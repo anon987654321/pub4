@@ -19671,6 +19671,174 @@ end
 # TECHNO SYNTH (techno_hate.rb) — acid-industrial hybrid at 142 BPM
 # =============================================================================
 
+# --- Industrial techno, HATE-podcast shape ----------------------------------
+#
+# The existing render_techno is a good 8-bar loop and nothing else. Every one of
+# its patterns is wrapped in mod(t, cycle), so a 213-bar render is that loop
+# repeated 26 times, byte for byte. Hypnotic repetition is right for the genre;
+# 26 identical repetitions is not an arrangement.
+#
+# What the style actually asks for, from the sources rather than from taste:
+#
+#   130-150 BPM, aggressive distorted sound design, heavy basslines.
+#   Metallic clangs, hydraulic hisses and processed factory recordings layered
+#   with heavy kicks. Heavy compression to make the kick punch, plus distortion
+#   or bit-crushing for grit. Dark atmospheres and MINIMAL melodic content, so
+#   the focus stays on energy. Reverb and delay for space and tension.
+#   Repetitive, hypnotic structures with EVOLVING LAYERS.
+#
+# The last line is the one render_techno misses, and it is the difference
+# between a loop and a set. So the core patterns keep their mod(t, cycle) --
+# that is the hypnosis -- and each LAYER gets a gate on absolute time. The same
+# eight bars come round and round while what is playing over them changes.
+#
+# A mix series like this runs long and moves in blocks rather than verses, so
+# the schedule is in 16-bar blocks and reads as a set list rather than a song
+# form: things arrive, sit, and leave.
+HATE_BPM = (ENV["HATE_BPM"] || 145).to_f
+HATE_CYCLE_BARS = 8
+HATE_BLOCK_BARS = 16
+
+# Which blocks each layer is present for, as a lambda over the block index.
+# Deliberately written as rules rather than a table: a set that runs eight
+# minutes or twenty should thin and thicken the same way either way.
+HATE_LAYERS = {
+  kick:  ->(b) { b != 3 },                    # out for one block, so its return lands
+  sub:   ->(b) { b >= 1 && b != 3 },
+  hat:   ->(b) { true },
+  open:  ->(b) { b >= 2 },
+  clap:  ->(b) { b >= 1 && b != 4 },
+  metal: ->(b) { b >= 2 },                    # the factory arrives late
+  hiss:  ->(b) { true },
+  acid:  ->(b) { b >= 3 },                    # the only melodic content, latest of all
+}.freeze
+
+# One gate expression per layer, over absolute time: the union of the blocks it
+# plays in. Layers present throughout return "1" and cost nothing.
+def hate_gate(layer, blocks, bar_p)
+  on = (0...blocks).select { |b| HATE_LAYERS.fetch(layer).call(b) }
+  return "1" if on.length == blocks
+
+  spans = on.chunk_while { |a, b| b == a + 1 }.map { |run| [run.first, run.last + 1] }
+  spans.map { |from, to|
+    "between(t,#{(from * HATE_BLOCK_BARS * bar_p).round(3)},#{(to * HATE_BLOCK_BARS * bar_p).round(3)})"
+  }.join("+")
+end
+
+def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp3"))
+  require_tools! "ffmpeg"
+  minutes = (ENV["HATE_MIN"] || 8).to_f.clamp(1.0, 60.0)
+  beat = 60.0 / HATE_BPM
+  bar = beat * 4
+  step = beat / 4
+  cycle = (bar * HATE_CYCLE_BARS).round(6)
+  blocks = [(minutes * 60.0 / (bar * HATE_BLOCK_BARS)).ceil, 2].max
+  total = (blocks * HATE_BLOCK_BARS * bar).round(3)
+
+  # The core eight bars. Four-to-the-floor with the variations that keep it from
+  # reading as a metronome: a kick roll into the turn, the hats dropping for a
+  # bar so their return is felt, the open hat only on the lift.
+  kick_per_bar = Array.new(HATE_CYCLE_BARS) { [0, 4, 8, 12] }
+  kick_per_bar[7] = [0, 4, 8, 12, 14, 15]
+  clap_per_bar = Array.new(HATE_CYCLE_BARS) { [4, 12] }
+  clap_per_bar[7] = [4, 12, 14]
+  hat_per_bar = Array.new(HATE_CYCLE_BARS) { [2, 6, 10, 14] }
+  hat_per_bar[3] = []
+  hat_per_bar[5] = (0..15).step(2).to_a
+  open_per_bar = Array.new(HATE_CYCLE_BARS) { [] }
+  open_per_bar[3] = [14]
+  open_per_bar[7] = [14]
+  # Metallic hits land off the grid on purpose -- a factory does not keep time.
+  metal_per_bar = Array.new(HATE_CYCLE_BARS) { [] }
+  metal_per_bar[1] = [7]; metal_per_bar[2] = [3, 11]; metal_per_bar[4] = [7, 13]; metal_per_bar[6] = [5]
+  # Minimal melodic content: two notes, an octave apart, and nothing else.
+  acid_steps = [0, 6, 10, 14]
+  acid_notes = [55.00, 55.00, 58.27, 55.00, 65.41, 55.00, 58.27, 51.91]
+
+  at = ->(b, s) { ((b * bar) + (s * step)).round(6) }
+  gather = ->(rows) { HATE_CYCLE_BARS.times.flat_map { |b| rows[b].map { |s| at.call(b, s) } } }
+
+  kicks = gather.call(kick_per_bar)
+  claps = gather.call(clap_per_bar)
+  hats = gather.call(hat_per_bar)
+  opens = gather.call(open_per_bar)
+  metals = gather.call(metal_per_bar)
+  acids = HATE_CYCLE_BARS.times.flat_map { |b| acid_steps.map { |s| [at.call(b, s), acid_notes[b]] } }
+
+  env = lambda do |times, len, decay|
+    times.map do |t|
+      tm = (t % cycle).round(6)
+      "between(mod(t,#{cycle}),#{tm},#{(tm + len).round(6)})*exp(-(mod(t,#{cycle})-#{tm})*#{decay})"
+    end.join("+")
+  end
+
+  # The kick: a pitch-swept sine, the way a 909 body is built, rather than a
+  # sample. 58 Hz rather than 110 -- this style sits lower than the house-tempo
+  # techno render does.
+  kick_sig = kicks.map do |t|
+    tm = (t % cycle).round(6)
+    dt = "mod(t,#{cycle})-#{tm}"
+    "between(mod(t,#{cycle}),#{tm},#{(tm + 0.22).round(6)})*0.98*exp(-#{dt}*7)*sin(2*PI*(58*#{dt}+190*#{dt}*exp(-#{dt}*26)))"
+  end.join("+")
+
+  sub_sig = kicks.map do |t|
+    tm = (t % cycle).round(6)
+    dt = "mod(t,#{cycle})-#{tm}"
+    "between(mod(t,#{cycle}),#{tm},#{(tm + 0.42).round(6)})*0.5*exp(-#{dt}*4)*sin(2*PI*41*#{dt})"
+  end.join("+")
+
+  acid_sig = acids.map do |(t, f)|
+    tm = (t % cycle).round(6)
+    dt = "mod(t,#{cycle})-#{tm}"
+    "between(mod(t,#{cycle}),#{tm},#{(tm + 0.16).round(6)})*0.55*exp(-#{dt}*11)*sin(2*PI*#{f}*#{dt})"
+  end.join("+")
+
+  g = ->(layer) { hate_gate(layer, blocks, bar) }
+
+  filt = <<~F
+    [0:a]aformat=channel_layouts=stereo,
+         aeval='(#{kick_sig})*(#{g.call(:kick)})|(#{kick_sig})*(#{g.call(:kick)})',
+         acrusher=bits=10:samples=1:mix=0.22,
+         aeval='tanh(val(0)*3.2)/tanh(3.2)|tanh(val(1)*3.2)/tanh(3.2)',
+         acompressor=threshold=-12dB:ratio=9:attack=1:release=38:makeup=4,
+         equalizer=f=58:t=o:w=0.8:g=5,lowpass=f=7000[kick];
+    [1:a]aformat=channel_layouts=stereo,
+         aeval='(#{sub_sig})*(#{g.call(:sub)})|(#{sub_sig})*(#{g.call(:sub)})',
+         lowpass=f=90[sub];
+    [2:a]volume='(#{env.call(claps, 0.05, 34)})*0.55*(#{g.call(:clap)})':eval=frame,
+         bandpass=f=1600:w=2200,aecho=0.6:0.45:37|74:0.28|0.14[clap];
+    [3:a]volume='(#{env.call(hats, 0.035, 80)})*0.34*(#{g.call(:hat)})':eval=frame,
+         highpass=f=8500[hat];
+    [4:a]volume='(#{env.call(opens, 0.45, 9)})*0.26*(#{g.call(:open)})':eval=frame,
+         bandpass=f=7200:w=5200[open];
+    [5:a]volume='(#{env.call(metals, 0.9, 5)})*0.30*(#{g.call(:metal)})':eval=frame,
+         bandpass=f=3100:w=260,bandpass=f=4700:w=200,
+         aecho=0.8:0.7:170|330|610:0.5|0.32|0.18,highpass=f=900[metal];
+    [6:a]volume='(0.05+0.05*sin(2*PI*t/#{(bar * 8).round(3)}))*(#{g.call(:hiss)})':eval=frame,
+         highpass=f=2400,lowpass=f=11000,aecho=0.7:0.6:220|450:0.35|0.2[hiss];
+    [7:a]aformat=channel_layouts=stereo,
+         aeval='(#{acid_sig})*(#{g.call(:acid)})|(#{acid_sig})*(#{g.call(:acid)})',
+         aeval='tanh(val(0)*4.5)/tanh(4.5)|tanh(val(1)*4.5)/tanh(4.5)',
+         bandpass=f=520:w=700,aecho=0.7:0.55:#{(step * 1000 * 3).round}|#{(step * 1000 * 6).round}:0.4|0.22[acid];
+    [kick][sub][clap][hat][open][metal][hiss][acid]amix=inputs=8:duration=longest:normalize=0,
+         highpass=f=26,
+         acompressor=threshold=-15dB:ratio=7:attack=2:release=60:makeup=3.5,
+         alimiter=limit=0.96:level_out=0.94[out]
+  F
+
+  inputs = Array.new(2) { lavfi("anullsrc=r=#{SAMPLE_RATE}:cl=stereo:d=#{total}") }.flatten +
+           Array.new(4) { lavfi("anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.9:d=#{total}:seed=#{noise_seed(41)}") }.flatten +
+           lavfi("anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.9:d=#{total}:seed=#{noise_seed(42)}") +
+           lavfi("anullsrc=r=#{SAMPLE_RATE}:cl=stereo:d=#{total}")
+
+  FileUtils.mkdir_p(File.dirname(destination))
+  dmesg("hate: #{HATE_BPM.round} BPM, #{blocks} blocks of #{HATE_BLOCK_BARS} bars, #{(total / 60).round(1)} min",
+        unit: "techno0", parent: "dilla0")
+  sh_filter_complex!(filt, *inputs, "-map", "[out]", "-t", total.to_s,
+                     "-c:a", "libmp3lame", "-b:a", "224k", destination)
+  puts "wrote #{destination}"
+  destination
+end
 def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
   require_tools! "ffmpeg"
   n_bars = [bars, TECHNO_BARS].max
@@ -23798,6 +23966,9 @@ DISPATCH = {
   "slum" => -> { render_slum_album(ARGV.shift || File.join(ROOT, "renders")) },
   "industrial" => -> { render_industrial(ARGV.shift || File.join(ROOT, "renders", "foundry_pulse.mp3")) },
   "techno" => -> { render_techno(ARGV.shift || File.join(OUTPUT_DIR, "techno_hate.mp3")) },
+  # Long-form industrial techno with layers that arrive and leave.
+  # HATE_MIN sets the length in minutes, HATE_BPM the tempo (130-150 is the range).
+  "hate" => -> { render_hate_techno(ARGV.shift || File.join(ROOT, "renders", "hate_session.mp3")) },
   "analog" => -> { render_analog(ARGV.shift || File.join(OUTPUT_DIR, "analog_full.mp3")) },
   "analog_liveset" => -> { analog_liveset(ARGV.shift || File.join(OUTPUT_DIR, "analog_liveset.mp3"), (ARGV.shift || 12).to_f) },
   "electronium" => -> { electronium_dispatch! },
