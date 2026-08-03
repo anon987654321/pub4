@@ -102,10 +102,26 @@ module Acapella
     # The slowest reading consistent with the evidence is the musical one, which
     # is the same rule RadioChop uses when it prefers a longer multiple.
     margin = peak * 0.88
-    in_range = scored.select { |score, tempo| score >= margin && BPM_RANGE.cover?(tempo) }
-    return nil if in_range.empty?
+    near_peak = scored.select { |score, _| score >= margin }
+    in_range = near_peak.select { |_, tempo| BPM_RANGE.cover?(tempo) }
+    return in_range.min_by(&:last).last unless in_range.empty?
 
-    in_range.min_by(&:last).last
+    # Nothing scored well inside the range, so fold the winner into it.
+    #
+    # This is the necessary consequence of the asymmetry noted above, and
+    # leaving it out cost three usable tracks. A drum stem locked at 0.722 --
+    # a strong, unambiguous reading -- at 159.6 bpm. Half of that is 79.8, which
+    # is plainly the tempo a person would name, but the statistic CANNOT confirm
+    # it: folding to half doubles the period, which splits one cluster into two
+    # opposite ones and scores near nothing. Requiring in-range confirmation
+    # therefore rejects every track whose pulse is detected at double time.
+    #
+    # The confidence check belongs on the peak, which is where the evidence is.
+    # Once the pulse is established, halving it is arithmetic, not measurement.
+    folded = near_peak.max_by(&:first).last
+    folded /= 2.0 while folded > BPM_RANGE.max
+    folded *= 2.0 while folded < BPM_RANGE.min
+    BPM_RANGE.cover?(folded) ? folded.round(2) : nil
   end
 
   # How tightly a set of times clusters when folded into one period.
@@ -245,14 +261,39 @@ module Acapella
 
   # ----------------------------------------------------------------- pipeline
 
-  # Every separated vocal we have, paired with the mix it came from.
-  def separated
-    Dir[File.join(WORK, "*", "*", "vocals.wav")].sort.filter_map do |stem|
-      slug = File.basename(File.dirname(stem))
-      mix = Dir[File.join(DEST, "*", "#{slug}.*")].first
-      next unless mix && File.file?(mix)
+  # Where separated vocals turn up, and the mix each belongs to.
+  #
+  # Two places, because two different jobs left stems behind. The downloaded
+  # acapellas live under scratch/acapella with their source in samples/acapella.
+  # But `kit` ran demucs over samples/own -- the operator's own recordings with
+  # named collaborators on them -- to dig a drum kit out, and it wrote every
+  # stem including the vocals. Those have been sitting there separated and
+  # unused, and they are better material than anything downloaded: they are the
+  # people who actually made these records.
+  # The own-recordings source is OFF by default. Those stems are the operator's
+  # collaborators on the operator's own records, and putting them over unrelated
+  # beats is a different decision from using a downloaded acapella -- it is their
+  # work being repurposed rather than a sample being flipped. OWN_VOCALS=1 opts
+  # in deliberately.
+  DOWNLOADED_STEMS = { stems: File.join(WORK, "*", "*", "vocals.wav"),
+                       mixes: File.join(DEST, "*") }.freeze
+  OWN_STEMS = { stems: File.join(ROOT, "scratch", "kit_dig", "*", "*", "vocals.wav"),
+                mixes: File.join(ROOT, "samples", "own") }.freeze
 
-      { slug:, stem:, mix: }
+  def stem_sources
+    ENV["OWN_VOCALS"] == "1" ? [DOWNLOADED_STEMS, OWN_STEMS] : [DOWNLOADED_STEMS]
+  end
+
+  def separated
+    stem_sources.flat_map do |source|
+      Dir[source[:stems]].sort.filter_map do |stem|
+        slug = File.basename(File.dirname(stem))
+        mix = Dir[File.join(source[:mixes], "#{slug}.*")].first ||
+              Dir[File.join(source[:mixes], "*", "#{slug}.*")].first
+        next unless mix && File.file?(mix)
+
+        { slug:, stem:, mix: }
+      end
     end
   end
 
@@ -291,12 +332,33 @@ module Acapella
     File.file?(path) ? (JSON.parse(File.read(path))["vocals"] || []) : []
   end
 
+  # Voices to leave out, and voices to reach for first.
+  #
+  # Both are operator judgements about performances rather than anything
+  # measurable, which is why they are lists of names and not a scoring function.
+  # A take can be perfectly separated, perfectly in tempo, and still the wrong
+  # one for these beats.
+  EXCLUDE = (ENV["VOCAL_EXCLUDE"] || "festival girson").downcase.split(",").map(&:strip).freeze
+  PREFER = (ENV["VOCAL_PREFER"] || "store p,dypt,jaja,nais body").downcase.split(",").map(&:strip).freeze
+
+  def usable
+    index.reject { |v| EXCLUDE.any? { |bad| v["slug"].to_s.downcase.include?(bad) } }
+  end
+
+  # Preferred takes first, everything else after, so a seed lands on a preferred
+  # one unless there are none left to land on.
+  def ranked
+    ok = usable
+    preferred, rest = ok.partition { |v| PREFER.any? { |good| v["slug"].to_s.downcase.include?(good) } }
+    preferred.empty? ? rest : preferred + rest
+  end
+
   # Picks one vocal for a track, always the same one for the same track name.
   def for_track(track, seed_hash)
-    all = index
-    return nil if all.empty?
+    pool = ranked
+    return nil if pool.empty?
 
-    all[seed_hash % all.length]
+    pool[seed_hash % pool.length]
   end
 
   # ------------------------------------------------------------------ laying
@@ -335,7 +397,8 @@ module Acapella
   # The key is the vocal itself, so the beat only steps back while someone is
   # actually speaking and comes straight back up in the gaps.
   def lay_on!(beat_path:, dest:, seed: 0, vocal: nil, beat_bpm: nil)
-    entry = vocal || index[seed % [index.length, 1].max]
+    pool = ranked
+    entry = vocal || (pool.empty? ? nil : pool[seed % pool.length])
     return nil unless entry && File.file?(File.expand_path(entry["stem"], ROOT))
 
     beat_tempo = beat_bpm || tempo(beat_path)

@@ -11631,7 +11631,7 @@ DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 # progression preset asks for. Both are generous compared with a real Rhodes --
 # the point is to stop a swell, not to forbid sustain.
 DILLA_PAD_ATTACK_CEILING = (ENV["PAD_ATTACK_CEILING"] || 260).to_i
-DILLA_PAD_RELEASE_CEILING = (ENV["PAD_RELEASE_CEILING"] || 1400).to_i
+DILLA_PAD_RELEASE_CEILING = (ENV["PAD_RELEASE_CEILING"] || 2200).to_i
 
 DILLA_STYLE_DEFAULTS = {
   "BPM" => "92",
@@ -11657,7 +11657,7 @@ DILLA_STYLE_DEFAULTS = {
   # Held pads; arps live on the lead stem (stream rotates LEAD_ARP_MODE).
   "PAD_ARP_MODE" => "held",
   "PAD_ATTACK" => "90",
-  "PAD_RELEASE" => "1100",
+  "PAD_RELEASE" => "1800",
   "PAD_LEGATO_VAR" => "1",
   "PAD_LAYERS" => "1",
   # Quieter choir so Rhodes/Prophet aren't buried under oohs.
@@ -11798,7 +11798,7 @@ DILLA_STYLE_DEFAULTS = {
   "HARMONIC_PADS_WEIGHT" => "1.12",
   "HARMONIC_PADS_VOLUME" => "1.2",
   # Louder pad bed so Rhodes/Prophet read over kit (was 62 — too shy).
-  "PAD_VOL" => "72",
+  "PAD_VOL" => "86",
   # Lead must cut over the stacked pad bed.
   "HARMONIC_SCALE_LEAD_WEIGHT" => "1.25",
   "HARMONIC_SCALE_LEAD_VOLUME" => "1.55",
