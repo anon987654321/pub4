@@ -57,7 +57,12 @@ class TestRuntimeCatalog < Minitest::Test
     assert_equal "/runtime/config", payload[:config_path]
     assert payload[:enhancements_pending_count].is_a?(Integer)
     assert payload[:enhancements].is_a?(Array)
-    assert_includes %w[wscons phosphor], payload[:aesthetic]
+    # Was %w[wscons phosphor], which pinned the retro modes as the only legal
+    # answers — so this went red the moment brutalist became the house default
+    # in 02e798aca and stayed red, unnoticed, because test/lib/** is outside
+    # `rake test`'s flat glob. Assert against MODES: the payload's contract is
+    # that it reports a real aesthetic, not that it reports a particular one.
+    assert_includes Master::Voice::Aesthetic::MODES, payload[:aesthetic]
     refute payload.key?(:topologies)
   end
 

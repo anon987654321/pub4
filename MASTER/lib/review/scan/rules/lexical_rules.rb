@@ -113,7 +113,13 @@ module Master
     description: "debug output left in lib/" do |src, path:|
     next [] unless path.to_s.include?("/lib/")
     next [] if path.to_s.include?("/scan/rules/")
-    findings = scan_lines(src, /^\s*pp?\s+(?!self\b)/, message: "p/pp debug call — remove or publish via event bus")
+    # `p` is a legal variable name, so a line starting `p <<` is an append to a
+    # local, not a Kernel#p call. The old pattern read both the same way and
+    # flagged attention_context.rb's `p << "zoom: …"` twice — an error-severity,
+    # auto_fix=true rule pointed at correct code. Anything whose next token is an
+    # assignment, append or comparison operator is the variable, not the call.
+    findings = scan_lines(src, /^\s*pp?\s+(?!self\b)(?!<<|==|!=|\|\|=|&&=|[+\-*\/%|&^]?=)/,
+      message: "p/pp debug call — remove or publish via event bus")
     findings += scan_lines(src, /\$stderr\.puts\b/, message: "$stderr.puts — use @bus.publish or $stdout")
     findings
   end

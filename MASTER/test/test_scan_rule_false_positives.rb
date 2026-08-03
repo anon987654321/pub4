@@ -166,4 +166,32 @@ class TestScanRuleFalsePositives < Minitest::Test
   def test_control_chars_flags_a_stray_soh_byte
     refute_empty findings(:CONTROL_CHARS, "def a\n  x = #{1.chr}y\nend\n")
   end
+
+  # --- DEBUG_OUTPUT -------------------------------------------------------
+  # `p` is a legal variable name. The rule read `p << "…"` as a Kernel#p call
+  # and flagged lib/ground/attention_context.rb twice — error severity, and
+  # auto_fix=true, pointed at correct code.
+
+  def test_debug_output_ignores_a_local_named_p
+    [
+      %(  p << "zoom: none"\n),
+      %(  p ||= []\n),
+      %(  p = compute_parts\n),
+      %(  p == other\n),
+    ].each do |source|
+      assert_empty findings(:DEBUG_OUTPUT, source, path: "lib/example.rb"),
+                   "#{source.inspect} uses a variable named p"
+    end
+  end
+
+  def test_debug_output_still_catches_real_debug_calls
+    [
+      %(  p foo\n),
+      %(  pp payload\n),
+      %(  p "literal"\n),
+      %(  $stderr.puts "trace"\n),
+    ].each do |source|
+      refute_empty findings(:DEBUG_OUTPUT, source, path: "lib/example.rb"), "#{source.inspect} is debug output"
+    end
+  end
 end
