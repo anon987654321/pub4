@@ -27,6 +27,18 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # Registered accounts must confirm their email before posting under their
+  # identity. Anonymous guests are unaffected — brgen's anonymous posting stays.
+  def require_verified_email
+    return if Current.user.nil? || Current.user.try(:guest?) || Current.user.email_verified?
+
+    message = t("verify.needed", default: "Confirm your email before posting — check your inbox.")
+    respond_to do |format|
+      format.html { redirect_back fallback_location: main_app.root_path, alert: message }
+      format.any  { head :forbidden }
+    end
+  end
+
   def log_tenant_access
     tenant = request.subdomain.presence || "brgen"
     Rails.logger.info(

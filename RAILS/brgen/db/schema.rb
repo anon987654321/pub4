@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1278,6 +1278,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_110000) do
     t.datetime "deletion_scheduled_at"
     t.string "display_name"
     t.string "email_address", null: false
+    t.string "email_verification_token"
+    t.datetime "email_verified_at"
     t.boolean "guest", default: false, null: false
     t.integer "karma"
     t.decimal "latitude", precision: 10, scale: 7
@@ -1296,6 +1298,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_110000) do
     t.index ["city_id"], name: "index_users_on_city_id"
     t.index ["deletion_scheduled_at"], name: "index_users_on_deletion_scheduled_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["email_verification_token"], name: "index_users_on_email_verification_token", unique: true
     t.index ["guest", "created_at"], name: "index_users_on_guest_and_created_at"
     t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
     t.index ["remember_token"], name: "index_users_on_remember_token", unique: true

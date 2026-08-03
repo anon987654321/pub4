@@ -3,6 +3,7 @@
 class CommentsController < ApplicationController
   rate_limit to: 20, within: 1.minute, only: :create,
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
+  before_action :require_verified_email, only: :create
   before_action :require_real_user, only: [ :destroy, :generate_summary ]
   before_action :set_commentable
 
