@@ -46,14 +46,22 @@ body.vertical-dating .match .feed-card-avatar-img {
   object-fit: cover;
 }
 
+// The dating immersive splash is a bare swipe surface. dating is already in the
+// immersive chrome-hide list in _vertical_shell.scss (nav/sidebar/tab-bar/etc.),
+// but two host elements still floated over "sveip for å begynne": the feed
+// keyboard-hotkey coach (a desktop hint, meaningless on a touch swipe surface) and
+// the nearby chat widget. Hidden here. The .brgen-logo-mark is deliberately KEPT —
+// _vertical_shell.scss documents it as the one fleet-wide brand mark; removing it
+// on dating is a product decision for the architect, not a cleanup.
+body.vertical-dating .hotkey-coach,
+body.vertical-dating .nearby-chat-widget-frame {
+  display: none !important;
+}
+
 .dating-intro {
   position: fixed;
   inset: 0;
-  // Above --z-toast (1100) so the opaque splash actually covers the host chrome
-  // — the brand logo, the keyboard-shortcuts toast, and the chat widget — which
-  // otherwise bled onto the "sveip for å begynne" screen (--z-splash was 1000,
-  // below the toast). Stays below --z-skip (2000) so the skip link still wins.
-  z-index: calc(var(--z-toast, 1100) + 20);
+  z-index: var(--z-splash);
   display: flex;
   flex-direction: column;
   align-items: center;
