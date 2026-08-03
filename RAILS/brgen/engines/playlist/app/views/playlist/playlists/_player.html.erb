@@ -7,9 +7,9 @@
 <% heading = playlist_name || playlist.name %>
 <% total_tracks = tracks_count || playlist.tracks_count %>
 <% total_plays = plays_count || playlist.plays_count %>
-<% active_src = active&.audio_file&.attached? ? url_for(active.audio_file) : (active&.source_type == "direct" ? active&.source_url : nil) %>
+<% active_src = active&.audio_file&.attached? ? main_app.url_for(active.audio_file) : (active&.source_type == "direct" ? active&.source_url : nil) %>
 <% active_embed = active&.external_embed_url %>
-<% active_art = active&.artwork&.attached? ? url_for(active.artwork) : nil %>
+<% active_art = active&.artwork&.attached? ? main_app.url_for(active.artwork) : nil %>
 
 <div
   class="playlist-app"
@@ -121,9 +121,9 @@
   <section class="playlist-queue" aria-label="Track queue">
     <h2 class="playlist-queue-heading">Queue</h2>
     <% rows.each_with_index do |track, index| %>
-      <% track_src = track.audio_file.attached? ? url_for(track.audio_file) : (track.source_type == "direct" ? track.source_url : nil) %>
+      <% track_src = track.audio_file.attached? ? main_app.url_for(track.audio_file) : (track.source_type == "direct" ? track.source_url : nil) %>
       <% track_embed = track.external_embed_url %>
-      <% track_art = track.artwork.attached? ? url_for(track.artwork) : nil %>
+      <% track_art = track.artwork.attached? ? main_app.url_for(track.artwork) : nil %>
       <button
         type="button"
         class="playlist-queue-item<%= " is-active" if track == active %>"

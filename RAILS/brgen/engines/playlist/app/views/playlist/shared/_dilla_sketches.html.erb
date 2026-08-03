@@ -32,7 +32,7 @@
           <% end %>
         <% end %>
         <% if sk.render.attached? %>
-          <audio controls preload="none" src="<%= url_for(sk.render) %>"></audio>
+          <audio controls preload="none" src="<%= main_app.url_for(sk.render) %>"></audio>
         <% end %>
         <% if sk.try(:track_id).present? %>
           <span class="dim">track #<%= sk.track_id %></span>

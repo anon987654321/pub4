@@ -17,36 +17,36 @@ module Pub4
 
     def postpro_candidates
       [
-        repo_join("studio/postpro/postpro.rb"),
-        Pathname.new("#{DEFAULT_REPO}/studio/postpro/postpro.rb"),
-        rails_root.join("../../studio/postpro/postpro.rb"),
+        repo_join("STUDIO/postpro/postpro.rb"),
+        Pathname.new("#{DEFAULT_REPO}/STUDIO/postpro/postpro.rb"),
+        rails_root.join("../../STUDIO/postpro/postpro.rb"),
       ]
     end
 
     def repligen_candidates
       [
-        repo_join("studio/repligen/repligen.rb"),
-        Pathname.new("#{DEFAULT_REPO}/studio/repligen/repligen.rb"),
-        rails_root.join("../../studio/repligen/repligen.rb"),
+        repo_join("STUDIO/repligen/repligen.rb"),
+        Pathname.new("#{DEFAULT_REPO}/STUDIO/repligen/repligen.rb"),
+        rails_root.join("../../STUDIO/repligen/repligen.rb"),
       ]
     end
 
     def dilla_candidates
       [
-        repo_join("studio/dilla/dilla.rb"),
-        Pathname.new("#{DEFAULT_REPO}/studio/dilla/dilla.rb"),
-        rails_root.join("../../studio/dilla/dilla.rb"),
+        repo_join("STUDIO/dilla/dilla.rb"),
+        Pathname.new("#{DEFAULT_REPO}/STUDIO/dilla/dilla.rb"),
+        rails_root.join("../../STUDIO/dilla/dilla.rb"),
       ]
     end
 
     # The study script is a thin wrapper around RadioBergenStudy, which lives in
-    # dilla.rb. It moved with the rest of studio/radio-bergen when that directory
+    # dilla.rb. It moved with the rest of STUDIO/radio-bergen when that directory
     # was removed; same three-candidate shape as its neighbours above.
     def radio_bergen_study_candidates
       [
-        repo_join("studio/dilla/scripts/radio_bergen_study.rb"),
-        Pathname.new("#{DEFAULT_REPO}/studio/dilla/scripts/radio_bergen_study.rb"),
-        rails_root.join("../../studio/dilla/scripts/radio_bergen_study.rb"),
+        repo_join("STUDIO/dilla/scripts/radio_bergen_study.rb"),
+        Pathname.new("#{DEFAULT_REPO}/STUDIO/dilla/scripts/radio_bergen_study.rb"),
+        rails_root.join("../../STUDIO/dilla/scripts/radio_bergen_study.rb"),
       ]
     end
 
@@ -102,7 +102,7 @@ module Pub4
       # Derived from rails_root, not from deploy_root. deploy_root is already
       # rails_root/.. (the repo), so going up again landed one level *above* the
       # checkout: with rails_root = /home/dev/pub4/RAILS this returned /home/dev,
-      # and repo_join("studio/…") pointed at /home/dev/studio. That is why every
+      # and repo_join("STUDIO/…") pointed at /home/dev/studio. That is why every
       # candidate list needed the hardcoded DEFAULT_REPO entry to work at all —
       # the derived one had always been wrong, on the server too.
       rails_root.join("..").expand_path

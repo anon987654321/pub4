@@ -76,7 +76,7 @@ module Brgen
       {
         user: "marte_kode24", community: "bergen", hours_ago: 7, votes: 8,
         title: "Dating i Bergen — ghosting eller bare regn?",
-        content: "Tredje match denne uka som foreslår kaffe på Møhlenpris og så forsvinner. Er dette en bygreie eller bare meg? Genuint nysgjerrig på erfaringer.",
+        content: "Tredje match denne uka som foreslår kaffe på Møhlenpris og så forsvinner. Er dette en bygreie, eller bare meg?",
         comments: [
           "Regn + travel hverdag, folk prioriterer om.",
           "Prøv aktiv date — Fløyen eller VilVite, mindre press.",
@@ -278,6 +278,42 @@ module Brgen
         comments: [
           "Quiz starter kl 19, kom tidlig.",
           "Bordene ved vinduet går først.",
+        ],
+      },
+      {
+        user: "tor_fana", community: "bergen", hours_ago: 4, votes: 21,
+        title: "Brann på Stadion i kveld — hvor ser dere kampen?",
+        content: "Fikk ikke billett og vil ikke se den alene. Hvilken pub tar imot Brann-folk uten kø?",
+        comments: [
+          "Fotballpuben i Nygårdsgaten. Kom en time før avspark.",
+          "Bien på Møhlenpris viser alltid, og trykket er høyt.",
+        ],
+      },
+      {
+        user: "hanne_sandviken", community: "bergen", hours_ago: 12, votes: 18,
+        title: "Leiepriser i Bergen — har de flatet ut?",
+        content: "Leter etter toroms under 14 000 nær sentrum. Urealistisk i år, eller finnes det fortsatt?",
+        comments: [
+          "Let ett stopp ut på Bybanen. Prisen faller fort.",
+          "Følg Hybel og Finn daglig. De gode går på timer.",
+        ],
+      },
+      {
+        user: "magnus_student", community: "bergen", hours_ago: 30, votes: 15,
+        title: "Flyttet til Bergen forrige uke — hva bør jeg vite?",
+        content: "Ny jobb, kjenner ingen. Gi meg det ene rådet dere skulle hatt første måneden her.",
+        comments: [
+          "Kjøp ordentlig regntøy før du kjøper noe annet.",
+          "Bli med på en fjelltur. Det er slik folk finner venner her.",
+        ],
+      },
+      {
+        user: "henrik_vestland", community: "bergen", hours_ago: 15, votes: 24,
+        title: "Dag 18 med regn — teller noen fortsatt?",
+        content: "Naboen sier det er sunt. Jeg sier vi bygger ark. Hvordan holder dere humøret oppe i grå uker?",
+        comments: [
+          "Paraply er for nybegynnere. Skikkelig jakke og godt humør.",
+          "Kaffe, bok, vindu mot Vågen. Da blir regnet kulisse.",
         ],
       },
     ].freeze
