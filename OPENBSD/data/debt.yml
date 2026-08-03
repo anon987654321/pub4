@@ -1,6 +1,19 @@
 # Actionable deploy debt — open items agents should work unless blocked.
 # Operator deploy debt. Narrative ops notes: OPENBSD/RUNBOOK.md, OPENBSD/DECISIONS.md.
 # Feature inventory: RAILS/apps.yml. Deferred features: apps.horizon.yml (agent: ignore).
+#
+# tag:
+#   operator-priority — a human must act (money, hardware, a force-push, root).
+#                       Fix before declaring a deploy healthy.
+#   agent-workable    — ordinary code work, no human decision needed. This is the
+#                       default the header describes; it was implicit until
+#                       2026-08-03, when items of this kind were first filed here
+#                       and neither existing tag was true of them.
+#   agent-ignore      — do not chase during narrow patches (scan noise, horizon).
+#
+# An entry that documents its own fix inside `summary` is still open as far as
+# open_debt_count (MASTER/lib/deploy/operator_docs.rb) is concerned — move it to
+# closed: or the count overstates. Three were sitting that way on 2026-08-03.
 
 open:
   - id: off_host_dr
@@ -30,86 +43,14 @@ open:
       The chat entry point into exec was closed 2026-07-27 (see git log,
       "stop visitor chat reaching the Fold"), but the escalation primitive
       remains for any other code-exec-as-dev path.
-  - id: doas_keepenv_is_a_root_rce
-    tag: operator-priority
-    summary: >
-      etc/doas.conf:1 uses `keepenv`, which preserves the caller's environment
-      across the privilege boundary. For a Ruby stack that includes RUBYOPT,
-      RUBYLIB, GEM_HOME and BUNDLE_*, so `RUBYOPT=-r/tmp/x.rb doas <anything>`
-      is arbitrary code execution as root by construction — no shell required.
-      MASTER/bin/tts-worker:18-22 already scrubs exactly that variable set
-      before boot because it does not trust it; keepenv hands the same set to
-      root.
-      This is INDEPENDENT of command scoping: dropping keepenv does not
-      restrict which commands run, so it does not hit the `doas zsh` problem
-      that makes cmd rules unworkable. It is the cheapest real reduction
-      available.
-      FIXED 2026-08-02, operator-authorised. The dev rule is now
-        permit nopass setenv { I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK
-                               RUN_PRODUCTION_SEEDS SKIP_MASTER_SCAN MAIL_IMG_FMT } dev as root
-      The allowlist was measured rather than taken from this entry's suggestion:
-      those five are the variables that scripts invoked under doas read and never
-      assign themselves. Everything else OPERATOR.sh reads (APP_PORTS, BACKEND_PORT,
-      BRGEN_IP, DOMAIN_BACKEND, HYP_IP, STATE_FILE, TMPFILES) it declares itself, and
-      the deploy scripts export inside the doas'd command string rather than across
-      the boundary — no `VAR=x doas` form exists anywhere in OPENBSD/.
-      keepenv stays on the root->root rule deliberately: it grants an attacker
-      nothing they do not already have, and stripping it would remove the environment
-      the outer dev->root hop just established from under the inner one.
-      INSTALLED + VALIDATED LIVE 2026-08-02. This entry's SEQUENCING assumption was
-      wrong: it claimed the repo file "reaches vm23 on the next 5-minute tick with no
-      deploy" via the auto-heal, so nothing else was needed. It never did — the live
-      /etc/doas.conf was verified 2026-08-02 to still be `permit nopass keepenv dev as
-      root`, i.e. the RCE was live in production the whole time while the repo believed
-      it fixed. The auto-heal that was supposed to install it (relayd-watchdog /
-      config-drift-check via validate_doas.ksh install) is itself a root-executes-
-      dev-checkout hole and has now been removed (see
-      root_dot_sources_dev_owned_repo_every_5min), so this file no longer auto-syncs at
-      all. The hardened doas.conf was installed by hand on vm23 via
-      `doas ksh validate_doas.ksh install <repo doas.conf> operator-manual`, which
-      backed up, installed, and passed validate_doas_works (dev->root AND
-      I_UNDERSTAND_DNS_WIPE still crosses). Confirmed live: dev rule is now the setenv
-      allowlist, keepenv removed from it, `doas id`/`doas zsh`/`doas rcctl` all work,
-      and master/brgen/amber/bsdports stayed healthy. keepenv remains on the root->root
-      rule by design. vps_safety_gate.rb pins the repo file. Going forward this file is
-      installed only by a deliberate root run (OPERATOR.sh or validate_doas.ksh
-      install), never a cron tick.
-  - id: root_dot_sources_dev_owned_repo_every_5min
-    tag: operator-priority
-    summary: >
-      etc/crontab.vm23:12 runs resource_guard.sh as root every 5 minutes, and
-      resource_guard.sh:64-68 dot-sources ${GUARD_REPO:-/home/dev/pub4}/OPENBSD/
-      validate_doas.ksh and stale_ci_cleanup.ksh — i.e. root EXECUTES files from
-      a dev-owned git checkout. Write access to either file is root code
-      execution within 5 minutes, independent of doas.
-      Consequence for remediation: install_doas_conf_from_repo then copies the
-      REPO's doas.conf over /etc/doas.conf, so hand-editing /etc/doas.conf on
-      the host is reverted on the next tick. Fix the repo file first.
-      The staging-file half is FIXED 2026-08-01. validate_doas.ksh now mktemps
-      inside root-owned 0700 /var/backups/openbsd_setup instead of writing
-      /tmp/doas.conf.install.$$ and copying it over /etc/doas.conf — winning that
-      race let a local account choose the contents of doas.conf, i.e. root by
-      construction. Two more of the same shape were found and fixed in the sweep:
-      OPERATOR.sh's install_tracked_crontab staged root's crontab at
-      /tmp/root_crontab.$$ and fed it straight to crontab(1), and backup_priv.sh
-      wrote the whole encrypted ~/priv archive to a second-granularity predictable
-      /tmp path; both now mktemp in a root- or owner-only directory.
-      CLOSED 2026-08-02. The summary named resource_guard.sh, but that path was
-      already clean — it sources only the root-owned /usr/local/libexec copy of
-      stale_ci_cleanup.ksh, whose own heal_doas_conf was removed earlier. The two
-      real survivors were the root cron scripts relayd-watchdog (*/5) and
-      config-drift-check (*/15): both ran, as root, `ksh /home/dev/pub4/OPENBSD/
-      validate_doas.ksh install /home/dev/pub4/OPENBSD/etc/doas.conf` every tick —
-      root executing a dev-owned script and installing a dev-owned doas.conf, i.e.
-      the RCE this entry describes, plus a silent revert of any hand-hardening.
-      heal_doas_conf! was removed from both; the no-heal copies are installed to
-      /usr/local/bin on vm23. config-drift-check is back to a read-only detector.
-      Nothing root-run now reads or executes from /home/dev/pub4 on a timer.
-      Wrinkle this exposed: because that heal was the only would-be installer of
-      doas.conf and it was not actually working, the hardened doas.conf had never
-      gone live — closing this entry meant installing it by hand (see
-      doas_keepenv_is_a_root_rce). doas.conf now installs only on a deliberate
-      OPERATOR.sh / validate_doas.ksh run.
+      REDUCED, NOT CLOSED, re-measured 2026-08-03. The `keepenv` half is gone (see
+      the closed entry doas_keepenv_is_a_root_rce): dev's rule is now a five-variable
+      setenv allowlist, so the environment-injection route to root no longer exists.
+      What this entry is actually about is unchanged — etc/rc.d/master:22 still sets
+      daemon_user="dev" and the dev rule is still nopass with no command scoping, so
+      any code execution as dev on the internet-facing app is still root without a
+      password. The fix named above stands: a dedicated master user + chown, not doas
+      scoping.
   - id: secrets_in_process_argv_and_world_readable_home
     tag: operator-priority
     summary: >
@@ -156,6 +97,14 @@ open:
       STILL OPEN (separate, untouched): vps_ci.sh / RAILS/_runtime_gate.sh run
       `chmod o+x /home/dev`, and OPERATOR.sh installs /home/dev/.zshrc 644 with real
       keys in it — a world-traversable home over a key-bearing dotfile.
+      RE-MEASURED 2026-08-03, and this half is smaller than written. /home/dev is
+      still drwx-----x (vps_ci.sh:88 and RAILS/_runtime_gate.sh:71 both still run the
+      chmod) and .zshrc is still 644, so the traversal is real — but the dotfile no
+      longer carries secrets: `grep -c "KEY\|TOKEN\|SECRET" /home/dev/.zshrc` is 0.
+      What remains is a world-traversable home over a world-readable dotfile with
+      nothing sensitive in it. Worth removing the two chmods on principle; it is no
+      longer a key-disclosure path. The argv half stays closed — `ps auxww` from the
+      dev account returns zero SECRET_KEY_BASE/MASTER_BRIDGE_TOKEN/*_API_KEY hits.
   - id: committed_rails_master_key_public_repo
     tag: operator-priority
     summary: >
@@ -178,6 +127,24 @@ open:
       remaining.
       STILL OPEN, and neither belongs to an agent: rotate secret_key_base, then purge
       the blob from history — a force-push to a public repository.
+      RE-MEASURED 2026-08-03, and untracking bought less than this entry implies.
+      `git rm` removed the file from the tip only. The blob entered at 039c26a07
+      (2026-03-13), that commit is still an ancestor of origin/main, and
+      `git cat-file -p 039c26a07:MASTER/web/config/master.key` returns the key today.
+      The repo is still public (unauthenticated API 200). So the key has been world-
+      readable for the ~5 months between those two dates and remains fetchable by
+      anyone who clones — untracking changed what `git add -A` can do, not what an
+      attacker can read.
+      Ordering matters and is the opposite of the sentence above: ROTATE FIRST. A
+      history purge is a force-push to a public repository, cannot be relied on
+      (forks, clones, GitHub's own unreachable-object retention, any archiver), and
+      does nothing about the five months already elapsed. Rotation is what actually
+      ends the exposure; the purge is hygiene afterwards and is optional. Treat the
+      current secret_key_base as burned regardless of what happens to the history.
+      Blast radius is still limited for the reason the original entry gives —
+      production reads SECRET_KEY_BASE from /etc/*.env and MASTER runs
+      SECRET_KEY_BASE_DUMMY=1 — so this is not an emergency, but it is not closed by
+      the untracking either.
   - id: brgen_allow_unauthenticated_access_is_a_noop
     tag: operator-priority
     summary: >
@@ -202,6 +169,123 @@ open:
       of the largest table, 99.3% of which was throwaway guest rows (102,778
       measured 2026-08-01). Covered by
       brgen/test/jobs/prune_guest_users_job_test.rb.
+
+  # --- RAILS completeness + UI/UX review 2026-08-03. Everything below was found by
+  # measuring the running apps and the served pages, not by reading the tree; none of
+  # it was tracked anywhere. UI_REFINEMENTS.md's checklists cannot catch these,
+  # because a landed row and a wrong-but-landed row look identical from the outside.
+  - id: amber_bsdports_stop_and_stay_down
+    tag: operator-priority
+    summary: >
+      Found amber and bsdports both dead on 2026-08-03; brgen was fine. Ports 61352
+      and 47312 closed on vm23, `doas rcctl check amber` reported amber(failed), and
+      nothing had restarted them. `doas rcctl restart` brought both back in ~2s with
+      no config change and no deploy, so the trees at /home/<app>/{app,shared} and the
+      pkg_scripts entries were all intact — they had simply stopped.
+      Cause NOT established. resource_guard is ruled out, which is the assumption to
+      resist: /var/db/resource_guard_shed was EMPTY and shedding fired on 17 of the
+      last 300 ticks (5.7%), so the guard was not parking them (contrast the 48%
+      measured 2026-07-29 in OPENBSD/CLAUDE.md). There is no production.log on the box
+      to work from. multi_app_ram is the obvious suspect and the box is consistent
+      with it — 1GB physmem, 85MB free with all three up, 1.4G of 2.5G swap in use,
+      mem_avail hovering 9-16% against the guard's own 8/14 thresholds — but nothing
+      measured ties the two together yet.
+      Why this went unnoticed for an unknown length of time: it is invisible from
+      outside. relayd still terminates TLS with a valid per-host cert, so the failure
+      shape is `SSL certificate verify ok` followed by `Empty reply from server`, and
+      curl reports http_code 000 rather than a 5xx. Nothing in the repo, the gates or
+      DNS looks wrong. Worse, the gates read a down app as green: layout_geometry
+      PASSED having skipped all 17 of its checks because the ports were closed, and
+      user_flow / payment_honesty skip their live halves the same way. External
+      alerting is filed separately and closed; whatever it watches, it did not catch
+      this.
+      Wanted: something that fails when a port that should be listening is not.
+  - id: brgen_city_carousel_links_dead
+    tag: operator-priority
+    summary: >
+      brgen/app/views/layouts/application.html.erb:107-116 renders 29 city domains as
+      real anchors (`https://<domain>/`) on every page of every surface, and the live
+      homepage ships all 29. They do not resolve: 6/6 sampled on 2026-08-03
+      (longyearbyn.no, stvanger.no, trndheim.no, kbenhvn.dk, lndon.uk, newyrk.us) fail
+      to connect. brgen is a one-city platform advertising a network of 29 that is not
+      there — this is the single most user-visible honesty problem in the tree, and it
+      is on 100% of pageviews.
+      Operator-priority because the fix is a product/money call, not a code call:
+      either buy and stand up the domains (registrar spend + relayd/acme work per
+      city, already tracked as the city-domains task) or stop rendering links to
+      hosts that do not answer. A cheap middle path is to gate the list on a
+      periodically-refreshed reachability check and render only the live ones, which
+      degrades to "just brgen.no" today and grows by itself as cities come up.
+  - id: brgen_layout_query_cost_and_page_weight
+    tag: agent-workable
+    summary: >
+      Two costs paid on every brgen pageview, on a box measured at 85MB free.
+      N+1 in the global layout: application.html.erb:96 does a Ruby-level
+      `.sum { |c| c.unread_count_for(Current.user) }` over every non-channel
+      conversation, and Conversation#unread_count_for (models/conversation.rb:128) is
+      itself a find_by plus a count — so 2 queries per DM thread, added to every
+      authenticated render of every page, purely to decide a badge number. Wants to be
+      one grouped query, or a counter the message write maintains.
+      Page weight: the served homepage is 232KB, of which 43KB is duplicated inline
+      SVG — 147 instances of 22 unique shapes, because the 5 feed-action icons are
+      re-emitted per post across 25 posts. ~19% of the document, gzip notwithstanding,
+      on a mobile-first social product. A <symbol> sprite emitted once plus <use>
+      removes it without touching the icon helper's call sites.
+  - id: rails_flash_strings_untranslated
+    tag: agent-workable
+    summary: >
+      144 hardcoded English flash strings across the three apps — amber 48 (items 13,
+      outfits 10, declutter 7), brgen host 44 (posts 7, email_subscriptions 5, live 5),
+      brgen engines 51 (playlist collaborations 5, marketplace checkouts 4) — counted
+      as `(notice|alert): "..."` in app/controllers. bsdports has 1.
+      brgen renders nb by default (live homepage: title "Bergen — Brgen", h1 "Hjem"),
+      so every successful create/update/destroy shows an English toast in an otherwise
+      Norwegian UI. UI_REFINEMENTS.md records chrome i18n as landed and it is — the
+      gap is that chrome_i18n_lint checks chrome and never looks at controller
+      flashes, so this whole class was never in scope. Extend the lint first, then the
+      strings, or it comes straight back.
+  - id: rails_no_breakpoint_token
+    tag: agent-workable
+    summary: >
+      design_tokens.yml carries color, space, motion, elevation and per-dialect maps
+      but no viewport scale, so responsive breakpoints are written by hand and have
+      drifted apart. brgen alone mixes 768px, 767px, 48rem (=768px), 700px, 480px,
+      1264px and 1265px; amber uses 768/640/1280px and 36rem; shared uses 480px,
+      40rem, 768px, 1280px. The 767/768 and 1264/1265 pairs are the tell — those are
+      off-by-one attempts at the same edge, which is exactly the bug a token exists to
+      prevent. Everything else in this design system is single-sourced; this is the
+      one axis that is not.
+  - id: playlist_engine_untested
+    tag: agent-workable
+    summary: >
+      engines/playlist has 26 Ruby files and 26 views and zero tests — the only one of
+      the five verticals with none (dating 1, takeaway 1, tv 1, marketplace 3). It is
+      the second-largest engine. This was masked twice over: the engine suites did not
+      run at all until 2026-08-03 (see rails_coverage_contract_is_tautological), and
+      the coverage ratchet in RAILS/test/coverage_ratchet_test.rb counts only the host
+      tree, so an engine at zero does not move it. Whatever lands here should also
+      teach the ratchet to see engines, or the next extraction repeats it.
+
+  - id: operator_docs_module_is_unreferenced
+    tag: agent-workable
+    summary: >
+      MASTER/lib/deploy/operator_docs.rb is read by nothing. Grepping MASTER and
+      OPENBSD for OperatorDocs returns only the constitutional scanner's own
+      activity log, i.e. the file has been scanned, never called. Found 2026-08-03
+      while checking that the debt.yml edits parsed.
+      Its ROOT was also wrong — File.expand_path("../../../..", __dir__) from
+      MASTER/lib/deploy resolves to the directory containing the checkout, so both
+      OPERATOR_PATH and DEBT_PATH pointed at files that do not exist. Every method
+      then degraded to its empty default without raising: open_debt_count answered 0
+      against a 14-item register, and render_deploy printed its four headings over
+      four blank values. Fixed to ../../.. and verified (open_debt_count 14,
+      render_deploy renders real recipes), but a correct module with no callers is
+      still dead wiring.
+      The decision this entry exists to force: wire it or delete it. /orient deploy
+      is the plausible consumer — MASTER/lib/pub4/status_report.rb already answers
+      the backlog question independently, with its own correct path, which is why
+      nothing ever noticed this one was broken. Two readers of the same file, one
+      live and one dead, is the duplication to collapse.
 
   # --- RAILS audit 2026-07-26. The crash-level items from this pass are fixed
   # (see git log and the closed: entries below); what remains open here is
@@ -256,6 +340,21 @@ open:
       STILL OPEN: the design-craft stack warns and returns when the app port is
       closed, which off the deploy host is always. payment_honesty_gate still only
       greps routes.rb for /checkout|webhooks/. Nothing calls gates/runner.rb --all.
+      THIRD PASS 2026-08-03. The payment_honesty half is closed, and it was worse
+      than "only greps": the grep ran against the HOST routes.rb, which still matches
+      /webhooks/ on webhooks/tradedoubler, so an unrelated affiliate route had been
+      standing in for the PSP callbacks ever since marketplace moved to an engine. It
+      now asserts both `checkout` and `webhooks` against the engine's own routes.rb
+      via a two-lookahead pattern.
+      Same pass, same cause: payment_honesty, layout_search and user_flow were all
+      still keyed on brgen/app/.../marketplace/... paths that the engine split had
+      moved, so all three failed on "missing" files — indistinguishable from the
+      files being deleted, and layout_search never reached its 32-candidate design
+      search at all. All three repointed at engines/marketplace and passing.
+      STILL OPEN after this pass: the port-closed degradation above is unchanged and
+      is the load-bearing one — layout_geometry reports PASSED having skipped all 17
+      of its checks when nothing is listening, so a down app reads as green (see
+      amber_bsdports_stop_and_stay_down). Nothing calls gates/runner.rb --all.
   - id: rails_coverage_contract_is_tautological
     tag: operator-priority
     summary: >
@@ -285,64 +384,17 @@ open:
       Worth knowing while reading that: nothing in this repository mints an SSO
       token. The consume half is wired in all three apps and the MASTER side is not
       here, so this hardened a dormant entry point.
-  - id: rails_silent_wiring_breaks
-    tag: agent-ignore
-    summary: >
-      RESOLVED 2026-08-01, with a gate so the class cannot come back silently.
-      Each item and what it turned out to be:
-      pwa-standalone named no controller anywhere and data-pwa-key had no reader —
-      both implemented in shared/frontend/pwa_standalone_controller.js, which
-      stamps [data-pwa-display] and namespaces the install-prompt dismissal by
-      app key.
-      offline-feed was a brgen-local controller emitted by amber item cards, where
-      the importmap eager-loads only that app's own directory — moved to
-      shared/frontend and registered, with shared_wiring forbidding a local copy.
-      submit->form-submit#lock named a method nobody wrote AND sat on two forms
-      with no form-submit controller attached; lock/unlock exist now (deferred a
-      tick so the submitter's own name/value still reaches the request) and the
-      controller is attached to both.
-      click->reply#toggle no longer appears in any view.
-      content_for :body_attrs was never yielded, and could not have worked if it
-      had been: Stimulus resolves an action against the element and its ancestors,
-      and <body> is the push controller's ancestor, not its descendant. brgen's
-      layout yields it now and the two views set data-push-seen, which
-      push_controller reads on turbo:load — its element is data-turbo-permanent so
-      connect() never runs again.
-      The install-prompt partial renders in all three apps and NO app styled it:
-      the moment install_prompt_controller cleared [hidden] it appeared as
-      unstyled text in document flow. Styled in shared _shell_widgets.scss, hidden
-      entirely in standalone launches; all three application.css rebuilt.
-      Turbo broadcasts: worse than "several", and in two groups. Reachable and
-      wired properly — Tv::StreamChat and Tv::VideoNote (both needed target: as
-      well as partial:, and tv/videos/show.html.erb had the container but no
-      turbo_stream_from at all). Reachable but pointing at nothing — Reaction,
-      Playlist::TimestampedComment and SecurityAdvisory each broadcast to a stream
-      with no subscriber, no container and no partial, enqueueing a Solid Queue job
-      per write that raised MissingTemplate on a 1-vCPU box; removed, each with the
-      reason in place. RAILS/test/turbo_broadcast_contract_test.rb pins all of it.
-      prune_guest_users_job is scheduled daily in brgen and amber, with the
-      (guest, created_at) index it scans on (migration 20260801160000) and
-      brgen/test/jobs/prune_guest_users_job_test.rb over the behaviour.
-      The mailer precedence bug was already fixed.
-      Shared::* social models — PARTIALLY RESOLVED 2026-08-02, and the "six with no
-      table in ANY app" claim was wrong. Only three were genuinely dead and are now
-      CUT: Post (shared_posts) and ChatMessage (shared_chat_messages) exist in no
-      schema, and Follow had zero references (brgen uses an app-local ::Follow on the
-      follows table). Those three could not be instantiated and were the trap.
-      The other three were mis-diagnosed and stay: Shared::Reaction (reactions) and
-      Shared::Notification (notifications) are `defined?(::Reaction/::Notification)`
-      fallbacks over tables brgen and amber both have, and Shared::ReviewCase
-      (review_cases) is live — amber's ReportsController subclasses
-      Shared::ReviewCasesController and amber has the review_cases table, so amber
-      reports create Shared::ReviewCase rows. turbo_broadcast_contract_test's
-      TABLELESS_SHARED had shared_* table names that never exist (shared_reactions vs
-      the real reactions), which is why it read all six as tableless; it now lists
-      only the remaining three with that caveat recorded.
-      STILL OPEN: those three broadcast implicitly on tables that DO exist, so their
-      callbacks can fire into streams with (likely) no subscriber and no partial —
-      the MissingTemplate-job risk this whole entry is about, now isolated to three
-      named models instead of hidden behind a wrong table name.
-
+      Checkout is no longer in the zero-tests list, 2026-08-03 — but the reason it
+      read as zero is the point. The tests existed; they had never run. `bin/rails
+      test` globs test/**/*_test.rb from the app root, so every engines/*/test suite
+      was invisible to it and to bin/ci from the extraction onward: 29 tests, of which
+      the 4 marketplace checkout ones had rotted into NameErrors on the pre-split
+      marketplace_checkout_path while CI stayed green the whole time. They now use the
+      marketplace.* mounted proxy, and shared/config/ci.rb widens DEFAULT_TEST /
+      DEFAULT_TEST_EXCLUDE when an app has engines. brgen 282 -> 311 runs, 2022
+      assertions. The ratchet in RAILS/test/coverage_ratchet_test.rb counts only the
+      host tree and did not move; playlist (26 Ruby files, 26 views) still has zero
+      tests of its own — see playlist_engine_untested.
 closed:
   - id: payment_webhooks_unverified
     resolution: >
@@ -424,3 +476,156 @@ closed:
     resolution: OPENBSD/bin/uptime-check.sh curls /up on all apps; documented in RUNBOOK.md (2026-07-16)
   - id: ssh_helper_dry
     resolution: OPENBSD/lib/ssh_vm23.sh; deploy_all.sh and vps_deploy_master.sh wired (2026-07-16)
+  - id: doas_keepenv_is_a_root_rce
+    resolution: >
+      Verified live 2026-08-03: /etc/doas.conf on vm23 grants dev only
+      `permit nopass setenv { I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK
+      RUN_PRODUCTION_SEEDS SKIP_MASTER_SCAN MAIL_IMG_FMT } dev as root`; keepenv
+      survives only on the root->root rule, by design. The RUBYOPT escalation this
+      entry describes is gone. Moved out of open, where it had been carrying its own
+      FIXED/INSTALLED+VALIDATED narrative since 2026-08-02 while still counting
+      against open_debt_count.
+      --- original open entry, kept as the record of how it got there ---
+      etc/doas.conf:1 uses `keepenv`, which preserves the caller's environment
+      across the privilege boundary. For a Ruby stack that includes RUBYOPT,
+      RUBYLIB, GEM_HOME and BUNDLE_*, so `RUBYOPT=-r/tmp/x.rb doas <anything>`
+      is arbitrary code execution as root by construction — no shell required.
+      MASTER/bin/tts-worker:18-22 already scrubs exactly that variable set
+      before boot because it does not trust it; keepenv hands the same set to
+      root.
+      This is INDEPENDENT of command scoping: dropping keepenv does not
+      restrict which commands run, so it does not hit the `doas zsh` problem
+      that makes cmd rules unworkable. It is the cheapest real reduction
+      available.
+      FIXED 2026-08-02, operator-authorised. The dev rule is now
+        permit nopass setenv { I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK
+                               RUN_PRODUCTION_SEEDS SKIP_MASTER_SCAN MAIL_IMG_FMT } dev as root
+      The allowlist was measured rather than taken from this entry's suggestion:
+      those five are the variables that scripts invoked under doas read and never
+      assign themselves. Everything else OPERATOR.sh reads (APP_PORTS, BACKEND_PORT,
+      BRGEN_IP, DOMAIN_BACKEND, HYP_IP, STATE_FILE, TMPFILES) it declares itself, and
+      the deploy scripts export inside the doas'd command string rather than across
+      the boundary — no `VAR=x doas` form exists anywhere in OPENBSD/.
+      keepenv stays on the root->root rule deliberately: it grants an attacker
+      nothing they do not already have, and stripping it would remove the environment
+      the outer dev->root hop just established from under the inner one.
+      INSTALLED + VALIDATED LIVE 2026-08-02. This entry's SEQUENCING assumption was
+      wrong: it claimed the repo file "reaches vm23 on the next 5-minute tick with no
+      deploy" via the auto-heal, so nothing else was needed. It never did — the live
+      /etc/doas.conf was verified 2026-08-02 to still be `permit nopass keepenv dev as
+      root`, i.e. the RCE was live in production the whole time while the repo believed
+      it fixed. The auto-heal that was supposed to install it (relayd-watchdog /
+      config-drift-check via validate_doas.ksh install) is itself a root-executes-
+      dev-checkout hole and has now been removed (see
+      root_dot_sources_dev_owned_repo_every_5min), so this file no longer auto-syncs at
+      all. The hardened doas.conf was installed by hand on vm23 via
+      `doas ksh validate_doas.ksh install <repo doas.conf> operator-manual`, which
+      backed up, installed, and passed validate_doas_works (dev->root AND
+      I_UNDERSTAND_DNS_WIPE still crosses). Confirmed live: dev rule is now the setenv
+      allowlist, keepenv removed from it, `doas id`/`doas zsh`/`doas rcctl` all work,
+      and master/brgen/amber/bsdports stayed healthy. keepenv remains on the root->root
+      rule by design. vps_safety_gate.rb pins the repo file. Going forward this file is
+      installed only by a deliberate root run (OPERATOR.sh or validate_doas.ksh
+      install), never a cron tick.
+  - id: root_dot_sources_dev_owned_repo_every_5min
+    resolution: >
+      Verified live 2026-08-03: root cron runs relayd-watchdog, config-drift-check
+      and resource_guard.sh out of /usr/local/bin, all root:wheel 755, and none of
+      them reference pub4 or GUARD_REPO. Nothing root-run reads or executes from
+      /home/dev/pub4 on a timer. Moved out of open; its own summary said
+      CLOSED 2026-08-02.
+      --- original open entry, kept as the record of how it got there ---
+      etc/crontab.vm23:12 runs resource_guard.sh as root every 5 minutes, and
+      resource_guard.sh:64-68 dot-sources ${GUARD_REPO:-/home/dev/pub4}/OPENBSD/
+      validate_doas.ksh and stale_ci_cleanup.ksh — i.e. root EXECUTES files from
+      a dev-owned git checkout. Write access to either file is root code
+      execution within 5 minutes, independent of doas.
+      Consequence for remediation: install_doas_conf_from_repo then copies the
+      REPO's doas.conf over /etc/doas.conf, so hand-editing /etc/doas.conf on
+      the host is reverted on the next tick. Fix the repo file first.
+      The staging-file half is FIXED 2026-08-01. validate_doas.ksh now mktemps
+      inside root-owned 0700 /var/backups/openbsd_setup instead of writing
+      /tmp/doas.conf.install.$$ and copying it over /etc/doas.conf — winning that
+      race let a local account choose the contents of doas.conf, i.e. root by
+      construction. Two more of the same shape were found and fixed in the sweep:
+      OPERATOR.sh's install_tracked_crontab staged root's crontab at
+      /tmp/root_crontab.$$ and fed it straight to crontab(1), and backup_priv.sh
+      wrote the whole encrypted ~/priv archive to a second-granularity predictable
+      /tmp path; both now mktemp in a root- or owner-only directory.
+      CLOSED 2026-08-02. The summary named resource_guard.sh, but that path was
+      already clean — it sources only the root-owned /usr/local/libexec copy of
+      stale_ci_cleanup.ksh, whose own heal_doas_conf was removed earlier. The two
+      real survivors were the root cron scripts relayd-watchdog (*/5) and
+      config-drift-check (*/15): both ran, as root, `ksh /home/dev/pub4/OPENBSD/
+      validate_doas.ksh install /home/dev/pub4/OPENBSD/etc/doas.conf` every tick —
+      root executing a dev-owned script and installing a dev-owned doas.conf, i.e.
+      the RCE this entry describes, plus a silent revert of any hand-hardening.
+      heal_doas_conf! was removed from both; the no-heal copies are installed to
+      /usr/local/bin on vm23. config-drift-check is back to a read-only detector.
+      Nothing root-run now reads or executes from /home/dev/pub4 on a timer.
+      Wrinkle this exposed: because that heal was the only would-be installer of
+      doas.conf and it was not actually working, the hardened doas.conf had never
+      gone live — closing this entry meant installing it by hand (see
+      doas_keepenv_is_a_root_rce). doas.conf now installs only on a deliberate
+      OPERATOR.sh / validate_doas.ksh run.
+  - id: rails_silent_wiring_breaks
+    resolution: >
+      Its own summary said RESOLVED 2026-08-01, with the stimulus_wiring gate
+      (326 checks) standing guard so the class cannot return silently. That gate
+      passes as of 2026-08-03. Moved out of open, where it was inflating the count.
+      --- original open entry, kept as the record of how it got there ---
+      RESOLVED 2026-08-01, with a gate so the class cannot come back silently.
+      Each item and what it turned out to be:
+      pwa-standalone named no controller anywhere and data-pwa-key had no reader —
+      both implemented in shared/frontend/pwa_standalone_controller.js, which
+      stamps [data-pwa-display] and namespaces the install-prompt dismissal by
+      app key.
+      offline-feed was a brgen-local controller emitted by amber item cards, where
+      the importmap eager-loads only that app's own directory — moved to
+      shared/frontend and registered, with shared_wiring forbidding a local copy.
+      submit->form-submit#lock named a method nobody wrote AND sat on two forms
+      with no form-submit controller attached; lock/unlock exist now (deferred a
+      tick so the submitter's own name/value still reaches the request) and the
+      controller is attached to both.
+      click->reply#toggle no longer appears in any view.
+      content_for :body_attrs was never yielded, and could not have worked if it
+      had been: Stimulus resolves an action against the element and its ancestors,
+      and <body> is the push controller's ancestor, not its descendant. brgen's
+      layout yields it now and the two views set data-push-seen, which
+      push_controller reads on turbo:load — its element is data-turbo-permanent so
+      connect() never runs again.
+      The install-prompt partial renders in all three apps and NO app styled it:
+      the moment install_prompt_controller cleared [hidden] it appeared as
+      unstyled text in document flow. Styled in shared _shell_widgets.scss, hidden
+      entirely in standalone launches; all three application.css rebuilt.
+      Turbo broadcasts: worse than "several", and in two groups. Reachable and
+      wired properly — Tv::StreamChat and Tv::VideoNote (both needed target: as
+      well as partial:, and tv/videos/show.html.erb had the container but no
+      turbo_stream_from at all). Reachable but pointing at nothing — Reaction,
+      Playlist::TimestampedComment and SecurityAdvisory each broadcast to a stream
+      with no subscriber, no container and no partial, enqueueing a Solid Queue job
+      per write that raised MissingTemplate on a 1-vCPU box; removed, each with the
+      reason in place. RAILS/test/turbo_broadcast_contract_test.rb pins all of it.
+      prune_guest_users_job is scheduled daily in brgen and amber, with the
+      (guest, created_at) index it scans on (migration 20260801160000) and
+      brgen/test/jobs/prune_guest_users_job_test.rb over the behaviour.
+      The mailer precedence bug was already fixed.
+      Shared::* social models — PARTIALLY RESOLVED 2026-08-02, and the "six with no
+      table in ANY app" claim was wrong. Only three were genuinely dead and are now
+      CUT: Post (shared_posts) and ChatMessage (shared_chat_messages) exist in no
+      schema, and Follow had zero references (brgen uses an app-local ::Follow on the
+      follows table). Those three could not be instantiated and were the trap.
+      The other three were mis-diagnosed and stay: Shared::Reaction (reactions) and
+      Shared::Notification (notifications) are `defined?(::Reaction/::Notification)`
+      fallbacks over tables brgen and amber both have, and Shared::ReviewCase
+      (review_cases) is live — amber's ReportsController subclasses
+      Shared::ReviewCasesController and amber has the review_cases table, so amber
+      reports create Shared::ReviewCase rows. turbo_broadcast_contract_test's
+      TABLELESS_SHARED had shared_* table names that never exist (shared_reactions vs
+      the real reactions), which is why it read all six as tableless; it now lists
+      only the remaining three with that caveat recorded.
+      STILL OPEN: those three broadcast implicitly on tables that DO exist, so their
+      callbacks can fire into streams with (likely) no subscriber and no partial —
+      the MissingTemplate-job risk this whole entry is about, now isolated to three
+      named models instead of hidden behind a wrong table name.
+

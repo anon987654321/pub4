@@ -5,7 +5,13 @@ require "yaml"
 module Master
   module Deploy
     module OperatorDocs
-      ROOT = File.expand_path("../../../..", __dir__)
+      # __dir__ is MASTER/lib/deploy, so the repo root is three levels up, not four.
+      # At four this resolved to the directory *containing* the checkout, both YAML
+      # paths were absent, and every method degraded to its empty default without
+      # raising: open_debt_count answered 0 against a 14-item register, and
+      # render_deploy printed its headings over four blank values. Nothing caught it
+      # because nothing calls this module (see operator_docs_module_is_unreferenced).
+      ROOT = File.expand_path("../../..", __dir__)
       OPERATOR_PATH = File.join(ROOT, "OPENBSD", "data", "operator.yml")
       DEBT_PATH = File.join(ROOT, "OPENBSD", "data", "debt.yml")
 
