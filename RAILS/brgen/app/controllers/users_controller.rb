@@ -40,14 +40,27 @@ class UsersController < ApplicationController
   # only render for providers configured in the environment, and no
   # registration action existed. This is that missing door.
   def create
+    # Honeypot: a hidden field no human ever fills. A bot that fills it gets a
+    # success-looking response and no account — cheap defence with no CAPTCHA.
+    if params[:homepage].present?
+      redirect_to after_authentication_url, notice: "Welcome to Brgen."
+      return
+    end
+
     @user = User.new(user_params)
     @user.guest = false
+    @user.require_email_verification = true # a public signup must confirm before posting
     guest = Current.user if Current.user&.guest?
 
     unless @user.save
       render :new, status: :unprocessable_entity
       return
     end
+
+    # Send the confirmation email; the account exists but can't post under its
+    # identity until it's verified (see ApplicationController#require_verified_email).
+    @user.generate_email_verification!
+    VerificationMailer.verify(@user).deliver_later
 
     merged = merge_guest_into(@user, guest)
     start_new_session_for @user

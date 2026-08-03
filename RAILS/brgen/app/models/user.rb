@@ -98,6 +98,29 @@ class User < ApplicationRecord
   def unbookmark!(post) = bookmarks.find_by(post: post)&.destroy
   def bookmarked?(post) = bookmarks.exists?(post_id: post.id)
 
+  # Only accounts created through the public signup form need to confirm — that's
+  # the impersonation vector. Programmatic users (seeds, tests, the IRC bridge,
+  # guests) are trusted and grandfathered verified on create. UsersController#create
+  # sets require_email_verification to opt a real signup into the gate.
+  attr_accessor :require_email_verification
+  before_create :grant_email_verification, unless: :require_email_verification
+
+  def email_verified? = has_attribute?(:email_verified_at) ? email_verified_at.present? : true
+
+  def generate_email_verification!
+    token = SecureRandom.urlsafe_base64(32)
+    update_columns(email_verification_token: token, updated_at: Time.current)
+    token
+  end
+
+  def verify_email!
+    update_columns(email_verified_at: Time.current, email_verification_token: nil, updated_at: Time.current)
+  end
+
+  def grant_email_verification
+    self.email_verified_at ||= Time.current if has_attribute?(:email_verified_at)
+  end
+
   # The subscribe-loop feed: hot posts from every community you've joined.
   def community_feed
     Post.hot.where(community_id: community_memberships.select(:community_id))
