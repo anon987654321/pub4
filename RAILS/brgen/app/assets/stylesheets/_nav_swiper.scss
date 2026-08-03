@@ -1,11 +1,10 @@
-/* Pull-down vertical-swiper nav. Hidden by default; swipe down from the top
-   edge (or click the grip) to reveal. Horizontal scroll with a right-edge fade. */
+/* Always-visible sticky top nav (main / AI / playlist / marketplace / dating …).
+   Sticks to the top of the scroll while the feed flows below it. Horizontal
+   scroll with a right-edge fade when the run overflows a narrow screen. */
 .nav_swiper {
-  position: fixed;
+  position: sticky;
   inset-block-start: 0;
-  inset-inline: 0;
   z-index: var(--z-nav);
-  pointer-events: none;
 }
 
 .nav_swiper_bar {
@@ -16,13 +15,7 @@
   scrollbar-width: none;
   padding-block-start: var(--safe-top);
   background: var(--bg);
-  transform: translateY(-100%);
-  /* Hidden while closed so the off-screen section links leave the tab order;
-     visibility flips only after the slide-up finishes (delay = transform time). */
-  visibility: hidden;
-  transition: transform var(--transition-normal) cubic-bezier(0.32, 0.72, 0, 1),
-              visibility 0s linear var(--transition-normal);
-  pointer-events: auto;
+  border-block-end: 1px solid var(--border);
   mask-image: linear-gradient(to right, #000 86%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, #000 86%, transparent 100%);
 }
@@ -73,26 +66,8 @@
    permanent mark on every page is a high price for an affordance mouse and
    touch already have: pointer at the top edge reveals, and so does a
    swipe-down from it. */
-.nav_swiper_reveal {
-  position: absolute;
-  inset-block-start: var(--safe-top);
-  inset-inline-start: 0;
-  padding: var(--space-2) var(--space-3);
-  border: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: var(--text-sm)/1 var(--font);
-  cursor: pointer;
-  pointer-events: auto;
-  transform: translateY(-200%);
-  transition: transform var(--transition-fast);
-}
-
-.nav_swiper_reveal:focus-visible {
-  transform: translateY(0);
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
+/* The nav is always visible now, so the reveal affordance is gone. */
+.nav_swiper_reveal { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

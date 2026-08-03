@@ -3,4 +3,21 @@
 class ConversationParticipant < ApplicationRecord
   belongs_to :conversation
   belongs_to :user
+
+  # IRC modes. RANK orders the roster (ops first) and lets join! only ever raise
+  # a role, never demote a bot that re-joins.
+  ROLES = %w[member voice op].freeze
+  RANK = { "member" => 0, "voice" => 1, "op" => 2 }.freeze
+  PREFIX = { "op" => "@", "voice" => "+", "member" => "" }.freeze
+
+  validates :role, inclusion: { in: ROLES }
+
+  # Ops, then voices, then members; stable by id within a tier.
+  scope :by_rank, lambda {
+    order(Arel.sql("CASE role WHEN 'op' THEN 0 WHEN 'voice' THEN 1 ELSE 2 END"), :id)
+  }
+
+  def op? = role == "op"
+  def voice? = role == "voice"
+  def mode_prefix = PREFIX.fetch(role, "")
 end

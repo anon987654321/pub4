@@ -17,23 +17,10 @@
   </aside>
 <% end %>
 
-<section class="city-home-intro" aria-label="<%= t("home.intro_title") %>">
-  <h2 class="city-home-intro-title"><%= t("home.intro_title") %></h2>
-  <p class="city-home-intro-body"><%= t("home.intro_body") %></p>
-  <p class="city-home-paths">
-    <%= link_to t("home.live"), live_path %>
-    <span class="city-home-sep" aria-hidden="true">·</span>
-    <%= link_to t("home.marketplace"), marketplace.root_url %>
-    <span class="city-home-sep" aria-hidden="true">·</span>
-    <%= link_to t("home.messages"), conversations_path %>
-    <span class="city-home-note"><%= t("home.no_signup") %></span>
-  </p>
-  <p class="city-home-ai">
-    <%= link_to t("home.ask_ai"), root_path(master: 1), class: "city-home-ai-link", data: { turbo: false },
-          title: t("home.ask_ai_title") %>
-  </p>
-</section>
-
+<%# The "Bergen, akkurat nå" intro banner and its paths/AI line were removed:
+    the front page opens straight into the feed. Wayfinding to the verticals
+    (main / AI / playlist / marketplace / dating) lives in the top nav, and the
+    anonymous compose box sits above the posts. %>
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation>
   <% if home_feed_following? && !authenticated? %>
     <p class="dim feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>

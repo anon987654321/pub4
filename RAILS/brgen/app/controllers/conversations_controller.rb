@@ -5,10 +5,18 @@ class ConversationsController < ApplicationController
 
   def index
     # DMs only — public channels live under /channels, not the messenger list.
+    # Order by newest message via a correlated subquery, not a raw
+    # "messages.created_at" order on an unjoined table — the latter needs
+    # .references(:messages) and then LEFT-JOIN-duplicates each conversation once
+    # per message. COALESCE to created_at keeps empty conversations in order.
     @conversations = Conversation.for_user(Current.user)
                                  .where(slug: nil)
                                  .includes(:participants, :messages)
-                                 .order("messages.created_at DESC")
+                                 .order(Arel.sql(
+                                   "COALESCE((SELECT MAX(m.created_at) FROM messages m " \
+                                   "WHERE m.conversation_id = conversations.id), " \
+                                   "conversations.created_at) DESC"
+                                 ))
   end
 
   def show

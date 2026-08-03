@@ -18,6 +18,17 @@ class Dating::Profile < ApplicationRecord
   GENDERS     = %w[man woman nonbinary other].freeze
   LOOKING_FOR = %w[man woman everyone].freeze
 
+  # Mutual orientation for discovery: show the viewer only the gender they're
+  # looking for (unless "everyone"/blank), and only profiles who'd want the
+  # viewer back. nil/"everyone" stay open on both sides, so nobody is filtered to
+  # an empty deck by leaving a preference unset.
+  scope :oriented_for, lambda { |viewer|
+    relation = all
+    relation = relation.where(gender: viewer.looking_for) if %w[man woman].include?(viewer&.looking_for)
+    relation = relation.where(looking_for: [ viewer.gender, "everyone", nil ]) if viewer&.gender.present?
+    relation
+  }
+
   validates :bio,         length: { maximum: 500 }
   validates :age,         numericality: { greater_than: 17, less_than: 100 }, allow_nil: true
   validates :gender,      inclusion: { in: GENDERS },     allow_nil: true

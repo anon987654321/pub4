@@ -137,3 +137,31 @@
 
 /* Live-activity signal on channel cards */
 .channel-live { color: oklch(70% 0.17 145); font-weight: 700; }
+
+/* IRC roster + coloured nicks. Each handle gets a stable hue (ChatHelper#nick_hue);
+   oklch holds every nick at the same perceived lightness, legible on both themes
+   with no per-theme override. Ops render @, voices +. */
+.channel-roster { margin-block-start: var(--space-2); }
+.roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+.roster-nick {
+  font: var(--text-sm)/1 var(--font);
+  color: oklch(62% 0.13 var(--nick-hue, 240));
+  white-space: nowrap;
+}
+.roster-nick[data-role="op"] { font-weight: 700; }
+.roster-mode { color: var(--text-dim); font-weight: 700; margin-inline-end: 1px; }
+.msg-nick { color: oklch(62% 0.13 var(--nick-hue, 240)); font-weight: 600; }
+.chat-code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.92em;
+  background: var(--hover);
+  padding: 0 0.32em;
+  border-radius: 3px;
+}

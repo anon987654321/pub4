@@ -15,6 +15,7 @@
        data-presence-url-value="<%= conversation_presence_path(@conversation) %>">
       <%= render "conversations/presence", conversation: @conversation %>
     </p>
+    <%= render "channels/roster", conversation: @conversation %>
   </header>
 
   <ul id="messages" class="channel-log conversation-log"

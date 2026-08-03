@@ -13,10 +13,10 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # per browser and PostsController#create allows anonymous posts.
     assert_includes response.body, "compose-launcher"
     assert_includes response.body, "feed-panel"
-    assert_includes response.body, "city-home-intro"
-    # Same as users_controller_test: through the key, so it follows the locale
-    # brgen.no resolves to (nb) rather than pinning the English copy.
-    assert_includes response.body, I18n.t("home.intro_title")
+    # The "Bergen, akkurat nå" intro banner was removed — the page opens straight
+    # into the feed. Wayfinding to the verticals now lives in the top nav.
+    assert_not_includes response.body, "city-home-intro"
+    assert_includes response.body, "nav_swiper"
     # AI is a chip / sidebar link, not an eager above-fold iframe hero.
     assert_not_includes response.body, 'class="ai-embed-frame"'
     assert_not_includes response.body, 'class="master-embed-frame"'

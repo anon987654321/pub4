@@ -16,6 +16,12 @@ Rails.application.routes.draw do
   post "internal/dilla_publish" => "internal#dilla_publish", as: :internal_dilla_publish
   get "sso/from_master" => "sso#from_master", as: :sso_from_master
 
+  # Legal / info pages, reachable on every city domain without an account
+  # (GDPR + TradeDoubler both require them public). See PagesController.
+  %w[privacy terms cookies].each do |legal_page|
+    get legal_page, to: "pages#show", defaults: { page: legal_page }, as: legal_page
+  end
+
   jobs_constraint = lambda { |request|
     session_id = request.cookie_jar.signed[:session_id]
     session_id.present? && ::Session.exists?(id: session_id)

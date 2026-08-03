@@ -105,10 +105,14 @@ class Conversation < ApplicationRecord
     messages.where(created_at: (Time.current - ACTIVE_WINDOW_SECONDS)..).distinct.count(:sender_id)
   end
 
-  def join!(user)
-    return if participants.exists?(user.id)
-
-    participants << user
+  def join!(user, role: "member")
+    membership = conversation_participants.find_or_create_by!(user_id: user.id)
+    # Only ever raise a role (member -> voice -> op); a bot re-seated or a human
+    # re-opening the room never loses its mode.
+    if ConversationParticipant::RANK.fetch(role, 0) > ConversationParticipant::RANK.fetch(membership.role, 0)
+      membership.update!(role: role)
+    end
+    membership
   end
 
   def self.direct_between(a, b)
