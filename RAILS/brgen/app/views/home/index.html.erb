@@ -22,6 +22,16 @@
     (main / AI / playlist / marketplace / dating) lives in the top nav, and the
     anonymous compose box sits above the posts. %>
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation>
+  <% if authenticated? %>
+    <nav class="feed-tabs" aria-label="<%= t("home.feed_sort", default: "Feed") %>">
+      <%= link_to t("home.feed_hot", default: "Hot"), main_app.root_path,
+            class: "feed-tab#{" active" if params[:feed].blank?}" %>
+      <%= link_to t("home.feed_following", default: "Following"), main_app.root_path(feed: "following"),
+            class: "feed-tab#{" active" if params[:feed] == "following"}" %>
+      <%= link_to t("home.feed_communities", default: "Communities"), main_app.root_path(feed: "communities"),
+            class: "feed-tab#{" active" if params[:feed] == "communities"}" %>
+    </nav>
+  <% end %>
   <% if home_feed_following? && !authenticated? %>
     <p class="dim feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>
   <% end %>

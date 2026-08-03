@@ -19,6 +19,9 @@ Rails.application.routes.draw do
   post   "users/:user_id/block" => "blocks#create",  as: :block_user
   delete "users/:user_id/block" => "blocks#destroy", as: :unblock_user
 
+  post   "communities/:community_id/join" => "community_memberships#create",  as: :join_community
+  delete "communities/:community_id/join" => "community_memberships#destroy", as: :leave_community
+
   # Legal / info pages, reachable on every city domain without an account
   # (GDPR + TradeDoubler both require them public). See PagesController.
   %w[privacy terms cookies].each do |legal_page|

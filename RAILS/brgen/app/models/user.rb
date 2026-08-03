@@ -81,6 +81,21 @@ class User < ApplicationRecord
   def blocking?(other) = blocks_as_blocker.exists?(blocked_id: other.id)
   def blocked_user_ids = blocks_as_blocker.pluck(:blocked_id)
 
+  has_many :community_memberships, dependent: :destroy
+  has_many :joined_communities, through: :community_memberships, source: :community
+
+  def join_community!(community)
+    community_memberships.find_or_create_by!(community: community)
+  end
+
+  def leave_community!(community) = community_memberships.find_by(community: community)&.destroy
+  def member_of?(community) = community_memberships.exists?(community_id: community.id)
+
+  # The subscribe-loop feed: hot posts from every community you've joined.
+  def community_feed
+    Post.hot.where(community_id: community_memberships.select(:community_id))
+  end
+
   def update_karma!
     score = Vote.joins("JOIN posts ON posts.id = votes.votable_id AND votes.votable_type = 'Post'")
                 .where(posts: { user_id: id }).sum(:value)

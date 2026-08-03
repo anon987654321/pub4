@@ -3,7 +3,16 @@
 <header class="community-header" role="banner" aria-label="Community">
   <h1><%= @community.name %></h1>
   <% if @community.description.present? %><p><%= @community.description %></p><% end %>
-  <p><strong><%= @community.posts.count %></strong> posts</p>
+  <p><strong><%= @community.posts.count %></strong> posts · <strong><%= @community.members_count %></strong> members</p>
+  <% if authenticated? && Current.user != @community.user %>
+    <p class="cluster">
+      <% if Current.user.member_of?(@community) %>
+        <%= button_to t("community.leave", default: "Leave"), leave_community_path(@community), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to t("community.join", default: "Join"), join_community_path(@community), method: :post, class: "btn btn-sm" %>
+      <% end %>
+    </p>
+  <% end %>
   <% if authenticated? && Current.user == @community.user %>
     <p class="cluster">
       <%= link_to t("actions.edit"), edit_community_path(@community), class: "btn btn-ghost btn-sm" %>

@@ -8,9 +8,15 @@ module Brgen
       feed.to_s == "following"
     end
 
+    def communities?(feed:)
+      feed.to_s == "communities"
+    end
+
     def scope(feed: nil, authenticated: false, user: Current.user)
       base =
-        if following?(feed:) && authenticated
+        if communities?(feed:) && authenticated
+          user.community_feed
+        elsif following?(feed:) && authenticated
           user.timeline_posts.hot
         elsif !authenticated && Brgen::DemoFeed.available?
           Brgen::DemoFeed.hot

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_100000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -217,6 +217,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_090000) do
     t.index ["city_id"], name: "index_communities_on_city_id"
     t.index ["subdomain"], name: "index_communities_on_subdomain", unique: true
     t.index ["user_id"], name: "index_communities_on_user_id"
+  end
+
+  create_table "community_memberships", force: :cascade do |t|
+    t.integer "community_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["community_id"], name: "index_community_memberships_on_community_id"
+    t.index ["user_id", "community_id"], name: "index_community_memberships_on_user_id_and_community_id", unique: true
+    t.index ["user_id"], name: "index_community_memberships_on_user_id"
   end
 
   create_table "conversation_participants", force: :cascade do |t|
@@ -1303,6 +1313,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_090000) do
   add_foreign_key "blocks", "users", column: "blocker_id"
   add_foreign_key "comments", "users"
   add_foreign_key "communities", "cities"
+  add_foreign_key "community_memberships", "communities"
+  add_foreign_key "community_memberships", "users"
   add_foreign_key "conversation_participants", "conversations"
   add_foreign_key "conversation_participants", "users"
   add_foreign_key "dating_dislikes", "users", column: "dislikee_id"
