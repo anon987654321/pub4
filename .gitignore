@@ -102,6 +102,19 @@ OPENBSD/var/nsd/zones/master/*
 # takes the generator reads at runtime) and samples/dug/provenance.json, the
 # record of what each dug side is and why it may be used.
 
+# Vocal stems the learner reads at render time. The audio is NOT tracked; the
+# meta.json and catalog.json beside it are, because the record of what a stem is
+# and where it came from is the part worth keeping in the repo -- the same split
+# samples/dug/provenance.json already makes.
+#
+# 1029.7 MB across 101 files was tracked until 2026-08-03, in a PUBLIC repository,
+# including acapellas from commercially released records. Untracking fixes the tip
+# only: the blobs remain reachable in history exactly as MASTER/web/config/master.key
+# does, so treat a clone as still carrying them until someone purges it.
+STUDIO/dilla/project/learnings/vocals/**/*.wav
+STUDIO/dilla/project/learnings/vocals/**/*.flac
+STUDIO/dilla/project/learnings/vocals/**/*.raw
+
 # Engine output
 STUDIO/dilla/renders/
 STUDIO/dilla/demo*.wav
