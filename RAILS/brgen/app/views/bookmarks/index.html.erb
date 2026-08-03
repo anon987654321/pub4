@@ -13,5 +13,6 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("bookmark.empty_title", default: "Nothing saved yet"),
-        body: t("bookmark.empty_body", default: "Tap Save on any post to keep it here.") %>
+        body: t("bookmark.empty_body", default: "Tap Save on any post to keep it here."),
+        action: { label: t("empty.city_feed"), path: root_path } %>
 <% end %>
