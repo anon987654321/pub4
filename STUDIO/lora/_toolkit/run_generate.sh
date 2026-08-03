@@ -13,6 +13,7 @@ Usage: lora [--check | --train | --train-kaggle | --train-replicate | --generate
   --check            HF FLUX gate, toolkit, dataset
   --train            Train LoRA locally / RunPod via ai-toolkit
   --train-kaggle     Train on a free Kaggle T4: push notebook, poll, pull weights
+  --train-colab      Write a Colab notebook for a free T4 (no phone verification)
   --train-replicate  Zip dataset, train on Replicate (ostris/flux-dev-lora-trainer)
   --generate         Sample from latest checkpoint, then optional postpro
   --postpro          Portrait postpro on generated samples in out/
@@ -33,12 +34,14 @@ Environment:
   LORA_LR, LORA_STEPS, LORA_RESOLUTIONS=512,768
   LORA_FLUX_MODEL_PATH, LORA_SKIP_POSTPRO=1
 
-Three train lanes:
+Four train lanes:
   A) local/RunPod:  ./lora --train
-  B) Kaggle:        ./lora --train-kaggle       (free, 30 GPU-h/week, 12h/session)
+  B) Colab:         ./lora --train-colab        (free T4, no phone verification)
+  C) Kaggle:        ./lora --train-kaggle       (free, but GPU+internet need
+                                                 phone verification)
      needs KAGGLE_USERNAME + KAGGLE_KEY (or ~/.kaggle/kaggle.json), a
      phone-verified account for internet, and an HF_TOKEN notebook secret
-  C) Replicate:     ./lora --train-replicate    (paid, hosted H100)
+  D) Replicate:     ./lora --train-replicate    (paid, hosted H100)
      needs REPLICATE_API_TOKEN
 
 RunPod (24GB+ GPU — RTX 4090 / A5000 / L4):
@@ -62,6 +65,7 @@ while [ $# -gt 0 ]; do
     --all) mode="all"; shift ;;
     --skip-postpro) skip_postpro=1; shift ;;
     --train-kaggle) mode="train-kaggle"; shift; break ;;
+    --train-colab) mode="train-colab"; shift; break ;;
     --train-replicate) mode="train-replicate"; shift; break ;;
     -h|--help) usage; exit 0 ;;
     *) echo "warn: unknown option $1" >&2; usage >&2; exit 1 ;;
@@ -142,6 +146,10 @@ case "$mode" in
     check_dataset
     ruby "$SCRIPT_DIR/run_train_kaggle.rb" "$@"
     report_weights
+    ;;
+  train-colab)
+    check_dataset
+    ruby "$SCRIPT_DIR/run_train_colab.rb" "$@"
     ;;
   train-replicate)
     check_dataset

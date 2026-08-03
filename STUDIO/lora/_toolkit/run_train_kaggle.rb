@@ -188,7 +188,11 @@ end
 def newest_checkpoint(paths)
   return [] if paths.empty?
 
-  [paths.max_by { |path| [path.basename.to_s[/\d+/].to_i, path.mtime] }]
+  # ai-toolkit saves as <name>_<step zero-padded to 9>.safetensors, and the name
+  # carries its own digits — ragnhild_v2_000001500 begins with a 2. Anchoring to
+  # the trailing run matters: the first one scored every checkpoint the same and
+  # left the choice to mtime, which is the thing this function exists to avoid.
+  [paths.max_by { |path| [path.basename.to_s[/(\d+)\.safetensors\z/, 1].to_i, path.mtime] }]
 end
 
 def run(*command, chdir: nil)
