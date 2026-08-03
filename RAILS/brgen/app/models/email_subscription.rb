@@ -3,6 +3,11 @@
 class EmailSubscription < ApplicationRecord
   before_create :generate_token
 
+  # normalizes (not a bare before_validation) so finder args normalize too:
+  # "Foo@X.com " and "foo@x.com" resolve to one row instead of inserting a
+  # case/whitespace duplicate past the uniqueness check.
+  normalizes :email, with: ->(email) { email.strip.downcase }
+
   validates :email, presence: true, uniqueness: true,
     format: { with: URI::MailTo::EMAIL_REGEXP }
 
