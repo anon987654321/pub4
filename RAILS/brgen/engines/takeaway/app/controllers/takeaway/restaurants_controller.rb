@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Takeaway::RestaurantsController < Takeaway::BaseController
+  include Shared::FindableBySlug
   include Shared::LiveSearchable
 
   allow_unauthenticated_access only: %i[index show]
@@ -54,7 +55,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
 
   private
 
-  def set_restaurant = (@restaurant = Takeaway::Restaurant.find(params[:id]))
+  def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant, params[:id]))
 
   def authorize_owner!
     redirect_to(restaurants_path, alert: "Not allowed") unless @restaurant.owner?(Current.user)

@@ -17,7 +17,7 @@ module Playlist
 
     def set_playlist
       # Absolute constant — nested under module Playlist, relative Playlist::Playlist nests again.
-      @playlist = ::Playlist::Playlist.includes(:user).find(params[:playlist_id])
+      @playlist = find_by_slug_or_id(::Playlist::Playlist.includes(:user), params[:playlist_id])
     end
 
     def authorize_editor!

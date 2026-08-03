@@ -3,6 +3,7 @@
 class Tv::Video < ApplicationRecord
   # Engine-ized Shared (tranche10)
   tracks_activity created: "VideoUploaded", updated: "VideoUpdated", source_vertical: "tv", actor: :user
+  include Shared::Sluggable # /videos/<title-slug>; global uniqueness (no city_id)
   include Shared::MediaProcessable
   include Shared::Reactable
   include Shared::Notifiable

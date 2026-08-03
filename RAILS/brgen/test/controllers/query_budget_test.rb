@@ -181,8 +181,9 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
       assert_response :success
 
       # `assigns` is gone in Rails 8 without rails-controller-testing, so count
-      # what actually reached the page: one distinct /posts/:id per rendered card.
-      rendered = response.body.scan(%r{/posts/(\d+)}).flatten.uniq.size
+      # what actually reached the page: one distinct /posts/:slug per rendered card.
+      # Posts are slug-routed now (Shared::Sluggable), e.g. /posts/budget-0.
+      rendered = response.body.scan(%r{/posts/([a-z0-9][a-z0-9-]*)}).flatten.uniq.size
       assert_operator rendered, :<, 30,
                       "communities#show rendered all #{rendered} posts; it must paginate like the feeds"
       assert_operator rendered, :>, 0, "the page rendered no posts at all — the test proves nothing"

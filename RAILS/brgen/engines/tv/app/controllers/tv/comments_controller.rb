@@ -16,7 +16,7 @@ class Tv::CommentsController < Tv::BaseController
   private
 
   def set_video
-    @video = Tv::Video.find(params[:video_id])
+    @video = find_by_slug_or_id(Tv::Video, params[:video_id])
   end
 
   def comment_params

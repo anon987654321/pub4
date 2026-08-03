@@ -41,7 +41,7 @@ class Tv::VideosController < Tv::BaseController
   # channel, comments and notes off the record -- unpreloaded that raises
   # everywhere violations are not downgraded to a log line (i.e. outside
   # development), so the video page was a 500 in production.
-  def set_video = (@video = Tv::Video.includes(:channel, :user, comments: :user, video_notes: :user).find(params[:id]))
+  def set_video = (@video = find_by_slug_or_id(Tv::Video.includes(:channel, :user, comments: :user, video_notes: :user), params[:id]))
   # No :tv_channel_id -- the channel comes from the route and is ownership
   # checked. Permitting it let a submitted id override that check by
   # reassigning the foreign key on the built record.

@@ -16,5 +16,5 @@ class Takeaway::FavoriteRestaurantsController < Takeaway::BaseController
 
   private
 
-  def set_restaurant = (@restaurant = Takeaway::Restaurant.find(params[:restaurant_id]))
+  def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant, params[:restaurant_id]))
 end

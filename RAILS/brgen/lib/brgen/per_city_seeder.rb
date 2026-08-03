@@ -93,9 +93,10 @@ module Brgen
         ) do |user|
           # The city slug keeps names unique across cities, but two of the 5 random
           # Faker names can collide WITHIN a city (no index in the visible name) —
-          # a flaky "Username er allerede i bruk" on replant. The index guarantees
-          # within-city uniqueness; still reads as a real display name.
-          user.username = "#{name_slug}_#{@city.slug}_#{index + 1}"
+          # a flaky "Username er allerede i bruk" on replant. The index (before the
+          # city slug) guarantees within-city uniqueness while the username still
+          # ends in _<city.slug> for the global-uniqueness namespacing.
+          user.username = "#{name_slug}_#{index + 1}_#{@city.slug}"
           user.password = user.password_confirmation = "password123"
           user.city = @city
           user.latitude = @city.latitude.to_f + rand(-0.05..0.05)

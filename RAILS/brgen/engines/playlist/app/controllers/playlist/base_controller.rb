@@ -5,5 +5,6 @@
 # host ApplicationController, so radio_tunnel_catalog (used by the radio-tunnel
 # view) is otherwise undefined at render. See brgen/ENGINES.md.
 class Playlist::BaseController < ApplicationController
+  include Shared::FindableBySlug # playlists are slug-routed; nested lookups resolve slug-or-id
   helper PlaylistHelper
 end

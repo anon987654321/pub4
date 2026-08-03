@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class PostsController < ApplicationController
+  include Shared::FindableBySlug
   include Shared::LiveSearchable
 
   rate_limit to: 30, within: 3.minutes, only: %i[create share],
@@ -98,7 +99,7 @@ class PostsController < ApplicationController
   private
 
   def set_post
-    @post = Post.includes(:user, :community).find(params[:id])
+    @post = find_by_slug_or_id(Post.includes(:user, :community), params[:id])
   end
 
   def authorize_owner

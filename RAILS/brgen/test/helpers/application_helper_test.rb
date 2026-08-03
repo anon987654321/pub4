@@ -78,7 +78,8 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_match %r{\Ahttps?://}, href
     # City marketplace subdomain is locale-specific (markedsplass for brgen.no).
     assert_match %r{markedsplass\.brgen\.no}, href
-    assert_includes href, "/listings/#{listing.id}"
+    # Listings are slug-routed now (Shared::Sluggable): to_param returns the slug.
+    assert_includes href, "/listings/#{listing.slug}"
   end
 
   test "inferred vertical for channels is messenger" do

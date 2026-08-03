@@ -4,6 +4,8 @@ require "zlib"
 
 class Takeaway::Restaurant < ApplicationRecord
   include CityTenantable
+  include Shared::Sluggable # /restaurants/<name-slug>; from :name, unique per city
+  sluggable_from :name
   include Shared::StrictSafeAssociations
 
   include Shared::Notifiable

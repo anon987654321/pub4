@@ -2,6 +2,7 @@
 
 class Marketplace::Listing < ApplicationRecord
   include CityTenantable
+  include Shared::Sluggable # /listings/<title-slug>; from :title, unique per city
   include Shared::MediaProcessable
   include Shared::GeoLocatable
   tracks_activity created: "ListingCreated", source_vertical: "marketplace", actor: :user

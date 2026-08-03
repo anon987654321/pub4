@@ -2,6 +2,7 @@
 
 class Post < ApplicationRecord
   include CityTenantable
+  include Shared::Sluggable # /posts/sol-pa-floyen; from :title, unique per city
   include Shared::GeoLocatable
 
   include Shared::Votable

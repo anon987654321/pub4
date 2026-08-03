@@ -42,7 +42,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
 
   private
 
-  def set_listing = (@listing = Marketplace::Listing.includes(:user).find(params[:listing_id]))
+  def set_listing = (@listing = find_by_slug_or_id(Marketplace::Listing.includes(:user), params[:listing_id]))
 
   def set_order = (@order = Marketplace::Order.includes(listing: :user, buyer: {}).find(params[:id]))
 end

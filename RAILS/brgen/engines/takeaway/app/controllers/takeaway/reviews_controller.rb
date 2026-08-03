@@ -36,7 +36,7 @@ class Takeaway::ReviewsController < Takeaway::BaseController
   private
 
   def set_restaurant
-    @restaurant = Takeaway::Restaurant.find(params[:restaurant_id])
+    @restaurant = find_by_slug_or_id(Takeaway::Restaurant, params[:restaurant_id])
   end
 
   def review_params

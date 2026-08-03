@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Playlist::PlaylistsController < Playlist::BaseController
+  include Shared::FindableBySlug
   allow_unauthenticated_access only: %i[index show]
   before_action :require_user_session, only: %i[new create]
   before_action :set_playlist, only: %i[show embed edit update destroy]
@@ -61,7 +62,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   private
 
   def set_playlist
-    @playlist = Playlist::Playlist.includes(:user).find(params[:id])
+    @playlist = find_by_slug_or_id(Playlist::Playlist.includes(:user), params[:id])
   end
 
   def playlist_params

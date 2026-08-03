@@ -21,7 +21,7 @@ class Marketplace::ReviewsController < Marketplace::BaseController
   private
 
   def set_listing
-    @listing = Marketplace::Listing.find(params[:listing_id])
+    @listing = find_by_slug_or_id(Marketplace::Listing, params[:listing_id])
   end
 
   def review_params

@@ -40,7 +40,7 @@ class Playlist::CollaborationsController < Playlist::BaseController
       @set = Playlist::Set.find(params[:set_id])
       @target = @set
     elsif params[:playlist_id]
-      @playlist = ::Playlist::Playlist.find(params[:playlist_id])
+      @playlist = find_by_slug_or_id(::Playlist::Playlist, params[:playlist_id])
       @target = @playlist
     else
       redirect_to(playlists_path)

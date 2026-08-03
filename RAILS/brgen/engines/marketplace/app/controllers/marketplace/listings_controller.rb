@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Marketplace::ListingsController < Marketplace::BaseController
+  include Shared::FindableBySlug
   include Shared::LiveSearchable
   include Shared::TwoFactorAuth
 
@@ -88,7 +89,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   private
 
-  def set_listing = (@listing = Marketplace::Listing.includes(:user, :category, photos_attachments: :blob).find(params[:id]))
+  def set_listing = (@listing = find_by_slug_or_id(Marketplace::Listing.includes(:user, :category, photos_attachments: :blob), params[:id]))
 
   def listing_params
     params.require(:marketplace_listing).permit(
