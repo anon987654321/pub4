@@ -1,0 +1,40 @@
+<%# Every icon, once per document, for <use> to reference.
+
+    OPT-IN via config.x.icon_sprite, which Shared::UiHelper#icon reads to decide
+    between <use> and inlining, and which the layout reads to decide whether to
+    render this at all. It deliberately is NOT "has this partial run yet?" —
+    Rails renders the template before the layout, so such a flag is set only
+    after every content icon has already been emitted, and the page would inline
+    its whole feed while the chrome below the sprite used it.
+
+    Worth being concrete about why it is not simply on everywhere. The sprite is
+    8.2KB flat. brgen's homepage draws 147 icons from 22 shapes and takes ~30KB
+    off the document by it; amber draws 2 per page and bsdports draws 1, both
+    only through shared partials, so switching them on cost bsdports 8.2KB
+    against a 30KB page to save about 350 bytes. Measured before choosing.
+
+    The whole set is emitted rather than only the icons a given page happens to
+    call, because Turbo can inject markup after this renders — a turbo-stream
+    appending a post carries <use href="#icon-repost"> and would draw nothing if
+    the sprite had been trimmed to what the initial page needed.
+
+    The paint attributes live on each <symbol>, not on the outer <svg> that
+    Shared::UiHelper#icon emits, so they are written once instead of 147 times.
+    That is safe here specifically because nothing overrides them: no stylesheet
+    in the tree selects into icon output (the one `path`/`use` rule,
+    _marketplace_animated_logo.scss's `.banner`, belongs to a self-contained logo
+    partial that makes no icon() calls), and the helper exposes no paint
+    argument. stroke="currentColor" still tracks the call site — currentColor
+    resolves against the computed color inside the use shadow tree, which
+    inherits from the element that referenced it.
+
+    The inline style is deliberate and must not become `display:none` or
+    `hidden`: a display:none sprite container stops <use> resolving in several
+    engines, so the container has to stay rendered and be collapsed instead. Kept
+    inline because it is a mechanical requirement of the technique rather than a
+    visual decision. %>
+<svg class="icon-sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+  <% Shared::UiHelper::ICONS.each do |icon_name| %>
+    <symbol id="icon-<%= icon_name %>" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><%= render "shared/icons/#{icon_name}" %></symbol>
+  <% end %>
+</svg>

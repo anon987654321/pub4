@@ -17,6 +17,10 @@ class ConversationsController < ApplicationController
                                    "WHERE m.conversation_id = conversations.id), " \
                                    "conversations.created_at) DESC"
                                  ))
+    # One grouped COUNT for the whole list. The view used to call
+    # unread_count_for per row, which includes(:messages) does not help with —
+    # it is a find_by plus its own COUNT, so the preload was paid and ignored.
+    @unread_counts = Conversation.unread_counts_for(Current.user)
   end
 
   def show

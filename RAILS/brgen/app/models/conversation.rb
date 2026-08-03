@@ -131,6 +131,36 @@ class Conversation < ApplicationRecord
     messages.where("created_at > ?", participant.last_read_at || Time.at(0)).count
   end
 
+  # unread_count_for is two queries (find_by participant, then COUNT) and is the
+  # right shape for one record. It is the wrong shape for a list, and both callers
+  # were lists: the messenger index ran it per row, and the layout summed it across
+  # every DM on EVERY authenticated render of EVERY page, purely to decide a badge
+  # number — 2 queries per thread added to each pageview, on a 1GB box.
+  #
+  # Same predicate, expressed once in SQL. The JOIN fans a message out per
+  # participant and the user_id filter collapses it back, so each message is
+  # counted once. COALESCE mirrors the `|| Time.at(0)` above: a participant who has
+  # never opened the thread has everything unread.
+  def self.unread_scope_for(user)
+    Message.joins(conversation: :conversation_participants)
+           .where(conversation_participants: { user_id: user.id })
+           .where(
+             "messages.created_at > COALESCE(conversation_participants.last_read_at, ?)",
+             Time.at(0)
+           )
+  end
+
+  # DMs only — public channels are ambient and must not light the badge.
+  def self.unread_total_for(user)
+    unread_scope_for(user).where(conversations: { slug: nil }).count
+  end
+
+  # { conversation_id => unread count }, for rendering a list of threads.
+  # Absent key means zero, so callers should fetch with a 0 default.
+  def self.unread_counts_for(user)
+    unread_scope_for(user).group("messages.conversation_id").count
+  end
+
   def mark_read_for!(user)
     conversation_participants.find_by(user:)&.update!(last_read_at: Time.now)
     messages.unexpired.find_each do |message|

@@ -64,6 +64,10 @@
       at the top of that file, which names this tunnel), so there is nothing left
       to paint. %>
   <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
+  <%# After the skip link, not before it — the sprite is inert (aria-hidden,
+      focusable="false", 0x0) so it cannot take focus either way, but the rule
+      above is that nothing precedes the skip link. %>
+  <%= render "shared/icon_sprite" if icon_sprite? %>
   <%= link_to main_app.root_path, class: "brgen-logo-mark", aria: { label: t("nav.brand_home") } do %>
     <span class="brand-text">brgen</span>
   <% end %>
@@ -92,8 +96,10 @@
   <% if Current.user %>
     <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" %>
     <%= turbo_stream_from "brgen:matches:#{Current.user.id}" %>
-    <%# DMs only — public channels are ambient and must not light the badge. %>
-    <% unread = Conversation.for_user(Current.user).where(slug: nil).sum { |c| c.unread_count_for(Current.user) } %>
+    <%# DMs only — public channels are ambient and must not light the badge.
+        One COUNT, not a Ruby sum over 2 queries per thread on every render of
+        every page. The filter lives in unread_total_for. %>
+    <% unread = Conversation.unread_total_for(Current.user) %>
     <div data-controller="push"
          data-push-vapid-key-value="<%= Shared::Vapid.public_key %>"
          data-push-subscribe-url-value="<%= main_app.push_subscriptions_path %>"

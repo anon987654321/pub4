@@ -1,5 +1,15 @@
-<%# Lucide icons (ISC) -- outlined, 2px stroke, 24x24 grid. %>
+<%# Lucide icons (ISC) -- outlined, 2px stroke, 24x24 grid.
+
+    Two forms, same outer element. An app with config.x.icon_sprite draws from
+    shared/_icon_sprite; every other app keeps the paths inline exactly as before.
+    The <svg> itself is identical in both — same class, viewBox, width, height and
+    aria-hidden — so nothing selecting or measuring an icon can tell them apart.
+    In the sprite form the paint attributes live on the <symbol> instead, where
+    they are written once rather than per instance. See _icon_sprite for why this
+    is opt-in and not simply always on. %>
 <% size = local_assigns.fetch(:size, 18) %>
-<svg class="<%= local_assigns[:css_class] %>" viewBox="0 0 24 24" width="<%= size %>" height="<%= size %>" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <%= render "shared/icons/#{name}" %>
-</svg>
+<% if icon_sprite? %>
+<svg class="<%= local_assigns[:css_class] %>" viewBox="0 0 24 24" width="<%= size %>" height="<%= size %>" aria-hidden="true"><use href="#icon-<%= name %>" /></svg>
+<% else %>
+<svg class="<%= local_assigns[:css_class] %>" viewBox="0 0 24 24" width="<%= size %>" height="<%= size %>" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><%= render "shared/icons/#{name}" %></svg>
+<% end %>

@@ -24,7 +24,7 @@
             <span><%= truncate(last.content.to_s, length: 80) %></span>
             <time datetime="<%= last.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(last.created_at) %> ago</time>
           <% end %>
-          <% unread = c.unread_count_for(Current.user) %>
+          <% unread = @unread_counts.fetch(c.id, 0) %>
           <% if unread.positive? %><mark><%= unread %></mark><% end %>
         <% end %>
       </li>

@@ -15,8 +15,33 @@ module Shared
       "local" => "📍",
     }.freeze
 
+    # Every icon partial in the shared engine, by name. Read once at load; the
+    # sprite partial and the unknown-name guard below both work off this list, so
+    # dropping a file in shared/app/views/shared/icons/ is all it takes to add one.
+    ICONS = Dir.children(Engine.root.join("app/views/shared/icons"))
+               .filter_map { |f| f[/\A_(.+)\.html\.erb\z/, 1] }
+               .sort.freeze
+
+    # Opt-in per app via config.x.icon_sprite. It cannot be "has the sprite
+    # partial run yet?", which is what this was first written as: Rails renders
+    # the template before the layout, so a flag the layout sets arrives after
+    # every content icon has already rendered — the page inlined its feed and
+    # only the chrome below the sprite used it. One config value, read here and
+    # by the layout, so both agree.
+    def icon_sprite?
+      Rails.application.config.x.icon_sprite.present?
+    end
+
     def icon(name, size: 18, css_class: nil)
-      render(partial: "shared/icon", locals: { name: name.to_sym, size: size, css_class: css_class })
+      key = name.to_sym
+      # Inlining the paths made an unknown name raise at render (missing partial).
+      # A <use href="#icon-nope"> would instead draw nothing, silently — the
+      # failure shape this repo keeps finding. Keep it loud.
+      unless ICONS.include?(key.to_s)
+        raise ArgumentError, "unknown icon #{key.inspect} — known: #{ICONS.join(', ')}"
+      end
+
+      render(partial: "shared/icon", locals: { name: key, size: size, css_class: css_class })
     end
 
     def reaction_glyph(kind)

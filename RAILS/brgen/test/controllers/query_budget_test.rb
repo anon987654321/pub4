@@ -221,4 +221,74 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
       assert_equal 1, post.score
     end
   end
+
+  # Every test above this one renders as a guest, and the layout's expensive work
+  # is behind `if Current.user`. So the whole authenticated chrome — the unread
+  # badge, the turbo_stream_from subscriptions, the push controller — was outside
+  # this file's reach, and an N+1 lived there undisturbed: the badge summed
+  # Conversation#unread_count_for over every DM, at 2 queries each, on every
+  # render of every page. Signing in is the coverage that was missing, not the
+  # assertion — reverting the fix takes the layout from 15 -> 15 queries to
+  # 19 -> 35, and both tests below go red.
+  def sign_in(user)
+    post session_path, params: { email_address: user.email_address, password: "password123" }
+  end
+
+  def seed_dms_for(user, count)
+    count.times do |i|
+      other = User.strict_loading(false).create!(
+        email_address: "dm-#{i}-#{SecureRandom.hex(4)}@brgen.no",
+        password: "password123", city: @city,
+      )
+      convo = Conversation.find_or_create_direct(user, other)
+      2.times { |j| convo.messages.create!(content: "m#{j}", sender: other, message_type: "text") }
+    end
+  end
+
+  test "signed-in chrome does not spend queries per conversation" do
+    ActsAsTenant.with_tenant(@city) do
+      seed_posts(3)
+      me = User.strict_loading(false).create!(
+        email_address: "chrome-#{SecureRandom.hex(4)}@brgen.no",
+        password: "password123", city: @city,
+      )
+      sign_in(me)
+
+      seed_dms_for(me, 2)
+      get root_path
+      assert_response :success
+      few = count_queries { get root_path }
+
+      seed_dms_for(me, 8)
+      many = count_queries { get root_path }
+
+      assert_operator many, :<=, few + 2,
+                      "layout cost grew with DM count (#{few} -> #{many}): the unread badge N+1 is back"
+
+      repeats = repeated_shapes { get root_path }
+      assert_empty repeats.map { |sql, n| "#{n}x #{sql[0, 90]}" },
+                   "a repeated query shape in authenticated chrome is an N+1"
+    end
+  end
+
+  test "the messenger index does not spend queries per thread" do
+    ActsAsTenant.with_tenant(@city) do
+      me = User.strict_loading(false).create!(
+        email_address: "msgr-#{SecureRandom.hex(4)}@brgen.no",
+        password: "password123", city: @city,
+      )
+      sign_in(me)
+
+      seed_dms_for(me, 2)
+      get conversations_path
+      assert_response :success
+      few = count_queries { get conversations_path }
+
+      seed_dms_for(me, 8)
+      many = count_queries { get conversations_path }
+
+      assert_operator many, :<=, few + 4,
+                      "messenger index cost grew with thread count (#{few} -> #{many})"
+    end
+  end
 end
