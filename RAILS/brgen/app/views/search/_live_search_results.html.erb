@@ -1,10 +1,18 @@
 <% if @query.present? %>
   <% @results.each do |vertical, records| %>
-    <% next if records.blank? %>
+    <%# Take the eight first, then ask whether there are any.
+        `records.blank?` on a relation is `records.to_a.blank?` -- it loaded every
+        matching row of each of the seven verticals just to decide whether to
+        render the section, and then `limit(8)` issued a second, bounded query
+        for the rows actually shown. SearchController hands several of these in
+        unbounded (Tv::Channel.all, Place.all), and Shared::LiveSearch adds a
+        WHERE but no LIMIT -- only its counter limits, and only for counting. %>
+    <% rows = records.limit(8).to_a %>
+    <% next if rows.empty? %>
     <section>
       <h2><%= vertical.to_s.humanize %></h2>
       <ul>
-        <% records.limit(8).each do |record| %>
+        <% rows.each do |record| %>
           <% label = record.try(:title) || record.try(:name) || record.try(:display_name) || record.try(:username) %>
           <% href = record_public_href(record) rescue nil %>
           <li><%= href ? link_to(label, href) : label %></li>

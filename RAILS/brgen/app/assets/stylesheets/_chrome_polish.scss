@@ -298,11 +298,11 @@ time {
   font-weight: 700;
 }
 
-.nav_swiper_bar {
-  scroll-snap-type: x proximity;
-  scroll-padding-inline: var(--space-2xs);
-}
-
+/* .nav_swiper_bar's scroll-snap now lives with the rest of the bar in
+   _nav_swiper.scss. It was here, later in the @use order, and its
+   `scroll-padding-inline: var(--space-2xs)` outranked the brand inset -- so the
+   snap engine pulled the first .nav_link back under the fixed wordmark and
+   cancelled the padding that was supposed to clear it. One owner per property. */
 .nav_link {
   scroll-snap-align: start;
   min-height: var(--tap-min);

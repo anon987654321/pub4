@@ -13,6 +13,22 @@
   --measure-body: 66ch;
 }
 
+/* One refresh gesture, not two. The document is the scroll container on every
+   RAILS surface -- pull_to_refresh_controller gates on window.scrollY -- so
+   .app-shell's own overscroll-behavior:contain (_shell.scss) applies to an
+   element that never scrolls, and <html> measured `auto`. Without containment
+   the browser's native pull-to-refresh runs alongside brgen's custom one, so a
+   single downward drag fires two refreshes, or none when the native gesture
+   claims the touch first.
+
+   Set on <html>, because overscroll-behavior only propagates to the viewport
+   from the root element. A no-op on the MASTER face, which keeps
+   overflow:hidden and never overscrolls. Both stacks forward this file;
+   _stack_brgen deliberately omits _minimal, so that is not a shared home. */
+html {
+  overscroll-behavior-y: contain;
+}
+
 /* Document surfaces (RAILS social/luxury/wscons). Face keeps overflow:hidden. */
 body[data-layout="document"] {
   min-height: 100dvh;

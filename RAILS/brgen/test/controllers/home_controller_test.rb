@@ -24,13 +24,27 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'aria-label="AI assistant"'
   end
 
-  def test_root_feed_tabs_link_to_subapps
+  # The verticals stay reachable from root, and reachable exactly once.
+  #
+  # This asserted a .feed-tab row in the layout's .feed-header. That row listed
+  # subapp_nav_items -- the same seven verticals brgen_nav_groups already puts in
+  # the always-visible .nav_swiper_bar immediately above it -- so root shipped two
+  # sticky horizontal scrollers at top:0 offering the same destinations. The row
+  # is gone; the swiper is the primary nav (WIRING_NOTES "Layout"). The count
+  # assertion is the part that would have caught the duplicate in the first place.
+  def test_root_offers_the_verticals_once
     host! "brgen.no"
     get root_url
     assert_response :success
-    assert_match(/class="feed-tab"[^>]*>marketplace/, response.body)
-    assert_match(/class="feed-tab"[^>]*>dating/, response.body)
-    assert_match(/class="feed-tab"[^>]*>playlist/, response.body)
+
+    %w[marketplace dating playlist TV takeaway maps messenger].each do |vertical|
+      assert_match(/class="nav_link[^"]*"[^>]*>#{Regexp.escape(vertical)}/, response.body,
+                   "#{vertical} should be reachable from the nav swiper")
+    end
+
+    assert_equal 1, response.body.scan(/class="nav_swiper_bar"/).size
+    assert_equal 0, response.body.scan(/class="feed-tabs"/).size,
+                 "root must not carry a second nav scroller duplicating the swiper"
   end
 
   def test_guest_root_can_open_master_embed

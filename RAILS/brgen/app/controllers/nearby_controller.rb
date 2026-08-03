@@ -8,6 +8,11 @@ class NearbyController < ApplicationController
   rate_limit to: 15, within: 5.minutes, only: %i[create],
     with: -> { redirect_to nearby_path, alert: "Slow down — too many chats started. Try again shortly." }
 
+  # #widget IS a turbo-frame body. Inside the application layout it answered
+  # 64,640 bytes -- including a second copy of the chat widget that requested it
+  # -- for the ~2KB frame Turbo then extracts and keeps.
+  layout false, only: :widget
+
   def index
     lat = Current.user&.latitude
     lng = Current.user&.longitude

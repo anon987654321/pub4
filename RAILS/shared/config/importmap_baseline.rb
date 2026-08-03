@@ -3,8 +3,8 @@
 # Shared importmap pins for the pub4 Rails family.
 # Include from each app: eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
 
-sc_pin = lambda do |name|
-  pin "@stimulus-components/#{name}", to: "@stimulus-components--#{name}.js"
+sc_pin = lambda do |name, preload: true|
+  pin "@stimulus-components/#{name}", to: "@stimulus-components--#{name}.js", preload: preload
 end
 
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
@@ -34,7 +34,14 @@ pin "@stimulus_reflex/futurism", to: "futurism.min.js"
 # keeps the relative imports resolving against that same CDN path, matching
 # the swiper/bundle pin below. Only stimulus-components/timeago needs this,
 # for formatDistanceToNow.
-pin "date-fns", to: "https://unpkg.com/date-fns@4.4.0/index.js"
+#
+# preload: false on every CDN-backed pin from here down. `pin` defaults to
+# preload: true, so each emitted a <link rel="modulepreload"> on every page of
+# every app -- unpkg, jsDelivr and esm.sh on the first-paint critical path
+# whether or not any code on the page imported them. stimulus_boot.js now
+# registers carousel and timeago on demand; without this the preload fetched
+# them anyway and the deferral bought nothing.
+pin "date-fns", to: "https://unpkg.com/date-fns@4.4.0/index.js", preload: false
 pin "sortablejs"
 pin "pub4/hotwire", to: "hotwire.js"
 pin "pub4/stimulus_boot", to: "stimulus_boot.js"
@@ -58,7 +65,10 @@ pin "pub4/scroll_chrome", to: "scroll_chrome_controller.js"
 pin "pub4/brgen_shell", to: "brgen_shell_controller.js"
 pin "pub4/action", to: "action_controller.js"
 pin "pub4/bottom_sheet", to: "bottom_sheet_controller.js"
-pin "web-vitals", to: "https://cdn.jsdelivr.net/npm/web-vitals@4.2.4/dist/web-vitals.js"
+# 1% sample (hotwire.js WEB_VITALS_SAMPLE_RATE), with a local PerformanceObserver
+# fallback -- so 99 visitors in 100 never import this and none of them should
+# preload it.
+pin "web-vitals", to: "https://cdn.jsdelivr.net/npm/web-vitals@4.2.4/dist/web-vitals.js", preload: false
 pin "pub4/autosave", to: "autosave_controller.js"
 pin "pub4/draft_store", to: "draft_store_controller.js"
 pin "pub4/media_picker", to: "media_picker_controller.js"
@@ -67,7 +77,10 @@ pin "pub4/feed_hotkey", to: "feed_hotkey_controller.js"
 pin "pub4/offline_feed", to: "offline_feed_controller.js"
 pin "pub4/pwa_standalone", to: "pwa_standalone_controller.js"
 pin "pwa/offline_store", to: "pwa_offline_store.js"
-pin "swiper/bundle", to: "https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bundle.min.mjs"
+# Only @stimulus-components/carousel imports this, and carousel appears on one
+# surface in the whole family (amber shared/_wardrobe_showcase). Lazy-registered
+# in stimulus_boot.js.
+pin "swiper/bundle", to: "https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bundle.min.mjs", preload: false
 # @stimulus-components/lightbox imports this; only brgen pinned it locally,
 # so every other app using this shared baseline couldn't resolve it.
 pin "lightgallery", to: "lightgallery.js"
@@ -76,12 +89,19 @@ pin "lightgallery", to: "lightgallery.js"
 # content itself has no external deps so it moves here just as cleanly).
 pin "idb-keyval", to: "idb-keyval.js"
 
+# dialog, scroll-to, sound and speech-recognition were pinned, vendored,
+# imported and registered, and no ERB in any of the four apps carries a
+# data-controller for them -- four components shipped and preloaded on every page
+# so that nothing could use them. Dropped from stimulus_boot.js with these pins.
 %w[
   animated-number auto-submit character-counter checkbox-select-all clipboard
-  content-loader dialog dropdown hotkey lightbox notification popover read-more
-  reveal scroll-to sortable sound speech-recognition timeago password-visibility
-  rails-nested-form carousel
+  content-loader dropdown hotkey lightbox notification popover read-more
+  reveal sortable password-visibility rails-nested-form
 ].each { |name| sc_pin.call(name) }
+
+# Registered on demand by stimulus_boot.js -- their dependencies are the CDN
+# pins above. Pinned so the dynamic import() can resolve, not preloaded.
+%w[carousel timeago].each { |name| sc_pin.call(name, preload: false) }
 
 pin "@stimulus-components/textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"
 pin "stimulus-textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"

@@ -3,7 +3,6 @@ import AutoSubmit from "@stimulus-components/auto-submit"
 import CheckboxSelectAll from "@stimulus-components/checkbox-select-all"
 import Clipboard from "@stimulus-components/clipboard"
 import ContentLoader from "@stimulus-components/content-loader"
-import Dialog from "@stimulus-components/dialog"
 import Dropdown from "@stimulus-components/dropdown"
 import Hotkey from "@stimulus-components/hotkey"
 import Lightbox from "@stimulus-components/lightbox"
@@ -11,16 +10,11 @@ import Notification from "@stimulus-components/notification"
 import Popover from "@stimulus-components/popover"
 import ReadMore from "@stimulus-components/read-more"
 import Reveal from "@stimulus-components/reveal"
-import ScrollTo from "@stimulus-components/scroll-to"
 import Sortable from "@stimulus-components/sortable"
-import Sound from "@stimulus-components/sound"
-import SpeechRecognition from "@stimulus-components/speech-recognition"
 import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
-import Timeago from "@stimulus-components/timeago"
 import AnimatedNumber from "@stimulus-components/animated-number"
 import PasswordVisibility from "@stimulus-components/password-visibility"
 import RailsNestedForm from "@stimulus-components/rails-nested-form"
-import Carousel from "@stimulus-components/carousel"
 import StimulusReflex from "stimulus_reflex"
 import ApplicationController from "controllers/application_controller"
 import LiveSearch from "pub4/live_search"
@@ -56,7 +50,6 @@ const COMPONENT_REGISTRATIONS = [
   ["checkbox-select-all", CheckboxSelectAll],
   ["clipboard", Clipboard],
   ["content-loader", ContentLoader],
-  ["dialog", Dialog],
   ["dropdown", Dropdown],
   ["hotkey", Hotkey],
   ["lightbox", Lightbox],
@@ -65,18 +58,78 @@ const COMPONENT_REGISTRATIONS = [
   ["popover", Popover],
   ["read-more", ReadMore],
   ["reveal", Reveal],
-  ["scroll-to", ScrollTo],
   ["sortable", Sortable],
-  ["sound", Sound],
-  ["speech-recognition", SpeechRecognition],
   ["textarea-autogrow", TextareaAutogrow],
-  ["timeago", Timeago],
   ["animated-number", AnimatedNumber],
   ["password-visibility", PasswordVisibility],
   ["nested-form", RailsNestedForm],
-  ["rails-nested-form", RailsNestedForm],
-  ["carousel", Carousel],
 ]
+
+// The two components whose dependency is a third-party CDN, registered only on
+// pages that actually contain them.
+//
+// carousel pulls swiper from cdn.jsdelivr.net and timeago pulls date-fns from
+// unpkg.com, and both were static imports here -- so every page of all three
+// apps put those hosts on its first-paint critical path. Measured on the brgen
+// front page: 537 requests for one load, including the whole
+// swiper@11.1.15/shared + modules tree and the date-fns@4.4.0/_lib tree. ES
+// modules fail as a graph, so one slow or blocked CDN left window.Turbo
+// undefined and all 169 data-controller elements on that page inert.
+//
+// The importmap pins stay on the CDN deliberately: importmap_baseline.rb
+// documents why (both packages cross-reference siblings by *relative* path, so
+// a single vendored file breaks every one of those paths). Keeping the pin and
+// deferring the import fixes the critical path without reopening that decision.
+// carousel is amber-only (shared/_wardrobe_showcase); timeago appears on feed,
+// message and notification surfaces but on no app's first paint.
+const LAZY_COMPONENTS = [
+  ["carousel", () => import("@stimulus-components/carousel")],
+  ["timeago", () => import("@stimulus-components/timeago")]
+]
+
+// Register `name` the first time the document contains an element asking for it.
+// Checks now, on every Turbo navigation, and on DOM mutation, so controllers
+// arriving by turbo-stream are covered too.
+const registerWhenPresent = (application, name, load) => {
+  const selector = `[data-controller~="${name}"]`
+  let done = false
+  let observer = null
+
+  const stop = () => {
+    document.removeEventListener("turbo:load", attempt)
+    document.removeEventListener("turbo:frame-load", attempt)
+    if (observer) { observer.disconnect(); observer = null }
+  }
+
+  function attempt() {
+    if (done || !document.querySelector(selector)) return
+    done = true
+    stop()
+    load()
+      .then((mod) => {
+        const constructor = mod?.default || mod
+        if (constructor) application.register(name, constructor)
+      })
+      .catch(() => {
+        // Optional: the surface degrades to its server-rendered markup. Allow a
+        // later attempt rather than latching the failure for the session.
+        done = false
+        listen()
+      })
+  }
+
+  function listen() {
+    document.addEventListener("turbo:load", attempt)
+    document.addEventListener("turbo:frame-load", attempt)
+    if (!observer && typeof MutationObserver === "function") {
+      observer = new MutationObserver(attempt)
+      observer.observe(document.documentElement, { childList: true, subtree: true })
+    }
+  }
+
+  attempt()
+  if (!done) listen()
+}
 
 export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("live-search", LiveSearch)
@@ -108,6 +161,8 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     if (component) application.register(name, component)
   })
+
+  LAZY_COMPONENTS.forEach(([name, load]) => registerWhenPresent(application, name, load))
 
   StimulusReflex.initialize(application, {
     applicationController: ApplicationController,

@@ -94,7 +94,7 @@ module Shared
     def edition_today
       return Time.zone.today if defined?(Time) && Time.respond_to?(:zone) && Time.zone
 
-      Date.today
+      Date.current
     end
 
     def read_attr(object, name)

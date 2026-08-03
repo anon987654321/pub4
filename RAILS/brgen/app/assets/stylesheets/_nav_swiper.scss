@@ -13,11 +13,34 @@
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
+  /* Clear the fixed chrome at both ends, the same way .feed-tabs does.
+     This bar moved to the top of the page when the nav became always-visible,
+     into the space the fixed .brgen-logo-mark already occupies (y 14-58 against
+     this bar's y 0-55). The bar's own opaque `background: var(--bg)` sits at
+     z-index 90 (.nav_swiper -> --z-nav -> --z-ui) against the wordmark's 11
+     (--z-chrome + 1), so the brand painted behind an opaque black rectangle and
+     elementFromPoint at its centre returned the "front" .nav_link: the brand
+     corner navigated to front instead of home.
+
+     --brand-mark-inline and --chrome-toggle-inline exist for exactly this and
+     are declared in _root.scss with a comment naming this bug on .feed-tabs.
+     Padding rather than a z-index bump, because the wordmark must not paint on
+     top of a scrolling nav item as it passes underneath. */
   padding-block-start: var(--safe-top);
+  padding-inline: var(--brand-mark-inline) var(--chrome-toggle-inline);
+  /* scroll-padding matters as much as padding here: with snapping on and no
+     inset, the snap engine scrolls the first item back to the container's edge
+     -- straight back under the wordmark -- and the padding above buys nothing. */
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--brand-mark-inline) var(--space-2xs);
   background: var(--bg);
   border-block-end: 1px solid var(--border);
-  mask-image: linear-gradient(to right, #000 86%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, #000 86%, transparent 100%);
+  /* Both edges fade now. The right-edge fade signals "more to scroll"; the new
+     left-edge fade is what lets nav items pass under the fixed wordmark, which
+     sits above this bar in the stack, without the two sets of letters colliding.
+     Same idiom, same mechanism, applied to the end that gained fixed chrome. */
+  mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--brand-mark-inline), var(--bg) 86%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--brand-mark-inline), var(--bg) 86%, transparent 100%);
 }
 
 .nav_swiper_bar::-webkit-scrollbar { display: none; }

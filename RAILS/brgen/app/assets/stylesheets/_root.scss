@@ -112,7 +112,20 @@ a:hover { text-decoration: underline; }
 a.brgen-logo-mark,
 .brgen-logo-mark {
   position: fixed;
-  z-index: calc(var(--z-chrome, 10) + 1);
+  /* Above the nav band, not below it. This was calc(--z-chrome + 1) = 11, and
+     .nav_swiper carries --z-nav (--z-ui, 90) with an opaque `background:
+     var(--bg)` on .nav_swiper_bar. Once the nav became always-visible it landed
+     at y 0-55 over the brand's y 14-58, so the wordmark painted behind a solid
+     black rectangle and elementFromPoint at its own centre returned the "front"
+     .nav_link -- the brand corner navigated to front instead of home.
+
+     By the rule stated for --z-carousel above ("must stay below --z-ui so it
+     never visually buries the one element in this band that's actually
+     interactive"), the brand belongs above: it is a link, and it is the one
+     piece of chrome that is identical on every surface. .nav_swiper_bar's
+     padding-inline keeps nav items clear of this footprint at rest, and its
+     left-edge mask fades them out as they scroll under it. */
+  z-index: calc(var(--z-nav, 90) + 1);
   /* Same corner inset as the theme control and the chat widget, and additive
      over the safe area rather than max()'d against it -- see --chrome-inset.
      This was 0.5rem top / 0.75rem start, so the brand sat 4px higher than the

@@ -84,7 +84,7 @@ class Message < ApplicationRecord
 
   def deliver_receipts
     conversation.participants.where.not(id: sender_id).each do |u|
-      message_receipts.create!(user: u, delivered_at: Time.now)
+      message_receipts.create!(user: u, delivered_at: Time.current)
     end
   end
 

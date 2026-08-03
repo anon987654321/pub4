@@ -409,7 +409,6 @@ class DeployBacklogTest < Minitest::Test
     source = read_source(File.join(ROOT, 'shared/frontend/stimulus_boot.js'))
     %w[
       Clipboard
-      Dialog
       Dropdown
       Hotkey
       Notification
@@ -417,15 +416,30 @@ class DeployBacklogTest < Minitest::Test
       Sortable
       toast
       TextareaAutogrow
-      Timeago
       PasswordVisibility
       RailsNestedForm
-      Carousel
       CharacterCounter
       CheckboxSelectAll
       ReadMore
     ].each do |component|
       assert_includes source, component
+    end
+
+    # carousel and timeago are registered on demand, not statically imported:
+    # their dependencies are swiper (cdn.jsdelivr.net) and date-fns (unpkg.com),
+    # and importing them here put both hosts on the first-paint critical path of
+    # every page in all three apps. Assert the lazy registration by name.
+    assert_includes source, 'LAZY_COMPONENTS'
+    %w[carousel timeago].each do |name|
+      assert_match(/\["#{name}",\s*\(\)\s*=>\s*import\(/, source,
+                   "#{name} should be lazily imported, not statically")
+    end
+
+    # Dialog, ScrollTo, Sound and SpeechRecognition were imported, registered,
+    # pinned and vendored with no data-controller for them in any of the four
+    # apps. Kept out.
+    %w[Dialog ScrollTo Sound SpeechRecognition].each do |dead|
+      refute_includes source, dead, "#{dead} has no consumer in any app"
     end
 
     assert_includes read_source(File.join(ROOT, 'shared/app/views/shared/_toast.html.erb')), 'data-controller="toast"'

@@ -35,7 +35,7 @@ class WardrobeAi
       Category: #{item.category}
       Color: #{item.color}
       Times worn: #{item.times_worn || 0}
-      Age: #{item.purchase_date ? "#{((Date.today - item.purchase_date) / 365).to_i} years" : "unknown"}
+      Age: #{item.purchase_date ? "#{((Date.current - item.purchase_date) / 365).to_i} years" : "unknown"}
     PROMPT
 
     result = if @client

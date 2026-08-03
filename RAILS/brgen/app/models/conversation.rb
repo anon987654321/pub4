@@ -162,7 +162,7 @@ class Conversation < ApplicationRecord
   end
 
   def mark_read_for!(user)
-    conversation_participants.find_by(user:)&.update!(last_read_at: Time.now)
+    conversation_participants.find_by(user:)&.update!(last_read_at: Time.current)
     messages.unexpired.find_each do |message|
       receipt = message.message_receipts.find_or_initialize_by(user: user)
       receipt.update!(read_at: Time.current) unless receipt.read_at

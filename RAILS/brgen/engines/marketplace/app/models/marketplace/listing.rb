@@ -70,6 +70,8 @@ class Marketplace::Listing < ApplicationRecord
   end
 
   def update_rating!
-    update_columns(rating: reviews.average(:rating)&.round(2) || 0)
+    # updated_at with it -- the rating is on every listing card, and skipping the
+    # timestamp leaves [listing] fragment caches serving the pre-review score.
+    update_columns(rating: reviews.average(:rating)&.round(2) || 0, updated_at: Time.current)
   end
 end

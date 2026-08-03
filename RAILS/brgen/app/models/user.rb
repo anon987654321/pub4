@@ -131,6 +131,11 @@ class User < ApplicationRecord
                 .where(posts: { user_id: id }).sum(:value)
     score += Vote.joins("JOIN comments ON comments.id = votes.votable_id AND votes.votable_type = 'Comment'")
                  .where(comments: { user_id: id }).sum(:value)
-    update_column(:karma, score)
+    # updated_at with it: karma renders on the profile and on every post byline,
+    # and update_column skips the timestamp, so `cache [user, ...]` fragments kept
+    # serving the old score indefinitely -- the runner shows the new value and the
+    # page shows the old one. The two methods above already do this; this was the
+    # one that did not.
+    update_columns(karma: score, updated_at: Time.current)
   end
 end

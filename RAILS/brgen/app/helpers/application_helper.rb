@@ -115,10 +115,6 @@ module ApplicationHelper
     [["brgen", platform], ["explore", verticals]]
   end
 
-  def subapp_nav_items
-    brgen_nav_items.select { |label, _| VERTICAL_NAV_LABELS.include?(label) }
-  end
-
   def active_vertical
     Current.subapp || inferred_vertical_from_controller
   end

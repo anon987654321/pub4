@@ -54,7 +54,9 @@ class Takeaway::Restaurant < ApplicationRecord
 
   def update_rating!
     avg = reviews.average(:rating)
-    update_columns(rating: avg&.round(1) || 0)
+    # updated_at with it -- same reason as Marketplace::Listing#update_rating!:
+    # the rating is displayed, so the fragment cache has to see the write.
+    update_columns(rating: avg&.round(1) || 0, updated_at: Time.current)
   end
 
   def geocode!

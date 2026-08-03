@@ -192,13 +192,15 @@
       <main id="main-content" role="main" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
         <% if !vertical_surface? && current_page?(main_app.root_path) %>
           <div class="feed-header">
-            <%# Visual brand is the fixed top-left .brgen-logo-mark (all surfaces). %>
+            <%# Visual brand is the fixed top-left .brgen-logo-mark (all surfaces).
+                No .feed-tabs row here. It listed subapp_nav_items -- exactly the
+                seven verticals brgen_nav_groups already puts in the always-visible
+                .nav_swiper_bar directly above it. Two sticky horizontal scrollers
+                at top:0 showing the same seven destinations read as two nav
+                swipers, cost 104px of chrome on a 997px page, and pushed the first
+                feed item to y:128. The swiper is the canonical primary nav
+                (WIRING_NOTES "Layout"); this row was the duplicate. %>
             <h1 class="visually-hidden"><%= t("nav.home") %></h1>
-            <nav class="feed-tabs" aria-label="<%= t("nav.subapps") %>">
-              <% subapp_nav_items.each do |label, url| %>
-                <%= link_to label, url, class: "feed-tab" %>
-              <% end %>
-            </nav>
           </div>
         <% end %>
         <%# City feed + compose first. AI lives as a compact chip in the home
@@ -279,7 +281,12 @@
       <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>
     </nav>
     <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
-    <section class="mobile-sheet" data-level="0" aria-label="<%= t("nav.quick_actions") %>" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
+    <%# Pointer events only. This also bound touchstart/touchmove/touchend to the
+        same three methods, and pointer events already cover touch on every
+        browser `allow_browser versions: :modern` admits -- so one finger drag ran
+        pointerMove and touchMove on the same frame, each writing a transform from
+        its own reading of the same gesture. %>
+    <section class="mobile-sheet" data-level="0" aria-label="<%= t("nav.quick_actions") %>" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp">
       <div class="mobile-sheet-handle"></div>
       <div class="mobile-sheet-links">
         <%= link_to t("nav.ai_assistant"), brgen_ai_url, data: { turbo: false } %>
