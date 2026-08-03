@@ -10331,26 +10331,57 @@ def stems_register(name, dir, bpm: nil, source: nil)
   stems_write_manifest(m)
 end
 
-def stems_scan(root = File.join(SAMPLE_DIR, "demucs"), manifest = File.join(SAMPLE_DIR, "manifest.json"))
+# Writes the manifest stems_load_manifest reads, in the shape it reads.
+#
+# The two halves of this subsystem never met. `stems scan` wrote
+# samples/manifest.json with sets as an ARRAY and repo-relative stem paths;
+# stems_load_manifest reads STEM_MANIFEST (stems/manifest.json) and every
+# consumer -- render_liveset is the only one -- wants sets as a HASH with
+# `dir` + `files`. STEM_DIR does not exist in the tree either, so the loader
+# always returned its empty default and render_liveset aborted with "no stem
+# set". Scanning produced a file nothing could read, at a path nothing looked at.
+#
+# `dir` is relative to ROOT rather than STEM_DIR because the stems live under
+# samples/demux; render_liveset resolves it against ROOT for that reason.
+#
+# bpm is deliberately nil. It used to be `bpm`, which is not a parameter here --
+# it is the method returning the RENDER's configured tempo, so all seven demucs
+# sets were recorded at 88.32 whatever the record actually ran at. A stem
+# stretched by that ratio drifts. cd8e6850f settled the principle when it
+# rejected two of four vocal tempos rather than write a number that would drift:
+# no bpm is a question, a wrong bpm is a silent fault.
+def stems_scan(root = File.join(SAMPLE_DIR, "demux"), manifest = STEM_MANIFEST)
   grouped = Dir.glob(File.join(root, "**", "*.{wav,mp3,flac,ogg,m4a}"), File::FNM_EXTGLOB)
                .group_by { |path| File.dirname(path) }
-  sets = grouped.map.with_index do |(directory, files), index|
-    {
-      "name" => File.basename(directory),
-      "bpm" => bpm,
+  existing = File.exist?(manifest) ? JSON.parse(File.read(manifest, encoding: "utf-8")) : {}
+  sets = grouped.each_with_object({}).with_index do |((directory, files), acc), index|
+    name = File.basename(directory)
+    acc[name] = {
+      "dir" => directory.sub(%r{\A#{Regexp.escape(ROOT)}/?}, ""),
+      "bpm" => existing.dig("sets", name, "bpm"),
+      "files" => files.map { |path| File.basename(path) }.sort,
       "stems" => stem_paths(files),
       "prime_swell" => ANALOG_PRIMES[index % ANALOG_PRIMES.length],
     }
   end
   FileUtils.mkdir_p(File.dirname(manifest))
-  File.write(manifest, JSON.pretty_generate({ "version" => 4, "sets" => sets }) + "\n")
-  puts "manifest -> #{manifest}"
+  File.write(manifest, JSON.pretty_generate({
+    "version" => 5,
+    "active" => existing["active"] || sets.keys.first,
+    "sets" => sets,
+  }) + "\n")
+  puts "manifest -> #{manifest} (#{sets.size} sets, #{sets.sum { |_, s| s['files'].size }} stems)"
 end
 
 def stems(*args)
   case args[0]
   when "scan"
-    stems_scan(args[1] || File.join(SAMPLE_DIR, "demucs"), args[2] || File.join(SAMPLE_DIR, "manifest.json"))
+    # Defer to stems_scan's own defaults rather than restating them. This line
+    # carried a second copy that disagreed with it twice over: samples/demucs,
+    # which is not the folder (it is samples/demux, so a bare `stems scan` found
+    # nothing and said so by writing an empty manifest), and samples/manifest.json,
+    # which is not where stems_load_manifest reads.
+    stems_scan(*args[1, 2].compact)
   when "add"
     name = args[1] or abort "usage: ruby dilla.rb stems add <name> <dir> [bpm]"
     dir  = args[2] or abort "usage: ruby dilla.rb stems add <name> <dir> [bpm]"
@@ -10368,6 +10399,13 @@ end
 
 def stem_key(path)
   basename = File.basename(path).downcase
+  # no_vocals BEFORE vocals, and sub_bass before bass: these are substring tests
+  # into one hash, so "no_vocals.wav" keyed as "vocals" and overwrote the real
+  # vocal stem -- whichever the glob reached last won. Two of the demucs sets are
+  # vocals + no_vocals only, so the instrumental, the only usable non-vocal
+  # material in them, was discarded on the way into the manifest.
+  return "no_vocals" if basename.include?("no_vocals")
+  return "sub_bass" if basename.include?("sub_bass")
   return "drums" if basename.include?("drums")
   return "bass" if basename.include?("bass")
   return "vocals" if basename.include?("vocals")
@@ -24780,7 +24818,10 @@ def render_liveset(name = "default", minutes: LIVESET_MIN)
   require_tools! "ffmpeg"
   m = stems_load_manifest
   set = m["sets"][name] || m["sets"][m["active"]] or abort "liveset: no stem set '#{name}'"
-  base_dir = File.join(STEM_DIR, set["dir"] || ".")
+  # `dir` is relative to ROOT: the stems live under samples/demux, not in
+  # STEM_DIR, which does not exist in the tree at all. Joining against STEM_DIR
+  # built a path below a missing directory, so every set resolved to nothing.
+  base_dir = File.expand_path(set["dir"] || ".", ROOT)
   files = set["files"]
   abort "liveset: empty set" if files.nil? || files.empty?
   inputs = files.flat_map { |f| ["-stream_loop", "-1", "-i", File.join(base_dir, f)] }
