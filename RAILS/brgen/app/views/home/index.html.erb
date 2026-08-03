@@ -15,6 +15,17 @@
       <p><%= link_to t("nav.new_community"), new_community_path, class: "btn btn-ghost btn-sm" %></p>
     <% end %>
   </aside>
+  <% trending_tags = Hashtag.trending.where("usage_count > 0").limit(8) %>
+  <% if trending_tags.any? %>
+    <aside class="sidebar-card">
+      <h2><%= t("nav.trending_tags", default: "Trending tags") %></h2>
+      <ul class="tag-cloud">
+        <% trending_tags.each do |tag| %>
+          <li><%= link_to "##{tag.name}", hashtag_path(tag.name) %></li>
+        <% end %>
+      </ul>
+    </aside>
+  <% end %>
 <% end %>
 
 <%# The "Bergen, akkurat nå" intro banner and its paths/AI line were removed:
@@ -22,6 +33,16 @@
     (main / AI / playlist / marketplace / dating) lives in the top nav, and the
     anonymous compose box sits above the posts. %>
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation>
+  <% if authenticated? %>
+    <nav class="feed-tabs" aria-label="<%= t("home.feed_sort", default: "Feed") %>">
+      <%= link_to t("home.feed_hot", default: "Hot"), main_app.root_path,
+            class: "feed-tab#{" active" if params[:feed].blank?}" %>
+      <%= link_to t("home.feed_following", default: "Following"), main_app.root_path(feed: "following"),
+            class: "feed-tab#{" active" if params[:feed] == "following"}" %>
+      <%= link_to t("home.feed_communities", default: "Communities"), main_app.root_path(feed: "communities"),
+            class: "feed-tab#{" active" if params[:feed] == "communities"}" %>
+    </nav>
+  <% end %>
   <% if home_feed_following? && !authenticated? %>
     <p class="dim feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>
   <% end %>

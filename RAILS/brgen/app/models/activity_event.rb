@@ -7,4 +7,6 @@ class ActivityEvent < ApplicationRecord
 
   scope :visible, -> { where(moderation_state: "clean") }
   scope :recent, -> { order(created_at: :desc) }
+  # Never surface private activity on a public profile (dating likes are private).
+  scope :public_only, -> { where(visibility: "public") }
 end

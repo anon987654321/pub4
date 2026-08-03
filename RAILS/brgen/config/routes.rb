@@ -16,6 +16,18 @@ Rails.application.routes.draw do
   post "internal/dilla_publish" => "internal#dilla_publish", as: :internal_dilla_publish
   get "sso/from_master" => "sso#from_master", as: :sso_from_master
 
+  post   "users/:user_id/block" => "blocks#create",  as: :block_user
+  delete "users/:user_id/block" => "blocks#destroy", as: :unblock_user
+
+  post   "communities/:community_id/join" => "community_memberships#create",  as: :join_community
+  delete "communities/:community_id/join" => "community_memberships#destroy", as: :leave_community
+
+  get "tags/:name" => "hashtags#show", as: :hashtag, constraints: { name: /[A-Za-z0-9_]+/ }
+
+  get    "saved" => "bookmarks#index", as: :saved
+  post   "posts/:post_id/bookmark" => "bookmarks#create",  as: :bookmark_post
+  delete "posts/:post_id/bookmark" => "bookmarks#destroy", as: :unbookmark_post
+
   # Legal / info pages, reachable on every city domain without an account
   # (GDPR + TradeDoubler both require them public). See PagesController.
   %w[privacy terms cookies].each do |legal_page|
@@ -74,7 +86,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :users, only: %i[show new create] do
+  resources :users, only: %i[show new create edit update] do
     member do
       post :follow, to: "follows#create"
       delete :unfollow, to: "follows#destroy"

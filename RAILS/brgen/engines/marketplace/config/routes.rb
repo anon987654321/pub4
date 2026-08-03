@@ -12,7 +12,7 @@ Marketplace::Engine.routes.draw do
     resources :orders, only: %i[create update]
     resources :reviews, only: %i[create]
   end
-  resources :orders, only: %i[show update]
+  resources :orders, only: %i[index show update]
 
   # Amazon-like cart (pending orders act as cart items for the buyer)
   resource :cart, only: :show, controller: "carts" do

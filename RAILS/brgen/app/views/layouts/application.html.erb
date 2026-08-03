@@ -4,6 +4,11 @@
   <meta charset="utf-8">
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
+  <%# iOS ignores the manifest for standalone behaviour — these give an installed
+      iPhone a real full-screen app, a translucent status bar, and a branded name. %>
+  <%= tag.meta name: "apple-mobile-web-app-capable", content: "yes" %>
+  <%= tag.meta name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" %>
+  <%= tag.meta name: "apple-mobile-web-app-title", content: "Brgen" %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
   <%= tag.meta name: "theme-color", content: "#000000", data: { light_color: "#ffffff", dark_color: "#000000" } %>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
@@ -17,6 +22,11 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <%# Share thumbnail: a per-page override (content_for :og_image) or the brand mark,
+      so every link shared to social/chat renders a card instead of bare text. %>
+  <% share_image = content_for?(:og_image) ? yield(:og_image) : "#{request.base_url}/icon.png" %>
+  <meta property="og:image" content="<%= share_image %>">
+  <meta name="twitter:image" content="<%= share_image %>">
   <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">

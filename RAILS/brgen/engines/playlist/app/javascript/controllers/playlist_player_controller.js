@@ -36,6 +36,7 @@ export default class extends Controller {
       this.audioTarget.addEventListener("ended", () => this.#onEnded())
       this.audioTarget.addEventListener("play", () => this.#recordListenOnce(), { once: true })
     }
+    this.#setupMediaSession()
 
     if (this.hasSrcValue && this.hasAudioTarget && !this.audioTarget.src) {
       this.audioTarget.src = this.srcValue
@@ -154,6 +155,7 @@ export default class extends Controller {
       this.audioTarget.src = src
       this.audioTarget.play()
       this.playing = true
+      this.#updateMediaMetadata()
     } else if (this.hasAudioTarget) {
       this.audioTarget.pause()
       this.audioTarget.removeAttribute("src")
@@ -183,6 +185,37 @@ export default class extends Controller {
     this.#drawWaveform(0)
     this.#tick()
     this.#refreshCommentsList()
+  }
+
+  // Media Session: lock-screen / headphone / car controls + now-playing metadata.
+  // Table stakes for audio on a phone — the player was fully custom but never
+  // registered with the OS. Auto-advance means no explicit next/prev handlers.
+  #setupMediaSession() {
+    if (!("mediaSession" in navigator) || !this.hasAudioTarget) return
+    const audio = this.audioTarget
+    const handlers = {
+      play: () => audio.play(),
+      pause: () => audio.pause(),
+      seekbackward: (d) => { audio.currentTime = Math.max(0, audio.currentTime - (d.seekOffset || 10)) },
+      seekforward: (d) => { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (d.seekOffset || 10)) },
+      seekto: (d) => { if (d.seekTime != null) audio.currentTime = d.seekTime },
+    }
+    for (const [action, fn] of Object.entries(handlers)) {
+      try { navigator.mediaSession.setActionHandler(action, fn) } catch (e) { /* unsupported */ }
+    }
+    audio.addEventListener("play", () => { navigator.mediaSession.playbackState = "playing" })
+    audio.addEventListener("pause", () => { navigator.mediaSession.playbackState = "paused" })
+    if (this.titleValue) this.#updateMediaMetadata()
+  }
+
+  #updateMediaMetadata() {
+    if (!("mediaSession" in navigator) || !window.MediaMetadata) return
+    navigator.mediaSession.metadata = new window.MediaMetadata({
+      title: this.titleValue || "brgen playlist",
+      artist: this.artistValue || "brgen",
+      album: "brgen",
+      artwork: this.artworkValue ? [{ src: this.artworkValue, sizes: "512x512", type: "image/jpeg" }] : [],
+    })
   }
 
   #tick() {

@@ -109,6 +109,9 @@ export default class extends Controller {
       const userId = this.currentCard.dataset.userId
       const card = this.currentCard
 
+      // A short buzz on commit — a like feels different from a pass.
+      if (navigator.vibrate) navigator.vibrate(isLike ? [12, 30, 12] : 8)
+
       // Commit animation offscreen
       const direction = isLike ? 1 : -1
       card.style.transition = "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 180ms"

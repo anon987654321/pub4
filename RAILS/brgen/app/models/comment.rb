@@ -19,9 +19,10 @@ class Comment < ApplicationRecord
   HAS_UPVOTE_SQL = Arel.sql("COUNT(CASE WHEN votes.value =  1 THEN 1 END) > 0")
   HAS_DOWNVOTE_SQL = Arel.sql("COUNT(CASE WHEN votes.value = -1 THEN 1 END) > 0")
 
-  scope :best,          -> { left_joins(:votes).group(:id).order(BEST_SQL) }
+  scope :kept,          -> { where(removed_at: nil) }
+  scope :best,          -> { kept.left_joins(:votes).group(:id).order(BEST_SQL) }
   scope :top,           -> { best }
-  scope :new_first,     -> { order(created_at: :desc) }
+  scope :new_first,     -> { kept.order(created_at: :desc) }
   scope :controversial, -> {
     left_joins(:votes).group(:id)
       .having(HAS_UPVOTE_SQL)

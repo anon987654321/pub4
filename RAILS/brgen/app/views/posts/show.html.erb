@@ -76,6 +76,11 @@
         partial -- the moderation pipeline had no inlet. Gated on authenticated?
         because ReportsController requires a real account. %>
     <% if authenticated? %>
+      <% if Current.user.bookmarked?(@post) %>
+        <%= button_to t("bookmark.unsave", default: "Unsave"), unbookmark_post_path(@post), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to t("bookmark.save", default: "Save"), bookmark_post_path(@post), method: :post, class: "btn btn-ghost btn-sm" %>
+      <% end %>
       <%= render "shared/report_button", target: @post, reason: nil %>
     <% end %>
   </div>
@@ -89,6 +94,16 @@
   </h3>
   <% if authenticated? || guest? %>
     <%= render "comments/form", comment: @new_comment, commentable: @post %>
+  <% end %>
+
+  <% if @comments.any? %>
+    <nav class="comment-sort feed-tabs" aria-label="<%= t("comments.sort_label", default: "Sort comments") %>">
+      <% PostsController::COMMENT_SORTS.each do |sort| %>
+        <%= link_to t("comments.sort.#{sort}", default: sort.capitalize),
+              main_app.post_path(@post, sort: sort),
+              class: "feed-tab#{" active" if @comment_sort == sort}" %>
+      <% end %>
+    </nav>
   <% end %>
 
   <ul id="comments">

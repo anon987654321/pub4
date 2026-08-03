@@ -1,14 +1,26 @@
+# Litestream — continuous SQLite replication. Each `dbs` entry must point at a
+# single database FILE (not a directory); the earlier `path: <dir>` + `pattern:`
+# was invalid, so litestream refused to start and nothing was ever replicated.
+#
+# Only production.sqlite3 is streamed per app — it holds the irreplaceable user
+# data. The cache/queue/cable databases are regeneratable and are left out to keep
+# WAL churn low on the 1-vCPU box.
+#
+# NOTE: the file:// replica is on the SAME disk as the source (accidental-delete /
+# corruption / point-in-time recovery, NOT disk-failure DR). For real DR add an
+# off-host replica (an s3:// URL with credentials, or sftp:// to a second host).
+# Litestream must also be installed first (`doas pkg_add litestream`) — it is not
+# currently on the box. Until both land, Shared::DatabaseSnapshotJob provides
+# local point-in-time snapshots of production.sqlite3.
 dbs:
-  - path: /home/brgen/app/storage
-    pattern: "*.sqlite3"
+  - path: /home/brgen/app/storage/production.sqlite3
     replicas:
       - url: file:///var/backups/litestream/brgen
-  - path: /home/amber/app/storage
-    pattern: "*.sqlite3"
+
+  - path: /home/amber/app/storage/production.sqlite3
     replicas:
       - url: file:///var/backups/litestream/amber
 
-  - path: /home/bsdports/app/storage
-    pattern: "*.sqlite3"
+  - path: /home/bsdports/app/storage/production.sqlite3
     replicas:
       - url: file:///var/backups/litestream/bsdports

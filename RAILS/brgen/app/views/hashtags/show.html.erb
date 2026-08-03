@@ -1,0 +1,18 @@
+<% content_for :title, "##{@hashtag.name}" %>
+
+<header class="page-header" role="banner">
+  <h1>#<%= @hashtag.name %></h1>
+  <p class="dim"><%= t("hashtag.count", count: @hashtag.usage_count, default: "%{count} posts") %></p>
+</header>
+
+<% if @posts.any? %>
+  <div class="post-feed">
+    <% @posts.each do |post| %>
+      <%= render "posts/post", post: post %>
+    <% end %>
+  </div>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+<% else %>
+  <%= render "shared/empty_state", title: t("hashtag.empty_title", default: "Nothing here yet"),
+        body: t("hashtag.empty_body", default: "No posts use ##{@hashtag.name} yet.") %>
+<% end %>

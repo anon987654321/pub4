@@ -73,3 +73,37 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(request).catch(() => caches.match("/offline")));
   }
 });
+
+// Web Push. The server (WebPushJob) sends a JSON payload; show it, and focus or
+// open the target on click. Retention's biggest lever — everything upstream
+// (VAPID, subscriptions, the webpush gem) already existed; this is the last mile.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { title: "brgen", body: event.data ? event.data.text() : "" };
+  }
+  const title = data.title || "brgen";
+  const options = {
+    body: data.body || "",
+    icon: "/icon-192.png",
+    badge: "/icon-mono-192.png",
+    tag: data.tag,
+    data: { url: data.url || "/" },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) {
+        if (w.url.includes(target) && "focus" in w) return w.focus();
+      }
+      return clients.openWindow(target);
+    })
+  );
+});

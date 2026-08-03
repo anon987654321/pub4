@@ -1,0 +1,17 @@
+<% content_for :title, t("bookmark.saved_title", default: "Saved") %>
+
+<header class="page-header" role="banner">
+  <h1><%= t("bookmark.saved_title", default: "Saved") %></h1>
+</header>
+
+<% if @posts.any? %>
+  <div class="post-feed">
+    <% @posts.each do |post| %>
+      <%= render "posts/post", post: post %>
+    <% end %>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("bookmark.empty_title", default: "Nothing saved yet"),
+        body: t("bookmark.empty_body", default: "Tap Save on any post to keep it here.") %>
+<% end %>

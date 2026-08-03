@@ -30,6 +30,7 @@ class ModerationWorkflow
       flag_for(report, status: status)
     when "resolved"
       close_flags(report, status: "resolved")
+      remove_content(report)
       penalize_owner(report)
     when "dismissed"
       close_flags(report, status: "dismissed")
@@ -56,6 +57,16 @@ class ModerationWorkflow
     ModerationFlag.where(flaggable: report.reportable, user: user, kind: report.reason)
       .where(status: %w[open reviewing])
       .update_all(status: status, updated_at: Time.current)
+  end
+
+  # Resolving a report takes the content down. update_columns (not update!) so a
+  # legacy record with a since-tightened validation can't block the takedown, and
+  # it bumps updated_at too so the [post,…] fragment cache re-renders without it.
+  def remove_content(report)
+    content = report.reportable
+    return unless content.respond_to?(:removed_at) && content.removed_at.nil?
+
+    content.update_columns(removed_at: Time.current, updated_at: Time.current)
   end
 
   def penalize_owner(report)

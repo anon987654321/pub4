@@ -1,0 +1,21 @@
+#!/bin/ksh
+#
+# brgen IRC bridge gateway. NOT enabled by default — see RAILS/brgen/IRC_BRIDGE.md
+# for the go-live checklist (pf listener port, rc.conf.local pkg_scripts, optional
+# TLS 6697 via relayd). Binds 127.0.0.1:6667 by default; expose it deliberately.
+
+daemon="/usr/local/bin/bundle34"
+daemon_flags="exec ruby bin/irc-gateway"
+daemon_user="brgen"
+daemon_execdir="/home/brgen/app"
+
+. /etc/rc.d/rc.subr
+
+rc_bg=YES
+
+rc_pre() {
+	. /etc/brgen.env 2>/dev/null || true
+	export RAILS_ENV=production HOME=/home/brgen IRC_HOST=127.0.0.1 IRC_PORT=6667
+}
+
+rc_cmd $1

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_110000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -161,6 +161,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
     t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
   end
 
+  create_table "blocks", force: :cascade do |t|
+    t.integer "blocked_id", null: false
+    t.integer "blocker_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["blocked_id"], name: "index_blocks_on_blocked_id"
+    t.index ["blocker_id", "blocked_id"], name: "index_blocks_on_blocker_id_and_blocked_id", unique: true
+    t.index ["blocker_id"], name: "index_blocks_on_blocker_id"
+  end
+
+  create_table "bookmarks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "post_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["post_id"], name: "index_bookmarks_on_post_id"
+    t.index ["user_id", "post_id"], name: "index_bookmarks_on_user_id_and_post_id", unique: true
+    t.index ["user_id"], name: "index_bookmarks_on_user_id"
+  end
+
   create_table "cities", force: :cascade do |t|
     t.string "country_code", null: false
     t.datetime "created_at", null: false
@@ -183,12 +203,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
     t.text "content", null: false
     t.datetime "created_at", null: false
     t.integer "parent_id"
+    t.datetime "removed_at"
     t.datetime "summary_updated_at"
     t.text "thread_summary"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
+    t.index ["removed_at"], name: "index_comments_on_removed_at"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
@@ -205,6 +227,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
     t.index ["city_id"], name: "index_communities_on_city_id"
     t.index ["subdomain"], name: "index_communities_on_subdomain", unique: true
     t.index ["user_id"], name: "index_communities_on_user_id"
+  end
+
+  create_table "community_memberships", force: :cascade do |t|
+    t.integer "community_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["community_id"], name: "index_community_memberships_on_community_id"
+    t.index ["user_id", "community_id"], name: "index_community_memberships_on_user_id_and_community_id", unique: true
+    t.index ["user_id"], name: "index_community_memberships_on_user_id"
   end
 
   create_table "conversation_participants", force: :cascade do |t|
@@ -881,6 +913,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
     t.integer "karma"
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
+    t.datetime "removed_at"
     t.string "slug"
     t.string "title", null: false
     t.datetime "updated_at", null: false
@@ -889,6 +922,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
     t.index ["city_id"], name: "index_posts_on_city_id"
     t.index ["community_id"], name: "index_posts_on_community_id"
     t.index ["latitude", "longitude"], name: "index_posts_on_latitude_and_longitude"
+    t.index ["removed_at"], name: "index_posts_on_removed_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
@@ -1285,8 +1319,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "activity_events", "users", column: "actor_id"
+  add_foreign_key "blocks", "users", column: "blocked_id"
+  add_foreign_key "blocks", "users", column: "blocker_id"
+  add_foreign_key "bookmarks", "posts"
+  add_foreign_key "bookmarks", "users"
   add_foreign_key "comments", "users"
   add_foreign_key "communities", "cities"
+  add_foreign_key "community_memberships", "communities"
+  add_foreign_key "community_memberships", "users"
   add_foreign_key "conversation_participants", "conversations"
   add_foreign_key "conversation_participants", "users"
   add_foreign_key "dating_dislikes", "users", column: "dislikee_id"

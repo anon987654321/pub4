@@ -10,6 +10,13 @@
   <% if authenticated? && Current.user != @user %>
     <%= render "shared/follow_button", user: @user, active: @active_follow %>
     <%= button_to t("actions.message"), user_conversations_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
+    <% if @active_block %>
+      <%= button_to t("block.unblock", default: "Unblock"), unblock_user_path(@user), method: :delete, class: "btn btn-ghost btn-sm" %>
+    <% else %>
+      <%= button_to t("block.block", default: "Block"), block_user_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  <% elsif authenticated? && Current.user == @user %>
+    <%= link_to t("profile.edit", default: "Edit profile"), edit_user_path(@user), class: "btn btn-ghost btn-sm" %>
   <% end %>
 
   <% if @user.dating_profile.present? %>
@@ -28,3 +35,18 @@
           action: { label: t("empty.city_feed"), path: root_path } %>
   <% end %>
 </section>
+
+<% if @activity.any? %>
+  <section class="profile-activity">
+    <h2><%= t("profile.activity", default: "Recent activity") %></h2>
+    <ul class="activity-list">
+      <% @activity.each do |event| %>
+        <li class="dim">
+          <%= t("activity.#{event.event_name.underscore}", default: event.event_name.underscore.humanize) %>
+          <span class="activity-vertical">· <%= event.source_vertical %></span>
+          <time datetime="<%= event.created_at.iso8601 %>"><%= time_ago_in_words(event.created_at) %> ago</time>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

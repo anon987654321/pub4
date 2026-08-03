@@ -2,6 +2,9 @@
 
 class PostsController < ApplicationController
   include Shared::FindableBySlug
+  # Flood protection on content creation (Rails 8 built-in), per-user or per-IP.
+  rate_limit to: 12, within: 1.minute, only: :create,
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   include Shared::LiveSearchable
 
   rate_limit to: 30, within: 3.minutes, only: %i[create share],
@@ -26,8 +29,18 @@ class PostsController < ApplicationController
     finish_live_search(partial: "posts/live_search_results")
   end
 
+  COMMENT_SORTS = %w[best new top controversial].freeze
+
   def show
-    @comments    = @post.comments.where(parent_id: nil).best.includes(:user, :votes, replies: [ :user, :votes ])
+    @comment_sort = COMMENT_SORTS.include?(params[:sort]) ? params[:sort] : "best"
+    roots = @post.comments.where(parent_id: nil)
+    roots = case @comment_sort
+            when "new"           then roots.new_first
+            when "top"           then roots.top
+            when "controversial" then roots.controversial
+            else roots.best
+            end
+    @comments    = roots.includes(:user, :votes, replies: [ :user, :votes ])
     @new_comment = Comment.new
   end
 
@@ -82,12 +95,16 @@ class PostsController < ApplicationController
   end
 
   def share
+    shared_media = Array(params[:media]).select { |f| f.respond_to?(:read) }
     post = Post.new(
-      title: share_title,
+      title: share_title.presence || (shared_media.any? ? t("share.photo_title", default: "Shared photo") : nil),
       content: share_content,
       community: Community.first,
       user: Current.user
     )
+    # Share Target for images: a photo shared INTO brgen from the camera roll lands
+    # attached to a fresh draft (manifest share_target declares files: media).
+    post.image.attach(shared_media.first) if shared_media.any? && post.respond_to?(:image)
 
     if post.save
       redirect_to edit_post_path(post), notice: "Shared into a draft"
@@ -100,6 +117,8 @@ class PostsController < ApplicationController
 
   def set_post
     @post = find_by_slug_or_id(Post.includes(:user, :community), params[:id])
+    # A moderator-removed post is gone for everyone, including via direct link.
+    raise ActiveRecord::RecordNotFound if @post&.removed_at?
   end
 
   def authorize_owner

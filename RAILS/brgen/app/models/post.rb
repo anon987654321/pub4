@@ -40,11 +40,22 @@ class Post < ApplicationRecord
 
   VOTE_SQL = Arel.sql("SUM(COALESCE(votes.value,0)) DESC, posts.created_at DESC")
   TOP_SQL  = Arel.sql("SUM(COALESCE(votes.value,0)) DESC")
+  # "hot" = score decayed by age, so it is a live ranking rather than an all-time
+  # leaderboard: score/(age_hours + 2). A high-vote post sinks as it ages and a
+  # fresh well-received one can surface. julianday keeps it a single SQLite
+  # expression (prod is SQLite); the created_at tiebreaker keeps it deterministic.
+  HOT_SQL = Arel.sql(
+    "(SUM(COALESCE(votes.value,0)) + 1.0) / " \
+    "(((julianday('now') - julianday(posts.created_at)) * 24.0) + 2.0) DESC, " \
+    "posts.created_at DESC"
+  )
   READING_WORDS_PER_MINUTE = 200
 
-  scope :hot,    -> { left_joins(:votes).group(:id).order(VOTE_SQL) }
-  scope :fresh,  -> { order(created_at: :desc) }
-  scope :top,    -> { left_joins(:votes).group(:id).order(TOP_SQL) }
+  # Content a moderator has removed never appears in any feed.
+  scope :kept,   -> { where(removed_at: nil) }
+  scope :hot,    -> { kept.left_joins(:votes).group(:id).order(HOT_SQL) }
+  scope :fresh,  -> { kept.order(created_at: :desc) }
+  scope :top,    -> { kept.left_joins(:votes).group(:id).order(TOP_SQL) }
   # Geo-stamped Live posts (Jodel layer). Not all posts are Live.
   scope :live,   -> { where.not(latitude: nil).where.not(longitude: nil) }
   scope :search, ->(q) {

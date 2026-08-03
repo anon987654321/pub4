@@ -5,6 +5,14 @@ class Marketplace::OrdersController < Marketplace::BaseController
   before_action :set_listing, only: :create
   before_action :set_order, only: %i[show update]
 
+  # Buyer's order history — a paid order used to vanish (the cart only lists
+  # pending). Scoped to Current.user's own orders.
+  def index
+    @orders = Marketplace::Order.where(buyer_id: Current.user.id)
+                                .includes(:listing)
+                                .order(created_at: :desc)
+  end
+
   def show
     authorize @order
     other = @order.buyer == Current.user ? @order.seller : @order.buyer
