@@ -28,9 +28,40 @@ module Acapella
   DEST = File.join(ROOT, "samples", "acapella")
   SAMPLE_RATE = 44_100
 
-  # Rap sits here. The detector returns a period, and a period can be read as
-  # half or double its true value; the range picks the reading a person would.
-  BPM_RANGE = (70.0..110.0)
+  # The range must span a FULL OCTAVE, and this one did not.
+  #
+  # A tempo can always be halved or doubled, so folding an arbitrary reading into
+  # a named range only works if the range covers a 2x span. 70 to 110 covers
+  # 1.57x, which leaves a hole: anything landing between 111 and 139 folds to
+  # neither -- halve it and it falls under 70, double it and it passes 110 -- so
+  # the method returned nil however good the reading was.
+  #
+  # That is not a threshold being strict. It is arithmetic throwing away
+  # evidence. One track measured a confidence of 0.499, comfortably above the
+  # 0.45 bar and better than takes that were accepted, and was reported as having
+  # no readable tempo because its pulse happened to sit at 120.
+  #
+  # 70 to 140 is exactly one octave and has no hole in it.
+  BPM_RANGE = (70.0..140.0)
+
+  # When the detector will not commit, the operator can.
+  #
+  # Some takes genuinely do not lock -- sparse percussion, live playing, heavy
+  # sidechain. Rather than lower the confidence bar for everything and admit
+  # noise, ACAPELLA_BPM=<slug>:<bpm> states a tempo by hand for one file. The
+  # detector stays honest and the track still gets used.
+  #
+  #   ACAPELLA_BPM="machomayne:101.2,other slug:88"
+  def manual_tempo(slug)
+    ENV["ACAPELLA_BPM"].to_s.split(",").each do |pair|
+      name, bpm = pair.split(":", 2)
+      next unless name && bpm && slug.to_s.downcase.include?(name.strip.downcase)
+
+      value = bpm.to_f
+      return value if value.positive?
+    end
+    nil
+  end
 
   module_function
 
@@ -224,7 +255,7 @@ module Acapella
 
     ok = RadioChop.run!("ffmpeg", "-nostdin", "-y", "-hide_banner", "-loglevel", "error",
                         "-ss", start_sec.round(3).to_s, "-t", take.round(3).to_s, "-i", vocal_path,
-                        "-af", "#{atempo_chain(ratio)},#{VOCAL_TONE}",
+                        "-af", "#{atempo_chain(ratio)},#{vocal_tone}",
                         "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", dest,
                         label: "acapella fit")
     return nil unless ok != false && File.file?(dest)
@@ -257,6 +288,27 @@ module Acapella
   # take, which on a rap vocal flattens the delivery, the loud line and the
   # muttered one arriving at the same level. That is the same fault that was
   # making the master wander, left in the vocal chain when the master was fixed.
+  # The darker reading of the same voice.
+  #
+  # Not simply the bright chain with the treble turned down -- that gives a dull
+  # vocal, which is a different thing from a dark one. Dark means the weight
+  # moves DOWN rather than the top going away: chest lifted around 220 Hz, the
+  # consonant band kept but narrowed and placed lower at 2.8 kHz so the words
+  # still arrive, and the air above 7 kHz rolled off rather than boosted.
+  #
+  # Then tape. An atan waveshaper at low drive adds the odd harmonics that make
+  # a voice sound recorded rather than captured, and it is the saturation that
+  # stops the result being merely quiet at the top -- there is still something
+  # happening up there, it is just harmonic rather than original.
+  VOCAL_TONE_DARK = "highpass=f=90," \
+                    "equalizer=f=220:t=q:w=1.0:g=2.5," \
+                    "equalizer=f=450:t=q:w=1.4:g=-1.5," \
+                    "equalizer=f=2800:t=q:w=1.6:g=2.0," \
+                    "lowpass=f=7200," \
+                    "volume=8dB,asoftclip=type=atan:param=1.8:oversample=4,volume=-8dB," \
+                    "acompressor=threshold=-20dB:ratio=3.5:attack=4:release=130:knee=6:makeup=1.7," \
+                    "alimiter=limit=0.92:level_out=0.94"
+
   VOCAL_TONE = "highpass=f=110," \
                "equalizer=f=380:t=q:w=1.2:g=-2.5," \
                "equalizer=f=3800:t=q:w=1.1:g=3.5," \
@@ -265,6 +317,11 @@ module Acapella
                "ratio=3:attack=2:release=60:mode=cutabove," \
                "acompressor=threshold=-20dB:ratio=4:attack=2:release=110:knee=4:makeup=1.9," \
                "alimiter=limit=0.92:level_out=0.94"
+
+  # Which tone a render uses. VOCAL_TONE=dark selects the darker chain.
+  def vocal_tone
+    ENV["VOCAL_TONE"].to_s.downcase == "dark" ? VOCAL_TONE_DARK : VOCAL_TONE
+  end
 
   # atempo handles 0.5x to 2x per instance. Anything beyond gets chained.
   def atempo_chain(ratio)
@@ -361,7 +418,7 @@ module Acapella
   # measurable, which is why they are lists of names and not a scoring function.
   # A take can be perfectly separated, perfectly in tempo, and still the wrong
   # one for these beats.
-  EXCLUDE = (ENV["VOCAL_EXCLUDE"] || "festival girson").downcase.split(",").map(&:strip).freeze
+  EXCLUDE = (ENV["VOCAL_EXCLUDE"] || "festival girson,dypt").downcase.split(",").map(&:strip).freeze
 
   # An allow-list, not a preference. VOCAL_ONLY= names who may appear at all,
   # and nothing outside it is used even if that leaves the pool empty and the
@@ -377,13 +434,29 @@ module Acapella
   # track. The distinction is in the word before the name.
   PRODUCER_CREDIT = /\bprod\.?\s*(by\s*)?/i
 
+  # A feature credit is not a lead vocal either.
+  #
+  # "Sonar Ut Gmix (feat. John Olav Nilsen, Vågard, Store P, Girson, Lars
+  # Vaular, Mats Dawg, Mike T…)" names him eighth on a posse cut, so a verse
+  # lifted from the middle of it is far likelier to be one of the other seven.
+  # The producer guard already refused "Jaja (prod. Store P)" for the same
+  # reason -- his name on the record is not his voice on the microphone -- and a
+  # guest spot is the same mistake wearing a different word.
+  #
+  # "Store P m⧸ Lars Vaular" is deliberately still allowed: there he is the
+  # billed artist and Vaular is the guest, which is a record of his with a
+  # feature on it rather than someone else's record he appears on.
+  FEATURE_CREDIT = /\b(?:feat|ft|featuring)\b\.?/i
+  CREDIT = Regexp.union(PRODUCER_CREDIT, FEATURE_CREDIT)
+
   def performer?(slug, name)
     text = slug.to_s.downcase
     return false unless text.include?(name)
 
-    # Reject only when the sole mention sits behind a production credit.
+    # Reject when every mention of the name sits behind a credit rather than in
+    # the artist position.
     text.split(/[(\[]/).any? do |part|
-      part.include?(name) && !part.match?(PRODUCER_CREDIT)
+      part.include?(name) && !part.match?(CREDIT)
     end
   end
 
@@ -413,8 +486,18 @@ module Acapella
   # Never the opening: a track begins with an intro, a hook, or silence, and
   # what is wanted is the rapper mid-flow. Sixteen bars in, moved on by the
   # track's own name so two beats do not get the same verse.
-  VERSE_ENTRY_BARS = 16
-  VERSE_STRIDE_BARS = 6
+  # Take the verse from the MIDDLE of the record, as a fraction of its length.
+  #
+  # A fixed sixteen bars in is a guess that happens to be wrong for most tracks.
+  # At around a hundred beats a minute it lands about forty seconds in, which on
+  # a four-minute record is still the first hook -- so every beat got the same
+  # opening material and none of them got a verse.
+  #
+  # Measuring from the whole duration instead puts the cut where the rapping
+  # actually is. The middle half of a track is verse: the intro and first hook
+  # are behind it, the outro and repeat-to-fade ahead of it. Different beats take
+  # different points inside that window so they do not all say the same thing.
+  VERSE_WINDOW = (0.32..0.68)
   VERSE_POSITIONS = 7
 
   # Beyond this much speeding up, take half the tempo instead.
@@ -453,8 +536,15 @@ module Acapella
     target = flow_tempo(entry["bpm"], beat_tempo)
 
     beat = 60.0 / entry["bpm"].to_f
-    offset_bars = VERSE_ENTRY_BARS + ((seed % VERSE_POSITIONS) * VERSE_STRIDE_BARS)
-    start = entry["start_sec"].to_f + (beat * 4 * offset_bars)
+    # Measured from the record's own length, not counted in bars from its start.
+    # See VERSE_WINDOW: a fixed sixteen bars lands about forty seconds in, which
+    # on a four-minute record is still the opening hook, so every beat took the
+    # same material and none of them took a verse.
+    total = probe_seconds(File.expand_path(entry["stem"], ROOT)).to_f
+    span = VERSE_WINDOW.max - VERSE_WINDOW.min
+    fraction = VERSE_WINDOW.min + ((seed % VERSE_POSITIONS) * span / VERSE_POSITIONS)
+    start = total.positive? ? (total * fraction).round(3) : entry["start_sec"].to_f + (beat * 64)
+    offset_bars = (start / (beat * 4)).round
 
     duration = probe_seconds(beat_path)
     return nil unless duration&.positive?

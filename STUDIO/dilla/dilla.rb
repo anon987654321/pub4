@@ -3443,13 +3443,67 @@ def bpm_scale
   scale.positive? ? scale.clamp(0.5, 1.5) : 1.0
 end
 
-def resolve_bpm(preset, _track, sonic)
+# The record sets the tempo, not the other way round.
+#
+# Every chop was being dragged to one render tempo, and because varispeed is on
+# (correctly -- see build_sample_loop_filter) tempo and pitch move together. The
+# eight ubrukte_samples chops sit at 73.6 to 122.4 BPM natively; against a fixed
+# 92 that is ratio 1.25 down to 0.75, which is +3.9 to -4.9 SEMITONES of
+# transposition applied purely as a side effect of a number nobody chose per
+# track. It flattens what separates the chops and smears the transients of
+# exactly the ones that were most distinct -- eight records rendered as one.
+#
+# Rendering at the chop's own tempo makes the ratio 1.0: no stretch, no
+# transposition, and the tempo variety that was in the source material comes
+# back for free. Folded into a single octave first, because a detector reports a
+# period and a period reads as half or double its true value -- the same trap
+# acapella.rb's BPM_RANGE fell into. 70-140 has no hole in it.
+#
+# BPM= and a sonic preset still win: an operator naming a tempo means it.
+SAMPLE_BPM_FLOOR = 70.0
+SAMPLE_BPM_CEILING = 140.0
+
+def fold_to_octave(bpm)
+  value = bpm.to_f
+  return unless value.positive?
+
+  value *= 2.0 while value < SAMPLE_BPM_FLOOR
+  value /= 2.0 while value >= SAMPLE_BPM_CEILING
+  value
+end
+
+def sample_native_bpm(track)
+  return unless ENV.fetch("SAMPLE_NATIVE_BPM", "1") != "0"
+
+  entry = sample_loop_entry(track) or return
+  return unless File.file?(entry[:path].to_s)
+
+  fold_to_octave(entry[:bpm])
+rescue StandardError => e
+  dmesg("native bpm unavailable: #{e.class}", unit: "smpl0", parent: "dilla0")
+  nil
+end
+
+def resolve_bpm(preset, track, sonic)
   env_bpm = ENV["BPM"]&.to_f
   sonic_bpm = sonic&.dig("synth", "bpm")&.to_f
-  base = if env_bpm&.positive?
+
+  # USER_PINNED_ENV, not ENV -- the same distinction bpm_scale draws, and for
+  # the same reason. The style tables write ENV["BPM"] themselves, so gating on
+  # ENV would mean the record's own tempo never won against a default nobody
+  # typed. Only a tempo the operator actually named outranks the record.
+  pinned = USER_PINNED_ENV["BPM"].to_s.strip.match?(/\A\d/)
+  native = (sample_native_bpm(track) unless pinned)
+
+  base = if pinned
            env_bpm
+         elsif native
+           dmesg(format("tempo from the record: %.1f bpm (no stretch)", native), unit: "smpl0", parent: "dilla0")
+           native
          elsif sonic_bpm&.positive?
            sonic_bpm
+         elsif env_bpm&.positive?
+           env_bpm
          else
            preset.fetch(:bpm, DEFAULT_BPM).to_f
          end
@@ -4888,16 +4942,39 @@ def sample_bed_band_limited?(threshold = -9.0)
   limited
 end
 
-def sample_loop_for(track)
-  raw = ENV["SAMPLE_LOOP"].to_s
+# SAMPLE_LOOP is a PATH, and "1" is not one.
+#
+# The variable names a specific file to use as the bed; empty means "look one up
+# for this track". It reads like a switch, so it gets set like a switch, and
+# SAMPLE_LOOP=1 sends it looking for a file called "1". That file does not
+# exist, File.file? says so, and the method returns nil -- no bed, no warning,
+# a track that renders perfectly and contains no sample at all.
+#
+# Thirteen beats were rendered that way before anyone noticed, every one of them
+# with the flag set to turn samples ON.
+#
+# The truthy words now mean what everybody assumes they mean.
+SAMPLE_LOOP_ON = %w[1 true yes on].freeze
+
+# Which loop a track would use, WITHOUT processing it.
+#
+# Split out of sample_loop_for so the tempo can ask which record is going under
+# the beat before deciding what tempo the beat is. sample_loop_for morphs and
+# convolves on the way out, which is far too expensive to run from resolve_bpm
+# and would recurse besides.
+def sample_loop_entry(track)
+  raw = ENV["SAMPLE_LOOP"].to_s.strip
   return if raw == "0"
 
-  entry = if raw.empty?
-            key = track.to_s.downcase.tr("-", "_").to_sym
-            TRACK_SAMPLE_LOOPS[TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key)] || chopped_bed_for(track)
-          else
-            { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f }
-          end
+  raw = "" if SAMPLE_LOOP_ON.include?(raw.downcase)
+  return { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f } unless raw.empty?
+
+  key = track.to_s.downcase.tr("-", "_").to_sym
+  TRACK_SAMPLE_LOOPS[TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key)] || chopped_bed_for(track)
+end
+
+def sample_loop_for(track)
+  entry = sample_loop_entry(track)
   return unless entry && File.file?(entry[:path].to_s)
 
   # Memoised: sample_loop_for is called from several places in one render, and
@@ -5576,6 +5653,50 @@ def synth_audition!
                               duration: 3.4, seed: stable_hash(patch.to_s))
     puts out ? "  #{patch.to_s.ljust(14)} #{out.sub("#{__dir__}/", '')}" : "  #{patch}: produced silence"
   end
+end
+
+# The progression played on real oscillators.
+#
+# Every other pad in this engine is FluidSynth reading a soundfont: a recording
+# of a sound somebody else made, which can be equalised afterwards and not much
+# else. lib/analog_synth.rb is the other thing -- oscillators, a four-pole
+# resonant ladder, and envelopes, which is what an analogue synthesiser is. It
+# was built and measured and then left unwired, because connecting it as THE pad
+# source means touching every patch table in the engine.
+#
+# This is the smaller version of that, and it is the version worth having: it
+# renders the same chords as a SECOND pad, underneath the sampled one. Two
+# instruments playing the same harmony is not a compromise, it is how a record
+# gets depth -- the soundfont has the detail of a real instrument and this has
+# the movement a recording cannot have, because its filter opens on every chord.
+#
+# warm_pad is the patch: two detuned saws and a square an octave down, filter
+# opening over a second and a half, so the chord arrives rather than starts.
+def analog_pad_file(pads, cfg, n_bars, beat_p)
+  return nil if pads.nil? || pads.empty? || ENV["ANALOG_PAD"] == "0"
+
+  bar = beat_p * 4.0
+  chord_bars = [cfg[:chord_bars] || 2, 1].max
+  # Held for its full length plus a little, so consecutive chords overlap the
+  # way a hand does not lift between them.
+  hold = (bar * chord_bars) * 1.04
+  notes = []
+  n_bars.times do |b|
+    next unless (b % chord_bars).zero?
+
+    chord = pads[(b / chord_bars) % pads.length]
+    Array(chord[:hz]).each do |hz|
+      next unless hz.to_f.positive?
+
+      notes << { hz: hz.to_f, at: (b * bar).round(4), held: hold.round(4), gain: 0.55 }
+    end
+  end
+  return nil if notes.empty?
+
+  AnalogSynth.render!(notes, dest: dilla_render_tmp("analogpad"),
+                      patch: ENV.fetch("ANALOG_PAD_PATCH", "warm_pad").to_sym,
+                      duration: (n_bars * bar) + 2.0,
+                      seed: stable_hash("analogpad:#{cfg[:track]}"))
 end
 
 # The records this flip may cut from: its own, plus one other.
@@ -19398,6 +19519,15 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     bass_bus_idx = idx
     idx += 1
   end
+  # The analogue pad, rendered before the graph is built so it can be an input
+  # like any other file. Pure Ruby, so it costs about a second.
+  analog_pad = analog_pad_file(pads, cfg, n_bars, beat_p)
+  analog_idx = nil
+  if analog_pad && File.file?(analog_pad)
+    command += ["-i", analog_pad]
+    analog_idx = idx
+    idx += 1
+  end
   loop_entry = sample_loop_for(cfg[:track])
   # The flip. Cuts the record into pieces and plays a new line out of them,
   # against this track's own chords, instead of repeating the record. What comes
@@ -19589,6 +19719,17 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     filt << "[dr_bass]anullsink" unless mix_labels.include?("[bassducked]")
   end
 
+  if analog_idx
+    filt << apply_section_envelope(
+      "[#{analog_idx}:a]aformat=channel_layouts=stereo,highpass=f=70,lowpass=f=6800," \
+      "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS[analogpad]",
+      :harm, n_bars, beat_p * 4.0
+    )
+    mix_labels << "[analogpad]"
+    mix_weights << ENV.fetch("ANALOG_PAD_WEIGHT", "0.62").to_s
+    dmesg("analog pad: #{ENV.fetch('ANALOG_PAD_PATCH', 'warm_pad')} on real oscillators",
+          unit: "harm0", parent: "dilla0")
+  end
   if stem_map[:mids]
     pan_fx = cfg[:stereo_pan] ? ",apulsator=mode=sine:hz=#{pan_hz}:amount=0.38" : ""
     filt << "[#{stem_map[:mids]}:a]aformat=channel_layouts=stereo,atempo=#{stem_tempo},atrim=0:#{duration},asetpts=PTS-STARTPTS," \
