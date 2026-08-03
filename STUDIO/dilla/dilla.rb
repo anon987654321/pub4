@@ -2309,6 +2309,10 @@ def pick_patch_from_pool(pool, seed: 0)
     warm = ids.reject { |i| metallic_patch?(synth_patch_by_id(i)) }
     ids = warm unless warm.empty?
   end
+  unless choral_pads_allowed?
+    grounded = ids.reject { |i| choral_patch?(synth_patch_by_id(i) || {}) }
+    ids = grounded unless grounded.empty?
+  end
 
   rng = Random.new(patch_cycle_seed(seed))
   synth_patch_by_id(ids[rng.rand(ids.length)])
@@ -2430,6 +2434,38 @@ def lead_patch_allowlist(role)
   end
 end
 
+# The General MIDI programs that are a choir, a string section or a horn line.
+#
+# Choir Aahs and Voice Oohs are literally that; 44 to 49 are the orchestral
+# strings and the harp; 60 to 62 are the horns. Held on a slow envelope, stacked
+# three or four deep, they are a church, and that is what the pads sounded like.
+#
+# Dilla used strings and voices constantly -- but sampled off records, arriving
+# with a room and a tape and a player attached. A general-MIDI string ensemble
+# has none of that. It is the sound of the preset, and it is the one texture
+# that pulls this engine away from a beat and toward library music.
+#
+# Set CHORAL_PADS=1 to allow them back.
+CHORAL_GM_PROGRAMS = [44, 45, 46, 47, 48, 49, 52, 53, 54, 60, 61, 62].freeze
+
+def choral_patch?(patch)
+  CHORAL_GM_PROGRAMS.include?(patch[:program])
+end
+
+def choral_pads_allowed?
+  ENV["CHORAL_PADS"] == "1"
+end
+
+# Filters a pool of patches, never down to nothing -- the same rule the other
+# filters here follow, because an empty pool is a crash and a slightly wrong
+# patch is a Tuesday.
+def reject_choral(pool)
+  return pool if choral_pads_allowed? || pool.empty?
+
+  grounded = pool.reject { |p| choral_patch?(p) }
+  grounded.empty? ? pool : grounded
+end
+
 def weighted_patch_pick(role, seed: nil, soulful: true)
   pool = SYNTH_PATCH_BY_ROLE.fetch(role, [])
   return if pool.empty?
@@ -2449,6 +2485,9 @@ def weighted_patch_pick(role, seed: nil, soulful: true)
     warm = pool.reject { |p| metallic_patch?(p) }
     pool = warm unless warm.empty?
   end
+  # Both selection paths, for the reason the comment above gives: a filter
+  # applied to only one of them is a filter that does not work.
+  pool = reject_choral(pool)
   return if pool.empty?
   rng = Random.new(seed || @render_seed || rand(1_000_000))
   total = pool.sum { |p| p[:weight] || 1.0 }
@@ -11285,6 +11324,12 @@ DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 
 # Canonical dilla DNA (kit-forward). Comfort is an overlay table, not a mode.
 # RENDER_MODE aliases camel|beat|punch → dilla; comfort|sofa → dilla+flags.
+# How slow a chord is allowed to speak and to fade in this style, whatever a
+# progression preset asks for. Both are generous compared with a real Rhodes --
+# the point is to stop a swell, not to forbid sustain.
+DILLA_PAD_ATTACK_CEILING = (ENV["PAD_ATTACK_CEILING"] || 120).to_i
+DILLA_PAD_RELEASE_CEILING = (ENV["PAD_RELEASE_CEILING"] || 1400).to_i
+
 DILLA_STYLE_DEFAULTS = {
   # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
   "TRACK" => "pedal_e_descent",
@@ -11307,8 +11352,8 @@ DILLA_STYLE_DEFAULTS = {
   "PAD_VOICE" => "stack_soul",
   # Held pads; arps live on the lead stem (stream rotates LEAD_ARP_MODE).
   "PAD_ARP_MODE" => "held",
-  "PAD_ATTACK" => "900",
-  "PAD_RELEASE" => "2800",
+  "PAD_ATTACK" => "25",
+  "PAD_RELEASE" => "700",
   "PAD_LEGATO_VAR" => "1",
   "PAD_LAYERS" => "1",
   # Quieter choir so Rhodes/Prophet aren't buried under oohs.
@@ -12394,10 +12439,23 @@ def reassert_dilla_style_locks!
 
     style_env_write!(key, DILLA_STYLE_DEFAULTS[key], force: true, label: "DILLA_STYLE_LOCK")
   end
+  # A ceiling, not just a floor.
+  #
+  # These two lines took the LARGER of the setting and the style default, so the
+  # pad envelope could only ever get slower. Progression presets asking for a
+  # 1400 ms attack won every time, and the style that is supposed to sound like
+  # a played Rhodes chord came out as a swell -- nine tenths of a second to
+  # speak, three seconds to die away. Held stacked chords swelling like that is
+  # a church organ, which is what the tracks sounded like.
+  #
+  # A struck electric piano speaks in a few milliseconds and is gone inside a
+  # bar. The floor still applies, so nothing gets unnaturally clicky, but the
+  # ceiling now stops a preset from turning the kit's own style into ambient
+  # music.
   atk = [ENV["PAD_ATTACK"].to_i, DILLA_STYLE_DEFAULTS["PAD_ATTACK"].to_i].max
   rel = [ENV["PAD_RELEASE"].to_i, DILLA_STYLE_DEFAULTS["PAD_RELEASE"].to_i].max
-  ENV["PAD_ATTACK"] = atk.to_s
-  ENV["PAD_RELEASE"] = rel.to_s
+  ENV["PAD_ATTACK"] = [atk, DILLA_PAD_ATTACK_CEILING].min.to_s
+  ENV["PAD_RELEASE"] = [rel, DILLA_PAD_RELEASE_CEILING].min.to_s
 end
 alias reassert_camel_beauty_locks! reassert_dilla_style_locks!
 

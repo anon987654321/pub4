@@ -271,14 +271,32 @@ module SampleFlip
   #
   # They are written out rather than generated because rhythm is the one thing
   # random numbers are reliably bad at.
+  # Three or four notes a bar, not six.
+  #
+  # The first version of these ran to six and seven hits, and the result was
+  # busy in a way that is the opposite of the intent -- a line playing on most
+  # of the sixteenths leaves the drums no room and gives the ear nothing to
+  # anticipate. What makes a sampled figure sit is the silence around it: the
+  # bar has sixteen places a note could go and only three of them are used, so
+  # each one lands.
+  #
+  # Written out rather than generated, because rhythm is the one thing random
+  # numbers are reliably bad at.
   FIGURES = [
-    [0, 3, 6, 8, 11, 14],       # the common one: on the one, then pushing
-    [0, 2, 5, 8, 10, 13],       # earlier in the second half
-    [0, 6, 8, 14],              # sparse, lets the drums carry it
-    [0, 3, 4, 8, 11, 12, 14],   # busier, doubles on 3-4 and 11-12
-    [2, 5, 8, 11, 14],          # starts late, no downbeat -- floats
-    [0, 4, 7, 8, 12, 15],       # answers itself across the halves
+    [0, 6, 11],           # the common one: downbeat, then pushing late
+    [0, 3, 8],            # a quick pair, then the halfway mark
+    [0, 8],               # two notes in a bar; lets the drums carry it
+    [0, 6, 8, 14],        # the busiest here, and still only four
+    [3, 8, 11],           # no downbeat -- floats over the bar line
+    [0, 7, 10],           # answers itself across the halves
   ].freeze
+
+  # How often a repetition of the phrase drops out entirely.
+  #
+  # Even three notes a bar becomes wallpaper if it never stops. A phrase that
+  # goes missing for two bars and comes back is heard again on its return;
+  # one that plays for sixteen bars straight is heard once, at the start.
+  REST_CHANCE = 0.22
 
   # A phrase is two bars long. Long enough to say something, short enough that
   # the ear has heard it twice before the section turns over.
@@ -338,13 +356,18 @@ module SampleFlip
   # note added on the final sixteenth, which leans into the next bar's downbeat.
   # A phrase that ends early and then pushes is a phrase that wants continuing.
   def answer(figure)
+    dropped = figure.last
     kept = figure[0...-1]
-    # A pickup the call does not already contain. Adding a fixed sixteenth here
-    # produced no change at all whenever the figure already ended on it -- the
-    # response came out identical to the call, and the whole call-and-response
-    # was a no-op that read correctly in the source.
-    pickup = [14, 13, 15, 11].find { |p| !kept.include?(p) }
-    (kept + [pickup].compact).sort
+    # A pickup that is neither already in the call nor the very note just
+    # dropped. Both exclusions were learned the same way, twice: a fixed
+    # sixteenth changed nothing when the figure already ended on it, and then
+    # choosing "any slot not in the remainder" happily chose back the note that
+    # had just been removed. Either way the response came out identical to the
+    # call and the call-and-response was a no-op that reads correctly in the
+    # source. Hence the guarantee below rather than trust.
+    pickup = [14, 13, 15, 11, 10].find { |p| !kept.include?(p) && p != dropped }
+    result = (kept + [pickup].compact).sort
+    result == figure ? kept : result
   end
 
   # Lays the phrase out across the whole track.
@@ -363,6 +386,10 @@ module SampleFlip
     previous = nil
 
     (0...bars).step(MOTIF_BARS).each_with_index do |bar0, repetition|
+      # Sit one out now and then -- but never the first, which is where the
+      # listener learns the phrase.
+      next if repetition.positive? && rng.rand < REST_CHANCE
+
       phrase = ((repetition % 4) == 3) ? variant : motif
       phrase.each do |note|
         bar = bar0 + note[:bar]
