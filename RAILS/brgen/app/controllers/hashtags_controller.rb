@@ -1,0 +1,18 @@
+# frozen_string_literal: true
+
+class HashtagsController < ApplicationController
+  allow_unauthenticated_access only: :show
+
+  def show
+    normalized = params[:name].to_s.downcase.gsub(/[^a-z0-9_]/, "")
+    @hashtag = Hashtag.find_by(name: normalized)
+    raise ActiveRecord::RecordNotFound unless @hashtag
+
+    scope = Post.kept
+                .where(id: Tagging.where(hashtag_id: @hashtag.id, taggable_type: "Post").select(:taggable_id))
+                .hot
+                .with_attached_image
+                .includes(:user, :community, :votes)
+    @pagy, @posts = pagy(scope)
+  end
+end

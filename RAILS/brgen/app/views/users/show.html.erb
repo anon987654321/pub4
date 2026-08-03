@@ -15,6 +15,8 @@
     <% else %>
       <%= button_to t("block.block", default: "Block"), block_user_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
     <% end %>
+  <% elsif authenticated? && Current.user == @user %>
+    <%= link_to t("profile.edit", default: "Edit profile"), edit_user_path(@user), class: "btn btn-ghost btn-sm" %>
   <% end %>
 
   <% if @user.dating_profile.present? %>

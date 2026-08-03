@@ -12,8 +12,13 @@ class Notification < ApplicationRecord
   scope :unread, -> { where(read_at: nil) }
   scope :recent, -> { order(created_at: :desc) }
 
+  # High-signal kinds also fire a browser push; likes/reactions stay in-app only
+  # so the lock screen doesn't become noise.
+  PUSHABLE_KINDS = %w[message match reply mention follow].freeze
+
   after_create_commit do
     broadcast_prepend_later_to "brgen:notifications:#{user_id}"
+    WebPushJob.perform_later(id) if PUSHABLE_KINDS.include?(kind)
   end
 
   def read?

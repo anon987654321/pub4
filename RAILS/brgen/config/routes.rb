@@ -22,6 +22,8 @@ Rails.application.routes.draw do
   post   "communities/:community_id/join" => "community_memberships#create",  as: :join_community
   delete "communities/:community_id/join" => "community_memberships#destroy", as: :leave_community
 
+  get "tags/:name" => "hashtags#show", as: :hashtag, constraints: { name: /[A-Za-z0-9_]+/ }
+
   # Legal / info pages, reachable on every city domain without an account
   # (GDPR + TradeDoubler both require them public). See PagesController.
   %w[privacy terms cookies].each do |legal_page|
@@ -80,7 +82,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :users, only: %i[show new create] do
+  resources :users, only: %i[show new create edit update] do
     member do
       post :follow, to: "follows#create"
       delete :unfollow, to: "follows#destroy"

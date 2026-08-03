@@ -14,6 +14,22 @@ class UsersController < ApplicationController
     @active_block  = authenticated? && Current.user != @user && Current.user.blocking?(@user)
   end
 
+  # Edit/update your own profile — always Current.user, never someone else's row.
+  def edit
+    require_user_session
+    @user = Current.user
+  end
+
+  def update
+    require_user_session
+    @user = Current.user
+    if @user.update(profile_params)
+      redirect_to main_app.user_path(@user), notice: t("profile.updated", default: "Profile updated.")
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
   def new
     @user = User.new
   end
@@ -57,6 +73,10 @@ class UsersController < ApplicationController
   rescue StandardError => error
     Rails.logger.warn("guest merge on signup failed: #{error.message}")
     false
+  end
+
+  def profile_params
+    params.require(:user).permit(:username, :display_name)
   end
 
   def user_params
