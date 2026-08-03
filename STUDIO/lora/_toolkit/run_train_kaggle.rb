@@ -287,9 +287,23 @@ def notebook_source(options, dataset_slug)
     # as true and still starts the box with no DNS unless the account is
     # phone-verified. Without this check the first symptom is apt retrying every
     # Ubuntu mirror until it gives up, which cost an hour of quota to learn once.
+    # Phone verification gates the GPU as well as the network, so report both
+    # from one run: a box with neither has not been verified, and a box with a
+    # GPU but no DNS is a different problem worth telling apart.
+    # An unverified box has no nvidia-smi at all, so this raises rather than
+    # returning non-zero — the reason a probe has to catch, not check a code.
+    try:
+        gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
+                             capture_output=True, text=True)
+        gpu = gpu.stdout.strip() if gpu.returncode == 0 else "ABSENT"
+    except FileNotFoundError:
+        gpu = "ABSENT (no nvidia-smi)"
+    print("ok: GPU", gpu or "ABSENT")
+
     socket.setdefaulttimeout(10)
     try:
         socket.gethostbyname("huggingface.co")
+        print("ok: DNS")
     except OSError:
         sys.exit("warn: this notebook has no DNS, so nothing can be downloaded. "
                  "Kaggle grants internet only to phone-verified accounts even "
