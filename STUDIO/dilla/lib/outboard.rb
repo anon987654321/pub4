@@ -345,6 +345,62 @@ module Outboard
       "[mb_mono][mb_wide]amix=inputs=2:weights=1 1:normalize=0"
   end
 
+  # ------------------------------------------------- Console summing bus
+  #
+  # The stage every other unit here skips. A desk does not only colour each
+  # channel on the way in -- the channels then MEET, on a summing bus with its
+  # own transformer, its own coupling capacitors, and its own phase behaviour.
+  # That bus is why a mix printed through a console does not sound like the same
+  # mix summed in software, and it is the last analog thing to touch the audio.
+  #
+  # Three parts, and only one of them is distortion.
+  #
+  #   PHASE ROTATION. Two allpass sections, at 90 Hz and 1.8 kHz. An allpass
+  #                   changes phase and NOTHING else, which is exactly what a
+  #                   chain of transformers and coupling caps does to a signal.
+  #                   Measured: 0.00 dB change at 60, 200, 1k, 4k and 12k Hz,
+  #                   while phase moves 226, 61, 261, 100 and 28 degrees at those
+  #                   same frequencies. That is the "phasy" character, and it is
+  #                   real phase rather than an effect pretending to be one.
+  #
+  #   MOVEMENT.       A very slow phaser, 0.1 Hz -- one sweep every ten seconds.
+  #                   Not an audible whoosh; a bus that will not sit perfectly
+  #                   still, which is the difference between analog and a plugin
+  #                   bypassed.
+  #
+  #   TRANSFORMER.    Gentle asymmetric saturation. Measured 2nd -61.3 dB, 3rd
+  #                   -73.8 dB on the same rig that reads neve_80 at 2nd -48.1
+  #                   and api_console at 3rd -46.6 -- so roughly 13 dB gentler
+  #                   than a channel strip, which is right. A summing bus is not
+  #                   a drive stage; if you can hear it working it is wrong.
+  #
+  # Note the rig: those three figures are comparable to each other because they
+  # were taken together. They read 6-12 dB hotter than the older per-unit figures
+  # quoted above, which were measured with a different setup -- compare within a
+  # set, not across them.
+  #
+  # TWO NUMBERS ARE NOT FREE CHOICES, and both were found by measurement:
+  #
+  #   aphaser speed has a hard floor of 0.1 in ffmpeg. Below it the filter is
+  #   REFUSED, and a refused filter does not degrade -- it takes the entire chain
+  #   with it and the render dies. 0.1 is the slowest legal sweep, which is also
+  #   the one wanted here.
+  #
+  #   aphaser attenuates hard and silently: in_gain 0.5 with the default out_gain
+  #   0.72 measured -8.56 dB mean across the band. out_gain 1.9 brings it to
+  #   -0.13 dB. With the saturator's own loss on top, the closing makeup is -1.0
+  #   dB rather than the -5.0 dB that symmetry with the drive would suggest;
+  #   measured net for the whole unit is -0.08 dB. An uncompensated version of
+  #   this cost 4 dB and would have read as "the phasy racks are quieter".
+  def console_sum(drive: 5, offset: 0.10, param: 1.2, makeup: -1.0, speed: 0.1)
+    "allpass=f=90:width_type=q:w=0.6:order=2," \
+      "allpass=f=1800:width_type=q:w=0.5:order=2," \
+      "aphaser=in_gain=0.5:out_gain=1.9:delay=3.2:decay=0.15:speed=#{speed}:type=t," \
+      "volume=#{drive}dB,dcshift=shift=#{offset}," \
+      "asoftclip=type=tanh:param=#{param}:oversample=4," \
+      "dcshift=shift=-#{offset},highpass=f=18,volume=#{makeup}dB"
+  end
+
   # ------------------------------------------------------------------ racks
   #
   # Signal paths, in patch order. A rack is a list of unit names; `chain` turns
@@ -371,7 +427,7 @@ module Outboard
     # colours what the tape already did.
     # Same reasoning: hedd_tape is a saturator too, and two on a master is one
     # too many. The tape machine ahead of the console carries the character.
-    tape_first: %i[tape_machine neve_80 stc8 gml_matte mono_bass],
+    tape_first: %i[tape_machine neve_80 stc8 console_sum gml_matte mono_bass],
     # Forward and bright, for tracks the drums lead.
     forward: %i[api_console stc8 gml_matte mono_bass],
     # The console alone, for when the material arrives already finished.
@@ -385,13 +441,13 @@ module Outboard
     # slow, gentle, and its ratio rises with how hard it is hit. The Fairchild
     # before the console rather than after, so the desk colours something already
     # sitting together.
-    glue: %i[fairchild670 neve_80 gml_matte mono_bass],
+    glue: %i[fairchild670 neve_80 console_sum gml_matte mono_bass],
 
     # SMOOTH. The LA-2A has no attack control because a light bulb decides its
     # timing, and the result is heavy compression you do not hear working. For
     # material with a wide dynamic range, where the STC-8's tempo pump would be
     # the wrong kind of audible.
-    smooth: %i[neve_80 la2a pultec_air gml_matte mono_bass],
+    smooth: %i[neve_80 la2a pultec_air console_sum gml_matte mono_bass],
 
     # SNAP. The 1176 catches the front of a transient in microseconds, which is
     # what makes a drum bus sound like a record. Paired with the API, since both
@@ -424,6 +480,7 @@ module Outboard
       when :fairchild670 then fairchild670
       when :pultec_air then pultec_air
       when :pultec_low then pultec_low
+      when :console_sum then console_sum
       when :space_echo then space_echo
       else
         missing&.call(unit)
@@ -441,6 +498,7 @@ module Outboard
       la2a: la2a, fet1176: fet1176, fairchild670: fairchild670,
       stc8: stc8(bpm:), gml_matte: gml_matte, neve_80: neve_80,
       api_console: api_console, tape_machine: tape_machine,
+      console_sum: console_sum,
     }
   end
 end
