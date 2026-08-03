@@ -40,6 +40,9 @@ class Dating::HomeController < Dating::BaseController
     disliked_ids = Dating::Dislike.where(disliker_id: Current.user.id).pluck(:dislikee_id)
     excluded = (liked_ids + disliked_ids + [ Current.user.id ]).uniq
     scope = scope.where.not(user_id: excluded)
+    # Orientation: mutual gender preference, so it's a dating app rather than a
+    # random-person feed. See Dating::Profile.oriented_for.
+    scope = scope.oriented_for(profile) if profile
     if (neigh = profile&.neighborhood)
       scope = scope.in_neighborhood(neigh)
     end

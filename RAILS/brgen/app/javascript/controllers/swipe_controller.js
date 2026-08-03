@@ -135,11 +135,11 @@ export default class extends Controller {
               this.currentCard.style.transform = ""
               this.currentCard.style.opacity = ""
             }
-            // Optional: flash success or update matches count
-            if (isLike && Math.random() > 0.7) { // simulate possible mutual
-              alert("It\'s a match! Check your matches.")
-              window.location.href = "/dating/matches"  // or Turbo visit
-            }
+            // A real match is decided on the server: Dating::Like#check_mutual_match
+            // creates a Dating::Match on a reciprocated like, and Match#announce_match
+            // broadcasts the overlay to both users over the match stream this page
+            // already subscribes to. No client-side guessing — a match appears only
+            // when it is actually mutual.
           }, 180)
         }
       } catch (err) {
