@@ -119,30 +119,64 @@ Highest-value restorations, all mechanically detectable and currently unenforced
 
 | | catalog size | resolved | dangling |
 |---|---|---|---|
-| before patch `0001` | 9 | 2 | 70 |
-| after patch `0001` | 142 | 69 | 3 |
+| live tree (`rules.yml` → `structural_ops.ops`) | 9 | 2 | **70** |
+| hypothetical, patch `0001` applied | 142 | 69 | 3 |
 
-The catalog restoration repaired 67 dangling references — before it, 70 of 72 operations
-pointed at nothing (a graph 97% broken, invisible at section level). Strongest evidence
-the ops restoration was load-bearing, not cosmetic.
+**Resolved 2026-08-03 — patch `0001` is unapplied, everywhere.** The catalog note below
+asked where the 142-op catalog lives. It doesn't: no file in the repo defines
+`move_method` or `clarify_purpose`, on any branch, at any SHA. The only operations
+catalog in the tree is `rules.yml`'s `structural_ops.ops` with **9** ops, of which
+exactly two — `delete` and `decouple` — resolve. **70 of 72 dangle today.** The
+before/after numbers were computed, not shipped.
 
-Three remain dangling, HEAD-native (not v110): `flatten_ui`, `prefer_title_type_token`,
-`wire_i18n_for_literals` — add to `structural_ops`.
+The 142 reconstructs as the v110 fossil's 136 operations plus 6 HEAD-native. That fossil
+is recoverable: `MASTER/data/archive/master.v3.yml`, deleted at `a81006e30` (2026-07-25)
+as an "unreferenced legacy config snapshot". Restoring its operations does resolve 69/72,
+leaving exactly `flatten_ui`, `prefer_title_type_token`, `wire_i18n_for_literals`.
 
-> **Codify note (2026-08-03, `1eaeefec1`):** the operations catalog that resolves these
-> 72 ops (`move_method`, `simplify`, …) was not found under `MASTER/` at this SHA — no
-> file defines `move_method`, and there is no `patches/` dir. Either patch `0001` is
-> unapplied on this branch or the catalog lives outside `MASTER/data`. The before/after
-> ops numbers above reflect the *patched* state; **confirm the catalog's location/merge
-> status** before acting on the linkage priorities.
+But the fossil also settles what v110's linkage was worth. Its smells are bare keys with
+nil values (`deep_nesting:` — no regex, no severity, no detector) and its operations are
+one-line glosses (`rename: "reveal intent"`). The meta's "every smell has a detector,
+operations never orphaned" was aspiration, not structure. **v110 was a vocabulary; HEAD is
+executable rules.** The loss runs opposite to how this audit reads it.
+
+Correspondingly, `operation:` is inert at HEAD — `PrincipleMap::Queries#operation_for` has
+zero callers in `lib/`, `core/` or `bin/`. Restoring the catalog closes the reference graph
+on paper while nothing reads it. Do it only alongside a consumer, or delete the field.
 
 ## Priority (revised by this audit)
 
-1. **Add the 3 remaining dangling ops** — trivial, closes the graph to 72/72.
-2. **9 mechanically-detectable smells** above, starting with `deep_nesting` /
-   `complex_conditional`.
-3. **`sectionitis_prevention` + `boring_technology`** — checkable, and both name failure
-   modes this repo demonstrably has.
-4. **Work the 86 `status: gap` principles** — MASTER already lists them; they need
-   `rule_ids`, not discovery.
-5. Leave the 39 aesthetic/architectural principles as persona prose.
+Reordered 2026-08-03 after measuring against the live registry rather than against rule
+names. The original list is kept struck through, because *why* it was wrong is the
+reusable lesson: it matched v110's vocabulary against 225 declarative rule ids in
+`data/rules/` and never loaded the registry, which holds **180 executable rule classes** —
+a different population. Nine of them exist only in Ruby, and they are precisely the
+mechanical ones the audit called absent.
+
+1. ~~Add the 3 remaining dangling ops~~ → **70 dangle, not 3**, and `operation:` has no
+   reader. Decide whether the field earns a consumer before restoring 136 glosses to feed
+   it.
+2. ~~9 mechanically-detectable smells~~ → **6 already ship**: `deep_nesting` is
+   `NESTING_DEPTH` (Prism AST, depth > 4), `complex_conditional` is
+   `CYCLOMATIC_COMPLEXITY` (> 10), `mixed_abstraction` is `ONE_ABSTRACTION_LEVEL`,
+   `unvalidated_input` is `DEFENSIVE_INPUT`/`PARSE_DONT_VALIDATE`/`COMPLETE_MEDIATION`,
+   `shared_mutable_state` is `NO_HIDDEN_GLOBAL_STATE`/`IMMUTABLE`,
+   `excessive_configuration` is `CONVENTION_OVER_CONFIG`. Genuinely missing:
+   `hard_to_delete`, `low_cohesion`, `resource_waste`.
+3. ~~`sectionitis_prevention` + `boring_technology`~~ → `sectionitis_prevention` **ships**
+   as `CONFIG_HIERARCHY` (YAML/JSON depth > 4, duplicate keys, top-level key ceiling).
+   `boring_technology` (dependency churn) is a real gap.
+4. **Reconciliation, done 2026-08-03 (`a4d37f5da`)** — 32 of the 86 gaps were already
+   enforced under other names; `covered` 51 → 83, `gap` 86 → 51, integrity still 0.
+   Three entries (`knowledge_biases`, `output_biases`, `patterns`) were fossil
+   `biases:`/`patterns:` section keys swept into `principles:` by the merge, and were
+   dropped: 138 → 135.
+5. **Build the two coherent clusters in the remaining 51.** Security/OpenBSD (6) and test
+   discipline (5) — *no registered rule touches tests at all*. Started with
+   `STRONG_PARAMETERS` (`6bdfdaf39`).
+6. Leave the ~30 architecture/aesthetic principles as persona prose. Unchanged, and the
+   audit's soundest call.
+
+The reverse invariant is the one still open: `rules.yml:190` declares "every registered
+rule id traces to a `principle_map` entry". Before reconciliation 45 of 180 did; after, 79.
+It is violated **101 times** and nothing checks it.
