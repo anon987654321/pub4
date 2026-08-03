@@ -303,6 +303,11 @@ module SampleFlip
   # texture of the track.
   REVERSE_CHANCE = 0.30
 
+  # How often a downbeat or halfway slot takes a voice instead of an instrument.
+  # Two in five of the eligible slots, and only two slots a bar are eligible, so
+  # a voice appears roughly once a bar at most.
+  VOCAL_CHANCE = 0.40
+
   # A phrase is two bars long. Long enough to say something, short enough that
   # the ear has heard it twice before the section turns over.
   MOTIF_BARS = 2
@@ -385,12 +390,16 @@ module SampleFlip
     return [] if slices.empty?
 
     rng = Random.new(seed)
-    # Reversal draws from its own stream. Sharing one meant that adding the
-    # reverse decision consumed numbers the rest-and-pick logic was using, and
-    # every other choice in the arrangement shifted -- the note count halved
-    # from a change that was supposed to affect nothing but direction. A
+    # Reversal and voice each draw from their own stream. Sharing one meant that
+    # adding the reverse decision consumed numbers the rest-and-pick logic was
+    # using, and every other choice in the arrangement shifted -- the note count
+    # halved from a change that was supposed to affect nothing but direction. A
     # decision that alters unrelated decisions is not a knob, it is a hazard.
     flip_rng = Random.new(seed ^ 0x7e7e)
+    vocal_rng = Random.new(seed ^ 0x3131)
+    vocals = slices.select { |s| s[:vocal] }
+    instruments = slices.reject { |s| s[:vocal] }
+    instruments = slices if instruments.empty?
     motif = build_motif(rng)
     variant = build_motif(rng)
     events = []
@@ -411,8 +420,20 @@ module SampleFlip
 
         # The degree, wrapped into the chord actually playing. A shape asking
         # for its fifth note over a three-note chord gets the second one.
-        target = tones[note[:degree] % tones.length]
-        pick = best_slice(slices, target, previous, rng)
+        # A voice, or an instrument?
+        #
+        # Vocal fragments are punctuation, not melody. They land on the downbeat
+        # and the halfway mark -- where a word would fall if someone were talking
+        # over the beat -- and never often enough to become the tune. Donuts uses
+        # them this way throughout: a syllable, often too short to make out, as
+        # rhythm rather than as singing.
+        want_vocal = vocals.any? && [0, 8].include?(note[:step]) && vocal_rng.rand < VOCAL_CHANCE
+        pool = want_vocal ? vocals : instruments
+        pick = best_slice(pool, target = tones[note[:degree] % tones.length], previous, rng)
+        # A voice that cannot reach the note within two semitones is better left
+        # out than dragged there, so fall back to the instruments rather than
+        # widening the retune.
+        pick ||= best_slice(instruments, target, previous, rng) if want_vocal
         next unless pick
 
         # A reversed piece is an event, not a texture. On the downbeat it would
@@ -421,6 +442,7 @@ module SampleFlip
         # next downbeat instead of covering one.
         reverse = note[:step] >= 10 && flip_rng.rand < REVERSE_CHANCE
         events << { bar:, step: note[:step], slice: pick[:slice], reverse:,
+                    vocal: pick[:slice][:vocal],
                     shift: pick[:shift], gain: note[:accent], degree: note[:degree] }
         previous = pick[:slice][:index]
       end
@@ -428,11 +450,20 @@ module SampleFlip
     events
   end
 
+  # How far a VOICE may be retuned.
+  #
+  # Much less than an instrument. A trumpet moved four semitones by varispeed is
+  # a trumpet in a different key; a voice moved four semitones is a different
+  # person, and usually a comic one. Two is the limit before the ear starts
+  # hearing the machine instead of the singer.
+  MAX_VOCAL_SHIFT = 2
+
   # The piece nearest the wanted note, counting a retune as a cost.
   def best_slice(slices, target_pc, previous_index, rng)
     scored = slices.filter_map do |slice|
       shift = semitone_distance(slice[:pitch_class], target_pc)
-      next if shift.abs > MAX_SHIFT_SEMITONES
+      limit = slice[:vocal] ? MAX_VOCAL_SHIFT : MAX_SHIFT_SEMITONES
+      next if shift.abs > limit
 
       cost = shift.abs.to_f
       cost += 3.0 if slice[:index] == previous_index
@@ -591,22 +622,28 @@ module SampleFlip
   # pitch the piece is, so pieces from two different records sort themselves
   # into one line by pitch alone. A horn from one record answers a piano from
   # another because they are a third apart, not because anyone planned it.
-  def build!(loop_path:, dest:, bpm:, bars:, chord_tones:, seed: 4242)
+  def build!(loop_path:, dest:, bpm:, bars:, chord_tones:, seed: 4242, vocal_path: nil)
     sources = Array(loop_path).uniq
     return nil if sources.empty?
 
     pool = []
     primary = nil
-    sources.each do |path|
+    # Instrument records first, then any vocal stems. The tag is all that
+    # separates them downstream: the cutting and pitch-finding are identical,
+    # because a voice is just another thing with a pitch and an attack.
+    tagged = sources.map { |p| [p, false] } + Array(vocal_path).uniq.map { |p| [p, true] }
+    tagged.each do |path, vocal|
+      next unless path && File.file?(path)
+
       left, right = decode(path)
       next if left.length < RATE / 2
 
-      primary ||= [left, right]
+      primary ||= [left, right] unless vocal
       mono = Array.new(left.length) { |i| (left[i] + right[i]) * 0.5 }
       found = analyse(mono, slice_points(mono))
       # Each piece remembers the audio it was cut from, so the playback stage
       # can read the right record without keeping them in step.
-      found.each { |s| s[:source] = { left:, right: } }
+      found.each { |s| s[:source] = { left:, right: }; s[:vocal] = vocal }
       pool.concat(found)
     end
     return nil if primary.nil? || pool.length < MIN_SLICES
@@ -624,6 +661,7 @@ module SampleFlip
     encode!(out_l, out_r, dest)
     { path: dest, slices: pool.length, events: events.length, records: sources.length,
       reversed: events.count { |e| e[:reverse] },
+      vocal_slices: pool.count { |s| s[:vocal] }, vocal_events: events.count { |e| e[:vocal] },
       pitches: pool.map { |s| s[:pitch_class] } }
   end
 end

@@ -67,6 +67,8 @@ require_relative "lib/mixer"
 require_relative "lib/crate_dig"
 require_relative "lib/radio_chop"
 require_relative "lib/sample_flip"
+require_relative "lib/vocal_chop"
+require_relative "lib/analog_synth"
 require_relative "lib/outboard"
 require_relative "lib/key_lock"
 require_relative "lib/modal_family"
@@ -5481,8 +5483,13 @@ def flip_loop_entry(entry, cfg, pads, n_bars)
   return entry if tones.empty?
 
   dest = dilla_render_tmp("flip")
+  records = flip_sources(entry, cfg)
+  # Voices from whichever of those records had any. Three of the eight chops do;
+  # the rest are instrumental passages, which is what the chop scorer was
+  # looking for in the first place.
+  voices = ENV["VOCAL_CHOPS"] == "0" ? [] : records.filter_map { |p| VocalChop.for_loop(p) }
   result = SampleFlip.build!(
-    loop_path: flip_sources(entry, cfg), dest:, bpm: cfg[:bpm].to_f,
+    loop_path: records, vocal_path: voices, dest:, bpm: cfg[:bpm].to_f,
     bars: n_bars, chord_tones: tones,
     seed: stable_hash("flip:#{cfg[:track]}")
   )
@@ -5495,11 +5502,40 @@ def flip_loop_entry(entry, cfg, pads, n_bars)
   # Name the records, not "loop.wav" -- every chop is called loop.wav, so the old
   # line said the same thing for all eight tracks and said nothing about the
   # second record at all.
-  crate = flip_sources(entry, cfg).map { |p| File.basename(File.dirname(p)) }
+  crate = records.map { |p| File.basename(File.dirname(p)) }
+  vocal_note = result[:vocal_events].to_i.positive? ? ", #{result[:vocal_events]} vocal" : ""
   dmesg("flip: #{result[:slices]} pieces off #{crate.join(' + ')}, " \
-        "#{result[:events]} notes over #{tones.length} chords, #{result[:reversed]} reversed",
+        "#{result[:events]} notes over #{tones.length} chords, " \
+        "#{result[:reversed]} reversed#{vocal_note}",
         unit: "harm0", parent: "dilla0")
   entry.merge(path: result[:path], bpm: cfg[:bpm].to_f, flipped: true)
+end
+
+# Plays a chord on every built-in synth patch, one file each.
+#
+# The point is to be able to hear what the oscillators and the filter actually
+# do, without a whole track around them. `PATCH=acid` for one; `HZ=` to move the
+# chord.
+def synth_audition!
+  wanted = ENV["PATCH"].to_s.strip
+  patches = wanted.empty? ? AnalogSynth::PATCHES.keys : [wanted.to_sym]
+  root = (ENV["HZ"] || 130.81).to_f
+  # A minor seventh, which shows a filter's character better than a single note:
+  # four voices beating against each other is where detune becomes audible.
+  chord = [1.0, 1.1892, 1.4983, 1.7818].map { |r| root * r }
+  dir = File.join(__dir__, "scratch", "synth")
+
+  patches.each do |patch|
+    unless AnalogSynth::PATCHES.key?(patch)
+      warn "no patch #{patch.inspect} — have: #{AnalogSynth::PATCHES.keys.join(', ')}"
+      next
+    end
+
+    notes = chord.map { |hz| { hz:, at: 0.05, held: 1.8, gain: 0.7 } }
+    out = AnalogSynth.render!(notes, dest: File.join(dir, "#{patch}.wav"), patch:,
+                              duration: 3.4, seed: stable_hash(patch.to_s))
+    puts out ? "  #{patch.to_s.ljust(14)} #{out.sub("#{__dir__}/", '')}" : "  #{patch}: produced silence"
+  end
 end
 
 # The records this flip may cut from: its own, plus one other.
@@ -25023,6 +25059,11 @@ DISPATCH = {
     ARGV[0] == "deep" ? demux_deep(src) : demux_six(src)
   end,
   "chop" => -> { chop_dispatch! },
+  # Recovers the voices the chop pipeline separated and then discarded. Needs no
+  # new separation: demucs already wrote vocals.wav for every cut it examined.
+  "vocal-chop" => -> { VocalChop.build! },
+  # Auditions the built-in synthesiser, one file per patch. PATCH=<name> for one.
+  "synth" => -> { synth_audition! },
   # A drum kit cut from our own recordings. The inverse of `chop`: that one
   # runs demucs and throws the drum stem away, this one keeps only the drums.
   "kit" => lambda do
