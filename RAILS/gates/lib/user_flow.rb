@@ -301,7 +301,7 @@ module Deploy
 
     def live_flow_checks(app)
       unless CrawlSupport.port_open?("127.0.0.1", app.port)
-        @result.warn("#{app.name}: live user flows skipped; port #{app.port} closed")
+        @result.skipped_live("#{app.name}: live user flows skipped; port #{app.port} closed")
         return
       end
 

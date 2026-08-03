@@ -116,7 +116,7 @@ module Deploy
           next
         end
         unless CrawlSupport.port_open?("127.0.0.1", app.port)
-          @result.warn("visual_quality: live #{probe[:quality_surface]} skipped (port closed)")
+          @result.skipped_live("visual_quality: live #{probe[:quality_surface]} skipped (port closed)")
           next
         end
         html = fetch("http://127.0.0.1:#{app.port}#{probe[:path]}", host: probe[:host])

@@ -32,6 +32,16 @@ module Deploy
     # GATE_STRICT_INCONCLUSIVE=1 promotes "could not check" to hard.
     def self.strict_inconclusive?(env = ENV) = flag?("GATE_STRICT_INCONCLUSIVE", env)
 
+    # GATE_REQUIRE_LIVE=1 turns "port closed, skipping" into a failure.
+    #
+    # measured_nothing? cannot express this case: a gate that ran fifty source
+    # checks and skipped every live one has a non-zero check count, so it passes
+    # and its skips are warnings. On 2026-08-03 that produced eight green gates on
+    # a machine where no app was listening -- and booting the apps turned one of
+    # them red immediately. This flag is for runs that mean to measure the live
+    # half, so the absence of it is loud instead of a warning line.
+    def self.require_live?(env = ENV) = flag?("GATE_REQUIRE_LIVE", env)
+
     def initialize
       @failures = []
       @warnings = []
@@ -57,6 +67,16 @@ module Deploy
 
     def warn(message)
       @warnings << message
+    end
+
+    # A live check the gate declined to run because nothing was listening.
+    def skipped_live(message)
+      if self.class.require_live?
+        @failures << "[live-required] #{message}"
+      else
+        @warnings << message
+      end
+      self
     end
 
     # A check that could not run. Name the missing precondition, not the check:

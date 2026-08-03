@@ -65,7 +65,7 @@ module Deploy
 
       surfaces = GeometryProbe.surfaces
       GeometryProbe.unreachable_apps(surfaces).each do |app|
-        @result.warn("geometry: #{app} port closed — surfaces skipped")
+        @result.skipped_live("geometry: #{app} port closed — surfaces skipped")
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?

@@ -23,8 +23,12 @@ class SolidusStagingContractTest < Minitest::Test
     assert_includes init, 'ENV["SOLIDUS_MARKETPLACE"]'
   end
 
+  # The marketplace vertical became a mountable engine, and the Solidus mount
+  # went with it. Read the host's routes plus the engine's, which is the app's
+  # actual routing surface.
   def test_routes_mount_only_when_mountable
-    routes = File.read(File.join(BRGEN, "config/routes.rb"))
+    routes = [File.join(BRGEN, "config/routes.rb"), *Dir.glob(File.join(BRGEN, "engines/*/config/routes.rb")).sort]
+             .select { |f| File.file?(f) }.map { |f| File.read(f) }.join("\n")
     assert_includes routes, "Brgen::SolidusMarketplace.mountable?"
     assert_includes routes, "Spree::Core::Engine"
     assert_includes routes, 'at: "/solidus"'

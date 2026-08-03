@@ -21,6 +21,48 @@ class ConstitutionalScanBudgetTest < Minitest::Test
     gate.budget.each_value { |ceiling| assert_kind_of Integer, ceiling }
   end
 
+  # The marker grep used to run before the count was read, over the whole output,
+  # so a finding that quoted one of the markers made a completed scan report as a
+  # crash. amber failed this gate that way on 2026-08-03 having scanned to 79-plus
+  # findings. A run that printed its count did not crash, whatever it found.
+  def test_a_finding_that_quotes_a_crash_marker_is_not_a_crash
+    output = <<~OUT
+      lib/thing.rb:4 [DEAD_CODE] rescue swallows uninitialized constant Foo
+      No such file or directory is the message this branch builds
+      scan: done [profile: full] 207 violations | top DEAD_CODE=48
+      79 more violation(s) omitted
+    OUT
+
+    assert_equal "207", output[Deploy::ConstitutionalScanGate::VIOLATION_LINE, 1]
+  end
+
+  # The rewrite matched the entries as a block directly under `targets:`, which
+  # every comment in that file breaks. It wrote nothing and announced the new
+  # numbers anyway. Assert against the real file's shape, comments included.
+  def test_ratchet_rewrites_a_commented_budget_file
+    original = File.read(Deploy::ConstitutionalScanGate::BUDGET_PATH)
+    scan = Deploy::ConstitutionalScanGate.new(targets: [])
+    lowered = scan.budget.transform_values { |ceiling| ceiling - 1 }
+    scan.instance_variable_set(:@measured, lowered)
+
+    with_env("GATE_SCAN_RATCHET", "1") { scan.send(:maybe_ratchet) }
+    written = YAML.safe_load_file(Deploy::ConstitutionalScanGate::BUDGET_PATH).fetch("targets")
+
+    assert_equal lowered, written, "the ratchet reported a write it did not make"
+    assert_includes File.read(Deploy::ConstitutionalScanGate::BUDGET_PATH), "# RATCHETED",
+                    "rewriting the block would have eaten the comments"
+  ensure
+    File.write(Deploy::ConstitutionalScanGate::BUDGET_PATH, original)
+  end
+
+  def with_env(key, value)
+    previous = ENV[key]
+    ENV[key] = value
+    yield
+  ensure
+    ENV[key] = previous
+  end
+
   def test_counts_come_out_of_the_scan_line
     line = "scan: done [profile: full] 410 violations | top DEAD_CODE=99 CONFIG_HIERARCHY=70"
 

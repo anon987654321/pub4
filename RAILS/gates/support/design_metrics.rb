@@ -73,8 +73,36 @@ module Deploy
     # mode they belong to. Pairing a light-mode text colour against a dark-mode
     # surface would invent a combination the UI never renders.
     MODE_PREFIX = /\A(light|dark)_/
-    FOREGROUND_KEY = /\A(?:light_|dark_)?(text|text_secondary|muted|accent|accent_hover|link)\z/
+    FOREGROUND_KEY = /\A(?:light_|dark_)?(text|text_secondary|muted|accent|accent_hover|link|danger)\z/
     BACKGROUND_KEY = /\A(?:light_|dark_)?(bg|surface|surface_elevated|search_bg|chrome_bg)\z/
+
+    # brgen's vertical accents sit in their own top-level map with no background
+    # of their own, so token_pairs -- which only pairs inside one dialect -- never
+    # saw them. They render on the social chrome. Paired against it, marketplace
+    # (#8c7a5e, 4.33:1) and tv (#d6473f, 4.14:1) are both under WCAG AA, and
+    # nothing had reported either.
+    VERTICAL_BACKGROUNDS = %w[bg surface_elevated].freeze
+
+    def vertical_accent_pairs(tokens)
+      verticals = tokens["vertical_accents"]
+      social = tokens["social"]
+      return [] unless verticals.is_a?(Hash) && social.is_a?(Hash)
+
+      verticals.flat_map do |vertical, row|
+        next [] unless row.is_a?(Hash)
+
+        row.slice("accent", "hover").flat_map do |key, fg|
+          VERTICAL_BACKGROUNDS.filter_map do |bg_key|
+            bg = social[bg_key]
+            ratio = bg && contrast_ratio(fg, bg)
+            next unless ratio
+
+            { label: "vertical_accents.#{vertical}_#{key}/social.#{bg_key}", fg: fg, bg: bg,
+              fg_key: "#{vertical}_#{key}", bg_key: bg_key, ratio: ratio }
+          end
+        end
+      end
+    end
 
     # All plausible fg/bg pairings within a dialect, mode-matched.
     def token_pairs(dialect_name, dialect)

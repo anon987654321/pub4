@@ -31,7 +31,8 @@ class CoverageRatchetTest < Minitest::Test
   # still counted; the vertical classes are counted from engines/*/app now.
   FLOORS = {
     "amber" => { "controllers" => 1, "models" => 5 },
-    "brgen" => { "controllers" => 12, "models" => 10 },
+    # models raised 10 -> 11 on 2026-08-03; the ratchet asked for it.
+    "brgen" => { "controllers" => 12, "models" => 11 },
     "bsdports" => { "controllers" => 2, "models" => 1 },
   }.freeze
 

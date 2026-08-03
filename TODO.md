@@ -67,9 +67,23 @@ strip these in the same pass: one disruptive operation instead of two.
 
 ## Not blocking, but unverified
 
-- Browser-backed gates (`geometry`, `reflow`, `keyboard_flow`, `mobile_flow`,
-  `journey_invariant`, `cross_app`, `layout_snapshot`) have not run this cycle.
-  They belong on the deploy host and need the resize first.
-- `constitutional_scan` re-measure was killed mid-run after brgen, amber and
-  bsdports scanned; no counts were printed. Ceilings were re-baselined in
-  `837679299` and have not been confirmed against the current tree.
+Both entries here were closed on 2026-08-03 by booting the four surfaces locally
+(`RAILS/bin/triangle`, new — there had been no supported way to do it, which is
+why the live gates ran nowhere). `constitutional_scan` re-measured all four
+targets, every one under its ceiling. The browser suite ran on this Mac rather
+than the deploy host; vm23 still needs the resize for that to be routine.
+
+What booting them proved, and the reason `GATE_REQUIRE_LIVE=1` now exists: with
+the ports closed, eight visual and user-flow gates reported PASSED having
+measured nothing live. With the apps up, `page_simulation` failed immediately.
+Set the flag on any run that means to measure the live half.
+
+- `page_simulation` covered 43 of brgen's 100 full-page views. The five verticals
+  became engines and `PageInventory` never followed them, so 57 views left the
+  simulation with nothing reporting it. Page URLs now come from a generated route
+  manifest (`RAILS/tools/generate_route_manifest.rb`) rather than a filename
+  convention. The same blind spot had also gone unnoticed in
+  `chrome_i18n_lint.rb` (aria_label read 89 against a baseline of 169 — the lint
+  had gone blind to the engine views, not improved) and in six RAILS contract
+  tests. Worth grepping for `app/views` and `app/controllers` globs that stop at
+  one level before assuming any other count is real.

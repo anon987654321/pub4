@@ -113,7 +113,7 @@ module Deploy
     def live_first_screen(app, surface)
       label = [app.name, surface[:label] || surface[:path]].join("/")
       unless CrawlSupport.port_open?("127.0.0.1", app.port)
-        @result.warn("layout_geometry: #{label} skipped (port #{app.port} closed)")
+        @result.skipped_live("layout_geometry: #{label} skipped (port #{app.port} closed)")
         return
       end
 

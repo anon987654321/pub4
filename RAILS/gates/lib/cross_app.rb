@@ -58,7 +58,7 @@ module Deploy
                               .group_by(&:app)
                               .transform_values(&:first)
                               .values
-      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.warn("cross_app: #{app} port closed — skipped") }
+      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("cross_app: #{app} port closed — skipped") }
       live = GeometryProbe.reachable(surfaces)
       if live.size < 2
         @result.inconclusive!("cross_app: need at least two apps running to compare (have #{live.size})")

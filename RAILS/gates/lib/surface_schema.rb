@@ -72,7 +72,7 @@ module Deploy
           next
         end
         unless CrawlSupport.port_open?("127.0.0.1", app.port)
-          @result.warn("surface_schema: #{surface[:schema]} skipped (port #{app.port} closed)")
+          @result.skipped_live("surface_schema: #{surface[:schema]} skipped (port #{app.port} closed)")
           next
         end
 

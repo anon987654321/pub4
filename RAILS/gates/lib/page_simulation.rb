@@ -50,6 +50,11 @@ module Deploy
       uncovered = PageInventory.uncovered_shared_views
       @result.fail("page_simulation: shared view outside the inventory — #{uncovered.join(", ")}") if uncovered.any?
 
+      # A stale manifest resolves confidently and wrongly, which is the failure
+      # the hand-maintained filename ladder had. Hard, not soft: the fix is one
+      # command, and a wrong URL turns every finding on that page into noise.
+      PageInventory.stale_route_manifests.each { |message| @result.fail("page_simulation: #{message}") }
+
       pages = PageInventory.all
       PageInventory.write_snapshot!(SNAPSHOT_PATH)
       by = pages.group_by { |p| p[:app] }.transform_values(&:size)
@@ -59,7 +64,11 @@ module Deploy
 
       ports_open = PORTS.transform_values { |port| CrawlSupport.port_open?("127.0.0.1", port) }
       ports_open.each do |app, open|
-        @result.warn("page_simulation: #{app} port #{PORTS[app]} #{open ? 'open' : 'closed'}")
+        if open
+          @result.warn("page_simulation: #{app} port #{PORTS[app]} open")
+        else
+          @result.skipped_live("page_simulation: #{app} port #{PORTS[app]} closed — live surfaces skipped")
+        end
       end
 
       live_count = 0

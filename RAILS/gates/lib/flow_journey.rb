@@ -41,7 +41,7 @@ module Deploy
           next
         end
         unless CrawlSupport.port_open?("127.0.0.1", port)
-          @result.warn("flow:#{flow["id"]} skipped — #{app} port #{port} closed")
+          @result.skipped_live("flow:#{flow["id"]} skipped — #{app} port #{port} closed")
           next
         end
         ran += 1

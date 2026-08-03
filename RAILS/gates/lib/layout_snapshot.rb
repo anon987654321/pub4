@@ -50,7 +50,7 @@ module Deploy
 
       surfaces = GeometryProbe.surfaces.select(&:snapshot)
       GeometryProbe.unreachable_apps(surfaces).each do |app|
-        @result.warn("layout_snapshot: #{app} port closed — snapshots skipped")
+        @result.skipped_live("layout_snapshot: #{app} port closed — snapshots skipped")
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?

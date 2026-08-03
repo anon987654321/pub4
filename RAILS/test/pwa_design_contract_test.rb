@@ -9,14 +9,28 @@ class PwaDesignContractTest < Minitest::Test
   SHARED_ROOT = File.join(ROOT, "shared")
   APPS = %w[amber brgen bsdports].freeze
 
-  def test_all_apps_ship_generated_workbox_workers
+  # brgen's worker is hand-rolled on purpose: the Workbox build froze ~89
+  # fingerprinted asset URLs in its precache manifest, every deploy re-digested
+  # them, and `install` failed with bad-precaching-response — which broke the PWA
+  # on playlist.brgen.no. Precaching content-addressed bundles is the wrong tool.
+  # The worker's own header records this. So assert what every worker must do,
+  # and let the Workbox build be one way of doing it rather than the contract.
+  HAND_ROLLED_WORKERS = %w[brgen].freeze
+
+  def test_all_apps_ship_a_service_worker_meeting_the_cache_contract
     each_app do |app, root|
       worker = read(root, "app/views/pwa/service-worker.js")
-      assert_includes worker, "Workbox 7.4.1 generated for #{app}"
-      assert_includes worker, "__CACHE_VERSION__"
-      assert_includes worker, "offline-forms"
-      assert_includes worker, "notificationclick"
+      assert_includes worker, "__CACHE_VERSION__", "#{app}: deploys cannot rotate cache buckets"
+      assert_includes worker, "notificationclick", "#{app}: web push notifications open nothing"
+      assert_match(/addEventListener\(\s*["']fetch["']/, worker, "#{app}: no fetch handler, so no offline story")
       assert_operator worker.bytesize, :>, 1_000
+
+      if HAND_ROLLED_WORKERS.include?(app)
+        assert_includes worker, "offline", "#{app}: hand-rolled worker with no offline fallback"
+      else
+        assert_includes worker, "Workbox 7.4.1 generated for #{app}"
+        assert_includes worker, "offline-forms"
+      end
     end
   end
 

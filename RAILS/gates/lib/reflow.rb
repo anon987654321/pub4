@@ -119,7 +119,7 @@ module Deploy
       end
 
       surfaces = pick_surfaces
-      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.warn("reflow: #{app} port closed — skipped") }
+      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("reflow: #{app} port closed — skipped") }
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
         @result.inconclusive!("reflow: no app reachable")

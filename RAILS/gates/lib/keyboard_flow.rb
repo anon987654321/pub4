@@ -53,7 +53,7 @@ module Deploy
       end
 
       surfaces = pick_surfaces
-      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.warn("keyboard_flow: #{app} port closed — skipped") }
+      GeometryProbe.unreachable_apps(surfaces).each { |app| @result.skipped_live("keyboard_flow: #{app} port closed — skipped") }
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
         @result.inconclusive!("keyboard_flow: no app reachable")

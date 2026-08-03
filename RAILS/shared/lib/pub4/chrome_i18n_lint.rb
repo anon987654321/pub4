@@ -99,9 +99,17 @@ module Pub4
       File.expand_path("../../..", __dir__)
     end
 
+    # brgen's verticals moved to engines/<name>/app/views, which the single-level
+    # glob never matched. The aria_label count fell 169 -> 89 on the extraction and
+    # read as an 80-finding improvement; it was the lint going blind to 57 views.
+    def view_paths
+      Dir.glob(File.join(rails_root, "*/app/views/**/*.erb")) +
+        Dir.glob(File.join(rails_root, "*/engines/*/app/views/**/*.erb"))
+    end
+
     def scan
       findings = []
-      Dir.glob(File.join(rails_root, "*/app/views/**/*.erb")).each do |path|
+      view_paths.sort.each do |path|
         # Doc comment inside the partial itself is not a call site.
         next if path.end_with?("shared/_empty_state.html.erb")
 

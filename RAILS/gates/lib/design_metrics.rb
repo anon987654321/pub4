@@ -128,7 +128,8 @@ module Deploy
       normal_min = @rules.dig("typography", "accessibility", "normal_text_contrast").to_f
       normal_min = 7.0 if normal_min <= 0 # design_rules AAA default
 
-      pairs = @tokens.flat_map { |name, dialect| DesignMetrics.token_pairs(name, dialect) }
+      pairs = @tokens.flat_map { |name, dialect| DesignMetrics.token_pairs(name, dialect) } +
+              DesignMetrics.vertical_accent_pairs(@tokens)
       if pairs.empty?
         @result.fail("design_metrics contrast: no token pairs resolved from design_tokens.yml", severity: :soft)
         return
@@ -155,6 +156,38 @@ module Deploy
       end
       @result.warn("design_metrics contrast: enumerated #{pairs.size} mode-matched token pairs " \
                    "across #{@tokens.keys.size} dialects (#{below_aa.size} below AA)")
+      judge_contrast_budget(below_aa.size, below_aaa.size)
+    end
+
+    # Soft failures are warnings unless GATE_STRICT_SOFT is set, so 30 pairs under
+    # WCAG AA sat under a green line indefinitely. A ceiling makes the number
+    # monotone without going red on arrival — the same trade constitutional_budget
+    # and css_budget make.
+    def judge_contrast_budget(below_aa, below_aaa)
+      budget = contrast_budget
+      return @result.warn("design_metrics contrast: no ceiling recorded in css_budget.yml") if budget.empty?
+
+      {
+        "contrast_below_aa" => below_aa,
+        "contrast_below_aaa" => below_aaa,
+      }.each do |key, count|
+        ceiling = budget[key]
+        next if ceiling.nil?
+
+        if count > ceiling
+          @result.fail("design_metrics #{key}: #{count} exceeds ceiling #{ceiling} (+#{count - ceiling}) — " \
+                       "raise the contrast, or record a new ceiling with a reason")
+        elsif count < ceiling
+          @result.warn("design_metrics #{key}: #{count}, under its #{ceiling} ceiling (-#{ceiling - count})")
+        end
+      end
+    end
+
+    def contrast_budget
+      path = File.expand_path("../data/css_budget.yml", __dir__)
+      (YAML.safe_load_file(path)&.dig("rules") || {}).slice("contrast_below_aa", "contrast_below_aaa")
+    rescue StandardError
+      {}
     end
 
     def check_touch_targets
@@ -298,7 +331,7 @@ module Deploy
 
       inventory = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }
       unless inventory && CrawlSupport.port_open?("127.0.0.1", inventory.port)
-        @result.warn("design_metrics browser: brgen port closed — skip live hit targets")
+        @result.skipped_live("design_metrics browser: brgen port closed — skip live hit targets")
         return
       end
 

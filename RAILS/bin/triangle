@@ -1,0 +1,155 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Boots brgen, amber, bsdports and the MASTER face on the ports every gate
+# probes, so the live half of the suite measures something.
+#
+#   RAILS/bin/triangle up      boot, migrate, wait for /up, print status
+#   RAILS/bin/triangle status  which ports answer
+#   RAILS/bin/triangle down    stop what this script started
+#
+# Why this exists: the browser and live-HTTP gates belong on the deploy host,
+# and vm23 has no headroom to run them (TODO.md item 2). So they ran nowhere,
+# and every gate whose live half was skipped still printed PASSED. `shared/bin/dev`
+# could not fill the gap -- it execs `foreman start -f Procfile.dev`, only amber
+# has a Procfile.dev, and none of the three apps ship bin/dev at all.
+#
+# Pending migrations are the usual reason a booted app answers 500 rather than
+# 200, so `up` migrates before it waits.
+
+require "fileutils"
+require "net/http"
+require "open3"
+require "yaml"
+
+module Deploy
+  module Triangle
+    ROOT = File.expand_path("../..", __dir__)
+    RAILS_ROOT = File.join(ROOT, "RAILS")
+    RUN_DIR = File.join(RAILS_ROOT, "tmp", "triangle")
+    BOOT_TIMEOUT = Integer(ENV.fetch("TRIANGLE_BOOT_TIMEOUT", "180"))
+
+    # Ports come from apps.yml so this file cannot disagree with the gates.
+    def self.apps
+      @apps ||= begin
+        config = YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml")).fetch("apps")
+        rows = config.map { |name, row| { name:, port: row.fetch("port"), dir: File.join(RAILS_ROOT, name), rails: true } }
+        rows << { name: "master", port: 53187, dir: File.join(ROOT, "MASTER", "web"), rails: true }
+        rows
+      end
+    end
+
+    def self.ruby_version
+      path = File.join(ROOT, ".ruby-version")
+      File.file?(path) ? File.read(path).strip : ENV.fetch("RBENV_VERSION", "")
+    end
+
+    def self.env_for(app)
+      { "RBENV_VERSION" => ruby_version, "RAILS_ENV" => "development", "PORT" => app[:port].to_s }
+    end
+
+    def self.listening?(port)
+      response = Net::HTTP.start("127.0.0.1", port, open_timeout: 2, read_timeout: 4) { |http| http.get("/up") }
+      response.code.to_i.between?(200, 399)
+    rescue StandardError
+      false
+    end
+
+    def self.pid_file(app) = File.join(RUN_DIR, "#{app[:name]}.pid")
+
+    def self.log_file(app) = File.join(RUN_DIR, "#{app[:name]}.log")
+
+    def self.migrate(app)
+      out, status = Open3.capture2e(env_for(app), "rbenv", "exec", "bundle", "exec", "bin/rails", "db:migrate", chdir: app[:dir])
+      return true if status.success?
+
+      warn "triangle: #{app[:name]} db:migrate failed\n#{out.lines.last(8).join}"
+      false
+    end
+
+    def self.boot(app)
+      FileUtils.mkdir_p(RUN_DIR)
+      log = File.open(log_file(app), "a")
+      pid = Process.spawn(
+        env_for(app),
+        "rbenv", "exec", "bundle", "exec", "bin/rails", "server", "-p", app[:port].to_s, "-b", "127.0.0.1",
+        chdir: app[:dir], out: log, err: log, pgroup: true
+      )
+      Process.detach(pid)
+      File.write(pid_file(app), pid)
+      pid
+    end
+
+    def self.wait_for(app)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + BOOT_TIMEOUT
+      until Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+        return true if listening?(app[:port])
+
+        sleep 2
+      end
+      false
+    end
+
+    def self.up
+      failed = []
+      apps.each do |app|
+        if listening?(app[:port])
+          puts "triangle: #{app[:name]} already up on #{app[:port]}"
+          next
+        end
+        unless File.directory?(app[:dir])
+          warn "triangle: #{app[:name]} has no directory at #{app[:dir]}"
+          failed << app[:name]
+          next
+        end
+
+        migrate(app)
+        boot(app)
+        if wait_for(app)
+          puts "triangle: #{app[:name]} up on #{app[:port]}"
+        else
+          warn "triangle: #{app[:name]} did not answer /up within #{BOOT_TIMEOUT}s — see #{log_file(app)}"
+          failed << app[:name]
+        end
+      end
+      failed
+    end
+
+    def self.status
+      apps.map do |app|
+        up = listening?(app[:port])
+        puts "triangle: #{app[:name].ljust(9)} #{app[:port]} #{up ? 'up' : 'down'}"
+        up
+      end
+    end
+
+    def self.down
+      apps.each do |app|
+        path = pid_file(app)
+        next unless File.file?(path)
+
+        pid = File.read(path).to_i
+        begin
+          Process.kill("TERM", -pid)
+          puts "triangle: stopped #{app[:name]} (pid #{pid})"
+        rescue Errno::ESRCH
+          puts "triangle: #{app[:name]} already gone"
+        end
+        FileUtils.rm_f(path)
+      end
+    end
+  end
+end
+
+case ARGV[0]
+when nil, "up"
+  failed = Deploy::Triangle.up
+  exit(failed.empty? ? 0 : 1)
+when "status"
+  exit(Deploy::Triangle.status.all? ? 0 : 1)
+when "down"
+  Deploy::Triangle.down
+else
+  warn "usage: RAILS/bin/triangle [up|status|down]"
+  exit 2
+end

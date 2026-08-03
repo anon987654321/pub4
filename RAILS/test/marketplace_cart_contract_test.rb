@@ -6,14 +6,34 @@ class MarketplaceCartContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   BRGEN = File.join(ROOT, "brgen")
 
+  # marketplace became a mountable engine; its controllers, views and routes
+  # moved to engines/marketplace/. Resolve either location so this contract
+  # follows the code rather than the old layout.
+  def brgen_read(relative)
+    direct = File.join(BRGEN, relative)
+    return File.read(direct) if File.file?(direct)
+
+    vertical = relative[%r{\Aapp/(?:controllers|views|models)/([a-z_]+)/}, 1]
+    engine = vertical && File.join(BRGEN, "engines", vertical, relative)
+    assert engine && File.file?(engine), "missing brgen/#{relative}"
+    File.read(engine)
+  end
+
+  def brgen_routes
+    [File.join(BRGEN, "config/routes.rb"), *Dir.glob(File.join(BRGEN, "engines/*/config/routes.rb")).sort]
+      .select { |f| File.file?(f) }.map { |f| File.read(f) }.join("\n")
+  end
+
   def test_send_all_offers_is_wired
-    routes = File.read(File.join(BRGEN, "config/routes.rb"))
-    carts = File.read(File.join(BRGEN, "app/controllers/marketplace/carts_controller.rb"))
-    view = File.read(File.join(BRGEN, "app/views/marketplace/carts/show.html.erb"))
+    routes = brgen_routes
+    carts = brgen_read("app/controllers/marketplace/carts_controller.rb")
+    view = brgen_read("app/views/marketplace/carts/show.html.erb")
 
     assert_includes routes, "post :send_offers"
     assert_includes carts, "def send_offers"
-    assert_includes view, "send_offers_marketplace_cart_path"
+    # Inside the engine the helper is engine-local. `send_offers_marketplace_cart_path`
+    # was the host-namespaced name before the extraction and resolves nowhere now.
+    assert_includes view, "send_offers_cart_path"
     refute_includes view, "disabled: true"
     refute_includes view, "One-click checkout coming soon"
   end
@@ -44,8 +64,8 @@ class MarketplaceCartContractTest < Minitest::Test
   end
 
   def test_cdn_assets_self_hosted
-    dating = File.read(File.join(BRGEN, "app/views/dating/home/index.html.erb"))
-    maps = File.read(File.join(BRGEN, "app/views/maps/home/index.html.erb"))
+    dating = brgen_read("app/views/dating/home/index.html.erb")
+    maps = brgen_read("app/views/maps/home/index.html.erb")
     amber = File.read(File.join(ROOT, "amber/app/views/layouts/application.html.erb"))
 
     assert_includes dating, "/vendor/css-doodle.min.js"

@@ -8,8 +8,46 @@ require "minitest/autorun"
 class ModelCoverageContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
+  # brgen's five verticals became mountable engines, so app/{models,controllers}/
+  # <vertical>/ moved to engines/<vertical>/app/.... These contracts still asked
+  # for the old path and had been red since; nothing in the gate suite runs this
+  # file, so the failure was silent. Resolve either location.
+  ENGINES = %w[dating marketplace playlist takeaway tv].freeze
+
+  # The verticals' routes moved with them: engines/<vertical>/config/routes.rb.
+  # These contracts assert that a route exists somewhere in the app's routing
+  # surface, so reading routes.rb means reading the host's plus every engine's.
+  def app_path(app, relative)
+    direct = File.join(ROOT, app, relative)
+    return direct if File.file?(direct)
+
+    vertical = relative[%r{\Aapp/(?:models|controllers|views)/([a-z_]+)/}, 1]
+    return direct unless ENGINES.include?(vertical)
+
+    File.join(ROOT, app, "engines", vertical, relative)
+  end
+
   def read_app(app, relative)
-    File.read(File.join(ROOT, app, relative))
+    return routing_surface(app) if relative == "config/routes.rb"
+
+    path = app_path(app, relative)
+    assert File.file?(path), "missing #{path.sub("#{ROOT}/", '')}"
+    File.read(path)
+  end
+
+  # Vertical tests moved into engines/<vertical>/test/ with everything else.
+  def assert_app_file(app, relative)
+    assert File.file?(app_path(app, relative)) ||
+           File.file?(File.join(ROOT, app, "engines", relative[%r{\Atest/\w+/([a-z_]+)/}, 1].to_s, relative)),
+           "missing #{app}/#{relative}"
+  end
+
+  def routing_surface(app)
+    files = [File.join(ROOT, app, "config", "routes.rb")] +
+            Dir.glob(File.join(ROOT, app, "engines", "*", "config", "routes.rb")).sort
+    present = files.select { |f| File.file?(f) }
+    assert present.any?, "missing #{app}/config/routes.rb"
+    present.map { |f| File.read(f) }.join("\n")
   end
 
   def test_brgen_dating_match_model_is_wired
@@ -29,7 +67,7 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes controller, "Dating::Match.active"
     assert_includes routes, "resources :matches"
     assert_includes apps_yml, "Dating::Match"
-    assert File.file?(File.join(ROOT, "brgen/test/models/dating/match_test.rb"))
+    assert_app_file("brgen", "test/models/dating/match_test.rb")
   end
 
   def test_brgen_marketplace_order_model_is_wired
@@ -46,7 +84,7 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes order, "def decline!"
     assert_includes controller, "Marketplace::OrdersController"
     assert_includes routes, "resources :orders"
-    assert File.file?(File.join(ROOT, "brgen/test/models/marketplace/order_test.rb"))
+    assert_app_file("brgen", "test/models/marketplace/order_test.rb")
   end
 
   def test_brgen_takeaway_order_model_is_wired
@@ -64,7 +102,7 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes order, "def transition_to!"
     assert_includes controller, "Takeaway::OrdersController"
     assert_includes routes, "resources :orders"
-    assert File.file?(File.join(ROOT, "brgen/test/models/takeaway/order_test.rb"))
+    assert_app_file("brgen", "test/models/takeaway/order_test.rb")
   end
 
   def test_brgen_vote_model_and_votable_concern_are_wired
@@ -84,7 +122,7 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes post, "include Shared::Votable"
     assert_includes controller, "find_votable"
     assert_includes routes, 'controller: "votes"'
-    assert File.file?(File.join(ROOT, "brgen/test/models/vote_test.rb"))
+    assert_app_file("brgen", "test/models/vote_test.rb")
   end
 
   def test_amber_outfit_model_is_wired
@@ -100,7 +138,7 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes outfit, "def context_label"
     assert_includes controller, "OutfitGeneration"
     assert_includes routes, "resources :outfits"
-    assert File.file?(File.join(ROOT, "amber/test/models/outfit_test.rb"))
+    assert_app_file("amber", "test/models/outfit_test.rb")
   end
 
   def test_amber_wardrobe_item_model_is_wired
@@ -116,7 +154,7 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes wardrobe_item, "validates :user_id, uniqueness:"
     assert_includes controller, "WardrobeAnalytics"
     assert_includes routes, "resources :wardrobe_items"
-    assert File.file?(File.join(ROOT, "amber/test/models/wardrobe_item_test.rb"))
+    assert_app_file("amber", "test/models/wardrobe_item_test.rb")
   end
 
   def test_amber_connection_model_is_wired
@@ -133,6 +171,6 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes connection, "def accept!"
     assert_includes controller, "ConnectionsController"
     assert_includes routes, "resources :connections"
-    assert File.file?(File.join(ROOT, "amber/test/models/connection_test.rb"))
+    assert_app_file("amber", "test/models/connection_test.rb")
   end
 end

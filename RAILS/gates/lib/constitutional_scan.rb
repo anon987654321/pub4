@@ -150,14 +150,19 @@ module Deploy
       # A crash is not a finding count, and `/scan` exits 0 whether it found 0 or
       # 410 — so the exit status says almost nothing and the count has to come out
       # of the output.
-      if stdout.to_s.match?(/LoadError|SyntaxError|uninitialized constant|No such file/)
-        @result.fail("constitutional scan crashed for #{path}: #{stdout.lines.last(3).join}")
-        return
-      end
-
+      #
+      # Order matters: the marker grep used to run first and swept the whole
+      # output, so a *finding* that quoted "uninitialized constant" or "No such
+      # file" made a completed scan report as a crash. amber failed this gate on
+      # 2026-08-03 having scanned cleanly to 79-plus findings. A run that printed
+      # its violation count did not crash, whatever its findings say.
       count = stdout.to_s[VIOLATION_LINE, 1]
       if count.nil?
-        @result.inconclusive!("#{name}: scan printed no violation count (#{elapsed}s) — output shape changed?")
+        if stdout.to_s.match?(/LoadError|SyntaxError|uninitialized constant|No such file/)
+          @result.fail("constitutional scan crashed for #{path}: #{stdout.lines.last(3).join}")
+        else
+          @result.inconclusive!("#{name}: scan printed no violation count (#{elapsed}s) — output shape changed?")
+        end
         return
       end
 
@@ -175,10 +180,29 @@ module Deploy
       lowered = @measured.select { |name, count| budget[name] && count < budget[name] }
       return progress("ratchet: nothing to lower") if lowered.empty?
 
-      updated = budget.merge(lowered)
-      File.write(BUDGET_PATH, File.read(BUDGET_PATH).sub(/^targets:\n(?:  \w+: \d+\n)+/m) do
-        "targets:\n#{updated.sort.map { |name, count| "  #{name}: #{count}\n" }.join}"
-      end)
+      # Per-line, not one block. The old pattern was
+      # /^targets:\n(?:  \w+: \d+\n)+/, which requires the entries to sit
+      # directly under `targets:` — and every one of them is preceded by the
+      # comment explaining why it moved. So the sub matched nothing, the file was
+      # rewritten unchanged, and the progress line below still announced the new
+      # numbers. On 2026-08-03 it reported "brgen → 329, amber → 164" and left
+      # 411/207 on disk. Rewriting a line at a time also keeps the comments.
+      body = File.read(BUDGET_PATH)
+      lowered.each do |name, count|
+        body = body.sub(/^(  #{Regexp.escape(name)}:)[ \t]+\d+$/, "\\1 #{count}")
+      end
+      File.write(BUDGET_PATH, body)
+
+      # Never announce a write without confirming it landed — that is the exact
+      # failure this comment describes.
+      reread = (YAML.safe_load_file(BUDGET_PATH)&.dig("targets") || {})
+      missed = lowered.reject { |name, count| reread[name] == count }
+      unless missed.empty?
+        @result.fail("constitutional scan: ratchet failed to record #{missed.keys.join(', ')} in " \
+                     "#{File.basename(BUDGET_PATH)} — the file's shape no longer matches the rewrite")
+        return
+      end
+
       progress "ratchet: #{lowered.map { |name, count| "#{name} → #{count}" }.join(", ")}"
     end
   end

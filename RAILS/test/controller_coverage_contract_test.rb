@@ -13,10 +13,39 @@ require "minitest/autorun"
 class ControllerCoverageContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
+  # brgen's five verticals became mountable engines, so app/{models,controllers}/
+  # <vertical>/ moved to engines/<vertical>/app/.... These contracts still asked
+  # for the old path and had been red since; nothing in the gate suite runs this
+  # file, so the failure was silent. Resolve either location.
+  ENGINES = %w[dating marketplace playlist takeaway tv].freeze
+
+  # The verticals' routes moved with them: engines/<vertical>/config/routes.rb.
+  # These contracts assert that a route exists somewhere in the app's routing
+  # surface, so reading routes.rb means reading the host's plus every engine's.
+  def app_path(app, relative)
+    direct = File.join(ROOT, app, relative)
+    return direct if File.file?(direct)
+
+    vertical = relative[%r{\Aapp/(?:models|controllers|views)/([a-z_]+)/}, 1]
+    return direct unless ENGINES.include?(vertical)
+
+    File.join(ROOT, app, "engines", vertical, relative)
+  end
+
   def read_app(app, relative)
-    path = File.join(ROOT, app, relative)
-    assert File.file?(path), "missing #{app}/#{relative}"
+    return routing_surface(app) if relative == "config/routes.rb"
+
+    path = app_path(app, relative)
+    assert File.file?(path), "missing #{path.sub("#{ROOT}/", '')}"
     File.read(path)
+  end
+
+  def routing_surface(app)
+    files = [File.join(ROOT, app, "config", "routes.rb")] +
+            Dir.glob(File.join(ROOT, app, "engines", "*", "config", "routes.rb")).sort
+    present = files.select { |f| File.file?(f) }
+    assert present.any?, "missing #{app}/config/routes.rb"
+    present.map { |f| File.read(f) }.join("\n")
   end
 
   def assert_actions(body, *actions)

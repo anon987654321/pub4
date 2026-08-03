@@ -1,0 +1,499 @@
+---
+schema: 1
+apps:
+  brgen:
+    digest: 7a53e91da52d9049
+    routes:
+      rails/pwa#offline:
+      - "/offline"
+      rails/pwa#manifest:
+      - "/manifest"
+      - "/manifest.json"
+      rails/pwa#service_worker:
+      - "/service-worker"
+      - "/service-worker.js"
+      internal#status:
+      - "/internal/status"
+      sso#from_master:
+      - "/sso/from_master"
+      email_verifications#show:
+      - "/verify/:token"
+      hashtags#show:
+      - "/tags/:name"
+      bookmarks#index:
+      - "/saved"
+      pages#show:
+      - "/terms"
+      - "/privacy"
+      - "/cookies"
+      pages#privacy:
+      - "/privacy"
+      pages#terms:
+      - "/terms"
+      pages#cookies:
+      - "/cookies"
+      sessions#new:
+      - "/session/new"
+      passwords#new:
+      - "/passwords/new"
+      passwords#edit:
+      - "/passwords/:token/edit"
+      account_settings#export:
+      - "/account/export"
+      account_settings#show:
+      - "/account"
+      two_factor_setups#show:
+      - "/two_factor_setup"
+      omniauth_callbacks#create:
+      - "/auth/:provider/callback"
+      fleet_health#show:
+      - "/health"
+      activity_events#index:
+      - "/activity_events"
+      notifications#badge:
+      - "/notifications/badge"
+      notifications#index:
+      - "/notifications"
+      admin/reports#index:
+      - "/admin/reports"
+      posts#index:
+      - "/posts"
+      - "/communities/:community_id/posts"
+      posts#new:
+      - "/posts/new"
+      - "/communities/:community_id/posts/new"
+      posts#edit:
+      - "/posts/:id/edit"
+      posts#show:
+      - "/posts/:id"
+      communities#index:
+      - "/communities"
+      communities#new:
+      - "/communities/new"
+      communities#edit:
+      - "/communities/:id/edit"
+      communities#show:
+      - "/communities/:id"
+      avatars#show:
+      - "/users/:id/avatar"
+      users#new:
+      - "/users/new"
+      users#edit:
+      - "/users/:id/edit"
+      users#show:
+      - "/users/:id"
+      conversations#index:
+      - "/"
+      - "/conversations"
+      conversations#show:
+      - "/conversations/:id"
+      maps/home#index:
+      - "/"
+      maps/places#index:
+      - "/places"
+      maps/places#show:
+      - "/places/:id"
+      partner/clicks#show:
+      - "/p/:token"
+      partner/programs#index:
+      - "/partner/programs"
+      partner/programs#new:
+      - "/partner/programs/new"
+      partner/programs#edit:
+      - "/partner/programs/:id/edit"
+      partner/programs#show:
+      - "/partner/programs/:id"
+      partner/memberships#show:
+      - "/partner/memberships/:id"
+      email_subscriptions#confirm:
+      - "/confirm_email/:token"
+      nearby#index:
+      - "/nearby"
+      nearby#room:
+      - "/nearby/room"
+      nearby#widget:
+      - "/nearby/widget"
+      live#index:
+      - "/live"
+      channels#index:
+      - "/channels"
+      channels#show:
+      - "/channels/:slug"
+      search#index:
+      - "/search"
+      sitemaps#index:
+      - "/sitemap.xml"
+      robots#show:
+      - "/robots.txt"
+      home#index:
+      - "/"
+      rails/health#show:
+      - "/up"
+      turbo/native/navigation#recede:
+      - "/recede_historical_location"
+      turbo/native/navigation#resume:
+      - "/resume_historical_location"
+      turbo/native/navigation#refresh:
+      - "/refresh_historical_location"
+      active_storage/blobs/redirect#show:
+      - "/rails/active_storage/blobs/:signed_id/*filename"
+      - "/rails/active_storage/blobs/redirect/:signed_id/*filename"
+      active_storage/blobs/proxy#show:
+      - "/rails/active_storage/blobs/proxy/:signed_id/*filename"
+      active_storage/representations/redirect#show:
+      - "/rails/active_storage/representations/:signed_blob_id/:variation_key/*filename"
+      - "/rails/active_storage/representations/redirect/:signed_blob_id/:variation_key/*filename"
+      active_storage/representations/proxy#show:
+      - "/rails/active_storage/representations/proxy/:signed_blob_id/:variation_key/*filename"
+      active_storage/disk#show:
+      - "/rails/active_storage/disk/:encoded_key/*filename"
+      tv/home#index:
+      - "/"
+      tv/videos#new:
+      - "/channels/:channel_slug/videos/new"
+      tv/live_streams#new:
+      - "/channels/:channel_slug/live_streams/new"
+      tv/episodes#show:
+      - "/channels/:channel_slug/shows/:slug/episodes/:number"
+      tv/shows#index:
+      - "/channels/:channel_slug/shows"
+      tv/shows#show:
+      - "/channels/:channel_slug/shows/:slug"
+      tv/channels#index:
+      - "/channels"
+      tv/channels#new:
+      - "/channels/new"
+      tv/channels#edit:
+      - "/channels/:slug/edit"
+      tv/channels#show:
+      - "/channels/:slug"
+      tv/videos#show:
+      - "/videos/:id"
+      tv/live_streams#index:
+      - "/live_streams"
+      tv/live_streams#show:
+      - "/live_streams/:id"
+      dating/home#index:
+      - "/"
+      dating/home#next:
+      - "/next"
+      dating/profiles#new:
+      - "/profile/new"
+      dating/profiles#edit:
+      - "/profile/edit"
+      dating/profiles#show:
+      - "/profile"
+      dating/matches#index:
+      - "/matches"
+      playlist/playlists#index:
+      - "/"
+      - "/playlists"
+      playlist/playlists#embed:
+      - "/playlists/:id/embed"
+      playlist/playlists#new:
+      - "/playlists/new"
+      playlist/playlists#edit:
+      - "/playlists/:id/edit"
+      playlist/playlists#show:
+      - "/playlists/:id"
+      playlist/listening_parties#show:
+      - "/sets/:set_id/listening_party"
+      playlist/sets#index:
+      - "/sets"
+      playlist/sets#new:
+      - "/sets/new"
+      playlist/sets#edit:
+      - "/sets/:id/edit"
+      playlist/sets#show:
+      - "/sets/:id"
+      playlist/hosted_tracks#index:
+      - "/hosted_tracks"
+      playlist/hosted_tracks#new:
+      - "/hosted_tracks/new"
+      playlist/hosted_tracks#edit:
+      - "/hosted_tracks/:id/edit"
+      playlist/hosted_tracks#show:
+      - "/hosted_tracks/:id"
+      takeaway/restaurants#index:
+      - "/"
+      - "/restaurants"
+      takeaway/orders#new:
+      - "/restaurants/:restaurant_id/orders/new"
+      takeaway/restaurants#new:
+      - "/restaurants/new"
+      takeaway/restaurants#edit:
+      - "/restaurants/:id/edit"
+      takeaway/restaurants#show:
+      - "/restaurants/:id"
+      takeaway/delivery_drivers#index:
+      - "/delivery_drivers"
+      takeaway/delivery_drivers#show:
+      - "/delivery_drivers/:id"
+      takeaway/orders#index:
+      - "/orders"
+      takeaway/orders#show:
+      - "/orders/:id"
+      marketplace/listings#index:
+      - "/"
+      - "/listings"
+      marketplace/stores#index:
+      - "/shops"
+      marketplace/stores#new:
+      - "/shops/new"
+      marketplace/stores#edit:
+      - "/shops/:id/edit"
+      marketplace/stores#show:
+      - "/shops/:id"
+      marketplace/deals#index:
+      - "/deals"
+      marketplace/deals#show:
+      - "/deals/:id"
+      marketplace/listings#new:
+      - "/listings/new"
+      marketplace/listings#edit:
+      - "/listings/:id/edit"
+      marketplace/listings#show:
+      - "/listings/:id"
+      marketplace/orders#index:
+      - "/orders"
+      marketplace/orders#show:
+      - "/orders/:id"
+      marketplace/carts#show:
+      - "/cart"
+      marketplace/checkouts#show:
+      - "/checkout"
+      marketplace/categories#show:
+      - "/categories/:id"
+      marketplace/saved_searches#index:
+      - "/saved_searches"
+  amber:
+    digest: f91ca3049601f4f3
+    routes:
+      rails/pwa#offline:
+      - "/offline"
+      internal#status:
+      - "/internal/status"
+      sso#from_master:
+      - "/sso/from_master"
+      registrations#new:
+      - "/registration/new"
+      sessions#new:
+      - "/session/new"
+      account_settings#export:
+      - "/account/export"
+      account_settings#show:
+      - "/account"
+      two_factor_setups#show:
+      - "/two_factor_setup"
+      omniauth_callbacks#create:
+      - "/auth/:provider/callback"
+      notifications#badge:
+      - "/notifications/badge"
+      notifications#index:
+      - "/notifications"
+      fleet_health#show:
+      - "/health"
+      passwords#new:
+      - "/passwords/new"
+      passwords#edit:
+      - "/passwords/:token/edit"
+      items#shopping_list:
+      - "/items/shopping_list"
+      items#index:
+      - "/items"
+      items#new:
+      - "/items/new"
+      items#edit:
+      - "/items/:id/edit"
+      items#show:
+      - "/items/:id"
+      outfits#dressing_room:
+      - "/outfits/dressing_room"
+      outfits#index:
+      - "/outfits"
+      outfits#new:
+      - "/outfits/new"
+      outfits#edit:
+      - "/outfits/:id/edit"
+      outfits#show:
+      - "/outfits/:id"
+      planned_outfits#index:
+      - "/planned_outfits"
+      wardrobe_items#analytics:
+      - "/wardrobe_items/analytics"
+      wardrobe_items#timeline:
+      - "/wardrobe_items/timeline"
+      wardrobe_items#index:
+      - "/wardrobe_items"
+      wardrobe_items#new:
+      - "/wardrobe_items/new"
+      wardrobe_items#edit:
+      - "/wardrobe_items/:id/edit"
+      wardrobe_items#show:
+      - "/wardrobe_items/:id"
+      connections#index:
+      - "/connections"
+      live_streams#index:
+      - "/live_streams"
+      live_streams#show:
+      - "/live_streams/:id"
+      messages#index:
+      - "/messages"
+      posts#feed:
+      - "/posts/feed"
+      posts#index:
+      - "/posts"
+      posts#new:
+      - "/posts/new"
+      posts#show:
+      - "/posts/:id"
+      users#show:
+      - "/users/:id"
+      creator_profiles#show:
+      - "/creators/:handle"
+      creator_profiles#new:
+      - "/creator_profile/new"
+      creator_profiles#edit:
+      - "/creator_profile/edit"
+      declutter#review:
+      - "/declutter/:id/review"
+      declutter#last_chance:
+      - "/declutter/:id/last_chance"
+      declutter#index:
+      - "/declutter"
+      ai#suggest_outfits:
+      - "/ai/outfits/suggest"
+      ai#declutter_guide:
+      - "/ai/declutter"
+      ai#capsule:
+      - "/ai/capsule"
+      ai#color_palette:
+      - "/ai/palette"
+      ai#search:
+      - "/ai/search"
+      ai#mood_board:
+      - "/ai/moodboard"
+      ai#occasion_map:
+      - "/ai/occasions"
+      ai#style_profile:
+      - "/ai/style"
+      ai#packing_list:
+      - "/ai/pack"
+      demo_wardrobe#index:
+      - "/demo"
+      demo_wardrobe#show:
+      - "/demo/items/:id"
+      home#index:
+      - "/"
+      rails/pwa#manifest:
+      - "/manifest"
+      rails/pwa#service_worker:
+      - "/service-worker"
+      rails/health#show:
+      - "/up"
+      sitemaps#index:
+      - "/sitemap.xml"
+      turbo/native/navigation#recede:
+      - "/recede_historical_location"
+      turbo/native/navigation#resume:
+      - "/resume_historical_location"
+      turbo/native/navigation#refresh:
+      - "/refresh_historical_location"
+      action_mailbox/ingresses/mandrill/inbound_emails#health_check:
+      - "/rails/action_mailbox/mandrill/inbound_emails"
+      rails/conductor/action_mailbox/inbound_emails#index:
+      - "/rails/conductor/action_mailbox/inbound_emails"
+      rails/conductor/action_mailbox/inbound_emails#new:
+      - "/rails/conductor/action_mailbox/inbound_emails/new"
+      rails/conductor/action_mailbox/inbound_emails#show:
+      - "/rails/conductor/action_mailbox/inbound_emails/:id"
+      rails/conductor/action_mailbox/inbound_emails/sources#new:
+      - "/rails/conductor/action_mailbox/inbound_emails/sources/new"
+      active_storage/blobs/redirect#show:
+      - "/rails/active_storage/blobs/:signed_id/*filename"
+      - "/rails/active_storage/blobs/redirect/:signed_id/*filename"
+      active_storage/blobs/proxy#show:
+      - "/rails/active_storage/blobs/proxy/:signed_id/*filename"
+      active_storage/representations/redirect#show:
+      - "/rails/active_storage/representations/:signed_blob_id/:variation_key/*filename"
+      - "/rails/active_storage/representations/redirect/:signed_blob_id/:variation_key/*filename"
+      active_storage/representations/proxy#show:
+      - "/rails/active_storage/representations/proxy/:signed_blob_id/:variation_key/*filename"
+      active_storage/disk#show:
+      - "/rails/active_storage/disk/:encoded_key/*filename"
+  bsdports:
+    digest: aa7c8d64c1172e25
+    routes:
+      rails/pwa#offline:
+      - "/offline"
+      internal#status:
+      - "/internal/status"
+      sso#from_master:
+      - "/sso/from_master"
+      sessions#new:
+      - "/session/new"
+      account_settings#export:
+      - "/account/export"
+      account_settings#show:
+      - "/account"
+      two_factor_setups#show:
+      - "/two_factor_setup"
+      omniauth_callbacks#create:
+      - "/auth/:provider/callback"
+      fleet_health#show:
+      - "/health"
+      passwords#new:
+      - "/passwords/new"
+      passwords#edit:
+      - "/passwords/:token/edit"
+      ports#index:
+      - "/"
+      - "/ports"
+      categories#index:
+      - "/categories"
+      categories#show:
+      - "/categories/:id"
+      maintainers#index:
+      - "/maintainers"
+      maintainers#show:
+      - "/maintainers/:id"
+      ports#explore:
+      - "/ports/:id/explore"
+      ports#show:
+      - "/ports/:id"
+      rails/pwa#manifest:
+      - "/manifest"
+      rails/pwa#service_worker:
+      - "/service-worker"
+      rails/health#show:
+      - "/up"
+      sitemaps#index:
+      - "/sitemap.xml"
+      turbo/native/navigation#recede:
+      - "/recede_historical_location"
+      turbo/native/navigation#resume:
+      - "/resume_historical_location"
+      turbo/native/navigation#refresh:
+      - "/refresh_historical_location"
+      action_mailbox/ingresses/mandrill/inbound_emails#health_check:
+      - "/rails/action_mailbox/mandrill/inbound_emails"
+      rails/conductor/action_mailbox/inbound_emails#index:
+      - "/rails/conductor/action_mailbox/inbound_emails"
+      rails/conductor/action_mailbox/inbound_emails#new:
+      - "/rails/conductor/action_mailbox/inbound_emails/new"
+      rails/conductor/action_mailbox/inbound_emails#show:
+      - "/rails/conductor/action_mailbox/inbound_emails/:id"
+      rails/conductor/action_mailbox/inbound_emails/sources#new:
+      - "/rails/conductor/action_mailbox/inbound_emails/sources/new"
+      active_storage/blobs/redirect#show:
+      - "/rails/active_storage/blobs/:signed_id/*filename"
+      - "/rails/active_storage/blobs/redirect/:signed_id/*filename"
+      active_storage/blobs/proxy#show:
+      - "/rails/active_storage/blobs/proxy/:signed_id/*filename"
+      active_storage/representations/redirect#show:
+      - "/rails/active_storage/representations/:signed_blob_id/:variation_key/*filename"
+      - "/rails/active_storage/representations/redirect/:signed_blob_id/:variation_key/*filename"
+      active_storage/representations/proxy#show:
+      - "/rails/active_storage/representations/proxy/:signed_blob_id/:variation_key/*filename"
+      active_storage/disk#show:
+      - "/rails/active_storage/disk/:encoded_key/*filename"

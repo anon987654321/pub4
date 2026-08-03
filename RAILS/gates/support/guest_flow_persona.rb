@@ -99,7 +99,7 @@ module Deploy
 
     def run_brgen_probes!(result, port_open:)
       unless port_open
-        result.warn("guest_flow: brgen port closed — guest capability probes skipped")
+        result.skipped_live("guest_flow: brgen port closed — guest capability probes skipped")
         return result
       end
 
