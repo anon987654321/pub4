@@ -70,6 +70,7 @@ module Master
           total: violations.size,
           rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
+          skipped: @file_collector.skipped,
         )
       end
 

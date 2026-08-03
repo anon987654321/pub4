@@ -8,9 +8,10 @@ module Master
       end
 
       def render
-        return "preview: clean — no violations" if total.to_i.zero?
+        return ["preview: clean — no violations", *skipped_line].join("\n") if total.to_i.zero?
 
         ["preview: #{total} violations (no changes made)",
+         *skipped_line,
          "by rule:", *rule_lines,
          "top files:", *file_lines].join("\n")
       end
@@ -21,6 +22,15 @@ module Master
 
       def total
         data[:total]
+      end
+
+      # Named, because a fix pass that narrows its own input without saying so
+      # reads as a smaller problem rather than a smaller scope.
+      def skipped_line
+        count = data[:skipped].to_i
+        return [] if count.zero?
+
+        ["skipped: #{count} generated/vendored file(s) — not fixable in place"]
       end
 
       def rule_lines
