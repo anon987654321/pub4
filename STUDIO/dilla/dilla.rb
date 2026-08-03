@@ -14481,6 +14481,50 @@ def demo_title(slug, idx)
   "#{first}_#{second}"
 end
 
+# True when every part carries the same codec, which is the one thing the concat
+# demuxer requires and the one thing it will not check. It probes the FIRST input
+# only and assumes the rest match, so a single odd part is copied through as if it
+# were the format of part 1.
+def demo_parts_uniform?(parts)
+  codecs = parts.map do |p|
+    out, status = Open3.capture2e("ffprobe", "-v", "error", "-select_streams", "a:0",
+                                  "-show_entries", "stream=codec_name",
+                                  "-of", "default=nw=1:nk=1", p)
+    status.success? ? out.strip : "unknown"
+  end
+  codecs.uniq.length <= 1
+end
+
+# Join the parts into one wav. `-c copy` is worth keeping -- it is near-instant on
+# 84 tracks where a re-encode is minutes -- but it cannot be trusted on its own,
+# because on a codec mismatch it does not fail. It writes the wrong stream into a
+# WAV container and exits 0, so the rescue that used to guard this never fired and
+# the demo shipped a file that opens nowhere. Check the parts first, then copy.
+def demo_join_parts!(parts, list, out)
+  if demo_parts_uniform?(parts)
+    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out
+    return out
+  end
+  # Re-encoding through the concat demuxer does NOT rescue this, which is the
+  # trap worth naming: the demuxer still probes part 1 and hands every later
+  # part to that decoder, so a pcm part read as mp3 yields "Header missing" per
+  # packet and silence where the audio was. Measured, not assumed. Each part has
+  # to be decoded on its own before anything joins them.
+  dmesg_warn("concat: parts are not one codec, normalising #{parts.length} before joining")
+  Dir.mktmpdir("dilla_join") do |tmp_dir|
+    normalised = parts.each_with_index.map do |p, i|
+      norm = File.join(tmp_dir, format("%03d.wav", i))
+      sh! "ffmpeg", "-y", "-loglevel", "error", "-i", p,
+          "-c:a", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2", norm
+      norm
+    end
+    norm_list = File.join(tmp_dir, "concat.txt")
+    File.write(norm_list, normalised.map { |p| "file '#{p}'" }.join("\n") + "\n")
+    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", norm_list, "-c", "copy", out
+  end
+  out
+end
+
 def demo_all(bars_count = 12, destination = nil)
   bars_count = bars_count.to_i
   bars_count = 12 unless bars_count.positive?
@@ -14695,8 +14739,22 @@ def demo_all(bars_count = 12, destination = nil)
           ENV["HATE_MIN"] = ((bars_count * 4 * (60.0 / HATE_BPM)) / 60.0).round(2).to_s
           begin
             dmesg("slot #{idx} -> techno", unit: "demo0", parent: "dilla0")
-            render_hate_techno(part.sub(/\.wav\z/, ".mp3"))
-            FileUtils.mv(part.sub(/\.wav\z/, ".mp3"), part) if part.end_with?(".wav")
+            techno_mp3 = part.sub(/\.wav\z/, ".mp3")
+            render_hate_techno(techno_mp3)
+            # Decode, do not rename. The techno renderer writes an mp3, and
+            # moving it onto the .wav path gave the part an extension that lied
+            # about its contents -- every other slot here is pcm_s16le. That
+            # matters at the end of this method, where the parts are joined with
+            # `-c copy`: the concat demuxer probes only the FIRST input and
+            # applies that codec to all of them, so one mp3 in slot 1 makes
+            # ffmpeg copy mp3 packets into a WAV container and exit 0. Nothing
+            # raises, so the re-encode rescue below never fires; the file simply
+            # does not open (afplay: "AudioFileOpen failed ('dta?')") and
+            # ffprobe reports a duration read from a header that does not
+            # describe the data -- 14.2 minutes for 5.3 minutes of audio.
+            sh! "ffmpeg", "-y", "-loglevel", "error", "-i", techno_mp3,
+                "-c:a", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2", part
+            FileUtils.rm_f(techno_mp3)
           ensure
             prev ? ENV["HATE_MIN"] = prev : ENV.delete("HATE_MIN")
           end
@@ -14806,12 +14864,7 @@ def demo_all(bars_count = 12, destination = nil)
   list = File.join(out_dir, "concat.txt")
   File.write(list, parts.map { |p| "file '#{p}'" }.join("\n") + "\n")
   tmp = "#{dest}.concat.wav"
-  begin
-    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", tmp
-  rescue StandardError
-    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list,
-        "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", tmp
-  end
+  demo_join_parts!(parts, list, tmp)
   FileUtils.mv(tmp, dest)
   # Optional album-level loudnorm (off by default — long concats exceed sh timeout).
   if ENV.fetch("DEMO_ALBUM_NORM", "0") == "1"
