@@ -12,14 +12,25 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
 
+    # The vertical-as-engine split moved marketplace's controllers, views and
+    # routes to engines/marketplace/ and left the payment *services* in the host.
+    # This gate kept the pre-split paths, so it failed on "missing" files that had
+    # only moved — and would have gone on failing identically had the checkout
+    # actually been deleted. Engine paths below; host paths for what stayed.
+    ENGINE = "brgen/engines/marketplace"
+
     REQUIRED = {
       "brgen/app/services/marketplace/payments/not_configured.rb" => /NotConfigured/,
       "brgen/app/services/marketplace/payments/stripe_checkout.rb" => /NotConfigured|configured\?/,
       "brgen/app/services/marketplace/payments/vipps_checkout.rb" => /NotConfigured|configured\?/,
-      "brgen/app/controllers/marketplace/checkouts_controller.rb" => /NotConfigured|provider/,
+      "#{ENGINE}/app/controllers/marketplace/checkouts_controller.rb" => /NotConfigured|provider/,
       # i18n keys or EN fallbacks after cart polish
-      "brgen/app/views/marketplace/carts/show.html.erb" => /pay_vipps|pay_stripe|Pay with Vipps|Pay with Stripe|not configured|cart_honest_pay|marketplace\.pay_/i,
-      "brgen/config/routes.rb" => /checkout|webhooks/,
+      "#{ENGINE}/app/views/marketplace/carts/show.html.erb" => /pay_vipps|pay_stripe|Pay with Vipps|Pay with Stripe|not configured|cart_honest_pay|marketplace\.pay_/i,
+      # Checkout + PSP webhook routes are drawn on the engine now. The host
+      # routes.rb still matches /webhooks/ via webhooks/tradedoubler, so keeping
+      # the assertion there would have passed on an unrelated route forever.
+      # Both must be present, hence the lookahead rather than an alternation.
+      "#{ENGINE}/config/routes.rb" => /(?=.*checkout)(?=.*webhooks)/m,
     }.freeze
 
     def self.run

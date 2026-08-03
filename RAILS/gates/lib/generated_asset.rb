@@ -7,11 +7,16 @@ module Deploy
   class GeneratedAssetGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
+    # Stylesheets only. app/javascript/**/*.{js,ts} used to be watched here and
+    # compared against application.css — but every app serves its JS through
+    # importmap, unbundled, so no JS file has application.css as its build
+    # artifact and no JS edit can make it stale. Touching a Stimulus controller
+    # reported three apps' CSS as needing a rebuild that would change nothing.
+    # (The one JS artifact that IS generated, the service worker, has its own
+    # check at the bottom of stale?.)
     WATCHED = [
       "app/assets/stylesheets/application.scss",
       "app/assets/stylesheets/**/*.scss",
-      "app/javascript/**/*.js",
-      "app/javascript/**/*.ts",
     ].freeze
 
     # An app's application.css is compiled from its own stylesheets *and* the
@@ -24,7 +29,6 @@ module Deploy
     # them was a no-op for the app trees and a visible change to the pages.
     SHARED_WATCHED = [
       "app/assets/stylesheets/**/*.scss",
-      "frontend/**/*.js",
     ].freeze
 
     def self.run
@@ -53,6 +57,24 @@ module Deploy
         .uniq.select { |path| File.file?(path) }
     end
 
+    # Absolute paths with uncommitted changes, or nil when git cannot answer
+    # (no repo, no git binary) — in which case the mtime check stands alone
+    # rather than silently passing everything.
+    def dirty_paths
+      return @dirty_paths if defined?(@dirty_paths)
+
+      out = IO.popen(["git", "-C", ROOT, "status", "--porcelain", "-z", "--", "RAILS"], err: File::NULL, &:read)
+      @dirty_paths =
+        if $?&.success?
+          out.split("\0").filter_map { |entry|
+            rel = entry[3..]
+            File.join(ROOT, rel) if rel && !rel.empty?
+          }.to_set
+        end
+    rescue SystemCallError
+      @dirty_paths = nil
+    end
+
     def stale?(app_dir, result, app_name)
       build = File.join(app_dir, "app", "assets", "builds", "application.css")
       sources = source_files(app_dir)
@@ -64,8 +86,19 @@ module Deploy
       end
 
       build_mtime = File.mtime(build)
+      dirty = dirty_paths
       sources.each do |source|
         next if File.mtime(source) <= build_mtime
+        # mtime alone is not evidence. `git checkout`/`pull` rewrites every file
+        # in one pass, so which of two files lands a millisecond later is write
+        # order, not an edit — this reported brgen's _channels.scss (1.3ms) and
+        # _nav_swiper.scss (3.7ms) as newer than a build that in fact contained
+        # both files' selectors verbatim. A source only counts as stale if it is
+        # actually modified in the working tree while the build is not: that is
+        # the real failure (edit the SCSS, forget to rebuild). With a clean tree
+        # the committed build is by construction the one built from the committed
+        # sources, whatever the checkout stamped on them.
+        next if dirty && !(dirty.include?(source) && !dirty.include?(build))
 
         rel = source.sub("#{app_dir}/", "").sub("#{RAILS_ROOT}/", "")
         result.fail("#{app_name}: stale asset build — #{rel} newer than application.css")

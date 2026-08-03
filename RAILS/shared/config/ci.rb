@@ -53,7 +53,21 @@ Pub4::CiGuard.run! do
     step "Security: Gem audit", audit
     step "Security: Brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
     step "Tests: DB prepare", "env RAILS_ENV=test bin/rails db:test:prepare"
-    step "Tests: Rails", "bin/rails test"
+    # bin/rails test globs test/**/*_test.rb from the app root, so the mountable
+    # verticals under engines/*/test were invisible to it and to this step. They
+    # went unrun from the extraction onward: 29 tests, four of which had rotted
+    # into NameErrors on the pre-split marketplace_checkout_path helper while CI
+    # stayed green. DEFAULT_TEST/DEFAULT_TEST_EXCLUDE are the runner's supported
+    # overrides (rails/test_unit/runner.rb); both must be set together, since
+    # widening the glob without widening the exclude would sweep in an engine's
+    # test/system or test/dummy.
+    if Dir.glob("engines/*/test/**/*_test.rb").any?
+      test_glob = "{test,engines/*/test}/**/*_test.rb"
+      test_exclude = "{test,engines/*/test}/{system,dummy,fixtures}/**/*_test.rb"
+      step "Tests: Rails", "env DEFAULT_TEST='#{test_glob}' DEFAULT_TEST_EXCLUDE='#{test_exclude}' bin/rails test"
+    else
+      step "Tests: Rails", "bin/rails test"
+    end
     # System tests spin up a real headless-Chrome session -- too heavy for the
     # 1-vCPU VPS gate (see resource_guard.sh), but must run in local/dev CI.
     # This is also where axe-core accessibility checks live (see

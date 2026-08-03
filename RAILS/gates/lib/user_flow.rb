@@ -101,7 +101,7 @@ module Deploy
         id: :single_h1_marketplace_listings,
         principle: "hierarchy / clarity",
         meaning: "Marketplace listings index exposes exactly one document h1",
-        paths: %w[brgen/app/views/marketplace/listings/index.html.erb],
+        paths: %w[brgen/engines/marketplace/app/views/marketplace/listings/index.html.erb],
         required_all: [/<h1\b/i],
         max_h1: 1,
       },
@@ -156,16 +156,21 @@ module Deploy
       }
     end.freeze
 
+    # Marketplace controllers/views live in engines/marketplace since the
+    # vertical-as-engine split; only the payment services stayed in the host app.
+    # These are relative to RAILS/<app>, so the engine prefix rides along here.
+    MP = "engines/marketplace/app"
+
     SOURCE_FLOW_MARKERS = {
       "brgen" => {
-        "marketplace cart" => %w[app/controllers/marketplace/carts_controller.rb app/views/marketplace/carts/show.html.erb],
-        "marketplace nav bar" => %w[app/views/marketplace/_nav_bar.html.erb],
+        "marketplace cart" => ["#{MP}/controllers/marketplace/carts_controller.rb", "#{MP}/views/marketplace/carts/show.html.erb"],
+        "marketplace nav bar" => ["#{MP}/views/marketplace/_nav_bar.html.erb"],
         "live hyperlocal feed" => %w[app/controllers/live_controller.rb app/views/live/index.html.erb],
         "yep search surface" => %w[../shared/app/assets/stylesheets/_search_yep.scss],
-        "payment scaffold or honest stub" => %w[
-          app/services/marketplace/payments/stripe_checkout.rb
-          app/services/marketplace/payments/vipps_checkout.rb
-          app/controllers/marketplace/checkouts_controller.rb
+        "payment scaffold or honest stub" => [
+          "app/services/marketplace/payments/stripe_checkout.rb",
+          "app/services/marketplace/payments/vipps_checkout.rb",
+          "#{MP}/controllers/marketplace/checkouts_controller.rb",
         ],
       },
       "amber" => {

@@ -10,9 +10,12 @@ module Deploy
   class LayoutSearchGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    CARD = File.join(RAILS, "brgen/app/views/marketplace/listings/_card.html.erb")
+    # Views moved to engines/marketplace in the vertical-as-engine split; the
+    # SCSS stayed in the host (engines contribute no stylesheets). See ENGINES.md.
+    ENGINE = File.join(RAILS, "brgen/engines/marketplace")
+    CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
     CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/_marketplace_cards.scss")
-    NAV = File.join(RAILS, "brgen/app/views/marketplace/_nav_bar.html.erb")
+    NAV = File.join(ENGINE, "app/views/marketplace/_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "shared/app/assets/stylesheets/_search_yep.scss")
 
     def self.run
