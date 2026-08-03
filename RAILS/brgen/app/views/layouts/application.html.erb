@@ -4,6 +4,11 @@
   <meta charset="utf-8">
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
+  <%# iOS ignores the manifest for standalone behaviour — these give an installed
+      iPhone a real full-screen app, a translucent status bar, and a branded name. %>
+  <%= tag.meta name: "apple-mobile-web-app-capable", content: "yes" %>
+  <%= tag.meta name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" %>
+  <%= tag.meta name: "apple-mobile-web-app-title", content: "Brgen" %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
   <%= tag.meta name: "theme-color", content: "#000000", data: { light_color: "#ffffff", dark_color: "#000000" } %>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>

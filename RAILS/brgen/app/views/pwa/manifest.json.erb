@@ -133,6 +133,7 @@
   "background_color": "#000000",
   "lang": <%= raw (Current.locale.presence || I18n.locale).to_s.to_json %>,
   "shortcuts": <%= raw shortcuts.to_json %>,
+  "categories": ["social", "news", "lifestyle"],
   "share_target": {
     "action": "/share",
     "method": "POST",
@@ -140,7 +141,10 @@
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "files": [
+        { "name": "media", "accept": ["image/*", "video/*"] }
+      ]
     }
   },
   "protocol_handlers": [

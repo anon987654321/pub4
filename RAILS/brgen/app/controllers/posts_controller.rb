@@ -95,12 +95,16 @@ class PostsController < ApplicationController
   end
 
   def share
+    shared_media = Array(params[:media]).select { |f| f.respond_to?(:read) }
     post = Post.new(
-      title: share_title,
+      title: share_title.presence || (shared_media.any? ? t("share.photo_title", default: "Shared photo") : nil),
       content: share_content,
       community: Community.first,
       user: Current.user
     )
+    # Share Target for images: a photo shared INTO brgen from the camera roll lands
+    # attached to a fresh draft (manifest share_target declares files: media).
+    post.image.attach(shared_media.first) if shared_media.any? && post.respond_to?(:image)
 
     if post.save
       redirect_to edit_post_path(post), notice: "Shared into a draft"
