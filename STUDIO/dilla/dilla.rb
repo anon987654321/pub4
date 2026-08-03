@@ -13069,7 +13069,46 @@ def showcase_demo!(dest = File.join(ROOT, "demo.wav"))
   ok
 end
 
+# A continuous techno set instead of the hip-hop rotation.
+#
+# The stream loop renders one track, plays it, moves to the next, forever. That
+# is the right shape for a catalogue of progressions and the wrong one for a
+# techno set, where the whole point is that it does not stop between pieces.
+#
+# STREAM_STYLE=techno routes each iteration through render_hate_techno instead,
+# and advances a block counter across iterations so the set keeps evolving
+# rather than restarting its arrangement every few minutes. Each pass renders a
+# few minutes, plays them, and the next pass picks up further along the shape --
+# the layer schedule reads a position from 0 to 1, so a stream that has been
+# running for an hour is deep into the set rather than back at the intro.
+#
+# Blocks are rendered a few minutes at a time rather than in one long file so
+# playback starts quickly and edits to the engine take effect within one block.
+def stream_techno_enabled? = ENV["STREAM_STYLE"].to_s.downcase == "techno"
+
+def stream_techno_block!(index)
+  minutes = ENV.fetch("STREAM_TECHNO_MIN", "3").to_f.clamp(0.5, 20.0)
+  # Walk the set: each block starts where the previous one left off, wrapping
+  # after a full arc so an all-night stream keeps arriving somewhere.
+  arc = ENV.fetch("STREAM_TECHNO_ARC", "6").to_i.clamp(2, 40)
+  phase = index % arc
+  dest = scratch_path("stream_techno_#{index % 2}.mp3")
+  prev = ENV["HATE_PHASE"]
+  ENV["HATE_PHASE"] = phase.to_s
+  ENV["HATE_MIN"] = minutes.to_s
+  begin
+    dmesg("techno block #{index} — phase #{phase}/#{arc}, #{minutes} min @ #{HATE_BPM.round} BPM",
+          unit: "stream0", parent: "dilla0")
+    render_hate_techno(dest)
+    play_audio(dest)
+  ensure
+    prev ? ENV["HATE_PHASE"] = prev : ENV.delete("HATE_PHASE")
+  end
+end
+
 def stream_play_track!(bars_count)
+  return stream_techno_block!(@stream_techno_index = (@stream_techno_index || -1) + 1) if stream_techno_enabled?
+
   timeout = stream_track_timeout_sec
   if timeout
     # play() renders, gates, iterates AND THEN blocks on play_audio for the full
@@ -19718,9 +19757,12 @@ HATE_LAYERS = {
   clap:  ->(p, _b) { p >= 0.15 && !p.between?(0.55, 0.62) },
   open:  ->(p, _b) { p >= 0.25 },
   metal: ->(p, _b) { p >= 0.3 },                    # the factory arrives late
+  dfam:  ->(p, _b) { p >= 0.35 && !p.between?(0.55, 0.62) },  # the machine in the room
   poly:  ->(p, _b) { p >= 0.4 },                    # the 11-against-16 hat, deep in
-  acid:  ->(p, _b) { p >= 0.45 },                   # the only melodic content
+  acid:  ->(p, _b) { p >= 0.45 },                   # the only sustained melodic content
+  bleep: ->(p, b) { p >= 0.45 && b.even? },         # blips answer the kit, in alternate blocks
   tom:   ->(p, b) { p >= 0.5 && b.odd? },
+  bloop: ->(p, b) { p >= 0.55 && b.odd? },          # ...and the falling ones answer the bleeps
   ride:  ->(p, _b) { p >= 0.6 }
 }.freeze
 
@@ -19737,7 +19779,26 @@ HATE_LAYERS = {
 #
 # Position is 0.0 at the first block and 1.0 at the last, so a set thins and
 # thickens the same way whether it runs eight minutes or thirty.
-def hate_position(block, blocks) = blocks < 2 ? 0.0 : block.to_f / (blocks - 1)
+# Where this block sits in the set, 0.0 to 1.0.
+#
+# HATE_PHASE shifts the whole window so a streamed set can pick up where the
+# last block left off instead of replaying its own intro every few minutes. A
+# render with no phase set behaves exactly as before.
+def hate_position(block, blocks)
+  base = blocks < 2 ? 0.0 : block.to_f / (blocks - 1)
+  # Presence, not value. Guarding on `phase.zero?` made the FIRST streamed block
+  # -- the one that should open the set at position 0 -- fall through to the
+  # unphased branch and land mid-arc, so a stream started at its own midpoint
+  # and then jumped backwards for block 1.
+  raw = ENV["HATE_PHASE"]
+  return base if raw.nil? || raw.empty?
+
+  phase = raw.to_i
+  arc = ENV.fetch("STREAM_TECHNO_ARC", "6").to_i.clamp(2, 40)
+  # Each streamed block covers one slice of the arc, so consecutive blocks walk
+  # forward through it and wrap rather than jumping back to nothing.
+  ((phase + base) / arc).clamp(0.0, 1.0)
+end
 
 def hate_gate(layer, blocks, bar_p)
   on = (0...blocks).select { |b| HATE_LAYERS.fetch(layer).call(hate_position(b, blocks), b) }
@@ -19912,21 +19973,187 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
             "afftfilt=real='hypot(re,im)*cos(b)':imag='hypot(re,im)*sin(b)':win_size=2048:overlap=0.8," \
             "lowpass=f=1200,tremolo=f=0.14:d=0.28,stereowiden=delay=22:feedback=0.4:crossfeed=0.35:drymix=0.7")
 
+  # DFAM. Dual-oscillator FM percussion on an 8-step pitch sequence.
+  #
+  # The Moog DFAM is a semi-modular percussion synth whose whole character is
+  # that pitch and decay move per STEP -- one knob row for pitch, another for
+  # velocity, eight steps each -- so a single voice walks through a phrase
+  # instead of repeating one sound. That is what industrial techno is built out
+  # of, and DfamEngine has held the semantics all along: dual-osc FM, noise
+  # blend, resonant lowpass, per-step pitch and velocity.
+  #
+  # It was reachable only from render_dilla, where it sits under hip-hop drums.
+  # Here it is the machine in the room.
+  #
+  # The sequence runs at 8 steps against the bar's 16, so it turns over twice a
+  # bar and lands differently against the kick each time. Pitch 0-100 from the
+  # engine maps onto 45-360 Hz: percussion register, not melody.
+  dfam_patch = DfamEngine.resolve_patch
+  dfam_pattern = DfamEngine.resolve_pattern(seed: (@render_seed || 0) + stable_hash("hate"))
+  fm_index = dfam_patch[:fm_pct] / 100.0 * 6.0
+  dfam_decay = 1000.0 / [dfam_patch[:decay_ms], 40].max
+  dfam_sig = (0...(HATE_CYCLE_BARS * 2)).map do |i|
+    idx = i % DfamEngine::STEPS
+    t0 = ((i * bar) / 2.0).round(6)
+    pitch = dfam_pattern[:pitch][idx]
+    vel = dfam_pattern[:velocity][idx] / 100.0
+    f1 = (45.0 + (pitch / 100.0 * 315.0)).round(2)
+    f2 = (f1 * (dfam_patch[:osc2_hz].to_f / [dfam_patch[:osc1_hz], 1].max)).round(2)
+    dt = "(t-#{t0})"
+    body = "sin(2*PI*#{f1}*#{dt}+#{fm_index.round(3)}*sin(2*PI*#{f2}*#{dt}))"
+    "between(t,#{t0},#{(t0 + 0.4).round(6)})*#{(0.42 * vel).round(3)}*exp(-#{dt}*#{dfam_decay.round(2)})*#{body}"
+  end.join("+")
+  tone.call(:dfam, dfam_sig,
+            # The resonant lowpass is the other half of the instrument: a
+            # 12dB/oct sweep with the resonance up, which is what gives a DFAM
+            # hit its pitched ring rather than a flat thud.
+            "lowpass=f=#{dfam_patch[:filter_hz]}:width_type=q:width=#{(dfam_patch[:res_pct] / 100.0 * 8 + 0.7).round(2)}," \
+            "asoftclip=type=atan:threshold=0.55:output=0.9," \
+            "aecho=0.7:0.5:95|185:0.3|0.17,stereotools=slev=1.4")
+
+  # Long chains on the drums.
+  #
+  # Each of these was three or four stages: shape it, echo it, place it. Written
+  # out as arrays because at eight or nine stages a single string stops being
+  # readable, and the order matters more than any individual value -- saturate
+  # before you compress and you get grit, after and you get a loud clean hit.
+  #
+  # The shape of each chain is the same: BAND (what part of the noise this drum
+  # is) -> DAMAGE (crush, saturate, frequency-shift) -> MOVEMENT (phaser,
+  # flanger, tremolo, so it is never twice the same) -> SPACE (echo, then
+  # placement). Damage before movement, because modulating a clean signal sounds
+  # like an effect and modulating a broken one sounds like a machine.
+  drum_chain = ->(stages) { stages.compact.join(",") }
+
   noise.call(:clap, "white", gather.call(clap_per_bar, :snare), 0.05, 34, 0.55,
-             "bandpass=f=1600:w=2200,aecho=0.6:0.45:37|74:0.28|0.14,haas=level_in=1:level_out=1:side_gain=0.8:left_delay=2.6:right_delay=4.1")
-  noise.call(:hat, "white", gather.call(hat_per_bar, :hat), 0.035, 80, 0.32, "highpass=f=8500,aphaseshift=shift=0.25")
+             drum_chain.call([
+               "bandpass=f=1600:w=2200",
+               "acrusher=bits=12:samples=2:mix=0.3",
+               "asoftclip=type=atan:threshold=0.6:output=0.9",
+               "flanger=delay=2:depth=3:regen=40:speed=0.3",
+               "adynamicequalizer=dfrequency=1800:tfrequency=1800:threshold=0.1:ratio=4",
+               "aecho=0.6:0.45:37|74|151:0.28|0.18|0.09",
+               "haas=level_in=1:level_out=1:side_gain=0.8:left_delay=2.6:right_delay=4.1",
+               "stereotools=slev=1.3",
+             ]))
+
+  noise.call(:hat, "white", gather.call(hat_per_bar, :hat), 0.035, 80, 0.32,
+             drum_chain.call([
+               "highpass=f=8500",
+               "acrusher=bits=9:samples=1:mix=0.22",
+               "aphaseshift=shift=0.25",
+               "tremolo=f=7.3:d=0.22",
+               "aecho=0.5:0.3:29|61:0.2|0.1",
+               "pan=stereo|c0=0.85*c0|c1=1.0*c1",
+             ]))
+
   noise.call(:poly, "white", poly_hits.map { |s| ((s / 16) * bar) + ((s % 16) * step) }, 0.03, 95, 0.2,
-             "bandpass=f=6200:w=3000,pan=stereo|c0=0.55*c0|c1=1.0*c1,aecho=0.6:0.4:91:0.24")
-  noise.call(:open, "white", gather.call(open_per_bar, :hat), 0.45, 9, 0.26, "bandpass=f=7200:w=5200,adecorrelate=stages=4")
+             drum_chain.call([
+               "bandpass=f=6200:w=3000",
+               "afreqshift=shift=210",
+               "acrusher=bits=8:samples=2:mix=0.35",
+               "pan=stereo|c0=0.55*c0|c1=1.0*c1",
+               "aecho=0.6:0.4:91|187:0.24|0.12",
+               "adecorrelate=stages=3",
+             ]))
+
+  noise.call(:open, "white", gather.call(open_per_bar, :hat), 0.45, 9, 0.26,
+             drum_chain.call([
+               "bandpass=f=7200:w=5200",
+               "aphaser=speed=0.5:decay=0.6:delay=3",
+               "adecorrelate=stages=4",
+               "aecho=0.7:0.55:230|470:0.32|0.18",
+               "stereowiden=delay=15:feedback=0.4:crossfeed=0.3:drymix=0.7",
+             ]))
+
   noise.call(:ride, "white", gather.call(ride_per_bar, :hat), 1.6, 2.4, 0.13,
-             "bandpass=f=5400:w=2600,aexciter=level_in=1:level_out=1:amount=2:blend=2:freq=7500," \
-             "aecho=0.8:0.7:410|790:0.4|0.24,stereotools=mlev=0.7:slev=1.5")
+             drum_chain.call([
+               "bandpass=f=5400:w=2600",
+               "aexciter=level_in=1:level_out=1:amount=2:blend=2:freq=7500",
+               "chorus=0.6:0.9:50|60:0.4|0.32:0.25|0.4:2|2.3",
+               "aecho=0.8:0.7:410|790|1290:0.4|0.24|0.12",
+               "stereotools=mlev=0.7:slev=1.5",
+             ]))
+
   noise.call(:metal, "white", gather.call(metal_per_bar), 0.9, 5, 0.30,
-             "bandpass=f=3100:w=260,bandpass=f=4700:w=200," \
-             "afreqshift=shift=-37," \
-             "aecho=0.8:0.7:170|330|610:0.5|0.32|0.18,highpass=f=900,stereotools=slev=1.8")
+             drum_chain.call([
+               "bandpass=f=3100:w=260",
+               "bandpass=f=4700:w=200",
+               "afreqshift=shift=-37",
+               "acrusher=bits=10:samples=3:mix=0.4",
+               "flanger=delay=4:depth=6:regen=60:speed=0.14",
+               "aecho=0.8:0.7:170|330|610|1130:0.5|0.32|0.18|0.09",
+               "highpass=f=900",
+               "stereotools=slev=1.8",
+             ]))
+
   noise.call(:tom, "brown", gather.call(tom_per_bar, :ghost), 0.5, 7, 0.34,
-             "bandpass=f=180:w=140,asoftclip=type=atan:threshold=0.7,aecho=0.7:0.5:130|260:0.3|0.16")
+             drum_chain.call([
+               "bandpass=f=180:w=140",
+               "asoftclip=type=atan:threshold=0.7",
+               "asubboost=dry=0.9:wet=0.35:decay=0.5:feedback=0.4:cutoff=120",
+               "aphaser=speed=0.2:decay=0.5:delay=3.4",
+               "aecho=0.7:0.5:130|260|520:0.3|0.16|0.08",
+               "stereotools=slev=1.2",
+             ]))
+
+  # BLEEPS AND BLOOPS.
+  #
+  # The Flying Lotus register: short pitched blips that bend as they sound, sat
+  # in a lot of delay, panned hard and never quite where the grid is. On
+  # Cosmogramma they are the thing that stops a beat being a beat and makes it
+  # sound like a broken transmission.
+  #
+  # A bleep bends UP and a bloop bends DOWN -- that is the whole difference, and
+  # the reason both words exist. The bend is inside the sine's phase argument
+  # rather than applied afterwards, so the pitch really moves during the note
+  # instead of the note being pitch-shifted as a block.
+  #
+  # Placed on the odd sixteenths the drums leave alone, so they answer the kit
+  # rather than doubling it.
+  bleep_steps = [3, 7, 11, 15]
+  bloop_steps = [5, 13]
+  bleep_freqs = [880.0, 1174.7, 987.8, 1318.5, 1046.5, 784.0, 1396.9, 659.3]
+
+  tone.call(:bleep,
+            HATE_CYCLE_BARS.times.flat_map { |b|
+              bleep_steps.each_slice(2).map(&:first).map { |s|
+                t0 = at.call(b, s)
+                f = bleep_freqs[b]
+                dt = "(t-#{t0})"
+                # +40% over the note: a rising chirp, not a tone.
+                "between(t,#{t0},#{(t0 + 0.09).round(6)})*0.3*exp(-#{dt}*22)*" \
+                  "sin(2*PI*(#{f}*#{dt}+#{(f * 0.4).round(1)}*#{dt}*#{dt}))"
+              }
+            }.join("+"),
+            drum_chain.call([
+              "acrusher=bits=7:samples=1:mix=0.45",
+              "highpass=f=500",
+              "aecho=0.7:0.6:#{(step * 1500).round}|#{(step * 3000).round}|#{(step * 4500).round}:0.42|0.26|0.14",
+              "aphaser=speed=0.9:decay=0.55:delay=2",
+              "pan=stereo|c0=1.0*c0|c1=0.35*c1",
+              "stereotools=slev=1.6",
+            ]))
+
+  tone.call(:bloop,
+            HATE_CYCLE_BARS.times.flat_map { |b|
+              bloop_steps.map { |s|
+                t0 = at.call(b, s)
+                f = (bleep_freqs[b] / 2.0).round(2)
+                dt = "(t-#{t0})"
+                # Falling: the bend term is negative and the note is longer.
+                "between(t,#{t0},#{(t0 + 0.22).round(6)})*0.26*exp(-#{dt}*9)*" \
+                  "sin(2*PI*(#{f}*#{dt}-#{(f * 0.55).round(1)}*#{dt}*#{dt}))"
+              }
+            }.join("+"),
+            drum_chain.call([
+              "acrusher=bits=8:samples=2:mix=0.3",
+              "lowpass=f=3200",
+              "afreqshift=shift=-19",
+              "aecho=0.7:0.55:#{(step * 2000).round}|#{(step * 5000).round}:0.4|0.2",
+              "pan=stereo|c0=0.35*c0|c1=1.0*c1",
+              "stereowiden=delay=20:feedback=0.45:crossfeed=0.35:drymix=0.65",
+            ]))
 
   # HYDRAULIC HISS. A slow breath rather than a hit.
   #
@@ -24128,6 +24355,15 @@ DISPATCH = {
     ARGV[0] == "deep" ? demux_deep(src) : demux_six(src)
   end,
   "chop" => -> { chop_dispatch! },
+  # A drum kit cut from our own recordings. The inverse of `chop`: that one
+  # runs demucs and throws the drum stem away, this one keeps only the drums.
+  "kit" => lambda do
+    require_relative "lib/kit_dig"
+    cmd = demucs_cmd or abort "demucs required — see `ruby dilla.rb chop` for the venv setup"
+    KitDig.build!(demucs: cmd, limit: ENV["KIT_LIMIT"]&.to_i)
+  rescue RuntimeError => e
+    abort "kit: #{e.message}"
+  end,
   "learn" => lambda do
     src = ARGV.shift or abort "usage: ruby dilla.rb learn <url-or-path> [--apply] [--deep]"
     apply = ARGV.delete("--apply")

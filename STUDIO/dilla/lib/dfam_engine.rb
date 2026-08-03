@@ -49,9 +49,21 @@ module DfamEngine
     base
   end
 
+  # djb2, not String#hash.
+  #
+  # Ruby randomises String#hash per process -- SipHash with a key drawn at
+  # startup -- so this seeded the pattern from a different number on every run
+  # and the eight-step sequence was never the same twice. It reads as
+  # deterministic, keyed on the track name, and is not. Twenty-six sites in
+  # dilla.rb had the same fault and were corrected; this one is in a lib file
+  # and was missed.
+  def stable_hash(text)
+    text.to_s.each_byte.reduce(5381) { |a, b| ((a * 33) + b) % 4_294_967_296 }
+  end
+
   def pattern_seed
     track = (ENV["TRACK"] || "minor_iv_loop").to_s.downcase.tr("-", "_")
-    track.hash.abs + (@render_seed || 0)
+    stable_hash(track) + (@render_seed || 0)
   end
 
   def mix_events!(left, right, events, chunk_start, chunk_frames, sample_rate: 44_100)
