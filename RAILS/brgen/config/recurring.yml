@@ -95,3 +95,11 @@ production:
     class: UserPurgeJob
     queue: bulk
     schedule: every day at 3:50am
+
+  # Point-in-time backup of production.sqlite3 (VACUUM INTO + gzip, keep 7).
+  # Real backups while litestream is uninstalled; same-disk until an off-host
+  # PUB4_BACKUP_DIR or a litestream s3:// replica is configured.
+  database_snapshot:
+    class: Shared::DatabaseSnapshotJob
+    queue: bulk
+    schedule: every day at 2:20am
