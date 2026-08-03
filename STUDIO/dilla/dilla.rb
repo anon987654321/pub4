@@ -14319,9 +14319,7 @@ def demo_all_order
   # Dilla-produced handful. That is right for a broadcast and wrong for a
   # catalogue demo, which should show everything the engine knows regardless
   # of what the stream is currently filtered to.
-  base = STREAM_TRACKS.map(&:to_sym)
-  extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
-  curated = (base + extra).uniq
+  curated = demo_curated_order
 
   # ...and then everything else, which is most of it.
   #
@@ -14351,6 +14349,45 @@ def demo_all_order
   loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_sym).sort
   tail = (CHORD_PROGRESSIONS.keys.map(&:to_sym).sort - curated - loops)
   (curated + loops + tail).uniq
+end
+
+# The curated head of the catalogue, on its own. Named because three places want
+# it: demo_all_order builds from it, DEMO_CURATED_ONLY returns it, and the help
+# text has to be able to say how big it is without guessing.
+def demo_curated_order
+  base = STREAM_TRACKS.map(&:to_sym)
+  extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
+  (base + extra).uniq
+end
+
+# Catalogue sizes, derived rather than written down.
+#
+# Both counts in the help text were stale, and not by a little: it advertised
+# "84 named pieces" for a default catalogue that had grown to 307, and a
+# "69-track stream rotation" that was 205. The numbers were right when they were
+# typed and nothing recomputed them when the pools grew -- the same shape as
+# every other hardcoded count in this tree.
+#
+# It is worth deriving because the number IS the cost. demo-all at 70s a track is
+# 1.7 hours at 86 and 6 hours at 307, and an operator choosing between them off
+# the help text was choosing off numbers four times wrong.
+#
+# The :all and :curated counts read no ENV, deliberately. demo_all_order honours
+# DEMO_TRACKS/DEMO_CATALOG/DEMO_CURATED_ONLY, which is right for a render and
+# wrong for a help screen -- `DEMO_CATALOG=stream ruby dilla.rb help` should
+# still report what the default catalogue costs. :stream goes through
+# stream_track_order and therefore does follow STREAM_LOCK and any progression
+# filter, because that is the honest answer to "what would DEMO_CATALOG=stream
+# render for me", which is the question the help line is answering.
+def demo_catalog_sizes
+  curated = demo_curated_order
+  loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_sym)
+  tail = CHORD_PROGRESSIONS.keys.map(&:to_sym) - curated - loops
+  {
+    all: (curated + loops + tail).uniq.length,
+    curated: curated.length,
+    stream: stream_track_order.length,
+  }
 end
 
 # The mp3 is the artifact worth tracking. A full-catalogue WAV runs to hundreds
@@ -14383,7 +14420,9 @@ end
 #   DEMO_CREATIVE=1 (default) rotate pads/leads/MIDI/analog + sparse rap so chords read
 #   DEMO_TRACK_TIMEOUT=300 max seconds per track (creative stacks need headroom)
 #   DEMO_RAP_EVERY=4 rap only every Nth track (0 = never; 1 = always)
-#   DEMO_CATALOG=stream restrict to STREAM_ROTATION (default: all 84 named pieces)
+#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CURATED_ONLY=1 the
+#     curated head only. Sizes are in demo_catalog_sizes -- do not write them here,
+#     the two that used to live in this file drifted to 4x wrong.
 #   DEMO_MP3=0 skip the mp3; DEMO_MP3_BITRATE=192k
 # One file per track instead of one 48-minute concat.
 #
@@ -20354,8 +20393,9 @@ def help
 
     STREAM (non-stop rotation — speakers via afplay/ffplay)
       stream [bars]                    Fast render+play (#{STREAM_BARS_COUNT} bars default)
-      demo-all [bars] [out.wav]        Render all 84 named pieces → demo.wav + demo.mp3 (resumable)
-      DEMO_CATALOG=stream              Restrict demo-all to the 69-track stream rotation
+      demo-all [bars] [out.wav]        Render all #{demo_catalog_sizes[:all]} named pieces → demo.wav + demo.mp3 (resumable)
+      DEMO_CURATED_ONLY=1              Just the curated head (#{demo_catalog_sizes[:curated]} pieces)
+      DEMO_CATALOG=stream              Restrict demo-all to the stream rotation (#{demo_catalog_sizes[:stream]})
       DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 192k
       STREAM_CONTINUOUS=1 (default)    Outer shell auto-restarts; per-track timeout skips hangs
       STREAM_TRACK_TIMEOUT=420         Max seconds per track before skip (0 = no limit)
