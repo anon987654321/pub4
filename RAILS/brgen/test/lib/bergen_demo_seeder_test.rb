@@ -82,7 +82,10 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
 
     hot_titles = Post.hot.where(city: @city).limit(5).pluck(:title)
     assert_includes hot_titles, "Hva skjer i Bergen i helgen?"
-    assert_includes hot_titles, "Radio Bergen-playlisten er oppe — hvem lager neste?"
+    # Vote weight surfaces the highest-engagement threads. The 2026-08-02 content
+    # broadening added higher-vote posts (Brann matchday, rain-day), which now lead
+    # the frontpage — the mechanism working, not a regression.
+    assert_includes hot_titles, "Brann på Stadion i kveld — hvor ser dere kampen?"
   end
 
   test "seeds bergen places takeaway and tv verticals" do

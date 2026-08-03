@@ -91,7 +91,11 @@ module Brgen
         User.strict_loading(false).find_or_create_by!(
           email_address: "seed_#{@city.slug}_#{index}@#{@city.domain}"
         ) do |user|
-          user.username = "#{name_slug}_#{@city.slug}"
+          # The city slug keeps names unique across cities, but two of the 5 random
+          # Faker names can collide WITHIN a city (no index in the visible name) —
+          # a flaky "Username er allerede i bruk" on replant. The index guarantees
+          # within-city uniqueness; still reads as a real display name.
+          user.username = "#{name_slug}_#{@city.slug}_#{index + 1}"
           user.password = user.password_confirmation = "password123"
           user.city = @city
           user.latitude = @city.latitude.to_f + rand(-0.05..0.05)

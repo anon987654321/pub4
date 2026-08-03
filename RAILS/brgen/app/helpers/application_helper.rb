@@ -35,7 +35,10 @@ module ApplicationHelper
         [
           tag.source(type: "image/webp", srcset: webp_srcset, sizes: sizes),
           image_tag(
-            attachment.variant(resize_to_limit: [ largest, largest ]),
+            # main_app.url_for: rendered inside isolated engines (tv/marketplace cards),
+            # image_tag would otherwise resolve the variant against engine routes that
+            # do not own ActiveStorage → to_model on VariantWithRecord. See ENGINES.md.
+            main_app.url_for(attachment.variant(resize_to_limit: [ largest, largest ])),
             alt: alt,
             srcset: fallback_srcset,
             sizes: sizes,
