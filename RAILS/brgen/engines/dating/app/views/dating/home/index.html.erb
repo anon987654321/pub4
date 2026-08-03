@@ -3,7 +3,7 @@
 <% content_for :head do %>
   <%# Inter is self-hosted (see _fonts_brand.scss). %>
   <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-600-normal.woff2" crossorigin>
-  <%# css-doodle.min.js dropped: the heart is now a plain inline SVG (_heart). %>
+  <script src="/vendor/css-doodle.min.js" defer></script>
 <% end %>
 
 <div class="dating-app" data-controller="dating-intro">

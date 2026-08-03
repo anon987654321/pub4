@@ -1,30 +1,52 @@
-<%# Clean inline SVG neon heart — replaced an 18-layer css-doodle that needed a
-    79KB vendor script to upgrade a custom element and rendered blank when it did
-    not. This always paints, has no JS dependency, and reads as the calm splash the
-    design calls for. Colours are the dating accents (green -> warm red). %>
+<%# Replace inner css-doodle block with the exact snippet from css-doodle.com when ready %>
 <div class="dating-heart-stage" aria-hidden="true">
-  <svg class="dating-heart" viewBox="0 0 240 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="dating-heart-grad" x1="20" y1="20" x2="220" y2="200" gradientUnits="userSpaceOnUse">
-        <stop offset="0" stop-color="#00d4aa"/>
-        <stop offset="0.5" stop-color="#ffffff"/>
-        <stop offset="1" stop-color="#ff5500"/>
-      </linearGradient>
-      <filter id="dating-heart-glow" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur stdDeviation="6" result="blur"/>
-        <feMerge>
-          <feMergeNode in="blur"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
-      </filter>
-    </defs>
-    <path
-      d="M120 196 C120 196 34 146 34 88 C34 56 60 38 88 48 C104 54 114 66 120 80 C126 66 136 54 152 48 C180 38 206 56 206 88 C206 146 120 196 120 196 Z"
-      stroke="url(#dating-heart-grad)"
-      stroke-width="3.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      filter="url(#dating-heart-glow)"
-    />
-  </svg>
+  <css-doodle class="dating-heart-doodle">
+    :doodle {
+      @grid: 18x1 / 100% 100%;
+      @size: 100% 100%;
+      background: transparent;
+      overflow: visible;
+      filter: contrast(1.35) saturate(1.2);
+    }
+
+    @place-cell: center;
+    @size: calc(92% - @i() * 2.1%);
+
+    clip-path: @shape(
+      points: 220;
+      x: 16 * sin(t) * sin(t) * sin(t);
+      y: -(13 * cos(t) - 5 * cos(2t) - 2 * cos(3t) - cos(4t));
+    );
+
+    background: linear-gradient(
+      105deg,
+      #00f0c8 0%,
+      #b8fff5 28%,
+      #ffffff 42%,
+      #ffb347 62%,
+      #ff5500 78%,
+      #ff2d2d 100%
+    );
+
+    opacity: calc(0.18 + (18 - @i()) * 0.045);
+    mix-blend-mode: screen;
+
+    transform:
+      rotate(calc((@i() - 9) * 1.4deg))
+      translateX(calc((@i() - 9) * 1.8px))
+      scale(calc(1 - @i() * 0.012));
+
+    animation: dating-heart-drift calc(2.1s + @i() * 0.11s) ease-in-out infinite alternate;
+    animation-delay: calc(@i() * -0.09s);
+
+    @keyframes dating-heart-drift {
+      to {
+        opacity: calc(0.28 + (18 - @i()) * 0.05);
+        transform:
+          rotate(calc((@i() - 9) * -2deg))
+          translateX(calc((@i() - 9) * -3px))
+          scale(calc(1.03 - @i() * 0.01));
+      }
+    }
+  </css-doodle>
 </div>

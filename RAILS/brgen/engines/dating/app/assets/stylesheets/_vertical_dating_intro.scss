@@ -18,21 +18,11 @@
   overflow: visible;
 }
 
-.dating-heart {
-  width: min(68vw, 300px);
-  height: auto;
+.dating-heart-doodle {
+  width: 100%;
+  height: 100%;
   display: block;
-  /* Calm: a single slow breath, not the old 18-layer drift animation. */
-  animation: dating-heart-breath 4.2s ease-in-out infinite alternate;
-}
-
-@keyframes dating-heart-breath {
-  from { transform: scale(1); opacity: 0.92; }
-  to { transform: scale(1.035); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dating-heart { animation: none; }
+  /* No CSS filter — flat UI rule (saturate/contrast lived here before). */
 }
 
 .dating-intro-title {
