@@ -874,6 +874,91 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:cs80_ensemble, role: :warm, program: 92, fx: "aecho=0.35:0.45:120|200:0.28|0.14"),
   synth_patch(:pwm_sweep_pad, role: :warm, program: 93, fx: "tremolo=f=0.55:d=0.22,aphaser=speed=0.14:decay=0.55"),
   # Singers Unlimited–style beds: soft GM choir, slow attack via pad envelope + FX.
+  # ---------------------------------------------------- the famous machines
+  #
+  # Six patches that people can name. Each is a General MIDI voice reshaped into
+  # the sound the real instrument is remembered for -- not the instrument, which
+  # would need its oscillators, but the fingerprint: what the filter did, what
+  # the chorus did, where the harmonics sat.
+  #
+  # The fingerprint is usually one or two things, and they are usually not the
+  # oscillators. A Juno-106 is a fairly ordinary single-oscillator synth wearing
+  # a famous chorus; a Minimoog is remembered for a filter and for three
+  # oscillators that would not stay in tune with each other. Reproduce those and
+  # most of the character follows.
+
+  # MINIMOOG. Three oscillators, never quite in tune with one another, into a
+  # 24 dB-per-octave ladder filter with a resonance that thickens rather than
+  # whistles. The bass on Thriller.
+  #
+  # The detuning is the point and is why a Moog bass sounds enormous from one
+  # note: three saws a few cents apart beat against each other, and the beating
+  # is heard as weight. Here that is a short chorus with almost no modulation --
+  # a fixed detune rather than a moving one -- and the ladder is a steep lowpass
+  # with a resonant lift sitting just on top of the cutoff.
+  synth_patch(:minimoog_bass, role: :bass, program: 38, weight: 3.0, mix: 1.2, fs_gain: 1.7,
+              fx: "chorus=0.6:0.9:11|17|23:0.28|0.22|0.18:0.05|0.04|0.03:0.6|0.5|0.4," \
+                  "equalizer=f=520:t=q:w=1.6:g=4.5,lowpass=f=520,lowpass=f=520," \
+                  "asubboost=dry=0.9:wet=0.5:decay=0.7:feedback=0.6:cutoff=90"),
+
+  # JUNO-106. One oscillator, a sub, and the chorus that made it famous -- a
+  # bucket-brigade delay running two slightly detuned copies against the dry
+  # signal. Chorus II is the wide one, and it is most of what people mean when
+  # they say "Juno".
+  #
+  # The giveaway is that the chorus is NOISY and slightly out of tune, because a
+  # bucket-brigade line is an analogue delay with its own noise floor. Clean
+  # digital chorus does not sound like this.
+  synth_patch(:juno106_pad, role: :warm, program: 89, weight: 2.6, mix: 0.88, fs_gain: 1.35,
+              fx: "chorus=0.7:0.85:24|31:0.42|0.38:0.32|0.28:1.6|2.1," \
+                  "highpass=f=90,lowpass=f=7200,volume=0.94"),
+
+  # DX7 E.PIANO 1. The preset on every ballad of the late eighties. Frequency
+  # modulation, not subtraction, which is why it has a glassy bell on the attack
+  # that no analogue synth produces and a hollow body underneath it.
+  #
+  # Shaped here by lifting the bell region hard on top of an electric piano and
+  # rolling away the low mids, which is where the difference between an FM piano
+  # and a Rhodes actually lives.
+  synth_patch(:dx7_epiano, role: :ep, program: 5, weight: 2.4, mix: 1.1, fs_gain: 1.6,
+              fx: "equalizer=f=2600:t=q:w=1.2:g=5.0,equalizer=f=420:t=q:w=1.0:g=-3.0," \
+                  "chorus=0.5:0.8:26|38:0.3|0.24:0.2|0.16:1.1|1.4,highpass=f=70"),
+
+  # PROPHET-5. Two oscillators with pulse-width modulation, a filter that opens
+  # slowly, and Poly-Mod routing one oscillator into the other's pitch. The
+  # brass sound is the one it is remembered for.
+  #
+  # Pulse-width modulation is a slow sweep of the pulse shape, heard as the tone
+  # hollowing and filling. A phaser is the closest thing to it here.
+  synth_patch(:prophet5_brass, role: :warm, program: 62, weight: 2.4, mix: 0.9, fs_gain: 1.4,
+              # aphaser takes `delay` (0-5 ms), not `depth`, and a rejected
+              # option fails the entire chain -- so the patch would have
+              # rendered with no effects at all rather than with a warning.
+              fx: "aphaser=speed=0.14:decay=0.5:delay=4," \
+                  "equalizer=f=1400:t=q:w=1.3:g=3.0,lowpass=f=6400,highpass=f=110"),
+
+  # TB-303. Not a bass machine by intent -- a failed accompaniment box -- and the
+  # entire foundation of acid house by accident. One oscillator, an 18 dB filter
+  # with far more resonance than is sensible, and an envelope that slams the
+  # cutoff on every accented note.
+  #
+  # The squelch IS the resonance sweeping. A fixed filter cannot make this sound,
+  # so the cutoff is swept here by asendcmd in the layer that uses it; what the
+  # patch carries is the resonant peak and the drive behind it.
+  synth_patch(:tb303_acid, role: :lead, program: 87, weight: 1.6, mix: 0.85, fs_gain: 1.3,
+              octave: 1, gate: 0.55,
+              fx: "equalizer=f=900:t=q:w=3.2:g=9.0,lowpass=f=1800," \
+                  "volume=10dB,asoftclip=type=tanh:param=2.0:oversample=4,volume=-10dB"),
+
+  # OBERHEIM OB-Xa. Two detuned sawtooths per voice, unison, filter wide open.
+  # The riff on "Jump", and the reason Oberheim brass is described as a wall.
+  #
+  # Wider and brighter than the Prophet: more detune, less filtering, and the
+  # stereo spread that having eight voices doubled gives you.
+  synth_patch(:obxa_brass, role: :warm, program: 63, weight: 2.2, mix: 0.86, fs_gain: 1.4,
+              fx: "chorus=0.65:0.8:18|29:0.5|0.44:0.24|0.2:0.9|1.3," \
+                  "equalizer=f=2200:t=q:w=1.5:g=3.5,lowpass=f=8200,extrastereo=m=1.12"),
+
   synth_patch(:choir_aahs, role: :warm, program: 52, weight: 1.4, mix: 0.42, fs_gain: 1.15,
               fx: "highpass=f=220,aecho=0.5:0.55:100|180:0.32|0.16,lowpass=f=3800:width_type=q:width=0.7,volume=0.85"),
   synth_patch(:voice_oohs, role: :warm, program: 53, weight: 1.3, mix: 0.38, fs_gain: 1.1,
@@ -5124,6 +5209,11 @@ def build_bass_bus_filter(idx, duration)
     "highpass=f=26," \
     "equalizer=f=70:t=o:w=1.1:g=#{sub_g}," \
     "equalizer=f=180:t=o:w=1.2:g=#{mud_g}," \
+    # The Pultec move on top of the two bands above: a broad lift under 100 Hz
+    # and a narrower dip near 280 -- the shape no single control produces, and
+    # the reason a fifty-year-old passive equaliser is still on every low end.
+    # Measured at +3.7 dB and -1.9 dB, flat again by a kilohertz.
+    "#{Outboard.pultec_low}," \
     "lowpass=f=1400," \
     "acompressor=threshold=-20dB:ratio=2.4:attack=14:release=150:makeup=1.5," \
     "atrim=0:#{duration},apad=whole_dur=#{duration}," \
@@ -5392,7 +5482,7 @@ def flip_loop_entry(entry, cfg, pads, n_bars)
 
   dest = dilla_render_tmp("flip")
   result = SampleFlip.build!(
-    loop_path: entry[:path], dest:, bpm: cfg[:bpm].to_f,
+    loop_path: flip_sources(entry, cfg), dest:, bpm: cfg[:bpm].to_f,
     bars: n_bars, chord_tones: tones,
     seed: stable_hash("flip:#{cfg[:track]}")
   )
@@ -5402,10 +5492,39 @@ def flip_loop_entry(entry, cfg, pads, n_bars)
     return entry
   end
 
-  dmesg("flip: #{result[:slices]} pieces off #{File.basename(entry[:path])}, " \
-        "#{result[:events]} notes played over #{tones.length} chords",
+  # Name the records, not "loop.wav" -- every chop is called loop.wav, so the old
+  # line said the same thing for all eight tracks and said nothing about the
+  # second record at all.
+  crate = flip_sources(entry, cfg).map { |p| File.basename(File.dirname(p)) }
+  dmesg("flip: #{result[:slices]} pieces off #{crate.join(' + ')}, " \
+        "#{result[:events]} notes over #{tones.length} chords, #{result[:reversed]} reversed",
         unit: "harm0", parent: "dilla0")
   entry.merge(path: result[:path], bpm: cfg[:bpm].to_f, flipped: true)
+end
+
+# The records this flip may cut from: its own, plus one other.
+#
+# A track built from a single record can only say one thing. The second is
+# chosen by the track name rather than at random, so a given track always digs
+# in the same crate -- and it is deliberately NOT the neighbouring chop, which
+# would come from the same few minutes of the same broadcast and sound like more
+# of the first record rather than like a second one.
+#
+# The arranging step does not care which record a piece came from. It asks only
+# what pitch the piece is, so pieces from two records sort themselves into one
+# line: a horn from one answers a piano from the other because they are a third
+# apart, not because anyone planned it.
+def flip_sources(entry, cfg)
+  return [entry[:path]] if ENV["FLIP_RECORDS"].to_s == "1"
+
+  others = chopped_bed_paths.reject { |p| p == entry[:path] }
+  return [entry[:path]] if others.empty?
+
+  [entry[:path], others[stable_hash("crate:#{cfg[:track]}") % others.length]]
+end
+
+def chopped_bed_paths
+  @chopped_bed_paths ||= Dir[File.join(__dir__, "samples", "chopped", "*", "loop.wav")].sort
 end
 
 # The progression as bare note-classes -- C is 0, C sharp is 1, and so on.
@@ -19145,7 +19264,10 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # crisp kit nor a key to carve the sampled bed with, for no musical reason.
   drum_label = "[drums]"
   if ENV["DRUM_FORWARD"] != "0"
-    filt << "[drums]asplit=2[dr_raw][dr_key]"
+    # Three taps off the kit, not two. [dr_key] carves the sampled bed and
+    # [dr_bass] moves the bass out of the kick's way; both are tied off below if
+    # their consumer is absent.
+    filt << "[drums]asplit=3[dr_raw][dr_key][dr_bass]"
     filt << "[dr_raw]#{drum_crisp_chain || 'anull'}[drums_c]"
     drum_label = "[drums_c]"
   end
@@ -19175,7 +19297,28 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # by the same chord-triggered envelope that keeps the pads out of the kick.
   if bass_own_bus && bass_bus_idx
     filt << apply_section_envelope(build_bass_bus_filter(bass_bus_idx, duration), :bass, n_bars, beat_p * 4.0)
-    mix_labels << "[bassbus]"
+    bass_label = "[bassbus]"
+    # The kick and the bass were both boosted in the same octave and simply
+    # summed. The bass bus lifts 70 Hz by 3 dB, which is where a kick's
+    # fundamental sits, and it entered the mix at 1.15 against the kit's 0.88 --
+    # the loudest thing in the track, sitting exactly on top of the one sound
+    # the track is built around.
+    #
+    # The note above about not ducking the bass is about the CHORD-triggered
+    # envelope, and it is right: pads move out of the way of chords, and a bass
+    # line that did the same would breathe on every chord change. A kick duck is
+    # a different thing entirely, and the two got conflated. This one is keyed
+    # off the kick alone -- the drums lowpassed to 120 Hz, so hats and snare
+    # never trigger it -- and it releases in 90 ms, well inside an eighth note,
+    # so the bass is back before the next note.
+    if ENV["DRUM_FORWARD"] != "0" && ENV["BASS_DUCK"] != "0"
+      filt << "[dr_bass]lowpass=f=120[dr_bass_k]"
+      filt << "#{bass_label}[dr_bass_k]sidechaincompress=threshold=" \
+              "#{ENV.fetch('BASS_DUCK_DB', '-28')}dB:ratio=6:attack=2:release=90:level_sc=1.0[bassducked]"
+      bass_label = "[bassducked]"
+      dmesg("bass ducks under the kick below 120 Hz", unit: "harm0", parent: "dilla0")
+    end
+    mix_labels << bass_label
     mix_weights << ENV.fetch("BASS_MIX_WEIGHT", "1.15").to_s
   end
   if loop_idx
@@ -19218,8 +19361,9 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # undrained pad does not finish -- it hangs, with no error to read. The kit
   # splits three ways unconditionally, so on any render without a carved bed the
   # third pad has to be tied off here.
-  if ENV["DRUM_FORWARD"] != "0" && !mix_labels.include?("[bedcarved]")
-    filt << "[dr_key]anullsink"
+  if ENV["DRUM_FORWARD"] != "0"
+    filt << "[dr_key]anullsink" unless mix_labels.include?("[bedcarved]")
+    filt << "[dr_bass]anullsink" unless mix_labels.include?("[bassducked]")
   end
 
   if stem_map[:mids]

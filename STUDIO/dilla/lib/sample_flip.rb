@@ -298,6 +298,11 @@ module SampleFlip
   # one that plays for sixteen bars straight is heard once, at the start.
   REST_CHANCE = 0.22
 
+  # How often a late-bar note is played backwards. Roughly one bar in three has
+  # one; more than that and the trick stops being a gesture and becomes the
+  # texture of the track.
+  REVERSE_CHANCE = 0.30
+
   # A phrase is two bars long. Long enough to say something, short enough that
   # the ear has heard it twice before the section turns over.
   MOTIF_BARS = 2
@@ -380,6 +385,12 @@ module SampleFlip
     return [] if slices.empty?
 
     rng = Random.new(seed)
+    # Reversal draws from its own stream. Sharing one meant that adding the
+    # reverse decision consumed numbers the rest-and-pick logic was using, and
+    # every other choice in the arrangement shifted -- the note count halved
+    # from a change that was supposed to affect nothing but direction. A
+    # decision that alters unrelated decisions is not a knob, it is a hazard.
+    flip_rng = Random.new(seed ^ 0x7e7e)
     motif = build_motif(rng)
     variant = build_motif(rng)
     events = []
@@ -404,7 +415,12 @@ module SampleFlip
         pick = best_slice(slices, target, previous, rng)
         next unless pick
 
-        events << { bar:, step: note[:step], slice: pick[:slice],
+        # A reversed piece is an event, not a texture. On the downbeat it would
+        # swallow the accent the phrase is built around, so it is only ever
+        # allowed on the last note of a bar -- where its swell leads into the
+        # next downbeat instead of covering one.
+        reverse = note[:step] >= 10 && flip_rng.rand < REVERSE_CHANCE
+        events << { bar:, step: note[:step], slice: pick[:slice], reverse:,
                     shift: pick[:shift], gain: note[:accent], degree: note[:degree] }
         previous = pick[:slice][:index]
       end
@@ -480,19 +496,34 @@ module SampleFlip
 
       following = timed[i + 1]
       room = following ? (following[:at] - event[:at]) + RELEASE_SEC : event[:slice][:length]
-      place(left, right, mono_l, mono_r, event[:slice], frame,
-            2.0**(event[:shift] / 12.0), room, event[:gain] || 1.0)
+      # Each piece carries its own source, since the pool may be drawn from more
+      # than one record.
+      src = event[:slice][:source] || { left: mono_l, right: mono_r }
+      place(left, right, src[:left], src[:right], event[:slice], frame,
+            2.0**(event[:shift] / 12.0), room, event[:gain] || 1.0,
+            reverse: event[:reverse])
     end
     [left, right]
   end
 
-  # Copies one piece into the output: resampled for pitch, cut to the room it
-  # has, and faded at both ends.
-  def place(left, right, src_l, src_r, slice, at, ratio, room, gain)
-    from = (slice[:start] * RATE).to_i
+  # Copies one piece into the output: resampled for pitch, optionally played
+  # backwards, cut to the room it has, and faded at both ends.
+  #
+  # Playing a piece backwards is the oldest sampler trick there is and it does
+  # something nothing else does: a note's decay becomes its attack, so a piano
+  # chord arrives as a swell that stops dead on the beat. It is unmistakably a
+  # sample being played, which is the sound this whole engine is after, and it
+  # costs one sign change in the read position.
+  def place(left, right, src_l, src_r, slice, at, ratio, room, gain, reverse: false)
     available = (slice[:length] / ratio * RATE).to_i
     out_frames = [available, (room * RATE).to_i].min
     return if out_frames < 2
+
+    # Forwards, start at the beginning and walk up. Backwards, start at the end
+    # of the piece and walk down.
+    start_frame = (slice[:start] * RATE).to_i
+    from = reverse ? start_frame + (slice[:length] * RATE).to_i : start_frame
+    step = reverse ? -ratio : ratio
 
     attack = (EDGE_FADE_SEC * RATE).to_i
     release = (RELEASE_SEC * RATE).to_i
@@ -504,9 +535,9 @@ module SampleFlip
       # Where in the original this output sample comes from. A fractional
       # position between two samples, mixed in proportion -- linear
       # interpolation, which is what makes the retune smooth rather than gritty.
-      pos = from + (i * ratio)
+      pos = from + (i * step)
       base = pos.to_i
-      break if base + 1 >= src_l.length
+      break if base < 0 || base + 1 >= src_l.length
 
       frac = pos - base
       envelope = edge_gain(i, out_frames, attack, release) * gain
@@ -552,22 +583,47 @@ module SampleFlip
   # description of what it did, or nil when the record yielded too few usable
   # pieces to play anything -- in which case the caller falls back to looping,
   # which is worse but is not silence.
+  # `loop_path` may be one record or several.
+  #
+  # A track built from a single record can only ever say one thing. Donuts moves
+  # between sources inside ninety seconds, and the reason it works is that the
+  # arranging step does not care where a piece came from -- it asks only what
+  # pitch the piece is, so pieces from two different records sort themselves
+  # into one line by pitch alone. A horn from one record answers a piano from
+  # another because they are a third apart, not because anyone planned it.
   def build!(loop_path:, dest:, bpm:, bars:, chord_tones:, seed: 4242)
-    left, right = decode(loop_path)
-    return nil if left.length < RATE / 2
+    sources = Array(loop_path).uniq
+    return nil if sources.empty?
 
-    mono = Array.new(left.length) { |i| (left[i] + right[i]) * 0.5 }
-    spans = slice_points(mono)
-    slices = analyse(mono, spans)
-    return nil if slices.length < MIN_SLICES
+    pool = []
+    primary = nil
+    sources.each do |path|
+      left, right = decode(path)
+      next if left.length < RATE / 2
 
-    events = arrange(slices, chord_tones, bars:, seed:)
+      primary ||= [left, right]
+      mono = Array.new(left.length) { |i| (left[i] + right[i]) * 0.5 }
+      found = analyse(mono, slice_points(mono))
+      # Each piece remembers the audio it was cut from, so the playback stage
+      # can read the right record without keeping them in step.
+      found.each { |s| s[:source] = { left:, right: } }
+      pool.concat(found)
+    end
+    return nil if primary.nil? || pool.length < MIN_SLICES
+
+    # Re-number after pooling: `index` is what stops a piece following itself,
+    # and two records each numbering from zero would make unrelated pieces look
+    # like the same piece.
+    pool.each_with_index { |s, i| s[:index] = i }
+
+    events = arrange(pool, chord_tones, bars:, seed:)
     return nil if events.empty?
 
-    out_l, out_r = render(left, right, events, bpm:, bars:, seed:)
+    out_l, out_r = render(primary[0], primary[1], events, bpm:, bars:, seed:)
     normalise!(out_l, out_r)
     encode!(out_l, out_r, dest)
-    { path: dest, slices: slices.length, events: events.length,
-      pitches: slices.map { |s| s[:pitch_class] } }
+    { path: dest, slices: pool.length, events: events.length, records: sources.length,
+      reversed: events.count { |e| e[:reverse] },
+      pitches: pool.map { |s| s[:pitch_class] } }
   end
 end

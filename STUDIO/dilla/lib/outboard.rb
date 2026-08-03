@@ -208,6 +208,102 @@ module Outboard
       "lowpass=f=#{hf}"
   end
 
+  # ---------------------------------------------------------- Pultec EQP-1A
+  #
+  # A passive tube equaliser from the 1950s, and the one piece of outboard whose
+  # most famous use is a thing its own manual warns against.
+  #
+  # Its low band has separate boost and attenuate knobs at the same selected
+  # frequency, and turning up both should cancel. It does not, because the two
+  # circuits are not mirror images: the BOOST is a broad, gentle shelf that
+  # starts below the frequency, while the CUT is narrower and starts slightly
+  # above it. Use both at 100 Hz and what you get is a lift underneath and a dip
+  # at 200 to 400 -- weight added exactly where a kick lives, and mud removed
+  # exactly where mud lives.
+  #
+  # No single control does this, which is why engineers still reach for it
+  # seventy years on. It is also precisely the shape a hip-hop low end wants.
+  def pultec_low(hz: 100, boost: 4.0, cut: 3.0)
+    "equalizer=f=#{hz}:t=q:w=0.7:g=#{boost}," \
+      "equalizer=f=#{(hz * 2.8).round}:t=q:w=1.1:g=-#{cut}"
+  end
+
+  # The matching high band: a broad lift with a small dip below it, which is how
+  # the Pultec adds air without the boost sounding like a boost.
+  def pultec_air(hz: 12_000, boost: 2.5)
+    "equalizer=f=#{hz}:t=h:w=0.6:g=#{boost}," \
+      "equalizer=f=#{(hz * 0.35).round}:t=q:w=1.4:g=-1.0"
+  end
+
+  # ------------------------------------------------------------- compressors
+  #
+  # Three ways of turning a signal down, which sound nothing alike because of
+  # what does the turning.
+
+  # TELETRONIX LA-2A. An optical compressor: the signal drives a small lamp, and
+  # a light-sensitive resistor beside it does the gain reduction. The lamp and
+  # the cell both take time to respond and neither is linear, so the release is
+  # in two stages -- a fast part and a long slow tail -- and it depends on how
+  # hard and how long the unit has been working.
+  #
+  # This is why an LA-2A is described as transparent while compressing heavily:
+  # it never grabs, and it lets go slowly enough that you hear the level change
+  # as an arrangement decision rather than as an effect. No attack control,
+  # because the lamp decides.
+  def la2a(threshold: -18, ratio: 3.0)
+    "acompressor=threshold=#{threshold}dB:ratio=#{ratio}:attack=10:release=600:" \
+      "knee=8:detection=rms:makeup=1.15"
+  end
+
+  # UREI 1176. A field-effect transistor does the gain reduction, and it does it
+  # in microseconds -- the fastest attack here by two orders of magnitude. Fast
+  # enough to catch the very front of a snare, which is why it grabs a drum bus
+  # and makes it sound like a record.
+  #
+  # The famous setting is all four ratio buttons pushed in at once, which the
+  # unit was never designed to allow: it produces a very high ratio with a
+  # distorted, lagging knee. That is what the aggressive figures below are.
+  def fet1176(threshold: -16, ratio: 12.0)
+    "acompressor=threshold=#{threshold}dB:ratio=#{ratio}:attack=0.4:release=90:" \
+      "knee=2:detection=peak:makeup=1.25"
+  end
+
+  # FAIRCHILD 670. A variable-mu limiter -- the gain reduction happens inside
+  # the valves themselves, whose amplification falls as the signal drives them.
+  # Twenty valves, a hundred and fifty pounds, and on most of the Beatles
+  # catalogue.
+  #
+  # Variable-mu units are slow and gentle and the ratio rises with how hard they
+  # are hit, so they flatter a mix rather than control it. Used here as glue,
+  # never as a limiter.
+  def fairchild670(threshold: -20, ratio: 1.8)
+    "acompressor=threshold=#{threshold}dB:ratio=#{ratio}:attack=25:release=400:" \
+      "knee=12:detection=rms:makeup=1.1"
+  end
+
+  # ------------------------------------------------------------- mono bass
+  #
+  # Everything below the crossover collapsed to the centre.
+  #
+  # This is a cutting-lathe rule that outlived the lathe. Bass energy that
+  # differs between the two channels moves the cutting stylus vertically, and
+  # enough of it lifts the needle out of the groove -- so records were always cut
+  # with a mono bottom. It survives because it turns out to be right for other
+  # reasons: a club system's subwoofer is one speaker fed from both channels, so
+  # stereo bass partly cancels before anyone hears it, and low frequencies carry
+  # no directional information to a listener anyway. The ear locates sound below
+  # about 150 Hz by which side is louder, not by anything in the waveform.
+  #
+  # What it buys is loudness. Two channels of bass in phase are 6 dB louder than
+  # two fighting, so the limiter downstream has less to do and the track hits
+  # harder at the same measured level.
+  def mono_bass(hz: 120)
+    "asplit=2[mb_lo][mb_hi];" \
+      "[mb_lo]lowpass=f=#{hz},pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1[mb_mono];" \
+      "[mb_hi]highpass=f=#{hz}[mb_wide];" \
+      "[mb_mono][mb_wide]amix=inputs=2:weights=1 1:normalize=0"
+  end
+
   # ------------------------------------------------------------------ racks
   #
   # Signal paths, in patch order. A rack is a list of unit names; `chain` turns
@@ -215,12 +311,12 @@ module Outboard
   RACKS = {
     # What Donuts went through, as closely as this can be said: a console, then
     # the Crane Song compressor timed to the track, then the GML for the top.
-    donuts: %i[neve_80 hedd_triode stc8 gml_matte],
+    donuts: %i[neve_80 hedd_triode stc8 gml_matte mono_bass],
     # Warmer and slower. The tape machine ahead of everything, so the console
     # colours what the tape already did.
-    tape_first: %i[tape_machine neve_80 hedd_tape stc8 gml_matte],
+    tape_first: %i[tape_machine neve_80 hedd_tape stc8 gml_matte mono_bass],
     # Forward and bright, for tracks the drums lead.
-    forward: %i[api_console hedd_pentode stc8 gml_matte],
+    forward: %i[api_console hedd_pentode stc8 gml_matte mono_bass],
     # The console alone, for when the material arrives already finished.
     light: %i[neve_80 stc8],
   }.freeze
@@ -244,6 +340,7 @@ module Outboard
       when :neve_80 then neve_80
       when :api_console then api_console
       when :tape_machine then tape_machine
+      when :mono_bass then mono_bass
       else
         missing&.call(unit)
         nil
@@ -256,6 +353,8 @@ module Outboard
   def all_units(bpm: 83.0)
     {
       hedd_triode: hedd_triode, hedd_pentode: hedd_pentode, hedd_tape: hedd_tape,
+      pultec_low: pultec_low, pultec_air: pultec_air,
+      la2a: la2a, fet1176: fet1176, fairchild670: fairchild670,
       stc8: stc8(bpm:), gml_matte: gml_matte, neve_80: neve_80,
       api_console: api_console, tape_machine: tape_machine,
     }

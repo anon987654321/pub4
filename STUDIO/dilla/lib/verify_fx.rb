@@ -88,12 +88,31 @@ module VerifyFx
       Check.new(name: "loop delay", signal: :sine,
                 filter: "aecho=0.8:0.32:489:0.28",
                 measure: ->(f) { measure(f, "volumedetect") }, expect: :any, min_delta: 0.3),
-      # vibrato is transparent in this build, so anything relying on it is
-      # pinned here as a known-failing check rather than quietly dropped: it
-      # documents the defect and will start passing if a future ffmpeg fixes it.
-      Check.new(name: "vibrato (known bad)", signal: :sine,
+      # vibrato works; this check did not.
+      #
+      # It was pinned as "known bad" on the conclusion that the filter was
+      # transparent in this build. It is not: measured against a five kilohertz
+      # tone, a depth of 0.9 swings the pitch by plus or minus 0.9 percent, and
+      # the depth maps one-to-one onto percent. The fault was in the
+      # measurement. A 200 Hz tone moved by 0.9 percent lands 1.8 Hz away, and
+      # the check then asked whether it had LEFT a band ten hertz wide. It never
+      # does, because it never goes near the edge.
+      #
+      # Nor could `band` ever have shown it. That helper is a highpass and a
+      # lowpass in series, and their skirts are far too gentle to care whether a
+      # tone has moved eleven hertz -- a second attempt narrowing it to four
+      # hertz wide also read exactly 0.0 dB. A resonant bandpass is the probe
+      # that resolves it: dry -24.3 dB, with vibrato -38.2 dB, a fall of nearly
+      # fourteen.
+      #
+      # The lesson is the one this file exists to enforce, turned on the file
+      # itself. A failing check is a claim about the world, and it has to be
+      # verified like any other before it is written down as somebody else's
+      # defect. This one accused ffmpeg for as long as it stood.
+      Check.new(name: "vibrato", signal: :sine_high,
                 filter: "vibrato=f=4:d=0.9",
-                measure: ->(f) { band(f, 195, 205) }, expect: :down, min_delta: 1.0),
+                measure: ->(f) { measure(f, "bandpass=f=1200:width_type=h:width=4,volumedetect") },
+                expect: :down, min_delta: 6.0),
       Check.new(name: "sample FM", signal: :sine_high,
                 filter: "highpass=f=700,afreqshift=shift=400:level=1,highpass=f=700",
                 # 2.0, not the 3.0 first guessed at. A frequency shift above the
