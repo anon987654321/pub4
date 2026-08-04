@@ -568,6 +568,9 @@ en:
     post_comment: "Post comment"
     subscribe: "Subscribe"
     unsubscribe: "Unsubscribe"
+    live_badge: "Live"
+    live_now: "Live now"
+    live_streams_label: "Live streams now"
   newsletter:
     email_placeholder: "your@email.com"
     subscribe: "Subscribe"

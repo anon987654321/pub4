@@ -568,6 +568,9 @@ nb:
     post_comment: "Publiser kommentar"
     subscribe: "Abonner"
     unsubscribe: "Avmeld"
+    live_badge: "Direkte"
+    live_now: "Direkte nå"
+    live_streams_label: "Direktesendinger nå"
   newsletter:
     email_placeholder: "din@epost.com"
     subscribe: "Abonner"

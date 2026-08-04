@@ -54,9 +54,10 @@ module Pub4
     BASELINES = {
       "empty_title" => 0,
       "search_placeholder" => 0,
-      # 172 → 169 → 141 → 135 (2026-08-04): bsdports ports/show, then its index,
-      # list, categories and maintainers views, plus five amber views. Down only.
-      "aria_label" => 135,
+      # 172 → 169 → 141 → 135 → 134 (2026-08-04): bsdports ports/show, then its
+      # index, list, categories and maintainers views, five amber views, and tv/home.
+      # Down only.
+      "aria_label" => 134,
     }.freeze
 
     # Kept for callers that referenced the old single number.

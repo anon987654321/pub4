@@ -381,9 +381,9 @@ count is not the finding; the verdict is.
 | `placeholder_hardcoded` | 5 | fixed |
 | `rb_hardcoded_domain` | 5 | artifact |
 | `rb_unscoped_all` | 5 | artifact |
-| `rb_skip_forgery` | 5 | open |
+| `rb_skip_forgery` | 5 | policy |
 | `nbsp_entity` | 5 | judgement |
-| `raw_html_safe` | 4 | open |
+| `raw_html_safe` | 4 | policy |
 | `class_soup` | 4 | open |
 | `view_too_long` | 4 | open |
 | `css_blur` | 3 | policy |
@@ -413,6 +413,34 @@ count is not the finding; the verdict is.
 **`css_off_grid`** — 83 findings, _artifact_. Substantially wrong: the grid array omitted 44, so the rule flags `min-height: 44px` — the touch target `ux_laws.fitts.target_min_px` mandates. Others land in `_jsfiddle_chrome.scss`, which `FrontendAuditor::PEN_STYLE_PATH_PATTERN` exempts as a product pen keeping exact CSS.
 
 **`css_px_width`** — 72 findings, _artifact_. Mostly `@media (min-width: 768px)` — breakpoints, not element widths. The regex matched `min-width` anywhere.
+
+**`raw_html_safe`** — 4 findings, _policy_, none exploitable. Audited each for
+whether user input can reach it, which is the only question that matters:
+
+- `two_factor_setups/show` renders `@qr.html_safe` — a TOTP QR generated
+  server-side from the provisioning URI, never from a request.
+- `shared/_link_converter` does `raw(Tradedoubler.epi_for(…).to_json)` on a city
+  slug and a subapp name, both resolved from `Brgen::DomainRegistry`'s
+  allowlist, not from params.
+- `dating/_match` interpolates a `Date`.
+- `tv/home` wrapped a static `<span class="live-badge">Live</span>`. Replaced with
+  `tag.span(t("tv.live_badge"), class: "live-badge")`, which escapes and also puts
+  the badge, the "Live now" heading and its aria-label through the locale — that
+  string was hardcoded English on a `default_locale: nb` surface.
+
+**`rb_skip_forgery`** — 5 findings, _policy_, all defensible:
+
+- `Shared::InternalTokenAuth` gates loopback/internal service callers on a shared
+  secret. CSRF is meaningless for a token-authenticated non-browser caller.
+- `posts#share` and `items#share` both keep `require_real_user` and a
+  `rate_limit`; a forged request could force a share the user is entitled to make
+  anyway.
+- `fingerprints#create` (brgen, amber) is a JS beacon with no form to carry a
+  token. This is the weakest of the five — a forged request could set a victim's
+  fingerprint — but it is the conventional shape for a beacon, and the value is
+  not a credential.
+
+Nothing here needs changing. Recorded so the next sweep does not re-audit it.
 
 **`delete_no_confirm`** — 29 findings, _artifact_, 4 real and fixed. The rule flags
 any `method: :delete`, and REST DELETE is not the same thing as destructive.

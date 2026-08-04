@@ -12,13 +12,13 @@
 </div>
 
 <% if @live.any? %>
-  <section role="region" aria-label="Live streams now">
-    <h2>Live now</h2>
+  <section role="region" aria-label="<%= t("tv.live_streams_label") %>">
+    <h2><%= t("tv.live_now") %></h2>
     <% @live.each do |b| %>
       <%= render "shared/feed_card",
         name: b.title,
         handle: b.channel.name,
-        content: capture { %(<span class="live-badge">Live</span>).html_safe },
+        content: tag.span(t("tv.live_badge"), class: "live-badge"),
         url: channel_path(b.channel),
         class: "tv" %>
     <% end %>
