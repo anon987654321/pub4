@@ -132,7 +132,7 @@ const registerWhenPresent = (application, name, load) => {
   if (!done) listen()
 }
 
-export function bootPub4Stimulus(application, { futurism = true } = {}) {
+export function bootPub4Stimulus(application) {
   application.register("live-search", LiveSearch)
   application.register("search-focus", SearchFocus)
   application.register("offline-page", OfflinePage)
@@ -171,17 +171,10 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
     isolate: true
   })
 
-  if (futurism) {
-    import("@stimulus_reflex/futurism")
-      .then((mod) => {
-        const Futurism = mod?.default || mod?.Futurism || mod
-        // Stimulus Application.load reads definition.identifier / shouldLoad — undefined crashes boot.
-        if (Futurism && (typeof Futurism === "function" || Futurism.shouldLoad !== undefined || Futurism.prototype)) {
-          application.register("futurism", Futurism)
-        }
-      })
-      .catch(() => {
-        /* optional dependency — vertical surfaces still boot without Futurism */
-      })
-  }
+  // Futurism registration lived here and is gone. It resolved and registered
+  // fine; nothing in any app ever carried data-controller="futurism", and the
+  // pin it needed defaults to preload: true, so every page paid for a module
+  // that had no element to attach to. See shared/config/importmap_baseline.rb
+  // for the pin that came out with it, and what to restore if a real paginated
+  // index adopts the lazy-render boundary.
 }

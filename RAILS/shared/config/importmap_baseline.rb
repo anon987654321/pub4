@@ -20,13 +20,17 @@ pin "@rails/request.js", to: "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0
 pin "stimulus-use"
 pin "stimulus_reflex"
 pin "cable_ready"
-# stimulus_boot.js imports the scoped npm name (@stimulus_reflex/futurism),
-# but the futurism gem's own importmap pins the bare "futurism" specifier to
-# futurism.min.js — without `to:` here, importmap-rails looked for a literal
-# "@stimulus_reflex/futurism.js" asset that doesn't exist, so the browser
-# failed to resolve the bare specifier. Point our scoped alias at the same
-# asset the gem itself ships.
-pin "@stimulus_reflex/futurism", to: "futurism.min.js"
+# No futurism pin. It used to be here — `pin "@stimulus_reflex/futurism", to:
+# "futurism.min.js"`, aliasing the scoped npm name stimulus_boot.js imported to
+# the asset the gem itself ships. The alias was correct and the module resolved
+# and registered on every page. What it never had was a consumer: no ERB in any
+# app carries data-controller="futurism", and shared/_futurism_pagy_list.html.erb
+# (the one place that would have) had zero callers. `pin` defaults to
+# preload: true, so the whole thing was fetched eagerly on every page load to
+# register a controller nothing asked for. Registration and partial removed with
+# it. The `futurism` gem stays in all three Gemfiles for the server-side
+# `futurize` helper; wiring a real paginated index to it is the open lazy-render
+# work in FINAL_TODO P0.4, and that starts by putting this pin back.
 # date-fns's own ESM build cross-references ~200 sibling files via *relative*
 # imports (./addDays.js, ./formatDistance.js, ...) rather than bare specifiers,
 # so vendoring a single flattened file locally breaks every one of those
