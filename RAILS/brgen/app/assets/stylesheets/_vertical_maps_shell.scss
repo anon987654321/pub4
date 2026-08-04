@@ -5,7 +5,6 @@ body.vertical-maps {
   --maps-ink: var(--text, #d8d6e0);
   --maps-muted: var(--text-secondary, #8a879c);
   --maps-accent: var(--accent, #5b8fd4);
-  --maps-accent-soft: color-mix(in srgb, var(--maps-accent) 18%, transparent);
   --maps-surface: color-mix(in srgb, var(--surface-elevated, #211f28) 92%, transparent);
   --maps-border: var(--border, #46435a);
   --font-primary: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;

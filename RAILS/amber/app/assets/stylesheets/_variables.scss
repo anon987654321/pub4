@@ -19,14 +19,11 @@
   --space-lg: 2rem;
   --space-xl: 3rem;
   --font-size-base: var(--font-size);
-  --line-height-base: 1.6;
-  --app-accent: var(--accent);
   --color-badge: var(--accent);
   --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
   --focus-ring: 2px solid var(--accent);
   --tap-min: 44px;
   --elev-1: 1px solid var(--border);
-  --turbo-progress-bar-color: var(--accent);
 }
 
 #dark-toggle {
@@ -48,7 +45,6 @@
   --color-extra-light-grey: var(--border);
   --color-grey-text: var(--text-secondary);
   --color-danger: var(--danger);
-  --app-accent: var(--accent);
   --color-badge: var(--accent);
   --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
 }

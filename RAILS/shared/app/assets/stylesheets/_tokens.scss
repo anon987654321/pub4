@@ -5,21 +5,17 @@
 @mixin semantic-light-overrides {
   @include x.light-tokens;
   color-scheme: light;
-  --color-background: var(--bg);
   --color-midtone: var(--text-secondary);
   --color-highlight: var(--surface);
   --color-accent: var(--accent);
   --color-border: var(--border);
   --color-midtone-tint: var(--hover);
-  --gradient-hero: linear-gradient(135deg, var(--bg) 0%, var(--surface-elevated) 100%);
-  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
   --text-primary: var(--text);
 }
 
 :root {
   @include x.dark-tokens;
   color-scheme: dark;
-  --color-background: var(--bg);
   --color-midtone: var(--text-secondary);
   --color-highlight: var(--surface);
   --color-accent: var(--accent);
@@ -29,8 +25,6 @@
   --color-overlay: rgb(0 0 0 / 0.4);
   --color-border: var(--border);
   --color-midtone-tint: var(--hover);
-  --gradient-hero: linear-gradient(135deg, var(--bg) 0%, var(--surface-elevated) 100%);
-  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
   --text-primary: var(--text);
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -38,7 +32,6 @@
   --text-lg: 1.125rem;
   /* Page / section titles — design_tokens shared_chrome.font_size_title */
   --text-title: 1.25rem;
-  --text-display: 1.75rem;
   /* Every step here sits on design_rules.yml's 8px rhythm
      ([0,4,8,12,16,20,24,32,40,48,64,96]px) — steps 7/9/11/13/14/15 used to
      fill the scale out to a smooth 0.25rem stride (28/36/44/52/56/60px),

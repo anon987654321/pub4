@@ -19,8 +19,6 @@
 ) {
   --c-text: #{$c-text};
   --c-accent: #{$c-accent};
-  --c-danger: #{$c-danger};
-  --c-code: #{$c-code};
   --bg: #{$bg};
   --surface: #{$surface};
   --surface-elevated: #{$surface-elevated};
@@ -38,7 +36,6 @@
   --font-size: 16px;
   --line-height: 20px;
   --weight-normal: 400;
-  --weight-medium: 500;
   --weight-bold: 700;
   --weight-heavy: 800;
   --radius-xs: 4px;
@@ -49,8 +46,6 @@
   --radius-lg: 16px;
   --sidebar-width: 275px;
   --feed-max: 600px;
-  --widgets-width: 350px;
-  --layout-max: 1265px;
 }
 
 // Indigo light (not Twitter blue) — matches design_tokens.yml light: palette.
@@ -135,7 +130,6 @@
   --accent-hover: #d0d0d0;
   --danger: #e46151;
   --font: Arial, Helvetica, sans-serif;
-  --chrome-bg: #0d0d0d;
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -164,7 +158,6 @@
   --accent-hover: #000000;
   --danger: #b24c3f;
   --font: Arial, Helvetica, sans-serif;
-  --chrome-bg: #333333;
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -196,7 +189,6 @@
   --surface2: var(--surface-elevated);
   --text-dim: var(--text-secondary);
   --radius: var(--radius-card);
-  --panel-blur-bg: var(--bg);
   --sp: 8px;
   --z-app: var(--z-chrome);
   --z-nav: var(--z-ui);

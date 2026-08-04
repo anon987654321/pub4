@@ -1,3 +1,18 @@
+/* Turbo's navigation progress bar, in the app's accent.
+
+   brgen and amber each declared `--turbo-progress-bar-color: var(--accent)` and
+   nothing read it: turbo.js:2416 hardcodes `background: #0076ff` in the
+   stylesheet it injects, and reads no custom property. Both apps have been
+   showing stock Turbo blue while carrying a token that says otherwise — the
+   declaration-with-no-reader shape, in the design system itself.
+
+   `html` prefix, not !important: Turbo appends its <style> to head at runtime,
+   after our <link>, so at equal specificity Turbo wins on order. 0,1,1 beats
+   0,1,0 regardless of where the two sheets land. */
+html .turbo-progress-bar {
+  background: var(--accent);
+}
+
 /* Skip-to-content: clipped off-screen until keyboard focus.
    Same contract as MASTER face.css .skip-link (hard hide until focus).
    Never leave a painted pill at top-left (playlist tunnel especially —
@@ -366,8 +381,13 @@ html.chrome-hidden .tab-bar {
 .tab-bar-peel {
   position: fixed;
   bottom: var(--safe-bottom, 0px);
-  left: 50%;
-  transform: translateX(-50%);
+  /* Centred by auto margins between zeroed inline insets, not by
+     `left: 50%; transform: translateX(-50%)`. The old pair mixed a physical
+     offset with a physical translate, so neither half flipped under
+     [dir="rtl"] — which _minimal.scss supports — and the auditor's
+     logical_properties warning was pointing at a real asymmetry rather than a
+     style preference. Same rendered box in LTR; measured below. */
+  inset-inline: 0;
   z-index: var(--z-nav, 80);
   width: 48px;
   min-height: 44px;
@@ -376,7 +396,8 @@ html.chrome-hidden .tab-bar {
   align-items: center;
   justify-content: center;
   padding: 0;
-  margin: 0;
+  margin-block: 0;
+  margin-inline: auto;
   border: 0;
   background: transparent;
   color: var(--text-dim, var(--text-secondary, #8a879c));
@@ -410,8 +431,10 @@ html.chrome-hidden .tab-bar {
 .tab-bar-coach {
   position: fixed;
   bottom: calc(var(--safe-bottom, 0px) + 2.75rem);
-  left: 50%;
-  transform: translateX(-50%);
+  /* See .tab-bar-peel: auto margins between zeroed inline insets, so the
+     centring survives a direction flip. */
+  inset-inline: 0;
+  margin-inline: auto;
   z-index: calc(var(--z-nav, 80) + 1);
   width: min(20rem, calc(100vw - 2rem));
   padding: 0.75rem 0.9rem;
@@ -503,8 +526,12 @@ html.chrome-hidden .tab-bar {
 .hotkey-coach {
   position: fixed;
   bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
+  /* See .tab-bar-peel. `width: fit-content` restores the shrink-to-fit these
+     had from `left: 50%` alone — zeroing both inline insets would otherwise
+     stretch a fixed element to the full viewport. */
+  inset-inline: 0;
+  margin-inline: auto;
+  width: fit-content;
   /* Was a bare 9999 — outranked even --z-skip (2000). A toast belongs at
      the toast tier, one step above modals, not above the skip-link. */
   z-index: var(--z-toast, 1100);
