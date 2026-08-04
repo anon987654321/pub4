@@ -8,11 +8,11 @@
 
   <%= form_with url: two_factor_setup_path, method: :post do |f| %>
     <div class="field">
-      <%= f.label :code, "Verification code" %>
+      <%= f.label :code, t("auth.verification_code") %>
       <%= f.text_field :code, autocomplete: "one-time-code", required: true %>
     </div>
     <div class="actions">
-      <%= f.submit "Enable 2FA", class: "btn btn-primary" %>
+      <%= f.submit t("auth.enable_2fa"), class: "btn btn-primary" %>
     </div>
   <% end %>
 </div>

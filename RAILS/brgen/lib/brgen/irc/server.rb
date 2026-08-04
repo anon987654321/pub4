@@ -50,7 +50,14 @@ module Brgen
         @logger&.warn("irc client dropped: #{e.class}: #{e.message}")
       ensure
         poller&.kill
-        socket.close rescue nil
+        # Already closed, already gone, or never connected is the expected case
+        # in an ensure block. Anything else is a real error and must not be
+        # swallowed by a bare `rescue nil` (soul.yml FAIL_VISIBLY).
+        begin
+          socket.close
+        rescue IOError, Errno::EBADF, Errno::ENOTCONN
+          nil
+        end
       end
 
       def with_writes(socket, lock, lines)

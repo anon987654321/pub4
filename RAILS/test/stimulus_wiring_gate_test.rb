@@ -56,6 +56,34 @@ class StimulusWiringGateTest < Minitest::Test
     assert_empty with_probe(%(<div data-controller="carousel" data-action="click->carousel#whatever"></div>))
   end
 
+  # The third leg: a data-*-value the controller never declares. This is the
+  # exact shape that shipped in shared/_action_bar — the like button wrote
+  # data-action-target-gid-value and data-action-kind-value, action_controller
+  # declared neither, so the POST reached Shared::ReactionsController with no
+  # subject, params.require(:target_gid) raised ParameterMissing, and the
+  # optimistic toggle silently rolled back on the 400.
+  def test_reports_a_value_nobody_declares
+    failures = with_probe(%(<button data-controller="action" data-action-no-such-value="x">y</button>))
+
+    assert_equal 1, failures.size, failures.inspect
+    assert_includes failures.first, "action:noSuch"
+  end
+
+  # …and it must not fire on values that are declared, in either brace layout.
+  def test_accepts_declared_values_written_on_one_line
+    # offline_feed_controller declares `static values = { key, title, url, meta }`
+    # on a single line. Anchoring the block scan on a newline made all four look
+    # absent.
+    assert_empty with_probe(%(<article data-controller="offline-feed" data-offline-feed-key-value="k" data-offline-feed-title-value="t"></article>))
+  end
+
+  # A controller extending a vendored base inherits that base's values, and the
+  # base is a bundle this gate does not read — same rule it already applies to
+  # vendored methods.
+  def test_does_not_guess_at_values_inherited_from_a_vendored_base
+    assert_empty with_probe(%(<div data-controller="character-counter" data-character-counter-countdown-value="true"></div>))
+  end
+
   private
 
   # The gate reads the real tree; a probe file is the only way to exercise the

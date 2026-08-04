@@ -86,7 +86,7 @@
   display: inline-block;
   width: 1.25rem;
   height: 1.25rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   vertical-align: middle;
   background: var(--swatch, var(--surface-elevated));

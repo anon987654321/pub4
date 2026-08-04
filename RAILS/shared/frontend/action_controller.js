@@ -11,7 +11,15 @@ export default class extends Controller {
     count: Number,
     activeClass: { type: String, default: "active" },
     param: { type: String, default: "" },
-    paramKey: { type: String, default: "vote[value]" }
+    paramKey: { type: String, default: "vote[value]" },
+    // shared/_action_bar's like button writes both of these, and neither was
+    // declared — so Stimulus never read them and the POST carried no subject.
+    // Shared::ReactionsController#create opens with
+    // params.require(:target_gid), which raises ParameterMissing → 400, so
+    // every like optimistically toggled, got rejected, and _rollback reverted
+    // it. The button could not work.
+    targetGid: { type: String, default: "" },
+    kind: { type: String, default: "" }
   }
 
   connect() {
@@ -37,9 +45,13 @@ export default class extends Controller {
         "Accept": "text/vnd.turbo-stream.html, application/json"
       }
       const init = { method: "POST", headers, credentials: "same-origin" }
-      if (this.paramValue) {
+      const body = new URLSearchParams()
+      if (this.paramValue) body.append(this.paramKeyValue, this.paramValue)
+      if (this.targetGidValue) body.append("target_gid", this.targetGidValue)
+      if (this.kindValue) body.append("kind", this.kindValue)
+      if (body.toString()) {
         headers["Content-Type"] = "application/x-www-form-urlencoded"
-        init.body = new URLSearchParams({ [this.paramKeyValue]: this.paramValue }).toString()
+        init.body = body.toString()
       }
       fetch(this.urlValue, init).then(res => {
         if (!res.ok) this._rollback(btn, isActive)

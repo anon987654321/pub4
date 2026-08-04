@@ -100,6 +100,23 @@ module Deploy
 
           result.fail("#{app}: #{rel} calls #{id}##{method}, absent from #{source.sub("#{@rails_root}/", "")}")
         end
+
+        values(text).each do |id, value|
+          next unless registered.include?(id)
+
+          source = first_party_source(app, id)
+          next unless source
+          # A controller that extends a vendored base inherits that base's
+          # declared values, and the base is a bundle we do not read — same
+          # reason this gate does not introspect vendored methods. Claiming a
+          # missing value there would be a guess.
+          next if inherits_from_vendor?(source)
+
+          result.checked!
+          next if values_in(source).include?(value)
+
+          result.fail("#{app}: #{rel} sets #{id}:#{value}, absent from static values in #{source.sub("#{@rails_root}/", "")}")
+        end
       end
     end
 
@@ -124,6 +141,101 @@ module Deploy
 
     def actions(text)
       text.scan(/[a-z0-9:.@_-]+->([a-z0-9-]+)#(#?[a-zA-Z_$][\w$]*)/).uniq
+    end
+
+    # data-<identifier>-<name>-value pairs, resolved against the controller's
+    # `static values` block.
+    #
+    # This is the third leg and it shipped broken too. shared/_action_bar's like
+    # button wrote data-action-target-gid-value and data-action-kind-value;
+    # action_controller declared neither, so Stimulus never read them and the
+    # POST reached Shared::ReactionsController with no subject. That controller
+    # opens with params.require(:target_gid), which raises ParameterMissing, so
+    # the request 400'd, _rollback reverted the optimistic toggle, and the like
+    # button simply did not work. Nothing raised anywhere a human would look.
+    #
+    # Splitting is ambiguous from the markup alone -- data-action-target-gid-value
+    # could be identifier "action" + value "targetGid", or identifier
+    # "action-target" + value "gid". Only registered identifiers are candidates,
+    # longest first so "feed-hotkey" wins over "feed" when both exist.
+    def values(text)
+      raw = text.scan(/data-([a-z0-9-]+)-value\s*=/).flatten.uniq
+      raw.filter_map do |slug|
+        id = registered_prefixes.find { |candidate| slug.start_with?("#{candidate}-") }
+        next unless id
+
+        name = slug.delete_prefix("#{id}-")
+        [ id, camelize(name) ]
+      end
+    end
+
+    def registered_prefixes
+      @registered_prefixes ||= (shared_identifiers + APPS.flat_map { |a| app_identifiers(a) })
+                              .uniq.sort_by { |id| -id.length }
+    end
+
+    def camelize(slug)
+      head, *rest = slug.split("-")
+      ([ head ] + rest.map(&:capitalize)).join
+    end
+
+    # Declared names inside `static values = { … }`, in either layout:
+    #
+    #   static values = { key: String, title: String }          # one line
+    #   static values = {                                        # or many
+    #     url: String,
+    #     activeClass: { type: String, default: "active" }
+    #   }
+    #
+    # An earlier version anchored on /\n\s*\}/ and so saw nothing in the
+    # single-line form, which made offline-feed's four declared values look
+    # absent. Brace-match instead of guessing at the closing line.
+    def values_in(path)
+      (@values ||= {})[path] ||= begin
+        source = File.read(path)
+        start = source.index(/static\s+values\s*=\s*\{/)
+        if start.nil?
+          []
+        else
+          open = source.index("{", start)
+          depth = 0
+          close = nil
+          source[open..].each_char.with_index do |ch, offset|
+            depth += 1 if ch == "{"
+            depth -= 1 if ch == "}"
+            if depth.zero?
+              close = open + offset
+              break
+            end
+          end
+          block = close ? source[(open + 1)...close] : ""
+          # Top-level keys only: `activeClass: { type: … }` must not contribute
+          # "type" and "default" as declared value names.
+          depth = 0
+          block.scan(/([{}])|([a-zA-Z_$][\w$]*)\s*:/).each_with_object([]) do |(brace, name), keys|
+            if brace
+              depth += brace == "{" ? 1 : -1
+            elsif depth.zero?
+              keys << name
+            end
+          end.uniq
+        end
+      end
+    end
+
+    # `export default class extends Something` where Something came from a bare
+    # module specifier (a vendored package), not a relative or pub4/ path.
+    def inherits_from_vendor?(path)
+      (@vendor_base ||= {})[path] ||= begin
+        source = File.read(path)
+        base = source[/export\s+default\s+class\s+extends\s+([A-Za-z_$][\w$]*)/, 1]
+        if base.nil? || base == "Controller"
+          false
+        else
+          spec = source[/import\s+#{Regexp.escape(base)}\s+from\s+["']([^"']+)["']/, 1]
+          spec.nil? || !(spec.start_with?(".") || spec.start_with?("pub4/") || spec.start_with?("controllers/"))
+        end
+      end
     end
 
     def first_party_source(app, id)

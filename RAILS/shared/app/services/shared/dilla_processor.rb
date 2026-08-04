@@ -126,7 +126,14 @@ module Shared
         begin
           status = Timeout.timeout(seconds) { wait_thr.value }
         rescue Timeout::Error
-          Process.kill("TERM", wait_thr.pid) rescue nil
+          # The process exiting between the timeout and the signal is the only
+          # failure worth ignoring here; a bare `rescue nil` would also hide a
+          # permissions problem, which is a real bug.
+          begin
+            Process.kill("TERM", wait_thr.pid)
+          rescue Errno::ESRCH, Errno::EPERM
+            nil
+          end
           [out_reader, err_reader].each(&:kill)
           log("dilla render timed out after #{seconds}s — killed pid #{wait_thr.pid}")
           return false

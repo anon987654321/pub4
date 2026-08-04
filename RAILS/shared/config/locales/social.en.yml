@@ -46,6 +46,9 @@ en:
     two_factor: "Two-factor setup"
     delete: "Delete account"
     delete_confirm: "Delete account in 30 days?"
+  auth:
+    enable_2fa: "Enable 2FA"
+    verification_code: "Verification code"
   # Live regions in shared/_live_search_form and autosave_controller. bsdports had no copy of these and shipped "translation missing" into the announced values.
   status:
     updating_results: "Updating results…"
@@ -76,6 +79,8 @@ en:
       other: "%{count} unread messages — marked read when you open this page."
     empty_body: "Send one with the form above, or follow creators to start a circle."
     connections: "Connections"
+  newsletter:
+    email_placeholder: "your@email.com"
   post:
     submit: "Post"
     share_look: "Share a look"

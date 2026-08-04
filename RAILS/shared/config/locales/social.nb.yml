@@ -44,6 +44,9 @@ nb:
     two_factor: "Tofaktoroppsett"
     delete: "Slett konto"
     delete_confirm: "Slette kontoen om 30 dager?"
+  auth:
+    enable_2fa: "Slå på 2FA"
+    verification_code: "Verifiseringskode"
   status:
     updating_results: "Oppdaterer resultater…"
     results_updated: "Resultater oppdatert"
@@ -73,6 +76,8 @@ nb:
       other: "%{count} uleste meldinger — merkes som lest når du åpner siden."
     empty_body: "Send en med skjemaet over, eller følg skapere for å starte en sirkel."
     connections: "Forbindelser"
+  newsletter:
+    email_placeholder: "din@epost.com"
   post:
     submit: "Post"
     share_look: "Del et look"

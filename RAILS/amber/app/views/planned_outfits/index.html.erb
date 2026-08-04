@@ -3,7 +3,7 @@
 <h1><%= t("pages.planner") %></h1>
 <%= form_with model: PlannedOutfit.new, url: planned_outfits_path do |f| %>
   <div class="field-row">
-    <%= f.date_field :planned_date, min: Date.today, class: "input" %>
+    <%= f.date_field :planned_date, min: Date.current, class: "input" %>
     <%= f.select :outfit_id, @outfits.map { |o| [o.name, o.id] }, { include_blank: "Select outfit…" } %>
     <%= f.text_field :notes, placeholder: t("planned.notes") %>
     <%= f.submit t("planned.plan_it"), class: "btn" %>

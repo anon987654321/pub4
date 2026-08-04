@@ -5,7 +5,7 @@
     <div class="field mb-8">
       <%= f.email_field :email, name: "email_subscription[email]",
             placeholder: t("newsletter.email_placeholder"), required: true,
-            class: "map-search-input" %>
+            autocomplete: "email", class: "map-search-input" %>
     </div>
     <label class="field--check-label">
       <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1">
