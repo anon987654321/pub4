@@ -14626,24 +14626,6 @@ end
 #
 # Decoding each part separately is what makes this safe for mixed codecs too, so
 # this path needs no uniformity check -- it IS the uniformity fix.
-def demo_level_and_join!(parts, out)
-  target = ENV.fetch("DEMO_LEVEL_LUFS", "-16.5").to_f
-  dmesg("level: #{parts.length} parts -> #{target} LUFS", unit: "demo0", parent: "dilla0")
-  Dir.mktmpdir("dilla_level") do |tmp_dir|
-    levelled = parts.each_with_index.map do |p, i|
-      dst = File.join(tmp_dir, format("%03d.wav", i))
-      sh! "ffmpeg", "-y", "-loglevel", "error", "-i", p,
-          "-c:a", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2", dst
-      normalize_track_loudness!(dst, lufs: target)
-      dst
-    end
-    list = File.join(tmp_dir, "concat.txt")
-    File.write(list, levelled.map { |p| "file '#{p}'" }.join("\n") + "\n")
-    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out
-  end
-  out
-end
-
 def demo_parts_uniform?(parts)
   codecs = parts.map do |p|
     out, status = Open3.capture2e("ffprobe", "-v", "error", "-select_streams", "a:0",
@@ -14660,29 +14642,42 @@ end
 # WAV container and exits 0, so the rescue that used to guard this never fired and
 # the demo shipped a file that opens nowhere. Check the parts first, then copy.
 def demo_join_parts!(parts, list, out)
-  if demo_level_parts?
-    return demo_level_and_join!(parts, out)
-  end
-  if demo_parts_uniform?(parts)
+  level = demo_level_parts?
+
+  # The fast path, and the only one that avoids touching 86 files: hand the
+  # caller's list straight to the concat demuxer and copy. It is legal only when
+  # nothing needs per-part work AND the parts already agree on a codec, because
+  # the demuxer probes part 1 and applies that decoder to every later part --
+  # one mp3 among the wavs and it copies mp3 packets into a WAV container and
+  # exits 0. Both conditions, or decode each part on its own below.
+  if !level && demo_parts_uniform?(parts)
     sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out
     return out
   end
-  # Re-encoding through the concat demuxer does NOT rescue this, which is the
-  # trap worth naming: the demuxer still probes part 1 and hands every later
-  # part to that decoder, so a pcm part read as mp3 yields "Header missing" per
-  # packet and silence where the audio was. Measured, not assumed. Each part has
-  # to be decoded on its own before anything joins them.
-  dmesg_warn("concat: parts are not one codec, normalising #{parts.length} before joining")
+
+  # One body for both remaining reasons to walk the parts -- levelling them, and
+  # rescuing a codec mismatch -- because they were the same fifteen lines twice,
+  # differing by the normalize call. Re-encoding through the concat demuxer does
+  # NOT rescue a mismatch, which is the trap worth naming: the demuxer still
+  # probes part 1, so a pcm part read as mp3 yields "Header missing" per packet
+  # and silence where the audio was. Measured, not assumed.
+  target = ENV.fetch("DEMO_LEVEL_LUFS", "-16.5").to_f
+  if level
+    dmesg("level: #{parts.length} parts -> #{target} LUFS", unit: "demo0", parent: "dilla0")
+  else
+    dmesg_warn("concat: parts are not one codec, decoding #{parts.length} before joining")
+  end
   Dir.mktmpdir("dilla_join") do |tmp_dir|
-    normalised = parts.each_with_index.map do |p, i|
-      norm = File.join(tmp_dir, format("%03d.wav", i))
+    prepared = parts.each_with_index.map do |p, i|
+      dst = File.join(tmp_dir, format("%03d.wav", i))
       sh! "ffmpeg", "-y", "-loglevel", "error", "-i", p,
-          "-c:a", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2", norm
-      norm
+          "-c:a", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2", dst
+      normalize_track_loudness!(dst, lufs: target) if level
+      dst
     end
-    norm_list = File.join(tmp_dir, "concat.txt")
-    File.write(norm_list, normalised.map { |p| "file '#{p}'" }.join("\n") + "\n")
-    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", norm_list, "-c", "copy", out
+    joined = File.join(tmp_dir, "concat.txt")
+    File.write(joined, prepared.map { |p| "file '#{p}'" }.join("\n") + "\n")
+    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", joined, "-c", "copy", out
   end
   out
 end
