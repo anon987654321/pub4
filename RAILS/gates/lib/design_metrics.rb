@@ -140,12 +140,26 @@ module Deploy
       # was fixed, and this file's own history is a warning about exactly the
       # opposite mistake — vertical accents rendering on social chrome with
       # nothing reporting them.
-      pairs, unpainted = all_pairs.partition { |p| DesignMetrics.token_painted?(RAILS, p[:fg_key]) }
+      # Both sides, not just the foreground. brgen_old_light.text/chrome_bg
+      # reported 1.26:1 — which reads as catastrophic until you notice
+      # --chrome-bg has no var() consumer left, so that pair measures ink on a
+      # surface nothing paints. Checking only the foreground kept it, because
+      # --text is read everywhere.
+      pairs, unpainted = all_pairs.partition do |p|
+        DesignMetrics.token_painted?(RAILS, p[:fg_key]) && DesignMetrics.token_painted?(RAILS, p[:bg_key])
+      end
       if unpainted.any?
         skipped = unpainted.select { |p| p[:ratio] < 4.5 }
+        # Name the side that has no reader, not the pair's foreground. Listing
+        # fg_key alone printed "text, accent, danger" — tokens painted all over
+        # the tree — because their *background* was the dead one, which reads as
+        # though the gate had lost track of the palette entirely.
+        dead = unpainted.flat_map { |p|
+          [p[:fg_key], p[:bg_key]].reject { |k| DesignMetrics.token_painted?(RAILS, k) }
+        }.uniq.sort
         @result.warn(
-          "design_metrics contrast: skipped #{unpainted.size} pair(s) whose token has no var() reader " \
-          "(#{skipped.size} of them below AA) — #{unpainted.map { |p| p[:fg_key] }.uniq.sort.join(', ')}"
+          "design_metrics contrast: skipped #{unpainted.size} pair(s) touching a token with no var() reader " \
+          "(#{skipped.size} of them below AA) — unread: #{dead.join(', ')}"
         )
       end
       if pairs.empty?
