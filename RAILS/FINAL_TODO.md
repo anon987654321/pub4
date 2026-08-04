@@ -351,7 +351,7 @@ count is not the finding; the verdict is.
 | `ctrl_no_rate_limit` | 64 | judgement |
 | `css_magic_hex` | 56 | judgement |
 | `css_animation_present` | 52 | policy |
-| `delete_no_confirm` | 29 | open |
+| `delete_no_confirm` | 29 | artifact |
 | `orphan_partial` | 28 | artifact |
 | `list_no_empty_state` | 28 | open |
 | `unread_css_var` | 27 | open |
@@ -365,40 +365,40 @@ count is not the finding; the verdict is.
 | `rb_file_too_long` | 13 | open |
 | `rb_time_now` | 13 | fixed |
 | `rb_update_column` | 12 | fixed |
-| `model_no_validations` | 11 | open |
+| `model_no_validations` | 11 | artifact |
 | `css_autofix_scar` | 11 | open |
-| `ctrl_index_no_pagination` | 11 | open |
+| `ctrl_index_no_pagination` | 11 | judgement |
 | `css_font_px_small` | 10 | open |
 | `rb_env_fetch_no_default` | 10 | artifact |
-| `inline_style` | 9 | open |
+| `inline_style` | 9 | policy |
 | `css_zindex_magic` | 9 | open |
 | `css_display_none_override` | 9 | open |
 | `rb_puts` | 8 | artifact |
 | `model_has_many_no_dependent` | 8 | artifact |
 | `scss_file_too_long` | 7 | open |
-| `img_no_dims` | 6 | open |
-| `heading_skip` | 5 | open |
-| `placeholder_hardcoded` | 5 | open |
+| `img_no_dims` | 6 | artifact |
+| `heading_skip` | 5 | judgement |
+| `placeholder_hardcoded` | 5 | fixed |
 | `rb_hardcoded_domain` | 5 | artifact |
 | `rb_unscoped_all` | 5 | artifact |
 | `rb_skip_forgery` | 5 | open |
-| `nbsp_entity` | 5 | open |
+| `nbsp_entity` | 5 | judgement |
 | `raw_html_safe` | 4 | open |
 | `class_soup` | 4 | open |
 | `view_too_long` | 4 | open |
-| `css_blur` | 3 | open |
-| `button_div` | 3 | open |
-| `submit_hardcoded` | 3 | open |
-| `target_blank_no_rel` | 2 | open |
+| `css_blur` | 3 | policy |
+| `button_div` | 3 | artifact |
+| `submit_hardcoded` | 3 | fixed |
+| `target_blank_no_rel` | 2 | artifact |
 | `dead_stimulus_controller` | 2 | fixed |
-| `rb_rescue_inline_nil` | 2 | open |
-| `img_no_lazy` | 2 | open |
-| `css_radius_large` | 2 | open |
-| `form_no_autocomplete` | 2 | open |
-| `css_line_height_tight` | 2 | open |
-| `rb_todo` | 1 | open |
-| `time_now` | 1 | open |
-| `value_no_declaration` | 1 | open |
+| `rb_rescue_inline_nil` | 2 | fixed |
+| `img_no_lazy` | 2 | fixed |
+| `css_radius_large` | 2 | fixed |
+| `form_no_autocomplete` | 2 | artifact |
+| `css_line_height_tight` | 2 | artifact |
+| `rb_todo` | 1 | artifact |
+| `time_now` | 1 | fixed |
+| `value_no_declaration` | 1 | fixed |
 
 ### Verdict notes
 
@@ -413,6 +413,83 @@ count is not the finding; the verdict is.
 **`css_off_grid`** — 83 findings, _artifact_. Substantially wrong: the grid array omitted 44, so the rule flags `min-height: 44px` — the touch target `ux_laws.fitts.target_min_px` mandates. Others land in `_jsfiddle_chrome.scss`, which `FrontendAuditor::PEN_STYLE_PATH_PATTERN` exempts as a product pen keeping exact CSS.
 
 **`css_px_width`** — 72 findings, _artifact_. Mostly `@media (min-width: 768px)` — breakpoints, not element widths. The regex matched `min-width` anywhere.
+
+**`delete_no_confirm`** — 29 findings, _artifact_, 4 real and fixed. The rule flags
+any `method: :delete`, and REST DELETE is not the same thing as destructive.
+Seventeen are toggles (unfollow, unlike, unwatch, unsubscribe, unsave, unbookmark,
+unblock, leave community) undone by clicking the same button again; four are
+sign-out; one — `shared/comments/_comment` — already had `turbo_confirm`, on the
+line after the one flagged. Putting "Are you sure?" in front of unfollowing
+someone is friction pretending to be care.
+
+The four that are irreversible now confirm, with copy that says what happens:
+deleting a `Marketplace::Listing` (which declares
+`has_many :orders, dependent: :destroy`, so the order history goes with it),
+ending a listening party for everyone listening, deleting a saved search, and
+deleting a port comment.
+
+**`model_no_validations`** — 11 findings, _artifact_, 0 real. `belongs_to` has been
+required by default since Rails 5, so ten of these join and event records
+(`Mention`, `Tagging`, `Tv::ViewEvent`, `Playlist::Listen`, `MessageReceipt`,
+`TypingIndicator`, `Stream`, `PrivacySetting`, two `Session`s) already validate
+presence of their associations — the rule only looked for an explicit `validates`.
+The eleventh is `ApplicationRecord`, an abstract base class.
+
+**`ctrl_index_no_pagination`** — 11 findings, _judgement_, ~2 real and not done.
+`channels#index` is a small fixed set per city, `playlist/playlists#index` renders
+nothing (immersive surface), and most of the rest are user-scoped and small. The
+two that genuinely grow without bound are `bookmarks#index` and amber's
+`connections#index`.
+
+Not fixed here because `pagy` in the controller without pagination markup in the
+view silently truncates at the default limit — which is worse than the unbounded
+query, and is the "no silent caps" rule in this file's own header. Each of the two
+needs controller *and* view, so it is a small piece of real work rather than a
+one-line lint fix.
+
+**`inline_style`** — 9 findings, _policy_. Seven are the correct pattern rather than
+a violation: `style="--swatch: <%= … %>"` passes a runtime colour as a custom
+property, which a stylesheet cannot do; `layouts/mailer` needs inline CSS because
+email clients have no custom properties; `_ad_slot`'s `display:block` is required
+by the ad script; and `users/new`'s `position:absolute;left:-9999px` is a honeypot
+that must not be identifiable by class name. The takeaway order-progress width and
+the icon sprite are the only two that could move to a custom property.
+
+**`heading_skip`** — 5 findings, _judgement_. Real against the flat heading order
+screen readers use — every one is an `<h3>` in an `<aside>` following an `<h1>`.
+Not fixed because no stylesheet normalises `h2`/`h3`, so promoting them changes
+rendered size on five sidebars. Either accept that, or promote and add one rule
+sizing sidebar headings; both are visual decisions.
+
+**`nbsp_entity`** — 5 findings, _judgement_. `~10&nbsp;km` in the chat widget is
+correct typography and should stay. The other four are spacing hacks — three
+separating inline meta on the dating profile, one reserving a line in the
+marketplace nav — and replacing them means a flex `gap`, which changes layout.
+
+**`css_blur`** — 3 findings, _policy_. Two are prose in a comment. The third,
+`_popover_tooltip.scss:49`, is a real `filter: drop-shadow()` and the comment above
+it documents why, which is what `pixel_perfection.exception_policy` requires of a
+scoped exception.
+
+**`img_no_dims`** — 6 findings, _artifact_. All six are `responsive_image_tag`,
+which emits `srcset` and `sizes`; the rule looked for `width:`/`height:` and does
+not know the helper's `widths:` argument.
+
+**`button_div`** — 3 findings, _artifact_. Two are `click@window->dropdown#hide`,
+a document-level listener rather than a control, and one is a modal backdrop.
+Neither needs to be focusable.
+
+**`css_line_height_tight`** — 2 findings, _artifact_. Both are on titles, and
+`typography.line_height` allows 1.0–1.2 for headings; the rule applied the body
+floor of 1.4 to everything.
+
+**`target_blank_no_rel`** and **`form_no_autocomplete`** — _artifact_ after fixing
+the one real instance of each. `_master_embed` already had `rel: "noopener"` and
+`_newsletter_cta` already had `autocomplete: "email"`, both on the line after the
+one flagged. This is the same single-line-regex fault as `rb_no_frozen_literal`
+and `model_has_many_no_dependent`; it has now produced false positives in five
+separate rules, and is the first thing to fix in any future version of these
+scanners.
 
 **`model_has_many_no_dependent`** — 8 findings, _artifact_, 1 real and fixed.
 Same single-line-regex bug as `rb_no_frozen_literal`: the rule matched

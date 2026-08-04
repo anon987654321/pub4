@@ -27,7 +27,7 @@ class StimulusWiringGateTest < Minitest::Test
     result = Deploy::StimulusWiringGate.run
 
     assert_empty result.failures, "dead Stimulus references:\n  #{result.failures.join("\n  ")}"
-    assert_operator result.checks_ran, :>, 100, "gate measured almost nothing — check the view glob"
+    assert_operator result.checks_ran, :>, 400, "gate measured almost nothing — check the view glob"
   end
 
   # A gate that cannot fail is not a gate. These two are the exact shapes that
@@ -67,6 +67,20 @@ class StimulusWiringGateTest < Minitest::Test
 
     assert_equal 1, failures.size, failures.inspect
     assert_includes failures.first, "action:noSuch"
+  end
+
+  # The fourth leg: a data-*-target the controller never declares. Stimulus leaves
+  # hasFooTarget false and the feature is simply absent — the same silence as an
+  # undeclared value, one attribute over.
+  def test_reports_a_target_nobody_declares
+    failures = with_probe(%(<div data-controller="scroll-chrome" data-scroll-chrome-target="nosuch"></div>))
+
+    assert_equal 1, failures.size, failures.inspect
+    assert_includes failures.first, "scroll-chrome:nosuch"
+  end
+
+  def test_accepts_declared_targets
+    assert_empty with_probe(%(<div data-controller="scroll-chrome" data-scroll-chrome-target="peel"></div>))
   end
 
   # …and it must not fire on values that are declared, in either brace layout.

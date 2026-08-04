@@ -101,6 +101,19 @@ module Deploy
           result.fail("#{app}: #{rel} calls #{id}##{method}, absent from #{source.sub("#{@rails_root}/", "")}")
         end
 
+        targets(text).each do |id, target|
+          next unless registered.include?(id)
+
+          source = first_party_source(app, id)
+          next unless source
+          next if inherits_from_vendor?(source)
+
+          result.checked!
+          next if targets_in(source).include?(target)
+
+          result.fail("#{app}: #{rel} marks #{id}:#{target} target, absent from static targets in #{source.sub("#{@rails_root}/", "")}")
+        end
+
         values(text).each do |id, value|
           next unless registered.include?(id)
 
@@ -166,6 +179,27 @@ module Deploy
 
         name = slug.delete_prefix("#{id}-")
         [ id, camelize(name) ]
+      end
+    end
+
+    # data-<identifier>-target="name". A target the controller does not declare
+    # leaves hasFooTarget false and the feature silently absent — the same class
+    # as an undeclared value, one attribute over.
+    def targets(text)
+      pairs = text.scan(/data-([a-z0-9-]+)-target\s*=\s*"([^"<%]+)"/)
+      pairs.flat_map do |slug, names|
+        id = registered_prefixes.find { |candidate| slug == candidate }
+        next [] unless id
+
+        names.split(/\s+/).reject(&:empty?).map { |name| [ id, name ] }
+      end.uniq
+    end
+
+    def targets_in(path)
+      (@targets ||= {})[path] ||= begin
+        source = File.read(path)
+        block = source[/static\s+targets\s*=\s*\[(.*?)\]/m, 1].to_s
+        block.scan(/["']([a-zA-Z_$][\w$]*)["']/).flatten.uniq
       end
     end
 
