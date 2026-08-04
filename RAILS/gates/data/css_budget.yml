@@ -17,7 +17,7 @@ schema: 1
 rules:
   important: 119
   rhythm: 82
-  magic_hex: 147
+  magic_hex: 132
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical

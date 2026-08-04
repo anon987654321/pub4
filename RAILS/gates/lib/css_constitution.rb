@@ -111,10 +111,43 @@ module Deploy
       @rhythm_allowlist ||= Array(@design.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
     end
 
+    # Strip comments before counting, rather than skipping lines that *start*
+    # with a comment marker.
+    #
+    # COMMENT only matches a leading //, /* or *. This tree writes multi-line
+    # block comments with plain indented continuation lines and no leading star,
+    # which is most of them — so every continuation line was counted as code.
+    # Measured across the 81 source stylesheets: 32 comment lines carrying a px
+    # value inflated the rhythm budget, 10 carrying a hex inflated magic_hex
+    # (including _empty_state.scss:69, which is why a survey of "hex equal to a
+    # token" reported --accent equal to a light grey), and one carrying the word
+    # !important inflated that budget by one — a comment whose subject was
+    # choosing specificity *instead of* !important.
+    #
+    # A budget that counts its own prose ratchets against documentation.
+    def strip_comments(body)
+      out = +""
+      rest = body.dup
+      until rest.empty?
+        if (open = rest.index("/*"))
+          out << rest[0...open].sub(%r{//.*}, "")
+          close = rest.index("*/", open + 2)
+          # Keep the newlines so line numbers survive.
+          span = close ? rest[open..close + 1] : rest[open..]
+          out << ("\n" * span.count("\n"))
+          rest = close ? rest[(close + 2)..] : ""
+        else
+          out << rest.gsub(%r{//.*}, "")
+          rest = ""
+        end
+      end
+      out
+    end
+
     def count_budget_rules(path, rel, body)
       token_source = TOKEN_SOURCES.include?(File.basename(path))
       allowed = rhythm_allowlist
-      body.each_line.with_index do |line, index|
+      strip_comments(body).each_line.with_index do |line, index|
         next if line.match?(COMMENT)
 
         where = "#{rel}:#{index + 1}"
