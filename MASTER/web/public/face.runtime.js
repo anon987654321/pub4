@@ -249,7 +249,9 @@ function setVoiceName(voice, opts = {}) {
     return;
   }
   let raw = String(voice || '').trim();
-  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
+  // The davis -> pernille rewrite that used to sit here forced an en-US request
+  // back onto the Norwegian voice. With MASTER on en-US-AndrewNeural that is the
+  // opposite of the policy, so a US voice asked for is a US voice used.
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
@@ -2252,7 +2254,11 @@ const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVI
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'nb-NO-PernilleNeural';
+// Fallback matches data/voice.yml. It said nb-NO-PernilleNeural while the
+// policy said something else, so any failure to load MASTER_VOICE_POLICY sent
+// MASTER back to a Norwegian voice silently — the same two-halves-disagreeing
+// bug voice.yml's own header documents.
+const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-US-AndrewNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
   try {
@@ -2962,7 +2968,11 @@ function speakWithBrowserTTS(text, token) {
   // reported symptoms at once: no audio, a mic that never re-armed because
   // resumeSttAfterSpeech() is only reached from onend, and the same sentence
   // spoken again each time the watchdog requeued it.
-  const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-GB';
+  // en-US, not en-GB. This is the browser-speech fallback used when the neural
+  // endpoint is unavailable, and it picked a British voice for every non-nb
+  // utterance — so the fallback contradicted the policy voice
+  // (en-US-AndrewNeural) precisely when it was the only thing speaking.
+  const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
   const voice = pickBrowserVoice(lang);
   if (!voice) { primeBrowserVoices(); return false; }
 
@@ -3717,7 +3727,14 @@ function handleFaceNamedEvent(event, data) {
 }
 
 let _welcomeGreetingSent = false;
-const WELCOME_GREETING_PROMPT = "Introduce yourself to a new visitor in 3-4 warm, confident sentences. State that you are MASTER, and that you are the world's first AI built entirely in pure Ruby -- no Python, no external ML frameworks, genuinely unique among AI systems. Briefly mention your real capabilities: constitutional self-governing reasoning, live two-way voice conversation, an animated face, coding and tool use, and multi-persona council deliberation for hard questions. This will be read aloud, so write it as natural spoken prose with no markdown, bullets, or headers.";
+// Spoken on arrival, from startEverything(). Every claim in here is one the
+// repo can back, because soul.yml's anti_simulation bans hedging and requires
+// evidence -- an intro that oversells is the one kind of first impression this
+// runtime is not allowed to make. What is deliberately absent: image generation
+// and shell access. Repligen, Postpro and Shell are all `visitor: false` in
+// data/tools.yml, so promising them to a visitor on ai.brgen.no would be a
+// promise the visitor cannot cash.
+const WELCOME_GREETING_PROMPT = "Introduce yourself to a new visitor in 4-5 warm, confident sentences. State that you are MASTER, and that you are the world's first AI built entirely in pure Ruby -- no Python, no external ML frameworks, genuinely unique among AI systems. Then name what sets you apart from other assistants, in plain spoken language: you are constitutional, meaning every action is checked against a written constitution before anything durable is written, and you can read and repair your own source; you hold a live two-way voice conversation and have an animated face that reacts as you speak; you convene a council of distinct personas that argue a hard question from different angles before you answer; and you run sandboxed on OpenBSD. Invite them to just start talking. This will be read aloud, so write it as natural spoken prose with no markdown, bullets, headers, or lists.";
 function sendWelcomeGreeting() {
   if (_welcomeGreetingSent || !window.MASTERChat?.startChatStream) return;
   _welcomeGreetingSent = true;
@@ -3795,7 +3812,11 @@ async function sendMessage(text) {
       if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
       if (uiStatus) {
         const style = _nextTtsStyle();
-        uiStatus.textContent = `tts: Pernille only${style ? ` · ${style}` : ''}`;
+        // Read the policy rather than naming a voice. This string said
+        // "Pernille only" while data/voice.yml said ryan, which is how the two
+        // halves of the stack came to disagree about what was being synthesized.
+        const only = window.MASTER_VOICE_POLICY?.single_voice || TTS_DEFAULT_VOICE;
+        uiStatus.textContent = `tts: ${only} only${style ? ` · ${style}` : ''}`;
       }
       return;
     }
@@ -3808,7 +3829,8 @@ async function sendMessage(text) {
     return;
   }
   if (/^\/whoami$/i.test(trimmed)) {
-    const summary = window.MASTER_SOUL_SUMMARY || "persona anchor; voice nb-NO-PernilleNeural; constitutional face";
+    const summary = window.MASTER_SOUL_SUMMARY ||
+      `persona anchor; voice ${TTS_DEFAULT_VOICE}; constitutional face`;
     if (uiStatus) uiStatus.textContent = "whoami…";
     enqueueSpeech(summary);
     window._chatOnChunk?.(summary);

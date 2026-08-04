@@ -53,7 +53,11 @@ const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVI
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'nb-NO-PernilleNeural';
+// Fallback matches data/voice.yml. It said nb-NO-PernilleNeural while the
+// policy said something else, so any failure to load MASTER_VOICE_POLICY sent
+// MASTER back to a Norwegian voice silently — the same two-halves-disagreeing
+// bug voice.yml's own header documents.
+const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-US-AndrewNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
   try {
@@ -763,7 +767,11 @@ function speakWithBrowserTTS(text, token) {
   // reported symptoms at once: no audio, a mic that never re-armed because
   // resumeSttAfterSpeech() is only reached from onend, and the same sentence
   // spoken again each time the watchdog requeued it.
-  const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-GB';
+  // en-US, not en-GB. This is the browser-speech fallback used when the neural
+  // endpoint is unavailable, and it picked a British voice for every non-nb
+  // utterance — so the fallback contradicted the policy voice
+  // (en-US-AndrewNeural) precisely when it was the only thing speaking.
+  const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
   const voice = pickBrowserVoice(lang);
   if (!voice) { primeBrowserVoices(); return false; }
 

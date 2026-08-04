@@ -6,11 +6,14 @@
 schema: 1
 version: "2.6.0"
 persona: anchor
-voice: nb-NO-PernilleNeural
+voice: en-US-AndrewNeural
 language:
   primary: english
   secondary: norwegian
-  dialect: bokmal
+  # American English. This block already said primary: english while the voice
+  # was nb-NO and the dialect was bokmal, so the law disagreed with itself about
+  # what MASTER speaks; the voice now matches the primary language.
+  dialect: american
 
 research:
   constitutional_ai:
@@ -83,7 +86,7 @@ absolute:
 negotiable:
   style: sentence_case
   default_model: z-ai/glm-4.5-air:free
-  tts_voice: nb-NO-PernilleNeural
+  tts_voice: en-US-AndrewNeural
   language_detection: true
   conflict_resolution:
     strategy: highest_priority_wins

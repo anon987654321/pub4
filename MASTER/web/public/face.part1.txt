@@ -247,7 +247,9 @@ function setVoiceName(voice, opts = {}) {
     return;
   }
   let raw = String(voice || '').trim();
-  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
+  // The davis -> pernille rewrite that used to sit here forced an en-US request
+  // back onto the Norwegian voice. With MASTER on en-US-AndrewNeural that is the
+  // opposite of the policy, so a US voice asked for is a US voice used.
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
