@@ -46,7 +46,36 @@ class Conversation < ApplicationRecord
   def self.find_or_create_channel(slug, city: nil)
     slug = slug.to_s
     spec = CHANNELS[slug] or return nil
-    includes(:city).find_by(slug: slug, city_id: city&.id) || create_channel!(slug, spec, city)
+    existing = includes(:city).find_by(slug: slug, city_id: city&.id)
+    return create_channel!(slug, spec, city) unless existing
+
+    rewelcome_if_empty!(existing)
+    existing
+  end
+
+  # A channel that has fallen silent is indistinguishable from a broken one.
+  #
+  # ChannelBot.welcome! runs once, inside create_channel!, and its three posts
+  # inherit the room's own CHANNEL_TTL (6h default) like every other channel
+  # message. So six hours after a room is created it is empty, and stays empty
+  # for good unless a human happens to speak into a page that gives them no
+  # reason to. Observed on production #brgen: correct chrome, real roster
+  # (@master +echo), topic line, and not one message.
+  #
+  # Re-seeding on open rather than exempting the welcome from expiry, because a
+  # permanent pinned "say hi" would still be sitting above a real conversation a
+  # year later. This way the greeting ages out the moment the room has actual
+  # traffic, and comes back only when it is the only thing that would be there.
+  def self.rewelcome_if_empty!(channel)
+    return unless channel.channel?
+    return if channel.messages.unexpired.exists?
+
+    ChannelBot.welcome!(channel)
+  rescue StandardError => e
+    # Opening a room must not 500 because the greeting failed. Surfaced rather
+    # than swallowed: a silent rescue here would hide the same emptiness this
+    # method exists to fix.
+    Rails.logger.warn("conversation:rewelcome_failed slug=#{channel.slug} #{e.class}: #{e.message}")
   end
 
   def self.create_channel!(slug, spec, city)
