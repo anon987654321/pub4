@@ -360,13 +360,13 @@ count is not the finding; the verdict is.
 | `rb_rescue_nil` | 21 | policy |
 | `form_no_label` | 18 | open |
 | `count_in_view` | 18 | fixed |
-| `target_no_controller` | 18 | open |
+| `target_no_controller` | 18 | artifact |
 | `unused_locale_key` | 14 | open |
 | `rb_file_too_long` | 13 | open |
 | `rb_time_now` | 13 | fixed |
 | `rb_update_column` | 12 | fixed |
 | `model_no_validations` | 11 | artifact |
-| `css_autofix_scar` | 11 | open |
+| `css_autofix_scar` | 11 | policy |
 | `ctrl_index_no_pagination` | 11 | judgement |
 | `css_font_px_small` | 10 | open |
 | `rb_env_fetch_no_default` | 10 | artifact |
@@ -413,6 +413,23 @@ count is not the finding; the verdict is.
 **`css_off_grid`** — 83 findings, _artifact_. Substantially wrong: the grid array omitted 44, so the rule flags `min-height: 44px` — the touch target `ux_laws.fitts.target_min_px` mandates. Others land in `_jsfiddle_chrome.scss`, which `FrontendAuditor::PEN_STYLE_PATH_PATTERN` exempts as a product pen keeping exact CSS.
 
 **`css_px_width`** — 72 findings, _artifact_. Mostly `@media (min-width: 768px)` — breakpoints, not element widths. The regex matched `min-width` anywhere.
+
+**`target_no_controller`** — 17 findings, _artifact_, 0 real, and the rule is
+retired. It resolved identifiers only against `application.register()` calls, so it
+missed the `COMPONENT_REGISTRATIONS` table and every per-app controller file, and
+reported `character-counter`, `clipboard`, `dropdown`, `popover`, `tiptap-editor`,
+`nav-swiper` and eleven others as unregistered. `stimulus_wiring` now checks
+targets as its fourth leg, against the same registration set it uses for
+identifiers, which is the correct version of this idea.
+
+**`css_autofix_scar`** — 11 findings, _policy_, deliberately kept. Ten are the
+marker `/* autofix: removed box-shadow (flat UI) */`, and they are a trail rather
+than litter: `shared/_focus_ring.scss`'s header cites them by name to explain why
+that file exists — "a flat-UI pass stripped the box-shadow that had been the
+indicator and left the `outline: none` beside it untouched, so the ring silently
+vanished". Deleting the markers would leave that explanation pointing at
+annotations that no longer exist, which is the drift this repo keeps paying for.
+The eleventh finding *is* that header.
 
 **`raw_html_safe`** — 4 findings, _policy_, none exploitable. Audited each for
 whether user input can reach it, which is the only question that matters:
