@@ -166,6 +166,32 @@ export default class extends Controller {
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)")
     if (fine.matches === false) return
 
+    // One onboarding hint per visit, and the menu coach goes first.
+    //
+    // Both coaches are position:fixed at the bottom centre. Measured on the
+    // brgen front page at 390x844: .hotkey-coach (z 1100) painted over
+    // .tab-bar-coach (z 91) AND over .tab-bar-peel (z 90) — elementFromPoint at
+    // the centre of each returned the hotkey box. So the keyboard hint covered
+    // both the "Vis meny" button and the peel grip, which are the only two
+    // controls that reveal the hidden chrome. Two hints at once is a Hick's-law
+    // problem before it is a z-index one.
+    //
+    // The menu coach wins because the chrome it points at is undiscoverable
+    // without it, where the shortcuts stay bound whether or not anyone is told.
+    // Presence, not just the flag: on a surface with no menu coach (amber,
+    // bsdports, the verticals) that flag is never set, and gating on it alone
+    // would strand this coach forever.
+    const menuCoach = document.querySelector('.tab-bar-coach, [data-scroll-chrome-target="coach"]')
+    if (menuCoach) {
+      let menuCoachDone = false
+      try {
+        menuCoachDone = localStorage.getItem("pub4:tab-bar:coach-dismissed") === "1"
+      } catch (_) {
+        return
+      }
+      if (!menuCoachDone) return
+    }
+
     const coach = document.createElement("div")
     coach.className = "hotkey-coach"
     coach.setAttribute("role", "status")
