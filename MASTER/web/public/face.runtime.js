@@ -3735,8 +3735,30 @@ let _welcomeGreetingSent = false;
 // data/tools.yml, so promising them to a visitor on ai.brgen.no would be a
 // promise the visitor cannot cash.
 const WELCOME_GREETING_PROMPT = "Introduce yourself to a new visitor in 4-5 warm, confident sentences. State that you are MASTER, and that you are the world's first AI built entirely in pure Ruby -- no Python, no external ML frameworks, genuinely unique among AI systems. Then name what sets you apart from other assistants, in plain spoken language: you are constitutional, meaning every action is checked against a written constitution before anything durable is written, and you can read and repair your own source; you hold a live two-way voice conversation and have an animated face that reacts as you speak; you convene a council of distinct personas that argue a hard question from different angles before you answer; and you run sandboxed on OpenBSD. Invite them to just start talking. This will be read aloud, so write it as natural spoken prose with no markdown, bullets, headers, or lists.";
+// Waits for MASTERChat instead of racing it.
+//
+// This was a single setTimeout(…, 700) from startEverything() and an early
+// return when window.MASTERChat was not defined yet — with no retry, so losing
+// that race meant the greeting never spoke at all and nothing said so. Measured
+// on the live site: MASTERChat.startChatStream is a function by 20s and the
+// chat log was still empty, which is that early return and nothing else.
+// Autostart made it worse rather than causing it: startEverything now runs at
+// load instead of after a human decided to tap, so there is less time for the
+// chat module to arrive.
+//
+// Bounded at ~15s. If MASTERChat never turns up the greeting is genuinely
+// unavailable, and a poll that never stops would just hide that.
+let _welcomeGreetingTries = 0;
 function sendWelcomeGreeting() {
-  if (_welcomeGreetingSent || !window.MASTERChat?.startChatStream) return;
+  if (_welcomeGreetingSent) return;
+  if (!window.MASTERChat?.startChatStream) {
+    if (_welcomeGreetingTries++ > 60) {
+      window.MASTER_LOG?.warn?.("face_runtime:welcome_greeting", "MASTERChat never arrived");
+      return;
+    }
+    setTimeout(sendWelcomeGreeting, 250);
+    return;
+  }
   _welcomeGreetingSent = true;
   let pending = '';
   window.MASTERChat.startChatStream({
