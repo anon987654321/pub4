@@ -3,7 +3,7 @@
 <% end %>
 
 <%= turbo_frame_tag "bsdports-maintainers", target: "_top" do %>
-<ul id="maintainers" role="list" aria-label="Maintainers">
+<ul id="maintainers" role="list" aria-label="<%= t("ports.maintainers_results_label") %>">
  <% @maintainers.each do |maintainer| %>
  <li>
  <%= link_to maintainer.name, maintainer_path(maintainer) %>

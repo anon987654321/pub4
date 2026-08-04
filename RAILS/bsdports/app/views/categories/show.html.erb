@@ -1,5 +1,5 @@
 <% content_for :title, @category.name %>
-<header role="banner" aria-label="Category header">
+<header role="banner" aria-label="<%= t("ports.category_header_label") %>">
   <h1><%= @category.name %></h1>
   <p><%= @category.description %></p>
 </header>

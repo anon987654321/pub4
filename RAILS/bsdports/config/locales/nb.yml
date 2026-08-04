@@ -82,6 +82,19 @@ nb:
     unknown: "ukjent"
     updated: "Oppdatert"
     version_history: "Versjonshistorikk"
+    browse_all: "Vis alle porter"
+    categories: "Kategorier"
+    categories_section_label: "Portkategorier"
+    empty_body: "Prøv et annet søk — for eksempel git, python eller en kategori."
+    header_page_label: "Hode for OpenBSD-porter"
+    list_label: "Liste over OpenBSD-porter"
+    purpose: "Svar raskt på tre spørsmål: hvilken pakke er dette, kan denne maskinen installere den, og hva vet den lokale varselindeksen?"
+    rss_link: "RSS (nye siste 7 dager)"
+    categories_results_label: "Kategorier"
+    category_header_label: "Kategorihode"
+    maintainers_results_label: "Vedlikeholdere"
+    unwatch: "Slutt å følge"
+    watch: "Følg"
   empty:
     no_ports: "Ingen porter funnet"
     no_categories: "Ingen kategorier"
@@ -101,6 +114,7 @@ nb:
   actions:
     all_categories: "Alle kategorier"
     all_maintainers: "Alle maintainere"
+    delete: "Slett"
   pwa:
     search_ports: "Søk porter"
     search: "Søk"

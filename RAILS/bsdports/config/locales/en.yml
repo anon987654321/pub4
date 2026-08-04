@@ -82,6 +82,19 @@ en:
     unknown: "unknown"
     updated: "Updated"
     version_history: "Version history"
+    browse_all: "Browse all ports"
+    categories: "Categories"
+    categories_section_label: "Port categories"
+    empty_body: "Try another query — e.g. git, python, or a category."
+    header_page_label: "OpenBSD ports header"
+    list_label: "OpenBSD ports list"
+    purpose: "Answer three questions quickly: what package is this, can this machine install it, and what does the local advisory index know?"
+    rss_link: "RSS (new last 7 days)"
+    categories_results_label: "Categories"
+    category_header_label: "Category header"
+    maintainers_results_label: "Maintainers"
+    unwatch: "Unwatch"
+    watch: "Watch"
   empty:
     no_ports: "No ports found"
     no_categories: "No categories"
@@ -103,6 +116,7 @@ en:
   actions:
     all_categories: "All categories"
     all_maintainers: "All maintainers"
+    delete: "Delete"
   pwa:
     search_ports: "Search ports"
     search: "Search"

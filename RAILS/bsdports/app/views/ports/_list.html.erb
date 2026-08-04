@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "ports", target: "_top" do %>
-<ul id="ports" role="list" aria-label="OpenBSD ports list" class="port-list">
+<ul id="ports" role="list" aria-label="<%= t("ports.list_label") %>" class="port-list">
   <% @ports.each do |port| %>
     <%= render "ports/row", port: %>
   <% end %>
@@ -7,8 +7,8 @@
 <% if @ports.empty? %>
   <%= render "shared/empty_state",
         title: t("empty.no_ports"),
-        body: "Try another query — e.g. git, python, or a category.",
-        action: { label: "Browse all ports", path: ports_path } %>
+        body: t("ports.empty_body"),
+        action: { label: t("ports.browse_all"), path: ports_path } %>
 <% end %>
 <%= render "shared/infinite_scroll_sentinel",
            pagy: @pagy,

@@ -3,7 +3,7 @@
 <% end %>
 
 <%= turbo_frame_tag "bsdports-categories", target: "_top" do %>
-<ul id="categories" role="list" aria-label="Categories">
+<ul id="categories" role="list" aria-label="<%= t("ports.categories_results_label") %>">
  <% @categories.each do |cat| %>
  <li>
  <%= link_to cat.name, category_path(cat) %>
