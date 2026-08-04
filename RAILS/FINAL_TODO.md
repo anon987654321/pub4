@@ -353,7 +353,7 @@ count is not the finding; the verdict is.
 | `css_animation_present` | 52 | policy |
 | `delete_no_confirm` | 29 | artifact |
 | `orphan_partial` | 28 | artifact |
-| `list_no_empty_state` | 28 | open |
+| `list_no_empty_state` | 28 | artifact |
 | `unread_css_var` | 27 | open |
 | `css_font_px_hardcoded` | 25 | open |
 | `css_vendor_prefix` | 24 | open |
@@ -413,6 +413,24 @@ count is not the finding; the verdict is.
 **`css_off_grid`** — 83 findings, _artifact_. Substantially wrong: the grid array omitted 44, so the rule flags `min-height: 44px` — the touch target `ux_laws.fitts.target_min_px` mandates. Others land in `_jsfiddle_chrome.scss`, which `FrontendAuditor::PEN_STYLE_PATH_PATTERN` exempts as a product pen keeping exact CSS.
 
 **`css_px_width`** — 72 findings, _artifact_. Mostly `@media (min-width: 768px)` — breakpoints, not element widths. The regex matched `min-width` anywhere.
+
+**`list_no_empty_state`** — 28 findings, _artifact_, ~0 real. The rule asked one
+file whether it both iterates and handles empty, and in this codebase those two
+things live in different files. `posts/index` renders its list through
+`live_search_index` → `posts/_live_search_results`, and *that* partial carries
+`<% if @posts.any? %>` with a `shared/empty_state` and a CTA; same for
+`items/index` → `items/_live_search_results`. The only `.each` left in the index
+itself is a bounded sidebar (`Community.popular.limit(8)`).
+
+Ten of the 28 are per-item partials, which structurally cannot hold the empty
+state for the collection that renders them. Five are forms iterating `<select>`
+options. The rest are chrome (nav bars, the icon sprite), a mailer text template,
+a turbo-stream with no UI, and the shared examples page.
+
+The decisive evidence is that `Pub4::EmptyStateLint` sits at **baseline 0** and
+passes: every empty state in the family already has an action, which is the
+`NO_DEAD_ENDS` invariant this rule was reaching for. It was measuring file
+structure and calling it product coverage.
 
 **`target_no_controller`** — 17 findings, _artifact_, 0 real, and the rule is
 retired. It resolved identifiers only against `application.register()` calls, so it
