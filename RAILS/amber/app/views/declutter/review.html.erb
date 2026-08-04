@@ -1,16 +1,16 @@
 <div class="declutter-page">
-  <header role="banner" aria-label="Declutter review header">
-    <h1>Declutter review</h1>
+  <header role="banner" aria-label="<%= t("declutter.review_header_label") %>">
+    <h1><%= t("declutter.review_title") %></h1>
     <p><%= @item.title %></p>
   </header>
 
-  <section role="region" aria-label="Item under review">
+  <section role="region" aria-label="<%= t("declutter.item_under_review") %>">
     <%= render "items/item", item: @item %>
   </section>
 
   <% if @score.present? %>
-    <section role="region" aria-label="Score">
-      <h2>Score</h2>
+    <section role="region" aria-label="<%= t("declutter.score") %>">
+      <h2><%= t("declutter.score") %></h2>
       <dl class="meta">
         <% @score.each do |key, value| %>
           <dt><%= key.to_s.humanize %></dt>
@@ -21,16 +21,16 @@
   <% end %>
 
   <% if @action.present? %>
-    <section role="region" aria-label="Recommended action">
-      <h2>Recommended action</h2>
+    <section role="region" aria-label="<%= t("declutter.recommended_action") %>">
+      <h2><%= t("declutter.recommended_action") %></h2>
       <p><strong><%= (@action[:recommendation] || @action["recommendation"]).to_s.humanize %></strong></p>
       <p class="dim"><%= @action[:copy] || @action["copy"] %></p>
-      <p class="dim">Destination: <%= (@action[:destination] || @action["destination"]).to_s.humanize %></p>
+      <p class="dim"><%= t("declutter.destination") %> <%= (@action[:destination] || @action["destination"]).to_s.humanize %></p>
     </section>
   <% end %>
 
-  <section role="region" aria-label="Decision form">
-    <h2>Decision</h2>
+  <section role="region" aria-label="<%= t("declutter.decision_form") %>">
+    <h2><%= t("declutter.decision") %></h2>
     <%= form_with model: @review, url: update_review_declutter_path(@item), method: :patch do |form| %>
       <div>
         <%= form.label :decision %>
@@ -52,7 +52,7 @@
   </section>
 
   <section>
-    <h2>Move item</h2>
+    <h2><%= t("declutter.move_item") %></h2>
     <nav role="navigation">
       <% %w[keep wear_this_week repair sell donate sentimental_archive release].each do |target| %>
         <%= button_to target.humanize, move_declutter_path(@item, target: target), method: :patch, class: "btn-sm" %>
@@ -62,7 +62,7 @@
   </section>
 
   <section>
-    <h2>Wear-it-this-week challenge</h2>
+    <h2><%= t("declutter.week_challenge") %></h2>
     <%= form_with url: challenge_declutter_path(@item), method: :post do |form| %>
       <div>
         <%= form.label :due_on %>
@@ -78,8 +78,8 @@
 
   <% if @last_chance.present? %>
     <section>
-      <h2>Last-chance outfits</h2>
-      <p class="dim">Give this piece one more real role before release.</p>
+      <h2><%= t("declutter.last_chance_outfits") %></h2>
+      <p class="dim"><%= t("declutter.one_more_role") %></p>
       <ul>
         <% @last_chance.each_with_index do |suggestion, index| %>
           <li>

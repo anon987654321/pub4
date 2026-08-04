@@ -91,8 +91,13 @@ class AmberBacklogTest < Minitest::Test
     assert_includes controller, "StyleEvolution"
     assert_includes controller, "def timeline"
     assert_includes routes, "get :timeline"
-    assert_includes view, "Style evolution"
-    assert_includes view, "Life phases"
+    # Both through the locale rather than as literals, for the same reason as
+    # items.sparks_joy above: asserting English in a default_locale: nb app is
+    # what kept the hardcoded copy in the view.
+    assert_includes view, "wardrobe.evolution_header"
+    assert_includes view, "wardrobe.life_phases"
+    assert_equal "Life phases", I18n.t("wardrobe.life_phases", locale: :en)
+    assert_equal "Livsfaser", I18n.t("wardrobe.life_phases", locale: :nb)
     assert_includes read("app/views/wardrobe_items/analytics.html.erb"), "timeline_wardrobe_items_path"
   end
 

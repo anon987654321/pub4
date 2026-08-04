@@ -1,26 +1,26 @@
 <% content_for :title, "Style evolution" %>
 
-<header role="banner" aria-label="Style evolution header">
+<header role="banner" aria-label="<%= t("wardrobe.evolution_header") %>">
   <div>
-    <p class="dim">Aesthetic phases over time</p>
+    <p class="dim"><%= t("wardrobe.phases_over_time") %></p>
     <h1><%= t("pages.timeline") %></h1>
   </div>
-  <nav role="navigation" aria-label="Style evolution actions">
+  <nav role="navigation" aria-label="<%= t("wardrobe.evolution_actions") %>">
     <%= link_to t("pages.analytics"), analytics_wardrobe_items_path, class: "btn" %>
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
   </nav>
 </header>
 
-<section class="chips" aria-label="Phase summary">
+<section class="chips" aria-label="<%= t("wardrobe.phase_summary") %>">
   <span class="chip"><%= @timeline[:summary][:total_items] %> wardrobe items</span>
   <span class="chip"><%= @timeline[:summary][:phased_items] %> with life phase</span>
   <% if @timeline[:summary][:dominant_phase].present? %>
-    <span class="chip">Dominant: <%= @timeline[:summary][:dominant_phase].humanize %></span>
+    <span class="chip"><%= t("wardrobe.dominant") %> <%= @timeline[:summary][:dominant_phase].humanize %></span>
   <% end %>
 </section>
 
-<section aria-label="Life phase groups">
-  <h2>Life phases</h2>
+<section aria-label="<%= t("wardrobe.life_phase_groups") %>">
+  <h2><%= t("wardrobe.life_phases") %></h2>
   <div class="style-phase-grid">
     <% @timeline[:phases].each do |group| %>
       <article class="style-phase-card" aria-labelledby="phase-<%= group[:phase] %>">
@@ -51,8 +51,8 @@
   </div>
 </section>
 
-<section aria-label="Wear history timeline">
-  <h2>Wear history</h2>
+<section aria-label="<%= t("wardrobe.wear_history_label") %>">
+  <h2><%= t("wardrobe.wear_history") %></h2>
   <% if @timeline[:wear_events].any? %>
     <ol class="style-timeline" role="list">
       <% @timeline[:wear_events].each do |event| %>
