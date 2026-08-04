@@ -281,8 +281,20 @@ module Deploy
       end
     end
 
+    # design_rules.yml declares the spacing scale twice and the two disagree:
+    #
+    #   pixel_perfection.eight_px_rhythm     0 4 8 12 16 20 24 32 40 48 64 96
+    #   layout_rules.grid.allowed_spacing_px   4 8    16    24 32    48 64
+    #
+    # This gate read the second, css_constitution's rhythm_allowlist reads the
+    # first, so two gates enforced different rules out of one law and 12px and
+    # 20px were reported off-scale here while passing there. eight_px_rhythm is
+    # the one FINAL_TODO's contract header quotes as the 8px rhythm, so it wins;
+    # the grid list stays as the fallback rather than being deleted, since it
+    # also carries columns and base_unit_px that nothing else supplies.
     def check_spacing_rhythm
-      allowed = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i)
+      allowed = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
+      allowed = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i) if allowed.empty?
       base = @rules.dig("layout_rules", "grid", "base_unit_px").to_i
       base = 8 if base <= 0
       allowed = [4, 8, 16, 24, 32, 48, 64] if allowed.empty?
