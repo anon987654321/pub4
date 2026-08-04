@@ -1,32 +1,32 @@
 <% content_for :title, @port.name %>
-<article aria-label="Port details">
-  <header aria-label="Port header">
+<article aria-label="<%= t("ports.details_label") %>">
+  <header aria-label="<%= t("ports.header_label") %>">
     <h1><%= @port.name %> <small><%= @port.version %></small></h1>
     <small><%= link_to @port.category.name, category_path(@port.category) %></small>
   </header>
   <p><%= @port.comment %></p>
   <section class="install-panel" aria-labelledby="install-heading">
-    <h2 id="install-heading">Install</h2>
+    <h2 id="install-heading"><%= t("ports.install") %></h2>
     <%= render "shared/copyable", text: "doas pkg_add #{@port.name}" %>
-    <p class="dim">Command targets <%= @port.platform.name %>. Branch, release and architecture availability are <strong>unknown in this index</strong>; confirm against your configured package repository before installing.</p>
+    <p class="dim"><%= t("ports.install_note_html", platform: @port.platform.name) %></p>
   </section>
   <% if @port.description.present? %>
     <%= read_more(@port.description, lines: 4) %>
   <% end %>
   <dl>
-    <dt>Exact identity</dt><dd><code><%= @port.pkgpath %>@<%= @port.version %></code></dd>
-    <dt>Platform</dt><dd><code><%= @port.platform.name %></code> · branch unknown · architecture unknown</dd>
-    <dt>Maintainer</dt><dd><% if @maintainer %><%= link_to @maintainer.name, maintainer_path(@maintainer) %><% else %><span class="data-state"><%= @port[:maintainer].presence || "unknown" %></span><% end %></dd>
-    <dt>Local install</dt><dd><%= @pkg_info.present? ? "installed (#{@pkg_info})" : "not installed" %></dd>
-    <dt>Pkgpath</dt><dd><code><%= @port.pkgpath %></code></dd>
-    <% if @port.homepage.present? %><dt>Homepage</dt><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
+    <dt><%= t("ports.exact_identity") %></dt><dd><code><%= @port.pkgpath %>@<%= @port.version %></code></dd>
+    <dt><%= t("ports.platform") %></dt><dd><code><%= @port.platform.name %></code> · <%= t("ports.platform_unknown") %></dd>
+    <dt><%= t("ports.maintainer") %></dt><dd><% if @maintainer %><%= link_to @maintainer.name, maintainer_path(@maintainer) %><% else %><span class="data-state"><%= @port[:maintainer].presence || t("ports.unknown") %></span><% end %></dd>
+    <dt><%= t("ports.local_install") %></dt><dd><%= @pkg_info.present? ? t("ports.installed", info: @pkg_info) : t("ports.not_installed") %></dd>
+    <dt><%= t("ports.pkgpath") %></dt><dd><code><%= @port.pkgpath %></code></dd>
+    <% if @port.homepage.present? %><dt><%= t("ports.homepage") %></dt><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
     <% update_age = @port.last_updated && (Date.current - @port.last_updated).to_i %>
-    <dt>Updated</dt><dd><span class="data-state <%= update_age && update_age > 365 ? "data-state--stale" : "" %>"><%= @port.last_updated&.strftime("%Y-%m-%d") || "unknown" %><%= " · stale (#{update_age} days)" if update_age && update_age > 365 %></span></dd>
+    <dt><%= t("ports.updated") %></dt><dd><span class="data-state <%= update_age && update_age > 365 ? "data-state--stale" : "" %>"><%= @port.last_updated&.strftime("%Y-%m-%d") || t("ports.unknown") %><%= " #{t("ports.stale", count: update_age)}" if update_age && update_age > 365 %></span></dd>
   </dl>
 
   <% if @dependencies.any? %>
-    <h2>Requires → dependencies</h2>
-    <ul aria-label="Port dependencies">
+    <h2><%= t("ports.requires") %></h2>
+    <ul aria-label="<%= t("ports.dependencies_label") %>">
       <% @dependencies.each do |dep| %>
         <li>
           <%= link_to dep.depends_on.name, port_path(dep.depends_on) %>
@@ -36,21 +36,21 @@
     </ul>
   <% end %>
 
-  <%= render "ports/dependency_tree", tree: @dependency_tree, heading: "This package → requires" %>
+  <%= render "ports/dependency_tree", tree: @dependency_tree, heading: t("ports.tree_heading") %>
 
   <% if @rdeps.any? %>
-    <h2>Required by ← reverse dependencies</h2>
-    <ul aria-label="Ports that depend on this package">
+    <h2><%= t("ports.required_by") %></h2>
+    <ul aria-label="<%= t("ports.rdeps_label") %>">
       <% @rdeps.each do |reverse| %>
         <li><%= link_to reverse.name, port_path(reverse) %></li>
       <% end %>
     </ul>
   <% end %>
 
-  <section aria-label="Package exploration assistant">
-    <h2>Exploration assistant</h2>
+  <section aria-label="<%= t("ports.explore_section") %>">
+    <h2><%= t("ports.explore") %></h2>
     <p id="port-explore-summary"><%= @explore_summary %></p>
-    <p><%= link_to "JSON summary", explore_port_path(@port), data: { turbo: false } %></p>
+    <p><%= link_to t("ports.json_summary"), explore_port_path(@port), data: { turbo: false } %></p>
   </section>
 
   <% if @deps.any? %>
@@ -67,7 +67,7 @@
   <% end %>
 
   <% if @updates.any? %>
-    <h2>Version history</h2>
+    <h2><%= t("ports.version_history") %></h2>
     <ul>
       <% @updates.each do |update| %>
         <li>
@@ -83,13 +83,15 @@
     </ul>
   <% end %>
 
-  <h2>CVEs / Security advisories</h2>
+  <h2><%= t("ports.advisories") %></h2>
   <% if @advisories&.any? %>
     <ul>
       <% @advisories.each do |adv| %>
         <li>
           <% if adv.nvd_url %>
-            <%= link_to adv.identifier, adv.nvd_url, target: "_blank" %>
+            <%# rel is not optional on target=_blank: without noopener the opened
+                page gets a window.opener handle back to this one. %>
+            <%= link_to adv.identifier, adv.nvd_url, target: "_blank", rel: "noopener noreferrer" %>
           <% else %>
             <%= adv.identifier %>
           <% end %>
@@ -99,33 +101,16 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="data-state">Unknown: no advisories are linked in this local index. This is not the same as a verified clean security record.</p>
+    <p class="data-state"><%= t("ports.advisories_none") %></p>
   <% end %>
-  <%= button_to "Cross-reference with NVD", crossref_cves_port_path(@port), method: :post %>
+  <%= button_to t("ports.crossref_nvd"), crossref_cves_port_path(@port), method: :post %>
 
-  <h2>MASTER review</h2>
-  <p>Scan <code>Makefile</code> and patches for quality issues.</p>
-  <%= button_to "Run MASTER review", review_port_path(@port), method: :post %>
+  <h2><%= t("ports.master_review") %></h2>
+  <p><%= t("ports.master_review_lead_html") %></p>
+  <%= button_to t("ports.run_master_review"), review_port_path(@port), method: :post %>
 
-  <nav role="navigation" aria-label="Port actions">
+  <nav role="navigation" aria-label="<%= t("ports.actions_label") %>">
     <% if authenticated? %>
       <%= render "ports/watch_toggle", port: @port, watching: @watching %>
     <% end %>
   </nav>
-</article>
-
-<section id="comments" role="region" aria-label="Comments">
-  <h2>Comments</h2>
-  <div id="port_comments">
-    <%= render @comments %>
-  </div>
-  <% if authenticated? %>
-    <%= form_with url: port_comments_path(@port), id: "port_comment_form", data: { turbo: true } do |f| %>
-      <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
-        <%= f.text_area :content, rows: 3, placeholder: "Add a comment…", data: { character_counter_target: "input" } %>
-        <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-      </div>
-      <p><%= f.submit "Comment" %></p>
-    <% end %>
-  <% end %>
-</section>
