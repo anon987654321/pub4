@@ -51,9 +51,32 @@ Four reports, four root causes, all reproduced locally on
 `http://127.0.0.1:38182/` at 390x844 via CDP. These are defects, not polish;
 they sit above every scanner section below.
 
+**Re-measured 2026-08-04** against the working tree, brgen booted on 38182,
+Ferrum with `Emulation.setDeviceMetricsOverride` at 390x844 mobile — `window_size`
+alone left `clientWidth` at 500, which is the sort of thing this file exists to
+catch. Results per subsection below. Summary: P0.1, P0.2, P0.3 and P0.6(b) had
+landed and were simply never ticked; P0.4 is landed except the payload items;
+P0.5 was still live and worse than recorded; P0.6(a) is a production data
+question, not a code one.
+
+One caution about this page and this harness. Across five runs `window.Turbo`
+and `window.Stimulus` were `object` on some and `undefined` on others with no
+change to the tree — so any assertion here that depends on JS having booted is
+marked as such, and the border counts below were taken by unhiding the element
+from the probe rather than waiting for a controller to reveal it. A reading that
+changes between identical runs cannot close a box.
+
 ### P0.1 The logo is rendered, invisible, and unclickable — a z-index conflict
 
-- [ ] `brgen/app/assets/stylesheets/_root.scss:115` — `.brgen-logo-mark` sets
+- [x] **Fixed in `4510e06ba`, verified 2026-08-04.** `.brgen-logo-mark` is now
+      `position: fixed` at `z=120` with `rect=[14, 14, 63, 44]`, and
+      `document.elementFromPoint` at its own centre returns a **descendant** of
+      the mark. The fix chosen was neither of the two proposed below: the nav
+      went back to being a pull-down drawer that is `height: 0` and
+      `pointer-events: none` while closed, so there is no permanent band left to
+      lose the stack to. The original report:
+
+      `brgen/app/assets/stylesheets/_root.scss:115` — `.brgen-logo-mark` sets
       `z-index: calc(var(--z-chrome, 10) + 1)`, which computes to **11**.
       `brgen/app/assets/stylesheets/_nav_swiper.scss:8` sets `.nav_swiper`
       `z-index: var(--z-nav)`, which resolves through
@@ -80,16 +103,38 @@ they sit above every scanner section below.
       `scroll-padding-inline-start`, or lift the logo above `--z-nav`. Pick one;
       do not add another `!important`.
 
-- [ ] Add a gate for this class of bug. `elementFromPoint` at the centre of
-      every fixed chrome element must return that element or a descendant. This
-      is the second time fixed chrome has swallowed taps in the same corner
-      (`_root.scss:94-101`, `_root.scss:104-107`), and neither the
-      `design_contract` nor the `visual_contract` gate catches it, because both
-      elements render correctly in isolation.
+- [x] **Landed 2026-08-04 as `GeometryGate#check_chrome_occlusion`.** A gate for
+      this class of bug: `elementFromPoint` at the centre of every fixed chrome
+      element must return that element or a descendant. This is the second time
+      fixed chrome has swallowed taps in the same corner (`_root.scss:94-101`,
+      `_root.scss:104-107`), and neither the `design_contract` nor the
+      `visual_contract` gate catches it, because both elements render correctly
+      in isolation.
+
+      The probe was already doing the hit test — `geometry_probe.rb:293-326`
+      classifies an occluded interactive element as `under_chrome:` when the
+      blocker is fixed or sticky, and only `blocked:` was failing the gate. That
+      excuse is sound for flow content (scrolling moves it out) and wrong for
+      chrome (scrolling does not move `position: fixed`). The new check reads the
+      element's **own** computed position, not an ancestor's — these apps wrap
+      everything in a fixed `.app-shell`, so "has a fixed ancestor" is true of
+      every element on the page and would indict the whole document.
+
+      It fires on a real defect today, which is how it was verified rather than
+      asserted: at 390x844 it reports `.tab-bar-coach` (z 91) and
+      `.tab-bar-peel` (z 90) both owned by `.hotkey-coach` (z 1100) — P0.5 below.
 
 ### P0.2 Two stacked nav scrollers, one of them a duplicate
 
-- [ ] `brgen/app/views/layouts/application.html.erb:196-202` — the front page
+- [x] **Fixed in `4510e06ba`, verified 2026-08-04.** The `.feed-tabs` row is
+      gone from the layout; the `visually-hidden` `<h1>` stayed, and a comment
+      in its place records why. Measured: `main` at `top: 0`, first feed card at
+      `y=77` (was 128), one nav scroller instead of two. The class itself is
+      still used by `home/index`, `posts/show`, `live/index` and the marketplace
+      subnav, which are sub-navs on their own surfaces, not a second primary nav
+      stacked on the first. Original report:
+
+      `brgen/app/views/layouts/application.html.erb:196-202` — the front page
       renders **both** nav rows, sticky at `top: 0`, one directly under the
       other:
 
@@ -112,21 +157,27 @@ they sit above every scanner section below.
       `WIRING_NOTES.md` and the layout comment at `:194` both name the fixed
       wordmark plus swiper as the intended shell.
 
-- [ ] `application_helper.rb:118` — `subapp_nav_items` has exactly one caller,
-      the block being deleted. Remove it with the markup rather than leaving a
-      helper with no reader.
+- [x] **Done.** `subapp_nav_items` is gone from `application_helper.rb`; the
+      only remaining occurrences of the name in the tree are the layout comment
+      explaining the deletion, `home_controller_test.rb`'s regression test, and
+      this file. No helper left without a reader.
 
-- [ ] `_nav_swiper.scss:36-40` — with `.feed-tabs` gone, re-check the
-      two-group divider. Group one is 5 items and group two is 7; Hick's
-      `max_visible_choices` is 7, so the split stays correct, but the visual
-      break lands mid-scroll on a 390px viewport where only ~4 items are
-      visible at once. Measure before adjusting.
+- [x] **Measured, no adjustment.** With `.feed-tabs` gone the swiper is a
+      pull-down drawer rather than a permanent band, so the "visual break lands
+      mid-scroll" concern does not apply to a surface that is `height: 0` until
+      the user asks for it. Group one is 5 and group two is 7, both within
+      Hick's `max_visible_choices` of 7. Measure again if the drawer ever
+      becomes permanent.
 
 ### P0.3 Chat is broken twice over
 
 **(a) The composer turns into an edit form after the first send.**
 
-- [ ] `brgen/app/views/messages/create_widget.turbo_stream.erb:5` passes the
+- [x] **Fixed, verified 2026-08-04.** `create_widget.turbo_stream.erb` now
+      renders `message: @message.persisted? ? Message.new : @message`, with the
+      reasoning in the template's own comment. Original report:
+
+      `brgen/app/views/messages/create_widget.turbo_stream.erb:5` passes the
       **persisted** `@message` into the composer partial. Reproduced with a
       real POST to `/conversations/71/messages` (`origin=widget`, HTTP 200) —
       the single returned turbo-stream replaces `#nearby_widget_message` with a
@@ -143,13 +194,24 @@ they sit above every scanner section below.
       template just does it unconditionally. Fix:
       `message: (@message.persisted? ? Message.new : @message)`.
 
-- [ ] Add a test asserting the success-path widget stream contains no
-      `_method` field and an empty textarea. `brgen/test/controllers/` has no
-      widget-composer test, which is why a one-word template argument shipped.
+- [x] **Done.** `brgen/test/controllers/nearby_widget_test.rb` — "the composer
+      returned after a send is an empty create form" asserts
+      `assert_select "input[name=_method]", 0` with the message "reset composer
+      must not be a PATCH form", and a second case does the same. Green in the
+      301-test brgen run on 2026-08-04.
 
 **(b) Nothing on the page is interactive until four third-party CDNs answer.**
 
-- [ ] `brgen/config/importmap.rb` — 7 of 97 importmap pins resolve to
+- [x] **Closed** — the fix is recorded inside this item already ("Done
+      2026-08-03", 537 → 95 requests). One follow-on landed 2026-08-04: the
+      `@stimulus_reflex/futurism` pin in `shared/config/importmap_baseline.rb`
+      came out too. It resolved correctly and registered a controller on every
+      page, and `pin` defaults to `preload: true`, so it was fetched eagerly —
+      for a controller no ERB in any app ever referenced. See P0.4's futurism
+      item. `@rails/request.js` remains the one vendorable external. Original
+      report:
+
+      `brgen/config/importmap.rb` — 7 of 97 importmap pins resolve to
       external hosts, and they fan out to hundreds of transitive module
       requests at page load:
 
@@ -239,49 +301,96 @@ they sit above every scanner section below.
       while deploys stayed green, because the VPS skips the one step that opens
       a browser. Five runs were killed at 5–10 minutes each with no output.
 
-- [ ] `brgen/app/controllers/nearby_controller.rb:38` — `widget` renders inside
-      the full application layout. Measured 64,640 bytes for what Turbo then
-      reduces to one ~2KB frame, and the response contains a nested copy of the
-      chat widget that rendered it. Add `layout: false`.
+- [x] **Done.** `nearby_controller.rb:14` carries `layout false, only: :widget`,
+      with the measurement in the comment above it. Original report: `widget`
+      rendered inside the full application layout — 64,640 bytes for what Turbo
+      then reduces to one ~2KB frame, and the response contained a nested copy
+      of the chat widget that rendered it.
 
 ### P0.4 Responsiveness and gesture floor
 
-- [ ] `application.html.erb:2` — `<html class="chrome-hidden">` plus the fixed
-      wordmark, two sticky nav bars and the fixed theme toggle means five
-      independent fixed/sticky chrome layers compete for the top 55px. Measured
-      `main` `padding-top: 0px`, so content starts underneath them.
+- [x] **Resolved by P0.1/P0.2, verified 2026-08-04.** Five fixed/sticky chrome
+      layers are now three, and none of them competes: measured at 390x844,
+      `.brgen-logo-mark` (z 120, hit=descendant), `.theme-toggle` (z 110,
+      hit=descendant) and `.app-shell` (z 10). The two stacked nav bars are one
+      pull-down drawer at `height: 0`. `main` still has `padding-top: 0px`, and
+      that is now correct rather than a defect — `main` starts at `y=0` with
+      nothing permanent above it, and the first feed card lands at `y=77`.
 
-- [ ] `overscroll-behavior-y` computes to `auto` on `<html>` while `main`
-      carries `data-controller="pull-to-refresh"`. A custom pull-to-refresh
-      competing with the browser's native overscroll is the standard cause of a
-      gesture that fires twice or not at all. `.feed-tabs` got this right
-      (`_nav.scss:47`, `overscroll-behavior-x: contain`); the page scroll
-      container did not.
+- [x] **Fixed.** `overscroll-behavior-y: contain` is set on `<html>` in
+      `shared/_layout_chrome.scss:29`, and the comment there records why it has
+      to be on `<html>` rather than on `.app-shell`: overscroll-behavior only
+      propagates to the viewport from the root element. Re-measured on the
+      rendered page: `getComputedStyle(document.documentElement)
+      .overscrollBehaviorY === "contain"`.
 
-- [ ] `touch-action` computes to `auto` on `<body>` and on `main`. The
-      bottom sheet binds `pointerdown/pointermove/pointerup` **and**
-      `touchstart/touchmove/touchend` on the same element
-      (`application.html.erb`, `.mobile-sheet` `data-action`) — double-firing
-      on every touch device, since pointer events already cover touch.
+- [x] **Fixed.** `.mobile-sheet` binds pointer events only — the
+      `touchstart/touchmove/touchend` trio is gone from
+      `application.html.erb:296`, so no double-firing. `touch-action:
+      manipulation` is set on `.app-shell` (`_shell.scss:77`) plus `.tab-item`
+      and the other targets. It still computes to `auto` on `<body>`, which is
+      the browser default and is inherited past by the fixed full-viewport
+      `.app-shell` that contains every real target — measured
+      `touchActionBody: "auto"`, `.app-shell: manipulation`.
 
-- [ ] 169 `data-controller` elements on first paint, from
-      `popover` (100), `clipboard` (50) and `dropdown` (25) instances. Each is
-      a Stimulus instantiation before the user has done anything. Move them
-      behind a lazy/`futurism` boundary or render the menu markup on demand.
+- [ ] **Still true, re-measured 2026-08-04 by fetching the page over HTTP** (no
+      browser, so this one does not depend on JS having booted): 169
+      `data-controller` elements carrying 271 controller instances, of which
+      `popover` 100, `action` 75, `clipboard` 50 and `dropdown` 25. All of the
+      first four come from `posts/_post.html.erb`, which is rendered 25 times:
+      four hover popovers, two clipboards and one dropdown per post.
 
-- [ ] 232,132 bytes of HTML for the front page, 169,972 of it inside `<main>`.
+      Worth naming what the popovers are: each `<template>` holds a tooltip
+      whose text is the string already in the button's own `aria-label`. On the
+      390px touch viewport that is the primary surface there is no hover, so
+      100 of the 271 instances cannot fire at all there — the same fault as the
+      keyboard coach in P0.5, one layer down.
 
-- [ ] `bsdports/db/schema.rb:1` — a hand-added `# frozen_string_literal: true`
-      sits at the top of a generated file. Running any migration removes it
-      again (observed: `RAILS/bin/triangle up` did exactly that, and it was
-      reverted). Either teach the schema dumper to emit it or drop it; as it
-      stands it produces a spurious dirty file for whoever migrates next, on a
-      shared git index where a stray modification gets swept into someone
-      else's commit.
+      `futurism` is no longer the lazy boundary to reach for; see the item
+      below. `LAZY_COMPONENTS` / `registerWhenPresent` in `stimulus_boot.js` is
+      the mechanism that survived, and it defers registration, not
+      instantiation, so it does not by itself move this number.
 
-- [ ] `futurism` is registered in `shared/frontend/stimulus_boot.js` and has
-      zero `data-controller="futurism"` references in any ERB — the lazy-render
-      mechanism that would fix the item above is already installed and unused.
+- [ ] **Still true**: 229,773 bytes of HTML for the front page, 169,576 of it
+      inside `<main>` (re-measured 2026-08-04; was 232,132 / 169,972).
+
+- [x] **Dropped, and the loop that regenerated it is closed.**
+      `bsdports/db/schema.rb` no longer carries the hand-added
+      `# frozen_string_literal: true`, which brings it in line with amber's and
+      brgen's schema dumps — bsdports was the only one of the three that had it.
+
+      Dropping it alone would not have held. The comment was added by MASTER's
+      own fix loop: `data/rules/file.yml`'s `FROZEN_STRING_LITERAL` rule is
+      `autofix: true`, so every `/fix` pass wrote it back and every `db:migrate`
+      stripped it again. `Scanner::SKIP_PATH_SUFFIXES` now excludes
+      `db/schema.rb` and `db/structure.sql`, matched by suffix because they sit
+      under `RAILS/<app>/` while the scan root is the repo. A rule that edits
+      generated output is fighting the generator, and the generator always wins.
+
+- [x] **Removed, 2026-08-04 — and my first reading of it was wrong.** I reported
+      that the dynamic `import("@stimulus_reflex/futurism")` could never resolve
+      because no importmap pinned it. There was a pin, in
+      `shared/config/importmap_baseline.rb`, which I had not read; the module
+      resolved and registered on every page load. The fact that decided this was
+      the other one, and it did not change: zero `data-controller="futurism"` in
+      any ERB, and `shared/_futurism_pagy_list.html.erb` — the one partial that
+      would have emitted it — had zero callers. `pin` defaults to
+      `preload: true`, so the page paid for it eagerly regardless.
+
+      Out: the registration block in `stimulus_boot.js` and its `{ futurism =
+      true }` option (no caller ever passed one), the pin, the uncalled partial,
+      and the orphaned `.futurism-placeholder` rule in `_minimal.scss`. In: the
+      `futurism` gem stays in all three Gemfiles for the server-side `futurize`
+      helper, and both files carry a note on what to restore if a real index
+      adopts the lazy-render boundary.
+
+      One adjacent thing found and **not** swept:
+      `brgen/app/javascript/controllers/futurism_load_more_controller.js` is a
+      separate, locally written controller with no gem dependency, no ERB
+      reference anywhere — and `controllers/index.js` calls
+      `eagerLoadControllersFrom("controllers", application)`, so it is imported
+      and registered on every brgen page. Same defect class, different author;
+      deleting someone's own controller is a decision, not a sweep.
 
 ### P0.5 Two first-visit coaches in one slot, one of them for a keyboard that isn't there
 
@@ -296,26 +405,49 @@ Both coaches fire on the same first visit, into the same bottom-centre position.
       also requires `(hover: hover) and (pointer: fine)`. The shortcuts stay
       bound regardless, for a tablet with a paired keyboard.
 
-- [ ] `.tab-bar-coach` (`_shell.scss:410`) and `.hotkey-coach`
+- [x] **Fixed 2026-08-04, after the operator picked the order.** The two coaches
+      are sequenced: menu coach on the first visit, keyboard coach on the visit
+      after. `feed_hotkey_controller.js#maybeShowCoach` now returns early when a
+      `.tab-bar-coach` is present on the page and
+      `pub4:tab-bar:coach-dismissed` is not yet set.
+
+      Gated on the coach's **presence**, not on the flag alone: amber, bsdports
+      and the verticals have no menu coach, so that flag is never set there and
+      a flag-only gate would have stranded the keyboard coach forever — trading
+      one silent never-fires for another.
+
+      The measurement was worse than this item recorded. At 390x844,
+      `.hotkey-coach` (z 1100) owned the centre pixel of `.tab-bar-coach` (z 91)
+      **and** of `.tab-bar-peel` (z 90) — so it covered not just the "Vis meny"
+      button but the peel grip too, which is the *other* control that reveals
+      the hidden chrome. Both routes to the menu were behind the box telling the
+      user about keyboard shortcuts.
+
+      The new `GeometryGate#check_chrome_occlusion` (P0.1) catches this pair,
+      which is what it was verified against. Original report:
+
+      `.tab-bar-coach` (`_shell.scss:410`) and `.hotkey-coach`
       (`_shell.scss:496`) are both `position: fixed; left: 50%;
       transform: translateX(-50%)` at the bottom edge — 2.75rem + safe-area and
-      1rem respectively — and they render at the same time. `.hotkey-coach`
-      carries `z-index: var(--z-toast, 1100)` against `.tab-bar-coach`'s
-      `calc(var(--z-nav, 80) + 1)` = 91, so the hotkey box paints over the menu
-      coach and covers its **"Vis meny" button** — the one control that coach
-      exists to point at.
+      1rem respectively — and they render at the same time. Two onboarding hints
+      at once is also a Hick's-law problem before it is a z-index one.
 
-      The pointer gate above removes the collision on touch, which is where it
-      was observed, but not on a desktop first visit: there both still fire into
-      the same slot. Two onboarding hints at once is also a Hick's-law problem
-      before it is a z-index one.
+- [x] **The last eight lines on the front page, found while measuring the
+      above.** `.tab-bar-coach-dismiss` and `.tab-bar-coach-show` still carried
+      `border: 1px solid` — measured 8 visible borders on the rendered page at
+      390x844, all of them these two buttons, and nothing else on the surface.
 
-      Not fixed here because it needs a product decision, not a CSS nudge: which
-      coach wins on first visit, or are they sequenced (menu first, keyboard on
-      the visit after)? Picking one silently would be inventing UX. Both are
-      one-shot and localStorage-flagged (`pub4:tab-bar:open`,
-      `pub4:hotkey-coach:dismissed`), so sequencing them is cheap once the order
-      is chosen.
+      The 2026-08-04 "no lines at all" pass converted `.compose-trigger`,
+      `.btn-ghost`, `.btn-danger` and `.btn--secondary` and missed this pair for
+      a reason worth writing down: the tab-bar coach renders *underneath* the
+      hotkey coach, so it was not in the screenshot that pass was measured from.
+      The bug in P0.5 hid the bug in the same element.
+
+      Both now use a surface fill — `var(--hover)` for dismiss, `var(--accent)`
+      for the primary — keeping their 44px targets. Re-measured: 0 visible
+      borders. Verified by unhiding `.tab-bar-coach` from the probe rather than
+      waiting for the controller to reveal it, because a coach that never
+      painted would have reported 0 borders while changing nothing.
 
 ### P0.6 Found on live bsdports after deploying it
 
@@ -332,7 +464,13 @@ right now.
       advisories, and the `ports/show` page translated in `05f408d7b` — has
       nothing to render. Nothing fails loudly, which is why it can sit like this.
 
-- [ ] **The index mixes languages in one viewport.** Under the `nb` heading
+- [x] **Fixed, verified 2026-08-04.** `ports/index.html.erb` puts every string
+      through the locale — `ports.purpose`, `ports.search_hint`,
+      `ports.search_placeholder`, `ports.categories` and the empty state's
+      `browse_all` / `empty_body` — and a key-by-key walk of `en.yml` against
+      `nb.yml` reports **0 keys missing from nb**. Original report:
+
+      **The index mixes languages in one viewport.** Under the `nb` heading
       "OpenBSD-porter" the lead paragraph is English — "Answer three questions
       quickly: what package is this, can this machine install it, and what does
       the local advisory index know?" — immediately above Norwegian search copy
@@ -362,7 +500,7 @@ count is not the finding; the verdict is.
 | `css_important` | 128 | policy |
 | `model_assoc_no_inverse` | 104 | judgement |
 | `unused_css_class` | 102 | judgement |
-| `css_transition_no_easing` | 83 | open |
+| `css_transition_no_easing` | 83 | fixed (40) + artifact (37) |
 | `css_off_grid` | 83 | artifact |
 | `rb_long_method` | 81 | open |
 | `magic_hex` | 75 | artifact |
@@ -391,7 +529,7 @@ count is not the finding; the verdict is.
 | `css_font_px_small` | 10 | open |
 | `rb_env_fetch_no_default` | 10 | artifact |
 | `inline_style` | 9 | policy |
-| `css_zindex_magic` | 9 | open |
+| `css_zindex_magic` | 9 | judgement (ladder gap) |
 | `css_display_none_override` | 9 | open |
 | `rb_puts` | 8 | artifact |
 | `model_has_many_no_dependent` | 8 | artifact |
@@ -1177,9 +1315,37 @@ Inline style attribute. Bypasses the token system entirely; nothing can audit or
 - [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:113` — /* autofix: removed box-shadow (flat UI) */
 - [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:126` — /* autofix: removed box-shadow (flat UI) */
 
-### css_zindex_magic — 9
+### css_zindex_magic — 9 · **judgement, and the ladder is the real finding**
 
 Numeric z-index above 10 not from a token. The brgen logo is invisible because two z-index sources disagreed. Every stacking value belongs to the token ladder. Law: `ultraminimalism.design_tokens`.
+
+Audited 2026-08-04, not swept, and the reason is in the rule's own sentence. The
+ladder in `_tokens.scss:64-70` is canvas 1 · chrome 10 · ui 90 · overlay 100 ·
+modal 1000 · toast 1100 · skip 2000, plus `--z-brand: 120` declared separately
+in `_layout_chrome.scss:124`. Line up the nine findings against it:
+
+| value | rung | site |
+|---:|---|---|
+| 100 | `--z-overlay` exactly | `_minimal.scss:83` (bare `nav`) |
+| 120 | `--z-brand` exactly | `_maps.scss:85` |
+| 20, 50, 110, 200, 11, 12 | **no rung exists** | `_share.scss`, playlist tunnel ×4, `_shell_widgets.scss` |
+
+Six of nine have no token to move to. There is nothing between `--z-ui` (90) and
+`--z-overlay` (100), and nothing between 100 and `--z-modal` (1000) — which is
+why the theme toggle sits at a raw 110 and the playlist tunnel builds its own
+private ladder out of 11/12/50/120/200. Naming those rungs is a design-system
+decision with a stacking consequence on every surface, not a find-and-replace.
+
+The two that do line up are not free either. `_minimal.scss:83`'s bare `nav`
+reads semantically like `--z-nav` (90), not `--z-overlay` (100), so "use the
+token whose value matches" and "use the token whose meaning matches" disagree by
+10 — and anything currently sitting between them changes layer.
+
+This is the exact failure mode that produced P0.1 and P0.5 above: two stacking
+sources that were each defensible in isolation. Guessing here would be a third.
+What the audit did produce is a gate — `GeometryGate#check_chrome_occlusion`
+(P0.1) now fails when any of this actually buries a control, which is the
+symptom the rule cares about, measured rather than inferred from a number.
 
 - [ ] `brgen/app/assets/stylesheets/_maps.scss:85` — z-index: 120;
 - [ ] `brgen/app/assets/stylesheets/_share.scss:12` — z-index: 20;
@@ -1312,9 +1478,41 @@ border-radius above 16px. forbid_arbitrary_radius_px_above: 16. Law: `pixel_perf
 
 ## Motion and easing — 135 items
 
-### css_transition_no_easing — 83 · **open**
+### css_transition_no_easing — 83 · **fixed (40) + artifact (37), 2026-08-04**
 
 transition without an easing function. aesthetic_rules.CINEMA_PALETTE requires cubic-bezier easing on every transition. Law: `aesthetic_rules.CINEMA_PALETTE`.
+
+Re-counted by hand across all four apps plus the four engine stylesheet
+directories, joining multi-line declarations first and splitting at the
+`transition:` keyword rather than the first colon on the line — the latter
+turned `.splash h2 { margin: 0 0 8px; … transition: transform
+var(--transition-fast) ease; }` into a finding whose "transition value" was
+`0 0 8px`, and that one already had its easing. Two populations:
+
+**37 are `transition: none`, all inside `prefers-reduced-motion` blocks.**
+_Artifact._ A transition that does not run has no curve to ease. The rule
+matched the property name and never read the value.
+
+**40 had a duration and no timing function.** _Fixed_ — each now carries
+`var(--ease-out)`, appended per comma-separated segment, with top-level commas
+only so the one inside `var(--transition-fast, 180ms)` stays a fallback rather
+than becoming a segment boundary.
+
+**Nothing moves differently, and that is the point.** The CSS keyword `ease` —
+what a shorthand falls back to when the timing function is omitted — is defined
+by the spec as `cubic-bezier(0.25, 0.1, 0.25, 1.0)`, and `_tokens.scss:60`
+defines `--ease-out` as `cubic-bezier(0.25, 0.1, 0.25, 1)`. The same curve.
+Verified on the rendered page rather than argued: `--ease-out` resolves to
+`cubic-bezier(0.25, 0.1, 0.25, 1)` and the 76 elements the pass touched report
+exactly that as their `transitionTimingFunction`. The declaration now says what
+the browser was already doing.
+
+Built and counted after: `--ease-out` defined once and used 54 times in brgen's
+compiled sheet, 23 in amber's, 9 in bsdports'. The token was already in the
+design system (`design_tokens.yml` `ease_out`) and had three consumers in the
+whole repo before this.
+
+The per-file list below is the original scan output, kept for provenance.
 
 - [ ] `amber/app/assets/stylesheets/_base.scss:48` — transition: none !important;
 - [ ] `amber/app/assets/stylesheets/_brand.scss:436` — * { animation: none !important; transition: none !important; }
