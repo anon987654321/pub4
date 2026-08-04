@@ -297,6 +297,30 @@ Both coaches fire on the same first visit, into the same bottom-centre position.
       `pub4:hotkey-coach:dismissed`), so sequencing them is cheap once the order
       is chosen.
 
+### P0.6 Found on live bsdports after deploying it
+
+Two things a source scanner cannot see, both visible on `https://bsdports.org/ports`
+right now.
+
+- [ ] **The ports index is empty in production.** It renders
+      "Ingen porter funnet" — no rows at all — on a site whose entire purpose is
+      browsing OpenBSD ports. The app is healthy (`rcctl` ok, `/up` 200, deploy
+      stamp `ok` at `53ef4aec0`), the search chrome renders, the empty state is
+      correct and translated; there is simply no port data. So the ports import
+      has either never run against production or stopped running, and every
+      surface downstream of it — categories, maintainers, dependency graphs,
+      advisories, and the `ports/show` page translated in `05f408d7b` — has
+      nothing to render. Nothing fails loudly, which is why it can sit like this.
+
+- [ ] **The index mixes languages in one viewport.** Under the `nb` heading
+      "OpenBSD-porter" the lead paragraph is English — "Answer three questions
+      quickly: what package is this, can this machine install it, and what does
+      the local advisory index know?" — immediately above Norwegian search copy
+      ("Søk i navn, eksakte pkgpaths, maintainere…"). The empty state's own
+      follow-ups are English too: "Try another query — e.g. git, python, or a
+      category." and "Browse all ports". `ports/show` is fully translated as of
+      `05f408d7b`; `ports/index` is not, and the seam is visible in a single
+      screenful.
 ---
 
 ## Scanner findings — verdicts
