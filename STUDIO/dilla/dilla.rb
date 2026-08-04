@@ -14626,6 +14626,62 @@ end
 #
 # Decoding each part separately is what makes this safe for mixed codecs too, so
 # this path needs no uniformity check -- it IS the uniformity fix.
+# Measure what "ok" never looked at: is there audio in the file, and is it as
+# long as its neighbours. Returns the suspects; the caller decides.
+#
+# Both thresholds are relative to the median of the parts themselves. An absolute
+# floor would be wrong twice over -- it would fire on a demo that is quiet by
+# choice, and it would miss a whole render that came out uniformly thin. What is
+# never intentional is one track sitting 25 dB under the ones beside it.
+#
+# Median and not mean, because the failure this exists to catch put 28 silent
+# parts into 86. A mean would have been dragged down toward them; the median of
+# that set was still a healthy -21 dB.
+def demo_suspect_parts(parts)
+  measured = parts.filter_map do |p|
+    next unless File.file?(p)
+    out = Open3.capture2e("ffmpeg", "-hide_banner", "-i", p, "-af",
+                          "astats=metadata=1:reset=0", "-f", "null", "-").first
+    # astats prints "-inf" for a digitally silent file, and the obvious
+    # /(-?[\d.]+)/ does not match it -- so the first version of this returned nil
+    # there and `next if rms.nil?` dropped the file from the set entirely. A
+    # check for silence that skips anything perfectly silent. Caught by feeding
+    # it an anullsrc probe, which it passed clean.
+    raw = out[/RMS level dB:\s*(-?(?:[\d.]+|inf))/, 1]
+    next if raw.nil?
+    rms = raw == "-inf" ? -120.0 : raw.to_f
+    dur = Open3.capture2e("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                          "-of", "default=nw=1:nk=1", p).first.to_f
+    { path: p, rms: rms, dur: dur }
+  end
+  return [] if measured.length < 3
+
+  mid = lambda { |vals| s = vals.sort; s[s.length / 2] }
+  med_rms = mid.call(measured.map { |m| m[:rms] })
+  med_dur = mid.call(measured.map { |m| m[:dur] })
+  measured.filter_map do |m|
+    quiet = m[:rms] < med_rms - 20
+    short = med_dur.positive? && m[:dur] < med_dur * 0.4
+    next unless quiet || short
+    reason = [quiet ? "#{m[:rms].round(1)}dB vs median #{med_rms.round(1)}" : nil,
+              short ? "#{m[:dur].round(1)}s vs median #{med_dur.round(1)}" : nil].compact.join(", ")
+    { path: m[:path], reason: reason }
+  end
+end
+
+# Name them in the log and in the closing summary. Deliberately a warning and not
+# an abort: this runs after hours of rendering, and killing the run would throw
+# away 80 good parts to punish six bad ones. Deleting the named files and
+# re-running fills exactly those gaps, which is what the resume is for.
+def demo_report_suspect_parts(parts)
+  suspects = demo_suspect_parts(parts)
+  return suspects if suspects.empty?
+
+  dmesg_warn("verify: #{suspects.length}/#{parts.length} parts look wrong — delete these and re-run to refill")
+  suspects.each { |s| dmesg_warn("  #{File.basename(s[:path])}: #{s[:reason]}") }
+  suspects
+end
+
 def demo_parts_uniform?(parts)
   codecs = parts.map do |p|
     out, status = Open3.capture2e("ffprobe", "-v", "error", "-select_streams", "a:0",
@@ -14682,7 +14738,50 @@ def demo_join_parts!(parts, list, out)
   out
 end
 
+# One demo-all at a time, for the same reason stream() takes a lock.
+#
+# Two of them share scratch/all_tracks_demo and they do not share it politely.
+# Each part is written through an intermediate and renamed into place, so while
+# one run is rewriting a part the other sees that path not exist -- and the join
+# reads all 86 paths at once, so it only has to lose the race on one of them to
+# die after hours of rendering. That happened twice tonight. It presents as a
+# file that "vanished": ffmpeg reports no such file, and by the time anyone looks
+# the part is back, because the other process finished its rename.
+#
+# It also produces the subtler version. A part read while it is half-written is a
+# valid, playable, TRUNCATED wav -- one came out at 20.9s against its neighbours'
+# 53.0s and passed every check, because `ok` only asks whether the file is bigger
+# than 50 kB.
+#
+# Same shape as acquire_stream_lock!, and mirrored deliberately rather than
+# generalised: the two locks guard different directories and there is no third
+# caller to justify the abstraction yet.
+DEMO_LOCK_PATH = scratch_path("dilla_demo.lock").freeze
+
+def acquire_demo_lock!
+  if File.exist?(DEMO_LOCK_PATH)
+    holder = File.read(DEMO_LOCK_PATH).strip.to_i
+    if holder.positive?
+      begin
+        Process.kill(0, holder)
+        dmesg_warn("demo-all already running as pid #{holder} — exit (DEMO_NO_LOCK=1 to override)")
+        exit 0
+      rescue Errno::ESRCH
+        FileUtils.rm_f(DEMO_LOCK_PATH)
+      end
+    end
+  end
+  File.write(DEMO_LOCK_PATH, Process.pid.to_s)
+  at_exit do
+    FileUtils.rm_f(DEMO_LOCK_PATH) if File.exist?(DEMO_LOCK_PATH) &&
+                                      File.read(DEMO_LOCK_PATH).strip.to_i == Process.pid
+  rescue StandardError
+    nil
+  end
+end
+
 def demo_all(bars_count = 12, destination = nil)
+  acquire_demo_lock! unless ENV["DEMO_NO_LOCK"] == "1"
   bars_count = bars_count.to_i
   bars_count = 12 unless bars_count.positive?
   dest = destination.to_s
@@ -15016,6 +15115,28 @@ def demo_all(bars_count = 12, destination = nil)
   end
 
   abort "demo-all: no parts rendered" if parts.empty?
+
+  # Look inside the parts before joining them.
+  #
+  # 28 of the 86 tracks in the demo committed at c0d00f488 were silence -- the
+  # techno slots, at -47.7 dB overall with no low end at all -- and every check
+  # between rendering them and publishing them passed. `ok` gates on
+  # File.size > 50_000, which a silent WAV satisfies easily. The lengths were
+  # measured and matched the arithmetic exactly. The concat succeeded. The
+  # loudness of the FINISHED record looked correct, because 58 healthy tracks
+  # carry an integrated figure past 28 quiet ones. It was rendered, joined,
+  # encoded, committed and played twice before anyone measured a part.
+  #
+  # So this measures the two things that were not being measured, per part, and
+  # says so out loud. Silence and truncation are the two failures this engine
+  # produces without raising -- a stage that emits nothing still writes a valid
+  # file, and a render cut short still writes a playable one.
+  #
+  # Thresholds are relative to the parts themselves, not absolutes: a demo that
+  # is quiet on purpose should not trip this, but one track 25 dB under its
+  # neighbours is never intentional. Median, not mean, so a handful of bad parts
+  # cannot drag the reference down to meet them.
+  demo_report_suspect_parts(parts)
 
   if demo_each?
     dmesg("demo-each: #{parts.length} files in the dilla root", unit: "demo0", parent: "dilla0")
