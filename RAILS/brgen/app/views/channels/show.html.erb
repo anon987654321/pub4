@@ -8,7 +8,12 @@
   <header class="channel-room-header" role="banner">
     <%= link_to t("messages.back_channels"), channels_path, class: "channel-back" %>
     <h1><%= @conversation.channel_title %></h1>
-    <p class="dim"><%= spec[:blurb] %></p>
+    <%# This blurb is what lib/brgen/irc/bridge.rb:27 already serves to a real
+        IRC client as the TOPIC reply, so name it that on the web too rather
+        than having one room description with two names. %>
+    <% if spec[:blurb].present? %>
+      <p class="dim channel-topic">Topic: <%= spec[:blurb] %></p>
+    <% end %>
     <%# Heartbeat lives on the header, not the log, so it keeps running while the
         reader scrolls back through history. %>
     <p class="dim" data-controller="presence"

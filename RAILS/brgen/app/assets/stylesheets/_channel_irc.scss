@@ -1,0 +1,249 @@
+/* Channel log as an IRC transcript, not a bubble thread.
+   ------------------------------------------------------
+   brgen already IS an IRC system underneath: Conversation::CHANNELS holds seven
+   #-prefixed rooms, bots are real User rows with op/voice roles and @/+ prefixes
+   (ConversationParticipant::PREFIX), humans get `Stranger #A3F1` handles, and
+   lib/brgen/irc/ speaks the actual protocol on 127.0.0.1:6667. Only the
+   presentation disagreed: _vertical_messenger_thread.scss styles
+   `body.vertical-messenger #messages article` as iMessage bubbles — max-width
+   82%, alternating flex-end/flex-start, rounded with a tail — and the channel
+   page inherits that because its <ul> also carries id="messages".
+
+   Alternating sides is the wrong idea for a room. It encodes "me vs them",
+   which is what a 1:1 thread is; a channel has many speakers and no side. So a
+   transcript: one line per message, timestamp and nick right-aligned in a fixed
+   gutter, every body starting at the same x. That column is what makes a
+   channel scannable, and it is what IRC clients have done since irssi.
+
+   Scoped to `#messages.channel-log` so the DM thread (conversations/show, which
+   has id="messages" but not .channel-log) keeps its bubbles. Both selectors are
+   needed: the bubble rules are `body.vertical-messenger #messages article`
+   (0,1,1,2) and a bare `.channel-log article` (0,0,1,1) loses to them. */
+
+body.vertical-messenger #messages.channel-log {
+  /* Hanging indent for wrapped lines. Named because the article's padding and
+     its negative text-indent have to stay equal and opposite — when the
+     [data-bot] rule below zeroed the padding on its own, the indent survived
+     and dragged `19:` off the left edge to be clipped. */
+  --irc-hang: 1.6rem;
+
+  gap: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/* Phone first, and the phone does not get the aligned column.
+   ----------------------------------------------------------
+   Measured at 430x900: `19:37 <Stranger #8A0B>` is 21 mono characters, about
+   164px at this size, against a 129px gutter. The nick truncated to `#8A…` and
+   then wrapped underneath the timestamp, so the one thing the column exists to
+   buy — a straight left edge on the text — was gone, and every row cost two
+   lines plus the handle that identifies the speaker. A fixed nick column is a
+   desktop-terminal idea and brgen's primary surface is 390px wide.
+
+   So the base layout flows inline, `19:37 <nick> message…`, which is what a
+   mobile IRC client does and what uses the width. A hanging indent keeps
+   wrapped lines from starting under the timestamp, so the message body is
+   still findable down the left edge. The aligned grid comes back at 40rem in
+   the media query at the end of this file, where it fits. */
+body.vertical-messenger #messages.channel-log article {
+  display: block;
+
+  /* Undo the bubble. Every one of these is load-bearing against
+     _vertical_messenger_thread.scss:76-96. */
+  max-width: none;
+  align-self: stretch;
+  background: none;
+  border: 0;
+  border-radius: 0;
+
+  padding-block: 0.09rem;
+  padding-inline: var(--irc-hang) 0;
+  text-indent: calc(-1 * var(--irc-hang));
+}
+
+/* A room reads by speaker, so the nick repeats on every line the way it does in
+   a real client. conversation_log_controller stamps data-grouped on messages
+   within 5 minutes of the same sender and shared/_chat_reactions.scss:83 hides
+   the header for those — correct for a bubble thread, wrong for a transcript,
+   where it would leave orphan lines under a gutter that says nothing. */
+body.vertical-messenger #messages.channel-log article[data-grouped="true"] > header {
+  display: flex;
+}
+
+/* inline-flex, not inline: the ERB emits the nick before the time, and IRC
+   reads time first. Flex `order` is what reverses them without touching a
+   partial the DM thread and the corner widget also render. `nowrap` matters —
+   _vertical_messenger_thread.scss:113 sets flex-wrap: wrap on this header, and
+   that inherited wrap is what let the nick fall below the timestamp. */
+body.vertical-messenger #messages.channel-log article > header {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  vertical-align: baseline;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  opacity: 1;
+  white-space: nowrap;
+  /* text-indent inherits, and inline-flex is a block container, so the article's
+     -1.6rem hanging indent was applied a second time inside this header and
+     dragged `<@ma` off the left edge to be clipped. */
+  text-indent: 0;
+}
+
+/* Header order in the ERB is nick, time, chips. IRC reads time first. */
+body.vertical-messenger #messages.channel-log article > header time {
+  order: -1;
+  color: var(--text-secondary, var(--text-dim));
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* Every message in a channel expires on the same CHANNEL_TTL (6h, and the room
+   header says so once), so a per-line "disappears in about 6 hours" chip is the
+   same sentence 100 times and it would break the gutter. The read receipt is a
+   DM concept — there is no "read" in a room with N lurkers. */
+body.vertical-messenger #messages.channel-log article > header .expiry-chip,
+body.vertical-messenger #messages.channel-log article > header .dim {
+  display: none;
+}
+
+/* Inline so it continues the same line as the header. The newline between
+   </header> and <p> in the ERB collapses to the separating space. */
+body.vertical-messenger #messages.channel-log article > p {
+  display: inline;
+  margin: 0;
+  line-height: inherit;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Reactions, images and audio are their own block under the line, and they
+   opt out of the hanging indent rather than hanging off the left edge. */
+body.vertical-messenger #messages.channel-log article > *:not(header):not(p) {
+  display: block;
+  text-indent: 0;
+}
+
+/* <nick>, and <@nick> for the ops. Only bots hold op/voice today (the roster's
+   `next unless` means humans never render a mode), and data-bot is already on
+   the article — so the prefix comes from CSS rather than a per-message
+   ConversationParticipant lookup, which would be an N+1 across the log. */
+body.vertical-messenger #messages.channel-log .msg-nick::before { content: "<"; }
+body.vertical-messenger #messages.channel-log .msg-nick::after { content: ">"; }
+body.vertical-messenger #messages.channel-log article[data-bot] .msg-nick::before { content: "<@"; }
+
+body.vertical-messenger #messages.channel-log .msg-nick {
+  font-weight: 400;
+}
+
+/* The accent rule and left border from _channels.scss:135 were a bubble-era
+   device; in a transcript the @ prefix and the nick colour already separate a
+   bot, and a rule down the side of every bot line is a line. */
+body.vertical-messenger #messages.channel-log article[data-bot] {
+  border-inline-start: 0;
+  /* Keeps the hanging indent — _channels.scss:135 sets its own
+     padding-inline-start for the bubble-era accent rule, and simply zeroing it
+     here broke the indent/text-indent pair. */
+  padding-inline-start: var(--irc-hang);
+}
+
+/* Own lines: no side, no bubble — just weight, the way a client highlights you. */
+body.vertical-messenger #messages.channel-log article[data-from="self"] .msg-nick {
+  font-weight: 700;
+}
+
+/* Expiry stays legible as the transcript ages, without the eroding border the
+   bubbles used (there is no border left to erode). */
+body.vertical-messenger #messages.channel-log article[data-expiry="soon"] > header time {
+  opacity: 0.45;
+}
+
+/* Topic bar: the room's blurb is what lib/brgen/irc/bridge.rb serves as TOPIC,
+   so it is the topic — set it as one line under the channel name. */
+body.vertical-messenger .channel-room-header h1 {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 1.0625rem;
+  letter-spacing: 0;
+}
+
+body.vertical-messenger .channel-room-header .channel-topic {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.75rem;
+  color: var(--text-secondary, var(--text-dim));
+}
+
+/* Names list, mono so the modes line up with the log. */
+body.vertical-messenger .roster-list { gap: 0 var(--space-2, 0.5rem); }
+
+body.vertical-messenger .roster-nick {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.75rem;
+}
+
+/* The composer had `border: 1px solid` on the container plus a second border on
+   the textarea inside it — two rules around one control. The 2026-08-04 "no
+   lines at all" decision leaves exactly one exemption, form-field outlines, so
+   the field keeps its edge and the box around it becomes a surface. */
+.channel-composer {
+  border: 0;
+  background: var(--surface-elevated, var(--surface2));
+}
+
+.channel-composer textarea {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8125rem;
+  min-height: 2.75rem;
+}
+
+/* The aligned nick column, once there is width for it.
+   ----------------------------------------------------
+   40rem (640px) is the first breakpoint where an 11.5rem gutter still leaves
+   more than half the line for text. Below it the inline flow above is the
+   layout; there is no third mode. */
+@media (min-width: 40rem) {
+  body.vertical-messenger #messages.channel-log {
+    --irc-gutter: 11.5rem;
+    /* Zeroing the variable retires the hanging indent for every row at once.
+       Resetting padding-inline-start on `article` instead would miss
+       `article[data-bot]`, which outranks it on specificity and would leave the
+       bot lines indented out of the column. */
+    --irc-hang: 0rem;
+  }
+
+  body.vertical-messenger #messages.channel-log article {
+    display: grid;
+    grid-template-columns: var(--irc-gutter) minmax(0, 1fr);
+    column-gap: var(--space-2, 0.5rem);
+    align-items: baseline;
+  }
+
+  /* Right-aligned against the gutter's inner edge, so every body starts at the
+     same x no matter how long the handle is. */
+  body.vertical-messenger #messages.channel-log article > header {
+    grid-column: 1;
+    display: flex;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+
+  /* Only here does a handle need to give way: the gutter is fixed, so a long
+     one clips rather than pushing that row's body out of the column. */
+  body.vertical-messenger #messages.channel-log .msg-nick {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body.vertical-messenger #messages.channel-log article > p {
+    display: block;
+    grid-column: 2;
+  }
+
+  body.vertical-messenger #messages.channel-log article > *:not(header):not(p) {
+    grid-column: 2;
+  }
+}

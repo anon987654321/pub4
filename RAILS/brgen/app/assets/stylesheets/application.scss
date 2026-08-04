@@ -44,6 +44,11 @@
 @use "vertical_maps_place";
 @use "vertical_messenger_list";
 @use "vertical_messenger_thread";
+// Must load after vertical_messenger_thread: it turns that file's bubble rules
+// off for the channel log, and the two selectors tie at (0,1,2,2), so order is
+// what decides. Winning by adding a redundant class instead would leave a
+// selector nobody can safely simplify later.
+@use "_channel_irc";
 @use "_card_modifiers";
 @use "_chrome_polish";
 @use "_chrome_surfaces";
