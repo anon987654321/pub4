@@ -477,6 +477,7 @@ nb:
     party_chat: "Festchat"
     back_to_set: "Tilbake til sett"
     join_code: "Kode"
+    confirm_end_party: "Avslutte lytteselskapet for alle som lytter?"
   marketplace:
     new_listing: "Ny annonse"
     edit_listing: "Rediger annonse"
@@ -514,6 +515,9 @@ nb:
       one: "%{count} vare"
       other: "%{count} varer"
     remove_listing: "Fjern annonse"
+    confirm_delete_saved_search: "Slette dette lagrede søket?"
+    confirm_remove_listing: "Slette denne annonsen? Ordrene og omtalene slettes sammen med den, og det kan ikke angres."
+    run_search: "Kjør"
   takeaway:
     unsave: "Fjern lagring"
     save_restaurant: "Lagre"

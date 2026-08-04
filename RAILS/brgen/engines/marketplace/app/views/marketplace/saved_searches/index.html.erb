@@ -12,8 +12,9 @@
   <div class="post-grid">
     <% @saved_searches.each do |saved_search| %>
       <% search_actions = capture do %>
-        <%= link_to "Run", listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "feed-action feed-action--primary" %>
-        <%= button_to t("actions.delete"), saved_search_path(saved_search), method: :delete, class: "feed-action" %>
+        <%= link_to t("marketplace.run_search"), listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "feed-action feed-action--primary" %>
+        <%= button_to t("actions.delete"), saved_search_path(saved_search), method: :delete,
+              data: { turbo_confirm: t("marketplace.confirm_delete_saved_search") }, class: "feed-action" %>
       <% end %>
       <%= render "shared/feed_card",
         name: saved_search.title,

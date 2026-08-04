@@ -95,6 +95,7 @@ en:
     maintainers_results_label: "Maintainers"
     unwatch: "Unwatch"
     watch: "Watch"
+    confirm_delete_comment: "Delete this comment?"
   empty:
     no_ports: "No ports found"
     no_categories: "No categories"

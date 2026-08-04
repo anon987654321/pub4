@@ -477,6 +477,7 @@ en:
     party_chat: "Party chat"
     back_to_set: "Back to set"
     join_code: "Join code"
+    confirm_end_party: "End the party for everyone listening?"
   marketplace:
     new_listing: "New listing"
     edit_listing: "Edit listing"
@@ -514,6 +515,9 @@ en:
       one: "%{count} item"
       other: "%{count} items"
     remove_listing: "Remove listing"
+    confirm_delete_saved_search: "Delete this saved search?"
+    confirm_remove_listing: "Delete this listing? Its orders and reviews are deleted with it, and that cannot be undone."
+    run_search: "Run"
   takeaway:
     unsave: "Unsave"
     save_restaurant: "Save"

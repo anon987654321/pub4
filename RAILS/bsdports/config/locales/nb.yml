@@ -95,6 +95,7 @@ nb:
     maintainers_results_label: "Vedlikeholdere"
     unwatch: "Slutt å følge"
     watch: "Følg"
+    confirm_delete_comment: "Slette denne kommentaren?"
   empty:
     no_ports: "Ingen porter funnet"
     no_categories: "Ingen kategorier"
