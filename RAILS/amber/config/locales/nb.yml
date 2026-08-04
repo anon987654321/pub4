@@ -296,7 +296,7 @@ nb:
     color: "Farge"
     material: "Materiale"
     mood: "Stemning:"
-    openrouter_unset_html: "OpenRouter er ikke konfigurert. Knappene kjører fortsatt uten <code>OPENROUTER_API_KEY</code>."
+    openrouter_unset_html: "OpenRouter er ikke konfigurert. Knappene kjører fortsatt <strong>lokale heuristikker</strong> (brukshistorikk, gledeflagg, kapselregler). Sett <code>OPENROUTER_API_KEY</code> for full LLM-analyse."
     permanent_removal: "Permanent sletting"
     price: "Pris"
     purchased: "Kjøpt"
@@ -307,6 +307,7 @@ nb:
     actions_label: "Plagghandlinger"
     affiliate_label: "Affiliate-lenke"
     header_label: "Plagghode"
+    openrouter_set: "OpenRouter er konfigurert — gledeanalyse og stemningsmerker bruker Gemini når det er tilgjengelig, med lokale heuristikker som reserve."
   outfits:
     share_brgen: "Del til brgen"
     wear_again: "Bruk igjen"

@@ -296,7 +296,7 @@ en:
     color: "Color"
     material: "Material"
     mood: "Mood:"
-    openrouter_unset_html: "OpenRouter is not configured. Buttons still run with <code>OPENROUTER_API_KEY</code> unset."
+    openrouter_unset_html: "OpenRouter is not configured. Buttons still run <strong>local heuristics</strong> (wear history, joy flags, capsule rules). Set <code>OPENROUTER_API_KEY</code> for full LLM analysis."
     permanent_removal: "Permanent removal"
     price: "Price"
     purchased: "Purchased"
@@ -307,6 +307,7 @@ en:
     actions_label: "Item actions"
     affiliate_label: "Affiliate link"
     header_label: "Item header"
+    openrouter_set: "OpenRouter is configured — joy analysis and mood tags use Gemini when available, with local heuristics as backup."
   outfits:
     share_brgen: "Share to brgen"
     wear_again: "Wear again"

@@ -116,8 +116,9 @@ nav .brand {
   text-decoration: none;
 }
 
-.skip-link,
-.skip-nav {
+/* .skip-nav went with shared/frontend/layouts/_nav.html.erb, the pre-engine
+   layout that was its only consumer. Every live app uses .skip-link. */
+.skip-link {
   position: fixed;
   inset-block-start: 0.75rem;
   inset-inline-start: 0.75rem;
@@ -143,9 +144,7 @@ nav .brand {
 }
 
 .skip-link:focus,
-.skip-link:focus-visible,
-.skip-nav:focus,
-.skip-nav:focus-visible {
+.skip-link:focus-visible {
   width: auto;
   height: auto;
   margin: 0;

@@ -54,9 +54,9 @@
   <section class="luxury-section">
     <h2><%= t("items.wardrobe_intelligence") %></h2>
     <% if amber_ai_available? %>
-      <p class="dim luxury-dim">OpenRouter is configured — joy analysis and mood tags use Gemini when available, with local heuristics as backup.</p>
+      <p class="dim luxury-dim"><%= t("items.openrouter_set") %></p>
     <% else %>
-      <p class="dim luxury-dim">OpenRouter is not configured. Buttons still run <strong>local heuristics</strong> (wear history, joy flags, capsule rules). Set <code>OPENROUTER_API_KEY</code> for full LLM analysis.</p>
+      <p class="dim luxury-dim"><%= t("items.openrouter_unset_html") %></p>
     <% end %>
     <div id="item_<%= @item.id %>_analysis"></div>
     <div id="item_<%= @item.id %>_tags"></div>
