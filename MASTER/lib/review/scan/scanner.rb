@@ -31,6 +31,14 @@ module Master
           web/public/three.face.module.js web/public/face.runtime.js
           web/public/face.modules.bundle.js web/public/face_vision.bundle.js
         ].freeze
+        # Rails writes these; ActiveRecord::SchemaDumper does not emit a
+        # frozen_string_literal magic comment, so FROZEN_STRING_LITERAL
+        # (autofix: true) added one and the next `db:migrate` stripped it again.
+        # That loop produced a spurious dirty db/schema.rb for whoever migrated
+        # next, on a shared git index where a stray modification gets swept into
+        # someone else's commit. Matched by suffix rather than prefix because
+        # they sit under RAILS/<app>/, and the scan root is the repo.
+        SKIP_PATH_SUFFIXES = %w[db/schema.rb db/structure.sql].freeze
         REQUIRED_DEPTH = :deep
         GIT_TIMEOUT_SECONDS = 5
         MAX_VIOLATION_OBJECTS = 100_000
@@ -43,6 +51,8 @@ module Master
           return true if SKIP_PATH_SEGMENTS.any? { |segment| segments.include?(segment) }
 
           rel = relative_path(path, root)
+          return true if SKIP_PATH_SUFFIXES.any? { |suffix| rel == suffix || rel.end_with?("/#{suffix}") }
+
           SKIP_RELATIVE_PATHS.any? { |prefix| rel == prefix || rel.start_with?("#{prefix}/") }
         end
 
