@@ -299,7 +299,7 @@ count is not the finding; the verdict is.
 | `unread_css_var` | 27 | open |
 | `css_font_px_hardcoded` | 25 | open |
 | `css_vendor_prefix` | 24 | open |
-| `rb_rescue_nil` | 21 | open |
+| `rb_rescue_nil` | 21 | policy |
 | `form_no_label` | 18 | open |
 | `count_in_view` | 18 | fixed |
 | `target_no_controller` | 18 | open |
@@ -356,7 +356,42 @@ count is not the finding; the verdict is.
 
 **`css_px_width`** — 72 findings, _artifact_. Mostly `@media (min-width: 768px)` — breakpoints, not element widths. The regex matched `min-width` anywhere.
 
+**`rb_rescue_nil`** — 21 findings, _policy_. Checked every site: these are
+deliberate, documented degradation, not swallowed errors.
+`AffiliateConversion.parse_time` returning nil for an unparseable timestamp in a
+third-party webhook payload is normal control flow; `ChannelPresence.read`
+carries the comment "a presence count is never worth failing a request over";
+`schema_url_for` and `story_url` omit a JSON-LD field rather than take a page
+down over a routing gap.
+
+What `soul.yml`'s FAIL_VISIBLY actually forbids is a bare `rescue` or
+`rescue Exception`, and both of those rules fired **zero** times across the
+whole tree. Adding a log line to 21 intentional fallbacks would add noise and
+call it rigour. Left alone deliberately.
+
 **`css_transition_no_easing`** — 83 findings, _open_. Real against `aesthetic_rules.CINEMA_PALETTE`, and safe to fix, but 83 declarations across four apps' stylesheets is a visual change to timing on every one. Wants one operator decision on the easing token, then a sweep.
+
+**This rule and `unread_css_var` are the same finding from both ends, which is
+the useful part.** Verifying the 27 unread custom properties by hand left 15 with
+no reader at all, and three of them are `--ease-linear`, `--ease-in-out` and
+`--ease-spring`. So the design system declares its easing curves and nothing
+references them, while 83 transitions animate with no easing function. Neither
+half looks broken on its own: the tokens are present, the transitions work.
+
+That makes the decision cheaper than it first appears. It is not "pick an easing
+value for 83 sites" — the values are already chosen and committed. It is one
+question: are those three the intended curves? If yes, the sweep is mechanical
+and the tokens stop being inert in the same pass. `--brand-mark-inline` was this
+same shape — a named value declared for a bug, applied to one of the two bars
+that needed it (P0.1).
+
+The other twelve unread properties are `--showcase-chip`,
+`--line-height-base`, `--elev-2`, `--maps-accent-soft`, `--playlist-success`,
+`--food-card-radius`, `--c-danger`, `--c-code`, `--layout-max`, `--blue`,
+`--grey`, `--luxury-accent`. `--blue` and `--grey` are pre-token names and read
+as residue; the rest each want the same question as the easing three — give it a
+reader or delete it. Deleting an unread declaration is not a visual change,
+because by definition nothing renders from it.
 
 **`ctrl_no_rate_limit`** — 64 findings, _judgement_. 64 controllers with a `create` and no `rate_limit`. Defence in depth, not a bug, and a mechanical sweep would throttle legitimate use at an arbitrary threshold. The subset worth doing deliberately is the write endpoints reachable without authentication.
 
@@ -1492,7 +1527,7 @@ target=_blank without rel=noopener. Reverse tabnabbing. Law: `soul.absolute.prot
 
 ## Correctness — 72 items
 
-### rb_rescue_nil — 21
+### rb_rescue_nil — 21 · **policy**
 
 rescue that returns nil. The failure becomes indistinguishable from an empty result — the exact shape of the dead-wiring bugs this repo keeps finding. Law: `soul.absolute.code_rules.FAIL_VISIBLY`.
 
