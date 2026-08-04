@@ -13,12 +13,12 @@
   <% end %>
 
   <div class="luxury-meta">
-    <header role="banner" aria-label="Item header">
+    <header role="banner" aria-label="<%= t("items.header_label") %>">
       <div>
         <p class="dim luxury-dim"><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
         <h1 class="luxury-title"><%= @item.title %></h1>
       </div>
-      <% if @item.spark_joy? %><span class="badge">Sparks joy</span><% end %>
+      <% if @item.spark_joy? %><span class="badge"><%= t("items.sparks_joy") %></span><% end %>
       <% if @item.color.present? %>
         <span class="color-swatch" style="--swatch: <%= wardrobe_color_swatch(@item.color) %>" title="<%= @item.color %>" aria-label="Color <%= @item.color %>"></span>
       <% end %>
@@ -34,25 +34,25 @@
   </div>
 
   <dl class="meta luxury-meta-list">
-    <dt>Category</dt><dd><%= @item.category %></dd>
-    <% if @item.color.present? %><dt>Color</dt><dd><%= @item.color %></dd><% end %>
-    <% if @item.size.present? %><dt>Size</dt><dd><%= @item.size %></dd><% end %>
-    <% if @item.material.present? %><dt>Material</dt><dd><%= @item.material %></dd><% end %>
-    <% if @item.brand.present? %><dt>Brand</dt><dd><%= @item.brand %></dd><% end %>
-    <% if @item.price? %><dt>Price</dt><dd><%= number_to_currency(@item.price) %></dd><% end %>
-    <dt>Worn</dt><dd><%= @item.times_worn.to_i %> times</dd>
-    <% if @item.purchase_date? %><dt>Purchased</dt><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
+    <dt><%= t("items.category") %></dt><dd><%= @item.category %></dd>
+    <% if @item.color.present? %><dt><%= t("items.color") %></dt><dd><%= @item.color %></dd><% end %>
+    <% if @item.size.present? %><dt><%= t("items.size") %></dt><dd><%= @item.size %></dd><% end %>
+    <% if @item.material.present? %><dt><%= t("items.material") %></dt><dd><%= @item.material %></dd><% end %>
+    <% if @item.brand.present? %><dt><%= t("items.brand") %></dt><dd><%= @item.brand %></dd><% end %>
+    <% if @item.price? %><dt><%= t("items.price") %></dt><dd><%= number_to_currency(@item.price) %></dd><% end %>
+    <dt><%= t("items.worn") %></dt><dd><%= @item.times_worn.to_i %> times</dd>
+    <% if @item.purchase_date? %><dt><%= t("items.purchased") %></dt><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
   </dl>
 
   <% if @item.mood_effect.present? || @item.life_phase.present? %>
     <div class="tag-row luxury-tags">
-      <% if @item.mood_effect.present? %><span class="tag">Mood: <%= @item.mood_effect %></span><% end %>
+      <% if @item.mood_effect.present? %><span class="tag"><%= t("items.mood") %> <%= @item.mood_effect %></span><% end %>
       <% if @item.life_phase.present? %><span class="tag tag--phase"><%= @item.life_phase %></span><% end %>
     </div>
   <% end %>
 
   <section class="luxury-section">
-    <h2>Wardrobe intelligence</h2>
+    <h2><%= t("items.wardrobe_intelligence") %></h2>
     <% if amber_ai_available? %>
       <p class="dim luxury-dim">OpenRouter is configured — joy analysis and mood tags use Gemini when available, with local heuristics as backup.</p>
     <% else %>
@@ -62,7 +62,7 @@
     <div id="item_<%= @item.id %>_tags"></div>
   </section>
 
-  <nav role="navigation" aria-label="Item actions" class="luxury-actions">
+  <nav role="navigation" aria-label="<%= t("items.actions_label") %>" class="luxury-actions">
     <%= button_to t("items.worn_today"), wear_item_path(@item), method: :post, class: "btn" %>
     <% if @item.spark_joy? %>
       <%= button_to t("items.no_joy"), clear_joy_item_path(@item), method: :post, class: "btn" %>
@@ -80,8 +80,8 @@
     <% end %>
   </nav>
 
-  <section class="luxury-section" aria-label="Affiliate link">
-    <h2>Affiliate / commerce link</h2>
+  <section class="luxury-section" aria-label="<%= t("items.affiliate_label") %>">
+    <h2><%= t("items.affiliate_link") %></h2>
     <p class="dim luxury-dim">Optional resale or shop-similar URL for this piece. Some links may be affiliate links.</p>
     <% if @item.affiliate_links.any? %>
       <ul>
@@ -94,7 +94,7 @@
       </ul>
     <% end %>
     <% if @shop_the_look.present? && @shop_the_look.any? %>
-      <h3>Shop the look</h3>
+      <h3><%= t("items.shop_the_look") %></h3>
       <ul class="stack">
         <% @shop_the_look.each do |suggestion| %>
           <li>
@@ -113,7 +113,7 @@
   </section>
 
   <details class="danger-zone">
-    <summary>Permanent removal</summary>
+    <summary><%= t("items.permanent_removal") %></summary>
     <p class="dim luxury-dim">Archiving is safer. Permanent deletion removes the item record and its attached photos.</p>
     <%= button_to t("items.delete_permanent"), @item, method: :delete, data: { turbo_confirm: t("items.confirm_delete") }, class: "btn btn-danger" %>
   </details>
