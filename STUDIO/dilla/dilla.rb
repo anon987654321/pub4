@@ -21135,9 +21135,31 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   # prevent. Measured across 42 parts: techno was 38% of the tracks and 61% of the
   # runtime.
   #
-  # 0.1 still guards what the clamp was guarding -- zero, negative, a typo'd
-  # HATE_MIN -- without overruling a caller who has done the arithmetic.
-  minutes = (ENV["HATE_MIN"] || 16).to_f.clamp(0.1, 60.0)
+  # The floor is 0.5, and it was 0.1 for one commit. That was wrong, and wrong in
+  # the expensive direction: below half a minute this renderer does not produce a
+  # short track, it produces near-silence. The layers are built over an eight-bar
+  # cycle and gated in across the arc, so a request too short for the arc to open
+  # leaves almost nothing switched on.
+  #
+  # Measured through this method, overall RMS:
+  #
+  #   HATE_MIN 0.33  ->  -47.7 dB, 26.5s   near-silent, low end at -79.4 (nothing)
+  #   HATE_MIN 0.50  ->  -13.8 dB, 53.0s   healthy, low end -13.9
+  #   HATE_MIN 1.00  ->  -15.6 dB, 79.4s   healthy
+  #
+  # The block floor is not involved: 0.33 measures -47.9 dB at two blocks and
+  # -47.7 at one. It is the requested length alone.
+  #
+  # This shipped. b36edcf5e lowered the clamp to let demo-all ask for 0.33, and
+  # 28 of the 86 tracks in the demo committed at c0d00f488 are effectively silent
+  # because of it -- 26 dB under every other track. The original clamp(1.0) was
+  # not the oversight it was described as; it was load-bearing, and the comment
+  # claiming 0.1 "still guards what the clamp was guarding" was false.
+  #
+  # 0.5 is the shortest length measured to render properly, so a demo slot now
+  # runs 53s against the hip-hop track's 31.3s rather than 79.4s. Re-measure
+  # before lowering it again; the failure is silent and does not raise.
+  minutes = (ENV["HATE_MIN"] || 16).to_f.clamp(0.5, 60.0)
   beat = 60.0 / HATE_BPM
   bar = beat * 4
   step = beat / 4
