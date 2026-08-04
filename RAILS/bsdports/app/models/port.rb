@@ -9,7 +9,7 @@ class Port < ApplicationRecord
   belongs_to :maintainer, optional: true
   has_many :dependencies, dependent: :destroy
   has_many :depends_on, through: :dependencies, source: :depends_on
-  has_many :dependents, class_name: "Dependency", foreign_key: :depends_on_id
+  has_many :dependents, class_name: "Dependency", foreign_key: :depends_on_id, dependent: :destroy
   has_many :reverse_deps, through: :dependents, source: :port
   has_many :port_updates, dependent: :destroy
   has_many :watches, dependent: :destroy
