@@ -64,7 +64,7 @@
   font-size: 0.75rem;
   color: var(--text-dim);
   opacity: 0;
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--transition-fast) var(--ease-out);
 }
 
 .compose-surface:focus-within .char-counter { opacity: 1; }
@@ -87,7 +87,7 @@
   color: var(--text-dim);
   cursor: pointer;
   font-size: 16px;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
 }
 
 .tiptap_btn:hover { color: var(--text); background: var(--hover); }

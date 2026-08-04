@@ -2,7 +2,7 @@
 .feed-post {
   padding: 1rem 0;
   border-bottom: 1px solid var(--border);
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out);
 }
 
 .feed-post:hover {

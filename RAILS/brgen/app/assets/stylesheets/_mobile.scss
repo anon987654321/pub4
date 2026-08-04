@@ -19,7 +19,7 @@
   justify-content: center;
   padding: var(--space-3);
   color: var(--text);
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out);
 }
 
 .tab-item[aria-current="page"] {
@@ -57,7 +57,7 @@
   background: rgba(0, 0, 0, .45);
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--transition-fast) var(--ease-out);
   z-index: calc(var(--z-nav) + 1);
 }
 

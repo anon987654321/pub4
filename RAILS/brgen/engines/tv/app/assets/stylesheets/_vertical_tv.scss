@@ -88,7 +88,7 @@ body.vertical-tv .show-card {
   border-radius: var(--radius-sm);
   text-decoration: none;
   color: inherit;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out);
 }
 
 body.vertical-tv .show-card:hover {

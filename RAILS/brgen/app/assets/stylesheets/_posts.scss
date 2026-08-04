@@ -4,7 +4,7 @@
   padding: var(--space-4);
   margin-bottom: var(--space-2);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out);
 }
 
 .post-card:hover { background: var(--hover-subtle); }
@@ -31,7 +31,7 @@
   min-width: 44px;
   padding: var(--space-1);
   border-radius: var(--radius-pill);
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -61,7 +61,7 @@
   font: var(--text-sm) / 1 var(--font);
   padding: var(--space-2);
   border-radius: var(--radius-pill);
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
 }
 
 .post-actions a:hover { color: var(--accent); background: var(--hover); text-decoration: none; }
@@ -156,7 +156,7 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   font-size: var(--text-sm);
   font-family: inherit;
   outline: none;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out);
 }
 
 input[type=file] {

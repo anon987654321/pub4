@@ -154,6 +154,16 @@ each competing with the text it was meant to organise.
 exemptions below are down to one. Measured on the brgen front page at 390×844: 21
 visible borders before, 0 after.
 
+**"0 after" needed a second pass the same day.** The first measurement was taken
+from a screenshot, and `.tab-bar-coach` renders *underneath* `.hotkey-coach`, so
+its two buttons — `.tab-bar-coach-dismiss` and `.tab-bar-coach-show` — were not
+in the frame and kept their `1px solid`. Re-measured by unhiding the coach from
+the probe rather than waiting for a controller to reveal it: 8 borders, all of
+them that pair, nothing else on the surface. Both now use a surface fill and
+keep their 44px targets; the page is at 0. If you check this number, unhide
+every `[hidden]` first — an element that never painted reports no borders and
+looks like a pass.
+
 Still legitimate — the only exemption left:
 - **form-field outlines** on `input` / `textarea` / `select`. An input with no
   outline gives no target; you must see where to type.

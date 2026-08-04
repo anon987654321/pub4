@@ -68,7 +68,7 @@
   padding: 0.25rem 0.75rem; /* 4px / 12px — eight_px_rhythm */
   font-size: 0.875rem;
   cursor: pointer;
-  transition: color var(--transition-fast), border-color var(--transition-fast);
+  transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }
 
 .btn-share:hover { color: var(--text); border-color: var(--text-dim); }

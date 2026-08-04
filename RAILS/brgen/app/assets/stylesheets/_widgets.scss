@@ -15,7 +15,7 @@
   font: 0.875rem/1 var(--font);
   font-weight: 500;
   color: var(--text-dim);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
   white-space: nowrap;
 }
 

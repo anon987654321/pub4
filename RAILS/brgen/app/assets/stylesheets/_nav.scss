@@ -73,7 +73,7 @@
   border-inline-start: 0;
   border-inline-end: 0;
   cursor: pointer;
-  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }
 
 .feed-tab:hover {
@@ -103,7 +103,7 @@ a.feed-tab { text-decoration: none; }
   border: 1px solid var(--border);
   margin: var(--space-3) var(--space-4);
   border-radius: var(--radius-sm);
-  transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
+  transition: background var(--transition-fast, 180ms) var(--ease-out), border-color var(--transition-fast, 180ms) var(--ease-out);
 }
 
 /* At rest the compose is one input line and nothing else — the placeholder
@@ -198,7 +198,7 @@ a.feed-tab { text-decoration: none; }
 label.compose-action {
   opacity: 1;
   cursor: pointer;
-  transition: color var(--transition-fast, 180ms);
+  transition: color var(--transition-fast, 180ms) var(--ease-out);
 }
 label.compose-action:hover { color: var(--text); }
 .compose-action--attached { color: var(--accent); }

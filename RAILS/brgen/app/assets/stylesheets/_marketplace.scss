@@ -73,7 +73,7 @@
   font-size: 0.875rem;
   color: var(--text);
   white-space: nowrap;
-  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
 }
 
 .deal-cat:hover {

@@ -72,7 +72,7 @@
   overflow: hidden;
   color: inherit;
   text-decoration: none;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out);
 }
 
 .top-offer-card:hover {

@@ -268,7 +268,7 @@ footer {
   font: inherit;
   color: var(--black);
   background: var(--search-bg);
-  transition: background var(--transition-fast, 180ms);
+  transition: background var(--transition-fast, 180ms) var(--ease-out);
 }
 
 .form input:focus,
@@ -430,12 +430,6 @@ footer {
   gap: 0.75rem;
 }
 
-.futurism-placeholder {
-  min-height: 120px;
-  border-radius: var(--radius);
-  margin-bottom: 1rem;
-}
-
 [dir="rtl"] {
   direction: rtl;
 }
@@ -462,7 +456,7 @@ footer {
   gap: 12px;
   padding: 12px 16px;
   margin-bottom: 2px;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast) var(--ease-out);
   /* Mobile base: slightly tighter on very small screens */
 }
 .feed-card:hover { background: var(--hover-subtle); }
@@ -566,7 +560,7 @@ footer {
   gap: 4px;
   padding: 8px 10px;
   border-radius: 0;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
   cursor: pointer;
   min-height: 44px; /* solid mobile tap target */
   min-width: 44px;
