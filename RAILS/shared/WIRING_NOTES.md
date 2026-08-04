@@ -150,12 +150,26 @@ apart by the gap between them; reach for padding, margin or `gap` first. The
 home feed alone carried 35 bordered elements, 25 of them one hairline per post,
 each competing with the text it was meant to organise.
 
-Still legitimate, because these are not separators:
-- form-field and control outlines (affordance — you must see where to type)
-- inline-direction accent markers (`border-inline-start: 3px solid var(--accent)`)
-- state indicators (the active tab's underline)
+**Tightened to "no lines at all" (operator decision, 2026-08-04.)** The three
+exemptions below are down to one. Measured on the brgen front page at 390×844: 21
+visible borders before, 0 after.
 
-A solid `background` still separates fine where a surface genuinely differs.
+Still legitimate — the only exemption left:
+- **form-field outlines** on `input` / `textarea` / `select`. An input with no
+  outline gives no target; you must see where to type.
+
+No longer exempt, and why:
+- **Control outlines.** A button is not a field. `.compose-trigger`,
+  `.btn-ghost`, `.btn-danger` and `.btn--secondary` each traded a 1px edge for a
+  surface fill, which reads as a control without drawing a rule.
+- **State indicators.** The active nav link's 2px underline is gone; state is
+  weight and colour. `aria-current` was already carrying it for assistive tech,
+  so nothing was lost but the line.
+- **Inline-direction accent markers.** Not currently on any measured surface; if
+  one comes back, it is a line and needs the same treatment.
+
+A solid `background` still separates fine where a surface genuinely differs — and
+after this pass it is doing all of the separating.
 
 **Feed actions:** use `shared/_x_feed_icon.html.erb` SVG icons — not emoji.
 
