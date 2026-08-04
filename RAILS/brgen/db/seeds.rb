@@ -331,21 +331,54 @@ restaurants.each do |rest|
 end
 
 # Orders + reviews
+#
+# Build the line items before saving, the way Takeaway::OrdersController#create
+# does. This used to create! the order bare and attach items afterwards, and
+# Takeaway::Order#meets_minimum_order reads `order_items.target` -- so the
+# subtotal was 0.00 at validation time and every restaurant with a
+# min_order_cents rejected its own seed order:
+#
+#   ActiveRecord::RecordInvalid: Minimum order for Døner Ekspress Åsane is
+#   122.76 NOK — your subtotal is 0.00 NOK.
+#
+# That took down `db:seed:replant`, which is a stage of vps_ci.sh, which is a
+# stage of vps-deploy -- so brgen could not be deployed at all, while the
+# validation itself is correct and the real checkout path was always fine.
+# Enough menu items to clear any threshold the restaurant advertises.
 restaurants.sample(10).each do |rest|
   buyer = users.sample
-  order = Takeaway::Order.create!(
+  # includes(:restaurant) is load-bearing, not decoration: ApplicationRecord sets
+  # strict_loading_by_default in every environment, and building an OrderItem
+  # reads menu_item.restaurant, so dropping the preload raises
+  # StrictLoadingViolationError here rather than degrading to an extra SELECT.
+  menu = Takeaway::MenuItem.available.includes(:restaurant)
+                           .where(restaurant: rest).order(Arel.sql('RANDOM()')).to_a
+  next if menu.empty?
+
+  order = Takeaway::Order.new(
     user: buyer,
     restaurant: rest,
     status: %w[pending out_for_delivery delivered].sample,
     delivery_address: Faker::Address.street_address,
     special_instructions: [nil, Faker::Lorem.sentence].sample
   )
-  order.record_activity!('TakeawayOrder') if order.respond_to?(:record_activity!)
 
-  items = Takeaway::MenuItem.available.includes(:restaurant).where(restaurant: rest).order(Arel.sql('RANDOM()')).limit(2)
-  items.each do |item|
-    order.order_items.create!(menu_item: item, quantity: rand(1..2), unit_price_cents: item.price_cents)
+  subtotal = 0
+  minimum = rest.min_order_cents.to_i
+  menu.each do |item|
+    break if order.order_items.size >= 2 && subtotal >= minimum
+
+    quantity = rand(1..2)
+    order.order_items.build(menu_item: item, quantity: quantity, unit_price_cents: item.price_cents)
+    subtotal += item.price_cents.to_i * quantity
   end
+  # A restaurant whose whole menu cannot reach its own minimum is bad seed data,
+  # not a reason to abort the seed.
+  next if subtotal < minimum
+
+  order.save!
+  order.calculate_totals!
+  order.record_activity!('TakeawayOrder') if order.respond_to?(:record_activity!)
 
   # Review
   next unless order.status == 'delivered'
