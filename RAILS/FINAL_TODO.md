@@ -350,7 +350,7 @@ count is not the finding; the verdict is.
 | `css_zindex_magic` | 9 | open |
 | `css_display_none_override` | 9 | open |
 | `rb_puts` | 8 | artifact |
-| `model_has_many_no_dependent` | 8 | open |
+| `model_has_many_no_dependent` | 8 | artifact |
 | `scss_file_too_long` | 7 | open |
 | `img_no_dims` | 6 | open |
 | `heading_skip` | 5 | open |
@@ -389,6 +389,37 @@ count is not the finding; the verdict is.
 **`css_off_grid`** — 83 findings, _artifact_. Substantially wrong: the grid array omitted 44, so the rule flags `min-height: 44px` — the touch target `ux_laws.fitts.target_min_px` mandates. Others land in `_jsfiddle_chrome.scss`, which `FrontendAuditor::PEN_STYLE_PATH_PATTERN` exempts as a product pen keeping exact CSS.
 
 **`css_px_width`** — 72 findings, _artifact_. Mostly `@media (min-width: 768px)` — breakpoints, not element widths. The regex matched `min-width` anywhere.
+
+**`model_has_many_no_dependent`** — 8 findings, _artifact_, 1 real and fixed.
+Same single-line-regex bug as `rb_no_frozen_literal`: the rule matched
+`^\s*has_many :name(rest of that line)` and tested only that line for
+`dependent:`. Every multi-line declaration keeps its options on the
+continuation line —
+
+```ruby
+has_many :listens, class_name: "Playlist::Listen",
+         foreign_key: :playlist_track_id, dependent: :destroy
+```
+
+— so `Playlist::Track`'s four associations, `Playlist::Playlist#playlist_tracks`
+and `Marketplace::Listing#favorites` all already declared it and all six were
+reported missing. I applied the "fix" first, which appended a second
+`dependent: :destroy` to the end of line one and broke three files' syntax; the
+revert is what proved they were already correct.
+
+The one real gap was `Port#dependents` (`bsdports/app/models/port.rb:12`) — a
+single-line declaration, and the only association on that model without it while
+`:dependencies`, `:port_updates`, `:watches`, `:comments` and
+`:security_advisories` all had it. Deleting a port left `Dependency` rows whose
+`depends_on_id` pointed at nothing, and `:reverse_deps` reads through exactly
+those rows. Fixed.
+
+- [ ] `Marketplace::Listing#orders` reads like the same gap and is not: it
+  already declares `dependent: :destroy`, which for orders is a decision rather
+  than an oversight — destroying a listing destroys its order history. Left as
+  found. Whether it should be `:restrict_with_error` instead (a listing with
+  orders cannot be deleted) is a product call about financial records, not a
+  lint fix.
 
 **`rb_rescue_nil`** — 21 findings, _policy_. Checked every site: these are
 deliberate, documented degradation, not swallowed errors.
@@ -1872,7 +1903,7 @@ Model with no validations. Nothing stops a blank or duplicate row. Law: `rams_ch
 - [ ] `bsdports/app/models/session.rb:1` — session.rb
 - [ ] `shared/app/models/application_record.rb:1` — application_record.rb
 
-### model_has_many_no_dependent — 8
+### model_has_many_no_dependent — 8 · **artifact (1 real, fixed)**
 
 has_many with no dependent: option. Deleting the parent orphans children or trips an FK constraint. Law: `rams_checklist.thorough`.
 
