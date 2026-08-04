@@ -4,8 +4,8 @@
       "slug": "slum_village",
       "artist": "Slum Village",
       "source": "https://www.youtube.com/watch?v=tah5UC2hdrk",
-      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/slum_village/vocals.wav",
-      "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260718_144652",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/slum_village/vocals.wav",
+      "stem_dir": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/samples/demux/htdemucs_6s/yt_20260718_144652",
       "bpm_estimate": 100.0,
       "phrases": [
         {
@@ -920,7 +920,7 @@
       "note": "Slum Village / Dilla production — real rapping for Camel stream",
       "isolated": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/slum_village/fit_86_32bars.wav",
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/slum_village/fit_86_32bars.wav",
         "beat_bpm": 86.0,
         "n_bars": 32,
         "offset_sec": 18.53,
@@ -934,8 +934,8 @@
       "artist": "Jonas V",
       "source": "https://www.youtube.com/watch?v=aTdDmMmt5VU",
       "title": "Kunst",
-      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/vocals.wav",
-      "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260718_221000",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/jonas_v/vocals.wav",
+      "stem_dir": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/samples/demux/htdemucs_6s/yt_20260718_221000",
       "bpm_estimate": 70.0,
       "phrases": [
         {
@@ -1943,7 +1943,7 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/fit_87_16bars.wav",
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/jonas_v/fit_87_16bars.wav",
         "beat_bpm": 87.36,
         "n_bars": 16,
         "offset_sec": 33.1471,
@@ -1977,8 +1977,8 @@
       "slug": "gunnhild",
       "artist": "Gunnhild",
       "source": "https://www.youtube.com/watch?v=95xXFe3Q2WY",
-      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/vocals.wav",
-      "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_ft/yt_20260729_001607",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/gunnhild/vocals.wav",
+      "stem_dir": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/samples/demux/htdemucs_ft/yt_20260729_001607",
       "bpm_estimate": 122.0,
       "phrases": [
         {
@@ -2486,7 +2486,7 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_88_8bars.wav",
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/gunnhild/fit_88_8bars.wav",
         "beat_bpm": 88.32,
         "n_bars": 8,
         "offset_sec": 39.4843,
@@ -2520,11 +2520,11 @@
       "slug": "haisam_johann",
       "artist": "Haisam & Johann",
       "source": "operator own recording, restored from git history",
-      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/haisam_johann/vocals.wav",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/haisam_johann/vocals.wav",
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/haisam_johann/fit_80_18bars.wav",
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/haisam_johann/fit_80_18bars.wav",
         "beat_bpm": 80.0,
         "n_bars": 18,
         "offset_sec": 40.6072,
@@ -2543,11 +2543,11 @@
       "slug": "angelo_johann",
       "artist": "Angelo Reira & Johann",
       "source": "operator own recording, restored from git history",
-      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/angelo_johann/vocals.wav",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/angelo_johann/vocals.wav",
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/angelo_johann/fit_76_18bars.wav",
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/angelo_johann/fit_76_18bars.wav",
         "beat_bpm": 76.0,
         "n_bars": 18,
         "offset_sec": 0.0,
