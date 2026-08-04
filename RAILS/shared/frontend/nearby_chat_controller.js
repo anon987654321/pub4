@@ -125,10 +125,22 @@ export default class extends Controller {
     this.#setTab("chat")
   }
 
+  // Both label targets live inside this.element, which #observer watches with
+  // {childList, subtree}. Writing textContent replaces the text node even when
+  // the string is identical, so an unconditional assignment here is a mutation
+  // that re-runs the observer that called us -- an unbreakable loop that pinned
+  // a renderer at 100% CPU and hung every brgen system test forever. Nothing
+  // caught it because ci.rb excludes test/system from the suite. Every write
+  // reachable from the observer callback must therefore be a no-op when the
+  // value has not changed.
+  #setText(el, value) {
+    if (el && el.textContent !== value) el.textContent = value
+  }
+
   #setTab(mode) {
     const label = mode === "nearby" ? this.labelNearbyValue : this.labelChatValue
-    if (this.hasTabLabelTarget) this.tabLabelTarget.textContent = label
-    if (this.hasHeaderLabelTarget) this.headerLabelTarget.textContent = label
+    if (this.hasTabLabelTarget) this.#setText(this.tabLabelTarget, label)
+    if (this.hasHeaderLabelTarget) this.#setText(this.headerLabelTarget, label)
   }
 
   // After the turbo-frame loads lobby vs nearby, prefer the server mode line.
@@ -142,14 +154,17 @@ export default class extends Controller {
     const text = strong.textContent?.trim()
     if (!text) return
     const label = text.replace(/^#/, "")
-    if (this.hasTabLabelTarget) this.tabLabelTarget.textContent = label
-    if (this.hasHeaderLabelTarget) this.headerLabelTarget.textContent = label
+    if (this.hasTabLabelTarget) this.#setText(this.tabLabelTarget, label)
+    if (this.hasHeaderLabelTarget) this.#setText(this.headerLabelTarget, label)
   }
 
+  // Reachable from the observer callback via #showLocationError, so it carries
+  // the same no-op-when-unchanged requirement as #setTab. See the note there.
   #setStatus(text) {
     if (!this.hasStatusTarget) return
-    this.statusTarget.textContent = text || ""
-    this.statusTarget.hidden = !text
+    const next = text || ""
+    this.#setText(this.statusTarget, next)
+    if (this.statusTarget.hidden !== !next) this.statusTarget.hidden = !next
   }
 
   #apply(open, { focus }) {
