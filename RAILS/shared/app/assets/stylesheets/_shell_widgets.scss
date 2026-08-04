@@ -173,9 +173,9 @@ body.vertical-playlist .nearby-chat-widget {
   align-items: center;
   gap: 6px;
   background: var(--surface2, var(--surface-elevated, #211f28));
-  border: 1px solid var(--border, #46435a);
-  border-block-end: 0;
-  border-inline-end: 0;
+  /* The elevated surface is the separation. Three edges of hairline around a
+     44px tab was the most line-per-pixel chrome on the page. */
+  border: 0;
   border-radius: var(--radius-sm, 8px) 0 0 0;
   color: var(--text, #d8d6e0);
   padding: 0.625rem 0.95rem;

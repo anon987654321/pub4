@@ -416,7 +416,7 @@ html.chrome-hidden .tab-bar {
   width: min(20rem, calc(100vw - 2rem));
   padding: 0.75rem 0.9rem;
   background: var(--surface-elevated, var(--surface2, #211f28));
-  border: 1px solid var(--border, #46435a);
+  border: 0;
   border-radius: var(--radius-sm, 8px);
   font-family: var(--font-primary, var(--font, system-ui, sans-serif));
   color: var(--text, #d8d6e0);
@@ -507,7 +507,8 @@ html.chrome-hidden .tab-bar {
   line-height: 1.4;
   color: var(--text, var(--text));
   background: var(--surface-elevated, var(--surface));
-  border: 1px solid var(--border, var(--border));
+  /* Floating chrome separates by surface, not by rule. */
+  border: 0;
   border-radius: var(--radius-xs, 3px);
   max-width: min(24rem, calc(100vw - 2rem));
 }
@@ -531,7 +532,10 @@ html.chrome-hidden .tab-bar {
   min-height: 44px;
   min-width: 44px;
   padding: 0.25rem 0.625rem;
-  border: 1px solid var(--border, currentColor);
+  /* Fill, not outline -- the last four lines on the front page were this one
+     button. */
+  border: 0;
+  background: var(--hover, transparent);
   background: transparent;
   color: inherit;
   cursor: pointer;

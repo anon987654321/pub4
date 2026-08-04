@@ -1,62 +1,71 @@
-/* Always-visible sticky top nav (main / AI / playlist / marketplace / dating …).
-   Sticks to the top of the scroll while the feed flows below it. Horizontal
-   scroll with a right-edge fade when the run overflows a narrow screen. */
+/* Pull-down top-drawer nav (front / live / AI / channels / the seven verticals).
+   Hidden by default; nav_swiper_controller reveals it on a swipe down from the
+   top edge, a pointer into the top 2px, the keyboard grip, or #toggle. Escape,
+   a tap away, or a swipe up hides it again.
+
+   It was permanent for a while, and that is what put the new-post box behind it:
+   brgen's .app-shell is `position: fixed; inset: 0`, so main starts at y=0 and
+   .compose-trigger sits at y=14 — inside this bar's 0-55 band, under a z-90
+   overlay. A drawer that overlays only while open has nothing to collide with. */
 .nav_swiper {
   position: sticky;
   inset-block-start: 0;
   z-index: var(--z-nav);
+  /* Closed, the wrapper holds neither space nor pointer events. It measured
+     h=62 at y=0 with z-90, so elementFromPoint over the new-post box still
+     returned .nav_swiper -- the bar was hidden and the box that contained it was
+     not. height:0 keeps the sticky anchor without the band. */
+  height: 0;
+  pointer-events: none;
+}
+
+.nav_swiper.revealed {
+  height: auto;
+  pointer-events: auto;
 }
 
 .nav_swiper_bar {
   display: flex;
   flex-direction: row;
   gap: 0;
+  /* Hidden state. The controller has always been written for this — swipe,
+     hover-at-edge, grip, Escape, tap-away, and a .revealed class — and all of
+     that machinery was inert while the bar was permanent. visibility (not
+     display) so the transform can animate and so it leaves the a11y tree. */
+  transform: translateY(-100%);
+  visibility: hidden;
   overflow-x: auto;
   scrollbar-width: none;
-  /* Clear the fixed chrome at both ends, the same way .feed-tabs does.
-     This bar moved to the top of the page when the nav became always-visible,
-     into the space the fixed .brgen-logo-mark already occupies (y 14-58 against
-     this bar's y 0-55). The bar's own opaque `background: var(--bg)` sits at
-     z-index 90 (.nav_swiper -> --z-nav -> --z-ui) against the wordmark's 11
-     (--z-chrome + 1), so the brand painted behind an opaque black rectangle and
-     elementFromPoint at its centre returned the "front" .nav_link: the brand
-     corner navigated to front instead of home.
-
-     --brand-mark-inline and --chrome-toggle-inline exist for exactly this and
-     are declared in _root.scss with a comment naming this bug on .feed-tabs.
-     Padding rather than a z-index bump, because the wordmark must not paint on
-     top of a scrolling nav item as it passes underneath. */
-  padding-block-start: var(--safe-top);
+  /* Only as wide as the run needs, up to the viewport. A drawer that is always
+     full-bleed reads as a page header; this reads as a panel. */
+  width: max-content;
+  max-width: 100%;
+  padding-block: var(--space-2);
+  padding-block-start: calc(var(--space-2) + var(--safe-top));
+  /* Leading inset clears the fixed wordmark, which sits above this bar in the
+     stack (--z-nav + 1). Trailing inset clears the theme control opposite it.
+     Both footprints are published as variables in _root.scss precisely so the
+     next piece of top chrome inherits the fix instead of rediscovering it. */
   padding-inline: var(--brand-mark-inline) var(--chrome-toggle-inline);
-  /* scroll-padding matters as much as padding here: with snapping on and no
-     inset, the snap engine scrolls the first item back to the container's edge
-     -- straight back under the wordmark -- and the padding above buys nothing. */
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--brand-mark-inline) var(--space-2xs);
   background: var(--bg);
-  border-block-end: 1px solid var(--border);
-  /* Both edges fade now. The right-edge fade signals "more to scroll"; the new
-     left-edge fade is what lets nav items pass under the fixed wordmark, which
-     sits above this bar in the stack, without the two sets of letters colliding.
-     Same idiom, same mechanism, applied to the end that gained fixed chrome. */
-  mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--brand-mark-inline), var(--bg) 86%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--brand-mark-inline), var(--bg) 86%, transparent 100%);
+  /* Fades right only. The right edge fade is the "more to scroll" signal; the
+     leading edge needs no fade now that the bar is a drawer rather than
+     permanent chrome behind a fixed wordmark. */
+  mask-image: linear-gradient(to right, var(--bg) 86%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, var(--bg) 86%, transparent 100%);
 }
 
 .nav_swiper_bar::-webkit-scrollbar { display: none; }
 
+/* One continuous run. The two role="group" wrappers stay for assistive tech —
+   they carry the "brgen" / "explore" labels — but they are visually seamless, so
+   the bar reads as a single swiper rather than two chunks with a rule between
+   them. The divider that used to sit here was one of the 17 lines removed. */
 .nav_swiper_group {
   display: flex;
   flex: 0 0 auto;
-}
-
-/* Visual break between the platform-links group and the seven-vertical
-   group, so the row reads as two chunks (Hick's law) rather than one flat
-   run of peer choices. */
-.nav_swiper_group + .nav_swiper_group {
-  border-inline-start: 1px solid var(--border);
-  margin-inline-start: var(--space-2);
-  padding-inline-start: var(--space-2);
 }
 
 .nav_swiper.revealed .nav_swiper_bar {
@@ -68,29 +77,67 @@
 
 .nav_link {
   flex: 0 0 auto;
-  padding: var(--space-4) var(--space-4);
+  /* Tighter than the old space-4 both ways: twelve destinations in a drawer, so
+     the run should cost as little width as it can while keeping the 44px tap
+     target that comes from min-height in _chrome_polish. */
+  padding: var(--space-3) var(--space-3);
   font: var(--text-sm)/1 var(--font);
   font-weight: 500;
   color: var(--text-dim);
   white-space: nowrap;
-  border-bottom: 2px solid transparent;
-  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  transition: color var(--transition-fast) var(--ease-in-out, ease),
+              background var(--transition-fast) var(--ease-in-out, ease);
 }
 
 .nav_link:hover { color: var(--text); background: var(--hover); text-decoration: none; }
-.nav_link.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
 
-/* Keyboard and assistive-tech path to the section nav. Off-screen until
-   focused, then it lands in the top-left like the skip link — the same
-   pattern, so the two behave alike.
+/* Active state is weight and colour, not an underline. aria-current carries it
+   for assistive tech; the 2px border-bottom this replaces was a line. */
+.nav_link.active { color: var(--text); font-weight: 700; }
+
+/* Keyboard and assistive-tech path into the drawer. Off-screen until focused,
+   then it lands top-left like the skip link — same pattern, same behaviour.
 
    It replaces .nav_swiper_grip, a 46x5 pill at the top centre that computed to
    46x44 with a pill radius and painted as a dim grey circle over the nav. A
-   permanent mark on every page is a high price for an affordance mouse and
-   touch already have: pointer at the top edge reveals, and so does a
-   swipe-down from it. */
-/* The nav is always visible now, so the reveal affordance is gone. */
-.nav_swiper_reveal { display: none; }
+   permanent mark on every page is a high price for an affordance mouse and touch
+   already have: a pointer at the top edge reveals, and so does a swipe down. */
+.nav_swiper_reveal {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: 1px;
+  height: 1px;
+  /* min-* beats width/height, and _chrome_polish gives every button a 44px
+     floor, so without these the hidden grip paints as a 44x44 square over the
+     wordmark. Restored on focus below, where it is a real target. */
+  min-width: 0;
+  min-height: 0;
+  /* The wrapper is pointer-events: none while closed; the grip is the one thing
+     inside it that must still be clickable once focus reveals it. */
+  pointer-events: auto;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font: inherit;
+}
+
+.nav_swiper_reveal:focus-visible {
+  width: auto;
+  height: auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  overflow: visible;
+  clip-path: none;
+  z-index: calc(var(--z-nav) + 2);
+  outline: var(--focus-ring, 2px solid var(--accent));
+  outline-offset: 2px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

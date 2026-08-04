@@ -79,11 +79,27 @@ class CritiqueImplementationTest < Minitest::Test
     hotkey = read("shared/frontend/feed_hotkey_controller.js")
     layout = read("bsdports/app/views/layouts/application.html.erb")
 
-    assert_includes index, "can this machine install it"
+    # Through the locale, not the literal. bsdports is fully translated now, so
+    # every one of these sentences lives in ports.* in en.yml and nb.yml — and a
+    # test that greps the view for English fails precisely when the app stops
+    # shipping English to a default_locale: nb audience. The claim being pinned is
+    # that the honest copy exists and says what it says, which the key assertions
+    # below check in both languages.
     assert_includes show, "doas pkg_add"
-    assert_includes show, "branch unknown · architecture unknown"
-    assert_includes show, "This is not the same as a verified clean security record"
-    assert_includes show, "Requires → dependencies"
+    assert_localised "bsdports", "ports/index.html.erb", "ports.purpose",
+                     "Answer three questions quickly: what package is this, can this machine install it, and what does the local advisory index know?"
+    assert_localised "bsdports", "ports/show.html.erb", "ports.platform_unknown",
+                     "branch unknown · architecture unknown"
+    assert_localised "bsdports", "ports/show.html.erb", "ports.advisories_none",
+                     "Unknown: no advisories are linked in this local index. This is not the same as a verified clean security record."
+    assert_localised "bsdports", "ports/show.html.erb", "ports.requires",
+                     "Requires → dependencies"
+
+    # The uncertainty has to survive translation, or the Norwegian reader gets a
+    # more confident product than the English one.
+    nb = YAML.safe_load_file(File.join(ROOT, "bsdports/config/locales/nb.yml")).fetch("nb")
+    assert_includes nb.dig("ports", "platform_unknown"), "ukjent"
+    assert_includes nb.dig("ports", "advisories_none"), "Ukjent"
     assert_includes hotkey, 'e.key === "/"'
     assert_match(/e\.key\.toLowerCase\(\) === "k"/, hotkey)
     assert_includes layout, "feed-hotkey"

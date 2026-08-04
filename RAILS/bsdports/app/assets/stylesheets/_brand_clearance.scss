@@ -1,0 +1,13 @@
+/* The shared brand mark (shared/_brand_mark) is fixed at the top inline-start
+   on every app. bsdports renders its primary nav there too, and _minimal.scss
+   gives every `nav` position: fixed with z-index: 100 -- above the mark's 91 --
+   so the nav painted over the wordmark and elementFromPoint at the mark's own
+   centre returned the nav. brgen had the identical bug with .nav_swiper.
+
+   The stacking itself is fixed by --z-brand (120) in _layout_chrome, which puts
+     the mark above any nav. This padding is still needed for a second, separate
+     reason: without it the nav first link sits under the wordmark, and a tap
+     there lands on the mark instead of the link. */
+nav[data-pwa-primary-nav] {
+  padding-inline-start: calc(var(--brand-mark-inline) + var(--space-2, 0.5rem));
+}

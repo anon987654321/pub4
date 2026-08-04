@@ -102,3 +102,77 @@ main[role="main"] {
 .flash-alert {
   z-index: var(--z-toast, 1100);
 }
+
+/* The one brand mark — shared/_brand_mark, fixed top-left on every surface of
+   every app. Type only: no chip, no border, no background, no shadow.
+   brgen's .brgen-logo-mark is the same treatment and keeps its own selector for
+   the rules that already reference it.
+
+   --brand-mark-inline publishes this footprint so anything anchored to the top
+   inline-start can clear it. That variable exists because the mark takes pointer
+   events, so whatever it lands on stops being clickable: the nav drawer's first
+   link and maps' search input have each had their leading ~63px swallowed, and a
+   tap there navigated home instead. */
+:root {
+  --brand-mark-inline: 4.75rem;
+  --chrome-toggle-inline: 4.25rem;
+  /* The mark outranks app chrome, because it is the one element that is the same
+     on every surface of every app. 91 (--z-nav + 1) was not enough: _minimal
+     gives every `nav` position: fixed with z-index: 100, so bsdports own primary
+     nav painted over it and elementFromPoint at the mark centre returned the nav.
+     Below --z-modal (1000) and --z-toast (1100); above any nav. */
+  --z-brand: 120;
+}
+
+.brand-mark {
+  position: fixed;
+  /* Above app chrome, not merely above the drawer -- see --z-brand. */
+  z-index: var(--z-brand, 120);
+  top: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px));
+  inset-inline-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 44px;
+  min-width: 44px;
+  /* Shrink to the wordmark. Measured 390px wide in amber, i.e. the full
+     viewport, which makes the whole top strip a link home and swallows taps on
+     anything up there. inset-inline-end: auto is what lets a fixed box
+     shrink-wrap; fit-content states the intent even where a rule fights it. */
+  width: fit-content;
+  inset-inline-end: auto;
+  padding: 0.25rem 0.35rem;
+  font: 800 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
+  letter-spacing: -0.03em;
+  color: var(--text);
+  text-decoration: none;
+  text-rendering: optimizeLegibility;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.brand-mark .brand-text {
+  text-transform: none;
+  letter-spacing: inherit;
+  font-weight: inherit;
+}
+
+.brand-mark:hover,
+.brand-mark:focus:not(:focus-visible),
+.brand-mark:active {
+  text-decoration: none;
+  color: var(--text);
+  opacity: 0.85;
+}
+
+/* :focus-visible deliberately keeps its ring. The wordmark was the one nav
+   element in brgen with no keyboard indicator at all, because a blanket
+   outline:none swallowed it. */
+.brand-mark:focus-visible {
+  color: var(--text);
+  text-decoration: none;
+  outline: var(--focus-ring, 2px solid var(--accent));
+  outline-offset: 2px;
+}

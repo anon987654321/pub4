@@ -1,0 +1,30 @@
+<%# The one brand mark, fixed top-left, on every surface of every app.
+    Type only — no chip, no border, no background. It is a link home and it is
+    the one piece of chrome that is identical everywhere, which is why it lives
+    here rather than three times.
+
+    Before this, the three apps did three different things: brgen had a fixed
+    type wordmark, amber rendered a non-fixed SVG (whose own comment describes
+    "retro hairlines"), and bsdports had no mark at all — only a text link inside
+    its nav. The SVG is still the right thing for a landing or marketing surface;
+    it is the wrong thing for chrome that has to sit in a 44px corner on every
+    page.
+
+    <header> wraps it so the wordmark is inside a banner landmark — axe flagged
+    it as the one piece of page content outside any landmark. The header adds no
+    box: the mark is position:fixed, so its parent has no in-flow child and
+    computes to zero height. Do not hang layout off it.
+
+    Params:
+      label — the wordmark text. Defaults to the app name.
+      href  — where home is. Defaults to the app's root_path. %>
+<% mark_label = local_assigns.fetch(:label) { t("app.name", default: "brgen") } %>
+<% mark_href  = local_assigns.fetch(:href) { main_app.respond_to?(:root_path) ? main_app.root_path : "/" } %>
+<%# brgen passes its historical class alongside so every rule already written
+    against .brgen-logo-mark keeps applying. %>
+<% mark_class = local_assigns.fetch(:class_name, "brand-mark") %>
+<header>
+  <%= link_to mark_href, class: mark_class, aria: { label: t("nav.brand_home", default: mark_label) } do %>
+    <span class="brand-text"><%= mark_label %></span>
+  <% end %>
+</header>

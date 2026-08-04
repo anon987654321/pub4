@@ -40,9 +40,28 @@ class LogoPlacementTest < ActiveSupport::TestCase
 
   # The layout renders it once, unconditionally, outside any vertical guard —
   # so every surface gets one and only one.
+  #
+  # Asserted through the shared partial rather than the class literal. The mark
+  # moved into shared/_brand_mark so brgen, amber and bsdports render the same
+  # one: brgen had a fixed wordmark, amber a non-fixed SVG, bsdports none at all
+  # (and, once counted, three separate links home). brgen still passes
+  # .brgen-logo-mark alongside .brand-mark, so every rule already written against
+  # it keeps applying — but the class name is now an argument, not markup, and a
+  # test that greps for the literal was testing the spelling.
   def test_layout_renders_exactly_one_wordmark
     layout = Rails.root.join("app/views/layouts/application.html.erb").read
 
-    assert_equal 1, layout.scan(/class: "brgen-logo-mark"/).size
+    assert_equal 1, layout.scan(%r{render "shared/brand_mark"}).size
+    assert_includes layout, "brgen-logo-mark"
+  end
+
+  # Unconditional: no vertical, auth or guest branch may skip it.
+  def test_the_wordmark_is_not_behind_a_conditional
+    layout = Rails.root.join("app/views/layouts/application.html.erb").read
+    line = layout.lines.find { |l| l.include?('render "shared/brand_mark"') }
+
+    refute_nil line
+    refute_match(/\bif\b|\bunless\b/, line,
+                 "the mark must render on every surface, not behind a guard")
   end
 end

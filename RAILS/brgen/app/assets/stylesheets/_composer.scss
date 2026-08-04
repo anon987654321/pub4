@@ -17,7 +17,9 @@
   width: 100%;
   padding: var(--space-2) var(--space-3);
   background: var(--surface-elevated);
-  border: 1px solid var(--border);
+  /* No outline: separation is the surface, not a line. This is a button, not a
+     field, so nothing is lost by removing the edge -- the fill is the target. */
+  border: 0;
   border-radius: var(--radius-pill);
   cursor: pointer;
   text-align: left;

@@ -91,21 +91,24 @@ a:hover { text-decoration: underline; }
   background: transparent !important;
 }
 
-/* Footprint published as a variable so anything a surface anchors to the top
+/* --brand-mark-inline and --chrome-toggle-inline moved to _layout_chrome.scss
+   with the shared .brand-mark that owns them, so they are declared once for all
+   three apps rather than in brgen only. The reasoning that earned them is kept
+   there. What follows is brgen's own mark styling, which .brand-mark now shares.
+
+   Kept for the record:
+   Footprint published as a variable so anything a surface anchors to the top
    inline-start can clear it, the way --tab-bar-h works for the bottom edge.
    The brand is fixed and takes pointer events, so whatever it lands on stops
    being clickable: the first .feed-tab on the feed and #map-search on maps
    both had their left ~63px swallowed, and a tap there navigated home instead.
    #navBar already cleared it with a hardcoded 4.75rem; this is that number,
    named, so the next top-left surface inherits the fix instead of rediscovering
-   the bug. */
-:root {
-  --brand-mark-inline: 4.75rem;
-  /* Mirror of the above for the trailing edge: .theme-toggle is fixed 44px wide
-     at inset-inline-end 0.75rem with z-index 110, so it covered the last
-     .feed-tab exactly the way the brand covered the first one. */
-  --chrome-toggle-inline: 4.25rem;
-}
+   the bug.
+
+   The trailing mirror, --chrome-toggle-inline, exists because .theme-toggle is
+   fixed 44px wide at inset-inline-end 0.75rem with z-index 110, so it covered
+   the last nav item exactly the way the brand covered the first one. */
 
 /* City brand: fixed top-left, identical on core + every vertical.
    MASTER face.css .top-left-logo — type only. Never a bordered/outlined chip. */
@@ -125,7 +128,7 @@ a.brgen-logo-mark,
      piece of chrome that is identical on every surface. .nav_swiper_bar's
      padding-inline keeps nav items clear of this footprint at rest, and its
      left-edge mask fades them out as they scroll under it. */
-  z-index: calc(var(--z-nav, 90) + 1);
+  z-index: var(--z-brand, 120);
   /* Same corner inset as the theme control and the chat widget, and additive
      over the safe area rather than max()'d against it -- see --chrome-inset.
      This was 0.5rem top / 0.75rem start, so the brand sat 4px higher than the

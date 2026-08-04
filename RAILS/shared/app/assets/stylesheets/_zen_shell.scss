@@ -110,9 +110,9 @@ input, button, textarea, select {
 }
 
 .btn--secondary {
-  background: transparent;
+  background: var(--hover-subtle, var(--hover));
   color: var(--text, var(--color-primary));
-  border-color: var(--border, var(--color-border));
+  border-color: transparent;
 }
 
 /* Family alias: brgen/bsdports use btn-ghost; amber often uses btn--ghost */

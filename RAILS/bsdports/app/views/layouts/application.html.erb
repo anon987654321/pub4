@@ -36,9 +36,14 @@
       data-feed-hotkey-coach-value="<%= t("hotkeys.coach") %>"
       data-feed-hotkey-coach-dismiss-value="<%= t("hotkeys.coach_dismiss") %>">
 <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
+<%# bsdports had no brand mark at all — only a text link inside the nav, which is
+    not the same thing and is not in the same place as brgen's or amber's. After
+    the skip link, which must stay the first focusable element. %>
+<%= render "shared/brand_mark", label: "bsdports" %>
 <div class="app-shell">
 <nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="<%= t("nav.home") %>">
-  <%= link_to t("app.name"), root_path, class: "brand", aria: { current: current_page?(root_path) ? "page" : nil } %>
+  <%# The wordmark is shared/_brand_mark, fixed top-left above this nav. A
+      second copy inside the nav was the same link twice, 9px apart. %>
   <%= link_to t("nav.ports"), ports_path, aria: { current: current_page?(ports_path) ? "page" : nil } %>
   <%= link_to t("nav.categories"), categories_path, aria: { current: current_page?(categories_path) ? "page" : nil } %>
   <%= link_to t("nav.maintainers"), maintainers_path, aria: { current: current_page?(maintainers_path) ? "page" : nil } %>
@@ -54,7 +59,9 @@
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
 <main id="main-content" role="main">
-  <%= link_to t("app.name"), root_path, class: "logo", aria: { label: t("app.name") } %>
+  <%# A third link home lived here, class="logo", inside main. With the nav's
+      .brand removed and shared/_brand_mark in the corner, bsdports was carrying
+      the same link three times on every page. The mark is the one. %>
   <%= yield %>
 </main>
 </div>

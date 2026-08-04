@@ -74,11 +74,10 @@
       child and computes to zero height, and every rule that styles the mark
       selects it by class with no combinator, so none of them can notice a new
       parent. Do not hang layout off this element. %>
-  <header>
-    <%= link_to main_app.root_path, class: "brgen-logo-mark", aria: { label: t("nav.brand_home") } do %>
-      <span class="brand-text">brgen</span>
-    <% end %>
-  </header>
+  <%# One shared mark across brgen, amber and bsdports (shared/_brand_mark).
+      class_name keeps .brgen-logo-mark so every rule already written against it
+      -- including _vertical_shell's playlist case -- still applies. %>
+  <%= render "shared/brand_mark", label: "brgen", class_name: "brand-mark brgen-logo-mark" %>
   <% unless vertical_surface? %>
     <div role="region" aria-label="<%= t("theme.region") %>">
       <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="<%= t("theme.toggle") %>"
