@@ -174,16 +174,43 @@ def build_stale?(app_dir, out)
   scss_sources(app_dir).any? { |path| File.mtime(path) > out_mtime }
 end
 
+# The app's own Ruby, not whatever is first on PATH. On a Mac with rbenv the
+# bare `bundle` resolved to system Ruby 2.6 and every app's dartsass:build
+# "skipped" with a rubygems require line — so the npx fallback was doing all
+# three builds, silently, and it is the weaker of the two paths.
+def bundle_cmd(app_dir)
+  version = ruby_version_for(app_dir)
+  return ["bundle"] unless version && which("rbenv")
+
+  ["rbenv", "exec", "bundle"].tap { ENV["RBENV_VERSION"] = version }
+end
+
+def ruby_version_for(app_dir)
+  [app_dir, RAILS_ROOT, File.expand_path("..", RAILS_ROOT)].each do |dir|
+    file = File.join(dir, ".ruby-version")
+    return File.read(file).strip if File.file?(file)
+  end
+  nil
+end
+
+def which(bin)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR)
+     .any? { |dir| File.executable?(File.join(dir, bin)) }
+end
+
 def try_dartsass(app_dir)
   return false unless File.file?(File.join(app_dir, "Gemfile"))
 
-  out, status = Open3.capture2e("bundle", "exec", "rails", "dartsass:build", chdir: app_dir)
+  out, status = Open3.capture2e(*bundle_cmd(app_dir), "exec", "rails", "dartsass:build", chdir: app_dir)
   if status.success?
     warn "css: #{File.basename(app_dir)} dartsass ok"
     return true
   end
 
-  warn "css: #{File.basename(app_dir)} dartsass skipped (#{out.lines.last&.strip})"
+  # The last line of a Ruby backtrace names rubygems, not the fault. Show the
+  # first real error line so a skip says why it skipped.
+  reason = out.lines.map(&:strip).find { |l| l.match?(/error|Error|cannot|Could not|incompatible/) }
+  warn "css: #{File.basename(app_dir)} dartsass skipped (#{reason || out.lines.last&.strip})"
   false
 rescue StandardError => e
   warn "css: #{File.basename(app_dir)} dartsass error (#{e.message})"
@@ -195,9 +222,18 @@ def try_npx_sass(app_dir)
   out = File.join(app_dir, "app", "assets", "builds", "application.css")
   FileUtils.mkdir_p(File.dirname(out))
   styles_dir = File.join(app_dir, "app", "assets", "stylesheets")
+  # Mountable engines contribute stylesheets that the host's application.scss
+  # @uses by bare name (`@use "_vertical_dating"`). Rails resolves those through
+  # each engine's assets.paths; a bare `sass` invocation does not, so after the
+  # vertical-as-engine split this fallback could not build brgen at all —
+  # "Can't find stylesheet to import" on line 35, while dartsass:build was fine.
+  engine_styles = Dir[File.join(app_dir, "engines", "*", "app", "assets", "stylesheets")].select do |d|
+    File.directory?(d)
+  end
   cmd = [
     "npx", "--yes", "sass", scss, out,
     "--load-path=#{styles_dir}",
+    *engine_styles.map { |d| "--load-path=#{d}" },
     "--load-path=#{SHARED_STYLES}",
     "--style=compressed",
   ]
