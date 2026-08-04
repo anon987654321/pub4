@@ -25,7 +25,6 @@ $vertical-accents: (
   body.vertical-#{$v},
   body.vertical-#{$v} #dark-toggle:checked ~ .theme-root {
     --accent: #{list.nth($c, 1)};
-    --accent-hover: #{list.nth($c, 2)};
     --vertical-#{$v}-accent: #{list.nth($c, 1)};
     --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
   }

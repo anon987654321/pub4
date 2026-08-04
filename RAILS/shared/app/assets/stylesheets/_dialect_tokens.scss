@@ -10,7 +10,6 @@
   $text-secondary: #8a879c,
   $border: #46435a,
   $accent: #7c6fd6,
-  $accent-hover: #9686e8,
   $danger: #e46151,
   $c-text: oklch(86% 0.02 300),
   $c-accent: oklch(78% 0.10 300),
@@ -29,7 +28,6 @@
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #{$accent};
-  --accent-hover: #{$accent-hover};
   --danger: #{$danger};
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
@@ -58,7 +56,6 @@
   $text-secondary: #5c586e,
   $border: #d4d1de,
   $accent: #5b4fc4,
-  $accent-hover: #4a3fb0,
   $danger: #a9483c
 ) {
   --bg: #{$bg};
@@ -71,7 +68,6 @@
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #{$accent};
-  --accent-hover: #{$accent-hover};
   --danger: #{$danger};
 }
 
@@ -87,7 +83,6 @@
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #8c7a5e;
-  --accent-hover: #6f6149;
   --danger: #a7473b;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -106,7 +101,6 @@
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #a38b6f;
-  --accent-hover: #8c7a5e;
   --danger: #ea6453;
 }
 
@@ -127,7 +121,6 @@
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #f2f2f2;
-  --accent-hover: #d0d0d0;
   --danger: #e46151;
   --font: Arial, Helvetica, sans-serif;
   --radius-xs: 4px;
@@ -155,7 +148,6 @@
   --hover: color-mix(in srgb, var(--text) 8%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #1a1a1a;
-  --accent-hover: #000000;
   --danger: #b24c3f;
   --font: Arial, Helvetica, sans-serif;
   --radius-xs: 4px;
