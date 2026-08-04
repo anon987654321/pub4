@@ -254,17 +254,39 @@
       addEventListener('keydown',function(e){
         if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}
       });
-      // Front-page embeds and ?autostart=1 skip the "launch AI" click-to-start
-      // overlay: boot immediately after listeners are wired. Full-page visits to
-      // ai.brgen.no still show the primer (consent + intentional start).
+      // Autostart is the default: no "launch AI" screen between the visitor and
+      // the face. Embeds and ?autostart=1 already took this path, so this flips
+      // which case is the exception rather than adding a new boot route — the
+      // one below has been the exercised path for every front-page embed.
+      // ?primer=1 keeps the old overlay for debugging the gesture path itself.
+      //
+      // What the tap did that a page load cannot: supply the user gesture an
+      // AudioContext needs. primeAudio() now runs against a page that has had no
+      // interaction, so the context is created 'suspended' and ctx.resume()
+      // rejects. The listeners below resume it on the first real interaction —
+      // any pointerdown or keydown, including the one that sends the first
+      // prompt — so speech works from the first reply without a screen whose
+      // only job was to collect a click.
       try{
         var q=new URLSearchParams(location.search||'');
-        var embedded=false;
-        try{embedded=window.self!==window.top;}catch(_e){embedded=true;}
-        if(q.get('autostart')==='1'||q.get('embed')==='1'||embedded){
+        if(q.get('primer')!=='1'){
           document.body.classList.add('primer-autostart');
           if(p){p.setAttribute('aria-hidden','true');p.tabIndex=-1;}
           setTimeout(go,0);
+
+          var resumeAudio=function(){
+            var ctx=window.__MASTER_AUDIO_PRIME__;
+            if(ctx&&ctx.state==='suspended'){try{ctx.resume();}catch(_e){}}
+            if(!ctx){primeAudio();return;}
+            if(ctx.state==='running'){
+              ['pointerdown','keydown','touchend'].forEach(function(ev){
+                removeEventListener(ev,resumeAudio,{capture:true});
+              });
+            }
+          };
+          ['pointerdown','keydown','touchend'].forEach(function(ev){
+            addEventListener(ev,resumeAudio,{capture:true,passive:true});
+          });
         }
       }catch(_e){}
     })();
