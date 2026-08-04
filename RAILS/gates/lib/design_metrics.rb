@@ -128,10 +128,29 @@ module Deploy
       normal_min = @rules.dig("typography", "accessibility", "normal_text_contrast").to_f
       normal_min = 7.0 if normal_min <= 0 # design_rules AAA default
 
-      pairs = @tokens.flat_map { |name, dialect| DesignMetrics.token_pairs(name, dialect) } +
-              DesignMetrics.vertical_accent_pairs(@tokens)
-      if pairs.empty?
+      all_pairs = @tokens.flat_map { |name, dialect| DesignMetrics.token_pairs(name, dialect) } +
+                  DesignMetrics.vertical_accent_pairs(@tokens)
+      if all_pairs.empty?
         @result.fail("design_metrics contrast: no token pairs resolved from design_tokens.yml", severity: :soft)
+        return
+      end
+
+      # Only measure colours something paints. Reported rather than dropped
+      # quietly: a gate that silently stops counting looks identical to one that
+      # was fixed, and this file's own history is a warning about exactly the
+      # opposite mistake — vertical accents rendering on social chrome with
+      # nothing reporting them.
+      pairs, unpainted = all_pairs.partition { |p| DesignMetrics.token_painted?(RAILS, p[:fg_key]) }
+      if unpainted.any?
+        skipped = unpainted.select { |p| p[:ratio] < 4.5 }
+        @result.warn(
+          "design_metrics contrast: skipped #{unpainted.size} pair(s) whose token has no var() reader " \
+          "(#{skipped.size} of them below AA) — #{unpainted.map { |p| p[:fg_key] }.uniq.sort.join(', ')}"
+        )
+      end
+      if pairs.empty?
+        @result.fail("design_metrics contrast: every token pair is unread — the palette paints nothing",
+                     severity: :soft)
         return
       end
 

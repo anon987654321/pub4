@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Deploy
   # Pure-Ruby design measurements against MASTER/data/design_rules.yml.
   # No browser required. Used by DesignMetricsGate + unit tests.
@@ -102,6 +104,74 @@ module Deploy
           end
         end
       end
+    end
+
+    # Custom properties actually read by something, as `var(--name`.
+    #
+    # A contrast finding is only worth a reader's attention if the colour it
+    # measures reaches a pixel. design_tokens.yml declares several that no longer
+    # do -- every *_hover value among them, since --accent-hover and
+    # --vertical-<v>-accent-hover have no var() consumer anywhere in the tree --
+    # so a third of the contrast list was about colours nothing paints, and the
+    # count could never reach zero by fixing CSS.
+    #
+    # Same rule the rest of this repo applies to declarations: find the reader
+    # before trusting one.
+    def read_custom_properties(rails_root)
+      @read_custom_properties ||= {}
+      @read_custom_properties[rails_root] ||= begin
+        globs = %w[
+          {shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
+          brgen/engines/*/app/assets/stylesheets/*.scss
+          {shared,brgen,amber,bsdports}/app/**/*.erb
+          brgen/engines/*/app/**/*.erb
+          shared/frontend/**/*.js
+          {shared,brgen,amber,bsdports}/app/javascript/**/*.js
+        ]
+        names = Set.new
+        globs.each do |pattern|
+          Dir.glob(File.join(rails_root, pattern)).each do |path|
+            next if path.include?("/builds/") || path.include?("/public/assets/") ||
+                    path.include?("/vendor/") || path.include?("/node_modules/")
+
+            File.read(path).scan(/var\(\s*(--[\w-]+)/) { |m| names << m.first }
+          rescue StandardError
+            next
+          end
+        end
+        names
+      end
+    end
+
+    # Candidate CSS names for a token key, since design_tokens.yml and the
+    # stylesheets spell the same colour differently: `light_accent` is --accent
+    # inside a light block, and `marketplace_hover` is
+    # --vertical-marketplace-accent-hover.
+    def custom_property_candidates(fg_key)
+      key = fg_key.to_s
+      base = key.sub(MODE_PREFIX, "")
+      cands = ["--#{base.tr('_', '-')}", "--#{key.tr('_', '-')}"]
+      if (m = base.match(/\A(?<vertical>[a-z]+)_(?<kind>accent|hover)\z/))
+        if m[:kind] == "accent"
+          # _vertical_shell.scss:27 assigns each vertical's accent straight to
+          # --accent under body.vertical-<v>, so these paint through the token
+          # every surface already reads. The --vertical-<v>-accent alias beside
+          # it has no consumer, and checking only that name skipped the very
+          # findings vertical_accent_pairs was written to surface (see its
+          # header: marketplace 4.33:1 and tv 4.14:1 on social chrome, "and
+          # nothing had reported either").
+          cands << "--accent"
+          cands << "--vertical-#{m[:vertical]}-accent"
+        else
+          cands << "--vertical-#{m[:vertical]}-accent-hover"
+        end
+      end
+      cands.uniq
+    end
+
+    def token_painted?(rails_root, fg_key)
+      read = read_custom_properties(rails_root)
+      custom_property_candidates(fg_key).any? { |c| read.include?(c) }
     end
 
     # All plausible fg/bg pairings within a dialect, mode-matched.
