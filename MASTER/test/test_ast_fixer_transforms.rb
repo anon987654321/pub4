@@ -87,6 +87,28 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :template_literals
   end
 
+  # CONCAT_PART stops at `(`, so a chain ending in a call matched only the
+  # callee and left the arguments dangling outside the new literal:
+  #
+  #   ' — c — ' + text.slice(cut + 1)  ->  ` — c — ${text.slice}`(cut + 1)
+  #
+  # That parses. It is a template literal invoked as a function, so it throws
+  # TypeError every time the line runs, and `node --check` and every syntax gate
+  # wave it through. It shipped four times in e7e48eed1 across
+  # web/public/chat.js and face_speech_runtime.js.
+  def test_string_concat_declines_a_chain_that_ends_in_a_call
+    result = fix("speech.js", <<~JS)
+      const a = text.slice(0, cut) + ' — c — ' + text.slice(cut + 1);
+      const b = "wait " + text.replace(/x/g, "y") + " done";
+    JS
+
+    assert_includes result[:content], "text.slice(0, cut) + ' — c — ' + text.slice(cut + 1);"
+    assert_includes result[:content], '"wait " + text.replace(/x/g, "y") + " done";'
+    refute_includes result[:transforms], :template_literals
+    refute_match(/`[^`]*\$\{[^}]*\}[^`]*`\s*\(/, result[:content],
+                 "produced a template literal called as a function")
+  end
+
   def test_keeps_reassigned_var
     result = fix("counter.js", <<~JS)
       var count = 0;

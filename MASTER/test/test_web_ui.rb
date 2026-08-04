@@ -495,6 +495,38 @@ class TestWebUI < Minitest::Test
     end
   end
 
+  # A template literal followed immediately by "(" calls the resulting string,
+  # which is a TypeError every time that line runs. It parses, so `node --check`
+  # and every syntax gate pass it.
+  #
+  # This is not hypothetical: e7e48eed1's mechanical sweep ("template_literals"
+  # among the AstFixer autofixes it names) rewrote four working concatenations
+  # into exactly this shape across chat.js and face_speech_runtime.js —
+  #
+  #   -  text.slice(0, cut) + ' — *cough* — ' + text.slice(cut + 1)
+  #   +  text.slice(0, cut) + ` — *cough* — ${text.slice}`(cut + 1)
+  #
+  # — and they sat in the tree for a day. Only chat.js was caught, indirectly,
+  # by the manifest-drift test above, and only because the digested copy still
+  # held the pre-sweep version; face_speech_runtime.js was never noticed at all,
+  # because face.runtime.js had not been rebuilt since. Precompiling would have
+  # "resolved" that drift by copying the broken source over the good asset.
+  def test_public_js_has_no_template_literal_called_as_a_function
+    public_dir = File.expand_path("../web/public", __dir__)
+    sources = Dir[File.join(public_dir, "*.js")] + Dir[File.join(public_dir, "face.part*.txt")]
+    offenders = sources.flat_map do |path|
+      File.readlines(path).each_with_index.filter_map do |line, i|
+        next unless line.match?(/`[^`]*\$\{[^}]*\}[^`]*`\s*\(/)
+
+        "#{File.basename(path)}:#{i + 1} #{line.strip[0, 100]}"
+      end
+    end
+
+    assert_empty offenders,
+                 "template literal called as a function (TypeError at runtime, parses fine):\n" +
+                 offenders.join("\n")
+  end
+
   # Reads web/config/face_assets.yml, which the view now renders from, rather
   # than scraping a javascript_include_tag(*%w[...]) literal out of the ERB.
   def boot_manifest_sources(index)

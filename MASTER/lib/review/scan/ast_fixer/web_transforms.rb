@@ -118,9 +118,27 @@ module Master
           CONCAT_CHAIN = /#{CONCAT_PART}(?:\s*\+\s*#{CONCAT_PART}){1,}/
           private_constant :CONCAT_PART, :CONCAT_CHAIN
 
+          # CONCAT_PART matches a dotted identifier path and stops at `(`, so a
+          # chain ending in a *call* matched only the callee and left the
+          # argument list dangling:
+          #
+          #   ' — *cough* — ' + text.slice(cut + 1)
+          #     -> ` — *cough* — ${text.slice}`(cut + 1)
+          #
+          # which is a template literal invoked as a function — a TypeError on
+          # every execution, and valid syntax, so it passes `node --check` and
+          # every parser gate. This shipped four times in `e7e48eed1` across
+          # web/public/chat.js and face_speech_runtime.js and sat in the tree
+          # until a rebuild surfaced it.
+          #
+          # The transform cannot absorb a call expression, so it declines rather
+          # than converting half of one. Same guard covers a call mid-chain
+          # (`"a" + f(x) + "b"` matches up to `f`, and post_match starts `(`).
           def convert_string_concat(src)
             changed = false
             out = src.gsub(CONCAT_CHAIN) do |match|
+              next match if Regexp.last_match.post_match.start_with?("(")
+
               literal = template_literal_for(match)
               next match unless literal
 

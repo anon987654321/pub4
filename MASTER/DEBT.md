@@ -150,6 +150,47 @@ same edit. Whoever resolves the ceiling should decide which of them means it.
 
 **agent-ignore** — `rake constitution` is broader than `rake selftest` and still reports thousands of self-scan findings. Do not chase zero. Track the count down by removing false positives and fixing high-signal violations.
 
+### Autofix Wrote Broken JavaScript — Closed 2026-08-04, With What It Cost
+
+**operator-priority context, no action left.** `AstFixer`'s `template_literals`
+transform converted a `+`-chain that ends in a *call* by taking only the callee:
+
+```js
+-  text.slice(0, cut) + ' — *cough* — ' + text.slice(cut + 1)
++  text.slice(0, cut) + ` — *cough* — ${text.slice}`(cut + 1)
+```
+
+`CONCAT_PART` matches a dotted identifier path and stops at `(`, so the argument
+list was left outside the new literal. The result is a template literal invoked
+as a function — a `TypeError` on every execution of that line, and **valid
+syntax**, so `node --check`, the parse gate and the commit's own "All parse"
+claim were all satisfied.
+
+Four instances shipped in `e7e48eed1`'s mechanical sweep, two in
+`web/public/chat.js` and two in `web/public/face_speech_runtime.js`, on the
+paralinguistic filler and timestamp paths of the live face.
+
+How long it hid, and why, is the part worth keeping:
+
+- `face_speech_runtime.js` feeds `face.runtime.js`, which had not been rebuilt
+  since. Production served the pre-sweep runtime and looked fine.
+- `chat.js` was caught only *indirectly*, by
+  `test_public_asset_manifest_matches_source_files`, and only because the
+  digested copy in `web/public/assets/` still held the good version. That test
+  reports "generated asset drifted" — a staleness message. Running
+  `assets:precompile` to clear it copies the broken source over the good asset
+  and turns the alarm off without fixing anything, which is exactly what
+  happened first.
+
+Closed three ways: the four call sites restored to concatenation; the transform
+now declines any chain followed by `(` (`web_transforms.rb`, with
+`test_string_concat_declines_a_chain_that_ends_in_a_call` pinning both the
+decline and the plain chain it must still convert); and
+`test_public_js_has_no_template_literal_called_as_a_function` in
+`test_web_ui.rb` fails on the shape directly, in the tree, rather than through a
+drift message. A repo-wide sweep of `.js`/`.mjs`/`.ts` finds zero remaining, and
+the detector was checked against the pre-fix blobs first — it reports 4 there.
+
 ### Web Face Verification
 
 Voice Mode and boot contracts are covered by `web/test/face_boot.test.mjs` (static assertions on `face.runtime.js`). The WebGL primer guard has the same pattern. Manual iOS Safari tap-testing remains operator-priority when boot assets change materially.

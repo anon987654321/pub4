@@ -139,7 +139,7 @@ function appendMsg(role, text = '') {
     d.dataset.enterStagger = String(stagger);
   }
   const now = new Date();
-  d.dataset.ts = now.getHours().toString().padStart(2,'0') + `:${now.getMinutes}`().toString().padStart(2,'0');
+  d.dataset.ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   if (role === 'assistant') {
     const conf = parseFloat(document.body.dataset.confidence || '1');
     d.style.setProperty('--conf-alpha', (0.08 + conf * 0.3).toFixed(2));
@@ -230,7 +230,7 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
   note.className = 'enhance-confirm';
   note.innerHTML =
     '<span class="enhance-arrow">\u2192</span> ' +
-    `<span class="enhance-text">${enhanced.replace}`(/</g, '&lt;') + '</span> ' +
+    '<span class="enhance-text">' + enhanced.replace(/</g, '&lt;') + '</span> ' +
     '<span class="enhance-yn">[y/n]</span>';
   log.appendChild(note);
   log.scrollTop = log.scrollHeight;
