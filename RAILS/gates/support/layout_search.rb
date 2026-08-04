@@ -169,7 +169,11 @@ module Deploy
       when "nav_model"
         nav.include?("navBar") || nav.include?('id="navBar"') ? "amazon_nav" : "plain_nav"
       when "search_model"
-        if search.include?(".search") && search.include?("border-radius: 30px")
+        # The pill radius was a literal `30px` when this pen was recreated; the
+        # token pass (0d7ca945e) moved it to var(--radius-pill), which resolves
+        # to 9999px in every dialect. Accept either, or the detector measures
+        # the design system's own migration as a regression.
+        if search.include?(".search") && search.match?(/border-radius:\s*(?:var\(--radius-pill|30px|9+px)/)
           "yep_search"
         else
           "plain_search"

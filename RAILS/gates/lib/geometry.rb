@@ -104,6 +104,7 @@ module Deploy
       check_overflow(surface, data)
       check_fitts(surface, elements)
       check_occlusion(surface, elements)
+      check_chrome_occlusion(surface, elements)
       check_contrast(surface, elements)
       check_token_conformance(surface, data)
       check_rhythm(surface, data)
@@ -184,6 +185,43 @@ module Deploy
           "(#{group.size}× unclickable) principle=fitts_law",
           severity: sev
         )
+      end
+    end
+
+    # `under_chrome` is an excuse the probe grants because scrolling moves flow
+    # content out from under fixed chrome. It does not move fixed chrome. So for
+    # an element whose OWN position is fixed, an occluding fixed/sticky blocker
+    # is permanent and the element is unclickable for the life of the page.
+    #
+    # This is the class of bug that shipped twice in the same corner: the brgen
+    # wordmark rendered at z-index 11 under .nav_swiper_bar at z-index 90, so
+    # elementFromPoint at the mark's own centre returned the "front" nav link and
+    # a tap on the brand navigated to front instead of home. Both elements are
+    # correct in isolation, which is why neither design_contract nor
+    # visual_contract saw it — only the composed hit test does.
+    #
+    # The element's own computed position is the test, not an ancestor's: these
+    # apps wrap the page in a fixed .app-shell, so "has a fixed ancestor" is true
+    # of every element and would indict the whole document.
+    def check_chrome_occlusion(surface, elements)
+      buried = elements.select do |el|
+        el["position"].to_s == "fixed" && el["hit"].to_s.start_with?("under_chrome")
+      end
+      return if buried.empty?
+
+      buried.group_by { |el| el["key"].to_s.sub(/\[\d+\]\z/, "") }.first(5).each do |key, group|
+        el = group.first
+        label = el["text"].to_s.strip.empty? ? (el["aria"] || el["tag"]) : el["text"].to_s.strip
+        @result.fail(
+          "geometry chrome occlusion: #{surface.id} #{key} is position:fixed " \
+          "(#{label.to_s[0, 30].inspect}, z=#{el["z"] || "auto"}) and its centre pixel is owned by " \
+          "#{el["hit"].sub("under_chrome:", "")} — fixed chrome cannot be scrolled out from " \
+          "under a blocker, so this target is dead for the life of the page " \
+          "(#{group.size}×) principle=fitts_law",
+          severity: :hard
+        )
+        @result.autofix(app: surface.app, selector: key, kind: :occlusion,
+                        detail: "#{surface.id}: fixed chrome buried by #{el["hit"].sub("under_chrome:", "")}")
       end
     end
 
