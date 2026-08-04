@@ -203,21 +203,41 @@ they sit above every scanner section below.
       `dist/requestjs.js` with no imports of its own, so that one *can* be
       vendored with `--download` and is the remaining GDPR/supply-chain item.
 
-- [x] ~~The front page becomes unresponsive to any JS evaluation about 3 seconds
-      after load.~~ **Withdrawn — this was my instrument, not the page.**
-      CDP `Runtime.evaluate` on this page times out unless Ferrum's request
-      interception happens to be enabled, and the reading flips with that
-      setting rather than with anything in the app: with interception on, a
-      trivial evaluate returns in 10–80ms at every offset from 1s to 20s. The
-      original "reproducible at t=3.2s" reading came from a wedged CDP session
-      — once one `send_message` times out, every later command on that session
-      fails identically, which is what produced the flat 6.01s rows that looked
-      like data. An earlier bisect "isolating" tiptap failed the same way.
+- [x] The front page becomes unresponsive to any JS evaluation about 3 seconds
+      after load. **Withdrawn as unmeasurable by me, then found by someone with
+      the right tool. Both halves are true and the second one matters more.**
 
-      Nothing in this file should be read as evidence of a main-thread stall.
-      If one is ever suspected again, measure it with `Performance.getMetrics`
-      or a `Tracing` capture, which do not need the page's main thread, and
-      never with repeated `evaluate` calls on one session.
+      **The renderer really was spinning.** `951dcd00d` names it:
+      `nearby_chat`'s `connect()` observes `this.element` with
+      `{childList, subtree}` and calls `#syncLabelsFromFrame` from the callback,
+      which assigned `textContent` to `tabLabel` and `headerLabel`
+      unconditionally — and both targets live *inside* the observed element.
+      Assigning `textContent` replaces the text node even when the string is
+      identical, so every callback produced the mutation that triggered the next
+      one. 100% CPU, and the load event never fired.
+
+      That is on the page I was probing, in the chat widget I was fixing. So my
+      original reading was pointing at something real. What was wrong was the
+      confidence and the method, not the symptom.
+
+      **My measurement was still not evidence, and that is the lesson to keep.**
+      CDP `Runtime.evaluate` flipped with whether Ferrum's request interception
+      happened to be enabled, and once one `send_message` timed out every later
+      command on that session failed identically — which is what produced the
+      flat 6.01s rows that looked reproducible. An earlier bisect "isolating"
+      tiptap failed the same way. A reading that changes when you toggle an
+      unrelated setting cannot name a cause, even when a cause exists.
+
+      The correct tool did name it: pausing the spinning V8 through CDP showed
+      the stack as `#syncLabelsFromFrame` <- `MutationObserver`, in a loop. Use
+      `Performance.getMetrics`, a `Tracing` capture, or a V8 pause — none of
+      which need the page's main thread — and never repeated `evaluate` calls on
+      one session.
+
+      Worth noting how long it hid: `ci.rb` runs the system-test step only when
+      not `vps_host`, so this hung every local `bin/ci` for brgen indefinitely
+      while deploys stayed green, because the VPS skips the one step that opens
+      a browser. Five runs were killed at 5–10 minutes each with no output.
 
 - [ ] `brgen/app/controllers/nearby_controller.rb:38` — `widget` renders inside
       the full application layout. Measured 64,640 bytes for what Turbo then
