@@ -157,6 +157,15 @@ export default class extends Controller {
     // Only coach when there is something to navigate (feed surface).
     if (this.#items().length < 1) return
 
+    // ...and only where there is a keyboard to coach about. The copy is
+    // "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)", and
+    // it was showing on a 390px touch viewport with no keyboard, no ? key and no
+    // j/k — verified on live brgen.no. A coarse pointer with no hover is a touch
+    // device; the shortcuts themselves stay bound either way, for a paired
+    // keyboard.
+    const fine = window.matchMedia("(hover: hover) and (pointer: fine)")
+    if (fine.matches === false) return
+
     const coach = document.createElement("div")
     coach.className = "hotkey-coach"
     coach.setAttribute("role", "status")

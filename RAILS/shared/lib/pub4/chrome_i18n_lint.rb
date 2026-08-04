@@ -54,7 +54,9 @@ module Pub4
     BASELINES = {
       "empty_title" => 0,
       "search_placeholder" => 0,
-      "aria_label" => 169,
+      # 172 → 169 → 141 (2026-08-04): bsdports ports/show and five amber views
+      # translated, which took 28 aria-labels off the count. Ratchet down only.
+      "aria_label" => 141,
     }.freeze
 
     # Kept for callers that referenced the old single number.

@@ -263,6 +263,40 @@ they sit above every scanner section below.
       zero `data-controller="futurism"` references in any ERB — the lazy-render
       mechanism that would fix the item above is already installed and unused.
 
+### P0.5 Two first-visit coaches in one slot, one of them for a keyboard that isn't there
+
+Found by screenshotting **live** `brgen.no` after the deploy, not by a scanner.
+Both coaches fire on the same first visit, into the same bottom-centre position.
+
+- [x] `shared/frontend/feed_hotkey_controller.js` — the hotkey coach reads
+      "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)" and
+      showed on a 390×844 touch viewport, where there is no keyboard, no `?` and
+      no j/k. `#maybeShowCoach` gated on "is this a feed surface" and on the
+      dismissed flag, and on nothing about input capability. **Fixed:** it now
+      also requires `(hover: hover) and (pointer: fine)`. The shortcuts stay
+      bound regardless, for a tablet with a paired keyboard.
+
+- [ ] `.tab-bar-coach` (`_shell.scss:410`) and `.hotkey-coach`
+      (`_shell.scss:496`) are both `position: fixed; left: 50%;
+      transform: translateX(-50%)` at the bottom edge — 2.75rem + safe-area and
+      1rem respectively — and they render at the same time. `.hotkey-coach`
+      carries `z-index: var(--z-toast, 1100)` against `.tab-bar-coach`'s
+      `calc(var(--z-nav, 80) + 1)` = 91, so the hotkey box paints over the menu
+      coach and covers its **"Vis meny" button** — the one control that coach
+      exists to point at.
+
+      The pointer gate above removes the collision on touch, which is where it
+      was observed, but not on a desktop first visit: there both still fire into
+      the same slot. Two onboarding hints at once is also a Hick's-law problem
+      before it is a z-index one.
+
+      Not fixed here because it needs a product decision, not a CSS nudge: which
+      coach wins on first visit, or are they sequenced (menu first, keyboard on
+      the visit after)? Picking one silently would be inventing UX. Both are
+      one-shot and localStorage-flagged (`pub4:tab-bar:open`,
+      `pub4:hotkey-coach:dismissed`), so sequencing them is cheap once the order
+      is chosen.
+
 ---
 
 ## Scanner findings — verdicts
