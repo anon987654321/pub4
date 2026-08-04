@@ -10,7 +10,14 @@ class PublicNavigationTest < ApplicationSystemTestCase
     # became "Hopp til hovedinnhold" and "Hovednavigasjon" when the chrome was
     # localised. What the test is checking is that the skip link and the primary
     # nav are present and labelled, which is locale-independent.
-    assert_selector "a.skip-link[href='#main-content']", text: I18n.t("skip_to_content")
+    # visible: :all because the skip link is supposed to be invisible here. It is
+    # clipped to 1x1 with clip-path/opacity:0 until :focus (_shell.scss), which is
+    # the standard pattern, and Selenium reports "" for the visible text of
+    # clipped content -- so the plain `text:` filter asserted something the design
+    # guarantees can never be true. Matching on all text still proves what this
+    # test is for: the link is present, points at #main-content, and is labelled.
+    assert_selector "a.skip-link[href='#main-content']",
+                    text: I18n.t("skip_to_content"), visible: :all
     assert_selector "main#main-content"
     assert_selector "nav[aria-label='#{I18n.t("nav.primary_nav")}']"
     assert_no_selector "meta[name='turbo-cache-control'][content='no-cache']", visible: :all

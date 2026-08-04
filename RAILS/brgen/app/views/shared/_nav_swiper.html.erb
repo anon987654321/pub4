@@ -1,15 +1,22 @@
 <div class="nav_swiper" data-controller="nav-swiper" data-nav-swiper-target="root">
-  <nav id="nav_sections" class="nav_swiper_bar" role="tablist" aria-label="Sections" data-brgen-shell-target="navSections">
+  <%# These are links that navigate — /live, /channels, another host entirely —
+      and there is no tabpanel anywhere on the page. Dressing them as
+      role="tablist" > role="group" > role="tab" produced three axe violations at
+      once: the group broke the tablist's required children, the tabs lost their
+      required tablist parent through it, and role="tablist" on <nav> overrode
+      the navigation landmark, so everything inside stopped counting as landmark
+      content. It is a navigation bar, so it says so; aria-current marks the
+      active entry, which is the correct signal for a nav and was already here.
+      Roving tabindex went with the tab roles: a tablist is one tab stop by
+      design, but a nav should let Tab reach every link. %>
+  <nav id="nav_sections" class="nav_swiper_bar" aria-label="Sections" data-brgen-shell-target="navSections">
     <% brgen_nav_groups.each do |group_label, items| %>
       <div class="nav_swiper_group" role="group" aria-label="<%= group_label.capitalize %>">
         <% items.each do |label, href| %>
           <% active = label.downcase == (active_vertical.to_s.presence || "front") %>
           <%= link_to label, href,
                 class: "nav_link#{" active" if active}",
-                role: "tab",
-                "aria-selected": active,
-                "aria-current": ("page" if active),
-                tabindex: (active ? 0 : -1) %>
+                "aria-current": ("page" if active) %>
         <% end %>
       </div>
     <% end %>

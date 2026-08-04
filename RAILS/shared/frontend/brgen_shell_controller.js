@@ -59,13 +59,14 @@ export default class extends Controller {
     this.slides[this.slideIndex]?.classList.add("active")
   }
 
-  // Every write here must be conditional. This runs from connect(), and the
-  // slides sit inside the subtree Stimulus observes for [data-controller], so an
-  // unconditional `s.textContent = ...` is a childList mutation that feeds the
-  // observer that reconnects the controller that runs this method again. That
-  // loop pegged a renderer at 100% CPU and hung brgen's system tests forever --
-  // invisible because ci.rb excludes test/system. Assigning the value it already
-  // holds still emits a mutation record, so equality is the guard, not laziness.
+  // The equality check is hygiene, not a fix for anything observed here: this
+  // method runs once per connect and settles, because dataset.base makes the
+  // second pass compute the label it already wrote. It is written this way
+  // because assigning textContent replaces the text node even when the string is
+  // identical, and nearby_chat_controller turned exactly that into an
+  // unbreakable MutationObserver loop (see the note on #setTab there). An
+  // earlier version of this comment blamed the carousel for that hang; it did
+  // not cause it.
   syncCarouselPrefix() {
     this.slides.forEach((s) => {
       if (!s.dataset.base) s.dataset.base = (s.textContent || s.dataset.domain || "").trim()
@@ -82,8 +83,13 @@ export default class extends Controller {
     })
   }
 
+  // Selects .nav_link, not [role="tab"]: _nav_swiper dropped the tablist roles
+  // because those entries are links that navigate and there is no tabpanel to
+  // control. Arrow keys still walk the bar, but tabIndex is left alone -- a
+  // tablist is deliberately one tab stop, whereas every link in a nav should
+  // stay reachable by Tab.
   onNavKeydown(e) {
-    const tabs = Array.from(this.navSectionsTarget.querySelectorAll('[role="tab"]'))
+    const tabs = Array.from(this.navSectionsTarget.querySelectorAll(".nav_link"))
     const i = tabs.indexOf(document.activeElement)
     if (i < 0) return
     let next = i
@@ -93,7 +99,6 @@ export default class extends Controller {
     else if (e.key === "End") next = tabs.length - 1
     else return
     e.preventDefault()
-    tabs.forEach((t, idx) => { t.tabIndex = idx === next ? 0 : -1 })
     tabs[next].focus()
   }
 

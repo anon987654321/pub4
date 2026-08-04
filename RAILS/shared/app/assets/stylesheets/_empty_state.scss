@@ -64,7 +64,12 @@
   color: var(--text-secondary, var(--text-dim));
 }
 
-.empty-state a {
+/* :not(.btn) because this rule is more specific (0,1,1) than .btn-primary
+   (0,1,0), so it captured the CTA's colour while .btn-primary kept supplying the
+   background: the button painted --accent (#f2f2f2) on --text (#e0e0e0), a
+   contrast ratio of 1.17. The label was there and unreadable. Prose links keep
+   the accent; anything styled as a button keeps the colour its own rule set. */
+.empty-state a:not(.btn) {
   color: var(--accent, var(--accent));
   font-weight: 600;
 }
