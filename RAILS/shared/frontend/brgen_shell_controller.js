@@ -59,6 +59,13 @@ export default class extends Controller {
     this.slides[this.slideIndex]?.classList.add("active")
   }
 
+  // Every write here must be conditional. This runs from connect(), and the
+  // slides sit inside the subtree Stimulus observes for [data-controller], so an
+  // unconditional `s.textContent = ...` is a childList mutation that feeds the
+  // observer that reconnects the controller that runs this method again. That
+  // loop pegged a renderer at 100% CPU and hung brgen's system tests forever --
+  // invisible because ci.rb excludes test/system. Assigning the value it already
+  // holds still emits a mutation record, so equality is the guard, not laziness.
   syncCarouselPrefix() {
     this.slides.forEach((s) => {
       if (!s.dataset.base) s.dataset.base = (s.textContent || s.dataset.domain || "").trim()
@@ -67,7 +74,8 @@ export default class extends Controller {
     const prefix = parts.length >= 3 && parts[0] !== "www" ? `${parts[0]}.` : ""
     this.slides.forEach((s) => {
       const base = s.dataset.base
-      s.textContent = prefix + base
+      const label = prefix + base
+      if (s.textContent !== label) s.textContent = label
       if (s.tagName === "A" && (!s.getAttribute("href") || s.getAttribute("href") === "#")) {
         s.href = `https://${base}/`
       }
@@ -91,7 +99,13 @@ export default class extends Controller {
 
   syncStandaloneMode() {
     const standalone = window.matchMedia("(display-mode: standalone)").matches
-    document.documentElement.dataset.displayMode = standalone ? "standalone" : "browser"
+    const mode = standalone ? "standalone" : "browser"
+    // Conditional for the same reason as syncCarouselPrefix: <html> is the root
+    // Stimulus observes, and re-setting an attribute to its current value still
+    // queues a mutation record.
+    if (document.documentElement.dataset.displayMode !== mode) {
+      document.documentElement.dataset.displayMode = mode
+    }
     document.querySelectorAll("nav").forEach((nav) => nav.classList.toggle("nav-visible", standalone))
   }
 }

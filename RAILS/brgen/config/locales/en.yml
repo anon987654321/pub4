@@ -307,6 +307,7 @@ en:
     create_playlist: "Create one to start the radio."
   actions:
     add_one: "Add one"
+    dismiss: "Dismiss"
     sell_something: "Sell something"
     new_set: "New set"
     tv_home: "TV home"
@@ -620,6 +621,7 @@ en:
     empty_waiting_title: "Waiting for the first Live notes"
     empty_waiting_body: "Enable location or check back when locals start posting."
   nearby:
+    is_nearby_html: "%{handle} is nearby"
     page_title: "Nearby"
     live_link: "Live feed (anonymous notes nearby)"
     prefer_room: "Prefer a room?"

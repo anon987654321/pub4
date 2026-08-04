@@ -384,9 +384,14 @@ class DeployBacklogTest < Minitest::Test
     setup = read_source(File.join(ROOT, 'shared/app/controllers/concerns/shared/application_setup.rb'))
     assert_includes setup, 'turbo_refreshes_with :morph, scroll: :preserve'
 
-    source = read_source(File.join(ROOT, 'shared/frontend/layouts/_nav.html.erb'))
-    assert_includes source, 'data-turbo-permanent'
-    assert_includes source, 'turbo_prefetch: false'
+    # There used to be a fourth check here, against
+    # shared/frontend/layouts/_nav.html.erb, asserting the same two attributes
+    # the loop above already asserts on all three real layouts. shared/frontend
+    # is registered as an *asset* path (engine.rb "shared.frontend_assets"),
+    # never a view path, so nothing could render that file -- and it still used
+    # user_signed_in? and @app_name from before the engine extraction. This
+    # assertion was its only reader, so it guarded markup that could not reach a
+    # page while reading as coverage. The file and its four siblings are gone.
 
     pagy_source = read_source(File.join(ROOT, 'shared/config/initializers/pagy.rb'))
     assert_includes pagy_source, 'data-turbo-prefetch="false"'

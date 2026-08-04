@@ -307,6 +307,7 @@ nb:
     create_playlist: "Opprett en for å starte radioen."
   actions:
     add_one: "Legg til en"
+    dismiss: "Lukk"
     sell_something: "Selg noe"
     new_set: "Nytt sett"
     tv_home: "TV-hjem"
@@ -620,6 +621,7 @@ nb:
     empty_waiting_title: "Venter på de første Live-notatene"
     empty_waiting_body: "Slå på posisjon eller kom tilbake når lokale begynner å poste."
   nearby:
+    is_nearby_html: "%{handle} er i nærheten"
     page_title: "I nærheten"
     live_link: "Live-feed (anonyme notater i nærheten)"
     prefer_room: "Vil du ha et rom?"

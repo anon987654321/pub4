@@ -65,6 +65,7 @@ pin "pub4/scroll_chrome", to: "scroll_chrome_controller.js"
 pin "pub4/brgen_shell", to: "brgen_shell_controller.js"
 pin "pub4/action", to: "action_controller.js"
 pin "pub4/bottom_sheet", to: "bottom_sheet_controller.js"
+pin "pub4/dismiss", to: "dismiss_controller.js"
 # 1% sample (hotwire.js WEB_VITALS_SAMPLE_RATE), with a local PerformanceObserver
 # fallback -- so 99 visitors in 100 never import this and none of them should
 # preload it.

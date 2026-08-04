@@ -32,6 +32,7 @@ import ScrollChrome from "pub4/scroll_chrome"
 import BrgenShell from "pub4/brgen_shell"
 import ActionController from "pub4/action"
 import BottomSheet from "pub4/bottom_sheet"
+import Dismiss from "pub4/dismiss"
 import Autosave from "pub4/autosave"
 import DraftStore from "pub4/draft_store"
 import MediaPicker from "pub4/media_picker"
@@ -146,6 +147,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("brgen-shell", BrgenShell)
   application.register("action", ActionController)
   application.register("bottom-sheet", BottomSheet)
+  application.register("dismiss", Dismiss)
   application.register("autosave", Autosave)
   application.register("draft-store", DraftStore)
   application.register("media-picker", MediaPicker)
