@@ -512,9 +512,9 @@ count is not the finding; the verdict is.
 | `delete_no_confirm` | 29 | artifact |
 | `orphan_partial` | 28 | artifact |
 | `list_no_empty_state` | 28 | artifact |
-| `unread_css_var` | 27 | open |
+| `unread_css_var` | 28 | fixed (19) + judgement (9) |
 | `css_font_px_hardcoded` | 25 | open |
-| `css_vendor_prefix` | 24 | open |
+| `css_vendor_prefix` | 24 | artifact / policy |
 | `rb_rescue_nil` | 21 | policy |
 | `form_no_label` | 18 | open |
 | `count_in_view` | 18 | fixed |
@@ -526,7 +526,7 @@ count is not the finding; the verdict is.
 | `model_no_validations` | 11 | artifact |
 | `css_autofix_scar` | 11 | policy |
 | `ctrl_index_no_pagination` | 11 | judgement |
-| `css_font_px_small` | 10 | open |
+| `css_font_px_small` | 10 | artifact |
 | `rb_env_fetch_no_default` | 10 | artifact |
 | `inline_style` | 9 | policy |
 | `css_zindex_magic` | 9 | judgement (ladder gap) |
@@ -1680,9 +1680,27 @@ Form with inputs and no label element.  Law: `rams_checklist.understandable`.
 - [ ] `bsdports/app/views/comments/create.turbo_stream.erb:1` — fields without label
 - [ ] `bsdports/app/views/ports/show.html.erb:1` — fields without label
 
-### css_font_px_small — 10
+### css_font_px_small — 10 · **artifact, 0 real, 2026-08-04**
 
 Font-size below 16px. typography.accessibility.body_min_px is 16; below that iOS zooms the viewport on focus. Law: `typography.accessibility.body_min_px`.
+
+All ten enumerated and read. **None is body text**, which is the only thing the
+16px floor is about — it exists because iOS zooms the viewport when a *form
+field* under 16px takes focus.
+
+Nine sit in files the repo's own linter already exempts:
+`FrontendAuditor::PEN_STYLE_PATH_PATTERN` allow-lists `_jsfiddle_chrome`,
+`_marketplace_nav_bar` and `_marketplace_animated_logo` as documented product
+pens whose exact CSS is preserved deliberately — including the 3px and 4px
+lettering inside the animated marketplace logo, which is an SVG glyph and not
+prose at any size.
+
+The tenth, `amber/_brand.scss:30`, is `font-size: 12px` on
+`.amber-logo-svg .amber-logo-mark` — the small type in the amber wordmark, set
+against a 60px logo word on the line above. Changing it resizes the brand.
+
+The scanner and the auditor disagree here, and the auditor is the one that knows
+about pens. Worth teaching the scanner the same allow-list if this rule is kept.
 
 - [ ] `amber/app/assets/stylesheets/_brand.scss:30` — font-size: 12px;
 - [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:103` — font-size: 4px;
@@ -2509,9 +2527,65 @@ Partial with no render call found. Verify against dynamic render paths before de
 - [ ] `shared/app/views/shared/icons/_sun.html.erb` — no render "shared/icons/sun" or "sun" found
 - [ ] `shared/frontend/layouts/_flash.html.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/shared/frontend/layouts/flash" or "flash" found
 
-### unread_css_var — 27 · **open**
+### unread_css_var — 28 · **fixed (19) + one given a reader + judgement (9), 2026-08-04**
 
 CSS custom property defined and never read. A token with no var() consumer. Declaration without a reader. Law: `MASTER/DEBT.md inert config`.
+
+Re-counted across all 91 stylesheets in the family: **28** names declared and
+never read, not 27. The count needed two passes, because the first one was wrong
+in both directions.
+
+**The instrument first.** Searching authored files only cannot see three real
+classes of reader: a library that names a property itself, a mixin that emits the
+name through interpolation, and the compiled sheet. Re-run against vendored JS,
+`node_modules` and the built CSS, eight names came back with apparent readers —
+and every one of them was a fossil. Seven were stale digested assets under
+`amber/public/assets/` carrying `_x_shell`, `_x_widgets` and `_items_luxury`,
+partials whose `x_` prefix was removed on 2026-07-23; the eighth was an unrelated
+`rdoc` gem stylesheet inside `vendor/bundle`. A precompiled asset from before a
+rename is not a reader.
+
+**`--turbo-progress-bar-color` was the one that mattered, and deleting it would
+have been the wrong fix.** brgen, amber and bsdports each declared
+`--turbo-progress-bar-color: var(--accent)`. Turbo reads no such property:
+`turbo.js:2416` hardcodes `background: #0076ff` in the stylesheet it injects. So
+all three apps have been showing stock Turbo blue while carrying a token that
+says they show brand accent — inert config in the design system itself.
+
+Given a reader instead: `html .turbo-progress-bar { background: var(--accent) }`
+in `shared/_shell.scss`, once for all three apps. The `html` prefix rather than
+`!important` because Turbo appends its `<style>` to head at runtime, after our
+`<link>`, so at equal specificity Turbo wins on order; 0,1,1 beats 0,1,0 whatever
+the order. Measured on the live page: the bar computes `rgb(91, 79, 196)`, which
+is brgen's `--accent` `#5b4fc4`, against Turbo's `rgb(0, 118, 255)`.
+
+**19 names deleted** (26 declarations, since several are declared per dialect):
+`--app-accent --c-code --c-danger --chrome-bg --color-background --elev-2
+--food-card-radius --gradient-card-scrim --gradient-hero --layout-max
+--line-height-base --maps-accent-soft --panel-blur-bg --playlist-success
+--showcase-chip --text-display --turbo-progress-bar-color --weight-medium
+--widgets-width`. `--panel-blur-bg` is a straggler from before the flat rule
+banned `backdrop-filter`; the two gradients are from the `pixel_field` vocabulary
+dropped 2026-07-18.
+
+**9 kept, and they are the interesting ones.** Each is as unread as the 19 and
+each would lose something real:
+
+- `--accent-hover` — declared **seven** times with a considered per-dialect value
+  (`#6f6149` luxury, `#8c7a5e`, `#d0d0d0` wscons, `#000000` face_root). That is a
+  fully specified design axis with no consumer, not an oversight. Deleting it
+  throws away a decision; wiring it means choosing which elements hover, which is
+  a visual call and not mine.
+- `--blue`, `--grey`, `--extra-light-grey` — three of the ten in
+  `minimal-alias-tokens`, whose own comment calls it "the same 10 x.com-style
+  names regardless of mode". It is a vocabulary, deliberately complete; three
+  gaps in it are worse than three unused names.
+- `--luxury-accent`, `--luxury-font-title`, `--luxury-radius-sm/md/lg` —
+  `WIRING_NOTES` documents amber's luxury dialect as "soft 6/10/14", and these
+  are exactly 6px/10px/14px. So the doc and the code disagree about whether amber
+  uses them; amber is on the shared `--radius-*` scale instead. Deleting the
+  tokens makes the doc wrong, keeping them keeps a claim the CSS does not honour,
+  and resolving it either way changes amber's corners.
 
 - [ ] `shared/app/assets/stylesheets` — --luxury-accent defined, never read via var(--luxury-accent)
 - [ ] `shared/app/assets/stylesheets` — --line-height-base defined, never read via var(--line-height-base)
@@ -2684,9 +2758,29 @@ Method longer than 30 lines. Same rule at method scale. Law: `soul.absolute.code
 - [ ] `tools/crawl_browser.rb:53` — crawl_target spans 32 lines
 - [ ] `tools/crawl_probe.rb:13` — run_browser_crawl spans 36 lines
 
-### css_vendor_prefix — 24
+### css_vendor_prefix — 24 · **artifact / policy, 0 to remove, 2026-08-04**
 
 Vendor prefix outside the known-needed set. Autoprefixer-era residue; most are no-ops on every browser `allow_browser versions: :modern` admits. Law: `aesthetic_rules.FLAT_HIERARCHY`.
+
+Audited every prefixed declaration in the family, asking the only question that
+decides it: does an unprefixed equivalent exist, and is it in the same rule block?
+
+**Twenty have no unprefixed equivalent at all** and cannot be "residue" —
+`-webkit-line-clamp`, `-webkit-box-orient`, `-webkit-overflow-scrolling`,
+`-webkit-tap-highlight-color`, `-webkit-font-smoothing`,
+`-moz-osx-font-smoothing`, `-webkit-appearance`, `-webkit-text-size-adjust`.
+Removing any of these removes the feature.
+
+**Four have the unprefixed property beside them**, all `-webkit-mask-image`
+paired with `mask-image` (`_marketplace.scss:30`, `_nav.scss:36`,
+`_nav_swiper.scss:57`, amber `_guest_showcase.scss:53`). These are the only
+candidates, and they stay: Safari shipped unprefixed `mask-image` in 15.4 (2022),
+so dropping the prefix drops iOS 14 and 15.0–15.3. On a phone-first social app
+that is a compatibility decision, not a cleanup, and the four sites are the
+horizontal edge-fade masks on the nav swipers — the chrome most likely to be
+touched on exactly those devices.
+
+Nothing to do. Recorded so the next sweep does not re-derive it.
 
 - [ ] `amber/app/assets/stylesheets/_base.scss:17` — -moz-osx-font-smoothing: grayscale;
 - [ ] `amber/app/assets/stylesheets/_items.scss:34` — .wardrobe-more-tools > summary::-webkit-details-marker { display: none; }
