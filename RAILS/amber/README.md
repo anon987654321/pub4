@@ -30,4 +30,6 @@ See **[HEIR.md](./HEIR.md)** — what runs alone, health checks, env keys, hones
 
 ## Integration
 
+Components and layers: **[ARCHITECTURE.md](./ARCHITECTURE.md)**. Deliberate shapes
+that look like bugs: **[DECISIONS.md](./DECISIONS.md)**.
 Shared tokens/concerns: `RAILS/shared/WIRING_NOTES.md`. Feature matrix: `apps.yml` → `amber`.
