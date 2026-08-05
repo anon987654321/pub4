@@ -479,6 +479,65 @@ right now.
       category." and "Browse all ports". `ports/show` is fully translated as of
       `05f408d7b`; `ports/index` is not, and the seam is visible in a single
       screenful.
+
+### P0.7 Things that pass because nobody else got there first (2026-08-05)
+
+Three findings from one night of deploying, grouped because they are the shape
+this file's own header warns about — "a landed row and an inert one look
+identical from the outside". Each was green on a laptop and broken on the
+machine nobody watches.
+
+- [x] **Five brgen tests only passed on an empty database.** CI failed on every
+      deploy attempt while the same commit gave 303 runs / 0 failures locally.
+      `TradedoublerTest` ×4 counted `AffiliateProduct.where(source:
+      "tradedoubler")` across the whole table — CI seeds ten placeholder rows
+      first, so "Expected: 2, Actual: 12" is ten seeded plus two imported.
+      `PerCitySeederTest` created `admin@brgen.no` to establish "a city-less
+      admin exists", which is exactly what `db/seeds.rb` creates, so it failed
+      for having its precondition already satisfied. Both now scope to their own
+      data; no assertion weakened (same 146 assertions), 0 failures against the
+      seeded VPS database. Same fault as the posts-controller 404 in `d7bfee521`.
+
+- [x] **Every channel empties six hours after it is created.**
+      `ChannelBot.welcome!` runs once inside `create_channel!` and its three
+      posts carry the room's own `CHANNEL_TTL`, so a visitor arrives to correct
+      chrome, a real roster (`@curator +echo`) and no conversation.
+      `find_or_create_channel` now re-welcomes a room it finds with no unexpired
+      messages, so production heals on the next visit and keeps healing — a
+      hand-seeded row would be gone by morning on the same TTL. Mutation-checked:
+      commenting the call out fails with "an empty room must seed opening lines
+      again on open".
+
+- [ ] **The reaction picker costs 44px on every line of a channel.**
+      `shared/_chat_reactions.scss:71` is `@media (hover: none) {
+      .msg_reaction_picker { opacity: 1 } }`, so on touch the seven-button picker
+      is permanently visible — measured as a 44px block under every message. The
+      reactions partial's own comment says seven buttons on every line of a chat
+      log is what it exists to avoid. Bubbles were tall enough to hide the cost;
+      the IRC transcript is not. Hiding it removes the only way to react on a
+      phone, so this needs a decision between a tap-to-reveal affordance and no
+      reactions in rooms.
+
+**The instrument failures are worth more than the findings.** Three separate
+measurements lied, each convincingly:
+
+1. The MASTER greeting was reported broken twice, at 8s and 45s, because
+   `#chat-log` innerText stays empty — the greeting streams to *speech*. Driving
+   `startChatStream` from a probe then returned `chunks 0, err null`, which reads
+   as a dead endpoint: `startChatStream` calls `closeChatStream()` first and
+   `openChatStream` swallows `AbortError` (`chat_actions.js:201`), so the probe
+   and the real greeting aborted each other. Watching the network settled it in
+   one run — seven `/chat/tts` requests, all `en-US-AndrewNeural`.
+2. A seven-channel Ferrum survey produced seven errors that were **one** dead
+   browser cascading, then seven more with isolated browsers — while `curl`
+   returned 200 for every one of those URLs. The pages were always fine.
+3. `design_metrics` reported `brgen_old_light.text/chrome_bg` at **1.26:1**,
+   which reads as catastrophic until you notice `--chrome-bg` has no `var()`
+   reader. It measured ink on a surface nothing paints.
+
+When a measurement depends on the thing being measured, it is not evidence.
+`curl` before a browser, the network log before page state, and check that a
+token is read before believing a contrast ratio about it.
 ---
 
 ## Scanner findings — verdicts
