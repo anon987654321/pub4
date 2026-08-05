@@ -190,12 +190,18 @@ openbsd_wscons:
   surface_elevated: "#0a140a"
   search_bg: "#0f1a0f"
   text: "#63c363"
-  # Aligned to what bsdports actually paints. application.scss:30 has said
-  # --text-secondary: #499149 for as long as this file has said #3d7a3d, so the
-  # contrast gate was failing a colour nothing renders: #3d7a3d is 4.05:1 on the
-  # black bg, #499149 is 5.43 (and 4.62 on search_bg, 4.86 on surface_elevated).
-  # bsdports was never below AA — the declaration was.
-  text_secondary: "#499149"
+  # Resolved from the built stylesheet, not from the nearest-looking hex.
+  #
+  # This said #3d7a3d (4.05:1 on black — a contrast failure the gate duly
+  # reported). bsdports/application.scss:30 says #499149, which looks like the
+  # answer and is not: a later :root sets --text-secondary: var(--text), so the
+  # painted value is --text, which resolves to #63c363 at 9.52:1. bsdports never
+  # had a contrast problem at any point; this declaration was wrong twice over.
+  #
+  # Worth a product look, separately: secondary text is now identical to primary
+  # text, so the wscons dialect has no typographic hierarchy between them. That
+  # is a design question, not a contrast one, and is left alone here.
+  text_secondary: "#63c363"
   border: "#1a3a1a"
   hover: "rgba(99, 195, 99, 0.1)"
   hover_subtle: "rgba(99, 195, 99, 0.03)"
@@ -278,4 +284,4 @@ vertical_accents:
   takeaway: { accent: "#e07b39", hover: "#c26a30" }
   playlist: { accent: "#12b6c4", hover: "#0f9aa6" }
   maps: { accent: "#5b8fd4", hover: "#4a7ab8" }         # cool cartography blue-gray
-  messenger: { accent: "#6f82d8", hover: "#5566c4" }    # soft slate-indigo chat; lifted from #6b7fd7 (4.37:1)
+  messenger: { accent: "#6b7fd7", hover: "#5566c4" }    # soft slate-indigo chat; 4.68:1 on brgen dark elevated — already AA, left alone

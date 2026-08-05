@@ -19,7 +19,7 @@ $vertical-accents: (
   takeaway:    (#e07b39, #c26a30),
   playlist:    (#12b6c4, #0f9aa6),
   maps:        (#5b8fd4, #4a7ab8),
-  messenger:   (#6f82d8, #5566c4),
+  messenger:   (#6b7fd7, #5566c4),
 );
 @each $v, $c in $vertical-accents {
   body.vertical-#{$v},

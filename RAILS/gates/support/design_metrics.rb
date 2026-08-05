@@ -85,9 +85,24 @@ module Deploy
     # nothing had reported either.
     VERTICAL_BACKGROUNDS = %w[bg surface_elevated].freeze
 
+    # Against the surfaces brgen actually paints, which are not social's.
+    #
+    # This paired every vertical accent with social.bg (#17161c) and
+    # social.surface_elevated (#211f28). brgen's dark theme is brgen_old_dark —
+    # _root.scss includes brgen-old-dark-tokens, whose later :root wins — so the
+    # real surfaces are #000000 and #1a1a1a. Every vertical finding was measured
+    # against a background the app never renders.
+    #
+    # It mattered in both directions. marketplace #8c7a5e reads 3.92:1 on
+    # social.surface_elevated and 4.19 on the real one — still failing, so the
+    # lift was right for the wrong reason. messenger #6b7fd7 reads 4.37 on
+    # social's and 4.68 on the real one — it already passed, and was "corrected"
+    # for nothing.
+    VERTICAL_SURFACE_DIALECT = "brgen_old_dark"
+
     def vertical_accent_pairs(tokens)
       verticals = tokens["vertical_accents"]
-      social = tokens["social"]
+      social = tokens[VERTICAL_SURFACE_DIALECT] || tokens["social"]
       return [] unless verticals.is_a?(Hash) && social.is_a?(Hash)
 
       verticals.flat_map do |vertical, row|
@@ -99,11 +114,78 @@ module Deploy
             ratio = bg && contrast_ratio(fg, bg)
             next unless ratio
 
-            { label: "vertical_accents.#{vertical}_#{key}/social.#{bg_key}", fg: fg, bg: bg,
+            { label: "vertical_accents.#{vertical}_#{key}/#{VERTICAL_SURFACE_DIALECT}.#{bg_key}", fg: fg, bg: bg,
               fg_key: "#{vertical}_#{key}", bg_key: bg_key, ratio: ratio }
           end
         end
       end
+    end
+
+    # Values of a custom property that survive the cascade.
+    #
+    # read_custom_properties below answers "is this property read anywhere",
+    # which is necessary and not sufficient. A dialect can declare a value, the
+    # property can be read all over the tree, and the value still never reach a
+    # pixel because a later rule at the same specificity overwrites it.
+    #
+    # That is what social.accent does. Every app emits `:root { --accent:
+    # #897dda }` from the shared baseline and then a second `:root` further down
+    # with its own dialect — #f2f2f2 for brgen's BRGEN_OLD grayscale, #7e6e55 for
+    # amber's luxury, #63c363 for bsdports' wscons. Same specificity, later wins,
+    # so the social value is shadowed in all three. Measured: with the accent
+    # "corrected" locally and production still on the old value, both computed
+    # --accent as #f2f2f2. Identical. The contrast finding that prompted the
+    # change was about a colour nothing paints.
+    #
+    # Deliberately reads the built CSS, unlike read_custom_properties, which
+    # excludes builds/ so a stale artifact cannot vote. Cascade order only exists
+    # after compilation — the SCSS says which mixins exist, not which one lands
+    # last in a given app. The freshness risk is real and is covered by
+    # `build_all_css.rb --check` and the generated_asset gate; if those are
+    # skipped this reads yesterday's answer.
+    #
+    # Scope: plain `:root` shadowing, which is the demonstrated defect. It does
+    # not resolve @media, [data-theme], or body-class scopes — a value at a more
+    # specific selector (body.vertical-marketplace) is treated as painting,
+    # which is correct for those and conservative elsewhere.
+    def winning_property_values(rails_root, prop)
+      @winning_property_values ||= {}
+      @winning_property_values[[rails_root, prop]] ||= begin
+        values = Set.new
+        Dir.glob(File.join(rails_root, "*/app/assets/builds/application.css")).each do |path|
+          css = File.read(path) rescue next
+          decls = []
+          css.scan(/([^{}]+)\{([^{}]*)\}/) do
+            selector = Regexp.last_match(1)
+            body = Regexp.last_match(2)
+            body.scan(/(?:\A|;)\s*#{Regexp.escape(prop)}\s*:\s*([^;]+)/) do
+              decls << [selector.strip.split(",").map(&:strip), Regexp.last_match(1).strip.downcase]
+            end
+          end
+          # Among bare `:root` rules only the last one is the default winner.
+          bare = decls.each_index.select { |i| decls[i][0] == [":root"] }
+          bare[0..-2].to_a.each { |i| decls[i] = nil }
+          decls.compact.each { |_, v| values << v }
+        end
+        values
+      end
+    end
+
+    # Does this dialect's declared value survive the cascade under any of the
+    # CSS names the token can take?
+    def token_value_wins?(rails_root, fg_key, value)
+      custom_property_candidates(fg_key).any? { |prop| token_value_paints?(rails_root, prop, value) }
+    end
+
+    def token_value_paints?(rails_root, prop, value)
+      return true if value.nil? || value.to_s.strip.empty?
+
+      winning = winning_property_values(rails_root, prop)
+      # No declarations found at all (property lives outside the built sheets) —
+      # do not silence a finding on the strength of a failed lookup.
+      return true if winning.empty?
+
+      winning.include?(value.to_s.strip.downcase)
     end
 
     # Custom properties actually read by something, as `var(--name`.

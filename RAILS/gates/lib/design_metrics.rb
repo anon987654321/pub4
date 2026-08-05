@@ -145,8 +145,15 @@ module Deploy
       # --chrome-bg has no var() consumer left, so that pair measures ink on a
       # surface nothing paints. Checking only the foreground kept it, because
       # --text is read everywhere.
+      # Read + wins. "Is the property read" is necessary and not sufficient: a
+      # dialect can declare a value, the property can be read everywhere, and a
+      # later rule at the same specificity can still overwrite it before it
+      # reaches a pixel. social.accent does exactly that in all three apps.
       pairs, unpainted = all_pairs.partition do |p|
-        DesignMetrics.token_painted?(RAILS, p[:fg_key]) && DesignMetrics.token_painted?(RAILS, p[:bg_key])
+        DesignMetrics.token_painted?(RAILS, p[:fg_key]) &&
+          DesignMetrics.token_painted?(RAILS, p[:bg_key]) &&
+          DesignMetrics.token_value_wins?(RAILS, p[:fg_key], p[:fg]) &&
+          DesignMetrics.token_value_wins?(RAILS, p[:bg_key], p[:bg])
       end
       if unpainted.any?
         skipped = unpainted.select { |p| p[:ratio] < 4.5 }
@@ -157,9 +164,20 @@ module Deploy
         dead = unpainted.flat_map { |p|
           [p[:fg_key], p[:bg_key]].reject { |k| DesignMetrics.token_painted?(RAILS, k) }
         }.uniq.sort
+        # Two different reasons, reported as two. Calling a shadowed token
+        # "unread" is the same error this filter was written to stop: --accent is
+        # read everywhere and social's value still never lands.
+        shadowed = unpainted.flat_map { |p|
+          [[p[:fg_key], p[:fg]], [p[:bg_key], p[:bg]]]
+            .select { |k, v| DesignMetrics.token_painted?(RAILS, k) && !DesignMetrics.token_value_wins?(RAILS, k, v) }
+            .map { |k, v| "#{k}=#{v}" }
+        }.uniq.sort
+        detail = []
+        detail << "unread: #{dead.join(', ')}" if dead.any?
+        detail << "overridden: #{shadowed.join(', ')}" if shadowed.any?
         @result.warn(
-          "design_metrics contrast: skipped #{unpainted.size} pair(s) touching a token with no var() reader " \
-          "(#{skipped.size} of them below AA) — unread: #{dead.join(', ')}"
+          "design_metrics contrast: skipped #{unpainted.size} pair(s) whose colour never reaches a pixel " \
+          "(#{skipped.size} of them below AA) — #{detail.join(' | ')}"
         )
       end
       if pairs.empty?
