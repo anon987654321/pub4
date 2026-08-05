@@ -26,6 +26,19 @@ open:
       UVM out-of-swap kills ruby34 when all three boot. Raise RAM (≥2GB)
       or run amber on-demand. After restarts: master → brgen → amber → relayd.
       Smoke: sh OPENBSD/bin/deploy-smoke.sh (ALLOW_AMBER_DOWN=1 if amber policy is optional).
+      2026-08-05: it also shows up as a STARTUP RACE, not only as an OOM kill,
+      and that form looks like a broken app. amber needs ~20s to signal ready;
+      Falcon SIGKILLs the worker if that misses its health-check window, so
+      while another app's CI has the box at load 5+ amber restarts, gets killed,
+      and rcctl reports amber(failed) with port 61352 closed. It is not broken —
+      `bin/rails runner` boots it fine (BOOT_OK) and on a quiet box it logs
+      "Finished startup" then ready:true within ~20s and stays. The fix is to
+      wait for the deploy to finish and restart, not to debug amber. bsdports is
+      a fourth app the entry above never contemplated; four do not fit at all.
+      Do NOT reproduce this by hand without --health-check-timeout 300: the rc.d
+      passes it, a bare `falcon serve` defaults to 30s, and the worker then dies
+      at exactly +30s, which reads as confirmation of a timeout theory that is
+      wrong.
 
   # --- Security review 2026-07-27. VERIFIED BY INSPECTION, not yet fixed.
   - id: internet_app_runs_as_passwordless_root_user
