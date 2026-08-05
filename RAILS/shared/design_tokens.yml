@@ -53,7 +53,9 @@ luxury:
   light_text: "#2c2824"
   light_muted: "#6b665f"
   light_border: "#e6e0d8"
-  light_accent: "#8c7a5e"   # warm taupe/gold
+  # Darker, not lighter: this is the light theme, so contrast comes from
+  # going down. #8c7a5e was 3.82:1 on light_bg and 4.15 on light_surface.
+  light_accent: "#7e6e55"   # warm taupe/gold, WCAG AA on warm paper
   # Dark mode (compatible with existing)
   dark_bg: "#1a1816"
   dark_surface: "#24221f"
@@ -188,7 +190,12 @@ openbsd_wscons:
   surface_elevated: "#0a140a"
   search_bg: "#0f1a0f"
   text: "#63c363"
-  text_secondary: "#3d7a3d"
+  # Aligned to what bsdports actually paints. application.scss:30 has said
+  # --text-secondary: #499149 for as long as this file has said #3d7a3d, so the
+  # contrast gate was failing a colour nothing renders: #3d7a3d is 4.05:1 on the
+  # black bg, #499149 is 5.43 (and 4.62 on search_bg, 4.86 on surface_elevated).
+  # bsdports was never below AA — the declaration was.
+  text_secondary: "#499149"
   border: "#1a3a1a"
   hover: "rgba(99, 195, 99, 0.1)"
   hover_subtle: "rgba(99, 195, 99, 0.03)"
@@ -214,7 +221,10 @@ social:
   border: "#46435a"
   hover: "rgba(216, 214, 224, 0.1)"
   hover_subtle: "rgba(216, 214, 224, 0.03)"
-  accent: "#7c6fd6"
+  # WCAG AA on every surface it lands on. #7c6fd6 was 3.86:1 on search_bg and
+  # 3.95 on surface_elevated; this is the gate's computed hue-preserving lift,
+  # taken from the worst pair so the rest clear with room (4.55-4.65).
+  accent: "#897dda"
   accent_hover: "#9686e8"
   danger: "#e46151"
   font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
@@ -262,10 +272,10 @@ light:
 
 # brgen vertical accent map (single source — mirrored in _vertical_shell.scss)
 vertical_accents:
-  marketplace: { accent: "#8c7a5e", hover: "#6f6149" }  # taupe storefront + serif
-  tv: { accent: "#d6473f", hover: "#b83a33" }
+  marketplace: { accent: "#98876e", hover: "#6f6149" }  # taupe storefront + serif; lifted from #8c7a5e (3.92:1)
+  tv: { accent: "#dc635c", hover: "#b83a33" }        # lifted from #d6473f (3.74:1 on surface_elevated)
   dating: { accent: "#00d4aa", hover: "#00b391" }       # Nordic teal (not warm coral)
   takeaway: { accent: "#e07b39", hover: "#c26a30" }
   playlist: { accent: "#12b6c4", hover: "#0f9aa6" }
   maps: { accent: "#5b8fd4", hover: "#4a7ab8" }         # cool cartography blue-gray
-  messenger: { accent: "#6b7fd7", hover: "#5566c4" }    # soft slate-indigo chat
+  messenger: { accent: "#6f82d8", hover: "#5566c4" }    # soft slate-indigo chat; lifted from #6b7fd7 (4.37:1)

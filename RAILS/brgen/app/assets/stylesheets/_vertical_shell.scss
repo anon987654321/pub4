@@ -13,13 +13,13 @@ body[class*="vertical-"] .compose-box {
 /* Single accent map — keep in sync with design_tokens.yml vertical_accents.
    Do not re-set --accent in ui_refinements or vertical-local sheets. */
 $vertical-accents: (
-  marketplace: (#8c7a5e, #6f6149),
-  tv:          (#d6473f, #b83a33),
+  marketplace: (#98876e, #6f6149),
+  tv:          (#dc635c, #b83a33),
   dating:      (#00d4aa, #00b391),
   takeaway:    (#e07b39, #c26a30),
   playlist:    (#12b6c4, #0f9aa6),
   maps:        (#5b8fd4, #4a7ab8),
-  messenger:   (#6b7fd7, #5566c4),
+  messenger:   (#6f82d8, #5566c4),
 );
 @each $v, $c in $vertical-accents {
   body.vertical-#{$v},
