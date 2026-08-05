@@ -105,13 +105,20 @@ class PerCitySeederTest < ActiveSupport::TestCase
   # uniqueness validation -- taking down the whole db:seed run on every replant.
   test "seed_admin adopts an existing city-less admin instead of duplicating it" do
     city = City.find_by!(domain: "brgen.no")
+    # Adopt the orphan if one is already there. The precondition this test needs
+    # is "a city-less admin exists", not "this test created it" — and db/seeds.rb
+    # creates exactly that user, so on the VPS, whose CI seeds before running the
+    # suite, the bare create! raised "Email address er allerede i bruk" and the
+    # test failed for having its precondition already satisfied. Locally, with an
+    # unseeded test database, it passed.
     orphan = ActsAsTenant.without_tenant do
-      User.create!(
-        email_address: "admin@#{city.domain}",
-        username: "preexisting_admin",
-        password: "password123",
-        password_confirmation: "password123"
-      )
+      User.find_by(email_address: "admin@#{city.domain}", city_id: nil) ||
+        User.create!(
+          email_address: "admin@#{city.domain}",
+          username: "preexisting_admin",
+          password: "password123",
+          password_confirmation: "password123"
+        )
     end
     assert_nil orphan.city_id
 

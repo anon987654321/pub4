@@ -7,6 +7,21 @@ class TradedoublerTest < ActiveSupport::TestCase
   # Live response shape is still unverified without a publisher token. parse
   # accepts nested XML-ish, flat JSON, and official offers[] documents.
 
+  # These tests count `AffiliateProduct.where(source: "tradedoubler")` across the
+  # whole table, so they assert on a clean database rather than on what they
+  # created. That holds on a laptop and fails on the VPS, whose CI seeds ten
+  # placeholder tradedoubler rows before the suite runs
+  # ("Affiliate: 10 placeholder product(s)") — which is why the same commit gave
+  # 303 runs / 0 failures here and "Expected: 2, Actual: 12" there. 12 is the
+  # ten seeded rows plus the two the test imported.
+  #
+  # Clearing the source's rows makes each test measure its own import instead of
+  # the database it happened to run against. Scoped to source: "tradedoubler" so
+  # nothing else's fixtures are touched.
+  setup do
+    AffiliateProduct.where(source: "tradedoubler").delete_all
+  end
+
   test "parses the nested products.product shape" do
     body = {
       "products" => {
