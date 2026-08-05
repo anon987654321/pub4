@@ -181,7 +181,7 @@ No longer exempt, and why:
 A solid `background` still separates fine where a surface genuinely differs — and
 after this pass it is doing all of the separating.
 
-**Feed actions:** use `shared/_x_feed_icon.html.erb` SVG icons — not emoji.
+**Feed actions:** use `shared/_feed_icon.html.erb` SVG icons — not emoji.
 
 ## Engine extraction (done)
 

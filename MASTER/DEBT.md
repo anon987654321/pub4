@@ -364,7 +364,7 @@ this is worth recording rather than just deleting:
   calls.
 - `core/world.rb:187 shell_git` — already gone; the line reference was stale.
 
-Same shape as the kill list in the old `core/ABSORPTION.md` (now
+Same shape as the kill list in the old `core/SEVERANCE.md` (now
 `core/SEVERANCE.md`), which was written from names rather than references and
 turned out to be mostly load-bearing. Verify before deleting, even when this file
 says a thing is dead.
@@ -401,7 +401,7 @@ fixed in the same pass — which is the argument for the rest of the list:
 (17s), so the 14 files under `test/{cli,io,fix,lib}/` are no longer skipped by the
 gate `START_HERE.md` tells contributors to run.
 
-**Doc drift** — closed 2026-08-01. `core/ABSORPTION.md` no longer exists (it is
+**Doc drift** — closed 2026-08-01. `core/SEVERANCE.md` no longer exists (it is
 `core/SEVERANCE.md`, a record rather than a plan) and `AGENTS.md` no longer sends
 agents there; the retired folder names `reach/`, `judge/`, `now/`, `loop/` appear in
 no current doc. `START_HERE.md:10` already describes `--profile=agent` correctly.

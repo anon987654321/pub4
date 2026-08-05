@@ -1,0 +1,54 @@
+# Dead path references MASTER/tools/doc_paths.rb tolerates, with the reason.
+#
+# The list only shrinks. MASTER/test/test_doc_paths.rb fails on anything not
+# listed here, and fails again when an entry stops being dead -- a fixed
+# reference must leave the baseline rather than sit here claiming debt that no
+# longer exists.
+#
+# Entries are findings, not decisions. Four of these are real and open.
+
+"OPENBSD/DECISIONS.md":
+  - path: OPENBSD/master.json
+    why: >
+      Three OPENBSD documents treat master.json as the canonical domain record
+      and no file by that name exists anywhere in the repo. Domain drift between
+      master.json, apps.yml, OPERATOR.sh and relayd.conf is listed as a
+      production blocker in RAILS/README.md, which makes the absent file part of
+      a blocker nobody can inspect. Open: find where it moved, or delete the
+      three references.
+
+"OPENBSD/RUNBOOK.md":
+  - path: OPENBSD/master.json
+    why: Same finding as OPENBSD/DECISIONS.md.
+
+"OPENBSD/START_HERE.md":
+  - path: OPENBSD/master.json
+    why: Same finding as OPENBSD/DECISIONS.md.
+
+"OPENBSD/SSH_ACCESS.md":
+  - path: priv/ssh/id_ed25519_brgen.pub
+    why: >
+      Deliberate. Keys are never committed; the document names where the
+      operator keeps one locally. Permanent exemption.
+
+"RAILS/FINAL_TODO.md":
+  - path: db/structure.sql
+    why: >
+      Planned, not present -- the apps run schema.rb. A planning document naming
+      a file that does not exist yet is doing its job. Remove when the migration
+      to structure.sql lands or the item is dropped.
+
+"RAILS/README.md":
+  - path: MASTER/web/public/domain_cluster.js
+    why: >
+      Open. The source file is gone; only the precompiled
+      web/public/assets/domain_cluster-3bf218f7.js survives. A generated asset
+      with no source in the tree cannot be rebuilt, and the document points
+      operators at the source. Find the source or document the asset as vendored.
+
+"MASTER/web/CLAUDE.md":
+  - path: bin/check-web
+    why: >
+      Open. No such script; MASTER/bin has smoke-web and web-screenshot, and the
+      web profile runs as `bin/check --profile=web`. The instruction sends a
+      reader to a command that does not exist.

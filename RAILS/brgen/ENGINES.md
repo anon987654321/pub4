@@ -1,3 +1,4 @@
+<!-- doc_paths: ignore -->
 # brgen verticals as mountable engines
 
 brgen's subdomain verticals are being pulled out of the host app into mountable
