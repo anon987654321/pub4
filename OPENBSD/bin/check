@@ -23,6 +23,13 @@ failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "RAILS/gates/runn
 failures << "domain_align" unless runner.run("domain align", RUBY, "RAILS/gates/runner.rb", "domain_alignment")
 failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
 
+# OPENBSD/test was reachable from no entrypoint at all (MASTER/tools/runs.rb):
+# four files covering the gate library, health check, restore scripts and the VPS
+# safety gate, 80 assertions, running nowhere. They pass, and passing tests that
+# never execute prove nothing.
+contracts = 'Dir["OPENBSD/test/**/test_*.rb"].sort.each { |file| require File.expand_path(file) }'
+failures << "openbsd_contracts" unless runner.run("openbsd contracts", RUBY, "-e", contracts)
+
 if profile == "contributor"
   puts "deploy-check: extended gates     skip — contributor profile (use OPENBSD/bin/check-full for integrity)"
 end
