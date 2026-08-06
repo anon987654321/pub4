@@ -166,7 +166,7 @@ warning rather than failing.
 
 **Why geometry rather than grepping CSS.** `layout_geometry_gate` asserts
 `_nav.scss` contains the string `min-height: 44px`. `geometry` asserts the box
-is 44px tall in a real browser at that viewport, that nothing covers its centre
+is 44px tall (`--tap-min`) in a real browser at that viewport, that nothing covers its centre
 pixel, and that its text clears WCAG AA against its composited background — with
 `var()`/`oklch`/`color-mix` resolved, which `DesignMetrics.parse_hex`
 structurally cannot do.

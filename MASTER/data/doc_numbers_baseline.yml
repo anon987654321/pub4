@@ -1,0 +1,33 @@
+# Dimensional values written in prose without naming the token that owns them,
+# tolerated with a reason. MASTER/test/test_doc_numbers.rb fails on anything not
+# listed, and fails again when an entry stops being untraceable.
+#
+# The list only shrinks. A number here is a number two files can disagree about.
+
+"RAILS/FINAL_TODO.md":
+  - value: 44px
+    why: >
+      Planning document, 222 KB, written against values rather than tokens
+      throughout. Naming the token in each mention is worth doing when the file
+      is split by owner (wishlist: no single document holds half the repo's
+      prose). Until then this is one entry rather than a hundred edits to a file
+      that is being restructured anyway.
+  - value: 6px
+    why: Same as 44px — luxury.radius_sm restated in a planning note.
+  - value: 10px
+    why: Same as 44px — luxury.radius_md restated in a planning note.
+  - value: 14px
+    why: Same as 44px — luxury.radius_lg restated in a planning note.
+  - value: 1265px
+    why: >
+      Same as 44px, and the sharpest case: social.layout_max is a layout
+      constant that exists in exactly one other place. Two files carrying 1265px
+      is the shape that made the gates disagree about spacing at 82831623a.
+
+"RAILS/UI_REFINEMENTS.md":
+  - value: 44px
+    why: >
+      A record of refinements already made. Rewriting a historical note to name
+      today's token would change what the record says happened. Permanent
+      exemption while the file stays a changelog; if it becomes prescriptive,
+      the numbers come out.

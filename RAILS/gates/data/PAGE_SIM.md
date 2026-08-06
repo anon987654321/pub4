@@ -19,7 +19,7 @@ ruby RAILS/gates/runner.rb flow_journey
 # Vertical + secondary host probes (user_flow guest persona)
 ruby RAILS/gates/runner.rb user_flow
 
-# Phone viewport journey (44px chrome, overflow, landmarks, brgen subapps)
+# Phone viewport journey (44px `--tap-min` chrome, overflow, landmarks, brgen subapps)
 ruby RAILS/gates/runner.rb mobile_flow
 
 # Desktop tab order

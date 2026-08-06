@@ -25,7 +25,7 @@ locales, comments, master_embed).
 |-------------|--------|
 | First focusable = skip-link | brgen/amber → `#main-content`; face → `#zin` |
 | `main` with `role="main"` + aria-label | all three |
-| Interactive chrome ≥ 44px | tab bar, peel, chat tab, face photo/spin |
+| Interactive chrome ≥ 44px (`--tap-min`) | tab bar, peel, chat tab, face photo/spin |
 | `:focus-visible` outline | `_focus_ring.scss` + face.css controls |
 | Landmarks i18n | `nav.sidebar|widgets|main|…` (nb/en) |
 
@@ -37,8 +37,8 @@ locales, comments, master_embed).
    `t("search.*")` with nb+en keys. Lint: `chrome_i18n_lint.rb`.
 3. **Empty CTAs** — `shared/empty_state` with `action:` or
    `<%# empty_state: no-action-ok %>`. Lint: `empty_state_lint.rb`.
-4. **Type tokens** — page headers `font-size: var(--text-title, 1.25rem)` and
-   `font-family: var(--font)`. Autofix: raw `20px` → title token.
+4. **Type tokens** — page headers `font-size: var(--text-title, 1.25rem)  <!-- font_size_title -->` and
+   `font-family: var(--font)`. Autofix: raw `20px` → `--line-height` token.
 5. **Space-not-lines** — list/grid cards: no hairline box; gap + elevated surface.
    Forms and bsdports CRT hairlines stay.
 6. **Verify** — `ruby RAILS/shared/lib/pub4/chrome_i18n_lint.rb`, empty/adhoc

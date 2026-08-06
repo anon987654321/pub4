@@ -160,7 +160,7 @@ its two buttons — `.tab-bar-coach-dismiss` and `.tab-bar-coach-show` — were 
 in the frame and kept their `1px solid`. Re-measured by unhiding the coach from
 the probe rather than waiting for a controller to reveal it: 8 borders, all of
 them that pair, nothing else on the surface. Both now use a surface fill and
-keep their 44px targets; the page is at 0. If you check this number, unhide
+keep their 44px (`--tap-min`) targets; the page is at 0. If you check this number, unhide
 every `[hidden]` first — an element that never painted reports no borders and
 looks like a pass.
 
