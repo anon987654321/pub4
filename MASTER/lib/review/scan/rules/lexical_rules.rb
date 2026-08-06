@@ -137,7 +137,12 @@ module Master
     severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[ruby],
     description: "bare Time.now/Date.today bypasses Rails Time.zone" do |src, path:|
     next [] unless path.match?(%r{/app/|/spec/|/test/})
-    findings  = scan_lines(src, /(?<![A-Za-z_.])Time\.now\b/,
+    # Time.now.utc and Time.now.to_i do not read Time.zone: one converts to UTC
+    # explicitly, the other is epoch seconds. Every RAILS finding this rule
+    # produced was one of those two forms — JWT exp/iat, a tmpfile suffix, and
+    # generated_at timestamps already pinned to .utc — so the rule was reporting
+    # 13 rewrites that would have changed no behaviour at all.
+    findings  = scan_lines(src, /(?<![A-Za-z_.])Time\.now\b(?!\s*\.\s*(?:utc|to_i|to_f|to_r))/,
                            message: "Time.now ignores Time.zone — use Time.current")
     findings += scan_lines(src, /(?<![A-Za-z_.])Date\.today\b/,
                            message: "Date.today ignores Time.zone — use Date.current")

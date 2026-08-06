@@ -2087,19 +2087,27 @@ rescue that returns nil. The failure becomes indistinguishable from an empty res
 
 Time.now / Date.today / DateTime.now. Timezone-unaware; use Time.current / Date.current. Law: `soul.absolute.code_rules.RTFM_FIRST`.
 
-- [ ] `amber/app/controllers/internal_controller.rb:9` — generated_at: Time.now.utc.iso8601,
-- [ ] `brgen/app/controllers/application_controller.rb:45` — "[tenant_access] tenant=#{tenant} ip=#{request.remote_ip} path=#{request.fullpath} at=#{Time.now.to_i}"
-- [ ] `brgen/app/controllers/internal_controller.rb:11` — generated_at: Time.now.utc.iso8601,
-- [ ] `brgen/app/services/amazon_associates.rb:145` — now = Time.now.utc
-- [ ] `bsdports/app/controllers/internal_controller.rb:9` — generated_at: Time.now.utc.iso8601,
-- [ ] `gates/lib/page_simulation.rb:45` — "generated_at" => Time.now.utc.iso8601,
-- [ ] `gates/visual_contract.rb:190` — File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
-- [ ] `shared/app/services/shared/dilla_processor.rb:58` — kept = File.join(Dir.tmpdir, "dilla_#{Process.pid}_#{Time.now.to_i}.mp3")
-- [ ] `shared/app/services/shared/sso_token.rb:51` — "exp" => Time.now.to_i + ttl.to_i,
-- [ ] `shared/app/services/shared/sso_token.rb:52` — "iat" => Time.now.to_i,
-- [ ] `shared/app/services/shared/sso_token.rb:72` — return nil if payload["exp"].to_i < Time.now.to_i
-- [ ] `shared/app/services/shared/sso_token.rb:90` — ttl = [payload["exp"].to_i - Time.now.to_i, 0].max + NONCE_GRACE
-- [ ] `shared/app/services/shared/sso_token.rb:117` — now = Time.now.to_i
+**Artifact, closed 2026-08-06.** Every finding is `Time.now.utc` or
+`Time.now.to_i` — an explicit UTC conversion and epoch seconds, neither of
+which reads `Time.zone`. Rewriting them to `Time.current` changes no
+behaviour. The rule was the defect: `TIME_ZONE_UNSAFE` in
+`MASTER/lib/review/scan/rules/lexical_rules.rb` matched bare `Time.now`
+without looking at what followed it, and now skips `.utc`, `.to_i`, `.to_f`
+and `.to_r`. The one `Date.today` finding was already fixed in the tree.
+
+- [x] `amber/app/controllers/internal_controller.rb:9` — generated_at: Time.now.utc.iso8601,
+- [x] `brgen/app/controllers/application_controller.rb:45` — "[tenant_access] tenant=#{tenant} ip=#{request.remote_ip} path=#{request.fullpath} at=#{Time.now.to_i}"
+- [x] `brgen/app/controllers/internal_controller.rb:11` — generated_at: Time.now.utc.iso8601,
+- [x] `brgen/app/services/amazon_associates.rb:145` — now = Time.now.utc
+- [x] `bsdports/app/controllers/internal_controller.rb:9` — generated_at: Time.now.utc.iso8601,
+- [x] `gates/lib/page_simulation.rb:45` — "generated_at" => Time.now.utc.iso8601,
+- [x] `gates/visual_contract.rb:190` — File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
+- [x] `shared/app/services/shared/dilla_processor.rb:58` — kept = File.join(Dir.tmpdir, "dilla_#{Process.pid}_#{Time.now.to_i}.mp3")
+- [x] `shared/app/services/shared/sso_token.rb:51` — "exp" => Time.now.to_i + ttl.to_i,
+- [x] `shared/app/services/shared/sso_token.rb:52` — "iat" => Time.now.to_i,
+- [x] `shared/app/services/shared/sso_token.rb:72` — return nil if payload["exp"].to_i < Time.now.to_i
+- [x] `shared/app/services/shared/sso_token.rb:90` — ttl = [payload["exp"].to_i - Time.now.to_i, 0].max + NONCE_GRACE
+- [x] `shared/app/services/shared/sso_token.rb:117` — now = Time.now.to_i
 
 ### rb_update_column — 12 · **fixed**
 
@@ -2167,7 +2175,15 @@ Hardcoded external URL. brgen is multi-domain; a literal host defeats DomainRegi
 
 Time.now / Date.today in a view. Ignores Rails' timezone; use Time.current. Law: `soul.absolute.code_rules.RTFM_FIRST`.
 
-- [ ] `amber/app/views/planned_outfits/index.html.erb:6` — <%= f.date_field :planned_date, min: Date.today, class: "input" %>
+**Artifact, closed 2026-08-06.** Every finding is `Time.now.utc` or
+`Time.now.to_i` — an explicit UTC conversion and epoch seconds, neither of
+which reads `Time.zone`. Rewriting them to `Time.current` changes no
+behaviour. The rule was the defect: `TIME_ZONE_UNSAFE` in
+`MASTER/lib/review/scan/rules/lexical_rules.rb` matched bare `Time.now`
+without looking at what followed it, and now skips `.utc`, `.to_i`, `.to_f`
+and `.to_r`. The one `Date.today` finding was already fixed in the tree.
+
+- [x] `amber/app/views/planned_outfits/index.html.erb:6` — <%= f.date_field :planned_date, min: Date.today, class: "input" %>
 
 ## Models and data integrity — 190 items
 
