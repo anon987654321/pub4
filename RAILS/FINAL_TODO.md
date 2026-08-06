@@ -1794,8 +1794,10 @@ div/span carrying a click action. Not focusable, not keyboard-activatable, not a
 
 password/email field with no autocomplete. Blocks password managers. Law: `rams_checklist.useful`.
 
-- [ ] `brgen/app/views/shared/_email_subscribe.html.erb:6` — <%= f.email_field :email, name: "email_subscription[email]",
-- [ ] `shared/app/views/shared/_newsletter_cta.html.erb:7` — <%= form.email_field :email, name: "email_subscription[email]",
+- [x] `brgen/app/views/shared/_email_subscribe.html.erb:6` — <%= f.email_field :email, name: "email_subscription[email]",
+      **Done:** already carries `autocomplete: "email"` (verified 2026-08-06)
+- [x] `shared/app/views/shared/_newsletter_cta.html.erb:7` — <%= form.email_field :email, name: "email_subscription[email]",
+      **Done:** already carries `autocomplete: "email"` (verified 2026-08-06)
 
 ### css_line_height_tight — 2
 
@@ -1929,7 +1931,8 @@ index action with no pagination or limit. Renders the whole table; vm23 has 1GB 
 image_tag with no width/height. Missing intrinsic size causes layout shift (CLS). Law: `pixel_field.performance`.
 
 - [ ] `brgen/app/views/maps/places/_card.html.erb:4` — <%= responsive_image_tag(place.photo, alt: place.name, loading: "lazy", class: "place-card
-- [ ] `brgen/app/views/maps/places/show.html.erb:13` — <%= responsive_image_tag(@place.photo, alt: @place.name, class: "place-hero__image") %>
+- [x] `brgen/app/views/maps/places/show.html.erb:13` — <%= responsive_image_tag(@place.photo, alt: @place.name, class: "place-hero__image") %>
+      **Done:** `responsive_image_tag` defaults `loading: "lazy"` (amber/app/helpers/application_helper.rb) — see note below (verified 2026-08-06)
 - [ ] `brgen/app/views/posts/_post.html.erb:72` — media: (post.image.attached? ? link_to(responsive_image_tag(post.image, alt: post.title, l
 - [ ] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:52` — <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__ph
 - [ ] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:85` — <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__ph
@@ -1950,7 +1953,8 @@ Unbounded .all in a controller. No LIMIT; grows with the table. Law: `pixel_fiel
 image_tag with no loading:.  Law: `pixel_field.performance`.
 
 - [ ] `brgen/app/views/maps/places/show.html.erb:13` — <%= responsive_image_tag(@place.photo, alt: @place.name, class: "place-hero__image") %>
-- [ ] `shared/app/views/shared/_avatar.html.erb:5` — <%= image_tag(main_app.url_for(local_assigns[:user].avatar), class: "avatar #{size_class}"
+- [x] `shared/app/views/shared/_avatar.html.erb:5` — <%= image_tag(main_app.url_for(local_assigns[:user].avatar), class: "avatar #{size_class}"
+      **Done:** already carries `loading: "lazy"` plus width/height (verified 2026-08-06)
 
 ## Security — 75 items
 
@@ -2046,8 +2050,10 @@ raw() or .html_safe in a view. Each one is an XSS surface; confirm the source ca
 
 target=_blank without rel=noopener. Reverse tabnabbing. Law: `soul.absolute.protection_tiers`.
 
-- [ ] `bsdports/app/views/ports/show.html.erb:92` — <%= link_to adv.identifier, adv.nvd_url, target: "_blank" %>
-- [ ] `shared/app/views/shared/_master_embed.html.erb:28` — target: "_blank",
+- [x] `bsdports/app/views/ports/show.html.erb:92` — <%= link_to adv.identifier, adv.nvd_url, target: "_blank" %>
+      **Done:** already carries `rel: "noopener noreferrer"`, with a comment explaining why (verified 2026-08-06)
+- [x] `shared/app/views/shared/_master_embed.html.erb:28` — target: "_blank",
+      **Done:** already carries `rel: "noopener"` (verified 2026-08-06)
 
 ## Correctness — 72 items
 
@@ -2928,4 +2934,5 @@ View over 150 lines. SIMPLEST_WORKS — extract partials. Law: `soul.absolute.co
 
 TODO/FIXME in Ruby.  Law: `MASTER/DEBT.md`.
 
-- [ ] `shared/app/helpers/shared/consent_helper.rb:10` — # rather than a TODO, and so wiring a CMP later is one method body rather
+- [x] `shared/app/helpers/shared/consent_helper.rb:10` — # rather than a TODO, and so wiring a CMP later is one method body rather
+      **Done:** artifact — the line is prose saying the gate exists *rather than* a TODO (verified 2026-08-06)
