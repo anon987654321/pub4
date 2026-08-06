@@ -2729,43 +2729,68 @@ each would lose something real:
 
 data-*-target with no matching registered controller. The stimulus_wiring gate covers data-action; targets are the gap. Law: `UI_REFINEMENTS stimulus_wiring gate`.
 
-- [ ] `views` — data-radio-tunnel-target used, no matching registered controller 'radio-tunnel'
-- [ ] `views` — data-filter-target used, no matching registered controller 'filter'
-- [ ] `views` — data-nested-form-target used, no matching registered controller 'nested-form'
-- [ ] `views` — data-clipboard-target used, no matching registered controller 'clipboard'
-- [ ] `views` — data-reveal-target used, no matching registered controller 'reveal'
-- [ ] `views` — data-flash-target used, no matching registered controller 'flash'
-- [ ] `views` — data-checkbox-select-all-target used, no matching registered controller 'checkbox-select-all'
-- [ ] `views` — data-toggle-target used, no matching registered controller 'toggle'
-- [ ] `views` — data-dropdown-target used, no matching registered controller 'dropdown'
-- [ ] `views` — data-map-target used, no matching registered controller 'map'
-- [ ] `views` — data-popover-target used, no matching registered controller 'popover'
-- [ ] `views` — data-tiptap-editor-target used, no matching registered controller 'tiptap-editor'
-- [ ] `views` — data-nav-swiper-target used, no matching registered controller 'nav-swiper'
-- [ ] `views` — data-dating-intro-target used, no matching registered controller 'dating-intro'
-- [ ] `views` — data-tabs-target used, no matching registered controller 'tabs'
-- [ ] `views` — data-marketplace-logo-target used, no matching registered controller 'marketplace-logo'
-- [ ] `views` — data-playlist-player-target used, no matching registered controller 'playlist-player'
-- [ ] `views` — data-character-counter-target used, no matching registered controller 'character-counter'
+
+**Closed 2026-08-06 — 17 of 18 were the rule, and the 18th is stale.** The
+check looked for `app/javascript/controllers/<name>_controller.js` in each app
+and knew about neither registration path that this tree actually uses: nine
+names are registered in `shared/frontend/stimulus_boot.js` (nested-form,
+clipboard, reveal, checkbox-select-all, dropdown, popover, character-counter
+among them), and eight are autoloaded from controller files it did not look at
+— four of those under `brgen/engines/`, which is the same blind spot that hid
+57 views when the verticals became engines.
+
+The remaining one, `flash`, has no controller anywhere and no
+`data-flash-target` in any view either: the markup was removed and the finding
+outlived it.
+
+
+- [x] `views` — data-radio-tunnel-target used, no matching registered controller 'radio-tunnel'
+- [x] `views` — data-filter-target used, no matching registered controller 'filter'
+- [x] `views` — data-nested-form-target used, no matching registered controller 'nested-form'
+- [x] `views` — data-clipboard-target used, no matching registered controller 'clipboard'
+- [x] `views` — data-reveal-target used, no matching registered controller 'reveal'
+- [x] `views` — data-flash-target used, no matching registered controller 'flash'
+- [x] `views` — data-checkbox-select-all-target used, no matching registered controller 'checkbox-select-all'
+- [x] `views` — data-toggle-target used, no matching registered controller 'toggle'
+- [x] `views` — data-dropdown-target used, no matching registered controller 'dropdown'
+- [x] `views` — data-map-target used, no matching registered controller 'map'
+- [x] `views` — data-popover-target used, no matching registered controller 'popover'
+- [x] `views` — data-tiptap-editor-target used, no matching registered controller 'tiptap-editor'
+- [x] `views` — data-nav-swiper-target used, no matching registered controller 'nav-swiper'
+- [x] `views` — data-dating-intro-target used, no matching registered controller 'dating-intro'
+- [x] `views` — data-tabs-target used, no matching registered controller 'tabs'
+- [x] `views` — data-marketplace-logo-target used, no matching registered controller 'marketplace-logo'
+- [x] `views` — data-playlist-player-target used, no matching registered controller 'playlist-player'
+- [x] `views` — data-character-counter-target used, no matching registered controller 'character-counter'
 
 ### unused_locale_key — 14
 
 Locale key with no reader. A translated string nothing renders. Inert config — the pub4 defect class. Law: `MASTER/DEBT.md inert config`.
 
-- [ ] `amber/config/locales/en.yml` — empty.no_outfits_body
-- [ ] `amber/config/locales/en.yml` — wardrobe.by_body_region
-- [ ] `amber/config/locales/nb.yml` — empty.no_outfits_body
-- [ ] `amber/config/locales/nb.yml` — wardrobe.by_body_region
-- [ ] `brgen/config/locales/en.yml` — nearby.waiting_body
-- [ ] `brgen/config/locales/en.yml` — nearby.waiting_title
-- [ ] `brgen/config/locales/en.yml` — home.intro_body
-- [ ] `brgen/config/locales/en.yml` — home.ask_ai_title
-- [ ] `brgen/config/locales/en.yml` — empty.no_listings_search
-- [ ] `brgen/config/locales/nb.yml` — home.intro_body
-- [ ] `brgen/config/locales/nb.yml` — home.ask_ai_title
-- [ ] `brgen/config/locales/nb.yml` — empty.no_listings_search
-- [ ] `brgen/config/locales/nb.yml` — nearby.waiting_title
-- [ ] `brgen/config/locales/nb.yml` — nearby.waiting_body
+
+**Closed 2026-08-06 — all 14 removed.** Seven keys across en and nb, each
+verified against a corpus of every ERB, Ruby and JS file in the four apps: no
+`t()` call, no lazy-lookup leaf, no reader of any kind. Removed from both
+locales so parity holds. `i18n_resolution_test`, `integrity_locale_test` and
+`chrome_i18n_lint_test` all pass after; each file was re-parsed as YAML
+immediately after the edit, since a line-based deletion that breaks nesting
+would otherwise surface as a runtime 500.
+
+
+- [x] `amber/config/locales/en.yml` — empty.no_outfits_body
+- [x] `amber/config/locales/en.yml` — wardrobe.by_body_region
+- [x] `amber/config/locales/nb.yml` — empty.no_outfits_body
+- [x] `amber/config/locales/nb.yml` — wardrobe.by_body_region
+- [x] `brgen/config/locales/en.yml` — nearby.waiting_body
+- [x] `brgen/config/locales/en.yml` — nearby.waiting_title
+- [x] `brgen/config/locales/en.yml` — home.intro_body
+- [x] `brgen/config/locales/en.yml` — home.ask_ai_title
+- [x] `brgen/config/locales/en.yml` — empty.no_listings_search
+- [x] `brgen/config/locales/nb.yml` — home.intro_body
+- [x] `brgen/config/locales/nb.yml` — home.ask_ai_title
+- [x] `brgen/config/locales/nb.yml` — empty.no_listings_search
+- [x] `brgen/config/locales/nb.yml` — nearby.waiting_title
+- [x] `brgen/config/locales/nb.yml` — nearby.waiting_body
 
 ### dead_stimulus_controller — 2 · **fixed**
 
