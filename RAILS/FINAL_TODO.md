@@ -1042,7 +1042,21 @@ Hardcoded submit button label. Submit labels are the highest-traffic chrome stri
 
 Literal hex colour in a view. design_rules.pixel_perfection.magic_color_hex_ban_inline. Colour belongs in a token, not in markup. Law: `pixel_perfection.magic_color_hex_ban_inline`.
 
-- [ ] `amber/app/views/layouts/application.html.erb:7` — #ffffff
+
+**Partly closed 2026-08-06 — 35 of 75, in three groups where a token is not
+expressible.** (a) `theme-color` meta in each app layout: the HTML spec takes a
+literal colour in a `content` attribute and `var()` is not valid there. (b)
+`theme_color` / `background_color` in each `pwa/manifest.json.erb`: the Web App
+Manifest is JSON and a CSS custom property is not a JSON value. (c)
+`shared/app/views/layouts/_mailer_styles.html.erb`: email clients strip CSS
+custom properties — Gmail among them — so a mail stylesheet that used tokens
+would render unstyled. The remaining 40, mostly `fill=` on the inline mannequin
+SVG in `amber/app/views/outfits/dressing_room.html.erb`, are real and stay open:
+inline SVG presentation attributes do accept `var()`, so those are a design
+decision rather than a technical limit.
+
+
+- [x] `amber/app/views/layouts/application.html.erb:7` — #ffffff
 - [ ] `amber/app/views/outfits/dressing_room.html.erb:16` — #2a2a2a
 - [ ] `amber/app/views/outfits/dressing_room.html.erb:17` — #2a2a2a
 - [ ] `amber/app/views/outfits/dressing_room.html.erb:18` — #2a2a2a
@@ -1051,8 +1065,8 @@ Literal hex colour in a view. design_rules.pixel_perfection.magic_color_hex_ban_
 - [ ] `amber/app/views/outfits/dressing_room.html.erb:21` — #2a2a2a
 - [ ] `amber/app/views/outfits/dressing_room.html.erb:22` — #1a1a1a
 - [ ] `amber/app/views/outfits/dressing_room.html.erb:23` — #1a1a1a
-- [ ] `amber/app/views/pwa/manifest.json.erb:46` — #FFB999
-- [ ] `amber/app/views/pwa/manifest.json.erb:47` — #FFFFFF
+- [x] `amber/app/views/pwa/manifest.json.erb:46` — #FFB999
+- [x] `amber/app/views/pwa/manifest.json.erb:47` — #FFFFFF
 - [ ] `amber/app/views/shared/_jox_logo.html.erb:7` — #0000FE
 - [ ] `amber/app/views/shared/_jox_logo.html.erb:15` — #01FF01
 - [ ] `amber/app/views/shared/_jox_logo.html.erb:23` — #DB0000
@@ -1065,9 +1079,9 @@ Literal hex colour in a view. design_rules.pixel_perfection.magic_color_hex_ban_
 - [ ] `amber/app/views/shared/_logo.html.erb:29` — #FFFFFF
 - [ ] `amber/app/views/shared/_logo.html.erb:30` — #FFFFFF
 - [ ] `amber/app/views/shared/_logo.html.erb:31` — #FFFFFF
-- [ ] `brgen/app/views/layouts/application.html.erb:13` — #000000
-- [ ] `brgen/app/views/pwa/manifest.json.erb:132` — #000000
-- [ ] `brgen/app/views/pwa/manifest.json.erb:133` — #000000
+- [x] `brgen/app/views/layouts/application.html.erb:13` — #000000
+- [x] `brgen/app/views/pwa/manifest.json.erb:132` — #000000
+- [x] `brgen/app/views/pwa/manifest.json.erb:133` — #000000
 - [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:6` — #e4e2db
 - [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:9` — #6b7178
 - [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:10` — #16181c
@@ -1085,38 +1099,38 @@ Literal hex colour in a view. design_rules.pixel_perfection.magic_color_hex_ban_
 - [ ] `brgen/engines/playlist/app/views/playlist/playlists/embed.html.erb:2` — #00d4ff
 - [ ] `brgen/engines/playlist/app/views/playlist/playlists/show.html.erb:5` — #00d4ff
 - [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:17` — #00d4ff
-- [ ] `bsdports/app/views/layouts/application.html.erb:7` — #000000
-- [ ] `bsdports/app/views/pwa/manifest.json.erb:38` — #0ea5e9
-- [ ] `bsdports/app/views/pwa/manifest.json.erb:39` — #0ea5e9
+- [x] `bsdports/app/views/layouts/application.html.erb:7` — #000000
+- [x] `bsdports/app/views/pwa/manifest.json.erb:38` — #0ea5e9
+- [x] `bsdports/app/views/pwa/manifest.json.erb:39` — #0ea5e9
 - [ ] `bsdports/app/views/shared/_jox_logo.html.erb:6` — #63c363
 - [ ] `bsdports/app/views/shared/_jox_logo.html.erb:14` — #4fa34f
 - [ ] `bsdports/app/views/shared/_jox_logo.html.erb:22` — #00ba7c
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:2` — #050505
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:3` — #050505
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:4` — #0a0a0a
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:5` — #8a8a8a
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:7` — #6f6f6f
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:9` — #f7f7f7
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:10` — #1f1f1f
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:11` — #7a7a7a
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:13` — #171717
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:15` — #ffffff
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:16` — #7a7a7a
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:17` — #c8c8c8
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:19` — #171717
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:23` — #ffffff
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:24` — #b5b5b5
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:25` — #f0f0f0
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:27` — #ffffff
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:28` — #9a9a9a
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:29` — #6d6d6d
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:30` — #171717
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:31` — #8d8d8d
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:32` — #4f4f4f
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:33` — #121212
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:34` — #fafafa
-- [ ] `shared/app/views/layouts/_mailer_styles.html.erb:35` — #7a7a7a
-- [ ] `shared/app/views/layouts/master_embed.html.erb:7` — #000000
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:2` — #050505
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:3` — #050505
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:4` — #0a0a0a
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:5` — #8a8a8a
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:7` — #6f6f6f
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:9` — #f7f7f7
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:10` — #1f1f1f
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:11` — #7a7a7a
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:13` — #171717
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:15` — #ffffff
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:16` — #7a7a7a
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:17` — #c8c8c8
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:19` — #171717
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:23` — #ffffff
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:24` — #b5b5b5
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:25` — #f0f0f0
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:27` — #ffffff
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:28` — #9a9a9a
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:29` — #6d6d6d
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:30` — #171717
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:31` — #8d8d8d
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:32` — #4f4f4f
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:33` — #121212
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:34` — #fafafa
+- [x] `shared/app/views/layouts/_mailer_styles.html.erb:35` — #7a7a7a
+- [x] `shared/app/views/layouts/master_embed.html.erb:7` — #000000
 
 ### css_magic_hex — 56 · **judgement**
 
@@ -1812,13 +1826,28 @@ line-height below 1.4. typography.line_height.body_min 1.4, accessibility_min 1.
 
 Fixed px width of 3+ digits. Fixed widths are the usual cause of horizontal overflow on a 390px viewport. Prefer min()/clamp()/ch. Law: `ultraminimalism.negative_space.content_width`.
 
-- [ ] `amber/app/assets/stylesheets/_base.scss:20` — @media (min-width: 1280px) {
-- [ ] `amber/app/assets/stylesheets/_brand.scss:33` — @media (min-width: 768px) {
+
+**Partly closed 2026-08-06 — 34 of 72 were `@media` breakpoints.** A breakpoint
+is not an element width and cannot cause horizontal overflow; the rule that
+produced these matched any 3+ digit px value in a stylesheet, condition included.
+The remaining 38 are real `max-width` / `min-width` declarations on elements and
+stay open as visual judgement.
+
+Note on provenance: no rule named `css_px_width` exists anywhere in MASTER,
+RAILS or OPENBSD. Neither does `css_off_grid`. These items cannot be regenerated
+or re-verified by any tool in the repo — they are a frozen snapshot from a
+scanner that no longer produces them under these names. The underlying checks
+live on as `EIGHT_PX_RHYTHM` in `MASTER/lib/review/scan/rules/surface_rules.rb`
+and the rhythm tally in `RAILS/gates/lib/css_constitution.rb`.
+
+
+- [x] `amber/app/assets/stylesheets/_base.scss:20` — @media (min-width: 1280px) {
+- [x] `amber/app/assets/stylesheets/_brand.scss:33` — @media (min-width: 768px) {
 - [ ] `amber/app/assets/stylesheets/_brand.scss:90` — max-width: 1000px;
-- [ ] `amber/app/assets/stylesheets/_brand.scss:109` — @media (min-width: 768px) {
-- [ ] `amber/app/assets/stylesheets/_brand.scss:169` — @media (min-width: 768px) {
+- [x] `amber/app/assets/stylesheets/_brand.scss:109` — @media (min-width: 768px) {
+- [x] `amber/app/assets/stylesheets/_brand.scss:169` — @media (min-width: 768px) {
 - [ ] `amber/app/assets/stylesheets/_brand.scss:230` — max-width: 640px;
-- [ ] `amber/app/assets/stylesheets/_dashboard.scss:27` — @media (max-width: 640px) {
+- [x] `amber/app/assets/stylesheets/_dashboard.scss:27` — @media (max-width: 640px) {
 - [ ] `amber/app/assets/stylesheets/_dashboard.scss:116` — min-width: 280px;
 - [ ] `amber/app/assets/stylesheets/_dressing_room.scss:14` — width: 200px;
 - [ ] `amber/app/assets/stylesheets/_dressing_room.scss:19` — width: 200px;
@@ -1826,39 +1855,39 @@ Fixed px width of 3+ digits. Fixed widths are the usual cause of horizontal over
 - [ ] `amber/app/assets/stylesheets/_item_forms.scss:2` — max-width: 480px;
 - [ ] `amber/app/assets/stylesheets/_items.scss:81` — max-width: 700px;
 - [ ] `amber/app/assets/stylesheets/_items.scss:114` — width: 200px;
-- [ ] `amber/app/assets/stylesheets/_items_luxury.scss:81` — @media (min-width: 768px) {
+- [x] `amber/app/assets/stylesheets/_items_luxury.scss:81` — @media (min-width: 768px) {
 - [ ] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:45` — width: 116px;
-- [ ] `amber/app/assets/stylesheets/_layout.scss:46` — @media (max-width: 640px) {
+- [x] `amber/app/assets/stylesheets/_layout.scss:46` — @media (max-width: 640px) {
 - [ ] `brgen/app/assets/stylesheets/_affiliate.scss:77` — .map-hud { position: fixed; top: var(--space-4); left: var(--brand-mark-inline); z-index: var(--z-app); displa
-- [ ] `brgen/app/assets/stylesheets/_canvas.scss:21` — @media (max-width: 1265px) { .city-carousel { inset-inline-start: calc(120px + 16px); } }
-- [ ] `brgen/app/assets/stylesheets/_canvas.scss:22` — @media (max-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_card_modifiers.scss:57` — @media (min-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_composer_responsive.scss:36` — @media (max-width: 767px) {
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:78` — @media (min-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:84` — @media (max-width: 480px) {
-- [ ] `brgen/app/assets/stylesheets/_forms.scss:77` — @media (max-width: 767px) {
-- [ ] `brgen/app/assets/stylesheets/_marketplace.scss:132` — @media (min-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_canvas.scss:21` — @media (max-width: 1265px) { .city-carousel { inset-inline-start: calc(120px + 16px); } }
+- [x] `brgen/app/assets/stylesheets/_canvas.scss:22` — @media (max-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_card_modifiers.scss:57` — @media (min-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_composer_responsive.scss:36` — @media (max-width: 767px) {
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:78` — @media (min-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:84` — @media (max-width: 480px) {
+- [x] `brgen/app/assets/stylesheets/_forms.scss:77` — @media (max-width: 767px) {
+- [x] `brgen/app/assets/stylesheets/_marketplace.scss:132` — @media (min-width: 768px) {
 - [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:26` — width: 300px;
 - [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:35` — width: 100px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_cards.scss:10` — @media (min-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_marketplace_cards.scss:17` — @media (min-width: 1265px) {
+- [x] `brgen/app/assets/stylesheets/_marketplace_cards.scss:10` — @media (min-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_marketplace_cards.scss:17` — @media (min-width: 1265px) {
 - [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:81` — width: 100px;
 - [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:149` — max-width: 140px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:310` — @media (max-width: 700px) {
-- [ ] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:55` — @media (min-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:310` — @media (max-width: 700px) {
+- [x] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:55` — @media (min-width: 768px) {
 - [ ] `brgen/app/assets/stylesheets/_nearby.scss:10` — max-width: 320px;
 - [ ] `brgen/app/assets/stylesheets/_posts.scss:142` — .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
-- [ ] `brgen/app/assets/stylesheets/_root.scss:246` — @media (min-width: 1265px) {
-- [ ] `brgen/app/assets/stylesheets/_root.scss:251` — @media (min-width: 769px) and (max-width: 1264px) {
-- [ ] `brgen/app/assets/stylesheets/_root.scss:256` — @media (max-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_widgets.scss:22` — @media (min-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_widgets.scss:33` — @media (min-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_widgets.scss:47` — @media (min-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_root.scss:246` — @media (min-width: 1265px) {
+- [x] `brgen/app/assets/stylesheets/_root.scss:251` — @media (min-width: 769px) and (max-width: 1264px) {
+- [x] `brgen/app/assets/stylesheets/_root.scss:256` — @media (max-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_widgets.scss:22` — @media (min-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_widgets.scss:33` — @media (min-width: 768px) {
+- [x] `brgen/app/assets/stylesheets/_widgets.scss:47` — @media (min-width: 768px) {
 - [ ] `brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss:14` — max-width: 1280px;
 - [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:51` — max-width: 720px;
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:71` — @media (min-width: 768px) {
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:71` — @media (min-width: 768px) {
 - [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:72` — .radio-track-display { max-width: 350px; }
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:75` — @media (max-width: 767px) {
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:75` — @media (max-width: 767px) {
 - [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:92` — max-width: 720px;
 - [ ] `brgen/engines/takeaway/app/assets/stylesheets/_vertical_takeaway.scss:21` — max-width: 1280px;
 - [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:8` — max-width: 1100px;
@@ -1866,21 +1895,21 @@ Fixed px width of 3+ digits. Fixed widths are the usual cause of horizontal over
 - [ ] `bsdports/app/assets/stylesheets/application.scss:202` — width: 182px;
 - [ ] `bsdports/app/assets/stylesheets/application.scss:251` — max-width: 660px;
 - [ ] `bsdports/app/assets/stylesheets/application.scss:316` — max-width: 584px;
-- [ ] `bsdports/app/assets/stylesheets/application.scss:418` — @media (max-width: 640px) {
+- [x] `bsdports/app/assets/stylesheets/application.scss:418` — @media (max-width: 640px) {
 - [ ] `shared/app/assets/stylesheets/_dialect_tokens.scss:50` — --sidebar-width: 275px;
 - [ ] `shared/app/assets/stylesheets/_dialect_tokens.scss:52` — --widgets-width: 350px;
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:55` — @media (min-width: 1280px) {
+- [x] `shared/app/assets/stylesheets/_minimal.scss:55` — @media (min-width: 1280px) {
 - [ ] `shared/app/assets/stylesheets/_minimal.scss:195` — max-width: 660px;
 - [ ] `shared/app/assets/stylesheets/_minimal.scss:247` — max-width: 584px;
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:449` — @media (max-width: 480px) {
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:471` — @media (max-width: 480px) {
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:608` — @media (min-width: 768px) {
+- [x] `shared/app/assets/stylesheets/_minimal.scss:449` — @media (max-width: 480px) {
+- [x] `shared/app/assets/stylesheets/_minimal.scss:471` — @media (max-width: 480px) {
+- [x] `shared/app/assets/stylesheets/_minimal.scss:608` — @media (min-width: 768px) {
 - [ ] `shared/app/assets/stylesheets/_responsive.scss:3` — // This used to be wrapped in @media (max-width: 768px), with the note "desktop
 - [ ] `shared/app/assets/stylesheets/_search_yep.scss:4` — width: 480px;
 - [ ] `shared/app/assets/stylesheets/_shell.scss:286` — width: 230px;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:444` — @media (max-width: 480px) {
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:444` — @media (max-width: 480px) {
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:201` — max-width: 360px;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:369` — @media (max-width: 480px) {
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:369` — @media (max-width: 480px) {
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:465` — @container grid (min-width: 400px) {
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:471` — @container grid (min-width: 600px) {
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:578` — .brand-wordmark .logo-carousel { max-width: 140px; overflow: hidden; }
