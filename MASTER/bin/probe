@@ -104,7 +104,7 @@ CHECKS = {
     needs_ruby3: true,
   },
   "crawl" => {
-    desc: "HTTP crawl manifest + inventory sync (apps.yml ↔ master.json)",
+    desc: "HTTP crawl manifest + inventory sync (apps.yml ↔ deploy_inventory.json)",
     cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "tools", "crawl_probe.rb")],
     cwd: REPO_ROOT,
   },

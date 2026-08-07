@@ -29,7 +29,7 @@ production:
 domain_alignment:
   require: lib/domain_alignment
   class: Deploy::DomainAlignmentGate
-  pass: "Domain alignment gate passed (city domains + master.json/relayd checks)."
+  pass: "Domain alignment gate passed (city domains + deploy_inventory.json/relayd checks)."
   covered_by: release
 
 frontend_auditor:

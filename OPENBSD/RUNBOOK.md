@@ -7,8 +7,8 @@ the agent contract, and live-operation safety in one place.
 ## Repo layout
 
 `MASTER/`, `RAILS/`, `OPENBSD/`, `OPENBSD/` at the repo root, plus dotfolders. Canonical
-inventories: `RAILS/apps.yml`, `OPENBSD/master.json`. Deploy gates (`integrity_gate.rb`,
-`verify_deploy_identity.rb`, `master.json`) and recovery pens (`archive/`, `quarantine/`) live
+inventories: `RAILS/apps.yml`, `OPENBSD/deploy_inventory.json`. Deploy gates (`integrity_gate.rb`,
+`verify_deploy_identity.rb`, `deploy_inventory.json`) and recovery pens (`archive/`, `quarantine/`) live
 at `OPENBSD/` top level.
 
 ## Deployment map
@@ -95,7 +95,7 @@ When SSH to vm23 is required, use normal paths: `doas zsh OPERATOR.sh`, `vps-dep
 **Rules:**
 
 - Run `bin/pub4 status` before starting work; use `OPENBSD/RECIPES.md` for copy-paste paths.
-- Treat `RAILS/apps.yml` and `master.json` as inventories, not suggestions.
+- Treat `RAILS/apps.yml` and `OPENBSD/deploy_inventory.json` as inventories, not suggestions.
 - Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
 - Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/vps_ci.sh <app>` for per-app CI.
 - Keep secrets in `/etc/*.env`; never commit them.
@@ -288,7 +288,7 @@ Ruby on VPS: `ruby34`, `bundle34`. Never parallel `bin/ci` across SSH sessions.
 OPENBSD/bin/check                         # local static deploy gates
 OPENBSD/bin/check-vps                     # vm23/live health gates; skips off-VPS
 ruby OPENBSD/integrity_gate.rb              # full chain: production, phantom_fk, frontend, relayd, domain_align, crawl
-ruby RAILS/tools/crawl_probe.rb           # HTTP manifest + apps.yml ↔ master.json sync
+ruby RAILS/tools/crawl_probe.rb           # HTTP manifest + apps.yml ↔ deploy_inventory.json sync
 MASTER_CRAWL_BROWSER=1 ruby RAILS/tools/crawl_browser.rb   # Ferrum element crawl (VPS)
 cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
 ```

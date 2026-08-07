@@ -6,7 +6,7 @@ require_relative "../../../OPENBSD/lib/gate_result"
 module Deploy
   class PortInventoryGate
     ROOT = File.expand_path("../../..", __dir__)
-    MASTER_JSON = ENV.fetch("MASTER_JSON", File.join(ROOT, "OPENBSD", "deploy_inventory.json"))
+    DEPLOY_INVENTORY = ENV.fetch("DEPLOY_INVENTORY", File.join(ROOT, "OPENBSD", "deploy_inventory.json"))
     OPENBSD_DEPLOY = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
     APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
     RAILS_README = File.join(ROOT, "RAILS", "README.md")
@@ -61,12 +61,12 @@ module Deploy
     end
 
     def check_master_json(result, apps)
-      unless File.file?(MASTER_JSON)
-        result.fail("missing OPENBSD/deploy_inventory.json mirror: #{MASTER_JSON}")
+      unless File.file?(DEPLOY_INVENTORY)
+        result.fail("missing OPENBSD/deploy_inventory.json mirror: #{DEPLOY_INVENTORY}")
         return
       end
 
-      master = Inventory.new(root: ROOT).master_apps(path: MASTER_JSON)
+      master = Inventory.new(root: ROOT).master_apps(path: DEPLOY_INVENTORY)
       expected = apps.sort_by(&:name).map { |app| [app.name, app.domain, app.port] }
       actual = master.sort_by(&:name).map { |app| [app.name, app.domain, app.port] }
       result.fail("OPENBSD/deploy_inventory.json must mirror RAILS/apps.yml active apps") unless actual == expected

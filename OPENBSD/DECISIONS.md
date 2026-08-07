@@ -51,7 +51,7 @@ App ports are internal implementation details. Public ingress is 22, 25, 80, and
 
 ## `rails/apps.yml` Is Canonical
 
-App status, domains, ports, and deploy scripts live in `RAILS/apps.yml`. `OPENBSD/master.json`, relayd, acme, NSD, and docs should agree with it.
+App status, domains, ports, and deploy scripts live in `RAILS/apps.yml`. `OPENBSD/deploy_inventory.json`, relayd, acme, NSD, and docs should agree with it.
 
 ## Copy-Tree Deploy
 
@@ -76,7 +76,7 @@ Solid Queue inline mode uses the env var `SOLID_QUEUE_IN_PUMA=true` — that nam
 
 - **Gate chain restored** — repointed `require_relative "utf8"` refs after the `tools/` reorg; every gate had been crashing with `LoadError`.
 - **CLI + probe bugs** — `Master::CommandRegistry.tree_lines` → `Master::Now::CommandRegistry.dispatch_tree`; nsaudit eager-loads + skips the kernel spine; smoke-web no longer crashes on a refused connection and skips cleanly off-VPS; asset drift regenerated.
-- **baibl + blognet removed** — apps, relayd, acme, nsd (zones + DNSSEC keys), litestream, rc.d, inventories (`master.json`, `apps.yml`), gates, tests, and their vanity/megablog domains.
+- **baibl + blognet removed** — apps, relayd, acme, nsd (zones + DNSSEC keys), litestream, rc.d, inventories (`deploy_inventory.json`, `apps.yml`), gates, tests, and their vanity/megablog domains.
 - **Web "tap to start" hardening** — platform-level guard in `chat/index.html.erb` blocks WebGL until primer tap.
 
 ## Open decisions (2026-07-10)

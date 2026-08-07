@@ -24,7 +24,7 @@ OPENBSD is the production surface for pub4: vm23 config backup, relayd, NSD/acme
 ## Source Of Truth
 
 - App inventory: `RAILS/apps.yml`.
-- Public/deploy identity: `OPENBSD/master.json`.
+- Public/deploy identity: `OPENBSD/deploy_inventory.json`.
 - OpenBSD configs: `OPENBSD/etc/`.
 - Operator runbook: `OPENBSD/RUNBOOK.md`.
 - Feature inventory: `RAILS/apps.yml`. Open debt: `OPENBSD/data/debt.yml`. Horizon: `apps.horizon.yml` (agent: ignore). Runtime: `/orient deploy`.

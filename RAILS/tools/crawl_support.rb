@@ -10,7 +10,7 @@ module CrawlSupport
   ROOT = File.expand_path("../..", __dir__)
   MANIFEST = File.expand_path("../crawl_manifest.yml", __dir__)
   APPS_YML = File.expand_path("../apps.yml", __dir__)
-  MASTER_JSON = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
+  DEPLOY_INVENTORY = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
 
   module_function
 
@@ -98,7 +98,7 @@ module CrawlSupport
   end
 
   def load_master_json
-    JSON.parse(File.read(MASTER_JSON))
+    JSON.parse(File.read(DEPLOY_INVENTORY))
   end
 
   def port_open?(host, port, timeout: 0.4)

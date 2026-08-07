@@ -15,7 +15,7 @@ module Deploy
     ROOT = Pathname.new(File.expand_path("../../..", __dir__))
     OPENBSD = ROOT.join("OPENBSD", "OPERATOR.sh")
     REGISTRY = ROOT.join("RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
-    MASTER_JSON = ROOT.join("OPENBSD", "deploy_inventory.json")
+    DEPLOY_INVENTORY = ROOT.join("OPENBSD", "deploy_inventory.json")
     RELAYD = ROOT.join("OPENBSD", "etc", "relayd.conf")
     COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
     MASTER_ONLY_SUBAPPS = %w[ai].freeze
@@ -65,7 +65,7 @@ module Deploy
         result.fail("routes playlist lists unknown label #{label}")
       end
 
-      master = parse_master_json
+      master = parse_deploy_inventory
       relayd_keys = parse_relayd_keypairs
 
       if master[:apps] && !master[:apps].empty?
@@ -144,10 +144,10 @@ module Deploy
       subs.uniq
     end
 
-    def parse_master_json
-      return {} unless MASTER_JSON.exist?
+    def parse_deploy_inventory
+      return {} unless DEPLOY_INVENTORY.exist?
 
-      data = JSON.parse(MASTER_JSON.read)
+      data = JSON.parse(DEPLOY_INVENTORY.read)
       apps = (data["apps"] || []).each_with_object({}) { |a, h| h[a["name"]] = a }
       master = data["master_face"] || {}
       { apps: apps, master: master }

@@ -30,7 +30,7 @@ ownership:
     purpose: serial VPS deploy entrypoint
     risk: critical
     check: zsh OPENBSD/bin/vps-deploy <app>
-  master.json:
+  deploy_inventory.json:
     purpose: deploy identity and public service inventory
     risk: high
     check: ruby OPENBSD/verify_deploy_identity.rb

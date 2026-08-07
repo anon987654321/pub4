@@ -97,7 +97,7 @@ VISUAL_CAPTURE=1 VISUAL_CAPTURE_APP=brgen VISUAL_CAPTURE_BASE=http://127.0.0.1:3
 | `Deploy::ProductionGate` | Production config, CI, deploy contract; optionally nests master asset/TTS checks |
 | `Deploy::MasterWebAssetsGate` | MASTER/web precompiled face assets + deploy-script wiring |
 | `Deploy::MasterTtsGate` | TTS worker/supervisor contract |
-| `Deploy::DomainAlignmentGate` | DNS/registry/master.json/relayd alignment |
+| `Deploy::DomainAlignmentGate` | DNS/registry/deploy_inventory.json/relayd alignment |
 | `Deploy::FrontendProductionGate` | Layout/CSS contract + MASTER/web face wiring |
 | `Deploy::FrontendAuditorGate` | Shared frontend auditor (0 warnings) |
 | `Deploy::StimulusComponentsGate` | Stimulus-components adoption + importmap pins |
@@ -283,7 +283,7 @@ Rails uses `Pub4::DeployPaths` to resolve MASTER media tools from a source check
 **Blockers:**
 
 1. City vanity TLS — `OPERATOR.sh` stage 1 must issue certs for every apex in `ALL_DOMAINS`; relayd keypairs only exist for certs on disk.
-2. Domain drift — `master.json`, `apps.yml`, `OPERATOR.sh`, and `relayd.conf` must agree.
+2. Domain drift — `OPENBSD/deploy_inventory.json`, `apps.yml`, `OPERATOR.sh`, and `relayd.conf` must agree.
 3. relayd restart after route changes.
 4. Seeds skipped in production unless `RUN_PRODUCTION_SEEDS=1`.
 5. openrsync broken on vm23 — deploy uses git pull.
