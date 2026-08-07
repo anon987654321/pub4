@@ -149,19 +149,6 @@ module DillaMaster
     [DillaAutomation.volume_filter([[0, 0.92], [mid, 1.08]])]
   end
 
-  # Back-compat aliases (leading comma form is intentional for mid-chain append).
-  def perceptual_limiter
-    ",#{perceptual_limiter_parts.join(',')}"
-  end
-
-  def harshness_notch
-    ",#{harshness_notch_parts.join(',')}"
-  end
-
-  def cassette_wow
-    ",#{cassette_wow_parts.join(',')}"
-  end
-
   def radio_club_morph(cfg, duration, section_fn = nil)
     ",#{radio_club_morph_parts(cfg, duration, section_fn).join(',')}"
   end
@@ -205,14 +192,6 @@ module DillaMaster
     return base unless enabled? && ENV["GROOVE_VINYL"] != "0"
     g = ghost_count.to_f / [kick_count, 1].max
     (base + g * 0.015).clamp(0.04, 0.14).round(3)
-  end
-
-  def vocal_carve_placeholder?
-    enabled? && ENV["VOCAL_CARVE"] == "1"
-  end
-
-  def vocal_carve_filter
-    ",equalizer=f=2800:t=h:w=900:g=-2.2:enable='gte(t,0)'"
   end
 
   def apply_phone_preview!(path)

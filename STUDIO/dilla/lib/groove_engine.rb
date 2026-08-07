@@ -572,12 +572,6 @@ module DillaGroove
     (base_steps + extra).uniq.sort
   end
 
-  def hat_accel_filter_hz(bar, n_bars, base_hz = 6500)
-    return base_hz unless enabled? && ENV["HAT_ACCEL"] == "1"
-    progress = bar.to_f / [n_bars - 1, 1].max
-    (base_hz + progress * 4000).round
-  end
-
   def euclidean(pulses, steps, rotation: 0)
     return [] if steps <= 0 || pulses <= 0
     bucket = 0.0
@@ -757,10 +751,6 @@ module DillaGroove
 
   def snare_sample_key(ghost:)
     ghost ? :ghost : :snare
-  end
-
-  def hat_sample_key(open: false)
-    open ? :open_hat : :hat
   end
 
   def apply_pocket_place(t, role:, beat_p:, bar:, step:, bpm:, section: nil)

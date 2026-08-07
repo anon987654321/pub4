@@ -83,7 +83,7 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 
 | ENV | Role |
 |-----|------|
-| `TRACK` / `PROGRESSION` | Progression id (e.g. `get_dis_money`, `neo_soul`) |
+| `TRACK` / `PROGRESSION` | Progression id (e.g. `pedal_e_descent`, `neo_soul`) |
 | `BARS` / `STREAM_BARS` | Length |
 | `STREAM_COMFORT` / `STREAM_PUNCH` | Sofa vs kit-forward stream |
 | `DILLA_COMFORT` | Sofa overlay on one-shot |
@@ -91,9 +91,9 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `POCKET_SET` | `neo_soul` (default), `classic`, `dusty`, `industrial` |
 | `KICK_GAIN` / `DRUM_BUS_VOL` | Quiet kit bus (~0.68 / 0.95) |
 | `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah on chord tones (`1` / `0.28` default; soft-fails) |
-| `VOCAL_CARVE` | Carve pads under rap stem (`1` when rap on) |
 | `STREAM_CREATIVE` / `STREAM_PUNCH` | Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — **off** by default |
 | `DILLA_SH_TIMEOUT` | Kill hung ffmpeg/fluidsynth (default 120s) |
+| `DILLA_FS_DRY` | Fluidsynth with its own chorus/reverb off — **off** by default; costs 12.6 dB of pad side-channel |
 | `THEORY_RUNTIME` / `THEORY_DILLA` / `THEORY_BACH` | Voicing operators |
 | `PAD_VOICE` / `PAD_VOL` / `PAD_LAYERS` | Pad bed |
 | `LEAD_ARP` / `HARMONY_LEAD` / `SCALE_LEAD` | Lead layers |
@@ -115,7 +115,7 @@ Full DNA is large (mix bus dB, harmonic stem weights). Prefer
 
 ```sh
 cd STUDIO/dilla
-TRACK=get_dis_money PROGRESSION=get_dis_money ruby dilla.rb dilla /tmp/beat.wav 12
+TRACK=pedal_e_descent PROGRESSION=pedal_e_descent ruby dilla.rb dilla /tmp/beat.wav 12
 ```
 
 ### 1. Engine CLI (`DISPATCH["dilla"]`)
@@ -152,7 +152,7 @@ sidechain amix → sonitex → analog → heuristics → loudnorm
 
 ## Stream rotation
 
-- **Progressions:** full pack (priority first: `get_dis_money`, neo-soul, untitled, …)
+- **Progressions:** full pack (priority first: `pedal_e_descent`, neo-soul, untitled, …)
 - **Drums:** `STREAM_DRUM_ROTATION` — soulful kits only (`dilla_slight`, `mpc3000`, …)
 - **No style sequence** — one DNA every slot; mix knobs only (`STREAM_COMFORT`, etc.)
 - **Style DNA wins** after force; `STREAM_CREATIVE_MAX` only when `STREAM_CREATIVE=1` or `STREAM_PUNCH=1`

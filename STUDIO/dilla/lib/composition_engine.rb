@@ -309,13 +309,6 @@ module DillaComposition
   module Counterpoint
     module_function
 
-    def parallel_fifth?(prev_intervals, next_intervals)
-      return false if prev_intervals.nil? || next_intervals.nil?
-      prev_intervals.zip(next_intervals).any? do |a, b|
-        a && b && (a - b).abs < 0.01 && [7, 12].include?((a % 12).round)
-      end
-    end
-
     def adjust_voices(voices_hz)
       sorted = voices_hz.sort
       return sorted if sorted.length < 2
@@ -331,9 +324,6 @@ module DillaComposition
       root_hz * semitone
     end
 
-    def passing_tone(from_hz, to_hz, step: 0.5)
-      from_hz + (to_hz - from_hz) * step
-    end
   end
 
   module Conversation

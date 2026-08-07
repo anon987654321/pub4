@@ -44,24 +44,6 @@ module Acapella
   # 70 to 140 is exactly one octave and has no hole in it.
   BPM_RANGE = (70.0..140.0)
 
-  # When the detector will not commit, the operator can.
-  #
-  # Some takes genuinely do not lock -- sparse percussion, live playing, heavy
-  # sidechain. Rather than lower the confidence bar for everything and admit
-  # noise, ACAPELLA_BPM=<slug>:<bpm> states a tempo by hand for one file. The
-  # detector stays honest and the track still gets used.
-  #
-  #   ACAPELLA_BPM="machomayne:101.2,other slug:88"
-  def manual_tempo(slug)
-    ENV["ACAPELLA_BPM"].to_s.split(",").each do |pair|
-      name, bpm = pair.split(":", 2)
-      next unless name && bpm && slug.to_s.downcase.include?(name.strip.downcase)
-
-      value = bpm.to_f
-      return value if value.positive?
-    end
-    nil
-  end
 
   module_function
 
@@ -207,11 +189,6 @@ module Acapella
       picked << i
     end
     picked.map { |i| i * RadioChop::ENV_WINDOW }
-  end
-
-  # How confident the reading is, for reporting.
-  def tempo_confidence(mix_path, bpm)
-    clustering(onset_times(mix_path), 60.0 / bpm).round(3)
   end
 
   # Where the first beat lands.
@@ -471,14 +448,6 @@ module Acapella
     ok.select { |v| ONLY.any? { |name| performer?(v["slug"], name) } }
   end
 
-  # Picks one vocal for a track, always the same one for the same track name.
-  def for_track(track, seed_hash)
-    pool = ranked
-    return nil if pool.empty?
-
-    pool[seed_hash % pool.length]
-  end
-
   # ------------------------------------------------------------------ laying
 
   # How far into the original the verse is taken from.
@@ -510,64 +479,6 @@ module Acapella
   # compromise, it is what the form does.
   HALF_TIME_ABOVE = 1.35
 
-  # The tempo the voice should actually be fitted to.
-  def flow_tempo(vocal_bpm, beat_bpm)
-    target = beat_bpm.to_f
-    target /= 2.0 while (target / vocal_bpm.to_f) > HALF_TIME_ABOVE
-    target
-  end
-
-  # Lays a fitted vocal over a finished beat.
-  #
-  # The beat ducks under the voice rather than the voice being pushed above the
-  # beat. Those sound different: raising the vocal makes it loud, while lowering
-  # everything else around it makes it CLEAR, and clarity is what carries words.
-  # The key is the vocal itself, so the beat only steps back while someone is
-  # actually speaking and comes straight back up in the gaps.
-  def lay_on!(beat_path:, dest:, seed: 0, vocal: nil, beat_bpm: nil)
-    pool = ranked
-    entry = vocal || (pool.empty? ? nil : pool[seed % pool.length])
-    return nil unless entry && File.file?(File.expand_path(entry["stem"], ROOT))
-
-    beat_tempo = beat_bpm || tempo(beat_path)
-    return nil unless beat_tempo
-
-    # Half time over fast music, rather than sprinting the rapper.
-    target = flow_tempo(entry["bpm"], beat_tempo)
-
-    beat = 60.0 / entry["bpm"].to_f
-    # Measured from the record's own length, not counted in bars from its start.
-    # See VERSE_WINDOW: a fixed sixteen bars lands about forty seconds in, which
-    # on a four-minute record is still the opening hook, so every beat took the
-    # same material and none of them took a verse.
-    total = probe_seconds(File.expand_path(entry["stem"], ROOT)).to_f
-    span = VERSE_WINDOW.max - VERSE_WINDOW.min
-    fraction = VERSE_WINDOW.min + ((seed % VERSE_POSITIONS) * span / VERSE_POSITIONS)
-    start = total.positive? ? (total * fraction).round(3) : entry["start_sec"].to_f + (beat * 64)
-    offset_bars = (start / (beat * 4)).round
-
-    duration = probe_seconds(beat_path)
-    return nil unless duration&.positive?
-
-    # Enough bars of the original that, once stretched, it covers the beat.
-    bars = ((duration * (entry["bpm"].to_f / target) / (beat * 4)).ceil + 1)
-    fitted = File.join(File.dirname(dest), "#{File.basename(dest, '.*')}_vox.wav")
-    fit = fit!(vocal_path: File.expand_path(entry["stem"], ROOT), dest: fitted,
-               from_bpm: entry["bpm"].to_f, to_bpm: target, start_sec: start, bars:)
-    return nil unless fit
-
-    ok = system("ffmpeg", "-nostdin", "-y", "-hide_banner", "-loglevel", "error",
-                "-i", beat_path, "-i", fitted,
-                "-filter_complex", MIX_GRAPH, "-map", "[out]",
-                "-c:a", "libmp3lame", "-b:a", "192k", dest,
-                out: File::NULL, err: File::NULL)
-    FileUtils.rm_f(fitted)
-    return nil unless ok && File.file?(dest)
-
-    { path: dest, vocal: entry["slug"], from_bpm: entry["bpm"], to_bpm: target,
-      ratio: fit[:ratio], verse_bars_in: offset_bars }
-  end
-
   # The voice sits IN the track, not on top of it.
   #
   # It was mixed at 1.15 against the beat's 1.0 and ducked the beat by a third,
@@ -589,10 +500,4 @@ module Acapella
     alimiter=limit=0.95:level_out=0.96[out]
   GRAPH
 
-  def probe_seconds(path)
-    out = IO.popen(["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                    "-of", "csv=p=0", path], &:read)
-    value = out.to_s.strip.to_f
-    value.positive? ? value : nil
-  end
 end

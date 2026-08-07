@@ -16,27 +16,8 @@ module DillaMl
     (base + g * 0.012).clamp(lo, 0.12).round(3)
   end
 
-  def predict_sub_hz(kick_hz, spectrum = nil)
-    low = spectrum&.dig(:low) || -20.0
-    offset = low < -22 ? 2.0 : 0.0
-    (kick_hz * 0.5 - offset).clamp(30.0, 80.0).round(2)
-  end
-
-  def mood_cluster_for(path_or_features)
-    return MOOD_CLUSTERS.sample if path_or_features.nil?
-    if path_or_features.is_a?(Hash)
-      high = path_or_features[:high].to_f
-      return :bright if high > -18
-      return :dark if high < -28
-    end
-    MOOD_CLUSTERS[path_or_features.to_s.hash.abs % MOOD_CLUSTERS.length]
-  end
-
   def ddsp_stub_note
     "DDSP sidecar not installed — using heuristic spectral regen. Set DILLA_ML=1 when tools/dilla-ml ships."
   end
 
-  def rave_stub_note
-    "RAVE latent DJ requires offline embedding — use stream + evolution for infinite variation."
-  end
 end

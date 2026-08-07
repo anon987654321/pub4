@@ -489,16 +489,4 @@ module Outboard
     end.join(",")
   end
 
-  # Every unit, for the verifier. Each must open in ffmpeg or it is not an
-  # emulation of anything.
-  def all_units(bpm: 83.0)
-    {
-      hedd_triode: hedd_triode, hedd_pentode: hedd_pentode, hedd_tape: hedd_tape,
-      pultec_low: pultec_low, pultec_air: pultec_air,
-      la2a: la2a, fet1176: fet1176, fairchild670: fairchild670,
-      stc8: stc8(bpm:), gml_matte: gml_matte, neve_80: neve_80,
-      api_console: api_console, tape_machine: tape_machine,
-      console_sum: console_sum,
-    }
-  end
 end

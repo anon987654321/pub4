@@ -87,7 +87,7 @@ module DillaHarmony
   end
 
   def progression_insight(chords)
-    return unless defined?(DillaMusicGems) && DillaMusicGems.major_third_cycle_full?
+    return unless defined?(DillaMusicGems) && DillaMusicGems.coltrane?
     symbols = chords.map { |c| c[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "") }
     DillaMusicGems.progression_analysis(symbols)
   end
@@ -389,12 +389,6 @@ module DillaHarmony
     motion <= 2 ? 1.12 : 1.0
   end
 
-  def stereo_pan_for_voice(voice_i, voices, soul: false)
-    return 0.0 unless soul
-    spread = 0.28
-    (voice_i.to_f / [voices - 1, 1].max - 0.5) * spread * 2.0
-  end
-
   def enrich_progression(pads, cfg, phases: [], curated: false)
     return [pads, phases] if pads.empty?
     soul = soul_profile?(cfg[:track])
@@ -484,13 +478,6 @@ module DillaHarmony
   def chord_pitch_classes(chord)
     root_pc = hz_to_midi(chord[:hz].min).round % 12
     chord[:hz].map { |h| ((hz_to_midi(h).round - root_pc) % 12) }.uniq.sort
-  end
-
-  def expected_pitch_classes(sym)
-    ref = DillaLofiMachine.chord_from_symbol(sym.to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, ""))
-    chord_pitch_classes(ref)
-  rescue StandardError
-    []
   end
 
   def chord_tones_preserved?(chord)
@@ -753,7 +740,7 @@ module DillaHarmony
     rescue StandardError
       ch
     end
-    # Bach/Dilla theory runtime (major_third_cycle_full/head_music when available).
+    # Bach/Dilla theory runtime (coltrane/head_music when available).
     if defined?(DillaTheoryRuntime)
       pads = DillaTheoryRuntime.refine_progression!(pads, cfg:)
     end

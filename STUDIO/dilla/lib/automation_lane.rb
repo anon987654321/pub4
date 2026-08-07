@@ -31,11 +31,6 @@ module DillaAutomation
     ladder
   end
 
-  # Convenience for the common two-step case (radio_club_morph's shape).
-  def step_expr(before:, at_sec:, after:)
-    volume_expr([[0, before], [at_sec, after]])
-  end
-
   def volume_filter(points)
     "volume='#{volume_expr(points)}':eval=frame"
   end

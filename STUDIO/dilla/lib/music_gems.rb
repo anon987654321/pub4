@@ -3,7 +3,7 @@
 require "timeout"
 
 # Thin adapter over community Ruby music gems (GitHub-sourced).
-#   major_third_cycle_full  — pedrozath/major_third_cycle_full — chord parsing, voicings, progression analysis
+#   coltrane  — pedrozath/coltrane — chord parsing, voicings, progression analysis
 #   midilib   — jimm/midilib — Standard MIDI File I/O
 #   wavefile  — jstrait/wavefile — WAV read without ffmpeg
 #   head_music — roberthead/head_music — pitch-class / interval analysis
@@ -15,44 +15,64 @@ module DillaMusicGems
 
   module_function
 
+  # One rescue used to wrap every require, so a single missing gem set all four
+  # flags to false and the only report was gated behind DILLA_DEBUG. That is how
+  # a broken `require` survived: 797af1469's rename sweep matched the bare word
+  # `coltrane` and rewrote the gem name — and the require of a gem that does not
+  # exist reported nothing, disabled head_music/midilib/wavefile which had loaded
+  # fine, and left chord parsing silently on the inline fallback for two days.
+  #
+  # A bundler/setup conflict genuinely does poison the whole set (see dilla.rb's
+  # header on require ordering), so that one keeps the wide rescue. A missing
+  # individual gem now costs only itself, and says so.
   def bootstrap!
     return @bootstrapped if defined?(@bootstrapped) && @bootstrapped
+
+    @coltrane = @midilib = @wavefile = @head_music = false
+    @bootstrapped = true
 
     gemfile = File.expand_path("../../../MASTER/Gemfile", __dir__)
     if File.file?(gemfile)
       ENV["BUNDLE_GEMFILE"] ||= gemfile
-      require "bundler/setup"
+      begin
+        require "bundler/setup"
+      rescue LoadError, StandardError => e
+        warn "dilla gems: bundler/setup failed (#{e.class}: #{e.message}) — " \
+             "all four gems unavailable, falling back to inline theory"
+        return @bootstrapped
+      end
     end
-    # head_music must load before major_third_cycle_full — loading it after breaks ClassicScales on Ruby 4.
-    require "ostruct"
-    require "head_music"
-    require "major_third_cycle_full"
-    require File.expand_path("../../../MASTER/lib/boot/hash_dig_compat", __dir__)
-    Master.install_hash_dig_compat!
-    require "midilib"
-    require "wavefile"
-    @major_third_cycle_full = true
-    @midilib = true
-    @wavefile = true
-    @head_music = true
-    @bootstrapped = true
+
+    # head_music must load before coltrane — loading it after breaks ClassicScales on Ruby 4.
+    @head_music = load_gem("head_music") { require "ostruct"; require "head_music" }
+    @coltrane = load_gem("coltrane") do
+      require "coltrane"
+      require File.expand_path("../../../MASTER/lib/boot/hash_dig_compat", __dir__)
+      Master.install_hash_dig_compat!
+    end
+    @midilib = load_gem("midilib") { require "midilib" }
+    @wavefile = load_gem("wavefile") { require "wavefile" }
+    @bootstrapped
+  end
+
+  # Names the gem and what is lost. Not gated on a debug flag: a missing gem
+  # changes what the engine renders, so it is not debug output.
+  def load_gem(name)
+    yield
+    true
   rescue LoadError => e
-    warn "dilla gems: partial load (#{e.message})" if ENV["DILLA_DEBUG"]
-    @major_third_cycle_full = false
-    @midilib = false
-    @wavefile = false
-    @head_music = false
-    @bootstrapped = true
+    warn "dilla gems: #{name} unavailable (#{e.message}) — falling back to inline theory for it"
+    false
   end
 
   def available?
     bootstrap!
-    @major_third_cycle_full || @midilib || @wavefile || @head_music
+    @coltrane || @midilib || @wavefile || @head_music
   end
 
-  def major_third_cycle_full?
+  def coltrane?
     bootstrap!
-    @major_third_cycle_full == true
+    @coltrane == true
   end
 
   def midilib?
@@ -70,7 +90,7 @@ module DillaMusicGems
     @head_music == true
   end
 
-  # Map dilla/Jazz symbols → major_third_cycle_full names (always use M for major).
+  # Map dilla/Jazz symbols → coltrane names (always use M for major).
   def coltrane_chord_name(sym)
     s = sym.to_s.strip
     return if s.empty?
@@ -96,7 +116,7 @@ module DillaMusicGems
   end
 
   def chord_from_symbol(sym, octave: PAD_OCTAVE, voices: PAD_VOICES)
-    return unless major_third_cycle_full?
+    return unless coltrane?
 
     raw = sym.to_s.strip
     bass_note = nil
@@ -134,11 +154,11 @@ module DillaMusicGems
   end
 
   def progression_analysis(symbols)
-    return unless major_third_cycle_full?
+    return unless coltrane?
     names = symbols.map { |s| coltrane_chord_name(s) }.compact
     return if names.length < 2
 
-    # major_third_cycle_full has hung indefinitely on specific chord symbols (Dm7b5, Cmaj9
+    # coltrane has hung indefinitely on specific chord symbols (Dm7b5, Cmaj9
     # — see README / producer_dna.rb#chord_from_symbol); bound it the same
     # way rather than let a render freeze forever with no exception raised.
     hits = Timeout.timeout(1.5) { ::Coltrane::Progression.find(*names) }
@@ -156,7 +176,7 @@ module DillaMusicGems
   end
 
   def chord_candidates_from_pitch_classes(pitch_classes, limit: 16)
-    return [] unless major_third_cycle_full?
+    return [] unless coltrane?
 
     pcs = pitch_classes.map { |pc| pc.to_i % 12 }.uniq.sort
     return [] if pcs.length < 3
@@ -230,7 +250,7 @@ module DillaMusicGems
   def status
     bootstrap!
     {
-      major_third_cycle_full: major_third_cycle_full?,
+      coltrane: coltrane?,
       midilib: midilib?,
       wavefile: wavefile?,
       head_music: head_music?,

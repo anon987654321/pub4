@@ -119,7 +119,6 @@ class TestDilla < Minitest::Test
         pad_vol: ENV["PAD_VOL"],
         crossfade: ENV["STREAM_CROSSFADE"],
         drum_rotate: ENV["STREAM_DRUM_ROTATE"],
-        vocal_carve: ENV["VOCAL_CARVE"],
         choir: ENV["CHOIR_VOX"]
       )
     RUBY
@@ -132,15 +131,19 @@ class TestDilla < Minitest::Test
     assert_equal "0", result.fetch("self_sample")
     assert_equal "0", result.fetch("conv")
     assert_equal "-16.5", result.fetch("lufs")
-    # Tracks DILLA_STYLE_DEFAULTS["PAD_VOL"], which the pad bed was raised to 72
-    # from 62 so Rhodes/Prophet read over the kit. The assertion here is that the
-    # stream path applies the DNA, not that the DNA holds any one number.
-    assert_equal "72", result.fetch("pad_vol")
+    # Tracks DILLA_STYLE_DEFAULTS["PAD_VOL"], raised 62 -> 72 -> 86 (e3a046f22,
+    # Store P over lush neo-soul pads) so Rhodes/Prophet read over the kit. The
+    # assertion here is that the stream path applies the DNA, not that the DNA
+    # holds any one number.
+    assert_equal "86", result.fetch("pad_vol")
     assert_equal "0.12", result.fetch("crossfade")
     assert_equal "1", result.fetch("drum_rotate")
-    assert_equal "1", result.fetch("vocal_carve")
-    # Vocals off by default; the carve stays on because it costs nothing
-    # when there is no vocal and is wanted the moment RAP_VOCAL is set.
+    # VOCAL_CARVE used to be asserted here. It was set to "1" by two defaults
+    # tables and read by exactly one method, DillaMaster.vocal_carve_placeholder?,
+    # which nothing called -- so this assertion only ever proved the string had
+    # been written into ENV, never that a single pad was carved under a vocal.
+    # Flag and reader are both gone; if the carve is wanted it needs building,
+    # and this line would not have noticed either way.
     assert_equal "0", result.fetch("choir")
   end
 
@@ -267,11 +270,11 @@ class TestDilla < Minitest::Test
     expected_narrow = narrow_result.fetch("rotation").select { |t| produced.include?(t) }
 
     assert_equal expected_narrow, narrow, "MODAL_ROTATION=0 restores the Dilla-produced pool exactly"
-    assert_equal "get_dis_money", wide.first, "the core still leads the widened rotation"
+    assert_equal "pedal_e_descent", wide.first, "the core still leads the widened rotation"
     assert_operator wide.length, :>, narrow.length, "widening admits the rest of the modal family"
     # Not "the core is contiguous at the head" — it is not. ModalFamily.widen
     # returns core-first, but stream_track_order reorders afterwards, so only
-    # get_dis_money reliably leads. The invariant that actually matters is that
+    # pedal_e_descent reliably leads. The invariant that actually matters is that
     # widening never drops a Dilla-produced track: it adds to the core, it does
     # not replace it.
     assert_empty narrow - wide, "widening must not drop any Dilla-produced track"
@@ -281,10 +284,10 @@ class TestDilla < Minitest::Test
     result = eval_in_engine(<<~RUBY)
       ENV["DILLA_PROGRESSIONS_ONLY"] = "0"
       order = stream_track_order.map(&:to_s)
-      puts JSON.generate(order_n: order.length, head: order.first(3), has_untitled: order.include?("untitled_how_does_it_feel"))
+      puts JSON.generate(order_n: order.length, head: order.first(3), has_untitled: order.include?("d_add9_soul_arc"))
     RUBY
     assert_operator result.fetch("order_n"), :>=, 8
-    assert_equal "get_dis_money", result.fetch("head").first
+    assert_equal "pedal_e_descent", result.fetch("head").first
     assert result.fetch("has_untitled"), "the unfiltered pool keeps the non-Dilla curated tracks"
   end
 
@@ -376,7 +379,7 @@ class TestDilla < Minitest::Test
   def test_pad_layers_stay_held_and_arp_routes_to_lead_cfg
     result = eval_in_engine(<<~RUBY)
       pads = [[0.0, 0.9, { name: "Fm9", hz: [174.61, 261.63] }, 3.8]]
-      cfg = { bpm: 94, swing: 57, track: :erykah_minor }
+      cfg = { bpm: 94, swing: 57, track: :warm_minor_vamp }
       patch = { id: :prophet_5_pad, arp_styles: %i[updown pingpong] }
       # NO_ARP defaults on from 2026-08-01, and it outranks PAD_ARP_MODE by
       # design. This test is about the arp routing itself, which is still there
@@ -458,9 +461,12 @@ class TestDilla < Minitest::Test
     assert_equal "1", result.fetch("composition")
     assert_equal "1", result.fetch("groove_engine")
     assert_equal "1", result.fetch("pocket_dna")
-    assert_equal "1", result.fetch("harmony_lead")
-    assert_equal "1", result.fetch("lead_arp")
-    assert_equal "get_dis_money", result.fetch("track")
+    # All four lead layers default off since cd8e6850f / 058ff18f3 ("drop the
+    # leads" -- the pads and the progression carry it). LEAD_ARP=1 here asserted
+    # the pre-decision default and had been red since.
+    assert_equal "0", result.fetch("harmony_lead")
+    assert_equal "0", result.fetch("lead_arp")
+    assert_equal "pedal_e_descent", result.fetch("track")
     assert_equal "1", result.fetch("phrase_drift")
     assert_equal "1", result.fetch("swing_jitter")
     # The FM kit is the default, and this assertion used to say the opposite.
@@ -488,7 +494,7 @@ class TestDilla < Minitest::Test
     assert result.fetch("dfam")
     assert result.fetch("spectral")
     assert result.fetch("master_on")
-    assert result.fetch("harmony_on")
+    refute result.fetch("harmony_on"), "harmony_lead_enabled? agrees with HARMONY_LEAD=0"
     assert result.fetch("composition_on")
     assert_empty result.fetch("conflicts"), "BEST must not soft-block STYLE DNA"
   end
@@ -501,9 +507,9 @@ class TestDilla < Minitest::Test
       ENV["SWING_JITTER"] = "1"
       ENV["PHRASE_DRIFT"] = "1"
       ENV["DILLA_RENDER_SEED"] = "42"
-      cfg = { track: :get_dis_money, bpm: 92.0, swing: 56.0, feel: :dilla_slight,
+      cfg = { track: :pedal_e_descent, bpm: 92.0, swing: 56.0, feel: :dilla_slight,
               timing: {}, chord_bars: 4, phrase_bars: 8, quintuplet: false,
-              progression: :get_dis_money, style_family: :dilla }
+              progression: :pedal_e_descent, style_family: :dilla }
       pads = [{ name: "Cm7", hz: [130.81, 155.56, 196.0, 233.08] },
               { name: "Fm7", hz: [174.61, 207.65, 261.63, 311.13] }]
       beat_p = 60.0 / 92.0
@@ -764,11 +770,11 @@ class TestDilla < Minitest::Test
       )
     RUBY
     assert_equal "dilla", result.fetch("mode")
-    assert_equal "get_dis_money", result.fetch("track")
+    assert_equal "pedal_e_descent", result.fetch("track")
     # DILLA_STYLE_DEFAULTS deliberately does NOT force BPM (see its own
     # comment): forcing "92" here used to silently clobber every other
     # track's own tuned tempo. resolve_bpm falls back to the track preset
-    # itself (still 92 for get_dis_money) when ENV["BPM"] is unset.
+    # itself (still 92 for pedal_e_descent) when ENV["BPM"] is unset.
     assert_nil result.fetch("bpm")
     assert_includes %w[0 1], result.fetch("kicks")
     # gunnhild is the only vocal source (2026-07-27); this asserted jonas_v,
@@ -833,8 +839,8 @@ class TestDilla < Minitest::Test
   end
 
   def test_dilla_neosoul_aydin_bach_progressions_resolve
-    %i[maj7_minor_cycle neo_soul electronium_loop aydin_modal_quartal aydin_jazz_turn
-       bach_circle_descent bach_descending_bass].each do |track|
+    %i[maj7_minor_cycle neo_soul electronium_loop modal_quartal_ladder minor_two_five_chain
+       circle_fifths_descent walking_bass_descent].each do |track|
       result = eval_in_engine(<<~RUBY)
         ENV["TRACK"] = #{track.to_s.dump}
         ENV["DILLA_RAW"] = "1"
@@ -862,9 +868,9 @@ class TestDilla < Minitest::Test
 
   def test_curated_progression_beautify_preserves_harmonic_quality
     result = eval_in_engine(<<~RUBY)
-      ENV["TRACK"] = "erykah_minor"
+      ENV["TRACK"] = "warm_minor_vamp"
       ENV["DILLA_RAW"] = "1"
-      pads = dilla_progression(:erykah_minor)
+      pads = dilla_progression(:warm_minor_vamp)
       cfg = enhanced_resolve_config
       curated, = DillaHarmony.beautify_curated_pipeline(pads, cfg, phases: [])
       full, = DillaHarmony.beautify_pipeline(pads, cfg, phases: [])
@@ -895,7 +901,7 @@ class TestDilla < Minitest::Test
       preset_key = lead_arp_preset_key
       ENV.delete("LEAD_VOICE")
       ENV.delete("LEAD_ARP_MODE")
-      apply_track_soul_profile!(:erykah_minor)
+      apply_track_soul_profile!(:warm_minor_vamp)
       puts JSON.generate(
         voice_id: patch&.dig(:id),
         arp_mode: arp_mode,
@@ -914,6 +920,87 @@ class TestDilla < Minitest::Test
     assert_equal 2, result.fetch("lead_subdiv")
     assert_equal "erykah", result.fetch("track_voice")
     assert_equal "erykah_dust", result.fetch("track_arp")
+  end
+
+  # A hand-cut loop only reaches a render when some TRACK name resolves to it:
+  # sample_loop_entry looks the track up in TRACK_SAMPLE_LOOPS, so a loop with
+  # no matching preset (or alias to one) is selectable only by typing
+  # TRACK=<slug> by hand, and never appears in the medley or the rotation.
+  # Three of the four measured loops were in that state. Nothing errors when it
+  # happens, which is why it needs a test rather than a comment.
+  def test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset
+    result = eval_in_engine(<<~RUBY)
+      presets = TRACK_PRESETS.keys.map(&:to_s)
+      loops = TRACK_SAMPLE_LOOPS_BUILTIN.keys.map(&:to_s)
+      aliases = TRACK_SAMPLE_LOOP_ALIASES.transform_keys(&:to_s).transform_values(&:to_s)
+      excluded = SAMPLE_LOOPS_OUT_OF_ROTATION.map(&:to_s)
+      unreachable = (loops - excluded).reject do |slug|
+        presets.include?(slug) || aliases.any? { |a, t| t == slug && presets.include?(a) }
+      end
+      puts JSON.generate(loops: loops, unreachable: unreachable,
+                         missing_files: TRACK_SAMPLE_LOOPS_BUILTIN.reject { |_, v| File.file?(v[:path]) }.keys)
+    RUBY
+    assert_operator result.fetch("loops").length, :>=, 4
+    assert_empty result.fetch("unreachable"),
+                 "hand-cut loops with no preset never render: #{result.fetch('unreachable').inspect}"
+    assert_empty result.fetch("missing_files"),
+                 "a loop entry pointing at a file that is not there renders silently without a bed"
+  end
+
+  # CHORD_SUFFIXES is the parser's whitelist; CHORD_TEMPLATES is what voices the
+  # match. A suffix listed in the first and missing from the second does not
+  # raise -- quality_for_suffix falls back to "maj9", so the symbol parses and
+  # renders as the wrong chord, silently. That is how a written 7#9 could come
+  # out a major ninth. Pin the two tables to each other.
+  #
+  # Also pins that no suffix contains "/": uncached_chord_from_symbol
+  # short-circuits any symbol with a slash into slash_chord_from_symbol before
+  # the suffix matcher runs, so such an entry is unreachable, and the symbol it
+  # advertises ("C6/9") raises KeyError on the bass-note lookup instead.
+  def test_chord_suffixes_all_have_a_template_and_no_suffix_carries_a_slash
+    result = eval_in_engine(<<~RUBY)
+      m = DillaLofiMachine
+      named = m::CHORD_SUFFIXES.reject(&:empty?)
+      puts JSON.generate(
+        count: named.length,
+        untemplated: named.reject { |s| m::CHORD_TEMPLATES.key?(s) || m::QUALITY_ALIASES.key?(s) },
+        with_slash: named.select { |s| s.include?("/") },
+        tones: named.to_h do |s|
+          hz = m.chord_from_symbol("C" + s)[:hz] rescue nil
+          [s, hz&.map { |f| (69.0 + (12.0 * Math.log2(f / 440.0))).round % 12 }&.uniq&.sort]
+        end
+      )
+    RUBY
+    assert_operator result.fetch("count"), :>=, 40
+    assert_empty result.fetch("untemplated"),
+                 "suffixes with no template voice as maj9 -- the wrong chord, without an error"
+    assert_empty result.fetch("with_slash"),
+                 "a suffix containing / can never be reached: the slash branch runs first"
+    unreachable = result.fetch("tones").select { |_, pcs| pcs.nil? }.keys
+    assert_empty unreachable, "every listed suffix must parse as a chord"
+  end
+
+  # The trim in build_voicing keeps the root and the highest four, so a
+  # six-interval template loses its lowest extension -- which on a dominant is
+  # the third, half the tritone that defines it. Every altered dominant here
+  # must still contain the tones its name claims.
+  def test_altered_dominants_keep_the_tones_they_are_named_for
+    result = eval_in_engine(<<~RUBY)
+      want = { "7#9" => [4, 10, 3], "7b13" => [4, 10, 8], "13b9" => [4, 10, 1, 9],
+               "13#11" => [4, 10, 6, 9], "7#9#11" => [4, 10, 3, 6],
+               "7#9b13" => [4, 10, 3, 8], "maj7#9" => [4, 11, 3],
+               "maj9#11" => [4, 11, 2, 6], "m9b5" => [3, 6, 10, 2],
+               "m11b5" => [3, 6, 10, 5], "m13" => [3, 10, 9], "69" => [4, 9, 2] }
+      missing = want.filter_map do |sfx, tones|
+        pcs = DillaLofiMachine.chord_from_symbol("C" + sfx)[:hz]
+                              .map { |f| (69.0 + (12.0 * Math.log2(f / 440.0))).round % 12 }
+        gone = tones.map { |t| t % 12 } - pcs
+        ["C" + sfx, gone] unless gone.empty?
+      end
+      puts JSON.generate(missing: missing)
+    RUBY
+    assert_empty result.fetch("missing"),
+                 "altered dominants dropped defining tones: #{result.fetch('missing').inspect}"
   end
 
   def test_music_gems_coltrane_parses_dilla_chord_symbols
@@ -1122,7 +1209,7 @@ class TestDilla < Minitest::Test
   #
   # `STREAM_TRACK=slum_village_players_documented PAD_VOICE=prophet` rendered the
   # documented transcription's name at its documented 91 BPM while playing
-  # get_dis_money's chords, because stream()'s guard skipped
+  # pedal_e_descent's chords, because stream()'s guard skipped
   # `ENV["PROGRESSION"] = track` whenever a pad key was set and PROGRESSION was
   # non-empty — and apply_best_defaults! guarantees it is never empty.
   def test_pinned_pad_voice_does_not_freeze_the_progression_on_the_default_track
@@ -1141,13 +1228,13 @@ class TestDilla < Minitest::Test
         curated: curated_progression?(cfg)
       )
     RUBY
-    assert_equal "get_dis_money", result.fetch("best_default"),
+    assert_equal "pedal_e_descent", result.fetch("best_default"),
       "premise: best defaults fill PROGRESSION, so it is never empty"
     assert_equal "slum_village_players_documented", result.fetch("after_sync")
     assert_equal "slum_village_players_documented", result.fetch("cfg_progression")
     assert result.fetch("curated"), "a documented transcription loops, it is not developed"
     assert_equal %w[Cm9 Fm9 Bb13 Ebmaj7 Abmaj7 Dm7b5 G7alt Cm9], result.fetch("chords"),
-      "the transcribed chords, not get_dis_money's chromatic descent"
+      "the transcribed chords, not pedal_e_descent's chromatic descent"
   end
 
   # The other half of the same guard: an explicitly pinned PROGRESSION survives
@@ -1157,14 +1244,14 @@ class TestDilla < Minitest::Test
       # USER_PINNED_ENV is captured at load, so pin through it the way a real
       # command line would.
       pinned = USER_PINNED_ENV.dup
-      pinned["PROGRESSION"] = "get_dis_money"
+      pinned["PROGRESSION"] = "pedal_e_descent"
       Object.send(:remove_const, :USER_PINNED_ENV)
       Object.const_set(:USER_PINNED_ENV, pinned.freeze)
-      ENV["PROGRESSION"] = "get_dis_money"
+      ENV["PROGRESSION"] = "pedal_e_descent"
       sync_progression_to_track!("slum_village_players_documented")
       puts JSON.generate(progression: ENV["PROGRESSION"])
     RUBY
-    assert_equal "get_dis_money", result.fetch("progression")
+    assert_equal "pedal_e_descent", result.fetch("progression")
   end
 
   def test_dilla_style_locks_color_and_disables_self_sample
@@ -1231,12 +1318,14 @@ class TestDilla < Minitest::Test
         roles: DillaComposition::ENSEMBLE_TIMELINE[:verse].map(&:to_s)
       )
     RUBY
-    assert_equal "get_dis_money", result.fetch("track")
+    assert_equal "pedal_e_descent", result.fetch("track")
     assert_equal "stack_soul", result.fetch("pad_voice")
     assert_equal "1", result.fetch("pad_layers")
     assert_operator result.fetch("stack_n"), :>=, 3
-    assert_equal "1", result.fetch("lead_arp")
-    assert result.fetch("lead_on")
+    # Leads default off (cd8e6850f). The arp volume stays configured for the
+    # moment LEAD_ARP=1 opts back in, so that assertion is unchanged.
+    assert_equal "0", result.fetch("lead_arp")
+    refute result.fetch("lead_on")
     assert_operator result.fetch("lead_vol"), :>=, 1.5
     assert_equal "1", result.fetch("morph"), "style defaults keep SYNTH_MORPH on for mid-phrase color"
     assert_includes result.fetch("roles"), "lead"
@@ -1269,14 +1358,17 @@ class TestDilla < Minitest::Test
     assert_includes result.fetch("morph_voices"), "glass"
     # SYNTH_MORPH=1 is fine: multi-layer stack still wins while PAD_LAYERS=1.
     assert_equal "1", result.fetch("morph")
-    assert_equal "1", result.fetch("exp")
+    # EXPERIMENTAL_LEADS went 1 -> 0 in cd8e6850f with the rest of the lead
+    # layers. The presets above must still all resolve — that is what this test
+    # is for — but the style DNA does not switch them on.
+    assert_equal "0", result.fetch("exp")
     assert_equal "stack_soul", result.fetch("pad")
     assert_operator result.fetch("stack"), :>=, 3
   end
 
   EXPANSION_TRACKS = %w[
     lydian_glass_cycle pedal_upper_structures bossa_major9_turn phrygian_gold_arc
-    two_chord_luminous mixo_sus_loop common_tone_drift coltrane_lite_triad
+    two_chord_luminous mixo_sus_loop common_tone_drift third_cycle_triads
     drone_quartal_wash waltz_relative_lift half_time_gospel_plagal double_time_pocket
     whole_tone_bridge upper_triad_tower minor_add9_lullaby dominant_chain_home
   ].freeze
@@ -1606,7 +1698,7 @@ class TestDilla < Minitest::Test
   def test_progression_pitch_class_weights_cover_unregistered_voicings
     result = eval_in_engine(<<~RUBY)
       puts JSON.generate(
-        time_donut: progression_pitch_class_weights(:time_donut),
+        db_major_minor_fall: progression_pitch_class_weights(:db_major_minor_fall),
         soul: progression_pitch_class_weights(:soul),
         lookup_hit: !PAD_CHORD_LOOKUP["Fm9"].nil?,
         lookup_miss: PAD_CHORD_LOOKUP["Fm7"].nil?
@@ -1617,10 +1709,10 @@ class TestDilla < Minitest::Test
            "test premise: Fm7 is not a registered pad voicing"
     assert result.fetch("lookup_hit"), "test premise: Fm9 is registered"
 
-    # time_donut is Dbmaj7 Cm7 Fm7 Bbm7 — every chord misses PAD_CHORD_LOOKUP,
+    # db_major_minor_fall is Dbmaj7 Cm7 Fm7 Bbm7 — every chord misses PAD_CHORD_LOOKUP,
     # which is exactly the case that scored as "no harmony at all" before the
     # root-parsing fallback.
-    weights = result.fetch("time_donut")
+    weights = result.fetch("db_major_minor_fall")
     refute_nil weights, "a progression of unregistered voicings must still yield weights"
     assert_equal 12, weights.length
     assert_in_delta 1.0, weights.sum, 0.001, "weights must be normalised"
@@ -1629,16 +1721,16 @@ class TestDilla < Minitest::Test
     # E — in none of the four chords — must carry none.
     %w[Db C F Bb].each do |pc|
       assert_operator weights[names.index(pc)], :>, 0.0,
-                      "#{pc} is a chord root of time_donut but scored zero"
+                      "#{pc} is a chord root of db_major_minor_fall but scored zero"
     end
     assert_in_delta 0.0, weights[names.index("E")], 0.001,
-                    "E is in no time_donut chord and must not score"
+                    "E is in no db_major_minor_fall chord and must not score"
   end
 
   def test_key_shift_prefers_smaller_moves_and_leaves_in_key_vocals_alone
     result = eval_in_engine(<<~RUBY)
       names = %w[C Db D Eb E F Gb G Ab A Bb B]
-      weights = progression_pitch_class_weights(:time_donut)
+      weights = progression_pitch_class_weights(:db_major_minor_fall)
       # A chroma already sitting on the progression's strongest tones.
       in_key = Array.new(12, 0.0)
       %w[F C Db Ab].each { |n| in_key[names.index(n)] = 0.25 }

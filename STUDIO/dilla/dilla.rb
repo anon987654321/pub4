@@ -12,7 +12,7 @@
 # unconstrained `require "json"`/`require "yaml"` below would activate
 # whatever version ships as a Ruby default gem (e.g. json 2.20.0 on 3.4.9),
 # so bootstrap!'s own `require "bundler/setup"` then conflicts and silently
-# disables major_third_cycle_full/midilib/wavefile/head_music for the rest of the process
+# disables coltrane/midilib/wavefile/head_music for the rest of the process
 # (bootstrap! rescues LoadError). Real invocations run plain `ruby dilla.rb`,
 # not `bundle exec`, so this ordering is the only thing that pins it correctly.
 require_relative "lib/music_gems"
@@ -4734,15 +4734,16 @@ TRACK_SAMPLE_LOOPS_BUILTIN = {
   # behaviour here (semua_untuk_mu measures +1.7 raw and was the LEAST
   # problematic in a mix), so this is a starting point to check in a render
   # rather than a tuned value.
-# 2 bars at 92 BPM from one of the operator's own recordings, restored from
-# git history. Self-similarity picks 5.22s at 0.509, the clearest loop in
-# their own catalogue, and 92 is the tempo kembara_rindu already sits at.
-# C# minor at a Krumhansl fit of 0.70 -- the strongest reading of any of
-# their own tracks -- so it clears the harmonic guard comfortably.
-rauingar: { path: File.join(SAMPLE_DIR, "rauingar", "loop.wav"), bpm: 92.0,
-            hp: 60, sub_db: -3.0, lp: 6200 },
   lo_borges: { path: File.join(SAMPLE_DIR, "lo_borges", "loop.wav"), bpm: 114.0,
                hp: 60, sub_db: -3.0, lp: 6000 },
+
+  # 2 bars at 92 BPM from one of the operator's own recordings, restored from
+  # git history. Self-similarity picks 5.22s at 0.509, the clearest loop in
+  # their own catalogue, and 92 is the tempo kembara_rindu already sits at.
+  # C# minor at a Krumhansl fit of 0.70 -- the strongest reading of any of
+  # their own tracks -- so it clears the harmonic guard comfortably.
+  rauingar: { path: File.join(SAMPLE_DIR, "rauingar", "loop.wav"), bpm: 92.0,
+              hp: 60, sub_db: -3.0, lp: 6200 },
 }.freeze
 
 # The chopper's rack, merged in under the hand-cut one. Same shape, same bus,
@@ -4756,6 +4757,20 @@ rauingar: { path: File.join(SAMPLE_DIR, "rauingar", "loop.wav"), bpm: 92.0,
 # BUILTIN wins a slug collision. Nothing generated should be able to take a name
 # out from under an entry that was measured by hand.
 TRACK_SAMPLE_LOOPS = RadioChop.registered_loops.merge(TRACK_SAMPLE_LOOPS_BUILTIN).freeze
+
+# Hand-cut loops kept in the rack but deliberately kept OUT of the medley and
+# the stream rotation. Still selectable by name (TRACK=rauingar), just never
+# chosen for you.
+#
+# This list exists so "no preset" can mean a decision rather than an oversight.
+# Three of the four builtin loops had no preset and appeared in nothing the
+# engine rendered on its own; that was an oversight, and nothing failed to say
+# so. test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset now holds
+# the line, and reads this constant for the exceptions -- so leaving a loop out
+# is one line here, and forgetting one is a test failure.
+#
+# rauingar: operator's call, 2026-08-07.
+SAMPLE_LOOPS_OUT_OF_ROTATION = %i[rauingar].freeze
 
 # The working names these two were ingested under, kept pointing at the same
 # entries so anything already written against them keeps working. The song
@@ -9121,6 +9136,33 @@ TRACK_PRESETS = {
     intro_bars: 2,
     timing: { snare: -6..2, hat_up: 2..8, bass: 4..12, kick_anchor: 0..2, pad: 0..6 }
   },
+  # Two of the hand-cut loops, which had no preset and so were unreachable.
+  #
+  # TRACK_SAMPLE_LOOPS_BUILTIN holds four measured loops, but a loop only reaches
+  # a render when a TRACK name resolves to it (sample_loop_entry looks the track
+  # up in that table), and only four_seven -> kembara_rindu had a preset. So
+  # semua_untuk_mu and lo_borges -- each cut, keyed and argued for by hand in the
+  # note above its entry -- appeared in nothing the engine renders on its own:
+  # not the medley, not the stream rotation, only a hand-typed TRACK=<slug>.
+  # (rauingar is deliberately out of the rotation -- see
+  # SAMPLE_LOOPS_OUT_OF_ROTATION.)
+  #
+  # BPMs are each loop's own measured tempo, not a choice: a bed at a different
+  # tempo to the arrangement has to be stretched, and these were cut to loop.
+  # Progressions sit with the material rather than against it -- semua_untuk_mu
+  # is a sustained G-minor passage with no onsets at all, so it gets a two-chord
+  # bed and long chords rather than a moving cycle; lo_borges reads D major and
+  # is the cleanest-looping of the four, so it takes the add9 arc.
+  semua_untuk_mu: {
+    bpm: 96, progression: :minor_ninth_two_chord, chord_bars: 2, phrase_bars: 16,
+    swing: 57, feel: :timeless, stereo_pan: true, intro_bars: 4,
+    timing: { snare: -18..-6, hat_up: 12..26, bass: 16..34, kick_anchor: 0..4, pad: 2..14 }
+  },
+  lo_borges: {
+    bpm: 114, progression: :d_add9_soul_arc, chord_bars: 1, phrase_bars: 8,
+    swing: 54, feel: :loose_pocket, stereo_pan: true,
+    timing: { snare: -12..-4, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -4..6 }
+  },
   baroque: {
     bpm: 104, progression: :baroque, chord_bars: 1, phrase_bars: 8, swing: 53,
     feel: :chromatic_planing,
@@ -9836,6 +9878,14 @@ def system_with_timeout(argv, timeout_sec:, verbose: false)
     # reader) takes SIGTTIN and sits STOPPED until the timeout kills it.
     # That serially killed every stream track at exactly 120s.
     pid = spawn(*argv, in: File::NULL, out: out_opt, err: err_file, pgroup: true)
+  rescue StandardError
+    # spawn raises before anything is returned when the binary is missing
+    # (Errno::ENOENT), so err_path never reaches sh!, which is the only thing
+    # that removes it. This used to be handled by an `ensure` at the foot of
+    # the method containing a comment and no code, so every failed spawn left
+    # a dilla_sh_*.err file in the temp directory for good.
+    FileUtils.rm_f(err_path)
+    raise
   ensure
     err_file.close
   end
@@ -9855,14 +9905,13 @@ def system_with_timeout(argv, timeout_sec:, verbose: false)
     rescue Errno::ECHILD
       nil
     end
-    status = nil
     return [false, "timeout after #{timeout_sec}s", err_path]
   end
+  # err_path is handed back, not removed here: sh! reads the tail for its
+  # diagnostic line and then removes it on both the success and failure paths.
   ok = status&.success?
   err_tail = File.readable?(err_path) ? File.read(err_path).to_s.lines.last(12).join : ""
   [ok, err_tail, err_path]
-ensure
-  # Keep err file only on failure for diagnostics; success cleans up.
 end
 
 def sh!(*command)
@@ -9931,6 +9980,31 @@ def sh_filter_complex!(graph, *args)
   ensure
     FileUtils.rm_f(script)
   end
+end
+
+# Every offline fluidsynth render goes through here, so a setting can be added
+# in one place instead of the eight that spelled this argv by hand.
+#
+# fluidsynth's own chorus and reverb are ON by default and this engine's gains
+# were tuned with them on. Rendering a six-note sustained pad through
+# GeneralUser-GS with `-o synth.chorus.active=0 -o synth.reverb.active=0`
+# measures 12.6 dB less side-channel energy (side RMS -32.9 dB -> -45.6 dB) and
+# -0.4 LUFS: the pad arrives at the bus close to mono. Defensible -- the engine
+# has its own space and width stages -- but that is a sound change, not an
+# optimisation, so it is opt-in rather than a default. It buys ~90 ms of a
+# ~450 ms call, against ffmpeg stages that dominate the render.
+#
+# Polyphony stays at fluidsynth's 256 default. GM presets spend two to four
+# voices per note, so a 96-voice cap is 24-48 sustained notes, and voice
+# stealing is silent -- nothing downstream would catch a pad losing notes.
+def fluidsynth_render!(out_path, sf2, midi_path, gain:)
+  dry = if ENV["DILLA_FS_DRY"] == "1"
+          ["-o", "synth.chorus.active=0", "-o", "synth.reverb.active=0"]
+        else
+          []
+        end
+  sh! "fluidsynth", "-ni", "-g", gain.to_s, *dry,
+      "-F", out_path.to_s, "-r", SAMPLE_RATE.to_s, sf2.to_s, midi_path.to_s
 end
 
 def capture(*command)
@@ -11854,7 +11928,6 @@ DILLA_PAD_ATTACK_CEILING = (ENV["PAD_ATTACK_CEILING"] || 260).to_i
 DILLA_PAD_RELEASE_CEILING = (ENV["PAD_RELEASE_CEILING"] || 2200).to_i
 
 DILLA_STYLE_DEFAULTS = {
-  "BPM" => "92",
   # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
   "TRACK" => "pedal_e_descent",
   "PROGRESSION" => "pedal_e_descent",
@@ -11864,6 +11937,14 @@ DILLA_STYLE_DEFAULTS = {
   # preset[:bpm], and this soft-fill ran before any track-specific preset
   # was ever consulted -- every track's own tuned bpm (86, 88, 138, ...)
   # was silently clobbered back to 92 for the entire session tonight.
+  #
+  # 058ff18f3 re-added "BPM" => "92" here, directly above this comment, to pin
+  # the tempo the A-laget acapellas stretch cleanliest to. It reintroduced the
+  # exact clobber: measured 2026-08-05, baroque (declares 104) and
+  # generated_techno (declares 80) both rendered at 92 * bpm_scale. Tracks with
+  # a sonic profile were spared because sonic_bpm outranks env_bpm; the rest
+  # were not. The acapella intent needs nothing here -- pedal_e_descent is the
+  # default TRACK and its own preset already carries 92.
   "BARS" => "32",
   "FORM" => "camel_32",
   "COMPOSITION" => "1",
@@ -11885,7 +11966,6 @@ DILLA_STYLE_DEFAULTS = {
   "CHOIR_VOX" => "0",
   "CHOIR_VOX_GAIN" => "0.16",
   "LUSH_SYNTH" => "1",
-  "LONG_STRIPDOWN" => "0",
   "MOTIF_RECALL" => "1",
   # Hybrid pocket + FlyLo overlay so kick/snare/hat/clap all read on speakers.
   # FLYLO_DRUMS_ONLY=1 + KICKS=0 was "no-kicks" and buried the hat bus under pads.
@@ -12065,7 +12145,6 @@ DILLA_STYLE_DEFAULTS = {
   "THEORY_DILLA" => "1",
   # Explicit CoC flags (also default-on via != "0" in code).
   "STREAM_DRUM_ROTATE" => "1",
-  "VOCAL_CARVE" => "1",
   "DFAM" => "1",
   "SPECTRAL_ENGINE" => "1",
   "THEORY_PARALLELS" => "1",
@@ -12120,7 +12199,6 @@ DILLA_BEST_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "VINYL" => "0",
   "BASS_SLIDE" => "1",
   "SPECTRAL_ARP" => "0",
-  "INDUSTRIAL_DARK" => "0",
   "GHOST_TIER" => "pocket",
   "SLASH_BASS" => "0",
   "PROMOTION_BEAUTY_MIN" => "78",
@@ -12148,7 +12226,7 @@ RENDER_MODE_DEFAULTS = {
     "FORM" => "soul_32", "COMPOSITION" => "1", "VOICING" => "bill_evans",
     "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "58",
     "LEAD_ARP" => "1", "HARMONY_LEAD" => "1", "HARMONY_LEP_MODE" => "hybrid",
-    "LUSH_SYNTH" => "1", "LONG_STRIPDOWN" => "1", "MOTIF_RECALL" => "1",
+    "LUSH_SYNTH" => "1", "MOTIF_RECALL" => "1",
     "GROOVE_DNA" => "donuts", "PERFORMER" => "yancey",
     "SONITEX" => "donuts_warm", "SONITEX_PRESET" => "donuts_warm",
     "ANALOG_CHAIN" => "vinyl_hot", "CONV_REVERB" => "chamber",
@@ -12172,7 +12250,7 @@ RENDER_MODE_DEFAULTS = {
     "BPM" => "68", "BARS" => "32",
     "PAD_ATTACK" => "3000", "PAD_RELEASE" => "8000", "PAD_VOL" => "72",
     "LUSH_SYNTH" => "1", "HARMONY_LEAD" => "1", "LEAD_ARP" => "0",
-    "LONG_STRIPDOWN" => "1", "MOTIF_RECALL" => "1",
+    "MOTIF_RECALL" => "1",
     "GROOVE_DNA" => "donuts", "PERFORMER" => "yancey",
     "KICKS" => "1", "KICK_GAIN" => "0.62", "GHOST_TIER" => "pocket",
     "SONITEX" => "subtle", "SONITEX_PRESET" => "subtle",
@@ -12183,7 +12261,7 @@ RENDER_MODE_DEFAULTS = {
     "FORM" => "donuts_time", "COMPOSITION" => "1", "VOICING" => "kenny_barron",
     "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "58",
     "LEAD_ARP" => "1", "HARMONY_LEAD" => "1", "HARMONY_LEP_MODE" => "hybrid",
-    "LUSH_SYNTH" => "1", "LONG_STRIPDOWN" => "1", "MOTIF_RECALL" => "1",
+    "LUSH_SYNTH" => "1", "MOTIF_RECALL" => "1",
     "GROOVE_DNA" => "donuts", "PERFORMER" => "yancey",
     "SONITEX" => "donuts_warm", "SONITEX_PRESET" => "donuts_warm",
     "ANALOG_CHAIN" => "cassette", "CONV_REVERB" => "chamber",
@@ -12347,7 +12425,7 @@ STREAM_SOUL_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "PAD_VOICE", "PAD_ARP_MODE", "PAD_LAYERS",
   "VOICING", "VOICE_LEAD_PADS", "LEARNED_PROGRESSION",
   "TRACK", "PROGRESSION", "RADIO_BERGEN",
-  "MOTIF_RECALL", "LUSH_SYNTH", "LONG_STRIPDOWN",
+  "MOTIF_RECALL", "LUSH_SYNTH",
   "RAP_VOCAL_STYLE", "RAP_VOCAL_MIX", "RAP_VOCAL_WEIGHT",
   "RAP_VOCAL_BED_WEIGHT", "RAP_VOCAL_SIDECHAIN", "SIDECHAIN_STYLE",
   "SYNTH_CYCLE", "FM_NATIVE",
@@ -12573,7 +12651,7 @@ STREAM_EXTRA_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "DRUM_MIX_WEIGHT", "DRUM_AIR_DB", "DRUM_PRESENCE_DB",
   "RADIO_BERGEN", "RAP_VOCAL_STYLE", "RAP_VOCAL_MIX",
   "RAP_VOCAL_WEIGHT", "RAP_VOCAL_BED_WEIGHT", "RAP_VOCAL_DUCK",
-  "RAP_VOCAL_SIDECHAIN", "VOCAL_CARVE", "STREAM_NORMALIZE",
+  "RAP_VOCAL_SIDECHAIN", "STREAM_NORMALIZE",
   "STREAM_LUFS", "STREAM_TRUE_PEAK", "STREAM_LRA",
   "STREAM_ROTATE_LEAD", "STREAM_ROTATE_SYNTH", "STREAM_LEAD_MIDI_RICH",
   "MELODIC_LEAD", "LEAD_ARP", "EXPERIMENTAL_LEADS",
@@ -12665,7 +12743,6 @@ STREAM_STYLE_SAFE = {
   "STREAM_GAP" => "0.15",
   "DILLA_STREAMING" => "1",
   "PLAY_VOL" => "1",
-  "VOCAL_CARVE" => "1",
 }.freeze
 
 def stream_creative_mode?
@@ -14457,7 +14534,7 @@ end
 # megabytes and still reviewable. The WAV stays on disk as the working master
 # and is not tracked.
 #
-# DEMO_MP3=0 skips the encode; DEMO_MP3_BITRATE overrides 192k.
+# DEMO_MP3=0 skips the encode; DEMO_MP3_BITRATE overrides 128k.
 def demo_encode_mp3(wav)
   return nil if ENV.fetch("DEMO_MP3", "1") == "0"
   return nil unless File.file?(wav)
@@ -18314,7 +18391,7 @@ def render_xlead_morph_fluidsynth(path, pad_events, duration, cfg)
   midi_path = "#{path}.smf.mid"
   write_smf_timed(midi_path, timed, duration:, midi_fx: MIDI_FX_LEAD, lead_mode: true)
   fs_gain = first_patch&.fetch(:fs_gain, 1.38) || 1.38
-  sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, midi_path
+  fluidsynth_render!(path, pad_soundfont_path, midi_path, gain: fs_gain)
   FileUtils.rm_f(midi_path)
   sh! "ffmpeg", "-y", "-i", path, "-af", lead_post_fx_chain(first_patch, duration, 0.0),
       "-c:a", "pcm_s16le", "#{path}.xlead.wav"
@@ -18408,16 +18485,16 @@ def render_pad_morph_fluidsynth(path, pad_events, duration)
   _, ep_anchor = write_smf_morph(ep_midi, pad_events, duration:, role: :ep,
                                 midi_fx: midi_fx_specs_for_role(:ep, ep_voice[:patch]))
   ep_mix = ep_anchor&.fetch(:mix, ep_voice[:patch]&.fetch(:mix, 1.2) || 1.2) || 1.2
-  sh! "fluidsynth", "-ni", "-g", (ep_anchor&.fetch(:fs_gain, ep_voice[:patch]&.fetch(:fs_gain, 1.7) || 1.7) || 1.7).to_s,
-      "-F", ep_path, "-r", SAMPLE_RATE.to_s, ep_voice[:sf2], ep_midi
+  fluidsynth_render!(ep_path, ep_voice[:sf2], ep_midi,
+                     gain: ep_anchor&.fetch(:fs_gain, ep_voice[:patch]&.fetch(:fs_gain, 1.7) || 1.7) || 1.7)
   FileUtils.rm_f(ep_midi)
 
   warm_midi = "#{warm_path}.smf.mid"
   _, warm_anchor = write_smf_morph(warm_midi, pad_events, duration:, role: :warm,
                                    midi_fx: midi_fx_specs_for_role(:warm, warm_voice[:patch]))
   warm_mix = warm_anchor&.fetch(:mix, warm_voice[:patch]&.fetch(:mix, 0.9) || 0.9) || 0.9
-  sh! "fluidsynth", "-ni", "-g", (warm_anchor&.fetch(:fs_gain, warm_voice[:patch]&.fetch(:fs_gain, 1.55) || 1.55) || 1.55).to_s,
-      "-F", warm_path, "-r", SAMPLE_RATE.to_s, warm_voice[:sf2], warm_midi
+  fluidsynth_render!(warm_path, warm_voice[:sf2], warm_midi,
+                     gain: warm_anchor&.fetch(:fs_gain, warm_voice[:patch]&.fetch(:fs_gain, 1.55) || 1.55) || 1.55)
   FileUtils.rm_f(warm_midi)
 
   texture_voice = resolve_texture_voice
@@ -18425,8 +18502,8 @@ def render_pad_morph_fluidsynth(path, pad_events, duration)
     texture_midi = "#{texture_path}.smf.mid"
     write_pad_smf(texture_midi, pad_events, program: texture_voice[:program], bank: texture_voice[:bank],
                   duration:, patch: texture_voice[:patch], role: :texture)
-    sh! "fluidsynth", "-ni", "-g", (texture_voice[:patch]&.fetch(:fs_gain, 1.2) || 1.2).to_s,
-        "-F", texture_path, "-r", SAMPLE_RATE.to_s, texture_voice[:sf2], texture_midi
+    fluidsynth_render!(texture_path, texture_voice[:sf2], texture_midi,
+                       gain: texture_voice[:patch]&.fetch(:fs_gain, 1.2) || 1.2)
     FileUtils.rm_f(texture_midi)
   end
 
@@ -18478,7 +18555,7 @@ def render_one_pad_layer!(voice_path, pad_events, duration, voice, role)
   write_pad_smf(midi_path, pad_events, program: voice[:program], bank: voice[:bank],
                 duration:, patch: voice[:patch], role:)
   fs_gain = voice[:patch]&.fetch(:fs_gain, 1.5) || 1.5
-  sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", voice_path, "-r", SAMPLE_RATE.to_s, voice[:sf2], midi_path
+  fluidsynth_render!(voice_path, voice[:sf2], midi_path, gain: fs_gain)
   FileUtils.rm_f(midi_path)
   return unless voice[:patch]&.dig(:fx) && tool_available?("ffmpeg")
   fx_tmp = "#{voice_path}.fx.wav"
@@ -19206,7 +19283,7 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, co
   write_smf(midi_path, lead_events, program:, bank: (counter ? 0 : lead_voice[:bank]),
             duration:, midi_fx: resolve_midi_fx_for(patch, role:), lead_mode: true)
   fs_gain = lead_voice[:patch]&.fetch(:fs_gain, 1.3) || 1.3
-  sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", path, "-r", SAMPLE_RATE.to_s, lead_voice[:sf2], midi_path
+  fluidsynth_render!(path, lead_voice[:sf2], midi_path, gain: fs_gain)
   FileUtils.rm_f(midi_path)
   target_db = if counter then COUNTER_LEAD_TARGET_RMS_DB
               elsif scale_arp then LEAD_TARGET_RMS_DB + 1.5
@@ -20642,7 +20719,7 @@ def help
       demo-all [bars] [out.wav]        Render all #{demo_catalog_sizes[:all]} named pieces → demo.wav + demo.mp3 (resumable)
       DEMO_CURATED_ONLY=1              Just the curated head (#{demo_catalog_sizes[:curated]} pieces)
       DEMO_CATALOG=stream              Restrict demo-all to the stream rotation (#{demo_catalog_sizes[:stream]})
-      DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 192k
+      DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 128k
       STREAM_CONTINUOUS=1 (default)    Outer shell auto-restarts; per-track timeout skips hangs
       STREAM_TRACK_TIMEOUT=420         Max seconds per track before skip (0 = no limit)
       STREAM_GAP=0.15                  Pause between tracks (0 = back-to-back)
@@ -20651,6 +20728,7 @@ def help
       STREAM_DEMO=demo.wav (default)   Each stream track overwrites demo.wav (WAV = no mp3 encode)
       STREAM_CREATIVE=1                Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — off by default
       DILLA_SH_TIMEOUT=120             Kill hung ffmpeg/fluidsynth after N seconds
+      DILLA_FS_DRY=1                   Fluidsynth without its own chorus/reverb (pads go ~mono)
       RENDER_MODE=dilla                Canonical DNA
       RENDER_MODE=warp                 Spectral/IDM bias (Brainfeeder-leaning)
       RENDER_MODE=long_soul|golden     Lush 32-bar soul (FORM + HARMONY_LEAD + bill_evans pads)
@@ -22393,7 +22471,7 @@ def analyze_stem_for_learn(path, stem_name)
     ranking = chord_candidates(pcs_hash).first(8)
     result[:pitch_classes] = top_pcs
     result[:top_chords] = ranking.map { |c| { name: c[:chord], score: c[:score] } }
-    if defined?(DillaMusicGems) && DillaMusicGems.major_third_cycle_full?
+    if defined?(DillaMusicGems) && DillaMusicGems.coltrane?
       result[:coltrane_candidates] = DillaMusicGems.chord_candidates_from_pitch_classes(top_pcs, limit: 8)
     end
   end
@@ -25002,7 +25080,7 @@ def render_punk_guitar_layer!(beat_bpm, n_bars, cfg)
   path = File.join(dir, "guitar.wav")
   midi_path = "#{path}.mid"
   write_smf(midi_path, events, program: voice[:program], bank: voice[:bank] || 0, duration:, lead_mode: true)
-  sh! "fluidsynth", "-ni", "-g", "1.2", "-F", path, "-r", SAMPLE_RATE.to_s, voice[:sf2], midi_path
+  fluidsynth_render!(path, voice[:sf2], midi_path, gain: 1.2)
   FileUtils.rm_f(midi_path)
   path
 end
@@ -25480,7 +25558,7 @@ def electronium_render_audio(midi_path, audio_path = nil)
   sf2 = pad_soundfont_path
   abort "no soundfont — install GeneralUser-GS or set DILLA_SOUNDFONT" unless sf2 && File.exist?(sf2)
   wav_tmp = audio_path.end_with?(".mp3") ? audio_path.sub(/\.mp3\z/i, ".wav") : audio_path
-  sh! "fluidsynth", "-ni", "-g", "1.4", "-F", wav_tmp, "-r", SAMPLE_RATE.to_s, sf2, midi_path
+  fluidsynth_render!(wav_tmp, sf2, midi_path, gain: 1.4)
   if audio_path.end_with?(".mp3")
     sh! "ffmpeg", "-y", "-i", wav_tmp, "-acodec", "libmp3lame", "-ab", "192k", audio_path
     FileUtils.rm_f(wav_tmp)
@@ -25548,7 +25626,8 @@ FLAG_ENV = {
   "soul-enrich" => "SOUL_ENRICH", "seed-text" => "SEED_TEXT", "tempo-ramp" => "TEMPO_RAMP",
   "markov-drums" => "MARKOV_DRUMS", "groove-lock" => "GROOVE_LOCK", "spectral-arp" => "SPECTRAL_ARP",
   "arp-idm-bias" => "ARP_IDM_BIAS", "arp-shape-bias" => "ARP_SHAPE_BIAS",
-  "industrial-dark" => "INDUSTRIAL_DARK", "reharm-loop" => "REHARM_LOOP", "prime-grid" => "PRIME_GRID",
+  "reharm-loop" => "REHARM_LOOP", "prime-grid" => "PRIME_GRID",
+  "inharmonic" => "INHARMONIC",
   "evolve-harmony-w" => "EVOLVE_HARMONY_W", "evolve-groove-w" => "EVOLVE_GROOVE_W",
   "sidechain-style" => "SIDECHAIN_STYLE",
   "lead-voice" => "LEAD_VOICE", "lead-arp-mode" => "LEAD_ARP_MODE",

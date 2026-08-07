@@ -82,6 +82,46 @@ module DillaLofiMachine
     "dim7" => [0, 3, 6, 9],
     "aug" => [0, 4, 8],
     "maj7#5" => [0, 4, 8, 11],
+    # The remaining neo-soul and altered-dominant colours. Without templates
+    # these fell through quality_for_suffix to maj9, so a written 7#9 rendered
+    # as a major ninth -- the opposite chord.
+    #
+    # Spelling follows this table's own extension convention (see
+    # voice_extensions): an interval SMALLER than one already listed is an
+    # upper extension and gets raised an octave, so "3" after "10" is a #9 at
+    # 15, not a minor third. Written that way, 7#9 voices [0,4,7,10,15] and
+    # 7b13 voices [0,4,7,10,20]. Order inside each array is therefore load
+    # bearing -- sorting one of these ascending would collapse its tension
+    # into a semitone cluster against the root.
+    "7#9" => [0, 4, 7, 10, 3],
+    "7b13" => [0, 4, 7, 10, 8],
+    # Two tensions on a dominant means five notes plus a fifth, and
+    # build_voicing only carries five: its trim keeps the root and then the
+    # HIGHEST four, so the sixth-note versions of these came out
+    # [0,7,10,3,8] -- the third gone, which is half the tritone that makes a
+    # dominant a dominant. The fifth is the note a piano player drops first
+    # for exactly this reason, so it is dropped here instead and the trim
+    # never fires. Order still matters: an interval smaller than one already
+    # listed is an upper extension (see voice_extensions), so b9-then-13
+    # stacks 13 then 21, while 13-then-b9 stacks 21 then 25 and the b9 ends
+    # up two octaves out.
+    "13b9" => [0, 4, 10, 1, 9],
+    "13#11" => [0, 4, 10, 6, 9],
+    "7#9#11" => [0, 4, 10, 3, 6],
+    "7#9b13" => [0, 4, 10, 3, 8],
+    "maj7#9" => [0, 4, 7, 11, 3],
+    "maj9#11" => [0, 4, 11, 2, 6],
+    "m9b5" => [0, 3, 6, 10, 2],
+    "m11b5" => [0, 3, 6, 10, 5],
+    "m13" => [0, 3, 7, 10, 9],
+    "m7#5" => [0, 3, 8, 10],
+    "add#11" => [0, 4, 7, 6],
+    # Spelled "69", not "6/9". uncached_chord_from_symbol short-circuits on
+    # any symbol containing "/" into slash_chord_from_symbol before the suffix
+    # matcher is ever consulted, so "C6/9" is read as a C6 triad over a bass
+    # note called "9" and raises KeyError. A suffix with a slash in it can
+    # never be reached here.
+    "69" => [0, 4, 7, 9, 2],
   }.freeze
 
   NOTE_PC = {
@@ -161,32 +201,31 @@ module DillaLofiMachine
     "Abmaj7" => [207.65, 261.63, 311.13, 392.00, 466.16],
   }.freeze
 
-  # Longest-first: `find` takes the first match, so "maj9" must be tried before
-  # "m9" before "m". The trailing "" makes a BARE major triad ("F", "D") parse
-  # at all -- without it chord_from_symbol raised ArgumentError on any plain
-  # triad, and because callers rescue that to nil, every bare-triad chord was
-  # silently dropped from its progression by filter_map. Upper-structure slash
-  # chords are written exactly that way, so `upper_triad_tower` was collapsing
-  # from 8 chords to 3, `drone_quartal_wash` 8 to 5, `pedal_upper_structures`
-  # 8 to 7. It must stay last so it only matches when nothing else does.
-    # Matched exactly (\A[A-G][#b]?<sfx>\z), so ordering is not significant --
-  # but keep the longer, more specific spellings listed first anyway so the
-  # list reads as "most specific quality wins" if the anchoring ever changes.
-  # Longest first: the parser takes the first entry that matches the whole
-  # symbol, so "maj13#11" has to be tried before "maj13", and "add9"/"sus9"
-  # before the bare "9".
+  # The whitelist the parser matches against. Every entry needs a template in
+  # CHORD_TEMPLATES or an entry in QUALITY_ALIASES, or quality_for_suffix
+  # silently voices it as maj9 -- test_chord_suffixes_all_have_a_template pins
+  # that. "sus4" and "sus" were listed in CHORD_TEMPLATES but not here, and
+  # this list is what the parser consults, so `Dsus4` raised and got
+  # filter_map'd away: quartal_suspension_twelve lost all four of the
+  # suspensions it is named for. Bare "sus4" resolves to the template carrying
+  # the b7, matching the 7sus4/7sus aliases.
   #
-  # "sus4" and "sus" had templates in CHORD_TEMPLATES but no entry here, and
-  # this list is the whitelist the parser matches against — so `Dsus4` raised
-  # and got filter_map'd away. quartal_suspension_twelve lost all four of its
-  # suspensions, which is every chord the progression is named for. Bare "sus4"
-  # resolves to the template that carries the b7, matching this table's own
-  # convention that 7sus4/7sus alias to "sus4" (see QUALITY_ALIASES).
+  # The trailing "" makes a BARE major triad ("F", "D") parse at all. Without
+  # it chord_from_symbol raised ArgumentError on any plain triad, and because
+  # callers rescue that to nil every bare-triad chord was dropped by
+  # filter_map -- upper_triad_tower collapsed from 8 chords to 3,
+  # drone_quartal_wash 8 to 5. It must stay last so it only matches when
+  # nothing else does.
+  #
+  # Entries are matched whole (\A[A-G][#b]?<sfx>\z), so ordering does NOT
+  # decide between them today. Longest-first is kept as house style so the
+  # list still reads correctly if that anchoring is ever relaxed.
   CHORD_SUFFIXES = %w[
-    maj13#11 maj7#11 maj13 maj9low maj9 maj7
-    maj7#5 m7b5 mmaj7 m11 m9 m7 m6
-    9sus4 9sus 7sus4 7sus 7#11 7alt 7#5 7b9 13 7
-    dim7 dim aug add9 sus9 sus4 sus2 sus 9 6 m
+    maj13#11 maj9#11 maj7#11 maj13 maj9low maj9 maj7#9 maj7#5 maj7
+    m11b5 m7b5 mmaj7 m9b5 m13 m11 m9 m7#5 m7 m6
+    9sus4 9sus 7sus4 7sus 7#9b13 7#9#11 7#11 7#9 7alt 7#5 7b13 7b9
+    13#11 13b9 13 7
+    dim7 dim aug add#11 add9 sus9 sus4 sus2 sus 69 9 6 m
   ].freeze + [""].freeze
 
 # Compiled once. The interpolated form was rebuilt on every iteration of every
@@ -1248,16 +1287,6 @@ euclid_sparse: {
     pads.length >= 2 ? pads : nil
   end
 
-  def drum_pattern_set(preset_key)
-    p = DRUM_PRESETS[preset_key]
-    return unless p
-    {
-      kicks: [p[:kicks]], snares: [p[:snares]], hats: [p[:hats]],
-      ghosts: [p[:ghosts]], opens: [6, 14], claps: [p[:claps]], perc: [p[:perc]],
-      swing: p[:swing], humanize: p[:humanize]
-    }
-  end
-
   def humanize_ms(bpm, ticks = 2)
     beat_ms = 60_000.0 / bpm
     (beat_ms / 96.0 * ticks).round(2)
@@ -1734,15 +1763,6 @@ end
     v = ENV[key]
     return default if v.nil? || v.empty?
     v.to_i
-  end
-
-  # --- backward-compatible aliases ---
-  def producer_track?(track)
-    harmony_profile?(track)
-  end
-
-  def track_entry(track)
-    profile_entry(track)
   end
 
   def track_preset(track)
