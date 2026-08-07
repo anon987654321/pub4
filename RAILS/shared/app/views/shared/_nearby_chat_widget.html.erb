@@ -43,8 +43,11 @@
     <p class="nearby-chat-widget-status dim" data-nearby-chat-target="status" hidden aria-live="polite"></p>
 
     <div class="nearby-chat-widget-body">
-      <% if respond_to?(:nearby_widget_path) %>
-        <%= turbo_frame_tag "nearby-chat-widget-frame", src: nearby_widget_path, class: "nearby-chat-widget-frame" do %>
+      <%# ambient_chat_frame_path, not respond_to?(:nearby_widget_path): the
+          brgen verticals are engines and an engine's helpers do not carry the
+          host app's routes. See Shared::UiHelper#ambient_chat_frame_path. %>
+      <% if (chat_frame_src = ambient_chat_frame_path) %>
+        <%= turbo_frame_tag "nearby-chat-widget-frame", src: chat_frame_src, class: "nearby-chat-widget-frame" do %>
           <div class="nearby-chat-widget-empty">
             <strong><%= t("chat.title", default: "Chat") %></strong>
             <p><%= t("chat.loading", default: "Loading the room…") %></p>

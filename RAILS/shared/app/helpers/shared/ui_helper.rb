@@ -5,6 +5,30 @@ module Shared
   module UiHelper
     NavItem = Data.define(:label, :path, :icon, :active, :aria, :data)
 
+    # Where the ambient chat widget loads its room from, or nil if this app has
+    # no room to load.
+    #
+    # brgen's five verticals are MOUNTABLE ENGINES, and an engine's url_helpers
+    # do not carry the host application's routes. `_nearby_chat_widget` gated on
+    # a bare `respond_to?(:nearby_widget_path)`, which is false inside
+    # marketplace, dating, tv, playlist and takeaway — so on those surfaces the
+    # shared widget fell through to its "no chat on this app" branch and offered
+    # a link to another domain, on the same application, with the same
+    # Conversation model and the same room that works on the front page. maps
+    # and messenger are not engines, which is exactly why only those two worked.
+    #
+    # Checking main_app as well makes the widget resolve identically on every
+    # brgen surface, and still return nil on amber/bsdports, which genuinely
+    # have no Conversation model and should keep the handoff.
+    def ambient_chat_frame_path
+      return nearby_widget_path if respond_to?(:nearby_widget_path)
+      if respond_to?(:main_app) && main_app.respond_to?(:nearby_widget_path)
+        return main_app.nearby_widget_path
+      end
+
+      nil
+    end
+
     REACTION_GLYPHS = {
       "like" => :like,
       "love" => :like,
