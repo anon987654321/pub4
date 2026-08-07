@@ -16,17 +16,52 @@ module Ports
       @ports_count = 0
     end
 
+    # No local tree is the NORMAL case, not a fatal one. platform.tree_path is
+    # /usr/ports, which a base OpenBSD install does not ship and vm23 does not
+    # have, and BSDPORTS_TREE_PATH is set nowhere in this repo. The old order
+    # raised on a nil root *before* the FTP fallback line, so the fallback built
+    # for exactly this situation could only ever run when a tree existed and
+    # yielded zero ports. That is why bsdports.org has shown "Ingen porter
+    # funnet" since launch: the import failed into an ImportRun row every night
+    # and the site has no surface that reports one.
+    # Three sources, best metadata first. Each is tried only if the one above
+    # produced nothing, and the run fails loudly if all three do.
+    #
+    #   1. a local ports tree           full metadata, needs /usr/ports
+    #   2. ports.tar.gz over HTTPS      full metadata, needs ~2 GB free disk
+    #   3. the published package index  names + versions only, needs 1 MB
+    #
+    # No local tree is the NORMAL case, not a fatal one: platform.tree_path is
+    # /usr/ports, which a base OpenBSD install does not ship and vm23 does not
+    # have, and BSDPORTS_TREE_PATH is set nowhere in this repo. The old order
+    # raised on a nil root *before* the fallback line, so the fallback built for
+    # exactly this situation could only ever run when a tree existed and yielded
+    # zero ports. That is why bsdports.org has shown "Ingen porter funnet" since
+    # launch: the import failed into an ImportRun row every night, and the site
+    # has no surface that reports one.
     def call
       @import_run = platform.import_runs.create!(status: "running", started_at: Time.current)
       root = TreeLocator.resolve(platform:, override: tree_path)
-      raise "ports tree not found for #{platform.slug}" unless root
+      source = nil
 
-      import_from_tree(root)
-      import_from_ftp if ports_count.zero? && use_ftp_fallback
+      if root
+        import_from_tree(root)
+        source = root.to_s
+      end
+
+      if ports_count.zero? && use_ftp_fallback
+        source = import_from_tarball || import_from_package_index
+      end
+
+      if ports_count.zero?
+        raise "no ports imported for #{platform.slug} " \
+              "(tree=#{root || 'none'}, remote_fallback=#{use_ftp_fallback})"
+      end
+
       resolve_dependencies
       rebuild_fts
-      @import_run.mark_succeeded!(ports_count:, source_revision: root.to_s)
-      Result.new(platform:, import_run: @import_run, ports_count:, tree_path: root.to_s)
+      @import_run.mark_succeeded!(ports_count:, source_revision: source.to_s)
+      Result.new(platform:, import_run: @import_run, ports_count:, tree_path: source.to_s)
     rescue StandardError => e
       @import_run&.mark_failed!(e.message)
       raise
@@ -45,18 +80,35 @@ module Ports
       end
     end
 
-    def import_from_ftp
-      fetcher = Openbsd::FtpIndexFetcher.new(platform:)
-      %w[devel archivers www editors lang security].each { |category| import_category_index(fetcher, category) }
+    # Full metadata over the wire, when the host can spare the disk.
+    def import_from_tarball
+      index = Openbsd::PackageIndexFetcher.new(platform:)
+      tarball = Openbsd::PortsTarball.new(platform:, release: safe_release(index))
+      imported = nil
+      tarball.with_tree do |tree_root|
+        import_from_tree(tree_root)
+        imported = tarball.url
+      end
+      ports_count.zero? ? nil : imported
     end
 
-    def import_category_index(fetcher, category)
-      index_path = fetcher.fetch_category_index(category)
-      return unless index_path
+    # Names and versions only — see PackageIndexParser on why that is all the
+    # mirror publishes. A catalogue with thin rows beats an empty page, and the
+    # rows are marked "uncategorised" rather than given an invented category.
+    def import_from_package_index
+      fetcher = Openbsd::PackageIndexFetcher.new(platform:)
+      entries = fetcher.each_entry
+      return nil if entries.nil? || entries.empty?
 
-      Openbsd::IndexParser.parse_file(index_path).each do |metadata|
-        upsert_port(metadata.merge(version: metadata[:full_pkgname].to_s.split("-", 2).last))
-      end
+      entries.each { |metadata| upsert_port(metadata) }
+      fetcher.index_url
+    end
+
+    def safe_release(fetcher)
+      fetcher.release
+    rescue StandardError => e
+      Rails.logger.warn("bsdports release detection failed: #{e.message}")
+      nil
     end
 
     def upsert_port(metadata)
