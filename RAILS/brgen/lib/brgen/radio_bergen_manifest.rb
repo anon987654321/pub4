@@ -32,12 +32,18 @@ module Brgen
         ]
       end
 
+      # All four candidates named a subsystem that no longer exists: 41b20306d
+      # removed studio/radio-bergen ("brgen's playlist replaced what it served"),
+      # and the surviving three paths were lowercase `studio/` after 2d4551597
+      # renamed the directory to STUDIO. So sonic_learnings returned {} on every
+      # call, and radio_bergen_study_test.rb skipped itself rather than failing.
+      # The learnings live in the dilla engine's own reference file now.
       def sonic_learnings_candidates
         [
           rails_root.join("config/radio_bergen/sonic.yml"),
-          rails_root.join("../../../studio/radio-bergen/radio_bergen_sonic.yml").expand_path,
-          Pub4::DeployPaths.repo_join("studio/radio-bergen/radio_bergen_sonic.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/studio/radio-bergen/radio_bergen_sonic.yml"),
+          rails_root.join("../../../STUDIO/dilla/reference_sonic.yml").expand_path,
+          Pub4::DeployPaths.repo_join("STUDIO/dilla/reference_sonic.yml"),
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/STUDIO/dilla/reference_sonic.yml"),
         ]
       end
 
@@ -94,8 +100,12 @@ module Brgen
           "$ git dig --follow pub4/index.html",
           "object: pub2 monolithic index.html → playlist.brgen.no warp tunnel",
           "archive: #{meta['source_archive'] || 'anon987654321/pub2'} @ #{pub2_head}",
-          "manifest: studio/radio-bergen/radio_bergen_tracks.yml",
-          "learnings: studio/radio-bergen/radio_bergen_sonic.yml (ruby radio_bergen_study.rb)",
+          # These two are rendered to the visitor on the playlist surface, so
+          # they name paths that exist. studio/radio-bergen/ was removed in
+          # 41b20306d; the manifest moved into this app and the learnings into
+          # the dilla engine.
+          "manifest: RAILS/brgen/config/radio_bergen/tracks.yml",
+          "learnings: STUDIO/dilla/reference_sonic.yml (ruby scripts/radio_bergen_study.rb)",
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
           "excavated: #{local_count} local_mp3 metadata rows · #{youtube_count} youtube references",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",

@@ -9,7 +9,7 @@ class DeployPathsTest < Minitest::Test
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Pub4::DeployPaths.postpro_script
       assert script, "expected postpro script"
-      assert_includes script.to_s, "/studio/postpro/postpro.rb"
+      assert_includes script.to_s, "/STUDIO/postpro/postpro.rb"
       assert File.file?(script)
     end
   end
@@ -18,7 +18,7 @@ class DeployPathsTest < Minitest::Test
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Pub4::DeployPaths.repligen_script
       assert script, "expected repligen script"
-      assert_includes script.to_s, "/studio/repligen/repligen.rb"
+      assert_includes script.to_s, "/STUDIO/repligen/repligen.rb"
       assert File.file?(script)
     end
   end
@@ -27,7 +27,7 @@ class DeployPathsTest < Minitest::Test
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Pub4::DeployPaths.dilla_script
       assert script, "expected dilla script"
-      assert_includes script.to_s, "/studio/dilla/dilla.rb"
+      assert_includes script.to_s, "/STUDIO/dilla/dilla.rb"
       assert File.file?(script)
     end
   end
@@ -62,8 +62,8 @@ class DeployPathsTest < Minitest::Test
   def test_repo_root_is_the_checkout_not_its_parent
     with_env("PUB4_ROOT" => nil, "PUB4_RAILS_ROOT" => rails_root, "PUB4_DEPLOY_ROOT" => nil) do
       assert_equal repo_root, Pub4::DeployPaths.repo_root.to_s
-      assert_equal File.join(repo_root, "studio/dilla/dilla.rb"),
-                   Pub4::DeployPaths.repo_join("studio/dilla/dilla.rb").to_s
+      assert_equal File.join(repo_root, "STUDIO/dilla/dilla.rb"),
+                   Pub4::DeployPaths.repo_join("STUDIO/dilla/dilla.rb").to_s
     end
   end
 

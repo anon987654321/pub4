@@ -2498,7 +2498,7 @@
         "snapped_lines": 8,
         "has_pulse": false,
         "key_shift": 0,
-        "progression": "get_dis_money",
+        "progression": "pedal_e_descent",
         "voice_only": true
       },
       "chroma": [

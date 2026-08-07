@@ -143,11 +143,27 @@ module Master
           end
         end
 
+        # Registers whose top-level keys are the SUBJECT of a finding rather than
+        # a configuration namespace. doc_paths_baseline.yml lists dead path
+        # references per document and doc_numbers_baseline.yml lists untraceable
+        # numbers per document, so any document carrying both debts appears in
+        # both — as RAILS/FINAL_TODO.md now does. That is two registers agreeing
+        # about which file has problems, not two sources of truth for one value,
+        # which is what SINGULARITY exists to catch. Exempted by file rather than
+        # by key: the keys are arbitrary document paths, so a key-name allowlist
+        # would need a new entry every time a document acquires a second kind of
+        # debt.
+        SINGULARITY_EXEMPT_REGISTERS = %w[
+          doc_paths_baseline.yml
+          doc_numbers_baseline.yml
+        ].freeze
+
         def singularity_yaml_paths(data_dir)
           Dir.glob(File.join(data_dir, "**", "*.yml")).sort.reject do |path|
             rel = path.delete_prefix("#{data_dir}/")
             rel.start_with?("agents/", "council/", "harnesses/", "lessons/", "ops/", "personas/",
-                            "prompts/", "rules/", "runtime/", "security/")
+                            "prompts/", "rules/", "runtime/", "security/") ||
+              SINGULARITY_EXEMPT_REGISTERS.include?(rel)
           end
         end
 

@@ -34,9 +34,9 @@ class RadioBergenStudyTest < ActiveSupport::TestCase
     # specific weight keys in every checkout — the same "data not checked out" case
     # the sonic-learnings test below already guards. Skip rather than assert a shape
     # the dilla rework is actively changing; restore when it settles.
-    skip "radio-bergen rotation-weight data in flux (STUDIO/dilla rework)" unless weights.key?("erykah_minor")
+    skip "radio-bergen rotation-weight data in flux (STUDIO/dilla rework)" unless weights.key?("warm_minor_vamp")
 
-    assert weights.key?("erykah_minor")
+    assert weights.key?("warm_minor_vamp")
     assert weights.key?("quartal_west_coast")
     assert weights.key?("neo_soul_pocket")
   end

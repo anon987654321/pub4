@@ -36,7 +36,7 @@ class RadioBergenStudyUnitTest < Minitest::Test
   def test_stream_weights_cover_bergen_and_beat_references
     weights = with_fast_audio_analysis { RadioBergenStudy.study! }["stream_rotation_weights"]
 
-    assert weights.key?("erykah_minor")
+    assert weights.key?("warm_minor_vamp")
     assert weights.key?("quartal_west_coast")
     assert weights.key?("neo_soul_pocket")
   end

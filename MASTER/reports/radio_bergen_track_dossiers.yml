@@ -11,7 +11,7 @@ cross_track_learnings:
       chain HPF 60 LPF 11.5k
     texture: bergen_night_rain pad wash; vinyl 0.07–0.08; bass shelf +9; master LP
       2.7–3.1 kHz
-    harmony: erykah_minor (F#m9–Bm7–Emaj7–C#m7); bill_evans voicing; swing 58%
+    harmony: warm_minor_vamp (F#m9–Bm7–Emaj7–C#m7); bill_evans voicing; swing 58%
     bpm_cluster: 84–90
   dilla_canon:
     drum_pattern: MPC swing 54–62%; kick late-3 anchor; snare early on 4/12; ghost
@@ -43,13 +43,13 @@ tracks:
     groove_dna: donuts
     drums: Bergen lofi grid; kick 0,4,8,12 with humanize; swung hats; sparse clap.
     texture: AKMD mastering chain; night-rain pad; vinyl 0.08; LP 3.1 kHz.
-    harmony: erykah_minor bill-evans voicing.
+    harmony: warm_minor_vamp bill-evans voicing.
     dilla_engine:
-      track: erykah_minor
+      track: warm_minor_vamp
       performer: yancey
       mix: akmd_lofi_mastering
   engine_recommendation:
-    track: erykah_minor
+    track: warm_minor_vamp
     performer: yancey
     mix: akmd_lofi_mastering
 - id: akmd_mike_t_alt_kan_skje
@@ -95,12 +95,12 @@ tracks:
     groove_dna: donuts
     drums: Same family as Stailings; slightly busier hat 16ths.
     texture: Lo-fi warmth; boosted 80/200 Hz per AKMD chain.
-    harmony: erykah_minor cycle.
+    harmony: warm_minor_vamp cycle.
     dilla_engine:
-      track: erykah_minor
+      track: warm_minor_vamp
       performer: yancey
   engine_recommendation:
-    track: erykah_minor
+    track: warm_minor_vamp
     performer: yancey
   calibration_notes:
   - BPM delta 15.2 (72.8 measured vs 88 curated)
@@ -170,12 +170,12 @@ tracks:
     groove_dna: donuts
     drums: Slow bergen swing; long kick sustain; rim ghosts.
     texture: Hotel-room ambience; heavy reverb on pad; AKMD LP.
-    harmony: erykah_minor / keys_woman blend.
+    harmony: warm_minor_vamp / keys_woman blend.
     dilla_engine:
-      track: erykah_minor
+      track: warm_minor_vamp
       performer: yancey
   engine_recommendation:
-    track: erykah_minor
+    track: warm_minor_vamp
     performer: yancey
   calibration_notes:
   - BPM delta 8.8 (76.2 measured vs 85 curated)
@@ -325,12 +325,12 @@ tracks:
     groove_dna: donuts
     drums: PB-series pocket; crisp snare; tight hats.
     texture: Cleaner top than Sandviken; still AKMD-mastered body.
-    harmony: erykah_minor with iv_borrow_minor color.
+    harmony: warm_minor_vamp with iv_borrow_minor color.
     dilla_engine:
-      track: erykah_minor
+      track: warm_minor_vamp
       performer: yancey
   engine_recommendation:
-    track: erykah_minor
+    track: warm_minor_vamp
     performer: yancey
   calibration_notes:
   - BPM delta 9.0 (80.0 measured vs 89 curated)
@@ -378,12 +378,12 @@ tracks:
     groove_dna: donuts
     drums: Stailings variant; drunk hat stagger on 3,9,15.
     texture: Canonical Bergen stailings timbre — reference for local rotation.
-    harmony: erykah_minor.
+    harmony: warm_minor_vamp.
     dilla_engine:
-      track: erykah_minor
+      track: warm_minor_vamp
       performer: yancey
   engine_recommendation:
-    track: erykah_minor
+    track: warm_minor_vamp
     performer: yancey
   calibration_notes:
   - BPM delta 22.2 (64.8 measured vs 87 curated)
