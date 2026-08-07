@@ -69,8 +69,24 @@ li:focus-within .msg_reaction_picker {
 }
 
 @media (hover: none) {
-  /* No hover on touch, so never hide it there. */
-  .msg_reaction_picker { opacity: 1; pointer-events: auto; }
+  /* Tap the line to reveal it, rather than showing it always.
+   *
+   * "No hover on touch, so never hide it there" was true about hover and wrong
+   * about the cost: it put seven buttons — a 44px block — under every single
+   * line of a chat log, which is precisely what the reactions partial says it
+   * exists to avoid. Bubbles were tall enough to absorb that; the IRC-style
+   * channel transcript is not.
+   *
+   * conversation_log_controller sets data-reactions-open on the tapped <li>
+   * (one delegated listener on the log, no per-message controller). :focus-within
+   * above still covers keyboard, so nothing regresses for pointer or keyboard.
+   */
+  .msg_reaction_picker { opacity: 0; pointer-events: none; }
+
+  li[data-reactions-open="true"] .msg_reaction_picker {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -185,4 +201,24 @@ li:focus-within .msg_reaction_picker {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* Optimistic send — the message you just typed, before the server has answered.
+ *
+ * Dimmed rather than skeletoned: it is real text the user just wrote, and the
+ * only uncertainty is delivery. Measured 2.7–5.3s between pressing send and any
+ * change on screen before this existed, so the state needs to be legible, not
+ * decorative. Flat, no animation (design_rules): reduced-motion users get the
+ * same thing everyone else does.
+ */
+li[data-optimistic="true"] article {
+  opacity: 0.62;
+}
+
+li[data-optimistic="true"] article[data-failed="true"] {
+  opacity: 1;
+}
+
+li[data-optimistic="true"] article[data-failed="true"] .dim {
+  color: var(--danger, #a9483c);
 }

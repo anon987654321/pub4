@@ -3,8 +3,11 @@
     pressed state for the viewer's own reaction. The full picker is not rendered
     inline -- shared/_reaction_bar draws all seven kinds at once, which is fine
     under a post but would put 7 buttons on every line of a chat log. Here the
-    picker is revealed on hover/focus of the message (CSS), so a quiet log stays
-    quiet.
+    picker is revealed on hover/focus of the message (CSS) and, on a touch
+    viewport, by tapping the line (conversation_log_controller sets
+    data-reactions-open) — so a quiet log stays quiet on every input type. It
+    did not: `@media (hover: none)` used to pin the picker open, costing 44px
+    under every line on exactly the surface this comment was written about.
 
     Replaced live by Reaction#broadcast_reaction_change over the conversation's
     own stream, so the id has to match what that broadcast targets. %>

@@ -41,6 +41,7 @@ import FeedHotkey from "pub4/feed_hotkey"
 import EdgeSwiper from "pub4/edge_swiper"
 import NearbyChat from "pub4/nearby_chat"
 import ConversationLog from "pub4/conversation_log"
+import OptimisticSend from "pub4/optimistic_send"
 import Presence from "pub4/presence"
 import OfflineFeed from "pub4/offline_feed"
 import PwaStandalone from "pub4/pwa_standalone"
@@ -156,6 +157,7 @@ export function bootPub4Stimulus(application) {
   application.register("edge-swiper", EdgeSwiper)
   application.register("nearby-chat", NearbyChat)
   application.register("conversation-log", ConversationLog)
+  application.register("optimistic-send", OptimisticSend)
   application.register("presence", Presence)
   application.register("offline-feed", OfflineFeed)
   application.register("pwa-standalone", PwaStandalone)

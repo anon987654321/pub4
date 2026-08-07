@@ -12,8 +12,11 @@
               id: "nearby_widget_message", class: "nearby-chat-widget-composer",
               data: {
                 turbo: true,
-                controller: "typing-input",
+                controller: "typing-input optimistic-send",
                 typing_input_url_value: conversation_typing_indicators_path(conversation),
+                optimistic_send_handle_value: handle,
+                optimistic_send_pending_label_value: t("chat.sending", default: "sending…"),
+                optimistic_send_failed_label_value: t("chat.send_failed", default: "not sent — tap to retry"),
                 action: "turbo:submit-end->typing-input#markValue keydown->typing-input#composerKeydown input->typing-input#ping"
               } do |f| %>
   <%= f.text_area :content, rows: 1,

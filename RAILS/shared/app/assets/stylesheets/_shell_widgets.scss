@@ -225,6 +225,57 @@ body.vertical-playlist .nearby-chat-widget {
   to { opacity: 1; transform: none; }
 }
 
+/* Touch: the corner widget becomes a bottom sheet.
+ *
+ * The desktop shape is 360x460 pinned to the corner, which reads as a widget
+ * you glance at. On a 390x844 phone that same box left the message log 246px —
+ * 29% of the screen — for the surface you are supposed to hold a conversation
+ * in, with the feed showing around it. Operator decision 2026-08-07: go
+ * near-full-height on touch and keep the corner shape for pointer devices.
+ *
+ * (hover: none) is the primary condition — this is about the input device, the
+ * same signal the reaction picker uses in _chat_reactions.scss. max-width is
+ * kept as a second condition because the corner shape is 360px wide and simply
+ * does not fit a viewport narrower than that, mouse or not. This is now the
+ * ONLY place the panel's small-screen geometry is set.
+ */
+@media (hover: none), (max-width: 480px) {
+  /* Only while open. Closed, the tab stays a corner chip — and the tab is
+     already visibility:hidden when the panel is open, so widening the container
+     cannot stretch it. The :has() selector is the same one used above. */
+  .nearby-chat-widget:has(.nearby-chat-widget-panel:not([hidden])) {
+    inset-inline: 0;
+    /* Cover the tab bar the way a sheet should. --safe-bottom moves inside the
+       panel below, so the composer still clears the home indicator. */
+    bottom: 0;
+  }
+
+  .nearby-chat-widget-panel {
+    width: 100%;
+    /* dvh, not vh: vh is the tallest viewport, so 92vh sits partly behind the
+       browser's own chrome on a phone and the composer goes under the URL bar.
+       The second term is the guard — the sheet can never exceed the viewport. */
+    height: min(92dvh, calc(100dvh - 24px));
+    /* Full bleed: side borders on a sheet that spans the screen are two lines
+       against the screen edge, which is the "separation is space, not lines"
+       rule in design_rules. The top border stays — it is a real edge. */
+    border-inline: 0;
+    border-radius: var(--radius-card, 16px) var(--radius-card, 16px) 0 0;
+    padding-block-end: var(--safe-bottom, 0px);
+    animation-name: nearby-widget-sheet-in;
+  }
+}
+
+/* A sheet rises; it does not scale up from the corner. */
+@keyframes nearby-widget-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nearby-chat-widget-panel { animation: none; }
+}
+
 .nearby-chat-widget-header {
   display: flex;
   align-items: center;
@@ -442,10 +493,11 @@ body.vertical-playlist .nearby-chat-widget {
 }
 
 @media (max-width: 480px) {
-  .nearby-chat-widget-panel {
-    width: 100vw;
-    height: min(70vh, 520px);
-  }
+  /* The panel's narrow-screen geometry used to live here as
+     `width: 100vw; height: min(70vh, 520px)`. It has moved up to the sheet
+     block next to the panel's own rule — two mobile treatments in one file, 300
+     lines apart, silently disagreed: whichever came last won, and this one did,
+     so the sheet capped at 520px and the change made above it did nothing. */
 
   body.vertical-playlist .nearby-chat-widget {
     bottom: calc(88px + var(--safe-bottom, 0px));

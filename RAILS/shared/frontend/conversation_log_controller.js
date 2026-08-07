@@ -47,14 +47,52 @@ export default class extends Controller {
       if (this.#atTail()) { this.unread = 0; this.#renderPill() }
     }
     this.element.addEventListener("scroll", this.onScroll, { passive: true })
+
+    // Tap-to-reveal for the reaction picker. On a touch viewport the picker was
+    // permanently visible (`@media (hover: none) { opacity: 1 }`), which put a
+    // 44px row of seven buttons under every single line — the exact cost the
+    // reactions partial says it exists to avoid. Bubbles were tall enough to
+    // hide it; an IRC transcript is not.
+    //
+    // One delegated listener on the log, not a controller per message: there
+    // are already 271 controller instances on a brgen page and a per-line
+    // controller would scale with the transcript. Tapping the line is the
+    // affordance, so this adds no chrome of its own. Hover/focus keeps working
+    // untouched for pointer and keyboard users.
+    this.onLineTap = (event) => {
+      if (!this.#isTouch()) return
+      // Let real controls do their job — chips, the picker itself, links.
+      if (event.target.closest("button, a, input, textarea, select")) return
+
+      const li = event.target.closest("li")
+      if (!li || li.parentElement !== this.element) return
+      const open = li.dataset.reactionsOpen === "true"
+      this.#closeAllPickers()
+      if (!open) li.dataset.reactionsOpen = "true"
+    }
+    this.element.addEventListener("click", this.onLineTap)
+
+    this.onKeydown = (event) => { if (event.key === "Escape") this.#closeAllPickers() }
+    this.element.addEventListener("keydown", this.onKeydown)
   }
 
   disconnect() {
     this.observer?.disconnect()
     this.observer = null
     this.element.removeEventListener("scroll", this.onScroll)
+    this.element.removeEventListener("click", this.onLineTap)
+    this.element.removeEventListener("keydown", this.onKeydown)
     this.pill?.remove()
     this.pill = null
+  }
+
+  #isTouch() {
+    return window.matchMedia?.("(hover: none)")?.matches ?? false
+  }
+
+  #closeAllPickers() {
+    this.element.querySelectorAll('li[data-reactions-open="true"]')
+      .forEach((li) => { delete li.dataset.reactionsOpen })
   }
 
   // Jump back to the newest line. Bound from the pill.
