@@ -2073,20 +2073,51 @@ create action with no rate_limit. Anonymous posting is a product feature here, w
 
 skip_before_action :verify_authenticity_token. Confirm each is a webhook with its own signature check. Law: `soul.absolute.protection_tiers`.
 
-- [ ] `amber/app/controllers/fingerprints_controller.rb:7` — skip_before_action :verify_authenticity_token, only: :create
-- [ ] `amber/app/controllers/items_controller.rb:14` — skip_before_action :verify_authenticity_token, only: [ :share ]
-- [ ] `brgen/app/controllers/fingerprints_controller.rb:7` — skip_before_action :verify_authenticity_token, only: :create
-- [ ] `brgen/app/controllers/posts_controller.rb:19` — skip_before_action :verify_authenticity_token, only: [ :share ]
-- [ ] `shared/app/controllers/concerns/shared/internal_token_auth.rb:11` — skip_before_action :verify_authenticity_token, raise: false
+
+**Closed 2026-08-07 — four legitimate, one real hole, now fixed.**
+
+`/share` in amber and brgen is the PWA Web Share Target declared in each
+`manifest.json.erb`: the operating system posts multipart form data with no
+CSRF token, so the skip is required rather than optional. That leaves the
+action reachable by a cross-site POST, and `items#share` builds an `Item` with
+a caller-supplied title and attached photos. brgen's `posts#share` has carried
+`before_action :require_real_user` for exactly this reason. amber's did not,
+and guests get a soft `Current.user` under `Shared::Authentication`, so the
+write succeeded for any visitor a third-party page could reach. Guard added,
+matching brgen.
+
+The other three are sound. `internal_token_auth.rb` authenticates a shared
+secret in `X-Internal-Token` before the action runs. `fingerprints#create`
+validates a 64-character hex string and sets a signed, httponly cookie in the
+caller's own browser — no server state changes, so forging the request only
+lets an attacker choose a value in the victim's own cookie jar.
+
+
+- [x] `amber/app/controllers/fingerprints_controller.rb:7` — skip_before_action :verify_authenticity_token, only: :create
+- [x] `amber/app/controllers/items_controller.rb:14` — skip_before_action :verify_authenticity_token, only: [ :share ]
+- [x] `brgen/app/controllers/fingerprints_controller.rb:7` — skip_before_action :verify_authenticity_token, only: :create
+- [x] `brgen/app/controllers/posts_controller.rb:19` — skip_before_action :verify_authenticity_token, only: [ :share ]
+- [x] `shared/app/controllers/concerns/shared/internal_token_auth.rb:11` — skip_before_action :verify_authenticity_token, raise: false
 
 ### raw_html_safe — 4
 
 raw() or .html_safe in a view. Each one is an XSS surface; confirm the source cannot be user input. Law: `soul.absolute.protection_tiers`.
 
-- [ ] `brgen/app/views/shared/_link_converter.html.erb:6` — var epi = <%= raw(
-- [ ] `brgen/engines/dating/app/views/dating/matches/_match.html.erb:9` — content: capture { %(<p class="feed-card-meta">Matched on #{match.created_at.to_date}</p>)
-- [ ] `brgen/engines/tv/app/views/tv/home/index.html.erb:21` — content: capture { %(<span class="live-badge">Live</span>).html_safe },
-- [ ] `shared/app/views/two_factor_setups/show.html.erb:6` — <div class="auth-form-qr"><%= @qr.html_safe %></div>
+
+**Artifact, closed 2026-08-07 — none is reachable by user input.** The dating
+`_match` and tv `index` calls mark up static literals (`<span
+class="live-badge">Live</span>`). `two_factor_setups/show` renders
+`RQRCode::QRCode#as_svg` output built from a server-generated provisioning
+URI — markup by design. `_link_converter` interpolates `to_json` inside a
+script block, whose inputs are a city slug and a surface name derived from
+`Current`, and no app overrides `escape_html_entities_in_json`, so Rails
+escapes `<`, `>` and `&` and a `</script>` cannot break out.
+
+
+- [x] `brgen/app/views/shared/_link_converter.html.erb:6` — var epi = <%= raw(
+- [x] `brgen/engines/dating/app/views/dating/matches/_match.html.erb:9` — content: capture { %(<p class="feed-card-meta">Matched on #{match.created_at.to_date}</p>)
+- [x] `brgen/engines/tv/app/views/tv/home/index.html.erb:21` — content: capture { %(<span class="live-badge">Live</span>).html_safe },
+- [x] `shared/app/views/two_factor_setups/show.html.erb:6` — <div class="auth-form-qr"><%= @qr.html_safe %></div>
 
 ### target_blank_no_rel — 2
 
@@ -2228,8 +2259,15 @@ Hardcoded external URL. brgen is multi-domain; a literal host defeats DomainRegi
 
 `rescue nil` modifier. Same rule, terser. Law: `soul.absolute.code_rules.FAIL_VISIBLY`.
 
-- [ ] `brgen/lib/brgen/irc/server.rb:53` — socket.close rescue nil
-- [ ] `shared/app/services/shared/dilla_processor.rb:129` — Process.kill("TERM", wait_thr.pid) rescue nil
+**Already fixed, closed 2026-08-07.** Both sites now use an explicit
+`begin`/`rescue` on a narrowed class, each with a comment citing FAIL_VISIBLY
+and naming the one failure worth ignoring — a socket already closed in an
+`ensure`, and a process that exited between the timeout and the signal. The
+findings outlived the code they described.
+
+
+- [x] `brgen/lib/brgen/irc/server.rb:53` — socket.close rescue nil
+- [x] `shared/app/services/shared/dilla_processor.rb:129` — Process.kill("TERM", wait_thr.pid) rescue nil
 
 ### time_now — 1
 

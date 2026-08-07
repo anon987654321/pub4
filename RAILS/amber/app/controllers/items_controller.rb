@@ -11,6 +11,14 @@ class ItemsController < ApplicationController
   # price, purchase date, photos). Gate on viewability rather than ownership so
   # public and follower wardrobes still browse.
   before_action :authorize_view!, only: %i[show]
+  # /share is the PWA Web Share Target: the OS posts multipart form data with no
+  # CSRF token, so the skip below is required rather than optional. That leaves
+  # the action reachable by a cross-site POST, and it creates a record with a
+  # caller-supplied title and attached photos. Guests get a soft Current.user
+  # here (Shared::Authentication), so without an identity gate the write
+  # succeeded for anyone. brgen's posts#share has carried require_real_user for
+  # this reason; amber's did not.
+  before_action :require_real_user, only: [ :share ]
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
