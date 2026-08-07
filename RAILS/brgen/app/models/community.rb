@@ -18,4 +18,19 @@ class Community < ApplicationRecord
 
   POPULAR_SQL = Arel.sql("COUNT(posts.id) DESC")
   scope :popular, -> { left_joins(:posts).group(:id).order(POPULAR_SQL) }
+
+  # The home page renders ten sidebar links from this, and `popular` joins and
+  # groups every post in the city to produce them. Measured 2026-08-07 on
+  # production: the front page answered in 4.1s TTFB while /posts, rendering the
+  # same feed without this call, answered in 0.83s at the same payload size.
+  #
+  # Which communities are busiest changes over hours, not seconds, so the ranking
+  # is cached per city. A stale entry costs a slightly out-of-date sidebar; the
+  # uncached version costs a full scan on every visit to the front door.
+  POPULAR_TTL = 10.minutes
+
+  def self.popular_cached(limit: 10, tenant: ActsAsTenant.current_tenant)
+    key = ["communities/popular", tenant&.id || "global", limit]
+    Rails.cache.fetch(key, expires_in: POPULAR_TTL) { popular.limit(limit).to_a }
+  end
 end
