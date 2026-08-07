@@ -201,14 +201,24 @@ module Master
 
         RuleDSL.rule :NO_LONG_TRANSITION,
           severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[css scss],
-          description: "UI transitions stay under 300ms" do |src, path:|
-          scan_lines(src, /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i,
+          description: "UI transitions stay under 300ms",
+          example_path: "/repo/app/assets/stylesheets/_example.scss",
+          fires: ".card { transition: opacity 500ms var(--ease-out); }\n",
+          # transition: none has no duration, and a token duration is not a literal.
+          does_not_fire: ".card { transition: none; }\n.b { transition: opacity var(--transition-fast) var(--ease-out); }\n" do |src, path:|
+          # The duration is rarely the first token: `transition: opacity 500ms
+          # var(--ease-out)` is the normal shorthand, and anchoring to the colon
+          # missed every one of them. Found by this rule's own fixture, 2026-08-07.
+          scan_lines(src, /transition(?:-duration)?\s*:[^;]*?\b([4-9]\d\d|\d{4,})\s*ms/i,
             message: "transition >300ms — keep motion snappy (≤300ms) per style.yml")
         end
 
         RuleDSL.rule :REDUCED_MOTION,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
-          description: "animations respect prefers-reduced-motion" do |src, path:|
+          description: "animations respect prefers-reduced-motion",
+          example_path: "/repo/app/assets/stylesheets/_example.scss",
+          fires: "@keyframes spin { to { transform: rotate(360deg); } }\n",
+          does_not_fire: "@keyframes spin { to { transform: rotate(360deg); } }\n@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }\n" do |src, path:|
           next [] unless src.match?(/@keyframes|animation\s*:/i)
           next [] if src.match?(/prefers-reduced-motion:\s*reduce/i)
           [finding(line: 1, message: "animation without prefers-reduced-motion override")]

@@ -26,15 +26,23 @@ module Master
 
         RuleDSL.rule :NO_DECORATIVE_FX,
           severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: false,
-          description: "flat UI — no blur, glow, or ornamental shadow" do |src, path:|
+          description: "flat UI — no blur, glow, or ornamental shadow",
+          example_path: "/repo/app/assets/stylesheets/_example.scss",
+          fires: ".card { box-shadow: 0 2px 8px rgba(0,0,0,.3); }\n",
+          # Suppressing a shadow is the law being obeyed, not broken.
+          does_not_fire: ".card { box-shadow: none; }\n.b { text-shadow: none; }\n" do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           findings = []
           src.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("//", "/*", "*")
-            # allow 0 shadows / none
-            next if line.match?(/box-shadow\s*:\s*(none|0\s)/i)
-            next if line.match?(/text-shadow\s*:\s*(none|0\s)/i)
+            # Allow a suppressed shadow — `none`, or an all-zero value. The old
+            # pattern matched `0\s`, which is the first token of every real
+            # shadow too: `box-shadow: 0 2px 8px rgba(0,0,0,.3)` was skipped as
+            # if it were a suppression. Found by this rule's own fixture,
+            # 2026-08-07. Match the whole value instead of its first token.
+            next if line.match?(/box-shadow\s*:\s*(none|0(?:\s+0)*(?:\s+0)?)\s*(?:!important)?\s*;/i)
+            next if line.match?(/text-shadow\s*:\s*(none|0(?:\s+0)*(?:\s+0)?)\s*(?:!important)?\s*;/i)
 
             if line.match?(/box-shadow\s*:/i) || line.match?(/text-shadow\s*:/i)
               findings << finding(line: num, message: "ornamental shadow — flat UI: use border/contrast, not glow (design_rules pixel_perfection)")
