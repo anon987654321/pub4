@@ -1,0 +1,183 @@
+# Written by OPENBSD/bin/domain_watch.rb --update. Committed so a domain
+# changing hands is a reviewable diff rather than a surprise outage.
+---
+amstrdam.nl:
+  state: registered
+  created: '2026-05-18'
+  registrar: GoDaddy.com
+austn.us:
+  state: unknown
+  note: registry referral, not a domain record
+brdeaux.fr:
+  state: unknown
+  note: registry referral, not a domain record
+brgen.no:
+  state: registered
+  created: '2020-08-25'
+brmingham.uk:
+  state: registered
+  created: 24-Jun-2021
+  expires: 24-Jun-2026
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+brssels.be:
+  state: registered
+bsddocs.org:
+  state: unknown
+  note: registry referral, not a domain record
+bsdports.net:
+  state: registered
+  created: '2022-08-08T14:15:12Z'
+  expires: '2026-08-08T14:15:12Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+bsdports.org:
+  state: registered
+  created: '2022-08-08T14:15:10Z'
+  expires: '2026-08-08T14:15:10Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+cardff.uk:
+  state: registered
+  created: 13-Aug-2021
+  expires: 13-Aug-2026
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+chcago.us:
+  state: unknown
+  note: registry referral, not a domain record
+denvr.us:
+  state: registered
+  created: '2021-08-13T11:20:09Z'
+  expires: '2026-08-13T11:20:09Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+discordb.org:
+  state: unknown
+  note: registry referral, not a domain record
+dllas.us:
+  state: unknown
+  note: registry referral, not a domain record
+dnver.us:
+  state: registered
+  created: '2021-07-03T22:55:07Z'
+  expires: '2026-07-03T22:55:07Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+dtroit.us:
+  state: unknown
+  note: registry referral, not a domain record
+edinbrgh.uk:
+  state: registered
+  created: 13-Aug-2021
+  expires: 13-Aug-2026
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+foball.no:
+  state: registered
+  created: '2022-07-30'
+frankfrt.de:
+  state: registered
+freehelp.legal:
+  state: unknown
+  note: registry referral, not a domain record
+gdnsk.pl:
+  state: unknown
+  note: No information available about domain name gdnsk.pl in the R
+glasgw.uk:
+  state: registered
+  created: 24-Jun-2021
+  expires: 24-Jun-2026
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+gtebrg.se:
+  state: unknown
+  note: "# Copyright (c) 1997- The Swedish Internet Foundation."
+hlsinki.fi:
+  state: unknown
+  note: registry referral, not a domain record
+houstn.us:
+  state: unknown
+  note: registry referral, not a domain record
+kbenhvn.dk:
+  state: unknown
+  note: registry referral, not a domain record
+lchtenstein.li:
+  state: unknown
+  note: registry referral, not a domain record
+lisbon.pt:
+  state: unknown
+  note: lookup failed
+lndon.uk:
+  state: unknown
+  note: ''
+longyearbyn.no:
+  state: unknown
+  note: registry referral, not a domain record
+lsangeles.com:
+  state: unknown
+  note: No match for domain "LSANGELES.COM".
+lverpool.uk:
+  state: registered
+  created: 25-Jun-2021
+  expires: 25-Jun-2026
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+mlan.it:
+  state: unknown
+  note: 'Domain:             mlan.it'
+mlmoe.se:
+  state: unknown
+  note: "# Copyright (c) 1997- The Swedish Internet Foundation."
+mnchester.uk:
+  state: registered
+  created: 25-Jun-2021
+  expires: 25-Jun-2026
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+mnnesota.com:
+  state: unknown
+  note: No match for domain "MNNESOTA.COM".
+mrseille.fr:
+  state: unknown
+  note: registry referral, not a domain record
+newyrk.us:
+  state: unknown
+  note: registry referral, not a domain record
+oshlo.no:
+  state: registered
+  created: '2020-08-22'
+prtland.com:
+  state: unknown
+  note: No match for domain "PRTLAND.COM".
+pub.attorney:
+  state: unknown
+  note: registry referral, not a domain record
+pub.healthcare:
+  state: unknown
+  note: registry referral, not a domain record
+reykjavk.is:
+  state: unknown
+  note: "% This is the ISNIC Whois server."
+rottrdam.nl:
+  state: unknown
+  note: rottrdam.nl is free
+stacyspassion.com:
+  state: unknown
+  note: No match for domain "STACYSPASSION.COM".
+stholm.se:
+  state: unknown
+  note: "# Copyright (c) 1997- The Swedish Internet Foundation."
+stvanger.no:
+  state: registered
+  created: '2020-08-22'
+trmso.no:
+  state: unknown
+  note: registry referral, not a domain record
+trndheim.no:
+  state: registered
+  created: '2020-08-22'
+utrcht.nl:
+  state: unknown
+  note: utrcht.nl is free
+wrsawa.pl:
+  state: unknown
+  note: 'No information available about domain name wrsawa.pl in the '
+wshingtondc.com:
+  state: registered
+  created: '2021-08-22T04:10:03Z'
+  expires: '2026-08-22T04:10:03Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+zrich.ch:
+  state: unknown
+  note: registry referral, not a domain record

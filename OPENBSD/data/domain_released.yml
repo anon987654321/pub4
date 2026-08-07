@@ -1,0 +1,16 @@
+# Domains deliberately not renewed, with the decision recorded.
+#
+# OPENBSD/test/test_domain_expiry.rb skips these. Everything else past expiry, or
+# inside the 30-day window, fails that test — so the only ways to green it are
+# renewing the domain or writing down that you chose to let it go.
+#
+# Empty on purpose as of 2026-08-07: every expired domain below is still wanted.
+# The five currently failing are brmingham.uk, glasgw.uk, lverpool.uk,
+# mnchester.uk (Nominet grace, deletion around 22-23 September) and dnver.us.
+# Add a domain here only when the answer is "we are letting this one go", never
+# to quiet the alarm.
+#
+# Format:
+#   dnver.us:
+#     decided: 2026-08-07
+#     why: Duplicate of denvr.us; one Denver domain is enough.
