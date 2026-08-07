@@ -10,6 +10,12 @@
   .site-legal a:hover{color:var(--text,#16181c);text-decoration:underline}
   .site-legal .affiliate-fine{margin:0;flex:1 1 260px;min-width:0;
     color:var(--text-secondary,#6b7178);font-size:12px;line-height:1.5}
+  /* The verification line is not fine print. TradeDoubler's publisher team has
+     to read the Site ID off this page, so it takes the footer's own 13px and
+     the primary ink rather than the 12px secondary the disclosure uses. */
+  .site-legal .site-verify{flex-basis:100%;font-size:13px;
+    color:var(--text,#16181c);display:flex;flex-wrap:wrap;gap:6px 18px}
+  .site-legal .site-verify strong{font-weight:700}
   .legal-prose{max-width:64ch;margin:0 auto;padding:32px 20px 64px}
   .legal-prose h1{font-size:1.6rem;line-height:1.15;margin:0 0 6px}
   .legal-prose .legal-eyebrow{font-size:.72rem;letter-spacing:.12em;

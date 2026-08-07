@@ -22,6 +22,28 @@ module Shared
       DEFAULT_DISCLOSURE
     end
 
+    # Publisher verification (TradeDoubler support thread, 2026-08-07). Their
+    # local publisher team proves site ownership by loading a page that clearly
+    # displays the account's Site ID, and asks for a visible contact email and a
+    # reachable cookie policy on the same site. All three have to be on a page a
+    # stranger can load without signing in, which is why they render in the site
+    # legal footer rather than on an account or admin surface.
+    #
+    # Deliberately NOT gated on TRADEDOUBLER_TOKEN like the partner list below:
+    # the token is issued *after* approval, and this is what gets you approved.
+    # Gating it on the token would have hidden it for exactly as long as it was
+    # needed.
+    def tradedoubler_site_id
+      ENV["TRADEDOUBLER_SITE_ID"].presence
+    end
+
+    # No default. An invented address on a verification page is worse than none:
+    # the reviewer mails it, it bounces, and the application fails for a reason
+    # nobody can see from here.
+    def site_contact_email
+      ENV["SITE_CONTACT_EMAIL"].presence
+    end
+
     def amazon_affiliate_url(url_or_asin)
       target = url_or_asin.to_s.strip
       return target if AMAZON_TAG.blank?

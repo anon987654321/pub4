@@ -8,3 +8,23 @@
     <%= partners.to_sentence %>.
   <% end %>
 </p>
+
+<%# Publisher verification block — see Shared::SeoKit#tradedoubler_site_id.
+    Each half renders only when its value is configured, so an unconfigured app
+    shows nothing rather than an empty label. %>
+<% if tradedoubler_site_id.present? || site_contact_email.present? %>
+  <p class="dim affiliate-fine site-verify" role="note">
+    <% if tradedoubler_site_id.present? %>
+      <span class="site-verify-id">
+        <%= t("legal.site_id_label", default: "TradeDoubler Site ID") %>:
+        <strong><%= tradedoubler_site_id %></strong>
+      </span>
+    <% end %>
+    <% if site_contact_email.present? %>
+      <span class="site-verify-contact">
+        <%= t("legal.contact_label", default: "Contact") %>:
+        <%= mail_to site_contact_email %>
+      </span>
+    <% end %>
+  </p>
+<% end %>
