@@ -21388,6 +21388,78 @@ def hate_gate(layer, blocks, bar_p)
   }.join("+")
 end
 
+# Genre as a parameter rather than a fork.
+#
+# This renderer had no harmony in it at all. Its pitched layers carried literal
+# frequencies -- an eight-entry acid_notes table, a 41 Hz sub, a drone on
+# 36.71/36.95 -- and it referenced chord, scale, root, note_hz and midi_to_hz
+# exactly zero times. That is why techno could sit next to the rest of the
+# catalogue but never blend with it: there was nothing for a progression to
+# attach to, so a jazz or soul progression could not drive an acid line and a
+# techno slot could not share a key with the track beside it.
+#
+# These read the same progression render_dilla does -- dilla_resolve_config then
+# dilla_progression -- and fold each chord's root into the register the layer
+# already worked in, so the shape of the part is unchanged and only its pitches
+# follow the harmony.
+#
+# Off by default. It changes what every techno render sounds like, which is the
+# operator's ear to decide, not a wiring question: TECHNO_HARMONY=1.
+TECHNO_ACID_REGISTER = (48.0..98.0).freeze
+TECHNO_SUB_REGISTER = (32.0..64.0).freeze
+TECHNO_DRONE_REGISTER = (30.0..58.0).freeze
+
+# Octave-fold rather than clamp. A root outside the register is the right pitch
+# class in the wrong octave, and clamping would flatten several chords onto the
+# same boundary note -- which is how a progression turns into a drone.
+def techno_fold(hz, register)
+  h = hz.to_f
+  return nil unless h.positive?
+
+  h *= 2.0 while h < register.begin
+  h /= 2.0 while h > register.end
+  h.round(2)
+end
+
+def techno_harmony_enabled? = ENV["TECHNO_HARMONY"] == "1"
+
+# One root per bar of the cycle, or nil when the harmonic path is off or the
+# progression will not resolve. nil means "keep the literal tables", so a broken
+# or missing progression degrades to exactly today's sound rather than to
+# silence.
+# The chord's NAME, not its lowest note.
+#
+# enrich_progression voices a good deal of this catalogue rootless -- that is
+# the point of a rootless voicing -- so the lowest frequency in c[:hz] is
+# routinely the third or the seventh. Following it would put the acid line a
+# third above the harmony on exactly the chords that were voiced most carefully,
+# and it would read as wrong without reading as broken. The name carries the
+# root whatever the voicing did with it; hz.min is the fallback for the handful
+# of generated chords whose names are not note-spelled ("napl3maj7", "bk2m9").
+def techno_chord_root_hz(chord)
+  name = chord[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "")
+  if (m = name.match(/\A([A-G][#b]?)/i))
+    pc = DillaLofiMachine::NOTE_PC[m[1][0].upcase + m[1][1..].to_s.downcase]
+    return 55.0 * (2.0**(((pc - 9) % 12) / 12.0)) if pc
+  end
+  Array(chord[:hz]).min.to_f
+end
+
+def techno_harmony_roots(bars, register: TECHNO_ACID_REGISTER)
+  return nil unless techno_harmony_enabled?
+
+  cfg = dilla_resolve_config
+  pads = dilla_progression(cfg[:progression])
+  roots = Array(pads).filter_map { |c| techno_chord_root_hz(c) if c.is_a?(Hash) }
+                     .select(&:positive?)
+  return nil if roots.length < 2
+
+  Array.new(bars) { |b| techno_fold(roots[b % roots.length], register) }.compact
+rescue StandardError => e
+  dmesg_warn("techno harmony unavailable (#{e.message}), using the literal tables")
+  nil
+end
+
 def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp3"))
   require_tools! "ffmpeg"
   # The lower clamp is 0.1, not 1.0, and that single number was the whole reason
@@ -21462,6 +21534,17 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   feel = DillaGroove::GROOVE_FEELS[:dilla_drag]
   depth = ENV.fetch("HATE_DILLA", "1") == "0" ? 0.0 : ENV.fetch("HATE_DILLA_DEPTH", "0.66").to_f
   drag = ->(role) { ((feel[role] || 0) * depth * tick).round(6) }
+
+  # Resolved once, up here, because three layers want it and they are built in
+  # source order -- sub before acid before drone. Assigning it beside the acid
+  # table left sub referencing a variable that did not exist yet, which Ruby
+  # reports as a NameError at render time rather than at load.
+  harmony_roots = techno_harmony_roots(HATE_CYCLE_BARS)
+  if harmony_roots
+    dmesg("techno harmony: #{harmony_roots.uniq.length} chord root(s) " \
+          "#{harmony_roots.first(4).map { |h| h.round(1) }.join('/')}",
+          unit: "techno0", parent: "dilla0")
+  end
 
   kick_per_bar = Array.new(HATE_CYCLE_BARS) { [0, 4, 8, 12] }
   kick_per_bar[7] = [0, 4, 8, 12, 14, 15]
@@ -21553,9 +21636,13 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
             }.join("+"),
             "asoftclip=type=atan:threshold=0.6,lowpass=f=2400,pan=stereo|c0=0.9*c0|c1=1.0*c1")
 
+  # The sub takes the tonic rather than a per-bar root. A sub that moves with
+  # every chord stops reading as the floor of the record and starts reading as a
+  # bassline, which is a different instrument and not this one's job.
+  sub_hz = (harmony_roots && techno_fold(harmony_roots.first, TECHNO_SUB_REGISTER)) || 41
   tone.call(:sub,
             gather.call(kick_per_bar, :kick).map { |t|
-              hit.call(t, 0.42, 0.5, 4, "sin(2*PI*41*(t-#{t}))")
+              hit.call(t, 0.42, 0.5, 4, "sin(2*PI*#{sub_hz}*(t-#{t}))")
             }.join("+"),
             "lowpass=f=90,virtualbass=cutoff=110:strength=0.6")
 
@@ -21565,7 +21652,10 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   # the result reads as metal rather than as a note. That is the futurist trick
   # this style leans on and it has no analogue on a keyboard.
   acid_steps = [0, 6, 10, 14]
-  acid_notes = [55.00, 55.00, 58.27, 55.00, 65.41, 55.00, 58.27, 51.91]
+  # The literal table is the fallback, not the definition: with TECHNO_HARMONY=1
+  # these become the progression's chord roots, one per bar of the cycle, folded
+  # into the same register the table already sat in (A1 to G2).
+  acid_notes = harmony_roots || [55.00, 55.00, 58.27, 55.00, 65.41, 55.00, 58.27, 51.91]
   tone.call(:acid,
             HATE_CYCLE_BARS.times.flat_map { |b|
               acid_steps.map { |s| hit.call(at.call(b, s), 0.16, 0.55, 11, "sin(2*PI*#{acid_notes[b]}*(t-#{at.call(b, s)}))") }
@@ -21580,8 +21670,15 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
 
   # DRONE. A dark bed under everything, built from two detuned saws a beat
   # apart so it beats slowly against itself, then spectrally smeared.
+  # Detune ratio preserved, not the literal pair. 36.95/36.71 is 1.00654, and it
+  # is the ratio that makes the two saws beat slowly against each other -- moving
+  # the drone to a new tonic has to carry that interval with it or the beating
+  # either disappears or turns into a chord.
+  drone_hz = (harmony_roots && techno_fold(harmony_roots.first, TECHNO_DRONE_REGISTER)) || 36.71
+  drone_detuned = (drone_hz * 1.00654).round(2)
   tone.call(:drone,
-            "0.13*(sin(2*PI*36.71*t)+sin(2*PI*36.95*t)+0.5*sin(2*PI*73.42*t))",
+            "0.13*(sin(2*PI*#{drone_hz}*t)+sin(2*PI*#{drone_detuned}*t)+" \
+            "0.5*sin(2*PI*#{(drone_hz * 2).round(2)}*t))",
             # Phase randomised per bin while the magnitudes are kept: the
             # spectral smear that turns two detuned saws into a wash with no
             # attack anywhere in it. afftfilt works per BIN, not per sample --
