@@ -14698,6 +14698,21 @@ def demo_techno_share = ENV.fetch("DEMO_TECHNO_SHARE", "0.34").to_f.clamp(0.0, 1
 def demo_techno_slot?(idx, slug)
   share = demo_techno_share
   return false if share <= 0.0
+
+  # A track carrying a sampled bed is never a techno slot, at any share.
+  #
+  # render_hate_techno builds its own arrangement from scratch and never calls
+  # sample_loop_for, so reassigning one of these hands back a techno piece with
+  # the record silently absent -- and the bed is the entire reason that track is
+  # in the catalogue. At the 0.34 default that was a third of every hand-cut and
+  # chopped loop replaced by something else, with nothing in the log to say the
+  # sample had been dropped rather than played.
+  #
+  # Checked before the share >= 1.0 shortcut, so DEMO_TECHNO_SHARE=1 still means
+  # "every slot that CAN be techno", not "lose every sample".
+  key = slug.to_s.downcase.tr("-", "_").to_sym
+  return false if TRACK_SAMPLE_LOOPS.key?(TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key))
+
   return true if share >= 1.0
 
   seed = stable_hash("techno:#{slug}") + (ENV["DEMO_SEED"] || "4242").to_i + idx

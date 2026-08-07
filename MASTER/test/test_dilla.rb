@@ -950,6 +950,41 @@ class TestDilla < Minitest::Test
                  "a loop entry pointing at a file that is not there renders silently without a bed"
   end
 
+  # demo-all reassigns a share of its slots to render_hate_techno, which builds
+  # its own arrangement and never calls sample_loop_for. Reassigning a track that
+  # carries a sampled bed therefore returns a techno piece with the record
+  # absent, and nothing in the log distinguishes that from the sample having
+  # played. At the 0.34 default it was a third of every hand-cut and chopped
+  # loop. The bed IS the reason those tracks exist, so they are exempt at any
+  # share -- including DEMO_TECHNO_SHARE=1.
+  def test_sampled_beds_are_never_reassigned_to_the_techno_renderer
+    result = eval_in_engine(<<~RUBY)
+      beds = TRACK_SAMPLE_LOOPS.keys.map(&:to_s) +
+             TRACK_SAMPLE_LOOP_ALIASES.keys.map(&:to_s)
+      stolen = { "default" => nil, "1.0" => "1", "0.34" => "0.34" }.filter_map do |label, share|
+        share ? ENV["DEMO_TECHNO_SHARE"] = share : ENV.delete("DEMO_TECHNO_SHARE")
+        hit = beds.each_with_index.select { |slug, i| demo_techno_slot?(i, slug) }.map(&:first)
+        [label, hit] unless hit.empty?
+      end
+      ENV.delete("DEMO_TECHNO_SHARE")
+      # Non-sample tracks must still be eligible, or the guard is just an off
+      # switch. Counted across the real catalogue rather than probed at one
+      # slug: whether any single track hashes into a slot is luck, and a
+      # control that narrow fails for reasons that have nothing to do with the
+      # guard.
+      plain = (TRACK_PRESETS.keys.map(&:to_s) - beds).first(40)
+      eligible = plain.each_with_index.count { |slug, i| demo_techno_slot?(i, slug) }
+      puts JSON.generate(stolen: stolen, bed_count: beds.length,
+                         plain_sampled: plain.length, plain_eligible: eligible)
+    RUBY
+    assert_operator result.fetch("bed_count"), :>=, 12
+    assert_empty result.fetch("stolen"),
+                 "sampled beds reassigned to techno, so the sample never plays: #{result.fetch('stolen').inspect}"
+    assert_operator result.fetch("plain_eligible"), :>, 0,
+                    "the guard must exempt sampled beds, not disable techno slots altogether " \
+                    "(0 of #{result.fetch('plain_sampled')} plain tracks were eligible)"
+  end
+
   # CHORD_SUFFIXES is the parser's whitelist; CHORD_TEMPLATES is what voices the
   # match. A suffix listed in the first and missing from the second does not
   # raise -- quality_for_suffix falls back to "maj9", so the symbol parses and
