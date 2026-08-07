@@ -54,6 +54,14 @@ leaves room for the browser gates to run on the box where they belong.
 Watch after the resize: brgen grew 170 MB → 284 MB RSS in about an hour under
 contention. Warming cache or leak is not yet distinguishable.
 
+Also waiting on this: bsdports now imports its catalogue, but only from the
+mirror's published package index, which carries names and versions and nothing
+else. The full metadata — category, COMMENT, maintainer, dependencies, i.e. the
+three questions `ports/index` says the page answers — comes from `ports.tar.gz`,
+56 MB compressed and several hundred MB extracted. `Ports::Openbsd::PortsTarball`
+implements that path and declines while free disk is under 2 GB, which on this
+box it is (see item 3). Enable with `BSDPORTS_PORTS_TARBALL=1` once resized.
+
 ## 3. `/home` is at 95% and the cause is in git, not on disk
 
 962 MB free of 17 G. `/home/dev/pub4` is 7.7 G of the 8.3 G under `/home/dev`,

@@ -659,6 +659,114 @@ the theme carrying ink that does.**
       default. Every "removed" entry was DOM re-parenting, not loss — confirmed
       by fetching the pages and finding the elements still present.
 
+### P0.9 The chat bar opened onto nothing on five of seven brgen surfaces (2026-08-07)
+
+Reported by the operator: "clicking the chat bottom bar in either site or
+subsite doesn't really allow me to chat to anyone in real time." Two separate
+causes, and the mechanism was never the problem — a two-browser test showed a
+message reaching the peer in **0 ms** through `Message#broadcasts_to` the whole
+time.
+
+- [x] **Five of the seven brgen verticals offered a link to another domain
+      instead of the chat that was already working.** `_nearby_chat_widget`
+      gated its turbo-frame on `respond_to?(:nearby_widget_path)`. The verticals
+      are **mountable engines**, and an engine's `url_helpers` do not carry the
+      host application's routes, so that was false inside marketplace, dating,
+      tv, playlist and takeaway — and the widget fell through to its "no chat on
+      this app" branch, offering `https://brgen.no/channels/brgen`. On brgen. To
+      itself. maps and messenger are not engines, which is exactly why those two
+      worked and hid the pattern for everyone testing on the front page.
+
+      Nothing failed: no 500, no log line, and the fallback renders a tidy
+      call-to-action, so the only way to see it was to tap the bar on a vertical
+      and notice you had left the site. `Shared::UiHelper#ambient_chat_frame_path`
+      now checks `main_app` too. Measured after, on all seven verticals plus the
+      root: one shared room, same guest identity across them (`Stranger #2FCA`
+      on markedsplass, dating and tv in one session). `ambient_chat_parity_test`
+      asserts every host renders the frame and that no brgen surface links out
+      to brgen; mutation-checked by removing the `main_app` branch, which fails
+      it naming markedsplass.
+
+      amber and bsdports keep the handoff — they genuinely have no `Conversation`
+      model — but its copy was **English inside a Norwegian UI** ("Open Brgen
+      chat" under "Logg inn for innboks"), because the shared partial's strings
+      lived in brgen's locales and amber had only one of the seven keys. Moved
+      to `shared/config/locales/social.{nb,en}.yml`, which the engine already
+      loads into every app.
+
+- [x] **Sending felt broken because nothing happened for up to five seconds.**
+      Measured across three consecutive sends before the fix: **2746 ms /
+      4859 ms / 5340 ms** between pressing send and any change on screen. The
+      composer kept the text, the log did not move, nothing showed a pending
+      state — the honest read of that UI is "it didn't work", and the natural
+      response is to press send again.
+
+      The cause is structural rather than a bug: the message is written, then
+      broadcast back, and only the broadcast paints. That is the right design —
+      one path renders every message, wherever it came from — but it makes the
+      sender wait for the same round trip as everyone else with no local echo.
+      `optimistic_send_controller` adds the echo and nothing else; the server
+      stays the single source of truth for what a message is.
+
+      Measured after: **visible in 27–30 ms, composer clears in 27–30 ms**, the
+      real message replaces the placeholder at 471–895 ms, and **one copy in the
+      log** — no duplicate. A failed submit keeps the text, restores it to the
+      composer and marks the line, rather than dropping what you wrote.
+
+      It listens on the **form**, not on the log. `conversation_log_controller`
+      already runs a MutationObserver over the log, and writing to the log from
+      inside that observer is precisely what produced the 100%-CPU spin in
+      `951dcd00d` (P0.3).
+
+- [x] **The panel is a bottom sheet on touch now** (operator decision, asked
+      before changing it — panel geometry is taste, not law). Measured at
+      390x844 with real touch emulation: **390x776, 92% of the screen, and the
+      message log went 246px -> 502px**, from 29% of the screen to 60%. Desktop
+      is untouched and re-measured: 360x460, still corner-anchored.
+
+      Two things this turned up. `dvh`, not `vh`: `vh` is the *largest*
+      viewport, so a 92vh sheet sits partly behind the phone's own browser
+      chrome and puts the composer under the URL bar. And the first attempt did
+      nothing at all, because the panel already had a second mobile treatment —
+      `@media (max-width: 480px) { height: min(70vh, 520px) }` — 300 lines
+      further down the same file. Two mobile rules that disagreed, last one
+      wins, and it capped the sheet at 520px. The geometry now lives in exactly
+      one place.
+
+      Gated on `(hover: none)` with `max-width: 480px` as a second condition:
+      the input device is the real signal, but a 360px-wide corner widget does
+      not fit a narrower viewport whatever is pointing at it.
+
+- [ ] **The chat tab's own width is unstable, and it is not a harness flake.**
+      `layout_snapshot` has been reporting `.nearby-chat-widget-tab: w 92 -> 102`
+      on and off for many runs, in both directions on different surfaces, and
+      re-baselining never converged — it just re-recorded whichever side of the
+      race that run caught.
+
+      Diagnosed 2026-08-07, after two wrong guesses (webfont metrics, then touch
+      emulation — both measured and both ruled out): **the label changes after
+      load.** The server renders `t("chat.title")` = "chat", 92px, and
+      `nearby_chat_controller#syncLabelsFromFrame` rewrites it to the room name,
+      "brgen", 102px, once the turbo-frame arrives. Reproduced directly — four
+      identical loads returned `chat/92, brgen/102, brgen/102, chat/92`.
+
+      That is a real flash of wrong content for users, not only a gate problem:
+      the corner chip visibly relabels itself a beat after the page settles. The
+      fix worth making is server-side — render the label the room will actually
+      have, so nothing has to swap — which also makes the snapshot stable
+      without teaching the harness to wait for it.
+
+- [x] **Checked and left alone:** `city_lobby: "by-lobby"` reads as a
+      Norwegian/English hybrid but is a deliberate coinage — `by` is city, and
+      the same file says "by-lobbyen" in prose. Not every odd-looking string is
+      a defect.
+
+**Playlist takes over six seconds to become interactive**, which is why the
+chat frame appeared dead there at first: at 6s `readyState` was still
+`interactive` and the frame had not been fetched; by 9s it was `complete` with
+Turbo up and chat ready in 0 ms. The widget is fine — the autostarting radio
+tunnel is what is slow. Separate from this item, and unmeasured beyond that.
+
 ---
 
 ## Scanner findings — verdicts
