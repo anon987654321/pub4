@@ -950,6 +950,51 @@ class TestDilla < Minitest::Test
                  "a loop entry pointing at a file that is not there renders silently without a bed"
   end
 
+  # Genre is meant to be a parameter, not a fork: dilla leans Detroit hiphop but
+  # techno, soul and jazz are supposed to blend rather than live in separate
+  # programs. The measurable form of that is whether a renderer can reach the
+  # shared spine at all -- the progression, the sampled bed, the groove engine.
+  #
+  # This does not demand that every renderer use all three. It pins the two
+  # facts that matter and that regressed silently before: render_dilla reaches
+  # all of it, and the techno renderer can reach harmony, which it could not
+  # until TECHNO_HARMONY existed. A future render_<genre> that reaches none of
+  # them is the thing this is here to make loud.
+  def test_genre_renderers_can_reach_the_shared_spine
+    result = eval_in_engine(<<~RUBY)
+      src = File.read(File.join(ROOT, "dilla.rb"))
+      # Slice to the next COLUMN-ZERO def, not to the next "\\nend\\n": every
+      # method here has nested blocks, so the first end belongs to one of them
+      # and the body comes back truncated. That is how the first version of
+      # this test reported render_dilla as not reaching the sampled bed.
+      body = ->(m) {
+        i = src.index("\\ndef " + m)
+        next "" unless i
+
+        src[i, (src.index("\\ndef ", i + 1) || src.length) - i]
+      }
+      spine = ->(b) {
+        { harmony: !!(b =~ /dilla_progression|techno_harmony_roots|dilla_resolve_config/),
+          bed: !!(b =~ /sample_loop_for|build_sample_loop_filter/),
+          groove: !!(b =~ /dilla_schedule|gather\\.call|pocket|swing/) }
+      }
+      puts JSON.generate(
+        dilla: spine.call(body.call("render_dilla")),
+        techno: spine.call(body.call("render_hate_techno")),
+        techno_harmony_is_opt_in: !techno_harmony_enabled?
+      )
+    RUBY
+    d = result.fetch("dilla")
+    assert d["harmony"] && d["bed"] && d["groove"],
+           "render_dilla is the spine; if it stops reaching one of these the test above it is measuring nothing"
+    t = result.fetch("techno")
+    assert t["harmony"],
+           "the techno renderer must be able to reach the progression, or genre is a fork again"
+    assert t["groove"], "the techno renderer builds its own grid; that is still groove"
+    assert result.fetch("techno_harmony_is_opt_in"),
+           "TECHNO_HARMONY changes the sound of every techno render and must stay opt-in until that is a decision"
+  end
+
   # demo-all reassigns a share of its slots to render_hate_techno, which builds
   # its own arrangement and never calls sample_loop_for. Reassigning a track that
   # carries a sampled bed therefore returns a techno piece with the record
