@@ -2570,6 +2570,39 @@ View iterates a collection with no empty branch. ui_polish.empty_requires_action
 
 SCSS class with no ERB/JS/Ruby consumer. Dead CSS. Confirm it is not built dynamically before deleting. Law: `aesthetic_rules.FLAT_HIERARCHY aggressive_merge`.
 
+
+**Attempted in bulk 2026-08-07 and stopped by verification. 2 of 102 closed;
+the other 100 stay open, and the reason is worth reading before anyone tries
+again.**
+
+A consumer search across 2,765 ERB, Ruby, JS, SCSS, JSON and YAML files
+confirmed all 102 selectors have no reference in source, and no `@extend`
+consumer either. A rule-removal pass was written and dry-run: 77 rules across 20
+files were removable without touching a compound selector.
+
+It was not applied, because the dry run named `.field_with_errors` and
+`.maplibregl-popup-content`. Neither can ever appear in application source:
+Rails wraps invalid form fields in `field_with_errors` through
+`ActionView::Base.field_error_proc`, and MapLibre creates its popup markup in
+the browser. Both would have been deleted, and the breakage — unstyled
+validation errors, an unstyled map popup — appears only on a path a scanner does
+not walk.
+
+That makes the method unsound rather than the finding wrong. "No reference in
+source" cannot distinguish a dead class from one whose consumer is a gem, a
+vendored library, or the browser. Several others in this list have the same
+shape: `.dropzone`, `.animate-*` if any JS toggles them, `.post-card`.
+
+What a safe pass needs, in order of cost: run the rendered gates with
+`RAILS/bin/triangle up` and collect the classes Chrome actually resolves per
+route, then delete only selectors absent from that set. `layout_snapshot` and
+`geometry` already drive Chrome over CDP and could report it. Until then each
+deletion is a judgement per class, not a batch.
+
+The two closed here are the inverse case: framework-injected, so the rule is
+correct to exist and the finding is the artifact.
+
+
 - [ ] `amber/app/assets/stylesheets/_brand.scss:285` — .logo-bar defined 1x, no ERB/JS/RB consumer
 - [ ] `amber/app/assets/stylesheets/_brand.scss:376` — .edge-swiper-grip defined 2x, no ERB/JS/RB consumer
 - [ ] `amber/app/assets/stylesheets/_brand.scss:387` — .sustainability-meter defined 1x, no ERB/JS/RB consumer
@@ -2602,7 +2635,7 @@ SCSS class with no ERB/JS/Ruby consumer. Dead CSS. Confirm it is not built dynam
 - [ ] `brgen/app/assets/stylesheets/_chrome_polish.scss:60` — .city-home-ai-link defined 3x, no ERB/JS/RB consumer
 - [ ] `brgen/app/assets/stylesheets/_dating_media.scss:21` — .match-avatar defined 1x, no ERB/JS/RB consumer
 - [ ] `brgen/app/assets/stylesheets/_feed_post.scss:135` — .overflow_panel defined 1x, no ERB/JS/RB consumer
-- [ ] `brgen/app/assets/stylesheets/_maps.scss:70` — .maplibregl-popup-content defined 1x, no ERB/JS/RB consumer
+- [x] `brgen/app/assets/stylesheets/_maps.scss:70` — .maplibregl-popup-content defined 1x, no ERB/JS/RB consumer
 - [ ] `brgen/app/assets/stylesheets/_maps.scss:89` — .match-overlay__card defined 1x, no ERB/JS/RB consumer
 - [ ] `brgen/app/assets/stylesheets/_maps.scss:98` — .match-overlay__eyebrow defined 1x, no ERB/JS/RB consumer
 - [ ] `brgen/app/assets/stylesheets/_marketplace.scss:3` — .marketplace-page-header defined 1x, no ERB/JS/RB consumer
@@ -2655,7 +2688,7 @@ SCSS class with no ERB/JS/Ruby consumer. Dead CSS. Confirm it is not built dynam
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:270` — .input-group__icon defined 1x, no ERB/JS/RB consumer
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:278` — .input-group__input defined 1x, no ERB/JS/RB consumer
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:306` — .dropzone defined 2x, no ERB/JS/RB consumer
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:419` — .field_with_errors defined 2x, no ERB/JS/RB consumer
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:419` — .field_with_errors defined 2x, no ERB/JS/RB consumer
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:43` — .text-base defined 1x, no ERB/JS/RB consumer
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:44` — .text-lg defined 1x, no ERB/JS/RB consumer
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:47` — .bg-surface defined 1x, no ERB/JS/RB consumer
