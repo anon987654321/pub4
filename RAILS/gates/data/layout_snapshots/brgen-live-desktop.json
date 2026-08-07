@@ -1,5 +1,5 @@
 {
-  "title": "Live · nearby — Brgen",
+  "title": "Live · i nærheten — Brgen",
   "viewport": [
     1440,
     900
@@ -13,16 +13,64 @@
   },
   "elements": [
     {
+      "key": "#app-tab-bar",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 900,
+        "w": 1440,
+        "h": 54
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "#app-tab-bar>a.tab-item",
+      "tag": "a",
+      "rect": {
+        "x": 0,
+        "y": 900,
+        "w": 240,
+        "h": 54
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#app-tab-bar>button.tab-item.tab-item-button",
+      "tag": "button",
+      "rect": {
+        "x": 1200,
+        "y": 900,
+        "w": 240,
+        "h": 54
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
       "key": "#live-feed>div.live-pagination>nav.pagy.series-nav",
       "tag": "nav",
       "rect": {
-        "x": 468,
-        "y": 5175,
-        "w": 504,
+        "x": 420,
+        "y": 5389,
+        "w": 600,
         "h": 20
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -32,13 +80,13 @@
       "key": "#live-feed>div.live-pagination>nav.pagy.series-nav>a",
       "tag": "a",
       "rect": {
-        "x": 468,
-        "y": 5175,
+        "x": 420,
+        "y": 5389,
         "w": 11,
         "h": 20
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "inline",
@@ -51,28 +99,60 @@
         "x": 420,
         "y": 0,
         "w": 600,
-        "h": 5258
+        "h": 5418
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "static"
     },
     {
+      "key": "#main-content>div.live-locate.section-divider--24>p.nearby-locate-actions>a.btn.btn-sm",
+      "tag": "a",
+      "rect": {
+        "x": 579,
+        "y": 382,
+        "w": 123,
+        "h": 44
+      },
+      "color": "#f7f6fa",
+      "bg": "#5b4fc4",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.live-locate.section-divider--24>p.nearby-locate-actions>button.btn.btn-primary.btn-sm",
+      "tag": "button",
+      "rect": {
+        "x": 438,
+        "y": 382,
+        "w": 132,
+        "h": 44
+      },
+      "color": "#f7f6fa",
+      "bg": "#1a1824",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
       "key": "#main-content>div.page-header.live-header>div>h1",
       "tag": "h1",
       "rect": {
-        "x": 486,
+        "x": 438,
         "y": 18,
-        "w": 468,
-        "h": 20
+        "w": 564,
+        "h": 28
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 22.5,
-      "line_height": 20,
+      "line_height": 28.1,
       "display": "block",
       "position": "static"
     },
@@ -80,13 +160,13 @@
       "key": "#main-content>div.page-header.live-header>nav.live-sort.feed-tabs",
       "tag": "nav",
       "rect": {
-        "x": 486,
-        "y": 96,
-        "w": 318,
+        "x": 438,
+        "y": 104,
+        "w": 314,
         "h": 49
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -96,13 +176,13 @@
       "key": "#main-content>div.page-header.live-header>nav.live-sort.feed-tabs>a.feed-tab",
       "tag": "a",
       "rect": {
-        "x": 572,
-        "y": 96,
+        "x": 524,
+        "y": 104,
         "w": 75,
         "h": 49
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -112,33 +192,65 @@
       "key": "#main-content>p.live-crosslinks.dim>a",
       "tag": "a",
       "rect": {
-        "x": 468,
-        "y": 63,
-        "w": 86,
+        "x": 420,
+        "y": 190,
+        "w": 97,
         "h": 17
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 15.8,
       "line_height": 20,
       "display": "inline",
       "position": "static"
     },
     {
-      "key": "body>div.theme-root>div.app-shell>nav.tab-bar",
-      "tag": "nav",
+      "key": "body>div.theme-root>div.app-shell>button.tab-bar-peel",
+      "tag": "button",
       "rect": {
-        "x": 0,
-        "y": 846,
-        "w": 1440,
-        "h": 54
+        "x": 696,
+        "y": 856,
+        "w": 48,
+        "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "fixed"
+    },
+    {
+      "key": "body>div.theme-root>div.nav_swiper>button.nav_swiper_reveal",
+      "tag": "button",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "absolute"
+    },
+    {
+      "key": "body>footer.site-legal>nav>a",
+      "tag": "a",
+      "rect": {
+        "x": 190,
+        "y": 959,
+        "w": 66,
+        "h": 20
+      },
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
     },
     {
       "key": "div.app-shell>div.layout>div.sidebar-swiper>button.edge-grip.edge-grip-left",
@@ -149,8 +261,8 @@
         "w": 44,
         "h": 48
       },
-      "color": "#ffffff",
-      "bg": "#000000",
+      "color": "#000000",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -165,47 +277,111 @@
         "w": 44,
         "h": 48
       },
-      "color": "#ffffff",
-      "bg": "#000000",
+      "color": "#000000",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "fixed"
     },
     {
-      "key": "div.theme-root>div.app-shell>nav.tab-bar>a.tab-item",
-      "tag": "a",
-      "rect": {
-        "x": 0,
-        "y": 846,
-        "w": 240,
-        "h": 54
-      },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "flex",
-      "position": "relative"
-    },
-    {
-      "key": "div.theme-root>div.app-shell>nav.tab-bar>button.tab-item.tab-item-button",
+      "key": "div.app-shell>div.tab-bar-coach>div.tab-bar-coach-actions>button.tab-bar-coach-dismiss",
       "tag": "button",
       "rect": {
-        "x": 1200,
-        "y": 846,
-        "w": 240,
-        "h": 54
+        "x": 694,
+        "y": 793,
+        "w": 90,
+        "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "flex",
-      "position": "relative"
+      "color": "#1a1824",
+      "bg": "#d9d7de",
+      "font_size": 14.6,
+      "line_height": 14.6,
+      "display": "block",
+      "position": "static"
     },
     {
-      "key": "html>body>a.brgen-logo-mark",
+      "key": "div.app-shell>div.tab-bar-coach>div.tab-bar-coach-actions>button.tab-bar-coach-show",
+      "tag": "button",
+      "rect": {
+        "x": 793,
+        "y": 793,
+        "w": 91,
+        "h": 44
+      },
+      "color": "#f7f6fa",
+      "bg": "#5b4fc4",
+      "font_size": 14.6,
+      "line_height": 14.6,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body>div.nearby-chat-widget>button.nearby-chat-widget-tab",
+      "tag": "button",
+      "rect": {
+        "x": 1338,
+        "y": 856,
+        "w": 102,
+        "h": 44
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 14.6,
+      "line_height": 14.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body>footer.site-legal",
+      "tag": "footer",
+      "rect": {
+        "x": 170,
+        "y": 940,
+        "w": 1100,
+        "h": 67
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body>footer.site-legal>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 190,
+        "y": 959,
+        "w": 243,
+        "h": 20
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body>footer.site-legal>p.dim.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 451,
+        "y": 960,
+        "w": 799,
+        "h": 18
+      },
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
         "x": 14,
@@ -213,28 +389,12 @@
         "w": 63,
         "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 20.3,
       "line_height": 20.3,
       "display": "flex",
       "position": "fixed"
-    },
-    {
-      "key": "html>body>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
-      "rect": {
-        "x": 1315,
-        "y": 789,
-        "w": 112,
-        "h": 44
-      },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "flex",
-      "position": "static"
     }
   ]
 }

@@ -47,8 +47,22 @@ module Deploy
       by_app.each do |app, rows|
         next unless File.directory?(stylesheets_dir(app))
 
-        body = render(rows)
         path = partial_path(app)
+        # Merge, do not replace. Each round measures the page with this partial
+        # already applied, so a rule that WORKS produces no finding and was
+        # therefore absent from `rows` — and a plain re-render dropped it.
+        # Observed 2026-08-07: a round that found one new overflow rewrote the
+        # file to that rule alone and deleted a load-bearing 44px touch fix, so
+        # the next round measured the touch violation again, re-added it, and
+        # dropped the overflow rule. It oscillated until max_rounds, and
+        # whichever half was missing at that moment is what shipped.
+        #
+        # This restores the behaviour the module docstring already claims ("the
+        # fix is additive and quarantined"). The file still shrinks the way the
+        # header describes — by deleting it, or by fixing the originating
+        # stylesheet and deleting the rule — but it no longer discards a fix
+        # because the fix was working.
+        body = render(merge_rows(existing_rows(path), rows))
         next if File.file?(path) && File.read(path) == body
 
         # Findings repeat per viewport and render() dedupes by selector, so
@@ -69,12 +83,50 @@ module Deploy
       written
     end
 
+    # Rules already in the generated partial, read back as rows so a merge is a
+    # plain union rather than a text splice. The file only ever holds the two
+    # shapes render() emits, so parsing it is reading our own output.
+    def existing_rows(path)
+      return [] unless File.file?(path)
+
+      kind = nil
+      detail = nil
+      # chomp first: readlines keeps the newline and \z is absolute end-of-string,
+      # so /\A\/\/ (.+)\z/ silently never matched a detail comment.
+      File.readlines(path, chomp: true).filter_map do |line|
+        case line
+        when /\A\/\/ --- (\w+) ---/ then kind = Regexp.last_match(1).to_sym; next
+        when /\A\/\/ (.+)\z/        then detail = Regexp.last_match(1).strip; next
+        when /\A(.+?) \{/
+          selector = Regexp.last_match(1).strip
+          row = { selector: selector, kind: kind, detail: detail, parsed: true }
+          detail = nil
+          kind ? row : nil
+        else
+          detail = nil
+          next
+        end
+      end
+    end
+
+    # New findings win on detail (they carry this round's measurement), but a
+    # selector present in either source survives.
+    def merge_rows(old_rows, new_rows)
+      fresh = new_rows.map { |r| [[r[:kind], css_selector(r[:selector])], r] }.to_h
+      kept = old_rows.reject { |r| fresh.key?([r[:kind], r[:selector]]) }
+      kept + new_rows
+    end
+
     def render(rows)
       out = +HEADER
       rows.group_by { |r| r[:kind] }.each do |kind, group|
         out << "\n// --- #{kind} ---\n"
         group.uniq { |r| r[:selector] }.sort_by { |r| r[:selector] }.each do |row|
-          sel = css_selector(row[:selector])
+          # A row read back from the file already holds a CSS selector.
+          # css_selector is not idempotent — it re-splits on ">" and rejoins
+          # with " > ", so a second pass turns "a > b" into "a  >  b" and the
+          # file churns on every round.
+          sel = row[:parsed] ? row[:selector] : css_selector(row[:selector])
           next unless sel
 
           out << "// #{row[:detail]}\n" if row[:detail]

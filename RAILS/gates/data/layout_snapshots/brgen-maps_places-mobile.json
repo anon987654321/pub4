@@ -1,0 +1,176 @@
+{
+  "title": "Steder — Brgen",
+  "viewport": [
+    390,
+    844
+  ],
+  "scroll_width": 390,
+  "h1_count": 1,
+  "landmarks": {
+    "main": true,
+    "nav": true,
+    "skip": true
+  },
+  "elements": [
+    {
+      "key": "#main-content",
+      "tag": "main",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 2861
+      },
+      "color": "#d8d6e0",
+      "bg": "#12151c",
+      "font_size": 16,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.page-header>h1",
+      "tag": "h1",
+      "rect": {
+        "x": 16,
+        "y": 80,
+        "w": 66,
+        "h": 28
+      },
+      "color": "#d8d6e0",
+      "bg": "#12151c",
+      "font_size": 22.5,
+      "line_height": 28.1,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.page-header>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 295,
+        "y": 75,
+        "w": 79,
+        "h": 44
+      },
+      "color": "#d8d6e0",
+      "bg": "#12151c",
+      "font_size": 16,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.page-header>nav>a.btn.btn-ghost",
+      "tag": "a",
+      "rect": {
+        "x": 295,
+        "y": 75,
+        "w": 79,
+        "h": 44
+      },
+      "color": "#8a879c",
+      "bg": "#12151c",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "inline-flex",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.search>form",
+      "tag": "form",
+      "rect": {
+        "x": 1,
+        "y": 151,
+        "w": 388,
+        "h": 52
+      },
+      "color": "#d8d6e0",
+      "bg": "#cccccc",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#maps-places-list>article.place-card>h2",
+      "tag": "h2",
+      "rect": {
+        "x": 34,
+        "y": 219,
+        "w": 322,
+        "h": 20
+      },
+      "color": "#d8d6e0",
+      "bg": "#1b1e25",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#maps-places-list>article.place-card>h2>a",
+      "tag": "a",
+      "rect": {
+        "x": 34,
+        "y": 218,
+        "w": 141,
+        "h": 21
+      },
+      "color": "#d8d6e0",
+      "bg": "#1b1e25",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "inline",
+      "position": "static"
+    },
+    {
+      "key": "#q",
+      "tag": "input",
+      "rect": {
+        "x": 1,
+        "y": 151,
+        "w": 388,
+        "h": 52
+      },
+      "color": "#aaaaaa",
+      "bg": "#cccccc",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "inline-block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>div.nearby-chat-widget>button.nearby-chat-widget-tab",
+      "tag": "button",
+      "rect": {
+        "x": 298,
+        "y": 800,
+        "w": 92,
+        "h": 44
+      },
+      "color": "#d8d6e0",
+      "bg": "#211f28",
+      "font_size": 14.6,
+      "line_height": 14.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>header>a.brand-mark.brgen-logo-mark",
+      "tag": "a",
+      "rect": {
+        "x": 14,
+        "y": 14,
+        "w": 65,
+        "h": 44
+      },
+      "color": "#d8d6e0",
+      "bg": "#12151c",
+      "font_size": 16.9,
+      "line_height": 16.9,
+      "display": "flex",
+      "position": "fixed"
+    }
+  ]
+}

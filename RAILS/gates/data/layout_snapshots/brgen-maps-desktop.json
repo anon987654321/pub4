@@ -21,9 +21,9 @@
         "w": 1440,
         "h": 900
       },
-      "color": "#e0e0e0",
+      "color": "#d8d6e0",
       "bg": "#12151c",
-      "font_size": 18,
+      "font_size": 16,
       "line_height": 20,
       "display": "block",
       "position": "static"
@@ -34,11 +34,11 @@
       "rect": {
         "x": 86,
         "y": 25,
-        "w": 240,
+        "w": 239,
         "h": 40
       },
-      "color": "#e0e0e0",
-      "bg": "#191a1a",
+      "color": "#d8d6e0",
+      "bg": "#201e27",
       "font_size": 15.8,
       "line_height": 20,
       "display": "block",
@@ -53,7 +53,7 @@
         "w": 1440,
         "h": 900
       },
-      "color": "#e0e0e0",
+      "color": "#d8d6e0",
       "bg": "#12151c",
       "font_size": 12,
       "line_height": 20,
@@ -61,15 +61,31 @@
       "position": "absolute"
     },
     {
-      "key": "html>body.vertical-maps>a.brgen-logo-mark",
+      "key": "html>body.vertical-maps>div.nearby-chat-widget>button.nearby-chat-widget-tab",
+      "tag": "button",
+      "rect": {
+        "x": 1348,
+        "y": 856,
+        "w": 92,
+        "h": 44
+      },
+      "color": "#d8d6e0",
+      "bg": "#211f28",
+      "font_size": 14.6,
+      "line_height": 14.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
         "x": 14,
         "y": 14,
-        "w": 63,
+        "w": 64,
         "h": 44
       },
-      "color": "#e0e0e0",
+      "color": "#d8d6e0",
       "bg": "#12151c",
       "font_size": 20.3,
       "line_height": 20.3,
@@ -77,31 +93,15 @@
       "position": "fixed"
     },
     {
-      "key": "html>body.vertical-maps>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
-      "rect": {
-        "x": 1315,
-        "y": 843,
-        "w": 112,
-        "h": 44
-      },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "flex",
-      "position": "static"
-    },
-    {
       "key": "section>div.map-hud>div.cluster>a.btn.btn-ghost.btn-sm",
       "tag": "a",
       "rect": {
-        "x": 335,
+        "x": 333,
         "y": 27,
-        "w": 111,
+        "w": 112,
         "h": 44
       },
-      "color": "#969696",
+      "color": "#8a879c",
       "bg": "#12151c",
       "font_size": 15.8,
       "line_height": 20,

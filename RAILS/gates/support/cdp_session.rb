@@ -169,8 +169,48 @@ module Deploy
 
         sleep 0.05
       end
+      await_webfonts
       sleep settle if settle.positive?
       url
+    end
+
+    # readyState "complete" does not mean the webfonts have applied, and text
+    # laid out in the fallback face measures differently from the real one, so
+    # waiting here makes a layout reading independent of font-cache state.
+    #
+    # Honest note on why this was added: it was written to explain the
+    # .nearby-chat-widget-tab snapshot flapping between 92px and 102px, and that
+    # diagnosis was WRONG — the widths are identical in both faces. The real
+    # cause is that the tab's LABEL changes after load: the server renders
+    # "chat" (92px) and nearby_chat_controller#syncLabelsFromFrame rewrites it
+    # to the room name, "brgen" (102px), once the frame arrives. The snapshot
+    # records whichever side of that race it caught, which is why re-baselining
+    # never converged. See FINAL_TODO P0.9.
+    #
+    # This wait is kept because measuring layout before fonts settle is wrong on
+    # its own terms, not because it fixed that. It does not fix that.
+    #
+    # Bounded and non-fatal: a page with no webfonts resolves immediately, and a
+    # font that never loads costs FONT_WAIT rather than the run.
+    FONT_WAIT = 3.0
+
+    # document.fonts.ready, not document.fonts.status. `status` reads "loaded"
+    # whenever no load is *currently pending* — including before a lazily
+    # triggered load has started — so polling it returned immediately and
+    # changed nothing. The promise is the actual settle signal.
+    def await_webfonts
+      evaluate(<<~JS, await_promise: true)
+        (async () => {
+          if (!document.fonts) return "none";
+          await Promise.race([
+            document.fonts.ready,
+            new Promise((r) => setTimeout(r, #{(FONT_WAIT * 1000).to_i}))
+          ]);
+          return document.fonts.status;
+        })()
+      JS
+    rescue JsError, Timeout
+      nil
     end
 
     def status

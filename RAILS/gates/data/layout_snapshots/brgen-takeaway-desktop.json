@@ -1,5 +1,5 @@
 {
-  "title": "Takeaway — Brgen",
+  "title": "Restauranter — Brgen",
   "viewport": [
     1440,
     900
@@ -16,9 +16,9 @@
       "key": "#accountStuff>a.nav-block.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 1275,
+        "x": 1280,
         "y": 67,
-        "w": 89,
+        "w": 87,
         "h": 44
       },
       "color": "#ffffff",
@@ -29,12 +29,60 @@
       "position": "static"
     },
     {
+      "key": "#app-tab-bar",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 900,
+        "w": 1440,
+        "h": 54
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "#app-tab-bar>a.tab-item",
+      "tag": "a",
+      "rect": {
+        "x": 0,
+        "y": 900,
+        "w": 240,
+        "h": 54
+      },
+      "color": "#e07b39",
+      "bg": "#e8e7ec",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#app-tab-bar>button.tab-item.tab-item-button",
+      "tag": "button",
+      "rect": {
+        "x": 1200,
+        "y": 900,
+        "w": 240,
+        "h": 54
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
       "key": "#department",
       "tag": "a",
       "rect": {
         "x": 86,
         "y": 120,
-        "w": 60,
+        "w": 68,
         "h": 36
       },
       "color": "#ffffff",
@@ -49,9 +97,9 @@
       "tag": "a",
       "rect": {
         "x": 86,
-        "y": 70,
-        "w": 121,
-        "h": 38
+        "y": 68,
+        "w": 131,
+        "h": 41
       },
       "color": "#ffffff",
       "bg": "#131921",
@@ -67,10 +115,10 @@
         "x": 0,
         "y": 0,
         "w": 1440,
-        "h": 2619
+        "h": 2611
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -80,12 +128,12 @@
       "key": "#main-content>div.search>form",
       "tag": "form",
       "rect": {
-        "x": 49,
-        "y": 159,
+        "x": 1,
+        "y": 235,
         "w": 478,
         "h": 49
       },
-      "color": "#e0e0e0",
+      "color": "#1a1824",
       "bg": "#cccccc",
       "font_size": 18,
       "line_height": 20,
@@ -93,32 +141,48 @@
       "position": "static"
     },
     {
-      "key": "#main-content>h1",
+      "key": "#main-content>header.page-header.vertical-purpose",
+      "tag": "header",
+      "rect": {
+        "x": 0,
+        "y": 158,
+        "w": 661,
+        "h": 63
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "sticky"
+    },
+    {
+      "key": "#main-content>header.page-header.vertical-purpose>h1",
       "tag": "h1",
       "rect": {
-        "x": 47,
-        "y": 157,
-        "w": 1,
-        "h": 1
+        "x": 18,
+        "y": 176,
+        "w": 176,
+        "h": 23
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
-      "font_size": 36,
-      "line_height": 20,
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 18,
+      "line_height": 22.5,
       "display": "block",
-      "position": "absolute"
+      "position": "static"
     },
     {
       "key": "#q",
       "tag": "input",
       "rect": {
-        "x": 49,
-        "y": 159,
+        "x": 1,
+        "y": 235,
         "w": 478,
         "h": 49
       },
       "color": "#aaaaaa",
-      "bg": "#000000",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -128,9 +192,9 @@
       "key": "#sections>a.section.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 147,
+        "x": 155,
         "y": 121,
-        "w": 99,
+        "w": 104,
         "h": 35
       },
       "color": "#ffffff",
@@ -144,13 +208,13 @@
       "key": "#takeaway-restaurants-list",
       "tag": "section",
       "rect": {
-        "x": 48,
-        "y": 209,
-        "w": 1344,
-        "h": 2347
+        "x": 0,
+        "y": 285,
+        "w": 1440,
+        "h": 2317
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -160,9 +224,9 @@
       "key": "#topHalf>a.nav-block.nav-deliver.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 210,
+        "x": 221,
         "y": 67,
-        "w": 87,
+        "w": 91,
         "h": 44
       },
       "color": "#ffffff",
@@ -176,9 +240,9 @@
       "key": "#topHalf>div.search.marketplace-nav-search>form",
       "tag": "form",
       "rect": {
-        "x": 308,
+        "x": 323,
         "y": 69,
-        "w": 956,
+        "w": 946,
         "h": 40
       },
       "color": "#ffffff",
@@ -192,7 +256,7 @@
       "key": "#topHalf>div.search.marketplace-nav-search>form>button.nav-search-submit",
       "tag": "button",
       "rect": {
-        "x": 1219,
+        "x": 1224,
         "y": 69,
         "w": 45,
         "h": 44
@@ -208,9 +272,9 @@
       "key": "#topHalf>div.search.marketplace-nav-search>form>input.nav-search-input",
       "tag": "input",
       "rect": {
-        "x": 448,
+        "x": 463,
         "y": 69,
-        "w": 771,
+        "w": 761,
         "h": 40
       },
       "color": "#111111",
@@ -224,33 +288,65 @@
       "key": "#topHalf>div.search.marketplace-nav-search>form>select.nav-search-category",
       "tag": "select",
       "rect": {
-        "x": 308,
+        "x": 323,
         "y": 69,
         "w": 140,
         "h": 40
       },
       "color": "#111111",
-      "bg": "#1a1a1a",
+      "bg": "#eeedf3",
       "font_size": 12,
       "line_height": null,
       "display": "block",
       "position": "static"
     },
     {
-      "key": "body.vertical-takeaway>div.theme-root>div.app-shell>nav.tab-bar",
-      "tag": "nav",
+      "key": "body.vertical-takeaway>div.theme-root>div.app-shell>button.tab-bar-peel",
+      "tag": "button",
       "rect": {
-        "x": 0,
-        "y": 846,
-        "w": 1440,
-        "h": 54
+        "x": 696,
+        "y": 856,
+        "w": 48,
+        "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "fixed"
+    },
+    {
+      "key": "body.vertical-takeaway>div.theme-root>div.nav_swiper>button.nav_swiper_reveal",
+      "tag": "button",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "absolute"
+    },
+    {
+      "key": "body.vertical-takeaway>footer.site-legal>nav>a",
+      "tag": "a",
+      "rect": {
+        "x": 190,
+        "y": 959,
+        "w": 66,
+        "h": 20
+      },
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
     },
     {
       "key": "div.app-shell>div.layout>div.sidebar-swiper>button.edge-grip.edge-grip-left",
@@ -261,8 +357,8 @@
         "w": 44,
         "h": 48
       },
-      "color": "#ffffff",
-      "bg": "#000000",
+      "color": "#000000",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -277,47 +373,79 @@
         "w": 44,
         "h": 48
       },
-      "color": "#ffffff",
-      "bg": "#000000",
+      "color": "#000000",
+      "bg": "#f7f6fa",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "fixed"
     },
     {
-      "key": "div.theme-root>div.app-shell>nav.tab-bar>a.tab-item",
-      "tag": "a",
-      "rect": {
-        "x": 0,
-        "y": 846,
-        "w": 240,
-        "h": 54
-      },
-      "color": "#e07b39",
-      "bg": "#202020",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "flex",
-      "position": "relative"
-    },
-    {
-      "key": "div.theme-root>div.app-shell>nav.tab-bar>button.tab-item.tab-item-button",
+      "key": "html>body.vertical-takeaway>div.nearby-chat-widget>button.nearby-chat-widget-tab",
       "tag": "button",
       "rect": {
-        "x": 1200,
-        "y": 846,
-        "w": 240,
-        "h": 54
+        "x": 1348,
+        "y": 856,
+        "w": 92,
+        "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 18,
-      "line_height": 20,
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 14.6,
+      "line_height": 14.6,
       "display": "flex",
-      "position": "relative"
+      "position": "static"
     },
     {
-      "key": "html>body.vertical-takeaway>a.brgen-logo-mark",
+      "key": "html>body.vertical-takeaway>footer.site-legal",
+      "tag": "footer",
+      "rect": {
+        "x": 170,
+        "y": 940,
+        "w": 1100,
+        "h": 67
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-takeaway>footer.site-legal>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 190,
+        "y": 959,
+        "w": 243,
+        "h": 20
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-takeaway>footer.site-legal>p.dim.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 451,
+        "y": 960,
+        "w": 799,
+        "h": 18
+      },
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-takeaway>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
         "x": 14,
@@ -325,28 +453,12 @@
         "w": 63,
         "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 20.3,
       "line_height": 20.3,
       "display": "flex",
       "position": "fixed"
-    },
-    {
-      "key": "html>body.vertical-takeaway>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
-      "rect": {
-        "x": 1315,
-        "y": 789,
-        "w": 112,
-        "h": 44
-      },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "flex",
-      "position": "static"
     }
   ]
 }

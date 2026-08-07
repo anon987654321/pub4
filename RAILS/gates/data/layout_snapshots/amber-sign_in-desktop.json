@@ -16,13 +16,13 @@
       "key": "#email_address",
       "tag": "input",
       "rect": {
-        "x": 561,
+        "x": 540,
         "y": 422,
-        "w": 318,
+        "w": 360,
         "h": 56
       },
-      "color": "#2c2824",
-      "bg": "#ebe4da",
+      "color": "#1a1824",
+      "bg": "#e8e6ef",
       "font_size": 20.3,
       "line_height": 32.4,
       "display": "block",
@@ -32,13 +32,13 @@
       "key": "#main-content",
       "tag": "main",
       "rect": {
-        "x": 420,
-        "y": 14,
-        "w": 600,
+        "x": 522,
+        "y": -41,
+        "w": 396,
         "h": 900
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 20.3,
       "line_height": 32.4,
       "display": "flex",
@@ -48,13 +48,13 @@
       "key": "#main-content>div.auth-form>form",
       "tag": "form",
       "rect": {
-        "x": 561,
-        "y": 392,
-        "w": 318,
-        "h": 287
+        "x": 540,
+        "y": 391,
+        "w": 360,
+        "h": 289
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 20.3,
       "line_height": 32.4,
       "display": "block",
@@ -64,13 +64,13 @@
       "key": "#main-content>div.auth-form>h1",
       "tag": "h1",
       "rect": {
-        "x": 561,
-        "y": 331,
-        "w": 318,
+        "x": 540,
+        "y": 274,
+        "w": 360,
         "h": 43
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 27,
       "line_height": 43.2,
       "display": "block",
@@ -80,124 +80,76 @@
       "key": "#password",
       "tag": "input",
       "rect": {
-        "x": 561,
-        "y": 523,
-        "w": 245,
+        "x": 540,
+        "y": 522,
+        "w": 287,
         "h": 56
       },
-      "color": "#2c2824",
-      "bg": "#ebe4da",
+      "color": "#1a1824",
+      "bg": "#e8e6ef",
       "font_size": 20.3,
       "line_height": 32.4,
       "display": "block",
       "position": "static"
     },
     {
-      "key": "body>div.theme-root>div.app-shell>footer.amber-footer",
+      "key": "body.auth-surface>div.theme-root>div.app-shell>footer.amber-footer",
       "tag": "footer",
       "rect": {
         "x": 0,
-        "y": 968,
+        "y": 913,
         "w": 1440,
         "h": 169
       },
-      "color": "#6b665f",
-      "bg": "#f8f5f0",
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
       "font_size": 14.6,
       "line_height": 23.4,
       "display": "flex",
       "position": "static"
     },
     {
-      "key": "body>div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>a",
-      "tag": "a",
-      "rect": {
-        "x": 27,
-        "y": 2,
-        "w": 1000,
-        "h": 40
-      },
-      "color": "#2c2824",
-      "bg": "#ffffff",
-      "font_size": 20.3,
-      "line_height": 0,
-      "display": "block",
-      "position": "static"
-    },
-    {
-      "key": "div.app-shell>div.layout>div.sidebar-swiper>button.edge-grip.edge-grip-left",
-      "tag": "button",
-      "rect": {
-        "x": 0,
-        "y": 426,
-        "w": 44,
-        "h": 48
-      },
-      "color": "#000000",
-      "bg": "#f8f5f0",
-      "font_size": 20.3,
-      "line_height": 32.4,
-      "display": "block",
-      "position": "fixed"
-    },
-    {
-      "key": "div.app-shell>div.layout>div.widgets-swiper>button.edge-grip.edge-grip-right",
-      "tag": "button",
-      "rect": {
-        "x": 1396,
-        "y": 426,
-        "w": 44,
-        "h": 48
-      },
-      "color": "#000000",
-      "bg": "#f8f5f0",
-      "font_size": 20.3,
-      "line_height": 32.4,
-      "display": "block",
-      "position": "fixed"
-    },
-    {
-      "key": "div.auth-form>form>div.actions>input.btn",
+      "key": "div.auth-form>form>div.actions>input.btn.btn--primary",
       "tag": "input",
       "rect": {
-        "x": 561,
-        "y": 597,
-        "w": 106,
+        "x": 540,
+        "y": 596,
+        "w": 119,
         "h": 44
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
       "font_size": 15.8,
       "line_height": 25.2,
       "display": "flex",
       "position": "static"
     },
     {
-      "key": "div.auth-form>form>p>a",
+      "key": "div.auth-form>form>p.auth-form-footer>a",
       "tag": "a",
       "rect": {
-        "x": 561,
-        "y": 657,
-        "w": 131,
-        "h": 18
+        "x": 540,
+        "y": 658,
+        "w": 107,
+        "h": 22
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#5b4fc4",
+      "bg": "#f7f6fa",
       "font_size": 15.8,
-      "line_height": 25.2,
-      "display": "inline",
+      "line_height": 22.1,
+      "display": "block",
       "position": "static"
     },
     {
       "key": "div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>div.amber-nav-actions>a.btn-sm",
       "tag": "a",
       "rect": {
-        "x": 1342,
-        "y": 0,
-        "w": 71,
+        "x": 27,
+        "y": -34,
+        "w": 82,
         "h": 44
       },
-      "color": "#2c2824",
+      "color": "#1a1824",
       "bg": "#f8f8f8",
       "font_size": 13.5,
       "line_height": 0,
@@ -208,49 +160,49 @@
       "key": "form>div.field>div.password-field>button.btn.btn-ghost.btn-sm",
       "tag": "button",
       "rect": {
-        "x": 815,
-        "y": 529,
+        "x": 836,
+        "y": 528,
         "w": 64,
         "h": 44
       },
-      "color": "#2c2824",
-      "bg": "#f1eee9",
+      "color": "#1a1824",
+      "bg": "#f0eff3",
       "font_size": 13.5,
       "line_height": 21.6,
       "display": "flex",
       "position": "static"
     },
     {
-      "key": "html>body>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
-      "rect": {
-        "x": 1333,
-        "y": 789,
-        "w": 93,
-        "h": 44
-      },
-      "color": "#2c2824",
-      "bg": "#f0ebe3",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "flex",
-      "position": "static"
-    },
-    {
-      "key": "html>body>div.theme-root>header.amber-logo-banner.amber-logo-banner--nav",
+      "key": "html>body.auth-surface>div.theme-root>header.amber-logo-banner.amber-logo-banner--nav",
       "tag": "header",
       "rect": {
         "x": 0,
-        "y": 0,
+        "y": -34,
         "w": 1440,
         "h": 44
       },
-      "color": "#2c2824",
+      "color": "#1a1824",
       "bg": "#ffffff",
       "font_size": 20.3,
       "line_height": 0,
       "display": "flex",
       "position": "sticky"
+    },
+    {
+      "key": "html>body.auth-surface>header>a.brand-mark",
+      "tag": "a",
+      "rect": {
+        "x": 14,
+        "y": 14,
+        "w": 70,
+        "h": 44
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "fixed"
     }
   ]
 }

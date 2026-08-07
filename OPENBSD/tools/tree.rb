@@ -68,32 +68,118 @@ class ProjectTree
     end
   end
 
+  # These reads used to be hardcoded `puts` lines, which is how they came to
+  # describe a repo that no longer existed: they still named lib/now, lib/judge,
+  # lib/loop and lib/reach (renamed to cli/review/fix/io in 693d2630d), a
+  # kernel/ directory (renamed to core/), "7 apps" (there are 3), lora as a
+  # top-level pillar (it moved under STUDIO/) and "lora/*.jpg at repo root" as
+  # noise to clean up (there are none). A tool you are told to run *before*
+  # restructuring is the last place a literal should stand in for a measurement.
+  # Everything below is derived from the tree on disk.
   def print_pub4_alignment
+    repo = repo_root
     puts
-    puts "Alignment read (far-away):"
-    puts "  ✓ SENSIBLE  4 pillars: OPENBSD (prod), MASTER (agent), bin (CLI), lora (training)"
-    puts "  ✓ SENSIBLE  RAILS: 7 apps + shared engine + apps.yml inventory"
-    puts "  ✓ SENSIBLE  brgen verticals: dating maps marketplace playlist takeaway tv + social core"
-    puts "  ✓ SENSIBLE  MASTER/lib: now judge loop reach ground trace voice (constitutional spine)"
-    puts "  ⚠ DRIFT     MASTER/data: ~50 root yml + runtime/ shard — merge target (see START_HERE)"
-    puts "  ⚠ DRIFT     OPENBSD + MASTER duplicate DECISIONS/EXAMPLES/REPAIR/DEBT md pairs"
-    puts "  ⚠ DRIFT     brgen SCSS: many _vertical_* partials — visual split matches domains (ok)"
-    puts "  ✗ NOISE     lora/*.jpg at repo root — move under lora/exports/"
+    puts "Alignment read (far-away, measured):"
+
+    pillars = %w[MASTER RAILS OPENBSD STUDIO bin dotfiles].select { |d| Dir.exist?(File.join(repo, d)) }
+    line(:ok, "#{pillars.size} pillars: #{pillars.join(' ')}")
+
+    apps = rails_apps(repo)
+    engines = brgen_engines(repo)
+    line(:ok, "RAILS: #{apps.size} app(s) (#{apps.join(' ')}) + shared engine + apps.yml inventory")
+    line(:ok, "brgen verticals as engines: #{engines.join(' ')}") if engines.any?
+
+    libs = subdirs(File.join(repo, "MASTER", "lib"))
+    line(:ok, "MASTER/lib spine: #{libs.join(' ')}") if libs.any?
+
+    data_yml = Dir.glob(File.join(repo, "MASTER", "data", "*.yml")).size
+    shards = Dir.glob(File.join(repo, "MASTER", "data", "rules", "*.yml")).size
+    budget = drift_or_ok(data_yml <= 40)
+    line(budget, "MASTER/data: #{data_yml} root yml + #{shards} rule shard(s) — target in START_HERE 'Data File Budget'")
+
+    dupes = duplicate_docs(repo)
+    line(:drift, "MASTER + OPENBSD share doc names: #{dupes.join(' ')} — same name, different scope") if dupes.any?
+
+    stray = stray_root_files(repo)
+    stray.any? ? line(:noise, "repo root carries #{stray.size} loose file(s): #{stray.first(6).join(' ')}")
+                : line(:ok, "repo root is clean — no loose media or scratch files")
+
     puts "  → Pillar views: --master-overview | --deploy-overview"
   end
 
   def print_master_alignment
+    repo = repo_root
+    master = File.join(repo, "MASTER")
     puts
-    puts "MASTER alignment (far-away):"
-    puts "  ✓ SENSIBLE  START_HERE.md is the single orientation doc (agent contract + runtime map)"
-    puts "  ✓ SENSIBLE  lib/ spine: now → judge → loop → reach → trace → ground → voice"
-    puts "  ✓ SENSIBLE  core/ + kernel/ isolated from lib/ until absorption cutover"
-    puts "  ✓ SENSIBLE  data/soul.yml + rules/*.yml shards — law tier, do not blind-merge"
-    puts "  ⚠ DRIFT     data/ root: ~45 yml + runtime/ (14 shards) — merge per START_HERE tiers"
-    puts "  ⚠ DRIFT     Duplicate MD pairs with OPENBSD: DECISIONS, EXAMPLES, REPAIR, DEBT"
-    puts "  ⚠ DRIFT     tools/ + web/ + bin/ — three faces; acceptable but watch overlap"
-    puts "  ✗ NOISE     .master/ runtime (cache, tts, melodic) — local-only, never commit"
+    puts "MASTER alignment (far-away, measured):"
+
+    line(:ok, "START_HERE.md is the single orientation doc") if File.exist?(File.join(master, "START_HERE.md"))
+
+    libs = subdirs(File.join(master, "lib"))
+    line(:ok, "lib/ spine: #{libs.join(' → ')}") if libs.any?
+
+    if Dir.exist?(File.join(master, "core"))
+      note = Dir.exist?(File.join(master, "kernel")) ? "core/ + kernel/" : "core/ only (kernel/ was renamed to core/)"
+      line(:ok, "#{note} — two spines, permanent by DECISIONS.md, not pending a cutover")
+    end
+
+    shards = Dir.glob(File.join(master, "data", "rules", "*.yml")).map { |f| File.basename(f, ".yml") }
+    line(:ok, "data/soul.yml + rules/{#{shards.join(',')}}.yml — law tier, do not blind-merge") if shards.any?
+
+    data_yml = Dir.glob(File.join(master, "data", "*.yml")).size
+    runtime = Dir.glob(File.join(master, "data", "runtime", "*.yml")).size
+    line(drift_or_ok(data_yml <= 40), "data/ root: #{data_yml} yml#{runtime.positive? ? " + runtime/ (#{runtime} shards)" : ''} — merge per START_HERE tiers")
+
+    faces = %w[tools web bin].select { |d| Dir.exist?(File.join(master, d)) }
+    line(:drift, "#{faces.join(' + ')} — #{faces.size} faces; acceptable but watch overlap") if faces.size > 1
+
+    line(:noise, ".master/ runtime (cache, tts, melodic) — local-only, never commit") if Dir.exist?(File.join(repo, ".master"))
     puts "  → Deep dive: ruby tree.rb MASTER --master-lib"
+  end
+
+  MARKS = { ok: "✓ SENSIBLE", drift: "⚠ DRIFT", noise: "✗ NOISE" }.freeze
+
+  def line(kind, text) = puts("  #{MARKS.fetch(kind)}  #{text}")
+
+  def drift_or_ok(condition) = condition ? :ok : :drift
+
+  # The walked root may be a pillar (MASTER) or the repo itself.
+  def repo_root
+    return @root unless File.basename(@root) == "MASTER" || File.basename(@root) == "OPENBSD"
+
+    File.dirname(@root)
+  end
+
+  def subdirs(path)
+    return [] unless Dir.exist?(path)
+
+    Dir.children(path).select { |e| !e.start_with?(".") && File.directory?(File.join(path, e)) }.sort
+  end
+
+  def rails_apps(repo)
+    path = File.join(repo, "RAILS", "apps.yml")
+    return subdirs(File.join(repo, "RAILS")) - %w[shared gates test tools bin visual_contract tmp] unless File.exist?(path)
+
+    (YAML.safe_load_file(path)["apps"] || {}).keys.sort
+  rescue StandardError
+    []
+  end
+
+  def brgen_engines(repo) = subdirs(File.join(repo, "RAILS", "brgen", "engines"))
+
+  def duplicate_docs(repo)
+    a = Dir.glob(File.join(repo, "MASTER", "*.md")).map { |f| File.basename(f) }
+    b = Dir.glob(File.join(repo, "OPENBSD", "*.md")).map { |f| File.basename(f) }
+    (a & b).sort
+  end
+
+  # Loose files at the repo root that are neither the documented entry points
+  # nor dotfiles. Media and scratch output is what this is looking for.
+  def stray_root_files(repo)
+    keep = %w[CLAUDE.md TODO.md README.md LICENSE Gemfile Gemfile.lock Rakefile]
+    Dir.children(repo).reject do |e|
+      e.start_with?(".") || keep.include?(e) || File.directory?(File.join(repo, e))
+    end.sort
   end
 
   def print_deploy_alignment

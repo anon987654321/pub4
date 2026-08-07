@@ -11,3 +11,7 @@
 // --- touch ---
 // brgen/core/mobile: rendered 13×13, floor 44px
 label.field--check-label > input { min-height: 44px; min-width: 44px; }
+
+// --- overflow ---
+// brgen/core: spills at 320px viewport
+table.lines { max-width: 100%; overflow-wrap: anywhere; }

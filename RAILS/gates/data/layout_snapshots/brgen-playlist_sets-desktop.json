@@ -1,0 +1,112 @@
+{
+  "title": "Sett — Brgen",
+  "viewport": [
+    1440,
+    900
+  ],
+  "scroll_width": 1440,
+  "h1_count": 1,
+  "landmarks": {
+    "main": true,
+    "nav": true,
+    "skip": true
+  },
+  "elements": [
+    {
+      "key": "#main-content",
+      "tag": "main",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.page-header>div>h1",
+      "tag": "h1",
+      "rect": {
+        "x": 18,
+        "y": 97,
+        "w": 158,
+        "h": 28
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 22.5,
+      "line_height": 28.1,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.search>form",
+      "tag": "form",
+      "rect": {
+        "x": 1,
+        "y": 166,
+        "w": 478,
+        "h": 52
+      },
+      "color": "#1a1824",
+      "bg": "#cccccc",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#q",
+      "tag": "input",
+      "rect": {
+        "x": 1,
+        "y": 166,
+        "w": 478,
+        "h": 52
+      },
+      "color": "#aaaaaa",
+      "bg": "#cccccc",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "inline-block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-playlist>div.nearby-chat-widget>button.nearby-chat-widget-tab",
+      "tag": "button",
+      "rect": {
+        "x": 1348,
+        "y": 784,
+        "w": 92,
+        "h": 44
+      },
+      "color": "#1a1824",
+      "bg": "#eeedf3",
+      "font_size": 14.6,
+      "line_height": 14.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-playlist>header>a.brand-mark.brgen-logo-mark",
+      "tag": "a",
+      "rect": {
+        "x": 14,
+        "y": 14,
+        "w": 63,
+        "h": 44
+      },
+      "color": "#1a1824",
+      "bg": "#f7f6fa",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "fixed"
+    }
+  ]
+}
