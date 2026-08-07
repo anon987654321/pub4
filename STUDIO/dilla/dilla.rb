@@ -4783,6 +4783,20 @@ TRACK_SAMPLE_LOOP_ALIASES = {
   nightbus: :semua_untuk_mu,
   # dmaj_open was a placeholder for a sample the operator had not yet named.
   dmaj_open: :lo_borges,
+  # Sheger. The chopper slugs its output after the source FILE, and the file
+  # was called ubrukte_samples.mp3 -- "unused samples", a working name for a
+  # crate, not the name of the record. Eight chops came out of it and all eight
+  # were carrying the filename. Same correction as four_seven -> kembara_rindu
+  # above, and the reason is the same: the ingest invents a slug, the operator
+  # knows what the record is.
+  sheger_01: :ubrukte_samples_01,
+  sheger_02: :ubrukte_samples_02,
+  sheger_03: :ubrukte_samples_03,
+  sheger_04: :ubrukte_samples_04,
+  sheger_05: :ubrukte_samples_05,
+  sheger_06: :ubrukte_samples_06,
+  sheger_07: :ubrukte_samples_07,
+  sheger_08: :ubrukte_samples_08,
 }.freeze
 
 # --- cross-sample processing ---------------------------------------------------
@@ -9163,6 +9177,44 @@ TRACK_PRESETS = {
     swing: 54, feel: :loose_pocket, stereo_pan: true,
     timing: { snare: -12..-4, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -4..6 }
   },
+
+  # Sheger, chopped eight ways. Same problem the loops above had and the same
+  # fix: the chopper registers its output in TRACK_SAMPLE_LOOPS, but a loop only
+  # renders when a TRACK resolves to it, and none of these had a track. All
+  # eight sat in the rack reachable only by hand.
+  #
+  # Every bpm here is the chop's own measured tempo from samples/chopped/
+  # loops.json, not a preference -- these were cut to loop at it. Progression
+  # and feel are each taken from the existing preset nearest that tempo, so no
+  # new musical judgement is smuggled in with the wiring: 122 from
+  # tresillo_house, 113 from amapiano_offbeat and lo_borges, 92 from
+  # pedal_e_descent, 82 from neo_soul, 74 from the mediant and neapolitan
+  # generators, 93 from players. The eight land on eight different progressions
+  # across eight tempos and eight key centres, which is what makes them worth
+  # having in the medley rather than one bed heard eight times.
+  sheger_01: { bpm: 122, progression: :double_plagal_open, chord_bars: 1, phrase_bars: 8,
+               swing: 52, feel: :tresillo_house },
+  sheger_02: { bpm: 113, progression: :still_water_pedal, chord_bars: 2, phrase_bars: 16,
+               swing: 52, feel: :amapiano_offbeat, stereo_pan: true },
+  sheger_03: { bpm: 92, progression: :pedal_e_descent, chord_bars: 1, phrase_bars: 8,
+               swing: 54, feel: :syncopated_slash_ninth, stereo_pan: true },
+  sheger_04: { bpm: 82, progression: :neo_soul, chord_bars: 2, phrase_bars: 16,
+               swing: 58, feel: :timeless, stereo_pan: true },
+  sheger_05: { bpm: 74, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16,
+               swing: 60, feel: :organic, stereo_pan: true },
+  sheger_06: { bpm: 93, progression: :players_measured, chord_bars: 2, phrase_bars: 16,
+               swing: 58, feel: :timeless, stereo_pan: true },
+  # neapolitan_door, not :neapolitan. There is a generate_neapolitan_progression
+  # but no :neapolitan route in GENERATED_STYLE_ROUTES, so the symbol resolves to
+  # nothing and the render falls back to the default progression without saying
+  # so -- this preset was written as :neapolitan first and rendered
+  # pedal_e_descent. generated_neapolitan above has the same symbol and the same
+  # silent fallback.
+  sheger_07: { bpm: 74, progression: :neapolitan_door, chord_bars: 2, phrase_bars: 16,
+               swing: 56, feel: :organic },
+  sheger_08: { bpm: 113, progression: :d_add9_soul_arc, chord_bars: 1, phrase_bars: 8,
+               swing: 54, feel: :loose_pocket, stereo_pan: true },
+
   baroque: {
     bpm: 104, progression: :baroque, chord_bars: 1, phrase_bars: 8, swing: 53,
     feel: :chromatic_planing,

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "shellwords"
+
 # Proves each effect stage actually does something.
 #
 # Every silent failure this engine has produced was the same shape: the filter
@@ -41,6 +43,33 @@ module VerifyFx
     run("-filter_complex",
         "anoisesrc=color=pink:amplitude=0.5:duration=#{seconds}:r=#{RATE}[l];" \
         "anoisesrc=color=white:amplitude=0.5:duration=#{seconds}:r=#{RATE}:seed=7[r];" \
+        "[l][r]join=inputs=2:channel_layout=stereo[o]",
+        "-map", "[o]", path)
+    path
+  end
+
+  # Hot and genuinely stereo, for the colour pass.
+  #
+  # Three of the first five stages this pass flagged were the signal's fault,
+  # not the stage's -- the same error the vibrato note above records, made again
+  # the moment the probe was reused on a wider population:
+  #
+  #   stereo_width is extrastereo, which scales the SIDE channel. `noise` is one
+  #   mono source copied to two channels, so its side is zero and any width
+  #   filter nulls perfectly while working exactly as designed.
+  #
+  #   stylus_mistrack only acts on samples above 0.55 (it models a needle
+  #   jumping on loud passages). `noise` peaks at 0.5 and never reaches it.
+  #
+  #   harmonic_bloom adds 0.07*val*abs(val); against a quiet source that lands
+  #   at -64.7 dB, just under the floor, while doing precisely what it says.
+  #
+  # Amplitude 0.9 and two uncorrelated channels removes all three excuses, so a
+  # stage that still nulls here has nowhere left to hide.
+  def hot_wide(path, seconds: 3)
+    run("-filter_complex",
+        "anoisesrc=color=pink:amplitude=0.9:duration=#{seconds}:r=#{RATE}[l];" \
+        "anoisesrc=color=brown:amplitude=0.9:duration=#{seconds}:r=#{RATE}:seed=11[r];" \
         "[l][r]join=inputs=2:channel_layout=stereo[o]",
         "-map", "[o]", path)
     path
@@ -123,9 +152,123 @@ module VerifyFx
     ]
   end
 
+  # --- the null test ---------------------------------------------------------
+  #
+  # Each check above states what one stage should do to one property, and that
+  # is the strongest claim a test here can make. It also costs a hand-tuned
+  # probe per stage -- see the vibrato note for how long one wrong probe stood
+  # -- which is why seven stages had one and the thirty-three colour stages the
+  # engine actually renders through had none.
+  #
+  # A weaker claim scales to all of them: send the signal through the stage,
+  # invert it against the dry signal, sum the two. If the residual is silence
+  # then not one sample changed, whatever ffmpeg reported on the way out. That
+  # is precisely the failure this file was written for, and it needs no
+  # knowledge of what the stage was trying to do.
+  #
+  # Measured on this build against known cases: `anull` and `volume=1` both null
+  # to -91.0 dB, the 16-bit floor; `volume=2` leaves -24.1, `highpass=f=800`
+  # -23.6, `aecho` -27.5, `vibrato` -21.9. Sixty decibels between the two
+  # populations, so the threshold below carries no judgement -- anything a
+  # listener could ever hear clears it by a wide margin.
+  NULL_FLOOR_DB = -60.0
+
+  NULL_GRAPH = "[1:a]volume=-1[inv];[0:a][inv]amix=inputs=2:normalize=0,volumedetect[o]"
+
+  def null_residual_db(dry, wet)
+    cmd = "ffmpeg -v info -i #{Shellwords.escape(dry)} -i #{Shellwords.escape(wet)} " \
+          "-filter_complex #{Shellwords.escape(NULL_GRAPH)} -map '[o]' -f null - 2>&1"
+    `#{cmd}`[/mean_volume: (-?[0-9.]+)/, 1]&.to_f
+  end
+
+  # Runs `filter` over `signal` and reports [opened?, residual_db].
+  def null_test(signal, filter, dir)
+    wet = File.join(dir, "vfx_null.wav")
+    opened = run("-i", signal, "-af", filter, "-ac", "2", wet)
+    residual = opened && File.file?(wet) ? null_residual_db(signal, wet) : nil
+    FileUtils.rm_f(wet)
+    [opened, residual]
+  end
+
+  # Every named colour stage the engine can put a record through.
+  #
+  # grade_filter and Outboard are dilla.rb's, so this only populates when
+  # verify-fx runs the way it is dispatched -- inside the engine. Required on
+  # its own, verify_fx still runs the seven checks and skips this pass rather
+  # than crashing.
+  #
+  # stc8 takes a tempo and `chain` composes other units rather than being one,
+  # so they are handled and excluded respectively.
+  def colour_stages
+    stages = {}
+    if defined?(grade_filter) && defined?(AUDIO_STOCKS)
+      stock = AUDIO_STOCKS[:tape_500]
+      GRADE_PRESETS_FOR_VERIFY.each do |fx|
+        f = begin
+          grade_filter(fx, stock)
+        rescue StandardError
+          nil
+        end
+        stages["grade:#{fx}"] = f if f.is_a?(String) && !f.empty?
+      end
+    end
+    if defined?(Outboard)
+      units = Outboard.methods(false).map(&:to_s) - %w[chain]
+      units.sort.each do |u|
+        f = begin
+          u == "stc8" ? Outboard.stc8(bpm: 90.0) : Outboard.send(u)
+        rescue StandardError, ArgumentError
+          nil
+        end
+        stages["outboard:#{u}"] = f if f.is_a?(String) && !f.empty?
+      end
+    end
+    stages
+  end
+
+  # The 20 arms of grade_filter's case. Listed rather than parsed out of the
+  # source: a stage that gets renamed should break this loudly here, not vanish
+  # from the verification quietly.
+  GRADE_PRESETS_FOR_VERIFY = %w[
+    tape_saturation analog_noise harmonic_bloom spectral_warmth parallel_compress
+    multiband_tone wow_flutter vinyl_crackle transient_sharpen stereo_width
+    print_through_echo reel_splice_clicks stylus_mistrack platter_wow
+    needle_drop_fade haas_jitter spring_reverb plate_reverb chamber_reverb dub_delay
+  ].freeze
+
+  def verify_colour_stages!(signal, dir)
+    stages = colour_stages
+    if stages.empty?
+      puts
+      puts "  colour stages: skipped (run as `ruby dilla.rb verify-fx`, not standalone)"
+      return 0
+    end
+
+    dead = []
+    stages.sort.each do |name, filter|
+      opened, residual = null_test(signal, filter, dir)
+      if !opened
+        dead << [name, "FAILS TO OPEN"]
+      elsif residual.nil?
+        dead << [name, "no output"]
+      elsif residual <= NULL_FLOOR_DB
+        dead << [name, format("transparent (%.1f dB residual)", residual)]
+      end
+    end
+
+    puts
+    if dead.empty?
+      puts "  all #{stages.length} colour stages change the audio"
+    else
+      puts "  #{dead.length} of #{stages.length} colour stages do NOTHING:"
+      dead.each { |name, why| puts "    #{name}: #{why}" }
+    end
+    dead.length
+  end
+
   def verify!(dir = Dir.tmpdir)
     src = {}
-    %i[sine sine_high noise wide].each do |kind|
+    %i[sine sine_high noise wide hot_wide].each do |kind|
       p = File.join(dir, "vfx_#{kind}.wav")
       send(kind, p)
       src[kind] = p
@@ -162,9 +305,10 @@ module VerifyFx
     # line below deletes. Run after it, every chain fails for want of an input
     # and the check reports 178 broken patches instead of the one real one --
     # which is what it did on its first run.
-    broken = verify_patch_chains!(src[:sine])
+    broken = verify_patch_chains!(src[:hot_wide], dir)
+    dead = verify_colour_stages!(src[:hot_wide], dir)
     src.each_value { |p| FileUtils.rm_f(p) }
-    failed.zero? && broken.zero?
+    failed.zero? && broken.zero? && dead.zero?
   end
 
   # Does every registered patch effect chain even OPEN?
@@ -184,7 +328,10 @@ module VerifyFx
   # One out of 178 chains was broken. The other 177 are the reason this is worth
   # keeping -- it is cheap, and the failure it catches is invisible in the audio
   # unless you already know which patch to listen for.
-  def verify_patch_chains!(signal)
+  # Opening is necessary, not sufficient. A chain that opens and leaves the
+  # audio untouched hands you the same dry patch as one that failed, and only
+  # the second announces itself -- so both are counted here now.
+  def verify_patch_chains!(signal, dir = Dir.tmpdir)
     chains = {}
     ObjectSpace.each_object(Hash) do |h|
       id = h[:id]
@@ -195,17 +342,30 @@ module VerifyFx
     end
     return 0 if chains.empty? || signal.nil?
 
-    out = File.join(Dir.tmpdir, "vfx_chain.wav")
-    broken = chains.sort.reject { |_, fx| run("-i", signal, "-af", fx, "-ac", "2", out) }
-    FileUtils.rm_f(out)
+    closed = []
+    inert = []
+    chains.sort.each do |id, fx|
+      opened, residual = null_test(signal, fx, dir)
+      if !opened
+        closed << [id, fx]
+      elsif residual && residual <= NULL_FLOOR_DB
+        inert << [id, residual]
+      end
+    end
 
     puts
-    if broken.empty?
-      puts "  all #{chains.length} patch fx chains open"
+    if closed.empty? && inert.empty?
+      puts "  all #{chains.length} patch fx chains open and change the audio"
     else
-      puts "  #{broken.length} of #{chains.length} patch fx chains FAIL to open:"
-      broken.each { |id, fx| puts "    #{id}: #{fx[0, 90]}" }
+      unless closed.empty?
+        puts "  #{closed.length} of #{chains.length} patch fx chains FAIL to open:"
+        closed.each { |id, fx| puts "    #{id}: #{fx[0, 90]}" }
+      end
+      unless inert.empty?
+        puts "  #{inert.length} of #{chains.length} patch fx chains open and do NOTHING:"
+        inert.each { |id, r| puts format("    %s: %.1f dB residual", id, r) }
+      end
     end
-    broken.length
+    closed.length + inert.length
   end
 end

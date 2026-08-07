@@ -931,16 +931,19 @@ class TestDilla < Minitest::Test
   def test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset
     result = eval_in_engine(<<~RUBY)
       presets = TRACK_PRESETS.keys.map(&:to_s)
-      loops = TRACK_SAMPLE_LOOPS_BUILTIN.keys.map(&:to_s)
+      # The MERGED rack, not just the hand-cut table: a chopped loop is a sample
+      # loop in every sense that matters, and the eight Sheger chops were
+      # unreachable in exactly the same way the hand-cut ones were.
+      loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_s)
       aliases = TRACK_SAMPLE_LOOP_ALIASES.transform_keys(&:to_s).transform_values(&:to_s)
       excluded = SAMPLE_LOOPS_OUT_OF_ROTATION.map(&:to_s)
       unreachable = (loops - excluded).reject do |slug|
         presets.include?(slug) || aliases.any? { |a, t| t == slug && presets.include?(a) }
       end
       puts JSON.generate(loops: loops, unreachable: unreachable,
-                         missing_files: TRACK_SAMPLE_LOOPS_BUILTIN.reject { |_, v| File.file?(v[:path]) }.keys)
+                         missing_files: TRACK_SAMPLE_LOOPS.reject { |_, v| File.file?(v[:path]) }.keys)
     RUBY
-    assert_operator result.fetch("loops").length, :>=, 4
+    assert_operator result.fetch("loops").length, :>=, 12
     assert_empty result.fetch("unreachable"),
                  "hand-cut loops with no preset never render: #{result.fetch('unreachable').inspect}"
     assert_empty result.fetch("missing_files"),
