@@ -11,6 +11,13 @@
   <%= tag.meta name: "apple-mobile-web-app-title", content: "Brgen" %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
   <%= tag.meta name: "theme-color", content: "#000000", data: { light_color: "#ffffff", dark_color: "#000000" } %>
+  <%# Must run before first paint and before any stylesheet, which is why it is a
+      blocking inline script here rather than a Stimulus controller: theme-toggle
+      is mounted on <body> and only reaches the DOM after Stimulus boots, so a
+      visitor with "light" saved was served a dark first frame on every load.
+      WIRING_NOTES.md has described this partial as the FOUC guard the whole time
+      nothing rendered it. %>
+  <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Brgen — city communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">

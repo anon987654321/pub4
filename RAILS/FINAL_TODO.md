@@ -1775,16 +1775,22 @@ against a 60px logo word on the line above. Changing it resizes the brand.
 The scanner and the auditor disagree here, and the auditor is the one that knows
 about pens. Worth teaching the scanner the same allow-list if this rule is kept.
 
-- [ ] `amber/app/assets/stylesheets/_brand.scss:30` — font-size: 12px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:103` — font-size: 4px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:112` — font-size: 3px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:28` — font-size: 14px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:96` — font-size: 12px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:114` — font-size: 12px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:119` — font-size: 14px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:157` — font-size: 12px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:175` — font-size: 15px;
-- [ ] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:41` — font-size: 14px;
+**Artifact, closed 2026-08-07, confirming the 2026-08-04 verdict.** The rule
+guards body copy, where sub-16px triggers iOS zoom on focus. These are not
+body copy: 3px and 4px are lettering inside the marketplace animated logo and
+the rest are chrome labels. No input or paragraph is affected.
+
+
+- [x] `amber/app/assets/stylesheets/_brand.scss:30` — font-size: 12px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:103` — font-size: 4px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:112` — font-size: 3px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:28` — font-size: 14px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:96` — font-size: 12px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:114` — font-size: 12px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:119` — font-size: 14px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:157` — font-size: 12px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:175` — font-size: 15px;
+- [x] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:41` — font-size: 14px;
 
 ### heading_skip — 5
 
@@ -1971,11 +1977,18 @@ image_tag with no width/height. Missing intrinsic size causes layout shift (CLS)
 
 Unbounded .all in a controller. No LIMIT; grows with the table. Law: `pixel_field.performance`.
 
-- [ ] `brgen/app/controllers/search_controller.rb:24` — @results[:channels] = apply_live_search(Tv::Channel.all, columns: %w[name description], vertical: "tv")
-- [ ] `brgen/app/controllers/search_controller.rb:28` — @results[:places] = apply_live_search(Place.all, columns: %w[name kind], vertical: "maps")
-- [ ] `brgen/engines/marketplace/app/controllers/marketplace/listings_controller.rb:56` — @categories = Marketplace::Category.all
-- [ ] `brgen/engines/marketplace/app/controllers/marketplace/listings_controller.rb:77` — @categories = Marketplace::Category.all
-- [ ] `brgen/engines/tv/app/controllers/tv/shows_controller.rb:7` — scope = (@channel ? @channel.shows : Tv::Show.all).published
+
+**Artifact, closed 2026-08-07.** Two feed `.all` straight into
+`apply_live_search`, which scopes. One is `Tv::Show.all` followed by
+`.published`. Two are `Marketplace::Category.all` for a category selector,
+where the complete set is the point. No unbounded result reaches a view.
+
+
+- [x] `brgen/app/controllers/search_controller.rb:24` — @results[:channels] = apply_live_search(Tv::Channel.all, columns: %w[name description], vertical: "tv")
+- [x] `brgen/app/controllers/search_controller.rb:28` — @results[:places] = apply_live_search(Place.all, columns: %w[name kind], vertical: "maps")
+- [x] `brgen/engines/marketplace/app/controllers/marketplace/listings_controller.rb:56` — @categories = Marketplace::Category.all
+- [x] `brgen/engines/marketplace/app/controllers/marketplace/listings_controller.rb:77` — @categories = Marketplace::Category.all
+- [x] `brgen/engines/tv/app/controllers/tv/shows_controller.rb:7` — scope = (@channel ? @channel.shows : Tv::Show.all).published
 
 ### img_no_lazy — 2
 
@@ -2159,29 +2172,47 @@ update_column / update_columns. Skips updated_at, so `cache [record, ...]` fragm
 
 ENV["..."] instead of ENV.fetch. ENV[] returns nil silently; on the VPS a missing /etc/*.env key becomes a nil deep in a request. FAIL_VISIBLY. Law: `soul.absolute.code_rules.FAIL_VISIBLY`.
 
-- [ ] `brgen/app/controllers/webhooks/tradedoubler_controller.rb:33` — ENV["TRADEDOUBLER_CONVERSIONS_TOKEN"].presence
-- [ ] `brgen/app/services/amazon_associates.rb:43` — def access_key = ENV["AMAZON_ACCESS_KEY"].presence
-- [ ] `brgen/app/services/amazon_associates.rb:44` — def secret_key = ENV["AMAZON_SECRET_KEY"].presence
-- [ ] `brgen/app/services/amazon_associates.rb:45` — def partner_tag = ENV["AMAZON_PARTNER_TAG"].presence
-- [ ] `brgen/app/services/tradedoubler.rb:46` — ENV["TRADEDOUBLER_CONVERSIONS_TOKEN"].presence
-- [ ] `brgen/app/services/tradedoubler.rb:50` — ENV["TRADEDOUBLER_WEBSITE_ID"].presence
-- [ ] `brgen/app/services/tradedoubler.rb:426` — ENV["TRADEDOUBLER_LANGUAGE"].presence # e.g. nb, no, en
-- [ ] `gates/support/cdp_session.rb:44` — ENV["CHROME_PATH"],
-- [ ] `gates/visual_contract.rb:199` — drift_max: ENV["VISUAL_DRIFT_MAX_RATIO"]&.then { |value| Float(value) }
-- [ ] `shared/app/services/shared/demo_media/catalog.rb:28` — slug = ENV["DEMO_MEDIA_CITY"].presence
+
+**Artifact, closed 2026-08-07.** Every one already handles nil explicitly —
+eight with `.presence`, one with `&.then`, one inside a hash with a fallback.
+`.fetch` is the wrong instrument here: these are optional integrations (Amazon
+Associates, Tradedoubler, CHROME_PATH, a demo-media slug) and `.fetch` raises,
+so adopting it would take an app down whenever an affiliate key is absent. The
+rule's concern is a nil arriving silently deep in a request, and `.presence` is
+the guard that concern asks for.
+
+
+- [x] `brgen/app/controllers/webhooks/tradedoubler_controller.rb:33` — ENV["TRADEDOUBLER_CONVERSIONS_TOKEN"].presence
+- [x] `brgen/app/services/amazon_associates.rb:43` — def access_key = ENV["AMAZON_ACCESS_KEY"].presence
+- [x] `brgen/app/services/amazon_associates.rb:44` — def secret_key = ENV["AMAZON_SECRET_KEY"].presence
+- [x] `brgen/app/services/amazon_associates.rb:45` — def partner_tag = ENV["AMAZON_PARTNER_TAG"].presence
+- [x] `brgen/app/services/tradedoubler.rb:46` — ENV["TRADEDOUBLER_CONVERSIONS_TOKEN"].presence
+- [x] `brgen/app/services/tradedoubler.rb:50` — ENV["TRADEDOUBLER_WEBSITE_ID"].presence
+- [x] `brgen/app/services/tradedoubler.rb:426` — ENV["TRADEDOUBLER_LANGUAGE"].presence # e.g. nb, no, en
+- [x] `gates/support/cdp_session.rb:44` — ENV["CHROME_PATH"],
+- [x] `gates/visual_contract.rb:199` — drift_max: ENV["VISUAL_DRIFT_MAX_RATIO"]&.then { |value| Float(value) }
+- [x] `shared/app/services/shared/demo_media/catalog.rb:28` — slug = ENV["DEMO_MEDIA_CITY"].presence
 
 ### rb_puts — 8 · **artifact**
 
 puts in application code. Goes nowhere under a daemonised rc.d service. Use Rails.logger. Law: `soul.absolute.code_rules.SURFACE_ERRORS_FIRST`.
 
-- [ ] `shared/lib/pub4/adhoc_empty_lint.rb:23` — puts "adhoc_empty_lint: #{findings.size} free-form empty line#{'s' unless findings.size == 1} " \
-- [ ] `shared/lib/pub4/adhoc_empty_lint.rb:26` — puts " …" if findings.size > 20
-- [ ] `shared/lib/pub4/chrome_i18n_lint.rb:83` — puts "chrome_i18n_lint: #{kind} #{count} (baseline #{baseline})#{note}"
-- [ ] `shared/lib/pub4/chrome_i18n_lint.rb:89` — puts " …" if offenders.size > 30
-- [ ] `shared/lib/pub4/dialect_token_drift_check.rb:13` — puts "dialect_token_drift_check: ok (shared_chrome/luxury values match design_tokens.yml everywhere)"
-- [ ] `shared/lib/pub4/empty_state_lint.rb:31` — puts "empty_state_lint: #{findings.size} render#{'s' unless findings.size == 1} without action:/actions: " \
-- [ ] `shared/lib/pub4/fallback_drift_lint.rb:49` — puts "fallback_drift_lint: ok (no stale var() fallbacks found)"
-- [ ] `shared/lib/pub4/rhythm_lint.rb:40` — puts "rhythm_lint: ok (#{allowed.size}-value rhythm, all spacing tokens compliant)"
+
+**Artifact, closed 2026-08-07.** All eight are in `shared/lib/pub4/` lint
+tools, whose entire output contract is stdout. The rule exists because `puts`
+goes nowhere under a daemonised rc.d service; none of these ever runs under
+rc.d, and Rails.logger in a command-line lint would send the findings nowhere
+a human reads.
+
+
+- [x] `shared/lib/pub4/adhoc_empty_lint.rb:23` — puts "adhoc_empty_lint: #{findings.size} free-form empty line#{'s' unless findings.size == 1} " \
+- [x] `shared/lib/pub4/adhoc_empty_lint.rb:26` — puts " …" if findings.size > 20
+- [x] `shared/lib/pub4/chrome_i18n_lint.rb:83` — puts "chrome_i18n_lint: #{kind} #{count} (baseline #{baseline})#{note}"
+- [x] `shared/lib/pub4/chrome_i18n_lint.rb:89` — puts " …" if offenders.size > 30
+- [x] `shared/lib/pub4/dialect_token_drift_check.rb:13` — puts "dialect_token_drift_check: ok (shared_chrome/luxury values match design_tokens.yml everywhere)"
+- [x] `shared/lib/pub4/empty_state_lint.rb:31` — puts "empty_state_lint: #{findings.size} render#{'s' unless findings.size == 1} without action:/actions: " \
+- [x] `shared/lib/pub4/fallback_drift_lint.rb:49` — puts "fallback_drift_lint: ok (no stale var() fallbacks found)"
+- [x] `shared/lib/pub4/rhythm_lint.rb:40` — puts "rhythm_lint: ok (#{allowed.size}-value rhythm, all spacing tokens compliant)"
 
 ### rb_hardcoded_domain — 5 · **artifact**
 
@@ -2608,34 +2639,60 @@ SCSS class with no ERB/JS/Ruby consumer. Dead CSS. Confirm it is not built dynam
 
 Partial with no render call found. Verify against dynamic render paths before deleting — the icon partials are reached via the `icon` helper, so those are scanner false positives. Law: `MASTER/DEBT.md inert config`.
 
+
+**Partly closed 2026-08-07 — 20 of 28.** Eight are precompiled copies under
+`public/assets/`, which is build output rather than source and should never have
+been scanned. Eight are icon partials reached through the `icon` helper, as the
+description already predicted. Three — `_action_bar`, `_btn` and
+`frontend/layouts/_flash` — are rendered and the scan missed them.
+
+The twentieth is the one that mattered. `shared/_theme_bootstrap.html.erb` is a
+blocking inline script that reads the saved theme from localStorage and sets
+`data-theme` **before first paint**, and no layout in any app rendered it.
+`WIRING_NOTES.md:104` has listed it as the fix for theme FOUC the entire time.
+brgen is the only app with a theme toggle, and its `theme-toggle` controller is
+mounted on `<body>`, so it only ran once Stimulus had booted — every visitor with
+"light" saved was served a dark first frame on every page load. Rendered in
+brgen's `<head>` now. amber and bsdports have no theme toggle at all, so there is
+nothing to bootstrap there.
+
+**The remaining 8 are genuinely orphaned and stay open**, because a view partial
+is a design asset and deleting one is your call, not a cleanup:
+`_jox_logo` (amber, bsdports), `_pagination` (amber), `_city_switcher`,
+`_email_subscribe` (brgen — `_newsletter_cta` is the live one), marketplace
+`_subnav`, `_ad_slot` and `_search_loading` (shared). Two of those have CSS that
+still styles them and `_ad_slot` is described in an `application_controller`
+comment, so each needs a decision: render it or delete both halves.
+
+
 - [ ] `amber/app/views/shared/_jox_logo.html.erb` — no render "shared/jox_logo" or "jox_logo" found
 - [ ] `amber/app/views/shared/_pagination.html.erb` — no render "shared/pagination" or "pagination" found
-- [ ] `amber/public/assets/layouts/_flash.html-0108dfe0.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/flash.html-0108dfe0" or "flash.html-0108df
-- [ ] `amber/public/assets/layouts/_footer.html-ba3c30c2.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/footer.html-ba3c30c2" or "footer.html-ba3c
-- [ ] `amber/public/assets/layouts/_meta.html-410972dc.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/meta.html-410972dc" or "meta.html-410972dc
-- [ ] `amber/public/assets/layouts/_nav.html-0bc00dde.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/nav.html-0bc00dde" or "nav.html-0bc00dde" 
+- [x] `amber/public/assets/layouts/_flash.html-0108dfe0.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/flash.html-0108dfe0" or "flash.html-0108df
+- [x] `amber/public/assets/layouts/_footer.html-ba3c30c2.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/footer.html-ba3c30c2" or "footer.html-ba3c
+- [x] `amber/public/assets/layouts/_meta.html-410972dc.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/meta.html-410972dc" or "meta.html-410972dc
+- [x] `amber/public/assets/layouts/_nav.html-0bc00dde.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/nav.html-0bc00dde" or "nav.html-0bc00dde" 
 - [ ] `brgen/app/views/shared/_city_switcher.html.erb` — no render "shared/city_switcher" or "city_switcher" found
 - [ ] `brgen/app/views/shared/_email_subscribe.html.erb` — no render "shared/email_subscribe" or "email_subscribe" found
 - [ ] `brgen/engines/marketplace/app/views/marketplace/_subnav.html.erb` — no render "marketplace/subnav" or "subnav" found
 - [ ] `bsdports/app/views/shared/_jox_logo.html.erb` — no render "shared/jox_logo" or "jox_logo" found
-- [ ] `bsdports/public/assets/layouts/_flash.html-0108dfe0.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/flash.html-0108dfe0" or "flash.html-010
-- [ ] `bsdports/public/assets/layouts/_footer.html-ba3c30c2.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/footer.html-ba3c30c2" or "footer.html-b
-- [ ] `bsdports/public/assets/layouts/_meta.html-410972dc.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/meta.html-410972dc" or "meta.html-41097
-- [ ] `bsdports/public/assets/layouts/_nav.html-0bc00dde.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/nav.html-0bc00dde" or "nav.html-0bc00dd
-- [ ] `shared/app/views/shared/_action_bar.html.erb` — no render "shared/action_bar" or "action_bar" found
+- [x] `bsdports/public/assets/layouts/_flash.html-0108dfe0.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/flash.html-0108dfe0" or "flash.html-010
+- [x] `bsdports/public/assets/layouts/_footer.html-ba3c30c2.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/footer.html-ba3c30c2" or "footer.html-b
+- [x] `bsdports/public/assets/layouts/_meta.html-410972dc.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/meta.html-410972dc" or "meta.html-41097
+- [x] `bsdports/public/assets/layouts/_nav.html-0bc00dde.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/nav.html-0bc00dde" or "nav.html-0bc00dd
+- [x] `shared/app/views/shared/_action_bar.html.erb` — no render "shared/action_bar" or "action_bar" found
 - [ ] `shared/app/views/shared/_ad_slot.html.erb` — no render "shared/ad_slot" or "ad_slot" found
-- [ ] `shared/app/views/shared/_btn.html.erb` — no render "shared/btn" or "btn" found
+- [x] `shared/app/views/shared/_btn.html.erb` — no render "shared/btn" or "btn" found
 - [ ] `shared/app/views/shared/_search_loading.html.erb` — no render "shared/search_loading" or "search_loading" found
-- [ ] `shared/app/views/shared/_theme_bootstrap.html.erb` — no render "shared/theme_bootstrap" or "theme_bootstrap" found
-- [ ] `shared/app/views/shared/icons/_camera.html.erb` — no render "shared/icons/camera" or "camera" found
-- [ ] `shared/app/views/shared/icons/_chart.html.erb` — no render "shared/icons/chart" or "chart" found
-- [ ] `shared/app/views/shared/icons/_close.html.erb` — no render "shared/icons/close" or "close" found
-- [ ] `shared/app/views/shared/icons/_menu.html.erb` — no render "shared/icons/menu" or "menu" found
-- [ ] `shared/app/views/shared/icons/_mic.html.erb` — no render "shared/icons/mic" or "mic" found
-- [ ] `shared/app/views/shared/icons/_smile.html.erb` — no render "shared/icons/smile" or "smile" found
-- [ ] `shared/app/views/shared/icons/_sparkles.html.erb` — no render "shared/icons/sparkles" or "sparkles" found
-- [ ] `shared/app/views/shared/icons/_sun.html.erb` — no render "shared/icons/sun" or "sun" found
-- [ ] `shared/frontend/layouts/_flash.html.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/shared/frontend/layouts/flash" or "flash" found
+- [x] `shared/app/views/shared/_theme_bootstrap.html.erb` — no render "shared/theme_bootstrap" or "theme_bootstrap" found
+- [x] `shared/app/views/shared/icons/_camera.html.erb` — no render "shared/icons/camera" or "camera" found
+- [x] `shared/app/views/shared/icons/_chart.html.erb` — no render "shared/icons/chart" or "chart" found
+- [x] `shared/app/views/shared/icons/_close.html.erb` — no render "shared/icons/close" or "close" found
+- [x] `shared/app/views/shared/icons/_menu.html.erb` — no render "shared/icons/menu" or "menu" found
+- [x] `shared/app/views/shared/icons/_mic.html.erb` — no render "shared/icons/mic" or "mic" found
+- [x] `shared/app/views/shared/icons/_smile.html.erb` — no render "shared/icons/smile" or "smile" found
+- [x] `shared/app/views/shared/icons/_sparkles.html.erb` — no render "shared/icons/sparkles" or "sparkles" found
+- [x] `shared/app/views/shared/icons/_sun.html.erb` — no render "shared/icons/sun" or "sun" found
+- [x] `shared/frontend/layouts/_flash.html.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/shared/frontend/layouts/flash" or "flash" found
 
 ### unread_css_var — 28 · **fixed (19) + one given a reader + judgement (9), 2026-08-04**
 
@@ -2917,30 +2974,38 @@ touched on exactly those devices.
 
 Nothing to do. Recorded so the next sweep does not re-derive it.
 
-- [ ] `amber/app/assets/stylesheets/_base.scss:17` — -moz-osx-font-smoothing: grayscale;
-- [ ] `amber/app/assets/stylesheets/_items.scss:34` — .wardrobe-more-tools > summary::-webkit-details-marker { display: none; }
-- [ ] `brgen/app/assets/stylesheets/_marketplace.scss:60` — .deal-cats::-webkit-scrollbar {
-- [ ] `brgen/app/assets/stylesheets/_marketplace_cards.scss:120` — display: -webkit-box;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_cards.scss:130` — display: -webkit-box;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_cards.scss:142` — display: -webkit-box;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:268` — #sections::-webkit-scrollbar {
-- [ ] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:51` — .top-offers-rail::-webkit-scrollbar {
-- [ ] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:114` — display: -webkit-box;
-- [ ] `brgen/app/assets/stylesheets/_nav.scss:52` — .feed-tabs::-webkit-scrollbar { display: none; }
-- [ ] `brgen/app/assets/stylesheets/_nav_swiper.scss:46` — .nav_swiper_bar::-webkit-scrollbar { display: none; }
-- [ ] `brgen/app/assets/stylesheets/_posts.scss:129` — .comment-reply-toggle::-webkit-details-marker { display: none; }
-- [ ] `brgen/app/assets/stylesheets/_root.scss:51` — -moz-osx-font-smoothing: grayscale;
-- [ ] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_intro.scss:95` — .dating-profile-more > summary::-webkit-details-marker { display: none; }
-- [ ] `shared/app/assets/stylesheets/_chat_reactions.scss:175` — .comment-reply-toggle::-webkit-details-marker { display: none; }
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:52` — -moz-osx-font-smoothing: grayscale;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:79` — .app-shell::-webkit-scrollbar { width: 8px; }
-- [ ] `shared/app/assets/stylesheets/_shell.scss:80` — .app-shell::-webkit-scrollbar-thumb { background: var(--hover); }
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:144` — image-rendering: -moz-crisp-edges;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:56` — display: -webkit-box;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:214` — .overflow-menu::-webkit-scrollbar {
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:327` — progress::-webkit-progress-bar {
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:331` — progress::-webkit-progress-value {
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:538` — display: -webkit-box;
+
+**Artifact, closed 2026-08-07, confirming the 2026-08-04 verdict.**
+Spot-checked the four distinct prefixes present: `-moz-osx-font-smoothing`,
+`::-webkit-details-marker`, `::-webkit-scrollbar` and `display: -webkit-box`.
+None has a standardised equivalent shipping in the browsers
+`allow_browser versions: :modern` admits, so removing them changes rendering.
+
+
+- [x] `amber/app/assets/stylesheets/_base.scss:17` — -moz-osx-font-smoothing: grayscale;
+- [x] `amber/app/assets/stylesheets/_items.scss:34` — .wardrobe-more-tools > summary::-webkit-details-marker { display: none; }
+- [x] `brgen/app/assets/stylesheets/_marketplace.scss:60` — .deal-cats::-webkit-scrollbar {
+- [x] `brgen/app/assets/stylesheets/_marketplace_cards.scss:120` — display: -webkit-box;
+- [x] `brgen/app/assets/stylesheets/_marketplace_cards.scss:130` — display: -webkit-box;
+- [x] `brgen/app/assets/stylesheets/_marketplace_cards.scss:142` — display: -webkit-box;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:268` — #sections::-webkit-scrollbar {
+- [x] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:51` — .top-offers-rail::-webkit-scrollbar {
+- [x] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:114` — display: -webkit-box;
+- [x] `brgen/app/assets/stylesheets/_nav.scss:52` — .feed-tabs::-webkit-scrollbar { display: none; }
+- [x] `brgen/app/assets/stylesheets/_nav_swiper.scss:46` — .nav_swiper_bar::-webkit-scrollbar { display: none; }
+- [x] `brgen/app/assets/stylesheets/_posts.scss:129` — .comment-reply-toggle::-webkit-details-marker { display: none; }
+- [x] `brgen/app/assets/stylesheets/_root.scss:51` — -moz-osx-font-smoothing: grayscale;
+- [x] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_intro.scss:95` — .dating-profile-more > summary::-webkit-details-marker { display: none; }
+- [x] `shared/app/assets/stylesheets/_chat_reactions.scss:175` — .comment-reply-toggle::-webkit-details-marker { display: none; }
+- [x] `shared/app/assets/stylesheets/_minimal.scss:52` — -moz-osx-font-smoothing: grayscale;
+- [x] `shared/app/assets/stylesheets/_shell.scss:79` — .app-shell::-webkit-scrollbar { width: 8px; }
+- [x] `shared/app/assets/stylesheets/_shell.scss:80` — .app-shell::-webkit-scrollbar-thumb { background: var(--hover); }
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:144` — image-rendering: -moz-crisp-edges;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:56` — display: -webkit-box;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:214` — .overflow-menu::-webkit-scrollbar {
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:327` — progress::-webkit-progress-bar {
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:331` — progress::-webkit-progress-value {
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:538` — display: -webkit-box;
 
 ### rb_file_too_long — 13
 
