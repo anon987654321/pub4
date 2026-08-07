@@ -5,6 +5,8 @@ en:
     privacy: "Privacy"
     terms: "Terms"
     cookies: "Cookies"
+    site_id_label: "TradeDoubler Site ID"
+    contact_label: "Contact"
   app:
     name: "Brgen"
   feed:
@@ -57,7 +59,7 @@ en:
     oauth_github: "Sign in with GitHub"
   skip_to_content: "Skip to main content"
   home:
-    intro_title: "Bergen, right now"
+    intro_title: "%{city}, right now"
     live: "Live"
     marketplace: "Marketplace"
     messages: "Messages"
@@ -254,7 +256,7 @@ en:
     no_posts_search: "No posts match this search."
     no_posts_yet: "No posts yet"
     be_first: "Be the first — guests can post without an account."
-    post_to_bergen: "Post to Bergen"
+    post_to_city: "Post to %{city}"
     clear_search: "Clear search"
     create_one: "Create one"
     start_city: "Start the conversation for your city."
@@ -347,7 +349,7 @@ en:
     channels: "Channels"
     places: "Places"
     new_message: "New message"
-    home_title: "Bergen"
+    home_title: "%{city}"
   hotkeys:
     help: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
     coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."
@@ -377,7 +379,7 @@ en:
     share_post: "Share post"
     view_community: "View community"
     about: "About"
-    community_platform: "brgen — Bergen community platform"
+    community_platform: "brgen — %{city} community platform"
     community_optional: "Community (optional)"
     no_community: "— no community —"
     body_optional: "Body (optional)"

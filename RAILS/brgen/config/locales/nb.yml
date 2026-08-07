@@ -5,6 +5,8 @@ nb:
     privacy: "Personvern"
     terms: "Vilkår"
     cookies: "Informasjonskapsler"
+    site_id_label: "TradeDoubler nettsted-ID"
+    contact_label: "Kontakt"
   app:
     name: "Brgen"
   feed:
@@ -57,7 +59,7 @@ nb:
     oauth_github: "Logg inn med GitHub"
   skip_to_content: "Hopp til hovedinnhold"
   home:
-    intro_title: "Bergen, akkurat nå"
+    intro_title: "%{city}, akkurat nå"
     live: "Live"
     marketplace: "Markedsplass"
     messages: "Meldinger"
@@ -254,7 +256,7 @@ nb:
     no_posts_search: "Ingen innlegg matcher søket."
     no_posts_yet: "Ingen innlegg ennå"
     be_first: "Vær den første — gjester kan poste uten konto."
-    post_to_bergen: "Post til Bergen"
+    post_to_city: "Post til %{city}"
     clear_search: "Tøm søk"
     create_one: "Opprett et"
     start_city: "Start samtalen for byen din."
@@ -347,7 +349,7 @@ nb:
     channels: "Kanaler"
     places: "Steder"
     new_message: "Ny melding"
-    home_title: "Bergen"
+    home_title: "%{city}"
   hotkeys:
     help: "j/k · ↓↑ nav · Enter åpne · / søk · n ny · esc nullstill · ? hjelp"
     coach: "Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for søk)."
@@ -377,7 +379,7 @@ nb:
     share_post: "Del innlegg"
     view_community: "Se fellesskap"
     about: "Om"
-    community_platform: "brgen — Bergens fellesskapsplattform"
+    community_platform: "brgen — %{city}s fellesskapsplattform"
     community_optional: "Fellesskap (valgfritt)"
     no_community: "— uten fellesskap —"
     body_optional: "Brødtekst (valgfritt)"

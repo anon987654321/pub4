@@ -15,5 +15,5 @@
 <% else %>
   <%= render "shared/empty_state", title: t("hashtag.empty_title", default: "Nothing here yet"),
         body: t("hashtag.empty_body", default: "No posts use ##{@hashtag.name} yet."),
-        action: { label: t("empty.post_to_bergen"), path: new_post_path } %>
+        action: { label: t("empty.post_to_city", city: city_name), path: new_post_path } %>
 <% end %>

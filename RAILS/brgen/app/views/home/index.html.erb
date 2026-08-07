@@ -1,4 +1,4 @@
-<% content_for :title, t("pages.home_title") %>
+<% content_for :title, t("pages.home_title", city: city_name) %>
 <% content_for :widgets_includes_communities, true %>
 <% content_for :widgets do %>
   <aside class="sidebar-card" data-controller="toggle" data-toggle-class="hidden">

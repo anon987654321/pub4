@@ -42,7 +42,12 @@ class CritiqueImplementationTest < Minitest::Test
     end
     refute_includes home, "sort-tabs"
     assert_match(/home\.intro_title|Bergen/, home)
-    assert_includes compose, "Post to Bergen"
+    # Was assert_includes compose, "Post to Bergen" — which pinned the single-city
+    # copy in place. brgen serves a different city per domain, so the composer
+    # heading has to interpolate: oshlo.no rendered "Post to Bergen" for as long
+    # as this assertion held.
+    assert_includes compose, "Post to %{city}"
+    assert_includes compose, "city: city_name"
     assert_includes compose, "Posting as a guest"
     assert_match(/post\.share|Share post/, post)
     assert_includes post, "shared/post_card"

@@ -126,6 +126,6 @@
     <p><%= @post.community.description.presence || @post.community.name %></p>
     <%= link_to t("posts.view_community"), community_path(@post.community) %>
   <% else %>
-    <p><%= t("posts.community_platform") %></p>
+    <p><%= t("posts.community_platform", city: city_name) %></p>
   <% end %>
 </aside>

@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
+
+# The city this request is for, resolved from the domain by
+# Brgen::DomainRegistry (oshlo.no -> Oslo, lndon.uk -> London). Copy must
+# interpolate this rather than name a city: pages.home_title was the literal
+# string "Bergen", so every city domain rendered "Bergen - Brgen" no matter
+# which city the request had already resolved to.
+def city_name
+  Current.city.presence || "Bergen"
+end
   def lazy_image_tag(source, alt:, blurhash: nil, **options)
     image_options = options.dup
     image_options[:loading] ||= "lazy"
