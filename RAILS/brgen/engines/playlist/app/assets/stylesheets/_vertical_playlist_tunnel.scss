@@ -68,9 +68,15 @@
   align-items: center;
   gap: var(--space-xs);
   font-size: var(--font-size-small);
-  color: var(--color-muted);
+  /* Pinned, not themed, and opaque rather than translucent. This panel floats
+     over the tunnel's WebGL canvas, so with rgba(0,0,0,0.7) its real background
+     was whatever the animation happened to be rendering — there was no stable
+     contrast to hold. Measured where the probe sampled (#4a4a4b) the themed ink
+     gave 1.30:1 for the track title and 3.59:1 for the note icon, both below AA.
+     A solid #14141a gives 12.77 and 7.44 and cannot drift with the animation. */
+  color: #d8d6e0;
   font-family: var(--font-mono);
-  background: rgba(0, 0, 0, 0.7);
+  background: #14141a;
   border-radius: var(--border-radius);
   padding: 0.25rem 0.75rem;
 }

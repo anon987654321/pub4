@@ -303,7 +303,7 @@ main[role="main"] {
   padding: 0 24px;
   margin-top: 16px;
   background: var(--accent);
-  color: var(--bg);
+  color: var(--accent-ink);
   border: none;
   border-radius: var(--radius-pill);
   font-size: 17px;
@@ -316,7 +316,7 @@ main[role="main"] {
 .compose-btn:hover {
   opacity: 0.88;
   text-decoration: none;
-  color: var(--bg);
+  color: var(--accent-ink);
 }
 .compose-icon {
   display: none;
@@ -334,12 +334,12 @@ main[role="main"] {
   align-items: center;
   justify-content: center;
   background: var(--accent);
-  color: var(--bg);
+  color: var(--accent-ink);
   z-index: var(--z-nav, 80);
   text-decoration: none;
 }
 .compose-fab:hover {
-  color: var(--bg);
+  color: var(--accent-ink);
   text-decoration: none;
 }
 .compose-fab svg {

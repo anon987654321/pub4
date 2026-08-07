@@ -156,10 +156,18 @@ def sync_static_tokens!
   CSS
 end
 
+# Engine stylesheets count. brgen's five verticals became mountable engines, and
+# their SCSS lives under engines/<v>/app/assets/stylesheets — outside both dirs
+# this used to glob. application.scss @use's them all, so they compile into the
+# build, but build_stale? could not see them: every marketplace/dating/playlist/
+# takeaway/tv style change reported "css: clean" and shipped the previous build.
+# Same blind spot as the four scanners that stopped seeing 57 views on the same
+# migration (TODO.md). A glob that stops one level above the code is not a check.
 def scss_sources(app_dir)
   dirs = [
     File.join(app_dir, "app", "assets", "stylesheets"),
     SHARED_STYLES,
+    *Dir.glob(File.join(app_dir, "engines", "*", "app", "assets", "stylesheets")),
   ]
   dirs.flat_map { |d| File.directory?(d) ? Dir.glob(File.join(d, "**", "*.scss")) : [] }
 end
@@ -168,8 +176,9 @@ def build_stale?(app_dir, out)
   return true unless File.file?(out)
 
   out_mtime = File.mtime(out)
-  script = File.join(RAILS_ROOT, "build_all_css.rb")
-  return true if File.file?(script) && File.mtime(script) > out_mtime
+  # __FILE__, not RAILS_ROOT/build_all_css.rb — this script lives in tools/, so
+  # that path never existed and the "script changed" branch never fired either.
+  return true if File.mtime(__FILE__) > out_mtime
 
   scss_sources(app_dir).any? { |path| File.mtime(path) > out_mtime }
 end

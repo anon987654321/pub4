@@ -277,6 +277,12 @@ light:
   danger: "#a9483c"
 
 # brgen vertical accent map (single source — mirrored in _vertical_shell.scss)
+#
+# Every accent below was tuned to be legible AS INK on a light surface, which
+# makes all seven too light to carry light ink themselves: against --bg
+# (#f7f6fa) they measure 1.77–3.46:1. Anything painting on one of these uses
+# --accent-ink (#1a1824, 4.70–9.16:1 across the seven), not --bg. Keep that in
+# mind when adding a vertical: check both directions, not just the one you need.
 vertical_accents:
   marketplace: { accent: "#98876e", hover: "#6f6149" }  # taupe storefront + serif; lifted from #8c7a5e (3.92:1)
   tv: { accent: "#dc635c", hover: "#b83a33" }        # lifted from #d6473f (3.74:1 on surface_elevated)

@@ -6,12 +6,22 @@ body.vertical-dating {
   --dating-card: var(--surface-elevated);
   --dating-border: var(--border);
   --dating-accent: var(--vertical-dating-accent, #00d4aa);
+  /* The Nordic teal is a fill colour. As ink on the light surface this vertical
+     actually renders on it measures 1.77:1 — the BankID trust line, which is
+     the one label on the intro a user is meant to read carefully. Same hue,
+     darkened until it clears AA: 5.62:1 on --bg. Dark mode keeps the bright
+     teal, which is already 9.42:1 there. */
+  --dating-accent-ink: #00705c;
   --dating-accent-warm: var(--vertical-dating-accent-warm, #ff5500);
   --dating-pass: var(--danger);
   --font-primary: "Inter", var(--font);
   background: var(--dating-bg);
   color: var(--dating-ink);
   font-family: var(--font-primary);
+}
+
+body.vertical-dating #dark-toggle:checked ~ .theme-root {
+  --dating-accent-ink: var(--dating-accent);
 }
 
 /* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */

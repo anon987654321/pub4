@@ -49,7 +49,9 @@ body.vertical-marketplace .marketplace-subnav .feed-tab.active {
 body.vertical-marketplace .deal-cat.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--bg);
+  /* --accent-ink, not --bg: see _dialect_tokens.scss. The taupe storefront
+     accent carries #f7f6fa at 3.24:1 and #1a1824 at 5.02:1. */
+  color: var(--accent-ink);
 }
 
 body.vertical-marketplace .deal-rating {
