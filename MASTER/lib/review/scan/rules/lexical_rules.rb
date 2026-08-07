@@ -135,7 +135,10 @@ module Master
 
   RuleDSL.rule :TIME_ZONE_UNSAFE,
     severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[ruby],
-    description: "bare Time.now/Date.today bypasses Rails Time.zone" do |src, path:|
+    description: "bare Time.now/Date.today bypasses Rails Time.zone",
+    example_path: "/repo/app/models/example.rb",
+    fires: "stamp = Time.now.beginning_of_day\n",
+    does_not_fire: "generated_at: Time.now.utc.iso8601, exp: Time.now.to_i\n" do |src, path:|
     next [] unless path.match?(%r{/app/|/spec/|/test/})
     # Time.now.utc and Time.now.to_i do not read Time.zone: one converts to UTC
     # explicitly, the other is epoch seconds. Every RAILS finding this rule

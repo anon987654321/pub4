@@ -65,7 +65,11 @@ module Master
 
         RuleDSL.rule :EIGHT_PX_RHYTHM,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: false,
-          description: "spacing on 8px rhythm (4px hairline allowed)" do |src, path:|
+          description: "spacing on 8px rhythm (4px hairline allowed)",
+          example_path: "/repo/app/assets/stylesheets/_example.scss",
+          fires: ".card { padding: 10px; }\n",
+          # A media condition is not spacing, and 44px is the tap-target token.
+          does_not_fire: "@media (min-width: 1280px) { .card { padding: 24px; min-height: 44px; } }\n" do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           allowed = Rules.thresholds.eight_px_rhythm.map(&:to_i)

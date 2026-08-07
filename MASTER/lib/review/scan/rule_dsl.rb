@@ -12,21 +12,40 @@ module Master
     #     scan_lines(src, /\bputs\b/, message: "puts in production code")
     #   end
       module RuleDSL
-        def self.rule(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil, &block)
+        # fires:/does_not_fire: are the rule's own worked examples, checked by
+        # test/test_rule_fixtures.rb.
+        #
+        # A scan rule fails in one direction far more often than the other: it
+        # keeps matching a pattern adjacent to the law it enforces. TIME_ZONE_UNSAFE
+        # matched every Time.now when the law is about Time.zone, so it reported 13
+        # rewrites of Time.now.utc and Time.now.to_i that would have changed no
+        # behaviour. A rule that carries the case it must NOT fire on cannot drift
+        # that way in silence.
+        #
+        #   RuleDSL.rule :TIME_ZONE_UNSAFE, ...,
+        #     fires: "Time.now.beginning_of_day",
+        #     does_not_fire: "Time.now.utc.iso8601"
+        def self.rule(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil,
+                      fires: nil, does_not_fire: nil, example_path: nil, &block)
           raise ArgumentError, "block required" unless block
 
           dsl_id = id.to_s
           dsl_desc = description || dsl_id.tr("_", " ")
           dsl_tags = Array(tags)
-          build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:)
+          build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
+                               fires:, does_not_fire:, example_path:)
         end
 
-        def self.build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:)
+        def self.build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
+                                      fires: nil, does_not_fire: nil, example_path: nil)
           Class.new(Rule) do
             @dsl_block = block
             @dsl_langs = applies_to
             @dsl_autofix = autofix
-            class << self; attr_reader :dsl_block, :dsl_langs, :dsl_autofix; end
+            @dsl_fires = fires
+            @dsl_does_not_fire = does_not_fire
+            @dsl_example_path = example_path
+            class << self; attr_reader :dsl_block, :dsl_langs, :dsl_autofix, :dsl_fires, :dsl_does_not_fire, :dsl_example_path; end
             define_method(:initialize) do
               super()
               @id = dsl_id; @description = dsl_desc
