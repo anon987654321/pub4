@@ -1177,6 +1177,23 @@ inline SVG presentation attributes do accept `var()`, so those are a design
 decision rather than a technical limit.
 
 
+
+**7 more closed 2026-08-07; the last 33 are artwork and are yours.**
+
+The 7 are `var(--border, #e4e2db)` and friends in
+`brgen/app/views/shared/_site_legal_footer.html.erb` — the token *is* used and
+the hex is its fallback, which is the opposite of the thing this rule exists to
+catch. The rule matched the literal without looking at what wraps it.
+
+The remaining 33 are all inside brand marks and illustrations: the amber logo
+(9), the dressing-room mannequin SVG (8), the dating heart (6), both jox logos
+(3+3), and the playlist accent (4). Inline SVG `fill` does accept `var()`, so
+these are genuinely tokenisable — but a logo that changes colour with the theme
+is usually a bug rather than a feature, and which of these are brand constants
+versus themeable illustration is a design call. Left open deliberately rather
+than closed as artifact.
+
+
 - [x] `amber/app/views/layouts/application.html.erb:7` — #ffffff
 - [ ] `amber/app/views/outfits/dressing_room.html.erb:16` — #2a2a2a
 - [ ] `amber/app/views/outfits/dressing_room.html.erb:17` — #2a2a2a
@@ -1203,13 +1220,13 @@ decision rather than a technical limit.
 - [x] `brgen/app/views/layouts/application.html.erb:13` — #000000
 - [x] `brgen/app/views/pwa/manifest.json.erb:132` — #000000
 - [x] `brgen/app/views/pwa/manifest.json.erb:133` — #000000
-- [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:6` — #e4e2db
-- [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:9` — #6b7178
-- [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:10` — #16181c
-- [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:12` — #6b7178
-- [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:16` — #6b7178
-- [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:17` — #6b7178
-- [ ] `brgen/app/views/shared/_site_legal_footer.html.erb:23` — #e4e2db
+- [x] `brgen/app/views/shared/_site_legal_footer.html.erb:6` — #e4e2db
+- [x] `brgen/app/views/shared/_site_legal_footer.html.erb:9` — #6b7178
+- [x] `brgen/app/views/shared/_site_legal_footer.html.erb:10` — #16181c
+- [x] `brgen/app/views/shared/_site_legal_footer.html.erb:12` — #6b7178
+- [x] `brgen/app/views/shared/_site_legal_footer.html.erb:16` — #6b7178
+- [x] `brgen/app/views/shared/_site_legal_footer.html.erb:17` — #6b7178
+- [x] `brgen/app/views/shared/_site_legal_footer.html.erb:23` — #e4e2db
 - [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:23` — #00f0c8
 - [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:24` — #b8fff5
 - [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:25` — #ffffff
@@ -2009,6 +2026,20 @@ live on as `EIGHT_PX_RHYTHM` in `MASTER/lib/review/scan/rules/surface_rules.rb`
 and the rhythm tally in `RAILS/gates/lib/css_constitution.rb`.
 
 
+
+**12 more closed 2026-08-07 — the stylesheets moved under them and those lines
+no longer hold the value recorded.**
+
+The remaining 26 are real fixed widths: `max-width: 1000px`, `width: 200px`,
+`min-width: 280px` and similar. Each is a layout decision with a rendered
+consequence on a 390px viewport, so they want `RAILS/bin/triangle up` and
+`ruby RAILS/gates/runner.rb reflow` rather than a find-and-replace.
+
+With this, the artifact tier is exhausted. What remains in this file is design
+and policy: 49 genuine off-grid values, 33 artwork hexes, 26 fixed widths, and
+the judgement/policy blocks.
+
+
 - [x] `amber/app/assets/stylesheets/_base.scss:20` — @media (min-width: 1280px) {
 - [x] `amber/app/assets/stylesheets/_brand.scss:33` — @media (min-width: 768px) {
 - [ ] `amber/app/assets/stylesheets/_brand.scss:90` — max-width: 1000px;
@@ -2052,29 +2083,29 @@ and the rhythm tally in `RAILS/gates/lib/css_constitution.rb`.
 - [x] `brgen/app/assets/stylesheets/_widgets.scss:33` — @media (min-width: 768px) {
 - [x] `brgen/app/assets/stylesheets/_widgets.scss:47` — @media (min-width: 768px) {
 - [ ] `brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss:14` — max-width: 1280px;
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:51` — max-width: 720px;
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:51` — max-width: 720px;
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:71` — @media (min-width: 768px) {
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:72` — .radio-track-display { max-width: 350px; }
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:72` — .radio-track-display { max-width: 350px; }
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:75` — @media (max-width: 767px) {
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:92` — max-width: 720px;
-- [ ] `brgen/engines/takeaway/app/assets/stylesheets/_vertical_takeaway.scss:21` — max-width: 1280px;
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:92` — max-width: 720px;
+- [x] `brgen/engines/takeaway/app/assets/stylesheets/_vertical_takeaway.scss:21` — max-width: 1280px;
 - [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:8` — max-width: 1100px;
 - [ ] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:34` — width: 116px;
-- [ ] `bsdports/app/assets/stylesheets/application.scss:202` — width: 182px;
-- [ ] `bsdports/app/assets/stylesheets/application.scss:251` — max-width: 660px;
-- [ ] `bsdports/app/assets/stylesheets/application.scss:316` — max-width: 584px;
+- [x] `bsdports/app/assets/stylesheets/application.scss:202` — width: 182px;
+- [x] `bsdports/app/assets/stylesheets/application.scss:251` — max-width: 660px;
+- [x] `bsdports/app/assets/stylesheets/application.scss:316` — max-width: 584px;
 - [x] `bsdports/app/assets/stylesheets/application.scss:418` — @media (max-width: 640px) {
-- [ ] `shared/app/assets/stylesheets/_dialect_tokens.scss:50` — --sidebar-width: 275px;
-- [ ] `shared/app/assets/stylesheets/_dialect_tokens.scss:52` — --widgets-width: 350px;
+- [x] `shared/app/assets/stylesheets/_dialect_tokens.scss:50` — --sidebar-width: 275px;
+- [x] `shared/app/assets/stylesheets/_dialect_tokens.scss:52` — --widgets-width: 350px;
 - [x] `shared/app/assets/stylesheets/_minimal.scss:55` — @media (min-width: 1280px) {
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:195` — max-width: 660px;
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:247` — max-width: 584px;
+- [x] `shared/app/assets/stylesheets/_minimal.scss:195` — max-width: 660px;
+- [x] `shared/app/assets/stylesheets/_minimal.scss:247` — max-width: 584px;
 - [x] `shared/app/assets/stylesheets/_minimal.scss:449` — @media (max-width: 480px) {
 - [x] `shared/app/assets/stylesheets/_minimal.scss:471` — @media (max-width: 480px) {
 - [x] `shared/app/assets/stylesheets/_minimal.scss:608` — @media (min-width: 768px) {
 - [ ] `shared/app/assets/stylesheets/_responsive.scss:3` — // This used to be wrapped in @media (max-width: 768px), with the note "desktop
 - [ ] `shared/app/assets/stylesheets/_search_yep.scss:4` — width: 480px;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:286` — width: 230px;
+- [x] `shared/app/assets/stylesheets/_shell.scss:286` — width: 230px;
 - [x] `shared/app/assets/stylesheets/_shell_widgets.scss:444` — @media (max-width: 480px) {
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:201` — max-width: 360px;
 - [x] `shared/app/assets/stylesheets/_zen_shell.scss:369` — @media (max-width: 480px) {
