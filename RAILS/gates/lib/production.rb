@@ -43,25 +43,43 @@ module Deploy
 
     private
 
+    # One check group per private method below. This was a single 83-line body
+    # covering production config, routes, Solid adapters, the Gemfile, bin/ci and
+    # the deploy script — six unrelated contracts sharing one failures array and
+    # nothing else.
     def check_app(name, metadata)
       app_dir = File.join(RAILS_ROOT, name)
       return unless File.directory?(app_dir)
 
       production = File.join(app_dir, "config", "environments", "production.rb")
-      gemfile = File.join(app_dir, "Gemfile")
-      ci_bin = File.join(app_dir, "bin", "ci")
-      deploy_script = File.join(ROOT, metadata.fetch("deploy_script"))
-      domain = metadata.fetch("domain")
-      app_failures = []
-
       unless File.file?(production)
         @result.fail("#{name}: missing config/environments/production.rb")
         return
       end
 
+      domain = metadata.fetch("domain")
+      failures = []
+      prod_active = production_lines(production)
+
+      check_production_config(failures, prod_active, domain)
+      check_routes(failures, app_dir)
+      check_solid_adapters(failures, prod_active)
+      check_gemfile(failures, name, app_dir)
+      check_ci(failures, app_dir)
+      check_deploy_script(failures, metadata, domain)
+
+      failures.each { |failure| @result.fail("#{name}: #{failure}") }
+    end
+
+    # The baseline is only in force when the app's own production.rb includes it.
+    def production_lines(production)
       baseline = File.join(RAILS_ROOT, "shared", "config", "environments", "production_baseline.rb")
-      prod_active = active_lines(production)
-      prod_active += active_lines(baseline) if File.read(production).include?("production_baseline")
+      lines = active_lines(production)
+      lines += active_lines(baseline) if File.read(production).include?("production_baseline")
+      lines
+    end
+
+    def check_production_config(app_failures, prod_active, domain)
       fail_app!(app_failures, "production config still has active example.com placeholder") if prod_active.any? { |line| line.include?("example.com") }
       fail_app!(app_failures, "production config must trust relayd with config.assume_ssl = true") unless prod_active.any? { |line| line.match?(/\bconfig\.assume_ssl\s*=\s*true\b/) }
       fail_app!(app_failures, "TLS terminates at relayd; do not enable config.force_ssl in Rails") if prod_active.any? { |line| line.match?(/\bconfig\.force_ssl\s*=\s*true\b/) }
@@ -72,7 +90,9 @@ module Deploy
       prod_text = prod_active.join("\n")
       fail_app!(app_failures, "production host_authorization must keep /up available") unless prod_text.include?("config.host_authorization") && prod_text.include?("/up")
       fail_app!(app_failures, "production host_authorization must keep /health available") unless prod_text.include?("config.host_authorization") && prod_text.include?("/health")
+    end
 
+    def check_routes(app_failures, app_dir)
       routes = File.join(app_dir, "config", "routes.rb")
       if File.file?(routes)
         routes_text = File.read(routes)
@@ -80,9 +100,15 @@ module Deploy
       else
         fail_app!(app_failures, "missing config/routes.rb")
       end
+    end
+
+    def check_solid_adapters(app_failures, prod_active)
       fail_app!(app_failures, "Solid Cache must be enabled") unless prod_active.any? { |line| line.match?(/\bconfig\.cache_store\s*=\s*:solid_cache_store\b/) }
       fail_app!(app_failures, "Solid Queue must be enabled") unless prod_active.any? { |line| line.match?(/\bconfig\.active_job\.queue_adapter\s*=\s*:solid_queue\b/) }
+    end
 
+    def check_gemfile(app_failures, name, app_dir)
+      gemfile = File.join(app_dir, "Gemfile")
       if File.file?(gemfile)
         gemfile_text = File.read(gemfile)
         @result.warn("#{name}: Gemfile has no explicit ruby version") unless gemfile_text.match?(/^ruby\s+/)
@@ -98,7 +124,10 @@ module Deploy
       else
         fail_app!(app_failures, "missing Gemfile")
       end
+    end
 
+    def check_ci(app_failures, app_dir)
+      ci_bin = File.join(app_dir, "bin", "ci")
       ci_config = File.join(app_dir, "config", "ci.rb")
       shared_ci = File.join(RAILS_ROOT, "shared", "config", "ci.rb")
       if File.file?(ci_bin)
@@ -123,7 +152,10 @@ module Deploy
       else
         fail_app!(app_failures, "missing bin/ci")
       end
+    end
 
+    def check_deploy_script(app_failures, metadata, domain)
+      deploy_script = File.join(ROOT, metadata.fetch("deploy_script"))
       if File.file?(deploy_script)
         deploy_text = File.read(deploy_script)
         deploy_contract = [deploy_text, File.file?(SHARED_DEPLOY) ? File.read(SHARED_DEPLOY) : ""].join("\n")
@@ -133,8 +165,6 @@ module Deploy
       else
         fail_app!(app_failures, "missing deploy script #{metadata.fetch('deploy_script')}")
       end
-
-      app_failures.each { |failure| @result.fail("#{name}: #{failure}") }
     end
 
     def run_nested_gates
