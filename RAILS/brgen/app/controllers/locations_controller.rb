@@ -6,6 +6,10 @@ class LocationsController < ApplicationController
   # can't be triangulated from proximity pings — ample precision for a
   # "within N km" stranger feature, and much safer than storing raw GPS.
   LOCATION_PRECISION = 2
+  # How long a stationary user may go without re-announcing. Long enough that a
+  # phone left on a desk stops broadcasting, short enough that someone who has
+  # been sitting in a cafe is still findable.
+  BROADCAST_COOLDOWN = 15.minutes
 
   def update
     # Soft guests are minted on every request; without a user there is nowhere
@@ -19,7 +23,23 @@ class LocationsController < ApplicationController
 
     lat = lat.round(LOCATION_PRECISION)
     lng = lng.round(LOCATION_PRECISION)
+
+    # Re-announcing costs one rendered partial and one push lookup per nearby
+    # user. Measured on production 2026-08-07: ~600 queries and 7-9s per call,
+    # repeatedly, which is what took brgen.no off the air — clients ping on a
+    # timer whether or not anyone has moved, and the position is already
+    # coarsened to a ~1 km grid, so a stationary user re-broadcast the same
+    # arrival every single ping.
+    #
+    # Announce on arrival in a new grid square, or once a cooldown has passed so
+    # a long-stationary user is still discoverable. Otherwise record the position
+    # and say nothing.
+    moved = me.latitude&.round(LOCATION_PRECISION) != lat ||
+            me.longitude&.round(LOCATION_PRECISION) != lng
+    due = me.location_updated_at.nil? || me.location_updated_at < BROADCAST_COOLDOWN.ago
+
     me.update_columns(latitude: lat, longitude: lng, location_updated_at: Time.current)
+    return head :ok unless moved || due
 
     # Broadcast to each nearby user that I just arrived/am still near.
     User.nearby(lat, lng, ALERT_RADIUS_KM).each do |other|
