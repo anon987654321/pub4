@@ -950,6 +950,43 @@ class TestDilla < Minitest::Test
                  "a loop entry pointing at a file that is not there renders silently without a bed"
   end
 
+  # GENRE names a bundle; it does not seize the controls. Every value in it is
+  # soft-filled, so anything the operator pinned survives — a bundle that
+  # overrode a deliberate choice would be worse than no bundle. And an unknown
+  # genre aborts rather than rendering the default quietly, which is the failure
+  # this tree keeps producing: you ask for something, get something else, and
+  # nothing says so.
+  def test_genre_bundles_fill_without_overriding_and_reject_unknown_names
+    result = eval_in_engine(<<~RUBY)
+      knobs = %w[POCKET_SET SONITEX SONITEX_PRESET ANALOG_CHAIN VOICING GENRE_HARMONY]
+      resolved = GENRE_DEFAULTS.keys.to_h do |g|
+        knobs.each { |k| ENV.delete(k) }
+        ENV["GENRE"] = g.to_s
+        apply_genre!
+        [g.to_s, knobs.to_h { |k| [k, ENV[k]] }.compact]
+      end
+      knobs.each { |k| ENV.delete(k) }
+      ENV["VOICING"] = "quartal"
+      ENV["GENRE"] = "soul"
+      apply_genre!
+      pinned = ENV["VOICING"]
+      knobs.each { |k| ENV.delete(k) }
+      ENV.delete("GENRE")
+      puts JSON.generate(resolved: resolved, pinned: pinned,
+                         soul_would_set: GENRE_DEFAULTS[:soul]["VOICING"])
+    RUBY
+    resolved = result.fetch("resolved")
+    assert_operator resolved.length, :>=, 5
+    assert resolved.key?("techno") && resolved.key?("jazz") && resolved.key?("soul"),
+           "the axis exists so techno, jazz and soul are reachable by name"
+    assert_equal "1", resolved.dig("techno", "GENRE_HARMONY"),
+                 "GENRE=techno must turn the harmonic path on, or the axis colours without connecting anything"
+    assert resolved.values.map { |v| v["SONITEX"] }.uniq.length >= 4,
+           "bundles that resolve to the same colour are not an axis"
+    assert_equal "quartal", result.fetch("pinned"),
+                 "a pinned knob must beat the bundle (soul would have set #{result.fetch('soul_would_set')})"
+  end
+
   # Genre is meant to be a parameter, not a fork: dilla leans Detroit hiphop but
   # techno, soul and jazz are supposed to blend rather than live in separate
   # programs. The measurable form of that is whether a renderer can reach the

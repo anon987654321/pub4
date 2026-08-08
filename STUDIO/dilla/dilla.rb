@@ -13472,7 +13472,63 @@ def phone_preview_gate_enabled?
   ENV["PHONE_PREVIEW_GATE"] == "1"
 end
 
+# One word for genre.
+#
+# Genre was spread across RENDER_MODE, a preset's feel:, GROOVE_DNA, PERFORMER,
+# SONITEX, ANALOG_CHAIN, POCKET_SET, VOICING and five separate CLI commands, so
+# "make this one sound like jazz" meant knowing which six knobs to move and in
+# which order. GENRE names the bundle.
+#
+# What this is NOT: a renderer switch. GENRE=techno colours a render and turns
+# on the harmonic path; it does not route to render_hate_techno. Routing on a
+# genre name would rebuild the fork this whole direction exists to remove, just
+# through a new door -- `dilla.rb hate` is still how you ask for that engine,
+# and it now shares the progression with everything else.
+#
+# Soft-filled, so every value here loses to anything the operator set. That is
+# the point of a bundle: a starting position, not a lock. Only knobs whose valid
+# values are enumerable in this file are included -- GROOVE_DNA and PERFORMER
+# are deliberately absent because their pools are assembled at runtime and a
+# wrong constant here would fall back silently, which is the exact failure this
+# tree keeps producing.
+GENRE_DEFAULTS = {
+  # The house lean. Named so it can be asked for explicitly rather than only
+  # being what you get by not asking.
+  hiphop: { "POCKET_SET" => "neo_soul", "SONITEX" => "donuts_warm",
+            "SONITEX_PRESET" => "donuts_warm", "ANALOG_CHAIN" => "vinyl_hot",
+            "VOICING" => "rootless" },
+  soul: { "POCKET_SET" => "neo_soul", "SONITEX" => "hi_fi_soul",
+          "SONITEX_PRESET" => "hi_fi_soul", "ANALOG_CHAIN" => "cassette",
+          "VOICING" => "bill_evans" },
+  jazz: { "POCKET_SET" => "classic", "SONITEX" => "subtle",
+          "SONITEX_PRESET" => "subtle", "ANALOG_CHAIN" => "broadcast",
+          "VOICING" => "kenny_barron" },
+  # GENRE_HARMONY on, because a techno colour over a progression is the whole
+  # reason this axis exists.
+  techno: { "POCKET_SET" => "industrial", "SONITEX" => "heavy",
+            "SONITEX_PRESET" => "heavy", "ANALOG_CHAIN" => "lo_fi",
+            "VOICING" => "quartal", "GENRE_HARMONY" => "1" },
+  lofi: { "POCKET_SET" => "dusty", "SONITEX" => "sp1200",
+          "SONITEX_PRESET" => "sp1200", "ANALOG_CHAIN" => "cassette",
+          "VOICING" => "drop2" },
+}.freeze
+
+def apply_genre!
+  raw = ENV["GENRE"].to_s.strip.downcase
+  return if raw.empty?
+
+  table = GENRE_DEFAULTS[raw.to_sym]
+  # Aborts rather than falling through. An unknown genre that quietly renders
+  # the default is the failure mode this file is full of: the operator asks for
+  # something, gets something else, and nothing says so.
+  abort "unknown GENRE=#{raw} — known: #{GENRE_DEFAULTS.keys.join(', ')}" unless table
+
+  soft_fill_env!(table, label: "GENRE_DEFAULTS[#{raw}]")
+  DillaDmesg.style!("genre=#{raw}") if ENV["DILLA_STREAMING"] != "1"
+end
+
 def apply_render_mode!
+  apply_genre!
   normalize_render_mode!
   mode = ENV["RENDER_MODE"]&.downcase&.to_sym
   return unless mode
@@ -20827,6 +20883,8 @@ def help
       STREAM_CREATIVE=1                Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — off by default
       DILLA_SH_TIMEOUT=120             Kill hung ffmpeg/fluidsynth after N seconds
       DILLA_FS_DRY=1                   Fluidsynth without its own chorus/reverb (pads go ~mono)
+      GENRE=hiphop|soul|jazz|techno|lofi   One word for the colour bundle; every knob still overrides it
+      GENRE_HARMONY=1                  Techno/industrial/analog take their pitches from the progression
       RENDER_MODE=dilla                Canonical DNA
       RENDER_MODE=warp                 Spectral/IDM bias (Brainfeeder-leaning)
       RENDER_MODE=long_soul|golden     Lush 32-bar soul (FORM + HARMONY_LEAD + bill_evans pads)
@@ -25943,7 +26001,7 @@ FLAG_ENV = {
   "markov-drums" => "MARKOV_DRUMS", "groove-lock" => "GROOVE_LOCK", "spectral-arp" => "SPECTRAL_ARP",
   "arp-idm-bias" => "ARP_IDM_BIAS", "arp-shape-bias" => "ARP_SHAPE_BIAS",
   "reharm-loop" => "REHARM_LOOP", "prime-grid" => "PRIME_GRID",
-  "inharmonic" => "INHARMONIC",
+  "inharmonic" => "INHARMONIC", "genre" => "GENRE", "genre-harmony" => "GENRE_HARMONY",
   "evolve-harmony-w" => "EVOLVE_HARMONY_W", "evolve-groove-w" => "EVOLVE_GROOVE_W",
   "sidechain-style" => "SIDECHAIN_STYLE",
   "lead-voice" => "LEAD_VOICE", "lead-arp-mode" => "LEAD_ARP_MODE",
