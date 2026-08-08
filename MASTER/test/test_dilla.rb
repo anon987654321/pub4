@@ -1032,6 +1032,59 @@ class TestDilla < Minitest::Test
            "TECHNO_HARMONY changes the sound of every techno render and must stay opt-in until that is a decision"
   end
 
+  # The same fork, one layer below the notes.
+  #
+  # Reaching the progression fixed what a genre renderer plays. It did not fix
+  # its level, because loudness is set by normalise_master! and that has exactly
+  # one call site, at the tail of render_dilla's finaliser. The three renderers
+  # that build their own filtergraph each ended in a limiter and stopped, and a
+  # limiter caps a peak without setting a loudness.
+  #
+  # Measured on a 26-track demo before this was wired: the 8 parts that hashed
+  # into a techno slot came out at -12.3 LUFS against -18.7 for the other 18.
+  # Nothing failed, nothing warned -- the level was simply never set, and the
+  # only symptom was one track in four being twice as loud as its neighbours.
+  #
+  # render_hiphop is deliberately checked by delegation rather than by grep: its
+  # whole body is `render_dilla(destination, bars)`, so it reaches the master the
+  # only way that matters. A grep for the call name reports it as a bypass, which
+  # is how this test's first version got the answer wrong.
+  def test_every_genre_renderer_reaches_the_master_bus
+    result = eval_in_engine(<<~RUBY)
+      src = File.read(File.join(ROOT, "dilla.rb"))
+      body = ->(m) {
+        i = src.index("\\ndef " + m)
+        next "" unless i
+
+        src[i, (src.index("\\ndef ", i + 1) || src.length) - i]
+      }
+      # Directly, via the genre helper, or by handing the whole render to a
+      # renderer that does one of those.
+      masters = ->(b) { !!(b =~ /normalise_master!|normalise_genre_master!|render_dilla\\(/) }
+      puts JSON.generate(
+        renderers: %w[render_hate_techno render_industrial render_analog render_hiphop]
+                     .to_h { |m| [m, masters.call(body.call(m))] },
+        # Lookbehind so the definition itself is not counted as one of its callers.
+        call_sites: src.scan(/(?<!def )normalise_genre_master!\\(/).length,
+        techno_target: MASTER_LUFS_BY_STYLE[:techno],
+        # The normalise pass re-encodes the file it levels. Hardcoding a bitrate
+        # there downgraded every 320k mp3 to 192k as a side effect of a gain.
+        reencodes_with_codec_for: !!(body.call("normalise_master!") =~ /codec_for\\(path\\)/)
+      )
+    RUBY
+
+    result.fetch("renderers").each do |name, reaches|
+      assert reaches, "#{name} never sets an integrated loudness, so it will drift " \
+                      "against every other renderer the moment they share a playlist"
+    end
+    assert_equal 3, result.fetch("call_sites"),
+                 "one call site per self-mastering renderer; a new one that skips this is the bug"
+    assert_equal(-17.0, result.fetch("techno_target"),
+                 "techno's target is deliberately explicit rather than falling through to :default")
+    assert result.fetch("reencodes_with_codec_for"),
+           "normalise_master! must re-encode at the renderer's own bitrate, not a hardcoded one"
+  end
+
   # demo-all reassigns a share of its slots to render_hate_techno, which builds
   # its own arrangement and never calls sample_loop_for. Reassigning a track that
   # carries a sampled bed therefore returns a techno piece with the record

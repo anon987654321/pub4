@@ -478,11 +478,17 @@ DILLA_TRACKS = %i[
 # feedback. loudnorm's integrated-loudness target was landing every track
 # at near-broadcast loudness with a tight LRA, which reads as fatiguing
 # even when true-peak is technically safe.
+# techno is deliberately the same number as :default rather than a louder one.
+# It is here so the knob is visible: the genre renderers never had a loudness
+# target at all until they were wired to normalise_master!, and an entry reading
+# -17.0 is something an operator can find and move. A value invented for it here
+# would be a level decision made by measurement rather than by ear.
 MASTER_LUFS_BY_STYLE = {
   dilla: -19.0,
   flylo: -17.0,
   madlib: -18.0,
   neo_soul: -18.5,
+  techno: -17.0,
   default: -17.0,
 }.freeze
 
@@ -6024,7 +6030,11 @@ def normalise_master!(path, cfg)
   ok = system("ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path,
               "-af", "volume=#{gain.round(2)}dB," \
                      "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled",
-              *(File.extname(path) == ".mp3" ? ["-c:a", "libmp3lame", "-b:a", "192k"] : []),
+              # codec_for, not a hardcoded 192k. Every renderer writes mp3 at 320k
+              # and this pass re-encoded the finished file at 192k on the way to
+              # setting its level -- a silent quality drop on every mp3 render,
+              # applied by the one stage whose job was supposed to be a gain.
+              *codec_for(path),
               tmp, out: File::NULL, err: File::NULL)
   if ok && File.file?(tmp) && File.size(tmp).positive?
     FileUtils.mv(tmp, path)
@@ -6035,6 +6045,31 @@ def normalise_master!(path, cfg)
     warn "master normalise: re-encode failed, leaving level as rendered"
   end
   path
+end
+
+# The genre renderers' way in to the master bus.
+#
+# render_dilla measures its finished file and applies one gain (normalise_master!
+# at the tail of its finaliser, the only call site there has ever been).
+# render_hate_techno, render_industrial and render_analog each hand-rolled a
+# master -- a console chain and a limiter -- and then stopped. A limiter caps a
+# peak; it does not set a loudness. So those three had no integrated-loudness
+# target at all, and it showed the moment they shared a playlist with a Dilla
+# render: measured across a 26-track demo, the 8 parts that hashed into a techno
+# slot came out at -12.3 LUFS against -18.7 for the other 18. A 6.5 dB step
+# between adjacent tracks, from a stage that was never wired rather than a level
+# anyone chose.
+#
+# This is the same fork the harmony work closed one layer up. Giving those
+# renderers the progression fixed what notes they played; it did not give them
+# the master, because the master lives in a finaliser only render_dilla runs.
+#
+# Takes a family symbol rather than a cfg: the genre renderers do not build the
+# render_config hash that carries :master_lufs, and inventing a partial one to
+# satisfy this call would be a worse lie than looking the number up here.
+def normalise_genre_master!(destination, family)
+  target = MASTER_LUFS_BY_STYLE.fetch(family, MASTER_LUFS_BY_STYLE[:default])
+  normalise_master!(destination, { master_lufs: target })
 end
 
 # The AKMD / Radio Bergen chain, reproduced stage for stage. It came from
@@ -20728,6 +20763,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
   sh!(*command)
   FileUtils.rm_f(drum_tmp)
   mix_note = sonitex_enabled? ? sonitex_label : "dry"
+  normalise_genre_master!(destination, :techno)
   puts "wrote #{destination} (#{ibpm.to_i} BPM industrial techno, #{n_bars} bars, #{mix_note})"
 end
 
@@ -21248,6 +21284,7 @@ def render_analog(destination, bar_count: bars)
 
   FileUtils.mkdir_p(File.dirname(destination))
   sh! "ffmpeg", "-y", *inputs, "-filter_complex", filter.tr("\n", " "), "-map", "[out]", *codec_for(destination), destination
+  normalise_genre_master!(destination, :analog)
   puts "wrote #{destination}"
 end
 
@@ -22128,6 +22165,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   sh! "ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex", graph,
       "-map", "[out]", "-t", total.to_s, "-c:a", "libmp3lame", "-b:a", "256k", destination
   FileUtils.rm_rf(work)
+  normalise_genre_master!(destination, :techno)
   puts "wrote #{destination}"
   destination
 end
