@@ -14699,19 +14699,24 @@ def demo_techno_slot?(idx, slug)
   share = demo_techno_share
   return false if share <= 0.0
 
-  # A track carrying a sampled bed is never a techno slot, at any share.
+  # A track carrying a sampled bed is a techno slot only when techno can carry
+  # the bed.
   #
-  # render_hate_techno builds its own arrangement from scratch and never calls
-  # sample_loop_for, so reassigning one of these hands back a techno piece with
-  # the record silently absent -- and the bed is the entire reason that track is
-  # in the catalogue. At the 0.34 default that was a third of every hand-cut and
-  # chopped loop replaced by something else, with nothing in the log to say the
-  # sample had been dropped rather than played.
+  # render_hate_techno used to build its arrangement from scratch and never call
+  # sample_loop_for, so reassigning one of these handed back a techno piece with
+  # the record silently absent -- at the 0.34 default, a third of every hand-cut
+  # and chopped loop, with nothing in the log to distinguish a dropped sample
+  # from a played one. It now takes the bed as a layer under TECHNO_HARMONY, so
+  # the exemption is scoped to the case that still loses it rather than left
+  # standing as a permanent rule. That is the whole point: a sampled record
+  # SHOULD be able to become a techno track.
   #
   # Checked before the share >= 1.0 shortcut, so DEMO_TECHNO_SHARE=1 still means
   # "every slot that CAN be techno", not "lose every sample".
-  key = slug.to_s.downcase.tr("-", "_").to_sym
-  return false if TRACK_SAMPLE_LOOPS.key?(TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key))
+  unless techno_harmony_enabled?
+    key = slug.to_s.downcase.tr("-", "_").to_sym
+    return false if TRACK_SAMPLE_LOOPS.key?(TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key))
+  end
 
   return true if share >= 1.0
 
@@ -19589,7 +19594,15 @@ end
 # post-attack — the "43" in the filename doesn't reliably encode a MIDI
 # note. Only sample keys listed here get pitch-shifted to a target hz;
 # everything else (kick/snare/hat/ghost) plays at native pitch.
-SAMPLE_NATURAL_HZ = { bass_43: 49.0, cowbell: 670.0 }.freeze
+# The pitch each sample was cut or synthesised at, so a hit asking for a target
+# frequency can be resampled to it. A sample missing from here cannot be pitched
+# at all -- ratio falls to 1.0 and the hit plays at its own pitch silently,
+# which is how the industrial bass stayed in a fixed E-to-Bb tritone no matter
+# what key the rest of the catalogue was in. Both values are read straight off
+# the generators in ensure_drum_kit!: ind_bass_e is aevalsrc at 41.2 Hz,
+# ind_bass_bb at 58.27 Hz.
+SAMPLE_NATURAL_HZ = { bass_43: 49.0, cowbell: 670.0,
+                      ind_bass_e: 41.2, ind_bass_bb: 58.27 }.freeze
 
 def render_sample_bus_wav(path, events, duration, kit, mapping)
   write_stereo_chunks(path, duration) do |chunk_start, chunk_frames, left, right|
@@ -20491,7 +20504,7 @@ def industrial_techno_section(bar)
 end
 
 # Arranged industrial techno: intro → groove → breakdown → build → main → peak → outro.
-def industrial_techno_schedule(n_bars, beat_p)
+def industrial_techno_schedule(n_bars, beat_p, roots = nil)
   bar_p  = (beat_p * 4.0).round(6)
   step_p = (bar_p / 16.0).round(6)
   events = Hash.new { |h, k| h[k] = [] }
@@ -20544,7 +20557,19 @@ def industrial_techno_schedule(n_bars, beat_p)
     if bass_active
       acid_steps = section == :intro ? [0, 8] : [0, 2, 3, 5, 8, 10, 11, 14]
       acid_steps.each do |step|
-        note = ((bar / 2 + step) % 4) >= 2 ? :ind_bass_bb : :ind_bass_e
+        # With a progression to follow, the hit carries a target FREQUENCY and
+        # render_sample_bus_wav resamples ind_bass_e to it. Without one it
+        # carries a sample key and alternates E against Bb on bar arithmetic --
+        # a fixed tritone, in every key, forever. That alternation is this
+        # renderer's signature and is kept as the default; it is simply no
+        # longer the only thing available.
+        note = if roots
+                 roots[(bar / 2) % roots.length]
+               elsif ((bar / 2 + step) % 4) >= 2
+                 :ind_bass_bb
+               else
+                 :ind_bass_e
+               end
         vel  = section == :peak ? 0.82 : 0.68
         vel *= 0.5 if section == :intro
         events[:bass] << [base + step * step_p, vel, note]
@@ -20569,7 +20594,13 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
   n_bars   = bars_count || (ENV["BARS"] ? bars : INDUSTRIAL_TECHNO_BARS)
   duration = (beat_p * 4.0 * n_bars).round(3)
   dotted_8th_ms = (3.0 * beat_p / 4.0 * 1000.0).round(1)
-  events   = industrial_techno_schedule(n_bars, beat_p)
+  # Same spine as techno: the progression's chord roots, folded into the register
+  # this bass already worked in (41.2 Hz E1 to 58.27 Hz Bb1, so an octave from
+  # E1 up).
+  ind_roots = techno_harmony_roots(8, register: (38.0..76.0))
+  dmesg("industrial harmony: bass follows #{ind_roots.uniq.length} chord root(s)",
+        unit: "ind0", parent: "dilla0") if ind_roots
+  events   = industrial_techno_schedule(n_bars, beat_p, ind_roots)
 
   kit = {
     ind_kick: load_mono_sample(drum_sample_path("ind_kick.wav")),
@@ -20972,18 +21003,58 @@ def analog_section_for_bar(b, total)
   [:outro, [0.25, 1.0 - ((b - 88) / [12.0, total - 88.0].max)].max]
 end
 
+# PAD_CHORDS entries all carry five voices, so the fixed indices below were safe
+# for as long as PAD_CHORDS was the only source. Progression chords are not:
+# neo_soul voices as [3, 3, 3, 2, 3, 3, 3, 3], because enrich_progression thins
+# and drops roots on purpose. hz[3] on a three-note chord is nil, and nil * 1.122
+# is a NoMethodError in the middle of a render.
+#
+# Widened rather than guarded. A two-note chord under a pad written for five
+# does not read as the same part in a new key, it reads as a thinner record, so
+# short chords are extended upward by octaves of their own tones until they have
+# five. That keeps the pad's density while letting its pitches follow.
+ANALOG_PAD_VOICES = 5
+
+def analog_fit_chord(hz)
+  voices = Array(hz).map(&:to_f).select(&:positive?).uniq.sort
+  return voices if voices.empty? || voices.length >= ANALOG_PAD_VOICES
+
+  # Successive octaves of successive tones: base[0]*2, base[1]*2, base[0]*4 …
+  # Doubling the same tone every time -- which the first version did, because
+  # `voices.length % voices.length` is always 0 -- produced [100,150,200,200,200]
+  # and a chord that is three copies of one note is not five voices.
+  base = voices.dup
+  tried = 0
+  while voices.length < ANALOG_PAD_VOICES && tried < base.length * 6
+    candidate = (base[tried % base.length] * (2**(1 + (tried / base.length)))).round(2)
+    # Skip an octave the chord already contains: [100,150,200] would otherwise
+    # take 100*2 and spend a voice on a unison with the 200 already there.
+    voices << candidate unless voices.any? { |v| (v - candidate).abs < 0.5 }
+    tried += 1
+  end
+  voices.sort
+end
+
 def analog_rotate_chord(chord, bar_index)
-  hz = chord[:hz].rotate((bar_index / 8) % chord[:hz].length)
+  fitted = analog_fit_chord(chord[:hz])
+  return fitted if fitted.empty?
+
+  hz = fitted.rotate((bar_index / 8) % fitted.length)
   extra = case bar_index % 12
           when 0 then hz[0] * 1.067
-          when 4 then hz[2] * 1.414
-          when 8 then hz[3] * 1.122
-          else nil
+          when 4 then (hz[2] || hz.last) * 1.414
+          when 8 then (hz[3] || hz.last) * 1.122
           end
   extra ? (hz + [extra]) : hz
 end
 
-def analog_schedule(bar_count)
+# `chords` overrides PAD_CHORDS when the caller has a progression to offer.
+# Same shape either way -- { name:, hz: [...] } -- which is why this is a
+# substitution rather than a conversion: PAD_CHORDS was already a hardcoded
+# six-chord progression in F minor, so this renderer has always been harmonic,
+# just never in the key anything else was in.
+def analog_schedule(bar_count, chords = nil)
+  pool = (chords && chords.length >= 2) ? chords : PAD_CHORDS
   beat = beat_seconds
   bar_len = beat * 4
   step = bar_len / 16
@@ -21025,13 +21096,13 @@ def analog_schedule(bar_count)
     events[:open] << [base + 6 * step + 0.008, den * 0.30] if ![:intro, :break].include?(sec) && [1, 3].include?(b % 4)
 
     if b >= 2 && b % 4 == 0
-      chord = analog_rotate_chord(PAD_CHORDS[(b / 4) % PAD_CHORDS.length], b)
+      chord = analog_rotate_chord(pool[(b / 4) % pool.length], b)
       sustain = 3.2 + (b % 3) * 0.9
       events[:pad] << [base + 0.03, den, chord, sustain]
     end
 
     if b >= 2 && b % 2 == 0
-      chord = analog_rotate_chord(PAD_CHORDS[(b / 4 + 3) % PAD_CHORDS.length], b)
+      chord = analog_rotate_chord(pool[(b / 4 + 3) % pool.length], b)
       events[:chop] << [base + [1, 2, 5, 9, 13][b % 5] * step + [-0.022, 0.0, 0.017][b % 3], den, chord]
     end
 
@@ -21061,7 +21132,19 @@ end
 def render_analog(destination, bar_count: bars)
   require_tools! "ffmpeg"
   dur = (bar_count * beat_seconds * 4).round(3)
-  ev = analog_schedule(bar_count)
+  # Third instance of the same defect: PAD_CHORDS is a fixed six-chord
+  # progression in F minor, so analog renders were always in F minor whatever
+  # key the track beside them was in.
+  analog_chords = if genre_harmony_enabled?
+                    begin
+                      dilla_progression(dilla_resolve_config[:progression])
+                    rescue StandardError
+                      nil
+                    end
+                  end
+  dmesg("analog harmony: pads follow #{analog_chords.length} progression chord(s)",
+        unit: "anlg0", parent: "dilla0") if analog_chords && analog_chords.length >= 2
+  ev = analog_schedule(bar_count, analog_chords)
   cycle = analog_two_bar_cycle
 
   kick = analog_drum_cycle_events(ev[:kick]).map { |t, v| kick_wave(t, v, cycle) }
@@ -21339,7 +21422,13 @@ HATE_LAYERS = {
   bleep: ->(p, b) { p >= 0.45 && b.even? },         # blips answer the kit, in alternate blocks
   tom:   ->(p, b) { p >= 0.5 && b.odd? },
   bloop: ->(p, b) { p >= 0.55 && b.odd? },          # ...and the falling ones answer the bleeps
-  ride:  ->(p, _b) { p >= 0.6 }
+  ride:  ->(p, _b) { p >= 0.6 },
+  # The sampled record, when TECHNO_HARMONY has put one under the arrangement.
+  # It enters with the drone rather than late: the point of a bed is that the
+  # rest of the arrangement is built over it, and a record that arrives at 45%
+  # reads as a sample drop rather than as the floor of the track. It steps out
+  # once across the middle so the return has somewhere to land.
+  bed:   ->(p, _b) { !p.between?(0.42, 0.52) }
 }.freeze
 
 # One gate expression per layer, over absolute time: the union of the blocks it
@@ -21421,7 +21510,64 @@ def techno_fold(hz, register)
   h.round(2)
 end
 
-def techno_harmony_enabled? = ENV["TECHNO_HARMONY"] == "1"
+# GENRE_HARMONY is the name for the property; TECHNO_HARMONY is kept because it
+# shipped first and is what the techno A/B renders were made under. Both mean
+# the same thing: the genre renderers take their pitches from the progression
+# instead of from literals.
+def genre_harmony_enabled? = ENV["GENRE_HARMONY"] == "1" || ENV["TECHNO_HARMONY"] == "1"
+
+def techno_harmony_enabled? = genre_harmony_enabled?
+
+TECHNO_BED_VOL = (ENV["TECHNO_BED_VOL"] || "0.55").to_f.clamp(0.0, 2.0)
+
+# Fold the tempo ratio into three-quarter-to-three-halves rather than stretching
+# whatever the arithmetic gives.
+#
+# A 92 BPM record against 145 BPM techno is 1.576x, which is not a stretch, it
+# is a sprint -- and build_sample_loop_filter's own clamp stops at 2.0, so it
+# would allow it. Halving it puts the record at half-time under the kit (0.788x,
+# a 21% slow-down), which is what a DJ does with the same two tempos and what
+# the material can actually take.
+def techno_bed_ratio(loop_bpm)
+  r = loop_bpm.to_f.positive? ? (HATE_BPM / loop_bpm.to_f) : 1.0
+  r /= 2.0 while r > 1.5
+  r *= 2.0 while r < 0.75
+  r.round(5)
+end
+
+# atempo, not asetrate.
+#
+# The engine's usual sample path varispeeds -- asetrate, which moves pitch and
+# tempo together like a turntable. That is right when the pads are transposed to
+# the loop, which is what render_dilla does. Here it would be backwards: the
+# acid, sub and drone have just been tuned TO the progression, and varispeeding
+# the record by 21% would move it a third of an octave away from the harmony it
+# is supposed to be sharing. Preserving pitch is what keeps the two in one key.
+def techno_bed_part!(work, cycle)
+  return nil unless techno_harmony_enabled?
+
+  entry = sample_loop_for(ENV["TRACK"])
+  return nil unless entry.is_a?(Hash) && entry[:path] && File.file?(entry[:path].to_s)
+
+  ratio = techno_bed_ratio(entry[:bpm])
+  chain = [
+    ("atempo=#{ratio}" unless (ratio - 1.0).abs < 0.001),
+    "highpass=f=#{(entry[:hp] || 45).to_i}",
+    ("equalizer=f=90:t=o:w=1.1:g=#{entry[:sub_db].to_f}" unless entry[:sub_db].to_f.zero?),
+    "lowpass=f=#{(entry[:lp] || 6000).to_i}",
+    "volume=#{TECHNO_BED_VOL}",
+  ].compact.join(",")
+  path = File.join(work, "bed.wav")
+  sh! "ffmpeg", "-y", "-v", "error", "-stream_loop", "-1", "-i", entry[:path].to_s,
+      "-t", cycle.to_s, "-af", "aformat=channel_layouts=stereo,#{chain}",
+      "-c:a", "pcm_s16le", path
+  return nil unless File.file?(path) && File.size(path) > 10_000
+
+  dmesg("techno bed #{File.basename(entry[:path])} @#{entry[:bpm].to_f.round}bpm " \
+        "-> #{(entry[:bpm].to_f * ratio).round}bpm (atempo #{ratio}, pitch held)",
+        unit: "techno0", parent: "dilla0")
+  path
+end
 
 # One root per bar of the cycle, or nil when the harmonic path is off or the
 # progression will not resolve. nil means "keep the literal tables", so a broken
@@ -21584,6 +21730,12 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   FileUtils.rm_rf(work)
   FileUtils.mkdir_p(work)
   parts = {}
+
+  # The record goes in first so it is the floor the rest is built on, and so a
+  # failure to prepare it costs the bed rather than the whole render.
+  if (bed_path = techno_bed_part!(work, cycle))
+    parts[:bed] = bed_path
+  end
 
   # -af takes a linear chain; anything with named pads -- an asplit into a wet
   # branch and back -- is a graph and needs -filter_complex. Detected rather

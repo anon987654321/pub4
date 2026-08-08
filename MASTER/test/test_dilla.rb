@@ -1006,11 +1006,22 @@ class TestDilla < Minitest::Test
     result = eval_in_engine(<<~RUBY)
       beds = TRACK_SAMPLE_LOOPS.keys.map(&:to_s) +
              TRACK_SAMPLE_LOOP_ALIASES.keys.map(&:to_s)
+      # With TECHNO_HARMONY off the techno renderer cannot carry a bed, so no
+      # sampled track may be reassigned at any share.
+      ENV.delete("TECHNO_HARMONY")
       stolen = { "default" => nil, "1.0" => "1", "0.34" => "0.34" }.filter_map do |label, share|
         share ? ENV["DEMO_TECHNO_SHARE"] = share : ENV.delete("DEMO_TECHNO_SHARE")
         hit = beds.each_with_index.select { |slug, i| demo_techno_slot?(i, slug) }.map(&:first)
         [label, hit] unless hit.empty?
       end
+      ENV.delete("DEMO_TECHNO_SHARE")
+      # With it on the bed IS carried, so the exemption must lift -- otherwise a
+      # sampled record could never become a techno track, which is the thing the
+      # whole genre-agnostic direction exists to allow.
+      ENV["TECHNO_HARMONY"] = "1"
+      ENV["DEMO_TECHNO_SHARE"] = "1"
+      lifted = beds.each_with_index.count { |slug, i| demo_techno_slot?(i, slug) }
+      ENV.delete("TECHNO_HARMONY")
       ENV.delete("DEMO_TECHNO_SHARE")
       # Non-sample tracks must still be eligible, or the guard is just an off
       # switch. Counted across the real catalogue rather than probed at one
@@ -1019,12 +1030,15 @@ class TestDilla < Minitest::Test
       # guard.
       plain = (TRACK_PRESETS.keys.map(&:to_s) - beds).first(40)
       eligible = plain.each_with_index.count { |slug, i| demo_techno_slot?(i, slug) }
-      puts JSON.generate(stolen: stolen, bed_count: beds.length,
+      puts JSON.generate(stolen: stolen, bed_count: beds.length, lifted: lifted,
                          plain_sampled: plain.length, plain_eligible: eligible)
     RUBY
     assert_operator result.fetch("bed_count"), :>=, 12
     assert_empty result.fetch("stolen"),
                  "sampled beds reassigned to techno, so the sample never plays: #{result.fetch('stolen').inspect}"
+    assert_operator result.fetch("lifted"), :>, 0,
+                    "with TECHNO_HARMONY on the techno renderer carries the bed, so the exemption must lift — " \
+                    "otherwise a sampled record can never become a techno track"
     assert_operator result.fetch("plain_eligible"), :>, 0,
                     "the guard must exempt sampled beds, not disable techno slots altogether " \
                     "(0 of #{result.fetch('plain_sampled')} plain tracks were eligible)"
