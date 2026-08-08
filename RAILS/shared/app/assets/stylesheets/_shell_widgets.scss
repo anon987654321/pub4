@@ -206,7 +206,9 @@ body.vertical-playlist .nearby-chat-widget {
   border: 1px solid var(--border, #46435a);
   border-block-end: 0;
   border-inline-end: 0;
-  border-radius: var(--radius-card, 16px) 0 0 0;
+  /* Square, like the tab. The widget is one surface and it now has one
+     treatment: nothing in it is rounded. */
+  border-radius: 0;
   overflow: hidden;
   animation: nearby-widget-in 180ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
@@ -265,7 +267,7 @@ body.vertical-playlist .nearby-chat-widget {
        against the screen edge, which is the "separation is space, not lines"
        rule in design_rules. The top border stays — it is a real edge. */
     border-inline: 0;
-    border-radius: var(--radius-card, 16px) var(--radius-card, 16px) 0 0;
+    border-radius: 0;
     padding-block-end: var(--safe-bottom, 0px);
     animation-name: nearby-widget-sheet-in;
   }
@@ -305,7 +307,7 @@ body.vertical-playlist .nearby-chat-widget {
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: var(--radius-sm, 8px);
+  border-radius: 0;
 }
 
 .nearby-chat-widget-close:hover { color: var(--text, #d8d6e0); }
@@ -345,7 +347,7 @@ body.vertical-playlist .nearby-chat-widget {
   resize: none;
   background: var(--bg, #17161c);
   border: 1px solid var(--border, #46435a);
-  border-radius: var(--radius-sm, 8px);
+  border-radius: 0;
   color: var(--text, #d8d6e0);
   padding: 0.5rem 0.65rem;
   min-height: 44px;
@@ -446,7 +448,7 @@ body.vertical-playlist .nearby-chat-widget {
   padding: 0 0.35rem;
   text-decoration: underline;
   text-underline-offset: 2px;
-  border-radius: var(--radius-sm, 8px);
+  border-radius: 0;
 }
 
 .nearby-chat-widget-linkish:hover {
@@ -476,7 +478,7 @@ body.vertical-playlist .nearby-chat-widget {
   min-height: 44px;
   padding: 0.5rem 0.9rem;
   border: 1px solid var(--border, #46435a);
-  border-radius: var(--radius-sm, 8px);
+  border-radius: 0;
   background: var(--bg, #17161c);
   text-decoration: none;
   font: 600 0.8125rem/1 var(--font-mono, ui-monospace, monospace);
