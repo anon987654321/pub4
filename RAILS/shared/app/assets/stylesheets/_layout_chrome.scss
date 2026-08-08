@@ -116,6 +116,15 @@ main[role="main"] {
 :root {
   --brand-mark-inline: 4.75rem;
   --chrome-toggle-inline: 4.25rem;
+  /* Height of brgen's permanent nav swiper, published for the same reason as
+     the two above and as --tab-bar-h at the other edge: the shell anchors
+     itself below the bar, and a surface that wants to clear the top chrome
+     should read the number rather than rediscover it. Measured, not guessed
+     -- see the assertion in layout_contract_test. Derived from the bar's own
+     composition (a 44px tap target plus its block padding, plus the safe area
+     the bar itself adds) rather than restated as a constant: at an 18px root a
+     hardcoded 3.5rem measured 63px against a 62px bar and left a 1px seam. */
+  --nav-swiper-h: calc(var(--tap-min, 44px) + (var(--space-2) * 2) + var(--safe-top, 0px));
   /* The mark outranks app chrome, because it is the one element that is the same
      on every surface of every app. 91 (--z-nav + 1) was not enough: _minimal
      gives every `nav` position: fixed with z-index: 100, so bsdports own primary

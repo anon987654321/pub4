@@ -69,9 +69,14 @@ a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
 /* Brgen-specific shell tweaks on top of the shared x shell. */
+/* Inset below the permanent nav. The bar is fixed chrome at y=0, and this
+   shell is the scroll container -- without the offset main starts at y=0 and
+   .compose-trigger lands inside the bar's band, which is the exact collision
+   that turned the nav into a drawer in the first place. Content scrolls UNDER
+   the bar from here, which is what its opaque background is for. */
 .app-shell {
   position: fixed;
-  inset: 0;
+  inset: var(--nav-swiper-h, 3.5rem) 0 0 0;
 }
 
 /* Wordmark is lowercase "brgen" (MASTER .top-left-logo) — pure type only. */

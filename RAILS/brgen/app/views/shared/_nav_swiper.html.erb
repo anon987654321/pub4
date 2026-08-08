@@ -1,4 +1,4 @@
-<div class="nav_swiper" data-controller="nav-swiper" data-nav-swiper-target="root">
+<div class="nav_swiper">
   <%# These are links that navigate — /live, /channels, another host entirely —
       and there is no tabpanel anywhere on the page. Dressing them as
       role="tablist" > role="group" > role="tab" produced three axe violations at
@@ -21,12 +21,4 @@
       </div>
     <% end %>
   </nav>
-  <%# Was an always-visible 46x5 grip pill at the top centre. It computed to
-      46x44 with a pill radius, so it painted as a dim grey circle sitting over
-      the nav — the most conspicuous thing on the page and the first thing
-      anyone noticed. The pull-down gesture and pointer-at-the-top-edge reveal
-      cover mouse and touch; this stays for keyboard and assistive tech, and
-      shows itself only on focus, exactly like the skip link above it. %>
-  <button type="button" class="nav_swiper_reveal" data-action="click->nav-swiper#toggle"
-          aria-expanded="false" aria-controls="nav_sections" data-nav-swiper-target="grip">Show sections</button>
 </div>
