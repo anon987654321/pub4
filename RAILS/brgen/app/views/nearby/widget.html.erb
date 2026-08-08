@@ -4,7 +4,7 @@
 
     <div class="nearby-chat-widget-mode dim" data-nearby-chat-target="mode">
       <% if @located %>
-        <strong>#nearby</strong>
+        <strong>#<%= ambient_chat_room_label %></strong>
         <span aria-hidden="true">·</span>
         <span>~10&nbsp;km</span>
         <span aria-hidden="true">·</span>
@@ -15,7 +15,7 @@
                 title="<%= t("chat.refresh_location") %>"
                 aria-label="<%= t("chat.refresh_location") %>">↻</button>
       <% else %>
-        <strong>#brgen</strong>
+        <strong>#<%= ambient_chat_room_label %></strong>
         <span aria-hidden="true">·</span>
         <span><%= t("chat.city_lobby") %></span>
         <span aria-hidden="true">·</span>

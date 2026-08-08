@@ -1,7 +1,11 @@
 <%# Fleet floating chat bar (flush bottom-right).
     Brgen: ambient chat — #brgen lobby without GPS, #nearby when located.
     Other apps: inbox or deep-link to Brgen. %>
-<% widget_title = local_assigns.fetch(:title, t("chat.title", default: "chat")) %>
+<%# The room this visitor lands in, resolved server-side. Rendering "chat"
+    here and letting nearby_chat_controller rewrite it once the frame arrived
+    was a visible relabel and made the tab's width unstable -- see
+    Shared::UiHelper#ambient_chat_room_label. %>
+<% widget_title = local_assigns.fetch(:title, ambient_chat_room_label || t("chat.title", default: "chat")) %>
 <div class="nearby-chat-widget"
      data-controller="nearby-chat"
      data-nearby-chat-storage-key-value="pub4:ambient-chat:open"

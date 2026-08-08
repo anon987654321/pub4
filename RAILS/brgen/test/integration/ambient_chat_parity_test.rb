@@ -48,6 +48,20 @@ class AmbientChatParityTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # The tab used to render "chat" and let nearby_chat_controller rewrite it to
+  # the room name once the turbo-frame landed. That is a visible relabel, and it
+  # made the tab's own width flap between 92px and 102px depending on whether the
+  # frame had arrived -- which is what layout_snapshot kept drifting on.
+  test "the chat tab is labelled with the room server-side, not after the frame loads" do
+    host! "brgen.no"
+    get "/"
+
+    assert_response :success
+    assert_select "[data-nearby-chat-target=tabLabel]", text: "brgen",
+                  count: 1
+    assert_select "[data-nearby-chat-target=tabLabel]", text: "chat", count: 0
+  end
+
   # The handoff is still correct where there is genuinely no room to join:
   # amber and bsdports have no Conversation model. Guarding the helper directly
   # because those apps are not booted by this suite.

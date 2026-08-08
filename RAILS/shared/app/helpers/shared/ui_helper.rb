@@ -29,6 +29,31 @@ module Shared
       nil
     end
 
+    # The room this visitor will land in, known at layout time.
+    #
+    # The tab used to render t("chat.title") — "chat" — and
+    # nearby_chat_controller#syncLabelsFromFrame then rewrote it to the room name
+    # once the turbo-frame arrived. That is a visible relabel a beat after the
+    # page settles, and it also made the chat tab's own width unstable: measured
+    # 2026-08-08, four identical loads gave chat/92px, brgen/102px, brgen/102px,
+    # chat/92px depending on whether the frame had landed. layout_snapshot had
+    # been drifting on that pair for many runs and re-baselining never converged,
+    # because it was re-recording whichever side of the race it caught.
+    #
+    # Nothing has to be fetched to know the answer: NearbyController#widget picks
+    # the geo room when the visitor has coordinates and the city lobby otherwise,
+    # from exactly the values available here. Returning nil on an app with no
+    # room keeps amber and bsdports on the generic title.
+    LOBBY_CHANNEL = "brgen"
+
+    def ambient_chat_room_label
+      return nil unless ambient_chat_frame_path
+
+      user = defined?(Current) ? Current.user : nil
+      located = user&.latitude.present? && user&.longitude.present?
+      located ? "nearby" : LOBBY_CHANNEL
+    end
+
     REACTION_GLYPHS = {
       "like" => :like,
       "love" => :like,
