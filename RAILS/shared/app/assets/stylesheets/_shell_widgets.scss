@@ -176,7 +176,12 @@ body.vertical-playlist .nearby-chat-widget {
   /* The elevated surface is the separation. Three edges of hairline around a
      44px tab was the most line-per-pixel chrome on the page. */
   border: 0;
-  border-radius: var(--radius-sm, 8px) 0 0 0;
+  /* Square. This 8px sat flush in the bottom-right corner of the viewport, so
+     it did not read as a rounded control — it read as the PAGE having a rounded
+     corner, which is what it was reported as. Nothing else at the viewport edge
+     is rounded: html, body, .theme-root, .app-shell, .layout and main are all 0
+     at every width. */
+  border-radius: 0;
   color: var(--text, #d8d6e0);
   padding: 0.625rem 0.95rem;
   min-height: 44px;
