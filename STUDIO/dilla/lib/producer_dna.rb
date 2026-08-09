@@ -1678,6 +1678,36 @@ end
 
   # 5, not 4: the extension that names an altered chord is a fifth or sixth
   # voice, so a four-voice cap removes precisely the note under discussion.
+  # The register the whole voicing is folded into, as MIDI note numbers for its
+  # LOWEST note.
+  #
+  # Was a literal 50..62 (D3..D4) inline in build_voicing. Operator direction on
+  # 2026-08-09 was "slower deeper chords always", and this window is what "deep"
+  # means for a chord: every voicing in the engine gets shifted as a unit until
+  # its bottom note sits inside it, so lowering the window lowers every pad,
+  # every stab and every held chord in one place rather than per preset.
+  #
+  # 43..55 is G2..G3, a fifth below where it was. Chosen to stay clear of the
+  # sub: the sampled beds are high-passed at 45 Hz and the sub bus owns roughly
+  # 32..64 Hz, and MIDI 43 is 98 Hz, so a root here still sits an octave above
+  # the sub rather than fighting it. Going lower starts muddying the low end
+  # instead of deepening the chord.
+  #
+  # CHORD_REGISTER_LOW/HIGH override for a render that wants the old placement.
+  #
+  # Read through a helper that treats an EMPTY variable as unset. `ENV["X"] ||
+  # default` does not: an empty string is truthy in Ruby, so `CHORD_REGISTER_HIGH=`
+  # in the environment yields "".to_f == 0.0, the fold-down loop then runs until
+  # the chord is below MIDI 0, and every voicing comes out around 6.9 Hz --
+  # inaudible, and silent rather than obviously broken.
+  def self.register_env(name, default)
+    v = ENV[name].to_s.strip
+    v.empty? ? default : v.to_f
+  end
+  CHORD_REGISTER_LOW = register_env("CHORD_REGISTER_LOW", 43.0)
+  CHORD_REGISTER_HIGH = register_env("CHORD_REGISTER_HIGH", 55.0)
+  raise "CHORD_REGISTER_LOW must be below CHORD_REGISTER_HIGH" if CHORD_REGISTER_LOW >= CHORD_REGISTER_HIGH
+
   def build_voicing(root_hz, quality, voices: 5)
     intervals = voice_extensions(CHORD_TEMPLATES.fetch(quality) { CHORD_TEMPLATES["maj9"] })
     hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
@@ -1703,8 +1733,8 @@ end
     # above would have been undone one line later. Shifting the whole chord
     # keeps every interval intact and only moves the register.
     shift = 0.0
-    shift += 12.0 while midis.min + shift < 50.0
-    shift -= 12.0 while midis.min + shift > 62.0
+    shift += 12.0 while midis.min + shift < CHORD_REGISTER_LOW
+    shift -= 12.0 while midis.min + shift > CHORD_REGISTER_HIGH
     midis = midis.map { |m| m + shift }
     midis.map { |m| (440.0 * (2.0**((m - 69.0) / 12.0))).round(2) }.uniq.first(voices)
   end

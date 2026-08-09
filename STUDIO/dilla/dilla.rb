@@ -3580,7 +3580,7 @@ def enhanced_resolve_config
     track:,
     bpm: resolve_bpm(preset, track, sonic),
     progression: prog,
-    chord_bars: preset.fetch(:chord_bars, 4),
+    chord_bars: resolve_chord_bars(preset),
     phrase_bars: preset[:phrase_bars],
     swing: resolve_swing(preset, sonic, time_of_day_swing_offset),
     feel:,
@@ -3607,6 +3607,100 @@ def enhanced_resolve_config
                             0.75
                           end,
   }
+end
+
+# The pad EQ's low-mid gain, in dB.
+#
+# warm_dilla_pad_post boosted 260 Hz by 2.0 dB and 520 Hz by 1.8 dB (1.2 dB at
+# 260 on the fluidsynth branch). That is the middle of the 200-500 Hz band every
+# hip-hop mixing source names as "mud" and says to cut -- so the pad was lifted
+# exactly where a mix gets congested, and then rolled off at 3.4 kHz where its
+# definition lives. Muddy and dull from the same chain.
+#
+# Measured on an instrumental render, relative to full band: 125 Hz -3.1 dB,
+# 250 Hz -5.1, 500 Hz -10.0, 1 kHz -15.1, 2 kHz -21.2, 4 kHz -27.5, 8 kHz -32.8.
+# A steady ~6 dB/octave slide with 125 Hz the loudest band. Nothing was clipping
+# (crest 12.0 dB, flat factor 0.0), so the "overdrive" was this tilt rather than
+# level -- which is why chasing it through the saturation stages found nothing.
+#
+# Default 0.0: the boosts are removed, not inverted. Operator chose "cut the mud
+# boosts" on 2026-08-09; turning them negative would be a tone decision made by
+# measurement rather than by ear, which is his call and not this function's.
+# PAD_MUD_DB takes a negative number when he wants the actual dip.
+#
+# The scale argument keeps the three bands' RELATIVE weighting: 520 Hz was 0.9x
+# the 260 Hz boost and the fluidsynth branch 0.6x, so a single knob moves all
+# three together in the proportion they were tuned in.
+def pad_mud_db(scale = 1.0)
+  ((ENV["PAD_MUD_DB"] || "0.0").to_f * scale).round(2)
+end
+
+# Where render_singers_chop_pads high-passes its pad stem.
+#
+# Scope note, because the first version of this comment claimed more: this is
+# ONE pad path, not the pad bus. The main chain is warm_dilla_pad_post, which
+# has no high-pass at all -- so a render that never calls the singers-chop
+# renderer is untouched by this, and measuring one proved it (80-140 Hz band
+# identical before and after, null residual -41 dB, i.e. render noise).
+#
+# It is still a real fix, just a latent one: the literal 140 was correct while
+# build_voicing folded every chord into MIDI 50..62 (147..247 Hz), where the
+# filter sat below the lowest root and only removed rumble.
+#
+# Lowering the chord register to 43..55 (98..196 Hz) for "slower deeper chords"
+# broke that relationship silently. Measured: a 98 Hz root through highpass
+# f=140 comes out 7.1 dB down (-28.2 dB against -21.1 dB unfiltered). The root
+# becomes the QUIETEST note in the chord, so the voicing is heard through its
+# upper partials -- thinner and more strident, not deeper. Chasing that as a
+# saturation problem is chasing the wrong stage.
+#
+# Derived from the register rather than pinned, so the two cannot drift apart
+# again: whatever CHORD_REGISTER_LOW says, this stays a little below it.
+#
+# 0.85 of the lowest root, capped at the historical 140 so this can only ever
+# open the filter DOWN from where it was, never up into the chords. At the
+# default register that is 83 Hz -- still above the sub bus (32..64 Hz) and the
+# kick fundamental, so the pads keep out of the low end while keeping their own
+# roots.
+#
+# General mixing practice is to high-pass pads at 150-200 Hz and leave the
+# bottom to kick and bass. That advice assumes pads voiced above it. Here the
+# operator has deliberately voiced them lower, so the filter follows the music
+# rather than the rule of thumb. PAD_HP pins it if that turns out wrong.
+def pad_highpass_hz
+  pinned = ENV["PAD_HP"].to_s.strip
+  return pinned.to_f.clamp(20.0, 400.0).round if pinned =~ /\A[\d.]+\z/
+
+  lowest_root = 440.0 * (2.0**((DillaProducerDNA::CHORD_REGISTER_LOW - 69.0) / 12.0))
+  [(lowest_root * 0.85), 140.0].min.clamp(20.0, 140.0).round
+end
+
+# How many bars each chord is held for.
+#
+# Operator direction on 2026-08-09 was "slower deeper chords always". This is
+# the "slower" half; CHORD_REGISTER_LOW/HIGH in producer_dna.rb is the "deeper".
+#
+# The preset value is MULTIPLIED rather than replaced, so the relative shape of
+# the catalogue survives: a preset that moved twice as fast as its neighbour
+# still does. Measured over TRACK_PRESETS, the distribution was 10 presets at 1
+# bar per chord, 55 at 2 and 6 at 4 -- so most of the catalogue changed chord
+# every two bars, which at 88 BPM is about 5.5 seconds.
+#
+# There was no override at all before this: chord_bars came only from the preset
+# literal, so there was no way to slow the harmony down short of editing 71
+# presets by hand.
+#
+# CHORD_BARS pins an absolute value, CHORD_SLOWDOWN scales the preset's.
+def resolve_chord_bars(preset)
+  pinned = ENV["CHORD_BARS"].to_s.strip
+  return pinned.to_i.clamp(1, 32) unless pinned.empty? || pinned.to_i.zero?
+
+  base = preset.fetch(:chord_bars, 4)
+  factor = (ENV["CHORD_SLOWDOWN"] || "2").to_f
+  factor = 1.0 unless factor.positive?
+  # Ceil, so a fractional factor still moves a 1-bar preset rather than
+  # rounding back down to where it started.
+  (base * factor).ceil.clamp(1, 32)
 end
 
 def resolve_master_lufs(family, sonic)
@@ -7503,7 +7597,7 @@ def warm_dilla_pad_post(path, cfg: nil, sonic: nil)
            [
              "aformat=channel_layouts=stereo",
              "lowpass=f=#{lp}:width_type=q:width=0.82",
-             "equalizer=f=260:t=o:w=1.0:g=1.2",
+             "equalizer=f=260:t=o:w=1.0:g=#{pad_mud_db(0.6)}",
              "equalizer=f=900:t=h:w=800:g=0.8",
              "equalizer=f=3200:t=h:w=1400:g=0.6",
              # aecho/chorus take in_gain:out_gain, NOT a wet/dry mix -- both
@@ -7523,8 +7617,8 @@ def warm_dilla_pad_post(path, cfg: nil, sonic: nil)
            [
              "aformat=channel_layouts=stereo",
              "lowpass=f=#{lp}:width_type=q:width=0.88",
-             "equalizer=f=260:t=o:w=1.0:g=2.0",
-             "equalizer=f=520:t=h:w=700:g=1.8",
+             "equalizer=f=260:t=o:w=1.0:g=#{pad_mud_db}",
+             "equalizer=f=520:t=h:w=700:g=#{pad_mud_db(0.9)}",
              "equalizer=f=1100:t=o:w=0.9:g=-0.6",
              "equalizer=f=3200:t=h:w=1600:g=1.0",
              ("tremolo=f=3.2:d=0.06" if cfg[:style_family] == :dilla),
@@ -7591,6 +7685,17 @@ LIVESET_PERIODS = [97, 113, 127, 149, 163, 179, 193, 211, 227, 251].freeze
 # catalogue and are still selectable by naming them explicitly -- what changed is
 # that nothing reaches them by default or by rotation.
 RAP_VOCAL_SOURCE = "gunnhild"
+
+# The voices a demo rotates through when RAP_VOCAL says nothing.
+#
+# Store P is a rapper the operator works with; haisam_johann and angelo_johann
+# are his own recordings; slum_village is the Dilla-lineage reference. Ordered
+# so the first slot is a full verse from a working rapper rather than a
+# reference or a demo take.
+#
+# Filtered against the catalogue at use, because a slug that does not resolve
+# renders instrumental while the log still prints rap=<slug>.
+DEMO_RAP_ROTATION = %w[store_p haisam_johann angelo_johann slum_village].freeze
 
 # Whether the launch environment explicitly asked for no vocals.
 #
@@ -8589,6 +8694,182 @@ end
 # F# minor is over-represented because the reference set is: five of the nine
 # local tracks in the Radio Bergen dossiers sit there, so the keys the pads
 # reach for should too.
+# Progressions organised by harmonic DEVICE rather than by mood.
+#
+# The device is the reusable part: once "backdoor" or "chromatic mediant" is in
+# the vocabulary it applies in any key, and the engine already transposes. The
+# existing tables are largely named for feel (warm_minor_vamp, neo_soul_pocket),
+# which makes them hard to reach for deliberately when a specific harmonic move
+# is wanted.
+#
+# Written mostly in C, F and Eb for readability; the key is arbitrary.
+#
+# Every symbol here was checked against chord_from_symbol before landing --
+# the first draft had 21 that did not parse, because plain major is the EMPTY
+# suffix in CHORD_SUFFIXES, not "maj", so CmajoverG is invalid and CoverG is
+# right. test_device_progressions_all_resolve keeps that true.
+DEVICE_PROGRESSIONS = {
+  # Modal interchange / borrowed from the parallel minor
+  borrowed_bVI_lift: %w[Cmaj9 Abmaj9 Fm9 Gsus4],
+  borrowed_bVII_fall: %w[Cmaj9 Bbmaj9 Fm9 Cmaj9],
+  borrowed_iv_ache: %w[Fmaj9 Fm9 Cmaj9 Am9],
+  borrowed_bIII_step: %w[Cmaj9 Ebmaj9 Fmaj9 Gsus4],
+  borrowed_bII_shadow: %w[Cm9 Dbmaj9 Cm9 Gm7],
+  minor_plagal_rest: %w[Cmaj9 Fm6 Cmaj9 Cmaj9],
+  parallel_minor_swap: %w[Ebmaj9 Ebm9 Abmaj9 Bbsus4],
+  aeolian_borrow_turn: %w[Am9 Fmaj9 Cmaj9 Gsus4],
+  dorian_borrow_bright: %w[Dm9 G13 Dm9 Bbmaj9],
+  phrygian_borrow_step: %w[Em9 Fmaj9 Em9 Am9],
+  mixo_borrow_seven: %w[Gmaj9 F13 Gmaj9 Dm9],
+  lydian_borrow_two: %w[Fmaj9#11 Gmaj9 Fmaj9#11 Cmaj9],
+  borrowed_dim_passing: %w[Cmaj9 C#dim7 Dm9 G13],
+  minor_four_major_four: %w[Gmaj9 Cmaj9 Cm9 Gmaj9],
+  bVII_bVI_bVII: %w[Am9 Gmaj9 Fmaj9 Gmaj9],
+  picardy_release: %w[Cm9 Fm9 Gsus4 Cmaj9],
+  borrowed_nine_sus: %w[Fmaj9 Bb9sus4 Fmaj9 Dm9],
+  modal_mixture_pair: %w[Dmaj9 Dm9 Gmaj9 Gm9],
+  ionian_to_dorian: %w[Cmaj9 Cm9 Fmaj9 Bb13],
+  borrowed_augmented_lift: %w[Cmaj9 Caug Fmaj9 Fm6],
+
+  # Chromatic mediants
+  chromatic_mediant_up: %w[Cmaj9 Emaj9 Cmaj9 Abmaj9],
+  chromatic_mediant_down: %w[Cmaj9 Abmaj9 Emaj9 Cmaj9],
+  mediant_minor_pair: %w[Am9 Fm9 Am9 Dbmaj9],
+  hexatonic_pole: %w[Cmaj9 Abm9 Cmaj9 Emaj9],
+  mediant_ladder_up: %w[Fmaj9 Amaj9 Dbmaj9 Fmaj9],
+  mediant_ladder_down: %w[Fmaj9 Dbmaj9 Amaj9 Fmaj9],
+  third_relation_soul: %w[Ebmaj9 Gmaj9 Bmaj9 Ebmaj9],
+  mediant_slash_drift: %w[Cmaj9 Emaj7overB Abmaj9 Cmaj9],
+  minor_mediant_wash: %w[Dm9 Fm9 Abmaj9 Dm9],
+  double_mediant_arc: %w[Amaj9 Fmaj9 Dbmaj9 Amaj9],
+  mediant_with_pedal: %w[Cmaj9 AboverC Emaj9 Cmaj9],
+  chromatic_third_cycle: %w[Bbmaj9 Dmaj9 Gbmaj9 Bbmaj9],
+  mediant_dominant_mix: %w[Cmaj9 Ab13 Emaj9 G13],
+  flat_six_major_turn: %w[Emaj9 Cmaj9 Amaj9 Emaj9],
+  sharp_five_mediant: %w[Cmaj9 G#maj9 Cmaj9 Fmaj9],
+
+  # Backdoor and tritone substitution
+  backdoor_classic: %w[Cmaj9 Fm9 Bb13 Cmaj9],
+  backdoor_extended: %w[Fmaj9 Bbm9 Eb13 Fmaj9],
+  tritone_sub_turn_alt: %w[Dm9 Db13 Cmaj9 Cmaj9],
+  tritone_two_five: %w[Am9 Ab13 Gmaj9 Gmaj9],
+  sub_five_chain: %w[Cmaj9 B13 Bb13 A13],
+  backdoor_minor: %w[Cm9 Fm9 Bb13 Cm9],
+  tritone_pedal_pull: %w[Fmaj9 Gb13 Fmaj9 Dm9],
+  double_backdoor: %w[Ebmaj9 Abm9 Db13 Ebmaj9],
+  altered_dominant_turn: %w[Dm9 G7alt Cmaj9 Am9],
+  alt_to_tonic_minor: %w[Dm7b5 G7alt Cm9 Cm9],
+  sub_dominant_slide: %w[Cmaj9 Db13 Dm9 Db13],
+  backdoor_with_nine: %w[Gmaj9 Cm9 F13 Gmaj9],
+  tritone_mediant_mix: %w[Cmaj9 Gb13 Ebmaj9 Cmaj9],
+  alt_chain_descent: %w[E7alt Eb7alt D7alt Db7alt],
+  backdoor_gospel: %w[Fmaj9 Bbm9 Eb13 Fmaj9 Dm9 Gm9 C13 Fmaj9],
+
+  # Pedal point
+  tonic_pedal_wash: %w[Cmaj9 FoverC G13overC Cmaj9],
+  dominant_pedal_hold: %w[CoverG Dm9overG G13 CoverG],
+  bass_pedal_minor: %w[Am9 DmoverA Em9overA Am9],
+  pedal_chromatic_top: %w[Cmaj9 C#dim7overC Dm9overC Cmaj9],
+  fifth_pedal_soul: %w[Fmaj9overC Gm9overC Ab13overC Fmaj9overC],
+  pedal_quartal_drift: %w[Dm11 Em11overD Fmaj9overD Dm11],
+  low_pedal_ache: %w[Cm9 AboverC Fm9overC Cm9],
+  pedal_lift_release: %w[Ebmaj9 AboverEb Bb13overEb Ebmaj9],
+  inverted_pedal_high: %w[Cmaj9 Fmaj9 Gsus4 Cmaj9],
+  organ_pedal_church: %w[GoverD Cmaj9overD D13 GoverD],
+  pedal_two_chord: %w[Fm9 EboverF Fm9 EboverF],
+  pedal_with_alt: %w[Cm9 G7altoverC Cm9 Fm9],
+  tonic_pedal_mediant: %w[Amaj9 FoverA Dbmaj9overA Amaj9],
+  pedal_sus_bloom: %w[Dsus4 Dmaj9 Dsus4 Dm9],
+  bass_hold_upper_move: %w[Bbmaj9 EboverBb Fm9overBb Bbmaj9],
+
+  # Dorian vamps (Dilla's home mode)
+  dorian_two_chord_lift: %w[Fm9 Bb13],
+  dorian_four_bar: %w[Dm9 G13 Dm9 G13],
+  dorian_sixth_shine: %w[Cm9 Am7b5 Cm9 F13],
+  dorian_quartal_vamp: %w[Gm11 C13 Gm11 C13],
+  dorian_add_nine: %w[Em9 Aadd9 Em9 Aadd9],
+  dorian_slash_walk: %w[Am9 DoverA Am9 Gmaj9],
+  dorian_ostinato: %w[Bbm9 Eb13 Bbm9 Eb13],
+  dorian_pedal_hold: %w[Fm11 Bb13overF Fm11 Bb13overF],
+  dorian_with_maj_four: %w[Dm9 Gmaj9 Dm9 Bbmaj9],
+  dorian_chromatic_step: %w[Cm9 C#dim7 Dm9 G13],
+  dorian_thirteen_bloom: %w[Gm9 C13 Gm9 F13],
+  dorian_minor_six: %w[Am9 Am6 Dm9 Am9],
+  dorian_open_fourths: %w[Dm11 Em11 Dm11 Cmaj9],
+  dorian_upper_triad: %w[Fm9 Abmaj9overF Fm9 Bb13],
+  dorian_soul_turn: %w[Cm9 F13 Bbmaj9 Ebmaj9],
+
+  # Constant structure / planing
+  planing_maj9_whole: %w[Cmaj9 Dmaj9 Ebmaj9 Fmaj9],
+  planing_m9_chromatic: %w[Cm9 Dbm9 Dm9 Ebm9],
+  planing_quartal_up: %w[Dm11 Em11 Fm11 Gm11],
+  planing_thirteen: %w[C13 D13 Eb13 F13],
+  constant_structure_thirds: %w[Cmaj9 Ebmaj9 Gbmaj9 Amaj9],
+  planing_sus_field: %w[Csus4 Dsus4 Fsus4 Gsus4],
+  planing_down_step: %w[Gmaj9 Fmaj9 Ebmaj9 Dbmaj9],
+  planing_add_nine: %w[Cadd9 Dadd9 Fadd9 Gadd9],
+  parallel_six_nine: %w[C69 D69 F69 G69],
+  planing_minor_eleven: %w[Am11 Bm11 Dm11 Em11],
+  whole_tone_planing: %w[Cmaj9 Dmaj9 Emaj9 Gbmaj9],
+  planing_alt_dominants: %w[C7alt D7alt F7alt G7alt],
+
+  # Line cliches and voice-led descents
+  minor_line_cliche_nine: %w[Cm9 Cmmaj7 Cm7 Cm6],
+  major_line_cliche: %w[Cmaj7 Cmaj9 C69 Cmaj7],
+  descending_bass_soul_slash: %w[Cmaj9 CoverB Am9 CoverG],
+  chromatic_inner_fall: %w[Fmaj9 Fmaj7#5 F13 Fmaj9],
+  walking_down_fourth: %w[Cmaj9 Bm9 Am9 Gmaj9],
+  half_step_voice_lead: %w[Dm9 Dbmaj9 Cmaj9 Bmaj9],
+  suspended_resolution_chain: %w[Csus4 Cmaj9 Fsus4 Fmaj9],
+  inner_voice_rise: %w[Am9 Ammaj7 Am7 Am6],
+  bass_descent_octave: %w[Cmaj9 CoverB CoverA CoverG],
+  contrary_motion_pair: %w[Cmaj9 Em9 Gmaj9 Bm9],
+  chromatic_upper_climb: %w[Fmaj9 Fmaj9#11 F13 Fmaj13],
+  stepwise_minor_arc: %w[Am9 Bm9 Cmaj9 Dm9],
+
+  # Deceptive and unexpected resolutions
+  deceptive_to_bVI: %w[Dm9 G13 Abmaj9 Cmaj9],
+  deceptive_minor_six: %w[Gm9 C13 Abmaj9 Fmaj9],
+  interrupted_cadence: %w[Fmaj9 Bb13 Gm9 Fmaj9],
+  false_relation_turn: %w[Cmaj9 Cm9 Abmaj9 Cmaj9],
+  evaded_resolution: %w[Dm9 G13 Em9 Am9],
+  surprise_major_third: %w[Am9 D13 F#maj9 Am9],
+  unresolved_hang: %w[Cmaj9 D13 Fmaj9 D13],
+  deceptive_chain_long: %w[Cmaj9 A13 Dm9 B13 Em9 C13 Fmaj9 G13],
+  sidestep_resolution: %w[Fm9 Bb13 Bmaj9 Ebmaj9],
+  dominant_to_dominant: %w[G13 C13 F13 Bb13],
+  minor_deceptive_lift: %w[Cm9 G7alt Abmaj9 Cm9],
+  wrong_key_landing: %w[Dm9 G13 Dbmaj9 Cmaj9],
+
+  # Quartal and sus fields
+  quartal_stack_open: %w[Dm11 Gm11 Cm11 Fm11],
+  sus_field_drift: %w[C9sus4 F9sus4 Bb9sus4 Eb9sus4],
+  quartal_pedal_bed: %w[Am11 Dm11 Am11 Em11],
+  sus_to_maj_bloom: %w[Gsus4 Gmaj9 Csus4 Cmaj9],
+  fourths_ladder: %w[Cm11 Fm11 Bbm11 Ebm11],
+  quartal_mediant_shift: %w[Dm11 Fm11 Abm11 Dm11],
+  sus_nine_hover: %w[F9sus Bb9sus F9sus Eb9sus],
+  open_fifth_field: %w[Csus2 Fsus2 Gsus2 Csus2],
+  quartal_over_pedal: %w[Dm11overG Em11overG Dm11overG Cmaj9overG],
+  mccoy_fourths: %w[Fm11 Bbm11 Fm11 Cm11],
+  sus_chromatic_pair: %w[Dbsus4 Dsus4 Dbsus4 Csus4],
+  quartal_upper_structure: %w[Cm11 Ebmaj9overC Cm11 Fm11],
+
+  # Gospel and church devices
+  gospel_walk_up_ninths: %w[Fmaj9 Gm9 Am9 Bbmaj9],
+  gospel_two_five_chain: %w[Am9 D13 Gm9 C13 Fmaj9 Fmaj9],
+  church_plagal_amen: %w[Fmaj9 Bbmaj9 Fmaj9 Fmaj9],
+  gospel_bVII_lift: %w[Cmaj9 Bbmaj9 Cmaj9 Fmaj9],
+  gospel_dim_passing: %w[Fmaj9 F#dim7 Gm9 C13],
+  shout_turnaround: %w[Ebmaj9 Cm9 Fm9 Bb13],
+  gospel_slash_climb: %w[FoverA Bbmaj9 FoverC Fmaj9],
+  hymn_suspension: %w[Cmaj9 Csus4 Cmaj9 Fmaj9],
+  gospel_minor_walk: %w[Cm9 Dm7b5 Ebmaj9 Fm9],
+  praise_break_cycle: %w[Abmaj9 Bbmaj9 Cm9 Abmaj9],
+  gospel_six_two_five_dorian: %w[Am9 D13 Dm9 G13],
+  amen_extended: %w[Bbmaj9 Ebmaj9 Bbmaj9 Fm9 Bb13 Ebmaj9],
+}.freeze
+
 EXTENDED_PROGRESSIONS = {
   # Stepwise descent from the tonic, twice, resolving the second time. The
   # first pass lands on the relative major and keeps moving; only the second
@@ -9163,7 +9444,7 @@ CHORD_PROGRESSIONS = {
   # Dorian with the window open: the minor tonic and the major fourth that only
   # Dorian has, plus the relative major leaning in. Modal, but not static.
   dorian_open_window: %w[Dm9 G13 Cmaj9 Am9 Dm9 Em9 G13 Dm9],
-}.merge(EXTENDED_PROGRESSIONS).freeze
+}.merge(EXTENDED_PROGRESSIONS).merge(DEVICE_PROGRESSIONS).freeze
 
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
@@ -9527,7 +9808,14 @@ CHORD_TEMPLATES = {
   "maj9" => [0, 4, 7, 11, 2],
   "sus" => [0, 5, 7],
   "dim" => [0, 3, 6],
-  "7alt" => [0, 4, 7, 10, 1],
+  # No natural fifth. "alt" means the fifth AND the ninth are altered; with a
+  # perfect fifth at 7 this was a 7b9 wearing an altered dominant's name, and
+  # the engine held both spellings at once -- DillaProducerDNA::CHORD_TEMPLATES
+  # has [0, 4, 8, 10, 1] for the same symbol. Which chord you got depended on
+  # whether the render reached chord_from_quality (this table) or build_voicing
+  # (that one), and both are live. Across the 15 symbols the two tables share,
+  # this was the only disagreement; test_chord_tables_agree pins that.
+  "7alt" => [0, 4, 8, 10, 1],
   "7#11" => [0, 4, 7, 10, 6],
   "m11" => [0, 3, 7, 10, 5],
   "sus4" => [0, 5, 7, 10],
@@ -15040,7 +15328,18 @@ def demo_all(bars_count = 12, destination = nil)
   # and tone across 84 pieces; a voice on top is the loudest thing in the mix and
   # it masks exactly what is being demonstrated. Set DEMO_RAP_EVERY=4 to put the
   # old every-fourth-track rap back.
-  rap_every = (ENV["DEMO_RAP_EVERY"] || "0").to_i
+  # Every other slot carries a rapper, by default.
+  #
+  # This defaulted to 0 -- no vocals anywhere -- on the reasoning that a voice is
+  # the loudest thing in the mix and masks the harmony the demo exists to show.
+  # That is true of a demo for an engine and wrong for a demo of a hiphop
+  # engine: the tool makes records for rappers, and a beat tape with no rapper
+  # on it does not demonstrate the thing it is for. Operator direction
+  # 2026-08-09: "make it include rap vocals".
+  #
+  # 2, not 1: alternating slots still leave every other track instrumental, so
+  # the harmony is audible on its own somewhere in the run.
+  rap_every = (ENV["DEMO_RAP_EVERY"] || "2").to_i
 
   # Captured ONCE, before the loop, because the loop assigns ENV["RAP_VOCAL"]
   # on every iteration -- reading it inside would return the previous slot's
@@ -15050,6 +15349,11 @@ def demo_all(bars_count = 12, destination = nil)
   # twenty-six slots is its own kind of monotony, and the catalogue has six.
   demo_rap_slugs = ENV["RAP_VOCAL"].to_s.split(",").map(&:strip)
                                     .reject { |s| s.empty? || s == "0" }
+  demo_rap_slugs = DEMO_RAP_ROTATION.dup if demo_rap_slugs.empty?
+  # Never ship a slug the catalogue cannot resolve: rap_vocal_resolve returns
+  # nil and the slot renders instrumental while the log still says rap=<slug>,
+  # which reads as the vocal having played.
+  demo_rap_slugs = demo_rap_slugs.select { |s| rap_vocal_resolve(s) }
   demo_rap_slugs = [RAP_VOCAL_SOURCE] if demo_rap_slugs.empty?
 
   ENV["SPEAK"] ||= "0"
@@ -15224,9 +15528,9 @@ def demo_all(bars_count = 12, destination = nil)
     # (kick_lag 2ms, hat_late 6ms) while yancey, the Dilla one, is 8 and 22.
     # A Dilla engine demonstrated itself in the least Dilla pocket it owns.
     #
-    # Off by default: this changes how every slot sits, and that is a decision
-    # about the record rather than a defect to repair.
-    if ENV["DEMO_VARY_POCKET"] == "1"
+    # On by default as of 2026-08-09, on operator direction to codify it. Set
+    # DEMO_VARY_POCKET=0 for the old single-pocket behaviour.
+    if ENV.fetch("DEMO_VARY_POCKET", "1") == "1"
       performers = DillaComposition::PERFORMERS.keys
       grooves = DillaComposition::GROOVE_DNA.keys
       # Indexed off the slug, not idx, so a track keeps its pocket when the
@@ -18941,7 +19245,7 @@ def render_singers_chop_pads(path, pad_events, duration)
 
   filt = "#{chains.join(';')};#{labels.join}" \
          "amix=inputs=#{labels.length}:duration=longest:normalize=0," \
-         "atrim=0:#{duration},highpass=f=140,alimiter=limit=0.95:level_out=0.96[pads]"
+         "atrim=0:#{duration},highpass=f=#{pad_highpass_hz},alimiter=limit=0.95:level_out=0.96[pads]"
   prev_soft = ENV["DILLA_SOFT_SH"]
   ENV["DILLA_SOFT_SH"] = "1"
   begin

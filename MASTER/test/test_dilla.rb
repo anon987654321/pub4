@@ -830,7 +830,16 @@ class TestDilla < Minitest::Test
         flylo_kick: events[:flylo_kick]&.length || 0
       )
     RUBY
-    assert_operator result.fetch("chord_count"), :>=, 12
+    # 8, not 12. resolve_chord_bars doubles every preset's chord_bars on the
+    # "slower deeper chords always" direction of 2026-08-09, so a progression
+    # generated across the same bar count holds each chord twice as long and
+    # needs about half as many. Measured 9 here where it was 14.
+    #
+    # The number was tracking harmonic rhythm rather than the property this
+    # test is named for -- the four assertions below (variety of names, variety
+    # of lengths, distinct pad voicings, distinct chord indices) are what makes
+    # a progression "long and varied", and none of them moved.
+    assert_operator result.fetch("chord_count"), :>=, 8
     assert_operator result.fetch("unique_names"), :>=, 3
     assert_operator result.fetch("lens_variety"), :>=, 2
     assert_operator result.fetch("pad_unique"), :>=, 3
@@ -1083,6 +1092,81 @@ class TestDilla < Minitest::Test
                  "techno's target is deliberately explicit rather than falling through to :default")
     assert result.fetch("reencodes_with_codec_for"),
            "normalise_master! must re-encode at the renderer's own bitrate, not a hardcoded one"
+  end
+
+  # DEVICE_PROGRESSIONS is 140 entries of pure data, and data of this shape
+  # fails silently: progression_for rescues ArgumentError and returns nil, so a
+  # mistyped symbol does not raise -- it renders a bar of nothing, or drops the
+  # chord and shortens the progression, and the log still names the track.
+  #
+  # The first draft had 21 symbols that did not parse. The cause is worth
+  # keeping in a test rather than a comment: plain major is the EMPTY suffix in
+  # CHORD_SUFFIXES, not "maj", so "CmajoverG" is invalid where "CoverG" is
+  # right. Nothing in the engine would have told anyone.
+  def test_device_progressions_all_resolve
+    result = eval_in_engine(<<~RUBY)
+      bad = []
+      DEVICE_PROGRESSIONS.each do |name, chords|
+        chords.each do |c|
+          r = begin
+            DillaProducerDNA.chord_from_symbol(c)
+          rescue StandardError
+            nil
+          end
+          bad << "\#{name}:\#{c}" if r.nil? || Array(r[:hz]).empty?
+        end
+      end
+      puts JSON.generate(
+        count: DEVICE_PROGRESSIONS.length,
+        symbols: DEVICE_PROGRESSIONS.values.sum(&:length),
+        bad: bad.first(20),
+        # Every one must survive the merge into CHORD_PROGRESSIONS -- a name
+        # colliding with an existing entry would be silently overwritten by it.
+        unreachable: DEVICE_PROGRESSIONS.keys.reject { |k| CHORD_PROGRESSIONS.key?(k) },
+        shortest: DEVICE_PROGRESSIONS.values.map(&:length).min
+      )
+    RUBY
+
+    assert_equal 140, result.fetch("count")
+    assert_empty result.fetch("bad"),
+                 "a symbol that does not parse renders as a missing chord, not an error"
+    assert_empty result.fetch("unreachable"),
+                 "a name that collides with an existing progression is silently overwritten by it"
+    assert_operator result.fetch("shortest"), :>=, 2, "a progression needs at least two chords to move"
+  end
+
+  # Two chord tables, one engine.
+  #
+  # dilla.rb::CHORD_TEMPLATES (15 symbols) feeds chord_from_quality;
+  # DillaProducerDNA::CHORD_TEMPLATES (46) feeds build_voicing. Both are live,
+  # so a symbol spelled differently in the two is a chord whose actual notes
+  # depend on which path the render happened to take.
+  #
+  # Measured: exactly one disagreement, "7alt" -- [0,4,7,10,1] here against
+  # [0,4,8,10,1] there. A perfect fifth at 7 makes it a 7b9, not an altered
+  # dominant, so half the engine played a chord that was not the one named.
+  #
+  # This pins agreement rather than merging the tables: the larger one carries
+  # 31 symbols the smaller does not, and several callers iterate the smaller as
+  # a validation set.
+  def test_chord_tables_agree_on_every_shared_symbol
+    result = eval_in_engine(<<~RUBY)
+      a = CHORD_TEMPLATES
+      b = DillaProducerDNA::CHORD_TEMPLATES
+      shared = a.keys & b.keys
+      puts JSON.generate(
+        shared: shared.length,
+        disagreeing: shared.reject { |k| a[k] == b[k] }.sort,
+        alt_here: a["7alt"], alt_there: b["7alt"]
+      )
+    RUBY
+    assert_operator result.fetch("shared"), :>=, 15, "the tables should still overlap"
+    assert_empty result.fetch("disagreeing"),
+                 "a symbol spelled two ways renders as two different chords depending on path"
+    # An altered dominant has no perfect fifth. Pinned directly so a future
+    # edit cannot make both tables agree on the WRONG spelling and still pass.
+    refute_includes result.fetch("alt_here"), 7, "7alt must not carry a natural fifth"
+    refute_includes result.fetch("alt_there"), 7, "7alt must not carry a natural fifth"
   end
 
   # A persisted composition session used to outrank the caller completely.
