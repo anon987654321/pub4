@@ -4752,7 +4752,51 @@ def drum_bus_mapping
   map
 end
 
+# Where the pad bus rolls off.
+#
+# 3400 Hz had no override of any kind -- it came from the sonic profile or that
+# literal, so there was no way to test a brighter pad without editing profiles.
+#
+# Measured against three J Dilla records (Time: The Donut of the Heart, Slum
+# Village's World Full of Sadness, Jay Dee's La La La), octave-band energy
+# relative to each file's own full-band level:
+#
+#            125Hz  250   500    1k    2k    4k    8k    tilt 125->4k
+#   Time      -5.8  -8.1 -10.5 -11.9 -11.4 -15.1 -20.7   -1.86 dB/oct
+#   Sadness   -3.5  -8.9 -12.7 -14.7 -15.9 -17.1 -19.6   -2.72
+#   La La La  -2.2  -9.0 -14.4 -15.7 -16.1 -15.2 -17.5   -2.60
+#   engine    -3.1  -5.1 -10.0 -15.1 -21.2 -27.5 -32.8   -4.88
+#
+# The engine falls roughly twice as fast: 12 dB darker at 4 kHz and 12-15 dB at
+# 8 kHz than any of the three. It also carries 3-4 dB MORE at 250 Hz. Dark and
+# congested at once, which is what "overdrive sound, pads not nice" describes.
+#
+# Caveat kept deliberately: the engine figure is an instrumental 8-bar sketch
+# and the records are full mastered tracks with vocals and leads that carry
+# their own top end. A render WITH a rap vocal measures -3.66 dB/oct -- closer,
+# still steeper than all three. So content explains part of the gap and not all
+# of it.
+#
+# The default is unchanged at 3400. PAD_LP exists so the number can be tested
+# against those references instead of argued about; moving the default is a tone
+# decision and belongs to the operator.
+#
+# A/B'd immediately after adding it, and the answer was NOT what the comment
+# above would lead you to expect: PAD_LP=3400 against PAD_LP=7000 produces
+# different files (different checksums, the override is definitely read) whose
+# octave-band energy is identical to 0.1 dB at every band. The pad bus simply
+# does not carry enough of the mix's top end for its bandwidth to register.
+#
+# So the darkness is not here. What the same measurement did find: every sampled
+# bed is lowpassed between 5200 and 6000 Hz by its TRACK_SAMPLE_LOOPS entry,
+# while all three reference records hold real energy at 8 kHz (-17.5 to -20.7
+# relative). And the source material can carry it -- kembara_rindu's own loop.wav
+# measures -2.54 dB/oct with 4 kHz at -17.8, which is La La La's -2.60 and -15.2
+# almost exactly. The crates are not the limit; the per-loop lp is.
 def sonic_pad_lowpass(sonic)
+  pinned = ENV["PAD_LP"].to_s.strip
+  return pinned.to_i.clamp(800, 18_000) if pinned =~ /\A\d+\z/
+
   sonic&.dig("synth", "pad_lowpass_hz")&.to_i || 3400
 end
 
