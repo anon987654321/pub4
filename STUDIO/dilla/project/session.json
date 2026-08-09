@@ -1,7 +1,7 @@
 {
-  "track": "neo_soul",
-  "performer": "questlove",
-  "groove_dna": "cosmogramma",
+  "track": "semua_untuk_mu",
+  "performer": "yancey",
+  "groove_dna": "donuts",
   "generation": 59,
   "best_score": 68.13,
   "motifs": [
@@ -106,22 +106,6 @@
     {
       "bar": "7",
       "section": "verse"
-    },
-    {
-      "bar": "8",
-      "section": "hook"
-    },
-    {
-      "bar": "9",
-      "section": "hook"
-    },
-    {
-      "bar": "10",
-      "section": "hook"
-    },
-    {
-      "bar": "11",
-      "section": "hook"
     }
   ],
   "critique_log": [

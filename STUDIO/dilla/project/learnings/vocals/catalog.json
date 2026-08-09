@@ -920,14 +920,36 @@
       "note": "Slum Village / Dilla production — real rapping for Camel stream",
       "isolated": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/slum_village/fit_86_32bars.wav",
-        "beat_bpm": 86.0,
-        "n_bars": 32,
-        "offset_sec": 18.53,
-        "phrase_start": 18.53,
-        "tempo_ratio": 0.86,
-        "rms_db": -18.44
-      }
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/slum_village/fit_88_12bars.wav",
+        "beat_bpm": 88.32,
+        "n_bars": 12,
+        "offset_sec": 47.915,
+        "phrase_start": 27.028,
+        "source_bpm": 100.0,
+        "tempo_ratio": 1.0,
+        "rms_db": -12.6,
+        "sub_bleed_db": -34.3,
+        "snapped_lines": 12,
+        "has_pulse": false,
+        "key_shift": 0,
+        "progression": "ubrukte_samples_03",
+        "voice_only": true
+      },
+      "chroma": [
+        0.06399,
+        0.07298,
+        0.08428,
+        0.09179,
+        0.09509,
+        0.07932,
+        0.083,
+        0.08489,
+        0.08673,
+        0.09382,
+        0.08334,
+        0.08079
+      ],
+      "voice_only": true
     },
     {
       "slug": "jonas_v",
@@ -2524,20 +2546,36 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/haisam_johann/fit_80_18bars.wav",
-        "beat_bpm": 80.0,
-        "n_bars": 18,
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/haisam_johann/fit_92_16bars.wav",
+        "beat_bpm": 92.16,
+        "n_bars": 16,
         "offset_sec": 40.6072,
         "phrase_start": 0.0,
         "source_bpm": 77.3,
         "tempo_ratio": 1.0,
-        "rms_db": -20.289,
-        "sub_bleed_db": -52.127,
-        "snapped_lines": 30,
+        "rms_db": -18.5,
+        "sub_bleed_db": -50.0,
+        "snapped_lines": 24,
         "has_pulse": false,
+        "key_shift": 0,
+        "progression": "pedal_e_descent",
         "voice_only": true
       },
-      "bpm_estimate": 77.3
+      "bpm_estimate": 77.3,
+      "chroma": [
+        0.05072,
+        0.05374,
+        0.06263,
+        0.07858,
+        0.09247,
+        0.09218,
+        0.10142,
+        0.09765,
+        0.10904,
+        0.09904,
+        0.09437,
+        0.06815
+      ]
     },
     {
       "slug": "angelo_johann",
@@ -2547,20 +2585,36 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/angelo_johann/fit_76_18bars.wav",
-        "beat_bpm": 76.0,
-        "n_bars": 18,
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/angelo_johann/fit_118_12bars.wav",
+        "beat_bpm": 117.5,
+        "n_bars": 12,
         "offset_sec": 0.0,
         "phrase_start": 0.0,
-        "source_bpm": 76.0,
+        "source_bpm": 152.0,
         "tempo_ratio": 1.0,
-        "rms_db": -21.903,
-        "sub_bleed_db": -43.169,
+        "rms_db": -18.6,
+        "sub_bleed_db": -39.9,
         "snapped_lines": null,
         "has_pulse": false,
+        "key_shift": 0,
+        "progression": "ubrukte_samples_01",
         "voice_only": true
       },
-      "bpm_estimate": 76.0
+      "bpm_estimate": 152.0,
+      "chroma": [
+        0.03787,
+        0.10109,
+        0.04621,
+        0.03716,
+        0.13186,
+        0.06197,
+        0.06137,
+        0.05253,
+        0.04974,
+        0.31431,
+        0.05364,
+        0.05226
+      ]
     },
     {
       "slug": "store_p",
@@ -2586,23 +2640,23 @@
         0.05149
       ],
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/store_p/fit_68_8bars_key-2.wav",
-        "beat_bpm": 68.0,
-        "n_bars": 8,
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/store_p/fit_92_16bars_key-1.wav",
+        "beat_bpm": 92.16,
+        "n_bars": 16,
         "offset_sec": 34.496,
         "phrase_start": 0.0,
         "source_bpm": 88.9,
-        "tempo_ratio": 0.7649,
-        "rms_db": -17.4,
-        "sub_bleed_db": -35.4,
-        "snapped_lines": 9,
+        "tempo_ratio": 1.0,
+        "rms_db": -17.7,
+        "sub_bleed_db": -37.4,
+        "snapped_lines": 13,
         "has_pulse": false,
-        "key_shift": -2,
-        "progression": "lydian_lift_backdoor_turn",
+        "key_shift": -1,
+        "progression": "pedal_e_descent",
         "voice_only": true
       },
       "bpm_estimate": 88.9
     }
   ],
-  "updated_at": "2026-08-03T20:06:52Z"
+  "updated_at": "2026-08-09T02:13:04Z"
 }
