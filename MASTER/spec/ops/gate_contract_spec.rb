@@ -40,4 +40,28 @@ class GateContractSpec < Minitest::Test
     assert_includes source, '"MASTER_WATCHER" => "0"'
     assert_includes source, '"MASTER_HEARTBEAT" => "0"'
   end
+
+  # The assertions above are string matches, and a string match is what let this
+  # break: bin/gate listed MASTER_AUTOFIX=0 and its comment claimed /scan was
+  # read-only under it, while MechanicalAutofix read MASTER_SCAN_AUTOFIX and
+  # consulted MASTER_AUTOFIX nowhere. Every key was present and the tree was
+  # still written to. So this one asks the consumer instead of the spelling.
+  def test_gate_safe_env_actually_disables_scan_autofix
+    require_relative "../../lib/review/scan/mechanical_autofix"
+
+    env = safe_env_from_source
+    assert_includes env.keys, "MASTER_SCAN_AUTOFIX",
+                    "bin/gate's SAFE_ENV must name the variable /scan's autofix pass actually reads"
+    refute Master::Review::Scan::MechanicalAutofix.enabled?(env: env),
+           "bin/gate's SAFE_ENV does not disable MechanicalAutofix, so the full chain's first " \
+           "/scan writes to the tree before /fix runs -- which is what the COMMANDS comment " \
+           "promises it does not do"
+  end
+
+  # Parsed out of the source rather than required, because bin/gate runs the
+  # whole chain at load time; there is nothing to require without running it.
+  def safe_env_from_source
+    body = File.read(GATE)[/SAFE_ENV = \{(.*?)\}\.freeze/m, 1].to_s
+    body.scan(/"([A-Z_]+)"\s*=>\s*"([^"]*)"/).to_h
+  end
 end

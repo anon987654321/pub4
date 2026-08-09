@@ -5,16 +5,30 @@ require "open3"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
+# MASTER_AUTOFIX gates the background fix *loop* (lib/ops/loop_slot.rb,
+# builder/ai_boot.rb) -- it has never had anything to do with the deterministic
+# AstFixer pass that /scan runs. That pass reads MASTER_SCAN_AUTOFIX, defaulting
+# to "1", so for as long as this hash listed only MASTER_AUTOFIX the full chain's
+# *first* `/scan .` wrote to the tree before `/fix` was ever reached, and the
+# variable set to prevent it was inert. Scan-only mode was safe by accident,
+# because it passes --no-autofix on the command line instead of trusting the env.
+#
+# Both keys, because they are two different switches and the gate wants both off:
+# no background convergence loop, and no writes from a step whose job is to
+# measure. RAILS/gates/lib/constitutional_scan.rb already carried exactly this
+# pair; this file had drifted from it.
 SAFE_ENV = {
   "MASTER_SAFE_MODE" => "1",
   "MASTER_BACKGROUND" => "0",
   "MASTER_AUTOFIX" => "0",
+  "MASTER_SCAN_AUTOFIX" => "0",
   "MASTER_WATCH" => "0",
   "MASTER_WATCHER" => "0",
   "MASTER_HEARTBEAT" => "0"
 }.freeze
 
-# Full chain mutates the tree via /fix. Prefer SCAN_ONLY=1 in CI/preflight.
+# Full chain mutates the tree via /fix, and only via /fix -- see SAFE_ENV above.
+# Prefer SCAN_ONLY=1 in CI/preflight.
 SCAN_ONLY = ENV["MASTER_GATE_SCAN_ONLY"] == "1" || ARGV.include?("--scan-only")
 
 COMMANDS = {

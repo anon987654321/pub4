@@ -52,10 +52,16 @@ module Master
       end
 
       def run_master(message)
+        # MASTER_SCAN_AUTOFIX=0 for the same reason bin/gate sets it: this runs
+        # `/scan MASTER/lib` and then `/fix MASTER/lib` and records what each did
+        # separately. MASTER_AUTOFIX gates the background fix loop, not the
+        # AstFixer pass inside /scan, so without this the scan step wrote to the
+        # tree and the capture attributed its edits to /fix.
         env = {
           "MASTER_SAFE_MODE" => "1",
           "MASTER_BACKGROUND" => "0",
           "MASTER_AUTOFIX" => "0",
+          "MASTER_SCAN_AUTOFIX" => "0",
           "MASTER_WATCH" => "0",
           "MASTER_HEARTBEAT" => "0",
           "MASTER_SELF_EVOLUTION" => "0",
