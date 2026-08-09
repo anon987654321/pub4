@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Repo-wide instruction surface for the MASTER runtime.
+#
+#   bin/master                          interactive session
+#   bin/master "tighten brgen's feed"   one instruction, then interactive
+#   bin/master --fold "<goal>"          route the goal through the core Fold and exit
+#   echo /status | bin/master           pipe mode
+#
+# MASTER already accepts free-text instructions, but only from inside MASTER/ —
+# it boots with `root: Dir.pwd` and its siblings are reached relatively
+# (MASTER/bin/gate reads ../RAILS and ../OPENBSD). Run it from the repo root and
+# it looks for ./data and finds nothing. So this wrapper does the one thing that
+# was missing: chdir into MASTER so the constitution and the sibling trees both
+# resolve, then hand the instruction over unchanged.
+#
+# Everything past this point is MASTER's: data/soul.yml and data/rules.yml
+# govern the session, and every durable write is validated against them. This
+# file adds no policy of its own and deliberately parses no flags beyond the
+# ones it needs — unrecognised arguments belong to bin/cli, not here.
+#
+# bin/pub4 (status, vps state/deploy/logs, post-pull) is untouched and remains
+# the operator surface; this is the instruction surface. bin/cli still forwards
+# to bin/pub4 for legacy callers.
+
+ROOT = File.expand_path("..", __dir__)
+MASTER = File.join(ROOT, "MASTER")
+CLI = File.join(MASTER, "bin", "cli")
+
+unless File.executable?(CLI) || File.file?(CLI)
+  warn "master: #{CLI} is missing — is this a full pub4 checkout?"
+  exit 1
+end
+
+if ARGV.first == "--help" || ARGV.first == "-h"
+  puts <<~HELP
+    master — instruct the MASTER runtime with the whole repo in scope
+
+    Usage:
+      bin/master                        interactive session
+      bin/master "<instruction>"        run one instruction, then interactive
+      bin/master --fold "<goal>"        route one coding goal through the core Fold
+      bin/master --fast                 status/orient/tools/help only (1GB hosts)
+      echo '/status' | bin/master       pipe mode
+
+    Slash commands (/status, /orient, /scan, /fix, /review, …) work as they do
+    in MASTER/bin/cli — this is the same runtime, booted from MASTER/ so that
+    data/soul.yml and the sibling RAILS, OPENBSD and STUDIO trees all resolve.
+
+    Repo operator surface (unchanged): bin/pub4 status | vps | post-pull
+    Gate chain over the whole tree:    cd MASTER && ruby bin/gate
+  HELP
+  exit 0
+end
+
+# Let MASTER's own tooling find the checkout without recomputing it from a
+# Rails root, which Pub4::DeployPaths exists to stop callers doing.
+ENV["PUB4_ROOT"] ||= ROOT
+
+# A bare instruction is what a person types; -m is what bin/cli parses. Passing
+# it through as -m keeps quoting behaviour identical whether the instruction has
+# spaces, slashes or neither, and leaves every flag bin/cli owns untouched.
+args = ARGV.dup
+if args.length == 1 && !args.first.start_with?("-")
+  args = ["-m", args.first]
+end
+
+# bin/ruby resolves pub4's preferred interpreter (ruby34 on OpenBSD, rbenv on
+# the Mac). Inheriting whatever `env ruby` happened to pick is how the local
+# boot broke before .ruby-version was pinned, and MASTER needs ~> 3.4.
+Dir.chdir(MASTER)
+exec(File.join(ROOT, "bin", "ruby"), CLI, *args)

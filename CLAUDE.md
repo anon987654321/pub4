@@ -16,7 +16,7 @@ MASTER/    constitutional AI runtime in Ruby — the primary product
 RAILS/     Rails 8 apps and mountable engines (brgen and its verticals, amber, bsdports)
 OPENBSD/   deploy pipeline, VPS runbook, operator debt
 STUDIO/    media tools — dilla (beats), lora, postpro (grading), repligen (images)
-bin/       repo-level entry points: cli, pub4, ruby
+bin/       repo-level entry points: master, cli, pub4, ruby
 dotfiles/  shell and editor config
 ```
 
@@ -33,6 +33,16 @@ dotfiles/  shell and editor config
 | Known debt, and what not to chase | `MASTER/DEBT.md`, `OPENBSD/data/debt.yml` |
 
 Feature truth is `RAILS/apps.yml`. Operator debt is `OPENBSD/data/debt.yml`.
+
+## Instructing MASTER
+
+`bin/master "<instruction>"` is the repo-wide instruction surface — the MASTER
+runtime booted from `MASTER/` so `data/soul.yml` and the sibling `RAILS`,
+`OPENBSD` and `STUDIO` trees all resolve. Bare `bin/master` opens a session;
+slash commands work as in `MASTER/bin/cli`, because it is that runtime.
+
+`bin/pub4` stays the *operator* surface (`status`, `vps state|deploy|logs`,
+`post-pull`) and `bin/cli` still forwards to it for legacy callers.
 
 ## Checks
 
