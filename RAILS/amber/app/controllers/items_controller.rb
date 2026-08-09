@@ -18,7 +18,17 @@ class ItemsController < ApplicationController
   # here (Shared::Authentication), so without an identity gate the write
   # succeeded for anyone. brgen's posts#share has carried require_real_user for
   # this reason; amber's did not.
-  before_action :require_real_user, only: [ :share ]
+  # NO `only:` here, and no second declaration: `before_action :require_real_user`
+  # above already covers every action including :share, and Rails DEDUPLICATES
+  # callbacks by filter name -- so re-declaring the same filter with
+  # `only: [:share]` did not add a second gate, it REPLACED the unrestricted one
+  # and narrowed it to :share. Read off the callback chain rather than the
+  # source: ItemsController had exactly ONE require_real_user callback and it
+  # carried @conditional_key=:only.
+  #
+  # The effect was the reverse of the intent above -- closing the /share hole
+  # opened index, new, create, edit, update and destroy to anyone. Measured on
+  # the running app before this fix: anonymous GET /items/new returned 200.
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
