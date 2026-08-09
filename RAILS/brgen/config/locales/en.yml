@@ -518,7 +518,7 @@ en:
       other: "%{count} items"
     remove_listing: "Remove listing"
     confirm_delete_saved_search: "Delete this saved search?"
-    confirm_remove_listing: "Delete this listing? Its orders and reviews are deleted with it, and that cannot be undone."
+    confirm_remove_listing: "Remove this listing? It is taken out of the marketplace and stays visible only to you. Orders and reviews are kept."
     run_search: "Run"
     top_offers_heading: "Picked for the city"
     make_offer: "Make an offer"

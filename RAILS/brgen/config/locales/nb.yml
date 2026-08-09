@@ -518,7 +518,7 @@ nb:
       other: "%{count} varer"
     remove_listing: "Fjern annonse"
     confirm_delete_saved_search: "Slette dette lagrede søket?"
-    confirm_remove_listing: "Slette denne annonsen? Ordrene og omtalene slettes sammen med den, og det kan ikke angres."
+    confirm_remove_listing: "Fjerne denne annonsen? Den tas ut av markedsplassen og blir bare synlig for deg. Ordrer og omtaler beholdes."
     run_search: "Kjør"
     top_offers_heading: "Plukket ut for byen"
     make_offer: "Gi et bud"

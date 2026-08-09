@@ -13,8 +13,24 @@ class Marketplace::Listing < ApplicationRecord
   belongs_to :store, class_name: "Marketplace::Store", optional: true
   belongs_to :category, class_name: "Marketplace::Category",
              foreign_key: :category_id, optional: true
+  # :restrict_with_error, not :destroy -- an order is a financial record and a
+  # buyer's receipt, and the seller who withdraws a listing does not own the
+  # buyer's half of it. Operator decision 2026-08-09.
+  #
+  # The listings controller withdraws rather than destroys (status: "removed",
+  # which ListingPolicy::Scope filters out of every index and show? hides from
+  # non-owners), so this does not fire on the normal path. What it guards is the
+  # cascade: User has_many :marketplace_listings, dependent: :destroy, so
+  # destroying a seller previously destroyed every order placed against them,
+  # including the buyers' side.
+  #
+  # That cascade is now refused, which leaves an open question rather than a
+  # closed door: account deletion has no controller path today, and when one is
+  # built it has to reconcile the buyer's right to a receipt with the seller's
+  # right to erasure. Anonymising the seller and keeping the order is the usual
+  # answer; that is a product decision, not this file's.
   has_many :orders, class_name: "Marketplace::Order",
-           foreign_key: :listing_id, dependent: :destroy
+           foreign_key: :listing_id, dependent: :restrict_with_error
   has_many :favorites, class_name: "Marketplace::ListingFavorite",
            foreign_key: :listing_id, dependent: :destroy
   has_many :deals, class_name: "Marketplace::Deal", dependent: :destroy
