@@ -396,9 +396,56 @@ module Deploy
           }
         }
 
+        // Peer choices per navigation group, for Hick's law and chunking. A
+        // count is only meaningful among *siblings* offered at the same moment,
+        // so this counts direct interactive children of each menu-ish container
+        // rather than every link inside it.
+        const groups = [];
+        document.querySelectorAll('nav, [role=navigation], [role=menu], [role=tablist], .tab-bar')
+          .forEach(container => {
+            const cs = getComputedStyle(container);
+            if (cs.display === 'none' || cs.visibility === 'hidden') return;
+            const r = container.getBoundingClientRect();
+            if (r.width < 1 || r.height < 1) return;
+            const choices = Array.from(container.querySelectorAll('a[href], button, [role=tab], [role=menuitem]'))
+              .filter(k => {
+                const kcs = getComputedStyle(k);
+                if (kcs.display === 'none' || kcs.visibility === 'hidden') return false;
+                const kr = k.getBoundingClientRect();
+                return kr.width > 0 && kr.height > 0;
+              });
+            groups.push({ sel: selFor(container), count: choices.length,
+                          scrollable: container.scrollWidth > container.clientWidth + 4 });
+          });
+
+        // Gestalt proximity, measured: an element's own internal padding against
+        // the gap separating it from the next block. When padding exceeds the
+        // separation, the parts of one thing sit further apart than two
+        // different things, and the grouping reads backwards.
+        const proximity = [];
+        for (let i = 0; i < containers.length && proximity.length < 200; i++) {
+          const kids = Array.from(containers[i].children).filter(k => {
+            const cs = getComputedStyle(k);
+            if (cs.display === 'none' || cs.position === 'absolute' || cs.position === 'fixed') return false;
+            const kr = k.getBoundingClientRect();
+            return kr.height > 24 && kr.width > vw * 0.5;
+          });
+          for (let j = 0; j + 1 < kids.length; j++) {
+            const a = kids[j], b = kids[j + 1];
+            const ar = a.getBoundingClientRect(), br = b.getBoundingClientRect();
+            const gap = Math.round(br.top - ar.bottom);
+            if (gap < 0 || gap > 128) continue;
+            const acs = getComputedStyle(a);
+            const padY = Math.round(parseFloat(acs.paddingTop) + parseFloat(acs.paddingBottom));
+            if (padY > 0) proximity.push({ sel: selFor(a), pad: padY, gap: gap });
+          }
+        }
+
         return {
           vw: vw, vh: vh,
           title: document.title,
+          groups: groups,
+          proximity: proximity,
           scroll_width: de.scrollWidth,
           client_width: de.clientWidth,
           h1_count: document.querySelectorAll('h1').length,
