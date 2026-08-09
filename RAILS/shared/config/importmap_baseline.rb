@@ -101,7 +101,7 @@ pin "idb-keyval", to: "idb-keyval.js"
 # so that nothing could use them. Dropped from stimulus_boot.js with these pins.
 %w[
   animated-number auto-submit character-counter checkbox-select-all clipboard
-  content-loader dropdown hotkey lightbox notification popover read-more
+  content-loader dropdown hotkey lightbox notification read-more
   reveal sortable password-visibility rails-nested-form
 ].each { |name| sc_pin.call(name) }
 

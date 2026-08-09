@@ -460,7 +460,17 @@ class DeployBacklogTest < Minitest::Test
     # crawler traffic. Assert the caching, not the key it happens to use.
     assert_includes read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post'
     assert_includes read_source(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post'
-    assert_includes read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'data-controller="clipboard popover"'
+    # The share button uses the shared clipboard component. This pinned the
+    # literal PAIR "clipboard popover", which is the same frozen-detail mistake
+    # the comment above records for the cache key, six lines up in this test:
+    # the popover was a tooltip duplicating the button's own aria-label, it
+    # could not fire on a touch viewport at all, and removing it from all four
+    # buttons cost 100 of the page's 270 controller instances. Assert the
+    # component that does the work, not the company it keeps.
+    post_partial = read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb'))
+    assert_includes post_partial, 'data-controller="clipboard"'
+    refute_includes post_partial, 'popover',
+                    'popover was removed as dead weight -- do not reintroduce it as a tooltip'
     assert_includes read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'shared/post_card'
     assert_includes read_source(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'shared/post_card'
     assert_includes read_source(File.join(ROOT, 'shared/app/views/shared/_post_card.html.erb')), 'shared/feed_card'

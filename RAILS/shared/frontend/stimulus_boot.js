@@ -7,7 +7,6 @@ import Dropdown from "@stimulus-components/dropdown"
 import Hotkey from "@stimulus-components/hotkey"
 import Lightbox from "@stimulus-components/lightbox"
 import Notification from "@stimulus-components/notification"
-import Popover from "@stimulus-components/popover"
 import ReadMore from "@stimulus-components/read-more"
 import Reveal from "@stimulus-components/reveal"
 import Sortable from "@stimulus-components/sortable"
@@ -57,7 +56,6 @@ const COMPONENT_REGISTRATIONS = [
   ["lightbox", Lightbox],
   ["notification", Notification],
   ["toast", Notification],
-  ["popover", Popover],
   ["read-more", ReadMore],
   ["reveal", Reveal],
   ["sortable", Sortable],
