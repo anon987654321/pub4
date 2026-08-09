@@ -5,7 +5,7 @@
 </div>
 
 <div class="field">
-  <label for="category-filter">Filter by category</label>
+  <label for="category-filter"><%= t("items.filter_by_category", default: "Filter by category") %></label>
   <select id="category-filter" data-action="change->filter#filter" data-filter-target="select">
     <option value="">All</option>
     <% Item::CATEGORIES.each do |category| %>

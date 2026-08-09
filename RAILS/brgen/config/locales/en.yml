@@ -477,6 +477,9 @@ en:
     back_to_set: "Back to set"
     join_code: "Join code"
     confirm_end_party: "End the party for everyone listening?"
+    add_track: "Add a track"
+    add_track_body: "Add a track to build this set."
+    sets_subtitle: "Local audio collections"
   marketplace:
     new_listing: "New listing"
     edit_listing: "Edit listing"
@@ -517,6 +520,8 @@ en:
     confirm_delete_saved_search: "Delete this saved search?"
     confirm_remove_listing: "Delete this listing? Its orders and reviews are deleted with it, and that cannot be undone."
     run_search: "Run"
+    top_offers_heading: "Picked for the city"
+    make_offer: "Make an offer"
   takeaway:
     unsave: "Unsave"
     save_restaurant: "Save"
@@ -547,6 +552,9 @@ en:
     license_number: "License number"
     latitude: "Latitude"
     longitude: "Longitude"
+    add_menu_item: "Add menu item"
+    reviews_heading: "Reviews from neighbours"
+    leave_review: "Leave a review"
   maps:
     map: "Map"
     open_in_map: "Open in map"
@@ -570,6 +578,7 @@ en:
     live_badge: "Live"
     live_now: "Live now"
     live_streams_label: "Live streams now"
+    channel_subtitle: "Brgen TV channel"
   newsletter:
     email_placeholder: "your@email.com"
     subscribe: "Subscribe"
@@ -648,3 +657,5 @@ en:
     body: "Live notes, marketplace, and nearby — one tap from your home screen."
     not_now: "Not now"
     action: "Install"
+  mailer:
+    confirm_subscription: "Confirm your subscription"

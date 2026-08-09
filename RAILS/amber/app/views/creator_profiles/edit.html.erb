@@ -1,6 +1,6 @@
-<% content_for :title, "Edit creator profile" %>
+<% content_for :title, t("creator_profiles.edit_title", default: "Edit creator profile") %>
 
-<h1>Edit creator profile</h1>
+<h1><%= t("creator_profiles.edit_title", default: "Edit creator profile") %></h1>
 <%= render "form", profile: @profile %>
 
 <section>

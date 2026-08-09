@@ -78,7 +78,7 @@
 
 <% if Current.user.present? && Current.user != @listing.user && !@listing.sold? %>
   <div id="make-offer" class="section-divider">
-    <p class="section-heading--md">Make an offer</p>
+    <p class="section-heading--md"><%= t("marketplace.make_offer", default: "Make an offer") %></p>
     <p class="dim">Send a short message to the seller. They can accept or decline from this listing page.</p>
     <div class="form-wrap form-wrap--flush">
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>

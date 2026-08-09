@@ -31,7 +31,7 @@
   <div class="field media-picker" data-controller="media-picker direct-upload" data-action="dragover->media-picker#dragover dragleave->media-picker#dragleave drop->media-picker#drop">
     <%= f.label :photos %>
     <%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
-    <button type="button" class="btn btn-ghost" data-action="click->media-picker#trigger">Choose or drop photos</button>
+    <button type="button" class="btn btn-ghost" data-action="click->media-picker#trigger"><%= t("items.choose_or_drop", default: "Choose or drop photos") %></button>
     <div class="media-picker-preview" data-media-picker-target="preview"></div>
     <p class="dim"><strong>Photo processing:</strong> uploads stay attached to your private wardrobe record. Amber creates garment segmentation, background-cleanup, colour and responsive derivatives for outfit matching. Deleting the item removes its attachments; archiving keeps them and is reversible.</p>
   </div>

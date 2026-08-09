@@ -257,6 +257,8 @@ en:
     colors: "4. Colors"
     fit: "5. Fit"
     infer_master: "Infer with MASTER"
+    gap_items: "Gap items to consider"
+    swatches_from_items: "Swatches from your items"
   pwa:
     add_item: "Add item"
     item: "Item"
@@ -306,6 +308,8 @@ en:
     affiliate_label: "Affiliate link"
     header_label: "Item header"
     openrouter_set: "OpenRouter is configured — joy analysis and mood tags use Gemini when available, with local heuristics as backup."
+    choose_or_drop: "Choose or drop photos"
+    filter_by_category: "Filter by category"
   outfits:
     share_brgen: "Share to brgen"
     wear_again: "Wear again"
@@ -362,3 +366,6 @@ en:
     occasion_example: "e.g. date, work, travel"
     generate_save: "Generate & save first as outfit"
     search_placeholder: "e.g. something warm but not bulky for a meeting"
+  creator_profiles:
+    edit_title: "Edit creator profile"
+    new_title: "Create creator profile"

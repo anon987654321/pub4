@@ -110,3 +110,5 @@ en:
     view: "View post"
     share: "Share post"
     share_short: "Share"
+  a11y:
+    skip_to_content: "Skip to main content"

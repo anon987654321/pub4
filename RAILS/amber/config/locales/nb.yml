@@ -257,6 +257,8 @@ nb:
     colors: "4. Farger"
     fit: "5. Passform"
     infer_master: "Utled med MASTER"
+    gap_items: "Hull å vurdere"
+    swatches_from_items: "Fargeprøver fra plaggene dine"
   pwa:
     add_item: "Legg til plagg"
     item: "Plagg"
@@ -306,6 +308,8 @@ nb:
     affiliate_label: "Affiliate-lenke"
     header_label: "Plagghode"
     openrouter_set: "OpenRouter er konfigurert — gledeanalyse og stemningsmerker bruker Gemini når det er tilgjengelig, med lokale heuristikker som reserve."
+    choose_or_drop: "Velg eller slipp bilder"
+    filter_by_category: "Filtrer etter kategori"
   outfits:
     share_brgen: "Del til brgen"
     wear_again: "Bruk igjen"
@@ -362,3 +366,6 @@ nb:
     occasion_example: "f.eks. date, jobb, reise"
     generate_save: "Generer og lagre første som antrekk"
     search_placeholder: "f.eks. noe varmt men ikke klumpete til møte"
+  creator_profiles:
+    edit_title: "Rediger skaperprofil"
+    new_title: "Opprett skaperprofil"

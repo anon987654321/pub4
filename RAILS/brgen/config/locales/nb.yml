@@ -477,6 +477,9 @@ nb:
     back_to_set: "Tilbake til sett"
     join_code: "Kode"
     confirm_end_party: "Avslutte lytteselskapet for alle som lytter?"
+    add_track: "Legg til et spor"
+    add_track_body: "Legg til et spor for å bygge dette settet."
+    sets_subtitle: "Lokale lydsamlinger"
   marketplace:
     new_listing: "Ny annonse"
     edit_listing: "Rediger annonse"
@@ -517,6 +520,8 @@ nb:
     confirm_delete_saved_search: "Slette dette lagrede søket?"
     confirm_remove_listing: "Slette denne annonsen? Ordrene og omtalene slettes sammen med den, og det kan ikke angres."
     run_search: "Kjør"
+    top_offers_heading: "Plukket ut for byen"
+    make_offer: "Gi et bud"
   takeaway:
     unsave: "Fjern lagring"
     save_restaurant: "Lagre"
@@ -547,6 +552,9 @@ nb:
     license_number: "Lisensnummer"
     latitude: "Breddegrad"
     longitude: "Lengdegrad"
+    add_menu_item: "Legg til menyelement"
+    reviews_heading: "Omtaler fra naboer"
+    leave_review: "Legg igjen en omtale"
   maps:
     map: "Kart"
     open_in_map: "Åpne i kart"
@@ -570,6 +578,7 @@ nb:
     live_badge: "Direkte"
     live_now: "Direkte nå"
     live_streams_label: "Direktesendinger nå"
+    channel_subtitle: "Brgen TV-kanal"
   newsletter:
     email_placeholder: "din@epost.com"
     subscribe: "Abonner"
@@ -648,3 +657,5 @@ nb:
     body: "Live, markedsplass og i nærheten — ett trykk fra hjem-skjermen."
     not_now: "Ikke nå"
     action: "Installer"
+  mailer:
+    confirm_subscription: "Bekreft abonnementet"

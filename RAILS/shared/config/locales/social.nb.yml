@@ -107,3 +107,5 @@ nb:
     view: "Se innlegg"
     share: "Del innlegg"
     share_short: "Del"
+  a11y:
+    skip_to_content: "Hopp til hovedinnhold"

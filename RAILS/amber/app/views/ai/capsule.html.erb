@@ -35,7 +35,7 @@
 
   <% if @result["gap_items"]&.any? %>
     <section>
-      <h2>Gap items to consider</h2>
+      <h2><%= t("ai.gap_items", default: "Gap items to consider") %></h2>
       <p class="dim">Use these as intentional purchases, not impulse buys.</p>
       <ul><% @result["gap_items"].each do |gap_item| %><li><%= gap_item %></li><% end %></ul>
     </section>

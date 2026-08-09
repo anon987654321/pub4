@@ -21,7 +21,7 @@
 
 <% if authenticated? && @restaurant.owner?(Current.user) %>
   <section>
-    <h2>Add menu item</h2>
+    <h2><%= t("takeaway.add_menu_item", default: "Add menu item") %></h2>
     <div class="form-wrap">
       <%= form_with scope: :takeaway_menu_item, url: restaurant_menu_items_path(@restaurant) do |f| %>
         <div class="field"><%= f.text_field :name, placeholder: t("takeaway.item_name"), required: true %></div>
@@ -98,7 +98,7 @@
 </section>
 
 <section>
-  <h2>Reviews from neighbours</h2>
+  <h2><%= t("takeaway.reviews_heading", default: "Reviews from neighbours") %></h2>
   <% if @reviews.any? %>
     <% @reviews.each do |r| %>
       <article>
@@ -116,7 +116,7 @@
 
 <% if @can_review %>
 <section>
-  <h2>Leave a review</h2>
+  <h2><%= t("takeaway.leave_review", default: "Leave a review") %></h2>
   <%= form_with scope: :takeaway_review, url: restaurant_reviews_path(@restaurant) do |f| %>
     <div class="field">
       <%= f.label :rating, t("takeaway.rating") %>
