@@ -27,10 +27,17 @@
 # Nothing regressed to earn them and no new debt is being waved through. Every
 # added hit is listed by file:line in the commit that widened the glob, so the
 # claim is checkable rather than asserted.
+#
+# rhythm 102 -> 31 the same day: 65 spacing values snapped to the nearest
+# allowed step, ties broken upward. The 31 that remain are the documented
+# product pens, two idioms that only look off-grid (`margin: -1px` is half of
+# the visually-hidden clip, -1000px parks a node off-screen), and 1px padding on
+# inline chips, where the nearest allowed step is 0 and would delete it rather
+# than align it. Below the grid is not off it.
 schema: 1
 rules:
   important: 126
-  rhythm: 102
+  rhythm: 31
   magic_hex: 142
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
@@ -39,18 +46,22 @@ rules:
   # which is where 15 of these 30 came from.
   contrast_below_aa: 30
   contrast_below_aaa: 65
-  # Recorded 2026-08-09. design_rules.yml's `typography` block was the last
-  # section it declares that nothing read, and both numbers below are what that
-  # bought. type_scale counts font-size literals off the --text-* ladder
-  # declared in _tokens.scss; the bulk of it is one specific thing — 0.8125rem
-  # (13px, 49 sites) and 0.9375rem (15px, 40 sites), which are x.com's type
-  # steps sitting alongside the token ladder's 12/14/16/18/20 rather than
-  # replacing it. Two rival scales in one tree is the defect; picking one is a
-  # design decision, not a lint fix, so it gets a ceiling and not an autofix.
-  # weight_ladder counts font-weight literals off --weight-normal/bold/heavy
-  # (400/700/800). 900 and 300 are gone; what remains is 600 (53) and 500 (8),
-  # which is the same open question one axis over — and 700/800 themselves sit
-  # 100 apart, under typography.hierarchy.min_weight_delta of 200.
-  # Both figures are post-fix and include the engines.
-  type_scale: 94
-  weight_ladder: 52
+  # Added 2026-08-09, when design_rules.yml's `typography` block finally got a
+  # reader. type_scale counts font-size literals off the --text-* ladder in
+  # _tokens.scss; weight_ladder counts font-weight literals off
+  # --weight-normal/bold/heavy. Both read their ladder out of the stylesheet
+  # that declares it, so a gate copy cannot drift from the tokens.
+  #
+  # First measured at 154 and 61. The tree was running two type scales at once —
+  # this ladder's 12/14/16/18/20 and a hardcoded 13/15/17 borrowed from x.com,
+  # 89 sites deep — so the same role rendered 14px in one sheet and 15px in
+  # another. The operator picked the token ladder; the 13/15/17 sites moved onto
+  # it and the weight ladder was re-cut to an even 400/600/800.
+  #
+  # What is left in type_scale is nine deliberate one-offs, not drift: brand
+  # display type in amber (60/120px), the animated marketplace logo, the offline
+  # hero, the swipe placeholder glyph, and `html, body { font-size: 21px }` in
+  # _minimal.scss — that last one is the large-screen root scale, and snapping
+  # it to a step would rescale every rem in the system.
+  type_scale: 9
+  weight_ladder: 0

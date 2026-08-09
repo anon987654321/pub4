@@ -13,7 +13,7 @@
   max-width: 28rem;
   margin-inline: auto;
   color: var(--text-secondary, var(--text-dim));
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   line-height: 1.5;
   background: transparent;
 }
@@ -27,7 +27,7 @@
   border: 0;
   border-radius: var(--radius-pill, 9999px);
   background: var(--hover-subtle, color-mix(in srgb, var(--text) 6%, transparent));
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   line-height: 1;
   color: var(--text-secondary, var(--text-dim));
   opacity: 0.85;
@@ -44,14 +44,14 @@
   border: 0;
   border-radius: var(--radius-pill, 9999px);
   background: var(--hover-subtle, color-mix(in srgb, var(--text) 6%, transparent));
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-secondary, var(--text-dim));
 }
 
 .empty-state-title {
   margin: 0;
   font-size: var(--text-title, 1.25rem);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   font-family: var(--font);
   color: var(--text, var(--text));
   letter-spacing: -0.01em;
@@ -71,7 +71,7 @@
    the accent; anything styled as a button keeps the colour its own rule set. */
 .empty-state a:not(.btn) {
   color: var(--accent, var(--accent));
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
 .empty-state .btn,

@@ -29,7 +29,7 @@ html .turbo-progress-bar {
   background: var(--text);
   color: var(--bg);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   border-radius: var(--radius-pill, 0);
   /* Hard hide — no partial paint if top-offset math fails. */
   width: 1px;
@@ -188,7 +188,7 @@ main[role="main"] {
   inset-inline-start: 0;
   inset-inline-end: 0;
   transform: translateY(-50%);
-  font-size: 22px;
+  font-size: var(--text-xl);
   line-height: 1;
   color: var(--text-secondary);
   transition: color var(--transition-fast, 180ms) var(--ease-out), opacity var(--transition-fast, 180ms) var(--ease-out);
@@ -250,7 +250,7 @@ main[role="main"] {
 }
 .brand-text {
   font-family: var(--font);
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   font-weight: var(--weight-bold, 700);
   letter-spacing: -0.03em;
   text-transform: none;
@@ -258,7 +258,7 @@ main[role="main"] {
 .sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   width: 100%;
 }
 .nav-item {
@@ -297,7 +297,7 @@ main[role="main"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   width: 230px;
   min-height: 52px;
   padding: 0 24px;
@@ -306,7 +306,7 @@ main[role="main"] {
   color: var(--accent-ink);
   border: none;
   border-radius: var(--radius-pill);
-  font-size: 17px;
+  font-size: var(--text-lg);
   font-weight: var(--weight-bold);
   touch-action: manipulation;
   cursor: pointer;
@@ -450,7 +450,7 @@ html.chrome-hidden .tab-bar {
 }
 .tab-bar-coach-text {
   margin: 0 0 0.65rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   line-height: 1.4;
 }
 .tab-bar-coach-actions {
@@ -475,7 +475,7 @@ html.chrome-hidden .tab-bar {
   border: 0;
   background: var(--hover, #232030);
   color: var(--text, #d8d6e0);
-  font: 600 0.8125rem/1 var(--font-primary, var(--font, system-ui, sans-serif));
+  font: var(--weight-bold) 0.8125rem/1 var(--font-primary, var(--font, system-ui, sans-serif));
   cursor: pointer;
 }
 .tab-bar-coach-show {

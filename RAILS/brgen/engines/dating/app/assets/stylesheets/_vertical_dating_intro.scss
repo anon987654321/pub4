@@ -29,7 +29,7 @@
   margin: 0;
   font-family: var(--font);
   font-size: clamp(2.75rem, 12vw, 4.5rem);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: -0.03em;
   line-height: 1.5;
   text-transform: lowercase;
@@ -51,7 +51,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   color: var(--dating-accent-ink);
   letter-spacing: -0.02em;
 }
@@ -87,7 +87,7 @@
   min-height: 44px;
   display: inline-flex;
   align-items: center;
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   color: var(--text-secondary, var(--text-dim));
   list-style: none;
 }

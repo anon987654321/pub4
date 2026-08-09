@@ -11,8 +11,8 @@
 .feed-header h1 {
   margin: 0;
   padding: var(--space-4) var(--space-4) var(--space-2);
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: var(--text-title);
+  font-weight: var(--weight-heavy);
   letter-spacing: -0.02em;
 }
 
@@ -56,9 +56,9 @@
      brgen's primary nav, so they should read as destinations, not as metadata.
      scroll-snap-align pairs with the scroller's snap type above. */
   padding: var(--space-3) var(--space-5, 1.25rem);
-  font-size: 1rem;
+  font-size: var(--text-base);
   scroll-snap-align: start;
-  font-weight: 500;
+  font-weight: var(--weight-bold);
   color: var(--text-dim);
   text-decoration: none;
   white-space: nowrap;
@@ -84,7 +84,7 @@
 
 .feed-tab.active {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   border-bottom-color: var(--accent);
 }
 
@@ -133,7 +133,7 @@ a.feed-tab { text-decoration: none; }
   display: grid;
   place-items: center;
   object-fit: cover;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   font-size: var(--font-size);
   color: var(--text-secondary);
 }

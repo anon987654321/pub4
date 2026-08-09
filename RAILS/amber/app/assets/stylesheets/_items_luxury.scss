@@ -23,7 +23,7 @@
 .luxury-card .item-title,
 .item-card--luxury .item-title {
   font-size: var(--luxury-font-meta);
-  font-weight: 500;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--luxury-letter-tight);
   line-height: 1.5;
   color: var(--luxury-text);
@@ -97,7 +97,7 @@
 
 .luxury-title {
   font-size: var(--luxury-font-display);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--luxury-letter-tight);
   line-height: var(--luxury-line-relaxed);
   margin: 0.25rem 0;
@@ -120,7 +120,7 @@
 }
 
 .luxury-meta-list dt {
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   color: var(--luxury-muted);
 }
 

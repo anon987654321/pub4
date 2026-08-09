@@ -26,7 +26,7 @@ body.vertical-messenger .layout {
 body.vertical-messenger main {
   max-width: min(100%, 520px);
   margin-inline: auto;
-  padding: max(12px, env(safe-area-inset-top)) 12px max(88px, env(safe-area-inset-bottom));
+  padding: max(12px, env(safe-area-inset-top)) 12px max(96px, env(safe-area-inset-bottom));
   min-height: 100dvh;
 }
 
@@ -42,7 +42,7 @@ body.vertical-messenger .page-header {
 
 body.vertical-messenger .page-header h1 {
   font-size: clamp(1.5rem, 5vw, 1.875rem);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: -0.03em;
   margin: 0;
 }
@@ -54,7 +54,7 @@ body.vertical-messenger .messenger-compose {
 body.vertical-messenger .messenger-compose label {
   display: block;
   margin-bottom: 0.35rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--msg-muted);
 }
 
@@ -80,7 +80,7 @@ body.vertical-messenger .messenger-compose-row input[type="submit"] {
   border-radius: var(--radius-pill);
   background: var(--msg-accent);
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   cursor: pointer;
 }
 
@@ -112,14 +112,14 @@ body.vertical-messenger ul[aria-label="Conversations"] li a:hover {
 }
 
 body.vertical-messenger ul[aria-label="Conversations"] strong {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-messenger ul[aria-label="Conversations"] span {
   grid-column: 1;
   color: var(--msg-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -129,7 +129,7 @@ body.vertical-messenger ul[aria-label="Conversations"] time {
   grid-column: 2;
   grid-row: 1 / span 2;
   align-self: center;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--msg-muted);
 }
 
@@ -142,8 +142,8 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
   min-width: 1.25rem;
   height: 1.25rem;
   padding: 0 var(--space-1);
-  font-size: 0.6875rem;
-  font-weight: 700;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
   display: grid;
   place-items: center;
 }

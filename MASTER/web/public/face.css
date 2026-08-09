@@ -46,9 +46,9 @@
   --face-phosphor-decay: 0.80;
   --transition-fast: 180ms;
   --transition-normal: 300ms;
-  --ease-out: cubic-bezier(0.25,0.1,0.25,1);
+  --ease-out: cubic-bezier(0.16,1,0.3,1);
   --ease-linear: cubic-bezier(0,0,1,1);
-  --ease-in-out: cubic-bezier(0.4,0,0.6,1);
+  --ease-in-out: cubic-bezier(0.65,0,0.35,1);
   --ease-spring: cubic-bezier(0.32,0.72,0,1);
   /* z-scale: canvas(base) < chrome(persistent HUD) < ui < overlay(panels) < modal(blocking) < toast(errors) < skip(a11y skip-link) */
   --z-canvas: 1;

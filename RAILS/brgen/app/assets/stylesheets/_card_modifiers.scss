@@ -1,29 +1,29 @@
 /* card-embed extensions — ported from shared/_minimal.scss for brgen (no minimal forward). */
 
 .feed-card-body {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   line-height: 1.5;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .feed-card-meta {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-dim);
-  margin: 2px 0;
+  margin: 4px 0;
   line-height: 1.5;
 }
 
 .price {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--accent);
-  font-size: 0.9375rem;
-  margin-top: 2px;
+  font-size: var(--text-base);
+  margin-top: 4px;
 }
 
 .feed-action--primary {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
 // :is(...) rather than 8 repeated compound selectors. This was originally
@@ -40,7 +40,7 @@
   border: 0;
   border-radius: var(--radius-card);
   margin-bottom: 0;
-  padding: 10px 12px;
+  padding: 12px 12px;
   flex-direction: column;
   gap: 8px;
 }
@@ -50,7 +50,7 @@
   height: auto;
   aspect-ratio: 16 / 9;
   border-radius: var(--radius-sm);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   flex: none;
 }
 

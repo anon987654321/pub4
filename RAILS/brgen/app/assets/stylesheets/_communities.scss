@@ -16,7 +16,7 @@
 .community-list li:hover { background: var(--hover); }
 
 .community-list a {
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   text-decoration: none;
 }
 

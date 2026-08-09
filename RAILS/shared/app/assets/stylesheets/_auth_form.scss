@@ -39,22 +39,22 @@ body.auth-surface {
 
 .auth-form h1 {
   margin: 0 0 var(--space-2, 0.5rem);
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-heavy);
   letter-spacing: -0.02em;
   color: var(--text);
 }
 
 .auth-form-lead {
   margin: 0 0 var(--space-4, 1rem);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--text-secondary, var(--text-dim));
 }
 
 .auth-form-lead a {
   color: var(--accent, var(--text));
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   text-decoration: none;
 }
 
@@ -71,7 +71,7 @@ body.auth-surface {
 }
 
 .auth-form .field label {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
@@ -136,14 +136,14 @@ body.auth-surface {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   line-height: 1.4;
   color: var(--text-secondary, var(--text-dim));
 }
 
 .auth-form-footer a {
   color: var(--accent, var(--text));
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -178,7 +178,7 @@ body.auth-surface {
   align-items: center;
   gap: var(--space-3, 0.75rem);
   margin: 0 0 var(--space-4, 1rem);
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary, var(--text-dim));
 }
 

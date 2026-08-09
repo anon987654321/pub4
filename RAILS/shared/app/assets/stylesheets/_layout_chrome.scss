@@ -49,7 +49,7 @@ body[data-layout="document"] {
 .page-header h1 {
   margin: 0;
   font-size: var(--font-size-title, 1.25rem);
-  font-weight: 800;
+  font-weight: var(--weight-heavy);
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
@@ -151,7 +151,7 @@ main[role="main"] {
   width: fit-content;
   inset-inline-end: auto;
   padding: 0.25rem 0.35rem;
-  font: 800 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
+  font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
   letter-spacing: -0.03em;
   color: var(--text);
   text-decoration: none;

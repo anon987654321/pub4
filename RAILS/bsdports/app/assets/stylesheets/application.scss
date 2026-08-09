@@ -34,7 +34,7 @@
   --danger: #ff6b6b;
   --font: "JetBrains Mono", ui-monospace, monospace;
   /* rem (not px) so CRT density keeps auditor body_font_px floor */
-  --font-size: 0.75rem;
+  --font-size: var(--text-xs);
   --line-height: 1rem;
   --radius-pill: 0;
   --radius-card: 0;
@@ -50,7 +50,7 @@
 }
 
 body {
-  padding-block-start: 58px;
+  padding-block-start: 64px;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
@@ -76,7 +76,7 @@ body {
 
 .advisory-tag {
   font-family: var(--font);
-  font-size: 0.6875rem;
+  font-size: var(--text-xs);
   color: var(--danger);
   border: 1px solid var(--border);
   padding: 0 0.3rem;
@@ -94,7 +94,7 @@ body > nav[aria-label="Primary navigation"] {
 
 body > nav[aria-label="Primary navigation"] a[aria-current="page"] {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   text-decoration: underline;
   text-decoration-color: var(--accent);
   text-underline-offset: 6px;
@@ -142,7 +142,7 @@ article dl {
 
 article dt {
   color: var(--text-secondary);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 article dd,
@@ -266,7 +266,7 @@ header {
       &.active {
         color: var(--text);
         border-bottom: 1px solid var(--accent);
-        font-weight: 700;
+        font-weight: var(--weight-bold);
 
         &::before {
           content: "* ";
@@ -384,7 +384,7 @@ kbd { padding: 0.12rem 0.35rem; border: 1px solid var(--border); border-bottom-w
 
 .port-name {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--text);
   text-decoration: none;
 }
@@ -485,7 +485,7 @@ kbd { padding: 0.12rem 0.35rem; border: 1px solid var(--border); border-bottom-w
 
 .empty-state-title {
   font-family: var(--font);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }

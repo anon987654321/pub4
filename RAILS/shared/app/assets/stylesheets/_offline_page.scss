@@ -20,14 +20,14 @@
 .offline-page h1 {
   margin: 0;
   font-size: clamp(1.5rem, 4vw, 2rem);
-  font-weight: 800;
+  font-weight: var(--weight-heavy);
   letter-spacing: -0.02em;
 }
 
 .offline-page-lead {
   margin: 0;
   color: var(--text-dim, var(--text-secondary));
-  font-size: 1rem;
+  font-size: var(--text-base);
   line-height: 1.5;
   max-width: 36em;
 }
@@ -44,8 +44,8 @@
   border-radius: var(--radius-pill, 9999px);
   background: var(--accent, var(--accent, #5b4fc4));
   color: var(--bg, #17161c);
-  font-weight: 700;
-  font-size: 0.9375rem;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
   cursor: pointer;
 }
 
@@ -67,7 +67,7 @@
   border: 1px solid var(--border, var(--border));
   border-radius: var(--radius-card, 0);
   background: var(--surface2, var(--surface-elevated));
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 
 .offline-page-item a {

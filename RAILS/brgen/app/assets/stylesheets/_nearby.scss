@@ -29,7 +29,7 @@
   to { opacity: 1; transform: none; }
 }
 
-.nearby-alert-body { display: flex; align-items: center; gap: 8px; flex: 1; font-size: .9375rem; }
+.nearby-alert-body { display: flex; align-items: center; gap: 8px; flex: 1; font-size: var(--text-base); }
 
 .nearby-alert-dot {
   width: 8px;
@@ -52,8 +52,8 @@
   border: none;
   color: var(--text-dim);
   cursor: pointer;
-  font-size: .8125rem;
-  padding: 2px 4px;
+  font-size: var(--text-sm);
+  padding: 4px 4px;
   flex-shrink: 0;
 }
 
@@ -66,7 +66,7 @@
   color: var(--text-dim);
   border-radius: var(--radius-pill);
   padding: 0.25rem 0.75rem; /* 4px / 12px — eight_px_rhythm */
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }

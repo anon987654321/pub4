@@ -5,8 +5,8 @@
 }
 
 .tv-live-streams h2 {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
   margin: var(--space-4) 0 var(--space-3);
 }
 
@@ -57,7 +57,7 @@
 }
 
 .live-stream-chat h2 {
-  font-size: 1rem;
+  font-size: var(--text-base);
   margin-bottom: var(--space-3);
 }
 
@@ -101,18 +101,18 @@
 .tv-poster--empty { background: var(--hover-subtle); }
 .tv-duration {
   position: absolute;
-  inset-block-end: 6px;
-  inset-inline-end: 6px;
-  padding: 1px 5px;
-  font: 700 0.6875rem/1.4 var(--font-mono, var(--font));
+  inset-block-end: 8px;
+  inset-inline-end: 8px;
+  padding: 1px 4px;
+  font: var(--weight-bold) 0.6875rem/1.4 var(--font-mono, var(--font));
   font-variant-numeric: tabular-nums;
   color: var(--text);
   background: color-mix(in srgb, var(--bg) 78%, transparent);
   border: 0;
   border-radius: var(--radius-xs, 3px);
 }
-.tv-card-meta { padding-block-start: 6px; }
-.tv-card-title { display: block; font-weight: 600; color: var(--text); line-height: 1.3; text-decoration: none; }
+.tv-card-meta { padding-block-start: 8px; }
+.tv-card-title { display: block; font-weight: var(--weight-bold); color: var(--text); line-height: 1.3; text-decoration: none; }
 .tv-card-title:hover { color: var(--accent); }
-.tv-card-sub { color: var(--text-dim); font-size: 0.8125rem; margin-block-start: 2px; }
+.tv-card-sub { color: var(--text-dim); font-size: var(--text-sm); margin-block-start: 4px; }
 .tv-views { font-variant-numeric: tabular-nums; }

@@ -101,7 +101,7 @@ nav a {
     unpadded anchor collapses to a 20px-tall hit area */
   padding-block: 0.5rem;
   color: var(--dark-grey);
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   text-decoration: none;
 }
 
@@ -110,7 +110,7 @@ nav a:hover {
 }
 
 nav .brand {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   margin-inline-end: auto;
   color: var(--black);
   text-decoration: none;
@@ -129,7 +129,7 @@ nav .brand {
   background: var(--black);
   color: var(--white);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   border-radius: var(--radius-pill);
   width: 1px;
   height: 1px;
@@ -169,11 +169,11 @@ main {
 
 footer {
   color: var(--light-grey);
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   display: flex;
   justify-content: center;
   align-items: stretch;
-  padding-bottom: 72px;
+  padding-bottom: 64px;
 }
 
 .stack {
@@ -207,14 +207,14 @@ footer {
 
 .dim {
   color: var(--dark-grey);
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 
 .badge {
   display: inline-block;
   padding: 0.1rem 0.5rem;
   border-radius: var(--radius-pill);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .badge-category {
@@ -296,7 +296,7 @@ footer {
   background: var(--black);
   color: var(--white);
   font: inherit;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   text-decoration: none;
   cursor: pointer;
   transition: opacity 180ms var(--ease-out);
@@ -350,8 +350,8 @@ footer {
 .avatar-initials {
   background: var(--surface-elevated);
   color: var(--black);
-  font-weight: 700;
-  font-size: 0.75rem;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-xs);
 }
 
 #swipe-stack {
@@ -455,7 +455,7 @@ footer {
   display: flex;
   gap: 12px;
   padding: 12px 16px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   transition: background var(--transition-fast) var(--ease-out);
   /* Mobile base: slightly tighter on very small screens */
 }
@@ -463,8 +463,8 @@ footer {
 
 @media (max-width: 480px) {
   .feed-card {
-    padding: 10px 12px;
-    gap: 10px;
+    padding: 12px 12px;
+    gap: 12px;
   }
 }
 
@@ -481,7 +481,7 @@ footer {
 .feed-card-avatar-placeholder {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.75rem; color: var(--text-dim);
+  font-weight: var(--weight-bold); font-size: var(--text-xs); color: var(--text-dim);
   background: var(--surface2);
 }
 
@@ -490,34 +490,34 @@ footer {
   display: flex;
   align-items: baseline; /* pixel-perfect text baseline alignment like x.com */
   gap: 4px;
-  font-size: 0.8125rem; /* ~13px */
+  font-size: var(--text-sm); /* ~13px */
   color: var(--text-dim);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   flex-wrap: wrap; /* mobile-friendly */
   line-height: 1.5;
 }
 .feed-card-name {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: -0.01em;
-  font-size: 0.9375rem; /* ~15px for name */
+  font-size: var(--text-base); /* ~15px for name */
 }
 .feed-card-handle {
   color: var(--text);
   opacity: 0.75;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
 }
 .feed-card-time {
   color: var(--text-dim);
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
 }
 
 .feed-card-text {
-  font-size: 0.9375rem; /* 15px */
-  font-weight: 400;
+  font-size: var(--text-base); /* 15px */
+  font-weight: var(--weight-normal);
   line-height: 1.5;
   letter-spacing: -0.01em;
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   color: var(--text);
 }
 .feed-card-text a {
@@ -527,22 +527,22 @@ footer {
 .feed-card-text a:hover { text-decoration: underline; }
 
 .feed-card-body {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   line-height: 1.5;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .feed-card-meta {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-dim);
-  margin: 2px 0;
+  margin: 4px 0;
   line-height: 1.5;
 }
 .price {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--accent);
-  font-size: 0.9375rem;
-  margin-top: 2px;
+  font-size: var(--text-base);
+  margin-top: 4px;
 }
 
 .feed-card-actions {
@@ -550,21 +550,21 @@ footer {
   align-items: center;
   gap: 0;
   color: var(--text-dim);
-  font-size: 0.8125rem;
-  margin-top: 6px;
+  font-size: var(--text-sm);
+  margin-top: 8px;
   flex-wrap: wrap; /* mobile: actions can wrap if many */
 }
 .feed-action {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: 0;
   transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
   cursor: pointer;
   min-height: 44px; /* solid mobile tap target */
   min-width: 44px;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
 }
 .feed-action:hover { color: var(--accent); background: var(--hover); }
 .feed-action.active { color: var(--accent); }
@@ -572,7 +572,7 @@ footer {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.feed-action-count { font-size: 0.8125rem; }
+.feed-action-count { font-size: var(--text-sm); }
 
 /* Grid context polish (e.g. marketplace feed-cards in .post-grid)
    Mobile-first: full-bleed image on small screens, reverts on desktop.
@@ -585,7 +585,7 @@ footer {
   background: var(--surface2);
   border-radius: 8px;
   margin-bottom: 0;
-  padding: 10px 12px;
+  padding: 12px 12px;
   flex-direction: column;
   gap: 8px;
 }
@@ -594,7 +594,7 @@ footer {
   height: auto;
   aspect-ratio: 16 / 9;
   border-radius: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   flex: none;
 }
 
@@ -604,7 +604,7 @@ footer {
     gap: 12px;
   }
   .feed-action {
-    padding: 6px 8px;
+    padding: 8px 8px;
     min-height: 44px;
     min-width: 44px;
   }

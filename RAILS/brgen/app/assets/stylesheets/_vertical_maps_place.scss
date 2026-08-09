@@ -5,7 +5,7 @@ body.vertical-maps .page-header {
 }
 
 body.vertical-maps .page-header h1 {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: -0.03em;
 }
 
@@ -42,7 +42,7 @@ body.vertical-maps .btn-primary {
   color: var(--maps-ink);
   border: 1px solid color-mix(in srgb, var(--maps-accent) 40%, var(--maps-border));
   border-radius: var(--radius-pill);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-maps .btn-ghost {
@@ -74,7 +74,7 @@ body.vertical-maps .place-card {
 
 body.vertical-maps .place-card h2 {
   margin: 0 0 0.25rem;
-  font-size: 1rem;
+  font-size: var(--text-base);
 }
 
 body.vertical-maps .place-card a {

@@ -54,7 +54,7 @@
 
 .swipe-meta h2 {
   margin: 0;
-  font: 700 clamp(1.35rem, 4.5vw, 1.75rem) / 1.5 var(--font);
+  font: var(--weight-bold) clamp(1.35rem, 4.5vw, 1.75rem) / 1.5 var(--font);
   letter-spacing: -0.02em;
   color: var(--text);
 }
@@ -64,7 +64,7 @@
 }
 
 .swipe-age {
-  font-weight: 500;
+  font-weight: var(--weight-bold);
   opacity: 0.92;
 }
 
@@ -80,7 +80,7 @@
   padding: 0.35rem 0.65rem;
   border: 3px solid currentColor;
   border-radius: var(--radius-sm);
-  font: 800 1.5rem / 1 var(--font);
+  font: var(--weight-heavy) 1.5rem / 1 var(--font);
   letter-spacing: 0.08em;
   opacity: 0;
   transform: rotate(-18deg) scale(0.85);

@@ -229,7 +229,10 @@ module Deploy
         next unless spacing
 
         spacing[1].scan(/(-?\d+(?:\.\d+)?)px/).flatten.each do |value|
-          number = value.to_f
+          # Compare magnitude: a -64px pull is as on-rhythm as a 64px push, and
+          # the allowlist only carries the positive half. Six negative offsets
+          # were counted as violations for their sign alone.
+          number = value.to_f.abs
           @tally["rhythm"] << "#{where} #{value}px" unless number == number.to_i && allowed.include?(number.to_i)
         end
       end

@@ -4,7 +4,7 @@
 @font-face {
   font-family: "Caprasimo";
   src: url("/fonts/caprasimo-latin-400-normal.woff2") format("woff2");
-  font-weight: 400;
+  font-weight: var(--weight-normal);
   font-style: normal;
   font-display: swap;
 }
@@ -27,7 +27,7 @@
 }
 
 .amber-logo-svg .amber-logo-mark {
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 @media (min-width: 768px) {
@@ -36,7 +36,7 @@
   }
 
   .amber-logo-svg .amber-logo-mark {
-    font-size: 24px;
+    font-size: var(--text-xl);
   }
 }
 
@@ -179,7 +179,7 @@
   margin-inline: auto;
   font-family: var(--amber-editorial-serif, var(--font));
   font-size: clamp(1.35rem, 3vw, 1.75rem);
-  font-weight: 400;
+  font-weight: var(--weight-normal);
   margin-block: 0;
   letter-spacing: -0.01em;
 }
@@ -209,7 +209,7 @@
 .amber-guest-secondary a {
   color: var(--text-dim);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
 .amber-guest-secondary a:hover,
@@ -238,7 +238,7 @@
 
 .amber-footer-cols h2 {
   font-size: var(--luxury-font-meta);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--luxury-muted);
@@ -290,7 +290,7 @@ body {
 h1, .display, .wordmark {
   font-family: "Caprasimo", Georgia, serif;
   letter-spacing: var(--letter-display);
-  font-weight: 400;
+  font-weight: var(--weight-normal);
 }
 
 /* Editorial grid: first card larger */
@@ -329,7 +329,7 @@ h1, .display, .wordmark {
   display: grid;
   place-items: center;
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   min-height: 8rem;
   aspect-ratio: 3 / 4;
@@ -393,7 +393,7 @@ h1, .display, .wordmark {
   color: var(--text-secondary);
 }
 .sustainability-grade {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--accent);
   border: var(--elev-1);
   padding: 0.15rem 0.45rem;
@@ -414,7 +414,7 @@ h1, .display, .wordmark {
   max-width: 12rem;
 }
 .look-rail .eyebrow {
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-secondary);

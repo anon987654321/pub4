@@ -76,7 +76,7 @@
      target that comes from min-height in _chrome_polish. */
   padding: var(--space-3) var(--space-3);
   font: var(--text-sm)/1 var(--font);
-  font-weight: 500;
+  font-weight: var(--weight-bold);
   color: var(--text-dim);
   white-space: nowrap;
   transition: color var(--transition-fast) var(--ease-in-out),
@@ -87,7 +87,7 @@
 
 /* Active state is weight and colour, not an underline. aria-current carries it
    for assistive tech; the 2px border-bottom this replaces was a line. */
-.nav_link.active { color: var(--text); font-weight: 700; }
+.nav_link.active { color: var(--text); font-weight: var(--weight-bold); }
 
 @media (prefers-reduced-motion: reduce) {
   *,

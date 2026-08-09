@@ -6,7 +6,7 @@ body.vertical-messenger header[aria-label="Conversation header"] {
 
 body.vertical-messenger header[aria-label="Conversation header"] h1 {
   margin: 0 0 var(--space-1);
-  font: 700 1.25rem / 1 var(--font);
+  font: var(--weight-bold) 1.25rem / 1 var(--font);
   letter-spacing: -0.02em;
 }
 
@@ -18,7 +18,7 @@ body.vertical-messenger header[aria-label="Conversation header"] nav a {
 
 body.vertical-messenger .disappearing-settings {
   margin-top: 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--msg-muted);
 }
 
@@ -60,7 +60,7 @@ body.vertical-messenger .expiry-chip[data-expiry="later"] {
 
 body.vertical-messenger .expiry-chip[data-expiry="soon"] {
   color: var(--msg-accent);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
 body.vertical-messenger #messages {
@@ -113,7 +113,7 @@ body.vertical-messenger #messages article header {
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-2);
   margin-bottom: var(--space-1);
-  font-size: 0.6875rem;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono, ui-monospace, monospace);
   opacity: 0.78;
@@ -166,7 +166,7 @@ body.vertical-messenger #new_message input[type="submit"] {
   border-radius: var(--radius-pill);
   background: var(--msg-accent);
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   cursor: pointer;
 }
 

@@ -4,7 +4,7 @@
   grid-auto-columns: minmax(72%, 1fr);
   gap: var(--space-3);
   overflow-x: auto;
-  padding: 2px 2px var(--space-3);
+  padding: 4px 4px var(--space-3);
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;

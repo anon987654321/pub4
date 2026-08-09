@@ -9,7 +9,7 @@
   border: none;
   border-radius: var(--radius-pill);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   cursor: pointer;
   transition: opacity var(--transition-fast) var(--ease-out);
   text-decoration: none;
@@ -53,7 +53,7 @@
   cursor: pointer;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .advanced-fields[open] summary {

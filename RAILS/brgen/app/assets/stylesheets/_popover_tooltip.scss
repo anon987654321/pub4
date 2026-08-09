@@ -25,14 +25,14 @@
 [data-popover-target="card"] {
   position: absolute;
   inset-inline-start: 50%;
-  inset-block-end: calc(100% + 10px);
+  inset-block-end: calc(100% + 12px);
   transform: translateX(-50%);
   background: var(--surface2);
   color: var(--text);
   font-size: var(--text-xs, 0.75rem);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   white-space: nowrap;
-  padding: 4px 6px;
+  padding: 4px 8px;
   border-radius: 2px;
   z-index: var(--z-ui, 90);
   pointer-events: none;

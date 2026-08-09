@@ -102,7 +102,7 @@
 .composer-title {
   margin: 0;
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .composer-close {
@@ -129,7 +129,7 @@
 }
 
 .composer-author-name {
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   font-size: var(--text-sm, 0.9375rem);
 }
 
@@ -190,7 +190,7 @@
 
 .composer-attach-label {
   font-size: var(--text-sm, 0.875rem);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
 .composer-submit {

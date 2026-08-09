@@ -17,7 +17,7 @@ body.vertical-marketplace main {
 body.vertical-marketplace .page-header h1,
 body.vertical-marketplace .marketplace-deals h1 {
   font-family: var(--font);
-  font-weight: 800;
+  font-weight: var(--weight-heavy);
   letter-spacing: -0.02em;
   font-size: var(--text-title, 1.25rem);
   text-transform: none;
@@ -38,7 +38,7 @@ body.vertical-marketplace .deal-card-img {
 
 body.vertical-marketplace .deal-price {
   font-size: var(--text-lg);
-  font-weight: 800;
+  font-weight: var(--weight-heavy);
 }
 
 body.vertical-marketplace .deal-cat.active,

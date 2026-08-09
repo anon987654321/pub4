@@ -1,6 +1,6 @@
 .affiliate-title {
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   line-height: 1.5;
   margin-bottom: var(--space-1);
 }
@@ -41,22 +41,22 @@
 .mb-12 { margin-bottom: var(--space-3); }
 .m-16 { margin: var(--space-4); }
 .text-end { text-align: right; }
-.text-sm { font-size: 0.8125rem; }
-.text-xs { font-size: 0.6875rem; }
+.text-sm { font-size: var(--text-sm); }
+.text-xs { font-size: var(--text-xs); }
 .text-visible { color: var(--color-success); }
 .text-hidden { color: var(--text-dim); }
 .btn-block { width: 100%; }
 .section-divider { padding: var(--space-4); border-bottom: 0; }
 .section-divider--24 { padding: var(--space-6) var(--space-4); border-bottom: 0; }
-.section-heading { font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-3); }
-.section-heading--md { font-size: var(--text-base); font-weight: 800; margin-bottom: var(--space-3); }
+.section-heading { font-size: var(--text-lg); font-weight: var(--weight-heavy); margin-bottom: var(--space-3); }
+.section-heading--md { font-size: var(--text-base); font-weight: var(--weight-heavy); margin-bottom: var(--space-3); }
 .form-wrap--flush { padding: 0; max-width: none; }
 .field--row { flex-direction: row; align-items: center; }
 .field--grow { flex: 1; min-width: 0; }
 .field--check-label { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--text-sm); margin-bottom: var(--space-2); cursor: pointer; }
-.field--check-label input { margin-top: 2px; flex-shrink: 0; }
+.field--check-label input { margin-top: 4px; flex-shrink: 0; }
 .chips--bar { padding: var(--space-3) var(--space-4); border-bottom: 0; }
-.listing-price { font-size: var(--text-2xl); font-weight: 800; color: var(--danger, var(--color-danger)); margin-bottom: var(--space-1); }
+.listing-price { font-size: var(--text-2xl); font-weight: var(--weight-heavy); color: var(--danger, var(--color-danger)); margin-bottom: var(--space-1); }
 .listing-actions { margin: var(--space-4) 0; display: flex; gap: var(--space-3); align-items: center; }
 .track-row { display: flex; align-items: center; justify-content: space-between; }
 .photo-strip { display: flex; gap: var(--space-2); padding: var(--space-4) 0; border-bottom: 0; flex-wrap: wrap; }

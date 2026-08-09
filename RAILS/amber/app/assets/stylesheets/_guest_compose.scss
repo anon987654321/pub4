@@ -25,7 +25,7 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   font-size: var(--text-base);
   color: var(--text-secondary);
 }
@@ -92,7 +92,7 @@
 
 .amber-compose-as {
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   color: var(--text-secondary);
   text-transform: lowercase;
 }
@@ -101,7 +101,7 @@
   background: var(--accent);
   color: var(--text);
   border-radius: var(--radius-pill);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   border: none;
 }
 
@@ -136,7 +136,7 @@
 
 .amber-guest-feed .author {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .amber-guest-feed .post-body {

@@ -7,7 +7,7 @@ $nerd-cdn: "https://cdn.jsdelivr.net/gh/Nick2bad4u/nerd-fonts-woff2@v1.0.5/fonts
        local("JetBrainsMonoNerdFont-Regular"),
        url("/fonts/JetBrainsMonoNerdFont-Regular.woff2") format("woff2"),
        url("#{$nerd-cdn}/Regular/JetBrainsMonoNerdFont-Regular.woff2") format("woff2");
-  font-weight: 400;
+  font-weight: var(--weight-normal);
   font-style: normal;
   font-display: swap;
 }
@@ -18,7 +18,7 @@ $nerd-cdn: "https://cdn.jsdelivr.net/gh/Nick2bad4u/nerd-fonts-woff2@v1.0.5/fonts
        local("JetBrainsMonoNerdFont-Bold"),
        url("/fonts/JetBrainsMonoNerdFont-Bold.woff2") format("woff2"),
        url("#{$nerd-cdn}/Bold/JetBrainsMonoNerdFont-Bold.woff2") format("woff2");
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   font-style: normal;
   font-display: swap;
 }

@@ -31,7 +31,7 @@
 
 .radio-header h1 {
   font-size: var(--font-size-large);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   margin: 0;
 }
 
@@ -41,14 +41,14 @@
   inset-inline-end: var(--space-lg);
   z-index: 11;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   pointer-events: auto;
 }
 
 .radio-nav a,
 .radio-nav-btn {
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: var(--border-radius);
   background: rgba(0, 0, 0, 0.65);
   color: var(--color-text);
@@ -219,7 +219,7 @@
 
 .radio-library-header h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-base);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-muted);
@@ -229,7 +229,7 @@
   border: 0;
   background: transparent;
   color: var(--color-text);
-  font-size: 1.5rem;
+  font-size: var(--text-xl);
   line-height: 1.5;
   cursor: pointer;
 }
@@ -254,7 +254,7 @@
 }
 
 .radio-library-item span {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--color-muted);
 }
 

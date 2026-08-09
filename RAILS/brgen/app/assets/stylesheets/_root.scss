@@ -11,7 +11,7 @@
   color-scheme: dark;
   // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
   // own deliberate size, distinct from the 16px shared default.
-  --font-size: 18px;
+  --font-size: var(--text-lg);
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
@@ -34,7 +34,7 @@
   @include x.brgen-old-light-tokens;
   @include x.app-root-tokens;
   color-scheme: light;
-  --font-size: 18px;
+  --font-size: var(--text-lg);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -83,7 +83,7 @@ a:hover { text-decoration: underline; }
 .brand-text {
   text-transform: none;
   letter-spacing: -0.03em;
-  font-weight: 800;
+  font-weight: var(--weight-heavy);
 }
 
 .brand-wordmark {
@@ -145,7 +145,7 @@ a.brgen-logo-mark,
   min-height: 44px;
   min-width: 44px;
   padding: 0.25rem 0.35rem;
-  font: 800 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
+  font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
   letter-spacing: -0.03em;
   color: var(--text);
   text-decoration: none;
@@ -240,14 +240,14 @@ body.vertical-marketplace #navBar {
 }
 
 .guest-demo-path a {
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .guest-demo-hint {
   opacity: 0.75;
-  font-weight: 400;
+  font-weight: var(--weight-normal);
 }
 
 @media (min-width: 1265px) {

@@ -46,8 +46,13 @@
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
   --font-size: 16px;
   --line-height: 20px;
+  /* design_rules typography.hierarchy allows three weights and wants at least
+     200 between them so a step is visible. --weight-bold was 700, which put it
+     100 from --weight-heavy — a difference you cannot see, and the reason the
+     tree had drifted to seven weights hunting for one that read. 600 restores
+     an even 400/600/800 ladder with a real gap at each step. */
   --weight-normal: 400;
-  --weight-bold: 700;
+  --weight-bold: 600;
   --weight-heavy: 800;
   --radius-xs: 4px;
   --radius-sm: 8px;

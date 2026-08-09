@@ -10,7 +10,7 @@ body.vertical-tv main {
 
 body.vertical-tv .page-header h1 {
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: -0.02em;
   color: var(--text);
 }
@@ -35,7 +35,7 @@ body.vertical-tv .live-badge {
   background: var(--tv-accent);
   color: var(--text);
   border: none;
-  font-weight: 800;
+  font-weight: var(--weight-heavy);
   animation: tv-live-pulse 2s var(--ease-in-out) infinite;
 }
 

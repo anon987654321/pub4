@@ -41,13 +41,13 @@
 .vote-btn.down:hover { color: var(--downvote); background: var(--hover-subtle); }
 .vote-btn.active-up { color: var(--upvote); }
 .vote-btn.active-down { color: var(--downvote); }
-.vote-score { font: 700 var(--text-xs) / 1 var(--font); color: var(--text-secondary); }
+.vote-score { font: var(--weight-bold) var(--text-xs) / 1 var(--font); color: var(--text-secondary); }
 
 .post-body { flex: 1; min-width: 0; }
 .post-meta { font: var(--text-sm) / 1.5 var(--font); color: var(--text-secondary); margin-bottom: var(--space-1); }
 .post-meta a { color: var(--text-secondary); }
-.post-meta .community { color: var(--text); font-weight: 700; }
-.post-title { font: 500 var(--text-sm) / 1.5 var(--font); color: var(--text); margin-bottom: var(--space-3); }
+.post-meta .community { color: var(--text); font-weight: var(--weight-bold); }
+.post-title { font: var(--weight-bold) var(--text-sm) / 1.5 var(--font); color: var(--text); margin-bottom: var(--space-3); }
 .post-title a { color: var(--text); }
 .post-title a:hover { text-decoration: underline; }
 
@@ -86,7 +86,7 @@
 .comment_item:hover { background: var(--hover-subtle); }
 
 .comment_item header {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--text-dim);
   margin-bottom: var(--space-1);
@@ -94,13 +94,13 @@
 
 .comment_item header span:first-child {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .comment_item > p {
   color: var(--text);
   line-height: 1.55;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   margin: 0;
 }
 
@@ -122,8 +122,8 @@
 .comment-reply-toggle {
   cursor: pointer;
   color: var(--accent);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
   list-style: none;
 }
 .comment-reply-toggle::-webkit-details-marker { display: none; }
@@ -135,7 +135,7 @@
   padding: 0;
   min-height: 0;
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
 /* Forms — x.com minimal */

@@ -108,7 +108,7 @@ body.vertical-dating .nearby-chat-widget {
   padding-top: clamp(48px, 12vh, 96px);
   font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
   font-size: clamp(1rem, 3.8vw, 1.125rem);
-  font-weight: 500;
+  font-weight: var(--weight-bold);
   letter-spacing: -0.01em;
   color: var(--dating-ink);
 }

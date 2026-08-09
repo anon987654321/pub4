@@ -27,8 +27,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.8125rem;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-sm);
   border-radius: var(--radius-sm);
   border-radius: 50%;
 }
@@ -38,23 +38,23 @@
   display: flex;
   align-items: baseline;
   gap: 4px;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-dim);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   flex-wrap: wrap;
   line-height: 1.5;
 }
 .feed-card-name {
   color: var(--text);
-  font-weight: 700;
-  font-size: 0.9375rem;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
 }
 .feed-card-handle { color: var(--text); opacity: 0.75; }
 .feed-card-time { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .feed-card-text {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   line-height: 1.5;
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   color: var(--text);
 }
 .feed-card-text a { color: var(--text); text-decoration: none; }
@@ -67,7 +67,7 @@
    line-era values. */
 .post-feed .feed-card {
   margin: 0;
-  padding: 14px 12px;
+  padding: 16px 12px;
   /* Skip rendering off-screen feed cards; the browser remembers each card's
      real height after first paint (auto), falling back to ~320px before then.
      Scoped to .post-feed so grid/match contexts keep normal sizing. */
@@ -84,8 +84,8 @@
 @media (max-width: 480px) {
   .feed-card,
   .post-feed .feed-card {
-    padding: 14px 12px;
-    gap: 10px;
+    padding: 16px 12px;
+    gap: 12px;
   }
 }
 
@@ -94,8 +94,8 @@
   align-items: center;
   gap: 0;
   color: var(--text-dim);
-  font-size: 0.8125rem;
-  margin-top: 6px;
+  font-size: var(--text-sm);
+  margin-top: 8px;
   flex-wrap: wrap;
   justify-content: flex-start;
 }
@@ -103,7 +103,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: var(--radius-pill);
   transition: color var(--transition-fast), background var(--transition-fast),
               transform var(--transition-fast) cubic-bezier(0.32, 0.72, 0, 1);
@@ -113,7 +113,7 @@
   border: 0;
   background: transparent;
   color: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
 }
 .feed-action:hover { color: var(--accent); background: var(--hover); }
 /* Tactile press feedback; reduced-motion users get the instant state (the
@@ -124,7 +124,7 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.feed-action-count { font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.feed-action-count { font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
 .feed-action-icon {
   flex-shrink: 0;
   width: 1.125rem;
@@ -166,7 +166,7 @@
   color: inherit;
   text-decoration: none;
   text-align: start;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 .feed-action-menu-list a:hover,

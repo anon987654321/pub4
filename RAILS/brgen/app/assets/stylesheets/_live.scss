@@ -27,7 +27,7 @@
 
 .live-rules summary {
   cursor: pointer;
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
 .live-rules ul {
@@ -82,7 +82,7 @@
 }
 
 .live-card-author {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--text, inherit);
 }
 

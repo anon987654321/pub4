@@ -24,7 +24,7 @@
 .ai-embed-heading {
   margin: 0;
   font-size: var(--text-sm, 0.875rem);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.02em;
   text-transform: lowercase;
   color: var(--text-secondary);
