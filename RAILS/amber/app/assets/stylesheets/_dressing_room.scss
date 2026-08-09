@@ -42,7 +42,7 @@
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transition: opacity var(--transition-fast) ease;
+    transition: opacity var(--transition-fast) var(--ease-out);
   }
 
   &--head {
@@ -99,7 +99,7 @@
   font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--color-grey-text);
   min-width: 70px;
 }

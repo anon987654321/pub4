@@ -152,7 +152,7 @@
     var(--hover-subtle) 100%
   );
   background-size: 200% 100%;
-  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  animation: skeleton-shimmer 1.2s var(--ease-in-out) infinite;
   min-height: 1rem;
 }
 @keyframes skeleton-shimmer {

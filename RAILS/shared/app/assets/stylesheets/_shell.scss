@@ -369,7 +369,7 @@ html.chrome-hidden {
   padding-bottom: var(--safe-bottom, 0px);
   /* "Hide bars on scroll to free up space" -- ported from the real 2014
      mobile.css footer.slide_down, driven by pub4/scroll_chrome. */
-  transition: transform 0.25s ease;
+  transition: transform 0.25s var(--ease-out);
 }
 html.chrome-hidden .tab-bar {
   transform: translateY(100%);
@@ -536,7 +536,7 @@ html.chrome-hidden .tab-bar {
      the toast tier, one step above modals, not above the skip-link. */
   z-index: var(--z-toast, 1100);
   padding: 0.375rem 0.75rem;
-  font-size: 0.625rem;
+  font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--text, var(--text));
   background: var(--surface-elevated, var(--surface));

@@ -127,7 +127,7 @@
 .radio-start-eyebrow {
   margin: 0;
   font: 10px/1.4 var(--font-mono);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-accent);
   pointer-events: none;
@@ -136,9 +136,9 @@
 .radio-start-message {
   margin: 0;
   font-size: var(--font-size-large);
-  font-weight: 300;
+  font-weight: var(--weight-normal);
   color: var(--color-text);
-  animation: radio-pulse 2s ease-in-out infinite;
+  animation: radio-pulse 2s var(--ease-in-out) infinite;
   pointer-events: none;
 }
 

@@ -12,7 +12,7 @@
 }
 
 .composer[open]::backdrop {
-  animation: composer-backdrop-in 180ms ease-out;
+  animation: composer-backdrop-in 180ms var(--ease-out);
 }
 
 @keyframes composer-drop-in {

@@ -153,7 +153,7 @@ body[data-theme="wscons"] .empty-state,
     var(--hover-subtle, rgba(216, 214, 224, 0.03)) 100%
   );
   background-size: 200% 100%;
-  animation: shared-skeleton-shimmer 1.2s ease-in-out infinite;
+  animation: shared-skeleton-shimmer 1.2s var(--ease-in-out) infinite;
   min-height: 1rem;
 }
 

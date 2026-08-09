@@ -79,8 +79,8 @@
   font-weight: 500;
   color: var(--text-dim);
   white-space: nowrap;
-  transition: color var(--transition-fast) var(--ease-in-out, ease),
-              background var(--transition-fast) var(--ease-in-out, ease);
+  transition: color var(--transition-fast) var(--ease-in-out),
+              background var(--transition-fast) var(--ease-in-out);
 }
 
 .nav_link:hover { color: var(--text); background: var(--hover); text-decoration: none; }

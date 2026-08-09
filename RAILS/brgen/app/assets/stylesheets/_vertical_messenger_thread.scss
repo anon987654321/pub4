@@ -185,7 +185,7 @@ body.vertical-messenger #typing-indicator[data-active="true"]::before {
   margin-inline-end: 0.35rem;
   vertical-align: middle;
   background: var(--msg-accent);
-  animation: msg-type-bar 1s ease-in-out infinite;
+  animation: msg-type-bar 1s var(--ease-in-out) infinite;
 }
 
 @keyframes msg-type-bar {

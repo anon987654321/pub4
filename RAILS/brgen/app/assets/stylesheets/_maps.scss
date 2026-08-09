@@ -63,7 +63,7 @@
 
 .map-popup a {
   color: var(--accent);
-  font-weight: 900;
+  font-weight: var(--weight-heavy);
   text-decoration: none;
 }
 
@@ -83,7 +83,7 @@
   padding: var(--space-4);
   background: rgba(2, 6, 23, .58);
   z-index: 120;
-  animation: matchFadeIn .18s ease-out both;
+  animation: matchFadeIn .18s var(--ease-out) both;
 }
 
 .match-overlay__card {
@@ -98,7 +98,7 @@
 .match-overlay__eyebrow {
   margin: 0 0 var(--space-1);
   text-transform: uppercase;
-  letter-spacing: .18em;
+  letter-spacing: .15em;
   font-size: var(--text-xs);
   color: var(--text-secondary);
 }

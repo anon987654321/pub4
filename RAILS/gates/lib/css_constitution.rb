@@ -25,6 +25,27 @@ module Deploy
     HEX = /#[0-9a-fA-F]{3,8}\b/
     COMMENT = %r{\A\s*(?://|/\*|\*)}
 
+    # design_rules.yml's whole `typography` block was the last section it
+    # declares that nothing read. flat_ui, eight_px_rhythm, magic hex and
+    # contrast all got a reader; type_scale, hierarchy.max_font_weights,
+    # letter_spacing.all_caps_min_em and line_height did not. Measured across
+    # the 82 source stylesheets on 2026-08-09: 71 distinct font-size values
+    # against max_font_sizes 8, seven font weights against max_font_weights 3,
+    # and two rival size ladders in the same tree — the token one
+    # (12/14/16/18/20) and a hardcoded 13/15/17 borrowed from x.com.
+    FONT_SIZE = /(?:\A|[;{\s])font-size\s*:\s*([^;}]+)/
+    FONT_WEIGHT = /(?:\A|[;{\s])font-weight\s*:\s*([^;}]+)/
+    TIMING = /(?:transition(?:-timing-function)?|animation)\s*:\s*([^;}]+)/
+    # Keyword timing functions are what CINEMA_PALETTE ("cubic-bezier easing on
+    # every transition") exists to forbid; the tokens are the way to satisfy it.
+    KEYWORD_EASING = /(?<![-\w])(?:ease|ease-in|ease-out|ease-in-out|linear)(?![-\w(])/
+    UPPERCASE = /text-transform\s*:\s*uppercase/
+    LETTER_SPACING = /letter-spacing\s*:\s*(-?[\d.]+)em/
+    # Relative and print units are correct as written: `em` sizes an inline
+    # optical correction against its own parent, `pt` is the right unit inside
+    # @media print. Neither belongs to the scale this counts.
+    RELATIVE_SIZE = /\A[\d.]+(?:em|%|pt|ex|ch)\z/
+
     # The palette lives here; a hex literal in either file is the definition the
     # rest of the tree is supposed to reference.
     TOKEN_SOURCES = %w[_tokens.scss _dialect_tokens.scss].freeze
@@ -62,7 +83,7 @@ module Deploy
 
       # Seeded, not defaulted: a rule that falls to zero has to still appear here
       # or it never reaches judge_budgets and its ceiling never ratchets down.
-      @tally = { "important" => [], "rhythm" => [], "magic_hex" => [] }
+      @tally = { "important" => [], "rhythm" => [], "magic_hex" => [], "type_scale" => [], "weight_ladder" => [] }
       files.each { |path| scan(path) }
       judge_budgets
       @result
@@ -111,6 +132,54 @@ module Deploy
       @rhythm_allowlist ||= Array(@design.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
     end
 
+    # Both ladders are read out of the stylesheets that declare them rather than
+    # restated here, the way rhythm_lint reads MASTER's rhythm directly. A gate
+    # carrying its own copy of the scale is a second source that drifts, and
+    # the drift is invisible precisely because both files look maintained.
+    def token_path(name)
+      File.join(RAILS, "shared", "app/assets/stylesheets", name)
+    end
+
+    def size_ladder
+      @size_ladder ||= begin
+        body = File.file?(token_path("_tokens.scss")) ? File.read(token_path("_tokens.scss")) : ""
+        body.scan(/--text-[\w-]+\s*:\s*([\d.]+rem)\s*;/).flatten.map { |v| normalize_size(v) }.uniq
+      end
+    end
+
+    def weight_ladder
+      @weight_ladder ||= begin
+        body = File.file?(token_path("_dialect_tokens.scss")) ? File.read(token_path("_dialect_tokens.scss")) : ""
+        body.scan(/--weight-[\w-]+\s*:\s*(\d{3})\s*;/).flatten.map(&:to_i).uniq
+      end
+    end
+
+    # 0.875rem, .875rem and 14px are the same step; compare in px so a call site
+    # cannot dodge the ladder by changing units.
+    def normalize_size(value)
+      case value.strip
+      when /\A([\d.]*\d)rem\z/ then (Regexp.last_match(1).to_f * 16).round(2)
+      when /\A([\d.]*\d)px\z/ then Regexp.last_match(1).to_f.round(2)
+      end
+    end
+
+    def count_typography(where, line)
+      if (m = line.match(FONT_SIZE))
+        value = m[1].strip
+        unless value.start_with?("var(", "clamp(", "calc(", "inherit") || value.match?(RELATIVE_SIZE)
+          px = normalize_size(value)
+          @tally["type_scale"] << "#{where} #{value}" if px && !size_ladder.include?(px)
+        end
+      end
+
+      return unless (m = line.match(FONT_WEIGHT))
+
+      value = m[1].strip
+      return if value.start_with?("var(", "$") || %w[inherit normal bold].include?(value)
+
+      @tally["weight_ladder"] << "#{where} #{value}" unless weight_ladder.include?(value.to_i)
+    end
+
     # Strip comments before counting, rather than skipping lines that *start*
     # with a comment marker.
     #
@@ -153,6 +222,7 @@ module Deploy
         where = "#{rel}:#{index + 1}"
         @tally["important"] << where if line.match?(IMPORTANT)
         @tally["magic_hex"] << where if !token_source && line.match?(HEX)
+        count_typography(where, line) unless token_source
         next if allowed.empty?
 
         spacing = line.match(SPACING)
@@ -167,12 +237,18 @@ module Deploy
 
     def css_files
       # Source of truth only — never fingerprinted public/assets copies.
+      #
+      # brgen's verticals are mountable engines, so their stylesheets live at
+      # engines/<name>/app/assets/stylesheets and an <app>/app/** glob does not
+      # reach them. That is the same blind spot RAILS/CLAUDE.md records for the
+      # four scanners that stopped seeing 57 views when the verticals moved:
+      # 10 sheets and 1406 lines of dating/marketplace/playlist/takeaway/tv CSS
+      # were outside every budget here, and the `size` rule below hard-fails on
+      # `_vertical_*` sheets specifically — a rule that named files it could not
+      # open. A falling finding count reads as improvement, not blindness.
       APPS.flat_map do |app|
-        bases = [
-          File.join(RAILS, app, "app/assets/stylesheets"),
-          (File.join(RAILS, app, "app/assets/stylesheets") if app == "shared"),
-        ].compact
-        bases = [File.join(RAILS, "shared", "app/assets/stylesheets")] if app == "shared"
+        bases = [File.join(RAILS, app, "app/assets/stylesheets")]
+        bases.concat(Dir.glob(File.join(RAILS, app, "engines/*/app/assets/stylesheets")))
         bases.flat_map do |base|
           next [] unless File.directory?(base)
 
@@ -215,13 +291,84 @@ module Deploy
       if lines > 200 && !File.basename(path).start_with?("application")
         @result.warn("css_constitution size: #{rel} is #{lines} lines (budget 200)") if lines > 250
         # Hard fail only for app-local vertical sheets, not shared shells
-        if lines > 400 && rel.match?(%r{\A(brgen|amber|bsdports)/app/assets/stylesheets/_vertical_})
+        if lines > 400 && rel.match?(%r{\A(brgen|amber|bsdports)/(engines/[^/]+/)?app/assets/stylesheets/_vertical_})
           @result.fail("css_constitution size: #{rel} is #{lines} lines (hard fail >400)")
         end
       end
 
       if body.match?(/@keyframes|animation\s*:/i) && !body.match?(/prefers-reduced-motion:\s*reduce/i)
         @result.fail("css_constitution reduced_motion: #{rel} animates without prefers-reduced-motion")
+      end
+
+      check_easing(rel, body)
+      check_caps_tracking(rel, body)
+    end
+
+    # Both of these reached zero in the 2026-08-09 typography pass, so they are
+    # hard checks rather than ceilings — the ceilings in css_budget.yml exist for
+    # debt that predates a reader, not for rules already clean.
+    def check_easing(rel, body)
+      strip_comments(body).each_line.with_index do |line, index|
+        next unless (m = line.match(TIMING))
+
+        value = m[1]
+        # `none` is how a reduced-motion block turns motion off, not an easing.
+        next if value.match?(/\bnone\b/) || value.include?("steps(")
+        next unless value.match?(KEYWORD_EASING)
+
+        @result.fail("css_constitution easing: #{rel}:#{index + 1} uses a keyword timing function " \
+                     "(#{value.strip}) — CINEMA_PALETTE wants a cubic-bezier; use var(--ease-out) et al")
+      end
+    end
+
+    # typography.letter_spacing.all_caps_min_em. An all-caps label without
+    # tracking closes its counters up and reads as a solid block; the law puts
+    # the floor at 0.05em and the ceiling at 0.15em.
+    def check_caps_tracking(rel, body)
+      floor = @design.dig("typography", "letter_spacing", "all_caps_min_em").to_f
+      ceiling = @design.dig("typography", "letter_spacing", "all_caps_max_em").to_f
+      return if floor.zero?
+
+      each_declaration_block(strip_comments(body)) do |block, line_no|
+        next unless block.match?(UPPERCASE)
+
+        tracking = block[LETTER_SPACING, 1]
+        if tracking.nil?
+          @result.fail("css_constitution caps_tracking: #{rel}:#{line_no} sets uppercase with no " \
+                       "letter-spacing (floor #{floor}em)")
+        elsif tracking.to_f < floor
+          @result.fail("css_constitution caps_tracking: #{rel}:#{line_no} tracks uppercase at " \
+                       "#{tracking}em, below the #{floor}em floor")
+        elsif ceiling.positive? && tracking.to_f > ceiling
+          @result.fail("css_constitution caps_tracking: #{rel}:#{line_no} tracks uppercase at " \
+                       "#{tracking}em, above the #{ceiling}em ceiling")
+        end
+      end
+    end
+
+    # Yields each *innermost* `{ … }` declaration block with the 1-based line its
+    # selector opens on. Nesting depth is tracked rather than assumed, because
+    # this tree writes SCSS nested inside @media and body.vertical-* wrappers —
+    # and only the innermost block is a rule. Yielding enclosing blocks too would
+    # let a sibling's letter-spacing vouch for an untracked uppercase rule.
+    def each_declaration_block(body)
+      lines = body.lines
+      opens = []
+      lines.each_with_index do |line, index|
+        line.each_char do |char|
+          if char == "{"
+            opens << [index, false]
+            # Mark every enclosing block as having a child.
+            opens[0..-2].each { |frame| frame[1] = true }
+            next
+          end
+          next unless char == "}"
+
+          start, nested = opens.pop
+          next if start.nil? || nested
+
+          yield lines[start..index].join, start + 1
+        end
       end
     end
   end

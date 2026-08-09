@@ -371,7 +371,7 @@ body.vertical-takeaway .sold-out-badge {
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   border: 1px solid var(--border);
   padding: 0.1rem 0.35rem;
   border-radius: var(--radius-xs, 4px);
@@ -385,7 +385,7 @@ body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::afte
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   border: 1px solid var(--border);
   padding: 0.1rem 0.35rem;
   border-radius: var(--radius-xs, 4px);

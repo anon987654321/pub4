@@ -87,7 +87,7 @@ input, button, textarea, select {
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-  transition: opacity 180ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+  transition: opacity 180ms var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out);
 }
 
 .btn:hover {
@@ -185,7 +185,7 @@ input, button, textarea, select {
 .skeleton {
   background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-border) 50%, var(--color-surface) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
+  animation: shimmer 1.4s var(--ease-in-out) infinite;
   border-radius: var(--radius-sm);
 }
 
@@ -256,7 +256,7 @@ article {
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 160ms ease;
+  transition: opacity 160ms var(--ease-out);
 }
 
 .tooltip-wrapper:hover .tooltip {
@@ -291,7 +291,7 @@ input[type="checkbox"].toggle {
   appearance: none;
   background: var(--color-border);
   border-radius: var(--radius-pill);
-  transition: background 160ms ease;
+  transition: background 160ms var(--ease-out);
 }
 
 input[type="checkbox"].toggle:checked {
@@ -308,7 +308,7 @@ input[type="radio"]:checked + label {
   border-radius: var(--radius-card);
   padding: var(--space-8);
   text-align: center;
-  transition: all 160ms ease;
+  transition: all 160ms var(--ease-out);
 }
 
 .dropzone.drag-over {
@@ -558,7 +558,7 @@ body:has(dialog[data-dialog-target="dialog"][open]) {
 /* Mobile sensor affordances */
 @media (pointer: coarse) {
   .deal-card, .post-card {
-    transition: transform 0.2s ease;
+    transition: transform 0.2s var(--ease-out);
   }
   .deal-card:active {
     transform: scale(0.985);

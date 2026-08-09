@@ -353,8 +353,8 @@ body.vertical-playlist .nearby-chat-widget {
   min-height: 44px;
   max-height: 6.5rem;
   font-family: var(--font-primary, var(--font, system-ui, sans-serif));
-  font-size: 0.875rem;
-  line-height: 1.35;
+  font-size: var(--text-sm);
+  line-height: 1.45;
 }
 
 .nearby-chat-widget-composer textarea:focus {

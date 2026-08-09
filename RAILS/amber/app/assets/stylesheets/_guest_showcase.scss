@@ -52,7 +52,7 @@
   -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 3%, #000 97%, transparent 100%);
 
   .swiper-wrapper {
-    transition-timing-function: linear;
+    transition-timing-function: var(--ease-linear);
   }
 
   .swiper-slide {
@@ -69,7 +69,7 @@
   overflow: hidden;
   border: 1px solid var(--showcase-border);
   background: var(--showcase-bg);
-  transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease;
+  transition: transform var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 
   &:hover {
     transform: scale(1.04);

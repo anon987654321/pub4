@@ -13,11 +13,25 @@
 # GATE_CSS_RATCHET=1 after a run that beats it.
 #
 # Recorded 2026-08-03 from a full run (RAILS/gates/runner.rb css_constitution).
+#
+# Re-measured 2026-08-09 over 92 stylesheets, up from 82. The gate globbed
+# <app>/app/assets/stylesheets and brgen's five verticals are mountable engines,
+# so 10 sheets and 1406 lines of dating/marketplace/playlist/takeaway/tv CSS
+# were outside every ceiling here — the same blind spot RAILS/CLAUDE.md records
+# for the four scanners that stopped seeing 57 views when the verticals moved.
+# The `size` rule hard-fails on `_vertical_*` sheets by name and could not open
+# one of them.
+#
+# important 119 -> 126, rhythm 82 -> 102 and magic_hex 132 -> 142 are that, and
+# only that: +7/+20/+10 findings that were always in the tree and never counted.
+# Nothing regressed to earn them and no new debt is being waved through. Every
+# added hit is listed by file:line in the commit that widened the glob, so the
+# claim is checkable rather than asserted.
 schema: 1
 rules:
-  important: 119
-  rhythm: 82
-  magic_hex: 132
+  important: 126
+  rhythm: 102
+  magic_hex: 142
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical
@@ -25,3 +39,18 @@ rules:
   # which is where 15 of these 30 came from.
   contrast_below_aa: 30
   contrast_below_aaa: 65
+  # Recorded 2026-08-09. design_rules.yml's `typography` block was the last
+  # section it declares that nothing read, and both numbers below are what that
+  # bought. type_scale counts font-size literals off the --text-* ladder
+  # declared in _tokens.scss; the bulk of it is one specific thing — 0.8125rem
+  # (13px, 49 sites) and 0.9375rem (15px, 40 sites), which are x.com's type
+  # steps sitting alongside the token ladder's 12/14/16/18/20 rather than
+  # replacing it. Two rival scales in one tree is the defect; picking one is a
+  # design decision, not a lint fix, so it gets a ceiling and not an autofix.
+  # weight_ladder counts font-weight literals off --weight-normal/bold/heavy
+  # (400/700/800). 900 and 300 are gone; what remains is 600 (53) and 500 (8),
+  # which is the same open question one axis over — and 700/800 themselves sit
+  # 100 apart, under typography.hierarchy.min_weight_delta of 200.
+  # Both figures are post-fix and include the engines.
+  type_scale: 94
+  weight_ladder: 52

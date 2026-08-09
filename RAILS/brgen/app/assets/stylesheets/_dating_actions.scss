@@ -47,7 +47,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 160ms ease, background 160ms ease;
+  transition: transform 160ms var(--ease-out), background 160ms var(--ease-out);
 }
 
 .swipe-action:active {

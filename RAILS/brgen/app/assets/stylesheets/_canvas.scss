@@ -38,7 +38,7 @@
   font-size: clamp(16px, 4vw, 28px);
   color: var(--text);
   letter-spacing: .02em;
-  transition: transform var(--transition-normal) cubic-bezier(0.32,0.72,0,1), opacity var(--transition-normal) ease;
+  transition: transform var(--transition-normal) var(--ease-spring), opacity var(--transition-normal) var(--ease-out);
   position: absolute;
   top: 0;
   inset-inline-start: 0;
@@ -65,12 +65,12 @@
   text-align: center;
   padding: 16px;
   opacity: 1;
-  transition: opacity var(--transition-fast) ease;
+  transition: opacity var(--transition-fast) var(--ease-out);
 }
 
 .splash.ack { opacity: 0; }
 .splash[hidden] { display: none; }
-.splash h2 { margin: 0 0 8px; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: 800; color: var(--text); letter-spacing: -0.03em; transition: transform var(--transition-fast) ease; }
+.splash h2 { margin: 0 0 8px; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: 800; color: var(--text); letter-spacing: -0.03em; transition: transform var(--transition-fast) var(--ease-out); }
 .splash h2.clicked { transform: scale(1.02); }
 .splash .tagline { color: var(--text-dim); font-size: clamp(0.9rem, 2.8vw, 1.05rem); margin: 0 0 1.6rem; max-width: 28em; line-height: 1.5; }
 .splash .chips { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; margin-bottom: 1.4rem; }
@@ -91,7 +91,7 @@
   border-color: var(--accent);
   background: var(--hover-subtle);
 }
-.splash .hint { color: var(--text-dim); font-size: .65rem; letter-spacing: .05em; }
+.splash .hint { color: var(--text-dim); font-size: var(--text-xs); letter-spacing: .05em; }
 .splash a { color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {

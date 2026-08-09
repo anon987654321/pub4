@@ -239,7 +239,7 @@
 .amber-footer-cols h2 {
   font-size: var(--luxury-font-meta);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--luxury-muted);
   margin-bottom: var(--luxury-space-xs);
@@ -350,7 +350,7 @@ h1, .display, .wordmark {
     var(--hover-subtle) 100%
   );
   background-size: 200% 100%;
-  animation: amber-skeleton 1.2s ease-in-out infinite;
+  animation: amber-skeleton 1.2s var(--ease-in-out) infinite;
   min-height: 1rem;
 }
 
@@ -389,7 +389,7 @@ h1, .display, .wordmark {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 .sustainability-grade {

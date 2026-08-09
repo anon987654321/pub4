@@ -237,7 +237,7 @@ footer {
   padding: 0.25rem 0.7rem;
   background: var(--hover);
   border-radius: var(--radius-pill);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--dark-grey);
 }
 
@@ -299,7 +299,7 @@ footer {
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-  transition: opacity 180ms ease;
+  transition: opacity 180ms var(--ease-out);
 }
 
 .btn:hover {
@@ -393,7 +393,7 @@ footer {
 
 .swipe-placeholder span {
   font-size: 64px;
-  font-weight: 900;
+  font-weight: var(--weight-heavy);
 }
 
 .swipe-meta {
@@ -419,7 +419,7 @@ footer {
 }
 
 .notification-group h2 {
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   margin-bottom: 0.5rem;
 }
 

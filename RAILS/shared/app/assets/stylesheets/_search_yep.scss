@@ -7,7 +7,7 @@
   border: 1px solid #ccc;
   border-radius: var(--radius-pill);
   font-size: 18px;
-  transition: all 100ms ease-in-out;
+  transition: all 100ms var(--ease-in-out);
 }
 
 .search input,
