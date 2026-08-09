@@ -17,12 +17,12 @@
 #
 # Everything past this point is MASTER's: data/soul.yml and data/rules.yml
 # govern the session, and every durable write is validated against them. This
-# file adds no policy of its own and deliberately parses no flags beyond the
-# ones it needs — unrecognised arguments belong to bin/cli, not here.
+# file adds no policy of its own and deliberately parses no flags beyond
+# --help — unrecognised arguments belong to MASTER/bin/cli, not here.
 #
-# bin/pub4 (status, vps state/deploy/logs, post-pull) is untouched and remains
-# the operator surface; this is the instruction surface. bin/cli still forwards
-# to bin/pub4 for legacy callers.
+# Two surfaces at the repo root and no third: bin/pub4 is the operator surface
+# (status, vps state/deploy/logs, post-pull) and this is the instruction
+# surface.
 
 ROOT = File.expand_path("..", __dir__)
 MASTER = File.join(ROOT, "MASTER")

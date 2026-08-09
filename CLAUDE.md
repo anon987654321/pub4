@@ -42,7 +42,9 @@ runtime booted from `MASTER/` so `data/soul.yml` and the sibling `RAILS`,
 slash commands work as in `MASTER/bin/cli`, because it is that runtime.
 
 `bin/pub4` stays the *operator* surface (`status`, `vps state|deploy|logs`,
-`post-pull`) and `bin/cli` still forwards to it for legacy callers.
+`post-pull`). Two surfaces, no third: `bin/cli` was a compat shim forwarding to
+`bin/pub4` for legacy callers that no longer exist, and was deleted rather than
+kept — every `bin/cli` in this tree means `MASTER/bin/cli`.
 
 ## Checks
 
