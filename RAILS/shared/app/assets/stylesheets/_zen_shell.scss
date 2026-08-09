@@ -29,6 +29,19 @@ input, button, textarea, select {
   font: inherit;
 }
 
+/* `font: inherit` above hands every field its container's size, which is how a
+   search input ends up at 12px inside a small-type shell without any rule ever
+   naming it. iOS Safari zooms the viewport when a text field under 16px takes
+   focus and does not zoom back, so the floor is enforced here rather than
+   chased per component: max() keeps any larger size the design asks for.
+   Buttons, radios and checkboxes are excluded — they take no caret. */
+input:not([type="radio"], [type="checkbox"], [type="range"], [type="color"],
+          [type="file"], [type="submit"], [type="button"], [type="image"]),
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
