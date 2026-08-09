@@ -418,26 +418,38 @@ module Deploy
                           scrollable: container.scrollWidth > container.clientWidth + 4 });
           });
 
-        // Gestalt proximity, measured: an element's own internal padding against
-        // the gap separating it from the next block. When padding exceeds the
-        // separation, the parts of one thing sit further apart than two
-        // different things, and the grouping reads backwards.
+        // Gestalt proximity, measured correctly: the space *between an element's
+        // own children* against the space between that element and the next one.
+        // That is what the eye compares. Summing the element's top and bottom
+        // padding — the first version of this — asks a different question and
+        // answers it wrongly: a hero with 40px above and below its content and
+        // 48px to the next section reported "80 > 48" and was flagged, when its
+        // children sit 32px apart inside a 48px separation, which is right.
         const proximity = [];
+        const measuredGap = (a, b) => Math.round(b.getBoundingClientRect().top - a.getBoundingClientRect().bottom);
+        const laidOut = el => {
+          const cs = getComputedStyle(el);
+          if (cs.display === 'none' || cs.position === 'absolute' || cs.position === 'fixed') return false;
+          return el.getBoundingClientRect().height > 4;
+        };
         for (let i = 0; i < containers.length && proximity.length < 200; i++) {
           const kids = Array.from(containers[i].children).filter(k => {
-            const cs = getComputedStyle(k);
-            if (cs.display === 'none' || cs.position === 'absolute' || cs.position === 'fixed') return false;
             const kr = k.getBoundingClientRect();
-            return kr.height > 24 && kr.width > vw * 0.5;
+            return laidOut(k) && kr.height > 24 && kr.width > vw * 0.5;
           });
           for (let j = 0; j + 1 < kids.length; j++) {
             const a = kids[j], b = kids[j + 1];
-            const ar = a.getBoundingClientRect(), br = b.getBoundingClientRect();
-            const gap = Math.round(br.top - ar.bottom);
-            if (gap < 0 || gap > 128) continue;
-            const acs = getComputedStyle(a);
-            const padY = Math.round(parseFloat(acs.paddingTop) + parseFloat(acs.paddingBottom));
-            if (padY > 0) proximity.push({ sel: selFor(a), pad: padY, gap: gap });
+            const external = measuredGap(a, b);
+            if (external < 0 || external > 128) continue;
+            // The widest gap between a's own consecutive children is its
+            // internal spacing — the distance the eye reads as "same group".
+            const inner = Array.from(a.children).filter(laidOut);
+            let internal = 0;
+            for (let k = 0; k + 1 < inner.length; k++) {
+              const g = measuredGap(inner[k], inner[k + 1]);
+              if (g > internal && g <= 128) internal = g;
+            }
+            if (internal > 0) proximity.push({ sel: selFor(a), pad: internal, gap: external });
           }
         }
 

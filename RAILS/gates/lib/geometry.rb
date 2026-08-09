@@ -182,9 +182,9 @@ module Deploy
 
       worst = offenders.max_by(3) { |row| row["pad"].to_i - row["gap"].to_i }
       @result.fail(
-        "geometry proximity: #{surface.id} has #{offenders.size} block(s) whose padding exceeds the gap " \
-        "to the next block — #{worst.map { |r| "#{r["sel"]} (pad #{r["pad"]}px > gap #{r["gap"]}px)" }.join('; ')}. " \
-        "Their insides read as further apart than they are from their neighbour (principle=proximity)",
+        "geometry proximity: #{surface.id} has #{offenders.size} block(s) spaced wider inside than out — " \
+        "#{worst.map { |r| "#{r["sel"]} (children #{r["pad"]}px apart, #{r["gap"]}px to the next block)" }.join('; ')}. " \
+        "Their own parts read as further apart than they are from their neighbour (principle=proximity)",
         severity: :soft
       )
     end
