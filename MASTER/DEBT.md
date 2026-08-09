@@ -115,12 +115,42 @@ entry in `autoload.yml`, `load.yml`, the gemspec or the Rakefile:
 touching a threshold, and the ratchet cleared the raise log, so the allowance is
 earned back rather than spent.
 
+**`pub4/status_report.rb` was not an orphan, and deleting it broke `bin/pub4` for
+six days.** Corrected 2026-08-09. `bin/pub4:12` requires it and `bin/pub4:48`
+calls `Pub4::StatusReport`, so every subcommand died with a LoadError before
+parsing argv — including the `bin/pub4 status` that the root `CLAUDE.md`
+documents as the repo-level check and that `bin/todo-retire`'s own failure
+message tells the operator to run. `bin/cli` execs `bin/pub4`, so it went with
+it. Restored, plus one latent fix: the default argument called
+`Environment.repo_root(__dir__)` positionally against a keyword parameter, which
+never raised only because `bin/pub4` always passes `root:`.
+
+The sweep was blind twice, and both are reproducible today:
+
+1. **Extension filter.** It matched constants with a grep over `*.rb`, `*.yml`
+   and `*.md`. `bin/pub4` has no extension. Re-run that grep now and it still
+   returns zero callers for `StatusReport`, which plainly has one.
+2. **Scope.** It ran from `MASTER/`, where `bin/` means `MASTER/bin/`. The caller
+   is in the *repo root* `bin/`, one directory above the scan root, and puts
+   `MASTER/lib` on the load path itself (`bin/pub4:9`).
+
+Pinned by `test/test_entrypoint_requires.rb`, which checks requires rather than
+constants: every `require` in an executable under the repo-root `bin/` or
+`MASTER/bin/` must resolve to a file on disk. A constant sweep can be fooled by
+an extension filter; a missing file cannot. Mutation-tested — remove
+`status_report.rb` and it fails naming the script, the feature and the path.
+
+**Any future orphan sweep must include the repo-root `bin/` and must not filter
+by extension.** The five other deletions above were re-checked against both
+blindnesses and all five hold.
+
 Two things worth carrying forward. The reference sweep matched this file's own
 warning below: the *first* orphan list, built from filename globs, was mostly
 wrong; the one that held matched each file's innermost constant across
-`lib/ core/ bin/ test/ spec/ web/ tools/ data/`. And ratcheting mid-session is a
-trap — recording the new low at 47,506 immediately blocked the +10 that closing
-the `[DENSITY]` finding required. Ratchet once, at the end.
+`lib/ core/ bin/ test/ spec/ web/ tools/ data/` — which, as above, is a scope
+that silently excludes the one caller that mattered. And ratcheting mid-session
+is a trap — recording the new low at 47,506 immediately blocked the +10 that
+closing the `[DENSITY]` finding required. Ratchet once, at the end.
 
 The historical accounting of who grew it, kept because the ratchet exists to make
 this legible:
