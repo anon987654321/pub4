@@ -55,6 +55,12 @@
 .field--grow { flex: 1; min-width: 0; }
 .field--check-label { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--text-sm); margin-bottom: var(--space-2); cursor: pointer; }
 .field--check-label input { margin-top: 4px; flex-shrink: 0; }
+/* Fitts floor at the origin — carried by _autofix_geometry until 2026-08-09
+   (brgen/core mobile, checkbox rendered 13x13 against a 44px floor). The
+   selector is the autofix's own: `.field--check-label input` is one specificity
+   step lower, and the generated layer used to load last, so matching its shape
+   is what keeps the rendered box identical. */
+label.field--check-label > input { min-height: 44px; min-width: 44px; }
 .chips--bar { padding: var(--space-3) var(--space-4); border-bottom: 0; }
 .listing-price { font-size: var(--text-2xl); font-weight: var(--weight-heavy); color: var(--danger, var(--color-danger)); margin-bottom: var(--space-1); }
 .listing-actions { margin: var(--space-4) 0; display: flex; gap: var(--space-3); align-items: center; }

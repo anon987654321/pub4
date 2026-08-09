@@ -266,3 +266,10 @@ body.vertical-marketplace #navBar {
     inset-inline-end: var(--space-2);
   }
 }
+
+/* Overflow guard at the origin — carried by _autofix_geometry until 2026-08-09
+   (brgen/core, table.lines spilled past a 320px viewport). */
+table.lines {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}

@@ -6,7 +6,6 @@
 @use "empty_state";
 @use "offline_page";
 @use "auth_form";
-@use "_autofix_geometry";
 @use "focus_ring";
 
 .nav-actions {
@@ -110,6 +109,18 @@ main#main-content {
 
 main#main-content :is(button, input[type="submit"], .btn) {
   min-height: 44px;
+}
+
+/* Fitts floor at the origin — carried by _autofix_geometry until 2026-08-09.
+   Both controls sit OUTSIDE main#main-content, which is why the rule above
+   never reached them: nav-actions sign-in/out rendered 46x18 and the search
+   submit 58x21, against a 44px floor. The selectors are the autofix's own —
+   `.nav-actions .btn` does NOT match, because the anchor carries `btn-ghost`
+   alone and never `btn`. */
+div.nav-actions > a.btn-ghost,
+div.search-form > input.btn.btn-sm {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 main#main-content :is(button, input, select, textarea, a):focus-visible {

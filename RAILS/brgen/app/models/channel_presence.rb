@@ -66,14 +66,17 @@ class ChannelPresence
     def read(conversation)
       value = Rails.cache.read(key(conversation))
       value.is_a?(Hash) ? value : {}
-    rescue StandardError
-      # A presence count is never worth failing a request over.
+    rescue StandardError => e
+      # A presence count is never worth failing a request over — but the
+      # failure is still logged (FAIL_VISIBLY): tolerated is not invisible.
+      Rails.logger.debug { "channel_presence read failed: #{e.class}: #{e.message}" }
       {}
     end
 
     def write(conversation, live)
       Rails.cache.write(key(conversation), live, expires_in: (TTL * 2).seconds)
-    rescue StandardError
+    rescue StandardError => e
+      Rails.logger.warn("channel_presence write failed: #{e.class}: #{e.message}")
       nil
     end
 
@@ -89,7 +92,8 @@ class ChannelPresence
         partial: "conversations/presence",
         locals: { conversation: conversation }
       )
-    rescue StandardError
+    rescue StandardError => e
+      Rails.logger.warn("channel_presence broadcast failed: #{e.class}: #{e.message}")
       nil
     end
   end

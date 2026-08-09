@@ -25,9 +25,8 @@ npm ci && npm run build:pwa               # rebuild the Workbox service worker
 
 `RAILS/test/*.rb` are standalone Minitest files run under bare `ruby` — they read
 source as text and never boot Rails. App tests under `RAILS/<app>/test/` need the
-app bundle. Ruby 3.4.9 comes from the repo-root `.ruby-version`; the apps declare
-none of their own, so run app commands from within the app directory or use
-`RBENV_VERSION=3.4.9 rbenv exec`.
+app bundle. Ruby 3.4.9 is pinned by `.ruby-version` at the repo root and in each
+app directory, so app commands resolve the same interpreter from any cwd.
 
 Which check proves the work: source change → the gate that owns it
 (`runner.rb --list`); app code → that app's `bin/ci`; anything measuring rendered
