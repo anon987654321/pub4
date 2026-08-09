@@ -216,13 +216,21 @@ module Deploy
     def count_budget_rules(path, rel, body)
       token_source = TOKEN_SOURCES.include?(File.basename(path))
       allowed = rhythm_allowlist
+      in_face = false
       strip_comments(body).each_line.with_index do |line, index|
         next if line.match?(COMMENT)
+
+        # @font-face descriptors name the weight and size of a *file*. They are
+        # not UI type and must not be measured against the ladder, or restoring
+        # a Bold face to 700 reads as drift off a 400/600/800 scale.
+        in_face = true if line.match?(/@font-face/)
+        face_line = in_face
+        in_face = false if in_face && line.match?(/\A\s*\}\s*\z/)
 
         where = "#{rel}:#{index + 1}"
         @tally["important"] << where if line.match?(IMPORTANT)
         @tally["magic_hex"] << where if !token_source && line.match?(HEX)
-        count_typography(where, line) unless token_source
+        count_typography(where, line) unless token_source || face_line
         next if allowed.empty?
 
         spacing = line.match(SPACING)
@@ -305,6 +313,25 @@ module Deploy
 
       check_easing(rel, body)
       check_caps_tracking(rel, body)
+      check_font_face_descriptors(rel, body)
+    end
+
+    # Inside @font-face, font-weight/style/stretch are *descriptors* naming what
+    # is in the file, not properties styling an element, and var() is invalid
+    # there — the browser drops the whole declaration and the face stops
+    # matching. A bulk weight-tokenisation pass rewrote four of them on
+    # 2026-08-09, including the JetBrainsMono Bold face, which would have told
+    # the browser its bold file was the body weight.
+    def check_font_face_descriptors(rel, body)
+      in_face = false
+      strip_comments(body).each_line.with_index do |line, index|
+        in_face = true if line.match?(/@font-face/)
+        if in_face && line.match?(/font-(?:weight|style|stretch)\s*:\s*var\(/)
+          @result.fail("css_constitution font_face: #{rel}:#{index + 1} uses var() in an @font-face " \
+                       "descriptor — it must state the weight of the file in src, not a UI token")
+        end
+        in_face = false if in_face && line.match?(/\A\s*\}\s*\z/)
+      end
     end
 
     # Both of these reached zero in the 2026-08-09 typography pass, so they are
