@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 require "socket"
 require "tmpdir"
 
@@ -74,6 +75,39 @@ class TestTtsSupervisor < Minitest::Test
       refute Sup.busy_not_dead?(path, slot), "a worker silent #{Sup::BUSY_STRIKES}x must be replaced"
     ensure
       server&.close
+    end
+  end
+
+  # The 2026-08-09 wedge: .master/tts-worker-0.starting stood for a day after a
+  # spawn died between mkdir and rmdir, so slot 0 of the pool answered false after
+  # burning START_TIMEOUT_S, on every call, forever.
+  def test_with_daemon_lock_breaks_an_abandoned_lock_instead_of_waiting_it_out
+    Dir.mktmpdir("master_tts_lock") do |dir|
+      lock = Sup.lock_path(dir, index: 0)
+      FileUtils.mkdir_p(File.dirname(lock))
+      Dir.mkdir(lock, 0o700)
+      abandoned = Time.now - (Sup::STALE_LOCK_S + 1)
+      File.utime(abandoned, abandoned, lock)
+
+      ran = false
+      started = Time.now
+      Sup.with_daemon_lock(dir, index: 0) { ran = true }
+
+      assert ran, "an abandoned lock must be broken, not waited out"
+      assert_operator Time.now - started, :<, Sup::START_TIMEOUT_S,
+                      "breaking an abandoned lock must not cost the full start timeout"
+      refute Dir.exist?(lock), "the lock must be released once the block returns"
+    end
+  end
+
+  def test_a_lock_a_live_holder_just_took_is_left_alone
+    Dir.mktmpdir("master_tts_fresh_lock") do |dir|
+      lock = Sup.lock_path(dir, index: 0)
+      FileUtils.mkdir_p(File.dirname(lock))
+      Dir.mkdir(lock, 0o700)
+
+      refute Sup.break_stale_lock(lock), "a lock younger than STALE_LOCK_S belongs to somebody"
+      assert Dir.exist?(lock), "a live holder's lock must survive the probe"
     end
   end
 

@@ -11,6 +11,11 @@ module Master
     module TtsSupervisor
       START_TIMEOUT_S = 15
       POLL_INTERVAL_S = 0.1
+      # A lock directory outlives the process that made it. The longest a live
+      # holder legitimately holds one is a single replace_worker, whose own
+      # wait_for_socket deadline is START_TIMEOUT_S; past twice that, nobody is
+      # coming back for it. See with_daemon_lock.
+      STALE_LOCK_S = START_TIMEOUT_S * 2
       # Process.spawn merges env onto the parent; Falcon's web bundle vars must not
       # leak into tts-worker children or Bundler resolves against web/vendor/bundle.
       # RUBYLIB and BUNDLE_LOCKFILE were the actual live leak (confirmed on vm23):
@@ -224,11 +229,21 @@ module Master
         false
       end
 
+      # Waiting out a lock whose owner is gone wedges the slot permanently. A spawn
+      # killed between mkdir and rmdir -- a crash, a ^C, a test that hit its timeout
+      # -- leaves the directory standing; socket_alive? stays false, the lock never
+      # clears, and every later call pays START_TIMEOUT_S to arrive at false again.
+      # Found on this box 2026-08-09: .master/tts-worker-0.starting had stood since
+      # the previous day, slot 0 of a two-slot pool was dead, and every other
+      # round-robin synthesis took 15s to fall back. It also timed out
+      # test_synthesize_streaming_falls_back_to_oneshot_when_socket_fails, which is
+      # the only reason anybody noticed.
       def with_daemon_lock(root, index: 0)
         path = lock_path(root, index:)
         deadline = Time.now + START_TIMEOUT_S
         acquired = false
         until acquired = lock_directory(path)
+          next if break_stale_lock(path)
           return false if Time.now >= deadline
 
           sleep POLL_INTERVAL_S
@@ -236,6 +251,17 @@ module Master
         yield
       ensure
         Dir.rmdir(path) if acquired && Dir.exist?(path)
+      end
+
+      def break_stale_lock(path)
+        return false unless Dir.exist?(path)
+        return false if Time.now - File.mtime(path) < STALE_LOCK_S
+
+        Dir.rmdir(path)
+        true
+      rescue SystemCallError => e
+        Master::Ground::Swallow.log(e, context: "TtsSupervisor.break_stale_lock")
+        false
       end
 
       def lock_directory(path)
