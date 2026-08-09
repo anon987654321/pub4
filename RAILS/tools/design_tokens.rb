@@ -56,7 +56,8 @@ module DesignTokens
   end
 
   def face_root_css
-    data = load.fetch("face_root")
+    root = load
+    data = root.fetch("face_root")
     anchors = data.fetch("anchors")
     derived = data.fetch("derived")
     layout = data.fetch("layout")
@@ -70,8 +71,12 @@ module DesignTokens
     %w[top right bottom left].each do |side|
       lines << "  --safe-#{side}: env(safe-area-inset-#{side}, 0px);"
     end
-    # Corner chrome matches RAILS --chrome-inset (shared_chrome.chrome_inset = 0.75rem).
-    lines << "  --chrome-inset: 0.75rem;"
+    # Read, not restated. This line used to hardcode 0.75rem behind a comment
+    # claiming it matched shared_chrome.chrome_inset — a copy describing itself
+    # as a reference. When the token moved to 12px the face kept the old value
+    # and the two drifted silently, which is the whole reason design_tokens.yml
+    # exists.
+    lines << "  --chrome-inset: #{root.fetch(%q{shared_chrome}).fetch(%q{chrome_inset})};"
     { "t" => "top", "r" => "right", "b" => "bottom", "l" => "left" }.each do |short, side|
       lines << "  --inset-#{short}: calc(var(--chrome-inset) + var(--safe-#{side}));"
     end

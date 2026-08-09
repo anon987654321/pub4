@@ -68,7 +68,13 @@ body[data-layout="document"] {
   max-width: var(--measure-body, 66ch);
 }
 
-/* Touch floor — buttons and primary nav hits (geometry gate also measures this). */
+/* Touch floor — buttons and primary nav hits (geometry gate also measures this).
+   min-height alone is half a floor: Fitts is about area, and an icon-only
+   control can be 44px tall and 24px wide and satisfy this rule while failing
+   the thing it exists to guarantee. The rendered gate measured exactly that —
+   pagination arrows at 10x44 and a close control at 34x22 — because the CSS
+   only ever constrained one axis. min-inline-size costs nothing on the
+   full-width members, which are already wider than the floor. */
 :where(
   button,
   .btn,
@@ -81,6 +87,7 @@ body[data-layout="document"] {
   .password-toggle
 ) {
   min-height: var(--tap-min, 44px);
+  min-inline-size: var(--tap-min, 44px);
 }
 
 /* Main column gutters — single rule so app shells cannot re-fight each other. */

@@ -43,6 +43,72 @@ module Deploy
       ((lighter + 0.05) / (darker + 0.05)).round(2)
     end
 
+    # APCA (Accessible Perceptual Contrast Algorithm), W3C draft constants
+    # 0.1.9. Reported alongside the WCAG 2.x ratio above, never instead of it:
+    # WCAG 2.x is what style.yml declares and what an auditor will measure.
+    #
+    # It is worth measuring both because the two disagree in a way that matters
+    # here. WCAG 2.x is a ratio of two luminances and is symmetric — it gives
+    # the same answer whether the text is dark on light or light on dark — while
+    # perceived contrast is not symmetric at all. Light text on a dark ground
+    # spreads into its background (halation) and reads thinner than the ratio
+    # predicts; mid-greys on light grounds read better than it predicts. A
+    # graphite/indigo dark UI is exactly where that error lives, so a secondary
+    # tier "failing" AAA by 0.2 may be perceptually fine, and something WCAG
+    # passes may not be.
+    #
+    # APCA returns a signed lightness contrast Lc, roughly -108..106. The sign
+    # carries polarity; readability thresholds use its absolute value.
+    APCA = {
+      trc: 2.4, r: 0.2126729, g: 0.7151522, b: 0.0721750,
+      norm_bg: 0.56, norm_txt: 0.57, rev_txt: 0.62, rev_bg: 0.65,
+      blk_thrs: 0.022, blk_clmp: 1.414, scale: 1.14,
+      lo_offset: 0.027, delta_y_min: 0.0005, lo_clip: 0.1
+    }.freeze
+
+    def apca_screen_luminance(rgb)
+      k = APCA
+      y = k[:r] * ((rgb[0] / 255.0)**k[:trc]) +
+          k[:g] * ((rgb[1] / 255.0)**k[:trc]) +
+          k[:b] * ((rgb[2] / 255.0)**k[:trc])
+      # Soft clamp near black: below this the display's own flare dominates.
+      y < k[:blk_thrs] ? y + ((k[:blk_thrs] - y)**k[:blk_clmp]) : y
+    end
+
+    # Lc for text `hex_txt` on background `hex_bg`. Order matters — unlike the
+    # WCAG ratio, swapping the arguments changes the answer.
+    def apca_lc(hex_txt, hex_bg)
+      txt = parse_hex(hex_txt)
+      bg = parse_hex(hex_bg)
+      return nil unless txt && bg
+
+      k = APCA
+      y_txt = apca_screen_luminance(txt)
+      y_bg = apca_screen_luminance(bg)
+      return 0.0 if (y_bg - y_txt).abs < k[:delta_y_min]
+
+      if y_bg > y_txt # dark text on a light ground
+        s = ((y_bg**k[:norm_bg]) - (y_txt**k[:norm_txt])) * k[:scale]
+        c = s < k[:lo_clip] ? 0.0 : s - k[:lo_offset]
+      else # light text on a dark ground
+        s = ((y_bg**k[:rev_bg]) - (y_txt**k[:rev_txt])) * k[:scale]
+        c = s > -k[:lo_clip] ? 0.0 : s + k[:lo_offset]
+      end
+      (c * 100).round(1)
+    end
+
+    # APCA's readability thresholds are a lookup over size and weight, not one
+    # number. This is the conservative reading of the bronze-level table: body
+    # copy wants Lc 75, larger or bolder text 60, and anything at 45 is a
+    # headline floor rather than a reading target.
+    def apca_threshold(size_px, bold: false)
+      size = size_px.to_f
+      return 45.0 if size >= 36 || (size >= 24 && bold)
+      return 60.0 if size >= 24 || (size >= 18.66 && bold)
+
+      75.0
+    end
+
     # Nudge a foreground hex along the luminance axis until it clears `target`
     # against `bg`, preserving hue and saturation. Returns nil when even pure
     # black or white cannot reach the target (a background that light or dark

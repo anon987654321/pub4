@@ -634,11 +634,47 @@ module Deploy
           )
         elsif ratio < @aaa && !large
           @result.fail(
-            "geometry contrast: #{surface.id} #{fg} on #{bg} = #{ratio} < design_rules AAA #{@aaa}",
+            "geometry contrast: #{surface.id} #{fg} on #{bg} = #{ratio} < design_rules AAA #{@aaa}" \
+            "#{apca_note(fg, bg, size, bold)}",
             severity: :soft
           )
         end
+
+        check_apca(surface, el, fg, bg, size, bold)
       end
+    end
+
+    # APCA reported next to the WCAG ratio, never instead of it. The two
+    # disagree in the direction that matters for a dark UI, and measured on this
+    # tree they disagree completely about where the debt is: #5c586e on white is
+    # 6.83 (fails AAA) but Lc 83.6 (comfortably readable), while #8a879c on
+    # #17161c is 5.16 — WCAG makes it look like a near miss — and Lc 38.3, which
+    # is below APCA's floor for text of any size. WCAG 2.x is symmetric and
+    # perception is not: light text on a dark ground halates and reads thinner
+    # than the ratio predicts.
+    def apca_note(fg, bg, size, bold)
+      lc = DesignMetrics.apca_lc(fg, bg)
+      return "" unless lc
+
+      " (APCA Lc #{lc.abs.round(1)}, wants #{DesignMetrics.apca_threshold(size, bold: bold).round})"
+    end
+
+    def check_apca(surface, el, fg, bg, size, bold)
+      lc = DesignMetrics.apca_lc(fg, bg)
+      return unless lc
+
+      want = DesignMetrics.apca_threshold(size, bold: bold)
+      return if lc.abs >= want
+
+      key = [:apca, fg, bg, want]
+      return if @apca_seen&.include?(key)
+
+      (@apca_seen ||= Set.new) << key
+      @result.fail(
+        "geometry apca: #{surface.id} #{fg} on #{bg} = Lc #{lc.abs.round(1)} < #{want.round} " \
+        "(#{size.round}px#{bold ? ' bold' : ''}, e.g. #{el["key"]}) principle=perceptual_contrast",
+        severity: :soft
+      )
     end
 
     def check_token_conformance(surface, data)

@@ -33,7 +33,7 @@ class LayoutContractTest < Minitest::Test
 
   def test_shared_chrome_tokens_declare_layout_floor
     yml = File.read(TOKENS)
-    assert_match(/chrome_inset:\s*"0\.75rem"/, yml)
+    assert_match(/chrome_inset:\s*"12px"/, yml)
     assert_match(/tap_min:\s*"44px"/, yml)
     assert_match(/bar_height:\s*"44px"/, yml)
     assert_match(/measure_body:\s*"66ch"/, yml)
@@ -41,7 +41,9 @@ class LayoutContractTest < Minitest::Test
 
   def test_face_root_shares_chrome_inset_and_tap
     css = File.read(FACE_CSS)
-    assert_includes css, "--chrome-inset: 0.75rem"
+    # Absolute unit on purpose — a rem lands on 13.5px at brgen's 18px root.
+    assert_includes css, "--chrome-inset: 12px"
+    refute_match(/--chrome-inset:\s*[\d.]+rem/, css, "chrome inset must not scale with the root")
     assert_includes css, "--tap-min: 44px"
     assert_includes css, "--bar-height: 44px"
     assert_includes css, "--z-skip: 2000"
@@ -51,7 +53,8 @@ class LayoutContractTest < Minitest::Test
 
   def test_dialect_exports_family_chrome_vars
     scss = File.read(DIALECT)
-    assert_includes scss, "--chrome-inset: 0.75rem"
+    assert_includes scss, "--chrome-inset: 12px"
+    refute_match(/--chrome-inset:\s*[\d.]+rem/, scss, "chrome inset must not scale with the root")
     assert_includes scss, "--tap-min: 44px"
     assert_includes scss, "--bar-height: 44px"
     assert_includes scss, "--measure-body: 66ch"

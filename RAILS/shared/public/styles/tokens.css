@@ -6,7 +6,7 @@
   --surface-elevated: #211f28;
   --search-bg: #232030;
   --text: #d8d6e0;
-  --text-secondary: #8a879c;
+  --text-secondary: #b6b3c8;
   --border: #46435a;
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);

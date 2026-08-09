@@ -38,7 +38,9 @@ shared_chrome:
   font_size_display: "1.75rem"
   measure_body: "66ch"
   # Family layout chrome (12px = face inset-t/r/b/l base; 44px = WCAG + face-bar)
-  chrome_inset: "0.75rem"
+  # Absolute, not rem: brgen sets its root to 18px, where 0.75rem resolves
+  # to 13.5px and puts every corner-anchored element on a fractional pixel.
+  chrome_inset: "12px"
   tap_min: "44px"
   bar_height: "44px"
   page_gutter: "clamp(16px, 5vw, 48px)"
@@ -223,7 +225,7 @@ social:
   surface_elevated: "#211f28"
   search_bg: "#232030"
   text: "#d8d6e0"
-  text_secondary: "#8a879c"
+  text_secondary: "#b6b3c8"
   border: "#46435a"
   hover: "rgba(216, 214, 224, 0.1)"
   hover_subtle: "rgba(216, 214, 224, 0.03)"
