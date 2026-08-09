@@ -145,4 +145,43 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
     assert_select "[data-nearby-chat-target=?]", "log"
     assert_select "form textarea, form input[type=text]"
   end
+
+  # The tab used to render t("chat.title") = "chat" and let
+  # nearby_chat_controller#syncLabelsFromFrame rewrite it to the room name once
+  # the turbo-frame arrived. That is a visible relabel a beat after the page
+  # settles, and it made layout_snapshot report
+  # `.nearby-chat-widget-tab: w 92 -> 102` on and off for many runs in both
+  # directions -- re-baselining never converged, because it just re-recorded
+  # whichever side of the race that run caught.
+  #
+  # Both sides now read Shared::UiHelper#ambient_chat_room_label, so there is one
+  # source and nothing to swap. These two cases are what keeps them equal: assert
+  # the tab renders the room name, not the generic word.
+  test "the chat tab renders the room name server-side, so nothing relabels after load" do
+    get root_path
+
+    assert_response :success
+    assert_select "[data-nearby-chat-target=?]", "tabLabel" do |labels|
+      assert_equal 1, labels.size
+      assert_equal "brgen", labels.first.text.strip,
+                   "the tab must ship the room it will land in, not a placeholder the JS replaces"
+    end
+  end
+
+  test "the tab label and the frame's room line come from the same source" do
+    user = located_user
+    post session_path, params: { email_address: user.email_address, password: "password123" }
+
+    get root_path
+    assert_response :success
+    tab_label = css_select("[data-nearby-chat-target=tabLabel]").first.text.strip
+
+    get_widget
+    assert_response :success
+    frame_room = css_select("[data-nearby-chat-target=mode] strong").first.text.strip
+
+    assert_equal "nearby", tab_label
+    assert_equal "##{tab_label}", frame_room,
+                 "syncLabelsFromFrame strips the leading # and assigns; if these disagree the tab relabels on load"
+  end
 end
