@@ -15042,6 +15042,16 @@ def demo_all(bars_count = 12, destination = nil)
   # old every-fourth-track rap back.
   rap_every = (ENV["DEMO_RAP_EVERY"] || "0").to_i
 
+  # Captured ONCE, before the loop, because the loop assigns ENV["RAP_VOCAL"]
+  # on every iteration -- reading it inside would return the previous slot's
+  # value ("0" on most of them) instead of what the operator asked for.
+  #
+  # Comma-separated, so a demo can rotate rappers. A single voice repeated over
+  # twenty-six slots is its own kind of monotony, and the catalogue has six.
+  demo_rap_slugs = ENV["RAP_VOCAL"].to_s.split(",").map(&:strip)
+                                    .reject { |s| s.empty? || s == "0" }
+  demo_rap_slugs = [RAP_VOCAL_SOURCE] if demo_rap_slugs.empty?
+
   ENV["SPEAK"] ||= "0"
   ENV["STREAM_CONTINUOUS"] = "0"
   ENV["DILLA_STREAMING"] = "1"
@@ -15192,13 +15202,39 @@ def demo_all(bars_count = 12, destination = nil)
     force_env!(demo_slot_pad_env(idx), label: "demo_all[#{idx}]") unless steady
     # Sparse rap so chord cycles are audible (a vocal on every slot masked
     # variety). gunnhild is the only vocal source now.
+    # One branch, not three. The rap_every > 1 branch used to hardcode
+    # "gunnhild" and so discarded an explicit RAP_VOCAL entirely: asking for
+    # store_p with DEMO_RAP_EVERY=3 rendered gunnhild on every third slot and
+    # said so in the log, which reads as the request having been honoured.
     if rap_every <= 0
       ENV["RAP_VOCAL"] = "0"
-    elsif rap_every == 1
-      ENV["RAP_VOCAL"] = ENV["RAP_VOCAL"].to_s.empty? ? "gunnhild" : ENV["RAP_VOCAL"]
-      ENV["RAP_VOCAL"] = "gunnhild" if ENV["RAP_VOCAL"] == "0"
     else
-      ENV["RAP_VOCAL"] = (idx % rap_every).zero? ? "gunnhild" : "0"
+      on = (idx % rap_every).zero?
+      # Index by how many vocal slots have gone by, not by idx, or a rotation
+      # of 2 voices at rap_every 2 would land on the same voice every time.
+      ENV["RAP_VOCAL"] = on ? demo_rap_slugs[(idx / rap_every) % demo_rap_slugs.length] : "0"
+    end
+
+    # Per-slot pocket, opt-in.
+    #
+    # performer and groove_dna drive the microtiming offsets in dilla_timing_ms,
+    # so they ARE the pocket. Left alone the whole demo inherits one identity
+    # from project/session.json -- measured, 18 of 18 non-techno parts came out
+    # questlove/cosmogramma, and questlove is the tightest profile in the table
+    # (kick_lag 2ms, hat_late 6ms) while yancey, the Dilla one, is 8 and 22.
+    # A Dilla engine demonstrated itself in the least Dilla pocket it owns.
+    #
+    # Off by default: this changes how every slot sits, and that is a decision
+    # about the record rather than a defect to repair.
+    if ENV["DEMO_VARY_POCKET"] == "1"
+      performers = DillaComposition::PERFORMERS.keys
+      grooves = DillaComposition::GROOVE_DNA.keys
+      # Indexed off the slug, not idx, so a track keeps its pocket when the
+      # running order changes and two demos stay comparable.
+      h = slug.to_s.each_char.sum(&:ord)
+      force_env!({ "PERFORMER" => performers[h % performers.length].to_s,
+                   "GROOVE_DNA" => grooves[(h / 7) % grooves.length].to_s },
+                 label: "demo_all[#{idx}] pocket")
     end
     # This read as "choir on every third creative slot", but the fallback was
     # "1" — so the other two thirds got a choir too, and the condition only
@@ -15611,13 +15647,29 @@ def composition_session!(n_bars: nil, track: nil, force_new: false)
     remove_instance_variable(:@composition_session) if instance_variable_defined?(:@composition_session)
   end
   return @composition_session if !force_new && instance_variable_defined?(:@composition_session) && @composition_session && !n_bars
+  # What was actually ASKED for, before the "yancey"/"donuts" fallbacks below
+  # flatten "unset" and "set to the default" into the same value. Session.load!
+  # needs that distinction: a nil means "keep what the file has", and without it
+  # every render would overwrite the evolved session's performer with a default
+  # nobody chose.
+  asked = ->(key) {
+    v = ENV[key].to_s.strip
+    v.empty? ? nil : v.downcase.tr("-", "_").to_sym
+  }
+  asked_performer = asked.call("PERFORMER")
+  asked_groove = asked.call("GROOVE_DNA")
+  asked_track = track || (ENV["TRACK"].to_s.strip.empty? ? nil : ENV["TRACK"].to_s.strip)
+
   track ||= (ENV["TRACK"] || "timeless").to_s
   n_bars ||= bars
-  performer = (ENV["PERFORMER"] || "yancey").to_s.downcase.tr("-", "_").to_sym
-  groove = (ENV["GROOVE_DNA"] || "donuts").to_s.downcase.tr("-", "_").to_sym
+  performer = asked_performer || :yancey
+  groove = asked_groove || :donuts
   apply_learned_env_for_track!(track.to_s) if track
   @composition_session = if composition_enabled? && !force_new && File.exist?(DillaComposition::SESSION_PATH)
-                           DillaComposition::Session.load!(default_track: track, n_bars:)
+                           DillaComposition::Session.load!(default_track: track, n_bars:,
+                                                           performer: asked_performer,
+                                                           groove_dna: asked_groove,
+                                                           track: asked_track)
                          else
                            DillaComposition::Session.new(track:, performer:,
                                                          groove_dna: groove, n_bars:)

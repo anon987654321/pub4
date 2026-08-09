@@ -1085,6 +1085,72 @@ class TestDilla < Minitest::Test
            "normalise_master! must re-encode at the renderer's own bitrate, not a hardcoded one"
   end
 
+  # A persisted composition session used to outrank the caller completely.
+  #
+  # composition_session! computed a performer and a groove from ENV and then
+  # called Session.load!, which had no parameter for either -- so both locals
+  # were discarded and the identity came entirely from project/session.json.
+  # A track preset saying PERFORMER => yancey, or an operator typing it on the
+  # command line, was read, ignored, and reported back as whatever the last
+  # evolve left on disk. The track went the same way.
+  #
+  # It is not a small cosmetic difference: performer and groove_dna drive the
+  # microtiming offsets in dilla_timing_ms, so they are the pocket. A 26-track
+  # demo rendered 18 non-techno parts all at questlove/cosmogramma/gen59, which
+  # is most of why a catalogue of distinct progressions sounded like one beat.
+  #
+  # Both directions matter. An explicit ask must win, and NO ask must still
+  # resume the file -- otherwise every render silently resets an evolved
+  # session's identity to a default nobody chose, which is the same class of bug
+  # pointing the other way.
+  def test_explicit_performer_beats_the_persisted_session
+    result = eval_in_engine(<<~RUBY)
+      require "fileutils"
+      require "json"
+      path = DillaComposition::SESSION_PATH
+      FileUtils.mkdir_p(File.dirname(path))
+      saved = File.exist?(path) ? File.read(path) : nil
+      File.write(path, JSON.generate(
+        "track" => "neo_soul", "performer" => "questlove",
+        "groove_dna" => "cosmogramma", "generation" => 59, "best_score" => 0.5
+      ))
+      begin
+        %w[PERFORMER GROOVE_DNA TRACK].each { |k| ENV.delete(k) }
+        reset_composition_session!
+        kept = composition_session!(n_bars: 8)
+
+        ENV["PERFORMER"] = "yancey"
+        ENV["GROOVE_DNA"] = "donuts"
+        ENV["TRACK"] = "semua_untuk_mu"
+        reset_composition_session!
+        asked = composition_session!(n_bars: 8, track: "semua_untuk_mu")
+
+        puts JSON.generate(
+          kept: { performer: kept.performer.to_s, groove: kept.groove_dna.to_s,
+                  track: kept.track.to_s, generation: kept.generation },
+          asked: { performer: asked.performer.to_s, groove: asked.groove_dna.to_s,
+                   track: asked.track.to_s, generation: asked.generation }
+        )
+      ensure
+        saved ? File.write(path, saved) : FileUtils.rm_f(path)
+      end
+    RUBY
+
+    asked = result.fetch("asked")
+    assert_equal "yancey", asked["performer"], "an explicit PERFORMER must reach the session"
+    assert_equal "donuts", asked["groove"], "an explicit GROOVE_DNA must reach the session"
+    assert_equal "semua_untuk_mu", asked["track"], "an explicit TRACK must reach the session"
+    assert_equal 59, asked["generation"],
+                 "the evolved material must survive -- this overrides the identity, not the session"
+
+    kept = result.fetch("kept")
+    assert_equal "questlove", kept["performer"],
+                 "with nothing asked for, the persisted session still wins; otherwise every " \
+                 "render quietly resets an evolved session to a default nobody chose"
+    assert_equal "cosmogramma", kept["groove"]
+    assert_equal "neo_soul", kept["track"]
+  end
+
   # demo-all reassigns a share of its slots to render_hate_techno, which builds
   # its own arrangement and never calls sample_loop_for. Reassigning a track that
   # carries a sampled bed therefore returns a techno piece with the record

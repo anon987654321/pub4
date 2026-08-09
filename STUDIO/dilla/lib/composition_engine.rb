@@ -278,11 +278,37 @@ module DillaComposition
       payload
     end
 
-    def self.load!(default_track: "timeless", n_bars: 64)
-      return new(track: default_track, n_bars:) unless File.exist?(SESSION_PATH)
+    # performer:/groove_dna:/track: are what the caller ASKED for, nil when it
+    # asked for nothing. They win over the file.
+    #
+    # Before they existed this method took its identity entirely from
+    # session.json, and composition_session! computed a performer and a groove
+    # from ENV two lines before calling it and then discarded both. So a track
+    # preset saying PERFORMER => yancey, or an operator typing PERFORMER=yancey,
+    # was read, ignored, and reported back as whatever the last evolve happened
+    # to leave on disk.
+    #
+    # Measured: a 26-track demo rendered 18 non-techno parts and every one of
+    # them came out performer=questlove groove_dna=cosmogramma generation=59.
+    # The drums varied across 22 presets and the tempo across 9 values, but the
+    # pocket -- the thing those two knobs shape -- was identical on all of them.
+    # That is most of why a catalogue of different progressions sounded like one
+    # beat repeated.
+    #
+    # The track was wrong the same way: asking for semua_untuk_mu returned a
+    # session whose track was neo_soul, because data["track"] came first.
+    #
+    # Everything else still comes from the file. The point is to keep the
+    # evolved material -- motifs, callbacks, tension curve, generation -- while
+    # letting the caller say who is playing it.
+    def self.load!(default_track: "timeless", n_bars: 64, performer: nil, groove_dna: nil, track: nil)
+      return new(track: track || default_track, performer: performer || :yancey,
+                 groove_dna: groove_dna || :donuts, n_bars:) unless File.exist?(SESSION_PATH)
+
       data = JSON.parse(File.read(SESSION_PATH))
-      s = new(track: data["track"] || default_track, performer: (data["performer"] || "yancey").to_sym,
-              groove_dna: (data["groove_dna"] || "donuts").to_sym, n_bars:)
+      s = new(track: track || data["track"] || default_track,
+              performer: performer || (data["performer"] || "yancey").to_sym,
+              groove_dna: groove_dna || (data["groove_dna"] || "donuts").to_sym, n_bars:)
       s.instance_variable_set(:@generation, data["generation"] || 0)
       s.instance_variable_set(:@best_score, data["best_score"] || 0.0)
       s.instance_variable_set(:@motifs, (data["motifs"] || []).map { |h| MotifCell.from_h(h) })
