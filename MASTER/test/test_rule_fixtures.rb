@@ -32,7 +32,7 @@ class TestRuleFixtures < Minitest::Test
     scss: "/repo/app/assets/stylesheets/_example.scss",
     css: "/repo/app/assets/stylesheets/example.css",
     erb: "/repo/app/views/example.html.erb",
-    js: "/repo/app/javascript/controllers/example_controller.js"
+    js: "/repo/app/javascript/controllers/example_controller.js",
   }.freeze
 
   def self.fixtured

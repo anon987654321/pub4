@@ -73,6 +73,80 @@ Every `git pull` deploy carries that history. More RAM does not touch it, and
 today added more audio (`42bb88375`). If the history rewrite in item 1 happens,
 strip these in the same pass: one disruptive operation instead of two.
 
+## 4. The MASTER-over-MASTER gate run is unfinished
+
+Opened 2026-08-09. This is the one entry here that is not a production blocker —
+it is parked work with a defined end, and it should be deleted the moment the
+chain completes rather than allowed to become a second debt register.
+
+`bin/gate`'s chain is `/scan → /fix → /scan → /critique → /review`, over MASTER
+and then over RAILS and OPENBSD. **Only the first `/scan .` on MASTER ran, and it
+was interrupted.** `/fix`, the second `/scan`, `/critique` and `/review` have not
+run against either tree, so nothing below the scanner layer has been measured.
+
+What the run established before it stopped:
+
+- `bundle exec rake test` is green — 1010 runs, 0 failures, 0 errors, 8 skips.
+  It was red at the start of the session; see `22e012e52`.
+- `rake spec`, `test:subsystems`, `security_sweep`, `test:core` and
+  `lint:data_singularity` all pass. `lint:frozen` and `lint:autoload` pass.
+  `lint:principle_trace` reports 101/101 untraced, at its ceiling.
+- `rake constitution` reports 3876 findings, 129 actionable against a budget of
+  1500. `rake selftest` reports 0.
+- The two files the interrupted scan modified — `MASTER/test/test_rule_fixtures.rb`
+  and `MASTER/tools/runs.rb` — are its own TRAILING_COMMAS autofix. Both are
+  correct and are kept, but they are 2 of roughly 232 such findings, so the pass
+  is arbitrary rather than complete.
+
+### 4a. `lint:spine` is red on a clean tree and has no dead code left to pay it
+
+`lib/` is 47,577 lines against a 47,458 ceiling (+119). 93 of those lines predate
+this session, spread over seven scan/fix tooling commits since the 2026-08-03
+ratchet; 26 are the TTS lock fix in `22e012e52`.
+
+The previous three breaches were each closed by deleting orphaned code. **That
+seam is empty.** A sweep of every constant and constant-path declared in each
+`lib/**/*.rb` against `lib core bin test spec web tools data script completions
+docs runtime`, the Rakefile, the Gemfile and the gemspec — the method
+`MASTER/DEBT.md` prescribes after the first, filename-based sweep produced a
+mostly-wrong list — returns **zero unreferenced files**.
+
+So this is the decision `data/spine.yml` said would eventually be owed: "if it is
+raised again without `lib/` ever falling back, the honest conclusion is that 'the
+spine never grows' is not the invariant anyone is holding, and the number should
+be replaced by one that is." The raise allowance is 0 of 2 used, so a raise is
+mechanically permitted — which is exactly why it needs a sponsor rather than an
+edit.
+
+The measurement that bears on it, and on the tension three passes have now
+deferred: of `lib/`'s 47,577 lines, **38,077 are code, 2,577 are comment and
+6,923 are blank**. `lint:spine` counts all three. `[DENSITY]` was deliberately
+changed on 2026-07-28 to count code lines only, so that a rationale paragraph
+above a tricky line is not penalised — this repo's stated convention. The two
+rules therefore still pull opposite ways on the same edit, and 20% of what the
+ceiling measures is whitespace and prose the codebase asks for.
+
+Three options, none taken: raise the ceiling with a reason; re-express it in code
+lines and re-ratchet; or absorb into `core/`, which its own standard (a handler
+per verb, a rule per constraint) does not accommodate for any of the 119 lines.
+
+### 4b. `MASTER_AUTOFIX=0` does not stop `/scan` writing to the tree
+
+`bin/gate`'s `SAFE_ENV` sets `MASTER_AUTOFIX=0`, and the comment above `COMMANDS`
+reads "Full chain mutates the tree via /fix" — i.e. the gate believes `/scan` is
+read-only under that env. It is not. `MechanicalAutofix.enabled?` reads
+`MASTER_SCAN_AUTOFIX`, defaulting to `"1"`, and consults `MASTER_AUTOFIX` nowhere
+(`lib/review/scan/mechanical_autofix.rb:15`).
+
+Scan-only mode is safe by accident: it passes `--no-autofix` explicitly on the
+command line. The full-fix chain's *first* `/scan .` writes files before `/fix`
+is reached, and the env var set to prevent that is inert — the dominant defect
+class in this repo, a declaration with no reader.
+
+Decide whether `MASTER_AUTOFIX=0` should gate scan autofix too, or whether
+`SAFE_ENV` should set `MASTER_SCAN_AUTOFIX=0` and the comment should stop
+claiming what it does not enforce.
+
 ## Not blocking, but unverified
 
 Both entries here were closed on 2026-08-03 by booting the four surfaces locally

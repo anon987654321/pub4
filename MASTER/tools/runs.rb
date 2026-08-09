@@ -49,7 +49,7 @@ module Pub4
       "RAILS/brgen/bin/ci" => ["RAILS/brgen/test/**/*_test.rb", "RAILS/brgen/engines/*/test/**/*_test.rb"],
       "RAILS/bsdports/bin/ci" => ["RAILS/bsdports/test/**/*_test.rb"],
       "RAILS/shared/bin/ci" => ["RAILS/shared/test/**/*_test.rb"],
-      "MASTER/web/bin/ci" => ["MASTER/web/test/**/*_test.rb"]
+      "MASTER/web/bin/ci" => ["MASTER/web/test/**/*_test.rb"],
     }.freeze
 
     # Support files named like tests. A runner loads these; nothing runs them.
