@@ -19,8 +19,8 @@ html .turbo-progress-bar {
    a light-on-dark skip chip used to read as a white rectangle). */
 .skip-link {
   position: fixed;
-  inset-block-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px));
-  inset-inline-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
+  inset-block-start: calc(var(--chrome-inset, 12px) + var(--safe-top, 0px));
+  inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
   z-index: var(--z-skip, 2000);
   padding: 0.5rem 0.75rem;
   min-height: var(--tap-min, 44px);

@@ -54,7 +54,18 @@ module Deploy
       @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
       @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
       @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f
-      @allowed_spacing = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i)
+      # design_rules states the spacing grid twice and the two disagree:
+      # pixel_perfection.eight_px_rhythm allows 12 and 20, layout_rules.grid.
+      # allowed_spacing_px does not. css_constitution, rhythm_lint and
+      # design_metrics all read the first; only this gate read the second, so a
+      # 12px gap was simultaneously compliant and a violation depending on which
+      # gate you asked. It is also the value --space-3 declares, which settles
+      # which list is real. Same precedence as design_metrics: rhythm first,
+      # grid as the fallback.
+      @allowed_spacing = Array(@rules.dig("pixel_perfection", "eight_px_rhythm")).map(&:to_i)
+      if @allowed_spacing.empty?
+        @allowed_spacing = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i)
+      end
       @allowed_spacing = [4, 8, 16, 24, 32, 48, 64] if @allowed_spacing.empty?
       @palette = token_palette
 
@@ -309,6 +320,13 @@ module Deploy
 
         r = el["frect"]
         next false unless r
+        # An element laid out by the width of the text before it is fractional
+        # by construction — a row of nav links lands at 85.5, 148.38, 201.66
+        # because that is where the words end, and no stylesheet chose it.
+        # Resampling only shows as a seam on a box that paints an edge, so this
+        # asks about block-level boxes and leaves inline runs alone.
+        next false if el["display"].to_s.start_with?("inline") && el["display"] != "inline-block"
+        next false if r["w"].to_f < 24 || r["h"].to_f < 24
 
         # Width and height are excluded deliberately: an intrinsically sized box
         # is allowed to be 100.5px wide. It is the *position* that resamples the
@@ -446,6 +464,12 @@ module Deploy
       offenders = elements.filter_map do |el|
         next unless el["visible"] && el["onscreen"]
         next unless el["text_align"].to_s == "center"
+        # Own text only. Dividing a *container's* height by its line-height
+        # counts its icon, heading, button and padding as prose: the shared
+        # empty state reported 12 lines where the sentence is two. A block that
+        # holds no text of its own is a layout box, and centring it is not the
+        # thing this rule is about.
+        next if el["text"].to_s.strip.empty?
 
         lh = el["line_height"].to_f
         next if lh <= 0
@@ -664,17 +688,26 @@ module Deploy
 
     # Every colour the design system actually sanctions, plus the achromatic
     # extremes every UI legitimately renders.
+    # Walk the whole tree, not just one level. design_tokens.yml nests
+    # vertical_accents as `messenger: { accent: "#6b7fd7", hover: "#5566c4" }`,
+    # so a one-level each_value saw a Hash where it expected a hex and skipped
+    # every vertical accent in the file. The channel pages were then reported as
+    # painting #6b7fd7 "outside design_tokens.yml" — a colour that is declared
+    # in design_tokens.yml, on the line above its own contrast measurement.
     def token_palette
       set = %w[#000000 #ffffff]
-      @tokens.each_value do |dialect|
-        next unless dialect.is_a?(Hash)
-
-        dialect.each_value do |value|
-          v = value.to_s.strip.downcase
-          set << expand_hex(v) if v.match?(/\A#[0-9a-f]{3}([0-9a-f]{3})?\z/)
-        end
-      end
+      collect_hexes(@tokens, set)
       set.compact.uniq
+    end
+
+    def collect_hexes(node, set)
+      case node
+      when Hash then node.each_value { |v| collect_hexes(v, set) }
+      when Array then node.each { |v| collect_hexes(v, set) }
+      else
+        v = node.to_s.strip.downcase
+        set << expand_hex(v) if v.match?(/\A#[0-9a-f]{3}([0-9a-f]{3})?\z/)
+      end
     end
 
     def expand_hex(value)

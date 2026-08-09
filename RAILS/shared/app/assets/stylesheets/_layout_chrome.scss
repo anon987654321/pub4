@@ -5,7 +5,7 @@
 /* Defaults when a surface has not loaded dialect tokens yet (error pages,
    MASTER mission-control). Dialect mixins override these on :root. */
 :root {
-  --chrome-inset: 0.75rem;
+  --chrome-inset: 12px;
   --tap-min: 44px;
   --bar-height: 44px;
   --page-gutter: clamp(16px, 5vw, 48px);
@@ -137,8 +137,8 @@ main[role="main"] {
   position: fixed;
   /* Above app chrome, not merely above the drawer -- see --z-brand. */
   z-index: var(--z-brand, 120);
-  top: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px));
-  inset-inline-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
+  top: calc(var(--chrome-inset, 12px) + var(--safe-top, 0px));
+  inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;

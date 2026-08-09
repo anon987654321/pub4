@@ -76,14 +76,14 @@
     border-color: color-mix(in srgb, var(--showcase-border) 70%, var(--showcase-accent));
   }
 
-  &__media {
+  .wardrobe-slide-media {
     display: block;
     width: 100%;
     height: 100%;
     text-decoration: none;
   }
 
-  &__media--swatch {
+  .wardrobe-slide-media-swatch {
     display: grid;
     place-items: center;
     background:

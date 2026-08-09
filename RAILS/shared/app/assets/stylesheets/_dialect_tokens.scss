@@ -198,7 +198,14 @@
   // Family chrome: same 0.75rem / 44px floor as MASTER face (design_tokens
   // shared_chrome + face_root.layout). Corner brand, theme toggle, nearby chip
   // and face HUD insets all read these vars.
-  --chrome-inset: 0.75rem;
+  // px, not rem, and deliberately. brgen sets its root to 18px (the real 2014
+  // mobile.css base), so 0.75rem resolved to 13.5px and put the brand mark at
+  // (13.5, 13.5) and the nav links at 85.5 / 148.38 / 201.66 on every surface —
+  // 60 components painting on fractional pixels, where the compositor resamples
+  // the text and a 1px edge becomes two half-intensity lines. A chrome inset is
+  // a fixed distance from the edge of the screen, not a multiple of the reading
+  // size, so it has no reason to scale with the root in the first place.
+  --chrome-inset: 12px;
   --tap-min: 44px;
   --bar-height: 44px;
   --tab-bar-h: var(--bar-height);
