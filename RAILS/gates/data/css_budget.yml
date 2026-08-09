@@ -63,5 +63,5 @@ rules:
   # hero, the swipe placeholder glyph, and `html, body { font-size: 21px }` in
   # _minimal.scss — that last one is the large-screen root scale, and snapping
   # it to a step would rescale every rem in the system.
-  type_scale: 9
+  type_scale: 8
   weight_ladder: 0

@@ -339,6 +339,17 @@ module Deploy
             aria: el.getAttribute('aria-label') || null,
             text: ownText.slice(0, 60),
             rect: { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) },
+            // The rounded rect above is what every existing check reads, and
+            // rounding is exactly what hides a subpixel defect: an element at
+            // x=12.5 reports 13 and looks aligned. Two decimals is past what a
+            // device pixel ratio of 3 can resolve, so anything left here is a
+            // real fractional position and not float noise.
+            frect: {
+              x: Math.round(r.left * 100) / 100,
+              y: Math.round(r.top * 100) / 100,
+              w: Math.round(r.width * 100) / 100,
+              h: Math.round(r.height * 100) / 100
+            },
             color: hex(fgOpaque),
             bg: hex(bg),
             font_size: Math.round(parseFloat(cs.fontSize) * 10) / 10,
@@ -346,6 +357,11 @@ module Deploy
             line_height: cs.lineHeight === 'normal' ? null : Math.round(parseFloat(cs.lineHeight) * 10) / 10,
             position: cs.position,
             display: cs.display,
+            text_align: cs.textAlign,
+            // Needed to tell a text field from a submit button: both are
+            // <input>, only one takes a caret, and only one triggers the iOS
+            // focus zoom. The selector alone cannot say which.
+            input_type: el.tagName === 'INPUT' ? (el.getAttribute('type') || 'text').toLowerCase() : null,
             z: cs.zIndex === 'auto' ? null : cs.zIndex,
             interactive: interactive,
             inline_in_text: inlineInText,

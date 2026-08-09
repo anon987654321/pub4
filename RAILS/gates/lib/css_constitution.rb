@@ -74,8 +74,7 @@ module Deploy
     def run_once
       @result = GateResult.new
       @design = File.file?(MASTER_DESIGN) ? YAML.safe_load_file(MASTER_DESIGN) : {}
-      touch = @design.dig("layout_rules", "touch", "target_min_px").to_i
-      @result.fail("css_constitution: design_rules touch.target_min_px missing/invalid") if touch.positive? && touch < 44
+      check_tap_token
 
       files = css_files
       @result.fail("css_constitution: no stylesheets found") if files.empty?
@@ -126,6 +125,30 @@ module Deploy
 
       body = File.read(BUDGET_PATH)
       File.write(BUDGET_PATH, body.sub(/^  #{Regexp.escape(rule)}: \d+$/, "  #{rule}: #{count}"))
+    end
+
+    # This replaces a check that read design_rules.touch.target_min_px and
+    # failed if it was under 44 — the law measured against a constant, with no
+    # stylesheet involved. It could not have caught a single real defect: the
+    # only way to fail it was to edit the rule file, and the rule file is what
+    # it was quoting. What matters is whether the token the family sizes its
+    # controls from actually meets the floor the law sets.
+    def check_tap_token
+      floor = @design.dig("layout_rules", "touch", "target_min_px").to_i
+      return if floor <= 0
+
+      source = File.read(token_path("_dialect_tokens.scss"))
+      %w[--tap-min --bar-height].each do |name|
+        value = source[/#{Regexp.escape(name)}\s*:\s*(\d+)px\s*;/, 1]
+        if value.nil?
+          @result.warn("css_constitution touch: #{name} is not declared in _dialect_tokens.scss")
+          next
+        end
+        next if value.to_i >= floor
+
+        @result.fail("css_constitution touch: #{name} is #{value}px, under design_rules " \
+                     "layout_rules.touch.target_min_px #{floor}px")
+      end
     end
 
     def rhythm_allowlist

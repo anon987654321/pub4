@@ -108,6 +108,223 @@ module Deploy
       check_contrast(surface, elements)
       check_token_conformance(surface, data)
       check_rhythm(surface, data)
+      check_input_zoom(surface, elements)
+      check_subpixel(surface, elements)
+      check_edge_alignment(surface, elements)
+      check_target_spacing(surface, elements)
+      check_centered_prose(surface, elements)
+    end
+
+    # Everything above this line reads the rounded rect, which is the one number
+    # a subpixel defect cannot survive: an element laid out at x=12.5 reports 13
+    # and measures as aligned. The four checks below read `frect`, the unrounded
+    # rect the probe now also returns.
+
+    # The rendered half of design_metrics' mobile_input check, and the half that
+    # can actually be complete. The source check has to infer "this is a text
+    # field" from the selector, so a rule written as `#q { … }` or one that only
+    # inherits its size is invisible to it — which is exactly how bsdports'
+    # search field sat at 13.5px. Here the tag is known and the size is the one
+    # the browser computed, root scaling and inheritance included.
+    TEXT_INPUT_TAGS = %w[input textarea select].freeze
+    NON_TEXT_INPUT = /\A(?:radio|checkbox|range|color|file|submit|button|image|hidden)\z/
+
+    def check_input_zoom(surface, elements)
+      floor = (@rules.dig("typography", "accessibility", "mobile_input_min_px") || 16).to_f
+      return if floor <= 0
+
+      offenders = elements.select do |el|
+        next false unless TEXT_INPUT_TAGS.include?(el["tag"])
+        next false unless el["visible"] && el["onscreen"]
+        # A submit button is an <input> too, and it takes no caret.
+        next false if el["input_type"].to_s.match?(NON_TEXT_INPUT)
+
+        size = el["font_size"].to_f
+        size.positive? && size < floor
+      end
+      return if offenders.empty?
+
+      named = offenders.uniq { |el| el["key"] }.first(4)
+                       .map { |el| "#{el["key"]} at #{el["font_size"]}px" }
+      @result.fail(
+        "geometry input_zoom: #{surface.id} renders #{offenders.size} text field(s) under " \
+        "#{floor.to_i}px — #{named.join('; ')}. iOS Safari zooms the viewport on focus and does " \
+        "not zoom back (principle=accessibility)"
+      )
+    end
+
+    # A box on a fractional pixel is resampled by the compositor: text loses its
+    # hinting and a 1px border becomes two half-intensity lines. It is the most
+    # common cause of "this looks slightly soft" that no stylesheet explains,
+    # because the offending value is usually a percentage or a flex remainder
+    # rather than anything written down.
+    SUBPIXEL_TOLERANCE = 0.05
+
+    def fractional?(value)
+      return false if value.nil?
+
+      frac = value.to_f.abs % 1
+      frac > SUBPIXEL_TOLERANCE && frac < (1 - SUBPIXEL_TOLERANCE)
+    end
+
+    def check_subpixel(surface, elements)
+      offenders = elements.select do |el|
+        next false unless el["visible"] && el["onscreen"]
+
+        r = el["frect"]
+        next false unless r
+
+        # Width and height are excluded deliberately: an intrinsically sized box
+        # is allowed to be 100.5px wide. It is the *position* that resamples the
+        # paint, and the position is what a layout controls.
+        fractional?(r["x"]) || fractional?(r["y"])
+      end
+      return if offenders.empty?
+
+      # Report distinct components, not instances. A feed of forty cards sharing
+      # one mispositioned action row is one thing to fix, and counting it forty
+      # times buries the other nine.
+      by_key = offenders.group_by { |el| el["key"] }
+      named = by_key.first(5).map do |key, els|
+        r = els.first["frect"]
+        "#{key} at (#{r["x"]}, #{r["y"]})#{" x#{els.size}" if els.size > 1}"
+      end
+      @result.fail(
+        "geometry subpixel: #{surface.id} paints #{by_key.size} distinct component(s) on fractional " \
+        "pixels (#{offenders.size} instances) — #{named.join('; ')} (principle=pixel_perfection)",
+        severity: :soft
+      )
+    end
+
+    # Two stacked blocks whose left edges differ by a pixel or three read as a
+    # mistake to anyone looking at the page, and no source rule can see it: the
+    # two values live in different stylesheets and are individually defensible.
+    # Exact agreement is fine and full disagreement is usually deliberate
+    # indentation. It is the near miss that is always a bug.
+    NEAR_MISS = (0.5..4.0)
+
+    def check_edge_alignment(surface, elements)
+      majors = elements.select do |el|
+        r = el["frect"]
+        el["visible"] && el["onscreen"] && r && r["w"].to_f >= surface.width * 0.4
+      end
+      return if majors.size < 2
+
+      edges = majors.map { |el| [el["frect"]["x"].to_f, el] }.sort_by(&:first)
+      misses = edges.each_cons(2).filter_map do |(x1, a), (x2, b)|
+        delta = (x2 - x1).abs
+        next unless NEAR_MISS.cover?(delta)
+
+        "#{a["key"]} at #{x1} vs #{b["key"]} at #{x2} (#{delta.round(2)}px apart)"
+      end
+      return if misses.empty?
+
+      @result.fail(
+        "geometry alignment: #{surface.id} has #{misses.size} near-miss left edge(s) — " \
+        "#{misses.first(4).join('; ')}. Align them or separate them deliberately " \
+        "(principle=alignment)", severity: :soft
+      )
+    end
+
+    # WCAG 2.5.8. The rule is *conditional*, and the condition is the whole
+    # point: a target at least 24x24 CSS px is exempt no matter how close its
+    # neighbour is, because a finger that lands anywhere on it still hits it.
+    # Only undersized targets need clearance. Measured without that condition
+    # this reported 3283 pairs on one page — every adjacent feed action, all of
+    # them adequately sized and none of them a defect.
+    WCAG_TARGET_MIN = 24.0
+
+    def undersized?(rect)
+      rect["w"].to_f < WCAG_TARGET_MIN || rect["h"].to_f < WCAG_TARGET_MIN
+    end
+
+    # The probe's own inline_in_text flag only catches a link whose parent is
+    # running text. It misses the commonest shape here — a link inside a card
+    # body, which is still a sentence — so the structural signal decides it: a
+    # box no taller than its own line of text has no padding of its own and is
+    # therefore a text run, not a control someone sized.
+    def inline_target?(el)
+      return true if el["inline_in_text"]
+      return false unless el["tag"] == "a" && !el["text"].to_s.strip.empty?
+
+      lh = el["line_height"].to_f
+      lh = el["font_size"].to_f * 1.5 if lh <= 0
+      return false if lh <= 0
+
+      el["frect"]&.dig("h").to_f <= lh + 2
+    end
+
+    def check_target_spacing(surface, elements)
+      targets = elements.select do |el|
+        r = el["frect"]
+        next false unless el["interactive"] && el["visible"] && el["onscreen"]
+        next false unless r && r["w"].to_f.positive? && r["h"].to_f.positive?
+
+        # 2.5.8 exempts targets "in a sentence or whose size is otherwise
+        # constrained by the line-height of non-target text". Counting those
+        # flags every pair of adjacent links in a paragraph, which is not a
+        # defect and is not fixable without breaking the sentence.
+        !inline_target?(el)
+      end
+      return if targets.size < 2
+
+      crowded = []
+      targets.combination(2) do |a, b|
+        # Exempt unless the pair actually needs clearance.
+        next unless undersized?(a["frect"]) || undersized?(b["frect"])
+
+        gap = rect_gap(a["frect"], b["frect"])
+        # Nested or overlapping controls are occlusion, already reported by
+        # check_occlusion; only true neighbours count here.
+        next if gap.nil? || gap.negative? || gap >= WCAG_TARGET_MIN
+
+        crowded << "#{a["key"]} (#{a["frect"]["w"].to_i}x#{a["frect"]["h"].to_i}) and " \
+                   "#{b["key"]} (#{b["frect"]["w"].to_i}x#{b["frect"]["h"].to_i}) are #{gap.round(1)}px apart"
+      end
+      return if crowded.empty?
+
+      @result.fail(
+        "geometry target_spacing: #{surface.id} has #{crowded.size} undersized target pair(s) closer " \
+        "than #{WCAG_TARGET_MIN.to_i}px — #{crowded.first(3).join('; ')} (principle=fitts)", severity: :soft
+      )
+    end
+
+    # Edge-to-edge distance between two boxes; nil when they overlap on both
+    # axes, which is occlusion rather than crowding.
+    def rect_gap(a, b)
+      dx = [b["x"].to_f - (a["x"].to_f + a["w"].to_f), a["x"].to_f - (b["x"].to_f + b["w"].to_f)].max
+      dy = [b["y"].to_f - (a["y"].to_f + a["h"].to_f), a["y"].to_f - (b["y"].to_f + b["h"].to_f)].max
+      return nil if dx.negative? && dy.negative?
+
+      [dx, dy].reject(&:negative?).min
+    end
+
+    # layout_rules.alignment.center_text_max_lines. Centred text gives the eye no
+    # fixed left edge to return to, so every line after the third costs the
+    # reader a hunt for where it starts. Only measurable once rendered, because
+    # the line count depends on the box the text landed in.
+    def check_centered_prose(surface, elements)
+      max_lines = @rules.dig("layout_rules", "alignment", "center_text_max_lines").to_i
+      return if max_lines <= 0
+
+      offenders = elements.filter_map do |el|
+        next unless el["visible"] && el["onscreen"]
+        next unless el["text_align"].to_s == "center"
+
+        lh = el["line_height"].to_f
+        next if lh <= 0
+
+        lines = (el["frect"]&.dig("h").to_f / lh).round
+        next if lines <= max_lines
+
+        "#{el["key"]} (#{lines} lines)"
+      end
+      return if offenders.empty?
+
+      @result.fail(
+        "geometry centered_prose: #{surface.id} centres #{offenders.size} block(s) past " \
+        "#{max_lines} lines — #{offenders.first(3).join('; ')} (principle=alignment)", severity: :soft
+      )
     end
 
     def check_landmarks(surface, data)

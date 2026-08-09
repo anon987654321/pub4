@@ -154,7 +154,9 @@
   border-radius: 0;
   background-color: #e6e6e6;
   color: #111;
-  font-size: var(--text-xs);
+  /* 16px floor even inside the pen: a select is a text field, and iOS Safari
+     zooms the viewport on focus below it. */
+  font-size: var(--text-base);
   cursor: pointer;
 }
 
@@ -172,7 +174,7 @@
   border-radius: 0;
   background: #fff;
   color: #111;
-  font-size: 15px;
+  font-size: var(--text-base);
   outline: none;
 }
 

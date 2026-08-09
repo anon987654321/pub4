@@ -1,5 +1,5 @@
 ---
-generated_at: '2026-08-07T13:15:39Z'
+generated_at: '2026-08-09T05:25:55Z'
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -2184,7 +2184,7 @@ pages:
   view: RAILS/amber/app/views/items/index.html.erb
   needs_id: false
   mode: live
-  http: 200
+  http: 302
   ok: true
   findings: []
 - id: amber/outfits/index

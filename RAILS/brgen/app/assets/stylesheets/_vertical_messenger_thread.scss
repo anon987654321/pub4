@@ -154,7 +154,7 @@ body.vertical-messenger #new_message textarea {
   background: var(--msg-surface);
   color: var(--msg-ink);
   font-family: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 
 body.vertical-messenger #new_message input[type="submit"] {
