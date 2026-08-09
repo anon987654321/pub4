@@ -44,18 +44,33 @@ module Master
             yaml_files = extract_loaded_yamls(code)
             return [] if yaml_files.empty?
 
-            loaded = load_referenced_yamls(yaml_files)
-            return [] if loaded.empty?
+            loaded, unparseable = load_referenced_yamls(yaml_files)
+            findings = unparseable.map do |yml_name, error|
+              finding(line: 1, message: "referenced yaml #{yml_name} failed to parse: #{error}")
+            end
+            return findings if loaded.empty?
 
-            phantom_dig_findings(code, loaded)
+            findings.concat(phantom_dig_findings(code, loaded))
           end
 
+          # Law that fails to parse must surface as a finding, never vanish: a
+          # scanner that silently skips an unparseable data/*.yml validates the
+          # codebase against a partial constitution and reports it as a pass.
           def load_referenced_yamls(yaml_files)
-            yaml_files.filter_map do |yml_name|
+            loaded = []
+            unparseable = []
+            yaml_files.each do |yml_name|
               yml_path = File.join(@data_dir, yml_name)
               next unless File.exist?(yml_path)
-              YAML.safe_load(File.read(yml_path), aliases: true) rescue nil
+
+              begin
+                data = YAML.safe_load(File.read(yml_path), aliases: true)
+                loaded << data if data
+              rescue StandardError => e
+                unparseable << [yml_name, e.message]
+              end
             end
+            [loaded, unparseable]
           end
 
           def phantom_dig_findings(code, loaded)
@@ -75,7 +90,11 @@ module Master
           end
 
           def check_phantom_scan_classes(code, _path)
-            data = YAML.safe_load(code, aliases: true) rescue nil
+            data = begin
+              YAML.safe_load(code, aliases: true)
+            rescue StandardError => e
+              return [finding(line: 1, message: "rules.yml failed to parse: #{e.message}")]
+            end
             return [] unless data.is_a?(Hash)
 
             depths = data["scan_depths"] || {}
@@ -135,7 +154,12 @@ module Master
             lib_dir = File.join(root, "lib")
             return "" unless File.directory?(lib_dir)
             Dir.glob(File.join(lib_dir, "**", "*.rb"))
-               .filter_map { |f| File.read(f) rescue nil }
+               .filter_map do |f|
+                 File.read(f)
+               rescue StandardError => e
+                 Master::Ground::Swallow.log(e, context: "graph_rules.load_lib_source", path: f)
+                 nil
+               end
                .join("\n")
           end
         end

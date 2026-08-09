@@ -32,7 +32,12 @@ module Master
         def overlapping_keys(dir)
           files = Dir.glob(File.join(dir, "*.yml"))
           keys = files.each_with_object({}) do |f, h|
-            data = Master.load_yaml(f) rescue nil
+            data = begin
+              Master.load_yaml(f)
+            rescue StandardError => e
+              Master::Ground::Swallow.log(e, context: "architecture_audit.overlapping_keys", path: f)
+              nil
+            end
             h[File.basename(f)] = data.is_a?(Hash) ? data.keys : []
           end
           pairs = []

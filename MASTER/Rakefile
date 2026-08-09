@@ -378,3 +378,31 @@ namespace :constitution do
     puts "constitution:autofix_group_c: #{fixed.values.sum} fix(es) — #{fixed.map { |k, v| "#{k}=#{v}" }.join(", ")}"
   end
 end
+
+# LOC ratchet — budgets live in data/limits.yml under loc_budgets, and this task
+# is that key's reader. limits.yml is the file DEBT.md names for holding 44 keys
+# with no reader, so a budget nothing read would have been the 45th.
+#
+# Budgets only ever shrink. A diff that grows a subsystem past its budget fails
+# here, and the remedy is extraction or deletion, never a bigger number.
+task :loc_budget do
+  require "yaml"
+  limits = YAML.safe_load_file(File.join(__dir__, "data", "limits.yml"), aliases: true)
+  budgets = limits.fetch("loc_budgets", {})
+  abort "loc_budget: no loc_budgets key in data/limits.yml" if budgets.empty?
+
+  over = budgets.filter_map do |dir, budget|
+    path = File.join(__dir__, dir)
+    next unless File.directory?(path)
+
+    actual = Dir.glob(File.join(path, "**", "*.rb")).sum { |file| File.foreach(file).count }
+    puts "loc_budget: #{dir} #{actual}/#{budget}"
+    [dir, actual, budget] if actual > budget
+  end
+
+  if over.any?
+    over.each { |dir, actual, budget| puts "loc_budget: OVER #{dir} #{actual} > #{budget}" }
+    abort "loc_budget: #{over.size} subsystem(s) over budget — shrink or split, never raise the budget"
+  end
+  puts "loc_budget: ok"
+end

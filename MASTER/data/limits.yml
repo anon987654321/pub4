@@ -820,3 +820,28 @@ guidance:
       subprocess-heavy tools must use Open3.popen or shell out via exe/<name>-worker, never fork.
   # OpenBSD dmesg-style progress (device at bus: detail). Default on.
   # ENV MASTER_DMESG=0 disables; MASTER_DMESG=1 forces on.
+
+# LOC ratchet budgets — reader: `rake loc_budget` (Rakefile). This key exists
+# because data/limits.yml is the file DEBT.md names for having 44 of 94
+# second-level keys with no reader; a budget nothing reads would have been the
+# 45th. Set to measured actuals at introduction (2026-08-09).
+#
+# The contract is one-directional: budgets only ever decrease. Growth past a
+# budget is a failing check, and the remedy is extraction or deletion, never a
+# bigger number.
+#
+# Counts every line, comments included — the same unit as lint:spine, and so
+# the same unresolved tension with [DENSITY], which deliberately counts code
+# lines only. Whoever settles that for lint:spine settles it for both.
+loc_budgets:
+  lib/cli: 8924
+  lib/review: 12651
+  lib/fix: 3451
+  lib/io: 4233
+  lib/trace: 2627
+  lib/ground: 7634
+  lib/voice: 3971
+  lib/boot: 346
+  lib/rails: 1158
+  lib/pub4: 412
+  core: 916

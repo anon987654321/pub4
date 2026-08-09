@@ -17,6 +17,7 @@ class TestLimitsSplit < Minitest::Test
   READERS = {
     "autoloop" => ["lib/fix/fix_loop/convergence_config.rb", "autoloop"],
     "conflicts" => ["lib/cli/scan_report.rb", "conflicts"],
+    "loc_budgets" => ["Rakefile", "loc_budgets"],
     "dmesg" => ["lib/cli/cli/command_handlers.rb", "dmesg"],
     "principle_groups" => ["lib/cli/scan_request.rb", "principle_groups"],
     "scan_profiles" => ["lib/cli/scan_request.rb", "scan_profiles"],

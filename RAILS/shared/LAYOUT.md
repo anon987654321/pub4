@@ -46,7 +46,8 @@ Social primitives (shared engine):
 1. `viewport-fit=cover` (safe-area aware)
 2. First focusable: `.skip-link` → primary content
 3. `main` with `id` + `role="main"`
-4. CSS vars present: `--chrome-inset` (0.75rem), `--tap-min` / `--bar-height` (44px),
+4. CSS vars present (all defined in `_dialect_tokens.scss`, values from
+   `design_tokens.yml`): `--chrome-inset` (0.75rem), `--tap-min` / `--bar-height` (44px),
    `--z-canvas`…`--z-skip` (shared ladder), `--safe-*`
 5. Interactive primary controls ≥ 44px tall
 6. No second box-shadow elevation language (flat UI); face popover exception only
