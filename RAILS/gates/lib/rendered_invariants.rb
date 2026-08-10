@@ -1,0 +1,163 @@
+# frozen_string_literal: true
+
+require_relative "../support/cdp_session"
+require_relative "../../../OPENBSD/lib/gate_result"
+
+module Deploy
+  # Two facts about a rendered page that no source check can see, and that this
+  # repo got wrong on 2026-08-10 in both cases:
+  #
+  #   1. brgen served its LIGHT palette. :root declared the dark BRGEN_OLD tokens
+  #      and had for months, but shared/_tokens.scss ends with
+  #      `@media (prefers-color-scheme: light) { :root:not([data-theme=dark]) }`,
+  #      which outranks a bare :root. On any client whose OS prefers light — the
+  #      default on most installs — that block won. The app declared dark and
+  #      served light, and both are valid CSS, so nothing reported it.
+  #
+  #   2. The chat tab is in a different corner on different surfaces. Two of
+  #      those differences are deliberate and documented; the point of this gate
+  #      is that a THIRD one would look identical from the source.
+  #
+  # Both are geometry and computed style, so both need a browser. The lesson from
+  # the same day is that this is exactly where gates go quiet: every rendered
+  # gate here calls skipped_live when a port is closed, and a skip is a warning
+  # rather than a failure unless GATE_REQUIRE_LIVE=1. So a green run on a laptop
+  # with nothing booted means nothing was measured. This gate follows that
+  # convention rather than inventing a second one — but it records what it
+  # measured, so a half-blind run does not read like a real one.
+  class RenderedInvariants
+    # Surfaces to visit, and the theme each is expected to serve.
+    #
+    # amber is deliberately absent: its :root includes luxury-light-tokens, so
+    # light is its design rather than a bug, and asserting dark there would be
+    # this gate telling the truth about the wrong intent.
+    SURFACES = [
+      { host: "brgen.no", theme: :dark },
+      { host: "playlist.brgen.no", theme: :dark },
+      { host: "markedsplass.brgen.no", theme: :dark },
+      { host: "takeaway.brgen.no", theme: :dark },
+      { host: "dating.brgen.no", theme: :dark },
+      { host: "tv.brgen.no", theme: :dark },
+    ].freeze
+
+    # Surfaces where the chat tab legitimately is not in the bottom-right corner,
+    # each with the reason. This list is the gate: a deviation that is not here
+    # fails, and an entry here whose reason has evaporated is the exemption
+    # problem MASTER/DEBT.md describes, so removing one is as much a fix as
+    # adding one.
+    CHAT_EXCEPTIONS = {
+      # The dating splash is a bare swipe surface and the widget floated over
+      # "sveip for å begynne" — see _vertical_dating_shell.scss.
+      "dating.brgen.no" => :absent,
+      # Lifted clear of the transport bar, whose height it reads from
+      # --tab-bar-h. Sitting flush would put it under a bar that intercepts the
+      # click.
+      "playlist.brgen.no" => :raised,
+    }.freeze
+
+    # A background this light cannot be a dark theme, whatever the tokens say.
+    DARK_MAX_LUMA = 0.35
+
+    def initialize(result: GateResult.new)
+      @result = result
+    end
+
+    def run
+      unless CdpSession.available?
+        @result.skipped_live("rendered_invariants: no Chrome — nothing measured")
+        return @result
+      end
+
+      CdpSession.open do |session|
+        session.viewport(1280, 800)
+        SURFACES.each { |surface| check_surface(session, surface) }
+      end
+      @result
+    rescue CdpSession::Unavailable => e
+      @result.skipped_live("rendered_invariants: #{e.message}")
+      @result
+    end
+
+    private
+
+    def check_surface(session, surface)
+      host = surface[:host]
+      session.navigate("https://#{host}/", settle: 1.5)
+      measured = session.evaluate(PROBE)
+      return @result.skipped_live("rendered_invariants: #{host} unreadable") unless measured
+
+      data = JSON.parse(measured)
+      @result.checked!(2)
+      check_theme(host, surface[:theme], data)
+      check_chat_corner(host, data)
+    rescue StandardError => e
+      @result.skipped_live("rendered_invariants: #{host} #{e.class}")
+    end
+
+    def check_theme(host, expected, data)
+      luma = data["luma"]
+      return unless luma
+
+      too_light = expected == :dark && luma > DARK_MAX_LUMA
+      return unless too_light
+
+      @result.fail(
+        "#{host} serves a light background (luma #{luma.round(2)}, bg #{data['bg']}) " \
+        "while its :root declares dark. Check for a prefers-color-scheme block " \
+        "outranking it — the fix is data-theme=\"dark\" on <html>, not new CSS.",
+      )
+    end
+
+    def check_chat_corner(host, data)
+      expectation = CHAT_EXCEPTIONS[host]
+
+      if data["chat"].nil?
+        return if expectation == :absent
+
+        return @result.fail("#{host} has no chat widget and no declared reason in CHAT_EXCEPTIONS")
+      end
+
+      if expectation == :absent
+        return @result.fail("#{host} is listed as :absent in CHAT_EXCEPTIONS but renders a chat widget")
+      end
+
+      right = data.dig("chat", "right")
+      bottom = data.dig("chat", "bottom")
+      flush = right.to_i.abs <= 2 && bottom.to_i.abs <= 2
+
+      return if flush && expectation.nil?
+      return if !flush && expectation == :raised
+      return @result.fail("#{host} declares :raised but the chat tab is flush in the corner") if flush
+
+      @result.fail(
+        "#{host} renders the chat tab #{right}px from the right and #{bottom}px from the " \
+        "bottom, which is neither the corner nor a declared exception. Either put it back " \
+        "in the corner or add it to CHAT_EXCEPTIONS with the reason.",
+      )
+    end
+
+    PROBE = <<~JS
+      (() => {
+        const cs = getComputedStyle(document.body);
+        const bg = cs.backgroundColor;
+        const m = bg.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
+        // Rec. 709 luma, 0..1. A theme is not "dark" because a token says so.
+        const luma = m
+          ? (0.2126 * +m[1] + 0.7152 * +m[2] + 0.0722 * +m[3]) / 255
+          : null;
+        const el = document.querySelector(".nearby-chat-widget");
+        let chat = null;
+        if (el && getComputedStyle(el).display !== "none") {
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) {
+            chat = {
+              right: Math.round(innerWidth - r.right),
+              bottom: Math.round(innerHeight - r.bottom),
+            };
+          }
+        }
+        return JSON.stringify({ bg, luma, chat });
+      })()
+    JS
+  end
+end

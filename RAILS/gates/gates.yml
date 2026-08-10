@@ -26,6 +26,12 @@ production:
   env_flags:
     GATE_SKIP_NESTED: skip_nested
 
+rendered_invariants:
+  require: lib/rendered_invariants
+  class: Deploy::RenderedInvariants
+  pass: "Rendered invariants passed (theme served matches theme declared; chat tab corner consistent or declared)."
+  covered_by: rendered_suite
+
 domain_alignment:
   require: lib/domain_alignment
   class: Deploy::DomainAlignmentGate
