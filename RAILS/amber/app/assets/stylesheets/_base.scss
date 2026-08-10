@@ -11,15 +11,25 @@ body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font: var(--font-size) / var(--line-height) var(--font);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* html only: the shorthand on both made body resolve --font-size a second
+   time against html's new size. Harmless while --font-size is 1rem, which is
+   why this only ever showed at >=1280px where the media query below raises it --
+   measured there as html 18px, body 20.25px. See brgen _root.scss, same bug. */
+html {
+  font: var(--font-size) / var(--line-height) var(--font);
+}
+
+body {
+  font: inherit;
+}
+
 @media (min-width: 1280px) {
-  html,
-  body {
+  html {
     font-size: var(--text-lg);
     line-height: 1.5;
   }

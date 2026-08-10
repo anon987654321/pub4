@@ -43,11 +43,33 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font: var(--font-size)/var(--line-height) var(--font);
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* html only, and that is the whole point.
+ *
+ * This shorthand used to sit on `html, body` together. --font-size is
+ * var(--text-lg), which is 1.125rem, and rem resolves against the root — so html
+ * took 1.125 x 16px = 18px, and then body resolved the *same declaration* against
+ * html's new 18px and took 20.25px. Every unstyled paragraph on brgen rendered
+ * 12.5% larger than --text-base, the token that says what body text is.
+ *
+ * Measured before: html 18px, body 20.25px, 1rem 18px. After: html 18px, body
+ * 18px, 1rem 18px. The rem base does not move, so _canvas.scss's clamp comment
+ * about one rem being 18px here stays true.
+ *
+ * 18px is what this app asked for — see --font-size above, "the real 2014
+ * mobile.css body base, this app's own deliberate size". It has not been getting
+ * it. body inherits rather than restating, so the pair cannot drift again. */
+html {
+  font: var(--font-size)/var(--line-height) var(--font);
+}
+
+body {
+  font: inherit;
 }
 
 /* No large-screen upscale here: the original desktop.css was a fixed,
