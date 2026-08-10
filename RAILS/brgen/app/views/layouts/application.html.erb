@@ -1,5 +1,24 @@
 <!DOCTYPE html>
-<html lang="<%= Current.locale || I18n.locale %>" dir="ltr" class="chrome-hidden">
+<%# data-theme="dark" is load-bearing, not decoration.
+
+    brgen's :root includes brgen-old-dark-tokens and has done all along, but
+    shared/_tokens.scss ends with
+
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme="dark"]) { ...light palette... }
+      }
+
+    and `:root:not(...)` outranks a bare `:root`. So on any client whose OS
+    prefers light — the default on most installs — that block won and brgen
+    rendered light: measured on the live site as --bg #f7f6fa against the
+    #17161c its own root declares, with the theme toggle sitting unchecked.
+    Every vertical inherits this layout, so all six surfaces were affected.
+
+    Claiming the opt-out the shared system already provides fixes it without
+    touching shared CSS. The explicit toggle is unaffected: it switches through
+    `#dark-toggle:checked ~ .theme-root`, a different selector, so a visitor who
+    asks for light still gets light. Dark by default, light on request. %>
+<html lang="<%= Current.locale || I18n.locale %>" dir="ltr" data-theme="dark" class="chrome-hidden">
 <head>
   <meta charset="utf-8">
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>

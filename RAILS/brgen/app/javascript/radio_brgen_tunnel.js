@@ -114,6 +114,30 @@ class AudioEngine {
   }
 }
 
+// The tunnel's ink, matched to the MASTER face on ai.brgen.no.
+//
+// That face is monochrome and says so in its own source: every entry in its TINT
+// table is `GOLD`, and GOLD is `new Color(1, 1, 1)` — pure white, the name
+// vestigial. Depth and mood there are carried entirely by opacity, in four tiers
+// (--face-fg, then --face-muted 35%, --face-dim 18%, --face-soft 8%) over black,
+// with a single faint violet cast in the ink itself (--c-text: oklch(86% 0.02
+// 300)) and violet used sparingly as an accent, never as a ramp.
+//
+// This tunnel did the opposite: it mapped ring depth to *hue*, ramping
+// rgb(0, n/2, n) from black to saturated blue, and held alpha constant at 128.
+// So the two surfaces of the same site read as different products — one
+// monochrome and architectural, one a blue rainbow.
+//
+// Now depth drives alpha and the hue is constant. #d8d6e0 is brgen's own --text
+// in the dark dialect, which is the same near-white-with-violet-cast the face
+// uses; taking it from the dialect rather than hardcoding a new value means the
+// tunnel follows the palette instead of pinning a second copy of it.
+const INK = { r: 216, g: 214, b: 224 }
+// Far rings barely present, near rings solid — the 8%-to-full range the face
+// works in, expressed as 0-255 alpha.
+const INK_ALPHA_MIN = 20
+const INK_ALPHA_MAX = 200
+
 class VisualEngine {
   constructor(canvas) {
     this.canvas = canvas
@@ -303,18 +327,20 @@ class VisualEngine {
       const prevRow = i > 0 ? this.particles[i - 1] : null
       row.forEach((particle, j) => {
         const prevInRow = j > 0 ? row[j - 1] : row[row.length - 1]
-        const lineColorValue = Math.round(i / this.particles.length * 200)
+        // Depth reads as opacity, not as hue — the MASTER face's model. See INK.
+        const depth = i / this.particles.length
+        const alpha = Math.round(INK_ALPHA_MIN + depth * (INK_ALPHA_MAX - INK_ALPHA_MIN))
         this.drawLine(
           particle.x2d | 0, particle.y2d | 0,
           prevInRow.x2d | 0, prevInRow.y2d | 0,
-          0, Math.round(lineColorValue / 2), lineColorValue, 128
+          INK.r, INK.g, INK.b, alpha
         )
         if (prevRow) {
           const prevInPrevRow = j === 0 ? prevRow[prevRow.length - 1] : prevRow[j - 1]
           this.drawLine(
             particle.x2d | 0, particle.y2d | 0,
             prevInPrevRow.x2d | 0, prevInPrevRow.y2d | 0,
-            0, Math.round(lineColorValue / 2), lineColorValue, 128
+            INK.r, INK.g, INK.b, alpha
           )
         }
       })
@@ -326,8 +352,11 @@ class VisualEngine {
       const sx = star.x * scale + this.centerX * 0.5 // approximate center
       const sy = star.y * scale + this.centerY * 0.5
       if (sx > 0 && sx < this.w && sy > 0 && sy < this.h) {
+        // Stars were already near-monochrome but lifted blue (b, b, b + 20).
+        // Same ink as the mesh now, so brightness is the only variable.
         const b = Math.floor(star.brightness * 200 + (this.audioBoost || 0) * 50)
-        this.setPixel(sx | 0, sy | 0, b, b, b + 20, 180)
+        const tint = (c) => Math.min(255, Math.round(b * (c / 255)))
+        this.setPixel(sx | 0, sy | 0, tint(INK.r), tint(INK.g), tint(INK.b), 180)
       }
     })
     this.ctx.putImageData(this.imageData, 0, 0)
