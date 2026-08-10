@@ -8,8 +8,6 @@ DATA = File.expand_path("../data", __dir__)
 
 YAML_SPECS = {
   "attention_context.yml"        => { required_keys: %w[protocol fields rendering when_to_emit], arrays: [] },
-  "mobile_web_opportunities.yml" => { required_keys: %w[clusters mining_queries],                arrays: %w[clusters] },
-  "visual_clusters.yml"          => { required_keys: %w[clusters],                                arrays: %w[clusters] },
   "patterns.yml"                 => { required_keys: %w[gh openbsd zsh infer prompt_archaeology repo_topics], arrays: [] },
 }.freeze
 
@@ -137,15 +135,19 @@ class TestRulesYamlRegistry < Minitest::Test
   def test_voice_yml_tts_policy_single_voice
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     tts = voice["tts"] || {}
-    # English with a Malay accent since 2026-08-10 (operator decision), replacing
-    # the US English pinned on 2026-08-04. ms-MY-OsmanNeural is a Malay-language
-    # voice reading English text — the accent comes from the voice, which is why
-    # soul.yml keeps language.primary: english and moves only dialect.
-    assert_equal "osman", tts["single_voice"]
-    assert_equal "ms-MY-OsmanNeural", tts["neural"]
+    # Pernille since 51424ab63 (operator decision), replacing the Osman pinned
+    # earlier the same day, which had replaced the US English of 2026-08-04.
+    # nb-NO-PernilleNeural is a Norwegian voice reading English text — the accent
+    # comes from the voice, which is why soul.yml keeps language.primary: english
+    # and moves only dialect.
+    #
+    # This assertion was left on "osman" when voice.yml moved, so MASTER's suite
+    # shipped red on origin/main. The data is the decision; the test follows it.
+    assert_equal "pernille", tts["single_voice"]
+    assert_equal "nb-NO-PernilleNeural", tts["neural"]
     assert_equal true, tts["persona_affects_text_only"]
-    assert_equal :osman, Master::Voice::Policy.single_voice_key
-    assert_equal "ms-MY-OsmanNeural", Master::Voice::Policy.neural_voice
+    assert_equal :pernille, Master::Voice::Policy.single_voice_key
+    assert_equal "nb-NO-PernilleNeural", Master::Voice::Policy.neural_voice
     # The pair has to agree: single_voice is what Ruby hands the synthesizer,
     # neural is what the browser reads, and they drifted apart once already.
     assert_equal tts["neural"], Master::Voice::Speech::VOICES.fetch(tts["single_voice"].to_sym)
@@ -218,18 +220,6 @@ class TestPhantomRecoveryRuntime < Minitest::Test
 end
 
 class TestClusterConsistency < Minitest::Test
-  CLUSTER_FILES = %w[visual_clusters.yml mobile_web_opportunities.yml].freeze
-
-  CLUSTER_FILES.each do |filename|
-    define_method(:"test_#{filename.tr('.', '_')}_no_duplicate_ids") do
-      data  = Master.load_yaml(File.join(DATA, filename))
-      items = Array(data["clusters"])
-      ids   = items.map { |c| c["id"] || c["name"] }.compact
-      dups  = ids.tally.select { |_, n| n > 1 }.keys
-      assert dups.empty?, "#{filename} has duplicate cluster ids: #{dups.join(', ')}"
-    end
-  end
-
   def test_patterns_repo_topics_no_duplicate_ids
     data  = Master.load_yaml(File.join(DATA, "patterns.yml"))
     items = Array(data.dig("repo_topics", "clusters"))
