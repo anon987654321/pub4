@@ -63,7 +63,7 @@ module Shared
 
       Current.session = user.sessions.create!(
         user_agent: request.user_agent,
-        ip_address: request.remote_ip
+        ip_address: request.remote_ip,
       )
       Current.user = user
       # domain: :all for the same reason as the session cookie (see
@@ -88,12 +88,29 @@ module Shared
       root_path
     end
 
+    # Sessions live in the main application's router. `new_session_path` on its
+    # own resolves against whichever route set is in scope, which inside a
+    # mounted engine is the engine's — and no engine has a sessions route. So a
+    # guest reaching any guarded action on a vertical got
+    #
+    #   ActionController::UrlGenerationError (No route matches
+    #     {action: "new", controller: "sessions"})
+    #
+    # which is a 500 where a sign-in redirect belonged. Two callers had already
+    # worked around it one at a time with `main_app.new_session_path`
+    # (takeaway/reviews, application_helper); this is the cause they were
+    # working around. Resolving against Rails.application works from both an
+    # engine and the main app, where `main_app` is not defined.
+    def sign_in_path
+      Rails.application.routes.url_helpers.new_session_path
+    end
+
     # Real account only (email/password session). Identity-bound actions:
     # permanent profile edits, ownership admin, account settings.
     def require_real_user
       return if authenticated?
 
-      redirect_to new_session_path, alert: "Sign in to continue"
+      redirect_to sign_in_path, alert: "Sign in to continue"
     end
 
     # Any usable identity including soft guests. Core product actions
@@ -101,7 +118,7 @@ module Shared
     def require_user_session
       return if Current.user.present?
 
-      redirect_to new_session_path, alert: "Sign in to continue"
+      redirect_to sign_in_path, alert: "Sign in to continue"
     end
 
     def require_authentication
@@ -145,7 +162,7 @@ module Shared
     def create_guest_user
       guest = ::User.new(
         email_address: "guest_#{SecureRandom.hex(8)}@guest.local",
-        guest: true
+        guest: true,
       )
       guest.password_digest = BCrypt::Password.create(SecureRandom.hex(16), cost: GUEST_BCRYPT_COST)
       guest.save!
