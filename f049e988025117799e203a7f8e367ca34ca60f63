@@ -1,0 +1,21 @@
+Attribution correction, added after the fact.
+
+This commit also contains work by a concurrent session that was uncommitted in
+the shared checkout when I committed RAILS/FINAL_TODO.md path-scoped: five
+per-section verdict annotations, under heading_skip, nbsp_entity,
+css_display_none_override, ctrl_index_no_pagination and unread_css_var, each
+naming its commit and separating fixed from artifact from policy. 57 of the 566
+boxes this commit ticks are theirs, not mine; my two passes account for exactly
+509 (456 bookkeeping + 53 length-rule), verified by replaying them against
+f049e9880^.
+
+The message above describes only my 509 and so understates what landed. The
+content is correct and stays; this note exists so that reading the message to
+find out what changed does not mislead.
+
+This is the shared-index hazard CLAUDE.md warns about, arriving from the
+direction we do not usually guard: not `git commit -a` sweeping a peer's work,
+but a path-scoped commit of one file that a peer also had in flight. Path
+scoping bounds which files you take, not which edits inside them. For a file
+several agents have reason to touch, say so before editing it — the way debt.yml
+was claimed in this same session.
