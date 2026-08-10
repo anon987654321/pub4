@@ -62,6 +62,46 @@ class DesignContractTest < Minitest::Test
     end
   end
 
+  # brgen wears the brgen_old dialect, and it wins on source order alone.
+  #
+  # `stack_brgen` forwards `_tokens.scss`, which emits the social indigo palette
+  # at plain `:root`. `_root.scss` emits brgen-old at plain `:root` too — same
+  # specificity — so the only thing making brgen grayscale rather than indigo is
+  # that `@use "_root"` comes *after* `@use "stack_brgen"` in application.scss.
+  # Reordering those lines, or moving _root into the stack, silently restores a
+  # palette this app deliberately left, with nothing failing to say so.
+  #
+  # Verified 2026-08-10 against brgen/app/assets/builds/application.css: two
+  # `:root` blocks, the second `--bg: #000000` / `--text: #e0e0e0` /
+  # `--accent: #f2f2f2` / `--radius-card: 8px`.
+  def test_brgen_old_dialect_is_emitted_after_the_social_stack
+    app_scss = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
+    uses = app_scss.scan(/^@use\s+"([^"]+)"/).flatten
+
+    stack = uses.index { |name| name == "stack_brgen" }
+    root  = uses.index { |name| name.delete_prefix("_") == "root" }
+
+    assert stack, "brgen/application.scss must @use stack_brgen"
+    assert root, "brgen/application.scss must @use _root (the brgen_old dialect)"
+    assert_operator root, :>, stack,
+                    "_root must come after stack_brgen or brgen renders the social indigo palette " \
+                    "instead of its own grayscale one — same specificity, source order decides"
+  end
+
+  # The dialect table in WIRING_NOTES claimed brgen was `social` / 4-8-12-16 long
+  # after brgen had moved to brgen_old, and nothing caught it because no check
+  # read the doc. This one does.
+  def test_wiring_notes_records_the_dialect_brgen_actually_wears
+    notes = File.read(File.join(SHARED, "WIRING_NOTES.md"))
+    worn = notes[/\*\*Worn at `:root`.*?\n\n/m]
+
+    assert worn, "WIRING_NOTES must keep a 'Worn at :root' table — declared mixins are not worn dialects"
+    brgen_row = worn.lines.find { |line| line.start_with?("| brgen") }
+    assert brgen_row, "the worn table must have a brgen row"
+    assert_includes brgen_row, "brgen_old",
+                    "brgen renders brgen-old-*-tokens; saying `social` here sends CSS work at the wrong palette"
+  end
+
   def test_no_shadow_blur_in_x_partials
     DIALECT_PARTIALS.each do |name|
       path = File.join(SHARED, "app", "assets", "stylesheets", name)

@@ -116,21 +116,51 @@ ruby RAILS/gates/runner.rb frontend_auditor
 
 ## Visual design system (2026-07-19)
 
-**Reference:** x.com interaction patterns; pub4 graphite/indigo palette. Source of truth: `shared/design_tokens.yml`, `shared/app/assets/stylesheets/_dialect_tokens.scss`, `_shell.scss`. amber/brgen inherit via `stack` / `stack_brgen` → `_tokens.scss` → `_dialect_tokens.scss`.
+**Reference:** x.com interaction patterns. Source of truth: `shared/design_tokens.yml`, `shared/app/assets/stylesheets/_dialect_tokens.scss`, `_shell.scss`. amber/brgen inherit via `stack` / `stack_brgen` → `_tokens.scss` → `_dialect_tokens.scss`.
 
-**Dialects (do not merge casually):**
-| Dialect | Apps | Radius | Notes |
-|---------|------|--------|-------|
-| `social` | brgen (+ verticals) | soft 4/8/12/16 | Graphite/indigo |
-| `luxury` | amber | soft 6/10/14 | Warm paper (`luxury-*-tokens`) |
-| `openbsd_wscons` | bsdports | **0** CRT-flat | Green mono terminal |
-| `face_root` | MASTER web face | **0** CRT-flat | Operator face only |
+**A declared dialect is not a worn one.** `_dialect_tokens.scss` declares the
+mixins; what an app renders is whichever `:root` block wins in its bundle. Read
+the second table before the first — until 2026-08-10 this section listed only the
+first, and so described brgen in a palette and radius scale it had left.
 
-**Shared social palette (dark):**
-- Accent default `#7c6fd6`; brgen `#5b4fc4`; danger `#d1594a`
-- bg/surface `#17161c`, elevated `#211f28`, search `#232030`
-- text `#d8d6e0`, secondary `#8a879c`, border `#46435a`
-- Light mode: indigo `#5b4fc4` on cool gray paper — **not** Twitter blue
+**Declared (do not merge casually):**
+| Mixin | Radius (xs/sm/md/card·lg) | Notes |
+|---|---|---|
+| `dark-tokens` / `light-tokens` | 4/8/12/16 | Graphite/indigo, parameterised |
+| `luxury-*-tokens` | –/6/10/14 | Warm paper |
+| `brgen-old-*-tokens` | 4/8/12/**8** | True grayscale, no accent hue |
+
+**Worn at `:root` (verified against `builds/application.css`, 2026-08-10):**
+| App | Dialect | Dark → light mechanism |
+|---|---|---|
+| brgen (+ verticals) | `brgen_old` | `:root` → `#dark-toggle:checked ~ .theme-root` |
+| amber | `luxury` | `_variables.scss`, both halves |
+| bsdports | `openbsd_wscons`, all radii **0** | Inline `:root` in its own `application.scss` — *not* a mixin here |
+| MASTER web face | `face_root`, radius 0 | `MASTER/web`, outside this tree |
+
+**brgen's actual dark palette** — grayscale, and deliberately so (`_root.scss`:
+"this app's identity is the direction itself, not a rotated hue"):
+- bg `#000000`, surface/elevated `#1a1a1a`, search `#222222`
+- text `#e0e0e0`, secondary `#969696`, border `#333333`
+- accent `#f2f2f2`, danger `#e46151`; `--radius-card`/`-lg` `8px`
+- Per-vertical accents still apply on `body.vertical-*` (marketplace `#98876e`,
+  tv `#dc635c`, dating `#00d4aa`, takeaway `#e07b39`, playlist `#12b6c4`,
+  maps `#5b8fd4`, messenger `#6b7fd7`)
+
+**The social indigo palette is still compiled into brgen** (`#17161c`/`#d8d6e0`/
+`#897dda`), because `stack_brgen` forwards `_tokens.scss`. Two facts follow, both
+load-bearing and neither a bug to "fix" casually:
+- The brgen-old `:root` beats it **on source order alone** — same specificity.
+  Reordering `@use "_root"` in `application.scss` would silently restore indigo.
+- `_tokens.scss` emits its light half at `[data-theme=light]` and
+  `:root:not([data-theme=dark])`, which **outrank** plain `:root`. So brgen has
+  two light themes: `#dark-toggle` gives the 2014 white/`#222`, `data-theme`
+  gives social `#f7f6fa`/`#1a1824`. Which one a visitor sees depends on which
+  control they used.
+
+Social dark-tokens is worn intentionally in exactly one brgen place —
+`body.vertical-maps` (`_vertical_maps_shell.scss`) — plus `shared/_minimal.scss`
+and `shared/_tokens.scss` themselves.
 
 **Focus triangle:** brgen + amber + MASTER web. Shared engine glue
 (layout, social locales, comments form/row, master_embed). bsdports/studio
