@@ -49,5 +49,28 @@ module App
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # `bin/rails test` must mean what CI means.
+    #
+    # Rails globs test/**/*_test.rb from the app root, which does not reach the
+    # mountable verticals under engines/*/test. shared/config/ci.rb sets
+    # DEFAULT_TEST/DEFAULT_TEST_EXCLUDE so the VPS runs them; nothing set it
+    # locally, so the two commands disagreed about what "the suite" is and the
+    # local one was the weaker.
+    #
+    # That gap has now bitten twice. ci.rb's own comment records four engine
+    # tests rotting into NameErrors on a stale route helper while CI stayed
+    # green; on 2026-08-10 a validation-i18n change broke two takeaway engine
+    # tests and three sessions reported "brgen green" from the narrow command
+    # before the VPS gate caught it — 349 runs locally against CI's 381.
+    #
+    # Set here rather than documented again, because a third warning comment
+    # would have been the third thing nobody read. ||= so an explicit
+    # DEFAULT_TEST on the command line still wins, and so ci.rb's own values
+    # pass through unchanged.
+    if Rails.env.test? || ENV["RAILS_ENV"] == "test"
+      ENV["DEFAULT_TEST"] ||= "{test,engines/*/test}/**/*_test.rb"
+      ENV["DEFAULT_TEST_EXCLUDE"] ||= "{test,engines/*/test}/{system,dummy,fixtures}/**/*_test.rb"
+    end
   end
 end
