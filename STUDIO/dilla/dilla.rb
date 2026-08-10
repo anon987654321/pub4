@@ -15695,23 +15695,27 @@ def demo_all(bars_count = 12, destination = nil)
     # Re-apply rotation after soul profile so lead/pad keep moving.
     stream_rotate_voices_and_arps!(idx) unless steady
     force_env!(demo_slot_pad_env(idx), label: "demo_all[#{idx}]") unless steady
-    # ...and then the layer profile again, last, for the tracks that have one.
-    #
     # The rotation above writes ENV directly and turns nine layers back ON:
     # LEAD_ARP, SCALE_LEAD, HARMONY_LEAD, CREATIVE_LEAD, MELODIC_LEAD,
-    # EXPERIMENTAL_LEADS, LEAD_MORPH, SYNTH_MORPH, PAD_TEXTURE. Those are
-    # exactly nine of the twenty-one knobs a TRACK_LAYER_PROFILES entry sets to
-    # "0" two lines earlier, so a sampled bed whose whole profile exists to let
-    # the record carry the harmony had every stripped layer put back before it
-    # rendered. Measured on the 34-track demo: kembara_rindu and
-    # semua_untuk_mu have profiles and neither had ever rendered lean here.
-    # Only the twelve mix-balance knobs (PAD_VOL, HARM_MIX_WEIGHT,
-    # SAMPLE_LOOP_VOL/WEIGHT, ...) were surviving.
+    # EXPERIMENTAL_LEADS, LEAD_MORPH, SYNTH_MORPH, PAD_TEXTURE -- exactly nine
+    # of the twenty-one knobs a TRACK_LAYER_PROFILES entry set to "0" two lines
+    # earlier. So a sampled bed whose profile exists to let the record carry the
+    # harmony gets every stripped layer back before it renders, and only the
+    # twelve mix-balance knobs (PAD_VOL, HARM_MIX_WEIGHT, SAMPLE_LOOP_VOL and
+    # WEIGHT, ...) survive into a demo. kembara_rindu and semua_untuk_mu have
+    # carried profiles all along and have never once rendered lean here.
     #
-    # The rotation is deliberate and stays -- lead and pad still move on every
-    # track. This re-assert is scoped to tracks that HAVE a layer profile, so
-    # it changes nothing for the other 380-odd.
-    apply_track_layer_profile!(slug, force: true)
+    # That was tried and reverted. An apply_track_layer_profile!(slug,
+    # force: true) here does work -- production complexity drops 4.04 -> 3.81 on
+    # kembara_rindu and 3.92 -> 3.67 on lo_borges, so the layers really do come
+    # off -- but content enjoyment goes DOWN by 0.09 on both tracks, three seeds
+    # each (audiobox-aesthetics; control sd 0.01-0.18). Neither delta clears its
+    # own error bar alone, but they agree in sign and to two decimals, and
+    # nothing measured got better. It changed rendered sound on four tracks and
+    # bought nothing, so it is not carried.
+    #
+    # Do not re-add it without a number. The obvious next question is whether
+    # the profile's own values are wrong for a demo rather than the ordering.
     # Sparse rap so chord cycles are audible (a vocal on every slot masked
     # variety). gunnhild is the only vocal source now.
     # One branch, not three. The rap_every > 1 branch used to hardcode
