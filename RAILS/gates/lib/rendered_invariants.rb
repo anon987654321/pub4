@@ -70,6 +70,12 @@ module Deploy
     # Sub-pixel differences are rounding, not misalignment.
     ALIGN_TOLERANCE_PX = 1
 
+    # runner.rb and gate_environment.rb both invoke a gate as `Class.run`. This
+    # gate shipped with only the instance method, so it was a row in gates.yml
+    # that nothing could call — registered, listed, and never once executed. The
+    # gate exists to catch declarations with no reader; it was one.
+    def self.run = new.run
+
     def initialize(result: GateResult.new)
       @result = result
     end
