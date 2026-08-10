@@ -3355,6 +3355,71 @@ the Gemfile, or the deploy entrypoint, and the right message still appears.
 product code, and each wants the same treatment as `check_app`: split at the
 responsibility bound, then mutation-test each half.
 
+---
+
+**2026-08-10 — ratcheted, and the count was 55, not 29.**
+
+Re-measured through Prism before touching anything: **55 methods over 30 code
+lines**, against the 29 recorded three days earlier. The list had not been wrong
+when written — the tree had moved. And the clearest evidence of what that means
+is that one of the 55 was `unnamed_controls` in
+`test/form_control_names_test.rb`, a method written **earlier the same day, by
+this agent, while closing this same backlog**. 44 code lines.
+
+That is the actual defect here, and it is not any individual method. A finding
+list is a snapshot. It cannot hold a line while you work down it, so the count
+had been measured three times (81 → 29 → 55) and converged on nothing. Splitting
+another handful by hand would have produced a fourth number with the same
+property.
+
+So the item is now closed as a **ratchet** rather than a list, on the same
+contract as `coverage_ratchet_test.rb` and MASTER's `rake lint:spine`:
+`test/method_length_ratchet_test.rb` records a ceiling per area — count of
+over-limit methods and the longest single method — which may fall and may never
+rise. It fails when someone adds a long method, including when that someone is an
+agent midway through fixing long methods, which is exactly what happened here and
+what nothing caught.
+
+Two guards on the instrument itself, because this file's whole job is to be
+believed about a number: it parses with Prism rather than a `def`/`end` regex
+(nested defs, one-line defs and heredocs all defeat the regex), and it carries a
+case proving 40 comment lines do not count against a 3-line method. Both
+directions mutation-tested in place — adding a 45-line method fails naming the
+file and method, and inflating a ceiling fails asking for it to be lowered.
+
+Ceilings measured after two splits:
+
+| area | over 30 lines | longest |
+|---|---:|---:|
+| gates | 39 | 68 |
+| brgen | 10 | 57 |
+| shared | 3 | 36 |
+| amber | 1 | 35 |
+| bsdports | 1 | 46 |
+
+`brgen_route_by_convention` — the worst on the recorded list at 75 — is now 24,
+split into `vertical_route_by_convention`, `dating_profile_route`,
+`tv_nested_route` and `apex_route_by_convention`. Not assumed equivalent:
+compared against the pre-split function over **585 route inputs, zero
+differences**.
+
+`deploy_backlog_test`'s 102-line `test_sqlite_wal_and_shared_stimulus_components_are_present`
+was the largest method in the tree and its name had stopped describing it — it
+also held the Stimulus registry, post-card and clipboard wiring, responsive
+images, three PWA manifests, two service workers, the brgen layout, bsdports HTTP
+caching and a recurring job. Six unrelated contracts sharing nothing but a `def`.
+Split into six, no assertions removed (44 runs, 1058 assertions, 0 failures). The
+bundling had a real cost beyond length: minitest stops at the first failed
+assertion, so a broken `database.yml` meant the other five contracts went
+unchecked that run, under a failure naming a method whose title mentioned
+neither.
+
+The remaining 52 stay open **and now cannot grow**. `gates` holds 39 of them and
+that is the honest shape of it: audit routines that walk a tree accumulating
+findings. Each wants what `production.rb`'s `check_app` got — split at the
+responsibility bound, then mutation-test each half — and each split lowers a
+number in `CEILINGS`.
+
 
 - [ ] `amber/app/controllers/ai_controller.rb:29` — suggest_outfits spans 33 lines
 - [x] `amber/app/helpers/application_helper.rb:37` — responsive_image_tag spans 32 lines

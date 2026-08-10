@@ -347,55 +347,67 @@ module Deploy
     # here that the manifest now answers is dead weight; delete one when the
     # route table proves it redundant, not before.
     def brgen_route_by_convention(parts)
-      if VERTICAL_HOSTS.key?(parts[0])
-        vert = parts[0]
-        rest = parts[1..]
-        host = VERTICAL_HOSTS[vert]
-        if VERTICAL_ROOTS[[vert, *rest]]
-          return [host, "/", "index"]
-        end
-        if rest == %w[carts show]
-          return [host, "/cart", "show"]
-        end
-        if rest == %w[home next]
-          return [host, "/next", "next"]
-        end
-        # Dating uses singular resource :profile (not /profiles)
-        if vert == "dating" && rest[0] == "profiles"
-          action = rest[1] || "show"
-          path =
-            case action
-            when "new" then "/profile/new"
-            when "edit" then "/profile/edit"
-            when "show" then "/profile"
-            else "/profile/#{action}"
-            end
-          return [host, path, action]
-        end
-        # TV shows/episodes/videos are nested under channels in routes —
-        # treat non-root index/new as needs_id for live probes.
-        if vert == "tv" && %w[shows episodes videos].include?(rest[0])
-          resource = rest[0]
-          action = rest[1] || "index"
-          # Live matrix skips :id paths; mark with :id so guest_liveable excludes them.
-          path =
-            case action
-            when "index" then "/channels/:slug/#{resource}"
-            when "new" then "/channels/:slug/#{resource}/new"
-            when "show" then "/#{resource}/:id"
-            else "/#{resource}/#{action}"
-            end
-          return [host, path, action]
-        end
-        if vert == "tv" && rest == %w[live_streams new]
-          return [host, "/channels/:slug/live_streams/new", "new"]
-        end
-        resource = rest[0]
-        action = rest[1] || "index"
-        resource = "shops" if vert == "marketplace" && resource == "stores"
-        return [host, rest_path(resource, action), action]
-      end
+      return vertical_route_by_convention(parts) if VERTICAL_HOSTS.key?(parts[0])
 
+      apex_route_by_convention(parts)
+    end
+
+    # The five mountable verticals. Each has its own host, so the answer is
+    # (host, path, action) rather than the apex's (path, action).
+    def vertical_route_by_convention(parts)
+      vert = parts[0]
+      rest = parts[1..]
+      host = VERTICAL_HOSTS[vert]
+
+      return [host, "/", "index"] if VERTICAL_ROOTS[[vert, *rest]]
+      return [host, "/cart", "show"] if rest == %w[carts show]
+      return [host, "/next", "next"] if rest == %w[home next]
+
+      special = dating_profile_route(vert, rest) || tv_nested_route(vert, rest)
+      return [host, *special] if special
+
+      resource = rest[0]
+      action = rest[1] || "index"
+      resource = "shops" if vert == "marketplace" && resource == "stores"
+      [host, rest_path(resource, action), action]
+    end
+
+    # Dating uses singular resource :profile (not /profiles).
+    def dating_profile_route(vert, rest)
+      return nil unless vert == "dating" && rest[0] == "profiles"
+
+      action = rest[1] || "show"
+      path =
+        case action
+        when "new" then "/profile/new"
+        when "edit" then "/profile/edit"
+        when "show" then "/profile"
+        else "/profile/#{action}"
+        end
+      [path, action]
+    end
+
+    # TV shows/episodes/videos are nested under channels in routes — treat
+    # non-root index/new as needs_id for live probes.
+    def tv_nested_route(vert, rest)
+      return nil unless vert == "tv"
+      return ["/channels/:slug/live_streams/new", "new"] if rest == %w[live_streams new]
+      return nil unless %w[shows episodes videos].include?(rest[0])
+
+      resource = rest[0]
+      action = rest[1] || "index"
+      # Live matrix skips :id paths; mark with :id so guest_liveable excludes them.
+      path =
+        case action
+        when "index" then "/channels/:slug/#{resource}"
+        when "new" then "/channels/:slug/#{resource}/new"
+        when "show" then "/#{resource}/:id"
+        else "/#{resource}/#{action}"
+        end
+      [path, action]
+    end
+
+    def apex_route_by_convention(parts)
       host = APEX
       case parts
       when %w[home index] then return [host, "/", "index"]

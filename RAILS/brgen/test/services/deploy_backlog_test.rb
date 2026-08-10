@@ -398,7 +398,18 @@ class DeployBacklogTest < Minitest::Test
     assert_includes pagy_source, 'rel="prefetch"'
   end
 
-  def test_sqlite_wal_and_shared_stimulus_components_are_present
+  # This was one 102-line method called
+  # test_sqlite_wal_and_shared_stimulus_components_are_present, and its name had
+  # stopped describing it: it also held the Stimulus registry, the post card and
+  # clipboard wiring, responsive images, three PWA manifests, two service
+  # workers, the brgen layout, bsdports HTTP caching and a recurring job. Six
+  # unrelated contracts sharing nothing but a `def`.
+  #
+  # Split at the contract bound, which also fixes what a bundle costs you when it
+  # fails: minitest stops at the first failed assertion, so a broken database.yml
+  # meant the other five contracts were never checked that run, and the failure
+  # named a method whose title mentioned neither.
+  def test_sqlite_runs_in_wal_mode_with_strict_loading
     %w[
       amber/config/database.yml
       brgen/config/database.yml
@@ -410,7 +421,9 @@ class DeployBacklogTest < Minitest::Test
 
     source = read_source(File.join(ROOT, 'shared/config/environments/development.rb'))
     assert_includes source, 'strict_loading_by_default = true'
+  end
 
+  def test_shared_stimulus_components_are_registered
     source = read_source(File.join(ROOT, 'shared/frontend/stimulus_boot.js'))
     %w[
       Clipboard
@@ -446,7 +459,9 @@ class DeployBacklogTest < Minitest::Test
     %w[Dialog ScrollTo Sound SpeechRecognition].each do |dead|
       refute_includes source, dead, "#{dead} has no consumer in any app"
     end
+  end
 
+  def test_shared_components_are_wired_into_the_views_that_use_them
     assert_includes read_source(File.join(ROOT, 'shared/app/views/shared/_toast.html.erb')), 'data-controller="toast"'
     assert_includes read_source(File.join(ROOT, 'shared/frontend/examples.html.erb')), 'data-controller="toast"'
 
@@ -477,6 +492,9 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_source(File.join(ROOT, 'shared/app/views/shared/_copyable.html.erb')),
                     'data-controller="clipboard"'
 
+  end
+
+  def test_responsive_images_are_served_as_lazy_webp_pictures
     helper_source = read_source(File.join(ROOT, 'amber/app/helpers/application_helper.rb'))
     assert_includes helper_source, 'responsive_image_url'
     assert_includes helper_source, 'content_tag(:picture)'
@@ -486,6 +504,9 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_source(File.join(ROOT, 'amber/app/views/outfits/dressing_room.html.erb')),
                     'responsive_image_url(item.photos.first'
 
+  end
+
+  def test_pwa_manifests_and_service_workers_are_installable
     %w[
       brgen/app/views/pwa/manifest.json.erb
       amber/app/views/pwa/manifest.json.erb
@@ -527,6 +548,9 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_source(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), '"file_handlers"'
     assert_includes read_source(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'image/*'
 
+  end
+
+  def test_bsdports_caches_publicly_and_brgen_checks_cable_health
     ports_controller = read_source(File.join(ROOT, 'bsdports/app/controllers/ports_controller.rb'))
     assert_includes ports_controller, 'expires_in 10.minutes, public: true'
     assert_includes ports_controller, 'fresh_when(@port, public: true)'

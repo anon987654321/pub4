@@ -66,61 +66,93 @@ class FormControlNamesTest < Minitest::Test
     src.gsub(/<%.*?%>/m) { |m| " " * m.length }
   end
 
-  def unnamed_controls(path)
+  Doc = Struct.new(:src, :stripped, :label_for, :helper_labels, :named_label_spans) do
+    # Does a <label> with text of its own enclose this offset?
+    def inside_named_label?(pos)
+      named_label_spans.any? { |s| pos > s[:from] && pos < s[:to] }
+    end
+
+    def line_at(pos) = src[0...pos].count("\n") + 1
+  end
+
+  def read(path)
     src = File.read(path)
     stripped = strip_erb(src)
-    label_for = stripped.scan(/<label[^>]*\bfor=["']([^"']+)/).flatten.to_set
-    helper_labels = src.scan(/\.label\s+:([a-z_0-9]+)/).flatten.to_set +
-                    src.scan(/label_tag\s+[:"']([a-z_0-9]+)/).flatten.to_set
+    Doc.new(
+      src,
+      stripped,
+      stripped.scan(/<label[^>]*\bfor=["']([^"']+)/).flatten.to_set,
+      src.scan(/\.label\s+:([a-z_0-9]+)/).flatten.to_set +
+        src.scan(/label_tag\s+[:"']([a-z_0-9]+)/).flatten.to_set,
+      named_label_spans(src, stripped),
+    )
+  end
 
+  # A wrapping <label> names its control only if it has text. brgen's compose bar
+  # wraps a file input in a label whose sole content is an aria-hidden icon.
+  def named_label_spans(src, stripped)
     spans = []
     stripped.to_enum(:scan, %r{<label\b[^>]*>(.*?)</label>}m).each do
       md = Regexp.last_match
       inner = src[md.begin(1), md[1].length].to_s
       text = inner.gsub(/<%.*?%>/m, " ").gsub(/<[^>]*>/m, " ")
-      erb_text = inner.scan(/<%=\s*(?:t\(|.*?\.capitalize|.*?\.humanize)/m)
-      spans << { from: md.begin(0), to: md.end(0), named: text.strip.length.positive? || erb_text.any? }
+      prints = text.strip.length.positive? ||
+               inner.match?(/<%=\s*(?:t\(|.*?\.capitalize|.*?\.humanize)/m)
+      spans << { from: md.begin(0), to: md.end(0) } if prints
     end
-    in_named_label = ->(pos) { spans.any? { |s| pos > s[:from] && pos < s[:to] && s[:named] } }
+    spans
+  end
 
+  def unnamed_html_controls(doc)
     found = []
-
-    stripped.to_enum(:scan, /<(input|textarea|select)\b([^>]*)>/mi).each do
+    doc.stripped.to_enum(:scan, /<(input|textarea|select)\b([^>]*)>/mi).each do
       md = Regexp.last_match # snapshot: the probes below reset Regexp.last_match
       tag = md[1].downcase
       at = md.begin(0)
-      attrs = src[at, md[0].length].to_s
+      attrs = doc.src[at, md[0].length].to_s
       type = attrs[/\btype=["']?([a-z]+)/i, 1]&.downcase
       next if tag == "input" && SKIP_INPUT_TYPES.include?(type.to_s)
       next if attrs =~ /aria-label\s*=/ || attrs =~ /aria-labelledby\s*=/
-      next if in_named_label.call(at)
+      next if doc.inside_named_label?(at)
 
       id = attrs[/\bid=["']([^"']+)/, 1]
-      next if id && label_for.include?(id)
+      next if id && doc.label_for.include?(id)
 
-      found << "#{src[0...at].count("\n") + 1}: <#{tag}#{type ? " type=#{type}" : ""}>"
+      found << "#{doc.line_at(at)}: <#{tag}#{type ? " type=#{type}" : ""}>"
     end
+    found
+  end
 
-    src.to_enum(:scan, /<%=?-?(.*?)-?%>/m).each do
+  def unnamed_helper_controls(doc)
+    found = []
+    doc.src.to_enum(:scan, /<%=?-?(.*?)-?%>/m).each do
       md = Regexp.last_match
       body = md[1]
       hit = body.match(/\b\w+\.(#{FORM_HELPERS.join("|")})\b\s*:([a-z_0-9]+)/) ||
             body.match(/\b(#{TAG_HELPERS.join("|")})\s*\(?\s*[:"']([a-z_0-9\[\]]+)/)
       next unless hit
-
-      helper, attr = hit[1], hit[2]
-      next if helper.start_with?("hidden")
+      next if hit[1].start_with?("hidden")
       next if body =~ /aria:\s*\{[^}]*label/m || body =~ /aria-label/
-      next if in_named_label.call(md.begin(0))
-      next if helper_labels.include?(attr) || label_for.include?(attr)
+      next if doc.inside_named_label?(md.begin(0))
+      next if named_by_helper?(doc, body, hit[2])
 
-      explicit_id = body[/\bid:\s*["']([^"']+)["']/, 1]
-      next if explicit_id && label_for.include?(explicit_id)
-
-      found << "#{src[0...md.begin(0)].count("\n") + 1}: #{helper} :#{attr}"
+      found << "#{doc.line_at(md.begin(0))}: #{hit[1]} :#{hit[2]}"
     end
-
     found
+  end
+
+  def named_by_helper?(doc, body, attr)
+    return true if doc.helper_labels.include?(attr) || doc.label_for.include?(attr)
+
+    # An explicit id: is what a <label for> points at, not the attribute name --
+    # five selects all called :answers each need their own.
+    explicit_id = body[/\bid:\s*["']([^"']+)["']/, 1]
+    !explicit_id.nil? && doc.label_for.include?(explicit_id)
+  end
+
+  def unnamed_controls(path)
+    doc = read(path)
+    unnamed_html_controls(doc) + unnamed_helper_controls(doc)
   end
 
   def test_the_scan_reaches_engine_views
