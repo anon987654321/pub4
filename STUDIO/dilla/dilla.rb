@@ -7092,9 +7092,13 @@ def arp_variation_for_chord(chord_i, chord, cfg, base_arp_cfg, patch: nil, role:
   end
   style = ARP_PATTERN_BUILDERS.keys.sample(random: rng) if rng.rand < 0.3
   subdiv_pool = [base_arp_cfg.fetch(:subdiv, 8), 3, 4, 6, 8, 12].uniq
+  # Operator, 2026-08-11: leads at half rate. subdiv is steps per bar, so
+  # halving it halves the note rate — the figure is the same, played twice as
+  # slow. Floor of 2 so a pool entry of 3 cannot round to a subdivision that
+  # produces no steps.
   {
     style:,
-    subdiv: subdiv_pool[rng.rand(subdiv_pool.length)],
+    subdiv: [subdiv_pool[rng.rand(subdiv_pool.length)] / 2, 2].max,
     gate: base_arp_cfg.fetch(:gate, 0.62) * rng.rand(0.82..1.14),
     vel: base_arp_cfg.fetch(:vel, 0.5) * rng.rand(0.75..1.2),
     time_offset: rng.rand(-0.035..0.09),
@@ -22126,6 +22130,11 @@ HATE_LAYERS = {
   dfam:  ->(p, _b) { p >= 0.35 && !p.between?(0.55, 0.62) },  # the machine in the room
   poly:  ->(p, _b) { p >= 0.4 },                    # the 11-against-16 hat, deep in
   acid:  ->(p, _b) { p >= 0.45 },                   # the only sustained melodic content
+  # Texture where the melody is not. paulwash is a bed, so it arrives early and
+  # never leaves; weird is a spice and stays intermittent, because a signal with
+  # no pitch left in it stops being interesting once you have placed it.
+  paulwash: ->(p, _b) { p >= 0.12 },
+  weird:    ->(p, b) { p >= 0.3 && b.odd? },
   bleep: ->(p, b) { p >= 0.45 && b.even? },         # blips answer the kit, in alternate blocks
   tom:   ->(p, b) { p >= 0.5 && b.odd? },
   bloop: ->(p, b) { p >= 0.55 && b.odd? },          # ...and the falling ones answer the bleeps
@@ -22313,8 +22322,33 @@ rescue StandardError => e
   nil
 end
 
+# One switch that forbids every pitched layer, rather than four that each
+# forbid one.
+#
+# This exists because "no leads" took six rounds to actually achieve. Each
+# attempt turned off the layer that had been named -- acid, then bleep and
+# bloop, then dfam -- and the next render still had a pitched line in it,
+# because the renderer has more tonal layers than anyone remembers. The list is
+# acid, bleep, bloop (chirps on a per-bar note table), dfam (an 8-step PITCH
+# sequence through a resonant filter), and the drone.
+#
+# HATE_TONAL=0 turns off all of them at once. It is a floor, not a default: the
+# individual switches still work, and setting this cannot accidentally enable
+# anything. test_hate_tonal_zero_silences_every_pitched_layer is the gate.
+HATE_TONAL_LAYERS = %w[HATE_MELODY HATE_DFAM HATE_DRONE].freeze
+
+def hate_forbid_tonal!
+  return false if ENV.fetch("HATE_TONAL", "1") != "0"
+
+  HATE_TONAL_LAYERS.each { |k| ENV[k] = "0" }
+  true
+end
+
 def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp3"))
   require_tools! "ffmpeg"
+  if hate_forbid_tonal!
+    dmesg("HATE_TONAL=0 — melody, dfam and drone all off", unit: "techno0", parent: "dilla0")
+  end
   # The lower clamp is 0.1, not 1.0, and that single number was the whole reason
   # the demo did not sound like one record.
   #
@@ -22416,6 +22450,75 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   tom_per_bar = Array.new(HATE_CYCLE_BARS) { [] }
   tom_per_bar[5] = [9, 13]; tom_per_bar[7] = [6, 10]
 
+  # HATE_MODERN=1 is the contemporary club pattern, not the industrial one.
+  #
+  # Modern techno is defined by a very small number of things and the offbeat
+  # open hat is the biggest: a four-on-the-floor kick with an open hat on every
+  # eighth between the kicks. That single relationship is what makes a pattern
+  # read as current rather than as 90s industrial, and it is why this is a
+  # separate mode from HATE_INTRICATE rather than more of it.
+  #
+  # The rest follows from it: closed hats on straight sixteenths to fill under
+  # the opens, a clap on 2 and 4 only, ghosts pulled right back because the
+  # groove is meant to be driving rather than shuffled, and toms and metal
+  # almost absent -- modern techno is sparse in the mids, and its weight comes
+  # from the kick and the sub rather than from the number of parts.
+  if ENV.fetch("HATE_MODERN", "0") != "0"
+    HATE_CYCLE_BARS.times do |b|
+      kick_per_bar[b] = [0, 4, 8, 12]                       # four on the floor, no variations
+      open_per_bar[b] = [2, 6, 10, 14]                      # THE offbeat open hat
+      hat_per_bar[b] = (0..15).step(2).to_a                  # eighths under the opens
+      clap_per_bar[b] = [4, 12]                              # 2 and 4, nothing else
+      ghost_per_bar[b] = b.odd? ? [7] : []                   # barely there
+      ride_per_bar[b] = []
+      metal_per_bar[b] = (b % 4).zero? ? [14] : []           # one accent per four bars
+      tom_per_bar[b] = []
+    end
+    # One dropped kick every eight bars is the only variation the pattern gets.
+    kick_per_bar[7] = [0, 4, 8]
+  end
+
+  # HATE_INTRICATE=1 thickens the programming without speeding it up.
+  #
+  # The tables above are deliberately sparse -- four kicks, two ghosts, four
+  # hats, and whole bars with nothing on them. That is the right density for a
+  # hypnotic set and the wrong one when the request is "much more intricate".
+  #
+  # Intricacy here means MORE PLACES, not more speed: sixteenth hats with gaps
+  # rather than a straight run, ghosts on the odd sixteenths where a shuffle
+  # lives, kick variations that differ per bar so the loop never repeats
+  # exactly, toms and metal answering across bars, and rides on the offbeat.
+  # Every added hit still lands on the same grid the drag is applied to, so the
+  # pocket is unchanged -- it is busier, not straighter.
+  if ENV.fetch("HATE_INTRICATE", "0") != "0"
+    HATE_CYCLE_BARS.times do |b|
+      # Kick: keep the four on the floor, add a syncopated push that moves per
+      # bar so no two bars are identical.
+      kick_per_bar[b] = ([0, 4, 8, 12] + [[14], [6], [3, 14], [10], [7], [2, 11], [15], [6, 14]][b % 8]).uniq.sort
+      # Ghosts on odd sixteenths -- where a shuffle's ghost notes actually sit.
+      ghost_per_bar[b] = ([3, 7, 11, 15] + (b.even? ? [5, 13] : [1, 9])).uniq.sort
+      # Hats: eighths with holes punched in them, and the holes move.
+      #
+      # Sixteenths here was too much for the synthesis, not for the music: each
+      # hit becomes another term in one aevalsrc expression, and 16 per bar over
+      # 8 bars made ffmpeg fail the layer outright with "cannot allocate
+      # memory". Eighths plus the offbeat ride below cover the same ground at
+      # half the term count.
+      holes = [[4], [0], [12], [8]][b % 4]
+      hat_per_bar[b] = ((0..15).step(2).to_a - holes)
+      # Open hat answering the clap, late in the bar.
+      open_per_bar[b] = b.odd? ? [14] : [7]
+      # Ride on the offbeat eighths rather than the downbeats.
+      ride_per_bar[b] = [2, 6, 10, 14]
+      # Metal and toms trade bars so something new arrives every two.
+      metal_per_bar[b] = b.even? ? [5, 13] : [3, 9]
+      tom_per_bar[b] = b.odd? ? [6, 10, 14] : [9]
+    end
+    # Claps keep the backbeat and gain a flam on the turnaround.
+    clap_per_bar[3] = [4, 12, 13]
+    clap_per_bar[7] = [4, 12, 14, 15]
+  end
+
   # A hat line on an 11-step cycle against a 16-step bar, so it only meets the
   # downbeat every 11 bars. This is the polymeter facility built earlier today;
   # its first use was a hi-hat in a hip-hop track, and it belongs here more --
@@ -22515,6 +22618,10 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   # these become the progression's chord roots, one per bar of the cycle, folded
   # into the same register the table already sat in (A1 to G2).
   acid_notes = harmony_roots || [55.00, 55.00, 58.27, 55.00, 65.41, 55.00, 58.27, 51.91]
+  # HATE_MELODY=0 drops it entirely. The acid IS the only melodic content here,
+  # so with it off the piece is drums, drone and texture -- which is a real
+  # setting for this genre, not a broken render.
+  if ENV.fetch("HATE_MELODY", "1") != "0"
   tone.call(:acid,
             HATE_CYCLE_BARS.times.flat_map { |b|
               acid_steps.map { |s| hit.call(at.call(b, s), 0.16, 0.55, 11, "sin(2*PI*#{acid_notes[b]}*(t-#{at.call(b, s)}))") }
@@ -22526,6 +22633,99 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
             "bandpass=f=520:w=760," \
             "aphaser=speed=0.12:decay=0.5:delay=2.6," \
             "aecho=0.7:0.55:#{(step * 3000).round}|#{(step * 6000).round}:0.4|0.22")
+  end
+
+  # PAULSTRETCH WASH. Texture where the melody was.
+  #
+  # Paulstretch's signature is not slowness, it is the absence of any transient:
+  # magnitudes kept, phase thrown away, so a source becomes a cloud that has no
+  # attack anywhere in it and no rhythm to read. There is no rubberband filter
+  # in this ffmpeg and no paulstretch anywhere, but the effect does not need a
+  # time-stretch when the source is synthesised -- write the sustain directly
+  # and destroy the phase.
+  #
+  # Two windows rather than one. 8192 with 0.9 overlap is long enough that
+  # everything inside it averages into a wash; 1024 underneath keeps a trace of
+  # movement so the layer does not sit completely still for two minutes. The
+  # slow pulsator pair beat against each other at 0.06 and 0.09 Hz, which is
+  # under a cycle per ten seconds -- swell, not wobble.
+  #
+  # apulsator and not tremolo for those: tremolo's `f` floor is 0.1 Hz, and a
+  # refused filter does not degrade quietly, it fails the whole chain and takes
+  # the layer with it. Measured -- tremolo=f=0.06 killed paulwash outright with
+  # "error applying option 'f' to filter 'tremolo': result too large".
+  # apulsator accepts down to 0.01 Hz.
+  if ENV.fetch("HATE_PAULSTRETCH", "1") != "0"
+    pw_root = (harmony_roots&.first || 55.0) * 4
+    pw = [pw_root, pw_root * 1.5, pw_root * (2**(10.0 / 12.0)), pw_root * 2].map { |h| h.round(2) }
+    # win_size in SAMPLES here, but Paulstretch specifies its window in seconds
+    # and wants it long: 0.25s upward, because a short window reads as grain and
+    # a long one is what produces the slow spectral pad. 32768 at 44.1k is
+    # 0.74s. The first attempt used 8192 (0.19s), which is the grainy end.
+    pw_win = ENV.fetch("HATE_PAULSTRETCH_WIN", "32768").to_i
+    # Phase must be RANDOM, not a function of the bin index. cos(b) is a fixed
+    # pattern across bins -- deterministic, and it re-imposes a structure that
+    # the whole point of this is to destroy. random(n) in ffmpeg's expression
+    # evaluator returns [0,1) and advances its own state per call.
+    scramble = "afftfilt=real='hypot(re,im)*cos(random(1)*6.2832)':" \
+               "imag='hypot(re,im)*sin(random(2)*6.2832)':" \
+               "win_size=#{pw_win}:overlap=0.9"
+    # +26 dB of makeup, measured not guessed. Randomising phase makes partials
+    # cancel instead of sum, and the chain was measured at 26.3 dB of loss
+    # (-19.9 dB source -> -46.2 dB out). Without this the layer renders, reports
+    # as a layer, and is inaudible in the mix -- the first version of this
+    # nulled against the melody-less render at -46 dB, i.e. it did nothing.
+    # Noise, not chord tones.
+    #
+    # The first version built this from root/5th/b7/octave and smeared those.
+    # Smearing a chord does not stop it being a chord -- it is a sustained pad
+    # playing the harmony, i.e. keys, which is exactly what was asked to go.
+    # Paulstretch on NOISE has no pitch to hear at all: the magnitudes are
+    # broadband, the phase is random, and what is left is air and movement.
+    # Shaped by the bandpass below rather than by a note.
+    tone.call(:paulwash,
+              "0.25*(random(0)*2-1)",
+              "#{scramble},#{scramble}," \
+              "bandpass=f=900:width_type=h:width=1600," \
+              "highpass=f=140,lowpass=f=6000," \
+              "apulsator=hz=0.06:amount=0.45:offset_r=0.5," \
+              "apulsator=hz=0.09:amount=0.25:offset_r=0.25," \
+              "chorus=0.6:0.9:50|70|90:0.4|0.32|0.3:0.25|0.4|0.3:2|2.3|1.3," \
+              "aphaser=speed=0.15:decay=0.55:delay=3.0," \
+              "aecho=0.8:0.9:#{(step * 7000).round}|#{(step * 11000).round}:0.55|0.4," \
+              "aecho=0.7:0.8:#{(step * 17000).round}|#{(step * 23000).round}:0.4|0.3," \
+              "stereowiden=delay=32:feedback=0.5:crossfeed=0.4:drymix=0.6," \
+              "volume=#{ENV.fetch('HATE_PAULSTRETCH_GAIN', '43')}dB")
+  end
+
+  # WEIRD. The deliberately wrong one.
+  #
+  # afreqshift moves every partial by the same NUMBER of Hz instead of the same
+  # ratio, so the harmonic series stops being harmonic -- the same trick the
+  # acid used on its wet side, but here it is the whole signal and the shift is
+  # large enough that no pitch survives it. Then flanger and a phaser on top of
+  # that, so what is left drifts. aphaser's speed floor is 0.1; below it the
+  # filter refuses to configure and refusing one filter kills the entire chain,
+  # so 0.12 is deliberate and not a rounding.
+  if ENV.fetch("HATE_WEIRD", "1") != "0"
+    w_root = (harmony_roots&.first || 55.0) * 2
+    # Noise here too, for the same reason paulwash is noise: a shifted sine is
+    # still a pitch, and the brief was no keys. The two slow AM terms stay --
+    # they are what makes it breathe rather than sit -- but they now modulate
+    # broadband noise instead of a note.
+    tone.call(:weird,
+              "0.2*(random(3)*2-1)*(0.5+0.5*sin(2*PI*0.7*t))*" \
+              "(0.6+0.4*sin(2*PI*0.23*t))",
+              "afreqshift=shift=#{(37 + (w_root % 23)).round}," \
+              "flanger=delay=14:depth=8:regen=45:speed=0.13," \
+              "aphaser=speed=0.12:decay=0.6:delay=3.2," \
+              "asoftclip=type=tanh:threshold=0.4:output=0.7," \
+              "bandpass=f=1400:width_type=h:width=2200," \
+              "crystalizer=i=3," \
+              "aecho=0.6:0.7:#{(step * 4500).round}|#{(step * 9000).round}:0.45|0.3," \
+              "stereowiden=delay=18:feedback=0.4:crossfeed=0.3:drymix=0.7," \
+              "volume=#{ENV.fetch('HATE_WEIRD_GAIN', '22')}dB")
+  end
 
   # DRONE. A dark bed under everything, built from two detuned saws a beat
   # apart so it beats slowly against itself, then spectrally smeared.
@@ -22535,6 +22735,10 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   # either disappears or turns into a chord.
   drone_hz = (harmony_roots && techno_fold(harmony_roots.first, TECHNO_DRONE_REGISTER)) || 36.71
   drone_detuned = (drone_hz * 1.00654).round(2)
+  # The drone had no switch of its own until now. It is two detuned saws on a
+  # tonic -- pitched, however smeared -- so HATE_TONAL has to be able to reach
+  # it or "no tonal layers" is not true.
+  if ENV.fetch("HATE_DRONE", "1") != "0"
   tone.call(:drone,
             "0.13*(sin(2*PI*#{drone_hz}*t)+sin(2*PI*#{drone_detuned}*t)+" \
             "0.5*sin(2*PI*#{(drone_hz * 2).round(2)}*t))",
@@ -22545,6 +22749,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
             # this assumed and why the whole layer failed to configure.
             "afftfilt=real='hypot(re,im)*cos(b)':imag='hypot(re,im)*sin(b)':win_size=2048:overlap=0.8," \
             "lowpass=f=1200,tremolo=f=0.14:d=0.28,stereowiden=delay=22:feedback=0.4:crossfeed=0.35:drymix=0.7")
+  end
 
   # DFAM. Dual-oscillator FM percussion on an 8-step pitch sequence.
   #
@@ -22576,13 +22781,38 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
     body = "sin(2*PI*#{f1}*#{dt}+#{fm_index.round(3)}*sin(2*PI*#{f2}*#{dt}))"
     "between(t,#{t0},#{(t0 + 0.4).round(6)})*#{(0.42 * vel).round(3)}*exp(-#{dt}*#{dfam_decay.round(2)})*#{body}"
   end.join("+")
+  # Its own gate, not HATE_MELODY's.
+  #
+  # It was briefly folded into HATE_MELODY because an 8-step PITCH sequence
+  # through a resonant filter does read as a line. But this is the machine the
+  # whole genre is built on and the operator wants it forward, so it gets
+  # HATE_DFAM instead: melody off and DFAM heavy is a real combination, and one
+  # switch could not express it.
+  #
+  # HATE_DFAM_HEAVY pushes it from an element to the loudest thing in the room:
+  # the resonance goes up, the softclip becomes drive rather than polish, a
+  # bitcrusher takes the edges off the sample rate, and the echo gets long
+  # enough to blur into the next hit.
+  if ENV.fetch("HATE_DFAM", "1") != "0"
+  heavy = ENV.fetch("HATE_DFAM_HEAVY", "0") != "0"
+  dfam_res = (dfam_patch[:res_pct] / 100.0 * (heavy ? 14 : 8) + 0.7).round(2)
+  dfam_tail = if heavy
+                "acrusher=bits=9:samples=2:mix=0.35," \
+                "afreqshift=shift=27," \
+                "aecho=0.8:0.7:#{(step * 2000).round}|#{(step * 4000).round}|#{(step * 7000).round}:0.5|0.32|0.18," \
+                "aphaser=speed=0.22:decay=0.5:delay=2.4," \
+                "stereotools=slev=1.8,volume=7dB"
+              else
+                "aecho=0.7:0.5:95|185:0.3|0.17,stereotools=slev=1.4"
+              end
   tone.call(:dfam, dfam_sig,
             # The resonant lowpass is the other half of the instrument: a
             # 12dB/oct sweep with the resonance up, which is what gives a DFAM
             # hit its pitched ring rather than a flat thud.
-            "lowpass=f=#{dfam_patch[:filter_hz]}:width_type=q:width=#{(dfam_patch[:res_pct] / 100.0 * 8 + 0.7).round(2)}," \
-            "asoftclip=type=atan:threshold=0.55:output=0.9," \
-            "aecho=0.7:0.5:95|185:0.3|0.17,stereotools=slev=1.4")
+            "lowpass=f=#{dfam_patch[:filter_hz]}:width_type=q:width=#{dfam_res}," \
+            "asoftclip=type=atan:threshold=#{heavy ? '0.32' : '0.55'}:output=#{heavy ? '1.0' : '0.9'}," \
+            "#{dfam_tail}")
+  end
 
   # Long chains on the drums.
   #
@@ -22688,6 +22918,11 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   bloop_steps = [5, 13]
   bleep_freqs = [880.0, 1174.7, 987.8, 1318.5, 1046.5, 784.0, 1396.9, 659.3]
 
+  # bleep and bloop are pitched too -- chirps on a per-bar note from
+  # bleep_freqs, which is a melody whatever it is called. HATE_MELODY=0 has to
+  # take all three or the line is still there: dropping only :acid left these
+  # playing and the operator still heard a top line.
+  if ENV.fetch("HATE_MELODY", "1") != "0"
   tone.call(:bleep,
             HATE_CYCLE_BARS.times.flat_map { |b|
               bleep_steps.each_slice(2).map(&:first).map { |s|
@@ -22727,6 +22962,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
               "pan=stereo|c0=0.35*c0|c1=1.0*c1",
               "stereowiden=delay=20:feedback=0.45:crossfeed=0.35:drymix=0.65",
             ]))
+  end
 
   # HYDRAULIC HISS. A slow breath rather than a hit.
   #
