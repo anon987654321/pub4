@@ -191,7 +191,7 @@ body.vertical-playlist .nearby-chat-widget {
 }
 
 .nearby-chat-widget-tab:hover {
-  border-color: var(--text-dim, var(--text-secondary, #8a879c));
+  border-color: var(--text-dim, var(--text-secondary));
 }
 
 .nearby-chat-widget-panel {
@@ -290,14 +290,14 @@ body.vertical-playlist .nearby-chat-widget {
   padding: 0.625rem 0.875rem;
   border-bottom: 1px solid var(--border, #46435a);
   font: var(--weight-bold) 0.8125rem/1 var(--font-mono, ui-monospace, monospace);
-  color: var(--text-dim, var(--text-secondary, #8a879c));
+  color: var(--text-dim, var(--text-secondary));
   flex-shrink: 0;
 }
 
 .nearby-chat-widget-close {
   background: none;
   border: none;
-  color: var(--text-dim, var(--text-secondary, #8a879c));
+  color: var(--text-dim, var(--text-secondary));
   cursor: pointer;
   font-size: var(--text-lg);
   line-height: 1;
@@ -327,7 +327,7 @@ body.vertical-playlist .nearby-chat-widget {
   padding: 0.5rem 0.75rem;
   margin: 0;
   list-style: none;
-  font-family: var(--font-primary, var(--font, system-ui, sans-serif));
+  font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.45;
 }
@@ -339,7 +339,7 @@ body.vertical-playlist .nearby-chat-widget {
   padding: 0.5rem;
   border-top: 1px solid var(--border, #46435a);
   flex-shrink: 0;
-  font-family: var(--font-primary, var(--font, system-ui, sans-serif));
+  font-family: var(--font);
 }
 
 .nearby-chat-widget-composer textarea {
@@ -352,7 +352,7 @@ body.vertical-playlist .nearby-chat-widget {
   padding: 0.5rem 0.65rem;
   min-height: 44px;
   max-height: 6.5rem;
-  font-family: var(--font-primary, var(--font, system-ui, sans-serif));
+  font-family: var(--font);
   font-size: var(--text-base);
   line-height: 1.45;
 }
@@ -385,7 +385,7 @@ body.vertical-playlist .nearby-chat-widget {
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem 0.95rem;
-  font-family: var(--font-primary, var(--font, system-ui, sans-serif));
+  font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--text, #d8d6e0);
@@ -404,17 +404,17 @@ body.vertical-playlist .nearby-chat-widget {
 
 .nearby-chat-widget-empty p {
   margin: 0;
-  color: var(--text-dim, var(--text-secondary, #8a879c));
+  color: var(--text-dim, var(--text-secondary));
 }
 
 .nearby-chat-widget-status {
   margin: 0;
   padding: 0.45rem 0.75rem;
-  font-family: var(--font-primary, var(--font, system-ui, sans-serif));
+  font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
   border-bottom: 1px solid var(--border, #46435a);
-  color: var(--text-dim, var(--text-secondary, #8a879c));
+  color: var(--text-dim, var(--text-secondary));
 }
 
 .nearby-chat-widget-status[hidden] {
@@ -428,7 +428,7 @@ body.vertical-playlist .nearby-chat-widget {
   gap: 0.35rem 0.5rem;
   margin: 0;
   padding: 0.35rem 0.75rem;
-  font-family: var(--font-primary, var(--font, system-ui, sans-serif));
+  font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
   border-bottom: 1px solid var(--border, #46435a);
@@ -486,7 +486,7 @@ body.vertical-playlist .nearby-chat-widget {
 }
 
 .nearby-chat-widget-cta:hover {
-  border-color: var(--text-dim, var(--text-secondary, #8a879c));
+  border-color: var(--text-dim, var(--text-secondary));
   text-decoration: none;
 }
 
@@ -531,7 +531,7 @@ body.vertical-playlist .nearby-chat-widget {
   border: 1px solid var(--border, #46435a);
   border-radius: var(--radius-card, 16px);
   color: var(--text, #d8d6e0);
-  font-family: var(--font-primary, var(--font, system-ui, sans-serif));
+  font-family: var(--font);
 }
 
 .install-prompt[hidden] { display: none; }
@@ -545,7 +545,7 @@ body.vertical-playlist .nearby-chat-widget {
   margin: 0;
   font-size: var(--text-sm);
   line-height: 1.45;
-  color: var(--text-dim, var(--text-secondary, #8a879c));
+  color: var(--text-dim, var(--text-secondary));
 }
 
 .install-prompt-actions {
@@ -560,13 +560,13 @@ body.vertical-playlist .nearby-chat-widget {
   padding: 0 0.9rem;
   border: 1px solid var(--border, #46435a);
   border-radius: var(--radius-sm, 8px);
-  font: var(--weight-bold) 0.875rem/1 var(--font-primary, var(--font, system-ui, sans-serif));
+  font: var(--weight-bold) 0.875rem/1 var(--font);
   cursor: pointer;
 }
 
 .install-prompt-secondary {
   background: transparent;
-  color: var(--text-dim, var(--text-secondary, #8a879c));
+  color: var(--text-dim, var(--text-secondary));
 }
 
 /* Family primary is inverted type-on-background, not an accent fill — see
@@ -578,7 +578,7 @@ body.vertical-playlist .nearby-chat-widget {
 }
 
 .install-prompt-secondary:hover { color: var(--text, #d8d6e0); }
-.install-prompt-primary:hover { border-color: var(--text-dim, var(--text-secondary, #8a879c)); }
+.install-prompt-primary:hover { border-color: var(--text-dim, var(--text-secondary)); }
 
 /* Installed launches: pwa_standalone_controller.js stamps this on <html>. There
    is nothing left to install, and the OS home indicator now sits where the

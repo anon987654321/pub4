@@ -2,6 +2,23 @@
 @use "fonts_brand";
 @use "dialect_tokens" as x;
 
+// One typeface for every brgen surface, written once here and emitted into both
+// token blocks below. Operator decision 2026-08-10, after the verticals were
+// found rendering in three different faces: Inter on dating and maps, "SF Pro
+// Display" on playlist, and Arial (from the BRGEN_OLD palette mixins) on the
+// feed and the commerce verticals — so the font changed as you moved between
+// subapps of one site.
+//
+// Inter rather than a system stack because it is the only real typeface in play:
+// vendored self-hosted in five weights (_fonts_brand.scss, five woff2 under
+// public/fonts), where a system stack resolves to a different font on every
+// operating system — an inconsistency you cannot see from one machine.
+//
+// A SCSS variable rather than a second CSS declaration: both the dark :root and
+// the light toggle block re-include app-root-tokens, which carries the shared
+// default, so each has to override it. This way the stack itself is stated once.
+$brgen-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
 :root {
   // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/
   // mobile.css (pub/__OLD_BACKUPS/BRGEN_OLD). True grayscale, no accent
@@ -12,6 +29,7 @@
   // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
   // own deliberate size, distinct from the 16px shared default.
   --font-size: var(--text-lg);
+  --font: #{$brgen-font};
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
@@ -35,6 +53,8 @@
   @include x.app-root-tokens;
   color-scheme: light;
   --font-size: var(--text-lg);
+  // Same face in both themes: the toggle changes the palette, not the type.
+  --font: #{$brgen-font};
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

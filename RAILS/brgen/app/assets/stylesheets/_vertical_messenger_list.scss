@@ -9,10 +9,9 @@ body.vertical-messenger {
   --msg-bubble-self: color-mix(in srgb, var(--accent) 22%, var(--surface-elevated));
   --msg-bubble-peer: var(--surface-elevated);
   --msg-accent: var(--accent);
-  --font-primary: var(--font);
   background: var(--msg-bg);
   color: var(--msg-ink);
-  font-family: var(--font-primary);
+  font-family: var(--font);
 }
 
 /* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */

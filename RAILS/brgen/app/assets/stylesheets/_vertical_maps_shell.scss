@@ -28,10 +28,9 @@ body.vertical-maps {
   --maps-accent: var(--accent);
   --maps-surface: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
   --maps-border: var(--border);
-  --font-primary: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--maps-bg);
   color: var(--maps-ink);
-  font-family: var(--font-primary);
+  font-family: var(--font);
 }
 
 /* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */

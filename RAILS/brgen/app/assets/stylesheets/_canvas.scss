@@ -12,7 +12,7 @@
   pointer-events: none;
   user-select: none;
   overflow: hidden;
-  font-family: Helvetica, sans-serif;
+  font-family: var(--font);
 }
 
 /* The shared shell actually collapses to a 120px sidebar at 1265px.  The old

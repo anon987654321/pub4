@@ -5,7 +5,7 @@ body.vertical-tv {
 }
 
 body.vertical-tv main {
-  max-width: 1100px;
+  max-width: var(--container-max);
 }
 
 body.vertical-tv .page-header h1 {

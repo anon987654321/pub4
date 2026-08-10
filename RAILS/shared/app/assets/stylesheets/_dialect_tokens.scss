@@ -42,7 +42,11 @@
   // dialect makes a scoped @include complete on its own.
   --surface2: var(--surface-elevated);
   --text-dim: var(--text-secondary);
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  // --font moved to app-root-tokens. This is a *palette* mixin, and carrying the
+  // typeface in it meant any surface that pinned a palette also reset the
+  // typeface. body.vertical-maps pins dark so its basemap and the shared widgets
+  // agree (see _vertical_maps_shell.scss) and silently got the system stack with
+  // it, overriding brgen's face on that vertical alone. A palette is colour.
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
   /* px on purpose, and the one place it has to be. Every rung of the type scale
      in _tokens.scss is rem, and rem is a multiple of whatever this resolves to,
@@ -153,7 +157,12 @@
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #f2f2f2;
   --danger: #e46151;
-  --font: Arial, Helvetica, sans-serif;
+  // No --font here. It was `Arial, Helvetica, sans-serif` in both this mixin and
+  // its light twin, which meant the typeface was declared twice, per theme, and
+  // the toggle could change it -- and it silently outranked anything brgen's
+  // :root said, because an @include emits its declarations at the point of
+  // inclusion. brgen now names its typeface once in _root.scss, after the
+  // includes, and the light block inherits it. Both mixins are brgen-only.
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -180,7 +189,7 @@
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #1a1a1a;
   --danger: #b24c3f;
-  --font: Arial, Helvetica, sans-serif;
+  // See the dark twin above: the typeface is declared once, in _root.scss.
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -195,6 +204,11 @@
 // layer to alias here. --surface2/--text-dim/--radius stay as compat names
 // for their many existing call sites, now pointing at the renamed sources.
 @mixin app-root-tokens {
+  // The typeface, declared once per app root rather than inside a palette.
+  // brgen re-declares it as Inter after this include (_root.scss); amber and
+  // bsdports take this default. Anything that only pins a palette — a vertical,
+  // a theme toggle — no longer changes the face as a side effect.
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);

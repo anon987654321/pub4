@@ -31,7 +31,7 @@ body.vertical-takeaway .layout {
 }
 
 body.vertical-takeaway main {
-  max-width: 1280px;
+  max-width: var(--container-max);
 }
 
 body.vertical-takeaway .page-header h1 {

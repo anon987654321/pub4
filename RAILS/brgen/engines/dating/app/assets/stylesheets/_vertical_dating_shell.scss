@@ -14,10 +14,9 @@ body.vertical-dating {
   --dating-accent-ink: #00705c;
   --dating-accent-warm: var(--vertical-dating-accent-warm, #ff5500);
   --dating-pass: var(--danger);
-  --font-primary: "Inter", var(--font);
   background: var(--dating-bg);
   color: var(--dating-ink);
-  font-family: var(--font-primary);
+  font-family: var(--font);
 }
 
 body.vertical-dating #dark-toggle:checked ~ .theme-root {
@@ -106,7 +105,9 @@ body.vertical-dating .nearby-chat-widget {
 .dating-intro-hint {
   margin: 0;
   padding-top: clamp(48px, 12vh, 96px);
-  font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  /* Was a hand-written stack with Inter LAST, so it rendered system-ui and the
+     Inter in it never had a chance to apply. */
+  font-family: var(--font);
   font-size: clamp(1rem, 3.8vw, 1.125rem);
   font-weight: var(--weight-bold);
   letter-spacing: -0.01em;

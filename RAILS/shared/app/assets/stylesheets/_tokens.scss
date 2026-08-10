@@ -60,6 +60,12 @@
   --space-10: 2.5rem;
   --space-12: 3rem;
   --space-16: 4rem;
+  /* Page content width for browse-style surfaces. Added 2026-08-10 because the
+     brgen verticals each picked their own: marketplace and takeaway 1280px, tv
+     1100px, and nothing named the number, so the same grid changed width as you
+     moved between subapps of one site. --feed-max (600px) stays separate — that
+     is the single-column reading measure, a different job. */
+  --container-max: 1280px;
   --transition-fast: 180ms;
   --transition-normal: 300ms;
   /* soul.yml aesthetic_rules CINEMA_PALETTE asks for cubic-bezier easing on

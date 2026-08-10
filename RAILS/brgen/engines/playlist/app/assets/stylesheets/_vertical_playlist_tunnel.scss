@@ -3,8 +3,8 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  font-family: var(--font-primary);
-  font-size: var(--font-size-base);
+  font-family: var(--font);
+  font-size: var(--text-base);
   color: var(--color-text);
   background: var(--color-bg);
   overflow: hidden;
@@ -23,22 +23,22 @@
 
 .radio-header {
   position: fixed;
-  inset-block-start: var(--space-lg);
-  inset-inline-start: var(--space-lg);
+  inset-block-start: var(--space-8);
+  inset-inline-start: var(--space-8);
   z-index: 10;
   pointer-events: none;
 }
 
 .radio-header h1 {
-  font-size: var(--font-size-large);
+  font-size: var(--text-xl);
   font-weight: var(--weight-bold);
   margin: 0;
 }
 
 .radio-nav {
   position: fixed;
-  inset-block-start: var(--space-lg);
-  inset-inline-end: var(--space-lg);
+  inset-block-start: var(--space-8);
+  inset-inline-end: var(--space-8);
   z-index: 11;
   display: flex;
   gap: 12px;
@@ -49,25 +49,25 @@
 .radio-nav a,
 .radio-nav-btn {
   padding: 8px 12px;
-  border-radius: var(--border-radius);
+  border-radius: 0;
   background: rgba(0, 0, 0, 0.65);
   color: var(--color-text);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: var(--font-size-small);
+  font-size: var(--text-sm);
   text-decoration: none;
   cursor: pointer;
 }
 
 .radio-now-playing {
   position: fixed;
-  inset-block-end: var(--space-lg);
-  inset-inline-end: var(--space-lg);
+  inset-block-end: var(--space-8);
+  inset-inline-end: var(--space-8);
   z-index: 10;
   pointer-events: none;
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  font-size: var(--font-size-small);
+  gap: var(--space-2);
+  font-size: var(--text-sm);
   /* Pinned, not themed, and opaque rather than translucent. This panel floats
      over the tunnel's WebGL canvas, so with rgba(0,0,0,0.7) its real background
      was whatever the animation happened to be rendering — there was no stable
@@ -77,14 +77,14 @@
   color: #d8d6e0;
   font-family: var(--font-mono);
   background: #14141a;
-  border-radius: var(--border-radius);
+  border-radius: 0;
   padding: 0.25rem 0.75rem;
 }
 
 /* Minimal home: keep title readable above the tab safe area / home indicator. */
 .radio-now-playing--minimal {
-  inset-block-end: calc(var(--space-lg) + var(--safe-bottom, 0px));
-  inset-inline: var(--space-md);
+  inset-block-end: calc(var(--space-8) + var(--safe-bottom, 0px));
+  inset-inline: var(--space-6);
   justify-content: center;
   max-width: min(92vw, 28rem);
   margin-inline: auto;
@@ -112,12 +112,12 @@
   display: grid;
   place-items: center;
   align-content: center;
-  gap: var(--space-sm);
+  gap: var(--space-4);
   z-index: 200;
   cursor: pointer;
   pointer-events: auto;
   text-align: center;
-  padding: var(--space-md);
+  padding: var(--space-6);
 }
 
 .radio-overlay[hidden] {
@@ -135,7 +135,7 @@
 
 .radio-start-message {
   margin: 0;
-  font-size: var(--font-size-large);
+  font-size: var(--text-xl);
   font-weight: var(--weight-normal);
   color: var(--color-text);
   animation: radio-pulse 2s var(--ease-in-out) infinite;
@@ -144,21 +144,21 @@
 
 .radio-start-hint {
   margin: 0;
-  font: var(--font-size-small)/1.5 var(--font-mono);
+  font: var(--text-sm)/1.5 var(--font-mono);
   color: var(--color-muted);
   pointer-events: none;
 }
 
 .radio-archaeology {
   position: fixed;
-  inset-block-end: calc(var(--space-lg) + 3rem);
-  inset-inline-start: var(--space-lg);
+  inset-block-end: calc(var(--space-8) + 3rem);
+  inset-inline-start: var(--space-8);
   z-index: 12;
   max-width: min(420px, 72vw);
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-4) var(--space-6);
   background: color-mix(in srgb, var(--color-bg) 88%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
-  border-radius: var(--border-radius);
+  border-radius: 0;
   font: 10px/1.45 var(--font-mono);
   color: var(--color-accent);
   pointer-events: none;
@@ -213,7 +213,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md);
+  padding: var(--space-6);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -236,7 +236,7 @@
 
 .radio-library-list {
   overflow: auto;
-  padding: var(--space-sm);
+  padding: var(--space-4);
 }
 
 .radio-library-item {

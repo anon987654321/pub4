@@ -11,7 +11,7 @@ body.vertical-marketplace .layout {
 }
 
 body.vertical-marketplace main {
-  max-width: 1280px;
+  max-width: var(--container-max);
 }
 
 body.vertical-marketplace .page-header h1,
