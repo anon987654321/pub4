@@ -17,9 +17,17 @@ development:
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
+# TEST_DB_ID gives a test run its own database file. Same switch brgen (b7069c736)
+# and bsdports (5b50837df) carry; amber was the one left, because a third session
+# was working the app when those landed.
+#
+# Rails suffixes per parallel *worker*, not per *session*, and this repo is worked
+# by several agents in one checkout — two `rails test` runs open the same file,
+# and with journal_mode WAL and a 5s timeout the loser gets SQLite3::BusyException
+# on every test. Unset it and nothing changes.
 test:
   <<: *default
-  database: storage/test.sqlite3
+  database: storage/test<%= ENV["TEST_DB_ID"] %>.sqlite3
 
 # Store production database in the storage/ directory, which by default
 # is mounted as a persistent Docker volume in config/deploy.yml.

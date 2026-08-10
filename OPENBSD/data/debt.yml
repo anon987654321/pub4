@@ -490,10 +490,19 @@ open:
       11 models with no validations at all — nothing stops a blank or duplicate
       row
   - id: rails_autofix_scars
-    tag: agent-workable
+    tag: agent-ignore
     summary: >-
-      11 `autofix:` markers left in stylesheets where GATE_AUTOFIX stripped a
-      property; the declaration around each usually no longer means anything
+      NOT a cleanup — do not remove these. 11 `autofix: removed box-shadow (flat
+      UI)` markers in _shell, _shell_widgets and brgen _root. Re-read 2026-08-10:
+      the declarations around them are live focus and hover suppression, and the
+      markers are the documented reason shared/_focus_ring.scss exists — its header
+      cites them by name as the evidence that a flat-UI pass stripped the box-shadow
+      that had been the focus indicator and left `outline: none` beside it. That
+      file restores the ring with an !important rule naming every suppressed
+      element. Measured over CDP with CSS.forcePseudoState on all three apps:
+      .brand, .theme-toggle and .brgen-logo-mark each compute a 2px solid ring.
+      Deleting the markers deletes the explanation for why that !important rule is
+      there.
   - id: rails_inline_styles
     tag: agent-workable
     summary: >-
