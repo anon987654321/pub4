@@ -109,7 +109,10 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
       )
 
       assert_not order.transition_to!("delivered")
-      assert_includes order.errors[:status], "cannot transition from pending to delivered"
+      # The key, not the sentence. default_locale is nb, so asserting the
+      # English string tied this to whichever language the message was in --
+      # and it was English on a Norwegian site, which was the bug (dfd59426b).
+      assert_includes order.errors.details[:status].map { |d| d[:error] }, :bad_transition
     end
   end
 
@@ -125,7 +128,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
       order.order_items.build(menu_item: item, quantity: 1, unit_price_cents: item.price_cents)
 
       assert_not order.save, "30 kr order must not clear a 150 kr minimum"
-      assert(order.errors[:base].any? { |m| m.include?("Minimum order") })
+      assert_includes order.errors.details[:base].map { |d| d[:error] }, :below_minimum
     end
   end
 
