@@ -23,6 +23,20 @@ class InfiniteScrollReflexContractTest < Minitest::Test
     @reflexes ||= Dir.glob(File.join(ROOT, "{amber,brgen,bsdports}", "app", "reflexes", "*infinite_scroll*.rb")).sort
   end
 
+  # Source with comment lines dropped.
+  #
+  # A source-scanning assertion that reads comments matches the prose explaining
+  # a thing as readily as the thing. That trap fired four times across this
+  # backlog -- twice on peer sessions' checks, once on an &nbsp; rule that caught
+  # the comment saying why the &nbsp; had gone, and once on a pagy-helper rule.
+  # The parent already carries `# renders "posts/post", as: :post` as its usage
+  # example; the day someone pastes that into a subclass to explain something,
+  # test_every_declared_partial_exists_on_disk would go looking for a partial
+  # that was never declared.
+  def code(path)
+    File.readlines(path).reject { |line| line.lstrip.start_with?("#") }.join
+  end
+
   def test_every_reflex_is_found
     # 21 on 2026-08-10. A glob that quietly stops matching reads as a clean run,
     # which is the failure mode this whole file exists to avoid.
@@ -31,14 +45,14 @@ class InfiniteScrollReflexContractTest < Minitest::Test
   end
 
   def test_every_reflex_declares_a_partial_and_a_local
-    undeclared = reflexes.reject { |path| File.read(path).match?(/^\s*renders\s+"[^"]+",\s*as:\s*:\w+/) }
+    undeclared = reflexes.reject { |path| code(path).match?(/^\s*renders\s+"[^"]+",\s*as:\s*:\w+/) }
 
     assert_empty undeclared.map { |p| p.delete_prefix("#{ROOT}/") }.sort,
                  "each reflex must declare `renders \"<partial>\", as: :<local>` so the shared spine can build page_html"
   end
 
   def test_every_reflex_defines_its_own_scope
-    scopeless = reflexes.reject { |path| File.read(path).match?(/^\s*def scope\b/) }
+    scopeless = reflexes.reject { |path| code(path).match?(/^\s*def scope\b/) }
 
     assert_empty scopeless.map { |p| p.delete_prefix("#{ROOT}/") }.sort,
                  "the scope is the only thing that differs between these — each must define #scope"
@@ -52,7 +66,7 @@ class InfiniteScrollReflexContractTest < Minitest::Test
       roots = [File.join(ROOT, app, "app", "views"), File.join(ROOT, "shared", "app", "views")] +
               Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views"))
 
-      File.read(path).scan(/partial:\s*"([^"]+)"|renders\s+"([^"]+)"/).flatten.compact.uniq.filter_map do |partial|
+      code(path).scan(/partial:\s*"([^"]+)"|renders\s+"([^"]+)"/).flatten.compact.uniq.filter_map do |partial|
         dir, base = File.split(partial)
         next if roots.any? { |r| Dir.glob(File.join(r, dir, "_#{base}.*")).any? }
 
@@ -73,7 +87,7 @@ class InfiniteScrollReflexContractTest < Minitest::Test
     assert_match(/def page_html/, parent, "the parent must build page_html from the declaration")
     assert_match(/pagy\(/, parent, "the parent must paginate — that was the line copied into all 21")
 
-    redefiners = reflexes.select { |path| File.read(path).match?(/^\s*def (load_more|page_html)\b/) }
+    redefiners = reflexes.select { |path| code(path).match?(/^\s*def (load_more|page_html)\b/) }
     assert_empty redefiners.map { |p| p.delete_prefix("#{ROOT}/") }.sort,
                  "these re-implement the shared spine; override after_paginate if a reflex needs extra work"
   end
