@@ -24,8 +24,16 @@ tts:
   # MASTER_SOUL_SUMMARY, guardVoice's locked return — and the two halves
   # disagreed about what was actually being synthesized. All three now read the
   # policy instead of hardcoding a name; see face.part1.txt and face.part5.txt.
-  single_voice: osman
-  neural: ms-MY-OsmanNeural
+  # Operator, 2026-08-11: back to Pernille, much louder and much slower.
+  #
+  # Pernille never left the rest of the tree — nb-NO-PernilleNeural is still the
+  # entry in face.runtime.js's VOICES and idle-signature tables, in
+  # personality.rb, and in agent_map.yml, which still says in five places that
+  # "TTS voice is always Pernille per data/voice.yml". The Osman change moved
+  # four files and the registry kept the old answer, so the tree disagreed with
+  # itself for a day. This makes it agree again.
+  single_voice: pernille
+  neural: nb-NO-PernilleNeural
   persona_affects_text_only: true
   stream_live_default: false
   # With persona_affects_text_only these two ARE the effective rate/pitch for
@@ -48,8 +56,20 @@ tts:
   # -8% rate is unchanged and is a listening preference for long-form comfort
   # rather than a property of any voice — the same figure the malay persona
   # arrived at independently.
-  default_rate: "-8%"
-  default_pitch: "-35Hz"
+  # Much slower, per the operator. -32% was measured as the point where the
+  # engine stops rendering cleanly and reads as choking, so this sits well
+  # short of it while being audibly slower than the -8% it replaces.
+  default_rate: "-22%"
+  # +0Hz, not Osman's -35Hz. This file's own standing warning is that pitch
+  # tuning does not survive a voice change — -20Hz was once picked for en-GB
+  # Ryan and carried onto a Norwegian voice it had never been measured against.
+  # -35Hz was measured on Osman. Pernille starts flat until someone listens.
+  default_pitch: "+0Hz"
+  # edge-tts --volume. The browser chain is the other half of "louder"
+  # (face_speech_runtime.js: masterGain 1.9 -> 3.4, partial no longer played at
+  # 0.85); this raises the synthesised signal itself rather than only its
+  # playback gain, so the two do not fight for the same headroom.
+  default_volume: "+40%"
 
 voice:
   style: openbsd_dmesg

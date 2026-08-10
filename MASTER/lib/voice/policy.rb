@@ -11,12 +11,13 @@ module Master
       # unreadable voice.yml falls back to, so a stale entry here reintroduces
       # the exact voice/neural mismatch the file's comment describes.
       FALLBACK = {
-        "single_voice" => "osman",
-        "neural" => "ms-MY-OsmanNeural",
+        "single_voice" => "pernille",
+        "neural" => "nb-NO-PernilleNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => false,
-        "default_rate" => "-8%",
-        "default_pitch" => "-35Hz",
+        "default_rate" => "-22%",
+        "default_pitch" => "+0Hz",
+        "default_volume" => "+40%",
       }.freeze
 
       module_function
@@ -57,6 +58,12 @@ module Master
 
       def default_pitch
         data["default_pitch"].to_s
+      end
+
+      # edge-tts --volume. Raises the synthesised signal itself, so the browser
+      # chain is not the only place loudness comes from.
+      def default_volume
+        data["default_volume"].to_s
       end
 
       def browser_payload
