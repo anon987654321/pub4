@@ -25,7 +25,11 @@
 <% end %>
 
 <% if @conversation %>
-  <h3>Chat with <%= @order.buyer == Current.user ? @order.seller.display_name : @order.buyer.display_name %></h3>
+  <%# section + h2, not a bare h3: the h1 above is the order, and this is the
+      order's chat -- one level down, not two. The section gives the heading a
+      region to name, so a screen reader can jump to the conversation. %>
+  <section class="order-chat" aria-labelledby="order-chat-heading">
+  <h2 id="order-chat-heading">Chat with <%= @order.buyer == Current.user ? @order.seller.display_name : @order.buyer.display_name %></h2>
   <ul id="messages" role="list" aria-label="Order messages">
     <% @messages.each do |m| %>
       <%= render "messages/message", message: m %>
@@ -50,4 +54,5 @@
     <%= f.hidden_field :message_type, value: "text" %>
     <p><%= f.submit t("actions.send"), class: "btn btn-primary" %></p>
   <% end %>
+  </section>
 <% end %>

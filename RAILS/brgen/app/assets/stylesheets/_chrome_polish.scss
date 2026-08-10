@@ -171,7 +171,10 @@
   font-size: var(--text-sm);
 }
 
-.post-show-aside h3 {
+// h2, not h3: these follow the page h1 with no h2 between them, which is a
+// skipped level in the outline screen readers navigate by. Promoted 2026-08-10;
+// the selectors moved with the markup so the rendered size does not change.
+.post-show-aside h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--text-base);
   color: var(--text);
@@ -181,9 +184,31 @@
   padding: var(--space-4);
 }
 
-#comments-section h3 {
+// The id matters here beyond habit. #comments-section is a <section>, and
+// _zen_shell's `section h2 { font-size: var(--text-xs) }` would otherwise catch
+// this heading the moment it stopped being an h3 -- measured 18px -> 13.5px.
+// An id (1,0,1) outranks that element pair (0,0,2), so it stays at --text-base.
+#comments-section h2 {
   font-size: var(--text-base);
   margin-bottom: var(--space-3);
+}
+
+// The two class-less <aside> sidebars -- communities/show and posts/index --
+// were the only headings in brgen that no rule sized at all, so they rendered at
+// the UA h3 default. Promoting them to h2 would have taken them to the UA h2
+// default: measured 23.6925px -> 30.375px on both.
+//
+// 1.17em *is* that UA h3 ratio, kept deliberately so the promotion is an
+// accessibility fix and nothing else. It is not on the type scale -- at brgen's
+// 20.25px root the scale offers --text-lg 20.25px and --text-xl 27px, and
+// neither is what these have always rendered at. Moving them onto the scale is a
+// visual decision and a separate one.
+//
+// :not([class]) keeps this off .post-show-aside, .sidebar-card, .sidebar,
+// .widgets and .channel-roster, all of which size their own headings.
+aside:not([class]) > h2 {
+  font-size: 1.17em;
+  margin-bottom: var(--space-2);
 }
 
 #comments {

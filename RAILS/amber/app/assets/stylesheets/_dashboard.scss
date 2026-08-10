@@ -194,6 +194,16 @@
   padding: var(--space-md);
 }
 
+// The card heading is an h2 as of 2026-08-10 -- it followed the page h1 as an
+// h3, skipping a level in the outline. Nothing sized it before, so it rendered
+// at the UA h3 default and the promotion alone measured 18.72px -> 24px.
+// 1.17em is that UA h3 ratio, held so the fix is structural and not visual.
+// amber's h1,h2 rule in _layout.scss still supplies family, weight and tracking.
+.occasion-card h2 {
+  font-size: 1.17em;
+  margin-bottom: var(--space-xs);
+}
+
 .occasion-card--sparse {
   border-color: var(--color-warning);
   background: color-mix(in srgb, var(--color-warning) 15%, var(--surface-elevated));

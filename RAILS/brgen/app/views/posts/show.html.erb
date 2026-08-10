@@ -87,11 +87,11 @@
 </article>
 
 <section id="comments-section">
-  <h3>
+  <h2>
     <%= t("comments.submit") %>
     <strong><%= Current.user&.guest? ? t("chat.anon") : (Current.user&.username || t("chat.anon")) %></strong>
     <% unless authenticated? %> · <%= link_to t("nav.sign_in"), new_session_path %><% end %>
-  </h3>
+  </h2>
   <% if authenticated? || guest? %>
     <%= render "comments/form", comment: @new_comment, commentable: @post %>
   <% end %>
@@ -121,7 +121,7 @@
 </section>
 
 <aside class="post-show-aside">
-  <h3><%= t("posts.about") %></h3>
+  <h2><%= t("posts.about") %></h2>
   <% if @post.community %>
     <p><%= @post.community.description.presence || @post.community.name %></p>
     <%= link_to t("posts.view_community"), community_path(@post.community) %>

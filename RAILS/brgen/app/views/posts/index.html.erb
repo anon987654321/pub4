@@ -15,7 +15,7 @@
 <%= live_search_index url: posts_path(sort: params[:sort]), results_partial: "posts/live_search_results", placeholder: t("search.posts"), label: t("search.posts_label"), frame_id: "brgen-posts" %>
 
 <aside>
-  <h3><%= t("nav.communities") %></h3>
+  <h2><%= t("nav.communities") %></h2>
   <ul>
     <% Community.popular.limit(8).each do |c| %>
       <li><%= link_to c.name, community_path(c) %></li>

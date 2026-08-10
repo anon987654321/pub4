@@ -23,6 +23,35 @@ class LayoutContractTest < Minitest::Test
     "master_dashboard" => File.join(REPO, "MASTER", "web", "app", "views", "dashboard", "index.html.erb"),
   }.freeze
 
+  # A heading level skipped inside one view breaks the outline screen-reader
+  # users navigate by. Six sites had it on 2026-08-10 -- five sidebars and a
+  # comments section that all went h1 -> h3 -- and each was promoted with a
+  # stylesheet rule holding the rendered size, so the outline changed and the
+  # pixels did not (measured over CDP against the bundle at HEAD).
+  #
+  # This scans every view rather than pinning those six paths: the finding list
+  # that named them had five, having missed a second h3 in posts/show.html.erb,
+  # and a check that only knows the names it was given cannot catch the next one.
+  #
+  # Per-file, which is the honest limit -- a view rendered into a layout that
+  # already carries an h1 is a skip this cannot see. It catches what it claims.
+  def test_no_view_skips_a_heading_level
+    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,shared}", "app", "views", "**", "*.html.erb")) +
+            Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.html.erb"))
+
+    refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
+
+    skips = views.flat_map do |path|
+      levels = File.read(path).scan(/<h([1-6])\b/).flatten.map(&:to_i)
+      levels.each_cons(2).filter_map do |from, to|
+        "#{path.delete_prefix("#{ROOT}/")}: h#{from} -> h#{to}" if to > from + 1
+      end
+    end
+
+    assert_empty skips.sort,
+                 "these views jump a heading level; promote the heading and size it so nothing moves"
+  end
+
   def test_layout_chrome_partial_exists
     assert File.file?(LAYOUT_CHROME), "expected _layout_chrome.scss"
     body = File.read(LAYOUT_CHROME)

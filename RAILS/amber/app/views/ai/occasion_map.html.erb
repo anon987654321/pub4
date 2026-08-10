@@ -3,7 +3,7 @@
 <div class="occasion-grid">
   <% @coverage.each do |occasion, items| %>
     <div class="occasion-card occasion-card--<%= items.size < 2 ? 'sparse' : 'covered' %>">
-      <h3><%= occasion.capitalize %></h3>
+      <h2><%= occasion.capitalize %></h2>
       <span class="occasion-count"><%= items.size %> items</span>
       <% if items.size < 2 %>
         <p class="dim occasion-warn">Gap — consider adding pieces</p>

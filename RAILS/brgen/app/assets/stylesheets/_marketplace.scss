@@ -167,6 +167,19 @@
   min-height: 44px;
 }
 
+// The order page's chat heading. It was a bare h3 under the order h1 -- a
+// skipped level -- and is now an h2 inside <section class="order-chat">.
+//
+// Both halves of that move need this rule. The bare h3 rendered at the UA
+// default, measured 23.6925px; as a plain h2 it would have gone to 30.375px, and
+// wrapping it in a <section> hands it to _zen_shell's `section h2` at --text-xs
+// (13.5px) instead. The class (0,1,1) outranks that pair (0,0,2), and 1.17em is
+// the UA h3 ratio the heading has always rendered at.
+.order-chat h2 {
+  font-size: 1.17em;
+  margin-bottom: var(--space-2);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .deal-cat {
     transition: none !important;
