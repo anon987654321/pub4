@@ -187,7 +187,6 @@ module Master
         def duplicate_top_level_key_allowed?(path, key)
           relative = path.delete_prefix("#{File.join(@root, "data")}/")
           {
-            "clusters" => %w[mobile_web_opportunities.yml visual_clusters.yml],
             "defaults" => %w[mcp_servers.yml models.yml],
             "openrouter" => %w[models.yml providers.yml],
             "principles" => %w[operator_principles.yml principle_map.yml],
