@@ -70,8 +70,11 @@ module Partner
       @program = Partner::Program.find(params[:id])
     end
 
+    # owner_id, not owner — the store arrives from a finder with nothing
+    # preloaded, and strict_loading_by_default raises on the association read
+    # before the comparison runs.
     def require_owner_of!(store)
-      return true if store && Current.user == store.owner
+      return true if store && Current.user && store.owner_id == Current.user.id
 
       redirect_to partner_programs_path, alert: "Not allowed."
       false

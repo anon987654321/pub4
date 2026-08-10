@@ -58,8 +58,11 @@ module Marketplace
       @store = Marketplace::Store.find_by!(slug: params[:id])
     end
 
+    # owner_id, not owner: set_store finds by slug with nothing preloaded, and
+    # strict_loading_by_default raises on the association read before the
+    # comparison — so store edit and update failed for the owner too.
     def authorize_owner
-      return if Current.user == @store.owner
+      return if Current.user && @store.owner_id == Current.user.id
 
       redirect_to shop_path(@store.slug), alert: t("marketplace.store_not_allowed", default: "Not allowed")
     end

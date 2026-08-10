@@ -53,8 +53,11 @@ class Tv::ChannelsController < Tv::BaseController
   def set_channel    = (@channel = Tv::Channel.find_by!(slug: params[:slug]))
   def channel_params = params.require(:tv_channel).permit(:name, :description, :banner, :avatar)
 
+  # user_id, not user: set_channel finds by slug with nothing preloaded, and
+  # strict_loading_by_default raises on the association read before the
+  # comparison — so channel edit and update failed for the owner too.
   def require_channel_owner!
-    return if @channel.user == Current.user
+    return if Current.user && @channel.user_id == Current.user.id
 
     redirect_to channel_path(@channel), alert: "Not authorized"
   end

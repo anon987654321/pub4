@@ -75,9 +75,17 @@ class Playlist::HostedTracksController < Playlist::BaseController
     params.require(:track).permit(:title, :artist, :album, :duration_seconds, :source_type, :source_url, :genre, :privacy, :expires_at)
   end
 
+  # user_id, not user. set_track finds the record with nothing preloaded, and
+  # ApplicationRecord sets strict_loading_by_default in every environment, so
+  # reading the association raised before the comparison could run — the guard
+  # never denied anyone, it failed for everyone, the owner included.
+  #
+  # The respond_to?(:user) line above it was the tell: a defence placed against
+  # a failure that cannot happen, one line above the one that does. respond_to?
+  # is true; the read is what raises. Comparing the column needs no preload and
+  # cannot raise at all.
   def authorize_owner!
-    return unless @track.respond_to?(:user)
-    return if @track.user == Current.user
+    return if Current.user && @track.user_id == Current.user.id
 
     redirect_to hosted_tracks_path, alert: t("playlist.not_allowed", default: "Not allowed")
   end
