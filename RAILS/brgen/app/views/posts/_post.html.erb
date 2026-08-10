@@ -20,8 +20,21 @@
         <%= render "shared/feed_icon", name: "comment" %>
         <span class="feed-action-count" data-action-target="count"><%= post.comment_count %></span>
       </button>
+      <%# No data-controller here, deliberately. There is no repost feature: no
+          route, no model, no controller, no column — grep the tree. The button
+          carried data-controller="action" with no data-action-url-value, and
+          action_controller#toggle guards its fetch on `if (this.urlValue)`, so
+          clicking it added the `active` class, sent nothing, and told the user
+          their repost had landed. It reverted on the next render.
+          shared/_action_bar.html.erb already renders its repost button with no
+          controller at all, which is the honest version of the same thing.
+
+          A button that silently discards the action is worse than one that does
+          nothing visible, so the pretence goes and the affordance stays exactly
+          where the design puts it. Whether to build repost or drop the button is
+          a product call, not this partial's. Costs 25 controller instances on the
+          front page — the same shape as the 100 popovers removed here earlier. %>
       <button type="button" class="feed-action" aria-label="<%= t("post.repost", default: "Repost") %>"
-              data-controller="action" data-action="click->action#toggle"
               title="<%= t("post.repost", default: "Repost") %>">
         <%= render "shared/feed_icon", name: "repost" %>
       </button>

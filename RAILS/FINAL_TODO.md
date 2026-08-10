@@ -333,26 +333,61 @@ changes between identical runs cannot close a box.
       `.app-shell` that contains every real target — measured
       `touchActionBody: "auto"`, `.app-shell: manipulation`.
 
-- [ ] **Still true, re-measured 2026-08-04 by fetching the page over HTTP** (no
-      browser, so this one does not depend on JS having booted): 169
-      `data-controller` elements carrying 271 controller instances, of which
-      `popover` 100, `action` 75, `clipboard` 50 and `dropdown` 25. All of the
-      first four come from `posts/_post.html.erb`, which is rendered 25 times:
-      four hover popovers, two clipboards and one dropdown per post.
+- [x] **271 → 144, and it is now a budget rather than a number in this file.**
+      Re-measured 2026-08-10 by rendering the real page against a seeded 25-post
+      feed through brgen's integration harness (no server, no browser, so it does
+      not depend on JS having booted).
 
-      Worth naming what the popovers are: each `<template>` holds a tooltip
-      whose text is the string already in the button's own `aria-label`. On the
-      390px touch viewport that is the primary surface there is no hover, so
-      100 of the 271 instances cannot fire at all there — the same fault as the
-      keyboard coach in P0.5, one layer down.
+      The 100 `popover` instances are gone — removed since this item was written,
+      with `deploy_backlog_test` already refuting their return. That took 271 to
+      169.
+
+      The remaining find is one layer down and the same shape. Each post also
+      carried `data-controller="action"` on its **repost** button with no
+      `data-action-url-value`, and `action_controller#toggle` guards its fetch on
+      `if (this.urlValue)`. So the button added the `active` class, sent nothing,
+      and told the reader their repost had landed; it reverted on the next
+      render. There is no repost feature anywhere in the tree — no route, no
+      model, no controller, no column. `shared/_action_bar.html.erb` renders its
+      own repost button with no controller at all, which is the honest version.
+
+      The pretence is removed and the affordance left exactly where the design
+      puts it: a button that silently discards the click is worse than one that
+      does nothing visible. Whether to build repost or drop the button is a
+      product call. −25 instances, 169 → 144.
+
+      Pinned by `brgen/test/integration/front_page_weight_test.rb`: a total
+      instance budget on the rendered page, a per-post budget on the partial
+      (5 — `action` ×2, `clipboard` ×2, `dropdown` ×1), a check that no repost
+      backend has appeared without the button being wired to it, and the popover
+      refutation. Mutation-tested by reintroducing the fake controller: three
+      assertions fail, naming the discarded click.
+
+      Its first run is worth recording, because it is this session's recurring
+      trap: it counted three `action` controllers in a partial that renders two,
+      and its popover check matched — both times reading **the comment explaining
+      why those things were removed**. A source scan that matches its own
+      rationale measures the documentation. It strips ERB comments now.
+
+- [ ] **Open, and the measurement needs the production feed.** 140,236 bytes for
+      the seeded 25-post page, 90,512 inside `<main>` — but that is not
+      comparable to the recorded 229,773 / 169,576, because the seeded posts
+      carry far shorter bodies than real ones. What can be said exactly is the
+      per-post chrome cost, which is what scales: 3,499 bytes per post on top of
+      54,609 bytes of page chrome.
+
+      The honest next step is a re-measure against the real feed rather than a
+      byte target guessed from a synthetic one. Two of the three remaining
+      per-post controllers are the duplicate `clipboard` pair — the dropdown's
+      "Copy link" and the toolbar's share button copy the identical
+      `post_url(post)`. Collapsing them is −25 instances, and it removes one of
+      two visible affordances, so it is the same product call as the repost
+      button.
 
       `futurism` is no longer the lazy boundary to reach for; see the item
       below. `LAZY_COMPONENTS` / `registerWhenPresent` in `stimulus_boot.js` is
       the mechanism that survived, and it defers registration, not
       instantiation, so it does not by itself move this number.
-
-- [ ] **Still true**: 229,773 bytes of HTML for the front page, 169,576 of it
-      inside `<main>` (re-measured 2026-08-04; was 232,132 / 169,972).
 
 - [x] **Dropped, and the loop that regenerated it is closed.**
       `bsdports/db/schema.rb` no longer carries the hand-added

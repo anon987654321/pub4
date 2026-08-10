@@ -484,7 +484,12 @@ class DeployBacklogTest < Minitest::Test
     # component that does the work, not the company it keeps.
     post_partial = read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb'))
     assert_includes post_partial, 'data-controller="clipboard"'
-    refute_includes post_partial, 'popover',
+    # ERB comments stripped before the refutation. This fired on 2026-08-10
+    # against a partial containing no popover at all: the comment recording *why*
+    # the popover was removed says the word, and a refute_includes over raw source
+    # cannot tell markup from the note explaining its absence. Third time that
+    # shape bit in one session -- see front_page_weight_test.rb.
+    refute_includes post_partial.gsub(/<%#.*?%>/m, ''), 'popover',
                     'popover was removed as dead weight -- do not reintroduce it as a tooltip'
     assert_includes read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'shared/post_card'
     assert_includes read_source(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'shared/post_card'
