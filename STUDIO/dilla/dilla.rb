@@ -14747,7 +14747,25 @@ end
 def stream_rotate_drums!(index)
   return unless stream_drum_rotate_enabled?
 
-  table = ENV["DEMO_CURATED_ONLY"] == "1" ? STREAM_DRUM_ROTATION : drum_rotation_full
+  # DRUM_ROTATE_CURATED is separate from DEMO_CURATED_ONLY on purpose: that one
+  # also narrows the TRACK list, so asking for the house kit meant giving up
+  # most of the catalogue.
+  #
+  # Why a demo wants it. drum_rotation_full is the 13 hand-built pairings
+  # followed by every other preset SORTED BY NAME, and the index walks it
+  # straight through. Measured on a 34-slot demo: 31 different presets in 34
+  # slots, nothing repeating, and past slot 13 the running order is alphabetical
+  # -- afro_clave, boom_808, dembow_lite, then the whole euclid_* and flylo_*
+  # runs. Five euclidean grids, a reggaeton dembow and an afro-cuban clave in a
+  # hiphop demo, each heard once. Operator verdict: "the drums seem to go
+  # without rhythm or purpose", which is what a kit that never repeats sounds
+  # like -- no groove survives one encounter.
+  #
+  # The curated table is 13 entries and deliberately repeats dilla_slight,
+  # mpc3000 and dilla_drunk, so over 34 slots a listener hears each pocket
+  # several times and it registers as the record's groove.
+  curated = ENV["DEMO_CURATED_ONLY"] == "1" || ENV.fetch("DRUM_ROTATE_CURATED", "0") == "1"
+  table = curated ? STREAM_DRUM_ROTATION : drum_rotation_full
   d = table[index % table.length]
   ENV["DRUM_PRESET"] = d[:preset]
   ENV["POCKET_SET"] = d[:pocket]
@@ -15547,6 +15565,9 @@ def demo_all(bars_count = 12, destination = nil)
   demo_rap_slugs = demo_rap_slugs.select { |s| rap_vocal_resolve(s) }
   demo_rap_slugs = [RAP_VOCAL_SOURCE] if demo_rap_slugs.empty?
 
+  # A demo shows the house sound, not the whole kit shelf. Set
+  # DRUM_ROTATE_CURATED=0 to walk all 62 presets again.
+  ENV["DRUM_ROTATE_CURATED"] ||= "1"
   ENV["SPEAK"] ||= "0"
   ENV["STREAM_CONTINUOUS"] = "0"
   ENV["DILLA_STREAMING"] = "1"
@@ -25845,6 +25866,17 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
   # vocal whose own spectrum measures smooth (peak 400-630 Hz, monotonic
   # rolloff above). That is what reads as hard/sharp once it is also loud.
   # RAP_VOCAL_SKIP_LOUDNORM=0 restores the old behaviour.
+  # Measured 2026-08-10, so nobody re-derives it: the report "the vocals go up
+  # and down in volume" is NOT this stage. Re-enabling loudnorm here (LRA=11, no
+  # second limiter) moves the fitted store_p stem from LRA 4.4 to 3.9 -- the
+  # stem is already even, and there is no wide dynamic range at this point for
+  # loudnorm to control. That change was made, measured, and reverted.
+  #
+  # Where to look instead: the anchor in mix_rap_vocal_layer!
+  # (RAP_VOCAL_ANCHOR_DB, currently -3.0) sets the voice against the FULL-band
+  # beat RMS, which includes kick and bass, so it governs audibility directly;
+  # and alimiter on the summed mix is the only dynamics acting on vocal peaks,
+  # so it is the candidate for both the pumping and the saturation.
   tail = if ENV.fetch("RAP_VOCAL_SKIP_LOUDNORM", "1") == "1"
            ""
          else
