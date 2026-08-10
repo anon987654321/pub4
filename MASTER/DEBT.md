@@ -566,6 +566,40 @@ The tell is a test whose failure message describes something good happening.
 When you write one, invert it and ask what a successful fix would look like in
 CI. If the answer is "red", the assertion is pointed the wrong way.
 
+## Scanner Convention — a build artifact outlives the source it was built from
+
+Third in the family above, and the one that hides best. An exemption outlives its
+subject; a comment outlives the rule it explains; and a **compiled artifact
+outlives the source it was compiled from** — while the source stays correct, so
+every reader who checks the source concludes the tree is fine.
+
+Found 2026-08-10 in amber. `public/assets` held a precompile from 2026-07-20,
+before the `x_` rename, and in development Rack::Static serves `public/` *ahead
+of* propshaft. So the stale bundle won its own route: the browser got July's
+JavaScript while the repo held August's, and nothing in the source could reveal
+it. That copy happened to contain a lightgallery bundle whose template literals
+had been mangled into unterminated strings, so it threw a SyntaxError and took
+every Stimulus controller in the app down with it — which is the only reason
+anyone noticed.
+
+That detail is the warning, not the incident. A *corrupt* stale artifact
+announces itself. A merely **outdated** one serves last month's behaviour in
+silence, indefinitely, and every debugging session that reads the source instead
+of the wire confirms the wrong conclusion.
+
+Practical consequences:
+
+- When behaviour contradicts source, check what is actually being served before
+  re-reading the source. `curl` the asset path and diff it against the file it
+  claims to be.
+- `public/assets` is gitignored, so this never ships — it is a local-only trap,
+  which also means CI cannot catch it for you.
+- The same shape reaches production by a different road: MASTER/web's
+  `face.runtime.js` is generated from `face.part*.txt`, and a commit that edits a
+  part without regenerating leaves a stale artifact tracked in git. The manifest
+  test exists for exactly that and is why `rake assets:precompile` belongs in the
+  same commit as any face-source edit.
+
 ## Not Debt
 
 - Two `Master::` spines.
