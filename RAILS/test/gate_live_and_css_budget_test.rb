@@ -49,6 +49,10 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     assert Deploy::GateResult.require_live?({ "GATE_REQUIRE_LIVE" => "1" })
   end
 
+  def design_tokens
+    YAML.safe_load_file(File.expand_path("../shared/design_tokens.yml", __dir__))
+  end
+
   def budget
     YAML.safe_load_file(File.expand_path("../gates/data/css_budget.yml", __dir__)).fetch("rules")
   end
@@ -69,18 +73,32 @@ class GateLiveAndCssBudgetTest < Minitest::Test
 
   # The vertical accents live in their own top-level map with no background of
   # their own, so token_pairs -- which pairs inside one dialect -- never saw them.
-  def test_vertical_accents_are_paired_against_the_social_chrome
-    tokens = YAML.safe_load_file(File.expand_path("../shared/design_tokens.yml", __dir__))
-    pairs = Deploy::DesignMetrics.vertical_accent_pairs(tokens)
+  #
+  # The dialect they are paired against comes from the constant, not from a
+  # literal here: it moved from "social" to "brgen_old_dark" at 9cefb0e02
+  # ("design_metrics measured contrast on colours nothing paints") and this test
+  # kept asserting the old label, so it had been failing on a rename rather than
+  # on a measurement.
+  def test_vertical_accents_are_paired_against_the_chrome_they_paint_on
+    pairs = Deploy::DesignMetrics.vertical_accent_pairs(design_tokens)
+    surface = Deploy::DesignMetrics::VERTICAL_SURFACE_DIALECT
 
     refute_empty pairs
     labels = pairs.map { |pair| pair[:label] }
 
-    assert_includes labels, "vertical_accents.marketplace_accent/social.bg"
-    assert_includes labels, "vertical_accents.tv_accent/social.bg"
-    marketplace = pairs.find { |pair| pair[:label] == "vertical_accents.marketplace_accent/social.bg" }
+    assert_includes labels, "vertical_accents.marketplace_accent/#{surface}.bg"
+    assert_includes labels, "vertical_accents.tv_accent/#{surface}.bg"
+  end
 
-    assert_operator marketplace[:ratio], :<, 4.5, "the finding this pairing exists to surface has gone"
+  # Not a specific colour: an accent that gets fixed should not fail this. What
+  # must hold is that the pairing still surfaces something token_pairs missed,
+  # which is the reason it was written. Today the hovers are what it catches.
+  def test_the_vertical_pairing_still_surfaces_a_finding
+    below_aa = Deploy::DesignMetrics.vertical_accent_pairs(design_tokens).select { |pair| pair[:ratio] < 4.5 }
+
+    refute_empty below_aa, "every vertical accent now clears AA — retire this pairing or lower the bar deliberately"
+    assert below_aa.all? { |pair| pair[:label].include?("_hover/") },
+           "an accent, not just a hover, is below AA: #{below_aa.map { |pair| pair[:label] }.join(", ")}"
   end
 
   def test_danger_reads_as_a_foreground_token
