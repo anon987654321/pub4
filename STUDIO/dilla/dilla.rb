@@ -6069,7 +6069,16 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
              else
                (0.24 * kick_velocity_scale + 0.1).round(2)
              end
-  bus_gain = ENV.fetch("DRUM_BUS_GAIN", flylo_primary_drums? ? "1.4" : "1.0").to_f
+  # 1.26 is +2 dB on the whole drum bus, raised from 1.0 on operator instruction
+  # 2026-08-10 ("make drums louder"). One multiplier, so it lifts kit and
+  # sample-kick together and does not re-balance anything inside the bus.
+  #
+  # The FlyLo path keeps 1.4: it is already the hot branch and stacking a raise
+  # on top of it is how the drums got called "too hard" before.
+  #
+  # Tune with DRUM_BUS_GAIN rather than editing this — the env var wins, and
+  # every preset hash below carries its own value that this does not touch.
+  bus_gain = ENV.fetch("DRUM_BUS_GAIN", flylo_primary_drums? ? "1.4" : "1.26").to_f
   drum_vol = (ENV["DEBUG_DRUM_WEIGHT"] || (base_vol * bus_gain).round(3)).to_s
   drum_air = ENV.fetch("DRUM_AIR_DB", "2.5").to_f
   drum_pres = ENV.fetch("DRUM_PRESENCE_DB", "2.5").to_f
