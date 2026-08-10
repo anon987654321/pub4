@@ -1439,35 +1439,71 @@ Literal hex colour in SCSS outside a custom-property definition. Same rule at th
 - [ ] `shared/frontend/layouts/visualizer.css:15` — background: #000;
 - [ ] `shared/frontend/layouts/visualizer.css:16` — color: #dcdcdc;
 
-### css_font_px_hardcoded — 25
+### css_font_px_hardcoded — 25 · **closed 2026-08-10, and one of them was a live regression**
 
 Hardcoded px font-size. design_rules.ui_polish.type_tokens — use var(--text-title) / var(--text-display); a px literal cannot participate in the modular scale. Law: `ui_polish.type_tokens`.
 
-- [ ] `amber/app/assets/stylesheets/_brand.scss:26` — font-size: 60px;
-- [ ] `amber/app/assets/stylesheets/_brand.scss:30` — font-size: 12px;
-- [ ] `amber/app/assets/stylesheets/_brand.scss:35` — font-size: 120px;
-- [ ] `amber/app/assets/stylesheets/_brand.scss:39` — font-size: 24px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:86` — font-size: 70px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:91` — font-size: 28px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:103` — font-size: 4px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:112` — font-size: 3px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:28` — font-size: 14px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:96` — font-size: 12px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:114` — font-size: 12px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:119` — font-size: 14px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:157` — font-size: 12px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:175` — font-size: 15px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:225` — font-size: 16px;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:14` — --font-size: 18px;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:38` — --font-size: 18px;
-- [ ] `brgen/app/assets/stylesheets/_tiptap.scss:89` — font-size: 16px;
-- [ ] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:41` — font-size: 14px;
-- [ ] `shared/app/assets/stylesheets/_dialect_tokens.scss:38` — --font-size: 16px;
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:58` — font-size: 21px;
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:396` — font-size: 64px;
-- [ ] `shared/app/assets/stylesheets/_search_yep.scss:9` — font-size: 18px;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:176` — font-size: 22px;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:294` — font-size: 17px;
+Re-measured before touching anything, and the list above was stale in both
+directions: 16 of the 25 had already been tokenised by earlier passes, and the
+scan had never seen three more (`_zen_shell.scss:42`, `_canvas.scss:38`, and
+`playlist/_vertical_playlist.scss:76` — the last one an engine stylesheet, the
+same blind spot that hid 57 views when the verticals moved). Nine real
+instances, in four different categories, and only one of them wanted a token.
+
+**The rule was right, and applying it had already broken something.** amber's
+logotype is drawn into `viewBox="0 0 1000 500"`, where a length is a fraction of
+the artwork's own grid rather than document type. An earlier pass moved
+`.amber-logo-mark` to `var(--text-xs)`/`var(--text-xl)` and left
+`.amber-logo-word` on px. Those tokens are rem; rem in an SVG resolves against
+the *root* font-size; and `_minimal.scss:58` raises the root from 16px to 21px at
+`min-width: 1280`. Measured in Chrome at 1400px wide: the word held at 60 user
+units while the ® grew 12 → 15.75, moving the mark/word ratio 0.2000 → 0.2625.
+One glyph of the wordmark inflating 31%, above one breakpoint only. It passed
+review because at the default root size `0.75rem` *is* exactly 12px. Reverted to
+px, and pinned by `test/svg_type_scale_test.rb` so an autofix pass cannot make
+the swap again.
+
+**Two were unreachable.** `_marketplace_animated_logo.scss` is a CodePen lifted
+whole, and its base rules are the pen's standalone 300×280 scale; in this tree
+the partial only ever renders inside `#logoWrapper`, so the `#logoWrapper`
+overrides win every time. The 70px and the 4px could not apply to any page.
+Deleted rather than tokenised.
+
+**One was dead CSS in the apps that shipped it.** `_minimal.scss` carried the
+dating swipe deck — `#swipe-stack`, `.swipe-card`, `.swipe-card--stack-0..15`,
+`.swipe-placeholder` (the 64px), `.swipe-meta`, `.swipe-actions`. Dating is a
+brgen engine, but `_minimal.scss` reaches only amber and bsdports: brgen goes
+through `_stack_brgen.scss`, which deliberately omits it, and keeps its own live
+copy in `_dating_stack.scss` (already on rem). So two apps were shipping 54 lines
+of deck for a feature neither has, and the flagged px was in CSS no page could
+match. Removed.
+
+**Four are px on purpose, now commented so the rule stops re-opening them.**
+`--font-size: 16px` and `_minimal.scss`'s 21px are the two absolute anchors the
+rem scale multiplies — express either as a token and it defines itself.
+`_zen_shell.scss:42`'s `max(16px, 1em)` is the iOS input-zoom floor and already
+carried its reason. The surviving 3px in the marketplace logo is decoration
+inside the logo's own geometry, below `--text-xs`; a modular scale has no rung
+there and should not grow one.
+
+**Two are judgement, and the measurement is the reason.** `_canvas.scss:38`'s
+`clamp(16px, 4vw, 28px)` reads as `clamp(var(--text-base), 4vw, var(--text-2xl))`
+— 1rem/1.75rem, apparently identical. It is not, on brgen. `_root.scss` sets
+`html, body { font: var(--font-size)/… }` with `--font-size: var(--text-lg)`, so
+html computes to 18px and one rem is 18px here. Measured at 1400px: px form
+clamps to 28px, token form to 31.5px. Same for the playlist clamp. Tokenising
+either grows brgen type 12.5%, so both keep px with the number written down.
+
+Worth recording separately, because it makes every rem on brgen ambiguous: that
+same `html, body` rule applies `1.125rem` to both elements, so html resolves to
+18px and body then compounds to **20.25px** (measured). brgen's body text is not
+the 18px its token says. Not fixed here — it is a visible change to a live site
+and belongs to whoever owns the type scale.
+
+Also surfaced, not fixed: `marketplace_logo_controller.js` declares a `seedPlus`
+Stimulus target and never reads it, so the `+` span the 3px sizes sits at
+`opacity: 0` with nothing to lift it. The visible "+" is a different element the
+controller builds itself. Inert wiring, the house defect class.
 
 ### inline_style — 9
 

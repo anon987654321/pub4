@@ -21,13 +21,25 @@
   initial-value: 50%;
 }
 
-/* Mobile-first type sizes (logo HTML base) */
+/* Mobile-first type sizes, in viewBox user units — NOT document type.
+   _logo.html.erb draws into viewBox="0 0 1000 500", so a length here is a
+   fraction of the logotype's own 1000x500 grid: 60 means "60/500 of the logo's
+   height", and the whole mark scales with the <svg> box. The document's modular
+   scale has no say in it, which is why these are px and must stay px.
+
+   The mark previously read var(--text-xs)/var(--text-xl). Those are rem, and rem
+   in an SVG resolves against the *root* font-size — which _minimal.scss raises
+   from 16px to 21px at min-width 1280. Measured in Chrome, at 1400px wide:
+   the word held at 60 user units while the (r) grew 12 -> 15.75, moving the
+   mark/word ratio 0.2000 -> 0.2625. One glyph of the wordmark inflating 31% at
+   one breakpoint, from a token swap that looked like a no-op because at the
+   default root size 0.75rem is exactly 12px. */
 .amber-logo-svg .amber-logo-word {
   font-size: 60px;
 }
 
 .amber-logo-svg .amber-logo-mark {
-  font-size: var(--text-xs);
+  font-size: 12px;
 }
 
 @media (min-width: 768px) {
@@ -36,7 +48,7 @@
   }
 
   .amber-logo-svg .amber-logo-mark {
-    font-size: var(--text-xl);
+    font-size: 24px;
   }
 }
 

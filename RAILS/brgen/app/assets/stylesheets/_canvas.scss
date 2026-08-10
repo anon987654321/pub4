@@ -35,6 +35,13 @@
   display: flex;
   align-items: center;
   font-weight: var(--weight-bold);
+  /* px endpoints, deliberately. The tempting rewrite is
+     clamp(var(--text-base), 4vw, var(--text-2xl)) — 1rem/1.75rem, which is
+     16px/28px and looks identical. It is not, on brgen. _root.scss sets
+     `html, body { font: var(--font-size)/... }` with --font-size: var(--text-lg),
+     so html computes to 18px and one rem here is 18px, not 16px. Measured in
+     Chrome at 1400px: the px form clamps to 28px, the token form to 31.5px.
+     Tokenising this grows the carousel 12.5%. */
   font-size: clamp(16px, 4vw, 28px);
   color: var(--text);
   letter-spacing: .02em;

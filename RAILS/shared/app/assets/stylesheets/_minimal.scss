@@ -52,6 +52,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* The second anchor, and px for the same reason as --font-size: this sets the
+   root that every rem in the scale multiplies. Note the consequence, because it
+   has bitten twice now — above 1280px one rem is 21px, not 16px, in amber and
+   bsdports (the two apps _stack.scss forwards this into). Any px value swapped
+   for a rem token in those apps changes size at this breakpoint and nowhere
+   else, which is why it reads as a no-op in a browser at default width. That is
+   exactly how amber's logotype lost its proportions; see _brand.scss. */
 @media (min-width: 1280px) {
   html,
   body {
@@ -354,61 +361,18 @@ footer {
   font-size: var(--text-xs);
 }
 
-#swipe-stack {
-  display: grid;
-  position: relative;
-  min-height: 420px;
-}
+/* The dating swipe deck used to live here — #swipe-stack, .swipe-card,
+   .swipe-card--stack-0..15, .swipe-placeholder, .swipe-meta, .swipe-actions.
+   It was dead in every app that loaded it. Dating is a brgen engine and the
+   markup exists only in brgen/engines/dating/app/views/dating/home/, but
+   _minimal.scss is forwarded by _stack.scss, which only amber and bsdports
+   use — brgen goes through _stack_brgen.scss, which deliberately omits it.
+   brgen's live copy is _dating_stack.scss, already on the rem scale
+   (clamp(3rem, 14vw, 4.5rem) where this had a bare 64px).
 
-.swipe-card {
-  grid-area: 1 / 1;
-  background: var(--surface-elevated);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-}
-
-@for $i from 0 through 15 {
-  .swipe-card--stack-#{$i} {
-    transform: translateY(#{$i * 6px}) scale(#{1 - $i * 0.02});
-    z-index: #{100 - $i};
-  }
-}
-
-.swipe-card img {
-  width: 100%;
-  max-height: 420px;
-  object-fit: cover;
-  border-radius: var(--radius);
-  margin-bottom: 0.75rem;
-}
-
-.swipe-placeholder {
-  display: grid;
-  place-items: center;
-  height: 220px;
-  background: var(--surface-elevated);
-  border-radius: var(--radius);
-  margin-bottom: 0.75rem;
-}
-
-.swipe-placeholder span {
-  font-size: 64px;
-  font-weight: var(--weight-heavy);
-}
-
-.swipe-meta {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.swipe-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 0.75rem;
-  justify-content: space-between;
-}
+   So the rule that flagged the 64px was pointing at CSS that no page could
+   ever match: two apps were shipping a 54-line deck for a feature neither
+   has. Removed rather than tokenised. */
 
 .dep-graph {
   background: var(--surface-elevated);

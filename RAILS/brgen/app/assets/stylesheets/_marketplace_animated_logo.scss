@@ -77,13 +77,17 @@
   margin-inline-start: -8px;
 }
 
+/* No font-size here. The pen this was lifted from rendered standalone at
+   300x280 and set 70px; in this app the partial is only ever rendered from
+   marketplace/takeaway _nav_bar.html.erb, inside #logoWrapper, where the rule
+   below wins on specificity every time. A declaration that no page can reach
+   is not a type-scale violation, it is a leftover. */
 .number_animate {
   position: relative;
   left: 8px;
   top: -34px;
   color: white;
   font-weight: normal;
-  font-size: 70px;
   z-index: 5;
 }
 
@@ -98,9 +102,20 @@
   right: -2px;
 }
 
+/* Same story as .number_animate: the 4px was the standalone pen's value and is
+   always beaten by the #logoWrapper rule below, so it is dropped rather than
+   tokenised. The 3px that survives is decoration inside the logo's own
+   geometry, well under the smallest rung of the type scale (--text-xs, 12px) —
+   a modular scale has no rung there and should not grow one for it.
+
+   Worth knowing before anyone wires this up: the span it sizes is the
+   `seedPlus` target, and it is inert. marketplace_logo_controller.js names
+   seedPlus in its `static targets` list and never reads it, so nothing ever
+   lifts this opacity: 0. The visible "+" is a different element — the
+   controller builds its own span inside .number_animate (see .number_animate
+   span above). This rule styles something no visitor has seen. */
 .marketplace .banner > span {
   font-weight: normal;
-  font-size: 4px;
   position: absolute;
   margin-top: -64px;
   margin-inline-end: -64px;

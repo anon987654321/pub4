@@ -44,6 +44,10 @@
   --text-dim: var(--text-secondary);
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  /* px on purpose, and the one place it has to be. Every rung of the type scale
+     in _tokens.scss is rem, and rem is a multiple of whatever this resolves to,
+     so the scale needs exactly one absolute anchor to be a multiple *of*.
+     Express this in var(--text-base) and it defines itself. */
   --font-size: 16px;
   --line-height: 20px;
   /* design_rules typography.hierarchy allows three weights and wants at least
