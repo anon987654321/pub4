@@ -32,7 +32,20 @@
      stack (--z-nav + 1). Trailing inset clears the theme control opposite it.
      Both footprints are published as variables in _root.scss precisely so the
      next piece of top chrome inherits the fix instead of rediscovering it. */
-  padding-inline: var(--brand-mark-inline) var(--chrome-toggle-inline);
+  /* Centred on the viewport, not on whatever the logo leaves over.
+     The two chrome footprints differ — brand 4.75rem, toggle 4.25rem — so
+     padding of one on each side put the content box half a rem off centre, and
+     the links sat visibly right of middle. Clearing both sides by the LARGER
+     footprint makes the content box symmetric about the viewport, so centring
+     it centres it on the page. Operator instruction 2026-08-10: the nav is
+     centred regardless of where the logo sits.
+     `safe` matters: past the point where the links no longer fit, plain
+     `center` overflows equally in both directions and the first link becomes
+     unreachable behind the leading edge. `safe center` falls back to flex-start
+     exactly then, which is also when the bar becomes a swiper again. */
+  --nav-clear: max(var(--brand-mark-inline), var(--chrome-toggle-inline));
+  padding-inline: var(--nav-clear);
+  justify-content: safe center;
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--brand-mark-inline) var(--space-2xs);
   background: var(--bg);

@@ -58,6 +58,7 @@ en:
     oauth_google: "Sign in with Google"
     oauth_snapchat: "Sign in with Snapchat"
     oauth_github: "Sign in with GitHub"
+    opens_new_tab: "%{label} (opens in a new tab)"
   skip_to_content: "Skip to main content"
   home:
     intro_title: "%{city}, right now"

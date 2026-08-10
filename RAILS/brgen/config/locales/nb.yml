@@ -58,6 +58,7 @@ nb:
     oauth_google: "Logg inn med Google"
     oauth_snapchat: "Logg inn med Snapchat"
     oauth_github: "Logg inn med GitHub"
+    opens_new_tab: "%{label} (åpnes i ny fane)"
   skip_to_content: "Hopp til hovedinnhold"
   home:
     intro_title: "%{city}, akkurat nå"

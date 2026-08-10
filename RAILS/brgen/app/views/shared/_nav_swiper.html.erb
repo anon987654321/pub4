@@ -14,8 +14,17 @@
       <div class="nav_swiper_group" role="group" aria-label="<%= group_label.capitalize %>">
         <% items.each do |label, href| %>
           <% active = label.downcase == (active_vertical.to_s.presence || "front") %>
+          <%# Every entry opens in a new tab — operator instruction 2026-08-10.
+              rel="noopener" is not optional with target="_blank": without it the
+              opened page gets a window.opener handle back into this one. The
+              verticals are separate hosts, so this is cross-origin.
+              aria-label carries the "new tab" fact, because a sighted user gets
+              it from the tab appearing and a screen-reader user gets nothing. %>
           <%= link_to label, href,
                 class: "nav_link#{" active" if active}",
+                target: "_blank",
+                rel: "noopener",
+                "aria-label": t("nav.opens_new_tab", label: label, default: "%{label} (opens in a new tab)"),
                 "aria-current": ("page" if active) %>
         <% end %>
       </div>
