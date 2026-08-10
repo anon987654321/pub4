@@ -1824,6 +1824,40 @@ class TestDilla < Minitest::Test
     assert_includes result.fetch("chain"), "atempo="
   end
 
+  # DEMO_INSTRUMENTAL_EVERY has to be additive: it holds slots back from
+  # whatever DEMO_RAP_EVERY already decided, and defaults to changing nothing.
+  # A knob that silently altered the default demo would be worse than no knob.
+  def test_demo_instrumental_every_holds_back_slots_without_changing_the_default
+    result = eval_in_engine(<<~RUBY)
+      run = lambda do |rap_every, instrumental|
+        ENV["DEMO_INSTRUMENTAL_EVERY"] = instrumental.to_s
+        (0...34).select { |i| demo_rap_slot?(i, rap_every) }
+      end
+      puts JSON.generate(
+        default: run.call(1, 0),
+        held: run.call(1, 6),
+        every_other: run.call(2, 0),
+        every_other_held: run.call(2, 6),
+        rap_off: run.call(0, 6)
+      )
+    RUBY
+
+    # Default (0) is off: every slot rap_every allows still carries a rapper.
+    assert_equal (0...34).to_a, result.fetch("default")
+
+    # Additive, not a replacement: the held slots are exactly those dropped.
+    held = result.fetch("held")
+    assert_equal [5, 11, 17, 23, 29], (0...34).to_a - held
+    assert_equal 29, held.size, "most slots should still carry a rapper"
+
+    # It narrows an existing selection rather than widening it.
+    every_other = result.fetch("every_other")
+    assert_equal every_other - [5, 11, 17, 23, 29], result.fetch("every_other_held")
+
+    # DEMO_RAP_EVERY=0 means no vocals anywhere and still wins.
+    assert_empty result.fetch("rap_off")
+  end
+
   def test_flylo_drum_overlay_schedules_dual_bus_events
     result = eval_in_engine(<<~RUBY)
       %w[RENDER_MODE CAMEL_DRUM_LOCK PRODUCER_MODE].each { |k| ENV.delete(k) }

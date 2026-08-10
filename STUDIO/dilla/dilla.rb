@@ -15213,6 +15213,26 @@ DEMO_TITLE_SECOND = %w[
 # 0 renders everything as hip-hop, 1 as techno.
 def demo_techno_share = ENV.fetch("DEMO_TECHNO_SHARE", "0.34").to_f.clamp(0.0, 1.0)
 
+# Does slot idx carry a rapper?
+#
+# DEMO_RAP_EVERY only reaches "every slot" (1) or "every other" (2) and has
+# nothing between them, so a demo that wants a rapper on most tracks and the
+# harmony naked on a few could not be asked for at all.
+# DEMO_INSTRUMENTAL_EVERY holds every Nth slot back on top of whatever
+# rap_every decided.
+#
+# Off by default (0), so no existing demo changes. The instrumental lands at the
+# END of each group of N, not the start, so slot 0 still opens with a voice.
+def demo_rap_slot?(idx, rap_every)
+  return false unless rap_every.positive?
+  return false unless (idx % rap_every).zero?
+
+  every = ENV.fetch("DEMO_INSTRUMENTAL_EVERY", "0").to_i
+  return true unless every.positive?
+
+  (idx % every) != every - 1
+end
+
 def demo_techno_slot?(idx, slug)
   share = demo_techno_share
   return false if share <= 0.0
@@ -15669,7 +15689,7 @@ def demo_all(bars_count = 12, destination = nil)
     if rap_every <= 0
       ENV["RAP_VOCAL"] = "0"
     else
-      on = (idx % rap_every).zero?
+      on = demo_rap_slot?(idx, rap_every)
       # Index by how many vocal slots have gone by, not by idx, or a rotation
       # of 2 voices at rap_every 2 would land on the same voice every time.
       ENV["RAP_VOCAL"] = on ? demo_rap_slugs[(idx / rap_every) % demo_rap_slugs.length] : "0"
