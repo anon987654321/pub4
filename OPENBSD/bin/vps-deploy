@@ -1,10 +1,37 @@
 #!/usr/bin/env zsh
 # Serial VPS deploy entrypoint — sync, CI, restart, health, deploy stamp.
-# Usage: zsh OPENBSD/bin/vps-deploy brgen|amber|bsdports|master
+# Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|master
 set -euo pipefail
 
 app=${1:-}
-[[ -n $app ]] || { print -u2 "usage: vps-deploy APP|master"; exit 2 }
+[[ -n $app ]] || { print -u2 "usage: vps-deploy all|APP|master"; exit 2 }
+
+# The whole fleet, in the order that survives its own side effects.
+#
+# There was no way to say "deploy everything", so the list lived in whoever was
+# typing, and master fell out of it: it is not under /home/*/app, so an operator
+# enumerating the Rails apps does not see it. Naming the four here makes the set
+# a definition rather than a habit.
+#
+# Order is load-bearing. Every deploy sheds amber and bsdports — they go to
+# rcctl failed with their ports closed while TLS keeps answering, so the outage
+# reads as a hang rather than a 5xx and nothing reports it. Deploying those two
+# last folds the restore into the same pass instead of leaving a window where
+# they are down and nobody is looking. master leads because it is independent of
+# the Rails apps and is the one that gets forgotten.
+DEPLOY_ALL=(master brgen amber bsdports)
+
+if [[ $app == all ]]; then
+  for one in $DEPLOY_ALL; do
+    print "vps-deploy: all -> $one"
+    # Re-entrant rather than inlined: each app gets the full path including its
+    # own health gate and deploy stamp, and a failure halts the pass instead of
+    # deploying the next one on top of a broken box.
+    zsh "$0" "$one" || { print -u2 "vps-deploy: all halted at $one"; exit 1 }
+  done
+  print "vps-deploy: all ok ($DEPLOY_ALL)"
+  exit 0
+fi
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 stamp_dir=/var/db/pub4

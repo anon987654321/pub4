@@ -4,6 +4,27 @@ Operator-facing docs live in `README.md`/`RUNBOOK.md`/`RECIPES.md`. This file
 is specifically the sharp edges that have burned agents in this repo — read it
 before touching the deploy pipeline, not after.
 
+## The fleet is four, and master is the one that gets dropped
+
+`bin/vps-deploy all` deploys `master brgen amber bsdports`, in that order,
+halting the pass on the first failure. Prefer it over four hand-typed runs.
+
+Until it existed there was no way to say "deploy everything", so the set lived
+in whoever was typing — and master is not under `/home/*/app`, so an operator
+enumerating the Rails apps does not see it and leaves it behind. A pull moves
+the checkout for everything; only a deploy makes any of it live.
+
+The order is load-bearing, not alphabetical. Every deploy sheds amber and
+bsdports: they land in `rcctl failed` with ports 61352/47312 closed while relayd
+keeps answering TLS, so the outage reads as a hang rather than a 5xx and nothing
+reports it. Deploying those two last folds the restore into the same pass.
+
+Related, and worth knowing before you diagnose a deploy: **a shed and a relayd
+failure look nothing alike once you check.** A shed leaves 443 answering with
+the app port closed. If 80 *and* 443 both refuse in ~30 ms while sshd is up, the
+front door is down, not a backend — and if something you did not deploy
+(ai.brgen.no) is down too, that is the diagnosis rather than collateral.
+
 ## `SKIP_CI=1` does not mean "skip CI"
 
 `bin/vps-deploy <app>` branches in two ways (see `bin/vps-deploy` ~line 40):
