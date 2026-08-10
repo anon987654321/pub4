@@ -1824,6 +1824,51 @@ class TestDilla < Minitest::Test
     assert_includes result.fetch("chain"), "atempo="
   end
 
+  # A part with no signal must not reach the concat. demo_report_suspect_parts
+  # names quiet and short parts, but it runs after the join -- twice now a
+  # -91 dB placeholder was warned about only once it was already inside the
+  # shipped demo. This gate is absolute and narrow: dead, not merely quiet.
+  def test_dead_parts_are_dropped_before_the_join_but_quiet_ones_are_kept
+    result = eval_in_engine(<<~RUBY)
+      dir = Dir.mktmpdir
+      make = lambda do |name, filter|
+        path = File.join(dir, name)
+        sh! "ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", filter,
+            "-ac", "2", "-ar", "44100", "-t", "2", path
+        path
+      end
+      dead  = make.call("dead.wav", "anullsrc=r=44100:cl=stereo")
+      quiet = File.join(dir, "quiet.wav")
+      sh! "ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "sine=f=220:d=2",
+          "-ac", "2", "-ar", "44100", "-af", "volume=-45dB", quiet
+      loud  = make.call("loud.wav", "sine=f=220:d=2")
+
+      puts JSON.generate(
+        dead_flagged: demo_part_dead?(dead),
+        quiet_flagged: demo_part_dead?(quiet),
+        loud_flagged: demo_part_dead?(loud),
+        kept: demo_reject_dead_parts([dead, quiet, loud]).map { |f| File.basename(f) },
+        all_dead: demo_reject_dead_parts([dead]).length,
+        missing_flagged: demo_part_dead?(File.join(dir, "does_not_exist.wav"))
+      )
+    RUBY
+
+    assert result.fetch("dead_flagged"), "digital silence must be flagged"
+    refute result.fetch("quiet_flagged"), "-45 dB is quiet, not dead — a legitimate take"
+    refute result.fetch("loud_flagged")
+
+    assert_equal %w[quiet.wav loud.wav], result.fetch("kept")
+
+    # Joining an empty list writes a zero-length file that every downstream step
+    # accepts, so an all-dead input must hand the parts back untouched and let
+    # the join fail loudly instead.
+    assert_equal 1, result.fetch("all_dead")
+
+    # A file ffmpeg cannot measure is not provably dead. After hours of
+    # rendering, keep it and let the suspect report name it.
+    refute result.fetch("missing_flagged"), "unmeasurable must not count as dead"
+  end
+
   # DEMO_INSTRUMENTAL_EVERY has to be additive: it holds slots back from
   # whatever DEMO_RAP_EVERY already decided, and defaults to changing nothing.
   # A knob that silently altered the default demo would be worse than no knob.

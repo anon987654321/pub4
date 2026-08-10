@@ -15356,6 +15356,38 @@ def demo_suspect_parts(parts)
   end
 end
 
+# Absolute, not relative: a file whose peak never leaves the noise floor carries
+# no signal at any playback level, so no demo can want it. -70 dBFS peak is two
+# orders of magnitude below the quietest real part measured here (-7.5 dB peak
+# on a retry-minimal render) and comfortably above a true digital zero's -91.0,
+# so it separates dead from merely quiet without judgement.
+DEAD_PART_PEAK_DBFS = -70.0
+
+def demo_part_dead?(path)
+  out, status = Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-i", path,
+                                "-af", "volumedetect", "-f", "null", "-")
+  # A file ffmpeg cannot measure is not provably dead, and this runs after hours
+  # of rendering: keep it and let demo_report_suspect_parts name it instead.
+  return false unless status.success?
+
+  peak = out[/max_volume:\s*(-?\d+(?:\.\d+)?)\s*dB/, 1]
+  return false if peak.nil?
+
+  peak.to_f <= DEAD_PART_PEAK_DBFS
+end
+
+def demo_reject_dead_parts(parts)
+  dead, alive = parts.partition { |p| demo_part_dead?(p) }
+  return parts if dead.empty?
+
+  dmesg_warn("join: dropping #{dead.length} dead part(s) — no signal above #{DEAD_PART_PEAK_DBFS} dBFS")
+  dead.each { |p| dmesg_warn("  #{File.basename(p)}") }
+  # Never hand back an empty list: joining nothing writes a zero-length file that
+  # every downstream step accepts. If they are all dead, that is the fault, and
+  # the caller should fail loudly on the join rather than silently on the output.
+  alive.empty? ? parts : alive
+end
+
 # Name them in the log and in the closing summary. Deliberately a warning and not
 # an abort: this runs after hours of rendering, and killing the run would throw
 # away 80 good parts to punish six bad ones. Deleting the named files and
@@ -15902,6 +15934,20 @@ def demo_all(bars_count = 12, destination = nil)
     return parts
   end
 
+  # Drop parts that are digitally dead before joining, not after.
+  #
+  # demo_report_suspect_parts below already names quiet and short parts, and it
+  # is deliberately a warning -- one bad part should not throw away eighty good
+  # ones. But it runs AFTER this join, so a part carrying nothing was warned
+  # about only once it was already inside demo.wav and demo.mp3. Measured twice
+  # now: a *_SILENCE placeholder at -91.0 dB joined into a shipped demo, and the
+  # log line that mentioned it read as a note rather than a fault.
+  #
+  # This is narrower than the suspect heuristic on purpose. It does not touch
+  # "quiet relative to its neighbours", which can be a legitimate take; it drops
+  # only files with no signal at all, which never can be. The part stays on
+  # disk, so deleting nothing and re-running still refills the gap.
+  parts = demo_reject_dead_parts(parts)
   list = File.join(out_dir, "concat.txt")
   File.write(list, parts.map { |p| "file '#{p}'" }.join("\n") + "\n")
   tmp = "#{dest}.concat.wav"
