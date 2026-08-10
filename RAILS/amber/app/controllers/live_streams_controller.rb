@@ -38,6 +38,8 @@ class LiveStreamsController < ApplicationController
   private
 
   def set_live_stream = @live_stream = LiveStream.find(params[:id])
-  def owns_stream? = @live_stream.user == Current.user
+  # user_id, not user — @live_stream is found by id with nothing preloaded and
+  # strict_loading_by_default raises on the association read.
+  def owns_stream? = Current.user.present? && Current.user.id == @live_stream.user_id
   def live_stream_params = params.require(:live_stream).permit(:title, :description, :scheduled_at)
 end

@@ -67,11 +67,25 @@ class WardrobeItemsController < ApplicationController
   private
 
   def set_wardrobe_item
-    @wardrobe_item = WardrobeItem.find(params[:id])
+    # includes(:item) because the show template opens with
+    # `@wardrobe_item.item&.title`, and strict_loading_by_default raises on a
+    # lazy association read in every environment. Without it this action was
+    # a 500 for everyone, owner included — found the same day as the ownership
+    # guard below, which failed the same way one line further down.
+    #
+    # Preloaded here rather than avoided, unlike the guard: the page genuinely
+    # needs the item, so the fix is to fetch it, not to sidestep it.
+    @wardrobe_item = WardrobeItem.includes(:item).find(params[:id])
   end
 
   def authorize!
-    redirect_to(wardrobe_items_path, alert: "Unauthorized") unless @wardrobe_item.user == Current.user
+    # user_id, not user: @wardrobe_item comes from WardrobeItem.find(params[:id])
+    # with nothing preloaded, and strict_loading_by_default raises on the
+    # association read before the comparison happens — so this guard never ran,
+    # and every path behind it failed, the owner's included.
+    return if Current.user && Current.user.id == @wardrobe_item.user_id
+
+    redirect_to(wardrobe_items_path, alert: "Unauthorized")
   end
 
   def wardrobe_item_params
