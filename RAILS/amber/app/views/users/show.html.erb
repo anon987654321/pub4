@@ -15,7 +15,7 @@
     <p><%= link_to t("actions.setup_creator", default: "Set up creator profile"), new_my_creator_profile_path, class: "btn btn-sm" %></p>
   <% end %>
 </header>
-<h2>Recent items</h2>
+<h2><%= t("users.recent_items") %></h2>
 <div class="item-grid">
   <% @items.each do |item| %>
     <%= link_to item_path(item) do %>

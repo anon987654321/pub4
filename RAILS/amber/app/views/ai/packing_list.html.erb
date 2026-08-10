@@ -20,7 +20,7 @@
 <% end %>
 
 <% if @result %>
-  <h2>Suggested outfits for <%= @duration %>d <%= @climate %></h2>
+  <h2><%= t("ai.suggested_outfits", days: @duration, climate: @climate) %></h2>
   <% if @result["outfits"] %>
     <ul>
       <% @result["outfits"].each do |o| %>

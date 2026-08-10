@@ -1189,45 +1189,59 @@ Grouped by theme, most-frequent rule first, every item with its `file:line`.
 
 ## i18n and copy — 137 items
 
-### hardcoded_copy — 129 · **open**
+### hardcoded_copy — 129 · **closed 2026-08-10: 91 fixed + 38 artifact**
 
 Hardcoded English copy in a view. design_rules.ui_polish.chrome_i18n makes untranslated shell copy debt; default_locale is nb, so an English string ships to a Norwegian visitor. Law: `design_rules.ui_polish.chrome_i18n`.
 
-**79 of 129 closed 2026-08-10. The 50 left are two blocks, and neither is "not done yet".**
+**Closed 2026-08-10. 129 findings, 91 real and fixed, 38 that were never findings.**
 
-25 had already been fixed by earlier work with the boxes never ticked. 46 more
-are now `t()` with nb and en entries — 44 new keys across brgen and, for the
-newsletter and skip-link partials all three apps render, bsdports. Rendered in a
-runner rather than assumed: "Lokal graf", "Selgeroversikt", "Lyttefest",
-"Utsolgt", "Hopp til hovedinnhold", and the interpolated "Serier på %{channel}"
-and "Bestill fra %{restaurant}".
+The 38 on `pages/privacy`, `pages/terms` and `pages/cookies` are *artifact*, and
+the earlier note here was wrong to call them an operator translation job. All
+three pages have been fully bilingual the whole time: each opens with
+`nb = I18n.locale.to_s.start_with?("nb", "nn")` and carries complete Norwegian
+prose beside the English. The rule matches English string literals in views and
+cannot see that these sit in the `else` branch of a locale conditional.
 
-Two traps worth recording. Several entries were *second* occurrences — the
-`content_for :title` was converted while the `<h1>` a line below still carried
-the literal, so a per-file check reported done while the page still showed
-English. And `dating/home/index`'s "Beskyttet med" was never English at all: it
-is hardcoded *Norwegian*, which this rule cannot tell from hardcoded English.
-Both now go through `t()`.
+Rendered in a runner rather than argued about — `ApplicationController.render`
+at each locale:
 
-**38 are the privacy, terms and cookies pages, and they are not an agent's to
-translate.** These are the documents a Norwegian reader is entitled to rely on,
-and one of them names TradeDoubler for the publisher verification recorded in
-`apps.yml`. A machine-translated cookie disclosure reads fine and may not say
-what the English says. Operator or a translator, not this.
+| page | nb | en |
+|---|---|---|
+| privacy | Personvern hos … | Privacy at … |
+| terms | Vilkår for … | Terms for … |
+| cookies | Informasjonskapsler på … | Cookies on … |
 
-**12 are amber, blocked on the shared checkout rather than on the work.** amber's
-nb/en locales have carried another session's uncommitted work all day, so keys
-cannot land there without sweeping it in. The views are ready the moment those
-files are free.
+So no legal text needed writing, which is the right outcome: translating a
+cookie disclosure is not an agent's call, and it turned out not to be anyone's
+— it was already done.
 
-- [ ] `amber/app/views/ai/_analysis.html.erb:3` — Analysis unavailable
-- [ ] `amber/app/views/ai/capsule.html.erb:5` — Capsule builder
+The other 91: 25 already fixed with the boxes never ticked, 66 converted to
+`t()` across brgen, bsdports and amber with nb and en entries either side.
+
+Three traps in the list itself, all of them the finding being wrong about
+*where* or *what*, never about whether the string was hardcoded:
+
+- Eight were **second occurrences**. Converting `content_for :title, "Upload
+  video"` leaves `<h1>Upload video</h1>` a line below, and a per-file check
+  calls the file done while the page still shows English.
+- `dating/home/index`'s "Beskyttet med" was **already Norwegian**. This rule
+  matches literals, not languages, so hardcoded nb and hardcoded en look the
+  same to it.
+- The 38 legal strings were **already translated**, one branch away.
+
+amber's 12 landed via `config/locales/copy.{nb,en}.yml` rather than nb.yml,
+which has carried a concurrent session's uncommitted work all day. Rails merges
+every file under config/locales; a probe key present only in the new file was
+used to prove that rather than assume it.
+
+- [x] `amber/app/views/ai/_analysis.html.erb:3` — Analysis unavailable
+- [x] `amber/app/views/ai/capsule.html.erb:5` — Capsule builder
 - [x] `amber/app/views/ai/capsule.html.erb:38` — Gap items to consider
 - [x] `amber/app/views/ai/color_palette.html.erb:7` — Swatches from your items
-- [ ] `amber/app/views/ai/color_palette.html.erb:25` — Clashing items
-- [ ] `amber/app/views/ai/packing_list.html.erb:19` — Suggested outfits for
+- [x] `amber/app/views/ai/color_palette.html.erb:25` — Clashing items
+- [x] `amber/app/views/ai/packing_list.html.erb:19` — Suggested outfits for
 - [x] `amber/app/views/creator_profiles/edit.html.erb:3` — Edit creator profile
-- [ ] `amber/app/views/creator_profiles/edit.html.erb:7` — Showcase items
+- [x] `amber/app/views/creator_profiles/edit.html.erb:7` — Showcase items
 - [x] `amber/app/views/creator_profiles/new.html.erb:3` — Create creator profile
 - [x] `amber/app/views/declutter/index.html.erb:26` — Overdue wear challenges
 - [x] `amber/app/views/declutter/index.html.erb:41` — Active wear challenges
@@ -1237,22 +1251,22 @@ files are free.
 - [x] `amber/app/views/declutter/review.html.erb:3` — Declutter review
 - [x] `amber/app/views/declutter/review.html.erb:25` — Recommended action
 - [x] `amber/app/views/declutter/review.html.erb:55` — Move item
-- [ ] `amber/app/views/demo_wardrobe/index.html.erb:5` — Demo wardrobe
-- [ ] `amber/app/views/demo_wardrobe/index.html.erb:30` — All pieces
-- [ ] `amber/app/views/demo_wardrobe/show.html.erb:12` — Spark joy
+- [x] `amber/app/views/demo_wardrobe/index.html.erb:5` — Demo wardrobe
+- [x] `amber/app/views/demo_wardrobe/index.html.erb:30` — All pieces
+- [x] `amber/app/views/demo_wardrobe/show.html.erb:12` — Spark joy
 - [x] `amber/app/views/items/_form.html.erb:34` — Choose or drop photos
 - [x] `amber/app/views/items/_live_search_results.html.erb:8` — Filter by category
 - [x] `amber/app/views/items/show.html.erb:21` — Sparks joy
 - [x] `amber/app/views/items/show.html.erb:55` — Wardrobe intelligence
 - [x] `amber/app/views/items/show.html.erb:97` — Shop the look
 - [x] `amber/app/views/items/show.html.erb:116` — Permanent removal
-- [ ] `amber/app/views/outfits/_form.html.erb:28` — Add item
-- [ ] `amber/app/views/outfits/index.html.erb:6` — Style combinations
-- [ ] `amber/app/views/outfits/show.html.erb:37` — Style intelligence
+- [x] `amber/app/views/outfits/_form.html.erb:28` — Add item
+- [x] `amber/app/views/outfits/index.html.erb:6` — Style combinations
+- [x] `amber/app/views/outfits/show.html.erb:37` — Style intelligence
 - [x] `amber/app/views/shared/_widgets.html.erb:14` — Your wardrobe
 - [x] `amber/app/views/shared/_widgets.html.erb:26` — Demo capsule
 - [x] `amber/app/views/shared/_widgets.html.erb:33` — Style notes
-- [ ] `amber/app/views/users/show.html.erb:18` — Recent items
+- [x] `amber/app/views/users/show.html.erb:18` — Recent items
 - [x] `amber/app/views/wardrobe_items/timeline.html.erb:5` — Aesthetic phases over time
 - [x] `amber/app/views/wardrobe_items/timeline.html.erb:23` — Life phases
 - [x] `amber/app/views/wardrobe_items/timeline.html.erb:55` — Wear history
@@ -1262,44 +1276,44 @@ files are free.
 - [x] `brgen/app/views/email_subscription_mailer/confirm.html.erb:5` — Confirm your subscription
 - [x] `brgen/app/views/email_subscription_mailer/confirm.html.erb:6` — Permission marketing
 - [x] `brgen/app/views/email_subscription_mailer/confirm.html.erb:18` — Confirm subscription
-- [ ] `brgen/app/views/pages/cookies.html.erb:19` — Annonsene vi viser er
-- [ ] `brgen/app/views/pages/cookies.html.erb:21` — Slik styrer du dem
-- [ ] `brgen/app/views/pages/cookies.html.erb:25` — Cookies on
-- [ ] `brgen/app/views/pages/cookies.html.erb:30` — Strictly necessary
-- [ ] `brgen/app/views/pages/cookies.html.erb:37` — The ads we show are
-- [ ] `brgen/app/views/pages/cookies.html.erb:39` — How to control them
-- [ ] `brgen/app/views/pages/privacy.html.erb:7` — Personvern hos
-- [ ] `brgen/app/views/pages/privacy.html.erb:14` — Hva vi samler inn
-- [ ] `brgen/app/views/pages/privacy.html.erb:17` — Innhold du lager
-- [ ] `brgen/app/views/pages/privacy.html.erb:22` — Reklame og partnerlenker
-- [ ] `brgen/app/views/pages/privacy.html.erb:23` — Vi selger og viser
-- [ ] `brgen/app/views/pages/privacy.html.erb:24` — Enkelte lenker er
-- [ ] `brgen/app/views/pages/privacy.html.erb:29` — Dine rettigheter
-- [ ] `brgen/app/views/pages/privacy.html.erb:32` — Lagring og deling
-- [ ] `brgen/app/views/pages/privacy.html.erb:35` — Privacy policy
-- [ ] `brgen/app/views/pages/privacy.html.erb:36` — Privacy at
-- [ ] `brgen/app/views/pages/privacy.html.erb:43` — What we collect
-- [ ] `brgen/app/views/pages/privacy.html.erb:46` — Content you create
-- [ ] `brgen/app/views/pages/privacy.html.erb:51` — Advertising and partner links
-- [ ] `brgen/app/views/pages/privacy.html.erb:52` — We sell and serve
-- [ ] `brgen/app/views/pages/privacy.html.erb:53` — Some links are
-- [ ] `brgen/app/views/pages/privacy.html.erb:55` — Legal basis
-- [ ] `brgen/app/views/pages/privacy.html.erb:58` — Your rights
-- [ ] `brgen/app/views/pages/privacy.html.erb:61` — Storage and sharing
-- [ ] `brgen/app/views/pages/terms.html.erb:12` — Hvem kan bruke tjenesten
-- [ ] `brgen/app/views/pages/terms.html.erb:15` — Innholdet ditt
-- [ ] `brgen/app/views/pages/terms.html.erb:18` — Akseptabel bruk
-- [ ] `brgen/app/views/pages/terms.html.erb:21` — Reklame og partnerlenker
-- [ ] `brgen/app/views/pages/terms.html.erb:22` — Nettstedet finansieres av
-- [ ] `brgen/app/views/pages/terms.html.erb:27` — Avslutning og lovvalg
-- [ ] `brgen/app/views/pages/terms.html.erb:30` — Terms of use
-- [ ] `brgen/app/views/pages/terms.html.erb:31` — Terms for
-- [ ] `brgen/app/views/pages/terms.html.erb:36` — Who can use it
-- [ ] `brgen/app/views/pages/terms.html.erb:39` — Your content
-- [ ] `brgen/app/views/pages/terms.html.erb:42` — Acceptable use
-- [ ] `brgen/app/views/pages/terms.html.erb:45` — Advertising and partner links
-- [ ] `brgen/app/views/pages/terms.html.erb:46` — The site is funded by
-- [ ] `brgen/app/views/pages/terms.html.erb:51` — Termination and governing law
+- [x] `brgen/app/views/pages/cookies.html.erb:19` — Annonsene vi viser er
+- [x] `brgen/app/views/pages/cookies.html.erb:21` — Slik styrer du dem
+- [x] `brgen/app/views/pages/cookies.html.erb:25` — Cookies on
+- [x] `brgen/app/views/pages/cookies.html.erb:30` — Strictly necessary
+- [x] `brgen/app/views/pages/cookies.html.erb:37` — The ads we show are
+- [x] `brgen/app/views/pages/cookies.html.erb:39` — How to control them
+- [x] `brgen/app/views/pages/privacy.html.erb:7` — Personvern hos
+- [x] `brgen/app/views/pages/privacy.html.erb:14` — Hva vi samler inn
+- [x] `brgen/app/views/pages/privacy.html.erb:17` — Innhold du lager
+- [x] `brgen/app/views/pages/privacy.html.erb:22` — Reklame og partnerlenker
+- [x] `brgen/app/views/pages/privacy.html.erb:23` — Vi selger og viser
+- [x] `brgen/app/views/pages/privacy.html.erb:24` — Enkelte lenker er
+- [x] `brgen/app/views/pages/privacy.html.erb:29` — Dine rettigheter
+- [x] `brgen/app/views/pages/privacy.html.erb:32` — Lagring og deling
+- [x] `brgen/app/views/pages/privacy.html.erb:35` — Privacy policy
+- [x] `brgen/app/views/pages/privacy.html.erb:36` — Privacy at
+- [x] `brgen/app/views/pages/privacy.html.erb:43` — What we collect
+- [x] `brgen/app/views/pages/privacy.html.erb:46` — Content you create
+- [x] `brgen/app/views/pages/privacy.html.erb:51` — Advertising and partner links
+- [x] `brgen/app/views/pages/privacy.html.erb:52` — We sell and serve
+- [x] `brgen/app/views/pages/privacy.html.erb:53` — Some links are
+- [x] `brgen/app/views/pages/privacy.html.erb:55` — Legal basis
+- [x] `brgen/app/views/pages/privacy.html.erb:58` — Your rights
+- [x] `brgen/app/views/pages/privacy.html.erb:61` — Storage and sharing
+- [x] `brgen/app/views/pages/terms.html.erb:12` — Hvem kan bruke tjenesten
+- [x] `brgen/app/views/pages/terms.html.erb:15` — Innholdet ditt
+- [x] `brgen/app/views/pages/terms.html.erb:18` — Akseptabel bruk
+- [x] `brgen/app/views/pages/terms.html.erb:21` — Reklame og partnerlenker
+- [x] `brgen/app/views/pages/terms.html.erb:22` — Nettstedet finansieres av
+- [x] `brgen/app/views/pages/terms.html.erb:27` — Avslutning og lovvalg
+- [x] `brgen/app/views/pages/terms.html.erb:30` — Terms of use
+- [x] `brgen/app/views/pages/terms.html.erb:31` — Terms for
+- [x] `brgen/app/views/pages/terms.html.erb:36` — Who can use it
+- [x] `brgen/app/views/pages/terms.html.erb:39` — Your content
+- [x] `brgen/app/views/pages/terms.html.erb:42` — Acceptable use
+- [x] `brgen/app/views/pages/terms.html.erb:45` — Advertising and partner links
+- [x] `brgen/app/views/pages/terms.html.erb:46` — The site is funded by
+- [x] `brgen/app/views/pages/terms.html.erb:51` — Termination and governing law
 - [x] `brgen/app/views/shared/_nav_swiper.html.erb:24` — Show sections
 - [x] `brgen/app/views/shared/_sidebar_discovery.html.erb:14` — Your feed
 - [x] `brgen/engines/dating/app/views/dating/home/_card.html.erb:35` — Looking for

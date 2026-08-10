@@ -1,0 +1,24 @@
+# UI copy, kept out of nb.yml on purpose — see validations.nb.yml for why.
+# amber's nb.yml has carried a concurrent session's uncommitted work all day, and
+# Rails merges every file under config/locales, so these land without touching it.
+# They move into nb.yml when it is quiet.
+nb:
+  ai:
+    analysis_unavailable: "Analysen er ikke tilgjengelig"
+    capsule_builder: "Kapselbygger"
+    clashing_items: "Plagg som skurrer"
+    suggested_outfits: "Foreslåtte antrekk for %{days} dager i %{climate}"
+  creator:
+    showcase_items: "Plagg i utstillingen"
+  demo:
+    wardrobe: "Demogarderobe"
+    wardrobe_header: "Topptekst for demogarderoben"
+    wardrobe_actions: "Handlinger for demogarderoben"
+    all_pieces: "Alle plagg"
+    spark_joy: "Gir glede"
+  outfits:
+    add_item: "Legg til plagg"
+    style_combinations: "Stilkombinasjoner"
+    style_intelligence: "Stilinnsikt"
+  users:
+    recent_items: "Nylige plagg"

@@ -1,0 +1,24 @@
+# UI copy, kept out of en.yml on purpose — see validations.nb.yml for why.
+# amber's nb.yml has carried a concurrent session's uncommitted work all day, and
+# Rails merges every file under config/locales, so these land without touching it.
+# They move into nb.yml when it is quiet.
+en:
+  ai:
+    analysis_unavailable: "Analysis unavailable"
+    capsule_builder: "Capsule builder"
+    clashing_items: "Clashing items"
+    suggested_outfits: "Suggested outfits for %{days}d %{climate}"
+  creator:
+    showcase_items: "Showcase items"
+  demo:
+    wardrobe: "Demo wardrobe"
+    wardrobe_header: "Demo wardrobe header"
+    wardrobe_actions: "Demo wardrobe actions"
+    all_pieces: "All pieces"
+    spark_joy: "Spark joy"
+  outfits:
+    add_item: "Add item"
+    style_combinations: "Style combinations"
+    style_intelligence: "Style intelligence"
+  users:
+    recent_items: "Recent items"

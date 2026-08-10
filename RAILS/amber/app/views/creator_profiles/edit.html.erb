@@ -4,7 +4,7 @@
 <%= render "form", profile: @profile %>
 
 <section>
-  <h2>Showcase items</h2>
+  <h2><%= t("creator.showcase_items") %></h2>
   <% if @profile.creator_wardrobe_items.any? %>
     <ul>
       <% @profile.creator_wardrobe_items.includes(:item).order(:position).each do |showcase| %>

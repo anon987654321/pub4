@@ -1,10 +1,10 @@
-<% content_for :title, "Demo wardrobe" %>
+<% content_for :title, t("demo.wardrobe") %>
 
-<header role="banner" aria-label="Demo wardrobe header">
+<header role="banner" aria-label="<%= t("demo.wardrobe_header") %>">
   <p class="dim">Capsule demo · <%= Amber::DemoWardrobe::DEMO_DISPLAY_NAME %></p>
-  <h1>Demo wardrobe</h1>
+  <h1><%= t("demo.wardrobe") %></h1>
   <p class="tagline">Browse a realistic capsule before you sign in — cost-per-wear, categories, and outfit combos.</p>
-  <nav role="navigation" aria-label="Demo wardrobe actions">
+  <nav role="navigation" aria-label="<%= t("demo.wardrobe_actions") %>">
     <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn--primary" %>
     <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn--ghost" %>
   </nav>
@@ -27,7 +27,7 @@
 <% end %>
 
 <section>
-  <h2>All pieces</h2>
+  <h2><%= t("demo.all_pieces") %></h2>
   <div class="item-grid">
     <%= render partial: "demo_wardrobe/item", collection: @items %>
   </div>
