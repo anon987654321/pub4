@@ -19527,6 +19527,168 @@ def render_singers_chop_pads(path, pad_events, duration)
   path
 end
 
+# The Singers Unlimited harmony as the track's melodic voice, resynthesized
+# rather than played back.
+#
+# render_singers_chop_pads above is varispeed tape: atrim a phrase, asetrate it
+# to the chord, done. That keeps the vocal sounding like a vocal, which is why
+# it reads as a bed. This path spectrally resynthesizes instead — magnitudes
+# kept, phase discarded — so the ensemble stops being four people singing and
+# becomes a sustained harmonic instrument that still carries their voicing.
+# That is the whole point: the melody is not played BY a synth, the choir IS
+# the synth.
+#
+# Phase randomization is the Paulstretch core (huge windows, random phase,
+# heavy overlap-add). ffmpeg has no paulstretch filter and no rubberband here,
+# so afftfilt supplies the phase discard and atempo=0.5 supplies the exact 2x
+# stretch that holds pitch. Measured on the real sample: band energy at 200/400/
+# 900/2500 Hz tracks the dry signal within 0.3 dB of a uniform 6 dB drop, so the
+# voicing survives intact and only the level moves — hence the fixed +6 dB.
+SU_MELODY_VARIANTS = 4
+SU_MELODY_WIN = 8192
+
+def su_melody_enabled?
+  ENV.fetch("SU_MELODY", "0") != "0"
+end
+
+# One afftfilt pass per variant instead of one per note. Per-note stretching
+# measured 9.4s for 24 voices, which extrapolates to ~61s on a three-minute
+# track and scales with length; this is a fixed four passes regardless.
+def su_melody_stretched_sources(src, src_dur, tmp_dir, rng)
+  SU_MELODY_VARIANTS.times.filter_map do |i|
+    grab = 9.0
+    at = 6.0 + rng.rand * [src_dur - grab - 8.0, 1.0].max
+    out = File.join(tmp_dir, "su_stretch#{i}.wav")
+    begin
+      sh! "ffmpeg", "-y", "-v", "error", "-ss", at.round(3).to_s, "-t", grab.to_s, "-i", src,
+          "-af", "aformat=channel_layouts=stereo,atempo=0.5," \
+                 "afftfilt=real='hypot(re,im)*cos(random(#{i + 1})*2*PI)':" \
+                 "imag='hypot(re,im)*sin(random(#{i + 1})*2*PI)':" \
+                 "win_size=#{SU_MELODY_WIN}:overlap=0.92,volume=6dB",
+          "-c:a", "pcm_s16le", out
+    rescue StandardError => e
+      warn "su melody variant #{i} skipped: #{e.message}"
+      next
+    end
+    File.file?(out) && File.size(out) > 4096 ? out : nil
+  end
+end
+
+# Resonant low-mid, absorbed highs, irregular short taps. A tunnel is a
+# resonance and an absorption, not a reverb preset — the short taps are the
+# flutter between close walls, the long pair is the far end. Applied to the
+# summed voices so they share one space rather than each sitting in its own.
+SU_TUNNEL_CHAIN = "highpass=f=90," \
+                  "equalizer=f=520:t=q:w=1.4:g=6," \
+                  "equalizer=f=1900:t=q:w=2.0:g=-4," \
+                  "lowpass=f=3400," \
+                  "aecho=0.82:0.85:37|59|83|127:0.5|0.38|0.28|0.18," \
+                  "aecho=0.9:0.8:311|487:0.22|0.14," \
+                  "stereotools=mlev=0.9:slev=1.35"
+
+SU_MELODY_TARGET_RMS_DB = -17.0
+
+def render_su_tunnel_melody(path, pad_events, duration)
+  src = singers_chop_source
+  return unless src
+
+  src_dur = audio_duration_sec(src[:path])
+  return if src_dur < 20.0
+
+  rng = Random.new((@render_seed || 4242) + 909)
+  tmp_dir = File.dirname(path)
+  sources = su_melody_stretched_sources(src[:path], src_dur, tmp_dir, rng)
+  return if sources.empty?
+
+  stretched_dur = sources.map { |s| audio_duration_sec(s) }
+  first_root = nil
+  chains = []
+  labels = []
+  idx = 0
+
+  pad_events.each_with_index do |(t, v, chord, sustain), ci|
+    next unless chord.is_a?(Hash) && chord[:hz].is_a?(Array) && chord[:hz].any?
+
+    hz = chord[:hz].map(&:to_f).select(&:positive?).sort
+    next if hz.empty?
+
+    root = hz.first
+    first_root ||= root
+    sus = sustain.to_f
+    next if sus <= 0.05
+
+    # Lower voices hold the chord; the top voice moves through its tones. The
+    # held pair is what makes it hypnotic, the moving top is what makes it a
+    # melody rather than a second pad.
+    held = hz.take(2)
+    top_tones = hz.drop(1).take(3)
+    top_tones = hz if top_tones.empty?
+
+    voices = held.map { |h| [h, 0.0, sus, h == root ? 0.95 : 0.55] }
+    steps = sus > 2.2 ? 3 : 2
+    steps.times do |s|
+      tone = top_tones[(ci + s) % top_tones.length]
+      st_off = sus * (s / steps.to_f)
+      st_len = (sus / steps) * 1.35
+      voices << [tone, st_off, st_len, 0.5]
+    end
+
+    voices.each do |(target, offset, length, gain)|
+      r = target / first_root
+      r /= 2.0 while r > 1.9
+      r *= 2.0 while r < 0.85
+      si = (ci + idx) % sources.length
+      need = length * r + 0.4
+      avail = [stretched_dur[si] - need - 0.1, 0.0].max
+      next if avail <= 0.0
+
+      s0 = (rng.rand * avail).round(3)
+      delay_ms = [((t + offset) * 1000.0).round, 0]
+      delay_ms = delay_ms.max
+      fade_in = [length * 0.3, 0.9].min
+      fade_at = [length - fade_in, 0.05].max
+      lbl = "sm#{idx}"
+      idx += 1
+
+      chains << "[#{si}:a]atrim=start=#{s0}:end=#{(s0 + need).round(3)},asetpts=PTS-STARTPTS," \
+                "aformat=channel_layouts=stereo," \
+                "asetrate=#{SAMPLE_RATE}*#{r.round(5)},aresample=#{SAMPLE_RATE}," \
+                "atrim=0:#{length.round(3)}," \
+                "afade=t=in:st=0:d=#{fade_in.round(3)}," \
+                "afade=t=out:st=#{fade_at.round(3)}:d=#{fade_in.round(3)}," \
+                "volume=#{(v.to_f * gain).round(3)}," \
+                "adelay=#{delay_ms}|#{delay_ms}[#{lbl}]"
+      labels << "[#{lbl}]"
+    end
+  end
+  return if labels.empty?
+
+  filt = "#{chains.join(';')};#{labels.join}" \
+         "amix=inputs=#{labels.length}:duration=longest:normalize=0," \
+         "#{SU_TUNNEL_CHAIN},atrim=0:#{duration}," \
+         "alimiter=limit=0.95:level_out=0.94[su]"
+  inputs = sources.flat_map { |s| ["-i", s] }
+  prev_soft = ENV["DILLA_SOFT_SH"]
+  ENV["DILLA_SOFT_SH"] = "1"
+  begin
+    sh! "ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex", filt,
+        "-map", "[su]", "-c:a", "pcm_s16le", path
+  rescue StandardError => e
+    warn "su tunnel melody failed (#{e.message})"
+    FileUtils.rm_f(path)
+    return
+  ensure
+    prev_soft ? ENV["DILLA_SOFT_SH"] = prev_soft : ENV.delete("DILLA_SOFT_SH")
+    sources.each { |s| FileUtils.rm_f(s) }
+  end
+  return unless File.file?(path)
+
+  normalize_wav_to_rms!(path, SU_MELODY_TARGET_RMS_DB)
+  dmesg("su tunnel melody (#{labels.length} voices, #{sources.length} stretched sources)",
+        unit: "harm0", parent: "dilla0")
+  path
+end
+
 # Soft choir pad on chord tones (Singers Unlimited–like ooh/aah). Default on
 # via CHOIR_VOX=1; set CHOIR_VOX=0 to disable. Gain via CHOIR_VOX_GAIN (0–1).
 def choir_vox_enabled?
@@ -20005,6 +20167,9 @@ end
 HARMONIC_STEM_MIX = {
   pads:          { volume: 1.35, weight: 1.7 },
   tones:         { volume: 0.72, weight: 0.55 },
+  # The melodic voice when SU_MELODY is on, which is also when every lead lane
+  # below is empty by construction — so this carries the top line alone.
+  su_melody:     { volume: 1.4, weight: 1.15 },
   harmony_lead:  { volume: 1.15, weight: 0.72 },
   scale_lead:    { volume: 1.2, weight: 0.78 },
   lead_arp:      { volume: 1.45, weight: 1.05 },
@@ -20138,20 +20303,36 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
       FileUtils.rm_f(grain_path)
     end
   end
+  # The resynthesized choir IS the top line, so every synth lead lane below is
+  # skipped rather than mixed quiet. Two top lines at once is the soup the
+  # comment further down is about, and a vocal one loses that fight by being
+  # the more interesting signal — mixing them just muddies both.
+  su_melody_path = "#{path}.su_melody.wav"
+  su_melody_rendered = nil
+  if su_melody_enabled?
+    begin
+      su_melody_rendered = render_su_tunnel_melody(su_melody_path, pad_events, duration)
+    rescue StandardError => e
+      warn "su tunnel melody skipped: #{e.message}"
+    end
+  end
+  leads_muted = !!su_melody_rendered
+
   n_bars_est = (duration / ((60.0 / cfg[:bpm]) * 4.0)).ceil
   # One clean melodic lead by default — scale/creative layers turned the top line into soup.
-  scale_on = lead_arp_enabled? && ENV.fetch("SCALE_LEAD", "0") != "0"
-  creative_on = lead_arp_enabled? && ENV.fetch("CREATIVE_LEAD", "0") != "0"
+  scale_on = !leads_muted && lead_arp_enabled? && ENV.fetch("SCALE_LEAD", "0") != "0"
+  creative_on = !leads_muted && lead_arp_enabled? && ENV.fetch("CREATIVE_LEAD", "0") != "0"
   scale_events = scale_on ? lead_events_scale_arp(pad_events, cfg, duration:, n_bars: n_bars_est) : []
   lead_arp_cfg = lead_arp_cfg_for(@render_lead_patch)
   # The counter-line replaces the arp rather than joining it. Two top lines at
   # once is the soup the comment above is about, and this one is written to
   # answer the chords, which only works if nothing else is talking over them.
-  counter_events = lead_events_melodic(pad_events, cfg, duration:, n_bars: n_bars_est)
-  lead_arp_ev = lead_arp_enabled? && counter_events.empty? ? lead_arp_events(pad_events, cfg, lead_arp_cfg) : []
+  counter_events = leads_muted ? [] : lead_events_melodic(pad_events, cfg, duration:, n_bars: n_bars_est)
+  lead_arp_ev = !leads_muted && lead_arp_enabled? && counter_events.empty? ?
+                lead_arp_events(pad_events, cfg, lead_arp_cfg) : []
   harmony_lead_cfg = harmony_lead_cfg_for(@render_scale_lead_patch)
   insight = instance_variable_defined?(:@progression_insight) ? @progression_insight : nil
-  harmony_lead_ev = harmony_lead_enabled? && ENV.fetch("HARMONY_LEAD", "0") != "0" ?
+  harmony_lead_ev = !leads_muted && harmony_lead_enabled? && ENV.fetch("HARMONY_LEAD", "0") != "0" ?
                     harmony_lead_events(pad_events, cfg, harmony_lead_cfg, progression_insight: insight) : []
   creative_events = creative_on ? lead_events_creative(pad_events, cfg, duration:, n_bars: n_bars_est) : []
   scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
@@ -20163,7 +20344,9 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # banner still announced steady mode, every take came out with the old arps,
   # and nothing in the log disagreed. One line here would have caught it in the
   # first render instead of the eighth.
-  dmesg(if counter_events.any?
+  dmesg(if leads_muted
+          "lead: su tunnel choir (synth leads muted)"
+        elsif counter_events.any?
           "lead: counter-line, #{counter_events.length} notes, #{ENV.fetch('LEAD_TIMBRE', 'choir')}"
         elsif lead_arp_ev.any?
           "lead: arp, #{lead_arp_ev.length} notes (counter-line off: MELODIC_LEAD=#{ENV['MELODIC_LEAD'].inspect})"
@@ -20177,7 +20360,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
                         render_lead_via_fluidsynth(lead_arp_path, lead_arp_ev, duration)
                       end
   xlead_rendered = nil
-  if lead_morph_enabled?
+  if lead_morph_enabled? && !leads_muted
     xlead_fs = render_xlead_morph_fluidsynth(xlead_path, pad_events, duration, cfg)
     xlead_native = render_xlead_native_fm("#{xlead_path}.native.wav", pad_events, duration, cfg)
     xlead_rendered = blend_xlead_stems(xlead_path, xlead_fs, xlead_native, duration)
@@ -20271,6 +20454,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # downstream.
   mix_harmonic_wav_stems(path, duration,
                          pads: pads_path, tones: tones_path,
+                         su_melody: (su_melody_rendered ? su_melody_path : nil),
                          harmony_lead: (harmony_lead_rendered ? harmony_lead_path : nil),
                          scale_lead: (scale_lead_rendered ? scale_lead_path : nil),
                          lead_arp: (lead_arp_rendered ? lead_arp_path : nil),
@@ -20278,6 +20462,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
                          lead: (lead_rendered ? lead_path : nil))
   FileUtils.rm_f(pads_path)
   FileUtils.rm_f(tones_path)
+  FileUtils.rm_f(su_melody_path)
   if dfam_events&.any?
     dfam_path = "#{path}.dfam.wav"
     render_dfam_wav(dfam_path, dfam_events, duration)
