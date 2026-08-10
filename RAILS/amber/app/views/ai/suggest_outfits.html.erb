@@ -13,12 +13,13 @@
 
 <turbo-frame id="amber-ai-suggest" data-turbo-action="replace">
 <%= form_with url: ai_suggest_outfits_path, method: :get, class: "form", html: { role: "form", "aria-label": "Generate outfit suggestions" } do |f| %>
+  <%# f.label rather than a bare <label> beside the field — see packing_list. %>
   <div class="field">
-    <label><%= t("ai.occasion") %></label>
+    <%= f.label :occasion, t("ai.occasion") %>
     <%= f.text_field :occasion, value: params[:occasion], placeholder: t("ai_forms.occasion_example") %>
   </div>
   <div class="field">
-    <label><%= t("ai.season") %></label>
+    <%= f.label :season, t("ai.season") %>
     <%= f.select :season, Item::SEASONS, { selected: params[:season] }, { include_blank: "Any" } %>
   </div>
   <div class="actions">

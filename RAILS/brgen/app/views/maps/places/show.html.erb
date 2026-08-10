@@ -42,7 +42,7 @@
     <% if authenticated? || guest? %>
       <% unless @checked_in %>
         <%= form_with url: check_in_maps_place_path(@place), method: :post, local: true, html: { style: "display:inline" } do |f| %>
-          <%= f.text_field :note, placeholder: t("maps.optional_note"), class: "field--grow" %>
+          <%= f.text_field :note, placeholder: t("maps.optional_note"), aria: { label: t("maps.optional_note") }, class: "field--grow" %>
           <%= f.submit t("maps.check_in"), class: "btn" %>
         <% end %>
       <% else %>

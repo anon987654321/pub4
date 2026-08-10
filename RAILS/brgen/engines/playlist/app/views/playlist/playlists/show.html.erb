@@ -17,11 +17,11 @@
       <p class="section-heading"><%= t("playlist.add_track", default: "Add a track") %></p>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_tracks_path(@playlist), scope: :playlist_track do |f| %>
-          <div class="field"><%= f.text_field :title, placeholder: t("playlist.title") %></div>
-          <div class="field"><%= f.text_field :artist, placeholder: t("playlist.artist") %></div>
-          <div class="field"><%= f.select :source_type, Playlist::Track::SOURCE_TYPES.reject { |type| type == "whyp" }.map { |type| [type.humanize, type] }, include_blank: "Source" %></div>
-          <div class="field"><%= f.url_field :source_url, placeholder: t("playlist.url_optional") %></div>
-          <div class="field"><%= f.datetime_field :expires_at %></div>
+          <div class="field"><%= f.text_field :title, placeholder: t("playlist.title"), aria: { label: t("playlist.title") } %></div>
+          <div class="field"><%= f.text_field :artist, placeholder: t("playlist.artist"), aria: { label: t("playlist.artist") } %></div>
+          <div class="field"><%= f.select :source_type, Playlist::Track::SOURCE_TYPES.reject { |type| type == "whyp" }.map { |type| [type.humanize, type] }, { include_blank: t("playlist.source", default: "Source") }, { aria: { label: t("playlist.source", default: "Source") } } %></div>
+          <div class="field"><%= f.url_field :source_url, placeholder: t("playlist.url_optional"), aria: { label: t("playlist.url_optional") } %></div>
+          <div class="field"><%= f.datetime_field :expires_at, aria: { label: t("playlist.expires_at", default: "Expires at") } %></div>
           <div class="field"><%= f.submit t("takeaway.add"), class: "btn btn-primary btn-sm" %></div>
         <% end %>
       </div>
@@ -31,7 +31,7 @@
       <p class="section-heading">Import links</p>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_imports_path(@playlist), method: :post do |f| %>
-          <div class="field"><%= f.text_area :urls, rows: 4, placeholder: t("playlist.import_urls_placeholder") %></div>
+          <div class="field"><%= f.text_area :urls, rows: 4, placeholder: t("playlist.import_urls_placeholder"), aria: { label: t("playlist.import_urls_placeholder") } %></div>
           <div class="field"><%= f.submit t("playlist.import"), class: "btn btn-primary btn-sm" %></div>
         <% end %>
       </div>
@@ -39,7 +39,8 @@
 
     <div class="section-divider">
       <p class="section-heading">Embed (customize: ?color=ff0000&amp;show_artwork=0&amp;compact=1)</p>
-      <input type="text" readonly value="<iframe src=&quot;<%= embed_playlist_playlist_url(@playlist) %>&quot; loading=&quot;lazy&quot; width=&quot;100%&quot; height=&quot;520&quot;></iframe>" class="field--grow">
+      <input type="text" readonly value="<iframe src=&quot;<%= embed_playlist_playlist_url(@playlist) %>&quot; loading=&quot;lazy&quot; width=&quot;100%&quot; height=&quot;520&quot;></iframe>" class="field--grow"
+             aria-label="<%= t("playlist.embed_code", default: "Embed code") %>">
       <small>Examples: <a href="<%= embed_playlist_playlist_url(@playlist, color: "ff0000") %>">red</a> | <a href="<%= embed_playlist_playlist_url(@playlist, color: "00ff00", show_artwork: "0") %>">no artwork</a> | <a href="<%= embed_playlist_playlist_url(@playlist, compact: "1", hide_branding: "1") %>">compact clean</a></small>
     </div>
   </section>

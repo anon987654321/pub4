@@ -10,7 +10,7 @@
     <%= f.text_area :body,
           rows: 1,
           maxlength: 500,
-          placeholder: t("amber.feed.compose_prompt"),
+          placeholder: t("amber.feed.compose_prompt"), aria: { label: t("amber.feed.compose_prompt") },
           class: "amber-compose-input",
           data: {
             controller: "textarea-autogrow",

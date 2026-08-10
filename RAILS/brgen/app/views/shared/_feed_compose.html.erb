@@ -66,20 +66,30 @@
       <div class="composer-attach">
         <span class="composer-attach-label"><%= t("feed.add_to_post", default: "Add to your post") %></span>
         <div class="compose-actions">
-          <label class="compose-action" title="Add photo">
+          <%# Each of these wraps its input in a <label>, which normally names it —
+              but the label's only content is an aria-hidden icon, so the
+              accessible name computes to "". title= is a tooltip, not a name.
+              The three inputs read as "unlabelled file upload" to a screen
+              reader, one after another, with nothing to tell them apart.
+              aria-label rather than visible text: these are 20px icon buttons in
+              a row and adding words would redesign the compose bar. %>
+          <label class="compose-action" title="<%= t("compose.add_photo", default: "Add photo") %>">
             <%= icon :camera, size: 20 %>
             <%= f.file_field :image, accept: "image/*", capture: "environment",
-                  class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+                  class: "visually-hidden", aria: { label: t("compose.add_photo", default: "Add photo") },
+                  data: { action: "change->feed-compose#mediaSelected" } %>
           </label>
-          <label class="compose-action" title="Record video">
+          <label class="compose-action" title="<%= t("compose.record_video", default: "Record video") %>">
             <%= icon :video, size: 20 %>
             <%= f.file_field :video, accept: "video/*", capture: "environment",
-                  class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+                  class: "visually-hidden", aria: { label: t("compose.record_video", default: "Record video") },
+                  data: { action: "change->feed-compose#mediaSelected" } %>
           </label>
-          <label class="compose-action" title="Record audio">
+          <label class="compose-action" title="<%= t("compose.record_audio", default: "Record audio") %>">
             <%= icon :mic, size: 20 %>
             <%= f.file_field :audio, accept: "audio/*", capture: "user",
-                  class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+                  class: "visually-hidden", aria: { label: t("compose.record_audio", default: "Record audio") },
+                  data: { action: "change->feed-compose#mediaSelected" } %>
           </label>
         </div>
       </div>

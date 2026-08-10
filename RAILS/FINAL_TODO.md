@@ -2053,28 +2053,72 @@ animation declaration — verify it is reduced-motion guarded and frame-budgeted
 
 ## Accessibility — 40 items
 
-### form_no_label — 18
+### form_no_label — 18 · **closed 2026-08-10; the rule asked the wrong question in both directions**
 
 Form with inputs and no label element.  Law: `rams_checklist.understandable`.
 
-- [ ] `amber/app/views/outfits/index.html.erb:1` — fields without label
-- [ ] `amber/app/views/planned_outfits/index.html.erb:1` — fields without label
-- [ ] `amber/app/views/shared/_feed_compose.html.erb:1` — fields without label
-- [ ] `brgen/app/views/channels/show.html.erb:1` — fields without label
-- [ ] `brgen/app/views/maps/places/show.html.erb:1` — fields without label
-- [ ] `brgen/app/views/messages/create.turbo_stream.erb:1` — fields without label
-- [ ] `brgen/app/views/messages/new.html.erb:1` — fields without label
-- [ ] `brgen/app/views/nearby/_widget_composer.html.erb:1` — fields without label
-- [ ] `brgen/engines/marketplace/app/views/marketplace/_nav_bar.html.erb:1` — fields without label
-- [ ] `brgen/engines/marketplace/app/views/marketplace/orders/show.html.erb:1` — fields without label
-- [ ] `brgen/engines/playlist/app/views/playlist/listening_parties/show.html.erb:1` — fields without label
-- [ ] `brgen/engines/playlist/app/views/playlist/playlists/show.html.erb:1` — fields without label
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:1` — fields without label
-- [ ] `brgen/engines/playlist/app/views/playlist/shared/_collaborators.html.erb:1` — fields without label
-- [ ] `brgen/engines/takeaway/app/views/takeaway/_nav_bar.html.erb:1` — fields without label
-- [ ] `brgen/engines/tv/app/views/tv/live_streams/show.html.erb:1` — fields without label
-- [ ] `bsdports/app/views/comments/create.turbo_stream.erb:1` — fields without label
-- [ ] `bsdports/app/views/ports/show.html.erb:1` — fields without label
+"Does this file contain a `<label>` element" is neither necessary nor sufficient
+for an accessible name, and both halves of that produced wrong answers here.
+
+**Not necessary.** `aria-label` names a control perfectly well, and this tree uses
+it deliberately for icon-sized controls where a visible label would redesign the
+row. Of the eighteen recorded files, ten were already correct — including
+`nearby/_widget_composer.html.erb` (`aria: { label: t("chat.message_label") }`),
+`marketplace/_nav_bar.html.erb` (`aria-label` on the search input), and
+`bsdports/ports/show.html.erb`, which has no form controls at all.
+
+**Not sufficient, and this is where the real defects were.** amber's AI forms
+carried `<label>Duration</label>` *beside* the select rather than wrapping it or
+carrying `for=` — so the rule saw a label and passed, while the label named
+nothing: the select announced as unlabelled and clicking the word did not focus
+it. Eight fields across `ai/packing_list`, `ai/style_profile`, `ai/suggest_outfits`.
+`style_profile` was the awkward one: five selects all called `:answers`, so
+Rails would have given all five the same generated id and every `for=` would have
+pointed at the first; they needed explicit ids as well as the name= they already
+overrode.
+
+Worse, brgen's compose bar wraps three file inputs in `<label>`s whose only
+content is an `aria-hidden` icon. A wrapping label does name its control — but
+its text here is `""`, so a screen reader met three consecutive "unlabelled file
+upload" announcements with nothing to tell photo, video and audio apart.
+`title=` is a tooltip, not a name.
+
+Measured with an accessible-name check rather than a label grep: **24 genuinely
+unnamed controls across 13 views**, against 18 files recorded. All 24 fixed.
+
+Where the control already carried `placeholder: t("…")`, that expression is the
+field's name and was reused verbatim rather than inventing a second string that
+can drift from it (31 controls). Where a bare `<label>` existed, it was wired to
+the field with `f.label` / `for=` — same copy, same markup order, no visual
+change. Only where a visible label would have restructured the layout — the
+planner's single-row `.field-row`, the compose bar's 20px icon strip, the
+media-picker inputs that are `media-input-hidden` behind a visible button — was
+`aria-label` used instead.
+
+Pinned by `test/form_control_names_test.rb`, which computes the name the way the
+platform does (`<label for>`, wrapping `<label>` *with text*, `aria-label`,
+`aria-labelledby`, `f.label :attr`, `label_tag`) and carries two cases proving it
+can fail, including the label-beside-the-field shape that fooled the original.
+Two views are allow-listed with reasons: a regex over ERB cannot read an
+`aria-label` that sits behind an escaped `<iframe>` in a `value=`, nor a
+`label_tag` whose id only resolves at render time.
+
+Suites green after: brgen 322 runs, amber 108, bsdports 22, 0 failures.
+
+New i18n keys, all written as `t("…", default: "…")` so nothing breaks
+untranslated — they want nb entries from whoever owns each locale file:
+`planned.date`, `planned.outfit`, `planned.select_outfit`, `outfits.season`
+(amber); `maps.all_types`, `maps.filter_by_kind`, `posts.add_photo`,
+`compose.add_photo`, `compose.record_video`, `compose.record_audio`,
+`marketplace.add_photos`, `playlist.source`, `playlist.expires_at`,
+`playlist.embed_code`, `playlist.comment_at_time`, `playlist.role`,
+`playlist.style`, `playlist.bars`, `playlist.sketch_state`,
+`playlist.paste_state` (brgen); `actions.copyable_text` (shared).
+
+Not fixed, and worth its own line: a visible label is the stronger fix than
+`aria-label` — it helps cognitive and motor users too, and gives a larger click
+target. Turning the aria-labelled fields into labelled ones is a layout change on
+four surfaces and belongs to whoever owns the visual design.
 
 ### css_font_px_small — 10 · **artifact, 0 real, 2026-08-04**
 

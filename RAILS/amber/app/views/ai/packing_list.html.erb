@@ -4,12 +4,16 @@
 <p class="dim">Select trip duration and climate. MASTER suggests outfits from your wardrobe.</p>
 
 <%= form_with url: ai_packing_list_path, method: :get, class: "form" do |f| %>
+  <%# f.label, not a bare <label>. These were <label>text</label> sitting beside
+      the field rather than wrapping it or carrying for=, so they named nothing:
+      a screen reader read the select as unlabelled and clicking the text did
+      not focus it. Same copy, same markup order, now actually associated. %>
   <div class="field">
-    <label><%= t("ai.duration") %></label>
+    <%= f.label :duration, t("ai.duration") %>
     <%= f.select :duration, (1..14).map { |d| [d, d] }, { selected: params[:duration] } %>
   </div>
   <div class="field">
-    <label><%= t("ai.climate") %></label>
+    <%= f.label :climate, t("ai.climate") %>
     <%= f.select :climate, ["hot", "cold", "mild", "rainy", "dry"], { selected: params[:climate] } %>
   </div>
   <div class="actions"><%= f.submit t("ai.generate_master"), class: "btn btn--primary" %></div>

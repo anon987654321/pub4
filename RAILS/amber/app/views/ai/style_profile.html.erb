@@ -4,25 +4,29 @@
 <p class="dim">MASTER will infer your aesthetic: minimal, bold or classic.</p>
 
 <%= form_with url: ai_style_profile_path, method: :post, class: "form" do |f| %>
+  <%# Five selects all named :answers, so Rails would give all five the same
+      generated id and each <label for> would point at the first. The name= is
+      already overridden per question; the id has to be too, or the labels
+      collide. The bare <label>s these replace were associated with nothing. %>
   <div class="field">
-    <label><%= t("ai.body_type") %></label>
-    <%= f.select :answers, { "Body type" => ["slim", "athletic", "curvy", "plus"] }, {}, { name: "answers[body_type]" } %>
+    <label for="answers_body_type"><%= t("ai.body_type") %></label>
+    <%= f.select :answers, { "Body type" => ["slim", "athletic", "curvy", "plus"] }, {}, { name: "answers[body_type]", id: "answers_body_type" } %>
   </div>
   <div class="field">
-    <label><%= t("ai.lines_patterns") %></label>
-    <%= f.select :answers, { "Preference" => ["minimal clean lines", "bold patterns and colors"] }, {}, { name: "answers[lines]" } %>
+    <label for="answers_lines"><%= t("ai.lines_patterns") %></label>
+    <%= f.select :answers, { "Preference" => ["minimal clean lines", "bold patterns and colors"] }, {}, { name: "answers[lines]", id: "answers_lines" } %>
   </div>
   <div class="field">
-    <label><%= t("ai.timeless_trendy") %></label>
-    <%= f.select :answers, { "Style" => ["classic timeless pieces", "trendy current styles"] }, {}, { name: "answers[timeless]" } %>
+    <label for="answers_timeless"><%= t("ai.timeless_trendy") %></label>
+    <%= f.select :answers, { "Style" => ["classic timeless pieces", "trendy current styles"] }, {}, { name: "answers[timeless]", id: "answers_timeless" } %>
   </div>
   <div class="field">
-    <label><%= t("ai.colors") %></label>
-    <%= f.select :answers, { "Palette" => ["neutrals and basics", "vibrant pops of color"] }, {}, { name: "answers[colors]" } %>
+    <label for="answers_colors"><%= t("ai.colors") %></label>
+    <%= f.select :answers, { "Palette" => ["neutrals and basics", "vibrant pops of color"] }, {}, { name: "answers[colors]", id: "answers_colors" } %>
   </div>
   <div class="field">
-    <label><%= t("ai.fit") %></label>
-    <%= f.select :answers, { "Fit" => ["tailored structured fits", "loose comfortable layers"] }, {}, { name: "answers[fit]" } %>
+    <label for="answers_fit"><%= t("ai.fit") %></label>
+    <%= f.select :answers, { "Fit" => ["tailored structured fits", "loose comfortable layers"] }, {}, { name: "answers[fit]", id: "answers_fit" } %>
   </div>
   <div class="actions"><%= f.submit t("ai.infer_master"), class: "btn btn--primary" %></div>
 <% end %>

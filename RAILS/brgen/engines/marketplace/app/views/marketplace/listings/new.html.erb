@@ -29,6 +29,7 @@
             capture: "environment",
             direct_upload: true,
             class: "media-input-hidden",
+            aria: { label: t("marketplace.add_photos", default: "Add photos") },
             data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
       <div class="media-actions">
         <button type="button" class="media-btn" data-action="click->media-picker#trigger">

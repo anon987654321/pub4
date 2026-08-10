@@ -105,7 +105,9 @@
 
   <% unless local_assigns[:embedded] %>
   <div class="playlist-comment-form" hidden data-playlist-player-target="commentForm">
-    <input type="text" placeholder="Comment at this time..." data-playlist-player-target="commentInput">
+    <input type="text" placeholder="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
+           aria-label="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
+           data-playlist-player-target="commentInput">
     <button type="button" data-action="playlist-player#submitComment">Add</button>
     <button type="button" data-action="playlist-player#cancelComment">Cancel</button>
   </div>

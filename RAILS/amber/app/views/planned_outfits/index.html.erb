@@ -2,10 +2,18 @@
 <%= turbo_stream_from "planned_outfits" %>
 <h1><%= t("pages.planner") %></h1>
 <%= form_with model: PlannedOutfit.new, url: planned_outfits_path do |f| %>
+  <%# aria-label rather than visible <label>s: .field-row lays these out as one
+      horizontal strip ending in the submit, and stacking three labels over it
+      would redesign the row. The names are for assistive tech only; the visible
+      affordances (the date picker, the "Select outfit…" blank, the placeholder)
+      stay exactly as they are. %>
   <div class="field-row">
-    <%= f.date_field :planned_date, min: Date.current, class: "input" %>
-    <%= f.select :outfit_id, @outfits.map { |o| [o.name, o.id] }, { include_blank: "Select outfit…" } %>
-    <%= f.text_field :notes, placeholder: t("planned.notes") %>
+    <%= f.date_field :planned_date, min: Date.current, class: "input",
+          aria: { label: t("planned.date", default: "Date") } %>
+    <%= f.select :outfit_id, @outfits.map { |o| [o.name, o.id] },
+          { include_blank: t("planned.select_outfit", default: "Select outfit…") },
+          { aria: { label: t("planned.outfit", default: "Outfit") } } %>
+    <%= f.text_field :notes, placeholder: t("planned.notes"), aria: { label: t("planned.notes") } %>
     <%= f.submit t("planned.plan_it"), class: "btn" %>
   </div>
 <% end %>

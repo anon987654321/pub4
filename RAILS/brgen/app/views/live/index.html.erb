@@ -50,7 +50,7 @@
                 id: "live_content",
                 rows: 2,
                 maxlength: Post::LIVE_CONTENT_MAX,
-                placeholder: t("live.compose_placeholder"),
+                placeholder: t("live.compose_placeholder"), aria: { label: t("live.compose_placeholder") },
                 class: "compose-input",
                 required: true,
                 data: {

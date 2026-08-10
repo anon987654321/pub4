@@ -30,7 +30,7 @@
     <% end %>
     <% if authenticated? %>
       <%= form_with url: live_stream_stream_chats_path(@live_stream), scope: :stream_chat, data: { turbo: true } do |f| %>
-        <%= f.text_field :message, placeholder: t("playlist.say_something"), required: true %>
+        <%= f.text_field :message, placeholder: t("playlist.say_something"), aria: { label: t("playlist.say_something") }, required: true %>
         <%= f.submit t("actions.send"), class: "btn btn-primary btn-sm" %>
       <% end %>
     <% end %>
