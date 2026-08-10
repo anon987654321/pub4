@@ -162,7 +162,7 @@ end
 # build, but build_stale? could not see them: every marketplace/dating/playlist/
 # takeaway/tv style change reported "css: clean" and shipped the previous build.
 # Same blind spot as the four scanners that stopped seeing 57 views on the same
-# migration (TODO.md). A glob that stops one level above the code is not a check.
+# migration. A glob that stops one level above the code is not a check.
 def scss_sources(app_dir)
   dirs = [
     File.join(app_dir, "app", "assets", "stylesheets"),

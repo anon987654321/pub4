@@ -13,7 +13,8 @@ module Ports
     #
     # Guarded on free disk, and the guard is the point. Measured 2026-08-05 the
     # tarball is 56 MB compressed and expands to several hundred MB, while vm23
-    # has 962 MB free on /home at 95% full (TODO.md item 3). Running this there
+    # has 962 MB free on /home at 95% full — OPENBSD/data/debt.yml,
+    # home_partition_full_from_git_history. Running this there
     # unguarded would fill the disk that already blocks a deploy. When there is
     # not enough room it declines and says so; the package-index path still
     # gives a browsable catalogue.

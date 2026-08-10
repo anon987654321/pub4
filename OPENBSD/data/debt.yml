@@ -158,6 +158,47 @@ open:
       production reads SECRET_KEY_BASE from /etc/*.env and MASTER runs
       SECRET_KEY_BASE_DUMMY=1 — so this is not an emergency, but it is not closed by
       the untracking either.
+
+
+      WIDENED 2026-08-10, migrated here from the repo-root TODO.md so that file
+      can be retired. This entry described one key; history holds SEVEN
+      master.key blobs, six of them beside the credentials.yml.enc they decrypt:
+      MASTER/web/config/master.key (2 versions), and
+      DEPLOY/rails/{brgen,amber,bsdports,baibl,blognet,hjerterom}/config/master.key,
+      each with its own credentials.yml.enc. Verified without decrypting anything:
+      DEPLOY/rails/brgen/config/master.key is 32 hex characters — a real key — and
+      its 548-byte credentials.yml.enc is in the same history. Anyone who has ever
+      cloned the repo holds both halves of all six pairs. 139c907e6 untracked only
+      MASTER/web/config/master.key and scoped the blast radius to that one file,
+      correctly for that file; the six DEPLOY pairs were never in scope and are
+      untouched. Untracking removes nothing from history in either case. Rotation
+      order is unchanged and applies to all of them: ROTATE FIRST, purge second
+      and optionally. brgen, amber and bsdports read SECRET_KEY_BASE from
+      /etc/<app>.env, so rotating those three is a value change plus rcctl
+      restart, not a code change. baibl, blognet and hjerterom are not live
+      services — confirm that before deciding they need anything beyond the purge.
+      If the purge does happen, do it in one pass with home_partition_full_from_git_history
+      below: both are rewrites of the same history, and one force-push to a public
+      repository is disruptive enough without doing it twice.
+  - id: home_partition_full_from_git_history
+    tag: operator-priority
+    summary: >
+      /home on vm23 was at 95% — 962 MB free of 17 G — and the cause is in git
+      rather than on disk. /home/dev/pub4 is 7.7 G of the 8.3 G under /home/dev,
+      and .git alone is 3.3 G. The ten largest objects in history are 80–87 MB WAV
+      renders under DEPLOY/dilla/renders/beats/, a path that no longer exists in
+      the tree and never will again. Every `git pull` deploy carries that history,
+      so this does not improve by itself and more RAM does not touch it; 42bb88375
+      added more audio on the day it was measured.
+
+
+      Migrated from the repo-root TODO.md on 2026-08-10 so that file can be
+      retired. Operator-owned: the fix is a history rewrite, which is a force-push
+      to a public repository. Strip these blobs in the same pass as the key purge
+      in committed_rails_master_key_public_repo above — one disruptive operation
+      rather than two. Figures are from 2026-08-02 and want re-measuring before
+      any action; they were not re-checked on 2026-08-10 because reading them
+      requires the box.
   - id: brgen_allow_unauthenticated_access_is_a_noop
     tag: operator-priority
     summary: >

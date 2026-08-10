@@ -461,6 +461,45 @@ Still true, and the reason this section exists: `pkg_add` succeeding at install
 time is not evidence ffmpeg is on the box now. Check `GET /health`
 deploy.tts_socket and `test -S .master/tts.sock` on vm23.
 
+## Scanner Convention — strip comments before matching source
+
+Any check that greps source for a string must remove comments first. A rule and
+the paragraph explaining the rule contain the same words, so a raw `include?` /
+`refute_includes` over a file matches the prose about a thing exactly as readily
+as the thing.
+
+This is not a hypothetical. It fired **four independent times on 2026-08-10**,
+across two agents working different parts of the same backlog:
+
+- `brgen/test/services/deploy_backlog_test.rb` refused a partial for containing
+  `popover` — the match was the comment recording why the popover was removed.
+  The partial contains no popover.
+- `RAILS/brgen/test/integration/front_page_weight_test.rb` counted three
+  `data-controller="action"` in a partial that renders two, having read the
+  comment that quotes the markup it replaced.
+- The `nbsp_entity` rule flagged the comment explaining why an `&nbsp;` was
+  removed.
+- The pagy-helper rule flagged the comment naming the helpers it bans.
+
+A fifth, one layer out: a CSS verification pass "confirmed" a rule had been
+deleted from three compiled bundles when sass had simply preserved the `/* */`
+comment naming it. Every assertion passed against comment text rather than CSS.
+
+The fix is one line at the read site, and it differs per language:
+
+```ruby
+source.gsub(/<%#.*?%>/m, "")          # ERB
+source.gsub(%r{/\*.*?\*/}m, "")       # CSS/SCSS block comments
+source.lines.reject { |l| l.strip.start_with?("#") }.join   # Ruby, YAML
+```
+
+Two consequences worth keeping in mind. A check that passes may be reading
+documentation, so prove a new source assertion can fail — plant the thing it
+bans and watch it fire. And the failure mode is asymmetric: a `refute_includes`
+that reads comments produces a *false alarm* the next author will "fix" by
+deleting the explanation, which is how a codebase loses the reasons for its own
+decisions.
+
 ## Not Debt
 
 - Two `Master::` spines.

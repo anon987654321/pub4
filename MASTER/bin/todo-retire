@@ -7,11 +7,18 @@ require "yaml"
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
 DEBT = File.join(REPO, "OPENBSD", "data", "debt.yml")
+# The TODO files this retires. Every name in the previous list —
+# MASTER/TODO.md, OPENBSD/TODO.md, RAILS/TODO.md, MASTER/tools/dilla/TODO.md —
+# referred to a file that does not exist and, from the git history, had not for
+# some time. So `legacy_open` was `false` unconditionally, the guard passed
+# having read nothing, and the delete step at the bottom deleted nothing. The two
+# files that do carry open checkboxes were in neither list.
+#
+# Verify with `ruby -e 'puts Dir.glob("**/*TODO*.md")'` from the repo root before
+# changing this, rather than trusting it.
 LEGACY = [
-  File.join(ROOT, "TODO.md"),
-  File.join(REPO, "OPENBSD", "TODO.md"),
-  File.join(REPO, "RAILS", "TODO.md"),
-  File.join(ROOT, "tools", "dilla", "TODO.md"),
+  File.join(REPO, "TODO.md"),
+  File.join(REPO, "RAILS", "FINAL_TODO.md"),
 ].freeze
 
 def run_step(name, *cmd, chdir:)
@@ -22,19 +29,39 @@ def run_step(name, *cmd, chdir:)
   status.success?
 end
 
-open_items = []
-if File.file?(DEBT)
-  data = YAML.safe_load(File.read(DEBT)) || {}
-  open_items = Array(data["open"])
+# The destination has to exist and parse before anything is deleted into it.
+# It is NOT required to be empty: debt.yml is the canonical register these files
+# retire *into*, so it is expected to carry open items indefinitely. The previous
+# version blocked on `open_items.any?`, which made the precondition
+# unsatisfiable — this script could never have completed a run, in any tree state.
+unless File.file?(DEBT)
+  warn "todo-retire: blocked — #{DEBT} is missing, and it is where these files retire to"
+  exit 1
 end
 
-legacy_open = LEGACY.any? do |path|
+begin
+  debt = YAML.safe_load(File.read(DEBT)) || {}
+rescue Psych::SyntaxError => e
+  warn "todo-retire: blocked — #{DEBT} does not parse (#{e.message})"
+  exit 1
+end
+
+unless debt.key?("open")
+  warn "todo-retire: blocked — #{DEBT} has no `open:` list to have retired anything into"
+  exit 1
+end
+
+still_open = LEGACY.select do |path|
   File.file?(path) && File.readlines(path).any? { |line| line.match?(/^\s*-\s+\[\s\]/) }
 end
 
-if open_items.any? || legacy_open
-  warn "todo-retire: blocked — open items remain in OPENBSD/data/debt.yml or legacy TODO.md files"
-  warn "todo-retire: run bin/handoff or bin/pub4 status"
+if still_open.any?
+  warn "todo-retire: blocked — unchecked items remain in:"
+  still_open.each do |path|
+    count = File.readlines(path).count { |line| line.match?(/^\s*-\s+\[\s\]/) }
+    warn "  #{path.delete_prefix("#{REPO}/")}  (#{count} unchecked)"
+  end
+  warn "todo-retire: close them, or move them to OPENBSD/data/debt.yml and tick the box"
   exit 1
 end
 
