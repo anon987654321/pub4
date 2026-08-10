@@ -600,6 +600,51 @@ Practical consequences:
   test exists for exactly that and is why `rake assets:precompile` belongs in the
   same commit as any face-source edit.
 
+## Scanner Convention — a check that accepts the broken shape as proof
+
+Fourth in the family, and the through-line under all four: each one **converts
+the absence of a property into evidence of it**. An exemption outlives its
+subject and reads as a considered decision. A comment outlives its rule and reads
+as documentation. A stale artifact outlives its source and reads as a correct
+build. And a check can accept the very shape it exists to forbid, so a defect
+arrives already carrying its own certificate of compliance.
+
+Four instances, all found on 2026-08-10, in four different subsystems:
+
+- **`ownership_guard_contract_test`** (brgen) asserts every mutating controller
+  has an ownership guard, and `INLINE_EQUALITY_RE` accepts `Current.user == …`
+  as proof of one. That is the broken shape: under
+  `strict_loading_by_default = true` the association read raises before the
+  comparison runs, so the guard never executes and every path behind it 500s —
+  the owner's included. Five controllers satisfied the gate with a guard that
+  could not run. The gate was not merely blind to them; it was the reason they
+  looked handled.
+- **`domain_alignment`** — the gate whose whole purpose is proving the fleet's
+  domains and ports agree — held its own literal table of the three
+  domain/port pairs rather than reading `apps.yml`. Edit `apps.yml` and the gate
+  keeps asserting the old numbers, and passes.
+- **`rendered_invariants`** shipped with an instance `run` and no class-level
+  `.run`, which is how `runner.rb` invokes a gate. It was a row in `gates.yml`,
+  listed by `--list`, counted as coverage, and never once executed. It is the
+  gate written to catch declarations with no reader.
+- **`port_inventory#check_smoke_probes`**, first attempt, matched
+  `127.0.0.1:PORT` and missed `smoke brgen 38182`. It read one of the two ways
+  those scripts spell a port and reported on both.
+
+Practical consequences:
+
+- **A gate's first run must be against a known-bad input, not a clean tree.** A
+  green first run is the least informative outcome available: it is equally
+  consistent with "nothing is wrong" and "nothing is measured". Every check
+  added on 2026-08-10 was mutated six ways and watched to fail before being
+  believed, and two of them did not fail and were wrong.
+- Registration is not execution. `deploy_gates_contract_test` asserting every
+  in-process gate class answers `.run` exists because of the third case above.
+- When writing a check that recognises a *pattern*, name the cases you already
+  know and pin them through it first. The peer session that swept the ownership
+  guards found its own regex matching `== Current.user.id` — the fixed branch —
+  because after `user` comes a dot rather than `_id`.
+
 ## Not Debt
 
 - Two `Master::` spines.
