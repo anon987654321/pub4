@@ -248,8 +248,11 @@ function setVoiceName(voice, opts = {}) {
   }
   let raw = String(voice || '').trim();
   // The davis -> pernille rewrite that used to sit here forced an en-US request
-  // back onto the Norwegian voice. With MASTER on en-US-AndrewNeural that is the
-  // opposite of the policy, so a US voice asked for is a US voice used.
+  // back onto the Norwegian voice, which is the opposite of the policy whatever
+  // the policy voice happens to be: a voice asked for is the voice used. The
+  // single-voice lock lives in guardVoice, which reads MASTER_VOICE_POLICY, not
+  // in a hardcoded rewrite here. (Policy voice is ms-MY-OsmanNeural as of
+  // 2026-08-10; nothing in this function should need to know that.)
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;

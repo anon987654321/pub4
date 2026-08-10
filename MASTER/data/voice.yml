@@ -3,41 +3,53 @@
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
 # Engine chain / transcendent mode: data/tts.yml (not used by web TtsJob). VPS env: OPENBSD/etc/rc.d/master.
 tts:
-  # American English (edge-tts / Azure neural). Operator decision 2026-08-04:
-  # MASTER speaks US English, which is also what soul.yml's language.primary has
-  # said all along while the voice was nb-NO.
+  # English with a Malay accent (edge-tts / Azure neural). Operator decision
+  # 2026-08-10: MASTER speaks English in Osman's voice, soothing.
   #
-  # Andrew rather than Ryan: en-GB-RyanNeural is British, and the ask was
-  # American. Andrew is the conversational en-US male in VOICE_ALIASES and
-  # already carries an idle signature in face.part1.txt, so the face has
-  # breath/saccade/blink tuning for it without inventing any.
+  # ms-MY-OsmanNeural is a Malay-language voice reading English text — that is
+  # what produces the accent, and it is why soul.yml keeps language.primary:
+  # english and moves only `dialect` to malaysian. The voice is not new to this
+  # tree: it is the `malay` persona in personas.yml, it is already in VOICES and
+  # VOICE_ALIASES on both the Ruby and JS sides, and it already carries an idle
+  # signature in face.part1.txt (breath 1.08, saccade 0.24, blink 3200ms), so the
+  # face has real breath/saccade/blink tuning for it rather than the generic
+  # fallback. That absence was the reason Andrew was chosen over Ryan in August;
+  # it does not apply here.
+  #
+  # The pitch below is the one part of this that is a measurement rather than a
+  # name — see default_pitch.
   #
   # The last time this value changed, the JS half of the stack kept its own
   # answer — "tts: Pernille only" in the /voice handler, the nb-NO default in
   # MASTER_SOUL_SUMMARY, guardVoice's locked return — and the two halves
   # disagreed about what was actually being synthesized. All three now read the
   # policy instead of hardcoding a name; see face.part1.txt and face.part5.txt.
-  single_voice: andrew
-  neural: en-US-AndrewNeural
+  single_voice: osman
+  neural: ms-MY-OsmanNeural
   persona_affects_text_only: true
   stream_live_default: false
   # With persona_affects_text_only these two ARE the effective rate/pitch for
   # every utterance (Personality#browser_profile substitutes them for the
   # persona's own).
   #
-  # Pitch stays neutral because pitch tuning does not survive a voice change.
-  # The history in this file is a warning about exactly that: -20Hz was picked
-  # for en-GB Ryan and then carried onto a Norwegian voice it was never measured
-  # against. Andrew gets +0Hz until someone listens to it and has a reason.
+  # -35Hz is not invented for this change and not carried over from Andrew's
+  # +0Hz. It is the value personas.yml already records for this exact voice,
+  # from someone listening to it: "natural, soothing single voice", settled at
+  # -8%/-35Hz after -32%/-180Hz pushed the engine past the range it renders
+  # cleanly and read as choking. Roughly +-15% rate and +-50Hz pitch is where
+  # Azure neural voices stay natural, so this sits inside it with room.
   #
-  # -8% rate is kept from the Pernille tuning because that one was a listening
-  # preference for long-form comfort rather than a property of the voice, eased
-  # from -12% since Andrew is already the slower-paced of the en-US voices. Both
-  # sit well inside the range Azure neural voices render cleanly (roughly
-  # +-15% rate / +-50Hz pitch) — see the malay persona's note on what
-  # -32%/-180Hz did to the engine.
+  # That history is also the standing warning here: pitch tuning does not survive
+  # a voice change. -20Hz was once picked for en-GB Ryan and then carried onto a
+  # Norwegian voice it had never been measured against. This value moves with
+  # Osman because it was measured on Osman; the next voice starts at +0Hz until
+  # someone listens.
+  #
+  # -8% rate is unchanged and is a listening preference for long-form comfort
+  # rather than a property of any voice — the same figure the malay persona
+  # arrived at independently.
   default_rate: "-8%"
-  default_pitch: "+0Hz"
+  default_pitch: "-35Hz"
 
 voice:
   style: openbsd_dmesg

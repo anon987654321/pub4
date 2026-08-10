@@ -57,7 +57,7 @@ const TTS_STORE = 'blobs';
 // policy said something else, so any failure to load MASTER_VOICE_POLICY sent
 // MASTER back to a Norwegian voice silently — the same two-halves-disagreeing
 // bug voice.yml's own header documents.
-const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-US-AndrewNeural';
+const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'ms-MY-OsmanNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
   try {
@@ -769,8 +769,15 @@ function speakWithBrowserTTS(text, token) {
   // spoken again each time the watchdog requeued it.
   // en-US, not en-GB. This is the browser-speech fallback used when the neural
   // endpoint is unavailable, and it picked a British voice for every non-nb
-  // utterance — so the fallback contradicted the policy voice
-  // (en-US-AndrewNeural) precisely when it was the only thing speaking.
+  // utterance — so the fallback contradicted the policy voice precisely when it
+  // was the only thing speaking.
+  //
+  // Deliberately still en-US now that the policy voice is ms-MY-OsmanNeural: the
+  // words are English either way, and a browser is far likelier to ship an
+  // en-US voice than an ms-MY one. Asking for a locale the platform lacks gets
+  // an arbitrary substitute, which is worse than a plain English fallback. The
+  // Malay accent is a property of the neural voice, not something this path can
+  // reproduce.
   const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
   const voice = pickBrowserVoice(lang);
   if (!voice) { primeBrowserVoices(); return false; }

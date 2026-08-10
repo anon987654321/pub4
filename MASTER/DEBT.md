@@ -510,10 +510,16 @@ see, precisely because the thing it excuses is invisible.
 
 Deleting `RAILS/FINAL_TODO.md` on 2026-08-10 surfaced two, immediately, because
 both tests named the file the moment it went: `doc_numbers` was still granting it
-44px, 6px, 10px, 14px and 1265px, and `doc_paths` was still excusing
-`db/structure.sql` on its behalf. Neither had had a subject for as long as it
-took to notice, and nothing would have reported it — a baseline that exempts a
-file that does not exist simply never fires.
+five dimension exemptions, and `doc_paths` was still excusing a generated schema
+path on its behalf. Neither had had a subject for as long as it took to notice,
+and nothing would have reported it — a baseline that exempts a file that does not
+exist simply never fires.
+
+(The numbers are deliberately not quoted here. Writing them out is what
+`doc_numbers` exists to catch, and this section tripped it on its first run —
+prose that prescribes a dimension without naming the token that owns it. The
+remedy was to stop quoting them, not to add a baseline entry, which would have
+been the very thing this section warns about.)
 
 The failure is quiet in both directions. While the file existed the exemption was
 load-bearing and correct; once it did not, the same line silently widened the

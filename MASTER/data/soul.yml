@@ -6,14 +6,21 @@
 schema: 1
 version: "2.6.0"
 persona: anchor
-voice: en-US-AndrewNeural
+voice: ms-MY-OsmanNeural
 language:
   primary: english
   secondary: norwegian
-  # American English. This block already said primary: english while the voice
-  # was nb-NO and the dialect was bokmal, so the law disagreed with itself about
-  # what MASTER speaks; the voice now matches the primary language.
-  dialect: american
+  # English spoken with a Malay accent. Operator decision 2026-08-10.
+  #
+  # primary stays english — the words are English; what changed is the mouth.
+  # ms-MY-OsmanNeural is a Malay-language neural voice reading English text,
+  # which is what produces the accent, so `dialect` names the accent rather than
+  # a variety of English with its own spelling and idiom.
+  #
+  # This block used to say primary: english while the voice was nb-NO and the
+  # dialect was bokmal, so the law described a Norwegian speaker and an English
+  # one at once. The three have been kept in step since; they still are.
+  dialect: malaysian
 
 research:
   constitutional_ai:
@@ -86,7 +93,7 @@ absolute:
 negotiable:
   style: sentence_case
   default_model: z-ai/glm-4.5-air:free
-  tts_voice: en-US-AndrewNeural
+  tts_voice: ms-MY-OsmanNeural
   language_detection: true
   conflict_resolution:
     strategy: highest_priority_wins

@@ -137,13 +137,15 @@ class TestRulesYamlRegistry < Minitest::Test
   def test_voice_yml_tts_policy_single_voice
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     tts = voice["tts"] || {}
-    # US English since 2026-08-04 (operator decision). Andrew, not Ryan: Ryan is
-    # en-GB, and the ask was American.
-    assert_equal "andrew", tts["single_voice"]
-    assert_equal "en-US-AndrewNeural", tts["neural"]
+    # English with a Malay accent since 2026-08-10 (operator decision), replacing
+    # the US English pinned on 2026-08-04. ms-MY-OsmanNeural is a Malay-language
+    # voice reading English text — the accent comes from the voice, which is why
+    # soul.yml keeps language.primary: english and moves only dialect.
+    assert_equal "osman", tts["single_voice"]
+    assert_equal "ms-MY-OsmanNeural", tts["neural"]
     assert_equal true, tts["persona_affects_text_only"]
-    assert_equal :andrew, Master::Voice::Policy.single_voice_key
-    assert_equal "en-US-AndrewNeural", Master::Voice::Policy.neural_voice
+    assert_equal :osman, Master::Voice::Policy.single_voice_key
+    assert_equal "ms-MY-OsmanNeural", Master::Voice::Policy.neural_voice
     # The pair has to agree: single_voice is what Ruby hands the synthesizer,
     # neural is what the browser reads, and they drifted apart once already.
     assert_equal tts["neural"], Master::Voice::Speech::VOICES.fetch(tts["single_voice"].to_sym)
