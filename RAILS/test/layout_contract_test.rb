@@ -61,9 +61,8 @@ class LayoutContractTest < Minitest::Test
   # collapses at some widths, wraps at others, and is announced as a space.
   #
   # Four were replaced on 2026-08-10 -- three separating meta pairs on the dating
-  # profile, now .profile-meta with a flex gap, and one reserving the language
-  # block's first line in the marketplace nav, now .nav-line-1:empty::before.
-  # Measured: EN's baseline against the block beside it moved 0.0px.
+  # profile, now .profile-meta with a flex gap, and one reserving a line box in
+  # the marketplace nav, which the storefront flatten removed outright.
   def test_nbsp_is_typography_not_spacing
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,shared}", "app", "views", "**", "*.erb")) +
             Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb"))

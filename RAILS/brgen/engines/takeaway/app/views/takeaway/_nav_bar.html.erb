@@ -1,11 +1,8 @@
-<%# Takeaway header — deliberately the same two-row structure as the
-    marketplace one, per the operator: the two storefronts should read as
-    siblings. It reuses #navBar / #topHalf / #bottomHalf and the .nav-block
-    classes from _marketplace_nav_bar.scss rather than restyling, so the
-    geometry cannot drift between the two verticals.
-
-    Cuisines stand in for marketplace's categories, and "Your orders" for its
-    cart, since takeaway has no basket of its own. %>
+<%# Takeaway header — the same structure as the marketplace one, per the
+    operator: the two storefronts should read as siblings. Reuses #navBar /
+    #topHalf / #bottomHalf and .nav-block from _marketplace_nav_bar.scss, so the
+    geometry cannot drift between the two verticals. Flattened with it on
+    2026-08-10: one line per entry, no stacked label/value blocks. %>
 <% active = local_assigns.fetch(:active, "restaurants") %>
 <% search_url = local_assigns.fetch(:search_url, restaurants_path) %>
 <% search_placeholder = local_assigns.fetch(:search_placeholder, t("search.restaurants")) %>
@@ -19,19 +16,13 @@
       <% end %>
     </div>
 
-    <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover" do %>
-      <span class="nav-line-1"><%= icon :nearby, size: 13 %> <%= t("storefront.deliver_to") %></span>
-      <span class="nav-line-2"><%= deliver_to %></span>
+    <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
+                aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
+      <%= icon :nearby, size: 13 %> <%= deliver_to %>
     <% end %>
 
     <div class="search marketplace-nav-search" data-controller="search-focus">
       <%= form_with url: search_url, method: :get, local: true do %>
-        <select name="cuisine" class="nav-search-category" aria-label="<%= t("storefront.cuisine") %>">
-          <option value=""><%= t("storefront.all") %></option>
-          <% Takeaway::Restaurant::CUISINE_TYPES.each do |cuisine| %>
-            <option value="<%= cuisine %>" <%= "selected" if params[:cuisine] == cuisine %>><%= cuisine %></option>
-          <% end %>
-        </select>
         <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
                placeholder="<%= search_placeholder %>" aria-label="<%= t("search.restaurants_label") %>"
                data-action="focus->search-focus#focus blur->search-focus#blur" />
@@ -40,27 +31,19 @@
     </div>
 
     <div id="accountStuff">
-      <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path, class: "nav-block nav-hover") do %>
-        <span class="nav-line-1"><%= t("storefront.hello") %> <%= authenticated? ? (Current.user.username.presence || t("storefront.you")) : t("storefront.sign_in") %></span>
-        <span class="nav-line-2"><%= t("storefront.account") %></span>
-      <% end %>
-      <%= link_to orders_path, class: "nav-block nav-hover#{" nav-cart--active" if active == "orders"}" do %>
-        <span class="nav-line-1"><%= t("storefront.your") %></span>
-        <span class="nav-line-2"><%= t("storefront.orders") %></span>
+      <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
+                  class: "nav-block nav-hover") do %>
+        <%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %>
       <% end %>
     </div>
   </div>
 
   <div id="bottomHalf">
-    <%= link_to restaurants_path, id: "department", class: "nav-hover" do %>
-      <%= icon :menu, size: 18 %> <%= t("storefront.all") %>
-    <% end %>
     <div id="sections">
       <%= link_to t("storefront.restaurants"), restaurants_path, class: "section nav-hover#{" section--active" if active == "restaurants"}" %>
       <%= link_to t("storefront.your_orders"), orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>
       <%= link_to t("storefront.drivers"), delivery_drivers_path, class: "section nav-hover#{" section--active" if active == "drivers"}" %>
       <%= link_to t("storefront.add_restaurant"), new_restaurant_path, class: "section nav-hover" if authenticated? %>
     </div>
-    <div id="subPromo"><%= t("storefront.sub_promo_food") %></div>
   </div>
 </div>
