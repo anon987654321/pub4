@@ -23,6 +23,11 @@ class TtsController < ApplicationController
       voice_locked:,
       style_locked:,
       bus: container[:bus],
+      # The client ranks playback lanes; the synthesis queue now ranks the same
+      # way, so an idle-loop nudge cannot be synthesized ahead of a reply the
+      # visitor is waiting on. Unknown or absent lane means response, which is
+      # the safe default: a reply never loses its place to an unlabelled job.
+      lane: params[:lane].to_s,
     )
     stream = Master::Voice::Expression.viseme_stream(text, style: synth_style, rate:)
     etag = %("#{job.job_id}")

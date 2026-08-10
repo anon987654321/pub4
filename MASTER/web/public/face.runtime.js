@@ -2541,6 +2541,13 @@ function announceTTS(text) {
 
 function ttsURL(text, voice, style) {
   const qs = new URLSearchParams({ text });
+  // Tell the server which lane this is. Its synthesis queue ranks by the same
+  // order this file ranks playback by, so an idle nudge can no longer be
+  // synthesized ahead of the reply someone is waiting on. Absent means
+  // "response" server-side, which is the safe default — an unlabelled job never
+  // loses its place to a nudge.
+  const lane = tts.meta.get(text)?.lane;
+  if (lane) qs.set('lane', lane);
   const persona = window.MASTER_PERSONA || {};
   const resolvedStyle = style || _nextTtsStyle(voice);
   if (voice) qs.set('voice', voice);
@@ -2685,8 +2692,22 @@ async function pollTTSJob(job, signal) {
   // silenced every later utterance — the "it only says scanning" bug (the
   // pre-cached status phrases play instantly; everything real timed out).
   // Late audio is still worth having: ttsTick serializes playback anyway.
-  for (let attempt = 0; attempt < 90; attempt++) {
-    const delay = attempt === 0 ? 40 : Math.min(80 + attempt * 90, 1200);
+  // Poll fast while the answer is still worth feeling instant, then back off.
+  //
+  // The previous schedule (40ms, then 80 + attempt*90 capped at 1200) started
+  // backing off immediately, so by the time synthesis finished the client was
+  // already sleeping in long gaps and noticed late: measured against the
+  // schedule itself, audio ready at 1.5s was picked up at 1.79s, at 2.5s it was
+  // picked up at 3.12s, and at 4s it was picked up at 4.81s. Up to 810ms of the
+  // wait was the client not looking, not the server not finishing.
+  //
+  // A flat 90ms for the first ~1.6s costs at most 18 extra requests against a
+  // local endpoint, and holds worst-case discovery lag under a tenth of a
+  // second across the whole range where a reply still feels immediate. After
+  // that the old curve resumes, because a job that has taken two seconds is
+  // queued behind something and hammering it helps nobody.
+  for (let attempt = 0; attempt < 110; attempt++) {
+    const delay = attempt === 0 ? 30 : (attempt <= 18 ? 90 : Math.min(120 + (attempt - 18) * 90, 1200));
     await new Promise((resolve) => setTimeout(resolve, delay));
     const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
     if (res.status === 202) {
@@ -2868,7 +2889,11 @@ function enqueueSpeech(text, opts = {}) {
   const decorated = _quirkifyTts(clean, _v, opts);
   applyParalinguisticState(decorated);
   if (tts.meta.size > 32) tts.meta.clear();
-  tts.meta.set(decorated, { voice: _v, style: _nextTtsStyle(_v) });
+  tts.meta.set(decorated, {
+    voice: _v,
+    style: _nextTtsStyle(_v),
+    lane: opts.priority === 'error' ? 'error' : (opts.quirky || opts.nudge ? 'nudge' : 'response'),
+  });
   announceTTS(decorated);
   tts.lastText = decorated;
   tts.resumeTime = null;

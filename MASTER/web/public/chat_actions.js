@@ -230,14 +230,62 @@ async function sendMessage(text) {
   let assistantBuffer = "";
   let ttsBuffer = "";
   const sentenceBreak = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
+  // Clause boundaries, used only for the very first thing said in a reply, and
+  // split into two because they break in opposite directions. Punctuation ends a
+  // clause, so the cut goes AFTER it. A conjunction begins one, so the cut goes
+  // BEFORE it — cutting after left the opener trailing a dangling "and", which
+  // is not where anyone pauses.
+  const clausePunct = /[,;:—–]\s+/;
+  const clauseJoin = /\s+(?:and|but|so|because|which|that|when|if)\s+/i;
+  let spokeFirst = false;
+
+  // Time to first sound is what makes a reply feel immediate, and synthesis
+  // time scales with how much text you hand the engine. Waiting for a whole
+  // sentence means a 25-word opener is synthesized before anything is heard;
+  // cutting the FIRST utterance at a clause starts the voice on a handful of
+  // words while the rest of the sentence is still arriving. Everything after
+  // that uses whole sentences, so phrasing settles immediately and only the
+  // opening is clipped short.
+  //
+  // Bounded on both sides deliberately: under MIN_FIRST_CHARS a fragment is too
+  // short to read as speech rather than a noise, and past MAX_FIRST_CHARS we
+  // stop waiting for a tidy boundary and start talking anyway.
+  const MIN_FIRST_CHARS = 24;
+  const MAX_FIRST_CHARS = 90;
+  const firstChunkCut = () => {
+    if (spokeFirst || ttsBuffer.trim().length < MIN_FIRST_CHARS) return -1;
+    const tail = ttsBuffer.slice(MIN_FIRST_CHARS);
+    const punct = tail.match(clausePunct);
+    const join = tail.match(clauseJoin);
+    // Whichever boundary comes first wins; punctuation keeps its mark, a
+    // conjunction is handed to the next chunk.
+    if (punct && (!join || punct.index <= join.index)) {
+      return MIN_FIRST_CHARS + punct.index + punct[0].length;
+    }
+    if (join) return MIN_FIRST_CHARS + join.index;
+    if (ttsBuffer.length >= MAX_FIRST_CHARS) {
+      // No boundary in range — break at a word edge, never mid-word.
+      const space = ttsBuffer.lastIndexOf(' ', MAX_FIRST_CHARS);
+      return space > MIN_FIRST_CHARS ? space + 1 : -1;
+    }
+    return -1;
+  };
+
   const flushSpeech = (force = false) => {
     let match;
     while ((match = ttsBuffer.match(sentenceBreak)) || (force && ttsBuffer.trim())) {
       const cut = match ? match.index + match[0].length : ttsBuffer.length;
       const sentence = ttsBuffer.slice(0, cut).trim();
       ttsBuffer = ttsBuffer.slice(cut);
-      if (sentence) window.MASTERVoice?.enqueue?.(sentence);
+      if (sentence) { window.MASTERVoice?.enqueue?.(sentence); spokeFirst = true; }
       if (!match) break;
+    }
+    if (force) return;
+    const early = firstChunkCut();
+    if (early > 0) {
+      const opener = ttsBuffer.slice(0, early).trim();
+      ttsBuffer = ttsBuffer.slice(early);
+      if (opener) { window.MASTERVoice?.enqueue?.(opener); spokeFirst = true; }
     }
   };
 

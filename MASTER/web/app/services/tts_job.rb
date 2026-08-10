@@ -6,13 +6,28 @@ require "json"
 
 class TtsJob
   CACHE_DIR = Rails.root.join("tmp", "tts_cache")
+
+  # Lower number is spoken sooner. The client already ranks its playback lanes
+  # error > response > nudge (face_speech_runtime.js), but this queue was plain
+  # FIFO, so an idle-loop nudge enqueued a moment before a reply was SYNTHESIZED
+  # first and the reply waited behind it. Ranking playback without ranking
+  # synthesis only moves the stall earlier in the pipeline.
+  PRIORITIES = { "error" => 0, "response" => 1, "nudge" => 2 }.freeze
+  DEFAULT_PRIORITY = PRIORITIES.fetch("response")
+
   @queue_mutex = Mutex.new
+  # Workers used to spin on `sleep 0.25` when the queue was empty, which is the
+  # common case for the first sentence of a reply: nothing else is in flight, so
+  # the job waited up to 250ms for a worker to wake before synthesis even began.
+  # A condition variable costs nothing and wakes on enqueue.
+  @queue_ready = ConditionVariable.new
   @materialize_mutex = Mutex.new
   @materializing = {}
   @queue = []
   @workers = []
 
-  def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil)
+  def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil,
+                   lane: "response")
     job = new(
       text:,
       voice:,
@@ -34,9 +49,17 @@ class TtsJob
     # back to the browser's native speechSynthesis (a different, robotic voice
     # per OS/browser). Writing the token at enqueue time closes that race.
     job.write_token
+    rank = PRIORITIES.fetch(lane.to_s, DEFAULT_PRIORITY)
     @queue_mutex.synchronize do
-      @queue << job unless @queue.any? { |queued| queued.job_id == job.job_id }
+      unless @queue.any? { |queued| queued[:job].job_id == job.job_id }
+        # Stable insert: ahead of everything strictly lower priority, behind
+        # everything of equal priority, so same-lane order is still arrival
+        # order and a reply's sentences cannot overtake each other.
+        at = @queue.index { |queued| queued[:rank] > rank } || @queue.size
+        @queue.insert(at, { job:, rank: })
+      end
       spawn_workers_locked!
+      @queue_ready.signal
     end
     job
   end
@@ -61,12 +84,15 @@ class TtsJob
       Thread.current.name = "tts-job-worker"
       Thread.current.report_on_exception = false
       loop do
-        job = @queue_mutex.synchronize { @queue.shift }
-        if job
-          materialize!(job)
-        else
-          sleep 0.25
+        entry = @queue_mutex.synchronize do
+          # wait releases the mutex and re-acquires on signal, so an enqueue
+          # wakes this thread immediately instead of it noticing up to 250ms
+          # later. The timeout is a safety net against a missed signal, not the
+          # normal path.
+          @queue_ready.wait(@queue_mutex, 5) while @queue.empty?
+          @queue.shift
         end
+        materialize!(entry[:job]) if entry
       end
     end
   end
