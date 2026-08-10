@@ -74,7 +74,9 @@ class Playlist::DillaSketchesController < Playlist::BaseController
 
   def authorize_editor
     u = Current.user
-    owner = (u == @parent.user)
+    # user_id, not user — @parent is found by id with nothing preloaded and
+    # strict_loading_by_default raises on the association read.
+    owner = (u && u.id == @parent.user_id)
     editor = false
     if (collab = @parent.collaborations.find_by(user: u))
       editor = %w[owner editor].include?(collab.role)

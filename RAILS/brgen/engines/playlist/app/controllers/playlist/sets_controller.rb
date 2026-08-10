@@ -87,7 +87,9 @@ class Playlist::SetsController < ApplicationController
 
   def authorize_owner_or_editor
     user = Current.user || (respond_to?(:current_user) ? current_user : nil)
-    return if user == @set.user
+    # user_id, not user — @set is found by id with nothing preloaded and
+    # strict_loading_by_default raises on the association read.
+    return if user && user.id == @set.user_id
     collab = @set.collaborations.find_by(user: user)
     return if collab && %w[owner editor].include?(collab.role)
     redirect_to(set_path(@set), alert: "Not allowed")

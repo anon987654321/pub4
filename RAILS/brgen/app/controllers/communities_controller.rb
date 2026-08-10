@@ -65,7 +65,10 @@ class CommunitiesController < ApplicationController
   end
 
   def authorize_owner
-    return if Current.user == @community.user
+    # user_id, not user: @community comes from Community.find(params[:id]) with
+    # nothing preloaded, and strict_loading_by_default raises on the association
+    # read before the comparison happens. See comments_controller, same bug.
+    return if Current.user && Current.user.id == @community.user_id
 
     redirect_to @community, alert: "Not allowed"
   end

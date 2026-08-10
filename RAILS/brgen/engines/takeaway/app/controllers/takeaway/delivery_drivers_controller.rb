@@ -28,7 +28,11 @@ module Takeaway
     end
 
     def authorize_owner!
-      redirect_to(delivery_driver_path(@delivery_driver), alert: "Not allowed") unless @delivery_driver.user == Current.user
+      # user_id, not user — @delivery_driver is found by id with nothing
+      # preloaded and strict_loading_by_default raises on the association read.
+      return if Current.user && Current.user.id == @delivery_driver.user_id
+
+      redirect_to(delivery_driver_path(@delivery_driver), alert: "Not allowed")
     end
 
     def driver_params
