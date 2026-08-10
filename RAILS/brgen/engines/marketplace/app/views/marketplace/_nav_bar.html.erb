@@ -46,7 +46,11 @@
     </div>
 
     <%= link_to listings_path, class: "nav-block nav-hover" do %>
-      <span class="nav-line-1">&nbsp;</span>
+      <%# No first line to show, but the block still needs one so "EN" lands on
+          the same baseline as the two-line blocks beside it. The reserved line
+          is a CSS concern -- .nav-line-1:empty in _marketplace_nav_bar.scss --
+          not a hard space in the markup that a screen reader reads out. %>
+      <span class="nav-line-1" aria-hidden="true"></span>
       <span class="nav-line-2">EN</span>
     <% end %>
 

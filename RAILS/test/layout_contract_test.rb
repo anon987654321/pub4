@@ -52,6 +52,40 @@ class LayoutContractTest < Minitest::Test
                  "these views jump a heading level; promote the heading and size it so nothing moves"
   end
 
+  # &nbsp; used as spacing, not as typography.
+  #
+  # The distinction is what the entity is touching. `~10&nbsp;km` binds a number
+  # to its unit so the pair never breaks across a line -- that is what a
+  # non-breaking space is for, and it stays. An &nbsp; alone on its line, or
+  # alone inside an element, is standing in for a gap or a reserved line box: it
+  # collapses at some widths, wraps at others, and is announced as a space.
+  #
+  # Four were replaced on 2026-08-10 -- three separating meta pairs on the dating
+  # profile, now .profile-meta with a flex gap, and one reserving the language
+  # block's first line in the marketplace nav, now .nav-line-1:empty::before.
+  # Measured: EN's baseline against the block beside it moved 0.0px.
+  def test_nbsp_is_typography_not_spacing
+    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,shared}", "app", "views", "**", "*.erb")) +
+            Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb"))
+
+    refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
+
+    hacks = views.flat_map do |path|
+      File.readlines(path).each_with_index.filter_map do |line, i|
+        next if line.lstrip.start_with?("<%#")
+
+        # Flagged when either side is whitespace or an element boundary, i.e.
+        # when it separates nothing from nothing.
+        next unless line =~ /(?:\A|[\s>])&nbsp;|&nbsp;(?:[\s<]|\z)/
+
+        "#{path.delete_prefix("#{ROOT}/")}:#{i + 1}  #{line.strip[0, 60]}"
+      end
+    end
+
+    assert_empty hacks.sort,
+                 "these &nbsp; are spacing, not typography — use a flex gap, padding, or a CSS-reserved line box"
+  end
+
   def test_layout_chrome_partial_exists
     assert File.file?(LAYOUT_CHROME), "expected _layout_chrome.scss"
     body = File.read(LAYOUT_CHROME)

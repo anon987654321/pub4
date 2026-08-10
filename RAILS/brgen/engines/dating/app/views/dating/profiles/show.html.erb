@@ -38,26 +38,30 @@
 
 <section data-tabs-target="panel" data-tabs-hash-value="#details" aria-labelledby="profile-details-tab" hidden>
   <article>
-    <p>
-      <span class="dim">Age</span> · <%= @profile.age || "—" %>
-      &nbsp;
-      <span class="dim">Gender</span> · <%= @profile.gender || "—" %>
-      &nbsp;
-      <span class="dim">Looking for</span> · <%= @profile.looking_for || "—" %>
+    <%# Each label/value pair is its own element so the gap can separate pairs
+        rather than characters. Bare text nodes between spans would become
+        anonymous flex items and the gap would land inside a pair, not between. %>
+    <p class="profile-meta">
+      <span><span class="dim">Age</span> · <%= @profile.age || "—" %></span>
+      <span><span class="dim">Gender</span> · <%= @profile.gender || "—" %></span>
+      <span><span class="dim">Looking for</span> · <%= @profile.looking_for || "—" %></span>
     </p>
   </article>
 
   <article>
-    <p>
-      <span class="dim">Location</span> · <%= @profile.location.presence || "—" %>
-      <% if @profile.neighborhood&.name.present? %> · <span class="dim">Bydel</span> · <%= @profile.neighborhood.name %><% end %>
-      &nbsp;
-      <span class="dim">Visibility</span> ·
-      <% if @profile.visible? %>
-        <span class="text-visible">visible</span>
-      <% else %>
-        <span class="text-hidden">hidden</span>
-      <% end %>
+    <p class="profile-meta">
+      <span>
+        <span class="dim">Location</span> · <%= @profile.location.presence || "—" %>
+        <% if @profile.neighborhood&.name.present? %> · <span class="dim">Bydel</span> · <%= @profile.neighborhood.name %><% end %>
+      </span>
+      <span>
+        <span class="dim">Visibility</span> ·
+        <% if @profile.visible? %>
+          <span class="text-visible">visible</span>
+        <% else %>
+          <span class="text-hidden">hidden</span>
+        <% end %>
+      </span>
     </p>
   </article>
 

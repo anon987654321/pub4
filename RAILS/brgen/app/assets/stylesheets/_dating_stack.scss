@@ -123,6 +123,16 @@
   opacity: 0.18;
 }
 
+/* Profile detail meta rows. These separated their label/value pairs with three
+   bare &nbsp; entities -- a spacing hack that collapses at some widths, wraps
+   mid-pair at others, and is read aloud as a space. The pairs are elements now
+   and the gap does the separating (layout_rules.whitespace.gap_over_margin). */
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

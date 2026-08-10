@@ -115,6 +115,16 @@
   color: #ccc;
 }
 
+/* The language block has no first line. .nav-block is a centred column, so
+   without a reserved line box "EN" centres on its own and sits a few px above
+   the neighbouring blocks' second line. An empty inline-block gives the line box
+   its strut, and the line-height supplies the height -- which is what the
+   &nbsp; that used to be in the markup was doing, one layer too high up. */
+.nav-line-1:empty::before {
+  content: "";
+  display: inline-block;
+}
+
 .nav-line-2 {
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
