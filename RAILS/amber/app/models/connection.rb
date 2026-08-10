@@ -19,6 +19,6 @@ class Connection < ApplicationRecord
   private
 
   def no_self_connection
-    errors.add(:addressee, "cannot be yourself") if requester_id == addressee_id
+    errors.add(:addressee, :self_connection) if requester_id == addressee_id
   end
 end

@@ -17,6 +17,6 @@ class PackingList < ApplicationRecord
 
   def ends_after_start
     return unless starts_on && ends_on
-    errors.add(:ends_on, "must be on or after starts_on") if ends_on < starts_on
+    errors.add(:ends_on, :before_start) if ends_on < starts_on
   end
 end

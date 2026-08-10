@@ -12,7 +12,10 @@ class ConnectionTest < ActiveSupport::TestCase
     connection = Connection.new(requester: @alice, addressee: @alice, status: "pending")
 
     assert_not connection.valid?
-    assert_includes connection.errors[:addressee], "cannot be yourself"
+    # The key, not the sentence. default_locale is nb, so asserting the English
+    # string tied this test to whichever language the message happened to be in
+    # -- and it was in English on a Norwegian site, which was the bug.
+    assert_includes connection.errors.details[:addressee].map { |d| d[:error] }, :self_connection
   end
 
   test "accept transitions pending to accepted" do

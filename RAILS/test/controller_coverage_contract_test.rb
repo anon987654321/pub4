@@ -164,6 +164,44 @@ class ControllerCoverageContractTest < Minitest::Test
                  "render shared/pager instead — these helpers exist in one pagy major and not the other"
   end
 
+  # ENGINES.md and the marketplace README both said brgen main kept "the
+  # craigslist/airbnb-style personal classifieds", with the engine as the
+  # transactional storefront. There is no listing model in the host app --
+  # app/models/marketplace.rb is a table-name-prefix module and nothing else --
+  # so both docs sent a reader looking for a tier that was never built. Same
+  # shape as the WIRING_NOTES dialect table that sent CSS work at the palette
+  # brgen had left.
+  #
+  # This asserts the pair stays consistent in whichever direction it is resolved:
+  # either the host has no listing model and the docs must not claim one, or
+  # someone builds it and this test says to update the docs with it.
+  def test_docs_do_not_claim_a_host_app_listing_model_that_does_not_exist
+    host_models = Dir.glob(File.join(ROOT, "brgen", "app", "models", "*.rb")).map { |p| File.basename(p, ".rb") }
+    host_has_listings = host_models.any? { |m| m =~ /\A(listing|classified|advert)/ }
+
+    docs = {
+      "brgen/ENGINES.md" => File.read(File.join(ROOT, "brgen", "ENGINES.md")),
+      "brgen/engines/marketplace/README.md" =>
+        File.read(File.join(ROOT, "brgen", "engines", "marketplace", "README.md")),
+    }
+
+    return if host_has_listings # the claim would be true; nothing to police
+
+    claims = docs.filter_map do |name, body|
+      # A claim is a sentence putting classifieds in the host app. The corrected
+      # text names the absence explicitly, so exclude the lines that do that.
+      offending = body.lines.each_with_index.select do |line, _|
+        line =~ /classifieds/i && line =~ /host app|brgen main keeps/i && line !~ /used to say|does not|never/i
+      end
+      next if offending.empty?
+
+      "#{name}:#{offending.first[1] + 1} — #{offending.first[0].strip[0, 70]}"
+    end
+
+    assert_empty claims,
+                 "no listing model exists in brgen/app/models; these say the host app carries classifieds"
+  end
+
   def test_bsdports_ports_and_sso
     ports = read_app("bsdports", "app/controllers/ports_controller.rb")
     sso = read_app("bsdports", "app/controllers/sso_controller.rb")

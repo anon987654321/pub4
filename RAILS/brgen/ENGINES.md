@@ -4,9 +4,18 @@
 brgen's subdomain verticals are being pulled out of the host app into mountable
 Rails engines under `engines/`, so each subapp (tv, dating, takeaway, playlist,
 marketplace, messenger) has focused ownership instead of drowning in brgen main.
-brgen main keeps the x.com-style social feed and the craigslist/airbnb-style
-personal classifieds; the marketplace engine is the Amazon-style multi-seller
-storefront; the rest are their own domains.
+brgen main keeps the x.com-style social feed; the marketplace engine owns every
+listing there is; the rest are their own domains.
+
+This paragraph used to say brgen main also kept "the craigslist/airbnb-style
+personal classifieds". It does not and never did: `brgen/app/models/marketplace.rb`
+is a table-name-prefix module and there is no listing model in the host app.
+Both tiers are one `Marketplace::Listing`, which `belongs_to :store, optional:
+true` — a listing with a store is a shop's product, a listing without one is a
+person selling a chair. The casual tier is therefore expressible but not built:
+no separate surface, no seeds that exercise it, and the storefront's own chrome
+around it. Building it out is a product decision; saying it already exists in a
+place it does not is how a reader goes looking for a model that was never there.
 
 `tv` was the pilot (2026-08-02). This is the recipe it proved — follow it exactly;
 the two starred steps are non-obvious and cost a boot each to find.

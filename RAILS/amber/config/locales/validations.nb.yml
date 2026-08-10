@@ -1,0 +1,25 @@
+# Model validation messages, kept out of nb.yml on purpose.
+#
+# These belong beside the rest of amber's Norwegian, and the day nb.yml is quiet
+# they can move there. They are here because Rails loads every file under
+# config/locales and merges them, which means a key can land without editing a
+# file another session has open — and nb.yml has carried uncommitted work from a
+# concurrent session all day. The models that raise these symbols are useless
+# without the strings: `errors.add(:addressee, :self_connection)` with no entry
+# renders "translation missing", so the pair has to ship together or not at all.
+nb:
+  activerecord:
+    errors:
+      models:
+        connection:
+          attributes:
+            addressee:
+              self_connection: "kan ikke være deg selv"
+        follow:
+          attributes:
+            followee:
+              self_follow: "du kan ikke følge deg selv"
+        packing_list:
+          attributes:
+            ends_on:
+              before_start: "må være på eller etter startdatoen"

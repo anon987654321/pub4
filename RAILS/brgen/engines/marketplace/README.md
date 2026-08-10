@@ -7,11 +7,24 @@ subdomain (localized per country, e.g. `markedsplass.brgen.no` — see
 
 ## What it is
 
-Where brgen main's classifieds are casual, person-to-person listings (craigslist/
-airbnb-style, in the host app), **marketplace is the transactional storefront**:
-shop owners (`Store`) post product `Listing`s across `Categories`, buyers add them
-to a cart and `Checkout` (Stripe/Vipps via `webhooks`), and both sides leave
-`Review`s. `Deal`s and `SavedSearch`es aid discovery; `favorite` bookmarks a listing.
+**Every listing in brgen lives here**, casual and transactional alike. Shop owners
+(`Store`) post product `Listing`s across `Categories`, buyers add them to a cart
+and `Checkout` (Stripe/Vipps via `webhooks`), and both sides leave `Review`s.
+`Deal`s and `SavedSearch`es aid discovery; `favorite` bookmarks a listing.
+
+The two tiers are one model, not two places. `Listing belongs_to :store,
+optional: true` — with a store it is a shop's product, without one it is a person
+selling a chair. Only the first is built out: the seeds always attach a store,
+there is no separate casual surface, and the storefront chrome wraps both.
+
+This paragraph used to say the casual tier was "in the host app". It is not.
+`brgen/app/models/marketplace.rb` is a table-name-prefix module and the host has
+no listing model at all, so a reader following that sentence goes looking for
+something that was never written. What *is* Craigslist-shaped about brgen is the
+access model rather than the catalogue: `ListingPolicy` lets anyone list without
+signing up, and `Shared::Authentication` gives anonymous visitors a soft
+`Current.user` to do it with. The taxonomy is consumer goods — electronics,
+clothing, furniture, vehicles, services — with no housing, jobs or gigs.
 
 ## Models (`marketplace_*` tables)
 

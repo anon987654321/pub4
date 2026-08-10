@@ -1,0 +1,18 @@
+# English half of validations.nb.yml — see that file for why these are not in
+# en.yml. Both move together when those files are quiet.
+en:
+  activerecord:
+    errors:
+      models:
+        connection:
+          attributes:
+            addressee:
+              self_connection: "cannot be yourself"
+        follow:
+          attributes:
+            followee:
+              self_follow: "cannot follow yourself"
+        packing_list:
+          attributes:
+            ends_on:
+              before_start: "must be on or after the start date"
