@@ -6,6 +6,18 @@
    MASTER mission-control). Dialect mixins override these on :root. */
 :root {
   --chrome-inset: 12px;
+  /* The vertical inset for fixed chrome, which is NOT the same number as the
+     horizontal one and was being given it anyway.
+     --nav-swiper-h is tap-min + (space-2 * 2) + safe-top, so a tap-min-tall item
+     centres on that band at exactly space-2 from the top. The brand mark and the
+     theme toggle used --chrome-inset (12px) for `top` instead, which put them
+     3px below the nav links: measured on brgen.no, links centre-y 31, logo and
+     toggle centre-y 34, in a 62px bar. Small enough to read as sloppiness rather
+     than as a bug, which is why it survived.
+     --chrome-inset stays 12px and stays px, for the reason recorded above it: a
+     distance from the screen edge should not scale with the reading size. This
+     one is a different measurement — it aligns to the bar, so it follows the bar. */
+  --chrome-inset-block: var(--space-2);
   --tap-min: 44px;
   --bar-height: 44px;
   --page-gutter: clamp(16px, 5vw, 48px);
@@ -144,7 +156,7 @@ main[role="main"] {
   position: fixed;
   /* Above app chrome, not merely above the drawer -- see --z-brand. */
   z-index: var(--z-brand, 120);
-  top: calc(var(--chrome-inset, 12px) + var(--safe-top, 0px));
+  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px));
   inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
   display: inline-flex;
   align-items: center;

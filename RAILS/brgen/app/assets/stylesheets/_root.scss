@@ -179,7 +179,7 @@ a.brgen-logo-mark,
      over the safe area rather than max()'d against it -- see --chrome-inset.
      This was 0.5rem top / 0.75rem start, so the brand sat 4px higher than the
      toggle opposite it and lost its inset entirely on a notched phone. */
-  top: calc(var(--chrome-inset, 12px) + var(--safe-top, 0px));
+  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px));
   inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
   display: inline-flex;
   align-items: center;

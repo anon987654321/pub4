@@ -99,7 +99,7 @@
 /* Theme control — icon only, no circular sphere/chip behind it. */
 .theme-toggle {
   position: fixed;
-  top: calc(var(--chrome-inset, 12px) + var(--safe-top, 0px));
+  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px));
   inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px));
   z-index: 110;
   width: 44px;

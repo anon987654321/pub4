@@ -58,6 +58,18 @@ module Deploy
     # A background this light cannot be a dark theme, whatever the tokens say.
     DARK_MAX_LUMA = 0.35
 
+    # Fixed chrome sharing the top band, which must therefore share one centre
+    # line. Measured on brgen.no before this check existed: nav links centred at
+    # y=31 in a 62px bar while the brand mark and theme toggle sat at y=34,
+    # because those two took `top` from --chrome-inset (a distance from the
+    # screen edge, 12px) instead of from the bar. Three pixels reads as
+    # sloppiness rather than as a bug, which is why it survived review and why it
+    # wants a number rather than an eye.
+    TOP_BAND = %w[.nav_link .brgen-logo-mark .theme-toggle].freeze
+
+    # Sub-pixel differences are rounding, not misalignment.
+    ALIGN_TOLERANCE_PX = 1
+
     def initialize(result: GateResult.new)
       @result = result
     end
@@ -87,9 +99,10 @@ module Deploy
       return @result.skipped_live("rendered_invariants: #{host} unreadable") unless measured
 
       data = JSON.parse(measured)
-      @result.checked!(2)
+      @result.checked!(3)
       check_theme(host, surface[:theme], data)
       check_chat_corner(host, data)
+      check_top_band_alignment(host, data)
     rescue StandardError => e
       @result.skipped_live("rendered_invariants: #{host} #{e.class}")
     end
@@ -136,6 +149,27 @@ module Deploy
       )
     end
 
+    # Everything sharing the top band shares a centre line, or this says by how
+    # much it does not. Compares centres rather than tops deliberately: elements
+    # of different heights are correctly aligned at different tops, so a
+    # top-based check would demand the wrong thing.
+    def check_top_band_alignment(host, data)
+      present = (data["band"] || {}).reject { |_, box| box.nil? }
+      return if present.size < 2
+
+      centres = present.transform_values { |box| box["cy"] }
+      spread = centres.values.max - centres.values.min
+      return if spread <= ALIGN_TOLERANCE_PX
+
+      @result.fail(
+        "#{host} top chrome is #{spread}px out of alignment " \
+        "(centre-y: #{centres.map { |sel, cy| "#{sel} #{cy}" }.join(', ')}). " \
+        "Everything in the top band centres on the nav bar — take `top` from " \
+        "--chrome-inset-block, which follows the bar, not --chrome-inset, which is a " \
+        "distance from the screen edge.",
+      )
+    end
+
     PROBE = <<~JS
       (() => {
         const cs = getComputedStyle(document.body);
@@ -156,7 +190,15 @@ module Deploy
             };
           }
         }
-        return JSON.stringify({ bg, luma, chat });
+        const band = {};
+        for (const sel of [".nav_link", ".brgen-logo-mark", ".theme-toggle"]) {
+          const t = document.querySelector(sel);
+          const tr = t && t.getBoundingClientRect();
+          band[sel] = (tr && tr.width > 0 && tr.height > 0)
+            ? { cy: Math.round(tr.top + tr.height / 2) }
+            : null;
+        }
+        return JSON.stringify({ bg, luma, chat, band });
       })()
     JS
   end
