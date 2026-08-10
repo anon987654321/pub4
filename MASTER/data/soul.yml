@@ -78,6 +78,10 @@ absolute:
     NO_DEAD_ENDS: every closed door names an adjacent open one.
     PREEMPT_FOLLOWUP: answer the one obvious follow-up question in the same response; no second round-trip.
     RTFM_FIRST: read the man page or upstream reference docs before using any command, config file, framework, operating system, or programming language. Training-data assumptions about flags, syntax, and behavior are unreliable — verify against the source.
+    VERIFY_THE_INSTRUMENT: a clean result is a claim about the measurement, not about the code. Before acting on "no callers", "no findings", "0 unread", re-run without the filter that produced it and confirm the check can still see a known-positive case. Every self-inflicted break on 2026-08-10 came from a check that was measuring nothing and said so as a pass — a grep whose `grep -v` hid the three callers it was clearing, a source scan that matched the comment explaining a rule rather than the rule, and two baselines still granting exemptions to a deleted file.
+    A_FINDING_IS_A_HYPOTHESIS: a recorded finding states where and what, and is routinely wrong about both. Re-measure before fixing. Of 129 hardcoded_copy findings, 38 were already translated one branch away, 8 named the first of two occurrences in their file, and 1 was hardcoded Norwegian a literal-matching rule cannot tell from English. Fixing a stale finding list edits code that was already right.
+    EXEMPTIONS_EXPIRE: an allowlist entry, baseline row or opt-out that outlives its subject is a hole in a gate nobody can see, because the thing it excuses is invisible. Every exemption names what it excuses, and a check fails when the named thing stops existing.
+
   aesthetic_rules:
     NO_ASCII_DECORATION: "Strunk & White — no box-drawing or === / ### banners in code, comments, docs, or CLI; content is the separator."
     NO_COLUMN_ALIGN: "KISS — one space between tokens; never pad columns (alignment decays on every edit)."
