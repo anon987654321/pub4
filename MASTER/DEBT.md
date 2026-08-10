@@ -537,6 +537,35 @@ root reported 89 phantom stale entries in `data/autoload.yml`, whose paths are
 relative to `MASTER/lib/`. Verify the instrument before believing the finding,
 which is the other lesson of this week.
 
+## Scanner Convention — a test must not punish the improvement it exists to detect
+
+Third sibling to the two sections above, found the same day. A gate that watches
+for a finding must be written so that **fixing the finding is not a failure.**
+
+`RAILS/test/gate_live_and_css_budget_test.rb` asserted that one specific colour
+pair — marketplace accent against the chrome the verticals paint on — measured
+*below* the AA contrast threshold, with the message "the finding this pairing
+exists to surface has gone". The intent was right and the encoding was backwards:
+anyone who improved that accent would have been met with a red test naming their
+fix as the regression. Nobody did, because it was already failing for a second
+reason (the surface dialect had been renamed under it), so the trap sat armed and
+invisible behind an unrelated red.
+
+Two rules come out of it, and they generalise past contrast:
+
+1. **Assert the invariant, not the instance.** The thing that must hold is that
+   the check still surfaces *something* a narrower check missed — not that one
+   named token is still broken. `refute_empty findings` survives every legitimate
+   fix; `assert specific_pair.ratio < threshold` survives none of them.
+2. **Read a name from the constant that owns it.** The test hardcoded the
+   dialect string, so a deliberate rename in the metric read as a measurement
+   failure. A test that spells out a value the code already names cannot tell a
+   rename from a regression.
+
+The tell is a test whose failure message describes something good happening.
+When you write one, invert it and ask what a successful fix would look like in
+CI. If the answer is "red", the assertion is pointed the wrong way.
+
 ## Not Debt
 
 - Two `Master::` spines.

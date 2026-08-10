@@ -11,6 +11,12 @@
 #
 #   ruby RAILS/tools/generate_route_manifest.rb [app ...]
 #
+# NAME EVERY APP. This rewrites the whole file rather than merging into it, so
+# regenerating for one app deletes the other two and the next run of
+# route_manifest_inventory fails with "manifest covers every app the inventory
+# probes". If you are here because one app's digest went stale, still pass all
+# three: `amber brgen bsdports`.
+#
 # Each app records a digest of its route sources. PageInventory fails the
 # simulation when the digest no longer matches, so a stale manifest is loud
 # rather than silently wrong -- which is the failure the hand-maintained ladder
