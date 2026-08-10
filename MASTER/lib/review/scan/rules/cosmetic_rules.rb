@@ -193,6 +193,50 @@ module Master
           [finding(line:, message: "begin/rescue inside def — put rescue on the def line")]
         end
 
+        # COMMENTS_AS_DEODORANT declared only a detect_semantic prompt, so it
+        # cost an LLM call and reached a file only when the cheap passes had
+        # already flagged it — the comment on a file that reads clean was never
+        # examined. Restatement is the mechanical half of the rule and needs no
+        # model: a comment whose content words are mostly the identifiers on the
+        # next line is saying it twice.
+        #
+        # Content words only, and a floor of three, because "# Cache the user"
+        # over `def cache_user` is a two-word coincidence and flagging it would
+        # train people to delete the comments that earn their place.
+        COMMENT_STOPWORDS = %w[the and for that with not its this are was were does def end
+                               self new nil true false].freeze
+        COMMENT_RESTATEMENT_FLOOR = 3
+        COMMENT_RESTATEMENT_RATIO = 0.75
+
+        # snake_case splits, so `increment_wear_count` is three words rather than
+        # one token that can never match the prose above it.
+        def self.content_words(text)
+          text.downcase.scan(/[a-z]{3,}/).reject { |word| COMMENT_STOPWORDS.include?(word) }.uniq
+        end
+
+        RuleDSL.rule :COMMENTS_AS_DEODORANT,
+          severity: :warning, tags: %i[CLEAN_CODE SELF_EXPLAINING], applies_to: %i[ruby],
+          description: "a comment that restates the line below it says nothing the code did not" do |src, path:|
+          next [] if path.to_s.include?("/review/scan/rules/")
+
+          lines = src.lines
+          lines.each_with_index.filter_map do |line, index|
+            next unless line.strip.start_with?("#")
+            next if line.include?("frozen_string_literal") || line.strip.start_with?("#!")
+
+            code = lines[index + 1].to_s
+            next if code.strip.empty? || code.strip.start_with?("#", "end")
+
+            said = Rules.content_words(line.sub(/^\s*#\s*/, ""))
+            next if said.size < COMMENT_RESTATEMENT_FLOOR
+
+            shared = (said & Rules.content_words(code)).size
+            next if shared.to_f / said.size < COMMENT_RESTATEMENT_RATIO
+
+            finding(line: index + 1,
+                    message: "comment restates the line below it — delete it, or say why instead of what")
+          end
+        end
       end
     end
   end

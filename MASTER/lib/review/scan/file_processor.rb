@@ -17,6 +17,11 @@ module Master
         MAX_FILE_BYTES = 10 * 1024 * 1024
         MAX_LINES = 10_000
 
+        # Fraction of otherwise-clean files that still get the semantic pass.
+        # Keyed on the path digest rather than rand, so two scans of the same
+        # tree ask the same questions and their reports can be compared.
+        SEMANTIC_SAMPLE = ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0.1").to_f
+
         def initialize(event_bus: nil)
           @bus = event_bus
         end
@@ -125,9 +130,40 @@ module Master
           findings = []
           findings.concat(run_rule_pass(pass: :lexical, rules: lexical, code:, ast:, path:))
           findings.concat(run_rule_pass(pass: :structural, rules: structural, code:, ast:, path:))
-          return findings if findings.empty? || lexical_error?(findings)
+          return findings if lexical_error?(findings)
+          return skip_semantic(path:, rules: semantic, findings:) unless semantic_due?(findings, path)
 
           findings.concat(run_rule_pass(pass: :semantic, rules: semantic, code:, ast:, path:))
+        end
+
+        # 74 of the 225 declared rules reach a file only through the semantic
+        # pass, and the pass ran only when the cheap passes had already found
+        # something. So a file that read as clean was never asked the 74
+        # questions — and reported "0 findings", which is a claim about the whole
+        # rule set rather than about the third of it that ran.
+        #
+        # The cost gate is real: one LLM call per file is not free on a tree this
+        # size. Keeping it, but sampling a deterministic slice so clean files are
+        # not permanently exempt, and saying so when a file is skipped.
+        def semantic_due?(findings, path)
+          return true unless findings.empty?
+          return false if SEMANTIC_SAMPLE <= 0
+
+          Digest::SHA256.hexdigest(sample_key(path))[0, 8].to_i(16) % 1000 < (SEMANTIC_SAMPLE * 1000).round
+        end
+
+        # Relative to the repo, not the absolute path: keyed on the latter, two
+        # checkouts of the same tree sample different files and a scan is not
+        # reproducible off the machine that ran it. Relative also holds still
+        # while the file is edited, so a rule does not switch on and off under
+        # someone's keystrokes.
+        def sample_key(path)
+          path.to_s.delete_prefix("#{Master::ROOT}/")
+        end
+
+        def skip_semantic(path:, rules:, findings:)
+          @bus&.publish("scan:semantic_skipped", path:, rule_count: rules.size, reason: "clean file, outside sample")
+          findings
         end
 
         def partition_rules(rule_set, ast)
