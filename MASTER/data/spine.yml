@@ -65,7 +65,35 @@ spine:
   # so a rationale paragraph above a tricky line satisfies one rule and breaches
   # the other. Three passes have now been paid for out of dead code instead of
   # deciding which rule means it.
-  lib_ceiling: 47458
+  # RE-EXPRESSED 2026-08-10. The unit changed: this is now **code lines**
+  # (non-blank, non-comment) across lib/**/*.rb, not raw lines. Operator decision,
+  # settling the conflict the note directly above records and did not resolve —
+  # lint:spine charged for comment lines while [DENSITY] deliberately does not, so
+  # a rationale paragraph above a tricky line satisfied one rule and breached the
+  # other, and three ratchet passes had been paid for out of dead code instead of
+  # deciding which rule meant it. They now agree.
+  #
+  # The key is renamed with the unit. A stale 47458 under `lib_code_ceiling` would
+  # have passed silently with ~20% slack; under a renamed key the Rakefile fails
+  # to load instead. Same reason the count is code lines: a number nobody can
+  # misread by accident.
+  #
+  # Recorded at 38219, which is the measurement, not a target. No raise allowance
+  # spent — this is a re-expression of the same tree, not permission to grow.
+  #
+  # For the record, because the switch happened while the old ceiling was
+  # breached: lib/ was 47753 raw lines here, +295 over the old 47458. That breach
+  # was real and traced to four commits — +119 (22e012e52, a TTS lock that
+  # outlived its owner), +141 (ae7f3f5a6, restoring lib/pub4/status_report.rb,
+  # which an orphan sweep had deleted while bin/pub4 still required it), +29
+  # (f82bcf63c), +6 (2839ab805). None of it is accretion the ratchet exists to
+  # catch; one of them is a deletion being undone. Switching units does not
+  # forgive it, and the number below is the honest post-fact measurement.
+  lib_code_ceiling: 38219
+  # Raw-line history, kept so the drift stays legible across the unit change.
+  # These are NOT comparable to lib_code_ceiling.
+  lib_raw_at_switch: 47753
+  lib_raw_ceiling_before_switch: 47458
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"

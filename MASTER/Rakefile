@@ -210,8 +210,32 @@ namespace :lint do
   task :spine do
     require "yaml"
     config = YAML.safe_load_file(File.join(__dir__, "data", "spine.yml")).fetch("spine")
-    ceiling = config.fetch("lib_ceiling")
-    lines = Dir.glob(File.join(__dir__, "lib", "**", "*.rb")).sum { |f| File.readlines(f).size }
+
+    # Code lines: non-blank, non-comment. This counted every line until
+    # 2026-08-10, and spine.yml had already recorded the problem with that
+    # without resolving it -- lint:spine charged for comment lines and [DENSITY]
+    # deliberately did not, so a paragraph of rationale above a tricky line
+    # satisfied one rule and breached the other. In a tree whose convention is to
+    # write that paragraph, the two rules were pulling in opposite directions and
+    # three ratchet passes had been paid for out of dead code rather than
+    # deciding which one meant it. They now agree.
+    #
+    # The key is lib_code_ceiling, not lib_ceiling: the unit changed, and a
+    # renamed key makes a stale number a load error instead of a silent pass at
+    # roughly 20% slack.
+    if config.key?("lib_ceiling") && !config.key?("lib_code_ceiling")
+      abort "lint:spine: data/spine.yml still carries lib_ceiling, which counted raw lines. " \
+            "This task now counts code lines (non-blank, non-comment). Rename the key to " \
+            "lib_code_ceiling and re-measure -- the old number is ~20% slack in the new unit, " \
+            "so carrying it across would pass having measured nothing."
+    end
+    ceiling = config.fetch("lib_code_ceiling")
+    lines = Dir.glob(File.join(__dir__, "lib", "**", "*.rb")).sum do |file|
+      File.readlines(file).count do |line|
+        stripped = line.strip
+        !stripped.empty? && !stripped.start_with?("#")
+      end
+    end
     core_files = Dir.glob(File.join(__dir__, "core", "*.rb")).size
 
     if core_files > config.fetch("core_files")
@@ -244,7 +268,7 @@ namespace :lint do
     # The ratchet only tightens. Nothing here can raise the ceiling.
     if lines < ceiling && ENV["RATCHET"] == "1"
       body = File.read(File.join(__dir__, "data", "spine.yml"))
-      body = body.sub(/^  lib_ceiling: \d+$/, "  lib_ceiling: #{lines}")
+      body = body.sub(/^  lib_code_ceiling: \d+$/, "  lib_code_ceiling: #{lines}")
       # A real fall clears the raise log, which is what makes the allowance a
       # budget rather than a countdown to a permanent failure. Earning back a
       # raise requires lib/ to actually come down first.
