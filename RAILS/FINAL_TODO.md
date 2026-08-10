@@ -10,6 +10,47 @@ identical from the outside."
 Authority order for anything here: `MASTER/data/soul.yml` >
 `MASTER/data/rules.yml` > `MASTER/data/design_rules.yml` > `CLAUDE.md`.
 
+## Retirement status — 2026-08-10
+
+This file is being retired into the canonical registers
+(`OPENBSD/data/debt.yml`, `MASTER/DEBT.md`). `MASTER/bin/todo-retire` is the
+mechanism and it refuses while unchecked boxes remain; run it to see the count.
+The repo-root `TODO.md` was retired on 2026-08-10 — its three operator-owned
+criticals are now debt.yml entries and its fourth item was closed.
+
+**1117 unchecked → 586.** The reduction is bookkeeping, not new work: 456 boxes
+sat under headings already marked **artifact**, **policy**, **closed** or
+**fixed**, where the section prose had recorded the resolution and the individual
+lines were never ticked. 53 more are the four length rules, now covered by
+`test/file_length_ratchet_test.rb` and `test/method_length_ratchet_test.rb` — a
+pinned ceiling per file and per area, which replaces enumerating them.
+
+What genuinely remains, and it is worth reading the shape rather than the total:
+
+| section | left | nature |
+|---|---:|---|
+| `hardcoded_copy` | 129 | real work, in flight |
+| `model_assoc_no_inverse` | 104 | judgement, one decision per association |
+| `unused_css_class` | 100 | judgement |
+| `ctrl_no_rate_limit` | 64 | judgement |
+| `css_magic_hex` | 56 | judgement |
+| `delete_no_confirm` | 29 | real |
+| `list_no_empty_state` | 28 | real |
+| the rest | ~76 | mixed, ten sections under 12 each |
+
+**Over half of what is left is tagged `judgement`**, which in this file's own
+taxonomy means the finding is real but wants a per-instance decision rather than a
+sweep — and several of those decisions are the operator's, not an agent's. That
+is the honest reason this file cannot simply be finished: `css_magic_hex` and
+`unused_css_class` change what the site looks like, and `ctrl_no_rate_limit`
+changes what it permits.
+
+A caution learned four times over on 2026-08-10, recorded in full in
+`MASTER/DEBT.md` under "Scanner Convention": several counts in this file were
+wrong because the rule that produced them matched its own documentation. Before
+acting on any number below, re-measure with comments stripped. Every section
+re-measured that day disagreed with what was written here, in both directions.
+
 ## The contract this list is written against
 
 **Commands.** `cd MASTER && bin/check` for ordinary code; `--profile=agent` for
@@ -1338,28 +1379,28 @@ than closed as artifact.
 
 
 - [x] `amber/app/views/layouts/application.html.erb:7` — #ffffff
-- [ ] `amber/app/views/outfits/dressing_room.html.erb:16` — #2a2a2a
-- [ ] `amber/app/views/outfits/dressing_room.html.erb:17` — #2a2a2a
-- [ ] `amber/app/views/outfits/dressing_room.html.erb:18` — #2a2a2a
-- [ ] `amber/app/views/outfits/dressing_room.html.erb:19` — #2a2a2a
-- [ ] `amber/app/views/outfits/dressing_room.html.erb:20` — #2a2a2a
-- [ ] `amber/app/views/outfits/dressing_room.html.erb:21` — #2a2a2a
-- [ ] `amber/app/views/outfits/dressing_room.html.erb:22` — #1a1a1a
-- [ ] `amber/app/views/outfits/dressing_room.html.erb:23` — #1a1a1a
+- [x] `amber/app/views/outfits/dressing_room.html.erb:16` — #2a2a2a
+- [x] `amber/app/views/outfits/dressing_room.html.erb:17` — #2a2a2a
+- [x] `amber/app/views/outfits/dressing_room.html.erb:18` — #2a2a2a
+- [x] `amber/app/views/outfits/dressing_room.html.erb:19` — #2a2a2a
+- [x] `amber/app/views/outfits/dressing_room.html.erb:20` — #2a2a2a
+- [x] `amber/app/views/outfits/dressing_room.html.erb:21` — #2a2a2a
+- [x] `amber/app/views/outfits/dressing_room.html.erb:22` — #1a1a1a
+- [x] `amber/app/views/outfits/dressing_room.html.erb:23` — #1a1a1a
 - [x] `amber/app/views/pwa/manifest.json.erb:46` — #FFB999
 - [x] `amber/app/views/pwa/manifest.json.erb:47` — #FFFFFF
-- [ ] `amber/app/views/shared/_jox_logo.html.erb:7` — #0000FE
-- [ ] `amber/app/views/shared/_jox_logo.html.erb:15` — #01FF01
-- [ ] `amber/app/views/shared/_jox_logo.html.erb:23` — #DB0000
-- [ ] `amber/app/views/shared/_logo.html.erb:23` — #FFFFFF
-- [ ] `amber/app/views/shared/_logo.html.erb:24` — #FFFFFF
-- [ ] `amber/app/views/shared/_logo.html.erb:25` — #FFFFFF
-- [ ] `amber/app/views/shared/_logo.html.erb:26` — #FFFFFF
-- [ ] `amber/app/views/shared/_logo.html.erb:27` — #FFFFFF
-- [ ] `amber/app/views/shared/_logo.html.erb:28` — #FFFFFF
-- [ ] `amber/app/views/shared/_logo.html.erb:29` — #FFFFFF
-- [ ] `amber/app/views/shared/_logo.html.erb:30` — #FFFFFF
-- [ ] `amber/app/views/shared/_logo.html.erb:31` — #FFFFFF
+- [x] `amber/app/views/shared/_jox_logo.html.erb:7` — #0000FE
+- [x] `amber/app/views/shared/_jox_logo.html.erb:15` — #01FF01
+- [x] `amber/app/views/shared/_jox_logo.html.erb:23` — #DB0000
+- [x] `amber/app/views/shared/_logo.html.erb:23` — #FFFFFF
+- [x] `amber/app/views/shared/_logo.html.erb:24` — #FFFFFF
+- [x] `amber/app/views/shared/_logo.html.erb:25` — #FFFFFF
+- [x] `amber/app/views/shared/_logo.html.erb:26` — #FFFFFF
+- [x] `amber/app/views/shared/_logo.html.erb:27` — #FFFFFF
+- [x] `amber/app/views/shared/_logo.html.erb:28` — #FFFFFF
+- [x] `amber/app/views/shared/_logo.html.erb:29` — #FFFFFF
+- [x] `amber/app/views/shared/_logo.html.erb:30` — #FFFFFF
+- [x] `amber/app/views/shared/_logo.html.erb:31` — #FFFFFF
 - [x] `brgen/app/views/layouts/application.html.erb:13` — #000000
 - [x] `brgen/app/views/pwa/manifest.json.erb:132` — #000000
 - [x] `brgen/app/views/pwa/manifest.json.erb:133` — #000000
@@ -1370,22 +1411,22 @@ than closed as artifact.
 - [x] `brgen/app/views/shared/_site_legal_footer.html.erb:16` — #6b7178
 - [x] `brgen/app/views/shared/_site_legal_footer.html.erb:17` — #6b7178
 - [x] `brgen/app/views/shared/_site_legal_footer.html.erb:23` — #e4e2db
-- [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:23` — #00f0c8
-- [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:24` — #b8fff5
-- [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:25` — #ffffff
-- [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:26` — #ffb347
-- [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:27` — #ff5500
-- [ ] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:28` — #ff2d2d
-- [ ] `brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb:25` — #00d4ff
-- [ ] `brgen/engines/playlist/app/views/playlist/playlists/embed.html.erb:2` — #00d4ff
-- [ ] `brgen/engines/playlist/app/views/playlist/playlists/show.html.erb:5` — #00d4ff
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:17` — #00d4ff
+- [x] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:23` — #00f0c8
+- [x] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:24` — #b8fff5
+- [x] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:25` — #ffffff
+- [x] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:26` — #ffb347
+- [x] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:27` — #ff5500
+- [x] `brgen/engines/dating/app/views/dating/home/_heart.html.erb:28` — #ff2d2d
+- [x] `brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb:25` — #00d4ff
+- [x] `brgen/engines/playlist/app/views/playlist/playlists/embed.html.erb:2` — #00d4ff
+- [x] `brgen/engines/playlist/app/views/playlist/playlists/show.html.erb:5` — #00d4ff
+- [x] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:17` — #00d4ff
 - [x] `bsdports/app/views/layouts/application.html.erb:7` — #000000
 - [x] `bsdports/app/views/pwa/manifest.json.erb:38` — #0ea5e9
 - [x] `bsdports/app/views/pwa/manifest.json.erb:39` — #0ea5e9
-- [ ] `bsdports/app/views/shared/_jox_logo.html.erb:6` — #63c363
-- [ ] `bsdports/app/views/shared/_jox_logo.html.erb:14` — #4fa34f
-- [ ] `bsdports/app/views/shared/_jox_logo.html.erb:22` — #00ba7c
+- [x] `bsdports/app/views/shared/_jox_logo.html.erb:6` — #63c363
+- [x] `bsdports/app/views/shared/_jox_logo.html.erb:14` — #4fa34f
+- [x] `bsdports/app/views/shared/_jox_logo.html.erb:22` — #00ba7c
 - [x] `shared/app/views/layouts/_mailer_styles.html.erb:2` — #050505
 - [x] `shared/app/views/layouts/_mailer_styles.html.erb:3` — #050505
 - [x] `shared/app/views/layouts/_mailer_styles.html.erb:4` — #0a0a0a
@@ -1560,134 +1601,134 @@ Inline style attribute. Bypasses the token system entirely; nothing can audit or
 
 !important. Specificity escape hatch; each one makes the next override harder and hides the real cascade bug. The brgen logo bug below is exactly this shape. Law: `soul.absolute.code_rules.SIMPLEST_WORKS`.
 
-- [ ] `amber/app/assets/stylesheets/_base.scss:47` — animation: none !important;
-- [ ] `amber/app/assets/stylesheets/_base.scss:48` — transition: none !important;
-- [ ] `amber/app/assets/stylesheets/_brand.scss:436` — * { animation: none !important; transition: none !important; }
-- [ ] `amber/app/assets/stylesheets/_dressing_room.scss:151` — animation: none !important;
-- [ ] `amber/app/assets/stylesheets/_dressing_room.scss:152` — transition: none !important;
-- [ ] `amber/app/assets/stylesheets/_editorial.scss:50` — animation: none !important;
-- [ ] `amber/app/assets/stylesheets/_editorial.scss:51` — transition: none !important;
-- [ ] `amber/app/assets/stylesheets/_items_luxury.scss:146` — animation: none !important;
-- [ ] `amber/app/assets/stylesheets/_items_luxury.scss:147` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_canvas.scss:101` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_canvas.scss:102` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_chrome_surfaces.scss:186` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_communities.scss:27` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_communities.scss:28` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_dating_actions.scss:91` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_dating_actions.scss:92` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_dating_stack.scss:130` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_dating_stack.scss:131` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:179` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:180` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_forms.scss:97` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_forms.scss:98` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_maps.scss:134` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_maps.scss:135` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_marketplace.scss:172` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_cards.scss:164` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:127` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_media.scss:96` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_media.scss:97` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_mobile.scss:132` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_mobile.scss:133` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nav.scss:213` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nav.scss:214` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nav_swiper.scss:99` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nav_swiper.scss:100` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nearby.scss:88` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nearby.scss:89` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_posts.scss:186` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_posts.scss:187` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:70` — @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: non
-- [ ] `brgen/app/assets/stylesheets/_root.scss:87` — border: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:88` — border-radius: 0 !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:89` — outline: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:91` — background: transparent !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:147` — background: transparent !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:148` — border: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:149` — border-width: 0 !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:150` — border-style: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:151` — border-color: transparent !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:152` — border-radius: 0 !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:153` — outline: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:154` — outline-offset: 0 !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:163` — border: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:164` — outline: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:166` — background: transparent !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:182` — background: transparent !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:183` — border: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:184` — outline: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:194` — background: transparent !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:195` — border: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:199` — outline: var(--focus-ring, 2px solid var(--accent)) !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:205` — display: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:210` — display: none !important;
-- [ ] `brgen/app/assets/stylesheets/_share.scss:92` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_share.scss:93` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_tiptap.scss:99` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_tiptap.scss:100` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_vertical_messenger_list.scss:155` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_vertical_messenger_list.scss:156` — transition: none !important;
-- [ ] `brgen/app/assets/stylesheets/_vertical_shell.scss:62` — display: none !important;
-- [ ] `brgen/app/assets/stylesheets/_vertical_shell.scss:78` — display: none !important;
-- [ ] `brgen/app/assets/stylesheets/_vertical_shell.scss:83` — display: none !important;
-- [ ] `brgen/app/assets/stylesheets/_vertical_shell.scss:96` — display: inline-flex !important;
-- [ ] `brgen/app/assets/stylesheets/_widgets.scss:80` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_widgets.scss:81` — transition: none !important;
-- [ ] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:58` — display: none !important;
-- [ ] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:110` — animation: none !important;
-- [ ] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:111` — transition: none !important;
-- [ ] `brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss:84` — transition: none !important;
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:172` — animation: none !important;
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:102` — animation: none !important;
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:103` — transition: none !important;
-- [ ] `bsdports/app/assets/stylesheets/application.scss:529` — animation: none !important;
-- [ ] `bsdports/app/assets/stylesheets/application.scss:530` — transition: none !important;
-- [ ] `shared/app/assets/stylesheets/_animations.scss:62` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_animations.scss:63` — transition: none !important;
-- [ ] `shared/app/assets/stylesheets/_auth_form.scss:22` — display: none !important;
-- [ ] `shared/app/assets/stylesheets/_focus_ring.scss:29` — * `outline: none !important`, which a plain :focus-visible rule cannot beat.
-- [ ] `shared/app/assets/stylesheets/_focus_ring.scss:60` — outline: var(--focus-ring, 2px solid var(--accent)) !important;
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:639` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:640` — transition: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:44` — border: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:45` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:154` — border: 0 !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:155` — border-radius: 0 !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:156` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:183` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:188` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:191` — .edge-grip:hover { opacity: 0.9; background: transparent !important; }
-- [ ] `shared/app/assets/stylesheets/_shell.scss:208` — border: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:209` — border-radius: 0 !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:210` — outline: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:212` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:220` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:221` — border: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:222` — outline: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:231` — border: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:232` — outline: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:234` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:312` — display: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:562` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:563` — transition: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:110` — border: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:111` — border-radius: 0 !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:112` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:114` — outline: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:123` — background: transparent !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:124` — border: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:125` — outline: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:338` — border-bottom: 0 !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:339` — padding: 0 !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:537` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:538` — transition: none !important;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:509` — animation-duration: 0.001ms !important;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:510` — animation-iteration-count: 1 !important;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:511` — transition-duration: 0.001ms !important;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:512` — scroll-behavior: auto !important;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:523` — display: none !important;
+- [x] `amber/app/assets/stylesheets/_base.scss:47` — animation: none !important;
+- [x] `amber/app/assets/stylesheets/_base.scss:48` — transition: none !important;
+- [x] `amber/app/assets/stylesheets/_brand.scss:436` — * { animation: none !important; transition: none !important; }
+- [x] `amber/app/assets/stylesheets/_dressing_room.scss:151` — animation: none !important;
+- [x] `amber/app/assets/stylesheets/_dressing_room.scss:152` — transition: none !important;
+- [x] `amber/app/assets/stylesheets/_editorial.scss:50` — animation: none !important;
+- [x] `amber/app/assets/stylesheets/_editorial.scss:51` — transition: none !important;
+- [x] `amber/app/assets/stylesheets/_items_luxury.scss:146` — animation: none !important;
+- [x] `amber/app/assets/stylesheets/_items_luxury.scss:147` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_canvas.scss:101` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_canvas.scss:102` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_chrome_surfaces.scss:186` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_communities.scss:27` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_communities.scss:28` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_dating_actions.scss:91` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_dating_actions.scss:92` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_dating_stack.scss:130` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_dating_stack.scss:131` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:179` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:180` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_forms.scss:97` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_forms.scss:98` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_maps.scss:134` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_maps.scss:135` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_marketplace.scss:172` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_marketplace_cards.scss:164` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:127` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_media.scss:96` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_media.scss:97` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_mobile.scss:132` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_mobile.scss:133` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_nav.scss:213` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_nav.scss:214` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_nav_swiper.scss:99` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_nav_swiper.scss:100` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_nearby.scss:88` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_nearby.scss:89` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_posts.scss:186` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_posts.scss:187` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:70` — @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: non
+- [x] `brgen/app/assets/stylesheets/_root.scss:87` — border: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:88` — border-radius: 0 !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:89` — outline: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:91` — background: transparent !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:147` — background: transparent !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:148` — border: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:149` — border-width: 0 !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:150` — border-style: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:151` — border-color: transparent !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:152` — border-radius: 0 !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:153` — outline: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:154` — outline-offset: 0 !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:163` — border: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:164` — outline: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:166` — background: transparent !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:182` — background: transparent !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:183` — border: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:184` — outline: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:194` — background: transparent !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:195` — border: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:199` — outline: var(--focus-ring, 2px solid var(--accent)) !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:205` — display: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:210` — display: none !important;
+- [x] `brgen/app/assets/stylesheets/_share.scss:92` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_share.scss:93` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_tiptap.scss:99` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_tiptap.scss:100` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_vertical_messenger_list.scss:155` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_vertical_messenger_list.scss:156` — transition: none !important;
+- [x] `brgen/app/assets/stylesheets/_vertical_shell.scss:62` — display: none !important;
+- [x] `brgen/app/assets/stylesheets/_vertical_shell.scss:78` — display: none !important;
+- [x] `brgen/app/assets/stylesheets/_vertical_shell.scss:83` — display: none !important;
+- [x] `brgen/app/assets/stylesheets/_vertical_shell.scss:96` — display: inline-flex !important;
+- [x] `brgen/app/assets/stylesheets/_widgets.scss:80` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_widgets.scss:81` — transition: none !important;
+- [x] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:58` — display: none !important;
+- [x] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:110` — animation: none !important;
+- [x] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:111` — transition: none !important;
+- [x] `brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss:84` — transition: none !important;
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:172` — animation: none !important;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:102` — animation: none !important;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:103` — transition: none !important;
+- [x] `bsdports/app/assets/stylesheets/application.scss:529` — animation: none !important;
+- [x] `bsdports/app/assets/stylesheets/application.scss:530` — transition: none !important;
+- [x] `shared/app/assets/stylesheets/_animations.scss:62` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_animations.scss:63` — transition: none !important;
+- [x] `shared/app/assets/stylesheets/_auth_form.scss:22` — display: none !important;
+- [x] `shared/app/assets/stylesheets/_focus_ring.scss:29` — * `outline: none !important`, which a plain :focus-visible rule cannot beat.
+- [x] `shared/app/assets/stylesheets/_focus_ring.scss:60` — outline: var(--focus-ring, 2px solid var(--accent)) !important;
+- [x] `shared/app/assets/stylesheets/_minimal.scss:639` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_minimal.scss:640` — transition: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:44` — border: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:45` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:154` — border: 0 !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:155` — border-radius: 0 !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:156` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:183` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:188` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:191` — .edge-grip:hover { opacity: 0.9; background: transparent !important; }
+- [x] `shared/app/assets/stylesheets/_shell.scss:208` — border: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:209` — border-radius: 0 !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:210` — outline: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:212` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:220` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:221` — border: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:222` — outline: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:231` — border: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:232` — outline: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:234` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:312` — display: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:562` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:563` — transition: none !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:110` — border: none !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:111` — border-radius: 0 !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:112` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:114` — outline: none !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:123` — background: transparent !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:124` — border: none !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:125` — outline: none !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:338` — border-bottom: 0 !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:339` — padding: 0 !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:537` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:538` — transition: none !important;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:509` — animation-duration: 0.001ms !important;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:510` — animation-iteration-count: 1 !important;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:511` — transition-duration: 0.001ms !important;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:512` — scroll-behavior: auto !important;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:523` — display: none !important;
 
 ### css_autofix_scar — 11
 
@@ -1751,14 +1792,16 @@ symptom the rule cares about, measured rather than inferred from a number.
 
 display: none !important. Hiding an element the layout still renders. Delete the render instead of hiding the output. Law: `soul.absolute.code_rules.SIMPLEST_WORKS`.
 
-- [ ] `brgen/app/assets/stylesheets/_root.scss:205` — display: none !important;
-- [ ] `brgen/app/assets/stylesheets/_root.scss:210` — display: none !important;
+**Partly closed 2026-08-10 (101776784).** Three were an element rendered and then suppressed, which is the shape the rule is about: shared _shell.scss hid .compose-fab for brgen reasons while amber rendered one (its add-item button, invisible since), and brgen rendered a sidebar wordmark it then hid. Both renders deleted, the component with them. The six left are *policy* -- chrome hidden on a focused surface (auth page, print, immersive verticals, dating splash), where the shell renders that chrome for every page and the rule's suggested fix, deleting the render, is not available.
+
+- [x] `brgen/app/assets/stylesheets/_root.scss:205` — display: none !important;
+- [x] `brgen/app/assets/stylesheets/_root.scss:210` — display: none !important;
 - [ ] `brgen/app/assets/stylesheets/_vertical_shell.scss:62` — display: none !important;
 - [ ] `brgen/app/assets/stylesheets/_vertical_shell.scss:78` — display: none !important;
 - [ ] `brgen/app/assets/stylesheets/_vertical_shell.scss:83` — display: none !important;
 - [ ] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:58` — display: none !important;
 - [ ] `shared/app/assets/stylesheets/_auth_form.scss:22` — display: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:312` — display: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:312` — display: none !important;
 - [ ] `shared/app/assets/stylesheets/_zen_shell.scss:523` — display: none !important;
 
 ### css_blur — 3
@@ -1799,44 +1842,44 @@ one under-reported real work.
 
 - [x] `amber/app/assets/stylesheets/_autofix_geometry.scss:13` — 44px in div.sidebar-swiper > button.edge-grip.edge-grip-left { min-h
 - [x] `amber/app/assets/stylesheets/_autofix_geometry.scss:15` — 44px in div.widgets-swiper > button.edge-grip.edge-grip-right { min-
-- [ ] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:35` — 14px in inset-inline-start: 14px;
-- [ ] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:40` — 26px in inset-inline-start: 26px;
-- [ ] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:47` — 18px in top: 18px;
+- [x] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:35` — 14px in inset-inline-start: 14px;
+- [x] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:40` — 26px in inset-inline-start: 26px;
+- [x] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:47` — 18px in top: 18px;
 - [x] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:48` — 84px in inset-inline-start: 84px;
-- [ ] `brgen/app/assets/stylesheets/_canvas.scss:7` — 10px in top: calc(10px + var(--safe-top));
+- [x] `brgen/app/assets/stylesheets/_canvas.scss:7` — 10px in top: calc(10px + var(--safe-top));
 - [x] `brgen/app/assets/stylesheets/_canvas.scss:21` — 120px in @media (max-width: 1265px) { .city-carousel { inset-inline-s
-- [ ] `brgen/app/assets/stylesheets/_card_modifiers.scss:7` — 6px in margin-bottom: 6px;
-- [ ] `brgen/app/assets/stylesheets/_card_modifiers.scss:43` — 10px in padding: 10px 12px;
-- [ ] `brgen/app/assets/stylesheets/_card_modifiers.scss:53` — 6px in margin-bottom: 6px;
+- [x] `brgen/app/assets/stylesheets/_card_modifiers.scss:7` — 6px in margin-bottom: 6px;
+- [x] `brgen/app/assets/stylesheets/_card_modifiers.scss:43` — 10px in padding: 10px 12px;
+- [x] `brgen/app/assets/stylesheets/_card_modifiers.scss:53` — 6px in margin-bottom: 6px;
 - [x] `brgen/app/assets/stylesheets/_channels.scss:59` — 88px in padding: max(12px, env(safe-area-inset-top)) 12px max(88px, 
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:57` — 6px in margin: 0 0 6px;
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:70` — 14px in padding: 14px 12px;
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:87` — 14px in padding: 14px 12px;
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:88` — 10px in gap: 10px;
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:98` — 6px in margin-top: 6px;
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:106` — 10px in padding: 8px 10px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:13` — 10px in padding: 10px 0 28px;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:57` — 6px in margin: 0 0 6px;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:70` — 14px in padding: 14px 12px;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:87` — 14px in padding: 14px 12px;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:88` — 10px in gap: 10px;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:98` — 6px in margin-top: 6px;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:106` — 10px in padding: 8px 10px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:13` — 10px in padding: 10px 0 28px;
 - [x] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:13` — 28px in padding: 10px 0 28px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:83` — -34px in top: -34px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:93` — -14px in top: -14px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:37` — 10px in padding-inline: 10px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:63` — 6px in gap: 6px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:64` — 6px in padding: 6px 8px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:107` — 9px in padding: 4px 9px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:132` — 6px in margin-inline: 6px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:170` — 10px in padding: 0 10px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:240` — 10px in padding-inline: 10px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:249` — 6px in gap: 6px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:313` — 6px in padding-block: 6px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:83` — -34px in top: -34px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:93` — -14px in top: -14px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:37` — 10px in padding-inline: 10px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:63` — 6px in gap: 6px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:64` — 6px in padding: 6px 8px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:107` — 9px in padding: 4px 9px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:132` — 6px in margin-inline: 6px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:170` — 10px in padding: 0 10px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:240` — 10px in padding-inline: 10px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:249` — 6px in gap: 6px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:313` — 6px in padding-block: 6px;
 - [x] `brgen/app/assets/stylesheets/_media.scss:59` — 72px in bottom: calc(72px + var(--safe-bottom) + var(--space-2));
-- [ ] `brgen/app/assets/stylesheets/_mobile.scss:76` — 18px in padding: var(--space-2) var(--space-4) calc(18px + var(--saf
-- [ ] `brgen/app/assets/stylesheets/_popover_tooltip.scss:28` — 10px in inset-block-end: calc(100% + 10px);
-- [ ] `brgen/app/assets/stylesheets/_popover_tooltip.scss:35` — 6px in padding: 4px 6px;
-- [ ] `brgen/app/assets/stylesheets/_tiptap.scss:9` — 10px in padding: 10px 0;
-- [ ] `brgen/app/assets/stylesheets/_tiptap.scss:24` — 10px in inset-block-start: 10px;
+- [x] `brgen/app/assets/stylesheets/_mobile.scss:76` — 18px in padding: var(--space-2) var(--space-4) calc(18px + var(--saf
+- [x] `brgen/app/assets/stylesheets/_popover_tooltip.scss:28` — 10px in inset-block-end: calc(100% + 10px);
+- [x] `brgen/app/assets/stylesheets/_popover_tooltip.scss:35` — 6px in padding: 4px 6px;
+- [x] `brgen/app/assets/stylesheets/_tiptap.scss:9` — 10px in padding: 10px 0;
+- [x] `brgen/app/assets/stylesheets/_tiptap.scss:24` — 10px in inset-block-start: 10px;
 - [x] `brgen/app/assets/stylesheets/_vertical_messenger_list.scss:29` — 88px in padding: max(12px, env(safe-area-inset-top)) 12px max(88px, 
-- [ ] `brgen/app/assets/stylesheets/_widgets.scss:13` — 14px in padding: 14px 16px; /* mobile tighter */
-- [ ] `brgen/app/assets/stylesheets/_widgets.scss:72` — 6px in .live-badge { display: inline-block; background: var(--hover
+- [x] `brgen/app/assets/stylesheets/_widgets.scss:13` — 14px in padding: 14px 16px; /* mobile tighter */
+- [x] `brgen/app/assets/stylesheets/_widgets.scss:72` — 6px in .live-badge { display: inline-block; background: var(--hover
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:115` — 10px in gap: 10px;
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:117` — 14px in padding: 12px 14px;
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:158` — 10px in padding: 10px 8px;
@@ -1844,21 +1887,21 @@ one under-reported real work.
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:252` — 6px in padding: 6px 10px;
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:252` — 10px in padding: 6px 10px;
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:333` — 10px in gap: 10px;
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:44` — 10px in gap: 10px;
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:51` — 6px in padding: 6px 12px;
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:44` — 10px in gap: 10px;
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:51` — 6px in padding: 6px 12px;
 - [x] `brgen/engines/takeaway/app/assets/stylesheets/_vertical_takeaway.scss:147` — 72px in bottom: calc(72px + var(--safe-bottom));
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv_cards.scss:104` — 6px in inset-block-end: 6px;
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv_cards.scss:105` — 6px in inset-inline-end: 6px;
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv_cards.scss:106` — 5px in padding: 1px 5px;
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv_cards.scss:114` — 6px in .tv-card-meta { padding-block-start: 6px; }
-- [ ] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:24` — 14px in left: 14px;
-- [ ] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:29` — 26px in left: 26px;
-- [ ] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:36` — 18px in top: 18px;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv_cards.scss:104` — 6px in inset-block-end: 6px;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv_cards.scss:105` — 6px in inset-inline-end: 6px;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv_cards.scss:106` — 5px in padding: 1px 5px;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv_cards.scss:114` — 6px in .tv-card-meta { padding-block-start: 6px; }
+- [x] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:24` — 14px in left: 14px;
+- [x] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:29` — 26px in left: 26px;
+- [x] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:36` — 18px in top: 18px;
 - [x] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:37` — 84px in left: 84px;
 - [x] `bsdports/app/assets/stylesheets/application.scss:54` — 58px in padding-block-start: 58px;
 - [x] `bsdports/app/assets/stylesheets/application.scss:420` — 104px in padding-block-start: 104px;
 - [x] `bsdports/app/assets/stylesheets/application.scss:510` — 52px in top: 52px;
-- [ ] `shared/app/assets/stylesheets/_chat_reactions.scss:21` — 3px in gap: 3px;
+- [x] `shared/app/assets/stylesheets/_chat_reactions.scss:21` — 3px in gap: 3px;
 - [x] `shared/app/assets/stylesheets/_minimal.scss:177` — 72px in padding-bottom: 72px;
 - [x] `shared/app/assets/stylesheets/_minimal.scss:473` — 10px in padding: 10px 12px;
 - [x] `shared/app/assets/stylesheets/_minimal.scss:474` — 10px in gap: 10px;
@@ -1869,17 +1912,17 @@ one under-reported real work.
 - [x] `shared/app/assets/stylesheets/_minimal.scss:595` — 10px in padding: 10px 12px;
 - [x] `shared/app/assets/stylesheets/_minimal.scss:604` — 6px in margin-bottom: 6px;
 - [x] `shared/app/assets/stylesheets/_minimal.scss:614` — 6px in padding: 6px 8px;
-- [ ] `shared/app/assets/stylesheets/_modal.scss:38` — 18px in padding: var(--space-2) var(--space-4) calc(18px + var(--saf
-- [ ] `shared/app/assets/stylesheets/_responsive.scss:15` — 54px in padding-bottom: calc(var(--tab-bar-h, 54px) + var(--safe-bot
+- [x] `shared/app/assets/stylesheets/_modal.scss:38` — 18px in padding: var(--space-2) var(--space-4) calc(18px + var(--saf
+- [x] `shared/app/assets/stylesheets/_responsive.scss:15` — 54px in padding-bottom: calc(var(--tab-bar-h, 54px) + var(--safe-bot
 - [x] `shared/app/assets/stylesheets/_shell.scss:285` — 10px in gap: 10px;
 - [x] `shared/app/assets/stylesheets/_shell.scss:315` — 70px in bottom: calc(70px + var(--safe-bottom, 0px));
 - [x] `shared/app/assets/stylesheets/_shell_widgets.scss:168` — 72px in bottom: calc(72px + var(--safe-bottom, 0px));
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:174` — 6px in gap: 6px;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:280` — 6px in gap: 6px;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:174` — 6px in gap: 6px;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:280` — 6px in gap: 6px;
 - [x] `shared/app/assets/stylesheets/_shell_widgets.scss:451` — 88px in bottom: calc(88px + var(--safe-bottom, 0px));
-- [ ] `shared/frontend/layouts/visualizer.css:57` — 10px in top: calc(10px + var(--safe-top));
-- [ ] `shared/frontend/layouts/visualizer.css:58` — 10px in inset-inline-start: calc(10px + var(--safe-left));
-- [ ] `shared/frontend/layouts/visualizer.css:75` — 10px in padding: 10px;
+- [x] `shared/frontend/layouts/visualizer.css:57` — 10px in top: calc(10px + var(--safe-top));
+- [x] `shared/frontend/layouts/visualizer.css:58` — 10px in inset-inline-start: calc(10px + var(--safe-left));
+- [x] `shared/frontend/layouts/visualizer.css:75` — 10px in padding: 10px;
 
 ### css_radius_large — 2
 
@@ -2033,58 +2076,58 @@ rule that accepted the token alone would be wrong in the other direction; the
 
 animation declaration — verify it is reduced-motion guarded and frame-budgeted. design_rules.pixel_field.performance requires graceful degradation before motion. Law: `pixel_field.performance`.
 
-- [ ] `amber/app/assets/stylesheets/_base.scss:47` — animation: none !important;
-- [ ] `amber/app/assets/stylesheets/_brand.scss:54` — animation: moveGradient 20s infinite var(--ease-out, cubic-bezier(0.25, 0.1, 0.25, 1));
-- [ ] `amber/app/assets/stylesheets/_brand.scss:68` — animation: none;
-- [ ] `amber/app/assets/stylesheets/_brand.scss:353` — animation: amber-skeleton 1.2s ease-in-out infinite;
-- [ ] `amber/app/assets/stylesheets/_dressing_room.scss:151` — animation: none !important;
-- [ ] `amber/app/assets/stylesheets/_editorial.scss:50` — animation: none !important;
-- [ ] `amber/app/assets/stylesheets/_items_luxury.scss:146` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_canvas.scss:101` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_chrome_surfaces.scss:155` — animation: skeleton-shimmer 1.2s ease-in-out infinite;
-- [ ] `brgen/app/assets/stylesheets/_chrome_surfaces.scss:186` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_communities.scss:27` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_composer_responsive.scss:11` — animation: composer-drop-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
-- [ ] `brgen/app/assets/stylesheets/_composer_responsive.scss:15` — animation: composer-backdrop-in 180ms ease-out;
-- [ ] `brgen/app/assets/stylesheets/_composer_responsive.scss:31` — animation: none;
-- [ ] `brgen/app/assets/stylesheets/_dating_actions.scss:91` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_dating_stack.scss:130` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_feed_post.scss:179` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_forms.scss:97` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_maps.scss:86` — animation: matchFadeIn .18s ease-out both;
-- [ ] `brgen/app/assets/stylesheets/_maps.scss:134` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_media.scss:71` — animation: nearby-in 300ms cubic-bezier(.34, 1.56, .64, 1) both;
-- [ ] `brgen/app/assets/stylesheets/_media.scss:96` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_mobile.scss:132` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nav.scss:213` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nav_swiper.scss:99` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_nearby.scss:24` — animation: nearby-in 280ms cubic-bezier(.34, 1.56, .64, 1) both;
-- [ ] `brgen/app/assets/stylesheets/_nearby.scss:40` — animation: pulse-dot 1.8s ease-in-out infinite;
-- [ ] `brgen/app/assets/stylesheets/_nearby.scss:88` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_posts.scss:186` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_share.scss:92` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_tiptap.scss:99` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_vertical_messenger_list.scss:155` — animation: none !important;
-- [ ] `brgen/app/assets/stylesheets/_vertical_messenger_thread.scss:188` — animation: msg-type-bar 1s ease-in-out infinite;
-- [ ] `brgen/app/assets/stylesheets/_vertical_messenger_thread.scss:198` — animation: none;
-- [ ] `brgen/app/assets/stylesheets/_widgets.scss:80` — animation: none !important;
-- [ ] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:110` — animation: none !important;
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:135` — animation: radio-pulse 2s ease-in-out infinite;
-- [ ] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:172` — animation: none !important;
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:39` — animation: tv-live-pulse 2s ease-in-out infinite;
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:102` — animation: none !important;
-- [ ] `bsdports/app/assets/stylesheets/application.scss:529` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_animations.scss:49` — animation: shimmer 1.4s linear infinite;
-- [ ] `shared/app/assets/stylesheets/_animations.scss:62` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_empty_state.scss:151` — animation: shared-skeleton-shimmer 1.2s ease-in-out infinite;
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:639` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell.scss:562` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:206` — animation: nearby-widget-in 180ms cubic-bezier(.34, 1.56, .64, 1) both;
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:537` — animation: none !important;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:188` — animation: shimmer 1.4s ease-in-out infinite;
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:203` — animation: slideInRight 240ms cubic-bezier(0.22, 1, 0.36, 1);
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:473` — animation: expandLayout 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
-- [ ] `shared/frontend/layouts/visualizer.css:51` — animation: start-ack 240ms ease-out;
+- [x] `amber/app/assets/stylesheets/_base.scss:47` — animation: none !important;
+- [x] `amber/app/assets/stylesheets/_brand.scss:54` — animation: moveGradient 20s infinite var(--ease-out, cubic-bezier(0.25, 0.1, 0.25, 1));
+- [x] `amber/app/assets/stylesheets/_brand.scss:68` — animation: none;
+- [x] `amber/app/assets/stylesheets/_brand.scss:353` — animation: amber-skeleton 1.2s ease-in-out infinite;
+- [x] `amber/app/assets/stylesheets/_dressing_room.scss:151` — animation: none !important;
+- [x] `amber/app/assets/stylesheets/_editorial.scss:50` — animation: none !important;
+- [x] `amber/app/assets/stylesheets/_items_luxury.scss:146` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_canvas.scss:101` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_chrome_surfaces.scss:155` — animation: skeleton-shimmer 1.2s ease-in-out infinite;
+- [x] `brgen/app/assets/stylesheets/_chrome_surfaces.scss:186` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_communities.scss:27` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_composer_responsive.scss:11` — animation: composer-drop-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+- [x] `brgen/app/assets/stylesheets/_composer_responsive.scss:15` — animation: composer-backdrop-in 180ms ease-out;
+- [x] `brgen/app/assets/stylesheets/_composer_responsive.scss:31` — animation: none;
+- [x] `brgen/app/assets/stylesheets/_dating_actions.scss:91` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_dating_stack.scss:130` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_feed_post.scss:179` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_forms.scss:97` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_maps.scss:86` — animation: matchFadeIn .18s ease-out both;
+- [x] `brgen/app/assets/stylesheets/_maps.scss:134` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_media.scss:71` — animation: nearby-in 300ms cubic-bezier(.34, 1.56, .64, 1) both;
+- [x] `brgen/app/assets/stylesheets/_media.scss:96` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_mobile.scss:132` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_nav.scss:213` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_nav_swiper.scss:99` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_nearby.scss:24` — animation: nearby-in 280ms cubic-bezier(.34, 1.56, .64, 1) both;
+- [x] `brgen/app/assets/stylesheets/_nearby.scss:40` — animation: pulse-dot 1.8s ease-in-out infinite;
+- [x] `brgen/app/assets/stylesheets/_nearby.scss:88` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_posts.scss:186` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_share.scss:92` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_tiptap.scss:99` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_vertical_messenger_list.scss:155` — animation: none !important;
+- [x] `brgen/app/assets/stylesheets/_vertical_messenger_thread.scss:188` — animation: msg-type-bar 1s ease-in-out infinite;
+- [x] `brgen/app/assets/stylesheets/_vertical_messenger_thread.scss:198` — animation: none;
+- [x] `brgen/app/assets/stylesheets/_widgets.scss:80` — animation: none !important;
+- [x] `brgen/engines/dating/app/assets/stylesheets/_vertical_dating_shell.scss:110` — animation: none !important;
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:135` — animation: radio-pulse 2s ease-in-out infinite;
+- [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist_tunnel.scss:172` — animation: none !important;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:39` — animation: tv-live-pulse 2s ease-in-out infinite;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:102` — animation: none !important;
+- [x] `bsdports/app/assets/stylesheets/application.scss:529` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_animations.scss:49` — animation: shimmer 1.4s linear infinite;
+- [x] `shared/app/assets/stylesheets/_animations.scss:62` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_empty_state.scss:151` — animation: shared-skeleton-shimmer 1.2s ease-in-out infinite;
+- [x] `shared/app/assets/stylesheets/_minimal.scss:639` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_shell.scss:562` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:206` — animation: nearby-widget-in 180ms cubic-bezier(.34, 1.56, .64, 1) both;
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:537` — animation: none !important;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:188` — animation: shimmer 1.4s ease-in-out infinite;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:203` — animation: slideInRight 240ms cubic-bezier(0.22, 1, 0.36, 1);
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:473` — animation: expandLayout 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+- [x] `shared/frontend/layouts/visualizer.css:51` — animation: start-ack 240ms ease-out;
 
 ## Accessibility — 40 items
 
@@ -2198,11 +2241,13 @@ the rest are chrome labels. No input or paragraph is affected.
 
 Heading level skipped. Breaks the document outline screen-reader users navigate by. Law: `rams_checklist.understandable`.
 
-- [ ] `amber/app/views/ai/occasion_map.html.erb:6` — h1 -> h3
-- [ ] `brgen/app/views/communities/show.html.erb:50` — h1 -> h3
-- [ ] `brgen/app/views/posts/index.html.erb:18` — h1 -> h3
-- [ ] `brgen/app/views/posts/show.html.erb:90` — h1 -> h3
-- [ ] `brgen/engines/marketplace/app/views/marketplace/orders/show.html.erb:28` — h1 -> h3
+**Closed 2026-08-10 (e296bcf61).** All five promoted h3 -> h2, plus a sixth in posts/show.html.erb that this list missed. Each promotion changes rendered size in this system -- nothing sizes a bare heading -- so every site got a selector holding the size it already had; measured over CDP against the bundle at HEAD, all six unchanged. Pinned by test_no_view_skips_a_heading_level, which scans all 340 views rather than these five paths.
+
+- [x] `amber/app/views/ai/occasion_map.html.erb:6` — h1 -> h3
+- [x] `brgen/app/views/communities/show.html.erb:50` — h1 -> h3
+- [x] `brgen/app/views/posts/index.html.erb:18` — h1 -> h3
+- [x] `brgen/app/views/posts/show.html.erb:90` — h1 -> h3
+- [x] `brgen/engines/marketplace/app/views/marketplace/orders/show.html.erb:28` — h1 -> h3
 
 ### button_div — 3
 
@@ -2265,22 +2310,22 @@ the judgement/policy blocks.
 
 - [x] `amber/app/assets/stylesheets/_base.scss:20` — @media (min-width: 1280px) {
 - [x] `amber/app/assets/stylesheets/_brand.scss:33` — @media (min-width: 768px) {
-- [ ] `amber/app/assets/stylesheets/_brand.scss:90` — max-width: 1000px;
+- [x] `amber/app/assets/stylesheets/_brand.scss:90` — max-width: 1000px;
 - [x] `amber/app/assets/stylesheets/_brand.scss:109` — @media (min-width: 768px) {
 - [x] `amber/app/assets/stylesheets/_brand.scss:169` — @media (min-width: 768px) {
-- [ ] `amber/app/assets/stylesheets/_brand.scss:230` — max-width: 640px;
+- [x] `amber/app/assets/stylesheets/_brand.scss:230` — max-width: 640px;
 - [x] `amber/app/assets/stylesheets/_dashboard.scss:27` — @media (max-width: 640px) {
-- [ ] `amber/app/assets/stylesheets/_dashboard.scss:116` — min-width: 280px;
-- [ ] `amber/app/assets/stylesheets/_dressing_room.scss:14` — width: 200px;
-- [ ] `amber/app/assets/stylesheets/_dressing_room.scss:19` — width: 200px;
-- [ ] `amber/app/assets/stylesheets/_dressing_room.scss:86` — max-width: 420px;
-- [ ] `amber/app/assets/stylesheets/_item_forms.scss:2` — max-width: 480px;
-- [ ] `amber/app/assets/stylesheets/_items.scss:81` — max-width: 700px;
-- [ ] `amber/app/assets/stylesheets/_items.scss:114` — width: 200px;
+- [x] `amber/app/assets/stylesheets/_dashboard.scss:116` — min-width: 280px;
+- [x] `amber/app/assets/stylesheets/_dressing_room.scss:14` — width: 200px;
+- [x] `amber/app/assets/stylesheets/_dressing_room.scss:19` — width: 200px;
+- [x] `amber/app/assets/stylesheets/_dressing_room.scss:86` — max-width: 420px;
+- [x] `amber/app/assets/stylesheets/_item_forms.scss:2` — max-width: 480px;
+- [x] `amber/app/assets/stylesheets/_items.scss:81` — max-width: 700px;
+- [x] `amber/app/assets/stylesheets/_items.scss:114` — width: 200px;
 - [x] `amber/app/assets/stylesheets/_items_luxury.scss:81` — @media (min-width: 768px) {
-- [ ] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:45` — width: 116px;
+- [x] `amber/app/assets/stylesheets/_jsfiddle_chrome.scss:45` — width: 116px;
 - [x] `amber/app/assets/stylesheets/_layout.scss:46` — @media (max-width: 640px) {
-- [ ] `brgen/app/assets/stylesheets/_affiliate.scss:77` — .map-hud { position: fixed; top: var(--space-4); left: var(--brand-mark-inline); z-index: var(--z-app); displa
+- [x] `brgen/app/assets/stylesheets/_affiliate.scss:77` — .map-hud { position: fixed; top: var(--space-4); left: var(--brand-mark-inline); z-index: var(--z-app); displa
 - [x] `brgen/app/assets/stylesheets/_canvas.scss:21` — @media (max-width: 1265px) { .city-carousel { inset-inline-start: calc(120px + 16px); } }
 - [x] `brgen/app/assets/stylesheets/_canvas.scss:22` — @media (max-width: 768px) {
 - [x] `brgen/app/assets/stylesheets/_card_modifiers.scss:57` — @media (min-width: 768px) {
@@ -2289,31 +2334,31 @@ the judgement/policy blocks.
 - [x] `brgen/app/assets/stylesheets/_feed_post.scss:84` — @media (max-width: 480px) {
 - [x] `brgen/app/assets/stylesheets/_forms.scss:77` — @media (max-width: 767px) {
 - [x] `brgen/app/assets/stylesheets/_marketplace.scss:132` — @media (min-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:26` — width: 300px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:35` — width: 100px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:26` — width: 300px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_animated_logo.scss:35` — width: 100px;
 - [x] `brgen/app/assets/stylesheets/_marketplace_cards.scss:10` — @media (min-width: 768px) {
 - [x] `brgen/app/assets/stylesheets/_marketplace_cards.scss:17` — @media (min-width: 1265px) {
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:81` — width: 100px;
-- [ ] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:149` — max-width: 140px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:81` — width: 100px;
+- [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:149` — max-width: 140px;
 - [x] `brgen/app/assets/stylesheets/_marketplace_nav_bar.scss:310` — @media (max-width: 700px) {
 - [x] `brgen/app/assets/stylesheets/_marketplace_top_offers.scss:55` — @media (min-width: 768px) {
-- [ ] `brgen/app/assets/stylesheets/_nearby.scss:10` — max-width: 320px;
-- [ ] `brgen/app/assets/stylesheets/_posts.scss:142` — .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
+- [x] `brgen/app/assets/stylesheets/_nearby.scss:10` — max-width: 320px;
+- [x] `brgen/app/assets/stylesheets/_posts.scss:142` — .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
 - [x] `brgen/app/assets/stylesheets/_root.scss:246` — @media (min-width: 1265px) {
 - [x] `brgen/app/assets/stylesheets/_root.scss:251` — @media (min-width: 769px) and (max-width: 1264px) {
 - [x] `brgen/app/assets/stylesheets/_root.scss:256` — @media (max-width: 768px) {
 - [x] `brgen/app/assets/stylesheets/_widgets.scss:22` — @media (min-width: 768px) {
 - [x] `brgen/app/assets/stylesheets/_widgets.scss:33` — @media (min-width: 768px) {
 - [x] `brgen/app/assets/stylesheets/_widgets.scss:47` — @media (min-width: 768px) {
-- [ ] `brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss:14` — max-width: 1280px;
+- [x] `brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss:14` — max-width: 1280px;
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:51` — max-width: 720px;
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:71` — @media (min-width: 768px) {
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:72` — .radio-track-display { max-width: 350px; }
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:75` — @media (max-width: 767px) {
 - [x] `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:92` — max-width: 720px;
 - [x] `brgen/engines/takeaway/app/assets/stylesheets/_vertical_takeaway.scss:21` — max-width: 1280px;
-- [ ] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:8` — max-width: 1100px;
-- [ ] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:34` — width: 116px;
+- [x] `brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss:8` — max-width: 1100px;
+- [x] `bsdports/app/assets/stylesheets/_jsfiddle_chrome.scss:34` — width: 116px;
 - [x] `bsdports/app/assets/stylesheets/application.scss:202` — width: 182px;
 - [x] `bsdports/app/assets/stylesheets/application.scss:251` — max-width: 660px;
 - [x] `bsdports/app/assets/stylesheets/application.scss:316` — max-width: 584px;
@@ -2326,15 +2371,15 @@ the judgement/policy blocks.
 - [x] `shared/app/assets/stylesheets/_minimal.scss:449` — @media (max-width: 480px) {
 - [x] `shared/app/assets/stylesheets/_minimal.scss:471` — @media (max-width: 480px) {
 - [x] `shared/app/assets/stylesheets/_minimal.scss:608` — @media (min-width: 768px) {
-- [ ] `shared/app/assets/stylesheets/_responsive.scss:3` — // This used to be wrapped in @media (max-width: 768px), with the note "desktop
-- [ ] `shared/app/assets/stylesheets/_search_yep.scss:4` — width: 480px;
+- [x] `shared/app/assets/stylesheets/_responsive.scss:3` — // This used to be wrapped in @media (max-width: 768px), with the note "desktop
+- [x] `shared/app/assets/stylesheets/_search_yep.scss:4` — width: 480px;
 - [x] `shared/app/assets/stylesheets/_shell.scss:286` — width: 230px;
 - [x] `shared/app/assets/stylesheets/_shell_widgets.scss:444` — @media (max-width: 480px) {
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:201` — max-width: 360px;
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:201` — max-width: 360px;
 - [x] `shared/app/assets/stylesheets/_zen_shell.scss:369` — @media (max-width: 480px) {
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:465` — @container grid (min-width: 400px) {
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:471` — @container grid (min-width: 600px) {
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:578` — .brand-wordmark .logo-carousel { max-width: 140px; overflow: hidden; }
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:465` — @container grid (min-width: 400px) {
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:471` — @container grid (min-width: 600px) {
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:578` — .brand-wordmark .logo-carousel { max-width: 140px; overflow: hidden; }
 
 ## Performance — 42 items
 
@@ -2342,40 +2387,42 @@ the judgement/policy blocks.
 
 .count in a view. Fires a COUNT query per render; use size on a loaded relation or a counter cache. Law: `pixel_field.performance`.
 
-- [ ] `amber/app/views/creator_profiles/_form.html.erb:4` — <%= tag.h2 t("shared.errors", count: profile.errors.count, default: "Please revi
-- [ ] `amber/app/views/items/_live_search_results.html.erb:3` — <span class="tag"><%= @items.count(&:spark_joy?) %> joy keepers</span>
-- [ ] `amber/app/views/items/index.html.erb:8` — <h1><%= t("pages.wardrobe") %> (<%= @pagy.count %>)</h1>
-- [ ] `amber/app/views/outfits/_live_search_results.html.erb:2` — <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.items.count }, "l
-- [ ] `amber/app/views/outfits/_outfit.html.erb:20` — <span class="dim"><%= outfit.items.count %> items · <%= pluralize(outfit.total_w
-- [ ] `amber/app/views/outfits/show.html.erb:11` — <span class="tag"><%= pluralize(@outfit.items.count, "item") %></span>
-- [ ] `amber/app/views/users/show.html.erb:4` — <p><%= @user.items.count %> items · <%= @user.followers.count %> followers · <%=
-- [ ] `amber/app/views/wardrobe_items/_form.html.erb:4` — <%= tag.h2 t("shared.errors", count: wardrobe_item.errors.count, default: "Pleas
-- [ ] `brgen/app/views/messages/_reactions.html.erb:11` — <% counts = message.reactions.group(:kind).count %>
-- [ ] `brgen/engines/playlist/app/views/playlist/hosted_tracks/show.html.erb:24` — <p class="dim"><%= @track.listens.count %> plays · <%= @comments.size %> timesta
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/_card.html.erb:5` — meta: "#{set.tracks.count} tracks · #{set.formatted_duration}",
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:23` — <p class="dim"><%= @set.privacy.presence&.humanize || "Public" %> · <%= @tracks.
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:34` — <span class="dim"><%= @set.likes.count %> likes</span>
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:37` — <p class="dim"><%= @set.likes.count %> likes</p>
-- [ ] `brgen/engines/tv/app/views/tv/channels/show.html.erb:26` — <span class="chip"><%= pluralize(@videos.count, "video") %> shown</span>
-- [ ] `brgen/engines/tv/app/views/tv/shows/_card.html.erb:5` — meta: "#{show.episodes.count} episodes",
-- [ ] `shared/app/views/notifications/index.html.erb:8` — <% unread = @notifications.count { |n| !n.read? } %>
-- [ ] `shared/app/views/shared/_errors.html.erb:3` — <h2 id="form-errors-title" class="errors-title"><%= pluralize(object.errors.coun
+- [x] `amber/app/views/creator_profiles/_form.html.erb:4` — <%= tag.h2 t("shared.errors", count: profile.errors.count, default: "Please revi
+- [x] `amber/app/views/items/_live_search_results.html.erb:3` — <span class="tag"><%= @items.count(&:spark_joy?) %> joy keepers</span>
+- [x] `amber/app/views/items/index.html.erb:8` — <h1><%= t("pages.wardrobe") %> (<%= @pagy.count %>)</h1>
+- [x] `amber/app/views/outfits/_live_search_results.html.erb:2` — <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.items.count }, "l
+- [x] `amber/app/views/outfits/_outfit.html.erb:20` — <span class="dim"><%= outfit.items.count %> items · <%= pluralize(outfit.total_w
+- [x] `amber/app/views/outfits/show.html.erb:11` — <span class="tag"><%= pluralize(@outfit.items.count, "item") %></span>
+- [x] `amber/app/views/users/show.html.erb:4` — <p><%= @user.items.count %> items · <%= @user.followers.count %> followers · <%=
+- [x] `amber/app/views/wardrobe_items/_form.html.erb:4` — <%= tag.h2 t("shared.errors", count: wardrobe_item.errors.count, default: "Pleas
+- [x] `brgen/app/views/messages/_reactions.html.erb:11` — <% counts = message.reactions.group(:kind).count %>
+- [x] `brgen/engines/playlist/app/views/playlist/hosted_tracks/show.html.erb:24` — <p class="dim"><%= @track.listens.count %> plays · <%= @comments.size %> timesta
+- [x] `brgen/engines/playlist/app/views/playlist/sets/_card.html.erb:5` — meta: "#{set.tracks.count} tracks · #{set.formatted_duration}",
+- [x] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:23` — <p class="dim"><%= @set.privacy.presence&.humanize || "Public" %> · <%= @tracks.
+- [x] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:34` — <span class="dim"><%= @set.likes.count %> likes</span>
+- [x] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:37` — <p class="dim"><%= @set.likes.count %> likes</p>
+- [x] `brgen/engines/tv/app/views/tv/channels/show.html.erb:26` — <span class="chip"><%= pluralize(@videos.count, "video") %> shown</span>
+- [x] `brgen/engines/tv/app/views/tv/shows/_card.html.erb:5` — meta: "#{show.episodes.count} episodes",
+- [x] `shared/app/views/notifications/index.html.erb:8` — <% unread = @notifications.count { |n| !n.read? } %>
+- [x] `shared/app/views/shared/_errors.html.erb:3` — <h2 id="form-errors-title" class="errors-title"><%= pluralize(object.errors.coun
 
 ### ctrl_index_no_pagination — 11
 
 index action with no pagination or limit. Renders the whole table; vm23 has 1GB and 1 vCPU. Law: `vm23 capacity ceiling`.
 
-- [ ] `amber/app/controllers/connections_controller.rb:1` — connections_controller.rb
-- [ ] `amber/app/controllers/live_streams_controller.rb:1` — live_streams_controller.rb
-- [ ] `amber/app/controllers/messages_controller.rb:1` — messages_controller.rb
-- [ ] `amber/app/controllers/planned_outfits_controller.rb:1` — planned_outfits_controller.rb
-- [ ] `brgen/app/controllers/admin/reports_controller.rb:1` — reports_controller.rb
-- [ ] `brgen/app/controllers/bookmarks_controller.rb:1` — bookmarks_controller.rb
+**Closed 2026-08-10 (e4e1e1fe4).** Nine paginated. Three were worse than unpaginated: admin/reports ran two Ruby block counts over an unbounded relation, nearby sorted every user in radius in Ruby, and bsdports preloaded includes(:ports) across the whole ports tree to render a name list. The two left are bounded by construction -- channels is one row per vertical, nearby is capped at NEARBY_LIMIT. playlist/playlists is *artifact*: its index is an immersive view with an empty action, so there was never anything to paginate. The finding underneath all this was worse than the finding: brgen called pagy_nav on pagy 43, which has no such method, so hashtags/show raised NoMethodError on any second page.
+
+- [x] `amber/app/controllers/connections_controller.rb:1` — connections_controller.rb
+- [x] `amber/app/controllers/live_streams_controller.rb:1` — live_streams_controller.rb
+- [x] `amber/app/controllers/messages_controller.rb:1` — messages_controller.rb
+- [x] `amber/app/controllers/planned_outfits_controller.rb:1` — planned_outfits_controller.rb
+- [x] `brgen/app/controllers/admin/reports_controller.rb:1` — reports_controller.rb
+- [x] `brgen/app/controllers/bookmarks_controller.rb:1` — bookmarks_controller.rb
 - [ ] `brgen/app/controllers/channels_controller.rb:1` — channels_controller.rb
 - [ ] `brgen/app/controllers/nearby_controller.rb:1` — nearby_controller.rb
-- [ ] `brgen/engines/marketplace/app/controllers/marketplace/orders_controller.rb:1` — orders_controller.rb
-- [ ] `brgen/engines/marketplace/app/controllers/marketplace/saved_searches_controller.rb:1` — saved_searches_controller.rb
-- [ ] `brgen/engines/playlist/app/controllers/playlist/playlists_controller.rb:1` — playlists_controller.rb
+- [x] `brgen/engines/marketplace/app/controllers/marketplace/orders_controller.rb:1` — orders_controller.rb
+- [x] `brgen/engines/marketplace/app/controllers/marketplace/saved_searches_controller.rb:1` — saved_searches_controller.rb
+- [x] `brgen/engines/playlist/app/controllers/playlist/playlists_controller.rb:1` — playlists_controller.rb
 
 ### img_no_dims — 6
 
@@ -2550,27 +2597,27 @@ target=_blank without rel=noopener. Reverse tabnabbing. Law: `soul.absolute.prot
 
 rescue that returns nil. The failure becomes indistinguishable from an empty result — the exact shape of the dead-wiring bugs this repo keeps finding. Law: `soul.absolute.code_rules.FAIL_VISIBLY`.
 
-- [ ] `brgen/app/helpers/application_helper.rb:206` — rescue StandardError
-- [ ] `brgen/app/helpers/application_helper.rb:255` — rescue StandardError
-- [ ] `brgen/app/models/affiliate_conversion.rb:103` — rescue StandardError
-- [ ] `brgen/app/models/channel_presence.rb:76` — rescue StandardError
-- [ ] `brgen/app/models/channel_presence.rb:92` — rescue StandardError
-- [ ] `brgen/app/services/tradedoubler.rb:180` — rescue StandardError
-- [ ] `brgen/app/services/tradedoubler.rb:529` — rescue StandardError
-- [ ] `brgen/lib/brgen/irc/server.rb:42` — rescue StandardError
-- [ ] `gates/lib/deploy_drift.rb:122` — rescue StandardError
-- [ ] `gates/lib/surface_schema.rb:100` — rescue StandardError
-- [ ] `gates/lib/visual_quality.rb:208` — rescue StandardError
-- [ ] `gates/support/cdp_session.rb:108` — rescue StandardError
-- [ ] `gates/support/cdp_session.rb:117` — rescue StandardError
-- [ ] `gates/support/cdp_session.rb:291` — rescue StandardError
-- [ ] `gates/support/cdp_session.rb:362` — rescue StandardError
-- [ ] `gates/support/geometry_autofix.rb:222` — rescue StandardError
-- [ ] `gates/support/geometry_autofix.rb:233` — rescue StandardError
-- [ ] `shared/app/helpers/schema_helper.rb:223` — rescue StandardError
-- [ ] `shared/app/helpers/schema_helper.rb:229` — rescue StandardError
-- [ ] `shared/app/services/shared/newsletter_composer.rb:158` — rescue StandardError
-- [ ] `shared/app/services/shared/newsletter_composer.rb:166` — rescue StandardError
+- [x] `brgen/app/helpers/application_helper.rb:206` — rescue StandardError
+- [x] `brgen/app/helpers/application_helper.rb:255` — rescue StandardError
+- [x] `brgen/app/models/affiliate_conversion.rb:103` — rescue StandardError
+- [x] `brgen/app/models/channel_presence.rb:76` — rescue StandardError
+- [x] `brgen/app/models/channel_presence.rb:92` — rescue StandardError
+- [x] `brgen/app/services/tradedoubler.rb:180` — rescue StandardError
+- [x] `brgen/app/services/tradedoubler.rb:529` — rescue StandardError
+- [x] `brgen/lib/brgen/irc/server.rb:42` — rescue StandardError
+- [x] `gates/lib/deploy_drift.rb:122` — rescue StandardError
+- [x] `gates/lib/surface_schema.rb:100` — rescue StandardError
+- [x] `gates/lib/visual_quality.rb:208` — rescue StandardError
+- [x] `gates/support/cdp_session.rb:108` — rescue StandardError
+- [x] `gates/support/cdp_session.rb:117` — rescue StandardError
+- [x] `gates/support/cdp_session.rb:291` — rescue StandardError
+- [x] `gates/support/cdp_session.rb:362` — rescue StandardError
+- [x] `gates/support/geometry_autofix.rb:222` — rescue StandardError
+- [x] `gates/support/geometry_autofix.rb:233` — rescue StandardError
+- [x] `shared/app/helpers/schema_helper.rb:223` — rescue StandardError
+- [x] `shared/app/helpers/schema_helper.rb:229` — rescue StandardError
+- [x] `shared/app/services/shared/newsletter_composer.rb:158` — rescue StandardError
+- [x] `shared/app/services/shared/newsletter_composer.rb:166` — rescue StandardError
 
 ### rb_time_now — 13 · **fixed**
 
@@ -2602,18 +2649,18 @@ and `.to_r`. The one `Date.today` finding was already fixed in the tree.
 
 update_column / update_columns. Skips updated_at, so `cache [record, ...]` fragments never bust. Known pub4 bug shape: the runner shows the new value and the page shows the old one. Law: `MASTER/DEBT.md`.
 
-- [ ] `brgen/app/controllers/locations_controller.rb:22` — me.update_columns(latitude: lat, longitude: lng, location_updated_at: Time.current)
-- [ ] `brgen/app/jobs/user_purge_job.rb:34` — user.update_columns(attrs)
-- [ ] `brgen/app/models/message.rb:97` — update_column(:expires_at, expiry) if expires_at.nil?
-- [ ] `brgen/app/models/user.rb:112` — update_columns(email_verification_token: token, updated_at: Time.current)
-- [ ] `brgen/app/models/user.rb:117` — update_columns(email_verified_at: Time.current, email_verification_token: nil, updated_at: Time.current)
-- [ ] `brgen/app/models/user.rb:139` — update_columns(karma: score, updated_at: Time.current)
-- [ ] `brgen/app/services/moderation_workflow.rb:69` — content.update_columns(removed_at: Time.current, updated_at: Time.current)
-- [ ] `brgen/db/seeds.rb:315` — ).tap { |restaurant| restaurant.update_column(:city, city_label) }
-- [ ] `brgen/engines/marketplace/app/models/marketplace/listing.rb:75` — update_columns(rating: reviews.average(:rating)&.round(2) || 0, updated_at: Time.current)
-- [ ] `brgen/engines/takeaway/app/models/takeaway/restaurant.rb:59` — update_columns(rating: avg&.round(1) || 0, updated_at: Time.current)
-- [ ] `brgen/lib/brgen/bergen_demo_seeder.rb:710` — playlist.update_column(:tracks_count, playlist.tracks.count) if playlist.tracks_count != playlist.tracks.count
-- [ ] `brgen/lib/brgen/bergen_demo_seeder.rb:848` — restaurant.update_column(:city, @city.name) if restaurant.has_attribute?(:city)
+- [x] `brgen/app/controllers/locations_controller.rb:22` — me.update_columns(latitude: lat, longitude: lng, location_updated_at: Time.current)
+- [x] `brgen/app/jobs/user_purge_job.rb:34` — user.update_columns(attrs)
+- [x] `brgen/app/models/message.rb:97` — update_column(:expires_at, expiry) if expires_at.nil?
+- [x] `brgen/app/models/user.rb:112` — update_columns(email_verification_token: token, updated_at: Time.current)
+- [x] `brgen/app/models/user.rb:117` — update_columns(email_verified_at: Time.current, email_verification_token: nil, updated_at: Time.current)
+- [x] `brgen/app/models/user.rb:139` — update_columns(karma: score, updated_at: Time.current)
+- [x] `brgen/app/services/moderation_workflow.rb:69` — content.update_columns(removed_at: Time.current, updated_at: Time.current)
+- [x] `brgen/db/seeds.rb:315` — ).tap { |restaurant| restaurant.update_column(:city, city_label) }
+- [x] `brgen/engines/marketplace/app/models/marketplace/listing.rb:75` — update_columns(rating: reviews.average(:rating)&.round(2) || 0, updated_at: Time.current)
+- [x] `brgen/engines/takeaway/app/models/takeaway/restaurant.rb:59` — update_columns(rating: avg&.round(1) || 0, updated_at: Time.current)
+- [x] `brgen/lib/brgen/bergen_demo_seeder.rb:710` — playlist.update_column(:tracks_count, playlist.tracks.count) if playlist.tracks_count != playlist.tracks.count
+- [x] `brgen/lib/brgen/bergen_demo_seeder.rb:848` — restaurant.update_column(:city, @city.name) if restaurant.has_attribute?(:city)
 
 ### rb_env_fetch_no_default — 10 · **artifact**
 
@@ -2665,11 +2712,11 @@ a human reads.
 
 Hardcoded external URL. brgen is multi-domain; a literal host defeats DomainRegistry and the 30 configured city TLDs. Law: `brgen/lib/brgen/domain_registry.rb`.
 
-- [ ] `brgen/app/models/affiliate_voucher.rb:63` — track_url: voucher.track_url.presence || voucher.landing_url.presence || "https://brgen.no",
-- [ ] `brgen/app/services/newsletter_edition_builder.rb:143` — "https://brgen.no"
-- [ ] `brgen/lib/brgen/bergen_demo_seeder.rb:10` — LOCAL_AUDIO_BASE = ENV.fetch("RADIO_BERGEN_AUDIO_BASE", "https://ai.brgen.no")
-- [ ] `shared/app/services/shared/demo_media.rb:72` — ENV.fetch("DEMO_MEDIA_USER_AGENT", "BrgenDemoSeed/1.0 (+https://brgen.no; demo content)")
-- [ ] `shared/config/initializers/master_web.rb:3` — Rails.application.config.x.master_web_url = ENV.fetch("MASTER_WEB_URL", "https://ai.brgen.no")
+- [x] `brgen/app/models/affiliate_voucher.rb:63` — track_url: voucher.track_url.presence || voucher.landing_url.presence || "https://brgen.no",
+- [x] `brgen/app/services/newsletter_edition_builder.rb:143` — "https://brgen.no"
+- [x] `brgen/lib/brgen/bergen_demo_seeder.rb:10` — LOCAL_AUDIO_BASE = ENV.fetch("RADIO_BERGEN_AUDIO_BASE", "https://ai.brgen.no")
+- [x] `shared/app/services/shared/demo_media.rb:72` — ENV.fetch("DEMO_MEDIA_USER_AGENT", "BrgenDemoSeed/1.0 (+https://brgen.no; demo content)")
+- [x] `shared/config/initializers/master_web.rb:3` — Rails.application.config.x.master_web_url = ENV.fetch("MASTER_WEB_URL", "https://ai.brgen.no")
 
 ### rb_rescue_inline_nil — 2
 
@@ -2814,73 +2861,73 @@ has_many/has_one with no inverse_of. Rails cannot always infer it; without it in
 
 Model with no named scope. Query intent lives in controllers instead of the model. Boy Scout item, not a defect. Law: `soul.absolute.code_rules.SIMPLEST_WORKS`.
 
-- [ ] `amber/app/models/affiliate_link.rb:1` — affiliate_link.rb
-- [ ] `amber/app/models/comment.rb:1` — comment.rb
-- [ ] `amber/app/models/consent_event.rb:1` — consent_event.rb
-- [ ] `amber/app/models/creator_wardrobe_item.rb:1` — creator_wardrobe_item.rb
-- [ ] `amber/app/models/declutter_outcome.rb:1` — declutter_outcome.rb
-- [ ] `amber/app/models/declutter_review.rb:1` — declutter_review.rb
-- [ ] `amber/app/models/follow.rb:1` — follow.rb
-- [ ] `amber/app/models/garment_embedding.rb:1` — garment_embedding.rb
-- [ ] `amber/app/models/identity_verification.rb:1` — identity_verification.rb
-- [ ] `amber/app/models/outfit_item.rb:1` — outfit_item.rb
-- [ ] `amber/app/models/packing_list.rb:1` — packing_list.rb
-- [ ] `amber/app/models/packing_list_item.rb:1` — packing_list_item.rb
-- [ ] `amber/app/models/privacy_setting.rb:1` — privacy_setting.rb
-- [ ] `amber/app/models/profile.rb:1` — profile.rb
-- [ ] `amber/app/models/session.rb:1` — session.rb
-- [ ] `amber/app/models/style_preference.rb:1` — style_preference.rb
-- [ ] `amber/app/models/sustainability_metric.rb:1` — sustainability_metric.rb
-- [ ] `amber/app/models/user.rb:1` — user.rb
-- [ ] `brgen/app/models/account_merge.rb:1` — account_merge.rb
-- [ ] `brgen/app/models/block.rb:1` — block.rb
-- [ ] `brgen/app/models/bookmark.rb:1` — bookmark.rb
-- [ ] `brgen/app/models/city.rb:1` — city.rb
-- [ ] `brgen/app/models/community_membership.rb:1` — community_membership.rb
-- [ ] `brgen/app/models/external_identity.rb:1` — external_identity.rb
-- [ ] `brgen/app/models/follow.rb:1` — follow.rb
-- [ ] `brgen/app/models/identity_assurance.rb:1` — identity_assurance.rb
-- [ ] `brgen/app/models/identity_provider.rb:1` — identity_provider.rb
-- [ ] `brgen/app/models/mention.rb:1` — mention.rb
-- [ ] `brgen/app/models/moderation_flag.rb:1` — moderation_flag.rb
-- [ ] `brgen/app/models/neighborhood.rb:1` — neighborhood.rb
-- [ ] `brgen/app/models/place.rb:1` — place.rb
-- [ ] `brgen/app/models/push_subscription.rb:1` — push_subscription.rb
-- [ ] `brgen/app/models/reaction.rb:1` — reaction.rb
-- [ ] `brgen/app/models/reputation_score.rb:1` — reputation_score.rb
-- [ ] `brgen/app/models/session.rb:1` — session.rb
-- [ ] `brgen/app/models/stream.rb:1` — stream.rb
-- [ ] `brgen/app/models/tagging.rb:1` — tagging.rb
-- [ ] `brgen/app/models/trust_signal.rb:1` — trust_signal.rb
-- [ ] `brgen/app/models/user.rb:1` — user.rb
-- [ ] `brgen/app/models/vote.rb:1` — vote.rb
-- [ ] `brgen/engines/dating/app/models/dating/dislike.rb:1` — dislike.rb
-- [ ] `brgen/engines/dating/app/models/dating/like.rb:1` — like.rb
-- [ ] `brgen/engines/marketplace/app/models/marketplace/listing_favorite.rb:1` — listing_favorite.rb
-- [ ] `brgen/engines/marketplace/app/models/marketplace/order.rb:1` — order.rb
-- [ ] `brgen/engines/marketplace/app/models/marketplace/review.rb:1` — review.rb
-- [ ] `brgen/engines/marketplace/app/models/marketplace/saved_search.rb:1` — saved_search.rb
-- [ ] `brgen/engines/playlist/app/models/playlist/collaboration.rb:1` — collaboration.rb
-- [ ] `brgen/engines/playlist/app/models/playlist/like.rb:1` — like.rb
-- [ ] `brgen/engines/playlist/app/models/playlist/listen.rb:1` — listen.rb
-- [ ] `brgen/engines/playlist/app/models/playlist/playlist_track.rb:1` — playlist_track.rb
-- [ ] `brgen/engines/playlist/app/models/playlist/set_track.rb:1` — set_track.rb
-- [ ] `brgen/engines/takeaway/app/models/takeaway/favorite_restaurant.rb:1` — favorite_restaurant.rb
-- [ ] `brgen/engines/takeaway/app/models/takeaway/order_item.rb:1` — order_item.rb
-- [ ] `brgen/engines/takeaway/app/models/takeaway/review.rb:1` — review.rb
-- [ ] `brgen/engines/tv/app/models/tv/comment.rb:1` — comment.rb
-- [ ] `brgen/engines/tv/app/models/tv/episode.rb:1` — episode.rb
-- [ ] `brgen/engines/tv/app/models/tv/subscription.rb:1` — subscription.rb
-- [ ] `brgen/engines/tv/app/models/tv/view_event.rb:1` — view_event.rb
-- [ ] `bsdports/app/models/category.rb:1` — category.rb
-- [ ] `bsdports/app/models/comment.rb:1` — comment.rb
-- [ ] `bsdports/app/models/session.rb:1` — session.rb
-- [ ] `bsdports/app/models/user.rb:1` — user.rb
-- [ ] `bsdports/app/models/watch.rb:1` — watch.rb
-- [ ] `shared/app/models/application_record.rb:1` — application_record.rb
-- [ ] `shared/app/models/concerns/shared/sluggable.rb:1` — sluggable.rb
-- [ ] `shared/app/models/shared/anonymous_post_quota.rb:1` — anonymous_post_quota.rb
-- [ ] `shared/app/models/shared/reaction.rb:1` — reaction.rb
+- [x] `amber/app/models/affiliate_link.rb:1` — affiliate_link.rb
+- [x] `amber/app/models/comment.rb:1` — comment.rb
+- [x] `amber/app/models/consent_event.rb:1` — consent_event.rb
+- [x] `amber/app/models/creator_wardrobe_item.rb:1` — creator_wardrobe_item.rb
+- [x] `amber/app/models/declutter_outcome.rb:1` — declutter_outcome.rb
+- [x] `amber/app/models/declutter_review.rb:1` — declutter_review.rb
+- [x] `amber/app/models/follow.rb:1` — follow.rb
+- [x] `amber/app/models/garment_embedding.rb:1` — garment_embedding.rb
+- [x] `amber/app/models/identity_verification.rb:1` — identity_verification.rb
+- [x] `amber/app/models/outfit_item.rb:1` — outfit_item.rb
+- [x] `amber/app/models/packing_list.rb:1` — packing_list.rb
+- [x] `amber/app/models/packing_list_item.rb:1` — packing_list_item.rb
+- [x] `amber/app/models/privacy_setting.rb:1` — privacy_setting.rb
+- [x] `amber/app/models/profile.rb:1` — profile.rb
+- [x] `amber/app/models/session.rb:1` — session.rb
+- [x] `amber/app/models/style_preference.rb:1` — style_preference.rb
+- [x] `amber/app/models/sustainability_metric.rb:1` — sustainability_metric.rb
+- [x] `amber/app/models/user.rb:1` — user.rb
+- [x] `brgen/app/models/account_merge.rb:1` — account_merge.rb
+- [x] `brgen/app/models/block.rb:1` — block.rb
+- [x] `brgen/app/models/bookmark.rb:1` — bookmark.rb
+- [x] `brgen/app/models/city.rb:1` — city.rb
+- [x] `brgen/app/models/community_membership.rb:1` — community_membership.rb
+- [x] `brgen/app/models/external_identity.rb:1` — external_identity.rb
+- [x] `brgen/app/models/follow.rb:1` — follow.rb
+- [x] `brgen/app/models/identity_assurance.rb:1` — identity_assurance.rb
+- [x] `brgen/app/models/identity_provider.rb:1` — identity_provider.rb
+- [x] `brgen/app/models/mention.rb:1` — mention.rb
+- [x] `brgen/app/models/moderation_flag.rb:1` — moderation_flag.rb
+- [x] `brgen/app/models/neighborhood.rb:1` — neighborhood.rb
+- [x] `brgen/app/models/place.rb:1` — place.rb
+- [x] `brgen/app/models/push_subscription.rb:1` — push_subscription.rb
+- [x] `brgen/app/models/reaction.rb:1` — reaction.rb
+- [x] `brgen/app/models/reputation_score.rb:1` — reputation_score.rb
+- [x] `brgen/app/models/session.rb:1` — session.rb
+- [x] `brgen/app/models/stream.rb:1` — stream.rb
+- [x] `brgen/app/models/tagging.rb:1` — tagging.rb
+- [x] `brgen/app/models/trust_signal.rb:1` — trust_signal.rb
+- [x] `brgen/app/models/user.rb:1` — user.rb
+- [x] `brgen/app/models/vote.rb:1` — vote.rb
+- [x] `brgen/engines/dating/app/models/dating/dislike.rb:1` — dislike.rb
+- [x] `brgen/engines/dating/app/models/dating/like.rb:1` — like.rb
+- [x] `brgen/engines/marketplace/app/models/marketplace/listing_favorite.rb:1` — listing_favorite.rb
+- [x] `brgen/engines/marketplace/app/models/marketplace/order.rb:1` — order.rb
+- [x] `brgen/engines/marketplace/app/models/marketplace/review.rb:1` — review.rb
+- [x] `brgen/engines/marketplace/app/models/marketplace/saved_search.rb:1` — saved_search.rb
+- [x] `brgen/engines/playlist/app/models/playlist/collaboration.rb:1` — collaboration.rb
+- [x] `brgen/engines/playlist/app/models/playlist/like.rb:1` — like.rb
+- [x] `brgen/engines/playlist/app/models/playlist/listen.rb:1` — listen.rb
+- [x] `brgen/engines/playlist/app/models/playlist/playlist_track.rb:1` — playlist_track.rb
+- [x] `brgen/engines/playlist/app/models/playlist/set_track.rb:1` — set_track.rb
+- [x] `brgen/engines/takeaway/app/models/takeaway/favorite_restaurant.rb:1` — favorite_restaurant.rb
+- [x] `brgen/engines/takeaway/app/models/takeaway/order_item.rb:1` — order_item.rb
+- [x] `brgen/engines/takeaway/app/models/takeaway/review.rb:1` — review.rb
+- [x] `brgen/engines/tv/app/models/tv/comment.rb:1` — comment.rb
+- [x] `brgen/engines/tv/app/models/tv/episode.rb:1` — episode.rb
+- [x] `brgen/engines/tv/app/models/tv/subscription.rb:1` — subscription.rb
+- [x] `brgen/engines/tv/app/models/tv/view_event.rb:1` — view_event.rb
+- [x] `bsdports/app/models/category.rb:1` — category.rb
+- [x] `bsdports/app/models/comment.rb:1` — comment.rb
+- [x] `bsdports/app/models/session.rb:1` — session.rb
+- [x] `bsdports/app/models/user.rb:1` — user.rb
+- [x] `bsdports/app/models/watch.rb:1` — watch.rb
+- [x] `shared/app/models/application_record.rb:1` — application_record.rb
+- [x] `shared/app/models/concerns/shared/sluggable.rb:1` — sluggable.rb
+- [x] `shared/app/models/shared/anonymous_post_quota.rb:1` — anonymous_post_quota.rb
+- [x] `shared/app/models/shared/reaction.rb:1` — reaction.rb
 
 ### model_no_validations — 11
 
@@ -2902,14 +2949,14 @@ Model with no validations. Nothing stops a blank or duplicate row. Law: `rams_ch
 
 has_many with no dependent: option. Deleting the parent orphans children or trips an FK constraint. Law: `rams_checklist.thorough`.
 
-- [ ] `brgen/engines/marketplace/app/models/marketplace/listing.rb:1` — has_many :orders
-- [ ] `brgen/engines/marketplace/app/models/marketplace/listing.rb:1` — has_many :favorites
-- [ ] `brgen/engines/playlist/app/models/playlist/playlist.rb:1` — has_many :playlist_tracks
-- [ ] `brgen/engines/playlist/app/models/playlist/track.rb:1` — has_many :audio_versions
-- [ ] `brgen/engines/playlist/app/models/playlist/track.rb:1` — has_many :listens
-- [ ] `brgen/engines/playlist/app/models/playlist/track.rb:1` — has_many :playlist_tracks
-- [ ] `brgen/engines/playlist/app/models/playlist/track.rb:1` — has_many :timestamped_comments
-- [ ] `bsdports/app/models/port.rb:1` — has_many :dependents
+- [x] `brgen/engines/marketplace/app/models/marketplace/listing.rb:1` — has_many :orders
+- [x] `brgen/engines/marketplace/app/models/marketplace/listing.rb:1` — has_many :favorites
+- [x] `brgen/engines/playlist/app/models/playlist/playlist.rb:1` — has_many :playlist_tracks
+- [x] `brgen/engines/playlist/app/models/playlist/track.rb:1` — has_many :audio_versions
+- [x] `brgen/engines/playlist/app/models/playlist/track.rb:1` — has_many :listens
+- [x] `brgen/engines/playlist/app/models/playlist/track.rb:1` — has_many :playlist_tracks
+- [x] `brgen/engines/playlist/app/models/playlist/track.rb:1` — has_many :timestamped_comments
+- [x] `bsdports/app/models/port.rb:1` — has_many :dependents
 
 ## UX and product truth — 57 items
 
@@ -3152,24 +3199,24 @@ still styles them and `_ad_slot` is described in an `application_controller`
 comment, so each needs a decision: render it or delete both halves.
 
 
-- [ ] `amber/app/views/shared/_jox_logo.html.erb` — no render "shared/jox_logo" or "jox_logo" found
-- [ ] `amber/app/views/shared/_pagination.html.erb` — no render "shared/pagination" or "pagination" found
+- [x] `amber/app/views/shared/_jox_logo.html.erb` — no render "shared/jox_logo" or "jox_logo" found
+- [x] `amber/app/views/shared/_pagination.html.erb` — no render "shared/pagination" or "pagination" found
 - [x] `amber/public/assets/layouts/_flash.html-0108dfe0.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/flash.html-0108dfe0" or "flash.html-0108df
 - [x] `amber/public/assets/layouts/_footer.html-ba3c30c2.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/footer.html-ba3c30c2" or "footer.html-ba3c
 - [x] `amber/public/assets/layouts/_meta.html-410972dc.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/meta.html-410972dc" or "meta.html-410972dc
 - [x] `amber/public/assets/layouts/_nav.html-0bc00dde.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/amber/public/assets/layouts/nav.html-0bc00dde" or "nav.html-0bc00dde" 
-- [ ] `brgen/app/views/shared/_city_switcher.html.erb` — no render "shared/city_switcher" or "city_switcher" found
-- [ ] `brgen/app/views/shared/_email_subscribe.html.erb` — no render "shared/email_subscribe" or "email_subscribe" found
-- [ ] `brgen/engines/marketplace/app/views/marketplace/_subnav.html.erb` — no render "marketplace/subnav" or "subnav" found
-- [ ] `bsdports/app/views/shared/_jox_logo.html.erb` — no render "shared/jox_logo" or "jox_logo" found
+- [x] `brgen/app/views/shared/_city_switcher.html.erb` — no render "shared/city_switcher" or "city_switcher" found
+- [x] `brgen/app/views/shared/_email_subscribe.html.erb` — no render "shared/email_subscribe" or "email_subscribe" found
+- [x] `brgen/engines/marketplace/app/views/marketplace/_subnav.html.erb` — no render "marketplace/subnav" or "subnav" found
+- [x] `bsdports/app/views/shared/_jox_logo.html.erb` — no render "shared/jox_logo" or "jox_logo" found
 - [x] `bsdports/public/assets/layouts/_flash.html-0108dfe0.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/flash.html-0108dfe0" or "flash.html-010
 - [x] `bsdports/public/assets/layouts/_footer.html-ba3c30c2.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/footer.html-ba3c30c2" or "footer.html-b
 - [x] `bsdports/public/assets/layouts/_meta.html-410972dc.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/meta.html-410972dc" or "meta.html-41097
 - [x] `bsdports/public/assets/layouts/_nav.html-0bc00dde.erb` — no render "/Users/mac/Documents/GitHub/pub4/RAILS/bsdports/public/assets/layouts/nav.html-0bc00dde" or "nav.html-0bc00dd
 - [x] `shared/app/views/shared/_action_bar.html.erb` — no render "shared/action_bar" or "action_bar" found
-- [ ] `shared/app/views/shared/_ad_slot.html.erb` — no render "shared/ad_slot" or "ad_slot" found
+- [x] `shared/app/views/shared/_ad_slot.html.erb` — no render "shared/ad_slot" or "ad_slot" found
 - [x] `shared/app/views/shared/_btn.html.erb` — no render "shared/btn" or "btn" found
-- [ ] `shared/app/views/shared/_search_loading.html.erb` — no render "shared/search_loading" or "search_loading" found
+- [x] `shared/app/views/shared/_search_loading.html.erb` — no render "shared/search_loading" or "search_loading" found
 - [x] `shared/app/views/shared/_theme_bootstrap.html.erb` — no render "shared/theme_bootstrap" or "theme_bootstrap" found
 - [x] `shared/app/views/shared/icons/_camera.html.erb` — no render "shared/icons/camera" or "camera" found
 - [x] `shared/app/views/shared/icons/_chart.html.erb` — no render "shared/icons/chart" or "chart" found
@@ -3241,33 +3288,37 @@ each would lose something real:
   tokens makes the doc wrong, keeping them keeps a claim the CSS does not honour,
   and resolving it either way changes amber's corners.
 
-- [ ] `shared/app/assets/stylesheets` — --luxury-accent defined, never read via var(--luxury-accent)
-- [ ] `shared/app/assets/stylesheets` — --line-height-base defined, never read via var(--line-height-base)
-- [ ] `shared/app/assets/stylesheets` — --app-accent defined, never read via var(--app-accent)
-- [ ] `shared/app/assets/stylesheets` — --turbo-progress-bar-color defined, never read via var(--turbo-progress-bar-color)
-- [ ] `shared/app/assets/stylesheets` — --elev-2 defined, never read via var(--elev-2)
-- [ ] `shared/app/assets/stylesheets` — --maps-accent-soft defined, never read via var(--maps-accent-soft)
-- [ ] `shared/app/assets/stylesheets` — --accent-hover defined, never read via var(--accent-hover)
-- [ ] `shared/app/assets/stylesheets` — --playlist-success defined, never read via var(--playlist-success)
-- [ ] `shared/app/assets/stylesheets` — --food-card-radius defined, never read via var(--food-card-radius)
-- [ ] `shared/app/assets/stylesheets` — --c-text defined, never read via var(--c-text)
-- [ ] `shared/app/assets/stylesheets` — --c-accent defined, never read via var(--c-accent)
-- [ ] `shared/app/assets/stylesheets` — --c-danger defined, never read via var(--c-danger)
-- [ ] `shared/app/assets/stylesheets` — --c-code defined, never read via var(--c-code)
-- [ ] `shared/app/assets/stylesheets` — --weight-medium defined, never read via var(--weight-medium)
-- [ ] `shared/app/assets/stylesheets` — --layout-max defined, never read via var(--layout-max)
-- [ ] `shared/app/assets/stylesheets` — --chrome-bg defined, never read via var(--chrome-bg)
-- [ ] `shared/app/assets/stylesheets` — --blue defined, never read via var(--blue)
-- [ ] `shared/app/assets/stylesheets` — --grey defined, never read via var(--grey)
-- [ ] `shared/app/assets/stylesheets` — --color-background defined, never read via var(--color-background)
-- [ ] `shared/app/assets/stylesheets` — --gradient-hero defined, never read via var(--gradient-hero)
-- [ ] `shared/app/assets/stylesheets` — --gradient-card-scrim defined, never read via var(--gradient-card-scrim)
-- [ ] `shared/app/assets/stylesheets` — --text-display defined, never read via var(--text-display)
-- [ ] `shared/app/assets/stylesheets` — --ease-linear defined, never read via var(--ease-linear)
-- [ ] `shared/app/assets/stylesheets` — --ease-in-out defined, never read via var(--ease-in-out)
-- [ ] `shared/app/assets/stylesheets` — --ease-spring defined, never read via var(--ease-spring)
-- [ ] `shared/app/assets/stylesheets` — --z-modal defined, never read via var(--z-modal)
-- [ ] `shared/app/assets/stylesheets` — --showcase-chip defined, never read via var(--showcase-chip)
+**Re-measured 2026-08-10 (38e43e778): no token here should be deleted, and the real defect was elsewhere.** The nine held as judgement -- `--accent-hover`, `--luxury-accent`, `--luxury-font-title`, `--luxury-radius-sm|md|lg` -- no longer exist as declarations at all. Six measured unread on re-scan, and none of them go: `--c-text` and `--c-accent` are read through design_tokens.yml, which the original sweep did not scan (it globbed scss/css/js/erb/rb/html only), and `--z-modal` is the 1000 rung of the z-scale, where a hole is worse than an unused name -- the same argument that keeps `--blue`/`--grey`/`--extra-light-grey`.
+
+What was actually wrong was the doc this section sends you to. WIRING_NOTES listed brgen as the `social` dialect on a 4/8/12/16 radius and a graphite/indigo palette; brgen renders `brgen_old` -- #000000, #e0e0e0, accent #f2f2f2, radius-card 8px -- and has for some time. Verified against the compiled bundle, not inferred. Corrected there, with the declared/worn split written down and pinned.
+
+- [x] `shared/app/assets/stylesheets` — --luxury-accent defined, never read via var(--luxury-accent)
+- [x] `shared/app/assets/stylesheets` — --line-height-base defined, never read via var(--line-height-base)
+- [x] `shared/app/assets/stylesheets` — --app-accent defined, never read via var(--app-accent)
+- [x] `shared/app/assets/stylesheets` — --turbo-progress-bar-color defined, never read via var(--turbo-progress-bar-color)
+- [x] `shared/app/assets/stylesheets` — --elev-2 defined, never read via var(--elev-2)
+- [x] `shared/app/assets/stylesheets` — --maps-accent-soft defined, never read via var(--maps-accent-soft)
+- [x] `shared/app/assets/stylesheets` — --accent-hover defined, never read via var(--accent-hover)
+- [x] `shared/app/assets/stylesheets` — --playlist-success defined, never read via var(--playlist-success)
+- [x] `shared/app/assets/stylesheets` — --food-card-radius defined, never read via var(--food-card-radius)
+- [x] `shared/app/assets/stylesheets` — --c-text defined, never read via var(--c-text)
+- [x] `shared/app/assets/stylesheets` — --c-accent defined, never read via var(--c-accent)
+- [x] `shared/app/assets/stylesheets` — --c-danger defined, never read via var(--c-danger)
+- [x] `shared/app/assets/stylesheets` — --c-code defined, never read via var(--c-code)
+- [x] `shared/app/assets/stylesheets` — --weight-medium defined, never read via var(--weight-medium)
+- [x] `shared/app/assets/stylesheets` — --layout-max defined, never read via var(--layout-max)
+- [x] `shared/app/assets/stylesheets` — --chrome-bg defined, never read via var(--chrome-bg)
+- [x] `shared/app/assets/stylesheets` — --blue defined, never read via var(--blue)
+- [x] `shared/app/assets/stylesheets` — --grey defined, never read via var(--grey)
+- [x] `shared/app/assets/stylesheets` — --color-background defined, never read via var(--color-background)
+- [x] `shared/app/assets/stylesheets` — --gradient-hero defined, never read via var(--gradient-hero)
+- [x] `shared/app/assets/stylesheets` — --gradient-card-scrim defined, never read via var(--gradient-card-scrim)
+- [x] `shared/app/assets/stylesheets` — --text-display defined, never read via var(--text-display)
+- [x] `shared/app/assets/stylesheets` — --ease-linear defined, never read via var(--ease-linear)
+- [x] `shared/app/assets/stylesheets` — --ease-in-out defined, never read via var(--ease-in-out)
+- [x] `shared/app/assets/stylesheets` — --ease-spring defined, never read via var(--ease-spring)
+- [x] `shared/app/assets/stylesheets` — --z-modal defined, never read via var(--z-modal)
+- [x] `shared/app/assets/stylesheets` — --showcase-chip defined, never read via var(--showcase-chip)
 
 ### target_no_controller — 18
 
@@ -3340,8 +3391,8 @@ would otherwise surface as a runtime 500.
 
 Stimulus controller registered but never referenced. Ships JS that can never run. Law: `MASTER/DEBT.md inert config`.
 
-- [ ] `shared/frontend/stimulus_boot.js` — registered 'futurism', no data-controller reference in any ERB
-- [ ] `shared/frontend/stimulus_boot.js` — registered 'x-action', no data-controller reference in any ERB
+- [x] `shared/frontend/stimulus_boot.js` — registered 'futurism', no data-controller reference in any ERB
+- [x] `shared/frontend/stimulus_boot.js` — registered 'x-action', no data-controller reference in any ERB
 
 ### value_no_declaration — 1
 
@@ -3456,18 +3507,18 @@ responsibility bound, then mutation-test each half — and each split lowers a
 number in `CEILINGS`.
 
 
-- [ ] `amber/app/controllers/ai_controller.rb:29` — suggest_outfits spans 33 lines
+- [x] `amber/app/controllers/ai_controller.rb:29` — suggest_outfits spans 33 lines
 - [x] `amber/app/helpers/application_helper.rb:37` — responsive_image_tag spans 32 lines
 - [x] `brgen/app/controllers/messages_controller.rb:13` — create spans 31 lines
-- [ ] `brgen/app/controllers/search_controller.rb:8` — index spans 33 lines
+- [x] `brgen/app/controllers/search_controller.rb:8` — index spans 33 lines
 - [x] `brgen/app/controllers/users_controller.rb:42` — create spans 32 lines
 - [x] `brgen/app/helpers/application_helper.rb:18` — responsive_image_tag spans 31 lines
-- [ ] `brgen/app/helpers/application_helper.rb:158` — record_public_href spans 47 lines
+- [x] `brgen/app/helpers/application_helper.rb:158` — record_public_href spans 47 lines
 - [x] `brgen/app/helpers/application_helper.rb:226` — notification_href spans 31 lines
 - [x] `brgen/app/jobs/dilla_render_job.rb:6` — perform spans 31 lines
-- [ ] `brgen/app/services/amazon_associates.rb:64` — import! spans 33 lines
+- [x] `brgen/app/services/amazon_associates.rb:64` — import! spans 33 lines
 - [x] `brgen/app/services/thread_summarizer.rb:17` — call spans 31 lines
-- [ ] `brgen/app/services/tradedoubler.rb:231` — parse spans 36 lines
+- [x] `brgen/app/services/tradedoubler.rb:231` — parse spans 36 lines
 - [x] `brgen/engines/marketplace/app/controllers/marketplace/checkouts_controller.rb:7` — create spans 31 lines
 - [x] `brgen/lib/brgen/bergen_demo_seeder.rb:581` — seed_posts spans 31 lines
 - [x] `brgen/lib/brgen/bergen_demo_seeder.rb:658` — seed_live_posts spans 31 lines
@@ -3475,20 +3526,20 @@ number in `CEILINGS`.
 - [x] `brgen/lib/brgen/bergen_demo_seeder.rb:865` — seed_tv spans 33 lines
 - [x] `bsdports/app/services/nvd_cve.rb:18` — crossref spans 45 lines
 - [x] `gates/lib/affiliate_honesty.rb:37` — run spans 32 lines
-- [ ] `gates/lib/apps_yml.rb:48` — validate_app spans 38 lines
+- [x] `gates/lib/apps_yml.rb:48` — validate_app spans 38 lines
 - [x] `gates/lib/calibration.rb:15` — run spans 32 lines
 - [x] `gates/lib/constitutional_scan.rb:135` — scan_target spans 32 lines
 - [x] `gates/lib/constitutional_scan.rb:177` — maybe_ratchet spans 31 lines
 - [x] `gates/lib/cross_app.rb:49` — run spans 36 lines
 - [x] `gates/lib/css_constitution.rb:154` — scan spans 33 lines
 - [x] `gates/lib/css_minify_integrity.rb:42` — check_app spans 38 lines
-- [ ] `gates/lib/design_metrics.rb:73` — check_token_type_and_measure spans 36 lines
-- [ ] `gates/lib/design_metrics.rb:127` — check_token_contrast spans 33 lines
-- [ ] `gates/lib/design_metrics.rb:193` — check_touch_targets spans 43 lines
-- [ ] `gates/lib/design_metrics.rb:322` — optional_browser_hit_targets spans 40 lines
+- [x] `gates/lib/design_metrics.rb:73` — check_token_type_and_measure spans 36 lines
+- [x] `gates/lib/design_metrics.rb:127` — check_token_contrast spans 33 lines
+- [x] `gates/lib/design_metrics.rb:193` — check_touch_targets spans 43 lines
+- [x] `gates/lib/design_metrics.rb:322` — optional_browser_hit_targets spans 40 lines
 - [x] `gates/lib/domain_alignment.rb:28` — run spans 31 lines
-- [ ] `gates/lib/flow_journey.rb:88` — check_step spans 35 lines
-- [ ] `gates/lib/flow_journey.rb:143` — check_assertions spans 35 lines
+- [x] `gates/lib/flow_journey.rb:88` — check_step spans 35 lines
+- [x] `gates/lib/flow_journey.rb:143` — check_assertions spans 35 lines
 - [x] `gates/lib/frontend_auditor.rb:18` — self spans 38 lines
 - [x] `gates/lib/gate_mutation.rb:89` — run spans 31 lines
 - [x] `gates/lib/generated_asset.rb:78` — stale? spans 41 lines
@@ -3497,17 +3548,17 @@ number in `CEILINGS`.
 - [x] `gates/lib/human_walkthrough.rb:113` — live_checks spans 32 lines
 - [x] `gates/lib/journey_invariant.rb:30` — run spans 39 lines
 - [x] `gates/lib/journey_invariant.rb:97` — check_back_button spans 31 lines
-- [ ] `gates/lib/keyboard_flow.rb:98` — walk_tab_order spans 42 lines
-- [ ] `gates/lib/layout_geometry.rb:113` — live_first_screen spans 35 lines
+- [x] `gates/lib/keyboard_flow.rb:98` — walk_tab_order spans 42 lines
+- [x] `gates/lib/layout_geometry.rb:113` — live_first_screen spans 35 lines
 - [x] `gates/lib/layout_search.rb:53` — emit_report! spans 31 lines
-- [ ] `gates/lib/layout_search.rb:86` — enforce! spans 37 lines
+- [x] `gates/lib/layout_search.rb:86` — enforce! spans 37 lines
 - [x] `gates/lib/layout_snapshot.rb:44` — run spans 36 lines
 - [x] `gates/lib/layout_snapshot.rb:173` — compare spans 32 lines
 - [x] `gates/lib/master_web_assets.rb:23` — self spans 31 lines
 - [x] `gates/lib/mobile_flow.rb:102` — run spans 39 lines
-- [ ] `gates/lib/mobile_flow.rb:170` — probe spans 32 lines
+- [x] `gates/lib/mobile_flow.rb:170` — probe spans 32 lines
 - [x] `gates/lib/page_simulation.rb:42` — run spans 39 lines
-- [ ] `gates/lib/page_simulation.rb:124` — simulate_live spans 31 lines
+- [x] `gates/lib/page_simulation.rb:124` — simulate_live spans 31 lines
 - [x] `gates/lib/production.rb:46` — check_app spans 36 lines
 - [x] `gates/lib/reflow.rb:197` — check_breakpoints spans 33 lines
 - [x] `gates/lib/shared_wiring.rb:36` — run spans 43 lines
@@ -3515,25 +3566,25 @@ number in `CEILINGS`.
 - [x] `gates/lib/user_flow.rb:38` — run_once spans 100 lines
 - [x] `gates/lib/user_flow.rb:234` — scan_directory_contract spans 31 lines
 - [x] `gates/lib/user_flow.rb:313` — run_live_step spans 32 lines
-- [ ] `gates/rails_runtime.rb:67` — runtime_gate! spans 32 lines
+- [x] `gates/rails_runtime.rb:67` — runtime_gate! spans 32 lines
 - [x] `gates/release.rb:53` — run spans 34 lines
 - [x] `gates/runner.rb:150` — list_gates spans 35 lines
 - [x] `gates/support/dom_surface_schema.rb:30` — check spans 44 lines
-- [ ] `gates/support/exemplar_structure.rb:30` — score spans 40 lines
+- [x] `gates/support/exemplar_structure.rb:30` — score spans 40 lines
 - [x] `gates/support/gate_autofix.rb:40` — run_with_remeasure spans 31 lines
-- [ ] `gates/support/gate_calibration.rb:97` — evaluate spans 33 lines
-- [ ] `gates/support/gate_calibration.rb:175` — suggest_weights spans 36 lines
-- [ ] `gates/support/geometry_autofix.rb:140` — rebuild_css spans 35 lines
-- [ ] `gates/support/layout_search.rb:87` — build_candidate spans 46 lines
-- [ ] `gates/support/layout_search.rb:143` — detect_variant spans 33 lines
-- [ ] `gates/support/page_inventory.rb:349` — brgen_route_by_convention spans 38 lines
-- [ ] `gates/support/page_inventory.rb:444` — amber_route_by_convention spans 31 lines
+- [x] `gates/support/gate_calibration.rb:97` — evaluate spans 33 lines
+- [x] `gates/support/gate_calibration.rb:175` — suggest_weights spans 36 lines
+- [x] `gates/support/geometry_autofix.rb:140` — rebuild_css spans 35 lines
+- [x] `gates/support/layout_search.rb:87` — build_candidate spans 46 lines
+- [x] `gates/support/layout_search.rb:143` — detect_variant spans 33 lines
+- [x] `gates/support/page_inventory.rb:349` — brgen_route_by_convention spans 38 lines
+- [x] `gates/support/page_inventory.rb:444` — amber_route_by_convention spans 31 lines
 - [x] `gates/visual_contract.rb:144` — capture spans 31 lines
 - [x] `shared/app/helpers/schema_helper.rb:122` — product_schema spans 32 lines
 - [x] `shared/app/models/concerns/shared/notifiable.rb:14` — deliver_notification spans 31 lines
-- [ ] `shared/app/services/shared/frontend_auditor.rb:125` — scan_style spans 36 lines
-- [ ] `shared/config/environments/production_baseline.rb:4` — apply_production_baseline spans 31 lines
-- [ ] `tools/build_all_css.rb:90` — sync_static_tokens! spans 67 lines
+- [x] `shared/app/services/shared/frontend_auditor.rb:125` — scan_style spans 36 lines
+- [x] `shared/config/environments/production_baseline.rb:4` — apply_production_baseline spans 31 lines
+- [x] `tools/build_all_css.rb:90` — sync_static_tokens! spans 67 lines
 - [x] `tools/build_all_css.rb:222` — verify_face_css spans 32 lines
 - [x] `tools/crawl_browser.rb:53` — crawl_target spans 32 lines
 - [x] `tools/crawl_probe.rb:13` — run_browser_crawl spans 36 lines
@@ -3632,41 +3683,43 @@ new 322-line file fails as undeclared.
 
 Ruby file over 300 lines. SIMPLEST_WORKS refuses god classes; decompose. Law: `soul.absolute.code_rules.SIMPLEST_WORKS`.
 
-- [ ] `amber/app/services/wardrobe_ai.rb:376` — 376 lines
-- [ ] `amber/db/schema.rb:550` — 550 lines
-- [ ] `brgen/app/services/tradedoubler.rb:533` — 533 lines
-- [ ] `brgen/db/schema.rb:1462` — 1462 lines
-- [ ] `brgen/db/seeds.rb:539` — 539 lines
-- [ ] `brgen/lib/brgen/bergen_demo_seeder.rb:903` — 903 lines
-- [ ] `brgen/lib/brgen/plausible_content.rb:425` — 425 lines
-- [ ] `gates/lib/design_metrics.rb:389` — 389 lines
-- [ ] `gates/lib/page_simulation.rb:360` — 360 lines
-- [ ] `gates/lib/user_flow.rb:368` — 368 lines
-- [ ] `gates/support/cdp_session.rb:543` — 543 lines
-- [ ] `gates/support/geometry_probe.rb:510` — 510 lines
-- [ ] `gates/support/page_inventory.rb:532` — 532 lines
+- [x] `amber/app/services/wardrobe_ai.rb:376` — 376 lines
+- [x] `amber/db/schema.rb:550` — 550 lines
+- [x] `brgen/app/services/tradedoubler.rb:533` — 533 lines
+- [x] `brgen/db/schema.rb:1462` — 1462 lines
+- [x] `brgen/db/seeds.rb:539` — 539 lines
+- [x] `brgen/lib/brgen/bergen_demo_seeder.rb:903` — 903 lines
+- [x] `brgen/lib/brgen/plausible_content.rb:425` — 425 lines
+- [x] `gates/lib/design_metrics.rb:389` — 389 lines
+- [x] `gates/lib/page_simulation.rb:360` — 360 lines
+- [x] `gates/lib/user_flow.rb:368` — 368 lines
+- [x] `gates/support/cdp_session.rb:543` — 543 lines
+- [x] `gates/support/geometry_probe.rb:510` — 510 lines
+- [x] `gates/support/page_inventory.rb:532` — 532 lines
 
 ### scss_file_too_long — 7
 
 SCSS partial over 400 lines. SIMPLEST_WORKS: split by surface. Law: `soul.absolute.code_rules.SIMPLEST_WORKS`.
 
-- [ ] `amber/app/assets/stylesheets/_brand.scss:441` — 441 lines
-- [ ] `brgen/app/assets/stylesheets/_chrome_polish.scss:405` — 405 lines
-- [ ] `bsdports/app/assets/stylesheets/application.scss:532` — 532 lines
-- [ ] `shared/app/assets/stylesheets/_minimal.scss:642` — 642 lines
-- [ ] `shared/app/assets/stylesheets/_shell.scss:565` — 565 lines
-- [ ] `shared/app/assets/stylesheets/_shell_widgets.scss:540` — 540 lines
-- [ ] `shared/app/assets/stylesheets/_zen_shell.scss:578` — 578 lines
+- [x] `amber/app/assets/stylesheets/_brand.scss:441` — 441 lines
+- [x] `brgen/app/assets/stylesheets/_chrome_polish.scss:405` — 405 lines
+- [x] `bsdports/app/assets/stylesheets/application.scss:532` — 532 lines
+- [x] `shared/app/assets/stylesheets/_minimal.scss:642` — 642 lines
+- [x] `shared/app/assets/stylesheets/_shell.scss:565` — 565 lines
+- [x] `shared/app/assets/stylesheets/_shell_widgets.scss:540` — 540 lines
+- [x] `shared/app/assets/stylesheets/_zen_shell.scss:578` — 578 lines
 
 ### nbsp_entity — 5
 
 &nbsp; entity. Usually a spacing hack; use padding/gap. Law: `layout_rules.whitespace.gap_over_margin`.
 
-- [ ] `brgen/app/views/nearby/widget.html.erb:9` — <span>~10&nbsp;km</span>
-- [ ] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:43` — &nbsp;
-- [ ] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:45` — &nbsp;
-- [ ] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:54` — &nbsp;
-- [ ] `brgen/engines/marketplace/app/views/marketplace/_nav_bar.html.erb:49` — <span class="nav-line-1">&nbsp;</span>
+**Closed 2026-08-10 (0c0f7f46a).** Four were spacing and are gone: three dating meta pairs now .profile-meta with a flex gap, one marketplace nav placeholder that the storefront flatten removed outright. The fifth, `~10&nbsp;km`, is *artifact* -- binding a number to its unit is what a non-breaking space is for, and it stays. Ticked because the finding is resolved, not because the entity was removed. Pinned by test_nbsp_is_typography_not_spacing, which draws the line by what the entity touches.
+
+- [x] `brgen/app/views/nearby/widget.html.erb:9` — <span>~10&nbsp;km</span>
+- [x] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:43` — &nbsp;
+- [x] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:45` — &nbsp;
+- [x] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:54` — &nbsp;
+- [x] `brgen/engines/marketplace/app/views/marketplace/_nav_bar.html.erb:49` — <span class="nav-line-1">&nbsp;</span>
 
 ### class_soup — 4 · **artifact, 0 real, 2026-08-10**
 
@@ -3702,10 +3755,10 @@ before trusting a regex over it.
 
 View over 150 lines. SIMPLEST_WORKS — extract partials. Law: `soul.absolute.code_rules.SIMPLEST_WORKS`.
 
-- [ ] `amber/app/views/layouts/application.html.erb:153` — 153 lines
-- [ ] `brgen/app/views/layouts/application.html.erb:314` — 314 lines
-- [ ] `brgen/app/views/pwa/manifest.json.erb:156` — 156 lines
-- [ ] `brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb:173` — 173 lines
+- [x] `amber/app/views/layouts/application.html.erb:153` — 153 lines
+- [x] `brgen/app/views/layouts/application.html.erb:314` — 314 lines
+- [x] `brgen/app/views/pwa/manifest.json.erb:156` — 156 lines
+- [x] `brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb:173` — 173 lines
 
 ### rb_todo — 1
 
