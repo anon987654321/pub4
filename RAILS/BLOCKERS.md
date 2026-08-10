@@ -96,8 +96,10 @@ restart.
 - Post-restart verification is a separate step from pre-restart validation, and
   a deploy cannot report success on the earlier one.
 - The failure signature is distinguishable from an app shed: relayd death
-  refuses on **both** 80 and 443 in ~30ms with sshd still up; a shed app leaves
-  TLS answering and only the app port closed.
+  refuses on **443** in ~30ms with sshd still up and the app answering on its own
+  port from the box; a shed app leaves TLS answering and only the app port
+  closed. Not port 80 — relayd declares one relay, `listen on 0.0.0.0 port 443
+  tls`, so 80 refuses on a healthy box and tests nothing.
 
 **Checked by:** `deploy_smoke_gate` validates relayd config content. Nothing
 yet re-checks liveness after the restart.

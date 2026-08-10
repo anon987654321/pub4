@@ -20,10 +20,21 @@ keeps answering TLS, so the outage reads as a hang rather than a 5xx and nothing
 reports it. Deploying those two last folds the restore into the same pass.
 
 Related, and worth knowing before you diagnose a deploy: **a shed and a relayd
-failure look nothing alike once you check.** A shed leaves 443 answering with
-the app port closed. If 80 *and* 443 both refuse in ~30 ms while sshd is up, the
-front door is down, not a backend — and if something you did not deploy
-(ai.brgen.no) is down too, that is the diagnosis rather than collateral.
+failure look nothing alike once you check.** A shed leaves 443 answering with the
+app port closed. If **443** refuses in ~30 ms while sshd is up and the app
+answers on its own port from the box, the front door is down, not a backend — and
+if something you did not deploy (ai.brgen.no) is down too, that is the diagnosis
+rather than collateral.
+
+Do not include port 80 in that test. This paragraph said "80 *and* 443 both
+refuse" until 2026-08-10, and port 80 always refuses: `relayd.conf` declares one
+relay, `listen on 0.0.0.0 port 443 tls`, and `netstat` on vm23 shows a single
+listener on `*.443`. There is no HTTP listener to lose. Half the signature was a
+constant, so a healthy box read as half-dead and checking 80 felt like evidence
+while carrying none. Found by writing the check wrong in the other direction —
+`curl http://brgen.no:443/up` speaks plain HTTP at a TLS port and returns 000, so
+a first pass reported both ports refusing and looked exactly like the outage it
+was inventing.
 
 ## `SKIP_CI=1` does not mean "skip CI"
 
