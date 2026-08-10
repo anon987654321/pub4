@@ -1,0 +1,11 @@
+Attribution note, added after the fact.
+
+The stale-hex fix inside shared/app/assets/stylesheets/_shell.scss and
+_shell_widgets.scss is a concurrent session's work, uncommitted in the shared
+checkout when I committed those two files path-scoped for the typography
+unification. My change to them was narrower: collapsing ten
+`var(--font-primary, var(--font, system-ui, sans-serif))` fallback chains to
+`var(--font)`.
+
+Path scoping bounds which files a commit takes, not which edits inside them.
+Second instance of that in one session, in both directions.
