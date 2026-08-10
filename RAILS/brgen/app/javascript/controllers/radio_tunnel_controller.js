@@ -44,6 +44,29 @@ export default class extends Controller {
     this.#ensureStarted()
   }
 
+  // Transport actions for the bottom bar. Deliberately only three: this engine
+  // drives a YouTube iframe and exposes start/stop/nextTrack with no pause and
+  // no previous, so a bar here renders play, stop and next and nothing else.
+  // Rendering a pause button that cannot pause is the shape removed from the
+  // feed earlier today — a control that looks live and discards the click.
+  play(event) {
+    event?.preventDefault()
+    this.#ensureStarted()
+  }
+
+  stop(event) {
+    event?.preventDefault()
+    this.app?.audioEngine?.stop()
+  }
+
+  next(event) {
+    event?.preventDefault()
+    const engine = this.app?.audioEngine
+    if (!engine) return
+    if (!engine.isPlaying) this.#ensureStarted()
+    engine.nextTrack()
+  }
+
   startKey(event) {
     if (!["Enter", "Space"].includes(event.code)) return
     event.preventDefault()

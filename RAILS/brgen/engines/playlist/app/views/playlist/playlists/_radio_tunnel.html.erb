@@ -79,4 +79,11 @@
   <% if local_assigns.fetch(:show_library, false) %>
     <%= render "playlist/playlists/library", playlists: playlists, pagy: local_assigns[:pagy] %>
   <% end %>
+
+  <%# play/stop/next only: this surface is driven by RadioBrgen, whose AudioEngine
+      exposes start/stop/nextTrack over a YouTube iframe and has no pause and no
+      previous. Rendering those two would be buttons that discard the click. %>
+  <%= render "playlist/shared/transport_bar",
+        scope: "radio-tunnel",
+        controls: %w[play stop next] %>
 <% end %>

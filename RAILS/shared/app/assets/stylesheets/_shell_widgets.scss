@@ -159,14 +159,13 @@ section h2 {
   pointer-events: auto;
 }
 
-/* The playlist page's now-playing/player bar sits flush across the bottom
-   edge -- without this offset the chat tab sits underneath it and eats no
-   clicks itself, but the player bar (rendered after it) intercepts the
-   click instead. Restored after a46dc643e dropped it while flattening the
-   widget to the true corner everywhere else. */
-body.vertical-playlist .nearby-chat-widget {
-  bottom: calc(72px + var(--safe-bottom, 0px));
-}
+/* No playlist special case here any more.
+   The rule above already lifts the widget by --tab-bar-h, and playlist now
+   publishes its transport bar's height into that token
+   (brgen/engines/playlist/.../_vertical_playlist.scss). This block hardcoded
+   72px, with an 88px mobile override 340 lines below it, so the bar's height and
+   the chat tab's offset were two numbers kept equal by hand — and they had
+   already drifted once, which is what a46dc643e was cleaning up. */
 
 .nearby-chat-widget-tab {
   display: flex;
@@ -506,9 +505,8 @@ body.vertical-playlist .nearby-chat-widget {
      lines apart, silently disagreed: whichever came last won, and this one did,
      so the sheet capped at 520px and the change made above it did nothing. */
 
-  body.vertical-playlist .nearby-chat-widget {
-    bottom: calc(88px + var(--safe-bottom, 0px));
-  }
+  /* The 88px mobile twin of the 72px rule above, removed with it — the token
+     carries the height at every width now. */
 }
 
 /* PWA install prompt. shared/app/views/shared/_install_prompt.html.erb renders

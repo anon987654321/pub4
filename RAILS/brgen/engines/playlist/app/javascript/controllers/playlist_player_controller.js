@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "audio", "waveform", "scrub", "scrubFill", "playBtn",
+    "audio", "waveform", "scrub", "scrubFill", "playBtn", "playIcon",
     "currentTime", "duration", "title", "artist", "artwork", "queueItem", "embed",
     "commentForm", "commentInput", "commentsList"
   ]
@@ -69,6 +69,52 @@ export default class extends Controller {
       this.playing = false
     }
     this.#syncPlayButton()
+  }
+
+  // Stop is not pause. Pause leaves the needle where it was; stop returns to the
+  // start, which is the distinction the two buttons exist to express.
+  stop() {
+    if (!this.hasAudioTarget) return
+    this.audioTarget.pause()
+    this.audioTarget.currentTime = 0
+    this.playing = false
+    this.#syncPlayButton()
+    this.#tick()
+  }
+
+  previous() {
+    this.#step(-1)
+  }
+
+  next() {
+    this.#step(1)
+  }
+
+  // Volume from a range input, 0..1. Kept off the audio element's own default so
+  // a muted-by-slider state survives a track change, which #step triggers.
+  setVolume(event) {
+    const value = Math.min(1, Math.max(0, Number(event.currentTarget.value)))
+    this.volume = value
+    if (this.hasAudioTarget) this.audioTarget.volume = value
+  }
+
+  // Walk the queue by delta and hand the neighbouring row to load(), rather than
+  // reimplementing what load() already does with the row's data-*-param
+  // attributes. Wraps at both ends: a transport bar with a dead button at the
+  // last track is the shape this repo has been removing all day.
+  #step(delta) {
+    if (!this.hasQueueItemTarget) return
+    const items = this.queueItemTargets
+    if (!items.length) return
+
+    const current = items.findIndex((el) => el.classList.contains("is-active"))
+    const from = current >= 0 ? current : 0
+    const target = items[(from + delta + items.length) % items.length]
+    if (!target) return
+
+    // load() already starts playback and moves is-active; calling play() here
+    // too would be a second start on the same element.
+    this.load({ currentTarget: target })
   }
 
   scrub(event) {
@@ -153,6 +199,9 @@ export default class extends Controller {
 
     if (src && this.hasAudioTarget) {
       this.audioTarget.src = src
+      // Carry the slider's volume across the track change; without this a
+      // listener who turned it down gets full volume on the next track.
+      if (typeof this.volume === "number") this.audioTarget.volume = this.volume
       this.audioTarget.play()
       this.playing = true
       this.#updateMediaMetadata()
@@ -240,6 +289,14 @@ export default class extends Controller {
   }
 
   #syncPlayButton() {
+    // The bottom transport bar's button carries both glyphs and swaps them by
+    // class, because the footer button below is driven by textContent and the
+    // two cannot share a target without one erasing the other's markup.
+    if (this.hasPlayIconTarget) {
+      const playing = this.hasAudioTarget && !this.audioTarget.paused
+      this.playIconTarget.classList.toggle("is-playing", playing)
+      this.playIconTarget.setAttribute("aria-pressed", playing ? "true" : "false")
+    }
     if (!this.hasPlayBtnTarget) return
     if (this.hasEmbedTarget && !this.embedTarget.hidden) {
       this.playBtnTarget.setAttribute("aria-pressed", "false")

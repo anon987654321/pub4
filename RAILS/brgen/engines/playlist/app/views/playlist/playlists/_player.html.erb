@@ -172,4 +172,11 @@
       </div>
     <% end %>
   </section>
+
+  <%# Inside .playlist-app deliberately: the bar is position: fixed so its DOM
+      position does not affect where it renders, but its data-action targets
+      resolve against the playlist-player controller on this element. %>
+  <%= render "playlist/shared/transport_bar",
+        scope: "playlist-player",
+        controls: %w[previous toggle stop next volume] %>
 </div>

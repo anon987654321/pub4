@@ -342,3 +342,77 @@ body.vertical-playlist .playlist-index {
   display: inline;
   margin: 0;
 }
+
+/* Bottom transport bar.
+
+   Height is published as --tab-bar-h on the body rather than kept private,
+   because .nearby-chat-widget already lifts itself by that token
+   (shared/_shell_widgets.scss). Before this, playlist hardcoded the clearance
+   twice — bottom: calc(72px + safe) and an 88px mobile override 340 lines apart
+   in the same file — so the chat tab's position and the bar's height were two
+   facts that had to be kept equal by hand. Now there is one. */
+body.vertical-playlist {
+  --transport-bar-h: 60px;
+  --tab-bar-h: var(--transport-bar-h);
+}
+
+.playlist-transport-bar {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: var(--z-toast, 1100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  block-size: var(--transport-bar-h);
+  padding: 0 var(--space-4) var(--safe-bottom, 0px);
+  /* Slightly rounded, and only at the top: the bar meets the viewport edge on
+     three sides, so rounding those would show the page behind it. Page corners
+     stay square — see the layout. */
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  border-block-start: 1px solid var(--border);
+  color: var(--text);
+}
+
+.playlist-transport-bar .transport-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--tap-min, 44px);
+  block-size: var(--tap-min, 44px);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.playlist-transport-bar .transport-btn:hover {
+  background: var(--hover);
+}
+
+/* The one emphasised control, filled rather than enlarged so the row keeps a
+   single tap-target height. */
+.playlist-transport-bar .transport-btn--primary {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.playlist-transport-bar .transport-volume {
+  display: inline-flex;
+  align-items: center;
+  min-inline-size: 96px;
+}
+
+.playlist-transport-bar .transport-volume input[type="range"] {
+  inline-size: 100%;
+  accent-color: var(--text);
+}
+
+/* One button, two glyphs, swapped by state — see #syncPlayButton. */
+.playlist-transport-bar .transport-icon-pause { display: none; }
+.playlist-transport-bar .transport-btn--primary.is-playing .transport-icon-play { display: none; }
+.playlist-transport-bar .transport-btn--primary.is-playing .transport-icon-pause { display: inline; }

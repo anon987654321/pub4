@@ -1,0 +1,74 @@
+<%# Bottom transport bar for the playlist surfaces.
+
+    locals:
+      scope    — the Stimulus controller that owns playback on this surface,
+                 "playlist-player" (show, sets) or "radio-tunnel" (the tunnel home)
+      controls — which buttons this surface can actually honour
+
+    Only the controls a scope supports are rendered, and that is the whole reason
+    `controls` is a local rather than a fixed row. playlist-player has
+    toggle/stop/previous/next and a volume element; radio-tunnel drives a YouTube
+    iframe through an engine exposing start/stop/nextTrack with no pause and no
+    previous. A pause button on the tunnel would look live and discard the click,
+    which is the exact defect removed from the feed's repost button earlier today.
+
+    The bar owns --tab-bar-h. .nearby-chat-widget already reads that token to lift
+    itself clear of bottom chrome (shared/_shell_widgets.scss), so declaring the
+    height here means the chat tab moves with the bar instead of playlist
+    hardcoding 72px and 88px in two rules 340 lines apart. %>
+<% scope = local_assigns.fetch(:scope, "playlist-player") %>
+<% controls = local_assigns.fetch(:controls, %w[previous toggle stop next volume]) %>
+<% act = ->(name) { "click->#{scope}##{name}" } %>
+
+<nav class="playlist-transport-bar"
+     role="group"
+     aria-label="<%= t("playlist.transport", default: "Playback") %>">
+  <% if controls.include?("previous") %>
+    <button type="button" class="transport-btn" data-action="<%= act.call("previous") %>"
+            aria-label="<%= t("playlist.previous", default: "Previous track") %>">
+      <%= icon :previous, size: 20 %>
+    </button>
+  <% end %>
+
+  <% if controls.include?("toggle") %>
+    <%# Not the playBtn target. That one is the footer's text button and
+        #syncPlayButton writes textContent into it, which would erase an SVG.
+        This carries both glyphs and flips them by class instead. %>
+    <button type="button" class="transport-btn transport-btn--primary"
+            data-action="<%= act.call("toggle") %>"
+            data-playlist-player-target="playIcon"
+            aria-label="<%= t("playlist.play_pause", default: "Play or pause") %>">
+      <%= icon :play, size: 22, css_class: "transport-icon-play" %>
+      <%= icon :pause, size: 22, css_class: "transport-icon-pause" %>
+    </button>
+  <% elsif controls.include?("play") %>
+    <button type="button" class="transport-btn transport-btn--primary"
+            data-action="<%= act.call("play") %>"
+            aria-label="<%= t("playlist.play", default: "Play") %>">
+      <%= icon :play, size: 22 %>
+    </button>
+  <% end %>
+
+  <% if controls.include?("stop") %>
+    <button type="button" class="transport-btn" data-action="<%= act.call("stop") %>"
+            aria-label="<%= t("playlist.stop", default: "Stop") %>">
+      <%= icon :stop, size: 20 %>
+    </button>
+  <% end %>
+
+  <% if controls.include?("next") %>
+    <button type="button" class="transport-btn" data-action="<%= act.call("next") %>"
+            aria-label="<%= t("playlist.next", default: "Next track") %>">
+      <%= icon :next, size: 20 %>
+    </button>
+  <% end %>
+
+  <% if controls.include?("volume") %>
+    <label class="transport-volume">
+      <span class="visually-hidden"><%= t("playlist.volume", default: "Volume") %></span>
+      <input type="range" min="0" max="1" step="0.01" value="1"
+             data-action="input-><%= scope %>#setVolume"
+             aria-label="<%= t("playlist.volume", default: "Volume") %>">
+    </label>
+  <% end %>
+</nav>
