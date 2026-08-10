@@ -14105,6 +14105,20 @@ end
 # behind :four_seven is four elements -- a sampled loop, an FM bass, a kick and
 # a clap -- so everything dilla would otherwise pile on top is turned off, and
 # the loop is left to be the harmony, which is its job in the original.
+#
+# Twelve tracks carry a sampled bed; two had a profile. The other ten got
+# dilla's full stack on top of the record, and in the 34-track demo those ten
+# held the bottom of the measured enjoyment ranking -- ubrukte_samples_01 last
+# of thirty-three. dmaj_open and sheger_01 below are four_seven's shape applied
+# to two of them. MASTER_CHAIN is deliberately not copied: that is a mastering
+# change, not an arrangement one.
+#
+# Measured caveat, so nobody reads more into these than is there: with only the
+# twelve knobs that survive into demo-all (see apply_track_layer_profile!'s
+# caller), adding this profile moved nothing -- lo_borges -0.08, sheger_01
+# +0.04 on audiobox-aesthetics content-enjoyment, against a within-arm spread
+# of 0.05-0.09 over three seeds. The nine layer-stripping knobs were untestable
+# until the re-assert in demo_all landed alongside this.
 TRACK_LAYER_PROFILES = {
   four_seven: {
     "PAD_TEXTURE" => "0", "PAD_GRANULAR" => "0", "CHOIR_VOX" => "0",
@@ -14134,6 +14148,28 @@ TRACK_LAYER_PROFILES = {
     "PAD_VOL" => "26", "HARM_MIX_WEIGHT" => "0.45",
     "SAMPLE_LOOP_VOL" => "1.1", "SAMPLE_LOOP_WEIGHT" => "1.45",
     "MASTER_CHAIN" => "akmd",
+  },
+  # lo_borges -- a hand-cut record, so the loop is the harmony here too.
+  dmaj_open: {
+    "PAD_TEXTURE" => "0", "PAD_GRANULAR" => "0", "CHOIR_VOX" => "0",
+    "LEAD_ARP" => "0", "SCALE_LEAD" => "0", "HARMONY_LEAD" => "0",
+    "CREATIVE_LEAD" => "0", "MELODIC_LEAD" => "0", "EXPERIMENTAL_LEADS" => "0",
+    "LEAD_MORPH" => "0", "SYNTH_MORPH" => "0", "PAD_LAYERS" => "0",
+    "DRUM_CHOPS" => "0", "ECLECTIC_PERC" => "0", "SELF_SAMPLE" => "0",
+    "SPEAK" => "0",
+    "PAD_VOL" => "34", "HARM_MIX_WEIGHT" => "0.55",
+    "SAMPLE_LOOP_VOL" => "1.25", "SAMPLE_LOOP_WEIGHT" => "1.6",
+  },
+  # ubrukte_samples_01 -- cut from the Sheger broadcast by `chop`.
+  sheger_01: {
+    "PAD_TEXTURE" => "0", "PAD_GRANULAR" => "0", "CHOIR_VOX" => "0",
+    "LEAD_ARP" => "0", "SCALE_LEAD" => "0", "HARMONY_LEAD" => "0",
+    "CREATIVE_LEAD" => "0", "MELODIC_LEAD" => "0", "EXPERIMENTAL_LEADS" => "0",
+    "LEAD_MORPH" => "0", "SYNTH_MORPH" => "0", "PAD_LAYERS" => "0",
+    "DRUM_CHOPS" => "0", "ECLECTIC_PERC" => "0", "SELF_SAMPLE" => "0",
+    "SPEAK" => "0",
+    "PAD_VOL" => "34", "HARM_MIX_WEIGHT" => "0.55",
+    "SAMPLE_LOOP_VOL" => "1.25", "SAMPLE_LOOP_WEIGHT" => "1.6",
   },
 }.freeze
 
@@ -15607,6 +15643,23 @@ def demo_all(bars_count = 12, destination = nil)
     # Re-apply rotation after soul profile so lead/pad keep moving.
     stream_rotate_voices_and_arps!(idx) unless steady
     force_env!(demo_slot_pad_env(idx), label: "demo_all[#{idx}]") unless steady
+    # ...and then the layer profile again, last, for the tracks that have one.
+    #
+    # The rotation above writes ENV directly and turns nine layers back ON:
+    # LEAD_ARP, SCALE_LEAD, HARMONY_LEAD, CREATIVE_LEAD, MELODIC_LEAD,
+    # EXPERIMENTAL_LEADS, LEAD_MORPH, SYNTH_MORPH, PAD_TEXTURE. Those are
+    # exactly nine of the twenty-one knobs a TRACK_LAYER_PROFILES entry sets to
+    # "0" two lines earlier, so a sampled bed whose whole profile exists to let
+    # the record carry the harmony had every stripped layer put back before it
+    # rendered. Measured on the 34-track demo: kembara_rindu and
+    # semua_untuk_mu have profiles and neither had ever rendered lean here.
+    # Only the twelve mix-balance knobs (PAD_VOL, HARM_MIX_WEIGHT,
+    # SAMPLE_LOOP_VOL/WEIGHT, ...) were surviving.
+    #
+    # The rotation is deliberate and stays -- lead and pad still move on every
+    # track. This re-assert is scoped to tracks that HAVE a layer profile, so
+    # it changes nothing for the other 380-odd.
+    apply_track_layer_profile!(slug, force: true)
     # Sparse rap so chord cycles are audible (a vocal on every slot masked
     # variety). gunnhild is the only vocal source now.
     # One branch, not three. The rap_every > 1 branch used to hardcode
