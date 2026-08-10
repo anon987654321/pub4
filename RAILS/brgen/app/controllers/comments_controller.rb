@@ -27,7 +27,13 @@ class CommentsController < ApplicationController
 
   def destroy
     @comment = Comment.find(params[:id])
-    @comment.destroy if @comment.user == Current.user
+    # user_id, not user. ApplicationRecord sets strict_loading_by_default in
+    # every environment, so reading `@comment.user` on a record found by id with
+    # nothing preloaded raises StrictLoadingViolationError — production included.
+    # Deleting a comment has therefore been failing for everyone, its author
+    # included, and the response is a redirect either way so nothing said so.
+    # Comparing the foreign key answers the same question without a query.
+    @comment.destroy if Current.user && @comment.user_id == Current.user.id
     respond_to do |format|
       format.turbo_stream
       format.html         { redirect_back fallback_location: root_path }
