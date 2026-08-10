@@ -30,8 +30,16 @@ class FileLengthRatchetTest < Minitest::Test
   # db:migrate. Excluded, not allow-listed, so they never read as debt.
   GENERATED = %r{/db/schema\.rb\z}
 
-  # file => code lines. Measured 2026-08-10. Lower a number when you split
-  # something; never raise one, and never add a row without saying why here.
+  # file => code lines. Re-measured 2026-08-10 after code_lines learned to strip
+  # block comments (see below). Lower a number when you split something; never
+  # raise one, and never add a row without saying why here.
+  #
+  # Only the .scss and .erb numbers moved, and brgen's PWA manifest left the list
+  # outright: it was never over the limit on code, only on the prose above it.
+  # The .rb numbers are unchanged, which is the point of stripping per language —
+  # a first pass that also treated `/*` as a Ruby comment reported four .rb files
+  # as 100–290 lines shorter, all of it real code sitting between the `/*` and
+  # the `*/` of a glob like `"**/*.rb"`.
   #
   # db/seeds.rb and plausible_content.rb are data rather than logic — long lists
   # of seed rows and sample copy. They are on the list because splitting them is
@@ -49,20 +57,80 @@ class FileLengthRatchetTest < Minitest::Test
     "brgen/lib/brgen/plausible_content.rb" => 344,
     "amber/app/services/wardrobe_ai.rb" => 319,
     "gates/lib/user_flow.rb" => 314,
-    "shared/app/assets/stylesheets/_minimal.scss" => 514,
-    "shared/app/assets/stylesheets/_shell.scss" => 507,
-    "shared/app/assets/stylesheets/_zen_shell.scss" => 491,
-    "shared/app/assets/stylesheets/_shell_widgets.scss" => 489,
-    "bsdports/app/assets/stylesheets/application.scss" => 454,
-    "brgen/app/views/layouts/application.html.erb" => 304,
+    "shared/app/assets/stylesheets/_minimal.scss" => 490,
+    "shared/app/assets/stylesheets/_zen_shell.scss" => 486,
+    "shared/app/assets/stylesheets/_shell.scss" => 466,
+    "shared/app/assets/stylesheets/_shell_widgets.scss" => 448,
+    "bsdports/app/assets/stylesheets/application.scss" => 435,
+    "brgen/app/views/layouts/application.html.erb" => 264,
     "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 160,
-    "brgen/app/views/pwa/manifest.json.erb" => 152,
   }.freeze
 
   COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
 
+  # Block comments are removed before the line rule runs, rather than the rule
+  # skipping lines that *start* with a marker. COMMENT_STARTS catches the first
+  # line of a `<%# … %>` or `/* … */` block and nothing after it, because this
+  # tree writes continuation lines as plain indented prose with no leading star.
+  # So a rule meant to spare documentation charged for all but its first line —
+  # brgen's application layout measured 317 against a 264-line body, and the way
+  # to satisfy the ratchet was to delete the paragraph explaining the CSS
+  # specificity race the file exists to work around.
+  #
+  # css_constitution learned the same lesson the same day about px values and
+  # hex colours in comments. This is that fix, extended to ERB.
+  #
+  # Per-language, and that is not fussiness. `/*` is a comment opener in SCSS and
+  # a substring of every glob in Ruby: `Dir.glob("**/*.rb")` contains both `/*`
+  # and `*/`, so a language-blind stripper deletes real code between them. It
+  # measured 60 files in this tree with "unbalanced" markers, all of them Ruby
+  # globs and regexes. Ruby's own block form is =begin/=end, which is what it
+  # gets here.
+  BLOCK_COMMENTS = {
+    "scss" => [["/*", "*/"]],
+    "erb" => [["<%#", "%>"], ["/*", "*/"]],
+    "rb" => [],
+  }.freeze
+
+  def strip_block_comments(body, kind)
+    pairs = BLOCK_COMMENTS.fetch(kind)
+    return strip_ruby_block_comments(body) if pairs.empty?
+
+    out = +""
+    rest = body
+    until rest.empty?
+      open = pairs.filter_map { |o, _| rest.index(o) }.min
+      return out << rest if open.nil?
+
+      opener = pairs.find { |o, _| rest[open, o.length] == o }
+      out << rest[0...open]
+      close = rest.index(opener[1], open + opener[0].length)
+      return out if close.nil?
+
+      # Keep the newlines so the count stays a line count.
+      out << ("\n" * rest[open..close].count("\n"))
+      rest = rest[(close + opener[1].length)..] || ""
+    end
+    out
+  end
+
+  def strip_ruby_block_comments(body)
+    inside = false
+    body.each_line.map do |line|
+      if line.start_with?("=begin")
+        inside = true
+      elsif line.start_with?("=end")
+        inside = false
+        next "\n"
+      end
+      inside ? "\n" : line
+    end.join
+  end
+
   def code_lines(path)
-    File.readlines(path).count do |line|
+    kind = File.extname(path).delete_prefix(".")
+    kind = "erb" if path.end_with?(".erb")
+    strip_block_comments(File.read(path), kind).each_line.count do |line|
       stripped = line.strip
       !stripped.empty? && !stripped.start_with?(*COMMENT_STARTS)
     end

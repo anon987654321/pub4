@@ -350,12 +350,22 @@ module Deploy
         @result.fail("css_constitution logical_props: #{rel} (#{hits} physical left/right)") if hits > 12
       end
 
-      lines = body.lines.size
+      # Code lines, like every other budget in this file and like the rest of the
+      # tree's size rules. This one counted raw lines and was the last holdout:
+      # _vertical_playlist.scss measured 418 against a 335-line body, so the way
+      # to satisfy a rule about CSS complexity was to delete the paragraphs
+      # explaining the CSS. Only that one sheet changes verdict — the next
+      # largest vertical is 234 code lines, so this is not a relaxation with
+      # somewhere to hide.
+      lines = strip_comments(body).each_line.count do |line|
+        stripped = line.strip
+        !stripped.empty? && !stripped.start_with?("//", "/*", "*")
+      end
       if lines > 200 && !File.basename(path).start_with?("application")
-        @result.warn("css_constitution size: #{rel} is #{lines} lines (budget 200)") if lines > 250
+        @result.warn("css_constitution size: #{rel} is #{lines} code lines (budget 200)") if lines > 250
         # Hard fail only for app-local vertical sheets, not shared shells
         if lines > 400 && rel.match?(%r{\A(brgen|amber|bsdports)/(engines/[^/]+/)?app/assets/stylesheets/_vertical_})
-          @result.fail("css_constitution size: #{rel} is #{lines} lines (hard fail >400)")
+          @result.fail("css_constitution size: #{rel} is #{lines} code lines (hard fail >400)")
         end
       end
 
