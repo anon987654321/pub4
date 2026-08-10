@@ -38,7 +38,9 @@ class OutfitGeneration
   attr_reader :user
 
   def scoped_items(season:, occasion:)
-    scope = user.items.active_wardrobe
+    # in_rotation, not active_wardrobe — a generated outfit should not reach
+    # into the declutter box for a garment you have already decided about.
+    scope = user.items.in_rotation
     scope = scope.where(season: [ season, "All-Season", nil, "" ]) if season.present?
     scope = scope.by_occasion(occasion) if occasion.present?
     scope.order(times_worn: :asc, updated_at: :asc).limit(50).to_a

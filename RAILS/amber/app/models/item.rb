@@ -60,6 +60,14 @@ class Item < ApplicationRecord
   scope :aging_unworn, -> { never_worn.where("purchase_date < ?", 6.months.ago) }
   scope :embeddable,   -> { where.not(title: [ nil, "" ]).where.not(category: [ nil, "" ]) }
   scope :active_wardrobe, -> { where.not(lifecycle_state: %w[released donated sold recycled]) }
+  # What is still in rotation: active_wardrobe minus the declutter box.
+  #
+  # The distinction matters for anything that *recommends* a garment. A boxed
+  # item is one you have already decided about, and active_wardrobe keeps it —
+  # so the dressing room offered it, the Style Assistant put it on you, and the
+  # idle figure nagged you to wear it. Inventory figures still count it, because
+  # you do still own it.
+  scope :in_rotation, -> { active_wardrobe.where.not(lifecycle_state: "declutter_box") }
   scope :declutter_box, -> { where(lifecycle_state: "declutter_box") }
   scope :sentimental, -> { where(lifecycle_state: "sentimental_archive") }
   scope :seasonal_archived, -> { where(lifecycle_state: "seasonal_archive") }

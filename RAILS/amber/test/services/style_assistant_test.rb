@@ -126,4 +126,19 @@ class StyleAssistantTest < ActiveSupport::TestCase
 
     assert_equal zones.sort_by { |zone| StyleAssistant::ZONES.keys.index(zone) }, zones
   end
+
+  # active_wardrobe keeps declutter-box garments, so the assistant used to dress
+  # you in something you had already decided to release.
+  test "a garment in the declutter box is never suggested" do
+    owner = user("assistant-boxed@example.com")
+    boxed = owner.items.create!(title: "Boxed tee", category: "Tops", spark_joy: true, times_worn: 40, lifecycle_state: "declutter_box")
+    kept = owner.items.create!(title: "Kept tee", category: "Tops", times_worn: 1)
+    owner.items.create!(title: "Bottom", category: "Bottoms")
+    owner.items.create!(title: "Shoes", category: "Shoes")
+
+    items = StyleAssistant.new(owner).suggest.items
+
+    assert_not_includes items, boxed
+    assert_includes items, kept
+  end
 end

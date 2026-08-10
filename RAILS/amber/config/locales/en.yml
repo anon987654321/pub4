@@ -442,8 +442,12 @@ en:
     never_worn: "Wear one never-worn item this week"
     repair: "Repair or release items marked for repair"
     underused: "Build one outfit around an underused piece"
-    declutter_box: "%{count} items waiting in the declutter box"
-    overdue: "%{count} wear challenges are overdue"
+    declutter_box:
+      one: "1 garment is waiting in the declutter box"
+      other: "%{count} garments are waiting in the declutter box"
+    overdue:
+      one: "1 wear challenge is overdue"
+      other: "%{count} wear challenges are overdue"
   # WardrobeGap — what the wardrobe is missing.
   gaps:
     category_minimum: "A resilient wardrobe usually needs at least %{count} %{category}."

@@ -100,8 +100,10 @@ class StyleAssistant
     end
   end
 
+  # in_rotation, not active_wardrobe: putting a garment you have already boxed
+  # on today's outfit is the opposite of the job.
   def candidates
-    @candidates ||= user.items.active_wardrobe.to_a.reject { |item| out_of_season?(item) }
+    @candidates ||= user.items.in_rotation.to_a.reject { |item| out_of_season?(item) }
   end
 
   def ranker = @ranker ||= TasteRanker.new(user)

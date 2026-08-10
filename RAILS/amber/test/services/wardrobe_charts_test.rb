@@ -64,6 +64,21 @@ class WardrobeChartsTest < ActiveSupport::TestCase
     assert_equal 7, bars.last.value
   end
 
+  # The three inventory figures still count a boxed garment — you own it. The
+  # idle figure asks you to go wear something, so it must not.
+  test "idle skips the declutter box, the inventory figures do not" do
+    owner = user("charts-boxed@example.com")
+    boxed = owner.items.create!(title: "Boxed tee", category: "Tops", times_worn: 1, last_worn_on: 300.days.ago.to_date, lifecycle_state: "declutter_box")
+    kept = owner.items.create!(title: "Kept tee", category: "Tops", times_worn: 1, last_worn_on: 30.days.ago.to_date)
+
+    charts = WardrobeCharts.new(owner)
+
+    assert_equal [ kept ], charts.idle.map(&:item)
+    assert_equal 2, charts.category_mix.first.value, "the boxed garment stopped being owned"
+    assert_equal 2, charts.wear_distribution.sum(&:value)
+    assert_not_includes charts.idle.map(&:item), boxed
+  end
+
   test "a never-worn garment is still dated from purchase" do
     owner = user("charts-idle-fallback@example.com")
     item = owner.items.create!(title: "Impulse buy", category: "Tops", times_worn: 0, purchase_date: 200.days.ago.to_date)

@@ -38,7 +38,10 @@ class OutfitsController < ApplicationController
   }.freeze
 
   def dressing_room
-    base = Current.user.items.active_wardrobe.with_photos_for_display
+    # in_rotation: the carousels offer garments to wear, and active_wardrobe
+    # keeps declutter-box items, so a garment you had already decided to release
+    # kept riding round the Tops zone.
+    base = Current.user.items.in_rotation.with_photos_for_display
     ranker = TasteRanker.new(Current.user)
     @zones = DRESSING_ROOM_ZONES.transform_values do |categories|
       ranker.rank(base.where(category: categories))

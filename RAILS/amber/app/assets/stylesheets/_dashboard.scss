@@ -86,7 +86,11 @@
 .cpw-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
+  /* space-between alone leaves nothing between a long title and a long value:
+     "Suede ankle boots" ran straight into "NOK 293.33/wear" once the currency
+     gained a three-letter unit. */
+  gap: var(--space-sm);
   padding: var(--space-xs) 0;
   border-bottom: 0; /* space-not-lines — matches .plan-row */
 }
@@ -95,6 +99,9 @@
   font-size: var(--text-xs);
   color: var(--danger);
   font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
 }
 
 .field-row {

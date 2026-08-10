@@ -87,7 +87,10 @@ class WardrobeCharts
   # never-worn garment still has an age.
   def idle
     today = Date.current
-    ranked = active.select(&:underused?)
+    # in_rotation, not active: this figure asks you to go wear something, and a
+    # garment in the declutter box is one you have already decided about. The
+    # three figures above are inventory questions, so they still count it.
+    ranked = user.items.in_rotation.select(&:underused?)
                    .sort_by { |item| [ -idle_days(item, today), item.times_worn.to_i, item.id ] }
                    .first(TOP_N)
 

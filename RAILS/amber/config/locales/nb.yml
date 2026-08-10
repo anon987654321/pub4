@@ -441,8 +441,12 @@ nb:
     never_worn: "Bruk ett aldri brukt plagg denne uken"
     repair: "Reparer eller kvitt deg med plagg merket for reparasjon"
     underused: "Bygg ett antrekk rundt et lite brukt plagg"
-    declutter_box: "%{count} plagg venter i ryddingsboksen"
-    overdue: "%{count} bruksutfordringer er forfalt"
+    declutter_box:
+      one: "1 plagg venter i ryddingsboksen"
+      other: "%{count} plagg venter i ryddingsboksen"
+    overdue:
+      one: "1 bruksutfordring er forfalt"
+      other: "%{count} bruksutfordringer er forfalt"
   # WardrobeGap — hva garderoben mangler.
   gaps:
     category_minimum: "En robust garderobe trenger som regel minst %{count} %{category}."

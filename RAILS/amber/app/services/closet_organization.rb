@@ -83,8 +83,10 @@ class ClosetOrganization
     }
   end
 
+  # Memoised because breathe_tip consults it, and the condition tip costs a
+  # query.
   def care_tips
-    [
+    @care_tips ||= [
       tip(:clean_needed, :care, count_of(:clean_needed)),
       tip(:repair, :care, count_of(:repair)),
       tip(:tailor, :care, count_of(:tailor)),
@@ -98,7 +100,7 @@ class ClosetOrganization
       tip(:seasonal_archive, :storage, active.count { |item| out_of_season?(item) }),
       tip(:fold, :storage, material_count(FOLD_MATERIALS)),
       tip(:hang, :storage, material_count(HANG_MATERIALS)),
-      tip(:breathe, :storage, material_count(BREATHE_MATERIALS)),
+      breathe_tip,
       tip(:archived_stale, :storage, count_of(:seasonal_archive))
     ].compact
   end
@@ -157,6 +159,16 @@ class ClosetOrganization
   end
 
   def material_count(pattern) = active.count { |item| item.material.to_s.match?(pattern) }
+
+  # "Condition twice a year, never seal in plastic" (care) and "cotton bags,
+  # never plastic" (storage) are the same instruction twice, and on any wardrobe
+  # with leather in it both fired. The care tip is the more complete of the two,
+  # so it wins and this one stands down.
+  def breathe_tip
+    return nil if care_tips.any? { |tip| tip.id == :material_leather }
+
+    tip(:breathe, :storage, material_count(BREATHE_MATERIALS))
+  end
 
   def material_care_tips
     counts = Hash.new(0)
