@@ -24,13 +24,6 @@
       Deliberate. Keys are never committed; the document names where the
       operator keeps one locally. Permanent exemption.
 
-"RAILS/FINAL_TODO.md":
-  - path: db/structure.sql
-    why: >
-      Planned, not present -- the apps run schema.rb. A planning document naming
-      a file that does not exist yet is doing its job. Remove when the migration
-      to structure.sql lands or the item is dropped.
-
 "RAILS/README.md":
   - path: MASTER/web/public/domain_cluster.js
     why: >

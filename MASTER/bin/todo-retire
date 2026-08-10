@@ -7,12 +7,16 @@ require "yaml"
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
 DEBT = File.join(REPO, "OPENBSD", "data", "debt.yml")
-# The TODO files this retires. Every name in the previous list —
-# MASTER/TODO.md, OPENBSD/TODO.md, RAILS/TODO.md, MASTER/tools/dilla/TODO.md —
-# referred to a file that does not exist and, from the git history, had not for
-# some time. So `legacy_open` was `false` unconditionally, the guard passed
-# having read nothing, and the delete step at the bottom deleted nothing. The two
-# files that do carry open checkboxes were in neither list.
+# The TODO files this retires. Both named here are now gone — TODO.md on
+# 2026-08-10 (its three operator criticals became debt.yml entries), and
+# RAILS/FINAL_TODO.md the same day (457 open findings became 16 rules there).
+# The list is kept rather than emptied because it is the mechanism: a future
+# TODO file goes here and this script walks it through the same gate.
+#
+# An earlier list named MASTER/TODO.md, OPENBSD/TODO.md, RAILS/TODO.md and
+# MASTER/tools/dilla/TODO.md — every one a file that did not exist, so the guard
+# passed having read nothing and the delete step deleted nothing. That is the
+# failure mode to watch for here, and the reason for the next line.
 #
 # Verify with `ruby -e 'puts Dir.glob("**/*TODO*.md")'` from the repo root before
 # changing this, rather than trusting it.
