@@ -591,6 +591,11 @@ function finishTTSPlayback(src, continueQueue = true) {
     emitTtsEvent('tts:playback:end', { text: finishedText, interrupted: !continueQueue, backend: 'edge', style, decay_rate });
   }
   _applyLocalPostSpeechDecay(decay_rate);
+  // Blink on finishing a thought. Humans blink at clause boundaries and just
+  // after an utterance ends, and that coupling is most of what makes a blink
+  // read as punctuation rather than a timer running behind the face. Skipped
+  // when the utterance was cut off — an interruption is not a completed thought.
+  if (continueQueue) window.MASTER_ATTENTION?.cue?.('utterance_end');
   tts.visemePlan = null;
   if (tts.outputGain && actx) tts.outputGain.gain.setValueAtTime(1.9, actx.currentTime);
   setTTSLoading(false);
