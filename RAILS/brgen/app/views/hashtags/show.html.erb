@@ -11,7 +11,7 @@
       <%= render "posts/post", post: post %>
     <% end %>
   </div>
-  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+  <%= render "shared/pager", pagy: @pagy %>
 <% else %>
   <%= render "shared/empty_state", title: t("hashtag.empty_title", default: "Nothing here yet"),
         body: t("hashtag.empty_body", default: "No posts use ##{@hashtag.name} yet."),

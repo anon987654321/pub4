@@ -649,3 +649,8 @@ en:
     action: "Install"
   mailer:
     confirm_subscription: "Confirm your subscription"
+  pagination:
+    label: "Pagination"
+    previous: "Previous"
+    next: "Next"
+    position: "Page %{page} of %{pages}"

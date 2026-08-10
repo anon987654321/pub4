@@ -8,7 +8,7 @@ class MaintainersController < ApplicationController
   def index
     scope = Maintainer.order(:name).includes(:ports)
     scope = apply_live_search(scope, columns: %w[name email], vertical: "maintainers") if live_search_query.present?
-    @maintainers = scope
+    @pagy, @maintainers = pagy(scope)
     finish_live_search(partial: "maintainers/live_search_results")
   end
 

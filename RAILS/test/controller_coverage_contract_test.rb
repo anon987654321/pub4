@@ -123,6 +123,47 @@ class ControllerCoverageContractTest < Minitest::Test
     assert_includes internal, "def status"
   end
 
+  # The three apps are on two pagy majors -- amber 9.4, brgen 43.3, bsdports 43.5
+  # -- and the view helpers were renamed across that boundary. `pagy_nav(@pagy)`
+  # is pagy 9; pagy 43 has `@pagy.series_nav` and no pagy_nav at all. brgen's
+  # hashtags/show.html.erb called pagy_nav while brgen ran 43, so that page
+  # raised NoMethodError the moment a hashtag had a second page. Nothing caught
+  # it, because the call is only reached when `pages > 1`.
+  #
+  # shared/_pager.html.erb now renders every pager off page/pages/next, which
+  # both majors expose. `prev` is deliberately not among them -- pagy 43 renamed
+  # it to `previous`, and that is exactly the kind of difference this guards.
+  VERSION_SPECIFIC_PAGY_HELPERS = %w[pagy_nav pagy_info pagy_bootstrap_nav series_nav].freeze
+
+  def test_views_do_not_call_a_pagy_helper_their_app_may_not_have
+    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports}", "app", "views", "**", "*.erb")) +
+            Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb")) +
+            Dir.glob(File.join(ROOT, "shared", "app", "views", "**", "*.erb"))
+
+    refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
+
+    offenders = views.flat_map do |path|
+      in_comment = false
+      File.readlines(path).each_with_index.filter_map do |line, i|
+        # ERB comments span lines, and the earlier one-line version of this check
+        # flagged the prose in _pager.html.erb that explains the rename.
+        was_comment = in_comment
+        in_comment = true if line.include?("<%#")
+        skip = in_comment || was_comment
+        in_comment = false if in_comment && line.include?("%>") && !line.rstrip.end_with?("<%#")
+        next if skip
+
+        helper = VERSION_SPECIFIC_PAGY_HELPERS.find { |h| line.include?(h) }
+        next unless helper
+
+        "#{path.delete_prefix("#{ROOT}/")}:#{i + 1} calls #{helper}"
+      end
+    end
+
+    assert_empty offenders.sort,
+                 "render shared/pager instead — these helpers exist in one pagy major and not the other"
+  end
+
   def test_bsdports_ports_and_sso
     ports = read_app("bsdports", "app/controllers/ports_controller.rb")
     sso = read_app("bsdports", "app/controllers/sso_controller.rb")

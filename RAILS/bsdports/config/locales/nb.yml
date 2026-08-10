@@ -124,3 +124,8 @@ nb:
     body: "Portersøk og advisories — åpne fra hjem-skjermen."
     not_now: "Ikke nå"
     action: "Installer"
+  pagination:
+    label: "Paginering"
+    previous: "Forrige"
+    next: "Neste"
+    position: "Side %{page} av %{pages}"

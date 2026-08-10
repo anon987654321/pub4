@@ -2,3 +2,5 @@
 <h1><%= t("pages.maintainers") %></h1>
 
 <%= live_search_index url: maintainers_path, results_partial: "maintainers/live_search_results", placeholder: t("ports.maintainers_placeholder"), label: t("ports.maintainers_label"), frame_id: "bsdports-maintainers" %>
+
+<%= render "shared/pager", pagy: @pagy %>

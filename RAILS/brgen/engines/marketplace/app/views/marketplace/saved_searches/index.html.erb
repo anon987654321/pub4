@@ -35,3 +35,5 @@
         body: t("actions.save_search_body"),
         action: { label: "Browse listings", path: listings_path } %>
 <% end %>
+
+<%= render "shared/pager", pagy: @pagy %>

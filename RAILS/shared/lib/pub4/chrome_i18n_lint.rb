@@ -54,10 +54,12 @@ module Pub4
     BASELINES = {
       "empty_title" => 0,
       "search_placeholder" => 0,
-      # 172 → 169 → 141 → 135 → 134 (2026-08-04): bsdports ports/show, then its
-      # index, list, categories and maintainers views, five amber views, and tv/home.
-      # Down only.
-      "aria_label" => 134,
+      # 172 → 169 → 141 → 135 → 134 (2026-08-04) → 133 (2026-08-10): bsdports
+      # ports/show, then its index, list, categories and maintainers views, five
+      # amber views, and tv/home. The last one is not a fix — amber's .compose-fab
+      # carried an aria-label and the element was deleted, having been invisible
+      # since shared/_shell.scss hid it. Down only.
+      "aria_label" => 133,
     }.freeze
 
     # Kept for callers that referenced the old single number.

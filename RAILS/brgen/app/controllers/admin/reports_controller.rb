@@ -5,9 +5,12 @@ class Admin::ReportsController < ApplicationController
   before_action :set_report, only: :update
 
   def index
-    @reports = ModerationReport.includes(:user, :reportable).recent
-    @open_count = @reports.count { |report| report.status == "open" }
-    @reviewing_count = @reports.count { |report| report.status == "reviewing" }
+    @pagy, @reports = pagy(ModerationReport.includes(:user, :reportable).recent)
+    # One grouped COUNT, not a Ruby block count over every row: the block form
+    # loaded the whole table to count it, and did so twice.
+    by_status = ModerationReport.group(:status).count
+    @open_count = by_status.fetch("open", 0)
+    @reviewing_count = by_status.fetch("reviewing", 0)
   end
 
   def update

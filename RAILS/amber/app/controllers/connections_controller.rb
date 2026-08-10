@@ -4,7 +4,10 @@ class ConnectionsController < ApplicationController
   before_action :require_real_user
 
   def index
-    @connections = Connection.where(requester: Current.user).or(Connection.where(addressee: Current.user)).includes(:requester, :addressee).order(created_at: :desc)
+    @pagy, @connections = pagy(
+      Connection.where(requester: Current.user).or(Connection.where(addressee: Current.user))
+                .includes(:requester, :addressee).order(created_at: :desc)
+    )
   end
 
   def create

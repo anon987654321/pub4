@@ -16,3 +16,5 @@
         body: t("bookmark.empty_body", default: "Tap Save on any post to keep it here."),
         action: { label: t("empty.city_feed"), path: root_path } %>
 <% end %>
+
+<%= render "shared/pager", pagy: @pagy %>

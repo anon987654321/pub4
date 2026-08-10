@@ -8,7 +8,7 @@ class CategoriesController < ApplicationController
   def index
     scope = Category.order(:name).includes(:ports)
     scope = apply_live_search(scope, columns: %w[name description], vertical: "categories") if live_search_query.present?
-    @categories = scope
+    @pagy, @categories = pagy(scope)
     finish_live_search(partial: "categories/live_search_results")
   end
 

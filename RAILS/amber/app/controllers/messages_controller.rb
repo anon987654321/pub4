@@ -4,7 +4,10 @@ class MessagesController < ApplicationController
   before_action :require_user_session
 
   def index
-    @messages = Message.where(sender: Current.user).or(Message.where(recipient: Current.user)).includes(:sender, :recipient).recent
+    @pagy, @messages = pagy(
+      Message.where(sender: Current.user).or(Message.where(recipient: Current.user))
+             .includes(:sender, :recipient).recent
+    )
     @unread_count = Current.user.received_messages.unread.count
     @message = Current.user.sent_messages.build
     Current.user.received_messages.unread.find_each(&:read!)

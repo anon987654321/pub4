@@ -649,3 +649,8 @@ nb:
     action: "Installer"
   mailer:
     confirm_subscription: "Bekreft abonnementet"
+  pagination:
+    label: "Paginering"
+    previous: "Forrige"
+    next: "Neste"
+    position: "Side %{page} av %{pages}"

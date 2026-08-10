@@ -126,3 +126,8 @@ en:
     body: "Ports search and advisories — open from your home screen."
     not_now: "Not now"
     action: "Install"
+  pagination:
+    label: "Pagination"
+    previous: "Previous"
+    next: "Next"
+    position: "Page %{page} of %{pages}"

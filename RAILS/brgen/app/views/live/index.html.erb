@@ -118,7 +118,7 @@
       </article>
     <% end %>
     <% if @pagy %>
-      <div class="live-pagination"><%== @pagy.series_nav if @pagy.pages > 1 %></div>
+      <div class="live-pagination"><%= render "shared/pager", pagy: @pagy %></div>
     <% end %>
   <% else %>
     <%= render "shared/empty_state",

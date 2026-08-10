@@ -5,7 +5,9 @@ class LiveStreamsController < ApplicationController
   before_action :set_live_stream, only: %i[show update destroy]
 
   def index
-    @live_streams = LiveStream.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
+    @pagy, @live_streams = pagy(
+      LiveStream.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
+    )
     @live_stream = Current.user.live_streams.build
   end
 

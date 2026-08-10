@@ -8,9 +8,11 @@ class Marketplace::OrdersController < Marketplace::BaseController
   # Buyer's order history — a paid order used to vanish (the cart only lists
   # pending). Scoped to Current.user's own orders.
   def index
-    @orders = Marketplace::Order.where(buyer_id: Current.user.id)
-                                .includes(:listing)
-                                .order(created_at: :desc)
+    @pagy, @orders = pagy(
+      Marketplace::Order.where(buyer_id: Current.user.id)
+                        .includes(:listing)
+                        .order(created_at: :desc)
+    )
   end
 
   def show

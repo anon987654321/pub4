@@ -1,0 +1,31 @@
+<%# Pager that does not care which pagy major the app is on.
+
+    The three apps are on two: amber pagy 9.4, brgen 43.3, bsdports 43.5. The
+    view helpers were renamed between them -- `pagy_nav(@pagy)` in 9 became
+    `@pagy.series_nav` in 43 -- and `prev` became `previous`. Calling either
+    name is an app-specific bet, and brgen lost it: hashtags/show.html.erb
+    called pagy_nav on 43, which raises NoMethodError as soon as a hashtag has
+    a second page.
+
+    So this uses only what both majors expose: page, pages, next. The previous
+    page comes off `page` rather than from prev/previous, which is exactly the
+    attribute that differs.
+
+    Locals: pagy (required), label (optional aria-label). %>
+<% if pagy && pagy.pages.to_i > 1 %>
+  <% previous_page = pagy.page > 1 ? pagy.page - 1 : nil %>
+  <nav class="pager" aria-label="<%= local_assigns.fetch(:label, t("pagination.label", default: "Pagination")) %>">
+    <% if previous_page %>
+      <%= link_to t("pagination.previous", default: "Previous"),
+                  url_for(page: previous_page), class: "pager-link", rel: "prev" %>
+    <% end %>
+    <span class="pager-position">
+      <%= t("pagination.position", page: pagy.page, pages: pagy.pages,
+            default: "Page %{page} of %{pages}") %>
+    </span>
+    <% if pagy.next %>
+      <%= link_to t("pagination.next", default: "Next"),
+                  url_for(page: pagy.next), class: "pager-link", rel: "next" %>
+    <% end %>
+  </nav>
+<% end %>

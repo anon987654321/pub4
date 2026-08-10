@@ -8,5 +8,5 @@
       heading: t("newsletter.style_notes"),
       blurb: t("newsletter.style_blurb"),
       button_label: t("newsletter.get_letter") %>
-<%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= render "shared/pager", pagy: @pagy %>
 <% end %>

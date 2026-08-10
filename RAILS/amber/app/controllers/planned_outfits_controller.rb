@@ -4,7 +4,7 @@ class PlannedOutfitsController < ApplicationController
   before_action :require_real_user
 
   def index
-    @planned = Current.user.planned_outfits.upcoming.includes(:outfit)
+    @pagy, @planned = pagy(Current.user.planned_outfits.upcoming.includes(:outfit))
     @outfits = Current.user.outfits.order(:name)
   end
 

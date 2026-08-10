@@ -9,14 +9,16 @@ class ConversationsController < ApplicationController
     # "messages.created_at" order on an unjoined table — the latter needs
     # .references(:messages) and then LEFT-JOIN-duplicates each conversation once
     # per message. COALESCE to created_at keeps empty conversations in order.
-    @conversations = Conversation.for_user(Current.user)
-                                 .where(slug: nil)
-                                 .includes(:participants, :messages)
-                                 .order(Arel.sql(
-                                   "COALESCE((SELECT MAX(m.created_at) FROM messages m " \
-                                   "WHERE m.conversation_id = conversations.id), " \
-                                   "conversations.created_at) DESC"
-                                 ))
+    @pagy, @conversations = pagy(
+      Conversation.for_user(Current.user)
+                  .where(slug: nil)
+                  .includes(:participants, :messages)
+                  .order(Arel.sql(
+                    "COALESCE((SELECT MAX(m.created_at) FROM messages m " \
+                    "WHERE m.conversation_id = conversations.id), " \
+                    "conversations.created_at) DESC"
+                  ))
+    )
     # One grouped COUNT for the whole list. The view used to call
     # unread_count_for per row, which includes(:messages) does not help with —
     # it is a find_by plus its own COUNT, so the preload was paid and ignored.

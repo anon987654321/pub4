@@ -36,3 +36,5 @@
         body: t("messages.empty_body"),
         action: { label: t("nav.nearby"), path: nearby_path } %>
 <% end %>
+
+<%= render "shared/pager", pagy: @pagy %>

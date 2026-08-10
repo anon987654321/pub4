@@ -4,9 +4,11 @@ class BookmarksController < ApplicationController
   before_action :require_user_session
 
   def index
-    @posts = Current.user.bookmarked_posts.kept
-                        .includes(:user, :community, :votes)
-                        .order(created_at: :desc)
+    @pagy, @posts = pagy(
+      Current.user.bookmarked_posts.kept
+                  .includes(:user, :community, :votes)
+                  .order(created_at: :desc)
+    )
   end
 
   def create

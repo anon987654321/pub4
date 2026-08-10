@@ -94,8 +94,13 @@ class NearbyController < ApplicationController
     value.to_f.clamp(0.5, MAX_RADIUS_KM)
   end
 
+  NEARBY_LIMIT = 100
+
+  # The reject/filter_map/sort_by below all happen in Ruby, so the scope has to
+  # be bounded before it gets there -- inside a dense city this was every user
+  # within the radius, on a 1GB box.
   def nearby_users(lat, lng, radius)
-    User.nearby(lat, lng, radius).reject { |user| user == Current.user }.filter_map do |user|
+    User.nearby(lat, lng, radius).limit(NEARBY_LIMIT).reject { |user| user == Current.user }.filter_map do |user|
       distance = user.distance_to(lat, lng)
       next if distance.nil? || distance > radius
 

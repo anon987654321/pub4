@@ -2,7 +2,7 @@
 
 class Marketplace::SavedSearchesController < Marketplace::BaseController
   def index
-    @saved_searches = Current.user.marketplace_saved_searches.order(created_at: :desc)
+    @pagy, @saved_searches = pagy(Current.user.marketplace_saved_searches.order(created_at: :desc))
   end
 
   def create
