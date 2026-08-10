@@ -280,13 +280,9 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 
 Rails uses `Pub4::DeployPaths` to resolve MASTER media tools from a source checkout or a VPS copy-tree; never assume `Rails.root/../../postpro`. Newsletter hero rendering can use the same postpro/repligen pair as MASTER. Keep provider tokens in the app's `/etc/<app>.env`; do not add them to Rails credentials or source. MASTER's natural-language media routing is local to the agent runtime, while Rails callers should use the shared service boundary so jobs remain observable and retryable.
 
-**Blockers:**
-
-1. City vanity TLS — `OPERATOR.sh` stage 1 must issue certs for every apex in `ALL_DOMAINS`; relayd keypairs only exist for certs on disk.
-2. Domain drift — `OPENBSD/deploy_inventory.json`, `apps.yml`, `OPERATOR.sh`, and `relayd.conf` must agree.
-3. relayd restart after route changes.
-4. Seeds skipped in production unless `RUN_PRODUCTION_SEEDS=1`.
-5. openrsync broken on vm23 — deploy uses git pull.
+**Blockers:** `BLOCKERS.md` — five entries, each with owner, unblock criteria,
+and the check that covers it. Kept there rather than here because two of the
+five sentences this section used to carry had gone stale unnoticed.
 
 **Deploy:**
 

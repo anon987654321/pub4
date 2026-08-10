@@ -2,6 +2,7 @@
 
 require "json"
 require "pathname"
+require_relative "../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 begin
@@ -69,11 +70,15 @@ module Deploy
       relayd_keys = parse_relayd_keypairs
 
       if master[:apps] && !master[:apps].empty?
-        expected_apps = {
-          "amber" => { domain: "amber.brgen.no", port: 61352 },
-          "brgen" => { domain: "brgen.no", port: 38182 },
-          "bsdports" => { domain: "bsdports.org", port: 47312 },
-        }
+        # Derived from apps.yml, not restated. This table used to be a literal
+        # of the same three domain/port pairs, which made the gate a fifth copy
+        # of the fact it exists to protect: edit apps.yml and the gate keeps
+        # asserting the old numbers, and passes. port_inventory checks the other
+        # four mirrors against apps.yml but does not read gates/lib, so nothing
+        # would have caught the drift.
+        expected_apps = Inventory.new(root: ROOT.to_s).apps.to_h do |app|
+          [app.name, { domain: app.domain, port: app.port }]
+        end
         expected_apps.each do |name, exp|
           entry = master[:apps][name]
           unless entry
