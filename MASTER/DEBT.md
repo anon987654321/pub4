@@ -500,6 +500,37 @@ that reads comments produces a *false alarm* the next author will "fix" by
 deleting the explanation, which is how a codebase loses the reasons for its own
 decisions.
 
+## Scanner Convention — an exemption must outlive nothing
+
+Sibling to the section above, found the same day and by the same kind of work.
+When a gate carries an allow-list — exempt paths, baseline numbers, known
+offenders — **the entries must be checked against reality, not just consulted.**
+An exemption whose subject no longer exists is a hole in the gate that nobody can
+see, precisely because the thing it excuses is invisible.
+
+Deleting `RAILS/FINAL_TODO.md` on 2026-08-10 surfaced two, immediately, because
+both tests named the file the moment it went: `doc_numbers` was still granting it
+44px, 6px, 10px, 14px and 1265px, and `doc_paths` was still excusing
+`db/structure.sql` on its behalf. Neither had had a subject for as long as it
+took to notice, and nothing would have reported it — a baseline that exempts a
+file that does not exist simply never fires.
+
+The failure is quiet in both directions. While the file existed the exemption was
+load-bearing and correct; once it did not, the same line silently widened the
+gate for every *other* file the rule covers, if the exemption is keyed on a value
+rather than a path.
+
+`rake lint:autoload` is the shape to copy: it does not merely read its 44 ignores,
+it asserts each one is still necessary and fails naming any that is not. Any new
+allow-list should be able to answer the same question about itself.
+
+Cheap check when adding or reviewing one: every path in an allow-list should
+resolve, and every numeric exemption should name the file it was granted for.
+Note that "resolve" needs the right base directory — a probe that assumed repo
+root reported 89 phantom stale entries in `data/autoload.yml`, whose paths are
+relative to `MASTER/lib/`. Verify the instrument before believing the finding,
+which is the other lesson of this week.
+
 ## Not Debt
 
 - Two `Master::` spines.
