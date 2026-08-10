@@ -526,6 +526,11 @@ Object.defineProperty(State, 'mode', {
   set(v) {
     _stateMode = v;
     rootBody.dataset.mode = v;
+    // Mic state in words, for the screen reader. The glyph carries it
+    // visually (grey idle, live while listening); this is the same fact
+    // for someone who cannot see the colour change.
+    const micText = document.querySelector('[data-mic-state-text]');
+    if (micText) micText.textContent = v === 'listening' ? 'Microphone on' : 'Microphone off';
     const s = document.getElementById('zsh-status');
     if (s) s.textContent = '';
     if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();

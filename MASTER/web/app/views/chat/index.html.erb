@@ -96,7 +96,22 @@
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
   <canvas id="face" role="img" aria-label="<%= t("face.face_aria", default: "MASTER face — visual state mirror") %>" tabindex="-1"></canvas>
   <div id="face-status-live" class="face-status-live" aria-live="polite" aria-atomic="true"></div>
-  <div id="mic-dot" aria-hidden="true"></div>
+  <%# Mic state, always on screen. It used to be a 10px dot at opacity 0 that
+      appeared only while listening, so "off" and "not rendered" looked
+      identical and the only way to learn the mic was off was to talk and get
+      nothing. Grey glyph when idle, live colour when listening.
+      role=status rather than aria-hidden: this is now the only indication of
+      whether the microphone is open, which is not something to hide from a
+      screen reader. %>
+  <div id="mic-dot" class="mic-indicator" role="status"
+       aria-label="<%= t("face.mic_state", default: "Microphone") %>">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/>
+      <path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span class="sr-only" data-mic-state-text></span>
+  </div>
   <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
   <div id="yt-player-b" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
   <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>

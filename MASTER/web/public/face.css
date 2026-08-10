@@ -326,9 +326,10 @@ body[data-tts-loading="true"] .ui-status {
 
 /* Pristine chrome: only the logo, face, and shell prompt stay visible --
    drop every top-right and bottom-right badge/status element. #mic-dot is
-   exempt: it's the only visible feedback that the mic is listening
-   (body[data-mode="listening"] #mic-dot below already gates it to opacity 0
-   otherwise, so it costs nothing when idle). */
+   exempt: it is the only feedback about whether the microphone is open.
+   It used to be free when idle because it was invisible then — and that was
+   the bug, since "off" and "no indicator" looked the same. It is now always
+   drawn, grey when idle. One 18px glyph is the price of not having to guess. */
 .model-badge,
 .sound-on-chip,
 .ui-status,
@@ -353,24 +354,49 @@ body[data-council-persona]::after {
   text-rendering: optimizeLegibility;
   transition: opacity 1.2s var(--ease-out);
 }
-/* Mic indicator — top-right, visible only during STT */
+/* Mic indicator — top-right, always present, two states.
+ *
+ * Was a 10px dot at opacity 0 that appeared only while listening. That made
+ * "microphone off" and "no indicator exists" the same picture, so the only way
+ * to find out was to speak and wait for nothing to happen. Operator report
+ * 2026-08-10: "no mic icon to indicate when its on and when its off (dark
+ * grey), so user has to guess".
+ *
+ * Idle is dark grey and legible rather than hidden — a control you can see is
+ * off is not clutter, it is the answer to the question. Listening keeps the
+ * live colour and the pulse it always had. */
 #mic-dot {
   position: fixed;
   top: calc(var(--inset-t) + 2px);
   inset-inline-end: calc(var(--inset-r) + 2px);
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--c-danger);
-  opacity: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--c-mic-off, #6b6b6b);
+  opacity: 1;
   pointer-events: none;
   z-index: var(--z-ui);
-  transition: opacity 120ms var(--ease-out);
+  transition: color 160ms var(--ease-out), opacity 160ms var(--ease-out);
 }
+
+#mic-dot svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: currentColor;
+}
+
+/* Listening: live colour and the pulse. */
 body[data-mode="listening"] #mic-dot {
-  opacity: 1;
+  color: var(--c-danger);
   will-change: transform;
   animation: micPulse 1.4s var(--ease-in-out) infinite;
+}
+
+/* While MASTER is speaking the mic is deliberately not listening, and saying so
+ * is worth more than going blank -- this is the moment a user is most likely to
+ * talk over it and wonder why nothing was heard. */
+body[data-mode="speaking"] #mic-dot {
+  opacity: 0.45;
 }
 
 @keyframes micPulse {
