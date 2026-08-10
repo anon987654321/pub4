@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
 class ShowsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @shows = pagy(shows_scope, page: page, request:)
-    super
-  end
+  renders "tv/shows/card", as: :show
 
   private
 
-  def page_html
-    @shows.map { |show| render(partial: "tv/shows/card", locals: { show:, channel: shows_channel }) }.join
+  # The card wants the channel alongside the show, so this one overrides
+  # row_locals rather than carrying its own page_html.
+  def row_locals(record)
+    { show: record, channel: shows_channel }
   end
 
-  def shows_scope
+  def scope
     scope = shows_channel ? shows_channel.shows : Tv::Show.all
     scope.published
   end

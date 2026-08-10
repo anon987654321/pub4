@@ -1,18 +1,11 @@
 # frozen_string_literal: true
 
 class DealsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @deals = pagy(deals_scope, page: page, request:)
-    super
-  end
+  renders "marketplace/deals/card", as: :deal
 
   private
 
-  def page_html
-    @deals.map { |deal| render(partial: "marketplace/deals/card", locals: { deal: }) }.join
-  end
-
-  def deals_scope
+  def scope
     scope = Marketplace::Deal.active.includes(:listing)
     return scope unless element.dataset["q"].present?
 

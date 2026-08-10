@@ -1,18 +1,11 @@
 # frozen_string_literal: true
 
 class SetsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @sets = pagy(sets_scope, page: page, request:)
-    super
-  end
+  renders "playlist/sets/card", as: :set
 
   private
 
-  def page_html
-    @sets.map { |set| render(partial: "playlist/sets/card", locals: { set: }) }.join
-  end
-
-  def sets_scope
+  def scope
     scope = Playlist::Set.publicly_listed
     return scope unless element.dataset["q"].present?
 

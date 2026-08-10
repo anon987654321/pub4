@@ -1,18 +1,11 @@
 # frozen_string_literal: true
 
 class OutfitsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @outfits = pagy(outfits_scope, page: page, request:)
-    super
-  end
+  renders "outfits/outfit", as: :outfit
 
   private
 
-  def page_html
-    @outfits.map { |outfit| render(partial: "outfits/outfit", locals: { outfit: }) }.join
-  end
-
-  def outfits_scope
+  def scope
     scope = Current.user.outfits.with_images_for_display.order(created_at: :desc)
     return scope unless element.dataset["q"].present?
 

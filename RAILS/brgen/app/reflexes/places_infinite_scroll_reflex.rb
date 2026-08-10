@@ -1,20 +1,11 @@
 # frozen_string_literal: true
 
 class PlacesInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @places = pagy(places_scope, page: page, request:)
-    super
-  end
+  renders "maps/places/card", as: :place
 
   private
 
-  def page_html
-    @places.map do |place|
-      render(partial: "maps/places/card", locals: { place: })
-    end.join
-  end
-
-  def places_scope
+  def scope
     scope = Place.includes(:city, :neighborhood).order(:name)
     scope = scope.where(kind: element.dataset["kind"]) if element.dataset["kind"].present?
     if element.dataset["q"].present?

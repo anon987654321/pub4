@@ -1,20 +1,11 @@
 # frozen_string_literal: true
 
 class ChannelsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @channels = pagy(channels_scope, page: page, request:)
-    super
-  end
+  renders "tv/channels/row", as: :channel
 
   private
 
-  def page_html
-    @channels.map do |channel|
-      render(partial: "tv/channels/row", locals: { channel: })
-    end.join
-  end
-
-  def channels_scope
+  def scope
     scope = Tv::Channel.all.includes(:user)
     if element.dataset["q"].present?
       term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"

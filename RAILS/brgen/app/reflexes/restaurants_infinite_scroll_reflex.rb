@@ -1,20 +1,11 @@
 # frozen_string_literal: true
 
 class RestaurantsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @restaurants = pagy(restaurants_scope, page: page, request:)
-    super
-  end
+  renders "takeaway/restaurants/card", as: :restaurant
 
   private
 
-  def page_html
-    @restaurants.map do |restaurant|
-      render(partial: "takeaway/restaurants/card", locals: { restaurant: })
-    end.join
-  end
-
-  def restaurants_scope
+  def scope
     scope = Takeaway::Restaurant.active.includes(:user)
     scope = scope.where(cuisine_type: element.dataset["cuisine"]) if element.dataset["cuisine"].present?
     if element.dataset["q"].present?

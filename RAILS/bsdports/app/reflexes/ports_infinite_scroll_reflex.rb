@@ -1,18 +1,11 @@
 # frozen_string_literal: true
 
 class PortsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @ports = pagy(ports_scope, page: page, request:)
-    super
-  end
+  renders "ports/row", as: :port
 
   private
 
-  def page_html
-    @ports.map { |port| render(partial: "ports/row", locals: { port: }) }.join
-  end
-
-  def ports_scope
+  def scope
     scope = Port.includes(:category)
     if element.dataset["q"].present?
       term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"

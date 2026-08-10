@@ -1,35 +1,34 @@
 # frozen_string_literal: true
 
 class ListingsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  def load_more
-    @pagy, @listings = pagy(listings_scope, page: page, request:)
-    @listing_distances = listing_distances(
-      @listings,
-      element.dataset["lat"].presence,
-      element.dataset["lng"].presence
-    )
-    super
-  end
+  renders "marketplace/listings/card", as: :listing
 
   private
 
-  def page_html
-    @listings.map do |listing|
-      render(
-        partial: "marketplace/listings/card",
-        locals: {
-          listing: listing,
-          distance_km: @listing_distances&.fetch(listing.id, nil),
-        }
-      )
-    end.join
+  # Distances are computed once for the page, between pagination and rendering,
+  # rather than per row inside the partial.
+  #
+  # The version this replaces assigned the distance hash over @listings -- the
+  # same ivar it had just paginated into -- and then read `@listings&.fetch(id)`
+  # while mapping over @listings. It worked only because the map had already
+  # captured the array; one more read of the ivar anywhere in that method would
+  # have been reading the hash.
+  def after_paginate
+    @distances = listing_distances(
+      @records,
+      element.dataset["lat"].presence,
+      element.dataset["lng"].presence
+    )
   end
 
-  def listings_scope
+  def row_locals(record)
+    { listing: record, distance_km: @distances[record.id] }
+  end
+
+  def scope
     scope = Marketplace::Listing.includes(:user, :category).recent
     scope = scope.where(category_id: element.dataset["categoryId"]) if element.dataset["categoryId"].present?
-    if element.dataset["q"].present?
-      term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
+    if (term = like_term)
       scope = scope.where("title LIKE ? OR description LIKE ? OR location LIKE ?", term, term, term)
     end
     lat = element.dataset["lat"].presence
