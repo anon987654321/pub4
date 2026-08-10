@@ -1,7 +1,5 @@
+---
 schema: 1
-# Reverse of the integrity check: registered scan rules that no principle claims.
-# rules.yml declares this direction as law; `rake lint:principle_trace` holds it
-# to a ceiling that only falls. Measured 2026-08-03: 101 of 181.
 rule_trace_ceiling: 101
 version: v110.0-restored
 source: merged master.yml fossil → MASTER runtime principle_map
@@ -68,6 +66,150 @@ clusters:
   - thin_controllers
   - view_purity
   - stimulus_progressive
+  visual_design:
+  - aesthetic_integrity
+  - clean_lines
+  - color_theory
+  - color_with_purpose
+  - content_prioritized
+  - deference
+  - essential_elements_only
+  - flush_left_alignment
+  - focus_on_content
+  - functional_typography
+  - functionality_over_aesthetics
+  - good_design_is_innovative
+  - good_design_is_long_lasting
+  - grid_based_layouts
+  - grid_systems
+  - intentional_typography
+  - large_scale_typography
+  - limited_color_palette
+  - line_and_shape
+  - minimal_materials
+  - monochromatic_schemes
+  - photography_over_illustration
+  - primary_colors
+  - proportion_and_scale
+  - remove_non_essentials
+  - sans_serif_typography
+  - shadows_create_hierarchy
+  - typography_hierarchy
+  - universal_visual_language
+  - visual_hierarchy_clarity
+  - visual_weight
+  clean_code:
+  - avoid_duplicate_code
+  - avoid_feature_envy
+  - avoid_long_methods
+  - avoid_mental_mapping
+  - avoid_premature_optimization
+  - avoid_primitive_obsession
+  - boy_scout_mandatory
+  - code_for_maintainer
+  - extend_dont_replace
+  - hide_implementation_details
+  - high_cohesion
+  - one_level_of_abstraction
+  - readability_first
+  - reduce_cognitive_load
+  - tell_dont_ask
+  engineering:
+  - boring_technology
+  - convention_over_configuration
+  - divitis_prevention
+  - evidence_over_opinion
+  - experimental_innovation
+  - file_sprawl_prevention
+  - inversion_of_control
+  - layered_complexity
+  - modular_design
+  - objective_clarity
+  - pareto_principle
+  - performance_theater_avoidance
+  - rational_objectivity
+  - robustness_principle
+  - sectionitis_prevention
+  - structured_logging
+  - test_pyramid
+  architecture:
+  - clean_geometric_lines
+  - clear_structural_exhibition
+  - contextual_response
+  - durability_and_longevity
+  - energy_efficiency
+  - geometric_patterns
+  - geometric_simplicity
+  - gesamtkunstwerk
+  - indoor_outdoor_connection
+  - integration_with_nature
+  - local_material_sourcing
+  - material_as_metaphor
+  - material_efficiency
+  - monumental_form
+  - natural_light
+  - natural_materials
+  - natural_ventilation
+  - net_zero_design
+  - order_and_geometry
+  - passive_solar_design
+  - place_based_design
+  - prospect_and_refuge
+  - raw_materials_exposed
+  - ribbon_windows
+  - sense_of_place
+  - truth_to_materials
+  - unity_of_art_craft
+  - utilitas
+  - waste_reduction
+  ux_laws:
+  - cross_platform_consistency
+  - direct_manipulation
+  - fittss_law
+  - intuitive_navigation
+  - learnability
+  - mental_models
+  - motion_provides_meaning
+  - peak_end_rule
+  - platform_consistency
+  - responsive_animation
+  - system_status_visibility
+  - teslers_law
+  - von_restorff_effect
+  refactoring:
+  - decompose_conditional
+  - encapsulate_variable
+  - encapsulate_what_changes
+  - extract_class
+  - extract_function
+  - extract_variable
+  - inline_function
+  - introduce_parameter_object
+  - move_function
+  - optimize_for_deletion
+  - prefer_polymorphism
+  - rename_variable
+  - replace_magic_numbers
+  - substitute_algorithm
+  japanese_aesthetics:
+  - fukinsei
+  - gaman
+  - ikigai
+  - jo_ha_kyu
+  - kintsugi
+  - kire
+  - miyabi
+  - mono_no_aware
+  - mottainai
+  - mushin
+  - omoiyari
+  - repose
+  - shakkei
+  - shibumi
+  - shoshin
+  - shu_ha_ri
+  - yoin
+  - yugen
 principles:
   accessibility:
     meaning: usable by people with diverse abilities
@@ -95,6 +237,17 @@ principles:
     status: gap
     tags:
     - code
+  aesthetic_integrity:
+    meaning: 'Appearance matches function  '
+    detects: visual_clutter
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   affordance:
     meaning: visual clues to functionality
     detects: unclear_affordance
@@ -127,6 +280,72 @@ principles:
     status: gap
     tags:
     - code
+  avoid_duplicate_code:
+    confidence: 0.75
+    detects: duplication
+    meaning: 'Eliminate repeated logic  '
+    operation: delete
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
+  avoid_feature_envy:
+    confidence: 0.75
+    detects: long_function
+    meaning: 'Methods shouldn''t access other object''s data excessively  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
+  avoid_long_methods:
+    confidence: 0.9
+    detects: long_function
+    meaning: 'Break down lengthy functions  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
+  avoid_mental_mapping:
+    meaning: code should be self-explanatory
+    detects: cryptic_code
+    severity: medium
+    confidence: 0.7
+    operation: clarify
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
+  avoid_premature_optimization:
+    meaning: clarity first, optimize when needed
+    detects: premature_optimization
+    severity: low
+    confidence: 0.8
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
+  avoid_primitive_obsession:
+    meaning: 'Use objects instead of primitives for domain concepts  '
+    detects: primitive_obsession
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
   avoid_side_effects:
     meaning: functions shouldn't cause hidden changes
     detects: hidden_side_effects
@@ -160,6 +379,28 @@ principles:
     status: gap
     tags:
     - aesthetic
+  boring_technology:
+    meaning: use proven tools, avoid framework churn
+    detects: trendy_stack
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  boy_scout_mandatory:
+    meaning: every change must improve surroundings
+    detects: quality_regression
+    severity: medium
+    confidence: 0.85
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
   boy_scout_rule:
     meaning: leave code better than you found it
     detects: no_improvement
@@ -233,6 +474,72 @@ principles:
     status: covered
     tags:
     - ui
+  clean_geometric_lines:
+    meaning: 'Pure, unadorned forms  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.9
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  clean_lines:
+    meaning: 'Pure, uncluttered forms  '
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.9
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  clear_structural_exhibition:
+    meaning: 'How it stands is visible  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: clarify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  code_for_maintainer:
+    meaning: write for the next person reading it
+    detects: clever_code
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
+  color_theory:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Relationships and psychology of color  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  color_with_purpose:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Meaningful color application  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   command_query_separation:
     meaning: separate actions from queries
     detects: mixed_concerns
@@ -313,6 +620,28 @@ principles:
     status: gap
     tags:
     - code
+  content_prioritized:
+    meaning: 'Information over decoration  '
+    detects: decorative_code
+    severity: low
+    confidence: 0.8
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  contextual_response:
+    meaning: 'Respect and enhance surrounding environment  '
+    detects: context_ignorance
+    severity: medium
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   contrast:
     meaning: emphasize differences to create interest
     detects: low_contrast
@@ -324,6 +653,17 @@ principles:
     status: covered
     tags:
     - ui
+  convention_over_configuration:
+    meaning: sensible defaults reduce decisions
+    detects: excessive_configuration
+    severity: medium
+    confidence: 0.8
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
   correlation_ids:
     meaning: trace requests across service boundaries
     detects: untraceable_requests
@@ -334,6 +674,17 @@ principles:
     status: gap
     tags:
     - code
+  cross_platform_consistency:
+    meaning: 'Same experience across devices  '
+    detects: platform_inconsistency
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   database_constraints:
     meaning: enforce integrity at database level, not just application
     detects: app_only_validation
@@ -356,6 +707,28 @@ principles:
     status: gap
     tags:
     - code
+  decompose_conditional:
+    confidence: 0.75
+    detects: high_complexity
+    meaning: 'Break complex conditionals into named functions  '
+    operation: rename
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  deference:
+    meaning: 'Interface recedes, content advances  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: introduce_interface
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   dependency_inversion:
     meaning: depend on abstractions, not concretions
     detects: concrete_dependency
@@ -389,6 +762,17 @@ principles:
     status: gap
     tags:
     - code
+  direct_manipulation:
+    meaning: 'Touch directly affects objects  '
+    detects: indirect_interaction
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   direct_nature_connection:
     meaning: 'Visual and physical access to natural elements  '
     detects: artificial_environment
@@ -399,6 +783,17 @@ principles:
     status: gap
     tags:
     - aesthetic
+  divitis_prevention:
+    meaning: use semantic HTML, avoid wrapper proliferation
+    detects: wrapper_proliferation
+    severity: medium
+    confidence: 0.8
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
   dont_repeat_yourself:
     meaning: avoid duplication, extract commonality
     detects: duplication
@@ -421,6 +816,17 @@ principles:
     tags:
     - code
     immutable: true
+  durability_and_longevity:
+    meaning: 'Built to last generations  '
+    detects: short_lifespan
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   eager_loading:
     meaning: avoid N+1 queries by loading associations upfront
     detects: n_plus_one
@@ -455,6 +861,39 @@ principles:
     status: covered
     tags:
     - aesthetic
+  encapsulate_variable:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Protect direct access to data  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  encapsulate_what_changes:
+    meaning: isolate variation points
+    detects: exposed_variation
+    severity: medium
+    confidence: 0.75
+    operation: encapsulate
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  energy_efficiency:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Minimize resource consumption  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   error_prevention:
     meaning: design to prevent mistakes
     detects: error_prone
@@ -466,6 +905,39 @@ principles:
     status: covered
     tags:
     - aesthetic
+  essential_elements_only:
+    meaning: 'Include only what''s necessary  '
+    detects: unnecessary_elements
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  evidence_over_opinion:
+    meaning: require proof, not assumptions
+    detects: unsubstantiated_claim
+    severity: medium
+    confidence: 0.8
+    operation: add_evidence
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  experimental_innovation:
+    meaning: 'Constant material exploration  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
   explicit_error_handling:
     meaning: handle errors explicitly, never swallow
     detects: no_error_handling
@@ -477,6 +949,17 @@ principles:
     status: covered
     tags:
     - code
+  extend_dont_replace:
+    meaning: build on existing patterns, don't rewrite
+    detects: unnecessary_rewrite
+    severity: medium
+    confidence: 0.8
+    operation: extend
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
   extensibility:
     meaning: open for extension
     detects: modification_required
@@ -488,6 +971,39 @@ principles:
     status: covered
     tags:
     - code
+  extract_class:
+    confidence: 0.75
+    detects: long_function
+    meaning: 'Split large class into smaller ones  '
+    operation: extract
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  extract_function:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Pull code into separate named function  '
+    operation: rename
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  extract_variable:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Put expression result into named variable  '
+    operation: rename
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
   fail_fast:
     meaning: report errors immediately
     detects: silent_errors
@@ -509,6 +1025,17 @@ principles:
     status: gap
     tags:
     - code
+  file_sprawl_prevention:
+    meaning: consolidate related files, avoid proliferation
+    detects: file_sprawl
+    severity: medium
+    confidence: 0.75
+    operation: consolidate
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
   firmitas:
     meaning: structural strength and durability
     detects: weak_structure
@@ -530,8 +1057,20 @@ principles:
     status: covered
     tags:
     - ui
+  fittss_law:
+    confidence: 0.75
+    detects: long_function
+    meaning: 'Larger, closer targets are faster to acquire  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   flat_ui:
-    meaning: 'Uniform size at rest; depth only when pixels collectively resemble a 3D model'
+    meaning: Uniform size at rest; depth only when pixels collectively resemble a
+      3D model
     detects: decorative_depth
     severity: medium
     confidence: 0.8
@@ -542,31 +1081,6 @@ principles:
     status: covered
     tags:
     - aesthetic
-  ui_chrome_i18n:
-    meaning: 'Shell/empty/search chrome uses I18n; default locale nb for family apps'
-    detects: hardcoded_en_chrome
-    severity: medium
-    confidence: 0.85
-    operation: wire_i18n_for_literals
-    rule_ids:
-    - ERB_HARDCODED_CHROME
-    status: covered
-    tags:
-    - i18n
-    - ui
-  type_title_token:
-    meaning: 'Page titles use --text-title modular token not raw 20px'
-    detects: one_off_title_px
-    severity: low
-    confidence: 0.75
-    operation: prefer_title_type_token
-    rule_ids:
-    - TYPE_TITLE_TOKEN
-    - TYPE_HIERARCHY
-    status: covered
-    tags:
-    - typography
-    - ui
   flexibility_and_adaptability:
     meaning: 'Design for change over time  '
     detects: rigid_structure
@@ -577,6 +1091,28 @@ principles:
     status: gap
     tags:
     - aesthetic
+  flush_left_alignment:
+    meaning: 'Asymmetric, readable text  '
+    detects: poor_alignment
+    severity: medium
+    confidence: 0.75
+    operation: align
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  focus_on_content:
+    meaning: 'Content is primary  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   form_follows_function:
     meaning: design prioritizes purpose over decoration
     detects: decorative_code
@@ -619,6 +1155,17 @@ principles:
     status: gap
     tags:
     - code
+  fukinsei:
+    meaning: asymmetry, irregularity - avoiding forced patterns
+    detects: forced_symmetry
+    severity: low
+    confidence: 0.6
+    operation: break_symmetry
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
   function_over_decoration:
     meaning: 'Utility drives aesthetic  '
     detects: decorative_code
@@ -632,6 +1179,72 @@ principles:
     status: covered
     tags:
     - aesthetic
+  functional_typography:
+    meaning: 'Type as functional tool  '
+    detects: decorative_type
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  functionality_over_aesthetics:
+    meaning: 'Honest expression of purpose  '
+    detects: form_over_function
+    severity: medium
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  gaman:
+    meaning: 'Enduring with dignity  '
+    detects: premature_abandonment
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  geometric_patterns:
+    meaning: 'Mathematical precision  '
+    detects: imprecise_layout
+    severity: medium
+    confidence: 0.8
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  geometric_simplicity:
+    meaning: 'Basic shapes as foundation  '
+    detects: complex_shapes
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  gesamtkunstwerk:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Total work of art  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   good_design_is_honest:
     meaning: doesn't manipulate or make false promises
     detects: misleading_interface
@@ -643,6 +1256,28 @@ principles:
     status: covered
     tags:
     - ui
+  good_design_is_innovative:
+    meaning: advances with technology and culture
+    detects: outdated_approach
+    severity: low
+    confidence: 0.7
+    operation: modernize
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  good_design_is_long_lasting:
+    meaning: avoids fashion, remains relevant
+    detects: trendy_code
+    severity: low
+    confidence: 0.7
+    operation: make_timeless
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   good_design_is_thorough:
     meaning: attention to every detail
     detects: incomplete_implementation
@@ -687,6 +1322,28 @@ principles:
     status: covered
     tags:
     - ui
+  grid_based_layouts:
+    meaning: 'Systematic spatial organization  '
+    detects: chaotic_layout
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  grid_systems:
+    meaning: 'Structural framework for layout  '
+    detects: unstructured_layout
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   harmony_of_parts:
     meaning: all elements work together cohesively
     detects: inconsistent_patterns
@@ -708,6 +1365,17 @@ principles:
     status: covered
     tags:
     - ui
+  hide_implementation_details:
+    meaning: expose only necessary interfaces
+    detects: leaky_abstraction
+    severity: medium
+    confidence: 0.75
+    operation: encapsulate
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
   hierarchy:
     meaning: clear structure and organization
     detects: flat_hierarchy
@@ -719,6 +1387,17 @@ principles:
     status: covered
     tags:
     - ui
+  high_cohesion:
+    meaning: related functionality grouped together
+    detects: low_cohesion
+    severity: medium
+    confidence: 0.75
+    operation: group
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
   high_contrast_elements:
     meaning: 'Bold visual distinctions  '
     detects: visual_clutter
@@ -752,6 +1431,17 @@ principles:
     status: covered
     tags:
     - code
+  ikigai:
+    meaning: reason for being, purpose
+    detects: purposeless_code
+    severity: medium
+    confidence: 0.7
+    operation: clarify_purpose
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
   immutability_preference:
     meaning: prefer immutable data structures, mutate explicitly
     detects: hidden_side_effects
@@ -765,6 +1455,17 @@ principles:
     status: covered
     tags:
     - code
+  indoor_outdoor_connection:
+    meaning: 'Seamless transitions between interior and exterior  '
+    detects: hard_boundaries
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   information_architecture:
     meaning: 'Logical content organization  '
     detects: disorganized_content
@@ -788,6 +1489,39 @@ principles:
     status: covered
     tags:
     - aesthetic
+  inline_function:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Replace function call with function body  '
+    operation: rename
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  integration_with_nature:
+    meaning: 'Blurring boundaries between inside and outside  '
+    detects: artificial_isolation
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  intentional_typography:
+    meaning: 'Purposeful type choices  '
+    detects: arbitrary_type
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   internalize_before_writing:
     meaning: understand existing code before modifying
     detects: blind_modification
@@ -798,6 +1532,50 @@ principles:
     status: gap
     tags:
     - code
+  introduce_parameter_object:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Group parameters into object  '
+    operation: organize
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  intuitive_navigation:
+    meaning: easy to understand and predict
+    detects: confusing_navigation
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
+  inversion_of_control:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Framework calls your code, not vice versa  '
+    operation: rename
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  jo_ha_kyu:
+    meaning: 'Beginning, break, rapid conclusion rhythm  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
   job_idempotency:
     meaning: background jobs safe to retry
     detects: non_idempotent_job
@@ -842,6 +1620,39 @@ principles:
     status: covered
     tags:
     - code
+  kintsugi:
+    meaning: golden repair, embracing damage as history
+    detects: hidden_history
+    severity: low
+    confidence: 0.65
+    operation: preserve_history
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  kire:
+    meaning: 'Clean cut, decisive action  '
+    detects: indecisive_code
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  large_scale_typography:
+    meaning: 'Bold, readable text  '
+    detects: long_function
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   law_of_demeter:
     meaning: only talk to immediate friends
     detects: train_wreck
@@ -853,6 +1664,28 @@ principles:
     status: covered
     tags:
     - code
+  layered_complexity:
+    meaning: 'Rich, multi-dimensional experiences  '
+    detects: flat_experience
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  learnability:
+    meaning: 'Easy for new users to accomplish tasks  '
+    detects: steep_learning_curve
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   least_privilege:
     meaning: grant minimum permissions required
     detects: excessive_permissions
@@ -886,6 +1719,28 @@ principles:
     status: covered
     tags:
     - ui
+  limited_color_palette:
+    meaning: 'Restrained color choices  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  line_and_shape:
+    meaning: 'Basic building blocks of form  '
+    detects: weak_structure
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   liskov_substitution:
     meaning: subtypes must be substitutable for base types
     detects: broken_inheritance
@@ -897,6 +1752,17 @@ principles:
     status: covered
     tags:
     - code
+  local_material_sourcing:
+    meaning: 'Use regional materials to reduce transport impact  '
+    detects: distant_sourcing
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   locality:
     meaning: behavior near trigger
     detects: action_at_distance
@@ -944,6 +1810,28 @@ principles:
     status: gap
     tags:
     - aesthetic
+  material_as_metaphor:
+    meaning: 'Digital surfaces behave like physical materials  '
+    detects: immaterial_design
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  material_efficiency:
+    meaning: 'Optimize material use, reduce waste  '
+    detects: material_waste
+    severity: medium
+    confidence: 0.75
+    operation: optimize_resources
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   mathematical_grids:
     meaning: 'Systematic layout structure  '
     detects: weak_structure
@@ -956,6 +1844,17 @@ principles:
     status: covered
     tags:
     - code
+  mental_models:
+    meaning: 'Match user expectations  '
+    detects: unexpected_behavior
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   metrics_and_alerting:
     meaning: measure what matters, alert on anomalies
     detects: blind_operation
@@ -966,6 +1865,39 @@ principles:
     status: gap
     tags:
     - code
+  minimal_materials:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Using only what''s necessary  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  miyabi:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Courtly elegance, refinement  '
+    operation: refine
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  modular_design:
+    meaning: 'Standardized, interchangeable parts  '
+    detects: monolithic_design
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
   modularity:
     meaning: depend on abstractions
     detects: concrete_dependency
@@ -978,6 +1910,116 @@ principles:
     status: covered
     tags:
     - code
+  mono_no_aware:
+    meaning: awareness of transience
+    detects: permanent_mindset
+    severity: low
+    confidence: 0.6
+    operation: accept_change
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  monochromatic_schemes:
+    meaning: 'Limited, often grey palette  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  monumental_form:
+    meaning: 'Bold, imposing presence  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  motion_provides_meaning:
+    meaning: 'Animation conveys relationships  '
+    detects: meaningless_motion
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
+  mottainai:
+    meaning: regret over waste, respect for resources
+    detects: wasteful_code
+    severity: medium
+    confidence: 0.75
+    operation: optimize_resources
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  move_function:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Relocate function to better class  '
+    operation: improve
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  mushin:
+    meaning: 'No-mind, effortless action  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  natural_light:
+    meaning: 'Maximize daylight for health and efficiency  '
+    detects: artificial_lighting
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  natural_materials:
+    meaning: 'Wood, stone, earth in their authentic forms  '
+    detects: synthetic_materials
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  natural_ventilation:
+    meaning: 'Use airflow patterns for comfort  '
+    detects: mechanical_dependence
+    severity: medium
+    confidence: 0.8
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   negative_space:
     meaning: breathing room
     detects: visual_clutter
@@ -1001,6 +2043,17 @@ principles:
     status: covered
     tags:
     - aesthetic
+  net_zero_design:
+    meaning: 'Buildings that produce as much energy as they consume  '
+    detects: energy_deficit
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   no_god_files:
     meaning: split monolithic files into focused modules
     detects: god_file
@@ -1035,6 +2088,17 @@ principles:
     status: covered
     tags:
     - code
+  objective_clarity:
+    meaning: 'Neutral, factual presentation  '
+    detects: biased_presentation
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
   observability:
     meaning: errors visible, debuggable, traceable
     detects: silent_errors
@@ -1047,6 +2111,28 @@ principles:
     tags:
     - code
     immutable: true
+  omoiyari:
+    meaning: 'Empathy, consideration for others  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  one_level_of_abstraction:
+    meaning: consistent abstraction within scope
+    detects: mixed_abstraction
+    severity: medium
+    confidence: 0.7
+    operation: normalize
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
   open_closed_principle:
     meaning: open for extension, closed for modification
     detects: modification_required
@@ -1081,6 +2167,28 @@ principles:
     status: covered
     tags:
     - code
+  optimize_for_deletion:
+    meaning: make code easy to remove
+    detects: hard_to_delete
+    severity: low
+    confidence: 0.7
+    operation: isolate
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  order_and_geometry:
+    meaning: rational organization using clear principles
+    detects: chaotic_structure
+    severity: medium
+    confidence: 0.75
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   orthogonality:
     meaning: changes in one area don't affect others
     detects: hidden_coupling
@@ -1093,6 +2201,28 @@ principles:
     status: covered
     tags:
     - code
+  pareto_principle:
+    meaning: '80% of effects from 20% of causes  '
+    detects: unfocused_effort
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  passive_solar_design:
+    meaning: 'Harness natural heating and cooling  '
+    detects: active_climate_control
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   pattern:
     meaning: repeated design elements
     detects: pattern_violation
@@ -1104,6 +2234,39 @@ principles:
     status: covered
     tags:
     - aesthetic
+  peak_end_rule:
+    meaning: 'Experiences judged by peak and end  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
+  performance_theater_avoidance:
+    meaning: avoid non-functional performance signals
+    detects: performance_theater
+    severity: low
+    confidence: 0.75
+    operation: delete
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  photography_over_illustration:
+    meaning: 'Realistic imagery  '
+    detects: abstract_imagery
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   pilotis:
     meaning: 'Elevated structure on columns, freeing ground level  '
     detects: ground_level_obstruction
@@ -1114,6 +2277,28 @@ principles:
     status: gap
     tags:
     - code
+  place_based_design:
+    meaning: 'Respond to specific site conditions and culture  '
+    detects: generic_design
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  platform_consistency:
+    confidence: 0.8
+    detects: unclear_intent
+    meaning: 'Use iOS patterns  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   pledge_unveil:
     meaning: restrict syscalls and filesystem access
     detects: unrestricted_process
@@ -1124,6 +2309,28 @@ principles:
     status: gap
     tags:
     - code
+  prefer_polymorphism:
+    meaning: 'Use inheritance hierarchies appropriately  '
+    detects: type_switching
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  primary_colors:
+    meaning: 'Red, blue, yellow emphasis  '
+    detects: muddied_palette
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   principle_of_least_knowledge:
     meaning: minimize dependencies and interactions
     detects: excessive_dependencies
@@ -1156,6 +2363,28 @@ principles:
     status: covered
     tags:
     - ui
+  proportion_and_scale:
+    meaning: relationships between parts create harmony
+    detects: unbalanced_modules
+    severity: low
+    confidence: 0.7
+    operation: rebalance
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  prospect_and_refuge:
+    meaning: 'Balance between openness and enclosure  '
+    detects: extreme_exposure
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   rate_limiting:
     meaning: protect resources from abuse
     detects: unbounded_requests
@@ -1167,6 +2396,50 @@ principles:
     status: covered
     tags:
     - code
+  rational_objectivity:
+    meaning: 'Logic-driven decisions  '
+    detects: emotional_design
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  raw_materials_exposed:
+    meaning: 'Concrete, steel shown honestly  '
+    detects: hidden_materials
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  readability_first:
+    meaning: 'Legibility paramount  '
+    detects: poor_readability
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
+  reduce_cognitive_load:
+    meaning: 'Don''t make users think unnecessarily  '
+    detects: cognitive_overload
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
   rejection_of_ornament:
     meaning: eliminate unnecessary decoration
     detects: decorative_code
@@ -1179,6 +2452,61 @@ principles:
     status: covered
     tags:
     - ui
+  remove_non_essentials:
+    meaning: 'Aggressive elimination of excess  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: delete
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  rename_variable:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Give variable more meaningful name  '
+    operation: rename
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  replace_magic_numbers:
+    confidence: 0.9
+    detects: unclear_intent
+    meaning: 'Use named constants  '
+    operation: rename
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
+  repose:
+    meaning: 'Calm, restful quality  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  responsive_animation:
+    meaning: 'Motion responds to input  '
+    detects: static_response
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   reversible_changes:
     meaning: every change should be undoable
     detects: irreversible_change
@@ -1202,6 +2530,28 @@ principles:
     tags:
     - aesthetic
     - ui
+  ribbon_windows:
+    meaning: 'Continuous horizontal bands of glazing  '
+    detects: punched_openings
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  robustness_principle:
+    meaning: 'Liberal in what you accept, conservative in what you send  '
+    detects: strict_parsing
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
   roof_garden:
     meaning: 'Reclaimed green space atop buildings  '
     detects: weak_structure
@@ -1212,6 +2562,17 @@ principles:
     status: gap
     tags:
     - aesthetic
+  sans_serif_typography:
+    meaning: 'Clean, modern typefaces  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   secrets_encryption:
     meaning: never store secrets in plaintext
     detects: plaintext_secrets
@@ -1233,6 +2594,17 @@ principles:
     status: gap
     tags:
     - code
+  sectionitis_prevention:
+    meaning: avoid excessive nesting in config files
+    detects: deep_nesting
+    severity: medium
+    confidence: 0.8
+    operation: flatten
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
   secure_by_default:
     meaning: safe configuration out of the box
     detects: insecure_defaults
@@ -1244,11 +2616,11 @@ principles:
     tags:
     - code
   security:
-    meaning: null
-    detects: null
+    meaning:
+    detects:
     severity: medium
     confidence: 0.7
-    operation: null
+    operation:
     rule_ids:
     - SECRET_PROXIMITY
     status: covered
@@ -1266,6 +2638,17 @@ principles:
     status: covered
     tags:
     - code
+  sense_of_place:
+    meaning: 'Create meaningful connection to location  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   sense_of_shelter:
     meaning: 'Creating protected, comfortable spaces  '
     detects: exposed_feeling
@@ -1290,6 +2673,28 @@ principles:
     status: covered
     tags:
     - code
+  shadows_create_hierarchy:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Depth through layering  '
+    operation: simplify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  shakkei:
+    meaning: 'Borrowed scenery, incorporating distant views  '
+    detects: isolated_design
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
   shibui:
     meaning: simple, subtle beauty
     detects: garish_design
@@ -1302,6 +2707,17 @@ principles:
     tags:
     - aesthetic
     - ui
+  shibumi:
+    meaning: 'Effortless perfection  '
+    detects: forced_elegance
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
   shizen:
     meaning: naturalness without pretense
     detects: artificial_abstraction
@@ -1312,6 +2728,28 @@ principles:
     status: gap
     tags:
     - code
+  shoshin:
+    meaning: 'Beginner''s mind, openness  '
+    detects: assumption_blindness
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
+  shu_ha_ri:
+    meaning: 'Follow, break, transcend learning stages  '
+    detects: stuck_at_stage
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
   signal_noise:
     meaning: maximize signal
     detects: high_noise
@@ -1344,6 +2782,19 @@ principles:
     status: gap
     tags:
     - code
+  stimulus_progressive:
+    meaning: Stimulus progressive enhancement, focused controllers
+    detects: js_soup
+    severity: medium
+    confidence: 0.75
+    operation: split
+    rule_ids:
+    - STIMULUS_CONTROLLER_SIZE
+    - STIMULUS_PROGRESSIVE
+    status: covered
+    tags:
+    - rails
+    - ui
   strong_parameters:
     meaning: whitelist permitted attributes explicitly
     detects: mass_assignment_risk
@@ -1368,6 +2819,28 @@ principles:
     status: covered
     tags:
     - code
+  structured_logging:
+    meaning: machine-parseable log format with consistent fields
+    detects: unstructured_logs
+    severity: medium
+    confidence: 0.85
+    operation: standardize
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  substitute_algorithm:
+    confidence: 0.75
+    detects: unclear_intent
+    meaning: 'Replace algorithm with clearer one  '
+    operation: clarify
+    severity: medium
+    rule_ids: []
+    status: gap
+    tags:
+    - refactoring
+    source: master.yml@30dad7ead
   symmetry_and_balance:
     meaning: visual/logical equilibrium through composition
     detects: asymmetric_structure
@@ -1378,6 +2851,17 @@ principles:
     status: gap
     tags:
     - aesthetic
+  system_status_visibility:
+    meaning: 'Keep users informed  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   tactile_surfaces:
     meaning: 'Physical qualities in digital space  '
     detects: unclear_intent
@@ -1388,6 +2872,28 @@ principles:
     status: gap
     tags:
     - aesthetic
+  tell_dont_ask:
+    meaning: command objects rather than querying them
+    detects: feature_envy
+    severity: medium
+    confidence: 0.75
+    operation: move_method
+    rule_ids: []
+    status: gap
+    tags:
+    - clean_code
+    source: master.yml@30dad7ead
+  teslers_law:
+    meaning: 'Complexity can''t be eliminated, only relocated  '
+    detects: hidden_complexity
+    severity: medium
+    confidence: 0.75
+    operation: delete
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   test_driven_development:
     meaning: 'Write tests before implementation  '
     detects: no_tests
@@ -1408,6 +2914,29 @@ principles:
     status: gap
     tags:
     - code
+  test_pyramid:
+    meaning: many unit tests, fewer integration, fewest e2e
+    detects: inverted_pyramid
+    severity: medium
+    confidence: 0.8
+    operation: rebalance
+    rule_ids: []
+    status: gap
+    tags:
+    - engineering
+    source: master.yml@30dad7ead
+  thin_controllers:
+    meaning: thin controllers, fat models
+    detects: fat_controller
+    severity: high
+    confidence: 0.85
+    operation: extract
+    rule_ids:
+    - THIN_CONTROLLER
+    status: covered
+    tags:
+    - rails
+    - code
   transparency:
     meaning: 'Visual and conceptual openness  '
     detects: visual_clutter
@@ -1418,6 +2947,64 @@ principles:
     status: gap
     tags:
     - aesthetic
+  truth_to_materials:
+    meaning: use materials honestly without disguise
+    detects: abstraction_abuse
+    severity: medium
+    confidence: 0.7
+    operation: reveal_intent
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
+  type_title_token:
+    meaning: Page titles use --text-title modular token not raw 20px
+    detects: one_off_title_px
+    severity: low
+    confidence: 0.75
+    operation: prefer_title_type_token
+    rule_ids:
+    - TYPE_TITLE_TOKEN
+    - TYPE_HIERARCHY
+    status: covered
+    tags:
+    - typography
+    - ui
+  typography_hierarchy:
+    meaning: 'Size, weight, style differentiation  '
+    detects: flat_typography
+    severity: low
+    confidence: 0.9
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  ui_chrome_i18n:
+    meaning: Shell/empty/search chrome uses I18n; default locale nb for family apps
+    detects: hardcoded_en_chrome
+    severity: medium
+    confidence: 0.85
+    operation: wire_i18n_for_literals
+    rule_ids:
+    - ERB_HARDCODED_CHROME
+    status: covered
+    tags:
+    - i18n
+    - ui
+  unity_of_art_craft:
+    meaning: 'Merge fine and applied arts  '
+    detects: art_craft_division
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   universal_design:
     meaning: 'Accessible to people of all abilities  '
     detects: accessibility_violation
@@ -1439,6 +3026,17 @@ principles:
     status: covered
     tags:
     - code
+  universal_visual_language:
+    meaning: 'Internationally comprehensible  '
+    detects: culture_specific
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
   user_centered_design:
     meaning: 'Design for actual user needs  '
     detects: designer_centered
@@ -1459,6 +3057,17 @@ principles:
     status: gap
     tags:
     - ui
+  utilitas:
+    meaning: functional utility and purpose
+    detects: purposeless_code
+    severity: medium
+    confidence: 0.8
+    operation: clarify_purpose
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   venustas:
     meaning: beauty and aesthetic delight
     detects: visual_clutter
@@ -1472,6 +3081,52 @@ principles:
     tags:
     - aesthetic
     - ui
+  view_purity:
+    meaning: views present; helpers and models compute
+    detects: logic_in_view
+    severity: medium
+    confidence: 0.8
+    operation: extract
+    rule_ids:
+    - NO_LOGIC_IN_VIEW
+    - RAILS_TAG_HELPER
+    status: covered
+    tags:
+    - rails
+    - ui
+  visual_hierarchy_clarity:
+    meaning: 'Clear information prioritization  '
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.8
+    operation: clarify
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  visual_weight:
+    meaning: 'Perceived heaviness of elements  '
+    detects: unbalanced_weight
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - visual_design
+    source: master.yml@30dad7ead
+  von_restorff_effect:
+    meaning: 'Distinctive items are remembered  '
+    detects: uniform_presentation
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - ux_laws
+    source: master.yml@30dad7ead
   wa:
     meaning: harmony, balance
     detects: chaotic_structure
@@ -1503,6 +3158,17 @@ principles:
     status: gap
     tags:
     - aesthetic
+  waste_reduction:
+    meaning: 'Minimize construction and operational waste  '
+    detects: waste_generation
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - architecture
+    source: master.yml@30dad7ead
   white_space:
     meaning: empty space that gives design breathing room
     detects: visual_clutter
@@ -1526,6 +3192,17 @@ principles:
     status: covered
     tags:
     - aesthetic
+  yoin:
+    meaning: 'Lingering resonance after experience  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
   you_arent_gonna_need_it:
     meaning: don't build features prematurely
     detects: speculative_code
@@ -1537,41 +3214,14 @@ principles:
     status: covered
     tags:
     - code
-  thin_controllers:
-    meaning: thin controllers, fat models
-    detects: fat_controller
-    severity: high
-    confidence: 0.85
-    operation: extract
-    rule_ids:
-    - THIN_CONTROLLER
-    status: covered
+  yugen:
+    meaning: subtle grace, mysterious depth
+    detects: shallow_implementation
+    severity: low
+    confidence: 0.65
+    operation: deepen
+    rule_ids: []
+    status: gap
     tags:
-    - rails
-    - code
-  view_purity:
-    meaning: views present; helpers and models compute
-    detects: logic_in_view
-    severity: medium
-    confidence: 0.8
-    operation: extract
-    rule_ids:
-    - NO_LOGIC_IN_VIEW
-    - RAILS_TAG_HELPER
-    status: covered
-    tags:
-    - rails
-    - ui
-  stimulus_progressive:
-    meaning: Stimulus progressive enhancement, focused controllers
-    detects: js_soup
-    severity: medium
-    confidence: 0.75
-    operation: split
-    rule_ids:
-    - STIMULUS_CONTROLLER_SIZE
-    - STIMULUS_PROGRESSIVE
-    status: covered
-    tags:
-    - rails
-    - ui
+    - japanese_aesthetics
+    source: master.yml@30dad7ead
