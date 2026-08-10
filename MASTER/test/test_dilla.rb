@@ -2037,6 +2037,38 @@ class TestDilla < Minitest::Test
     assert result.key?("pad_body_db")
   end
 
+  # The shipped artifact, not the parts.
+  #
+  # demo_reject_dead_parts guards the join, but only for parts it is handed. A
+  # demo assembled some other way, or a mastering stage that emits nothing, can
+  # still put a dead stretch in demo.mp3 -- and nothing looks at demo.mp3 after
+  # it is written. Twice a -91 dB placeholder reached a demo; both times it was
+  # found by listening, not by a test.
+  #
+  # One decode, two filters. Deliberately loose bounds: this is a smoke gate for
+  # "the demo is broken", not a taste judgement, and a demo the operator
+  # deliberately masters differently should not fail it.
+  def test_shipped_demo_has_no_dead_stretch_and_lands_near_its_loudness_target
+    demo = File.expand_path("../../STUDIO/dilla/demo.mp3", __dir__)
+    skip "demo.mp3 missing" unless File.file?(demo)
+    skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
+
+    out = `ffmpeg -hide_banner -nostats -i #{demo.dump} -af silencedetect=n=-70dB:d=5,ebur128 -f null - 2>&1`
+
+    dead = out.scan(/silence_duration:\s*([\d.]+)/).flatten.map(&:to_f)
+    assert_empty dead.select { |d| d >= 5.0 },
+                 "demo.mp3 contains #{dead.length} silent stretch(es) of 5s or more " \
+                 "(longest #{dead.max}s) -- a dead part reached the master"
+
+    integrated = out.scan(/I:\s*(-?[\d.]+)\s*LUFS/).flatten.last&.to_f
+    refute_nil integrated, "ebur128 reported no integrated loudness for demo.mp3"
+
+    target = eval_in_engine("puts JSON.generate(t: MASTER_LUFS_BY_STYLE[:default])").fetch("t")
+    assert_in_delta target, integrated, 2.0,
+                    "demo.mp3 integrated loudness #{integrated} LUFS is more than 2 LU " \
+                    "from the #{target} LUFS target -- mastering did not run, or ran twice"
+  end
+
   def test_master_heuristics_has_no_parallel_council
     result = eval_in_engine(<<~RUBY)
       puts JSON.generate(
