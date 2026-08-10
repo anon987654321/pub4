@@ -16,7 +16,19 @@ module Deploy
 
     PEN_ALLOW = %r{(?:^|/)(?:_search_yep|_jsfiddle_chrome|_marketplace_nav_bar|_marketplace_animated_logo)\.scss\z}
 
-    FLAT_PATTERN = /box-shadow\s*:\s*(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i
+    # `: none` is how a stylesheet *complies* with flat_ui, so it cannot be the
+    # thing that fails it. text-shadow and backdrop-filter had no exclusion at
+    # all, and box-shadow's did not work: `\s*(?!none\b)` lets the `\s*`
+    # backtrack to zero width, so the lookahead runs against " none" — which is
+    # not "none" — and succeeds. `box-shadow: none` matched; only the unspaced
+    # `box-shadow:none` was ever excluded.
+    #
+    # The assertion has to cover the whitespace it is skipping, so it goes
+    # before it rather than after. Nothing in RAILS writes the compliant form
+    # today, which is why this never showed: the first stylesheet to turn an
+    # effect off explicitly would have been the one penalised for it, and that
+    # stylesheet was MASTER's face.
+    FLAT_PATTERN = /box-shadow\s*:(?!\s*none\b)|text-shadow\s*:(?!\s*none\b)|backdrop-filter\s*:(?!\s*none\b)|filter\s*:[^;]*\bblur\(/i
     TWITTER_BLUE = /#1d9bf0|#1DA1F2/i
     LONG_TRANSITION = /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i
     PHYSICAL_LR = /^\s*(margin|padding|inset)-(left|right)\s*:|^\s*left\s*:|^\s*right\s*:/
@@ -280,7 +292,7 @@ module Deploy
       # were outside every budget here, and the `size` rule below hard-fails on
       # `_vertical_*` sheets specifically — a rule that named files it could not
       # open. A falling finding count reads as improvement, not blindness.
-      APPS.flat_map do |app|
+      rails = APPS.flat_map do |app|
         bases = [File.join(RAILS, app, "app/assets/stylesheets")]
         bases.concat(Dir.glob(File.join(RAILS, app, "engines/*/app/assets/stylesheets")))
         bases.flat_map do |base|
@@ -291,7 +303,24 @@ module Deploy
               p.match?(/\.map\z/)
           end
         end
-      end.uniq
+      end
+
+      (rails + master_web_files).uniq
+    end
+
+    # The fourth public surface. ai.brgen.no is reachable from brgen's own top
+    # nav, so a visitor crosses from a gated app into an ungated one without
+    # leaving the product — and this gate had never opened it, because MASTER
+    # keeps its stylesheets in web/public rather than app/assets/stylesheets and
+    # every glob here is shaped for a Rails app.
+    #
+    # Named files, not a glob: web/public also holds fingerprinted precompile
+    # output (24 face-*.css copies at the last count), and scanning build
+    # artifacts is what the "source of truth only" note above forbids.
+    MASTER_WEB = %w[MASTER/web/public/face.css MASTER/web/public/chat_upload.css].freeze
+
+    def master_web_files
+      MASTER_WEB.map { |rel| File.join(ROOT, rel) }.select { |p| File.file?(p) }
     end
 
     def scan(path)

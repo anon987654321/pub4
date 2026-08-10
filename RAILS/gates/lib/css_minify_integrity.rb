@@ -43,9 +43,17 @@ module Deploy
       entry = File.join(RAILS_ROOT, app, "app/assets/stylesheets/application.scss")
       return result.inconclusive!("css_minify_integrity: #{app} has no application.scss") unless File.file?(entry)
 
+      # The engine paths are not optional. Rails puts each mounted engine's
+      # app/assets on the asset load path, so `rake dartsass:build` compiles;
+      # this list is hand-built, and without them brgen's application.scss cannot
+      # resolve its vertical imports. The gate did not report "brgen unchecked",
+      # it reported a Sass::CompileError — so a path list that had gone stale
+      # read as a broken stylesheet, and the minify check it exists to run never
+      # executed for brgen at all.
       load_paths = [
         File.join(RAILS_ROOT, "shared", "app/assets/stylesheets"),
         File.join(RAILS_ROOT, app, "app/assets/stylesheets"),
+        *Dir.glob(File.join(RAILS_ROOT, app, "engines/*/app/assets/stylesheets")),
       ]
 
       begin

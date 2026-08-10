@@ -34,11 +34,29 @@
 # the visually-hidden clip, -1000px parks a node off-screen), and 1px padding on
 # inline chips, where the nearest allowed step is 0 and would delete it rather
 # than align it. Below the grid is not off it.
+# Re-measured 2026-08-10 over 94 stylesheets, up from 92. MASTER/web joined the
+# scan: ai.brgen.no is reachable from brgen's own top nav, so a visitor crosses
+# from three gated apps into an ungated one without leaving the product, and
+# every glob here was shaped for a Rails app while MASTER keeps its stylesheets
+# in web/public. Two files, 1513 lines, never counted by anything.
+#
+# important 126 -> 130, rhythm 31 -> 89, magic_hex 142 -> 150, type_scale 8 -> 10
+# and weight_ladder 0 -> 2 are that, and only that. Nothing regressed to earn
+# them. face.css's own 21 rule violations were fixed rather than absorbed —
+# 5 keyword easings to var(--ease-out), 8 uppercase trackings to the 0.15em
+# ceiling, 21 physical left/right to their logical twins, and the accent glow on
+# #primer-title removed with the reduced-motion override that existed only to
+# turn it off. What is left here is the counted debt of a fourth surface.
+#
+# rhythm's +58 is the largest and the least surprising: face.css positions a
+# canvas overlay in device pixels against safe-area insets, which is not the
+# 8px page grid and never claimed to be. It is a candidate for the next ratchet,
+# not a licence.
 schema: 1
 rules:
-  important: 126
-  rhythm: 31
-  magic_hex: 142
+  important: 130
+  rhythm: 89
+  magic_hex: 150
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical
@@ -63,5 +81,13 @@ rules:
   # hero, the swipe placeholder glyph, and `html, body { font-size: 21px }` in
   # _minimal.scss — that last one is the large-screen root scale, and snapping
   # it to a step would rescale every rem in the system.
-  type_scale: 8
-  weight_ladder: 0
+  #
+  # +2 and +2 on 2026-08-10 are MASTER/web joining the scan (see the header).
+  # face.css runs a terminal type ramp — 10/11/13px status chips, monospace, on
+  # a canvas — and a 700 weight in two places. Neither reads the RAILS token
+  # ladder, because face.css has no access to it: it is served from
+  # MASTER/web/public, outside the asset pipeline that defines --text-* and
+  # --weight-*. Snapping the numbers alone would only hide that; the fix is a
+  # shared token source, which is a decision, not a ratchet.
+  type_scale: 10
+  weight_ladder: 2
