@@ -95,7 +95,11 @@ All under `app/services/`.
 | `OutfitGeneration` | Generates outfits from scoped items, layer-aware, biased toward least-worn |
 | `OutfitOrdering` | Orders items within an outfit for display |
 | `StyleEvolution` | Wear timeline grouped into life phases |
-| `WardrobeAnalytics` | Summary, average cost-per-wear, tips |
+| `TasteRanker` | Ranks garments on declared preference plus joy, wear, recency and life phase; `explain` names the reasons |
+| `StyleAssistant` | One outfit for today — deterministic per user and date, weather-aware, rests recent wears, persists nothing |
+| `ClosetOrganization` | Care, storage, zoning and restraint tips, each naming its principle and the wardrobe evidence behind it |
+| `WardrobeAnalytics` | Summary, average cost-per-wear, tips. Counts in SQL — it never loads the wardrobe |
+| `WardrobeCharts` | The four analytics figures: category mix, wear distribution, cost-per-wear, idle |
 | `WardrobeAi` | Joy analysis and outfit suggestion; reports `available?` and degrades when unconfigured |
 | `WardrobeVisibilityPolicy` | Answers view / remix / run-AI-analysis against layer 1 consent |
 | `GarmentTaxonomy` | Category normalization, weather fit, formality score, semantic tags |

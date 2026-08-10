@@ -8,6 +8,7 @@
   <nav role="navigation" aria-label="<%= t("wardrobe.analytics_actions") %>">
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
     <%= link_to t("nav.outfits"), outfits_path, class: "btn" %>
+    <%= link_to t("pages.organize"), organize_wardrobe_items_path, class: "btn" %>
     <%= link_to t("pages.timeline"), timeline_wardrobe_items_path, class: "btn" %>
     <%= link_to t("wardrobe.color_palette"), ai_palette_path, class: "btn" %>
   </nav>
@@ -20,13 +21,55 @@
   <span class="chip"><%= t("wardrobe.chip_underused", count: @analytics[:underused]) %></span>
   <span class="chip"><%= t("wardrobe.chip_box", count: @analytics[:declutter_box]) %></span>
   <span class="chip"><%= t("wardrobe.chip_memory", count: @analytics[:sentimental_archive]) %></span>
+  <%# cost-per-wear was computed by WardrobeAnalytics and then dropped on the
+      floor by this page for its whole life. It is the metric the original
+      specification named, so it leads the figures below as well as sitting
+      here. %>
+  <% if @analytics[:cost_per_wear] %>
+    <span class="chip"><%= t("wardrobe.chip_avg_wear", amount: number_to_currency(@analytics[:cost_per_wear])) %></span>
+  <% end %>
 </section>
 
-<section>
-  <h2><%= t("wardrobe.category_mix") %></h2>
-  <% @analytics[:by_category].each do |category, count| %>
-    <p><strong><%= category.presence || t("wardrobe.unsorted") %></strong> <span class="dim"><%= count %></span></p>
-  <% end %>
+<section aria-label="<%= t("wardrobe.viz.region") %>">
+  <%= render "figure",
+        id: "category-mix",
+        title: t("wardrobe.category_mix"),
+        caption: t("wardrobe.viz.category_caption", count: @analytics[:active_items]),
+        empty: t("wardrobe.viz.category_empty"),
+        # No href: items#index filters on lifecycle and free-text search only,
+        # so a category link would carry a parameter nothing reads.
+        rows: @charts[:category_mix].map { |bar|
+          { label: bar.label.presence || t("wardrobe.unsorted"), share: bar.share, value: bar.value }
+        } %>
+
+  <%= render "histogram",
+        id: "wear-distribution",
+        title: t("wardrobe.viz.usage"),
+        caption: t("wardrobe.viz.usage_caption"),
+        columns: @charts[:wear_distribution].map { |bar|
+          { label: bar.key == :never ? t("wardrobe.viz.never") : bar.label,
+            share: bar.share, value: bar.value, emphasis: bar.key == :never && bar.value.positive? }
+        } %>
+
+  <%= render "figure",
+        id: "cost-per-wear",
+        title: t("wardrobe.viz.cost"),
+        caption: @analytics[:cost_per_wear] ? t("wardrobe.viz.cost_caption", amount: number_to_currency(@analytics[:cost_per_wear])) : t("wardrobe.viz.cost_caption_none"),
+        empty: t("wardrobe.viz.cost_empty"),
+        rows: @charts[:cost_per_wear].map { |bar|
+          { label: bar.label, share: bar.share, value: number_to_currency(bar.value),
+            note: t("wardrobe.viz.worn_times", count: bar.item.times_worn.to_i), href: item_path(bar.item) }
+        } %>
+
+  <%= render "figure",
+        id: "idle",
+        title: t("wardrobe.viz.idle"),
+        caption: t("wardrobe.viz.idle_caption"),
+        empty: t("wardrobe.viz.idle_empty"),
+        rows: @charts[:idle].map { |bar|
+          { label: bar.label, share: bar.share, value: t("wardrobe.viz.days", count: bar.value),
+            note: t("wardrobe.viz.worn_times", count: bar.item.times_worn.to_i), href: item_path(bar.item) }
+        } %>
 </section>
 
 <section>

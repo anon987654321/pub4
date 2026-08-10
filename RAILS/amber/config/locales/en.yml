@@ -1,5 +1,21 @@
 en:
   hello: "Hello"
+  # Amber stores money in øre (MoneyInOre) for a Bergen wardrobe, so the
+  # currency is NOK. Without this block Rails fell back to its built-in
+  # default and rendered dollars on every price, cost-per-wear and recovered
+  # -value figure in the app.
+  number:
+    format:
+      delimiter: ","
+      separator: "."
+      precision: 2
+    currency:
+      format:
+        format: "%u %n"
+        unit: "NOK"
+        delimiter: ","
+        separator: "."
+        precision: 2
   app:
     name: "Amber"
   skip_to_content: "Skip to main content"
@@ -32,6 +48,7 @@ en:
     primary_nav: "Primary navigation"
     brand_home: "Amber home"
     main: "Main content"
+    mix_match: "Mix & Match"
   auth:
     sign_in: "Sign in"
     sign_in_lead: "Browse the demo wardrobe without an account. Sign in to catalog your own pieces and plan outfits."
@@ -77,6 +94,7 @@ en:
     capsule_plan: "Capsule plan"
     this_week: "This week"
     worst_cpw: "Worst cost-per-wear"
+    cpw_value: "%{amount}/wear · worn %{count}×"
     aging_unworn: "Aging unworn"
     recent: "Recent"
     all_items: "All items →"
@@ -139,6 +157,8 @@ en:
     suggest_outfits: "Outfit suggestions"
     search_wardrobe_title: "Search Wardrobe"
     dressing_room: "Dressing room"
+    organize: "Closet organization"
+    shop_smarter: "Shop smarter"
   actions:
     compose_outfit: "Compose an outfit"
     home: "Home"
@@ -237,10 +257,29 @@ en:
     wear_history: "Wear history"
     wear_history_label: "Wear history timeline"
     your_wardrobe: "Your wardrobe"
+    viz:
+      region: "Wardrobe figures"
+      category_caption: "Active wardrobe, %{count} garments"
+      category_empty: "Add a garment to see what the wardrobe is made of."
+      usage: "How often garments get worn"
+      usage_caption: "Active wardrobe by wear count"
+      never: "Never"
+      cost: "Costliest per wear"
+      cost_caption: "%{amount} per wear on average"
+      cost_caption_none: "No garment has both a price and a logged wear yet."
+      cost_empty: "Add a price and log a wear to see cost-per-wear."
+      idle: "Sitting longest"
+      idle_caption: "Worn fewer than three times, longest untouched first"
+      idle_empty: "Nothing is sitting idle."
+      worn_times: "worn %{count}×"
+      days: "%{count}d"
   newsletter:
     style_notes: "Style notes"
     style_blurb: "Weekly wardrobe essays, outfit ideas, and capsule tips. No spam."
     get_letter: "Get the letter"
+    view_offer: "View offer"
+    today_in: "Today in %{city}"
+    curated_offers: "Curated offers"
   ai:
     occasion: "Occasion"
     season: "Season"
@@ -259,6 +298,10 @@ en:
     infer_master: "Infer with MASTER"
     gap_items: "Gap items to consider"
     swatches_from_items: "Swatches from your items"
+    analysis_unavailable: "No analysis for this garment yet."
+    capsule_builder: "The smallest set of pieces that still dresses you"
+    clashing_items: "Colours that fight each other"
+    suggested_outfits: "Outfits for %{days} days in a %{climate} climate"
   pwa:
     add_item: "Add item"
     item: "Item"
@@ -311,14 +354,21 @@ en:
     choose_or_drop: "Choose or drop photos"
     filter_by_category: "Filter by category"
   outfits:
+    add_item: "Add a garment"
+    style_combinations: "Combinations from your own wardrobe"
+    style_intelligence: "What this outfit is doing"
     share_brgen: "Share to brgen"
     wear_again: "Wear again"
     weather_placeholder: "Weather (prefilled from Bergen when available)"
     occasion_placeholder: "Occasion"
     generate: "Generate outfit"
+    season: "Season"
   planned:
     notes: "Notes…"
     plan_it: "Plan it"
+    date: "Date"
+    outfit: "Outfit"
+    select_outfit: "Select outfit…"
   live_streams:
     title: "Style sessions"
     all: "All style sessions"
@@ -329,6 +379,7 @@ en:
     mark_ended: "Mark ended"
   creator:
     add_showcase: "Add to showcase"
+    showcase_items: "Showcase pieces"
   declutter:
     reason_kept: "memory, gift, rare, uncomfortable…"
     save_review: "Save review"
@@ -369,3 +420,252 @@ en:
   creator_profiles:
     edit_title: "Edit creator profile"
     new_title: "Create creator profile"
+  demo:
+    wardrobe: "Demo wardrobe"
+    wardrobe_header: "Demo wardrobe header"
+    wardrobe_actions: "Demo wardrobe actions"
+    all_pieces: "Every piece"
+    spark_joy: "Sparks joy"
+  users:
+    recent_items: "Recent pieces"
+  # TasteRanker#explain — why a garment leads its carousel.
+  taste:
+    joy: "sparks joy"
+    worn: "worn %{count} times"
+    recent: "worn recently"
+    matches: "matches “%{name}”"
+    avoids: "matches “avoid: %{name}”"
+    aspirational: "aspirational"
+    past_self: "past self"
+  # WardrobeAnalytics#tips — the rule coach, not an LLM.
+  coach:
+    never_worn: "Wear one never-worn item this week"
+    repair: "Repair or release items marked for repair"
+    underused: "Build one outfit around an underused piece"
+    declutter_box: "%{count} items waiting in the declutter box"
+    overdue: "%{count} wear challenges are overdue"
+  # WardrobeGap — what the wardrobe is missing.
+  gaps:
+    category_minimum: "A resilient wardrobe usually needs at least %{count} %{category}."
+    connector: "Missing %{name} for easier outfit combinations."
+    connectors:
+      neutral_top: "a neutral top"
+      dark_bottom: "a dark bottom"
+      weather_layer: "a weather layer"
+      versatile_shoe: "a versatile shoe"
+  duplicates:
+    reason: "%{count} similar %{color} %{category} items. Keep the best-fitting favourite and release weak duplicates."
+  # ClosetOrganization's rules. Every tip carries a title (what to do), a body
+  # (why), and the principle it borrows from, so the advice is auditable rather
+  # than oracular.
+  closet:
+    garments:
+      one: "%{count} garment"
+      other: "%{count} garments"
+    groups:
+      one: "%{count} group"
+      other: "%{count} groups"
+    is_are:
+      one: "is"
+      other: "are"
+    materials:
+      wool: "wool"
+      silk: "silk"
+      linen: "linen"
+      leather: "leather"
+      denim: "denim"
+      cotton: "cotton"
+    tips:
+      clean_needed:
+        title: "Wash or air %{garments}"
+        body: "Marked clean-needed. Clothes stored dirty attract moths and set stains — care comes before storage."
+        principle: "Care before storage"
+      repair:
+        title: "Repair or release %{garments}"
+        body: "A repair pile that never moves is storage spent on garments you cannot wear. Book one repair session or release them."
+        principle: "Kintsugi — mend visibly rather than discard"
+      tailor:
+        title: "%{garments} waiting on tailoring"
+        body: "Fit is the difference between owning a garment and wearing it. Tailoring converts dead stock into rotation."
+        principle: "Fit over quantity"
+      condition:
+        title: "%{garments} logged as worn out or for retirement"
+        body: "Condition is recorded per owner, not per garment. Decide each one now rather than letting it occupy prime rail space."
+        principle: "Decide once, not repeatedly"
+      material_wool:
+        title: "%{garments} in %{material}"
+        body: "Air between wears instead of washing; wash cold and dry flat. Wool self-cleans if given a day on a hanger."
+        principle: "Material dictates method"
+      material_silk:
+        title: "%{garments} in %{material}"
+        body: "Hand wash cool or dry clean, and keep out of direct light — silk fades faster than it wears out."
+        principle: "Material dictates method"
+      material_linen:
+        title: "%{garments} in %{material}"
+        body: "Wash warm and hang damp; the creases are the material, not a fault."
+        principle: "Material dictates method"
+      material_leather:
+        title: "%{garments} in %{material}"
+        body: "Condition twice a year, never seal in plastic, and dry away from heat."
+        principle: "Material dictates method"
+      material_denim:
+        title: "%{garments} in %{material}"
+        body: "Wash rarely and inside out. Every wash costs indigo."
+        principle: "Material dictates method"
+      material_cotton:
+        title: "%{garments} in %{material}"
+        body: "Wash cool and line dry; the dryer, not wear, is what thins cotton."
+        principle: "Material dictates method"
+      seasonal_archive:
+        title: "Archive %{garments} that are out of season"
+        body: "Only the current season belongs in reach. Box the rest clean and labelled; the closet you see should be the closet you can wear today."
+        principle: "Seasonal rotation — the interior changes with the year"
+      fold:
+        title: "Fold %{garments} that are knitted"
+        body: "Knits stretch at the shoulder if hung. Fold them into vertical stacks so each one is visible from above rather than buried."
+        principle: "Vertical filing — everything visible at once"
+      hang:
+        title: "Hang %{garments} that hold a structure"
+        body: "Silk, linen and tailoring keep their line on a hanger and lose it in a stack. Give them shoulder-width spacing."
+        principle: "Support the structure the garment has"
+      breathe:
+        title: "%{garments} in leather need to breathe"
+        body: "Cotton bags, never plastic. Trapped moisture is what cracks a hide, not use."
+        principle: "Material dictates method"
+      archived_stale:
+        title: "%{garments} are in seasonal archive"
+        body: "Archive earns its keep only if it comes back. Resurface the ones whose season has returned so the archive stays a cycle, not a graveyard."
+        principle: "Rotation, not accumulation"
+      prime_reach:
+        title: "Put %{garments} you wear most in prime reach"
+        body: "The band between hip and shoulder costs no bending or stretching. Your most-worn garments belong there and nothing else does."
+        principle: "Reach zones — anthropometric planning"
+      deep_storage:
+        title: "Move %{garments} that are loved but unworn to eye level"
+        body: "A garment that sparks joy and is never worn is usually a garment you cannot see. Trade its position with something you reach for on autopilot."
+        principle: "Visibility drives use"
+      category_zones:
+        title: "Zone the rail: %{zones}"
+        body: "Group by category before anything else, largest group nearest the door. Outfit-building becomes a walk along the rail instead of a search."
+        principle: "Circulation — arrange along the path of movement"
+      color_run:
+        title: "Run each zone light to dark"
+        body: "Within a category, order by value rather than hue. A gradient reads as one composed surface; scattered colour reads as clutter even when the garments are identical."
+        principle: "Value gradient — tonal composition"
+      density:
+        title: "%{categories} %{verb} crowded"
+        body: "Above roughly %{crowded} garments a category stops being browsable — you wear the front third and forget the rest. Thin toward %{airy}–%{crowded}."
+        principle: "Ma — the interval is part of the composition"
+      duplicates:
+        title: "%{group_word} of near-identical garments, %{count} surplus"
+        body: "Keep the best of each and release the rest. Two of the same garment is one garment and one decision you make every morning."
+        principle: "One of each, and the best one"
+      one_in_one_out:
+        title: "%{added} in, %{released} out over the last quarter"
+        body: "The wardrobe is growing faster than it is releasing. One in, one out keeps the volume fixed so the closet never has to be reorganised again."
+        principle: "One in, one out"
+      negative_space:
+        title: "%{joy} of %{total} garments spark joy"
+        body: "The other %{count} are the ones you push past to reach these. Empty rail is not waste — it is what makes the remaining garments visible."
+        principle: "Negative space is the design"
+  footer:
+    wardrobe: "Wardrobe"
+    browse: "Browse"
+    ai_styling: "AI styling"
+    about: "About"
+    support: "Support"
+    contact: "Contact"
+    language: "Language"
+    tagline: "AI wardrobe management."
+    locales:
+      nb: "Norsk"
+      en: "English"
+  shop:
+    lead: "Buy for a gap, not for a mood"
+    actions: "Shopping actions"
+    missing: "missing %{count}"
+    owned: "owned %{count} / %{target}"
+    score: "score %{score}"
+    already_own: "Before you buy — what you already have"
+    duplicate_count: "%{count} near-identical garments"
+    keeper: "Keep:"
+    your_links: "Your affiliate products"
+    your_links_body: "Links you have attached to your own garments — resale listings, shop-similar URLs, or your own affiliate links. Add one from any garment's page."
+    link_count: "%{count} links"
+    open: "Open"
+    no_links: "No links yet"
+    no_links_body: "Open a garment and paste a resale or shop-similar URL to keep it here."
+    store_feeds: "Store feeds"
+    no_feed_tag: "not connected"
+    feed_unavailable:
+      available: "A product feed client is loaded. Amber does not ship a browsing surface for it yet."
+      no_token: "Amber carries no product feed from stores like Net-a-porter. Nothing is configured, and nothing is being fetched."
+      no_feed_client: "A feed token is configured, but Amber has no client to use it — the TradeDoubler integration lives in brgen and is not loaded in this app. The token does nothing here."
+      no_query: "This garment has no brand or title to search on."
+  assistant:
+    today: "Today's look"
+    lead: "Built from what is already in your closet"
+    save: "Save this look"
+    saved_name: "Look for %{date}"
+    zones:
+      outer: "Layer"
+      top: "Top"
+      bottom: "Bottom"
+      dress: "Dress"
+      shoes: "Shoes"
+      accessory: "Accessory"
+    reasons:
+      weatherproof: "keeps the weather off"
+      light_fabric: "light for the temperature"
+    notes:
+      layering: "layering up"
+      no_outerwear: "warm enough to skip a layer"
+      resting: "resting what you wore in the last %{days} days"
+  organize:
+    lead: "Cleaning, storing, zoning"
+    body: "Guidance drawn from architecture, interior design and zen minimalism, applied to what is actually in your wardrobe. Every tip names the principle behind it and the garments that triggered it."
+    actions: "Closet organization actions"
+    empty_title: "Nothing to reorganise"
+    empty_body: "Add garments, log wears, and record condition — the guidance follows from those signals."
+    registers:
+      care: "Care"
+      storage: "Storage"
+      zoning: "Zoning"
+      restraint: "Restraint"
+    register_leads:
+      care: "Cleaning and repair come before anything else — a garment cannot be stored or zoned until it is wearable."
+      storage: "What to fold, what to hang, and what leaves the room until its season returns."
+      zoning: "Where each garment sits, planned by reach and by the path you walk through the room."
+      restraint: "How much the wardrobe should hold, and what the empty rail is for."
+  dressing_room:
+    title: "Mix & Match"
+    zone_head: "Accessories"
+    zone_top: "Tops"
+    zone_bottom: "Bottoms"
+    zone_shoes: "Shoes"
+    previous: "Previous %{zone}"
+    next: "Next %{zone}"
+    pause: "Pause rotation"
+    shuffle: "Shuffle"
+    save: "Save this look"
+    empty_body: "Add a few garments and the carousels will start combining them for you."
+  pagination:
+    label: "Pagination"
+    previous: "Previous"
+    next: "Next"
+    position: "Page %{page} of %{pages}"
+  activerecord:
+    errors:
+      models:
+        connection:
+          attributes:
+            addressee:
+              self_connection: "cannot be yourself"
+        follow:
+          attributes:
+            followee:
+              self_follow: "cannot follow yourself"
+        packing_list:
+          attributes:
+            ends_on:
+              before_start: "must be on or after the start date"

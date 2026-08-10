@@ -28,16 +28,32 @@ module ShopTheLook
       end
     end
 
+    # Why the remote feed cannot answer, or nil when it can.
+    #
+    # This used to be two silent `return []` guards, and the second one is
+    # unconditional in amber: `Tradedoubler` is defined in brgen's app/services
+    # and is never loaded in this process. So setting TRADEDOUBLER_TOKEN in
+    # /etc/amber.env passed the first gate, hit the second, and produced
+    # nothing — configuration with no reader, reporting nothing. Name the
+    # reason so the UI can say which of the two it is.
+    def remote_unavailable_reason(item = nil)
+      return :no_token unless ENV["TRADEDOUBLER_TOKEN"].present? || ENV["TRADEDOUBLER_PRODUCTS_TOKEN"].present?
+      return :no_feed_client unless defined?(Tradedoubler) && Tradedoubler.respond_to?(:deals)
+      return :no_query if item && query_for(item).blank?
+
+      nil
+    end
+
+    def remote_available? = remote_unavailable_reason.nil?
+
+    def query_for(item)
+      [ item.brand, item.title, item.category ].compact.join(" ").strip
+    end
+
     def remote_suggestions(item, limit:)
-      return [] unless ENV["TRADEDOUBLER_TOKEN"].present? || ENV["TRADEDOUBLER_PRODUCTS_TOKEN"].present?
+      return [] if remote_unavailable_reason(item)
 
-      query = [item.brand, item.title, item.category].compact.join(" ").strip
-      return [] if query.blank?
-
-      # Amber stays self-contained: optional HTTP search against brgen public
-      # deals is out of scope. Operators can paste TD links; when a local
-      # Tradedoubler constant exists (shared deploy), use it.
-      return [] unless defined?(Tradedoubler) && Tradedoubler.respond_to?(:deals)
+      query = query_for(item)
 
       Tradedoubler.deals(limit: limit).filter_map do |deal|
         next if deal.placeholder

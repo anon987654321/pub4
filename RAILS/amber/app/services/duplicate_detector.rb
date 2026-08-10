@@ -34,6 +34,9 @@ class DuplicateDetector
 
   def reason_for(items)
     first = items.first
-    "#{items.size} similar #{first.color} #{first.category.to_s.downcase} items. Keep the best-fitting favorite and release weak duplicates."
+    I18n.t("duplicates.reason",
+           count: items.size,
+           color: first.color.presence,
+           category: first.category.to_s.downcase).squish
   end
 end

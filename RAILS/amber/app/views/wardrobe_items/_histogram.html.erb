@@ -1,0 +1,30 @@
+<%#
+  A distribution, drawn as columns rather than the ranked bars of _figure: the
+  axis here is ordered and continuous, and reading it left to right is the
+  whole point. Column heights ride on --share against the plot band's height.
+
+  Locals: id, title, columns [{label:, share:, value:, emphasis:}], and
+  optionally caption.
+%>
+<figure class="viz viz-columns" aria-labelledby="viz-<%= id %>-title">
+  <figcaption class="viz-head">
+    <h3 class="viz-title" id="viz-<%= id %>-title"><%= title %></h3>
+    <% if local_assigns[:caption].present? %>
+      <p class="viz-caption dim"><%= caption %></p>
+    <% end %>
+  </figcaption>
+
+  <ol class="viz-plot">
+    <% columns.each do |column| %>
+      <li class="viz-column<%= " is-emphasis" if column[:emphasis] %>">
+        <span class="viz-column-value"><%= column[:value] %></span>
+        <% if column[:share].to_f.positive? %>
+          <span class="viz-column-fill" style="--share: <%= column[:share] %>"></span>
+        <% else %>
+          <span></span>
+        <% end %>
+        <span class="viz-column-label"><%= column[:label] %></span>
+      </li>
+    <% end %>
+  </ol>
+</figure>

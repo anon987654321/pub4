@@ -1,0 +1,50 @@
+<%#
+  The Style Assistant: one outfit for today, from what is already in the
+  closet. Deterministic for the date, so refreshing does not reshuffle it.
+
+  A partial rather than inline in home/index because that view was already
+  doing four jobs — guest hero, signed-in dashboard, structured data and this —
+  and crossed the 150-line ceiling the file-length ratchet holds.
+
+  Local: look (a StyleAssistant::Suggestion).
+%>
+<section class="today-look" aria-labelledby="today-look-title">
+  <div class="today-look-head">
+    <h2 id="today-look-title"><%= t("assistant.today") %></h2>
+    <p class="dim">
+      <%= t("assistant.lead") %>
+      <% if look.notes.any? %>
+        <span aria-hidden="true">·</span>
+        <%= look.notes.map { |note| t("assistant.notes.#{note}", days: StyleAssistant::REST_DAYS) }.join(" · ") %>
+      <% end %>
+    </p>
+  </div>
+
+  <ol class="today-look-picks">
+    <% look.picks.each do |pick| %>
+      <li class="today-look-pick">
+        <span class="today-look-zone"><%= t("assistant.zones.#{pick.zone}") %></span>
+        <%= link_to pick.item.title, pick.item, class: "today-look-item" %>
+        <% if pick.reasons.any? %>
+          <%# Symbols are the assistant's own reasons; strings come from
+              TasteRanker and are already prose. %>
+          <span class="today-look-why dim">
+            <%= pick.reasons.map { |reason| reason.is_a?(Symbol) ? t("assistant.reasons.#{reason}") : reason }.join(", ") %>
+          </span>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+
+  <%# Saving reuses outfits#save_look — the same endpoint the dressing room
+      posts to — so there is one way to turn a combination into an outfit. %>
+  <%= form_with url: save_look_outfits_path, method: :post, class: "today-look-actions" do |f| %>
+    <% look.item_ids.each do |id| %>
+      <input type="hidden" name="item_ids[]" value="<%= id %>">
+    <% end %>
+    <%# ISO date rather than l(): amber ships no nb date formats, so a localised
+        strftime would raise on the default locale. %>
+    <input type="hidden" name="name" value="<%= t("assistant.saved_name", date: look.date.to_s) %>">
+    <%= f.submit t("assistant.save"), class: "btn btn--primary" %>
+  <% end %>
+</section>

@@ -1,5 +1,20 @@
 nb:
   hello: "Hei"
+  # See the note in en.yml. Norwegian convention: non-breaking space as the
+  # thousands delimiter, comma as the decimal separator, unit before the
+  # amount — kr 1 234,50.
+  number:
+    format:
+      delimiter: " "
+      separator: ","
+      precision: 2
+    currency:
+      format:
+        format: "%u %n"
+        unit: "kr"
+        delimiter: " "
+        separator: ","
+        precision: 2
   app:
     name: "Amber"
   skip_to_content: "Hopp til hovedinnhold"
@@ -32,6 +47,7 @@ nb:
     primary_nav: "Hovednavigasjon"
     brand_home: "Amber hjem"
     main: "Hovedinnhold"
+    mix_match: "Miks & match"
   auth:
     sign_in: "Logg inn"
     sign_in_lead: "Bla i demogarderoben uten konto. Logg inn for å katalogisere egne plagg og planlegge antrekk."
@@ -77,6 +93,7 @@ nb:
     capsule_plan: "Kapselplan"
     this_week: "Denne uken"
     worst_cpw: "Dårligst kostnad per bruk"
+    cpw_value: "%{amount}/bruk · brukt %{count}×"
     aging_unworn: "Aldrende ubrukte"
     recent: "Nylig"
     all_items: "Alle plagg →"
@@ -139,6 +156,8 @@ nb:
     suggest_outfits: "Antrekkforslag"
     search_wardrobe_title: "Søk garderobe"
     dressing_room: "Prøverom"
+    organize: "Garderobeorganisering"
+    shop_smarter: "Handle smartere"
   actions:
     compose_outfit: "Sett sammen antrekk"
     home: "Hjem"
@@ -237,10 +256,29 @@ nb:
     wear_history: "Brukshistorikk"
     wear_history_label: "Tidslinje for brukshistorikk"
     your_wardrobe: "Garderoben din"
+    viz:
+      region: "Garderobefigurer"
+      category_caption: "Aktiv garderobe, %{count} plagg"
+      category_empty: "Legg til et plagg for å se hva garderoben består av."
+      usage: "Hvor ofte plaggene brukes"
+      usage_caption: "Aktiv garderobe etter antall bruk"
+      never: "Aldri"
+      cost: "Dyrest per bruk"
+      cost_caption: "%{amount} per bruk i snitt"
+      cost_caption_none: "Ingen plagg har både pris og registrert bruk ennå."
+      cost_empty: "Legg inn pris og registrer en bruk for å se kostnad per bruk."
+      idle: "Står lengst urørt"
+      idle_caption: "Brukt færre enn tre ganger, lengst urørt først"
+      idle_empty: "Ingenting står urørt."
+      worn_times: "brukt %{count}×"
+      days: "%{count}d"
   newsletter:
     style_notes: "Stilnotater"
     style_blurb: "Ukentlige garderobe-essays, antrekkideer og kapselforslag. Ingen spam."
     get_letter: "Få brevet"
+    view_offer: "Se tilbud"
+    today_in: "I dag i %{city}"
+    curated_offers: "Utvalgte tilbud"
   ai:
     occasion: "Anledning"
     season: "Sesong"
@@ -259,6 +297,10 @@ nb:
     infer_master: "Utled med MASTER"
     gap_items: "Hull å vurdere"
     swatches_from_items: "Fargeprøver fra plaggene dine"
+    analysis_unavailable: "Ingen analyse av dette plagget ennå."
+    capsule_builder: "Det minste settet plagg som fortsatt kler deg"
+    clashing_items: "Farger som slåss med hverandre"
+    suggested_outfits: "Antrekk for %{days} dager i %{climate} klima"
   pwa:
     add_item: "Legg til plagg"
     item: "Plagg"
@@ -311,14 +353,21 @@ nb:
     choose_or_drop: "Velg eller slipp bilder"
     filter_by_category: "Filtrer etter kategori"
   outfits:
+    add_item: "Legg til plagg"
+    style_combinations: "Kombinasjoner fra din egen garderobe"
+    style_intelligence: "Hva dette antrekket gjør"
     share_brgen: "Del til brgen"
     wear_again: "Bruk igjen"
     weather_placeholder: "Vær (forhåndsutfylt fra Bergen når tilgjengelig)"
     occasion_placeholder: "Anledning"
     generate: "Generer antrekk"
+    season: "Sesong"
   planned:
     notes: "Notater…"
     plan_it: "Planlegg"
+    date: "Dato"
+    outfit: "Antrekk"
+    select_outfit: "Velg antrekk…"
   live_streams:
     title: "Stiløkter"
     all: "Alle stiløkter"
@@ -329,6 +378,7 @@ nb:
     mark_ended: "Merk som avsluttet"
   creator:
     add_showcase: "Legg til showcase"
+    showcase_items: "Utvalgte plagg"
   declutter:
     reason_kept: "minne, gave, sjelden, ubehagelig…"
     save_review: "Lagre vurdering"
@@ -369,3 +419,251 @@ nb:
   creator_profiles:
     edit_title: "Rediger skaperprofil"
     new_title: "Opprett skaperprofil"
+  demo:
+    wardrobe: "Demogarderobe"
+    wardrobe_header: "Hode for demogarderobe"
+    wardrobe_actions: "Handlinger for demogarderobe"
+    all_pieces: "Alle plagg"
+    spark_joy: "Gir glede"
+  users:
+    recent_items: "Nylige plagg"
+  # TasteRanker#explain — hvorfor et plagg leder karusellen sin.
+  taste:
+    joy: "gir glede"
+    worn: "brukt %{count} ganger"
+    recent: "brukt nylig"
+    matches: "treffer “%{name}”"
+    avoids: "treffer “unngå: %{name}”"
+    aspirational: "ambisjon"
+    past_self: "tidligere jeg"
+  # WardrobeAnalytics#tips — regelcoachen, ikke en språkmodell.
+  coach:
+    never_worn: "Bruk ett aldri brukt plagg denne uken"
+    repair: "Reparer eller kvitt deg med plagg merket for reparasjon"
+    underused: "Bygg ett antrekk rundt et lite brukt plagg"
+    declutter_box: "%{count} plagg venter i ryddingsboksen"
+    overdue: "%{count} bruksutfordringer er forfalt"
+  # WardrobeGap — hva garderoben mangler.
+  gaps:
+    category_minimum: "En robust garderobe trenger som regel minst %{count} %{category}."
+    connector: "Mangler %{name} for enklere antrekkskombinasjoner."
+    connectors:
+      neutral_top: "en nøytral overdel"
+      dark_bottom: "en mørk underdel"
+      weather_layer: "et værlag"
+      versatile_shoe: "en allsidig sko"
+  duplicates:
+    reason: "%{count} like %{color} %{category}-plagg. Behold favoritten som sitter best og gi de svake duplikatene videre."
+  # Se merknaden i en.yml. Hvert tips har tittel (hva), brødtekst (hvorfor) og
+  # prinsippet det er hentet fra.
+  closet:
+    garments:
+      one: "%{count} plagg"
+      other: "%{count} plagg"
+    groups:
+      one: "%{count} gruppe"
+      other: "%{count} grupper"
+    is_are:
+      one: "er"
+      other: "er"
+    materials:
+      wool: "ull"
+      silk: "silke"
+      linen: "lin"
+      leather: "skinn"
+      denim: "denim"
+      cotton: "bomull"
+    tips:
+      clean_needed:
+        title: "Vask eller luft %{garments}"
+        body: "Merket som trenger rens. Skittentøy på lager trekker møll og setter flekker — stell kommer før oppbevaring."
+        principle: "Stell før oppbevaring"
+      repair:
+        title: "Reparer eller kvitt deg med %{garments}"
+        body: "En reparasjonsbunke som aldri flytter seg er lagerplass brukt på plagg du ikke kan gå med. Sett av én reparasjonsøkt, eller gi dem videre."
+        principle: "Kintsugi — lapp synlig framfor å kaste"
+      tailor:
+        title: "%{garments} venter på skredder"
+        body: "Passform er forskjellen på å eie et plagg og å bruke det. Skredderarbeid gjør dødt lager til rotasjon."
+        principle: "Passform framfor mengde"
+      condition:
+        title: "%{garments} er registrert som utslitt eller klar for pensjon"
+        body: "Tilstand føres per eier, ikke per plagg. Ta avgjørelsen nå framfor å la dem oppta plass på beste stang."
+        principle: "Bestem én gang, ikke om igjen"
+      material_wool:
+        title: "%{garments} i %{material}"
+        body: "Luft mellom bruk framfor å vaske; vask kaldt og tørk flatt. Ull renser seg selv med et døgn på henger."
+        principle: "Materialet bestemmer metoden"
+      material_silk:
+        title: "%{garments} i %{material}"
+        body: "Håndvask kaldt eller rens, og hold unna direkte lys — silke falmer raskere enn den slites."
+        principle: "Materialet bestemmer metoden"
+      material_linen:
+        title: "%{garments} i %{material}"
+        body: "Vask varmt og heng fuktig; skrukkene er materialet, ikke en feil."
+        principle: "Materialet bestemmer metoden"
+      material_leather:
+        title: "%{garments} i %{material}"
+        body: "Behandle to ganger i året, aldri pakk i plast, og tørk unna varme."
+        principle: "Materialet bestemmer metoden"
+      material_denim:
+        title: "%{garments} i %{material}"
+        body: "Vask sjelden og med vrangen ut. Hver vask koster indigo."
+        principle: "Materialet bestemmer metoden"
+      material_cotton:
+        title: "%{garments} i %{material}"
+        body: "Vask kaldt og heng til tørk; det er tørketrommelen, ikke bruken, som tynner bomull."
+        principle: "Materialet bestemmer metoden"
+      seasonal_archive:
+        title: "Arkiver %{garments} som er utenfor sesong"
+        body: "Bare denne sesongen hører hjemme innen rekkevidde. Pakk resten rent og merket; skapet du ser bør være skapet du kan bruke i dag."
+        principle: "Sesongrotasjon — interiøret følger året"
+      fold:
+        title: "Brett %{garments} som er strikket"
+        body: "Strikk strekker seg i skulderen om det henges. Brett dem i stående stabler så hvert plagg synes ovenfra framfor å bli begravd."
+        principle: "Stående arkivering — alt synlig samtidig"
+      hang:
+        title: "Heng %{garments} som holder en fasong"
+        body: "Silke, lin og skredderarbeid holder linjen på henger og mister den i en stabel. Gi dem skulderbredde avstand."
+        principle: "Støtt fasongen plagget allerede har"
+      breathe:
+        title: "%{garments} i skinn trenger å puste"
+        body: "Bomullsposer, aldri plast. Det er innestengt fuktighet som sprekker skinn, ikke bruk."
+        principle: "Materialet bestemmer metoden"
+      archived_stale:
+        title: "%{garments} står i sesongarkivet"
+        body: "Arkivet gjør nytte bare om noe kommer tilbake. Hent fram de som har fått sesongen sin igjen, så arkivet forblir en syklus og ikke en kirkegård."
+        principle: "Rotasjon, ikke oppsamling"
+      prime_reach:
+        title: "Sett %{garments} du bruker mest innen beste rekkevidde"
+        body: "Feltet mellom hofte og skulder koster verken bøying eller strekk. De mest brukte plaggene hører hjemme der, og ingenting annet."
+        principle: "Rekkeviddesoner — antropometrisk planlegging"
+      deep_storage:
+        title: "Flytt %{garments} du er glad i men ikke bruker, til øyehøyde"
+        body: "Et plagg som gir glede og likevel aldri brukes, er som regel et plagg du ikke ser. Bytt plass med noe du griper etter på autopilot."
+        principle: "Synlighet driver bruk"
+      category_zones:
+        title: "Sone stangen: %{zones}"
+        body: "Grupper etter kategori før noe annet, største gruppe nærmest døra. Å sette sammen antrekk blir en tur langs stangen framfor et søk."
+        principle: "Sirkulasjon — ordne langs bevegelsesretningen"
+      color_run:
+        title: "La hver sone gå fra lyst til mørkt"
+        body: "Innen en kategori, sorter etter valør framfor kulør. En gradient leses som én komponert flate; spredt farge leses som rot selv med identiske plagg."
+        principle: "Valørgradient — tonal komposisjon"
+      density:
+        title: "%{categories} %{verb} overfylt"
+        body: "Over omtrent %{crowded} plagg slutter en kategori å være mulig å bla i — du bruker den fremste tredelen og glemmer resten. Tynn ned mot %{airy}–%{crowded}."
+        principle: "Ma — mellomrommet er en del av komposisjonen"
+      duplicates:
+        title: "%{group_word} med nesten like plagg, %{count} til overs"
+        body: "Behold den beste i hver gruppe og gi resten videre. To like plagg er ett plagg og én avgjørelse du tar hver morgen."
+        principle: "Én av hvert, og den beste"
+      one_in_one_out:
+        title: "%{added} inn, %{released} ut det siste kvartalet"
+        body: "Garderoben vokser raskere enn den slipper. Én inn, én ut holder volumet fast, så skapet aldri trenger å omorganiseres igjen."
+        principle: "Én inn, én ut"
+      negative_space:
+        title: "%{joy} av %{total} plagg gir glede"
+        body: "De andre %{count} er dem du skyver forbi for å nå disse. Tom stang er ikke sløsing — det er det som gjør de gjenværende plaggene synlige."
+        principle: "Tomrommet er designet"
+  footer:
+    wardrobe: "Garderobe"
+    browse: "Bla"
+    ai_styling: "AI-styling"
+    about: "Om"
+    support: "Støtte"
+    contact: "Kontakt"
+    language: "Språk"
+    tagline: "AI-garderobestyring."
+    locales:
+      nb: "Norsk"
+      en: "English"
+  shop:
+    lead: "Kjøp for et hull, ikke for en stemning"
+    actions: "Handlehandlinger"
+    missing: "mangler %{count}"
+    owned: "eier %{count} / %{target}"
+    score: "score %{score}"
+    already_own: "Før du kjøper — det du allerede har"
+    duplicate_count: "%{count} nesten like plagg"
+    keeper: "Behold:"
+    your_links: "Dine affiliate-produkter"
+    your_links_body: "Lenker du har knyttet til egne plagg — bruktannonser, kjøp-lignende-URL-er eller dine egne affiliate-lenker. Legg til en fra siden til et hvilket som helst plagg."
+    link_count: "%{count} lenker"
+    open: "Åpne"
+    no_links: "Ingen lenker ennå"
+    no_links_body: "Åpne et plagg og lim inn en brukt- eller kjøp-lignende-URL for å samle den her."
+    store_feeds: "Butikkfeeder"
+    no_feed_tag: "ikke tilkoblet"
+    feed_unavailable:
+      available: "En produktfeed-klient er lastet. Amber har ennå ingen flate for å bla i den."
+      no_token: "Amber har ingen produktfeed fra butikker som Net-a-porter. Ingenting er konfigurert, og ingenting hentes."
+      no_feed_client: "Et feed-token er konfigurert, men Amber har ingen klient til å bruke det — TradeDoubler-integrasjonen ligger i brgen og lastes ikke i denne appen. Tokenet gjør ingenting her."
+      no_query: "Dette plagget har verken merke eller tittel å søke på."
+  assistant:
+    today: "Dagens antrekk"
+    lead: "Satt sammen av det som allerede henger i skapet"
+    save: "Lagre antrekket"
+    saved_name: "Antrekk for %{date}"
+    zones:
+      outer: "Lag"
+      top: "Overdel"
+      bottom: "Underdel"
+      dress: "Kjole"
+      shoes: "Sko"
+      accessory: "Tilbehør"
+    reasons:
+      weatherproof: "holder været ute"
+      light_fabric: "lett for temperaturen"
+    notes:
+      layering: "legger på et lag"
+      no_outerwear: "varmt nok til å droppe et lag"
+      resting: "hviler det du brukte de siste %{days} dagene"
+  organize:
+    lead: "Rens, oppbevaring, soner"
+    body: "Veiledning hentet fra arkitektur, interiørdesign og zen-minimalisme, brukt på det som faktisk står i garderoben din. Hvert tips navngir prinsippet bak seg og plaggene som utløste det."
+    actions: "Handlinger for garderobeorganisering"
+    empty_title: "Ingenting å omorganisere"
+    empty_body: "Legg til plagg, registrer bruk og noter tilstand — veiledningen følger av de signalene."
+    registers:
+      care: "Stell"
+      storage: "Oppbevaring"
+      zoning: "Soner"
+      restraint: "Måtehold"
+    register_leads:
+      care: "Rens og reparasjon kommer først — et plagg kan verken oppbevares eller sones før det er brukbart."
+      storage: "Hva som brettes, hva som henges, og hva som forlater rommet til sesongen kommer tilbake."
+      zoning: "Hvor hvert plagg står, planlagt etter rekkevidde og etter veien du går gjennom rommet."
+      restraint: "Hvor mye garderoben bør romme, og hva den tomme stangen er til for."
+  dressing_room:
+    title: "Miks & match"
+    zone_head: "Tilbehør"
+    zone_top: "Overdeler"
+    zone_bottom: "Underdeler"
+    zone_shoes: "Sko"
+    previous: "Forrige %{zone}"
+    next: "Neste %{zone}"
+    pause: "Pause rotasjonen"
+    shuffle: "Stokk om"
+    save: "Lagre dette antrekket"
+    empty_body: "Legg inn noen plagg, så begynner karusellene å kombinere dem for deg."
+  pagination:
+    label: "Paginering"
+    previous: "Forrige"
+    next: "Neste"
+    position: "Side %{page} av %{pages}"
+  activerecord:
+    errors:
+      models:
+        connection:
+          attributes:
+            addressee:
+              self_connection: "kan ikke være deg selv"
+        follow:
+          attributes:
+            followee:
+              self_follow: "du kan ikke følge deg selv"
+        packing_list:
+          attributes:
+            ends_on:
+              before_start: "må være på eller etter startdatoen"

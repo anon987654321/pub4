@@ -26,14 +26,51 @@ class OutfitsController < ApplicationController
     finish_live_search(partial: "outfits/live_search_results")
   end
 
+  # Mix & Match Magic. Each zone is ordered by TasteRanker rather than by
+  # insertion, so the first garment a carousel shows is the one this wardrobe's
+  # behaviour says the owner reaches for — that is the "ever-evolving knowledge
+  # of your taste" the feature is named for.
+  DRESSING_ROOM_ZONES = {
+    head:   [ "Accessories" ],
+    top:    %w[Tops Outerwear],
+    bottom: %w[Bottoms Dresses],
+    shoes:  [ "Shoes" ]
+  }.freeze
+
   def dressing_room
     base = Current.user.items.active_wardrobe.with_photos_for_display
-    @zones = {
-      head:   base.where(category: "Accessories"),
-      top:    base.where(category: %w[Tops Outerwear]),
-      bottom: base.where(category: %w[Bottoms Dresses]),
-      shoes:  base.where(category: "Shoes"),
-    }
+    ranker = TasteRanker.new(Current.user)
+    @zones = DRESSING_ROOM_ZONES.transform_values do |categories|
+      ranker.rank(base.where(category: categories))
+    end
+    @taste_reasons = @zones.values.flatten.to_h { |item| [ item.id, ranker.explain(item) ] }
+  end
+
+  # Save the four garments the carousels are currently showing. Before this the
+  # button was a bare link to the blank outfit form, so every combination the
+  # user rotated to was thrown away at the moment they tried to keep it.
+  def save_look
+    ids = Array(params[:item_ids]).map(&:to_i).uniq.reject(&:zero?)
+    items = Current.user.items.where(id: ids).to_a
+    return redirect_to(dressing_room_outfits_path, alert: "Pick at least one garment first") if items.empty?
+
+    outfit = Current.user.outfits.build(
+      name: params[:name].presence || default_look_name(items),
+      season: season_from_month,
+      occasion: params[:occasion].presence
+    )
+    # Position head-to-toe so the saved outfit reads in the same order the
+    # dressing room stacked it on the mannequin.
+    zone_order = DRESSING_ROOM_ZONES.keys.each_with_index.to_h
+    items.sort_by { |item| [ zone_order.fetch(zone_for(item), zone_order.size), item.id ] }
+         .each_with_index { |item, index| outfit.outfit_items.build(item: item, position: index) }
+
+    if outfit.save
+      Shared::DomainEvent.record!(actor: Current.user, action: "outfit.created", subject: outfit, source_vertical: "amber") if defined?(Shared::DomainEvent)
+      redirect_to outfit, notice: "Look saved"
+    else
+      redirect_to dressing_room_outfits_path, alert: outfit.errors.full_messages.to_sentence
+    end
   end
 
   def generate
@@ -137,6 +174,15 @@ class OutfitsController < ApplicationController
 
   def outfit_params
     params.require(:outfit).permit(:name, :description, :category, :season, :occasion, outfit_items_attributes: %i[id item_id position _destroy])
+  end
+
+  def zone_for(item)
+    DRESSING_ROOM_ZONES.find { |_zone, categories| categories.include?(item.category) }&.first
+  end
+
+  def default_look_name(items)
+    lead = items.find { |item| item.category.in?(%w[Tops Dresses Outerwear]) } || items.first
+    [ lead.color.presence&.then { |c| c.start_with?("#") ? nil : c }, lead.title, "look" ].compact.join(" ")
   end
 
   def weather_prompt(weather)

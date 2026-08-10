@@ -145,7 +145,7 @@ class AmberBacklogTest < Minitest::Test
     # This read `assert_includes … "Sparks joy"`, which pinned English into a
     # default_locale: nb app -- and items.sparks_joy already existed, with a
     # Norwegian value, bypassed by the hardcoded string in the view.
-    assert_includes read("app/views/items/show.html.erb"), 'items.sparks_joy'
+    assert_includes read("app/views/items/show.html.erb"), "items.sparks_joy"
     assert_equal "Sparks joy", I18n.t("items.sparks_joy", locale: :en)
     assert_equal "Gir glede", I18n.t("items.sparks_joy", locale: :nb)
     assert_includes read("config/recurring.yml"), "DeclutterHygieneJob"

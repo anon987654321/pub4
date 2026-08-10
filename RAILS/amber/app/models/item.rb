@@ -23,7 +23,7 @@ class Item < ApplicationRecord
   # list/show helpers hit preprocessed digests instead of inventing new sizes.
   PHOTO_VARIANTS = {
     thumb: { resize_to_limit: [ 240, 240 ] },
-    card: { resize_to_limit: [ 720, 960 ] },
+    card: { resize_to_limit: [ 720, 960 ] }
   }.freeze
 
   has_many_attached :photos do |attachable|
@@ -53,6 +53,10 @@ class Item < ApplicationRecord
   scope :recent,       -> { order(created_at: :desc) }
   scope :worn_most,    -> { order(times_worn: :desc) }
   scope :never_worn,   -> { where("times_worn = 0 OR times_worn IS NULL") }
+  # The SQL twin of #underused? — kept adjacent so the threshold cannot drift
+  # between the two. WardrobeAnalytics used to answer this by loading every
+  # row and calling the Ruby predicate.
+  scope :underused,    -> { where("COALESCE(times_worn, 0) < 3") }
   scope :aging_unworn, -> { never_worn.where("purchase_date < ?", 6.months.ago) }
   scope :embeddable,   -> { where.not(title: [ nil, "" ]).where.not(category: [ nil, "" ]) }
   scope :active_wardrobe, -> { where.not(lifecycle_state: %w[released donated sold recycled]) }

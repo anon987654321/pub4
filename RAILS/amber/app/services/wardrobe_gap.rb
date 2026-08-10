@@ -6,14 +6,17 @@ class WardrobeGap
     "Bottoms" => 3,
     "Shoes" => 2,
     "Outerwear" => 1,
-    "Accessories" => 2,
+    "Accessories" => 2
   }.freeze
 
+  # `key` names the locale entry under `gaps.connectors`; the display name is
+  # translated rather than baked in, because these reasons render beside
+  # translated chrome on the Shop smarter page.
   CONNECTORS = [
-    { name: "neutral top", category: "Tops", colors: %w[white black navy grey beige] },
-    { name: "dark bottom", category: "Bottoms", colors: %w[black navy denim charcoal] },
-    { name: "weather layer", category: "Outerwear", colors: %w[black navy beige olive] },
-    { name: "versatile shoe", category: "Shoes", colors: %w[black white brown] }
+    { key: :neutral_top, category: "Tops", colors: %w[white black navy grey beige] },
+    { key: :dark_bottom, category: "Bottoms", colors: %w[black navy denim charcoal] },
+    { key: :weather_layer, category: "Outerwear", colors: %w[black navy beige olive] },
+    { key: :versatile_shoe, category: "Shoes", colors: %w[black white brown] }
   ].freeze
 
   def initialize(user)
@@ -31,7 +34,7 @@ class WardrobeGap
         owned: count,
         target: minimum,
         missing: minimum - count,
-        reason: "A resilient wardrobe usually needs at least #{minimum} #{category.downcase}.",
+        reason: I18n.t("gaps.category_minimum", count: minimum, category: category.downcase)
       }
     end + connector_gaps
   end
@@ -57,8 +60,8 @@ class WardrobeGap
       {
         kind: "connector",
         category: connector[:category],
-        name: connector[:name],
-        reason: "Missing #{connector[:name]} for easier outfit combinations.",
+        name: I18n.t("gaps.connectors.#{connector[:key]}"),
+        reason: I18n.t("gaps.connector", name: I18n.t("gaps.connectors.#{connector[:key]}"))
       }
     end
   end

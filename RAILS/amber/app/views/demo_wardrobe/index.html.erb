@@ -1,4 +1,8 @@
 <% content_for :title, t("demo.wardrobe") %>
+<%# The demo wardrobe is amber's one public catalogue. Structured data stopped
+    at items#show, which is behind authentication and therefore invisible to a
+    crawler — this page is the one that was worth describing. %>
+<% content_for :json_ld, json_ld_script(demo_item_list_schema(@items, title: t("demo.wardrobe"))) %>
 
 <header role="banner" aria-label="<%= t("demo.wardrobe_header") %>">
   <p class="dim">Capsule demo · <%= Amber::DemoWardrobe::DEMO_DISPLAY_NAME %></p>

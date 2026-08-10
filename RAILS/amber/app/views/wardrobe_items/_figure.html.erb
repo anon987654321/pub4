@@ -1,0 +1,42 @@
+<%#
+  A ranked figure: one row per bar, length carried by the --share custom
+  property rather than an inline pixel width, so the chart reflows with its
+  column instead of being drawn once at whatever width it first rendered.
+
+  Locals: id, title, rows [{label:, share:, value:, note:, href:}], and
+  optionally caption and empty. Every string arrives already translated — the
+  service that produced the numbers deals only in numbers.
+%>
+<figure class="viz" aria-labelledby="viz-<%= id %>-title">
+  <figcaption class="viz-head">
+    <h3 class="viz-title" id="viz-<%= id %>-title"><%= title %></h3>
+    <% if local_assigns[:caption].present? %>
+      <p class="viz-caption dim"><%= caption %></p>
+    <% end %>
+  </figcaption>
+
+  <% if rows.blank? %>
+    <%# empty_state: no-action-ok — nothing to plot is a legible answer %>
+    <p class="dim"><%= local_assigns[:empty] %></p>
+  <% else %>
+    <ol class="viz-rows">
+      <% rows.each do |row| %>
+        <li class="viz-row">
+          <span class="viz-label">
+            <span class="viz-label-text">
+              <%= row[:href].present? ? link_to(row[:label], row[:href]) : row[:label] %>
+            </span>
+            <% if row[:note].present? %><span class="viz-note dim"><%= row[:note] %></span><% end %>
+          </span>
+          <%# The value printed beside the bar is the accessible reading of it,
+              so the track itself carries no semantics. A zero share draws no
+              fill at all rather than a misleading sliver. %>
+          <span class="viz-track" aria-hidden="true">
+            <% if row[:share].to_f.positive? %><span class="viz-fill" style="--share: <%= row[:share] %>"></span><% end %>
+          </span>
+          <span class="viz-value"><%= row[:value] %></span>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</figure>

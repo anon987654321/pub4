@@ -39,7 +39,7 @@ Rails.application.routes.draw do
   patch "drafts/:id", to: "drafts#update", as: :draft
 
   resources :outfits do
-    collection { get :dressing_room; post :generate }
+    collection { get :dressing_room; post :save_look; post :generate }
     member { post :like; patch :reorder; post :share; post :wear }
   end
 
@@ -48,6 +48,7 @@ Rails.application.routes.draw do
   resources :wardrobe_items do
     collection do
       get :analytics
+      get :organize
       get :timeline
     end
   end

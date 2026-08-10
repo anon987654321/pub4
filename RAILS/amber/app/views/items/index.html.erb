@@ -23,6 +23,7 @@
         <nav role="navigation" aria-label="<%= t("wardrobe.records_gaps_nav") %>" class="wardrobe-action-group wardrobe-action-group--secondary">
           <h2><%= t("wardrobe.records_gaps") %></h2>
           <%= link_to t("wardrobe.wear_analytics"), analytics_wardrobe_items_path, class: "btn" %>
+          <%= link_to t("pages.organize"), organize_wardrobe_items_path, class: "btn" %>
           <%= link_to t("wardrobe.color_palette"), ai_palette_path, class: "btn" %>
           <%= link_to t("wardrobe.shop_gap"), shopping_list_items_path, class: "btn" %>
           <%= button_to t("items.archive_seasonal"), archive_seasonal_items_path, method: :post, class: "btn" %>

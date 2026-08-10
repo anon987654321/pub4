@@ -29,7 +29,7 @@ class WardrobeMutationsTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { Item.count }, 1 do
       post items_path, params: {
-        item: { title: "Navy blazer", category: "Outerwear", brand: "Test" },
+        item: { title: "Navy blazer", category: "Outerwear", brand: "Test" }
       }
     end
     item = Item.order(:id).last
@@ -56,9 +56,9 @@ class WardrobeMutationsTest < ActionDispatch::IntegrationTest
           occasion: "work",
           outfit_items_attributes: {
             "0" => { item_id: top.id, position: 0 },
-            "1" => { item_id: bottom.id, position: 1 },
-          },
-        },
+            "1" => { item_id: bottom.id, position: 1 }
+          }
+        }
       }
     end
     outfit = Outfit.order(:id).last

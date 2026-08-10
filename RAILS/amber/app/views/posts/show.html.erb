@@ -1,3 +1,6 @@
+<%# posts#show is public. The shared Article schema builds its URL from
+    url_for(@post), which is already the public path, so it needs no override. %>
+<% content_for :json_ld, json_ld_for(@post, type: :article) %>
 <%= turbo_stream_from @post %>
 <article class="post">
   <header class="feed-post-meta feed-post-byline">

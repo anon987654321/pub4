@@ -11,7 +11,16 @@ class WardrobeItemsController < ApplicationController
 
   def analytics
     @analytics = WardrobeAnalytics.new(Current.user).summary
+    # Charts are built here rather than folded into the summary: items#index
+    # reads the same summary for one chip, and would otherwise pay for four
+    # figures it never draws.
+    @charts = WardrobeCharts.new(Current.user).figures
     @recommendations = Current.user.recommendations.active.recent.limit(12)
+  end
+
+  def organize
+    @organization = ClosetOrganization.new(Current.user)
+    @grouped = @organization.grouped
   end
 
   def timeline

@@ -30,7 +30,7 @@ class WardrobeAuthorizationTest < ActionDispatch::IntegrationTest
   end
 
   test "a stranger cannot reorder another user's outfit" do
-    patch reorder_outfit_path(@outfit), params: { positions: [1, 2] }
+    patch reorder_outfit_path(@outfit), params: { positions: [ 1, 2 ] }
 
     assert_response :redirect
     assert_equal "Unauthorized", flash[:alert]

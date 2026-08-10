@@ -140,8 +140,26 @@
   color: var(--color-grey-text);
 }
 
+// Why this garment leads its zone — TasteRanker's reasons, so the rotation is
+// legible as a preference model rather than a random shuffle.
+.zone-why {
+  font-size: var(--text-xs);
+  color: var(--color-grey-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .dressing-room-actions {
   margin-top: var(--space-sm);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.dressing-room-save {
+  display: inline-flex;
 }
 
 @media (prefers-reduced-motion: reduce) {

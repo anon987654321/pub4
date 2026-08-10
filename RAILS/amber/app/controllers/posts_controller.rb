@@ -57,7 +57,11 @@ class PostsController < ApplicationController
 
   private
 
-  def set_post = @post = Post.find(params[:id])
+  # posts#show reads user, outfit and item directly, and the Article schema
+  # reads the author again. Bare `find` left all three to lazy loading, which
+  # strict_loading refuses outright — the page only worked because production
+  # does not enable it.
+  def set_post = @post = Post.includes(:user, :outfit, :item).find(params[:id])
   def authorize_owner!
     redirect_to(posts_path, alert: "Unauthorized") unless @post.user == Current.user
   end

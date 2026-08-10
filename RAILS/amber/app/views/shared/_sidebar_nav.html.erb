@@ -16,6 +16,12 @@
     <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
     <span><%= t("nav.outfits") %></span>
   <% end %>
+  <%# Mix & Match was a top-level nav entry in the original spec; the dressing
+      room existed but was reachable only from a button on outfits#index. %>
+  <%= link_to dressing_room_outfits_path, class: nav_cls.(dressing_room_outfits_path) do %>
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M12 2a2.5 2.5 0 00-2.5 2.5c0 .87.44 1.63 1.11 2.08L4 11.5V13h2v7h12v-7h2v-1.5l-6.61-4.92A2.49 2.49 0 0014.5 4.5 2.5 2.5 0 0012 2zm0 2a.5.5 0 110 1 .5.5 0 010-1zm0 4.24L16.9 12H7.1L12 8.24zM8 14h8v4H8v-4z"/></svg>
+    <span><%= t("nav.mix_match") %></span>
+  <% end %>
   <%= link_to planned_outfits_path, class: nav_cls.(planned_outfits_path) do %>
     <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z"/></svg>
     <span><%= t("nav.planner") %></span>

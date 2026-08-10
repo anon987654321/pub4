@@ -158,6 +158,14 @@ class ItemsController < ApplicationController
     service.create_recommendations!
     @gaps = service.gaps
     @recommendations = Current.user.recommendations.where(kind: "purchase_gap").recent
+    # "Allows you to include your own affiliate products as well" was only ever
+    # reachable one garment at a time from items#show; there was no view of the
+    # links you had already added.
+    @affiliate_links = AffiliateLink.joins(:item).where(items: { user_id: Current.user.id })
+                                    .includes(:item).order(:merchant)
+    # The other half of shopping smarter: what you already own too much of.
+    @duplicate_groups = DuplicateDetector.new(Current.user).ranked_groups.first(3)
+    @feed_reason = ShopTheLook.remote_unavailable_reason
   end
 
   private

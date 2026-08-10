@@ -262,6 +262,13 @@
   color: var(--luxury-text);
 }
 
+/* Language switcher. The current locale reads as chosen rather than as a link
+   you have not pressed yet. */
+.amber-footer-locales a.is-current {
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+}
+
 .amber-footer-legal {
   margin-top: var(--luxury-space-xl);
   font-size: var(--luxury-font-meta);

@@ -1,4 +1,5 @@
 <% content_for :title, @item.title %>
+<% content_for :json_ld, json_ld_script(demo_garment_schema(@item)) %>
 
 <article class="item-detail">
   <p class="dim"><%= link_to "← Demo wardrobe", demo_wardrobe_path %></p>

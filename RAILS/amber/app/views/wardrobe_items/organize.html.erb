@@ -1,0 +1,43 @@
+<% content_for :title, t("pages.organize") %>
+
+<header role="banner" aria-label="<%= t("pages.organize") %>">
+  <div>
+    <p class="dim"><%= t("organize.lead") %></p>
+    <h1><%= t("pages.organize") %></h1>
+  </div>
+  <nav role="navigation" aria-label="<%= t("organize.actions") %>">
+    <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
+    <%= link_to t("pages.analytics"), analytics_wardrobe_items_path, class: "btn" %>
+  </nav>
+</header>
+
+<p class="dim">
+  <%= t("organize.body") %>
+  <span class="tag"><%= t("wardrobe.coach_rules") %></span>
+</p>
+
+<% if @grouped.blank? %>
+  <%# empty_state: no-action-ok — a wardrobe with nothing to correct is the goal %>
+  <%= render "shared/empty_state",
+        title: t("organize.empty_title"),
+        body: t("organize.empty_body"),
+        action: { label: t("actions.wardrobe"), path: items_path } %>
+<% else %>
+  <% ClosetOrganization::REGISTERS.each do |register| %>
+    <% tips = @grouped[register] %>
+    <% next if tips.blank? %>
+    <section aria-labelledby="register-<%= register %>">
+      <h2 id="register-<%= register %>"><%= t("organize.registers.#{register}") %></h2>
+      <p class="dim"><%= t("organize.register_leads.#{register}") %></p>
+      <% tips.each do |tip| %>
+        <article class="organize-tip">
+          <h3><%= tip.title %></h3>
+          <p><%= tip.body %></p>
+          <%# The principle is named on every tip so the advice is auditable
+              rather than oracular — you can disagree with the principle. %>
+          <p class="organize-principle dim"><%= tip.principle %></p>
+        </article>
+      <% end %>
+    </section>
+  <% end %>
+<% end %>

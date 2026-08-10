@@ -1,4 +1,10 @@
 <% content_for :title, t("home.dashboard") %>
+<%# The signed-out landing page is the only surface a crawler reaches first.
+    Describe the demo capsule it can actually follow; the signed-in dashboard
+    is private and gets nothing. %>
+<% if !authenticated? && @demo_items&.any? %>
+  <% content_for :json_ld, json_ld_script(demo_item_list_schema(@demo_items, title: t("home.demo_capsule"))) %>
+<% end %>
 
 <%# amber had no MASTER face surface at all; brgen has carried it on its home
     page since the embed landed. Same shared partial, amber's own heading. %>
@@ -26,6 +32,8 @@
     </nav>
   </header>
 
+  <%= render "today_look", look: @today_look if @today_look&.any? %>
+
   <% if @planned_this_week.any? %>
     <section>
       <h2><%= t("home.this_week") %></h2>
@@ -48,7 +56,10 @@
         <% @worst_cpw.each do |item| %>
           <div class="cpw-row">
             <%= link_to item.title, item %>
-            <span class="cpw-val">£<%= item.cost_per_wear %>/wear · worn <%= item.times_worn %>×</span>
+            <%# Was a hardcoded £ next to eight number_to_currency calls that
+                rendered $ — three currencies in one app, for a wardrobe priced
+                in øre. %>
+            <span class="cpw-val"><%= t("home.cpw_value", amount: number_to_currency(item.cost_per_wear), count: item.times_worn.to_i) %></span>
           </div>
         <% end %>
       </div>
@@ -110,7 +121,7 @@
             body: t("empty.guest_post"),
             action: { label: t("home.browse_demo"), path: demo_wardrobe_path } %>
     <% end %>
-    <%== pagy_nav(@pagy) if @pagy&.pages.to_i > 1 %>
+    <%= render "shared/pager", pagy: @pagy %>
   </section>
 
   <% if @demo_items&.any? %>

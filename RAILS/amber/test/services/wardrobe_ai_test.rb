@@ -14,8 +14,8 @@ class WardrobeAiTest < ActiveSupport::TestCase
 
       {
         "choices" => [
-          { "message" => { "content" => @content } },
-        ],
+          { "message" => { "content" => @content } }
+        ]
       }
     end
   end

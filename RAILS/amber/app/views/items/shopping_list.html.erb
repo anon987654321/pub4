@@ -1,24 +1,99 @@
-<% content_for :title, t("pages.shopping_list") %>
+<% content_for :title, t("pages.shop_smarter") %>
 
-<h1><%= t("pages.shopping_list") %></h1>
+<header role="banner" aria-label="<%= t("pages.shop_smarter") %>">
+  <div>
+    <p class="dim"><%= t("shop.lead") %></p>
+    <h1><%= t("pages.shop_smarter") %></h1>
+  </div>
+  <nav role="navigation" aria-label="<%= t("shop.actions") %>">
+    <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
+    <%= link_to t("pages.analytics"), analytics_wardrobe_items_path, class: "btn" %>
+  </nav>
+</header>
 
-<% if @gaps.any? %>
-  <ul>
-    <% @gaps.each do |gap| %>
-      <li>
-        <strong><%= gap[:category] || gap[:name] %></strong>
-        <p><%= gap[:reason] %></p>
-        <% if gap[:missing] %><span class="tag">missing <%= gap[:missing] %></span><% end %>
-        <% if gap[:owned] %><span class="tag">owned <%= gap[:owned] %> / <%= gap[:target] %></span><% end %>
-      </li>
-    <% end %>
-  </ul>
-<% else %>
-  <%= render "shared/empty_state",
-        title: t("empty.no_gaps"),
-        body: t("wardrobe.gaps_complete"),
-        action: { label: t("actions.back_to_wardrobe"), path: items_path } %>
+<section aria-labelledby="shop-gaps">
+  <h2 id="shop-gaps"><%= t("pages.shopping_list") %></h2>
+  <% if @gaps.any? %>
+    <ul>
+      <% @gaps.each do |gap| %>
+        <li>
+          <strong><%= gap[:category] || gap[:name] %></strong>
+          <p><%= gap[:reason] %></p>
+          <% if gap[:missing] %><span class="tag"><%= t("shop.missing", count: gap[:missing]) %></span><% end %>
+          <% if gap[:owned] %><span class="tag"><%= t("shop.owned", count: gap[:owned], target: gap[:target]) %></span><% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_gaps"),
+          body: t("wardrobe.gaps_complete"),
+          action: { label: t("actions.back_to_wardrobe"), path: items_path } %>
+  <% end %>
+</section>
+
+<%# The counterpart to a gap list. Buying a fifth near-identical white shirt is
+    the failure mode a shopping list on its own cannot catch. %>
+<% if @duplicate_groups.any? %>
+  <section aria-labelledby="shop-duplicates">
+    <h2 id="shop-duplicates"><%= t("shop.already_own") %></h2>
+    <ul>
+      <% @duplicate_groups.each do |group| %>
+        <li>
+          <strong><%= t("shop.duplicate_count", count: group[:count]) %></strong>
+          <p class="dim"><%= group[:reason] %></p>
+          <% if group[:keeper] %>
+            <p class="dim"><%= t("shop.keeper") %> <%= link_to group[:keeper].title, group[:keeper] %></p>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
 <% end %>
+
+<section aria-labelledby="shop-affiliates">
+  <h2 id="shop-affiliates"><%= t("shop.your_links") %></h2>
+  <p class="dim"><%= t("shop.your_links_body") %></p>
+  <% if @affiliate_links.any? %>
+    <ul class="shop-links">
+      <% @affiliate_links.group_by(&:merchant).each do |merchant, links| %>
+        <li>
+          <strong><%= merchant %></strong> <span class="tag"><%= t("shop.link_count", count: links.size) %></span>
+          <ul>
+            <% links.each do |link| %>
+              <li>
+                <%= link_to link.item.title, link.item %>
+                <%# rel is on the outbound link because these are commercial and
+                    user-supplied; the destination is not amber's to vouch for. %>
+                <%= link_to t("shop.open"), link.url, rel: "nofollow noopener sponsored", target: "_blank", class: "btn-link" %>
+                <% if link.commission_rate.present? %>
+                  <span class="dim"><%= number_to_percentage(link.commission_rate, precision: 1) %></span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("shop.no_links"),
+          body: t("shop.no_links_body"),
+          action: { label: t("actions.wardrobe"), path: items_path } %>
+  <% end %>
+</section>
+
+<%# The original specification also asked for a feed of the newest and most
+    popular pieces from stores like Net-a-porter. Amber ships no such feed, and
+    the branch that pretended to (ShopTheLook.remote_suggestions) could never
+    fire — say so rather than leaving an empty section that looks broken. %>
+<section aria-labelledby="shop-feeds">
+  <h2 id="shop-feeds"><%= t("shop.store_feeds") %></h2>
+  <p class="dim shop-feed-note">
+    <%= t("shop.feed_unavailable.#{@feed_reason || :available}") %>
+    <span class="tag"><%= t("shop.no_feed_tag") %></span>
+  </p>
+</section>
 
 <h2><%= t("wardrobe.master_recs") %></h2>
 <% if @recommendations.any? %>
@@ -26,7 +101,7 @@
     <% @recommendations.each do |rec| %>
       <li>
         <%= rec.reason %>
-        <span class="tag">score <%= rec.score %></span>
+        <span class="tag"><%= t("shop.score", score: rec.score) %></span>
       </li>
     <% end %>
   </ul>

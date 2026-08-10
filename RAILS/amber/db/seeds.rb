@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Production: credible demo capsule only. Dev/test: Faker flood for local work.
 
 if Rails.env.production?

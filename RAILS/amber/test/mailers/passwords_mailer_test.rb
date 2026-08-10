@@ -17,7 +17,7 @@ class PasswordsMailerTest < ActionMailer::TestCase
   def test_reset_renders_both_parts_from_the_engine_views
     mail = PasswordsMailer.reset(user)
 
-    assert_equal ["reset-test@example.com"], mail.to
+    assert_equal [ "reset-test@example.com" ], mail.to
     assert_equal "Reset your password", mail.subject
 
     html = mail.html_part || mail

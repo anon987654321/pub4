@@ -1,4 +1,7 @@
-<% cache [post, Current.user&.id, post.anonymous?] do %>
+<%# I18n.locale is in the key because the fragment holds translated chrome and
+    Rails does not add the locale to fragment cache keys itself — without it,
+    switching language served whichever language rendered the post first. %>
+<% cache [post, Current.user&.id, post.anonymous?, I18n.locale] do %>
   <% post_actions = capture do %>
     <% unless guest? %>
       <%= button_to t("post.like_count", count: post.likes_count), like_post_path(post), method: :post %>

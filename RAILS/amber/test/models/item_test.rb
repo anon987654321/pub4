@@ -20,7 +20,7 @@ class ItemTest < ActiveSupport::TestCase
   test "occasions normalizes comma-separated tags" do
     item = Item.new(occasion_tags: "work, casual,travel")
 
-    assert_equal ["work", "casual", "travel"], item.occasions
+    assert_equal [ "work", "casual", "travel" ], item.occasions
   end
 
   test "wear! increments times_worn, logs wear, and updates cost_per_wear" do

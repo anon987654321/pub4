@@ -41,7 +41,7 @@ gem "bootsnap", require: false
 gem "image_processing", "~> 1.2"
 
 group :development, :test do
-  gem 'minitest', '~> 5.25'
+  gem "minitest", "~> 5.25"
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
@@ -74,7 +74,7 @@ gem "falcon"
 gem "ferrum"
 
 # Engine-ize spike: shared as local path gem (relative from rails/amber)
-gem 'pub4-shared', path: '../shared'
+gem "pub4-shared", path: "../shared"
 
 gem "dartsass-rails", "~> 0.5.1"
 

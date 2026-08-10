@@ -25,7 +25,10 @@ See **[HEIR.md](./HEIR.md)** — what runs alone, health checks, env keys, hones
 | Photo pipeline | Variants + portrait polish + colour — not ML cut-out |
 | Fingerprint | Local CRC — not semantic embeddings |
 | AI | OpenRouter when `OPENROUTER_API_KEY` set; heuristics otherwise |
-| Tips | Rule coach |
+| Tips | Rule coach — analytics nudges plus `ClosetOrganization`'s care/storage/zoning/restraint registers, each naming its principle |
+| Taste model | `TasteRanker` — declared preferences plus joy/wear/recency/life-phase. Deterministic weights, not learned |
+| Daily look | `StyleAssistant` — deterministic per user and date, weather-aware, persists nothing until you save it |
+| Store feeds | None. Amber has no Net-a-porter-style product feed; `ShopTheLook` serves the links you added yourself and says why the remote half is dark |
 | Style sessions | Calendar/status only |
 
 ## Integration

@@ -1,14 +1,18 @@
-<% content_for :title, "Style" %>
+<% content_for :title, t("dressing_room.title") %>
 <%
   zones_json = @zones.transform_values { |items|
     items.map { |item|
       { id: item.id, name: item.title, color: item.color.to_s,
+        why: Array(@taste_reasons[item.id]).first(2).join(" · "),
         url: item.photos.attached? ? responsive_image_url(item.photos.first, widths: [480]) : nil }
     }
   }.to_json
 %>
 
-<div class="dressing-room" data-controller="wardrobe-carousel" data-wardrobe-carousel-zones-value="<%= zones_json %>">
+<div class="dressing-room"
+     data-controller="wardrobe-carousel"
+     data-wardrobe-carousel-zones-value="<%= zones_json %>"
+     data-wardrobe-carousel-interval-value="4200">
 
   <div class="mannequin-stage">
     <div class="mannequin">
@@ -41,20 +45,48 @@
   </div>
 
   <div class="zone-carousels">
-    <% { head: "Accessories", top: "Tops", bottom: "Bottoms", shoes: "Shoes" }.each do |zone, label| %>
+    <% {
+         head: t("dressing_room.zone_head"),
+         top: t("dressing_room.zone_top"),
+         bottom: t("dressing_room.zone_bottom"),
+         shoes: t("dressing_room.zone_shoes"),
+       }.each do |zone, label| %>
       <div class="zone-row">
         <span class="zone-tag"><%= label %></span>
-        <button class="carousel-btn" data-action="wardrobe-carousel#prev" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="Previous <%= label %>">‹</button>
+        <button class="carousel-btn" data-action="wardrobe-carousel#prev" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.previous", zone: label) %>">‹</button>
         <span class="zone-info">
           <span data-zone-label="<%= zone %>">—</span>
           <span class="zone-count" data-zone-count="<%= zone %>"></span>
+          <span class="zone-why dim" data-zone-why="<%= zone %>"></span>
         </span>
-        <button class="carousel-btn" data-action="wardrobe-carousel#next" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="Next <%= label %>">›</button>
+        <button class="carousel-btn" data-action="wardrobe-carousel#next" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.next", zone: label) %>">›</button>
       </div>
     <% end %>
   </div>
 
   <div class="dressing-room-actions">
-    <%= link_to "Save as outfit", new_outfit_path, class: "btn" %>
+    <button type="button"
+            class="btn"
+            data-action="wardrobe-carousel#toggle"
+            data-wardrobe-carousel-target="playToggle"
+            aria-pressed="false"><%= t("dressing_room.pause") %></button>
+    <button type="button" class="btn" data-action="wardrobe-carousel#shuffle"><%= t("dressing_room.shuffle") %></button>
+
+    <%# Saving used to be a bare link to the empty outfit form, which discarded
+        whatever combination the carousels were showing. The hidden inputs are
+        written by the Stimulus controller on every rotation. %>
+    <%= form_with url: save_look_outfits_path, method: :post, class: "dressing-room-save" do |f| %>
+      <% %i[head top bottom shoes].each do |zone| %>
+        <input type="hidden" name="item_ids[]" value="" data-wardrobe-carousel-target="pick" data-zone-pick="<%= zone %>">
+      <% end %>
+      <%= f.submit t("dressing_room.save"), class: "btn" %>
+    <% end %>
   </div>
+
+  <% if @zones.values.all?(&:empty?) %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_items"),
+          body: t("dressing_room.empty_body"),
+          action: { label: t("nav.add_item"), path: new_item_path } %>
+  <% end %>
 </div>
