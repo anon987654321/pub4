@@ -54,6 +54,6 @@ class Partner::Conversion < ApplicationRecord
   def commission_within_order_value
     return if commission_cents.to_i <= order_value_cents.to_i
 
-    errors.add(:commission_cents, "cannot exceed the order value")
+    errors.add(:commission_cents, :exceeds_order_value)
   end
 end

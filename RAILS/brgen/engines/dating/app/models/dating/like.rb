@@ -12,7 +12,7 @@ class Dating::Like < ApplicationRecord
   private
 
   def no_self_like
-    errors.add(:likee, "can't like yourself") if liker_id == likee_id
+    errors.add(:likee, :self_like) if liker_id == likee_id
   end
 
   def check_mutual_match

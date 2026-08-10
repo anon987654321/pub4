@@ -245,6 +245,60 @@ en:
         hold_days: "Hold before payable (days)"
         auto_approve_partners: "Approve partners automatically"
         terms: "Terms"
+    errors:
+      models:
+        block:
+          attributes:
+            base:
+              self_block: "cannot block yourself"
+        follow:
+          attributes:
+            base:
+              self_follow: "cannot follow yourself"
+        partner/conversion:
+          attributes:
+            commission_cents:
+              exceeds_order_value: "cannot exceed the order value"
+        partner/program:
+          attributes:
+            commission_rate:
+              exceeds_max_percent: "cannot exceed %{percent}%% of the order value"
+        post:
+          attributes:
+            content:
+              too_long_for_live: "is too long for Live (max %{count} characters)"
+        dating/dislike:
+          attributes:
+            dislikee:
+              self_dislike: "cannot dislike yourself"
+        dating/like:
+          attributes:
+            likee:
+              self_like: "cannot like yourself"
+        dating/profile:
+          attributes:
+            photos:
+              required_when_visible: "must include at least one photo when visible"
+        marketplace/review:
+          attributes:
+            base:
+              requires_completed_order: "requires an accepted or completed order"
+            user:
+              own_listing: "cannot review your own listing"
+        playlist/like:
+          attributes:
+            base:
+              target_required: "needs something to like"
+        takeaway/order:
+          attributes:
+            status:
+              bad_transition: "cannot go from %{from} to %{to}"
+            base:
+              below_minimum: "Minimum order at %{restaurant} is %{minimum} — your subtotal is %{subtotal}."
+        takeaway/order_item:
+          attributes:
+            menu_item:
+              unavailable: "is unavailable"
   post:
     new: "New post"
     guest_sign_in: " to use your name."
@@ -339,6 +393,7 @@ en:
     message: "Message"
     mark_read: "Mark read"
     confirm_delete: "Delete?"
+    copyable_text: "Text to copy"
   pages:
     account: "Account"
     two_factor: "Two-factor authentication"
@@ -386,6 +441,7 @@ en:
     photo_camera: "Photo / Camera"
     post_anonymously: "Post anonymously"
     min_read: "%{n} min read"
+    add_photo: "Add photo"
   channels:
     title: "Channels"
     aria: "Public channels"
@@ -470,6 +526,15 @@ en:
     add_track: "Add a track"
     add_track_body: "Add a track to build this set."
     sets_subtitle: "Local audio collections"
+    source: "Source"
+    expires_at: "Expires at"
+    embed_code: "Embed code"
+    comment_at_time: "Comment at this time…"
+    role: "Role"
+    style: "Style"
+    bars: "Bars"
+    sketch_state: "Sketch state (JSON)"
+    paste_state: "Paste JSON state from lab"
   marketplace:
     new_listing: "New listing"
     edit_listing: "Edit listing"
@@ -512,6 +577,7 @@ en:
     run_search: "Run"
     top_offers_heading: "Picked for the city"
     make_offer: "Make an offer"
+    add_photos: "Add photos"
   takeaway:
     unsave: "Unsave"
     save_restaurant: "Save"
@@ -550,6 +616,8 @@ en:
     open_in_map: "Open in map"
     optional_note: "Optional note"
     check_in: "I'm here (check-in)"
+    all_types: "All types"
+    filter_by_kind: "Filter by type"
   communities:
     name_placeholder: "e.g. bergen, tech, musikk"
     description_placeholder: "What is this community about?"
@@ -654,3 +722,7 @@ en:
     previous: "Previous"
     next: "Next"
     position: "Page %{page} of %{pages}"
+  compose:
+    add_photo: "Add photo"
+    record_video: "Record video"
+    record_audio: "Record audio"

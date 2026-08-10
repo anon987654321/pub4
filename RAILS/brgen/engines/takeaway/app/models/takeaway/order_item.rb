@@ -13,6 +13,6 @@ class Takeaway::OrderItem < ApplicationRecord
   private
 
   def menu_item_must_be_available
-    errors.add(:menu_item, "is unavailable") unless menu_item&.available_for_order?
+    errors.add(:menu_item, :unavailable) unless menu_item&.available_for_order?
   end
 end

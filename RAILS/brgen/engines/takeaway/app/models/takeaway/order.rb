@@ -48,7 +48,7 @@ class Takeaway::Order < ApplicationRecord
 
   def transition_to!(next_status)
     unless may_transition_to?(next_status)
-      errors.add(:status, "cannot transition from #{status} to #{next_status}")
+      errors.add(:status, :bad_transition, from: status, to: next_status)
       return false
     end
 
@@ -144,7 +144,7 @@ class Takeaway::Order < ApplicationRecord
     sub = order_items.target.sum { |oi| oi.unit_price_cents.to_i * oi.quantity.to_i }
     return if sub >= min
 
-    errors.add(:base, "Minimum order for #{restaurant.name} is #{restaurant.min_order_display} — your subtotal is #{amount_display(sub)}.")
+    errors.add(:base, :below_minimum, restaurant: restaurant.name, minimum: restaurant.min_order_display, subtotal: amount_display(sub))
   end
 
   def status_transition_allowed
@@ -153,6 +153,6 @@ class Takeaway::Order < ApplicationRecord
     return if previous_status.blank?
     return if TRANSITIONS.fetch(previous_status, []).include?(status)
 
-    errors.add(:status, "cannot transition from #{previous_status} to #{status}")
+    errors.add(:status, :bad_transition, from: previous_status, to: status)
   end
 end

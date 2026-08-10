@@ -16,7 +16,7 @@ module Playlist
     private
 
     def target_present
-      errors.add(:base, "playlist target required") if set_id.blank? && playlist_id.blank?
+      errors.add(:base, :target_required) if set_id.blank? && playlist_id.blank?
     end
   end
 end

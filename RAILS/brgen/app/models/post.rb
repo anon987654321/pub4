@@ -101,6 +101,6 @@ class Post < ApplicationRecord
     return if content.blank?
     return if content.to_s.length <= LIVE_CONTENT_MAX
 
-    errors.add(:content, "is too long for Live (max #{LIVE_CONTENT_MAX} characters)")
+    errors.add(:content, :too_long_for_live, count: LIVE_CONTENT_MAX)
   end
 end

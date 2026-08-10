@@ -15,7 +15,7 @@ class Follow < ApplicationRecord
   private
 
   def no_self_follow
-    errors.add(:base, "cannot follow yourself") if follower_id == followed_id
+    errors.add(:base, :self_follow) if follower_id == followed_id
   end
 
   def emit_follow_created

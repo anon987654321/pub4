@@ -63,6 +63,6 @@ class Partner::Program < ApplicationRecord
     return unless percent?
     return if commission_rate.to_i <= MAX_PERCENT_BPS
 
-    errors.add(:commission_rate, "cannot exceed #{MAX_PERCENT_BPS / 100}% of the order value")
+    errors.add(:commission_rate, :exceeds_max_percent, percent: MAX_PERCENT_BPS / 100)
   end
 end

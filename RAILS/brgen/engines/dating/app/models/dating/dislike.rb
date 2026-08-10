@@ -10,6 +10,6 @@ class Dating::Dislike < ApplicationRecord
 
   private
   def no_self_dislike
-    errors.add(:dislikee, "can't dislike yourself") if disliker_id == dislikee_id
+    errors.add(:dislikee, :self_dislike) if disliker_id == dislikee_id
   end
 end

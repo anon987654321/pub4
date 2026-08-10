@@ -12,6 +12,6 @@ class Block < ApplicationRecord
   private
 
   def no_self_block
-    errors.add(:base, "cannot block yourself") if blocker_id == blocked_id
+    errors.add(:base, :self_block) if blocker_id == blocked_id
   end
 end

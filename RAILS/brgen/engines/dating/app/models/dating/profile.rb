@@ -55,6 +55,6 @@ class Dating::Profile < ApplicationRecord
     return unless visible?
     return if photos.attached?
 
-    errors.add(:photos, "must include at least one photo when visible")
+    errors.add(:photos, :required_when_visible)
   end
 end

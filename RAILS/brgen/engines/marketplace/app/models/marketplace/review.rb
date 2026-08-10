@@ -20,11 +20,11 @@ class Marketplace::Review < ApplicationRecord
   def buyer_has_completed_interaction
     return if listing&.orders&.where(buyer: user, status: %w[accepted completed])&.exists?
 
-    errors.add(:base, "review requires an accepted or completed marketplace order")
+    errors.add(:base, :requires_completed_order)
   end
 
   def seller_cannot_review_own_listing
-    errors.add(:user, "cannot review your own listing") if listing&.user_id == user_id
+    errors.add(:user, :own_listing) if listing&.user_id == user_id
   end
 
   # after_commit fires on destroy too, and a review being destroyed was found by

@@ -245,6 +245,60 @@ nb:
         hold_days: "Hold før utbetaling (dager)"
         auto_approve_partners: "Godkjenn partnere automatisk"
         terms: "Vilkår"
+    errors:
+      models:
+        block:
+          attributes:
+            base:
+              self_block: "du kan ikke blokkere deg selv"
+        follow:
+          attributes:
+            base:
+              self_follow: "du kan ikke følge deg selv"
+        partner/conversion:
+          attributes:
+            commission_cents:
+              exceeds_order_value: "kan ikke overstige ordreverdien"
+        partner/program:
+          attributes:
+            commission_rate:
+              exceeds_max_percent: "kan ikke overstige %{percent} %% av ordreverdien"
+        post:
+          attributes:
+            content:
+              too_long_for_live: "er for langt for Live (maks %{count} tegn)"
+        dating/dislike:
+          attributes:
+            dislikee:
+              self_dislike: "du kan ikke avvise deg selv"
+        dating/like:
+          attributes:
+            likee:
+              self_like: "du kan ikke like deg selv"
+        dating/profile:
+          attributes:
+            photos:
+              required_when_visible: "må ha minst ett bilde når profilen er synlig"
+        marketplace/review:
+          attributes:
+            base:
+              requires_completed_order: "du kan bare vurdere etter en akseptert eller fullført ordre"
+            user:
+              own_listing: "du kan ikke vurdere din egen annonse"
+        playlist/like:
+          attributes:
+            base:
+              target_required: "mangler et mål å like"
+        takeaway/order:
+          attributes:
+            status:
+              bad_transition: "kan ikke gå fra %{from} til %{to}"
+            base:
+              below_minimum: "Minste ordre hos %{restaurant} er %{minimum} — din delsum er %{subtotal}."
+        takeaway/order_item:
+          attributes:
+            menu_item:
+              unavailable: "er utsolgt"
   post:
     new: "Nytt innlegg"
     guest_sign_in: " for å bruke navnet ditt."
@@ -339,6 +393,7 @@ nb:
     message: "Melding"
     mark_read: "Merk som lest"
     confirm_delete: "Slette?"
+    copyable_text: "Tekst som kopieres"
   pages:
     account: "Konto"
     two_factor: "Tofaktorautentisering"
@@ -386,6 +441,7 @@ nb:
     photo_camera: "Foto / Kamera"
     post_anonymously: "Post anonymt"
     min_read: "%{n} min lesing"
+    add_photo: "Legg til bilde"
   channels:
     title: "Kanaler"
     aria: "Offentlige kanaler"
@@ -470,6 +526,15 @@ nb:
     add_track: "Legg til et spor"
     add_track_body: "Legg til et spor for å bygge dette settet."
     sets_subtitle: "Lokale lydsamlinger"
+    source: "Kilde"
+    expires_at: "Utløper"
+    embed_code: "Innbyggingskode"
+    comment_at_time: "Kommenter her…"
+    role: "Rolle"
+    style: "Stil"
+    bars: "Takter"
+    sketch_state: "Skissetilstand (JSON)"
+    paste_state: "Lim inn JSON-tilstand fra lab"
   marketplace:
     new_listing: "Ny annonse"
     edit_listing: "Rediger annonse"
@@ -512,6 +577,7 @@ nb:
     run_search: "Kjør"
     top_offers_heading: "Plukket ut for byen"
     make_offer: "Gi et bud"
+    add_photos: "Legg til bilder"
   takeaway:
     unsave: "Fjern lagring"
     save_restaurant: "Lagre"
@@ -550,6 +616,8 @@ nb:
     open_in_map: "Åpne i kart"
     optional_note: "Valgfri merknad"
     check_in: "Jeg er her (sjekk inn)"
+    all_types: "Alle typer"
+    filter_by_kind: "Filtrer på type"
   communities:
     name_placeholder: "f.eks. bergen, tech, musikk"
     description_placeholder: "Hva handler dette fellesskapet om?"
@@ -654,3 +722,7 @@ nb:
     previous: "Forrige"
     next: "Neste"
     position: "Side %{page} av %{pages}"
+  compose:
+    add_photo: "Legg til bilde"
+    record_video: "Ta opp video"
+    record_audio: "Ta opp lyd"
