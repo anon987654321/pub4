@@ -3560,7 +3560,40 @@ None has a standardised equivalent shipping in the browsers
 - [x] `shared/app/assets/stylesheets/_zen_shell.scss:331` — progress::-webkit-progress-value {
 - [x] `shared/app/assets/stylesheets/_zen_shell.scss:538` — display: -webkit-box;
 
-### rb_file_too_long — 13
+### rb_file_too_long / scss_file_too_long / view_too_long — 24 · **ratcheted 2026-08-10**
+
+The three length rules close together, as `test/file_length_ratchet_test.rb`, for
+the reason `rb_long_method` did: three lists cannot hold a line while you work
+down them, and the counts had already drifted.
+
+Re-measured in **code lines** — non-blank, non-comment — matching `[DENSITY]`,
+the method ratchet, and `lint:spine`, which was re-expressed the same day for the
+same conflict. Four of the 24 were only ever over on their comments and are not
+findings at all: `_brand.scss` (441 raw / 379 code), `_chrome_polish.scss`
+(405/366), amber's application layout (153/143) and `gates/lib/page_simulation.rb`
+(360/295).
+
+Two more are `db/schema.rb`, which Rails writes from the migrations — "split it"
+is not an available action, and a hand-edit is gone at the next `db:migrate`.
+Excluded from the scan rather than allow-listed in it, so they stop reading as
+debt; the test asserts the exclusion is load-bearing by checking schema.rb is
+actually over the limit (brgen's is 1,359 code lines).
+
+That leaves 20 real files, each pinned at its measured size. Two entries the raw
+count had missed appear now: `deploy_backlog_test.rb` (756) and
+`gates/lib/geometry.rb` (498).
+
+Same guards as the method ratchet: a ceiling may fall and may never rise, an
+undeclared oversize file fails as "no ceiling declared", and a ceiling left above
+the real number fails asking to be lowered. Mutation-tested in three directions —
+60 added comment lines pass, 15 added code lines fail naming the overage, and a
+new 322-line file fails as undeclared.
+
+- `brgen/db/seeds.rb` (421) and `plausible_content.rb` (344) are data rather than
+  logic — seed rows and sample copy. On the list because splitting them is
+  possible, not because it is clearly worth doing.
+
+### rb_file_too_long — 13 (raw-line list, superseded above)
 
 Ruby file over 300 lines. SIMPLEST_WORKS refuses god classes; decompose. Law: `soul.absolute.code_rules.SIMPLEST_WORKS`.
 
@@ -3600,14 +3633,35 @@ SCSS partial over 400 lines. SIMPLEST_WORKS: split by surface. Law: `soul.absolu
 - [ ] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:54` — &nbsp;
 - [ ] `brgen/engines/marketplace/app/views/marketplace/_nav_bar.html.erb:49` — <span class="nav-line-1">&nbsp;</span>
 
-### class_soup — 4
+### class_soup — 4 · **artifact, 0 real, 2026-08-10**
 
 Element with 6+ classes. UI_REFINEMENTS "Full ERB class-soup -> bare semantic HTML" is still open. Law: `aesthetic_rules.FLAT_HIERARCHY`.
 
-- [ ] `amber/app/views/ai/occasion_map.html.erb:5` — 6 classes: occasion-card occasion-card--<%= items.size < 2 ?
-- [ ] `bsdports/app/views/ports/_row.html.erb:9` — 8 classes: data-state <%= age && age >
-- [ ] `bsdports/app/views/ports/show.html.erb:24` — 8 classes: data-state <%= update_age && update_age >
-- [ ] `shared/app/views/shared/_feed_card.html.erb:21` — 7 classes: feed-card-avatar-placeholder monogram monogram--<%= monogram.ord % 6
+The rule splits the raw `class="…"` attribute on whitespace and counts the
+tokens. It does that *before* the ERB is evaluated, so one interpolated modifier
+class is counted as one class per Ruby word inside it. Every finding here is that
+arithmetic, not an element:
+
+| site | tokens counted | classes actually rendered |
+|---|---:|---:|
+| `ai/occasion_map.html.erb:5` | 10 | 2 |
+| `ports/_row.html.erb:9` | 8 | 2 |
+| `ports/show.html.erb:24` | 8 | 2 |
+| `shared/_feed_card.html.erb:21` | 7 | 3 |
+
+Re-measured across all 371 views with the ERB collapsed to a single token first:
+**no element in the tree renders with 6 or more classes.** Three more sites the
+rule flags on the same arithmetic (`_player.html.erb:57` and `:64`,
+`amber/home/index.html.erb:20`) are equally clean — the last one renders a single
+class, from nine counted tokens.
+
+Worth noting for whoever fixes the rule: `ports/_row.html.erb:9` and
+`ports/show.html.erb:24` write `class="data-state <%= … ? "data-state--stale" : "" %>"`,
+with double quotes inside a double-quoted attribute. ERB resolves before HTML so
+it renders correctly, but it truncates every source-level parser at the inner
+quote — it defeated both the original rule and the re-measurement until the
+scanner was taught about it. Nothing to fix in the markup; something to know
+before trusting a regex over it.
 
 ### view_too_long — 4
 
