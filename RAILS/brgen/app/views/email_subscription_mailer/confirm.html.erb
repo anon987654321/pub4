@@ -3,7 +3,7 @@
   <tr>
     <td class="mail-typo-hero">
       <h1><%= t("mailer.confirm_subscription", default: "Confirm your subscription") %></h1>
-      <p>Permission marketing</p>
+      <p><%= t("mailer.permission_marketing") %></p>
     </td>
   </tr>
   <tr>
@@ -15,7 +15,7 @@
   </tr>
   <tr>
     <td class="mail-cta-wrap">
-      <a href="<%= @confirm_url %>" class="mail-cta">Confirm subscription</a>
+      <a href="<%= @confirm_url %>" class="mail-cta"><%= t("mailer.confirm_button") %></a>
     </td>
   </tr>
   <tr><td class="mail-signoff">— The Brgen editors</td></tr>

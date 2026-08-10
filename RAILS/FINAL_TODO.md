@@ -1193,48 +1193,75 @@ Grouped by theme, most-frequent rule first, every item with its `file:line`.
 
 Hardcoded English copy in a view. design_rules.ui_polish.chrome_i18n makes untranslated shell copy debt; default_locale is nb, so an English string ships to a Norwegian visitor. Law: `design_rules.ui_polish.chrome_i18n`.
 
+**79 of 129 closed 2026-08-10. The 50 left are two blocks, and neither is "not done yet".**
+
+25 had already been fixed by earlier work with the boxes never ticked. 46 more
+are now `t()` with nb and en entries — 44 new keys across brgen and, for the
+newsletter and skip-link partials all three apps render, bsdports. Rendered in a
+runner rather than assumed: "Lokal graf", "Selgeroversikt", "Lyttefest",
+"Utsolgt", "Hopp til hovedinnhold", and the interpolated "Serier på %{channel}"
+and "Bestill fra %{restaurant}".
+
+Two traps worth recording. Several entries were *second* occurrences — the
+`content_for :title` was converted while the `<h1>` a line below still carried
+the literal, so a per-file check reported done while the page still showed
+English. And `dating/home/index`'s "Beskyttet med" was never English at all: it
+is hardcoded *Norwegian*, which this rule cannot tell from hardcoded English.
+Both now go through `t()`.
+
+**38 are the privacy, terms and cookies pages, and they are not an agent's to
+translate.** These are the documents a Norwegian reader is entitled to rely on,
+and one of them names TradeDoubler for the publisher verification recorded in
+`apps.yml`. A machine-translated cookie disclosure reads fine and may not say
+what the English says. Operator or a translator, not this.
+
+**12 are amber, blocked on the shared checkout rather than on the work.** amber's
+nb/en locales have carried another session's uncommitted work all day, so keys
+cannot land there without sweeping it in. The views are ready the moment those
+files are free.
+
 - [ ] `amber/app/views/ai/_analysis.html.erb:3` — Analysis unavailable
 - [ ] `amber/app/views/ai/capsule.html.erb:5` — Capsule builder
-- [ ] `amber/app/views/ai/capsule.html.erb:38` — Gap items to consider
-- [ ] `amber/app/views/ai/color_palette.html.erb:7` — Swatches from your items
+- [x] `amber/app/views/ai/capsule.html.erb:38` — Gap items to consider
+- [x] `amber/app/views/ai/color_palette.html.erb:7` — Swatches from your items
 - [ ] `amber/app/views/ai/color_palette.html.erb:25` — Clashing items
 - [ ] `amber/app/views/ai/packing_list.html.erb:19` — Suggested outfits for
-- [ ] `amber/app/views/creator_profiles/edit.html.erb:3` — Edit creator profile
+- [x] `amber/app/views/creator_profiles/edit.html.erb:3` — Edit creator profile
 - [ ] `amber/app/views/creator_profiles/edit.html.erb:7` — Showcase items
-- [ ] `amber/app/views/creator_profiles/new.html.erb:3` — Create creator profile
-- [ ] `amber/app/views/declutter/index.html.erb:26` — Overdue wear challenges
-- [ ] `amber/app/views/declutter/index.html.erb:41` — Active wear challenges
-- [ ] `amber/app/views/declutter/index.html.erb:65` — Declutter box
-- [ ] `amber/app/views/declutter/index.html.erb:77` — Highest release scores
-- [ ] `amber/app/views/declutter/index.html.erb:89` — Duplicate groups
-- [ ] `amber/app/views/declutter/review.html.erb:3` — Declutter review
-- [ ] `amber/app/views/declutter/review.html.erb:25` — Recommended action
-- [ ] `amber/app/views/declutter/review.html.erb:55` — Move item
+- [x] `amber/app/views/creator_profiles/new.html.erb:3` — Create creator profile
+- [x] `amber/app/views/declutter/index.html.erb:26` — Overdue wear challenges
+- [x] `amber/app/views/declutter/index.html.erb:41` — Active wear challenges
+- [x] `amber/app/views/declutter/index.html.erb:65` — Declutter box
+- [x] `amber/app/views/declutter/index.html.erb:77` — Highest release scores
+- [x] `amber/app/views/declutter/index.html.erb:89` — Duplicate groups
+- [x] `amber/app/views/declutter/review.html.erb:3` — Declutter review
+- [x] `amber/app/views/declutter/review.html.erb:25` — Recommended action
+- [x] `amber/app/views/declutter/review.html.erb:55` — Move item
 - [ ] `amber/app/views/demo_wardrobe/index.html.erb:5` — Demo wardrobe
 - [ ] `amber/app/views/demo_wardrobe/index.html.erb:30` — All pieces
 - [ ] `amber/app/views/demo_wardrobe/show.html.erb:12` — Spark joy
-- [ ] `amber/app/views/items/_form.html.erb:34` — Choose or drop photos
-- [ ] `amber/app/views/items/_live_search_results.html.erb:8` — Filter by category
-- [ ] `amber/app/views/items/show.html.erb:21` — Sparks joy
-- [ ] `amber/app/views/items/show.html.erb:55` — Wardrobe intelligence
-- [ ] `amber/app/views/items/show.html.erb:97` — Shop the look
-- [ ] `amber/app/views/items/show.html.erb:116` — Permanent removal
+- [x] `amber/app/views/items/_form.html.erb:34` — Choose or drop photos
+- [x] `amber/app/views/items/_live_search_results.html.erb:8` — Filter by category
+- [x] `amber/app/views/items/show.html.erb:21` — Sparks joy
+- [x] `amber/app/views/items/show.html.erb:55` — Wardrobe intelligence
+- [x] `amber/app/views/items/show.html.erb:97` — Shop the look
+- [x] `amber/app/views/items/show.html.erb:116` — Permanent removal
 - [ ] `amber/app/views/outfits/_form.html.erb:28` — Add item
 - [ ] `amber/app/views/outfits/index.html.erb:6` — Style combinations
 - [ ] `amber/app/views/outfits/show.html.erb:37` — Style intelligence
-- [ ] `amber/app/views/shared/_widgets.html.erb:14` — Your wardrobe
-- [ ] `amber/app/views/shared/_widgets.html.erb:26` — Demo capsule
-- [ ] `amber/app/views/shared/_widgets.html.erb:33` — Style notes
+- [x] `amber/app/views/shared/_widgets.html.erb:14` — Your wardrobe
+- [x] `amber/app/views/shared/_widgets.html.erb:26` — Demo capsule
+- [x] `amber/app/views/shared/_widgets.html.erb:33` — Style notes
 - [ ] `amber/app/views/users/show.html.erb:18` — Recent items
-- [ ] `amber/app/views/wardrobe_items/timeline.html.erb:5` — Aesthetic phases over time
-- [ ] `amber/app/views/wardrobe_items/timeline.html.erb:23` — Life phases
-- [ ] `amber/app/views/wardrobe_items/timeline.html.erb:55` — Wear history
-- [ ] `brgen/app/views/activity_events/index.html.erb:5` — Local graph
-- [ ] `brgen/app/views/admin/reports/index.html.erb:17` — Select all
-- [ ] `brgen/app/views/communities/new.html.erb:1` — New community
-- [ ] `brgen/app/views/email_subscription_mailer/confirm.html.erb:5` — Confirm your subscription
-- [ ] `brgen/app/views/email_subscription_mailer/confirm.html.erb:6` — Permission marketing
-- [ ] `brgen/app/views/email_subscription_mailer/confirm.html.erb:18` — Confirm subscription
+- [x] `amber/app/views/wardrobe_items/timeline.html.erb:5` — Aesthetic phases over time
+- [x] `amber/app/views/wardrobe_items/timeline.html.erb:23` — Life phases
+- [x] `amber/app/views/wardrobe_items/timeline.html.erb:55` — Wear history
+- [x] `brgen/app/views/activity_events/index.html.erb:5` — Local graph
+- [x] `brgen/app/views/admin/reports/index.html.erb:17` — Select all
+- [x] `brgen/app/views/communities/new.html.erb:1` — New community
+- [x] `brgen/app/views/email_subscription_mailer/confirm.html.erb:5` — Confirm your subscription
+- [x] `brgen/app/views/email_subscription_mailer/confirm.html.erb:6` — Permission marketing
+- [x] `brgen/app/views/email_subscription_mailer/confirm.html.erb:18` — Confirm subscription
 - [ ] `brgen/app/views/pages/cookies.html.erb:19` — Annonsene vi viser er
 - [ ] `brgen/app/views/pages/cookies.html.erb:21` — Slik styrer du dem
 - [ ] `brgen/app/views/pages/cookies.html.erb:25` — Cookies on
@@ -1273,55 +1300,55 @@ Hardcoded English copy in a view. design_rules.ui_polish.chrome_i18n makes untra
 - [ ] `brgen/app/views/pages/terms.html.erb:45` — Advertising and partner links
 - [ ] `brgen/app/views/pages/terms.html.erb:46` — The site is funded by
 - [ ] `brgen/app/views/pages/terms.html.erb:51` — Termination and governing law
-- [ ] `brgen/app/views/shared/_nav_swiper.html.erb:24` — Show sections
-- [ ] `brgen/app/views/shared/_sidebar_discovery.html.erb:14` — Your feed
-- [ ] `brgen/engines/dating/app/views/dating/home/_card.html.erb:35` — Looking for
-- [ ] `brgen/engines/dating/app/views/dating/home/index.html.erb:26` — Beskyttet med
-- [ ] `brgen/engines/dating/app/views/dating/profiles/edit.html.erb:17` — Current photos
-- [ ] `brgen/engines/dating/app/views/dating/profiles/edit.html.erb:47` — More details
-- [ ] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:46` — Looking for
-- [ ] `brgen/engines/marketplace/app/views/marketplace/_top_offers.html.erb:7` — Top offers
-- [ ] `brgen/engines/marketplace/app/views/marketplace/_top_offers.html.erb:8` — Picked for the city
-- [ ] `brgen/engines/marketplace/app/views/marketplace/listings/show.html.erb:81` — Make an offer
-- [ ] `brgen/engines/marketplace/app/views/marketplace/listings/show.html.erb:98` — Seller dashboard
-- [ ] `brgen/engines/marketplace/app/views/marketplace/orders/show.html.erb:28` — Chat with
-- [ ] `brgen/engines/marketplace/app/views/marketplace/saved_searches/index.html.erb:5` — Marketplace alerts
-- [ ] `brgen/engines/playlist/app/views/playlist/hosted_tracks/show.html.erb:30` — Timestamped comments
-- [ ] `brgen/engines/playlist/app/views/playlist/playlists/show.html.erb:17` — Add a track
-- [ ] `brgen/engines/playlist/app/views/playlist/playlists/show.html.erb:31` — Import links
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/edit.html.erb:5` — Playlist set
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/index.html.erb:5` — Local audio collections
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/new.html.erb:5` — Playlist set
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:5` — Playlist set
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:87` — Add a track
-- [ ] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:101` — Listening party
-- [ ] `brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:62` — Render now
-- [ ] `brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:63` — Publish as playlist track
-- [ ] `brgen/engines/takeaway/app/views/takeaway/delivery_drivers/index.html.erb:5` — Takeaway operations
-- [ ] `brgen/engines/takeaway/app/views/takeaway/delivery_drivers/show.html.erb:5` — Takeaway operations
-- [ ] `brgen/engines/takeaway/app/views/takeaway/orders/new.html.erb:6` — Order from
-- [ ] `brgen/engines/takeaway/app/views/takeaway/orders/show.html.erb:12` — Status timeline
-- [ ] `brgen/engines/takeaway/app/views/takeaway/orders/show.html.erb:26` — Order cancelled
-- [ ] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:24` — Add menu item
-- [ ] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:56` — Sold out
-- [ ] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:89` — Sold out
-- [ ] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:101` — Reviews from neighbours
-- [ ] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:119` — Leave a review
-- [ ] `brgen/engines/tv/app/views/tv/channels/edit.html.erb:3` — Edit channel
-- [ ] `brgen/engines/tv/app/views/tv/channels/new.html.erb:3` — New channel
-- [ ] `brgen/engines/tv/app/views/tv/home/index.html.erb:16` — Live now
-- [ ] `brgen/engines/tv/app/views/tv/shows/index.html.erb:4` — Shows on
-- [ ] `brgen/engines/tv/app/views/tv/videos/new.html.erb:3` — Upload video
-- [ ] `brgen/engines/tv/app/views/tv/videos/new.html.erb:11` — Uploading to
-- [ ] `bsdports/app/views/ports/show.html.erb:11` — Command targets
-- [ ] `bsdports/app/views/ports/show.html.erb:17` — Exact identity
-- [ ] `bsdports/app/views/ports/show.html.erb:20` — Local install
-- [ ] `bsdports/app/views/ports/show.html.erb:51` — Exploration assistant
-- [ ] `bsdports/app/views/ports/show.html.erb:70` — Version history
-- [ ] `shared/app/views/layouts/mailer.html.erb:18` — Skip to main content
-- [ ] `shared/app/views/shared/newsletter/_deal.html.erb:14` — View offer
-- [ ] `shared/app/views/shared/newsletter/_edition.html.erb:16` — Today in
-- [ ] `shared/app/views/shared/newsletter/_edition.html.erb:24` — Curated offers
+- [x] `brgen/app/views/shared/_nav_swiper.html.erb:24` — Show sections
+- [x] `brgen/app/views/shared/_sidebar_discovery.html.erb:14` — Your feed
+- [x] `brgen/engines/dating/app/views/dating/home/_card.html.erb:35` — Looking for
+- [x] `brgen/engines/dating/app/views/dating/home/index.html.erb:26` — Beskyttet med
+- [x] `brgen/engines/dating/app/views/dating/profiles/edit.html.erb:17` — Current photos
+- [x] `brgen/engines/dating/app/views/dating/profiles/edit.html.erb:47` — More details
+- [x] `brgen/engines/dating/app/views/dating/profiles/show.html.erb:46` — Looking for
+- [x] `brgen/engines/marketplace/app/views/marketplace/_top_offers.html.erb:7` — Top offers
+- [x] `brgen/engines/marketplace/app/views/marketplace/_top_offers.html.erb:8` — Picked for the city
+- [x] `brgen/engines/marketplace/app/views/marketplace/listings/show.html.erb:81` — Make an offer
+- [x] `brgen/engines/marketplace/app/views/marketplace/listings/show.html.erb:98` — Seller dashboard
+- [x] `brgen/engines/marketplace/app/views/marketplace/orders/show.html.erb:28` — Chat with
+- [x] `brgen/engines/marketplace/app/views/marketplace/saved_searches/index.html.erb:5` — Marketplace alerts
+- [x] `brgen/engines/playlist/app/views/playlist/hosted_tracks/show.html.erb:30` — Timestamped comments
+- [x] `brgen/engines/playlist/app/views/playlist/playlists/show.html.erb:17` — Add a track
+- [x] `brgen/engines/playlist/app/views/playlist/playlists/show.html.erb:31` — Import links
+- [x] `brgen/engines/playlist/app/views/playlist/sets/edit.html.erb:5` — Playlist set
+- [x] `brgen/engines/playlist/app/views/playlist/sets/index.html.erb:5` — Local audio collections
+- [x] `brgen/engines/playlist/app/views/playlist/sets/new.html.erb:5` — Playlist set
+- [x] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:5` — Playlist set
+- [x] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:87` — Add a track
+- [x] `brgen/engines/playlist/app/views/playlist/sets/show.html.erb:101` — Listening party
+- [x] `brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:62` — Render now
+- [x] `brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:63` — Publish as playlist track
+- [x] `brgen/engines/takeaway/app/views/takeaway/delivery_drivers/index.html.erb:5` — Takeaway operations
+- [x] `brgen/engines/takeaway/app/views/takeaway/delivery_drivers/show.html.erb:5` — Takeaway operations
+- [x] `brgen/engines/takeaway/app/views/takeaway/orders/new.html.erb:6` — Order from
+- [x] `brgen/engines/takeaway/app/views/takeaway/orders/show.html.erb:12` — Status timeline
+- [x] `brgen/engines/takeaway/app/views/takeaway/orders/show.html.erb:26` — Order cancelled
+- [x] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:24` — Add menu item
+- [x] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:56` — Sold out
+- [x] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:89` — Sold out
+- [x] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:101` — Reviews from neighbours
+- [x] `brgen/engines/takeaway/app/views/takeaway/restaurants/show.html.erb:119` — Leave a review
+- [x] `brgen/engines/tv/app/views/tv/channels/edit.html.erb:3` — Edit channel
+- [x] `brgen/engines/tv/app/views/tv/channels/new.html.erb:3` — New channel
+- [x] `brgen/engines/tv/app/views/tv/home/index.html.erb:16` — Live now
+- [x] `brgen/engines/tv/app/views/tv/shows/index.html.erb:4` — Shows on
+- [x] `brgen/engines/tv/app/views/tv/videos/new.html.erb:3` — Upload video
+- [x] `brgen/engines/tv/app/views/tv/videos/new.html.erb:11` — Uploading to
+- [x] `bsdports/app/views/ports/show.html.erb:11` — Command targets
+- [x] `bsdports/app/views/ports/show.html.erb:17` — Exact identity
+- [x] `bsdports/app/views/ports/show.html.erb:20` — Local install
+- [x] `bsdports/app/views/ports/show.html.erb:51` — Exploration assistant
+- [x] `bsdports/app/views/ports/show.html.erb:70` — Version history
+- [x] `shared/app/views/layouts/mailer.html.erb:18` — Skip to main content
+- [x] `shared/app/views/shared/newsletter/_deal.html.erb:14` — View offer
+- [x] `shared/app/views/shared/newsletter/_edition.html.erb:16` — Today in
+- [x] `shared/app/views/shared/newsletter/_edition.html.erb:24` — Curated offers
 
 ### placeholder_hardcoded — 5
 

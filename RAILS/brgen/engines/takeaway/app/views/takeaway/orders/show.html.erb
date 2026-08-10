@@ -9,7 +9,7 @@
 </div>
 
 <div class="order-status" role="status" aria-live="polite">
-  <h2>Status timeline</h2>
+  <h2><%= t("takeaway.status_timeline") %></h2>
   <div class="chips">
     <% Takeaway::Order::STATUSES.each do |status| %>
       <span class="chip"><%= status.humanize %><%= " ✓" if @order.status == status %></span>
@@ -23,7 +23,7 @@
   <% if @order.status == "delivered" %>
     <p class="eta-badge eta-badge--done">Delivered</p>
   <% elsif @order.status == "cancelled" %>
-    <p class="eta-badge eta-badge--cancelled">Order cancelled</p>
+    <p class="eta-badge eta-badge--cancelled"><%= t("takeaway.order_cancelled") %></p>
   <% else %>
     <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.estimated_ready_at.iso8601 %>">Est. delivery — calculating…</p>
   <% end %>

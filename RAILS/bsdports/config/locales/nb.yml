@@ -129,3 +129,9 @@ nb:
     previous: "Forrige"
     next: "Neste"
     position: "Side %{page} av %{pages}"
+  newsletter:
+    view_offer: "Se tilbudet"
+    curated_offers: "Utvalgte tilbud"
+    today_in: "I dag i %{city}"
+  a11y:
+    skip_to_content: "Hopp til innholdet"

@@ -4,7 +4,7 @@
 <% if offers.present? %>
 <section class="marketplace-top-offers" aria-labelledby="top-offers-heading">
   <header class="marketplace-top-offers-header">
-    <p class="top-offers-kicker">Top offers</p>
+    <p class="top-offers-kicker"><%= t("marketplace.top_offers_kicker") %></p>
     <h2 id="top-offers-heading" class="top-offers-heading"><%= t("marketplace.top_offers_heading", default: "Picked for the city") %></h2>
     <p class="top-offers-lede dim">Featured deals and high-signal listings — denser than the feed, still flat.</p>
   </header>

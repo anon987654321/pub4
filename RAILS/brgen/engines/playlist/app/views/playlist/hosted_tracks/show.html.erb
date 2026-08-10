@@ -27,7 +27,7 @@
 
 <% if @comments.any? %>
   <section class="playlist-details">
-    <h2>Timestamped comments</h2>
+    <h2><%= t("playlist.timestamped_comments") %></h2>
     <% @comments.each do |comment| %>
       <article>
         <p class="dim"><%= comment.timestamp_seconds %>s</p>

@@ -131,3 +131,9 @@ en:
     previous: "Previous"
     next: "Next"
     position: "Page %{page} of %{pages}"
+  newsletter:
+    view_offer: "View offer"
+    curated_offers: "Curated offers"
+    today_in: "Today in %{city}"
+  a11y:
+    skip_to_content: "Skip to main content"

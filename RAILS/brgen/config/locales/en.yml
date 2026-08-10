@@ -19,6 +19,7 @@ en:
     guest_hint: "Posting as anon · %{limit} posts per browser"
     guest_limit_why: "The limit slows spam without asking for an account."
     advanced_post: "Advanced post with photo"
+    your_feed: "Your feed"
   nav:
     home: "Home"
     explore: "Explore"
@@ -394,6 +395,8 @@ en:
     mark_read: "Mark read"
     confirm_delete: "Delete?"
     copyable_text: "Text to copy"
+    select_all: "Select all"
+    select_all_reports: "Select all reports"
   pages:
     account: "Account"
     two_factor: "Two-factor authentication"
@@ -485,6 +488,9 @@ en:
     someone: "Someone"
     its_a_match: "It's a match!"
     open_messages: "Open messages"
+    current_photos: "Current photos"
+    more_details: "More details"
+    protected_with: "Protected with"
   playlist:
     sets: "Sets"
     new_set: "New set"
@@ -535,6 +541,11 @@ en:
     bars: "Bars"
     sketch_state: "Sketch state (JSON)"
     paste_state: "Paste JSON state from lab"
+    timestamped_comments: "Timestamped comments"
+    import_links: "Import links"
+    render_now: "Render now"
+    publish_as_track: "Publish as playlist track"
+    set_kicker: "Playlist set"
   marketplace:
     new_listing: "New listing"
     edit_listing: "Edit listing"
@@ -578,6 +589,10 @@ en:
     top_offers_heading: "Picked for the city"
     make_offer: "Make an offer"
     add_photos: "Add photos"
+    top_offers_kicker: "Top offers"
+    seller_dashboard: "Seller dashboard"
+    alerts: "Marketplace alerts"
+    chat_with: "Chat with %{name}"
   takeaway:
     unsave: "Unsave"
     save_restaurant: "Save"
@@ -611,6 +626,11 @@ en:
     add_menu_item: "Add menu item"
     reviews_heading: "Reviews from neighbours"
     leave_review: "Leave a review"
+    status_timeline: "Status timeline"
+    order_cancelled: "Order cancelled"
+    order_from: "Order from %{restaurant}"
+    sold_out: "Sold out"
+    operations: "Takeaway operations"
   maps:
     map: "Map"
     open_in_map: "Open in map"
@@ -624,6 +644,7 @@ en:
     create: "Create"
     save: "Save"
     confirm_delete: "Delete community?"
+    new_community: "New community"
   tv:
     create_channel: "Create channel"
     upload: "Upload"
@@ -637,12 +658,20 @@ en:
     live_now: "Live now"
     live_streams_label: "Live streams now"
     channel_subtitle: "Brgen TV channel"
+    edit_channel: "Edit channel"
+    new_channel: "New channel"
+    upload_video: "Upload video"
+    shows_on: "Shows on %{channel}"
+    uploading_to_html: "Uploading to %{channel}"
   newsletter:
     email_placeholder: "your@email.com"
     subscribe: "Subscribe"
     title: "City updates"
     body: "News and deals from your city, once a week."
     marketing_consent: "I agree to receive deals and partner offers (optional, unsubscribe any time)"
+    view_offer: "View offer"
+    curated_offers: "Curated offers"
+    today_in: "Today in %{city}"
   pwa:
     home: "Home"
     new: "New"
@@ -717,6 +746,8 @@ en:
     action: "Install"
   mailer:
     confirm_subscription: "Confirm your subscription"
+    permission_marketing: "Permission marketing"
+    confirm_button: "Confirm subscription"
   pagination:
     label: "Pagination"
     previous: "Previous"
@@ -726,3 +757,7 @@ en:
     add_photo: "Add photo"
     record_video: "Record video"
     record_audio: "Record audio"
+  activity:
+    local_graph: "Local graph"
+  a11y:
+    skip_to_content: "Skip to main content"

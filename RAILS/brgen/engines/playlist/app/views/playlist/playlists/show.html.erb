@@ -28,7 +28,7 @@
     </div>
 
     <div class="section-divider">
-      <p class="section-heading">Import links</p>
+      <p class="section-heading"><%= t("playlist.import_links") %></p>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_imports_path(@playlist), method: :post do |f| %>
           <div class="field"><%= f.text_area :urls, rows: 4, placeholder: t("playlist.import_urls_placeholder"), aria: { label: t("playlist.import_urls_placeholder") } %></div>

@@ -44,7 +44,7 @@
     <p class="profile-meta">
       <span><span class="dim">Age</span> · <%= @profile.age || "—" %></span>
       <span><span class="dim">Gender</span> · <%= @profile.gender || "—" %></span>
-      <span><span class="dim">Looking for</span> · <%= @profile.looking_for || "—" %></span>
+      <span><span class="dim"><%= t("dating.looking_for") %></span> · <%= @profile.looking_for || "—" %></span>
     </p>
   </article>
 

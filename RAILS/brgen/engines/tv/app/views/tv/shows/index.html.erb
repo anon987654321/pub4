@@ -1,7 +1,7 @@
 <% content_for :title, "TV Shows" %>
 
 <div class="page-header" role="banner" aria-label="TV shows header">
-  <h1>Shows on <%= @channel&.name || "Brgen TV" %></h1>
+  <h1><%= t("tv.shows_on", channel: @channel&.name || "Brgen TV") %></h1>
 </div>
 
 <% if @shows.any? %>

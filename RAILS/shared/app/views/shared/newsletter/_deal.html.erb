@@ -11,7 +11,7 @@
       <% if deal.price.present? %>
         <p class="mail-deal-price"><strong><%= deal.price %> <%= deal.currency %></strong> · <%= deal.merchant %></p>
       <% end %>
-      <a href="<%= deal.url %>" class="mail-cta" rel="sponsored">View offer</a>
+      <a href="<%= deal.url %>" class="mail-cta" rel="sponsored"><%= t("newsletter.view_offer") %></a>
     </td>
   </tr>
 </table>

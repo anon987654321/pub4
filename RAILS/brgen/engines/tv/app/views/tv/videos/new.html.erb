@@ -1,6 +1,6 @@
-<% content_for :title, "Upload video" %>
+<% content_for :title, t("tv.upload_video") %>
 
-<div class="page-header" role="banner"><h1>Upload video</h1></div>
+<div class="page-header" role="banner"><h1><%= t("tv.upload_video") %></h1></div>
 
 <div class="form-wrap">
   <%# videos_path does not exist -- upload is only routed under a channel
@@ -8,7 +8,7 @@
       the URL rather than from a picker the create action never read. %>
   <%= form_with model: @video, url: channel_videos_path(@channel), multipart: true do |f| %>
     <%= render "shared/errors", object: @video %>
-    <p class="dim">Uploading to <strong><%= @channel.name %></strong></p>
+    <p class="dim"><%= t("tv.uploading_to_html", channel: tag.strong(@channel.name)).html_safe %></p>
     <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
     <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>

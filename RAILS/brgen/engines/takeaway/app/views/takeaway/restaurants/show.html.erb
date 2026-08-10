@@ -53,7 +53,7 @@
           <% end %>
           <div>
             <strong><%= item.name %></strong> · <%= item.price_display %>
-            <% unless item.available? %><span class="sold-out-badge">Sold out</span><% end %>
+            <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
             <% if item.vegetarian? %><span class="chip">Vegetarian</span><% end %>
             <% if item.vegan? %><span class="chip">Vegan</span><% end %>
             <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
@@ -86,7 +86,7 @@
         <% end %>
         <div>
           <strong><%= item.name %></strong> · <%= item.price_display %>
-          <% unless item.available? %><span class="sold-out-badge">Sold out</span><% end %>
+          <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
           <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
         </div>
       </article>

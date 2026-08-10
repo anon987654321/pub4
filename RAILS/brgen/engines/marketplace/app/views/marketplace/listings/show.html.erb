@@ -95,7 +95,7 @@
 
 <% if Current.user.present? && Current.user == @listing.user %>
   <div class="section-divider">
-    <p class="section-heading--md">Seller dashboard</p>
+    <p class="section-heading--md"><%= t("marketplace.seller_dashboard") %></p>
     <div class="chips">
       <span class="chip"><%= pluralize(@listing.views_count.to_i, "view") %></span>
       <span class="chip"><%= pluralize(@listing.orders.size, "offer") %></span>

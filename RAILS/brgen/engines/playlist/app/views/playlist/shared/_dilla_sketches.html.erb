@@ -59,8 +59,8 @@
           <%= f.number_field :bars, value: 12, min: 4, max: 64, aria: { label: t("playlist.bars", default: "Bars") } %>
           <%= f.text_area :state, value: { pat_: {}, aud_: {}, mix_: { style: "dilla", bars: 12 } }.to_json, rows: 3, aria: { label: t("playlist.sketch_state", default: "Sketch state (JSON)") } %>
           <%= f.text_field :notes, placeholder: t("playlist.notes_optional"), aria: { label: t("playlist.notes_optional") } %>
-          <label><input type="checkbox" name="render_now" value="1" checked /> Render now</label>
-          <label><input type="checkbox" name="publish" value="1" checked /> Publish as playlist track</label>
+          <label><input type="checkbox" name="render_now" value="1" checked /> <%= t("playlist.render_now") %></label>
+          <label><input type="checkbox" name="publish" value="1" checked /> <%= t("playlist.publish_as_track") %></label>
           <%= f.submit t("playlist.save_sketch"), class: "btn btn-primary btn-sm" %>
         <% end %>
       <% else %>

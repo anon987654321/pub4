@@ -32,7 +32,7 @@
     <% if profile.bio.present? %><p class="swipe-bio"><%= profile.bio %></p><% end %>
     <div class="chips swipe-chips">
       <% if profile.gender.present? %><span class="chip"><%= profile.gender %></span><% end %>
-      <% if profile.looking_for.present? %><span class="chip">Looking for <%= profile.looking_for %></span><% end %>
+      <% if profile.looking_for.present? %><span class="chip"><%= t("dating.looking_for") %> <%= profile.looking_for %></span><% end %>
       <span class="chip chip--status"><%= profile.visible? ? "visible" : "paused" %></span>
     </div>
     <% if Current.user.present? && Current.user != profile.user %>

@@ -14,7 +14,7 @@
 <% if @reports.any? %>
   <div data-controller="checkbox-select-all">
     <p class="cluster">
-      <label><input type="checkbox" data-checkbox-select-all-target="checkboxAll" aria-label="Select all reports"> Select all</label>
+      <label><input type="checkbox" data-checkbox-select-all-target="checkboxAll" aria-label="<%= t("actions.select_all_reports") %>"> <%= t("actions.select_all") %></label>
     </p>
     <% @reports.each do |report| %>
       <article role="article" aria-label="Report">

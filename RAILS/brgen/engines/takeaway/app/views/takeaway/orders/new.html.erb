@@ -1,9 +1,9 @@
-<% content_for :title, "Order from #{@restaurant.name}" %>
+<% content_for :title, t("takeaway.order_from", restaurant: @restaurant.name) %>
 
 <header class="page-header" role="banner" aria-label="Restaurant header">
   <div>
     <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.city_label %></p>
-    <h1>Order from <%= @restaurant.name %></h1>
+    <h1><%= t("takeaway.order_from", restaurant: @restaurant.name) %></h1>
     <p><%= @restaurant.address %></p>
   </div>
 </header>

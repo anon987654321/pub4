@@ -13,7 +13,7 @@
 
   <% if edition.stories.any? %>
     <tr><td><hr class="mail-divider"></td></tr>
-    <tr><td><p class="mail-section-title">Today in <%= edition.city_name %></p></td></tr>
+    <tr><td><p class="mail-section-title"><%= t("newsletter.today_in", city: edition.city_name) %></p></td></tr>
     <% edition.stories.each do |story| %>
       <%= render "shared/newsletter/story", story: story %>
     <% end %>
@@ -21,7 +21,7 @@
 
   <% if edition.deals.any? %>
     <tr><td><hr class="mail-divider"></td></tr>
-    <tr><td><p class="mail-section-title">Curated offers</p></td></tr>
+    <tr><td><p class="mail-section-title"><%= t("newsletter.curated_offers") %></p></td></tr>
     <% edition.deals.each do |deal| %>
       <%= render "shared/newsletter/deal", deal: deal %>
     <% end %>

@@ -19,6 +19,7 @@ nb:
     guest_hint: "Du poster som anon · %{limit} innlegg per nettleser"
     guest_limit_why: "Grensen bremser spam uten å kreve konto."
     advanced_post: "Utvidet innlegg med bilde"
+    your_feed: "Din strøm"
   nav:
     home: "Hjem"
     explore: "Utforsk"
@@ -394,6 +395,8 @@ nb:
     mark_read: "Merk som lest"
     confirm_delete: "Slette?"
     copyable_text: "Tekst som kopieres"
+    select_all: "Velg alle"
+    select_all_reports: "Velg alle rapporter"
   pages:
     account: "Konto"
     two_factor: "Tofaktorautentisering"
@@ -485,6 +488,9 @@ nb:
     someone: "Noen"
     its_a_match: "Det er en match!"
     open_messages: "Åpne meldinger"
+    current_photos: "Bilder du har nå"
+    more_details: "Flere detaljer"
+    protected_with: "Beskyttet med"
   playlist:
     sets: "Sett"
     new_set: "Nytt sett"
@@ -535,6 +541,11 @@ nb:
     bars: "Takter"
     sketch_state: "Skissetilstand (JSON)"
     paste_state: "Lim inn JSON-tilstand fra lab"
+    timestamped_comments: "Kommentarer med tidspunkt"
+    import_links: "Importer lenker"
+    render_now: "Render nå"
+    publish_as_track: "Publiser som spor i spillelisten"
+    set_kicker: "Spilleliste"
   marketplace:
     new_listing: "Ny annonse"
     edit_listing: "Rediger annonse"
@@ -578,6 +589,10 @@ nb:
     top_offers_heading: "Plukket ut for byen"
     make_offer: "Gi et bud"
     add_photos: "Legg til bilder"
+    top_offers_kicker: "Beste tilbud"
+    seller_dashboard: "Selgeroversikt"
+    alerts: "Varsler fra markedsplassen"
+    chat_with: "Chat med %{name}"
   takeaway:
     unsave: "Fjern lagring"
     save_restaurant: "Lagre"
@@ -611,6 +626,11 @@ nb:
     add_menu_item: "Legg til menyelement"
     reviews_heading: "Omtaler fra naboer"
     leave_review: "Legg igjen en omtale"
+    status_timeline: "Statusforløp"
+    order_cancelled: "Bestillingen er kansellert"
+    order_from: "Bestill fra %{restaurant}"
+    sold_out: "Utsolgt"
+    operations: "Takeaway-drift"
   maps:
     map: "Kart"
     open_in_map: "Åpne i kart"
@@ -624,6 +644,7 @@ nb:
     create: "Opprett"
     save: "Lagre"
     confirm_delete: "Slette fellesskapet?"
+    new_community: "Nytt fellesskap"
   tv:
     create_channel: "Opprett kanal"
     upload: "Last opp"
@@ -637,12 +658,20 @@ nb:
     live_now: "Direkte nå"
     live_streams_label: "Direktesendinger nå"
     channel_subtitle: "Brgen TV-kanal"
+    edit_channel: "Rediger kanal"
+    new_channel: "Ny kanal"
+    upload_video: "Last opp video"
+    shows_on: "Serier på %{channel}"
+    uploading_to_html: "Laster opp til %{channel}"
   newsletter:
     email_placeholder: "din@epost.com"
     subscribe: "Abonner"
     title: "Byoppdateringer"
     body: "Nyheter og tilbud fra byen din, én gang i uken."
     marketing_consent: "Jeg godtar å motta tilbud og partnerforslag (valgfritt, avmeld når som helst)"
+    view_offer: "Se tilbudet"
+    curated_offers: "Utvalgte tilbud"
+    today_in: "I dag i %{city}"
   pwa:
     home: "Hjem"
     new: "Ny"
@@ -717,6 +746,8 @@ nb:
     action: "Installer"
   mailer:
     confirm_subscription: "Bekreft abonnementet"
+    permission_marketing: "Samtykkebasert markedsføring"
+    confirm_button: "Bekreft abonnementet"
   pagination:
     label: "Paginering"
     previous: "Forrige"
@@ -726,3 +757,7 @@ nb:
     add_photo: "Legg til bilde"
     record_video: "Ta opp video"
     record_audio: "Ta opp lyd"
+  activity:
+    local_graph: "Lokal graf"
+  a11y:
+    skip_to_content: "Hopp til innholdet"
