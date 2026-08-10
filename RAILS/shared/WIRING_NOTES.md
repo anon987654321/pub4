@@ -249,3 +249,54 @@ Deliberately left duplicated:
   Stimulus baseline is registered for *all* apps in `frontend/stimulus_boot.js`.
   Promoting product-specific branding there would ship a jox logo controller to
   brgen, which does not have that logo. Two copies beats one wrong dependency.
+
+## Vertical ownership (2026-08-10)
+
+brgen hosts five mountable engines and two plain namespaces. Which is which
+matters more than it looks: **tooling that globs `<app>/app/**` sees the
+namespaces and misses the engines**, and this repo has paid for that four times
+— 57 engine views dropped out of four scanners at once when the verticals moved,
+and the falling finding count read as an improvement rather than as blindness.
+The engines live at `brgen/engines/<name>`, not `brgen/app/engines/<name>`.
+
+| Vertical | Kind | Path | Models | Controllers | Views |
+|---|---|---|---|---|---|
+| marketplace | engine | `brgen/engines/marketplace` | 8 | 12 | 28 |
+| playlist | engine | `brgen/engines/playlist` | 13 | 12 | 27 |
+| tv | engine | `brgen/engines/tv` | 11 | 10 | 23 |
+| takeaway | engine | `brgen/engines/takeaway` | 7 | 7 | 13 |
+| dating | engine | `brgen/engines/dating` | 4 | 6 | 10 |
+| maps | namespace | `brgen/app/controllers/maps/` | — | 3 | — |
+| messenger | namespace | `brgen/app/controllers/{conversations,messages}_controller.rb` | — | 2 | — |
+
+Subdomain constraints in `brgen/config/routes.rb` map hosts onto these through
+`Brgen::DomainRegistry`. The MASTER relay is not a vertical.
+
+### Shared concerns each engine actually includes
+
+Measured by scanning for `Shared.concern(:X)` and `include Shared::X` in each
+engine's models — not by looking for the constant name, which over-reports on
+comments and on `Tv` in particular.
+
+| Engine | Concerns |
+|---|---|
+| marketplace | GeoLocatable, MediaProcessable, Notifiable, Reactable, Sluggable, StrictSafeAssociations |
+| takeaway | GeoLocatable, MediaProcessable, Notifiable, Reactable, Sluggable, StrictSafeAssociations, Votable |
+| dating | GeoLocatable, MediaProcessable, Notifiable, Reactable, StrictSafeAssociations |
+| playlist | GeoLocatable, MediaProcessable, Notifiable, Reactable, Sluggable |
+| tv | MediaProcessable, Notifiable, Reactable, Sluggable |
+
+Four concerns are load-bearing everywhere: `MediaProcessable`, `Notifiable`,
+`Reactable`, `Sluggable` (four of five). A change to any of those lands in every
+vertical of brgen plus amber and bsdports at once. `Votable` is takeaway-only
+inside the engines, which is worth knowing before assuming it is safe to change.
+
+### Rules
+
+- A vertical's models must not reference another vertical's models. Cross-
+  vertical reads go through a shared concern.
+- A vertical's views may use any shared Stimulus controller; the baseline is
+  registered for every app in `frontend/stimulus_boot.js`.
+- Anything that enumerates brgen's code must glob `brgen/engines/*/app/**`
+  alongside `brgen/app/**`, or it is measuring roughly half the app and will
+  report the difference as health.
