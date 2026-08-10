@@ -70,6 +70,18 @@ writes have produced silently corrupt files. Commit path-scoped
 (`git commit -- <paths>`, no prior `git add`) at minimum; take a worktree
 (`sh OPENBSD/dev/agent_worktree.sh <name>`) if more than one agent is active.
 
+Path scoping bounds the commit, not the push. `git push` sends every commit
+beneath yours, so pushing one path-scoped commit publishes whatever anyone else
+committed and had not sent yet — on 2026-08-10 one push carried four commits
+another session had told its user were still local. Run `git log --oneline
+origin/main..HEAD` before pushing and say in your report what went with you.
+There is no per-commit push; the only real fix is a worktree.
+
+Paths do not identify sessions either. Everything commits as the same author, and
+inferring "this is my tree, so this is my commit" was wrong twice on 2026-08-10 —
+three sessions were in `RAILS/` at once. Read the commit body before claiming or
+disclaiming one.
+
 **Ruby and zsh, not GNU text tools.** `sed`, `awk`, `find`, `head`, `tail`, `wc`,
 `perl` and `python` are banned in agent shell calls and committed scripts — BSD
 variants break GNU idioms and this repo deploys to OpenBSD. Use `ruby -e`, zsh
