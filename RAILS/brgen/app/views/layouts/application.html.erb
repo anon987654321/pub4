@@ -141,9 +141,6 @@
     <div class="layout">
       <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
       <aside class="sidebar" aria-label="<%= t("nav.sidebar") %>" data-edge-swiper-target="root">
-        <%= link_to main_app.root_path, class: "brand brand-wordmark", aria: { label: "Brgen" } do %>
-          <span class="brand-text">brgen</span>
-        <% end %>
         <nav role="navigation" data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to main_app.root_path, class: nav_cls.(main_app.root_path) do %>

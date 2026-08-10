@@ -515,7 +515,6 @@ thead th {
 @media (forced-colors: active) {
   .btn,
   .compose-btn,
-  .compose-fab,
   button {
     forced-color-adjust: auto;
     border: 1px solid ButtonText;
@@ -536,7 +535,6 @@ thead th {
   .nav,
   .btn,
   .compose-btn,
-  .compose-fab,
   nav {
     display: none !important;
   }

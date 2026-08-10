@@ -24,7 +24,7 @@ $vertical-accents: (
 /* Ink for anything painted ON these accents. Every one of the seven was tuned
    to be legible as ink on a light surface, which makes them all too light to
    carry light ink: measured against --bg (#f7f6fa) they run 1.77–3.46:1, and
-   .compose-btn, .compose-fab and brgen's own .btn all paint color: var(--bg) on
+   .compose-btn and brgen's own .btn all paint color: var(--bg) on
    background: var(--accent). Against #1a1824 the same seven run 4.70–9.16:1, so
    one dark ink clears AA for all of them. Verified per accent, not assumed. */
 $vertical-accent-ink: #1a1824;
@@ -57,7 +57,6 @@ body[class*="vertical-"] main {
     .tab-bar,
     .tab-bar-peel,
     .tab-bar-coach,
-    .compose-fab,
     .theme-toggle,
     .city-carousel,
     .widget-search,

@@ -322,30 +322,6 @@ main[role="main"] {
   display: none;
   flex-shrink: 0;
 }
-/* Compose FAB is a circular sphere — never shown on brgen (top compose box). */
-.compose-fab {
-  display: none !important;
-  position: fixed;
-  inset-inline-end: calc(16px + var(--safe-right, 0px));
-  bottom: calc(70px + var(--safe-bottom, 0px));
-  width: 54px;
-  height: 54px;
-  border-radius: 0;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent);
-  color: var(--accent-ink);
-  z-index: var(--z-nav, 80);
-  text-decoration: none;
-}
-.compose-fab:hover {
-  color: var(--accent-ink);
-  text-decoration: none;
-}
-.compose-fab svg {
-  width: 22px;
-  height: 22px;
-}
 /* Height published as a variable so anything else pinned to the bottom edge can
    clear it instead of guessing. The nearby chat tab was flush to the corner and
    landed on top of this bar's last item — the hamburger — on every surface that

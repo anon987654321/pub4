@@ -207,16 +207,6 @@ a.brgen-logo-mark:focus-visible,
   outline-offset: 2px;
 }
 
-/* One brand surface only — fixed mark is canonical. */
-.sidebar > .brand.brand-wordmark {
-  display: none !important;
-}
-
-/* Compose is the top expand box — never a bottom-right FAB on brgen. */
-.compose-fab {
-  display: none !important;
-}
-
 /* Verticals: leave room under fixed brand so product chrome is not covered. */
 body[class*="vertical-"] main#main-content,
 body[class*="vertical-"] main[role="main"] {
