@@ -61,6 +61,19 @@ Pub4::CiGuard.run! do
     # overrides (rails/test_unit/runner.rb); both must be set together, since
     # widening the glob without widening the exclude would sweep in an engine's
     # test/system or test/dummy.
+    #
+    # Setting them here fixed the gate and left `bin/rails test` narrow, so the
+    # two commands disagreed about what the suite is and the local one was the
+    # weaker. That bit a second time on 2026-08-10: a validation-i18n change
+    # broke two takeaway engine tests, three sessions reported brgen green from
+    # the narrow command — 349 runs against this step's 381 — and the VPS gate
+    # was the only thing that caught it, at the cost of a blocked deploy.
+    #
+    # brgen sets the same two values in config/application.rb now (9506d1db6),
+    # so the local command matches this one, and RAILS/test/test_scope_parity_test.rb
+    # fails if they drift apart. Change the globs here and that test will tell
+    # you which app to update. This comment is a pointer, not a warning to keep
+    # in mind — the keeping-in-mind is what failed twice.
     if Dir.glob("engines/*/test/**/*_test.rb").any?
       test_glob = "{test,engines/*/test}/**/*_test.rb"
       test_exclude = "{test,engines/*/test}/{system,dummy,fixtures}/**/*_test.rb"
