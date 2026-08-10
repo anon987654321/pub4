@@ -218,8 +218,17 @@ module SchemaHelper
     }
   end
 
+  # Absolute, not the path url_for returns by default in a view. A relative
+  # "url" in JSON-LD is resolved against the page it appears on, which makes
+  # the same resource carry a different identity on every page that lists it —
+  # the one field consumers use to deduplicate.
+  # polymorphic_url, not url_for: url_for takes a single argument, so it cannot
+  # be asked for an absolute URL here and returns a path. A relative "url" in
+  # JSON-LD is resolved against the page it appears on, which makes the same
+  # resource carry a different identity on every page that lists it — the one
+  # field consumers use to deduplicate.
   def schema_url_for(resource)
-    url_for(resource)
+    polymorphic_url(resource)
   rescue StandardError
     nil
   end

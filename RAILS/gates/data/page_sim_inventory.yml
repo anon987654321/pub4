@@ -1,7 +1,7 @@
 ---
 generated_note: Snapshot of Deploy::PageInventory.all — regenerate via page_simulation
   gate
-count: 169
+count: 170
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -1121,6 +1121,14 @@ pages:
   host:
   path: "/wardrobe_items/new"
   action: new
+  persona: auth
+  needs_id: false
+- id: amber/wardrobe_items/organize
+  app: amber
+  view: RAILS/amber/app/views/wardrobe_items/organize.html.erb
+  host:
+  path: "/wardrobe_items/organize"
+  action: organize
   persona: auth
   needs_id: false
 - id: amber/wardrobe_items/show

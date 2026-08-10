@@ -64,8 +64,14 @@ module Pub4
       path.sub("#{rails_root}/", "")
     end
 
+    # brgen's verticals are mountable engines, so their stylesheets live at
+    # brgen/engines/<name>/app/assets/stylesheets — outside the first glob.
+    # A stale --text-secondary fallback sat in the playlist engine unseen
+    # because of it; the same blind spot cost four other scanners 57 views
+    # when the verticals moved.
     def scss_files
-      Dir.glob(File.join(rails_root, "*/app/assets/stylesheets/**/*.scss"))
+      Dir.glob(File.join(rails_root, "*/app/assets/stylesheets/**/*.scss")) +
+        Dir.glob(File.join(rails_root, "*/engines/*/app/assets/stylesheets/**/*.scss"))
     end
 
     def collect_known_values
