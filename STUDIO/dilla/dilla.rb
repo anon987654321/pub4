@@ -6113,10 +6113,47 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
               else
                 "afade=t=in:st=0:d=#{bar_sec.round(2)}:curve=qsin,"
               end
-  "[0:a]aformat=channel_layouts=stereo,#{bus_analog_filter(:drums)}volume=#{drum_vol}," \
-    "#{drum_fade}equalizer=f=480:t=h:w=420:g=-1.5,#{flylo_eq}#{crush}" \
+  head = "[0:a]aformat=channel_layouts=stereo,#{bus_analog_filter(:drums)}volume=#{drum_vol}," \
+         "#{drum_fade}equalizer=f=480:t=h:w=420:g=-1.5,#{flylo_eq}"
+  tail = "equalizer=f=55:t=o:w=0.7:g=#{kick_boost},highpass=f=25#{haas}"
+  return smooth_drum_bus_filter(head, tail) if smooth_drums?
+
+  "#{head}#{crush}" \
     "acompressor=threshold=-14dB:ratio=2.2:attack=3:release=60," \
-    "equalizer=f=55:t=o:w=0.7:g=#{kick_boost},highpass=f=25#{haas}[drums]"
+    "#{tail}[drums]"
+end
+
+def smooth_drums?
+  ENV.fetch("SMOOTH_DRUMS", "0") != "0"
+end
+
+# Weight without grit.
+#
+# The crusher above is doing two jobs at once: it adds harmonic density, which
+# is what makes the kit feel dense and present, and it adds quantisation noise,
+# which is the audible grit. Asking for EQ'd drums with no crushing means
+# keeping the first job and dropping the second, so removing the crusher alone
+# would leave the kit thinner than before rather than smoother.
+#
+# Parallel compression is the documented way to get the density back: a hard-
+# compressed copy blended under the untouched one raises the body and the tail
+# while the dry path keeps its transients. Standard practice on this genre's
+# drum bus, and it is why the split exists here rather than a single heavier
+# compressor, which would flatten the attack the crusher was never touching.
+#
+# The tonal moves are the "EQ'd" half: 300 clears the boxiness the crusher used
+# to mask, 3k is held down because parallel compression pushes presence forward,
+# and the shelf above 9k opens the top the removed bit-reduction was dulling.
+def smooth_drum_bus_filter(head, tail)
+  "#{head}asplit=2[d_dry][d_par];" \
+  "[d_par]acompressor=threshold=-30dB:ratio=8:attack=1:release=120," \
+  "equalizer=f=180:t=o:w=1.1:g=2.0,lowpass=f=7000[d_pc];" \
+  "[d_dry][d_pc]amix=inputs=2:weights=1 0.42:duration=first:normalize=0," \
+  "equalizer=f=300:t=o:w=1.2:g=-2.2," \
+  "equalizer=f=3000:t=o:w=1.4:g=-1.6," \
+  "equalizer=f=9000:t=h:w=6000:g=1.4," \
+  "acompressor=threshold=-14dB:ratio=2.2:attack=6:release=90," \
+  "#{tail}[drums]"
 end
 
 def build_up_filter_enhanced(input_tag, duration, out_tag: "built")
