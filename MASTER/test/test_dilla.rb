@@ -1135,6 +1135,53 @@ class TestDilla < Minitest::Test
     assert_operator result.fetch("shortest"), :>=, 2, "a progression needs at least two chords to move"
   end
 
+  # A patch that is defined and never listed in a pool cannot be selected.
+  #
+  # SYNTH_PATCH_CATALOG is 212 entries and nothing enforces that any of them is
+  # reachable, so an addition is one edit away from being decoration. That is
+  # not hypothetical: role :bass holds exactly one patch, minimoog_bass, whose
+  # id appears nowhere else in the file -- no pool, no preset, no selector. Bass
+  # is synthesised through render_harmonic_wav instead, so the whole role is
+  # dead weight and has been for as long as it has existed.
+  #
+  # This pins the gear patches added on 2026-08-09 for J Dilla and Flying Lotus
+  # (Voyager, MicroKORG, Access Virus, Motif-Rack) rather than the whole
+  # catalogue, because the catalogue is not clean and a test that fails on
+  # arrival teaches nobody anything. The :bass hole is recorded here in words so
+  # the next person meets it as a known defect rather than a discovery.
+  def test_gear_patches_are_reachable_from_a_pool
+    result = eval_in_engine(<<~RUBY)
+      # Comments stripped first. Counting raw occurrences cannot tell a pool
+      # entry from prose, and this test failed on arrival because a comment
+      # elsewhere in the file NAMED minimoog_bass while explaining that it is
+      # unreachable -- the mention made it look reached.
+      src = File.read(File.join(ROOT, "dilla.rb"))
+                 .lines.reject { |l| l =~ /\\A\\s*#/ }.join
+      gear = %i[voyager_ladder_pad voyager_mono_lead microkorg_lead
+                microkorg_vox_texture access_virus_hyper motif_rack_strings motif_rack_ep]
+      puts JSON.generate(
+        defined: gear.select { |id| !synth_patch_by_id(id).nil? },
+        # More than one occurrence means the id is named somewhere beyond its
+        # own synth_patch(...) definition -- a pool, a preset or a cycle.
+        orphans: gear.select { |id| src.scan(/\\b\#{id}\\b/).length < 2 },
+        catalog: SYNTH_PATCH_CATALOG.length,
+        bass_role: SYNTH_PATCH_CATALOG.select { |p| p[:role] == :bass }.map { |p| p[:id] },
+        bass_orphaned: SYNTH_PATCH_CATALOG.select { |p| p[:role] == :bass }
+                                          .all? { |p| src.scan(/\\b\#{p[:id]}\\b/).length < 2 }
+      )
+    RUBY
+
+    assert_equal 7, result.fetch("defined").length, "every gear patch must load"
+    assert_empty result.fetch("orphans"),
+                 "a patch named in no pool can never be selected, however good it sounds"
+    assert_operator result.fetch("catalog"), :>=, 212
+
+    # Documented, not asserted away: if someone wires the bass role up, this
+    # flips and the comment above needs deleting rather than the test relaxing.
+    assert result.fetch("bass_orphaned"),
+           "role :bass is currently unreachable; if that changed, update the note on this test"
+  end
+
   # Two chord tables, one engine.
   #
   # dilla.rb::CHORD_TEMPLATES (15 symbols) feeds chord_from_quality;

@@ -823,6 +823,54 @@ SYNTH_PATCH_CATALOG = [
               arp_styles: %i[up downup quint_spread],
               midi_arp: { style: :up, subdiv: 4, gate: 0.88, vel: 0.26 },
               fx: "lowpass=f=3000:width_type=q:width=0.75,tremolo=f=0.18:d=0.06,chorus=0.38:0.58:32|42:0.14|0.1:0.18|0.14:0.92|1.15,aecho=0.28:0.36:80|150:0.18|0.08,equalizer=f=180:t=o:w=1:g=1.6"),
+  # The instruments the two producers this engine is modelled on actually owned.
+  #
+  # Researched 2026-08-09 rather than assumed. J Dilla: a Minimoog Voyager built
+  # and signed for him by Bob Moog in 2002, an MPC3000, a MicroKORG and a
+  # Motif-Rack ES. Flying Lotus: Fender Rhodes and Wurlitzer, an Access Virus,
+  # and a Voyager of his own; the Cosmogramma synths are reported to have come
+  # from the MicroKORG.
+  #
+  # The overlap is the point. Voyager and MicroKORG are the two boxes BOTH of
+  # them worked on, and neither had a patch here -- 205 patches and not one named
+  # for the synth that made the records. Rhodes, Wurlitzer and Juno were already
+  # covered, so this fills the gap rather than restating what exists.
+  #
+  # Weights are deliberately modest against the incumbents (rhodes_mark1 3.6,
+  # prophet_5_pad 3.6, moog_model_d 3.0): these join the rotation, they do not
+  # take it over.
+  synth_patch(:voyager_ladder_pad, role: :warm, program: 90, weight: 2.2, mix: 0.8, fs_gain: 1.46,
+              color: "Voyager ladder pad",
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "lowpass=f=2600,equalizer=f=110:t=o:w=0.9:g=3.0," \
+                  "chorus=0.5:0.7:22|30:0.2|0.15:0.14|0.1:0.9|1.2"),
+  # Octave 1 and a tight gate: the Voyager's signature on these records is a
+  # monophonic line low in the register, not a chord.
+  synth_patch(:voyager_mono_lead, role: :lead, program: 87, weight: 2.0, mix: 0.9, fs_gain: 1.42,
+              octave: 1, gate: 0.62, arp_styles: %i[up updown],
+              color: "Voyager mono line",
+              fx: "lowpass=f=2400,equalizer=f=180:t=q:w=1.4:g=4.0,aphaser=speed=0.09:decay=0.5"),
+  # Thin, slightly brittle and digital next to the Moog -- that contrast is what
+  # it is for, so it is not smoothed with chorus.
+  synth_patch(:microkorg_lead, role: :lead, program: 81, weight: 1.8, mix: 0.86, fs_gain: 1.35,
+              octave: 2, gate: 0.7, arp_styles: %i[updown spiral],
+              color: "MicroKORG digital lead",
+              fx: "equalizer=f=2600:t=h:w=1500:g=2.0,lowpass=f=7000,acrusher=bits=12:samples=1.2:mix=0.08"),
+  synth_patch(:microkorg_vox_texture, role: :texture, program: 54, weight: 1.5, mix: 0.8, fs_gain: 1.3,
+              color: "MicroKORG vocoder wash",
+              fx: "chorus=0.6:0.8:35|48:0.26|0.2:0.24|0.18:1.1|1.4,lowpass=f=5200"),
+  synth_patch(:access_virus_hyper, role: :warm, program: 89, weight: 1.9, mix: 0.84, fs_gain: 1.44,
+              color: "Access Virus hypersaw pad",
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "chorus=0.7:0.9:38|52|61:0.3|0.24|0.2:0.28|0.22|0.18:1.1|1.35|1.6,lowpass=f=6200"),
+  synth_patch(:motif_rack_strings, role: :warm, program: 49, weight: 1.7, mix: 0.82, fs_gain: 1.42,
+              color: "Motif-Rack ES strings",
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "equalizer=f=320:t=o:w=1.1:g=1.4,lowpass=f=5600,aecho=0.5:0.6:120|200:0.22|0.12"),
+  synth_patch(:motif_rack_ep, role: :ep, program: 5, weight: 1.6, mix: 1.02, fs_gain: 1.5,
+              color: "Motif-Rack ES FM EP",
+              fx: "equalizer=f=2200:t=h:w=1600:g=1.8,tremolo=f=0.3:d=0.06,lowpass=f=6000"),
+
   synth_patch(:moog_sub37_pad, role: :warm, program: 38, weight: 2.4, mix: 0.78, fs_gain: 1.4,
               color: "Moog sub harmonic pad",
               fx: "lowpass=f=2200,equalizer=f=95:t=o:w=0.8:g=3.5,aphaser=speed=0.1:decay=0.55"),
@@ -1516,6 +1564,11 @@ PAD_VOICE_PRESETS = {
   # Rhodes front and center; Prophet under it, not Juno strings.
   rhodes:  { ep: :rhodes_mark1, warm: :prophet_5_pad },
   moog:    { ep: :rhodes_cafe_warm, warm: :moog_model_d },
+  # Dilla's actual Voyager under his actual Rhodes.
+  voyager: { ep: :rhodes_mark1, warm: :voyager_ladder_pad },
+  # Flying Lotus: Rhodes and Wurlitzer in front, the Virus behind.
+  virus:   { ep: :rhodes_stage73, warm: :access_virus_hyper },
+  motif:   { ep: :motif_rack_ep, warm: :motif_rack_strings },
   # Double-Prophet bed under Stage 73 — the poly pad is the character.
   prophet: { ep: :rhodes_stage73, warm: :prophet_5_pad, warm2: :prophet_6_warm },
   fm:      { ep: :rhodes_cafe_warm, warm: :fm_bowed_pad },
@@ -1803,6 +1856,11 @@ TRACK_SOUL_LEAD_PROFILES = {
 }.freeze
 
 LEAD_VOICE_PRESETS = {
+  # The two boxes Dilla and Flying Lotus both actually worked on. Named so
+  # LEAD_VOICE=voyager reaches the patch -- a patch defined and never listed in
+  # a pool is unreachable, which is exactly the state minimoog_bass is in.
+  voyager: :voyager_mono_lead,
+  microkorg: :microkorg_lead,
   donuts: :donuts_wurli_lead,
   soul_prophet: :soul_prophet_arp,
   prophet: :soul_prophet_arp,
@@ -2012,6 +2070,7 @@ LEAD_VOICE_POOLS = {
 PATCH_CYCLE_TEXTURE = %i[
   soft_synth_str shimmer_organ ethnic_flute kalimba_dust space_voice reverse_pad_ghost music_box
   harp_gliss vintage_dream_bell tinkle_bell bottle_blow agogo_perc seashore_bed breath_noise
+  microkorg_vox_texture
 ].freeze
 
 PATCH_CYCLE_SCALE_LEAD = %i[
