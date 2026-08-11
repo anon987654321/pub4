@@ -19932,6 +19932,53 @@ def no_lead?
   ENV.fetch("NO_LEAD", "0") != "0"
 end
 
+def grand_pads? = ENV.fetch("GRAND", "0") != "0"
+
+# Grandeur by orchestration rather than by EQ.
+#
+# With no lead the pads are the whole record, and a four-voice stack in one
+# octave is a small sound however it is filtered. Weight and scale in an organ
+# registration or a string section come from the same notes doubled at the
+# octave -- a 16-foot stop under the 8-foot, basses under the celli. Boosting
+# low end instead only makes the same narrow voicing heavier, which is muddier,
+# not bigger.
+#
+# The octave below carries the root and fifth only. Doubling a ninth or a
+# thirteenth down there turns an extension into a low interval that beats
+# against the root, which is why the low copy is filtered rather than complete.
+# The octave above takes the upper voices, where it reads as air.
+GRAND_LOW_GAIN = 0.55
+GRAND_HIGH_GAIN = 0.38
+
+def grandeur_pad_events(pad_events)
+  pad_events.flat_map do |event|
+    t, v, chord, sustain = event
+    next [event] unless chord.is_a?(Hash) && chord[:hz].is_a?(Array)
+
+    hz = chord[:hz].map(&:to_f).select(&:positive?).sort
+    next [event] if hz.length < 2
+
+    root = hz.first
+    # Root and fifth only: within 60 cents of a 3:2, octave-folded.
+    low = hz.select do |h|
+      ratio = h / root
+      ratio /= 2.0 while ratio > 2.0
+      (ratio - 1.0).abs < 0.03 || (ratio - 1.5).abs < 0.05
+    end
+    out = [event]
+    if low.any?
+      out << [t, v * GRAND_LOW_GAIN, chord.merge(hz: low.map { |h| h / 2.0 },
+                                                 name: "#{chord[:name]}_8vb"), sustain]
+    end
+    upper = hz.drop(1)
+    if upper.any?
+      out << [t, v * GRAND_HIGH_GAIN, chord.merge(hz: upper.map { |h| h * 2.0 },
+                                                  name: "#{chord[:name]}_8va"), sustain]
+    end
+    out
+  end
+end
+
 # One afftfilt pass per variant instead of one per note. Per-note stretching
 # measured 9.4s for 24 voices, which extrapolates to ~61s on a three-minute
 # track and scales with length; this is a fixed four passes regardless.
@@ -20789,12 +20836,20 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
       warn "singers chop pads skipped: #{e.message}"
     end
   end
+  # Octave doubling applies to the pad render only. pad_events is also what the
+  # bass, the chop grid and the melody read their chords from, and adding voices
+  # to the shared list would have the bass playing the doubling too.
+  pad_render_events = grand_pads? ? grandeur_pad_events(pad_events) : pad_events
+  if grand_pads?
+    dmesg("grand pads: #{pad_events.length} chords -> #{pad_render_events.length} voicings (8vb root+5th, 8va upper)",
+          unit: "harm0", parent: "dilla0")
+  end
   if used_singers_chops
     # Real chopped vocal bed replaces the synth pad stack entirely.
   elsif fluidsynth_pad_available?
-    render_pad_via_fluidsynth(pads_path, pad_events, duration)
+    render_pad_via_fluidsynth(pads_path, pad_render_events, duration)
   else
-    render_native_pad_wav(pads_path, pad_events, duration)
+    render_native_pad_wav(pads_path, pad_render_events, duration)
   end
   # Soft Singers Unlimited–like ooh/aah on chord tones under the pad bed —
   # redundant (and muddy) when the bed already IS chopped real vocals.
@@ -20919,7 +20974,13 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # oscillator/soundfont voice), pre-rendered per chord since the algorithm
   # itself needs a contiguous buffer, then windowed into the tones stream
   # the same way chop/melody events already are.
-  pluck_buffers = pad_events.filter_map do |(t, v, chord, _sustain)|
+  # The pluck plays the root of every chord, for 1.1s, on every take, and it was
+  # the only melodic voice in the engine with no switch at all. With the four
+  # synth lanes and the choir silenced it was what remained playing a line --
+  # which is why "not that lead" came after a lead had already been removed.
+  # PLUCK=0 turns it off; NO_LEAD takes it with everything else.
+  pluck_on = ENV.fetch("PLUCK", "1") != "0" && !no_lead?
+  pluck_buffers = (pluck_on ? pad_events : []).filter_map do |(t, v, chord, _sustain)|
     next unless chord && chord[:hz]&.any?
     [t, v, karplus_strong_pluck(chord[:hz].min, 1.1, seed: stable_hash(chord[:name].to_s) % 100_000)]
   end
