@@ -345,6 +345,21 @@ fix just didn't travel. So: grep the shape, then fix at a choke point —
 `synth_patch` for patch fx, `pick_patch_from_pool` plus `weighted_patch_pick`
 for selection — not at the call sites.
 
+*Measured again 2026-08-11, on the entry two sections up.* "`asoftclip` needs
+`oversample`" is written down, correct, and applied to **10 of 19** real filter
+invocations. Of the 9 without it, **8 are inside `render_hate_techno`** and the
+ninth is `flylo_top_dirt`. So the aliasing this engine calls "the digital
+harshness it was supposed to remove" is concentrated almost entirely in one
+renderer — the same fork whose harmony had to be closed separately, and whose
+master had to be closed separately after that, and which is the renderer people
+describe as sounding harsh and simple. Three layers of the same fork, each found
+and closed on its own.
+
+Count when grepping, too: a bare `asoftclip` scan returns 28 hits and 18
+"without oversample", because prose in the comments is describing the bug. Only
+19 are `asoftclip=type=` filter strings on non-comment lines. A finding stated
+to one significant figure of wrongness is still a wrong finding.
+
 **A feature can be fully built, correct, documented — and switched off.** Five
 analog stages defaulted to `0`: a Jiles-Atherton magnetisation model, an
 Ornstein-Uhlenbeck wow generator, a per-channel console strip, per-bus
