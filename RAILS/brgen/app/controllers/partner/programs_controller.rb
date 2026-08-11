@@ -44,7 +44,7 @@ module Partner
       @program.city ||= Current.city_record
 
       if @program.save
-        redirect_to partner_program_path(@program), notice: "Partner program created."
+        redirect_to partner_program_path(@program), notice: t("flash.partner_program_created")
       else
         render :new, status: :unprocessable_entity
       end
@@ -58,7 +58,7 @@ module Partner
       return unless require_owner_of!(@program.store)
 
       if @program.update(program_params)
-        redirect_to partner_program_path(@program), notice: "Program updated."
+        redirect_to partner_program_path(@program), notice: t("flash.program_updated")
       else
         render :edit, status: :unprocessable_entity
       end
@@ -76,7 +76,7 @@ module Partner
     def require_owner_of!(store)
       return true if store && Current.user && store.owner_id == Current.user.id
 
-      redirect_to partner_programs_path, alert: "Not allowed."
+      redirect_to partner_programs_path, alert: t("shared.flash.not_authorized")
       false
     end
 

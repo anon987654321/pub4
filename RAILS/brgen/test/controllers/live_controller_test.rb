@@ -46,6 +46,6 @@ class LiveControllerTest < ActionDispatch::IntegrationTest
     post live_path, params: { post: { content: "Should not land" } }
     assert_redirected_to live_path
     follow_redirect!
-    assert_match(/Enable location/, flash[:alert].to_s + response.body)
+    assert_includes(flash[:alert].to_s + response.body, I18n.t("flash.location_required_to_post"))
   end
 end

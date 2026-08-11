@@ -18,7 +18,7 @@ class ChannelsController < ApplicationController
                     else
                       Conversation.find_or_create_channel(params[:slug], city: Current.city_record)
                     end
-    return redirect_to(channels_path, alert: "No such channel.") unless @conversation
+    return redirect_to(channels_path, alert: t("flash.no_such_channel")) unless @conversation
 
     if Current.user.present?
       @conversation.join!(Current.user)

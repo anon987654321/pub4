@@ -16,9 +16,9 @@ class TwoFactorSetupsController < ::ApplicationController
   def create
     if verify_totp(Current.user, params[:code].to_s)
       session[:two_factor_verified_at] = Time.current.to_i
-      redirect_to account_path, notice: "Two-factor authentication enabled"
+      redirect_to account_path, notice: t("shared.flash.two_factor_enabled")
     else
-      redirect_to two_factor_setup_path, alert: "Invalid code"
+      redirect_to two_factor_setup_path, alert: t("shared.flash.invalid_code")
     end
   end
 
@@ -26,18 +26,18 @@ class TwoFactorSetupsController < ::ApplicationController
     if verify_totp(Current.user, params[:code].to_s)
       Current.user.disable_otp!
       session.delete(:two_factor_verified_at)
-      redirect_to account_path, notice: "Two-factor authentication disabled"
+      redirect_to account_path, notice: t("shared.flash.two_factor_disabled")
     else
-      redirect_to two_factor_setup_path, alert: "Invalid code"
+      redirect_to two_factor_setup_path, alert: t("shared.flash.invalid_code")
     end
   end
 
   def verify
     if verify_totp(Current.user, params[:code].to_s)
       session[:two_factor_verified_at] = Time.current.to_i
-      redirect_to after_authentication_url, notice: "Verified"
+      redirect_to after_authentication_url, notice: t("shared.flash.verified")
     else
-      redirect_to two_factor_setup_path, alert: "Invalid code"
+      redirect_to two_factor_setup_path, alert: t("shared.flash.invalid_code")
     end
   end
 

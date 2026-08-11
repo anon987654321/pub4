@@ -11,7 +11,7 @@ class OmniauthCallbacksController < ::ApplicationController
   def create
     auth = request.env["omniauth.auth"]
     unless auth
-      redirect_to new_session_path, alert: "OAuth failed"
+      redirect_to new_session_path, alert: t("shared.flash.oauth_failed")
       return
     end
 
@@ -23,7 +23,7 @@ class OmniauthCallbacksController < ::ApplicationController
     # (Shared::Authentication); it already sets a permanent signed cookie.
     start_new_session_for user
 
-    redirect_to after_authentication_url, notice: "Signed in with #{auth.provider}"
+    redirect_to after_authentication_url, notice: t("shared.flash.signed_in_with", provider: auth.provider)
   end
 
   private

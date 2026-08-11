@@ -8,7 +8,7 @@ class CreatorProfilesController < ApplicationController
   def show
     policy = WardrobeVisibilityPolicy.new(viewer: Current.user, owner: @profile.user)
     unless @profile.public? || (authenticated? && Current.user == @profile.user)
-      return redirect_to root_path, alert: "Creator profile is private"
+      return redirect_to root_path, alert: t("flash.creator_profile_private")
     end
 
     @showcase_items = @profile.creator_wardrobe_items.includes(item: { photos_attachments: :blob }).order(:position)
@@ -27,7 +27,7 @@ class CreatorProfilesController < ApplicationController
     user = User.includes(:creator_profile).find(Current.user.id)
     @profile = user.build_creator_profile(creator_profile_params)
     if @profile.save
-      redirect_to creator_profile_path(@profile.handle), notice: "Creator profile published"
+      redirect_to creator_profile_path(@profile.handle), notice: t("flash.creator_profile_published")
     else
       render :new, status: :unprocessable_entity
     end
@@ -38,7 +38,7 @@ class CreatorProfilesController < ApplicationController
 
   def update
     if @profile.update(creator_profile_params)
-      redirect_to creator_profile_path(@profile.handle), notice: "Creator profile updated"
+      redirect_to creator_profile_path(@profile.handle), notice: t("flash.creator_profile_updated")
     else
       render :edit, status: :unprocessable_entity
     end

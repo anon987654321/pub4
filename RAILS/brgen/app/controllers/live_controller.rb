@@ -4,7 +4,7 @@
 # Uses the same soft-guest identity as the rest of brgen — no signup to post.
 class LiveController < ApplicationController
   rate_limit to: 20, within: 3.minutes, only: :create,
-    with: -> { redirect_to live_path, alert: "Slow down — too many Live posts. Try again shortly." }
+    with: -> { redirect_to live_path, alert: t("flash.live_rate_limited") }
 
   before_action :require_user_session, only: :create
 
@@ -31,13 +31,13 @@ class LiveController < ApplicationController
   def create
     lat, lng = visitor_coords
     unless lat && lng
-      redirect_to live_path, alert: "Enable location to post on Live."
+      redirect_to live_path, alert: t("flash.location_required_to_post")
       return
     end
 
     anon = Shared::AnonymousPost.new(request: request, user: Current.user)
     unless anon.allowed?
-      redirect_to new_session_path, alert: "Sign up to post more (#{Shared::AnonymousPost::LIMIT} anonymous posts per browser)."
+      redirect_to new_session_path, alert: t("flash.anonymous_post_limit", limit: Shared::AnonymousPost::LIMIT)
       return
     end
 
@@ -48,13 +48,13 @@ class LiveController < ApplicationController
     @post.title = @post.title.truncate(300)
 
     unless PostModeration.new(@post).approve?
-      redirect_to live_path, alert: "Post blocked by moderation."
+      redirect_to live_path, alert: t("flash.post_blocked_by_moderation")
       return
     end
 
     if @post.save
       anon.record_post!
-      redirect_to live_path(sort: "fresh"), notice: "Posted to Live."
+      redirect_to live_path(sort: "fresh"), notice: t("flash.posted_to_live")
     else
       redirect_to live_path, alert: @post.errors.full_messages.to_sentence.presence || "Could not post."
     end

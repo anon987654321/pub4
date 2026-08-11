@@ -112,3 +112,34 @@ en:
     share_short: "Share"
   a11y:
     skip_to_content: "Skip to main content"
+  # Engine-owned keys. Namespaced under shared: so an app can keep its own
+  # flash: block without colliding, and because the call sites say
+  # t("shared.flash.…") — appended at top level they resolved to nothing at all.
+  shared:
+    # Mirrors social.nb.yml's flash: block. Both files carry the same key set, and
+    # RAILS/test/app_flash_i18n_test.rb fails if one gains a key the other lacks.
+    flash:
+      account_deletion_scheduled: "Account scheduled for deletion in 30 days. Export emailed if configured."
+      account_deletion_cancelled: "Account deletion cancelled."
+      account_scheduled_for_deletion: "This account is scheduled for deletion."
+      sign_in_required: "Sign in to continue."
+      rate_limited: "Try again later."
+      credentials_invalid: "Try another email address or password."
+      password_reset_sent: "Password reset instructions sent (if a user with that email address exists)."
+      password_reset_done: "Password has been reset."
+      passwords_did_not_match: "Passwords did not match."
+      password_reset_link_invalid: "Password reset link is invalid or has expired."
+      not_authorized: "You do not have access to this."
+      two_factor_required: "Two-factor verification required."
+      two_factor_enabled: "Two-factor authentication enabled."
+      two_factor_disabled: "Two-factor authentication disabled."
+      invalid_code: "Invalid code."
+      verified: "Verified."
+      oauth_failed: "OAuth sign-in failed."
+      signed_in_with: "Signed in with %{provider}."
+      signed_in_via_master: "Signed in via MASTER."
+      sso_link_invalid: "SSO link expired or invalid."
+      sso_session_failed: "Could not create a session for %{email}."
+      reaction_added: "Reaction added."
+      reaction_removed: "Reaction removed."
+      sent_for_review: "Sent for review."

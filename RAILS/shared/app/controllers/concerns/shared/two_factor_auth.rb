@@ -24,7 +24,7 @@ module Shared
       return unless user&.two_factor_required?
       return if session[:two_factor_verified_at].to_i > 1.hour.ago.to_i
 
-      redirect_to two_factor_setup_path, alert: "Two-factor verification required"
+      redirect_to two_factor_setup_path, alert: t("shared.flash.two_factor_required")
     end
   end
 end

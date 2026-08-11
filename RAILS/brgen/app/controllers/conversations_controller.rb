@@ -36,9 +36,9 @@ class ConversationsController < ApplicationController
     @conversation = Conversation.for_user(Current.user).find(params[:id])
     duration = Conversation::DISAPPEARING_OPTIONS[params[:disappearing]]
     if @conversation.update(disappearing_duration: duration)
-      redirect_to @conversation, notice: "Disappearing messages updated"
+      redirect_to @conversation, notice: t("flash.disappearing_messages_updated")
     else
-      redirect_to @conversation, alert: "Could not update settings"
+      redirect_to @conversation, alert: t("flash.settings_update_failed")
     end
   end
 
@@ -47,7 +47,7 @@ class ConversationsController < ApplicationController
     @conversation = Conversation.find_or_create_direct(Current.user, other)
     redirect_to @conversation
   rescue ActiveRecord::RecordNotFound
-    redirect_to conversations_path, alert: "User not found"
+    redirect_to conversations_path, alert: t("flash.user_not_found")
   end
 
   private

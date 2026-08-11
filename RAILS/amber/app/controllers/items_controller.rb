@@ -63,7 +63,7 @@ class ItemsController < ApplicationController
     if @item.save
       WardrobeMediaJob.enqueue_for(@item.id) if @item.photos.attached?
       @item.record_activity!("AmberItemCreated", source_vertical: "amber")
-      redirect_to(@item, notice: "Item added")
+      redirect_to(@item, notice: t("flash.item_added"))
     else
       render(:new, status: :unprocessable_entity)
     end
@@ -75,7 +75,7 @@ class ItemsController < ApplicationController
     if @item.update(item_params)
       WardrobeMediaJob.enqueue_for(@item.id) if @item.photos.attached?
       @item.record_activity!("AmberItemUpdated", source_vertical: "amber")
-      redirect_to(@item, notice: "Updated")
+      redirect_to(@item, notice: t("flash.updated"))
     else
       render(:edit, status: :unprocessable_entity)
     end
@@ -84,7 +84,7 @@ class ItemsController < ApplicationController
   def destroy
     @item.record_activity!("AmberItemRemoved", source_vertical: "amber")
     @item.destroy
-    redirect_to items_path, notice: "Removed from wardrobe"
+    redirect_to items_path, notice: t("flash.item_removed")
   end
 
   def share
@@ -97,28 +97,28 @@ class ItemsController < ApplicationController
 
     if @item.save
       @item.record_activity!("AmberItemShared", source_vertical: "amber")
-      redirect_to edit_item_path(@item), notice: "Shared into your wardrobe draft"
+      redirect_to edit_item_path(@item), notice: t("flash.item_shared_into_draft")
     else
-      redirect_to new_item_path, alert: "Could not create item draft"
+      redirect_to new_item_path, alert: t("flash.item_draft_failed")
     end
   end
 
   def spark_joy
     @item.update!(spark_joy: true)
     @item.record_activity!("AmberItemSparkedJoy", source_vertical: "amber")
-    redirect_back fallback_location: @item, notice: "This item sparks joy!"
+    redirect_back fallback_location: @item, notice: t("flash.sparks_joy")
   end
 
   def clear_joy
     @item.update!(spark_joy: false)
     @item.record_activity!("AmberItemDecluttered", source_vertical: "amber")
-    redirect_back fallback_location: @item, notice: "Marked as not sparking joy — open declutter when ready."
+    redirect_back fallback_location: @item, notice: t("flash.no_spark_joy")
   end
 
   def declutter
     @item.update!(spark_joy: false)
     @item.record_activity!("AmberItemDecluttered", source_vertical: "amber")
-    redirect_to review_declutter_path(@item), notice: "Marked for declutter"
+    redirect_to review_declutter_path(@item), notice: t("flash.marked_for_declutter")
   end
 
   def archive
@@ -140,17 +140,17 @@ class ItemsController < ApplicationController
   def wear
     @item.wear!
     @item.record_activity!("AmberItemWorn", source_vertical: "amber")
-    redirect_to @item, notice: "Worn today — +1"
+    redirect_to @item, notice: t("flash.worn_today")
   end
 
   def archive_seasonal
     Current.user.items.active_wardrobe.find_each(&:archive_out_of_season!)
-    redirect_to items_path, notice: "Out-of-season items moved to archive"
+    redirect_to items_path, notice: t("flash.out_of_season_archived")
   end
 
   def resurface_seasonal
     Current.user.items.seasonal_archived.find_each(&:resurface_seasonal!)
-    redirect_to items_path, notice: "Seasonal items resurfaced if in season"
+    redirect_to items_path, notice: t("flash.seasonal_resurfaced")
   end
 
   def shopping_list
@@ -182,13 +182,13 @@ class ItemsController < ApplicationController
   end
 
   def authorize!
-    redirect_to(items_path, alert: "Unauthorized") unless @item.user_id == Current.user&.id
+    redirect_to(items_path, alert: t("shared.flash.not_authorized")) unless @item.user_id == Current.user&.id
   end
 
   def authorize_view!
     return if WardrobeVisibilityPolicy.new(viewer: Current.user, owner: @item.user).can_view_wardrobe?
 
-    redirect_to(items_path, alert: "Unauthorized")
+    redirect_to(items_path, alert: t("shared.flash.not_authorized"))
   end
 
   def apply_lifecycle_filter(scope)

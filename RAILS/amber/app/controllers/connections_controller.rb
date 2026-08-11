@@ -13,7 +13,7 @@ class ConnectionsController < ApplicationController
   def create
     addressee = User.find(params[:user_id])
     Current.user.connections_requested.find_or_create_by!(addressee: addressee)
-    redirect_to connections_path, notice: "Connection requested"
+    redirect_to connections_path, notice: t("flash.connection_requested")
   end
 
   def update

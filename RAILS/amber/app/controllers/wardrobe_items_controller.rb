@@ -85,7 +85,7 @@ class WardrobeItemsController < ApplicationController
     # and every path behind it failed, the owner's included.
     return if Current.user && Current.user.id == @wardrobe_item.user_id
 
-    redirect_to(wardrobe_items_path, alert: "Unauthorized")
+    redirect_to(wardrobe_items_path, alert: t("shared.flash.not_authorized"))
   end
 
   def wardrobe_item_params

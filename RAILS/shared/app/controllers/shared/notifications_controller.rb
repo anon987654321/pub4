@@ -42,7 +42,7 @@ module Shared
     def require_current_user
       return if respond_to?(:current_user, true) && current_user
 
-      redirect_to main_app.root_path, alert: "Sign in required"
+      redirect_to main_app.root_path, alert: t("shared.flash.sign_in_required")
     end
   end
 end

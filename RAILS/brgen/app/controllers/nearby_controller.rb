@@ -6,7 +6,7 @@ class NearbyController < ApplicationController
 
   # Anonymous stranger chat is abuse-prone — cap how fast conversations start.
   rate_limit to: 15, within: 5.minutes, only: %i[create],
-    with: -> { redirect_to nearby_path, alert: "Slow down — too many chats started. Try again shortly." }
+    with: -> { redirect_to nearby_path, alert: t("flash.chats_rate_limited") }
 
   # #widget IS a turbo-frame body. Inside the application layout it answered
   # 64,640 bytes -- including a second copy of the chat widget that requested it
@@ -27,7 +27,7 @@ class NearbyController < ApplicationController
   def room
     lat = Current.user&.latitude
     lng = Current.user&.longitude
-    return redirect_to(nearby_path, alert: "Enable location to join the nearby chat room.") unless lat && lng
+    return redirect_to(nearby_path, alert: t("flash.location_required_for_nearby")) unless lat && lng
 
     conversation = Conversation.find_or_create_geo_room(lat: lat, lng: lng)
     conversation.join!(Current.user)
@@ -70,14 +70,14 @@ class NearbyController < ApplicationController
 
   def create
     other = User.find(params[:user_id])
-    return redirect_to(nearby_path, alert: "That's you.") if other == Current.user
+    return redirect_to(nearby_path, alert: t("flash.thats_you")) if other == Current.user
 
     # Only start chats with people actually in range — don't let the endpoint
     # open a DM to an arbitrary user id (enumeration / non-consensual contact).
     lat = Current.user&.latitude
     lng = Current.user&.longitude
     in_range = lat && lng && other.distance_to(lat, lng).to_f <= MAX_RADIUS_KM
-    return redirect_to(nearby_path, alert: "That person isn't nearby anymore.") unless in_range
+    return redirect_to(nearby_path, alert: t("flash.no_longer_nearby")) unless in_range
 
     conversation = Conversation.find_or_create_direct(Current.user, other)
     redirect_to conversation

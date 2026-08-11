@@ -12,28 +12,28 @@ class EmailSubscriptionsController < ApplicationController
       sub.interests           = params[:email_subscription][:interests].presence
       if sub.save
         EmailSubscriptionConfirmationJob.perform_later(sub.id)
-        redirect_back fallback_location: root_path, notice: "Check your inbox to confirm."
+        redirect_back fallback_location: root_path, notice: t("flash.confirm_your_inbox")
       else
         redirect_back fallback_location: root_path, alert: sub.errors.full_messages.first
       end
     else
-      redirect_back fallback_location: root_path, notice: "Already subscribed."
+      redirect_back fallback_location: root_path, notice: t("flash.already_subscribed")
     end
   end
 
   def confirm
     sub = EmailSubscription.find_by!(token: params[:token])
     if sub.confirmed?
-      redirect_to root_path, notice: "Already confirmed."
+      redirect_to root_path, notice: t("flash.already_confirmed")
     else
       sub.confirm!
-      redirect_to root_path, notice: "Subscribed! You'll receive city updates."
+      redirect_to root_path, notice: t("flash.subscribed")
     end
   end
 
   def destroy
     sub = EmailSubscription.find_by!(token: params[:token])
     sub.destroy!
-    redirect_to root_path, notice: "Unsubscribed."
+    redirect_to root_path, notice: t("flash.unsubscribed")
   end
 end

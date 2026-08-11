@@ -18,9 +18,19 @@ class AmberBacklogTest < Minitest::Test
   # b369c6213 for brgen's rendered-body tests.
   def assert_localised(relative, key, english)
     assert_includes read(relative), %(t("#{key}"))
-    locale = YAML.safe_load_file(File.join(ROOT, "config", "locales", "en.yml")).fetch("en")
-    value = key.split(".").reduce(locale) { |node, segment| node.fetch(segment) }
-    assert_equal english, value, "en.yml #{key} drifted from the copy #{relative} promises"
+    assert_equal english, locale_value(:en, key), "en.yml #{key} drifted from the copy #{relative} promises"
+  end
+
+  # Read the YAML rather than asking I18n.
+  #
+  # Two assertions here used `I18n.t(key, locale: :en)` and were order-dependent
+  # because of it: they passed in a full-suite run, where some earlier test had
+  # already forced the :en translations to load, and failed on their own with
+  # "Translation missing: en.wardrobe.life_phases" for a key that is present in
+  # en.yml. A file this test already reads cannot be warmed up wrong.
+  def locale_value(locale, key)
+    root = YAML.safe_load_file(File.join(ROOT, "config", "locales", "#{locale}.yml")).fetch(locale.to_s)
+    key.split(".").reduce(root) { |node, segment| node.fetch(segment) }
   end
 
   def test_social_live_message_models_are_persisted_and_routed
@@ -42,7 +52,10 @@ class AmberBacklogTest < Minitest::Test
     assert_includes routes, "resources :messages"
     assert_includes read("app/views/connections/index.html.erb"), "Connection"
     assert_localised "app/views/live_streams/index.html.erb", "live_streams.title", "Style sessions"
-    assert_includes read("app/controllers/messages_controller.rb"), "Message sent"
+    # Was assert_includes … "Message sent", which is the same coupling the helper
+    # above exists to remove: the flash went through I18n on 2026-08-11 and the
+    # assertion failed on a controller that had got better.
+    assert_localised "app/controllers/messages_controller.rb", "flash.message_sent", "Message sent."
     # "New message" was the compose form's heading before the page was
     # localised; the form is what the assertion was really about, and it does
     # not move when the copy does.
@@ -96,8 +109,8 @@ class AmberBacklogTest < Minitest::Test
     # what kept the hardcoded copy in the view.
     assert_includes view, "wardrobe.evolution_header"
     assert_includes view, "wardrobe.life_phases"
-    assert_equal "Life phases", I18n.t("wardrobe.life_phases", locale: :en)
-    assert_equal "Livsfaser", I18n.t("wardrobe.life_phases", locale: :nb)
+    assert_equal "Life phases", locale_value(:en, "wardrobe.life_phases")
+    assert_equal "Livsfaser", locale_value(:nb, "wardrobe.life_phases")
     assert_includes read("app/views/wardrobe_items/analytics.html.erb"), "timeline_wardrobe_items_path"
   end
 
@@ -146,8 +159,8 @@ class AmberBacklogTest < Minitest::Test
     # default_locale: nb app -- and items.sparks_joy already existed, with a
     # Norwegian value, bypassed by the hardcoded string in the view.
     assert_includes read("app/views/items/show.html.erb"), "items.sparks_joy"
-    assert_equal "Sparks joy", I18n.t("items.sparks_joy", locale: :en)
-    assert_equal "Gir glede", I18n.t("items.sparks_joy", locale: :nb)
+    assert_equal "Sparks joy", locale_value(:en, "items.sparks_joy")
+    assert_equal "Gir glede", locale_value(:nb, "items.sparks_joy")
     assert_includes read("config/recurring.yml"), "DeclutterHygieneJob"
     assert_includes read("HEIR.md"), "heir"
   end

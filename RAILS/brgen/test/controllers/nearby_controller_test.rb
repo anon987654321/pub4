@@ -30,7 +30,7 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
 
     get nearby_room_path
     assert_redirected_to nearby_path
-    assert_equal "Enable location to join the nearby chat room.", flash[:alert]
+    assert_equal I18n.t("flash.location_required_for_nearby"), flash[:alert]
   end
 
   test "room creates and joins an anonymous geo-scoped group room" do

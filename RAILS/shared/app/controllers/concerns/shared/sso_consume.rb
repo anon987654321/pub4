@@ -14,7 +14,7 @@ module Shared
       app = sso_app_name
       payload = Shared::SsoToken.verify(params[:token].to_s, expected_app: app)
       unless payload
-        redirect_to(sso_failure_path, alert: "SSO link expired or invalid")
+        redirect_to(sso_failure_path, alert: t("shared.flash.sso_link_invalid"))
         return
       end
 
@@ -23,12 +23,12 @@ module Shared
         display_name: payload["display_name"]
       )
       unless user
-        redirect_to(sso_failure_path, alert: "Could not create session for #{payload['email']}")
+        redirect_to(sso_failure_path, alert: t("shared.flash.sso_session_failed", email: payload["email"]))
         return
       end
 
       start_sso_session!(user)
-      redirect_to(sso_success_path, notice: "Signed in via MASTER")
+      redirect_to(sso_success_path, notice: t("shared.flash.signed_in_via_master"))
     end
 
     private

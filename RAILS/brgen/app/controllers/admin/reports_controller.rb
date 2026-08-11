@@ -27,6 +27,6 @@ class Admin::ReportsController < ApplicationController
   def require_admin!
     return if Current.user&.email_address == ENV.fetch("BRGEN_ADMIN_EMAIL", "admin@brgen.no")
 
-    redirect_to(root_path, alert: "Unauthorized")
+    redirect_to(root_path, alert: t("shared.flash.not_authorized"))
   end
 end

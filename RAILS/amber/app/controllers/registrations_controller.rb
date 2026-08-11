@@ -9,7 +9,7 @@ class RegistrationsController < ApplicationController
     user = User.new(registration_params)
     if user.save
       start_new_session_for user
-      redirect_to root_path, notice: "Welcome to Amber!"
+      redirect_to root_path, notice: t("flash.welcome")
     else
       render :new, status: :unprocessable_entity
     end

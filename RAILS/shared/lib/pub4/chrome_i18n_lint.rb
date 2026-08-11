@@ -79,11 +79,16 @@ module Pub4
       # amber's footer, whose column labels were hardcoded English until it
       # gained a language switcher. Down only.
       "aria_label" => 127,
-      # Measured 2026-08-11, first run of CONTROLLER_FLASH: amber 48, brgen
-      # engines 48, brgen host 44, shared 28, bsdports 1. The hand count that
-      # opened this debt said 144 and was blind to shared/app/controllers, whose
-      # 28 ship to all three apps at once. Down only.
-      "controller_flash" => 169,
+      # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
+      # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
+      # and was blind to shared/app/controllers, whose sites ship to all three apps
+      # at once — which is also why those went first. Their keys are shared.flash.*
+      # in social.{nb,en}.yml, pinned by RAILS/test/app_flash_i18n_test.rb.
+      # 141 → 48: amber (48), the brgen host (44) and bsdports (1) followed, each
+      # into its own app-level flash: namespace, reusing shared.flash.* for the
+      # sentences the engine already owns (not_authorized, rate_limited). What is
+      # left is the five brgen engines. Down only.
+      "controller_flash" => 48,
     }.freeze
 
     # Kept for callers that referenced the old single number.

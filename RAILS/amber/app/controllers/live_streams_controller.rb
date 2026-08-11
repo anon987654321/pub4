@@ -16,7 +16,7 @@ class LiveStreamsController < ApplicationController
   def create
     @live_stream = Current.user.live_streams.build(live_stream_params)
     if @live_stream.save
-      redirect_to live_streams_path, notice: "Live stream scheduled"
+      redirect_to live_streams_path, notice: t("flash.live_stream_scheduled")
     else
       @live_streams = LiveStream.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
       render :index, status: :unprocessable_entity

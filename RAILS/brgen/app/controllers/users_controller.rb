@@ -3,7 +3,7 @@
 class UsersController < ApplicationController
   allow_unauthenticated_access only: %i[show new create]
   rate_limit to: 10, within: 10.minutes, only: :create,
-    with: -> { redirect_to new_user_path, alert: "Try again later." }
+    with: -> { redirect_to new_user_path, alert: t("shared.flash.rate_limited") }
 
   def show
     @user = User.includes(:dating_profile).find(params[:id])
@@ -43,7 +43,7 @@ class UsersController < ApplicationController
     # Honeypot: a hidden field no human ever fills. A bot that fills it gets a
     # success-looking response and no account — cheap defence with no CAPTCHA.
     if params[:homepage].present?
-      redirect_to after_authentication_url, notice: "Welcome to Brgen."
+      redirect_to after_authentication_url, notice: t("flash.welcome")
       return
     end
 

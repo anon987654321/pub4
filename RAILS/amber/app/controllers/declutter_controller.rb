@@ -23,7 +23,7 @@ class DeclutterController < ApplicationController
   def update_review
     review = @item.declutter_review || @item.build_declutter_review(user: Current.user)
     review.update!(review_params)
-    redirect_to review_declutter_path(@item), notice: "Declutter review saved"
+    redirect_to review_declutter_path(@item), notice: t("flash.declutter_review_saved")
   end
 
   def move
@@ -46,18 +46,18 @@ class DeclutterController < ApplicationController
       due_on: params[:due_on].presence || 7.days.from_now.to_date,
       note: params[:note].presence || "Wear once before deciding."
     )
-    redirect_to review_declutter_path(@item), notice: "Wear-it-this-week challenge created for #{challenge.due_on}"
+    redirect_to review_declutter_path(@item), notice: t("flash.challenge_created", due_on: challenge.due_on)
   end
 
   def complete_challenge
     challenge = @item.declutter_challenges.active.order(:due_on).first || @item.declutter_challenges.order(created_at: :desc).first
     challenge&.complete!
-    redirect_to @item, notice: "Challenge completed — item marked worn"
+    redirect_to @item, notice: t("flash.challenge_completed")
   end
 
   def outcome
     @item.create_declutter_outcome!(outcome_params.merge(user: Current.user))
-    redirect_to declutter_index_path, notice: "Declutter outcome recorded"
+    redirect_to declutter_index_path, notice: t("flash.declutter_outcome_recorded")
   end
 
   def last_chance
@@ -68,7 +68,7 @@ class DeclutterController < ApplicationController
     suggestions = LastChanceOutfit.new(@item).suggestions
     suggestion = suggestions[params[:index].to_i] || suggestions.first
     unless suggestion
-      return redirect_to(review_declutter_path(@item), alert: "No last-chance combination available")
+      return redirect_to(review_declutter_path(@item), alert: t("flash.no_last_chance_combination"))
     end
 
     outfit = Current.user.outfits.create!(
@@ -79,7 +79,7 @@ class DeclutterController < ApplicationController
     Item.where(id: suggestion[:item_ids], user_id: Current.user.id).each_with_index do |piece, index|
       outfit.outfit_items.create!(item: piece, position: index)
     end
-    redirect_to outfit, notice: "Last-chance outfit created — wear it before you decide."
+    redirect_to outfit, notice: t("flash.last_chance_outfit_created")
   end
 
   private

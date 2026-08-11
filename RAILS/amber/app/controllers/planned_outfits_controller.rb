@@ -12,7 +12,7 @@ class PlannedOutfitsController < ApplicationController
     @plan = Current.user.planned_outfits.build(plan_params)
     if @plan.save
       @plan.record_activity!("AmberPlannedOutfitCreated", source_vertical: "amber")
-      redirect_to(planned_outfits_path, notice: "Planned")
+      redirect_to(planned_outfits_path, notice: t("flash.outfit_planned"))
     else
       redirect_to(planned_outfits_path, alert: @plan.errors.full_messages.first)
     end

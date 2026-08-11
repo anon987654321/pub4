@@ -46,9 +46,9 @@ module Maps
         note: params[:note].to_s.strip.presence,
         checked_in_at: Time.current
       )
-      redirect_to maps_place_path(@place), notice: "Checked in at #{@place.name}"
+      redirect_to maps_place_path(@place), notice: t("flash.checked_in_at", place: @place.name)
     rescue ActiveRecord::RecordInvalid
-      redirect_to maps_place_path(@place), alert: "Could not check in"
+      redirect_to maps_place_path(@place), alert: t("flash.check_in_failed")
     end
   end
 end

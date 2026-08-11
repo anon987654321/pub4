@@ -131,7 +131,7 @@ class AiController < ApplicationController
                .update!(weight: 1.0, metadata: { body_type: answers[:body_type] }.compact)
       end
 
-      redirect_to user_path(Current.user), notice: "Style profile set to #{aesthetic}"
+      redirect_to user_path(Current.user), notice: t("flash.style_profile_set", aesthetic: aesthetic)
     end
   end
 

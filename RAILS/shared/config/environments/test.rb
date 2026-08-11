@@ -55,7 +55,13 @@ Rails.application.configure do
   config.active_support.deprecation = :stderr
 
   # Raises error for missing translations.
-  # config.i18n.raise_on_missing_translations = true
+  #
+  # On, since 2026-08-11. Off, a missing key renders a "translation missing" span and
+  # the page still 200s — which is how 30 shared-engine flash messages pointed at a
+  # key path that did not exist, and how a test comparing I18n.t(key) against
+  # flash[:alert] passed with both sides equal to the same missing-translation
+  # string. Comparing two lookups of a broken key is a tautology.
+  config.i18n.raise_on_missing_translations = true
 
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true

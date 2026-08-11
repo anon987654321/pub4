@@ -16,7 +16,7 @@ class MessagesController < ApplicationController
   def create
     @message = Current.user.sent_messages.build(message_params)
     if @message.save
-      redirect_to messages_path, notice: "Message sent"
+      redirect_to messages_path, notice: t("flash.message_sent")
     else
       @messages = Message.where(sender: Current.user).or(Message.where(recipient: Current.user)).includes(:sender, :recipient).recent
       @unread_count = Current.user.received_messages.unread.count

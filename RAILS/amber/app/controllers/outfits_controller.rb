@@ -55,7 +55,7 @@ class OutfitsController < ApplicationController
   def save_look
     ids = Array(params[:item_ids]).map(&:to_i).uniq.reject(&:zero?)
     items = Current.user.items.where(id: ids).to_a
-    return redirect_to(dressing_room_outfits_path, alert: "Pick at least one garment first") if items.empty?
+    return redirect_to(dressing_room_outfits_path, alert: t("flash.pick_a_garment_first")) if items.empty?
 
     outfit = Current.user.outfits.build(
       name: params[:name].presence || default_look_name(items),
@@ -70,7 +70,7 @@ class OutfitsController < ApplicationController
 
     if outfit.save
       Shared::DomainEvent.record!(actor: Current.user, action: "outfit.created", subject: outfit, source_vertical: "amber") if defined?(Shared::DomainEvent)
-      redirect_to outfit, notice: "Look saved"
+      redirect_to outfit, notice: t("flash.look_saved")
     else
       redirect_to dressing_room_outfits_path, alert: outfit.errors.full_messages.to_sentence
     end
@@ -83,7 +83,7 @@ class OutfitsController < ApplicationController
       season: params[:season].presence || season_from_month,
       occasion: params[:occasion]
     )
-    outfit ? redirect_to(outfit, notice: "Outfit generated") : redirect_to(outfits_path, alert: "Add wardrobe items before generating outfits")
+    outfit ? redirect_to(outfit, notice: t("flash.outfit_generated")) : redirect_to(outfits_path, alert: t("flash.add_items_before_generating"))
   end
 
   def show
@@ -99,7 +99,7 @@ class OutfitsController < ApplicationController
     @outfit = Current.user.outfits.build(outfit_params)
     if @outfit.save
       Shared::DomainEvent.record!(actor: Current.user, action: "outfit.created", subject: @outfit, source_vertical: "amber") if defined?(Shared::DomainEvent)
-      redirect_to(@outfit, notice: "Outfit created")
+      redirect_to(@outfit, notice: t("flash.outfit_created"))
     else
       render(:new, status: :unprocessable_entity)
     end
@@ -112,7 +112,7 @@ class OutfitsController < ApplicationController
   def update
     if @outfit.update(outfit_params)
       Shared::DomainEvent.record!(actor: Current.user, action: "outfit.updated", subject: @outfit, source_vertical: "amber") if defined?(Shared::DomainEvent)
-      redirect_to(@outfit, notice: "Updated")
+      redirect_to(@outfit, notice: t("flash.updated"))
     else
       render(:edit, status: :unprocessable_entity)
     end
@@ -121,7 +121,7 @@ class OutfitsController < ApplicationController
   def destroy
     @outfit.record_activity!("AmberOutfitRemoved", source_vertical: "amber")
     @outfit.destroy
-    redirect_to outfits_path, notice: "Outfit deleted"
+    redirect_to outfits_path, notice: t("flash.outfit_deleted")
   end
 
   def like
@@ -135,16 +135,16 @@ class OutfitsController < ApplicationController
     post = Current.user.posts.build(body: body, outfit_id: @outfit.id)
     if post.save
       @outfit.record_activity!("AmberOutfitShared", source_vertical: "amber")
-      redirect_to post, notice: "Outfit shared to brgen!"
+      redirect_to post, notice: t("flash.outfit_shared_to_brgen")
     else
-      redirect_to @outfit, alert: "Could not share: #{post.errors.full_messages.to_sentence}"
+      redirect_to @outfit, alert: t("flash.outfit_share_failed", errors: post.errors.full_messages.to_sentence)
     end
   end
 
   def wear
     @outfit.touch
     @outfit.record_activity!("AmberOutfitWorn", source_vertical: "amber")
-    redirect_to @outfit, notice: "Marked as worn again!"
+    redirect_to @outfit, notice: t("flash.marked_as_worn_again")
   end
 
   def reorder
@@ -166,13 +166,13 @@ class OutfitsController < ApplicationController
   end
 
   def authorize!
-    redirect_to(outfits_path, alert: "Unauthorized") unless @outfit.user_id == Current.user&.id
+    redirect_to(outfits_path, alert: t("shared.flash.not_authorized")) unless @outfit.user_id == Current.user&.id
   end
 
   def authorize_view!
     return if WardrobeVisibilityPolicy.new(viewer: Current.user, owner: @outfit.user).can_view_wardrobe?
 
-    redirect_to(outfits_path, alert: "Unauthorized")
+    redirect_to(outfits_path, alert: t("shared.flash.not_authorized"))
   end
 
   def outfit_params

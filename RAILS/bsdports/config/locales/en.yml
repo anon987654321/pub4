@@ -137,3 +137,6 @@ en:
     today_in: "Today in %{city}"
   a11y:
     skip_to_content: "Skip to main content"
+  # Mirrors nb.yml's flash: block.
+  flash:
+    cve_cross_reference_complete: "CVE cross-reference complete."

@@ -8,7 +8,7 @@ module Shared
       allow_unauthenticated_access
       before_action :set_user_by_token, only: %i[edit update]
       rate_limit to: 10, within: 3.minutes, only: :create,
-        with: -> { redirect_to new_password_path, alert: "Try again later." }
+        with: -> { redirect_to new_password_path, alert: t("shared.flash.rate_limited") }
     end
 
     def new
@@ -20,7 +20,7 @@ module Shared
       end
 
       redirect_to new_session_path,
-        notice: "Password reset instructions sent (if user with that email address exists)."
+        notice: t("shared.flash.password_reset_sent")
     end
 
     def edit
@@ -29,9 +29,9 @@ module Shared
     def update
       if @user.update(params.permit(:password, :password_confirmation))
         @user.sessions.destroy_all
-        redirect_to new_session_path, notice: "Password has been reset."
+        redirect_to new_session_path, notice: t("shared.flash.password_reset_done")
       else
-        redirect_to edit_password_path(params[:token]), alert: "Passwords did not match."
+        redirect_to edit_password_path(params[:token]), alert: t("shared.flash.passwords_did_not_match")
       end
     end
 
@@ -40,7 +40,7 @@ module Shared
     def set_user_by_token
       @user = User.find_by_password_reset_token!(params[:token])
     rescue ActiveSupport::MessageVerifier::InvalidSignature
-      redirect_to new_password_path, alert: "Password reset link is invalid or has expired."
+      redirect_to new_password_path, alert: t("shared.flash.password_reset_link_invalid")
     end
   end
 end

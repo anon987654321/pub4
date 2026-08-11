@@ -7,7 +7,7 @@ module Shared
     included do
       allow_unauthenticated_access only: %i[new create]
       rate_limit to: 10, within: 3.minutes, only: :create,
-        with: -> { redirect_to new_session_path, alert: "Try again later." }
+        with: -> { redirect_to new_session_path, alert: t("shared.flash.rate_limited") }
     end
 
     def new
@@ -18,12 +18,12 @@ module Shared
       if user && user.try(:deletion_pending?)
         # A scheduled-for-deletion account cannot sign back in and quietly keep
         # itself alive; erasure has teeth (see UserPurgeJob).
-        redirect_to new_session_path, alert: "This account is scheduled for deletion."
+        redirect_to new_session_path, alert: t("shared.flash.account_scheduled_for_deletion")
       elsif user
         start_new_session_for user
         redirect_to after_authentication_url
       else
-        redirect_to new_session_path, alert: "Try another email address or password."
+        redirect_to new_session_path, alert: t("shared.flash.credentials_invalid")
       end
     end
 

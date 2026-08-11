@@ -7,7 +7,7 @@ class AffiliateLinksController < ApplicationController
     item = Current.user.items.find(params[:item_id])
     link = item.affiliate_links.build(affiliate_params)
     if link.save
-      redirect_to item, notice: "Affiliate link saved"
+      redirect_to item, notice: t("flash.affiliate_link_saved")
     else
       redirect_to item, alert: link.errors.full_messages.to_sentence
     end
@@ -16,7 +16,7 @@ class AffiliateLinksController < ApplicationController
   def destroy
     item = Current.user.items.find(params[:item_id])
     item.affiliate_links.find(params[:id]).destroy
-    redirect_to item, notice: "Affiliate link removed"
+    redirect_to item, notice: t("flash.affiliate_link_removed")
   end
 
   private

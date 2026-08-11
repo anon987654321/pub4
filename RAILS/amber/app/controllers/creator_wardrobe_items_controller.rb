@@ -10,16 +10,16 @@ class CreatorWardrobeItemsController < ApplicationController
     showcase.caption = params[:caption].to_s.strip.presence
     showcase.position = @profile.creator_wardrobe_items.count
     if showcase.save
-      redirect_to edit_my_creator_profile_path, notice: "Item added to showcase"
+      redirect_to edit_my_creator_profile_path, notice: t("flash.showcase_item_added")
     else
-      redirect_to edit_my_creator_profile_path, alert: "Could not add item"
+      redirect_to edit_my_creator_profile_path, alert: t("flash.showcase_item_failed")
     end
   end
 
   def destroy
     showcase = @profile.creator_wardrobe_items.find(params[:id])
     showcase.destroy!
-    redirect_to edit_my_creator_profile_path, notice: "Item removed from showcase"
+    redirect_to edit_my_creator_profile_path, notice: t("flash.showcase_item_removed")
   end
 
   private

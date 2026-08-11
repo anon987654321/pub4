@@ -20,6 +20,6 @@ class DemoWardrobeController < ApplicationController
   def require_demo!
     return if Amber::DemoWardrobe.available?
 
-    redirect_to root_path, alert: "Demo wardrobe is not available yet."
+    redirect_to root_path, alert: t("flash.demo_wardrobe_unavailable")
   end
 end

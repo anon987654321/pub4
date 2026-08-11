@@ -36,7 +36,7 @@ class CommunitiesController < ApplicationController
     @community = Community.new(community_params)
     @community.user = Current.user
     if @community.save
-      redirect_to @community, notice: "Community created."
+      redirect_to @community, notice: t("flash.community_created")
     else
       render :new, status: :unprocessable_entity
     end
@@ -47,7 +47,7 @@ class CommunitiesController < ApplicationController
 
   def update
     if @community.update(community_params)
-      redirect_to @community, notice: "Community updated."
+      redirect_to @community, notice: t("flash.community_updated")
     else
       render :edit, status: :unprocessable_entity
     end
@@ -55,7 +55,7 @@ class CommunitiesController < ApplicationController
 
   def destroy
     @community.destroy
-    redirect_to communities_path, notice: "Community removed."
+    redirect_to communities_path, notice: t("flash.community_removed")
   end
 
   private
@@ -70,7 +70,7 @@ class CommunitiesController < ApplicationController
     # read before the comparison happens. See comments_controller, same bug.
     return if Current.user && Current.user.id == @community.user_id
 
-    redirect_to @community, alert: "Not allowed"
+    redirect_to @community, alert: t("shared.flash.not_authorized")
   end
 
   def community_params

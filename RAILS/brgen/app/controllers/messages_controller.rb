@@ -8,7 +8,7 @@ class MessagesController < ApplicationController
   before_action :set_conversation
 
   rate_limit to: 40, within: 3.minutes, only: :create,
-    with: -> { redirect_back fallback_location: root_path, alert: "Slow down — too many messages. Try again shortly." }
+    with: -> { redirect_back fallback_location: root_path, alert: t("flash.messages_rate_limited") }
 
   def create
     @message        = @conversation.messages.build(message_params)

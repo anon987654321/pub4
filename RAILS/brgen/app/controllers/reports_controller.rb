@@ -11,7 +11,7 @@ class ReportsController < ApplicationController
     # signature, so the nil case is handled here.
     @target = GlobalID::Locator.locate_signed(params.require(:target_gid))
     unless @target
-      redirect_back fallback_location: root_path, alert: "That content is no longer available."
+      redirect_back fallback_location: root_path, alert: t("flash.content_unavailable")
       return
     end
 
@@ -23,7 +23,7 @@ class ReportsController < ApplicationController
     )
     ModerationReportNotificationJob.perform_later(@report.id)
     respond_to do |f|
-      f.html { redirect_back fallback_location: root_path, notice: "Report submitted." }
+      f.html { redirect_back fallback_location: root_path, notice: t("flash.report_submitted") }
       f.turbo_stream
       f.json { render json: { reported: true } }
     end

@@ -27,7 +27,7 @@ class PostsController < ApplicationController
     anon = Shared::AnonymousPost.new(request: request, user: Current.user)
     unless anon.allowed?
       redirect_to new_registration_path,
-        alert: "Sign up to post more (#{Shared::AnonymousPost::LIMIT} anonymous posts per browser)."
+        alert: t("flash.anonymous_post_limit", limit: Shared::AnonymousPost::LIMIT)
       return
     end
 
@@ -63,7 +63,7 @@ class PostsController < ApplicationController
   # does not enable it.
   def set_post = @post = Post.includes(:user, :outfit, :item).find(params[:id])
   def authorize_owner!
-    redirect_to(posts_path, alert: "Unauthorized") unless @post.user == Current.user
+    redirect_to(posts_path, alert: t("shared.flash.not_authorized")) unless @post.user == Current.user
   end
 
   def post_params = params.require(:post).permit(:body, :outfit_id, :item_id, :anonymous)

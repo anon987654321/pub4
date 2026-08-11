@@ -14,7 +14,7 @@ module Shared
       )
 
       respond_to do |format|
-        format.html { redirect_back fallback_location: main_app.root_path, notice: "Sent for review" }
+        format.html { redirect_back fallback_location: main_app.root_path, notice: t("shared.flash.sent_for_review") }
         format.turbo_stream
         format.json { render json: { id: @review_case.id, state: @review_case.state }, status: :created }
       end
@@ -37,7 +37,7 @@ module Shared
     def require_current_user
       return if respond_to?(:current_user, true) && current_user
 
-      redirect_to main_app.root_path, alert: "Sign in required"
+      redirect_to main_app.root_path, alert: t("shared.flash.sign_in_required")
     end
   end
 end

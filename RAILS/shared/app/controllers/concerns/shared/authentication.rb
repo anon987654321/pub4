@@ -110,7 +110,7 @@ module Shared
     def require_real_user
       return if authenticated?
 
-      redirect_to sign_in_path, alert: "Sign in to continue"
+      redirect_to sign_in_path, alert: t("shared.flash.sign_in_required")
     end
 
     # Any usable identity including soft guests. Core product actions
@@ -118,7 +118,7 @@ module Shared
     def require_user_session
       return if Current.user.present?
 
-      redirect_to sign_in_path, alert: "Sign in to continue"
+      redirect_to sign_in_path, alert: t("shared.flash.sign_in_required")
     end
 
     def require_authentication

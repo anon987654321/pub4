@@ -9,7 +9,7 @@ class PostsController < ApplicationController
   include Shared::LiveSearchable
 
   rate_limit to: 30, within: 3.minutes, only: %i[create share],
-    with: -> { redirect_to posts_path, alert: "Try again later." }
+    with: -> { redirect_to posts_path, alert: t("shared.flash.rate_limited") }
 
 # ONE declaration. Rails deduplicates callbacks by filter name, so declaring
 # :require_real_user twice did not add a second gate -- the later `only:`
@@ -58,7 +58,7 @@ before_action :require_real_user, only: %i[edit update destroy share]
   def create
     anon = Shared::AnonymousPost.new(request: request, user: Current.user)
     unless anon.allowed?
-      redirect_to new_session_path, alert: "Sign up to post more (#{Shared::AnonymousPost::LIMIT} anonymous posts per browser)."
+      redirect_to new_session_path, alert: t("flash.anonymous_post_limit", limit: Shared::AnonymousPost::LIMIT)
       return
     end
 
@@ -71,7 +71,7 @@ before_action :require_real_user, only: %i[edit update destroy share]
     end
     @post.community = @community if @community
     unless PostModeration.new(@post).approve?
-      redirect_to new_post_path, alert: "Post blocked by moderation."
+      redirect_to new_post_path, alert: t("flash.post_blocked_by_moderation")
       return
     end
 
@@ -80,7 +80,7 @@ before_action :require_real_user, only: %i[edit update destroy share]
 
       preset = post_params[:preset].presence
       PostproJob.perform_later(@post.to_gid.to_s, preset) if preset && @post.image.attached?
-      redirect_to @post, notice: "Posted."
+      redirect_to @post, notice: t("flash.posted")
     else
       render :new, status: :unprocessable_entity
     end
@@ -114,9 +114,9 @@ before_action :require_real_user, only: %i[edit update destroy share]
     post.image.attach(shared_media.first) if shared_media.any? && post.respond_to?(:image)
 
     if post.save
-      redirect_to edit_post_path(post), notice: "Shared into a draft"
+      redirect_to edit_post_path(post), notice: t("flash.shared_into_draft")
     else
-      redirect_to new_post_path, alert: "Could not create draft"
+      redirect_to new_post_path, alert: t("flash.draft_failed")
     end
   end
 
@@ -131,7 +131,7 @@ before_action :require_real_user, only: %i[edit update destroy share]
   def authorize_owner
     return if Current.user == @post.user
 
-    redirect_to @post, alert: "Not allowed"
+    redirect_to @post, alert: t("shared.flash.not_authorized")
   end
 
   def set_community
