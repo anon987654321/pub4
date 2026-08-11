@@ -8506,6 +8506,35 @@ MICROTIMING_MS = {
 # probabilistic organic generation. Kicks/snares/ghosts/hats are authored
 # separately so each voice has its own pocket.
 DRUM_PATTERN_SETS = {
+  # ONE DROP. Roots reggae, the Hugh Mundell / Augustus Pablo end of it.
+  #
+  # The defining feature is a hole, not a hit: step 0 is empty. Kick and snare
+  # land together on beat 3 (step 8) and the bar "drops" onto it. Every other
+  # pattern in this file anchors the downbeat, so this is the one that must not
+  # -- put a kick on 0 and it stops being a one drop and becomes a slow
+  # rocksteady, which is a different genre.
+  #
+  # The rim/side-stick doubling the snare on 8 is the reggae sound rather than a
+  # backbeat crack; it is voiced through the ghost lane because that is the
+  # quiet lane this engine already has.
+  #
+  # Hats on the offbeats only. The skank -- the guitar/organ chop on the "and"
+  # of every beat -- is harmonic, not percussive, so it is not here; it belongs
+  # to the pad layer and is what a future DUB rack would carve around.
+  #
+  # Additive, like the canon pockets below: nothing changes unless GROOVE_FEEL
+  # asks for it.
+  one_drop: {
+    kicks: [
+      [8], [8], [8, 14], [8], [6, 8], [8, 15], [8], [8, 11]
+    ],
+    snares: [[8], [8], [8], [8, 14], [8], [8]],
+    ghosts: [[8], [8, 12], [8], [4, 8], [8], [8, 10]],
+    hats: [
+      [2, 6, 10, 14], [2, 6, 10, 14], [2, 6, 10, 14, 15],
+      [2, 4, 6, 10, 12, 14], [2, 6, 10, 14]
+    ],
+  },
   # The two canon pockets, played rather than described.
   #
   # RADIO_BERGEN dossiers carry these as prose -- "MPC swing 54-62%; kick late-3
