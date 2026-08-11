@@ -55,16 +55,25 @@
     transition-timing-function: var(--ease-linear);
   }
 
+  // One slide fills the row. Paired with slidesPerView: 1 in
+  // Amber::WardrobeShowcase.carousel_options -- "auto" sized each slide from
+  // the card below, and a 4.5rem card meant a dozen garments visible at once.
   .swiper-slide {
-    width: auto;
+    width: 100%;
     height: auto;
   }
 }
 
 .wardrobe-slide-card {
   display: block;
-  width: 4.5rem;
-  height: 4.5rem;
+  // Fills the single slide rather than sitting as a 4.5rem thumbnail centred in
+  // an empty row. Square is kept via aspect-ratio so a portrait and a landscape
+  // photo occupy the same footprint and the row does not jump between slides.
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  max-width: 22rem;
+  margin-inline: auto;
   border-radius: var(--radius-card);
   overflow: hidden;
   border: 1px solid var(--showcase-border);

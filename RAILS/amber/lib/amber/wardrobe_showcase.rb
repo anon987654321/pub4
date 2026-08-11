@@ -62,16 +62,29 @@ module Amber
         end
       end
 
+      # One garment at a time, per operator instruction 2026-08-11.
+      #
+      # slidesPerView: "auto" sizes each slide from its own CSS, and the slide
+      # card is 4.5rem wide, so a viewport fits a dozen at once and the row read
+      # as a filmstrip rather than a carousel. The width lives in
+      # _guest_showcase.scss and the count lives here; changing only the CSS
+      # would leave "auto" still deciding, and changing only this would leave a
+      # 4.5rem card centred in an empty row. Both move together.
+      #
+      # speed drops with the count. 9000 ms was a continuous crawl for a
+      # marquee of many small slides; the same speed on a single full-width
+      # slide is one garment sliding for nine seconds. A discrete step with a
+      # pause between reads as a carousel.
       def carousel_options(reverse:)
         {
-          slidesPerView: "auto",
-          spaceBetween: 10,
+          slidesPerView: 1,
+          spaceBetween: 0,
           loop: true,
-          speed: 9_000,
+          speed: 700,
           grabCursor: true,
           allowTouchMove: true,
           autoplay: {
-            delay: 0,
+            delay: 3_600,
             disableOnInteraction: false,
             reverseDirection: reverse,
             pauseOnMouseEnter: true
