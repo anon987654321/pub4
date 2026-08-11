@@ -10,6 +10,35 @@
 # Intent: social = soft radii; face/bsdports = CRT-flat zeros; luxury = calm product.
 # Light social = indigo on cool paper (not Twitter #1d9bf0). Vertical accents: vertical_accents: below.
 
+# The viewport scale. Every other axis in this system is single-sourced; this one
+# was not, so responsive breakpoints were written by hand and drifted: 13 distinct
+# widths across 58 media queries in the three apps plus the engine.
+#
+# NOT a CSS custom property, and cannot be one: `@media (min-width: var(--x))` is
+# invalid CSS, so a media query has to carry a literal. That is why this section is
+# a declared set rather than a generated variable — the numbers stay in the
+# stylesheets and Pub4::BreakpointLint asserts they are these numbers.
+#
+# Every edge below is `min-width`. A max-width bound is the edge MINUS 1px, never
+# the edge itself: `(max-width: 768px)` and `(min-width: 768px)` both match at
+# exactly 768px, so both blocks apply and the later one silently wins.
+#
+# Each edge is here because something already uses it, with the count as of
+# 2026-08-11. New work picks one of these; a new edge is a design decision that
+# goes in this list first.
+viewport:
+  xs: 480    # 10 uses — small phone
+  sm: 576    # 1 use (36rem, amber brand)
+  md: 640    # 5 uses (4 as 640px, 3 as 40rem) — large phone / small tablet
+  lg: 768    # 22 uses (21 as 768px, 1 as 48rem) — tablet; 767 is its max-bound
+  # 1265 is x.com's wide breakpoint and brgen's three-column desktop edge
+  # (_root, _marketplace_cards, _canvas). 1264 is its max-bound and correct.
+  wide: 1265 # 6 uses
+  xl: 1280   # 5 uses, all in shared/_minimal.scss
+  # Both 1265 and 1280 are live, 15px apart, which is itself drift — but they are
+  # in different files with different jobs and collapsing them changes what
+  # renders. Recorded rather than resolved.
+
 # Shared motion + elevation (borders, never box-shadow) — export via CSS vars in apps.
 # Layout chrome is the family contract across MASTER face + RAILS apps (dialects may
 # restyle surfaces; they must not invent a second z-scale, tap floor, or skip-link).

@@ -25,7 +25,7 @@
   font-weight: var(--weight-bold);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .dash-stats dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-sm);

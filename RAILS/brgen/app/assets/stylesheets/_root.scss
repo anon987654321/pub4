@@ -287,12 +287,15 @@ body.vertical-marketplace #navBar {
   .compose-icon { display: none; }
 }
 
-@media (min-width: 769px) and (max-width: 1264px) {
+/* 768, not 769: every other bound in the family treats 768 as the tablet edge,
+   so at exactly 768px the compose control fell through to base styling while
+   the rest of the shell was already in its tablet band. */
+@media (min-width: 768px) and (max-width: 1264px) {
   .compose-label { display: none; }
   .compose-icon { display: block; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .theme-toggle {
     inset-block-start: var(--space-2);
     inset-inline-end: var(--space-2);
