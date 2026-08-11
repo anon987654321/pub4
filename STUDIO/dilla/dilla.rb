@@ -6444,8 +6444,58 @@ end
 # during the track: one measurement, one number, one limiter to catch whatever
 # the gain pushes over the ceiling. A section that was written quiet stays quiet
 # relative to the rest, which is the whole point of writing it quiet.
+# Width at the master, because that is the only place it can be verified.
+#
+# Measured: finished tracks sit at -45 to -65 dB side-to-mid where real records
+# are -3 to -6. The harmonic bus is not the cause -- it measures -6.8 on its own,
+# with or without a stereo sample bed under it. The drum bus is mono because
+# every one-shot in the kit is a single-channel file, and it is 27 dB louder
+# than the harmonic bus, so it dominates the sum.
+#
+# Two fixes were tried at the source and neither survived into a render. Widening
+# the drum bus moved the finished file 0.3 dB (-48.3 to -48.6 with the switch on
+# and off, which is nothing). Lifting the harmonic bus 20.6 dB moved it 2.2 dB.
+# Both worked in isolation and neither worked in place, which means the loss is
+# somewhere in the summing I have not found.
+#
+# So this runs last, on the file itself, where the number can be checked against
+# the file that ships rather than against a stage in the middle. Above 300 Hz
+# only, so the kick and bass stay centred and mono_bass has nothing to undo.
+MASTER_WIDTH_HZ = 300
+
+def master_width
+  ENV.fetch("MASTER_WIDTH", "0").to_f.clamp(0.0, 1.0)
+end
+
+def widen_master!(path)
+  amt = master_width
+  return path unless amt.positive? && File.file?(path)
+
+  out = "#{path}.wide#{File.extname(path)}"
+  chain = "[0:a]asplit=2[mw_lo][mw_hi];" \
+          "[mw_lo]lowpass=f=#{MASTER_WIDTH_HZ}[mw_low];" \
+          "[mw_hi]highpass=f=#{MASTER_WIDTH_HZ}," \
+          "haas=left_delay=#{(2.0 + 5.0 * amt).round(2)}:right_delay=#{(0.5 + 1.2 * amt).round(2)}:" \
+          "left_balance=-#{(0.3 * amt).round(2)}:right_balance=#{(0.3 * amt).round(2)}:" \
+          "side_gain=#{(1.0 + 0.8 * amt).round(2)}[mw_wide];" \
+          "[mw_low][mw_wide]amix=inputs=2:weights=1 1:duration=first:normalize=0," \
+          "alimiter=limit=0.97[mwout]"
+  begin
+    sh! "ffmpeg", "-y", "-v", "error", "-i", path, "-filter_complex", chain,
+        "-map", "[mwout]", "-ar", SAMPLE_RATE.to_s, *codec_for(out), out
+    FileUtils.mv(out, path)
+    dmesg("master width: #{amt} above #{MASTER_WIDTH_HZ} Hz", unit: "mix0", parent: "dilla0")
+  rescue StandardError => e
+    warn "master width skipped: #{e.message}"
+    FileUtils.rm_f(out)
+  end
+  path
+end
+
 def normalise_master!(path, cfg)
   return path if ENV["MASTER_NORMALISE"] == "0" || !File.file?(path)
+
+  widen_master!(path)
 
   # MASTER_LUFS outranks the style table. The per-style targets are a texture
   # decision made by ear and stay that way, but they are set for the Dilla-
