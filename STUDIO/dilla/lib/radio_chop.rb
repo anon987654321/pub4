@@ -412,7 +412,19 @@ module RadioChop
     best_c, best_n = candidates.max_by(&:first)
     4.downto(2) do |k|
       c = correlation_at(env, best_n * k)
+      # The margin IS the check. It was deleted by an AstFixer autofix pass in
+      # e7e48eed1, which left the trailing backslash behind: `return {...} \`
+      # continued onto the loop's own `end`, which parses, so the file stayed
+      # Syntax OK and the commit reported "all parse; both engines boot".
+      #
+      # What it did was return on the FIRST iteration unconditionally. Every
+      # loop this function measured came back as best_n * 4 with multiple: 4 --
+      # four times too long whenever the 4x window fit, and a NoMethodError on
+      # nil.round when it did not. The four hand-cut verifications in the
+      # comment above (kembara_rindu 10.44, semua_untuk_mu 10.00, rauingar 5.22,
+      # lo_borges 8.42) had all been true and none of them were any more.
       return { seconds: (best_n * k * ENV_WINDOW).round(3), correlation: c.round(3), multiple: k } \
+        if c && c >= best_c - MULTIPLE_MARGIN
     end
     { seconds: (best_n * ENV_WINDOW).round(3), correlation: best_c.round(3), multiple: 1 }
   end
