@@ -6232,6 +6232,10 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
               end
   head = "[0:a]aformat=channel_layouts=stereo,#{bus_analog_filter(:drums)}volume=#{drum_vol}," \
          "#{drum_fade}equalizer=f=480:t=h:w=420:g=-1.5,#{flylo_eq}"
+  # chomp the comma first: head ends comma-terminated so the next filter can be
+  # appended, and pinning a label straight onto it yields ",[d_pre]" -- which
+  # ffmpeg parses as an empty filter name and rejects the whole graph.
+  head = "#{head.chomp(',')}[d_pre];#{drum_width_stage('d_pre', 'd_wide')}[d_wide]" if drum_width.positive?
   tail = "equalizer=f=55:t=o:w=0.7:g=#{kick_boost},highpass=f=25#{haas}"
   return smooth_drum_bus_filter(head, tail) if smooth_drums?
 
@@ -6268,6 +6272,47 @@ end
 # they add impact at the two frequencies that carry it rather than making the
 # whole kit louder, which the master stage would only take back out.
 HARD_DRUM_CLICK_HP = 1800
+
+# Measured on a finished take: the drum bus is 36 dB down side-to-mid, which is
+# very nearly a point source, and it is 9.5 dB louder than the harmonic bus.
+# So the loudest thing in the mix is mono, and the stereo thing is underneath
+# it -- which is why the finished master reads as mono (-46 to -65 dB side/mid)
+# while the harmonic stem on its own is a healthy -7, and real records sit at
+# -3 to -6.
+#
+# Widening above 250 Hz only. The kick and the low body stay where they are,
+# because low-frequency stereo is what mono_bass exists to undo and moving it
+# would fight the last stage of every rack.
+DRUM_WIDTH_HZ = 250
+
+def drum_width
+  ENV.fetch("DRUM_WIDTH", "0").to_f.clamp(0.0, 1.0)
+end
+
+def drum_width_stage(input, output)
+  amt = drum_width
+  return "[#{input}]anull[#{output}];" if amt <= 0.0
+
+  # haas, not stereowiden. Every sample in the kit is a mono file -- measured,
+  # all of kick/snare/hat/clap/ghost are single-channel -- so the drum bus has
+  # no left-right difference at all and stereowiden has nothing to widen. It
+  # moved the bus 0.4 dB and I mistook that for a tuning problem.
+  #
+  # haas synthesises an image instead of enlarging one: a few milliseconds of
+  # delay on one channel, which the ear reads as direction rather than as echo
+  # below the ~30 ms fusion limit. That is the only thing that makes a stereo
+  # field out of a mono source.
+  #
+  # Still above 250 Hz only. A Haas delay on the kick would smear its attack and
+  # then be folded back by mono_bass at the end of every rack anyway.
+  "[#{input}]asplit=2[dw_lo][dw_hi];" \
+  "[dw_lo]lowpass=f=#{DRUM_WIDTH_HZ}[dw_low];" \
+  "[dw_hi]highpass=f=#{DRUM_WIDTH_HZ}," \
+  "haas=left_delay=#{(2.0 + 6.0 * amt).round(2)}:right_delay=#{(0.6 + 1.4 * amt).round(2)}:" \
+  "left_balance=-#{(0.3 * amt).round(2)}:right_balance=#{(0.3 * amt).round(2)}:" \
+  "side_gain=#{(1.0 + 0.6 * amt).round(2)}[dw_wide];" \
+  "[dw_low][dw_wide]amix=inputs=2:weights=1 1:duration=first:normalize=0[#{output}];"
+end
 
 def hard_drum_stage(input, output)
   "[#{input}]asplit=2[hd_body][hd_click];" \
