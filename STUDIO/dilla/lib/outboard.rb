@@ -428,6 +428,59 @@ module Outboard
       "[dt_dry][dt_throw]amix=inputs=2:weights=1 1:normalize=0"
   end
 
+  # ------------------------------------------------------------ liquid
+  #
+  # Water, not the genre label. "Liquid" in liquid drum and bass names the
+  # harmony, but the word also describes a set of real, nameable effects, and
+  # this is those: what a sound does when it is under, on, or moving through
+  # water.
+  #
+  # Four mechanisms, because each one is a different physical thing:
+  #
+  # SUBMERSION is a lowpass. Water absorbs high frequencies far faster than air,
+  # which is why everything underwater is muffled -- and the cutoff MOVES,
+  # because your depth does.
+  #
+  # SURFACE is chorus. A rippling surface is many slightly different path
+  # lengths at once, which is exactly a set of short modulated delays.
+  #
+  # FLOW is a phaser. Notches sweeping through the spectrum are what a moving
+  # boundary between two media sounds like.
+  #
+  # WOBBLE is vibrato. Sound travels faster in water than air, so a moving
+  # medium bends pitch -- small amounts read as wet, large amounts as seasick.
+  #
+  # Kept subtle by default. Every one of these is an effect people reach for and
+  # overuse, and the difference between "underwater" and "broken tape" is
+  # entirely the depth setting.
+  def liquid_submerge(hz: 2_600, depth: 0.55, rate: 0.07)
+    # A moving cutoff, approximated with two fixed bands crossfaded by an LFO --
+    # ffmpeg has no LFO-driven lowpass, and apulsator on a filtered split is the
+    # cheapest honest way to get one.
+    "asplit=2[lq_open][lq_deep];" \
+      "[lq_deep]lowpass=f=#{hz}:width_type=q:width=0.7,volume=#{depth.round(2)}[lq_d];" \
+      "[lq_open]apulsator=hz=#{rate}:amount=#{(depth * 0.5).round(2)}:mode=sine[lq_o];" \
+      "[lq_o][lq_d]amix=inputs=2:weights=1 1:duration=first:normalize=0"
+  end
+
+  def liquid_surface(depth_ms: 3.2, rate: 0.35)
+    "chorus=0.85:0.9:22|34|48:0.4|0.34|0.28:" \
+      "#{depth_ms}|#{(depth_ms * 0.7).round(2)}|#{(depth_ms * 1.3).round(2)}:" \
+      "#{rate}|#{(rate * 1.7).round(2)}|#{(rate * 0.6).round(2)}"
+  end
+
+  def liquid_flow(speed: 0.18, decay: 0.6)
+    "aphaser=in_gain=0.55:out_gain=0.95:delay=4.2:decay=#{decay}:" \
+      "speed=#{[speed, 0.1].max}:type=t"
+  end
+
+  # vibrato's depth is a fraction, not a percentage, and 0.08 is already
+  # noticeable. Above about 0.2 it stops sounding like water and starts sounding
+  # like a tape machine with a failing capstan.
+  def liquid_wobble(rate: 0.6, depth: 0.06)
+    "vibrato=f=#{rate}:d=#{depth.clamp(0.0, 0.2)}"
+  end
+
   # ------------------------------------------------------------- mono bass
   #
   # Everything below the crossover collapsed to the centre.
@@ -599,6 +652,10 @@ module Outboard
     # pultec_air out was the first attempt and measured +1.0 dB at the top --
     # the neve drive and console sum both add harmonics up there, so declining
     # to add an air shelf does not make anything darker.
+    # LIQUID. The water chain ahead of a clean console, so the console glues
+    # something already moving rather than colouring it into stillness.
+    liquid: %i[liquid_surface liquid_submerge liquid_flow liquid_wobble neve_80 la2a pultec_air console_sum gml_matte mono_bass],
+
     dub: %i[delay_throw spring_reverb space_echo pultec_low_dub dub_phaser neve_80 la2a console_sum dub_darken mono_bass],
   }.freeze
 
@@ -628,6 +685,10 @@ module Outboard
       when :pultec_air then pultec_air
       when :pultec_low then pultec_low
       when :pultec_low_dub then pultec_low_dub
+      when :liquid_wobble then liquid_wobble
+      when :liquid_flow then liquid_flow
+      when :liquid_surface then liquid_surface
+      when :liquid_submerge then liquid_submerge
       when :delay_throw then delay_throw(bpm: bpm)
       when :dub_phaser then dub_phaser
       when :spring_reverb then spring_reverb
