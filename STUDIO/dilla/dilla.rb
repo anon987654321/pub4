@@ -2451,6 +2451,51 @@ def smooth_analog? = ENV.fetch("SMOOTH_ANALOG", "1") != "0"
 
 def metallic_patch?(patch) = patch && METALLIC_PROGRAMS.include?(patch[:program])
 
+# The GM pipe family: flute, recorder, pan flute, blown bottle, shakuhachi,
+# whistle, ocarina. Operator, 2026-08-11: no flutes, skip those parts of the
+# song -- so this rejects the whole family rather than the two patches whose
+# names happen to say flute. ethnic_flute is a pan flute at 75 and would have
+# survived an id-based list, and so would anything added later that is a flute
+# without being called one.
+PIPE_GM_PROGRAMS = (72..79).freeze
+
+def flutes_allowed? = ENV["FLUTES"] == "1"
+
+def flute_patch?(patch) = patch && PIPE_GM_PROGRAMS.include?(patch[:program])
+
+# Same rule as reject_choral above: filter, but never down to an empty pool.
+def reject_flutes(pool)
+  return pool if flutes_allowed? || pool.empty?
+
+  grounded = pool.reject { |p| flute_patch?(p) }
+  grounded.empty? ? pool : grounded
+end
+
+# The backstop, at the only point that cannot be routed around: the byte that
+# becomes a MIDI program change. Every FluidSynth voice in this engine passes
+# through one of the three 0xC0 sites, so a flute that survives every pool
+# filter still cannot reach the soundfont.
+#
+# This exists because filtering the pools was not enough twice. There are nine
+# pipe-family patches and only three say flute in their name -- jazz_ballad_lead
+# is program 73, and so are whistle_hook, piccolo_spark, shakuhachi_breath and
+# ocarina_folk in their own registers. mellotron_flute_pad is also referenced
+# directly as a texture rather than drawn from a pool, so no pool filter would
+# ever have seen it.
+#
+# 89 is Pad 2 (warm), already in WARM_PAD_GM_PROGRAMS. A pipe patch is usually
+# doing something soft and high, and a warm pad is the substitution least likely
+# to turn into a harsh stab where a breathy line used to be.
+NONFLUTE_SUBSTITUTE_PROGRAM = 89
+
+def nonflute_program(program)
+  prog = program.to_i
+  return prog if flutes_allowed? || !PIPE_GM_PROGRAMS.include?(prog)
+
+  @flute_substitutions = (@flute_substitutions || 0) + 1
+  NONFLUTE_SUBSTITUTE_PROGRAM
+end
+
 def pick_patch_from_pool(pool, seed: 0)
   ids = Array(pool).compact.uniq
   return if ids.empty?
@@ -2465,6 +2510,10 @@ def pick_patch_from_pool(pool, seed: 0)
   unless choral_pads_allowed?
     grounded = ids.reject { |i| choral_patch?(synth_patch_by_id(i) || {}) }
     ids = grounded unless grounded.empty?
+  end
+  unless flutes_allowed?
+    unpiped = ids.reject { |i| flute_patch?(synth_patch_by_id(i) || {}) }
+    ids = unpiped unless unpiped.empty?
   end
 
   rng = Random.new(patch_cycle_seed(seed))
@@ -2645,6 +2694,7 @@ def weighted_patch_pick(role, seed: nil, soulful: true)
   # Both selection paths, for the reason the comment above gives: a filter
   # applied to only one of them is a filter that does not work.
   pool = reject_choral(pool)
+  pool = reject_flutes(pool)
   return if pool.empty?
   rng = Random.new(seed || @render_seed || rand(1_000_000))
   total = pool.sum { |p| p[:weight] || 1.0 }
@@ -6250,7 +6300,19 @@ end
 def normalise_master!(path, cfg)
   return path if ENV["MASTER_NORMALISE"] == "0" || !File.file?(path)
 
-  target = (cfg[:master_lufs] || MASTER_TARGET_LUFS).to_f
+  # MASTER_LUFS outranks the style table. The per-style targets are a texture
+  # decision made by ear and stay that way, but they are set for the Dilla-
+  # leaning material this engine started as -- techno rendered through a dilla
+  # family lands near -19, which is roughly 5 dB under where the genre sits and
+  # 9 under a club master. It does not sound thin, it sounds small next to
+  # anything else, and there was no way to say so per render short of editing
+  # the table and moving every other track with it.
+  env_lufs = ENV["MASTER_LUFS"].to_s.strip
+  target = if env_lufs.empty?
+             (cfg[:master_lufs] || MASTER_TARGET_LUFS).to_f
+           else
+             env_lufs.to_f
+           end
   out, err, status = capture("ffmpeg", "-nostdin", "-hide_banner", "-i", path,
                              "-af", "loudnorm=I=#{target}:TP=#{TRUE_PEAK_CEILING_DB}:print_format=json",
                              "-f", "null", "-")
@@ -12131,7 +12193,44 @@ def continuous_speech_text(duration, seed: nil)
     sentences << s
     word_count += s.split.length
   end
-  sentences.join(" ")
+  scramble_words(sentences.join(" "), rng)
+end
+
+# Every word shuffled, so the delivery stays confident and the sense is gone.
+#
+# Shuffling inside each line kept too much of it -- short lines came back nearly
+# intact and the pickup lines were still recognisable, which reads as a glitch
+# rather than a joke. Pooling every word across the whole passage first is what
+# makes it reliably nonsense: words land next to words from lines they never
+# belonged to.
+#
+# Sentence lengths are preserved and the terminal punctuation is put back, so
+# the TTS still phrases it as speech with commas and full stops in believable
+# places. That contrast is the joke -- someone delivering total gibberish with
+# the cadence of a man who means it. Scrambling the punctuation too would just
+# sound like a broken parser.
+def scramble_words(text, rng)
+  return text unless scramble_speech?
+
+  lengths = text.split(/(?<=[.?!])\s+/).map { |s| s.split.length }
+  bare = text.split.map { |w| w.gsub(/[.,!?]+\z/, "") }.reject(&:empty?)
+  return text if bare.length < 4
+
+  pool = bare.shuffle(random: rng)
+  out = []
+  lengths.each do |n|
+    n = [n, pool.length].min
+    break if n <= 0
+    chunk = pool.shift(n)
+    chunk[-1] = "#{chunk[-1]}#{rng.rand < 0.3 ? '?' : '.'}"
+    out << chunk.join(" ")
+  end
+  out << pool.join(" ") if pool.any?
+  out.join(" ")
+end
+
+def scramble_speech?
+  ENV.fetch("SCRAMBLE_SPEECH", "1") != "0"
 end
 
 # Real structure, not a smooth gate: ~20-30s of talking, then ~20-30s of
@@ -18972,7 +19071,7 @@ def write_smf(path, note_events, program: PAD_GM_PROGRAM, bank: 0, duration: nil
   timed.sort_by! { |tick, kind, *| [tick, kind == :off ? 0 : 1, kind == :cc ? 1 : 2] }
 
   track_events = [[0, [0xB0 | channel, 0x00, bank & 0x7f].pack("C*")],
-                  [0, [0xC0 | channel, program].pack("C*")]]
+                  [0, [0xC0 | channel, nonflute_program(program)].pack("C*")]]
   last_tick = 0
   timed.each do |entry|
     tick = entry[0]
@@ -19046,7 +19145,7 @@ def write_smf_morph(path, pad_events, duration:, role:, midi_fx: nil, channel: 0
             when :bank
               [0xB0 | channel, 0x00, entry[2] & 0x7f].pack("C*")
             when :prog
-              [0xC0 | channel, entry[2]].pack("C*")
+              [0xC0 | channel, nonflute_program(entry[2])].pack("C*")
             when :cc
               entry[2].pack("C*")
             else
@@ -19082,7 +19181,7 @@ def write_smf_timed(path, timed, duration:, midi_fx: nil, channel: 0, lead_mode:
             when :bank
               [0xB0 | channel, 0x00, entry[2] & 0x7f].pack("C*")
             when :prog
-              [0xC0 | channel, entry[2]].pack("C*")
+              [0xC0 | channel, nonflute_program(entry[2])].pack("C*")
             when :cc
               entry[2].pack("C*")
             else
