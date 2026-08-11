@@ -4,16 +4,19 @@ require "yaml"
 
 module Master
   module Deploy
+    # Serves /orient deploy (Ground::BootstrapDocs#section) and owns the one read
+    # of the debt register: Pub4::StatusReport#backlog_open_count delegates here
+    # rather than parsing the same YAML a second way, which is how one of the two
+    # copies stayed broken unnoticed for as long as it did.
     module OperatorDocs
       # __dir__ is MASTER/lib/deploy, so the repo root is three levels up, not four.
       # At four this resolved to the directory *containing* the checkout, both YAML
       # paths were absent, and every method degraded to its empty default without
-      # raising: open_debt_count answered 0 against a 14-item register, and
-      # render_deploy printed its headings over four blank values. Nothing caught it
-      # because nothing calls this module (see operator_docs_module_is_unreferenced).
+      # raising: open_debt_count answered 0 against a 14-item register.
       ROOT = File.expand_path("../../..", __dir__)
       OPERATOR_PATH = File.join(ROOT, "OPENBSD", "data", "operator.yml")
-      DEBT_PATH = File.join(ROOT, "OPENBSD", "data", "debt.yml")
+      DEBT_RELATIVE = File.join("OPENBSD", "data", "debt.yml")
+      DEBT_PATH = File.join(ROOT, DEBT_RELATIVE)
 
       module_function
 
@@ -23,10 +26,13 @@ module Master
         YAML.safe_load(File.read(OPERATOR_PATH)) || {}
       end
 
-      def load_debt
-        return { "open" => [] } unless File.file?(DEBT_PATH)
+      # root: so the cross-repo diagnostic can pass its own checkout rather than
+      # inheriting this file's idea of where the repo is.
+      def load_debt(root: ROOT)
+        path = root == ROOT ? DEBT_PATH : File.join(root, DEBT_RELATIVE)
+        return { "open" => [] } unless File.file?(path)
 
-        YAML.safe_load(File.read(DEBT_PATH)) || { "open" => [] }
+        YAML.safe_load(File.read(path)) || { "open" => [] }
       end
 
       def render_deploy
@@ -48,8 +54,8 @@ module Master
         lines.join("\n")
       end
 
-      def open_debt_count
-        Array(load_debt["open"]).size
+      def open_debt_count(root: ROOT)
+        Array(load_debt(root:)["open"]).size
       end
     end
   end

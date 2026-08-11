@@ -47,6 +47,23 @@ module Pub4
       aria:\s*\{[^}]*?label:\s*"[^"<%]{2,80}"
     /x
 
+    # notice:/alert: with a literal string, in a controller.
+    #
+    # The three rules above read views, and that scope was the whole blind spot:
+    # chrome i18n was recorded as landed and is, while every successful
+    # create/update/destroy still answered with an English toast over a Norwegian
+    # page. A class nothing measures is a class nobody is holding, so this rule
+    # exists before the copy does — the strings can then come down one at a time
+    # against a number that can only fall.
+    CONTROLLER_FLASH = /
+      (?:notice|alert):\s*
+      (?:
+        "[A-Z][^"]{2,120}"
+        |
+        '[A-Z][^']{2,120}'
+      )
+    /x
+
     OPT_OUT = "chrome_i18n: ok"
 
     # Per kind, because they are not the same debt. A new hardcoded empty title is a
@@ -62,6 +79,11 @@ module Pub4
       # amber's footer, whose column labels were hardcoded English until it
       # gained a language switcher. Down only.
       "aria_label" => 127,
+      # Measured 2026-08-11, first run of CONTROLLER_FLASH: amber 48, brgen
+      # engines 48, brgen host 44, shared 28, bsdports 1. The hand count that
+      # opened this debt said 144 and was blind to shared/app/controllers, whose
+      # 28 ship to all three apps at once. Down only.
+      "controller_flash" => 169,
     }.freeze
 
     # Kept for callers that referenced the old single number.
@@ -114,27 +136,34 @@ module Pub4
         Dir.glob(File.join(rails_root, "*/engines/*/app/views/**/*.erb"))
     end
 
+    # Controllers, for CONTROLLER_FLASH. Same two-level shape as view_paths, and
+    # for the same reason: a single-level glob goes blind to the five engines.
+    def controller_paths
+      Dir.glob(File.join(rails_root, "*/app/controllers/**/*.rb")) +
+        Dir.glob(File.join(rails_root, "*/engines/*/app/controllers/**/*.rb"))
+    end
+
+    VIEW_RULES = { "empty_title" => EMPTY_TITLE, "search_placeholder" => SEARCH_PLACEHOLDER,
+                   "aria_label" => ARIA_LABEL }.freeze
+    CONTROLLER_RULES = { "controller_flash" => CONTROLLER_FLASH }.freeze
+
     def scan
-      findings = []
-      view_paths.sort.each do |path|
-        # Doc comment inside the partial itself is not a call site.
-        next if path.end_with?("shared/_empty_state.html.erb")
+      # Doc comment inside the partial itself is not a call site.
+      views = view_paths.sort.reject { |path| path.end_with?("shared/_empty_state.html.erb") }
 
-        lines = File.readlines(path, encoding: "UTF-8")
-        lines.each_with_index do |line, i|
-          next if line.include?("t(") || line.include?("I18n.t")
-          next if comment_or_opt_out?(lines, i)
+      views.flat_map { |path| findings_in(path, VIEW_RULES) } +
+        controller_paths.sort.flat_map { |path| findings_in(path, CONTROLLER_RULES) }
+    end
 
-          if line.match?(EMPTY_TITLE)
-            findings << Finding.new(rel(path), i + 1, "empty_title")
-          elsif line.match?(SEARCH_PLACEHOLDER)
-            findings << Finding.new(rel(path), i + 1, "search_placeholder")
-          elsif line.match?(ARIA_LABEL)
-            findings << Finding.new(rel(path), i + 1, "aria_label")
-          end
-        end
+    def findings_in(path, rules)
+      lines = File.readlines(path, encoding: "UTF-8")
+      lines.each_with_index.filter_map do |line, i|
+        next if line.include?("t(") || line.include?("I18n.t")
+        next if comment_or_opt_out?(lines, i)
+
+        kind, = rules.find { |_, pattern| line.match?(pattern) }
+        Finding.new(rel(path), i + 1, kind) if kind
       end
-      findings
     end
 
     def rel(path)

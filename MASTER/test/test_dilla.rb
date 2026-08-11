@@ -1075,7 +1075,12 @@ class TestDilla < Minitest::Test
                      .to_h { |m| [m, masters.call(body.call(m))] },
         # Lookbehind so the definition itself is not counted as one of its callers.
         call_sites: src.scan(/(?<!def )normalise_genre_master!\\(/).length,
-        techno_target: MASTER_LUFS_BY_STYLE[:techno],
+        # The invariant is that techno has its own entry, not what that entry
+        # says. This asserted == -17.0 until 2026-08-11, which was the value of
+        # :default — so it passed identically whether techno was explicit or
+        # falling through, i.e. it could never detect the thing its own message
+        # named. It then failed as a regression when the operator asked for -14.
+        techno_is_explicit: MASTER_LUFS_BY_STYLE.key?(:techno),
         # The normalise pass re-encodes the file it levels. Hardcoding a bitrate
         # there downgraded every 320k mp3 to 192k as a side effect of a gain.
         reencodes_with_codec_for: !!(body.call("normalise_master!") =~ /codec_for\\(path\\)/)
@@ -1088,8 +1093,9 @@ class TestDilla < Minitest::Test
     end
     assert_equal 3, result.fetch("call_sites"),
                  "one call site per self-mastering renderer; a new one that skips this is the bug"
-    assert_equal(-17.0, result.fetch("techno_target"),
-                 "techno's target is deliberately explicit rather than falling through to :default")
+    assert result.fetch("techno_is_explicit"),
+           "techno's target must be its own entry in MASTER_LUFS_BY_STYLE rather than " \
+           "falling through to :default — the level itself is the operator's to set"
     assert result.fetch("reencodes_with_codec_for"),
            "normalise_master! must re-encode at the renderer's own bitrate, not a hardcoded one"
   end

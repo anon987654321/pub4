@@ -28,7 +28,6 @@ Operator entrypoints for the constitutional runtime. Run from `MASTER/` unless n
 | `status` | Runtime status summary |
 | `sync-env` | Sync env files from templates |
 | `test-safety` | Test harness safety checks |
-| `todo-retire` | Retire completed TODO markers |
 | `tts-bootstrap` | Start TTS worker stack |
 | `tts-e2e` | TTS end-to-end poll test |
 | `tts-speak` | One-shot TTS speak |

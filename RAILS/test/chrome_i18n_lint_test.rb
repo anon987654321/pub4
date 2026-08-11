@@ -40,26 +40,27 @@ class ChromeI18nLintTest < Minitest::Test
   #
   # 0 today across all 6. This is a ratchet at zero, not a tolerance.
   def test_no_opt_out_has_outlived_what_it_excuses
-    rules = [
-      Pub4::ChromeI18nLint::EMPTY_TITLE,
-      Pub4::ChromeI18nLint::SEARCH_PLACEHOLDER,
-      Pub4::ChromeI18nLint::ARIA_LABEL,
-    ]
+    scopes = {
+      Pub4::ChromeI18nLint.view_paths => Pub4::ChromeI18nLint::VIEW_RULES.values,
+      Pub4::ChromeI18nLint.controller_paths => Pub4::ChromeI18nLint::CONTROLLER_RULES.values,
+    }
+    scopes.each_key do |paths|
+      refute_empty paths, "a glob stopped matching, which is blindness not cleanliness"
+    end
 
-    paths = Pub4::ChromeI18nLint.view_paths
-    refute_empty paths, "no views found — the glob stopped matching, which is blindness not cleanliness"
+    stale = scopes.flat_map do |paths, rules|
+      paths.flat_map do |path|
+        lines = File.readlines(path, encoding: "UTF-8")
+        lines.each_with_index.filter_map do |line, i|
+          next unless line.include?(Pub4::ChromeI18nLint::OPT_OUT)
 
-    stale = paths.flat_map do |path|
-      lines = File.readlines(path, encoding: "UTF-8")
-      lines.each_with_index.filter_map do |line, i|
-        next unless line.include?(Pub4::ChromeI18nLint::OPT_OUT)
+          # The marker guards its own line and the next two — the same window
+          # comment_or_opt_out? uses, read forwards.
+          window = lines[i..[i + 2, lines.size - 1].min].join
+          next if rules.any? { |re| window.match?(re) }
 
-        # The marker guards its own line and the next two — the same window
-        # comment_or_opt_out? uses, read forwards.
-        window = lines[i..[i + 2, lines.size - 1].min].join
-        next if rules.any? { |re| window.match?(re) }
-
-        "#{Pub4::ChromeI18nLint.rel(path)}:#{i + 1}"
+          "#{Pub4::ChromeI18nLint.rel(path)}:#{i + 1}"
+        end
       end
     end
 
@@ -106,5 +107,41 @@ class ChromeI18nLintTest < Minitest::Test
 
   def test_a_single_character_label_is_not_worth_translating
     refute_match(Pub4::ChromeI18nLint::ARIA_LABEL, %(<button aria-label="×">))
+  end
+
+  # brgen renders :nb, so an English toast over a Norwegian page is the most
+  # visible i18n gap in the family and nothing counted it until this rule.
+  def test_detects_hardcoded_controller_flashes
+    [
+      %(redirect_to item, notice: "Affiliate link saved"),
+      %(redirect_to root_path, alert: "You are not allowed to do that"),
+      %(render :new, status: :unprocessable_entity, alert: 'Could not save the item'),
+    ].each do |sample|
+      assert_match(Pub4::ChromeI18nLint::CONTROLLER_FLASH, sample, "should flag #{sample}")
+    end
+  end
+
+  def test_ignores_translated_flashes
+    [
+      %(redirect_to item, notice: t(".saved")),
+      %(redirect_to item, notice: I18n.t("items.destroyed")),
+      %(redirect_to item, notice: helpers.item_notice(@item)),
+    ].each do |sample|
+      refute_match(Pub4::ChromeI18nLint::CONTROLLER_FLASH, sample, "should not flag #{sample}")
+    end
+  end
+
+  # Every counted string lives in a file the lint can still open. A rule whose
+  # findings point at nothing is how a ratchet turns into a number.
+  def test_every_finding_resolves_to_a_real_line
+    findings = Pub4::ChromeI18nLint.scan
+    refute_empty findings
+
+    missing = findings.reject do |finding|
+      path = File.join(Pub4::ChromeI18nLint.rails_root, finding.file)
+      File.file?(path) && File.readlines(path, encoding: "UTF-8").length >= finding.line
+    end
+
+    assert_empty missing.map(&:file).uniq
   end
 end

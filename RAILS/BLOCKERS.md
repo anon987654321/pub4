@@ -1,6 +1,6 @@
 # RAILS deploy blockers
 
-The five things that stop a RAILS deploy from being a one-command operation,
+The four things that stop a RAILS deploy from being a one-command operation,
 each with what actually happens today, what would have to change, and what
 already checks it.
 
@@ -43,42 +43,7 @@ the city-domain entry in `OPENBSD/data/debt.yml`.
 
 ---
 
-## 2. Domain and port drift
-
-**Status:** partially closed 2026-08-10. Was the highest-consequence blocker in
-the list.
-
-`apps.yml` is the source of truth for each app's domain and port. Six other
-files restate them, and until today the one carrying live traffic —
-`OPENBSD/etc/relayd.conf` — was checked by nothing. Changing a port in
-`apps.yml` updated the deploy script, `OPERATOR.sh`, `deploy_inventory.json`,
-the README and the Workbox list, all five verified, while relayd kept
-forwarding to the old number: gate green, deploy successful, `rcctl` reporting
-the app running, site serving 502 from the one file no check read.
-
-Two of the copies were in the gates themselves. `domain_alignment` — the gate
-whose whole job is proving the fleet agrees — held its own literal table of the
-three domain/port pairs instead of reading `apps.yml`.
-
-**Owner:** RAILS.
-
-**Unblock criteria**
-
-- Every file stating two or more app ports is either derived from `apps.yml` or
-  listed in `PortInventoryGate::FLEET_INVENTORIES` with the check that covers
-  it. ✅
-- A new undeclared fleet inventory fails the gate. ✅
-- The remaining prose copies (`CLAUDE.md` ×2, `RUNBOOK.md`, `debt.yml`) are
-  declared as prose and accepted as drift-prone. ✅
-
-**Checked by:** `port_inventory` — `check_relayd_ports`, `check_crawl_manifest`,
-`check_smoke_probes`, `check_fleet_inventories`, plus the pre-existing
-`check_master_json`, `check_openbsd_ports`, `check_deploy_scripts`,
-`check_pwa_builder`, `check_readmes`.
-
----
-
-## 3. relayd restart after route changes
+## 2. relayd restart after route changes
 
 **Status:** open, and sharper than it reads.
 
@@ -106,7 +71,7 @@ yet re-checks liveness after the restart.
 
 ---
 
-## 4. Production seeds are opt-in — under two different names
+## 3. Production seeds are opt-in — under two different names
 
 **Status:** open. The README named one variable; the deploy path reads two
 others.
@@ -131,7 +96,7 @@ path reads, gets no error, and concludes seeds ran.
 
 ---
 
-## 5. openrsync on vm23
+## 4. openrsync on vm23
 
 **Status:** the README entry was wrong. Corrected here.
 

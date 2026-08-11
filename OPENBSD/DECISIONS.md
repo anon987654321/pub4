@@ -72,6 +72,35 @@ Solid Queue inline mode uses the env var `SOLID_QUEUE_IN_PUMA=true` — that nam
 - `OPENBSD/OPERATOR.sh` — full vm23 OpenBSD installer (etc/usr/var, relayd, services)
 - `RAILS/deploy.sh` — Rails app copy-tree deploy only (brgen, amber, bsdports)
 
+## `/etc/doas.conf` Installs Only On A Deliberate Root Run (2026-08-02)
+
+**Status:** accepted. Moved here from `data/debt.yml`, where it was the tail of a
+closed entry — it is policy, not debt.
+
+dev's rule is a five-variable `setenv` allowlist
+(`I_UNDERSTAND_DNS_WIPE`, `I_UNDERSTAND_CONSOLE_RISK`, `RUN_PRODUCTION_SEEDS`,
+`SKIP_MASTER_SCAN`, `MAIL_IMG_FMT`) — measured, not guessed: those are the
+variables that scripts invoked under doas read and never assign themselves.
+`keepenv` was removed from it because it preserves `RUBYOPT`/`RUBYLIB`/`GEM_HOME`
+across the privilege boundary, which is arbitrary code execution as root by
+construction. It stays on the root→root rule deliberately: it grants an attacker
+nothing they do not already have, and stripping it would remove the environment
+the outer dev→root hop just established from under the inner one.
+
+Command scoping is **not** available as a hardening step here. The deploy
+pipeline invokes `doas zsh` 27×, `doas sh` 8×, `doas ksh` 6× and `doas su` 2×,
+and a root shell is equivalent to blanket root.
+
+The file is installed by `OPERATOR.sh` or an explicit
+`doas ksh validate_doas.ksh install <file> <reason>` — **never by a cron tick.**
+The auto-heal that used to install it (`relayd-watchdog`, `config-drift-check`)
+was root executing a dev-owned checkout, so it was removed; the consequence is
+that a repo edit here does not reach the box by itself. A hardened `doas.conf`
+sat in the repo for a day while production still ran the unhardened one, because
+the installer everyone assumed existed did not work. Verify live with
+`doas cat /etc/doas.conf`, not with the repo file. `vps_safety_gate.rb` pins the
+repo copy.
+
 ## Release history (from RELEASE.md, merged 2026-07-10)
 
 - **Gate chain restored** — repointed `require_relative "utf8"` refs after the `tools/` reorg; every gate had been crashing with `LoadError`.

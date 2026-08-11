@@ -4,6 +4,9 @@ require "json"
 require "open3"
 require "yaml"
 require_relative "environment"
+# Only "yaml" itself is behind this — requiring it does not boot the Master
+# runtime, so the standalone contract above holds.
+require_relative "../deploy/operator_docs"
 
 module Pub4
   class StatusReport
@@ -80,15 +83,15 @@ module Pub4
     end
 
     def backlog_source
-      "OPENBSD/data/debt.yml"
+      Master::Deploy::OperatorDocs::DEBT_RELATIVE
     end
 
+    # One reader for the register, in the module /orient deploy already uses. The
+    # second copy that used to live here answered the same question with its own
+    # path arithmetic, and a register with two readers is how the broken one goes
+    # unnoticed — it was, for weeks.
     def backlog_open_count
-      path = File.join(@root, "OPENBSD", "data", "debt.yml")
-      return 0 unless File.file?(path)
-
-      data = YAML.safe_load(File.read(path)) || {}
-      Array(data["open"]).size
+      Master::Deploy::OperatorDocs.open_debt_count(root: @root)
     end
 
     def horizon_count

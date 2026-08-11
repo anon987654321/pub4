@@ -280,7 +280,7 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 
 Rails uses `Pub4::DeployPaths` to resolve MASTER media tools from a source checkout or a VPS copy-tree; never assume `Rails.root/../../postpro`. Newsletter hero rendering can use the same postpro/repligen pair as MASTER. Keep provider tokens in the app's `/etc/<app>.env`; do not add them to Rails credentials or source. MASTER's natural-language media routing is local to the agent runtime, while Rails callers should use the shared service boundary so jobs remain observable and retryable.
 
-**Blockers:** `BLOCKERS.md` — five entries, each with owner, unblock criteria,
+**Blockers:** `BLOCKERS.md` — four entries, each with owner, unblock criteria,
 and the check that covers it. Kept there rather than here because two of the
 five sentences this section used to carry had gone stale unnoticed.
 
