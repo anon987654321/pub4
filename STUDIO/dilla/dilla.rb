@@ -4170,13 +4170,33 @@ end
 # feel and starts reading as an unsteady tempo. Percussion is furthest behind
 # at 1.45 -- shakers and maracas played deliberately late are named repeatedly
 # as the source of the push and pull against kick and snare.
+# The melodic roles were missing entirely, and they are the busiest roles in the
+# engine: lead appears 90 times, warm 75, ep 50, texture 28. With no entry they
+# fell through `SWING_ROLE_SCALE[role] || 1.0` and were swung at exactly the
+# hi-hat rate — the most exaggerated lean in the kit — while bass sat at 0.3 and
+# pad at 0.5 because someone had already decided sustained material should lean
+# less than the hats.
+#
+# That is backwards for this feel. The records this engine is named after put the
+# keys and the lead behind or across the drums, not locked to the hat; a Rhodes
+# chord swung as hard as a shaker is the sound of a sequencer, which is the one
+# thing the pocket exists to avoid. Sustained voices take the pad's 0.5, leads
+# sit a little further back at 0.6 — enough to be heard leaning, short of the
+# ghost-note 1.2 that would make a held note sound late rather than lazy.
+#
+# `kick` was the other one, and it is a plain defect: kick_anchor is 0.0 because
+# it is the grid reference everything else leans against, and a bare `:kick`
+# role — three call sites — was swinging at 1.0. Same drum, opposite treatment,
+# decided by which name the call site happened to use.
 SWING_ROLE_SCALE = {
-  kick_anchor: 0.0, kick_sync: 0.15,
+  kick_anchor: 0.0, kick: 0.0, kick_sync: 0.15,
   snare: 0.85, clap: 0.85,
-  hat_down: 1.0, hat_up: 1.1, open: 1.0,
+  hat_down: 1.0, hat_up: 1.1, hat: 1.0, open: 1.0,
   ghost: 1.2,
   perc: 1.45,
   bass: 0.3, pad: 0.5,
+  ep: 0.5, warm: 0.5, texture: 0.4, native: 0.5,
+  lead: 0.6, xlead: 0.6, scale_lead: 0.6, creative_lead: 0.6,
 }.freeze
 SWING_ROLE_SPREAD = ENV.fetch("SWING_ROLE_SPREAD", "1").to_f.clamp(0.0, 3.0)
 
