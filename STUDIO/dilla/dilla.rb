@@ -5270,7 +5270,23 @@ def sample_loop_entry(track)
   return if raw == "0"
 
   raw = "" if SAMPLE_LOOP_ON.include?(raw.downcase)
-  return { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f } unless raw.empty?
+  unless raw.empty?
+    # A slug, not only a path. SAMPLE_LOOP took a bare filename, so choosing a
+    # known bed by hand meant passing its path and silently losing the hp/sub_db/
+    # lp that TRACK_SAMPLE_LOOPS records for it -- and those are measured per
+    # loop precisely because a global value is wrong for one of them whichever
+    # way it goes (four_seven -4.9 dB against nightbus -10.3 dB, per that table).
+    #
+    # This is what lets a bed and a progression be chosen independently:
+    # SAMPLE_LOOP picks the sample, TRACK still picks the chords. Before, both
+    # came off TRACK, so a Dilla progression under the semua bed was not
+    # expressible.
+    slug = raw.downcase.tr("-", "_").to_sym
+    named = TRACK_SAMPLE_LOOPS[TRACK_SAMPLE_LOOP_ALIASES.fetch(slug, slug)]
+    return named if named
+
+    return { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f }
+  end
 
   key = track.to_s.downcase.tr("-", "_").to_sym
   TRACK_SAMPLE_LOOPS[TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key)] || chopped_bed_for(track)
@@ -6190,12 +6206,46 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
   return smooth_drum_bus_filter(head, tail) if smooth_drums?
 
   "#{head}#{crush}" \
-    "acompressor=threshold=-14dB:ratio=2.2:attack=3:release=60," \
+    "acompressor=threshold=-14dB:ratio=2.2:attack=3:release=60" \
+    "#{hard_drums? ? "[d_soft];#{hard_drum_stage('d_soft', 'd_hard')}[d_hard]" : ','}" \
     "#{tail}[drums]"
 end
 
 def smooth_drums?
   ENV.fetch("SMOOTH_DRUMS", "0") != "0"
+end
+
+def hard_drums?
+  ENV.fetch("HARD_DRUMS", "0") != "0"
+end
+
+# Harder is not the opposite of smoother, and this composes with SMOOTH_DRUMS
+# rather than fighting it.
+#
+# Smooth meant no grit: the bit-crusher gone, its harmonic density replaced by
+# parallel compression. Hard means more impact, which is a transient question,
+# not a distortion one. The two ask for different things and both can hold --
+# what you cannot have is grit and impact at once, because quantisation noise
+# sits on top of the attack and masks it.
+#
+# The click band is high-passed before it is compressed, so the fast attack
+# works on stick and beater noise instead of being triggered by kick
+# fundamental -- a full-band fast compressor ducks the whole kit every time the
+# kick lands, which reads as pumping rather than punch. Blended under, so the
+# body of the hit is untouched.
+#
+# 55 Hz is weight and 3.2 kHz is where a snare reads as crack. Both narrow, so
+# they add impact at the two frequencies that carry it rather than making the
+# whole kit louder, which the master stage would only take back out.
+HARD_DRUM_CLICK_HP = 1800
+
+def hard_drum_stage(input, output)
+  "[#{input}]asplit=2[hd_body][hd_click];" \
+  "[hd_click]highpass=f=#{HARD_DRUM_CLICK_HP},acompressor=threshold=-34dB:ratio=6:attack=0.3:release=45," \
+  "volume=2.5dB[hd_tick];" \
+  "[hd_body][hd_tick]amix=inputs=2:weights=1 0.5:duration=first:normalize=0," \
+  "equalizer=f=55:t=o:w=0.8:g=2.2," \
+  "equalizer=f=3200:t=o:w=1.6:g=2.0[#{output}];"
 end
 
 # Weight without grit.
@@ -6223,7 +6273,8 @@ def smooth_drum_bus_filter(head, tail)
   "equalizer=f=300:t=o:w=1.2:g=-2.2," \
   "equalizer=f=3000:t=o:w=1.4:g=-1.6," \
   "equalizer=f=9000:t=h:w=6000:g=1.4," \
-  "acompressor=threshold=-14dB:ratio=2.2:attack=6:release=90," \
+  "acompressor=threshold=-14dB:ratio=2.2:attack=6:release=90" \
+  "#{hard_drums? ? "[d_soft];#{hard_drum_stage('d_soft', 'd_hard')}[d_hard]" : ','}" \
   "#{tail}[drums]"
 end
 
@@ -19850,6 +19901,10 @@ end
 # voicing survives intact and only the level moves — hence the fixed +6 dB.
 SU_MELODY_VARIANTS = 4
 SU_MELODY_WIN = 8192
+# How much untouched signal sits under the resynthesis. Enough to return the
+# attacks; past roughly 0.5 the source stops sounding like an instrument and
+# starts sounding like a vocal sample again, which is the thing this is not.
+SU_MELODY_DRY_BLEND = (ENV["SU_MELODY_DRY"] || 0.34).to_f.clamp(0.0, 1.0)
 
 def su_melody_enabled?
   ENV.fetch("SU_MELODY", "0") != "0"
@@ -19864,12 +19919,24 @@ def su_melody_stretched_sources(src, src_dur, tmp_dir, rng)
     at = 6.0 + rng.rand * [src_dur - grab - 8.0, 1.0].max
     out = File.join(tmp_dir, "su_stretch#{i}.wav")
     begin
+      # Part resynthesised, part not.
+      #
+      # Discarding all phase gives a perfectly smooth drone and no instrument:
+      # every transient in the source is gone, so nothing has an attack and the
+      # result is a wash that sits behind the track rather than a voice that
+      # plays it. That is the "synth patch" complaint. Blending the untouched
+      # signal back under the phase-randomised one returns the consonant edges
+      # and the breath while keeping the sustain the stretch created -- the
+      # spectral part supplies the tone, the dry part supplies the articulation.
       sh! "ffmpeg", "-y", "-v", "error", "-ss", at.round(3).to_s, "-t", grab.to_s, "-i", src,
-          "-af", "aformat=channel_layouts=stereo,atempo=0.5," \
-                 "afftfilt=real='hypot(re,im)*cos(random(#{i + 1})*2*PI)':" \
-                 "imag='hypot(re,im)*sin(random(#{i + 1})*2*PI)':" \
-                 "win_size=#{SU_MELODY_WIN}:overlap=0.92,volume=6dB",
-          "-c:a", "pcm_s16le", out
+          "-filter_complex",
+          "[0:a]aformat=channel_layouts=stereo,atempo=0.5,asplit=2[sd][sw];" \
+          "[sw]afftfilt=real='hypot(re,im)*cos(random(#{i + 1})*2*PI)':" \
+          "imag='hypot(re,im)*sin(random(#{i + 1})*2*PI)':" \
+          "win_size=#{SU_MELODY_WIN}:overlap=0.94,volume=6dB[swet];" \
+          "[sd]highpass=f=180,volume=-3dB[sdry];" \
+          "[swet][sdry]amix=inputs=2:weights=1 #{SU_MELODY_DRY_BLEND}:duration=first:normalize=0[out]",
+          "-map", "[out]", "-c:a", "pcm_s16le", out
     rescue StandardError => e
       warn "su melody variant #{i} skipped: #{e.message}"
       next
@@ -19890,9 +19957,67 @@ SU_TUNNEL_CHAIN = "highpass=f=90," \
                   "aecho=0.9:0.8:311|487:0.22|0.14," \
                   "stereotools=mlev=0.9:slev=1.35"
 
+# The refined tunnel: a convolved impulse response instead of six discrete taps.
+#
+# The chain above is four short echoes at 37/59/83/127 ms and a far pair. Taps
+# that short are a comb filter, not a room -- each one puts a fixed notch in the
+# spectrum, and four of them on a sustained choir is a metallic ring sitting on
+# every held note. That is what reads as unrefined, and no amount of tuning the
+# gains fixes it, because the artefact is the discreteness itself.
+#
+# A real tunnel tail is dense: thousands of reflections, too close together to
+# hear individually, getting darker as they decay because air and concrete
+# absorb treble faster than bass. That is an impulse response, so this generates
+# one -- exponentially decaying noise, low-passed progressively over its length,
+# with the early part shaped to keep the close-wall character the taps were
+# there for -- and convolves it with afir.
+SU_TUNNEL_IR_SEC = 1.9
+SU_TUNNEL_IR_RATE = 44_100
+
+def su_tunnel_ir_path(dir)
+  path = File.join(dir, "su_tunnel_ir.wav")
+  return path if File.file?(path) && File.size(path) > 4096
+
+  frames = (SU_TUNNEL_IR_SEC * SU_TUNNEL_IR_RATE).to_i
+  rng = Random.new(90_210)
+  # Two decorrelated channels, or the tail collapses to the middle and the
+  # tunnel has no width at all.
+  samples = Array.new(2) { Array.new(frames, 0.0) }
+  2.times do |ch|
+    lp = 0.0
+    frames.times do |i|
+      t = i.to_f / SU_TUNNEL_IR_RATE
+      # Exponential decay, plus a short pre-delay so the direct sound is not
+      # smeared into its own reflections.
+      env = t < 0.006 ? 0.0 : Math.exp(-4.2 * t)
+      # Progressive damping: the coefficient falls as the tail ages, so late
+      # reflections are darker than early ones the way absorption makes them.
+      a = 0.55 - (0.35 * (t / SU_TUNNEL_IR_SEC))
+      lp += a * ((rng.rand * 2.0 - 1.0) - lp)
+      samples[ch][i] = lp * env
+    end
+    peak = samples[ch].max_by(&:abs).abs
+    samples[ch].map! { |v| v / peak * 0.7 } if peak.positive?
+  end
+
+  File.open(path, "wb") do |f|
+    data_bytes = frames * 2 * 2
+    f.write("RIFF"); f.write([36 + data_bytes].pack("V")); f.write("WAVEfmt ")
+    f.write([16, 1, 2, SU_TUNNEL_IR_RATE, SU_TUNNEL_IR_RATE * 4, 4, 16].pack("VvvVVvv"))
+    f.write("data"); f.write([data_bytes].pack("V"))
+    frames.times do |i|
+      f.write([(samples[0][i] * 32_767).round.clamp(-32_768, 32_767),
+               (samples[1][i] * 32_767).round.clamp(-32_768, 32_767)].pack("s<s<"))
+    end
+  end
+  path
+end
+
+def su_tunnel_refined? = ENV.fetch("SU_TUNNEL_REFINED", "1") != "0"
+
 SU_MELODY_TARGET_RMS_DB = -17.0
 
-def render_su_tunnel_melody(path, pad_events, duration)
+def render_su_tunnel_melody(path, pad_events, duration, cfg: nil, n_bars: nil)
   src = singers_chop_source
   return unless src
 
@@ -19903,6 +20028,21 @@ def render_su_tunnel_melody(path, pad_events, duration)
   tmp_dir = File.dirname(path)
   sources = su_melody_stretched_sources(src[:path], src_dur, tmp_dir, rng)
   return if sources.empty?
+
+  # The tune, from the engine's own line writer rather than this renderer's
+  # arpeggiator. Rendered by the choir instead of a soundfont, so the melody is
+  # written by the part of the engine that knows how to write one and voiced by
+  # the part that sounds good.
+  tune = if cfg
+           begin
+             lead_events_melodic(pad_events, cfg, duration: duration, n_bars: n_bars)
+           rescue StandardError => e
+             warn "su melody line fell back to held chords: #{e.message}"
+             []
+           end
+         else
+           []
+         end
 
   stretched_dur = sources.map { |s| audio_duration_sec(s) }
   first_root = nil
@@ -19921,21 +20061,19 @@ def render_su_tunnel_melody(path, pad_events, duration)
     sus = sustain.to_f
     next if sus <= 0.05
 
-    # Lower voices hold the chord; the top voice moves through its tones. The
-    # held pair is what makes it hypnotic, the moving top is what makes it a
-    # melody rather than a second pad.
+    # The held pair only. The top line used to be built here by stepping through
+    # top_tones[(ci + s) % length] -- a cycle through the chord's own notes,
+    # indexed by which chord it was. That is an arpeggiator, not a melody: no
+    # contour, no phrase, no motif, the same shape over every chord, and it
+    # never rests. It is why the lead was unlistenable.
+    #
+    # The tune now comes from lead_events_melodic, which the engine already had:
+    # a motif stated then inverted and reversed across phrases, notes chosen by
+    # lead_note_score against parallel fifths and oversized leaps, whole phrases
+    # left silent by lead_phrase_rests?, contrary motion to the pad top. All of
+    # that existed and this renderer walked past it to roll its own.
     held = hz.take(2)
-    top_tones = hz.drop(1).take(3)
-    top_tones = hz if top_tones.empty?
-
-    voices = held.map { |h| [h, 0.0, sus, h == root ? 0.95 : 0.55] }
-    steps = sus > 2.2 ? 3 : 2
-    steps.times do |s|
-      tone = top_tones[(ci + s) % top_tones.length]
-      st_off = sus * (s / steps.to_f)
-      st_len = (sus / steps) * 1.35
-      voices << [tone, st_off, st_len, 0.5]
-    end
+    voices = held.map { |h| [h, 0.0, sus, h == root ? 0.9 : 0.5] }
 
     voices.each do |(target, offset, length, gain)|
       r = target / first_root
@@ -19965,13 +20103,72 @@ def render_su_tunnel_melody(path, pad_events, duration)
       labels << "[#{lbl}]"
     end
   end
+
+  # The melody itself, one choir voice per written note, louder than the held
+  # pair so it reads as the line and they read as the ground under it.
+  tune.each_with_index do |(t, v, note, sustain), ni|
+    nhz = note.is_a?(Hash) ? Array(note[:hz]).map(&:to_f).select(&:positive?) : []
+    target = nhz.first
+    next unless target
+
+    length = sustain.to_f
+    next if length <= 0.05
+
+    first_root ||= target
+    r = target / first_root
+    r /= 2.0 while r > 1.9
+    r *= 2.0 while r < 0.85
+    si = (ni + 1) % sources.length
+    need = length * r + 0.4
+    avail = [stretched_dur[si] - need - 0.1, 0.0].max
+    next if avail <= 0.0
+
+    s0 = (rng.rand * avail).round(3)
+    delay_ms = [(t.to_f * 1000.0).round, 0].max
+    # A shorter attack than the bed. The bed swells over 0.3 of its length,
+    # which is right for something held and wrong for a sung note -- it is what
+    # made every entry vague instead of articulate.
+    fade_in = [length * 0.12, 0.22].min
+    fade_out = (length * 0.3).round(3)
+    fade_at = [length - fade_out, 0.05].max
+    lbl = "sl#{ni}"
+
+    chains << "[#{si}:a]atrim=start=#{s0}:end=#{(s0 + need).round(3)},asetpts=PTS-STARTPTS," \
+              "aformat=channel_layouts=stereo," \
+              "asetrate=#{SAMPLE_RATE}*#{r.round(5)},aresample=#{SAMPLE_RATE}," \
+              "atrim=0:#{length.round(3)}," \
+              "afade=t=in:st=0:d=#{fade_in.round(3)}," \
+              "afade=t=out:st=#{fade_at.round(3)}:d=#{fade_out}," \
+              "volume=#{(v.to_f * 1.15).round(3)}," \
+              "adelay=#{delay_ms}|#{delay_ms}[#{lbl}]"
+    labels << "[#{lbl}]"
+  end
+  dmesg("su melody line: #{tune.length} written notes over #{pad_events.length} chords",
+        unit: "harm0", parent: "dilla0")
   return if labels.empty?
 
-  filt = "#{chains.join(';')};#{labels.join}" \
-         "amix=inputs=#{labels.length}:duration=longest:normalize=0," \
-         "#{SU_TUNNEL_CHAIN},atrim=0:#{duration}," \
-         "alimiter=limit=0.95:level_out=0.94[su]"
+  ir = su_tunnel_refined? ? su_tunnel_ir_path(tmp_dir) : nil
+  if ir
+    # Convolution replaces the tap chain; the tone shaping stays, since the IR
+    # supplies the room and not the resonance.
+    space = "highpass=f=90,equalizer=f=520:t=q:w=1.4:g=5," \
+            "equalizer=f=1900:t=q:w=2.0:g=-3.5,lowpass=f=3600"
+    wet = "[mixed]#{space}[dry_t];" \
+          "[dry_t]asplit=2[t_dry][t_wet];" \
+          "[t_wet][#{sources.length}:a]afir=dry=0:wet=1:gtype=peak:maxir=#{SU_TUNNEL_IR_SEC}[t_verb];" \
+          "[t_dry][t_verb]amix=inputs=2:weights=1 0.85:duration=first:normalize=0," \
+          "stereotools=mlev=0.9:slev=1.3"
+    filt = "#{chains.join(';')};#{labels.join}" \
+           "amix=inputs=#{labels.length}:duration=longest:normalize=0[mixed];" \
+           "#{wet},atrim=0:#{duration},alimiter=limit=0.95:level_out=0.94[su]"
+  else
+    filt = "#{chains.join(';')};#{labels.join}" \
+           "amix=inputs=#{labels.length}:duration=longest:normalize=0," \
+           "#{SU_TUNNEL_CHAIN},atrim=0:#{duration}," \
+           "alimiter=limit=0.95:level_out=0.94[su]"
+  end
   inputs = sources.flat_map { |s| ["-i", s] }
+  inputs += ["-i", ir] if ir
   prev_soft = ENV["DILLA_SOFT_SH"]
   ENV["DILLA_SOFT_SH"] = "1"
   begin
@@ -20615,7 +20812,10 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   su_melody_rendered = nil
   if su_melody_enabled?
     begin
-      su_melody_rendered = render_su_tunnel_melody(su_melody_path, pad_events, duration)
+      su_melody_rendered = render_su_tunnel_melody(
+        su_melody_path, pad_events, duration,
+        cfg: cfg, n_bars: (duration / ((60.0 / cfg[:bpm]) * 4.0)).ceil
+      )
     rescue StandardError => e
       warn "su tunnel melody skipped: #{e.message}"
     end
