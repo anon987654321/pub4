@@ -1,0 +1,44 @@
+<%# TradeDoubler Link Converter, in the engine rather than in brgen.
+    It lived in brgen/app/views and read brgen's `Tradedoubler` constant, so amber
+    could not render it — which is half of why amber earned nothing on the
+    affiliate links it already shows. Both halves now come from
+    Shared::LinkConverter.
+
+    Renders nothing without TRADEDOUBLER_WEBSITE_ID: an app with no website id has
+    nothing to attribute to, and emitting the script anyway would load a third
+    party for no reason.
+
+    Script source, in order: our own /js/td-lc.js when a sync job has written one
+    (ad blockers target tradedoubler.com by hostname, so a first-party copy is the
+    one that survives), otherwise the remote URL. The fallback matters for an app
+    without its own LinkConverterSyncJob — remote-and-sometimes-blocked beats
+    absent. %>
+<% if Shared::LinkConverter.configured? %>
+  <% script_src = Shared::LinkConverter.script_src(Rails.public_path) %>
+  <% if script_src.present? %>
+    <script type="text/javascript">
+      window.tdlcAsyncInit = function() {
+        var epi = <%= raw(
+          Shared::LinkConverter.epi_for(
+            city: (defined?(Current) && (Current.try(:city) || Current.try(:city_record)&.try(:slug))),
+            surface: (defined?(Current) && Current.try(:subapp)) || Rails.application.class.module_parent_name.downcase
+          ).to_json
+        ) %>;
+        if (epi) { window.tdlc_epi = epi; }
+        if (typeof TDLinkConverter !== "undefined") {
+          TDLinkConverter.init({ tdlc_epi: window.tdlc_epi });
+        }
+      };
+      (function(d, s) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        var id = "td-link-converter";
+        if (d.getElementById(id)) return;
+        js = d.createElement(s);
+        js.id = id;
+        js.async = true;
+        js.src = <%= raw script_src.to_json %>;
+        fjs.parentNode.insertBefore(js, fjs);
+      })(document, "script");
+    </script>
+  <% end %>
+<% end %>

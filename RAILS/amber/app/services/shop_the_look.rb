@@ -16,12 +16,25 @@ module ShopTheLook
       (local + remote).uniq { |s| s.url }.first(limit)
     end
 
+    # Saved links, attributed.
+    #
+    # This emitted `link.url` verbatim, which is the second reason amber earned
+    # nothing: with no website id in the URL a converting click pays nobody, so
+    # the whole "shop the look" surface was a link list. Shared::LinkConverter
+    # returns the URL unchanged when TRADEDOUBLER_WEBSITE_ID is unset (an
+    # unattributed link still works, and inventing tracking is what
+    # affiliate_honesty forbids) and when the owner already pasted a tracked URL.
+    #
+    # Server-side as well as through the Link Converter script, because the script
+    # is exactly what an ad blocker removes and this path does not depend on JS.
     def local_links(item)
+      epi = Shared::LinkConverter.epi_for(surface: "amber", post_id: item.id)
+
       Array(item.affiliate_links).map do |link|
         Suggestion.new(
           title: item.title.to_s,
           merchant: link.merchant.to_s,
-          url: link.url.to_s,
+          url: Shared::LinkConverter.wrap(link.url.to_s, epi: epi),
           source: "saved",
           score: 1.0
         )

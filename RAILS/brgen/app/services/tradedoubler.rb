@@ -46,15 +46,16 @@ module Tradedoubler
       ENV["TRADEDOUBLER_CONVERSIONS_TOKEN"].presence
     end
 
-    def website_id
-      ENV["TRADEDOUBLER_WEBSITE_ID"].presence
-    end
+    # Link Converter lives in Shared::LinkConverter so amber can attribute too.
+    # These delegate rather than keeping a second copy of an attribution rule:
+    # two copies is how one of them silently stops attributing.
+    def website_id = Shared::LinkConverter.website_id
 
     def token = products_token
     def market = ENV.fetch("TRADEDOUBLER_MARKET", "NO")
     def configured? = products_token.present?
     def vouchers_configured? = vouchers_token.present?
-    def link_converter_configured? = website_id.present?
+    def link_converter_configured? = Shared::LinkConverter.configured?
 
     # Comma-separated feed IDs. When blank, import discovers active feeds.
     def feed_ids
@@ -355,51 +356,14 @@ module Tradedoubler
     end
 
     # EPI helpers for tracked surfaces (appended by views / Link Converter).
-    def epi_for(city: nil, surface: nil, tribe: nil, edition: nil, post_id: nil)
-      parts = []
-      parts << "city:#{city}" if city.present?
-      parts << "surface:#{surface}" if surface.present?
-      parts << "tribe:#{tribe}" if tribe.present?
-      parts << "edition:#{edition}" if edition.present?
-      parts << "post:#{post_id}" if post_id.present?
-      parts.join("|").presence
-    end
+    def epi_for(**parts) = Shared::LinkConverter.epi_for(**parts)
 
-    def append_epi(url, epi:, epi2: nil)
-      return url if url.blank? || epi.blank?
+    def append_epi(url, epi:, epi2: nil) = Shared::LinkConverter.append_epi(url, epi: epi, epi2: epi2)
 
-      uri = URI(url)
-      params = URI.decode_www_form(uri.query.to_s)
-      params << %w[epi] + [epi]
-      params << %w[epi2] + [epi2] if epi2.present?
-      uri.query = URI.encode_www_form(params)
-      uri.to_s
-    rescue URI::InvalidURIError
-      url
-    end
-
-    def link_converter_remote_url
-      return nil unless link_converter_configured?
-
-      "#{LINK_CONVERTER_URL}?a(#{website_id})"
-    end
+    def link_converter_remote_url = Shared::LinkConverter.remote_script_url
 
     # Download server-side Link Converter script (ad-block resistant path).
-    def sync_link_converter!(local_path:)
-      remote = link_converter_remote_url
-      return false if remote.blank?
-
-      uri = URI(remote)
-      res = Net::HTTP.get_response(uri)
-      return false unless res.is_a?(Net::HTTPSuccess)
-
-      FileUtils.mkdir_p(File.dirname(local_path))
-      File.binwrite(local_path, res.body)
-      true
-    rescue StandardError => e
-      Ground::Swallow.log(e, context: "Tradedoubler.sync_link_converter!") if defined?(Ground::Swallow)
-      false
-    end
+    def sync_link_converter!(local_path:) = Shared::LinkConverter.sync!(local_path: local_path)
 
     def matrix_uri(path, matrix:, token:, extension: "json")
       matrix_part = matrix.compact.map do |key, value|
