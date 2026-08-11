@@ -8506,6 +8506,40 @@ MICROTIMING_MS = {
 # probabilistic organic generation. Kicks/snares/ghosts/hats are authored
 # separately so each voice has its own pocket.
 DRUM_PATTERN_SETS = {
+  # LIQUID DNB. The two-step, at 170-176.
+  #
+  # Kick on 1, snare on 2, kick on the "and" of 3, snare on 4 -- steps 0, 4, 10,
+  # 12 on this grid. That displaced second kick is the whole genre: it is what
+  # makes the bar roll forward instead of marching, and moving it onto 8 turns
+  # liquid into halftime.
+  #
+  # Liquid rather than neurofunk or jump-up, which matters for what is NOT here.
+  # No chopped amen, no snare rushes, no double-time fills. The kit stays out of
+  # the way and the harmony carries the track -- the style is defined by lush
+  # Rhodes and strings over a break that barely changes, which is why the
+  # variations below move ghosts and hats and almost never touch the anchors.
+  #
+  # Hats roll in 16ths. At 174 bpm a 16th is 86 ms, so a straight roll reads as
+  # continuous motion rather than as separate hits, and that shimmer is what
+  # people mean by "rolling".
+  #
+  # Ghosts sit between the snares, quiet, on the 16ths either side of the
+  # backbeat. They are the difference between a programmed break and one that
+  # sounds played.
+  liquid_dnb: {
+    kicks: [
+      [0, 10], [0, 10], [0, 10, 14], [0, 6, 10],
+      [0, 10], [0, 3, 10], [0, 10, 11], [0, 10]
+    ],
+    snares: [[4, 12], [4, 12], [4, 12], [4, 12, 15], [4, 12], [4, 12, 14]],
+    ghosts: [[2, 7, 14], [6, 14], [2, 6, 11, 14], [7, 15], [2, 14], [6, 9, 14]],
+    hats: [
+      (0..15).to_a, (0..15).to_a,
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+      [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15],
+      (0..15).to_a
+    ],
+  },
   # ONE DROP. Roots reggae, the Hugh Mundell / Augustus Pablo end of it.
   #
   # The defining feature is a hole, not a hit: step 0 is empty. Kick and snare
