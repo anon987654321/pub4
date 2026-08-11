@@ -18,8 +18,41 @@ module Marketplace
           ENV["VIPPS_SUBSCRIPTION_KEY"].to_s.strip.present?
       end
 
+      TEST_API_BASE = "https://apitest.vipps.no"
+      LIVE_API_BASE = "https://api.vipps.no"
+
+      # The test endpoint is not a safe default in production.
+      #
+      # This used to be a bare ENV.fetch with the test host as its fallback. A
+      # production box missing one variable would then take a customer through a
+      # complete, successful-looking checkout against Vipps' test environment:
+      # a redirect, a confirmation, an order marked paid, and no money. The
+      # class comment above says "never fakes success", and unconfigured it did
+      # not -- but *mis*configured it faked success perfectly, which is worse,
+      # because nothing raises and nobody looks.
+      #
+      # So the environment is now chosen rather than defaulted. Production uses
+      # the live host unless VIPPS_TEST_MODE is explicitly set, and an explicit
+      # VIPPS_API_BASE pointing at test in production has to say so out loud.
       def self.api_base
-        ENV.fetch("VIPPS_API_BASE", "https://apitest.vipps.no")
+        explicit = ENV["VIPPS_API_BASE"].to_s.strip
+        return explicit if explicit.present? && (!production? || test_mode? || !explicit.include?("apitest"))
+
+        if explicit.present? && explicit.include?("apitest") && production? && !test_mode?
+          raise NotConfigured,
+                "Vipps (VIPPS_API_BASE points at the test endpoint in production; " \
+                "set VIPPS_TEST_MODE=1 to allow it deliberately)"
+        end
+
+        production? && !test_mode? ? LIVE_API_BASE : TEST_API_BASE
+      end
+
+      def self.test_mode?
+        ENV["VIPPS_TEST_MODE"].to_s.strip.present?
+      end
+
+      def self.production?
+        defined?(Rails) && Rails.respond_to?(:env) ? Rails.env.production? : false
       end
 
       def self.start!(order:, return_url:)

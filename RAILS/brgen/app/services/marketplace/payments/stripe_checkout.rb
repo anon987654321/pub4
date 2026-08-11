@@ -15,8 +15,30 @@ module Marketplace
         ENV["STRIPE_SECRET_KEY"].to_s.strip.present?
       end
 
+      # Stripe carries its environment in the key rather than the URL, so there
+      # is no test host to default to -- but the failure is the same shape as
+      # the one Vipps had: an sk_test_ key on a production box takes a customer
+      # through a complete, successful-looking checkout that moves no money, and
+      # nothing raises.
+      #
+      # Unlike an unset key, this one cannot be caught by `configured?`, because
+      # a test key IS configured. It just is not the right one.
+      def self.test_key?
+        ENV["STRIPE_SECRET_KEY"].to_s.strip.start_with?("sk_test_")
+      end
+
+      def self.production?
+        defined?(Rails) && Rails.respond_to?(:env) ? Rails.env.production? : false
+      end
+
       def self.start!(order:, success_url:, cancel_url:)
         raise NotConfigured, "Stripe" unless configured?
+
+        if production? && test_key? && ENV["STRIPE_TEST_MODE"].to_s.strip.empty?
+          raise NotConfigured,
+                "Stripe (sk_test_ key in production takes payments that move no money; " \
+                "set STRIPE_TEST_MODE=1 to allow it deliberately)"
+        end
 
         body = URI.encode_www_form(
           "mode" => "payment",
