@@ -20469,7 +20469,27 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
   cache_self_sample!(destination)
-  FileUtils.rm_f(destination)
+  # Set the previous take aside instead of deleting it.
+  #
+  # This line used to be FileUtils.rm_f(destination), which destroyed the old
+  # render before a single note of the new one existed. Every path out of this
+  # method that is not "wrote #{destination}" therefore lost the take: a raise,
+  # a timeout, a SIGTERM, ffmpeg refusing a filter, the operator pressing ^C
+  # thirty seconds in. The window is not small — a 48-bar render is minutes long
+  # and the file is gone for all of it.
+  #
+  # These renders are not reproducible. The seed rotates, the performer and
+  # generation are chosen per run, and the mp3 is the only copy — the tree
+  # ignores renders, so git has never held one. Two of the operator's tracks
+  # went missing mid-session and the cause was read as "another agent"; it was
+  # this. It reproduced here exactly: vaular_remix.mp3 existed, a re-render was
+  # started against the same path, that render died at 137s, and the finished
+  # take was gone with nothing to replace it.
+  #
+  # cache_self_sample! above keeps 1.2 seconds of the old file. That is a sample
+  # source, not a backup, and it is the only thing that has ever survived this.
+  previous_take = "#{destination}.prev" if File.file?(destination)
+  FileUtils.mv(destination, previous_take) if previous_take
   cfg      = dilla_resolve_config
   cfg      = DillaSeeds.apply_to_cfg!(cfg)
   n_bars   = bars_count || bars
@@ -21217,6 +21237,20 @@ ensure
   # .dilla_harmonic.<pid>.wav.*/.dilla_drums.<pid>.wav scratch forever --
   # `ensure` so it still fires if this method raises partway through.
   cleanup_render_scratch!
+  # Put the old take back unless a new one actually landed.
+  #
+  # "Landed" is a size check, not File.exist?: a render killed during the final
+  # ffmpeg leaves a truncated destination behind, and restoring nothing over a
+  # 40-byte stub would lose the take just as completely as the delete did.
+  # 64 KB is under a second of 320k mp3 — anything smaller is wreckage.
+  if defined?(previous_take) && previous_take && File.file?(previous_take)
+    if File.size?(destination).to_i > 64_000
+      FileUtils.rm_f(previous_take)
+    else
+      FileUtils.mv(previous_take, destination)
+      warn "render did not finish — kept the previous #{File.basename(destination)}"
+    end
+  end
 end
 
 def industrial_techno_section(bar)
