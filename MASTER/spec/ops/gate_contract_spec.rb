@@ -15,7 +15,25 @@ class GateContractSpec < Minitest::Test
   def test_gate_is_expected_to_keep_repo_clean
     source = File.read(GATE)
     assert_includes source, 'assert_clean("MASTER")'
-    assert_includes source, 'assert_clean("RAILS", "OPENBSD", "MASTER")'
+    assert_includes source, 'assert_clean("RAILS", "OPENBSD", "STUDIO", "MASTER")'
+  end
+
+  # The gate must cover every sibling tree CLAUDE.md names, not a subset.
+  #
+  # It carried RAILS and OPENBSD and reported the repo clean on that basis. STUDIO
+  # — dilla, lora, postpro, repligen — was never scanned, fixed or reviewed, so
+  # "gate clean" was a claim about three quarters of the repo. Asserting the set
+  # rather than one string, because the failure mode is a tree going missing from
+  # the list and nothing noticing, which is what happened.
+  def test_gate_targets_every_sibling_tree
+    source = File.read(GATE)
+    targets = source[/deploy: %w\[([^\]]*)\]/, 1].to_s.split
+
+    %w[../RAILS ../OPENBSD ../STUDIO].each do |tree|
+      assert_includes targets, tree,
+                      "bin/gate does not scan #{tree}; a gate whose target list is shorter " \
+                      "than the repo reports clean on the part it looked at"
+    end
   end
 
   # bin/gate's deploy pass must only reference directories that actually

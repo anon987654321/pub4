@@ -48,7 +48,18 @@ COMMANDS = {
   # DEPLOY was renamed to RAILS + OPENBSD (OPERATOR was later folded into
   # OPENBSD). /scan takes one path per invocation, so each former DEPLOY
   # child gets its own pass.
-  deploy: %w[../RAILS ../OPENBSD].flat_map { |path|
+  #
+  # STUDIO added 2026-08-11. CLAUDE.md names four sibling trees and this list
+  # carried two, so dilla, lora, postpro and repligen -- 57 tracked Ruby files
+  # including the whole beat engine -- were never scanned, fixed or reviewed,
+  # and the gate reported the repo clean on the strength of three quarters of
+  # it. A gate whose target list is shorter than the repo is not a gate.
+  #
+  # Caveat for the FULL pass, not scan-only: scanner.rb SKIP_PATH_SEGMENTS
+  # skips `cache` but not `.cache`, so /fix would descend into STUDIO's
+  # generated lora/**/.cache/** copies. Read the printed diff before
+  # committing; do not commit rewrites of generated caches.
+  deploy: %w[../RAILS ../OPENBSD ../STUDIO].flat_map { |path|
     if SCAN_ONLY
       ["/scan --no-autofix #{path}", "/critique #{path}"]
     else
@@ -155,7 +166,7 @@ git_diff("MASTER")
 assert_clean("MASTER") unless SCAN_ONLY
 
 COMMANDS[:deploy].each { |line| run_master_line(line) }
-git_diff("RAILS", "OPENBSD", "MASTER")
-assert_clean("RAILS", "OPENBSD", "MASTER") unless SCAN_ONLY
+git_diff("RAILS", "OPENBSD", "STUDIO", "MASTER")
+assert_clean("RAILS", "OPENBSD", "STUDIO", "MASTER") unless SCAN_ONLY
 
 puts SCAN_ONLY ? "ok: MASTER gate scan-only complete" : "ok: MASTER gate clean"
