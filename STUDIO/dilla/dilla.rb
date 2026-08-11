@@ -8231,6 +8231,53 @@ MICROTIMING_MS = {
 # probabilistic organic generation. Kicks/snares/ghosts/hats are authored
 # separately so each voice has its own pocket.
 DRUM_PATTERN_SETS = {
+  # The two canon pockets, played rather than described.
+  #
+  # RADIO_BERGEN dossiers carry these as prose -- "MPC swing 54-62%; kick late-3
+  # anchor; snare early on 4/12; ghost on 2/10" for dilla_canon, "flylo_abstract
+  # broken 16ths; kick 0,5,8,13; displaced snares" for flylo_canon. Those strings
+  # sit in a dossier hash near DOSSIERS_PATH; the drums come from
+  # drum_pattern_pick, which is keyed on feel and has never seen them. So the
+  # engine documented a pocket it did not play, in the two styles it is most
+  # often asked for.
+  #
+  # Transcribed here from those specs and nowhere else -- the anchors are the
+  # dossier's, and the variation around them follows the house shape of the pools
+  # below (a fixed anchor pair plus movement). Added as new feels rather than
+  # edits to existing ones, so no render changes unless GROOVE_FEEL asks.
+  dilla_canon: {
+    # Every kick anchors 0 and the late 3. 10 is the second anchor, which is what
+    # makes the bar lean without the snare having to move.
+    kicks: [
+      [0, 3, 10], [0, 3, 10, 14], [0, 3, 7, 10], [0, 3, 10, 13],
+      [0, 2, 3, 10], [0, 3, 6, 10, 15], [0, 3, 9, 10], [0, 3, 11]
+    ],
+    # 4 and 12 held. "Early" is timing, not grid -- GROOVE_FEEL supplies it.
+    snares: [[4, 12], [4, 12], [4, 12, 14], [4, 11, 12], [4, 12], [3, 4, 12]],
+    ghosts: [[2, 10], [2, 6, 10], [2, 10, 14], [2, 5, 10], [2, 10, 13], [1, 2, 10]],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14, 3], [0, 2, 4, 6, 8, 10, 12, 14, 11],
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 3, 6, 9, 12, 15],
+      [0, 2, 4, 6, 8, 10, 12, 14]
+    ],
+    opens: [6, 14],
+  },
+  # The kick here is quoted exactly: 0, 5, 8, 13. Snares are displaced off 4/12
+  # rather than sitting on them, which is what "displaced" buys -- the backbeat
+  # stops being a reference point and the bar reads broken.
+  flylo_canon: {
+    kicks: [
+      [0, 5, 8, 13], [0, 5, 8, 13, 15], [0, 5, 9, 13], [0, 4, 8, 13],
+      [0, 5, 8, 12], [0, 3, 5, 8, 13]
+    ],
+    snares: [[5, 13], [4, 13], [5, 12], [6, 13], [4, 11], [5, 14]],
+    ghosts: [[2, 7, 11, 15], [1, 6, 10, 14], [3, 9, 14], [2, 6, 11], [1, 7, 12]],
+    hats: [
+      [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15], [0, 2, 3, 5, 6, 8, 9, 11, 12, 14],
+      [1, 2, 4, 5, 7, 8, 10, 11, 13, 14], [0, 3, 4, 7, 8, 11, 12, 15]
+    ],
+    opens: [7, 15],
+  },
   timeless: {
     kicks: [
       [0, 8, 10, 15], [0, 3, 9, 11, 14], [0, 6, 10, 13], [0, 2, 7, 10, 14],
