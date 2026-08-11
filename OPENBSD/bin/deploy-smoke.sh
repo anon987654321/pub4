@@ -116,12 +116,32 @@ brgen_html_smoke() {
       ok "brgen no guest splash"
       ;;
   esac
+  # The nav landmark, not a tablist.
+  #
+  # This asked for role="tablist" until 2026-08-11 and warned on every run,
+  # because brgen/app/views/shared/_nav_swiper.html.erb deliberately stopped being
+  # one on 2026-08-10: dressing navigating links as tabs produced three axe
+  # violations at once, and role="tablist" on <nav> overrode the navigation
+  # landmark so nothing inside counted as landmark content. The check outlived the
+  # shape it was written for and trained everyone to ignore a warn.
+  #
+  # What the decision actually preserved is what is checked now: the nav landmark
+  # is present and the active entry carries aria-current, which is the correct
+  # signal for navigation.
   case "$html" in
-    *'role="tablist"'*)
-      ok "brgen nav tablist present"
+    *'id="nav_sections"'*)
+      ok "brgen nav landmark present"
       ;;
     *)
-      warn "brgen nav tablist not found (cache or partial HTML?)"
+      warn "brgen nav landmark not found (cache or partial HTML?)"
+      ;;
+  esac
+  case "$html" in
+    *'aria-current="page"'*)
+      ok "brgen nav marks the active entry"
+      ;;
+    *)
+      warn "brgen nav has no aria-current (front page may be the active entry)"
       ;;
   esac
 }
