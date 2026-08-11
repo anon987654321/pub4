@@ -358,6 +358,76 @@ module Outboard
       "[se_dry][se_verb]amix=inputs=2:weights=1 1:normalize=0"
   end
 
+  # ------------------------------------------------------- the dub effects
+  #
+  # Dub is not a genre applied to a mix, it is a performance played on the desk.
+  # King Tubby and Scientist were engineers reworking rhythm tracks other people
+  # had recorded, and the record is what the room's outboard did to them. So
+  # these are the boxes that were physically in those rooms, not a mood.
+
+  # SPRING REVERB. The Fisher/Accutronics tank in every console and guitar amp,
+  # and nothing like a plate or a hall.
+  #
+  # Three properties, all of which are usually treated as faults:
+  #
+  # DISPERSION. A spring is not a delay line -- high frequencies travel through
+  # it faster than low ones, so a single hit arrives smeared into a descending
+  # chirp. That is the "boing", and cascaded allpass filters are exactly the
+  # tool: they delay by frequency without changing amplitude.
+  #
+  # RESONANCE. A physical spring has strong modes at particular frequencies. A
+  # flat decay is a plate; the peaks are what makes a spring identifiable.
+  #
+  # BANDWIDTH. A tank passes roughly 150 Hz to 4 kHz and nothing outside it,
+  # which is why spring reverb sits in a mix without needing to be carved out.
+  def spring_reverb(mix: 0.42, decay: 0.55)
+    "asplit=2[sp_dry][sp_wet];" \
+      "[sp_wet]highpass=f=150,lowpass=f=4000," \
+      "allpass=f=380:width_type=q:w=0.6,allpass=f=1250:width_type=q:w=0.5," \
+      "allpass=f=2600:width_type=q:w=0.4," \
+      "aecho=0.9:#{decay}:29|37|53|71:0.7|0.55|0.4|0.3," \
+      "equalizer=f=1800:t=q:w=2.2:g=4,equalizer=f=3400:t=q:w=3.0:g=2.5," \
+      "lowpass=f=3600,volume=#{mix}[sp_verb];" \
+      "[sp_dry][sp_verb]amix=inputs=2:weights=1 1:normalize=0"
+  end
+
+  # PHASER. The Mutron Bi-Phase, and after it the Small Stone -- the sweep under
+  # half of Lee Perry's Black Ark output.
+  #
+  # Slow and deep. A fast phaser is a seventies funk guitar; a dub phaser takes
+  # ten or fifteen seconds to cross, so it reads as the whole track breathing
+  # rather than as an effect on one part.
+  #
+  # 0.1 Hz is aphaser's floor -- it silently refuses anything slower, and a
+  # refused filter kills the entire graph rather than degrading, so this clamps
+  # rather than trusting the argument.
+  def dub_phaser(speed: 0.12, decay: 0.55, delay: 3.4)
+    "aphaser=in_gain=0.6:out_gain=0.9:delay=#{delay}:decay=#{decay}:" \
+      "speed=#{[speed, 0.1].max}:type=t"
+  end
+
+  # DELAY THROW. The engineer's hand on the send: one phrase pushed into the
+  # echo while everything else stays dry.
+  #
+  # A constant delay is a texture; a throw is an event, and the difference is
+  # the whole style. `enable` gates the wet path so the echo opens for a two
+  # second window every eight bars and is closed the rest of the time.
+  #
+  # Period comes from the tempo rather than a fixed number of seconds, so the
+  # throws land on bar lines instead of drifting across them.
+  def delay_throw(bpm: 76, bars: 8, window: 2.0, time_ms: 320, feedback: 0.62)
+    bar = 4.0 * 60.0 / bpm.to_f
+    period = (bar * bars).round(3)
+    "asplit=2[dt_dry][dt_wet];" \
+      "[dt_wet]aecho=0.9:#{feedback}:#{time_ms.round}|#{(time_ms * 2).round}|#{(time_ms * 3).round}:" \
+      "0.7|0.5|0.35,lowpass=f=2600,highpass=f=200," \
+      # Muted OUTSIDE the window, not inside it. enable makes a filter active
+      # while its expression is true, so gating on lt() would have silenced the
+      # throw and passed echo the rest of the time -- the exact inverse.
+      "volume=0:enable='gte(mod(t\\,#{period})\\,#{window})'[dt_throw];" \
+      "[dt_dry][dt_throw]amix=inputs=2:weights=1 1:normalize=0"
+  end
+
   # ------------------------------------------------------------- mono bass
   #
   # Everything below the crossover collapsed to the centre.
@@ -529,7 +599,7 @@ module Outboard
     # pultec_air out was the first attempt and measured +1.0 dB at the top --
     # the neve drive and console sum both add harmonics up there, so declining
     # to add an air shelf does not make anything darker.
-    dub: %i[space_echo pultec_low_dub neve_80 la2a console_sum dub_darken mono_bass],
+    dub: %i[delay_throw spring_reverb space_echo pultec_low_dub dub_phaser neve_80 la2a console_sum dub_darken mono_bass],
   }.freeze
 
   DEFAULT_RACK = :donuts
@@ -558,6 +628,9 @@ module Outboard
       when :pultec_air then pultec_air
       when :pultec_low then pultec_low
       when :pultec_low_dub then pultec_low_dub
+      when :delay_throw then delay_throw(bpm: bpm)
+      when :dub_phaser then dub_phaser
+      when :spring_reverb then spring_reverb
       when :dub_darken then dub_darken
       when :console_sum then console_sum
       when :space_echo then space_echo
