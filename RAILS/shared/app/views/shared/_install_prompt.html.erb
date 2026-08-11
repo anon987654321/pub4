@@ -1,4 +1,11 @@
-<%# PWA install prompt — shown after third visit when beforeinstallprompt fires.
+<%# PWA install prompt — shown once the visitor has got real value out of the
+    product (posted, played, chatted) and beforeinstallprompt has fired. Not on a
+    visit count: those were removed from install_prompt_controller because they
+    fire before the product is useful, and this comment still described them.
+
+    First of the three onboarding prompts; the menu coach and the push button
+    both wait behind it. See shared/frontend/onboarding_queue.js.
+
     Locals: title (optional), body (optional). Defaults stay generic for unknown hosts. %>
 <% title = local_assigns[:title].presence || t("install.title", default: "Install this app") %>
 <% body = local_assigns[:body].presence || t("install.body", default: "Get quicker access from your home screen.") %>

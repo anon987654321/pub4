@@ -4,6 +4,7 @@
 // peel grip. Hide again on scroll-down. First visit gets a one-shot coach
 // tip so the closed bar stays findable (NN/g progressive disclosure).
 import { Controller } from "@hotwired/stimulus"
+import { mayPrompt, YIELD_EVENT } from "pub4/onboarding"
 
 const COACH_KEY = "pub4:tab-bar:coach-dismissed"
 
@@ -25,10 +26,19 @@ export default class extends Controller {
 
     this.onScroll = this.onScroll.bind(this)
     this.element.addEventListener("scroll", this.onScroll, { passive: true })
+
+    // Step back for the install prompt without marking the coach dismissed —
+    // the visitor has not seen it, so it is still owed to them on a later visit.
+    this.onYield = () => {
+      if (this.coachTimer) clearTimeout(this.coachTimer)
+      this.#hideCoachUi()
+    }
+    window.addEventListener(YIELD_EVENT, this.onYield)
   }
 
   disconnect() {
     this.element.removeEventListener("scroll", this.onScroll)
+    window.removeEventListener(YIELD_EVENT, this.onYield)
     if (this.coachTimer) clearTimeout(this.coachTimer)
   }
 
@@ -102,10 +112,17 @@ export default class extends Controller {
     if (!this.hasCoachTarget) return
     if (!this.hidden) return
     if (this.#coachDismissed()) return
+    // Not on the first sitting, and never over the install prompt. "Menyen er
+    // nederst" is worth nothing to someone still deciding whether they care
+    // about the app; it used to fire 1.6s into the very first page view. See
+    // pub4/onboarding for the ordering.
+    if (!mayPrompt("menu_coach")) return
 
     // Delay so first paint isn't noisy; feed content lands first.
     this.coachTimer = setTimeout(() => {
       if (!this.hidden || this.#coachDismissed()) return
+      if (!mayPrompt("menu_coach")) return
+
       this.coachTarget.hidden = false
       this.coachTarget.setAttribute("data-open", "1")
     }, 1600)
