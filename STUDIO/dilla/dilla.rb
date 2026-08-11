@@ -83,6 +83,7 @@ require_relative "lib/harmony_lead"
 require_relative "lib/theory_runtime"
 require_relative "lib/groove_engine"
 require_relative "lib/seed_providers"
+require_relative "lib/provenance"
 require_relative "lib/rhythm_macros"
 require_relative "lib/master_heuristics"
 require_relative "lib/spectral_engine"
@@ -27288,6 +27289,12 @@ DISPATCH = {
       abort "usage: ruby dilla.rb rap-vocal ingest|fit|list"
     end
   end,
+  # Print the command that rebuilds a render. The .dilla file carries it; this
+  # saves reading JSON to find it.
+  "replay" => lambda do
+    manifest = ARGV.shift or abort "usage: ruby dilla.rb replay <file.dilla>"
+    puts DillaProvenance.replay_command(manifest)
+  end,
   "liveset" => lambda do
     set = ARGV.shift || stems_load_manifest["active"] || "default"
     mins = (ARGV.shift || LIVESET_MIN).to_i
@@ -27303,6 +27310,11 @@ def render_output_path?(token)
 end
 
 if __FILE__ == $PROGRAM_NAME
+  # Before anything reads a seed. Draws and records RENDER_SEED when it is unset,
+  # so every file this run produces gets a .dilla recipe beside it and can be
+  # made again. DILLA_NO_PROVENANCE=1 restores the old unrecorded behaviour.
+  DillaProvenance.begin!(root: OUTPUT_DIR, argv: ARGV)
+
   pad_voice_before = ENV["PAD_VOICE"]
   pad_arp_before = ENV["PAD_ARP_MODE"]
   apply_best_defaults!
