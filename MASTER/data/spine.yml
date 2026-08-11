@@ -89,7 +89,28 @@ spine:
   # (f82bcf63c), +6 (2839ab805). None of it is accretion the ratchet exists to
   # catch; one of them is a deletion being undone. Switching units does not
   # forgive it, and the number below is the honest post-fact measurement.
-  lib_code_ceiling: 38219
+  # RAISED 2026-08-11, 38219 -> 38294 (+75), operator-sponsored. The first raise
+  # under the code-line unit, and the first one this file's own refusal made
+  # somebody ask for rather than take.
+  #
+  # All 75 lines are five commits, and every one is a fix: 50471a924 (one voice
+  # pinned in all four places that name one), ca92b7d2b (137 principles the tree
+  # had forgotten), be274db22 (two thirds of the law only fired on files that had
+  # already failed something), 51424ab63 (a second copy of the level that undid
+  # every previous attempt), ffa0730ff (two YAML files nothing read).
+  #
+  # What makes this a raise rather than a deletion: the three previous breaches
+  # were each paid for out of orphaned code, and that account is now empty. A
+  # sweep of all 445 lib/ files -- no extension filter, repo root as the scan
+  # root, both blindnesses of the 2026-08-03 sweep corrected -- returned one
+  # candidate, ground/pledge.rb, and it was a false positive: the sweep read its
+  # inner LibC module as the file's constant while Pledge itself is live. Neither
+  # is any of the five absorbable by core/'s own standard, which takes a handler
+  # per verb and a rule per constraint; a scan rule's regex is neither.
+  #
+  # Second raise now needs the same conversation. This one leaves the allowance
+  # at 1 of 2.
+  lib_code_ceiling: 38294
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -97,7 +118,9 @@ spine:
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"
-  raised: []
+  raised:
+    - "2026-08-11: 38219 -> 38294 (+75), operator-sponsored. Five fix commits, no
+      orphan left to pay for it (445 files swept), nothing absorbable by core/."
   # How many raises may stand before lint:spine refuses another. The allowance was
   # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
   # mechanism working: a genuine fall earns the budget back, so this is a budget

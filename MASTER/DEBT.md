@@ -14,36 +14,31 @@ which made the open items hard to find and let four of them go stale unnoticed.
 - **agent-ignore** — do not chase during narrow patches (constitution scan noise, horizon features).
 - **operator-priority** — humans should fix before declaring deploy healthy.
 
-## Spine Ceiling — breached, +75, and it needs a decision
+## Spine Ceiling — raised to 38,294 on sponsorship, 2026-08-11
 
-`lib/` is **38,294 code lines against a 38,219 ceiling** (measured 2026-08-11).
-`rake lint:spine` is therefore red on a clean tree, and because `rake audit` and
-`bin/check --profile=full` both depend on it, so are they.
+`lib/` reached 38,294 code lines against a 38,219 ceiling (+75), which made
+`rake lint:spine` — and through it `rake audit` and `bin/check --profile=full` —
+red on a clean tree. Closed by a **raise, sponsored by the operator**, which is
+the first thing this ratchet has produced that was asked for rather than taken.
 
-The whole +75 is five commits from 2026-08-10/11, and every one is a fix rather
-than a feature: `50471a924`, `ca92b7d2b`, `be274db22`, `51424ab63`, `ffa0730ff`.
-They touch `review/council/critique/context.rb`, `review/scan/file_processor.rb`,
-`review/scan/rules/cosmetic_rules.rb`, `review/scan/self_test.rb` and
-`voice/policy.rb`.
+The +75 is five commits, every one a fix: `50471a924`, `ca92b7d2b`, `be274db22`,
+`51424ab63`, `ffa0730ff`.
 
-**There is no dead code to pay for it this time.** A sweep of all 445 `lib/`
-files against every reference in the repo — no extension filter, repo root as
-the scan root, both blindnesses from the 2026-08-03 sweep corrected — returns
-one candidate, `ground/pledge.rb`, and that is a false positive: the sweep read
-its inner `LibC` module as the file's constant while `Pledge` itself is live.
-Three of the four previous breaches were closed out of orphaned files. That
-account is empty.
+What made this a raise rather than a deletion is the part worth carrying forward.
+The three previous breaches were each paid for out of orphaned code, and **that
+account is now empty.** A sweep of all 445 `lib/` files against every reference in
+the repo — no extension filter, repo root as the scan root, both blindnesses of
+the 2026-08-03 sweep corrected — returned one candidate, `ground/pledge.rb`, and
+that was a false positive: the sweep read its inner `LibC` module as the file's
+constant while `Pledge` itself is live. Nor is any of the five absorbable by
+`core/`'s own standard, which takes a handler per verb and a rule per constraint;
+a scan rule's regex is neither.
 
-So the options are the two `data/spine.yml` names: absorb into `core/`, or raise.
-The raise allowance is unspent (`raised: []`, `consecutive_raises_allowed: 2`),
-and none of these five commits is absorbable by `core/`'s own standard — it takes
-a handler per verb and a rule per constraint, and a scan rule's regex is neither.
-**A raise is a decision with a sponsor, not a ceiling edit**, so it is left
-breached and visible rather than quietly widened.
-
-Read the history in `data/spine.yml` before deciding: the unit changed on
-2026-08-10 from raw lines to code lines, precisely so that `lint:spine` and
-`[DENSITY]` stop pulling opposite ways on the same edit.
+The allowance now stands at 1 of 2, and the log entry in `data/spine.yml` is what
+makes that a budget rather than prose. A second raise needs the same conversation.
+`rake lint:spine RATCHET=1` clears the log when `lib/` genuinely falls — ratchet
+once, at the end of a session, since an intermediate ratchet has already locked in
+a state that was not clean and blocked the work that would have made it so.
 
 ## Self-Test Debt
 
