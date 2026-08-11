@@ -109,15 +109,45 @@ module DillaProvenance
       }
     end
 
-    # The knobs that change what comes out. Recorded by name so a manifest read
-    # a year from now says which switches were thrown, not just the seed.
-    ENV_KEYS = %w[
-      TRACK BARS BPM PROGRESSION STYLE PAD_VOICE PAD_ARP_MODE DILLA_RAW
-      SEED_PROVIDER LIVESET_MIN DILLA_OUTPUT_DIR
+    # The knobs that change what comes out, derived from the engine rather than
+    # listed by hand.
+    #
+    # The first version was a hand-kept allow-list of eleven names. v4 was
+    # rendered with fifteen knobs set and the manifest recorded six of them --
+    # PAD_VOL, GROOVE_FEEL, KICK_GAIN, ANALOG_CHAIN, SONITEX and RAP_VOCAL all
+    # missing -- so the file said "reproduce with" above a command that would
+    # not. A provenance record that is silently partial is worse than none,
+    # because it is believed.
+    #
+    # So the set is whatever the engine actually reads: every ENV["X"] and
+    # ENV.fetch("X" in dilla.rb and lib/. That cannot go stale against a new
+    # knob, which a list maintained beside the code always does.
+    #
+    # Deliberately not "every variable currently set": this file is written next
+    # to audio that gets shared, and the environment holds credentials.
+    ENV_READ = /ENV(?:\.fetch)?\[?\(?["']([A-Z][A-Z0-9_]{2,})["']/
+
+    def engine_env_keys
+      @engine_env_keys ||= begin
+        sources = [File.join(engine_root, "dilla.rb")] + Dir.glob(File.join(engine_root, "lib", "*.rb"))
+        sources.flat_map { |f| File.read(f).scan(ENV_READ).flatten rescue [] }.uniq.freeze
+      end
+    end
+
+    # The engine reads HOME and PATH like any program does, and they are not
+    # knobs. RENDER_SEED has its own field. The pattern is the safety net the
+    # comment above promises: this file sits beside audio that gets shared, and
+    # a manifest is a bad place to learn that an API key was in the environment.
+    ENV_DENY = %w[
+      HOME PATH PWD OLDPWD SHELL SHLVL TERM TMPDIR USER LOGNAME LANG LC_ALL
+      EDITOR VISUAL DISPLAY SSH_AUTH_SOCK RENDER_SEED
     ].freeze
+    ENV_DENY_PATTERN = /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH|COOKIE|SESSION/i
 
     def recorded_env
-      ENV_KEYS.each_with_object({}) do |key, acc|
+      engine_env_keys.each_with_object({}) do |key, acc|
+        next if ENV_DENY.include?(key) || key.match?(ENV_DENY_PATTERN)
+
         value = ENV[key]
         acc[key] = value unless value.nil? || value.empty?
       end
