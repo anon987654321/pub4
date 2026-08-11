@@ -453,6 +453,28 @@ module Outboard
     # what makes a drum bus sound like a record. Paired with the API, since both
     # are the fast, forward end of the collection.
     snap: %i[api_console fet1176 hedd_pentode gml_matte mono_bass],
+
+    
+    # BEAUTY. The chain you would reach for if the brief were "make it lovely"
+    # rather than "make it loud", and the only rack that reaches pultec_low --
+    # which was built, measured, and then put in no rack and given no caller.
+    # That is the same unreferenced-unit defect the note above this block
+    # describes, still true one unit later.
+    #
+    # Order is the reason it works. Tape first, so everything after colours
+    # something that already has the medium on it. Then the Pultec low, whose
+    # boost and cut overlap on purpose -- the shelf lifts 60 Hz while the
+    # adjacent cut pulls 168 Hz down, and the gap between them is the trick:
+    # weight without the mud that a plain low boost adds. Then the console for
+    # harmonics, the Fairchild to glue, the LA-2A to level what the Fairchild
+    # left, and the Pultec air last so the top opens after the compressors have
+    # stopped moving rather than being squashed by them.
+    #
+    # Two compressors is deliberate and is not two saturators: the Fairchild is
+    # variable-mu glue and the LA-2A is optical levelling, and they hear
+    # different things. Two saturators on a master is the mistake the donuts
+    # comment documents, and this rack has one -- the tape.
+    beauty: %i[tape_machine pultec_low neve_80 fairchild670 la2a pultec_air console_sum gml_matte mono_bass],
   }.freeze
 
   DEFAULT_RACK = :donuts

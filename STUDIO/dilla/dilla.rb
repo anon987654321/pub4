@@ -1649,6 +1649,27 @@ PAD_VOICE_PRESETS = {
 # Explicit multi-layer pad stacks: id + amix weight. Order = mix order.
 # Weights favor distinct timbres (EP attack, Moog body, Prophet air, Juno sheen).
 PAD_LAYER_STACKS = {
+  # The string machines, which is where this kind of beauty actually lives.
+  #
+  # A Rhodes carries the harmony because it has an attack and you can hear which
+  # note is which; the ensembles underneath have almost none, which is the point.
+  # The CS-80 and the Solina are both divide-down string machines whose whole
+  # character is a slow chorused swell with no transient at all -- put a defined
+  # voice on top of them and the chord reads clearly while the bed underneath
+  # just widens.
+  #
+  # Rhodes first and loudest for that reason. CS-80 next because it has the most
+  # movement. Solina under it for width. The Juno wash last and quietest -- its
+  # chorus is the widest of the three and stacking it high smears the others.
+  #
+  # Four layers is the ceiling. A fifth ensemble adds no new information and
+  # costs a FluidSynth pass, and the fourth is already at 0.5.
+  stack_beauty: [
+    { id: :rhodes_mark1, mix: 1.3, role: :ep },
+    { id: :cs80_ensemble, mix: 1.1, role: :warm },
+    { id: :solina_ensemble, mix: 0.8, role: :warm },
+    { id: :juno_chorus_wash, mix: 0.5, role: :texture },
+  ],
   # Mixes tuned so Rhodes tines and Prophet poly dominate; Moog is glue only.
   stack_soul: [
     { id: :rhodes_mark1, mix: 1.45, role: :ep },
@@ -20946,7 +20967,13 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # That is the exact confusion both comments above are about, so the one case
   # where the silence is deliberate says so.
   if leads_muted
-    dmesg("lead: su tunnel choir (four synth lanes muted)", unit: "harm0", parent: "dilla0")
+    # Two different silences, and the message used to claim the choir either
+    # way. Under NO_LEAD nothing is playing a top line at all, and saying "su
+    # tunnel choir" there reports a voice that is not in the render -- the exact
+    # thing the four-lane comment below was written to stop.
+    dmesg(su_melody_rendered ? "lead: su tunnel choir (four synth lanes muted)"
+                             : "lead: none (NO_LEAD -- four synth lanes, choir and pluck all off)",
+          unit: "harm0", parent: "dilla0")
   else
     played = []
     played << "counter-line #{counter_events.length}n/#{ENV.fetch('LEAD_TIMBRE', 'choir')}" if counter_events.any?
