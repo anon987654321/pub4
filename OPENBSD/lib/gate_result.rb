@@ -48,6 +48,7 @@ module Deploy
       @soft_failures = []
       @unchecked = []
       @checks_ran = 0
+      @live_skips = 0
     end
 
     # severity: :hard (default, blocks) | :soft (warn unless GATE_STRICT_SOFT)
@@ -71,6 +72,7 @@ module Deploy
 
     # A live check the gate declined to run because nothing was listening.
     def skipped_live(message)
+      @live_skips += 1
       if self.class.require_live?
         @failures << "[live-required] #{message}"
       else
@@ -78,6 +80,8 @@ module Deploy
       end
       self
     end
+
+    attr_reader :live_skips
 
     # A check that could not run. Name the missing precondition, not the check:
     # "no Chrome/Chromium" reads as a fixable environment fact, "geometry not
@@ -107,8 +111,30 @@ module Deploy
     # time meant a gate that ran fifty checks and skipped one hard-failed on the
     # deploy host, so `resource_guard.sh` parking amber -- a documented, normal VPS
     # state -- blocked releases that had nothing wrong with them.
+    #
+    # A live skip counts toward "measured nothing" as of 2026-08-11. It did not,
+    # and that was the hole: skipped_live files a warning rather than an unchecked
+    # precondition, so a gate whose ENTIRE check set was live-skipped had zero
+    # checks, zero unchecked and reported PASSED. layout_geometry did exactly that
+    # on 2026-08-03 -- PASSED having skipped all 17 of its checks because no app was
+    # listening, which is how a dead amber and bsdports read as green for an unknown
+    # number of days (data/debt.yml: amber_bsdports_stop_and_stay_down).
+    #
+    # A gate that skipped some live checks and ran others still passes: this asks
+    # whether anything at all was measured, not whether everything was.
     def measured_nothing?
-      @checks_ran.zero? && !@unchecked.empty?
+      @checks_ran.zero? && (!@unchecked.empty? || @live_skips.positive?)
+    end
+
+    # Why nothing was measured, in the terms the reader can act on. "0
+    # precondition(s) missing" was the old output for an all-live-skipped gate,
+    # which is both true and useless: the preconditions were not missing, the app
+    # was not listening.
+    def nothing_measured_reason
+      parts = []
+      parts << "#{@unchecked.size} precondition(s) missing" unless @unchecked.empty?
+      parts << "#{@live_skips} live check(s) skipped, nothing listening" if @live_skips.positive?
+      parts.empty? ? "no checks ran" : parts.join(", ")
     end
 
     def ok?
@@ -148,6 +174,9 @@ module Deploy
       # Chrome would speak for the whole suite the way one app used to speak for
       # a whole gate.
       @checks_ran += other.checks_ran if other.respond_to?(:checks_ran)
+      # Same reason as checks_ran: without this a composite whose every leaf
+      # live-skipped would look like a composite that had nothing to skip.
+      @live_skips += other.live_skips if other.respond_to?(:live_skips)
       self
     end
 
@@ -165,13 +194,13 @@ module Deploy
         # FAILED with nothing under it.
         if @failures.empty?
           emit("Failures:", ["nothing measured, and GATE_STRICT_INCONCLUSIVE is set " \
-                             "(#{@unchecked.size} precondition(s) missing)"])
+                             "(#{nothing_measured_reason})"])
         end
         :failed
       when :inconclusive
         # Deliberately not the success message: the point of the third state is
         # that this gate has nothing to report success about.
-        puts "inconclusive: nothing measured — #{@unchecked.size} precondition(s) missing " \
+        puts "inconclusive: nothing measured — #{nothing_measured_reason} " \
              "(set GATE_STRICT_INCONCLUSIVE=1 to treat as failure)"
         :inconclusive
       else

@@ -136,7 +136,16 @@ open:
       Why it can persist unnoticed: relayd still terminates TLS with a valid cert,
       so the shape is `SSL certificate verify ok` then `Empty reply from server` and
       curl reports 000, not a 5xx. Nothing in the repo, the gates or DNS looks wrong.
-      TWO CONCRETE ACTIONS, both verified missing 2026-08-11:
+      FIXED 2026-08-11, and it was the worst of the three: the post-deploy smoke —
+      the one gate whose job is noticing a dead app — could not fail on bsdports.
+      It had no local check at all, and its public check passed a literal 0 for
+      `required`. deploy_smoke_contract_test asserted the URL was present, which is
+      true of an optional check, so the hole was invisible from the test. bsdports
+      now has an rcctl check, a local :47312 check and a required public check, each
+      waivable only through ALLOW_BSDPORTS_DOWN, and the contract test asserts
+      requiredness per endpoint plus that every waiver variable still gates
+      something (mutation-checked against the old shape).
+      TWO CONCRETE ACTIONS STILL OPEN, both verified missing 2026-08-11:
       (a) OPENBSD/bin/uptime-check.sh already fails correctly when an app is down,
           and NOTHING runs it — no line in etc/crontab.vm23, and OPERATOR.sh does
           not install it to /usr/local/bin. A checker on no schedule is why the

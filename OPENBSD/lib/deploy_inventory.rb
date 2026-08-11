@@ -37,9 +37,23 @@ module Deploy
 
     private
 
+    REQUIRED_APP_KEYS = %w[domain port deploy_script deploy_root].freeze
+
+    # apps.yml is the fleet's source of truth and is edited by hand, so a missing
+    # key has to say which app and which key. It used to raise a bare
+    # `KeyError: key not found: "deploy_root"` six frames inside a gate, which reads
+    # as a broken gate rather than an incomplete entry — every gate that reads the
+    # inventory died the same anonymous way.
     def load_apps
-      data = YAML.safe_load(File.read(File.join(root, "RAILS", "apps.yml")))
+      path = File.join(root, "RAILS", "apps.yml")
+      data = YAML.safe_load(File.read(path))
       data.fetch("apps").map do |name, metadata|
+        missing = REQUIRED_APP_KEYS.reject { |key| metadata.is_a?(Hash) && metadata.key?(key) }
+        unless missing.empty?
+          raise KeyError, "RAILS/apps.yml: app #{name.inspect} is missing #{missing.join(', ')} " \
+                          "(every app needs #{REQUIRED_APP_KEYS.join(', ')})"
+        end
+
         App.new(
           name: name,
           title: metadata["title"],

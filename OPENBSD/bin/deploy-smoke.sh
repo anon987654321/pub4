@@ -6,8 +6,17 @@
 #   sh OPENBSD/bin/deploy-smoke.sh --public     # public HTTPS only
 #   sh OPENBSD/bin/deploy-smoke.sh --local      # localhost ports + rcctl only
 #   ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh   # don't fail if amber is down
+#   ALLOW_BSDPORTS_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh  # same for bsdports
 #
 # Exit 0 only when required checks pass.
+#
+# bsdports was the hole this script existed to cover and did not: it had no local
+# check at all and its public check was optional, so the one post-deploy gate that
+# is supposed to notice a dead app could not fail on the app that was found dead
+# (data/debt.yml: amber_bsdports_stop_and_stay_down). The contract test passed
+# throughout, because it asserted the URL was present rather than required.
+# A waiver is now a named variable per app, so waiving is a decision that shows up
+# in the command line rather than a default nobody reads.
 
 set -eu
 
@@ -15,6 +24,7 @@ CURL=${CURL:-curl}
 TIMEOUT=${SMOKE_TIMEOUT:-20}
 MODE=${1:-auto}
 ALLOW_AMBER_DOWN=${ALLOW_AMBER_DOWN:-0}
+ALLOW_BSDPORTS_DOWN=${ALLOW_BSDPORTS_DOWN:-0}
 
 failed=0
 warns=0
@@ -142,6 +152,10 @@ amber_req=1
 if [ "$ALLOW_AMBER_DOWN" = "1" ]; then
   amber_req=0
 fi
+bsdports_req=1
+if [ "$ALLOW_BSDPORTS_DOWN" = "1" ]; then
+  bsdports_req=0
+fi
 
 if [ "$run_local" = "1" ]; then
   printf '\n== local (vm23) ==\n'
@@ -149,10 +163,14 @@ if [ "$run_local" = "1" ]; then
   check_rcctl master 1
   check_rcctl brgen 1
   check_rcctl amber "$amber_req"
+  check_rcctl bsdports "$bsdports_req"
   check_rcctl relayd 1
   check_http master_local  "http://127.0.0.1:53187/up" 1
   check_http brgen_local   "http://127.0.0.1:38182/up" 1
   check_http amber_local   "http://127.0.0.1:61352/up" "$amber_req"
+  # The local port is the check that distinguishes a shed app from a relayd
+  # failure: a shed app leaves 443 answering and only this port closed.
+  check_http bsdports_local "http://127.0.0.1:47312/up" "$bsdports_req"
 fi
 
 if [ "$run_public" = "1" ]; then
@@ -160,8 +178,7 @@ if [ "$run_public" = "1" ]; then
   check_http master_public  "https://ai.brgen.no/up" 1
   check_http brgen_public   "https://brgen.no/up" 1
   check_http amber_public   "https://amber.brgen.no/up" "$amber_req"
-  # bsdports optional in multi-app tight hosts
-  check_http bsdports_public "https://bsdports.org/up" 0
+  check_http bsdports_public "https://bsdports.org/up" "$bsdports_req"
   brgen_html_smoke
 fi
 

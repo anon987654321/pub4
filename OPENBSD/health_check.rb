@@ -15,15 +15,25 @@ APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 options = {
   all_ready_apps: false,
   public: false,
+  public_only: false,
   core: false,
   json: false,
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: ruby34 OPENBSD/health_check.rb [--core|--all-ready-apps] [--public] [--json]"
+  parser.banner = "Usage: ruby34 OPENBSD/health_check.rb [--core|--all-ready-apps] [--public|--public-only] [--json]"
   parser.on("--core", "Check only core infrastructure plus brgen/master") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in RAILS/apps.yml") { options[:all_ready_apps] = true }
   parser.on("--public", "Check public HTTPS endpoints, cert files, and externally-routed names") { options[:public] = true }
+  # Everything else in this file needs rcctl, pfctl, /etc/relayd.conf and localhost
+  # ports -- i.e. vm23. --public-only is the subset an external checker can actually
+  # answer, and it exists so OPENBSD/bin/uptime-check.sh can be a wrapper over this
+  # file instead of a second, hardcoded list of hosts: that copy named four domains
+  # and would have gone on naming four after a fifth app shipped.
+  parser.on("--public-only", "Only public HTTPS endpoints (runs anywhere, no vm23 tools)") do
+    options[:public_only] = true
+    options[:public] = true
+  end
   parser.on("--json", "Emit machine-readable JSON on success") { options[:json] = true }
 end.parse!
 
@@ -31,9 +41,17 @@ options[:all_ready_apps] = false if options[:core]
 
 failures = []
 
+# A missing binary is a named failure, not a backtrace. This raised Errno::ENOENT
+# out of Open3 and killed the whole run at the first check: off the box that is
+# every invocation (no /usr/sbin/rcctl), and on the box it would take the weekly
+# integrity run down with a stack trace the moment a tool moved -- reporting
+# nothing about the twenty checks after it. The point of this script is the list of
+# failures, so an absent tool belongs in that list.
 def run(*cmd)
   out, status = Open3.capture2e(*cmd)
   [status.success?, out.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?").strip]
+rescue Errno::ENOENT, Errno::EACCES => e
+  [false, "#{cmd.first}: #{e.class.name.split("::").last} (this check needs vm23)"]
 end
 
 def privileged(*cmd)
@@ -88,8 +106,17 @@ def service_running?(service)
   [ok && out.include?("(ok)"), out]
 end
 
-def curl_ok?(url, timeout: 25)
-  run("/usr/local/bin/curl", "-fsS", "--max-time", timeout.to_s, url)
+# OpenBSD packages curl into /usr/local/bin; every other host puts it in
+# /usr/bin. Hardcoding the first meant a laptop run failed every HTTP check with
+# "not found" and said nothing about whether the site was up.
+# CURL= is honoured because the wrapper that documents it (bin/uptime-check.sh)
+# is now a wrapper over this file.
+CURL = [ENV["CURL"], "/usr/local/bin/curl", "/usr/bin/curl"]
+       .compact.find { |path| File.executable?(path) } || "curl"
+HTTP_TIMEOUT = Integer(ENV.fetch("HEALTH_CHECK_TIMEOUT", "25"))
+
+def curl_ok?(url, timeout: HTTP_TIMEOUT)
+  run(CURL, "-fsS", "--max-time", timeout.to_s, url)
 end
 
 apps = load_apps
@@ -99,37 +126,45 @@ app_domains = apps.transform_values { |metadata| metadata.fetch("domain") }
 core_apps = %w[brgen]
 ready_apps = options[:all_ready_apps] ? app_ports.keys.sort : core_apps
 
+# Every check below this line except the HTTPS block needs a tool or a file that
+# only exists on vm23. Under --public-only they are not skipped silently: the
+# collections are empty and the guarded blocks say so in the scope line at the end,
+# so a run cannot look like it checked the box when it checked the internet.
+on_box = !options[:public_only]
+
 core_services = %w[nsd httpd relayd smtpd master] + core_apps
-required_services = (core_services + ready_apps).uniq
+required_services = on_box ? (core_services + ready_apps).uniq : []
 
 required_services.each do |service|
   running, out = service_running?(service)
   failures << "#{service}: #{out.empty? ? "check failed" : out}" unless running
 end
 
-pfctl = File.executable?("/sbin/pfctl") ? "/sbin/pfctl" : "/usr/sbin/pfctl"
-ok, out = run(*privileged(pfctl, "-s", "rules"))
-pf_ok = ok && out.include?("block") && out.include?("log all")
-failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless pf_ok
+if on_box
+  pfctl = File.executable?("/sbin/pfctl") ? "/sbin/pfctl" : "/usr/sbin/pfctl"
+  ok, out = run(*privileged(pfctl, "-s", "rules"))
+  pf_ok = ok && out.include?("block") && out.include?("log all")
+  failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless pf_ok
 
-dns_ok = false
-if File.executable?("/usr/bin/dig")
-  dns_ok, dns_out = run("/usr/bin/dig", "@127.0.0.1", "brgen.no", "SOA", "+short", "+time=2", "+tries=1")
-  dns_ok &&= !dns_out.empty? && dns_out.include?("brgen.no")
-elsif (dns_cmd = %w[/usr/sbin/drill /usr/bin/drill].find { |c| File.executable?(c) })
-  dns_ok, dns_out = run(dns_cmd, "@127.0.0.1", "brgen.no", "SOA")
-  dns_ok &&= dns_out.include?("brgen.no.")
-end
-unless dns_ok
-  nsd_ok, nsd_out = run(*privileged("/usr/sbin/rcctl", "check", "nsd"))
-  failures << "dns: no local SOA (nsd #{nsd_out.strip})" unless nsd_ok && nsd_out.include?("(ok)")
+  dns_ok = false
+  if File.executable?("/usr/bin/dig")
+    dns_ok, dns_out = run("/usr/bin/dig", "@127.0.0.1", "brgen.no", "SOA", "+short", "+time=2", "+tries=1")
+    dns_ok &&= !dns_out.empty? && dns_out.include?("brgen.no")
+  elsif (dns_cmd = %w[/usr/sbin/drill /usr/bin/drill].find { |c| File.executable?(c) })
+    dns_ok, dns_out = run(dns_cmd, "@127.0.0.1", "brgen.no", "SOA")
+    dns_ok &&= dns_out.include?("brgen.no.")
+  end
+  unless dns_ok
+    nsd_ok, nsd_out = run(*privileged("/usr/sbin/rcctl", "check", "nsd"))
+    failures << "dns: no local SOA (nsd #{nsd_out.strip})" unless nsd_ok && nsd_out.include?("(ok)")
+  end
 end
 
-up_checks = { "master" => 53_187 }
+up_checks = on_box ? { "master" => 53_187 } : {}
 ready_apps.each do |name|
   port = app_ports[name]
   failures << "#{name}: missing port in apps.yml" unless port
-  up_checks[name] = port if port
+  up_checks[name] = port if port && on_box
 end
 
 up_checks.each do |name, port|
@@ -161,7 +196,10 @@ up_checks.each do |name, port|
   end
 end
 
-if File.file?("/etc/relayd.conf")
+if !on_box
+  # /etc/relayd.conf is on vm23; the repo copy is deliberately not a substitute
+  # (OPENBSD/DECISIONS.md and the relayd entries in RUNBOOK.md).
+elsif File.file?("/etc/relayd.conf")
   relayd_conf = File.read("/etc/relayd.conf")
   unless relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/up"')
     failures << "relayd: master backend missing http /up check"
@@ -176,7 +214,7 @@ else
   failures << "relayd: /etc/relayd.conf missing"
 end
 
-if options[:public]
+if options[:public] && on_box
   domains = ["brgen.no"] + ready_apps.filter_map { |name| app_domains[name] }
   domains.uniq.each do |domain|
     fullchain = "/etc/ssl/#{domain}.fullchain.pem"
@@ -196,7 +234,7 @@ if options[:public]
   end
 
   https_checks.each do |name, url|
-    ok, out = curl_ok?(url, timeout: 25)
+    ok, out = curl_ok?(url)
     failures << "#{name} https: #{out.empty? ? "no response" : out}" unless ok
   end
 end
@@ -211,7 +249,13 @@ if failures.any?
 end
 
 mode = options[:all_ready_apps] ? "all-ready-apps" : "core"
-scope = options[:public] ? "#{mode}+public" : mode
+scope = if options[:public_only]
+          "public-only (#{ready_apps.size} app(s); nothing on vm23 was checked)"
+        elsif options[:public]
+          "#{mode}+public"
+        else
+          mode
+        end
 if options[:json]
   puts JSON.generate(ok: true, scope: scope, services_checked: required_services, apps_checked: ready_apps)
 else

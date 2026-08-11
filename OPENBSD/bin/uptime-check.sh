@@ -1,37 +1,29 @@
 #!/usr/bin/env sh
-# External-style uptime checker — curls /up on each production app.
-# Runs from a laptop or vm23; no local gates required.
+# External-style uptime checker — public HTTPS only, no vm23 tools needed.
+# Runs from a laptop or vm23.
 #
 # Usage:
 #   sh OPENBSD/bin/uptime-check.sh
 #   CURL=/usr/local/bin/curl sh OPENBSD/bin/uptime-check.sh
+#   UPTIME_CHECK_TIMEOUT=40 sh OPENBSD/bin/uptime-check.sh
 #
 # Exit 0 only when every endpoint returns HTTP 2xx/3xx.
+#
+# This used to be its own list of four hardcoded URLs. health_check.rb asks the
+# same question against RAILS/apps.yml, so the hardcoded copy could only ever go
+# stale — it would still have named four domains after a fifth app shipped, and
+# nothing would have reported that. --public-only is the scope that needs no
+# rcctl, no pfctl and no /etc/relayd.conf, which is what made this a wrapper
+# rather than a deletion: the entry point is documented in RUNBOOK.md and
+# RAILS/amber/HEIR.md, and it is the one health check that runs anywhere.
 
 set -eu
 
-CURL=${CURL:-curl}
-TIMEOUT=${UPTIME_CHECK_TIMEOUT:-20}
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
+RUBY=${RUBY:-$(command -v ruby34 2>/dev/null || command -v ruby)}
 
-check() {
-  name=$1
-  url=$2
-  if ! $CURL -fsS --max-time "$TIMEOUT" -o /dev/null "$url"; then
-    printf 'FAIL %s %s\n' "$name" "$url" >&2
-    return 1
-  fi
-  printf 'ok   %s %s\n' "$name" "$url"
-}
+# Same names this script has always documented, mapped onto health_check.rb's.
+HEALTH_CHECK_TIMEOUT=${UPTIME_CHECK_TIMEOUT:-20}
+export HEALTH_CHECK_TIMEOUT
 
-failed=0
-check master  "https://ai.brgen.no/up"        || failed=1
-check brgen   "https://brgen.no/up"          || failed=1
-check amber   "https://amber.brgen.no/up"    || failed=1
-check bsdports "https://bsdports.org/up"     || failed=1
-
-if [ "$failed" -ne 0 ]; then
-  printf 'uptime-check: one or more endpoints failed\n' >&2
-  exit 1
-fi
-
-printf 'uptime-check: all endpoints ok\n'
+exec "$RUBY" "${ROOT}/OPENBSD/health_check.rb" --public-only --all-ready-apps "$@"

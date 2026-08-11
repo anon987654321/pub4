@@ -49,6 +49,49 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     assert Deploy::GateResult.require_live?({ "GATE_REQUIRE_LIVE" => "1" })
   end
 
+  # The other half of the same gap, and the one that let a dead app read as green
+  # without anybody setting a flag: a gate whose ENTIRE check set is live-skipped
+  # reported PASSED, because skipped_live files a warning rather than an unchecked
+  # precondition, leaving both counts at zero. layout_geometry said PASSED having
+  # skipped all 17 of its checks.
+  def test_a_gate_that_skipped_every_live_check_measured_nothing
+    result = Deploy::GateResult.new
+    result.skipped_live("amber port 61352 closed")
+    result.skipped_live("bsdports port 47312 closed")
+
+    assert_equal :inconclusive, result.outcome,
+                 "a gate that ran no checks at all must not report PASSED"
+    assert result.measured_nothing?
+    assert_match(/live check\(s\) skipped/, result.nothing_measured_reason)
+  end
+
+  # The distinction that keeps this from blocking normal VPS states: a parked amber
+  # must not turn a gate that measured brgen into a non-result.
+  def test_a_gate_that_measured_something_still_passes
+    assert_equal :passed, result_with_skip.outcome
+  end
+
+  def test_a_composite_carries_its_leaves_live_skips
+    leaf = Deploy::GateResult.new
+    leaf.skipped_live("brgen port closed")
+    composite = Deploy::GateResult.new.merge!(leaf, label: "geometry")
+
+    assert_equal :inconclusive, composite.outcome,
+                 "one leaf's skip count must reach the composite, or the suite claims " \
+                 "coverage its leaves did not earn"
+  end
+
+  # "0 precondition(s) missing" was the old message for this case — true, and
+  # useless: nothing was missing, nothing was listening.
+  def test_the_reason_names_which_of_the_two_causes_it_was
+    unchecked = Deploy::GateResult.new.inconclusive!("no Chrome")
+    live = Deploy::GateResult.new
+    live.skipped_live("port closed")
+
+    assert_match(/precondition/, unchecked.nothing_measured_reason)
+    refute_match(/precondition/, live.nothing_measured_reason)
+  end
+
   def design_tokens
     YAML.safe_load_file(File.expand_path("../shared/design_tokens.yml", __dir__))
   end

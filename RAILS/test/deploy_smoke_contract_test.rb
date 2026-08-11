@@ -9,19 +9,75 @@ class DeploySmokeContractTest < Minitest::Test
   RAILS_APPS = APPS
   SMOKE = File.join(OPENBSD_ROOT, "bin", "deploy-smoke.sh")
 
+  # Every app's local port and public URL, and the rcctl service name. bsdports had
+  # neither local check when this list was only strings.
+  ENDPOINTS = {
+    "master" => ["http://127.0.0.1:53187/up", "https://ai.brgen.no/up"],
+    "brgen" => ["http://127.0.0.1:38182/up", "https://brgen.no/up"],
+    "amber" => ["http://127.0.0.1:61352/up", "https://amber.brgen.no/up"],
+    "bsdports" => ["http://127.0.0.1:47312/up", "https://bsdports.org/up"],
+  }.freeze
+
+  # An app may be waived only by its own named variable, so a waiver is visible in
+  # the command that waives it.
+  WAIVERS = { "amber" => "ALLOW_AMBER_DOWN", "bsdports" => "ALLOW_BSDPORTS_DOWN" }.freeze
+
+  def smoke_body
+    @smoke_body ||= begin
+      assert File.file?(SMOKE), "missing OPENBSD/bin/deploy-smoke.sh"
+      File.read(SMOKE)
+    end
+  end
+
+  # Comments stripped: this script explains its own required/optional history in
+  # prose, and an assertion over the raw file reads the explanation as the check.
+  def smoke_code
+    @smoke_code ||= smoke_body.lines.reject { |line| line.strip.start_with?("#") }.join
+  end
+
   def test_deploy_smoke_script_exists_and_covers_apps
-    assert File.file?(SMOKE), "missing OPENBSD/bin/deploy-smoke.sh"
-    body = File.read(SMOKE)
-    assert_includes body, "ALLOW_AMBER_DOWN"
-    assert_includes body, "http://127.0.0.1:38182/up"
-    assert_includes body, "http://127.0.0.1:61352/up"
-    assert_includes body, "http://127.0.0.1:53187/up"
-    assert_includes body, "https://brgen.no/up"
-    assert_includes body, "https://amber.brgen.no/up"
-    assert_includes body, "https://ai.brgen.no/up"
-    assert_includes body, "https://bsdports.org/up"
-    assert_includes body, "brgen_html_smoke"
-    assert_includes body, "rcctl"
+    ENDPOINTS.each_value do |urls|
+      urls.each { |url| assert_includes smoke_code, url }
+    end
+    assert_includes smoke_code, "brgen_html_smoke"
+    assert_includes smoke_code, "rcctl"
+  end
+
+  # The bug this replaces an assert_includes for: `https://bsdports.org/up` was
+  # present all along, passed to check_http with a literal 0 for `required`. The URL
+  # being mentioned proved nothing about whether a dead app fails the smoke, which
+  # is the only thing this script is for.
+  def test_every_endpoint_is_required_or_waived_by_its_own_named_variable
+    ENDPOINTS.each do |app, urls|
+      urls.each do |url|
+        call = smoke_code.lines.find { |line| line.include?(url) && line.include?("check_http") }
+        refute_nil call, "#{url} is in the script but not passed to check_http"
+
+        required = call.split(url, 2).last.delete('"').strip
+        expected = WAIVERS.fetch(app, "1")
+        expected = "$#{app}_req" unless expected == "1"
+
+        assert_equal expected, required,
+                     "#{app} #{url} must be required (1) or gated on #{WAIVERS[app] || "nothing"} — " \
+                     "a hardcoded 0 is a check that cannot fail, which is how a dead app read as green"
+      end
+    end
+  end
+
+  def test_every_app_has_an_rcctl_check
+    ENDPOINTS.each_key do |app|
+      assert_match(/check_rcctl\s+#{app}\s/, smoke_code, "#{app} has no rcctl check")
+    end
+  end
+
+  # A waiver variable that no longer gates anything is an exemption outliving its
+  # subject (soul.yml EXEMPTIONS_EXPIRE), and it reads as a considered decision.
+  def test_each_waiver_variable_is_read_and_gates_a_check
+    WAIVERS.each do |app, variable|
+      assert_includes smoke_code, variable, "#{variable} is documented but never read"
+      assert_match(/#{app}_req=0/, smoke_code, "#{variable} does not actually waive #{app}")
+      assert_includes smoke_code, "$#{app}_req", "#{app}_req is set but passed to no check"
+    end
   end
 
   def test_deploy_smoke_gate_static_contract

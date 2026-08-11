@@ -94,7 +94,12 @@ module Deploy
         end
       end
 
-      %w[brgen.no ai.brgen.no amber.brgen.no bsdports.org].each do |dom|
+      # Derived, for the same reason the port table above it is. This was a literal
+      # %w[brgen.no ai.brgen.no amber.brgen.no bsdports.org] -- the last hardcoded
+      # fleet list inside the gate whose whole purpose is proving the fleet agrees.
+      # A fourth app would have shipped with no keypair assertion and the gate would
+      # have passed, which is exactly how relayd.conf drifted unnoticed for ports.
+      live_apexes(master).each do |dom|
         result.fail("relayd.conf missing tls keypair for #{dom}") unless relayd_keys.include?(dom)
       end
 
@@ -102,6 +107,19 @@ module Deploy
     end
 
     private
+
+    # Every domain that terminates TLS on vm23: the apps from apps.yml plus the
+    # MASTER face, which is not a Rails app and so lives in deploy_inventory.json's
+    # master_face rather than apps.yml.
+    def live_apexes(master)
+      apps = begin
+        Inventory.new(root: ROOT.to_s).apps.map(&:domain)
+      rescue StandardError
+        []
+      end
+      face = master.dig(:master, "domain")
+      (apps + [face]).compact.uniq
+    end
 
     def parse_openbsd_domains
       text = OPENBSD.read
