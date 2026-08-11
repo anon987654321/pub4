@@ -1,7 +1,7 @@
 {
-  "track": "backdoor",
-  "performer": "herbie",
-  "groove_dna": "cosmogramma",
+  "track": "circle_fifths_descent",
+  "performer": "yancey",
+  "groove_dna": "donuts",
   "generation": 59,
   "best_score": 68.13,
   "motifs": [
@@ -93,34 +93,242 @@
     },
     {
       "bar": "4",
-      "section": "verse"
+      "section": "intro"
     },
     {
       "bar": "5",
-      "section": "verse"
+      "section": "intro"
     },
     {
       "bar": "6",
-      "section": "verse"
+      "section": "intro"
     },
     {
       "bar": "7",
-      "section": "verse"
+      "section": "intro"
     },
     {
       "bar": "8",
-      "section": "hook"
+      "section": "verse"
     },
     {
       "bar": "9",
-      "section": "hook"
+      "section": "verse"
     },
     {
       "bar": "10",
-      "section": "hook"
+      "section": "verse"
     },
     {
       "bar": "11",
+      "section": "verse"
+    },
+    {
+      "bar": "12",
+      "section": "verse"
+    },
+    {
+      "bar": "13",
+      "section": "verse"
+    },
+    {
+      "bar": "14",
+      "section": "verse"
+    },
+    {
+      "bar": "15",
+      "section": "verse"
+    },
+    {
+      "bar": "16",
+      "section": "hook"
+    },
+    {
+      "bar": "17",
+      "section": "hook"
+    },
+    {
+      "bar": "18",
+      "section": "hook"
+    },
+    {
+      "bar": "19",
+      "section": "hook"
+    },
+    {
+      "bar": "20",
+      "section": "hook"
+    },
+    {
+      "bar": "21",
+      "section": "hook"
+    },
+    {
+      "bar": "22",
+      "section": "hook"
+    },
+    {
+      "bar": "23",
+      "section": "hook"
+    },
+    {
+      "bar": "24",
+      "section": "verse"
+    },
+    {
+      "bar": "25",
+      "section": "verse"
+    },
+    {
+      "bar": "26",
+      "section": "verse"
+    },
+    {
+      "bar": "27",
+      "section": "verse"
+    },
+    {
+      "bar": "28",
+      "section": "verse"
+    },
+    {
+      "bar": "29",
+      "section": "verse"
+    },
+    {
+      "bar": "30",
+      "section": "verse"
+    },
+    {
+      "bar": "31",
+      "section": "verse"
+    },
+    {
+      "bar": "32",
+      "section": "bridge"
+    },
+    {
+      "bar": "33",
+      "section": "bridge"
+    },
+    {
+      "bar": "34",
+      "section": "bridge"
+    },
+    {
+      "bar": "35",
+      "section": "bridge"
+    },
+    {
+      "bar": "36",
+      "section": "bridge"
+    },
+    {
+      "bar": "37",
+      "section": "bridge"
+    },
+    {
+      "bar": "38",
+      "section": "bridge"
+    },
+    {
+      "bar": "39",
+      "section": "bridge"
+    },
+    {
+      "bar": "40",
+      "section": "solo"
+    },
+    {
+      "bar": "41",
+      "section": "solo"
+    },
+    {
+      "bar": "42",
+      "section": "solo"
+    },
+    {
+      "bar": "43",
+      "section": "solo"
+    },
+    {
+      "bar": "44",
+      "section": "solo"
+    },
+    {
+      "bar": "45",
+      "section": "solo"
+    },
+    {
+      "bar": "46",
+      "section": "solo"
+    },
+    {
+      "bar": "47",
+      "section": "solo"
+    },
+    {
+      "bar": "48",
+      "section": "breakdown"
+    },
+    {
+      "bar": "49",
+      "section": "breakdown"
+    },
+    {
+      "bar": "50",
+      "section": "breakdown"
+    },
+    {
+      "bar": "51",
+      "section": "breakdown"
+    },
+    {
+      "bar": "52",
+      "section": "breakdown"
+    },
+    {
+      "bar": "53",
+      "section": "breakdown"
+    },
+    {
+      "bar": "54",
+      "section": "breakdown"
+    },
+    {
+      "bar": "55",
+      "section": "breakdown"
+    },
+    {
+      "bar": "56",
+      "section": "hook"
+    },
+    {
+      "bar": "57",
+      "section": "hook"
+    },
+    {
+      "bar": "58",
+      "section": "hook"
+    },
+    {
+      "bar": "59",
+      "section": "hook"
+    },
+    {
+      "bar": "60",
+      "section": "hook"
+    },
+    {
+      "bar": "61",
+      "section": "hook"
+    },
+    {
+      "bar": "62",
+      "section": "hook"
+    },
+    {
+      "bar": "63",
       "section": "hook"
     }
   ],
