@@ -103,3 +103,17 @@ body.vertical-tv .show-card:hover {
     transition: none !important;
   }
 }
+
+// Measured by Pub4::CssCoverageLint 2026-08-11.
+.episode-link {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.episode-link:hover,
+.episode-link:focus-visible {
+  text-decoration: underline;
+}

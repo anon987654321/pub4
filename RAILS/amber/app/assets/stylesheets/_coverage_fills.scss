@@ -1,0 +1,181 @@
+// Classes amber's markup asked for and no stylesheet defined.
+//
+// Measured by Pub4::CssCoverageLint on 2026-08-11 (see the shared file of the same
+// name for why the lint exists). Token-only, no hex, no !important: layout, spacing
+// and type hierarchy from the luxury dialect's own :root, so a dialect switch carries
+// these with it.
+
+// A button that is a link, not a box. Used on five surfaces for destructive or
+// secondary actions inside a row — `button_to` renders a real <button>, so it needs
+// the chrome removed rather than added.
+.btn-link {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: var(--tap-min);
+  color: var(--text-secondary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.btn-link:hover,
+.btn-link:focus-visible {
+  color: var(--text);
+}
+
+// Wardrobe item collection and detail.
+.wardrobe-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--space-sm);
+}
+
+.wardrobe-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs, var(--space-xs));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs);
+}
+
+.wardrobe-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.wardrobe-detail {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.wardrobe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-block-start: var(--space-sm);
+}
+
+.wardrobe-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-width: var(--measure-body);
+}
+
+// Carousel slide. The glyph is the first letter of a garment with no photo, so it
+// stands in for an image and must fill the same box.
+.wardrobe-slide-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+.wardrobe-slide-glyph {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--font-size);
+}
+
+.wardrobe-carousel-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  margin-block-end: var(--space-xs);
+}
+
+.wardrobe-carousel-row-label {
+  margin: 0;
+  font-weight: var(--weight-bold);
+}
+
+.wardrobe-carousel-row-hint {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+// Single-purpose containers the markup names and nothing styled.
+.declutter-page,
+.wardrobe-items,
+.outfit-visual {
+  margin-block-end: var(--space-md);
+}
+
+.outfit-visual {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.luxury-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--text-secondary);
+}
+
+// A garment with no photo: the category name standing in for the image.
+.item-placeholder {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.today-look-item {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+// The flash text itself; .flash and .flash--<type> already carry the card.
+.flash-msg {
+  flex: 1 1 auto;
+}
+
+// Nested outfit-item fields, added and removed by the nested-form controller.
+.nested-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.nested-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-xs);
+  border-block-end: 1px solid var(--border);
+  padding-block-end: var(--space-xs);
+}
+
+// Histogram figure — .viz carries the frame, this is the column variant.
+.viz-columns {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+// Affiliate list on the shopping page.
+.shop-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs, var(--space-xs));
+}
+
+.shop-feed-note {
+  color: var(--text-secondary);
+}

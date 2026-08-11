@@ -31,29 +31,42 @@ module Pub4
     OPT_OUT = "css_coverage: ok"
 
     # Applied by JS, by the framework, or by a gate — never written in a stylesheet.
+    #
+    # The last three are styled by an inline attribute on the element, each for a
+    # documented reason: the icon sprite must be width/height 0 rather than
+    # display:none or <use> stops resolving in several browsers, the honeypot is
+    # positioned off-screen inline so no stylesheet can accidentally reveal it, and the
+    # scroll sentinel is a zero-height JS target. `swiper` and `adsbygoogle` belong to
+    # Swiper and Google; writing rules for them would be styling someone else's API.
     EXTERNAL = %w[
       hidden turbo-progress-bar translation_missing
       nav-visible active current selected open
+      adsbygoogle swiper
+      icon-sprite hp-field infinite-scroll-sentinel
     ].to_set
 
-    # Measured 2026-08-11, first run.
+    # Measured 2026-08-11: undefined_class 128 reported → 96 real → 4 remaining.
     #
-    # undefined_class 96. The largest groups: shared/_pager's three classes across 19
-    # render sites, shared/_post_card's feed-post-*, amber's btn-link on 5 surfaces,
-    # and marketplace's cart-pay-vipps / cart-pay-stripe on the cart. Each is either
-    # a missing style or markup to delete, and choosing between them is a
-    # rendered-value decision (WIRING_NOTES.md, "Who owns a rendered value"), so this
-    # counts and does not fix. Down only.
+    # 128 → 96 was the instrument getting honest. It read only .scss/.css and so
+    # reported every mail-* class and every legal-* class as undefined; both were wrong.
+    # Email cannot load an asset bundle, so the mailer layout defines its classes in an
+    # inline <style>, and brgen's _site_legal_footer carries a <style> block that styles
+    # the three legal pages. Inline blocks are read now.
     #
-    # unused_selector 266, recorded rather than chased, per the register's own caveat.
+    # 96 → 4 was the work: 63 classes were styled in the *_coverage_fills.scss files and
+    # the engines' own stylesheets, token-only, and the rest were classified rather than
+    # invented for — a class that always shares its element with a styled sibling
+    # inherits from it, and a class that names the Stimulus controller mounted on the
+    # same element is that controller's identity.
     #
-    # A note on why this number is trustworthy at all: a first pass read only
-    # .scss/.css and reported every mail-* class and every legal-* class as
-    # undefined. Both were wrong — email defines its classes in the mailer layout's
-    # inline <style>, and brgen's _site_legal_footer carries a <style> block that
-    # styles the three legal pages. Inline blocks are read now, which is what moved
-    # 128 reported to 96 real.
-    BASELINES = { "undefined_class" => 96, "unused_selector" => 266 }.freeze
+    # The 4 that remain are single-word legacy names — .inline, .post, .text, .list —
+    # each on one surface, each doing nothing. They are markup to delete rather than
+    # styles to write, and deleting a class that short wants a human who can grep for it
+    # in a template language a regex reads badly.
+    #
+    # unused_selector 266, recorded rather than chased, per the register's own caveat
+    # that a literal search cannot prove a runtime-composed class name is dead.
+    BASELINES = { "undefined_class" => 4, "unused_selector" => 266 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -106,6 +119,7 @@ module Pub4
 
     def used_names
       @used_names ||= begin
+        @lists = {}
         used = {}
         views.each do |view|
           body = strip_erb(File.read(view, encoding: "UTF-8"))
@@ -113,12 +127,48 @@ module Pub4
 
           [/class:\s*["']([^"'<>]+)["']/, /class=["']([^"'<>]*)["']/].each do |pattern|
             body.scan(pattern) do |(list)|
-              list.to_s.split(/\s+/).each { |name| (used[name] ||= []) << view }
+              names = list.to_s.split(/\s+/)
+              names.each do |name|
+                (used[name] ||= []) << view
+                (@lists[name] ||= []) << names
+              end
             end
           end
         end
         used
       end
+    end
+
+    # Every class list a name appeared in, so a sibling can be consulted.
+    def class_lists
+      used_names
+      @lists
+    end
+
+    # A class that ALWAYS shares its element with a class that IS styled inherits from
+    # it — `.channel-guest-hint dim`, `.conversation-log channel-log`, `.comment-time
+    # dim`. That is a naming hook, not a missing style, and reporting it asks the next
+    # author to invent a rule for something already styled.
+    #
+    # "Always", not "ever": a class that appears alone on any surface is doing its own
+    # work there and stays in the count.
+    def inherits_everywhere?(name)
+      lists = class_lists[name] || []
+      return false if lists.empty?
+
+      lists.all? { |list| (list - [name]).any? { |sibling| defined_names.include?(sibling) } }
+    end
+
+    # A class that names a Stimulus controller mounted on the same element is that
+    # controller's identity, not a style — `class="nested-form"
+    # data-controller="nested-form"`. Writing a rule for it would be styling an API.
+    def controller_identity?(name)
+      @controller_identities ||= views.flat_map do |view|
+        strip_erb(File.read(view, encoding: "UTF-8"))
+          .scan(/data-controller=["']([^"'<>]+)["']/).flatten
+          .flat_map { |list| list.split(/\s+/) }
+      end.to_set
+      @controller_identities.include?(name)
     end
 
     # A modifier or element whose base is defined is a real BEM pair the literal scan
@@ -133,7 +183,8 @@ module Pub4
 
     def undefined_classes
       used_names.keys.reject do |name|
-        interpolated?(name) || EXTERNAL.include?(name) || defined_names.include?(name) || base_defined?(name)
+        interpolated?(name) || EXTERNAL.include?(name) || defined_names.include?(name) ||
+          base_defined?(name) || inherits_everywhere?(name) || controller_identity?(name)
       end
     end
 

@@ -416,3 +416,37 @@ body.vertical-playlist {
 .playlist-transport-bar .transport-icon-pause { display: none; }
 .playlist-transport-bar .transport-btn--primary.is-playing .transport-icon-play { display: none; }
 .playlist-transport-bar .transport-btn--primary.is-playing .transport-icon-pause { display: inline; }
+
+// Measured by Pub4::CssCoverageLint 2026-08-11. Token-only, no hex.
+.playlist-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  border-block-end: 1px solid var(--border);
+  padding-block: var(--space-xs);
+}
+
+.playlist-analytics {
+  display: grid;
+  gap: var(--space-xs);
+  margin-block-start: var(--space-sm);
+}
+
+// A dilla sketch is a generated audio idea; the form posts one back.
+.dilla-sketch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  border-block-end: 1px solid var(--border);
+  padding-block: var(--space-xs);
+}
+
+.dilla-sketch-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+}

@@ -1,0 +1,120 @@
+// Classes the engine's own markup asked for and no stylesheet defined.
+//
+// Pub4::CssCoverageLint measured 96 of these across the family on 2026-08-11 — the
+// direction of CSS drift nothing had ever measured, while the register tracked only
+// the reverse (selectors with no markup). Each was a hook the author expected to do
+// something, on a live surface: shared/_pager renders from 19 call sites.
+//
+// Rules here are deliberately minimal and token-only. No hex, no !important, no new
+// visual language: layout, spacing and type hierarchy from the tokens the app already
+// defines at :root, so a dialect switch carries these with it. Anything that wanted a
+// design decision rather than a default is left alone and stays in the lint's count.
+//
+// Fold these into the component stylesheets they belong to whenever those files are
+// next touched; this file exists so the gap was closed in one reviewable place.
+
+// Pagination — shared/_pager, 19 render sites, previously unstyled entirely.
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-block: var(--space-md);
+}
+
+.pager-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding-inline: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.pager-link:hover,
+.pager-link:focus-visible {
+  background: var(--hover);
+}
+
+// Tabular numerals so "2 / 14" does not reflow as the page count changes.
+.pager-position {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+// Post card — the shared card both brgen and amber render.
+.feed-post-title {
+  margin: 0;
+  font-size: var(--font-size);
+  font-weight: var(--weight-bold);
+  line-height: var(--line-height);
+}
+
+.feed-post-time {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.feed-post-media {
+  margin-block-start: var(--space-xs);
+}
+
+// Comment row.
+.comment-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-block-start: var(--space-xs);
+}
+
+// Vipps sign-in. The brand colour is Vipps's own and belongs to them, so this only
+// gives the button its shape and lets the accent token colour it — picking a hex here
+// would be inventing a brand.
+.oauth-vipps {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2xs, var(--space-xs));
+  min-height: var(--tap-min);
+  width: 100%;
+}
+
+// Ad slot. Inert until a consent platform exists (see Shared::ConsentHelper), and
+// labelled, because an unlabelled ad beside real listings is indistinguishable from
+// editorial content.
+.ad-slot {
+  margin-block: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs);
+}
+
+.ad-slot-label {
+  margin: 0 0 var(--space-2xs, var(--space-xs));
+  font-size: var(--text-sm);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+// Publisher verification, rendered in the legal footer when the ids are configured.
+.site-verify-id,
+.site-verify-contact {
+  display: inline-block;
+  margin-inline-end: var(--space-sm);
+}
+
+// The MASTER face embedded in an app surface. An iframe carries a border and an
+// inline size by default, which is never what an embed wants.
+.master-embed-frame {
+  display: block;
+  width: 100%;
+  border: 0;
+}

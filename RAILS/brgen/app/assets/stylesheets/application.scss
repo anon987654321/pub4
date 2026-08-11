@@ -57,3 +57,9 @@
 @use "auth_form";
 @use "focus_ring";
 @use "chat_reactions";
+
+// Classes the markup asked for and nothing defined, measured by
+// Pub4::CssCoverageLint 2026-08-11. Last on purpose: these complement the
+// components above rather than competing with them.
+@use "shared_coverage_fills";
+@use "coverage_fills";

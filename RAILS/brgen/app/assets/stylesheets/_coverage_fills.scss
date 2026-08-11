@@ -1,0 +1,85 @@
+// Classes brgen's markup asked for and no stylesheet defined.
+//
+// Measured by Pub4::CssCoverageLint on 2026-08-11 (see shared/_coverage_fills.scss
+// for why the lint exists). Token-only, no hex, no !important.
+//
+// Classes whose element already carries a styled sibling — `.channel-guest-hint dim`,
+// `.affiliate-placeholder dim`, `.conversation-log` beside `.channel-log` — are not
+// here and are not missing styles: they inherit, and the lint knows that now.
+
+// Profile activity feed.
+.profile-activity {
+  margin-block-start: var(--space-md);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-vertical {
+  color: var(--text-secondary);
+}
+
+// Hashtag cloud on the front page.
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Partner programme pages.
+.partner-programs,
+.partner-program,
+.partner-membership {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-width: var(--measure-body);
+}
+
+// Media gallery thumbnail link. The anchor is the hit target, so it carries the tap
+// floor rather than the image inside it.
+.media-gallery-item {
+  display: block;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+// Place hero image on the maps surface.
+.place-hero {
+  margin: 0 0 var(--space-sm);
+}
+
+.place-hero__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+// Validation errors. role="alert" is already on the element; this gives the list the
+// shape of an error block without inventing a colour — --danger is the token the
+// dialects already define for it.
+.form-errors {
+  margin: 0 0 var(--space-sm);
+  padding-inline-start: var(--space-md);
+  color: var(--danger);
+}
+
+.messenger-compose-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-xs);
+  margin-block-end: var(--space-sm);
+}
