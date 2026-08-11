@@ -20,6 +20,7 @@ import LiveSearch from "pub4/live_search"
 import SearchFocus from "pub4/search_focus"
 import OfflinePage from "pub4/offline_page"
 import InstallPrompt from "pub4/install_prompt"
+import { noteSession } from "pub4/onboarding"
 import ThemeToggle from "pub4/theme_toggle"
 import InfiniteScroll from "pub4/infinite_scroll"
 import BrowserFingerprint from "pub4/browser_fingerprint"
@@ -132,6 +133,11 @@ const registerWhenPresent = (application, name, load) => {
 }
 
 export function bootPub4Stimulus(application) {
+  // Counted once per boot, before any controller connects, so the three
+  // onboarding prompts all read the same session number on this page. Safe on
+  // every Turbo visit — it only increments after a gap. See pub4/onboarding.
+  noteSession()
+
   application.register("live-search", LiveSearch)
   application.register("search-focus", SearchFocus)
   application.register("offline-page", OfflinePage)

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { mayPrompt, YIELD_EVENT } from "pub4/onboarding"
 
 export default class extends Controller {
   static values = { vapidKey: String, subscribeUrl: String, unread: Number }
@@ -43,6 +44,15 @@ export default class extends Controller {
     // Defer permission request to a user gesture via the "Enable notifications" button if present.
     const btn = document.getElementById("push-enable-btn")
     if (!btn) return
+    // Last of the three onboarding prompts: asking a stranger to accept
+    // notifications is the biggest request the app makes and it used to be the
+    // one made soonest, appearing the moment permission was `default`. Waits
+    // for a familiar visitor and never opens over the install prompt.
+    if (!mayPrompt("push")) return
+
+    const yieldToInstall = () => { btn.hidden = true }
+    window.addEventListener(YIELD_EVENT, yieldToInstall, { once: true })
+
     btn.hidden = false
     btn.addEventListener("click", async () => {
       const perm = await Notification.requestPermission()

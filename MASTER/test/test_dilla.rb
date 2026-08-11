@@ -1903,6 +1903,46 @@ class TestDilla < Minitest::Test
     assert_empty result.fetch("rap_off")
   end
 
+  # "No leads" took six rounds to achieve, because each attempt turned off the
+  # layer that had been named and the renderer had another one. HATE_TONAL=0 is
+  # the single switch; this pins that it reaches every pitched layer and that it
+  # is inert unless asked for.
+  def test_hate_tonal_zero_silences_every_pitched_layer
+    result = eval_in_engine(<<~RUBY)
+      keys = HATE_TONAL_LAYERS
+      keys.each { |k| ENV.delete(k) }
+      ENV.delete("HATE_TONAL")
+      untouched = { fired: hate_forbid_tonal!, values: keys.to_h { |k| [k, ENV[k]] } }
+
+      keys.each { |k| ENV.delete(k) }
+      ENV["HATE_TONAL"] = "0"
+      forbidden = { fired: hate_forbid_tonal!, values: keys.to_h { |k| [k, ENV[k]] } }
+
+      # An explicit 1 must not be able to switch anything ON by accident.
+      keys.each { |k| ENV.delete(k) }
+      ENV["HATE_TONAL"] = "1"
+      on = { fired: hate_forbid_tonal!, values: keys.to_h { |k| [k, ENV[k]] } }
+
+      puts JSON.generate(layers: keys, untouched:, forbidden:, on:)
+    RUBY
+
+    # The list has to cover the layers that actually carry pitch.
+    assert_equal %w[HATE_MELODY HATE_DFAM HATE_DRONE], result.fetch("layers")
+
+    # Unset: inert. A default that quietly muted layers would be worse than none.
+    refute result.dig("untouched", "fired")
+    assert result.dig("untouched", "values").values.all?(&:nil?),
+           "HATE_TONAL unset must not write any layer key"
+
+    # Zero: every one of them off, in one call.
+    assert result.dig("forbidden", "fired")
+    assert_equal %w[0 0 0], result.dig("forbidden", "values").values_at(*result.fetch("layers"))
+
+    # One: still inert -- this switch only ever subtracts.
+    refute result.dig("on", "fired")
+    assert result.dig("on", "values").values.all?(&:nil?)
+  end
+
   def test_flylo_drum_overlay_schedules_dual_bus_events
     result = eval_in_engine(<<~RUBY)
       %w[RENDER_MODE CAMEL_DRUM_LOCK PRODUCER_MODE].each { |k| ENV.delete(k) }

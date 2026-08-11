@@ -242,8 +242,6 @@ face3d_migration:
     role: optional boot when ?face3d=1 or auto via visual_bridge
   - path: web/public/cluster_miner.js
     role: groups master:visual/codebase/rule_event into master:clusters
-  - path: data/visual_clusters.yml
-    role: canonical cluster registry
   - path: lib/rails/face3d_runtime_policy.rb
     role: quality degradation and audit policy
   clusters:
@@ -275,7 +273,6 @@ face3d_migration:
   - id: repo_ecology
     files:
     - data/runtime.yml#repo_ecology
-    - data/visual_clusters.yml
     purpose: repository as semantic topology and cognitive geography
   proposed_clusters:
   - id: cluster_miner

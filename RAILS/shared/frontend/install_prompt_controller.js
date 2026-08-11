@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { installDismissedKey } from "pub4/pwa_standalone"
+import { announceInstallVisible } from "pub4/onboarding"
 
 const VALUE_KEY = "install-prompt-value"
 // The unscoped key stays readable so a dismissal from before the key was
@@ -46,7 +47,14 @@ export default class extends Controller {
   }
 
   reveal() {
-    if (this.canShow()) this.element.hidden = false
+    if (!this.canShow()) return
+    if (!this.element.hidden) return
+
+    this.element.hidden = false
+    // Install outranks the menu coach and the push button, and it can appear at
+    // any moment — the visitor posts, plays a track, sends a message. Whichever
+    // of the other two is already open steps back rather than stacking.
+    announceInstallVisible()
   }
 
   dismiss() {
