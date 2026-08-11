@@ -91,6 +91,7 @@ module Pub4
       "chrome_i18n" => "shared/lib/pub4/chrome_i18n_lint.rb",
       "breakpoint" => "shared/lib/pub4/breakpoint_lint.rb",
       "empty_state" => "shared/lib/pub4/empty_state_lint.rb",
+      "css_coverage" => "shared/lib/pub4/css_coverage_lint.rb",
     }.freeze
 
     def rails_lint_rows
