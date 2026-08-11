@@ -51,7 +51,7 @@ class FileLengthRatchetTest < Minitest::Test
     "gates/lib/geometry.rb" => 498,
     "gates/support/page_inventory.rb" => 434,
     "gates/support/cdp_session.rb" => 428,
-    "brgen/app/services/tradedoubler.rb" => 426,
+    "brgen/app/services/tradedoubler.rb" => 391,
     "brgen/db/seeds.rb" => 421,
     "gates/support/geometry_probe.rb" => 410,
     "brgen/lib/brgen/plausible_content.rb" => 344,

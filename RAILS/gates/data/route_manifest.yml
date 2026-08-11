@@ -2,7 +2,7 @@
 schema: 1
 apps:
   amber:
-    digest: 9401b5798b474ccb
+    digest: 242684fc9ce005d7
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -22,6 +22,10 @@ apps:
       - "/two_factor_setup"
       omniauth_callbacks#create:
       - "/auth/:provider/callback"
+      site_verifications#well_known:
+      - "/.well-known/:network-site-verification"
+      site_verifications#file:
+      - "/:network:token.html"
       notifications#badge:
       - "/notifications/badge"
       notifications#index:
@@ -159,7 +163,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: 7a53e91da52d9049
+    digest: 8b135a1bbee9de31
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -203,6 +207,10 @@ apps:
       - "/two_factor_setup"
       omniauth_callbacks#create:
       - "/auth/:provider/callback"
+      site_verifications#well_known:
+      - "/.well-known/:network-site-verification"
+      site_verifications#file:
+      - "/:network:token.html"
       fleet_health#show:
       - "/health"
       activity_events#index:
@@ -424,7 +432,7 @@ apps:
       marketplace/saved_searches#index:
       - "/saved_searches"
   bsdports:
-    digest: aa7c8d64c1172e25
+    digest: 92e527c3a4ea92cd
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -442,6 +450,10 @@ apps:
       - "/two_factor_setup"
       omniauth_callbacks#create:
       - "/auth/:provider/callback"
+      site_verifications#well_known:
+      - "/.well-known/:network-site-verification"
+      site_verifications#file:
+      - "/:network:token.html"
       fleet_health#show:
       - "/health"
       passwords#new:

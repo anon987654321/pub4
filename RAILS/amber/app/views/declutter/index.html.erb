@@ -2,6 +2,12 @@
   <header role="banner" aria-label="<%= t("declutter.header_label") %>">
     <h1><%= t("pages.declutter") %></h1>
     <p>Marie Kondo loop: joy, one more wear, then a clear release path — not instant trash.</p>
+    <%# ai_declutter was routed and linked from nowhere: reachable only by typing
+        the URL. It belongs on this page rather than in a tools drawer — someone
+        already here has decided to declutter. %>
+    <nav role="navigation" aria-label="<%= t("declutter.tools_label") %>" class="wardrobe-action-group">
+      <%= link_to t("declutter.ai_guide"), ai_declutter_path, class: "btn" %>
+    </nav>
   </header>
 
   <% if @summary.present? %>

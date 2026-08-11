@@ -4,6 +4,10 @@ nb:
     name: "BSDports"
   skip_to_content: "Hopp til hovedinnhold"
   nav:
+    # Referenced by the engine chat widget. bsdports has no messages route, so the
+    # branch that shows it never renders here — but a key the view can name must
+    # resolve, or it ships as a translation_missing span the day it does.
+    messages: "Meldinger"
     ports: "Porter"
     categories: "Kategorier"
     maintainers: "Maintainere"

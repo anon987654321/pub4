@@ -16,7 +16,7 @@ en:
     add_to_post: "Add to your post"
     posting_as_guest: "Anon"
     post_action: "Post"
-    guest_hint: "Posting as anon · %{limit} posts per browser"
+    guest_hint: "Posting as anon · %{remaining} of %{limit} posts left in this browser"
     guest_limit_why: "The limit slows spam without asking for an account."
     advanced_post: "Advanced post with photo"
     your_feed: "Your feed"

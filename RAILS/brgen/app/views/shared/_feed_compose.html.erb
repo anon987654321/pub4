@@ -106,7 +106,12 @@
           <%# Two sentences, so two elements. Rendered as siblings in one text
               node they ran together as "…15 innlegg per nettleser The limit
               slows spam…" with no separator at all. %>
-          <p><%= t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT) %></p>
+          <%# The count, not just the cap. amber has said "%{remaining} of %{limit}
+              left" since it shipped; brgen stated the cap and left you to find the
+              remainder by hitting it, which is an error message doing the work of a
+              status. %>
+          <p><%= t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT,
+                   remaining: Shared::AnonymousPost.new(request: request, user: Current.user).remaining) %></p>
           <p><%= t("feed.guest_limit_why") %></p>
         <% else %>
           <%= link_to t("feed.advanced_post"), main_app.new_post_path, class: "link-inherit" %>

@@ -82,12 +82,22 @@
 
   <section class="luxury-section" aria-label="<%= t("items.affiliate_label") %>">
     <h2><%= t("items.affiliate_link") %></h2>
-    <p class="dim luxury-dim">Optional resale or shop-similar URL for this piece. Some links may be affiliate links.</p>
+    <%# Was a hardcoded English sentence that also stood in for a disclosure. The
+        real disclosure is the engine partial: it names the partner programmes that
+        are actually configured, and says nothing when none are. %>
+    <p class="dim luxury-dim"><%= t("items.affiliate_help") %></p>
+    <%= render "shared/affiliate_disclosure" %>
     <% if @item.affiliate_links.any? %>
       <ul>
         <% @item.affiliate_links.each do |link| %>
           <li>
-            <%= link_to link.merchant, link.url, rel: "sponsored noopener", target: "_blank" %>
+            <%# data-controller here rather than on the list: one controller per
+                anchor is what carries that anchor's merchant to the beacon. The
+                href stays the merchant URL so the Link Converter script can still
+                rewrite it — see outbound_click_controller.js. %>
+            <%= link_to link.merchant, link.url, rel: "sponsored noopener", target: "_blank",
+                  data: { controller: "outbound-click", action: "click->outbound-click#record",
+                          outbound_click_merchant_value: link.merchant, outbound_click_surface_value: "item_affiliate" } %>
             <%= button_to t("actions.remove"), item_affiliate_link_path(@item, link), method: :delete, class: "btn-sm" %>
           </li>
         <% end %>
@@ -99,7 +109,10 @@
         <% @shop_the_look.each do |suggestion| %>
           <li>
             <%= link_to "#{suggestion.merchant}: #{suggestion.title}", suggestion.url,
-                  rel: "sponsored noopener", target: "_blank" %>
+                  rel: "sponsored noopener", target: "_blank",
+                  data: { controller: "outbound-click", action: "click->outbound-click#record",
+                          outbound_click_merchant_value: suggestion.merchant,
+                          outbound_click_surface_value: "shop_the_look" } %>
             <span class="tag dim"><%= suggestion.source %></span>
           </li>
         <% end %>

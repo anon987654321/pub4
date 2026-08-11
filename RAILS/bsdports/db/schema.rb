@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_14_164503) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
   create_table "categories", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -66,6 +66,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_14_164503) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_maintainers_on_name", unique: true
+  end
+
+  create_table "outbound_clicks", force: :cascade do |t|
+    t.string "app", null: false
+    t.datetime "created_at", null: false
+    t.string "epi"
+    t.boolean "guest", default: false, null: false
+    t.string "merchant"
+    t.bigint "subject_id"
+    t.string "subject_type"
+    t.string "surface"
+    t.string "url_host", null: false
+    t.bigint "user_id"
+    t.index ["created_at"], name: "index_outbound_clicks_on_created_at"
+    t.index ["merchant", "created_at"], name: "index_outbound_clicks_on_merchant_and_created_at"
+    t.index ["subject_type", "subject_id"], name: "index_outbound_clicks_on_subject_type_and_subject_id"
   end
 
   create_table "platforms", force: :cascade do |t|

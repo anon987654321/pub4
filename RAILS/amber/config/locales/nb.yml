@@ -192,6 +192,7 @@ nb:
     go_feed: "Stil-feed"
     retry: "Prøv igjen"
   wardrobe:
+    occasion_map: "Anledningskart"
     closet_intelligence: "Garderobe-intelligens"
     items_region: "Garderobeplagg"
     header: "Garderobe-header"
@@ -333,6 +334,7 @@ nb:
     restored_notice: "Tilbakeført til aktiv garderobe."
     undo_restore: "Angre — gjenopprett"
     affiliate_link: "Affiliate-/handelslenke"
+    affiliate_help: "Valgfri lenke til gjenbruk eller et liknende plagg."
     brand: "Merke"
     category: "Kategori"
     color: "Farge"
@@ -380,6 +382,8 @@ nb:
     add_showcase: "Legg til showcase"
     showcase_items: "Utvalgte plagg"
   declutter:
+    tools_label: "Ryddeverktøy"
+    ai_guide: "Ryddeveiledning"
     reason_kept: "minne, gave, sjelden, ubehagelig…"
     save_review: "Lagre vurdering"
     declutter_box: "Ryddingsboks"

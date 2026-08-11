@@ -193,6 +193,7 @@ en:
     go_feed: "Style feed"
     retry: "Try again"
   wardrobe:
+    occasion_map: "Occasion map"
     closet_intelligence: "Closet intelligence"
     items_region: "Wardrobe items"
     header: "Wardrobe header"
@@ -334,6 +335,7 @@ en:
     restored_notice: "Restored to your active wardrobe."
     undo_restore: "Undo — restore"
     affiliate_link: "Affiliate / commerce link"
+    affiliate_help: "Optional resale or shop-similar URL for this piece."
     brand: "Brand"
     category: "Category"
     color: "Color"
@@ -381,6 +383,8 @@ en:
     add_showcase: "Add to showcase"
     showcase_items: "Showcase pieces"
   declutter:
+    tools_label: "Declutter tools"
+    ai_guide: "Declutter guide"
     reason_kept: "memory, gift, rare, uncomfortable…"
     save_review: "Save review"
     declutter_box: "Declutter box"
