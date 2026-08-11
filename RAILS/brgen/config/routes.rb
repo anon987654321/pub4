@@ -53,6 +53,7 @@ Rails.application.routes.draw do
   resource  :session, only: %i[new create destroy]
   resources :passwords, param: :token, only: %i[new create edit update]
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../shared/config/routes/verification.rb", __dir__)))
   post "fingerprint" => "fingerprints#create"
   instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
   resources :activity_events, only: :index

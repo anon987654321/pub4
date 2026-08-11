@@ -31,6 +31,19 @@ nb:
     master_summary: "MASTER-sammendrag:"
 
   chat:
+    # The eight strings the ambient chat widget shows while it is asking for, or
+    # failing to get, a location. They lived only as t(..., default: "English")
+    # fallbacks in the view, so amber and bsdports rendered the whole recovery
+    # path in English over an nb page — and a `default:` also suppresses
+    # raise_on_missing_translations, so nothing could report it.
+    nearby_tab: "nærområdet"
+    status_asking: "Spør om posisjon …"
+    status_denied: "Posisjon er blokkert — du blir i #brgen. Slå på posisjon i nettleseren for #nearby."
+    status_timeout: "Posisjonen tok for lang tid — du blir i #brgen."
+    status_unavailable: "Posisjon er ikke tilgjengelig — du blir i #brgen."
+    status_blocked: "Denne siden får ikke lese posisjon — #brgen virker fortsatt."
+    status_server: "Kunne ikke lagre posisjonen — prøv igjen."
+    status_network: "Nettverksfeil da posisjonen skulle lagres — prøv igjen."
     title: "chat"
     close: "Lukk"
     loading: "Laster…"

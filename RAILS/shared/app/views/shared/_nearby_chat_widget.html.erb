@@ -5,19 +5,19 @@
     here and letting nearby_chat_controller rewrite it once the frame arrived
     was a visible relabel and made the tab's width unstable -- see
     Shared::UiHelper#ambient_chat_room_label. %>
-<% widget_title = local_assigns.fetch(:title, ambient_chat_room_label || t("chat.title", default: "chat")) %>
+<% widget_title = local_assigns.fetch(:title, ambient_chat_room_label || t("chat.title")) %>
 <div class="nearby-chat-widget"
      data-controller="nearby-chat"
      data-nearby-chat-storage-key-value="pub4:ambient-chat:open"
-     data-nearby-chat-label-chat-value="<%= t("chat.title", default: "chat") %>"
-     data-nearby-chat-label-nearby-value="<%= t("chat.nearby_tab", default: "nearby") %>"
-     data-nearby-chat-status-asking-value="<%= t("chat.status_asking", default: "Asking for location…") %>"
-     data-nearby-chat-status-denied-value="<%= t("chat.status_denied", default: "Location blocked — staying in #brgen. Enable location in the browser for #nearby.") %>"
-     data-nearby-chat-status-timeout-value="<%= t("chat.status_timeout", default: "Location timed out — staying in #brgen.") %>"
-     data-nearby-chat-status-unavailable-value="<%= t("chat.status_unavailable", default: "Location unavailable — staying in #brgen.") %>"
-     data-nearby-chat-status-blocked-value="<%= t("chat.status_blocked", default: "This page cannot read location — #brgen still works.") %>"
-     data-nearby-chat-status-server-value="<%= t("chat.status_server", default: "Could not save location — try again.") %>"
-     data-nearby-chat-status-network-value="<%= t("chat.status_network", default: "Network error saving location — try again.") %>">
+     data-nearby-chat-label-chat-value="<%= t("chat.title") %>"
+     data-nearby-chat-label-nearby-value="<%= t("chat.nearby_tab") %>"
+     data-nearby-chat-status-asking-value="<%= t("chat.status_asking") %>"
+     data-nearby-chat-status-denied-value="<%= t("chat.status_denied") %>"
+     data-nearby-chat-status-timeout-value="<%= t("chat.status_timeout") %>"
+     data-nearby-chat-status-unavailable-value="<%= t("chat.status_unavailable") %>"
+     data-nearby-chat-status-blocked-value="<%= t("chat.status_blocked") %>"
+     data-nearby-chat-status-server-value="<%= t("chat.status_server") %>"
+     data-nearby-chat-status-network-value="<%= t("chat.status_network") %>">
   <button type="button"
           class="nearby-chat-widget-tab"
           data-nearby-chat-target="tab"
@@ -41,7 +41,7 @@
       <button type="button"
               class="nearby-chat-widget-close"
               data-action="nearby-chat#close"
-              aria-label="<%= t("chat.close", default: "Close") %>">&times;</button>
+              aria-label="<%= t("chat.close") %>">&times;</button>
     </header>
 
     <p class="nearby-chat-widget-status dim" data-nearby-chat-target="status" hidden aria-live="polite"></p>
@@ -53,29 +53,29 @@
       <% if (chat_frame_src = ambient_chat_frame_path) %>
         <%= turbo_frame_tag "nearby-chat-widget-frame", src: chat_frame_src, class: "nearby-chat-widget-frame" do %>
           <div class="nearby-chat-widget-empty">
-            <strong><%= t("chat.title", default: "Chat") %></strong>
-            <p><%= t("chat.loading", default: "Loading the room…") %></p>
+            <strong><%= t("chat.title") %></strong>
+            <p><%= t("chat.loading") %></p>
           </div>
         <% end %>
       <% elsif respond_to?(:messages_path) %>
         <div class="nearby-chat-widget-empty">
-          <strong><%= t("nav.messages", default: t("messages.title", default: "Messages")) %></strong>
+          <strong><%= t("nav.messages") %></strong>
           <% if respond_to?(:authenticated?) && authenticated? %>
-            <p><%= t("chat.open_inbox", default: "Open your inbox to read and send messages on this app.") %></p>
-            <%= link_to t("chat.open_messages", default: "Open messages"), messages_path, class: "nearby-chat-widget-cta" %>
+            <p><%= t("chat.open_inbox") %></p>
+            <%= link_to t("chat.open_messages"), messages_path, class: "nearby-chat-widget-cta" %>
           <% else %>
-            <p><%= t("chat.sign_in_inbox", default: "Sign in for this app’s inbox, or chat anonymously on Brgen.") %></p>
+            <p><%= t("chat.sign_in_inbox") %></p>
             <% if respond_to?(:new_session_path) %>
-              <%= link_to t("nav.sign_in", default: "Sign in"), new_session_path, class: "nearby-chat-widget-cta" %>
+              <%= link_to t("nav.sign_in"), new_session_path, class: "nearby-chat-widget-cta" %>
             <% end %>
-            <%= link_to t("chat.open_brgen", default: "Open Brgen chat"), "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
+            <%= link_to t("chat.open_brgen"), "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
           <% end %>
         </div>
       <% else %>
         <div class="nearby-chat-widget-empty">
-          <strong><%= t("chat.on_brgen", default: "Chat on Brgen") %></strong>
-          <p><%= t("chat.lobby_body", default: "City lobby works without GPS.") %></p>
-          <%= link_to t("chat.open_brgen_channel", default: "Open #brgen"), "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
+          <strong><%= t("chat.on_brgen") %></strong>
+          <p><%= t("chat.lobby_body") %></p>
+          <%= link_to t("chat.open_brgen_channel"), "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
         </div>
       <% end %>
     </div>

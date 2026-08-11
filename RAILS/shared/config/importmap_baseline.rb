@@ -82,6 +82,7 @@ pin "pub4/feed_compose", to: "feed_compose_controller.js"
 pin "pub4/feed_hotkey", to: "feed_hotkey_controller.js"
 pin "pub4/offline_feed", to: "offline_feed_controller.js"
 pin "pub4/pwa_standalone", to: "pwa_standalone_controller.js"
+pin "pub4/outbound_click", to: "outbound_click_controller.js"
 # Not a controller — the shared ordering rule for the three onboarding prompts.
 pin "pub4/onboarding", to: "onboarding_queue.js"
 pin "pwa/offline_store", to: "pwa_offline_store.js"

@@ -33,6 +33,19 @@ en:
     master_summary: "MASTER summary:"
 
   chat:
+    # The eight strings the ambient chat widget shows while it is asking for, or
+    # failing to get, a location. They lived only as t(..., default: "English")
+    # fallbacks in the view, so amber and bsdports rendered the whole recovery
+    # path in English over an nb page — and a `default:` also suppresses
+    # raise_on_missing_translations, so nothing could report it.
+    nearby_tab: "nearby"
+    status_asking: "Asking for location…"
+    status_denied: "Location blocked — staying in #brgen. Enable location in the browser for #nearby."
+    status_timeout: "Location timed out — staying in #brgen."
+    status_unavailable: "Location unavailable — staying in #brgen."
+    status_blocked: "This page cannot read location — #brgen still works."
+    status_server: "Could not save location — try again."
+    status_network: "Network error saving location — try again."
     title: "chat"
     close: "Close"
     loading: "Loading…"

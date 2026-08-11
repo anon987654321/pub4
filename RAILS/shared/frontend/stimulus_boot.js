@@ -25,6 +25,7 @@ import ThemeToggle from "pub4/theme_toggle"
 import InfiniteScroll from "pub4/infinite_scroll"
 import BrowserFingerprint from "pub4/browser_fingerprint"
 import DirectUpload from "pub4/direct_upload"
+import OutboundClick from "pub4/outbound_click"
 import CharacterCounter from "pub4/character_counter"
 import LuxuryProduct from "pub4/luxury_product"
 import ScrollReveal from "pub4/scroll_reveal"
@@ -146,6 +147,7 @@ export function bootPub4Stimulus(application) {
   application.register("infinite-scroll", InfiniteScroll)
   application.register("browser-fingerprint", BrowserFingerprint)
   application.register("direct-upload", DirectUpload)
+  application.register("outbound-click", OutboundClick)
   application.register("luxury-product", LuxuryProduct)
   application.register("scroll-reveal", ScrollReveal)
   application.register("scroll-chrome", ScrollChrome)
