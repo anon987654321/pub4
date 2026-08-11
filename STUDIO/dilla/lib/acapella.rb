@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "digest"
 require_relative "radio_chop"
 
 # Putting somebody's vocal on our beat, in time.
@@ -230,15 +231,25 @@ module Acapella
     take = beat * 4 * bars
     FileUtils.mkdir_p(File.dirname(dest))
 
+    # target_bars was declared and never read, which mattered because the whole
+    # point of fitting is to drop the result onto a beat of a known length.
+    # take/ratio is only approximately a whole number of bars at to_bpm --
+    # atempo rounds, the source bars are measured rather than exact -- so a
+    # sixteen-bar take arrives a few tens of milliseconds long or short and the
+    # last word either overruns the beat or leaves a hole. Trimming and padding
+    # to the exact figure costs nothing and makes the output droppable.
+    exact = target_bars ? (60.0 / to_bpm.to_f * 4 * target_bars).round(3) : nil
+    tail = exact ? ",atrim=0:#{exact},apad=whole_dur=#{exact}" : ""
+
     ok = RadioChop.run!("ffmpeg", "-nostdin", "-y", "-hide_banner", "-loglevel", "error",
                         "-ss", start_sec.round(3).to_s, "-t", take.round(3).to_s, "-i", vocal_path,
-                        "-af", "#{atempo_chain(ratio)},#{vocal_tone}",
+                        "-af", "#{atempo_chain(ratio)},#{vocal_tone}#{tail}",
                         "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", dest,
                         label: "acapella fit")
     return nil unless ok != false && File.file?(dest)
 
     { path: dest, ratio: ratio.round(4), from_bpm:, to_bpm:,
-      seconds: (take / ratio).round(2) }
+      seconds: (exact || (take / ratio)).round(2) }
   end
 
   # A rap vocal wants to sit forward without getting shrill. High-passed to lose
@@ -500,4 +511,130 @@ module Acapella
     alimiter=limit=0.95:level_out=0.96[out]
   GRAPH
 
+  # Everything above this line was the section: four constants describing where
+  # to cut, when to halve, and how to mix -- and no code that read any of them.
+  # index! measured every separated vocal and wrote samples/acapella/index.json,
+  # and nothing has ever opened that file. The library stopped at the point
+  # where it would have been used.
+  #
+  # (dilla.rb has its own rap-vocal path, rap_vocal_fit! and its thirty
+  # neighbours, which places a vocal DURING a render. This is the other job:
+  # putting an indexed acapella over a beat that already exists as a file.)
+
+  # Seconds of audio in a file.
+  #
+  # ffprobe rather than a decode, because the verse offset is a fraction of the
+  # WHOLE record and reading its length is cheaper than measuring it.
+  def duration(path)
+    RadioChop.capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                      "-of", "default=nokey=1:noprint_wrappers=1", path).to_f
+  end
+
+  # One of VERSE_POSITIONS points inside VERSE_WINDOW, chosen by name.
+  #
+  # MD5 of the name rather than String#hash: Ruby seeds string hashing per
+  # process, so the same beat would take a different verse on every run and the
+  # "so two beats do not get the same verse" property would be noise instead of
+  # a rule. A digest is stable across processes and machines.
+  def verse_start(total_sec, seed)
+    return 0.0 unless total_sec.to_f.positive?
+
+    slot = Digest::MD5.hexdigest(seed.to_s)[0, 8].to_i(16) % VERSE_POSITIONS
+    span = VERSE_WINDOW.max - VERSE_WINDOW.min
+    fraction = VERSE_WINDOW.min + (span * slot / (VERSE_POSITIONS - 1).to_f)
+    (total_sec.to_f * fraction).round(3)
+  end
+
+  # What tempo to actually stretch to, given HALF_TIME_ABOVE.
+  #
+  # Returns the tempo the vocal is fitted to, which is not always the beat's:
+  # over a fast beat the rapper works at half the beat's tempo, one syllable
+  # per two beats. The ratio is reported alongside so a caller can say which
+  # happened.
+  def stretch_plan(from_bpm:, to_bpm:)
+    from = from_bpm.to_f
+    to = to_bpm.to_f
+    return nil unless from.positive? && to.positive?
+
+    half = (to / from) > HALF_TIME_ABOVE
+    target = half ? to / 2.0 : to
+    { to_bpm: target.round(2), ratio: (target / from).round(4), half_time: half }
+  end
+
+  # Beat in, voice on top, one file out. MIX_GRAPH's [0:a] is the beat and
+  # [1:a] is the vocal; duration=first means the beat decides the length.
+  def lay!(beat:, vocal:, dest:)
+    FileUtils.mkdir_p(File.dirname(dest))
+    RadioChop.run!("ffmpeg", "-nostdin", "-y", "-hide_banner", "-loglevel", "error",
+                   "-i", beat, "-i", vocal,
+                   "-filter_complex", MIX_GRAPH, "-map", "[out]",
+                   "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", dest,
+                   label: "acapella lay")
+    File.file?(dest) ? dest : nil
+  end
+
+  # Which indexed vocal to use. A named slug wins; otherwise the ranked pool,
+  # picked by the beat's own name so the same beat always gets the same rapper.
+  def choose(slug: nil, seed: nil)
+    pool = ranked
+    return nil if pool.empty?
+    return pool.find { |v| v["slug"].to_s.downcase.include?(slug.to_s.downcase) } if slug
+
+    pool[Digest::MD5.hexdigest(seed.to_s)[8, 8].to_i(16) % pool.length]
+  end
+
+  # The whole thing: pick a vocal, cut a verse from a bar line of the original,
+  # stretch it to the beat's tempo (or half of it), and mix.
+  #
+  # bars is how many bars of the BEAT the vocal has to fill, which is why it is
+  # passed to fit! as target_bars as well: the take comes from the original's
+  # bar grid, the result has to land on ours.
+  def over!(beat:, dest:, bpm:, bars: 16, slug: nil, seed: nil)
+    entry = choose(slug:, seed: seed || File.basename(beat, ".*"))
+    unless entry
+      warn "acapella: nothing usable in the index — run `dilla acapella` first" \
+           "#{ONLY.empty? ? '' : " (VOCAL_ONLY=#{ONLY.join(',')})"}"
+      return nil
+    end
+
+    # Every one of these branches used to be a bare `return nil`, which is the
+    # failure this library exists to stop being: index.json is written once and
+    # scratch/ is cleaned often, so the ordinary case is a row pointing at a
+    # stem that is no longer on disk. Saying which one, and what to run, is the
+    # difference between a missing file and "nothing laid".
+    stem = File.expand_path(entry["stem"], ROOT)
+    unless File.file?(stem)
+      warn "acapella: #{entry['slug']} is indexed but its stem is gone (#{entry['stem']}) — re-run demucs"
+      return nil
+    end
+
+    from_bpm = entry["bpm"].to_f
+    plan = stretch_plan(from_bpm:, to_bpm: bpm)
+    unless plan
+      warn "acapella: #{entry['slug']} has no usable tempo (#{entry['bpm'].inspect})"
+      return nil
+    end
+
+    # Snap the verse offset back to the original's own bar grid, anchored on the
+    # downbeat index! measured. Cutting on a bar line is what preserves how the
+    # rapper sits against it; cutting on the raw fraction would land mid-bar and
+    # the offset that IS the performance would be lost.
+    bar = 60.0 / from_bpm * 4
+    anchor = entry["start_sec"].to_f
+    raw = verse_start(duration(stem), seed || File.basename(beat, ".*"))
+    start = anchor + ([((raw - anchor) / bar).floor, 0].max * bar)
+
+    fitted = fit!(vocal_path: stem, dest: File.join(WORK, "fit", "#{entry['slug']}_#{bpm.round}_#{bars}bars.wav"),
+                  from_bpm:, to_bpm: plan[:to_bpm], start_sec: start, bars:, target_bars: bars)
+    unless fitted
+      warn "acapella: #{entry['slug']} will not stretch #{from_bpm} -> #{plan[:to_bpm]} bpm"
+      return nil
+    end
+
+    laid = lay!(beat:, vocal: fitted[:path], dest:)
+    return nil unless laid
+
+    { out: laid, slug: entry["slug"], from_bpm:, to_bpm: plan[:to_bpm],
+      half_time: plan[:half_time], start_sec: start.round(3), bars:, fit: fitted[:path] }
+  end
 end

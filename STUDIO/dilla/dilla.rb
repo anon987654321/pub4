@@ -11572,10 +11572,21 @@ def drum_check
   # answer to --drum-preset. Nothing enforced that, though, and a feel added
   # straight into DRUM_PATTERN_SETS without a preset would be reachable only by
   # someone who already knew its name.
+  #
+  # There is a THIRD door, and reporting four working feels as BROKEN is how it
+  # was found. DillaLofiMachine.profile_preset does `preset[:feel] = drum_key`
+  # where drum_key is ENV["DRUM_PRESET"] unvalidated, and drum_feel_key accepts
+  # any DRUM_PATTERN_SETS key — so `--drum-preset=liquid_dnb` plays liquid_dnb
+  # even though liquid_dnb is not in DRUM_PRESETS at all. Verified against
+  # profile_preset directly: it returns feel: :liquid_dnb.
+  #
+  # liquid_dnb, one_drop, dilla_canon and flylo_canon were all added on purpose
+  # as opt-in ("nothing changes unless asked"), so a check calling them broken
+  # was arguing with a decision. What is still worth saying is that nothing
+  # NAMES them: you reach them only if you already know the word.
   reachable = TRACK_PRESETS.values.filter_map { |p| p[:feel] }.to_set | LOFI_DRUM_FEELS.to_set | Set[:default]
   (DRUM_PATTERN_SETS.keys - reachable.to_a).each do |feel|
-    puts format("BROKEN feel :%s has no TRACK_PRESETS entry and is not a lofi preset — only FEEL= by hand reaches it", feel)
-    problems += 1
+    puts format("NOTE   feel :%s is reachable only as --drum-preset=%s — no preset or listing names it", feel, feel)
   end
   puts "#{DRUM_PATTERN_SETS.length} drum feels and #{TRACK_PRESETS.length} presets checked, #{problems} problem(s)"
   problems
@@ -11585,9 +11596,89 @@ end
 # everything it composes -- the vocabulary rather than the sentences. Cheap
 # enough (no audio, no ffmpeg) to run on every change to any of the tables.
 def vocab_check
-  failures = chord_check + arp_check + drum_check
+  failures = chord_check + arp_check + drum_check + wiring_check
   puts failures.zero? ? "vocabulary ok" : "#{failures} problem(s)"
   exit(1) unless failures.zero?
+end
+
+# Constants read from somewhere this tree cannot see, so absence of a reader
+# here is not absence of a reader.
+WIRING_EXTERNAL_READERS = %w[
+  SAMPLE_LOOPS_OUT_OF_ROTATION
+  STREAM_ROTATION
+].freeze
+
+# How many declarations currently have no reader. A ratchet, not a target: the
+# check fails when the number goes UP, which is the only moment anyone can act
+# on it cheaply. Lowering it is a separate decision per constant, because most
+# of the survivors would change how a render SOUNDS if they were wired, and
+# that is the operator's call and not a checker's.
+#
+# What is in the list today, and why each is left alone rather than fixed:
+#
+#   CONSOLE_TRANSFORMER_LF_HZ / _HF_HZ   the console emulation's transformer
+#                                        corners; wiring them re-EQs every
+#                                        master
+#   MASTER_TARGET_LRA                    loudnorm gets I and TP and not LRA
+#   WARM_PAD_GM_PROGRAMS                 the pad family never rotates; EP does
+#   EXTERNAL_EP_BANKS                    galaxy-electric-pianos.sf2 unreachable
+#   NINTH_VOICING_TRACKS / _BARS         14 presets marked for ninth voicings
+#                                        that nothing applies
+#   HIP_HOP_BPM / _BARS                  dead twins of the live TECHNO_ pair
+#   INDUSTRIAL_BPM_DEFAULT               the industrial renderer's own tempo
+#   DELICIOUS_NATIVE_BPM,                arithmetic on live constants, kept as
+#   ARTIST_VERIFIED_TRACKS               documentation of a derived figure
+#   CHORD_SYMBOLS (Electronium)          display names nothing prints
+#   HISTORY_PATH, MOOD_CLUSTERS,         session history, ML stubs, theory
+#   NOTE_NAMES, CIRCLE_FIFTHS_SEMITONES, helpers, RG69_* aliases: subsystems
+#   RG69_*, PRODUCER_TRACKS, WAVES,      that stopped short of their last step
+#   SOUL_QUALITIES
+#
+# Every one of them was found the same way: nothing in the tree names it. That
+# is pub4's dominant defect class — a declaration with no reader reads exactly
+# like a setting, right up until you change it and nothing happens.
+WIRING_DEAD_BASELINE = 23
+
+def wiring_dead_constants
+  sources = [__FILE__] + Dir[File.join(__dir__, "lib", "*.rb")].sort
+  defined_at = {}
+  bodies = sources.to_h do |path|
+    text = File.read(path)
+    text.each_line.with_index(1) do |line, number|
+      next unless (match = line.match(/^\s*([A-Z][A-Z0-9_]{2,})\s*=[^=~]/))
+
+      defined_at[match[1]] ||= "#{File.basename(path)}:#{number}"
+    end
+    # Comments are where a dead constant is most often MENTIONED, which is why
+    # a plain grep says everything is wired. `#{` is NOT a comment: a heredoc
+    # line that is nothing but an interpolation starts with whitespace and a
+    # hash, and stripping it hides a real reader. (Found by running the same
+    # rule over STUDIO/lora, where it reported token_block dead when line 315
+    # is `#{token_block(options)}`.)
+    [path, text.gsub(/^\s*#(?!\{).*$/, "")]
+  end
+  code = bodies.values.join("\n")
+
+  defined_at.reject do |name, _|
+    next true if WIRING_EXTERNAL_READERS.include?(name)
+
+    # `Mod::NAME` counts as a reader. `.` is deliberately NOT excluded: no
+    # constant is ever reached through a dot, but `when ..LEAD_STEP_SEMITONES`
+    # is a beginless range and excluding `.` reported that live constant dead —
+    # the checker's own first false positive, found by reading its output
+    # against the source rather than trusting the count.
+    code.scan(/(?<![\w@$])#{name}(?![\w])/).length > 1
+  end
+end
+
+def wiring_check
+  dead = wiring_dead_constants
+  dead.sort_by { |_, where| where }.each { |name, where| puts format("NOTE   %-32s declared at %s, no reader", name, where) }
+  puts "#{dead.length} declaration(s) with no reader (baseline #{WIRING_DEAD_BASELINE})"
+  return 0 if dead.length <= WIRING_DEAD_BASELINE
+
+  puts "BROKEN dead declarations rose #{WIRING_DEAD_BASELINE} -> #{dead.length}; wire it or say why in WIRING_DEAD_BASELINE"
+  1
 end
 
 INTERVAL_NAMES = {
@@ -28206,6 +28297,35 @@ DISPATCH = {
   # Measures every separated acapella against its own mix and records the
   # tempo and first downbeat. Fitting happens per render, at that tempo.
   "acapella" => -> { Acapella.index! },
+  # The other half, which the library had constants for and no code: put an
+  # indexed acapella over a beat that already exists as a file. `acapella`
+  # measured every vocal and wrote samples/acapella/index.json, and nothing
+  # opened it.
+  #
+  # Distinct from RAP_VOCAL_*, which places a voice while a track renders.
+  # This one takes a finished wav and a tempo and hands back a wav with
+  # somebody on it, which is what you want for a beat that already exists --
+  # a bounced take, a stem, something off the stream.
+  #
+  # Flags go through apply_flags! like everywhere else, so it is --bpm=88 and
+  # --bars=16 (BPM and BARS), and who may appear is VOCAL_ONLY / VOCAL_EXCLUDE
+  # -- the same two lists index! and ranked already read. No new vocabulary.
+  "acapella-lay" => lambda do
+    beat = ARGV.shift or abort "usage: ruby dilla.rb acapella-lay <beat.wav> [out.wav] --bpm=N [--bars=N]"
+    abort "acapella-lay: no such file #{beat}" unless File.file?(beat)
+
+    bpm = ENV["BPM"].to_f
+    abort "acapella-lay: --bpm=N is the beat's own tempo and is required" unless bpm.positive?
+
+    bars = (ENV["BARS"] || "16").to_i
+    dest = ARGV.shift || beat.sub(/(\.\w+)?\z/) { |ext| "_vocal#{ext}" }
+    laid = Acapella.over!(beat:, dest:, bpm:, bars:)
+    abort "acapella-lay: nothing laid" unless laid
+
+    puts format("ok: %s  %s %.1f->%.1f bpm%s  %d bars  from %.2fs",
+                laid[:out], laid[:slug], laid[:from_bpm], laid[:to_bpm],
+                laid[:half_time] ? " (half-time)" : "", laid[:bars], laid[:start_sec])
+  end,
   # Auditions the built-in synthesiser, one file per patch. PATCH=<name> for one.
   "synth" => -> { synth_audition! },
   # A drum kit cut from our own recordings. The inverse of `chop`: that one
