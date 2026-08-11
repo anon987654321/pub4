@@ -57,7 +57,7 @@ module Pub4
       rows.compact
     end
 
-    # --- MASTER -------------------------------------------------------------
+    # MASTER: the spine ratchet, read from data/spine.yml.
 
     def spine_rows
       spine = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("spine")
@@ -84,7 +84,7 @@ module Pub4
       end
     end
 
-    # --- RAILS lints --------------------------------------------------------
+    # The RAILS lints, each a Pub4 module with its own BASELINES.
 
     # Each is a module with BASELINES (per kind) or BASELINE (single) and a scan.
     RAILS_LINTS = {
@@ -129,7 +129,7 @@ module Pub4
       Pub4.const_get(constant) if Pub4.const_defined?(constant)
     end
 
-    # --- gates/data ---------------------------------------------------------
+    # Ceilings that live in gates/data rather than in a lint.
 
     # css_budget's numbers need the gate to run (it compiles nothing, but it does
     # walk 94 stylesheets), so the ceiling is read here and the current value is
@@ -145,7 +145,7 @@ module Pub4
       end
     end
 
-    # --- test-embedded ceilings --------------------------------------------
+    # Ceilings a test file owns.
 
     # POINTED AT, NOT RE-MEASURED — and the first version of this method is why.
     #
@@ -177,7 +177,7 @@ module Pub4
                note: "floors, not ceilings — run the test; it fails in both directions already")]
     end
 
-    # --- deep ---------------------------------------------------------------
+    # Deep rows: these shell out to a scanner and cost minutes.
 
     def deep_rows
       [
@@ -198,7 +198,7 @@ module Pub4
       path.sub("#{ROOT}/", "")
     end
 
-    # --- rendering ----------------------------------------------------------
+    # Rendering.
 
     def render(rows)
       width = rows.map { |row| row.name.length }.max

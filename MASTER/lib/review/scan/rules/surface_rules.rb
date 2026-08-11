@@ -365,7 +365,7 @@ module Master
             message: "full-root scan/fix — scope to path; respect host carrying capacity")
         end
 
-        # --- Rails app surface ---
+        # Rails app surface.
 
         # Rails app law restored from master.yml rails_conventions — lexical/structural.
         # Applies under RAILS/, MASTER/web app views, and any app/ tree.

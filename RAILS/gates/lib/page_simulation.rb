@@ -180,7 +180,7 @@ module Deploy
       push_entry(entry)
     end
 
-    # --- source UX checks ----------------------------------------------------
+    # Source UX checks.
 
     def check_heading(page, body)
       return [] if page[:app] == "master" && page[:path].end_with?(".html")
@@ -291,7 +291,7 @@ module Deploy
       findings
     end
 
-    # --- helpers -------------------------------------------------------------
+    # Helpers.
 
     def base_entry(page)
       {
