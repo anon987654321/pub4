@@ -250,6 +250,64 @@ open:
       the lesson — the tests existed and had never run, because `bin/rails test`
       globbed from the app root and never saw engines/*/test.
 
+  - id: scanner_overlaps_two_installed_linters
+    tag: agent-workable
+    summary: >
+      MASTER carries 143 executable rule classes and 28 of them cover ground rubocop
+      and reek already cover: DOUBLE_QUOTES_RUBY, TRAILING_WHITESPACE, LONG_LINE,
+      EMPTY_RESCUE, FROZEN_LITERAL, NO_PUTS, CONSECUTIVE_BLANK_LINES and twenty-one
+      more. Both gems are in MASTER/Gemfile, both are bridged in
+      lib/review/scan/rules/external_linter_rules.rb, and the bridge is gated behind
+      MASTER_EXTERNAL_LINT=1 which nothing in lib/, bin/, data/ or OPENBSD sets --
+      .reek.yml:7 records exactly that. So the duplication is known and undecided
+      rather than accidental.
+      The other 115 rules are this product's own law (COMPLETION_THEATER,
+      HOST_CAPACITY, PRINCIPLE_MAP, EIGHT_PX_RHYTHM, the ARIA and BEM families) and
+      are not outsourceable to a Ruby linter, which cannot see ERB or SCSS at all.
+      Cheapest next step is measurement rather than a decision: set
+      MASTER_EXTERNAL_LINT=1 in one check profile and record how many of the 28 fire
+      on findings the bespoke rules already report. That number decides whether the
+      28 retire in favour of custom cops -- rubocop's 2026 plugin API is built for it
+      and holds config stability between minor versions -- or stay as they are.
+
+  - id: gate_result_is_a_shared_kernel_filed_under_deploy
+    tag: agent-workable
+    summary: >
+      Measured 2026-08-11 by counting require_relative across trees rather than prose
+      mentions: RAILS requires OPENBSD/lib/gate_result at 53 sites, deploy_inventory
+      at 16 and utf8 at 5, so 74 in total. OPENBSD requires MASTER/lib/pub4 at 3.
+      MASTER requires nothing from either tree and reads only their data (apps.yml,
+      debt.yml) -- an independence worth protecting deliberately.
+      So RAILS's whole 59-file gate framework is built on a type owned by the deploy
+      tree, and the directory names say the opposite. Nothing is broken; it is an
+      ownership question with 74 dependents. The answer is either a repo-level shared
+      kernel or a DECISIONS.md entry saying the deploy tree owns it on purpose.
+      Either beats the current silence, because the next person to move a file will
+      not know which of the two it is.
+
+  - id: gates_have_no_precision_ledger
+    tag: agent-workable
+    summary: >
+      Two things this fleet's ~60 gates do not do, both from arXiv 2607.07405
+      ("Reason Less, Verify More", KDD workshop 2026), whose architecture is the one
+      pub4 already has -- read-only pre-execution gates over state-decidable
+      predicates.
+      1. PER-GATE PRECISION. In their four-gate suite one gate ran at 100% precision
+      (161 true blocks, zero false) and another at 5%. pub4 keeps no ledger of which
+      gate blocks correctly, so a 5%-precision gate here would be indistinguishable
+      from a strict one: it would read as noise people learn to ignore, which is the
+      same failure as the tablist warning that fired on every deploy for a day.
+      2. FAIL-OPEN. If a gate itself errors, their system allows the original call
+      rather than inventing a false block. Deploy::GateResult has no such policy, so a
+      gate that raises takes the run down with it.
+      Worth reading beside it: arXiv 2608.04066 formalises what the 2026-08-11 session
+      did by hand a dozen times -- a claim is admitted only when a prediction
+      registered BEFORE acting is matched against observation by code. Their
+      instrument self-invalidated 4 of its first 8 runs and each invalidation
+      localised a real defect. Making that mechanical here means every gate carries
+      its known-bad input and is re-run against it, instead of depending on whoever
+      wrote it having mutated it once and remembered to say so.
+
   - id: rails_audit_backlog_2026_08_10
     tag: agent-workable
     summary: >

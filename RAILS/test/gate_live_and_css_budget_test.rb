@@ -24,7 +24,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   def result_with_skip
     result = Deploy::GateResult.new
     result.checked!(50)
-    result.skipped_live("brgen port 38182 closed")
+    result.skipped_live("brgen port closed")
     result
   end
 
@@ -56,8 +56,8 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   # skipped all 17 of its checks.
   def test_a_gate_that_skipped_every_live_check_measured_nothing
     result = Deploy::GateResult.new
-    result.skipped_live("amber port 61352 closed")
-    result.skipped_live("bsdports port 47312 closed")
+    result.skipped_live("amber port closed")
+    result.skipped_live("bsdports port closed")
 
     assert_equal :inconclusive, result.outcome,
                  "a gate that ran no checks at all must not report PASSED"
