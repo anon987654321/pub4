@@ -105,6 +105,31 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `FLYLO_DRUM_OVERLAY` / `DRUM_CHOPS` / `FM_DRUMS` | Off by default (sparse soul kit) |
 | `DILLA_RAW` | Skip best soft defaults |
 | `GROOVE_ENGINE` / `POCKET_DNA` | Pocket humanize (default on) |
+| `GROOVE_FEEL` | `boom_bap` (**default**), `dilla_drag`, `camel` — the microtiming table |
+| `LA_BEAT_PROGRESSION` | LA-beat arranger — **off**; see the Camel warning below |
+| `MASTER_SMOOTH_DB` / `MASTER_SMOOTH_HZ` | De-harsher: 2 dB out at 3200 Hz by default |
+| `HARM_PRESENCE_DB` / `DRUM_PRESENCE_DB` | Presence boosts, +2.4 and +2.5 — same band the de-harsher cuts |
+| `RENDER_SEED` | Pins the whole render. Drawn and recorded when unset — see Provenance |
+| `DEMO_TRACKS` | Explicit comma-separated order; beats every other rule in `demo_all_order` |
+| `RENDER_BEAUTY_MIN` | Harmony floor before a render is kept (55–78 across profiles) |
+
+Three of these are worth stating outright because each one is a documented
+capability that is off, or a default that surprises:
+
+- **`GROOVE_FEEL` defaults to `boom_bap`**, so the Dilla microtiming this engine
+  is named for is not applied unless asked. `dilla_drag` is the snare-behind
+  table; `camel` drags further and pulls the hats early, which is what reads as
+  broken rather than swung.
+- **`LA_BEAT_PROGRESSION` is off on purpose**, and the reason is specific:
+  forcing it on Camel injected random planing-style chords and made streams
+  sound broken. It and the fugue arranger both rewrite the progression, so
+  running both means two arrangers fighting over the same chords.
+- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` adds ~2.4 dB
+  and `DRUM_PRESENCE_DB` ~2.5 dB around the presence band; `MASTER_SMOOTH_DB`
+  takes 2 dB back out at 3.2 kHz. The net is a boost into the band the comment
+  at `master_smooth!` calls "where distortion and harshness actually live". If a
+  render is rough on the ears, this arithmetic is the first place to look, not
+  the tape stage.
 
 Full DNA is large (mix bus dB, harmonic stem weights). Prefer
 `config-provenance` after a render over memorizing every key.
@@ -169,6 +194,29 @@ SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 ---
 
 ## Provenance debugging
+
+Every run writes a `<file>.dilla` beside each audio file it produced —
+`lib/provenance.rb`, hooked at the CLI entry before anything reads a seed. It
+carries the render seed, argv, the env knobs that change the output, the engine
+commit, whether the working tree was clean, and a sha256.
+
+```sh
+ruby dilla.rb replay renders/beats/direction_v4.wav.dilla
+# RENDER_SEED=1505395575 TRACK=circle_fifths_descent … ruby dilla.rb dilla …
+```
+
+`RENDER_SEED` is drawn and recorded when unset rather than left to chance. The
+consequence is worth knowing: an unpinned render now runs through the *pinned*
+code paths, so noise comes from `seed_for(tag)` rather than ffmpeg's `seed=-1`.
+Two unpinned renders still differ from each other exactly as before; each is now
+a draw that can be replayed instead of one that cannot. `DILLA_NO_PROVENANCE=1`
+restores the old behaviour, seed and all.
+
+Nothing before 2026-08-11 is reproducible. The 616 audio files in the tree at
+that point, `su_tunnel_choir.wav` among them, have no recorded seed and cannot
+be made again.
+
+For the resolved ENV rather than the render:
 
 ```sh
 cd STUDIO/dilla

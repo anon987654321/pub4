@@ -300,6 +300,37 @@ were all silent — the code ran, returned success, and did nothing.
 - **Concat lists need absolute paths.** The demuxer resolves relative entries
   against the list file's directory, so a relative output path silently produced
   no effect at all.
+- **`GROOVE_FEEL` defaults to `boom_bap`.** The Dilla microtiming this engine is
+  named for is off unless asked. `dilla_drag` puts the snare behind while the
+  hats hold the grid; `camel` drags further and pulls the hats early. Every
+  render that never set it got straight-ahead timing.
+- **The fugue arranger is gated on the track's *name*.** `arrange_fugue_progression`
+  builds exposition / development / recapitulation, and `theory_runtime` only
+  reaches for it when `TRACK` matches `/bach|baroque|circle|fugue/i`. Of the
+  whole catalogue only `circle_fifths_descent` does, so asking for "a fugue
+  concept" on any other track silently gets none.
+- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` (+2.4, or +2.2
+  on flylo) and `DRUM_PRESENCE_DB` (+2.5) both push the same region that
+  `MASTER_SMOOTH_DB` takes 2 dB out of at 3.2 kHz. Net is a boost into the band
+  `master_smooth!` itself calls "where distortion and harshness actually live".
+  The de-harsher is no longer switched off, but it is outnumbered.
+- **`analyze_harshness` cannot see ear-level harshness.** It is a two-band ratio
+  splitting at 3.5 kHz, so 2–4 kHz — the roughness people actually complain
+  about — falls inside `mid` and cancels. A render measured −24.5 (very
+  un-harsh) while sounding rough. The meter is not wrong; it is aimed
+  elsewhere. A three-band split with a 2 kHz boundary is the fix.
+- **Sonitex's six stages are one flat hash here.** The real STX-1260 is six
+  independent sections — MIX, DISTORTION, VINYL, TONE, NOISE, SAMPLING — each
+  with its own sub-presets. `SONITEX_PRESETS` collapses them into one set of
+  keys, so `subtle` turns *everything* down together. "Vinyl bandwidth and head
+  bump without the bit-crush" is not currently expressible: the SAMPLING crush
+  and the TONE bandwidth are the same knob.
+- **One console strip is not a console.** `console_strip.rb`'s own header argues
+  that the sound people mean by "console" is the sum of thirty slightly
+  different channels, and then runs one pass. NastyVCS gets its character from
+  transformer circuitry at *both* input and output plus a phase-alignment stage
+  used for colouring — which is why five instances in series sounds like
+  something one instance does not. There is no instance count.
 
 ## Five findings that keep recurring
 
