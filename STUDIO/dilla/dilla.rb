@@ -20188,13 +20188,22 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # banner still announced steady mode, every take came out with the old arps,
   # and nothing in the log disagreed. One line here would have caught it in the
   # first render instead of the eighth.
-  dmesg(if counter_events.any?
-          "lead: counter-line, #{counter_events.length} notes, #{ENV.fetch('LEAD_TIMBRE', 'choir')}"
-        elsif lead_arp_ev.any?
-          "lead: arp, #{lead_arp_ev.length} notes (counter-line off: MELODIC_LEAD=#{ENV['MELODIC_LEAD'].inspect})"
-        else
-          "lead: none"
-        end, unit: "harm0", parent: "dilla0")
+  #
+  # All four lead paths, not two. This message was written to answer "which lead
+  # actually played" and then reported on counter_events and lead_arp_ev only,
+  # while scale_events and harmony_lead_ev were computed twenty lines above and
+  # rendered to fluidsynth on the two lines above this one. So a take with a
+  # harmony lead on it logged "lead: none", which is the same silence the comment
+  # above is about — one layer over.
+  #
+  # It cost a render to find. A Vaular take was re-rendered specifically to add a
+  # lead, on the strength of this line saying there was none.
+  played = []
+  played << "counter-line #{counter_events.length}n/#{ENV.fetch('LEAD_TIMBRE', 'choir')}" if counter_events.any?
+  played << "arp #{lead_arp_ev.length}n" if lead_arp_ev.any?
+  played << "scale #{scale_events.length}n" if scale_events.any?
+  played << "harmony #{harmony_lead_ev.length}n" if harmony_lead_ev.any?
+  dmesg("lead: #{played.empty? ? 'none' : played.join(' + ')}", unit: "harm0", parent: "dilla0")
 
   lead_arp_rendered = if counter_events.any?
                         render_lead_via_fluidsynth(lead_arp_path, counter_events, duration, counter: true)
