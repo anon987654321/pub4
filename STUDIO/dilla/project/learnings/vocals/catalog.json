@@ -2640,23 +2640,29 @@
         0.05149
       ],
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/store_p/fit_88_48bars_key-1.wav",
-        "beat_bpm": 88.32,
-        "n_bars": 48,
-        "offset_sec": 34.496,
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/store_p/fit_140_32bars_key-1.wav",
+        "beat_bpm": 140.0,
+        "n_bars": 32,
+        "offset_sec": 34.4658,
         "phrase_start": 0.0,
-        "source_bpm": 88.9,
+        "source_bpm": 177.8,
         "tempo_ratio": 1.0,
-        "rms_db": -17.7,
-        "sub_bleed_db": -37.3,
-        "snapped_lines": 47,
+        "rms_db": -17.0,
+        "sub_bleed_db": -35.6,
+        "snapped_lines": 23,
         "has_pulse": false,
         "key_shift": -1,
         "progression": "pedal_e_descent",
         "voice_only": true
       },
-      "bpm_estimate": 88.9
+      "bpm_estimate": 177.8
+    },
+    {
+      "slug": "singers_unlimited",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/singers_unlimited/vocals.wav",
+      "phrases": [],
+      "note": "close-harmony ensemble; source for SU_MELODY resynthesis, not a rap take"
     }
   ],
-  "updated_at": "2026-08-11T04:18:20Z"
+  "updated_at": "2026-08-11T05:05:19Z"
 }

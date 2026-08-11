@@ -489,7 +489,16 @@ MASTER_LUFS_BY_STYLE = {
   flylo: -17.0,
   madlib: -18.0,
   neo_soul: -18.5,
-  techno: -17.0,
+  # -14, on operator instruction 2026-08-11 ("make it louder, -14 lufs"). The
+  # -17 it replaces was set for the Dilla-leaning material this engine started
+  # as; techno sits roughly 5 dB above that on any reference, and rendering the
+  # techno family through a dilla target landed takes at -19.
+  #
+  # This also moves DILLA_QUALITY_LUFS_TARGET, which is derived from the spread
+  # below rather than written separately. That is the point: without it the
+  # quality gate kept its old -20.5..-15.5 window and failed every track the
+  # operator had just asked for, reporting the requested level as a defect.
+  techno: -14.0,
   default: -17.0,
 }.freeze
 
@@ -11076,9 +11085,18 @@ def dilla_quality(path, baseline_path = nil)
     high: band_rms(path, highpass: 3_500, lowpass: 16_000),
   }
   mono = band_rms(path, highpass: 28, lowpass: 16_000)
+  # last_progression_chords is render-time state, so auditing a file this
+  # process did not render finds nil -- and score_beauty(nil) returns 50, which
+  # the report then printed as a harmony score next to real measurements. Every
+  # `quality` run on an existing mp3 has been reporting a fabricated 50 with an
+  # empty breakdown; the number looked like a measurement and was a default.
+  #
+  # Absent is now absent. A null says "not measured" and cannot be averaged,
+  # plotted or compared by mistake, which a 50 can.
   chords = DillaHarmony.last_progression_chords
-  harmony_score = DillaHarmony.score_beauty(chords)
-  harmony_breakdown = chords&.any? ? DillaHarmony.score_breakdown(chords) : {}
+  harmony_measured = chords&.any?
+  harmony_score = harmony_measured ? DillaHarmony.score_beauty(chords) : nil
+  harmony_breakdown = harmony_measured ? DillaHarmony.score_breakdown(chords) : nil
   harshness = DillaMaster.analyze_harshness(spectrum)
   sub_kick = DillaMaster.sub_kick_balance(spectrum, harmony_score)
   report = media_metadata(path).merge(
@@ -19910,6 +19928,10 @@ def su_melody_enabled?
   ENV.fetch("SU_MELODY", "0") != "0"
 end
 
+def no_lead?
+  ENV.fetch("NO_LEAD", "0") != "0"
+end
+
 # One afftfilt pass per variant instead of one per note. Per-note stretching
 # measured 9.4s for 24 voices, which extrapolates to ~61s on a three-minute
 # track and scales with length; this is a fixed four passes regardless.
@@ -20810,7 +20832,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # the more interesting signal — mixing them just muddies both.
   su_melody_path = "#{path}.su_melody.wav"
   su_melody_rendered = nil
-  if su_melody_enabled?
+  if su_melody_enabled? && !no_lead?
     begin
       su_melody_rendered = render_su_tunnel_melody(
         su_melody_path, pad_events, duration,
@@ -20820,7 +20842,11 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
       warn "su tunnel melody skipped: #{e.message}"
     end
   end
-  leads_muted = !!su_melody_rendered
+  # NO_LEAD=1 silences every top line there is: the four synth lanes and the
+  # choir together. Asked for twice -- the first time it was read as "change it",
+  # which was the other half of the same sentence and the wrong half. With no
+  # lead the rapper is the top line, which is what a Dilla beat is anyway.
+  leads_muted = !!su_melody_rendered || no_lead?
 
   n_bars_est = (duration / ((60.0 / cfg[:bpm]) * 4.0)).ceil
   # One clean melodic lead by default — scale/creative layers turned the top line into soup.
