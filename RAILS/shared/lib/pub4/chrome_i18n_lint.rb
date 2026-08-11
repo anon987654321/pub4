@@ -64,6 +64,21 @@ module Pub4
       )
     /x
 
+    # t("key", default: "English") in a shipped view.
+    #
+    # The most effective hiding place in the codebase, because it defeats two guards
+    # at once: this lint skips any line containing t( (it looks for strings that
+    # never reach I18n at all), and i18n_resolution_test deliberately ignores keys
+    # carrying a default, since a default means the key is optional.
+    # config.i18n.raise_on_missing_translations does not fire either — a default IS
+    # the translation as far as Rails is concerned.
+    #
+    # So the ambient chat widget shipped fourteen English strings to amber and
+    # bsdports, including every "why you are not in #nearby" recovery message, and
+    # nothing in the tree could report it. A default belongs in library code that
+    # cannot know its host's locales; in a view it is a hardcoded string with an
+    # alibi.
+    TRANSLATE_DEFAULT = /\bt\(\s*["'][\w.]+["']\s*,\s*default:/
     OPT_OUT = "chrome_i18n: ok"
 
     # Per kind, because they are not the same debt. A new hardcoded empty title is a
@@ -89,6 +104,13 @@ module Pub4
       # sentences the engine already owns (not_authorized, rate_limited). What is
       # left is the five brgen engines. Down only.
       "controller_flash" => 48,
+      # Measured 2026-08-11 by this rule: 216 lines. (A looser hand grep said 231 —
+      # it counted occurrences, not lines, which is the reminder that the number to
+      # ratchet is always the instrument's own.) A ratchet rather than a ban,
+      # because 216 cannot come down in one pass — but the chat
+      # widget's 18 already did, and every one that goes is a string that can no
+      # longer hide from the other three rules here. Down only.
+      "translate_default" => 216,
     }.freeze
 
     # Kept for callers that referenced the old single number.
@@ -151,19 +173,23 @@ module Pub4
     VIEW_RULES = { "empty_title" => EMPTY_TITLE, "search_placeholder" => SEARCH_PLACEHOLDER,
                    "aria_label" => ARIA_LABEL }.freeze
     CONTROLLER_RULES = { "controller_flash" => CONTROLLER_FLASH }.freeze
+    DEFAULT_RULES = { "translate_default" => TRANSLATE_DEFAULT }.freeze
 
     def scan
       # Doc comment inside the partial itself is not a call site.
       views = view_paths.sort.reject { |path| path.end_with?("shared/_empty_state.html.erb") }
 
       views.flat_map { |path| findings_in(path, VIEW_RULES) } +
-        controller_paths.sort.flat_map { |path| findings_in(path, CONTROLLER_RULES) }
+        controller_paths.sort.flat_map { |path| findings_in(path, CONTROLLER_RULES) } +
+        # skip_translated: false — this rule looks FOR a t( call rather than for a
+        # string that never reached one.
+        views.flat_map { |path| findings_in(path, DEFAULT_RULES, skip_translated: false) }
     end
 
-    def findings_in(path, rules)
+    def findings_in(path, rules, skip_translated: true)
       lines = File.readlines(path, encoding: "UTF-8")
       lines.each_with_index.filter_map do |line, i|
-        next if line.include?("t(") || line.include?("I18n.t")
+        next if skip_translated && (line.include?("t(") || line.include?("I18n.t"))
         next if comment_or_opt_out?(lines, i)
 
         kind, = rules.find { |_, pattern| line.match?(pattern) }

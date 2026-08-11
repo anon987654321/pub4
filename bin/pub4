@@ -21,6 +21,7 @@ def usage
       bin/pub4 vps deploy <app|master> [--remote]
       bin/pub4 vps logs <app> [--lines N] [--remote]
       bin/pub4 post-pull
+      bin/pub4 measure [--deep] [--json]
 
     Profiles (passed through to check scripts):
       OPENBSD/bin/check --profile=contributor
@@ -46,6 +47,15 @@ case command
 when "status", nil
   json = ARGV.include?("--json")
   puts Pub4::StatusReport.new(root: ROOT).render(json:)
+when "measure"
+  # Every ratchet in the repo, current beside recorded. Non-zero when any is over
+  # its ceiling OR slack beneath it, because a ceiling above the real number is
+  # room the next change grows into without failing anything.
+  require_relative "../MASTER/tools/ratchets"
+  deep = !ARGV.delete("--deep").nil?
+  rows = Pub4::Ratchets.all(deep:)
+  puts ARGV.include?("--json") ? Pub4::Ratchets.json(rows) : Pub4::Ratchets.render(rows)
+  exit(Pub4::Ratchets.ok?(rows) ? 0 : 1)
 when "post-pull"
   script = File.join(OPENBSD_OPS, "bin", "post-pull-checklist")
   exec(script, *ARGV)

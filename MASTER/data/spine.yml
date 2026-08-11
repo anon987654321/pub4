@@ -7,6 +7,13 @@
 # DEBT.md makes of data/limits.yml, where 44 of 94 second-level keys have no
 # reader. This file is the reader.
 #
+# What this file claims, settled 2026-08-11 (DECISIONS.md, "The invariant"):
+# `core_files: 6` is the invariant — a new top-level concept in core/ is a design
+# change. `lib_code_ceiling` is a BUDGET WITH A SPONSOR, not a promise that lib/
+# never grows: it has been raised three times and the unit changed once, so the
+# old sentence had already been disproved by its own log. The mechanism is
+# unchanged; the claim is now the one that is true.
+#
 # The ceiling only ever goes down. When lib/ shrinks, run `rake lint:spine
 # RATCHET=1` to record the new low; there is no task that raises it. Raising it
 # is a deliberate edit to this file, in a commit that says why.

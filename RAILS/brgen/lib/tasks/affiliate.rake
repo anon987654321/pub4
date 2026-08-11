@@ -95,5 +95,11 @@ namespace :affiliate do
     deleted = AffiliateProduct.where(placeholder: true).delete_all
     puts "affiliate:drop_placeholders — removed #{deleted} row(s)."
   end
+  desc "Clicks sent vs conversions returned, and the gap between them"
+  task :attribution, [ :days ] => :environment do |_, args|
+    days = (args[:days] || 7).to_i
+    puts PartnerAttributionReport.new(window: days.days).render
+  end
+
 end
 

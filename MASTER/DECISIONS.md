@@ -28,6 +28,29 @@ when `lib/` grows past its recorded ceiling or `core/` gains a top-level file.
 The ceiling only ratchets down (`RATCHET=1` records a new low); raising it is a
 deliberate edit with a reason in the commit. Part of `rake audit`.
 
+### The invariant, settled 2026-08-11
+
+The ceiling has now been raised three times (2026-07-31, 2026-08-01, 2026-08-11)
+and its unit changed once. `data/spine.yml`'s own note said that if it were raised
+again without `lib/` ever falling back, "the honest conclusion is that 'the spine
+never grows' is not the invariant anyone is holding". `lib/` did fall back twice,
+by deletion — and on the third raise there was nothing dead left to pay with: a
+sweep of all 445 files returned one candidate and it was a false positive.
+
+So the sentence is retired and replaced by the two things that are actually true:
+
+- **`core_files: 6` is the invariant.** A new top-level concept in `core/` is a
+  design change and must be argued for. This has never been raised and should not
+  be. It is what "the spine" means.
+- **`lib_code_ceiling` is a budget with a sponsor, not a promise.** It exists so
+  growth is visible and has to be asked for. A raise needs a named sponsor and the
+  per-commit accounting in `spine.yml`; `consecutive_raises_allowed: 2` refuses the
+  third until `lib/` genuinely falls.
+
+Nothing about the mechanism changes — this only stops the file claiming an
+invariant that three raises have already disproved. A number nobody believes is
+worse than a budget everybody reads.
+
 ## Rule Data Stays Split
 
 `data/rules.yml` is the constitutional rule registry. `data/rules/*.yml` are scanner shards by scope. `data/design_rules.yml`, `data/llm_output_rules.yml`, and `data/rule_deps.yml` each have separate consumers. Merging them would reduce proximity to their owners.

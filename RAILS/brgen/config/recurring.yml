@@ -65,6 +65,13 @@ production:
     class: AffiliateImportJob
     queue: bulk
     schedule: every day at 3:15am
+  # Weekly, and the one report that can tell "nobody clicked" from "tracking is
+  # broken" — which a network dashboard reports as the same zero.
+  partner_attribution_report:
+    class: PartnerAttributionReportJob
+    queue: bulk
+    schedule: every monday at 6am
+
 
   link_converter_sync:
     class: LinkConverterSyncJob

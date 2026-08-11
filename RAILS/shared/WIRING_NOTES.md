@@ -114,6 +114,36 @@ ruby RAILS/tools/build_all_css.rb --check
 ruby RAILS/gates/runner.rb frontend_auditor
 ```
 
+## Who owns a rendered value (2026-08-11)
+
+The line an agent kept having to guess at, so it is written down. It was guessed
+twice on 2026-08-11 alone: a `border-color: #fff` that put `magic_hex` over its
+ceiling, and six media queries where one width was both a floor and a ceiling.
+
+**An agent may not choose or change a rendered value.** Not a colour, not a
+breakpoint edge, not a radius, not a layout. The operator is a trained architect
+and the apparent oddities are usually decisions — the swipe-reveal nav is
+deliberate, the flat pass that stripped every box-shadow is deliberate, the
+`brgen-old-*` grayscale is deliberate. "It looks wrong to me" is not evidence.
+
+**What an agent may do instead, in preference order:**
+
+1. **Add a token, and reference it.** A named entry in `design_tokens.yml` with
+   the count of sites that justify it is an addition, not a change: the rendered
+   value is identical the moment every site points at it.
+2. **Add a gate.** A number that can only fall is worth more than a fix, because
+   it holds after the session ends. `Pub4::BreakpointLint` exists for exactly this.
+3. **Fix an ambiguity, not an aesthetic.** Two rules that both match at one exact
+   viewport width have no intended outcome — bundle order decides. Collapsing that
+   is repairing an undefined state, and it still gets said out loud in the commit.
+4. **Record the finding and stop.** A ceiling raise with the reason in the file,
+   naming the commit that caused it and the decision it is waiting on, is a
+   legitimate outcome. It leaves the gate measuring everything else.
+
+**Never** substitute a token whose value differs from the literal it replaces, on
+the grounds that it is "more correct". That is a colour change wearing a
+refactor's clothes.
+
 ## Visual design system (2026-07-19)
 
 **Reference:** x.com interaction patterns. Source of truth: `shared/design_tokens.yml`, `shared/app/assets/stylesheets/_dialect_tokens.scss`, `_shell.scss`. amber/brgen inherit via `stack` / `stack_brgen` → `_tokens.scss` → `_dialect_tokens.scss`.

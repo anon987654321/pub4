@@ -6,7 +6,22 @@ module Shared
     %w[app/models app/models/concerns app/services app/controllers app/controllers/concerns app/policies app/helpers app/jobs app/reflexes].each do |dir|
       config.autoload_paths << root.join(dir).to_s
     end
-    config.paths["db/migrate"] << root.join("db/migrate").to_s
+    # NO db/migrate path. Deliberate, and the deletion of a line that looked like
+    # wiring and was not.
+    #
+    # `config.paths["db/migrate"] << root.join("db/migrate")` sat here and no app
+    # read it: `bin/rails db:migrate:status` in all three lists only that app's own
+    # migrations, and the three files under shared/db/migrate had per-app
+    # equivalents doing the real work (amber's enable_anonymous_posts creates the
+    # same anonymous_post_quotas table). On 2026-08-11 a migration was added to
+    # shared/db/migrate for the outbound_clicks table, ran nowhere, and the beacon
+    # that writes to it would have failed silently behind a rescue — inert config
+    # inside the framework wiring, which is this repo's own favourite defect class.
+    #
+    # The convention is one migration per app. `shared/db/migrate` is kept as the
+    # historical record of the three that predate it and is asserted empty of new
+    # files by RAILS/test/engine_migration_convention_test.rb, because a file added
+    # there would silently do nothing.
     config.active_record.schema_format = :ruby if config.respond_to?(:active_record)
 
     %w[app/channels].each { |dir| config.autoload_paths << root.join(dir).to_s }
