@@ -83,6 +83,7 @@ require_relative "lib/harmony_lead"
 require_relative "lib/theory_runtime"
 require_relative "lib/groove_engine"
 require_relative "lib/seed_providers"
+require_relative "lib/provenance"
 require_relative "lib/rhythm_macros"
 require_relative "lib/master_heuristics"
 require_relative "lib/spectral_engine"
@@ -4220,13 +4221,33 @@ end
 # feel and starts reading as an unsteady tempo. Percussion is furthest behind
 # at 1.45 -- shakers and maracas played deliberately late are named repeatedly
 # as the source of the push and pull against kick and snare.
+# The melodic roles were missing entirely, and they are the busiest roles in the
+# engine: lead appears 90 times, warm 75, ep 50, texture 28. With no entry they
+# fell through `SWING_ROLE_SCALE[role] || 1.0` and were swung at exactly the
+# hi-hat rate — the most exaggerated lean in the kit — while bass sat at 0.3 and
+# pad at 0.5 because someone had already decided sustained material should lean
+# less than the hats.
+#
+# That is backwards for this feel. The records this engine is named after put the
+# keys and the lead behind or across the drums, not locked to the hat; a Rhodes
+# chord swung as hard as a shaker is the sound of a sequencer, which is the one
+# thing the pocket exists to avoid. Sustained voices take the pad's 0.5, leads
+# sit a little further back at 0.6 — enough to be heard leaning, short of the
+# ghost-note 1.2 that would make a held note sound late rather than lazy.
+#
+# `kick` was the other one, and it is a plain defect: kick_anchor is 0.0 because
+# it is the grid reference everything else leans against, and a bare `:kick`
+# role — three call sites — was swinging at 1.0. Same drum, opposite treatment,
+# decided by which name the call site happened to use.
 SWING_ROLE_SCALE = {
-  kick_anchor: 0.0, kick_sync: 0.15,
+  kick_anchor: 0.0, kick: 0.0, kick_sync: 0.15,
   snare: 0.85, clap: 0.85,
-  hat_down: 1.0, hat_up: 1.1, open: 1.0,
+  hat_down: 1.0, hat_up: 1.1, hat: 1.0, open: 1.0,
   ghost: 1.2,
   perc: 1.45,
   bass: 0.3, pad: 0.5,
+  ep: 0.5, warm: 0.5, texture: 0.4, native: 0.5,
+  lead: 0.6, xlead: 0.6, scale_lead: 0.6, creative_lead: 0.6,
 }.freeze
 SWING_ROLE_SPREAD = ENV.fetch("SWING_ROLE_SPREAD", "1").to_f.clamp(0.0, 3.0)
 
@@ -8309,6 +8330,53 @@ MICROTIMING_MS = {
 # probabilistic organic generation. Kicks/snares/ghosts/hats are authored
 # separately so each voice has its own pocket.
 DRUM_PATTERN_SETS = {
+  # The two canon pockets, played rather than described.
+  #
+  # RADIO_BERGEN dossiers carry these as prose -- "MPC swing 54-62%; kick late-3
+  # anchor; snare early on 4/12; ghost on 2/10" for dilla_canon, "flylo_abstract
+  # broken 16ths; kick 0,5,8,13; displaced snares" for flylo_canon. Those strings
+  # sit in a dossier hash near DOSSIERS_PATH; the drums come from
+  # drum_pattern_pick, which is keyed on feel and has never seen them. So the
+  # engine documented a pocket it did not play, in the two styles it is most
+  # often asked for.
+  #
+  # Transcribed here from those specs and nowhere else -- the anchors are the
+  # dossier's, and the variation around them follows the house shape of the pools
+  # below (a fixed anchor pair plus movement). Added as new feels rather than
+  # edits to existing ones, so no render changes unless GROOVE_FEEL asks.
+  dilla_canon: {
+    # Every kick anchors 0 and the late 3. 10 is the second anchor, which is what
+    # makes the bar lean without the snare having to move.
+    kicks: [
+      [0, 3, 10], [0, 3, 10, 14], [0, 3, 7, 10], [0, 3, 10, 13],
+      [0, 2, 3, 10], [0, 3, 6, 10, 15], [0, 3, 9, 10], [0, 3, 11]
+    ],
+    # 4 and 12 held. "Early" is timing, not grid -- GROOVE_FEEL supplies it.
+    snares: [[4, 12], [4, 12], [4, 12, 14], [4, 11, 12], [4, 12], [3, 4, 12]],
+    ghosts: [[2, 10], [2, 6, 10], [2, 10, 14], [2, 5, 10], [2, 10, 13], [1, 2, 10]],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14, 3], [0, 2, 4, 6, 8, 10, 12, 14, 11],
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 3, 6, 9, 12, 15],
+      [0, 2, 4, 6, 8, 10, 12, 14]
+    ],
+    opens: [6, 14],
+  },
+  # The kick here is quoted exactly: 0, 5, 8, 13. Snares are displaced off 4/12
+  # rather than sitting on them, which is what "displaced" buys -- the backbeat
+  # stops being a reference point and the bar reads broken.
+  flylo_canon: {
+    kicks: [
+      [0, 5, 8, 13], [0, 5, 8, 13, 15], [0, 5, 9, 13], [0, 4, 8, 13],
+      [0, 5, 8, 12], [0, 3, 5, 8, 13]
+    ],
+    snares: [[5, 13], [4, 13], [5, 12], [6, 13], [4, 11], [5, 14]],
+    ghosts: [[2, 7, 11, 15], [1, 6, 10, 14], [3, 9, 14], [2, 6, 11], [1, 7, 12]],
+    hats: [
+      [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15], [0, 2, 3, 5, 6, 8, 9, 11, 12, 14],
+      [1, 2, 4, 5, 7, 8, 10, 11, 13, 14], [0, 3, 4, 7, 8, 11, 12, 15]
+    ],
+    opens: [7, 15],
+  },
   timeless: {
     kicks: [
       [0, 8, 10, 15], [0, 3, 9, 11, 14], [0, 6, 10, 13], [0, 2, 7, 10, 14],
@@ -12132,6 +12200,12 @@ def save_setlist(path, takes: nil, bars: nil)
     h[k] = v unless v.nil? || v.empty?
   end
   doc = {
+    # Named, because .dilla is now two formats. DillaProvenance writes one
+    # beside every render as <output>.mp3.dilla: a single take, its seed, and
+    # the command that rebuilds it. This is the other kind -- several takes and
+    # the environment they share. The suffixes differ in practice, but a file
+    # should say what it is rather than rely on how it happened to be named.
+    "schema" => "setlist",
     "setlist_version" => SETLIST_VERSION,
     "engine_sha" => setlist_engine_sha,
     "bars" => (bars || ENV["BARS"] || 32).to_i,
@@ -12147,6 +12221,12 @@ end
 def render_setlist(path, outdir = nil)
   abort("no such setlist: #{path}") unless File.file?(path)
   doc = JSON.parse(File.read(path))
+  # Handed the other .dilla, say which one it is. Falling through to "no takes"
+  # would blame the file for being empty when it is simply a different format
+  # with its own command.
+  if doc["schema"].to_s != "setlist" && doc.key?("render_seed") && doc.key?("command")
+    abort("#{File.basename(path)} is a render manifest, not a setlist — use: ruby dilla.rb replay #{path}")
+  end
   if doc["setlist_version"].to_i > SETLIST_VERSION
     abort("setlist v#{doc['setlist_version']} is newer than this engine understands (v#{SETLIST_VERSION})")
   end
@@ -20568,15 +20648,32 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # banner still announced steady mode, every take came out with the old arps,
   # and nothing in the log disagreed. One line here would have caught it in the
   # first render instead of the eighth.
-  dmesg(if leads_muted
-          "lead: su tunnel choir (synth leads muted)"
-        elsif counter_events.any?
-          "lead: counter-line, #{counter_events.length} notes, #{ENV.fetch('LEAD_TIMBRE', 'choir')}"
-        elsif lead_arp_ev.any?
-          "lead: arp, #{lead_arp_ev.length} notes (counter-line off: MELODIC_LEAD=#{ENV['MELODIC_LEAD'].inspect})"
-        else
-          "lead: none"
-        end, unit: "harm0", parent: "dilla0")
+  #
+  # All four lead paths, not two. This message was written to answer "which lead
+  # actually played" and then reported on counter_events and lead_arp_ev only,
+  # while scale_events and harmony_lead_ev were computed twenty lines above and
+  # rendered to fluidsynth on the two lines above this one. So a take with a
+  # harmony lead on it logged "lead: none", which is the same silence the comment
+  # above is about — one layer over.
+  #
+  # It cost a render to find. A Vaular take was re-rendered specifically to add a
+  # lead, on the strength of this line saying there was none.
+  #
+  # leads_muted is named separately rather than left to fall through to "none".
+  # Under SU_MELODY every one of the four lanes is empty by construction, so the
+  # honest four-path report and a silent-by-mistake render print the same word.
+  # That is the exact confusion both comments above are about, so the one case
+  # where the silence is deliberate says so.
+  if leads_muted
+    dmesg("lead: su tunnel choir (four synth lanes muted)", unit: "harm0", parent: "dilla0")
+  else
+    played = []
+    played << "counter-line #{counter_events.length}n/#{ENV.fetch('LEAD_TIMBRE', 'choir')}" if counter_events.any?
+    played << "arp #{lead_arp_ev.length}n" if lead_arp_ev.any?
+    played << "scale #{scale_events.length}n" if scale_events.any?
+    played << "harmony #{harmony_lead_ev.length}n" if harmony_lead_ev.any?
+    dmesg("lead: #{played.empty? ? 'none' : played.join(' + ')}", unit: "harm0", parent: "dilla0")
+  end
 
   lead_arp_rendered = if counter_events.any?
                         render_lead_via_fluidsynth(lead_arp_path, counter_events, duration, counter: true)
@@ -20853,7 +20950,27 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
   cache_self_sample!(destination)
-  FileUtils.rm_f(destination)
+  # Set the previous take aside instead of deleting it.
+  #
+  # This line used to be FileUtils.rm_f(destination), which destroyed the old
+  # render before a single note of the new one existed. Every path out of this
+  # method that is not "wrote #{destination}" therefore lost the take: a raise,
+  # a timeout, a SIGTERM, ffmpeg refusing a filter, the operator pressing ^C
+  # thirty seconds in. The window is not small — a 48-bar render is minutes long
+  # and the file is gone for all of it.
+  #
+  # These renders are not reproducible. The seed rotates, the performer and
+  # generation are chosen per run, and the mp3 is the only copy — the tree
+  # ignores renders, so git has never held one. Two of the operator's tracks
+  # went missing mid-session and the cause was read as "another agent"; it was
+  # this. It reproduced here exactly: vaular_remix.mp3 existed, a re-render was
+  # started against the same path, that render died at 137s, and the finished
+  # take was gone with nothing to replace it.
+  #
+  # cache_self_sample! above keeps 1.2 seconds of the old file. That is a sample
+  # source, not a backup, and it is the only thing that has ever survived this.
+  previous_take = "#{destination}.prev" if File.file?(destination)
+  FileUtils.mv(destination, previous_take) if previous_take
   cfg      = dilla_resolve_config
   cfg      = DillaSeeds.apply_to_cfg!(cfg)
   n_bars   = bars_count || bars
@@ -21601,6 +21718,20 @@ ensure
   # .dilla_harmonic.<pid>.wav.*/.dilla_drums.<pid>.wav scratch forever --
   # `ensure` so it still fires if this method raises partway through.
   cleanup_render_scratch!
+  # Put the old take back unless a new one actually landed.
+  #
+  # "Landed" is a size check, not File.exist?: a render killed during the final
+  # ffmpeg leaves a truncated destination behind, and restoring nothing over a
+  # 40-byte stub would lose the take just as completely as the delete did.
+  # 64 KB is under a second of 320k mp3 — anything smaller is wreckage.
+  if defined?(previous_take) && previous_take && File.file?(previous_take)
+    if File.size?(destination).to_i > 64_000
+      FileUtils.rm_f(previous_take)
+    else
+      FileUtils.mv(previous_take, destination)
+      warn "render did not finish — kept the previous #{File.basename(destination)}"
+    end
+  end
 end
 
 def industrial_techno_section(bar)
@@ -27685,6 +27816,12 @@ DISPATCH = {
       abort "usage: ruby dilla.rb rap-vocal ingest|fit|list"
     end
   end,
+  # Print the command that rebuilds a render. The .dilla file carries it; this
+  # saves reading JSON to find it.
+  "replay" => lambda do
+    manifest = ARGV.shift or abort "usage: ruby dilla.rb replay <file.dilla>"
+    puts DillaProvenance.replay_command(manifest)
+  end,
   "liveset" => lambda do
     set = ARGV.shift || stems_load_manifest["active"] || "default"
     mins = (ARGV.shift || LIVESET_MIN).to_i
@@ -27700,6 +27837,11 @@ def render_output_path?(token)
 end
 
 if __FILE__ == $PROGRAM_NAME
+  # Before anything reads a seed. Draws and records RENDER_SEED when it is unset,
+  # so every file this run produces gets a .dilla recipe beside it and can be
+  # made again. DILLA_NO_PROVENANCE=1 restores the old unrecorded behaviour.
+  DillaProvenance.begin!(root: OUTPUT_DIR, argv: ARGV)
+
   pad_voice_before = ENV["PAD_VOICE"]
   pad_arp_before = ENV["PAD_ARP_MODE"]
   apply_best_defaults!

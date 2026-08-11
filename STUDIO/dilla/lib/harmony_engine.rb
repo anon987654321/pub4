@@ -521,7 +521,7 @@ module DillaHarmony
       end
       voiced = anchor_register(clamp_register(open_spacing(voiced)), centre)
       prev = voiced
-      hz = voiced.map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
+      hz = dedupe_by_pitch(voiced).first(MAX_PAD_VOICES).map { |m| midi_to_hz(m) }
       led << { name: nxt[:name], hz:, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
     end
     led
@@ -547,10 +547,31 @@ module DillaHarmony
       end
       voiced = anchor_register(clamp_register(open_spacing(voiced)), centre)
       prev = voiced
-      hz = voiced.map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
+      hz = dedupe_by_pitch(voiced).first(MAX_PAD_VOICES).map { |m| midi_to_hz(m) }
       led << { name: nxt[:name], hz:, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
     end
     led
+  end
+
+  # Two voices on the same note are a doubled unison, not a chord tone, and the
+  # engine was shipping them: of 165 voicings logged to progressions_log.txt, 33
+  # carried a duplicated pitch, 27 had fewer than three distinct ones, and 9 were
+  # a single pitch class repeated -- G/Bb came out D3 D3 D5, which is the fifth
+  # three times with the root and third gone.
+  #
+  # The dedupe was there and could not catch them. It ran on the *frequencies*,
+  # after midi_to_hz, so two voices at 146.83 Hz and 147.06 Hz are distinct
+  # floats, survive uniq, and are both D3. They only became equal after
+  # nearest_note rounded them for the log, which is why the log showed the
+  # problem and the code could not see it.
+  #
+  # The near-collisions come from the octave-shift arithmetic above:
+  # `target + ((anchor - target) / 12.0).round * 12.0`, then open_spacing,
+  # clamp_register and anchor_register, each nudging a float. Rounding to the
+  # semitone is the level the question is actually asked at -- a chord is a set
+  # of pitches, not a set of frequencies.
+  def dedupe_by_pitch(midis)
+    midis.uniq { |m| m.round }
   end
 
   def pitch_class_dist(a, b)
