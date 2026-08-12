@@ -1,5 +1,5 @@
 <% content_for :title, t("creator_profiles.new_title", default: "Create creator profile") %>
 
 <h1><%= t("creator_profiles.new_title", default: "Create creator profile") %></h1>
-<p class="dim">Share a public wardrobe showcase others can remix when you allow it.</p>
+<p class="dim"><%= t("creator_profiles.new_lead") %></p>
 <%= render "form", profile: @profile %>

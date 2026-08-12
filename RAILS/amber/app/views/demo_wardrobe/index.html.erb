@@ -5,9 +5,9 @@
 <% content_for :json_ld, json_ld_script(demo_item_list_schema(@items, title: t("demo.wardrobe"))) %>
 
 <header role="banner" aria-label="<%= t("demo.wardrobe_header") %>">
-  <p class="dim">Capsule demo · <%= Amber::DemoWardrobe::DEMO_DISPLAY_NAME %></p>
+  <p class="dim"><%= t("demo.capsule_kicker", name: Amber::DemoWardrobe::DEMO_DISPLAY_NAME) %></p>
   <h1><%= t("demo.wardrobe") %></h1>
-  <p class="tagline">Browse a realistic capsule before you sign in — cost-per-wear, categories, and outfit combos.</p>
+  <p class="tagline"><%= t("demo.index_tagline") %></p>
   <nav role="navigation" aria-label="<%= t("demo.wardrobe_actions") %>">
     <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn--primary" %>
     <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn--ghost" %>

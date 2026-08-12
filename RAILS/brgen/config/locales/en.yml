@@ -173,6 +173,9 @@ en:
     playlist_label: "Playlist search"
     tv: "Search channels and videos…"
     tv_label: "TV search"
+    results_for:
+      one: "%{count} result for “%{query}”"
+      other: "%{count} results for “%{query}”"
   messages:
     disappears_in: "disappears in %{time}"
     title: "Messages"
@@ -524,6 +527,11 @@ en:
     current_photos: "Current photos"
     more_details: "More details"
     protected_with: "Protected with"
+    edit_profile_blurb: "Photos and about you matter most — other details stay optional."
+    create_profile_blurb: "Three steps to start — photos, about you, who you are looking for. Details can wait."
+    photo_hint: "Add at least one clear photo when you can."
+    essentials: "Essentials"
+    more_details_optional: "More details (optional)"
   playlist:
     tap_to_start: "tap to start"
     next: "Next track"
@@ -587,6 +595,20 @@ en:
     render_now: "Render now"
     publish_as_track: "Publish as playlist track"
     set_kicker: "Playlist set"
+    upload_blurb: "Direct upload here. High quality 320kbps MP3 / FLAC supported. Replace keeps share links (no URL change)."
+    current_file: "Current: %{name} — replace keeps your share/embed links"
+    track_stats: "%{plays} plays · %{comments} timestamped comments · %{versions} prior versions"
+    set_stats: "%{plays} plays across %{tracks} tracks · %{comments} comments total."
+    now_playing: "Now playing:"
+    waiting_for_host: "Waiting for the host to pick a track…"
+    comments_seek: "Comments (click to seek)"
+    embed_customize: "Embed (customize: ?color=ff0000&amp;show_artwork=0&amp;compact=1)"
+    party_blurb: "Start or join a real-time synced listening session with embedded player and chat."
+    open_in_lab: "open in lab"
+    analytics: "Analytics"
+    privacy_line: "Privacy: %{value}"
+    privacy_private: "private"
+    expires_on: "· expires %{date}"
   marketplace:
     browse_listings: "Browse listings"
     deals:
@@ -655,6 +677,8 @@ en:
     seller_dashboard: "Seller dashboard"
     alerts: "Marketplace alerts"
     chat_with: "Chat with %{name}"
+    top_offers_blurb: "Featured deals and high-signal listings — denser than the feed, still flat."
+    message_seller_hint: "Send a short message to the seller. They can accept or decline from this listing page."
   takeaway:
     intro: "Local kitchens, guest checkout — no signup to place an order."
     unsave: "Unsave"
@@ -694,6 +718,12 @@ en:
     order_from: "Order from %{restaurant}"
     sold_out: "Sold out"
     operations: "Takeaway operations"
+    available_items: "available items"
+    min_order_line: "Min order: %{min} · Delivery: %{fee} ·"
+    reload_to_order: "Reload to place an order — guests can order without signup."
+    saves:
+      one: "%{count} save"
+      other: "%{count} saves"
   maps:
     browse_list: "Browse list"
     needs_js: "Map needs JavaScript."
@@ -704,6 +734,7 @@ en:
     check_in: "I'm here (check-in)"
     all_types: "All types"
     filter_by_kind: "Filter by type"
+    checked_in_recently: "You checked in here recently."
   communities:
     name_placeholder: "e.g. bergen, tech, musikk"
     description_placeholder: "What is this community about?"
@@ -734,6 +765,9 @@ en:
     upload_video: "Upload video"
     shows_on: "Shows on %{channel}"
     uploading_to_html: "Uploading to %{channel}"
+    no_description: "This channel has not added a description yet."
+    home_blurb: "Local channels, shows, and live stages — watch without an account."
+    thumbnail_hint: "postpro.rb grades thumbnails — blockbuster for Odyssey-style cinematic."
   newsletter:
     email_placeholder: "your@email.com"
     subscribe: "Subscribe"
@@ -818,6 +852,12 @@ en:
     confirm_subscription: "Confirm your subscription"
     permission_marketing: "Permission marketing"
     confirm_button: "Confirm subscription"
+    verify_welcome: "Welcome to Brgen."
+    verify_body: "Confirm this email address to start posting under your account:"
+    verify_cta: "Confirm my email"
+    verify_ignore: "If you didn’t create a Brgen account, ignore this message — nothing happens until you confirm."
+    signoff: "— The Brgen editors"
+    not_you: "If you did not sign up, ignore this email."
   pagination:
     label: "Pagination"
     previous: "Previous"

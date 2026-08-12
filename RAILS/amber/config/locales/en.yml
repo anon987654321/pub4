@@ -105,6 +105,7 @@ en:
     ask_ai: "Ask Amber AI"
     style_feed: "Style feed"
     demo_capsule: "Demo capsule"
+    demo_counts: "%{pieces} · %{outfits} — no account required"
   empty:
     no_posts_yet: "No posts yet"
     guest_post: "Share an #ootd thought above — guests can post without an account."
@@ -274,6 +275,8 @@ en:
       idle_empty: "Nothing is sitting idle."
       worn_times: "worn %{count}×"
       days: "%{count}d"
+    total_items: "%{count} wardrobe items"
+    with_phase: "%{count} with life phase"
   newsletter:
     style_notes: "Style notes"
     style_blurb: "Weekly wardrobe essays, outfit ideas, and capsule tips. No spam."
@@ -303,6 +306,23 @@ en:
     capsule_builder: "The smallest set of pieces that still dresses you"
     clashing_items: "Colours that fight each other"
     suggested_outfits: "Outfits for %{days} days in a %{climate} climate"
+    local_rules_html: "Using <strong>local capsule rules</strong>%{note}. Enable <code>OPENROUTER_API_KEY</code> for LLM optimisation."
+    openrouter_missing: " (OpenRouter not configured)"
+    source: "Source: %{source}"
+    gap_items_hint: "Use these as intentional purchases, not impulse buys."
+    not_enough_items: "Not enough items to analyse."
+    dashboard_back: "← Dashboard"
+    declutter_dashboard: "Declutter dashboard"
+    letting_go: "Items to consider letting go:"
+    no_candidates: "No declutter candidates — your wardrobe is in great shape."
+    packing_lead: "Select trip duration and climate. MASTER suggests outfits from your wardrobe."
+    packing_created: "Packing list created (demo). View in planned or wardrobe."
+    style_profile_lead: "MASTER will infer your aesthetic: minimal, bold or classic."
+    suggest_lead: "OpenRouter + wardrobe metadata%{vision}. Shopping links are not used for ranking."
+    suggest_vision: " (vision when photos exist)"
+    suggest_local_html: "<strong>OpenRouter not configured</strong> — suggestions use local rules from your joy/active wardrobe. Set <code>OPENROUTER_API_KEY</code> for LLM + vision styling."
+    master_photo_html: "MASTER photograph is enabled (<code>AMBER_ENABLE_MASTER_PHOTO=1</code>) — look photos may attach when generation succeeds."
+    submit_to_compose: "Submit the form to compose from clothes you already own."
   pwa:
     add_item: "Add item"
     item: "Item"
@@ -355,6 +375,16 @@ en:
     openrouter_set: "OpenRouter is configured — joy analysis and mood tags use Gemini when available, with local heuristics as backup."
     choose_or_drop: "Choose or drop photos"
     filter_by_category: "Filter by category"
+    photo_processing_html: "<strong>Photo processing:</strong> uploads stay attached to your private wardrobe record. Amber creates garment segmentation, background-cleanup, colour and responsive derivatives for outfit matching. Deleting the item removes its attachments; archiving keeps them and is reversible."
+    archiving_safer: "Archiving is safer. Permanent deletion removes the item record and its attached photos."
+    wears_on_page:
+      one: "%{count} wear on this page"
+      other: "%{count} wears on this page"
+    joy_keepers: "%{count} joy keepers"
+    categories: "%{count} categories"
+    pieces:
+      one: "%{count} piece"
+      other: "%{count} pieces"
   outfits:
     add_item: "Add a garment"
     style_combinations: "Combinations from your own wardrobe"
@@ -365,6 +395,15 @@ en:
     occasion_placeholder: "Occasion"
     generate: "Generate outfit"
     season: "Season"
+    count:
+      one: "%{count} outfit"
+      other: "%{count} outfits"
+    no_description: "Add a description to capture why this outfit works."
+    style_intelligence_lead: "Use this outfit as a signal for future capsules, weather-aware recommendations, event styling, and declutter decisions."
+    weather_now: "Bergen now: %{description}"
+    weather_temp: ", %{temp}°C"
+    weather_wind: ", wind %{wind} km/h"
+    generate_label: "Generate outfit"
   planned:
     notes: "Notes…"
     plan_it: "Plan it"
@@ -379,6 +418,8 @@ en:
     schedule: "Schedule session"
     mark_live: "Mark live"
     mark_ended: "Mark ended"
+    style_session: "%{status} · style session (not a video stream)"
+    header_label: "Style session header"
   creator:
     add_showcase: "Add to showcase"
     showcase_items: "Showcase pieces"
@@ -417,6 +458,9 @@ en:
     review_title: "Declutter review"
     score: "Score"
     week_challenge: "Wear-it-this-week challenge"
+    kondo_lead: "Marie Kondo loop: joy, one more wear, then a clear release path — not instant trash."
+    box_heading: "30-day box — decide now"
+    box_label: "30-day declutter box"
   ai_forms:
     occasion_example: "e.g. date, work, travel"
     generate_save: "Generate & save first as outfit"
@@ -424,14 +468,21 @@ en:
   creator_profiles:
     edit_title: "Edit creator profile"
     new_title: "Create creator profile"
+    new_lead: "Share a public wardrobe showcase others can remix when you allow it."
   demo:
     wardrobe: "Demo wardrobe"
     wardrobe_header: "Demo wardrobe header"
     wardrobe_actions: "Demo wardrobe actions"
     all_pieces: "Every piece"
     spark_joy: "Sparks joy"
+    index_tagline: "Browse a realistic capsule before you sign in — cost-per-wear, categories, and outfit combos."
+    capsule_kicker: "Capsule demo · %{name}"
+    create_hint: "Create an account to track wears, declutter scores, and outfit suggestions on your own wardrobe."
+    full_wardrobe: "Full demo wardrobe →"
   users:
     recent_items: "Recent pieces"
+    profile_counts: "%{items} items · %{followers} followers · %{following} following"
+    profile_header: "User profile header"
   # TasteRanker#explain — why a garment leads its carousel.
   taste:
     joy: "sparks joy"

@@ -13,7 +13,7 @@
   <div class="chips">
     <span class="chip">Minimum <%= number_to_currency(@restaurant.min_order_cents.to_i / 100.0, unit: "kr ") %></span>
     <span class="chip">Delivery <%= number_to_currency(@restaurant.delivery_fee_cents.to_i / 100.0, unit: "kr ") %></span>
-    <span class="chip"><%= @menu_items.size %> available items</span>
+    <span class="chip"><%= @menu_items.size %> <%= t("takeaway.available_items") %></span>
   </div>
 </article>
 

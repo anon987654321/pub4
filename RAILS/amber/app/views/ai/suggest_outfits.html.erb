@@ -2,12 +2,12 @@
 <header role="banner" aria-label="AI outfit suggestions header">
   <h1><%= t("pages.suggest_outfits") %></h1>
   <% if @ai_available %>
-    <p class="dim">OpenRouter + wardrobe metadata<% if Current.user.items.joins(:photos_attachments).exists? %> (vision when photos exist)<% end %>. Shopping links are not used for ranking.</p>
+    <p class="dim"><%= t("ai.suggest_lead", vision: (Current.user.items.joins(:photos_attachments).exists? ? t("ai.suggest_vision") : "")) %></p>
   <% else %>
-    <p class="dim"><strong>OpenRouter not configured</strong> — suggestions use local rules from your joy/active wardrobe. Set <code>OPENROUTER_API_KEY</code> for LLM + vision styling.</p>
+    <p class="dim"><%= t("ai.suggest_local_html").html_safe %></p>
   <% end %>
   <% if @master_photo %>
-    <p class="dim">MASTER photograph is enabled (<code>AMBER_ENABLE_MASTER_PHOTO=1</code>) — look photos may attach when generation succeeds.</p>
+    <p class="dim"><%= t("ai.master_photo_html").html_safe %></p>
   <% end %>
 </header>
 
@@ -46,7 +46,7 @@
     </article>
   <% end %>
 <% else %>
-  <p class="dim">Submit the form to compose from clothes you already own.</p>
+  <p class="dim"><%= t("ai.submit_to_compose") %></p>
 <% end %>
 
 <p><%= link_to t("actions.back_to_wardrobe"), items_path %></p>

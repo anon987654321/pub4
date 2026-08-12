@@ -12,8 +12,8 @@
 </header>
 
 <section class="chips" aria-label="<%= t("wardrobe.phase_summary") %>">
-  <span class="chip"><%= @timeline[:summary][:total_items] %> wardrobe items</span>
-  <span class="chip"><%= @timeline[:summary][:phased_items] %> with life phase</span>
+  <span class="chip"><%= t("wardrobe.total_items", count: @timeline[:summary][:total_items]) %></span>
+  <span class="chip"><%= t("wardrobe.with_phase", count: @timeline[:summary][:phased_items]) %></span>
   <% if @timeline[:summary][:dominant_phase].present? %>
     <span class="chip"><%= t("wardrobe.dominant") %> <%= @timeline[:summary][:dominant_phase].humanize %></span>
   <% end %>

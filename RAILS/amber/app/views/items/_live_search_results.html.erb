@@ -1,7 +1,7 @@
 <div class="tag-row">
-  <span class="tag"><%= pluralize(@items.sum { |item| item.times_worn.to_i }, "wear") %> on this page</span>
-  <span class="tag"><%= @items.count(&:spark_joy?) %> joy keepers</span>
-  <span class="tag"><%= @items.map(&:category).compact.uniq.size %> categories</span>
+  <span class="tag"><%= t("items.wears_on_page", count: @items.sum { |item| item.times_worn.to_i }) %></span>
+  <span class="tag"><%= t("items.joy_keepers", count: @items.count(&:spark_joy?)) %></span>
+  <span class="tag"><%= t("items.categories", count: @items.map(&:category).compact.uniq.size) %></span>
 </div>
 
 <div class="field">

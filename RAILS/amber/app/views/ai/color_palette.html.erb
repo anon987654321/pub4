@@ -30,6 +30,6 @@
     <ul><% @result["suggestions"].each do |s| %><li><%= s %></li><% end %></ul>
   <% end %>
 <% else %>
-  <p class="dim">Not enough items to analyse.</p>
+  <p class="dim"><%= t("ai.not_enough_items") %></p>
 <% end %>
-<p><%= link_to "← Dashboard", root_path %></p>
+<p><%= link_to t("ai.dashboard_back"), root_path %></p>

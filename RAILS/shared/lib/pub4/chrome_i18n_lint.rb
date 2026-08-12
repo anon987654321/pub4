@@ -93,7 +93,13 @@ module Pub4
       # having been invisible since shared/_shell.scss hid it. The last six are
       # amber's footer, whose column labels were hardcoded English until it
       # gained a language switcher. Down only.
-      "aria_label" => 127,
+      #
+      # → 122 (2026-08-12): fell out of the visible-copy pass, not aimed at.
+      # amber's declutter box, live-stream and profile headers and the outfit
+      # generator, plus dating's Essentials legend. What is left is 39 aria-only
+      # strings the same pass measured but did not translate — the count is not
+      # the work item, that list is.
+      "aria_label" => 122,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps

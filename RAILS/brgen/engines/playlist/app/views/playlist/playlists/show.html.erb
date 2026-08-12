@@ -4,7 +4,7 @@
 <p class="radio-back-link"><%= link_to "← radio", root_path %></p>
 <%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, color: params[:color] || "#00d4ff", comments: @comments, track_comments: @track_comments %>
 
-<p class="dim"><%= @playlist.plays_count.to_i %> plays across <%= @tracks.size %> tracks · <%= @comments.size %> comments total.</p>
+<p class="dim"><%= t("playlist.set_stats", plays: @playlist.plays_count.to_i, tracks: @tracks.size, comments: @comments.size) %></p>
 
 <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
   <section class="playlist-admin" aria-label="Playlist management">
@@ -38,7 +38,7 @@
     </div>
 
     <div class="section-divider">
-      <p class="section-heading">Embed (customize: ?color=ff0000&amp;show_artwork=0&amp;compact=1)</p>
+      <p class="section-heading"><%= t("playlist.embed_customize") %></p>
       <input type="text" readonly value="<iframe src=&quot;<%= embed_playlist_playlist_url(@playlist) %>&quot; loading=&quot;lazy&quot; width=&quot;100%&quot; height=&quot;520&quot;></iframe>" class="field--grow"
              aria-label="<%= t("playlist.embed_code", default: "Embed code") %>">
       <small>Examples: <a href="<%= embed_playlist_playlist_url(@playlist, color: "ff0000") %>">red</a> | <a href="<%= embed_playlist_playlist_url(@playlist, color: "00ff00", show_artwork: "0") %>">no artwork</a> | <a href="<%= embed_playlist_playlist_url(@playlist, compact: "1", hide_branding: "1") %>">compact clean</a></small>

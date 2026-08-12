@@ -18,8 +18,8 @@
       <a href="<%= @confirm_url %>" class="mail-cta"><%= t("mailer.confirm_button") %></a>
     </td>
   </tr>
-  <tr><td class="mail-signoff">— The Brgen editors</td></tr>
-  <tr><td class="mail-permission">If you did not sign up, ignore this email.</td></tr>
+  <tr><td class="mail-signoff"><%= t("mailer.signoff") %></td></tr>
+  <tr><td class="mail-permission"><%= t("mailer.not_you") %></td></tr>
   <tr>
     <td class="mail-footer">
       <a href="<%= @unsubscribe_url %>">Unsubscribe</a>

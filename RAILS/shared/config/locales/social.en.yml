@@ -81,6 +81,7 @@ en:
     with_google: "Sign in with Google"
     with_snapchat: "Sign in with Snapchat"
     with_vipps: "Sign in with Vipps"
+    two_factor_lead: "Scan the QR code or enter the secret in your authenticator app."
   # Live regions in shared/_live_search_form and autosave_controller. bsdports had no copy of these and shipped "translation missing" into the announced values.
   status:
     updating_results: "Updating results…"
@@ -90,6 +91,8 @@ en:
     saved: "Saved"
     saved_locally: "Saved locally"
     restored: "Restored"
+    loading_more: "Loading more…"
+    loading_results: "Loading results…"
   theme:
     region: "Theme"
     toggle: "Toggle light theme"
@@ -113,6 +116,13 @@ en:
     connections: "Connections"
   newsletter:
     email_placeholder: "your@email.com"
+    heading: "The city letter"
+    blurb: "One email a week. Curated, not cluttered. Unsubscribe any time."
+    marketing_opt_in: "Send me partner offers and sponsored picks (optional)"
+    subscribe: "Subscribe"
+    unavailable: "Newsletter signup opens after email routes are configured for this app."
+    unsubscribe: "Unsubscribe"
+    affiliate_disclosure: "Some links are affiliate links. We may earn a commission."
   post:
     submit: "Post"
     share_look: "Share a look"
@@ -169,11 +179,20 @@ en:
       reaction_added: "Reaction added."
       reaction_removed: "Reaction removed."
       sent_for_review: "Sent for review."
+    errors_prevented:
+      one: "%{count} issue prevented this from being saved"
+      other: "%{count} issues prevented this from being saved"
   # Chrome these three apps share. Only brgen carried nb entries for them, so
   # amber and bsdports rendered the English t() defaults over an nb page.
   legal:
     site_id_label: "TradeDoubler Site ID"
     contact_label: "Contact"
+    affiliate_disclosure: "Some links are affiliate links. We may earn a commission at no extra cost to you."
+    partner_programs: "Partner programs include %{list}."
+    aria: "Legal and information"
+    privacy: "Privacy"
+    terms: "Terms"
+    cookies: "Cookies"
   nav:
     brand_home: "Home"
   pages:
@@ -182,5 +201,16 @@ en:
   search:
     query: "Search query"
     submit: "Search"
+    results_for:
+      one: "%{count} result for “%{query}”"
+      other: "%{count} results for “%{query}”"
   showcase:
     devices: "The app on desktop and mobile"
+  # The service worker's offline shell. Rendered by all three apps.
+  offline:
+    badge: "Offline"
+    title: "%{app} is offline"
+    lead: "We’ll show the last cached items from this device when they’re available."
+    retry: "Retry"
+    loading: "Loading cached items…"
+    list_label: "Offline content list"

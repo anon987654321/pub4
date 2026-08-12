@@ -17,7 +17,7 @@
 <% if @outfit.description.present? %>
   <p><%= @outfit.description %></p>
 <% else %>
-  <p class="dim">Add a description to capture why this outfit works.</p>
+  <p class="dim"><%= t("outfits.no_description") %></p>
 <% end %>
 
 <% if @outfit.image.attached? %>
@@ -35,7 +35,7 @@
 
 <section>
   <h2><%= t("outfits.style_intelligence") %></h2>
-  <p class="dim">Use this outfit as a signal for future capsules, weather-aware recommendations, event styling, and declutter decisions.</p>
+  <p class="dim"><%= t("outfits.style_intelligence_lead") %></p>
 </section>
 
 <nav role="navigation" aria-label="Outfit actions">

@@ -13,9 +13,9 @@
   </nav>
 </header>
 
-<section class="form-wrap" aria-label="Generate outfit">
+<section class="form-wrap" aria-label="<%= t("outfits.generate_label") %>">
   <% if @weather.present? %>
-    <p class="dim">Bergen now: <%= @weather[:description] %><% if @weather[:temp] %>, <%= @weather[:temp].round %>°C<% end %><% if @weather[:wind] %>, wind <%= @weather[:wind] %> km/h<% end %></p>
+    <p class="dim"><%= t("outfits.weather_now", description: @weather[:description]) %><% if @weather[:temp] %><%= t("outfits.weather_temp", temp: @weather[:temp].round) %><% end %><% if @weather[:wind] %><%= t("outfits.weather_wind", wind: @weather[:wind]) %><% end %></p>
   <% end %>
   <%= form_with url: generate_outfits_path, method: :post do |f| %>
     <div class="field"><%= f.text_field :weather, value: @default_weather, placeholder: t("outfits.weather_placeholder"), aria: { label: t("outfits.weather_placeholder") } %></div>

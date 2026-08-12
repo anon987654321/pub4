@@ -16,7 +16,9 @@
 <article>
   <p><%= @restaurant.description %></p>
   <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
-  <p class="dim">Min order: <%= @restaurant.min_order_display %> · Delivery: <%= @restaurant.delivery_fee_display %> · <%= pluralize(@restaurant.favorites.size, "save") %></p>
+  <%# pluralize() takes an English noun and applies English rules; t(count:)
+      goes through the locale's own plural rules instead. %>
+  <p class="dim"><%= t("takeaway.min_order_line", min: @restaurant.min_order_display, fee: @restaurant.delivery_fee_display) %> <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>
 </article>
 
 <% if authenticated? && @restaurant.owner?(Current.user) %>
@@ -91,7 +93,7 @@
         </div>
       </article>
     <% end %>
-    <p class="dim">Reload to place an order — guests can order without signup.</p>
+    <p class="dim"><%= t("takeaway.reload_to_order") %></p>
     <p><%= link_to "Reload", restaurant_path(@restaurant), class: "btn btn-primary" %></p>
 
   <% end %>

@@ -79,7 +79,7 @@
 <% if Current.user.present? && Current.user != @listing.user && !@listing.sold? %>
   <div id="make-offer" class="section-divider">
     <p class="section-heading--md"><%= t("marketplace.make_offer", default: "Make an offer") %></p>
-    <p class="dim">Send a short message to the seller. They can accept or decline from this listing page.</p>
+    <p class="dim"><%= t("marketplace.message_seller_hint") %></p>
     <div class="form-wrap form-wrap--flush">
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
       <%= form_with(model: @order, url: listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: main_app.draft_path(draft_key)) }) do |f| %>

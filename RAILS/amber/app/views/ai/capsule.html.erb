@@ -12,9 +12,9 @@
 </header>
 
 <% if @result["source"] == "capsule_builder" || !@ai_available %>
-  <p class="dim">Using <strong>local capsule rules</strong><% if !@ai_available %> (OpenRouter not configured)<% end %>. Enable <code>OPENROUTER_API_KEY</code> for LLM optimisation.</p>
+  <p class="dim"><%= t("ai.local_rules_html", note: (@ai_available ? "" : t("ai.openrouter_missing"))).html_safe %></p>
 <% elsif @result["source"] %>
-  <p class="dim">Source: <%= @result["source"] %></p>
+  <p class="dim"><%= t("ai.source", source: @result["source"]) %></p>
 <% end %>
 
 <% if @result["items"].present? %>
@@ -36,7 +36,7 @@
   <% if @result["gap_items"]&.any? %>
     <section>
       <h2><%= t("ai.gap_items", default: "Gap items to consider") %></h2>
-      <p class="dim">Use these as intentional purchases, not impulse buys.</p>
+      <p class="dim"><%= t("ai.gap_items_hint") %></p>
       <ul><% @result["gap_items"].each do |gap_item| %><li><%= gap_item %></li><% end %></ul>
     </section>
   <% end %>

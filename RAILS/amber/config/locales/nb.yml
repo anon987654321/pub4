@@ -104,6 +104,7 @@ nb:
     ask_ai: "Spør Amber AI"
     style_feed: "Stil-feed"
     demo_capsule: "Demo-kapsel"
+    demo_counts: "%{pieces} · %{outfits} — ingen konto nødvendig"
   empty:
     no_posts_yet: "Ingen innlegg ennå"
     guest_post: "Del en #ootd-tanke over — gjester kan poste uten konto."
@@ -273,6 +274,8 @@ nb:
       idle_empty: "Ingenting står urørt."
       worn_times: "brukt %{count}×"
       days: "%{count}d"
+    total_items: "%{count} plagg i garderoben"
+    with_phase: "%{count} med livsfase"
   newsletter:
     style_notes: "Stilnotater"
     style_blurb: "Ukentlige garderobe-essays, antrekkideer og kapselforslag. Ingen spam."
@@ -302,6 +305,23 @@ nb:
     capsule_builder: "Det minste settet plagg som fortsatt kler deg"
     clashing_items: "Farger som slåss med hverandre"
     suggested_outfits: "Antrekk for %{days} dager i %{climate} klima"
+    local_rules_html: "Bruker <strong>lokale kapselregler</strong>%{note}. Slå på <code>OPENROUTER_API_KEY</code> for LLM-optimalisering."
+    openrouter_missing: " (OpenRouter er ikke satt opp)"
+    source: "Kilde: %{source}"
+    gap_items_hint: "Bruk disse som bevisste kjøp, ikke impulskjøp."
+    not_enough_items: "Ikke nok plagg til å analysere."
+    dashboard_back: "← Oversikt"
+    declutter_dashboard: "Ryddeoversikt"
+    letting_go: "Plagg du kan vurdere å gi slipp på:"
+    no_candidates: "Ingen kandidater for rydding — garderoben din er i god form."
+    packing_lead: "Velg reiselengde og klima. MASTER foreslår antrekk fra garderoben din."
+    packing_created: "Pakkeliste opprettet (demo). Se den under planlagt eller garderobe."
+    style_profile_lead: "MASTER utleder estetikken din: minimal, dristig eller klassisk."
+    suggest_lead: "OpenRouter + garderobedata%{vision}. Handlelenker påvirker ikke rangeringen."
+    suggest_vision: " (bildeanalyse når det finnes bilder)"
+    suggest_local_html: "<strong>OpenRouter er ikke satt opp</strong> — forslagene bruker lokale regler fra glede-/aktiv-garderoben din. Sett <code>OPENROUTER_API_KEY</code> for LLM- og bildebasert styling."
+    master_photo_html: "MASTER-fotografering er slått på (<code>AMBER_ENABLE_MASTER_PHOTO=1</code>) — bilder kan følge med når genereringen lykkes."
+    submit_to_compose: "Send inn skjemaet for å sette sammen antrekk av klær du allerede eier."
   pwa:
     add_item: "Legg til plagg"
     item: "Plagg"
@@ -354,6 +374,16 @@ nb:
     openrouter_set: "OpenRouter er konfigurert — gledeanalyse og stemningsmerker bruker Gemini når det er tilgjengelig, med lokale heuristikker som reserve."
     choose_or_drop: "Velg eller slipp bilder"
     filter_by_category: "Filtrer etter kategori"
+    photo_processing_html: "<strong>Bildebehandling:</strong> opplastinger forblir knyttet til din private garderobeoppføring. Amber lager plaggsegmentering, bakgrunnsfjerning, farge og responsive varianter for antrekksmatching. Sletter du plagget, fjernes vedleggene; arkivering beholder dem og kan angres."
+    archiving_safer: "Arkivering er tryggere. Permanent sletting fjerner plaggoppføringen og bildene som hører til."
+    wears_on_page:
+      one: "%{count} gang brukt på denne siden"
+      other: "%{count} ganger brukt på denne siden"
+    joy_keepers: "%{count} gledesbevarere"
+    categories: "%{count} kategorier"
+    pieces:
+      one: "%{count} plagg"
+      other: "%{count} plagg"
   outfits:
     add_item: "Legg til plagg"
     style_combinations: "Kombinasjoner fra din egen garderobe"
@@ -364,6 +394,15 @@ nb:
     occasion_placeholder: "Anledning"
     generate: "Generer antrekk"
     season: "Sesong"
+    count:
+      one: "%{count} antrekk"
+      other: "%{count} antrekk"
+    no_description: "Legg til en beskrivelse som fanger hvorfor dette antrekket fungerer."
+    style_intelligence_lead: "Bruk dette antrekket som signal for framtidige kapsler, væravhengige anbefalinger, arrangementsstyling og ryddebeslutninger."
+    weather_now: "Bergen nå: %{description}"
+    weather_temp: ", %{temp} °C"
+    weather_wind: ", vind %{wind} km/t"
+    generate_label: "Lag antrekk"
   planned:
     notes: "Notater…"
     plan_it: "Planlegg"
@@ -378,6 +417,8 @@ nb:
     schedule: "Planlegg økt"
     mark_live: "Merk som live"
     mark_ended: "Merk som avsluttet"
+    style_session: "%{status} · stiløkt (ikke en videostrøm)"
+    header_label: "Topptekst for stiløkt"
   creator:
     add_showcase: "Legg til showcase"
     showcase_items: "Utvalgte plagg"
@@ -416,6 +457,9 @@ nb:
     review_title: "Ryddegjennomgang"
     score: "Poeng"
     week_challenge: "Bruk-det-denne-uken-utfordring"
+    kondo_lead: "Marie Kondo-sløyfe: glede, én gang til, så en tydelig vei ut — ikke søpla med en gang."
+    box_heading: "30-dagersboks — bestem deg nå"
+    box_label: "30-dagers ryddeboks"
   ai_forms:
     occasion_example: "f.eks. date, jobb, reise"
     generate_save: "Generer og lagre første som antrekk"
@@ -423,14 +467,21 @@ nb:
   creator_profiles:
     edit_title: "Rediger skaperprofil"
     new_title: "Opprett skaperprofil"
+    new_lead: "Del en offentlig garderobeutstilling som andre kan remikse når du tillater det."
   demo:
     wardrobe: "Demogarderobe"
     wardrobe_header: "Hode for demogarderobe"
     wardrobe_actions: "Handlinger for demogarderobe"
     all_pieces: "Alle plagg"
     spark_joy: "Gir glede"
+    index_tagline: "Bla gjennom en realistisk kapsel før du logger inn — kostnad per bruk, kategorier og antrekkskombinasjoner."
+    capsule_kicker: "Kapseldemo · %{name}"
+    create_hint: "Opprett konto for å følge bruk, ryddescore og antrekksforslag i din egen garderobe."
+    full_wardrobe: "Hele demogarderoben →"
   users:
     recent_items: "Nylige plagg"
+    profile_counts: "%{items} plagg · %{followers} følgere · %{following} følger"
+    profile_header: "Topptekst for brukerprofil"
   # TasteRanker#explain — hvorfor et plagg leder karusellen sin.
   taste:
     joy: "gir glede"

@@ -3,6 +3,9 @@
 module Shared
   # Cross-app SEO, affiliate, and permission-marketing helpers.
   module SeoKit
+    # Kept as the last-resort literal only. The disclosure is the one line on
+    # every page of all three apps that a regulator and TradeDoubler's publisher
+    # team both read, and it was rendering in English over an nb footer.
     DEFAULT_DISCLOSURE = "Some links are affiliate links. We may earn a commission at no extra cost to you."
 
     def meta_description_for(resource, fallback: nil)
@@ -19,7 +22,7 @@ module Shared
     end
 
     def affiliate_disclosure_text
-      DEFAULT_DISCLOSURE
+      I18n.t("legal.affiliate_disclosure", default: DEFAULT_DISCLOSURE)
     end
 
     # Publisher verification (TradeDoubler support thread, 2026-08-07). Their

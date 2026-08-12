@@ -1,8 +1,8 @@
 <% content_for :title, @live_stream.title %>
 
-<header role="banner" aria-label="Style session header">
+<header role="banner" aria-label="<%= t("live_streams.header_label") %>">
   <div>
-    <p class="dim"><%= @live_stream.status %> · style session (not a video stream)</p>
+    <p class="dim"><%= t("live_streams.style_session", status: @live_stream.status) %></p>
     <h1><%= @live_stream.title %></h1>
   </div>
 </header>

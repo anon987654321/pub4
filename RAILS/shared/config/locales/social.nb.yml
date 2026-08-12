@@ -81,6 +81,7 @@ nb:
     with_google: "Logg inn med Google"
     with_snapchat: "Logg inn med Snapchat"
     with_vipps: "Logg inn med Vipps"
+    two_factor_lead: "Skann QR-koden eller skriv inn hemmeligheten i autentiseringsappen din."
   status:
     updating_results: "Oppdaterer resultater…"
     results_updated: "Resultater oppdatert"
@@ -89,6 +90,8 @@ nb:
     saved: "Lagret"
     saved_locally: "Lagret lokalt"
     restored: "Gjenopprettet"
+    loading_more: "Laster mer…"
+    loading_results: "Laster resultater…"
   theme:
     region: "Tema"
     toggle: "Bytt til lyst tema"
@@ -112,6 +115,13 @@ nb:
     connections: "Forbindelser"
   newsletter:
     email_placeholder: "din@epost.com"
+    heading: "Bybrevet"
+    blurb: "Én e-post i uken. Kuratert, ikke rotete. Meld deg av når du vil."
+    marketing_opt_in: "Send meg partnertilbud og sponsede utvalg (valgfritt)"
+    subscribe: "Abonner"
+    unavailable: "Nyhetsbrevet åpner når e-postrutene er satt opp for denne appen."
+    unsubscribe: "Meld deg av"
+    affiliate_disclosure: "Noen lenker er affiliatelenker. Vi kan tjene provisjon."
   post:
     submit: "Post"
     share_look: "Del et look"
@@ -173,11 +183,20 @@ nb:
       reaction_added: "Reaksjon lagt til."
       reaction_removed: "Reaksjon fjernet."
       sent_for_review: "Sendt til vurdering."
+    errors_prevented:
+      one: "%{count} feil hindret lagringen"
+      other: "%{count} feil hindret lagringen"
   # Chrome these three apps share. Only brgen carried nb entries for them, so
   # amber and bsdports rendered the English t() defaults over an nb page.
   legal:
     site_id_label: "TradeDoubler Site ID"
     contact_label: "Kontakt"
+    affiliate_disclosure: "Noen lenker er affiliatelenker. Vi kan tjene provisjon uten ekstra kostnad for deg."
+    partner_programs: "Partnerprogrammer: %{list}."
+    aria: "Juridisk og informasjon"
+    privacy: "Personvern"
+    terms: "Vilkår"
+    cookies: "Informasjonskapsler"
   nav:
     brand_home: "Til forsiden"
   pages:
@@ -186,5 +205,16 @@ nb:
   search:
     query: "Søkeord"
     submit: "Søk"
+    results_for:
+      one: "%{count} treff for «%{query}»"
+      other: "%{count} treff for «%{query}»"
   showcase:
     devices: "Appen på skrivebord og mobil"
+  # The service worker's offline shell. Rendered by all three apps.
+  offline:
+    badge: "Frakoblet"
+    title: "%{app} er frakoblet"
+    lead: "Vi viser det sist mellomlagrede innholdet fra denne enheten når det er tilgjengelig."
+    retry: "Prøv igjen"
+    loading: "Laster mellomlagret innhold…"
+    list_label: "Liste over frakoblet innhold"

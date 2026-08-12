@@ -12,7 +12,7 @@
   <% if @item.spark_joy? %>
     <p class="chip"><%= t("demo.spark_joy") %></p>
   <% end %>
-  <p class="hint">Create an account to track wears, declutter scores, and outfit suggestions on your own wardrobe.</p>
+  <p class="hint"><%= t("demo.create_hint") %></p>
   <p class="actions">
     <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn--primary" %>
     <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn--ghost" %>

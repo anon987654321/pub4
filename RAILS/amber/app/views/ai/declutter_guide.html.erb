@@ -1,10 +1,10 @@
 <% content_for :title, t("pages.declutter_guide") %>
 <h1><%= t("pages.declutter_guide") %></h1>
-<p><%= link_to "Declutter dashboard", declutter_index_path, class: "btn" %></p>
+<p><%= link_to t("ai.declutter_dashboard"), declutter_index_path, class: "btn" %></p>
 <% if @candidates.any? %>
-  <p class="dim">Items to consider letting go:</p>
+  <p class="dim"><%= t("ai.letting_go") %></p>
   <div class="item-grid"><%= render @candidates %></div>
 <% else %>
-  <p>No declutter candidates — your wardrobe is in great shape.</p>
+  <p><%= t("ai.no_candidates") %></p>
 <% end %>
 <p><%= link_to t("actions.back"), items_path %></p>

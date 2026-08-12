@@ -46,7 +46,7 @@
           <%= f.submit t("maps.check_in"), class: "btn" %>
         <% end %>
       <% else %>
-        <p class="dim">You checked in here recently.</p>
+        <p class="dim"><%= t("maps.checked_in_recently") %></p>
       <% end %>
     <% end %>
   </p>

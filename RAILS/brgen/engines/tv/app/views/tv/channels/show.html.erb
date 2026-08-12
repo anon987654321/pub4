@@ -28,7 +28,7 @@
   <% if @channel.description.present? %>
     <p><%= simple_format(@channel.description) %></p>
   <% else %>
-    <p class="dim">This channel has not added a description yet.</p>
+    <p class="dim"><%= t("tv.no_description") %></p>
   <% end %>
 </article>
 

@@ -127,7 +127,7 @@
 
   <details class="danger-zone">
     <summary><%= t("items.permanent_removal") %></summary>
-    <p class="dim luxury-dim">Archiving is safer. Permanent deletion removes the item record and its attached photos.</p>
+    <p class="dim luxury-dim"><%= t("items.archiving_safer") %></p>
     <%= button_to t("items.delete_permanent"), @item, method: :delete, data: { turbo_confirm: t("items.confirm_delete") }, class: "btn btn-danger" %>
   </details>
 </div>

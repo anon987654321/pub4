@@ -99,7 +99,7 @@
 <% if authenticated? %>
 <section>
   <h2><%= t("playlist.listening_party") %></h2>
-  <p class="dim">Start or join a real-time synced listening session with embedded player and chat.</p>
+  <p class="dim"><%= t("playlist.party_blurb") %></p>
   <% if @set.listening_party&.active? %>
     <%= link_to "Join party", set_listening_party_path(@set), class: "btn btn-primary btn-sm" %>
     <span class="dim">Code: <%= @set.listening_party.join_code %></span>

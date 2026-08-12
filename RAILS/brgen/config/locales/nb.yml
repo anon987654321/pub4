@@ -179,6 +179,9 @@ nb:
     playlist_label: "Søk spillelister"
     tv: "Søk kanaler og videoer…"
     tv_label: "Søk TV"
+    results_for:
+      one: "%{count} treff for «%{query}»"
+      other: "%{count} treff for «%{query}»"
   messages:
     disappears_in: "forsvinner om %{time}"
     title: "Meldinger"
@@ -530,6 +533,11 @@ nb:
     current_photos: "Bilder du har nå"
     more_details: "Flere detaljer"
     protected_with: "Beskyttet med"
+    edit_profile_blurb: "Bilder og «om deg» betyr mest — resten er valgfritt."
+    create_profile_blurb: "Tre steg for å komme i gang — bilder, om deg, hvem du ser etter. Detaljene kan vente."
+    photo_hint: "Legg til minst ett tydelig bilde når du har mulighet."
+    essentials: "Det viktigste"
+    more_details_optional: "Flere detaljer (valgfritt)"
   playlist:
     tap_to_start: "trykk for å starte"
     next: "Neste spor"
@@ -593,6 +601,20 @@ nb:
     render_now: "Render nå"
     publish_as_track: "Publiser som spor i spillelisten"
     set_kicker: "Spilleliste"
+    upload_blurb: "Direkte opplasting her. Høy kvalitet, 320 kbps MP3 / FLAC støttes. Erstatning beholder delingslenkene (ingen URL-endring)."
+    current_file: "Nåværende: %{name} — erstatning beholder delings- og innbyggingslenkene"
+    track_stats: "%{plays} avspillinger · %{comments} kommentarer med tidspunkt · %{versions} tidligere versjoner"
+    set_stats: "%{plays} avspillinger på %{tracks} spor · %{comments} kommentarer totalt."
+    now_playing: "Spilles nå:"
+    waiting_for_host: "Venter på at verten skal velge et spor…"
+    comments_seek: "Kommentarer (klikk for å hoppe)"
+    embed_customize: "Innbygging (tilpass: ?color=ff0000&amp;show_artwork=0&amp;compact=1)"
+    party_blurb: "Start eller bli med i en synkronisert lytteøkt med innebygd spiller og chat."
+    open_in_lab: "åpne i lab"
+    analytics: "Statistikk"
+    privacy_line: "Synlighet: %{value}"
+    privacy_private: "privat"
+    expires_on: "· utløper %{date}"
   marketplace:
     browse_listings: "Bla i annonser"
     deals:
@@ -661,6 +683,8 @@ nb:
     seller_dashboard: "Selgeroversikt"
     alerts: "Varsler fra markedsplassen"
     chat_with: "Chat med %{name}"
+    top_offers_blurb: "Utvalgte tilbud og annonser med høy signalverdi — tettere enn strømmen, fortsatt flatt."
+    message_seller_hint: "Send en kort melding til selgeren. De kan godta eller avslå fra denne annonsesiden."
   takeaway:
     intro: "Lokale kjøkken, gjestekasse — ingen registrering for å bestille."
     unsave: "Fjern lagring"
@@ -700,6 +724,12 @@ nb:
     order_from: "Bestill fra %{restaurant}"
     sold_out: "Utsolgt"
     operations: "Takeaway-drift"
+    available_items: "tilgjengelige retter"
+    min_order_line: "Minstebeløp: %{min} · Levering: %{fee} ·"
+    reload_to_order: "Last inn på nytt for å bestille — gjester kan bestille uten registrering."
+    saves:
+      one: "%{count} lagret"
+      other: "%{count} lagret"
   maps:
     browse_list: "Bla i listen"
     needs_js: "Kartet krever JavaScript."
@@ -710,6 +740,7 @@ nb:
     check_in: "Jeg er her (sjekk inn)"
     all_types: "Alle typer"
     filter_by_kind: "Filtrer på type"
+    checked_in_recently: "Du sjekket inn her nylig."
   communities:
     name_placeholder: "f.eks. bergen, tech, musikk"
     description_placeholder: "Hva handler dette fellesskapet om?"
@@ -740,6 +771,9 @@ nb:
     upload_video: "Last opp video"
     shows_on: "Serier på %{channel}"
     uploading_to_html: "Laster opp til %{channel}"
+    no_description: "Denne kanalen har ikke lagt til en beskrivelse ennå."
+    home_blurb: "Lokale kanaler, programmer og direktesendte scener — se uten konto."
+    thumbnail_hint: "postpro.rb graderer miniatyrbilder — blockbuster for Odyssey-aktig kino."
   newsletter:
     email_placeholder: "din@epost.com"
     subscribe: "Abonner"
@@ -824,6 +858,12 @@ nb:
     confirm_subscription: "Bekreft abonnementet"
     permission_marketing: "Samtykkebasert markedsføring"
     confirm_button: "Bekreft abonnementet"
+    verify_welcome: "Velkommen til Brgen."
+    verify_body: "Bekreft denne e-postadressen for å begynne å publisere under kontoen din:"
+    verify_cta: "Bekreft e-postadressen min"
+    verify_ignore: "Har du ikke opprettet en Brgen-konto, kan du se bort fra denne meldingen — ingenting skjer før du bekrefter."
+    signoff: "— Redaksjonen i Brgen"
+    not_you: "Har du ikke meldt deg på, kan du se bort fra denne e-posten."
   pagination:
     label: "Paginering"
     previous: "Forrige"

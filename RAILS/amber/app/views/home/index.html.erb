@@ -127,9 +127,9 @@
   <% if @demo_items&.any? %>
     <section>
       <h2><%= t("home.demo_capsule") %></h2>
-      <p class="dim"><%= pluralize(@demo_items.size, "piece") %> · <%= pluralize(@demo_outfits&.size.to_i, "outfit") %> — no account required</p>
+      <p class="dim"><%= t("home.demo_counts", pieces: t("items.pieces", count: @demo_items.size), outfits: t("outfits.count", count: @demo_outfits&.size.to_i)) %></p>
       <div class="item-grid"><%= render partial: "demo_wardrobe/item", collection: @demo_items %></div>
-      <p><%= link_to "Full demo wardrobe →", demo_wardrobe_path %></p>
+      <p><%= link_to t("demo.full_wardrobe"), demo_wardrobe_path %></p>
     </section>
   <% end %>
 <% end %>

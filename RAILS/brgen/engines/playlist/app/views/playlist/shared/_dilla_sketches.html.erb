@@ -23,7 +23,7 @@
         </span>
         by <%= sk.user&.try(:display_name) || sk.user&.email || "anon" %>
         <% if sk.lab_url.present? %>
-          <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">open in lab</a>
+          <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm"><%= t("playlist.open_in_lab") %></a>
         <% end %>
         <% if can_manage %>
           <%= button_to t("playlist.render"), render_path_proc.call(sk), method: :post, class: "btn btn-primary btn-sm", params: { publish: "1" } %>
