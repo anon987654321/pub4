@@ -14,7 +14,7 @@ module Deploy
     VERTICAL_HOSTS = {
       "dating" => "dating.#{APEX}",
       "marketplace" => "markedsplass.#{APEX}",
-      "playlist" => "spilleliste.#{APEX}",
+      "playlist" => "playlist.#{APEX}",
       "tv" => "tv.#{APEX}",
       "takeaway" => "takeaway.#{APEX}",
       "maps" => "maps.#{APEX}",

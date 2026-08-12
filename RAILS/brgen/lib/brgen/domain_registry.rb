@@ -14,7 +14,6 @@ module Brgen
       "maps" => :maps,
       "messenger" => :messenger,
       "playlist" => :playlist,
-      "spilleliste" => :playlist,
       "takeaway" => :takeaway,
       "tv" => :tv,
       "marche" => :marketplace,
@@ -32,7 +31,15 @@ module Brgen
 
     TV_SUBDOMAINS          = %w[tv].freeze
     DATING_SUBDOMAINS      = %w[dating].freeze
-    PLAYLIST_SUBDOMAINS    = %w[playlist spilleliste].freeze
+    # `playlist` in every city, including the Norwegian ones. `spilleliste` was
+    # here as a second Norwegian-language host for the same engine, and it was
+    # the odd one out: marketplace is translated per country because the word is
+    # part of the brand in each market (markedsplass, marknadsplats, marktplatz,
+    # mercato), while dating, tv, takeaway, maps and messenger are the same word
+    # everywhere and were never translated. Playlist is in that second group.
+    # It also never resolved — spilleliste.brgen.no and spilleliste.oshlo.no were
+    # both NXDOMAIN, so every gate and flow pointing at it was measuring nothing.
+    PLAYLIST_SUBDOMAINS    = %w[playlist].freeze
     TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
     MARKETPLACE_SUBDOMAINS = SUBAPP_ALIASES.select { |_subdomain, subapp| subapp == :marketplace }.keys.freeze
     MAPS_SUBDOMAINS        = %w[maps].freeze
@@ -95,20 +102,32 @@ module Brgen
     # RAILS/BLOCKERS.md "City vanity TLS". Linking the rest puts dead links in
     # front of every visitor, so nothing user-facing may iterate ENTRIES.
     #
-    # Ground truth is `grep keypair /etc/relayd.conf` on vm23. Measured
-    # 2026-08-12: keypairs for brgen.no, ai.brgen.no, amber.brgen.no,
-    # bsdports.org, oshlo.no — and an HTTP sweep of all 44 entries agreed
-    # exactly, 200 from 46.23.89.226 for these two and nothing else. Five more
-    # resolve to that address but refuse on 443 (stvanger.no, trndheim.no,
-    # cardff.uk, edinbrgh.uk, frankfrt.de); 34 are NXDOMAIN; and amstrdam.nl,
-    # denvr.us and dnver.us have left us entirely — amstrdam.nl is behind
-    # Cloudflare and 301s to afvinklijst.nl.
+    # Ground truth is `grep keypair /etc/relayd.conf` on vm23, and domain_alignment
+    # now asserts this list equals (ENTRIES ∩ those keypairs) so it cannot drift
+    # silently in either direction.
+    #
+    # Seven, as of 2026-08-12, up from two. The five that joined were not five new
+    # certificates: acme-client had been issuing and renewing for stvanger.no,
+    # trndheim.no, cardff.uk, edinbrgh.uk and frankfrt.de all along, and all five
+    # resolved to 46.23.89.226. They were missing one `tls keypair` line each, so
+    # they completed the TCP connection on 443 and then refused the handshake —
+    # which to a visitor is worse than NXDOMAIN, because a browser reports it as a
+    # security failure rather than a domain that does not exist.
+    #
+    # The rest of ENTRIES: 33 are NXDOMAIN at their registrar and need money, not
+    # config. amstrdam.nl and dnver.us have left us — amstrdam.nl is on Cloudflare
+    # and 301s to afvinklijst.nl, dnver.us has expired. denvr.us, wshingtondc.com
+    # and foball.no are still registered to us at Domeneshop and delegated to
+    # Domeneshop's parking nameservers rather than ns.brgen.no; those three come
+    # back with a delegation change in the panel and no purchase.
     #
     # This is a separate constant rather than a seventh field on Entry because
     # domain_alignment parses these lines with a six-argument regex. A seventh
     # field makes that scan return nothing, and the gate then compares two empty
     # sets and passes having measured nothing.
-    LIVE_DOMAINS = %w[brgen.no oshlo.no].freeze
+    LIVE_DOMAINS = %w[
+      brgen.no oshlo.no stvanger.no trndheim.no cardff.uk edinbrgh.uk frankfrt.de
+    ].freeze
 
     # fetch, not [], so a domain deleted from ENTRIES takes the page down here
     # rather than silently shrinking the city network to whatever still matches.

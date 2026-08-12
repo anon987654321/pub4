@@ -20,7 +20,6 @@ module Deploy
     RELAYD = ROOT.join("OPENBSD", "etc", "relayd.conf")
     COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
     MASTER_ONLY_SUBAPPS = %w[ai].freeze
-    NORWEGIAN_PLAYLIST_ALIAS = "spilleliste"
 
     def self.run
       new.run
@@ -61,7 +60,7 @@ module Deploy
       end
 
       routes.fetch(:playlist).each do |label|
-        next if %w[playlist spilleliste].include?(label)
+        next if label == "playlist"
 
         result.fail("routes playlist lists unknown label #{label}")
       end
@@ -103,10 +102,51 @@ module Deploy
         result.fail("relayd.conf missing tls keypair for #{dom}") unless relayd_keys.include?(dom)
       end
 
+      live_domains_check(result, registry.keys, relayd_keys)
+
       result
     end
 
     private
+
+    # LIVE_DOMAINS must be exactly the city apexes relayd holds a keypair for.
+    #
+    # It is the list the layout iterates to draw the city network, so it decides
+    # what a visitor can click. Both directions of drift are real and both have
+    # happened:
+    #
+    #   too many  a domain in the list that relayd will not serve is a link to a
+    #             TLS handshake failure, which a browser reports as an attack.
+    #   too few   a domain relayd serves and the list omits is a city nobody can
+    #             reach from the site. Five sat like that from whenever they were
+    #             issued until 2026-08-12 — stvanger.no, trndheim.no, cardff.uk,
+    #             edinbrgh.uk and frankfrt.de all had certificates, all resolved
+    #             here, and none was linked or served.
+    #
+    # Source, not network. relayd.conf is tracked and is what gets installed, so
+    # this holds off the deploy host and in CI — and a gate that needed DNS to run
+    # would be the kind that passes having measured nothing.
+    def live_domains_check(result, registry_domains, relayd_keys)
+      declared = extract_constant(REGISTRY.read, "LIVE_DOMAINS")
+      certified = registry_domains & relayd_keys
+
+      unknown = declared - registry_domains
+      result.fail("LIVE_DOMAINS names #{unknown.join(', ')}, absent from ENTRIES") if unknown.any?
+
+      missing = certified - declared
+      extra = declared - certified - unknown
+
+      if missing.any?
+        result.fail("LIVE_DOMAINS omits #{missing.sort.join(', ')} — relayd.conf has a tls keypair " \
+                    "for each, so they serve and nothing links them")
+      end
+      if extra.any?
+        result.fail("LIVE_DOMAINS names #{extra.sort.join(', ')} with no tls keypair in relayd.conf — " \
+                    "the city network links a hostname that refuses TLS")
+      end
+
+      result.checked!(declared.size)
+    end
 
     # Every domain that terminates TLS on vm23: the apps from apps.yml plus the
     # MASTER face, which is not a Rails app and so lives in deploy_inventory.json's
@@ -157,12 +197,17 @@ module Deploy
       match = text.match(/#{name}\s*=\s*%w\[([^\]]+)\]/)
       raise "missing #{name} in domain_registry.rb" unless match
 
-      match[1].split(/\s+/)
+      # reject(&:empty?), because a %w[] wrapped across lines starts with a
+      # newline and split leaves an empty first element — which then compares
+      # unequal against every real list and fails the gate on formatting.
+      match[1].split(/\s+/).reject(&:empty?)
     end
 
     def expected_subdomains_for(domain, marketplace_subdomain)
+      # The marketplace subdomain is the only translated one — it comes from the
+      # registry row (markedsplass, marknadsplats, marktplatz, mercato, ...).
+      # Everything else is the same word in every city.
       subs = [marketplace_subdomain, *COMMON_SUBAPPS]
-      subs << NORWEGIAN_PLAYLIST_ALIAS if domain.end_with?(".no")
       subs << "ai" if domain == "brgen.no"
       subs.uniq
     end

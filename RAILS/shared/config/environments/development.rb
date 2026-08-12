@@ -87,7 +87,7 @@ Rails.application.configure do
   config.hosts << /\A([a-z0-9-]+\.)*brgen\.no\z/i
   config.hosts << /\A([a-z0-9-]+\.)*localhost\z/i
   %w[
-    markedsplass dating playlist spilleliste tv takeaway maps messenger
+    markedsplass dating playlist tv takeaway maps messenger
   ].each { |sub| config.hosts << "#{sub}.brgen.no" }
   # bsdports runs its own apex, so brgen.no's rules never covered it: probing
   # the local server with its real Host header returned 403 Blocked hosts.

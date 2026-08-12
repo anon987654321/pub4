@@ -39,14 +39,14 @@ module Deploy
         path: "/",
         expect_body: [/dating|swipe|Oppdag|profile|main|swipe-action/i],
       },
+      # One entry, not two. This was "playlist" on spilleliste.brgen.no and
+      # "playlist_en" on playlist.brgen.no, a pair that existed to prove the
+      # Norwegian alias and the English name both reached the engine. The alias
+      # is gone (see Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS) and, for as long
+      # as it had been declared, spilleliste.brgen.no was NXDOMAIN — so the half
+      # of the pair that justified the split had never once resolved.
       {
         label: "playlist",
-        host: "spilleliste.#{APEX}",
-        path: "/",
-        expect_body: [/playlist|spilleliste|track|set|main|search/i],
-      },
-      {
-        label: "playlist_en",
         host: "playlist.#{APEX}",
         path: "/",
         expect_body: [/playlist|track|set|main|search/i],
@@ -142,13 +142,13 @@ module Deploy
       # Playlist secondary
       {
         label: "playlist_sets",
-        host: "spilleliste.#{APEX}",
+        host: "playlist.#{APEX}",
         path: "/sets",
         expect_body: [/set|playlist|track|main|search/i],
       },
       {
         label: "playlist_hosted",
-        host: "spilleliste.#{APEX}",
+        host: "playlist.#{APEX}",
         path: "/hosted_tracks",
         expect_body: [/track|host|upload|playlist|main/i],
       },

@@ -208,7 +208,7 @@ flows:
     steps:
       - name: playlist
         get: /
-        host: spilleliste.brgen.no
+        host: playlist.brgen.no
         expect_status: [200]
         forbid_body: ["Sign in to continue"]
       - name: tv
@@ -328,16 +328,16 @@ flows:
     steps:
       - name: root
         get: /
-        host: spilleliste.brgen.no
+        host: playlist.brgen.no
         expect_status: [200]
         forbid_body: ["Sign in to continue"]
       - name: sets
         get: /sets
-        host: spilleliste.brgen.no
+        host: playlist.brgen.no
         expect_status: [200]
       - name: hosted
         get: /hosted_tracks
-        host: spilleliste.brgen.no
+        host: playlist.brgen.no
         expect_status: [200]
       - name: en_host
         get: /

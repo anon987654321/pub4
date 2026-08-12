@@ -12,7 +12,7 @@ primary:
   domains:
     core: brgen.no
     marketplace: markedsplass.brgen.no
-    playlist: spilleliste.brgen.no
+    playlist: playlist.brgen.no
     tv: tv.brgen.no
     takeaway: takeaway.brgen.no
 

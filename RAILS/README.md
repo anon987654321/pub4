@@ -234,7 +234,7 @@ Subdomain constraints live in `brgen/config/routes.rb` via `Brgen::DomainRegistr
 | Subdomain | Module |
 |-----------|--------|
 | markedsplass / marketplace aliases | marketplace |
-| playlist / spilleliste | playlist |
+| playlist | playlist |
 | takeaway | takeaway |
 | tv | tv |
 | maps | maps |
