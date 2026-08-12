@@ -42,7 +42,9 @@ class SitemapsController < ApplicationController
   # scope because a sitemap that forgets the city is how oshlo.no listed
   # Bergen's posts, and a default_scope is not something a reader can see.
   def entries_for(relation, changefreq:, priority:, cap: PER_MODEL_CAP)
-    relation.limit(cap).map do |record|
+    # A cached collection arrives already limited and as an Array.
+    relation = relation.limit(cap) if relation.respond_to?(:limit)
+    relation.map do |record|
       Shared::SitemapBuilder::Entry.new(loc: yield(record), lastmod: record.updated_at,
                                         changefreq: changefreq, priority: priority)
     end
@@ -56,18 +58,23 @@ class SitemapsController < ApplicationController
     entries_for(Community.in_current_city, changefreq: "weekly", priority: "0.5") { |c| community_url(c) }
   end
 
-  # Public profiles whose home-city hint is this city. User is not a tenant
-  # row; city_id is optional. Dating/messenger stay unsitemapped.
+  # Public profiles whose home-city hint is this city. User is not a tenant row
+  # and its in_current_city is strict about nil city_id — see the scope.
+  # Dating/messenger stay unsitemapped.
   def user_entries
-    city = Current.city_record
-    return [] unless city
-
-    entries_for(User.public_profiles.where(city_id: city.id), changefreq: "weekly", priority: "0.4") { |u| user_url(u) }
+    entries_for(User.public_profiles.in_current_city, changefreq: "weekly", priority: "0.4") { |u| user_url(u) }
   end
 
-  # Hashtags are global by design — a tag is not a city's property.
+  # Hashtags are global by design — a tag is not a city's property. Which is
+  # also why one cache entry serves every host: trending is a JOIN + GROUP BY +
+  # ORDER BY COUNT(*) over the whole tagging window, and it was recomputed on
+  # every crawler hit on all 44 domains for a result none of them varied.
+  # Community.popular_cached is the same medicine for the same query shape.
   def hashtag_entries
-    entries_for(Hashtag.trending, changefreq: "daily", priority: "0.4", cap: HASHTAG_CAP) { |t| hashtag_url(t.name) }
+    tags = Rails.cache.fetch("sitemap/hashtags/#{HASHTAG_CAP}", expires_in: 1.hour) do
+      Hashtag.trending.limit(HASHTAG_CAP).to_a
+    end
+    entries_for(tags, changefreq: "daily", priority: "0.4", cap: HASHTAG_CAP) { |t| hashtag_url(t.name) }
   end
 
   def tv_entries

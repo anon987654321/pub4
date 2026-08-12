@@ -226,10 +226,16 @@ module ApplicationHelper
   def activity_event_href(event)
     return if event.blank? || event.object_type.blank? || event.object_id.blank?
 
-    klass = event.object_type.to_s.safe_constantize
-    return unless klass
+    # Reuse the subject a batch loader already fetched (ActivityEvent
+    # .for_city_home); only fall back to a lookup when the event arrived from
+    # somewhere that did not preload one.
+    record = event.activity_subject if event.respond_to?(:activity_subject)
+    if record.nil?
+      klass = event.object_type.to_s.safe_constantize
+      return unless klass
 
-    record = klass.find_by(id: event.object_id)
+      record = klass.find_by(id: event.object_id)
+    end
     record_public_href(record)
   end
 

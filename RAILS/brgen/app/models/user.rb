@@ -35,6 +35,22 @@ class User < ApplicationRecord
     where(guest: false).where.not(username: [nil, ""])
   }
 
+  # The same name every city-facing surface uses, with the one difference this
+  # model's shape forces: strict, not CityScoped.
+  #
+  # CityScoped reads a nil city_id as global — legal for a tenanted row, and it
+  # belongs in every city rather than none. Here nil is the common case, not the
+  # exception: guests are created in resume_session before set_domain_context
+  # sets the tenant, so most rows carry no city at all. Treating those as global
+  # would put every city's people on every city's sitemap, which is the leak
+  # this scope exists to stop. No tenant means no rows, for the same reason.
+  scope :in_current_city, -> {
+    tenant = ActsAsTenant.current_tenant
+    next none unless tenant
+
+    where(city_id: tenant.id)
+  }
+
   # Never falls through to the email address. This method shadows the users
   # .display_name column, so the stored name was dead and every caller — the
   # marketplace seller line, dating matches, takeaway drivers, TV comments —
