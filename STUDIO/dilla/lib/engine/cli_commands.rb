@@ -599,12 +599,82 @@ def wiring_dead_constants
   end
 end
 
+# Called by nothing in the engine, but named by MASTER's test suite, which is
+# not in the corpus below. The constant ratchet needs the same escape hatch and
+# calls it WIRING_EXTERNAL_READERS.
+WIRING_EXTERNAL_CALLERS = %w[engine_source].freeze
+
+# The same ratchet as WIRING_DEAD_BASELINE, for methods.
+#
+# A constant with no reader and a method with no caller are the same defect and
+# only one of them was being counted. Three methods were sitting in the engine
+# when this was written, and none of them is a leftover: each is a sound stage
+# somebody designed, commented at length, and never connected.
+#
+#   sample_modern_chain            denoise/exciter/subboost/widen for sampled
+#                                  beds. sonitex_enabled? already turns Sonitex
+#                                  OFF for exactly those renders because this
+#                                  was meant to replace it, so today they get
+#                                  the subtraction and not the addition. Four
+#                                  ENV knobs (SAMPLE_MODERN, SAMPLE_DENOISE_DB,
+#                                  SAMPLE_AIR, SAMPLE_SUB) read by nothing.
+#   dilla_mix_preprocess_filters   the Dilla drum bus: NY parallel compression,
+#                                  sub bump, mix low-pass. mix_bass_chord_
+#                                  balance_filter's comment cited its bass bump
+#                                  as one of the two things it corrects for.
+#   log_progression!               logs every chord with its frequencies.
+#                                  Superseded in practice by log_progression_
+#                                  phases!, which render_dilla does call but
+#                                  which records no Hz.
+#
+# Not deleted, and not wired either: wiring any of the first two changes how
+# renders SOUND, which is the operator's call, and deleting them would throw
+# away the design and leave the live code beside them arguing with itself. They
+# are counted here so they stay visible and so a fourth cannot arrive quietly.
+WIRING_DEAD_METHOD_BASELINE = 3
+
+def wiring_dead_methods
+  defined_at = {}
+  ENGINE_SOURCES.each do |path|
+    body = RubyVM::AbstractSyntaxTree.parse_file(path).children[2]
+    nodes = body.type == :BLOCK ? body.children : [body]
+    nodes.each do |node|
+      next unless node.type == :DEFN
+
+      defined_at[node.children[0].to_s] ||= "#{File.basename(path)}:#{node.first_lineno}"
+    end
+  end
+  # Same corpus and the same comment-stripping as the constant ratchet: a
+  # method named only in prose is not called. `.` is excluded here where the
+  # constant rule keeps it -- a constant is never reached through a dot, but a
+  # method very often is, and `foo.bar` is a call on something else entirely.
+  code = (ENGINE_SOURCES + Dir[File.join(ROOT, "lib", "*.rb")].sort)
+         .map { |path| File.read(path).gsub(/^\s*#(?!\{).*$/, "") }.join("\n")
+  defined_at.reject do |name, _|
+    next true if WIRING_EXTERNAL_CALLERS.include?(name)
+
+    code.scan(/(?<![\w@$.])#{Regexp.escape(name)}(?![\w])/).length > 1
+  end
+end
+
 def wiring_check
   dead = wiring_dead_constants
   dead.sort_by { |_, where| where }.each { |name, where| puts format("NOTE   %-32s declared at %s, no reader", name, where) }
   puts "#{dead.length} declaration(s) with no reader (baseline #{WIRING_DEAD_BASELINE})"
-  return 0 if dead.length <= WIRING_DEAD_BASELINE
 
-  puts "BROKEN dead declarations rose #{WIRING_DEAD_BASELINE} -> #{dead.length}; wire it or say why in WIRING_DEAD_BASELINE"
-  1
+  orphans = wiring_dead_methods
+  orphans.sort_by { |_, where| where }.each { |name, where| puts format("NOTE   %-32s defined at %s, no caller", name, where) }
+  puts "#{orphans.length} method(s) with no caller (baseline #{WIRING_DEAD_METHOD_BASELINE})"
+
+  status = 0
+  if dead.length > WIRING_DEAD_BASELINE
+    puts "BROKEN dead declarations rose #{WIRING_DEAD_BASELINE} -> #{dead.length}; wire it or say why in WIRING_DEAD_BASELINE"
+    status = 1
+  end
+  if orphans.length > WIRING_DEAD_METHOD_BASELINE
+    puts "BROKEN uncalled methods rose #{WIRING_DEAD_METHOD_BASELINE} -> #{orphans.length}; " \
+         "call it or say why in WIRING_DEAD_METHOD_BASELINE"
+    status = 1
+  end
+  status
 end

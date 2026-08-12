@@ -202,8 +202,14 @@ end
 # That is one generation of ageing too many, and the wrong direction for this
 # material. The chops arrive with their own age already on them. What they want
 # is the other half of the Cooley principle -- make old things sound new -- which
-# is what sample_modern_chain below does: definition, extension, and the room
-# the broadcast lost, rather than more wear.
+# is what sample_modern_chain below was written to do: definition, extension,
+# and the room the broadcast lost, rather than more wear.
+#
+# Only half of that shipped. This gate is live and removes Sonitex from every
+# sample-backed render; sample_modern_chain has no caller, so nothing takes its
+# place, and those renders get the subtraction without the addition. Wiring it
+# changes how every sampled bed sounds, which is the operator's call and not a
+# tidy-up's -- see the dead-method ratchet in cli_commands.rb.
 #
 # Synthesised material is the opposite case. It has no age of its own, and
 # giving it some is exactly what the emulation is for, so nothing changes there.
@@ -365,13 +371,19 @@ MASTER_TARGET_LUFS = -17.0
 TRUE_PEAK_CEILING_DB = -1.0
 TRUE_PEAK_CEILING_LINEAR = (10**(TRUE_PEAK_CEILING_DB / 20.0)).round(4)
 
-# dilla_mix_preprocess_filters' NY drum bump (+5.2dB@58Hz/+3.6dB@92Hz) and
-# every Sonitex preset's own warmth/head-bump EQ both re-boost the same
-# sub-100Hz band the sample bass and synth bass already occupy, at various
-# points earlier in the chain — repeatedly undoing any balance correction
-# placed before them. This is the one point both the dry and Sonitex paths
-# funnel through right before the final safety limiter, so it's the only
-# place a correction here actually sticks.
+# Every Sonitex preset's own warmth/head-bump EQ re-boosts the sub-100Hz band
+# the sample bass and synth bass already occupy, earlier in the chain — undoing
+# any balance correction placed before it. This is the one point both the dry
+# and Sonitex paths funnel through right before the final safety limiter, so
+# it's the only place a correction here actually sticks.
+#
+# This paragraph named a second cause until 2026-08-12: dilla_mix_preprocess_
+# filters' NY drum bump, +5.2dB@58Hz and +3.6dB@92Hz. That method has no caller
+# and never had one, so half of what these numbers were set against was never
+# in the signal path. The numbers are left exactly as they are — they were tuned
+# by ear against what the master actually sounded like, not derived from this
+# comment, so the comment was wrong and the cut may still be right. But if the
+# non-flylo -11dB@95Hz ever sounds like too much bass removed, this is why.
 def mix_bass_chord_balance_filter(input_tag, out_tag: "balanced")
   # Sonitex warmth re-boosts sub; this stage tames sustained bass so chords
   # stay clear. On Camel/FlyLo the same -11dB@95Hz was also deleting kick

@@ -387,7 +387,11 @@ def log_progression_phases!(track, bpm, pads, phases)
     "  [#{phase}] #{chord[:name]}: #{notes}"
   end
   File.open(PROGRESSION_LOG_PATH, "a") do |f|
-    f.puts "=== #{Time.now.iso8601} — TRACK=#{track} BPM=#{bpm.round(1)} (fugue) ==="
+    # Tagged (fugue) only when there are fugue phases. render_dilla calls this
+    # for every render, not just fugues, so the tag was hardcoded onto all of
+    # them -- all 133 entries in the log say (fugue), including batucada and
+    # afrobeats_pocket. A label that is always printed identifies nothing.
+    f.puts "=== #{Time.now.iso8601} — TRACK=#{track} BPM=#{bpm.round(1)}#{phases ? ' (fugue)' : ''} ==="
     f.puts lines
     f.puts
   end

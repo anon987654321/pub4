@@ -34,14 +34,6 @@ def singers_chop_source
   { path:, phrases: Array(entry&.dig("phrases")).map { |p| p["start"].to_f }.select(&:positive?) }
 end
 
-def audio_duration_sec(path)
-  out, = Open3.capture2("ffprobe", "-v", "error", "-show_entries", "format=duration",
-                        "-of", "default=noprint_wrappers=1:nokey=1", path)
-  out.to_f
-rescue StandardError
-  0.0
-end
-
 def render_singers_chop_pads(path, pad_events, duration)
   src = singers_chop_source
   return unless src

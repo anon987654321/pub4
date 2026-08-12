@@ -81,14 +81,6 @@ def mix_metrics(path)
   }
 end
 
-def audio_duration_sec(path)
-  return 0.0 unless tool_available?("ffprobe")
-
-  out, = capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
-                 "-of", "default=noprint_wrappers=1:nokey=1", path)
-  out.to_s.strip.to_f
-end
-
 def crit_session_cli!(path = nil)
   path ||= File.join(OUTPUT_DIR, "demo.wav")
   path = File.join(ROOT, "demo.wav") unless File.file?(path)

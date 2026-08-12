@@ -164,6 +164,27 @@ def tool_available?(name)
   ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |directory| File.executable?(File.join(directory, name)) }
 end
 
+# One definition. There were two -- one beside the mix metrics, one beside the
+# pad layers -- and Ruby does not warn when a second `def` of the same name
+# replaces the first, so whichever file loaded last silently owned the method
+# for every caller in the engine. They agreed on the answer, which is the only
+# reason this was invisible rather than a bug: both shell out to ffprobe and
+# both return 0.0 when it is absent, one by guarding and one by rescuing.
+#
+# Here rather than in either caller, next to the tool guard and the shell
+# wrapper it is built from, and keeping both of the answers they gave: the
+# guard, so a missing ffprobe is not an exception, and the rescue, so a file
+# ffprobe cannot read is not either.
+def audio_duration_sec(path)
+  return 0.0 unless tool_available?("ffprobe")
+
+  out, = capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "default=noprint_wrappers=1:nokey=1", path)
+  out.to_s.strip.to_f
+rescue StandardError
+  0.0
+end
+
 DEMUX_VENV_PYTHON = File.join(scratch_path("venv-demucs"), "bin", "python").freeze
 
 def demucs_cmd
