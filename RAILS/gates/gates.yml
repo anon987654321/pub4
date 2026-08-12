@@ -147,6 +147,12 @@ affiliate_honesty:
   pass: "Affiliate honesty gate passed."
   covered_by: layout_suite
 
+content_honesty:
+  require: lib/content_honesty
+  class: Deploy::ContentHonestyGate
+  pass: "Content honesty gate passed (no Faker filler on public surfaces)."
+  covered_by: layout_suite
+
 layout_search:
   require: lib/layout_search
   class: Deploy::LayoutSearchGate
@@ -163,7 +169,7 @@ stimulus_wiring:
 layout_suite:
   require: lib/layout_suite
   class: Deploy::LayoutSuiteGate
-  pass: "Layout suite passed (CSS + geometry + dialect + payment + flow + auditor + stimulus)."
+  pass: "Layout suite passed (CSS + geometry + dialect + payment + content + flow + auditor + stimulus)."
 
 surface_schema:
   require: lib/surface_schema

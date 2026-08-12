@@ -8,6 +8,7 @@ require_relative "layout_geometry"
 require_relative "dialect_purity"
 require_relative "payment_honesty"
 require_relative "affiliate_honesty"
+require_relative "content_honesty"
 require_relative "layout_search"
 require_relative "user_flow"
 require_relative "surface_schema"
@@ -30,6 +31,7 @@ module Deploy
       LayoutSearchGate,
       PaymentHonestyGate,
       AffiliateHonestyGate,
+      ContentHonestyGate,
       UserFlowGate,
       SurfaceSchemaGate,
       DesignMetricsGate,
