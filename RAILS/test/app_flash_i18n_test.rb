@@ -59,6 +59,20 @@ class AppFlashI18nTest < Minitest::Test
     end.uniq.sort
   end
 
+  # Keys built by interpolation — t("flash.marketplace.payment_statuses.#{status}")
+  # in checkouts_controller. The literal scan above cannot see the leaves, so
+  # the namespace up to the interpolation counts as used and everything under
+  # it is covered. Without this the five payment_statuses read as inert copy
+  # while a live redirect renders one of them on every checkout.
+  def dynamic_prefixes_used_by(tree)
+    CONTROLLERS.fetch(tree).flat_map { |glob| Dir.glob(File.join(ROOT, glob)) }.flat_map do |file|
+      File.readlines(file, encoding: "UTF-8")
+          .reject { |line| line.strip.start_with?("#") }
+          .join
+          .scan(/"((?:[\w.]*\.)?flash\.[\w.]*?)\#\{/).flatten
+    end.uniq
+  end
+
   def resolve(locale_hash, dotted)
     locale_hash.dig(*dotted.split("."))
   end
@@ -73,6 +87,22 @@ class AppFlashI18nTest < Minitest::Test
 
   def flash_block(locale_hash)
     locale_hash.dig("shared", "flash") || locale_hash["flash"] || {}
+  end
+
+  # I18n pluralisation: a controller asks for flash.x.y and I18n picks the
+  # branch from the count, so the branches are part of one key, not keys.
+  PLURAL_BRANCHES = %w[zero one two few many other].freeze
+
+  # Dotted paths to the leaves. flash_block.keys only ever returned the top
+  # level, so once the verticals gained their own namespaces (flash.dating.*,
+  # flash.marketplace.* …) the parents read as keys no controller asks for --
+  # true, and not the question -- while every leaf underneath them went
+  # unchecked, which is the half that catches inert copy.
+  def leaf_keys(node, prefix = [])
+    return [prefix.join(".")] unless node.is_a?(Hash)
+    return [prefix.join(".")] if node.keys.all? { |k| PLURAL_BRANCHES.include?(k.to_s) }
+
+    node.flat_map { |key, value| leaf_keys(value, prefix + [key.to_s]) }
   end
 
   def test_every_key_a_controller_asks_for_resolves_in_both_locales
@@ -132,13 +162,15 @@ class AppFlashI18nTest < Minitest::Test
   # A declared key no controller asks for is inert config that reads as live copy.
   def test_no_declared_flash_key_is_unused
     used = LOCALES.keys.flat_map { |tree| keys_used_by(tree) }.uniq
+    dynamic = LOCALES.keys.flat_map { |tree| dynamic_prefixes_used_by(tree) }.uniq
 
     LOCALES.each do |tree, (nb_file, _)|
       block = flash_block(load_locale(nb_file, "nb"))
       next if block.empty?
 
       prefix = tree == "shared" ? "shared.flash." : "flash."
-      unused = block.keys.map { |key| "#{prefix}#{key}" } - used
+      unused = (leaf_keys(block).map { |key| "#{prefix}#{key}" } - used)
+               .reject { |key| dynamic.any? { |stem| key.start_with?(stem) } }
 
       assert_empty unused, "#{tree}: declared and asked for by no controller"
     end

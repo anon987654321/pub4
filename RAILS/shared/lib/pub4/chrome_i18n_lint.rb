@@ -103,7 +103,7 @@ module Pub4
       # → 119: the map HUD region, the message article, amber's palette section
       # and its logo svg. Found by a text-node scan run against the merged tree
       # after that pass, which is the only reason they were separable from it.
-      "aria_label" => 118,
+      "aria_label" => 117,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -128,7 +128,7 @@ module Pub4
       # longer hide from the other three rules here. Down only.
       # 2026-08-12: 215. The affiliate sidebar's three hardcoded strings became
       # affiliate.* keys in both brgen locales.
-      "translate_default" => 215,
+      "translate_default" => 214,
     }.freeze
 
     # Kept for callers that referenced the old single number.

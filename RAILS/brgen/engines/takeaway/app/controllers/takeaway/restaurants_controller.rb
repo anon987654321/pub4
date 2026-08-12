@@ -38,7 +38,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   def create
     @restaurant = Current.user.takeaway_restaurants.build(restaurant_params)
     @restaurant.save ?
-      redirect_to(restaurant_path(@restaurant), notice: "Restaurant created") :
+      redirect_to(restaurant_path(@restaurant), notice: t("flash.takeaway.restaurant_created")) :
       render(:new, status: :unprocessable_entity)
   end
 
@@ -60,7 +60,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant, params[:id]))
 
   def authorize_owner!
-    redirect_to(restaurants_path, alert: "Not allowed") unless @restaurant.owner?(Current.user)
+    redirect_to(restaurants_path, alert: t("flash.takeaway.not_the_owner")) unless @restaurant.owner?(Current.user)
   end
 
   def restaurant_params = params.require(:takeaway_restaurant).permit(

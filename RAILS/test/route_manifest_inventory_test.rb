@@ -34,13 +34,20 @@ class RouteManifestInventoryTest < Minitest::Test
     assert_empty Deploy::PageInventory.stale_route_manifests
   end
 
+  # The legal pages are shared views, so their ids carry the shared/ segment the
+  # inventory gives them (page_inventory.rb#shared_pages). They were listed here
+  # as brgen/pages/* until 2026-08-12, when the per-app copies were dropped in
+  # favour of the one in RAILS/shared -- which is also why all three apps can be
+  # asserted now instead of brgen alone.
   def test_routes_beat_the_filename_convention
-    {
-      "brgen/bookmarks/index" => "/saved",
-      "brgen/pages/privacy" => "/privacy",
-      "brgen/pages/terms" => "/terms",
-      "brgen/pages/cookies" => "/cookies",
-    }.each do |id, path|
+    expected = { "brgen/bookmarks/index" => "/saved" }
+    %w[amber brgen bsdports].each do |app|
+      expected["#{app}/shared/pages/privacy"] = "/privacy"
+      expected["#{app}/shared/pages/terms"] = "/terms"
+      expected["#{app}/shared/pages/cookies"] = "/cookies"
+    end
+
+    expected.each do |id, path|
       page = find(id)
       refute_nil page, "#{id} left the inventory"
       assert_equal path, page[:path], "#{id} resolved to the convention, not the route"

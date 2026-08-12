@@ -14,11 +14,14 @@ class CritiqueImplementationTest < Minitest::Test
   # app's en.yml: the control still has to say this word, and the check survives
   # the next locale. Two assertions in this file were already rewritten for the
   # same reason; the comments above them explain each case.
+  def en_value(app, key)
+    locale = YAML.safe_load_file(File.join(ROOT, app, "config", "locales", "en.yml")).fetch("en")
+    key.split(".").reduce(locale) { |node, segment| node.fetch(segment) }
+  end
+
   def assert_localised(app, template, key, english)
     assert_includes read("#{app}/app/views/#{template}"), %(t("#{key}"))
-    locale = YAML.safe_load_file(File.join(ROOT, app, "config", "locales", "en.yml")).fetch("en")
-    value = key.split(".").reduce(locale) { |node, segment| node.fetch(segment) }
-    assert_equal english, value, "#{app} en.yml #{key} drifted from the copy #{template} promises"
+    assert_equal english, en_value(app, key), "#{app} en.yml #{key} drifted from the copy #{template} promises"
   end
 
   def test_brgen_has_one_ranking_control_local_voice_and_accessible_actions
@@ -69,9 +72,16 @@ class CritiqueImplementationTest < Minitest::Test
     # never used — so it failed while the behaviour it guards was correct.
     assert_match(/items\.archive|Archive to memory/, show)
     assert_match(/items\.restore|Restore to wardrobe/, show)
-    assert_includes form, "Photo processing:"
+    # The disclosure is t("items.photo_processing_html"), so the promised phrase
+    # lives in the locale value and never appears in the template. Asserting the
+    # English literal against the view failed on a form that renders it
+    # correctly — the same mistake as the archive assertion above, and the
+    # reason RAILS tests assert through keys rather than English.
+    assert_includes form, %(t("items.photo_processing_html"))
+    assert_includes en_value("amber", "items.photo_processing_html"), "Photo processing:"
     assert_includes outfit, "outfit-composition"
-    assert_includes ai, "Why it works:"
+    assert_includes ai, %(t("ai.why_it_works"))
+    assert_includes en_value("amber", "ai.why_it_works"), "Why it works:"
   end
 
   def test_bsdports_exposes_operator_decisions_and_uncertainty

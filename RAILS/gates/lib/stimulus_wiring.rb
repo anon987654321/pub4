@@ -68,10 +68,14 @@ module Deploy
 
     # eagerLoadControllersFrom("controllers") turns foo_bar_controller.js into
     # the identifier "foo-bar".
+    # Engine controllers register too, and both halves of this gate have to know
+    # it: an engine view naming an engine controller is correctly wired, and a
+    # glob that sees one side but not the other reports it as broken.
     def app_identifiers(app)
-      Dir.glob(File.join(@rails_root, app, "app/javascript/controllers/*_controller.js"))
-         .map { |path| File.basename(path, "_controller.js").tr("_", "-") }
-         .reject { |name| name == "application" }
+      (Dir.glob(File.join(@rails_root, app, "app/javascript/controllers/*_controller.js")) +
+       Dir.glob(File.join(@rails_root, app, "engines/*/app/javascript/controllers/*_controller.js")))
+        .map { |path| File.basename(path, "_controller.js").tr("_", "-") }
+        .reject { |name| name == "application" }
     end
 
     private
@@ -135,8 +139,16 @@ module Deploy
 
     # Shared partials render inside every app, so each app's registration set has
     # to satisfy them.
+    #
+    # Engine views count too. brgen's verticals are mountable engines and their
+    # views render inside brgen with brgen's registrations, so a glob that stops
+    # at app/views goes blind to them — which is what happened when maps was
+    # extracted on 2026-08-12 and checks_ran fell from over 400 to 391. The
+    # floor assertion in stimulus_wiring_gate_test is there to catch exactly
+    # that, and it did.
     def views(app)
       Dir.glob(File.join(@rails_root, app, "app/views/**/*.erb")) +
+        Dir.glob(File.join(@rails_root, app, "engines/*/app/views/**/*.erb")) +
         Dir.glob(File.join(@rails_root, "shared/app/views/**/*.erb"))
     end
 
@@ -171,14 +183,30 @@ module Deploy
     # could be identifier "action" + value "targetGid", or identifier
     # "action-target" + value "gid". Only registered identifiers are candidates,
     # longest first so "feed-hotkey" wins over "feed" when both exist.
+    #
+    # Only values on the controller's own element count. static values govern
+    # that element and nothing else; the same attribute on a target is an
+    # ordinary dataset read, which is how dating/profiles/show sets
+    # data-tabs-hash-value on each tab and tabs_controller reads
+    # tab.dataset.tabsHashValue. Scanning the whole file reported that correct
+    # wiring as dead, so the check now looks at one tag at a time and requires
+    # the tag to carry data-controller naming the identifier.
     def values(text)
-      raw = text.scan(/data-([a-z0-9-]+)-value\s*=/).flatten.uniq
-      raw.filter_map do |slug|
-        id = registered_prefixes.find { |candidate| slug.start_with?("#{candidate}-") }
+      text.scan(/<[^>]*>/m).flat_map { |tag| values_on_tag(tag) }.uniq
+    end
+
+    def values_on_tag(tag)
+      declared = tag[/data-controller\s*=\s*"([^"]*)"/, 1]
+      return [] unless declared
+
+      on_element = declared.split(/\s+/)
+      tag.scan(/data-([a-z0-9-]+)-value\s*=/).flatten.uniq.filter_map do |slug|
+        id = registered_prefixes.find do |candidate|
+          slug.start_with?("#{candidate}-") && on_element.include?(candidate)
+        end
         next unless id
 
-        name = slug.delete_prefix("#{id}-")
-        [ id, camelize(name) ]
+        [ id, camelize(slug.delete_prefix("#{id}-")) ]
       end
     end
 

@@ -104,10 +104,10 @@
        hidden
        role="status"
        aria-live="polite">
-    <p class="tab-bar-coach-text"><%= t("nav.menu_coach", default: "Menu is down here — tap the bar or scroll up.") %></p>
+    <p class="tab-bar-coach-text"><%= t("nav.menu_coach") %></p>
     <div class="tab-bar-coach-actions">
-      <button type="button" class="tab-bar-coach-dismiss" data-action="scroll-chrome#dismissCoach"><%= t("nav.menu_coach_dismiss", default: "Got it") %></button>
-      <button type="button" class="tab-bar-coach-show" data-action="scroll-chrome#reveal"><%= t("nav.show_menu", default: "Show menu") %></button>
+      <button type="button" class="tab-bar-coach-dismiss" data-action="scroll-chrome#dismissCoach"><%= t("nav.menu_coach_dismiss") %></button>
+      <button type="button" class="tab-bar-coach-show" data-action="scroll-chrome#reveal"><%= t("nav.show_menu") %></button>
     </div>
   </div>
   <button type="button"
@@ -116,11 +116,11 @@
           data-action="scroll-chrome#reveal"
           aria-controls="app-tab-bar"
           aria-expanded="false"
-          aria-label="<%= t("nav.show_menu", default: "Show menu") %>"></button>
+          aria-label="<%= t("nav.show_menu") %>"></button>
   <nav id="app-tab-bar"
        role="navigation"
        class="tab-bar"
-       aria-label="<%= t("nav.mobile_nav", default: t("nav.home")) %>"
+       aria-label="<%= t("nav.mobile_nav") %>"
        data-scroll-chrome-target="bar"
        data-turbo-permanent
        aria-hidden="true"

@@ -9,7 +9,7 @@ require_relative "../../gates/support/geometry_autofix"
 require_relative "../../gates/lib/gate_mutation"
 require_relative "../../gates/lib/layout_snapshot"
 require_relative "../../gates/support/geometry_probe"
-require_relative "../../gates/lib/geometry_type"
+require_relative "../../gates/support/geometry_type"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 # Unit coverage for the pure logic behind the browser-backed gates. Nothing

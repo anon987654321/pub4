@@ -25,7 +25,7 @@ module Deploy
       "privacy" => "legal", "terms" => "legal", "cookies" => "legal",
     }.freeze
 
-    WALK = File.read(File.join(__dir__, "../support/geometry_type_walk.js"))
+    WALK = File.read(File.join(__dir__, "geometry_type_walk.js"))
 
     module_function
 

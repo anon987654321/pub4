@@ -2,7 +2,7 @@
 schema: 1
 apps:
   amber:
-    digest: 242684fc9ce005d7
+    digest: 117ecfec69a9715f
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -14,6 +14,16 @@ apps:
       - "/registration/new"
       sessions#new:
       - "/session/new"
+      pages#show:
+      - "/terms"
+      - "/privacy"
+      - "/cookies"
+      pages#privacy:
+      - "/privacy"
+      pages#terms:
+      - "/terms"
+      pages#cookies:
+      - "/cookies"
       account_settings#export:
       - "/account/export"
       account_settings#show:
@@ -163,7 +173,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: 8b135a1bbee9de31
+    digest: e10abaaeb55db8e6
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -252,12 +262,6 @@ apps:
       - "/conversations"
       conversations#show:
       - "/conversations/:id"
-      maps/home#index:
-      - "/"
-      maps/places#index:
-      - "/places"
-      maps/places#show:
-      - "/places/:id"
       partner/clicks#show:
       - "/p/:token"
       partner/programs#index:
@@ -431,8 +435,14 @@ apps:
       - "/categories/:id"
       marketplace/saved_searches#index:
       - "/saved_searches"
+      maps/home#index:
+      - "/"
+      maps/places#index:
+      - "/places"
+      maps/places#show:
+      - "/places/:id"
   bsdports:
-    digest: 92e527c3a4ea92cd
+    digest: b7cc7045d85f7ac5
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -442,6 +452,16 @@ apps:
       - "/sso/from_master"
       sessions#new:
       - "/session/new"
+      pages#show:
+      - "/terms"
+      - "/privacy"
+      - "/cookies"
+      pages#privacy:
+      - "/privacy"
+      pages#terms:
+      - "/terms"
+      pages#cookies:
+      - "/cookies"
       account_settings#export:
       - "/account/export"
       account_settings#show:

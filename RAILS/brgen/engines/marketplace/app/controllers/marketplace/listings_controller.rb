@@ -6,7 +6,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
   include Shared::TwoFactorAuth
 
   rate_limit to: 20, within: 3.minutes, only: %i[create],
-    with: -> { redirect_to listings_path, alert: "Try again later." }
+    with: -> { redirect_to listings_path, alert: t("flash.listings_rate_limited") }
 
   allow_unauthenticated_access only: %i[index show]
   before_action :require_user_session, only: %i[new create]
@@ -69,7 +69,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
         actor: Current.user, action: "listing.created", subject: @listing,
         source_vertical: "marketplace", locality: @listing.location
       )
-      redirect_to listing_path(@listing), notice: "Listed"
+      redirect_to listing_path(@listing), notice: t("flash.marketplace.listing_published")
     else
       render :new, status: :unprocessable_entity
     end

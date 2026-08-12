@@ -6,7 +6,7 @@ require_relative "../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../tools/crawl_support"
 require_relative "cdp_session"
 require_relative "brgen_vertical_surfaces"
-require_relative "../lib/geometry_type" # worn-type walk; see GeometryType.probe
+require_relative "geometry_type" # worn-type walk; see GeometryType.probe
 
 module Deploy
   # The shared measurement substrate: one DOM walk per surface returning what
