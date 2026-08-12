@@ -8,7 +8,8 @@ skip_postpro=0
 
 usage() {
   cat <<EOF
-Usage: lora [--check | --train | --train-kaggle | --train-replicate | --generate | --postpro | --all]
+Usage: lora [--check | --train | --train-kaggle | --train-colab | --train-replicate
+             | --generate | --postpro | --all]
 
   --check            HF FLUX gate, toolkit, dataset
   --train            Train LoRA locally / RunPod via ai-toolkit
@@ -19,7 +20,8 @@ Usage: lora [--check | --train | --train-kaggle | --train-replicate | --generate
   --postpro          Portrait postpro on generated samples in out/
   --all              check, generate, postpro (default)
 
-Anything after --train-kaggle or --train-replicate is passed to that lane, e.g.
+Anything after a lane flag (--train-kaggle, --train-colab, --train-replicate)
+is passed to that lane, e.g.
   ./lora --train-kaggle --dry-run --steps 600
   ./lora --train-replicate --dry-run
 

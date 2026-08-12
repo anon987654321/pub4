@@ -25,6 +25,15 @@ Ragnhild that has been graded is not the model saying her name back. Keeping
 them in one directory would make the first real generate run look like it
 appended to work the model never did.
 
+**`dataset/` is versioned, and this repo's origin is public.** Twenty captioned
+photographs of two named people — 17 of Ragnhild, 3 of Johann — are committed
+and published, and that is deliberate rather than an oversight: it is what makes
+the Colab lane work without a token, since the notebook simply clones the
+origin. Checked 2026-08-12. The consequence is that adding a photograph here
+publishes it, immediately and to anyone, and that removing it later leaves it in
+the history. Curate `sources/` freely; treat a `git add` under `dataset/` as
+consent to publish that face.
+
 `subject.env` names the three things that differ between one subject and the
 next:
 
@@ -51,13 +60,14 @@ STUDIO/lora/ragnhild/lora --generate   # sample from the newest checkpoint
 STUDIO/lora/ragnhild/lora --all        # check, generate, postpro
 ```
 
-## Three train lanes
+## Four train lanes
 
 Same dataset and trigger; pick the lane that fits ops cost.
 
 | Lane | Command | Hardware | Cost |
 |------|---------|----------|------|
 | **Kaggle** | `./lora --train-kaggle` | 16 GB T4, 12 h/session, ~30 h/week | free |
+| **Colab** | `./lora --train-colab` | 16 GB T4, no phone verification | free |
 | **Local / RunPod** | `./lora --train` | M2 MPS, or a 24 GB+ pod over SSH | pod hourly |
 | **Replicate** | `./lora --train-replicate` | hosted H100, ~1000 steps | per run |
 
@@ -97,6 +107,19 @@ One-time setup on kaggle.com:
 
 The notebook and dataset are both created private and should stay that way.
 
+### Colab (`run_train_colab.rb`)
+
+There is no API to push to — Colab is a browser — so this writes
+`<subject>/colab.ipynb` and prints the URL that opens it. The notebook clones
+this repo for the toolkit and the captioned dataset, mounts Drive so a
+disconnect costs the session rather than the training, and hands back to
+`./lora --train`. `--no-drive` keeps everything in `/content`, which dies with
+the runtime.
+
+**The clone is the reason this lane needs no token and the reason to think
+before using it:** `PUB4_REPO` defaults to the public pub4 origin, so the
+dataset it pulls is whatever captioned photographs are committed there.
+
 ### Replicate (`run_train_replicate.rb`)
 
 Zips `dataset/`, uploads via the Files API, trains
@@ -121,10 +144,17 @@ YAML rather than keeping a config per machine.
 | `cuda` | bf16 | adamw8bit | no | 512/768/1024 |
 | `cuda_t4` | fp16 | adamw8bit | yes | 512 |
 | `mps` | fp16 | adamw | yes | 512 |
+| `cpu` | bf16 | adamw | yes | 512 |
 
 `cuda_t4` is a profile, not a device ai-toolkit knows — it emits `cuda`. Turing
 has no bf16 at all, so inheriting the `cuda` dtype there is a hard failure
 rather than a slow path, and 16 GB will not hold FLUX.1-dev unquantised.
+
+`cpu` is an escape hatch, not a lane: it was an allowed value with no profile
+at all until 2026-08-11, which meant it inherited `adamw8bit` — bitsandbytes,
+CUDA-only — on the one device guaranteed not to have CUDA. It now gets `adamw`
+and a single bucket, and warns, because 1800 CPU steps of a 12B model is not a
+run anyone finishes.
 
 ## Status
 

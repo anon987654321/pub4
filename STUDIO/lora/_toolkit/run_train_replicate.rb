@@ -24,7 +24,6 @@ require "optparse"
 require "pathname"
 require "tmpdir"
 require "time"
-require "pathname"
 
 # The subject is chosen by the wrapper that invoked this (see _toolkit/lib.sh):
 # SUBJECT_DIR points at STUDIO/lora/<subject>, and subject.env there names

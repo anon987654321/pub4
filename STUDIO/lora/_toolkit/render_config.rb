@@ -80,6 +80,22 @@ def apply_device!(process)
     train["lr"] = 1.0e-5 unless ENV.key?("LORA_LR")
     # M2 8 GB: single resolution bucket reduces VRAM churn.
     process["datasets"].first["resolution"] = [512] unless ENV.key?("LORA_RESOLUTIONS")
+  when "cpu"
+    # cpu was in ALLOWED_DEVICES and in run_generate.sh's help, and had no
+    # branch here at all -- so it fell through the case and inherited
+    # train.yaml verbatim: adamw8bit, which IS bitsandbytes and IS CUDA-only,
+    # plus 512/768/1024 buckets. The one device that certainly has no CUDA was
+    # the one configured to use a CUDA optimizer. It would not have failed at
+    # config time; it would have failed inside torch, after the model download.
+    model["low_vram"] = true
+    model["quantize"] = true
+    train["optimizer"] = "adamw"
+    process["datasets"].first["resolution"] = [512] unless ENV.key?("LORA_RESOLUTIONS")
+    # Not a lane, an escape hatch. FLUX.1-dev is 12B parameters; a CPU step is
+    # minutes, so 1800 of them is not a training run you will finish. Say so
+    # rather than let it look like a supported choice.
+    warn "warn: LORA_DEVICE=cpu will run, but FLUX.1-dev on CPU is minutes per step — " \
+         "use --train-kaggle or --train-colab for a free GPU"
   end
 end
 
