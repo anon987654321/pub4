@@ -141,20 +141,21 @@
     <button id="push-enable-btn" class="push-enable-btn" hidden><%= t("push.enable") %></button>
   <% end %>
 
-  <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="<%= t("nav.city_network") %>" data-brgen-shell-target="carousel">
-    <div class="carousel-container" role="list">
-      <% %w[
-        brgen.no longyearbyn.no oshlo.no stvanger.no trmso.no trndheim.no
-        reykjavk.is kbenhvn.dk stholm.se mlmoe.se gtebrg.se hlsinki.fi
-        lndon.uk mnchester.uk edinbrgh.uk glasgw.uk amstrdam.nl rottrdam.nl
-        brssels.be frankfrt.de zrich.ch mlan.it brdeaux.fr lisbon.pt wrsawa.pl
-        newyrk.us lsangeles.com chcago.us houstn.us
-      ].each_with_index do |domain, i| %>
-        <a class="carousel-slide<%= " active" if i.zero? %>" role="listitem"
-           href="https://<%= domain %>/" data-domain="<%= domain %>" data-base="<%= domain %>"><%= domain %></a>
-      <% end %>
+  <%# Only apexes that serve. This list used to be 29 domains written out here;
+      26 of them refused the connection and one, amstrdam.nl, had left us and
+      redirected to a stranger's site. DomainRegistry::LIVE_DOMAINS is the one
+      place that fact is recorded — do not iterate ENTRIES here. %>
+  <% live_cities = Brgen::DomainRegistry.live_entries %>
+  <% if live_cities.length > 1 %>
+    <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="<%= t("nav.city_network") %>" data-brgen-shell-target="carousel">
+      <div class="carousel-container" role="list">
+        <% live_cities.each do |entry| %>
+          <a class="carousel-slide<%= " active" if entry.domain == Current.domain %>" role="listitem"
+             href="https://<%= entry.domain %>/" data-domain="<%= entry.domain %>" data-base="<%= entry.domain %>"><%= entry.domain %></a>
+        <% end %>
+      </div>
     </div>
-  </div>
+  <% end %>
 
   <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
     <div class="layout">

@@ -1,5 +1,8 @@
 if (window.Turbo?.config?.drive) Turbo.config.drive.progressBarDelay = 100;
 
+// Carries the current vertical across to the other cities: on dating.brgen.no
+// the oshlo.no slide reads dating.oshlo.no. The href has to move with the label
+// — it did not, so every slide announced a subdomain and navigated to the apex.
 function updateCarouselPrefix() {
   const el = document.getElementById("cityCarousel");
   if (!el) return;
@@ -7,7 +10,11 @@ function updateCarouselPrefix() {
   slides.forEach(s => { if (!s.dataset.base) s.dataset.base = s.textContent.trim(); });
   const parts = location.hostname.split(".");
   const prefix = parts.length >= 3 && parts[0] !== "www" ? parts[0] + "." : "";
-  slides.forEach(s => { s.textContent = prefix + s.dataset.base; });
+  slides.forEach(s => {
+    const host = prefix + s.dataset.base;
+    s.textContent = host;
+    s.href = "https://" + host + "/";
+  });
 }
 
 function initCarousel() {

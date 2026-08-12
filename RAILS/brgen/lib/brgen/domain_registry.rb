@@ -89,6 +89,33 @@ module Brgen
 
     ENTRIES_BY_DOMAIN = ENTRIES.index_by(&:domain).freeze
 
+    # The city apexes that actually serve this app. Every other ENTRIES row is a
+    # domain we intend to run and have wired into OPERATOR.sh#ALL_DOMAINS, but
+    # relayd only answers for an apex whose certificate exists on disk — see
+    # RAILS/BLOCKERS.md "City vanity TLS". Linking the rest puts dead links in
+    # front of every visitor, so nothing user-facing may iterate ENTRIES.
+    #
+    # Ground truth is `grep keypair /etc/relayd.conf` on vm23. Measured
+    # 2026-08-12: keypairs for brgen.no, ai.brgen.no, amber.brgen.no,
+    # bsdports.org, oshlo.no — and an HTTP sweep of all 44 entries agreed
+    # exactly, 200 from 46.23.89.226 for these two and nothing else. Five more
+    # resolve to that address but refuse on 443 (stvanger.no, trndheim.no,
+    # cardff.uk, edinbrgh.uk, frankfrt.de); 34 are NXDOMAIN; and amstrdam.nl,
+    # denvr.us and dnver.us have left us entirely — amstrdam.nl is behind
+    # Cloudflare and 301s to afvinklijst.nl.
+    #
+    # This is a separate constant rather than a seventh field on Entry because
+    # domain_alignment parses these lines with a six-argument regex. A seventh
+    # field makes that scan return nothing, and the gate then compares two empty
+    # sets and passes having measured nothing.
+    LIVE_DOMAINS = %w[brgen.no oshlo.no].freeze
+
+    # fetch, not [], so a domain deleted from ENTRIES takes the page down here
+    # rather than silently shrinking the city network to whatever still matches.
+    def self.live_entries
+      LIVE_DOMAINS.map { |domain| ENTRIES_BY_DOMAIN.fetch(domain) }
+    end
+
     def self.production_hosts
       ENTRIES.flat_map { |entry| [ entry.domain, /.*\.#{Regexp.escape(entry.domain)}\z/ ] }.uniq
     end
