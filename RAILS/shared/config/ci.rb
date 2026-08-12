@@ -14,8 +14,19 @@ vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || Fil
 
 Pub4::CiGuard.run! do
   CI.run do
-    step "Setup", "bin/setup --skip-server"
-    app = File.basename(Dir.getwd)
+    # On vm23 the tree is already /home/<app>/app. bin/setup's db:prepare
+    # loads development configs against that tree and dies (nil configurations).
+    # Test DB has its own step below; production is migrated after CI.
+    if vps_host
+      step "Setup", "echo 'vps: skip bin/setup'"
+    else
+      step "Setup", "bin/setup --skip-server"
+    end
+    app = ENV["PUB4_CI_APP"].to_s
+    app = File.basename(Dir.getwd) if app.empty?
+    # cwd is /home/brgen/app on the VPS, so basename is "app" and --app app
+    # looks for RAILS/app, which is not a Rails app and has no ../shared gem.
+    app = File.basename(File.expand_path("..")) if app == "app"
     css_builder = [
       ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "build_all_css.rb"),
       "/home/dev/pub4/RAILS/tools/build_all_css.rb",

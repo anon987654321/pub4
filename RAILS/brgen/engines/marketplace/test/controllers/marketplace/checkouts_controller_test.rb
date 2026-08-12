@@ -41,7 +41,7 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
     sign_in(@buyer)
     post marketplace.checkout_path, params: { provider: "bogus" }
     assert_redirected_to marketplace.cart_path
-    assert_equal "Unknown payment provider", flash[:alert]
+    assert_equal I18n.t("flash.marketplace.unknown_provider"), flash[:alert]
   end
 
   test "create fails closed when the provider is unconfigured" do
@@ -58,6 +58,6 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
     @order.update!(payment_status: "paid", status: "paid")
     post marketplace.checkout_path, params: { provider: "stripe" }
     assert_redirected_to marketplace.cart_path
-    assert_equal "Cart has no payable items", flash[:alert]
+    assert_equal I18n.t("flash.marketplace.cart_not_payable"), flash[:alert]
   end
 end
