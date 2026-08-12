@@ -1,5 +1,4 @@
 # vm23_small: boot core only; optional apps via rcctl start or resource_guard when idle.
-hjerterom_flags=NO
 httpd_flags=
 nsd_flags=
 pf=YES

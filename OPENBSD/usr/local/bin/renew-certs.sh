@@ -23,11 +23,11 @@ ACME_CONF=/etc/acme-client.conf
 #                              exact file relayd loads
 #   domain "<name>" { ... }    acme-client knows how to renew it
 #
-# Held-but-unconfigured names are excluded rather than attempted. There are four:
-# ai, baibl, blognet and hjerterom under brgen.no, which are SANs of other
-# certificates or were issued by hand, and passing any of them to acme-client
-# fails on a config lookup before a single packet leaves the box. Renewal now
-# covers exactly what is deployed, and first issuance stays a deliberate act.
+# Held-but-unconfigured names are excluded rather than attempted. There is one,
+# ai.brgen.no, which is a SAN of brgen.no rather than a domain acme-client knows
+# how to renew on its own — passing it in fails on a config lookup before a
+# single packet leaves the box. Renewal covers exactly what is deployed, and
+# first issuance stays a deliberate act.
 typeset -a CONFIGURED HELD DOMAINS
 
 CONFIGURED=()
@@ -69,11 +69,28 @@ fi
 
 print -r -- "renew-certs: renewing ${#DOMAINS} of ${#HELD} held certificate(s): ${DOMAINS}"
 
+# acme-client exits 0 whether it renewed or found the certificate still valid, so
+# counting successful invocations counts every domain every week — which meant
+# the relayd restart below fired on every run. That is not free: relayd's health
+# check is `interval 120`, and after a restart brgen's table sits empty until the
+# first check passes. Measured 2026-08-12, that is roughly 20 seconds of 000 on
+# brgen.no and every city with it, once a week, for nothing.
+#
+# The file mtime is the honest signal: acme-client rewrites the fullchain only
+# when it actually issues.
 typeset renewed=0
 for domain in $DOMAINS; do
+  typeset chain=/etc/ssl/$domain.fullchain.pem
+  typeset before=0
+  [[ -f $chain ]] && before=$(stat -f %m $chain)
+
   if acme-client -v -f $ACME_CONF "$domain"; then
-    print -r -- "Renewed: $domain"
-    (( renewed += 1 ))
+    typeset after=0
+    [[ -f $chain ]] && after=$(stat -f %m $chain)
+    if (( after > before )); then
+      print -r -- "Renewed: $domain"
+      (( renewed += 1 ))
+    fi
   fi
 done
 

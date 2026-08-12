@@ -217,6 +217,15 @@ archived_subsystems:
     recovery_source: OPENBSD/archive/recovery/references/build_blognet.rb
     notes: Retired from active stack; old megablog/content-generation logic preserved as recovery-only context.
 
+  hjerterom:
+    recovery_source: git history — deleted 2026-08-12; databases at /var/backups/pub4/hjerterom-20260812 on vm23.
+    notes: >-
+      Retired with baibl and blognet. All three were recorded as removed in
+      OPENBSD/DECISIONS.md two months before vm23 actually lost them: the users,
+      homes (1.6GB between them), rc.d scripts, /etc/*.env files, login classes,
+      certificate symlinks and DNS zones were all still there on 2026-08-12.
+      port_inventory now scans the config files where that residue lives.
+
   aight_production_ai:
     recovery_source: MASTER/lib/reach/
     notes: Absorbed — semantic cache + scrape in MASTER reach; shared Scrape service in pub4-shared.

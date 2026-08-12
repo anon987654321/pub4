@@ -53,16 +53,17 @@ mail_domain: brgen.no
 # ones that are NXDOMAIN today cost nothing to keep ready.
 #
 # Measured 2026-08-12: every one of these that is not brgen-adjacent is NXDOMAIN
-# at its registrar. baibl and blognet have a product behind them on this box (an
-# /etc/*.env and a *.brgen.no certificate each); the anti-gambling trio and
-# foodielicio.us are older ideas; bsdports.net is a defensive registration for
-# bsdports.org. hjerterom.no was here until 2026-08-12, when the app was deleted.
+# at its registrar. The anti-gambling trio and foodielicio.us are older ideas;
+# bsdports.net is a defensive registration for bsdports.org.
+#
+# baibl.no, blognet.no and hjerterom.no were here until 2026-08-12, when all
+# three apps were deleted. Their users, homes, rc.d scripts, /etc/*.env files,
+# login classes and the baibl/blognet/hjerterom A records under brgen.no went
+# with them; databases are at /var/backups/pub4/{hjerterom,deleted-apps}-20260812.
 extra_zones:
   antibettingblog.com: {}
   anticasinoblog.com: {}
   antigamblingblog.com: {}
-  baibl.no: {}
-  blognet.no: {}
   bsdports.net: {}
   bsdports.org: {}
   discordb.org: {}
@@ -100,11 +101,10 @@ extra_records:
       )
 
 # Hosts that exist under a zone for reasons the vertical list does not cover.
-# ns is the glue for the nameserver every other zone is delegated to; the other
-# three are separate products served from the same box under brgen.no.
+# ns is the glue for the nameserver every other zone is delegated to; amber is a
+# separate product served from the same box. baibl, blognet and hjerterom were
+# here until their apps were deleted on 2026-08-12.
 extra_hosts:
   brgen.no:
     - ns
     - amber
-    - baibl
-    - blognet

@@ -238,7 +238,19 @@ module RenderDns
     out << "}"
 
     city_zones.each do |domain, subdomains|
-      names = [domain, "www.#{domain}"]
+      # The apex is deliberately absent. acme-client.conf(5): "The common name is
+      # included automatically if this option is present." Listing it as well puts
+      # it in the request twice, and acme-client then compares that request
+      # against the issued certificate, finds them different, and reports
+      # "domain list changed, forcing renewal" — on every single run.
+      #
+      # The hand-written config had the apex in the list, and the breakage was
+      # invisible because the weekly job had never run (see etc/crontab.vm23).
+      # Armed and left as it was, it would have re-issued nine certificates every
+      # Monday and hit Let's Encrypt's duplicate-certificate limit — five per
+      # identical name set per week — inside five weeks, with no certificate to
+      # show for it.
+      names = ["www.#{domain}"]
       names += subdomains.map { |sub| "#{sub}.#{domain}" }
       names += Array(policy.dig("cert_extra_names", domain)).map { |host| "#{host}.#{domain}" }
       names << "mail.#{domain}" if domain == mail_domain

@@ -64,11 +64,21 @@ Full aliases and GitHub keys: `OPENBSD/SSH_ACCESS.md`. Network table: `OPENBSD/R
 The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`) are one Rails
 app served under subdomains via `<brgen>`; relayd already routes them all (`etc/relayd.conf`).
 
-The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl` and
-`blognet` were removed from the stack (apps, relayd, acme, nsd, litestream, inventories); their
-vanity/megablog domains (`baibl.no`, `blognet.no`, `foodielicio.us`, `anti{casino,gambling,betting}blog.com`)
-went with them. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) still need stage-1 certs
-from `OPERATOR.sh`.
+The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl`,
+`blognet` and `hjerterom` are retired; on 2026-08-12 their users, home directories
+(1.6 GB between them), rc.d scripts, `/etc/*.env` files, login classes, certificate
+symlinks and DNS zones were removed from vm23, and their vanity/megablog domains
+(`baibl.no`, `blognet.no`, `hjerterom.no`, `foodielicio.us`,
+`anti{casino,gambling,betting}blog.com`) with them. Databases are kept at
+`/var/backups/pub4/{hjerterom,deleted-apps}-20260812`.
+
+Note the date against the release-history line in `DECISIONS.md` that says baibl and
+blognet were removed: that was written two months earlier and was true of the repo,
+not of the box. `port_inventory` now scans the config files where that kind of
+residue lives, so the next one cannot be half-done quietly.
+
+Seven city apexes serve as of 2026-08-12 (`Brgen::DomainRegistry::LIVE_DOMAINS`);
+the rest of `ENTRIES` is either NXDOMAIN at the registrar or parked at Domeneshop.
 
 TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable `force_ssl`.
 

@@ -72,7 +72,26 @@ module Deploy
       "RAILS/env.sample",
       "RAILS/tools/build_workbox.mjs",
     ].freeze
-    RETIRED_APP_NAMES = %w[baibl blognet].freeze
+    # The config files a retired app leaves itself in. This list used to be
+    # RETIRED_ACTIVE_PATHS alone — five scripts — and none of them was where the
+    # leftover references actually lived. On 2026-08-12, two months after DECISIONS.md
+    # recorded "baibl + blognet removed — apps, relayd, acme, nsd, litestream,
+    # rc.d, inventories", vm23 still had both users, both home directories
+    # (547M and 553M), both rc.d scripts, both /etc/*.env files, both login
+    # classes, both certificate symlinks, both DNS zones, and blognet in
+    # litestream.yml. The decision was written and half executed, and nothing
+    # compared the two.
+    RETIRED_CONFIG_PATHS = [
+      "OPENBSD/etc/rc.conf.local",
+      "OPENBSD/etc/login.conf",
+      "OPENBSD/etc/litestream.yml",
+      "OPENBSD/etc/relayd.conf",
+      "OPENBSD/etc/acme-client.conf",
+      "OPENBSD/data/dns.yml",
+      "OPENBSD/var/nsd/etc/nsd.conf",
+    ].freeze
+
+    RETIRED_APP_NAMES = %w[baibl blognet hjerterom].freeze
 
     def self.run
       new.run
@@ -355,13 +374,20 @@ module Deploy
     end
 
     def check_retired_names_not_active(result)
-      RETIRED_ACTIVE_PATHS.each do |relative|
+      (RETIRED_ACTIVE_PATHS + RETIRED_CONFIG_PATHS).each do |relative|
         path = File.join(ROOT, relative)
         next unless File.file?(path)
 
-        body = File.read(path)
+        # Comments are exempt. A retired name in a line explaining why it was
+        # removed is the record of the removal; a retired name in a directive is
+        # the removal not having happened. Matching both would push people to
+        # delete the explanation, which is the half worth keeping.
+        body = File.read(path, encoding: "UTF-8").lines.reject { |line| line.match?(/\A\s*[#;]/) }.join
+
         RETIRED_APP_NAMES.each do |name|
-          result.fail("#{relative}: retired app #{name} must not appear in active deploy tooling") if body.match?(/\b#{Regexp.escape(name)}\b/)
+          next unless body.match?(/\b#{Regexp.escape(name)}\b/)
+
+          result.fail("#{relative}: retired app #{name} must not appear in active deploy tooling")
         end
       end
     end
