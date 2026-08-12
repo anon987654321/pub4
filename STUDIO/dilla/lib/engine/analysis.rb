@@ -346,46 +346,58 @@ def where_report(name)
   return puts("usage: dilla where <method|CONSTANT|KNOB>") if name.to_s.empty?
 
   needle = name.to_s
-  found = false
+  # Hoisted: interpolating the needle into a literal recompiles the pattern on
+  # every one of the ~42k lines below.
+  assign_re = /^\s*#{Regexp.escape(needle)}\s*=[^=~]/
+  hits = []
+  mentions = []
+  unreadable = []
 
+  # One read per file feeds all three questions. Reading them once for the AST,
+  # again for constants and a third time for mentions was 5.9 MB of I/O to
+  # answer a question about 2 MB of source.
   ENGINE_SOURCES.each do |path|
-    body = RubyVM::AbstractSyntaxTree.parse_file(path).children[2]
-    nodes = body.type == :BLOCK ? body.children : [body]
-    nodes.each do |node|
-      next unless node.type == :DEFN && node.children[0].to_s == needle
+    src = File.read(path)
+    base = File.basename(path)
+    mentions << base if src.include?(needle)
 
-      puts "method   #{File.basename(path)}:#{node.first_lineno}"
-      found = true
+    src.each_line.with_index(1) do |line, number|
+      hits << "constant #{base}:#{number}" if line.match?(assign_re)
     end
-  rescue SyntaxError, StandardError
-    next
-  end
 
-  ENGINE_SOURCES.each do |path|
-    File.read(path).each_line.with_index(1) do |line, number|
-      next unless line.match?(/^\s*#{Regexp.escape(needle)}\s*=[^=~]/)
-
-      puts "constant #{File.basename(path)}:#{number}"
-      found = true
+    begin
+      body = RubyVM::AbstractSyntaxTree.parse(src).children[2]
+      nodes = body.type == :BLOCK ? body.children : [body]
+      nodes.each do |node|
+        hits << "method   #{base}:#{node.first_lineno}" if node.type == :DEFN && node.children[0].to_s == needle
+      end
+    rescue SyntaxError, StandardError
+      # SyntaxError is a ScriptError, not a StandardError — both are needed.
+      unreadable << base
     end
   end
 
   if (knob = DillaKnobs[needle])
-    puts "knob     #{knob.type}#{knob.default ? ", default #{knob.default}" : ''} — read in #{knob.read_in.join(', ')}"
-    puts "         written by #{knob.written_in.join(', ')}" if knob.written_in.any?
-    found = true
+    hits << "knob     #{knob.type}#{knob.default ? ", default #{knob.default}" : ''} — read in #{knob.read_in.join(', ')}"
+    hits << "         written by #{knob.written_in.join(', ')}" if knob.written_in.any?
   end
+
+  puts hits
 
   # Mentions, only when nothing defines it. A name that appears in ten comments
   # and no definition is exactly the case this is for.
-  unless found
-    mentions = ENGINE_SOURCES.select { |p| File.read(p).include?(needle) }
+  if hits.empty?
     if mentions.empty?
       puts "nothing in the engine defines or mentions #{needle}"
     else
-      puts "no definition. mentioned in: #{mentions.map { |p| File.basename(p) }.join(', ')}"
+      puts "no definition. mentioned in: #{mentions.join(', ')}"
     end
   end
+
+  # A file that would not parse is a file this could not answer for. Saying so
+  # matters more here than anywhere: a silent skip turns "not defined" into a
+  # confident wrong answer from the tool whose only job is that question.
+  puts "could not parse (methods not searched): #{unreadable.join(', ')}" if unreadable.any?
 end
 
 # `dilla taste <kept...> vs <rejected...>` — what separates the two piles.
