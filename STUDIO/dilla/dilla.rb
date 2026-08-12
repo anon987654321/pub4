@@ -297,6 +297,7 @@ DISPATCH = {
   "assets" => -> { assets_report(ARGV.shift) },
   "tracklist" => -> { tracklist_report(ARGV.shift) },
   "taste" => -> { taste_report(ARGV.dup) },
+  "where" => -> { where_report(ARGV.shift) },
   "sample" => -> { sample },
   "source" => -> { source(ARGV.shift, ARGV.shift) },
   "livestream" => -> { livestream(ARGV.shift, ARGV.shift) },

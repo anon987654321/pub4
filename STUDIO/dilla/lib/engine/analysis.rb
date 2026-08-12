@@ -328,6 +328,66 @@ end
 
 PRECEDENCE_ORDER = DillaKnobs::PRECEDENCE
 
+# `dilla where <name>` — which file owns a method, a constant or a knob.
+#
+# This is what namespacing the engine was wanted for. 79 files define methods on
+# Object, so nothing declares ownership and grep is the only way to answer
+# "where does this live" -- and grep answers it badly here, because a name is
+# mentioned in prose far more often than it is defined, which is the same
+# property that makes the wiring ratchets strip comments.
+#
+# Wrapping the engine in modules would answer it too, and would be a rewrite of
+# 116 files whose load order is load-bearing (constants are computed at require
+# time from ones above them) for no change in behaviour. This answers the
+# question directly instead, from the AST for methods and from the source for
+# constants, and it distinguishes a definition from a mention -- which is the
+# part that actually helps.
+def where_report(name)
+  return puts("usage: dilla where <method|CONSTANT|KNOB>") if name.to_s.empty?
+
+  needle = name.to_s
+  found = false
+
+  ENGINE_SOURCES.each do |path|
+    body = RubyVM::AbstractSyntaxTree.parse_file(path).children[2]
+    nodes = body.type == :BLOCK ? body.children : [body]
+    nodes.each do |node|
+      next unless node.type == :DEFN && node.children[0].to_s == needle
+
+      puts "method   #{File.basename(path)}:#{node.first_lineno}"
+      found = true
+    end
+  rescue SyntaxError, StandardError
+    next
+  end
+
+  ENGINE_SOURCES.each do |path|
+    File.read(path).each_line.with_index(1) do |line, number|
+      next unless line.match?(/^\s*#{Regexp.escape(needle)}\s*=[^=~]/)
+
+      puts "constant #{File.basename(path)}:#{number}"
+      found = true
+    end
+  end
+
+  if (knob = DillaKnobs[needle])
+    puts "knob     #{knob.type}#{knob.default ? ", default #{knob.default}" : ''} — read in #{knob.read_in.join(', ')}"
+    puts "         written by #{knob.written_in.join(', ')}" if knob.written_in.any?
+    found = true
+  end
+
+  # Mentions, only when nothing defines it. A name that appears in ten comments
+  # and no definition is exactly the case this is for.
+  unless found
+    mentions = ENGINE_SOURCES.select { |p| File.read(p).include?(needle) }
+    if mentions.empty?
+      puts "nothing in the engine defines or mentions #{needle}"
+    else
+      puts "no definition. mentioned in: #{mentions.map { |p| File.basename(p) }.join(', ')}"
+    end
+  end
+end
+
 # `dilla taste <kept...> vs <rejected...>` — what separates the two piles.
 #
 # The only honest way I have to tune this engine toward what the operator likes:
