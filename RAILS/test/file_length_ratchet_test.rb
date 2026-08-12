@@ -41,12 +41,18 @@ class FileLengthRatchetTest < Minitest::Test
   # as 100–290 lines shorter, all of it real code sitting between the `/*` and
   # the `*/` of a glob like `"**/*.rb"`.
   #
-  # db/seeds.rb and plausible_content.rb are data rather than logic — long lists
-  # of seed rows and sample copy. They are on the list because splitting them is
-  # possible, not because it is obviously worth doing.
+  # db/seeds.rb is data rather than logic — long lists of seed rows. It is on
+  # the list because splitting it is possible, not because it is obviously
+  # worth doing.
+  #
+  # plausible_content.rb left the list on 2026-08-12: it reached 512 against a
+  # 344 ceiling, and the pools that made it long were data with one reader
+  # each, so they moved to plausible_content/{prose,commerce}.rb and the
+  # remainder is 129 lines of methods. That is what "splitting is possible"
+  # looked like when something finally forced it.
   CEILINGS = {
     "brgen/lib/brgen/bergen_demo_seeder.rb" => 839,
-    "brgen/test/services/deploy_backlog_test.rb" => 756,
+    "brgen/test/services/deploy_backlog_test.rb" => 746,
     "gates/lib/design_metrics.rb" => 522,
     "gates/lib/geometry.rb" => 498, # held; type checks live in geometry_type.rb
     "gates/support/page_inventory.rb" => 434,
@@ -54,7 +60,6 @@ class FileLengthRatchetTest < Minitest::Test
     "brgen/app/services/tradedoubler.rb" => 391,
     "brgen/db/seeds.rb" => 421,
     "gates/support/geometry_probe.rb" => 412,
-    "brgen/lib/brgen/plausible_content.rb" => 344,
     "amber/app/services/wardrobe_ai.rb" => 319,
     "gates/lib/user_flow.rb" => 314,
     "shared/app/assets/stylesheets/_minimal.scss" => 490,

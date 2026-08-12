@@ -691,24 +691,11 @@ class DeployBacklogTest < Minitest::Test
                     'tv/channels/row'
   end
 
-  def test_maps_places_browse_and_infinite_scroll_are_wired
-    controller = read_brgen('engines/maps/app/controllers/maps/places_controller.rb')
-    index = read_brgen('engines/maps/app/views/maps/places/index.html.erb')
-    partial = read_brgen('engines/maps/app/views/maps/places/_live_search_results.html.erb')
-    reflex = read_brgen('app/reflexes/places_infinite_scroll_reflex.rb')
-    home = read_brgen('engines/maps/app/views/maps/home/index.html.erb')
-
-    assert_includes controller, 'format.html'
-    assert_includes controller, '@pagy, @places = pagy'
-    assert_includes index, 'places_path'
-    assert_includes partial, 'PlacesInfiniteScrollReflex#load_more'
-    assert_includes reflex, 'maps/places/card'
-    assert_includes home, 'places_path'
-    routes = read_brgen('config/routes.rb')
-    assert_includes routes, 'mount Maps::Engine'
-    listing = read_brgen('engines/marketplace/app/models/marketplace/listing.rb')
-    assert_includes listing, 'scope :casual'
-  end
+# maps engine wiring: RAILS/test/maps_engine_wiring_contract_test.rb.
+# The marketplace scope stays here; it is not a maps fact.
+def test_casual_listings_have_a_scope
+  assert_includes read_brgen("engines/marketplace/app/models/marketplace/listing.rb"), "scope :casual"
+end
 
   def test_messenger_compose_flow_accepts_username
     index = read_brgen('app/views/conversations/index.html.erb')

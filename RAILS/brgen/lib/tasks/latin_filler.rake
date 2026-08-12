@@ -111,7 +111,7 @@ namespace :brgen do
       before_top = usage.values.max
 
       candidates = BrgenTitleSpread.duplicate_title_posts(scope)
-      pool = Brgen::PlausibleContent::NORWEGIAN_POST_TITLES.map do |template|
+      pool = Brgen::PlausibleContent::Prose::NORWEGIAN_POST_TITLES.map do |template|
         Brgen::PlausibleContent.format_with(template, city: city.name)
       end
       # Titles already in use count toward the budget, so a pool title that is
