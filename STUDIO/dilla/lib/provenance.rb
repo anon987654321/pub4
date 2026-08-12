@@ -4,6 +4,8 @@ require "json"
 require "digest"
 require "time"
 require "English"
+require_relative "engine_sources"
+require_relative "knobs"
 
 # Every rendered file gets a recipe beside it, so any render can be made again.
 #
@@ -98,15 +100,55 @@ module DillaProvenance
     def manifest_for(path)
       {
         "schema" => SCHEMA,
-        "note" => "Reproduce with: RENDER_SEED=#{@seed} ruby dilla.rb #{@argv.join(' ')}",
+        # The pins belong in the sentence that claims reproduction. Without them
+        # it read "Reproduce with: RENDER_SEED=… ruby dilla.rb out.wav" over a
+        # take rendered with fifteen knobs set, and RELEASE.mp3's own sidecar is
+        # the proof that a confident note over an incomplete command gets
+        # believed for months.
+        "note" => "Reproduce with: #{reproduce_command}",
         "render_seed" => @seed,
         "seed_was" => @explicit ? "given" : "drawn and recorded",
         "command" => { "argv" => @argv, "cwd" => @root },
         "engine" => engine_identity,
         "environment" => recorded_env,
+        # The knobs the OPERATOR set, as opposed to the ones a defaults table
+        # filled in. This is the difference between a recipe and a transcript.
+        "pinned" => pinned_env,
+        # Knobs this run computed for itself. Not inputs; see derived_env.
+        "derived" => derived_env,
         "artifact" => artifact(path),
         "rendered_at" => @started_at.utc.iso8601,
       }
+    end
+
+    def reproduce_command
+      pins = pinned_env.map { |k, v| "#{k}=#{v}" }
+      (["RENDER_SEED=#{@seed}"] + pins + ["ruby dilla.rb"] + @argv).join(" ")
+    end
+
+    # What the caller actually typed.
+    #
+    # `environment` records all 172 knobs the run ended up with, and replaying
+    # that is not replaying the run: env_locks.rb distinguishes a value the
+    # operator pinned from one a style table soft-filled, and soft fill only
+    # wins when nothing set the key first. Feed the whole recorded environment
+    # back in and every engine-chosen default arrives as an operator pin, so the
+    # tables that would have chosen them are locked out and the replay diverges
+    # from the take it claims to reproduce -- most visibly on tracks whose own
+    # progression is supposed to overwrite the default.
+    #
+    # USER_PINNED_ENV is captured in dilla.rb before any require can mutate ENV,
+    # which is exactly the set wanted here. Absent (provenance loaded on its own,
+    # as the tests do) this records nothing rather than guessing.
+    def pinned_env
+      return {} unless Object.const_defined?(:USER_PINNED_ENV)
+
+      keys = engine_env_keys
+      Object.const_get(:USER_PINNED_ENV).select do |key, value|
+        keys.include?(key) && !value.to_s.empty? &&
+          !ENV_DENY.include?(key) && !key.match?(ENV_DENY_PATTERN) &&
+          !DillaKnobs::ENGINE_WRITTEN.include?(key)
+      end
     end
 
     # The knobs that change what comes out, derived from the engine rather than
@@ -130,34 +172,60 @@ module DillaProvenance
     # KICK_GAIN were all missing again — five of the six names in the paragraph
     # above, recorded there as the reason the hand-kept list was abandoned. The
     # manifests written between the split and this fix say "reproduce with" over
-    # a command that will not. Recurse, so the next move down a directory is not
-    # a third occurrence.
+    # a command that will not.
+    #
+    # Recursing fixed that instance and left the cause: this file still had its
+    # own opinion about which files the engine is, and so did four other places.
+    # It reads DillaSources now, which is the only one. A directory move cannot
+    # produce a third occurrence unless it defeats that file too, and that file
+    # is what the tests point at.
     #
     # Deliberately not "every variable currently set": this file is written next
     # to audio that gets shared, and the environment holds credentials.
     ENV_READ = /ENV(?:\.fetch)?\[?\(?["']([A-Z][A-Z0-9_]{2,})["']/
 
     def engine_env_keys
-      @engine_env_keys ||= begin
-        sources = [File.join(engine_root, "dilla.rb")] + Dir.glob(File.join(engine_root, "lib", "**", "*.rb"))
-        sources.flat_map { |f| File.read(f).scan(ENV_READ).flatten rescue [] }.uniq.freeze
-      end
+      @engine_env_keys ||=
+        DillaSources.all.flat_map { |f| File.read(f).scan(ENV_READ).flatten rescue [] }.uniq.freeze
     end
 
     # The engine reads HOME and PATH like any program does, and they are not
     # knobs. RENDER_SEED has its own field. The pattern is the safety net the
     # comment above promises: this file sits beside audio that gets shared, and
     # a manifest is a bad place to learn that an API key was in the environment.
+    #
+    # The toolchain names are here for the same reason and were found the same
+    # way: BUNDLE_GEMFILE is read by lib/music_gems.rb, so it is a knob by this
+    # module's definition and turned up in `pinned` next to BARS and SONITEX as
+    # though someone had chosen it. It says which Gemfile the shell happened to
+    # export, which is not part of how a beat was made.
     ENV_DENY = %w[
       HOME PATH PWD OLDPWD SHELL SHLVL TERM TMPDIR USER LOGNAME LANG LC_ALL
       EDITOR VISUAL DISPLAY SSH_AUTH_SOCK RENDER_SEED
+      BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH GEM_HOME GEM_PATH
+      RBENV_VERSION RUBYOPT RUBYLIB
     ].freeze
     ENV_DENY_PATTERN = /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH|COOKIE|SESSION/i
 
     def recorded_env
       engine_env_keys.each_with_object({}) do |key, acc|
         next if ENV_DENY.include?(key) || key.match?(ENV_DENY_PATTERN)
+        # A knob the engine WRITES is an output of this render, not an input to
+        # it. DILLA_RENDER_SEED is set by drum_kit.rb from the seed that is
+        # already recorded above, so replaying a manifest verbatim fed a result
+        # back in as a cause. Recorded separately below, under a name that says
+        # what it is.
+        next if DillaKnobs::ENGINE_WRITTEN.include?(key)
 
+        value = ENV[key]
+        acc[key] = value unless value.nil? || value.empty?
+      end
+    end
+
+    # What the run computed for itself. Kept because it is useful to see, and
+    # kept out of `environment` because replaying it would be wrong.
+    def derived_env
+      DillaKnobs::ENGINE_WRITTEN.each_with_object({}) do |key, acc|
         value = ENV[key]
         acc[key] = value unless value.nil? || value.empty?
       end
@@ -204,10 +272,22 @@ module DillaProvenance
     end
 
     # `dilla replay <file.dilla>` — prints the command that rebuilds it.
+    #
+    # From `pinned` when the manifest has one, because that is what the operator
+    # typed and letting the engine choose the rest is what the original run did.
+    # Manifests written before `pinned` existed only have `environment`, and for
+    # those this falls back to it and says so -- an imperfect replay the reader
+    # knows is imperfect beats a perfect-looking one that is not.
     def replay_command(manifest_path)
       doc = JSON.parse(File.read(manifest_path))
-      env = doc["environment"].map { |k, v| "#{k}=#{v}" }
-      (["RENDER_SEED=#{doc['render_seed']}"] + env + ["ruby dilla.rb"] + doc["command"]["argv"]).join(" ")
+      pinned = doc["pinned"]
+      source = pinned && !pinned.empty? ? pinned : doc["environment"]
+      env = source.map { |k, v| "#{k}=#{v}" }
+      command = (["RENDER_SEED=#{doc['render_seed']}"] + env + ["ruby dilla.rb"] + doc["command"]["argv"]).join(" ")
+      return command if pinned
+
+      "# no `pinned` in this manifest (written before it was recorded); every engine-chosen\n" \
+      "# default below arrives as an operator pin, which is not how the take was rendered.\n#{command}"
     end
   end
 end

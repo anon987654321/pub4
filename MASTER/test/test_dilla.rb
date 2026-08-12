@@ -2375,4 +2375,124 @@ class TestDilla < Minitest::Test
     assert_operator keys.length, :>=, 600,
                     "the engine reads 610 knobs; a sharp drop means the source glob stopped seeing files"
   end
+
+  # Five places each answered "which files is the engine made of" separately, and
+  # they disagreed: the parse check ran over 80 files while the engine was 116,
+  # so all thirty lib/*.rb modules were never syntax-checked at all -- and that is
+  # the check MASTER's autofix has broken this engine past before. The fix is
+  # DillaSources; this test is what stops a sixth answer appearing.
+  def test_engine_sources_is_the_only_definition_of_what_the_engine_is
+    require File.expand_path("../../STUDIO/dilla/lib/engine_sources", __dir__)
+    root = DillaSources.root
+
+    assert_empty DillaSources.unlisted_parts,
+                 "a file in lib/engine/ that ENGINE_PARTS does not name is never required, so nothing in it runs"
+    on_disk = Dir[File.join(root, "lib", "engine", "*.rb")].length + Dir[File.join(root, "lib", "*.rb")].length + 1
+    assert_equal on_disk, DillaSources.all.length,
+                 "DillaSources.all must be every ruby file the engine is made of, or the checks that read it are partial"
+
+    # A re-derivation is a glob over the engine's own source directories. Comment
+    # bodies are excluded the same way the wiring ratchets exclude them: this rule
+    # is quoted in prose in engine_sources.rb itself, which is the file allowed to
+    # own the answer.
+    reglob = /Dir(?:\.glob)?[\[(][^)\]]*(?:"|')[^"']*lib[^"']*(?:engine|\*\*|\*\.rb)/
+    offenders = DillaSources.all.reject { |p| File.basename(p) == "engine_sources.rb" }.filter_map do |path|
+      body = File.read(path).gsub(/^\s*#(?!\{).*$/, "")
+      "#{File.basename(path)}: #{body[reglob]}" if body.match?(reglob)
+    end
+    assert_empty offenders,
+                 "these re-derive the engine's file list instead of reading DillaSources — the drift that cost " \
+                 "484 of 610 provenance knobs started exactly here"
+  end
+
+  # The registry is derived from the source rather than declared beside it, for
+  # the reason provenance.rb's own comment gives. What it says about a knob is
+  # therefore only worth what the extractor is worth, so this pins the extractor
+  # against knobs whose behaviour is documented in the engine's own comments --
+  # including the two it got wrong on the first attempt, both in the direction of
+  # telling the operator a working value was a mistake.
+  def test_knob_registry_reads_each_knob_as_the_engine_reads_it
+    require File.expand_path("../../STUDIO/dilla/lib/knobs", __dir__)
+
+    assert_operator DillaKnobs.all.length, :>=, 600, "the engine reads 610 knobs"
+
+    # A path with an off-switch is a path. Calling SAMPLE_LOOP a flag is the
+    # mistake that cost thirteen renders their sample bed.
+    assert_equal :path, DillaKnobs["SAMPLE_LOOP"].type
+    # ...and its off-switch is a %w[] constant declared above the check, so a
+    # scanner reading only inline literals would call the working SAMPLE_LOOP=1
+    # an error.
+    assert_includes DillaKnobs["SAMPLE_LOOP"].accepted, "1"
+
+    # EXTERNAL_KIT names a kit that the code joins onto a cache directory. It is
+    # not a path, and reporting it as a missing file flagged the engine's own
+    # default on a clean environment.
+    assert_equal :string, DillaKnobs["EXTERNAL_KIT"].type
+
+    # A flag is boolean. PAD_VOICE is compared against "0" somewhere and picks a
+    # synth voice by name everywhere else.
+    assert_equal :string, DillaKnobs["PAD_VOICE"].type
+
+    assert_equal 0.08..1.35, DillaKnobs["KICK_GAIN"].range
+    assert_equal :float, DillaKnobs["KICK_GAIN"].type
+    assert_equal "0.62", DillaKnobs["DILLA_XCONV_WET"].default
+  end
+
+  def test_knob_check_finds_real_mistakes_and_stays_quiet_otherwise
+    require File.expand_path("../../STUDIO/dilla/lib/knobs", __dir__)
+
+    # Each of these is a mistake the engine used to accept in silence.
+    problems = DillaKnobs.validate(
+      "SONITEXT" => "heavy",              # typo: nothing reads it
+      "PAD_TEXTURE" => "true",            # compared against "1" only, so this is OFF
+      "DILLA_QUALITY_GATE" => "false",    # compared against "0" only, so this is ON
+      "SAMPLE_EXCITE" => "3.0",           # clamped to 0..1
+      "SAMPLE_LOOP" => "/nope.wav",       # a path to nothing
+      "DILLA_RENDER_SEED" => "12345"      # an output of a render, not an input
+    )
+    %w[SONITEXT PAD_TEXTURE DILLA_QUALITY_GATE SAMPLE_EXCITE SAMPLE_LOOP DILLA_RENDER_SEED].each do |knob|
+      assert(problems.any? { |p| p.start_with?(knob) }, "#{knob} should have been reported; got #{problems.inspect}")
+    end
+    assert_match(/did you mean SONITEX\?/, problems.find { |p| p.start_with?("SONITEXT") })
+
+    # And values that are right must be silent, or the report gets skipped. This
+    # ran at 62 notes for a correct environment before the ==/!= distinction went
+    # in, of which four were real.
+    assert_empty DillaKnobs.validate(
+      "SONITEX" => "heavy", "PAD_TEXTURE" => "1", "SAMPLE_EXCITE" => "0.3",
+      "KICK_GAIN" => "0.9", "FM_DRUMS" => "0", "SPECTRAL_ARP" => "0", "BPM" => "96"
+    )
+  end
+
+  # RELEASE.mp3's sidecar recorded 171 knobs and could not rebuild the file.
+  # Replaying every recorded value converts engine-chosen defaults into operator
+  # pins, which locks out the tables that chose them -- so the recipe is not the
+  # environment, it is the part of it the caller typed.
+  def test_provenance_separates_what_the_operator_pinned_from_what_the_engine_filled
+    require File.expand_path("../../STUDIO/dilla/lib/provenance", __dir__)
+
+    Dir.mktmpdir do |dir|
+      output = File.join(dir, "pins.wav")
+      env = { "BARS" => "2", "SONITEX" => "heavy", "PAD_VOL" => "60", "DILLA_OUTPUT_DIR" => dir }
+      env["DILLA_SCRATCH_DIR"] = File.join(dir, "scratch")
+      _out, err, status = Open3.capture3(env, RbConfig.ruby, ENGINE, "dilla", output)
+      assert status.success?, "the render must succeed before its manifest means anything: #{err}"
+
+      manifest = JSON.parse(File.read("#{output}.dilla"))
+      pinned = manifest.fetch("pinned")
+      assert_equal({ "BARS" => "2", "SONITEX" => "heavy", "PAD_VOL" => "60",
+                     "DILLA_OUTPUT_DIR" => dir, "DILLA_SCRATCH_DIR" => File.join(dir, "scratch") }, pinned,
+                   "pinned is what the caller typed — no more, and the toolchain's own variables are not knobs")
+      assert_operator manifest.fetch("environment").length, :>, pinned.length,
+                      "environment still records everything, for reading rather than for replaying"
+
+      # DILLA_RENDER_SEED is written by drum_kit.rb from the seed above it.
+      # Feeding it back in as an input is feeding a result back in as a cause.
+      refute manifest.fetch("environment").key?("DILLA_RENDER_SEED")
+      assert manifest.fetch("derived").key?("DILLA_RENDER_SEED")
+
+      assert_match(/RENDER_SEED=\d+ .*SONITEX=heavy.*ruby dilla\.rb/, manifest.fetch("note"),
+                   "the sentence that claims reproduction has to carry the pins")
+    end
+  end
 end

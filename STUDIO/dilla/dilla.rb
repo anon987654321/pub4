@@ -17,6 +17,9 @@
 # not `bundle exec`, so this ordering is the only thing that pins it correctly.
 require_relative "lib/music_gems"
 DillaMusicGems.bootstrap!
+# The one definition of which files the engine is made of. Required this early
+# because it has no dependencies and ENGINE_PARTS below is read out of it.
+require_relative "lib/engine_sources"
 
 # Everything the caller set before dilla touched the environment.
 #
@@ -90,6 +93,7 @@ require_relative "lib/spectral_engine"
 require_relative "lib/dilla_ml"
 require_relative "lib/dfam_engine"
 require_relative "lib/automation_lane"
+require_relative "lib/knobs"
 
 # Terse OpenBSD-style console log (see lib/dilla_dmesg.rb). Prefer dmesg over
 # decorative banners; set DILLA_DMESG=0 to silence, =2 for verbose argv.
@@ -165,96 +169,26 @@ DEMUX_MODEL = "htdemucs_6s"
 # catalog afterward, so the extra model/shifts time is worth spending here.
 DEMUX_VOCAL_MODEL = "htdemucs_ft"
 
-# The engine's own top-level program, split by concern. Required in the order
-# they were written in, which is load-bearing: constants here are computed at
+# The engine's own top-level program, split by concern. The list and its order
+# live in lib/engine_sources.rb, which is also what provenance, the parse check
+# and the wiring ratchets read -- see that file for why there is exactly one of
+# them now. The order is load-bearing: constants in these files are computed at
 # load time from ones above them, and reordering silently changes their values.
-ENGINE_PARTS = %w[
-  source_learn
-  track_tables
-  patch_catalog
-  voice_presets
-  patch_select
-  render_seed
-  patch_pools
-  radio_bergen
-  resolve_config
-  progression_build
-  groove_timing
-  percussion
-  drum_policy
-  render_scratch
-  drum_bus
-  sample_loops
-  bus_filters
-  render_helpers
-  drum_bus_filter
-  master_chain
-  form_map
-  lead_arp
-  lead_melodic
-  engine_defaults
-  drum_patterns
-  chord_tables
-  progression_tables
-  chord_theory
-  shell
-  cli_commands
-  analysis
-  grade_analog
-  setlist
-  speech
-  live_play
-  style_defaults
-  archetypes
-  stream_tuning
-  env_locks
-  stream_iterate
-  apply_profiles
-  mix_metrics
-  showcase
-  stream_rotation
-  demo_catalog
-  demo_all
-  stream
-  composition_glue
-  learned_engine
-  dilla_progression
-  dilla_drums
-  dilla_schedule
-  drum_kit
-  assets
-  synth_samples
-  native_synth
-  midi_smf
-  pad_render
-  pad_layers
-  lead_render
-  render_dilla
-  render_industrial
-  composition_cmds
-  help
-  render_analog
-  render_madlib
-  render_techno
-  mix_recipes
-  flylo_learn
-  rap_vocal
-  organic
-  crate
-  sample_morph
-  organic_vary
-  tape_master
-  rap_vocal_fit
-  punk_guitar
-  learn_source
-  electronium
-].freeze
+ENGINE_PARTS = DillaSources::ENGINE_PARTS
 ENGINE_PARTS.each { |part| require_relative "lib/engine/#{part}" }
 
-# Every file the engine is made of. `wiring_check`, `debug` and the stream's
-# restart-on-edit all mean "the engine", which stopped being one file.
-ENGINE_SOURCES = ([ENGINE_FILE] +
-                  ENGINE_PARTS.map { |part| File.join(ROOT, "lib", "engine", "#{part}.rb") }).freeze
+# A part sitting in lib/engine/ that ENGINE_PARTS does not name is never
+# required. Nothing failed when that happened -- the file simply did not exist
+# as far as the running engine was concerned -- so say it at load.
+unless DillaSources.unlisted_parts.empty?
+  warn "dilla: lib/engine/ holds #{DillaSources.unlisted_parts.length} file(s) no ENGINE_PARTS entry " \
+       "requires, so nothing in them runs: " +
+       DillaSources.unlisted_parts.map { |p| File.basename(p) }.join(", ")
+end
+
+# Every file the engine is made of. `wiring_check`, `debug`, provenance and the
+# stream's restart-on-edit all mean "the engine", which stopped being one file.
+ENGINE_SOURCES = DillaSources.all
 
 def engine_source
   ENGINE_SOURCES.map { |path| File.read(path) }.join("\n")
@@ -356,6 +290,7 @@ DISPATCH = {
   "council" => -> { council },
   "debug" => -> { debug },
   "config-provenance" => -> { print_config_provenance },
+  "knobs" => -> { knobs_report(ARGV.shift) },
   "sample" => -> { sample },
   "source" => -> { source(ARGV.shift, ARGV.shift) },
   "livestream" => -> { livestream(ARGV.shift, ARGV.shift) },
@@ -730,6 +665,17 @@ if __FILE__ == $PROGRAM_NAME
                  (pad_arp_before && !pad_arp_before.empty?)
     apply_track_soul_profile!(ENV["TRACK"], force: !pad_locked) if ENV["TRACK"] && !ENV["TRACK"].empty?
   end
+  # After the defaults tables have run, because half the environment a render
+  # sees comes from them, and before any of it is used. Advisory only: a knob
+  # this cannot make sense of is far more often the checker's ignorance than
+  # the operator's mistake, and a render must never fail on bookkeeping. It
+  # catches the class of mistake that produces a perfect render of the wrong
+  # thing -- a typo'd knob, a flag set to a word it does not accept, a value
+  # outside a clamp -- none of which anything said a word about before.
+  if ENV["DILLA_KNOB_CHECK"] != "0"
+    DillaKnobs.validate.each { |problem| dmesg_warn("knob: #{problem}") }
+  end
+
   cmd = ARGV.shift
   if cmd.nil?
     # Bare invoke: render demo.wav showcasing every named style/progression,

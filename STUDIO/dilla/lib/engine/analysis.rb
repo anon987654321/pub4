@@ -267,6 +267,67 @@ def ears_verdict(report)
   "usable"
 end
 
+# `dilla knobs` — the environment contract, derived from the engine.
+#
+#   knobs                one line per knob, grouped by type
+#   knobs SAMPLE_LOOP    everything known about one, and where it is read
+#   knobs conflicts      knobs whose default differs between files
+#   knobs check          what is wrong with the environment right now
+#
+# Words rather than --flags: the global flag parser consumes anything starting
+# with -- before dispatch ever runs, so `knobs --check` aborts with the flag list
+# instead of reaching this method.
+#
+# There are 610 of them and until this existed the only way to learn what one
+# did was to grep for it and read the coercion.
+def knobs_report(argument = nil)
+  case argument
+  when nil, ""
+    by_type = DillaKnobs.all.values.group_by(&:type)
+    PRECEDENCE_ORDER.each do |type|
+      found = by_type[type]
+      next unless found
+
+      puts "#{type} (#{found.length})"
+      found.sort_by(&:name).each do |knob|
+        detail = []
+        detail << "default #{knob.default}" if knob.default
+        detail << "#{knob.range.first}..#{knob.range.last}" if knob.range
+        detail << "one of #{knob.accepted.join('|')}" if knob.type == :flag && knob.accepted.any?
+        detail << "ENGINE-WRITTEN" if knob.derived?
+        puts format("  %-32s %s", knob.name, detail.join(", "))
+      end
+    end
+    puts "#{DillaKnobs.all.length} knobs across #{ENGINE_SOURCES.length} files " \
+         "(#{DillaKnobs.inputs.length} you can set, #{DillaKnobs.all.length - DillaKnobs.inputs.length} the engine writes)"
+  when "conflicts"
+    conflicts = DillaKnobs.conflicts
+    conflicts.each do |name, knob|
+      puts format("%-24s %s", name, knob.defaults.compact.uniq.inspect)
+      puts format("%-24s read in %s", "", knob.read_in.join(", "))
+    end
+    puts "#{conflicts.length} knob(s) whose default differs between files — whichever site runs first wins"
+  when "check"
+    problems = DillaKnobs.validate
+    problems.each { |problem| puts "NOTE   #{problem}" }
+    puts problems.empty? ? "environment ok" : "#{problems.length} note(s)"
+  else
+    knob = DillaKnobs[argument.upcase]
+    return puts("no knob called #{argument} — try `dilla knobs` for the list") unless knob
+
+    puts knob.name
+    puts "  type      #{knob.type}#{knob.mixed? ? " (sites disagree: #{knob.types.uniq.join(', ')})" : ''}"
+    puts "  default   #{knob.default || '(none in the source)'}"
+    puts "  range     #{knob.range ? "#{knob.range.first}..#{knob.range.last} (clamped)" : '(unclamped)'}"
+    puts "  accepts   #{knob.accepted.any? ? knob.accepted.join(', ') : '(any value)'}"
+    puts "  read in   #{knob.read_in.join(', ')}"
+    puts "  written   #{knob.written_in.any? ? knob.written_in.join(', ') : '(never — pure input)'}"
+    puts "  NOTE: the engine writes this for itself; it is an output of a render, not an input to one" if knob.derived?
+  end
+end
+
+PRECEDENCE_ORDER = DillaKnobs::PRECEDENCE
+
 def debug
   scan
   puts "music gems: #{DillaMusicGems.status.inspect}" if defined?(DillaMusicGems)

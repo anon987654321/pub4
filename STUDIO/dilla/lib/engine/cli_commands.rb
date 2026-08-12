@@ -568,7 +568,9 @@ def wiring_dead_constants
   # ENGINE_SOURCES, not just the entry script: most of the engine's constants
   # live in lib/engine/ since the split, and reading only dilla.rb would report
   # every one of them as undeclared and every reader as the only mention.
-  sources = ENGINE_SOURCES + Dir[File.join(ROOT, "lib", "*.rb")].sort
+  # It used to append Dir[lib/*.rb] here by hand, in two places, because
+  # ENGINE_SOURCES excluded them. It no longer does -- see lib/engine_sources.rb.
+  sources = ENGINE_SOURCES
   defined_at = {}
   bodies = sources.to_h do |path|
     text = File.read(path)
@@ -648,8 +650,7 @@ def wiring_dead_methods
   # method named only in prose is not called. `.` is excluded here where the
   # constant rule keeps it -- a constant is never reached through a dot, but a
   # method very often is, and `foo.bar` is a call on something else entirely.
-  code = (ENGINE_SOURCES + Dir[File.join(ROOT, "lib", "*.rb")].sort)
-         .map { |path| File.read(path).gsub(/^\s*#(?!\{).*$/, "") }.join("\n")
+  code = ENGINE_SOURCES.map { |path| File.read(path).gsub(/^\s*#(?!\{).*$/, "") }.join("\n")
   defined_at.reject do |name, _|
     next true if WIRING_EXTERNAL_CALLERS.include?(name)
 
