@@ -93,7 +93,14 @@ module RenderDns
              "#{policy.dig('soa', 'expire')} #{policy.dig('soa', 'minimum')})"
     ns.each { |server| lines << "@ IN NS #{server}" }
     lines << "@ IN A #{ip}"
-    lines << "www IN A #{ip}"
+
+    # www only where a certificate can cover it, which means only where there is
+    # an acme-client block — and those come from ALL_DOMAINS. The five zones that
+    # are not in it (the anti-gambling trio, bsdports.net, foodielicio.us) would
+    # otherwise advertise a www host pointing at a box holding no certificate for
+    # it: a name that resolves and then fails TLS, which a browser reports as an
+    # attack. config-drift-check flags exactly this, and flagged those five.
+    lines << "www IN A #{ip}" if city_zones.key?(domain)
 
     if mail
       lines << "@ IN MX 10 mail.#{domain}."

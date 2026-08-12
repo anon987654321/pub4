@@ -110,7 +110,12 @@ cd /home/dev/pub4 && git pull --ff-only
 - OpenBSD **7.8** on VM (provider ships **7.9** — see [upgrade.html](https://www.openbsd.amsterdam/upgrade.html)).
 - Initial root password (fresh installs): `awk '{print $NF}' ~/.ssh/authorized_keys`
 - PTR / rDNS from inside VM only: [ptr.html](https://www.openbsd.amsterdam/ptr.html) (`ptr4` / `ptr6` token API)
-- Backup: [backup.html](https://www.openbsd.amsterdam/backup.html) — `ssh s4vm23@wingman1.openbsd.amsterdam`, `openrsync` (config stub on VM: `~/.ssh/config` → `Host wingman1`)
+- Backup: [backup.html](https://www.openbsd.amsterdam/backup.html) — `openrsync` over the
+  `Host wingman1` stanza in dev's `~/.ssh/config`. **Port 31415, not 22** — the host pings
+  from 1 ms away and refuses 22, so a missing `Port` line reads as "the backup server is
+  down". That line was absent, and `backup_priv.sh` passed the FQDN rather than the alias,
+  which bypassed the stanza's user, key and host-key policy as well. Both fixed 2026-08-12;
+  the account's `backup/` directory was empty, so nothing had ever been stored.
 
 ## OpenBSD Amsterdam doc index
 

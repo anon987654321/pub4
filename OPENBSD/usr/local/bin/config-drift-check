@@ -17,8 +17,16 @@ require "open3"
 
 failures = []
 
+# encoding: "UTF-8" explicitly. cron runs with no LANG, so Ruby's external
+# encoding defaults to US-ASCII, and the first regex over a config file with a
+# non-ASCII character in a comment raises "invalid byte sequence in US-ASCII" and
+# takes the whole check down. That surfaced the day this job started running at
+# all — it had been failing at exec for months on cron's PATH — and the trigger
+# was an em dash in a relayd.conf comment written the same afternoon. Same fault
+# as OPENBSD/bin/render_dns.rb, and RAILS/test/integrity_locale_test.rb pins the
+# shape of it for the integrity gate.
 def read(path)
-  File.read(path)
+  File.read(path, encoding: "UTF-8")
 rescue Errno::ENOENT
   nil
 end
@@ -30,9 +38,36 @@ nsd_conf    = read("/var/nsd/etc/nsd.conf") || read("/etc/nsd.conf") || ""
 hosts = relayd_conf.scan(/match request header "Host" value "([^"]+)"/).flatten.uniq.sort
 sans  = acme_conf.scan(/"([a-z0-9.*-]+\.[a-z]{2,})"/i).flatten.uniq.sort
 
+# An explicit Host route is not how most of these reach a backend, and demanding
+# one produced 404 failures the first time this check ever ran — one per SAN
+# without a `match request header "Host"` line, which is nearly all of them.
+#
+# relayd.conf ends with a bare `pass`, so any host that matches no rule falls
+# through to the relay's first backend. That is deliberate: it is what lets a new
+# city apex serve on a `tls keypair` line alone, with no per-host rule to add. The
+# explicit routes exist only to send amber, ai and bsdports somewhere other than
+# <brgen>. So the real drift is a SAN with no route AND no fallthrough to catch
+# it — and if the fallthrough is ever removed, this check turns back on by itself.
+fallthrough = relayd_conf.match?(/^\s*pass\s*$/)
+
 sans.each do |host|
-  next if hosts.include?(host)
+  next if hosts.include?(host) || fallthrough
   failures << "relayd missing Host route for acme SAN: #{host}"
+end
+
+# The keypair is the thing a city cannot serve without, fallthrough or not. Every
+# apex we hold a certificate for must have one, or it completes the TCP
+# connection on 443 and then refuses the handshake — which a browser reports as
+# an attack rather than as a missing site. Five cities sat like that until
+# 2026-08-12.
+keypairs = relayd_conf.scan(/tls keypair "([^"]+)"/).flatten.uniq
+Dir["/etc/ssl/*.crt"].each do |crt|
+  name = File.basename(crt, ".crt")
+  next if name == "smtp" || keypairs.include?(name)
+  # A SAN of another certificate needs no keypair of its own.
+  next if sans.include?(name) && !acme_conf.match?(/domain "#{Regexp.escape(name)}"/)
+
+  failures << "relayd has no tls keypair for /etc/ssl/#{name}.crt — that host refuses TLS"
 end
 
 hosts.each do |host|
@@ -73,6 +108,9 @@ Dir["/var/nsd/zones/master/*.zone"].each do |path|
     fqdn = label.include?(".") ? label : "#{label}.#{zone}"
     next if relayd_hosts[fqdn]
     next if sans.include?(fqdn)
+    # ns is the nameserver's own glue record. It answers on port 53 and
+    # terminates no TLS, so it has no business in relayd or in a certificate.
+    next if label == "ns"
 
     failures << "zone A record without relayd/acme route: #{fqdn} (#{path})"
   end
