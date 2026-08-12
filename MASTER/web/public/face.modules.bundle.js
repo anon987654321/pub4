@@ -112,9 +112,10 @@
     }
     return true;
   }
+  const TTS_PLAYBACK_GAIN = 19;
   function restorePlaybackGain(tts, actx, playing) {
     if (!playing || !tts?.outputGain || !actx) return;
-    tts.outputGain.gain.setTargetAtTime(1.9, actx.currentTime, 0.08);
+    tts.outputGain.gain.setTargetAtTime(tts.playbackGain || TTS_PLAYBACK_GAIN, actx.currentTime, 0.08);
   }
   window.MASTER_FACE_AUDIO = Object.freeze({
     applySttDuck,

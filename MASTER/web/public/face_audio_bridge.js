@@ -14,12 +14,12 @@
     return true;
   }
 
-  // The one place the playback level is written down. It was 1.9 here and 1.9
-  // again in face_speech_runtime's graph, so raising the voice at the graph did
-  // nothing the moment STT ducked and this restored the old number over it —
-  // which is why "make it louder" kept not working. Read from the runtime if it
-  // published a level, so the two cannot drift apart again.
-  const TTS_PLAYBACK_GAIN = 5.7;
+  // Fallback only. The live level is tts.playbackGain, published by the
+  // speech runtime (19.0 — ten times the 1.9 this used to hardcode). A second
+  // copy here is why every previous attempt to raise the voice was undone the
+  // first time speech recognition ducked it. Keep this number equal to the
+  // runtime's published value so a missed publish still restores the new level.
+  const TTS_PLAYBACK_GAIN = 19.0;
 
   function restorePlaybackGain(tts, actx, playing) {
     if (!playing || !tts?.outputGain || !actx) return;

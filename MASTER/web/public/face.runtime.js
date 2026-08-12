@@ -2681,7 +2681,9 @@ async function tryPartialTTSPlay(job, bytes) {
     const url = URL.createObjectURL(blob);
     const partial = new Audio(url);
     partial.preload = 'auto';
-    partial.volume = Math.min(1, (tts.volume || 1) * 0.85);
+    // The streamed partial played 15% under everything else for no stated
+    // reason, so the first thing heard of every utterance was the quietest.
+    partial.volume = Math.min(1, tts.volume || 1);
     partial.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
     partial.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
     if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));
@@ -2771,10 +2773,23 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   warmth.type = 'lowshelf'; warmth.frequency.value = 220; warmth.gain.value = 3.5;
   smooth.type = 'highshelf'; smooth.frequency.value = 8500; smooth.gain.value = -3;
   presence.type = 'peaking'; presence.frequency.value = 3200; presence.Q.value = 1.2; presence.gain.value = -1.8;
-  compressor.threshold.value = -22; compressor.knee.value = 22; compressor.ratio.value = 7;
+  // Opened up because the gain above feeds this. At -22/7:1 almost everything
+  // was above the knee, so raising masterGain bought compression rather than
+  // loudness — the level went up and got squashed back down in the same graph.
+  // -12 and 3:1 still catches peaks and lets the gain reach the output.
+  compressor.threshold.value = -12; compressor.knee.value = 18; compressor.ratio.value = 3;
   compressor.attack.value = 0.004; compressor.release.value = 0.22;
   convolver.buffer = buildRoomIR(actx);
-  dryGain.gain.value = 0.78; wetGain.gain.value = 0.22; masterGain.gain.value = 1.9;
+  // Operator, 2026-08-11: no reverb on the voice, and 10x louder. The wet leg is
+  // left wired rather than unpicked from the graph so restoring it is one
+  // number, but it contributes nothing at 0.
+  //
+  // 19.0 is 10x the 1.9 this has always been. It is published on tts so
+  // face_audio_bridge's duck-restore reads it instead of its own copy of 1.9 —
+  // that second copy is why every previous attempt to raise the voice was
+  // undone the first time speech recognition ducked it.
+  dryGain.gain.value = 1.0; wetGain.gain.value = 0.0; masterGain.gain.value = 19.0;
+  tts.playbackGain = 19.0;
   analyser.fftSize = 256;
   msrc.connect(boost);
   boost.connect(warmth); warmth.connect(smooth); smooth.connect(presence);
@@ -2806,7 +2821,9 @@ function finishTTSPlayback(src, continueQueue = true) {
   // when the utterance was cut off — an interruption is not a completed thought.
   if (continueQueue) window.MASTER_ATTENTION?.cue?.('utterance_end');
   tts.visemePlan = null;
-  if (tts.outputGain && actx) tts.outputGain.gain.setValueAtTime(1.9, actx.currentTime);
+  if (tts.outputGain && actx && Number.isFinite(tts.playbackGain)) {
+    tts.outputGain.gain.setValueAtTime(tts.playbackGain, actx.currentTime);
+  }
   setTTSLoading(false);
   stopVisemeAnim();
   rootBody.dataset.ttsWave = '';

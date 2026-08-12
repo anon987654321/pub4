@@ -571,11 +571,11 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   compressor.threshold.value = -12; compressor.knee.value = 18; compressor.ratio.value = 3;
   compressor.attack.value = 0.004; compressor.release.value = 0.22;
   convolver.buffer = buildRoomIR(actx);
-  // Operator, 2026-08-11: no reverb on the voice, and 3x louder. The wet leg is
+  // Operator, 2026-08-11: no reverb on the voice, and 10x louder. The wet leg is
   // left wired rather than unpicked from the graph so restoring it is one
   // number, but it contributes nothing at 0.
   //
-  // 5.7 is 3x the 1.9 this has always been. It is published on tts so
+  // 19.0 is 10x the 1.9 this has always been. It is published on tts so
   // face_audio_bridge's duck-restore reads it instead of its own copy of 1.9 —
   // that second copy is why every previous attempt to raise the voice was
   // undone the first time speech recognition ducked it.
@@ -612,7 +612,9 @@ function finishTTSPlayback(src, continueQueue = true) {
   // when the utterance was cut off — an interruption is not a completed thought.
   if (continueQueue) window.MASTER_ATTENTION?.cue?.('utterance_end');
   tts.visemePlan = null;
-  if (tts.outputGain && actx) tts.outputGain.gain.setValueAtTime(1.9, actx.currentTime);
+  if (tts.outputGain && actx && Number.isFinite(tts.playbackGain)) {
+    tts.outputGain.gain.setValueAtTime(tts.playbackGain, actx.currentTime);
+  }
   setTTSLoading(false);
   stopVisemeAnim();
   rootBody.dataset.ttsWave = '';

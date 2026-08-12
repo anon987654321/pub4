@@ -33,6 +33,8 @@ topics:
       - web/public/face.part2.txt
       - web/public/face.part3.txt
       - web/public/face.part5.txt
+      - web/public/face_speech_runtime.js
+      - web/public/face_speech_playback.js
       - web/public/face.runtime.js
       - web/public/container_gate.js
       - web/public/boot_fsm.js
@@ -205,6 +207,20 @@ patch_briefs:
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+  web/public/face_speech_runtime.js:
+    check: bin/check --profile=web
+    topic: face_boot
+    tests: [web/test/face_boot.test.mjs]
+    deploy: vps-deploy master
+    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    note: concatenated into face.runtime.js — never hand-edit the generated file
+  web/public/face_speech_playback.js:
+    check: bin/check --profile=web
+    topic: face_boot
+    tests: [web/test/face_boot.test.mjs]
+    deploy: vps-deploy master
+    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    note: concatenated into face.runtime.js — never hand-edit the generated file
   web/public/face.runtime.js:
     check: bin/check --profile=web
     topic: face_boot
