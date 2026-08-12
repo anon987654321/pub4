@@ -188,17 +188,6 @@ open:
       approval and AdSense site review both go easier for an apex that is the
       product than for a subdomain of something else.
 
-  - id: playlist_engine_untested
-    tag: agent-workable
-    summary: >
-      engines/playlist has 26 Ruby files and 26 views and no test directory at all
-      (verified 2026-08-11) — the only one of the five verticals with none (dating 1,
-      takeaway 1, tv 1, marketplace 3). It is the second-largest engine. Masked
-      twice: the engine suites did not run at all until 2026-08-03, and the coverage
-      ratchet in RAILS/test/coverage_ratchet_test.rb counts only the host tree, so an
-      engine at zero does not move it. Whatever lands here should also teach the
-      ratchet to see engines, or the next extraction repeats it.
-
   - id: rails_gates_not_wired
     tag: operator-priority
     summary: >
@@ -382,6 +371,25 @@ not_debt:
 
 # One line each. The how is in git log; the rule, if there is one, is in DECISIONS.md.
 closed:
+  - id: playlist_engine_untested
+    resolution: >
+      Closed 2026-08-12. engines/playlist has a test directory: 13 tests over
+      Playlist::Playlist and Playlist::ListeningParty, covering what is not Rails
+      doing Rails — add_track! ordering and idempotence, tracks_count, the
+      city_trending tenancy scope, join-code generation and uniqueness, and the
+      end! transition.
+      The entry's closing ask was already satisfied: coverage_ratchet_test's
+      source_roots has globbed engines/*/app since 2026-08-02, so the engine's
+      zero was visible in the ratchet the whole time. What let it sit was the
+      floor — brgen/models at 11 does not complain about one engine at nothing.
+      Raised to 13, and the ratchet asked for it rather than being told.
+      Writing them found a small schema fact worth keeping: playlist_playlists
+      declares tracks_count, likes_count and plays_count as nullable integers with
+      no default, so a new playlist has nil counters and `popular` orders by a
+      column that starts NULL. increment! copes; anything reading before the first
+      write does not. Asserted as-is, so a migration adding defaults shows up as a
+      deliberate change rather than a surprise.
+
   - id: rails_flash_strings_untranslated
     resolution: >
       Closed 2026-08-12 at zero, measured by the instrument rather than by grep.

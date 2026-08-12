@@ -35,7 +35,13 @@ class CoverageRatchetTest < Minitest::Test
   FLOORS = {
     "amber" => { "controllers" => 1, "models" => 5 },
     # models raised 10 -> 11 on 2026-08-03; the ratchet asked for it.
-    "brgen" => { "controllers" => 11, "models" => 11 },
+    # 11 -> 13 on 2026-08-12: engines/playlist got its first tests, covering
+    # Playlist::Playlist and Playlist::ListeningParty. It was the only one of the
+    # five verticals with no test directory at all, and the largest untested
+    # surface in the tree — this ratchet already counted engines/*/app, so the
+    # zero was visible here the whole time and nobody had raised it because a
+    # floor of 11 does not complain about an engine sitting at nothing.
+    "brgen" => { "controllers" => 11, "models" => 13 },
     "bsdports" => { "controllers" => 2, "models" => 1 },
   }.freeze
 
