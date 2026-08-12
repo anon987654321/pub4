@@ -70,8 +70,14 @@ before_action :require_real_user, only: %i[edit update destroy share]
       @post.title = @post.title.truncate(300)
     end
     @post.community = @community if @community
-    unless PostModeration.new(@post).approve?
-      redirect_to new_post_path, alert: t("flash.post_blocked_by_moderation")
+    verdict = PostModeration.new(@post).decide
+    unless verdict.approved
+      # Named refusals. The one generic message was fine while the only rejection
+      # path was an LLM saying no; the link rule needs to tell the author what to
+      # change, or it reads as the site being broken.
+      key = verdict.reason == :unverified_author_spam_signals ? "flash.link_requires_verified_account"
+                                                           : "flash.post_blocked_by_moderation"
+      redirect_to new_post_path, alert: t(key)
       return
     end
 

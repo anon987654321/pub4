@@ -626,6 +626,20 @@ en:
     casual_hint: "No shop needed — a listing without a store is you selling one thing."
     sold: "Sold"
     nearby_listings: "Nearby"
+    listing: "Listing"
+    listing_kicker: "Marketplace / %{category}"
+    share: "Share"
+    reviews: "Reviews"
+    seller_rating: "%{rating} ★ seller interaction rating"
+    views:
+      one: "%{count} view"
+      other: "%{count} views"
+    saves:
+      one: "%{count} save"
+      other: "%{count} saves"
+    reviews_count:
+      one: "%{count} review"
+      other: "%{count} reviews"
     deals:
       featured: "Featured deals"
       title: "Deals"
@@ -759,6 +773,7 @@ en:
     on_the_map: "On the map"
     at_this_place: "Here"
     nearby_places: "Nearby"
+    no_place: "Not on the map"
   communities:
     about: "About %{name}"
     name_placeholder: "e.g. bergen, tech, musikk"
@@ -973,6 +988,7 @@ en:
     location_required_to_post: "Enable location to post on Live."
     anonymous_post_limit: "Sign up to post more (%{limit} anonymous posts per browser)."
     post_blocked_by_moderation: "Post blocked by moderation."
+    link_requires_verified_account: "Sign in and confirm your email address to post links or offers."
     posted_to_live: "Posted to Live."
     checked_in_at: "Checked in at %{place}."
     check_in_failed: "Could not check in."

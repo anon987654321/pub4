@@ -632,6 +632,20 @@ nb:
     casual_hint: "Ingen butikk nødvendig — en annonse uten butikk er deg som selger én ting."
     sold: "Solgt"
     nearby_listings: "I nærheten"
+    listing: "Annonse"
+    listing_kicker: "Markedsplass / %{category}"
+    share: "Del"
+    reviews: "Omtaler"
+    seller_rating: "%{rating} ★ vurdering av selger"
+    views:
+      one: "%{count} visning"
+      other: "%{count} visninger"
+    saves:
+      one: "%{count} lagring"
+      other: "%{count} lagringer"
+    reviews_count:
+      one: "%{count} omtale"
+      other: "%{count} omtaler"
     deals:
       featured: "Utvalgte tilbud"
       title: "Tilbud"
@@ -765,6 +779,7 @@ nb:
     on_the_map: "På kartet"
     at_this_place: "Her"
     nearby_places: "I nærheten"
+    no_place: "Ikke på kartet"
   communities:
     about: "Om %{name}"
     name_placeholder: "f.eks. bergen, tech, musikk"
@@ -981,6 +996,7 @@ nb:
     location_required_to_post: "Slå på posisjon for å poste på Live."
     anonymous_post_limit: "Registrer deg for å poste mer (%{limit} anonyme innlegg per nettleser)."
     post_blocked_by_moderation: "Innlegget ble stoppet av moderering."
+    link_requires_verified_account: "Logg inn og bekreft e-postadressen din for å legge ut lenker eller tilbud."
     posted_to_live: "Publisert til Live."
     checked_in_at: "Sjekket inn på %{place}."
     check_in_failed: "Kunne ikke sjekke inn."
