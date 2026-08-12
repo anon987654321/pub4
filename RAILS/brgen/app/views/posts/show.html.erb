@@ -1,6 +1,9 @@
 <% content_for :title, @post.title %>
 <% content_for :description, meta_description_for(@post) %>
 <% content_for :json_ld, json_ld_for(@post, type: :article) %>
+<% if @post.image.attached? %>
+  <% content_for :og_image, seo_image_url(@post.image) %>
+<% end %>
 <%= turbo_stream_from @post %>
 
 <article class="feed-post-show">

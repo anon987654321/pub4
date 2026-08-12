@@ -1,5 +1,5 @@
-<% content_for :title, "Markedsplass" %>
-<% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: "Markedsplass")) if @listings.any? %>
+<% content_for :title, t("marketplace.home_title", city: city_name) %>
+<% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: t("marketplace.home_title", city: city_name))) if @listings.any? %>
 
 <%= render "marketplace/nav_bar",
       active: "listings",

@@ -24,22 +24,47 @@ class SitemapsController < ApplicationController
       # Personal profiles and private conversations are never indexed — root only.
     else
       entries.concat(posts_entries)
+      entries.concat(community_entries)
+      entries.concat(hashtag_entries)
     end
 
     entries
   end
 
+  # ActsAsTenant already scopes CityTenantable models, but a sitemap that
+  # forgets the city is how oshlo.no listed Bergen's posts. Named here so a
+  # test can see the word and a future default_scope change cannot hide it.
+  def in_this_city(relation)
+    city = Current.city_record
+    return relation.none unless city
+    return relation.where(city_id: city.id) if relation.klass.column_names.include?("city_id")
+
+    relation
+  end
+
   def posts_entries
-    Post.hot.limit(PER_MODEL_CAP).map do |post|
+    in_this_city(Post.hot).limit(PER_MODEL_CAP).map do |post|
       Shared::SitemapBuilder::Entry.new(loc: post_url(post), lastmod: post.updated_at, changefreq: "daily", priority: "0.6")
     end
   end
 
+  def community_entries
+    in_this_city(Community).limit(PER_MODEL_CAP).map do |community|
+      Shared::SitemapBuilder::Entry.new(loc: community_url(community), lastmod: community.updated_at, changefreq: "weekly", priority: "0.5")
+    end
+  end
+
+  def hashtag_entries
+    Hashtag.trending.limit([PER_MODEL_CAP, 200].min).map do |tag|
+      Shared::SitemapBuilder::Entry.new(loc: hashtag_url(tag.name), lastmod: tag.updated_at, changefreq: "daily", priority: "0.4")
+    end
+  end
+
   def tv_entries
-    entries = Tv::Channel.limit(PER_MODEL_CAP).map do |channel|
+    entries = in_this_city(Tv::Channel).limit(PER_MODEL_CAP).map do |channel|
       Shared::SitemapBuilder::Entry.new(loc: tv.channel_url(channel), lastmod: channel.updated_at, changefreq: "weekly", priority: "0.6")
     end
-    entries + Tv::Video.published.limit(PER_MODEL_CAP).map do |video|
+    entries + Tv::Video.published.in_current_city.limit(PER_MODEL_CAP).map do |video|
       Shared::SitemapBuilder::Entry.new(loc: tv.video_url(video), lastmod: video.updated_at, changefreq: "monthly", priority: "0.5")
     end
   end
@@ -54,25 +79,27 @@ class SitemapsController < ApplicationController
   end
 
   def takeaway_entries
-    Takeaway::Restaurant.active.limit(PER_MODEL_CAP).map do |restaurant|
+    in_this_city(Takeaway::Restaurant.active).limit(PER_MODEL_CAP).map do |restaurant|
       Shared::SitemapBuilder::Entry.new(loc: takeaway.restaurant_url(restaurant), lastmod: restaurant.updated_at, changefreq: "weekly", priority: "0.7")
     end
   end
 
   def marketplace_entries
-    entries = Marketplace::Store.active.limit(PER_MODEL_CAP).map do |store|
+    entries = in_this_city(Marketplace::Store.active).limit(PER_MODEL_CAP).map do |store|
       Shared::SitemapBuilder::Entry.new(loc: marketplace.shop_url(store), lastmod: store.updated_at, changefreq: "weekly", priority: "0.6")
     end
-    entries += Marketplace::Listing.active.limit(PER_MODEL_CAP).map do |listing|
+    entries += in_this_city(Marketplace::Listing.active).limit(PER_MODEL_CAP).map do |listing|
       Shared::SitemapBuilder::Entry.new(loc: marketplace.listing_url(listing), lastmod: listing.updated_at, changefreq: "daily", priority: "0.7")
     end
-    entries + Marketplace::Deal.active.limit(PER_MODEL_CAP).map do |deal|
+    deal_rel = Marketplace::Deal.active
+    deal_rel = in_this_city(deal_rel) if Marketplace::Deal.column_names.include?("city_id")
+    entries + deal_rel.limit(PER_MODEL_CAP).map do |deal|
       Shared::SitemapBuilder::Entry.new(loc: marketplace.deal_url(deal), lastmod: deal.updated_at, changefreq: "daily", priority: "0.6")
     end
   end
 
   def maps_entries
-    Place.limit(PER_MODEL_CAP).map do |place|
+    in_this_city(Place).limit(PER_MODEL_CAP).map do |place|
       Shared::SitemapBuilder::Entry.new(loc: maps_place_url(place), lastmod: place.updated_at, changefreq: "monthly", priority: "0.6")
     end
   end

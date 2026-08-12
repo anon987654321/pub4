@@ -736,7 +736,12 @@ class DeployBacklogTest < Minitest::Test
 
     brgen_routes = read_source(File.join(ROOT, 'brgen/config/routes.rb'))
     assert_includes brgen_routes, 'robots#show'
-    assert_includes read_brgen('app/controllers/sitemaps_controller.rb'), 'Brgen::DomainRegistry.resolve'
+    source = read_brgen('app/controllers/sitemaps_controller.rb')
+    assert_includes source, 'Brgen::DomainRegistry.resolve'
+    assert_includes source, 'in_this_city',
+                    "sitemap queries must name the city; tenant default_scope is not a contract a reader can see"
+    assert_includes source, 'community_entries'
+    assert_includes source, 'hashtag_entries'
   end
 
   def test_marketplace_deals_stores_and_playlist_sets_use_infinite_scroll

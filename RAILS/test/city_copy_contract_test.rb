@@ -66,11 +66,22 @@ class CityCopyContractTest < Minitest::Test
   def test_the_city_bearing_keys_interpolate
     LOCALES.each do |locale|
       values = values_for(locale)
-      %w[pages.home_title posts.community_platform empty.post_to_city].each do |key|
+      %w[pages.home_title pages.default_description posts.community_platform empty.post_to_city marketplace.home_title].each do |key|
         assert values.key?(key), "#{locale}.yml lost #{key}"
         assert_includes values[key], "%{city}", "#{locale}.yml #{key} no longer interpolates the city"
       end
     end
+  end
+
+  def test_layout_does_not_hardcode_bergen_or_a_brgen_title_suffix
+    layout = File.read(File.join(ROOT, "app/views/layouts/application.html.erb"))
+    refute_match(/— Brgen/, layout,
+                 "the title suffix was the city leak: every host rendered 'Page — Brgen'")
+    refute_match(/organization_json_ld\(site_name: "Brgen"/, layout)
+    refute_includes layout, "city communities across Scandinavia"
+    assert_includes layout, "city_name"
+    assert_includes layout, "pages.default_description"
+    assert_includes layout, "website_json_ld"
   end
 
   def test_city_name_helper_exists

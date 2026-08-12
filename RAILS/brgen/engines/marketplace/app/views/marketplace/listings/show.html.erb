@@ -1,6 +1,10 @@
 <% content_for :title, @listing.title %>
 <% content_for :description, meta_description_for(@listing) %>
 <% content_for :json_ld, json_ld_for(@listing, type: :product) %>
+<% content_for :og_type, "product" %>
+<% if @listing.photos.attached? %>
+  <% content_for :og_image, seo_image_url(@listing.photos.first) %>
+<% end %>
 
 <div class="page-header marketplace-listing-header">
   <div>

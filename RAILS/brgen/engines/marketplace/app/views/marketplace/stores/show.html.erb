@@ -1,4 +1,6 @@
 <% content_for :title, @store.name %>
+<% content_for :description, meta_description_for(@store) %>
+<% content_for :json_ld, json_ld_for(@store, type: :local_business) %>
 
 <%= tag.section class: "marketplace-store" do %>
   <%= tag.header do %>

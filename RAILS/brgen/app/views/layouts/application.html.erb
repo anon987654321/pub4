@@ -27,7 +27,7 @@
       iPhone a real full-screen app, a translucent status bar, and a branded name. %>
   <%= tag.meta name: "apple-mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" %>
-  <%= tag.meta name: "apple-mobile-web-app-title", content: "Brgen" %>
+  <%= tag.meta name: "apple-mobile-web-app-title", content: city_name %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
   <%= tag.meta name: "theme-color", content: "#000000", data: { light_color: "#ffffff", dark_color: "#000000" } %>
   <%# Must run before first paint and before any stylesheet, which is why it is a
@@ -37,17 +37,19 @@
       WIRING_NOTES.md has described this partial as the FOUC guard the whole time
       nothing rendered it. %>
   <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
-  <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
-  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Brgen — city communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <% page_title = content_for?(:title) ? yield(:title) : nil %>
+  <% page_description = content_for?(:description) ? yield(:description) : t("pages.default_description", city: city_name) %>
+  <title><%= page_title.present? ? "#{page_title} — #{city_name}" : city_name %></title>
+  <meta name="description" content="<%= page_description %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
-  <meta property="og:site_name" content="Brgen">
-  <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
-  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <meta property="og:site_name" content="<%= city_name %>">
+  <meta property="og:title" content="<%= page_title.presence || city_name %>">
+  <meta property="og:description" content="<%= page_description %>">
   <meta property="og:url" content="<%= request.original_url %>">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
-  <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <meta property="og:type" content="<%= content_for?(:og_type) ? yield(:og_type) : "website" %>">
+  <meta name="twitter:card" content="<%= content_for?(:og_image) ? "summary_large_image" : "summary" %>">
+  <meta name="twitter:title" content="<%= page_title.presence || city_name %>">
+  <meta name="twitter:description" content="<%= page_description %>">
   <%# Share thumbnail: a per-page override (content_for :og_image) or the brand mark,
       so every link shared to social/chat renders a card instead of bare text. %>
   <% share_image = content_for?(:og_image) ? yield(:og_image) : "#{request.base_url}/icon.png" %>
@@ -71,7 +73,8 @@
   <link rel="stylesheet" href="/lightgallery.css">
   <meta name="lg-license" content="<%= ENV.fetch("LIGHTGALLERY_LICENSE", "0000-0000-000-0000") %>">
   <%= yield :json_ld %>
-  <%= json_ld_script(organization_json_ld(site_name: "Brgen", url: main_app.root_url)) %>
+  <%= json_ld_script(organization_json_ld(site_name: city_name, url: main_app.root_url)) %>
+  <%= json_ld_script(website_json_ld(site_name: city_name, url: main_app.root_url, description: page_description, search: !vertical_surface?)) %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="<%= body_surface_classes %>"

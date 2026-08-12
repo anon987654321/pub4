@@ -435,6 +435,7 @@ nb:
     places: "Steder"
     new_message: "Ny melding"
     home_title: "%{city}"
+    default_description: "Innlegg, butikker, mat og folk i %{city}."
   hotkeys:
     help: "j/k · ↓↑ nav · Enter åpne · / søk · n ny · esc nullstill · ? hjelp"
     coach: "Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for søk)."
@@ -619,6 +620,7 @@ nb:
     privacy_private: "privat"
     expires_on: "· utløper %{date}"
   marketplace:
+    home_title: "Markedsplass · %{city}"
     browse_listings: "Bla i annonser"
     deals:
       featured: "Utvalgte tilbud"

@@ -74,19 +74,22 @@ module Shared
       }.compact
     end
 
-    def website_json_ld(site_name:, url:, description: nil)
-      {
+    def website_json_ld(site_name:, url:, description: nil, search: true)
+      data = {
         "@context" => "https://schema.org",
         "@type" => "WebSite",
         "name" => site_name,
         "url" => url,
         "description" => description,
-        "potentialAction" => {
+      }.compact
+      if search
+        data["potentialAction"] = {
           "@type" => "SearchAction",
           "target" => "#{url}/search?q={search_term_string}",
           "query-input" => "required name=search_term_string",
-        },
-      }.compact
+        }
+      end
+      data
     end
 
     def breadcrumb_json_ld(items)

@@ -4,6 +4,7 @@ require "test_helper"
 
 class ApplicationHelperTest < ActionView::TestCase
   include ApplicationHelper
+  include SchemaHelper
 
   setup do
     Brgen::CitySeed.sync! if City.table_exists? && City.none?
@@ -80,6 +81,38 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_match %r{markedsplass\.brgen\.no}, href
     # Listings are slug-routed now (Shared::Sluggable): to_param returns the slug.
     assert_includes href, "/listings/#{listing.slug}"
+  end
+
+  test "city_name reads the domain when Current.city is blank" do
+    Current.city = nil
+    Current.domain = "oshlo.no"
+    assert_equal "Oslo", city_name
+  end
+
+  test "city_name does not invent Bergen as a last resort" do
+    Current.city = nil
+    Current.domain = nil
+    assert_equal "Brgen", city_name
+  end
+
+  test "schema_url_for makes listing URLs absolute on the marketplace host" do
+    user = User.strict_loading(false).create!(
+      email_address: "seo-#{SecureRandom.hex(4)}@example.com",
+      password: "password123",
+      username: "seo#{SecureRandom.hex(3)}",
+      city: @city
+    )
+    category = Marketplace::Category.create!(
+      name: "Furniture",
+      slug: "furniture-#{SecureRandom.hex(4)}"
+    )
+    listing = Marketplace::Listing.create!(
+      user: user, title: "Seo chair", description: "a chair",
+      price_cents: 1000, status: "active", category: category, city: @city
+    )
+    url = schema_url_for(listing)
+    assert url.start_with?("http"), url
+    assert_match %r{markedsplass\.brgen\.no}, url
   end
 
   test "inferred vertical for channels is messenger" do

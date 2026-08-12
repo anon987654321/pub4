@@ -429,6 +429,7 @@ en:
     places: "Places"
     new_message: "New message"
     home_title: "%{city}"
+    default_description: "Posts, shops, food and people in %{city}."
   hotkeys:
     help: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
     coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."
@@ -613,6 +614,7 @@ en:
     privacy_private: "private"
     expires_on: "· expires %{date}"
   marketplace:
+    home_title: "Market · %{city}"
     browse_listings: "Browse listings"
     deals:
       featured: "Featured deals"

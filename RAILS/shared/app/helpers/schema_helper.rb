@@ -44,6 +44,45 @@ module SchemaHelper
     }.compact
   end
 
+  # Absolute, not the path url_for returns by default in a view. A relative
+  # "url" in JSON-LD is resolved against the page it appears on, which makes
+  # the same resource carry a different identity on every page that lists it —
+  # the one field consumers use to deduplicate.
+  # Prefer record_public_href so brgen verticals keep their subdomain host
+  # (markedsplass.brgen.no, tv.brgen.no). polymorphic_url is the amber/bsdports
+  # fallback. A leftover path is then joined to request.base_url.
+  def schema_url_for(resource)
+    href = record_public_href(resource) if respond_to?(:record_public_href)
+    if href.blank?
+      href = begin
+        polymorphic_url(resource)
+      rescue StandardError
+        nil
+      end
+    end
+    return if href.blank?
+    return href if href.start_with?("http://", "https://")
+    return "#{request.base_url}#{href}" if href.start_with?("/") && respond_to?(:request)
+
+    href
+  end
+
+  # Absolute URL for a share card or JSON-LD image. Isolated engines do not
+  # own ActiveStorage routes, so go through main_app when it is there.
+  def seo_image_url(attachment)
+    return if attachment.blank?
+    return if attachment.respond_to?(:attached?) && !attachment.attached?
+
+    blob = attachment.try(:blob) || attachment
+    if respond_to?(:main_app) && main_app.respond_to?(:rails_blob_url)
+      main_app.rails_blob_url(blob, only_path: false)
+    else
+      rails_blob_url(blob, only_path: false)
+    end
+  rescue StandardError
+    nil
+  end
+
   private
 
   def build_schema(resource, explicit_type)
@@ -93,6 +132,7 @@ module SchemaHelper
       "dateModified" => post.updated_at&.iso8601,
       "description" => meta_description_for(post),
       "url" => schema_url_for(post),
+      "image" => seo_image_url(post.try(:image)),
       "wordCount" => body.to_s.split.size,
       "inLanguage" => I18n.locale.to_s,
     }.compact
@@ -116,6 +156,7 @@ module SchemaHelper
       "address" => place.try(:address),
       "geo" => geo_snippet(place),
       "url" => schema_url_for(place),
+      "image" => seo_image_url(place.try(:photo) || place.try(:image)),
     }.compact
   end
 
@@ -161,6 +202,8 @@ module SchemaHelper
       "description" => video.try(:description)&.truncate(200),
       "uploadDate" => video.created_at&.iso8601,
       "url" => schema_url_for(video),
+      "thumbnailUrl" => seo_image_url(video.try(:thumbnail)),
+      "duration" => iso8601_duration(video.try(:duration_seconds).to_i),
     }.compact
   end
 
@@ -218,25 +261,8 @@ module SchemaHelper
     }
   end
 
-  # Absolute, not the path url_for returns by default in a view. A relative
-  # "url" in JSON-LD is resolved against the page it appears on, which makes
-  # the same resource carry a different identity on every page that lists it —
-  # the one field consumers use to deduplicate.
-  # polymorphic_url, not url_for: url_for takes a single argument, so it cannot
-  # be asked for an absolute URL here and returns a path. A relative "url" in
-  # JSON-LD is resolved against the page it appears on, which makes the same
-  # resource carry a different identity on every page that lists it — the one
-  # field consumers use to deduplicate.
-  def schema_url_for(resource)
-    polymorphic_url(resource)
-  rescue StandardError
-    nil
-  end
-
   def schema_photo_url_for(photo)
-    photo.url
-  rescue StandardError
-    nil
+    seo_image_url(photo)
   end
 
   def iso8601_duration(seconds)

@@ -1,4 +1,6 @@
 <% content_for :title, @restaurant.name %>
+<% content_for :description, meta_description_for(@restaurant) %>
+<% content_for :json_ld, json_ld_for(@restaurant, type: :local_business) %>
 
 <div class="page-header" role="banner" aria-label="Takeaway restaurant header">
   <h1><%= @restaurant.name %></h1>

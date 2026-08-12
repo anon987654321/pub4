@@ -1,4 +1,9 @@
 <% content_for :title, @place.name %>
+<% content_for :description, meta_description_for(@place) %>
+<% content_for :json_ld, json_ld_for(@place, type: :local_business) %>
+<% if @place.photo.attached? %>
+  <% content_for :og_image, seo_image_url(@place.photo) %>
+<% end %>
 
 <div class="page-header" role="banner" aria-label="Place details header">
   <h1><%= @place.name %></h1>
