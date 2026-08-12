@@ -56,24 +56,58 @@
   border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
 }
 
-.sidebar-card {
+/* The city-interconnection surfaces are the same shape as a sidebar card — a
+   heading over a list of links to things that already exist on another host —
+   so they share its treatment rather than each inventing one. .city-today and
+   .also-nearby are the home strip and the show-page aside; .profile-verticals
+   is the same list on a public profile. Grouped into the selectors below
+   instead of copied: three near-identical blocks is how the card and its
+   cousins drift apart. */
+.sidebar-card,
+.city-today,
+.also-nearby,
+.profile-verticals {
   padding: var(--space-4);
 }
 
-.sidebar-card h2 {
+.sidebar-card h2,
+.city-today h2,
+.also-nearby h2,
+.profile-verticals h2 {
   margin: 0 0 var(--space-3);
   font-size: var(--text-base);
   font-weight: var(--weight-heavy);
 }
 
-.sidebar-card ul {
+.sidebar-card ul,
+.city-today-list,
+.also-nearby ul,
+.profile-verticals ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.sidebar-card li + li {
+.sidebar-card li + li,
+.city-today-list li + li,
+.also-nearby li + li,
+.profile-verticals li + li {
   margin-top: var(--space-2);
+}
+
+/* The strip pairs each link with its vertical ("marketplace", "tv"). Baseline
+   the two and let the label sit at the end, so the links stay a scannable
+   column instead of a ragged one. */
+.city-today-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Each vertical's rows under one subheading. */
+.profile-verticals ul + h3 {
+  margin-top: var(--space-4);
 }
 
 /* Empty state styles live in shared/_empty_state.scss */
