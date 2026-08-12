@@ -1,0 +1,80 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require "open3"
+require "rbconfig"
+
+# The two STUDIO vocab-checks are the real contract for postpro and repligen.
+# They used to be operator memory. A table that fails quiet is how unread
+# temp: and a costume --final model survive.
+class TestStudioMedia < Minitest::Test
+  ROOT = File.expand_path("../..", __dir__)
+  POSTPRO = File.join(ROOT, "STUDIO", "postpro", "postpro.rb")
+  REPLIGEN = File.join(ROOT, "STUDIO", "repligen", "repligen.rb")
+
+  def test_postpro_unread_temp_is_a_vocab_check_error
+    source = File.read(POSTPRO)
+    assert_match(/temp:\s*%w\[spectral_temp color_temp\]/, source,
+                 "temp: must sit in key_readers next to stops:/lens:/age:, not in a NOTE")
+    refute_match(/deliberately not fatal/, source)
+
+    # Every preset that sets temp: has to name a step that reads it. Parsed
+    # from the table rather than by booting postpro: ruby-vips is not in
+    # MASTER's bundle, and `bundle exec rake test` is how this file runs.
+    source.scan(/^  ([a-z0-9_]+): \{ fx: %w\[([^\]]+)\]([^}]*)\}/m).each do |name, fx, rest|
+      next unless rest.match?(/\btemp:/)
+      assert(fx.split.intersect?(%w[spectral_temp color_temp]),
+             "#{name} sets temp: but its chain has no spectral_temp/color_temp step")
+    end
+  end
+
+  def test_sonitex_sections_cover_the_stx1260_and_default_to_the_preset
+    analog = File.read(File.join(ROOT, "STUDIO", "dilla", "lib", "engine", "grade_analog.rb"))
+    assert_includes analog, "SONITEX_SECTIONS"
+    assert_includes analog, "sonitex_section_amount"
+    %w[mix distortion vinyl tone noise sampling].each do |section|
+      assert_match(/^\s+#{section}:/, analog)
+    end
+    tape = File.read(File.join(ROOT, "STUDIO", "dilla", "lib", "tape_hysteresis.rb"))
+    assert_includes tape, "def params_for_bias"
+    master = File.read(File.join(ROOT, "STUDIO", "dilla", "lib", "engine", "tape_master.rb"))
+    assert_includes master, "TAPE_BIAS"
+    assert_includes master, "TAPE_LOSS_HZ"
+  end
+
+  def test_postpro_finishing_grain_uses_the_preset_stock
+    source = File.read(POSTPRO)
+    assert_includes source, "def apply_finishing_grain"
+    assert_includes source, "GRAIN_REFERENCE_WIDTH"
+    refute_match(/grain\(processed, 400, :kodak_portra, 0\.35\)/, source)
+    %w[process_file run_random run_one_shot run_watch].each do |name|
+      body = source[/^def #{name}\b.*?^end$/m]
+      assert body, "#{name} must still exist"
+      assert_includes body, "apply_finishing_grain(processed",
+                      "#{name} must finish through apply_finishing_grain, not a hardcoded Portra pass"
+    end
+  end
+
+  def test_repligen_vocab_check_exits_zero_and_final_is_ultra
+    out, status = run_script(REPLIGEN, "vocab-check")
+    assert status.success?, "repligen vocab-check failed:\n#{out}"
+
+    source = File.read(REPLIGEN)
+    assert_match(/FINAL_MODEL = "black-forest-labs\/flux-1.1-pro-ultra"/, source)
+    assert_includes source, '"black-forest-labs/flux-1.1-pro-ultra"'
+    assert_includes source, '"black-forest-labs/flux-kontext-pro"'
+    assert_includes source, "input_image"
+    assert_includes source, '"raw"'
+  end
+
+  def run_script(script, *args)
+    # These scripts install and load their own gems (ruby-vips). `bundle exec`
+    # rake test leaves BUNDLE_* set, so a require "vips" looks in MASTER's
+    # Gemfile and misses the gem postpro just installed. Operator invocations
+    # are plain `ruby`, so the test has to be too.
+    env = ENV.to_h.reject { |key, _| key.start_with?("BUNDLE_") }
+    env["RUBYOPT"] = env["RUBYOPT"].to_s.split.reject { |flag| flag.include?("bundler") }.join(" ")
+    out, status = Open3.capture2e(env, RbConfig.ruby, script, *args)
+    [out, status]
+  end
+end
