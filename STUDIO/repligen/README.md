@@ -57,20 +57,48 @@ does not say which.
 
 `vocab-check` verifies all of the above without an API call: every key
 reachable after normalisation, every `--distance` mapped to a ratio, every
-model's `negative_prompt_key` present in its own `input_keys`, and the batch
-diversity claim measured rather than asserted.
+model's `negative_prompt_key` present in its own `input_keys`, every declared
+input key fillable by something in `build_input`, and the batch diversity claim
+measured rather than asserted.
+
+## Sampler knobs
+
+`--guidance` and `--steps` are model-relative, because the models disagree on
+both the spelling and the range. On `flux-dev` they are `guidance` (0–10) and
+`num_inference_steps` (1–50); on `flux-schnell` the step ceiling is **4**; on
+`stable-diffusion-3.5-large` they are `cfg` (0–20) and `steps` (1–50);
+`flux-1.1-pro` has neither. A figure outside the chosen model's range is a
+refusal, not a clamp — clamping silently is how you pay for 28 steps on a
+four-step model and get four.
+
+Both knobs were read by `build_input` long before either had a flag: three
+declared capabilities with no way to reach them. `vocab-check` now fails on
+that shape.
 
 ## Negative prompts
 
-Every Flux model, including the default `flux-1.1-pro`, has no negative-prompt
-input at all. Repligen assembles an anti-plastic-skin negative anyway, so for
-those models it asks for the opposite in the affirmative
-(`POSITIVE_SKIN_GUIDANCE`) and says on stderr that it is doing so. The
-provenance sidecar records `negative_prompt_sent` alongside the text: before
-2026-07-30 it recorded the negative as though it had been applied when
-`build_input`'s `input_keys` filter had dropped it.
+**No model in the table takes a negative prompt.** Every Flux model, including
+the default `flux-1.1-pro`, has no such input, and `stable-diffusion-3.5-large`
+dropped the one SD3 had — its live schema is prompt / aspect_ratio / cfg /
+image / prompt_strength / steps / seed / output_format / output_quality, and
+nothing else. The capability table said otherwise until 2026-08-11, and because
+it was the only entry claiming support it was the only one for which the
+positive fallback was suppressed, a `negative_prompt` key the model does not
+have was sent, and the sidecar recorded `negative_prompt_sent: true`.
 
-Models that do take one (`stable-diffusion-3.5-large`) get it as written.
+Repligen assembles an anti-plastic-skin negative anyway, so it asks for the
+opposite in the affirmative (`POSITIVE_SKIN_GUIDANCE`) and says on stderr that
+it is doing so. The provenance sidecar records `negative_prompt_sent` alongside
+the text: before 2026-07-30 it recorded the negative as though it had been
+applied when `build_input`'s `input_keys` filter had dropped it.
+
+## Preview and final
+
+`--preview` swaps in `flux-schnell` unless a model was named explicitly or
+`REPLIGEN_MODEL` is set. `--final` forces `flux-1.1-pro` and **does** override
+`REPLIGEN_MODEL`, which is the asymmetry it exists for: the environment
+variable is how a session stays in preview, and `--final` is how one image
+leaves it. Until 2026-08-11 `--final` was parsed into an option nothing read.
 
 ## Batches
 

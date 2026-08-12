@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
 
 # Small, non-interactive Replicate image entrypoint. Credentials stay in env/user config.
 require "optparse"
@@ -209,17 +208,56 @@ BACKGROUND_POOL = [
 # other to break the lockstep, and expression is the field a viewer reads first.
 POOL_STRIDES = { expression: 1, pose: 5, wardrobe: 3, background: 4 }.freeze
 
-# What each Replicate model actually accepts. An unknown model falls back to
-# the conservative default rather than failing closed.
+# What each Replicate model actually accepts, checked against the live schemas
+# rather than remembered.
+#
+# stable-diffusion-3.5-large was wrong in all three of its interesting fields.
+# Its schema is prompt / aspect_ratio / cfg / image / prompt_strength / steps /
+# seed / output_format / output_quality — the guidance knob is `cfg`, not
+# `cfg_scale`; the step count is `steps`, not `num_inference_steps`; and there
+# is NO negative_prompt at all (SD3 had one, 3.5 dropped it). It was the one
+# model in this table declared to accept a negative prompt, so it was the one
+# model for which negative_prompt_supported? returned true — meaning the
+# POSITIVE_SKIN_GUIDANCE fallback was suppressed, a `negative_prompt` key the
+# model does not have was sent, and the provenance sidecar recorded
+# negative_prompt_sent: true. Precisely the failure the file's own comments say
+# was fixed, surviving in the one entry nobody re-read.
+#
+# guidance_key / steps_key / their ranges are here because build_input had been
+# reading options[:guidance], options[:steps] and options[:cfg_scale] for keys
+# no flag could ever set. Three declared capabilities with no way to reach them.
 MODEL_CAPABILITIES = {
-  "black-forest-labs/flux-1.1-pro" => { input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed], negative_prompt_key: nil },
-  "black-forest-labs/flux-dev" => { input_keys: %w[prompt aspect_ratio output_format seed guidance num_inference_steps], negative_prompt_key: nil },
-  "black-forest-labs/flux-schnell" => { input_keys: %w[prompt aspect_ratio output_format seed num_inference_steps], negative_prompt_key: nil },
-  "stability-ai/stable-diffusion-3.5-large" => { input_keys: %w[prompt negative_prompt aspect_ratio output_format seed cfg_scale], negative_prompt_key: "negative_prompt" },
+  "black-forest-labs/flux-1.1-pro" => {
+    input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed],
+    negative_prompt_key: nil,
+  },
+  "black-forest-labs/flux-dev" => {
+    input_keys: %w[prompt aspect_ratio output_format seed guidance num_inference_steps],
+    negative_prompt_key: nil,
+    guidance_key: "guidance", guidance_range: (0.0..10.0), guidance_default: 3.0,
+    steps_key: "num_inference_steps", steps_range: (1..50), steps_default: 28,
+  },
+  "black-forest-labs/flux-schnell" => {
+    input_keys: %w[prompt aspect_ratio output_format seed num_inference_steps],
+    negative_prompt_key: nil,
+    # schnell is a 1-4 step model. The same --steps 28 that is right for dev is
+    # out of range here, which is why the ceiling is per-model and not global.
+    steps_key: "num_inference_steps", steps_range: (1..4), steps_default: 4,
+  },
+  "stability-ai/stable-diffusion-3.5-large" => {
+    input_keys: %w[prompt aspect_ratio output_format seed cfg steps],
+    negative_prompt_key: nil,
+    guidance_key: "cfg", guidance_range: (0.0..20.0), guidance_default: 3.5,
+    steps_key: "steps", steps_range: (1..50), steps_default: 35,
+  },
 }.freeze
 DEFAULT_CAPABILITY = { input_keys: %w[prompt aspect_ratio output_format seed], negative_prompt_key: nil }.freeze
 
 PREVIEW_MODEL = "black-forest-labs/flux-schnell"
+# What --final asks for. The flag was parsed into options[:final] and nothing
+# ever read it, so `--final` did nothing at all: with REPLIGEN_MODEL set to a
+# preview model it silently kept previewing.
+FINAL_MODEL = "black-forest-labs/flux-1.1-pro"
 
 def capability_for(model_id)
   MODEL_CAPABILITIES[model_id] || DEFAULT_CAPABILITY
@@ -326,6 +364,25 @@ def negative_prompt_supported?(model_id)
   !cap[:negative_prompt_key].nil? && cap[:input_keys].include?(cap[:negative_prompt_key])
 end
 
+# A number the model will accept, or a refusal that says what the range is.
+#
+# Silently clamping is the wrong answer here for the same reason a missing film
+# stock was: you asked for 28 steps on a model whose ceiling is 4, paid for the
+# generation, and got something you did not ask for with nothing in the output
+# saying so.
+def model_number(cap, kind, value)
+  return nil if value.nil?
+
+  key = cap[:"#{kind}_key"]
+  abort "warn: --#{kind == :guidance ? 'guidance' : 'steps'} is not a knob on this model" unless key
+
+  range = cap[:"#{kind}_range"]
+  unless range.cover?(value)
+    abort "warn: #{key} #{value} is outside this model's range #{range.first}..#{range.last}"
+  end
+  [key.to_sym, value]
+end
+
 def build_input(prompt, options, seed:, negative_prompt:)
   cap = capability_for(options[:model])
   full = {
@@ -335,10 +392,9 @@ def build_input(prompt, options, seed:, negative_prompt:)
     safety_tolerance: 2,
     seed:,
     negative_prompt:,
-    guidance: options[:guidance],
-    num_inference_steps: options[:steps],
-    cfg_scale: options[:cfg_scale],
   }.compact
+  [model_number(cap, :guidance, options[:guidance]),
+   model_number(cap, :steps, options[:steps])].compact.each { |key, value| full[key] = value }
   if cap[:negative_prompt_key] && full.key?(:negative_prompt)
     full[cap[:negative_prompt_key].to_sym] = full.delete(:negative_prompt)
   end
@@ -460,6 +516,11 @@ parser = OptionParser.new do |p|
   p.on("--allow-beautify") { options[:allow_beautify] = true }
   p.on("--batch N", Integer) { |v| options[:batch] = v.clamp(1, 20) }
   p.on("--seed N", Integer) { |v| options[:seed] = v }
+  # Both knobs are per-model: --guidance is `guidance` on flux-dev and `cfg` on
+  # SD 3.5, --steps is `num_inference_steps` on Flux and `steps` on SD 3.5, and
+  # the ranges differ. build_input maps and checks; here they are just numbers.
+  p.on("--guidance N", Float) { |v| options[:guidance] = v }
+  p.on("--steps N", Integer) { |v| options[:steps] = v }
   p.on("--preview") { options[:preview] = true }
   p.on("--final") { options[:final] = true }
   p.on("--postpro PRESET") { |v| options[:postpro] = v }
@@ -479,6 +540,10 @@ end
 # diversity quota that four same-length pools could not possibly fill. None of
 # them raised. You paid Replicate, waited, and got a picture that was missing
 # the thing you asked for.
+# The keys build_input can fill from something other than a per-model knob.
+# Keep in step with the literal hash there.
+PRODUCIBLE_INPUT_KEYS = %w[prompt aspect_ratio output_format safety_tolerance seed].freeze
+
 def vocab_check
   problems = []
 
@@ -503,10 +568,28 @@ def vocab_check
   MODEL_CAPABILITIES.each do |model, cap|
     problems << "#{model} lists no prompt input key" unless cap[:input_keys].include?("prompt")
     key = cap[:negative_prompt_key]
-    next if key.nil? || cap[:input_keys].include?(key)
-    problems << "#{model} names negative_prompt_key #{key.inspect} but does not list it in input_keys"
+    problems << "#{model} names negative_prompt_key #{key.inspect} but does not list it in input_keys" \
+      unless key.nil? || cap[:input_keys].include?(key)
+
+    # An input key nothing can fill is the same defect as a vocabulary entry
+    # nothing can select: it reads as a capability and is a comment. This is how
+    # guidance/num_inference_steps/cfg_scale were found — declared here, read in
+    # build_input, and settable by no flag in the parser.
+    %i[guidance steps].each do |kind|
+      knob = cap[:"#{kind}_key"]
+      next unless knob
+
+      problems << "#{model} names #{kind}_key #{knob.inspect}, which is not in its input_keys" \
+        unless cap[:input_keys].include?(knob)
+      problems << "#{model} names #{kind}_key #{knob.inspect} with no #{kind}_range to check against" \
+        unless cap[:"#{kind}_range"]
+    end
+    (cap[:input_keys] - PRODUCIBLE_INPUT_KEYS - [cap[:guidance_key], cap[:steps_key], cap[:negative_prompt_key]].compact).each do |orphan|
+      problems << "#{model} declares input key #{orphan.inspect}, which build_input has no source for"
+    end
   end
   problems << "PREVIEW_MODEL #{PREVIEW_MODEL} has no MODEL_CAPABILITIES entry" unless MODEL_CAPABILITIES.key?(PREVIEW_MODEL)
+  problems << "FINAL_MODEL #{FINAL_MODEL} has no MODEL_CAPABILITIES entry" unless MODEL_CAPABILITIES.key?(FINAL_MODEL)
 
   # The batch diversity claim, checked rather than asserted: --batch tops out at
   # 20, so twenty consecutive indices must produce twenty distinct combinations.
@@ -549,7 +632,13 @@ when "vocab-check"
   vocab_check
 when "generate"
   abort parser.to_s if options[:prompt].to_s.strip.empty?
+  abort "warn: --preview and --final ask for different models" if options[:preview] && options[:final]
+
   options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("REPLIGEN_MODEL") && !options[:model_explicit]
+  # --final overrides REPLIGEN_MODEL, unlike --preview. That is the asymmetry
+  # the flag is for: the environment variable is how you leave a session in
+  # preview, and --final is how you say "not this one, do it properly".
+  options[:model] = FINAL_MODEL if options[:final] && !options[:model_explicit]
   options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio], options[:distance])
   client = options[:dry_run] ? nil : Master::Io::ReplicateClient.new
 
@@ -562,9 +651,12 @@ when "generate"
     warn "warn: #{options[:model]} takes no negative prompt; asking for the opposite in the positive instead"
   end
 
+  # Invariant across the batch — every field it reads is the same for all
+  # twenty images. Only diversify() varies per index.
+  compiled = compile_prompt(options[:prompt], options)
+  compiled = "#{compiled}, #{POSITIVE_SKIN_GUIDANCE}" if negative_prompt && !negative_prompt_supported?(options[:model])
+
   outputs = (0...options[:batch]).map do |index|
-    compiled = compile_prompt(options[:prompt], options)
-    compiled = "#{compiled}, #{POSITIVE_SKIN_GUIDANCE}" if negative_prompt && !negative_prompt_supported?(options[:model])
     varied = diversify(compiled, index, options[:batch])
     seed = options[:seed] ? options[:seed] + index : SecureRandom.random_number(2**31)
     input = build_input(varied, options, seed:, negative_prompt:)
