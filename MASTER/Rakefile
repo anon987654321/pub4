@@ -405,12 +405,17 @@ namespace :lint do
   task :instruments do
     sh RbConfig.ruby, File.join(__dir__, "tools", "instruments.rb")
   end
+
+  desc "No two files loadable into one process define the same top-level constant"
+  task :constant_collisions do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "constant_collisions.rb")
+  end
 end
 
 desc "Full audit: constitution + selftest + the lint:* gates"
 task audit: %i[constitution selftest lint:frozen lint:data_singularity lint:spine lint:autoload
                lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
-               lint:do_not_touch lint:instruments] do
+               lint:do_not_touch lint:instruments lint:constant_collisions] do
   puts "audit: passed"
 end
 

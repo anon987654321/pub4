@@ -318,11 +318,19 @@ Depending on load order, the security sweep would have run `git ls-files` agains
 warning in `bin/check`'s output was the only thing standing between that and a
 silent pass, and it read as cosmetic noise.
 
-Closed for that pair on 2026-08-12 by renaming MASTER's to `SWEEP_ROOT`. The
-class is open: any two of the remaining 24 required into one process collide the
-same way, and nothing detects it. A gate would assert that no two files loadable
-together define the same top-level constant — related to `lint:autoload`, which
-already proves every Zeitwerk ignore is still necessary.
+Closed for that pair on 2026-08-12 by renaming MASTER's to `SWEEP_ROOT`, and the
+class is closed with it: **`rake lint:constant_collisions`** asserts that no two
+files reachable by a `require_relative` define the same top-level constant. 362
+requirable files of 2,094 first-party Ruby, currently 0 collisions — the gate
+lands green because the one live instance was fixed, and it flags the pair again
+if either file goes back to a bare `ROOT`.
+
+The remaining 24 bare `ROOT` definitions stay, deliberately. A standalone script
+run as `ruby thing.rb` never shares an interpreter with another, so the constant
+is only a hazard once something requires the file. Only `require_relative` is
+followed: a plain `require` resolves against `$LOAD_PATH`, which depends on how
+the process was started, and guessing at it would produce a gate that is wrong
+in both directions.
 
 `test_dilla.rb` is the other half of this and is worth moving regardless: a test
 in MASTER that loads STUDIO's entry point breaks whenever STUDIO refactors, which
