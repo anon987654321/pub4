@@ -2356,4 +2356,23 @@ class TestDilla < Minitest::Test
     assert_equal "fit_86_16bars_key-2.wav", result.fetch("down")
     refute_equal result.fetch("up"), result.fetch("down")
   end
+
+  # The .dilla manifest beside every render claims "Reproduce with: ...", so a
+  # knob the scan misses is not a missing line in a report — it is a recipe that
+  # silently omits an ingredient. The scan globbed lib/*.rb, one level, and the
+  # engine split into lib/engine/ dropped 484 of 610 knobs without failing
+  # anything. Named knobs here rather than a bare count: a count can be met by
+  # any 610 strings, and these six are the ones the module's own comment records
+  # as having gone missing the first time.
+  def test_provenance_records_the_knobs_the_engine_reads_from_every_engine_file
+    require File.expand_path("../../STUDIO/dilla/lib/provenance", __dir__)
+    keys = DillaProvenance.engine_env_keys
+
+    %w[PROGRESSION SONITEX RAP_VOCAL ANALOG_CHAIN PAD_VOL KICK_GAIN].each do |knob|
+      assert_includes keys, knob,
+                      "#{knob} decides how a render sounds, so a manifest without it cannot rebuild one"
+    end
+    assert_operator keys.length, :>=, 600,
+                    "the engine reads 610 knobs; a sharp drop means the source glob stopped seeing files"
+  end
 end

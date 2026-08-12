@@ -123,13 +123,23 @@ module DillaProvenance
     # ENV.fetch("X" in dilla.rb and lib/. That cannot go stale against a new
     # knob, which a list maintained beside the code always does.
     #
+    # It went stale anyway, against a moved knob rather than a new one. The glob
+    # was `lib/*.rb`, one level deep, which was every file lib/ had until the
+    # engine was split into lib/engine/ (c94fe8b00). After it, the scan found 126
+    # of 610 knobs: PROGRESSION, SONITEX, RAP_VOCAL, ANALOG_CHAIN, PAD_VOL and
+    # KICK_GAIN were all missing again — five of the six names in the paragraph
+    # above, recorded there as the reason the hand-kept list was abandoned. The
+    # manifests written between the split and this fix say "reproduce with" over
+    # a command that will not. Recurse, so the next move down a directory is not
+    # a third occurrence.
+    #
     # Deliberately not "every variable currently set": this file is written next
     # to audio that gets shared, and the environment holds credentials.
     ENV_READ = /ENV(?:\.fetch)?\[?\(?["']([A-Z][A-Z0-9_]{2,})["']/
 
     def engine_env_keys
       @engine_env_keys ||= begin
-        sources = [File.join(engine_root, "dilla.rb")] + Dir.glob(File.join(engine_root, "lib", "*.rb"))
+        sources = [File.join(engine_root, "dilla.rb")] + Dir.glob(File.join(engine_root, "lib", "**", "*.rb"))
         sources.flat_map { |f| File.read(f).scan(ENV_READ).flatten rescue [] }.uniq.freeze
       end
     end
