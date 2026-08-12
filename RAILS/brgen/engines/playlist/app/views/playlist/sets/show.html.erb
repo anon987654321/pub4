@@ -1,4 +1,5 @@
 <% content_for :title, @set.name %>
+<% content_for :json_ld, json_ld_for(@set, type: :music_playlist) if @set.privacy.blank? || @set.privacy == "public" %>
 
 <div class="page-header" role="banner">
   <div>

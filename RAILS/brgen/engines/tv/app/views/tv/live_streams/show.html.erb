@@ -1,4 +1,5 @@
 <% content_for :title, @live_stream.title %>
+<% content_for :json_ld, json_ld_for(@live_stream, type: :video) %>
 
 <%= tag.article class: "tv-live-stream" do %>
   <%= tag.header class: "page-header" do %>

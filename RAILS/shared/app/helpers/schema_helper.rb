@@ -122,6 +122,10 @@ module SchemaHelper
       product_schema(resource)
     when "video", "video_object"
       video_schema(resource)
+    when "broadcast_channel", "channel"
+      broadcast_channel_schema(resource)
+    when "tv_series", "tv_show"
+      tv_series_schema(resource)
     when "music_playlist", "playlist"
       music_playlist_schema(resource)
     when "recipe"
@@ -166,9 +170,30 @@ module SchemaHelper
     {
       "@context" => "https://schema.org",
       "@type" => "Person",
-      "name" => user.try(:name) || user.try(:username) || "User",
+      "name" => user.try(:display_name) || user.try(:name) || user.try(:username) || "User",
       "url" => schema_url_for(user),
       "image" => user.try(:avatar_url),
+    }.compact
+  end
+
+  def broadcast_channel_schema(channel)
+    {
+      "@context" => "https://schema.org",
+      "@type" => "BroadcastChannel",
+      "name" => channel.try(:name),
+      "description" => meta_description_for(channel),
+      "url" => schema_url_for(channel),
+      "image" => seo_image_url(channel.try(:avatar) || channel.try(:banner)),
+    }.compact
+  end
+
+  def tv_series_schema(show)
+    {
+      "@context" => "https://schema.org",
+      "@type" => "TVSeries",
+      "name" => show.try(:title) || show.try(:name),
+      "description" => meta_description_for(show),
+      "url" => schema_url_for(show),
     }.compact
   end
 
@@ -237,7 +262,9 @@ module SchemaHelper
   end
 
   def music_playlist_schema(playlist)
-    tracks = playlist.respond_to?(:tracks) ? playlist.tracks.unexpired.limit(50) : []
+    track_rel = playlist.respond_to?(:tracks) ? playlist.tracks : []
+    track_rel = track_rel.unexpired if track_rel.respond_to?(:unexpired)
+    tracks = track_rel.respond_to?(:limit) ? track_rel.limit(50) : Array(track_rel).first(50)
     {
       "@context" => "https://schema.org",
       "@type" => "MusicPlaylist",

@@ -1,4 +1,5 @@
 <% content_for :title, @show.title %>
+<% content_for :json_ld, json_ld_for(@show, type: :tv_series) %>
 
 <div class="page-header" role="banner">
   <h1><%= @show.title %></h1>

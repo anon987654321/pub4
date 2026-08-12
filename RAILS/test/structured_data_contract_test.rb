@@ -22,6 +22,24 @@ class StructuredDataContractTest < Minitest::Test
     assert_includes helper, "organization_snippet"
   end
 
+  def test_sitemapped_profile_emits_person_json_ld
+    show = read_rel("brgen/app/views/users/show.html.erb")
+    helper = read_rel("shared/app/helpers/schema_helper.rb")
+    assert_includes show, "json_ld_for(@user, type: :person)"
+    assert_includes helper, "display_name"
+  end
+
+  def test_remaining_public_shows_emit_json_ld
+    {
+      "brgen/engines/tv/app/views/tv/channels/show.html.erb" => "broadcast_channel",
+      "brgen/engines/tv/app/views/tv/shows/show.html.erb" => "tv_series",
+      "brgen/engines/tv/app/views/tv/live_streams/show.html.erb" => "type: :video",
+      "brgen/engines/playlist/app/views/playlist/sets/show.html.erb" => "music_playlist",
+    }.each do |path, marker|
+      assert_includes read_rel(path), marker, "#{path} still has a title and no structured data"
+    end
+  end
+
   def test_community_and_hashtag_emit_collection_json_ld
     community = read_rel("brgen/app/views/communities/show.html.erb")
     hashtag = read_rel("brgen/app/views/hashtags/show.html.erb")

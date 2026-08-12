@@ -1,4 +1,5 @@
 <% content_for :title, @user.display_name %>
+<% content_for :json_ld, json_ld_for(@user, type: :person) %>
 <%= turbo_stream_from @user %>
 
 <header class="profile-header" role="banner" aria-label="User profile">

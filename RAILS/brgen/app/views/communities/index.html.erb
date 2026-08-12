@@ -1,8 +1,8 @@
-<% content_for :title, "Communities" %>
+<% content_for :title, t("nav.communities") %>
 
-<div class="page-header" role="banner" aria-label="Communities header">
-  <h1>Communities</h1>
-  <% if authenticated? %><%= link_to "+ New", new_community_path, class: "btn btn-sm" %><% end %>
+<div class="page-header" role="banner" aria-label="<%= t("nav.communities") %>">
+  <h1><%= t("nav.communities") %></h1>
+  <% if authenticated? %><%= link_to t("nav.new_community"), new_community_path, class: "btn btn-sm" %><% end %>
 </div>
 
 <%= live_search_index url: communities_path, results_partial: "communities/live_search_results", placeholder: t("search.communities"), label: t("search.communities_label"), frame_id: "brgen-communities" %>
