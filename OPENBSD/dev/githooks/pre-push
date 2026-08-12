@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# A push carries everything beneath it, including work its authors have not
+# finished deciding about.
+#
+# CLAUDE.md records that on 2026-08-10 one push carried four commits another
+# session had told its user were still local. On 2026-08-12 it happened three
+# more times in a single afternoon, in both directions: a session deliberately
+# held three commits back and every one of them was pushed by somebody else
+# within the hour, while that session in turn was one keystroke from publishing
+# a dilla commit it had never read.
+#
+# git offers no per-commit push and no way to tell sessions apart. What it does
+# offer is the list, which nobody looks at. So this stops on more than one
+# commit and prints them — author, age, subject — and makes publishing another
+# session's work a thing you say out loud:
+#
+#     PUB4_PUSH_ALL=1 git push
+#
+# Installed by `bin/pub4 hooks`. The real fix is still `bin/pub4 worktree <name>`.
+
+ZERO = "0" * 40
+
+def commits(range)
+  IO.popen(["git", "log", "--format=%h%an%ar%s", range], &:read)
+    .lines(chomp: true).reject(&:empty?).map { |line| line.split("") }
+end
+
+pushing = []
+$stdin.each_line do |line|
+  local_ref, local_sha, _remote_ref, remote_sha = line.split
+  next if local_sha.nil? || local_sha == ZERO # branch deletion
+
+  range = remote_sha.nil? || remote_sha == ZERO ? local_sha : "#{remote_sha}..#{local_sha}"
+  pushing.concat(commits(range))
+  pushing.uniq!
+  break if local_ref.nil?
+end
+
+if pushing.size == 1
+  # Not refused, but named. Right now the single unpushed commit in this
+  # checkout is as likely to be another session's as it is to be yours — one
+  # commit is exactly where the "yours?" guess is weakest, so it gets printed
+  # rather than assumed.
+  sha, author, age, subject = pushing.first
+  warn "pre-push: publishing #{sha} (#{author}, #{age}) #{subject[0, 62]}"
+  exit 0
+end
+
+exit 0 if pushing.empty?
+exit 0 if ENV["PUB4_PUSH_ALL"] == "1"
+
+warn ""
+warn "pre-push: REFUSED — #{pushing.size} commits would be published, not 1:"
+warn ""
+pushing.each_with_index do |(sha, author, age, subject), index|
+  marker = index.zero? ? "yours?" : "      "
+  warn format("  %s %s  %-12s %-14s %s", marker, sha, author, age, subject[0, 62])
+end
+warn ""
+warn "  Only the top one is plausibly this session's. The rest belong to whoever"
+warn "  is also working in this checkout, and pushing publishes their work on"
+warn "  their behalf, before they have decided to."
+warn ""
+warn "  Read them first:   git log -p origin/main..HEAD"
+warn "  Then, if you mean it:"
+warn ""
+warn "      PUB4_PUSH_ALL=1 git push"
+warn ""
+warn "  To stop sharing an index at all:  bin/pub4 worktree <name>"
+warn ""
+exit 1

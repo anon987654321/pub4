@@ -25,7 +25,12 @@ module Master
               next [] unless detect
 
               regex = detect.is_a?(String) ? Regexp.new(detect) : detect
-              scan_lines(code, regex, message: "veto: #{name} — #{spec["apply"] || "blocked"}")
+              # unfinished is the one pattern that means to read comments, because
+              # that is where a work marker lives. Every other veto is about code,
+              # and a comment describing a shell interpolation is documentation.
+              # (Written without naming the markers, since this rule reads it.)
+              source = spec["reads_comments"] ? code : without_comment_lines(code)
+              scan_lines(source, regex, message: "veto: #{name} — #{spec["apply"] || "blocked"}")
             end
           end
 
@@ -146,20 +151,6 @@ module Master
             else
               scan_lines(without_comment_lines(code), entry[:regex], message:)
             end
-          end
-
-          # A declarative rule's detect_lexical is a raw regex over raw lines, so a
-          # comment that names the thing the rule forbids becomes a finding about
-          # itself. BARE_RESCUE and FAIL_VISIBLY both fired on the paragraph in
-          # lexical_rules.rb explaining which rescue shapes each rule owns.
-          #
-          # Comment-only lines, not trailing comments: blanking from an unquoted `#`
-          # needs to know whether it is inside a string, and a rule that guesses
-          # wrong about that would drop real findings. This is the half that is
-          # provably safe. scan_lines is shared by most rules in the tree and is
-          # deliberately not touched — several of them mean to read comments.
-          def without_comment_lines(code)
-            code.gsub(/^[ \t]*(#|\/\/)[^\n]*/) { |line| " " * line.length }
           end
 
           def applies?(entry, path, rel)

@@ -80,11 +80,20 @@ and on 2026-08-12 one session's debt write-up was committed by another under a
 message about something else. It is one command now.
 
 In the shared tree, commit path-scoped at minimum (`git commit -- <paths>`, no
-prior `git add`). `bin/pub4 hooks` installs a `pre-commit` guard that refuses a
-commit spanning more than one top-level tree — the `git commit -a` signature —
-unless you set `PUB4_CROSS_TREE=1`, and prints everything it is leaving behind
-so the other sessions' work in your tree is visible at the moment you commit.
-It cannot tell sessions apart; nothing in git can.
+prior `git add`). `bin/pub4 hooks` installs two guards:
+
+- **`pre-commit`** refuses a commit spanning more than one top-level tree — the
+  `git commit -a` signature — unless you set `PUB4_CROSS_TREE=1`, and prints
+  everything it is leaving behind, so other sessions' work in your tree is
+  visible at the moment you commit.
+- **`pre-push`** refuses to publish more than one commit unless you set
+  `PUB4_PUSH_ALL=1`, listing each with its author and age first. On a single
+  commit it prints what is going rather than assuming it is yours.
+
+Neither can tell sessions apart; nothing in git can. Path scoping bounds the
+commit, not the push: `git push` sends every commit beneath yours. Run
+`git log --oneline origin/main..HEAD` before pushing and say in your report what
+went with you.
 
 Path scoping bounds the commit, not the push. `git push` sends every commit
 beneath yours, so pushing one path-scoped commit publishes whatever anyone else

@@ -184,6 +184,112 @@ class TestScanRuleFalsePositives < Minitest::Test
     refute_empty findings(:veto_patterns, %(def stub\n  ...\nend\n))
   end
 
+  # --- veto sql_injection -------------------------------------------------
+  # Was `execute|query.*#\{`, which binds as `(execute)|(query.*#\{)` — so the
+  # bare word `execute` anywhere on a line was an unconditional merge blocker.
+  # 87 findings in lib/, all read, 0 real: method names (execute_job,
+  # pre_execute?), the parameterized form the rule prescribes, a log line, and a
+  # comment. The one that looked real interpolated a WHERE clause built entirely
+  # from "col = ?" literals with every value in args. Narrowed 2026-08-12 to 0.
+
+  def test_veto_sql_injection_ignores_method_names_and_the_parameterized_form
+    [
+      %(def execute_resync(lines)\n),
+      %(result = execute_job(job)\n),
+      %(@bus&.publish("review:blocked", phase: "post_execute")\n),
+      %(recent = @db.execute("SELECT event_type FROM events WHERE ts >= ?", [cutoff])\n),
+      %(@db.execute(<<~SQL, args).map { |row| row_for(row) }\n),
+      %(render("context: gathering for query=\#{query[0, 60]}", mode: :dim)\n),
+    ].each do |source|
+      assert_empty findings(:veto_patterns, source),
+                   "#{source.inspect} is a method name or the parameterized form"
+    end
+  end
+
+  def test_veto_sql_injection_still_catches_interpolated_sql
+    refute_empty findings(:veto_patterns, %(@db.execute("SELECT * FROM t WHERE id = \#{id}")\n))
+    refute_empty findings(:veto_patterns, %(@db.execute_batch("DROP TABLE \#{table}")\n))
+    # A single quote inside the double-quoted SQL — the classic injection shape.
+    # The old `["'][^"']*` class stopped at that quote and missed it entirely.
+    refute_empty findings(:veto_patterns, %(db.query("DELETE FROM x WHERE name='\#{name}'")\n))
+  end
+
+  # --- veto unsafe_calls, second narrowing --------------------------------
+  # 23 findings in lib/ -> 3. The 20 removed: 9 markdown fences inside Ruby
+  # strings, 6 markdown code spans in prose, 2 Shellwords.escape'd backticks,
+  # 2 Open3 arg-array calls, 1 string wrapped in backticks for display. All four
+  # of those shapes are either prose or the fix this rule prescribes.
+
+  def test_veto_unsafe_calls_ignores_markdown_and_escaped_shell_outs
+    [
+      %([["```\#{lang}", *lines, "```"], lines.size]\n),
+      %(parts << "Code:\\n```\\n\#{ctx[:code]}\\n```" if ctx[:code]\n),
+      %(md << "## `\#{rel}`"\n),
+      %(reason: "recent fix `\#{rule_id}` touched a performance smell"\n),
+      %(out = `git -C \#{Shellwords.escape(@root)} status --porcelain`\n),
+      %(Open3.capture2e("node", "--input-type=\#{mode}", "--check", stdin_data: src)\n),
+    ].each do |source|
+      assert_empty findings(:veto_patterns, source),
+                   "#{source.inspect} is markdown, or the escaping this rule prescribes"
+    end
+  end
+
+  def test_veto_unsafe_calls_still_catches_a_shell_out_with_interpolation
+    refute_empty findings(:veto_patterns, %(out = `\#{cmd} 2>/dev/null`\n))
+    refute_empty findings(:veto_patterns, %(`ps x -o pid= -U \#{user} 2>/dev/null`.each_line { |l| l }\n))
+    refute_empty findings(:veto_patterns, %(%x{ls \#{dir}}\n))
+    refute_empty findings(:veto_patterns, %(Open3.capture2("ls \#{dir}")\n))
+    # Quoting an interpolated path inside a shell string does not make it safe.
+    refute_empty findings(:veto_patterns, %(system("rm -rf '\#{directory}'")\n))
+  end
+
+  # --- veto patterns and comments ------------------------------------------
+  # VetoPatternRule scanned raw source, so a comment describing a shell
+  # interpolation vetoed the file that explained it — the same defect
+  # without_comment_lines was written for on the declarative side. It is now
+  # per-pattern: unfinished declares reads_comments, because a work marker lives
+  # in a comment; nothing else does.
+
+  def test_a_comment_describing_a_shell_out_is_not_a_shell_out
+    assert_empty findings(:veto_patterns, %(  # the old form was `\#{cmd} 2>/dev/null` here\n))
+    assert_empty findings(:veto_patterns, %(  # never write system("rm -rf \#{d}") in this tree\n))
+  end
+
+  def test_unfinished_still_reads_comments_because_that_is_where_markers_live
+    refute_empty findings(:veto_patterns, %(  # TODO: this must still be caught\n))
+  end
+
+  # race_conditions was `if.*\n.*=.*\n.*if` and scan_lines feeds one line at a
+  # time, so it needed three lines and could never see two. Deleted 2026-08-12
+  # after never having fired; check-then-act detection needs an AST rule and is
+  # tracked in DEBT.md. This asserts it is gone rather than silently dead.
+  # A newline inside a negated class — `[^`\n]*` — is the opposite: it says "stay
+  # on this line". Only a \n outside a character class demands one. The first
+  # version of this test missed that and failed on two healthy patterns, which is
+  # the instrument being wrong rather than the law.
+  def self.requires_a_newline?(detect)
+    detect.to_s.gsub(/\[\^?(?:\\.|[^\]])*\]/, "").include?('\n')
+  end
+
+  def test_no_veto_pattern_needs_more_than_one_line
+    multiline = Master.load_rules.fetch("veto_patterns", {}).filter_map do |name, spec|
+      name if self.class.requires_a_newline?(spec["detect"])
+    end
+
+    assert_empty multiline,
+                 "these veto patterns span lines, and scan_lines matches one line at a time, " \
+                 "so they can never fire: #{multiline.join(', ')}"
+  end
+
+  # The detector above only means something if it still recognises the pattern
+  # that was deleted for exactly this.
+  def test_the_multiline_detector_recognises_the_deleted_race_conditions_pattern
+    assert self.class.requires_a_newline?('if.*\n.*=.*\n.*if'),
+           "the check no longer catches the pattern it was written for"
+    refute self.class.requires_a_newline?('`[^`\n]*#\{'),
+           "a newline inside a negated class means stay on this line, not span lines"
+  end
+
   # --- CONTROL_CHARS ------------------------------------------------------
   # A concurrent write left SOH bytes wrapping a string literal this session;
   # this rule catches that corruption class. Tab/newline stay legal. The SOH is

@@ -199,7 +199,31 @@ veto_patterns:
     apply: move_to_env
     violates_law: ROBUSTNESS
   sql_injection:
-    detect: execute|query.*#\{
+    # Was `execute|query.*#\{`. The alternation binds as `(execute)|(query.*#\{)`,
+    # so the bare word `execute` anywhere on a line was an unconditional merge
+    # blocker. 87 findings in lib/, every one read and classified, 0 real:
+    #
+    #   `def execute_resync`, `execute_job`, `pre_execute?`, `phase: "post_execute"`
+    #   `@db.execute(sql, [args])` — the parameterized form this rule prescribes
+    #   `@db.execute(<<~SQL, args)` — likewise, via heredoc
+    #   `"context: gathering for query=#{query[0, 60]}"` — a log line
+    #   `# Unsafe shell never executes.` — a comment
+    #
+    # The one candidate that looked real was `WHERE #{where.join(" AND ")}` in
+    # ground/knowledge_store/feedback_events.rb. Checked: provider_errors_query
+    # builds `where` from the literals "event_type = ?" and "dimension = ?" and
+    # puts every value in `args`. Parameterized. Also a false positive.
+    #
+    # Now: execute/query called with a quoted string that carries an
+    # interpolation. Backreferenced quoting, `(["'])(?:(?!\1).)*`, so that
+    # `query("... name='#{name}'")` — a single quote inside a double-quoted SQL
+    # string, which is the classic injection shape — is not skipped.
+    #
+    # KNOWN GAP, and it is the important one: this cannot see interpolation
+    # inside a heredoc, because scan_lines is per line and the `<<~SQL` line
+    # carries no `#{`. Catching SQL built across lines needs an AST rule, not a
+    # lexical veto. Tracked in DEBT.md rather than pretended away here.
+    detect: (?:execute|query)\w*\s*\(\s*(["'])(?:(?!\1).)*#\{
     apply: parameterize
     violates_law: ROBUSTNESS
   unfinished:
@@ -239,20 +263,45 @@ veto_patterns:
     # Pinned in both directions in test/test_scan_rule_false_positives.rb, per
     # that file's own rule: a narrowing has to prove what it still catches.
     detect: "#[^\\n]*\\b(TODO|FIXME)\\b|^\\s*\\.\\.\\.\\s*$"
+    # The only veto pattern that means to read comments — a marker lives in one.
+    # Every other pattern is about code, and a comment describing shell safety or
+    # SQL injection is documentation, not the thing. See VetoPatternRule.
+    reads_comments: true
     apply: complete_or_track
     violates_law: ROBUSTNESS
   unsafe_calls:
     # Interpolation is the arbitrary-code-execution risk. `system("cmd", arg, arg)`
     # is the safe arg-array form style.yml prescribes as the FIX for this, so
     # vetoing it too was a contradiction and the source's biggest false positive.
-    # Every clause now requires a `#{...}` reaching a shell; the backtick clause is
-    # new (the old regex missed `\#{x}` entirely) and Open3 now covers popen too.
-    detect: system\s*\(\s*["'][^"']*#\{|exec\s*\(\s*["'][^"']*#\{|%x[\{(\[<][^)}\]>]*#\{|`[^`]*#\{|Open3\.\w+\s*\([^)]*#\{
+    # Every clause requires a `#{...}` reaching a shell.
+    #
+    # Narrowed again 2026-08-12, 23 findings in lib/ -> 3, all 20 removed ones
+    # read and classified first:
+    #
+    #    9  a markdown fence inside a Ruby string — "```#{lang}", "```\n#{code}"
+    #    6  a markdown code span in prose — "task `#{topic}`", "- `#{path}` (…)"
+    #    2  backticks whose content is Shellwords.escape'd, which is the fix
+    #    2  Open3 in the arg-array form, which is also the fix
+    #    1  "`#{body}`", a string being wrapped in backticks for display
+    #
+    # Three changes. The backtick clause now needs a SINGLE backtick — `(?<!`)`(?!`)`
+    # — which drops every triple-fence; it needs a space inside the backticks, so a
+    # bare `#{path}` code span is not a command; and it refuses Shellwords.escape.
+    # Open3 now only fires when the FIRST argument is one quoted string holding both
+    # a space and an interpolation, which is the shape that reaches a shell — the
+    # old `\([^)]*#\{` matched interpolation in any argument of the safe form.
+    #
+    # The quoted-string clauses use a backreference, `(["'])(?:(?!\1).)*`, instead
+    # of `["'][^"']*`. The old class stopped at the first quote of EITHER kind, so
+    # `system("rm -rf '#{dir}'")` — a shell string quoting an interpolated path,
+    # which is exactly the dangerous case — did not match at all.
+    #
+    # What survives in lib/, and should: ps with an interpolated $USER
+    # (ground/host_budget.rb), a wholly interpolated command
+    # (trace/snapshot_collector.rb), and an interpolated interpreter path
+    # (voice/engines.rb). Two take their value from ENV.
+    detect: (?:system|exec)\s*\(\s*(["'])(?:(?!\1).)*#\{|%x[\{(\[<][^)}\]>]*#\{|(?<!`)`(?!`)(?![^`\n]*Shellwords\.escape)(?=[^`\n]*#\{)[^`\n]*\s[^`\n]*`|Open3\.\w+\s*\(\s*(["'])(?:(?!\2).)*\s(?:(?!\2).)*#\{
     apply: add_safe_nav
-    violates_law: ROBUSTNESS
-  race_conditions:
-    detect: if.*\n.*=.*\n.*if
-    apply: add_mutex
     violates_law: ROBUSTNESS
 structural_ops:
   preserve_note: These keep getting deleted in self-runs — DO NOT REMOVE.

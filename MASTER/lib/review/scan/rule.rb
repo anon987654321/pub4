@@ -7,6 +7,7 @@ module Master
 
       class Rule
         EXT_LANG = Master::FILE_LANGUAGE_MAP
+        COMMENT_LINE = %r{^[ \t]*(#|//)[^\n]*}
 
         attr_reader :id, :description, :severity, :rule_tags, :auto_fix
 
@@ -85,6 +86,18 @@ module Master
             finding(line: num, message:, fix:) if line.match?(pattern)
           end
         end
+
+        # A raw regex over raw lines makes a comment that names the thing the rule
+        # forbids into a finding about itself. BARE_RESCUE and FAIL_VISIBLY both
+        # fired on the paragraph in lexical_rules.rb explaining which rescue shape
+        # each rule owns; veto unsafe_calls fires on a comment describing a shell
+        # interpolation. Blanked to spaces, so line numbers still line up.
+        #
+        # Comment-only lines, not trailing comments: blanking from an unquoted `#`
+        # needs to know whether it is inside a string, and guessing wrong drops real
+        # findings. This is the half that is provably safe. scan_lines itself is
+        # deliberately untouched — several rules mean to read comments.
+        def without_comment_lines(code) = code.gsub(COMMENT_LINE) { |line| " " * line.length }
 
         def default_confidence
           case @severity

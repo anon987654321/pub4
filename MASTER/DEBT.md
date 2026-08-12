@@ -147,6 +147,41 @@ answer must be one. A comparison between the two survivors would have passed
 before the deletion, since those two were already disjoint — which is why a
 duplicate rule can sit in a tree this heavily tested for as long as it did.
 
+### The veto patterns had never been read — audited 2026-08-12
+
+`selfcheck` is error/critical only, so `:veto` findings never reached it, and
+`rake constitution` sorts them into a bucket outside the actionable budget.
+Nobody had opened either. All five patterns, every finding across `lib/` read
+and classified: **229 findings, 4 real.**
+
+| pattern | before | after | what it was matching |
+|---|---|---|---|
+| `sql_injection` | 87 | 0 | `execute\|query.*#\{` binds as `(execute)\|(query.*#\{)`, so the bare word `execute` was a merge blocker — `execute_job`, `pre_execute?`, and the parameterized form the rule prescribes |
+| `unfinished` | 119 | 0 | `pending` (an order state, and inside *depending*), prose ellipsis, and Ruby's exclusive range `[0...-1]` |
+| `unsafe_calls` | 23 | 3 | markdown fences and code spans inside Ruby strings; `Shellwords.escape`'d backticks and the Open3 arg-array form, both of which are the fix this rule prescribes |
+| `race_conditions` | 0 | — | **deleted.** `if.*\n.*=.*\n.*if` needs three lines and `scan_lines` matches one at a time. It could never fire, at `:veto`, since it was written |
+| `secrets` | 0 | 0 | correct, and the only one that was |
+
+The three surviving `unsafe_calls` are real shell-outs with interpolation
+(`ground/host_budget.rb`, `trace/snapshot_collector.rb`, `voice/engines.rb`);
+two take their value from `ENV`.
+
+Two gaps left open rather than papered over, both needing an AST rule instead of
+a lexical veto — `scan_lines` is per line and cannot see across one:
+
+- **SQL built in a heredoc.** `@db.execute(<<~SQL, args)` puts the interpolation
+  on a later line than the call. The one instance in `lib/` is parameterized and
+  safe; the rule cannot tell, and would not catch a real one.
+- **Check-then-act.** What `race_conditions` was reaching for. If the concern is
+  wanted it needs a real rule class; a three-line regex was never going to be it.
+
+Also fixed here: `VetoPatternRule` scanned raw source, so a comment describing a
+shell interpolation vetoed the file explaining it — the same defect
+`without_comment_lines` was written for on the declarative side, which the veto
+path never got. It is now per-pattern: `unfinished` declares `reads_comments`
+because a work marker lives in a comment, and nothing else does.
+`without_comment_lines` moved to the shared `Rule` base rather than being copied.
+
 ## Inert law and config
 
 The dominant defect class in this tree: a declaration with no reader. Both named
