@@ -17,9 +17,6 @@
 #
 # Uses major_third_cycle_full / head_music when present (DillaMusicGems); otherwise pure math.
 module DillaTheoryRuntime
-  NOTE_NAMES = %w[C C# D D# E F F# G G# A A# B].freeze
-  CIRCLE_FIFTHS_SEMITONES = 7
-
   module_function
 
   def enabled?

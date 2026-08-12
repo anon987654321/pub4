@@ -46,8 +46,6 @@ module AnalogSynth
   # sine with a little edge. Flutes and soft sub-bass.
   # SINE has no harmonics at all. Only a fundamental. Sub-bass, and the bottom
   # octave of anything that needs weight without mud.
-  WAVES = %i[saw square triangle sine].freeze
-
   module_function
 
   # ------------------------------------------------------------- oscillators

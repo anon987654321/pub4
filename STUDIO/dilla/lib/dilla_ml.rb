@@ -2,8 +2,6 @@
 
 # Tier-B ML stubs — heuristic fallbacks until `tools/dilla-ml/` ships.
 module DillaMl
-  MOOD_CLUSTERS = %w[dusty bright dark warm crisp].freeze
-
   module_function
 
   def groove_synced_vinyl(ghost_count, kick_count, base: 0.06)

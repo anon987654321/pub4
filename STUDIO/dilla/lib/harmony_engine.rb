@@ -3,7 +3,6 @@
 # Soul / neo-soul / soul-jazz harmony — voicing, validation, beauty scoring,
 # and progression transforms for Dilla-style chord beauty.
 module DillaHarmony
-  SOUL_QUALITIES = %w[maj9 m9 maj7 m7 m11 maj6 6 13 7sus 7alt 7#11 m7b5 sus4].freeze
   PAD_MIDI_MIN = 50.0
   # G5, not E5. At 76 a mid-register 13th sat three semitones above the ceiling,
   # so the whole chord was transposed down an octave to fit -- a 12-semitone lurch

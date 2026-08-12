@@ -11,7 +11,6 @@ module DillaComposition
   PROJECT_DIR = ENV.fetch("DILLA_PROJECT_DIR", File.join(File.expand_path("..", __dir__), "project"))
   SESSION_PATH = File.join(PROJECT_DIR, "session.json")
   MOTIFS_PATH = File.join(PROJECT_DIR, "motifs.json")
-  HISTORY_PATH = File.join(PROJECT_DIR, "history.json")
 
   ARRANGEMENT_FORM = %i[intro verse hook verse bridge solo breakdown hook outro].freeze
 

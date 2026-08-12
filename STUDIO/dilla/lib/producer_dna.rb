@@ -1799,10 +1799,6 @@ end
     profile_preset(track)
   end
 
-  RG69_CHORDS = CHORD_VOICINGS.transform_values { |hz| { hz: } }.freeze
-  RG69_DRUM_PRESETS = DRUM_PRESETS
-  RG69_LOFI = LOFI_DEFAULTS
-  PRODUCER_TRACKS = HARMONY_PROFILES
 end
 
 DillaProducerDNA = DillaLofiMachine
