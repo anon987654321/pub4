@@ -2164,7 +2164,6 @@ principles:
     rule_ids:
     - SILENT_RESCUE
     - NARROW_SILENT_RESCUE
-    - EMPTY_RESCUE
     status: covered
     tags:
     - code

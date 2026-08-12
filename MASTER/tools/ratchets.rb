@@ -92,6 +92,7 @@ module Pub4
       "breakpoint" => "shared/lib/pub4/breakpoint_lint.rb",
       "empty_state" => "shared/lib/pub4/empty_state_lint.rb",
       "css_coverage" => "shared/lib/pub4/css_coverage_lint.rb",
+      "asset_url" => "shared/lib/pub4/asset_url_lint.rb",
     }.freeze
 
     def rails_lint_rows

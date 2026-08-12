@@ -64,10 +64,41 @@ by removing false positives and fixing high-signal violations.
 
 ## Scanner noise
 
-`rake selfcheck` is **34 violations across 6 rules** (measured 2026-08-11):
-`EMPTY_RESCUE` 11, `SILENT_RESCUE` 10, `guard_expensive_ops` 9,
-`UNBOUNDED_RETRY` 2, `bare_rescue` 1, `fail_visibly` 1. The last two are the
-autofixer that repairs bare rescues flagging its own source.
+`rake selfcheck` is **17 violations across 3 rules** (measured 2026-08-12):
+`SILENT_RESCUE` 10, `guard_expensive_ops` 5, `UNBOUNDED_RETRY` 2.
+
+It was 34 across 6 the day before, and 17 of the 17 that went were the rules
+misreading their own tree rather than code getting fixed:
+
+- `EMPTY_RESCUE` 11 → **deleted.** It shared `SilentRescue.discard_body?` with
+  `SILENT_RESCUE` and `NARROW_SILENT_RESCUE` and differed only in which `rescue`
+  lines it matched, so across MASTER it produced 37 findings and **0 unique**. Its
+  own comment claimed it "doesn't re-flag what those already catch"; it re-flagged
+  all 37, 8 of them at both `:error` and `:warning` at once. It also made severity
+  depend on comma count — `rescue Errno::ESRCH` was an error, the identical
+  `rescue Errno::ESRCH, Errno::EPERM` only a warning — because its naked-class
+  branch matched one whitespace-delimited token.
+- `bare_rescue` 1 → 0 and `fail_visibly` 1 → 0. Both were the entry above:
+  "the autofixer that repairs bare rescues flagging its own source" was
+  `@transforms << :bare_rescue`, a symbol, matched by `rescue\s*$`. Recorded here
+  as noise for weeks; it was one lookbehind.
+- `guard_expensive_ops` 9 → 5. The four that went were prose about truncation and
+  `rm -rf`. `detect_lexical` is a raw regex over raw lines, so the YAML bridge read
+  comments as code — the same defect as `DEBUG_OUTPUT` reading `p << "…"` as a
+  `Kernel#p` call. Comment-only lines are blanked in the bridge now; `scan_lines`
+  itself is untouched, because several rules mean to read comments.
+
+The five surviving `guard_expensive_ops` are still false positives — a `truncate`
+string helper, a policy regex *listing* the forbidden verbs, a `CONFIRM` array of
+symbols, a fixture string — and were verified line by line as code rather than
+prose, which is why they stay counted. Narrowing further needs its own reasoning.
+
+Both narrowings are pinned in both directions by
+`test/test_scan_rule_false_positives.rb`, including a test that fails if
+`EMPTY_RESCUE` is ever re-registered, and one that asks *every* registered rule how
+many of them call a given `rescue` line a discard — the answer must be one. A
+two-rule comparison would have passed before the deletion, since those two were
+already disjoint.
 
 It was 71 before `STALE_NAMESPACE` (25 → 0) and `COMPLETION_THEATER` (12 → 0)
 were narrowed on 2026-08-01, and both narrowings are pinned in both directions by

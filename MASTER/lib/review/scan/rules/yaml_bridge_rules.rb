@@ -144,8 +144,22 @@ module Master
             if entry[:regex].source.include?("\\A")
               code.match?(entry[:regex]) ? [finding(line: 1, message:)] : []
             else
-              scan_lines(code, entry[:regex], message:)
+              scan_lines(without_comment_lines(code), entry[:regex], message:)
             end
+          end
+
+          # A declarative rule's detect_lexical is a raw regex over raw lines, so a
+          # comment that names the thing the rule forbids becomes a finding about
+          # itself. BARE_RESCUE and FAIL_VISIBLY both fired on the paragraph in
+          # lexical_rules.rb explaining which rescue shapes each rule owns.
+          #
+          # Comment-only lines, not trailing comments: blanking from an unquoted `#`
+          # needs to know whether it is inside a string, and a rule that guesses
+          # wrong about that would drop real findings. This is the half that is
+          # provably safe. scan_lines is shared by most rules in the tree and is
+          # deliberately not touched — several of them mean to read comments.
+          def without_comment_lines(code)
+            code.gsub(/^[ \t]*(#|\/\/)[^\n]*/) { |line| " " * line.length }
           end
 
           def applies?(entry, path, rel)

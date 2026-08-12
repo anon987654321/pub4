@@ -73,27 +73,23 @@ module Master
     SilentRescue.scan(src, narrow: true).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
-  RuleDSL.rule :EMPTY_RESCUE,
-    severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
-    description: "empty rescue swallows errors silently" do |src, path:|
-    next [] if path.to_s.include?("/review/scan/rules/")
-    lines = src.lines
-    lines.each_with_index.filter_map do |line, index|
-      n = index + 1
-      bare_rescue = line.match?(/^\s*rescue\s*$/)
-      naked_class = line.match?(/^\s*rescue\s+\S+\s*$/) && !line.match?(/=>/)
-      next unless bare_rescue || naked_class
-      # Missing `=> e` alone isn't silent — a rescue whose body already returns
-      # a meaningful documented fallback, re-raises, warns, or publishes never
-      # needed the exception object. Only flag the same genuine discard shape
-      # SILENT_RESCUE/NARROW_SILENT_RESCUE check (nil/false/[]/{}/underscore-var
-      # with no prior handling), so this doesn't re-flag what those already
-      # catch, and doesn't flag a fine, self-documenting fallback.
-      next unless SilentRescue.discard_body?(lines, index)
-
-      finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise")
-    end
-  end
+  # EMPTY_RESCUE was deleted here on 2026-08-12. It shared SilentRescue's
+  # discard_body? predicate with the two rules above and differed only in which
+  # `rescue` lines it matched, so every finding it produced was already produced
+  # by one of them: measured across MASTER at 37 findings, 0 unique. Its own
+  # comment claimed it "doesn't re-flag what those already catch"; it re-flagged
+  # all 37.
+  #
+  # It also made severity depend on comma count. Its naked-class branch matched
+  # `rescue\s+\S+` — one token — so `rescue Errno::ESRCH` was an ERROR while the
+  # identical `rescue Errno::ESRCH, Errno::EPERM` was only NARROW_SILENT_RESCUE's
+  # warning. 8 sites carried both severities at once.
+  #
+  # Coverage is unchanged by construction, not just by measurement, and
+  # test_scan_rule_false_positives.rb pins each shape: bare `rescue`,
+  # `rescue StandardError` and `rescue Exception` fall to SILENT_RESCUE's
+  # non-narrow branch; any other class name, scoped or not, matches
+  # NARROW_SILENT_RESCUE.
 
   RuleDSL.rule :CONSECUTIVE_BLANK_LINES,
     severity: :info, tags: %i[HYGIENE],

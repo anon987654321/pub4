@@ -194,4 +194,123 @@ class TestScanRuleFalsePositives < Minitest::Test
       refute_empty findings(:DEBUG_OUTPUT, source, path: "lib/example.rb"), "#{source.inspect} is debug output"
     end
   end
+
+  # --- the rescue family, after EMPTY_RESCUE was collapsed into it ----------
+  #
+  # EMPTY_RESCUE was deleted on 2026-08-12 as a pure duplicate: 37 findings across
+  # MASTER, 0 unique to it, 8 double-reported at both :error and :warning. Deleting
+  # a rule is the change most likely to quietly drop coverage, so this asserts the
+  # thing that actually matters — every `rescue` shape it used to match is still
+  # matched by one of the two survivors, and at exactly one severity.
+
+  RESCUE_SHAPES = {
+    "rescue\n" => :SILENT_RESCUE,
+    "rescue StandardError\n" => :SILENT_RESCUE,
+    "rescue Exception\n" => :SILENT_RESCUE,
+    "rescue ArgumentError\n" => :NARROW_SILENT_RESCUE,
+    "rescue Errno::ESRCH\n" => :NARROW_SILENT_RESCUE,
+    "rescue Errno::ESRCH, Errno::EPERM\n" => :NARROW_SILENT_RESCUE,
+  }.freeze
+
+  def rescue_source(clause) = "def probe\n  work\n#{clause}  nil\nend\n"
+
+  # Asked of every registered rule, not just the two survivors — a comparison
+  # between SILENT_RESCUE and NARROW_SILENT_RESCUE would have passed before the
+  # deletion too, since those two were already disjoint. What was broken was a
+  # third rule saying the same thing, so the question has to be "how many rules in
+  # this tree call this line a discard", which is exactly what it counts.
+  def discard_reporters(source)
+    scanner.rules.select do |rule|
+      Array(rule.check(source, path: File.join(Master::ROOT, "lib/example.rb")))
+        .any? { |f| f[:message].to_s.match?(/discard|swallow/i) }
+    end.map { |rule| rule.id.to_s }
+  end
+
+  def test_every_rescue_shape_is_reported_by_exactly_one_rule
+    RESCUE_SHAPES.each do |clause, owner|
+      reporters = discard_reporters(rescue_source(clause))
+
+      assert_equal [owner.to_s], reporters,
+                   "#{clause.strip.inspect} should be one rule's finding, not #{reporters.join(' + ')}"
+    end
+  end
+
+  # The comma case is the one EMPTY_RESCUE got wrong: it matched a single token, so
+  # one exception class was an error and two of the same class family were a
+  # warning. Both are the same code.
+  def test_severity_does_not_depend_on_how_many_classes_are_listed
+    one = findings(:NARROW_SILENT_RESCUE, rescue_source("rescue Errno::ESRCH\n"))
+    two = findings(:NARROW_SILENT_RESCUE, rescue_source("rescue Errno::ESRCH, Errno::EPERM\n"))
+
+    assert_equal one.size, two.size
+  end
+
+  # The predicate all of them share, and the reason the count is 35 rather than the
+  # 234 a naive "rescue with no logger" search returns: a rescue that re-raises,
+  # warns, logs, publishes, or returns anything other than an empty value is not a
+  # discard. Every one of these is correct code that must stay unflagged.
+  def test_a_rescue_that_answers_the_question_is_not_a_discard
+    [
+      "def probe\n  work\nrescue StandardError => e\n  raise e\nend\n",
+      "def probe\n  work\nrescue StandardError => e\n  Master::Ground::Swallow.log(e)\nend\n",
+      "def probe\n  work\nrescue StandardError\n  warn \"probe failed\"\nend\n",
+      "def probe\n  work\nrescue StandardError\n  DEFAULT_BUDGET\nend\n",
+    ].each do |source|
+      %i[SILENT_RESCUE NARROW_SILENT_RESCUE].each do |id|
+        assert_empty findings(id, source), "#{source.lines[2].strip.inspect} handles the error"
+      end
+    end
+  end
+
+  # --- the YAML lexical bridge reading comments ------------------------------
+  #
+  # detect_lexical is a raw regex over raw lines, so the paragraph above
+  # explaining which rescue shape belongs to which rule became two error-severity
+  # findings about itself — BARE_RESCUE and FAIL_VISIBLY, which share one regex.
+  # Skipping comment-only lines took selfcheck from 25 to 17: those two to zero,
+  # and guard_expensive_ops from 9 to 5, all four of which were prose about
+  # truncation and `rm -rf`. Verified line by line that the five survivors are code.
+
+  def bridge = scanner.rules.find { |r| r.id.to_s == "yaml_declarative" } || raise("bridge rule is not registered")
+
+  # frozen_string_literal is a file-level `\A` rule in the same bridge and fires on
+  # every fixture here, so this asks about the line rules only. Asserting the whole
+  # list was empty made the test fail for a reason it was not about.
+  LINE_RULES = %w[bare_rescue fail_visibly guard_expensive_ops].freeze
+
+  def bridge_findings(source)
+    Array(bridge.check(source, path: File.join(Master::ROOT, "lib/example.rb")))
+      .map { |f| f[:rule].to_s }.select { |id| LINE_RULES.include?(id) }
+  end
+
+  def test_a_comment_naming_a_forbidden_construct_is_not_a_finding
+    [
+      "# `rescue Exception` falls to SILENT_RESCUE's non-narrow branch\n",
+      "  # a bare rescue\n",
+      "# Rotate rather than truncate-in-place\n",
+      "  // rm -rf in a JS comment\n",
+    ].each do |source|
+      assert_empty bridge_findings(source), "#{source.strip.inspect} is prose, not code"
+    end
+  end
+
+  def test_the_same_constructs_in_code_are_still_findings
+    assert_includes bridge_findings("def probe\n  work\nrescue\n  nil\nend\n"), "bare_rescue"
+    assert_includes bridge_findings("def probe\n  work\nrescue Exception\n  nil\nend\n"), "bare_rescue"
+    assert_includes bridge_findings("  Item.delete_all\n"), "guard_expensive_ops"
+  end
+
+  # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues was an
+  # error-severity finding against itself, recorded in DEBT.md as noise rather than
+  # fixed. A symbol is not a rescue clause.
+  def test_a_symbol_named_bare_rescue_is_not_a_bare_rescue
+    refute_includes bridge_findings("  @transforms << :bare_rescue\n"), "bare_rescue"
+    refute_includes bridge_findings("  def bare_rescue\n"), "bare_rescue"
+  end
+
+  def test_the_deleted_rule_does_not_come_back
+    refute scanner.rules.any? { |r| r.id.to_s == "EMPTY_RESCUE" },
+           "EMPTY_RESCUE was collapsed into SILENT_RESCUE/NARROW_SILENT_RESCUE — re-registering it " \
+           "restores the double-report this test exists to prevent"
+  end
 end
