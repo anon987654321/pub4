@@ -203,6 +203,40 @@ What is open is the class, not an instance. When you find one: find the reader
 before trusting a config key, and **add the gate, not just the fix** — a
 two-direction test is what stops the two halves blurring back together.
 
+### A general "every data key has a reader" gate does not work here — tried 2026-08-12
+
+It is the obvious next gate and it is not buildable statically. Measured before
+building, which is the only reason it was not built:
+
+- **At the key level: 607 of 1173 second-level keys** across `data/**/*.yml` have
+  no literal mention in first-party code. 52% — a checker wrong more often than
+  right, which is what the veto audit spent the same day deleting.
+- **At the section level: 49 of 238 top-level sections.** Better, and legible,
+  but still holding whole classes of false positive: `personas.yml`'s persona
+  names and `models.yml`'s model rows are registry entries selected by a config
+  value at runtime, and `doc_paths_baseline.yml` is keyed by the very document
+  paths it exists to list.
+
+The reason is that this tree reaches its data four ways a grep cannot follow:
+interpolated filenames (`review/modes.rb` opens `data/prompts/mode_#{mode}.yml`),
+directory globs, the `DATA_ALIASES` table, and generic section loaders like
+`RuntimeCatalog.load(section)`. All four are legitimate.
+
+Two things worth keeping from the attempt:
+
+- **`loc_budgets` looked dead and is not.** It is read by the `loc_budget` task
+  in the Rakefile, which a `lib/`-only search misses. Any search for readers has
+  to include `Rakefile` and `bin/`.
+- **The top remaining candidate, `limits.yml` `guidance` (29 keys), is the
+  closure above working exactly as designed** — the deliberately unread half of
+  the split, pinned in both directions by `test/test_limits_split.rb`. An
+  unread-key gate would have reported the fix as the defect.
+
+So the honest scope is per-file and by hand, with a two-direction test, the way
+`limits.yml` and `security/defaults.yml` were each closed. A repo-wide gate would
+need a baseline carrying a written reason for all 49, which is a decision about
+49 sections rather than a mechanical step.
+
 ## Test coverage
 
 **163 of 445 `lib/` files have no test or spec naming their innermost class or
