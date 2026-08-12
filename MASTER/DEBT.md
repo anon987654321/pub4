@@ -14,40 +14,41 @@ which made the open items hard to find and let four of them go stale unnoticed.
 - **agent-ignore** — do not chase during narrow patches (constitution scan noise, horizon features).
 - **operator-priority** — humans should fix before declaring deploy healthy.
 
-## Spine Ceiling — raised to 38,294 on sponsorship, 2026-08-11
+## Spine Ceiling
 
-`lib/` reached 38,294 code lines against a 38,219 ceiling (+75), which made
-`rake lint:spine` — and through it `rake audit` and `bin/check --profile=full` —
-red on a clean tree. Closed by a **raise, sponsored by the operator**, which is
-the first thing this ratchet has produced that was asked for rather than taken.
+**Not open.** The number, its full raise/ratchet log and the reasoning behind every
+move live in `data/spine.yml`, which is the file `rake lint:spine` reads. This
+section held a copy and the copy drifted — it read "38,294, allowance 1 of 2" while
+`spine.yml` had ratcheted to 38,285 and cleared the log, which is the two-source
+failure this register warns about elsewhere in its own words.
 
-The +75 is five commits, every one a fix: `50471a924`, `ca92b7d2b`, `be274db22`,
-`51424ab63`, `ffa0730ff`.
+What belongs here is the rule the ratchet taught, because it is not in the
+mechanism:
 
-What made this a raise rather than a deletion is the part worth carrying forward.
-The three previous breaches were each paid for out of orphaned code, and **that
-account is now empty.** A sweep of all 445 `lib/` files against every reference in
-the repo — no extension filter, repo root as the scan root, both blindnesses of
-the 2026-08-03 sweep corrected — returned one candidate, `ground/pledge.rb`, and
-that was a false positive: the sweep read its inner `LibC` module as the file's
-constant while `Pledge` itself is live. Nor is any of the five absorbable by
-`core/`'s own standard, which takes a handler per verb and a rule per constraint;
-a scan rule's regex is neither.
+**Ratchet once, at the end of a session, on a settled tree.** An intermediate
+ratchet has already locked in a state that was not clean and blocked the work that
+would have made it so (2026-08-03). And on 2026-08-12 a ratchet taken while three
+other sessions had uncommitted `lib/` edits recorded a low that was not the
+ratcheting session's to hold — in a shared checkout the honest moment is after the
+tree stops moving, not after your own part of it does.
 
-The allowance now stands at 1 of 2, and the log entry in `data/spine.yml` is what
-makes that a budget rather than prose. A second raise needs the same conversation.
-`rake lint:spine RATCHET=1` clears the log when `lib/` genuinely falls — ratchet
-once, at the end of a session, since an intermediate ratchet has already locked in
-a state that was not clean and blocked the work that would have made it so.
+**A breach is paid out of `lib/`, not out of this file.** Three of the four breaches
+so far were closed by deleting code nothing referenced; the fourth was a raise, and
+it needed the operator to sponsor it because the orphan account was empty. That
+sequence is the mechanism working. `rake lint:spine RATCHET=1` clears the raise log
+when `lib/` genuinely falls, which is what makes the allowance a budget and not a
+countdown.
 
 ## Self-Test Debt
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **0 findings as of 2026-08-11**, across all eight
-dimensions. Treat that as true for the commit that carries it and no further: the
-count has been 0, 1, 2, 6 and 7 on different days of the same fortnight, and a
-"clean since" claim in `START_HERE.md` was already stale once.
+`rake selftest` reports **3 findings as of 2026-08-12**, all of them in the fold
+spine, all of them newly *visible* rather than newly true — see "The fold spine
+had never been scanned" below. It was 0 on 2026-08-11. Treat any count here as
+true for the commit that carries it and no further: it has been 0, 1, 2, 3, 6 and
+7 on different days of the same fortnight, and a "clean since" claim in
+`START_HERE.md` was already stale once.
 
 `test/test_heartbeat.rb:44` (`self_test_heartbeat_publishes_clean_scan_metrics`)
 fails *because* this count is non-zero — a symptom of this track, not an
@@ -55,6 +56,45 @@ independent defect.
 
 Triage each new finding as: true violation to fix / scanner false positive / rule
 exemption needed / rule threshold too strict / known debt to leave alone.
+
+## The fold spine had never been scanned — opened 2026-08-12
+
+**operator-priority** — this is a decision to make, not noise to chase.
+
+`SelfCheck#run` scans `File.join(@root, "lib")`. So does `selftest`. For the
+three weeks `core/` existed as a sibling of `lib/`, **every gate MASTER points at
+its own source skipped the constitutional fold entirely** — the six files that
+judge every effect before it touches the world were the only ones exempt from the
+law they enforce. Nothing declared that exemption; it fell out of a path.
+
+Merging the spine into `lib/` on 2026-08-12 subjected it, and it fails:
+
+```
+[ABSTRACTION] lib/core/constitution.rb:16  Constitution — 16 public methods (max 10)
+[ABSTRACTION] lib/core/memory.rb:10        Memory       — 17 public methods (max 10)
+[DENSITY]     lib/core/fold.rb:28          run          — 24 code lines (max 20)
+```
+
+`rake selfcheck` independently gains `NO_GOD_CLASS` 2 and `SILENT_RESCUE` 1 from
+the same files. Measured twice, because attribution in a shared tree is a guess
+otherwise: 19 → 22 on a clean HEAD worktree with only the move applied, and
+17 → 20 in the working tree against the "Scanner noise" baseline below. Same +3,
+same three files, from two different starting points.
+
+**Do not autofix these.** The obvious remedy — decompose `Constitution` and
+`Memory` — collides head-on with `core_files: 6` in `data/spine.yml`, which makes
+a seventh top-level concept in the fold a design decision requiring a sponsor.
+One rule says decompose, the other says not into a new file. That conflict is the
+actual open question and it needs an operator, not a pass of `/fix`:
+
+1. Raise the thresholds for the fold spine specifically, and say why in `rules.yml`.
+2. Decompose within the existing six files (private methods, extracted lambdas).
+3. Raise `core_files` and let the fold be seven or eight concepts.
+4. Record an explicit, dated exemption — noting `soul.yml` EXEMPTIONS_EXPIRE.
+
+What must not happen is the count being driven to zero by re-exempting the fold,
+which would restore the invisible hole and lose the one thing this merge bought:
+the fold is now measured by the law it applies to everything else.
 
 ## Constitution Scan Debt
 
@@ -93,19 +133,19 @@ string helper, a policy regex *listing* the forbidden verbs, a `CONFIRM` array o
 symbols, a fixture string — and were verified line by line as code rather than
 prose, which is why they stay counted. Narrowing further needs its own reasoning.
 
-Both narrowings are pinned in both directions by
-`test/test_scan_rule_false_positives.rb`, including a test that fails if
-`EMPTY_RESCUE` is ever re-registered, and one that asks *every* registered rule how
-many of them call a given `rescue` line a discard — the answer must be one. A
-two-rule comparison would have passed before the deletion, since those two were
-already disjoint.
+It was 71 before `STALE_NAMESPACE` (25 → 0) and `COMPLETION_THEATER` (12 → 0) were
+narrowed on 2026-08-01.
 
-It was 71 before `STALE_NAMESPACE` (25 → 0) and `COMPLETION_THEATER` (12 → 0)
-were narrowed on 2026-08-01, and both narrowings are pinned in both directions by
-`test/test_scan_rule_false_positives.rb` — the false positive is gone *and* the
-real violation still fires. Copy that shape for anything on this list: a rule
-whose false positives are removed without a test asserting it still fires has
-been turned off, not fixed.
+Every narrowing on this list is pinned in both directions by
+`test/test_scan_rule_false_positives.rb`: the false positive is gone *and* the real
+violation still fires. Copy that shape — a rule whose false positives are removed
+without a test asserting it still fires has been turned off, not fixed. The
+2026-08-12 pass added the two cases that shape does not cover on its own: a test
+that fails if `EMPTY_RESCUE` is ever re-registered, and one that asks *every*
+registered rule how many of them call a given `rescue` line a discard, where the
+answer must be one. A comparison between the two survivors would have passed
+before the deletion, since those two were already disjoint — which is why a
+duplicate rule can sit in a tree this heavily tested for as long as it did.
 
 ## Inert law and config
 
@@ -333,13 +373,16 @@ the assertion points the wrong way.
 
 ## Not Debt
 
-- Two `Master::` spines. `DECISIONS.md` frames the dual spine as permanent, not
-  transitional.
-- Split rule registries. Do not merge `data/rules/*.yml`.
+- The fold spine living inside `lib/`. Merged 2026-08-12 on operator
+  instruction; `DECISIONS.md` records the reversal and what was kept (the
+  no-backedges test, `core_files: 6`). Not a regression to undo.
+- One rule registry. The four `data/rules/*.yml` shards were folded into
+  `data/rules.yml` on the same instruction. Their single consumer was
+  `load_rules`, which merged them back before any scanner saw them.
 - Local `knowledge/` corpus and generated `output/` artifacts.
 - Deferred WebGL boot.
 - Media-generation severance: re-severed 2026-07-14 (`76b11fec4`), confirmed
-  permanent 2026-07-15. `core/SEVERANCE.md` is the source of truth. If the LoRA
-  training loop needs generation capability again, express it as `core/world.rb`
-  handlers per the original absorption plan — do not restore the deleted
-  `io/lora_pipeline.rb` / `video_chain.rb`.
+  permanent 2026-07-15. `docs/SEVERANCE.md` is the source of truth. If the LoRA
+  training loop needs generation capability again, express it as
+  `lib/core/world.rb` handlers per the original absorption plan — do not restore
+  the deleted `io/lora_pipeline.rb` / `video_chain.rb`.
