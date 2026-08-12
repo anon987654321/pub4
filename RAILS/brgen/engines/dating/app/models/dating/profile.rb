@@ -30,12 +30,12 @@ class Dating::Profile < ApplicationRecord
   }
 
   validates :bio,         length: { maximum: 500 }
-  validates :age,         numericality: { greater_than: 17, less_than: 100 }, allow_nil: true
+  validates :age, numericality: { greater_than_or_equal_to: 18, less_than: 100 }
   validates :gender,      inclusion: { in: GENDERS },     allow_nil: true
   validates :looking_for, inclusion: { in: LOOKING_FOR }, allow_nil: true
   validate :photos_present_when_visible, on: :update
 
-  scope :visible, -> { where(visible: true) }
+  scope :visible, -> { where(visible: true).where("age >= 18") }
   # nearby (bbox) + haversine provided by concern; old approx replaced for consistency
   scope :in_neighborhood, ->(neigh) { neigh ? where(neighborhood_id: neigh.id) : all }
 

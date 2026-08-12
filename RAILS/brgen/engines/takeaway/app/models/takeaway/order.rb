@@ -129,7 +129,7 @@ class Takeaway::Order < ApplicationRecord
   private
 
   def amount_display(cents)
-    format("%.2f NOK", cents.to_i / CENTS_PER_KRONE)
+    Shared::MoneyDisplay.format(cents)
   end
 
   # The restaurant advertises a minimum-order threshold (shown as a chip on its

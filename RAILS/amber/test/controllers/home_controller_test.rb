@@ -4,6 +4,16 @@ require "test_helper"
 require "minitest/mock"
 
 class HomeControllerTest < ActionDispatch::IntegrationTest
+  def test_legal_pages_are_public
+    %w[/privacy /terms /cookies].each do |path|
+      get path
+      assert_response :success, path
+      assert_includes response.body, "legal-prose"
+    end
+    get root_url
+    assert_includes response.body, privacy_path
+  end
+
   def test_guest_root_shows_animated_amber_logo
     get root_url
     assert_response :success

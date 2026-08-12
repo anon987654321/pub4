@@ -8,7 +8,7 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS = %w[amber brgen bsdports].freeze
 
-    REQUIRED_ROUTE_FILES = %w[auth.rb fleet.rb social.rb].freeze
+    REQUIRED_ROUTE_FILES = %w[auth.rb fleet.rb social.rb legal.rb].freeze
     REQUIRED_PUBLIC_FILES = %w[404.html 422.html 500.html styles/errors.css].freeze
     REQUIRED_STIMULUS_REGISTRATIONS = %w[
       autosave draft-store media-picker feed-compose scroll-reveal offline-feed pwa-standalone

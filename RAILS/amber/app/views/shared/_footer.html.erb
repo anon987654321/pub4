@@ -16,7 +16,7 @@
     </nav>
     <nav aria-label="<%= t("footer.support") %>">
       <h2><%= t("footer.support") %></h2>
-      <%= mail_to "hello@amber.brgen.no", t("footer.contact") %>
+      <%= mail_to legal_contact_email, t("footer.contact") %>
     </nav>
     <%# The only route into the English half of the locale files. Plain links,
         so it works before any JavaScript runs; the choice sticks in the

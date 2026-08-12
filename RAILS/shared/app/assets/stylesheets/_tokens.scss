@@ -112,6 +112,16 @@
   --luxury-line-relaxed: 1.6;
 }
 
+/* Catalog quantities share a width so a column of prices does not dance.
+   Worn on marketplace, takeaway, and feed counts. */
+[data-money],
+.deal-price,
+.listing-price,
+.listing-buy-bar-amount,
+.item-subtotal {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
 [data-theme="light"] {
   @include semantic-light-overrides;
 }

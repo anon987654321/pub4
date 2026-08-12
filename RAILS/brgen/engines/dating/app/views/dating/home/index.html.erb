@@ -23,11 +23,12 @@
     </div>
 
     <footer class="dating-intro-trust">
-      <span><%= t("dating.protected_with") %></span>
-      <span class="dating-intro-bankid" aria-label="bankID">
-        <span class="dating-intro-bankid-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-        bankID
-      </span>
+      <span><%= t("legal.dating_age") %></span>
+      <nav aria-label="<%= t("legal.aria") %>">
+        <%= link_to t("legal.privacy"), main_app.privacy_path %>
+        <%= link_to t("legal.terms"), main_app.terms_path %>
+        <%= link_to t("legal.cookies"), main_app.cookies_path %>
+      </nav>
     </footer>
   </section>
 

@@ -35,6 +35,17 @@ module Master
         dig("ux_laws", "hick", "max_visible_choices", root:) || 7
       end
 
+      def self.worn_type(root: Master::ROOT)
+        dig("worn_type", root:) || {}
+      end
+
+      def self.worn_profile(name, root: Master::ROOT)
+        profiles = worn_type(root:)["profiles"] || {}
+        feed = profiles["feed"] || {}
+        spec = profiles[name.to_s] || {}
+        feed.merge(spec).merge("name" => name.to_s)
+      end
+
       def self.eight_px_rhythm(root: Master::ROOT)
         dig("pixel_perfection", "eight_px_rhythm", root:) ||
           dig("layout_rules", "grid", "allowed_spacing_px", root:) ||

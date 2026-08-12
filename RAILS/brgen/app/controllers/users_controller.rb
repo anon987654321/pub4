@@ -47,6 +47,13 @@ class UsersController < ApplicationController
       return
     end
 
+    unless params[:accept_terms] == "1" && params[:accept_age] == "1"
+      @user = User.new(user_params)
+      @user.errors.add(:base, t("legal.accept_terms"))
+      render :new, status: :unprocessable_entity
+      return
+    end
+
     @user = User.new(user_params)
     @user.guest = false
     @user.require_email_verification = true # a public signup must confirm before posting

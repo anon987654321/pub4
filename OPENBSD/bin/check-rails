@@ -83,7 +83,9 @@ if deep
     timeout: Integer(ENV.fetch("DEPLOY_DEEP_CHECK_TIMEOUT", "2400"))
   )
   deep_gates.each do |name, gate|
-    failures << name.tr(" ", "_") unless deep_runner.run(name, RUBY, GATES_RUNNER, gate, env: { "GATE_AUTOFIX" => "0" })
+    env = { "GATE_AUTOFIX" => "0" }
+    env["GATE_REQUIRE_LIVE"] = "1" if name == "rendered suite"
+    failures << name.tr(" ", "_") unless deep_runner.run(name, RUBY, GATES_RUNNER, gate, env: env)
   end
 else
   deep_gates.each { |name, _| puts "deploy-rails: #{name.ljust(18)} skip — --profile=full or CHECK_RAILS_DEEP=1" }

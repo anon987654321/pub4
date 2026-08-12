@@ -4,6 +4,6 @@ class VerificationMailer < ApplicationMailer
   def verify(user)
     @user = user
     @token = user.email_verification_token
-    mail subject: "Confirm your email for Brgen", to: user.email_address
+    mail subject: I18n.t("mailer.verify_email_subject"), to: user.email_address
   end
 end

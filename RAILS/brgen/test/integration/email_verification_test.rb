@@ -15,7 +15,7 @@ class EmailVerificationTest < ActionDispatch::IntegrationTest
 
   test "public signup creates an unverified account with a token" do
     email = "new-#{SecureRandom.hex(4)}@brgen.no"
-    post users_path, params: { user: { email_address: email, username: "nb_#{SecureRandom.hex(3)}", password: "password12345", password_confirmation: "password12345" } }
+    post users_path, params: { accept_terms: "1", accept_age: "1", user: { email_address: email, username: "nb_#{SecureRandom.hex(3)}", password: "password12345", password_confirmation: "password12345" } }
     u = User.find_by(email_address: email)
     assert u, "account should be created"
     assert_not u.email_verified?, "a fresh signup is unverified"
@@ -30,7 +30,7 @@ class EmailVerificationTest < ActionDispatch::IntegrationTest
 
   test "an unverified signup is gated from posting until it confirms" do
     email = "gate-#{SecureRandom.hex(4)}@brgen.no"
-    post users_path, params: { user: { email_address: email, username: "g_#{SecureRandom.hex(3)}", password: "password12345", password_confirmation: "password12345" } }
+    post users_path, params: { accept_terms: "1", accept_age: "1", user: { email_address: email, username: "g_#{SecureRandom.hex(3)}", password: "password12345", password_confirmation: "password12345" } }
     community = Community.first
     assert_no_difference -> { Post.count } do
       post posts_path, params: { post: { title: "blocked", content: "x", community_id: community.id } }

@@ -57,6 +57,20 @@ topics:
       - rake lint:data_singularity
     note: All scanner law is data/rules.yml under one top-level rules key, scopes codebase/file/line/unit, folded 2026-08-12. selftest failures may be known debt (agent-ignore).
 
+  worn_type:
+    files:
+      - data/design_rules.yml
+      - lib/design/thresholds.rb
+      - RAILS/gates/lib/geometry_type.rb
+      - RAILS/gates/support/geometry_type_walk.js
+      - RAILS/gates/support/geometry_probe.rb
+    tests:
+      - test/test_design_rules_worn_type.rb
+      - RAILS/test/gates/rendered_gates_test.rb
+    note: >
+      Judge rendered type, not stylesheet tokens. Feed is a short measure
+      (--feed-max 600px). Legal/prose keeps 66ch. Profiles in worn_type.
+
   deploy:
     files:
       - OPENBSD/vps_deploy_master.sh

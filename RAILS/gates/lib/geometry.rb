@@ -118,7 +118,6 @@ module Deploy
       check_chrome_occlusion(surface, elements)
       check_contrast(surface, elements)
       check_token_conformance(surface, data)
-      check_rhythm(surface, data)
       check_choice_overload(surface, data)
       check_proximity(surface, data)
       check_thumb_zone(surface, elements)
@@ -128,6 +127,7 @@ module Deploy
       check_edge_alignment(surface, elements)
       check_target_spacing(surface, elements)
       check_centered_prose(surface, elements)
+      check_rhythm(surface, data, GeometryType.check(@result, surface, data))
     end
 
     # Everything above this line reads the rounded rect, which is the one number
@@ -669,7 +669,7 @@ module Deploy
       key = [:apca, fg, bg, want]
       return if @apca_seen&.include?(key)
 
-      (@apca_seen ||= Set.new) << key
+      (@apca_seen ||= {})[key] = true
       @result.fail(
         "geometry apca: #{surface.id} #{fg} on #{bg} = Lc #{lc.abs.round(1)} < #{want.round} " \
         "(#{size.round}px#{bold ? ' bold' : ''}, e.g. #{el["key"]}) principle=perceptual_contrast",
@@ -690,7 +690,7 @@ module Deploy
       )
     end
 
-    def check_rhythm(surface, data)
+    def check_rhythm(surface, data, spec = {})
       gaps = Array(data["gaps"])
       return if gaps.empty?
 
@@ -698,7 +698,7 @@ module Deploy
       return if off.empty?
 
       ratio = (off.size.to_f / gaps.size * 100).round
-      return if ratio < 25 # a few one-offs are not a rhythm failure
+      return if ratio < (spec["rhythm_off_max_pct"] || 25).to_i
 
       sample = off.group_by { |g| g["gap"] }.sort_by { |_, v| -v.size }.first(3)
       @result.fail(

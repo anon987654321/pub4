@@ -5,10 +5,23 @@
   <% end %>
 </ul>
 <% if @ports.empty? %>
+  <% unimported = @catalog_empty && params[:q].blank? && params[:category_id].blank? %>
   <%= render "shared/empty_state",
-        title: t("empty.no_ports"),
-        body: t("ports.empty_body"),
+        title: unimported ? t("empty.no_catalog") : t("empty.no_ports"),
+        body: unimported ? t("ports.empty_unimported") : t("ports.empty_body"),
         action: { label: t("ports.browse_all"), path: ports_path } %>
+  <% if unimported %>
+    <p class="dim">
+      <% if @last_import %>
+        <%= t("ports.last_import",
+              status: @last_import.status,
+              count: @last_import.ports_count.to_i,
+              when: l(@last_import.started_at, format: :short)) %>
+      <% else %>
+        <%= t("ports.never_imported") %>
+      <% end %>
+    </p>
+  <% end %>
 <% end %>
 <%= render "shared/infinite_scroll_sentinel",
            pagy: @pagy,

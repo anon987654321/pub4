@@ -193,6 +193,13 @@ en:
     privacy: "Privacy"
     terms: "Terms"
     cookies: "Cookies"
+    accept_terms: "I accept the terms and the privacy policy"
+    accept_age: "I am at least 16 years old"
+    dating_age: "I am at least 18. Dating is only for adults."
+  mailer:
+    password_reset_subject: "Reset your password"
+    verify_email_subject: "Confirm your email"
+    sign_in_link_subject: "Sign-in link"
   nav:
     brand_home: "Home"
   pages:

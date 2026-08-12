@@ -197,6 +197,13 @@ nb:
     privacy: "Personvern"
     terms: "Vilkår"
     cookies: "Informasjonskapsler"
+    accept_terms: "Jeg godtar vilkårene og personvernerklæringen"
+    accept_age: "Jeg er minst 16 år"
+    dating_age: "Jeg er minst 18 år. Dating er bare for voksne."
+  mailer:
+    password_reset_subject: "Tilbakestill passordet"
+    verify_email_subject: "Bekreft e-postadressen"
+    sign_in_link_subject: "Innloggingslenke"
   nav:
     brand_home: "Til forsiden"
   pages:

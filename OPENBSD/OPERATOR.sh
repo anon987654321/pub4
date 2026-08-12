@@ -583,6 +583,8 @@ stage_1() {
 
   install_static usr/local/bin/renew-certs.sh /usr/local/bin/renew-certs.sh
   chmod 755 /usr/local/bin/renew-certs.sh
+  install_static usr/local/bin/uptime-check.sh /usr/local/bin/uptime-check.sh
+  chmod 755 /usr/local/bin/uptime-check.sh
   install_tracked_crontab || exit 1
 
   log INFO "Stage 1 complete. ns.brgen.no ($BRGEN_IP) authoritative with DNSSEC."

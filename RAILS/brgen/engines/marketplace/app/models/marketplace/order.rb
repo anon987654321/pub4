@@ -39,7 +39,7 @@ class Marketplace::Order < ApplicationRecord
 
   # Cart-like helpers (pending orders act as the buyer's cart)
   def total_cents = (price_cents.presence || listing.price_cents || 0) * (quantity.presence || 1).to_i
-  def total_display = "#{total_cents / 100.0} #{listing.currency || 'NOK'}"
+  def total_display = Shared::MoneyDisplay.format(total_cents, listing.currency || "NOK")
 
   def accept!
     update!(status: "accepted")

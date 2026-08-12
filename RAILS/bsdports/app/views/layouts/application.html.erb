@@ -6,16 +6,16 @@
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#000000" data-light-color="#ffffff" data-dark-color="#000000">
   <title><%= content_for?(:title) ? "#{yield :title} — BSDports" : "BSDports" %></title>
-  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "BSDports — browse and search the BSD ports collection. Find packages, track versions, and explore the BSD ecosystem." %>">
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "BSDports — search OpenBSD ports, dependencies and local advisories." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
   <meta property="og:site_name" content="BSDports">
   <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "BSDports" %>">
-  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "Browse and search the BSD ports collection. Find packages, track versions, and explore the BSD ecosystem." %>">
+  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "Search OpenBSD ports, dependencies and local advisories." %>">
   <meta property="og:url" content="<%= request.original_url %>">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "BSDports" %>">
-  <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "Browse and search the BSD ports collection. Find packages, track versions, and explore the BSD ecosystem." %>">
+  <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "Search OpenBSD ports, dependencies and local advisories." %>">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <link rel="preload" href="/icon.png" as="image">
@@ -24,7 +24,7 @@
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
   <%= yield :json_ld %>
-  <%= json_ld_script(website_json_ld(site_name: "BSDports", url: root_url, description: "Semantic search for OpenBSD ports.")) %>
+  <%= json_ld_script(website_json_ld(site_name: "BSDports", url: root_url, description: "Full-text search for OpenBSD ports.")) %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="wscons <%= "auth-surface" if controller_path.in?(%w[sessions passwords]) %>"
@@ -64,6 +64,7 @@
       the same link three times on every page. The mark is the one. %>
   <%= yield %>
 </main>
+<%= render "shared/site_legal_footer" %>
 </div>
 <%= render "shared/install_prompt",
       title: t("install.title"),

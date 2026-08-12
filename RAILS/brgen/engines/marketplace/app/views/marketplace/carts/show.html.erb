@@ -31,19 +31,30 @@
   </div>
 
   <div class="cart-summary">
-    <p><strong><%= t("marketplace.cart_total", amount: @cart_total / 100.0) %></strong></p>
+    <p><strong><%= t("marketplace.cart_total", amount: Shared::MoneyDisplay.format(@cart_total)) %></strong></p>
     <p class="dim"><%= t("marketplace.cart_pay_hint") %></p>
 
-    <div class="cart-pay-actions" role="group" aria-label="<%= t("marketplace.payment_methods") %>">
-      <%= button_to t("marketplace.pay_vipps"), checkout_path,
-            method: :post, params: { provider: "vipps" },
-            class: "btn btn-primary cart-pay-vipps",
-            form: { data: { turbo: false } } %>
-      <%= button_to t("marketplace.pay_stripe"), checkout_path,
-            method: :post, params: { provider: "stripe" },
-            class: "btn btn-ghost cart-pay-stripe",
-            form: { data: { turbo: false } } %>
-    </div>
+    <% vipps_ready = Marketplace::Payments::VippsCheckout.configured? %>
+    <% stripe_ready = Marketplace::Payments::StripeCheckout.configured? &&
+         !(Rails.env.production? && Marketplace::Payments::StripeCheckout.test_key?) %>
+    <% if vipps_ready || stripe_ready %>
+      <div class="cart-pay-actions" role="group" aria-label="<%= t("marketplace.payment_methods") %>">
+        <% if vipps_ready %>
+          <%= button_to t("marketplace.pay_vipps"), checkout_path,
+                method: :post, params: { provider: "vipps" },
+                class: "btn btn-primary cart-pay-vipps",
+                form: { data: { turbo: false } } %>
+        <% end %>
+        <% if stripe_ready %>
+          <%= button_to t("marketplace.pay_stripe"), checkout_path,
+                method: :post, params: { provider: "stripe" },
+                class: "btn btn-ghost cart-pay-stripe",
+                form: { data: { turbo: false } } %>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="hint mt-8" role="status"><%= t("marketplace.cart_pay_unavailable") %></p>
+    <% end %>
     <p class="hint mt-8"><%= t("marketplace.cart_honest_pay") %></p>
 
     <%= button_to t("marketplace.send_all_offers"), send_offers_cart_path,

@@ -9,6 +9,7 @@ require_relative "../../gates/support/geometry_autofix"
 require_relative "../../gates/lib/gate_mutation"
 require_relative "../../gates/lib/layout_snapshot"
 require_relative "../../gates/support/geometry_probe"
+require_relative "../../gates/lib/geometry_type"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 # Unit coverage for the pure logic behind the browser-backed gates. Nothing
@@ -270,5 +271,55 @@ class RenderedGatesTest < Minitest::Test
     map = Deploy::GeometryProbe.host_map
     assert map.keys.any? { |h| h.end_with?("brgen.no") }, "brgen verticals must be resolvable"
     assert map.values.all? { |v| v.start_with?("127.0.0.1:") }
+  end
+
+  FakeResult = Struct.new(:fails) do
+    def initialize
+      super([])
+    end
+
+    def fail(msg, severity: :soft)
+      fails << msg
+    end
+  end
+
+  def type_surface(label, width = 1440)
+    Deploy::GeometryProbe::Surface.new(
+      app: "brgen", label: label, host: nil, path: "/", viewport: "desktop",
+      width: width, height: 900, snapshot: false, port: 38_182
+    )
+  end
+
+  def test_marketplace_wears_the_catalog_profile
+    assert_equal "catalog", Deploy::GeometryType.profile_for("marketplace")
+    assert Deploy::GeometryType.profile("marketplace")["require_tabular_nums"]
+  end
+
+  def test_dating_and_playlist_wear_immersive
+    assert_equal "immersive", Deploy::GeometryType.profile_for("dating")
+    assert_equal "immersive", Deploy::GeometryType.profile_for("playlist")
+    assert_equal 0, Deploy::GeometryType.profile("dating")["measure_min_ch"]
+  end
+
+  def test_worn_measure_flags_prose_outside_the_profile
+    result = FakeResult.new
+    data = { "prose" => [{ "sel" => "p.body", "ch" => 90 }, { "sel" => "p.lede", "ch" => 88 }] }
+    Deploy::GeometryType.check_measure(result, type_surface("core"), data, Deploy::GeometryType.profile("feed"))
+    assert result.fails.any? { |m| m.include?("bringhurst") }, result.fails.inspect
+  end
+
+  def test_catalog_flags_prices_without_tabular_nums
+    result = FakeResult.new
+    data = { "tabular" => [{ "sel" => ".deal-price", "numeric" => "normal", "text" => "kr 100" }] }
+    Deploy::GeometryType.check_tabular(result, type_surface("marketplace"), data, Deploy::GeometryType.profile("marketplace"))
+    assert result.fails.any? { |m| m.include?("tabular") }, result.fails.inspect
+  end
+
+  def test_type_walk_script_is_present
+    path = File.join(__dir__, "../../gates/support/geometry_type_walk.js")
+    src = File.read(path)
+    assert_includes src, "firstLineChars"
+    assert_includes src, "empty_ratio"
+    assert_includes src, "fontVariantNumeric"
   end
 end

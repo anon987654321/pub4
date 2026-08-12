@@ -6,7 +6,12 @@ typography:
     ideal_ch: 66
     mobile_min_ch: 35
     mobile_max_ch: 50
-    action: Flag readable prose blocks outside range. Prefer max-width in ch units.
+    # The x.com-shaped feed is a short measure on purpose: --feed-max 600px at
+    # brgen's 18px root is ~45ch, not 66. Legal/prose keeps ideal_ch. Worn
+    # measure is geometry_type.rb reading worn_type.profiles, not this token.
+    feed_min_ch: 35
+    feed_max_ch: 55
+    action: Flag readable prose blocks outside range. Prefer max-width in ch units. Count worn characters, not the CSS token.
   line_height:
     body_min: 1.4
     body_max: 1.6
@@ -420,6 +425,77 @@ ux_laws:
   progressive_disclosure:
     require_advanced_hidden: true
     action: Advanced/secondary controls should start collapsed or on secondary surfaces.
+
+# Worn type — what the visitor sees, not what the stylesheet declares.
+# Reader: RAILS/gates/lib/geometry_type.rb (and GeometryProbe TYPE_WALK).
+# MASTER/lib/design/thresholds.rb#worn_profile is the Ruby face.
+# A profile with no reader is inert; test_design_rules_worn_type.rb holds that.
+worn_type:
+  type_scale_ratio: 1.25
+  type_scale_tolerance_px: 1.5
+  baseline_module_px: 4
+  hanging_marker_max_inset_px: 0
+  golden_split:
+    min: 0.55
+    max: 0.70
+  profiles:
+    feed:
+      measure_min_ch: 35
+      measure_max_ch: 55
+      mobile_min_ch: 30
+      mobile_max_ch: 50
+      rhythm_off_max_pct: 25
+      empty_min_pct: 20
+      empty_max_pct: 75
+      accents_max: 2
+    catalog:
+      measure_min_ch: 20
+      measure_max_ch: 50
+      rhythm_off_max_pct: 15
+      empty_min_pct: 15
+      empty_max_pct: 70
+      accents_max: 2
+      require_tabular_nums: true
+    chat:
+      measure_min_ch: 0
+      measure_max_ch: 0
+      rhythm_off_max_pct: 45
+      empty_min_pct: 10
+      empty_max_pct: 85
+      accents_max: 2
+    immersive:
+      measure_min_ch: 0
+      measure_max_ch: 0
+      rhythm_off_max_pct: 40
+      empty_min_pct: 8
+      empty_max_pct: 90
+      accents_max: 2
+    map:
+      measure_min_ch: 0
+      measure_max_ch: 0
+      label_min_px: 12
+      rhythm_off_max_pct: 40
+      empty_min_pct: 0
+      empty_max_pct: 100
+      accents_max: 2
+    legal:
+      measure_min_ch: 55
+      measure_max_ch: 75
+      rhythm_off_max_pct: 20
+      empty_min_pct: 25
+      empty_max_pct: 70
+      accents_max: 1
+    auth:
+      measure_min_ch: 0
+      measure_max_ch: 0
+      rhythm_off_max_pct: 30
+      empty_min_pct: 20
+      empty_max_pct: 80
+      accents_max: 2
+  action: >
+    Judge each surface under its profile. Count worn characters, computed
+    sizes, baselines, tabular figures, accent hues, empty ratio, and
+    main/aside split. Do not grep stylesheets for these.
 pixel_perfection:
   forbidden_css:
   - box-shadow

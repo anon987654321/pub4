@@ -80,19 +80,19 @@ others.
 - `RAILS/_deploy.sh` gates its two seed steps on `SEED_ON_DEPLOY=1` and
   `DEMO_SEED_ON_DEPLOY=1`.
 
-`RAILS/README.md` documented only `RUN_PRODUCTION_SEEDS`. Anyone following the
-README while deploying through `deploy.sh` sets a variable that nothing in that
-path reads, gets no error, and concludes seeds ran.
+`RAILS/_deploy.sh` now treats `RUN_PRODUCTION_SEEDS=1` as an alias for
+`SEED_ON_DEPLOY=1`, so the name the README documents is no longer inert.
+The two paths still exist: OPERATOR seeds once on first install, deploy.sh
+seeds on each deploy that asks. That split is deliberate.
 
 **Owner:** RAILS.
 
 **Unblock criteria**
 
-- One name, or a documented reason the two paths seed differently.
-- The unread name fails loudly rather than silently, per the repo's own
-  inert-config rule.
+- One name, or a documented reason the two paths seed differently. The
+  alias is the documented reason.
 
-**Checked by:** nothing yet.
+**Checked by:** `RAILS/_deploy.sh` reads `RUN_PRODUCTION_SEEDS`.
 
 ---
 

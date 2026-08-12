@@ -24,6 +24,19 @@
       <%= f.label :password_confirmation, t("auth.confirm_password") %>
       <%= password_visibility_field f, :password_confirmation, required: true, autocomplete: "new-password", maxlength: 72 %>
     </div>
+    <div class="field">
+      <label>
+        <%= check_box_tag :accept_age, "1", params[:accept_age] == "1", required: true %>
+        <%= t("legal.accept_age") %>
+      </label>
+    </div>
+    <div class="field">
+      <label>
+        <%= check_box_tag :accept_terms, "1", params[:accept_terms] == "1", required: true %>
+        <%= t("legal.accept_terms") %>
+        (<%= link_to t("legal.terms"), terms_path %> · <%= link_to t("legal.privacy"), privacy_path %>)
+      </label>
+    </div>
     <div class="actions">
       <%# Honeypot: hidden from humans, catnip for bots. Any value fails signup. %>
       <div class="hp-field" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden">

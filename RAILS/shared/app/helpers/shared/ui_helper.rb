@@ -252,5 +252,17 @@ module Shared
       aria[:current] = "page" if active
       aria
     end
+
+    def legal_app_key
+      Rails.application.class.module_parent_name.to_s.downcase
+    end
+
+    def legal_contact_email
+      ENV["SITE_CONTACT_EMAIL"].to_s.strip.presence || "personvern@brgen.no"
+    end
+
+    def legal_social_network?
+      %w[brgen amber].include?(legal_app_key)
+    end
   end
 end

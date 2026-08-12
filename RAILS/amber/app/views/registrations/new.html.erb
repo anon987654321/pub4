@@ -14,6 +14,19 @@
       <%= f.label :password_confirmation, t("auth.confirm_password") %>
       <%= password_visibility_field f, :password_confirmation, autocomplete: "new-password" %>
     </div>
+    <div class="field">
+      <label>
+        <%= check_box_tag :accept_age, "1", params[:accept_age] == "1", required: true %>
+        <%= t("legal.accept_age") %>
+      </label>
+    </div>
+    <div class="field">
+      <label>
+        <%= check_box_tag :accept_terms, "1", params[:accept_terms] == "1", required: true %>
+        <%= t("legal.accept_terms") %>
+        (<%= link_to t("legal.terms"), terms_path %> · <%= link_to t("legal.privacy"), privacy_path %>)
+      </label>
+    </div>
     <div class="actions">
       <%= f.submit t("auth.create_account"), class: "btn btn--primary" %>
     </div>

@@ -8,7 +8,7 @@ class Takeaway::OrderItem < ApplicationRecord
   validate :menu_item_must_be_available
 
   def subtotal_cents = unit_price_cents * quantity
-  def subtotal_display = "#{subtotal_cents / 100.0} NOK"
+  def subtotal_display = Shared::MoneyDisplay.format(subtotal_cents)
 
   private
 

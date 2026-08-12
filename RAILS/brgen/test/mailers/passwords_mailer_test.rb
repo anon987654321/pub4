@@ -15,7 +15,8 @@ class PasswordsMailerTest < ActionMailer::TestCase
     html = mail.html_part || mail
 
     assert_equal ["reset-brgen@example.com"], mail.to
-    assert_equal "Reset your password", mail.subject
+    assert_equal I18n.t("mailer.password_reset_subject"), mail.subject
+    assert_match(/brgen\.no/, mail.from.join)
     assert_match(/password/i, html.body.to_s)
     assert_match(/x-apple-disable-message-reformatting/, html.body.to_s,
                  "expected the engine layout, not Rails' generated stub")

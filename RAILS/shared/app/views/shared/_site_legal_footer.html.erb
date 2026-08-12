@@ -1,6 +1,5 @@
-<%# Minimal legal footer — required to be reachable for GDPR + TradeDoubler.
-    Flat (no shadow/blur), hidden on immersive verticals so it never covers a
-    swipe surface. Styles are scoped inline to avoid an asset rebuild. %>
+<%# Minimal legal footer — GDPR + publisher review. Flat. Dating hides this
+    because its intro is a swipe surface; those links live on the intro. %>
 <style>
   .site-legal{max-width:1100px;margin:40px auto 0;padding:18px 20px 28px;
     border-top:1px solid var(--border,#e4e2db);display:flex;flex-wrap:wrap;
@@ -10,9 +9,6 @@
   .site-legal a:hover{color:var(--text,#16181c);text-decoration:underline}
   .site-legal .affiliate-fine{margin:0;flex:1 1 260px;min-width:0;
     color:var(--text-secondary,#6b7178);font-size:12px;line-height:1.5}
-  /* The verification line is not fine print. TradeDoubler's publisher team has
-     to read the Site ID off this page, so it takes the footer's own 13px and
-     the primary ink rather than the 12px secondary the disclosure uses. */
   .site-legal .site-verify{flex-basis:100%;font-size:13px;
     color:var(--text,#16181c);display:flex;flex-wrap:wrap;gap:6px 18px}
   .site-legal .site-verify strong{font-weight:700}
@@ -27,15 +23,18 @@
   .legal-prose ul{padding-left:1.1rem}
   .legal-prose .legal-nav{display:flex;gap:16px;margin-top:34px;
     padding-top:16px;border-top:1px solid var(--border,#e4e2db);font-size:14px}
-  /* Dating's intro is a full-screen swipe surface; legal links live in that
-     intro instead. Other verticals keep the footer so privacy is one tap away. */
   body.vertical-dating .site-legal{display:none}
 </style>
+<%
+  privacy_href = respond_to?(:privacy_path) ? privacy_path : main_app.privacy_path
+  terms_href = respond_to?(:terms_path) ? terms_path : main_app.terms_path
+  cookies_href = respond_to?(:cookies_path) ? cookies_path : main_app.cookies_path
+%>
 <footer class="site-legal" role="contentinfo">
-  <nav aria-label="<%= t("legal.aria", default: "Legal and information") %>">
-    <%= link_to t("legal.privacy", default: "Privacy"), main_app.privacy_path %>
-    <%= link_to t("legal.terms", default: "Terms"), main_app.terms_path %>
-    <%= link_to t("legal.cookies", default: "Cookies"), main_app.cookies_path %>
+  <nav aria-label="<%= t("legal.aria") %>">
+    <%= link_to t("legal.privacy"), privacy_href %>
+    <%= link_to t("legal.terms"), terms_href %>
+    <%= link_to t("legal.cookies"), cookies_href %>
   </nav>
   <%= render "shared/affiliate_disclosure" %>
 </footer>

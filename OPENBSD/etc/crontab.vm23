@@ -37,3 +37,8 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 
 # renew-certs — weekly ACME renewal (stage-1 installs renew-certs.sh)
 0 2 * * 1 /usr/local/bin/renew-certs.sh >> /var/log/cert-renewal.log 2>&1
+
+# uptime-check — public /up on every apps.yml host. Installed to
+# /usr/local/bin so root cron does not exec the checkout. Wrapper lives
+# in OPENBSD/usr/local/bin/uptime-check.sh.
+*/5 * * * * /usr/local/bin/uptime-check.sh >> /var/log/uptime-check.log 2>&1

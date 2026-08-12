@@ -68,6 +68,14 @@ Nothing about the mechanism changes — this only stops the file claiming an
 invariant that three raises have already disproved. A number nobody believes is
 worse than a budget everybody reads.
 
+## Worn Type Is What The Visitor Sees (2026-08-12)
+
+`design_rules.yml` already stated Bringhurst's 66ch, a modular scale, a golden split, and Vignelli's one-accent budget. `design_metrics` grepped stylesheets for those numbers. A 600px feed at brgen's 18px root is a short measure (~45ch), not 66ch, and the two sources disagreed in silence.
+
+The law is now `worn_type:` in the same file. `RAILS/gates/lib/geometry_type.rb` is the reader: it takes the probe's worn characters, computed sizes, baselines, tabular figures, accent hues, empty ratio, and main/aside split, and judges each surface under a named profile (`feed`, `catalog`, `chat`, `immersive`, `map`, `legal`, `auth`). `--feed-max: 600px` stays the feed column. `measure_body: 66ch` stays the legal/prose column. They are different jobs.
+
+`Master::Design::Thresholds.worn_profile` is the Ruby face. `MASTER/test/test_design_rules_worn_type.rb` fails if a profile has no reader.
+
 ## Rule Data Folded Into One File (2026-08-12)
 
 **This reverses "Rule Data Stays Split", by the same operator instruction as the spine merge.**

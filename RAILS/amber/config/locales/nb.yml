@@ -332,7 +332,7 @@ nb:
     outfit: "Antrekk"
   install:
     title: "Installer Amber"
-    body: "Garderoben offline — antrekk og bruks-sporing fra hjem-skjermen."
+    body: "Amber på hjem-skjermen — feed, antrekk og bruks-sporing når du er på nett."
     not_now: "Ikke nå"
     action: "Installer"
 
@@ -636,7 +636,7 @@ nb:
     support: "Støtte"
     contact: "Kontakt"
     language: "Språk"
-    tagline: "AI-garderobestyring."
+    tagline: "Sosial mote — antrekk, garderobe og folk du følger."
     locales:
       nb: "Norsk"
       en: "English"

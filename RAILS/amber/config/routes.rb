@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   resource :registration, only: %i[new create]
 
   resource :session, only: %i[new create destroy]
+  instance_eval(File.read(File.expand_path("../../shared/config/routes/legal.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../shared/config/routes/verification.rb", __dir__)))
   post "fingerprint" => "fingerprints#create"

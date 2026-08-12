@@ -6,6 +6,12 @@ class RegistrationsController < ApplicationController
   def new = render
 
   def create
+    unless params[:accept_terms] == "1" && params[:accept_age] == "1"
+      flash.now[:alert] = t("legal.accept_terms")
+      render :new, status: :unprocessable_entity
+      return
+    end
+
     user = User.new(registration_params)
     if user.save
       start_new_session_for user

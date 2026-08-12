@@ -5,7 +5,7 @@ module Shared
     def sign_in(user, token)
       @user = user
       @url = magic_link_url(token)
-      mail(to: user.email_address, subject: "Sign in link")
+      mail(to: user.email_address, subject: I18n.t("mailer.sign_in_link_subject"))
     end
 
     private

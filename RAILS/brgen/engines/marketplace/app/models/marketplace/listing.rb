@@ -73,7 +73,7 @@ class Marketplace::Listing < ApplicationRecord
     value.to_f.clamp(1.0, MAX_RADIUS_KM)
   end
 
-  def price_display = "#{price_cents / 100.0} #{currency}"
+  def price_display = Shared::MoneyDisplay.format(price_cents, currency)
   def sold? = status == "sold"
   def favorite_for(user) = favorites.find_by(user: user)
   def store_name = store&.name

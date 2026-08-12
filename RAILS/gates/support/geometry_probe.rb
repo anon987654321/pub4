@@ -6,6 +6,7 @@ require_relative "../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../tools/crawl_support"
 require_relative "cdp_session"
 require_relative "brgen_vertical_surfaces"
+require_relative "../lib/geometry_type" # worn-type walk; see GeometryType.probe
 
 module Deploy
   # The shared measurement substrate: one DOM walk per surface returning what
@@ -20,7 +21,7 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__)
     DATA = File.join(File.expand_path("..", __dir__), "data", "geometry_surfaces.yml")
 
-    Surface = Struct.new(:app, :label, :host, :path, :viewport, :width, :height, :snapshot, :port, keyword_init: true) do
+    Surface = Struct.new(:app, :label, :host, :path, :viewport, :width, :height, :snapshot, :port, :profile, keyword_init: true) do
       def id = "#{app}/#{label}/#{viewport}"
 
       # A surface without a declared host is probed over loopback. Only brgen
@@ -56,7 +57,7 @@ module Deploy
               w, h = vps.fetch(vp)
               rows << Surface.new(app: "brgen", label: s[:label], host: s[:host], path: s[:path],
                                   viewport: vp, width: w, height: h, snapshot: true,
-                                  port: ports["brgen"])
+                                  port: ports["brgen"], profile: s[:profile])
             end
           end
         end
@@ -67,7 +68,8 @@ module Deploy
             app = s.fetch("app")
             rows << Surface.new(app: app, label: s.fetch("label"), host: s["host"],
                                 path: s.fetch("path"), viewport: vp, width: w, height: h,
-                                snapshot: !!s["snapshot"], port: ports[app])
+                                snapshot: !!s["snapshot"], port: ports[app],
+                                profile: s["profile"])
           end
         end
         filter(rows)
@@ -536,7 +538,7 @@ module Deploy
       # Status first. A 403 host-authorization page or a 500 renders a
       # perfectly measurable DOM that has nothing to do with the design, and
       # grading it produces confident nonsense.
-      cdp.evaluate(WALK).merge("status" => cdp.status)
+      cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge("status" => cdp.status)
     rescue CdpSession::Error => e
       { "error" => "#{e.class.name.split('::').last}: #{e.message}" }
     end

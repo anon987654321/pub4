@@ -18,7 +18,8 @@ class PasswordsMailerTest < ActionMailer::TestCase
     mail = PasswordsMailer.reset(user)
 
     assert_equal [ "reset-test@example.com" ], mail.to
-    assert_equal "Reset your password", mail.subject
+    assert_equal I18n.t("mailer.password_reset_subject"), mail.subject
+    assert_match(/brgen\.no/, mail.from.join)
 
     html = mail.html_part || mail
     text = mail.text_part || mail

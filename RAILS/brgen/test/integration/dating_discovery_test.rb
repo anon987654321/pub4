@@ -34,4 +34,22 @@ class DatingDiscoveryTest < ActiveSupport::TestCase
     ids = Dating::Profile.oriented_for(viewer).pluck(:id)
     assert_includes ids, open.id
   end
+
+  test "a dating profile requires an adult age" do
+    u = User.create!(email_address: "age-#{SecureRandom.hex(4)}@brgen.no",
+                     password: "password12345", username: "a_#{SecureRandom.hex(3)}", city: @city)
+    missing = Dating::Profile.new(user: u, visible: true)
+    under = Dating::Profile.new(user: u, visible: true, age: 17)
+
+    assert_not missing.valid?
+    assert_not under.valid?
+  end
+
+  test "visible discovery never includes anyone under 18" do
+    adult = profile("woman", "man")
+    ids = Dating::Profile.visible.pluck(:id)
+
+    assert_includes ids, adult.id
+    assert Dating::Profile.visible.where("age < 18").none?
+  end
 end

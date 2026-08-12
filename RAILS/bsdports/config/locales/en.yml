@@ -90,6 +90,9 @@ en:
     categories: "Categories"
     categories_section_label: "Port categories"
     empty_body: "Try another query — e.g. git, python, or a category."
+    empty_unimported: "The catalogue is empty because the OpenBSD index has not been imported on this server yet. This is not a failed search."
+    last_import: "Last import: %{status} · %{count} ports · %{when}"
+    never_imported: "No import has been run."
     header_page_label: "OpenBSD ports header"
     list_label: "OpenBSD ports list"
     purpose: "Answer three questions quickly: what package is this, can this machine install it, and what does the local advisory index know?"
@@ -102,6 +105,7 @@ en:
     confirm_delete_comment: "Delete this comment?"
   empty:
     no_ports: "No ports found"
+    no_catalog: "No ports imported"
     no_categories: "No categories"
     no_categories_search: "No categories match this search."
     no_maintainers: "No maintainers"

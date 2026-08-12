@@ -118,34 +118,21 @@ open:
       waivable only through ALLOW_BSDPORTS_DOWN, and the contract test asserts
       requiredness per endpoint plus that every waiver variable still gates
       something (mutation-checked against the old shape).
-      TWO CONCRETE ACTIONS STILL OPEN, both verified missing 2026-08-11:
-      (a) OPENBSD/bin/uptime-check.sh already fails correctly when an app is down,
-          and NOTHING runs it — no line in etc/crontab.vm23, and OPERATOR.sh does
-          not install it to /usr/local/bin. A checker on no schedule is why the
-          length of this outage is unknown. Needs the install + cron line, which is
-          a root run.
-      (b) Deploy::GateResult.require_live? (OPENBSD/lib/gate_result.rb) turns
-          "port closed, skipping" into a failure, and NO runner sets
-          GATE_REQUIRE_LIVE=1. So layout_geometry still reports PASSED having
-          skipped all 17 of its checks when nothing is listening, and user_flow /
-          payment_honesty skip their live halves the same way. The mechanism exists;
-          the deploy path does not use it.
+      REPO HALF CLOSED 2026-08-12: etc/crontab.vm23 schedules
+      /usr/local/bin/uptime-check.sh every 5 minutes; OPERATOR.sh stage 1
+      installs OPENBSD/usr/local/bin/uptime-check.sh. Still open:
+      (a) the root run that copies those two files onto vm23.
+      (b) OPENBSD/bin/check-rails --profile=full now sets GATE_REQUIRE_LIVE=1
+          on rendered_suite. Local contributor runs still degrade. A laptop
+          `full` with no apps listening will fail rather than skip.
 
   - id: brgen_city_carousel_links_dead
     tag: operator-priority
     summary: >
-      brgen/app/views/layouts/application.html.erb:144-154 renders 29 city domains
-      as real anchors (`https://<domain>/`) on every page of every surface, and the
-      live homepage ships all 29. They do not resolve: 6/6 sampled 2026-08-03
-      (longyearbyn.no, stvanger.no, trndheim.no, kbenhvn.dk, lndon.uk, newyrk.us)
-      fail to connect. brgen is a one-city platform advertising a network of 29 that
-      is not there, on 100% of pageviews.
-      Operator-priority because the fix is a product/money call: buy and stand up
-      the domains (registrar spend + relayd/acme work per city, tracked as the
-      city-domains task) or stop rendering links to hosts that do not answer. Cheap
-      middle path: gate the list on a periodically-refreshed reachability check and
-      render only the live ones — degrades to "just brgen.no" today and grows by
-      itself as cities come up.
+      The carousel now iterates DomainRegistry::LIVE_DOMAINS (brgen.no, oshlo.no)
+      only. What remains is the product/money call: stand up the other city
+      apexes, or accept a two-city network. Linking dead hosts is no longer the
+      visitor-facing defect.
 
   - id: amber_moving_to_its_own_apex
     tag: operator-priority

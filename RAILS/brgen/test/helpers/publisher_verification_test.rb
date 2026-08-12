@@ -24,6 +24,14 @@ class PublisherVerificationTest < ActionDispatch::IntegrationTest
     old.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
   end
 
+  test "privacy terms and cookies are public" do
+    %w[/privacy /terms /cookies].each do |path|
+      get path
+      assert_response :success, path
+      assert_includes response.body, "legal-prose"
+    end
+  end
+
   test "the site id and contact email render on the front page for a signed-out visitor" do
     with_env("TRADEDOUBLER_SITE_ID" => "24680", "SITE_CONTACT_EMAIL" => "verify@example.test") do
       get root_path

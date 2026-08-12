@@ -333,7 +333,7 @@ en:
     outfit: "Outfit"
   install:
     title: "Install Amber"
-    body: "Your wardrobe offline — outfits and wear tracking on the home screen."
+    body: "Amber on the home screen — feed, outfits and wear tracking when you are online."
     not_now: "Not now"
     action: "Install"
 
@@ -638,7 +638,7 @@ en:
     support: "Support"
     contact: "Contact"
     language: "Language"
-    tagline: "AI wardrobe management."
+    tagline: "Social fashion — outfits, wardrobe, and people you follow."
     locales:
       nb: "Norsk"
       en: "English"

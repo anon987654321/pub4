@@ -90,6 +90,9 @@ nb:
     categories: "Kategorier"
     categories_section_label: "Portkategorier"
     empty_body: "Prøv et annet søk — for eksempel git, python eller en kategori."
+    empty_unimported: "Katalogen er tom fordi OpenBSD-indeksen ikke er importert på denne serveren ennå. Det er ikke et søk uten treff."
+    last_import: "Siste import: %{status} · %{count} porter · %{when}"
+    never_imported: "Ingen importering er kjørt."
     header_page_label: "Hode for OpenBSD-porter"
     list_label: "Liste over OpenBSD-porter"
     purpose: "Svar raskt på tre spørsmål: hvilken pakke er dette, kan denne maskinen installere den, og hva vet den lokale varselindeksen?"
@@ -102,6 +105,7 @@ nb:
     confirm_delete_comment: "Slette denne kommentaren?"
   empty:
     no_ports: "Ingen porter funnet"
+    no_catalog: "Ingen porter importert"
     no_categories: "Ingen kategorier"
     no_categories_search: "Ingen kategorier matcher søket."
     no_maintainers: "Ingen maintainere"

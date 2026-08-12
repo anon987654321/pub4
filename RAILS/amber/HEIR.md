@@ -1,6 +1,6 @@
 # Amber — heir / operator one-pager
 
-Amber is a **circular wardrobe** app (`amber.brgen.no`). Day-to-day it should run without engineering. This page is for the person who inherits stewardship.
+Amber is a **social fashion** app (`amber.brgen.no`) — feed, follows, outfits and a wardrobe, sharing the same social stack as brgen. Day-to-day it should run without engineering. This page is for the person who inherits stewardship.
 
 ## What you do
 

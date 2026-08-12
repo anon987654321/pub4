@@ -29,7 +29,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "creating an account signs the visitor in as a real user" do
-    post users_path, params: { user: {
+    post users_path, params: { accept_terms: "1", accept_age: "1", user: {
       email_address: "newcomer@example.test",
       username: "newcomer",
       password: "password123",
@@ -51,7 +51,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     guest_post = Post.where(user: guest).order(created_at: :desc).first
     assert guest_post, "expected the guest to have posted"
 
-    post users_path, params: { user: {
+    post users_path, params: { accept_terms: "1", accept_age: "1", user: {
       email_address: "carryover@example.test",
       password: "password123",
       password_confirmation: "password123"
@@ -60,6 +60,17 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     user = User.find_by(email_address: "carryover@example.test")
     assert_equal user.id, Post.strict_loading(false).find(guest_post.id).user_id
+  end
+
+  test "signup without accepting terms creates no account" do
+    assert_no_difference -> { User.where(guest: false).count } do
+      post users_path, params: { user: {
+        email_address: "noterms@example.test",
+        password: "password123",
+        password_confirmation: "password123"
+      } }
+    end
+    assert_response :unprocessable_entity
   end
 
   test "an invalid signup re-renders the form instead of erroring" do

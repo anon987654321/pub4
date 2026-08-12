@@ -19,6 +19,8 @@ class PortsController < ApplicationController
       format.html do
         @pagy, @ports = pagy(scope)
         @categories = Category.order(:name)
+        @catalog_empty = !Port.exists?
+        @last_import = ImportRun.recent.first if defined?(ImportRun)
         finish_live_search(partial: "ports/live_search_results")
       end
       format.rss do

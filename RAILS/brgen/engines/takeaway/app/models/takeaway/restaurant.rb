@@ -45,11 +45,11 @@ class Takeaway::Restaurant < ApplicationRecord
   end
 
   def delivery_fee_display
-    format("%.2f NOK", delivery_fee_cents.to_i / CENTS_PER_KRONE)
+    Shared::MoneyDisplay.format(delivery_fee_cents)
   end
 
   def min_order_display
-    format("%.2f NOK", min_order_cents.to_i / CENTS_PER_KRONE)
+    Shared::MoneyDisplay.format(min_order_cents)
   end
 
   def update_rating!

@@ -31,11 +31,7 @@ Rails.application.routes.draw do
   post   "posts/:post_id/bookmark" => "bookmarks#create",  as: :bookmark_post
   delete "posts/:post_id/bookmark" => "bookmarks#destroy", as: :unbookmark_post
 
-  # Legal / info pages, reachable on every city domain without an account
-  # (GDPR + TradeDoubler both require them public). See PagesController.
-  %w[privacy terms cookies].each do |legal_page|
-    get legal_page, to: "pages#show", defaults: { page: legal_page }, as: legal_page
-  end
+  instance_eval(File.read(File.expand_path("../../shared/config/routes/legal.rb", __dir__)))
 
   jobs_constraint = lambda { |request|
     session_id = request.cookie_jar.signed[:session_id]

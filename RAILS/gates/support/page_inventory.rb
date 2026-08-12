@@ -72,6 +72,7 @@ module Deploy
       %w[passwords edit] => { path: "/passwords/:token/edit", persona: "guest", needs_id: true },
       # bsdports keeps the social routes behind BSDPORTS_SOCIAL=1.
       %w[notifications index] => { path: "/notifications", persona: "auth", apps: %w[brgen amber] },
+      %w[pages privacy] => { path: "/privacy", persona: "guest" }, %w[pages terms] => { path: "/terms", persona: "guest" }, %w[pages cookies] => { path: "/cookies", persona: "guest" },
     }.freeze
 
     # Rendered by MasterGuestHome inside each app's own home action, so the home row covers it.
@@ -90,8 +91,7 @@ module Deploy
       { id: "bsdports/home", path: "/", persona: "guest" },
       { id: "bsdports/ports", path: "/ports", persona: "guest" },
       { id: "bsdports/categories", path: "/categories", persona: "guest" },
-      { id: "bsdports/maintainers", path: "/maintainers", persona: "guest" },
-      { id: "bsdports/session", path: "/session/new", persona: "guest" },
+      { id: "bsdports/maintainers", path: "/maintainers", persona: "guest" }, { id: "bsdports/session", path: "/session/new", persona: "guest" },
     ].freeze
 
     module_function

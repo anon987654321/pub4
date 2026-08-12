@@ -24,6 +24,17 @@ class SharedSocialRoutesTest < Minitest::Test
     end
   end
 
+  def test_every_app_evals_shared_legal_routes
+    %w[amber brgen bsdports].each do |app|
+      routes = File.read(File.join(ROOT, app, "config/routes.rb"))
+      assert_includes routes, "shared/config/routes/legal.rb", "#{app} must eval shared legal routes"
+    end
+    legal = File.read(File.join(ROOT, "shared/config/routes/legal.rb"))
+    %w[privacy terms cookies].each do |page|
+      assert_includes legal, page
+    end
+  end
+
   def test_bsdports_social_is_opt_in
     routes = File.read(File.join(ROOT, "bsdports", "config/routes.rb"))
     assert_includes routes, "BSDPORTS_SOCIAL"

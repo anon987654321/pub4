@@ -42,7 +42,7 @@
         rather than characters. Bare text nodes between spans would become
         anonymous flex items and the gap would land inside a pair, not between. %>
     <p class="profile-meta">
-      <span><span class="dim">Age</span> · <%= @profile.age || "—" %></span>
+      <span><span class="dim"><%= t("dating.age") %></span> · <%= @profile.age || "—" %></span>
       <span><span class="dim">Gender</span> · <%= @profile.gender || "—" %></span>
       <span><span class="dim"><%= t("dating.looking_for") %></span> · <%= @profile.looking_for || "—" %></span>
     </p>

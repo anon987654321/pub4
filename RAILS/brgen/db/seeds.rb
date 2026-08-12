@@ -18,7 +18,7 @@ if Rails.env.production? && City.table_exists?
   puts "Production seed: Bergen demo only (skipping Faker flood)."
   User.find_or_create_by!(email_address: "admin@brgen.no") do |u|
     u.username = "admin"
-    u.password = u.password_confirmation = ENV.fetch("ADMIN_SEED_PASSWORD", "password123")
+    u.password = u.password_confirmation = ENV["ADMIN_SEED_PASSWORD"].to_s.tap { |p| raise "set ADMIN_SEED_PASSWORD" if p.empty? || p == "password123" }
   end
   if (bergen = City.find_by(domain: "brgen.no"))
     Brgen::BergenDemoSeeder.new(bergen).seed!
