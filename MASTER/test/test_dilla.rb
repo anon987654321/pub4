@@ -2560,6 +2560,88 @@ class TestDilla < Minitest::Test
     end
   end
 
+  # How much of the shared spine each renderer reaches, as a ratchet.
+  #
+  # The existing spine test asks whether the techno renderer CAN reach harmony.
+  # This asks how much of it every renderer reaches, and refuses to let any of
+  # them reach less than they do today. Genre is meant to be a parameter, and
+  # the way it stops being one is a renderer quietly growing its own copy of
+  # something the spine already does.
+  #
+  # Transitively, one level of calls deep, which matters: measured on each
+  # method's own body, render_hate_techno reads as not reaching the sampled bed,
+  # and it does reach it — through techno_bed_part!. A reach measurement that
+  # only reads the entry method reports forks that are not there, and this one
+  # did before it followed calls.
+  #
+  # The baseline is what is true today, not what should be. Two renderers do not
+  # reach the bed and three do not reach the arrangement, and in the techno
+  # renderer's case that is because it HAS an arrangement — hate_gate, a second
+  # implementation of section_layer_windows in a different vocabulary. Merging
+  # them changes how every techno set sounds, so it stays the operator's call;
+  # what this stops is the number going the other way.
+  GENRE_SPINE_BASELINE = {
+    "render_dilla" => %w[harmony bed groove arrangement],
+    "render_hate_techno" => %w[harmony bed groove],
+    "render_industrial" => %w[harmony groove],
+    "render_analog" => %w[harmony groove],
+  }.freeze
+
+  def test_genre_renderers_reach_of_the_shared_spine_never_narrows
+    result = eval_in_engine(<<~RUBY)
+      src = engine_source
+      index = []
+      src.enum_for(:scan, /\\ndef ([a-z_][\\w?!]*)/).each { index << [Regexp.last_match.begin(0), $1] }
+      bodies = {}
+      index.each_with_index do |(pos, name), i|
+        # Comments stripped, the same rule the wiring ratchets use and for the
+        # same reason. A comment ABOUT the shared arrangement is where this
+        # duplication is documented, and matching it reported hate_gate as
+        # reaching the thing it is a second copy of.
+        body = src[pos, (index[i + 1]&.first || src.length) - pos]
+        bodies[name] ||= body.gsub(/^\\s*#(?!\\{).*$/, "")
+      end
+
+      markers = { "harmony" => /dilla_progression|techno_harmony_roots|generate_progression|voice_lead_chords/,
+                  "bed" => /sample_loop_for|build_sample_loop_filter|_bed_part!/,
+                  "groove" => /dilla_schedule|pocket|swing|groove/,
+                  "arrangement" => /apply_section_envelope|dilla_section|section_layer/ }
+
+      reach = lambda do |name, seen, depth|
+        return {} if depth > 3 || seen[name] || bodies[name].nil?
+        seen[name] = true
+        body = bodies[name]
+        found = markers.transform_values { |re| !!(body =~ re) }
+        body.scan(/\\b([a-z_][\\w]*[!?]?)\\s*\\(/).flatten.uniq.each do |callee|
+          next unless bodies.key?(callee)
+          reach.call(callee, seen, depth + 1).each { |k, v| found[k] ||= v }
+        end
+        found
+      end
+
+      out = {}
+      #{GENRE_SPINE_BASELINE.keys.inspect}.each do |m|
+        r = reach.call(m, {}, 0)
+        out[m] = r.select { |_, v| v }.keys.sort
+      end
+      puts JSON.generate(out)
+    RUBY
+
+    GENRE_SPINE_BASELINE.each do |renderer, expected|
+      actual = result.fetch(renderer, [])
+      missing = expected - actual
+      assert_empty missing,
+                   "#{renderer} stopped reaching #{missing.join(', ')} — genre is a parameter only while the " \
+                   "renderers share the spine, and this is how that quietly stops being true"
+      gained = actual - expected
+      next if gained.empty?
+
+      # Not a failure. A renderer reaching MORE is the direction this wants; the
+      # baseline just has to be updated so the ratchet holds at the new level.
+      puts "NOTE   #{renderer} now also reaches #{gained.join(', ')} — raise GENRE_SPINE_BASELINE"
+    end
+  end
+
   # I cannot hear these renders, so every measurement I take of them is worth
   # exactly what its instrument is worth. This tool reports which dimensions
   # separate the operator's kept takes from their rejected ones, and it got the
