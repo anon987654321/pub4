@@ -184,6 +184,63 @@ class TestScanRuleFalsePositives < Minitest::Test
     refute_empty findings(:veto_patterns, %(def stub\n  ...\nend\n))
   end
 
+  # --- learned_smells must not restate a registered rule ------------------
+  # data/rules.yml's learned_smells layer re-applies raw regexes on top of the
+  # registered rules. Two of the ten were copies: `long_line` produced 334
+  # findings across lib/ of which THREE were at a line no other rule reports —
+  # and all three were in lib/io/llm.rb, which LONG_LINE deliberately exempts, so
+  # the copy was 331 duplicates plus a silent override of an exemption.
+  # `debug_output` carried the same id as the registered rule, making its findings
+  # indistinguishable rather than merely doubled.
+  #
+  # The other eight are the only implementation of what they detect and stay.
+
+  def test_no_learned_smell_shares_an_id_with_a_registered_rule
+    registered = scanner.rules.map { |rule| rule.id.to_s.downcase }
+    clashing = learned_smell_ids.select { |id| registered.include?(id.downcase) }
+
+    assert_empty clashing,
+                 "a learned_smell restates a registered rule, so both fire on the same line and " \
+                 "the findings cannot be told apart: #{clashing.join(', ')}"
+  end
+
+  # The substantive half. An id can differ and the detection still be a copy —
+  # LONG_LINE vs long_line was exactly that.
+  def test_no_learned_smell_reports_what_a_registered_rule_already_reports
+    source = "x = 1\n#{'a' * 130}\n"
+    findings = scanner.rules.flat_map do |rule|
+      next [] unless rule.respond_to?(:check)
+
+      Array(rule.check(source, path: "lib/sample.rb")).map { |f| [f[:line], rule.id.to_s.downcase] }
+    rescue StandardError
+      []
+    end
+    long = findings.select { |line, _| line == 2 }.map(&:last).uniq
+
+    assert_equal 1, long.size,
+                 "more than one rule reports the same long line: #{long.join(', ')}"
+  end
+
+  def learned_smell_ids
+    YAML.safe_load_file(File.expand_path("../data/rules.yml", __dir__), aliases: true)
+        .fetch("learned_smells", []).map { |smell| smell["id"].to_s }
+  end
+
+  # --- NO_PUTS's exemption survived a directory rename --------------------
+  # It read `/now/cli` and lib/now/ was renamed to lib/cli/ in 693d2630d. The
+  # exemption kept pointing at the old address, so 105 findings appeared in
+  # selfcheck's largest actionable bucket — every one in lib/cli/, 100 of them in
+  # lib/cli/cli/, all of them decisions the rule's author had already made.
+
+  def test_no_puts_still_exempts_the_cli_entry_layer
+    assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "lib/cli/cli/repl_flow.rb")
+    assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "bin/master")
+  end
+
+  def test_no_puts_still_catches_a_bare_puts_in_library_code
+    refute_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "lib/ground/rules.rb")
+  end
+
   # --- veto sql_injection -------------------------------------------------
   # Was `execute|query.*#\{`, which binds as `(execute)|(query.*#\{)` — so the
   # bare word `execute` anywhere on a line was an unconditional merge blocker.

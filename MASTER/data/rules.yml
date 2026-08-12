@@ -741,21 +741,17 @@ learned_smells:
   pattern: "[ \\t]+$"
   confidence: 0.99
   autofix: strip_trailing_whitespace
-- id: debug_output
-  # Was "\b(?:puts|p|pp|warn)\b" — the bare word anywhere on a line, at 0.97
-  # confidence, with an autofix that REMOVES the call. Two problems.
-  #
-  # `warn` is how a library surfaces a problem it cannot handle, which soul.yml's
-  # FAIL_VISIBLY requires; deleting warn calls is the constitution eating itself.
-  # 61 of them in lib/. And `puts` belongs to NO_PUTS, which already scopes it to
-  # library code and lets the CLI print.
-  #
-  # What is left is the actual debug call: p/pp at the head of a line. `p` is a
-  # legal variable name, so the same operator exclusions the DEBUG_OUTPUT Ruby
-  # rule carries apply here — `p << "…"` is an append, not a print.
-  pattern: "^\\s*pp?\\s+(?!self\\b)(?!<<|==|!=|\\|\\|=|&&=|[+\\-*/%|&^]?=)"
-  confidence: 0.97
-  autofix: remove_debug_call
+# debug_output was removed 2026-08-12, for the same reason as long_line above and
+# with the same evidence. It carried the SAME id as the registered DEBUG_OUTPUT
+# rule, so their findings were not even distinguishable in a report — where
+# long_line at least differed by case. The registered rule is :error with a
+# working autofix; this copy was :warning with `autofix: remove_debug_call`, a
+# name that appears nowhere but in this file.
+#
+# Its own comment said the narrowing had to carry "the same operator exclusions
+# the DEBUG_OUTPUT Ruby rule carries" — two regexes kept in step by hand, which
+# is the definition of the defect. That reasoning lives on in the registered
+# rule and in test_debug_output_ignores_a_local_named_p, which pins it.
 - id: todo_comment
   pattern: "\\b(?:TODO|FIXME|HACK)\\b"
   confidence: 0.7
@@ -774,10 +770,17 @@ learned_smells:
   pattern: "(?<![\\w.])(?<!= )(?<!: )(?!19\\d{2}(?![\\d.]))(?!20\\d{2}(?![\\d.]))\\d{2,}(?![\\w.])"
   confidence: 0.85
   autofix: extract_named_constant
-- id: long_line
-  pattern: "^.{121,}$"
-  confidence: 0.9
-  autofix: wrap_at_120
+# long_line was removed 2026-08-12. It restated the registered LONG_LINE rule as a
+# raw regex and produced 334 findings across lib/, of which THREE landed on a line
+# no other rule reports — and all three are in lib/io/llm.rb, which LONG_LINE
+# deliberately exempts. So the copy was 331 duplicates plus a quiet override of an
+# exemption, reported at :warning where the real rule says :info and with the id as
+# its whole message.
+#
+# The same test the EMPTY_RESCUE deletion used: how many findings are unique to it.
+# Every other entry in this list passes that test — magic_number, future_tense,
+# duplicate_code, sycophancy and todo_comment are the only implementations of what
+# they detect, which is why this is a deletion of one entry and not of the layer.
 - id: sycophancy
   pattern: "\\b(?:absolutely|certainly|of course|happy to help)\\b"
   confidence: 0.99

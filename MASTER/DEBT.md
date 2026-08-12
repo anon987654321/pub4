@@ -135,6 +135,36 @@ bought — the fold is measured by the law it applies to everything else.
 reports thousands of self-scan findings. Do not chase zero. Track the count down
 by removing false positives and fixing high-signal violations.
 
+### Two copies found by reading the buckets — 2026-08-12
+
+**3,602 findings / 125 actionable → 3,166 / 20**, without fixing a single line of
+the code being scanned. Both were duplicate detections, found the way the veto
+audit found its 119: by reading the findings instead of the count.
+
+- **`NO_PUTS` 105 → 5.** Its exemption read `/now/cli`, and `lib/now/` was renamed
+  to `lib/cli/` in `693d2630d`. The exemption kept pointing at the old address, so
+  105 findings appeared in the largest *actionable* bucket — every one in
+  `lib/cli/`, 100 of them in `lib/cli/cli/`, all of them decisions the rule's own
+  author had already made and the rename silently undid. This is the
+  exemption-outliving-its-subject defect inverted: the subject moved out from
+  under the exemption, and a gate began firing on exactly what it exempted.
+- **`learned_smells` 10 → 8.** `long_line` restated the registered `LONG_LINE` as
+  a raw regex: 334 findings, of which **3** landed on a line no other rule
+  reports — and all 3 in `lib/io/llm.rb`, which `LONG_LINE` deliberately exempts.
+  So 331 duplicates plus a quiet override of an exemption, at `:warning` where the
+  real rule says `:info`, with the id as its whole message. `debug_output` carried
+  the *same* id as the registered rule, making its findings indistinguishable
+  rather than merely doubled; its `autofix: remove_debug_call` names nothing that
+  exists anywhere.
+
+The other eight learned smells pass the test the EMPTY_RESCUE deletion used —
+`magic_number`, `future_tense`, `duplicate_code`, `sycophancy` and `todo_comment`
+are the only implementation of what they detect. Two entries went, not the layer.
+
+Both pinned in `test/test_scan_rule_false_positives.rb`, and generalised: no
+learned smell may share an id with a registered rule, and no two rules may report
+the same long line.
+
 ## Scanner noise
 
 `rake selfcheck` is **17 violations across 3 rules** (measured 2026-08-12):
