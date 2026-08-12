@@ -1,0 +1,31 @@
+#!/bin/sh
+# Run by /etc/weekly, which cron invokes Saturday 03:30. Same PATH caveat as
+# daily.local: cron does not carry /usr/local/bin, and every interpreter here
+# lives there.
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+export PATH
+
+# Are the domains still ours, and how long have we got.
+#
+# Weekly rather than daily because it makes one whois query per domain and the
+# registries rate-limit; and as dev rather than root because it only reads whois
+# and writes a file inside dev's own checkout — root executing a dev-owned tree
+# is the hazard that got the doas.conf "heal" removed from relayd-watchdog.
+#
+# It exits non-zero when something is expiring, lapsed, or has changed hands, so
+# the logger line is the alert. It went in on 2026-08-12, the day a whois sweep
+# found cardff.uk and edinbrgh.uk — two of the seven cities that serve — expiring
+# the next morning, denvr.us the same day, and four .uk domains that had expired
+# in June and were still inside Nominet's protected period. Every one of those
+# dates was already in OPENBSD/data/domain_inventory.yml, committed, and nothing
+# read it. Five days earlier the same thing happened to bsdports.org.
+# su without -l. The login profile boots MASTER's sqlite store and prompts for a
+# passphrase, so `su -l` put three lines of "disk I/O error" and "Must be
+# connected to a terminal" at the top of a log whose whole job is to be read when
+# something is wrong. (That prompt is also why daily.local's backup_priv.sh has
+# been failing every night.)
+#
+# Plain ASCII in the logger line: syslog renders an em dash as M-bM^@M^T.
+su dev -c 'cd /home/dev/pub4 && /usr/local/bin/ruby34 OPENBSD/bin/domain_watch.rb' \
+  > /var/log/domain_watch.log 2>&1 ||
+  logger -t weekly.local "domain_watch: a domain is expiring, lapsed or changed hands - see /var/log/domain_watch.log"

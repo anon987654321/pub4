@@ -21,6 +21,7 @@
 # clients. Anything we cannot determine is reported "unknown" and never counted
 # as healthy — a monitor that reports green on a failed lookup is worse than none.
 
+require "date"
 require "json"
 require "yaml"
 
@@ -78,6 +79,11 @@ module Deploy
                        out[/Registered on[.\s]*:\s*(\S+)/i, 1] ||
                        out[/Created[.\s]*:\s*(\S+)/i, 1],
           "expires" => out[/(?:Expiry date|Registry Expiry Date|Expires on)[.\s]*:\s*(\S+)/i, 1],
+          # Nominet keeps saying "registered" for months after a .uk lapses and
+          # puts the truth here instead: "Renewal required." Four of ours said
+          # that on 2026-08-12, having expired in June, and the state field alone
+          # reported all four as healthy.
+          "status" => out[/Registration status:\s*\n?\s*(\S[^\n]*)/i, 1]&.strip,
           "registrar" => out[/Registrar:\s*\n?\s*(\S[^\n]*)/i, 1]&.strip
         }.compact
       else
@@ -113,6 +119,50 @@ module Deploy
       end
       { lost:, changed: }
     end
+
+    # An expiry date is not a warning until something reads it.
+    #
+    # The snapshot has carried "expires" since it was written, and nothing ever
+    # compared it to today — compare() only noticed a domain going from
+    # registered to available, which is the state it reaches after it is too late
+    # to renew. On 2026-08-12 the committed file said cardff.uk and edinbrgh.uk
+    # expired the following day, denvr.us the same day, and four .uk domains had
+    # expired in June. All seven were sitting in the repo, in git, unread. The
+    # same shape as bsdports.org expiring with a day's notice five days earlier
+    # (c6bb41135), and the same shape as the cron PATH: the data was right and
+    # nothing looked at it.
+    EXPIRY_WARN_DAYS = 45
+
+    # `13-Aug-2026` from Nominet, `2026-08-13T11:20:09Z` from the .us/.com
+    # registries, and nothing at all from Norid — .no whois publishes no expiry,
+    # so brgen.no and the three other .no cities cannot be watched this way and
+    # are not silently counted as fine.
+    def days_until(value)
+      return nil if value.to_s.empty?
+
+      date = begin
+        Date.parse(value.to_s)
+      rescue ArgumentError, TypeError
+        nil
+      end
+      date && (date - Date.today).to_i
+    end
+
+    def expiring(current, within: EXPIRY_WARN_DAYS)
+      current.filter_map do |domain, row|
+        next unless row["state"] == "registered"
+
+        renewal_flagged = row["status"].to_s.match?(/renewal required|suspended|grace|redemption/i)
+        days = days_until(row["expires"])
+        next unless renewal_flagged || (days && days <= within)
+
+        [domain, days, row["status"]]
+      end.sort_by { |_, days, _| days || -9_999 }
+    end
+
+    def unwatchable(current)
+      current.select { |_, row| row["state"] == "registered" && row["expires"].to_s.empty? }.keys
+    end
   end
 end
 
@@ -144,6 +194,29 @@ if $PROGRAM_NAME == __FILE__
   unknown = current.select { |_, r| r["state"] == "unknown" }.keys
   puts "\nlookup inconclusive (#{unknown.size}):\n  #{unknown.join(', ')}" if unknown.any?
 
+  expiring = Deploy::DomainWatch.expiring(current)
+  if expiring.any?
+    puts "\nEXPIRING or LAPSED (#{expiring.size}):"
+    expiring.each do |domain, days, status|
+      when_ = if status.to_s.match?(/renewal required|suspended|grace|redemption/i)
+                status.to_s.sub(/\.\z/, "")
+              elsif days.negative?
+                "expired #{-days} day(s) ago"
+              else
+                "#{days} day(s) left"
+              end
+      puts "  #{domain.ljust(18)} #{when_}"
+    end
+    puts "  Renew at the registrar. Nothing in this repo can do it."
+  end
+
+  unwatchable = Deploy::DomainWatch.unwatchable(current)
+  if unwatchable.any?
+    # Named rather than skipped: these are registered and their expiry is simply
+    # not knowable from whois, so a clean run above does not cover them.
+    puts "\nno expiry published, not watched (#{unwatchable.size}):\n  #{unwatchable.join(', ')}"
+  end
+
   if diff[:lost].any?
     puts "\nLOST since last snapshot: #{diff[:lost].join(', ')}"
   end
@@ -152,5 +225,5 @@ if $PROGRAM_NAME == __FILE__
     diff[:changed].each { |line| puts "  #{line}" }
   end
 
-  exit(diff[:lost].empty? && diff[:changed].empty? ? 0 : 1)
+  exit(diff[:lost].empty? && diff[:changed].empty? && expiring.empty? ? 0 : 1)
 end

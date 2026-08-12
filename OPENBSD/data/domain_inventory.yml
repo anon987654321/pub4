@@ -5,6 +5,15 @@ amstrdam.nl:
   state: registered
   created: '2026-05-18'
   registrar: GoDaddy.com
+antibettingblog.com:
+  state: unknown
+  note: No match for "ANTIBETTINGBLOG.COM".
+anticasinoblog.com:
+  state: unknown
+  note: No match for "ANTICASINOBLOG.COM".
+antigamblingblog.com:
+  state: unknown
+  note: No match for "ANTIGAMBLINGBLOG.COM".
 austn.us:
   state: unknown
   note: registry referral, not a domain record
@@ -27,12 +36,12 @@ bsddocs.org:
 bsdports.net:
   state: registered
   created: '2022-08-08T14:15:12Z'
-  expires: '2026-08-08T14:15:12Z'
+  expires: '2027-08-08T14:15:12Z'
   registrar: Domeneshop AS dba domainnameshop.com
 bsdports.org:
   state: registered
   created: '2022-08-08T14:15:10Z'
-  expires: '2026-08-08T14:15:10Z'
+  expires: '2027-08-08T14:15:10Z'
   registrar: Domeneshop AS dba domainnameshop.com
 cardff.uk:
   state: registered
@@ -69,6 +78,9 @@ edinbrgh.uk:
 foball.no:
   state: registered
   created: '2022-07-30'
+foodielicio.us:
+  state: unknown
+  note: registry referral, not a domain record
 frankfrt.de:
   state: registered
 freehelp.legal:
@@ -99,7 +111,7 @@ lchtenstein.li:
   note: registry referral, not a domain record
 lisbon.pt:
   state: unknown
-  note: lookup failed
+  note: lisbon.pt - Forbiden Name
 lndon.uk:
   state: unknown
   note: ''
@@ -108,7 +120,7 @@ longyearbyn.no:
   note: registry referral, not a domain record
 lsangeles.com:
   state: unknown
-  note: No match for domain "LSANGELES.COM".
+  note: No match for "LSANGELES.COM".
 lverpool.uk:
   state: registered
   created: 25-Jun-2021
@@ -127,7 +139,7 @@ mnchester.uk:
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 mnnesota.com:
   state: unknown
-  note: No match for domain "MNNESOTA.COM".
+  note: No match for "MNNESOTA.COM".
 mrseille.fr:
   state: unknown
   note: registry referral, not a domain record
@@ -139,7 +151,7 @@ oshlo.no:
   created: '2020-08-22'
 prtland.com:
   state: unknown
-  note: No match for domain "PRTLAND.COM".
+  note: No match for "PRTLAND.COM".
 pub.attorney:
   state: unknown
   note: registry referral, not a domain record
@@ -154,7 +166,7 @@ rottrdam.nl:
   note: rottrdam.nl is free
 stacyspassion.com:
   state: unknown
-  note: No match for domain "STACYSPASSION.COM".
+  note: No match for "STACYSPASSION.COM".
 stholm.se:
   state: unknown
   note: "# Copyright (c) 1997- The Swedish Internet Foundation."
@@ -169,7 +181,7 @@ trndheim.no:
   created: '2020-08-22'
 utrcht.nl:
   state: unknown
-  note: utrcht.nl is free
+  note: registry referral, not a domain record
 wrsawa.pl:
   state: unknown
   note: 'No information available about domain name wrsawa.pl in the '
