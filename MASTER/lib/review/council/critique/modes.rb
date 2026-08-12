@@ -75,8 +75,19 @@ module Master
                 "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer",
                 "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
               ],
+              # dilla.rb is the entry script and little else since the engine was
+              # split into lib/engine/. It stays because the panel needs to see
+              # what the CLI offers, but max_bytes means a list is a budget: name
+              # the parts that decide how a render SOUNDS, or the panel critiques
+              # the boot sequence. Before the split this read the first 36 KB of a
+              # 1.37 MB file — the patch catalogue, and nothing downstream of it.
               files: %w[
-                ../STUDIO/dilla/dilla.rb ../STUDIO/dilla/lib/master_heuristics.rb
+                ../STUDIO/dilla/dilla.rb
+                ../STUDIO/dilla/lib/engine/master_chain.rb
+                ../STUDIO/dilla/lib/engine/bus_filters.rb
+                ../STUDIO/dilla/lib/engine/drum_bus_filter.rb
+                ../STUDIO/dilla/lib/engine/groove_timing.rb
+                ../STUDIO/dilla/lib/master_heuristics.rb
                 lib/voice/dilla.rb lib/voice/production_dna.rb
                 lib/io/analog_capabilities.rb
               ],

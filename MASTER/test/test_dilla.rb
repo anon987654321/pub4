@@ -1008,7 +1008,7 @@ class TestDilla < Minitest::Test
   # them is the thing this is here to make loud.
   def test_genre_renderers_can_reach_the_shared_spine
     result = eval_in_engine(<<~RUBY)
-      src = File.read(File.join(ROOT, "dilla.rb"))
+      src = engine_source
       # Slice to the next COLUMN-ZERO def, not to the next "\\nend\\n": every
       # method here has nested blocks, so the first end belongs to one of them
       # and the body comes back truncated. That is how the first version of
@@ -1060,7 +1060,7 @@ class TestDilla < Minitest::Test
   # is how this test's first version got the answer wrong.
   def test_every_genre_renderer_reaches_the_master_bus
     result = eval_in_engine(<<~RUBY)
-      src = File.read(File.join(ROOT, "dilla.rb"))
+      src = engine_source
       body = ->(m) {
         i = src.index("\\ndef " + m)
         next "" unless i
@@ -1161,8 +1161,7 @@ class TestDilla < Minitest::Test
       # entry from prose, and this test failed on arrival because a comment
       # elsewhere in the file NAMED minimoog_bass while explaining that it is
       # unreachable -- the mention made it look reached.
-      src = File.read(File.join(ROOT, "dilla.rb"))
-                 .lines.reject { |l| l =~ /\\A\\s*#/ }.join
+      src = engine_source.lines.reject { |l| l =~ /\\A\\s*#/ }.join
       gear = %i[voyager_ladder_pad voyager_mono_lead microkorg_lead
                 microkorg_vox_texture access_virus_hyper motif_rack_strings motif_rack_ep]
       puts JSON.generate(
