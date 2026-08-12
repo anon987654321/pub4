@@ -3,8 +3,15 @@
 
 require "open3"
 
-ROOT = File.expand_path("../..", __dir__)
-QUARANTINE = File.join(ROOT, "OPENBSD", "quarantine", "virus_museum")
+# SWEEP_ROOT, not ROOT. This file is required by test/test_security_sweep.rb,
+# and 25 files in this repo define a bare top-level ROOT, each pointing at a
+# different tree. In one `rake test` process STUDIO/dilla/dilla.rb also defines
+# one, so the two collided: Ruby warned and let the second assignment win, which
+# means whichever loaded last silently gave the other the wrong repo root.
+# The warning was the only thing standing between that and a sweep of the wrong
+# tree reporting clean. See DEBT.md, "Top-level ROOT".
+SWEEP_ROOT = File.expand_path("../..", __dir__)
+QUARANTINE = File.join(SWEEP_ROOT, "OPENBSD", "quarantine", "virus_museum")
 
 SECRET_PATTERNS = [
   /sk-[A-Za-z0-9_\-]{16,}/,
@@ -63,7 +70,7 @@ TRACKED_DENY_GLOBS = [
 ].freeze
 
 def git_ls_files(pattern)
-  out, status = Open3.capture2("git", "-C", ROOT, "ls-files", pattern)
+  out, status = Open3.capture2("git", "-C", SWEEP_ROOT, "ls-files", pattern)
   status.success? ? out.lines.map(&:chomp).reject(&:empty?) : []
 end
 
@@ -72,10 +79,10 @@ def scan_tracked_secrets
   git_ls_files(".").each do |path|
     next if path.match?(SKIP_PATH_RE)
     next if path.end_with?("/db/seeds.rb")
-    next unless File.file?(File.join(ROOT, path))
-    next if File.size(File.join(ROOT, path)) > 512_000
+    next unless File.file?(File.join(SWEEP_ROOT, path))
+    next if File.size(File.join(SWEEP_ROOT, path)) > 512_000
 
-    body = File.read(File.join(ROOT, path), mode: "rb").force_encoding(Encoding::UTF_8)
+    body = File.read(File.join(SWEEP_ROOT, path), mode: "rb").force_encoding(Encoding::UTF_8)
     next unless body.valid_encoding?
 
     SECRET_PATTERNS.each do |pattern|
@@ -106,7 +113,7 @@ def sweep
   bad_ext = quarantine_files.reject { |path| path.end_with?(".txt") || path.end_with?("README.md") }
   failures.concat(bad_ext.map { |path| "virus museum non-text file: #{path}" })
 
-  mode_lines, = Open3.capture2("git", "-C", ROOT, "ls-files", "-s", "OPENBSD/quarantine/virus_museum")
+  mode_lines, = Open3.capture2("git", "-C", SWEEP_ROOT, "ls-files", "-s", "OPENBSD/quarantine/virus_museum")
   mode_lines.lines.each do |line|
     mode, _type, _sha, _stage, path = line.split(/\s+/, 5)
     failures << "virus museum executable: #{path}" if mode && mode != "100644"

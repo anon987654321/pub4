@@ -237,6 +237,35 @@ So the honest scope is per-file and by hand, with a two-direction test, the way
 need a baseline carrying a written reason for all 49, which is a decision about
 49 sections rather than a mechanical step.
 
+## Top-level ROOT
+
+**25 files across the repo define a bare top-level `ROOT`**, each pointing at a
+different tree — `MASTER/tools/*` at the repo root, `OPENBSD/*.rb` at `OPENBSD/`,
+`STUDIO/dilla/dilla.rb` at the dilla directory, `RAILS/tools/*` at `RAILS/`.
+
+In their own processes that is harmless, which is why it has stood. It stops
+being harmless the moment two of them are loaded together: Ruby warns
+`already initialized constant ROOT`, lets the **second assignment win**, and the
+loser then reads the wrong tree with no further complaint.
+
+That happened in `rake test`, where `test_security_sweep.rb` requires
+`tools/security_sweep.rb` and `test_dilla.rb` loads `STUDIO/dilla/dilla.rb`.
+Depending on load order, the security sweep would have run `git ls-files` against
+`STUDIO/dilla` and reported the repo clean having scanned a music directory. The
+warning in `bin/check`'s output was the only thing standing between that and a
+silent pass, and it read as cosmetic noise.
+
+Closed for that pair on 2026-08-12 by renaming MASTER's to `SWEEP_ROOT`. The
+class is open: any two of the remaining 24 required into one process collide the
+same way, and nothing detects it. A gate would assert that no two files loadable
+together define the same top-level constant — related to `lint:autoload`, which
+already proves every Zeitwerk ignore is still necessary.
+
+`test_dilla.rb` is the other half of this and is worth moving regardless: a test
+in MASTER that loads STUDIO's entry point breaks whenever STUDIO refactors, which
+it did (`engine_source` undefined, 2026-08-12). It should read `ENGINE_SOURCES`
+or live in STUDIO.
+
 ## Test coverage
 
 **163 of 445 `lib/` files have no test or spec naming their innermost class or
