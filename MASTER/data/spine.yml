@@ -210,7 +210,43 @@ spine:
   # scan_coverage.yml exists because Fix::SelfCheck scanned File.join(root,
   # "lib") as a path literal, which is how core/ sat outside its own law for
   # three weeks without anyone choosing that. A literal cannot be audited.
-  lib_code_ceiling: 38844
+  # RAISED 2026-08-12, 38844 -> 38860 (+16), operator-sponsored, allowance 2 of 2.
+  #
+  # Closing the fold-spine debt DEBT.md opened when the 2026-08-12 merge first
+  # subjected the fold to its own law. Three findings, two closed here, one left
+  # as a decision. Every line is a rule forcing a change:
+  #
+  #   review/scan/code_metrics.rb  +7  public_method_count now honours
+  #                                    private_class_method. `private` marks a
+  #                                    position in the instance-method stream and
+  #                                    `def self.x` never enters it, so a class
+  #                                    written in that idiom read as fully public
+  #                                    however it was arranged.
+  #   core/constitution.rb         +4  12 rule factories declared private. The
+  #                                    surface is load, admit, immutable_paths_rule.
+  #                                    ABSTRACTION 16 -> 4.
+  #   core/fold.rb                 +4  the admitted half of `run` extracted to a
+  #                                    private `apply`. DENSITY 24 -> 14 code
+  #                                    lines, and no seventh file, which is what
+  #                                    core_files: 6 was protecting.
+  #   core/memory.rb               +1  detect_host_memory_mb declared private.
+  #                                --
+  #                                +16
+  #
+  # rake selftest 3 findings -> 1, rake selfcheck 20 -> 19 (NO_GOD_CLASS 2 -> 1).
+  # Method extraction always costs lines; that is the standing tension between
+  # DENSITY and this ceiling, and it is the reason the allowance exists.
+  #
+  # This raise covers 16 lines and NOT the 9 that d35b40ec0 ("Ship
+  # visitor-readiness and worn-type layout law") added to lib/design/thresholds.rb
+  # without touching this file. lint:spine therefore still fails at +9, naming
+  # that commit. Absorbing somebody else's unaccounted growth into a raise of my
+  # own is precisely how a ceiling stops measuring anything — "a good reason will
+  # always be available" is this file's own warning, and it applies hardest when
+  # the reason is somebody else's.
+  #
+  # The allowance is now spent. The next line into lib/ comes out of lib/.
+  lib_code_ceiling: 38860
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -221,6 +257,9 @@ spine:
   raised:
   - "2026-08-12 38811 -> 38844 (+33): one counter instead of three (CodeMetrics),
      and the scan-coverage manifest getting a reader. Operator-sponsored."
+  - "2026-08-12 38844 -> 38860 (+16): closing two of the three fold-spine findings
+     the merge exposed — private_class_method honoured, 12 rule factories declared
+     private, Fold#run's admitted half extracted. Operator-sponsored."
   # How many raises may stand before lint:spine refuses another. The allowance was
   # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
   # mechanism working: a genuine fall earns the budget back, so this is a budget

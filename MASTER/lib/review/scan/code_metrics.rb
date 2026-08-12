@@ -55,16 +55,30 @@ module Master
         end
 
         # Defs before the first `private`/`protected` in a class body.
+        # `private` does not touch `def self.x`, so a class whose internals are all
+        # class methods counted as fully public. Core::Constitution read as 16
+        # public methods when three are its API and thirteen are rule factories
+        # only it calls — ABSTRACTION was measuring the idiom, not the surface.
+        # private_class_method names its methods instead of marking a position,
+        # so they are collected and subtracted rather than stopping the walk.
         def public_method_count(class_node)
           return 0 unless class_node.respond_to?(:body) && class_node.body
 
+          nodes = class_node.body.child_nodes.compact
+          hidden = private_class_method_names(nodes)
           count = 0
-          class_node.body.child_nodes.compact.each do |node|
+          nodes.each do |node|
             break if node.is_a?(Prism::CallNode) && %w[private protected].include?(node.name.to_s)
 
-            count += 1 if node.is_a?(Prism::DefNode)
+            count += 1 if node.is_a?(Prism::DefNode) && !hidden.include?(node.name.to_s)
           end
           count
+        end
+
+        def private_class_method_names(nodes)
+          nodes.grep(Prism::CallNode)
+               .select { |node| node.name.to_s == "private_class_method" }
+               .flat_map { |node| node.arguments&.arguments.to_a.grep(Prism::SymbolNode).map(&:unescaped) }
         end
       end
     end

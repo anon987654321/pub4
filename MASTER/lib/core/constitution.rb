@@ -165,5 +165,21 @@ module Master::Core
     rescue RegexpError
       nil
     end
+
+    # The surface is load, admit, and immutable_paths_rule — which
+    # test/core/test_immutable_paths.rb builds directly. The rest are rule
+    # factories `default_rules` calls and nothing else does, verified against
+    # lib/, test/, spec/, tools/, bin/ and web/.
+    #
+    # Declared rather than merely true: `private` marks a position in the
+    # instance-method stream and class methods never enter it, so this class read
+    # as 16 public methods under ABSTRACTION no matter how it was arranged. That
+    # is the idiom being measured, not the surface — see DEBT.md, "The fold spine
+    # had never been scanned". Fixing it by decomposing would have needed a
+    # seventh file in the fold, which `core_files: 6` makes a design decision.
+    private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule,
+                         :safe_exec_rule, :structured_exec_rule, :evidence_for_done_rule,
+                         :git_commit_evidence_rule, :council_for_done_rule,
+                         :ideation_before_write_rule, :ruby_syntax_error, :safe_rx
   end
 end

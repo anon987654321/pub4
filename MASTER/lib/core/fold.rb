@@ -36,20 +36,9 @@ module Master::Core
           observation = Observation.no("refused by #{by}: #{reason}")
           @memory.record(effect, observation)
           emit(turn, effect, observation)
-          next
         in Verdict::Allow(effect: admitted)
-          if admitted.done?
-            observation = Observation.ok("done")
-            @memory.record(admitted, observation)
-            emit(turn, admitted, observation)
-            return Done.new(reason: :complete, turns: turn, summary: admitted.args[:summary])
-          end
-
-          checkpoint = @world.checkpoint
-          observation = @world.perform(admitted)
-          @memory.record(admitted, observation)
-          @world.rollback(checkpoint) if observation.err?
-          emit(turn, admitted, observation)
+          done = apply(turn, admitted)
+          return done if done
         end
       end
 
@@ -57,6 +46,27 @@ module Master::Core
     end
 
     private
+
+    # The admitted half of the loop. Returns Done when the effect ends the fold
+    # and nil to take another turn — extracted from `run` so that method stays
+    # under DENSITY's 20 code lines without the fold gaining a seventh file,
+    # which `core_files: 6` makes a design decision. See DEBT.md, "The fold spine
+    # had never been scanned".
+    def apply(turn, admitted)
+      if admitted.done?
+        observation = Observation.ok("done")
+        @memory.record(admitted, observation)
+        emit(turn, admitted, observation)
+        return Done.new(reason: :complete, turns: turn, summary: admitted.args[:summary])
+      end
+
+      checkpoint = @world.checkpoint
+      observation = @world.perform(admitted)
+      @memory.record(admitted, observation)
+      @world.rollback(checkpoint) if observation.err?
+      emit(turn, admitted, observation)
+      nil
+    end
 
     def emit(turn, effect, observation)
       @observer&.call(turn:, effect:, observation:)

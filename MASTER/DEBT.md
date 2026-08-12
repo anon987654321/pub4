@@ -81,15 +81,43 @@ otherwise: 19 → 22 on a clean HEAD worktree with only the move applied, and
 17 → 20 in the working tree against the "Scanner noise" baseline below. Same +3,
 same three files, from two different starting points.
 
-**Do not autofix these.** The obvious remedy — decompose `Constitution` and
-`Memory` — collides head-on with `core_files: 6` in `data/spine.yml`, which makes
-a seventh top-level concept in the fold a design decision requiring a sponsor.
-One rule says decompose, the other says not into a new file. That conflict is the
-actual open question and it needs an operator, not a pass of `/fix`:
+**Two of the three are closed, by option 2 — 2026-08-12.** Nothing was
+exempted, no threshold moved, and `core_files` is still 6.
+
+- **`Constitution` 16 → 4.** Twelve of the sixteen are rule factories that only
+  `default_rules` calls, verified against `lib/`, `test/`, `spec/`, `tools/`,
+  `bin/` and `web/`. They are `def self.` — and `private` marks a position in the
+  instance-method stream that class methods never enter, so the class read as
+  fully public however it was arranged. They are now
+  `private_class_method`, and `CodeMetrics.public_method_count` honours that
+  declaration, pinned by `tools/fixtures/class_methods.rb`. ABSTRACTION was
+  measuring the idiom, not the surface.
+- **`Fold#run` 24 → 14 code lines.** The admitted half moved to a private
+  `apply`. A private method is not a new concept, so `core_files: 6` never came
+  into it — the conflict below was real for decomposition into *files*, not for
+  decomposition inside one.
+
+`rake selftest` 3 findings → 1. `rake selfcheck` 20 → 19, `NO_GOD_CLASS` 2 → 1.
+The +16 code lines this cost are accounted line by line in `data/spine.yml`;
+they spent the second and last raise of the allowance.
+
+**Still open, and still a decision: `Memory`, 16 public methods.** Option 2 does
+not reach it. Only `detect_host_memory_mb` was internal — the other three class
+methods have readers across `lib/` and `test/`, and all thirteen instance methods
+are genuine fold API: the risk gates (`council_required?`, `ideation_satisfied?`
+and their marks), the transcript (`note`, `record`, `context`), and the evidence
+ledger (`record_evidence`, `evidence_score`, `proved?`).
+
+Which is itself the finding. Those are **three jobs in one object**, and that is
+the real reason it measures as a god class — not an idiom this time. Splitting
+them is the honest fix and it needs a seventh file, which `core_files: 6` makes a
+design decision requiring a sponsor. One rule says decompose, the other says not
+into a new file:
 
 1. Raise the thresholds for the fold spine specifically, and say why in `rules.yml`.
-2. Decompose within the existing six files (private methods, extracted lambdas).
-3. Raise `core_files` and let the fold be seven or eight concepts.
+2. ~~Decompose within the existing six files.~~ Tried; does not reach `Memory`.
+3. Raise `core_files` and let the fold be seven concepts — transcript, evidence,
+   and risk gates being the natural seam.
 4. Record an explicit, dated exemption — noting `soul.yml` EXEMPTIONS_EXPIRE.
 
 What must not happen is the count being driven to zero by re-exempting the fold,

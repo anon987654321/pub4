@@ -58,6 +58,12 @@ module Master::Core
       nil
     end
 
+    # Only host_memory_mb calls it; the other three class methods here have
+    # readers across lib/ and test/. This does not clear ABSTRACTION on its own
+    # — see DEBT.md, "The fold spine had never been scanned" — it just stops the
+    # count including something that was never part of the surface.
+    private_class_method :detect_host_memory_mb
+
     def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" }, risk: :low)
       @entries = []
       @budget = budget
