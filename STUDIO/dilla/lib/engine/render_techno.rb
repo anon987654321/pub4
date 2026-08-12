@@ -113,6 +113,24 @@ def hate_position(block, blocks)
   ((phase + base) / arc).clamp(0.0, 1.0)
 end
 
+# This is the engine's SECOND arrangement.
+#
+# dilla_drums.rb has SECTION_LAYER_GAIN and section_layer_windows: named
+# sections, a gain per layer per section, contiguous bars merged into windows,
+# a short edge fade. This does the same job -- which layers sound when -- from
+# a different vocabulary (blocks and an arc position rather than sections and
+# bars) and emits a different filter (an `enable` expression built from
+# `between` terms rather than a chain of `volume` stages).
+#
+# Both are good. Neither knows the other exists, which is the fork the genre
+# work is supposed to be closing: `techno_bed_part!` above is the same story for
+# the sampled bed, a second implementation of what build_sample_loop_filter
+# does. The measurable form is in test_genre_renderers_reach_of_the_shared_spine,
+# which records what each renderer reaches and fails if any of them reaches
+# less. Merging the two arrangements is a real change to how every techno set
+# sounds and is not something to do quietly at the end of a refactor -- but the
+# duplication is now written down where the next person will find it, rather
+# than being discoverable only by reading both renderers side by side.
 def hate_gate(layer, blocks, bar_p)
   on = (0...blocks).select { |b| HATE_LAYERS.fetch(layer).call(hate_position(b, blocks), b) }
   return "1" if on.length == blocks
