@@ -4,12 +4,16 @@
   # Chrome and then reported as "property 'url' of 'shortcut' not present".
   # Keep shortcuts as same-origin relative paths for the active vertical surface.
   vertical = Current.subapp.to_s
-  city = Current.city.to_s
+  # city_name, not Current.city: same resolution the layout uses, so an installed
+  # app on oshlo.no is called Oslo rather than Brgen. The head and the manifest
+  # are served to the same page and disagreeing about the brand is visible at
+  # install time.
+  city = city_name
   app_name, short_name, description, shortcuts =
     case vertical
     when "playlist"
       [
-        "Brgen Playlist",
+        "#{city} Playlist",
         "Playlist",
         t("pwa.desc_playlist", city: city, default: "Playlists, sets, and radio for %{city}."),
         [
@@ -20,7 +24,7 @@
       ]
     when "dating"
       [
-        "Brgen Dating",
+        "#{city} Dating",
         "Dating",
         t("pwa.desc_dating", city: city, default: "Dating in %{city}."),
         [
@@ -31,7 +35,7 @@
       ]
     when "tv"
       [
-        "Brgen TV",
+        "#{city} TV",
         "TV",
         t("pwa.desc_tv", city: city, default: "Live streams and channels for %{city}."),
         [
@@ -41,7 +45,7 @@
       ]
     when "marketplace"
       [
-        "Brgen Marketplace",
+        "#{city} Marketplace",
         "Shop",
         t("pwa.desc_marketplace", city: city, default: "Marketplace for %{city}."),
         [
@@ -51,7 +55,7 @@
       ]
     when "takeaway"
       [
-        "Brgen Takeaway",
+        "#{city} Takeaway",
         "Food",
         t("pwa.desc_takeaway", city: city, default: "Takeaway for %{city}."),
         [
@@ -60,7 +64,7 @@
       ]
     when "maps"
       [
-        "Brgen Maps",
+        "#{city} Maps",
         "Maps",
         t("pwa.desc_maps", city: city, default: "Maps for %{city}."),
         [
@@ -69,7 +73,7 @@
       ]
     when "messenger"
       [
-        "Brgen Messenger",
+        "#{city} Messenger",
         "Chat",
         t("pwa.desc_messenger", city: city, default: "Messages for %{city}."),
         [
@@ -78,9 +82,13 @@
       ]
     else
       [
-        "Brgen",
-        "Brgen",
-        t("pwa.desc_city", default: "City communities across Scandinavia and Europe. Connect, post, and discover your city."),
+        city,
+        city,
+        # Same key the layout's meta description uses, so the installed app and
+        # the page it was installed from say the same thing. pwa.desc_city was
+        # defined in neither locale, so this string was always the English
+        # literal — the exact leak class city_copy_contract_test exists for.
+        t("pages.default_description", city: city),
         [
           { "name" => t("nav.new_post"), "short_name" => t("pwa.post"), "url" => "/posts/new" },
           { "name" => t("pwa.new_listing"), "short_name" => t("pwa.listing"), "url" => "/listings/new" },

@@ -20,25 +20,45 @@ class SitemapCityScopeContractTest < Minitest::Test
   ROOT = File.expand_path("../brgen", __dir__)
   CONTROLLER = File.join(ROOT, "app/controllers/sitemaps_controller.rb")
 
+  # Every city-owned model the sitemap lists, and where its city comes from.
+  # nil means global by design and must NOT be scoped.
+  SCOPED = {
+    "Post.hot" => :own, "Community" => :own, "Tv::Channel" => :own,
+    "Takeaway::Restaurant.active" => :own, "Marketplace::Store.active" => :own,
+    "Marketplace::Listing.active" => :own, "Place" => :own,
+    "Tv::Video.published" => :parent, "Marketplace::Deal.active" => :parent,
+  }.freeze
+
   def source
     @source ||= File.read(CONTROLLER)
   end
 
-  def test_sitemap_queries_name_the_city
-    assert_includes source, "in_this_city",
-                    "sitemap queries must name the city; a tenant default_scope is not a contract a reader can see"
+  def test_every_city_owned_relation_is_scoped_to_the_current_city
+    SCOPED.each_key do |relation|
+      assert_includes source, "#{relation}.in_current_city",
+                      "#{relation} is listed in the sitemap without naming the city; " \
+                      "a tenant default_scope is not a contract a reader can see, " \
+                      "and the two :parent models have no default scope at all"
+    end
   end
 
-  # in_this_city takes bare classes (Community, Tv::Channel, Place) as well as
-  # relations. `klass` is not one of the methods ActiveRecord delegates from a
-  # model class to `all`, so dropping the `.all` raises NoMethodError on exactly
-  # those three call sites — and only once a city resolves, which no source-text
-  # reading of the helper reveals.
-  def test_in_this_city_normalises_through_all
-    body = source[/def in_this_city.*?\n  end/m]
-    refute_nil body, "in_this_city has been renamed or removed"
-    assert_includes body, "relation.all",
-                    "in_this_city is called with bare model classes; it must go through .all before .klass"
+  # The models with no city_id of their own. Without a scope they are simply
+  # unscoped, which is how every city's sitemap came to list every city's deals.
+  def test_parent_tenanted_models_declare_how_they_reach_a_city
+    {
+      "engines/tv/app/models/concerns/tv/channel_tenanted.rb" => "tenanted_through :channel",
+      "engines/marketplace/app/models/marketplace/deal.rb" => "tenanted_through :listing",
+    }.each do |path, declaration|
+      assert_includes File.read(File.join(ROOT, path)), declaration,
+                      "#{path} lost its city derivation"
+    end
+  end
+
+  def test_city_scoping_is_one_mechanism_not_a_controller_helper
+    refute_includes source, "in_this_city",
+                    "city scoping belongs on the models (CityScoped / TenantedThrough), not re-derived in the controller"
+    refute_match(/column_names\.include\?\("city_id"\)/, source,
+                 "a runtime schema probe cannot tell 'not tenanted' from 'tenanted through a parent'")
   end
 
   def test_every_indexable_model_has_an_entries_method
@@ -46,12 +66,5 @@ class SitemapCityScopeContractTest < Minitest::Test
        takeaway_entries marketplace_entries maps_entries].each do |method|
       assert_includes source, "def #{method}", "sitemap lost #{method}"
     end
-  end
-
-  # Deal has no city_id of its own — it reaches the city through its store — so
-  # it must not carry a hand-written column probe that silently opts it out.
-  def test_no_per_model_city_column_probes
-    refute_match(/column_names\.include\?\("city_id"\)/, source.sub(/def in_this_city.*?\n  end/m, ""),
-                 "city scoping belongs in in_this_city, not re-tested per model")
   end
 end

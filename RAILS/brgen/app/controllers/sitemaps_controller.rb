@@ -34,78 +34,53 @@ class SitemapsController < ApplicationController
     entries
   end
 
-  # ActsAsTenant already scopes CityTenantable models, but a sitemap that
-  # forgets the city is how oshlo.no listed Bergen's posts. Named here so a
-  # test can see the word and a future default_scope change cannot hide it.
-  # Takes a class or a relation: `klass` is not one of the methods
-  # ActiveRecord delegates from a model class to `all` (`none` is), so the bare
-  # `Community` / `Tv::Channel` / `Place` call sites need the `all` first.
-  def in_this_city(relation)
-    scope = relation.all
-    city = Current.city_record
-    return scope.none unless city
-    return scope.where(city_id: city.id) if scope.klass.column_names.include?("city_id")
-
-    scope
+  # in_current_city is the city scoping, and it lives on the models: CityScoped
+  # for the ones with their own city_id, TenantedThrough for Tv::Video and
+  # Marketplace::Deal, which have none and reach a city through a parent. It is
+  # written at every call site rather than left to acts_as_tenant's default
+  # scope because a sitemap that forgets the city is how oshlo.no listed
+  # Bergen's posts, and a default_scope is not something a reader can see.
+  def entries_for(relation, changefreq:, priority:, cap: PER_MODEL_CAP)
+    relation.limit(cap).map do |record|
+      Shared::SitemapBuilder::Entry.new(loc: yield(record), lastmod: record.updated_at,
+                                        changefreq: changefreq, priority: priority)
+    end
   end
 
   def posts_entries
-    in_this_city(Post.hot).limit(PER_MODEL_CAP).map do |post|
-      Shared::SitemapBuilder::Entry.new(loc: post_url(post), lastmod: post.updated_at, changefreq: "daily", priority: "0.6")
-    end
+    entries_for(Post.hot.in_current_city, changefreq: "daily", priority: "0.6") { |p| post_url(p) }
   end
 
   def community_entries
-    in_this_city(Community).limit(PER_MODEL_CAP).map do |community|
-      Shared::SitemapBuilder::Entry.new(loc: community_url(community), lastmod: community.updated_at, changefreq: "weekly", priority: "0.5")
-    end
+    entries_for(Community.in_current_city, changefreq: "weekly", priority: "0.5") { |c| community_url(c) }
   end
 
+  # Hashtags are global by design — a tag is not a city's property.
   def hashtag_entries
-    Hashtag.trending.limit(HASHTAG_CAP).map do |tag|
-      Shared::SitemapBuilder::Entry.new(loc: hashtag_url(tag.name), lastmod: tag.updated_at, changefreq: "daily", priority: "0.4")
-    end
+    entries_for(Hashtag.trending, changefreq: "daily", priority: "0.4", cap: HASHTAG_CAP) { |t| hashtag_url(t.name) }
   end
 
   def tv_entries
-    entries = in_this_city(Tv::Channel).limit(PER_MODEL_CAP).map do |channel|
-      Shared::SitemapBuilder::Entry.new(loc: tv.channel_url(channel), lastmod: channel.updated_at, changefreq: "weekly", priority: "0.6")
-    end
-    entries + Tv::Video.published.in_current_city.limit(PER_MODEL_CAP).map do |video|
-      Shared::SitemapBuilder::Entry.new(loc: tv.video_url(video), lastmod: video.updated_at, changefreq: "monthly", priority: "0.5")
-    end
+    entries_for(Tv::Channel.in_current_city, changefreq: "weekly", priority: "0.6") { |c| tv.channel_url(c) } +
+      entries_for(Tv::Video.published.in_current_city, changefreq: "monthly", priority: "0.5") { |v| tv.video_url(v) }
   end
 
   def playlist_entries
-    entries = Playlist::Playlist.public_playlists.limit(PER_MODEL_CAP).map do |playlist|
-      Shared::SitemapBuilder::Entry.new(loc: playlist.playlist_url(playlist), lastmod: playlist.updated_at, changefreq: "weekly", priority: "0.6")
-    end
-    entries + Playlist::Set.publicly_listed.limit(PER_MODEL_CAP).map do |set|
-      Shared::SitemapBuilder::Entry.new(loc: playlist.set_url(set), lastmod: set.updated_at, changefreq: "weekly", priority: "0.5")
-    end
+    entries_for(Playlist::Playlist.public_playlists, changefreq: "weekly", priority: "0.6") { |p| playlist.playlist_url(p) } +
+      entries_for(Playlist::Set.publicly_listed, changefreq: "weekly", priority: "0.5") { |s| playlist.set_url(s) }
   end
 
   def takeaway_entries
-    in_this_city(Takeaway::Restaurant.active).limit(PER_MODEL_CAP).map do |restaurant|
-      Shared::SitemapBuilder::Entry.new(loc: takeaway.restaurant_url(restaurant), lastmod: restaurant.updated_at, changefreq: "weekly", priority: "0.7")
-    end
+    entries_for(Takeaway::Restaurant.active.in_current_city, changefreq: "weekly", priority: "0.7") { |r| takeaway.restaurant_url(r) }
   end
 
   def marketplace_entries
-    entries = in_this_city(Marketplace::Store.active).limit(PER_MODEL_CAP).map do |store|
-      Shared::SitemapBuilder::Entry.new(loc: marketplace.shop_url(store), lastmod: store.updated_at, changefreq: "weekly", priority: "0.6")
-    end
-    entries += in_this_city(Marketplace::Listing.active).limit(PER_MODEL_CAP).map do |listing|
-      Shared::SitemapBuilder::Entry.new(loc: marketplace.listing_url(listing), lastmod: listing.updated_at, changefreq: "daily", priority: "0.7")
-    end
-    entries + in_this_city(Marketplace::Deal.active).limit(PER_MODEL_CAP).map do |deal|
-      Shared::SitemapBuilder::Entry.new(loc: marketplace.deal_url(deal), lastmod: deal.updated_at, changefreq: "daily", priority: "0.6")
-    end
+    entries_for(Marketplace::Store.active.in_current_city, changefreq: "weekly", priority: "0.6") { |s| marketplace.shop_url(s) } +
+      entries_for(Marketplace::Listing.active.in_current_city, changefreq: "daily", priority: "0.7") { |l| marketplace.listing_url(l) } +
+      entries_for(Marketplace::Deal.active.in_current_city, changefreq: "daily", priority: "0.6") { |d| marketplace.deal_url(d) }
   end
 
   def maps_entries
-    in_this_city(Place).limit(PER_MODEL_CAP).map do |place|
-      Shared::SitemapBuilder::Entry.new(loc: maps.place_url(place), lastmod: place.updated_at, changefreq: "monthly", priority: "0.6")
-    end
+    entries_for(Place.in_current_city, changefreq: "monthly", priority: "0.6") { |p| maps.place_url(p) }
   end
 end

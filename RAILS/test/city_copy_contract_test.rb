@@ -84,6 +84,32 @@ class CityCopyContractTest < Minitest::Test
     assert_includes layout, "website_json_ld"
   end
 
+  # The layout assertion above pins one file by path, and the leak class is
+  # "a hardcoded brand string on any city-facing surface". The manifest is proof
+  # that scoping the check to one file lets the next one drift: it named the app
+  # "Brgen" and carried the Scandinavia sentence long after the layout stopped.
+  BRAND_LEAKS = [
+    [/city communities across scandinavia/i, "the pan-European blurb: every city got the same description"],
+    [/"Brgen (Playlist|Dating|TV|Marketplace|Takeaway|Maps|Messenger)"/, "a vertical app name fixed to Brgen"],
+  ].freeze
+
+  def test_city_facing_surfaces_do_not_hardcode_the_brand
+    surfaces = Dir.glob(File.join(ROOT, "app/views/{layouts,pwa}/**/*.erb"))
+    refute_empty surfaces, "found no layout/manifest surfaces — the glob has gone stale"
+    surfaces.each do |path|
+      body = File.read(path)
+      BRAND_LEAKS.each do |pattern, why|
+        refute_match(pattern, body, "#{path.sub(ROOT, "")}: #{why}")
+      end
+    end
+  end
+
+  def test_the_manifest_resolves_its_name_from_the_city
+    manifest = File.read(File.join(ROOT, "app/views/pwa/manifest.json.erb"))
+    assert_includes manifest, "city_name",
+                    "the manifest is served to the same page as the head; both must resolve the city the same way"
+  end
+
   def test_city_name_helper_exists
     helper = File.read(File.join(ROOT, "app/helpers/application_helper.rb"))
     assert_includes helper, "def city_name",

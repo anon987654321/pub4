@@ -4,6 +4,11 @@ class Place < ApplicationRecord
   include Shared::ActivityTrackable
   include Shared::GeoLocatable
   include Shared::MediaProcessable
+  # Not CityTenantable: places.city_id is NOT NULL and belongs_to :city is
+  # required here, so the optional-tenant declaration would weaken it and add a
+  # default_scope to five existing query sites. The scope alone is what the
+  # city-facing surfaces need.
+  include CityScoped
   belongs_to :city
   belongs_to :neighborhood, optional: true
 
