@@ -46,7 +46,7 @@ module Deploy
       _written, stale = RenderDns.render_zones(check: true)
       %w[nsd.conf acme-client.conf].zip([RenderDns::NSD_CONF, RenderDns::ACME_CONF]).each do |label, path|
         body = label == "nsd.conf" ? RenderDns.nsd_conf_body : RenderDns.acme_conf_body
-        stale << label unless File.exist?(path) && File.read(path) == body
+        stale << label unless File.exist?(path) && File.read(path, encoding: "UTF-8") == body
       end
 
       if stale.empty?
@@ -62,7 +62,7 @@ module Deploy
     # directory were maintained separately.
     def every_domain_has_a_zone
       declared = RenderDns.zones.keys
-      conf = File.read(RenderDns::NSD_CONF).scan(/name:\s+"([^"]+)"/).flatten
+      conf = File.read(RenderDns::NSD_CONF, encoding: "UTF-8").scan(/name:\s+"([^"]+)"/).flatten
 
       missing_block = declared - conf
       orphan_block = conf - declared
@@ -109,7 +109,7 @@ module Deploy
     end
 
     def live_domains
-      match = File.read(REGISTRY).match(/LIVE_DOMAINS\s*=\s*%w\[([^\]]+)\]/)
+      match = File.read(REGISTRY, encoding: "UTF-8").match(/LIVE_DOMAINS\s*=\s*%w\[([^\]]+)\]/)
       return [] unless match
 
       match[1].split(/\s+/).reject(&:empty?)

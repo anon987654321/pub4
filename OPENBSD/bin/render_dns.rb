@@ -27,6 +27,13 @@ require "yaml"
 require "date"
 require "fileutils"
 
+# UTF-8 explicitly on every read. The zone files are ASCII, but OPERATOR.sh and
+# data/dns.yml carry em dashes in their comments, and vm23's cron and non-login
+# shells run with no LANG at all — so Ruby defaults external encoding to
+# US-ASCII and the first regex against a comment raises "invalid byte sequence
+# in US-ASCII". Found by running --check over ssh, which is exactly the shape of
+# shell a gate runs in. OPENBSD/integrity_gate.rb has a test pinning the same
+# failure mode (RAILS/test/integrity_locale_test.rb).
 module RenderDns
   ROOT       = File.expand_path("../..", __dir__)
   OPENBSD    = File.join(ROOT, "OPENBSD")
@@ -45,7 +52,7 @@ module RenderDns
   # The city network, straight out of the shell array the installer uses, so the
   # generator cannot describe a different fleet from the one OPERATOR.sh deploys.
   def city_zones
-    block = File.read(OPERATOR)[/ALL_DOMAINS=\(\n(.*?)\n\)/m, 1] or
+    block = File.read(OPERATOR, encoding: "UTF-8")[/ALL_DOMAINS=\(\n(.*?)\n\)/m, 1] or
       raise "ALL_DOMAINS block not found in #{OPERATOR}"
 
     block.lines.filter_map do |line|
@@ -131,7 +138,7 @@ module RenderDns
     today = Date.today.strftime("%Y%m%d")
     return "#{today}01" unless File.exist?(path)
 
-    existing = File.read(path)
+    existing = File.read(path, encoding: "UTF-8")
     old = existing[SERIAL_LINE, 1]
     return "#{today}01" unless old
 
@@ -153,7 +160,7 @@ module RenderDns
       body = zone_body(domain, subdomains)
       final = body.sub("%<serial>s", serial_for(path, body))
 
-      if File.exist?(path) && File.read(path) == final
+      if File.exist?(path) && File.read(path, encoding: "UTF-8") == final
         next
       elsif check
         stale << "#{domain}.zone"
@@ -250,7 +257,7 @@ module RenderDns
   end
 
   def sync_file(path, body, check:, label:, written:, stale:)
-    return if File.exist?(path) && File.read(path) == body
+    return if File.exist?(path) && File.read(path, encoding: "UTF-8") == body
 
     if check
       stale << label
