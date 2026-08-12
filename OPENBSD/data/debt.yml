@@ -23,6 +23,56 @@
 #    it, the rule belongs in DECISIONS.md, and the line here points at it.
 
 open:
+  - id: seven_tables_recorded_as_migrated_and_absent
+    tag: operator-priority
+    summary: >
+      Seven tables exist in brgen's schema.rb and not in the production database,
+      and `rails db:migrate:status` reports 0 pending — the migration that creates
+      them, 20260514120000_create_identity_and_trust_primitives, is recorded in
+      schema_migrations as applied. It ran, was marked done, and left nothing.
+      Measured 2026-08-12: schema.rb 92 tables, production 87.
+      Missing: account_merges, external_identities, identity_assurances,
+      identity_providers, moderation_flags, reputation_scores, trust_signals.
+      What that breaks, all of it silently until something touches it:
+      User#destroy raises ActiveRecord::StatementInvalid on the
+      `has_many :account_merges, dependent: :destroy` — so account deletion, which
+      the users table has deletion_scheduled_at and deleted_at columns for, cannot
+      complete, and PruneGuestUsersJob cannot delete a single row.
+      ModerationWorkflow#penalize_owner writes trust_signals, so resolving a
+      moderation report raises. TrustScore has no table. OAuth's
+      external_identities has no table.
+      Found by trying to prune 141,753 stale guest rows and getting "removed 0"
+      with no error — in_batches(&:destroy_all) swallowed it; a single
+      user.destroy on the same row raises immediately.
+      Fix is a schema change against live data and belongs with an operator:
+      re-run that migration's up (or a create_table_if_not_exists equivalent),
+      then re-run the prune. Note there is also one genuinely unapplied migration,
+      20260812190000, from the same day's engine work.
+
+  - id: solid_queue_worker_never_ran
+    tag: operator-priority
+    summary: >
+      No background job has ever run on this box. Every app's rc.d exported
+      SOLID_QUEUE_IN_PUMA=true; in-Puma mode is a Puma plugin, all three apps run
+      under Falcon, and not one has a config/puma.rb — so the variable was read by
+      nothing and no worker ever started. Measured 2026-08-12: brgen 1670 jobs
+      enqueued and 0 finished, 0 registered processes, 0 recurring tasks; amber 103
+      and 0.
+      Cost, from the enqueued classes and recurring.yml: 150 MessageExpirationJob,
+      so disappearing messages have never disappeared — a privacy promise the UI
+      makes in Norwegian and the database breaks. 1520 Turbo broadcast jobs, so
+      every live update routed through a job has not arrived. PruneGuestUsersJob,
+      DatabaseSnapshotJob (which the off_host_dr entry calls the only thing backing
+      up production.sqlite3), digests, rollups, newsletters, search reindex, and
+      the cache and cable health checks.
+      The dead variable is gone from all three rc.d files and the template, and
+      etc/rc.d/<app>_jobs exists for each app, deliberately NOT enabled: a Solid
+      Queue worker is another resident Ruby process on a 1 GB box that already
+      cannot hold what it runs (see multi_app_ram). Enabling it is the operator
+      call the footer of each script spells out. health_check.rb now fails when a
+      queue has unfinished work and no registered process, so whichever way that
+      decision goes, this stops being invisible.
+
   - id: off_host_dr
     tag: operator-priority
     summary: >

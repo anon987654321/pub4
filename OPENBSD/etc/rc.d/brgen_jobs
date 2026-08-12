@@ -1,0 +1,69 @@
+#!/bin/ksh
+# Solid Queue worker for brgen. NOT enabled by default — see the footer.
+#
+# Every app's rc.d exported SOLID_QUEUE_IN_PUMA=true. In-Puma mode is a Puma
+# plugin; all three apps run under Falcon and not one of them has a
+# config/puma.rb, so no plugin ever loaded and the variable was read by nothing.
+# It was the only thing in the tree that looked like a job worker, and it had
+# never started one.
+#
+# Measured on vm23, 2026-08-12:
+#
+#   brgen     1670 jobs enqueued, 0 finished, 0 processes, 0 recurring tasks
+#   amber      103 jobs enqueued, 0 finished, 0 processes
+#   bsdports     0 enqueued, so nothing to notice
+#
+# What that has cost, from the enqueued classes and recurring.yml:
+#
+#   MessageExpirationJob   150 queued on brgen. Disappearing messages do not
+#                          disappear — a privacy promise the UI makes in
+#                          Norwegian ("Forsvinnende meldinger") that the
+#                          database has been breaking since the feature shipped.
+#   PruneGuestUsersJob     141,753 guest rows older than a week, unpruned.
+#   Turbo broadcast jobs   1520 on brgen; every live update routed through a job
+#                          rather than an inline broadcast has not arrived.
+#   DatabaseSnapshotJob    debt.yml calls this the only thing backing up
+#                          production.sqlite3. It has never taken a snapshot.
+#   digests, rollups, newsletters, search reindex, cache and cable health checks
+#
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+APP_DIR=/home/brgen/app
+[ -r /etc/rails/common.env ] && . /etc/rails/common.env
+[ -r /etc/brgen.env ] && . /etc/brgen.env
+: "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/brgen.env}"
+
+daemon="/bin/ksh"
+# Same shape as rc.d/brgen: SECRET_KEY_BASE is sourced inside the shell by the
+# app user rather than interpolated here, where it would sit in ps(1) argv.
+daemon_flags="-c 'cd ${APP_DIR} && . /etc/brgen.env && export RAILS_ENV=production SECRET_KEY_BASE HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec rake solid_queue:start'"
+daemon_user="brgen"
+daemon_execdir="/home/brgen/app"
+daemon_logger="daemon.notice"
+daemon_timeout="120"
+
+. /etc/rc.d/rc.subr
+pexp="ruby34.*solid_queue"
+rc_bg=YES
+rc_reload=NO
+
+rc_cmd $1
+
+# Enabling this is an operator decision, and the reason is vm23 rather than the
+# code. The box is 1 GB and 1 vCPU; debt.yml's multi_app_ram entry records that
+# it already cannot keep master + brgen + amber resident, and resource_guard
+# shed amber and bsdports twice on 2026-08-12 alone. A Solid Queue worker is
+# another resident Ruby process with the whole app loaded in it.
+#
+# When you have decided about the memory:
+#
+#   doas rcctl enable brgen_jobs
+#   doas rcctl start brgen_jobs
+#   doas rcctl set brgen_jobs status on
+#
+# Then confirm it took, because a registered process is the only proof:
+#
+#   sqlite3 -readonly /home/brgen/app/storage/production_queue.sqlite3 \
+#     'select count(*) from solid_queue_processes;'   # expect >= 1
+#
+# health_check.rb fails when a queue has unfinished work and no process, so
+# this stops being invisible either way.

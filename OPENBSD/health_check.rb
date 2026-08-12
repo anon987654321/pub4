@@ -209,6 +209,43 @@ if on_box
   end
 end
 
+# A queue with work in it and nobody registered to do it.
+#
+# brgen's rc.d exported SOLID_QUEUE_IN_PUMA=true while running under Falcon,
+# which has no Puma plugin to read it, so no worker had ever started. Measured
+# 2026-08-12: 1670 jobs enqueued, 0 finished, 0 processes, 0 recurring tasks.
+# Every check on this box passed throughout — the web app was healthy and the
+# jobs simply piled up in a SQLite file nobody queried. Disappearing messages
+# had never disappeared and 141,753 guest rows had never been pruned.
+#
+# Read-only and per app, from the queue database directly rather than by booting
+# Rails, so it costs nothing on a 1 vCPU box.
+if on_box
+  apps.each do |name, metadata|
+    next if metadata["standalone"]
+
+    queue_db = "/home/#{name}/app/storage/production_queue.sqlite3"
+    next unless File.readable?(queue_db)
+
+    counts = %w[
+      SELECT\ COUNT(*)\ FROM\ solid_queue_jobs\ WHERE\ finished_at\ IS\ NULL
+      SELECT\ COUNT(*)\ FROM\ solid_queue_processes
+    ].map do |sql|
+      ok, out = run("/usr/local/bin/sqlite3", "-readonly", queue_db, sql.tr("\\ ", " "))
+      ok ? out.strip.to_i : nil
+    end
+    pending, workers = counts
+    next if pending.nil? || workers.nil?
+
+    # Zero workers is only a fault when there is work waiting. An idle app with a
+    # drained queue and no worker is a deployment choice, not a broken one.
+    if pending.positive? && workers.zero?
+      failures << "#{name} queue: #{pending} unfinished job(s) and no registered Solid Queue process " \
+                  "— see OPENBSD/etc/rc.d/#{name}_jobs"
+    end
+  end
+end
+
 up_checks = on_box ? { "master" => 53_187 } : {}
 ready_apps.each do |name|
   port = app_ports[name]

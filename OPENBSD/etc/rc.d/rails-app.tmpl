@@ -1,6 +1,12 @@
 #!/bin/ksh
 daemon="/bin/ksh"
-daemon_flags="-c 'cd /home/${app}/app && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${secret} HOME=/home/${app} && exec /usr/local/bin/bundle34 exec falcon serve --health-check-timeout 300 --bind http://127.0.0.1:${port}'"
+# SOLID_QUEUE_IN_PUMA=true was here and is gone. In-Puma mode is a Puma plugin;
+# this app runs under Falcon and has no config/puma.rb, so no plugin ever loaded
+# and the variable was read by nothing. It was the only thing that looked like a
+# job worker and it had never started one — 1670 jobs enqueued on brgen and 0
+# finished, measured 2026-08-12. rc.d/<app>_jobs is the real worker; read its
+# footer before enabling it, because vm23 has 1 GB.
+daemon_flags="-c 'cd /home/${app}/app && export RAILS_ENV=production SECRET_KEY_BASE=${secret} HOME=/home/${app} && exec /usr/local/bin/bundle34 exec falcon serve --health-check-timeout 300 --bind http://127.0.0.1:${port}'"
 daemon_user="${app}"
 daemon_execdir="${app_dir}"
 daemon_timeout="60"
