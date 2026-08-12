@@ -1,0 +1,21 @@
+<% if @places.any? %>
+  <%= turbo_frame_tag "maps-places", target: "_top" do %>
+    <div class="place-list" id="maps-places-list" role="list" aria-label="Places">
+      <% @places.each do |place| %>
+        <%= render "maps/places/card", place: %>
+      <% end %>
+    </div>
+
+    <%= render "shared/infinite_scroll_sentinel",
+               pagy: @pagy,
+               reflex: "PlacesInfiniteScrollReflex#load_more",
+               sentinel_id: "maps-places-sentinel",
+               q: params[:q],
+               kind: params[:kind] %>
+  <% end %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("empty.no_places"),
+        body: t("empty.no_places_search"),
+        action: { label: t("empty.clear_search"), path: places_path } %>
+<% end %>

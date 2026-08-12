@@ -20,4 +20,6 @@ class Place < ApplicationRecord
 
   has_many :place_check_ins, dependent: :destroy
   has_many :check_in_users, through: :place_check_ins, source: :user
+  has_many :restaurants, class_name: "Takeaway::Restaurant", dependent: :nullify
+  has_many :stores, class_name: "Marketplace::Store", dependent: :nullify
 end

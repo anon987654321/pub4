@@ -13,6 +13,11 @@ class UsersController < ApplicationController
     @active_follow = authenticated? && Current.user.following?(@user)
     @active_block  = authenticated? && Current.user != @user && Current.user.blocking?(@user)
     @activity = ActivityEvent.visible.public_only.where(actor_id: @user.id).recent.limit(20)
+    @stores = @user.marketplace_stores.active.limit(8)
+    @casual_listings = @user.marketplace_listings.active.casual.limit(8)
+    @restaurants = @user.takeaway_restaurants.active.limit(8)
+    @channels = @user.tv_channels.limit(8)
+    @playlists = @user.playlist_playlists.public_playlists.limit(8)
   end
 
   # Edit/update your own profile — always Current.user, never someone else's row.

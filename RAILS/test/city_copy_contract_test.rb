@@ -66,7 +66,7 @@ class CityCopyContractTest < Minitest::Test
   def test_the_city_bearing_keys_interpolate
     LOCALES.each do |locale|
       values = values_for(locale)
-      %w[pages.home_title pages.default_description posts.community_platform empty.post_to_city marketplace.home_title].each do |key|
+      %w[pages.home_title pages.default_description posts.community_platform empty.post_to_city marketplace.home_title marketplace.deals.show_title hashtag.also_in_city communities.also_in_city marketplace.stores.also_in_city].each do |key|
         assert values.key?(key), "#{locale}.yml lost #{key}"
         assert_includes values[key], "%{city}", "#{locale}.yml #{key} no longer interpolates the city"
       end

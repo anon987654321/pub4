@@ -77,8 +77,11 @@ module ApplicationHelper
     nil
   end
 
+  # ENTRIES_BY_DOMAIN is the frozen index of the same rows. The linear find this
+  # replaced ran per record through schema_url_for -> record_public_href, so a
+  # 25-listing index page walked all 44 entries 25 times.
   def marketplace_subdomain
-    Brgen::DomainRegistry::ENTRIES.find { |entry| entry.domain == Current.domain }&.marketplace_subdomain || "marketplace"
+    Brgen::DomainRegistry::ENTRIES_BY_DOMAIN[Current.domain.to_s]&.marketplace_subdomain || "marketplace"
   end
 
   def marketplace_host
@@ -205,7 +208,7 @@ module ApplicationHelper
     when Playlist::Playlist
       playlist.playlist_url(record, host: domain, subdomain: "playlist")
     when Place
-      main_app.maps_place_url(record, host: domain, subdomain: "maps")
+      maps.place_url(record, host: domain, subdomain: "maps")
     when Dating::Match
       dating.matches_url(host: domain, subdomain: "dating")
     when Dating::Profile

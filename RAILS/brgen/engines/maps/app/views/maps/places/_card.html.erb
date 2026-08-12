@@ -1,0 +1,12 @@
+<article class="place-card" role="article" aria-label="<%= place.name %>">
+  <% if place.photo.attached? %>
+    <%= link_to place_path(place), class: "place-card__media" do %>
+      <%= responsive_image_tag(place.photo, alt: place.name, loading: "lazy", class: "place-card__image") %>
+    <% end %>
+  <% end %>
+  <h2><%= link_to place.name, place_path(place) %></h2>
+  <p class="dim"><%= place.kind %><% if place.city %> · <%= place.city.name %><% end %><% if place.neighborhood %> · <%= place.neighborhood.name %><% end %></p>
+  <% if place.address.present? %>
+    <p class="dim"><%= place.address %></p>
+  <% end %>
+</article>

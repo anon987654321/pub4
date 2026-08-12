@@ -82,6 +82,7 @@ en:
     follow_sign_in: "Sign in"
     follow_hint: " to see posts from people you follow."
     local_posts: "Local posts"
+    today_empty: "Nothing new across the city yet."
   auth:
     sign_in: "Sign in"
     sign_in_lead: "You can browse and post without an account. Sign in to keep your posts and lift the guest limit."
@@ -526,6 +527,7 @@ en:
     ready_to_chat: "is ready to chat."
     someone: "Someone"
     its_a_match: "It's a match!"
+    home_title: "Dating"
     open_messages: "Open messages"
     current_photos: "Current photos"
     more_details: "More details"
@@ -537,6 +539,7 @@ en:
     essentials: "Essentials"
     more_details_optional: "More details (optional)"
   playlist:
+    home_title: "Playlist"
     tap_to_start: "tap to start"
     next: "Next track"
     play: "Play"
@@ -616,9 +619,16 @@ en:
   marketplace:
     home_title: "Market · %{city}"
     browse_listings: "Browse listings"
+    listing_kind: "Who is selling"
+    from_anyone: "Anyone"
+    from_a_person: "Person"
+    from_a_shop: "Shop"
+    casual_hint: "No shop needed — a listing without a store is you selling one thing."
+    sold: "Sold"
     deals:
       featured: "Featured deals"
       title: "Deals"
+      show_title: "%{headline} · %{city}"
     max_price: "Max price"
     min_price: "Min price"
     orders:
@@ -636,6 +646,7 @@ en:
       edit: "Edit store"
       new: "Open a store"
       title: "Stores"
+      also_in_city: "Also in %{city}"
     new_listing: "New listing"
     edit_listing: "Edit listing"
     saved_searches: "Saved searches"
@@ -743,6 +754,8 @@ en:
     all_types: "All types"
     filter_by_kind: "Filter by type"
     checked_in_recently: "You checked in here recently."
+    on_the_map: "On the map"
+    at_this_place: "Here"
   communities:
     about: "About %{name}"
     name_placeholder: "e.g. bergen, tech, musikk"
@@ -751,6 +764,7 @@ en:
     save: "Save"
     confirm_delete: "Delete community?"
     new_community: "New community"
+    also_in_city: "Also in %{city}"
   tv:
     live_streams:
       chat: "Chat"
@@ -776,6 +790,9 @@ en:
     uploading_to_html: "Uploading to %{channel}"
     no_description: "This channel has not added a description yet."
     home_blurb: "Local channels, shows, and live stages — watch without an account."
+    home_title: "TV"
+    channels_title: "Channels"
+    shows_title: "Shows"
     thumbnail_hint: "postpro.rb grades thumbnails — blockbuster for Odyssey-style cinematic."
   newsletter:
     email_placeholder: "your@email.com"
@@ -878,6 +895,7 @@ en:
     record_audio: "Record audio"
   activity:
     local_graph: "Local graph"
+    title: "Activity"
   a11y:
     skip_to_content: "Skip to main content"
   # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb
@@ -936,10 +954,18 @@ en:
     count: "%{count} posts"
     empty_body: "No posts use #%{name} yet."
     empty_title: "Nothing here yet"
+    also_in_city: "Communities in %{city}"
   profile:
     activity: "Recent activity"
     display_name: "Display name"
     edit: "Edit profile"
     username: "Username"
+    across_the_city: "Across the city"
+    stores: "Shops"
+    listings: "Listings"
+    restaurants: "Restaurants"
+    channels: "Channels"
+    playlists: "Playlists"
+    posts: "Posts"
   showcase:
     devices: "The app on desktop and mobile"

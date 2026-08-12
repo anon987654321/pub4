@@ -14,5 +14,6 @@ class HashtagsController < ApplicationController
                 .with_attached_image
                 .includes(:user, :community, :votes)
     @pagy, @posts = pagy(scope)
+    @city_communities = Community.popular_cached(limit: 6)
   end
 end

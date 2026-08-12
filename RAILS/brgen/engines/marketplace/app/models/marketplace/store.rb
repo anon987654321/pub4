@@ -18,6 +18,7 @@ module Marketplace
     ].freeze
 
     belongs_to :owner, class_name: "User"
+    belongs_to :place, optional: true
     has_many :listings, class_name: "Marketplace::Listing", dependent: :nullify
 
     validates :name, presence: true, length: { maximum: 160 }

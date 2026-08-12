@@ -1,0 +1,21 @@
+<% content_for :title, t("pages.places") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("pages.places") %>">
+  <h1><%= t("pages.places") %></h1>
+  <nav role="navigation" aria-label="<%= t("pages.places") %>">
+    <%= link_to t("maps.map"), root_path, class: "btn btn-ghost" %>
+  </nav>
+</div>
+
+<%= live_search_index url: places_path,
+                      results_partial: "maps/places/live_search_results",
+                      placeholder: t("search.places"),
+                      label: t("search.places_label"),
+                      frame_id: "maps-places" do |f| %>
+  <%# The search field beside this one gets its name from live_search_index's
+      label:; this select had none. %>
+  <%= f.select :kind,
+        [[t("maps.all_types", default: "All types"), ""]] + Place.distinct.order(:kind).pluck(:kind).compact.map { |k| [k.humanize, k] },
+        { selected: params[:kind] },
+        { aria: { label: t("maps.filter_by_kind", default: "Filter by type") } } %>
+<% end %>

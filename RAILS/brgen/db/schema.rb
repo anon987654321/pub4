@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_190000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -503,12 +503,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
     t.text "description"
     t.string "name", null: false
     t.integer "owner_id", null: false
+    t.integer "place_id"
     t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.boolean "verified", default: false, null: false
     t.string "vertical"
     t.index ["city_id"], name: "index_marketplace_stores_on_city_id"
     t.index ["owner_id"], name: "index_marketplace_stores_on_owner_id"
+    t.index ["place_id"], name: "index_marketplace_stores_on_place_id"
     t.index ["slug"], name: "index_marketplace_stores_on_slug", unique: true
     t.index ["vertical", "active"], name: "index_marketplace_stores_on_vertical_and_active"
   end
@@ -1088,6 +1090,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
     t.integer "min_order_cents"
     t.string "name"
     t.string "phone"
+    t.integer "place_id"
     t.decimal "rating"
     t.integer "reviews_count"
     t.string "slug"
@@ -1096,6 +1099,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
     t.index ["city_id", "slug"], name: "index_takeaway_restaurants_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_takeaway_restaurants_on_city_id"
     t.index ["latitude", "longitude"], name: "index_takeaway_restaurants_on_latitude_and_longitude"
+    t.index ["place_id"], name: "index_takeaway_restaurants_on_place_id"
     t.index ["user_id"], name: "index_takeaway_restaurants_on_user_id"
   end
 
@@ -1372,6 +1376,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
   add_foreign_key "marketplace_reviews", "users"
   add_foreign_key "marketplace_saved_searches", "users"
   add_foreign_key "marketplace_stores", "cities"
+  add_foreign_key "marketplace_stores", "places"
   add_foreign_key "marketplace_stores", "users", column: "owner_id"
   add_foreign_key "mentions", "users", column: "mentioned_user_id"
   add_foreign_key "message_receipts", "messages"
@@ -1445,6 +1450,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
   add_foreign_key "takeaway_orders", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_orders", "users"
   add_foreign_key "takeaway_restaurants", "cities"
+  add_foreign_key "takeaway_restaurants", "places"
   add_foreign_key "takeaway_restaurants", "users"
   add_foreign_key "takeaway_reviews", "takeaway_orders", column: "order_id"
   add_foreign_key "takeaway_reviews", "takeaway_restaurants", column: "restaurant_id"

@@ -7,6 +7,9 @@ class SitemapsController < ApplicationController
   # active subapp is resolved the same way the rest of the app resolves it
   # (Brgen::DomainRegistry), so this needs no per-subdomain route wiring.
   PER_MODEL_CAP = 2_000
+  # Trending is an aggregate over the whole tagging window, not a page of rows —
+  # it earns a tighter cap than the per-model one.
+  HASHTAG_CAP = 200
 
   private
 
@@ -34,12 +37,16 @@ class SitemapsController < ApplicationController
   # ActsAsTenant already scopes CityTenantable models, but a sitemap that
   # forgets the city is how oshlo.no listed Bergen's posts. Named here so a
   # test can see the word and a future default_scope change cannot hide it.
+  # Takes a class or a relation: `klass` is not one of the methods
+  # ActiveRecord delegates from a model class to `all` (`none` is), so the bare
+  # `Community` / `Tv::Channel` / `Place` call sites need the `all` first.
   def in_this_city(relation)
+    scope = relation.all
     city = Current.city_record
-    return relation.none unless city
-    return relation.where(city_id: city.id) if relation.klass.column_names.include?("city_id")
+    return scope.none unless city
+    return scope.where(city_id: city.id) if scope.klass.column_names.include?("city_id")
 
-    relation
+    scope
   end
 
   def posts_entries
@@ -55,7 +62,7 @@ class SitemapsController < ApplicationController
   end
 
   def hashtag_entries
-    Hashtag.trending.limit([PER_MODEL_CAP, 200].min).map do |tag|
+    Hashtag.trending.limit(HASHTAG_CAP).map do |tag|
       Shared::SitemapBuilder::Entry.new(loc: hashtag_url(tag.name), lastmod: tag.updated_at, changefreq: "daily", priority: "0.4")
     end
   end
@@ -91,16 +98,14 @@ class SitemapsController < ApplicationController
     entries += in_this_city(Marketplace::Listing.active).limit(PER_MODEL_CAP).map do |listing|
       Shared::SitemapBuilder::Entry.new(loc: marketplace.listing_url(listing), lastmod: listing.updated_at, changefreq: "daily", priority: "0.7")
     end
-    deal_rel = Marketplace::Deal.active
-    deal_rel = in_this_city(deal_rel) if Marketplace::Deal.column_names.include?("city_id")
-    entries + deal_rel.limit(PER_MODEL_CAP).map do |deal|
+    entries + in_this_city(Marketplace::Deal.active).limit(PER_MODEL_CAP).map do |deal|
       Shared::SitemapBuilder::Entry.new(loc: marketplace.deal_url(deal), lastmod: deal.updated_at, changefreq: "daily", priority: "0.6")
     end
   end
 
   def maps_entries
     in_this_city(Place).limit(PER_MODEL_CAP).map do |place|
-      Shared::SitemapBuilder::Entry.new(loc: maps_place_url(place), lastmod: place.updated_at, changefreq: "monthly", priority: "0.6")
+      Shared::SitemapBuilder::Entry.new(loc: maps.place_url(place), lastmod: place.updated_at, changefreq: "monthly", priority: "0.6")
     end
   end
 end

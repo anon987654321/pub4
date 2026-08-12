@@ -32,6 +32,10 @@
     the front page opens straight into the feed. Wayfinding to the verticals
     (main / AI / playlist / marketplace / dating) lives in the top nav, and the
     anonymous compose box sits above the posts. %>
+<% if @city_today.present? %>
+  <%= render "home/today", events: @city_today %>
+<% end %>
+
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation>
   <% if authenticated? %>
     <nav class="feed-tabs" aria-label="<%= t("home.feed_sort", default: "Feed") %>">

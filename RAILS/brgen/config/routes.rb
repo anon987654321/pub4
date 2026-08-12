@@ -132,16 +132,10 @@ Rails.application.routes.draw do
   # marketplace.* mounted helper. See brgen/ENGINES.md.
   mount Marketplace::Engine, at: "/", as: "marketplace", constraints: { subdomain: MARKETPLACE_SUBDOMAINS }
 
-  constraints(subdomain: MAPS_SUBDOMAINS) do
-    scope module: "maps", as: "maps" do
-      root "home#index"
-      resources :places, only: %i[index show] do
-        member do
-          post :check_in
-        end
-      end
-    end
-  end
+  # maps vertical extracted to engines/maps. Place stays a host model.
+  # Top-level mount with constraints: keyword — NOT a constraints(subdomain:)
+  # block, which would drop the maps.* mounted helper. See brgen/ENGINES.md.
+  mount Maps::Engine, at: "/", as: "maps", constraints: { subdomain: MAPS_SUBDOMAINS }
 
   constraints(subdomain: MESSENGER_SUBDOMAINS) do
     root "conversations#index", as: :messenger_root

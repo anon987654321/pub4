@@ -37,4 +37,18 @@ class LocaleBridgeTest < ActiveSupport::TestCase
   test "unknown locales fall back to english" do
     assert_equal :en, Brgen::LocaleBridge.resolve(:xx)
   end
+
+  test "every registry locale resolves to a shipped locale" do
+    shipped = %i[nb en nl de fr]
+    Brgen::DomainRegistry::ENTRIES.each do |entry|
+      resolved = Brgen::LocaleBridge.resolve(entry.locale)
+      assert_includes shipped, resolved,
+                      "#{entry.domain} claims #{entry.locale.inspect} and LocaleBridge sent #{resolved.inspect}"
+    end
+  end
+
+  test "denver has one apex" do
+    denvers = Brgen::DomainRegistry::ENTRIES.select { |entry| entry.city == "Denver" }
+    assert_equal ["denvr.us"], denvers.map(&:domain)
+  end
 end

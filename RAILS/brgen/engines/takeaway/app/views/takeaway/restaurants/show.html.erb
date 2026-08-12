@@ -18,6 +18,9 @@
 <article>
   <p><%= @restaurant.description %></p>
   <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
+  <% if @restaurant.place.present? %>
+    <p><%= link_to t("maps.on_the_map"), record_public_href(@restaurant.place), class: "btn btn-ghost btn-sm" %></p>
+  <% end %>
   <%# pluralize() takes an English noun and applies English rules; t(count:)
       goes through the locale's own plural rules instead. %>
   <p class="dim"><%= t("takeaway.min_order_line", min: @restaurant.min_order_display, fee: @restaurant.delivery_fee_display) %> <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>

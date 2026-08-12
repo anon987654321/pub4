@@ -88,6 +88,7 @@ nb:
     follow_sign_in: "Logg inn"
     follow_hint: " for å se innlegg fra folk du følger."
     local_posts: "Lokale innlegg"
+    today_empty: "Ingenting nytt i byen ennå."
   auth:
     sign_in: "Logg inn"
     sign_in_lead: "Du kan lese og poste uten konto. Logg inn for å beholde innleggene og heve gjestegrensen."
@@ -532,6 +533,7 @@ nb:
     ready_to_chat: "er klar til å chatte."
     someone: "Noen"
     its_a_match: "Det er en match!"
+    home_title: "Dating"
     open_messages: "Åpne meldinger"
     current_photos: "Bilder du har nå"
     more_details: "Flere detaljer"
@@ -543,6 +545,7 @@ nb:
     essentials: "Det viktigste"
     more_details_optional: "Flere detaljer (valgfritt)"
   playlist:
+    home_title: "Spilleliste"
     tap_to_start: "trykk for å starte"
     next: "Neste spor"
     play: "Spill av"
@@ -622,9 +625,16 @@ nb:
   marketplace:
     home_title: "Markedsplass · %{city}"
     browse_listings: "Bla i annonser"
+    listing_kind: "Hvem selger"
+    from_anyone: "Alle"
+    from_a_person: "Person"
+    from_a_shop: "Butikk"
+    casual_hint: "Ingen butikk nødvendig — en annonse uten butikk er deg som selger én ting."
+    sold: "Solgt"
     deals:
       featured: "Utvalgte tilbud"
       title: "Tilbud"
+      show_title: "%{headline} · %{city}"
     max_price: "Maks pris"
     min_price: "Min. pris"
     orders:
@@ -642,6 +652,7 @@ nb:
       edit: "Rediger butikk"
       new: "Åpne butikk"
       title: "Butikker"
+      also_in_city: "Også i %{city}"
     new_listing: "Ny annonse"
     edit_listing: "Rediger annonse"
     saved_searches: "Lagrede søk"
@@ -749,6 +760,8 @@ nb:
     all_types: "Alle typer"
     filter_by_kind: "Filtrer på type"
     checked_in_recently: "Du sjekket inn her nylig."
+    on_the_map: "På kartet"
+    at_this_place: "Her"
   communities:
     about: "Om %{name}"
     name_placeholder: "f.eks. bergen, tech, musikk"
@@ -757,6 +770,7 @@ nb:
     save: "Lagre"
     confirm_delete: "Slette fellesskapet?"
     new_community: "Nytt fellesskap"
+    also_in_city: "Også i %{city}"
   tv:
     live_streams:
       chat: "Chat"
@@ -782,6 +796,9 @@ nb:
     uploading_to_html: "Laster opp til %{channel}"
     no_description: "Denne kanalen har ikke lagt til en beskrivelse ennå."
     home_blurb: "Lokale kanaler, programmer og direktesendte scener — se uten konto."
+    home_title: "TV"
+    channels_title: "Kanaler"
+    shows_title: "Serier"
     thumbnail_hint: "postpro.rb graderer miniatyrbilder — blockbuster for Odyssey-aktig kino."
   newsletter:
     email_placeholder: "din@epost.com"
@@ -884,6 +901,7 @@ nb:
     record_audio: "Ta opp lyd"
   activity:
     local_graph: "Lokal graf"
+    title: "Aktivitet"
   a11y:
     skip_to_content: "Hopp til innholdet"
   # Flash messages. 44 hardcoded English strings until 2026-08-11 — English toasts
@@ -944,10 +962,18 @@ nb:
     count: "%{count} innlegg"
     empty_body: "Ingen innlegg bruker #%{name} ennå."
     empty_title: "Ingenting her ennå"
+    also_in_city: "Fellesskap i %{city}"
   profile:
     activity: "Nylig aktivitet"
     display_name: "Visningsnavn"
     edit: "Rediger profil"
     username: "Brukernavn"
+    across_the_city: "På tvers av byen"
+    stores: "Butikker"
+    listings: "Annonser"
+    restaurants: "Restauranter"
+    channels: "Kanaler"
+    playlists: "Spillelister"
+    posts: "Innlegg"
   showcase:
     devices: "Appen på skrivebord og mobil"

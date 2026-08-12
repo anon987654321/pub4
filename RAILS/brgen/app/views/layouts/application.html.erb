@@ -37,22 +37,24 @@
       WIRING_NOTES.md has described this partial as the FOUC guard the whole time
       nothing rendered it. %>
   <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
-  <% page_title = content_for?(:title) ? yield(:title) : nil %>
-  <% page_description = content_for?(:description) ? yield(:description) : t("pages.default_description", city: city_name) %>
-  <title><%= page_title.present? ? "#{page_title} — #{city_name}" : city_name %></title>
+  <%# content_for(:x) with no block is the read form: it already returns nil when unset,
+      so content_for?(:x) ? yield(:x) : … was two lookups and the key named twice. %>
+  <% page_title = content_for(:title).presence %>
+  <% page_description = content_for(:description).presence || t("pages.default_description", city: city_name) %>
+  <title><%= page_title ? "#{page_title} — #{city_name}" : city_name %></title>
   <meta name="description" content="<%= page_description %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
   <meta property="og:site_name" content="<%= city_name %>">
-  <meta property="og:title" content="<%= page_title.presence || city_name %>">
+  <meta property="og:title" content="<%= page_title || city_name %>">
   <meta property="og:description" content="<%= page_description %>">
   <meta property="og:url" content="<%= request.original_url %>">
-  <meta property="og:type" content="<%= content_for?(:og_type) ? yield(:og_type) : "website" %>">
-  <meta name="twitter:card" content="<%= content_for?(:og_image) ? "summary_large_image" : "summary" %>">
-  <meta name="twitter:title" content="<%= page_title.presence || city_name %>">
+  <meta property="og:type" content="<%= content_for(:og_type).presence || "website" %>">
+  <meta name="twitter:card" content="<%= content_for(:og_image).present? ? "summary_large_image" : "summary" %>">
+  <meta name="twitter:title" content="<%= page_title || city_name %>">
   <meta name="twitter:description" content="<%= page_description %>">
   <%# Share thumbnail: a per-page override (content_for :og_image) or the brand mark,
       so every link shared to social/chat renders a card instead of bare text. %>
-  <% share_image = content_for?(:og_image) ? yield(:og_image) : "#{request.base_url}/icon.png" %>
+  <% share_image = content_for(:og_image).presence || "#{request.base_url}/icon.png" %>
   <meta property="og:image" content="<%= share_image %>">
   <meta name="twitter:image" content="<%= share_image %>">
   <link rel="preload" href="/icon.png" as="image">
@@ -73,8 +75,8 @@
   <link rel="stylesheet" href="/lightgallery.css">
   <meta name="lg-license" content="<%= ENV.fetch("LIGHTGALLERY_LICENSE", "0000-0000-000-0000") %>">
   <%= yield :json_ld %>
-  <%= json_ld_script(organization_json_ld(site_name: city_name, url: main_app.root_url)) %>
-  <%= json_ld_script(website_json_ld(site_name: city_name, url: main_app.root_url, description: page_description, search: !vertical_surface?)) %>
+  <%= json_ld_script(organization_json_ld(site_name: city_name, url: main_app.root_url, area_served: city_name)) %>
+  <%= json_ld_script(website_json_ld(site_name: city_name, url: main_app.root_url, description: page_description, search: !vertical_surface?, area_served: city_name)) %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="<%= body_surface_classes %>"

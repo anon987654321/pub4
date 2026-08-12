@@ -588,7 +588,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_brgen('app/controllers/maps/places_controller.rb'), 'def check_in'
     assert_includes read_brgen('app/controllers/playlist/listening_parties_controller.rb'), 'def create'
     assert_includes read_brgen('app/views/users/show.html.erb'), 'follow_button'
-    assert_includes read_brgen('app/views/maps/places/show.html.erb'), 'check_in_maps_place_path'
+    assert_includes read_brgen('engines/maps/app/views/maps/places/show.html.erb'), 'check_in_place_path'
     assert_includes read_brgen('app/views/playlist/sets/show.html.erb'), 'set_listening_party_path'
   end
 
@@ -692,18 +692,22 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_maps_places_browse_and_infinite_scroll_are_wired
-    controller = read_brgen('app/controllers/maps/places_controller.rb')
-    index = read_brgen('app/views/maps/places/index.html.erb')
-    partial = read_brgen('app/views/maps/places/_live_search_results.html.erb')
+    controller = read_brgen('engines/maps/app/controllers/maps/places_controller.rb')
+    index = read_brgen('engines/maps/app/views/maps/places/index.html.erb')
+    partial = read_brgen('engines/maps/app/views/maps/places/_live_search_results.html.erb')
     reflex = read_brgen('app/reflexes/places_infinite_scroll_reflex.rb')
-    home = read_brgen('app/views/maps/home/index.html.erb')
+    home = read_brgen('engines/maps/app/views/maps/home/index.html.erb')
 
     assert_includes controller, 'format.html'
     assert_includes controller, '@pagy, @places = pagy'
-    assert_includes index, 'maps_places_path'
+    assert_includes index, 'places_path'
     assert_includes partial, 'PlacesInfiniteScrollReflex#load_more'
     assert_includes reflex, 'maps/places/card'
-    assert_includes home, 'maps_places_path'
+    assert_includes home, 'places_path'
+    routes = read_brgen('config/routes.rb')
+    assert_includes routes, 'mount Maps::Engine'
+    listing = read_brgen('engines/marketplace/app/models/marketplace/listing.rb')
+    assert_includes listing, 'scope :casual'
   end
 
   def test_messenger_compose_flow_accepts_username
@@ -734,14 +738,9 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, 'sitemap_entries'
     end
 
-    brgen_routes = read_source(File.join(ROOT, 'brgen/config/routes.rb'))
-    assert_includes brgen_routes, 'robots#show'
-    source = read_brgen('app/controllers/sitemaps_controller.rb')
-    assert_includes source, 'Brgen::DomainRegistry.resolve'
-    assert_includes source, 'in_this_city',
-                    "sitemap queries must name the city; tenant default_scope is not a contract a reader can see"
-    assert_includes source, 'community_entries'
-    assert_includes source, 'hashtag_entries'
+    assert_includes read_source(File.join(ROOT, 'brgen/config/routes.rb')), 'robots#show'
+    # City scoping and per-model coverage: RAILS/test/sitemap_city_scope_contract_test.rb.
+    assert_includes read_brgen('app/controllers/sitemaps_controller.rb'), 'Brgen::DomainRegistry.resolve'
   end
 
   def test_marketplace_deals_stores_and_playlist_sets_use_infinite_scroll

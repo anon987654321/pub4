@@ -70,6 +70,7 @@ gem 'brgen-marketplace', path: 'engines/marketplace', require: 'marketplace'
 gem 'brgen-playlist', path: 'engines/playlist', require: 'playlist'
 gem 'brgen-takeaway', path: 'engines/takeaway', require: 'takeaway'
 gem 'brgen-dating', path: 'engines/dating', require: 'dating'
+gem 'brgen-maps', path: 'engines/maps', require: 'maps'
 
 gem "dartsass-rails", "~> 0.5.1"
 

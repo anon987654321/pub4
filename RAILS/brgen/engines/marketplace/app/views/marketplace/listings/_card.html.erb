@@ -21,7 +21,9 @@
         </div>
       <% end %>
       <% if listing.sold? %>
-        <span class="deal-badge">Sold</span>
+        <span class="deal-badge"><%= t("marketplace.sold") %></span>
+      <% elsif listing.casual? %>
+        <span class="deal-badge deal-badge--soft"><%= t("marketplace.from_a_person") %></span>
       <% elsif listing.condition.present? %>
         <span class="deal-badge deal-badge--soft"><%= listing.condition.tr("_", " ") %></span>
       <% end %>

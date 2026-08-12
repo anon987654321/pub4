@@ -20,3 +20,14 @@
         body: t("hashtag.empty_body", name: @hashtag.name, default: "No posts use ##{@hashtag.name} yet."),
         action: { label: t("empty.post_to_city", city: city_name), path: new_post_path } %>
 <% end %>
+
+<% if @city_communities.present? %>
+  <aside>
+    <h2><%= t("hashtag.also_in_city", city: city_name) %></h2>
+    <ul>
+      <% @city_communities.each do |community| %>
+        <li><%= link_to community.name, community_path(community) %></li>
+      <% end %>
+    </ul>
+  </aside>
+<% end %>

@@ -1,5 +1,6 @@
-<% content_for :title, t("marketplace.home_title", city: city_name) %>
-<% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: t("marketplace.home_title", city: city_name))) if @listings.any? %>
+<% market_title = t("marketplace.home_title", city: city_name) %>
+<% content_for :title, market_title %>
+<% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: market_title)) if @listings.any? %>
 
 <%= render "marketplace/nav_bar",
       active: "listings",
@@ -7,7 +8,15 @@
       search_placeholder: t("search.marketplace"),
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
-<h1 class="visually-hidden">Markedsplass</h1>
+<h1 class="visually-hidden"><%= market_title %></h1>
+<nav class="deal-cats" aria-label="<%= t("marketplace.listing_kind") %>">
+  <%= link_to t("marketplace.from_anyone"), listings_path(category_id: params[:category_id], q: params[:q].presence),
+        class: "deal-cat#{" active" if params[:from].blank?}" %>
+  <%= link_to t("marketplace.from_a_person"), listings_path(from: "person", category_id: params[:category_id], q: params[:q].presence),
+        class: "deal-cat#{" active" if params[:from] == "person"}" %>
+  <%= link_to t("marketplace.from_a_shop"), listings_path(from: "shop", category_id: params[:category_id], q: params[:q].presence),
+        class: "deal-cat#{" active" if params[:from] == "shop"}" %>
+</nav>
 
 <%= live_search_index url: listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.marketplace_label"), frame_id: "marketplace-listings" do |f| %>
   <%= f.select :category_id,

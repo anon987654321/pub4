@@ -89,9 +89,9 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     )
 
     assert_difference -> { PlaceCheckIn.count }, 1 do
-      post check_in_maps_place_path(place), params: { note: "hello" }
+      post maps.check_in_place_path(place), params: { note: "hello" }
     end
-    assert_redirected_to maps_place_path(place)
+    assert_redirected_to maps.place_path(place)
   end
 
   test "maps check-in persists for signed-in user" do
@@ -111,8 +111,8 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     )
     sign_in_with_session_cookie!(user)
 
-    post check_in_maps_place_path(place), params: { note: "here" }
-    assert_redirected_to maps_place_path(place)
+    post maps.check_in_place_path(place), params: { note: "here" }
+    assert_redirected_to maps.place_path(place)
     assert PlaceCheckIn.exists?(user: user, place: place), "expected check-in to persist for signed-in user"
   end
 

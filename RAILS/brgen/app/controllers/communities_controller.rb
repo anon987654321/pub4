@@ -26,6 +26,7 @@ class CommunitiesController < ApplicationController
   def show
     scope = @community.posts.hot.with_attached_image.includes(:user, :community, :votes)
     @pagy, @posts = pagy(scope)
+    @other_communities = Community.popular.where.not(id: @community.id).limit(6)
   end
 
   def new

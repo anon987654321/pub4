@@ -20,12 +20,40 @@
   <% end %>
 
   <% if @user.dating_profile.present? %>
-    <p><%= link_to "Dating profile", dating.root_url(subdomain: "dating"), class: "btn btn-ghost btn-sm" %></p>
+    <p><%= link_to t("dating.your_profile"), dating.root_url(subdomain: "dating"), class: "btn btn-ghost btn-sm" %></p>
   <% end %>
 </header>
 
+<% if [@stores, @casual_listings, @restaurants, @channels, @playlists].any?(&:present?) %>
+  <section class="profile-verticals">
+    <h2><%= t("profile.across_the_city") %></h2>
+    <% {
+         @stores => "profile.stores",
+         @casual_listings => "profile.listings",
+         @restaurants => "profile.restaurants",
+         @channels => "profile.channels",
+         @playlists => "profile.playlists"
+       }.each do |records, key| %>
+      <% next if records.blank? %>
+      <h3><%= t(key) %></h3>
+      <ul>
+        <% records.each do |record| %>
+          <% href = record_public_href(record) %>
+          <li>
+            <% if href.present? %>
+              <%= link_to record.try(:name) || record.try(:title), href %>
+            <% else %>
+              <%= record.try(:name) || record.try(:title) %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+<% end %>
+
 <section>
-  <h2>Posts</h2>
+  <h2><%= t("profile.posts") %></h2>
   <% if @posts.any? %>
     <%= render partial: "posts/post", collection: @posts %>
   <% else %>

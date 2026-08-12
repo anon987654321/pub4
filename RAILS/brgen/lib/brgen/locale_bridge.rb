@@ -43,6 +43,9 @@ module Brgen
         it:    %i[en fr],
         pt:    %i[en fr],
         pl:    %i[en de],
+        "de-CH": %i[de en],
+        "de-LI": %i[de en],
+        "fr-BE": %i[fr en],
       }
     end
   end

@@ -7,6 +7,7 @@ class User
     included do
       has_many :marketplace_favorites, class_name: "Marketplace::ListingFavorite", dependent: :destroy
       has_many :marketplace_listings, class_name: "Marketplace::Listing", dependent: :destroy
+      has_many :marketplace_stores, class_name: "Marketplace::Store", foreign_key: :owner_id, dependent: :destroy
       has_many :marketplace_orders, class_name: "Marketplace::Order", foreign_key: :buyer_id, dependent: :destroy
       has_many :marketplace_saved_searches, class_name: "Marketplace::SavedSearch", dependent: :destroy
     end

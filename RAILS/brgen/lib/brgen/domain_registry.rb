@@ -47,6 +47,10 @@ module Brgen
 
     LOCAL_HOSTS = [ "127.0.0.1", "localhost" ].freeze
 
+    # Entry.locale is the language of the city, not a promise that we ship a
+    # YAML file for it. LocaleBridge.resolve is what I18n.locale becomes —
+    # da/sv/fi/is → nb, it/pt → fr, pl/en-US/en-GB → en. Do not add a thin
+    # locale file that is a copy of another language; that is a claim.
     ENTRIES = [
       Entry.new("brgen.no", "Bergen", "NO", :nb, "NOK", "markedsplass"),
       Entry.new("longyearbyn.no", "Longyearbyen", "NO", :nb, "NOK", "markedsplass"),
@@ -84,7 +88,6 @@ module Brgen
       Entry.new("chcago.us", "Chicago", "US", :"en-US", "USD", "marketplace"),
       Entry.new("denvr.us", "Denver", "US", :"en-US", "USD", "marketplace"),
       Entry.new("dllas.us", "Dallas", "US", :"en-US", "USD", "marketplace"),
-      Entry.new("dnver.us", "Denver", "US", :"en-US", "USD", "marketplace"),
       Entry.new("dtroit.us", "Detroit", "US", :"en-US", "USD", "marketplace"),
       Entry.new("houstn.us", "Houston", "US", :"en-US", "USD", "marketplace"),
       Entry.new("lsangeles.com", "Los Angeles", "US", :"en-US", "USD", "marketplace"),

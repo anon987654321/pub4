@@ -64,32 +64,35 @@ module Shared
       target
     end
 
-    def organization_json_ld(site_name:, url:, logo: nil)
+    def organization_json_ld(site_name:, url:, logo: nil, area_served: nil)
       {
         "@context" => "https://schema.org",
         "@type" => "Organization",
         "name" => site_name,
         "url" => url,
         "logo" => logo,
+        "areaServed" => area_served,
       }.compact
     end
 
-    def website_json_ld(site_name:, url:, description: nil, search: true)
-      data = {
+    def website_json_ld(site_name:, url:, description: nil, search: true, area_served: nil)
+      {
         "@context" => "https://schema.org",
         "@type" => "WebSite",
         "name" => site_name,
         "url" => url,
         "description" => description,
+        "areaServed" => area_served,
+        # compact drops this when search is false, the same way it drops a nil
+        # description — no need for a second shape.
+        "potentialAction" => (if search
+                                {
+                                  "@type" => "SearchAction",
+                                  "target" => "#{url}/search?q={search_term_string}",
+                                  "query-input" => "required name=search_term_string",
+                                }
+                              end),
       }.compact
-      if search
-        data["potentialAction"] = {
-          "@type" => "SearchAction",
-          "target" => "#{url}/search?q={search_term_string}",
-          "query-input" => "required name=search_term_string",
-        }
-      end
-      data
     end
 
     def breadcrumb_json_ld(items)

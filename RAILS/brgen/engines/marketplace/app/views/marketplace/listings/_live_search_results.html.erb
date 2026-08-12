@@ -39,7 +39,8 @@
                category_id: params[:category_id],
                lat: @search_lat,
                lng: @search_lng,
-               radius_km: @radius_km %>
+               radius_km: @radius_km,
+               from: params[:from] %>
   <% end %>
 <% else %>
   <%= render "shared/empty_state",

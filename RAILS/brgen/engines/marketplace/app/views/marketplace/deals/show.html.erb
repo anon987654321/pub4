@@ -1,4 +1,5 @@
-<% content_for :title, @deal.headline %>
+<% content_for :title, t("marketplace.deals.show_title", headline: @deal.headline, city: city_name) %>
+<% content_for :json_ld, json_ld_script(offer_schema(@deal)) %>
 
 <%= tag.article class: "marketplace-deal" do %>
   <%= tag.header do %>

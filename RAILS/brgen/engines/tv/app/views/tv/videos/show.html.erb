@@ -2,9 +2,7 @@
 <% content_for :description, meta_description_for(@video) %>
 <% content_for :json_ld, json_ld_for(@video, type: :video) %>
 <% content_for :og_type, "video.other" %>
-<% if @video.thumbnail.attached? %>
-  <% content_for :og_image, seo_image_url(@video.thumbnail) %>
-<% end %>
+<% content_for :og_image, seo_image_url(@video.thumbnail) %>
 
 <div class="page-header" role="banner">
   <div>

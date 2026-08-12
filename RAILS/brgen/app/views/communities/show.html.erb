@@ -46,6 +46,17 @@
         action: { label: t("nav.new_post"), path: new_community_post_path(@community) } %>
 <% end %>
 
+<% if @other_communities.present? %>
+  <aside>
+    <h2><%= t("communities.also_in_city", city: city_name) %></h2>
+    <ul>
+      <% @other_communities.each do |community| %>
+        <li><%= link_to community.name, community_path(community) %></li>
+      <% end %>
+    </ul>
+  </aside>
+<% end %>
+
 <aside>
   <h2><%= t("communities.about", name: @community.name) %></h2>
   <p><%= @community.description.presence || "No description." %></p>

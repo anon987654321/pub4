@@ -29,10 +29,13 @@ class CoverageRatchetTest < Minitest::Test
   # that also matched a same-named vertical class — so extraction removed a
   # double-count, not coverage. The host classes of those names are still tested and
   # still counted; the vertical classes are counted from engines/*/app now.
+  # controllers 12 -> 11 on 2026-08-12: maps controllers moved to engines/maps.
+  # Check-in is still asserted from host integration tests; the engine source
+  # no longer basename-collides with a host maps_places test that was never there.
   FLOORS = {
     "amber" => { "controllers" => 1, "models" => 5 },
     # models raised 10 -> 11 on 2026-08-03; the ratchet asked for it.
-    "brgen" => { "controllers" => 12, "models" => 11 },
+    "brgen" => { "controllers" => 11, "models" => 11 },
     "bsdports" => { "controllers" => 2, "models" => 1 },
   }.freeze
 

@@ -66,6 +66,10 @@ class Marketplace::Listing < ApplicationRecord
   scope :recent,   -> { order(created_at: :desc) }
   scope :popular,  -> { order(views_count: :desc) }
   scope :from_store, ->(store) { where(store: store) }
+  # No store = a person selling a chair. The storefront already stores that;
+  # these scopes are the chrome the index was missing.
+  scope :casual, -> { where(store_id: nil) }
+  scope :from_shops, -> { where.not(store_id: nil) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
   scope :rated, -> { where("rating > 0") }
 
@@ -74,6 +78,7 @@ class Marketplace::Listing < ApplicationRecord
   end
 
   def price_display = Shared::MoneyDisplay.format(price_cents, currency)
+  def casual? = store_id.nil?
   def sold? = status == "sold"
   def favorite_for(user) = favorites.find_by(user: user)
   def store_name = store&.name

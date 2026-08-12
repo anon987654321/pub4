@@ -82,13 +82,13 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     place = Place.create!(name: "Fløyen", kind: "landmark", latitude: 60.39, longitude: 5.33, city: @city)
     host! "maps.brgen.no"
 
-    get maps_place_path(place)
+    get maps.place_path(place)
     assert_response :success
     assert_difference -> { PlaceCheckIn.count }, 1 do
-      post check_in_maps_place_path(place), params: { note: "hei" }
+      post maps.check_in_place_path(place), params: { note: "hei" }
     end
 
-    get maps_place_path(place)
+    get maps.place_path(place)
     # Through the key, not the English sentence. The view has always said
     # t("maps.checked_in_recently"); this line matched the literal, so it passed
     # only while nb happened to be missing that key and Rails fell back to en.

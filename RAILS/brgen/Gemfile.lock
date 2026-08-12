@@ -23,6 +23,13 @@ PATH
       rails (>= 8.0)
 
 PATH
+  remote: engines/maps
+  specs:
+    brgen-maps (0.1.0)
+      pub4-shared
+      rails (>= 8.0)
+
+PATH
   remote: engines/marketplace
   specs:
     brgen-marketplace (0.1.0)
@@ -702,6 +709,7 @@ DEPENDENCIES
   bcrypt (~> 3.1)
   brakeman
   brgen-dating!
+  brgen-maps!
   brgen-marketplace!
   brgen-playlist!
   brgen-takeaway!

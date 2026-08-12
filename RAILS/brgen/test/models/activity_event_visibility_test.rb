@@ -15,4 +15,26 @@ class ActivityEventVisibilityTest < ActiveSupport::TestCase
     assert_includes ids, pub.id
     assert_not_includes ids, priv.id, "a private dating like must never surface on a profile"
   end
+
+  test "for_city_home keeps another city's listing off this city's strip" do
+    foreign = ActivityEvent.create!(
+      actor: @user, source_vertical: "marketplace", event_name: "ListingCreated",
+      object_type: "Marketplace::Listing", object_id: 9_999_999,
+      locality: "Oslo", visibility: "public", moderation_state: "clean"
+    )
+    category = Marketplace::Category.create!(name: "Chairs", slug: "chairs-#{SecureRandom.hex(4)}")
+    listing = Marketplace::Listing.create!(
+      user: @user, title: "Bergen chair", description: "chair",
+      price_cents: 1000, status: "active", category: category, city: @city
+    )
+    local = ActivityEvent.create!(
+      actor: @user, source_vertical: "marketplace", event_name: "ListingCreated",
+      object_type: "Marketplace::Listing", object_id: listing.id,
+      visibility: "public", moderation_state: "clean"
+    )
+
+    ids = ActivityEvent.for_city_home(@city).map(&:id)
+    assert_includes ids, local.id
+    refute_includes ids, foreign.id
+  end
 end

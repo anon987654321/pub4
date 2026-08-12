@@ -14,6 +14,7 @@ class Takeaway::Restaurant < ApplicationRecord
   tracks_activity created: "TakeawayRestaurantCreated", updated: "TakeawayRestaurantUpdated", source_vertical: "takeaway", actor: :user
 
   belongs_to :user
+  belongs_to :place, optional: true
   has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy
   has_many :orders, class_name: "Takeaway::Order", dependent: :destroy
   has_many :favorites, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy

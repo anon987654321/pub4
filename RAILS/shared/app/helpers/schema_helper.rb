@@ -24,7 +24,25 @@ module SchemaHelper
   end
 
   # ItemList for category / search result pages (marketplace index, etc.)
+  def offer_schema(deal)
+    listing = deal.try(:listing)
+    {
+      "@context" => "https://schema.org",
+      "@type" => "Offer",
+      "name" => deal.try(:headline),
+      "url" => schema_url_for(deal),
+      "itemOffered" => {
+        "@type" => "Product",
+        "name" => listing.try(:title),
+        "url" => schema_url_for(listing),
+      }.compact,
+    }.compact
+  end
+
   def item_list_schema(items, title: nil)
+    # Load once: `size` on an unloaded relation is a COUNT round-trip, and the
+    # `.any?` most call sites guard with is a third.
+    items = items.to_a
     {
       "@context" => "https://schema.org",
       "@type" => "ItemList",
@@ -52,33 +70,28 @@ module SchemaHelper
   # (markedsplass.brgen.no, tv.brgen.no). polymorphic_url is the amber/bsdports
   # fallback. A leftover path is then joined to request.base_url.
   def schema_url_for(resource)
-    href = record_public_href(resource) if respond_to?(:record_public_href)
-    if href.blank?
-      href = begin
-        polymorphic_url(resource)
-      rescue StandardError
-        nil
-      end
+    href = (record_public_href(resource) if respond_to?(:record_public_href)).presence
+    href ||= begin
+      polymorphic_url(resource)
+    rescue StandardError
+      nil
     end
     return if href.blank?
-    return href if href.start_with?("http://", "https://")
-    return "#{request.base_url}#{href}" if href.start_with?("/") && respond_to?(:request)
+    # Anything not starting with "/" is already absolute.
+    return href unless href.start_with?("/")
 
-    href
+    respond_to?(:request) ? "#{request.base_url}#{href}" : href
   end
 
   # Absolute URL for a share card or JSON-LD image. Isolated engines do not
   # own ActiveStorage routes, so go through main_app when it is there.
   def seo_image_url(attachment)
-    return if attachment.blank?
-    return if attachment.respond_to?(:attached?) && !attachment.attached?
+    # One guard covers nil, an unattached Attached::One (whose #blob is nil but
+    # which is not itself blank), an ActiveStorage::Attachment, and a bare Blob.
+    blob = attachment.respond_to?(:blob) ? attachment.blob : attachment
+    return if blob.blank?
 
-    blob = attachment.try(:blob) || attachment
-    if respond_to?(:main_app) && main_app.respond_to?(:rails_blob_url)
-      main_app.rails_blob_url(blob, only_path: false)
-    else
-      rails_blob_url(blob, only_path: false)
-    end
+    (respond_to?(:main_app) ? main_app : self).rails_blob_url(blob, only_path: false)
   rescue StandardError
     nil
   end
@@ -149,6 +162,7 @@ module SchemaHelper
   end
 
   def local_business_schema(place)
+    pin = place.try(:place)
     {
       "@context" => "https://schema.org",
       "@type" => "LocalBusiness",
@@ -157,18 +171,20 @@ module SchemaHelper
       "geo" => geo_snippet(place),
       "url" => schema_url_for(place),
       "image" => seo_image_url(place.try(:photo) || place.try(:image)),
+      "sameAs" => (schema_url_for(pin) if pin.present?),
     }.compact
   end
 
   def product_schema(listing)
     price = listing.try(:price_cents).to_i / 100.0 if listing.try(:price_cents).to_i > 0
+    url = schema_url_for(listing)
 
     data = {
       "@context" => "https://schema.org",
       "@type" => "Product",
       "name" => listing.try(:title),
       "description" => listing.try(:description)&.truncate(300),
-      "url" => schema_url_for(listing),
+      "url" => url,
       "sku" => listing.try(:id)&.to_s,
       # try(:name), not &.name: only brgen's User responds to #name. amber's
       # does not, so &.name raised NoMethodError and took out every
@@ -183,12 +199,12 @@ module SchemaHelper
         # Marketplace::Listing but amber renders its Item through it, and Item
         # has no #sold?. nil is falsy, so unknown reads as InStock.
         "availability" => listing.try(:sold?) ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-        "url" => schema_url_for(listing),
+        "url" => url,
       }.compact,
     }
 
     if listing.respond_to?(:photos) && listing.photos.attached?
-      data["image"] = schema_photo_url_for(listing.photos.first)
+      data["image"] = seo_image_url(listing.photos.first)
     end
 
     data.compact
@@ -203,7 +219,7 @@ module SchemaHelper
       "uploadDate" => video.created_at&.iso8601,
       "url" => schema_url_for(video),
       "thumbnailUrl" => seo_image_url(video.try(:thumbnail)),
-      "duration" => iso8601_duration(video.try(:duration_seconds).to_i),
+      "duration" => iso8601_duration(video.try(:duration_seconds)),
     }.compact
   end
 
@@ -259,10 +275,6 @@ module SchemaHelper
       "latitude" => place.latitude,
       "longitude" => place.longitude,
     }
-  end
-
-  def schema_photo_url_for(photo)
-    seo_image_url(photo)
   end
 
   def iso8601_duration(seconds)

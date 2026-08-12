@@ -1,0 +1,19 @@
+<%# Compact "in %{city} today" strip. Not a second feed — the banner that
+    named the city was removed on purpose; this is interconnection, a handful
+    of new listings / restaurants / videos that already exist on other hosts. %>
+<aside class="city-today sidebar-card" aria-label="<%= t("home.intro_title", city: city_name) %>">
+  <h2><%= t("home.intro_title", city: city_name) %></h2>
+  <ul class="city-today-list">
+    <% events.each do |event| %>
+      <% href = activity_event_href(event) %>
+      <li>
+        <% if href.present? %>
+          <%= link_to activity_event_title(event), href %>
+        <% else %>
+          <%= activity_event_title(event) %>
+        <% end %>
+        <span class="dim"><%= event.source_vertical %></span>
+      </li>
+    <% end %>
+  </ul>
+</aside>

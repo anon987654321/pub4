@@ -18,6 +18,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
     scope = policy_scope(Marketplace::Listing).with_attached_photos.includes(:user, :category)
     scope = apply_live_search(scope, columns: %w[title description location], vertical: "marketplace", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+    scope = scope.casual if params[:from] == "person"
+    scope = scope.from_shops if params[:from] == "shop"
     @search_lat = params[:lat].presence
     @search_lng = params[:lng].presence
     @radius_km = Marketplace::Listing.radius_from(params[:radius_km].presence || Marketplace::Listing::DEFAULT_RADIUS_KM)
