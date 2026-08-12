@@ -212,16 +212,48 @@ end
 # Gains rather than mutes, mostly. A layer dropping to zero and back is a hard
 # edit and sounds like one; dropping to a third leaves the part audible as a
 # memory of itself. Zero is reserved for the places a hard entrance is the point.
+#
+# :harm is here with no reductions on purpose. render_dilla asks for a :harm
+# envelope on the analog pad and always has, and because the table never
+# mentioned :harm that call has been a silent no-op for its whole life --
+# section_layer_windows returns an empty list for an unknown layer and
+# apply_section_envelope returns the chain untouched. Declaring it empty makes
+# the two lists agree without changing a single sample: the pad stays at full
+# level in every section, exactly as it does today. What it buys is that
+# SECTION_LAYERS_DECLARED and SECTION_LAYERS_APPLIED can now be compared, so the
+# next layer wired to nothing fails a test instead of looking like a feature.
+#
+# Giving the pads an actual section shape is a musical decision and belongs to
+# the operator, not to the commit that noticed the wiring was dead.
 SECTION_LAYER_GAIN = {
-  intro:     { drums: 0.0,  bass: 0.30, lead: 0.0,  chops: 0.0,  sample: 0.55 },
-  main:      {},
-  breakdown: { drums: 0.0,  bass: 0.55, chops: 0.0 },
-  build:     { lead: 0.0,   sample: 0.7 },
-  turn:      { lead: 0.0 },
-  outro:     { drums: 0.45, bass: 0.5,  lead: 0.0,  chops: 0.0 },
+  intro:     { drums: 0.0,  bass: 0.30, lead: 0.0,  chops: 0.0,  sample: 0.55, harm: 1.0 },
+  main:      { harm: 1.0 },
+  breakdown: { drums: 0.0,  bass: 0.55, chops: 0.0, harm: 1.0 },
+  build:     { lead: 0.0,   sample: 0.7, harm: 1.0 },
+  turn:      { lead: 0.0,   harm: 1.0 },
+  outro:     { drums: 0.45, bass: 0.5,  lead: 0.0,  chops: 0.0, harm: 1.0 },
 }.freeze
 
 def section_layers_enabled? = ENV.fetch("SECTION_LAYERS", "1") != "0"
+
+# Every layer SECTION_LAYER_GAIN has an opinion about.
+SECTION_LAYERS_DECLARED = SECTION_LAYER_GAIN.values.flat_map(&:keys).uniq.freeze
+
+# Layers whose envelope is actually asked for somewhere. Two of the five were
+# not, and that is what this pair of constants exists to stop happening again.
+#
+# :lead and :chops carried gains in the table above -- lead silent through the
+# intro, the breakdown, the build and the outro; chops silent through three of
+# them -- and nothing ever called apply_section_envelope for either. The most
+# dramatic instruction in the arrangement, on the layer a listener notices
+# first, was a hash entry nobody read. Meanwhile :harm WAS applied, to the
+# analog pad, and the table says nothing about :harm, so section_layer_windows
+# returned an empty list and that call has always been a no-op too.
+#
+# Neither failed. Both are the shape of defect this repository keeps finding:
+# a declaration with no reader, indistinguishable from a working feature until
+# somebody diffs the two lists. So they get diffed, in a test.
+SECTION_LAYERS_APPLIED = %i[drums bass sample lead chops harm].freeze
 
 # The time windows, in seconds, where this layer is not at full level.
 #
@@ -282,6 +314,46 @@ def apply_section_envelope(chain, layer, n_bars, bar_p)
   return chain if env.empty? || chain.to_s.empty?
 
   chain.sub(/\A(\[[^\]]+\])/) { "#{Regexp.last_match(1)}#{env}," }
+end
+
+# The same envelope, for a layer that has no bus to hang it on.
+#
+# The lead is synthesised into the harmonic render rather than mixed as its own
+# stream, so there is no filtergraph label to prefix and its section gain has to
+# be applied to the notes. Events are [time, velocity, chord, sustain]; a gain
+# of zero drops the note rather than playing it at zero, because a MIDI note-on
+# at velocity 0 is a note-off in some synths and a very quiet note in others.
+#
+# Off by default under SECTION_LAYERS=1, which is what every existing render was
+# made with. SECTION_LAYERS=full turns on the layers the table has always
+# declared. Wiring them silently would change the sound of every take with a
+# lead in it, and that is not a checker's call to make -- see
+# WIRING_DEAD_METHOD_BASELINE's note, which says the same thing about the two
+# sound stages nobody connected.
+def section_layers_full? = ENV["SECTION_LAYERS"].to_s.downcase == "full"
+
+def apply_section_envelope_to_events(events, layer, n_bars, bar_p)
+  return events unless section_layers_full? && events.is_a?(Array) && events.any?
+
+  windows = section_layer_windows(layer, n_bars, bar_p)
+  return events if windows.empty?
+
+  kept = events.filter_map do |event|
+    at = event[0].to_f
+    _from, _to, gain = windows.find { |from, to, _| at >= from && at < to }
+    next event if gain.nil?
+    next nil if gain.zero?
+
+    scaled = event.dup
+    scaled[1] = (event[1].to_f * gain).round(4)
+    scaled
+  end
+  dropped = events.length - kept.length
+  if dropped.positive?
+    dmesg("section: #{layer} drops #{dropped} of #{events.length} note(s) outside its sections",
+          unit: "harm0", parent: "dilla0")
+  end
+  kept
 end
 
 def dilla_section(bar, n_bars)

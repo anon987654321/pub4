@@ -328,6 +328,51 @@ end
 
 PRECEDENCE_ORDER = DillaKnobs::PRECEDENCE
 
+# `dilla taste <kept...> vs <rejected...>` — what separates the two piles.
+#
+# The only honest way I have to tune this engine toward what the operator likes:
+# they sort the takes, this measures both groups and reports only the dimensions
+# where the groups genuinely separate. It names the knob that moves each one and
+# then stops, because a rendered-sound default is theirs to set.
+#
+# `vs` and not `--`: the global flag parser consumes anything beginning with two
+# dashes before dispatch runs, so a bare `--` separator aborts with the flag list.
+def taste_report(argv)
+  split = argv.index("vs") || argv.index("--")
+  unless split
+    puts "usage: dilla taste <kept.wav...> vs <rejected.wav...>"
+    puts "  measures both piles and reports only where they separate."
+    return
+  end
+
+  kept = argv[0...split]
+  rejected = argv[(split + 1)..] || []
+  result = DillaTaste.compare(kept, rejected)
+  return puts("taste: #{result[:error]}") if result[:error]
+
+  puts "#{result[:kept]} kept against #{result[:rejected]} rejected"
+  strong, weak = result[:findings].partition { |f| f[:separation] >= 1.5 }
+
+  if strong.empty?
+    puts "Nothing separates these two piles measurably. That is a real answer: whatever you are"
+    puts "hearing is not in the dimensions below, so do not let me tune against them."
+  end
+  strong.each do |f|
+    k = f[:kept]
+    r = f[:rejected]
+    puts format("\n%s — kept %.2f%s (%.2f–%.2f), rejected %.2f%s (%.2f–%.2f)  [separation %.2f]",
+                f[:dimension], k[:mean], f[:units], k[:min], k[:max],
+                r[:mean], f[:units], r[:min], r[:max], f[:separation])
+    direction = k[:mean] > r[:mean] ? "more" : "less"
+    puts "  you keep the takes with #{direction} of it. moves with: #{f[:knob]}"
+  end
+
+  return if weak.empty?
+
+  puts "\nno separation (the piles overlap):"
+  weak.each { |f| puts format("  %-26s %.2f", f[:dimension], f[:separation]) }
+end
+
 # `dilla tracklist <file.dilla>` — what a compilation is made of.
 #
 # Reads the `assembly` block: each part, where it starts, how long it runs, and

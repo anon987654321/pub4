@@ -96,6 +96,7 @@ require_relative "lib/automation_lane"
 require_relative "lib/knobs"
 require_relative "lib/frozen_state"
 require_relative "lib/assets_manifest"
+require_relative "lib/taste"
 
 # Terse OpenBSD-style console log (see lib/dilla_dmesg.rb). Prefer dmesg over
 # decorative banners; set DILLA_DMESG=0 to silence, =2 for verbose argv.
@@ -295,6 +296,7 @@ DISPATCH = {
   "knobs" => -> { knobs_report(ARGV.shift) },
   "assets" => -> { assets_report(ARGV.shift) },
   "tracklist" => -> { tracklist_report(ARGV.shift) },
+  "taste" => -> { taste_report(ARGV.dup) },
   "sample" => -> { sample },
   "source" => -> { source(ARGV.shift, ARGV.shift) },
   "livestream" => -> { livestream(ARGV.shift, ARGV.shift) },

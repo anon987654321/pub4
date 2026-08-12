@@ -397,6 +397,20 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   harmony_lead_ev = !leads_muted && harmony_lead_enabled? && ENV.fetch("HARMONY_LEAD", "0") != "0" ?
                     harmony_lead_events(pad_events, cfg, harmony_lead_cfg, progression_insight: insight) : []
   creative_events = creative_on ? lead_events_creative(pad_events, cfg, duration:, n_bars: n_bars_est) : []
+
+  # The lead's section envelope, applied to its notes because it has no bus.
+  #
+  # All four lead paths, for the reason the comment below gives about the log
+  # line that reported on two of them: a feature wired into half the paths it
+  # applies to is the harder bug to see, because it works.
+  if section_layers_full? && (lead_bar_p = (60.0 / cfg[:bpm].to_f) * 4.0).positive?
+    scale_events = apply_section_envelope_to_events(scale_events, :lead, n_bars_est, lead_bar_p)
+    counter_events = apply_section_envelope_to_events(counter_events, :lead, n_bars_est, lead_bar_p)
+    lead_arp_ev = apply_section_envelope_to_events(lead_arp_ev, :lead, n_bars_est, lead_bar_p)
+    harmony_lead_ev = apply_section_envelope_to_events(harmony_lead_ev, :lead, n_bars_est, lead_bar_p)
+    creative_events = apply_section_envelope_to_events(creative_events, :lead, n_bars_est, lead_bar_p)
+  end
+
   scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
   harmony_lead_rendered = harmony_lead_ev.any? ? render_lead_via_fluidsynth(harmony_lead_path, harmony_lead_ev, duration, scale_arp: true) : nil
   # Say which lead actually played, and how many notes it played.

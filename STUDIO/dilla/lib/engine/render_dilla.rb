@@ -588,8 +588,18 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     mix_weights << "0.82"
   end
   if stem_map[:highs]
-    filt << "[#{stem_map[:highs]}:a]aformat=channel_layouts=stereo,atempo=#{stem_tempo},atrim=0:#{duration},asetpts=PTS-STARTPTS," \
-             "highpass=f=400,volume='#{chop_gate}':eval=frame,aecho=0.35:0.4:90:0.25[chops]"
+    # SECTION_LAYER_GAIN has always said chops are silent through the intro, the
+    # breakdown and the outro. Nothing read it until now.
+    #
+    # Under SECTION_LAYERS=full only, for the same reason the lead's envelope is:
+    # every stem render ever made was made without this, and switching it on by
+    # default would change all of them on the strength of a table entry rather
+    # than on somebody listening.
+    chops_chain = "[#{stem_map[:highs]}:a]aformat=channel_layouts=stereo,atempo=#{stem_tempo}," \
+                  "atrim=0:#{duration},asetpts=PTS-STARTPTS," \
+                  "highpass=f=400,volume='#{chop_gate}':eval=frame,aecho=0.35:0.4:90:0.25[chops]"
+    chops_chain = apply_section_envelope(chops_chain, :chops, n_bars, beat_p * 4.0) if section_layers_full?
+    filt << chops_chain
     mix_labels << "[chops]"
     mix_weights << "0.68"
   end
