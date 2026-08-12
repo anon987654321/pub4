@@ -2,6 +2,14 @@
 
 require "fileutils"
 require "json"
+# MasterPaths::ROOT rather than Master::ROOT, which is defined in lib/master.rb
+# and therefore only exists after a full runtime boot. lib/io/replicate_client.rb
+# is deliberately standalone-loadable -- STUDIO/repligen and STUDIO/lora both
+# require it and nothing else -- and it calls Swallow.log in three rescue paths,
+# so on the first Replicate training for a new subject (model_exists? raises,
+# the rescue fires) the swallow raised NameError instead of logging. Same value,
+# no boot order.
+require_relative "../boot/paths"
 
 module Master
   module Ground
@@ -9,7 +17,7 @@ module Master
     # every swallowed error publishes to the event bus and writes
     # to a structured log for post-mortem analysis.
     module Swallow
-      LOG_PATH = File.join(Master::ROOT, ".master", "swallowed_errors.jsonl").freeze
+      LOG_PATH = File.join(MasterPaths::ROOT, ".master", "swallowed_errors.jsonl").freeze
 
       # Every swallow this session looked identical from outside -- the
       # extract_code NameError (defeated the primary LLM fix strategy every

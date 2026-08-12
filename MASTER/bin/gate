@@ -109,9 +109,30 @@ INCONCLUSIVE = [
   /wall-clock timeout/,
 ].freeze
 
+# A stage that never returns is the one shape INCONCLUSIVE cannot catch.
+#
+# Every pattern in that list is something a stage SAYS on its way out. A stage
+# that says nothing and does not exit is invisible to all of them, and
+# capture2e has no timeout, so the gate simply stops — no output, no failure,
+# no exit code, indefinitely.
+#
+# Measured 2026-08-11: `/critique ../STUDIO/repligen` ran 16 minutes at 0% CPU
+# and produced zero bytes before being killed by hand, and `/review` the same,
+# on a runtime where a plain prompt answers in under two seconds. Both go
+# through the council's LLM agent; the ordinary reply lane does not. So this is
+# not "no provider keys" — it is one lane blocking on a call that never
+# returns, and the gate had no way to notice.
+#
+# 20 minutes per stage, which is above the slowest honest /scan measured here
+# (38s for STUDIO/dilla) by a wide margin, and MASTER_GATE_STAGE_TIMEOUT raises
+# it for a genuinely long full-fix pass. A timeout is reported as inconclusive
+# rather than as a failure of the code under test, because that is what it is:
+# nothing was measured.
+STAGE_TIMEOUT = Integer(ENV.fetch("MASTER_GATE_STAGE_TIMEOUT", "1200"))
+
 def run_master_line(line)
   puts "master> #{line}"
-  stdout, status = Open3.capture2e(SAFE_ENV, "bundle", "exec", "ruby", "bin/cli", chdir: ROOT, stdin_data: "#{line}\n")
+  stdout, status = capture_with_timeout(line)
   puts stdout
   abort "err: MASTER command failed: #{line}" unless status.success?
 
@@ -120,6 +141,28 @@ def run_master_line(line)
 
   evidence = stdout.lines.grep(hit).map(&:strip).first
   abort "err: #{line} exited 0 but reached no verdict: #{evidence}"
+end
+
+# capture2e, with a wall clock. Streams into a buffer so a stage killed at the
+# deadline still shows whatever it managed to say.
+def capture_with_timeout(line)
+  buffer = +""
+  Open3.popen2e(SAFE_ENV, "bundle", "exec", "ruby", "bin/cli", chdir: ROOT) do |stdin, out, wait|
+    stdin.puts(line)
+    stdin.close
+    reader = Thread.new { out.each_line { |l| buffer << l } }
+    unless wait.join(STAGE_TIMEOUT)
+      Process.kill("TERM", wait.pid)
+      wait.join(10) || Process.kill("KILL", wait.pid)
+      reader.join(5)
+      puts buffer
+      abort "err: #{line} produced no verdict in #{STAGE_TIMEOUT}s and was killed — " \
+            "#{buffer.empty? ? 'it printed nothing at all' : "it printed #{buffer.lines.length} line(s)"}. " \
+            "Nothing was measured; raise MASTER_GATE_STAGE_TIMEOUT only if you know the stage was working."
+    end
+    reader.join
+    return [buffer, wait.value]
+  end
 end
 
 def git_diff(*paths)

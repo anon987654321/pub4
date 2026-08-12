@@ -6,10 +6,24 @@ class GateContractSpec < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   GATE = File.join(ROOT, "bin", "gate")
 
+  # The command reaches bin/cli on stdin, and the gate does not wait forever for
+  # an answer.
+  #
+  # This asserted the literal string "stdin_data", which was capture2e's keyword.
+  # The gate moved to popen2e on 2026-08-12 for the timeout below — same
+  # contract, same stdin, different spelling — and the spec failed on the
+  # spelling. Asserting the two properties instead: something is written to the
+  # child's stdin, and there is a wall clock on the wait. A stage that hangs is
+  # the one failure INCONCLUSIVE cannot catch, because every pattern in that
+  # list is something a stage says on its way out.
   def test_gate_runs_master_cli
     source = File.read(GATE)
     assert_includes source, '"bin/cli"'
-    assert_includes source, "stdin_data"
+    assert_match(/stdin_data|stdin\.puts/, source,
+                 "bin/gate must feed the command to bin/cli on stdin")
+    assert_includes source, "STAGE_TIMEOUT",
+                    "bin/gate must bound how long it waits for a stage; a stage that never " \
+                    "returns produces no output for INCONCLUSIVE to match on"
   end
 
   def test_gate_is_expected_to_keep_repo_clean
