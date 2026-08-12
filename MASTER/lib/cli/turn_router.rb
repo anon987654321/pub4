@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../../core/master"
 require_relative "../io/media_intent"
 
 module Master

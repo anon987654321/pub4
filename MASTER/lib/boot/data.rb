@@ -49,23 +49,10 @@ module Master
       own_root = root == ROOT
       data_dir = own_root ? DATA : File.join(root, "data")
       rules_path = File.join(data_dir, "rules.yml")
-      # Skip the read entirely rather than let load_yaml warn: for a foreign
-      # root, "this project has no rules.yml" is the answer, not a fault. Every
-      # scanner passes the directory it is scanning (RuleRegistryAudit, SelfTest,
-      # YamlBridgeRules, Fix::Priority), so each run against a Dir.mktmpdir root
-      # printed "load_yaml: No such file or directory ... /T/d2026…/data/rules.yml"
-      # and taught readers to scroll past the one warning that has already caught
-      # a genuine path bug. Our own ROOT still goes through load_yaml, where a
-      # missing constitution stays loud.
-      base = if own_root || File.exist?(rules_path)
-               load_yaml(rules_path)
-             else
-               {}
-             end
-      shards = Dir.glob(File.join(data_dir, "rules", "*.yml")).sort
-      return base if shards.empty?
+      # Skip the read entirely rather than let load_yaml warn — see above.
+      return {} unless own_root || File.exist?(rules_path)
 
-      base.merge("rules" => merge_rule_shards(base, shards))
+      load_yaml(rules_path)
     end
 
     private
@@ -87,14 +74,6 @@ module Master
         warn("yaml_validation: #{relative}: #{message}")
         bus&.publish("data:yaml_parse_error", path: relative, error: message)
       end
-    end
-
-    def merge_rule_shards(base, shards)
-      merged = JSON.parse(JSON.generate(base.fetch("rules", {})))
-      shards.each do |file|
-        (load_yaml(file) || {}).each { |scope, list| (merged[scope] ||= []).concat(Array(list)) }
-      end
-      merged
     end
   end
 end

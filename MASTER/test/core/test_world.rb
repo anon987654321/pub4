@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../core/master"
+require "master"
 require "tmpdir"
 
 # The World is the only door to reality, so its handlers carry the whole blast

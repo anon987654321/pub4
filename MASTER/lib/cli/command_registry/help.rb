@@ -56,7 +56,7 @@ module Master
         },
         "core" => {
           summary: "run core fold smoke test",
-          detail: ["/core", "Runs core/spec/core_smoke.rb — Effect → Constitution → World loop."],
+          detail: ["/core", "Runs spec/core_smoke.rb — Effect → Constitution → World loop."],
         },
         "fix" => {
           summary: "run or preview fixes for a target",

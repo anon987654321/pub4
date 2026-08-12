@@ -13,11 +13,6 @@ require "master"
 # this, lazy const_get can't autoload a plural-filename fragment and false-alarms.
 Master.eager_load!
 
-# Also load the core spine so bin/master-core's Master::Core::* references
-# resolve. Since it lives under Master::Core (not the Master:: top level), it
-# coexists with lib in one process — no collision, no special-casing.
-require_relative "../core/master"
-
 ROOT = File.expand_path("..", __dir__)
 SKIP = %r{/(vendor|tmp|log|public/assets|public/packs|node_modules|\.git)/}
 

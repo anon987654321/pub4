@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../../core/master"
+require "master"
 require "tmpdir"
 
 class WorldRollbackTest < Minitest::Test

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../core/master"
+require "master"
 
 # The context budget adapts to the host so a ~1GB VPS compacts sooner and never
 # feeds the OOM-killer. budget_for is the pure policy; these pin its edges.

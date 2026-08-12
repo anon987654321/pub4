@@ -49,17 +49,13 @@ topics:
     files:
       - data/soul.yml
       - data/rules.yml
-      - data/rules/line.yml
-      - data/rules/file.yml
-      - data/rules/unit.yml
-      - data/rules/codebase.yml
       - data/limits.yml
       - lib/review/scan/
       - lib/ground/rules.rb
     tests:
       - bin/check --profile=agent
       - rake lint:data_singularity
-    note: Do not fold rule shards without retuning scanners. selftest failures may be known debt (agent-ignore).
+    note: All scanner law is data/rules.yml under one top-level rules key, scopes codebase/file/line/unit, folded 2026-08-12. selftest failures may be known debt (agent-ignore).
 
   deploy:
     files:
@@ -92,11 +88,7 @@ patch_briefs:
     topic: law
     debt_tag: agent-ignore
     tests: [bin/check --profile=agent, rake lint:data_singularity]
-    note: rule registry; shards live in data/rules/*.yml — do not fold blindly
-  data/rules/:
-    check: rake lint:data_singularity
-    topic: law
-    tests: [rake lint:data_singularity, bin/check --profile=agent]
+    note: rule registry and all scanner law in one file since the 2026-08-12 fold
   data/providers.yml:
     check: ruby -Ilib:test test/test_provider_config.rb
     tests: [test/test_provider_config.rb]

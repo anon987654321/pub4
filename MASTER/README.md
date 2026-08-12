@@ -12,4 +12,4 @@ The chat router recognizes explicit creation requests before the normal agent tu
 
 The implementation is intentionally narrow: discussing J Dilla or photography remains a normal chat turn. Advanced users can invoke the Repligen and Postpro tools directly.
 
-Two spines share the `Master::` namespace intentionally. `lib/` is the application/runtime spine loaded by the gem and the CLI. `core/` is a small constitutional fold spine (`Master::Core::`) loaded on its own path by `bin/master-core` and the core tests. Because it lives under `Master::Core::` (not top-level `Master::`), it coexists with `lib/` in one process without constant collisions.
+One spine, one loader. `lib/` is the application runtime; the constitutional fold lives inside it at `lib/core.rb` + `lib/core/` under `Master::Core::`, autoloaded by the same Zeitwerk loader as everything else. It depends on nothing in `lib/` outside its own namespace, which `test/core/test_no_lib_backedges.rb` holds. The two-spine split ended 2026-08-12 — see `DECISIONS.md`.

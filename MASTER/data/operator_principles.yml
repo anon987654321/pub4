@@ -3,7 +3,7 @@ meta:
   source: runtime authority — edit operator_principles.yml directly; never add data/principles/*.md
   count: 27
   order: importance — workflow, verification, architecture, code craft, presentation, git, voice
-  resolves: soul.yml aesthetic_rules and style.yml line_order defer here for operator intent; scan rules in rules/unit.yml
+  resolves: soul.yml aesthetic_rules and style.yml line_order defer here for operator intent; scan rules in rules.yml unit scope
 principles:
 - id: feedback_operator_autonomy
   name: "Operator Autonomy — decisive execution without permission loops"
@@ -16,7 +16,7 @@ principles:
   description: Run probes, gates, tests, and fixes in this environment; command output is the definition of done
   type: feedback
   body: |-
-    Run probes, gates, tests, and fixes yourself. Never end with you should run X when X is executable here. Gate stdout and test output beat narrative completion. On failure, diagnose and retry—do not hand the chore to the operator. Aligns with soul FAIL_VISIBLY and rules/unit.yml FAIL_VISIBLY.
+    Run probes, gates, tests, and fixes yourself. Never end with you should run X when X is executable here. Gate stdout and test output beat narrative completion. On failure, diagnose and retry—do not hand the chore to the operator. Aligns with soul FAIL_VISIBLY and rules.yml unit FAIL_VISIBLY.
 - id: feedback_scan_sweep_convergence
   name: "Fixed Point — deep scan then sweep to convergence"
   description: Run through MASTER means deep scan plus sweep; standing orders handle post-write lint and drift
@@ -70,13 +70,13 @@ principles:
   description: Extract or parameterize duplicated logic; singularity wins for YAML data
   type: feedback
   body: |-
-    Before copying a block to vary one literal, extract or parameterize. Scan enforces via rules/unit.yml DRY; limits.yml singularity wins for YAML data. File and module sprawl is Flat Hierarchy—not a second copy of the same gate script.
+    Before copying a block to vary one literal, extract or parameterize. Scan enforces via rules.yml unit DRY; limits.yml singularity wins for YAML data. File and module sprawl is Flat Hierarchy—not a second copy of the same gate script.
 - id: feedback_no_new_files
   name: "YAGNI — edit in place, no new files without approval"
   description: Patch originals; Flat Hierarchy merge/rename runs before any new path
   type: feedback
   body: |-
-    Edit the original path—no _fixed.rb, staging copies, or new files without approval. Try Flat Hierarchy merge/rename first on every touch. Transient /tmp/patch.rb on VPS is fine for in-place runs. Do not add config tiers that only weaken quality. Scan enforces via rules/unit.yml speculative-generality rules.
+    Edit the original path—no _fixed.rb, staging copies, or new files without approval. Try Flat Hierarchy merge/rename first on every touch. Transient /tmp/patch.rb on VPS is fine for in-place runs. Do not add config tiers that only weaken quality. Scan enforces via rules.yml unit speculative-generality rules.
 - id: feedback_importance_order
   name: "Inverted Pyramid — importance-ordered file lines"
   description: Public API and main flow in the top third; helpers and constants last
@@ -88,7 +88,7 @@ principles:
   description: Shortest form that preserves behavior; no filler, ceremony, or defensive noise
   type: feedback
   body: |-
-    Write the shortest correct form in every language—no filler, redundant branches, or ceremonial patterns. No defensive over-engineering or comments that restate code. Scan enforces via rules/unit.yml KISS and soul SIMPLEST_WORKS. Distinct from Craft (proactive polish beyond scope) and Boy Scout Rule (full-file lint on touch).
+    Write the shortest correct form in every language—no filler, redundant branches, or ceremonial patterns. No defensive over-engineering or comments that restate code. Scan enforces via rules.yml unit KISS and soul SIMPLEST_WORKS. Distinct from Craft (proactive polish beyond scope) and Boy Scout Rule (full-file lint on touch).
 - id: feedback_strunk_white
   name: "Strunk & White — active prose and casing"
   description: Active voice, sentence case, no ASCII banners; commits imperative ≤72 chars

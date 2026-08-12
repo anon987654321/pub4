@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../core/master"
+require "master"
 
 # Model.parse is the whole trust boundary between the LLM and the fold: it must
 # turn any string into exactly one Effect, and never raise. These cases pin that.

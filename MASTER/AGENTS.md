@@ -10,8 +10,8 @@ Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). Full con
 | TTS / speech / visemes | `topics.tts` |
 | Deploy / VPS / rc.d | `topics.deploy` |
 | Persona / voice policy | `topics.persona` |
-| Law / scanners / loop | `START_HERE.md` → Data File Budget; do not merge `data/rules/*.yml` |
-| Extend runtime behavior | `DECISIONS.md` → Two Master Spines. New ability inside `core/` = one Effect verb in `core/world.rb`; new constraint = one rule in `core/constitution.rb`; anything else is `lib/` and must not grow it (`rake lint:spine`) |
+| Law / scanners / loop | `START_HERE.md` → Data File Budget; all scanner law is `data/rules.yml` |
+| Extend runtime behavior | `DECISIONS.md` → One Spine. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
 
 CLI dump: `/orient agent_map` · per-file brief: `/orient patch <path>` (e.g. `/orient patch web/public/face.js`).
 
@@ -30,8 +30,7 @@ On failure, use structured hints: `bin/check --profile=agent --format=brief`
 
 ## Do not touch (unless the task requires it)
 
-1. Do not merge `lib/` and `core/`. The two spines are permanent — see `DECISIONS.md`; what was cut to build `core/`, and what survived the attempt, is recorded in `core/SEVERANCE.md`.
-2. Do not fold `data/rules/*.yml` into `rules.yml` without retuning scanners.
+1. `lib/core.rb` and `lib/core/` are the fold spine and must not require the rest of `lib/` (`test/core/test_no_lib_backedges.rb`). The directory split ended 2026-08-12; what was cut to build it is recorded in `docs/SEVERANCE.md`.
 3. Do not commit `knowledge/`, `output/`, `.master/`.
 4. No WebGL before primer tap (`web/app/views/chat/index.html.erb`).
 5. `tools.yml` lists Repligen/Postpro for slash commands — not LLM-native tools; media routes via `Io::MediaIntent`.

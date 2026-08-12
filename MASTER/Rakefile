@@ -303,7 +303,7 @@ namespace :lint do
       puts "lint:spine: #{lines}/#{ceiling} lines (#{ceiling - lines} under — " \
            "run `rake lint:spine RATCHET=1` to record the new low)"
     else
-      puts "lint:spine: #{lines}/#{ceiling} lines, core/ #{core_files} files"
+      puts "lint:spine: #{lines}/#{ceiling} lines, fold spine #{core_files} files"
     end
   end
 

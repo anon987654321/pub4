@@ -149,7 +149,7 @@ on paper while nothing reads it. Do it only alongside a consumer, or delete the 
 Reordered 2026-08-03 after measuring against the live registry rather than against rule
 names. The original list is kept struck through, because *why* it was wrong is the
 reusable lesson: it matched v110's vocabulary against 225 declarative rule ids in
-`data/rules/` and never loaded the registry, which holds **180 executable rule classes** —
+`data/rules.yml` and never loaded the registry, which holds **180 executable rule classes** —
 a different population. Nine of them exist only in Ruby, and they are precisely the
 mechanical ones the audit called absent.
 

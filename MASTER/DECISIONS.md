@@ -8,23 +8,40 @@ This file records intentional shapes that may otherwise look like bugs.
 
 See `OPENBSD/DECISIONS.md` — **No Fourth Public App Until brgen Boundaries Hold**. MASTER work should prefer subtraction (one generated agent context, structural vs cosmetic scan severity) over new portfolio apps. Do not invent a seventh product surface from agent sessions without that ADR being revisited.
 
-## Two Master Spines
+## One Spine, With The Dependency Rule Kept (2026-08-12)
 
-`lib/` and `core/` are intentionally separate load paths. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `core/` is a small isolated constitutional fold loaded on its own path by the core tests and `bin/master-core`.
+**This reverses "Two Master Spines", which stood from 2026-07-30 to 2026-08-12 and is superseded by operator instruction.** The prior text is below the line, because a decision that was reversed is more useful than a decision that was quietly deleted.
 
-Core types live under `Master::Core::` (not top-level `Master::`) so they coexist with lib constants in one process — the runtime cutover loads `core/` into the CLI via the bridge. `bin/nsaudit` loads the core entrypoint explicitly; the two-spine design is deliberate, not accidental duplication. (The module was named `Master::Kernel` until it was renamed to `Master::Core` to stop shadowing Ruby's built-in `::Kernel`.)
+`core/` is now `lib/core.rb` + `lib/core/`, autoloaded by the same Zeitwerk loader as the rest of `lib/`. The path-to-constant mapping already wanted exactly this: `push_dir(lib, namespace: Master)` makes `lib/core.rb` → `Master::Core` and `lib/core/fold.rb` → `Master::Core::Fold`. The merge needed no new entries in `data/autoload.yml` — `rake lint:autoload` still reports 44 ignores, all necessary.
 
-Namespace tooling should treat `bin/master-core` as the core load entrypoint.
+Two things the old split was carrying, and where each went:
+
+- **The dependency direction survives, as a test.** The fold must not reach into the application spine. That was enforced by a directory boundary and is now enforced by `test/core/test_no_lib_backedges.rb`, which names the fold's files explicitly and fails if any of them requires a sibling under `lib/`. It also asserts it found the files at all, since a glob that matches nothing passes silently.
+- **`core_files: 6` survives, counted differently.** `lib/{core.rb,core/*.rb}` — five in the directory plus the entrypoint beside it. Globbing only `lib/core/` would have read 5 against a ceiling of 6 and handed out a free concept.
+
+What the merge removed, beyond a directory: `bin/master-core` put `core/` on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb` files won was decided by load-path order. `bin/nsaudit` had to hand-require the second spine so the first one's constants would resolve. Both are gone.
+
+`lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved files `lib/` fell 28. The arithmetic is in `data/spine.yml` so the claim is checkable rather than asserted.
+
+---
+
+*Superseded 2026-08-12 — retained for the reasoning, not as current policy:*
+
+> `lib/` and `core/` are intentionally separate load paths. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `core/` is a small isolated constitutional fold loaded on its own path by the core tests and `bin/master-core`.
+>
+> Core types live under `Master::Core::` (not top-level `Master::`) so they coexist with lib constants in one process — the runtime cutover loads `core/` into the CLI via the bridge. `bin/nsaudit` loads the core entrypoint explicitly; the two-spine design is deliberate, not accidental duplication. (The module was named `Master::Kernel` until it was renamed to `Master::Core` to stop shadowing Ruby's built-in `::Kernel`.)
+>
+> Namespace tooling should treat `bin/master-core` as the core load entrypoint.
 
 ## The Spine Ratchet Replaces An Unmeasured Invariant
 
-`core/ABSORPTION.md` asserted "the spine never grows" and nothing checked it.
+`core/ABSORPTION.md` (now `docs/SEVERANCE.md`) asserted "the spine never grows" and nothing checked it.
 In the three weeks after `core/` landed, `lib/` gained 8,022 lines and `core/`
-gained none. That file is now `core/SEVERANCE.md`, a record of what was cut
-rather than a plan, and this document is the standing policy on the two spines.
+gained none. That file is now `docs/SEVERANCE.md`, a record of what was cut
+rather than a plan, and this document is the standing policy on the spine.
 
 What is enforced instead: `rake lint:spine` reads `data/spine.yml` and fails
-when `lib/` grows past its recorded ceiling or `core/` gains a top-level file.
+when `lib/` grows past its recorded ceiling or the fold spine gains a file.
 The ceiling only ratchets down (`RATCHET=1` records a new low); raising it is a
 deliberate edit with a reason in the commit. Part of `rake audit`.
 
@@ -39,7 +56,7 @@ sweep of all 445 files returned one candidate and it was a false positive.
 
 So the sentence is retired and replaced by the two things that are actually true:
 
-- **`core_files: 6` is the invariant.** A new top-level concept in `core/` is a
+- **`core_files: 6` is the invariant.** A new top-level concept in the fold is a
   design change and must be argued for. This has never been raised and should not
   be. It is what "the spine" means.
 - **`lib_code_ceiling` is a budget with a sponsor, not a promise.** It exists so
@@ -51,9 +68,17 @@ Nothing about the mechanism changes — this only stops the file claiming an
 invariant that three raises have already disproved. A number nobody believes is
 worse than a budget everybody reads.
 
-## Rule Data Stays Split
+## Rule Data Folded Into One File (2026-08-12)
 
-`data/rules.yml` is the constitutional rule registry. `data/rules/*.yml` are scanner shards by scope. `data/design_rules.yml`, `data/llm_output_rules.yml`, and `data/rule_deps.yml` each have separate consumers. Merging them would reduce proximity to their owners.
+**This reverses "Rule Data Stays Split", by the same operator instruction as the spine merge.**
+
+`data/rules.yml` is the whole scanner law: all 225 rules under one `rules:` key, in the four scopes the scanners already asked for by name (`codebase` 52, `file` 21, `line` 80, `unit` 72). The four `data/rules/*.yml` shards are gone, and so is `merge_rule_shards` in `lib/boot/data.rb` — the loader now reads one file.
+
+The fold was textual rather than a Psych round-trip, so every comment in the shards survived; a YAML load-and-dump would have stripped the lot, and those comments are where the rules explain themselves. `Master.load_rules` was proved deep-equal to its pre-fold output before the shards were deleted.
+
+The old entry's argument was proximity to consumers. It did not hold up: the shards had **one** consumer between them — `load_rules`, which concatenated all four back into a single hash before any scanner saw them. The split was proximity for readers, not for code, and it cost a directory plus a merge step that could disagree with itself.
+
+`data/design_rules.yml`, `data/llm_output_rules.yml`, and `data/rule_deps.yml` **do** each have separate consumers (`Master::Design`, `Master::Review::OutputCheck`, `Master::Fix::FixLoop`) and stay where they are. That part of the old entry was right and is not affected.
 
 ## Local Knowledge Stays Local
 

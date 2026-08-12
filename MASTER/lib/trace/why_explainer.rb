@@ -24,22 +24,15 @@ module Master
 
       private
 
+      # Master.load_rules, not a private re-read. This method used to load
+      # rules.yml and then overwrite base["rules"] with its own copy of the
+      # shard-merge loop — a second implementation of Master.load_rules living
+      # two directories away. When the shards were folded into rules.yml on
+      # 2026-08-12 that copy started returning {} and assigning it over the real
+      # rules, so /why went silent for every registry and scan rule while
+      # reporting nothing wrong.
       def rules
-        @rules ||= begin
-          base = Master.load_yaml(File.join(@root, "data", "rules.yml")) || {}
-          base["rules"] = load_split_rules
-          base
-        end
-      end
-
-      def load_split_rules
-        dir = File.join(@root, "data", "rules")
-        return {} unless File.directory?(dir)
-
-        Dir.glob(File.join(dir, "*.yml")).sort.each_with_object({}) do |path, merged|
-          data = Master.load_yaml(path) || {}
-          data.each { |scope, items| (merged[scope] ||= []).concat(Array(items)) }
-        end
+        @rules ||= Master.load_rules(root: @root)
       end
 
       def soul

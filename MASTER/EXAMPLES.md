@@ -43,9 +43,10 @@ Scanner false positive: SQL detector flagged as SQL injection; needs scanner exe
 ## Good TODO Update
 
 ```markdown
-- [x] Add `data/rules/README.md` mapping rule shards to consumers.
+- [x] Fold the four rule shards into `data/rules.yml`.
       Verified by reading live consumers in `lib/review/output_check.rb`,
-      `lib/fix/fix_loop/rule_order.rb`, and scanner rule loading.
+      `lib/fix/fix_loop/rule_order.rb`, and `lib/boot/data.rb`, then proving
+      `Master.load_rules` deep-equal to its pre-fold output before deleting them.
 ```
 
 ## Bad TODO Update

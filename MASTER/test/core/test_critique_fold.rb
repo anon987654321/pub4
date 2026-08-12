@@ -3,7 +3,7 @@
 require "minitest/autorun"
 $LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
 require "result"
-require_relative "../../core/master"
+require "master"
 
 class CritiqueFoldTest < Minitest::Test
   class ScriptedModel

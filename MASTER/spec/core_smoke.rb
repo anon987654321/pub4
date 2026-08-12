@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
 # A full agent session on the real data/, with a scripted model and real git.
-#   ruby MASTER/core/spec/core_smoke.rb
+#   ruby -IMASTER/lib MASTER/spec/core_smoke.rb
 # Proves the whole spine in one run: effects proposed, the Constitution
 # blocking the dangerous ones and admitting the safe ones, the World writing
 # through backup, explicit git commit after evidence, and an evidence-gated finish.
 
-require_relative "../master"
+require "master"
 require "open3"
 require "tmpdir"
 
-DATA = File.expand_path("../../data", __dir__)
+DATA = File.expand_path("../data", __dir__)
 
 $fail = 0
 def check(label)

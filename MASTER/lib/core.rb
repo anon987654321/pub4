@@ -4,10 +4,16 @@
 #
 # The whole thing is one sentence: fold proposed effects through a constitution
 # that admits each one before it touches the world. Four concepts carry it —
-# Core (the fold), Constitution (the gate), World (the effects), Memory (the
-# record) — and this file holds the vocabulary they share.
-module Master; end
-
+# Fold, Constitution (the gate), World (the effects), Memory (the record) — and
+# this file holds the vocabulary they share.
+#
+# Until 2026-08-12 this was `core/master.rb`, the root of a second spine loaded
+# on its own path. It is now `lib/core.rb`, autoloaded by the same Zeitwerk
+# loader as the rest of `lib/`, which is what the path-to-constant mapping
+# already wanted: `lib/core.rb` → `Master::Core`, `lib/core/fold.rb` →
+# `Master::Core::Fold`. The fold still depends on nothing in `lib/` outside its
+# own namespace — `test/core/test_no_lib_backedges.rb` is what holds that, and
+# it is the part of the two-spine split that was carrying real weight.
 module Master::Core
   # An Effect is something the agent wants to do. Nothing reaches the world
   # except by proposing an Effect and having the Constitution admit it. The verb
@@ -73,9 +79,3 @@ module Master::Core
     def _dump(_) = raise(TypeError, "Secret cannot be Marshalled")
   end
 end
-
-require_relative "memory"
-require_relative "world"
-require_relative "constitution"
-require_relative "core"
-require_relative "model"

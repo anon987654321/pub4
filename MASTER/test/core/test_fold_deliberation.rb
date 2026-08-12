@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 $LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
-require_relative "../../core/master"
+require "master"
 require "cli/fold_risk"
 
 class FoldDeliberationTest < Minitest::Test

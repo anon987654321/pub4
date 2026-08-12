@@ -1,6 +1,6 @@
 # The spine ratchet. `rake lint:spine` fails when lib/ grows past the ceiling.
 #
-# core/SEVERANCE.md (written as ABSORPTION.md) asserted "the spine never grows"
+# docs/SEVERANCE.md (written as core/ABSORPTION.md) asserted "the spine never grows"
 # and nothing measured it,
 # so lib/ gained 8,022 lines in the three weeks after core/ landed while core/
 # gained none. An invariant nothing measures is decoration -- the same critique
@@ -153,29 +153,33 @@ spine:
   # Psych::SyntaxError. Repaired by hand and the writer fixed in the Rakefile;
   # a ratchet that corrupts the file it ratchets is worse than no ratchet.
   #
-  # REBASELINED 2026-08-12, 38285 -> 38823 (+538), for the second unit change in
+  # REBASELINED 2026-08-12, 38285 -> 38811 (+526), for the second unit change in
   # this file's life: core/ was merged into lib/ on operator instruction, so the
   # thing being measured now contains the fold spine that was deliberately
   # outside it. This is NOT a raise and does not touch `raised:` — spending the
   # allowance here would record accretion that did not happen, and would leave
-  # the next person believing lib/ grew by 538 lines when nobody wrote one.
+  # the next person believing lib/ grew by 526 lines when nobody wrote one.
   #
   # The arithmetic, because the distinction is only worth anything if it is
   # checkable:
   #
   #   moved in from core/     554 code lines (the six files, measured at HEAD)
-  #   lib/ after the merge  38823
-  #   lib/ minus those files 38269, against the old ceiling of 38285
+  #   lib/ after the merge  38811
+  #   lib/ minus those files 38257, against the old ceiling of 38285
   #
-  # So lib/ excluding the moved spine came DOWN 16 lines in the same commit —
-  # the shard-merge method that data/rules.yml's fold made dead, and the five
-  # require_relatives in the old core/master.rb plus two in lib/cli that Zeitwerk
-  # now does. A merge that moves 554 lines in and reports +538 is reporting
-  # honestly; if this number had come in above 38285 + 554 the difference would
-  # have been new code, and that would have been a raise.
+  # So lib/ excluding the moved spine came DOWN 28 lines in the same commit.
+  # Three deletions paid for that: merge_rule_shards in boot/data.rb, dead once
+  # data/rules.yml absorbed the shards; a second copy of that same shard-merge
+  # loop in trace/why_explainer.rb, which the fold turned into a method that
+  # overwrote the real rules with {} and silently emptied /why; and seven
+  # require_relatives that Zeitwerk now does.
+  #
+  # A merge that moves 554 lines in and reports +526 is reporting honestly. Had
+  # this come in above 38285 + 554 the difference would have been new code, and
+  # that would have been a raise.
   #
   # The ratchet still only goes down from here. `rake lint:spine RATCHET=1`.
-  lib_code_ceiling: 38823
+  lib_code_ceiling: 38811
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -194,6 +198,11 @@ spine:
   # the same argument both times — that the growth was justified. It usually is.
   # That is exactly why the number needed teeth rather than prose.
   consecutive_raises_allowed: 2
-  # core/ is allowed to grow only by a handler per verb and a rule per
+  # The fold spine is allowed to grow only by a handler per verb and a rule per
   # constraint; this is a tripwire on new top-level concepts, not on line count.
+  #
+  # Counted as lib/{core.rb,core/*.rb} since the 2026-08-12 merge — six files
+  # still, five in the directory plus the entrypoint beside it. Globbing only
+  # lib/core/ would have read 5 against a ceiling of 6 and quietly handed out a
+  # free concept, which is how an invariant stops being one.
   core_files: 6

@@ -93,9 +93,8 @@ class ProjectTree
     line(:ok, "MASTER/lib spine: #{libs.join(' ')}") if libs.any?
 
     data_yml = Dir.glob(File.join(repo, "MASTER", "data", "*.yml")).size
-    shards = Dir.glob(File.join(repo, "MASTER", "data", "rules", "*.yml")).size
     budget = drift_or_ok(data_yml <= 40)
-    line(budget, "MASTER/data: #{data_yml} root yml + #{shards} rule shard(s) — target in START_HERE 'Data File Budget'")
+    line(budget, "MASTER/data: #{data_yml} root yml — target in START_HERE 'Data File Budget'")
 
     dupes = duplicate_docs(repo)
     line(:drift, "MASTER + OPENBSD share doc names: #{dupes.join(' ')} — same name, different scope") if dupes.any?
@@ -123,8 +122,8 @@ class ProjectTree
       line(:ok, "#{note} — two spines, permanent by DECISIONS.md, not pending a cutover")
     end
 
-    shards = Dir.glob(File.join(master, "data", "rules", "*.yml")).map { |f| File.basename(f, ".yml") }
-    line(:ok, "data/soul.yml + rules/{#{shards.join(',')}}.yml — law tier, do not blind-merge") if shards.any?
+    scopes = rule_scopes(master)
+    line(:ok, "data/soul.yml + rules.yml{#{scopes.join(',')}} — law tier, one file since the 2026-08-12 fold") if scopes.any?
 
     data_yml = Dir.glob(File.join(master, "data", "*.yml")).size
     runtime = Dir.glob(File.join(master, "data", "runtime", "*.yml")).size
@@ -154,6 +153,18 @@ class ProjectTree
     return [] unless Dir.exist?(path)
 
     Dir.children(path).select { |e| !e.start_with?(".") && File.directory?(File.join(path, e)) }.sort
+  end
+
+  # Reads the scopes out of rules.yml rather than counting shard files. Counting
+  # files reported "0 rule shards" the moment they were folded in, which reads as
+  # loss when it is a move.
+  def rule_scopes(master)
+    path = File.join(master, "data", "rules.yml")
+    return [] unless File.exist?(path)
+
+    (YAML.safe_load_file(path, aliases: true)["rules"] || {}).keys.sort
+  rescue Psych::Exception
+    []
   end
 
   def rails_apps(repo)

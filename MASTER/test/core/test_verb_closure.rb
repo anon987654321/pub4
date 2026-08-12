@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 
-require_relative "../../core/master"
+require "master"
 
 class VerbClosureTest < Minitest::Test
   CLOSED = Master::Core::VERBS.freeze

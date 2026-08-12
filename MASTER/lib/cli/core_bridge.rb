@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../../core/master"
-
 module Master
   module CLI
     # CoreBridge — run one coding goal through the core Fold from the CLI and web

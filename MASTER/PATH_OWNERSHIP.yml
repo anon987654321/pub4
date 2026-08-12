@@ -58,8 +58,12 @@ ownership:
     purpose: personality, speech, TTS, rendering
     risk: medium
     check: bin/check
-  core/:
-    purpose: isolated constitutional fold spine
+  lib/core.rb:
+    purpose: fold spine entrypoint — Effect, VERBS, Verdict, Secret
+    risk: critical
+    check: rake test:core
+  lib/core/:
+    purpose: constitutional fold spine — must not require the rest of lib/
     risk: high
     check: rake test:core
   lib/boot/:
@@ -107,13 +111,9 @@ ownership:
     risk: critical
     check: bin/check --profile=agent
   data/rules.yml:
-    purpose: constitutional rule registry
+    purpose: constitutional rule registry and all scanner law (folded 2026-08-12)
     risk: critical
     check: bin/check --profile=agent
-  data/rules/:
-    purpose: scanner rule shards by scope
-    risk: high
-    check: rake lint:data_singularity
   data/providers.yml:
     purpose: provider registry
     risk: high

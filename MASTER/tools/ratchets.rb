@@ -65,7 +65,7 @@ module Pub4
         Row.new(name: "spine.lib_code_ceiling", current: lib_code_lines, ceiling: spine["lib_code_ceiling"],
                 direction: :down, source: "MASTER/data/spine.yml",
                 note: "a budget with a sponsor, not a promise (DECISIONS.md)"),
-        Row.new(name: "spine.core_files", current: Dir.glob(File.join(MASTER, "core/*.rb")).size,
+        Row.new(name: "spine.core_files", current: Dir.glob(File.join(MASTER, "lib/{core.rb,core/*.rb}")).size,
                 ceiling: spine["core_files"], direction: :fixed, source: "MASTER/data/spine.yml",
                 note: "the actual invariant: a new top-level concept is a design change"),
       ]

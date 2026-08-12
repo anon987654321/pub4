@@ -25,7 +25,7 @@ dotfiles/  shell and editor config
 | Working on | Read first |
 |---|---|
 | Anything in MASTER | `MASTER/START_HERE.md` (full contract), `MASTER/AGENTS.md` (task-scoped) |
-| MASTER law, scanners, fix loop | `MASTER/START_HERE.md` "Data File Budget"; do not merge `data/rules/*.yml` |
+| MASTER law, scanners, fix loop | `MASTER/START_HERE.md` "Data File Budget"; all scanner law is `data/rules.yml` |
 | The web face / WebGL / primer tap | `MASTER/web/CLAUDE.md` |
 | Deploy, VPS, rc.d, relayd | `OPENBSD/CLAUDE.md`, then `OPENBSD/RUNBOOK.md` |
 | RAILS app CSS or visual work | `RAILS/shared/WIRING_NOTES.md` "Visual design system" |

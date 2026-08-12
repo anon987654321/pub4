@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../core/master"
+require "master"
 require "tmpdir"
 
 # The observer lets a host watch the fold turn by turn without being able to

@@ -1,6 +1,6 @@
 # Start Here
 
-MASTER is a constitutional AI runtime in Ruby. Models propose; the runtime validates against `data/soul.yml`, `data/rules.yml`, and scanner shards before durable writes. The Rails face in `web/` mirrors runtime state at `https://ai.brgen.no`.
+MASTER is a constitutional AI runtime in Ruby. Models propose; the runtime validates against `data/soul.yml`, `data/rules.yml`, and its scanner rules before durable writes. The Rails face in `web/` mirrors runtime state at `https://ai.brgen.no`.
 
 **Orientation:** `AGENTS.md` for task-scoped agent entry; this file for the full contract. Law and config live in YAML under `data/`. Prose stubs: `data/SOUL.md`, `data/IDENTITY.md`, generated `data/CANON.md`. Everything else defers to `/orient` or this section.
 
@@ -25,10 +25,10 @@ bin/cli → Master.bootstrap_container
        → lib/ground (constitution, memory, policy)
        → lib/voice (persona, TTS, SOUL evolution)
        → web/ (Rails chat face)
-core/ — isolated constitutional fold spine (separate load path; do not merge with lib/ casually)
+lib/core.rb + lib/core/ — the constitutional fold spine (Effect → Constitution → World → Memory)
 ```
 
-High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `lib/master.rb`, `web/app/views/chat/index.html.erb`, `web/public/face*`, `lib/io/`, `.master/`.
+High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `lib/master.rb`, `lib/core.rb`, `web/app/views/chat/index.html.erb`, `web/public/face*`, `lib/io/`, `.master/`.
 
 ## Agent Contract
 
@@ -46,27 +46,26 @@ High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `li
 | Deploy / Rails | `OPENBSD/bin/check-rails --profile=contributor` |
 | Operator / release | `bin/pub4 status` then `OPENBSD/bin/check-full` |
 
-**Do not optimize away:** the dual `lib/` + `core/` spines — permanent by decision, not pending a cutover (`DECISIONS.md`, "Two Master Spines"; `core/SEVERANCE.md` records why the migration chart was retired); `data/rules/` shards (one consumer each); deferred WebGL until primer tap; constitution self-scan debt during unrelated UI work.
+**Do not optimize away:** the fold spine's independence from the rest of `lib/` — `lib/core*` requires nothing outside its own namespace, held by `test/core/test_no_lib_backedges.rb`; deferred WebGL until primer tap; constitution self-scan debt during unrelated UI work.
 
 ## Do Not Touch (unless the task requires it)
 
-1. `lib/` and `core/` are two spines, deliberately and permanently — do not merge them. Restarting absorption would be a product decision with a sponsor and a date, not a refactor (`core/SEVERANCE.md`).
-2. `data/rules/*.yml` shards stay split — do not fold into `rules.yml` without retuning scanners.
-3. `knowledge/` is local-only — do not commit without updating `SearchKnowledge`.
-4. WebGL / face boot stays deferred until primer tap.
-5. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement unprompted.
-6. VPS: one app CI/deploy at a time on vm23.
-7. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets.
-8. After `git pull` on vm23, run `vps-deploy` before expecting live health.
-9. Feature truth: `RAILS/apps.yml`; debt: `OPENBSD/data/debt.yml`.
-10. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPENBSD/RUNBOOK.md`.
-11. Production VM is vm23 only (`dev@brgen.no`).
-12. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only gates.
-13. Dmesg every file op — see `OPENBSD/RUNBOOK.md`.
+1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not require the rest of `lib/`. The two-spine *directory* split ended 2026-08-12 (`docs/SEVERANCE.md`); the dependency direction it was protecting did not, and is now a test rather than a folder boundary. `core_files: 6` in `data/spine.yml` still makes a seventh concept a design decision.
+2. `knowledge/` is local-only — do not commit without updating `SearchKnowledge`.
+3. WebGL / face boot stays deferred until primer tap.
+4. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement unprompted.
+5. VPS: one app CI/deploy at a time on vm23.
+6. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets.
+7. After `git pull` on vm23, run `vps-deploy` before expecting live health.
+8. Feature truth: `RAILS/apps.yml`; debt: `OPENBSD/data/debt.yml`.
+9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPENBSD/RUNBOOK.md`.
+10. Production VM is vm23 only (`dev@brgen.no`).
+11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only gates.
+12. Dmesg every file op — see `OPENBSD/RUNBOOK.md`.
 
 ## Data File Budget (why so many YAML files)
 
-`data/` is down to 54 files (was ~80) after the 2026-05 defrag plan's Tier-5 pass (2026-07-15): 9 files removed outright (dead — no code path ever loaded their content, despite some claiming otherwise in their own header comments), 13 folded into `patterns.yml` under namespaced keys, 1 folded despite having no enforced consumer (kept as reference documentation). **Do not merge blindly** — each remaining path has Ruby loaders and tests.
+`data/` is 46 yml (37 at the root) as of 2026-08-12, after the 2026-05 defrag plan's Tier-5 pass (2026-07-15) and the rule-shard fold: 9 files removed outright (dead — no code path ever loaded their content, despite some claiming otherwise in their own header comments), 13 folded into `patterns.yml` under namespaced keys, 1 folded despite having no enforced consumer (kept as reference documentation). **Do not merge blindly** — each remaining path has Ruby loaders and tests.
 
 A handful of Tier-5-looking files were deliberately left alone rather than folded: `council.yml` (8+ consumers across the whole deliberation subsystem, protected by its own scanner rule), `state.yml` (backs standing-orders/autocommit via `DATA_ALIASES`), `topologies.yml`/`tts.yml` (feed the live web boot payload and TTS), `tools.dynamic.yml` (two-tier repo+user-override merge), `exemplars.yml`/`openbsd.yml` (active read-modify-write targets, not static config — folding would make routine runtime events rewrite the shared source-of-truth file). Folding any of these needs a real design decision, not a mechanical move.
 
@@ -75,7 +74,7 @@ A handful of Tier-5-looking files were deliberately left alone rather than folde
 **Tier 1 — Law (5 files, do not collapse without a migration):**
 
 - `soul.yml` — constitutional schema, sacred paths, anti-simulation
-- `rules.yml` + `rules/{codebase,file,line,unit}.yml` — scanner law (sharded on purpose)
+- `rules.yml` — scanner law, all four scopes (`codebase`, `file`, `line`, `unit`) under one `rules:` key since the 2026-08-12 fold
 - `limits.yml` — budgets, scan profiles, standing orders
 - `voice.yml` — persona, TTS, speech
 - `style.yml` — output shape, line order
@@ -112,7 +111,7 @@ Far-away visual tree with noise pruned and alignment notes. Do this before mergi
 
 ## Source And Local State
 
-- Source: `lib/`, `core/`, `data/`, `bin/`, `test/`, `spec/`, `web/app/`, `web/public/`.
+- Source: `lib/`, `data/`, `bin/`, `test/`, `spec/`, `web/app/`, `web/public/`.
 - Local/generated: `.master/`, `knowledge/`, `output/`, `web/public/assets/`, `web/storage/`, `web/log/`.
 
 ## Law Ladder

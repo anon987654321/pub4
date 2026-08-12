@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "yaml"
-require_relative "../../core/master"
+require "master"
 
 # The evidence weights live in exactly one Ruby place — Memory::SCORING — and the
 # lib spine still reads data/rules.yml's evidence_scoring. Until that spine is

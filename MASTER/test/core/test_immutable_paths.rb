@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../core/master"
+require "master"
 
 # The agent must never rewrite the constitution it is judged by or the spine
 # that folds its effects. These pin that block — and that ordinary paths still
 # pass, so the guard is a scalpel, not a wall.
 class ImmutablePathsTest < Minitest::Test
-  IMMUTABLE = %w[data/rules.yml data/soul.yml core/].freeze
+  IMMUTABLE = %w[data/rules.yml data/soul.yml lib/core.rb lib/core/].freeze
 
   def constitution
     rules = [Master::Core::Constitution.immutable_paths_rule(IMMUTABLE)]
@@ -31,7 +31,13 @@ class ImmutablePathsTest < Minitest::Test
   end
 
   def test_write_anywhere_under_the_spine_is_blocked
-    assert_blocked Master::Core::Effect.write("core/world.rb", "# hijack\n"), by: :immutable_paths
+    assert_blocked Master::Core::Effect.write("lib/core/world.rb", "# hijack\n"), by: :immutable_paths
+  end
+
+  # The entrypoint is a file beside the directory, not inside it. Guarding only
+  # `lib/core/` would leave VERBS, Effect and Secret rewritable by an effect.
+  def test_write_to_the_spine_entrypoint_is_blocked
+    assert_blocked Master::Core::Effect.write("lib/core.rb", "# hijack\n"), by: :immutable_paths
   end
 
   def test_leading_dot_slash_still_matches
@@ -39,7 +45,7 @@ class ImmutablePathsTest < Minitest::Test
   end
 
   def test_git_stage_of_immutable_path_is_blocked
-    effect = Master::Core::Effect.git(:stage, paths: ["core/core.rb"])
+    effect = Master::Core::Effect.git(:stage, paths: ["lib/core/fold.rb"])
     assert_blocked effect, by: :immutable_paths
   end
 
@@ -48,7 +54,8 @@ class ImmutablePathsTest < Minitest::Test
   end
 
   def test_sibling_of_immutable_file_is_not_blocked
-    # "core/" guards the tree, but a file merely prefixed "core" is not it.
-    assert_allowed Master::Core::Effect.write("coreish.rb", "A = 1\n")
+    # "lib/core/" guards the tree and "lib/core.rb" is an exact match; a file
+    # merely prefixed "core" is neither.
+    assert_allowed Master::Core::Effect.write("lib/coreish.rb", "A = 1\n")
   end
 end

@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 
-load File.expand_path("../../core/master.rb", __dir__)
+require "master"
 
 class TestKernelSpine < Minitest::Test
   Model = Struct.new(:effects) do

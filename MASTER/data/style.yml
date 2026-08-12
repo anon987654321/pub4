@@ -374,7 +374,7 @@ typography:
 
 # Canonical 10-item reference — style.yml is not globbed by Master.load_rules,
 # so this list feeds no detector directly. All 10 now have live semantic
-# entries in data/rules/unit.yml: SYSTEM_STATUS/MATCH_REAL_WORLD/USER_CONTROL/
+# entries in the unit scope of data/rules.yml: SYSTEM_STATUS/MATCH_REAL_WORLD/USER_CONTROL/
 # CONSISTENCY/GUARD_EXPENSIVE_OPS/RECOGNITION_OVER_RECALL/FLEXIBILITY_EFFICIENCY/
 # AESTHETIC_MINIMALISM/ERROR_RECOVERY/HELP_AND_DOCUMENTATION.
 nielsen_heuristics:
