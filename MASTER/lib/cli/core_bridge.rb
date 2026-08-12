@@ -20,7 +20,7 @@ module Master
 
         done = build_fold(root:, model:, model_id:, memory:, critique_runner:, max_turns:, observer:).run(goal)
 
-        { reason: done.reason, turns: done.turns, summary: done.summary, transcript:, risk: memory.risk }
+        { reason: done.reason, turns: done.turns, summary: done.summary, transcript:, risk: memory.proof.risk }
       end
 
       def build_turn_observer(transcript, bus:, on_turn:)

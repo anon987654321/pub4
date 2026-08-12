@@ -9,6 +9,7 @@
 # defect, same file pair.
 
 require "minitest/autorun"
+require "yaml"
 require_relative "../tools/doc_citations"
 
 class TestDocCitations < Minitest::Test
@@ -29,7 +30,11 @@ class TestDocCitations < Minitest::Test
   # A checker that has stopped finding anything to check reports clean forever.
   def test_the_checker_is_reading_documents_and_data
     assert_operator @report["docs"], :>, 40, "only #{@report['docs']} documents seen"
-    assert_operator @report["quotations"] + @report["citations"], :>=, 6,
+    # Floor, not a target. It was 6 until 2026-08-12, when fixing seven stale
+    # `core_files: 6` references removed most of them — rewriting prose to drop
+    # the number is a real loss of coverage, so the floor is asserted rather than
+    # quietly followed downward.
+    assert_operator @report["quotations"] + @report["citations"], :>=, 4,
                     "only #{@report['quotations']} quotation(s) and #{@report['citations']} " \
                     "citation(s) found — the checker stopped matching"
     assert_includes Pub4::DocCitations.keys.keys, "core_files",
@@ -39,8 +44,13 @@ class TestDocCitations < Minitest::Test
   def test_a_citation_resolves_against_data
     value, error = Pub4::DocCitations.resolve("data/spine.yml", "spine.core_files")
 
+    live = YAML.safe_load_file(File.expand_path("../data/spine.yml", __dir__)).dig("spine", "core_files")
+
     assert_nil error
-    assert_equal "6", value
+    # Against the file, not a literal. This asserted "6" and broke the day
+    # core_files was raised — a test that hardcodes the value whose citation it
+    # is checking is itself a third copy of that value.
+    assert_equal live.to_s, value
   end
 
   # Both halves of a citation must be able to fail: a wrong number, and a marker
@@ -54,11 +64,13 @@ class TestDocCitations < Minitest::Test
   end
 
   def test_a_wrong_number_before_a_marker_is_a_finding
+    live, = Pub4::DocCitations.resolve("data/spine.yml", "spine.core_files")
+    wrong = live.to_i + 1
     findings = Pub4::DocCitations.citation_findings(
-      "TEST.md", 1, "data/spine.yml", "spine.core_files", "a ceiling of 7 "
+      "TEST.md", 1, "data/spine.yml", "spine.core_files", "a ceiling of #{wrong} "
     )
 
     assert_equal 1, findings.size
-    assert_includes findings.first["message"], "cites spine.core_files as 7"
+    assert_includes findings.first["message"], "cites spine.core_files as #{wrong}"
   end
 end

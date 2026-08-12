@@ -17,7 +17,7 @@ See `OPENBSD/DECISIONS.md` — **No Fourth Public App Until brgen Boundaries Hol
 Two things the old split was carrying, and where each went:
 
 - **The dependency direction survives, as a test.** The fold must not reach into the application spine. That was enforced by a directory boundary and is now enforced by `test/core/test_no_lib_backedges.rb`, which names the fold's files explicitly and fails if any of them requires a sibling under `lib/`. It also asserts it found the files at all, since a glob that matches nothing passes silently.
-- **`core_files: 6` survives, counted differently.** `lib/{core.rb,core/*.rb}` — five in the directory plus the entrypoint beside it. Globbing only `lib/core/` would have read 5 against a ceiling of 6 <!-- cite: data/spine.yml#spine.core_files --> and handed out a free concept.
+- **`core_files` survives, counted differently.** `lib/{core.rb,core/*.rb}` — the directory plus the entrypoint beside it. Globbing only `lib/core/` would have read one under the ceiling and handed out a free concept. It stood at 6 through the merge and was raised to 7 <!-- cite: data/spine.yml#spine.core_files --> on 2026-08-12 for `Proof`.
 
 What the merge removed, beyond a directory: `bin/master-core` put `core/` on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb` files won was decided by load-path order. `bin/nsaudit` had to hand-require the second spine so the first one's constants would resolve. Both are gone.
 
@@ -56,9 +56,19 @@ sweep of all 445 files returned one candidate and it was a false positive.
 
 So the sentence is retired and replaced by the two things that are actually true:
 
-- **`core_files: 6` is the invariant.** A new top-level concept in the fold is a
-  design change and must be argued for. This has never been raised and should not
-  be. It is what "the spine" means.
+- **`core_files` is the invariant.** A new top-level concept in the fold is a
+  design change and must be argued for. It is what "the spine" means.
+
+  *Amended 2026-08-12.* This bullet used to end "This has never been raised and
+  should not be." It has now been raised once, 6 → 7, for `Master::Core::Proof`
+  — and the raise is the mechanism working rather than failing. `Memory` measured
+  16 public methods against ABSTRACTION's 10 and could not be brought under it by
+  declaring visibility the way `Constitution` could, because every method had a
+  caller. The count was telling the truth: Memory was a transcript, an evidence
+  ledger, and the risk gates wearing one name, and the Constitution reached past
+  the first to ask the other two. The invariant did not stop the seventh concept;
+  it made the seventh concept get argued for, which is all it was ever able to
+  do. What it must keep refusing is a file added because something felt long.
 - **`lib_code_ceiling` is a budget with a sponsor, not a promise.** It exists so
   growth is visible and has to be asked for. A raise needs a named sponsor and the
   per-commit accounting in `spine.yml`; `consecutive_raises_allowed: 2` refuses the

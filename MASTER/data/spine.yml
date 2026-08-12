@@ -273,8 +273,39 @@ spine:
   # The fold spine is allowed to grow only by a handler per verb and a rule per
   # constraint; this is a tripwire on new top-level concepts, not on line count.
   #
-  # Counted as lib/{core.rb,core/*.rb} since the 2026-08-12 merge — six files
-  # still, five in the directory plus the entrypoint beside it. Globbing only
-  # lib/core/ would have read 5 against a ceiling of 6 and quietly handed out a
-  # free concept, which is how an invariant stops being one.
-  core_files: 6
+  # Counted as lib/{core.rb,core/*.rb} since the 2026-08-12 merge — the entrypoint
+  # plus the directory. Globbing only lib/core/ would have read one fewer than the
+  # ceiling and quietly handed out a free concept, which is how an invariant stops
+  # being one.
+  #
+  # RAISED 2026-08-12, 6 -> 7, operator-sponsored. The first raise since this file
+  # was written, and DECISIONS.md called it "the actual invariant", so the argument
+  # is on the record rather than in a commit subject.
+  #
+  # `Memory` measured 16 public methods against ABSTRACTION's 10 and could not be
+  # brought under it by declaring visibility, the way `Constitution` could — every
+  # one of its methods had a caller. That was the count telling the truth: Memory
+  # was three objects wearing one name, a transcript and an evidence ledger and
+  # the risk gates, and the Constitution reached past the first to ask the other
+  # two. `lib/core/proof.rb` is the second of those three: what has been shown,
+  # and what must be shown before `done`.
+  #
+  # This is what the invariant is FOR. It did not stop the seventh concept; it
+  # made the seventh concept get argued for, which is the whole mechanism. What it
+  # must keep refusing is a file added because something felt too long — the
+  # question is whether the fold has gained a concept, and here it had one all
+  # along, unnamed.
+  #
+  # Memory 16 public methods -> 7, Proof 8, Constitution 4, Fold 2. `rake selftest`
+  # 1 finding -> 0, the
+  # first time the fold has been clean under its own law since it was subjected
+  # to it.
+  #
+  # The +10 code lines the split cost were absorbed, not raised for: the raise
+  # allowance was already spent and this file says the next line into lib/ comes
+  # out of lib/. A sweep for dead code found none — no lib/ file has a declared
+  # constant that nothing else references — so it came out of the new code
+  # instead: SCORING on one line, mark_ideation_complete! as a tap, and no `risk`
+  # delegator on Memory, which was the forwarding this split existed to avoid.
+  # lib/ net 0.
+  core_files: 7

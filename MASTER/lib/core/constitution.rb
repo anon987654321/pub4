@@ -121,7 +121,7 @@ module Master::Core
     # The agent may not declare success without evidence (no completion theater).
     def self.evidence_for_done_rule
       Rule.new(id: :evidence_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
-        next nil if memory.proved?
+        next nil if memory.proof.proved?
 
         Verdict::Block.new(reason: "no passing evidence on record", by: :evidence_for_done)
       })
@@ -130,7 +130,7 @@ module Master::Core
     def self.git_commit_evidence_rule
       Rule.new(id: :git_commit_evidence, verbs: %i[git], judge: lambda { |effect, memory|
         next nil unless effect.args[:operation].to_sym == :commit
-        next nil if memory.proved?
+        next nil if memory.proof.proved?
 
         Verdict::Block.new(reason: "cannot commit before evidence threshold", by: :git_commit_evidence)
       })
@@ -139,8 +139,8 @@ module Master::Core
     # High-risk goals require an in-process council critique before done.
     def self.council_for_done_rule
       Rule.new(id: :council_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
-        next nil unless memory.council_required?
-        next nil if memory.council_cleared?
+        next nil unless memory.proof.council_required?
+        next nil if memory.proof.council_cleared?
 
         Verdict::Block.new(reason: "run critique (council tribunal) before done on high-risk goals", by: :council_for_done)
       })
@@ -149,7 +149,7 @@ module Master::Core
     # Medium+ goals must carry ideation notes seeded before the first write.
     def self.ideation_before_write_rule
       Rule.new(id: :ideation_before_write, verbs: %i[write], judge: lambda { |_effect, memory|
-        next nil if memory.ideation_satisfied?
+        next nil if memory.proof.ideation_satisfied?
 
         Verdict::Block.new(reason: "ideation not complete — approaches/chosen must be in memory", by: :ideation_before_write)
       })
@@ -175,8 +175,8 @@ module Master::Core
     # instance-method stream and class methods never enter it, so this class read
     # as 16 public methods under ABSTRACTION no matter how it was arranged. That
     # is the idiom being measured, not the surface — see DEBT.md, "The fold spine
-    # had never been scanned". Fixing it by decomposing would have needed a
-    # seventh file in the fold, which `core_files: 6` makes a design decision.
+    # had never been scanned". Unlike Memory, this class did not need splitting:
+    # its count was the idiom, and Memory's was the design.
     private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule,
                          :safe_exec_rule, :structured_exec_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :council_for_done_rule,

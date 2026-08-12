@@ -194,7 +194,7 @@ module Master
           DeliberationPrep.seed_memory!(memory, ideation)
         elsif FoldRisk.ideation_required?(risk)
           memory.note(:chosen, "proceed: ideation skipped (no agent)")
-          memory.mark_ideation_complete!
+          memory.proof.mark_ideation_complete!
         end
         memory
       end

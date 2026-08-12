@@ -17,7 +17,7 @@ class CritiqueFoldTest < Minitest::Test
 
   def test_critique_effect_records_council_pass
     memory = Master::Core::Memory.new(risk: :high)
-    memory.mark_ideation_complete!
+    memory.proof.mark_ideation_complete!
     runner = lambda do |**_|
       Master::Result.ok("critique: council pass")
     end
@@ -25,14 +25,14 @@ class CritiqueFoldTest < Minitest::Test
     observation = world.perform(Master::Core::Effect.critique)
     memory.record(Master::Core::Effect.critique, observation)
 
-    assert memory.council_cleared?
+    assert memory.proof.council_cleared?
   end
 
   def test_high_risk_fold_completes_with_critique
     Dir.mktmpdir do |root|
       memory = Master::Core::Memory.new(risk: :high)
       memory.note(:goal, "ship fix")
-      memory.mark_ideation_complete!
+      memory.proof.mark_ideation_complete!
       model = ScriptedModel.new(
         Master::Core::Effect.exec(["true"], evidence: :test_pass),
         Master::Core::Effect.exec(["true"], evidence: :scan_clean),

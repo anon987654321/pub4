@@ -43,9 +43,10 @@ countdown.
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **3 findings as of 2026-08-12**, all of them in the fold
-spine, all of them newly *visible* rather than newly true — see "The fold spine
-had never been scanned" below. It was 0 on 2026-08-11. Treat any count here as
+`rake selftest` reports **0 findings as of 2026-08-12**, after the three the
+merge exposed in the fold spine were closed — see "The fold spine had never been
+scanned" below. Unlike the 0 of 2026-08-11, this one is measured over a tree that
+includes the fold. Treat any count here as
 true for the commit that carries it and no further: it has been 0, 1, 2, 3, 6 and
 7 on different days of the same fortnight, and a "clean since" claim in
 `START_HERE.md` was already stale once.
@@ -82,7 +83,7 @@ otherwise: 19 → 22 on a clean HEAD worktree with only the move applied, and
 same three files, from two different starting points.
 
 **Two of the three are closed, by option 2 — 2026-08-12.** Nothing was
-exempted, no threshold moved, and `core_files` is still 6.
+exempted, no threshold moved, and `core_files` was still 6 at that point.
 
 - **`Constitution` 16 → 4.** Twelve of the sixteen are rule factories that only
   `default_rules` calls, verified against `lib/`, `test/`, `spec/`, `tools/`,
@@ -93,7 +94,7 @@ exempted, no threshold moved, and `core_files` is still 6.
   declaration, pinned by `tools/fixtures/class_methods.rb`. ABSTRACTION was
   measuring the idiom, not the surface.
 - **`Fold#run` 24 → 14 code lines.** The admitted half moved to a private
-  `apply`. A private method is not a new concept, so `core_files: 6` never came
+  `apply`. A private method is not a new concept, so `core_files` never came
   into it — the conflict below was real for decomposition into *files*, not for
   decomposition inside one.
 
@@ -101,28 +102,32 @@ exempted, no threshold moved, and `core_files` is still 6.
 The +16 code lines this cost are accounted line by line in `data/spine.yml`;
 they spent the second and last raise of the allowance.
 
-**Still open, and still a decision: `Memory`, 16 public methods.** Option 2 does
-not reach it. Only `detect_host_memory_mb` was internal — the other three class
-methods have readers across `lib/` and `test/`, and all thirteen instance methods
-are genuine fold API: the risk gates (`council_required?`, `ideation_satisfied?`
-and their marks), the transcript (`note`, `record`, `context`), and the evidence
-ledger (`record_evidence`, `evidence_score`, `proved?`).
+**`Memory` closed by option 3 — 2026-08-12, operator-sponsored.** Option 2 could
+not reach it: only `detect_host_memory_mb` was internal, and every other method
+had a caller. That was the count telling the truth rather than measuring an
+idiom. `Memory` was **three jobs in one object** — a transcript, an evidence
+ledger, and the risk gates — and the Constitution reached straight past the first
+to ask the other two.
 
-Which is itself the finding. Those are **three jobs in one object**, and that is
-the real reason it measures as a god class — not an idiom this time. Splitting
-them is the honest fix and it needs a seventh file, which `core_files: 6` makes a
-design decision requiring a sponsor. One rule says decompose, the other says not
-into a new file:
+`lib/core/proof.rb` is the second and third of those: what has been shown, and
+what must be shown before `done`. `core_files` 6 → 7, the first raise since the
+spine was written, argued in `data/spine.yml`. Memory 16 public methods → 7,
+Proof 8, Constitution 4, Fold 2.
 
-1. Raise the thresholds for the fold spine specifically, and say why in `rules.yml`.
-2. ~~Decompose within the existing six files.~~ Tried; does not reach `Memory`.
-3. Raise `core_files` and let the fold be seven concepts — transcript, evidence,
-   and risk gates being the natural seam.
-4. Record an explicit, dated exemption — noting `soul.yml` EXEMPTIONS_EXPIRE.
+Two things were deliberate. Nothing forwards: the Constitution and the CLI reach
+`memory.proof.*` directly, because a delegator would have kept the public count
+where it was and hidden the seam the count existed to point at. And the +10 code
+lines were **absorbed rather than raised for** — the raise allowance was spent,
+`spine.yml` says the next line into `lib/` comes out of `lib/`, and a sweep found
+no `lib/` file with a declared constant nothing else references. They came out of
+the new code instead, leaving `lib/` net 0.
 
-What must not happen is the count being driven to zero by re-exempting the fold,
-which would restore the invisible hole and lose the one thing this merge bought:
-the fold is now measured by the law it applies to everything else.
+**`rake selftest` 3 findings → 0. `rake selfcheck` 20 → 18.** The fold is clean
+under its own law for the first time since it was subjected to it.
+
+What must not happen, and did not: the count being driven to zero by re-exempting
+the fold, which would restore the invisible hole and lose the one thing the merge
+bought — the fold is measured by the law it applies to everything else.
 
 ## Constitution Scan Debt
 
@@ -501,7 +506,7 @@ the assertion points the wrong way.
 
 - The fold spine living inside `lib/`. Merged 2026-08-12 on operator
   instruction; `DECISIONS.md` records the reversal and what was kept (the
-  no-backedges test, `core_files: 6`). Not a regression to undo.
+  no-backedges test, and the `core_files` invariant). Not a regression to undo.
 - One rule registry. The four `data/rules/*.yml` shards were folded into
   `data/rules.yml` on the same instruction. Their single consumer was
   `load_rules`, which merged them back before any scanner saw them.

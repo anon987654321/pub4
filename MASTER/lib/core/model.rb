@@ -20,8 +20,8 @@ module Master::Core
 
     # Built from Memory's evidence policy so the numbers the model is told match
     # the numbers the Constitution enforces — one source, no prose drift.
-    EVIDENCE_KINDS = Memory::SCORING.keys.join("|").freeze
-    EVIDENCE_WEIGHTS = Memory::SCORING.map { |k, v| "#{k}=#{v}" }.join(", ").freeze
+    EVIDENCE_KINDS = Proof::SCORING.keys.join("|").freeze
+    EVIDENCE_WEIGHTS = Proof::SCORING.map { |k, v| "#{k}=#{v}" }.join(", ").freeze
 
     SYSTEM = <<~PROMPT.freeze
       You are MASTER, a constitutional coding agent working toward one GOAL. Each
@@ -53,7 +53,7 @@ module Master::Core
         - never write the constitution (data/rules.yml, data/soul.yml) or the core/ spine
         - exec argv must be an array of strings
         - no `done` or `git commit` until exec evidence reaches the threshold
-          (#{EVIDENCE_WEIGHTS}; threshold #{Memory::PASS_THRESHOLD})
+          (#{EVIDENCE_WEIGHTS}; threshold #{Proof::PASS_THRESHOLD})
         - medium+ goals carry approach/chosen notes — do not write before reading them
         - high-risk goals require a passing `critique` before `done`
 

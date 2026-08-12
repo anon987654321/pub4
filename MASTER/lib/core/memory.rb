@@ -1,27 +1,21 @@
 # frozen_string_literal: true
 
 module Master::Core
-  # Memory — the record. Holds the conversation the model sees and the evidence
-  # the Constitution checks. Compaction is turn-aware: it summarises the oldest
-  # turns and keeps the recent ones whole, never orphaning an observation from
-  # the effect that produced it.
+  # Memory — the record. Holds the conversation the model sees, compacted to a
+  # budget. Compaction is turn-aware: it summarises the oldest turns and keeps
+  # the recent ones whole, never orphaning an observation from the effect that
+  # produced it.
   #
   # This is where the old trace/, history/, and scope/ collapse to.
+  #
+  # What it no longer holds is Proof — the evidence ledger and the risk gates,
+  # which moved to lib/core/proof.rb on 2026-08-12. Memory answers what was
+  # said; Proof answers whether it was enough. Reach the second through
+  # `memory.proof`, deliberately rather than through forwarding methods: a
+  # delegator would have kept the public count where it was and hidden the seam
+  # that the count existed to point at.
   class Memory
     Entry = Data.define(:role, :text)
-
-    # What counts as proof, and how much of it ends the turn. This is the one
-    # Ruby source for the core's evidence policy; the Model's prompt is built
-    # from it (no restated numbers) and a test pins it to data/rules.yml, whose
-    # evidence_scoring the lib spine still reads until that spine is severed.
-    SCORING = {
-      test_pass: 35,
-      scan_clean: 25,
-      code_review: 20,
-      log_analysis: 10,
-      profiling_data: 10,
-    }.freeze
-    PASS_THRESHOLD = 80
 
     # Context budget in characters. A ~1GB OpenBSD VPS cannot hold a generous
     # transcript alongside an LLM call without the OOM-killer stepping in, so on a
@@ -58,38 +52,18 @@ module Master::Core
       nil
     end
 
-    # Only host_memory_mb calls it; the other three class methods here have
-    # readers across lib/ and test/. This does not clear ABSTRACTION on its own
-    # — see DEBT.md, "The fold spine had never been scanned" — it just stops the
-    # count including something that was never part of the surface.
+    # Only host_memory_mb calls it. `private` cannot reach a `def self.` — see
+    # CodeMetrics.public_method_count and DEBT.md, "The fold spine had never been
+    # scanned".
     private_class_method :detect_host_memory_mb
+
+    attr_reader :proof
 
     def initialize(budget: self.class.host_budget, summarize: ->(dropped) { "[#{dropped.length} earlier steps summarised]" }, risk: :low)
       @entries = []
       @budget = budget
       @summarize = summarize
-      @evidence = []
-      @risk = risk.to_sym
-      @ideation_complete = false
-      @council_pass = false
-    end
-
-    attr_reader :risk
-
-    def council_required? = %i[high critical].include?(@risk)
-    def ideation_required? = %i[medium high critical].include?(@risk)
-    def council_cleared? = @council_pass || !council_required?
-    def ideation_satisfied? = !ideation_required? || @ideation_complete
-
-    def mark_ideation_complete!
-      @ideation_complete = true
-      self
-    end
-
-    def mark_council_pass!(detail: "council pass")
-      @council_pass = true
-      @evidence << Evidence.new(kind: :council_pass, ok: true, score: 0, detail:, at: Time.now.utc)
-      self
+      @proof = Proof.new(risk:)
     end
 
     def note(kind, text)
@@ -100,20 +74,9 @@ module Master::Core
     def record(effect, observation)
       @entries << Entry.new(role: :act, text: effect.to_s)
       @entries << Entry.new(role: :obs, text: observation.to_s)
-      record_evidence(effect, observation)
-      mark_council_pass!(detail: observation.message) if effect.verb == :critique && observation.ok?
+      @proof.record_evidence(effect, observation)
+      @proof.mark_council_pass!(detail: observation.message) if effect.verb == :critique && observation.ok?
       self
-    end
-
-    def evidence_score = @evidence.select(&:ok).sum(&:score)
-    def proved? = evidence_score >= PASS_THRESHOLD
-
-    def record_evidence(effect, observation)
-      return unless effect.verb == :exec && observation.ok?
-
-      kind = effect.args[:evidence]&.to_sym
-      score = SCORING.fetch(kind, 0)
-      @evidence << Evidence.new(kind:, ok: true, score:, detail: observation.message, at: Time.now.utc) if score.positive?
     end
 
     # The context the model proposes against — compacted to the budget.

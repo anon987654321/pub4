@@ -33,7 +33,7 @@ class TestKernelSpine < Minitest::Test
       ).run("finish")
 
       assert_equal :max_turns, result.reason
-      refute memory.proved?
+      refute memory.proof.proved?
     end
   end
 
@@ -67,6 +67,6 @@ class TestKernelSpine < Minitest::Test
     memory = Master::Core::Memory.new
     memory.record(Master::Core::Effect.exec(["true"]), Master::Core::Observation.ok(""))
 
-    refute memory.proved?
+    refute memory.proof.proved?
   end
 end

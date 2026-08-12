@@ -35,7 +35,7 @@ class FoldDeliberationTest < Minitest::Test
     memory = Master::Core::Memory.new(risk: :high)
     memory.record(Master::Core::Effect.critique, Master::Core::Observation.ok("council pass"))
 
-    assert memory.council_cleared?
+    assert memory.proof.council_cleared?
   end
 
   def test_ideation_blocks_write_when_unsatisfied
@@ -50,7 +50,7 @@ class FoldDeliberationTest < Minitest::Test
   def test_ideation_seeded_allows_write
     memory = Master::Core::Memory.new(risk: :medium)
     memory.note(:chosen, "use option 2")
-    memory.mark_ideation_complete!
+    memory.proof.mark_ideation_complete!
     law = Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
     verdict = law.admit(Master::Core::Effect.write("a.rb", "x"), memory)
 

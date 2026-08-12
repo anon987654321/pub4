@@ -38,12 +38,12 @@ module Master
       def seed_memory!(memory, payload)
         return memory unless payload
 
-        memory.note(:risk, memory.risk)
+        memory.note(:risk, memory.proof.risk)
         Array(payload[:ideas]).each_with_index do |idea, index|
           memory.note(:approach, "#{index + 1}. #{idea}")
         end
         memory.note(:chosen, payload[:final].to_s)
-        memory.mark_ideation_complete!
+        memory.proof.mark_ideation_complete!
         memory
       end
 
