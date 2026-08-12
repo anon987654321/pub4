@@ -25,7 +25,7 @@
       <span class="comment-author"><%= comment_author_name(comment) %></span>
       <span class="comment-time dim">
         ·
-        <time datetime="<%= comment.created_at.iso8601 %>" data-controller="timeago">
+        <time datetime="<%= comment.created_at.iso8601 %>">
           <%= time_ago_in_words(comment.created_at) %>
         </time>
       </span>

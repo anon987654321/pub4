@@ -2,6 +2,9 @@
 # Apps can override any key in their own config/locales.
 en:
   actions:
+    copyable_text: "Text to copy"
+    show: "Show"
+    hide: "Hide"
     save: "Save"
     send: "Send"
     cancel: "Cancel"
@@ -71,6 +74,13 @@ en:
   auth:
     enable_2fa: "Enable 2FA"
     verification_code: "Verification code"
+    # Mirrors social.nb.yml. See there for why these live in the engine.
+    options: "Sign in options"
+    or_email: "or email"
+    with_github: "Sign in with GitHub"
+    with_google: "Sign in with Google"
+    with_snapchat: "Sign in with Snapchat"
+    with_vipps: "Sign in with Vipps"
   # Live regions in shared/_live_search_form and autosave_controller. bsdports had no copy of these and shipped "translation missing" into the announced values.
   status:
     updating_results: "Updating results…"
@@ -129,6 +139,9 @@ en:
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
+    errors: "Please review the form"
+    # See the nb file for why this is a whole phrase and not a suffix.
+    time_ago: "%{time} ago"
     # Mirrors social.nb.yml's flash: block. Both files carry the same key set, and
     # RAILS/test/app_flash_i18n_test.rb fails if one gains a key the other lacks.
     flash:
@@ -156,3 +169,18 @@ en:
       reaction_added: "Reaction added."
       reaction_removed: "Reaction removed."
       sent_for_review: "Sent for review."
+  # Chrome these three apps share. Only brgen carried nb entries for them, so
+  # amber and bsdports rendered the English t() defaults over an nb page.
+  legal:
+    site_id_label: "TradeDoubler Site ID"
+    contact_label: "Contact"
+  nav:
+    brand_home: "Home"
+  pages:
+    account: "Account"
+    two_factor: "Two-factor authentication"
+  search:
+    query: "Search query"
+    submit: "Search"
+  showcase:
+    devices: "The app on desktop and mobile"

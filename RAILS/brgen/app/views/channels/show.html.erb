@@ -11,8 +11,9 @@
     <%# This blurb is what lib/brgen/irc/bridge.rb:27 already serves to a real
         IRC client as the TOPIC reply, so name it that on the web too rather
         than having one room description with two names. %>
-    <% if spec[:blurb].present? %>
-      <p class="dim channel-topic">Topic: <%= spec[:blurb] %></p>
+    <% blurb = Conversation.channel_blurb(@conversation.slug) %>
+    <% if blurb.present? %>
+      <p class="dim channel-topic"><%= t("channels.topic", topic: blurb) %></p>
     <% end %>
     <%# Heartbeat lives on the header, not the log, so it keeps running while the
         reader scrolls back through history. %>

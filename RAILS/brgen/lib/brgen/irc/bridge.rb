@@ -25,7 +25,7 @@ module Brgen
       end
 
       def topic(channel)
-        ::Conversation::CHANNELS.dig(channel.slug, :blurb).to_s
+        ::Conversation.channel_blurb(channel.slug)
       end
 
       # A user row to author a bridged message. One per distinct nick, namespaced

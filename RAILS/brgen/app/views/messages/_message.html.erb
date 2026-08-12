@@ -11,15 +11,18 @@
         the way every IRC client prints it. Relative time ("3 minutes ago")
         suits a DM, where recency is the question, but in a room it rewrites
         every visible line on a timer and gives you nothing to refer back to.
-        No timeago controller here either — that controller exists to keep a
-        relative string fresh, and there is nothing to refresh. %>
+        The timeago Stimulus controller is gone from this tree entirely: it
+        reads data-timeago-datetime-value, no view ever set one, and its only
+        effect if it had fired would be to overwrite the server's Norwegian
+        with date-fns English. %>
     <% if in_channel %>
       <time datetime="<%= message.created_at.iso8601 %>"><%= message.created_at.strftime("%H:%M") %></time>
     <% else %>
-      <time datetime="<%= message.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(message.created_at) %> ago</time>
+      <time datetime="<%= message.created_at.iso8601 %>"><%= time_ago(message.created_at) %></time>
     <% end %>
     <% if message.expires_at %>
-      <span class="expiry-chip" data-expiry="<%= message.expiry_urgency %>">· disappears <%= time_ago_in_words(message.expires_at) %></span>
+      <%# A future span, so not time_ago — "forsvinner om …", not "for … siden". %>
+      <span class="expiry-chip" data-expiry="<%= message.expiry_urgency %>">· <%= t("messages.disappears_in", time: time_ago_in_words(message.expires_at)) %></span>
     <% end %>
     <% receipt = message.message_receipts.find_by(user: Current.user) %>
     <% if receipt&.read? %><span class="dim">· read</span><% end %>

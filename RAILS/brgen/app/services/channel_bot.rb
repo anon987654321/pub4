@@ -94,13 +94,13 @@ class ChannelBot
     echo = bot_for(Array(spec[:bots])[1])
 
     channel.messages.create!(sender: host, message_type: "text",
-      content: "#{spec[:blurb]} you're anonymous here — say hi.")
+      content: I18n.t("channels.welcome.host", blurb: Conversation.channel_blurb(channel.slug)))
     if echo
       channel.messages.create!(sender: echo, message_type: "text",
-        content: "type `/help` any time, and keep it local.")
+        content: I18n.t("channels.welcome.echo"))
     end
     channel.messages.create!(sender: host, message_type: "text",
-      content: "so — what's happening in your city right now?")
+      content: I18n.t("channels.welcome.prompt"))
   end
 
   # --- replying -----------------------------------------------------------

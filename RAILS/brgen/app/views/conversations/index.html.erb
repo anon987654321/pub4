@@ -22,7 +22,7 @@
           <strong><%= other&.display_name || "anon" %></strong>
           <% if last %>
             <span><%= truncate(last.content.to_s, length: 80) %></span>
-            <time datetime="<%= last.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(last.created_at) %> ago</time>
+            <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
           <% end %>
           <% unread = @unread_counts.fetch(c.id, 0) %>
           <% if unread.positive? %><mark><%= unread %></mark><% end %>

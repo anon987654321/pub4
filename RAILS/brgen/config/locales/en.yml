@@ -1,5 +1,11 @@
+# Mirrors nb.yml. A key present in one file and absent from the other is a
+# finding — see RAILS/test/nb_locale_completeness_test.rb.
 en:
   hello: "Hello"
+  affiliate:
+    deals_title: "Deals"
+    deal_alt: "Affiliate deal"
+    placeholder_notice: "Example listing — not a tracked affiliate link"
   legal:
     aria: "Legal and information"
     privacy: "Privacy"
@@ -21,6 +27,8 @@ en:
     advanced_post: "Advanced post with photo"
     your_feed: "Your feed"
   nav:
+    pagination: "Pagination"
+    trending_tags: "Trending tags"
     home: "Home"
     explore: "Explore"
     notifications: "Notifications"
@@ -61,6 +69,10 @@ en:
     opens_new_tab: "%{label} (opens in a new tab)"
   skip_to_content: "Skip to main content"
   home:
+    feed_communities: "Communities"
+    feed_following: "Following"
+    feed_hot: "Hot"
+    feed_sort: "Feed"
     intro_title: "%{city}, right now"
     live: "Live"
     marketplace: "Marketplace"
@@ -90,6 +102,7 @@ en:
     new_password: "New password"
     save_password: "Save password"
   chat:
+    roster: "In this channel"
     title: "chat"
     nearby_tab: "nearby"
     close: "Close"
@@ -161,6 +174,7 @@ en:
     tv: "Search channels and videos…"
     tv_label: "TV search"
   messages:
+    disappears_in: "disappears in %{time}"
     title: "Messages"
     new_message: "New message"
     username: "Username"
@@ -175,6 +189,7 @@ en:
     unread_one: "%{count} new message ↓"
     unread_other: "%{count} new messages ↓"
   comments:
+    sort_label: "Sort comments"
     placeholder: "What do you think?"
     submit: "Comment"
     reply_placeholder: "Reply…"
@@ -361,6 +376,7 @@ en:
     no_sessions: "No sessions scheduled"
     create_playlist: "Create one to start the radio."
   actions:
+    load_more: "Older posts"
     add_one: "Add one"
     dismiss: "Dismiss"
     sell_something: "Sell something"
@@ -447,6 +463,22 @@ en:
     min_read: "%{n} min read"
     add_photo: "Add photo"
   channels:
+    topic: "Topic: %{topic}"
+    # The seven public rooms. These were English literals in
+    # Conversation::CHANNELS, read by the channels index, the room header,
+    # the IRC topic and the bot welcome — four Norwegian surfaces.
+    blurb:
+      brgen: "The city-wide lobby — anything goes."
+      marketplace: "Buying, selling, haggling, and finds."
+      dating: "Flirt, vent, and swap first-date ideas."
+      playlist: "Now playing — share tracks and listening parties."
+      tv: "Live threads for shows and streams."
+      takeaway: "What's good to order right now?"
+      maps: "Local spots, tips, and directions."
+    welcome:
+      host: "%{blurb} you're anonymous here — say hi."
+      echo: "type `/help` any time, and keep it local."
+      prompt: "so — what's happening in your city right now?"
     title: "Channels"
     aria: "Public channels"
     intro: "Public rooms%{city} — you're anonymous here. Jump in, a few local agents are already around."
@@ -493,6 +525,14 @@ en:
     more_details: "More details"
     protected_with: "Protected with"
   playlist:
+    tap_to_start: "tap to start"
+    next: "Next track"
+    play: "Play"
+    play_pause: "Play or pause"
+    previous: "Previous track"
+    stop: "Stop"
+    transport: "Playback"
+    volume: "Volume"
     sets: "Sets"
     new_set: "New set"
     edit_set: "Edit set"
@@ -548,6 +588,27 @@ en:
     publish_as_track: "Publish as playlist track"
     set_kicker: "Playlist set"
   marketplace:
+    browse_listings: "Browse listings"
+    deals:
+      featured: "Featured deals"
+      title: "Deals"
+    max_price: "Max price"
+    min_price: "Min price"
+    orders:
+      empty_body: "Your marketplace orders will show up here."
+      empty_title: "No orders yet"
+      listing: "Listing"
+      title: "Your orders"
+    sort_label: "Sort"
+    sort_price_high: "Price ↓"
+    sort_price_low: "Price ↑"
+    sort_recent: "Newest"
+    stores:
+      delete: "Delete store"
+      delete_confirm: "Delete store?"
+      edit: "Edit store"
+      new: "Open a store"
+      title: "Stores"
     new_listing: "New listing"
     edit_listing: "Edit listing"
     saved_searches: "Saved searches"
@@ -595,6 +656,7 @@ en:
     alerts: "Marketplace alerts"
     chat_with: "Chat with %{name}"
   takeaway:
+    intro: "Local kitchens, guest checkout — no signup to place an order."
     unsave: "Unsave"
     save_restaurant: "Save"
     order_food: "Order food nearby"
@@ -633,6 +695,9 @@ en:
     sold_out: "Sold out"
     operations: "Takeaway operations"
   maps:
+    browse_list: "Browse list"
+    needs_js: "Map needs JavaScript."
+    browse_as_list: "Browse places as a list"
     map: "Map"
     open_in_map: "Open in map"
     optional_note: "Optional note"
@@ -647,6 +712,11 @@ en:
     confirm_delete: "Delete community?"
     new_community: "New community"
   tv:
+    live_streams:
+      chat: "Chat"
+      new: "New live stream"
+      title: "Live streams"
+      viewers: "%{count} viewers"
     create_channel: "Create channel"
     upload: "Upload"
     note_placeholder: "Timestamped note…"
@@ -716,7 +786,6 @@ en:
     share_to_post_title: "Share location to post"
     share_to_post_body: "A rough position keeps your note to people nearby. Your exact location is never shown."
     feed_label: "Live posts nearby"
-    ago: "ago"
     vote_label: "Vote, score %{score}"
     comment_label: "Comment"
     empty_located_title: "Quiet around here"
@@ -800,3 +869,28 @@ en:
     content_unavailable: "That content is no longer available."
     report_submitted: "Report submitted."
     welcome: "Welcome to Brgen."
+  block:
+    block: "Block"
+    unblock: "Unblock"
+  bookmark:
+    empty_body: "Tap Save on any post to keep it here."
+    empty_title: "Nothing saved yet"
+    save: "Save"
+    saved_title: "Saved"
+    unsave: "Unsave"
+  common:
+    close: "Close"
+  community:
+    join: "Join"
+    leave: "Leave"
+  hashtag:
+    count: "%{count} posts"
+    empty_body: "No posts use #%{name} yet."
+    empty_title: "Nothing here yet"
+  profile:
+    activity: "Recent activity"
+    display_name: "Display name"
+    edit: "Edit profile"
+    username: "Username"
+  showcase:
+    devices: "The app on desktop and mobile"

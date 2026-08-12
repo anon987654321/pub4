@@ -44,7 +44,7 @@
       <%= link_to @post.community.name, community_path(@post.community) %> ·
     <% end %>
     <%= @post.author_name %> ·
-    <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %> ago</time>
+    <time datetime="<%= @post.created_at.iso8601 %>"><%= time_ago(@post.created_at) %></time>
     <% if @post.reading_time_minutes.positive? %>
       · <%= t("posts.min_read", n: @post.reading_time_minutes) %>
     <% end %>

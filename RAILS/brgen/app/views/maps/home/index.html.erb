@@ -10,11 +10,11 @@
   <div class="map-hud" role="region" aria-label="Map search and info">
     <div class="cluster">
       <input id="map-search" type="search" placeholder="<%= t("search.places") %>" data-map-target="search" role="searchbox" aria-label="<%= t("search.places_label") %>" class="map-search-input">
-      <%= link_to "Browse list", maps_places_path, class: "btn btn-ghost btn-sm map-browse-link" %>
+      <%= link_to t("maps.browse_list"), maps_places_path, class: "btn btn-ghost btn-sm map-browse-link" %>
     </div>
     <div id="place-popup" class="map-place-popup" data-map-target="popup" hidden role="status" aria-live="polite"></div>
   </div>
   <noscript>
-    <p class="empty-state">Map needs JavaScript. <%= link_to "Browse places as a list", maps_places_path, class: "btn" %>.</p>
+    <p class="empty-state"><%= t("maps.needs_js") %> <%= link_to t("maps.browse_as_list"), maps_places_path, class: "btn" %>.</p>
   </noscript>
 </section>

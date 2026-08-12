@@ -33,7 +33,7 @@
   <%= render "shared/empty_state",
         title: t("empty.no_saved_searches"),
         body: t("actions.save_search_body"),
-        action: { label: "Browse listings", path: listings_path } %>
+        action: { label: t("marketplace.browse_listings"), path: listings_path } %>
 <% end %>
 
 <%= render "shared/pager", pagy: @pagy %>

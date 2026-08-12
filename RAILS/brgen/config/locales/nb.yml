@@ -1,5 +1,17 @@
+# 55 of the keys below were added 2026-08-12. Each already had a call site
+# passing an English string as its t() default, and no nb entry — so the
+# default is what a Norwegian visitor read. They are spread through the
+# sections rather than gathered in one block, because the next person to
+# add a key belongs in the section, not in an appendix.
+#
+# RAILS/test/nb_locale_completeness_test.rb fails if a t() call's whole
+# default chain is missing from this file again.
 nb:
   hello: "Hei"
+  affiliate:
+    deals_title: "Tilbud"
+    deal_alt: "Partnertilbud"
+    placeholder_notice: "Eksempeloppføring — ikke en sporet partnerlenke"
   legal:
     aria: "Juridisk og informasjon"
     privacy: "Personvern"
@@ -21,6 +33,8 @@ nb:
     advanced_post: "Utvidet innlegg med bilde"
     your_feed: "Din strøm"
   nav:
+    pagination: "Sidenavigasjon"
+    trending_tags: "Populære emneknagger"
     home: "Hjem"
     explore: "Utforsk"
     notifications: "Varsler"
@@ -61,6 +75,10 @@ nb:
     opens_new_tab: "%{label} (åpnes i ny fane)"
   skip_to_content: "Hopp til hovedinnhold"
   home:
+    feed_communities: "Fellesskap"
+    feed_following: "Følger"
+    feed_hot: "Hot"
+    feed_sort: "Strøm"
     intro_title: "%{city}, akkurat nå"
     live: "Live"
     marketplace: "Markedsplass"
@@ -90,6 +108,7 @@ nb:
     new_password: "Nytt passord"
     save_password: "Lagre passord"
   chat:
+    roster: "I denne kanalen"
     title: "chat"
     nearby_tab: "nærheten"
     close: "Lukk"
@@ -161,6 +180,7 @@ nb:
     tv: "Søk kanaler og videoer…"
     tv_label: "Søk TV"
   messages:
+    disappears_in: "forsvinner om %{time}"
     title: "Meldinger"
     new_message: "Ny melding"
     username: "Brukernavn"
@@ -175,6 +195,7 @@ nb:
     unread_one: "%{count} ny melding ↓"
     unread_other: "%{count} nye meldinger ↓"
   comments:
+    sort_label: "Sorter kommentarer"
     placeholder: "Hva tenker du?"
     submit: "Kommenter"
     reply_placeholder: "Svar…"
@@ -361,6 +382,7 @@ nb:
     no_sessions: "Ingen økter planlagt"
     create_playlist: "Opprett en for å starte radioen."
   actions:
+    load_more: "Eldre innlegg"
     add_one: "Legg til en"
     dismiss: "Lukk"
     sell_something: "Selg noe"
@@ -447,6 +469,22 @@ nb:
     min_read: "%{n} min lesing"
     add_photo: "Legg til bilde"
   channels:
+    topic: "Emne: %{topic}"
+    # The seven public rooms. These were English literals in
+    # Conversation::CHANNELS, read by the channels index, the room header,
+    # the IRC topic and the bot welcome — four Norwegian surfaces.
+    blurb:
+      brgen: "Byens felles lobby — alt er lov."
+      marketplace: "Kjøp, salg, prute og funn."
+      dating: "Flørt, frustrasjon og forslag til første date."
+      playlist: "Spilles nå — del spor og lyttefester."
+      tv: "Direktetråder for program og sendinger."
+      takeaway: "Hva er verdt å bestille akkurat nå?"
+      maps: "Lokale steder, tips og veibeskrivelser."
+    welcome:
+      host: "%{blurb} Du er anonym her — si hei."
+      echo: "Skriv `/help` når som helst, og hold det lokalt."
+      prompt: "Så — hva skjer i byen din akkurat nå?"
     title: "Kanaler"
     aria: "Offentlige kanaler"
     intro: "Offentlige rom%{city} — du er anonym her. Hopp inn, noen lokale agenter er allerede her."
@@ -493,6 +531,14 @@ nb:
     more_details: "Flere detaljer"
     protected_with: "Beskyttet med"
   playlist:
+    tap_to_start: "trykk for å starte"
+    next: "Neste spor"
+    play: "Spill av"
+    play_pause: "Spill av eller pause"
+    previous: "Forrige spor"
+    stop: "Stopp"
+    transport: "Avspilling"
+    volume: "Volum"
     sets: "Sett"
     new_set: "Nytt sett"
     edit_set: "Rediger sett"
@@ -548,6 +594,27 @@ nb:
     publish_as_track: "Publiser som spor i spillelisten"
     set_kicker: "Spilleliste"
   marketplace:
+    browse_listings: "Bla i annonser"
+    deals:
+      featured: "Utvalgte tilbud"
+      title: "Tilbud"
+    max_price: "Maks pris"
+    min_price: "Min. pris"
+    orders:
+      empty_body: "Bestillingene dine fra markedsplassen dukker opp her."
+      empty_title: "Ingen bestillinger ennå"
+      listing: "Annonse"
+      title: "Dine bestillinger"
+    sort_label: "Sorter"
+    sort_price_high: "Pris ↓"
+    sort_price_low: "Pris ↑"
+    sort_recent: "Nyeste"
+    stores:
+      delete: "Slett butikk"
+      delete_confirm: "Slette butikken?"
+      edit: "Rediger butikk"
+      new: "Åpne butikk"
+      title: "Butikker"
     new_listing: "Ny annonse"
     edit_listing: "Rediger annonse"
     saved_searches: "Lagrede søk"
@@ -595,6 +662,7 @@ nb:
     alerts: "Varsler fra markedsplassen"
     chat_with: "Chat med %{name}"
   takeaway:
+    intro: "Lokale kjøkken, gjestekasse — ingen registrering for å bestille."
     unsave: "Fjern lagring"
     save_restaurant: "Lagre"
     order_food: "Bestill mat i nærheten"
@@ -633,6 +701,9 @@ nb:
     sold_out: "Utsolgt"
     operations: "Takeaway-drift"
   maps:
+    browse_list: "Bla i listen"
+    needs_js: "Kartet krever JavaScript."
+    browse_as_list: "Se stedene som liste"
     map: "Kart"
     open_in_map: "Åpne i kart"
     optional_note: "Valgfri merknad"
@@ -647,6 +718,11 @@ nb:
     confirm_delete: "Slette fellesskapet?"
     new_community: "Nytt fellesskap"
   tv:
+    live_streams:
+      chat: "Chat"
+      new: "Ny direktesending"
+      title: "Direktesendinger"
+      viewers: "%{count} seere"
     create_channel: "Opprett kanal"
     upload: "Last opp"
     note_placeholder: "Tidsstemplet notat…"
@@ -716,7 +792,6 @@ nb:
     share_to_post_title: "Del posisjon for å poste"
     share_to_post_body: "En grov posisjon holder notatet til folk i nærheten. Nøyaktig posisjon vises aldri."
     feed_label: "Live-innlegg i nærheten"
-    ago: "siden"
     vote_label: "Stem, poeng %{score}"
     comment_label: "Kommentar"
     empty_located_title: "Stille her"
@@ -802,3 +877,28 @@ nb:
     content_unavailable: "Innholdet er ikke tilgjengelig lenger."
     report_submitted: "Rapporten er sendt."
     welcome: "Velkommen til Brgen."
+  block:
+    block: "Blokker"
+    unblock: "Opphev blokkering"
+  bookmark:
+    empty_body: "Trykk Lagre på et innlegg for å beholde det her."
+    empty_title: "Ingenting lagret ennå"
+    save: "Lagre"
+    saved_title: "Lagret"
+    unsave: "Fjern fra lagret"
+  common:
+    close: "Lukk"
+  community:
+    join: "Bli med"
+    leave: "Forlat"
+  hashtag:
+    count: "%{count} innlegg"
+    empty_body: "Ingen innlegg bruker #%{name} ennå."
+    empty_title: "Ingenting her ennå"
+  profile:
+    activity: "Nylig aktivitet"
+    display_name: "Visningsnavn"
+    edit: "Rediger profil"
+    username: "Brukernavn"
+  showcase:
+    devices: "Appen på skrivebord og mobil"

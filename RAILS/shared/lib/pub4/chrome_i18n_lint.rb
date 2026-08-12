@@ -110,7 +110,9 @@ module Pub4
       # because 216 cannot come down in one pass — but the chat
       # widget's 18 already did, and every one that goes is a string that can no
       # longer hide from the other three rules here. Down only.
-      "translate_default" => 216,
+      # 2026-08-12: 215. The affiliate sidebar's three hardcoded strings became
+      # affiliate.* keys in both brgen locales.
+      "translate_default" => 215,
     }.freeze
 
     # Kept for callers that referenced the old single number.

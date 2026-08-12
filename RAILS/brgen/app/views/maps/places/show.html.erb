@@ -59,7 +59,7 @@
           <li>
             <%= check_in.user.display_name %>
             <% if check_in.note.present? %> — <%= check_in.note %><% end %>
-            <span class="dim">· <time datetime="<%= check_in.checked_in_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(check_in.checked_in_at) %> ago</time></span>
+            <span class="dim">· <time datetime="<%= check_in.checked_in_at.iso8601 %>"><%= time_ago(check_in.checked_in_at) %></time></span>
           </li>
         <% end %>
       </ul>

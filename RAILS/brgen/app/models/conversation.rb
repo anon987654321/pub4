@@ -34,6 +34,17 @@ class Conversation < ApplicationRecord
 
   def self.channel_slug?(slug) = CHANNELS.key?(slug.to_s)
 
+  # The room's one-line description, in the reader's language.
+  #
+  # `blurb:` above stays as the English source string and as the fallback, but
+  # nothing user-facing may read it directly: the channels index, the room
+  # header, the IRC topic and ChannelBot's welcome line all render to visitors
+  # of a Norwegian site, and all four printed the constant.
+  def self.channel_blurb(slug)
+    slug = slug.to_s
+    I18n.t("channels.blurb.#{slug}", default: CHANNELS.dig(slug, :blurb).to_s)
+  end
+
   # Idempotently resolve a channel by slug, seeding its bots + a welcome line
   # the first time it is opened.
   # `includes(:city)` is load-bearing, not a query tweak: ApplicationRecord sets

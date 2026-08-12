@@ -7,7 +7,7 @@
   <% end %>
   <% if notification.body.present? %><p><%= notification.body %></p><% end %>
   <p class="dim">
-    <time datetime="<%= notification.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(notification.created_at) %> ago</time>
+    <time datetime="<%= notification.created_at.iso8601 %>"><%= time_ago(notification.created_at) %></time>
     <% if notification.read? %> · read<% end %>
   </p>
   <div class="notification-actions cluster">

@@ -47,8 +47,8 @@ module Shared
             aria: { label: "Toggle password visibility" }
           ) do
             safe_join([
-              tag.span("Show", data: { password_visibility_target: "icon" }),
-              tag.span("Hide", data: { password_visibility_target: "icon" }, class: "hidden"),
+              tag.span(I18n.t("actions.show"), data: { password_visibility_target: "icon" }),
+              tag.span(I18n.t("actions.hide"), data: { password_visibility_target: "icon" }, class: "hidden"),
             ])
           end,
         ])

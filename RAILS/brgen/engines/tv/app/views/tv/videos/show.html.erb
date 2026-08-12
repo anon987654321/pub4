@@ -31,7 +31,7 @@
                              data-animated-number-duration-value="900"><%= @video.views_count.to_i %></span> views</span>
     <span class="chip"><%= @video.duration_formatted %></span>
     <span class="chip"><%= @video.status %></span>
-    <% if @video.published_at.present? %><span class="chip"><span data-controller="timeago"><%= time_ago_in_words(@video.published_at) %> ago</span></span><% end %>
+    <% if @video.published_at.present? %><span class="chip"><span><%= time_ago(@video.published_at) %></span></span><% end %>
   </div>
   <% if @video.description.present? %>
     <p class="mt-12"><%= simple_format(@video.description) %></p>

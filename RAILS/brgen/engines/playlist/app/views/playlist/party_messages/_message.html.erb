@@ -1,5 +1,5 @@
 <p>
   <strong><%= message.user.display_name %></strong>:
   <%= message.body %>
-  <span class="dim">· <time datetime="<%= message.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(message.created_at) %> ago</time></span>
+  <span class="dim">· <time datetime="<%= message.created_at.iso8601 %>"><%= time_ago(message.created_at) %></time></span>
 </p>

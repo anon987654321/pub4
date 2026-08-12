@@ -7,7 +7,7 @@
   <% end %>
   <p class="dim">
     <%= event.source_vertical %> · <%= event.object_type.to_s.demodulize %>
-    · <span data-controller="timeago"><%= time_ago_in_words(event.created_at) %> ago</span>
+    · <span><%= time_ago(event.created_at) %></span>
   </p>
   <% if event.locality.present? %><p class="dim"><%= event.locality %></p><% end %>
   <% if href.present? %>

@@ -189,6 +189,22 @@ module Shared
       post.try(:author_avatar_url).presence || post.try(:user)&.try(:avatar_url)
     end
 
+    # A localised relative time, whole. Fourteen views wrote
+    # `<%= time_ago_in_words(x) %> ago`, which prints the Rails-localised span
+    # and then an English word: every brgen post page read "rundt 2 måneder
+    # ago". Norwegian circumfixes the phrase ("for … siden"), so there is no
+    # suffix that fixes it — the whole string has to come from the locale.
+    #
+    # The five i18n contract tests all passed through this. They measure page
+    # titles, aria-labels, search placeholders and controller flashes; nothing
+    # looked at body text, and nothing at all could have seen a bare word typed
+    # after a helper call. RAILS/test/view_body_copy_i18n_test.rb does now.
+    def time_ago(time)
+      return nil if time.blank?
+
+      t("shared.time_ago", time: time_ago_in_words(time))
+    end
+
     private
 
     def sidebar_nav_link(item)

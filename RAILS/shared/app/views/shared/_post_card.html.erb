@@ -49,7 +49,7 @@
           <% end %>
         </span>
         <% if time.present? && post.created_at %>
-          · <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time %></time>
+          · <time datetime="<%= post.created_at.iso8601 %>"><%= time %></time>
         <% elsif time.present? %>
           · <span class="feed-post-time"><%= time %></span>
         <% end %>

@@ -91,7 +91,7 @@
       <article class="live-card" id="<%= dom_id(post) %>">
         <header class="live-card-meta">
           <span class="live-card-author"><%= t("chat.anon") %></span>
-          <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %> <%= t("live.ago") %></time>
+          <time datetime="<%= post.created_at.iso8601 %>"><%= time_ago(post.created_at) %></time>
           <% if @located && post.geo? && Current.user&.geo? %>
             <span class="dim"><%= number_with_precision(post.distance_to(Current.user.latitude, Current.user.longitude), precision: 1) %> km</span>
           <% end %>

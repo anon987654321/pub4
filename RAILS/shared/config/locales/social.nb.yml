@@ -1,5 +1,8 @@
 nb:
   actions:
+    copyable_text: "Tekst som skal kopieres"
+    show: "Vis"
+    hide: "Skjul"
     save: "Lagre"
     send: "Send"
     cancel: "Avbryt"
@@ -69,6 +72,15 @@ nb:
   auth:
     enable_2fa: "Slå på 2FA"
     verification_code: "Verifiseringskode"
+    # shared/_oauth_links renders in all three apps and reads these first,
+    # falling back to nav.oauth_* and then to English. Only brgen carries
+    # nav.oauth_*, so amber and bsdports showed the English sign-in buttons.
+    options: "Innloggingsvalg"
+    or_email: "eller e-post"
+    with_github: "Logg inn med GitHub"
+    with_google: "Logg inn med Google"
+    with_snapchat: "Logg inn med Snapchat"
+    with_vipps: "Logg inn med Vipps"
   status:
     updating_results: "Oppdaterer resultater…"
     results_updated: "Resultater oppdatert"
@@ -126,6 +138,12 @@ nb:
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
+    errors: "Se over skjemaet"
+    # Norwegian marks a past span on both sides — "for … siden" — so a relative
+    # time cannot be built by appending a suffix to time_ago_in_words. Fourteen
+    # views did exactly that and every post page read "rundt 2 måneder ago".
+    # Rendered through Shared::UiHelper#time_ago; %{time} is the localised span.
+    time_ago: "for %{time} siden"
     # Flash messages raised by the engine's own controllers and concerns. These were
     # 30 hardcoded English strings until 2026-08-11, shown over an nb UI in all three
     # apps at once — the shared engine was the largest single block of the 169 the
@@ -155,3 +173,18 @@ nb:
       reaction_added: "Reaksjon lagt til."
       reaction_removed: "Reaksjon fjernet."
       sent_for_review: "Sendt til vurdering."
+  # Chrome these three apps share. Only brgen carried nb entries for them, so
+  # amber and bsdports rendered the English t() defaults over an nb page.
+  legal:
+    site_id_label: "TradeDoubler Site ID"
+    contact_label: "Kontakt"
+  nav:
+    brand_home: "Til forsiden"
+  pages:
+    account: "Konto"
+    two_factor: "Tofaktorautentisering"
+  search:
+    query: "Søkeord"
+    submit: "Søk"
+  showcase:
+    devices: "Appen på skrivebord og mobil"

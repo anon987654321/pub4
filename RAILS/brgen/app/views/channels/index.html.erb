@@ -12,7 +12,7 @@
       <li class="channel-card" role="listitem">
         <%= link_to channel_path(slug), class: "channel-card-link" do %>
           <span class="channel-name"><%= spec[:name] %></span>
-          <span class="channel-blurb"><%= spec[:blurb] %></span>
+          <span class="channel-blurb"><%= Conversation.channel_blurb(slug) %></span>
           <span class="channel-meta dim">
             <% if room %>
               <% active = room.recent_active_count %>

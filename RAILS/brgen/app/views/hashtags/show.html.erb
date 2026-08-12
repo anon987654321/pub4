@@ -13,7 +13,10 @@
   </div>
   <%= render "shared/pager", pagy: @pagy %>
 <% else %>
+  <%# The tag name is an i18n argument, not Ruby interpolation into the default.
+      Built into the default string, it reached no translation — the nb entry
+      added with this change takes %{name}, and had no way to be given one. %>
   <%= render "shared/empty_state", title: t("hashtag.empty_title", default: "Nothing here yet"),
-        body: t("hashtag.empty_body", default: "No posts use ##{@hashtag.name} yet."),
+        body: t("hashtag.empty_body", name: @hashtag.name, default: "No posts use ##{@hashtag.name} yet."),
         action: { label: t("empty.post_to_city", city: city_name), path: new_post_path } %>
 <% end %>

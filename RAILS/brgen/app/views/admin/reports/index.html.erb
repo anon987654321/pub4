@@ -25,7 +25,7 @@
         <p class="dim">
           <%= report.reportable_type %>#<%= report.reportable_id %>
           · by <%= report.user.display_name %>
-          · <span data-controller="timeago"><%= time_ago_in_words(report.created_at) %> ago</span>
+          · <span><%= time_ago(report.created_at) %></span>
         </p>
         <% if report.details.present? %><p><%= report.details %></p><% end %>
         <nav role="navigation" class="cluster">

@@ -5,7 +5,11 @@
 <article class="post">
   <header class="feed-post-meta feed-post-byline">
     <span class="author"><%= @post.user.email_address.split("@").first %></span>
-    · <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %></time>
+    <%# time_ago, not time_ago_in_words: Norwegian marks a past span on both
+        sides ("for 2 måneder siden"), so the suffix cannot be appended. The
+        timeago Stimulus controller that used to hang off this tag is gone —
+        it read data-timeago-datetime-value, which no view ever set. %>
+    · <time datetime="<%= @post.created_at.iso8601 %>"><%= time_ago(@post.created_at) %></time>
   </header>
   <h1 class="post-title"><%= @post.body.truncate(80, separator: " ") %></h1>
   <div class="feed-post-body feed-post-prose"><%= @post.body %></div>
