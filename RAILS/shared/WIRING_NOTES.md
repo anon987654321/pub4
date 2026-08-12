@@ -296,7 +296,7 @@ The engines live at `brgen/engines/<name>`, not `brgen/app/engines/<name>`.
 | tv | engine | `brgen/engines/tv` | 11 | 10 | 23 |
 | takeaway | engine | `brgen/engines/takeaway` | 7 | 7 | 13 |
 | dating | engine | `brgen/engines/dating` | 4 | 6 | 10 |
-| maps | namespace | `brgen/app/controllers/maps/` | — | 3 | — |
+| maps | engine | `brgen/engines/maps` | — | 3 | 5 |
 | messenger | namespace | `brgen/app/controllers/{conversations,messages}_controller.rb` | — | 2 | — |
 
 Subdomain constraints in `brgen/config/routes.rb` map hosts onto these through

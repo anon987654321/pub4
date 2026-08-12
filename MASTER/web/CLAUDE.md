@@ -84,7 +84,7 @@ code read.
 - `public/cognition_ecology*.js`: 2D canvas ecology, allowed before primer.
 
 **Checks:**
-- `bin/check-web`
+- `bin/check --profile=web` (there is no `bin/check-web`; the profile replaced it)
 - `ruby -Ilib:test test/test_web_ui.rb --name test_public_asset_manifest_matches_source_files`
 - Manual real-browser tap test after boot changes (see below) — headless
   CDP tools have shown false hangs in sandboxed environments in this repo's

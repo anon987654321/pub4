@@ -246,7 +246,7 @@ Scoped roots use single-prefixed helpers (`marketplace_root_path`, `maps_root_pa
 
 **Standalone apps:** amber (amber.brgen.no:61352), bsdports (bsdports.org:47312).
 
-**Operator UI:** MASTER domain bar (`MASTER/web/public/domain_cluster.js`), CLI `/domain <name>` via `SubdomainOrchestrator`.
+**Operator UI:** CLI `/domain <name>` via `SubdomainOrchestrator`. The browser half is `window.MASTER_ACTIVE_DOMAIN`, read by `MASTER/web/public/chat_actions.js`. The dedicated domain bar has no source in the tree: `domain_cluster.js` went in `930a35ca5` and only the precompiled `MASTER/web/public/assets/domain_cluster-3bf218f7.js` survives, which means it ships and cannot be rebuilt. Treat it as vendored until someone restores the source.
 
 Gate: `ruby RAILS/gates/runner.rb domain_alignment`
 
