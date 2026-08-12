@@ -81,33 +81,6 @@ open:
       master.env is 600 root:wheel. The CI lock moved to root-owned 0755
       /var/db/pub4 via the single definition in OPENBSD/lib/ci_lock.sh.
 
-  - id: committed_rails_master_key_public_repo
-    tag: operator-priority
-    summary: >
-      github.com/anon987654321/pub4 is PUBLIC and its history holds SEVEN
-      master.key blobs, six of them beside the credentials.yml.enc they decrypt:
-      MASTER/web/config/master.key (2 versions) and
-      DEPLOY/rails/{brgen,amber,bsdports,baibl,blognet,hjerterom}/config/master.key.
-      Verified without decrypting: DEPLOY/rails/brgen/config/master.key is 32 hex
-      characters and its 548-byte credentials.yml.enc is in the same history.
-      Anyone who has ever cloned holds both halves of all six pairs.
-      139c907e6 untracked MASTER/web/config/master.key from the tip only — the blob
-      entered at 039c26a07 (2026-03-13), still an ancestor of origin/main, and
-      `git cat-file -p 039c26a07:MASTER/web/config/master.key` returns the key
-      today. Untracking changed what `git add -A` can do, not what an attacker can
-      read.
-      ORDER: rotate first, purge second and optionally. A history purge is a
-      force-push to a public repo, cannot be relied on (forks, clones, GitHub's
-      unreachable-object retention, archivers), and does nothing about the months
-      already elapsed. Treat every one of these keys as burned.
-      brgen/amber/bsdports read SECRET_KEY_BASE from /etc/<app>.env, so rotating
-      those three is a value change plus rcctl restart, not a code change. baibl,
-      blognet and hjerterom are not live services — confirm that before deciding
-      they need anything beyond the purge. Blast radius is limited (production does
-      not use the tracked key; MASTER runs SECRET_KEY_BASE_DUMMY=1), so this is not
-      an emergency. If the purge happens, do it in one pass with
-      home_partition_full_from_git_history — one force-push, not two.
-
   - id: home_partition_full_from_git_history
     tag: operator-priority
     summary: >
@@ -354,7 +327,7 @@ open:
   - id: two_rules_share_one_rescue_regex
     tag: agent-ignore
     summary: >
-      BARE_RESCUE in data/rules/line.yml and FAIL_VISIBLY in data/rules/unit.yml
+      BARE_RESCUE in the line scope of data/rules.yml and FAIL_VISIBLY in the unit scope
       carry the identical detect_lexical, the identical severity (error) and the
       same fix advice in different words, so every bare rescue in this tree is two
       findings. Both were edited in step on 2026-08-12 when the regex was corrected
@@ -406,6 +379,34 @@ not_debt:
 
 # One line each. The how is in git log; the rule, if there is one, is in DECISIONS.md.
 closed:
+  - id: committed_rails_master_key_public_repo
+    resolution: >
+      Closed 2026-08-12, by measurement rather than by rotation: the rotation this
+      entry asked for had already happened in /etc, and what was left was the dead
+      half still sitting in git. The seven burned keys are confirmed (all six apps at
+      ffb39dc12/b1882a484 2026-05-06, moved 28bad8208, emptied 4f3780d89/6f81a4d34
+      2026-05-29 — emptying moved the tip, not the history), and they stay burned;
+      that is not what changed. What changed is that the keys no longer open
+      anything. The three still-tracked credentials.yml.enc (MASTER/web, amber,
+      bsdports) were decrypted with the historical keys: each held exactly one value,
+      secret_key_base, and no API key or database password. The live values differ —
+      compared as SHA256 digests, never as values: amber 9bbeac9f… in git against
+      d14ba067… live, bsdports 6ffd8e80… against c50ceca2… Production takes
+      SECRET_KEY_BASE from /etc/<app>.env (640 root:<app>, absent from git) and each
+      rc.d hard-requires it, `: "${SECRET_KEY_BASE:?missing ...}"`, so the service
+      refuses to boot without one; MASTER/web exports SECRET_KEY_BASE_DUMMY=1 and
+      never needed a real value. So all three .enc files were deleted rather than
+      re-keyed: nothing reads them (every Rails.application.credentials reference in
+      the repo is inside a comment — the commented-out aws block in each storage.yml),
+      and a re-key would have produced a new secret for a file with no reader. Amber
+      was booted with its credentials file moved aside first, to prove the deletion
+      was safe and not merely plausible. RAILS/test/tracked_secrets_test.rb is the
+      gate, and it was confirmed to fail on all three files before they were removed.
+      The optional history purge is NOT done and is deliberately not tracked here
+      twice — it is a force-push to a public repo, cannot be relied on (forks, clones,
+      unreachable-object retention, archivers), and if it happens it goes in one pass
+      with home_partition_full_from_git_history.
+
   - id: rails_no_asset_url_lint
     resolution: >
       Closed 2026-08-12. Pub4::AssetUrlLint reads every url() in a stylesheet or an
