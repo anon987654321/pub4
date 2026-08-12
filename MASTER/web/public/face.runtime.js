@@ -2784,12 +2784,14 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   // left wired rather than unpicked from the graph so restoring it is one
   // number, but it contributes nothing at 0.
   //
-  // 19.0 is 10x the 1.9 this has always been. It is published on tts so
-  // face_audio_bridge's duck-restore reads it instead of its own copy of 1.9 —
-  // that second copy is why every previous attempt to raise the voice was
-  // undone the first time speech recognition ducked it.
-  dryGain.gain.value = 1.0; wetGain.gain.value = 0.0; masterGain.gain.value = 19.0;
-  tts.playbackGain = 19.0;
+  // 10x the 1.9 this has always been. Written once and published on tts so
+  // face_audio_bridge's duck-restore reads the live value instead of its own
+  // copy — that second copy is why every previous attempt to raise the voice
+  // was undone the first time speech recognition ducked it, and it had already
+  // drifted to 5.7 against this 19.0 before the bridge was pointed here.
+  const masterGainValue = 19.0;
+  dryGain.gain.value = 1.0; wetGain.gain.value = 0.0; masterGain.gain.value = masterGainValue;
+  tts.playbackGain = masterGainValue;
   analyser.fftSize = 256;
   msrc.connect(boost);
   boost.connect(warmth); warmth.connect(smooth); smooth.connect(presence);

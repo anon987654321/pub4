@@ -63,7 +63,7 @@ topics:
     files:
       - data/design_rules.yml
       - lib/design/thresholds.rb
-      - RAILS/gates/lib/geometry_type.rb
+      - RAILS/gates/support/geometry_type.rb
       - RAILS/gates/support/geometry_type_walk.js
       - RAILS/gates/support/geometry_probe.rb
     tests:

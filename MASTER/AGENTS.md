@@ -12,7 +12,7 @@ Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). Full con
 | Persona / voice policy | `topics.persona` |
 | Law / scanners / loop | `START_HERE.md` → Data File Budget; all scanner law is `data/rules.yml` |
 | Extend runtime behavior | `DECISIONS.md` → One Spine. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
-| Worn type / layout gates | `data/design_rules.yml` `worn_type` + `RAILS/gates/lib/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
+| Worn type / layout gates | `data/design_rules.yml` `worn_type` + `RAILS/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 
 CLI dump: `/orient agent_map` · per-file brief: `/orient patch <path>` (e.g. `/orient patch web/public/face.js`).
 

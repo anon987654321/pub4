@@ -427,7 +427,7 @@ ux_laws:
     action: Advanced/secondary controls should start collapsed or on secondary surfaces.
 
 # Worn type — what the visitor sees, not what the stylesheet declares.
-# Reader: RAILS/gates/lib/geometry_type.rb (and GeometryProbe TYPE_WALK).
+# Reader: RAILS/gates/support/geometry_type.rb (and GeometryProbe TYPE_WALK).
 # MASTER/lib/design/thresholds.rb#worn_profile is the Ruby face.
 # A profile with no reader is inert; test_design_rules_worn_type.rb holds that.
 worn_type:
