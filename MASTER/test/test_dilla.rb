@@ -2560,6 +2560,89 @@ class TestDilla < Minitest::Test
     end
   end
 
+  # I cannot hear these renders, so every measurement I take of them is worth
+  # exactly what its instrument is worth. This tool reports which dimensions
+  # separate the operator's kept takes from their rejected ones, and it got the
+  # first one wrong: ebur128 prints a running I: per frame and the summary last,
+  # so reading the FIRST match gave -70 LUFS for everything and two piles 14 dB
+  # apart reported no separation in loudness. It was caught only by running it
+  # against a difference that was known in advance, which is what this test is.
+  def test_taste_separates_two_piles_on_a_difference_it_was_given
+    skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
+    require File.expand_path("../../STUDIO/dilla/lib/taste", __dir__)
+
+    Dir.mktmpdir do |dir|
+      # The piles differ in level and in nothing else.
+      kept, rejected = [-6, -20].map do |db|
+        (1..3).map do |i|
+          path = File.join(dir, "#{db}_#{i}.wav")
+          system("ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i",
+                 "sine=frequency=#{200 + i * 40}:duration=4",
+                 "-af", "volume=#{db}dB", "-ac", "2", path, exception: true)
+          path
+        end
+      end
+
+      result = DillaTaste.compare(kept, rejected)
+      findings = result.fetch(:findings).to_h { |f| [f[:dimension], f] }
+
+      loudness = findings.fetch("integrated loudness")
+      assert_operator loudness[:separation], :>, 1.5,
+                      "a 14 dB level difference must separate on loudness; it read 0.00 before the summary-line fix"
+      assert_operator loudness[:kept][:mean], :>, loudness[:rejected][:mean]
+      assert_in_delta 14.0, loudness[:kept][:mean] - loudness[:rejected][:mean], 1.5,
+                      "and it must separate by roughly the amount it was given, not merely in the right direction"
+
+      # Just as important: the dimensions that did NOT differ must report that
+      # they did not. A tool that finds something in every dimension finds
+      # nothing, and would tune this engine against noise.
+      %w[transient density low-versus-mid balance stereo width].each do |quiet|
+        next unless findings.key?(quiet)
+
+        assert_operator findings[quiet][:separation], :<, 1.5,
+                        "#{quiet} is identical in both piles and must not be reported as a difference"
+      end
+
+      assert_equal({ error: "need at least two files on each side" }, DillaTaste.compare(kept.first(1), rejected),
+                   "one take a side is an anecdote, and the tool has to say so rather than compute a spread of zero")
+    end
+  end
+
+  # SECTION_LAYER_GAIN said the lead is silent through the intro, the breakdown,
+  # the build and the outro, and the chops through three of them. Nothing ever
+  # called apply_section_envelope for either, so the most dramatic instruction in
+  # the arrangement -- on the layer a listener notices first -- was a hash entry
+  # with no reader. Meanwhile :harm WAS applied and was not in the table, so that
+  # call returned the chain untouched every time it ran. Neither failed anything.
+  #
+  # This is the diff that would have said so.
+  def test_every_declared_section_layer_is_wired_and_every_wired_one_declared
+    result = eval_in_engine(<<~RUBY)
+      applied = SECTION_LAYERS_APPLIED.map(&:to_s)
+      puts JSON.generate(
+        declared: SECTION_LAYERS_DECLARED.map(&:to_s).sort,
+        applied: applied.sort,
+        lead_windows: section_layer_windows(:lead, 16, 2.0),
+        harm_windows: section_layer_windows(:harm, 16, 2.0)
+      )
+    RUBY
+
+    assert_equal result.fetch("declared"), result.fetch("applied"),
+                 "a layer with a gain nobody reads is not an arrangement, and a layer read with no gain is a no-op"
+
+    # The lead's declared silences are real windows, not an empty list.
+    refute_empty result.fetch("lead_windows"),
+                 "the lead has sections it is supposed to sit out; if this is empty the table stopped saying so"
+    assert(result.fetch("lead_windows").any? { |_from, _to, gain| gain.zero? },
+           "silent means gain 0 somewhere")
+
+    # :harm is declared at full level everywhere on purpose — see the comment on
+    # SECTION_LAYER_GAIN. Giving the pads a shape is the operator's call; this
+    # only proves the wiring is no longer pointed at nothing.
+    assert(result.fetch("harm_windows").all? { |_from, _to, gain| gain == 1.0 },
+           "declaring :harm must not change what the pads do")
+  end
+
   # Working out what is in RELEASE.mp3 took envelope-fingerprinting every audio
   # file still on disk against the master, because a 44-minute compilation's
   # only record was a sidecar describing one 160-second render. An assembly has
@@ -2632,5 +2715,61 @@ class TestDilla < Minitest::Test
       ENV.delete("DILLA_FROZEN")
       DillaFrozen.reset!
     end
+  end
+
+  # The old meter split at 3.5 kHz, so 2–4 kHz sat inside mid and cancelled.
+  # A synthetic mix that is quiet above 3.5 kHz and hot at 2–4 kHz must now
+  # read as harsh; the same numbers on the old two-band shape must not, so a
+  # caller that has not been updated keeps its previous result.
+  def test_analyze_harshness_sees_the_presence_band
+    require File.expand_path("../../STUDIO/dilla/lib/master_heuristics", __dir__)
+
+    old_shape = { mid: -18.0, high: -42.5 }
+    old = DillaMaster.analyze_harshness(old_shape)
+    refute old[:needs_notch], "two-band fallback must not invent a presence problem"
+    assert_in_delta(-24.5, old[:harshness], 0.01)
+
+    three = DillaMaster.analyze_harshness(
+      mid: -18.0, high: -42.5, body: -20.0, presence: -13.5, air: -28.0
+    )
+    assert_in_delta(6.5, three[:harshness], 0.01)
+    assert three[:needs_notch], "presence 6.5 dB above the body is the roughness the old meter missed"
+    assert_in_delta(-13.5, three[:presence_db], 0.01)
+    assert_in_delta(-20.0, three[:body_db], 0.01)
+  end
+
+  def test_loss_gates_reject_true_peak_and_lufs_and_share_the_quality_window
+    require File.expand_path("../../STUDIO/dilla/lib/master_heuristics", __dir__)
+
+    gates = DillaMaster.loss_gates
+    assert gates["true_peak_max_dbtp"], "loss_gates must name a true-peak ceiling"
+    assert gates["integrated_lufs_min"], "loss_gates must name a LUFS floor"
+    assert gates["integrated_lufs_max"], "loss_gates must name a LUFS ceiling"
+
+    hot = DillaMaster.passes_loss_gates?({ true_peak_dbtp: 0.2, integrated_lufs: -8.0 })
+    refute hot[:pass]
+    assert(hot[:failures].any? { |line| line.include?("true_peak") }, hot[:failures].inspect)
+    assert(hot[:failures].any? { |line| line.include?("integrated_lufs") }, hot[:failures].inspect)
+
+    ok = DillaMaster.passes_loss_gates?({ true_peak_dbtp: -1.5, integrated_lufs: -17.0 })
+    refute(ok[:failures].any? { |line| line.include?("true_peak") || line.include?("integrated_lufs") },
+           ok[:failures].inspect)
+  end
+
+  def test_loss_gates_lufs_window_matches_the_quality_target
+    result = eval_in_engine(<<~RUBY)
+      require "yaml"
+      gates = YAML.safe_load_file(DillaMaster::REFERENCE_PATH)["loss_gates"]
+      puts JSON.generate(
+        min: gates.fetch("integrated_lufs_min"),
+        max: gates.fetch("integrated_lufs_max"),
+        quality_min: DILLA_QUALITY_LUFS_TARGET.begin,
+        quality_max: DILLA_QUALITY_LUFS_TARGET.end
+      )
+    RUBY
+    assert_in_delta result.fetch("quality_min"), result.fetch("min"), 0.01,
+                    "loss_gates LUFS floor must be DILLA_QUALITY_LUFS_TARGET.begin, not a second number"
+    assert_in_delta result.fetch("quality_max"), result.fetch("max"), 0.01,
+                    "loss_gates LUFS ceiling must be DILLA_QUALITY_LUFS_TARGET.end, not a second number"
   end
 end
