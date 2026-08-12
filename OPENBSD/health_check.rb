@@ -158,6 +158,55 @@ if on_box
     nsd_ok, nsd_out = run(*privileged("/usr/sbin/rcctl", "check", "nsd"))
     failures << "dns: no local SOA (nsd #{nsd_out.strip})" unless nsd_ok && nsd_out.include?("(ok)")
   end
+
+  # DNSSEC signature freshness, which nothing else can see.
+  #
+  # RRSIGs expire. nsd-resign re-signs anything with under 14 days left and runs
+  # from /etc/daily.local, and for as long as that line read `ruby` rather than
+  # an absolute path it had never once executed — cron's PATH does not include
+  # /usr/local/bin. The zones stayed valid the whole time and every check passed,
+  # because unexpired signatures on an unpublished DS look exactly like healthy
+  # ones. The day a DS is published at the registrar, that stops being true and
+  # the whole zone SERVFAILs on the expiry date.
+  #
+  # So this asks the question that distinguishes the two states: how long is
+  # left. Under 7 days means the nightly re-sign has missed at least one window.
+  # Root-only files, so it degrades to silence rather than a false pass off the
+  # box or without doas.
+  zone_dir = "/var/nsd/zones/master"
+  signed = Dir.glob("#{zone_dir}/*.zone.signed")
+  if signed.any?
+    soon = signed.filter_map do |path|
+      expiry = begin
+        File.read(path, encoding: "BINARY").scan(/RRSIG\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d{14})/).flatten.min
+      rescue StandardError
+        nil
+      end
+      next unless expiry
+
+      days = (Time.new(expiry[0, 4].to_i, expiry[4, 2].to_i, expiry[6, 2].to_i) - Time.now) / 86_400
+      [File.basename(path, ".zone.signed"), days.round] if days < 7
+    end
+
+    unless soon.empty?
+      failures << "dnssec: #{soon.size} zone(s) expire within a week — nsd-resign is not running " \
+                  "(#{soon.first(5).map { |z, d| "#{z} #{d}d" }.join(', ')})"
+    end
+
+    # More than one KSK and one ZSK means keys are accumulating again, which is
+    # what OPERATOR.sh's stage_1 used to do on every run: 700 key files for 60
+    # zones, every one of them published, and a DNSKEY response within reach of
+    # the 1232-byte UDP ceiling. It also makes a published DS unstable, because
+    # nsd-resign signs with the newest key it finds.
+    overkeyed = signed.filter_map do |path|
+      count = File.read(path, encoding: "BINARY").scan(/IN\s+DNSKEY\s+25[67]\s/).size
+      [File.basename(path, ".zone.signed"), count] if count > 2
+    end
+    unless overkeyed.empty?
+      failures << "dnssec: #{overkeyed.size} zone(s) publish more than one KSK+ZSK pair " \
+                  "(#{overkeyed.first(5).map { |z, c| "#{z} #{c}" }.join(', ')})"
+    end
+  end
 end
 
 up_checks = on_box ? { "master" => 53_187 } : {}

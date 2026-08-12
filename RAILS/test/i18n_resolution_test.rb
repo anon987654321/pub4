@@ -39,16 +39,27 @@ class I18nResolutionTest < Minitest::Test
     end
   end
 
-  # What Rails loads for this app: its own config/locales plus the engine's social.<locale>.yml.
+  # What Rails loads for this app: everything in its config/locales for this
+  # locale, plus the engine's social.<locale>.yml. Globbed rather than named,
+  # because Rails loads the whole directory and amber splits its into three
+  # files — en.yml, copy.en.yml and validations.en.yml — of which this used to
+  # read one.
   def app_keys(app, locale)
-    flat_keys("#{app}/config/locales/#{locale}.yml").merge(flat_keys("shared/config/locales/social.#{locale}.yml"))
+    paths = Dir.glob(File.join(ROOT, "#{app}/config/locales/*#{locale}.yml")) +
+            Dir.glob(File.join(ROOT, "shared/config/locales/*.#{locale}.yml"))
+    paths.each_with_object({}) { |path, out| out.merge!(flat_keys(path.sub("#{ROOT}/", ""))) }
   end
 
-  # Views and helpers the app can render: its own, plus the engine's.
+  # Views and helpers the app can render: its own, the engine's, and — the part
+  # this missed — the mountable engines brgen's verticals live in. 102 view and
+  # helper files under brgen/engines/*/app were outside the glob, which is the
+  # same blind spot that cost four other scanners 57 views when the verticals
+  # moved and read as an improving finding count rather than as blindness.
   def keys_used_by(app)
     @keys_used_by ||= {}
     @keys_used_by[app] ||= begin
       globs = ["#{app}/app/views/**/*.erb", "#{app}/app/helpers/**/*.rb",
+               "#{app}/engines/*/app/views/**/*.erb", "#{app}/engines/*/app/helpers/**/*.rb",
                "shared/app/views/**/*.erb", "shared/app/helpers/**/*.rb"]
       globs.flat_map { |glob| Dir.glob(File.join(ROOT, glob)) }.each_with_object({}) do |path, found|
         defaultless_keys(File.read(path)).each { |key| found[key] ||= path.sub("#{ROOT}/", "") }

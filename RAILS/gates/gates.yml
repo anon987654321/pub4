@@ -32,6 +32,11 @@ rendered_invariants:
   pass: "Rendered invariants passed (theme served matches theme declared; chat tab corner consistent or declared)."
   covered_by: rendered_suite
 
+dns_zones:
+  require: lib/dns_zones
+  class: Deploy::DnsZonesGate
+  pass: "dns_zones: repo and nsd agree (zones, nsd.conf, acme-client.conf)."
+
 domain_alignment:
   require: lib/domain_alignment
   class: Deploy::DomainAlignmentGate
