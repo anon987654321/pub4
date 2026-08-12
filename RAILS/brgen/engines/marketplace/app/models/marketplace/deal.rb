@@ -10,6 +10,12 @@ module Marketplace
     include Shared::Notifiable
     belongs_to :listing, class_name: "Marketplace::Listing"
 
+    # marketplace_deals has no city_id — a deal's city is its listing's — so
+    # nothing scoped deals to the request's city and every city's sitemap
+    # listed every city's deals.
+    include TenantedThrough
+    tenanted_through :listing
+
     validates :headline, presence: true, length: { maximum: 160 }
     validates :badge, length: { maximum: 64 }, allow_blank: true
     validates :discount_percent, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }, allow_nil: true

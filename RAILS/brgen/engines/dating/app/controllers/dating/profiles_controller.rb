@@ -20,7 +20,7 @@ class Dating::ProfilesController < Dating::BaseController
     @profile = Current.user.build_dating_profile(profile_params)
     if @profile.save
       enqueue_photo_processing
-      redirect_to(root_path, notice: "Profile created")
+      redirect_to(root_path, notice: t("flash.dating.profile_created"))
     else
       @neighborhoods = available_neighborhoods
       render(:new, status: :unprocessable_entity)
@@ -31,7 +31,7 @@ class Dating::ProfilesController < Dating::BaseController
     purge_removed_photos
     if @profile.update(profile_params)
       enqueue_photo_processing
-      redirect_to(root_path, notice: "Profile updated")
+      redirect_to(root_path, notice: t("flash.dating.profile_updated"))
     else
       @neighborhoods = available_neighborhoods
       render(:edit, status: :unprocessable_entity)

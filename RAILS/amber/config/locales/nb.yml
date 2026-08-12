@@ -733,7 +733,25 @@ nb:
   # English toasts over an nb wardrobe. "Unauthorized" is deliberately NOT here:
   # it reuses shared.flash.not_authorized, because the engine already owns that
   # sentence for all three apps.
+  # Lifecycle states as a reader sees them, so a flash can name one without
+  # String#humanize, which only ever produces English.
+  lifecycle_states:
+    active: "i bruk"
+    repair: "til reparasjon"
+    clean_needed: "til rens"
+    tailor: "til skredder"
+    declutter_box: "ryddingsboksen"
+    sentimental_archive: "minnearkivet"
+    seasonal_archive: "sesongarkivet"
+    resale: "videresalg"
+    donate: "til donasjon"
+    sold: "solgt"
+    donated: "donert"
+    recycled: "gjenvunnet"
+    released: "sluppet"
   flash:
+    wear_once_note: "Bruk det én gang før du bestemmer deg."
+    item_moved: "%{title} er flyttet til %{state}."
     affiliate_link_saved: "Affiliatelenken er lagret."
     affiliate_link_removed: "Affiliatelenken er fjernet."
     style_profile_set: "Stilprofilen er satt til %{aesthetic}."

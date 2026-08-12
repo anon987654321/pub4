@@ -27,7 +27,7 @@ class Tv::VideosController < Tv::BaseController
     if @video.save
       preset = video_params[:preset].presence
       PostproJob.perform_later(@video.to_gid.to_s, preset, "thumbnail") if preset && @video.thumbnail.attached?
-      redirect_to video_path(@video), notice: "Video uploaded"
+      redirect_to video_path(@video), notice: t("flash.tv.video_uploaded")
     else
       render :new, status: :unprocessable_entity
     end
@@ -50,6 +50,6 @@ class Tv::VideosController < Tv::BaseController
   def require_video_owner!
     return if @video.user == Current.user
 
-    redirect_to video_path(@video), alert: "Not authorized"
+    redirect_to video_path(@video), alert: t("shared.flash.not_authorized")
   end
 end

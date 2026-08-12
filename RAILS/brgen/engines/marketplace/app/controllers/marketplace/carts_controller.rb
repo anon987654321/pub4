@@ -12,7 +12,7 @@ class Marketplace::CartsController < Marketplace::BaseController
   def send_offers
     load_cart
     if @cart_items.empty?
-      redirect_to cart_path, alert: "Cart is empty"
+      redirect_to cart_path, alert: t("flash.marketplace.cart_empty")
       return
     end
 
@@ -36,7 +36,7 @@ class Marketplace::CartsController < Marketplace::BaseController
     end
 
     redirect_to cart_path,
-                notice: "Sent #{sent} #{'offer'.pluralize(sent)} to sellers"
+                notice: t("flash.marketplace.offers_sent", count: sent)
   end
 
   private

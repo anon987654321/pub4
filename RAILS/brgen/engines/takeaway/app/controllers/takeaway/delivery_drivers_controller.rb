@@ -32,7 +32,7 @@ module Takeaway
       # preloaded and strict_loading_by_default raises on the association read.
       return if Current.user && Current.user.id == @delivery_driver.user_id
 
-      redirect_to(delivery_driver_path(@delivery_driver), alert: "Not allowed")
+      redirect_to(delivery_driver_path(@delivery_driver), alert: t("shared.flash.not_authorized"))
     end
 
     def driver_params

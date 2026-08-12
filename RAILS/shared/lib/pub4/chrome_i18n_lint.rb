@@ -103,7 +103,7 @@ module Pub4
       # → 119: the map HUD region, the message article, amber's palette section
       # and its logo svg. Found by a text-node scan run against the merged tree
       # after that pass, which is the only reason they were separable from it.
-      "aria_label" => 119,
+      "aria_label" => 118,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -113,7 +113,13 @@ module Pub4
       # into its own app-level flash: namespace, reusing shared.flash.* for the
       # sentences the engine already owns (not_authorized, rate_limited). What is
       # left is the five brgen engines. Down only.
-      "controller_flash" => 48,
+      # 0 as of 2026-08-12. The remaining 48 were all in the five brgen engines,
+      # nested per engine as flash.<engine>.* in brgen's locales; the eleven
+      # "Not allowed"/"Not authorized" copies became shared.flash.not_authorized
+      # and "Try again later." became shared.flash.rate_limited. A ratchet at zero
+      # is a ban, which is what this should have been from the start — 169 was
+      # only ever a ratchet because it could not be paid off in one pass.
+      "controller_flash" => 0,
       # Measured 2026-08-11 by this rule: 216 lines. (A looser hand grep said 231 —
       # it counted occurrences, not lines, which is the reminder that the number to
       # ratchet is always the instrument's own.) A ratchet rather than a ban,

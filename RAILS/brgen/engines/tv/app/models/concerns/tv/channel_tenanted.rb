@@ -24,18 +24,16 @@ module Tv
   module ChannelTenanted
     extend ActiveSupport::Concern
 
+    # The nil-city_id decision documented here is now TenantedThrough's, shared
+    # with Marketplace::Deal, which had the same defect through :listing and no
+    # scope at all: acts_as_tenant :city is `optional: true`, so a parent with
+    # no city is legal and reads as global rather than orphaned — it should
+    # appear in every city, not in none. No such rows exist today (all three
+    # production channels are Bergen's); this decides the case before it
+    # arrives rather than after.
     included do
-      # nil city_id included deliberately. acts_as_tenant :city is declared
-      # `optional: true` on Tv::Channel, so a channel with no city is legal and
-      # reads as global rather than orphaned — it should appear in every city,
-      # not in none. No such rows exist today (all three production channels are
-      # Bergen's); this decides the case before it arrives rather than after.
-      scope :in_current_city, lambda {
-        tenant = ActsAsTenant.current_tenant
-        next all unless tenant
-
-        joins(:channel).where(tv_channels: { city_id: [tenant.id, nil] })
-      }
+      include TenantedThrough
+      tenanted_through :channel
     end
   end
 end

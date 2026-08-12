@@ -25,7 +25,7 @@ class Tv::ChannelsController < Tv::BaseController
 
   def create
     @channel = Current.user.tv_channels.build(channel_params)
-    @channel.save ? redirect_to(channel_path(@channel), notice: "Channel created") : render(:new, status: :unprocessable_entity)
+    @channel.save ? redirect_to(channel_path(@channel), notice: t("flash.tv.channel_created")) : render(:new, status: :unprocessable_entity)
   end
 
   def update
@@ -59,6 +59,6 @@ class Tv::ChannelsController < Tv::BaseController
   def require_channel_owner!
     return if Current.user && @channel.user_id == Current.user.id
 
-    redirect_to channel_path(@channel), alert: "Not authorized"
+    redirect_to channel_path(@channel), alert: t("shared.flash.not_authorized")
   end
 end

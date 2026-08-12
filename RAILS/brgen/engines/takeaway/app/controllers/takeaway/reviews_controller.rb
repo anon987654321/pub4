@@ -5,7 +5,7 @@ class Takeaway::ReviewsController < Takeaway::BaseController
 
   def create
     unless authenticated?
-      redirect_to(main_app.new_session_path, alert: "Sign in to leave a review")
+      redirect_to(main_app.new_session_path, alert: t("flash.takeaway.review_requires_sign_in"))
       return
     end
 
@@ -13,7 +13,7 @@ class Takeaway::ReviewsController < Takeaway::BaseController
     delivered_orders = Takeaway::Order.where(user: user, restaurant: @restaurant, status: "delivered")
     has_delivered = delivered_orders.exists?
     unless has_delivered
-      redirect_to(restaurant_path(@restaurant), alert: "Review only after delivered order")
+      redirect_to(restaurant_path(@restaurant), alert: t("flash.takeaway.review_requires_delivery"))
       return
     end
 
@@ -27,7 +27,7 @@ class Takeaway::ReviewsController < Takeaway::BaseController
 
     if review.save
       @restaurant.update_rating!
-      redirect_to(restaurant_path(@restaurant), notice: "Review saved")
+      redirect_to(restaurant_path(@restaurant), notice: t("flash.takeaway.review_saved"))
     else
       redirect_to(restaurant_path(@restaurant), alert: review.errors.full_messages.to_sentence)
     end

@@ -733,7 +733,23 @@ en:
               before_start: "must be on or after the start date"
   # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb
   # fails if either file gains a key the other lacks.
+  lifecycle_states:
+    active: "in rotation"
+    repair: "repairs"
+    clean_needed: "cleaning"
+    tailor: "the tailor"
+    declutter_box: "the declutter box"
+    sentimental_archive: "the sentimental archive"
+    seasonal_archive: "the seasonal archive"
+    resale: "resale"
+    donate: "donation"
+    sold: "sold"
+    donated: "donated"
+    recycled: "recycled"
+    released: "released"
   flash:
+    wear_once_note: "Wear once before deciding."
+    item_moved: "%{title} moved to %{state}."
     affiliate_link_saved: "Affiliate link saved."
     affiliate_link_removed: "Affiliate link removed."
     style_profile_set: "Style profile set to %{aesthetic}."

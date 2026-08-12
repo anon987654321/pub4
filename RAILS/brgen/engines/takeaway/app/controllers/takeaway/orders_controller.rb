@@ -31,7 +31,7 @@ class Takeaway::OrdersController < Takeaway::BaseController
     end
     if saved
 
-      redirect_to order_path(@order), notice: "Order placed"
+      redirect_to order_path(@order), notice: t("flash.takeaway.order_placed")
     else
       @menu_items = @restaurant.menu_items.available
       render :new, status: :unprocessable_entity

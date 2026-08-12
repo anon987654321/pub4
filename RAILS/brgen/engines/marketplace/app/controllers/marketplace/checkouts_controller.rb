@@ -8,7 +8,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     provider = params[:provider].to_s
     order = find_payable_order
     unless order
-      redirect_to cart_path, alert: "Cart has no payable items"
+      redirect_to cart_path, alert: t("flash.marketplace.cart_not_payable")
       return
     end
 
@@ -26,7 +26,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
           return_url: checkout_url(provider: "vipps", order_id: order.id)
         )
       else
-        redirect_to cart_path, alert: "Unknown payment provider"
+        redirect_to cart_path, alert: t("flash.marketplace.unknown_provider")
         return
       end
     redirect_to url, allow_other_host: true
@@ -34,7 +34,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     redirect_to cart_path, alert: e.message
   rescue StandardError => e
     Ground::Swallow.log(e, context: "Marketplace::CheckoutsController#create") if defined?(Ground::Swallow)
-    redirect_to cart_path, alert: "Checkout failed: #{e.message}"
+    redirect_to cart_path, alert: t("flash.marketplace.checkout_failed", message: e.message)
   end
 
   # GET return from PSP (success path; webhooks remain source of truth when configured)
@@ -42,7 +42,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     order = Current.user.marketplace_orders.find_by(id: params[:order_id])
     if order&.payment_status == "pending" && params[:provider].present?
       # Without webhook yet, operator can mark paid in admin; here we only show status honestly.
-      redirect_to order_path(order), notice: "Payment #{order.payment_status} via #{order.payment_provider || params[:provider]}"
+      redirect_to order_path(order), notice: t("flash.marketplace.payment_recorded", status: t("flash.marketplace.payment_statuses.#{order.payment_status}"), provider: order.payment_provider || params[:provider])
     else
       redirect_to cart_path
     end

@@ -12,7 +12,7 @@ class Marketplace::ReviewsController < Marketplace::BaseController
     end
 
     if review.save
-      redirect_to listing_path(@listing), notice: "Review saved"
+      redirect_to listing_path(@listing), notice: t("flash.marketplace.review_saved")
     else
       redirect_to listing_path(@listing), alert: review.errors.full_messages.to_sentence
     end

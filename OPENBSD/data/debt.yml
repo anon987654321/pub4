@@ -25,7 +25,22 @@
 open:
   - id: off_host_dr
     tag: operator-priority
-    summary: Litestream replicas are same-disk only; off-host replica still needed
+    summary: >
+      Litestream has never replicated anything, and not for the reason this entry
+      gave. Measured on the box 2026-08-12: the binary is not installed. `which
+      litestream` finds nothing, pkg_info has no entry, and /etc/rc.d/litestream
+      points at /usr/local/bin/litestream, which does not exist. rcctl has been
+      reporting litestream(failed) in daily.out under "Services that should be
+      running but aren't", next to httpd, for months.
+      /etc/litestream.yml was also the pre-2026-07 version, with `path: <dir>` plus
+      `pattern:` — a form litestream rejects — so even installed it would not have
+      started. The repo's corrected copy (one entry per database file, three apps,
+      hjerterom's stanza gone) is deployed, so the config is right whenever the
+      package lands.
+      Two things, in order: `doas pkg_add litestream`, then an off-host replica. The
+      file:// replicas are on the same disk as the source, which covers an
+      accidental delete and nothing else. Until then Shared::DatabaseSnapshotJob is
+      the only thing backing up production.sqlite3, and it writes to that same disk.
 
   - id: multi_app_ram
     tag: operator-priority
@@ -84,15 +99,18 @@ open:
   - id: home_partition_full_from_git_history
     tag: operator-priority
     summary: >
-      /home on vm23 was at 95% (962 MB free of 17G) and the cause is in git rather
-      than on disk: /home/dev/pub4 is 7.7G of the 8.3G under /home/dev, and .git
-      alone is 3.3G. The ten largest objects in history are 80–87 MB WAV renders
-      under DEPLOY/dilla/renders/beats/, a path that no longer exists and never
-      will again. Every `git pull` deploy carries that history, so this does not
-      improve by itself and more RAM does not touch it.
+      Re-measured on the box 2026-08-12, as this entry asked. /home is at 89% (1.9G
+      free of 17G), up from 99% that morning — the three retired apps (baibl,
+      blognet, hjerterom) still had home directories worth 1.6G between them, for
+      products removed from the repo in July.
+      The git figure moved too: /home/dev/pub4 is 8.0G and .git is 3.3G of it, not
+      the 7.7G recorded on 2026-08-02, so someone has run a gc. The claim underneath
+      stands. The ten largest objects in history are 80–87 MB WAV renders under
+      DEPLOY/dilla/renders/beats/, a path that no longer exists and never will
+      again; every `git pull` deploy carries them, so this does not improve by
+      itself and more RAM does not touch it.
       Operator-owned: the fix is a history rewrite, i.e. a force-push to a public
-      repo. Strip these blobs in the same pass as the key purge above. Figures are
-      from 2026-08-02 and want re-measuring on the box before any action.
+      repo. Strip these blobs in the same pass as the key purge above.
 
   - id: amber_bsdports_stop_and_stay_down
     tag: operator-priority
@@ -129,10 +147,22 @@ open:
   - id: brgen_city_carousel_links_dead
     tag: operator-priority
     summary: >
-      The carousel now iterates DomainRegistry::LIVE_DOMAINS (brgen.no, oshlo.no)
-      only. What remains is the product/money call: stand up the other city
-      apexes, or accept a two-city network. Linking dead hosts is no longer the
-      visitor-facing defect.
+      The carousel iterates DomainRegistry::LIVE_DOMAINS, which went from two to
+      seven on 2026-08-12: stvanger.no, trndheim.no, cardff.uk, edinbrgh.uk and
+      frankfrt.de joined, and not one of them needed a certificate — acme-client had
+      been renewing all five for months and each was missing a single `tls keypair`
+      line in relayd.conf. domain_alignment now asserts LIVE_DOMAINS equals
+      (ENTRIES ∩ relayd keypairs), so neither direction can drift quietly again.
+      What remains is the product/money call, with a sharper edge than "stand up the
+      rest". Of the 37 not live: 33 are NXDOMAIN and need registrar money; denvr.us
+      and wshingtondc.com are ours at Domeneshop but delegated to their parking
+      nameservers, a free panel change; brmingham.uk, glasgw.uk, lverpool.uk and
+      mnchester.uk expired in June and sit in Nominet's protected period; brssels.be
+      is gone, whois says AVAILABLE.
+      And the question underneath changed shape. Cardiff and Edinburgh now have zero
+      posts, because every post they had was bot spam, swept the same day. A live
+      city with no content is a different visitor problem from a dead link, and not
+      one this entry has ever accounted for.
 
   - id: amber_moving_to_its_own_apex
     tag: operator-priority
@@ -157,20 +187,6 @@ open:
       Worth doing for revenue reasons as well as branding: TradeDoubler publisher
       approval and AdSense site review both go easier for an apex that is the
       product than for a subdomain of something else.
-
-  - id: rails_flash_strings_untranslated
-    tag: agent-workable
-    summary: >
-      169 hardcoded English flash strings across the family, and brgen renders nb by
-      default, so every successful create/update/destroy shows an English toast in an
-      otherwise Norwegian UI.
-      MEASURED, not counted by hand, 2026-08-11: Pub4::ChromeI18nLint's
-      controller_flash rule is the instrument and the number is ratcheted in
-      chrome_i18n_lint.rb (amber 48, brgen engines 48, brgen host 44, shared 28,
-      bsdports 1). The hand count that opened this entry said 144 and was blind to
-      shared/app/controllers, whose 28 ship to all three apps at once.
-      What is left is Norwegian copy, one controller at a time; the count can only
-      fall. `ruby RAILS/shared/lib/pub4/chrome_i18n_lint.rb` lists the sites.
 
   - id: playlist_engine_untested
     tag: agent-workable
@@ -366,6 +382,30 @@ not_debt:
 
 # One line each. The how is in git log; the rule, if there is one, is in DECISIONS.md.
 closed:
+  - id: rails_flash_strings_untranslated
+    resolution: >
+      Closed 2026-08-12 at zero, measured by the instrument rather than by grep.
+      169 → 48 → 0.
+      The last 48 were all in the five brgen engines, which is what this entry's own
+      note predicted, and they went in one pass: flash.<engine>.* keys in brgen's nb
+      and en locales, nested per engine because that is how the call sites are
+      organised. The eleven copies of "Not allowed" and "Not authorized" became
+      shared.flash.not_authorized rather than an eleventh translation of the same
+      sentence, and "Try again later." became shared.flash.rate_limited.
+      Four needed more than a key. The offers-sent line interpolated a count and
+      called String#pluralize on an English noun, so it became a pluralized entry.
+      The payment line interpolated a machine value into a sentence, so the five
+      PAYMENT_STATUSES got words of their own. And in amber, state.humanize.downcase
+      produced English in every locale by construction — that one had survived
+      precisely because translating the sentence around it would have left the state
+      name in English regardless.
+      The ratchet is 0, which makes it a ban; that is what it should have been from
+      the start, and 169 was only ever a ratchet because it could not be paid off in
+      one pass.
+      One test changed with it: vertical_mutations_test asserted /Sent 1/ and so
+      passed only while the flash was hardcoded English on an nb UI — a test pinning
+      the bug in place, and the second of those found the same day.
+
   - id: committed_rails_master_key_public_repo
     resolution: >
       Closed 2026-08-12, by measurement rather than by rotation: the rotation this

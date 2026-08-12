@@ -631,6 +631,7 @@ nb:
     from_a_shop: "Butikk"
     casual_hint: "Ingen butikk nødvendig — en annonse uten butikk er deg som selger én ting."
     sold: "Solgt"
+    nearby_listings: "I nærheten"
     deals:
       featured: "Utvalgte tilbud"
       title: "Tilbud"
@@ -735,6 +736,7 @@ nb:
     longitude: "Lengdegrad"
     add_menu_item: "Legg til menyelement"
     reviews_heading: "Omtaler fra naboer"
+    nearby_restaurants: "I nærheten"
     leave_review: "Legg igjen en omtale"
     status_timeline: "Statusforløp"
     order_cancelled: "Bestillingen er kansellert"
@@ -762,6 +764,7 @@ nb:
     checked_in_recently: "Du sjekket inn her nylig."
     on_the_map: "På kartet"
     at_this_place: "Her"
+    nearby_places: "I nærheten"
   communities:
     about: "Om %{name}"
     name_placeholder: "f.eks. bergen, tech, musikk"
@@ -909,6 +912,59 @@ nb:
   # sentence are NOT here: they reuse shared.flash.*, which the engine owns for all
   # three apps.
   flash:
+    # Flash messages from the five brgen engines. These were the last 49
+    # hardcoded English strings the controller_flash lint counted, shown over
+    # an nb UI. Nested per engine because that is how the call sites are
+    # organised; "Not allowed" and "Not authorized" became
+    # shared.flash.not_authorized rather than an eleventh copy.
+    dating:
+      profile_created: "Profilen er opprettet."
+      profile_updated: "Profilen er oppdatert."
+    marketplace:
+      cart_empty: "Handlekurven er tom."
+      cart_not_payable: "Ingenting i handlekurven kan betales."
+      unknown_provider: "Ukjent betalingsleverandør."
+      checkout_failed: "Betalingen gikk ikke gjennom: %{message}"
+      payment_recorded: "Betaling %{status} via %{provider}."
+      listing_saved: "Annonsen er lagret."
+      listing_unsaved: "Annonsen er fjernet fra lagrede."
+      listing_published: "Annonsen er lagt ut."
+      offer_sent: "Budet er sendt."
+      offers_sent:
+        one: "1 bud er sendt til selgeren."
+        other: "%{count} bud er sendt til selgerne."
+      offer_failed: "Kunne ikke sende budet."
+      review_saved: "Vurderingen er lagret."
+      search_saved: "Søket er lagret."
+      search_deleted: "Det lagrede søket er slettet."
+      payment_statuses:
+        unpaid: "ubetalt"
+        pending: "under behandling"
+        paid: "gjennomført"
+        failed: "mislyktes"
+        refunded: "refundert"
+    playlist:
+      user_not_found: "Fant ikke brukeren."
+      collaborator_added: "Samarbeidspartneren er lagt til."
+      collaborator_removed: "Samarbeidspartneren er fjernet."
+      party_started: "Lyttefesten er i gang."
+      party_ended: "Lyttefesten er avsluttet."
+      message_failed: "Meldingen kunne ikke sendes."
+      playlist_created: "Spillelisten er opprettet."
+      track_added: "Sporet er lagt til."
+    takeaway:
+      restaurant_saved: "Restauranten er lagret."
+      restaurant_unsaved: "Restauranten er fjernet fra lagrede."
+      menu_item_added: "Retten er lagt til."
+      order_placed: "Bestillingen er sendt."
+      restaurant_created: "Restauranten er opprettet."
+      review_requires_sign_in: "Logg inn for å skrive en vurdering."
+      review_requires_delivery: "Du kan vurdere etter en levert bestilling."
+      review_saved: "Vurderingen er lagret."
+    tv:
+      channel_created: "Kanalen er opprettet."
+      comment_added: "Kommentaren er lagt til."
+      video_uploaded: "Videoen er lastet opp."
     no_such_channel: "Kanalen finnes ikke."
     community_created: "Fellesskapet er opprettet."
     community_updated: "Fellesskapet er oppdatert."

@@ -5,19 +5,19 @@ class Playlist::CollaborationsController < Playlist::BaseController
 
   def create
     unless authenticated? && owner_or_editor?
-      redirect_to(target_path, alert: "Not allowed") and return
+      redirect_to(target_path, alert: t("shared.flash.not_authorized")) and return
     end
 
     username = params[:username].to_s.strip
     target_user = User.find_by(username: username)
     unless target_user
-      redirect_to(target_path, alert: "User not found") and return
+      redirect_to(target_path, alert: t("flash.playlist.user_not_found")) and return
     end
 
     role = params[:role].presence || "editor"
     collab = @target.collaborations.build(user: target_user, role: role)
     if collab.save
-      redirect_to(target_path, notice: "Collaborator added")
+      redirect_to(target_path, notice: t("flash.playlist.collaborator_added"))
     else
       redirect_to(target_path, alert: collab.errors.full_messages.to_sentence)
     end
@@ -25,12 +25,12 @@ class Playlist::CollaborationsController < Playlist::BaseController
 
   def destroy
     unless authenticated? && owner_or_editor?
-      redirect_to(target_path, alert: "Not allowed") and return
+      redirect_to(target_path, alert: t("shared.flash.not_authorized")) and return
     end
 
     collab = @target.collaborations.find(params[:id])
     collab.destroy
-    redirect_to(target_path, notice: "Collaborator removed")
+    redirect_to(target_path, notice: t("flash.playlist.collaborator_removed"))
   end
 
   private

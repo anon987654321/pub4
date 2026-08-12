@@ -92,6 +92,6 @@ class Playlist::SetsController < ApplicationController
     return if user && user.id == @set.user_id
     collab = @set.collaborations.find_by(user: user)
     return if collab && %w[owner editor].include?(collab.role)
-    redirect_to(set_path(@set), alert: "Not allowed")
+    redirect_to(set_path(@set), alert: t("shared.flash.not_authorized"))
   end
 end

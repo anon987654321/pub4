@@ -7,7 +7,7 @@ class Takeaway::MenuItemsController < Takeaway::BaseController
   def create
     @item = @restaurant.menu_items.build(item_params)
     @item.save ?
-      redirect_to(restaurant_path(@restaurant), notice: "Item added") :
+      redirect_to(restaurant_path(@restaurant), notice: t("flash.takeaway.menu_item_added")) :
       redirect_to(restaurant_path(@restaurant), alert: @item.errors.full_messages.to_sentence)
   end
 

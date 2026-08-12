@@ -8,12 +8,12 @@ class Marketplace::SavedSearchesController < Marketplace::BaseController
   def create
     saved_search = Current.user.marketplace_saved_searches.create!(saved_search_params)
     saved_search.record_activity!("MarketplaceSearchSaved", actor: Current.user, source_vertical: "marketplace", locality: saved_search.location, visibility: "private")
-    redirect_back fallback_location: listings_path, notice: "Saved search"
+    redirect_back fallback_location: listings_path, notice: t("flash.marketplace.search_saved")
   end
 
   def destroy
     Current.user.marketplace_saved_searches.find(params[:id]).destroy
-    redirect_to saved_searches_path, notice: "Deleted saved search"
+    redirect_to saved_searches_path, notice: t("flash.marketplace.search_deleted")
   end
 
   private

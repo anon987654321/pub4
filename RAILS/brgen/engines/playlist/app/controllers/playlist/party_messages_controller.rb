@@ -8,7 +8,7 @@ class Playlist::PartyMessagesController < Playlist::BaseController
       @message = @party.party_messages.create!(user: Current.user, body: params[:body].to_s.strip)
       redirect_to set_listening_party_path(@party.set), notice: nil
     rescue ActiveRecord::RecordInvalid
-      redirect_to set_listening_party_path(@party.set), alert: "Message could not be sent"
+      redirect_to set_listening_party_path(@party.set), alert: t("flash.playlist.message_failed")
     end
 
     private

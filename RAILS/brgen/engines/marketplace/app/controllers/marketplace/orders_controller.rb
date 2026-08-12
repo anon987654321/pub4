@@ -35,9 +35,9 @@ class Marketplace::OrdersController < Marketplace::BaseController
     if @order.save
       @order.deliver_notification(@listing.user, title: "New marketplace offer", body: "#{Current.user.display_name} sent an offer for #{@listing.title}.", source: @order)
       @order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace", locality: @listing.location)
-      redirect_to listing_path(@listing), notice: "Offer sent"
+      redirect_to listing_path(@listing), notice: t("flash.marketplace.offer_sent")
     else
-      redirect_to listing_path(@listing), alert: "Could not send offer"
+      redirect_to listing_path(@listing), alert: t("flash.marketplace.offer_failed")
     end
   end
 

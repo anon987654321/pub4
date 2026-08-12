@@ -16,7 +16,7 @@ class Playlist::ListeningPartiesController < Playlist::BaseController
       first_track = @set.tracks.order(:position).first
       @party.current_track = first_track
       @party.save!
-      redirect_to set_listening_party_path(@set), notice: "Listening party started"
+      redirect_to set_listening_party_path(@set), notice: t("flash.playlist.party_started")
     end
 
     def update
@@ -27,7 +27,7 @@ class Playlist::ListeningPartiesController < Playlist::BaseController
 
     def destroy
       @party.end!
-      redirect_to set_path(@set), notice: "Party ended"
+      redirect_to set_path(@set), notice: t("flash.playlist.party_ended")
     end
 
     private
@@ -41,6 +41,6 @@ class Playlist::ListeningPartiesController < Playlist::BaseController
     end
 
     def require_host!
-      redirect_to(set_listening_party_path(@set), alert: "Not allowed") unless @party.host == Current.user
+      redirect_to(set_listening_party_path(@set), alert: t("shared.flash.not_authorized")) unless @party.host == Current.user
     end
   end

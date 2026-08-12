@@ -42,7 +42,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   def create
     @playlist = Current.user.playlist_playlists.build(playlist_params)
     @playlist.save ?
-      redirect_to(playlist_path(@playlist), notice: "Playlist created") :
+      redirect_to(playlist_path(@playlist), notice: t("flash.playlist.playlist_created")) :
       render(:new, status: :unprocessable_entity)
   end
 
@@ -77,6 +77,6 @@ class Playlist::PlaylistsController < Playlist::BaseController
     return if Current.user == @playlist.user
     collab = @playlist.collaborations.find_by(user: Current.user)
     return if collab && %w[owner editor].include?(collab.role)
-    redirect_to(playlist_path(@playlist), alert: "Not allowed")
+    redirect_to(playlist_path(@playlist), alert: t("shared.flash.not_authorized"))
   end
 end

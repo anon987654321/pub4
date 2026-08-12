@@ -67,7 +67,7 @@ module Tv
     def require_live_stream_owner!
       return if @live_stream.user_id == Current.user&.id
 
-      redirect_to live_stream_path(@live_stream), alert: "Not authorized"
+      redirect_to live_stream_path(@live_stream), alert: t("shared.flash.not_authorized")
     end
 
     # form_with model: @live_stream scopes fields under the model's param_key.

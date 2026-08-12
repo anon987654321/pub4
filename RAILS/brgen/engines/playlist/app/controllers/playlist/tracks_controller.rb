@@ -14,10 +14,10 @@ class Playlist::TracksController < Playlist::BaseController
 
     if @set
       @set.add_track!(track, user: Current.user)
-      redirect_to set_path(@set), notice: "Track added"
+      redirect_to set_path(@set), notice: t("flash.playlist.track_added")
     else
       @playlist.add_track!(track, user: Current.user)
-      redirect_to playlist_path(@playlist), notice: "Track added"
+      redirect_to playlist_path(@playlist), notice: t("flash.playlist.track_added")
     end
   end
 
@@ -60,7 +60,7 @@ class Playlist::TracksController < Playlist::BaseController
     return if collab && %w[owner editor].include?(collab.role)
 
     target_path = target ? target_path(target) : playlists_path
-    redirect_to target_path, alert: "Not allowed"
+    redirect_to target_path, alert: t("shared.flash.not_authorized")
   end
 
   def target_path(target)

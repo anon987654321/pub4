@@ -625,6 +625,7 @@ en:
     from_a_shop: "Shop"
     casual_hint: "No shop needed — a listing without a store is you selling one thing."
     sold: "Sold"
+    nearby_listings: "Nearby"
     deals:
       featured: "Featured deals"
       title: "Deals"
@@ -729,6 +730,7 @@ en:
     longitude: "Longitude"
     add_menu_item: "Add menu item"
     reviews_heading: "Reviews from neighbours"
+    nearby_restaurants: "Nearby"
     leave_review: "Leave a review"
     status_timeline: "Status timeline"
     order_cancelled: "Order cancelled"
@@ -756,6 +758,7 @@ en:
     checked_in_recently: "You checked in here recently."
     on_the_map: "On the map"
     at_this_place: "Here"
+    nearby_places: "Nearby"
   communities:
     about: "About %{name}"
     name_placeholder: "e.g. bergen, tech, musikk"
@@ -901,6 +904,59 @@ en:
   # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb
   # fails if either file gains a key the other lacks.
   flash:
+    # Flash messages from the five brgen engines. These were the last 49
+    # hardcoded English strings the controller_flash lint counted, shown over
+    # an nb UI. Nested per engine because that is how the call sites are
+    # organised; "Not allowed" and "Not authorized" became
+    # shared.flash.not_authorized rather than an eleventh copy.
+    dating:
+      profile_created: "Profile created."
+      profile_updated: "Profile updated."
+    marketplace:
+      cart_empty: "Your cart is empty."
+      cart_not_payable: "Nothing in the cart can be paid for."
+      unknown_provider: "Unknown payment provider."
+      checkout_failed: "Checkout failed: %{message}"
+      payment_recorded: "Payment %{status} via %{provider}."
+      listing_saved: "Listing saved."
+      listing_unsaved: "Listing removed from saved."
+      listing_published: "Listing published."
+      offer_sent: "Offer sent."
+      offers_sent:
+        one: "Sent 1 offer to the seller."
+        other: "Sent %{count} offers to sellers."
+      offer_failed: "Could not send the offer."
+      review_saved: "Review saved."
+      search_saved: "Search saved."
+      search_deleted: "Saved search deleted."
+      payment_statuses:
+        unpaid: "unpaid"
+        pending: "pending"
+        paid: "paid"
+        failed: "failed"
+        refunded: "refunded"
+    playlist:
+      user_not_found: "User not found."
+      collaborator_added: "Collaborator added."
+      collaborator_removed: "Collaborator removed."
+      party_started: "Listening party started."
+      party_ended: "Listening party ended."
+      message_failed: "Message could not be sent."
+      playlist_created: "Playlist created."
+      track_added: "Track added."
+    takeaway:
+      restaurant_saved: "Restaurant saved."
+      restaurant_unsaved: "Restaurant removed from saved."
+      menu_item_added: "Menu item added."
+      order_placed: "Order placed."
+      restaurant_created: "Restaurant created."
+      review_requires_sign_in: "Sign in to leave a review."
+      review_requires_delivery: "You can review after a delivered order."
+      review_saved: "Review saved."
+    tv:
+      channel_created: "Channel created."
+      comment_added: "Comment added."
+      video_uploaded: "Video uploaded."
     no_such_channel: "No such channel."
     community_created: "Community created."
     community_updated: "Community updated."

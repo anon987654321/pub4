@@ -37,14 +37,19 @@ class DeclutterController < ApplicationController
       attrs[:spark_joy] = false if @item.has_attribute?(:spark_joy)
     end
     @item.update!(attrs)
-    redirect_to declutter_index_path, notice: "#{@item.title} moved to #{state.humanize.downcase}"
+    # The last hardcoded English flash in the family, and the reason it was last:
+    # String#humanize turns "declutter_box" into "Declutter box" and there is no
+    # locale in which it does anything else, so translating the sentence around it
+    # would have left the state name in English regardless.
+    redirect_to declutter_index_path,
+                notice: t("flash.item_moved", title: @item.title, state: t("lifecycle_states.#{state}"))
   end
 
   def challenge
     challenge = @item.declutter_challenges.create!(
       user: Current.user,
       due_on: params[:due_on].presence || 7.days.from_now.to_date,
-      note: params[:note].presence || "Wear once before deciding."
+      note: params[:note].presence || t("flash.wear_once_note")
     )
     redirect_to review_declutter_path(@item), notice: t("flash.challenge_created", due_on: challenge.due_on)
   end

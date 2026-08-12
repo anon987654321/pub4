@@ -6,12 +6,12 @@ class Takeaway::FavoriteRestaurantsController < Takeaway::BaseController
 
   def create
     Current.user.takeaway_favorite_restaurants.find_or_create_by!(restaurant: @restaurant)
-    redirect_back fallback_location: restaurant_path(@restaurant), notice: "Restaurant saved"
+    redirect_back fallback_location: restaurant_path(@restaurant), notice: t("flash.takeaway.restaurant_saved")
   end
 
   def destroy
     Current.user.takeaway_favorite_restaurants.find_by(restaurant: @restaurant)&.destroy
-    redirect_back fallback_location: restaurant_path(@restaurant), notice: "Restaurant removed"
+    redirect_back fallback_location: restaurant_path(@restaurant), notice: t("flash.takeaway.restaurant_unsaved")
   end
 
   private
