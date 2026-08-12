@@ -171,16 +171,33 @@ module PostproBootstrap
     profiles
   end
 
+  # Anchored to this file, for the same reason the camera profiles and
+  # REPLIGEN_PATH are: `File.exist?("master.json")` asked the shell's working
+  # directory, which is wherever the operator happened to be standing. It has
+  # therefore been false on every invocation, so CONFIG has always been {} and
+  # all twelve `CONFIG[...]` reads in this file have always taken their
+  # fallback — including apply_camera_profile_first, which is the switch for
+  # get_camera_profile and apply_camera_profile, fifty lines that have never
+  # run. The same defect was found and fixed one screen below this, twice, and
+  # left here.
+  #
+  # POSTPRO_CONFIG overrides, so a config can live somewhere other than beside
+  # the script without moving the script.
+  def self.master_config_path
+    File.expand_path(ENV.fetch("POSTPRO_CONFIG", File.join(__dir__, "master.json")))
+  end
+
   def self.load_master_config
-    return {} unless File.exist?("master.json")
+    path = master_config_path
+    return {} unless File.exist?(path)
 
     begin
-      master = JSON.parse(File.read("master.json").gsub(/^.*\/\/.*$/, ""))
+      master = JSON.parse(File.read(path).gsub(/^.*\/\/.*$/, ""))
       config = master.dig("config", "multimedia", "postpro") || {}
-      dmesg "OK loaded defaults from master.json"
+      dmesg "OK loaded defaults from #{path}"
       config
     rescue StandardError => e
-      dmesg "WARN failed to parse master.json: #{e.message}"
+      dmesg "WARN failed to parse #{path}: #{e.message}"
       {}
     end
   end
@@ -723,12 +740,25 @@ end
 # from neutral creates the colour cast that defines a stock's look.
 # One maplut at runtime; CPU spent only on cache miss.
 module HD
-  # NOT frozen. This is a memo table -- lut_for and calibrated_basis both write
-  # into it on first use -- and freezing it turns every write into a FrozenError.
-  # Combined with the LoadError above, no run of this file has reached a single
-  # preset since the freeze went in: film_curve is in 46 of the 49 chains, and
-  # film_curve calls HD.apply.
-  CACHE = {}.freeze
+  # An instance variable, NOT a constant, and that is the whole point.
+  #
+  # This was `CACHE = {}` with a comment above it saying "NOT frozen -- this is
+  # a memo table and freezing it turns every write into a FrozenError". The
+  # comment was right and the code under it said `.freeze` anyway, twice, in
+  # this module and in Spectral: MASTER's IMMUTABLE rule ("mutable constant —
+  # append .freeze") fires on `CACHE = {}` and cannot tell a lookup table from
+  # a cache, so every autofix pass over this file put the freeze back.
+  #
+  # The cost was total. film_curve is in 46 of the 58 chains and calls
+  # HD.apply; spectral_temp calls Spectral.adaptation_matrix. With either
+  # frozen, `--preset portrait` dies on "can't modify frozen Hash" before the
+  # second effect runs — postpro could not grade a single image. --vocab-check
+  # does not catch it, because it reads tables and never touches a pixel: the
+  # file reported 0 problems throughout.
+  #
+  # Arguing with the scanner in a comment lost twice. A module ivar is not a
+  # constant, so IMMUTABLE has nothing to fire on and there is no argument.
+  def self.cache = (@cache ||= {})
 
   module_function
 
@@ -763,7 +793,7 @@ module HD
   end
 
   def lut_for(stock_data)
-    CACHE[stock_data.object_id] ||= build_lut(stock_data)
+    cache[stock_data.object_id] ||= build_lut(stock_data)
   end
 
   def apply(image, stock_data)
@@ -898,12 +928,10 @@ module Spectral
   D65_KELVIN = 6504.0
   PRIMARY_CENTERS = [611.0, 549.0, 464.0].freeze
   PRIMARY_SIGMA = 30.0
-  # NOT frozen. This is a memo table -- lut_for and calibrated_basis both write
-  # into it on first use -- and freezing it turns every write into a FrozenError.
-  # Combined with the LoadError above, no run of this file has reached a single
-  # preset since the freeze went in: film_curve is in 46 of the 49 chains, and
-  # film_curve calls HD.apply.
-  CACHE = {}.freeze
+  # A module ivar rather than a constant, for the reason spelled out over
+  # HD.cache above: calibrated_basis memoises into it, and an autofix that
+  # freezes every constant took this file out twice.
+  def self.cache = (@cache ||= {})
 
   module_function
 
@@ -945,7 +973,7 @@ module Spectral
   end
 
   def calibrated_basis
-    CACHE[:basis] ||= begin
+    cache[:basis] ||= begin
       raw = gaussian_basis
       d65 = normalize_to_y1(planckian(D65_KELVIN))
       cols = raw.map { |b| matvec3(XYZ_TO_SRGB, spd_to_xyz(b, d65)) }
@@ -2983,6 +3011,62 @@ def vocab_check
   end
   (STOCKS.keys - STOCKS.select { |_, d| d[:speed] }.keys).each { |s| problems << "#{s} has no speed:, so grain cannot rate it" }
 
+  # All four output paths finish the same way, or this is two tools wearing one
+  # name. Until 2026-08-12 process_file and run_random ran the finishing grain
+  # and run_one_shot and run_watch did not, so the same --preset produced a
+  # different negative depending on which entry point rendered it — and the thin
+  # side of the split was repligen's --postpro handoff, which is the path that
+  # makes the finals. Operator's call: all four grain.
+  #
+  # Read out of this file rather than asserted in prose, because the split had
+  # already survived one round of being written down and left alone.
+  finishing_grain = "grain(processed, 400, :kodak_portra, 0.35)"
+  source = File.read(__FILE__)
+  ungrained = %w[process_file run_random run_one_shot run_watch].reject do |name|
+    source[/^def #{name}\b.*?^end$/m]&.include?(finishing_grain)
+  end
+  unless ungrained.empty?
+    problems << "output paths disagree on the finishing grain: #{ungrained.join(", ")} " \
+                "#{ungrained.one? ? "does" : "do"} not run it, the rest do"
+  end
+
+  # Still true, and still the look rather than a defect: the finishing pass uses
+  # Portra's channel scaling at a fixed ISO 400 whatever stock the preset chose,
+  # so a Tri-X preset carries a colour-negative grain structure over its own.
+  double_grained = PRESETS.count { |_, p| Array(p[:fx]).include?("grain") }
+  notes << "every output is grained a second time at ISO 400 Portra regardless of preset stock " \
+           "(#{double_grained} of #{PRESETS.length} presets already grain in their own chain)"
+
+  # CONFIG is empty unless a master.json sits beside this file, which is the
+  # normal state. Saying so is the difference between a default and a setting
+  # nobody can find the reader for.
+  unless File.exist?(PostproBootstrap.master_config_path)
+    notes << "no #{PostproBootstrap.master_config_path} — CONFIG is empty, so jpeg_quality, variations, " \
+             "default_preset and apply_camera_profile_first all take their built-in fallbacks " \
+             "(the camera-profile pass is therefore off)"
+  end
+
+  # One actual pixel, through actual chains.
+  #
+  # Everything above reads tables, which is why a frozen memo cache — an error
+  # raised in the first or second effect of every preset that has one — sat
+  # here undetected while this same function printed "0 problems". A table
+  # checker cannot see a runtime failure, so the checker has to run something.
+  #
+  # 8x8 pixels through four presets chosen to cover the machinery the table
+  # checks cannot reach: HD.apply (film_curve), Spectral.adaptation_matrix
+  # (spectral_temp), a black-and-white chain and a print chain. Milliseconds.
+  smoke = %i[portrait cinematic noir masterpiece].select { |name| PRESETS.key?(name) }
+  begin
+    probe = Vips::Image.black(8, 8).add(128).cast("uchar").bandjoin([128, 128]).copy(interpretation: :srgb)
+    smoke.each do |name|
+      out = preset(probe, name)
+      problems << "preset #{name} returned nothing for an 8x8 probe" unless out
+    end
+  rescue StandardError, NoMethodError => e
+    problems << "preset chain raises on an 8x8 probe: #{e.class}: #{e.message}"
+  end
+
   problems.each { |line| puts "BROKEN #{line}" }
   notes.each { |line| puts "NOTE   #{line}" }
   puts "#{PRESETS.length} presets, #{STOCKS.length} stocks, #{LENSES.length} lenses, " \
@@ -3034,9 +3118,24 @@ def run_one_shot
   end
 
   processed = preset(image, preset_name)
+  # Operator, 2026-08-12: the four entry points now grain identically. This one
+  # and run_watch did not, so the same --preset gave a different negative
+  # depending on whether it arrived through a batch or through repligen's
+  # --postpro handoff -- and the handoff is the path that produces the finals.
+  processed = grain(processed, 400, :kodak_portra, 0.35)
   processed = rgb_bands(processed)
   quality = CONFIG["jpeg_quality"] || 95
-  processed.write_to_file(output_path, Q: quality)
+  # --tiff16 was honoured by process_file and ignored here, so the one-shot mode
+  # -- the mode repligen's --postpro handoff uses, and the only one with an
+  # explicit output path -- quietly wrote 8-bit JPEG when asked for 16-bit TIFF.
+  # A grading tool silently halving its bit depth is the kind of thing you find
+  # much later, in the file.
+  if ARGV.include?("--tiff16") || output_path.end_with?(".tif", ".tiff")
+    output_path = output_path.sub(/\.(jpg|jpeg|png|webp)$/i, ".tif")
+    processed.cast("ushort").write_to_file(output_path)
+  else
+    processed.write_to_file(output_path, Q: quality)
+  end
   write_comparison(image, processed, output_path)
   sidecar = write_grade_sidecar(input_path, output_path, preset_name, image, processed)
   sidecar[:quality][:warnings].each { |warning| $cli_logger.info "warn #{warning}" }
@@ -3140,6 +3239,7 @@ def run_watch
       begin
         image     = load_image(path)
         processed = preset(image, preset_name)
+        processed = grain(processed, 400, :kodak_portra, 0.35)
         processed = rgb_bands(processed)
         processed.write_to_file(out, Q: CONFIG["jpeg_quality"] || 95)
         $cli_logger.info "ok preset=#{preset_name} out=#{out}"
