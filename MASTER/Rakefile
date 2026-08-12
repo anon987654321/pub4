@@ -111,18 +111,22 @@ task :autoload do
   puts "autoload: clean"
 end
 
-desc "Run core/spec/core_smoke.rb — Effect → Constitution → World loop"
+desc "Run spec/core_smoke.rb — Effect → Constitution → World loop"
 task :core_smoke do
-  sh RbConfig.ruby, File.join(__dir__, "core", "spec", "core_smoke.rb")
+  sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "spec", "core_smoke.rb")
 end
 
 namespace :test do
-  desc "Core spine tests (isolated from lib/master Zeitwerk load)"
+  desc "Fold spine tests (lib/core.rb + lib/core/)"
   task :core do
     # Each file runs in its own process: `ruby a.rb b.rb c.rb` runs only a.rb and
     # passes the rest as ARGV, so the old single-invocation form silently skipped
     # every file after the first.
-    FileList["test/core/test_*.rb"].each { |f| ruby "-Itest", f }
+    #
+    # -Ilib since the 2026-08-12 merge: these used to require_relative
+    # ../../core/master and load the fold spine on its own path. There is one
+    # spine and one loader now, so they require "master" like everything else.
+    FileList["test/core/test_*.rb"].each { |f| ruby "-Ilib", "-Itest", f }
   end
 
   desc "Subsystem-mirrored tests (test/cli, io, fix, lib/**) -- not covered by :test's flat test/test_*.rb glob"
@@ -236,10 +240,13 @@ namespace :lint do
         !stripped.empty? && !stripped.start_with?("#")
       end
     end
-    core_files = Dir.glob(File.join(__dir__, "core", "*.rb")).size
+    # lib/core.rb and lib/core/*.rb both count: the entrypoint is a concept
+    # (Effect, VERBS, Secret), and globbing only the directory would have relaxed
+    # a 6-file invariant to 5 the moment the spine moved, without saying so.
+    core_files = Dir.glob(File.join(__dir__, "lib", "{core.rb,core/*.rb}")).size
 
     if core_files > config.fetch("core_files")
-      abort "lint:spine: core/ has #{core_files} files, ceiling is #{config['core_files']} — " \
+      abort "lint:spine: the fold spine has #{core_files} files, ceiling is #{config['core_files']} — " \
             "a new ability is a verb in world.rb and a new constraint is a rule in constitution.rb, " \
             "not a new concept"
     end
@@ -272,7 +279,24 @@ namespace :lint do
       # A real fall clears the raise log, which is what makes the allowance a
       # budget rather than a countdown to a permanent failure. Earning back a
       # raise requires lib/ to actually come down first.
-      body = body.sub(/^  raised:\n(?:    - .*\n)+/, "  raised: []\n")
+      #
+      # `    .*` and not `    - .*`: every entry in that list is a wrapped YAML
+      # scalar whose continuation lines are indented past the dash, and matching
+      # only the dashed line deleted the first line of the entry and stranded
+      # the rest as a bare scalar under `raised: []`. That is not a cosmetic
+      # slip — it made spine.yml unparseable, so the next reader of the file
+      # died on Psych::SyntaxError, including this task. It happened on
+      # 2026-08-12 and cost a green tree until someone read the YAML by hand.
+      body = body.sub(/^  raised:\n(?:    .*\n)+/, "  raised: []\n")
+      # And never write a file this task cannot read back. A ratchet whose
+      # failure mode is corrupting its own ledger has no business writing
+      # unattended.
+      begin
+        YAML.safe_load(body).fetch("spine").fetch("lib_code_ceiling")
+      rescue StandardError => e
+        abort "lint:spine: refusing to write data/spine.yml — the rewrite does not parse " \
+              "(#{e.class}: #{e.message}). The file on disk is untouched; ratchet it by hand."
+      end
       File.write(File.join(__dir__, "data", "spine.yml"), body)
       puts "lint:spine: ratcheted #{ceiling} -> #{lines} (raise log cleared)"
     elsif lines < ceiling

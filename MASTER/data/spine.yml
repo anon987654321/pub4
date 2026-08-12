@@ -117,7 +117,65 @@ spine:
   #
   # Second raise now needs the same conversation. This one leaves the allowance
   # at 1 of 2.
-  lib_code_ceiling: 38294
+  #
+  # RAISED 2026-08-11, 38294 -> 38296 (+2). This is that second raise, and the
+  # conversation the note above asked for is short, because both lines are the
+  # same word:
+  #
+  #   lib/ground/swallow.rb      require_relative "../boot/paths"
+  #   lib/io/replicate_client.rb require_relative "../ground/swallow"
+  #
+  # replicate_client.rb rescues into Ground::Swallow in three places and never
+  # required it. Under a full boot something else had loaded it; loaded on its
+  # own — which is exactly how STUDIO/repligen and STUDIO/lora's Replicate lane
+  # use this file, and the only way they use it — the rescue itself raised
+  # NameError. So the first Replicate training for a new subject died inside
+  # the handler for "the destination model does not exist yet", which is the
+  # normal case. swallow.rb in turn read Master::ROOT, defined in lib/master.rb
+  # and therefore absent without that boot, so requiring it was not enough:
+  # MasterPaths::ROOT is the same path with no boot order.
+  #
+  # No new behaviour, no new subsystem, and nothing core/ has a verb or a
+  # constraint for: two requires that should have been there when the mixin
+  # started calling across a file boundary. The allowance is now 0 of 2 — the
+  # next line into lib/ comes out of lib/, not out of this file.
+  #
+  # RATCHETED 2026-08-12, 38296 -> 38285 (-11). lib/ fell below the ceiling of
+  # its own accord, so the ceiling follows it down and `raised:` empties: a
+  # genuine fall earns the raise budget back, which is the mechanism this file
+  # describes four paragraphs down and had not yet exercised under the code-line
+  # unit.
+  #
+  # Written by `rake lint:spine RATCHET=1`, which left the file unparseable —
+  # it replaced the `raised:` list with `[]` but deleted only the first line of
+  # its one two-line entry, stranding the continuation as a bare scalar and
+  # making every reader of this file (lint:spine itself included) die on
+  # Psych::SyntaxError. Repaired by hand and the writer fixed in the Rakefile;
+  # a ratchet that corrupts the file it ratchets is worse than no ratchet.
+  #
+  # REBASELINED 2026-08-12, 38285 -> 38823 (+538), for the second unit change in
+  # this file's life: core/ was merged into lib/ on operator instruction, so the
+  # thing being measured now contains the fold spine that was deliberately
+  # outside it. This is NOT a raise and does not touch `raised:` — spending the
+  # allowance here would record accretion that did not happen, and would leave
+  # the next person believing lib/ grew by 538 lines when nobody wrote one.
+  #
+  # The arithmetic, because the distinction is only worth anything if it is
+  # checkable:
+  #
+  #   moved in from core/     554 code lines (the six files, measured at HEAD)
+  #   lib/ after the merge  38823
+  #   lib/ minus those files 38269, against the old ceiling of 38285
+  #
+  # So lib/ excluding the moved spine came DOWN 16 lines in the same commit —
+  # the shard-merge method that data/rules.yml's fold made dead, and the five
+  # require_relatives in the old core/master.rb plus two in lib/cli that Zeitwerk
+  # now does. A merge that moves 554 lines in and reports +538 is reporting
+  # honestly; if this number had come in above 38285 + 554 the difference would
+  # have been new code, and that would have been a raise.
+  #
+  # The ratchet still only goes down from here. `rake lint:spine RATCHET=1`.
+  lib_code_ceiling: 38823
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -125,9 +183,7 @@ spine:
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"
-  raised:
-    - "2026-08-11: 38219 -> 38294 (+75), operator-sponsored. Five fix commits, no
-      orphan left to pay for it (445 files swept), nothing absorbable by core/."
+  raised: []
   # How many raises may stand before lint:spine refuses another. The allowance was
   # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
   # mechanism working: a genuine fall earns the budget back, so this is a budget
