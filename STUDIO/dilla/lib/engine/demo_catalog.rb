@@ -523,6 +523,7 @@ def demo_join_parts!(parts, list, out)
   # exits 0. Both conditions, or decode each part on its own below.
   if !level && demo_parts_uniform?(parts)
     sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out
+    DillaProvenance.record_assembly!(out, parts:, how: "concat demuxer, stream copy, no levelling")
     return out
   end
 
@@ -550,5 +551,13 @@ def demo_join_parts!(parts, list, out)
     File.write(joined, prepared.map { |p| "file '#{p}'" }.join("\n") + "\n")
     sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", joined, "-c", "copy", out
   end
+  # The ORIGINAL parts, not the levelled temporaries -- those live in a tmpdir
+  # that is gone by the time anyone reads this, and naming them would record a
+  # tracklist of paths that never existed outside one process. The levelling is
+  # in `how` instead, which is the part worth knowing.
+  DillaProvenance.record_assembly!(
+    out, parts:,
+    how: level ? "decoded per part, levelled to #{target} LUFS, then concat" : "decoded per part, then concat"
+  )
   out
 end

@@ -6,6 +6,7 @@
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
+require_relative "../frozen_state"
 
 
 RAP_VOCAL_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "vocals").freeze
@@ -26,7 +27,7 @@ def rap_vocal_save_catalog!(cat)
   DillaSourceLearn.ensure_dir!
   FileUtils.mkdir_p(RAP_VOCAL_DIR)
   cat["updated_at"] = Time.now.utc.iso8601
-  File.write(RAP_VOCAL_CATALOG, JSON.pretty_generate(cat) + "\n")
+  DillaFrozen.write_json(RAP_VOCAL_CATALOG, cat)
 end
 
 def rap_vocal_phrase_onsets(path)

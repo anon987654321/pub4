@@ -94,6 +94,8 @@ require_relative "lib/dilla_ml"
 require_relative "lib/dfam_engine"
 require_relative "lib/automation_lane"
 require_relative "lib/knobs"
+require_relative "lib/frozen_state"
+require_relative "lib/assets_manifest"
 
 # Terse OpenBSD-style console log (see lib/dilla_dmesg.rb). Prefer dmesg over
 # decorative banners; set DILLA_DMESG=0 to silence, =2 for verbose argv.
@@ -291,6 +293,8 @@ DISPATCH = {
   "debug" => -> { debug },
   "config-provenance" => -> { print_config_provenance },
   "knobs" => -> { knobs_report(ARGV.shift) },
+  "assets" => -> { assets_report(ARGV.shift) },
+  "tracklist" => -> { tracklist_report(ARGV.shift) },
   "sample" => -> { sample },
   "source" => -> { source(ARGV.shift, ARGV.shift) },
   "livestream" => -> { livestream(ARGV.shift, ARGV.shift) },
@@ -672,6 +676,26 @@ if __FILE__ == $PROGRAM_NAME
   # catches the class of mistake that produces a perfect render of the wrong
   # thing -- a typo'd knob, a flag set to a word it does not accept, a value
   # outside a clamp -- none of which anything said a word about before.
+  # A named input that is not here stops the render, rather than being
+  # substituted for something that is.
+  #
+  # This is the one check in the engine that refuses instead of warning, and the
+  # reason is that the failure it catches is invisible in the output: a missing
+  # sample or an absent drum kit produces a finished, good-sounding beat that is
+  # not the one the recipe asked for, and nothing downstream can tell. Every
+  # other kind of mistake here shows up as a bad render; this one shows up as a
+  # different render. DILLA_ASSET_CHECK=0 to proceed anyway.
+  if ENV["DILLA_ASSET_CHECK"] != "0"
+    missing = DillaAssets.missing_inputs
+    unless missing.empty?
+      missing.each { |problem| dmesg_error("asset: #{problem}") }
+      abort "dilla: #{missing.length} named input(s) missing — fix them, or set DILLA_ASSET_CHECK=0 to " \
+            "render with whatever the engine substitutes"
+    end
+  end
+
+  # After the asset check, so a missing file is reported once by the check that
+  # refuses rather than twice by two checks that say the same thing.
   if ENV["DILLA_KNOB_CHECK"] != "0"
     DillaKnobs.validate.each { |problem| dmesg_warn("knob: #{problem}") }
   end

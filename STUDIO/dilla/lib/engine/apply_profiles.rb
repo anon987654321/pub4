@@ -6,6 +6,7 @@
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
+require_relative "../frozen_state"
 
 
 # One word for genre.
@@ -118,7 +119,7 @@ def promote_progression_hook!(track, beauty, report: nil, path: nil)
   key = track.to_s.downcase.tr("-", "_")
   data[key] = (data[key] || 0) + 1
   data["_last"] = { "track" => key, "beauty" => beauty.round(1), "at" => Time.now.utc.iso8601 }
-  File.write(PROMOTED_PROFILES_PATH, JSON.pretty_generate(data) + "\n")
+  DillaFrozen.write_json(PROMOTED_PROFILES_PATH, data)
   remove_instance_variable(:@radio_bergen_learnings) if instance_variable_defined?(:@radio_bergen_learnings)
 rescue StandardError => e
   warn "progression promotion failed: #{e.message}"

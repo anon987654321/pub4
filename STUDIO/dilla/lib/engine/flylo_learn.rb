@@ -6,6 +6,7 @@
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
+require_relative "../frozen_state"
 
 
 FLYLO_LEARNINGS_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "flylo_drums").freeze
@@ -118,7 +119,7 @@ def learn_flylo_drums!(src, track: :quartal_west_coast, slug: "flylo_camel", app
   grid[:source] = src.to_s
   grid[:slug] = slug.to_s
   out_path = File.join(FLYLO_LEARNINGS_DIR, "#{slug}.json")
-  File.write(out_path, JSON.pretty_generate(grid.transform_keys(&:to_s)) + "\n")
+  DillaFrozen.write_json(out_path, grid.transform_keys(&:to_s))
 
   eng = load_learned_engine(refresh: true)
   track_s = track.to_s

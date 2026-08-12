@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "frozen_state"
 require "fileutils"
 require "json"
 require "open3"
@@ -749,7 +750,7 @@ module RadioChop
     end
 
     data = { "version" => 1, "ingested_at" => Time.now.utc.iso8601, "loops" => loops }
-    File.write(REGISTRY, "#{JSON.pretty_generate(data)}\n")
+    DillaFrozen.write_json(REGISTRY, data)
     puts "chop: #{loops.length} loops -> #{REGISTRY.sub("#{ROOT}/", '')}"
     loops
   end

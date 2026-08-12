@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "frozen_state"
 require "json"
 require "fileutils"
 require_relative "harmony_engine"
@@ -272,8 +273,8 @@ module DillaComposition
         arrangement: @arrangement.map { |e| e.transform_values(&:to_s) },
         critique_log: @critique_log.last(20)
       }
-      File.write(SESSION_PATH, JSON.pretty_generate(payload) + "\n")
-      File.write(MOTIFS_PATH, JSON.pretty_generate(@motifs.map(&:to_h)) + "\n")
+      DillaFrozen.write_json(SESSION_PATH, payload)
+      DillaFrozen.write_json(MOTIFS_PATH, @motifs.map(&:to_h))
       payload
     end
 

@@ -1,0 +1,79 @@
+{
+  "schema": "dilla.assets.v1",
+  "note": "The inputs a recipe can name. `dilla assets` checks them; a mismatch means a take rendered from this crate cannot be rendered from it again.",
+  "external_kit_cache": {
+    "present": true,
+    "commit": "77ba31428a079dd8f17c8e144c1e649ea0a198b3",
+    "kits": [
+      "01-hard-trap",
+      "02-bounce",
+      "03-soulful-vintage"
+    ]
+  },
+  "assets": {
+    "samples/drums/bass_43.wav": {
+      "bytes": 119148,
+      "sha256": "2cbd97d7b5ae2905ca4d109201a71e73aafc929e10b3a9902cf7f8ec5f0e701a"
+    },
+    "samples/drums/ghost.wav": {
+      "bytes": 12426,
+      "sha256": "6bc45de1b8b84ecefbbb31073f4fac16ef702e7f57ce70e84f10f51e54eb92a8"
+    },
+    "samples/drums/hat.wav": {
+      "bytes": 6252,
+      "sha256": "59cd2d2e5a19122eeae2fd7f940c82cb93f7f5b12eb805bff454bb72fa7ae998"
+    },
+    "samples/drums/ind_bass_bb.wav": {
+      "bytes": 21246,
+      "sha256": "14c951f9b86020a938d41e98900bcc2c5b96f6a5ef630ec6297520e36a41c69a"
+    },
+    "samples/drums/ind_bass_e.wav": {
+      "bytes": 21246,
+      "sha256": "3f8ddf0e76118e9a82a0f9f131c443863402af40292298b4b6c3f4ee1bf1368c"
+    },
+    "samples/drums/ind_clap.wav": {
+      "bytes": 20542,
+      "sha256": "fd3b2c09aae2ee21c60c83c06104ad4851f5f90bf66b000807a06d4798019940"
+    },
+    "samples/drums/ind_hat.wav": {
+      "bytes": 4488,
+      "sha256": "4cff72fea3686ad3be0992fdbbfc91c8df5c679e5fcdd3b972bc2f6312f65dbc"
+    },
+    "samples/drums/ind_kick.wav": {
+      "bytes": 57408,
+      "sha256": "4253c10260526be4373f651761073476d51994e29bccfd53b9db8527b6d3ecea"
+    },
+    "samples/drums/ind_stab.wav": {
+      "bytes": 30948,
+      "sha256": "5b8ff514291da7760d94561f0b682e33dd023fe8fbdcbc0ebc409d17ef70afad"
+    },
+    "samples/drums/kick.wav": {
+      "bytes": 48588,
+      "sha256": "7e31f31bc2a98f0d084828892c21a96625fea118ba24f12f344806110db4ba5d"
+    },
+    "samples/drums/open_hat.wav": {
+      "bytes": 37122,
+      "sha256": "73a67452f84c21252806a0372e9b660b99473b03e36369a8b15352cbba012016"
+    },
+    "samples/drums/snare.wav": {
+      "bytes": 28302,
+      "sha256": "2c5c1197b8cc197c3169f882c82e1ad60507ca18748748d2ae796e17fcaaab20"
+    },
+    "samples/kembara_rindu/loop.wav": {
+      "bytes": 3681436,
+      "sha256": "024c6028457f4c3da7cba3235eb88fa890338c029e51be61dce099d9f9b06635"
+    },
+    "samples/lo_borges/loop.wav": {
+      "bytes": 1485546,
+      "sha256": "c57a42435dcb15ed46950693c50f12eec2492cf283a0708acd40afca54934dd9"
+    },
+    "samples/rauingar/loop.wav": {
+      "bytes": 920358,
+      "sha256": "ab0e17b08f3063b8334e68953934ae32063dce37fe817ba640c1ce758d791304"
+    },
+    "samples/semua_untuk_mu/loop.wav": {
+      "bytes": 1764078,
+      "sha256": "d73683e6dca5ff846138f42dcf254229908933d8633b3ebe87b790017e757499"
+    }
+  }
+}

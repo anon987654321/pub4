@@ -521,6 +521,17 @@ def demo_all(bars_count = 12, destination = nil)
       prev_to ? ENV["DILLA_SH_TIMEOUT"] = prev_to : ENV.delete("DILLA_SH_TIMEOUT")
     end
   end
+  # Re-recorded against `dest`, because demo_join_parts! wrote its manifest
+  # beside the temporary and the mv above left it there. Working out what was in
+  # a 44-minute master by fingerprinting every file still on disk is what this
+  # exists to prevent; a tracklist filed under a filename that no longer exists
+  # would prevent nothing.
+  DillaProvenance.record_assembly!(
+    dest, parts:,
+    how: "demo concat of #{parts.length} part(s)" +
+         (ENV.fetch("DEMO_ALBUM_NORM", "0") == "1" ? ", then album loudnorm" : "")
+  )
+  FileUtils.rm_f("#{tmp}#{DillaProvenance::MANIFEST_EXT}")
   dur = 0.0
   begin
     out, = Open3.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration",

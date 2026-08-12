@@ -328,6 +328,63 @@ end
 
 PRECEDENCE_ORDER = DillaKnobs::PRECEDENCE
 
+# `dilla tracklist <file.dilla>` — what a compilation is made of.
+#
+# Reads the `assembly` block: each part, where it starts, how long it runs, and
+# the recipe it was rendered from, copied in at join time so it survives the part
+# being swept. For a plain render it says so rather than inventing a tracklist.
+def tracklist_report(manifest_path)
+  return puts("usage: dilla tracklist <file.dilla>") if manifest_path.to_s.empty?
+
+  manifest_path = "#{manifest_path}#{DillaProvenance::MANIFEST_EXT}" unless manifest_path.end_with?(DillaProvenance::MANIFEST_EXT)
+  return puts("no manifest at #{manifest_path}") unless File.file?(manifest_path)
+
+  doc = JSON.parse(File.read(manifest_path))
+  assembly = doc["assembly"]
+  unless assembly
+    puts "#{File.basename(manifest_path)} describes a single render, not an assembly."
+    puts doc["note"]
+    return
+  end
+
+  puts "#{assembly['parts']} part(s), #{format('%.1f', assembly['seconds'])}s — #{assembly['how']}"
+  assembly["from"].each_with_index do |part, index|
+    starts = part["starts_at"].to_f
+    puts format("%2d. %s  %s  %.1fs", index + 1,
+                format("%d:%02d", (starts / 60).to_i, (starts % 60).to_i),
+                part["path"], part["seconds"].to_f)
+    seed = part.dig("recipe", "render_seed")
+    puts format("    seed %s%s", seed, part.dig("recipe", "pinned")&.any? ? "  #{part['recipe']['pinned'].map { |k, v| "#{k}=#{v}" }.join(' ')}" : "") if seed
+  end
+end
+
+# `dilla assets` — is the crate the recipes name still here and still itself?
+#
+#   assets           check the recorded fingerprints against disk
+#   assets record    write data/assets.json from the crate as it is now
+def assets_report(argument = nil)
+  if argument == "record"
+    payload = DillaAssets.record!
+    puts "wrote #{DillaAssets.manifest_path.sub("#{ROOT}/", '')} — #{payload['assets'].length} asset(s)"
+    kit = payload["external_kit_cache"]
+    puts(kit["present"] ? "external kits: #{kit['kits'].join(', ')} at #{kit['commit']&.slice(0, 12)}" : "external kits: absent")
+    return
+  end
+
+  result = DillaAssets.verify
+  result[:missing].each { |name| puts "MISSING  #{name}" }
+  result[:changed].each { |name| puts "CHANGED  #{name}" }
+  result[:unrecorded].each { |name| puts "NOTE     #{name} is in the crate and not recorded" }
+  puts "#{result[:recorded]} recorded, #{result[:missing].length} missing, #{result[:changed].length} changed"
+
+  kit = DillaAssets.external_kit_identity
+  puts(kit["present"] ? "external kits: #{kit['kits'].join(', ')}" : "external kits: absent — renders fall back to the synthesized kit")
+
+  live = DillaAssets.missing_inputs
+  live.each { |problem| puts "INPUT    #{problem}" }
+  exit(1) unless result[:missing].empty? && result[:changed].empty? && live.empty?
+end
+
 def debug
   scan
   puts "music gems: #{DillaMusicGems.status.inspect}" if defined?(DillaMusicGems)

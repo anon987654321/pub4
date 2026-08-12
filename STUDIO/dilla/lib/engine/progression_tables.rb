@@ -833,6 +833,23 @@ TRACK_PRESETS = {
     timing: { snare: -12..-4, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -4..6 }
   },
 
+  # The fifth hand-cut loop, added the same day as this preset, so it never had
+  # the gap the two above sat in -- test_every_hand_cut_sample_loop_is_reachable_
+  # as_a_track_preset failed the moment the rack entry landed without it, which
+  # is the check working exactly as its comment says it should.
+  #
+  # 84 is the loop's own measured tempo, not a choice, for the reason given
+  # above. The progression and feel are taken from the existing preset nearest
+  # that tempo -- sheger_04 at 82, :neo_soul and :timeless -- by the same rule
+  # the eight chops follow, so no new musical judgement is smuggled in with the
+  # wiring. The loop reads A minor and neo_soul is a minor cycle, so they are
+  # not fighting; KEY_LOCK moves both to one tonic anyway.
+  arat_swost_wolet: {
+    bpm: 84, progression: :neo_soul, chord_bars: 2, phrase_bars: 16,
+    swing: 56, feel: :timeless, stereo_pan: true,
+    timing: { snare: -16..-6, hat_up: 10..22, bass: 14..30, kick_anchor: 0..4, pad: 0..12 }
+  },
+
   # Sheger, chopped eight ways. Same problem the loops above had and the same
   # fix: the chopper registers its output in TRACK_SAMPLE_LOOPS, but a loop only
   # renders when a TRACK resolves to it, and none of these had a track. All

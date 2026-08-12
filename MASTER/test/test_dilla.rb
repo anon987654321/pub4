@@ -2161,22 +2161,57 @@ class TestDilla < Minitest::Test
     end
   end
 
-  # Whole-pipeline smoke: synthesizes real audio, so it's opt-in.
-  # Run with: DILLA_SMOKE=1 bundle exec ruby -Itest test/test_dilla.rb
-  def test_smoke_two_bar_render_produces_playable_audio
-    skip "set DILLA_SMOKE=1 to run the render smoke test" unless ENV["DILLA_SMOKE"] == "1"
+  # Whole-pipeline smoke, and it runs by default.
+  #
+  # It was opt-in behind DILLA_SMOKE=1, which meant the suite passed having
+  # rendered no audio at all: 87 tests green over an engine whose sound paths
+  # were never executed. That is how a refactor gets called verified at the
+  # method-and-constant level while a stage of the chain is silently gone, which
+  # has happened here twice -- and MASTER's own autofix has broken this engine
+  # past a check whose entire content was "does it parse".
+  #
+  # So it asserts three things a parse cannot: that the stages are in the log,
+  # that there is sound, and that the sound is neither silence nor clipping.
+  # Twenty seconds against a 30-second per-test budget; DILLA_SMOKE=0 skips it
+  # on a machine without ffmpeg time to spare.
+  def test_smoke_two_bar_render_runs_the_whole_chain_and_lands_in_range
+    skip "DILLA_SMOKE=0 set" if ENV["DILLA_SMOKE"] == "0"
     skip "ffmpeg/ffprobe not available" unless system("which ffmpeg ffprobe > /dev/null 2>&1")
+
     Dir.mktmpdir do |dir|
-      out = File.join(dir, "smoke.mp3")
-      _stdout, err, status = Open3.capture3(
-        { "DILLA_SCRATCH_DIR" => File.join(dir, "scratch") },
-        RbConfig.ruby, ENGINE, "dilla", out, "2"
+      out = File.join(dir, "smoke.wav")
+      stdout, err, status = Open3.capture3(
+        { "DILLA_SCRATCH_DIR" => File.join(dir, "scratch"), "DILLA_OUTPUT_DIR" => dir, "BARS" => "2" },
+        RbConfig.ruby, ENGINE, "dilla", out
       )
       assert status.success?, "2-bar render failed: #{err}"
       assert File.file?(out), "render reported success but wrote no file"
+      log = stdout + err
+
+      # Named stages, because "it produced a file" is true of a render with the
+      # analog chain, the tape stage or the master bus missing entirely.
+      {
+        "harmony" => /harm|chord|progression/i,
+        "drums" => /kick|drum/i,
+        "the tape stage" => /tape:/i,
+        "the master bus" => /master:.*lufs/i,
+      }.each do |stage, pattern|
+        assert_match pattern, log, "#{stage} left no trace in the render log"
+      end
+
       duration, = Open3.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration",
                                  "-of", "default=noprint_wrappers=1:nokey=1", out)
-      assert duration.to_f.positive?, "rendered file has no measurable duration"
+      assert_operator duration.to_f, :>, 1.0, "rendered file has no measurable duration"
+
+      # Silence and clipping are the two ways a render can succeed and be
+      # useless, and both have happened.
+      _o, volume, = Open3.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", out,
+                                   "-af", "volumedetect", "-f", "null", "-")
+      mean = volume[/mean_volume:\s*(-?[\d.]+) dB/, 1]&.to_f
+      peak = volume[/max_volume:\s*(-?[\d.]+) dB/, 1]&.to_f
+      refute_nil mean, "volumedetect printed no mean level: #{volume}"
+      assert_operator mean, :>, -45.0, "the render is effectively silent (#{mean} dB mean)"
+      assert_operator peak, :<, -0.1, "the render is clipping (#{peak} dB peak)"
     end
   end
 
@@ -2493,6 +2528,109 @@ class TestDilla < Minitest::Test
 
       assert_match(/RENDER_SEED=\d+ .*SONITEX=heavy.*ruby dilla\.rb/, manifest.fetch("note"),
                    "the sentence that claims reproduction has to carry the pins")
+    end
+  end
+
+  # A pre/post comparison of a refactor was abandoned because session.json moved
+  # between the two takes, so the refactor shipped unmeasured. Frozen reads the
+  # learned state and writes none of it, which is what makes an A/B possible at
+  # all -- and it has to be provable in both directions, or "frozen" is a claim
+  # rather than a behaviour.
+  def test_dilla_frozen_reads_the_learned_state_and_writes_none_of_it
+    session = File.expand_path("../../STUDIO/dilla/project/session.json", __dir__)
+    skip "no session state on this machine yet" unless File.file?(session)
+
+    # One render, not two: the suite gives each test 30 seconds and a render is
+    # about twenty, so the unfrozen control lives in the test below where it
+    # costs nothing. What this proves is that a whole real render, with every
+    # writer the engine reaches, leaves the state where it found it.
+    Dir.mktmpdir do |dir|
+      env = { "BARS" => "2", "DILLA_FROZEN" => "1",
+              "DILLA_SCRATCH_DIR" => File.join(dir, "scratch"), "DILLA_OUTPUT_DIR" => dir }
+      before = File.mtime(session)
+      _o, err, status = Open3.capture3(env, RbConfig.ruby, ENGINE, "dilla", File.join(dir, "cold.wav"))
+      assert status.success?, "frozen render failed: #{err}"
+
+      assert_equal before, File.mtime(session), "DILLA_FROZEN=1 must not write the session back"
+      assert_match(/frozen: not writing project\/session\.json/, err,
+                   "a skipped write is announced; silently dropping data would be worse than the bug this fixes")
+      assert_includes JSON.parse(File.read(File.join(dir, "cold.wav.dilla"))).fetch("frozen"),
+                      "project/session.json",
+                      "the manifest has to say the take was made against held state"
+    end
+  end
+
+  # Working out what is in RELEASE.mp3 took envelope-fingerprinting every audio
+  # file still on disk against the master, because a 44-minute compilation's
+  # only record was a sidecar describing one 160-second render. An assembly has
+  # to write down its parts, and it has to inline each part's recipe rather than
+  # point at it: renders are gitignored and the seed rotates, so a manifest
+  # referring to a deleted wav records nothing at all.
+  def test_an_assembly_records_its_parts_with_offsets_and_their_recipes
+    require File.expand_path("../../STUDIO/dilla/lib/provenance", __dir__)
+
+    Dir.mktmpdir do |dir|
+      parts = %w[a b].map { |name| File.join(dir, "#{name}.wav") }
+      parts.each_with_index do |part, index|
+        # 0.4s of tone is enough to have a duration and a hash; this test is
+        # about the bookkeeping, and a real render costs twenty seconds.
+        system("ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i",
+               "sine=frequency=#{220 * (index + 1)}:duration=0.4", "-ac", "2", part, exception: true)
+        File.write("#{part}.dilla", JSON.generate(
+                                      "render_seed" => 100 + index,
+                                      "pinned" => { "BARS" => "2" },
+                                      "note" => "Reproduce with: ...",
+                                      "engine" => { "commit" => "abc123" }
+                                    ))
+      end
+
+      DillaProvenance.instance_variable_set(:@root, dir)
+      joined = File.join(dir, "master.wav")
+      FileUtils.cp(parts.first, joined)
+      DillaProvenance.record_assembly!(joined, parts:, how: "test join")
+
+      assembly = JSON.parse(File.read("#{joined}.dilla")).fetch("assembly")
+      assert_equal 2, assembly.fetch("parts")
+      assert_equal "test join", assembly.fetch("how")
+
+      first, second = assembly.fetch("from")
+      assert_equal "a.wav", first.fetch("path")
+      assert_in_delta 0.0, first.fetch("starts_at"), 0.001
+      assert_in_delta first.fetch("seconds"), second.fetch("starts_at"), 0.01,
+                      "part 2 starts where part 1 ends — an offset is what makes this a tracklist"
+      assert_equal 64, first.fetch("sha256").length
+
+      # The part's recipe, copied in. This is the whole point: it has to survive
+      # the part being deleted.
+      assert_equal 101, second.dig("recipe", "render_seed")
+      assert_equal({ "BARS" => "2" }, second.dig("recipe", "pinned"))
+      parts.each { |part| FileUtils.rm_f([part, "#{part}.dilla"]) }
+      assert_equal 101, JSON.parse(File.read("#{joined}.dilla")).dig("assembly", "from", 1, "recipe", "render_seed"),
+                   "the record still names what part 2 was made from after part 2 is gone"
+    end
+  end
+
+  # The control for the test above, and the mechanism on its own: frozen has to
+  # be the only difference, or "it did not write" proves nothing about freezing.
+  def test_frozen_state_writes_when_thawed_and_announces_every_skip
+    require File.expand_path("../../STUDIO/dilla/lib/frozen_state", __dir__)
+
+    Dir.mktmpdir do |dir|
+      target = File.join(dir, "state.json")
+      DillaFrozen.reset!
+
+      ENV.delete("DILLA_FROZEN")
+      assert DillaFrozen.write_json(target, { "generation" => 1 }), "thawed must report that it wrote"
+      assert_equal 1, JSON.parse(File.read(target)).fetch("generation")
+
+      ENV["DILLA_FROZEN"] = "1"
+      captured = capture_io { refute DillaFrozen.write_json(target, { "generation" => 2 }) }
+      assert_equal 1, JSON.parse(File.read(target)).fetch("generation"), "frozen left the old value"
+      assert_includes DillaFrozen.skips.join, "state.json"
+      assert_match(/frozen: not writing/, captured.join)
+    ensure
+      ENV.delete("DILLA_FROZEN")
+      DillaFrozen.reset!
     end
   end
 end

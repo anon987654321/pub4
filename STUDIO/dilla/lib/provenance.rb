@@ -6,6 +6,7 @@ require "time"
 require "English"
 require_relative "engine_sources"
 require_relative "knobs"
+require_relative "frozen_state"
 
 # Every rendered file gets a recipe beside it, so any render can be made again.
 #
@@ -116,9 +117,18 @@ module DillaProvenance
         "pinned" => pinned_env,
         # Knobs this run computed for itself. Not inputs; see derived_env.
         "derived" => derived_env,
+        # A frozen render read the learned state and wrote none of it back, so
+        # the take beside this manifest was made against state that has not
+        # moved since. Worth recording: it is the difference between a take that
+        # can be compared with another and one that cannot.
+        "frozen" => (DillaFrozen.skips if DillaFrozen.on?),
+        # What this file was joined from, when it was joined rather than
+        # rendered. A compilation gets both blocks: the environment describes
+        # the run that produced its parts, `assembly` describes the parts.
+        "assembly" => assemblies[path.to_s],
         "artifact" => artifact(path),
-        "rendered_at" => @started_at.utc.iso8601,
-      }
+        "rendered_at" => @started_at&.utc&.iso8601,
+      }.compact
     end
 
     def reproduce_command
@@ -257,6 +267,95 @@ module DillaProvenance
         "working_tree_clean" => status.nil? ? nil : status.empty?,
         "ruby" => RUBY_VERSION,
       }
+    end
+
+    # --- assembly ---------------------------------------------------------------
+    #
+    # A recipe per rendered file was never enough, because the files that matter
+    # most are not rendered, they are assembled.
+    #
+    # RELEASE.mp3 is 44 minutes and its sidecar describes a 160-second render:
+    # the same seed, the same command, one sixteenth of the artifact. Working out
+    # what was actually in it took envelope fingerprinting of every audio file
+    # still on disk against the master, and the answer was four identifiable
+    # takes, fifteen minutes that matched nothing, and a 21-minute compilation
+    # that was itself an assembly of about ten more. None of that was written
+    # down anywhere, and most of the parts no longer exist -- renders are
+    # gitignored and the seed rotates, so a part that is gone is gone.
+    #
+    # Which is why each part's own recipe is INLINED here rather than referenced.
+    # A manifest that points at a .dilla file beside a deleted wav records
+    # nothing. Inlined, the assembly still says what every part was made from
+    # after every part has been swept.
+    ASSEMBLY_SCHEMA = "dilla.assembly.v1"
+
+    def assemblies = @assemblies ||= {}
+
+    # parts: the files joined, in order. how: a sentence about the join.
+    def record_assembly!(output, parts:, how:)
+      return if disabled?
+
+      # Assemblies happen from commands that may never have called begin!.
+      @root ||= Dir.pwd
+      @argv ||= []
+      @started_at ||= Time.now
+      offset = 0.0
+      described = parts.map do |part|
+        seconds = duration_of(part)
+        entry = {
+          "path" => part.to_s.sub("#{@root}/", ""),
+          "starts_at" => offset.round(3),
+          "seconds" => seconds&.round(3),
+          "bytes" => (File.size(part) if File.file?(part)),
+          "sha256" => (Digest::SHA256.file(part).hexdigest if File.file?(part)),
+          # The part's own recipe, copied in. See the note above.
+          "recipe" => part_recipe(part),
+        }.compact
+        offset += seconds.to_f
+        entry
+      end
+
+      assemblies[output.to_s] = {
+        "schema" => ASSEMBLY_SCHEMA,
+        "how" => how,
+        "parts" => described.length,
+        "seconds" => offset.round(3),
+        "assembled_at" => Time.now.utc.iso8601,
+        "from" => described,
+      }
+      write_manifest(output) if File.file?(output)
+      assemblies[output.to_s]
+    rescue StandardError => e
+      # An assembly that succeeded must not be reported as failed because its
+      # bookkeeping did not -- the same rule finish! follows.
+      warn "provenance: assembly record failed: #{e.class}: #{e.message}"
+      nil
+    end
+
+    def part_recipe(part)
+      manifest = "#{part}#{MANIFEST_EXT}"
+      return unless File.file?(manifest)
+
+      doc = JSON.parse(File.read(manifest))
+      {
+        "render_seed" => doc["render_seed"],
+        "pinned" => doc["pinned"],
+        "note" => doc["note"],
+        "engine_commit" => doc.dig("engine", "commit"),
+      }.compact
+    rescue StandardError
+      nil
+    end
+
+    def duration_of(path)
+      return unless File.file?(path)
+
+      out = IO.popen(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                      "-of", "default=nk=1:nw=1", path.to_s], err: File::NULL, &:read)
+      value = out.to_s.strip.to_f
+      value.positive? ? value : nil
+    rescue StandardError
+      nil
     end
 
     def artifact(path)

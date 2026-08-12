@@ -431,6 +431,11 @@ def dilla_tape_stop!(path, beat_bpm:)
     sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list,
         "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", out
     FileUtils.mv(out, path)
+    # Recorded before the slices are deleted on the next line: the parts of a
+    # tape brake exist only inside this method, so this is the only moment their
+    # durations and hashes can be read at all.
+    DillaProvenance.record_assembly!(path, parts: [head] + parts,
+                                           how: "tape stop: head plus #{parts.length} decelerating slice(s)")
     FileUtils.rm_f([head, tailp, list] + parts)
     path
   rescue StandardError => e

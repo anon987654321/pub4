@@ -6,6 +6,7 @@
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
+require_relative "../frozen_state"
 
 
 # Sparse boom-bap base. Bar-to-bar phrase rotation is DillaGroove.pocket_* when
@@ -89,7 +90,7 @@ end
 def save_learned_engine!(data)
   DillaSourceLearn.ensure_dir!
   data["promoted_at"] = Time.now.utc.iso8601
-  File.write(DillaSourceLearn::LEARNED_ENGINE_PATH, JSON.pretty_generate(data) + "\n")
+  DillaFrozen.write_json(DillaSourceLearn::LEARNED_ENGINE_PATH, data)
   @learned_engine_cache = data
   data
 end
@@ -260,7 +261,7 @@ def learn_diff_dossiers!(audio_root: nil)
   end
   payload = { generated_at: Time.now.utc.iso8601, tracks: diffs }
   DillaSourceLearn.ensure_dir!
-  File.write(DillaSourceLearn::DOSSIER_DIFF_PATH, JSON.pretty_generate(payload) + "\n")
+  DillaFrozen.write_json(DillaSourceLearn::DOSSIER_DIFF_PATH, payload)
   puts "learn-diff: #{diffs.length} tracks → #{DillaSourceLearn::DOSSIER_DIFF_PATH}"
   payload
 end

@@ -86,6 +86,45 @@ TRACK_SAMPLE_LOOPS_BUILTIN = {
   # their own tracks -- so it clears the harmonic guard comfortably.
   rauingar: { path: File.join(SAMPLE_DIR, "rauingar", "loop.wav"), bpm: 92.0,
               hp: 60, sub_db: -3.0, lp: 6200 },
+
+  # Arat Swost Wolet, Ethiopian. 4 bars from 11.430s of the slowed copy.
+  #
+  # The de-vocaled stem, not the record: samples/arat_swost_wolet_slow.wav is
+  # demucs's no_vocals output played at 0.8x, which the commit that added it does
+  # not say and the audio does. Measured against the separated stems, on the
+  # frames where the vocal sings the mix sits +4.90 dB above no_vocals and this
+  # file sits -1.09 dB; on the frames where it is silent this file matches
+  # no_vocals to +0.10 dB. So the singer is out, which is what makes it usable
+  # as a bed under the engine's own harmony rather than a second tune.
+  #
+  # 84 BPM, decided by self-similarity rather than by onset spacing, which
+  # disagreed. Onset gaps put it at 86.1; the repeat structure puts the bar at
+  # 2.8575s and finds it again at 1, 2, 3, 4 and 5 bars -- five multiples of one
+  # grid, which onset spacing cannot fake. 11.43s is 4 bars at 84. Its
+  # self-repetition is 0.969, the cleanest in the rack by a distance (lo_borges,
+  # previously the best, reads 0.654).
+  #
+  # A minor at a Krumhansl fit of 0.687, the strongest reading of anything here
+  # except semua_untuk_mu.
+  #
+  # Known and not fixed: the loop does not rejoin cleanly. Its tail is about
+  # 12 dB below its head, at EVERY candidate window on the grid, so it is the
+  # phrase and not the cut -- the figure ends quiet. Expect an audible dip at
+  # the seam and reach for LOOP_DELAY_BEATS or a crossfade if it matters. The
+  # window at 11.430s was chosen because it has the best self-repetition and the
+  # equal-best rejoin of the thirteen tried; bar 0 is within noise of it.
+  #
+  # hp/sub_db/lp are PROVISIONAL, in the same sense lo_borges's are and for the
+  # same reason. Raw-loop bands, relative to the loudest: sub -0.7, low 0.0,
+  # lomid -0.4, mid -8.0, hi -19.0, air -36.7. Low-versus-mid is +8.0 dB, which
+  # is far more bass-forward than anything else in the rack (four_seven -4.9,
+  # nightbus -10.3, lo_borges -6.6) -- this record brings a lot of its own low
+  # end. But raw numbers have already proved a poor predictor of render
+  # behaviour here, so these are a starting point to check in a render and not a
+  # tuned value. The air figure is a cliff like four_seven's: there is nothing
+  # above 8 kHz to recover with EQ, so SAMPLE_EXCITE is the knob for it.
+  arat_swost_wolet: { path: File.join(SAMPLE_DIR, "arat_swost_wolet", "loop.wav"), bpm: 84.0,
+                      hp: 90, sub_db: -6.0, lp: 6000 },
 }.freeze
 
 # The chopper's rack, merged in under the hand-cut one. Same shape, same bus,
