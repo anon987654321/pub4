@@ -4,7 +4,7 @@
 <%# data-sender-id is viewer-independent so it stays correct when this partial
     is rendered from a broadcast job (no Current.user); the conversation-log
     controller turns it into data-from on arrival. %>
-<article data-sender-id="<%= message.sender_id %>" data-from="<%= message.sender_id == Current.user&.id ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %><%= " data-expiry=\"#{message.expiry_urgency}\"" if message.expiry_urgency %> aria-label="Message from <%= who %>">
+<article data-sender-id="<%= message.sender_id %>" data-from="<%= message.sender_id == Current.user&.id ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %><%= " data-expiry=\"#{message.expiry_urgency}\"" if message.expiry_urgency %> aria-label="<%= t("messages.from_aria", name: who) %>">
   <header>
     <span class="msg-nick" style="<%= nick_style(who) %>"><%= who %></span>
     <%# A channel is a transcript, so the time is absolute and stable: [19:32],

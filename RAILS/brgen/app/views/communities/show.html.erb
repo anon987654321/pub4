@@ -47,7 +47,7 @@
 <% end %>
 
 <aside>
-  <h2>About <%= @community.name %></h2>
+  <h2><%= t("communities.about", name: @community.name) %></h2>
   <p><%= @community.description.presence || "No description." %></p>
   <% if Current.user.present? %>
     <p><%= link_to t("nav.new_post"), new_community_post_path(@community) %></p>

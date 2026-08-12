@@ -183,6 +183,7 @@ nb:
       one: "%{count} treff for «%{query}»"
       other: "%{count} treff for «%{query}»"
   messages:
+    from_aria: "Melding fra %{name}"
     disappears_in: "forsvinner om %{time}"
     title: "Meldinger"
     new_message: "Ny melding"
@@ -511,6 +512,7 @@ nb:
     add_restaurant: "Legg til restaurant"
     saved_searches: "Lagrede søk"
   dating:
+    about_tab: "Om"
     edit_profile: "Rediger profil"
     your_profile: "Din profil"
     create_profile: "Opprett profil"
@@ -731,6 +733,8 @@ nb:
       one: "%{count} lagret"
       other: "%{count} lagret"
   maps:
+    recent_check_ins: "Nylige innsjekkinger"
+    hud_aria: "Kartsøk og informasjon"
     browse_list: "Bla i listen"
     needs_js: "Kartet krever JavaScript."
     browse_as_list: "Se stedene som liste"
@@ -742,6 +746,7 @@ nb:
     filter_by_kind: "Filtrer på type"
     checked_in_recently: "Du sjekket inn her nylig."
   communities:
+    about: "Om %{name}"
     name_placeholder: "f.eks. bergen, tech, musikk"
     description_placeholder: "Hva handler dette fellesskapet om?"
     create: "Opprett"

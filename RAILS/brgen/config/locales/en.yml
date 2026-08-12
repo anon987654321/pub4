@@ -177,6 +177,7 @@ en:
       one: "%{count} result for “%{query}”"
       other: "%{count} results for “%{query}”"
   messages:
+    from_aria: "Message from %{name}"
     disappears_in: "disappears in %{time}"
     title: "Messages"
     new_message: "New message"
@@ -505,6 +506,7 @@ en:
     add_restaurant: "Add restaurant"
     saved_searches: "Saved searches"
   dating:
+    about_tab: "About"
     edit_profile: "Edit profile"
     your_profile: "Your profile"
     create_profile: "Create profile"
@@ -725,6 +727,8 @@ en:
       one: "%{count} save"
       other: "%{count} saves"
   maps:
+    recent_check_ins: "Recent check-ins"
+    hud_aria: "Map search and info"
     browse_list: "Browse list"
     needs_js: "Map needs JavaScript."
     browse_as_list: "Browse places as a list"
@@ -736,6 +740,7 @@ en:
     filter_by_kind: "Filter by type"
     checked_in_recently: "You checked in here recently."
   communities:
+    about: "About %{name}"
     name_placeholder: "e.g. bergen, tech, musikk"
     description_placeholder: "What is this community about?"
     create: "Create"

@@ -19,6 +19,7 @@ nb:
     name: "Amber"
   skip_to_content: "Hopp til hovedinnhold"
   amber:
+    logo_aria: "Amber-logo med retrolinjer"
     feed:
       compose_prompt: "Del en #ootd tanke…"
       post_action: "Publiser"
@@ -284,6 +285,8 @@ nb:
     today_in: "I dag i %{city}"
     curated_offers: "Utvalgte tilbud"
   ai:
+    palette_aria: "Fargeprøver fra garderoben"
+    why_it_works: "Hvorfor det funker:"
     occasion: "Anledning"
     season: "Sesong"
     generate_suggestions: "Generer forslag"

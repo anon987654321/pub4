@@ -89,7 +89,10 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     end
 
     get maps_place_path(place)
-    assert_match(/checked in here recently/, response.body)
+    # Through the key, not the English sentence. The view has always said
+    # t("maps.checked_in_recently"); this line matched the literal, so it passed
+    # only while nb happened to be missing that key and Rails fell back to en.
+    assert_match(/#{Regexp.escape(I18n.t("maps.checked_in_recently"))}/, response.body)
   end
 
   test "reporting a post locates the signed global id" do

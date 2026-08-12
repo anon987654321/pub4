@@ -7,7 +7,7 @@
 <section role="application" aria-label="Interactive map for business discovery" data-controller="map" data-map-points-value="<%= json_escape(@places_json) %>" data-map-center-lat-value="60.39" data-map-center-lng-value="5.33" data-map-zoom-value="12" data-map-style-url-value="https://tiles.openfreemap.org/styles/liberty">
   <div id="map" class="map-canvas" data-map-target="canvas" aria-hidden="true"></div>
 
-  <div class="map-hud" role="region" aria-label="Map search and info">
+  <div class="map-hud" role="region" aria-label="<%= t("maps.hud_aria") %>">
     <div class="cluster">
       <input id="map-search" type="search" placeholder="<%= t("search.places") %>" data-map-target="search" role="searchbox" aria-label="<%= t("search.places_label") %>" class="map-search-input">
       <%= link_to t("maps.browse_list"), maps_places_path, class: "btn btn-ghost btn-sm map-browse-link" %>

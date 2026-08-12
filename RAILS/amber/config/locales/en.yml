@@ -20,6 +20,7 @@ en:
     name: "Amber"
   skip_to_content: "Skip to main content"
   amber:
+    logo_aria: "Amber logo with retro lines"
     feed:
       compose_prompt: "Share an #ootd thought…"
       post_action: "Post"
@@ -285,6 +286,8 @@ en:
     today_in: "Today in %{city}"
     curated_offers: "Curated offers"
   ai:
+    palette_aria: "Colour swatches from wardrobe"
+    why_it_works: "Why it works:"
     occasion: "Occasion"
     season: "Season"
     generate_suggestions: "Generate suggestions"

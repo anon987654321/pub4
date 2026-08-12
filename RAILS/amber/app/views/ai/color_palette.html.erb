@@ -3,7 +3,7 @@
 <% if @result["source"] %><p class="dim">Source: <%= @result["source"] %></p><% end %>
 
 <% if @swatches.present? %>
-  <section aria-label="Colour swatches from wardrobe">
+  <section aria-label="<%= t("ai.palette_aria") %>">
     <h2><%= t("ai.swatches_from_items", default: "Swatches from your items") %></h2>
     <div class="tag-row color-swatch-row">
       <% @swatches.each do |title, color| %>

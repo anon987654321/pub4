@@ -53,7 +53,7 @@
 
   <% if @recent_check_ins.any? %>
     <section>
-      <h2>Recent check-ins</h2>
+      <h2><%= t("maps.recent_check_ins") %></h2>
       <ul>
         <% @recent_check_ins.each do |check_in| %>
           <li>
