@@ -450,6 +450,14 @@ the assertion points the wrong way.
   `load_rules`, which merged them back before any scanner saw them.
 - Local `knowledge/` corpus and generated `output/` artifacts.
 - Deferred WebGL boot.
+- **The gap between 181 registry classes and 225 declared rules.** Checked
+  2026-08-12 on the theory that the difference was inert law — declared rules
+  nothing implements, which would be this file's dominant defect class at the
+  constitutional layer. It is not. **Every one of the 225 has a detection path**:
+  118 semantic-only, 69 registry+lexical, 7 lexical-only through the YAML bridge,
+  and the rest combinations. Zero with none. `RuleRegistryAudit` already measures
+  the split, `SelfTest` reads it, and `test_rule_registry_audit.rb` pins it.
+  What the check did produce is the line below.
 - Media-generation severance: re-severed 2026-07-14 (`76b11fec4`), confirmed
   permanent 2026-07-15. `docs/SEVERANCE.md` is the source of truth. If the LoRA
   training loop needs generation capability again, express it as

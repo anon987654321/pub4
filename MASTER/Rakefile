@@ -43,6 +43,15 @@ task :constitution do
   paths = Master.scan_roots(root:).flat_map { |dir| Dir.glob(File.join(root, dir, Master::Review::Scan::Scanner::SCAN_GLOB)) }
                 .select { |path| File.file?(path) && !Master::Review::Scan::Scanner.skip_path?(path, root:) }
   puts "constitution: #{paths.size} file(s) across #{Master.scan_roots(root:).join(', ')}"
+  # Which half of the law is actually running. 126 of the 225 declared rules are
+  # detect_semantic only, and SemanticRule#check returns [] with no LLM agent
+  # attached — which is every local gate. "clean" over 99 rules and "clean" over
+  # 225 are different claims and used to print identically.
+  audit = Master::Review::Scan::RuleRegistryAudit.new(root:).call
+  semantic = audit.semantic_only.size
+  agent = scanner.rules.any? { |rule| rule.id.to_s == "semantic" && rule.instance_variable_get(:@agent) }
+  puts "constitution: #{audit.yaml_rules - semantic} of #{audit.yaml_rules} declared rules active" \
+       "#{agent ? '' : " (#{semantic} semantic need an LLM agent; none attached)"}"
 
   violations = paths.each_with_index.flat_map do |path, index|
     puts "constitution: scanned #{index}/#{paths.size}" if index.positive? && (index % 25).zero?
@@ -98,6 +107,10 @@ desc "Fast error/critical-only scan of lib/ (Fix::SelfCheck) -- a quick fail-fas
 task :selfcheck do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
   require "master"
+  audit = Master::Review::Scan::RuleRegistryAudit.new(root: __dir__).call
+  puts "selfcheck: #{audit.yaml_rules - audit.semantic_only.size} of #{audit.yaml_rules} declared " \
+       "rules active (#{audit.semantic_only.size} semantic need an LLM agent), " \
+       "error/critical only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
   puts report.summary
   unless report.clean?
