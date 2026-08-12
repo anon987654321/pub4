@@ -3,24 +3,94 @@
 # Zone signing and TLSA records: usr/local/bin/nsd-resign (daily.local).
 set -euo pipefail
 
-ALL_DOMAINS=(
-  brgen.no longyearbyn.no oshlo.no stvanger.no trmso.no trndheim.no
-  reykjavk.is kbenhvn.dk gtebrg.se mlmoe.se stholm.se hlsinki.fi
-  brmingham.uk cardff.uk edinbrgh.uk glasgw.uk lndon.uk lverpool.uk
-  mnchester.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch
-  lchtenstein.li frankfrt.de brdeaux.fr mrseille.fr mlan.it lisbon.pt
-  wrsawa.pl gdnsk.pl austn.us chcago.us denvr.us dllas.us dnver.us
-  dtroit.us houstn.us lsangeles.com mnnesota.com newyrk.us prtland.com
-  wshingtondc.com pub.healthcare pub.attorney freehelp.legal
-  bsdports.org bsddocs.org discordb.org
-  stacyspassion.com
-  foball.no amber.brgen.no
-)
+ACME_CONF=/etc/acme-client.conf
 
-for domain in $ALL_DOMAINS; do
-  if acme-client -v -f /etc/acme-client.conf "$domain"; then
+# Renew what we hold, not what we hope for.
+#
+# This was a hardcoded list of all 53 domains in acme-client.conf. Only nine of
+# them have ever been issued a certificate; the other 44 are NXDOMAIN at their
+# registrar, so every weekly run asked Let's Encrypt to validate 44 hostnames
+# that do not resolve. That never actually happened, because the script's
+# `#!/usr/bin/env zsh` shebang could not find zsh under cron's PATH and the job
+# had never once run (see etc/crontab.vm23). Fixing the PATH armed it: the next
+# Monday would have been the first real run, and it would have spent 44 failed
+# authorizations against the account rate limit to renew nine certificates.
+#
+# The list is now an intersection of two facts on disk, both of which acme-client
+# itself maintains:
+#
+#   /etc/ssl/<name>.crt        we hold a certificate for this name, and it is the
+#                              exact file relayd loads
+#   domain "<name>" { ... }    acme-client knows how to renew it
+#
+# Held-but-unconfigured names are excluded rather than attempted. There are four:
+# ai, baibl, blognet and hjerterom under brgen.no, which are SANs of other
+# certificates or were issued by hand, and passing any of them to acme-client
+# fails on a config lookup before a single packet leaves the box. Renewal now
+# covers exactly what is deployed, and first issuance stays a deliberate act.
+typeset -a CONFIGURED HELD DOMAINS
+
+CONFIGURED=()
+while IFS= read -r line; do
+  [[ $line == domain\ \"*\"* ]] || continue
+  line=${line#domain \"}
+  CONFIGURED+=(${line%%\"*})
+done < $ACME_CONF
+
+# (N) nullglob, :t basename, :r strip the final extension -- "amber.brgen.no.crt"
+# becomes "amber.brgen.no". smtp.crt is smtpd's own self-signed certificate and
+# is not ACME's to renew; cert.pem is the trust store.
+HELD=(/etc/ssl/*.crt(N:t:r))
+HELD=(${HELD:#smtp})
+
+DOMAINS=(${HELD:*CONFIGURED})
+
+if (( ${#DOMAINS} == 0 )); then
+  print -ru2 -- "renew-certs: no held certificate matches a domain in $ACME_CONF — refusing to run"
+  exit 1
+fi
+
+typeset -a skipped
+skipped=(${HELD:|DOMAINS})
+(( ${#skipped} )) && print -r -- "renew-certs: held but not in $ACME_CONF, skipping: ${skipped}"
+
+# http-01 needs a listener on port 80, and relayd is not it: relayd.conf declares
+# exactly one relay, `listen on 0.0.0.0 port 443 tls`. httpd serves /var/www/acme
+# and nothing else. It was down on 2026-08-12 -- daily.out had been saying so under
+# "Services that should be running but aren't" -- and the only visible symptom was
+# bsdports.org failing to renew with 7 days left on its certificate while the other
+# eight succeeded, because their authorizations were still cached at Let's Encrypt
+# and did not need a challenge. Cached authorizations expire; this is the renewal
+# that quietly stops working months before anyone notices.
+if ! /usr/sbin/rcctl check httpd >/dev/null 2>&1; then
+  print -ru2 -- "renew-certs: httpd is down — starting it, http-01 challenges need port 80"
+  /usr/sbin/rcctl start httpd || print -ru2 -- "renew-certs: httpd would not start; renewals needing a challenge will fail"
+fi
+
+print -r -- "renew-certs: renewing ${#DOMAINS} of ${#HELD} held certificate(s): ${DOMAINS}"
+
+typeset renewed=0
+for domain in $DOMAINS; do
+  if acme-client -v -f $ACME_CONF "$domain"; then
     print -r -- "Renewed: $domain"
+    (( renewed += 1 ))
   fi
 done
 
-/usr/sbin/rcctl reload relayd
+print -r -- "renew-certs: $renewed renewed of ${#DOMAINS}"
+
+# restart, not reload. `rcctl reload relayd` sends SIGHUP, and relayd loads its
+# tls keypairs in the parent before chroot -- a SIGHUP after the certificate files
+# have been replaced leaves it accepting connections on 443 and answering none of
+# them. Measured 2026-08-12: seven certificates renewed, one reload, and every host
+# on the box returned curl (52) Empty reply from server until relayd was restarted.
+# rcctl check reported relayd(ok) throughout, so nothing on the box disagreed.
+#
+# Only when something changed. A restart is a real interruption, and the common
+# case is that nothing was renewed at all.
+if (( renewed > 0 )); then
+  print -r -- "renew-certs: restarting relayd to load $renewed replaced certificate(s)"
+  /usr/sbin/rcctl restart relayd
+else
+  print -r -- "renew-certs: nothing renewed, leaving relayd alone"
+fi

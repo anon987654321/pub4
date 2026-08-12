@@ -1,7 +1,19 @@
 #!/bin/sh
-ruby /usr/local/bin/nsd-resign
+# Interpreters by absolute path, and PATH set anyway.
+#
+# /etc/daily inherits cron's environment, which does not include /usr/local/bin —
+# where every interpreter on this box lives. `ruby` on line 2 and `ruby34` on the
+# config_drift_gate line both failed to exec on every run, and the second one was
+# invisible because its `2>&1` sent the shell's own "not found" into the output
+# file it was writing. See etc/crontab.vm23 for the full accounting; the PATH line
+# there is the real fix, and this is the belt to its braces — daily.local is also
+# run by hand, from shells that have their own ideas about PATH.
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+export PATH
+
+/usr/local/bin/ruby34 /usr/local/bin/nsd-resign
 /usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
-ruby34 /home/dev/pub4/OPENBSD/config_drift_gate.rb >/tmp/config-drift.out 2>&1 || \
+/usr/local/bin/ruby34 /home/dev/pub4/OPENBSD/config_drift_gate.rb >/tmp/config-drift.out 2>&1 || \
   logger -t daily.local "repo/live config drift — see /tmp/config-drift.out (e.g. sshd PasswordAuthentication)"
 su -l dev -c '/home/dev/pub4/OPENBSD/backup_priv.sh'
 

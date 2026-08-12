@@ -119,6 +119,23 @@ install_tracked_crontab() {
   TMPFILES+=($root_cron)
   crontab -l 2>/dev/null > $root_cron || :
 
+  # The PATH assignment gets its own pass, because the merge loop below cannot
+  # carry it: it skips anything with fewer than six fields, and `PATH=...` is one.
+  # That is how the single most load-bearing line in crontab.vm23 would have been
+  # tracked in the repo and never installed. Rewritten rather than appended so a
+  # stale PATH on the box is corrected rather than shadowed — cron takes the last
+  # assignment, but a reader takes the first.
+  typeset cron_path
+  cron_path=$(grep -m1 '^PATH=' $tracked) || cron_path=''
+  if [[ -n $cron_path ]]; then
+    typeset merged
+    merged=$(mktemp "${cron_dir}/root_crontab.XXXXXXXXXX") || return 1
+    TMPFILES+=($merged)
+    { print -r -- "$cron_path"; grep -v '^PATH=' $root_cron } > $merged || return 1
+    mv $merged $root_cron || return 1
+    log INFO "installed root cron: $cron_path"
+  fi
+
   while IFS= read -r line; do
     [[ -z $line || $line == \#* ]] && continue
     typeset -a fields=(${=line})

@@ -2,6 +2,30 @@
 # Merge idempotently on deploy. Hand-edits on vm23 should be copied back here.
 # nsd-resign runs from etc/daily.local, not this crontab.
 
+# The most important line in this file, and it is not a job.
+#
+# cron(8) runs with PATH=/bin:/sbin:/usr/bin:/usr/sbin — no /usr/local/bin. Every
+# interpreter this box actually uses lives there: ruby, ruby34, zsh. So every job
+# below whose shebang is `#!/usr/bin/env ruby` or `#!/usr/bin/env zsh` had been
+# failing at exec, once per scheduled tick, since it was installed. Measured
+# 2026-08-12:
+#
+#   relayd-watchdog       every minute   env: ruby: No such file or directory
+#   config-drift-check    every 15 min   /var/log/config_drift.log, same line, forever
+#   renew-certs.sh        weekly         /var/log/cert-renewal.log, env: zsh: ...
+#   nsd-resign            daily          /var/log/daily.out, ruby: not found
+#
+# Only resource_guard.sh ran, because it is the one job with a #!/bin/ksh shebang.
+# Nothing alerted: each failure was one line in a log nobody reads, and the two
+# jobs whose whole purpose is drift detection were themselves the drift.
+#
+# It stayed invisible because the *outcomes* looked fine. Certificates were valid
+# (issued before the breakage, expiring 2026-10-29 with nothing to renew them),
+# and DNSSEC signatures were valid (expiring 2026-08-30 with nothing to re-sign) —
+# and no DS record is published, so the expiry could not bite yet. Publishing DS
+# without this line would have taken every domain down on 2026-08-30.
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+
 # relayd-watchdog — restart relayd when unhealthy or backends stale
 */5 * * * * /usr/local/bin/relayd-watchdog
 
