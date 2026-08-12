@@ -211,7 +211,10 @@ had ever been through them. Set a switch to `0` to get the old behaviour back.
 | `BUS_ANALOG` | `0.3` | per-channel saturation plus small phase offsets, so buses don't sum coherently |
 | `CONSOLE_STRIP` | `0.35` | per-channel desk model; L and R run one seed apart, which is the point |
 | `TAPE_HYSTERESIS` | `0.25` | Jiles-Atherton, RK4 — path-dependent, unlike every other stage |
+| `TAPE_BIAS` | `1.0` | 1 = original loop; lower = less bias, wider hysteresis (ChowTape) |
+| `TAPE_LOSS_HZ` | `0` | spacing/loss lowpass into JA; 0 is off, 14000 is the analog start |
 | `TAPE_WOW_MS` | `0.6` | Ornstein-Uhlenbeck flutter |
+| `SONITEX_MIX` / `_DISTORTION` / `_VINYL` / `_TONE` / `_NOISE` / `_SAMPLING` | `1` | STX-1260 section wet amount; `SONITEX_SAMPLING=0` is crush off, tone stays |
 | `MASTER_SMOOTH_DB` | `2.0` | takes 2 dB out of the presence band; the stage that answers "harsh" |
 | `SMOOTH_ANALOG` | `1` | drop patches on metallic GM programs (chromatic percussion, 94, 98, 99, 103) |
 | `MASTER_TILT_DB` | `0` | negative = darker; lows up as highs come down |
@@ -314,17 +317,15 @@ were all silent — the code ran, returned success, and did nothing.
   `MASTER_SMOOTH_DB` takes 2 dB out of at 3.2 kHz. Net is a boost into the band
   `master_smooth!` itself calls "where distortion and harshness actually live".
   The de-harsher is no longer switched off, but it is outnumbered.
-- **`analyze_harshness` cannot see ear-level harshness.** It is a two-band ratio
-  splitting at 3.5 kHz, so 2–4 kHz — the roughness people actually complain
-  about — falls inside `mid` and cancels. A render measured −24.5 (very
-  un-harsh) while sounding rough. The meter is not wrong; it is aimed
-  elsewhere. A three-band split with a 2 kHz boundary is the fix.
-- **Sonitex's six stages are one flat hash here.** The real STX-1260 is six
-  independent sections — MIX, DISTORTION, VINYL, TONE, NOISE, SAMPLING — each
-  with its own sub-presets. `SONITEX_PRESETS` collapses them into one set of
-  keys, so `subtle` turns *everything* down together. "Vinyl bandwidth and head
-  bump without the bit-crush" is not currently expressible: the SAMPLING crush
-  and the TONE bandwidth are the same knob.
+- **`analyze_harshness` is a three-band meter.** Presence (2–4 kHz) minus body
+  (180 Hz–2 kHz). The old two-band split at 3.5 kHz put the roughness people
+  complain about inside `mid`, where it cancelled — a render measured −24.5
+  (very un-harsh) while sounding rough. `low`/`mid`/`high` stay at their
+  historical edges so `sub_kick_balance` and old sidecars keep the same
+  numbers. Callers that still pass only mid/high get the old ratio.
+- **Sonitex sections are independently wet.** `SONITEX_SAMPLING=0` turns the
+  crush off without touching vinyl tone. Amount 1 (the default) is the preset
+  unchanged. The six names are MIX, DISTORTION, VINYL, TONE, NOISE, SAMPLING.
 - **One console strip is not a console.** `console_strip.rb`'s own header argues
   that the sound people mean by "console" is the sum of thirty slightly
   different channels, and then runs one pass. NastyVCS gets its character from

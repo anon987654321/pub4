@@ -57,6 +57,16 @@ module TapeHysteresis
 
   DEFAULTS = { ms: 1.0, a: 0.22, alpha: 1.6e-3, k: 0.47, c: 1.7e-1 }.freeze
 
+  # Bias current. 1.0 is this file's original loop (more bias, tighter).
+  # 0.0 widens k and a — ChowTape's "less bias" dead zone at low level —
+  # so quiet material and loud material stop sharing one saturator at two gains.
+  # Default 1.0 so an unset TAPE_BIAS is the loop every existing render heard.
+  def params_for_bias(bias)
+    b = bias.to_f.clamp(0.0, 1.0)
+    open = 1.0 - b
+    DEFAULTS.merge(k: 0.47 + (0.38 * open), a: 0.22 + (0.10 * open))
+  end
+
   # RK4 over the input as the driving field.
   def process(samples, drive: 1.0, params: DEFAULTS)
     m = 0.0

@@ -189,12 +189,9 @@ def dilla_quality(path, baseline_path = nil)
   abort loud_err unless loud_status.success?
   json_text = (loud_out + loud_err)[/\{\s*"input_i".*?\}/m]
   loudness = json_text ? JSON.parse(json_text) : {}
-  spectrum = {
-    low: band_rms(path, highpass: 28, lowpass: 180),
-    mid: band_rms(path, highpass: 180, lowpass: 3_500),
-    high: band_rms(path, highpass: 3_500, lowpass: 16_000),
-  }
+  spectrum = render_spectrum(path)
   mono = band_rms(path, highpass: 28, lowpass: 16_000)
+  phase = DillaMaster.min_phase_correlation(path)
   # last_progression_chords is render-time state, so auditing a file this
   # process did not render finds nil -- and score_beauty(nil) returns 50, which
   # the report then printed as a harmony score next to real measurements. Every
@@ -223,11 +220,16 @@ def dilla_quality(path, baseline_path = nil)
     # (see MASTER_LUFS_BY_STYLE's own comment). This target/warning used to
     # still check the old broadcast-loud range, so it flagged a false
     # "too quiet" warning on every single correctly-targeted dilla render.
+    stereo_phase_correlation: phase,
     target: { integrated_lufs: DILLA_QUALITY_LUFS_TARGET, true_peak_max_dbtp: -1.0 }, warnings: [],
     capabilities: Master::Io::AnalogCapabilities.for(:dilla).last(5).map { |entry| entry[:id] }
   )
   report[:warnings] << "true peak exceeds -1 dBTP" if report[:true_peak_dbtp] && report[:true_peak_dbtp] > -1.0
   report[:warnings] << "master is outside the #{DILLA_QUALITY_LUFS_TARGET} LUFS range" if report[:integrated_lufs] && !DILLA_QUALITY_LUFS_TARGET.cover?(report[:integrated_lufs])
+  min_phase = DillaMaster.loss_gates["stereo_phase_correlation_min"]
+  if phase && min_phase && phase < min_phase
+    report[:warnings] << "stereo phase correlation #{phase.round(2)} < #{min_phase} (mono cancellation risk)"
+  end
   if baseline_path && File.file?(baseline_path)
     baseline = JSON.parse(File.read(baseline_path), symbolize_names: true)
     old = baseline[:spectral_rms_db] || {}

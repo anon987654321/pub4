@@ -64,12 +64,35 @@ module DillaMaster
       skipped << "mud_db_200_400hz (no audio path or report value given)"
     end
 
-    phase = path && File.file?(path) ? min_phase_correlation(path) : nil
+    phase = report[:stereo_phase_correlation] || report["stereo_phase_correlation"]
+    phase ||= (path && File.file?(path) ? min_phase_correlation(path) : nil)
     if phase
       min = gates["stereo_phase_correlation_min"]
       failures << "stereo_phase_correlation #{phase.round(2)} < #{min} (mono cancellation risk)" if min && phase < min
     else
       skipped << "stereo_phase_correlation (no audio path given)"
+    end
+
+    # LUFS / true-peak are already measured by `dilla_quality`. Promotion used
+    # to ignore them, so a take that `quality` itself warned about could still
+    # land in promoted_profiles.json. The numbers live in this file's yaml so
+    # the range is one source, not a second copy of DILLA_QUALITY_LUFS_TARGET.
+    tp = report[:true_peak_dbtp] || report["true_peak_dbtp"]
+    if tp
+      max_tp = gates["true_peak_max_dbtp"]
+      failures << "true_peak #{tp.round(1)} dBTP > #{max_tp} dBTP (intersample clip on lossy codecs)" if max_tp && tp > max_tp
+    else
+      skipped << "true_peak_dbtp (not present in report)"
+    end
+
+    lufs = report[:integrated_lufs] || report["integrated_lufs"]
+    if lufs
+      min_l = gates["integrated_lufs_min"]
+      max_l = gates["integrated_lufs_max"]
+      failures << "integrated_lufs #{lufs.round(1)} < #{min_l} (below the style spread)" if min_l && lufs < min_l
+      failures << "integrated_lufs #{lufs.round(1)} > #{max_l} (above the style spread)" if max_l && lufs > max_l
+    else
+      skipped << "integrated_lufs (not present in report)"
     end
 
     { pass: failures.empty?, failures:, skipped: }
@@ -158,11 +181,34 @@ module DillaMaster
     "highpass=f=180,lowpass=f=3800,pan=mono|c0=0.5*c0+0.5*c1,alimiter=limit=0.9"
   end
 
+  # Ear-level roughness lives in 2–4 kHz. The old meter was a two-band
+  # ratio split at 3.5 kHz, so that region sat inside `mid` and cancelled —
+  # a render measured −24.5 (very un-harsh) while sounding rough. Three-band:
+  # body (180–2 kHz) vs presence (2–4 kHz) vs air (4 kHz+). Harshness is
+  # presence standing above the body. Air being hotter is brightness, not
+  # roughness. `needs_notch` keeps the 6 dB threshold so the quality gate
+  # does not suddenly retry every take; the number it compares is now the
+  # band people actually hear. Callers that still pass only mid/high fall
+  # back to the old ratio rather than inventing a presence band.
   def analyze_harshness(spectrum)
-    high = spectrum[:high] || spectrum["high"] || -30.0
-    mid = spectrum[:mid] || spectrum["mid"] || -20.0
-    delta = high.to_f - mid.to_f
-    { harshness: delta.round(2), needs_notch: delta > 6.0 }
+    body = spectrum[:body] || spectrum["body"]
+    presence = spectrum[:presence] || spectrum["presence"]
+    air = spectrum[:air] || spectrum["air"]
+    if body && presence
+      delta = presence.to_f - body.to_f
+      {
+        harshness: delta.round(2),
+        needs_notch: delta > 6.0,
+        body_db: body.to_f.round(2),
+        presence_db: presence.to_f.round(2),
+        air_db: (air || spectrum[:high] || spectrum["high"] || -30.0).to_f.round(2),
+      }
+    else
+      high = spectrum[:high] || spectrum["high"] || -30.0
+      mid = spectrum[:mid] || spectrum["mid"] || -20.0
+      delta = high.to_f - mid.to_f
+      { harshness: delta.round(2), needs_notch: delta > 6.0 }
+    end
   end
 
   # harmony_score kept in the signature for call-site compatibility but no

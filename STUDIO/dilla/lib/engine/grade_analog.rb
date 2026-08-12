@@ -273,8 +273,62 @@ def sample_modern_chain
   ].join(",")
 end
 
+# STX-1260 sections. The DeviceChain is already this shape; the preset table
+# was one flat hash, so `subtle` turned crush, hiss, drive and wow down
+# together and "vinyl tone without the bit-crush" was inexpressible.
+SONITEX_SECTIONS = {
+  mix: %i[comp_threshold comp_ratio comp_attack comp_release comp_makeup stereo_width side_gain
+          out_comp_threshold out_comp_ratio out_comp_makeup limit level_out],
+  distortion: %i[dist_pre_emph_db dist_pre_lp dist_drive dist_mix dist_dc],
+  vinyl: %i[hf_rolloff lf_rolloff head_bump_hz head_bump_db groove_wear_lp wow_rate wow_depth flutter_hz flutter_depth],
+  tone: %i[warmth_db sibilance_db sibilance_hz phone_lp],
+  noise: %i[hiss_amp pop_rate pop_amp click_rate],
+  sampling: %i[crush_bits crush_sr crush_mix crush_post_lp],
+}.freeze
+
+# Fully dry values for a section amount of 0. Amount 1 is the preset (no-op).
+SONITEX_SECTION_BYPASS = {
+  stereo_width: 1.0, side_gain: 1.0,
+  comp_ratio: 1.0, comp_makeup: 0.0, out_comp_ratio: 1.0, out_comp_makeup: 0.0,
+  limit: 1.0, level_out: 1.0,
+  dist_mix: 0.0, dist_drive: 1.0, dist_dc: 0.0, dist_pre_emph_db: 0.0,
+  head_bump_db: 0.0, hf_rolloff: 20_000, groove_wear_lp: 20_000, lf_rolloff: 20,
+  wow_depth: 0.0, flutter_depth: 0.0,
+  warmth_db: 0.0, sibilance_db: 0.0, phone_lp: 20_000,
+  hiss_amp: 0.0, pop_rate: 0.0, click_rate: 0.0, pop_amp: 0.0,
+  crush_mix: 0.0, crush_bits: 16, crush_sr: 1.0, crush_post_lp: 20_000,
+}.freeze
+
+def sonitex_section_amount(name)
+  raw = ENV["SONITEX_#{name.to_s.upcase}"].to_s.strip
+  return 1.0 if raw.empty?
+  return 0.0 if raw.match?(/\A(?:0|false|off)\z/i)
+  return 1.0 if raw.match?(/\A(?:1|true|on)\z/i)
+
+  raw.to_f.clamp(0.0, 1.0)
+end
+
+def sonitex_apply_sections(cfg)
+  out = cfg.dup
+  SONITEX_SECTIONS.each do |section, keys|
+    amount = sonitex_section_amount(section)
+    next if amount >= 1.0
+
+    keys.each do |key|
+      next unless out.key?(key)
+
+      bypass = SONITEX_SECTION_BYPASS[key]
+      next if bypass.nil?
+
+      mixed = (out[key] * amount) + (bypass * (1.0 - amount))
+      out[key] = cfg[key].is_a?(Integer) ? mixed.round : mixed
+    end
+  end
+  out
+end
+
 def sonitex_config(track: nil)
-  SONITEX_PRESETS.fetch(sonitex_resolve_preset(track:) || :classic)
+  sonitex_apply_sections(SONITEX_PRESETS.fetch(sonitex_resolve_preset(track:) || :classic))
 end
 
 # Report what the master bus actually did, not what the preset table resolves to.

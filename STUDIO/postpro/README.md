@@ -67,16 +67,17 @@ missing from one of them does not fail; it quietly becomes a different stock,
 which is why `--vocab-check` refuses a gap.
 
 Grain rates film against its own box speed: at box speed a stock comes out at
-its own sigma, and each stop of push costs sqrt(2) more grain. `stock_matrix`
-normalises its rows so the matrix does dye crosstalk and the H&D offsets do the
-colour cast, rather than both doing cast.
+its own sigma, and each stop of push costs sqrt(2) more grain. Cell size scales
+with image width from a 2048 px reference so a newsletter hero and a 4k print
+share an emulsion. The finishing pass uses the preset's stock and box speed,
+not a second Portra-400 layer. `stock_matrix` normalises its rows so the matrix
+does dye crosstalk and the H&D offsets do the colour cast, rather than both
+doing cast.
 
-Known and deliberate: 50 presets declare `temp:` with neither `spectral_temp`
-nor `color_temp` in the chain, so `--describe-preset` prints a Kelvin figure the
-render does not apply. `--vocab-check` reports this as a NOTE rather than a
-failure. Fixing it means adding a white-balance step to 50 presets, which
-changes what every one of them looks like — a decision for whoever owns the
-look, not for a checker.
+A preset that sets `temp:` without a `spectral_temp` or `color_temp` step in
+its chain is a `--vocab-check` failure — the same unread-key rule as `stops:`,
+`lens:`, and `age:`. A Kelvin figure `--describe-preset` prints and the render
+never applies is a lie, not a look.
 
 ## Config
 

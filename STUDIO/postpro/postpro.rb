@@ -710,6 +710,15 @@ PRESETS = {
                  stock: :kodak_ektar100, temp: 5000, intensity: 0.85, lens: "takumar" },
 }.freeze
 
+# Finishing grain uses the preset's own stock and box speed, not a second
+# Portra-400 emulsion on top of Tri-X. Random/unspecified presets fall back
+# to Portra so the four output paths still share one call.
+def apply_finishing_grain(image, preset_name = nil)
+  data = PRESETS[preset_name.to_s.to_sym] || {}
+  stock = data[:stock] || :kodak_portra
+  grain(image, preset_effective_iso(data), stock, 0.35)
+end
+
 # Box speed, doubled per stop of push. A preset may override with iso:.
 def preset_effective_iso(preset_data)
   return preset_data[:iso].to_f if preset_data[:iso]
@@ -1155,7 +1164,11 @@ def color_separate(image, intensity = 0.6)
   safe_cast(image * (1 - intensity) + separated * intensity)
 end
 
-GRAIN_CELL_BASE = 4.0  # base Perlin cell size in px — larger = coarser grain
+GRAIN_CELL_BASE = 4.0  # Perlin cell size in px at GRAIN_REFERENCE_WIDTH
+# Cell sizes were calibrated at 2K. Scale with width so a 600 px hero and a
+# 4k print share an emulsion; Newson grain is a crystal size, not a fraction
+# of the picture.
+GRAIN_REFERENCE_WIDTH = 2048.0
 # Amplitude denominator, tuned for scRGB [0,1] space. Rebased from 400 when the
 # ISO term moved to being relative to box speed: the old term was a constant
 # sqrt(800/100) = 2.83 for every preset, so dividing the denominator by that
@@ -1177,6 +1190,7 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   data      = STOCKS[stock] || STOCKS[:kodak_portra]
   scales    = GRAIN_CHAN_SCALE[stock] || [1.0, 1.0, 1.0]
   sublayers = data[:sublayers] || [{ sensitivity_shift: 0.0, grain_scale: 1.0, weight: 1.0 }]
+  cell_base = [GRAIN_CELL_BASE * (image.width.to_f / GRAIN_REFERENCE_WIDTH), 1.0].max
   # Relative to the stock's OWN box speed, not to a fixed ISO 100.
   #
   # sqrt(iso/100) against a per-stock sigma double-counts: data[:grain] already
@@ -1199,16 +1213,16 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   # Lognormal cluster field: silver halide crystals cluster in groups whose
   # amplitude follows a lognormal distribution. exp(gaussian_noise) produces
   # the characteristic long-tail clumping seen in real emulsion grain scans.
-  cluster_sigma = [GRAIN_CELL_BASE * 2.5, 1.0].max
+  cluster_sigma = [cell_base * 2.5, 1.0].max
   cluster_field = Vips::Image.gaussnoise(image.width, image.height, sigma: GRAIN_LOGNORM_SIGMA, mean: 0.0,
                                                                    seed: postpro_seed(11))
                              .gaussblur(cluster_sigma).exp
                              .linear([1.0 / GRAIN_LOGNORM_MEAN], [0])
 
   bands = scales.each_with_index.map do |chan_scale, ci|
-    sp = [GRAIN_CELL_BASE * GRAIN_CHANNEL_SPATIAL[ci] * 0.7, 0.3].max
+    sp = [cell_base * GRAIN_CHANNEL_SPATIAL[ci] * 0.7, 0.3].max
     sublayers.map do |sl|
-      cell      = [GRAIN_CELL_BASE * (2.0**sl[:sensitivity_shift]) * sl[:grain_scale], 1.5].max.round
+      cell      = [cell_base * (2.0**sl[:sensitivity_shift]) * sl[:grain_scale], 1.5].max.round
       amplitude = base_amplitude * chan_scale * sl[:grain_scale] * sl[:weight]
       perlin    = Vips::Image.perlin(image.width, image.height, cell_size: cell, seed: postpro_seed(100 + ci))
       # Was Vips::Image.fractsurf(w, h, 2.5, seed:). fractsurf takes no seed
@@ -2731,7 +2745,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
 
       next unless processed
 
-      processed = grain(processed, 400, :kodak_portra, 0.35)
+      processed = apply_finishing_grain(processed, preset_name)
       processed = rgb_bands(processed)
       timestamp = Time.now.strftime("%Y%m%d%H%M%S")
       suffix = preset_name || "processed"
@@ -2964,6 +2978,7 @@ def vocab_check
     stops: %w[push_pull], age: %w[faded_print dye_fade expired_film],
     print_stock: %w[print_film], exposure_secs: %w[reciprocity_failure],
     k1: %w[lens_distortion], f_number: %w[diffraction_blur], tonemap_ev: %w[tonemap],
+    temp: %w[spectral_temp color_temp],
   }
   PRESETS.each do |name, p|
     key_readers.each do |key, readers|
@@ -2973,15 +2988,7 @@ def vocab_check
     end
   end
 
-  # temp: is the same defect at a scale that is an aesthetic decision rather
-  # than a bug fix. 49 of the presets declare a colour temperature and have
-  # neither spectral_temp nor color_temp, so describe_preset prints a Kelvin
-  # figure the render never applied -- but adding a white-balance step to 49
-  # presets would change what every one of them looks like, which is a call for
-  # whoever owns the look, not for a checker. Reported, deliberately not fatal.
-  no_temp_step = PRESETS.reject { |_, p| (Array(p[:fx]) & %w[spectral_temp color_temp]).any? }.keys
-  notes = no_temp_step.empty? ? [] : ["#{no_temp_step.length} presets declare temp: with no spectral_temp/color_temp step " \
-                                      "to apply it, so --describe-preset reports a Kelvin figure the render does not use"]
+  notes = []
 
   # A colour matrix whose rows do not sum to 1 shifts neutrals. stock_matrix
   # normalises them at application time so this cannot reach a render, but a
@@ -3020,21 +3027,18 @@ def vocab_check
   #
   # Read out of this file rather than asserted in prose, because the split had
   # already survived one round of being written down and left alone.
-  finishing_grain = "grain(processed, 400, :kodak_portra, 0.35)"
+  finishing_grain = "apply_finishing_grain(processed"
   source = File.read(__FILE__)
   ungrained = %w[process_file run_random run_one_shot run_watch].reject do |name|
     source[/^def #{name}\b.*?^end$/m]&.include?(finishing_grain)
   end
   unless ungrained.empty?
     problems << "output paths disagree on the finishing grain: #{ungrained.join(", ")} " \
-                "#{ungrained.one? ? "does" : "do"} not run it, the rest do"
+                "#{ungrained.one? ? "does" : "do"} not run apply_finishing_grain, the rest do"
   end
 
-  # Still true, and still the look rather than a defect: the finishing pass uses
-  # Portra's channel scaling at a fixed ISO 400 whatever stock the preset chose,
-  # so a Tri-X preset carries a colour-negative grain structure over its own.
   double_grained = PRESETS.count { |_, p| Array(p[:fx]).include?("grain") }
-  notes << "every output is grained a second time at ISO 400 Portra regardless of preset stock " \
+  notes << "every output is grained a second time at the preset's own stock and box speed " \
            "(#{double_grained} of #{PRESETS.length} presets already grain in their own chain)"
 
   # CONFIG is empty unless a master.json sits beside this file, which is the
@@ -3122,7 +3126,7 @@ def run_one_shot
   # and run_watch did not, so the same --preset gave a different negative
   # depending on whether it arrived through a batch or through repligen's
   # --postpro handoff -- and the handoff is the path that produces the finals.
-  processed = grain(processed, 400, :kodak_portra, 0.35)
+  processed = apply_finishing_grain(processed, preset_name)
   processed = rgb_bands(processed)
   quality = CONFIG["jpeg_quality"] || 95
   # --tiff16 was honoured by process_file and ignored here, so the one-shot mode
@@ -3200,7 +3204,7 @@ def run_random
           image = load_image(file)
           next unless image
           processed = preset_chain(image, [base, layer])
-          processed = grain(processed, 400, :kodak_portra, 0.35)
+          processed = apply_finishing_grain(processed, base)
           processed = rgb_bands(processed)
           timestamp = Time.now.strftime("%Y%m%d%H%M%S")
           output = file.sub(File.extname(file), "_#{base}+#{layer}_v#{i + 1}_#{timestamp}#{File.extname(file)}")
@@ -3239,7 +3243,7 @@ def run_watch
       begin
         image     = load_image(path)
         processed = preset(image, preset_name)
-        processed = grain(processed, 400, :kodak_portra, 0.35)
+        processed = apply_finishing_grain(processed, preset_name)
         processed = rgb_bands(processed)
         processed.write_to_file(out, Q: CONFIG["jpeg_quality"] || 95)
         $cli_logger.info "ok preset=#{preset_name} out=#{out}"

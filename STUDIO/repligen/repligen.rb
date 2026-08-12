@@ -231,6 +231,19 @@ MODEL_CAPABILITIES = {
     input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed],
     negative_prompt_key: nil,
   },
+  # 4 MP. `raw` is the camera-look toggle BFL added for Ultra: less plastic,
+  # more candid. Set automatically when --stock or --lens is on, because those
+  # flags are how this file asks for a photograph rather than an illustration.
+  "black-forest-labs/flux-1.1-pro-ultra" => {
+    input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed raw],
+    negative_prompt_key: nil,
+  },
+  # Text-instructed edit of an existing picture. Requires --image; generate
+  # without one is a refusal, not a silent text-to-image fallback.
+  "black-forest-labs/flux-kontext-pro" => {
+    input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed input_image],
+    negative_prompt_key: nil,
+  },
   "black-forest-labs/flux-dev" => {
     input_keys: %w[prompt aspect_ratio output_format seed guidance num_inference_steps],
     negative_prompt_key: nil,
@@ -257,7 +270,11 @@ PREVIEW_MODEL = "black-forest-labs/flux-schnell"
 # What --final asks for. The flag was parsed into options[:final] and nothing
 # ever read it, so `--final` did nothing at all: with REPLIGEN_MODEL set to a
 # preview model it silently kept previewing.
-FINAL_MODEL = "black-forest-labs/flux-1.1-pro"
+#
+# Ultra, not Pro: 4 MP and a raw mode that matches the stock/lens vocabulary.
+# Cheap one-shots stay on flux-1.1-pro (the default); --final is how one
+# image leaves preview and also leaves the 1 MP-class model.
+FINAL_MODEL = "black-forest-labs/flux-1.1-pro-ultra"
 
 def capability_for(model_id)
   MODEL_CAPABILITIES[model_id] || DEFAULT_CAPABILITY
@@ -383,6 +400,15 @@ def model_number(cap, kind, value)
   [key.to_sym, value]
 end
 
+# Ultra's raw mode is the camera look. Stock or lens in the request means
+# the caller asked for a photograph; --no-raw is how they opt out, --raw
+# is how they force it on a model that has the key.
+def raw_mode?(options)
+  return false if options[:no_raw]
+  return true if options[:raw]
+  !!(options[:stock] || options[:lens])
+end
+
 def build_input(prompt, options, seed:, negative_prompt:)
   cap = capability_for(options[:model])
   full = {
@@ -392,6 +418,8 @@ def build_input(prompt, options, seed:, negative_prompt:)
     safety_tolerance: 2,
     seed:,
     negative_prompt:,
+    raw: raw_mode?(options) || nil,
+    input_image: options[:image],
   }.compact
   [model_number(cap, :guidance, options[:guidance]),
    model_number(cap, :steps, options[:steps])].compact.each { |key, value| full[key] = value }
@@ -468,6 +496,8 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
     negative_prompt_sent: !negative_prompt.nil? && negative_prompt_supported?(options[:model]),
     model: options[:model],
     aspect_ratio: options[:aspect_ratio],
+    raw: raw_mode?(options) && capability_for(options[:model])[:input_keys].include?("raw"),
+    input_image: options[:image],
     seed:,
     sha256: digest,
     generated_at: Time.now.utc.iso8601,
@@ -523,6 +553,9 @@ parser = OptionParser.new do |p|
   p.on("--steps N", Integer) { |v| options[:steps] = v }
   p.on("--preview") { options[:preview] = true }
   p.on("--final") { options[:final] = true }
+  p.on("--raw") { options[:raw] = true }
+  p.on("--no-raw") { options[:no_raw] = true }
+  p.on("--image FILE") { |v| options[:image] = File.expand_path(v) }
   p.on("--postpro PRESET") { |v| options[:postpro] = v }
 end
 command = ARGV.shift || "help"
@@ -542,7 +575,7 @@ end
 # the thing you asked for.
 # The keys build_input can fill from something other than a per-model knob.
 # Keep in step with the literal hash there.
-PRODUCIBLE_INPUT_KEYS = %w[prompt aspect_ratio output_format safety_tolerance seed].freeze
+PRODUCIBLE_INPUT_KEYS = %w[prompt aspect_ratio output_format safety_tolerance seed raw input_image].freeze
 
 def vocab_check
   problems = []
@@ -639,6 +672,11 @@ when "generate"
   # the flag is for: the environment variable is how you leave a session in
   # preview, and --final is how you say "not this one, do it properly".
   options[:model] = FINAL_MODEL if options[:final] && !options[:model_explicit]
+  if options[:image]
+    abort "warn: --image #{options[:image]} is not a file" unless File.file?(options[:image])
+  elsif capability_for(options[:model])[:input_keys].include?("input_image")
+    abort "warn: #{options[:model]} is an editor; pass --image PATH"
+  end
   options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio], options[:distance])
   client = options[:dry_run] ? nil : Master::Io::ReplicateClient.new
 

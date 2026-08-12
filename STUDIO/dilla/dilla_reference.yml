@@ -80,3 +80,11 @@ loss_gates:
   correlation_source: "kick/bass micro-timing correlation above 0.95 reads as quantized/robotic"
   stereo_phase_correlation_min: 0.30
   phase_source: "L/R phase correlation below 0.30 anywhere risks cancellation when summed to mono (phone/laptop speakers, club mono sends)"
+  # Same window dilla_quality already warns on: ±1.5 dB around MASTER_LUFS_BY_STYLE
+  # (currently -19..-14). Written here so promotion and `quality` share one
+  # source; test_loss_gates_share_the_quality_lufs_window fails if they drift.
+  true_peak_max_dbtp: -1.0
+  true_peak_source: "EBU R128 / streaming delivery; above -1 dBTP intersamples clip on lossy codecs"
+  integrated_lufs_min: -20.5
+  integrated_lufs_max: -12.5
+  lufs_source: "DILLA_QUALITY_LUFS_TARGET: style spread -19..-14 plus 1.5 dB tolerance"

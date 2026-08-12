@@ -173,6 +173,7 @@ def help
      KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
          KICK_GAIN=0.88 (0.78 on flylo) kick/sub level scale — lower if still loud
          SONITEX=donuts_warm (default) | SONITEX=classic | SONITEX=heavy | SONITEX=0 dry
+         SONITEX_SAMPLING=0 (crush off) SONITEX_NOISE=0 TAPE_BIAS=1 TAPE_LOSS_HZ=0
          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)
          FORCE_KIT=1 regenerate synth drums
          samples/drums/custom/ overrides kit

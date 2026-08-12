@@ -27,6 +27,12 @@ TAPE_HYSTERESIS = (ENV["TAPE_HYSTERESIS"] || 0.25).to_f.clamp(0.0, 1.0)
 # 0.6 ms of Ornstein-Uhlenbeck wow. Real wow is subtle — enough that held
 # notes are never quite steady, not enough to read as an effect.
 TAPE_WOW_MS = (ENV["TAPE_WOW_MS"] || 0.6).to_f.clamp(0.0, 8.0)
+# 1.0 = original JA loop. Lower = less bias current, wider hysteresis.
+TAPE_BIAS = (ENV["TAPE_BIAS"] || 1.0).to_f.clamp(0.0, 1.0)
+# Spacing/loss filter in front of the magnetisation, Hz. 0 is off — tape is
+# not full-bandwidth into oxide, but turning this on by default would retone
+# every existing render. 14000 is the analog starting point.
+TAPE_LOSS_HZ = (ENV["TAPE_LOSS_HZ"] || 0).to_f.clamp(0.0, 20_000.0)
 
 # Per-channel console strip. See lib/console_strip.rb for why this is per
 # channel and not on the master, and for the harmonic measurements.
@@ -115,10 +121,15 @@ def tape_hysteresis!(path)
   out = "#{path}.tape#{ext.empty? ? '.wav' : ext}"
   args = ext.downcase == ".wav" || ext.empty? ? ["-c:a", "pcm_s16le"] : codec_for(out)
   begin
-    sh! "ffmpeg", "-y", "-i", path, "-f", "s16le", "-acodec", "pcm_s16le",
-        "-ar", SAMPLE_RATE.to_s, "-ac", "1", raw
+    decode = ["ffmpeg", "-y", "-i", path]
+    decode += ["-af", "lowpass=f=#{TAPE_LOSS_HZ.round}"] if TAPE_LOSS_HZ.positive?
+    decode += ["-f", "s16le", "-acodec", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "1", raw]
+    sh!(*decode)
     pcm = File.binread(raw).unpack("s<*").map { |s| s / PCM16_FULL_SCALE }
-    pcm = TapeHysteresis.process(pcm, drive: 1.0 + (3.0 * TAPE_HYSTERESIS)) if TAPE_HYSTERESIS.positive?
+    if TAPE_HYSTERESIS.positive?
+      pcm = TapeHysteresis.process(pcm, drive: 1.0 + (3.0 * TAPE_HYSTERESIS),
+                                   params: TapeHysteresis.params_for_bias(TAPE_BIAS))
+    end
     pcm = TapeHysteresis.apply_wow(pcm, rate: SAMPLE_RATE, depth_ms: TAPE_WOW_MS) if TAPE_WOW_MS.positive?
     peak = pcm.map(&:abs).max
     pcm = pcm.map { |v| v / peak * 0.94 } if peak&.positive?
@@ -145,7 +156,11 @@ def tape_hysteresis!(path)
         "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
     FileUtils.mv(out, path)
     took = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(1)
-    puts "tape: Jiles-Atherton hysteresis#{TAPE_WOW_MS.positive? ? " + O-U wow #{TAPE_WOW_MS}ms" : ''} (#{took}s)"
+    extras = []
+    extras << "bias #{TAPE_BIAS}" if TAPE_BIAS < 1.0
+    extras << "loss #{TAPE_LOSS_HZ.round}Hz" if TAPE_LOSS_HZ.positive?
+    extras << "O-U wow #{TAPE_WOW_MS}ms" if TAPE_WOW_MS.positive?
+    puts "tape: Jiles-Atherton hysteresis#{extras.empty? ? '' : " (#{extras.join(', ')})"} (#{took}s)"
     path
   rescue StandardError => e
     warn "tape hysteresis: #{e.message}"

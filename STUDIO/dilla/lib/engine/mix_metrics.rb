@@ -8,12 +8,20 @@
 # computed at load time from ones declared above them.
 
 
+# low/mid/high stay at their historical edges so sub_kick_balance and old
+# quality sidecars keep the same numbers. body/presence/air are the three
+# bands analyze_harshness actually needs (2 kHz and 4 kHz splits).
+RENDER_SPECTRUM_BANDS = {
+  low: [28, 180],
+  body: [180, 2_000],
+  mid: [180, 3_500],
+  presence: [2_000, 4_000],
+  high: [3_500, 16_000],
+  air: [4_000, 16_000],
+}.freeze
+
 def render_spectrum(path)
-  {
-    low: band_rms(path, highpass: 28, lowpass: 180),
-    mid: band_rms(path, highpass: 180, lowpass: 3_500),
-    high: band_rms(path, highpass: 3_500, lowpass: 16_000),
-  }
+  RENDER_SPECTRUM_BANDS.transform_values { |lo, hi| band_rms(path, highpass: lo, lowpass: hi) }
 end
 
 # Objective mix meters for piping into MASTER council (not a parallel critique stack).

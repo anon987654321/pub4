@@ -67,9 +67,14 @@ measured rather than asserted.
 both the spelling and the range. On `flux-dev` they are `guidance` (0–10) and
 `num_inference_steps` (1–50); on `flux-schnell` the step ceiling is **4**; on
 `stable-diffusion-3.5-large` they are `cfg` (0–20) and `steps` (1–50);
-`flux-1.1-pro` has neither. A figure outside the chosen model's range is a
-refusal, not a clamp — clamping silently is how you pay for 28 steps on a
-four-step model and get four.
+`flux-1.1-pro` and `flux-1.1-pro-ultra` have neither. A figure outside the
+chosen model's range is a refusal, not a clamp — clamping silently is how
+you pay for 28 steps on a four-step model and get four.
+
+`--final` is Ultra (4 MP). `--raw` / `--no-raw` reach Ultra's camera-look
+toggle; `--stock` or `--lens` turns raw on unless `--no-raw`. `--image PATH`
+is required on `flux-kontext-pro` (text-instructed edit); generate without
+one is a refusal, not a silent text-to-image fallback.
 
 Both knobs were read by `build_input` long before either had a flag: three
 declared capabilities with no way to reach them. `vocab-check` now fails on
@@ -95,10 +100,11 @@ applied when `build_input`'s `input_keys` filter had dropped it.
 ## Preview and final
 
 `--preview` swaps in `flux-schnell` unless a model was named explicitly or
-`REPLIGEN_MODEL` is set. `--final` forces `flux-1.1-pro` and **does** override
-`REPLIGEN_MODEL`, which is the asymmetry it exists for: the environment
-variable is how a session stays in preview, and `--final` is how one image
-leaves it. Until 2026-08-11 `--final` was parsed into an option nothing read.
+`REPLIGEN_MODEL` is set. `--final` forces `flux-1.1-pro-ultra` and **does**
+override `REPLIGEN_MODEL`, which is the asymmetry it exists for: the
+environment variable is how a session stays in preview, and `--final` is how
+one image leaves it — now at 4 MP, with raw mode when the request is a
+photograph. Until 2026-08-11 `--final` was parsed into an option nothing read.
 
 ## Batches
 
