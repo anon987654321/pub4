@@ -179,7 +179,38 @@ spine:
   # that would have been a raise.
   #
   # The ratchet still only goes down from here. `rake lint:spine RATCHET=1`.
-  lib_code_ceiling: 38811
+  #
+  # RAISED 2026-08-12, 38811 -> 38844 (+33), operator-sponsored, allowance 1 of 2.
+  #
+  # Counting moved INTO lib/ so that it happens once. This task and
+  # tools/ratchets.rb each carried their own copy of the non-blank-non-comment
+  # line count -- for this ratchet, printed side by side in the same register --
+  # and SmallFunctionsRule carried a third for method bodies. Three
+  # implementations of "how this repo counts code", agreeing by luck. They are
+  # now Master::Review::Scan::CodeMetrics, which lib/ has to hold because lib/
+  # may not depend on tools/.
+  #
+  # The accounting, every line of it:
+  #
+  #   review/scan/code_metrics.rb          +34  the one implementation
+  #   review/scan/rules/structural_rules.rb -15  two copies deleted
+  #   fix/self_check.rb                     +7  scan roots from data, not a literal
+  #   boot/data.rb                          +7  Master.scan_roots, the reader for it
+  #                                        ---
+  #                                         +33
+  #
+  # Why this is a raise and not a rebaseline: the 2026-08-12 core/ merge moved
+  # 554 existing lines across a boundary and wrote none, so the measured thing
+  # changed. Here 34 lines were written that did not exist anywhere. Two copies
+  # elsewhere went away and the repo total fell, but lib/ genuinely grew, and
+  # calling that a rebaseline would be spending the word to avoid spending the
+  # allowance.
+  #
+  # The other +14 is the scan-coverage manifest getting a reader. data/
+  # scan_coverage.yml exists because Fix::SelfCheck scanned File.join(root,
+  # "lib") as a path literal, which is how core/ sat outside its own law for
+  # three weeks without anyone choosing that. A literal cannot be audited.
+  lib_code_ceiling: 38844
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -187,7 +218,9 @@ spine:
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"
-  raised: []
+  raised:
+  - "2026-08-12 38811 -> 38844 (+33): one counter instead of three (CodeMetrics),
+     and the scan-coverage manifest getting a reader. Operator-sponsored."
   # How many raises may stand before lint:spine refuses another. The allowance was
   # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
   # mechanism working: a genuine fall earns the budget back, so this is a budget

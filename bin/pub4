@@ -22,6 +22,8 @@ def usage
       bin/pub4 vps logs <app> [--lines N] [--remote]
       bin/pub4 post-pull
       bin/pub4 measure [--deep] [--json]
+      bin/pub4 worktree <name>        own checkout + branch, so agents never share an index
+      bin/pub4 hooks                  install the shared-tree commit guard
 
     Profiles (passed through to check scripts):
       OPENBSD/bin/check --profile=contributor
@@ -59,6 +61,24 @@ when "measure"
 when "post-pull"
   script = File.join(OPENBSD_OPS, "bin", "post-pull-checklist")
   exec(script, *ARGV)
+when "worktree"
+  # The one command, because the friction was the whole problem. CLAUDE.md has
+  # said "take a worktree if more than one agent is active" for months while the
+  # worktree took a remembered path to a shell script and the shared tree took
+  # nothing. Sessions kept picking nothing, and kept committing each other's work.
+  name = ARGV.shift
+  abort("usage: bin/pub4 worktree <name>   (e.g. bin/pub4 worktree claude)") if name.to_s.empty?
+  exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
+when "hooks"
+  # core.hooksPath rather than copying into .git/hooks: a copy is a second
+  # implementation that drifts from the tracked one, silently, which is the
+  # defect this repo has the most of.
+  hooks = File.join(OPENBSD_OPS, "dev", "githooks")
+  system("git", "-C", ROOT, "config", "core.hooksPath", "OPENBSD/dev/githooks") ||
+    abort("pub4 hooks: git config failed")
+  puts "hooks: core.hooksPath -> OPENBSD/dev/githooks"
+  Dir.children(hooks).sort.each { |hook| puts "  #{hook}#{File.executable?(File.join(hooks, hook)) ? '' : '  (NOT EXECUTABLE)'}" }
+  puts "hooks: cross-tree commits now refused unless PUB4_CROSS_TREE=1"
 when "vps"
   sub = ARGV.shift
   case sub

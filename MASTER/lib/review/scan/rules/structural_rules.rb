@@ -81,14 +81,11 @@ module Master
           # Body only (between `def` and its `end`), excluding blank lines and
           # whole-line comments. A trailing comment on a code line still counts,
           # because that line carries code.
+          # CodeMetrics, not a local copy: lint:spine and tools/ratchets.rb each
+          # held their own line counter for the same ratchet, and this was the
+          # third. tools/fixtures declares the answers it must give.
           def code_length(node, lines)
-            first = node.location.start_line   # 1-based `def` line
-            last  = node.location.end_line     # 1-based `end` line
-            body  = lines[first...(last - 1)] || []
-            body.count do |line|
-              stripped = line.strip
-              !stripped.empty? && !stripped.start_with?("#")
-            end
+            CodeMetrics.method_code_lines(node, lines)
           end
 
           def visit(node, &block)
@@ -143,16 +140,7 @@ module Master
           end
 
           def count_public_methods(class_node)
-            count = 0
-            in_private = false
-            return count unless class_node.respond_to?(:body) && class_node.body
-            class_node.body.child_nodes.compact.each do |node|
-              if node.is_a?(Prism::CallNode) && %w[private protected].include?(node.name.to_s)
-                in_private = true
-              end
-              count += 1 if !in_private && node.is_a?(Prism::DefNode)
-            end
-            count
+            CodeMetrics.public_method_count(class_node)
           end
         end
 

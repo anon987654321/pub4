@@ -1,0 +1,45 @@
+# Which of MASTER's own Ruby is subject to MASTER's own law.
+#
+# `Fix::SelfCheck` and `rake constitution` scanned `File.join(root, "lib")` as a
+# path literal. `core/` sat beside `lib/` from 2026-07-20 to 2026-08-12, so for
+# three weeks the six files that judge every effect were the only files in the
+# tree exempt from the law they enforce. Nobody decided that and nothing said it;
+# it fell out of a string. The 2026-08-12 merge moved the fold under `lib/` and
+# the exemption closed silently, which is the same failure in the other
+# direction — a gate's coverage changing without anyone reading a number.
+#
+# This file is that number. `rake lint:scan_coverage` fails when a top-level
+# directory of MASTER holds Ruby and appears in neither list, so a new tree is a
+# decision instead of an accident. `roots` is read by Fix::SelfCheck, not just by
+# the lint — a coverage manifest nothing loads is the inert-config defect this
+# repo already has enough of.
+#
+# An exemption with no subject is a hole in a gate nobody can see
+# (`soul.yml` EXEMPTIONS_EXPIRE), so an `exempt` entry naming a directory that no
+# longer exists fails too.
+scan_coverage:
+  # Scanned by the self-directed gates. Relative to MASTER/.
+  roots:
+  - lib
+  # Not scanned, and why. A reason is required: the lint fails on a blank one,
+  # because "exempt: true" records the exemption without recording the argument,
+  # and the argument is the part that rots.
+  exempt:
+    test: >-
+      Tests are the instrument, not the subject. Scanning them makes every
+      fixture that deliberately contains a violation into a violation, which is
+      how a self-scanning gate learns to fail on its own evidence.
+    spec: >-
+      Same as test/. spec/core_smoke.rb asserts on the fold by running it.
+    tools: >-
+      Standalone scripts run by rake and by hand, outside the Zeitwerk loader and
+      outside the runtime. They are first-party and the exemption is arguable —
+      it is written down here so somebody can argue it, which was the whole
+      problem with core/.
+    script: >-
+      One-off migration and probe scripts, kept for the record rather than run.
+    web: >-
+      A Rails application with its own gates (bin/check --profile=web,
+      test:web_ui, test:integration_web). MASTER's scanner law is written for the
+      runtime, and applying rules like DENSITY to ERB-adjacent controllers
+      produces findings nobody acts on.

@@ -2,7 +2,8 @@
 
 module Master
   module Fix
-    # Applies MASTER's canonical scanner to its own lib/ tree.
+    # Applies MASTER's canonical scanner to MASTER's own source, over the roots
+    # data/scan_coverage.yml declares rather than a hardcoded lib/.
     class SelfCheck
       QUICK_SEVERITIES = %i[error critical].freeze
 
@@ -40,14 +41,23 @@ module Master
       private
 
       def run(severity_filter:)
-        result = @scanner.scan_dir(File.join(@root, "lib"), depth: :deep, stream: false)
-        return failed_report(result.message) if result.respond_to?(:err?) && result.err?
+        violations = []
+        scan_dirs.each do |dir|
+          result = @scanner.scan_dir(dir, depth: :deep, stream: false)
+          return failed_report(result.message) if result.respond_to?(:err?) && result.err?
 
-        violations = flatten_violations(result.value!)
-        violations = filter_severities(violations, severity_filter)
-        build_report(violations)
+          violations.concat(flatten_violations(result.value!))
+        end
+        build_report(filter_severities(violations, severity_filter))
       rescue StandardError => e
         failed_report("#{e.class}: #{e.message}")
+      end
+
+      # data/scan_coverage.yml, not File.join(@root, "lib") — see Master.scan_roots.
+      def scan_dirs
+        Master.scan_roots(root: @root)
+              .map { |dir| File.join(@root, dir) }
+              .select { |dir| Dir.exist?(dir) }
       end
 
       def build_report(violations)

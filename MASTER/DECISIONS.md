@@ -17,11 +17,11 @@ See `OPENBSD/DECISIONS.md` — **No Fourth Public App Until brgen Boundaries Hol
 Two things the old split was carrying, and where each went:
 
 - **The dependency direction survives, as a test.** The fold must not reach into the application spine. That was enforced by a directory boundary and is now enforced by `test/core/test_no_lib_backedges.rb`, which names the fold's files explicitly and fails if any of them requires a sibling under `lib/`. It also asserts it found the files at all, since a glob that matches nothing passes silently.
-- **`core_files: 6` survives, counted differently.** `lib/{core.rb,core/*.rb}` — five in the directory plus the entrypoint beside it. Globbing only `lib/core/` would have read 5 against a ceiling of 6 and handed out a free concept.
+- **`core_files: 6` survives, counted differently.** `lib/{core.rb,core/*.rb}` — five in the directory plus the entrypoint beside it. Globbing only `lib/core/` would have read 5 against a ceiling of 6 <!-- cite: data/spine.yml#spine.core_files --> and handed out a free concept.
 
 What the merge removed, beyond a directory: `bin/master-core` put `core/` on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb` files won was decided by load-path order. `bin/nsaudit` had to hand-require the second spine so the first one's constants would resolve. Both are gone.
 
-`lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved files `lib/` fell 28. The arithmetic is in `data/spine.yml` so the claim is checkable rather than asserted.
+`lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved files `lib/` fell 28. The arithmetic is in `data/spine.yml` so the claim is checkable rather than asserted. It has since been raised once, to 38844 <!-- cite: data/spine.yml#spine.lib_code_ceiling -->, for `Review::Scan::CodeMetrics` — one line counter where there had been three.
 
 ---
 

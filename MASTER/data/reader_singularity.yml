@@ -1,0 +1,33 @@
+# One data file, one loader. The ceiling only ever goes down.
+#
+# lib/trace/why_explainer.rb held a second copy of the rule-shard merge loop,
+# two directories from the real one in lib/boot/data.rb. Both used the shared
+# Master.load_yaml helper — what made the copy a second implementation was
+# building the path and composing the result itself. They agreed perfectly until
+# the shards were folded into rules.yml on 2026-08-12, at which point the copy's
+# glob matched nothing and it assigned {} over the real rules, silently emptying
+# /why for all 225 rules.
+#
+# `lint:data_singularity` asserts one top-level key per data file. This is that
+# idea one level out: one reader per data file.
+#
+# 47 sites across 9 files already existed when this landed, so the numbers below
+# are a ratchet, not a target — the same mechanism as data/spine.yml. A file not
+# listed here may have at most one reader; a listed file may fall and never rise.
+# `ruby MASTER/tools/reader_singularity.rb --ratchet` records a new low.
+#
+# Recorded 2026-08-12. This is the measurement, not an endorsement: nine data
+# files being read from nine places each is how the why_explainer defect got
+# written in the first place, and every one of these is a candidate for an
+# accessor on Master.* the way load_rules already is.
+reader_singularity:
+  ceiling:
+    agent_taxonomy.yml: 2
+    models.yml: 9
+    patterns.yml: 9
+    rule_deps.yml: 2
+    rules.yml: 9
+    soul.yml: 8
+    tools.yml: 2
+    tts.yml: 2
+    voice.yml: 4

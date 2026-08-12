@@ -37,9 +37,12 @@ task :constitution do
   scanner = Master::Review::Scan::InfraHelpers.build_scanner(root:)
   scanner.rules.reject! { |rule| rule.id.to_s == "ast_omission" }
   timeout = Integer(ENV.fetch("MASTER_CONSTITUTION_FILE_TIMEOUT", "4"))
-  lib     = File.join(root, "lib")
-  paths   = Dir.glob(File.join(lib, Master::Review::Scan::Scanner::SCAN_GLOB))
-               .select { |path| File.file?(path) && !Master::Review::Scan::Scanner.skip_path?(path, root:) }
+  # data/scan_coverage.yml, not File.join(root, "lib") — a path literal here is
+  # how core/ stayed outside its own law for three weeks. rake lint:scan_coverage
+  # audits the manifest; this reads it.
+  paths = Master.scan_roots(root:).flat_map { |dir| Dir.glob(File.join(root, dir, Master::Review::Scan::Scanner::SCAN_GLOB)) }
+                .select { |path| File.file?(path) && !Master::Review::Scan::Scanner.skip_path?(path, root:) }
+  puts "constitution: #{paths.size} file(s) across #{Master.scan_roots(root:).join(', ')}"
 
   violations = paths.each_with_index.flat_map do |path, index|
     puts "constitution: scanned #{index}/#{paths.size}" if index.positive? && (index % 25).zero?
@@ -234,12 +237,12 @@ namespace :lint do
             "so carrying it across would pass having measured nothing."
     end
     ceiling = config.fetch("lib_code_ceiling")
-    lines = Dir.glob(File.join(__dir__, "lib", "**", "*.rb")).sum do |file|
-      File.readlines(file).count do |line|
-        stripped = line.strip
-        !stripped.empty? && !stripped.start_with?("#")
-      end
-    end
+    # Master::Review::Scan::CodeMetrics, not a copy of the counter. This task and
+    # tools/ratchets.rb each carried their own, for the same ratchet, in the same
+    # table — they agreed by luck rather than by construction.
+    $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+    require "master"
+    lines = Master::Review::Scan::CodeMetrics.code_lines_in(File.join(__dir__, "lib"))
     # lib/core.rb and lib/core/*.rb both count: the entrypoint is a concept
     # (Effect, VERBS, Secret), and globbing only the directory would have relaxed
     # a 6-file invariant to 5 the moment the spine moved, without saying so.
@@ -364,10 +367,37 @@ namespace :lint do
       abort "lint:data_singularity: #{check.findings.size} violation(s)"
     end
   end
+
+  desc "Every Ruby-bearing tree in MASTER is scanned by its own law or exempt with a written reason"
+  task :scan_coverage do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "scan_coverage.rb")
+  end
+
+  desc "One loader per data file — a second direct reader is a second implementation"
+  task :reader_singularity do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "reader_singularity.rb")
+  end
+
+  desc "Prose citing a number that data/ owns must cite the value data/ currently holds"
+  task :doc_citations do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "doc_citations.rb")
+  end
+
+  desc "Every Do Not Touch entry names the gate that fails when its claim stops being true"
+  task :do_not_touch do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "do_not_touch.rb")
+  end
+
+  desc "The repo's own measuring code agrees with tools/fixtures, whose answers are declared"
+  task :instruments do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "instruments.rb")
+  end
 end
 
-desc "Full audit: constitution + selftest + lint:frozen + lint:data_singularity + lint:spine + lint:autoload + lint:principle_trace"
-task audit: %i[constitution selftest lint:frozen lint:data_singularity lint:spine lint:autoload lint:principle_trace] do
+desc "Full audit: constitution + selftest + the lint:* gates"
+task audit: %i[constitution selftest lint:frozen lint:data_singularity lint:spine lint:autoload
+               lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
+               lint:do_not_touch lint:instruments] do
   puts "audit: passed"
 end
 

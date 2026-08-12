@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# One git index, many agents.
+#
+# The default checkout is shared. CLAUDE.md has described this hazard accurately
+# for months — commit path-scoped, take a worktree if more than one agent is
+# active — and it keeps happening anyway, because staying in the shared tree is
+# zero effort and taking a worktree is a decision. On 2026-08-10 one push carried
+# four commits another session had told its user were still local. On 2026-08-12
+# a session's debt write-up was committed by a different session under a message
+# about something else, and that session's own commit body says it was "carrying
+# a four-line path correction from another session" — it carried rather more.
+#
+# This hook cannot tell sessions apart. Nothing in git can: everything commits as
+# the same author, and paths do not identify a session either. What it can do is
+# make the shared tree visible at the moment it matters, and refuse the one shape
+# that is almost always an accident.
+#
+#   1. A commit spanning more than one top-level tree is refused. That is the
+#      signature of `git commit -a` in this repo. Deliberate cross-tree commits
+#      are real but rare: set PUB4_CROSS_TREE=1 to say you meant it.
+#
+#   2. Everything left uncommitted is printed, grouped by tree. Some of it is
+#      probably not yours. That is the point.
+#
+# Installed by `bin/pub4 hooks`, which sets core.hooksPath to this directory.
+# The real fix is still `bin/pub4 worktree <name>`.
+
+TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+
+def tree_of(path)
+  head = path.split("/").first
+  TREES.include?(head) ? head : "(root)"
+end
+
+def paths(*args)
+  out = IO.popen(["git", *args, "-z"], &:read)
+  out.split("\0").reject(&:empty?)
+end
+
+staged = paths("diff", "--cached", "--name-only")
+exit 0 if staged.empty?
+
+staged_trees = staged.map { |path| tree_of(path) }.uniq.sort
+unstaged = paths("diff", "--name-only") + paths("ls-files", "--others", "--exclude-standard")
+left = (unstaged - staged).group_by { |path| tree_of(path) }
+
+unless left.empty?
+  summary = left.sort.map { |tree, files| "#{tree} (#{files.size})" }.join(", ")
+  warn "pre-commit: leaving uncommitted: #{summary}"
+  left.sort.each do |tree, files|
+    files.sort.first(6).each { |file| warn "    #{file}" }
+    warn "    … and #{files.size - 6} more in #{tree}" if files.size > 6
+  end
+  warn "pre-commit: some of that may belong to another session. Read before you claim it."
+end
+
+if staged_trees.size > 1 && ENV["PUB4_CROSS_TREE"] != "1"
+  warn ""
+  warn "pre-commit: REFUSED — this commit spans #{staged_trees.size} trees: #{staged_trees.join(', ')}"
+  warn ""
+  warn "  In a shared checkout that is usually `git commit -a` sweeping up work that"
+  warn "  is not yours. Commit path-scoped instead:"
+  warn ""
+  warn "      git commit -- <paths>          # no prior `git add`"
+  warn ""
+  warn "  If the change genuinely spans trees, say so:"
+  warn ""
+  warn "      PUB4_CROSS_TREE=1 git commit -- <paths>"
+  warn ""
+  warn "  If more than one agent is working here, the actual fix is a worktree:"
+  warn ""
+  warn "      bin/pub4 worktree <name>"
+  warn ""
+  exit 1
+end
+
+exit 0

@@ -52,6 +52,14 @@ TRACKED_DENY_GLOBS = [
   "RAILS/*/db/**/*.sqlite3",
   "**/.env",
   "**/credentials/*.key",
+  # CLAUDE.md's never-commit list, as a check rather than a sentence. These are
+  # gitignored, and .gitignore is exactly what failed for the seven master.key
+  # blobs still readable in this repo's history: a pattern stops a mistake only
+  # until someone adds a path explicitly. START_HERE.md "Do Not Touch" 2 names
+  # this sweep as its gate, so the claim now has a reader.
+  "MASTER/knowledge/**",
+  "MASTER/output/**",
+  "**/.master/**",
 ].freeze
 
 def git_ls_files(pattern)

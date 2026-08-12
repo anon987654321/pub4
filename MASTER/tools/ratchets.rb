@@ -75,13 +75,13 @@ module Pub4
     end
 
     # Same definition as the Rakefile's lint:spine: non-blank, non-comment.
+    # The same counter lint:spine uses, rather than a second copy of it. This
+    # register exists because ten instruments each had their own idea of where
+    # the number lived; carrying its own line count would have made eleven.
     def lib_code_lines
-      Dir.glob(File.join(MASTER, "lib/**/*.rb")).sum do |file|
-        File.readlines(file).count do |line|
-          stripped = line.strip
-          !stripped.empty? && !stripped.start_with?("#")
-        end
-      end
+      $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
+      require "master"
+      Master::Review::Scan::CodeMetrics.code_lines_in(File.join(MASTER, "lib"))
     end
 
     # The RAILS lints, each a Pub4 module with its own BASELINES.

@@ -66,9 +66,25 @@ bin/pub4 status                           # repo-level status
 
 **One git index, many agents.** The default checkout is shared. `git commit -a`
 sweeps another agent's half-finished work into your commit, and interleaved
-writes have produced silently corrupt files. Commit path-scoped
-(`git commit -- <paths>`, no prior `git add`) at minimum; take a worktree
-(`sh OPENBSD/dev/agent_worktree.sh <name>`) if more than one agent is active.
+writes have produced silently corrupt files.
+
+```zsh
+bin/pub4 worktree <name>   # your own checkout + branch — the actual fix
+bin/pub4 hooks             # refuse cross-tree commits in the shared tree
+```
+
+Take the worktree if more than one agent is active. This paragraph asked for
+that in prose for months while the worktree cost a remembered path to a shell
+script and the shared tree cost nothing, so sessions kept choosing nothing —
+and on 2026-08-12 one session's debt write-up was committed by another under a
+message about something else. It is one command now.
+
+In the shared tree, commit path-scoped at minimum (`git commit -- <paths>`, no
+prior `git add`). `bin/pub4 hooks` installs a `pre-commit` guard that refuses a
+commit spanning more than one top-level tree — the `git commit -a` signature —
+unless you set `PUB4_CROSS_TREE=1`, and prints everything it is leaving behind
+so the other sessions' work in your tree is visible at the moment you commit.
+It cannot tell sessions apart; nothing in git can.
 
 Path scoping bounds the commit, not the push. `git push` sends every commit
 beneath yours, so pushing one path-scoped commit publishes whatever anyone else

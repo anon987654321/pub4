@@ -55,6 +55,23 @@ module Master
       load_yaml(rules_path)
     end
 
+    # The directories MASTER's self-directed gates scan, from
+    # data/scan_coverage.yml instead of a path literal repeated in each gate.
+    #
+    # `File.join(root, "lib")` was written into Fix::SelfCheck and rake
+    # constitution, and core/ therefore sat outside the law for three weeks
+    # without anyone choosing that. A literal cannot be audited; a manifest can,
+    # and rake lint:scan_coverage audits this one. Foreign roots (scanner tests
+    # against a mktmpdir) have no manifest and get the old default.
+    def scan_roots(root: ROOT)
+      data_dir = root == ROOT ? DATA : File.join(root, "data")
+      path = File.join(data_dir, "scan_coverage.yml")
+      return ["lib"] unless File.exist?(path)
+
+      roots = load_yaml(path).dig("scan_coverage", "roots")
+      roots.is_a?(Array) && !roots.empty? ? roots : ["lib"]
+    end
+
     private
 
     def data_validation_cache

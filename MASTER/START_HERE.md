@@ -50,18 +50,26 @@ High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `lib/master.rb`, `lib/c
 
 ## Do Not Touch (unless the task requires it)
 
-1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not require the rest of `lib/`. The two-spine *directory* split ended 2026-08-12 (`docs/SEVERANCE.md`); the dependency direction it was protecting did not, and is now a test rather than a folder boundary. `core_files: 6` in `data/spine.yml` still makes a seventh concept a design decision.
-2. `knowledge/` is local-only — do not commit without updating `SearchKnowledge`.
-3. WebGL / face boot stays deferred until primer tap.
-4. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement unprompted.
-5. VPS: one app CI/deploy at a time on vm23.
-6. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets.
-7. After `git pull` on vm23, run `vps-deploy` before expecting live health.
-8. Feature truth: `RAILS/apps.yml`; debt: `OPENBSD/data/debt.yml`.
-9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPENBSD/RUNBOOK.md`.
-10. Production VM is vm23 only (`dev@brgen.no`).
-11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only gates.
-12. Dmesg every file op — see `OPENBSD/RUNBOOK.md`.
+Every entry names the gate that fails when its claim stops being true, or says
+why no gate can hold it. This is not decoration: item 2 of this list used to be
+"rule data stays split, because each shard sits near its consumers", and that
+reason had been false since the day the shards were created — the four of them
+had one consumer between them. A conclusion does not rot loudly. A test does.
+`rake lint:do_not_touch` checks that every entry below carries one and that the
+gates it names exist.
+
+1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not require the rest of `lib/`. The two-spine *directory* split ended 2026-08-12 (`docs/SEVERANCE.md`); the dependency direction it was protecting did not, and is now a test rather than a folder boundary. `core_files: 6` in `data/spine.yml` still makes a seventh concept a design decision. — gate: `test/core/test_no_lib_backedges.rb`, `rake lint:spine`
+2. `knowledge/` is local-only — do not commit without updating `SearchKnowledge`. — gate: `rake security_sweep`
+3. WebGL / face boot stays deferred until primer tap. — gate: `rake test:web_ui`, `test/test_web_ui.rb`
+4. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement unprompted. — no gate: a horizon file is a list of things deliberately not built, so there is no artefact to assert on; the failure mode is an agent building one, which only a reader of the diff can catch.
+5. VPS: one app CI/deploy at a time on vm23. — no gate: concurrency on a remote host, enforced by the deploy lock on vm23 rather than by anything in this repo; a local check would assert against state it cannot see.
+6. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets. — gate: `rake security_sweep`, `RAILS/test/tracked_secrets_test.rb`
+7. After `git pull` on vm23, run `vps-deploy` before expecting live health. — no gate: an ordering rule for two commands run on the VPS; nothing in the repo observes whether the box was deployed after its last pull.
+8. Feature truth: `RAILS/apps.yml`; debt: `OPENBSD/data/debt.yml`. — gate: `RAILS/gates/lib/apps_yml.rb`
+9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPENBSD/RUNBOOK.md`. — no gate: a prohibition on an action, not a property of the tree; the guard is the human-only env var in item 11.
+10. Production VM is vm23 only (`dev@brgen.no`). — no gate: a deployment fact about the world; the repo cannot assert which host is production, only which one its scripts name.
+11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only gates. — gate: `OPENBSD/vps_safety_gate.rb`
+12. Dmesg every file op — see `OPENBSD/RUNBOOK.md`. — no gate: a habit for the operator's own audit trail, checkable only against a session transcript, which is not an artefact this repo keeps.
 
 ## Data File Budget (why so many YAML files)
 
