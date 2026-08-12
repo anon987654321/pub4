@@ -199,6 +199,16 @@ if [ "$run_public" = "1" ]; then
   check_http brgen_public   "https://brgen.no/up" 1
   check_http amber_public   "https://amber.brgen.no/up" "$amber_req"
   check_http bsdports_public "https://bsdports.org/up" "$bsdports_req"
+  # One asset per app, from the engine's shared/public, which the deploy ships by
+  # tarring RAILS/shared wholesale rather than through the asset pipeline. Nothing
+  # else here proves that tar arrived: /up answers from the app, and propshaft
+  # never digests these files, so a sync that dropped public/ would look green.
+  #
+  # This exact font 404'd on amber for months while the stylesheet asking for it
+  # returned 200, because it existed only under brgen/public — Pub4::AssetUrlLint
+  # now catches that at source, but a source lint cannot prove the file shipped.
+  check_http shared_font_brgen "https://brgen.no/fonts/lg.woff2" 1
+  check_http shared_font_amber "https://amber.brgen.no/fonts/lg.woff2" "$amber_req"
   brgen_html_smoke
 fi
 
