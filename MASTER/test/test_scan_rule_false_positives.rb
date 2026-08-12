@@ -152,6 +152,38 @@ class TestScanRuleFalsePositives < Minitest::Test
     refute_empty findings(:veto_patterns, %(system("rm -rf \#{directory}")\n))
   end
 
+  # --- veto unfinished ----------------------------------------------------
+  # Was "\.\.\.|TODO|FIXME|pending". It fired 119 times in lib/ and was wrong
+  # 119 times: 49 the word "pending" (an order state in VALID_STATES, and the
+  # inside of depending/spending), 41 an ellipsis in prose or documented syntax,
+  # 26 Ruby's exclusive range, 3 the source of the rules that detect TODO.
+  #
+  # Zero real findings, at :veto — the strongest severity there is. A veto that
+  # is wrong every time does not gate anything; it teaches the reader that a
+  # veto is noise. Narrowed 2026-08-12 to 0 in lib/.
+
+  def test_veto_unfinished_ignores_ruby_range_pending_and_quoted_markers
+    [
+      %(dropped = @entries[0...(@entries.length - keep.length)]\n),
+      %((1...lines.length).each { |i| check(i) }\n),
+      %(@pending = []\n),
+      %(VALID_STATES = %w[pending running done error].freeze\n),
+      %(# constant from lib/review and depending on its load order\n),
+      %(text + "\\n... [truncated]"\n),
+      %(scan_lines(src, /\\b(TODO|FIXME|HACK|XXX)\\b/, message: "unresolved marker")\n),
+    ].each do |source|
+      assert_empty findings(:veto_patterns, source),
+                   "#{source.inspect} is ordinary Ruby, not unfinished work"
+    end
+  end
+
+  # The half a narrowing has to prove: a real marker and a real stub still veto.
+  def test_veto_unfinished_still_catches_a_marker_and_a_stub
+    refute_empty findings(:veto_patterns, %(# TODO: wire this up\n))
+    refute_empty findings(:veto_patterns, %(  # FIXME broken since the merge\n))
+    refute_empty findings(:veto_patterns, %(def stub\n  ...\nend\n))
+  end
+
   # --- CONTROL_CHARS ------------------------------------------------------
   # A concurrent write left SOH bytes wrapping a string literal this session;
   # this rule catches that corruption class. Tab/newline stay legal. The SOH is

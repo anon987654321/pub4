@@ -203,7 +203,42 @@ veto_patterns:
     apply: parameterize
     violates_law: ROBUSTNESS
   unfinished:
-    detect: "\\.\\.\\.|TODO|FIXME|pending"
+    # Was "\\.\\.\\.|TODO|FIXME|pending", which fired 119 times in lib/ and was
+    # wrong 119 times. Measured 2026-08-12, every finding read and classified:
+    #
+    #   49  the word "pending" — @pending, the "pending" order state in
+    #       VALID_STATES, and the substring inside depending / spending
+    #   41  an ellipsis in prose or in documented syntax — "\n... [truncated]",
+    #       %i[...], for...of, require(...).permit(...)
+    #   26  Ruby's exclusive range operator — lines[0...-1], (1...lines.length)
+    #    3  the source of the rules that detect TODO/FIXME, quoting it
+    #
+    # Zero real unfinished work, at :veto — the strongest severity there is.
+    # 119 false vetoes do not gate anything; they teach the reader that a veto is
+    # noise, which costs more than the rule was ever worth.
+    #
+    # Narrowed rather than deleted — the intent is right, only the reach was
+    # wrong. Three clauses, each doing one thing:
+    #
+    #   #[^\n]*\b(TODO|FIXME)\b   a marker in a comment, which is what a marker
+    #                             is. The last three false vetoes were TODO
+    #                             inside the regex literals of the rules that
+    #                             detect TODO; none has a `#` before it.
+    #   ^\s*\.\.\.\s*$            a stubbed body — `...` alone on its line. This
+    #                             is the shape lexical TODO_FIXME does not have,
+    #                             and the reason to keep a veto here at all.
+    #   (pending removed)         a legitimate order state in this codebase
+    #                             (VALID_STATES) and a substring of depending
+    #                             and spending. No narrowing rescues a word.
+    #
+    # The comment clause deliberately does not carry TODO_FIXME's hardcoded
+    # `path.include?("/review/scan/rules/")` exemption. Copying an exemption into
+    # a second file is how the two drift; being precise about what a marker looks
+    # like needs no exemption at all.
+    #
+    # Pinned in both directions in test/test_scan_rule_false_positives.rb, per
+    # that file's own rule: a narrowing has to prove what it still catches.
+    detect: "#[^\\n]*\\b(TODO|FIXME)\\b|^\\s*\\.\\.\\.\\s*$"
     apply: complete_or_track
     violates_law: ROBUSTNESS
   unsafe_calls:
