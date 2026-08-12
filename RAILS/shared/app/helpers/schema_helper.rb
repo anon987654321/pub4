@@ -39,7 +39,7 @@ module SchemaHelper
     }.compact
   end
 
-  def item_list_schema(items, title: nil)
+  def item_list_schema(items, title: nil, item_type: "Product")
     # Load once: `size` on an unloaded relation is a COUNT round-trip, and the
     # `.any?` most call sites guard with is a third.
     items = items.to_a
@@ -53,12 +53,22 @@ module SchemaHelper
           "@type" => "ListItem",
           "position" => index,
           "item" => {
-            "@type" => "Product",
+            "@type" => item_type,
             "name" => item.try(:title) || item.try(:name),
             "url" => schema_url_for(item),
           },
         }
       end,
+    }.compact
+  end
+
+  def collection_page_schema(name:, url:, items:, item_type: "Thing")
+    {
+      "@context" => "https://schema.org",
+      "@type" => "CollectionPage",
+      "name" => name,
+      "url" => url,
+      "mainEntity" => item_list_schema(items, title: name, item_type: item_type),
     }.compact
   end
 
@@ -148,6 +158,7 @@ module SchemaHelper
       "image" => seo_image_url(post.try(:image)),
       "wordCount" => body.to_s.split.size,
       "inLanguage" => I18n.locale.to_s,
+      "publisher" => organization_snippet,
     }.compact
   end
 
@@ -172,6 +183,7 @@ module SchemaHelper
       "url" => schema_url_for(place),
       "image" => seo_image_url(place.try(:photo) || place.try(:image)),
       "sameAs" => (schema_url_for(pin) if pin.present?),
+      "aggregateRating" => aggregate_rating_snippet(place),
     }.compact
   end
 
@@ -206,6 +218,7 @@ module SchemaHelper
     if listing.respond_to?(:photos) && listing.photos.attached?
       data["image"] = seo_image_url(listing.photos.first)
     end
+    data["aggregateRating"] = aggregate_rating_snippet(listing)
 
     data.compact
   end
@@ -266,6 +279,25 @@ module SchemaHelper
   def person_snippet(user)
     return nil unless user
     { "@type" => "Person", "name" => user.try(:name) || user.try(:username) }
+  end
+
+  def organization_snippet
+    name = respond_to?(:city_name) ? city_name : nil
+    return if name.blank?
+
+    { "@type" => "Organization", "name" => name }
+  end
+
+  def aggregate_rating_snippet(resource)
+    count = resource.try(:reviews_count).to_i
+    value = resource.try(:rating).to_f
+    return if count <= 0 || value <= 0
+
+    {
+      "@type" => "AggregateRating",
+      "ratingValue" => value,
+      "reviewCount" => count,
+    }
   end
 
   def geo_snippet(place)

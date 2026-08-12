@@ -1,4 +1,14 @@
 <% content_for :title, @community.name %>
+<% content_for :json_ld, json_ld_script(collection_page_schema(
+      name: @community.name,
+      url: schema_url_for(@community),
+      items: @posts,
+      item_type: "Article"
+    )) %>
+<% content_for :json_ld, json_ld_script(breadcrumb_json_ld([
+      [city_name, main_app.root_url],
+      [@community.name, request.original_url.split("?").first]
+    ])) %>
 
 <header class="community-header" role="banner" aria-label="Community">
   <h1><%= @community.name %></h1>

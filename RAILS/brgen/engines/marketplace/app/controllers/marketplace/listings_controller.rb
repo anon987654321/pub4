@@ -50,6 +50,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @order = Marketplace::Order.new if Current.user.present?
     @reviews = @listing.reviews.includes(:user).order(created_at: :desc)
     @review = Marketplace::Review.new if Current.user.present? && @listing.reviewable_by?(Current.user)
+    @nearby_listings = nearby_listings_for(@listing)
   end
 
   def new
@@ -107,6 +108,15 @@ class Marketplace::ListingsController < Marketplace::BaseController
       :title, :description, :price_cents, :condition, :status, :location,
       :latitude, :longitude, :category_id, :preset, photos: []
     )
+  end
+
+  def nearby_listings_for(listing)
+    return Marketplace::Listing.none unless listing.geo?
+
+    policy_scope(Marketplace::Listing).active
+      .where.not(id: listing.id)
+      .nearby(listing.latitude, listing.longitude, 5)
+      .limit(6)
   end
 
   def listing_distances(listings, lat, lng)

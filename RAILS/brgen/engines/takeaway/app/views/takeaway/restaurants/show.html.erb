@@ -1,6 +1,10 @@
 <% content_for :title, @restaurant.name %>
 <% content_for :description, meta_description_for(@restaurant) %>
 <% content_for :json_ld, json_ld_for(@restaurant, type: :local_business) %>
+<% content_for :json_ld, json_ld_script(breadcrumb_json_ld([
+      [t("storefront.restaurants"), restaurants_url],
+      [@restaurant.name, request.original_url.split("?").first]
+    ])) %>
 
 <div class="page-header" role="banner" aria-label="Takeaway restaurant header">
   <h1><%= @restaurant.name %></h1>
@@ -120,6 +124,8 @@
           action: { label: "Browse menu", path: restaurant_path(@restaurant, anchor: "menu") } %>
   <% end %>
 </section>
+
+<%= render "shared/also_nearby", items: @nearby_restaurants, title: t("takeaway.nearby_restaurants", default: "Nearby") %>
 
 <% if @can_review %>
 <section>

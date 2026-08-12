@@ -1,4 +1,14 @@
 <% content_for :title, "##{@hashtag.name}" %>
+<% content_for :json_ld, json_ld_script(collection_page_schema(
+      name: "##{@hashtag.name}",
+      url: hashtag_url(@hashtag.name),
+      items: @posts,
+      item_type: "Article"
+    )) %>
+<% content_for :json_ld, json_ld_script(breadcrumb_json_ld([
+      [city_name, main_app.root_url],
+      ["##{@hashtag.name}", request.original_url.split("?").first]
+    ])) %>
 
 <header class="page-header" role="banner">
   <h1>#<%= @hashtag.name %></h1>

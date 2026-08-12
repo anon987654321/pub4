@@ -27,6 +27,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
     @favorited = Current.user.present? && Current.user.takeaway_favorite_restaurants.exists?(restaurant: @restaurant)
     @reviews = load_neighbour_reviews
     @can_review = can_leave_review?
+    @nearby_restaurants = nearby_restaurants_for(@restaurant)
   end
 
   def new
@@ -91,5 +92,14 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
 
   def can_leave_review?
     authenticated? && Current.user.takeaway_orders.where(restaurant: @restaurant, status: "delivered").exists?
+  end
+
+  def nearby_restaurants_for(restaurant)
+    return Takeaway::Restaurant.none unless restaurant.geo?
+
+    Takeaway::Restaurant.active
+      .where.not(id: restaurant.id)
+      .nearby(restaurant.latitude, restaurant.longitude, 5)
+      .limit(6)
   end
 end

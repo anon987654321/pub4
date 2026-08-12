@@ -38,6 +38,7 @@ module Maps
       # authenticated? it stayed false for a guest who had just checked in and
       # the page kept offering the form.
       @checked_in = Current.user.present? && @place.place_check_ins.exists?(user: Current.user)
+      @nearby_places = nearby_places_for(@place)
     end
 
     def check_in
@@ -50,6 +51,16 @@ module Maps
       redirect_to place_path(@place), notice: t("flash.checked_in_at", place: @place.name)
     rescue ActiveRecord::RecordInvalid
       redirect_to place_path(@place), alert: t("flash.check_in_failed")
+    end
+
+    private
+
+    def nearby_places_for(place)
+      return Place.none unless place.geo?
+
+      scope = Place.where.not(id: place.id)
+      scope = scope.where(city: Current.city_record) if Current.city_record
+      scope.nearby(place.latitude, place.longitude, 5).limit(6)
     end
   end
 end

@@ -3,6 +3,10 @@
 <% content_for :json_ld, json_ld_for(@listing, type: :product) %>
 <% content_for :og_type, "product" %>
 <% content_for :og_image, seo_image_url(@listing.photos.first) %>
+<% content_for :json_ld, json_ld_script(breadcrumb_json_ld([
+      [t("marketplace.home_title", city: city_name), listings_url],
+      [@listing.title, request.original_url.split("?").first]
+    ])) %>
 
 <div class="page-header marketplace-listing-header">
   <div>
@@ -47,6 +51,8 @@
   <% end %>
   <%= render "shared/affiliate_disclosure" %>
 </article>
+
+<%= render "shared/also_nearby", items: @nearby_listings, title: t("marketplace.nearby_listings", default: "Nearby") %>
 
 <div class="section-divider">
   <p class="section-heading--md">Reviews</p>
