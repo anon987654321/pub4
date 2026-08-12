@@ -67,26 +67,41 @@ const COMPONENT_REGISTRATIONS = [
   ["nested-form", RailsNestedForm],
 ]
 
-// The two components whose dependency is a third-party CDN, registered only on
-// pages that actually contain them.
+// The one component whose dependency is a third-party CDN, registered only on
+// pages that actually contain it.
 //
-// carousel pulls swiper from cdn.jsdelivr.net and timeago pulls date-fns from
-// unpkg.com, and both were static imports here -- so every page of all three
-// apps put those hosts on its first-paint critical path. Measured on the brgen
-// front page: 537 requests for one load, including the whole
-// swiper@11.1.15/shared + modules tree and the date-fns@4.4.0/_lib tree. ES
-// modules fail as a graph, so one slow or blocked CDN left window.Turbo
-// undefined and all 169 data-controller elements on that page inert.
+// carousel pulls swiper from cdn.jsdelivr.net, and it was a static import here
+// -- so every page of all three apps put that host on its first-paint critical
+// path. Measured on the brgen front page: 537 requests for one load, including
+// the whole swiper@11.1.15/shared + modules tree. ES modules fail as a graph,
+// so one slow or blocked CDN left window.Turbo undefined and all 169
+// data-controller elements on that page inert.
 //
-// The importmap pins stay on the CDN deliberately: importmap_baseline.rb
-// documents why (both packages cross-reference siblings by *relative* path, so
-// a single vendored file breaks every one of those paths). Keeping the pin and
+// The importmap pin stays on the CDN deliberately: importmap_baseline.rb
+// documents why (swiper cross-references siblings by *relative* path, so a
+// single vendored file breaks every one of those paths). Keeping the pin and
 // deferring the import fixes the critical path without reopening that decision.
-// carousel is amber-only (shared/_wardrobe_showcase); timeago appears on feed,
-// message and notification surfaces but on no app's first paint.
+//
+// "carousel" here means this one swiper-backed package, and the only element
+// asking for it is amber's shared/_wardrobe_showcase. It does NOT mean brgen has
+// no carousels -- brgen has four, and all of them are hand-rolled and touch
+// neither this controller nor swiper: the city network nav bar (#cityCarousel,
+// driven by brgen_shell_controller + face.js), the media gallery and dating
+// swipe (swipe_controller, data-swipe-mode-value="carousel"), and playlist's
+// immersive view, which reuses the city carousel as its logo. So the deferral
+// costs brgen nothing today, but adopting this package on any brgen surface
+// puts jsdelivr back on that page -- vendor swiper first if that happens.
+//
+// timeago was the second entry here until 2026-08-12. It read
+// data-timeago-datetime-value; no view in any app ever set that attribute, so
+// on the eighteen surfaces that declared the controller it replaced the
+// server's text with the empty string -- or would have, had it registered.
+// Measured over CDP on the live post page: all three elements kept their
+// server-rendered text. Its only possible effect was to overwrite localised
+// Norwegian with date-fns English, so the controller, the eighteen
+// declarations and the date-fns pin all went together.
 const LAZY_COMPONENTS = [
-  ["carousel", () => import("@stimulus-components/carousel")],
-  ["timeago", () => import("@stimulus-components/timeago")]
+  ["carousel", () => import("@stimulus-components/carousel")]
 ]
 
 // Register `name` the first time the document contains an element asking for it.

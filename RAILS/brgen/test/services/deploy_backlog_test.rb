@@ -443,15 +443,23 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, component
     end
 
-    # carousel and timeago are registered on demand, not statically imported:
-    # their dependencies are swiper (cdn.jsdelivr.net) and date-fns (unpkg.com),
-    # and importing them here put both hosts on the first-paint critical path of
-    # every page in all three apps. Assert the lazy registration by name.
+    # carousel is registered on demand, not statically imported: its dependency
+    # is swiper (cdn.jsdelivr.net), and importing it here put that host on the
+    # first-paint critical path of every page in all three apps. Assert the lazy
+    # registration by name.
     assert_includes source, 'LAZY_COMPONENTS'
-    %w[carousel timeago].each do |name|
+    %w[carousel].each do |name|
       assert_match(/\["#{name}",\s*\(\)\s*=>\s*import\(/, source,
                    "#{name} should be lazily imported, not statically")
     end
+
+    # timeago was the other lazy component until 2026-08-12. It read
+    # data-timeago-datetime-value, which no view ever set, so its only possible
+    # effect was to replace localised Norwegian with date-fns English. Gone with
+    # its pin, its vendored file and the unpkg.com host it needed. Matched on
+    # the registration form, not the bare word: the comment above LAZY_COMPONENTS
+    # explains the removal and has to keep naming it.
+    refute_match(/\["timeago",/, source, 'timeago has no consumer in any app')
 
     # Dialog, ScrollTo, Sound and SpeechRecognition were imported, registered,
     # pinned and vendored with no data-controller for them in any of the four

@@ -10,13 +10,17 @@ end
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "@hotwired--stimulus.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
-# src/index.js pulls in ./fetch_request, ./fetch_response,
-# ./request_interceptor, ./verbs via *extensionless* relative imports —
-# valid for a bundler (which auto-resolves the .js) but not for a browser's
-# native ES module loader, which requests the literal path with no
-# extension and 404s. dist/requestjs.js is the pre-bundled, self-contained
-# build (no imports at all) — use that instead.
-pin "@rails/request.js", to: "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/dist/requestjs.js"
+# Vendored, not CDN. The dist build is what makes that possible: src/index.js
+# pulls in ./fetch_request, ./fetch_response, ./request_interceptor and ./verbs
+# via *extensionless* relative imports — valid for a bundler, which auto-resolves
+# the .js, but not for a browser's native ES module loader, which requests the
+# literal path and 404s. dist/requestjs.js is pre-bundled with no imports at all.
+pin "@rails/request.js", to: "@rails--request.js"
+# The cable_ready gem ships its own importmap pinning morphdom to ga.jspm.io,
+# with `pin`'s default preload: true — measured on live brgen.no, that host and
+# jsDelivr were the two external modulepreloads on every page. This line runs
+# after the gem paths are drawn, so re-pinning the same name overrides it.
+pin "morphdom", to: "morphdom.js"
 pin "stimulus-use"
 pin "stimulus_reflex"
 pin "cable_ready"
@@ -31,21 +35,22 @@ pin "cable_ready"
 # it. The `futurism` gem stays in all three Gemfiles for the server-side
 # `futurize` helper; wiring a real paginated index to it is the open lazy-render
 # work in FINAL_TODO P0.4, and that starts by putting this pin back.
-# date-fns's own ESM build cross-references ~200 sibling files via *relative*
-# imports (./addDays.js, ./formatDistance.js, ...) rather than bare specifiers,
-# so vendoring a single flattened file locally breaks every one of those
-# relative paths once served from our own domain. Pinning straight to the CDN
-# keeps the relative imports resolving against that same CDN path, matching
-# the swiper/bundle pin below. Only stimulus-components/timeago needs this,
-# for formatDistanceToNow.
+# No date-fns pin, and unpkg.com is no longer contacted by any app. It existed
+# for one consumer, @stimulus-components/timeago, and that controller is gone:
+# it reads data-timeago-datetime-value, no view in any app ever set one, and its
+# only possible effect was to overwrite the server's localised Norwegian with
+# date-fns English. Relative time is now rendered server-side by
+# Shared::UiHelper#time_ago. Restoring the pin means restoring the CDN, because
+# date-fns's ESM build cross-references ~200 siblings by *relative* path
+# (./addDays.js, ./formatDistance.js, ...) — vendoring one flattened file breaks
+# every one of those paths once served from our own domain.
 #
 # preload: false on every CDN-backed pin from here down. `pin` defaults to
 # preload: true, so each emitted a <link rel="modulepreload"> on every page of
-# every app -- unpkg, jsDelivr and esm.sh on the first-paint critical path
-# whether or not any code on the page imported them. stimulus_boot.js now
-# registers carousel and timeago on demand; without this the preload fetched
-# them anyway and the deferral bought nothing.
-pin "date-fns", to: "https://unpkg.com/date-fns@4.4.0/index.js", preload: false
+# every app -- jsDelivr and esm.sh on the first-paint critical path whether or
+# not any code on the page imported them. stimulus_boot.js registers carousel on
+# demand; without this the preload fetched it anyway and the deferral bought
+# nothing.
 pin "sortablejs"
 pin "pub4/hotwire", to: "hotwire.js"
 pin "pub4/stimulus_boot", to: "stimulus_boot.js"
@@ -108,9 +113,9 @@ pin "idb-keyval", to: "idb-keyval.js"
   reveal sortable password-visibility rails-nested-form
 ].each { |name| sc_pin.call(name) }
 
-# Registered on demand by stimulus_boot.js -- their dependencies are the CDN
-# pins above. Pinned so the dynamic import() can resolve, not preloaded.
-%w[carousel timeago].each { |name| sc_pin.call(name, preload: false) }
+# Registered on demand by stimulus_boot.js -- its dependency is the swiper CDN
+# pin above. Pinned so the dynamic import() can resolve, not preloaded.
+%w[carousel].each { |name| sc_pin.call(name, preload: false) }
 
 pin "@stimulus-components/textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"
 pin "stimulus-textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"

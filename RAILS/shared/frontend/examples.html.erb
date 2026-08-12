@@ -44,5 +44,5 @@
   <% end %>
 </ul>
 
-<%# Timeago %>
-<time datetime="<%= Time.current.iso8601 %>" data-controller="timeago"></time>
+<%# The Timeago example is gone with the controller. Relative time is rendered
+    server-side by Shared::UiHelper#time_ago so it comes out localised. %>
