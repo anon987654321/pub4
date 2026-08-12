@@ -2,6 +2,7 @@
 
 class Tv::Broadcast < ApplicationRecord
   include Shared::MediaProcessable
+  include Tv::ChannelTenanted
   tracks_activity created: "BroadcastScheduled", updated: "BroadcastUpdated", source_vertical: "tv", actor: :user
 
   belongs_to :channel, class_name: "Tv::Channel", foreign_key: :tv_channel_id
@@ -15,8 +16,11 @@ class Tv::Broadcast < ApplicationRecord
   validates :title, presence: true
   before_create { self.stream_key = SecureRandom.hex(16) }
 
-  scope :live,      -> { where(status: "live") }
-  scope :scheduled, -> { where(status: "scheduled") }
+  # Same nil-channel exposure as Tv::Video — tv/home/index renders
+  # b.channel.name for every @live row. It has not fired only because no
+  # broadcast is live; the crash was one row away, not absent.
+  scope :live,      -> { where(status: "live").in_current_city }
+  scope :scheduled, -> { where(status: "scheduled").in_current_city }
 
   # `actor: user` is a lazy belongs_to read, and a broadcast toggled from a
   # controller is loaded by id with nothing preloaded — so under strict loading

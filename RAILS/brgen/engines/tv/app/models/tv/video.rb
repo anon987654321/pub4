@@ -7,6 +7,7 @@ class Tv::Video < ApplicationRecord
   include Shared::MediaProcessable
   include Shared::Reactable
   include Shared::Notifiable
+  include Tv::ChannelTenanted
 
   belongs_to :channel,     class_name: "Tv::Channel",   foreign_key: :tv_channel_id
   belongs_to :user
@@ -24,9 +25,12 @@ class Tv::Video < ApplicationRecord
   validates :title, presence: true
   validates :status, inclusion: { in: STATUSES }, allow_nil: true
 
+  # in_current_city on the two scopes the public pages read, not on :published —
+  # :published is also used by admin and by the channel's own show page, where
+  # the channel is already the tenant-scoped record doing the asking.
   scope :published, -> { where(status: "published").order(published_at: :desc) }
-  scope :trending,  -> { published.order(views_count: :desc) }
-  scope :recent,    -> { published.order(published_at: :desc) }
+  scope :trending,  -> { published.in_current_city.order(views_count: :desc) }
+  scope :recent,    -> { published.in_current_city.order(published_at: :desc) }
 
   after_update_commit :record_video_published, if: :published_status_change?
 
