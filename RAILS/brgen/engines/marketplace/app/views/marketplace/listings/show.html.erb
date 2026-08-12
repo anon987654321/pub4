@@ -10,7 +10,7 @@
 
 <div class="page-header marketplace-listing-header">
   <div>
-    <p class="dim">Marketplace / <%= @listing.category&.name || "Listing" %></p>
+    <p class="dim"><%= t("marketplace.listing_kicker", category: @listing.category&.name || t("marketplace.listing")) %></p>
     <h1><%= @listing.title %></h1>
   </div>
   <nav role="navigation" aria-label="Listing actions" class="marketplace-actions">
@@ -29,15 +29,15 @@
 <article class="marketplace-listing">
   <p class="listing-price"><%= @listing.price_display %></p>
   <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user&.display_name || "anon" %></p>
-  <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · <%= pluralize(@listing.favorites.size, "save") %> · <%= pluralize(@listing.reviews_count.to_i, "review") %> · status: <%= @listing.status %></p>
+  <p class="dim"><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %> · <%= t("marketplace.reviews_count", count: @listing.reviews_count.to_i) %></p>
   <% if @listing.reviews_count.to_i.positive? %>
-    <p class="dim"><%= number_with_precision(@listing.rating, precision: 1) %> ★ seller interaction rating</p>
+    <p class="dim"><%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %></p>
   <% end %>
   <div class="listing-description"><%= simple_format(@listing.description) %></div>
   <button class="btn-share" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
-          data-action="click->share#share">Share</button>
+          data-action="click->share#share"><%= t("marketplace.share") %></button>
   <%# seller can read back nil: User is acts_as_tenant-scoped on city, so a
       seller with no city (or another city) is invisible under this tenant and
       the association returns nil. Without this guard the != test passes and
@@ -55,7 +55,7 @@
 <%= render "shared/also_nearby", items: @nearby_listings, title: t("marketplace.nearby_listings", default: "Nearby") %>
 
 <div class="section-divider">
-  <p class="section-heading--md">Reviews</p>
+  <p class="section-heading--md"><%= t("marketplace.reviews") %></p>
   <% if @review %>
     <div class="form-wrap form-wrap--flush">
       <%= form_with(model: @review, url: listing_reviews_path(@listing)) do |f| %>

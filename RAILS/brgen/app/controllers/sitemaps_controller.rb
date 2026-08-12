@@ -29,6 +29,7 @@ class SitemapsController < ApplicationController
       entries.concat(posts_entries)
       entries.concat(community_entries)
       entries.concat(hashtag_entries)
+      entries.concat(user_entries)
     end
 
     entries
@@ -53,6 +54,15 @@ class SitemapsController < ApplicationController
 
   def community_entries
     entries_for(Community.in_current_city, changefreq: "weekly", priority: "0.5") { |c| community_url(c) }
+  end
+
+  # Public profiles whose home-city hint is this city. User is not a tenant
+  # row; city_id is optional. Dating/messenger stay unsitemapped.
+  def user_entries
+    city = Current.city_record
+    return [] unless city
+
+    entries_for(User.public_profiles.where(city_id: city.id), changefreq: "weekly", priority: "0.4") { |u| user_url(u) }
   end
 
   # Hashtags are global by design — a tag is not a city's property.

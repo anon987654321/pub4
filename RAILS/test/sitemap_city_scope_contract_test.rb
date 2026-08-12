@@ -62,7 +62,7 @@ class SitemapCityScopeContractTest < Minitest::Test
   end
 
   def test_every_indexable_model_has_an_entries_method
-    %w[posts_entries community_entries hashtag_entries tv_entries
+    %w[posts_entries community_entries hashtag_entries user_entries tv_entries
        takeaway_entries marketplace_entries maps_entries].each do |method|
       assert_includes source, "def #{method}", "sitemap lost #{method}"
     end

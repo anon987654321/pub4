@@ -29,6 +29,12 @@ class User < ApplicationRecord
 
   include Shared::GeoLocatable
 
+  # Public profile pages a crawler may list. Not a tenant row — city_id is
+  # only a home-city hint — so the sitemap names the city at the call site.
+  scope :public_profiles, -> {
+    where(guest: false).where.not(username: [nil, ""])
+  }
+
   # Never falls through to the email address. This method shadows the users
   # .display_name column, so the stored name was dead and every caller — the
   # marketplace seller line, dating matches, takeaway drivers, TV comments —

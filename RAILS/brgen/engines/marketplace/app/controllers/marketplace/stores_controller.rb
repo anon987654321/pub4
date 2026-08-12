@@ -9,6 +9,7 @@ module Marketplace
     before_action :set_store, only: %i[show edit update destroy]
     before_action :require_real_user, only: %i[new create edit update destroy]
     before_action :authorize_owner, only: %i[edit update destroy]
+    before_action :load_city_places, only: %i[new create edit update]
 
     def index
       scope = Marketplace::Store.active.by_vertical(params[:vertical]).recent
@@ -69,7 +70,12 @@ module Marketplace
     end
 
     def store_params
-      params.require(:store).permit(:name, :slug, :description, :vertical)
+      params.require(:store).permit(:name, :slug, :description, :vertical, :place_id)
+    end
+
+    def load_city_places
+      city = Current.city_record
+      @places = city ? Place.where(city_id: city.id).order(:name) : Place.none
     end
   end
 end

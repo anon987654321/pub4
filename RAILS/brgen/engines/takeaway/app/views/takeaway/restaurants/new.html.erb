@@ -19,6 +19,7 @@
     <div class="field"><%= f.label :delivery_fee_cents, t("takeaway.delivery_fee") %><%= f.number_field :delivery_fee_cents %></div>
     <div class="field"><%= f.label :min_order_cents, t("takeaway.min_order") %><%= f.number_field :min_order_cents %></div>
     <div class="field field--check"><%= f.check_box :active %><%= f.label :active, t("takeaway.active") %></div>
+    <%= render "takeaway/restaurants/place_field", f: f %>
     <div class="field"><%= f.submit t("takeaway.save"), class: "btn btn-primary" %></div>
   <% end %>
 </div>

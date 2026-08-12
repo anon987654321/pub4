@@ -31,6 +31,25 @@ class StructuredDataContractTest < Minitest::Test
     assert_includes hashtag, "breadcrumb_json_ld"
   end
 
+  def test_sitemap_lists_public_profiles_in_this_city
+    sitemap = read_rel("brgen/app/controllers/sitemaps_controller.rb")
+    user = read_rel("brgen/app/models/user.rb")
+    assert_includes sitemap, "user_entries"
+    assert_includes sitemap, "User.public_profiles"
+    assert_includes user, "scope :public_profiles"
+    refute_includes sitemap, "Dating::"
+  end
+
+  def test_owners_can_attach_a_place
+    restaurant = read_rel("brgen/engines/takeaway/app/controllers/takeaway/restaurants_controller.rb")
+    store = read_rel("brgen/engines/marketplace/app/controllers/marketplace/stores_controller.rb")
+    assert_includes restaurant, ":place_id"
+    assert_includes store, ":place_id"
+    assert_includes restaurant, "load_city_places"
+    assert_includes store, "load_city_places"
+    assert File.file?(File.join(ROOT, "brgen/engines/takeaway/app/views/takeaway/restaurants/_place_field.html.erb"))
+  end
+
   def test_show_pages_ask_for_nearby_neighbours
     listing = read_rel("brgen/engines/marketplace/app/controllers/marketplace/listings_controller.rb")
     restaurant = read_rel("brgen/engines/takeaway/app/controllers/takeaway/restaurants_controller.rb")

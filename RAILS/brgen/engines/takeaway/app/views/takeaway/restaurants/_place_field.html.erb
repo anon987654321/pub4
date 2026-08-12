@@ -1,0 +1,4 @@
+<div class="field">
+  <%= f.label :place_id, t("maps.on_the_map") %>
+  <%= f.collection_select :place_id, @places, :id, :name, { include_blank: t("maps.no_place") } %>
+</div>

@@ -8,6 +8,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
   before_action :require_real_user, except: %i[index show]
   before_action :set_restaurant, only: %i[show edit update destroy]
   before_action :authorize_owner!, only: %i[edit update destroy]
+  before_action :load_city_places, only: %i[new create edit update]
 
   def index
     # :city as well as :user — the card renders restaurant.city, which was one
@@ -74,6 +75,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
     :latitude,
     :longitude,
     :active,
+    :place_id,
   )
 
   def load_neighbour_reviews
@@ -92,6 +94,11 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
 
   def can_leave_review?
     authenticated? && Current.user.takeaway_orders.where(restaurant: @restaurant, status: "delivered").exists?
+  end
+
+  def load_city_places
+    city = Current.city_record
+    @places = city ? Place.where(city_id: city.id).order(:name) : Place.none
   end
 
   def nearby_restaurants_for(restaurant)

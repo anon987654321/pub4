@@ -6,8 +6,8 @@
     <p class="dim"><%= t("tv.home_blurb") %></p>
   </div>
   <div>
-    <%= link_to "All channels", channels_path, class: "btn btn-ghost" %>
-    <% if authenticated? %><%= link_to "Create channel", new_channel_path, class: "btn" %><% end %>
+    <%= link_to t("tv.channels_title"), channels_path, class: "btn btn-ghost" %>
+    <% if authenticated? %><%= link_to t("tv.create_channel"), new_channel_path, class: "btn" %><% end %>
   </div>
 </div>
 
