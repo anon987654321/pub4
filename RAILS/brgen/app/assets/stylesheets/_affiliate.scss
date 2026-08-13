@@ -83,3 +83,107 @@ label.field--check-label > input { min-height: 44px; min-width: 44px; }
 .map-hud { position: fixed; top: var(--space-4); left: var(--brand-mark-inline); z-index: var(--z-app); display: flex; flex-direction: column; gap: var(--space-2); max-width: 280px; }
 .map-search-input { flex: 1; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: inherit; font-size: var(--text-base); }
 .map-place-popup { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--text-sm); }
+
+/* In-feed affiliate unit. The original pen packed uneven images with Packery
+   and tilted them with Parallax.js over jQuery; grid packs them here and one
+   Stimulus controller does the tilt, so the unit costs no dependency and no
+   licence. See RAILS/shared/reference/affiliate_banner/ for the original. */
+.affiliate_feed_unit {
+  display: block;
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  background: var(--surface-elevated, var(--surface));
+  border: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.affiliate_feed_unit .sponsored {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  /* All-caps earns tracking; lowercase prose does not. */
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+/* auto-fill + minmax is the packing rule: as many columns as fit, each at
+   least 108px, the row height fixed so uneven product images form a band
+   rather than a ragged edge. */
+.affiliate_feed_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  grid-auto-rows: 132px;
+  gap: var(--space-2);
+}
+
+.affiliate_feed_tile,
+.affiliate_feed_cta {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  /* transform only — the controller writes translate3d, and transitioning
+     transform keeps the tilt off the layout path. */
+  transition: transform 120ms ease-out;
+  will-change: transform;
+}
+
+.affiliate_feed_tile img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.affiliate_feed_title,
+.affiliate_feed_price,
+.affiliate_feed_placeholder {
+  position: relative;
+  z-index: 1;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+/* The image runs to the tile edge, so the label needs its own ground rather
+   than a text-shadow — flat, and legible over any product photo. */
+.affiliate_feed_title,
+.affiliate_feed_price {
+  background: var(--surface);
+  padding: 2px 4px;
+  border-radius: 2px;
+  align-self: flex-start;
+}
+
+.affiliate_feed_price { font-weight: var(--weight-heavy); }
+
+.affiliate_feed_cta {
+  align-items: center;
+  justify-content: center;
+  grid-column: span 2;
+  background: var(--accent);
+  /* accent-ink, not inherit: the tile paints the accent behind text that would
+     otherwise stay the body colour, which on a light accent is light-on-light.
+     This is the token that exists for exactly that pairing. */
+  color: var(--accent-ink);
+  font-size: var(--text-base);
+  font-weight: var(--weight-heavy);
+  text-align: center;
+}
+
+/* The tilt is decoration: without it the band still reads. */
+@media (prefers-reduced-motion: reduce) {
+  .affiliate_feed_tile,
+  .affiliate_feed_cta {
+    transition: none;
+    transform: none !important;
+  }
+}

@@ -903,6 +903,7 @@ en:
     needs_js: "Map needs JavaScript."
     browse_as_list: "Browse places as a list"
     map: "Map"
+    aria_map: "Interactive map of places in the city"
     open_in_map: "Open in map"
     optional_note: "Optional note"
     check_in: "I'm here (check-in)"
@@ -1024,6 +1025,21 @@ en:
   activity:
     local_graph: "Local graph"
     title: "Activity"
+    listing_created: "New listing"
+    takeaway_restaurant_created: "New restaurant"
+    marketplace_store_created: "New store"
+    marketplace_deal_created: "New deal"
+    video_published: "New video"
+    event_created: "New event"
+    post_created: "New post"
+    verticals:
+      takeaway: "takeaway"
+      marketplace: "marketplace"
+      social: "posts"
+      tv: "TV"
+      dating: "dating"
+      playlist: "playlist"
+      maps: "maps"
   a11y:
     skip_to_content: "Skip to main content"
   # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb

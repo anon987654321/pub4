@@ -2,6 +2,12 @@
 
 module Brgen
   module HomeFeed
+    # Posts between in-feed affiliate units. Here rather than in the view
+    # because the view is not the place to decide how often a reader is sold
+    # to, and because the infinite-scroll reflex will need the same number when
+    # it learns to interleave.
+    AFFILIATE_EVERY = 4
+
     module_function
 
     def following?(feed:)

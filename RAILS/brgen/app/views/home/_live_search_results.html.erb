@@ -5,8 +5,16 @@
 <% if @posts.any? %>
  <%= turbo_frame_tag "home-feed", target: "_top" do %>
  <div class="post-feed" id="home-feed">
- <% @posts.each do |post| %>
+ <% @posts.each_with_index do |post, index| %>
  <%= render "posts/post", post: post %>
+ <%# One unit after every AFFILIATE_EVERY posts, never before the first and
+     never trailing the last — an ad in the last slot reads as the end of the
+     feed. Posts appended by HomeInfiniteScrollReflex do not carry one yet:
+     the reflex renders "posts/post" per row and has no slot for anything
+     else, so extending it is its own change. %>
+ <% if ((index + 1) % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && index + 1 < @posts.size %>
+ <%= render "shared/affiliate_feed_unit" %>
+ <% end %>
  <% end %>
  </div>
 

@@ -909,6 +909,7 @@ nb:
     needs_js: "Kartet krever JavaScript."
     browse_as_list: "Se stedene som liste"
     map: "Kart"
+    aria_map: "Interaktivt kart over steder i byen"
     open_in_map: "Åpne i kart"
     optional_note: "Valgfri merknad"
     check_in: "Jeg er her (sjekk inn)"
@@ -1030,6 +1031,21 @@ nb:
   activity:
     local_graph: "Lokal graf"
     title: "Aktivitet"
+    listing_created: "Ny annonse"
+    takeaway_restaurant_created: "Ny restaurant"
+    marketplace_store_created: "Ny butikk"
+    marketplace_deal_created: "Nytt tilbud"
+    video_published: "Ny video"
+    event_created: "Nytt arrangement"
+    post_created: "Nytt innlegg"
+    verticals:
+      takeaway: "takeaway"
+      marketplace: "markedsplass"
+      social: "innlegg"
+      tv: "TV"
+      dating: "dating"
+      playlist: "spilleliste"
+      maps: "kart"
   a11y:
     skip_to_content: "Hopp til innholdet"
   # Flash messages. 44 hardcoded English strings until 2026-08-11 — English toasts

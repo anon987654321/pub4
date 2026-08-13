@@ -1,0 +1,57 @@
+<%# In-feed affiliate unit: product tiles packed edge to edge with a couple of
+    call-to-action tiles among them, and a pointer parallax over the band.
+
+    This is the CodePen banner kept at RAILS/shared/reference/affiliate_banner/,
+    rebuilt on this tree's stack. The pen needed jQuery, imagesLoaded, Parallax,
+    Packery and anime — five CDN scripts, one of them GPLv3-or-paid — to pack
+    uneven images and tilt them. CSS grid packs them, and one Stimulus
+    controller does the tilt.
+
+    Reads Affiliate.deals, the same single path over every network the sidebar
+    unit uses, so a new network appears here without editing this view. %>
+<% deals = Affiliate.deals(category: local_assigns[:category], limit: 8) %>
+<% if deals.any? %>
+  <aside class="affiliate_feed_unit"
+         aria-label="<%= t("affiliate.feed_unit_label") %>"
+         data-controller="parallax-tilt"
+         data-action="pointermove->parallax-tilt#move pointerleave->parallax-tilt#leave">
+    <p class="sponsored"><%= t("affiliate.sponsored") %></p>
+
+    <div class="affiliate_feed_grid">
+      <% deals.each_with_index do |deal, index| %>
+        <%# A call-to-action tile every third slot, the rhythm the pen used. %>
+        <% if index.positive? && (index % 3).zero? %>
+          <% cta = t("affiliate.cta").values[(index / 3 - 1) % t("affiliate.cta").size] %>
+          <div class="affiliate_feed_cta" data-parallax-tilt-target="tile" data-parallax-tilt-depth="0.14">
+            <span><%= cta %></span>
+          </div>
+        <% end %>
+
+        <a class="affiliate_feed_tile"
+           href="<%= deal.click_url %>"
+           target="_blank"
+           rel="noopener sponsored"
+           data-parallax-tilt-target="tile"
+           data-parallax-tilt-depth="<%= format("%.3f", 0.03 + (index % 5) * 0.022) %>">
+          <% if deal.image_url.present? %>
+            <img loading="lazy" decoding="async"
+                 alt="<%= deal.title.presence || t("affiliate.deal_alt") %>"
+                 src="<%= deal.image_url %>">
+          <% end %>
+          <span class="affiliate_feed_title"><%= deal.title %></span>
+          <% if deal.price.present? %>
+            <span class="affiliate_feed_price"><%= deal.currency %> <%= deal.price %></span>
+          <% end %>
+          <%# Same rule as the sidebar unit: an unlabelled placeholder is
+              indistinguishable from a paid deal, to the visitor and to whoever
+              reconciles the payout. %>
+          <% if deal.placeholder %>
+            <span class="affiliate_feed_placeholder dim"><%= t("affiliate.placeholder_notice") %></span>
+          <% end %>
+        </a>
+      <% end %>
+    </div>
+
+    <%= render "shared/affiliate_disclosure" %>
+  </aside>
+<% end %>
