@@ -23,6 +23,8 @@ curl -fsS http://127.0.0.1:38182/health
 `Brgen::DomainRegistry` resolves city from hostname (`oshlo.no`, `lsangeles.com`, `brgen.no`, …). Each apex is an isolated experience — no cross-city switcher. Dev defaults to Bergen.
 
 Shared concerns via `pub4-shared`. Backlog: `apps.yml` → `brgen.features`.
+Parity gaps against the apps brgen is measured by — and the four features whose
+tables exist with nothing reading them — are in `../TODO.md`.
 
 ## Seeds
 
