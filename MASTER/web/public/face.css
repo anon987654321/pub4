@@ -39,7 +39,7 @@
   --face-bar-height: 44px;
   --bar-height: 44px;
   --hud-tier-status: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
-  --hud-tier-caption: calc(var(--face-bar-height) + var(--safe-bottom) + 44px);
+  --hud-tier-caption: calc(var(--face-bar-height) + var(--safe-bottom) + var(--tap-min));
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
   --face-particle-size: 0.019;
   --face-glow-scale: 1.22;
@@ -130,8 +130,8 @@ body[data-focus-mode="1"] #chat-shell,
 body[data-focus-mode="1"] #ascii-star,
 body[data-focus-mode="1"]
 #photo-button {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -247,7 +247,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
 
 #cmd-palette-list li {
   padding: 10px 14px;
-  min-height: 44px;
+  min-height: var(--tap-min);
   font: 16px/1.5 var(--font-label);
   color: color-mix(in srgb, var(--face-fg) 78%, transparent);
   cursor: pointer;
@@ -270,7 +270,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
 body[data-face-pip="1"] canvas {
   width: min(34vw, 320px);
   height: min(34vw, 320px);
-  inset: auto 12px calc(56px + var(--safe-bottom)) auto;
+  inset: auto var(--chrome-inset) calc(56px + var(--safe-bottom)) auto;
   border-radius: 12px;
   transition: inset 180ms var(--ease-out), width 180ms var(--ease-out), height 180ms var(--ease-out), border-radius 180ms var(--ease-out), transform 180ms var(--ease-out), filter var(--transition-fast) var(--ease-out);
 }
@@ -284,11 +284,11 @@ body[data-face-pip="1"][data-face-pip-corner="top-right"] canvas {
 }
 
 body[data-face-pip="1"][data-face-pip-corner="bottom-left"] canvas {
-  inset: auto auto calc(56px + var(--safe-bottom)) calc(12px + var(--safe-left));
+  inset: auto auto calc(56px + var(--safe-bottom)) var(--inset-l);
 }
 
 body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
-  inset: auto calc(12px + var(--safe-right)) calc(56px + var(--safe-bottom)) auto;
+  inset: auto var(--inset-r) calc(56px + var(--safe-bottom)) auto;
 }
 
 #zsh-wave {
@@ -889,8 +889,8 @@ body[data-tts-error="true"] #zsh-status { opacity: 1; color: var(--c-danger); }
   font: inherit;
   cursor: pointer;
   padding: 0 0 0 8px;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
   opacity: .45;
   transition: opacity .1s;
 }
@@ -995,7 +995,7 @@ body.primer-autostart #primer {
 }
 
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
-.chip { font: 14px/1.5 var(--font-label); letter-spacing: .08em; padding: 10px 14px; min-height: 44px; border: 1px solid color-mix(in srgb, var(--face-fg) 8%, transparent); border-radius: var(--radius-xs); color: color-mix(in srgb, var(--c-text) 62%, transparent); transition: background 120ms var(--ease-out); }
+.chip { font: 14px/1.5 var(--font-label); letter-spacing: .08em; padding: 10px 14px; min-height: var(--tap-min); border: 1px solid color-mix(in srgb, var(--face-fg) 8%, transparent); border-radius: var(--radius-xs); color: color-mix(in srgb, var(--c-text) 62%, transparent); transition: background 120ms var(--ease-out); }
 #primer .tagline { opacity: .72; font-size: .9em; margin-top: 14px; letter-spacing: .1em; }
 
 /* #56 Sleeping dim */
@@ -1028,7 +1028,7 @@ body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
 body[data-tts-loading="true"] canvas { filter: none; }
 
 /* FA75 copy button */
-.message.assistant .msg-copy { position:absolute; top:4px; right:6px; background:none; border:none; color:var(--face-dim); cursor:pointer; font:12px/1.5 var(--font-label); opacity:0; transition:opacity .15s; padding:8px; min-width:44px; min-height:44px; }
+.message.assistant .msg-copy { position:absolute; top:4px; right:6px; background:none; border:none; color:var(--face-dim); cursor:pointer; font:12px/1.5 var(--font-label); opacity:0; transition:opacity .15s; padding:8px; min-width: var(--tap-min); min-height: var(--tap-min); }
 .message.assistant:hover .msg-copy,
 .message.assistant:focus-within .msg-copy { opacity:1; }
 .message.assistant .msg-copy:hover { color:var(--c-text); }
@@ -1055,8 +1055,8 @@ body[data-tts-loading="true"] canvas { filter: none; }
   cursor: pointer;
   font: 12px/1.5 var(--font-label);
   padding: 8px 10px;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
 }
 
 .message.assistant .msg-actions button:hover {
@@ -1065,7 +1065,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
 
 .face-error-banner {
   position: fixed;
-  inset-inline: 12px;
+  inset-inline: var(--chrome-inset);
   top: var(--inset-t);
   z-index: var(--z-toast);
   padding: 10px 12px;
@@ -1079,7 +1079,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
 
 ::selection { background: color-mix(in srgb, var(--c-danger) 22%, transparent); color: inherit; }
 
-.tool { background:none; border:0; color:var(--face-muted); font:inherit; padding:10px 8px; margin-inline-end:6px; cursor:pointer; letter-spacing:.02em; opacity:.6; transition:opacity .15s,color .15s; min-width:44px; min-height:44px; }
+.tool { background:none; border:0; color:var(--face-muted); font:inherit; padding:10px 8px; margin-inline-end:6px; cursor:pointer; letter-spacing:.02em; opacity:.6; transition:opacity .15s,color .15s; min-width: var(--tap-min); min-height: var(--tap-min); }
 .tool:hover, .tool:focus { opacity:1; color:var(--face-fg); }
 .tool.active { color:var(--c-accent); opacity:1; }
 
@@ -1524,8 +1524,8 @@ canvas#face,
 .face-bar button,
 .face-bar a,
 .bar-btn {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
 }
 #push-enable-btn,
 .permission-prompt button {
@@ -1534,6 +1534,6 @@ canvas#face,
   border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--face-fg);
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: 0 1rem;
 }
