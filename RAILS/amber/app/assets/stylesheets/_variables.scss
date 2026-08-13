@@ -1,5 +1,12 @@
 @use "dialect_tokens" as x;
 
+// Luxury on :root alone loses to stack's social light. _tokens.scss paints
+// light-tokens at [data-theme=light] and at :root:not([data-theme=dark])
+// inside prefers-color-scheme: light — (0,2,0) vs this file's (0,1,0).
+// Measured live 2026-08-13: amber.brgen.no --bg #f7f6fa / --accent #5b4fc4
+// (social) while --radius-card stayed 14px (luxury). Same leak WIRING_NOTES
+// records for brgen's two light themes. Restate luxury at those selectors
+// so the worn dialect is what a visitor with OS light mode actually sees.
 :root {
   @include x.luxury-light-tokens;
   @include x.app-root-tokens;
@@ -24,6 +31,18 @@
   --focus-ring: 2px solid var(--accent);
   --tap-min: 44px;
   --elev-1: 1px solid var(--border);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    @include x.luxury-light-tokens;
+    color-scheme: light;
+  }
+}
+
+[data-theme="light"] {
+  @include x.luxury-light-tokens;
+  color-scheme: light;
 }
 
 #dark-toggle {

@@ -186,7 +186,10 @@ load-bearing and neither a bug to "fix" casually:
   `:root:not([data-theme=dark])`, which **outrank** plain `:root`. So brgen has
   two light themes: `#dark-toggle` gives the 2014 white/`#222`, `data-theme`
   gives social `#f7f6fa`/`#1a1824`. Which one a visitor sees depends on which
-  control they used.
+  control they used. Amber's luxury `:root` lost that fight too: measured
+  2026-08-13 on amber.brgen.no, OS-light visitors got social paper
+  (`#f7f6fa`/`#5b4fc4`) with luxury radii. `_variables.scss` restates luxury
+  at those two selectors.
 
 Social dark-tokens is worn intentionally in exactly one brgen place —
 `body.vertical-maps` (`_vertical_maps_shell.scss`) — plus `shared/_minimal.scss`

@@ -74,6 +74,26 @@ class DesignContractTest < Minitest::Test
   # Verified 2026-08-10 against brgen/app/assets/builds/application.css: two
   # `:root` blocks, the second `--bg: #000000` / `--text: #e0e0e0` /
   # `--accent: #f2f2f2` / `--radius-card: 8px`.
+  # amber wears luxury, and stack's social light outranks a plain :root.
+  #
+  # `_tokens.scss` (via `@use "stack"`) emits light-tokens at
+  # `[data-theme=light]` and at `:root:not([data-theme=dark])` inside
+  # `prefers-color-scheme: light`. luxury-light-tokens on bare `:root` loses
+  # that fight: measured 2026-08-13 on amber.brgen.no, --bg was social
+  # `#f7f6fa` and --accent `#5b4fc4` while --radius-card stayed luxury 14px.
+  # `_variables.scss` must restate luxury at those two selectors.
+  def test_amber_luxury_beats_the_social_light_override
+    variables = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "_variables.scss"))
+
+    assert_includes variables, "luxury-light-tokens",
+                    "amber/_variables.scss must include luxury-light-tokens"
+    assert_match(/:root:not\(\[data-theme=["']dark["']\]\)/, variables,
+                 "luxury must be restated at :root:not([data-theme=dark]) — that is the selector " \
+                 "stack uses for OS-light, and it outranks plain :root")
+    assert_match(/\[data-theme=["']light["']\]/, variables,
+                 "luxury must be restated at [data-theme=light] or the theme toggle restores social indigo")
+  end
+
   def test_brgen_old_dialect_is_emitted_after_the_social_stack
     app_scss = File.read(File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss"))
     uses = app_scss.scan(/^@use\s+"([^"]+)"/).flatten
