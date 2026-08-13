@@ -114,8 +114,12 @@
   }
   const TTS_PLAYBACK_GAIN = 19;
   function restorePlaybackGain(tts, actx, playing) {
-    if (!playing || !tts?.outputGain || !actx) return;
-    tts.outputGain.gain.setTargetAtTime(tts.playbackGain || TTS_PLAYBACK_GAIN, actx.currentTime, 0.08);
+    if (!playing) return;
+    if (tts?.outputGain && actx) {
+      tts.outputGain.gain.setTargetAtTime(tts.playbackGain || TTS_PLAYBACK_GAIN, actx.currentTime, 0.08);
+    } else if (tts?.audio) {
+      tts.audio.volume = 1;
+    }
   }
   window.MASTER_FACE_AUDIO = Object.freeze({
     applySttDuck,

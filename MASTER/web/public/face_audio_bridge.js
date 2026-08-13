@@ -21,9 +21,24 @@
   // runtime's published value so a missed publish still restores the new level.
   const TTS_PLAYBACK_GAIN = 19.0;
 
+  // Both branches of applySttDuck need an undo, and only the WebAudio one had
+  // it: this returned early unless outputGain and actx were both present, so on
+  // the element path — AudioContext suspended, not yet created, or speech
+  // starting before connectTTSAudio runs — ducking set tts.audio.volume to
+  // 0.12 and nothing ever put it back. Math.min meant it could only fall, so
+  // one pass of speech recognition left the voice at 12% for the life of that
+  // element, which is inaudible on a laptop speaker rather than merely quiet.
+  //
+  // The element path restores to 1, not TTS_PLAYBACK_GAIN: HTMLMediaElement
+  // .volume is a 0..1 scalar and anything above 1 throws IndexSizeError. The
+  // gain figure belongs to the graph, which is the other branch.
   function restorePlaybackGain(tts, actx, playing) {
-    if (!playing || !tts?.outputGain || !actx) return;
-    tts.outputGain.gain.setTargetAtTime(tts.playbackGain || TTS_PLAYBACK_GAIN, actx.currentTime, 0.08);
+    if (!playing) return;
+    if (tts?.outputGain && actx) {
+      tts.outputGain.gain.setTargetAtTime(tts.playbackGain || TTS_PLAYBACK_GAIN, actx.currentTime, 0.08);
+    } else if (tts?.audio) {
+      tts.audio.volume = 1;
+    }
   }
 
   window.MASTER_FACE_AUDIO = Object.freeze({
