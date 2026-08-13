@@ -699,6 +699,7 @@ en:
     more_details_optional: "More details (optional)"
     unmatch: "Unmatch"
     matched_on: "Matched on %{date}"
+    rewind: "Rewind"
   playlist:
     home_title: "Playlist"
     tap_to_start: "tap to start"
@@ -1117,6 +1118,8 @@ en:
       prompt_removed: "Answer removed"
       profile_created: "Profile created."
       profile_updated: "Profile updated."
+      rewound: "Last pass undone."
+      nothing_to_rewind: "Nothing to rewind."
     marketplace:
       address_saved: "Address saved"
       address_default: "Default address set"

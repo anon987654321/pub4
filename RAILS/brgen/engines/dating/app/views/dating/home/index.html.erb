@@ -49,6 +49,7 @@
         <h1><%= t("dating.discover") %></h1>
       </div>
       <nav role="navigation" aria-label="<%= t("dating.home_title") %>">
+        <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "btn btn-ghost" %>
         <%= link_to t("dating.matches"), matches_path, class: "btn btn-ghost" %>
         <% if Current.user&.dating_profile.present? %>
           <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost" %>

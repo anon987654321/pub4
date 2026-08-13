@@ -468,8 +468,16 @@ to `matched` rather than inserting a second pair. The matches list is still
 rematch, strict loading) and `brgen/test/controllers/dating_unmatch_test.rb`
 (participant can, stranger 404s).
 
+**Rewind is built.** Last pass only: `Dating::Dislike.rewind!` destroys the
+most recent dislike and the deck query already excludes dislikes, so that
+profile comes back. A like is a different decision (it may have created a
+match) and is left alone. Empty rewind is a flash, not a 404.
+
+**Check:** `brgen/test/controllers/dating_rewind_test.rb` (last pass undone,
+a like is not).
+
 **Still open:** super-like and boost (both purchases — `apps.horizon.yml` has
-them as `agent: ignore`), rewind, photo verification, daily picks.
+them as `agent: ignore`), photo verification, daily picks.
 
 ### Takeaway (DoorDash / Foodora) — **hours, tips, scheduling done**
 

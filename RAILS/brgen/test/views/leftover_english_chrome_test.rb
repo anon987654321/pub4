@@ -36,6 +36,12 @@ class LeftoverEnglishChromeTest < ActiveSupport::TestCase
     refute_includes card, "Matched on"
   end
 
+  test "dating discover rewind uses the locale key" do
+    source = read("engines/dating/app/views/dating/home/index.html.erb")
+    assert_includes source, 't("dating.rewind")'
+    assert_includes source, "rewind_path"
+  end
+
   test "playlist set card uses privacy and tracks keys" do
     source = read("engines/playlist/app/views/playlist/sets/_card.html.erb")
     refute_includes source, '"Public"'

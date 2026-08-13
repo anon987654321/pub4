@@ -705,6 +705,7 @@ nb:
     more_details_optional: "Flere detaljer (valgfritt)"
     unmatch: "Fjern match"
     matched_on: "Match %{date}"
+    rewind: "Angre"
   playlist:
     home_title: "Spilleliste"
     tap_to_start: "trykk for å starte"
@@ -1125,6 +1126,8 @@ nb:
       prompt_removed: "Svar fjernet"
       profile_created: "Profilen er opprettet."
       profile_updated: "Profilen er oppdatert."
+      rewound: "Siste pass er angret."
+      nothing_to_rewind: "Ingenting å angre."
     marketplace:
       address_saved: "Adresse lagret"
       address_default: "Standardadresse satt"

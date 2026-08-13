@@ -13,5 +13,6 @@ Dating::Engine.routes.draw do
   # different page rather than folded into it.
   resources :likes, only: %i[create index]
   resources :dislikes, only: :create
+  resource :rewind, only: :create, controller: "rewinds"
   resources :matches, only: %i[index destroy]
 end
