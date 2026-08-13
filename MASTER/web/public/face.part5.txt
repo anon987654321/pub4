@@ -299,8 +299,30 @@ function maybeAutoVoice() {
   const enterWhenQuiet = () => {
     if (State.voiceMode || !voiceAutoEnabled()) return;
     // Hold off while the greeting is still speaking so we don't hear ourselves.
-    if ((tts.playing || State.mode === 'speaking') && waited < 12000) {
-      waited += 400; setTimeout(enterWhenQuiet, 400); return;
+    if (tts.playing || State.mode === 'speaking') {
+      // The bound used to be `waited < 12000`, and when it expired this fell
+      // through to enterVoiceMode() WHILE the greeting was still speaking. That
+      // is the one thing the wait exists to prevent, and it is reachable by the
+      // ordinary route of a greeting longer than twelve seconds:
+      //
+      //   enterVoiceMode -> startSTT -> `if (tts.playing) ttsSkip()` cuts the
+      //   greeting off mid-sentence -> ttsSkipHard clears the queue and calls
+      //   resumeSttAfterSpeech -> which calls startSTT again, re-entrantly.
+      //
+      // recognition.start() on an already-starting recogniser throws
+      // InvalidStateError, onend fires almost immediately, and onend's own guard
+      // counts anything held under 800ms as a failed re-arm. Five of those and
+      // exitVoiceMode({ reason: 'unreliable' }) turns the mic off and leaves it
+      // off. Reported from an Android TV as: the mic goes on, MASTER rambles its
+      // introduction, the mic icon goes grey.
+      //
+      // So the timeout no longer performs the unsafe action. It stops polling and
+      // hands the intent to resumeSttAfterSpeech(), which already runs when
+      // playback genuinely drains and is the one place that knows it has.
+      waited += 400;
+      if (waited < 12000) { setTimeout(enterWhenQuiet, 400); return; }
+      State.autoVoicePending = true;
+      return;
     }
     enterVoiceMode({ fromAuto: true });
   };
@@ -350,8 +372,50 @@ function stopSTT() {
 // itself as if the user had spoken it).
 function resumeSttAfterSpeech() {
   if (State.voiceMode) { if (!State.sttActive) startSTT(); return; }
+  // A greeting that outlasted maybeAutoVoice()'s wait parks its intent here
+  // rather than opening the mic over its own voice. This is the moment playback
+  // has actually drained, which is what that function was waiting for.
+  if (State.autoVoicePending && voiceAutoEnabled()) {
+    State.autoVoicePending = false;
+    enterVoiceMode({ fromAuto: true });
+    return;
+  }
   if (State.wakeArmed && !State.sttActive) startWakeListening();
 }
+
+// The mic must not be able to stay grey.
+//
+// Re-arming after speech depends on a chain: audio.onended -> finishTTSPlayback
+// -> ttsTick -> the queue drains -> resumeSttAfterSpeech. Every link has broken
+// at least once, and each break was fixed where it broke: the duck with no undo
+// on the element path, the hard-skip that bypassed ttsTick, browser TTS that
+// never fired onend because no voice matched the language, the auto-voice
+// timeout above. Four fixes, one symptom — a mic that goes grey and stays grey.
+//
+// So this does not add a fifth link. It states the invariant and repairs it:
+// voice mode on, nothing playing, recogniser idle is a state that should not
+// persist, whatever broke upstream. Two consecutive ticks before acting, so a
+// legitimate gap between utterances is not mistaken for the fault.
+//
+// It matters most where nobody can reach the mic button. This was reported from
+// an Android TV, where the recovery for a grey mic is a remote control and a
+// pointer that does not exist.
+let _micIdleTicks = 0;
+setInterval(() => {
+  if (document.hidden) { _micIdleTicks = 0; return; }
+  const stuck = State.voiceMode && !State.sttActive && !tts.playing && !tts.paused;
+  if (!stuck) { _micIdleTicks = 0; return; }
+
+  _micIdleTicks += 1;
+  if (_micIdleTicks < 2) return;
+
+  _micIdleTicks = 0;
+  // Named at warn, not repaired silently. A self-healing loop that says nothing
+  // hides the break it is healing, and the break is the thing worth fixing.
+  window.MASTER_LOG?.warn?.("face_runtime:mic_rearm", "voice mode on with an idle recogniser — reopening");
+  _voiceModeRearmFails = 0;
+  startSTT();
+}, 3000);
 
 let evtSrc = null;
 let stageTimer = null;
