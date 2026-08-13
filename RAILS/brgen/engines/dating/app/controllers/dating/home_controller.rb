@@ -13,12 +13,16 @@ class Dating::HomeController < Dating::BaseController
         return
       end
     end
-    @profiles = candidate_scope.order(Arel.sql("RANDOM()")).limit(5)
-    @next_profile = candidate_scope.order(Arel.sql("RANDOM()")).first
+    # ranked_for, not RANDOM(): see Dating::Profile. The deck has to be
+    # stable while someone browses, or a profile they just passed cannot be
+    # found again.
+    @profiles = candidate_scope.ranked_for(Current.user).limit(5)
+    @next_profile = @profiles.first
+    current_dating_profile&.touch_activity! if authenticated?
   end
 
   def next
-    @profile = candidate_scope.order(Arel.sql("RANDOM()")).first
+    @profile = candidate_scope.ranked_for(Current.user).first
     head :no_content unless @profile
   end
 

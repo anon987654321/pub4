@@ -35,7 +35,57 @@ class Dating::Profile < ApplicationRecord
   validates :looking_for, inclusion: { in: LOOKING_FOR }, allow_nil: true
   validate :photos_present_when_visible, on: :update
 
+  has_many :prompts, class_name: "Dating::Prompt", dependent: :destroy
+
   scope :visible, -> { where(visible: true).where("age >= 18") }
+
+  # The deck was ORDER BY RANDOM(). Orientation, neighbourhood and a 20 km
+  # radius filtered the pool and nothing ranked it, so someone who last opened
+  # this in March sat beside someone who is online now — and every reload
+  # reshuffled, so a profile you had just seen could not be found again.
+  #
+  # Three ingredients, in this order:
+  #
+  #   recency  — who is actually around. A dating app whose deck is full of
+  #              dormant accounts is a dating app nobody matches on.
+  #   effort   — a profile with prompts answered gives the viewer something to
+  #              reply to, which is the whole interaction this vertical is for.
+  #   shuffle  — a per-viewer, per-day deterministic jitter. Without it the same
+  #              profile is top of everyone's deck forever, and with plain
+  #              RANDOM() the order changes on every reload.
+  #
+  # Deliberately not "attractiveness", engagement or any like-count feedback
+  # loop: ranking people by how much attention they already get is how these
+  # products end up with a handful of accounts receiving everything.
+  RECENCY_SQL = <<~SQL.squish
+    CASE
+      WHEN dating_profiles.last_active_at IS NULL THEN 3
+      WHEN dating_profiles.last_active_at > datetime('now', '-2 days')  THEN 0
+      WHEN dating_profiles.last_active_at > datetime('now', '-14 days') THEN 1
+      ELSE 2
+    END
+  SQL
+
+  # A prime modulus with a per-viewer multiplier, not a per-viewer offset:
+  # adding a constant to every id shifts all of them equally and leaves the
+  # order unchanged, which is exactly what the first version of this did.
+  # Multiplying by a different coprime genuinely permutes the deck.
+  SHUFFLE_MODULUS = 997
+
+  def self.ranked_for(viewer, seed: Date.current.to_s)
+    multiplier = (Digest::MD5.hexdigest("#{seed}:#{viewer&.id}")[0, 6].to_i(16) % (SHUFFLE_MODULUS - 1)) + 1
+    order(Arel.sql(<<~SQL.squish))
+      #{RECENCY_SQL} ASC,
+      (SELECT COUNT(*) FROM dating_prompts WHERE dating_prompts.profile_id = dating_profiles.id) DESC,
+      ((dating_profiles.id * #{multiplier}) % #{SHUFFLE_MODULUS}) ASC
+    SQL
+  end
+
+  # Distinct from updated_at, which changes when a photo variant is processed in
+  # the background and would otherwise read as someone being around.
+  def touch_activity!
+    update_columns(last_active_at: Time.current, updated_at: Time.current)
+  end
   # nearby (bbox) + haversine provided by concern; old approx replaced for consistency
   scope :in_neighborhood, ->(neigh) { neigh ? where(neighborhood_id: neigh.id) : all }
 

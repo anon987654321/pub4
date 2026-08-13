@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_190000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -281,10 +281,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_180000) do
   end
 
   create_table "dating_likes", force: :cascade do |t|
+    t.string "comment"
     t.datetime "created_at", null: false
+    t.integer "dating_prompt_id"
     t.integer "likee_id", null: false
     t.integer "liker_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["dating_prompt_id"], name: "index_dating_likes_on_dating_prompt_id"
     t.index ["likee_id"], name: "index_dating_likes_on_likee_id"
     t.index ["liker_id", "likee_id"], name: "index_dating_likes_on_liker_id_and_likee_id", unique: true
     t.index ["liker_id"], name: "index_dating_likes_on_liker_id"
@@ -308,6 +311,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_180000) do
     t.integer "city_id"
     t.datetime "created_at", null: false
     t.string "gender"
+    t.datetime "last_active_at"
     t.decimal "latitude"
     t.string "location"
     t.decimal "longitude"
@@ -319,6 +323,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_180000) do
     t.index ["city_id"], name: "index_dating_profiles_on_city_id"
     t.index ["neighborhood_id"], name: "index_dating_profiles_on_neighborhood_id"
     t.index ["user_id"], name: "index_dating_profiles_on_user_id"
+    t.index ["visible", "last_active_at"], name: "index_dating_profiles_on_visible_and_last_active_at"
+  end
+
+  create_table "dating_prompts", force: :cascade do |t|
+    t.string "answer", null: false
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "profile_id", null: false
+    t.string "question", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id", "position"], name: "index_dating_prompts_on_profile_id_and_position"
+    t.index ["profile_id"], name: "index_dating_prompts_on_profile_id"
   end
 
   create_table "email_subscriptions", force: :cascade do |t|
@@ -1531,12 +1547,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_180000) do
   add_foreign_key "conversation_participants", "users"
   add_foreign_key "dating_dislikes", "users", column: "dislikee_id"
   add_foreign_key "dating_dislikes", "users", column: "disliker_id"
+  add_foreign_key "dating_likes", "dating_prompts"
   add_foreign_key "dating_likes", "users", column: "likee_id"
   add_foreign_key "dating_likes", "users", column: "liker_id"
   add_foreign_key "dating_matches", "users", column: "initiator_id"
   add_foreign_key "dating_matches", "users", column: "receiver_id"
   add_foreign_key "dating_profiles", "cities"
   add_foreign_key "dating_profiles", "users"
+  add_foreign_key "dating_prompts", "dating_profiles", column: "profile_id"
   add_foreign_key "event_rsvps", "events"
   add_foreign_key "event_rsvps", "users"
   add_foreign_key "events", "cities"

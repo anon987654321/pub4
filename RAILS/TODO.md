@@ -413,19 +413,45 @@ coupons, referral credit, bundle pricing.
 
 Solidus remains blocked — see below — so all of this is native-path work.
 
-### Dating (Tinder / Hinge)
+### Dating (Tinder / Hinge) — **ranking and prompts done**
 
-`Dating::HomeController#candidate_scope` ends in `ORDER BY RANDOM()`. Orientation,
-neighbourhood and a 20 km radius filter the pool; nothing ranks it. No
-compatibility, recency or activity weighting.
+The deck was `ORDER BY RANDOM()`: orientation, neighbourhood and a 20 km radius
+filtered the pool and nothing ranked it, so someone last seen in March sat
+beside someone online now — and every reload reshuffled, so a profile you had
+just passed could not be found again.
 
-Missing: who-liked-you, super-like, rewind, unmatch, photo verification, daily
-picks.
+`Dating::Profile.ranked_for` orders by three things, in this order:
 
-Worth naming: the current shape of the category is **Hinge**, not Tinder —
-liking a specific photo or prompt with a comment, rather than a swipe deck. That
-is a `Dating::Prompt` model plus a like-carrying-a-comment, and it lands on the
-existing `Dating::Match#announce_match → Conversation` handoff unchanged.
+1. **recency** — who is actually around; a deck full of dormant accounts is a
+   dating app nobody matches on;
+2. **effort** — profiles with prompts answered, because that is what gives the
+   viewer something to reply to;
+3. **a per-viewer, per-day shuffle** — stable while someone browses, different
+   tomorrow, and different between two people.
+
+Deliberately *not* attractiveness, engagement, or any like-count feedback loop:
+ranking people by the attention they already receive is how these products end
+up with a handful of accounts getting everything.
+
+The shuffle is a per-viewer **multiplier** over a prime modulus, not an offset.
+The first version added a per-viewer salt, which shifts every id equally and
+leaves the order identical — the test that two viewers see different decks is
+what caught it.
+
+`Dating::Prompt` is the Hinge half: a fixed question list (free text becomes a
+second bio), three per profile, and a like that points at one answer and says
+something about it. Plain likes still work — a product that refuses one is a
+product people stop using at 1am. Prompt ids are scoped to the liked person's
+own profile, or a like could point at a stranger's answer.
+
+Who-liked-you is its own page, not folded into the deck: people who have already
+said yes are a different decision from people who have not seen you.
+
+**Check:** `brgen/test/models/dating_ranking_test.rb` (8) and
+`brgen/test/controllers/dating_likes_test.rb` (5).
+
+**Still open:** super-like and boost (both purchases — `apps.horizon.yml` has
+them as `agent: ignore`), rewind, unmatch, photo verification, daily picks.
 
 ### Takeaway (DoorDash / Foodora)
 

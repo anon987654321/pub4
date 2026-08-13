@@ -649,6 +649,26 @@ nb:
     add_restaurant: "Legg til restaurant"
     saved_searches: "Lagrede søk"
   dating:
+    who_liked_you: "Hvem har likt deg"
+    back_to_deck: "Tilbake til bunken"
+    like_back: "Lik tilbake"
+    pass: "Hopp over"
+    no_likes_title: "Ingen har likt deg ennå"
+    no_likes_body: "Svar på et par spørsmål i profilen — det gir folk noe å svare på."
+    add_prompt: "Legg til svar"
+    remove_prompt: "Fjern"
+    your_prompts: "Dine svar"
+    comment_placeholder: "Si noe om svaret…"
+    like_with_comment: "Lik og si noe"
+    prompts:
+      q_sunday: "En perfekt søndag er"
+      q_bergen: "Det beste med Bergen er"
+      q_unpopular: "Min mest upopulære mening"
+      q_teach: "Jeg kan lære deg"
+      q_never: "Jeg kommer aldri til å"
+      q_meal: "Måltidet jeg lager best"
+      q_song: "Sangen jeg aldri blir lei"
+      q_weekend: "Neste helg skal jeg"
     about_tab: "Om"
     edit_profile: "Rediger profil"
     your_profile: "Din profil"
@@ -1088,6 +1108,8 @@ nb:
     # organised; "Not allowed" and "Not authorized" became
     # shared.flash.not_authorized rather than an eleventh copy.
     dating:
+      prompt_saved: "Svar lagret"
+      prompt_removed: "Svar fjernet"
       profile_created: "Profilen er opprettet."
       profile_updated: "Profilen er oppdatert."
     marketplace:

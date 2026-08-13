@@ -5,8 +5,13 @@
 Dating::Engine.routes.draw do
   root "home#index"
   get "next" => "home#next", as: :next
-  resource :profile, only: %i[new create edit update show]
-  resources :likes, only: :create
+  resource :profile, only: %i[new create edit update show] do
+    # Three answers, because a profile answering eight is a bio in disguise.
+    resources :prompts, only: %i[create destroy]
+  end
+  # index is "who liked you" — a different decision from the deck, so a
+  # different page rather than folded into it.
+  resources :likes, only: %i[create index]
   resources :dislikes, only: :create
   resources :matches, only: :index
 end

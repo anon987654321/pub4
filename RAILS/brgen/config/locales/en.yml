@@ -643,6 +643,26 @@ en:
     add_restaurant: "Add restaurant"
     saved_searches: "Saved searches"
   dating:
+    who_liked_you: "Who liked you"
+    back_to_deck: "Back to the deck"
+    like_back: "Like back"
+    pass: "Pass"
+    no_likes_title: "Nobody has liked you yet"
+    no_likes_body: "Answer a couple of prompts on your profile — it gives people something to reply to."
+    add_prompt: "Add an answer"
+    remove_prompt: "Remove"
+    your_prompts: "Your answers"
+    comment_placeholder: "Say something about this answer…"
+    like_with_comment: "Like and say something"
+    prompts:
+      q_sunday: "A perfect Sunday is"
+      q_bergen: "The best thing about Bergen is"
+      q_unpopular: "My most unpopular opinion"
+      q_teach: "I could teach you"
+      q_never: "I will never"
+      q_meal: "The meal I cook best"
+      q_song: "The song I never tire of"
+      q_weekend: "Next weekend I am"
     about_tab: "About"
     edit_profile: "Edit profile"
     your_profile: "Your profile"
@@ -1080,6 +1100,8 @@ en:
     # organised; "Not allowed" and "Not authorized" became
     # shared.flash.not_authorized rather than an eleventh copy.
     dating:
+      prompt_saved: "Answer saved"
+      prompt_removed: "Answer removed"
       profile_created: "Profile created."
       profile_updated: "Profile updated."
     marketplace:
