@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "pub4/load_average"
+
 module Shared
   # Delete guest rows nobody is behind any more.
   #
@@ -71,20 +73,31 @@ module Shared
 
     # Skipped rather than slowed when the box is loaded: a queue worker competing
     # with a deploy or a CI run is how the shed starts.
+    #
+    # This read used to be File.read("/proc/loadavg"), which OpenBSD does not
+    # have. It raised ENOENT into a bare rescue that returned false, so the
+    # guard said "not busy" on every tick of the only machine it exists for —
+    # written the day after this job took the whole site down, and incapable of
+    # preventing that from the moment it was written. Pub4::LoadAverage reads
+    # sysctl first and returns nil rather than zero when it cannot tell.
+    #
+    # Unknown counts as busy. A hygiene job that skips a night costs nothing; a
+    # hygiene job that runs blind against a 1-vCPU box cost the site once
+    # already. The log line is there so a permanently-blind guard shows up as
+    # a job that never removes anything, rather than as silence.
     def busy?
       return false if Rails.env.test?
 
-      load1 = File.read("/proc/loadavg").split.first.to_f
-      return false if load1.zero?
-
-      if load1 > LOAD_CEILING
-        Rails.logger.info("PruneGuestUsersJob: load #{load1} over #{LOAD_CEILING}, leaving the rest for the next run")
-        true
-      else
-        false
+      load1 = Pub4::LoadAverage.one
+      if load1.nil?
+        Rails.logger.warn("PruneGuestUsersJob: cannot read load average, skipping this run")
+        return true
       end
-    rescue StandardError
-      false
+
+      return false unless load1 > LOAD_CEILING
+
+      Rails.logger.info("PruneGuestUsersJob: load #{load1} over #{LOAD_CEILING}, leaving the rest for the next run")
+      true
     end
   end
 end

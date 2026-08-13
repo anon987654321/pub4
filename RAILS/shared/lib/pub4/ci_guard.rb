@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "timeout"
+require_relative "load_average"
 
 module Pub4
   # VPS-only mutex + load gate for Rails bin/ci (prevents parallel CI pile-ups on vm23).
@@ -40,13 +41,17 @@ module Pub4
       exit 1
     end
 
+    # Unreadable load fails open here, unlike PruneGuestUsersJob, and on
+    # purpose: this gate stands in front of CI, so treating unknown as busy
+    # would make an unreadable sysctl look exactly like a permanently locked
+    # box and block every deploy. The warning is the difference between failing
+    # open and not noticing — the old version returned 0.0 in silence, which
+    # reads in the log as an idle machine.
     def current_load
-      line = `sysctl -n vm.loadavg 2>/dev/null`.strip
-      parts = line.split
-      return parts[1].to_f if parts.size >= 2
+      load5 = LoadAverage.five
+      return load5 if load5
 
-      0.0
-    rescue StandardError
+      warn "pub4-ci-guard: cannot read load average, proceeding ungated"
       0.0
     end
 
