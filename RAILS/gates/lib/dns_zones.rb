@@ -90,21 +90,57 @@ module Deploy
       end
 
       subdomains = RenderDns.city_zones
-      live.each do |domain|
-        names = [domain, "www.#{domain}"] + Array(subdomains[domain]).map { |sub| "#{sub}.#{domain}" }
-        unanswered = names.reject do |name|
-          resolver.getaddress(name)
-          true
-        rescue Resolv::ResolvError, Resolv::ResolvTimeout
-          false
-        end
+      live.each { |domain| check_domain(resolver, domain, Array(subdomains[domain])) }
+    end
 
-        if unanswered.empty?
-          @result.checked!(names.size)
-        else
-          @result.fail("dns_zones: #{domain} is in LIVE_DOMAINS and #{NAMESERVER} does not answer for " \
-                       "#{unanswered.sort.join(', ')}")
-        end
+    def check_domain(resolver, domain, subdomains)
+      names = [domain, "www.#{domain}"] + subdomains.map { |sub| "#{sub}.#{domain}" }
+      by_verdict = names.group_by { |name| answer(resolver, name) }
+      missing = Array(by_verdict[:missing])
+      timed_out = Array(by_verdict[:timeout])
+
+      if missing.any?
+        @result.fail("dns_zones: #{domain} is in LIVE_DOMAINS and #{NAMESERVER} does not answer for " \
+                     "#{missing.sort.join(', ')}")
+      end
+      if timed_out.any?
+        @result.skipped_live("dns_zones: #{NAMESERVER} timed out for #{timed_out.sort.join(', ')} " \
+                             "after #{RETRIES} attempts — not measured, not absent")
+      end
+      @result.checked!(names.size - timed_out.size)
+    end
+
+    # Answers over UDP, retried, because a timeout is not an absent record.
+    #
+    # This gate hard-failed on the first Resolv::ResolvTimeout, and one such
+    # failure is what running it for the first time produced: "frankfrt.de is in
+    # LIVE_DOMAINS and 46.23.89.226 does not answer for maps.frankfrt.de", while
+    # `dig @46.23.89.226 maps.frankfrt.de` answered immediately and three
+    # consecutive re-runs of the gate passed. A false block, from one dropped UDP
+    # packet in the ~500 sequential queries this makes.
+    #
+    # arXiv 2607.07405 is the reason that matters rather than being a re-run
+    # someone shrugs at: it audits a four-gate suite and finds one gate blocking
+    # at 100% precision and another at 5%, and a gate whose blocks are mostly its
+    # own noise is one people learn to skip. This gate was already invisible —
+    # registered in gates.yml and invoked by nothing — so its first impression on
+    # anyone wiring it up would have been a block that was not true.
+    #
+    # NXDOMAIN keeps failing. That is the gate's actual job, and it is a
+    # different exception class from the one that was costing precision.
+    RETRIES = 3
+
+    def answer(resolver, name)
+      attempts = 0
+      begin
+        attempts += 1
+        resolver.getaddress(name)
+        :ok
+      rescue Resolv::ResolvTimeout
+        retry if attempts < RETRIES
+        :timeout
+      rescue Resolv::ResolvError
+        :missing
       end
     end
 

@@ -106,6 +106,47 @@ class DeployGatesContractTest < Minitest::Test
     end
   end
 
+  # A registered gate that nothing runs.
+  #
+  # `runner.rb --all` exists and is called by nothing (OPENBSD/data/debt.yml:
+  # rails_gates_not_wired), so a gate is only ever run if some script names it or
+  # names the composite that covers it. dns_zones was the one that neither
+  # applied to: registered in gates.yml, complete, and never once executed. When
+  # it finally was, it hard-failed on a claim that was not true — one dropped UDP
+  # packet out of ~500 queries, reported as a missing DNS record — because a gate
+  # nobody runs is also a gate nobody has seen be wrong.
+  #
+  # A count would have said 47 gates and meant 46. This asks the question the
+  # count cannot.
+  CALLER_GLOBS = %w[OPENBSD/bin/* OPENBSD/*.sh OPENBSD/*.rb OPENBSD/lib/*.rb
+                    RAILS/*.sh MASTER/bin/* bin/*].freeze
+
+  # Comment lines are stripped first, and that is not tidiness. Written without
+  # it, this test passed with the wiring deleted — because the commit that added
+  # the wiring also added a comment saying the word "dns_zones", and prose about
+  # a gate satisfied a check for whether anything runs it. Ruby and zsh share the
+  # `#` comment marker, which is the whole of what these callers are.
+  def caller_source
+    CALLER_GLOBS.flat_map { |glob| Dir[File.join(REPO_ROOT, glob)] }
+                .select { |path| File.file?(path) }
+                .map { |path| File.read(path, encoding: "UTF-8") }
+                .join("\n")
+                .lines.reject { |line| line.match?(/\A\s*#/) }.join
+  end
+
+  def test_every_registered_gate_is_named_by_some_caller
+    text = caller_source
+
+    orphans = GATES.reject do |name, row|
+      parent = row["covered_by"]
+      text.match?(/\b#{Regexp.escape(name)}\b/) || (parent && text.match?(/\b#{Regexp.escape(parent)}\b/))
+    end.keys
+
+    assert_empty orphans,
+                 "these gates are registered in gates.yml and no script in the repo runs them, directly " \
+                 "or through their composite — wire each into a check-* entrypoint or delete it"
+  end
+
   # The deploy-time integrity chain names gates instead of pointing at scripts,
   # so it cannot outlive a file the way it did when the shims moved.
   def test_integrity_chain_names_gates_that_exist

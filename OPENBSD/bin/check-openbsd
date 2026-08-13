@@ -12,6 +12,14 @@ runner = Pub4::CheckRunner.new(prefix: "deploy-openbsd", root: ROOT, timeout: ST
 failures = []
 failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deploy_identity.rb")
 failures << "ports" unless runner.run("ports", RUBY, "RAILS/gates/runner.rb", "port_inventory")
+# dns_zones was registered in RAILS/gates/gates.yml and invoked by nothing — the
+# only one of the 47 that no script in this repo named, so `runner.rb --all`
+# being uncalled (data/debt.yml: rails_gates_not_wired) meant it had never run.
+# It belongs here rather than in check-rails: what it compares is
+# OPENBSD/var/nsd/zones against what bin/render_dns.rb generates, plus a live
+# query to our own nameserver. Nothing about it is a Rails concern except the
+# directory its file happens to sit in.
+failures << "dns_zones" unless runner.run("dns zones", RUBY, "RAILS/gates/runner.rb", "dns_zones")
 failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
 failures << "vps_ci_all syntax" unless runner.run("vps_ci_all syntax", "zsh", "-n", "OPENBSD/vps_ci_all.sh")
 failures << "openbsd deploy syntax" unless runner.run("openbsd deploy syntax", "zsh", "-n", "OPENBSD/OPERATOR.sh")
