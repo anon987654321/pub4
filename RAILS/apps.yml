@@ -69,7 +69,8 @@ apps:
         - { name: "Tv::Video (status machine, duration_formatted)", status: done }
         - { name: "Tv::Broadcast (stream_key, go_live!/end_live!)", status: done }
         - { name: "Tv::Subscription", status: done }
-        - { name: "Tv::ViewEvent", status: done }
+        - { name: "Tv::ViewEvent", status: done, notes: "watch_time_seconds + completed are written by the player now; nothing wrote them before, so trending sorted views_count (incremented on page load)" }
+        - { name: vertical watch-time feed (/feed),                         status: done, notes: "Tv::FeedController; CSS scroll-snap not a JS scroller; 100dvh; preload=none with only the visible video playing; furthest-point watch time via sendBeacon; ranked by summed watch time with views_count as tiebreak" }
         - { name: "Tv::Show", status: done, notes: "tv_shows migration + ShowsController" }
         - { name: "Tv::Episode", status: done, notes: "tv_episodes migration + belongs_to show/video" }
         - { name: video upload + Active Storage variants,                  status: done, notes: "Tv::Video video_file + thumbnail; webp poster/thumb variants via MediaProcessable" }

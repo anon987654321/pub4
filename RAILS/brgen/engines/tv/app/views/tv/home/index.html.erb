@@ -6,8 +6,10 @@
     <p class="dim"><%= t("tv.home_blurb") %></p>
   </div>
   <div>
+    <%# The other shape of this page: no choosing, just the next thing. %>
+    <%= link_to t("tv.feed.title"), feed_path, class: "btn" %>
     <%= link_to t("tv.channels_title"), channels_path, class: "btn btn-ghost" %>
-    <% if authenticated? %><%= link_to t("tv.create_channel"), new_channel_path, class: "btn" %><% end %>
+    <% if authenticated? %><%= link_to t("tv.create_channel"), new_channel_path, class: "btn btn-ghost" %><% end %>
   </div>
 </div>
 

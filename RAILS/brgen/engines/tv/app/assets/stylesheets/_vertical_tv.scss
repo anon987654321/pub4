@@ -117,3 +117,62 @@ body.vertical-tv .show-card:hover {
 .episode-link:focus-visible {
   text-decoration: underline;
 }
+
+/* Vertical feed — one video per screen.
+   Snapping is CSS, not JS: the browser already does momentum, rubber-banding
+   and keyboard paging correctly, and a hand-rolled scroller gets at least one
+   of the three wrong on some device. Stimulus only decides what plays. */
+.tv-feed {
+  position: relative;
+  /* dvh, not vh: mobile browser chrome collapses on scroll, and vh leaves a
+     strip of the next video showing under the address bar the whole way down. */
+  height: 100dvh;
+  margin-inline: calc(var(--container-pad, 1rem) * -1);
+}
+
+.tv-feed-scroller {
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+}
+
+.tv-feed-scroller::-webkit-scrollbar { display: none; }
+
+.tv-feed-item {
+  position: relative;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  background: var(--tv-stage);
+}
+
+.tv-feed-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--tv-stage);
+}
+
+/* Flat: a solid band rather than a gradient scrim, per the design rules. */
+.tv-feed-overlay {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: var(--space-4, 1rem);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.tv-feed-title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  margin: 0;
+}
+
+.tv-feed-channel { margin: 0; color: var(--text-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-feed-scroller { scroll-behavior: auto; }
+}

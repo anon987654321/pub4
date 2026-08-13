@@ -6,6 +6,10 @@
 Tv::Engine.routes.draw do
   root "home#index"
 
+  # home#index is the grid — the YouTube answer to "what is there". This is the
+  # other shape: one video per screen, ranked by watch time.
+  get "feed", to: "feed#index", as: :feed
+
   resources :channels, param: :slug do
     member do
       post :subscribe
@@ -21,8 +25,9 @@ Tv::Engine.routes.draw do
   resources :videos, only: %i[show destroy] do
     resources :video_notes, only: :create
     resources :comments, only: :create
-    # The row is created by videos#show; the player PATCHes watch time onto it.
-    resources :view_events, only: :update
+    # videos#show creates its own row; the vertical feed creates one per video
+    # as it scrolls into view. Both PATCH watch time onto it.
+    resources :view_events, only: %i[create update]
   end
 
   resources :live_streams, only: %i[index show update destroy] do

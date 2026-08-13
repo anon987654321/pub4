@@ -1,0 +1,34 @@
+<%# locals: video %>
+<article class="tv-feed-item"
+         data-tv-feed-target="item"
+         data-video-id="<%= video.id %>"
+         data-view-events-url="<%= tv.video_view_events_path(video) %>"
+         aria-label="<%= video.title %>">
+  <%# No autoplay attribute and no preload: ten videos preloading at once is a
+      few hundred megabytes on a phone. The controller plays whichever one is
+      on screen and pauses the rest. muted + playsinline because iOS refuses to
+      autoplay anything else, and the sound comes on when the viewer asks. %>
+  <video class="tv-feed-video"
+         data-tv-feed-target="video"
+         preload="none"
+         muted
+         loop
+         playsinline
+         poster="<%= video.thumbnail.attached? ? main_app.url_for(video.thumbnail) : "" %>"
+         src="<%= main_app.url_for(video.video_file) %>"></video>
+
+  <div class="tv-feed-overlay">
+    <p class="tv-feed-channel"><%= link_to video.channel.name, tv.channel_path(video.channel) %></p>
+    <h2 class="tv-feed-title"><%= link_to video.title, tv.video_path(video) %></h2>
+    <p class="chips">
+      <span class="chip"><%= video.duration_formatted %></span>
+      <span class="chip"><%= t("tv.feed.views", count: video.views_count.to_i) %></span>
+    </p>
+    <button type="button" class="btn btn-ghost btn-sm"
+            data-action="tv-feed#toggleSound"
+            data-tv-feed-target="soundButton"
+            aria-pressed="false">
+      <%= t("tv.feed.sound_on") %>
+    </button>
+  </div>
+</article>

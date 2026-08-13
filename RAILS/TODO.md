@@ -290,14 +290,48 @@ guests — the same shape as the tv video page.
 **Still open:** crossposts, per-community bans (a report resolves against the
 global `TrustScore`, not this community), and a wiki.
 
-### 2.5 No vertical video surface (TikTok)
+### 2.5 No vertical video surface (TikTok) — **done**
 
-`Tv::HomeController#index` is a trending/live/recent grid — the YouTube shape,
-not the TikTok one. A full-screen vertical swipe feed over existing
-`Tv::Video` is unblocked *once 1.2 records watch time*; the playlist engine's
-swipe tracking (`Playlist::ListensController`) is the closest existing pattern.
+`tv.­*/feed`: one video per screen, ranked by watch time. `home#index` stays as
+it was — the grid is the YouTube answer to "what is there", and this is the
+other question.
+
+Only possible because 1.2 records watch time. Ranking a feed on `views_count`
+would have served whatever got the most accidental clicks, since that counter
+is incremented on page load.
+
+- **Snapping is CSS, not JS.** The browser already does momentum,
+  rubber-banding and keyboard paging correctly; a hand-rolled scroller gets at
+  least one of those wrong on some device. Stimulus only decides what plays and
+  what gets recorded.
+- **`100dvh`, not `vh`** — mobile browser chrome collapses on scroll, and `vh`
+  leaves a strip of the next video showing under the address bar all the way
+  down.
+- **No `autoplay`, `preload="none"`.** Ten videos preloading at once is a few
+  hundred megabytes on a phone; the controller plays the visible one and pauses
+  the rest. `muted` + `playsinline` because iOS refuses to autoplay anything
+  else, and sound is opt-in.
+- **Watch time is the furthest point reached, sampled while it plays** — a
+  looping video's `currentTime` returns to zero, so the max is the only honest
+  number. Reported with `sendBeacon` on scroll-away and unload.
+- A video with no file is not in the feed at all: a blank screen you cannot
+  scroll past is worse than a shorter feed.
+- **Logged-out viewers count.** brgen mints a real `User` per visitor, so their
+  watch time ranks too — for video that is the point, since most viewers are
+  never signed in. `PruneGuestUsersJob` `destroy_all`s those users and the view
+  events are `dependent: :destroy`, so the rows go with them.
+
+**Found while wiring it:** the nested view-events path carries the video's slug
+(`Sluggable#to_param`) and the create action looked up by `id` — the third time
+that trap has appeared today, after `post_vote_path` and `post_repost_path`.
+
+**Check:** `brgen/test/controllers/tv_feed_test.rb` (6), including that one
+viewer who watched a clip through outranks 500 page opens.
 
 Live streaming stays blocked — see "Blocked" below.
+
+**Still open:** sounds/remix as a first-class object (a video has no audio
+identity, so there is nothing to browse "more of"), and duets.
 
 ---
 

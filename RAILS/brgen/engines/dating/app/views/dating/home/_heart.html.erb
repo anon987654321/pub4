@@ -1,51 +1,51 @@
-<%# Replace inner css-doodle block with the exact snippet from css-doodle.com when ready %>
+<%# The original, recovered 2026-08-13 from the CodePen export kept whole at
+    RAILS/shared/reference/banner_art/. This file's placeholder asked for "the
+    exact snippet ... when ready" and carried a stand-in until then: 18 filled
+    hearts blended with mix-blend-mode: screen.
+
+    This is that snippet, with one deviation. The original grids at 50vmin,
+    which was right for a 300x300 banner and under-fills .dating-heart-stage
+    (min(92vw, 520px) x min(58vh, 480px)); the doodle is sized 100% by
+    _vertical_dating_intro.scss, so the grid follows the stage instead.
+
+    frame: is what makes it read — the hearts are outlines, not fills, and each
+    one is filled by its own rotating gradient stripe via :after. The glow is
+    two drop-shadows rather than a box-shadow, so it is not what the flat-UI
+    rule forbids. css-doodle is self-hosted at /vendor/css-doodle.min.js and
+    loaded by dating/home/index.html.erb; nothing here reaches a CDN. %>
 <div class="dating-heart-stage" aria-hidden="true">
   <css-doodle class="dating-heart-doodle">
     :doodle {
-      @grid: 18x1 / 100% 100%;
-      @size: 100% 100%;
-      background: transparent;
-      overflow: visible;
-      filter: contrast(1.35) saturate(1.2);
+      @grid: 1x10 / 100% 100%;
+      filter:
+        drop-shadow(0 0 10px #ff360e) drop-shadow(0 0 20px #ff360e);
     }
 
+    @size: calc(100% - @i * 3%);
     @place-cell: center;
-    @size: calc(92% - @i() * 2.1%);
 
     clip-path: @shape(
-      points: 220;
-      x: 16 * sin(t) * sin(t) * sin(t);
-      y: -(13 * cos(t) - 5 * cos(2t) - 2 * cos(3t) - cos(4t));
+      points: 180;
+      a: cos(t)*13/18 - cos(2t)*5/18;
+      b: cos(3t)/18 + cos(4t)/18;
+      x: .75 * sin(t)^3;
+      y: a - b + .15;
+      frame: @r(2, 2.5);
     );
 
-    background: linear-gradient(
-      105deg,
-      #00f0c8 0%,
-      #b8fff5 28%,
-      #ffffff 42%,
-      #ffb347 62%,
-      #ff5500 78%,
-      #ff2d2d 100%
-    );
+    :after {
+      content: '';
+      @place-cell: center;
+      @size: @p(@r(10px), @m5(@r(50%))) 100%;
+      background: linear-gradient(@r(360deg),
+        #30182b, #f0f1bc, #60f0c0, #ff360e, #191f04);
+      animation: cycle @r(2s, 8s) linear infinite;
+      animation-delay: -@r(8s);
+    }
 
-    opacity: calc(0.18 + (18 - @i()) * 0.045);
-    mix-blend-mode: screen;
-
-    transform:
-      rotate(calc((@i() - 9) * 1.4deg))
-      translateX(calc((@i() - 9) * 1.8px))
-      scale(calc(1 - @i() * 0.012));
-
-    animation: dating-heart-drift calc(2.1s + @i() * 0.11s) ease-in-out infinite alternate;
-    animation-delay: calc(@i() * -0.09s);
-
-    @keyframes dating-heart-drift {
+    @keyframes cycle {
       to {
-        opacity: calc(0.28 + (18 - @i()) * 0.05);
-        transform:
-          rotate(calc((@i() - 9) * -2deg))
-          translateX(calc((@i() - 9) * -3px))
-          scale(calc(1.03 - @i() * 0.01));
+        transform: rotate(1turn);
       }
     }
   </css-doodle>

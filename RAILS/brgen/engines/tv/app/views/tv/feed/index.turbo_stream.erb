@@ -1,0 +1,5 @@
+<%# Append rather than replace, so the feed keeps its scroll position and the
+    video currently playing is not torn out from under the viewer. %>
+<%= turbo_stream.append "tv-feed-items" do %>
+  <%= render partial: "tv/feed/item", collection: @videos, as: :video %>
+<% end %>

@@ -1,0 +1,20 @@
+<% content_for :title, t("tv.feed.title") %>
+
+<%# One video per screen, CSS scroll-snap rather than a JS scroller: the browser
+    already does momentum, rubber-banding and keyboard paging correctly, and a
+    hand-rolled one gets all three wrong on some device. Stimulus only decides
+    which video is playing and reports how much of it was watched. %>
+<div class="tv-feed"
+     data-controller="tv-feed"
+     data-tv-feed-signed-in-value="<%= authenticated? %>"
+     data-tv-feed-next-url-value="<%= @has_more ? tv.feed_path(offset: @next_offset, format: :turbo_stream) : "" %>">
+  <div class="tv-feed-scroller" data-tv-feed-target="scroller" id="tv-feed-items">
+    <%= render partial: "tv/feed/item", collection: @videos, as: :video %>
+  </div>
+
+  <% if @videos.empty? %>
+    <%= render "shared/empty_state",
+          title: t("tv.feed.empty_title"),
+          body: t("tv.feed.empty_body") %>
+  <% end %>
+</div>
