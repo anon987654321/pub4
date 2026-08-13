@@ -332,8 +332,28 @@ guests — the same shape as the tv video page.
 **Check:** `brgen/test/models/community_governance_test.rb` (9) and
 `brgen/test/controllers/community_moderation_test.rb` (9).
 
-**Still open:** crossposts, per-community bans (a report resolves against the
-global `TrustScore`, not this community), and a wiki.
+**Bans are built.** A mod queue that can resolve a report but not stop the
+person who caused it is half a tool: resolving takes the content down and the
+same account posts the same thing a minute later.
+
+`CommunityBan` is its own table, not a flag on `community_memberships`, because
+a public community takes posts from anyone — the person to ban usually has no
+membership row, and inventing one to hold the ban would make them a member and
+bump `members_count` in the act of banning them. Checked before privacy in
+`postable_by?`, since a public community is exactly where a ban has to bite.
+
+Scoped to the community and nowhere else: one community's moderator silencing
+someone across the whole city is not a lever that should exist. Temporary bans
+lapse on their own; a moderator cannot be banned without being demoted first (a
+fight the app should not settle); any moderator can lift any ban, because a mod
+team that cannot undo each other's mistakes escalates everything to the owner;
+and the banned person is told with the reason, because a ban nobody is informed
+of reads as the site being broken.
+
+**Check:** `brgen/test/models/community_ban_test.rb` (10) and
+`brgen/test/controllers/community_bans_controller_test.rb` (6).
+
+**Still open:** crossposts and a wiki.
 
 ### 2.5 No vertical video surface (TikTok) — **done**
 

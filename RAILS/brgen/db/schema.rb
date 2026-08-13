@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_240000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_250000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -232,6 +232,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_240000) do
     t.index ["city_id"], name: "index_communities_on_city_id"
     t.index ["subdomain"], name: "index_communities_on_subdomain", unique: true
     t.index ["user_id"], name: "index_communities_on_user_id"
+  end
+
+  create_table "community_bans", force: :cascade do |t|
+    t.integer "banned_by_id", null: false
+    t.integer "community_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.string "reason"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["banned_by_id"], name: "index_community_bans_on_banned_by_id"
+    t.index ["community_id", "user_id"], name: "index_community_bans_on_community_id_and_user_id", unique: true
+    t.index ["community_id"], name: "index_community_bans_on_community_id"
+    t.index ["user_id", "expires_at"], name: "index_community_bans_on_user_id_and_expires_at"
+    t.index ["user_id"], name: "index_community_bans_on_user_id"
   end
 
   create_table "community_memberships", force: :cascade do |t|
@@ -1565,6 +1580,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_240000) do
   add_foreign_key "bookmarks", "users"
   add_foreign_key "comments", "users"
   add_foreign_key "communities", "cities"
+  add_foreign_key "community_bans", "communities"
+  add_foreign_key "community_bans", "users"
+  add_foreign_key "community_bans", "users", column: "banned_by_id"
   add_foreign_key "community_memberships", "communities"
   add_foreign_key "community_memberships", "users"
   add_foreign_key "conversation_participants", "conversations"

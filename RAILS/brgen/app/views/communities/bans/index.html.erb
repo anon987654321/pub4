@@ -1,0 +1,30 @@
+<% content_for :title, t("community.bans") %>
+
+<div class="page-header" role="banner">
+  <div>
+    <p class="dim"><%= link_to @community.name, community_path(@community) %></p>
+    <h1><%= t("community.bans") %></h1>
+  </div>
+  <%= link_to t("community.mod_queue"), community_moderation_index_path(@community), class: "btn btn-ghost btn-sm" %>
+</div>
+
+<% if @bans.any? %>
+  <ul class="ban-list" role="list">
+    <% @bans.each do |ban| %>
+      <li class="cluster">
+        <span><strong><%= ban.user.display_name %></strong></span>
+        <span class="chip">
+          <%= ban.permanent? ? t("community.ban_permanent") : t("community.ban_until", time: l(ban.expires_at, format: :event)) %>
+        </span>
+        <% if ban.reason.present? %><span class="dim"><%= ban.reason %></span><% end %>
+        <span class="dim"><%= ban.banned_by.display_name %></span>
+        <%# Any moderator can lift any ban: a mod team that cannot undo each
+            other's mistakes escalates every disagreement to the owner. %>
+        <%= button_to t("community.lift_ban"), community_ban_path(@community, ban),
+              method: :delete, class: "btn btn-ghost btn-sm" %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="dim"><%= t("community.no_bans") %></p>
+<% end %>

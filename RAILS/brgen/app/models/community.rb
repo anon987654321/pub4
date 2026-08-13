@@ -14,6 +14,8 @@ class Community < ApplicationRecord
   has_many :moderator_memberships, -> { where(role: %w[moderator owner]) },
            class_name: "CommunityMembership", inverse_of: :community, dependent: nil
   has_many :moderators, through: :moderator_memberships, source: :user
+  has_many :community_bans, dependent: :destroy
+  has_many :banned_users, through: :community_bans, source: :user
 
   has_one_attached :icon
   has_one_attached :banner
@@ -87,12 +89,32 @@ class Community < ApplicationRecord
 
   def postable_by?(user)
     return false if user.blank? || archived?
+    # Checked before privacy, because a public community is exactly where a ban
+    # has to bite: anyone may post there, which is what made the mod queue
+    # unable to stop a repeat offender at all.
+    return false if banned?(user)
 
     case privacy
     when "public" then true
     else member?(user)
     end
   end
+
+  def banned?(user)
+    return false if user.blank?
+
+    community_bans.active.exists?(user_id: user.id)
+  end
+
+  # By id, and memoised: the mod queue asks this once per row, and reading
+  # `report.reportable.user` to ask it is a lazy association read on a
+  # strict-loading record — which raised the whole page rather than showing a
+  # ban button.
+  def banned_user_ids
+    @banned_user_ids ||= community_bans.active.pluck(:user_id).to_set
+  end
+
+  def ban_for(user) = user.present? ? community_bans.active.find_by(user_id: user.id) : nil
 
   def archived? = archived_at.present?
 

@@ -44,6 +44,17 @@
                     community_moderation_path(@community, report, status: status),
                     method: :patch, class: "btn btn-ghost btn-sm" %>
             <% end %>
+            <%# Resolving a report takes the content down; without this the same
+                account posts the same thing a minute later. The author id comes
+                off the reported record rather than the report, which carries
+                the reporter. %>
+            <% author_id = report.reportable.try(:user_id) %>
+            <% if author_id && !@community.banned_user_ids.include?(author_id) %>
+              <%= button_to t("community.ban_author"),
+                    community_bans_path(@community, user_id: author_id),
+                    method: :post, class: "btn btn-ghost btn-sm",
+                    data: { turbo_confirm: t("community.confirm_ban") } %>
+            <% end %>
           </td>
         </tr>
       <% end %>
