@@ -246,7 +246,44 @@ spine:
   # the reason is somebody else's.
   #
   # The allowance is now spent. The next line into lib/ comes out of lib/.
-  lib_code_ceiling: 38860
+  # RAISED 2026-08-13, 38860 -> 38869 (+9), operator-sponsored, AND the raise log
+  # cleared by the same decision. Read both halves; the second is the unusual one.
+  #
+  # The 9 lines are d35b40ec0's, not this session's: two accessors in
+  # lib/design/thresholds.rb, `worn_type` and `worn_profile`, which give
+  # design_rules.yml's worn_type block a Ruby reader. That is the same category as
+  # the 2026-08-11 raise ("two YAML files nothing read", "137 principles the tree
+  # had forgotten") — law gaining a reader, which is this register's dominant
+  # defect being closed rather than accretion. test_design_rules_worn_type.rb
+  # fails if a profile has no reader, so the lines are load-bearing.
+  #
+  # Why the log was cleared. `raised:` already held two entries, so a third made
+  # lint:spine abort by design: "the ceiling has been raised N times without lib/
+  # ever falling". That refusal is correct and it did its job — it forced this
+  # paragraph instead of a silent bump. What it asks for is absorption, and there
+  # was none to be had. Three sweeps on 2026-08-12 all came back empty:
+  #
+  #   whole files whose declared constants nothing references   0 of 453
+  #   files where no declared constant is used elsewhere        0
+  #   private methods with no caller                            313 candidates,
+  #     every one checked was live — the regex broke on `!` and `?` suffixes, so
+  #     background_cycle! and automatic_gate_met? read as dead while both are
+  #     called four lines from where they are defined
+  #
+  # So the choice was: leave the gate red on somebody else's unaccounted lines, or
+  # have the operator grant what a genuine fall grants automatically. The operator
+  # granted it. This is the first time the log has been cleared by decision rather
+  # than by lib/ coming down, and it is dated and named here so that it stays a
+  # single visible event rather than a precedent anybody can reach for.
+  #
+  # What did NOT change: consecutive_raises_allowed stays 2. The next two raises
+  # are budgeted as before and the third after them is refused as before. Nothing
+  # about the mechanism is weaker; one turn of it was taken by hand.
+  #
+  # The two raises this clears are not erased — 38811 -> 38844 and 38844 -> 38860
+  # are both still written out in full above, with their accounting. `raised:` is
+  # the counter; the comments are the record, and only the counter was reset.
+  lib_code_ceiling: 38869
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -254,12 +291,13 @@ spine:
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"
+  # Cleared by operator decision 2026-08-13, not by a fall — see the note above
+  # lib_code_ceiling. The two 2026-08-12 entries this replaces are written out in
+  # full in the comments; what was reset is the counter, not the record.
   raised:
-  - "2026-08-12 38811 -> 38844 (+33): one counter instead of three (CodeMetrics),
-     and the scan-coverage manifest getting a reader. Operator-sponsored."
-  - "2026-08-12 38844 -> 38860 (+16): closing two of the three fold-spine findings
-     the merge exposed — private_class_method honoured, 12 rule factories declared
-     private, Fold#run's admitted half extracted. Operator-sponsored."
+  - "2026-08-13 38860 -> 38869 (+9): d35b40ec0's worn_type/worn_profile accessors,
+     giving design_rules.yml's worn_type block a Ruby reader. Operator-sponsored,
+     and the same decision cleared the two entries before it."
   # How many raises may stand before lint:spine refuses another. The allowance was
   # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
   # mechanism working: a genuine fall earns the budget back, so this is a budget

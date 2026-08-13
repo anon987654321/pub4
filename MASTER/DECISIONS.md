@@ -21,7 +21,7 @@ Two things the old split was carrying, and where each went:
 
 What the merge removed, beyond a directory: `bin/master-core` put `core/` on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb` files won was decided by load-path order. `bin/nsaudit` had to hand-require the second spine so the first one's constants would resolve. Both are gone.
 
-`lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved files `lib/` fell 28. The arithmetic is in `data/spine.yml` so the claim is checkable rather than asserted. It has since been raised twice, to 38860 <!-- cite: data/spine.yml#spine.lib_code_ceiling -->: once for `Review::Scan::CodeMetrics` — one line counter where there had been three — and once to close the fold-spine findings the merge exposed. The allowance is now spent.
+`lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved files `lib/` fell 28. The arithmetic is in `data/spine.yml` so the claim is checkable rather than asserted. It has since been raised three times, to 38869 <!-- cite: data/spine.yml#spine.lib_code_ceiling -->: once for `Review::Scan::CodeMetrics` — one line counter where there had been three — once to close the fold-spine findings the merge exposed, and once for `d35b40ec0`'s `worn_type` accessors, which took an operator decision to clear the raise log because nothing was left to absorb.
 
 ---
 
@@ -73,6 +73,14 @@ So the sentence is retired and replaced by the two things that are actually true
   growth is visible and has to be asked for. A raise needs a named sponsor and the
   per-commit accounting in `spine.yml`; `consecutive_raises_allowed: 2` refuses the
   third until `lib/` genuinely falls.
+
+  *Amended 2026-08-13.* That refusal fired for the first time, and what it caught
+  was somebody else's 9 unaccounted lines with nothing left to absorb — three
+  sweeps for dead code came back empty. The operator cleared the raise log by
+  decision rather than by a fall, which is a turn of the mechanism taken by hand
+  and is recorded as a single dated event in `spine.yml`. `consecutive_raises_allowed`
+  stays 2 and nothing about the mechanism is weaker. The refusal worked exactly as
+  intended: it converted a silent bump into an argument.
 
 Nothing about the mechanism changes — this only stops the file claiming an
 invariant that three raises have already disproved. A number nobody believes is
