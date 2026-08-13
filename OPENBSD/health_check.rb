@@ -209,6 +209,44 @@ if on_box
   end
 end
 
+# How far behind each app's last successful deploy is.
+#
+# A deploy that fails at a CI gate leaves the previous stamp saying "ok" and the
+# old build serving, so from outside nothing has happened — and nothing reports
+# it. amber sat at 2026-08-12T08:49 for a day and a half through three failed
+# attempts, still preloading two CDNs that had been vendored three weeks earlier,
+# and the only way to find out was to read a rendered page and compare it against
+# the repo. Measured 2026-08-13: brgen 21 commits behind, bsdports 93.
+#
+# A count, not a clock. Time behind says nothing on a quiet week; commits behind
+# is the thing that grows while a gate is red. Warned, not failed, because being
+# behind is normal between deploys — the point is that the number is visible.
+DEPLOY_DRIFT_LIMIT = Integer(ENV.fetch("DEPLOY_DRIFT_LIMIT", "40"))
+
+if on_box
+  repo = "/home/dev/pub4"
+  apps.each_key do |name|
+    stamp = "/var/db/pub4/last_deploy_#{name}.json"
+    next unless File.readable?(stamp)
+
+    sha = begin
+      JSON.parse(File.read(stamp))["sha"].to_s
+    rescue StandardError
+      nil
+    end
+    next if sha.nil? || sha.empty?
+
+    ok, out = run("git", "-C", repo, "rev-list", "--count", "#{sha}..HEAD")
+    next unless ok
+
+    behind = out.strip.to_i
+    next if behind <= DEPLOY_DRIFT_LIMIT
+
+    failures << "#{name} deploy: #{behind} commits behind HEAD (last ok #{sha}) — " \
+                "a failed CI gate leaves the old stamp saying ok"
+  end
+end
+
 # A queue with work in it and nobody registered to do it.
 #
 # brgen's rc.d exported SOLID_QUEUE_IN_PUMA=true while running under Falcon,
