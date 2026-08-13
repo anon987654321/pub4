@@ -373,18 +373,43 @@ identity, so there is nothing to browse "more of"), and duets.
 
 ## Tier 3 — per-surface parity
 
-### Marketplace (Amazon / Temu)
+### Marketplace (Amazon / Temu) — **basket done**
 
-The cart is not a cart. `Marketplace::CartsController#load_cart` lists pending
-per-listing `Marketplace::Order` rows and `CheckoutsController#create` pays
-exactly one of them. Stripe and Vipps are wired; the basket is not.
+`Marketplace::Order` is a per-listing *offer* with its own payment, which is the
+right shape for classifieds: a bike from a stranger is negotiated, not added to
+a cart. It was the wrong shape for a shop — four things meant four payments,
+four PSP round trips and four card charges, with nowhere to put an address.
 
-Missing: multi-item single payment, shipping addresses, fulfilment and tracking,
-product variants (size/colour), inventory counts, returns, seller payouts,
-listing Q&A, wishlist, and search facets (FTS only, no faceting).
+So `Marketplace::Checkout` sits **above** the orders rather than replacing them,
+and both shapes keep working. One basket, one payment, one address, many orders,
+split by seller for fulfilment.
 
-Temu-flavoured work is cheap on top of the existing `Marketplace::Deal`:
-countdown flash deals, coupons, referral credit, bundle pricing.
+- **`Marketplace::Address` is its own record**, so a second purchase does not
+  mean typing it again and a later edit does not rewrite the address printed on
+  last month's label.
+- **Fulfilment is a separate axis from payment.** A paid order that has not
+  shipped and a shipped order awaiting payment are both real states; collapsing
+  them into one column is why "where is my parcel" goes unanswered. `ship!`
+  carries a tracking code and tells the buyer.
+- **`stock` is nil for one-of-a-kind**, a number for a shop. Defaulting to 1
+  would have made every private sale read as a shop with one left.
+- **Paying is all-or-nothing** — a half-paid basket, one card charged, is the
+  state nobody can resolve.
+- The payment services stopped reading `order.listing.currency`/`.title` and now
+  ask the payable for them, so a basket goes through the *same* guarded path
+  (including the sk_test_-key-in-production guard) rather than a second one.
+- Check order in `checkouts#create` is the order a buyer should meet it in:
+  nothing to pay for → provider unconfigured → no address → then a basket.
+  Getting this wrong produced a `DoubleRenderError`, i.e. a 500 for a buyer who
+  had simply not saved an address.
+
+**Check:** `brgen/test/models/marketplace_checkout_test.rb` (8) and
+`brgen/test/controllers/marketplace_basket_test.rb` (5).
+
+**Still open:** product variants (size/colour — a real schema, not a column),
+returns, seller payouts, listing Q&A, wishlist, and search facets. Temu-flavoured
+work is still cheap on top of `Marketplace::Deal`: countdown flash deals,
+coupons, referral credit, bundle pricing.
 
 Solidus remains blocked — see below — so all of this is native-path work.
 

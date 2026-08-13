@@ -34,6 +34,18 @@
     <p><strong><%= t("marketplace.cart_total", amount: Shared::MoneyDisplay.format(@cart_total)) %></strong></p>
     <p class="dim"><%= t("marketplace.cart_pay_hint") %></p>
 
+    <%# Paying the whole basket needs somewhere to send it. Shown before the pay
+        buttons rather than discovered after the money has moved. %>
+    <div class="cart-address">
+      <% if @delivery_address %>
+        <p><strong><%= t("marketplace.deliver_to") %></strong> <%= @delivery_address %></p>
+        <%= link_to t("marketplace.change_address"), addresses_path, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <p class="dim"><%= t("marketplace.no_address_yet") %></p>
+        <%= link_to t("marketplace.add_address"), addresses_path, class: "btn btn-sm" %>
+      <% end %>
+    </div>
+
     <% vipps_ready = Marketplace::Payments::VippsCheckout.configured? %>
     <% stripe_ready = Marketplace::Payments::StripeCheckout.configured? &&
          !(Rails.env.production? && Marketplace::Payments::StripeCheckout.test_key?) %>

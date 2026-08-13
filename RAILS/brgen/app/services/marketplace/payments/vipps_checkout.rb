@@ -61,12 +61,12 @@ module Marketplace
         token = access_token
         reference = "brgen-order-#{order.id}-#{SecureRandom.hex(4)}"
         payload = {
-          amount: { currency: (order.listing.currency || "NOK"), value: order.total_cents.to_i },
+          amount: { currency: order.payment_currency, value: order.total_cents.to_i },
           paymentMethod: { type: "WALLET" },
           reference: reference,
           returnUrl: return_url,
           userFlow: "WEB_REDIRECT",
-          paymentDescription: order.listing.title.to_s.truncate(100),
+          paymentDescription: order.payment_description.to_s.truncate(100),
         }
         uri = URI("#{api_base}/epayment/v1/payments")
         req = Net::HTTP::Post.new(uri)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_180000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -478,6 +478,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
     t.index ["slug"], name: "index_identity_providers_on_slug", unique: true
   end
 
+  create_table "marketplace_addresses", force: :cascade do |t|
+    t.string "city_name", null: false
+    t.string "country_code", default: "NO", null: false
+    t.datetime "created_at", null: false
+    t.boolean "default_address", default: false, null: false
+    t.string "line1", null: false
+    t.string "line2"
+    t.string "phone"
+    t.string "postcode", null: false
+    t.string "recipient", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "default_address"], name: "index_marketplace_addresses_on_user_id_and_default_address"
+    t.index ["user_id"], name: "index_marketplace_addresses_on_user_id"
+  end
+
   create_table "marketplace_categories", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -486,6 +502,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_marketplace_categories_on_parent_id"
     t.index ["slug"], name: "index_marketplace_categories_on_slug", unique: true
+  end
+
+  create_table "marketplace_checkouts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "currency", default: "NOK", null: false
+    t.integer "marketplace_address_id"
+    t.datetime "paid_at"
+    t.string "payment_provider"
+    t.string "payment_reference"
+    t.string "status", default: "open", null: false
+    t.integer "total_cents", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["marketplace_address_id"], name: "index_marketplace_checkouts_on_marketplace_address_id"
+    t.index ["user_id", "status"], name: "index_marketplace_checkouts_on_user_id_and_status"
+    t.index ["user_id"], name: "index_marketplace_checkouts_on_user_id"
   end
 
   create_table "marketplace_deals", force: :cascade do |t|
@@ -529,6 +561,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
     t.integer "reviews_count", default: 0, null: false
     t.string "slug"
     t.string "status"
+    t.integer "stock"
     t.integer "store_id"
     t.string "title"
     t.datetime "updated_at", null: false
@@ -544,8 +577,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
 
   create_table "marketplace_orders", force: :cascade do |t|
     t.integer "buyer_id", null: false
+    t.string "carrier"
     t.datetime "created_at", null: false
+    t.datetime "delivered_at"
+    t.string "fulfilment_status", default: "unfulfilled", null: false
     t.integer "listing_id", null: false
+    t.integer "marketplace_checkout_id"
     t.text "message"
     t.datetime "paid_at"
     t.string "payment_provider"
@@ -553,10 +590,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
     t.string "payment_status", default: "unpaid", null: false
     t.integer "price_cents"
     t.integer "quantity", default: 1, null: false
+    t.datetime "shipped_at"
     t.string "status"
+    t.string "tracking_code"
     t.datetime "updated_at", null: false
     t.index ["buyer_id"], name: "index_marketplace_orders_on_buyer_id"
+    t.index ["fulfilment_status"], name: "index_marketplace_orders_on_fulfilment_status"
     t.index ["listing_id"], name: "index_marketplace_orders_on_listing_id"
+    t.index ["marketplace_checkout_id"], name: "index_marketplace_orders_on_marketplace_checkout_id"
     t.index ["payment_reference"], name: "index_marketplace_orders_on_payment_reference"
     t.index ["payment_status"], name: "index_marketplace_orders_on_payment_status"
   end
@@ -1508,6 +1549,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
   add_foreign_key "fedi_follows", "fedi_actors"
   add_foreign_key "fedi_follows", "users"
   add_foreign_key "identity_assurances", "users"
+  add_foreign_key "marketplace_addresses", "users"
+  add_foreign_key "marketplace_checkouts", "marketplace_addresses"
+  add_foreign_key "marketplace_checkouts", "users"
   add_foreign_key "marketplace_deals", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "users"
@@ -1515,6 +1559,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
   add_foreign_key "marketplace_listings", "marketplace_categories", column: "category_id"
   add_foreign_key "marketplace_listings", "marketplace_stores", column: "store_id"
   add_foreign_key "marketplace_listings", "users"
+  add_foreign_key "marketplace_orders", "marketplace_checkouts"
   add_foreign_key "marketplace_orders", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_orders", "users", column: "buyer_id"
   add_foreign_key "marketplace_reviews", "marketplace_listings", column: "listing_id"

@@ -77,6 +77,26 @@ class Marketplace::Listing < ApplicationRecord
     value.to_f.clamp(1.0, MAX_RADIUS_KM)
   end
 
+  # nil stock means one of a kind, which is what a classifieds listing is; a
+  # number means a shop with inventory. Defaulting to 1 would have made every
+  # private sale read as a shop with one left.
+  def one_of_a_kind? = stock.nil?
+  def in_stock? = one_of_a_kind? ? !sold? : stock.to_i.positive?
+
+  def available_quantity = one_of_a_kind? ? (sold? ? 0 : 1) : stock.to_i
+
+  # Called when an order is paid. update_column-style so a legacy listing with a
+  # since-tightened validation cannot block a sale that has already been paid
+  # for, and updated_at goes with it because the card is cached on [listing].
+  def consume_stock!(quantity = 1)
+    return mark_sold! if one_of_a_kind?
+
+    remaining = [ stock.to_i - quantity.to_i, 0 ].max
+    update_columns(stock: remaining, status: remaining.zero? ? "sold" : status, updated_at: Time.current)
+  end
+
+  def mark_sold! = update_columns(status: "sold", updated_at: Time.current)
+
   def price_display = Shared::MoneyDisplay.format(price_cents, currency)
   def casual? = store_id.nil?
   def sold? = status == "sold"

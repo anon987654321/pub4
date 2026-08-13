@@ -19,6 +19,10 @@ Marketplace::Engine.routes.draw do
     post :send_offers
   end
   resource :checkout, only: %i[create show], controller: "checkouts"
+  # Where the parcel goes. Its own record rather than fields on the checkout, so
+  # a second purchase does not mean typing it again and a later edit does not
+  # rewrite the address printed on last month's label.
+  resources :addresses, only: %i[index create update destroy]
   # Not `namespace :webhooks` — inside the marketplace scope that resolved to
   # Marketplace::Webhooks::WebhooksController, which does not exist, so PSP
   # callbacks never reached mark_paid! and orders stayed unpaid. Explicit paths
