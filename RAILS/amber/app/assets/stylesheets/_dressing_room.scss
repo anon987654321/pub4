@@ -110,8 +110,8 @@
   border-radius: var(--radius-pill);
   /* 44px is the Fitts's-law touch-target floor (design_rules.yml ux_laws.fitts) —
      the old var(--space-3) box was 12px, smaller than its own glyph. */
-  width: 44px;
-  height: 44px;
+  width: var(--tap-min);
+  height: var(--tap-min);
   cursor: pointer;
   font-size: var(--text-lg);
   line-height: 1.5;

@@ -65,7 +65,7 @@
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: var(--space-2) var(--space-3);
   background: var(--surface-elevated);
   border: 1px solid var(--border);
@@ -164,7 +164,7 @@
 }
 
 .cart-pay-actions .btn {
-  min-height: 44px;
+  min-height: var(--tap-min);
 }
 
 // The order page's chat heading. It was a bare h3 under the order h1 -- a

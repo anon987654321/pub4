@@ -104,7 +104,7 @@ nav.nav-visible {
 nav a {
   display: inline-flex;
   align-items: center;
-  min-height: 44px; /* touch target: --line-height is a fixed 20px, so an
+  min-height: var(--tap-min); /* touch target: --line-height is a fixed 20px, so an
     unpadded anchor collapses to a 20px-tall hit area */
   padding-block: 0.5rem;
   color: var(--dark-grey);
@@ -526,8 +526,8 @@ footer {
   border-radius: 0;
   transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
   cursor: pointer;
-  min-height: 44px; /* solid mobile tap target */
-  min-width: 44px;
+  min-height: var(--tap-min); /* solid mobile tap target */
+  min-width: var(--tap-min);
   font-size: var(--text-sm);
 }
 .feed-action:hover { color: var(--accent); background: var(--hover); }
@@ -569,8 +569,8 @@ footer {
   }
   .feed-action {
     padding: 8px 8px;
-    min-height: 44px;
-    min-width: 44px;
+    min-height: var(--tap-min);
+    min-width: var(--tap-min);
   }
   .feed-card-header {
     flex-wrap: nowrap;

@@ -96,7 +96,7 @@ select {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
@@ -152,7 +152,7 @@ select {
 }
 
 .btn--sm {
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding-inline: var(--space-3);
   font-size: var(--text-sm);
 }
@@ -304,7 +304,7 @@ input:focus + label {
 }
 
 input[type="checkbox"].toggle {
-  width: 44px;
+  width: var(--tap-min);
   height: 26px;
   appearance: none;
   background: var(--color-border);

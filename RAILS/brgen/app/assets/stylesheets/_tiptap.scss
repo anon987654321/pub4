@@ -5,7 +5,7 @@
 
 .tiptap_area {
   position: relative;
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: 12px 0;
   color: var(--text);
   font-size: var(--text-title, 1.25rem);

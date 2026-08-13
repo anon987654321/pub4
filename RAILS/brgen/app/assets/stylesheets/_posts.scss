@@ -27,8 +27,8 @@
   cursor: pointer;
   font-size: var(--text-base);
   line-height: 1.5;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   padding: var(--space-1);
   border-radius: var(--radius-pill);
   transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
@@ -166,7 +166,7 @@ input[type=file] {
 }
 
 input[type=file]::file-selector-button {
-  min-height: 44px;
+  min-height: var(--tap-min);
   margin-inline-end: var(--space-2);
   padding-inline: var(--space-3);
   border: 0;

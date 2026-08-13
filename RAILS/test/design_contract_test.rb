@@ -199,6 +199,30 @@ class DesignContractTest < Minitest::Test
     end
   end
 
+  # --tap-min is 44px. A min-height/min-width written as the literal is the same
+  # paint as the token and is how the floor drifted: half the family pointed at
+  # the token and half restated the number. Use-sites must read the token;
+  # definitions (`--tap-min: 44px`) and already-tokenised fallbacks stay.
+  TAP_FLOOR_LITERAL = /(?<![\w-])(min-height|min-width|min-inline-size|min-block-size)\s*:\s*44px\b/
+  TAP_FLOOR_SKIP = %r{/(builds|vendor|node_modules|public/assets)/}
+
+  def test_tap_floor_use_sites_read_the_token
+    leftovers = tap_floor_stylesheets.flat_map do |path|
+      File.readlines(path, encoding: "UTF-8").each_with_index.filter_map do |line, index|
+        next if line.match?(/\A\s*(\/\/|\/\*|\*)/)
+        next if line.match?(/--(?:tap-min|bar-height|face-bar-height|tab-bar-h)\s*:/)
+
+        next unless line.match?(TAP_FLOOR_LITERAL)
+
+        repo = File.expand_path("..", ROOT)
+        "#{path.sub("#{repo}/", "").sub("#{ROOT}/", "")}:#{index + 1}: #{line.strip}"
+      end
+    end
+
+    assert_empty leftovers,
+                 "tap-floor literals must be var(--tap-min) — same 44px, named:\n  #{leftovers.join("\n  ")}"
+  end
+
   private
 
   def mixin_block(scss, name)
@@ -222,5 +246,14 @@ class DesignContractTest < Minitest::Test
     return primary if File.file?(primary)
 
     File.join(ROOT, app, "app", "assets", "builds", "app.css")
+  end
+
+  def tap_floor_stylesheets
+    rails = Dir.glob(File.join(ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
+            Dir.glob(File.join(ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
+            Dir.glob(File.join(ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}")) +
+            Dir.glob(File.join(ROOT, "shared/frontend/**/*.css"))
+    face = File.expand_path("../MASTER/web/public/face.css", ROOT)
+    (rails + [face]).uniq.reject { |path| path.match?(TAP_FLOOR_SKIP) || !File.file?(path) }
   end
 end

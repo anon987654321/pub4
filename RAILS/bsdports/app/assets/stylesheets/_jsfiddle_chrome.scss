@@ -45,8 +45,8 @@
 
 /* yep search on CRT: keep pen geometry, green ink */
 body .search {
-  background-color: #0f1a0f;
-  border: 1px solid #1a3a1a;
+  background-color: var(--search-bg);
+  border: 1px solid var(--border);
   color: var(--text);
 }
 
@@ -60,6 +60,6 @@ body .search input::placeholder {
 
 body .search.focus,
 body .search.active {
-  background-color: #0a140a;
+  background-color: var(--surface-elevated);
   border-color: var(--accent);
 }

@@ -63,7 +63,7 @@
   text-decoration: none;
   white-space: nowrap;
   border-bottom: 2px solid transparent;
-  min-height: 44px;
+  min-height: var(--tap-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -122,7 +122,7 @@ a.feed-tab { text-decoration: none; }
 .compose-box:not(.compose-box--expanded) .compose-hint { display: none; }
 
 .compose-box:focus-within { background: var(--hover); outline: 1px solid var(--accent); outline-offset: 1px; }
-.compose-hint details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.compose-hint details summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
 
 .compose-avatar {
   width: 40px;
@@ -160,7 +160,7 @@ a.feed-tab { text-decoration: none; }
   line-height: 1.5;
   padding: var(--space-2) 0;
   resize: none;
-  min-height: 44px;
+  min-height: var(--tap-min);
 }
 
 .compose-input::placeholder { color: var(--text-secondary); }

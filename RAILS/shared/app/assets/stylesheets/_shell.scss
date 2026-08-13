@@ -163,8 +163,8 @@ main[role="main"] {
   transform: translateY(-50%);
   width: 28px;
   height: 48px;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
   padding: 0;
   border: 0 !important;
   border-radius: 0 !important;
@@ -366,8 +366,8 @@ html.chrome-hidden .tab-bar {
   inset-inline: 0;
   z-index: var(--z-nav, 80);
   width: 48px;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -437,8 +437,8 @@ html.chrome-hidden .tab-bar {
 }
 .tab-bar-coach-dismiss,
 .tab-bar-coach-show {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   padding: 0.4rem 0.75rem;
   border-radius: var(--radius-sm, 8px);
   /* Fill, not outline. These two buttons were the last eight lines on the
@@ -538,8 +538,8 @@ html.chrome-hidden .tab-bar {
 .hotkey-coach-dismiss {
   font: inherit;
   font-size: inherit;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   padding: 0.25rem 0.625rem;
   /* Fill, not outline -- the last four lines on the front page were this one
      button. */

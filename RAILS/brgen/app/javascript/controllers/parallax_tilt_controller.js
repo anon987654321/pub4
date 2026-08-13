@@ -19,7 +19,13 @@ export default class extends Controller {
   static values = { strength: { type: Number, default: 18 } }
 
   connect() {
-    this.reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    this.motion = window.matchMedia("(prefers-reduced-motion: reduce)")
+    this.reduced = this.motion.matches
+    this.onMotion = () => {
+      this.reduced = this.motion.matches
+      if (this.reduced) this.reset()
+    }
+    this.motion.addEventListener("change", this.onMotion)
     if (this.reduced) return
 
     this.frame = null
@@ -31,6 +37,11 @@ export default class extends Controller {
   disconnect() {
     if (this.frame) cancelAnimationFrame(this.frame)
     if (this.onResize) window.removeEventListener("resize", this.onResize)
+    if (this.motion && this.onMotion) this.motion.removeEventListener("change", this.onMotion)
+  }
+
+  reset() {
+    this.tileTargets.forEach((tile) => { tile.style.transform = "" })
   }
 
   measure() {

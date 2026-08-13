@@ -161,8 +161,8 @@ main[role="main"] {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   /* Shrink to the wordmark. Measured 390px wide in amber, i.e. the full
      viewport, which makes the whole top strip a link home and swallows taps on
      anything up there. inset-inline-end: auto is what lets a fixed box

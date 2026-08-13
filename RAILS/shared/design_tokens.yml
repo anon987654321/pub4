@@ -150,7 +150,7 @@ face_root:
     face-bar-height: "44px"
     bar-height: "44px"
     hud-tier-status: "calc(var(--face-bar-height) + var(--safe-bottom) + 8px)"
-    hud-tier-caption: "calc(var(--face-bar-height) + var(--safe-bottom) + 44px)"
+    hud-tier-caption: "calc(var(--face-bar-height) + var(--safe-bottom) + var(--tap-min))"
     # Additive-blending budget: ~17k points; raising size/glow/decay together
     # (the 2026-07-09 "pristine detail tier": 0.024/1.38/0.88) overflows the
     # framebuffer into a solid white oval. These are the last-known-good values.

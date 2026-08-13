@@ -36,8 +36,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   margin-block-start: var(--space-4, 1rem);
   padding: 0.5rem 1.25rem;
   border: 1px solid var(--border, var(--border));

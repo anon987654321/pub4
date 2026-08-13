@@ -11,18 +11,18 @@
 .qty-field { width: 60px; }
 
 .form-inline-errors-wrap {
-  margin-bottom: .75rem;
+  margin-bottom: var(--space-3);
 }
 
 .form-inline-errors {
   margin: 0;
-  padding: .75rem .9rem;
+  padding: var(--space-3) .9rem;
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--color-danger) 10%, white);
   color: color-mix(in srgb, var(--color-danger) 86%, black);
   list-style: none;
   display: grid;
-  gap: .25rem;
+  gap: var(--space-1);
 }
 
 .field-error {
@@ -40,7 +40,7 @@
 .mb-8 { margin-bottom: var(--space-2); }
 .mb-12 { margin-bottom: var(--space-3); }
 .m-16 { margin: var(--space-4); }
-.text-end { text-align: right; }
+.text-end { text-align: end; }
 .text-sm { font-size: var(--text-sm); }
 .text-xs { font-size: var(--text-xs); }
 .text-visible { color: var(--color-success); }
@@ -60,7 +60,7 @@
    selector is the autofix's own: `.field--check-label input` is one specificity
    step lower, and the generated layer used to load last, so matching its shape
    is what keeps the rendered box identical. */
-label.field--check-label > input { min-height: 44px; min-width: 44px; }
+label.field--check-label > input { min-height: var(--tap-min); min-width: var(--tap-min); }
 .chips--bar { padding: var(--space-3) var(--space-4); border-bottom: 0; }
 .listing-price { font-size: var(--text-2xl); font-weight: var(--weight-heavy); color: var(--danger, var(--color-danger)); margin-bottom: var(--space-1); }
 .listing-actions { margin: var(--space-4) 0; display: flex; gap: var(--space-3); align-items: center; }
@@ -131,7 +131,7 @@ label.field--check-label > input { min-height: 44px; min-width: 44px; }
   text-decoration: none;
   /* transform only — the controller writes translate3d, and transitioning
      transform keeps the tilt off the layout path. */
-  transition: transform 120ms ease-out;
+  transition: transform 120ms var(--ease-out);
   will-change: transform;
 }
 
@@ -184,6 +184,5 @@ label.field--check-label > input { min-height: 44px; min-width: 44px; }
   .affiliate_feed_tile,
   .affiliate_feed_cta {
     transition: none;
-    transform: none !important;
   }
 }

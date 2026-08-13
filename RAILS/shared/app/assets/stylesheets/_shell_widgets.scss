@@ -102,8 +102,8 @@
   top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px));
   inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px));
   z-index: 110;
-  width: 44px;
-  height: 44px;
+  width: var(--tap-min);
+  height: var(--tap-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -183,7 +183,7 @@ section h2 {
   border-radius: 0;
   color: var(--text, #d8d6e0);
   padding: 0.625rem 0.95rem;
-  min-height: 44px;
+  min-height: var(--tap-min);
   font: 0.8125rem/1 var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -300,8 +300,8 @@ section h2 {
   cursor: pointer;
   font-size: var(--text-lg);
   line-height: 1;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -349,7 +349,7 @@ section h2 {
   border-radius: 0;
   color: var(--text, #d8d6e0);
   padding: 0.5rem 0.65rem;
-  min-height: 44px;
+  min-height: var(--tap-min);
   max-height: 6.5rem;
   font-family: var(--font);
   font-size: var(--text-base);
@@ -363,8 +363,8 @@ section h2 {
 
 .nearby-chat-widget-composer .btn {
   flex-shrink: 0;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
 }
 
 .nearby-chat-widget-composer .btn:disabled {
@@ -442,8 +442,8 @@ section h2 {
   font: inherit;
   font-weight: var(--weight-bold);
   cursor: pointer;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   padding: 0 0.35rem;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -474,7 +474,7 @@ section h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: 0.5rem 0.9rem;
   border: 1px solid var(--border, #46435a);
   border-radius: 0;
@@ -554,7 +554,7 @@ section h2 {
 
 .install-prompt-primary,
 .install-prompt-secondary {
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: 0 0.9rem;
   border: 1px solid var(--border, #46435a);
   border-radius: var(--radius-sm, 8px);

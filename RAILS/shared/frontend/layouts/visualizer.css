@@ -7,6 +7,7 @@
   --zoom: 1;
   --transition-duration: 120ms;
   --focus-outline: 2px solid #dcdcdc;
+  --tap-min: 44px;
 }
 
 html, body {
@@ -106,8 +107,8 @@ h1.city-carousel {
   cursor: pointer;
   opacity: 0.7;
   transition: opacity var(--transition-duration) ease;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
 }
 
 .ui-btn:focus {

@@ -108,8 +108,8 @@
   transition: color var(--transition-fast), background var(--transition-fast),
               transform var(--transition-fast) cubic-bezier(0.32, 0.72, 0, 1);
   cursor: pointer;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   border: 0;
   background: transparent;
   color: inherit;
@@ -158,7 +158,7 @@
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: var(--space-1) var(--space-2);
   border: 0;
   background: none;

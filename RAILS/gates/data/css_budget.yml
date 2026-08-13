@@ -34,6 +34,10 @@
 # the visually-hidden clip, -1000px parks a node off-screen), and 1px padding on
 # inline chips, where the nearest allowed step is 0 and would delete it rather
 # than align it. Below the grid is not off it.
+# 89 -> 91 on 2026-08-13: brgen/_affiliate.scss in-feed tile labels. `gap: 2px`
+# between title and price, `padding: 2px 4px` on the surface chip over the
+# photo. Nearest allowed step is 4px, which doubles the hairline, or 0, which
+# deletes it. Same class as the 1px chips above — below the grid, not off it.
 # Re-measured 2026-08-10 over 94 stylesheets, up from 92. MASTER/web joined the
 # scan: ai.brgen.no is reachable from brgen's own top nav, so a visitor crosses
 # from three gated apps into an ungated one without leaving the product, and
@@ -55,7 +59,7 @@
 schema: 1
 rules:
   important: 130
-  rhythm: 89
+  rhythm: 91
   # 150 -> 151 on 2026-08-11, and this one is a ceiling raise rather than a
   # measurement, so it is worth being exact about what it is.
   #
@@ -68,7 +72,12 @@ rules:
   #
   # Raised so the suite measures everything else again. It comes back to 150 when
   # that hover border names a token: run with GATE_CSS_RATCHET=1 after.
-  magic_hex: 151
+  #
+  # 151 -> 148 on 2026-08-13: bsdports/_jsfiddle_chrome.scss pointed three
+  # use-sites at the worn :root tokens they already matched (#0f1a0f search-bg,
+  # #1a3a1a border, #0a140a surface-elevated). Same paint; the literals left
+  # the count.
+  magic_hex: 148
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical

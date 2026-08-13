@@ -13,7 +13,7 @@
   cursor: pointer;
   transition: opacity var(--transition-fast) var(--ease-out);
   text-decoration: none;
-  min-height: 44px;
+  min-height: var(--tap-min);
 }
 
 .btn:hover { opacity: .88; text-decoration: none; }
@@ -21,7 +21,7 @@
 /* Fill instead of outline. A transparent button with a 1px edge is a line;\n   a subtle surface reads as a control without one. */\n.btn-ghost { background: var(--hover-subtle); border: 0; color: var(--text); }
 .btn-ghost:hover { background: var(--hover); }
 .btn-danger { background: var(--hover); color: var(--danger, var(--text)); border: 0; }
-.btn-sm { min-height: 44px; padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
+.btn-sm { min-height: var(--tap-min); padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
 
 .btn:focus-visible,
 .media-btn:focus-visible {

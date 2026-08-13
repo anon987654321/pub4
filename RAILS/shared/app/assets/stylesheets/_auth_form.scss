@@ -86,7 +86,7 @@ body.auth-surface {
 .auth-form input[type="text"],
 .auth-form .password-field input {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
@@ -112,8 +112,8 @@ body.auth-surface {
 
 .auth-form .password-field .password-toggle,
 .auth-form .password-field .btn {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -127,7 +127,7 @@ body.auth-surface {
 
 .auth-form .actions .btn,
 .auth-form .actions input[type="submit"] {
-  min-height: 44px;
+  min-height: var(--tap-min);
 }
 
 .auth-form-footer {
@@ -169,7 +169,7 @@ body.auth-surface {
 .oauth-links .btn,
 .oauth-links button {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--tap-min);
   justify-content: center;
 }
 

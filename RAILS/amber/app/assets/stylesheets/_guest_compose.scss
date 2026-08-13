@@ -45,7 +45,7 @@
   line-height: 1.5;
   padding: var(--space-1) 0;
   resize: none;
-  min-height: 44px;
+  min-height: var(--tap-min);
 }
 
 .amber-compose-input::placeholder {

@@ -60,7 +60,7 @@
 .city-home-ai-link {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--tap-min);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
   color: var(--text-secondary, var(--text-dim));

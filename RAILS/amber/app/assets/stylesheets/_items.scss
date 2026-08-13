@@ -24,7 +24,7 @@
 }
 .wardrobe-more-tools > summary {
   cursor: pointer;
-  min-height: 44px;
+  min-height: var(--tap-min);
   display: inline-flex;
   align-items: center;
   font-weight: var(--weight-bold);
@@ -46,7 +46,7 @@
 .outfit-composition span { display: grid; place-items: center; background: var(--surface-elevated); color: var(--text-secondary); font-weight: var(--weight-bold); }
 .pairing-rationale { padding-inline-start: var(--space-md); border-inline-start: 3px solid var(--accent); }
 .danger-zone { margin-top: var(--space-lg); padding-top: var(--space-md); border-top: 0; }
-.danger-zone summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.danger-zone summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
 
 /* Base item-card (kept for compatibility) — space-not-lines; luxury variant is photo-first */
 .item-card {
@@ -158,7 +158,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: var(--space-xs) var(--space-md);
   background: var(--color-black);
   color: var(--color-white);
@@ -176,7 +176,7 @@
 }
 
 .btn-sm {
-  min-height: 44px;
+  min-height: var(--tap-min);
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--text-xs);
   background: var(--hover-subtle);
