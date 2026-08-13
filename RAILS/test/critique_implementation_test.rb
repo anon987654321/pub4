@@ -54,7 +54,11 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes compose, "Posting as a guest"
     assert_match(/post\.share|Share post/, post)
     assert_includes post, "shared/post_card"
-    assert_includes css, "min-height: 44px"
+    # Either spelling. The sheet writes min-height: var(--tap-min) and the token
+    # is 44px; pinning the literal made this fail on a card whose tap targets are
+    # exactly what the assertion is about. layout_geometry asserts the token's
+    # value, so accepting the name here is not accepting a promise.
+    assert_match(/min-height:\s*(?:44px|var\(--tap-min\))/, css)
   end
 
   def test_amber_prioritizes_owned_clothes_and_reversible_lifecycle

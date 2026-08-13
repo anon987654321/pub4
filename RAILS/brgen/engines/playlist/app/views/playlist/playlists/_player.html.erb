@@ -110,13 +110,7 @@
   </footer>
 
   <% unless local_assigns[:embedded] %>
-  <div class="playlist-comment-form" hidden data-playlist-player-target="commentForm">
-    <input type="text" placeholder="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
-           aria-label="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
-           data-playlist-player-target="commentInput">
-    <button type="button" data-action="playlist-player#submitComment">Add</button>
-    <button type="button" data-action="playlist-player#cancelComment">Cancel</button>
-  </div>
+    <%= render "playlist/playlists/comment_form" %>
   <% end %>
 
   <iframe class="playlist-embed-frame" src="<%= active_embed %>" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" data-playlist-player-target="embed" <%= "hidden" unless active_embed %>></iframe>

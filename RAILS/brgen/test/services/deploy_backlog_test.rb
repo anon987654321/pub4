@@ -550,7 +550,12 @@ class DeployBacklogTest < Minitest::Test
     assert_includes brgen_sw, '/offline'
     assert_includes brgen_sw, "url.pathname.startsWith(\"/assets/\")"
     refute_includes brgen_sw, 'workbox:core'
-    brgen_layout = read_source(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
+    # The layout and the chrome it renders, read as one surface. brgen_ai_url is
+    # reached from the mobile sheet, which moved into shared/_mobile_chrome when
+    # the layout was split at its length ceiling — the link did not move, the
+    # file boundary did, and an assertion naming one file called that a
+    # regression.
+    brgen_layout = %w[layouts/application shared/_mobile_chrome].sum("") { |v| read_source(File.join(ROOT, "brgen/app/views/#{v}.html.erb")) }
     assert_includes brgen_layout, 'data-push-unread-value='
     assert_includes brgen_layout, 'render "shared/ai_nav_link"'
     assert_includes brgen_layout, 'brgen_ai_url'

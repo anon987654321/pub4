@@ -109,12 +109,31 @@ module Deploy
       # app has, so both File.file? guards were false and the whole check was
       # unreachable: shared/pwa/service_worker.js could change and no app's
       # bundle was ever reported stale.
+      #
+      # Making it reachable then made it wrong for brgen, which no longer builds
+      # its service worker at all. Workbox froze ~89 fingerprinted asset URLs in
+      # a precache manifest; every deploy re-digests those assets, so `install`
+      # started failing with bad-precaching-response and the PWA broke on
+      # playlist.brgen.no. brgen replaced the bundle with a hand-rolled worker
+      # that precaches only /offline. Telling that app to "run npm run build:pwa"
+      # is telling it to reintroduce the outage — and the freshness comparison is
+      # meaningless for a file no generator writes.
+      #
+      # So: check each app against the source it actually has. amber and bsdports
+      # still ship the Workbox bundle and are still worth a staleness check;
+      # brgen gets the opposite check, that the bundle has not crept back.
       sw_source = File.join(RAILS_ROOT, "shared", "pwa", "service_worker.js")
       sw_build = File.join(app_dir, "app", "views", "pwa", "service-worker.js")
       return unless File.file?(sw_source)
 
       unless File.file?(sw_build)
-        result.fail("#{app_name}: missing app/views/pwa/service-worker.js — run npm run build:pwa")
+        result.fail("#{app_name}: missing app/views/pwa/service-worker.js")
+        return
+      end
+
+      unless File.read(sw_build).include?("workbox:core")
+        result.warn("#{app_name}: service-worker.js is hand-rolled, not built — npm run build:pwa " \
+                    "would overwrite it with the Workbox precache bundle it deliberately replaced")
         return
       end
 

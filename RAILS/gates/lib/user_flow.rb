@@ -121,8 +121,15 @@ module Deploy
         id: :touch_target_buy_bar,
         principle: "fitts_law / touch target_min_px 44",
         meaning: "Sticky buy bar CTAs declare min-height 44px",
-        paths: %w[brgen/app/assets/stylesheets/_marketplace.scss],
-        required_any: [/min-height:\s*44px/, /listing-buy-bar/],
+        # Was brgen/app/assets/stylesheets/_marketplace.scss, which has not held
+        # the buy bar since the verticals became mountable engines — the same
+        # blind spot that cost four other scanners 57 views. It also read
+        # `required_any: [44px literal, listing-buy-bar]`, so a sheet merely
+        # mentioning the class satisfied a rule about touch geometry, and the
+        # literal no longer matches a tree that spells the floor var(--tap-min).
+        # Both halves are required now, against the file that actually styles it.
+        paths: %w[brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss],
+        required_all: [/\.listing-buy-bar-cta/, /min-height:\s*(?:44px|var\(--tap-min\))/],
       },
     ].freeze
 

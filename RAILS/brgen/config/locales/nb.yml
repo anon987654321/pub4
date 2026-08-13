@@ -189,6 +189,7 @@ nb:
       sound_on: "Lyd"
       empty_title: "Ingen videoer ennå"
       empty_body: "Når noen laster opp noe, dukker det opp her."
+      empty_action: "Se kanaler"
       views:
         one: "%{count} visning"
         other: "%{count} visninger"
@@ -666,7 +667,7 @@ nb:
     like_with_comment: "Lik og si noe"
     prompts:
       q_sunday: "En perfekt søndag er"
-      q_bergen: "Det beste med Bergen er"
+      q_bergen: "Det beste med %{city} er"
       q_unpopular: "Min mest upopulære mening"
       q_teach: "Jeg kan lære deg"
       q_never: "Jeg kommer aldri til å"
@@ -837,6 +838,7 @@ nb:
     max_price: "Maks pris"
     min_price: "Min. pris"
     orders:
+      empty_action: "Se annonser"
       empty_body: "Bestillingene dine fra markedsplassen dukker opp her."
       empty_title: "Ingen bestillinger ennå"
       listing: "Annonse"

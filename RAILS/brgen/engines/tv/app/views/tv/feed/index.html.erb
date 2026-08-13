@@ -13,8 +13,12 @@
   </div>
 
   <% if @videos.empty? %>
+    <%# An empty feed is the expected state until repligen fills tv, so this is
+        the page a first visitor sees — it cannot be a dead end. Channels are
+        browsable whether or not anything has been uploaded. %>
     <%= render "shared/empty_state",
           title: t("tv.feed.empty_title"),
-          body: t("tv.feed.empty_body") %>
+          body: t("tv.feed.empty_body"),
+          action: { label: t("tv.feed.empty_action"), path: channels_path } %>
   <% end %>
 </div>

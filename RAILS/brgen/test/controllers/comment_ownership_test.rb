@@ -83,6 +83,32 @@ class CommentOwnershipTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # Every test above deletes by calling comment_path directly, so none of them
+  # ever rendered the button a person would have to click to get there. That was
+  # the blind spot: shared/comments/_comment builds the button's target from
+  # comment_destroy_arg, which returns [commentable, comment] whenever the parent
+  # is persisted — and there is no post_comment_path. brgen's comment routes are
+  # `shallow: true`, so :destroy is a member action and lives at /comments/:id;
+  # only :create is nested. The button therefore raised NoMethodError, and it
+  # renders only when comment.user == Current.user, so it took signing in and
+  # looking at your own comment. Deleting worked; the page offering it did not.
+  test "a thread renders for the author of a comment in it" do
+    ActsAsTenant.with_tenant(@city) do
+      author = user("render-author")
+      post_record = a_post(author)
+      Comment.create!(user: author, commentable: post_record, content: "mine to delete")
+
+      sign_in(author)
+      get post_path(post_record)
+
+      assert_response :success
+      # Two arguments only: assert_select's third is an equality/count comparison,
+      # not a failure message, and passing a sentence there asserts the element's
+      # text equals that sentence.
+      assert_select "form[action=?]", comment_path(Comment.last)
+    end
+  end
+
   # The post's author is not the comment's author. Owning the thread does not
   # confer the right to delete replies in it — if that is ever wanted it should
   # be an explicit moderation path, not a side effect of a widened check.

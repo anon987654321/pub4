@@ -51,7 +51,7 @@ class MethodLengthRatchetTest < Minitest::Test
   # responsibility bound, then mutation-test each half.
   CEILINGS = {
     "gates" => [39, 68],
-    "brgen" => [10, 57],
+    "brgen" => [9, 57],
     "shared" => [3, 36],
     "amber" => [1, 35],
     "bsdports" => [1, 46],

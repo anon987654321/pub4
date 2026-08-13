@@ -41,7 +41,7 @@ class CoverageRatchetTest < Minitest::Test
     # surface in the tree — this ratchet already counted engines/*/app, so the
     # zero was visible here the whole time and nobody had raised it because a
     # floor of 11 does not complain about an engine sitting at nothing.
-    "brgen" => { "controllers" => 11, "models" => 13 },
+    "brgen" => { "controllers" => 14, "models" => 18 },
     "bsdports" => { "controllers" => 2, "models" => 1 },
   }.freeze
 

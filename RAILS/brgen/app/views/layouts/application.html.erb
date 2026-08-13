@@ -278,74 +278,7 @@
       </div>
     </div>
 
-    <%# Footer menu is progressive: closed by default (scroll-chrome). Peel +
-        scroll-up reveal; scroll-down hides. First visit coach once. %>
-    <div class="tab-bar-coach"
-         data-scroll-chrome-target="coach"
-         hidden
-         role="status"
-         aria-live="polite">
-      <p class="tab-bar-coach-text"><%= t("nav.menu_coach", default: "Menu is down here — tap the bar or scroll up.") %></p>
-      <div class="tab-bar-coach-actions">
-        <button type="button" class="tab-bar-coach-dismiss" data-action="scroll-chrome#dismissCoach"><%= t("nav.menu_coach_dismiss", default: "Got it") %></button>
-        <button type="button" class="tab-bar-coach-show" data-action="scroll-chrome#reveal"><%= t("nav.show_menu", default: "Show menu") %></button>
-      </div>
-    </div>
-    <button type="button"
-            class="tab-bar-peel"
-            data-scroll-chrome-target="peel"
-            data-action="scroll-chrome#reveal"
-            aria-controls="app-tab-bar"
-            aria-expanded="false"
-            aria-label="<%= t("nav.show_menu", default: "Show menu") %>"></button>
-    <nav id="app-tab-bar"
-         role="navigation"
-         class="tab-bar"
-         aria-label="<%= t("nav.mobile_nav") %>"
-         data-scroll-chrome-target="bar"
-         data-turbo-permanent
-         aria-hidden="true"
-         inert>
-      <%= link_to main_app.root_path, class: "tab-item", aria: { label: t("nav.home"), current: current_page?(main_app.root_path) ? "page" : nil } do %>
-        <%= icon :home, size: 26 %>
-      <% end %>
-      <%= link_to main_app.communities_path, class: "tab-item", aria: { label: t("nav.explore"), current: current_page?(main_app.communities_path) ? "page" : nil } do %>
-        <%= icon :explore, size: 26 %>
-      <% end %>
-      <%= render "shared/ai_nav_link", class_name: "tab-item", show_label: false %>
-      <%= link_to main_app.conversations_path, class: "tab-item", aria: { label: t("nav.messages"), current: current_page?(main_app.conversations_path) ? "page" : nil } do %>
-        <%= icon :messages, size: 26 %>
-      <% end %>
-      <%= link_to main_app.nearby_path, class: "tab-item", aria: { label: t("nav.nearby"), current: current_page?(main_app.nearby_path) ? "page" : nil } do %>
-        <%= icon :nearby, size: 26 %>
-      <% end %>
-      <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" data-bottom-sheet-target="trigger" aria-expanded="false" aria-label="<%= t("nav.more") %>">
-        <%= icon :menu, size: 26 %>
-      </button>
-      <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>
-    </nav>
-    <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
-    <%# Pointer events only. This also bound touchstart/touchmove/touchend to the
-        same three methods, and pointer events already cover touch on every
-        browser `allow_browser versions: :modern` admits -- so one finger drag ran
-        pointerMove and touchMove on the same frame, each writing a transform from
-        its own reading of the same gesture. %>
-    <section class="mobile-sheet" data-level="0" aria-label="<%= t("nav.quick_actions") %>" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp">
-      <div class="mobile-sheet-handle"></div>
-      <div class="mobile-sheet-links">
-        <%= link_to t("nav.ai_assistant"), brgen_ai_url, data: { turbo: false } %>
-        <%= link_to t("home.live"), main_app.live_path %>
-        <%= link_to t("nav.channels"), main_app.channels_path %>
-        <%= link_to t("nav.new_post"), main_app.new_post_path %>
-        <%= link_to t("nav.new_community"), main_app.new_community_path %>
-        <% if authenticated? %>
-          <%= link_to t("nav.profile"), main_app.user_path(Current.user) %>
-          <%= link_to t("nav.sign_out"), main_app.session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
-        <% else %>
-          <%= link_to t("nav.sign_in"), main_app.new_session_path %>
-        <% end %>
-      </div>
-    </section>
+    <%= render "shared/mobile_chrome" %>
   </div>
   </div>
   <%= render "shared/install_prompt",

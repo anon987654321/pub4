@@ -183,6 +183,7 @@ en:
       sound_on: "Sound"
       empty_title: "No videos yet"
       empty_body: "When someone uploads something it shows up here."
+      empty_action: "Browse channels"
       views:
         one: "%{count} view"
         other: "%{count} views"
@@ -660,7 +661,11 @@ en:
     like_with_comment: "Like and say something"
     prompts:
       q_sunday: "A perfect Sunday is"
-      q_bergen: "The best thing about Bergen is"
+      # Key keeps its original name: it is the stored value of dating_prompts.question
+      # on every row already written, and the inclusion validation reads that list.
+      # The copy is what had to change — brgen serves a different city per domain,
+      # so "Bergen" here asked someone in Oslo about Bergen.
+      q_bergen: "The best thing about %{city} is"
       q_unpopular: "My most unpopular opinion"
       q_teach: "I could teach you"
       q_never: "I will never"
@@ -831,6 +836,7 @@ en:
     max_price: "Max price"
     min_price: "Min price"
     orders:
+      empty_action: "Browse listings"
       empty_body: "Your marketplace orders will show up here."
       empty_title: "No orders yet"
       listing: "Listing"

@@ -74,8 +74,11 @@ class FileLengthRatchetTest < Minitest::Test
     # 436-line stylesheet to make room for one import would be the ratchet driving the
     # design rather than measuring it.
     "bsdports/app/assets/stylesheets/application.scss" => 436,
-    "brgen/app/views/layouts/application.html.erb" => 264,
-    "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 160,
+    # Both were over: the layout by 8 and the player by 1. Split rather than
+    # raised — the mobile bottom chrome moved to shared/_mobile_chrome and the
+    # timestamped-comment composer to playlist/playlists/_comment_form.
+    "brgen/app/views/layouts/application.html.erb" => 213,
+    "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 155,
   }.freeze
 
   COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
@@ -219,14 +222,18 @@ class FileLengthRatchetTest < Minitest::Test
     MSG
   end
 
+  # Only downward. This compared for inequality, so a file that had *grown* was
+  # reported here too — under the heading "the tree is better than the ratchet
+  # records", with the instruction to lower the ceiling to match. Following that
+  # on a 272-line file with a 264 ceiling would have recorded the regression as
+  # the new floor and closed the failure that was telling the truth about it.
+  # Growth is test_no_file_exceeds_its_ceiling's to report, and only its.
   def test_ceilings_are_not_slack
     current = oversize
     slack = CEILINGS.filter_map do |path, ceiling|
-      next if current[path] == ceiling
-
       if current[path].nil?
         "#{path}: no longer over the limit — remove the row"
-      else
+      elsif current[path] < ceiling
         "#{path}: now #{current[path]}, recorded #{ceiling} — lower it"
       end
     end

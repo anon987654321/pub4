@@ -1,5 +1,5 @@
 ---
-generated_at: '2026-08-10T12:48:15Z'
+generated_at: '2026-08-13T20:21:16Z'
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -51,6 +51,16 @@ pages:
   mode: source
   ok: true
   findings: []
+- id: brgen/communities/bans/index
+  app: brgen
+  path: "/communities/:community_id/bans"
+  host: brgen.no
+  persona: guest
+  view: RAILS/brgen/app/views/communities/bans/index.html.erb
+  needs_id: true
+  mode: source
+  ok: true
+  findings: []
 - id: brgen/communities/edit
   app: brgen
   path: "/communities/:id/edit"
@@ -68,6 +78,26 @@ pages:
   persona: guest
   view: RAILS/brgen/app/views/communities/index.html.erb
   needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/communities/moderation/index
+  app: brgen
+  path: "/communities/:community_id/moderation"
+  host: brgen.no
+  persona: guest
+  view: RAILS/brgen/app/views/communities/moderation/index.html.erb
+  needs_id: true
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/communities/moderators/index
+  app: brgen
+  path: "/communities/:community_id/moderators"
+  host: brgen.no
+  persona: guest
+  view: RAILS/brgen/app/views/communities/moderators/index.html.erb
+  needs_id: true
   mode: source
   ok: true
   findings: []
@@ -111,6 +141,46 @@ pages:
   mode: source
   ok: true
   findings: []
+- id: brgen/events/edit
+  app: brgen
+  path: "/events/:id/edit"
+  host: brgen.no
+  persona: auth
+  view: RAILS/brgen/app/views/events/edit.html.erb
+  needs_id: true
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/events/index
+  app: brgen
+  path: "/events"
+  host: brgen.no
+  persona: guest
+  view: RAILS/brgen/app/views/events/index.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/events/new
+  app: brgen
+  path: "/events/new"
+  host: brgen.no
+  persona: auth
+  view: RAILS/brgen/app/views/events/new.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/events/show
+  app: brgen
+  path: "/events/:id"
+  host: brgen.no
+  persona: guest
+  view: RAILS/brgen/app/views/events/show.html.erb
+  needs_id: true
+  mode: source
+  ok: true
+  findings: []
 - id: brgen/hashtags/show
   app: brgen
   path: "/tags/:name"
@@ -138,36 +208,6 @@ pages:
   persona: guest
   view: RAILS/brgen/app/views/live/index.html.erb
   needs_id: false
-  mode: source
-  ok: true
-  findings: []
-- id: brgen/maps/home/index
-  app: brgen
-  path: "/"
-  host: maps.brgen.no
-  persona: guest
-  view: RAILS/brgen/app/views/maps/home/index.html.erb
-  needs_id: false
-  mode: source
-  ok: true
-  findings: []
-- id: brgen/maps/places/index
-  app: brgen
-  path: "/places"
-  host: maps.brgen.no
-  persona: guest
-  view: RAILS/brgen/app/views/maps/places/index.html.erb
-  needs_id: false
-  mode: source
-  ok: true
-  findings: []
-- id: brgen/maps/places/show
-  app: brgen
-  path: "/places/:id"
-  host: maps.brgen.no
-  persona: guest
-  view: RAILS/brgen/app/views/maps/places/show.html.erb
-  needs_id: true
   mode: source
   ok: true
   findings: []
@@ -207,36 +247,6 @@ pages:
   host: brgen.no
   persona: auth
   view: RAILS/brgen/app/views/notifications/index.html.erb
-  needs_id: false
-  mode: source
-  ok: true
-  findings: []
-- id: brgen/pages/cookies
-  app: brgen
-  path: "/cookies"
-  host: brgen.no
-  persona: guest
-  view: RAILS/brgen/app/views/pages/cookies.html.erb
-  needs_id: false
-  mode: source
-  ok: true
-  findings: []
-- id: brgen/pages/privacy
-  app: brgen
-  path: "/privacy"
-  host: brgen.no
-  persona: guest
-  view: RAILS/brgen/app/views/pages/privacy.html.erb
-  needs_id: false
-  mode: source
-  ok: true
-  findings: []
-- id: brgen/pages/terms
-  app: brgen
-  path: "/terms"
-  host: brgen.no
-  persona: guest
-  view: RAILS/brgen/app/views/pages/terms.html.erb
   needs_id: false
   mode: source
   ok: true
@@ -351,6 +361,36 @@ pages:
   mode: source
   ok: true
   findings: []
+- id: brgen/stories/index
+  app: brgen
+  path: "/stories"
+  host: brgen.no
+  persona: guest
+  view: RAILS/brgen/app/views/stories/index.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/stories/new
+  app: brgen
+  path: "/stories/new"
+  host: brgen.no
+  persona: auth
+  view: RAILS/brgen/app/views/stories/new.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/stories/show
+  app: brgen
+  path: "/stories/:id"
+  host: brgen.no
+  persona: guest
+  view: RAILS/brgen/app/views/stories/show.html.erb
+  needs_id: true
+  mode: source
+  ok: true
+  findings: []
 - id: brgen/users/edit
   app: brgen
   path: "/users/:id/edit"
@@ -401,6 +441,16 @@ pages:
   mode: source
   ok: true
   findings: []
+- id: brgen/dating/likes/index
+  app: brgen
+  path: "/likes"
+  host: dating.brgen.no
+  persona: guest
+  view: RAILS/brgen/engines/dating/app/views/dating/likes/index.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
 - id: brgen/dating/matches/index
   app: brgen
   path: "/matches"
@@ -437,6 +487,46 @@ pages:
   host: dating.brgen.no
   persona: guest
   view: RAILS/brgen/engines/dating/app/views/dating/profiles/show.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/maps/home/index
+  app: brgen
+  path: "/"
+  host: maps.brgen.no
+  persona: guest
+  view: RAILS/brgen/engines/maps/app/views/maps/home/index.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/maps/places/index
+  app: brgen
+  path: "/places"
+  host: maps.brgen.no
+  persona: guest
+  view: RAILS/brgen/engines/maps/app/views/maps/places/index.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/maps/places/show
+  app: brgen
+  path: "/places/:id"
+  host: maps.brgen.no
+  persona: guest
+  view: RAILS/brgen/engines/maps/app/views/maps/places/show.html.erb
+  needs_id: true
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/marketplace/addresses/index
+  app: brgen
+  path: "/addresses"
+  host: markedsplass.brgen.no
+  persona: guest
+  view: RAILS/brgen/engines/marketplace/app/views/marketplace/addresses/index.html.erb
   needs_id: false
   mode: source
   ok: true
@@ -530,8 +620,7 @@ pages:
   needs_id: false
   mode: source
   ok: true
-  findings:
-  - 'brgen/marketplace/orders/index: empty_state without action: CTA (NO_DEAD_ENDS)'
+  findings: []
 - id: brgen/marketplace/orders/show
   app: brgen
   path: "/orders/:id"
@@ -595,7 +684,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/edit
   app: brgen
   path: "/hosted_tracks/:id/edit"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: auth
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/edit.html.erb
   needs_id: true
@@ -605,7 +694,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/index
   app: brgen
   path: "/hosted_tracks"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: guest
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/index.html.erb
   needs_id: false
@@ -615,7 +704,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/new
   app: brgen
   path: "/hosted_tracks/new"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: auth
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/new.html.erb
   needs_id: false
@@ -625,7 +714,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/show
   app: brgen
   path: "/hosted_tracks/:id"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: guest
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/show.html.erb
   needs_id: true
@@ -635,7 +724,7 @@ pages:
 - id: brgen/playlist/listening_parties/show
   app: brgen
   path: "/sets/:set_id/listening_party"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: guest
   view: RAILS/brgen/engines/playlist/app/views/playlist/listening_parties/show.html.erb
   needs_id: true
@@ -645,7 +734,7 @@ pages:
 - id: brgen/playlist/playlists/edit
   app: brgen
   path: "/playlists/:id/edit"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: auth
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/edit.html.erb
   needs_id: true
@@ -655,7 +744,7 @@ pages:
 - id: brgen/playlist/playlists/embed
   app: brgen
   path: "/playlists/:id/embed"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: guest
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/embed.html.erb
   needs_id: true
@@ -665,7 +754,7 @@ pages:
 - id: brgen/playlist/playlists/index
   app: brgen
   path: "/"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: guest
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/index.html.erb
   needs_id: false
@@ -675,7 +764,7 @@ pages:
 - id: brgen/playlist/playlists/new
   app: brgen
   path: "/playlists/new"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: auth
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/new.html.erb
   needs_id: false
@@ -685,7 +774,7 @@ pages:
 - id: brgen/playlist/playlists/show
   app: brgen
   path: "/playlists/:id"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: guest
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/show.html.erb
   needs_id: true
@@ -695,7 +784,7 @@ pages:
 - id: brgen/playlist/sets/edit
   app: brgen
   path: "/sets/:id/edit"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: auth
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/edit.html.erb
   needs_id: true
@@ -705,7 +794,7 @@ pages:
 - id: brgen/playlist/sets/index
   app: brgen
   path: "/sets"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: guest
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/index.html.erb
   needs_id: false
@@ -715,7 +804,7 @@ pages:
 - id: brgen/playlist/sets/new
   app: brgen
   path: "/sets/new"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: auth
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/new.html.erb
   needs_id: false
@@ -725,7 +814,7 @@ pages:
 - id: brgen/playlist/sets/show
   app: brgen
   path: "/sets/:id"
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   persona: guest
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb
   needs_id: true
@@ -869,6 +958,16 @@ pages:
   persona: guest
   view: RAILS/brgen/engines/tv/app/views/tv/episodes/show.html.erb
   needs_id: true
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/tv/feed/index
+  app: brgen
+  path: "/feed"
+  host: tv.brgen.no
+  persona: guest
+  view: RAILS/brgen/engines/tv/app/views/tv/feed/index.html.erb
+  needs_id: false
   mode: source
   ok: true
   findings: []
@@ -1652,6 +1751,96 @@ pages:
   mode: source
   ok: true
   findings: []
+- id: brgen/shared/pages/privacy
+  app: brgen
+  path: "/privacy"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/privacy.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: amber/shared/pages/privacy
+  app: amber
+  path: "/privacy"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/privacy.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: bsdports/shared/pages/privacy
+  app: bsdports
+  path: "/privacy"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/privacy.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/shared/pages/terms
+  app: brgen
+  path: "/terms"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/terms.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: amber/shared/pages/terms
+  app: amber
+  path: "/terms"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/terms.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: bsdports/shared/pages/terms
+  app: bsdports
+  path: "/terms"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/terms.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: brgen/shared/pages/cookies
+  app: brgen
+  path: "/cookies"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/cookies.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: amber/shared/pages/cookies
+  app: amber
+  path: "/cookies"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/cookies.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
+- id: bsdports/shared/pages/cookies
+  app: bsdports
+  path: "/cookies"
+  host:
+  persona: guest
+  view: RAILS/shared/app/views/pages/cookies.html.erb
+  needs_id: false
+  mode: source
+  ok: true
+  findings: []
 - id: master/face
   app: master
   path: "/"
@@ -1703,21 +1892,21 @@ pages:
   ok: true
   findings: []
 summary:
-  total_pages: 170
+  total_pages: 189
   by_app:
-    brgen: 100
-    amber: 53
-    bsdports: 12
+    brgen: 113
+    amber: 56
+    bsdports: 15
     master: 5
-  guest: 97
-  auth: 73
+  guest: 113
+  auth: 76
   live_probed: 0
   ports_open:
     brgen: false
     amber: false
     bsdports: false
     master: false
-  hard_findings: 1
-  soft_findings: 1
-  source_ok: 170
-  source_total: 170
+  hard_findings: 0
+  soft_findings: 0
+  source_ok: 189
+  source_total: 189

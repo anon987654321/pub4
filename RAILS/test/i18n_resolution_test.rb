@@ -94,11 +94,17 @@ class I18nResolutionTest < Minitest::Test
     nil
   end
 
+  # Branch keys count as resolvable, not just leaves. `t` on a namespace returns
+  # the subtree as a Hash, and _affiliate_feed_unit deliberately does that —
+  # t("affiliate.cta").values cycles the call-to-action tiles — so recording only
+  # leaves reported a key that resolves fine as translation_missing. A branch
+  # that does not exist still fails, which is the part worth keeping.
   def flat_keys(relative, node = nil, prefix = [], out = {})
     node ||= (YAML.safe_load_file(File.join(ROOT, relative), aliases: true) || {}).values.first || {}
     node.each do |key, value|
       path = prefix + [key.to_s]
-      value.is_a?(Hash) ? flat_keys(relative, value, path, out) : out[path.join(".")] = true
+      out[path.join(".")] = true
+      flat_keys(relative, value, path, out) if value.is_a?(Hash)
     end
     out
   end

@@ -1,0 +1,10 @@
+<%# The timestamped-comment composer, hidden until the + Comment button opens it.
+    locals: none — the player renders it only on the non-embedded surface.
+    Lifted out of _player.html.erb, which was one line over its length ceiling. %>
+<div class="playlist-comment-form" hidden data-playlist-player-target="commentForm">
+  <input type="text" placeholder="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
+         aria-label="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
+         data-playlist-player-target="commentInput">
+  <button type="button" data-action="playlist-player#submitComment">Add</button>
+  <button type="button" data-action="playlist-player#cancelComment">Cancel</button>
+</div>

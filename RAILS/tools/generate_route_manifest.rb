@@ -11,11 +11,12 @@
 #
 #   ruby RAILS/tools/generate_route_manifest.rb [app ...]
 #
-# NAME EVERY APP. This rewrites the whole file rather than merging into it, so
-# regenerating for one app deletes the other two and the next run of
-# route_manifest_inventory fails with "manifest covers every app the inventory
-# probes". If you are here because one app's digest went stale, still pass all
-# three: `amber brgen bsdports`.
+# Naming one app regenerates that app and leaves the others as they are. It used
+# to rewrite the whole file, so regenerating for one deleted the other two, and
+# the header said so in capitals — while page_simulation, the thing that tells
+# you a digest is stale, printed the single-app command. The advice on screen
+# walked into the trap the header warned about, which is a warning doing no work.
+# Merging removes the trap instead of restating it.
 #
 # Each app records a digest of its route sources. PageInventory fails the
 # simulation when the digest no longer matches, so a stale manifest is loud
@@ -102,10 +103,17 @@ module Deploy
       }
     end
 
+    # Merged into whatever is already on disk, so regenerating one app leaves the
+    # other two intact. Each app carries its own digest and the inventory test
+    # compares them per app, so a merged-in entry that has since gone stale is
+    # still caught — nothing is traded away for this.
     def write(apps = APPS)
-      manifest = build(apps)
-      File.write(PATH, YAML.dump(manifest))
-      manifest
+      existing = File.file?(PATH) ? (YAML.safe_load_file(PATH) || {}) : {}
+      merged = build(apps)
+      merged["apps"] = (existing["apps"] || {}).merge(merged["apps"])
+      merged["apps"] = merged["apps"].sort.to_h
+      File.write(PATH, YAML.dump(merged))
+      merged
     end
   end
 end
@@ -113,6 +121,10 @@ end
 if $PROGRAM_NAME == __FILE__
   apps = ARGV.empty? ? Deploy::RouteManifest::APPS : ARGV
   manifest = Deploy::RouteManifest.write(apps)
-  manifest["apps"].each { |app, row| puts "#{app}: #{row['routes'].size} controller#action keys (digest #{row['digest']})" }
+  # Only the apps this run rebuilt. The manifest carries the others too now, and
+  # printing them would read as having re-measured what it merely preserved.
+  manifest["apps"].slice(*apps).each { |app, row| puts "#{app}: #{row['routes'].size} controller#action keys (digest #{row['digest']})" }
+  kept = manifest["apps"].keys - apps
+  puts "kept unchanged: #{kept.join(', ')}" if kept.any?
   puts "wrote #{Deploy::RouteManifest::PATH.sub("#{Deploy::RouteManifest::ROOT}/", '')}"
 end

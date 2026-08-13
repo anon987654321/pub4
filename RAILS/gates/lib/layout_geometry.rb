@@ -14,6 +14,19 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
 
+    # The touch floor, spelled either way.
+    #
+    # These three surfaces were reported as having no touch floor while all
+    # three set one: the tree writes `min-height: var(--tap-min)` and this
+    # grepped for the literal `min-height: 44px`, so the gate was measuring a
+    # spelling rather than a geometry and firing on files that satisfied it.
+    #
+    # Accepting the token on its name alone would be the opposite mistake — a
+    # sheet that had quietly dropped to 30px would pass — so TAP_MIN_PX re-reads
+    # what the token resolves to and #assert_token_floor fails if it is not 44.
+    TAP_MIN = 'min-height:\s*(?:44px|var\(--tap-min\))'
+    TOKENS = File.join(RAILS, "shared/app/assets/stylesheets/_dialect_tokens.scss")
+
     # Map surface labels (from SURFACES / verticals) → schema ids.
     # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
     SCHEMA_FOR_LABEL = {
@@ -35,15 +48,15 @@ module Deploy
     BASE_SURFACES = [
       { app: "brgen", port_key: "brgen", path: "/", host: nil, label: "core_ip",
         first_screen: [%r{skip-link|Skip to main}i, %r{<main\b|main-content}i, %r{<h1\b}i],
-        css_touch: [%w[brgen/app/assets/stylesheets/_nav.scss min-height:\s*44px],
-                    %w[brgen/app/assets/stylesheets/_marketplace.scss min-height:\s*44px]] },
+        css_touch: [["brgen/app/assets/stylesheets/_nav.scss", TAP_MIN],
+                    ["brgen/app/assets/stylesheets/_marketplace.scss", TAP_MIN]] },
       { app: "amber", port_key: "amber", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{Amber|jox|Signup|Login|wardrobe}i],
         # Was _jsfiddle_chrome.scss + "jox-buttons", which asserted only that a
         # class name appeared in a file — not that anything rendered it and not
         # that it met a target size. Nothing rendered .jox-buttons in either app.
         # Now the same shape as brgen's: a real 44px floor in a live sheet.
-        css_touch: [%w[amber/app/assets/stylesheets/_items.scss min-height:\s*44px]] },
+        css_touch: [["amber/app/assets/stylesheets/_items.scss", TAP_MIN]] },
       { app: "bsdports", port_key: "bsdports", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{BSD|port}i],
         css_touch: [%w[bsdports/app/assets/stylesheets/application.scss --font]] },
@@ -98,7 +111,27 @@ module Deploy
       body.valid_encoding? ? body : body.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
     end
 
+    # What `var(--tap-min)` is worth. Run once per gate run, not per surface —
+    # every css_touch needle that accepts the token leans on this one number.
+    def assert_token_floor
+      return if @token_floor_checked
+
+      @token_floor_checked = true
+      unless File.file?(TOKENS)
+        @result.fail("layout_geometry: missing #{TOKENS} — --tap-min is unreadable, so the touch floor is unverified")
+        return
+      end
+
+      declared = File.read(TOKENS)[/--tap-min:\s*([0-9]+)px/, 1]
+      if declared.nil?
+        @result.fail("layout_geometry: _dialect_tokens.scss declares no --tap-min — sheets spell the floor with a token that does not exist")
+      elsif declared.to_i < 44
+        @result.fail("layout_geometry: --tap-min is #{declared}px, below the 44px Fitts floor — every sheet spelling it var(--tap-min) is under target")
+      end
+    end
+
     def source_touch_checks(surface)
+      assert_token_floor
       Array(surface[:css_touch]).each do |rel, needle|
         path = File.join(RAILS, rel)
         unless File.file?(path)

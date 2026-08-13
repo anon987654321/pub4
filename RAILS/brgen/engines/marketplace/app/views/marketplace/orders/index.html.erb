@@ -17,9 +17,13 @@
     <% end %>
   </ul>
 <% else %>
+  <%# The empty case is the common one for a new account, and it was a page with
+      nothing to do on it — the state NO_DEAD_ENDS names. Somebody with no orders
+      wants listings, so the empty state hands them the listings. %>
   <%= render "shared/empty_state",
-        title: t("marketplace.orders.empty_title", default: "No orders yet"),
-        body: t("marketplace.orders.empty_body", default: "Your marketplace orders will show up here.") %>
+        title: t("marketplace.orders.empty_title"),
+        body: t("marketplace.orders.empty_body"),
+        action: { label: t("marketplace.orders.empty_action"), path: listings_path } %>
 <% end %>
 
 <%= render "shared/pager", pagy: @pagy %>

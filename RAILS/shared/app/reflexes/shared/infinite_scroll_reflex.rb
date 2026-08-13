@@ -10,9 +10,16 @@ module Shared
   # name. The scope is the only thing that was ever really different, so that is
   # the only thing a subclass writes now, alongside one `renders` line.
   #
-  # A reflex that needs more than the pattern has two seams rather than a copy of
-  # the spine: `after_paginate` for work between pagination and rendering, and
-  # `row_locals` for a partial that takes more than the record.
+  # A reflex that needs more than the pattern has three seams rather than a copy
+  # of the spine: `after_paginate` for work between pagination and rendering,
+  # `row_locals` for a partial that takes more than the record, and `after_row`
+  # for markup interleaved between rows.
+  #
+  # `after_row` exists because the home feed had no seam that fit and overrode
+  # `page_html` instead — the one method the contract test names as re-implementing
+  # the spine. It needed to interleave an affiliate unit every Nth row, which
+  # neither of the other two seams can express, so the copy was the only way to
+  # say it. A seam here says it once for all twenty-one subclasses.
   class InfiniteScrollReflex < Shared::ApplicationReflex
     if defined?(Pagy::Method)
       include Pagy::Method
@@ -103,11 +110,30 @@ module Shared
       { self.class.row_local => record }
     end
 
+    # Markup to append after a row, or nil for none. `slot` is the row's position
+    # in the feed as a whole, not within this page — see #slot_for.
+    def after_row(record, slot) = nil
+
+    # The row's position in the feed as a whole. This is the whole subtlety of
+    # interleaving: counting within the page restarts at every page boundary,
+    # which bunches interleaved units near the top of each batch and drifts out
+    # of step with whatever the first screen rendered server-side. So page and
+    # per_page carry into it.
+    def slot_for(index)
+      per_page = @pagy&.limit.to_i
+      offset = per_page.positive? ? (page - 1) * per_page : 0
+      offset + index + 1
+    end
+
     def page_html
       partial = self.class.row_partial
       raise NotImplementedError, "#{self.class} must declare `renders`" if partial.nil?
 
-      @records.map { |record| render(partial: partial, locals: row_locals(record)) }.join
+      @records.each_with_index.map { |record, index|
+        row = render(partial: partial, locals: row_locals(record))
+        extra = after_row(record, slot_for(index))
+        extra ? row + extra : row
+      }.join
     end
   end
 end

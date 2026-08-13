@@ -173,7 +173,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   brgen:
-    digest: e10abaaeb55db8e6
+    digest: 961d4eba2df82964
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -241,6 +241,38 @@ apps:
       - "/posts/:id/edit"
       posts#show:
       - "/posts/:id"
+      well_known#webfinger:
+      - "/.well-known/webfinger"
+      well_known#nodeinfo_index:
+      - "/.well-known/nodeinfo"
+      well_known#nodeinfo:
+      - "/nodeinfo/2.1"
+      fediverse/actors#outbox:
+      - "/users/:username/outbox"
+      fediverse/actors#followers:
+      - "/users/:username/followers"
+      fediverse/actors#show:
+      - "/users/:username"
+      stories#index:
+      - "/stories"
+      stories#new:
+      - "/stories/new"
+      stories#show:
+      - "/stories/:id"
+      events#index:
+      - "/events"
+      events#new:
+      - "/events/new"
+      events#edit:
+      - "/events/:id/edit"
+      events#show:
+      - "/events/:id"
+      communities/moderation#index:
+      - "/communities/:community_id/moderation"
+      communities/moderators#index:
+      - "/communities/:community_id/moderators"
+      communities/bans#index:
+      - "/communities/:community_id/bans"
       communities#index:
       - "/communities"
       communities#new:
@@ -318,6 +350,8 @@ apps:
       - "/rails/active_storage/disk/:encoded_key/*filename"
       tv/home#index:
       - "/"
+      tv/feed#index:
+      - "/feed"
       tv/videos#new:
       - "/channels/:channel_slug/videos/new"
       tv/live_streams#new:
@@ -352,6 +386,8 @@ apps:
       - "/profile/edit"
       dating/profiles#show:
       - "/profile"
+      dating/likes#index:
+      - "/likes"
       dating/matches#index:
       - "/matches"
       playlist/playlists#index:
@@ -431,6 +467,8 @@ apps:
       - "/cart"
       marketplace/checkouts#show:
       - "/checkout"
+      marketplace/addresses#index:
+      - "/addresses"
       marketplace/categories#show:
       - "/categories/:id"
       marketplace/saved_searches#index:

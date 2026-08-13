@@ -136,13 +136,33 @@ module Shared
         t("chat.anon", default: "anon")
     end
 
-    # Polymorphic destroy target: nested [commentable, comment] when the parent
-    # is a Post (amber + brgen nested routes); bare comment for shallow routes.
+    # Polymorphic destroy target: nested [commentable, comment] where the app
+    # nests both actions, bare comment where :destroy is shallow.
+    #
+    # The comment above this said exactly that and the code below it did not: it
+    # returned the nested pair whenever the parent was persisted, unconditionally.
+    # amber nests (`resources :posts { resources :comments }`) and has a
+    # post_comment_path; brgen routes them `shallow: true`, so :destroy is a
+    # member action at /comments/:id and post_comment_path does not exist. Every
+    # delete button brgen rendered raised NoMethodError, and it renders only when
+    # comment.user == Current.user — so the page 500'd for the one person entitled
+    # to use the button, on posts#show, while comments#destroy itself worked fine.
+    #
+    # Asked of the route set rather than inferred from the models, because the
+    # difference is a routing decision and the apps are entitled to disagree:
+    # amber has post_comment and no comment, brgen has comment and no post_comment.
+    #
+    # named_routes, not respond_to?. A view does not answer respond_to? for its
+    # route helpers — it is false for post_comment_path and comment_path alike, in
+    # both apps — so a respond_to? test reads as "not nested" everywhere and is
+    # right about brgen only by luck, while sending amber to a comment_path it
+    # does not have.
     def comment_destroy_arg(comment)
       parent = comment.try(:commentable)
-      return [ parent, comment ] if parent.present? && parent.persisted?
+      return comment unless parent.present? && parent.persisted?
 
-      comment
+      nested = :"#{parent.model_name.singular_route_key}_#{comment.model_name.singular_route_key}"
+      Rails.application.routes.named_routes.key?(nested) ? [ parent, comment ] : comment
     end
 
     # Root post for reply forms when comments nest under comments.

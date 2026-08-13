@@ -77,17 +77,16 @@
 
   <section role="region" aria-label="<%= t("comments.submit") %>">
     <h2><%= t("comments.submit") %></h2>
+    <%# Was a hand-rolled form and a hand-rolled comment row. The form's textarea
+        had no accessible name — a screen reader announced "edit text, blank" —
+        because the aria-label the shared fields carry was the one thing the copy
+        left out. The row dropped the timestamp, the vote control and the delete
+        the rest of the fleet renders. Both are the shared partials now. %>
     <% if @comment %>
-      <%= form_with model: [ @event, @comment ] do |f| %>
-        <%= f.text_area :content, placeholder: t("comments.placeholder"), rows: 2 %>
-        <%= f.submit t("comments.submit"), class: "btn btn-sm" %>
-      <% end %>
+      <%= render "comments/form", comment: @comment, commentable: @event, rows: 2 %>
     <% end %>
     <% @comments.each do |comment| %>
-      <article class="comment" role="article">
-        <p class="dim"><%= comment.user.display_name %></p>
-        <p><%= comment.content %></p>
-      </article>
+      <%= render "comments/comment", comment: comment %>
     <% end %>
   </section>
 

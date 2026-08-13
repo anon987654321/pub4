@@ -1,7 +1,7 @@
 ---
 generated_note: Snapshot of Deploy::PageInventory.all — regenerate via page_simulation
   gate
-count: 170
+count: 189
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -43,6 +43,14 @@ pages:
   action: show
   persona: guest
   needs_id: true
+- id: brgen/communities/bans/index
+  app: brgen
+  view: RAILS/brgen/app/views/communities/bans/index.html.erb
+  host: brgen.no
+  path: "/communities/:community_id/bans"
+  action: index
+  persona: guest
+  needs_id: true
 - id: brgen/communities/edit
   app: brgen
   view: RAILS/brgen/app/views/communities/edit.html.erb
@@ -59,6 +67,22 @@ pages:
   action: index
   persona: guest
   needs_id: false
+- id: brgen/communities/moderation/index
+  app: brgen
+  view: RAILS/brgen/app/views/communities/moderation/index.html.erb
+  host: brgen.no
+  path: "/communities/:community_id/moderation"
+  action: index
+  persona: guest
+  needs_id: true
+- id: brgen/communities/moderators/index
+  app: brgen
+  view: RAILS/brgen/app/views/communities/moderators/index.html.erb
+  host: brgen.no
+  path: "/communities/:community_id/moderators"
+  action: index
+  persona: guest
+  needs_id: true
 - id: brgen/communities/new
   app: brgen
   view: RAILS/brgen/app/views/communities/new.html.erb
@@ -91,6 +115,38 @@ pages:
   action: show
   persona: guest
   needs_id: true
+- id: brgen/events/edit
+  app: brgen
+  view: RAILS/brgen/app/views/events/edit.html.erb
+  host: brgen.no
+  path: "/events/:id/edit"
+  action: edit
+  persona: auth
+  needs_id: true
+- id: brgen/events/index
+  app: brgen
+  view: RAILS/brgen/app/views/events/index.html.erb
+  host: brgen.no
+  path: "/events"
+  action: index
+  persona: guest
+  needs_id: false
+- id: brgen/events/new
+  app: brgen
+  view: RAILS/brgen/app/views/events/new.html.erb
+  host: brgen.no
+  path: "/events/new"
+  action: new
+  persona: auth
+  needs_id: false
+- id: brgen/events/show
+  app: brgen
+  view: RAILS/brgen/app/views/events/show.html.erb
+  host: brgen.no
+  path: "/events/:id"
+  action: show
+  persona: guest
+  needs_id: true
 - id: brgen/hashtags/show
   app: brgen
   view: RAILS/brgen/app/views/hashtags/show.html.erb
@@ -115,30 +171,6 @@ pages:
   action: index
   persona: guest
   needs_id: false
-- id: brgen/maps/home/index
-  app: brgen
-  view: RAILS/brgen/app/views/maps/home/index.html.erb
-  host: maps.brgen.no
-  path: "/"
-  action: index
-  persona: guest
-  needs_id: false
-- id: brgen/maps/places/index
-  app: brgen
-  view: RAILS/brgen/app/views/maps/places/index.html.erb
-  host: maps.brgen.no
-  path: "/places"
-  action: index
-  persona: guest
-  needs_id: false
-- id: brgen/maps/places/show
-  app: brgen
-  view: RAILS/brgen/app/views/maps/places/show.html.erb
-  host: maps.brgen.no
-  path: "/places/:id"
-  action: show
-  persona: guest
-  needs_id: true
 - id: brgen/messages/new
   app: brgen
   view: RAILS/brgen/app/views/messages/new.html.erb
@@ -170,30 +202,6 @@ pages:
   path: "/notifications"
   action: index
   persona: auth
-  needs_id: false
-- id: brgen/pages/cookies
-  app: brgen
-  view: RAILS/brgen/app/views/pages/cookies.html.erb
-  host: brgen.no
-  path: "/cookies"
-  action: cookies
-  persona: guest
-  needs_id: false
-- id: brgen/pages/privacy
-  app: brgen
-  view: RAILS/brgen/app/views/pages/privacy.html.erb
-  host: brgen.no
-  path: "/privacy"
-  action: privacy
-  persona: guest
-  needs_id: false
-- id: brgen/pages/terms
-  app: brgen
-  view: RAILS/brgen/app/views/pages/terms.html.erb
-  host: brgen.no
-  path: "/terms"
-  action: terms
-  persona: guest
   needs_id: false
 - id: brgen/partner/memberships/show
   app: brgen
@@ -283,6 +291,30 @@ pages:
   action: new
   persona: guest
   needs_id: false
+- id: brgen/stories/index
+  app: brgen
+  view: RAILS/brgen/app/views/stories/index.html.erb
+  host: brgen.no
+  path: "/stories"
+  action: index
+  persona: guest
+  needs_id: false
+- id: brgen/stories/new
+  app: brgen
+  view: RAILS/brgen/app/views/stories/new.html.erb
+  host: brgen.no
+  path: "/stories/new"
+  action: new
+  persona: auth
+  needs_id: false
+- id: brgen/stories/show
+  app: brgen
+  view: RAILS/brgen/app/views/stories/show.html.erb
+  host: brgen.no
+  path: "/stories/:id"
+  action: show
+  persona: guest
+  needs_id: true
 - id: brgen/users/edit
   app: brgen
   view: RAILS/brgen/app/views/users/edit.html.erb
@@ -323,6 +355,14 @@ pages:
   action: next
   persona: guest
   needs_id: false
+- id: brgen/dating/likes/index
+  app: brgen
+  view: RAILS/brgen/engines/dating/app/views/dating/likes/index.html.erb
+  host: dating.brgen.no
+  path: "/likes"
+  action: index
+  persona: guest
+  needs_id: false
 - id: brgen/dating/matches/index
   app: brgen
   view: RAILS/brgen/engines/dating/app/views/dating/matches/index.html.erb
@@ -353,6 +393,38 @@ pages:
   host: dating.brgen.no
   path: "/profile"
   action: show
+  persona: guest
+  needs_id: false
+- id: brgen/maps/home/index
+  app: brgen
+  view: RAILS/brgen/engines/maps/app/views/maps/home/index.html.erb
+  host: maps.brgen.no
+  path: "/"
+  action: index
+  persona: guest
+  needs_id: false
+- id: brgen/maps/places/index
+  app: brgen
+  view: RAILS/brgen/engines/maps/app/views/maps/places/index.html.erb
+  host: maps.brgen.no
+  path: "/places"
+  action: index
+  persona: guest
+  needs_id: false
+- id: brgen/maps/places/show
+  app: brgen
+  view: RAILS/brgen/engines/maps/app/views/maps/places/show.html.erb
+  host: maps.brgen.no
+  path: "/places/:id"
+  action: show
+  persona: guest
+  needs_id: true
+- id: brgen/marketplace/addresses/index
+  app: brgen
+  view: RAILS/brgen/engines/marketplace/app/views/marketplace/addresses/index.html.erb
+  host: markedsplass.brgen.no
+  path: "/addresses"
+  action: index
   persona: guest
   needs_id: false
 - id: brgen/marketplace/carts/show
@@ -478,7 +550,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/edit
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/edit.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/hosted_tracks/:id/edit"
   action: edit
   persona: auth
@@ -486,7 +558,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/index
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/index.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/hosted_tracks"
   action: index
   persona: guest
@@ -494,7 +566,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/new
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/new.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/hosted_tracks/new"
   action: new
   persona: auth
@@ -502,7 +574,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/show
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/show.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/hosted_tracks/:id"
   action: show
   persona: guest
@@ -510,7 +582,7 @@ pages:
 - id: brgen/playlist/listening_parties/show
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/listening_parties/show.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/sets/:set_id/listening_party"
   action: show
   persona: guest
@@ -518,7 +590,7 @@ pages:
 - id: brgen/playlist/playlists/edit
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/edit.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/playlists/:id/edit"
   action: edit
   persona: auth
@@ -526,7 +598,7 @@ pages:
 - id: brgen/playlist/playlists/embed
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/embed.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/playlists/:id/embed"
   action: embed
   persona: guest
@@ -534,7 +606,7 @@ pages:
 - id: brgen/playlist/playlists/index
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/index.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/"
   action: index
   persona: guest
@@ -542,7 +614,7 @@ pages:
 - id: brgen/playlist/playlists/new
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/new.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/playlists/new"
   action: new
   persona: auth
@@ -550,7 +622,7 @@ pages:
 - id: brgen/playlist/playlists/show
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/show.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/playlists/:id"
   action: show
   persona: guest
@@ -558,7 +630,7 @@ pages:
 - id: brgen/playlist/sets/edit
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/edit.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/sets/:id/edit"
   action: edit
   persona: auth
@@ -566,7 +638,7 @@ pages:
 - id: brgen/playlist/sets/index
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/index.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/sets"
   action: index
   persona: guest
@@ -574,7 +646,7 @@ pages:
 - id: brgen/playlist/sets/new
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/new.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/sets/new"
   action: new
   persona: auth
@@ -582,7 +654,7 @@ pages:
 - id: brgen/playlist/sets/show
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb
-  host: spilleliste.brgen.no
+  host: playlist.brgen.no
   path: "/sets/:id"
   action: show
   persona: guest
@@ -699,6 +771,14 @@ pages:
   action: show
   persona: guest
   needs_id: true
+- id: brgen/tv/feed/index
+  app: brgen
+  view: RAILS/brgen/engines/tv/app/views/tv/feed/index.html.erb
+  host: tv.brgen.no
+  path: "/feed"
+  action: index
+  persona: guest
+  needs_id: false
 - id: brgen/tv/home/index
   app: brgen
   view: RAILS/brgen/engines/tv/app/views/tv/home/index.html.erb
@@ -1322,6 +1402,78 @@ pages:
   path: "/notifications"
   action: index
   persona: auth
+  needs_id: false
+- id: brgen/shared/pages/privacy
+  app: brgen
+  view: RAILS/shared/app/views/pages/privacy.html.erb
+  host:
+  path: "/privacy"
+  action: privacy
+  persona: guest
+  needs_id: false
+- id: amber/shared/pages/privacy
+  app: amber
+  view: RAILS/shared/app/views/pages/privacy.html.erb
+  host:
+  path: "/privacy"
+  action: privacy
+  persona: guest
+  needs_id: false
+- id: bsdports/shared/pages/privacy
+  app: bsdports
+  view: RAILS/shared/app/views/pages/privacy.html.erb
+  host:
+  path: "/privacy"
+  action: privacy
+  persona: guest
+  needs_id: false
+- id: brgen/shared/pages/terms
+  app: brgen
+  view: RAILS/shared/app/views/pages/terms.html.erb
+  host:
+  path: "/terms"
+  action: terms
+  persona: guest
+  needs_id: false
+- id: amber/shared/pages/terms
+  app: amber
+  view: RAILS/shared/app/views/pages/terms.html.erb
+  host:
+  path: "/terms"
+  action: terms
+  persona: guest
+  needs_id: false
+- id: bsdports/shared/pages/terms
+  app: bsdports
+  view: RAILS/shared/app/views/pages/terms.html.erb
+  host:
+  path: "/terms"
+  action: terms
+  persona: guest
+  needs_id: false
+- id: brgen/shared/pages/cookies
+  app: brgen
+  view: RAILS/shared/app/views/pages/cookies.html.erb
+  host:
+  path: "/cookies"
+  action: cookies
+  persona: guest
+  needs_id: false
+- id: amber/shared/pages/cookies
+  app: amber
+  view: RAILS/shared/app/views/pages/cookies.html.erb
+  host:
+  path: "/cookies"
+  action: cookies
+  persona: guest
+  needs_id: false
+- id: bsdports/shared/pages/cookies
+  app: bsdports
+  view: RAILS/shared/app/views/pages/cookies.html.erb
+  host:
+  path: "/cookies"
+  action: cookies
+  persona: guest
   needs_id: false
 - id: master/face
   app: master

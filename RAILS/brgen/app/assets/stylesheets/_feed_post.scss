@@ -184,7 +184,10 @@
   background: var(--surface);
   color: inherit;
   font: inherit;
-  font-size: var(--text-sm);
+  /* --text-base, not --text-sm: iOS Safari zooms the viewport when a text field
+     under 16px takes focus, and it does not zoom back out. Every other control
+     in the card can be small; the one you type into cannot. */
+  font-size: var(--text-base);
   resize: vertical;
 }
 

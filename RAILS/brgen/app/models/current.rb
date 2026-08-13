@@ -19,4 +19,18 @@ class Current < ActiveSupport::CurrentAttributes
   # form prefills it). Same memo shape as the id set, so the feed does not
   # add a second query per card for it.
   attribute :repost_quote_comments
+
+  # The city this request is for, resolved from the domain by
+  # Brgen::DomainRegistry (oshlo.no -> Oslo, lndon.uk -> London).
+  #
+  # Lives here rather than only in ApplicationHelper because copy that names a
+  # city is not only rendered from views: Dating::Prompt#question_text
+  # interpolates it from a model, where no helper is in scope, and had no way to
+  # reach this — which is why its city prompt was the literal string "Bergen"
+  # for every city domain.
+  def self.city_name
+    city.presence ||
+      Brgen::DomainRegistry::ENTRIES_BY_DOMAIN[domain.to_s]&.city ||
+      "Brgen"
+  end
 end

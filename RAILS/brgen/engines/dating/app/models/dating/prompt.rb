@@ -31,7 +31,11 @@ class Dating::Prompt < ApplicationRecord
 
   scope :ordered, -> { order(:position, :id) }
 
-  def question_text = I18n.t(question)
+  # `city:` is passed for every question, not just the one that reads it: I18n
+  # ignores interpolation values a string does not name, and gating it on which
+  # key happens to carry %{city} today is a trap for whoever writes the ninth
+  # question.
+  def question_text = I18n.t(question, city: Current.city_name)
 
   private
 
