@@ -125,6 +125,51 @@ export default class extends Controller {
     this.#tick()
   }
 
+  // The scrubber carried role="slider" with aria-valuemin/max/now and no way to
+  // reach or move it from a keyboard: a control that announces itself to a screen
+  // reader as a slider and then does not behave like one is worse than an
+  // unlabelled div, because the label is a promise. role="slider" obliges arrow
+  // keys, Home and End — this is that half.
+  //
+  // Written against currentTime rather than the aria value, so the audio element
+  // stays the single source of position and #tick keeps aria-valuenow honest.
+  scrubKey(event) {
+    if (!this.hasAudioTarget || !this.audioTarget.duration) return
+
+    const duration = this.audioTarget.duration
+    const step = event.shiftKey ? duration / 10 : 5
+    let next = null
+
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowUp":
+        next = this.audioTarget.currentTime + step
+        break
+      case "ArrowLeft":
+      case "ArrowDown":
+        next = this.audioTarget.currentTime - step
+        break
+      case "Home":
+        next = 0
+        break
+      case "End":
+        next = duration
+        break
+      case " ":
+      case "Enter":
+        this.toggle()
+        event.preventDefault()
+        return
+      default:
+        return
+    }
+
+    this.audioTarget.currentTime = Math.min(duration, Math.max(0, next))
+    this.#tick()
+    // Arrow keys scroll the page by default, which is the opposite of seeking.
+    event.preventDefault()
+  }
+
   waveformScrub(event) {
     if (!this.hasAudioTarget || !this.audioTarget.duration) return
     const rect = this.waveformTarget.getBoundingClientRect()

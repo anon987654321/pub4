@@ -83,11 +83,17 @@
 
     <span class="playlist-transport-time" data-playlist-player-target="currentTime">0:00</span>
 
+    <%# tabindex is not decoration: role="slider" without it announces a control
+        a keyboard cannot reach. Arrow/Home/End handling is scrubKey in the
+        controller. Kept outside the tag — an ERB comment between attributes
+        defeats every HTML attribute parser, including the one in
+        RAILS/test/keyboard_reachable_controls_test.rb. %>
     <div
       class="playlist-scrub"
       data-playlist-player-target="scrub"
-      data-action="click->playlist-player#scrub"
+      data-action="click->playlist-player#scrub keydown->playlist-player#scrubKey"
       role="slider"
+      tabindex="0"
       aria-label="Seek"
       aria-valuemin="0"
       aria-valuemax="100"

@@ -9,7 +9,13 @@ class LogoContractTest < ActionView::TestCase
     html = rendered
 
     assert_includes html, 'viewBox="0 0 1000 500"'
-    assert_includes html, "Amber Logo with Retro Lines"
+    # Through the key. This asserted the English literal "Amber Logo with Retro
+    # Lines" and broke the moment the aria-label became t("amber.logo_aria") in
+    # the 2026-08-12 i18n pass — mine, and the third test this week found pinning
+    # an untranslated string in place. The <title> below is not translated and is
+    # asserted literally, which is the difference: one is chrome a screen reader
+    # reads aloud, the other is an internal name.
+    assert_includes html, I18n.t("amber.logo_aria")
     assert_includes html, "Amber Logo - Nice Version"
     assert_includes html, 'd="M50,220 C250,180 750,180 950,220"'
     assert_includes html, 'startOffset="2%"'

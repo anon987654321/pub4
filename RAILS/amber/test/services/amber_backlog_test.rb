@@ -90,7 +90,12 @@ class AmberBacklogTest < Minitest::Test
     assert_includes media_picker, "drop(event)"
     assert_localised "app/views/wardrobe_items/analytics.html.erb", "pages.analytics", "Wardrobe analytics"
     assert_localised "app/views/wardrobe_items/analytics.html.erb", "wardrobe.coach_rules", "rules, not AI"
-    assert_includes read("app/views/outfits/index.html.erb"), "Generate outfit"
+    # assert_localised, like the two lines above it. This read the source for the
+    # literal "Generate outfit" and broke when the view became
+    # t("outfits.generate_label") — the same shape as the other two, just missed
+    # when they were converted. The helper checks both halves: the view goes
+    # through the key, and en.yml still says what this test says it says.
+    assert_localised "app/views/outfits/index.html.erb", "outfits.generate_label", "Generate outfit"
   end
 
   def test_style_evolution_timeline_is_wired
