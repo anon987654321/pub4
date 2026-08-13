@@ -29,6 +29,8 @@ class TestSecurityDefaults < Minitest::Test
     %w[pairing required_for_remote_channels] => ["lib/ground/pairing.rb", "required_for_remote_channels"],
     %w[pairing code_ttl_seconds] => ["lib/ground/pairing.rb", "code_ttl_seconds"],
     %w[pairing allowlist_path] => ["lib/ground/pairing.rb", "allowlist_path"],
+    %w[pairing redeem_per_minute] => ["lib/ground/pairing.rb", "redeem_per_minute"],
+    %w[pairing redeem_window_seconds] => ["lib/ground/pairing.rb", "redeem_window_seconds"],
   }.freeze
 
   def defaults

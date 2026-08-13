@@ -791,6 +791,52 @@ body.mission-control a:focus-visible {
   opacity: .75;
 }
 
+#scope-row {
+  position: fixed;
+  inset-inline: 16px;
+  inset-block-end: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
+  z-index: var(--z-chrome);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: baseline;
+  max-width: min(92vw, 28rem);
+  font: 11px/1.4 var(--font-label);
+  letter-spacing: .08em;
+  color: color-mix(in srgb, var(--face-fg) 48%, transparent);
+  pointer-events: auto;
+}
+#scope-label { text-transform: lowercase; color: color-mix(in srgb, var(--face-fg) 72%, transparent); }
+#pair-form, #pair-issue-form { display: flex; gap: 8px; align-items: baseline; }
+#scope-row input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--face-fg) 28%, transparent);
+  color: var(--face-fg);
+  font: inherit;
+  width: 9ch;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+#pair-issue-form input { width: 12ch; text-transform: none; letter-spacing: 0; }
+#scope-row button {
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: .12em;
+  padding: 0;
+  cursor: pointer;
+}
+#pair-hint, #pair-status { margin: 0; flex: 1 1 100%; max-width: 36rem; }
+#pair-list { list-style: none; margin: 0; padding: 0; flex: 1 1 100%; }
+#pair-list li { display: flex; gap: 8px; align-items: baseline; }
+body.face-loading #scope-row { opacity: 0; pointer-events: none; }
+body.zen #scope-row { opacity: .12; }
+body.zen:has(#zsh.live) #scope-row,
+body:has(#zsh.live) #scope-row,
+body.zen[data-edge-hover="1"] #scope-row { opacity: .92; }
+
 #zsh {
   position: fixed;
   inset-inline: 0;

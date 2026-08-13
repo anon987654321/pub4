@@ -27,6 +27,19 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "tts-style-indicator"
     refute_includes response.body, "face-controls"
     assert_includes response.body, "spin-btn"
+    assert_includes response.body, 'data-profile="public"'
+    assert_includes response.body, "have a code?"
+    assert_includes response.body, "scope-label"
+    refute_includes response.body, "operator surface"
+  end
+
+  test "authenticated index offers issue not redeem" do
+    get root_path, headers: auth_headers
+
+    assert_response :success
+    assert_includes response.body, 'data-profile="operator"'
+    assert_includes response.body, "issue code"
+    refute_includes response.body, "have a code?"
   end
 
   test "index face asset paths are wired for blob import replacement" do

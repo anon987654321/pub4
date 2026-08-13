@@ -77,4 +77,37 @@ class TestPairing < Minitest::Test
     assert Master::Ground::Pairing.required_for_remote?(:matrix)
     refute Master::Ground::Pairing.required_for_remote?(:web)
   end
+
+  def test_revoke_accepts_subject
+    issued = Master::Ground::Pairing.issue(root: @root)
+    result = Master::Ground::Pairing.redeem(issued[:code], root: @root)
+    assert Master::Ground::Pairing.revoke(result[:subject], root: @root)
+    refute Master::Ground::Pairing.valid_token?(result[:token], root: @root)
+  end
+
+  def test_list_does_not_leak_tokens
+    issued = Master::Ground::Pairing.issue(root: @root, label: "phone")
+    result = Master::Ground::Pairing.redeem(issued[:code], root: @root)
+    rows = Master::Ground::Pairing.list(root: @root)
+    assert_equal 1, rows.size
+    assert_equal result[:subject], rows.first[:subject]
+    refute rows.first.key?(:token)
+  end
+
+  def test_face_profile_and_redeem_notice
+    assert_equal "public", Master::Ground::Pairing.face_profile(visitor: true, paired: false)
+    assert_equal "messaging", Master::Ground::Pairing.face_profile(visitor: true, paired: true)
+    assert_equal "operator", Master::Ground::Pairing.face_profile(visitor: false, paired: false)
+    issued = Master::Ground::Pairing.issue(root: @root)
+    result = Master::Ground::Pairing.redeem(issued[:code], root: @root)
+    notice = Master::Ground::Pairing.redeem_notice(result)
+    assert_match(/messaging/, notice)
+    assert_match(/bundle exec ruby bin\/cli/, notice)
+    refute_match(/bodyguard/i, notice)
+  end
+
+  def test_redeem_budget_reads_the_file
+    assert_equal 8, Master::Ground::Pairing.redeem_per_minute
+    assert_equal 60, Master::Ground::Pairing.redeem_window_seconds
+  end
 end

@@ -17,6 +17,7 @@ module Master
       TOKEN_BYTES = 24
       DEFAULT_TTL = 600
       DEFAULT_ALLOWLIST = ".master/pairing/allowlist.yml"
+      REDEEM_NOTICE = "paired — messaging tools on. This is not operator access. Shell stays off. For a private assistant: clone pub4, bundle exec ruby bin/cli, /pair issue, and point the PWA at your host — not the shared public face.".freeze
 
       module_function
 
@@ -27,27 +28,15 @@ module Master
         {}
       end
 
-      def required_for_remote_channels?
-        config["required_for_remote_channels"] != false
-      end
-
-      def required_for_remote?(channel)
-        required_for_remote_channels? && REMOTE.include?(channel.to_sym)
-      end
-
-      def code_ttl_seconds
-        Integer(config["code_ttl_seconds"] || DEFAULT_TTL)
-      end
-
-      def allowlist_path(root = Master::ROOT)
-        rel = config["allowlist_path"].to_s
-        rel = DEFAULT_ALLOWLIST if rel.empty?
-        File.expand_path(rel, root)
-      end
-
-      def codes_path(root = Master::ROOT)
-        File.join(File.dirname(allowlist_path(root)), "codes.yml")
-      end
+      def required_for_remote_channels? = config["required_for_remote_channels"] != false
+      def required_for_remote?(channel) = required_for_remote_channels? && REMOTE.include?(channel.to_sym)
+      def code_ttl_seconds = Integer(config["code_ttl_seconds"] || DEFAULT_TTL)
+      def redeem_per_minute = Integer(config["redeem_per_minute"] || 8)
+      def redeem_window_seconds = Integer(config["redeem_window_seconds"] || 60)
+      def face_profile(visitor:, paired:) = visitor ? (paired ? "messaging" : "public") : "operator"
+      def redeem_notice(result) = "#{REDEEM_NOTICE} subject=#{result[:subject]}"
+      def allowlist_path(root = Master::ROOT) = File.expand_path(config["allowlist_path"].to_s.empty? ? DEFAULT_ALLOWLIST : config["allowlist_path"], root)
+      def codes_path(root = Master::ROOT) = File.join(File.dirname(allowlist_path(root)), "codes.yml")
 
       def issue(root: Master::ROOT, label: nil)
         code = CODE_BYTES.times.map { ALPHABET[SecureRandom.random_number(ALPHABET.length)] }.join
@@ -82,34 +71,25 @@ module Master
         { token:, subject:, label: row["label"].to_s }
       end
 
-      def valid_token?(token, root: Master::ROOT)
-        return false if token.to_s.empty?
+      def valid_token?(token, root: Master::ROOT) = token.to_s != "" && load_yaml(allowlist_path(root)).key?(token.to_s)
+      def subject_for(token, root: Master::ROOT) = load_yaml(allowlist_path(root)).dig(token.to_s, "subject")
 
-        load_yaml(allowlist_path(root)).key?(token.to_s)
-      end
-
-      def subject_for(token, root: Master::ROOT)
-        load_yaml(allowlist_path(root)).dig(token.to_s, "subject")
-      end
-
-      def revoke(token, root: Master::ROOT)
+      def revoke(id, root: Master::ROOT)
         allow = load_yaml(allowlist_path(root))
-        removed = allow.delete(token.to_s)
+        key = allow.key?(id.to_s) ? id.to_s : allow.find { |_token, row| row["subject"] == id.to_s }&.first
+        return false unless key
+
+        allow.delete(key)
         persist(allowlist_path(root), allow)
-        !removed.nil?
+        true
       end
 
       def list(root: Master::ROOT)
-        load_yaml(allowlist_path(root)).map do |token, row|
-          { token: "#{token[0, 6]}…", subject: row["subject"], paired_at: row["paired_at"], label: row["label"] }
-        end
+        load_yaml(allowlist_path(root)).map { |_token, row| { subject: row["subject"], paired_at: row["paired_at"], label: row["label"] } }
       end
 
       def apply_remote!(channel)
-        return unless required_for_remote?(channel)
-        return if Fiber[:master_paired] || Fiber[:master_elevated]
-
-        Fiber[:master_visitor] = true
+        Fiber[:master_visitor] = true if required_for_remote?(channel) && !Fiber[:master_paired] && !Fiber[:master_elevated]
       end
 
       def apply_token!(token, root: Master::ROOT)
@@ -117,17 +97,12 @@ module Master
 
         Fiber[:master_paired] = true
         Fiber[:master_pair_subject] = subject_for(token, root:)
-        true
       end
 
       def status(token = nil, root: Master::ROOT)
-        if token.to_s.empty?
-          return { paired: false, profile: ToolProfile.current_name } unless Fiber[:master_paired]
+        return { paired: valid_token?(token, root:), subject: subject_for(token, root:), profile: ToolProfile.current_name } if token.to_s != ""
 
-          return { paired: true, subject: Fiber[:master_pair_subject], profile: ToolProfile.current_name }
-        end
-
-        { paired: valid_token?(token, root:), subject: subject_for(token, root:), profile: ToolProfile.current_name }
+        { paired: Fiber[:master_paired] == true, subject: Fiber[:master_pair_subject], profile: ToolProfile.current_name }
       end
 
       def load_yaml(path)

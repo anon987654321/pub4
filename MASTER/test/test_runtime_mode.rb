@@ -23,6 +23,8 @@ class TestRuntimeMode < Minitest::Test
     output = Master::CLI::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
     assert_includes output, "reading tiers"
     assert_includes output, "/orient trace"
+    assert_includes output, "pairing:"
+    assert_includes output, "bundle exec ruby bin/cli"
     assert_includes output, "Deliberate"
   end
 

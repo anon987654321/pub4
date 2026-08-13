@@ -47,6 +47,9 @@ pairing:
   required_for_remote_channels: true
   code_ttl_seconds: 600
   allowlist_path: ".master/pairing/allowlist.yml"
+  # Read by lib/ground/pairing.rb; applied in PairController and chat redeem.
+  redeem_per_minute: 8
+  redeem_window_seconds: 60
 
 # Intent with no implementation. Nothing reads any of this, and saying so here is
 # the point: a policy file whose enforced half cannot be told from its aspirational

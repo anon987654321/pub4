@@ -16,6 +16,8 @@ class PwaMasterContractTest < Minitest::Test
     assert_includes manifest, '"display": "standalone"'
     assert_includes manifest, "theme_color"
     assert_includes manifest, "background_color"
+    assert_includes manifest, "Public MASTER chat"
+    refute_includes manifest, "operator surface"
   end
 
   def test_master_service_worker_avoids_stale_face_precache

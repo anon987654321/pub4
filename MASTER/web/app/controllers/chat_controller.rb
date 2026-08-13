@@ -17,6 +17,7 @@ class ChatController < ApplicationController
     c = container
     @model = c&.[](:agent)&.model.to_s.split("/").last.presence || "booting"
     @tier  = request.env["master.tier"].to_s
+    @profile = face_profile
     @container_ready = !c.nil?
     render layout: false
   end
@@ -87,10 +88,14 @@ class ChatController < ApplicationController
       render(json: { output: "unlocked — full tool access enabled." }) and return
     end
     if (code = pair_redeem_arg(cmd))
+      if pair_redeem_limited?
+        render(json: { output: "pair: too many tries — wait a minute" }, status: :too_many_requests)
+        return
+      end
       result = Master::Ground::Pairing.redeem(code)
       if result
         set_pair_cookie(result[:token])
-        render(json: { output: "paired — messaging tools on. This is not operator access." })
+        render(json: { output: Master::Ground::Pairing.redeem_notice(result) })
       else
         render(json: { output: "pair: invalid or expired code" }, status: :unprocessable_entity)
       end
@@ -187,10 +192,15 @@ class ChatController < ApplicationController
   end
 
   def redeem_pair_from_chat(input)
+    if pair_redeem_limited?
+      stream_plain("pair: too many tries — wait a minute")
+      return
+    end
+
     result = Master::Ground::Pairing.redeem(pair_redeem_arg(input))
     body = if result
              set_pair_cookie(result[:token])
-             "paired — messaging tools on. This is not operator access."
+             Master::Ground::Pairing.redeem_notice(result)
            else
              "pair: invalid or expired code"
            end

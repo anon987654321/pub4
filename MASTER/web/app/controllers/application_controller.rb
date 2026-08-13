@@ -90,6 +90,26 @@ class ApplicationController < ActionController::Base
   end
   helper_method :pairing_active? if respond_to?(:helper_method)
 
+  def face_profile
+    Master::Ground::Pairing.face_profile(visitor: visitor?, paired: pairing_active?)
+  end
+  helper_method :face_profile if respond_to?(:helper_method)
+
+  def pair_redeem_limited?
+    count = increment_rate_limit!(
+      "master:rl:pair:#{request.remote_ip}",
+      window: Master::Ground::Pairing.redeem_window_seconds,
+    )
+    count > Master::Ground::Pairing.redeem_per_minute
+  end
+
+  def enforce_pair_redeem_rate_limit
+    return unless pair_redeem_limited?
+
+    response.headers["Retry-After"] = Master::Ground::Pairing.redeem_window_seconds.to_s
+    render json: { error: "too many pair attempts — wait a minute" }, status: :too_many_requests
+  end
+
   def set_pair_cookie(token)
     cookies[:master_paired] = {
       value: token, expires: 1.year.from_now,
@@ -189,7 +209,8 @@ class ApplicationController < ActionController::Base
 
   def warming_exempt_path?
     path = request.path
-    return true if path == "/up" || path == "/health" || path == "/ingress/health" || path == "/pair"
+    return true if path == "/up" || path == "/health" || path == "/ingress/health"
+    return true if path == "/pair" || path.start_with?("/pair/")
     return true if smoke_chat_probe?
     return true if path.start_with?("/assets/", "/runtime/")
     return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|face_vision|face_deferred|topology_|cluster_|domain_cluster|mask|sw\.js|manifest\.json|icon\.|offline\.html)})

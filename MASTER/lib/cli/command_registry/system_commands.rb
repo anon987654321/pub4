@@ -72,6 +72,8 @@ module Master
           "rules: #{Master.rule_count(root:)} registered",
           "pipeline: #{Master::CLI::RuntimeMode::PIPELINE_STAGES}",
           "trace:   /orient trace — /tail /replay /status",
+          "pairing: /pair issue then redeem — public face stays messaging-only",
+          "clone:   bundle exec ruby bin/cli · /pair issue · point the phone PWA at your host",
           "",
           "reading tiers:",
           "  explore     /orient bootstrap + /orient soul|rules|limits",
@@ -213,12 +215,12 @@ module Master
           Master::Ground::Pairing.status.inspect
         when /\Aissue(?:\s+(.*))?\z/
           issued = Master::Ground::Pairing.issue(root:, label: $1.to_s.strip)
-          "pair code #{issued[:code]} expires in #{issued[:expires_in]}s — redeem via /pair #{issued[:code]} or POST /pair"
+          "pair code #{issued[:code]} expires in #{issued[:expires_in]}s — redeem via /pair #{issued[:code]} or the face field"
         when "list"
           rows = Master::Ground::Pairing.list(root:)
           return "pair: no allowlist entries" if rows.empty?
 
-          rows.map { |row| "#{row[:subject]} #{row[:label]} #{row[:token]}" }.join("\n")
+          rows.map { |row| "#{row[:subject]} #{row[:label]}".strip }.join("\n")
         when /\Arevoke\s+(\S+)\z/
           Master::Ground::Pairing.revoke($1, root:) ? "pair: revoked" : "pair: not found"
         else
@@ -227,7 +229,7 @@ module Master
 
           Fiber[:master_paired] = true
           Fiber[:master_pair_subject] = result[:subject]
-          "paired — messaging tools on. subject=#{result[:subject]}"
+          Master::Ground::Pairing.redeem_notice(result)
         end
       end
 
