@@ -191,6 +191,25 @@ STUDIO/dilla/samples/dug/**/*.mp3
 STUDIO/dilla/samples/dug/**/*.flac
 STUDIO/dilla/samples/dug/**/*.wav
 
+# "ikke dele" is the operator saying do not share, in the filename, and this repo
+# is public. Three such files were sitting untracked in
+# samples/johann_ableton/ on 2026-08-13 with nothing stopping a `git add -A` from
+# publishing them — the same shape as the seven master.key blobs that are burned
+# into this repository's history and cannot be un-burned, which is what
+# RAILS/test/tracked_secrets_test.rb exists to remember.
+#
+# Narrow on purpose. 427 sample files under samples/ are tracked deliberately;
+# the crate is the point of dilla and its copyright exposure is a decision
+# already taken. This matches the marking, not the directory, so the rule
+# travels with any file the operator names that way.
+#
+# None of the three had ever been committed when this went in, so ignoring them
+# is sufficient. If one ever is, ignoring will not remove it — that needs a
+# history rewrite, and the entry to read first is
+# home_partition_full_from_git_history in OPENBSD/data/debt.yml.
+*ikke-dele*
+*ikke_dele*
+
 # Python venvs the audio tools shell out to (demucs stem separation, librosa
 # analysis) — rebuilt locally, never shipped.
 STUDIO/dilla/.venv-demucs/
