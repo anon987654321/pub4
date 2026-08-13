@@ -134,16 +134,16 @@ test("face.runtime.js matches the rake concat of its sources", () => {
   assert.equal(runtime, expected, "run: cd MASTER/web && bundle exec rails assets:build_face_runtime");
 });
 
-test("TTS playback gain is one published number, not leftover copies of 1.9", () => {
+test("TTS playback gain is one published number, and fits under 0 dBFS", () => {
   const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
   const bridge = readFileSync(join(publicDir, "face_audio_bridge.js"), "utf8");
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   // One constant feeding both assignments, rather than the literal written
   // twice — this test is named for that and was pinning the duplication.
-  assert.match(speech, /const masterGainValue = 19\.0/);
+  assert.match(speech, /const masterGainValue = 1\.9/);
   assert.match(speech, /masterGain\.gain\.value = masterGainValue/);
   assert.match(speech, /tts\.playbackGain = masterGainValue/);
-  assert.match(bridge, /TTS_PLAYBACK_GAIN = 19\.0/);
+  assert.match(bridge, /TTS_PLAYBACK_GAIN = 1\.9/);
   assert.match(bridge, /tts\.playbackGain \|\| TTS_PLAYBACK_GAIN/);
   assert.match(speech, /setValueAtTime\(tts\.playbackGain/);
   assert.doesNotMatch(speech, /setValueAtTime\(1\.9/);

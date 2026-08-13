@@ -112,7 +112,7 @@
     }
     return true;
   }
-  const TTS_PLAYBACK_GAIN = 19;
+  const TTS_PLAYBACK_GAIN = 1.9;
   function restorePlaybackGain(tts, actx, playing) {
     if (!playing) return;
     if (tts?.outputGain && actx) {

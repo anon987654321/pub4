@@ -576,12 +576,21 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   // left wired rather than unpicked from the graph so restoring it is one
   // number, but it contributes nothing at 0.
   //
-  // 10x the 1.9 this has always been. Written once and published on tts so
-  // face_audio_bridge's duck-restore reads the live value instead of its own
-  // copy — that second copy is why every previous attempt to raise the voice
-  // was undone the first time speech recognition ducked it, and it had already
-  // drifted to 5.7 against this 19.0 before the bridge was pointed here.
-  const masterGainValue = 19.0;
+  // 1.9, which is what fits. Measured 2026-08-13 against a real /chat/tts
+// response: edge-tts hands us speech peaking at -4.5 dBFS, and this graph
+// (boost 1.35 -> warmth +3.5 -> smooth -3 -> presence -1.8 -> compressor at
+// -12/3:1) leaves it peaking at -5.5 dBFS. The largest gain that fits under
+// 0 dBFS is 1.88x. 19.0 put the output 20.1 dB over, so every utterance was
+// hard-clipped by the destination and the compressor pumped underneath it —
+// audible as a thin, torn voice rather than a loud one.
+//
+// "10x louder" multiplied a number that was already at the ceiling. The lever
+// for loudness is the synthesiser, where data/voice.yml already asks for
+// +40% volume, or a limiter here. Not raw gain into a clamped destination.
+//
+// Published on tts so face_audio_bridge duck-restores to the live value;
+// TTS_PLAYBACK_GAIN there must stay equal to this.
+const masterGainValue = 1.9;
   dryGain.gain.value = 1.0; wetGain.gain.value = 0.0; masterGain.gain.value = masterGainValue;
   tts.playbackGain = masterGainValue;
   analyser.fftSize = 256;
