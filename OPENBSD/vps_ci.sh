@@ -33,10 +33,13 @@ sync_ci_rails_root() {
   # found the hard way when a controller deleted from git upstream kept
   # passing CI on the VPS from a stale copy months after removal.
   doas rm -rf "$mirror/RAILS"
-  doas tar cf - -C "$repo" RAILS | doas sh -c "cd ${mirror} && tar xf -"
-  if [[ -d ${repo}/MASTER/tools ]]; then
+  # git archive is the tracked tree. tar of the working checkout also packed
+  # gitignored RAILS/*/vendor/bundle left by a local bundle, filled /home, and
+  # aborted extract with "Unable to restore mode and times" (2026-08-13).
+  git -C "$repo" archive HEAD RAILS | doas sh -c "cd ${mirror} && tar xf -"
+  if git -C "$repo" cat-file -e HEAD:MASTER/tools 2>/dev/null; then
     doas rm -rf "$mirror/MASTER/tools"
-    doas tar cf - -C "$repo" MASTER/tools | doas sh -c "cd ${mirror} && tar xf -"
+    git -C "$repo" archive HEAD MASTER/tools | doas sh -c "cd ${mirror} && tar xf -"
   fi
   doas chown -R "${app}:${app}" "$mirror"
 }
@@ -49,7 +52,7 @@ sync_from_repo() {
     # engines/ carries brgen's vertical Rails engines (path gems in the Gemfile);
     # without it the copy-tree Gemfile's `path: 'engines/<v>'` resolves to a missing
     # dir and bundle aborts. See RAILS/brgen/ENGINES.md.
-    local -a paths=(test app lib config bin db engines Gemfile Gemfile.lock)
+    local -a paths=(test app lib config bin db engines public vendor/javascript Gemfile Gemfile.lock)
     local -a existing=()
     local rel
     for rel in "${paths[@]}"; do
@@ -62,12 +65,13 @@ sync_from_repo() {
     # (test/app/lib/config/bin/db) actually disappear from the deployed
     # copy instead of surviving as stale dead code indefinitely.
     local dir_rel
-    for dir_rel in test app lib config bin db engines; do
+    for dir_rel in test app lib config bin db engines public vendor/javascript; do
       [[ -d $src/$dir_rel ]] && doas rm -rf "${app_dir}/${dir_rel}"
     done
     doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
     doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
       "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}/engines" \
+      "${app_dir}/public" "${app_dir}/vendor" \
       "${app_dir}/Gemfile" "${app_dir}/Gemfile.lock" \
       "${app_dir}"/*.sh(N) 2>/dev/null || true
   fi

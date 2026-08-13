@@ -48,7 +48,8 @@ test("face.js builds a blob runtime and rewrites module asset paths", () => {
 });
 
 test("concatenated face parts form a syntactically valid module (guards tap-to-start)", () => {
-  // face.js fetches face.part1..5, joins them with "\n", and import()s the blob. A
+  // face.js fetches the generated face.runtime.js blob (rake concat of part1-3,
+  // speech modules, and part5). A
   // duplicate top-level const (or any syntax error) spanning two parts throws at import
   // time, so window.MASTER_FACE never loads and the primer tap silently does nothing.
   // The per-file assertions above cannot see cross-part collisions — only the join can.

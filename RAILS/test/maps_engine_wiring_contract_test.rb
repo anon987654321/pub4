@@ -51,4 +51,13 @@ class MapsEngineWiringContractTest < Minitest::Test
   def test_place_show_offers_a_check_in
     assert_includes read("engines/maps/app/views/maps/places/show.html.erb"), "check_in_place_path"
   end
+
+  def test_map_home_centers_on_the_current_city_not_bergen
+    home = read("engines/maps/app/views/maps/home/index.html.erb")
+    controller = read("engines/maps/app/controllers/maps/home_controller.rb")
+    refute_includes home, "60.39"
+    assert_includes home, "@map_center_lat"
+    assert_includes controller, "city&.latitude"
+    assert_includes home, 't("maps.aria_map")'
+  end
 end

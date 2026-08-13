@@ -17,7 +17,7 @@ class ControllerCoverageContractTest < Minitest::Test
   # <vertical>/ moved to engines/<vertical>/app/.... These contracts still asked
   # for the old path and had been red since; nothing in the gate suite runs this
   # file, so the failure was silent. Resolve either location.
-  ENGINES = %w[dating marketplace playlist takeaway tv].freeze
+  ENGINES = %w[dating marketplace playlist takeaway tv maps].freeze
 
   # The verticals' routes moved with them: engines/<vertical>/config/routes.rb.
   # These contracts assert that a route exists somewhere in the app's routing

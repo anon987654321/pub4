@@ -240,7 +240,24 @@ module ApplicationHelper
   end
 
   def activity_event_title(event)
-    event.event_name.to_s.humanize
+    return "" if event.blank?
+
+    record = event.activity_subject if event.respond_to?(:activity_subject)
+    if record.nil? && event.object_type.present?
+      record = event.object_type.to_s.safe_constantize&.find_by(id: event.object_id)
+    end
+    name = record.try(:title).presence || record.try(:name).presence
+    return name if name.present?
+
+    key = event.event_name.to_s.underscore
+    I18n.t("activity.#{key}", default: key.tr("_", " ").capitalize)
+  end
+
+  def activity_event_vertical(event)
+    key = event.source_vertical.to_s
+    return "" if key.blank?
+
+    I18n.t("activity.verticals.#{key}", default: key)
   end
 
   # Deep link for a Notification — prefers notifiable, then source_*, then kind.

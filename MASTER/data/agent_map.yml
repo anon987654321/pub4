@@ -194,13 +194,6 @@ patch_briefs:
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd MASTER/web && bundle exec rails assets:build_face_runtime
-  web/public/face.part4.txt:
-    check: bin/check --profile=web
-    topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
-    deploy: vps-deploy master
-    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
-    note: deprecated speech stub — prefer face_speech_*.js sources
   web/public/face.part5.txt:
     check: bin/check --profile=web
     topic: face_boot

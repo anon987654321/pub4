@@ -71,8 +71,8 @@
     <ul class="activity-list">
       <% @activity.each do |event| %>
         <li class="dim">
-          <%= t("activity.#{event.event_name.underscore}", default: event.event_name.underscore.humanize) %>
-          <span class="activity-vertical">· <%= event.source_vertical %></span>
+          <%= activity_event_title(event) %>
+          <span class="activity-vertical">· <%= activity_event_vertical(event) %></span>
           <time datetime="<%= event.created_at.iso8601 %>"><%= time_ago(event.created_at) %></time>
         </li>
       <% end %>

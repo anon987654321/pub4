@@ -18,10 +18,10 @@ class HealthController < ActionController::API
     critical = %i[tts git]
     critical_ok = critical.all? { |key| checks[key] }
     status = if critical_ok
-checks.values.all? ? "ok" : "degraded"
-else
-"unavailable"
-end
+               checks.values.all? { |value| value == true } ? "ok" : "degraded"
+             else
+               "unavailable"
+             end
     http = critical_ok ? :ok : :service_unavailable
     render json: { status:, checks:, deploy: deploy_confidence }, status: http
   end
@@ -56,7 +56,7 @@ end
 
   def container_healthy?
     c = Rails.application.config.x.master_container
-    return "warming" unless c
+    return false unless c
 
     c[:agent].respond_to?(:model)
   rescue StandardError => _

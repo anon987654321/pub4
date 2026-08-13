@@ -38,12 +38,16 @@ stamp_dir=/var/db/pub4
 mkdir -p "$stamp_dir" 2>/dev/null || doas mkdir -p "$stamp_dir"
 doas chmod 755 "$stamp_dir" 2>/dev/null || true
 
-sha=$(git -C "$repo" rev-parse --short HEAD)
-started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+# SHA and time are captured at write_stamp, not here. vps_deploy_master.sh
+# pulls origin/main; reading HEAD before that call stamped the pre-pull SHA
+# (76f1a65fa on 2026-08-12 while /health correctly said 5eff4d87a).
 
 write_stamp() {
   local name=$1 stamp_status=$2
-  local file=$stamp_dir/last_deploy_${name}.json
+  local sha started file
+  sha=$(git -C "$repo" rev-parse --short HEAD)
+  started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  file=$stamp_dir/last_deploy_${name}.json
   doas tee "$file" >/dev/null <<EOF
 {"app":"$name","sha":"$sha","at":"$started","status":"$stamp_status","host":"$(hostname)"}
 EOF
@@ -58,6 +62,13 @@ if [[ $app == master ]]; then
 fi
 
 [[ -d /home/${app}/app ]] || { print -u2 "missing /home/${app}/app"; exit 1 }
+
+# Rails apps do not pull inside vps_ci.sh. A laptop `vps-deploy brgen --remote`
+# used to CI and sync whatever the VPS checkout already had, which lagged
+# origin/main by days. master pulls inside vps_deploy_master.sh; this is the
+# matching step for the three copy-tree apps.
+print "vps-deploy: $app (git pull --ff-only)"
+git -C "$repo" pull --ff-only origin main
 
 print "vps-deploy: $app (preflight load)"
 if [[ -x $repo/OPENBSD/resource_guard.sh ]]; then
