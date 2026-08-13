@@ -30,6 +30,12 @@ nb:
     deals_title: "Tilbud"
     deal_alt: "Partnertilbud"
     placeholder_notice: "Eksempeloppføring — ikke en sporet partnerlenke"
+    sponsored: "Annonse"
+    feed_unit_label: "Sponsede produkter"
+    cta:
+      buy: "Kjøp nå!"
+      happy: "Bli glad!"
+      good: "Føl deg bra!"
   legal:
     aria: "Juridisk og informasjon"
     privacy: "Personvern"
@@ -1179,6 +1185,7 @@ nb:
     mark_dismissed: "Avvist"
     queue_empty: "Ingenting i køen"
     queue_empty_body: "Rapporter fra dette fellesskapet dukker opp her."
+    back_to_community: "Tilbake til %{community}"
     open_count:
       one: "%{count} åpen"
       other: "%{count} åpne"

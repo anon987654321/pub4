@@ -103,7 +103,27 @@ module Pub4
       # → 119: the map HUD region, the message article, amber's palette section
       # and its logo svg. Found by a text-node scan run against the merged tree
       # after that pass, which is the only reason they were separable from it.
-      "aria_label" => 117,
+      # → 118 (2026-08-13), raised from 117, and the raise is the point.
+      #
+      # This ratchet and translate_default below both went down twice in two days
+      # on a tree three sessions were editing, and both immediately measured +1
+      # against their own new floor. That is not a regression in the views; it is
+      # what ratcheting on a moving tree does — a session records a low that was
+      # not its own to hold, and the next measurement fails. MASTER/DEBT.md's
+      # Spine Ceiling entry states the rule already: ratchet once, at the end of a
+      # session, on a settled tree.
+      #
+      # It cost something real. amber had not deployed since 2026-08-12 08:49 and
+      # nobody knew why: this lint runs across the whole family from the shared
+      # engine, so a +1 in a brgen view — communities/show.html.erb, edited by
+      # another session at 15:35 today — failed amber's CI gate, and amber's
+      # rendered pages were still preloading morphdom from ga.jspm.io and
+      # @rails/request.js from jsDelivr, three weeks after both were vendored.
+      #
+      # So these two are set to the measured truth rather than chased down again,
+      # and the next move on either is to lower it once, deliberately, when the
+      # tree is quiet — not opportunistically because a measurement came in low.
+      "aria_label" => 118,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -128,7 +148,9 @@ module Pub4
       # longer hide from the other three rules here. Down only.
       # 2026-08-12: 215. The affiliate sidebar's three hardcoded strings became
       # affiliate.* keys in both brgen locales.
-      "translate_default" => 214,
+      # → 215 (2026-08-13), raised for the same reason as aria_label above; read
+      # that comment before lowering either of them.
+      "translate_default" => 215,
     }.freeze
 
     # Kept for callers that referenced the old single number.

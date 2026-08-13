@@ -24,6 +24,12 @@ en:
     deals_title: "Deals"
     deal_alt: "Affiliate deal"
     placeholder_notice: "Example listing — not a tracked affiliate link"
+    sponsored: "Sponsored"
+    feed_unit_label: "Sponsored products"
+    cta:
+      buy: "Buy now!"
+      happy: "Be happy!"
+      good: "Feel good!"
   legal:
     aria: "Legal and information"
     privacy: "Privacy"
@@ -1171,6 +1177,7 @@ en:
     mark_dismissed: "Dismiss"
     queue_empty: "Nothing in the queue"
     queue_empty_body: "Reports from this community show up here."
+    back_to_community: "Back to %{community}"
     open_count:
       one: "%{count} open"
       other: "%{count} open"
