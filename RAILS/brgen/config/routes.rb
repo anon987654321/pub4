@@ -70,6 +70,10 @@ Rails.application.routes.draw do
     resource :repost, only: [ :create ], controller: "reposts"
   end
 
+  # Stories delete themselves after 24h; `alive` hides an expired one from every
+  # surface whether or not the sweep has run yet.
+  resources :stories, only: %i[index show new create destroy]
+
   # Cancelling is a member-facing state change, not a delete: people have it in
   # their calendar. RSVP is nested because it only exists against an event.
   resources :events do

@@ -1,0 +1,50 @@
+<% content_for :title, t("stories.new") %>
+
+<h1><%= t("stories.new") %></h1>
+<p class="dim"><%= t("stories.lifetime_notice") %></p>
+
+<%= form_with model: @story do |f| %>
+  <% if @story.errors.any? %>
+    <ul class="form-errors" role="alert">
+      <% @story.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+    </ul>
+  <% end %>
+
+  <p>
+    <%# capture="environment" opens the rear camera directly on a phone rather
+        than the file picker — camera-first is the whole point of the format.
+        On a desktop it degrades to an ordinary file input. %>
+    <%= f.label :media, t("stories.media") %>
+    <%= f.file_field :media, accept: "image/*,video/*", capture: "environment",
+          direct_upload: true, required: true %>
+  </p>
+
+  <p>
+    <%= f.label :caption, t("stories.caption") %>
+    <div data-controller="character-counter" data-character-counter-countdown-value="true">
+      <%= f.text_field :caption, maxlength: 280, data: { character_counter_target: "input" } %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+    </div>
+  </p>
+
+  <%# The position comes from the one the app already has — locations#update
+      stores it coarsened to a ~1 km grid — rather than asking the browser again
+      from this form. The geolocation Stimulus controller POSTs to that endpoint
+      and has no form-field targets, so wiring hidden inputs to it would have
+      been a control that does nothing. Opt-in, and only if a position is
+      already known. %>
+  <% if Current.user.latitude.present? %>
+    <p>
+      <%= f.label :attach_area do %>
+        <%= f.check_box :attach_area %>
+        <%= t("stories.add_area") %>
+      <% end %>
+      <span class="dim"><%= t("stories.area_hint") %></span>
+    </p>
+  <% end %>
+
+  <p>
+    <%= f.submit t("stories.post"), class: "btn btn-primary" %>
+    <%= link_to t("actions.cancel"), stories_path, class: "btn btn-ghost" %>
+  </p>
+<% end %>

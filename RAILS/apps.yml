@@ -62,6 +62,8 @@ apps:
         - { name: creator monetization,                                    status: planned, agent: ignore }
         - { name: maps surface,                                            status: done, notes: "maps. subdomain, Places index/show, Mapbox home" }
         - { name: Events (city listing, RSVP, capacity, cancellation),      status: done, notes: "Event + EventRsvp; upcoming keeps running multi-day events; three-way RSVP because interested is the majority answer on every event platform; cancel! notifies attendees rather than deleting; emits EventCreated to the city strip" }
+        - { name: Stories (24h ephemeral media, viewer set, sweep),          status: done, notes: "Story + StoryView; expires_at is stored so alive/label/sweep read one column; alive hides an expired story before the sweep runs; seen is a set not a log; capture=environment for camera-first; coarse area inherited from the position locations#update already stored" }
+        - { name: Community governance (roles, rules, flair, privacy, per-community mod queue), status: done, notes: "community_memberships.role member/moderator/owner with last-owner protection; owner-only appointment; restricted = whole city reads, members post; queue derived from the community posts because ModerationReport is polymorphic with no community_id" }
       subapp_tv:
         - { name: "Tv::Channel (slug, avatar, banner, subscribers_count)", status: done, notes: "patch_tv_models.sh" }
         - { name: "Tv::Video (status machine, duration_formatted)", status: done }

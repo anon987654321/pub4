@@ -1,0 +1,54 @@
+<% content_for :title, t("stories.by", user: @story.user.display_name) %>
+
+<article class="story-viewer" role="article" aria-label="<%= t("stories.by", user: @story.user.display_name) %>">
+  <header class="story-viewer-head">
+    <p class="dim">
+      <strong><%= @story.user.display_name %></strong>
+      ·
+      <%# The countdown reads the row's own expires_at rather than re-deriving
+          24 hours from created_at, so the label, the alive scope and the sweep
+          cannot disagree. %>
+      <time datetime="<%= @story.expires_at.iso8601 %>">
+        <%= t("stories.expires_in", time: distance_of_time_in_words(Time.current, @story.expires_at)) %>
+      </time>
+    </p>
+    <%= link_to t("actions.close"), stories_path, class: "btn btn-ghost btn-sm" %>
+  </header>
+
+  <% if @story.media.attached? %>
+    <div class="story-media">
+      <%= image_tag @story.media.variant(resize_to_limit: [ 1_080, 1_920 ], format: :webp), alt: @story.caption.to_s %>
+    </div>
+  <% end %>
+
+  <% if @story.caption.present? %>
+    <p class="story-caption"><%= @story.caption %></p>
+  <% end %>
+
+  <% if @ring.size > 1 %>
+    <nav class="story-ring-nav" role="navigation" aria-label="<%= t("stories.more_from", user: @story.user.display_name) %>">
+      <% @ring.each_with_index do |story, index| %>
+        <%= link_to (index + 1), story_path(story),
+              class: "chip#{" active" if story.id == @story.id}",
+              aria: { current: (story.id == @story.id ? "page" : nil) } %>
+      <% end %>
+    </nav>
+  <% end %>
+
+  <%# The viewer list is the author's alone. Everyone else sees the count. %>
+  <% if @viewers %>
+    <section role="region" aria-label="<%= t("stories.seen_by") %>">
+      <h2><%= t("stories.seen_count", count: @story.views_count) %></h2>
+      <ul class="viewer-list">
+        <% @viewers.each do |view| %>
+          <li><%= view.user.display_name %></li>
+        <% end %>
+      </ul>
+      <%= button_to t("actions.delete"), story_path(@story), method: :delete,
+            class: "btn btn-ghost btn-sm",
+            data: { turbo_confirm: t("stories.confirm_delete") } %>
+    </section>
+  <% else %>
+    <p class="dim"><%= t("stories.seen_count", count: @story.views_count) %></p>
+  <% end %>
+</article>

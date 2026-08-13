@@ -27,6 +27,8 @@ class User
       has_many :events, dependent: :destroy
       has_many :event_rsvps, dependent: :destroy
       has_many :attending_events, through: :event_rsvps, source: :event
+      has_many :stories, dependent: :destroy
+      has_many :story_views, dependent: :destroy
     end
   end
 end

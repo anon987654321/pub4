@@ -65,6 +65,7 @@ nb:
     messages: "Meldinger"
     nearby: "I nærheten"
     events: "Hva skjer"
+    stories: "Historier"
     profile: "Profil"
     more: "Mer"
     post: "Post"
@@ -176,6 +177,26 @@ nb:
     unread_count:
       one: "%{count} ulest"
       other: "%{count} uleste"
+  stories:
+    title: "Historier"
+    new: "Ny historie"
+    post: "Publiser"
+    media: "Bilde eller klipp"
+    caption: "Tekst"
+    add_area: "Merk omtrent hvor jeg er"
+    area_hint: "Grovkornet til omtrent én kilometer."
+    lifetime_notice: "Historier forsvinner av seg selv etter 24 timer."
+    expires_in: "borte om %{time}"
+    by: "Historie av %{user}"
+    open_ring: "Åpne historien til %{user}"
+    more_from: "Flere fra %{user}"
+    seen_by: "Sett av"
+    confirm_delete: "Slette historien?"
+    empty_title: "Ingen historier akkurat nå"
+    empty_body: "De forsvinner etter 24 timer, så her er det bare det ferske."
+    seen_count:
+      one: "%{count} har sett den"
+      other: "%{count} har sett den"
   events:
     title: "Hva skjer"
     new: "Nytt arrangement"
@@ -469,6 +490,7 @@ nb:
     no_sessions: "Ingen økter planlagt"
     create_playlist: "Opprett en for å starte radioen."
   actions:
+    close: "Lukk"
     load_more: "Eldre innlegg"
     add_one: "Legg til en"
     dismiss: "Lukk"
@@ -1001,6 +1023,8 @@ nb:
   # sentence are NOT here: they reuse shared.flash.*, which the engine owns for all
   # three apps.
   flash:
+    story_posted: "Historie publisert"
+    story_removed: "Historie slettet"
     community:
       not_a_member: "Denne personen er ikke medlem"
       moderator_added: "Moderator lagt til"

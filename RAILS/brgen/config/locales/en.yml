@@ -59,6 +59,7 @@ en:
     messages: "Messages"
     nearby: "Nearby"
     events: "What is on"
+    stories: "Stories"
     profile: "Profile"
     more: "More"
     post: "Post"
@@ -170,6 +171,26 @@ en:
     unread_count:
       one: "%{count} unread"
       other: "%{count} unread"
+  stories:
+    title: "Stories"
+    new: "New story"
+    post: "Post"
+    media: "Photo or clip"
+    caption: "Caption"
+    add_area: "Tag roughly where I am"
+    area_hint: "Coarsened to about a kilometre."
+    lifetime_notice: "Stories delete themselves after 24 hours."
+    expires_in: "gone in %{time}"
+    by: "Story by %{user}"
+    open_ring: "Open the story from %{user}"
+    more_from: "More from %{user}"
+    seen_by: "Seen by"
+    confirm_delete: "Delete this story?"
+    empty_title: "No stories right now"
+    empty_body: "They disappear after 24 hours, so this is only what is fresh."
+    seen_count:
+      one: "%{count} has seen it"
+      other: "%{count} have seen it"
   events:
     title: "What is on"
     new: "New event"
@@ -463,6 +484,7 @@ en:
     no_sessions: "No sessions scheduled"
     create_playlist: "Create one to start the radio."
   actions:
+    close: "Close"
     load_more: "Older posts"
     add_one: "Add one"
     dismiss: "Dismiss"
@@ -993,6 +1015,8 @@ en:
   # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb
   # fails if either file gains a key the other lacks.
   flash:
+    story_posted: "Story posted"
+    story_removed: "Story removed"
     community:
       not_a_member: "That person is not a member"
       moderator_added: "Moderator added"

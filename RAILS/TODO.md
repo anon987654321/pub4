@@ -219,14 +219,37 @@ city-strip on the home page that now carries `EventCreated`.
 **Still open:** recurring events, ticketing beyond an external link, and an
 event's own map pin on the maps engine (it has coordinates; nothing draws them).
 
-### 2.3 No Story / ephemeral media (Snapchat)
+### 2.3 No Story / ephemeral media (Snapchat) — **done**
 
-Ephemeral exists, but only in DMs: `Conversation#disappearing_messages?` and
-`Message#expires_at` with `schedule_expiration`. There is no 24-hour media
-story, no camera-first capture surface, and no streak.
+Ephemerality existed only inside DMs. `Story` + `StoryView` put it on a public
+surface.
 
-The Snap-Map equivalent is closest to shipping — `Place`, `PlaceCheckIn` and the
-geo rooms (`Conversation.find_or_create_geo_room`) are already built.
+- **The lifetime is a column, not a computation.** `expires_at` is stored, so
+  the `alive` scope, the countdown label and the sweep all read one value rather
+  than each re-deriving 24 hours and eventually disagreeing.
+- **`alive` hides an expired story before the sweep runs**, so a link stops
+  working the moment it should rather than whenever the job catches up. The
+  sweep is about the bytes: `destroy`, not `delete_all`, so the Active Storage
+  blobs go with the rows on a 1 GB VPS.
+- **Seen is a set, not a log.** Opening twice is one view and the author's
+  viewer list never repeats a name. `create_or_find_by!` was wrong here — it
+  rescues the *database's* uniqueness error, and the model validation fires
+  first, so a second open raised instead of reading as "already seen".
+- **Camera-first**: the file field carries `capture="environment"`, which opens
+  the rear camera on a phone and degrades to a file picker on a desktop.
+- **The area comes from the position the app already has.** `locations#update`
+  stores it coarsened to ~1 km; the compose form opts in rather than taking a
+  fresh GPS read. The existing `geolocation` Stimulus controller POSTs to that
+  endpoint and has no form-field targets, so hidden inputs wired to it would
+  have been controls that do nothing.
+- A ring is a person, not a photo: grouped by author, followed authors first.
+
+**Check:** `brgen/test/models/story_test.rb` (10) and
+`brgen/test/controllers/stories_controller_test.rb` (7).
+
+**Still open:** streaks, replies to a story (it has no conversation hook), and
+the Snap-Map — `Story` stores coarse coordinates and nothing draws them yet,
+though `Place` and the geo rooms are already there.
 
 ### 2.4 `Community` was eight columns (Reddit) — **done**
 

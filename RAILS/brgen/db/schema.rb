@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_160000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1056,6 +1056,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_150000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "stories", force: :cascade do |t|
+    t.string "caption"
+    t.integer "city_id"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "views_count", default: 0, null: false
+    t.index ["city_id"], name: "index_stories_on_city_id"
+    t.index ["expires_at"], name: "index_stories_on_expires_at"
+    t.index ["user_id", "expires_at"], name: "index_stories_on_user_id_and_expires_at"
+    t.index ["user_id"], name: "index_stories_on_user_id"
+  end
+
+  create_table "story_views", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["story_id", "user_id"], name: "index_story_views_on_story_id_and_user_id", unique: true
+    t.index ["story_id"], name: "index_story_views_on_story_id"
+    t.index ["user_id"], name: "index_story_views_on_user_id"
+  end
+
   create_table "streams", force: :cascade do |t|
     t.string "content_type"
     t.datetime "created_at", null: false
@@ -1513,6 +1539,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_150000) do
   add_foreign_key "reposts", "users"
   add_foreign_key "reputation_scores", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "stories", "cities"
+  add_foreign_key "stories", "users"
+  add_foreign_key "story_views", "stories"
+  add_foreign_key "story_views", "users"
   add_foreign_key "streams", "posts"
   add_foreign_key "streams", "users"
   add_foreign_key "taggings", "hashtags"

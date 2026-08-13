@@ -1,0 +1,34 @@
+<% content_for :title, t("stories.title") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("stories.title") %>">
+  <h1><%= t("stories.title") %></h1>
+  <% if authenticated? %>
+    <%= link_to t("stories.new"), new_story_path, class: "btn btn-sm" %>
+  <% end %>
+</div>
+
+<% if @rings.any? %>
+  <%# A story surface is a list of people, not a list of photos — one ring per
+      author, newest first, people you follow before everyone else. %>
+  <ul class="story-rings" role="list">
+    <% @rings.each do |stories| %>
+      <% newest = stories.first %>
+      <li class="story-ring<%= " story-ring--seen" if newest.seen_by?(Current.user) %>">
+        <%= link_to story_path(newest), aria: { label: t("stories.open_ring", user: newest.user.display_name) } do %>
+          <% if newest.media.attached? %>
+            <%= image_tag newest.media.variant(resize_to_limit: [ 240, 320 ], format: :webp), alt: "" %>
+          <% end %>
+          <span class="story-ring-name"><%= newest.user.display_name %></span>
+          <% if stories.size > 1 %>
+            <span class="story-ring-count"><%= stories.size %></span>
+          <% end %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("stories.empty_title"),
+        body: t("stories.empty_body"),
+        action: (authenticated? ? { label: t("stories.new"), path: new_story_path } : nil) %>
+<% end %>
