@@ -1,0 +1,27 @@
+# A three-gate registry used by RAILS/test/gate_failopen_test.rb and nothing
+# else. Pointed at with GATES_FILE.
+#
+# The order matters and is the whole point: a gate that passes, then one that
+# raises, then another that passes. Before the fail-open rescue in runner.rb the
+# third row never ran — the exception escaped the `to_h` that builds `outcomes`
+# and the process died at row two. A fixture registry is the only way to prove
+# that from outside, because gates.yml deliberately contains no gate that raises.
+ok_before:
+  require: fixtures/failopen/gates_fixture
+  class: Deploy::FailOpenFixtures::PassingGate
+  pass: "fixture gate passed"
+
+raiser:
+  require: fixtures/failopen/gates_fixture
+  class: Deploy::FailOpenFixtures::RaisingGate
+  pass: "unreachable — this gate raises"
+
+ok_after:
+  require: fixtures/failopen/gates_fixture
+  class: Deploy::FailOpenFixtures::PassingGate
+  pass: "fixture gate passed"
+
+missing_class:
+  require: fixtures/failopen/gates_fixture
+  class: Deploy::FailOpenFixtures::NoSuchGate
+  pass: "unreachable — this class does not exist"

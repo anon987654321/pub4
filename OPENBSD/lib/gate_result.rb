@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
 module Deploy
-  # Three outcomes, not two.
+  # Four outcomes, not two.
+  #
+  # :passed, :failed, :inconclusive (the gate declined to measure), :errored
+  # (the gate tried and broke). The first three are below; :errored and its
+  # fail-open policy are documented on `errored!`.
   #
   # `ok?` only ever meant "no hard failures", so a gate that could not run —
   # no Chrome, no app listening, no deploy stamp, a missing gem — reported the
@@ -18,7 +22,7 @@ module Deploy
   # GATE_STRICT_INCONCLUSIVE=1 makes it blocking, for CI on the deploy host
   # where Chrome and the apps are supposed to be present.
   class GateResult
-    attr_reader :failures, :warnings, :soft_failures, :unchecked
+    attr_reader :failures, :warnings, :soft_failures, :unchecked, :errors
 
     TRUTHY = %w[1 true yes on].freeze
 
@@ -42,13 +46,53 @@ module Deploy
     # half, so the absence of it is loud instead of a warning line.
     def self.require_live?(env = ENV) = flag?("GATE_REQUIRE_LIVE", env)
 
+    # GATE_STRICT_ERRORS=1 makes a gate's own crash blocking. See errored! for
+    # why the default is the other way.
+    def self.strict_errors?(env = ENV) = flag?("GATE_STRICT_ERRORS", env)
+
     def initialize
       @failures = []
       @warnings = []
       @soft_failures = []
       @unchecked = []
+      @errors = []
       @checks_ran = 0
       @live_skips = 0
+    end
+
+    # The gate itself broke — an exception escaped its own run, not a finding
+    # it made about the tree.
+    #
+    # Fail-open, from arXiv 2607.07405 §"deterministic gates": "if a gate itself
+    # raises an exception, the harness records the error and allows the original
+    # call." Their reason is precision. A gate that crashes and blocks produces a
+    # false block on every subsequent call, and a suite whose blocks are mostly
+    # its own bugs is one people learn to route around — which is how a gate
+    # fleet stops being read at all.
+    #
+    # pub4's version of that was worse than a false block: RAILS/gates/runner.rb
+    # called `klass.run` with no rescue, so one gate raising killed the process
+    # and every gate after it in the --all order never ran. Forty-six gates
+    # reporting nothing, exit 1, and a backtrace where the summary should be.
+    #
+    # So this is a fourth state and not a failure: it never blocks by default,
+    # it is counted and named separately from both :passed and :failed, and it
+    # can never be mistaken for a pass. GATE_STRICT_ERRORS=1 promotes it for CI
+    # on the deploy host, where a gate that cannot run is itself the news.
+    def errored!(reason)
+      @errors << reason
+      @failures << "[gate-error] #{reason}" if self.class.strict_errors?
+      self
+    end
+
+    # A gate that raised, rendered as a result rather than as a backtrace. The
+    # caller passes the gate name because an exception message rarely says which
+    # gate produced it.
+    def self.from_error(exception, gate:, backtrace_lines: 3)
+      trace = Array(exception.backtrace).first(backtrace_lines).join(" | ")
+      new.errored!(
+        "#{gate} raised #{exception.class}: #{exception.message}#{trace.empty? ? '' : " @ #{trace}"}"
+      )
     end
 
     # severity: :hard (default, blocks) | :soft (warn unless GATE_STRICT_SOFT)
@@ -155,8 +199,14 @@ module Deploy
     # fifty-first passed, and says what it skipped -- calling that "checked
     # nothing" was false, dropped it out of the pass count, and under
     # GATE_STRICT_INCONCLUSIVE turned a parked app into a blocked deploy.
+    # A gate whose own code raised. Ranked above :inconclusive because it is a
+    # stronger statement: inconclusive means the gate declined to measure,
+    # errored means it tried and broke.
+    def errored? = !@errors.empty?
+
     def outcome
       return :failed unless ok?
+      return :errored if errored?
       return :failed if measured_nothing? && self.class.strict_inconclusive?
 
       measured_nothing? ? :inconclusive : :passed
@@ -170,6 +220,11 @@ module Deploy
       Array(other.warnings).each { |w| @warnings << "#{tag}#{w}" }
       Array(other.soft_failures).each { |m| @soft_failures << "#{tag}#{m}" }
       Array(other.unchecked).each { |m| @unchecked << "#{tag}#{m}" }
+      # Without this a composite swallows a leaf that crashed: the leaf's errors
+      # would be neither failures nor unchecked, so the composite would report
+      # PASSED for a leaf that never ran. That is the same false green the third
+      # state was added to close, one level up.
+      Array(other.errors).each { |m| @errors << "#{tag}#{m}" } if other.respond_to?(:errors)
       # A composite measured whatever its leaves measured, or one leaf with no
       # Chrome would speak for the whole suite the way one app used to speak for
       # a whole gate.
@@ -185,9 +240,14 @@ module Deploy
     def render(success_message = nil)
       emit("Warnings:", @warnings)
       emit("Not checked:", @unchecked)
+      emit("Gate errors (fail-open — nothing was blocked by these):", @errors)
       emit("Failures:", @failures)
 
       case outcome
+      when :errored
+        puts "errored: the gate itself broke and blocked nothing — " \
+             "#{@errors.size} error(s) above (set GATE_STRICT_ERRORS=1 to treat as failure)"
+        :errored
       when :failed
         # The strict-mode failure has no message of its own -- the promotion moved
         # out of inconclusive! and into outcome -- so say why, or the runner reports

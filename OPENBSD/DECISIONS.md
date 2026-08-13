@@ -41,6 +41,44 @@ removed so the first person to run it does not import 61 zones by accident.
 An audit that reports "61 zone files missing from the repo" is describing this
 decision, not a gap. Do not close it.
 
+## `OPENBSD/lib/` Owns The Gate Kernel, On Purpose (2026-08-13)
+
+**Status:** accepted
+
+**Context:** `Deploy::GateResult` lives in `OPENBSD/lib/` and RAILS requires it at
+53 sites — with `deploy_inventory` (16) and `utf8` (5), 74 requires across the
+tree boundary. RAILS's whole 59-file gate framework is built on a type owned by
+the deploy tree, and the directory names say the opposite. `data/debt.yml`
+(`gate_result_is_a_shared_kernel_filed_under_deploy`) measured that in 2026-08
+and named the two ways out: extract a repo-level shared kernel, or write this
+entry. It stayed unwritten, and 2026-08-13 added `gate_ledger.rb` beside
+`gate_result.rb` — so the choice was being made by accretion instead.
+
+**Decision:** the deploy tree owns the gate kernel. `OPENBSD/lib/` holds the
+types every gate returns and the state every gate reads; RAILS, MASTER and
+STUDIO consume them by `require_relative` across the boundary and add nothing to
+them.
+
+**Why not a repo-level `lib/`:** a fourth top-level tree whose only content is
+three files, and the dependency it would remove is one RAILS already has and
+does not suffer from. The real asymmetry is the other way and worth keeping:
+**MASTER requires nothing from either tree** — it reads their data (`apps.yml`,
+`debt.yml`) and shells out to their scripts, but no `require_relative` crosses
+into it. That independence is what a shared kernel would quietly erode, because
+a kernel is exactly the thing everything ends up requiring.
+
+**Consequences:**
+
+- A gate anywhere returns `Deploy::GateResult`. Adding an outcome to it is a
+  deploy-tree change with four consumers (`RAILS/gates/runner.rb`,
+  `OPENBSD/bin/check-*`, `STUDIO/gate.rb`, `OPENBSD/lib/gate_environment.rb`),
+  not a local one.
+- MASTER reaches STUDIO's gate by subprocess (`rake studio` shells out) rather
+  than by require, specifically so `MASTER/Gemfile` and `MASTER/lib` stay clear
+  of `OPENBSD/lib`. That is the rule this entry exists to keep visible.
+- If a fourth tree ever needs the kernel and cannot take a subprocess, revisit —
+  three consumers is a convention, five is a library.
+
 ## relayd Owns TLS
 
 TLS terminates at relayd. Rails apps must use `config.assume_ssl = true` and must not force SSL themselves.

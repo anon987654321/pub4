@@ -28,7 +28,16 @@ GATES_DIR = __dir__
 RAILS_ROOT = File.expand_path("..", __dir__)
 REPO_ROOT = File.expand_path("../..", __dir__)
 
-GATES = YAML.safe_load_file(File.join(GATES_DIR, "gates.yml")).freeze
+# GATES_FILE points the runner at a different registry. It exists so the
+# fail-open behaviour below can be proved end-to-end: a gate that raises has to
+# actually be run through this file to show that the run survives it, and there
+# is deliberately no such gate in gates.yml.
+GATES = YAML.safe_load_file(ENV.fetch("GATES_FILE", File.join(GATES_DIR, "gates.yml"))).freeze
+
+# Groups every gate of one invocation into one row in the ledger, so "this gate
+# failed" can be told apart from "this whole run failed". The pid disambiguates
+# two runs started in the same second, which happens in CI.
+RUN_ID = "#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}-#{Process.pid}"
 
 # Counts the pass lines interpolate. Lambdas, not values: a gate's own constant
 # is only defined once its file has been required, and nothing should pay for a
@@ -100,6 +109,19 @@ def run_in_process(key, row, verbose:)
   kwargs = run_kwargs(row)
   result = kwargs.empty? ? klass.run : klass.run(**kwargs)
   emit_gate_result(key, result, verbose:)
+# Fail-open, per arXiv 2607.07405: a gate that raises records the error and
+# allows the call rather than inventing a block. Everything is caught, not just
+# StandardError — the crashes this actually sees are LoadError from a moved
+# `require` and NameError from a renamed class, both of which are ScriptError
+# or StandardError but neither of which a bare `rescue` would have caught.
+#
+# Before this, one raising gate ended the process: `outcomes` is built by a
+# single `to_h` over every gate, so the exception escaped the loop and the
+# forty-six gates after it in --all order never ran, with a backtrace in place
+# of the summary. That is not a strict suite, it is an unread one.
+rescue StandardError, ScriptError => e
+  require_relative "../../OPENBSD/lib/gate_result"
+  emit_gate_result(key, Deploy::GateResult.from_error(e, gate: key), verbose:)
 end
 
 def emit_gate_result(key, result, verbose:)
@@ -107,6 +129,11 @@ def emit_gate_result(key, result, verbose:)
     warn "[gates] #{key}: in-process gate did not return Deploy::GateResult"
     return :failed
   end
+
+  # Kept for the ledger, which wants the finding counts and not just the verdict:
+  # a gate that failed with one finding and one that failed with ninety read the
+  # same in the outcome column.
+  @last_result = result
 
   autofix_off = ENV["GATE_AUTOFIX"].to_s.strip.downcase.match?(/\A(0|false|no|off)\z/)
   warn "[gates] GATE_AUTOFIX #{autofix_off ? 'off (report-only)' : 'on (fix + remeasure)'}"
@@ -130,20 +157,61 @@ def run_subprocess(key, row)
   end
   extra = gate_extra_args(key)
   puts "[gates] visual_contract capture enabled (VISUAL_CAPTURE=1)" if key == "visual_contract" && extra.include?("--capture")
-  system(*ruby_cmd, path, *extra)
-  # A subprocess only tells us its exit status, so an inconclusive gate run this
-  # way still reads as a pass here. Its own output names what it skipped.
-  $?.success? ? :passed : :failed
+  ok = system(*ruby_cmd, path, *extra)
+  status = $?
+
+  # Three cases, and only two of them used to be told apart.
+  #
+  # `system` returns nil when the command could not be run at all — no such
+  # interpreter, script not executable. That is the gate erroring, not the gate
+  # failing, and reporting it as FAILED is the false block arXiv 2607.07405
+  # measures. Same for a signal death: SIGKILL is the OOM killer or a timeout,
+  # never a verdict about the tree.
+  #
+  # Exit 1 stays :failed. Ruby exits 1 both for `report!`'s deliberate block and
+  # for an uncaught exception, so the two are genuinely indistinguishable from
+  # out here; the in-process path above is where a crash gets named, and that is
+  # the path 44 of the 47 gates take.
+  return :errored if ok.nil?
+  return :errored if status.respond_to?(:signaled?) && status.signaled?
+
+  # An inconclusive gate run this way still reads as a pass: a subprocess only
+  # tells us its exit status. Its own output names what it skipped.
+  status.success? ? :passed : :failed
 end
 
-OUTCOME_LABEL = { passed: "PASSED", failed: "FAILED", inconclusive: "INCONCLUSIVE (checked nothing)" }.freeze
+OUTCOME_LABEL = {
+  passed: "PASSED",
+  failed: "FAILED",
+  inconclusive: "INCONCLUSIVE (checked nothing)",
+  errored: "ERRORED (gate broke, blocked nothing)",
+}.freeze
+
+def ledger
+  @ledger ||= begin
+    require_relative "../../OPENBSD/lib/gate_ledger"
+    Deploy::GateLedger.new
+  end
+end
 
 def run_one(key, verbose:)
   row = GATES.fetch(key)
   source = subprocess?(row) ? row["script"] : row["class"]
   puts "\n==> [gates] Running #{key} (#{source})"
+  @last_result = nil
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
   outcome = subprocess?(row) ? run_subprocess(key, row) : run_in_process(key, row, verbose:)
+  elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
   puts "[gates] #{key} #{OUTCOME_LABEL.fetch(outcome)}"
+  ledger.record(
+    gate: key,
+    outcome: outcome,
+    run_id: RUN_ID,
+    failures: @last_result.respond_to?(:failures) ? @last_result.failures.size : 0,
+    warnings: @last_result.respond_to?(:warnings) ? @last_result.warnings.size : 0,
+    errors: @last_result.respond_to?(:errors) ? @last_result.errors.size : 0,
+    duration_ms: elapsed
+  )
   outcome
 end
 
@@ -167,6 +235,7 @@ OptionParser.new do |opts|
   opts.banner = "Usage: ruby RAILS/gates/runner.rb [options] [gate_names...]"
   opts.on("--all", "Run all registered gates") { options[:all] = true }
   opts.on("--list", "List available gates") { options[:list] = true }
+  opts.on("--ledger", "Report each gate's outcome history (fire rate, error rate)") { options[:ledger] = true }
   opts.on("-h", "--help", "Show this help") do
     puts opts
     exit
@@ -175,6 +244,11 @@ end.parse!
 
 if options[:list]
   list_gates
+  exit
+end
+
+if options[:ledger]
+  ledger.render
   exit
 end
 
@@ -197,9 +271,22 @@ outcomes = gates_to_run.to_h { |key| [key, run_one(key, verbose:)] }
 
 failed = outcomes.select { |_, o| o == :failed }.keys
 unchecked = outcomes.select { |_, o| o == :inconclusive }.keys
+errored = outcomes.select { |_, o| o == :errored }.keys
 passed = outcomes.count { |_, o| o == :passed }
 
 puts "\n#{'=' * 50}"
+
+# Printed before the verdict and independently of it, because it is the one line
+# that changes what the rest of the summary means. An errored gate blocked
+# nothing (fail-open), so a run can say ALL PASSED while a gate that would have
+# caught the regression never ran — and unlike a failure, nobody goes looking
+# for it. GATE_STRICT_ERRORS=1 turns these into failures on the deploy host.
+if errored.any?
+  puts "[gates] #{errored.size} gate(s) ERRORED and blocked nothing: #{errored.join(', ')}"
+  puts "[gates]   whatever those guard was not checked this run " \
+       "(GATE_STRICT_ERRORS=1 to fail on it; --ledger for how long this has been true)"
+end
+
 if failed.any?
   puts "[gates] SOME GATES FAILED: #{failed.join(', ')}"
 elsif unchecked.any?
@@ -207,6 +294,11 @@ elsif unchecked.any?
   # point of the third state: "ALL PASSED (24)" used to include gates that had
   # no Chrome, no listening app and nothing to measure.
   puts "[gates] #{passed} gate(s) passed, #{unchecked.size} inconclusive: #{unchecked.join(', ')}"
+elsif errored.any?
+  # Same rule as the inconclusive line above, for the same reason: "ALL SELECTED
+  # GATES PASSED (46)" over a run where the forty-seventh crashed is a coverage
+  # number the run did not earn, and it is the number people quote.
+  puts "[gates] #{passed} gate(s) passed, #{errored.size} errored: #{errored.join(', ')}"
 else
   puts "[gates] ALL SELECTED GATES PASSED (#{passed})"
 end

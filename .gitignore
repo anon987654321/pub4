@@ -49,6 +49,9 @@ memory/*.jsonl
 :memory:/
 .constitutional_costs.jsonl
 .constitutional_memory.json
+# Per-gate outcome history (OPENBSD/lib/gate_ledger.rb). Append-only and written
+# by every gate run, so a committed copy would conflict in a shared checkout.
+.gate_ledger.jsonl
 .master/
 MASTER/.constitutional_locks/
 MASTER/output/
