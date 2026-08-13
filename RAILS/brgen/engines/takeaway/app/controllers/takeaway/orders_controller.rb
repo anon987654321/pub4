@@ -18,8 +18,16 @@ class Takeaway::OrdersController < Takeaway::BaseController
     @menu_items = @restaurant.menu_items.available
   end
 
-  def create
-    @order = @restaurant.orders.build(order_params.merge(user: Current.user))
+def create
+  # A kitchen that is shut cannot cook now, but can take an order for later —
+  # that is most of what scheduling is for. Checked here rather than only in
+  # the view, because a hidden button is not a closing time.
+  unless @restaurant.accepting_orders?(scheduled_for: order_params[:scheduled_for])
+    redirect_to restaurant_path(@restaurant), alert: t("flash.takeaway.closed_now")
+    return
+  end
+
+  @order = @restaurant.orders.build(order_params.merge(user: Current.user))
     item_params.each do |item_id, qty|
       next unless qty.to_i > 0
       item = @restaurant.menu_items.available.find_by(id: item_id)
@@ -49,6 +57,9 @@ class Takeaway::OrdersController < Takeaway::BaseController
 
   private
   def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant, params[:restaurant_id]))
-  def order_params   = params.require(:takeaway_order).permit(:delivery_address, :special_instructions)
+  # tip_cents and scheduled_for are the customer's, so they are permitted;
+  # totals are recomputed server-side in calculate_totals! and never read from
+  # the form.
+  def order_params   = params.require(:takeaway_order).permit(:delivery_address, :special_instructions, :tip_cents, :scheduled_for)
   def item_params    = params.dig(:takeaway_order, :items) || {}
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_210000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -692,11 +692,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_190000) do
     t.text "content", null: false
     t.integer "conversation_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.integer "duration_seconds"
+    t.datetime "edited_at"
     t.datetime "expires_at"
     t.string "message_type"
+    t.integer "parent_id"
     t.integer "sender_id"
     t.datetime "updated_at", null: false
+    t.index ["conversation_id", "deleted_at"], name: "index_messages_on_conversation_id_and_deleted_at"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["parent_id"], name: "index_messages_on_parent_id"
     t.index ["sender_id"], name: "index_messages_on_sender_id"
   end
 
@@ -1237,6 +1243,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_190000) do
     t.index ["restaurant_id"], name: "index_takeaway_menu_items_on_restaurant_id"
   end
 
+  create_table "takeaway_opening_hours", force: :cascade do |t|
+    t.integer "closes_minute", null: false
+    t.datetime "created_at", null: false
+    t.integer "opens_minute", null: false
+    t.integer "restaurant_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "weekday", null: false
+    t.index ["restaurant_id", "weekday"], name: "index_takeaway_opening_hours_on_restaurant_id_and_weekday"
+    t.index ["restaurant_id"], name: "index_takeaway_opening_hours_on_restaurant_id"
+  end
+
   create_table "takeaway_order_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "menu_item_id", null: false
@@ -1254,9 +1271,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_190000) do
     t.integer "delivery_driver_id"
     t.integer "delivery_fee_cents"
     t.integer "restaurant_id", null: false
+    t.datetime "scheduled_for"
     t.text "special_instructions"
     t.string "status"
     t.integer "subtotal_cents"
+    t.integer "tip_cents", default: 0, null: false
     t.integer "total_cents"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -1264,6 +1283,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_190000) do
     t.index ["delivery_driver_id"], name: "index_takeaway_orders_on_delivery_driver_id"
     t.index ["restaurant_id", "status", "updated_at"], name: "index_takeaway_orders_on_restaurant_id_and_status_and_updated_at"
     t.index ["restaurant_id"], name: "index_takeaway_orders_on_restaurant_id"
+    t.index ["scheduled_for"], name: "index_takeaway_orders_on_scheduled_for"
     t.index ["user_id"], name: "index_takeaway_orders_on_user_id"
   end
 
@@ -1590,6 +1610,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_190000) do
   add_foreign_key "message_receipts", "messages"
   add_foreign_key "message_receipts", "users"
   add_foreign_key "messages", "conversations"
+  add_foreign_key "messages", "messages", column: "parent_id"
   add_foreign_key "moderation_flags", "users"
   add_foreign_key "moderation_reports", "users"
   add_foreign_key "neighborhoods", "cities"
@@ -1658,6 +1679,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_190000) do
   add_foreign_key "takeaway_favorite_restaurants", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_favorite_restaurants", "users"
   add_foreign_key "takeaway_menu_items", "takeaway_restaurants", column: "restaurant_id"
+  add_foreign_key "takeaway_opening_hours", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_order_items", "takeaway_menu_items", column: "menu_item_id"
   add_foreign_key "takeaway_order_items", "takeaway_orders", column: "order_id"
   add_foreign_key "takeaway_orders", "takeaway_delivery_drivers", column: "delivery_driver_id"

@@ -47,6 +47,31 @@ class MessagesController < ApplicationController
     end
   end
 
+  # Editing is bounded to a short window; unsending is not. A message sent to
+  # the wrong room, on a chat where people post real addresses, is a safety
+  # problem rather than a typo.
+  def update
+    message = @conversation.messages.find(params[:id])
+    return head :forbidden unless message.editable_by?(Current.user)
+
+    message.edit!(params.require(:message).permit(:content)[:content])
+    respond_to do |format|
+      format.turbo_stream { render :update }
+      format.html { redirect_to conversation_path(@conversation) }
+    end
+  end
+
+  def destroy
+    message = @conversation.messages.find(params[:id])
+    return head :forbidden unless message.deletable_by?(Current.user)
+
+    message.unsend!
+    respond_to do |format|
+      format.turbo_stream { render :update }
+      format.html { redirect_to conversation_path(@conversation) }
+    end
+  end
+
   private
 
   def from_widget? = params[:origin] == "widget"
@@ -56,6 +81,7 @@ class MessagesController < ApplicationController
   end
 
   def message_params
-    params.require(:message).permit(:content, :message_type)
+    # parent_id makes it a reply; duration_seconds is set for a voice note.
+    params.require(:message).permit(:content, :message_type, :parent_id, :duration_seconds, :attachment)
   end
 end

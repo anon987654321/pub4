@@ -19,6 +19,7 @@ class Takeaway::Restaurant < ApplicationRecord
   has_many :orders, class_name: "Takeaway::Order", dependent: :destroy
   has_many :favorites, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
   has_many :reviews, class_name: "Takeaway::Review", dependent: :destroy
+  has_many :opening_hours, class_name: "Takeaway::OpeningHour", dependent: :destroy
 
   CUISINE_TYPES = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza Burger Kebab Sushi Vegetarian Vegan].freeze
   CENTS_PER_KRONE = 100.0
@@ -32,6 +33,26 @@ class Takeaway::Restaurant < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :popular, -> { order(rating: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
+
+# A restaurant with no hours recorded is treated as open, not shut: most of
+# them have none yet, and defaulting to closed would empty the listing.
+# `active` remains the switch for "not taking orders at all".
+def open_now?(moment = Time.current)
+  return false unless active?
+  return true unless Takeaway::OpeningHour.exists?(restaurant_id: id)
+
+  Takeaway::OpeningHour.open_at?(id, moment)
+end
+
+# An order for later is still allowed while the kitchen is shut — that is
+# most of what scheduling is for.
+def accepting_orders?(scheduled_for: nil)
+  return active? if scheduled_for.present?
+
+  open_now?
+end
+
+def hours_for(wday) = opening_hours.for_weekday(wday).order(:opens_minute)
 
   def owner?(account)
     user_id == account&.id

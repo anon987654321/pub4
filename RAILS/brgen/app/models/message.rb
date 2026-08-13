@@ -9,13 +9,22 @@ class Message < ApplicationRecord
   belongs_to :conversation
   belongs_to :sender, class_name: "User", foreign_key: :sender_id
   has_many :message_receipts, dependent: :destroy
+  # A reply points at what it answers. In a channel with several
+  # conversations running at once, a message with no referent is one nobody can
+  # follow.
+  belongs_to :parent, class_name: "Message", optional: true
+  has_many :replies, class_name: "Message", foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
   has_one_attached :attachment
   process_media_variants :attachment, variants: {
     inline: { resize_to_limit: [ 900, 900 ], format: :webp },
     thumb: { resize_to_limit: [ 320, 320 ], format: :webp },
   }
 
-  validates :content, presence: true, length: { maximum: 10_000 }
+  # unless deleted?: unsend! empties the body and keeps the row, and without
+  # this the record would be permanently invalid — every later save on it, from
+  # a receipt or a reaction, would fail.
+  validates :content, presence: true, unless: :deleted?
+  validates :content, length: { maximum: 10_000 }
   validates :message_type, inclusion: { in: %w[text image file audio] }
 
   # Live delivery. The declarative `broadcasts_to` re-renders _message inside
@@ -35,9 +44,43 @@ class Message < ApplicationRecord
   after_create_commit :maybe_summon_bot, if: :bot_worthy?
 
   scope :recent, -> { order(created_at: :desc) }
+  # Soft-deleted messages keep their row so a threaded reply is not orphaned,
+  # but they carry no body. Every render reads this rather than `all`.
+  scope :visible, -> { where(deleted_at: nil) }
   scope :unexpired, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
 
   def expired? = expires_at&.past?
+
+def edited? = edited_at.present?
+def deleted? = deleted_at.present?
+def reply? = parent_id.present?
+def voice? = message_type == "audio"
+
+# Editing is bounded: a message that can be rewritten hours later is a
+# message a reader cannot trust, and the receipt they already read is gone.
+EDIT_WINDOW = 15.minutes
+
+def editable_by?(user)
+  user.present? && user.id == sender_id && !deleted? && created_at > EDIT_WINDOW.ago
+end
+
+# Unsending has no window. A message sent to the wrong room — with a real
+# address in it, on a hyperlocal chat — is a safety problem, not a typo.
+def deletable_by?(user)
+  user.present? && user.id == sender_id && !deleted?
+end
+
+def edit!(new_content)
+  update!(content: new_content, edited_at: Time.current)
+end
+
+# The row stays, the body goes: a hard delete leaves a hole in a thread and
+# orphans whatever replied to it.
+def unsend!
+  update_columns(
+    content: "", deleted_at: Time.current, updated_at: Time.current
+  )
+end
 
   # Urgency tier for the fading-bubble treatment in the message thread —
   # derived from how much of the message's own lifespan is left, not a

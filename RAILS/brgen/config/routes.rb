@@ -139,7 +139,9 @@ Rails.application.routes.draw do
   end
 
   resources :conversations, only: %i[index show update] do
-    resources :messages, only: [ :create ]
+    # update is a bounded edit; destroy is an unsend, which keeps the row so a
+    # threaded reply is not orphaned.
+    resources :messages, only: %i[create update destroy]
     resources :typing_indicators, only: [ :create ]
     resource :presence, only: %i[create destroy]
   end

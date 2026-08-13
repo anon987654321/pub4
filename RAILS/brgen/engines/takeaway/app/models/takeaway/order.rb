@@ -45,7 +45,9 @@ class Takeaway::Order < ApplicationRecord
     # belongs_to read — so this raised on any order loaded from the database
     # rather than built in memory.
     fee = strict_safe_attribute(:restaurant, :delivery_fee_cents).to_i
-    update!(subtotal_cents: sub, delivery_fee_cents: fee, total_cents: sub + fee)
+    # The tip is part of what is charged, so it belongs in the total rather than
+    # being added at some later point nobody can find.
+    update!(subtotal_cents: sub, delivery_fee_cents: fee, total_cents: sub + fee + tip_cents.to_i)
   end
 
   def advance_status!
@@ -111,9 +113,16 @@ class Takeaway::Order < ApplicationRecord
     "delivered" => 0,
   }.freeze
 
+  def scheduled? = scheduled_for.present?
+
+  # A scheduled order is not late because it was placed hours ago: its estimate
+  # is anchored to when the customer asked for it, not to when they ordered.
   def estimated_ready_at
     return nil if status == "cancelled"
-    created_at + ETA_MINUTES_BY_STATUS.fetch(status, 30).minutes
+    return scheduled_for if scheduled? && scheduled_for > Time.current
+
+    anchor = scheduled? ? scheduled_for : created_at
+    anchor + ETA_MINUTES_BY_STATUS.fetch(status, 30).minutes
   end
 
   # Fraction of the delivery journey complete, for a real (non-decorative)
@@ -167,6 +176,10 @@ class Takeaway::Order < ApplicationRecord
 
   def total_display
     amount_display(total_cents)
+  end
+
+  def tip_display
+    amount_display(tip_cents)
   end
 
   private
