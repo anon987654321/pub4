@@ -111,6 +111,9 @@ Rails.application.routes.draw do
     # per-community one, derived from the posts that belong here.
     resources :moderation, only: %i[index update], controller: "communities/moderation"
     resources :moderators, only: %i[index create destroy], controller: "communities/moderators"
+    # Scoped to this community, never site-wide: one community's moderator
+    # silencing someone everywhere is not a lever that should exist.
+    resources :bans, only: %i[index create destroy], controller: "communities/bans"
     resources :posts, shallow: true do
       resources :comments, shallow: true, only: %i[create destroy] do
         resources :comments, shallow: true, only: %i[create destroy], as: :replies
