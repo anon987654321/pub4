@@ -188,6 +188,19 @@ module Master
           summary: "run bin/doctor health checks",
           detail: ["/doctor", "Provider keys, disk, git, web smoke hints.", "/doctor --fix repairs known config drift (e.g. dangling principle_map.yml rule_ids)."],
         },
+        "pair" => {
+          summary: "issue or redeem a pairing code for messaging tools",
+          detail: [
+            "/pair issue [label]",
+            "/pair <code> — redeem (also POST /pair)",
+            "/pair status", "/pair list", "/pair revoke <token>",
+            "Paired visitors get the messaging profile (fetch + personal memory), never Shell.",
+          ],
+        },
+        "security-audit" => {
+          summary: "runtime exposure: pairing, profiles, visitor slash, gateway",
+          detail: ["/security-audit", "Distinct from /doctor. Reports whether the public face can reach personal tools without pairing."],
+        },
         "commit" => {
           summary: "LLM-authored git commit of the current diff (review-gated)",
           detail: ["/commit", "Shows this notice first -- re-run as /commit --confirm to actually run git add -u + git commit."],
@@ -240,7 +253,7 @@ module Master
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
         "work" => %w[scan fix through workflow review critique self kernel status mode map maturity replay graph resync tail edge-cases],
         "agent" => %w[run reasoning task persona btw shell gateway plan rebuild],
-        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain fold],
+        "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor pair security-audit help domain fold],
         "infer" => [],
         "media" => %w[music dilla],
       }.freeze

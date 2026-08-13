@@ -1322,6 +1322,11 @@ heartbeat:
     action: snapshot
     enabled: false
     description: Use /snapshot instead.
+  - name: personal_pulse
+    action: personal_pulse
+    interval_seconds: 1800
+    enabled: false
+    description: Paired-workspace pulse. Replies HEARTBEAT_OK when nothing needs a nudge.
 
 # Merged from former refusal_templates.yml — refusal scaffolding when MASTER
 # cannot or should not act. Source: OpenAI / Anthropic system-prompt

@@ -26,6 +26,27 @@ tools:
   custom:
     # Read by lib/cli/destructive_routes.rb#blocking_review?.
     require_review_for_destructive: true
+  # Read by lib/ground/tool_profile.rb. public = open internet; messaging =
+  # paired visitor (fetch + personal memory, never Shell); full is implicit
+  # (authenticated, dangerous only when elevated).
+  profiles:
+    public:
+      - AskLlm
+      - WebSearch
+      - SubdomainOrchestrator
+    messaging:
+      - AskLlm
+      - WebSearch
+      - SubdomainOrchestrator
+      - WebFetch
+      - MemoryRecord
+
+# Remote-channel pairing. Read by lib/ground/pairing.rb. Store is .master/
+# (gitignored); a path under data/security/ would commit identities.
+pairing:
+  required_for_remote_channels: true
+  code_ttl_seconds: 600
+  allowlist_path: ".master/pairing/allowlist.yml"
 
 # Intent with no implementation. Nothing reads any of this, and saying so here is
 # the point: a policy file whose enforced half cannot be told from its aspirational
@@ -54,13 +75,6 @@ planned:
     channel_default:
       trust: untrusted
       sandbox: restricted
-
-  # Remote-channel pairing. No pairing code exists, and allowlist_path names a
-  # file that has never been created — data/security/ holds only this file.
-  pairing:
-    required_for_remote_channels: true
-    code_ttl_seconds: 600
-    allowlist_path: "MASTER/data/security/allowlist.yml"
 
   # The health route is declared in web/config/routes.rb, not derived from here.
   ingress:

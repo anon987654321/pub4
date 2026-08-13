@@ -24,6 +24,11 @@ class TestSecurityDefaults < Minitest::Test
     %w[ingress window_seconds] => ["web/app/controllers/ingress_controller.rb", "window_seconds"],
     %w[tools custom require_review_for_destructive] =>
       ["lib/cli/destructive_routes.rb", "require_review_for_destructive"],
+    %w[tools profiles public] => ["lib/ground/tool_profile.rb", "profiles"],
+    %w[tools profiles messaging] => ["lib/ground/tool_profile.rb", "profiles"],
+    %w[pairing required_for_remote_channels] => ["lib/ground/pairing.rb", "required_for_remote_channels"],
+    %w[pairing code_ttl_seconds] => ["lib/ground/pairing.rb", "code_ttl_seconds"],
+    %w[pairing allowlist_path] => ["lib/ground/pairing.rb", "allowlist_path"],
   }.freeze
 
   def defaults
@@ -63,8 +68,7 @@ class TestSecurityDefaults < Minitest::Test
     refute_empty planned, "planned: should hold the recorded-but-unimplemented policy"
 
     # Distinctive leaf names only — "enabled" or "port" would match half the tree.
-    distinctive = %w[deny_patterns code_ttl_seconds allowlist_path require_scope
-                     channel_default health_path required_for_remote_channels]
+    distinctive = %w[deny_patterns require_scope channel_default health_path]
     sources = Dir.glob(File.join(Master::ROOT, "{lib,core,bin,web/app}", "**", "*.rb"))
 
     distinctive.each do |name|

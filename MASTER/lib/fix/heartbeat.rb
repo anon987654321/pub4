@@ -19,6 +19,7 @@ module Master
         "self_test" => :run_self_test,
         "prune_undo" => :prune_undo_journal,
         "snapshot" => :run_snapshot,
+        "personal_pulse" => :personal_pulse,
       }.freeze
 
       def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil)
@@ -160,6 +161,10 @@ module Master
         container = { root: @root, bus: @bus }
         Builder.boot_snapshot(container)
         "snapshot: generated"
+      end
+
+      def personal_pulse
+        Master::Ground::PersonalWorkspace.pulse(root: @root)
       end
 
       def load_jobs

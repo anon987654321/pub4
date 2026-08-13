@@ -62,6 +62,7 @@ module Master
         Io::SearchFiles => Io::LLM::SearchFiles,
         Io::Shell => Io::LLM::Shell,
         Io::WebSearch => Io::LLM::WebSearch,
+        Io::WebFetch => Io::LLM::WebFetch,
         Io::AskLlm => Io::LLM::AskLlm,
         Io::GitContext => Io::LLM::GitContext,
         Io::AstEdit => Io::LLM::AstEdit,

@@ -25,6 +25,8 @@ module Master
       ensure
         Fiber[:master_elevated] = nil
         Fiber[:master_visitor] = nil
+        Fiber[:master_paired] = nil
+        Fiber[:master_pair_subject] = nil
       end
     end
   end

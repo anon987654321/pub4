@@ -8,14 +8,15 @@ module Master
 
         def llm_tools(selected_model)
           return [] unless tool_capable?(selected_model)
-          return build_llm_tools(visitor: true) if Fiber[:master_visitor]
 
-          tier = Fiber[:master_elevated] ? :elevated : :standard
+          profile = Ground::ToolProfile.current
           @llm_tools_by_tier ||= {}
-          @llm_tools_by_tier[tier] ||= build_llm_tools
+          @llm_tools_by_tier[profile] ||= build_llm_tools(profile:)
         end
 
-        def build_llm_tools(visitor: false)
+        def build_llm_tools(visitor: false, profile: nil)
+          profile ||= visitor ? :public : Ground::ToolProfile.current
+          allowed = Ground::ToolProfile.allowlist(profile)
           tier = @model_router&.tier_for_model(@config.model).to_s
           @tools.filter_map do |tool|
             wrapper = LLM_TOOL_MAP[tool.class]
@@ -23,8 +24,8 @@ module Master
             name = tool.class.name.split("::").last
             meta = @tool_registry.fetch(name, {})
             next unless tool_available_for_context?(meta)
-            next if visitor && meta["visitor"] != true
-            next if !visitor && !Fiber[:master_elevated] && meta["tier"] == "dangerous"
+            next if allowed && !allowed.include?(name)
+            next if allowed.nil? && !Fiber[:master_elevated] && meta["tier"] == "dangerous"
             next if tier == "cheap" && meta["tier"] == "dangerous"
             wrapper.new(tool)
           end

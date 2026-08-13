@@ -86,6 +86,16 @@ class ChatController < ApplicationController
       cookies[:master_unlocked] = { value: "1", expires: 1.year.from_now, secure: true, httponly: true, same_site: :strict }
       render(json: { output: "unlocked — full tool access enabled." }) and return
     end
+    if (code = pair_redeem_arg(cmd))
+      result = Master::Ground::Pairing.redeem(code)
+      if result
+        set_pair_cookie(result[:token])
+        render(json: { output: "paired — messaging tools on. This is not operator access." })
+      else
+        render(json: { output: "pair: invalid or expired code" }, status: :unprocessable_entity)
+      end
+      return
+    end
     return head(:forbidden) if visitor?
 
     with_master_fiber(unlocked: cookies[:master_unlocked].to_s == "1") do
@@ -140,6 +150,7 @@ class ChatController < ApplicationController
     mp = message_params
     input = mp[:message].to_s.strip
     return head(:bad_request) if input.empty?
+    return redeem_pair_from_chat(input) if visitor? && pair_redeem_arg(input)
     return head(:forbidden) if visitor? && input.start_with?("/")
     return stream_smoke_reply(input) if smoke_chat_message?(input)
 
@@ -155,6 +166,8 @@ class ChatController < ApplicationController
       tier: request.env["master.tier"].to_s,
       unlocked: cookies[:master_unlocked].to_s == "1",
       author: false,
+      paired: pairing_active?,
+      pair_token: cookies[:master_paired].to_s,
     ).call
   rescue IOError, ActionController::Live::ClientDisconnected
     nil
@@ -163,6 +176,37 @@ class ChatController < ApplicationController
   end
 
   private
+
+  def pair_redeem_arg(cmd)
+    return unless cmd.to_s.match?(%r{\A/pair(?:\s|\z)})
+
+    rest = cmd.to_s.sub(%r{\A/pair\s*}, "")
+    return if rest.empty? || rest.match?(/\A(issue|list|revoke|status)\b/i)
+
+    rest.split.first
+  end
+
+  def redeem_pair_from_chat(input)
+    result = Master::Ground::Pairing.redeem(pair_redeem_arg(input))
+    body = if result
+             set_pair_cookie(result[:token])
+             "paired — messaging tools on. This is not operator access."
+           else
+             "pair: invalid or expired code"
+           end
+    stream_plain(body)
+  end
+
+  def stream_plain(body)
+    response.headers["Content-Type"] = "text/event-stream"
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["X-Accel-Buffering"] = "no"
+    response.stream.write(": connected\n\n")
+    response.stream.write("data: #{body}\n\n")
+    response.stream.write("data: [DONE]\n\n")
+  ensure
+    response.stream.close
+  end
 
   def message_params
     params.permit(:message, :state, :pre_enhanced, :voice, :image_token, image: %i[data mime name])

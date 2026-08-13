@@ -6,7 +6,7 @@ require "master"
 class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
-  VISITOR_ALLOWED_TOOLS = %w[AskLlm WebSearch].freeze
+  VISITOR_ALLOWED_TOOLS = Master::Ground::ToolProfile.public_names.freeze
   AUTHENTICATED_ACTIONS = %i[dmesg history live metrics].freeze
   TTS_SYNTH_ACTIONS = %i[show].freeze
   TTS_POLL_ACTIONS = %i[status stream].freeze
@@ -85,13 +85,28 @@ class ApplicationController < ActionController::Base
     head :forbidden
   end
 
+  def pairing_active?
+    Master::Ground::Pairing.valid_token?(cookies[:master_paired].to_s)
+  end
+  helper_method :pairing_active? if respond_to?(:helper_method)
+
+  def set_pair_cookie(token)
+    cookies[:master_paired] = {
+      value: token, expires: 1.year.from_now,
+      secure: request.ssl?, httponly: true, same_site: :strict,
+    }
+  end
+
   def with_master_fiber(unlocked: false)
     Fiber[:master_visitor] = visitor?
     Fiber[:master_elevated] = unlocked
+    Master::Ground::Pairing.apply_token!(cookies[:master_paired].to_s)
     yield
   ensure
     Fiber[:master_visitor] = nil
     Fiber[:master_elevated] = nil
+    Fiber[:master_paired] = nil
+    Fiber[:master_pair_subject] = nil
   end
 
   def enforce_chat_rate_limit
@@ -174,7 +189,7 @@ class ApplicationController < ActionController::Base
 
   def warming_exempt_path?
     path = request.path
-    return true if path == "/up" || path == "/health" || path == "/ingress/health"
+    return true if path == "/up" || path == "/health" || path == "/ingress/health" || path == "/pair"
     return true if smoke_chat_probe?
     return true if path.start_with?("/assets/", "/runtime/")
     return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|face_vision|face_deferred|topology_|cluster_|domain_cluster|mask|sw\.js|manifest\.json|icon\.|offline\.html)})

@@ -52,6 +52,22 @@ class TestHeartbeat < Minitest::Test
     end
   end
 
+  def test_personal_pulse_returns_heartbeat_ok_when_nothing_to_say
+    Dir.mktmpdir do |root|
+      write_heartbeat_jobs(root, <<~YAML)
+        - name: personal_pulse
+          action: personal_pulse
+          interval_seconds: 0
+          enabled: true
+      YAML
+
+      results = Master::Fix::Heartbeat.new(root:).run_due!
+      pulse = results.find { |row| row[:name] == "personal_pulse" }
+      assert pulse
+      assert_equal "HEARTBEAT_OK", pulse[:result]
+    end
+  end
+
   def test_self_test_heartbeat_publishes_violation_metrics_with_last_fixed
     Dir.mktmpdir do |root|
       write_heartbeat_root(root, <<~YAML)

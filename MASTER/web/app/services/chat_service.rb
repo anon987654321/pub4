@@ -14,7 +14,7 @@ class ChatService
   ].freeze
   BUS_THOUGHT_RE = /:(?:done|error|warn|crit|resolved|confidence|detected)\b/.freeze
 
-  def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:)
+  def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:, paired: false, pair_token: nil)
     @container = container
     @params = params
     @stream = stream
@@ -22,6 +22,8 @@ class ChatService
     @tier = tier
     @unlocked = unlocked
     @author = author
+    @paired = paired
+    @pair_token = pair_token
     @subscriptions = []
     @mutated_paths = []
     @mutated = false
@@ -92,6 +94,8 @@ class ChatService
     @container[:bus]&.publish("input:long", length: input.length) if input.length > 180
     Fiber[:master_visitor] = @tier != "authenticated"
     Fiber[:master_elevated] = @unlocked || @author
+    Fiber[:master_paired] = @paired
+    Fiber[:master_pair_subject] = Master::Ground::Pairing.subject_for(@pair_token.to_s) if @paired
   end
 
   def subscribe_to_events
@@ -308,6 +312,8 @@ class ChatService
   def clear_fiber_flags
     Fiber[:master_visitor] = nil
     Fiber[:master_elevated] = nil
+    Fiber[:master_paired] = nil
+    Fiber[:master_pair_subject] = nil
   end
 
   def tool_payload(event)

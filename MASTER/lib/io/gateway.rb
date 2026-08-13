@@ -29,6 +29,8 @@ module Master
         channel = channel.to_sym
         return Result.err("unknown channel: #{channel}", category: :validation) unless CHANNELS.include?(channel)
 
+        Master::Ground::Pairing.apply_remote!(channel)
+
         message_text = message.to_s.strip
         turn_id = "#{Process.pid}-#{Time.now.to_i}-#{rand(36**4).to_s(36)}"
         @bus&.publish("gateway:turn_start", turn_id:, channel:, message: message_text[0, 200])

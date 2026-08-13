@@ -94,6 +94,23 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "[DONE]"
   end
 
+  test "visitor slash stays forbidden except pair redeem" do
+    post "/chat/message", params: { message: "/shell ls" }
+
+    assert_response :forbidden
+  end
+
+  test "visitor can redeem a pairing code in chat" do
+    issued = Master::Ground::Pairing.issue(label: "chat")
+    post "/chat/message", params: { message: "/pair #{issued[:code]}" }
+
+    assert_response :success
+    assert_includes response.body, "paired"
+    assert cookies[:master_paired].present?
+  ensure
+    FileUtils.rm_rf(File.join(Master::ROOT, ".master", "pairing"))
+  end
+
   test "message accepts seven field felt state" do
     felt = "curious|thinking|0.42|0.88|0.55|0.12|0.35"
     post "/chat/message", params: { message: "ping", state: felt }

@@ -32,6 +32,8 @@ Rails.application.routes.draw do
   get  "up" => "rails/health#show", as: :rails_health_check
   get  "health" => "health#show"
   get  "ingress/health", to: "ingress#health"
+  get  "pair", to: "pair#show"
+  post "pair", to: "pair#create"
   post "ingress/cron/:name", to: "ingress#cron"
   post "ingress/webhook/:name", to: "ingress#webhook"
   get  "metrics" => "chat#metrics_prometheus"

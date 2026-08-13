@@ -41,5 +41,18 @@ class ToolRegistryElevationTest < Minitest::Test
   ensure
     Fiber[:master_visitor] = nil
     Fiber[:master_elevated] = nil
+    Fiber[:master_paired] = nil
+  end
+
+  def test_paired_visitor_does_not_receive_shell
+    harness = RegistryHarness.new
+    Fiber[:master_visitor] = true
+    Fiber[:master_paired] = true
+    names = harness.send(:llm_tools, "test/model").map { |tool| tool.class.name }
+
+    refute_includes names, "Master::Io::LLM::Shell"
+  ensure
+    Fiber[:master_visitor] = nil
+    Fiber[:master_paired] = nil
   end
 end

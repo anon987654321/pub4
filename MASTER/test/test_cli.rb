@@ -37,6 +37,8 @@ class TestCLI < Minitest::Test
   # invisible when the file runs alone, and nothing to do with the router.
   def teardown
     Fiber[:master_visitor] = nil
+    Fiber[:master_paired] = nil
+    Fiber[:master_pair_subject] = nil
   end
 
   # container accessor

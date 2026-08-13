@@ -28,6 +28,8 @@ module Master
           "context" => command(:dispatch_context_window, session, root),
           "verify" => command(:dispatch_verify_wired, scanner, root),
           "doctor" => command(:dispatch_doctor, root),
+          "pair" => command(:dispatch_pair, root),
+          "security-audit" => command(:dispatch_security_audit, root),
         }
       end
 
@@ -202,6 +204,35 @@ module Master
           "agent  #{wired.size} wired #{wired.empty? ? '' : wired.join(' ')}",
           "docs   data/tools.yml · /orient trace",
         ].join("\n")
+      end
+
+      def dispatch_pair(root, ctx: nil)
+        arg = arg_for(ctx)
+        case arg
+        when "", "status"
+          Master::Ground::Pairing.status.inspect
+        when /\Aissue(?:\s+(.*))?\z/
+          issued = Master::Ground::Pairing.issue(root:, label: $1.to_s.strip)
+          "pair code #{issued[:code]} expires in #{issued[:expires_in]}s — redeem via /pair #{issued[:code]} or POST /pair"
+        when "list"
+          rows = Master::Ground::Pairing.list(root:)
+          return "pair: no allowlist entries" if rows.empty?
+
+          rows.map { |row| "#{row[:subject]} #{row[:label]} #{row[:token]}" }.join("\n")
+        when /\Arevoke\s+(\S+)\z/
+          Master::Ground::Pairing.revoke($1, root:) ? "pair: revoked" : "pair: not found"
+        else
+          result = Master::Ground::Pairing.redeem(arg.split.first, root:)
+          return "pair: invalid or expired code" unless result
+
+          Fiber[:master_paired] = true
+          Fiber[:master_pair_subject] = result[:subject]
+          "paired — messaging tools on. subject=#{result[:subject]}"
+        end
+      end
+
+      def dispatch_security_audit(root, ctx: nil)
+        Master::Ground::SecurityAudit.report(root:)
       end
 
       def dispatch_doctor(root, ctx: nil)

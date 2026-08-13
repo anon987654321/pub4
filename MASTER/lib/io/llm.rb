@@ -12,7 +12,7 @@ module Master
     module LLM
 
     # LLM — shared base module for LLM-backed tool functionality.
-      # All 15 tools below wrap an existing Master tool instance the same
+      # All 16 tools below wrap an existing Master tool instance the same
       # way (governor/undo/event_bus plumbing lives on @tool, not here).
       module ToolInitializer
         def initialize(tool) = @tool = tool
@@ -103,6 +103,17 @@ module Master
 
         def execute(query:)
           result = @tool.call(query: query.to_s)
+          result.ok? ? result.value! : "Error: #{result.message}"
+        end
+      end
+
+      class WebFetch < RubyLLM::Tool
+        include ToolInitializer
+        description "Fetch a URL as plain text. Rewrites github/gist/arxiv/codepen URLs."
+        param :url, desc: "http(s) URL to fetch", required: true
+
+        def execute(url:)
+          result = @tool.call(url: url.to_s)
           result.ok? ? result.value! : "Error: #{result.message}"
         end
       end

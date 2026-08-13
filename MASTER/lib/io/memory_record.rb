@@ -24,6 +24,12 @@ module Master
         type = VALID_TYPES.include?(type.to_s) ? type.to_s : "general"
         return Result.err("memory_record: key must match #{KEY_RE.source}", category: :validation) unless KEY_RE.match?(key)
 
+        if (subject = Fiber[:master_pair_subject].to_s).strip != ""
+          path = Master::Ground::PersonalWorkspace.append_memory(root: @root, subject:, key:, body:, type:)
+          @bus&.publish("memory:record", key:, type:, path: relative(path), paired: true)
+          return Result.ok("memory_record: #{relative(path)}")
+        end
+
         path = persist_context(key:, description:, type:, body:)
         @memory&.remember("claude/#{key}", body.to_s.strip, type:)
         @bus&.publish("memory:record", key:, type:, path: relative(path))

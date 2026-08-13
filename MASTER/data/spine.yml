@@ -283,7 +283,14 @@ spine:
   # The two raises this clears are not erased — 38811 -> 38844 and 38844 -> 38860
   # are both still written out in full above, with their accounting. `raised:` is
   # the counter; the comments are the record, and only the counter was reset.
-  lib_code_ceiling: 38869
+  #
+  # RAISED 2026-08-13, 38869 -> 39258 (+389). Pairing before personal tools:
+  # Ground::Pairing, ToolProfile, PersonalWorkspace, SecurityAudit, plus the
+  # WebFetch LLM wrapper and the MemoryRecord paired-workspace branch. These are
+  # readers for security/defaults.yml keys that lived under planned: and enforced
+  # nothing — the same category as worn_type. Public stays AskLlm/WebSearch/
+  # SubdomainOrchestrator; messaging never includes Shell.
+  lib_code_ceiling: 39258
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -298,6 +305,9 @@ spine:
   - "2026-08-13 38860 -> 38869 (+9): d35b40ec0's worn_type/worn_profile accessors,
      giving design_rules.yml's worn_type block a Ruby reader. Operator-sponsored,
      and the same decision cleared the two entries before it."
+  - "2026-08-13 38869 -> 39258 (+389): pairing, tool profiles, personal workspace,
+     security-audit, WebFetch LLM wrapper. Promotes planned pairing keys to
+     enforced readers. Public face stays messaging-only after redeem."
   # How many raises may stand before lint:spine refuses another. The allowance was
   # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
   # mechanism working: a genuine fall earns the budget back, so this is a budget
