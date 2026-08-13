@@ -56,9 +56,15 @@ EOF
 
 if [[ $app == master ]]; then
   print "vps-deploy: master web"
-  zsh "$repo/OPENBSD/vps_deploy_master.sh"
-  write_stamp master ok
-  exit 0
+  if zsh "$repo/OPENBSD/vps_deploy_master.sh"; then
+    write_stamp master ok
+    exit 0
+  fi
+  # A failed restart used to leave last_deploy_master.json saying ok from
+  # the last good run, so /health and the operator read a live SHA while
+  # :53187 was closed (measured 2026-08-13).
+  write_stamp master failed
+  exit 1
 fi
 
 [[ -d /home/${app}/app ]] || { print -u2 "missing /home/${app}/app"; exit 1 }
@@ -118,8 +124,10 @@ print "vps-deploy: $app (assets precompile)"
 rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
 
 print "vps-deploy: $app (restart)"
-doas rcctl restart "$app"
-doas rcctl check "$app"
+if ! doas rcctl restart "$app" || ! doas rcctl check "$app"; then
+  write_stamp "$app" failed
+  exit 1
+fi
 
 port=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","port")')
 up_ok=0
@@ -127,7 +135,7 @@ for i in {1..30}; do
   curl -fsS "http://127.0.0.1:${port}/up" >/dev/null 2>&1 && { up_ok=1; break; }
   sleep 2
 done
-[[ $up_ok -eq 1 ]] || { print -u2 "vps-deploy: $app /up not ready on :${port}"; exit 1; }
+[[ $up_ok -eq 1 ]] || { write_stamp "$app" failed; print -u2 "vps-deploy: $app /up not ready on :${port}"; exit 1; }
 
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! grep -q 'define(version: 0)' "$queue_schema" 2>/dev/null; then

@@ -22,6 +22,8 @@ class RestoreScriptsTest < Minitest::Test
     assert_includes write, "rev-parse --short HEAD"
     refute_match(/sha=\$\(git -C "\$repo" rev-parse --short HEAD\)\nstarted=/, source.split("write_stamp()")[0])
     assert_includes source, "pull --ff-only origin main"
+    assert_includes source, 'write_stamp master failed'
+    assert_includes source, 'write_stamp "$app" failed'
   end
 
   def test_vps_ci_mirrors_the_tracked_tree_not_vendor

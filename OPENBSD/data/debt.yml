@@ -44,10 +44,10 @@ open:
       Found by trying to prune 141,753 stale guest rows and getting "removed 0"
       with no error — in_batches(&:destroy_all) swallowed it; a single
       user.destroy on the same row raises immediately.
-      Fix is a schema change against live data and belongs with an operator:
-      re-run that migration's up (or a create_table_if_not_exists equivalent),
-      then re-run the prune. Note there is also one genuinely unapplied migration,
-      20260812190000, from the same day's engine work.
+      Repair migration is in the tree: 20260813230000_repair_missing_identity_and_trust_tables
+      (create_table if_not_exists for all seven). Next action is operator: deploy
+      brgen so db:prepare runs it, then re-run the prune. Note there is also one
+      genuinely unapplied migration, 20260812190000, from the same day's engine work.
 
   - id: solid_queue_worker_never_ran
     tag: operator-priority
