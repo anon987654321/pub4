@@ -3489,6 +3489,39 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   // banked and only committed after this much real quiet.
   const STT_QUIET_MS = 1600;
   let sttSilenceTimer = null, sttPartial = '', sttFinalSoFar = '';
+  // Barge-in. Someone who starts talking has taken the turn, so stop rather
+  // than duck: applySttDuck only lowers the voice to 0.12 and State.sttDuck
+  // decays 0.06 a tick, so the duck expired and MASTER came back up over a
+  // person still mid-sentence. Ducking is what you do for a notification; a
+  // human stops.
+  //
+  // The guard is the whole difficulty. The mic hears MASTER's own voice, so an
+  // unguarded barge-in cancels itself on every utterance — the echo this
+  // file's TTS/STT duck was written for. Two conditions before yielding: enough
+  // heard to be a real attempt rather than a syllable of bleed, and the text
+  // not already contained in what is being spoken right now.
+  const BARGE_IN_MIN_CHARS = 8;
+  const normaliseHeard = (s) => String(s || '')
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  function speechIsEchoOfSelf(heard) {
+    const spoken = normaliseHeard(tts.current);
+    if (!spoken) return false;
+    const said = normaliseHeard(heard);
+    return said.length > 0 && spoken.includes(said);
+  }
+  function bargeInIfSpeaking(heard) {
+    if (!tts.playing && !tts.loading) return;
+    const said = normaliseHeard(heard);
+    if (said.length < BARGE_IN_MIN_CHARS) return;
+    if (speechIsEchoOfSelf(said)) return;
+
+    emitTtsEvent('tts:barge_in', { heard: said.slice(0, 40) });
+    ttsSkip();
+  }
+
   recognition.onresult = (e) => {
     let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -3507,6 +3540,9 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       return;
     }
     if (!final.trim() && !interim.trim()) return;
+    // Before the transcript is accumulated: yielding the turn should happen on
+    // the first interim words, not after the silence timer has run.
+    bargeInIfSpeaking(`${final} ${interim}`);
     if (final.trim()) sttFinalSoFar = sttFinalSoFar ? `${sttFinalSoFar} ${final.trim()}` : final.trim();
     sttPartial = `${sttFinalSoFar} ${interim.trim()}`.trim();
     if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
