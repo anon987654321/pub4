@@ -129,13 +129,41 @@ shed=0
 if awk -v l="$load" -v w="$LOAD_WARN" 'BEGIN{exit !(l>=w)}'; then shed=1; fi
 if [[ $mem_avail_pct -lt $MEM_WARN ]]; then shed=1; fi
 
+# A deploy is load this box was told to make. rc.d/{master,amber,brgen,bsdports}
+# touch /home/dev/pub4/.deploying* for the duration of rc_pre() — precompile,
+# migrate, cold boot — which is exactly the transient breach SHED_STRIKES above
+# describes, and exactly when this guard used to take amber and bsdports down.
+# Restore then crawls back one service per 5-minute tick, so a deploy cost those
+# two apps ten minutes of downtime that TLS hid, on every deploy.
+#
+# The locks have been written since the rc.d scripts were introduced and nothing
+# has ever read them. Reading one is the whole fix: shedding in response to the
+# operator's own deploy is the guard fighting the thing that asked for the work.
+#
+# Ahead of both the history log and the strike counter, so the log records the
+# decision actually taken and a deploy tick is not counted as a strike that
+# fires the moment the deploy ends.
+#
+# Only the shed side. Restore still waits for pressure to clear on its own
+# terms — a deploy ending does not mean memory is free, and the one-per-tick
+# stagger below exists because simultaneous cold boots re-trigger this guard.
+deploying=0
+if ls /home/dev/pub4/.deploying* >/dev/null 2>&1; then
+  deploying=1
+  if [[ $shed -eq 1 ]]; then
+    logger -t resource-guard \
+      "deploy in progress (load=$load mem_avail=${mem_avail_pct}%) — not shedding"
+    shed=0
+  fi
+fi
+
 # Load-history log: LOAD_WARN/LOAD_CRIT above were set from a single evening's
 # observation (itself skewed high by concurrent deploys/agent activity, not a
 # calm baseline) -- recalibrating them again by guesswork would repeat the
 # same mistake. This gives a real dataset (`awk '{print $4}' | sort -n` etc.)
 # to recalibrate from once enough ticks have accumulated. One line/5min ==
 # ~2000 lines/week; rotated weekly via newsyslog (OPENBSD/etc/newsyslog.conf).
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) load=$load mem_avail=${mem_avail_pct}% shed=$shed" \
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) load=$load mem_avail=${mem_avail_pct}% shed=$shed deploy=$deploying" \
   >> /var/log/resource_guard_history.log 2>/dev/null || true
 
 if [[ -f $ALL_APPS_FLAG ]]; then

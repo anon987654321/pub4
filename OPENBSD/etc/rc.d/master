@@ -81,9 +81,22 @@ rc_pre() {
     _skip=1
   fi
   if [ "$_skip" = "0" ]; then
-    (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
-    mkdir -p /home/dev/pub4/MASTER/web/tmp
-    echo "$_digest" > "$_stamp"
+    # Stamp only on success. `|| true` swallowed a failed precompile and the
+    # stamp went down regardless — and because the skip test above is
+    # stamp-equals-digest, one failure then made every later start skip
+    # precompile as well. Nothing retries until an input file changes.
+    #
+    # Measured 2026-08-13 on vm23: MASTER/web had no public/assets directory at
+    # all, a stamp from that day's deploy, and /health reporting
+    # face_runtime_digest: null — the field the deploy-confidence playbook says
+    # to check. It stayed invisible because public/ is served undigested, so the
+    # face kept working while every fingerprinted asset was missing.
+    if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null; then
+      mkdir -p /home/dev/pub4/MASTER/web/tmp
+      echo "$_digest" > "$_stamp"
+    else
+      logger -t master "assets:precompile failed — stamp not written, will retry next start"
+    fi
   fi
   # Load-bearing asset gate: refuse to start serving a broken face.js/manifest
   # mismatch (the exact class of bug that wedged the primer boot on 2026-07-10).
