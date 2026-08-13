@@ -29,7 +29,26 @@ class Tv::Video < ApplicationRecord
   # :published is also used by admin and by the channel's own show page, where
   # the channel is already the tenant-scoped record doing the asking.
   scope :published, -> { where(status: "published").order(published_at: :desc) }
-  scope :trending,  -> { published.in_current_city.order(views_count: :desc) }
+
+  # Trending ranks by watch time, not by page opens. views_count is incremented
+  # in videos#show, so a viewer who bounced after four seconds moved a video up
+  # exactly as far as one who watched it through — which is the difference
+  # between a most-clicked list and a most-watched one.
+  #
+  # A correlated subquery rather than left_joins + group: the home page passes
+  # this scope to pagy, and pagy counts a grouped relation with .count(:all),
+  # which returns a hash of per-group counts instead of a number. tv_view_events
+  # is indexed on tv_video_id.
+  #
+  # views_count stays as the tiebreak, so a video nobody has reported watch time
+  # for yet still ranks rather than falling to the bottom of the page.
+  WATCH_TIME_SQL = <<~SQL.squish
+    (SELECT COALESCE(SUM(watch_time_seconds), 0) FROM tv_view_events
+      WHERE tv_view_events.tv_video_id = tv_videos.id) DESC,
+    tv_videos.views_count DESC
+  SQL
+
+  scope :trending,  -> { published.in_current_city.reorder(Arel.sql(WATCH_TIME_SQL)) }
   scope :recent,    -> { published.in_current_city.order(published_at: :desc) }
 
   after_update_commit :record_video_published, if: :published_status_change?

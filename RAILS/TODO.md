@@ -41,17 +41,48 @@ inclusion, and the quote-post variant that x.com and Mastodon both depend on.
 **Check:** none today. A view test asserting every `feed-action` button resolves
 to a controller or a form would catch the whole class.
 
-### 1.2 `Tv::ViewEvent` is never created
+### 1.2 `Tv::ViewEvent` recorded that a page opened, not that anything was watched — **done**
 
-`tv_view_events` carries `watch_time_seconds` and `completed`. The model exists.
-`Tv::Video has_many :view_events`. **Nothing anywhere creates a row.**
-`Tv::Video.trending` sorts on the `views_count` counter column instead.
+The first version of this entry said no row was ever created. That was wrong,
+and wrong for an instructive reason: the grep behind it searched for the class
+name, and the only writer reaches the table through the association
+(`@video.view_events.create!` in `videos#show`). Searching for the noun missed
+the verb.
 
-So there is no watch-time signal in the database, and no TikTok-style ranking is
-possible until the player writes one. This is the single highest-leverage item
-in the file: it is a Stimulus controller posting progress plus a create action.
+What was true: the row was created with `watch_time_seconds` and `completed`
+both nil and nothing ever filled them in, and `Tv::Video.trending` sorted
+`views_count` — incremented on that same page load. So a viewer who bounced
+after four seconds moved a video up the trending page exactly as far as one who
+watched it through, and the two columns that could tell them apart were never
+written by anything.
 
-**Check:** none today.
+Now: `videos#show` keeps the row in an ivar and hands the player its URL; the
+player reports the furthest point reached on pause, on `ended`, on tab hide and
+on disconnect. `record_progress!` takes the max (beacons arrive out of order),
+clamps to the video's own `duration_seconds` (the number comes from the client,
+and unclamped the ranking is forgeable), and marks `completed` at 90% because
+the last `timeupdate` rarely reaches duration. `trending` now ranks by summed
+watch time with `views_count` as the tiebreak, via a correlated subquery rather
+than `left_joins + group` — the home page passes the scope to pagy, and pagy
+counts a grouped relation with `.count(:all)`, which returns a hash.
+
+Two things fell out of doing it:
+
+- `data-tv-player-target="video"` was declared on no page in the tree, so the
+  player's whole `#bindVideoEvents` body — including the wake lock on play —
+  had never run. Watch-time reporting needs that target, so it runs now.
+- `videos#show` preloaded `:channel` but not `channel: :user`, and the subscribe
+  control reads `Current.user != @video.channel.user` only when authenticated.
+  The page rendered for guests and raised for every signed-in viewer, which is
+  why a guest-only smoke test never caught it.
+
+**Check:** `engines/tv/test/models/tv/view_event_test.rb` (monotonicity, clamp,
+90% threshold, no-duration case, strict loading, and that trending puts one
+watched-through view above 500 page opens) and
+`test/controllers/tv_watch_time_test.rb` (a viewer can only write their own
+event; the page carries the progress URL).
+
+**Still open:** the vertical feed that would consume this ranking — see 2.5.
 
 ### 1.3 `Marketplace::SavedSearch` never runs itself
 

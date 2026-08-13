@@ -6,7 +6,11 @@ class Tv::VideosController < Tv::BaseController
   before_action :require_video_owner!, only: :destroy
 
   def show
-    @video.view_events.create!(user: Current.user) if authenticated?
+    # Kept in an ivar so the player can PATCH watch time onto this exact row.
+    # Before that it was created and abandoned: watch_time_seconds and completed
+    # were never written by anything, so the table recorded that a signed-in
+    # user opened the page and nothing about whether they watched it.
+    @view_event = @video.view_events.create!(user: Current.user) if authenticated?
     @video.increment!(:views_count)
   end
 
@@ -41,7 +45,11 @@ class Tv::VideosController < Tv::BaseController
   # channel, comments and notes off the record -- unpreloaded that raises
   # everywhere violations are not downgraded to a log line (i.e. outside
   # development), so the video page was a 500 in production.
-  def set_video = (@video = find_by_slug_or_id(Tv::Video.includes(:channel, :user, comments: :user, video_notes: :user), params[:id]))
+  # `channel: :user` because the subscribe control reads
+  # `Current.user != @video.channel.user`, which is only reached when
+  # authenticated -- so the page rendered for guests and raised for every
+  # signed-in viewer, which is why a guest-only smoke test never saw it.
+  def set_video = (@video = find_by_slug_or_id(Tv::Video.includes(:user, comments: :user, video_notes: :user, channel: :user), params[:id]))
   # No :tv_channel_id -- the channel comes from the route and is ownership
   # checked. Permitting it let a submitted id override that check by
   # reassigning the foreign key on the built record.

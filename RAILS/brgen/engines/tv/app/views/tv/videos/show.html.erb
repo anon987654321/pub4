@@ -15,10 +15,16 @@
           data-action="click->share#share">Share</button>
 </div>
 
-<div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true" data-tv-player-auto-orientation-value="true" data-tv-player-orientation-value="landscape">
+<%# progress-url is only set for a signed-in viewer: view events belong to a
+    user, so there is no row for a guest to report against. %>
+<div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true" data-tv-player-auto-orientation-value="true" data-tv-player-orientation-value="landscape"
+     <% if @view_event %>data-tv-player-progress-url-value="<%= video_view_event_path(@video, @view_event) %>"<% end %>>
 <% if @video.video_file.attached? %>
   <div class="tv-media">
-    <%= video_tag main_app.url_for(@video.video_file), controls: true, class: "video-player #{tv_media_image_classes(@video.video_file)}" %>
+    <%# data-tv-player-target="video" was never declared on any page, so the
+        controller's play/pause binding — and with it the wake lock — had never
+        run. It is required for watch-time reporting, and fixes that too. %>
+    <%= video_tag main_app.url_for(@video.video_file), controls: true, class: "video-player #{tv_media_image_classes(@video.video_file)}", data: { tv_player_target: "video" } %>
   </div>
 <% elsif @video.thumbnail.attached? %>
   <div class="tv-media">

@@ -21,6 +21,8 @@ Tv::Engine.routes.draw do
   resources :videos, only: %i[show destroy] do
     resources :video_notes, only: :create
     resources :comments, only: :create
+    # The row is created by videos#show; the player PATCHes watch time onto it.
+    resources :view_events, only: :update
   end
 
   resources :live_streams, only: %i[index show update destroy] do
