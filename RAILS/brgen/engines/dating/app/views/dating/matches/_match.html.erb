@@ -1,11 +1,14 @@
 <% other = match.other_user(Current.user) %>
 <% match_actions = capture do %>
   <%= button_to t("actions.message"), main_app.user_conversations_path(other), method: :post, class: "feed-action feed-action--primary" %>
+  <%= button_to t("dating.unmatch"), match_path(match), method: :delete, class: "feed-action" %>
 <% end %>
-<%= render "shared/feed_card",
-  avatar_url: (other.dating_profile&.photos&.attached? ? main_app.url_for(other.dating_profile.photos.first) : nil),
-  name: other&.display_name || "anon",
-  url: main_app.user_path(other),
-  content: capture { %(<p class="feed-card-meta">Matched on #{match.created_at.to_date}</p>).html_safe },
-  actions: match_actions,
-  class: "match" %>
+<%= tag.div id: dom_id(match) do %>
+  <%= render "shared/feed_card",
+    avatar_url: (other.dating_profile&.photos&.attached? ? main_app.url_for(other.dating_profile.photos.first) : nil),
+    name: other&.display_name || t("chat.anon", default: "anon"),
+    url: main_app.user_path(other),
+    content: capture { %(<p class="feed-card-meta">#{t("dating.matched_on", date: l(match.created_at.to_date))}</p>).html_safe },
+    actions: match_actions,
+    class: "match" %>
+<% end %>

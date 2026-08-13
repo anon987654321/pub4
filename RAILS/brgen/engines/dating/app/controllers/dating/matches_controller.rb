@@ -13,4 +13,16 @@ class Dating::MatchesController < Dating::BaseController
         )
     )
   end
+
+  def destroy
+    @match = Dating::Match.active
+      .where("initiator_id = ? OR receiver_id = ?", Current.user.id, Current.user.id)
+      .find(params[:id])
+    @match.unmatch!
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to matches_path }
+    end
+  end
 end

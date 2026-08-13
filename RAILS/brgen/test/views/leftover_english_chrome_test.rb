@@ -20,6 +20,20 @@ class LeftoverEnglishChromeTest < ActiveSupport::TestCase
     source = read("engines/takeaway/app/views/takeaway/orders/show.html.erb")
     refute_includes source, "status.humanize"
     assert_includes source, 't("takeaway.statuses.'
+    assert_includes source, "again_order_path"
+    refute_includes source, "link_to t(\"actions.reorder\")"
+  end
+
+  test "dating matches chrome uses locale keys" do
+    index = read("engines/dating/app/views/dating/matches/index.html.erb")
+    card = read("engines/dating/app/views/dating/matches/_match.html.erb")
+    assert_includes index, 't("dating.matches")'
+    assert_includes index, 't("dating.discover")'
+    refute_includes index, ">Matcher<"
+    refute_includes index, '"Oppdag"'
+    assert_includes card, 't("dating.unmatch")'
+    assert_includes card, 't("dating.matched_on"'
+    refute_includes card, "Matched on"
   end
 
   test "playlist set card uses privacy and tracks keys" do

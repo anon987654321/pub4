@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_240000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1133,6 +1133,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_220000) do
   end
 
   create_table "reposts", force: :cascade do |t|
+    t.text "comment"
     t.datetime "created_at", null: false
     t.integer "post_id", null: false
     t.datetime "updated_at", null: false

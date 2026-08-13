@@ -14,9 +14,18 @@ class RepostsController < ApplicationController
 
   def create
     post = find_by_slug_or_id(Post.kept, params[:post_id])
+    comment = params[:comment].to_s.strip.presence
     repost = Current.user.reposts.find_by(post_id: post.id)
 
-    if repost
+    if comment
+      # A comment turns a missing row into a quote, or a boost into a quote.
+      # A second boost press (no comment) still destroys, including a quote.
+      if repost
+        repost.update!(comment: comment)
+      else
+        Current.user.reposts.create!(post: post, comment: comment)
+      end
+    elsif repost
       repost.destroy
     else
       Current.user.reposts.create!(post: post)
@@ -24,6 +33,7 @@ class RepostsController < ApplicationController
 
     # The memo was populated before this request changed the answer.
     Current.reposted_post_ids = nil
+    Current.repost_quote_comments = nil
     @post = post.reload
     respond_to do |format|
       format.turbo_stream

@@ -1,9 +1,9 @@
 <% content_for :title, t("dating.matches") %>
 
-<div class="page-header" role="banner" aria-label="Dating matches header">
-  <h1>Matcher</h1>
-  <nav role="navigation" aria-label="Matches nav">
-    <%= link_to "Oppdag", root_path, class: "btn btn-ghost btn-sm" %>
+<div class="page-header" role="banner" aria-label="<%= t("dating.matches") %>">
+  <h1><%= t("dating.matches") %></h1>
+  <nav role="navigation" aria-label="<%= t("dating.matches") %>">
+    <%= link_to t("dating.discover"), root_path, class: "btn btn-ghost btn-sm" %>
   </nav>
 </div>
 
@@ -12,9 +12,9 @@
   <%= render "shared/empty_state",
         title: t("dating.no_matches"),
         body: t("dating.no_matches_body"),
-        action: { label: "Oppdag", path: root_path } %>
+        action: { label: t("dating.discover"), path: root_path } %>
 <% else %>
-  <section id="dating-matches-list" class="match-list" role="list" aria-label="Matcher">
+  <section id="dating-matches-list" class="match-list" role="list" aria-label="<%= t("dating.matches") %>">
     <% @matches.each do |match| %>
       <%= render "dating/matches/match", match: %>
     <% end %>

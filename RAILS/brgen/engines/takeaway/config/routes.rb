@@ -11,5 +11,7 @@ Takeaway::Engine.routes.draw do
       resources :reviews, only: %i[create]
     end
     resources :delivery_drivers, only: %i[index show update]
-    resources :orders, only: %i[index show update]
+    resources :orders, only: %i[index show update] do
+      post :again, on: :member
+    end
 end

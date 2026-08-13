@@ -74,6 +74,34 @@ class Dating::MatchTest < ActiveSupport::TestCase
     end
   end
 
+  test "unmatch ends the match and clears the likes so they can like again" do
+    ActsAsTenant.with_tenant(@city) do
+      Dating::Like.create!(liker: @initiator, likee: @receiver)
+      Dating::Like.create!(liker: @receiver, likee: @initiator)
+      match = Dating::Match.between(@initiator, @receiver)
+      assert_equal "matched", match.status
+
+      assert match.unmatch!
+      assert_equal "unmatched", match.reload.status
+      assert_not_includes Dating::Match.active, match
+      assert_equal 0, Dating::Like.where(liker: [ @initiator, @receiver ]).count
+
+      Dating::Like.create!(liker: @initiator, likee: @receiver)
+      Dating::Like.create!(liker: @receiver, likee: @initiator)
+      assert_equal "matched", match.reload.status
+    end
+  end
+
+  test "unmatch on a freshly-found match does not violate strict loading" do
+    ActsAsTenant.with_tenant(@city) do
+      id = Dating::Match.create!(initiator: @initiator, receiver: @receiver, status: "matched").id
+      found = Dating::Match.find(id)
+
+      assert found.unmatch!
+      assert_equal "unmatched", found.reload.status
+    end
+  end
+
   test "a pending match announces nothing" do
     ActsAsTenant.with_tenant(@city) do
       assert_no_difference "Notification.count" do

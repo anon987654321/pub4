@@ -50,6 +50,8 @@ before_action :require_real_user, only: %i[edit update destroy share]
             end
     @comments    = roots.includes(:user, :votes, replies: [ :user, :votes ])
     @new_comment = Comment.new
+    @quotes      = @post.reposts.quoted.includes(:user).order(created_at: :desc)
+    @quote_comment = @post.quote_comment_by(Current.user)
   end
 
   def new

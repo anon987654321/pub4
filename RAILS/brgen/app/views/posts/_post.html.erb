@@ -12,7 +12,8 @@
       be in the key or one viewer's repost state renders for everyone. Computed
       once here and passed down rather than called three times per card. %>
   <% reposted = post.reposted_by?(Current.user) %>
-  <% cache [post, post.voted_by?(Current.user), reposted] do %>
+  <% quote = post.quote_comment_by(Current.user) %>
+  <% cache [post, post.voted_by?(Current.user), reposted, quote] do %>
     <% post_actions = capture do %>
       <button type="button" class="feed-action"
               aria-label="<%= t("post.comment_aria", count: post.comment_count, default: "Comment, %{count} comments") %>"
@@ -66,6 +67,12 @@
           <button type="button" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>"
                   data-action="click->clipboard#copy"><%= t("post.copy_link", default: "Copy link") %></button>
           <%= link_to t("post.view", default: "View post"), post_path(post) %>
+          <%= form_with url: post_repost_path(post), method: :post, class: "feed-quote-form" do %>
+            <%= text_area_tag :comment, quote, maxlength: Repost::COMMENT_MAX, required: true,
+                  rows: 2, placeholder: t("post.quote_placeholder"),
+                  aria: { label: t("post.quote") } %>
+            <%= submit_tag t("post.quote") %>
+          <% end %>
         </div>
       </div>
       <button type="button" class="feed-action"

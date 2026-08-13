@@ -88,6 +88,38 @@ class RepostTest < ActiveSupport::TestCase
     end
   end
 
+  test "a quote is a repost with a comment, not a new post" do
+    post = post_by(@author, title: "Sitat #{SecureRandom.hex(3)}")
+
+    assert_no_difference -> { Post.count } do
+      assert_difference -> { Repost.count }, 1 do
+        Repost.create!(user: @booster, post: post, comment: "Dette er viktig")
+      end
+    end
+
+    quote = post.reposts.find_by!(user: @booster)
+    assert quote.quoted?
+    assert_equal "Dette er viktig", quote.comment
+    assert_includes Repost.quoted, quote
+  end
+
+  test "a quote longer than 280 characters is rejected" do
+    post = post_by(@author, title: "For langt #{SecureRandom.hex(3)}")
+    quote = Repost.new(user: @booster, post: post, comment: "x" * 281)
+
+    refute quote.valid?
+    assert_includes quote.errors[:comment], I18n.t("errors.messages.too_long", count: Repost::COMMENT_MAX)
+  end
+
+  test "quoting notifies the author with the comment" do
+    post = post_by(@author, title: "Sitert #{SecureRandom.hex(3)}")
+
+    assert_difference -> { @author.notifications.count }, 1 do
+      Repost.create!(user: @booster, post: post, comment: "Enig")
+    end
+    assert_equal "Enig", @author.notifications.last.body
+  end
+
   test "destroying a post takes its reposts with it" do
     post = post_by(@author, title: "Slettes #{SecureRandom.hex(3)}")
     Repost.create!(user: @booster, post: post)

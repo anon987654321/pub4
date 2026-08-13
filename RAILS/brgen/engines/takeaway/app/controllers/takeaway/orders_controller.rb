@@ -55,6 +55,33 @@ def create
     redirect_to order_path(@order)
   end
 
+  # Copies available items and the same address onto a new pending order.
+  # Unavailable items are skipped; if none remain, send the diner to the
+  # menu rather than placing an empty ticket.
+  def again
+    source = Current.user.takeaway_orders.includes(:restaurant, order_items: { menu_item: :restaurant }).find(params[:id])
+    restaurant = source.restaurant
+    unless restaurant.accepting_orders?
+      redirect_to restaurant_path(restaurant), alert: t("flash.takeaway.closed_now")
+      return
+    end
+
+    @order = source.build_reorder
+    if @order.order_items.empty?
+      redirect_to restaurant_path(restaurant), alert: t("flash.takeaway.reorder_empty")
+      return
+    end
+
+    saved = ActiveRecord::Base.transaction do
+      @order.save ? @order.calculate_totals! && true : false
+    end
+    if saved
+      redirect_to order_path(@order), notice: t("flash.takeaway.order_placed")
+    else
+      redirect_to restaurant_path(restaurant), alert: @order.errors.full_messages.to_sentence
+    end
+  end
+
   private
   def set_restaurant = (@restaurant = find_by_slug_or_id(Takeaway::Restaurant, params[:restaurant_id]))
   # tip_cents and scheduled_for are the customer's, so they are permitted;

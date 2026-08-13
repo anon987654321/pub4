@@ -55,6 +55,34 @@ class RepostsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "POST with a comment creates a quote, and a second POST without one removes it" do
+    sign_in_as(@booster)
+
+    assert_difference -> { Repost.count }, 1 do
+      post post_repost_path(@post), params: { comment: "Les dette" }
+    end
+    quote = Repost.find_by!(user: @booster, post: @post)
+    assert_equal "Les dette", quote.comment
+
+    post post_repost_path(@post), params: { comment: "Endret" }
+    assert_equal "Endret", quote.reload.comment
+    assert_equal 1, @post.reload.reposts_count
+
+    assert_difference -> { Repost.count }, -1 do
+      post post_repost_path(@post)
+    end
+  end
+
+  test "a comment on an existing boost turns it into a quote" do
+    sign_in_as(@booster)
+    post post_repost_path(@post)
+
+    assert_no_difference -> { Repost.count } do
+      post post_repost_path(@post), params: { comment: "Etterpå" }
+    end
+    assert_equal "Etterpå", Repost.find_by!(user: @booster, post: @post).comment
+  end
+
   test "a removed post cannot be reposted" do
     sign_in_as(@booster)
     @post.update!(removed_at: Time.current)

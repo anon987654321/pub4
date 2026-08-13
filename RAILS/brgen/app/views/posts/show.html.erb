@@ -67,6 +67,28 @@
     <div class="post_body"><%= sanitize @post.content, tags: %w[p br strong em b i ul ol li], attributes: [] %></div>
   <% end %>
 
+  <section id="quotes" class="post-quotes">
+    <h2><%= t("post.quotes") %></h2>
+    <%= form_with url: post_repost_path(@post), method: :post, class: "feed-quote-form" do %>
+      <%= text_area_tag :comment, @quote_comment, maxlength: Repost::COMMENT_MAX, required: true,
+            rows: 3, placeholder: t("post.quote_placeholder"),
+            aria: { label: t("post.quote") } %>
+      <%= submit_tag t("post.quote"), class: "btn btn-sm" %>
+    <% end %>
+    <% if @quotes.any? %>
+      <ul>
+        <% @quotes.each do |repost| %>
+          <li>
+            <blockquote>
+              <p><%= repost.comment %></p>
+              <cite><%= repost.user.display_name %></cite>
+            </blockquote>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+
   <div class="feed-post-actions">
     <button type="button" class="feed-action" data-controller="share"
             data-share-title-value="<%= @post.title %>"

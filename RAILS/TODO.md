@@ -65,11 +65,20 @@ timeline inclusion, author notification, cascade) and
 `brgen/test/controllers/reposts_controller_test.rb` (POST toggle, guest
 behaviour, removed posts, cache-key leakage, and voting by slug).
 
-**Still open:** quote-post — a repost carrying a comment — which x.com and
-Mastodon both lean on. Also `shared/app/views/shared/_action_bar.html.erb` is
-wired the same way but **no view in any of the three apps renders that
-partial**; it is contract-pinned by `RAILS/test/design_contract_test.rb` and
-otherwise dead. Deleting it is a call for whoever added it.
+**Quote-post is built.** A `reposts.comment` column (max 280) turns the same
+row into a quote; empty comment stays a boost; a second boost press still
+destroys. The write surface is a form in the more-actions dropdown (no extra
+Stimulus — FrontPageWeightTest still holds) and on the post page, which lists
+quotes. It is not a `Post`, for the same Sluggable reason as a boost.
+
+**Check:** `brgen/test/models/repost_test.rb` (quote is not a Post, length,
+notification body) and `brgen/test/controllers/reposts_controller_test.rb`
+(comment creates, updates a boost, second POST without comment destroys).
+
+**Still open:** `shared/app/views/shared/_action_bar.html.erb` is wired the same
+way but **no view in any of the three apps renders that partial**; it is
+contract-pinned by `RAILS/test/design_contract_test.rb` and otherwise dead.
+Deleting it is a call for whoever added it.
 
 ### 1.2 `Tv::ViewEvent` recorded that a page opened, not that anything was watched — **done**
 
@@ -450,8 +459,17 @@ said yes are a different decision from people who have not seen you.
 **Check:** `brgen/test/models/dating_ranking_test.rb` (8) and
 `brgen/test/controllers/dating_likes_test.rb` (5).
 
+**Unmatch is built.** `Dating::Match#unmatch!` writes `unmatched`, drops the
+mutual likes so the pair can like again, and rematch flips the same row back
+to `matched` rather than inserting a second pair. The matches list is still
+`active` (matched only); destroy is scoped to a participant.
+
+**Check:** `engines/dating/test/models/dating/match_test.rb` (likes cleared,
+rematch, strict loading) and `brgen/test/controllers/dating_unmatch_test.rb`
+(participant can, stranger 404s).
+
 **Still open:** super-like and boost (both purchases — `apps.horizon.yml` has
-them as `agent: ignore`), rewind, unmatch, photo verification, daily picks.
+them as `agent: ignore`), rewind, photo verification, daily picks.
 
 ### Takeaway (DoorDash / Foodora) — **hours, tips, scheduling done**
 
@@ -473,9 +491,19 @@ reading only today's row says a place open until 02:00 is shut at 00:30.
 
 **Check:** `brgen/test/models/takeaway_hours_test.rb` (8).
 
+**Order-again is built.** `orders#again` copies available items at current
+prices onto a new pending ticket with the same address. Items that left the
+menu are skipped; if none remain, the diner is sent to the restaurant rather
+than placing an empty order. Tip and scheduled_for stay off — those are
+per-ticket. The show-page "reorder" control is a POST, not a link at the
+menu.
+
+**Check:** `engines/takeaway/test/models/takeaway/order_test.rb` (`build_reorder`)
+and `brgen/test/controllers/takeaway_order_again_test.rb` (copy, skip-empty).
+
 **Still open:** the live courier map (the driver has coordinates and the maps
-engine exists; nothing draws them yet), group orders, order-again, and web push
-on each `transition_to!` — the transition sends an in-app notification and
+engine exists; nothing draws them yet), group orders, and web push on each
+`transition_to!` — the transition sends an in-app notification and
 `PushSubscription` is still not on that path.
 
 ### Messenger — **reply, edit and unsend done**

@@ -13,5 +13,5 @@ Dating::Engine.routes.draw do
   # different page rather than folded into it.
   resources :likes, only: %i[create index]
   resources :dislikes, only: :create
-  resources :matches, only: :index
+  resources :matches, only: %i[index destroy]
 end

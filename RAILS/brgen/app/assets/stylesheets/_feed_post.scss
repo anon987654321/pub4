@@ -171,6 +171,22 @@
 }
 .feed-action-menu-list a:hover,
 .feed-action-menu-list button:hover { background: var(--hover); }
+.feed-quote-form {
+  display: grid;
+  gap: var(--space-1);
+}
+.feed-quote-form textarea {
+  width: 100%;
+  min-height: calc(var(--tap-min) * 2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+  resize: vertical;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

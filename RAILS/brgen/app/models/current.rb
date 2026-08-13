@@ -15,4 +15,8 @@ class Current < ActiveSupport::CurrentAttributes
   # asks "did I repost this?" — as an exists? per card that is the N+1
   # QueryBudgetTest exists to catch. See Repost.reposted_post_ids_for.
   attribute :reposted_post_ids
+  # Quote text is user-specific output inside the cached card (the dropdown
+  # form prefills it). Same memo shape as the id set, so the feed does not
+  # add a second query per card for it.
+  attribute :repost_quote_comments
 end

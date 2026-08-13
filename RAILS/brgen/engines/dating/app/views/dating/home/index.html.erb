@@ -43,17 +43,17 @@
   </section>
 
   <section class="dating-discover-panel" data-dating-intro-target="discover" hidden aria-hidden="true">
-    <div class="page-header" role="banner" aria-label="Dating discover header">
+    <div class="page-header" role="banner" aria-label="<%= t("dating.discover") %>">
       <div>
-        <p class="dim">Lokalt</p>
-        <h1>Oppdag</h1>
+        <p class="dim"><%= t("dating.local") %></p>
+        <h1><%= t("dating.discover") %></h1>
       </div>
-      <nav role="navigation" aria-label="Dating navigation">
-        <%= link_to "Matcher", matches_path, class: "btn btn-ghost" %>
+      <nav role="navigation" aria-label="<%= t("dating.home_title") %>">
+        <%= link_to t("dating.matches"), matches_path, class: "btn btn-ghost" %>
         <% if Current.user&.dating_profile.present? %>
-          <%= link_to "Profil", edit_profile_path, class: "btn btn-ghost" %>
+          <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost" %>
         <% elsif Current.user.present? %>
-          <%= link_to "Lag profil", new_profile_path, class: "btn btn-ghost" %>
+          <%= link_to t("dating.create_profile"), new_profile_path, class: "btn btn-ghost" %>
         <% end %>
       </nav>
     </div>

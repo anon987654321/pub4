@@ -162,6 +162,31 @@ class Takeaway::Order < ApplicationRecord
   end
 
   def next_status = TRANSITIONS.fetch(status, []).first
+  # A new pending order with the same address and whatever is still on the
+  # menu. Tip and scheduled_for stay off — those are per-ticket decisions.
+  def build_reorder
+    kitchen = strict_safe(:restaurant)
+    copy = kitchen.orders.build(
+      user: strict_safe(:user),
+      delivery_address: delivery_address,
+      special_instructions: special_instructions
+    )
+    order_items.each do |oi|
+      item = oi.association(:menu_item).loaded? ? oi.menu_item : oi.strict_safe(:menu_item)
+      # available_for_order? reads item.restaurant. Point the inverse at the
+      # kitchen we already have so the create validation does not lazy-load.
+      next unless item&.available? && kitchen.active?
+
+      item.association(:restaurant).target = kitchen unless item.association(:restaurant).loaded?
+      copy.order_items.build(
+        menu_item: item,
+        quantity: oi.quantity,
+        unit_price_cents: item.price_cents
+      )
+    end
+    copy
+  end
+
   def cancel! = transition_to!("cancelled")
   def confirm! = transition_to!("confirmed")
   def prepare! = transition_to!("preparing")

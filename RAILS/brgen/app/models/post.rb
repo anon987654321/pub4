@@ -74,6 +74,7 @@ class Post < ApplicationRecord
   def live? = latitude.present? && longitude.present?
 
   def reposted_by?(user) = Repost.reposted_post_ids_for(user).include?(id)
+  def quote_comment_by(user) = Repost.quote_comments_for(user)[id]
 
   def stamp_live_location!(lat:, lng:)
     self.latitude  = lat.to_f.round(LIVE_LOCATION_PRECISION)

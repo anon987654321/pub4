@@ -34,8 +34,12 @@ class Dating::Like < ApplicationRecord
 
   def check_mutual_match
     return unless Dating::Like.exists?(liker_id: likee_id, likee_id: liker_id)
-    Dating::Match.find_or_create_by!(initiator_id: liker_id, receiver_id: likee_id) do |m|
-      m.status = "matched"
+
+    match = Dating::Match.between(liker_id, likee_id)
+    if match
+      match.update!(status: "matched") unless match.status == "matched"
+    else
+      Dating::Match.create!(initiator_id: liker_id, receiver_id: likee_id, status: "matched")
     end
   end
 end

@@ -147,6 +147,34 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
     end
   end
 
+  test "build_reorder copies available items at current prices and skips the rest" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = Takeaway::Restaurant.create!(
+        user: @owner, name: "Reorder Kitchen", address: "Marken 30",
+        cuisine_type: "Norwegian", city: @city, active: true, delivery_fee_cents: 4_000
+      )
+      soup = Takeaway::MenuItem.create!(restaurant: restaurant, name: "Suppe", price_cents: 10_000, available: true)
+      gone = Takeaway::MenuItem.create!(restaurant: restaurant, name: "Borte", price_cents: 5_000, available: true)
+      source = restaurant.orders.build(user: @buyer, delivery_address: "Torget 9", special_instructions: "Ekstra")
+      source.order_items.build(menu_item: soup, quantity: 2, unit_price_cents: 9_000)
+      source.order_items.build(menu_item: gone, quantity: 1, unit_price_cents: 5_000)
+      source.save!
+      gone.update!(available: false)
+      soup.update!(price_cents: 11_000)
+
+      copy = Takeaway::Order.includes(:restaurant, order_items: :menu_item).find(source.id).build_reorder
+
+      assert_equal @buyer.id, copy.user_id
+      assert_equal "Torget 9", copy.delivery_address
+      assert_equal "Ekstra", copy.special_instructions
+      assert_equal 1, copy.order_items.size
+      built = copy.order_items.first
+      assert_equal soup.id, built.menu_item_id
+      assert_equal 2, built.quantity
+      assert_equal 11_000, built.unit_price_cents
+    end
+  end
+
   test "no minimum set imposes no floor" do
     ActsAsTenant.with_tenant(@city) do
       restaurant = Takeaway::Restaurant.create!(
