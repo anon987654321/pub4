@@ -228,15 +228,44 @@ story, no camera-first capture surface, and no streak.
 The Snap-Map equivalent is closest to shipping — `Place`, `PlaceCheckIn` and the
 geo rooms (`Conversation.find_or_create_geo_room`) are already built.
 
-### 2.4 `Community` is eight columns (Reddit)
+### 2.4 `Community` was eight columns (Reddit) — **done**
 
-`communities` carries `city_id, name, slug, subdomain, description, user_id` and
-timestamps. No moderators, rules, icon, banner, privacy level, or flair.
-`ModerationReport`/`ModerationFlag`/`TrustScore` are global, so there is no mod
-team per community, no per-community queue, and no crossposts.
+Roles on `community_memberships` (member / moderator / owner), plus rules,
+flair, privacy, icon, banner, `members_count` and an archive flag on
+`communities`. A community can now be run by its own members.
 
-A community that cannot be moderated by its own members is a category page, not
-a subreddit.
+- **Owner is a membership row, not just `communities.user_id`.** The creator
+  gets one on create, and the migration backfills every existing community —
+  otherwise each one predating today has an empty moderator list and nobody who
+  can appoint anyone.
+- **The last owner cannot be demoted.** Nothing else in the app creates an
+  owner, so that is not a state to recover from later.
+- **Only an owner appoints.** If a moderator could change roles, one could
+  demote the person who made the community, and there is nothing above them to
+  appeal to. Moderators may edit rules and flair; only an owner may delete.
+- **Reading and posting are separate questions.** Restricted is the interesting
+  case: the whole city reads it, only members post. Enforced in the controller,
+  because a hidden compose link is not a permission check.
+- **The queue is derived, not denormalised.** `ModerationReport` is polymorphic
+  and carries no `community_id`; `Community#moderation_queue` reaches it through
+  the community's posts and their comments, so there is no column to backfill
+  and keep true.
+- Flair is the label itself on `posts.flair`, not an id — flairs are edited as a
+  text list, so an id would dangle the moment a community renamed one.
+
+**Found while wiring it, and fixed:** `ModerationWorkflow#transition!` read the
+polymorphic `report.reportable` on a report loaded by `find`, raising under
+strict loading *after* the status had been written — **`Admin::Reports#update`
+has been on that path the whole time**, so resolving any report from the admin
+queue 500'd. And `communities#show` compared `Current.user != @community.user`,
+a lazy read that raised for every signed-in visitor while rendering fine for
+guests — the same shape as the tv video page.
+
+**Check:** `brgen/test/models/community_governance_test.rb` (9) and
+`brgen/test/controllers/community_moderation_test.rb` (9).
+
+**Still open:** crossposts, per-community bans (a report resolves against the
+global `TrustScore`, not this community), and a wiki.
 
 ### 2.5 No vertical video surface (TikTok)
 

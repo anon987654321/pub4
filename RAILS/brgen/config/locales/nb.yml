@@ -7,6 +7,21 @@
 # RAILS/test/nb_locale_completeness_test.rb fails if a t() call's whole
 # default chain is missing from this file again.
 nb:
+  errors:
+    messages:
+      last_owner: "kan ikke fjernes — fellesskapet ville stå uten eier"
+      before_start: "kan ikke være før start"
+    not_found_title: "Siden finnes ikke"
+    not_found_body: "Adressen matcher ingen side. Prøv hjem, Live eller markedsplassen."
+    unprocessable_title: "Kunne ikke behandle det"
+    unprocessable_body: "Noe i forespørselen var ugyldig. Gå tilbake og prøv igjen."
+    server_title: "Noe gikk galt"
+    server_body: "Vi traff en uventet feil. Prøv igjen om et øyeblikk."
+    go_home: "Hjem"
+    go_live: "Live"
+    go_marketplace: "Markedsplass"
+    go_search: "Søk"
+    retry: "Prøv igjen"
   time:
     formats:
       event: "%-d. %b kl. %H:%M"
@@ -508,18 +523,6 @@ nb:
     help: "j/k · ↓↑ nav · Enter åpne · / søk · n ny · esc nullstill · ? hjelp"
     coach: "Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for søk)."
     coach_dismiss: "Skjønner"
-  errors:
-    not_found_title: "Siden finnes ikke"
-    not_found_body: "Adressen matcher ingen side. Prøv hjem, Live eller markedsplassen."
-    unprocessable_title: "Kunne ikke behandle det"
-    unprocessable_body: "Noe i forespørselen var ugyldig. Gå tilbake og prøv igjen."
-    server_title: "Noe gikk galt"
-    server_body: "Vi traff en uventet feil. Prøv igjen om et øyeblikk."
-    go_home: "Hjem"
-    go_live: "Live"
-    go_marketplace: "Markedsplass"
-    go_search: "Søk"
-    retry: "Prøv igjen"
   sort:
     hot: "Hot"
     fresh: "Fersk"
@@ -998,6 +1001,11 @@ nb:
   # sentence are NOT here: they reuse shared.flash.*, which the engine owns for all
   # three apps.
   flash:
+    community:
+      not_a_member: "Denne personen er ikke medlem"
+      moderator_added: "Moderator lagt til"
+      moderator_removed: "Moderator fjernet"
+      members_only: "Bare for medlemmer"
     event_created: "Arrangement opprettet"
     event_updated: "Arrangement oppdatert"
     event_cancelled: "Arrangementet er avlyst"
@@ -1106,6 +1114,49 @@ nb:
   common:
     close: "Lukk"
   community:
+    rules: "Regler"
+    rules_hint: "Én regel per linje."
+    flairs: "Merkelapper"
+    flairs_hint: "Én merkelapp per linje. Brukes til å filtrere innlegg."
+    filter_by_flair: "Filtrer på merkelapp"
+    all_flair: "Alle"
+    privacy: "Synlighet"
+    privacy_hint: "Begrenset: alle leser, bare medlemmer poster. Privat: bare medlemmer."
+    privacy_options:
+      public: "Åpent"
+      restricted: "Begrenset"
+      private: "Privat"
+    icon: "Ikon"
+    banner: "Bannerbilde"
+    mod_queue: "Modkø"
+    moderators: "Moderatorer"
+    moderators_hint: "Bare eieren kan utnevne og fjerne moderatorer."
+    make_moderator: "Gjør til moderator"
+    remove_moderator: "Fjern som moderator"
+    owner_locked: "Eier"
+    moderator_appointed: "Du er moderator i %{community}"
+    moderator_appointed_body: "Du kan nå behandle rapporter og redigere regler."
+    members_only_posting: "Bare medlemmer kan poste her."
+    reported: "Rapportert"
+    reason: "Grunn"
+    status: "Status"
+    action: "Handling"
+    subject_gone: "Innholdet er borte"
+    mark_reviewing: "Under vurdering"
+    mark_resolved: "Løst"
+    mark_dismissed: "Avvist"
+    queue_empty: "Ingenting i køen"
+    queue_empty_body: "Rapporter fra dette fellesskapet dukker opp her."
+    open_count:
+      one: "%{count} åpen"
+      other: "%{count} åpne"
+    reviewing_count:
+      one: "%{count} under vurdering"
+      other: "%{count} under vurdering"
+    role:
+      member: "Medlem"
+      moderator: "Moderator"
+      owner: "Eier"
     join: "Bli med"
     leave: "Forlat"
   hashtag:

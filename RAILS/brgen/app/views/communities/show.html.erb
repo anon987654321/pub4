@@ -14,7 +14,10 @@
   <h1><%= @community.name %></h1>
   <% if @community.description.present? %><p><%= @community.description %></p><% end %>
   <p><strong><%= @community.posts.count %></strong> posts · <strong><%= @community.members_count %></strong> members</p>
-  <% if authenticated? && Current.user != @community.user %>
+  <%# user_id, not user: comparing the association is a lazy read on a
+      strict-loading record. Preloaded in the controller too, but the id
+      comparison is what makes this page independent of that. %>
+  <% if authenticated? && Current.user.id != @community.user_id %>
     <p class="cluster">
       <% if Current.user.member_of?(@community) %>
         <%= button_to t("community.leave", default: "Leave"), leave_community_path(@community), method: :delete, class: "btn btn-ghost btn-sm" %>
@@ -23,16 +26,46 @@
       <% end %>
     </p>
   <% end %>
-  <% if authenticated? && Current.user == @community.user %>
+  <%# Moderators maintain rules and flair; only an owner can delete the place. %>
+  <% if @moderator %>
     <p class="cluster">
       <%= link_to t("actions.edit"), edit_community_path(@community), class: "btn btn-ghost btn-sm" %>
-      <%= button_to t("actions.delete"), community_path(@community), method: :delete, data: { turbo_confirm: t("communities.confirm_delete") }, class: "btn btn-danger btn-sm" %>
+      <%= link_to t("community.mod_queue"), community_moderation_index_path(@community), class: "btn btn-ghost btn-sm" %>
+      <% if @community.owner?(Current.user) %>
+        <%= link_to t("community.moderators"), community_moderators_path(@community), class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("actions.delete"), community_path(@community), method: :delete, data: { turbo_confirm: t("communities.confirm_delete") }, class: "btn btn-danger btn-sm" %>
+      <% end %>
     </p>
   <% end %>
 </header>
 
-<% if Current.user.present? %>
+<% if @community.rule_list.any? %>
+  <section class="community-rules" role="region" aria-label="<%= t("community.rules") %>">
+    <h2><%= t("community.rules") %></h2>
+    <ol>
+      <% @community.rule_list.each do |rule| %><li><%= rule %></li><% end %>
+    </ol>
+  </section>
+<% end %>
+
+<% if @community.flair_options.any? %>
+  <nav class="chips" role="navigation" aria-label="<%= t("community.filter_by_flair") %>">
+    <%= link_to t("community.all_flair"), community_path(@community),
+          class: "chip#{" active" if @flair.blank?}" %>
+    <% @community.flair_options.each do |flair| %>
+      <%= link_to flair, community_path(@community, flair: flair),
+            class: "chip#{" active" if @flair == flair}" %>
+    <% end %>
+  </nav>
+<% end %>
+
+<%# postable_by? rather than "signed in": a restricted community lets the whole
+    city read and only members post, and offering a compose link that will be
+    refused on submit is worse than not offering it. %>
+<% if @community.postable_by?(Current.user) %>
   <p><%= link_to "+ New post in #{@community.name}", new_community_post_path(@community) %></p>
+<% elsif Current.user.present? && @community.privacy != "public" %>
+  <p class="dim"><%= t("community.members_only_posting") %></p>
 <% end %>
 
 <% if @posts.any? %>

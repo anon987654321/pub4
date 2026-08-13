@@ -1,0 +1,32 @@
+<% content_for :title, t("community.moderators") %>
+
+<div class="page-header" role="banner">
+  <div>
+    <p class="dim"><%= link_to @community.name, community_path(@community) %></p>
+    <h1><%= t("community.moderators") %></h1>
+  </div>
+</div>
+
+<p class="dim"><%= t("community.moderators_hint") %></p>
+
+<ul class="member-list">
+  <% @memberships.each do |membership| %>
+    <li class="cluster">
+      <span><%= membership.user.display_name %></span>
+      <span class="chip"><%= t("community.role.#{membership.role}") %></span>
+      <% if membership.role == "member" %>
+        <%= button_to t("community.make_moderator"),
+              community_moderators_path(@community, user_id: membership.user_id),
+              method: :post, class: "btn btn-ghost btn-sm" %>
+      <% elsif membership.role == "moderator" %>
+        <%= button_to t("community.remove_moderator"),
+              community_moderator_path(@community, membership),
+              method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%# The last owner cannot be demoted: there would be nobody left who can
+            appoint anyone, and nothing else in the app creates an owner. %>
+        <span class="dim"><%= t("community.owner_locked") %></span>
+      <% end %>
+    </li>
+  <% end %>
+</ul>

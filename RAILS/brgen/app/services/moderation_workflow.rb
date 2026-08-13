@@ -38,12 +38,30 @@ class ModerationWorkflow
     report
   end
 
-  private
+private
+
+# report.reportable is a lazy polymorphic read, and ApplicationRecord is
+# strict_loading by default. report! creates the report with its subject in
+# memory so that path was fine; transition! takes a report a controller
+# loaded by id, which has nothing preloaded — so resolving a report raised
+# after update! had already written the new status. Admin::Reports#update
+# has been on that path the whole time.
+#
+# strict_safe does not apply: it needs reflection.klass, which a polymorphic
+# belongs_to has no single answer for.
+def subject_for(report)
+  return report.reportable if report.association(:reportable).loaded?
+
+  klass = report.reportable_type.to_s.safe_constantize
+  klass.respond_to?(:strict_loading) ? klass.strict_loading(false).find_by(id: report.reportable_id) : nil
+end
+
 
   def flag_for(report, status:)
-    user = accountable_user(report.reportable) || report.user
+    subject = subject_for(report)
+    user = accountable_user(subject) || report.user
     flag = ModerationFlag.where(
-      flaggable: report.reportable,
+      flaggable: subject,
       user: user,
       kind: report.reason
     ).where(status: %w[open reviewing]).first_or_initialize
@@ -53,8 +71,9 @@ class ModerationWorkflow
   end
 
   def close_flags(report, status:)
-    user = accountable_user(report.reportable) || report.user
-    ModerationFlag.where(flaggable: report.reportable, user: user, kind: report.reason)
+    subject = subject_for(report)
+    user = accountable_user(subject) || report.user
+    ModerationFlag.where(flaggable: subject, user: user, kind: report.reason)
       .where(status: %w[open reviewing])
       .update_all(status: status, updated_at: Time.current)
   end
@@ -63,14 +82,14 @@ class ModerationWorkflow
   # legacy record with a since-tightened validation can't block the takedown, and
   # it bumps updated_at too so the [post,…] fragment cache re-renders without it.
   def remove_content(report)
-    content = report.reportable
+    content = subject_for(report)
     return unless content.respond_to?(:removed_at) && content.removed_at.nil?
 
     content.update_columns(removed_at: Time.current, updated_at: Time.current)
   end
 
   def penalize_owner(report)
-    user = accountable_user(report.reportable)
+    user = accountable_user(subject_for(report))
     return unless user
 
     user.trust_signals.find_or_create_by!(

@@ -81,6 +81,11 @@ Rails.application.routes.draw do
   end
 
   resources :communities do
+    # A community's own moderators work this queue. Admin::Reports is every
+    # report in the app behind a single BRGEN_ADMIN_EMAIL check; this is the
+    # per-community one, derived from the posts that belong here.
+    resources :moderation, only: %i[index update], controller: "communities/moderation"
+    resources :moderators, only: %i[index create destroy], controller: "communities/moderators"
     resources :posts, shallow: true do
       resources :comments, shallow: true, only: %i[create destroy] do
         resources :comments, shallow: true, only: %i[create destroy], as: :replies

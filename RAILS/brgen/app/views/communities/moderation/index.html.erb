@@ -1,0 +1,56 @@
+<% content_for :title, t("community.mod_queue") %>
+
+<div class="page-header" role="banner">
+  <div>
+    <p class="dim"><%= link_to @community.name, community_path(@community) %></p>
+    <h1><%= t("community.mod_queue") %></h1>
+  </div>
+  <p class="chips">
+    <span class="chip"><%= t("community.open_count", count: @open_count) %></span>
+    <span class="chip"><%= t("community.reviewing_count", count: @reviewing_count) %></span>
+  </p>
+</div>
+
+<% if @reports.any? %>
+  <table class="mod-queue">
+    <thead>
+      <tr>
+        <th scope="col"><%= t("community.reported") %></th>
+        <th scope="col"><%= t("community.reason") %></th>
+        <th scope="col"><%= t("community.status") %></th>
+        <th scope="col"><%= t("community.action") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @reports.each do |report| %>
+        <tr>
+          <td>
+            <%# The report is polymorphic; a removed subject leaves the row
+                readable rather than raising on a nil. %>
+            <% if report.reportable.is_a?(Post) %>
+              <%= link_to report.reportable.title, post_path(report.reportable) %>
+            <% elsif report.reportable.present? %>
+              <%= truncate(report.reportable.try(:content).to_s, length: 80) %>
+            <% else %>
+              <span class="dim"><%= t("community.subject_gone") %></span>
+            <% end %>
+          </td>
+          <td><%= report.reason %></td>
+          <td><%= report.status %></td>
+          <td class="cluster">
+            <% %w[reviewing resolved dismissed].each do |status| %>
+              <% next if report.status == status %>
+              <%= button_to t("community.mark_#{status}"),
+                    community_moderation_path(@community, report, status: status),
+                    method: :patch, class: "btn btn-ghost btn-sm" %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("community.queue_empty"),
+        body: t("community.queue_empty_body") %>
+<% end %>

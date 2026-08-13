@@ -22,6 +22,7 @@ before_action :require_real_user, only: %i[edit update destroy share]
   before_action :set_post,          only: [ :show, :edit, :update, :destroy ]
   before_action :authorize_owner,   only: [ :edit, :update, :destroy ]
   before_action :set_community,     only: [ :new, :create ]
+  before_action :enforce_community_posting_rules, only: :create
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
@@ -145,7 +146,18 @@ before_action :require_real_user, only: %i[edit update destroy share]
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :video, :audio, :preset)
+    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :video, :audio, :preset, :flair)
+  end
+
+  # A restricted community lets the whole city read it and only members post;
+  # a private one lets neither. Enforced here rather than only in the view,
+  # because a hidden form is not a permission check.
+  def enforce_community_posting_rules
+    target = @community || Community.find_by(id: post_params[:community_id])
+    return if target.blank? || target.postable_by?(Current.user)
+
+    redirect_to(target.readable_by?(Current.user) ? community_path(target) : communities_path,
+                alert: t("flash.community.members_only"))
   end
 
   def share_title

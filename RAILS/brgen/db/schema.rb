@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_150000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -215,10 +215,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_140000) do
   end
 
   create_table "communities", force: :cascade do |t|
+    t.datetime "archived_at"
     t.integer "city_id"
     t.datetime "created_at", null: false
     t.text "description"
+    t.text "flairs"
+    t.integer "members_count", default: 0, null: false
     t.string "name", null: false
+    t.string "privacy", default: "public", null: false
+    t.text "rules"
     t.string "slug"
     t.string "subdomain"
     t.datetime "updated_at", null: false
@@ -232,8 +237,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_140000) do
   create_table "community_memberships", force: :cascade do |t|
     t.integer "community_id", null: false
     t.datetime "created_at", null: false
+    t.string "role", default: "member", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["community_id", "role"], name: "index_community_memberships_on_community_id_and_role"
     t.index ["community_id"], name: "index_community_memberships_on_community_id"
     t.index ["user_id", "community_id"], name: "index_community_memberships_on_user_id_and_community_id", unique: true
     t.index ["user_id"], name: "index_community_memberships_on_user_id"
@@ -976,6 +983,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_140000) do
     t.integer "community_id"
     t.text "content"
     t.datetime "created_at", null: false
+    t.string "flair"
     t.integer "karma"
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
@@ -987,6 +995,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_140000) do
     t.integer "user_id", null: false
     t.index ["city_id", "slug"], name: "index_posts_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_posts_on_city_id"
+    t.index ["community_id", "flair"], name: "index_posts_on_community_id_and_flair"
     t.index ["community_id"], name: "index_posts_on_community_id"
     t.index ["latitude", "longitude"], name: "index_posts_on_latitude_and_longitude"
     t.index ["removed_at"], name: "index_posts_on_removed_at"

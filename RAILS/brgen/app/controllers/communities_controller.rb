@@ -8,7 +8,8 @@ class CommunitiesController < ApplicationController
   before_action :authorize_owner, only: %i[edit update destroy]
 
   def index
-    scope = Community.popular.includes(:user)
+    # A private community is not listed to people who are not in it.
+    scope = Community.visible_to(Current.user).popular.includes(:user)
     scope = apply_live_search(scope, columns: %w[name description], vertical: "communities") if live_search_query.present?
     @pagy, @communities = pagy(scope)
     finish_live_search(partial: "communities/live_search_results")
@@ -24,9 +25,20 @@ class CommunitiesController < ApplicationController
   # Measured over 2,584 logged requests on 2026-08-01: 816 queries and a 3.5s
   # p50, with a 110s worst case — the slowest endpoint in the app by both.
   def show
+    # Reading and posting are separate questions, and this is the reading one.
+    # Restricted communities are readable by the whole city; private ones are
+    # not, and a hidden link is not a permission check.
+    unless @community.readable_by?(Current.user)
+      redirect_to communities_path, alert: t("flash.community.members_only")
+      return
+    end
+
     scope = @community.posts.hot.with_attached_image.includes(:user, :community, :votes)
+    scope = scope.where(flair: params[:flair]) if params[:flair].present?
+    @flair = params[:flair]
     @pagy, @posts = pagy(scope)
-    @other_communities = Community.popular.where.not(id: @community.id).limit(6)
+    @other_communities = Community.visible_to(Current.user).popular.where.not(id: @community.id).limit(6)
+    @moderator = @community.moderator?(Current.user) || @community.owner?(Current.user)
   end
 
   def new
@@ -37,6 +49,10 @@ class CommunitiesController < ApplicationController
     @community = Community.new(community_params)
     @community.user = Current.user
     if @community.save
+      # The creator is the owner, and owner is a membership row rather than only
+      # communities.user_id — otherwise the moderator list is empty on day one
+      # and there is nobody to appoint from.
+      @community.community_memberships.create!(user: Current.user, role: "owner")
       redirect_to @community, notice: t("flash.community_created")
     else
       render :new, status: :unprocessable_entity
@@ -61,20 +77,28 @@ class CommunitiesController < ApplicationController
 
   private
 
+  # `user` is preloaded because the header reads @community.user, and
+  # strict_loading_by_default raises on that lazily — the page rendered for
+  # guests and raised for every signed-in visitor, the same shape as the tv
+  # video page.
   def set_community
-    @community = Community.find(params[:id])
+    @community = Community.includes(:user).find(params[:id])
   end
 
   def authorize_owner
     # user_id, not user: @community comes from Community.find(params[:id]) with
     # nothing preloaded, and strict_loading_by_default raises on the association
     # read before the comparison happens. See comments_controller, same bug.
-    return if Current.user && Current.user.id == @community.user_id
+    #
+    # Moderators may edit — rules and flair are the things a mod team maintains
+    # — but only an owner may delete the place.
+    return if @community.owner?(Current.user)
+    return if action_name != "destroy" && @community.moderator?(Current.user)
 
     redirect_to @community, alert: t("shared.flash.not_authorized")
   end
 
   def community_params
-    params.require(:community).permit(:name, :description)
+    params.require(:community).permit(:name, :description, :rules, :privacy, :flairs, :icon, :banner)
   end
 end

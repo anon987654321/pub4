@@ -1,6 +1,21 @@
 # Mirrors nb.yml. A key present in one file and absent from the other is a
 # finding — see RAILS/test/nb_locale_completeness_test.rb.
 en:
+  errors:
+    messages:
+      last_owner: "cannot be removed — the community would have no owner"
+      before_start: "cannot be before the start"
+    not_found_title: "Page not found"
+    not_found_body: "That address does not match a page. Try home, Live, or the marketplace."
+    unprocessable_title: "Could not process that"
+    unprocessable_body: "Something in the request was invalid. Go back and try again."
+    server_title: "Something went wrong"
+    server_body: "We hit an unexpected error. Try again in a moment."
+    go_home: "Home"
+    go_live: "Live"
+    go_marketplace: "Marketplace"
+    go_search: "Search"
+    retry: "Try again"
   time:
     formats:
       event: "%b %-d at %H:%M"
@@ -502,18 +517,6 @@ en:
     help: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
     coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."
     coach_dismiss: "Got it"
-  errors:
-    not_found_title: "Page not found"
-    not_found_body: "That address does not match a page. Try home, Live, or the marketplace."
-    unprocessable_title: "Could not process that"
-    unprocessable_body: "Something in the request was invalid. Go back and try again."
-    server_title: "Something went wrong"
-    server_body: "We hit an unexpected error. Try again in a moment."
-    go_home: "Home"
-    go_live: "Live"
-    go_marketplace: "Marketplace"
-    go_search: "Search"
-    retry: "Try again"
   sort:
     hot: "Hot"
     fresh: "Fresh"
@@ -990,6 +993,11 @@ en:
   # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb
   # fails if either file gains a key the other lacks.
   flash:
+    community:
+      not_a_member: "That person is not a member"
+      moderator_added: "Moderator added"
+      moderator_removed: "Moderator removed"
+      members_only: "Members only"
     event_created: "Event created"
     event_updated: "Event updated"
     event_cancelled: "Event cancelled"
@@ -1098,6 +1106,49 @@ en:
   common:
     close: "Close"
   community:
+    rules: "Rules"
+    rules_hint: "One rule per line."
+    flairs: "Flair"
+    flairs_hint: "One label per line. Used to filter posts."
+    filter_by_flair: "Filter by flair"
+    all_flair: "All"
+    privacy: "Visibility"
+    privacy_hint: "Restricted: anyone reads, members post. Private: members only."
+    privacy_options:
+      public: "Public"
+      restricted: "Restricted"
+      private: "Private"
+    icon: "Icon"
+    banner: "Banner"
+    mod_queue: "Mod queue"
+    moderators: "Moderators"
+    moderators_hint: "Only the owner can appoint and remove moderators."
+    make_moderator: "Make moderator"
+    remove_moderator: "Remove as moderator"
+    owner_locked: "Owner"
+    moderator_appointed: "You are a moderator of %{community}"
+    moderator_appointed_body: "You can now work reports and edit the rules."
+    members_only_posting: "Only members can post here."
+    reported: "Reported"
+    reason: "Reason"
+    status: "Status"
+    action: "Action"
+    subject_gone: "The content is gone"
+    mark_reviewing: "Reviewing"
+    mark_resolved: "Resolve"
+    mark_dismissed: "Dismiss"
+    queue_empty: "Nothing in the queue"
+    queue_empty_body: "Reports from this community show up here."
+    open_count:
+      one: "%{count} open"
+      other: "%{count} open"
+    reviewing_count:
+      one: "%{count} reviewing"
+      other: "%{count} reviewing"
+    role:
+      member: "Member"
+      moderator: "Moderator"
+      owner: "Owner"
     join: "Join"
     leave: "Leave"
   hashtag:
