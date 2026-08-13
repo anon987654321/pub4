@@ -31,7 +31,29 @@ db_create_migrate_as_app() {
   log_ok "Database ready"
 }
 
-# rails_prepare_secondary_dbs_as_app APP_NAME APP_DIR — load cache/queue/cable schemas on copy-tree deploy.
+# rails_prepare_secondary_dbs_as_app APP_NAME APP_DIR — initialise cache/queue/cable
+# databases on copy-tree deploy, once.
+#
+# This used to run db:schema:load:<db> unconditionally on every deploy. Rails
+# schema files create their tables with `force: :cascade` — schema:load DROPS
+# each table and recreates it — so every deploy silently emptied all three
+# secondary databases. For cache and cable that is survivable. For queue it
+# means every enqueued job is destroyed at deploy time: brgen was carrying 1670
+# of them on 2026-08-13 and had 0 an hour later, deleted rather than run.
+#
+# It was invisible because no Solid Queue worker has ever run on this box (see
+# OPENBSD/DECISIONS.md, "Falcon Only"), so nothing was going to execute those
+# jobs anyway. That changes the moment a worker exists, and a deploy that
+# discards the password-reset emails enqueued while it was running is a worse
+# bug than the one this loop was added to fix.
+#
+# The loop was added because the queue schema was not being loaded at all. That
+# was a real gap; the verb was wrong. So it now loads a schema only when the
+# database does not already carry its tables, and otherwise leaves the data
+# alone. `rails db:prepare` on the line above already handles both creation and
+# migration of every configured database (DatabaseTasks.prepare_all walks
+# each_current_configuration, not just primary) — this stays as the explicit
+# backstop it was meant to be.
 rails_prepare_secondary_dbs_as_app() {
   local app_name=$1
   local app_dir=$2
@@ -42,11 +64,45 @@ rails_prepare_secondary_dbs_as_app() {
     local schema="${app_dir}/db/${db}_schema.rb"
     [[ -f $schema ]] || continue
     grep -q 'define(version: 0)' "$schema" 2>/dev/null && continue
+
+    if secondary_db_initialized "$app_name" "$app_dir" "$db"; then
+      log_ok "${db} db already initialised for ${app_name} — not reloading its schema"
+      continue
+    fi
+
     log "db:schema:load:${db} for ${app_name}"
     run_rails_as_app "$app_name" "$app_dir" \
       "SECRET_KEY_BASE=${secret} DISABLE_DATABASE_ENVIRONMENT_CHECK=1 RAILS_ENV=production bundle34 exec rails db:schema:load:${db}" \
       || { log_err "db:schema:load:${db} failed for ${app_name}"; return 1; }
   done
+}
+
+# secondary_db_initialized APP_NAME APP_DIR DB — true when the database file
+# exists and holds the first table its schema declares.
+#
+# Deliberately fails to "not initialised" whenever it cannot tell: a missing
+# sqlite3, an unreadable file, a database.yml that stops using the
+# storage/production_<db>.sqlite3 convention all three apps share today. Being
+# wrong that way reloads a schema that did not need reloading, which is what
+# this code did on every deploy until now. Being wrong the other way would skip
+# the load that makes the app boot.
+secondary_db_initialized() {
+  local app_name=$1 app_dir=$2 db=$3
+  local file="${app_dir}/storage/production_${db}.sqlite3"
+  local table
+
+  whence sqlite3 >/dev/null 2>&1 || return 1
+  ${_PRIV} test -s "$file" || return 1
+
+  table=$(ruby34 -e 'm = File.read(ARGV[0], encoding: "UTF-8").match(/create_table "([^"]+)"/); print(m ? m[1] : "")' \
+    "${app_dir}/db/${db}_schema.rb")
+  [[ -n $table ]] || return 1
+
+  # Exit status is the whole answer: sqlite3 fails with "no such table" when the
+  # schema was never loaded, and succeeds with no output when the table is there
+  # and empty. Reading the output instead would call a freshly loaded, still
+  # empty queue "not initialised" and reload it every deploy.
+  ${_PRIV} sh -c "su -m ${app_name} -c 'sqlite3 \"${file}\" \"select 1 from ${table} limit 1;\"'" >/dev/null 2>&1
 }
 
 # migrate_sqlite_db_to_storage_if_needed APP_NAME APP_DIR — one-time brgen db/ → storage/ move (R7).

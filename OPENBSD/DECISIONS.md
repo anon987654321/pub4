@@ -109,6 +109,12 @@ Measured on vm23 that day: brgen had 1670 jobs enqueued, 0 finished, 0 registere
 
 The variable is gone from all three `rc.d` files and the template. A Solid Queue worker under Falcon needs its own process: `etc/rc.d/<app>_jobs` exists for each app and is deliberately not enabled — read its footer, because vm23 is 1 GB and already cannot hold what it runs. `health_check.rb` fails when a queue has unfinished work and no registered process, so whichever way that goes it is visible.
 
+**And the deploy was deleting the queue (2026-08-13).** `rails_prepare_secondary_dbs_as_app` in `RAILS/_database.sh` ran `db:schema:load:{cache,queue,cable}` on *every* deploy. Rails schema files declare `create_table … force: :cascade`, so a schema load drops each table and recreates it empty. Every deploy discarded every enqueued job. brgen's 1670 pending jobs were gone within the hour of the 2026-08-13 deploy — deleted, not run.
+
+Secondary schemas are now loaded **once**, when the database does not already carry its tables. `rails db:prepare` on the preceding line already creates and migrates every configured database (`DatabaseTasks.prepare_all` walks `each_current_configuration`, not just primary); the explicit loop stays as a backstop, guarded. Pinned by `test_secondary_schema_load_is_guarded_by_an_initialisation_check`.
+
+This mattered less than it looks like it should have, because nothing was ever going to run those jobs — and that is exactly why it needed fixing before the worker question is settled rather than after. A deploy that discards the password-reset emails enqueued while it was running is a worse bug than no worker at all.
+
 ## A Foreign Key To `users` Needs A `has_many` On `User` (2026-08-13)
 
 Any table with an FK to `users` must have a matching association on `User` with an explicit `dependent:`. Without one, `User#destroy` raises `SQLite3::ConstraintException: FOREIGN KEY constraint failed` — from the database, not from Rails, with nothing in the model to explain it.

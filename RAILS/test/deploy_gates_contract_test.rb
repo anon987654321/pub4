@@ -273,6 +273,34 @@ class DeployGatesContractTest < Minitest::Test
     assert File.file?(File.join(ROOT, "bsdports/db/queue_schema.rb"))
   end
 
+  # Rails schema files create their tables with `force: :cascade`, so
+  # `db:schema:load:queue` drops every table and recreates it empty. Running it
+  # on every deploy — which _database.sh did until 2026-08-13 — discards every
+  # enqueued background job as a side effect of deploying. brgen was carrying
+  # 1670 and had 0 an hour later.
+  #
+  # It read as harmless because no Solid Queue worker runs on this box, so
+  # nothing was going to execute them. That is an argument for fixing it before
+  # a worker exists, not after: the first deploy with one would throw away the
+  # password-reset emails enqueued while it was running.
+  def test_secondary_schema_load_is_guarded_by_an_initialisation_check
+    source = File.read(File.join(ROOT, "_database.sh"), encoding: "UTF-8")
+
+    assert_includes source, "secondary_db_initialized",
+                    "the deploy must check before loading a secondary schema over live data"
+
+    body = source[/rails_prepare_secondary_dbs_as_app\(\).*?\n}/m]
+
+    refute_nil body, "rails_prepare_secondary_dbs_as_app no longer parses as one function"
+    assert_includes body, "if secondary_db_initialized",
+                    "db:schema:load must sit behind the guard, not beside it"
+
+    guard_line = body.lines.index { |l| l.include?("if secondary_db_initialized") }
+    load_line = body.lines.index { |l| l.include?("db:schema:load:${db}") && !l.strip.start_with?("#") }
+
+    assert_operator guard_line, :<, load_line, "the guard must precede the load it guards"
+  end
+
   def test_local_knowledge_corpus_is_not_tracked
     files = git_files("MASTER/knowledge")
 
