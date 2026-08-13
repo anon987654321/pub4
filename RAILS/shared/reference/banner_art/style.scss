@@ -1,0 +1,168 @@
+// Recovered CodePen export. Reference only — not compiled by any app.
+.banner_wrapper {
+  display: flex;
+  background: #efefef;
+  justify-content: center;
+  padding: 10px 0 28px;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.sponsored {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #999;
+}
+
+.banner {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  width: 300px;
+  height: 300px;
+  padding-bottom: 30px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 6px;
+}
+
+.banner h1 { font-size: 28px; text-transform: lowercase; }
+
+.marketplace .button { background: #3ea6ff; color: black; }
+.marketplace .star:before {
+  display: block;
+  content: "";
+  background-image: url("https://i.imgur.com/0Kvpz18.png");
+  width: 23px;
+  height: 23px;
+  opacity: 0.8;
+}
+.star { position: absolute; }
+.star:nth-of-type(1) { bottom: 40px; left: 60px; }
+.star:nth-of-type(2) { bottom: 50px; right: 60px; }
+.star:nth-of-type(3) { bottom: 20px; left: 60px; }
+
+footer { width: 100%; padding: 10px; bottom: 0; position: absolute; }
+
+.marketplace .banner { background: white; color: black; }
+.marketplace .banner img { width: 40%; margin: 10px 0 50px; }
+
+.dating .banner { background: #100f24; color: white; }
+
+.playlist .button { background: white; }
+.playlist .banner { background: black; color: white; position: relative; }
+.playlist footer { background: #1c74e9; color: white; }
+
+input[type="submit"], button, a.button {
+  display: flex;
+  border: none;
+  background-color: #ff9900;
+  color: black;
+  border-radius: 30px;
+  font-size: 14px;
+  padding: 10px 20px 12px;
+}
+
+body { font-family: sans-serif; }
+a.button { text-decoration: none; }
+
+:root {
+  --colorEyeBlue: #34495e12;
+  --colorEyeDark: #07070715;
+  --colorBackground: #111;
+  --sizeEye: 200px;
+  --sizeBigLine: calc(0.01 * var(--sizeEye));
+  --sizeSmallLine: calc(0.003 * var(--sizeEye));
+  --sizeIris: calc(var(--sizeEye) / 2);
+}
+
+:root {
+  --scifi: (
+    :doodle {
+      @grid: 1x19 / 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    @place-cell: center;
+    @size: calc(20% + @i * 4%);
+    z-index: 2;
+    border-radius: 100%;
+    border-style: solid;
+    border-width: @pick(
+      var(--sizeSmallLine),
+      var(--sizeSmallLine),
+      var(--sizeBigLine)
+    );
+    border-color: hsla(215, @r(40%,50%), @r(70%, 82%), @r(5%, 90%)) transparent;
+    will-change: transform;
+    animation: myanimation @r(4s, 15s) linear alternate infinite;
+    @keyframes myanimation {
+      from { transform: rotate(@r(360deg)) }
+      to { transform: rotate(@r(360deg)) }
+    }
+    @nth(1) { background-color: #000; border: none; z-index: 3; }
+  );
+}
+
+:root {
+  --iris: (
+    :doodle {
+      @grid: 1x30 / 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    @place-cell: center;
+    @size: 100%;
+    z-index: 1;
+    border-radius: 100%;
+    border-style: dashed;
+    border-width: var(--sizeIris);
+    border-color: var(--colorEyeBlue) var(--colorEyeDark);
+    transform: rotate(@r(179deg));
+  );
+}
+
+:root {
+  --iris2: (
+    :doodle {
+      @grid: 1x30 / 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    z-index: 1;
+    @place-cell: center;
+    background-color: var(--colorEyeBlue);
+    @size: 100%;
+    clip-path: polygon(48% 50%, 50% 100%, 52% 50%, 50% 0%);
+    transform: rotate(@r(179deg));
+  );
+}
+
+.art { position: relative; width: var(--sizeEye); height: var(--sizeEye); }
+
+.lp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  overflow: hidden;
+  height: 80px;
+  width: 80px;
+  background-color: white;
+  border-radius: 100%;
+  z-index: 5;
+}
+.lp h1 { z-index: 6; font-size: 200%; color: blue; }
+.lp span {
+  background: black;
+  height: 10px;
+  width: 10px;
+  border-radius: 100%;
+  position: absolute;
+}

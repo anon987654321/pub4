@@ -1,0 +1,18 @@
+// Recovered CodePen export. Reference only — not compiled by any app.
+.affiliate_banner h2 {
+  font-family: "Comic Sans MS";
+  font-size: 44px;
+}
+
+.affiliate_banner {
+  height: 250px;
+  width: 80%;
+  margin: 0 auto;
+  font-size: 30px;
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+
+#scene { margin-top: -40px; }
+#scene div img { width: 180px; }
+#scene .call_to_action { position: absolute; z-index: 9999; }

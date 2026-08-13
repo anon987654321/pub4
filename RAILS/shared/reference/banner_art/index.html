@@ -1,0 +1,177 @@
+<!-- Recovered CodePen export. Reference only — not rendered by any app.
+     See README.md in this directory for what is wired and what it would cost. -->
+<div class="banner_wrapper marketplace">
+  <p class="sponsored">Sponsored</p>
+  <div class="banner">
+    <h1>Sentrum</h1>
+    <img src="https://i.imgur.com/FzKQ6Yu.gif">
+    <span class="star"></span>
+    <span class="star"></span>
+    <span class="star"></span>
+    <a class="button" href="#">Start shopping</a>
+  </div>
+</div>
+
+<div class="banner_wrapper dating">
+  <p class="sponsored">Sponsored</p>
+  <div class="banner">
+    <h1>Dating</h1>
+    <css-doodle click-to-update="">
+      <style>
+        :doodle {
+          @grid: 1x10 / 50vmin;
+          filter:
+            drop-shadow(0 0 10px #ff360e) drop-shadow(0 0 20px #ff360e);
+        }
+        @size: calc(100% - @i * 3%);
+        @place-cell: center;
+        clip-path: @shape(points: 180;
+          a: cos(t)*13/18 - cos(2t)*5/18;
+          b: cos(3t)/18 + cos(4t)/18;
+          x: .75 * sin(t)^3;
+          y: a - b + .15;
+          frame: @r(2, 2.5);
+        );
+        :after {
+          content: '';
+          @place-cell: center;
+          @size: @p(@r(10px), @m5(@r(50%))) 100%;
+          background: linear-gradient(@r(360deg),
+            #30182b, #f0f1bc, #60f0c0, #ff360e, #191f04);
+          animation: cycle @r(2s, 8s) linear infinite;
+          animation-delay: -@r(8s);
+        }
+        @keyframes cycle {
+          to {
+            transform: rotate(1turn);
+          }
+        }
+      </style>
+    </css-doodle>
+
+    <!-- Alternate heart, kept deliberately: a different parametrisation of the
+         same shape, filled rather than framed. -->
+    <!--<css-doodle click-to-update="">
+      <style>
+        :doodle {
+          @grid: 1x10 / 50vmin;
+          filter:
+            drop-shadow(0 0 10px #ff360e)
+            drop-shadow(0 0 20px #ff360e);
+        }
+        @size: calc(100% - @i * 3%);
+        @place-cell: center;
+        clip-path: @shape(
+          points: 1000;
+          scale: .34;
+          origin: 0 -1.6;
+          s: sqrt.abs.cos(t) / (sin(t) + 1.6);
+          r: 2 + (s - 2) * sin(t);
+          frame: 5;
+        );
+        :after {
+          content: '';
+          @place-cell: center;
+          @size: @p(@r(10%, 20%), @m5(@r(10%, 50%))) 100%;
+          background: radial-gradient(
+            #30182b,#f0f1bc,#60f0c0,#ff360e,#191f04
+          );
+          animation: cycle @r(2s, 8s) linear infinite;
+          animation-delay: -@r(8s);
+        }
+        @keyframes cycle {
+          to { transform: rotate(1turn); }
+        }
+      </style>
+    </css-doodle>-->
+
+    <!--<a class="button" href="#">Register now</a>-->
+
+    <footer class="bankid">
+      Protected by BankID
+    </footer>
+  </div>
+</div>
+
+<div class="banner_wrapper playlist">
+  <p class="sponsored">Sponsored</p>
+  <div class="banner">
+    <div class="art">
+      <!-- scifi circles -->
+      <css-doodle use="var(--scifi)"></css-doodle>
+      <!-- iris radial from center pattern -->
+      <css-doodle use="var(--iris)"></css-doodle>
+      <!-- iris radial from center triangles -->
+      <css-doodle use="var(--iris2)"></css-doodle>
+    </div>
+
+    <!-- <h1 class="ml15">
+      <span class="word">Cool<br>music</span>
+    </h1>
+    <a class="button" href="#">Listen now</a>-->
+
+    <div class="lp">
+      <h1>Test</h1>
+      <span></span>
+    </div>
+  </div>
+</div>
+
+<div class="banner_wrapper playlist">
+  <p class="sponsored">Sponsored</p>
+  <div class="banner">
+    <!-- https://codepen.io/alisasila/pen/jOVWPRb -->
+    <css-doodle grid="200x1">
+      :doodle {
+        @size: 95vmin;
+        overflow: hidden;
+      }
+      @size: 100%;
+      @place-cell: center;
+      ::before{
+        content: "";
+        @size: @r(5%);
+        border: 1px solid white;
+        background: @p(none, white, linear-gradient(to @p(bottom, left), @stripe(black, white 1px, black, white 1px, black, white 1px, black, white 1px, black, white 1px, black)));
+        border-radius: @p(0, 50%);
+        position: absolute;
+        top: @r(100%);
+        left: @r(100%);
+        animation: floatingUpDown @r(1.5s, 5s) @r(1.5s) linear infinite alternate;
+      }
+      ::after {
+        content: "";
+        height: @r(0.5%);
+        width: @r(1.5%, 7%);
+        background: white;
+        position: absolute;
+        top: @r(100%);
+        left: @r(100%);
+        animation: floatingStickAnim @r(1.5s, 5s) @r(1.5s) linear infinite alternate;
+        transform: translateX(300%);
+        transition: background 0.2s;
+      }
+      :doodle(:hover)::after{
+        background: limegreen;
+      }
+      @keyframes floatingUpDown {
+        100% {
+          transform: translateY(-50%) rotateZ(@r(-5deg, 5deg));
+        }
+      }
+      @keyframes floatingStickAnim {
+        100% {
+          transform: translateX(-300%);
+        }
+      }
+    </css-doodle>
+
+    <h1 class="ml15">
+      <span class="word">Cool<br>music</span>
+    </h1>
+    <a class="button" href="#">Listen now</a>
+    <footer>
+      New streaming service
+    </footer>
+  </div>
+</div>
