@@ -27,6 +27,25 @@ task :security_sweep do
   sh RbConfig.ruby, "tools/security_sweep.rb"
 end
 
+desc "STUDIO parses, has no orphans, and its entry points still boot"
+task :studio do
+  # A subprocess, not a require. `bin/gate`'s /fix step mutates the whole shared
+  # worktree, and STUDIO was the only tree with nothing that fails when it
+  # breaks -- dilla and postpro have each been broken by it silently. Running it
+  # from here is what makes the fix loop's own damage visible to the fix loop.
+  #
+  # Subprocess specifically, because MASTER requires nothing from the sibling
+  # trees and the gate requires OPENBSD/lib/gate_result. That independence is
+  # deliberate (OPENBSD/data/debt.yml: gate_result_is_a_shared_kernel_filed_
+  # under_deploy) and a rake task is not a reason to spend it.
+  gate = File.expand_path("../STUDIO/gate.rb", __dir__)
+  if File.file?(gate)
+    sh RbConfig.ruby, gate
+  else
+    warn "studio: #{gate} not found — skipping (STUDIO tree absent?)"
+  end
+end
+
 desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
 task :constitution do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
@@ -413,7 +432,7 @@ namespace :lint do
 end
 
 desc "Full audit: constitution + selftest + the lint:* gates"
-task audit: %i[constitution selftest lint:frozen lint:data_singularity lint:spine lint:autoload
+task audit: %i[constitution selftest studio lint:frozen lint:data_singularity lint:spine lint:autoload
                lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
                lint:do_not_touch lint:instruments lint:constant_collisions] do
   puts "audit: passed"

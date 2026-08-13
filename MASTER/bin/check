@@ -39,12 +39,18 @@ web_live = ENV["MASTER_WEB_LIVE"] == "1"
 # files under test/{cli,io,fix,lib} were skipped by the gate START_HERE.md tells
 # contributors to run. rake test's glob is test/test_*.rb and does not reach them.
 # 17s, measured 2026-08-01.
+# rake["studio"] is in agent as well as the two heavy profiles, and it is the
+# only step that is. The agent profile is what runs around law and fix-loop work,
+# which is exactly the work that has silently broken STUDIO before — `bin/gate`'s
+# /fix step rewrites the whole shared worktree, and until STUDIO/gate.rb there
+# was nothing in any profile that noticed. It costs ~3s: parse is in-process AST
+# and the two load probes are about a second each.
 PROFILES = {
   "operator"    => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
-                    rake["test:core"], rake["lint:data_singularity"]],
+                    rake["test:core"], rake["lint:data_singularity"], rake["studio"]],
   "contributor" => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
-                    rake["lint:data_singularity"]],
-  "agent"       => [rake["selftest"], rake["lint:data_singularity"]],
+                    rake["lint:data_singularity"], rake["studio"]],
+  "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["studio"]],
   "web"         => [["web ui static", RUBY, "-Ilib:test", "test/test_web_ui.rb"],
                     *(web_live ? [rake["test:web"], rake["test:integration_web"]] : [])],
   "full"        => [run_bin["ci"], run_bin["probe", "all"], rake["audit"]],

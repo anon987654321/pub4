@@ -523,6 +523,18 @@ def maybe_handoff_postpro(output, preset)
   result.ok? ? output : (abort "warn: postpro handoff failed: #{result.message}")
 end
 
+# Everything below this line is the CLI: it reads ARGV, and the `case` at the
+# end runs a command or aborts with usage. Without this guard, *loading* the file
+# ran a command — so nothing could ever require it, and STUDIO/gate.rb could
+# check it no further than "it parses", which is the check an autofix passes
+# while leaving the tool dead.
+#
+# A top-level `return` rather than wrapping 220 lines in an `if`: it ends the
+# file for `load` and `require` exactly as the wrapper would, and re-indenting
+# the whole dispatch would have buried the change in a diff nobody could read.
+# Running it as a script is unaffected — that is the branch that continues.
+return unless __FILE__ == $PROGRAM_NAME
+
 cache = File.expand_path(ENV.fetch("REPLIGEN_CATALOG", "~/.cache/repligen/models.json"))
 blob_cache_dir = File.expand_path(ENV.fetch("REPLIGEN_BLOB_CACHE", "~/.cache/repligen/blobs"))
 options = { model: ENV.fetch("REPLIGEN_MODEL", "black-forest-labs/flux-1.1-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
