@@ -8,7 +8,8 @@ module Master
     # Multi-engine TTS registry — mlx, chatterbox, edge_melodic, edge, say.
     module Engines
       # edge_melodic/edge lead the chain: they're a fast local subprocess and
-      # already the configured persona voice (nb-NO-PernilleNeural). Kokoro
+      # already speak whatever data/voice.yml names (do not repeat the voice
+      # here — that is how the last two switches left the tree stale). Kokoro
       # used to be forced first via `attempt?`'s always-try-on-OpenBSD gate,
       # but that's a network round-trip to a third-party inference API on
       # every single phrase -- on a 1-CPU VPS with a serial synth queue, that

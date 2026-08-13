@@ -19,21 +19,30 @@ tts:
   # The pitch below is the one part of this that is a measurement rather than a
   # name — see default_pitch.
   #
-  # The last time this value changed, the JS half of the stack kept its own
-  # answer — "tts: Pernille only" in the /voice handler, the nb-NO default in
-  # MASTER_SOUL_SUMMARY, guardVoice's locked return — and the two halves
-  # disagreed about what was actually being synthesized. All three now read the
-  # policy instead of hardcoding a name; see face.part1.txt and face.part5.txt.
-  # Operator, 2026-08-11: back to Pernille, much louder and much slower.
+  # Three operator decisions, in order: 2026-08-10 to Osman, 2026-08-11 back to
+  # Pernille (much louder and much slower — the volume and rate below are from
+  # that pass and are kept), 2026-08-13 to Osman again. This is the third.
   #
-  # Pernille never left the rest of the tree — nb-NO-PernilleNeural is still the
-  # entry in face.runtime.js's VOICES and idle-signature tables, in
-  # personality.rb, and in agent_map.yml, which still says in five places that
-  # "TTS voice is always Pernille per data/voice.yml". The Osman change moved
-  # four files and the registry kept the old answer, so the tree disagreed with
-  # itself for a day. This makes it agree again.
-  single_voice: pernille
-  neural: nb-NO-PernilleNeural
+  # Both earlier passes left the tree disagreeing with itself, in opposite
+  # directions, because a name lives in more places than the one that changed:
+  #
+  #   - 08-10 moved four files and the registry kept Pernille — face.runtime.js's
+  #     VOICES and idle-signature tables, expression.rb, and agent_map.yml, which
+  #     said in five places that "TTS voice is always Pernille per data/voice.yml".
+  #   - 08-11 moved this value back and left soul.yml declaring
+  #     `dialect: malaysian`, so the constitution described a Malaysian-accented
+  #     English identity that a Norwegian voice then read aloud. It also left
+  #     face_speech_runtime.js falling back to Osman whenever MASTER_VOICE_POLICY
+  #     failed to load, silently switching accent and language on a load error.
+  #
+  # So this pass moves the registry with the value: lib/voice/policy.rb's
+  # hardcoded defaults, agent_map.yml's note, health_controller's comment, and
+  # personas.yml's header. What did not need moving was already right — the
+  # alias in speech.rb, the idle signatures in expression.rb and face.runtime.js,
+  # soul.yml's dialect, and the JS fallback, which now agrees rather than
+  # contradicting.
+  single_voice: osman
+  neural: ms-MY-OsmanNeural
   persona_affects_text_only: true
   stream_live_default: false
   # With persona_affects_text_only these two ARE the effective rate/pitch for
@@ -60,11 +69,12 @@ tts:
   # engine stops rendering cleanly and reads as choking, so this sits well
   # short of it while being audibly slower than the -8% it replaces.
   default_rate: "-22%"
-  # +0Hz, not Osman's -35Hz. This file's own standing warning is that pitch
-  # tuning does not survive a voice change — -20Hz was once picked for en-GB
-  # Ryan and carried onto a Norwegian voice it had never been measured against.
-  # -35Hz was measured on Osman. Pernille starts flat until someone listens.
-  default_pitch: "+0Hz"
+  # -35Hz, measured on Osman. The standing warning here is that pitch tuning
+  # does not survive a voice change — -20Hz was once picked for en-GB Ryan and
+  # carried onto a Norwegian voice it had never been measured against — which is
+  # why Pernille was reset to +0Hz rather than inheriting this. Coming back to
+  # Osman restores his own measurement rather than carrying hers.
+  default_pitch: "-35Hz"
   # edge-tts --volume. The browser chain is the other half of "louder"
   # (face_speech_runtime.js: masterGain 1.9 -> 3.4, partial no longer played at
   # 0.85); this raises the synthesised signal itself rather than only its

@@ -1,5 +1,5 @@
 # MASTER personas — LLM style descriptor and legacy voice fields.
-# TTS synthesis always uses data/voice.yml (single_voice: pernille / nb-NO) — persona affects text only.
+# TTS synthesis always uses data/voice.yml (single_voice: osman / ms-MY) — persona affects text only.
 # The per-persona `voice:` fields below are legacy and are NOT synthesized while
 # persona_affects_text_only is true; they only feed idle-signature lookups.
 # Add a new persona here, restart MASTER (or wait for hot-reload).

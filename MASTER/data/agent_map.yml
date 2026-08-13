@@ -22,7 +22,7 @@ topics:
       - web/test/controllers/health_controller_test.rb
       - web/test/face_boot.test.mjs
     deploy: zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh
-    playbook: master_web_pernille_defaults
+    playbook: master_web_single_voice_defaults
     proof: curl -fsS http://127.0.0.1:53187/health | jq '{status, checks, deploy}'
 
   face_boot:
@@ -44,7 +44,7 @@ topics:
       - bin/check --profile=web
       - web/script/probe_http
     deploy: zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh
-    playbook: master_web_pernille_defaults
+    playbook: master_web_single_voice_defaults
     note: No WebGL before primer tap. Rebuild face.runtime.js after editing face.part* or speech modules.
 
   law:
@@ -90,7 +90,7 @@ topics:
       - data/personas.yml
       - lib/voice/personality.rb
       - web/app/views/chat/index.html.erb
-    note: TTS voice is always Pernille per data/voice.yml; persona changes LLM style only.
+    note: TTS voice is whatever data/voice.yml tts.single_voice names (osman since 2026-08-13); persona changes LLM style only.
 
 patch_briefs:
   data/soul.yml:
@@ -116,7 +116,7 @@ patch_briefs:
     topic: tts
     tests: [test/test_yaml_registries.rb, test/test_speech.rb]
     deploy: vps-deploy master
-    playbook: master_web_pernille_defaults
+    playbook: master_web_single_voice_defaults
   bin/:
     check: bin/check
     tests: [bin/check]
@@ -162,13 +162,13 @@ patch_briefs:
     topic: tts
     tests: [test/test_speech.rb]
     deploy: vps-deploy master
-    playbook: master_web_pernille_defaults
+    playbook: master_web_single_voice_defaults
   web/app/views/chat/index.html.erb:
     check: bin/check --profile=web
     topic: face_boot
     tests: [bin/check --profile=web, web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    playbook: master_web_pernille_defaults
+    playbook: master_web_single_voice_defaults
     note: primer/WebGL guard lives here — read web/CLAUDE.md first
   web/public/face.js:
     check: bin/check --profile=web

@@ -53,10 +53,11 @@ const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVI
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-// Fallback matches data/voice.yml. It said nb-NO-PernilleNeural while the
-// policy said something else, so any failure to load MASTER_VOICE_POLICY sent
-// MASTER back to a Norwegian voice silently — the same two-halves-disagreeing
-// bug voice.yml's own header documents.
+// Fallback matches data/voice.yml, and has to: a failure to load
+// MASTER_VOICE_POLICY otherwise switches the voice, its accent and its language
+// with nothing said. This literal has been wrong in both directions — Pernille
+// here while the policy said Osman, then Osman here while the policy said
+// Pernille — which is the two-halves bug voice.yml's own header documents.
 const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'ms-MY-OsmanNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {

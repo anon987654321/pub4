@@ -10,7 +10,7 @@ class HealthController < ActionController::API
       git: git_healthy?,
       container: container_healthy?,
     }
-    # TTS (Pernille) is mandatory, so it stays critical — a genuine TTS-capability
+    # TTS is mandatory, so it stays critical — a genuine TTS-capability
     # outage (worker missing or EventMachine without SSL) should 503 and alert.
     # replicate (media) stays non-critical (degraded). tts_healthy? now checks
     # capability rather than transient socket liveness, so this no longer
@@ -32,7 +32,7 @@ end
     return true if Rails.env.test?
 
     # Capability check, not socket liveness. The worker + EventMachine-with-SSL
-    # are what make Pernille synthesis possible; the daemon socket is spun up on
+    # are what make synthesis possible; the daemon socket is spun up on
     # demand (and can be reaped under load on the 1-vCPU host), so requiring a
     # live socket here produced a false negative — tts reported down between
     # syntheses while synthesis worked fine, 503'ing /health.

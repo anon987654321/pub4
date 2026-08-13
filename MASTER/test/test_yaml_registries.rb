@@ -135,19 +135,21 @@ class TestRulesYamlRegistry < Minitest::Test
   def test_voice_yml_tts_policy_single_voice
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     tts = voice["tts"] || {}
-    # Pernille since 51424ab63 (operator decision), replacing the Osman pinned
-    # earlier the same day, which had replaced the US English of 2026-08-04.
-    # nb-NO-PernilleNeural is a Norwegian voice reading English text — the accent
-    # comes from the voice, which is why soul.yml keeps language.primary: english
-    # and moves only dialect.
+    # Osman since 2026-08-13 (operator decision), replacing the Pernille of
+    # 08-11, which had replaced the Osman of 08-10, which replaced the US English
+    # of 08-04. ms-MY-OsmanNeural is a Malay voice reading English text — the
+    # accent comes from the voice, which is why soul.yml keeps
+    # language.primary: english and moves only dialect, to malaysian.
     #
-    # This assertion was left on "osman" when voice.yml moved, so MASTER's suite
-    # shipped red on origin/main. The data is the decision; the test follows it.
-    assert_equal "pernille", tts["single_voice"]
-    assert_equal "nb-NO-PernilleNeural", tts["neural"]
+    # This assertion has now been left behind by a voice.yml change twice, in
+    # both directions, shipping MASTER's suite red on origin/main each time. The
+    # data is the decision; the test follows it. The three structural assertions
+    # below are the ones worth having — they hold whatever the name is.
+    assert_equal "osman", tts["single_voice"]
+    assert_equal "ms-MY-OsmanNeural", tts["neural"]
     assert_equal true, tts["persona_affects_text_only"]
-    assert_equal :pernille, Master::Voice::Policy.single_voice_key
-    assert_equal "nb-NO-PernilleNeural", Master::Voice::Policy.neural_voice
+    assert_equal :osman, Master::Voice::Policy.single_voice_key
+    assert_equal "ms-MY-OsmanNeural", Master::Voice::Policy.neural_voice
     # The pair has to agree: single_voice is what Ruby hands the synthesizer,
     # neural is what the browser reads, and they drifted apart once already.
     assert_equal tts["neural"], Master::Voice::Speech::VOICES.fetch(tts["single_voice"].to_sym)

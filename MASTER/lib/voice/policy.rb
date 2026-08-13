@@ -11,12 +11,12 @@ module Master
       # unreadable voice.yml falls back to, so a stale entry here reintroduces
       # the exact voice/neural mismatch the file's comment describes.
       FALLBACK = {
-        "single_voice" => "pernille",
-        "neural" => "nb-NO-PernilleNeural",
+        "single_voice" => "osman",
+        "neural" => "ms-MY-OsmanNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => false,
         "default_rate" => "-22%",
-        "default_pitch" => "+0Hz",
+        "default_pitch" => "-35Hz",
         "default_volume" => "+40%",
       }.freeze
 

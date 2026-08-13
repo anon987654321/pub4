@@ -277,10 +277,11 @@ function initSemanticPools() {
 if (window.ParticleKernel) initSemanticPools();
 else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKernel) initSemanticPools(); }, { once: true });
 
-const COUNCIL_VOICE = {
-  Architect: 'pernille', Skeptic: 'pernille', Pragmatist: 'pernille',
-  Security: 'pernille', User: 'pernille', Mentor: 'pernille'
-};
+// COUNCIL_VOICE was here until 2026-08-13: six council personas mapped to a
+// voice name, defined and never read anywhere in the face sources. Single-voice
+// policy makes it unreachable by design — guardVoice discards its argument and
+// returns MASTER_VOICE_POLICY.neural — so it was six more copies of a voice
+// name that could only ever go stale, and had.
 
 // Pristine chrome: council personas no longer shift the face to a hue
 // (was blue/orange/green/red/purple/yellow per persona) -- only the logo,

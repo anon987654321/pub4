@@ -1428,10 +1428,10 @@ operator_playbook:
       action: "MASTER_LOW_RESOURCE=1 or MASTER_SMOKE_PIPE_TIMEOUT=90 for smoke/probe on vm23."
       proof: "MASTER_LOW_RESOURCE=1 bundle34 exec ruby bin/smoke --web"
 
-    - id: master_web_pernille_defaults
+    - id: master_web_single_voice_defaults
       area: master_web
       signal: "White page, silent TTS, or voice/lang regressions after persona changes"
-      action: "Single-voice policy in data/voice.yml (tts.single_voice: pernille). Ruby reads Voice::Policy; JS reads MASTER_VOICE_POLICY. guardVoice always returns nb-NO-PernilleNeural. rc.d/master fingerprints face_*.js + sw.js. vps_deploy_master.sh runs bundle install before precompile."
+      action: "Single-voice policy in data/voice.yml (tts.single_voice). Ruby reads Voice::Policy; JS reads MASTER_VOICE_POLICY; guardVoice returns whatever that policy names, so no file should carry the voice by name. rc.d/master fingerprints face_*.js + sw.js. vps_deploy_master.sh runs bundle install before precompile."
       proof: "curl page includes MASTER_VOICE_POLICY; GET /chat/tts status returns audio; GET /health checks.tts true and deploy.tts_socket true; ruby OPENBSD/health_check.rb --core; bin/smoke --web clean"
 
     - id: master_deploy_confidence
