@@ -7,13 +7,47 @@ require_relative "load_average"
 module Pub4
   # VPS-only mutex + load gate for Rails bin/ci (prevents parallel CI pile-ups on vm23).
   module CiGuard
-    LOCK_PATH = ENV.fetch("PUB4_CI_LOCK", "/var/tmp/pub4-ci.lock")
-    HOLDER_PATH = "#{LOCK_PATH}.holder".freeze
+    # The one CI lock, shared with the shell side.
+    #
+    # This used to be /var/tmp/pub4-ci.lock while OPENBSD/lib/ci_lock.sh called
+    # itself "the one definition of the pub4 CI mutex path" and pointed three
+    # shell scripts at /var/db/pub4/ci.lock. Two files, no mutual exclusion
+    # between them — and the half that was actually being locked was the half
+    # left in world-writable /var/tmp, which is precisely what that rewrite was
+    # written to fix. It moved the callers that were not locking anything.
+    #
+    # An override is honoured only when its directory is not world-writable.
+    # That is the property the /var/tmp objection was about: a fixed name in a
+    # directory anyone can write to is a symlink an attacker plants and root
+    # then chmods. Checking the directory lets a test point this at a private
+    # tmpdir without reopening the hole, which hardcoding one path would not.
+    LOCK_DIR = "/var/db/pub4"
+    DEFAULT_LOCK_PATH = File.join(LOCK_DIR, "ci.lock")
+
+    # Resolved per call rather than frozen into a constant at load: the override
+    # is an environment variable, and a constant read at require time cannot see
+    # one set afterwards -- which is every test, and every caller that sets it
+    # between loading this file and running CI.
     MAX_LOAD = ENV.fetch("PUB4_CI_MAX_LOAD", "4").to_f
     TIMEOUT_S = Integer(ENV.fetch("PUB4_CI_TIMEOUT", "3600"))
     VPS_MARKERS = ["/etc/relayd.conf", "/var/db/pub4_vps"].freeze
 
     module_function
+
+    def lock_path(requested = ENV["PUB4_CI_LOCK"].to_s)
+      return DEFAULT_LOCK_PATH if requested.empty?
+
+      dir = File.dirname(requested)
+      return DEFAULT_LOCK_PATH unless File.directory?(dir)
+      return requested if (File.stat(dir).mode & 0o002).zero?
+
+      warn "pub4-ci-guard: ignoring PUB4_CI_LOCK=#{requested} — #{dir} is world-writable"
+      DEFAULT_LOCK_PATH
+    rescue SystemCallError
+      DEFAULT_LOCK_PATH
+    end
+
+    def holder_path = "#{lock_path}.holder"
 
     def enabled?
       return true if ENV["PUB4_CI_GUARD"] == "1"
@@ -56,58 +90,76 @@ module Pub4
     end
 
     def with_lock
-      FileUtils.mkdir_p(File.dirname(LOCK_PATH))
-      file = open_shared(LOCK_PATH, File::CREAT | File::RDWR)
+      # /var/db/pub4 is root-owned and created by pub4_ensure_ci_lock. Making it
+      # here is only for the case where it is already there, so a failure to
+      # create is not a failure to lock — open_shared reports that properly.
+      # Resolved once per run: calling lock_path repeatedly would re-warn about
+      # a rejected override on every use, and could disagree with itself if the
+      # environment changed underneath.
+      path = lock_path
+      holder = "#{path}.holder"
+
+      begin
+        FileUtils.mkdir_p(File.dirname(path))
+      rescue SystemCallError
+        nil
+      end
+
+      file = open_shared(path)
       begin
         unless file.flock(File::LOCK_EX | File::LOCK_NB)
-          warn "pub4-ci-guard: #{LOCK_PATH} busy (#{safe_read(HOLDER_PATH)})"
+          warn "pub4-ci-guard: #{path} busy (#{safe_read(holder)})"
           exit 1
         end
-        write_holder!
+        write_holder!(holder)
         yield
       ensure
         file.close
         begin
-          File.delete(HOLDER_PATH) if File.exist?(HOLDER_PATH)
-        rescue Errno::EPERM
+          File.delete(holder) if File.exist?(holder)
+        rescue SystemCallError
           nil
         end
       end
     end
 
-    # The 0o666 mode passed to File.open/File.write is masked by the creating
-    # process's umask (typically 022), so a file first created by one app's
-    # deploy user ends up 0644 -- writable only by that user. chmod isn't
-    # subject to umask, so force it explicitly after creation -- but only the
-    # file's owner may chmod it at all, so every app after the first hits
-    # Errno::EPERM here and that's fine: it means someone already fixed the
-    # mode (or this app's own creation already got it right).
+    # Read-only, because flock(2) does not need write permission — and that is
+    # the whole reason this file no longer has to be world-writable.
     #
-    # None of this helps if the file already exists with a stale restrictive
-    # mode from before this fix (or a stricter umask) -- opening it for
-    # read/write then fails at the OS level with Errno::EACCES, before any
-    # chmod call ever runs. That's a real, separate failure a non-owner
-    # process cannot self-heal (chmod would also raise EPERM), so it's
-    # reported clearly instead of crashing with a raw backtrace.
-    def open_shared(path, mode)
-      file = File.open(path, mode, 0o666)
-      begin
-        File.chmod(0o666, path)
-      rescue Errno::EPERM
-        nil
-      end
-      file
-    rescue Errno::EACCES => e
-      warn "pub4-ci-guard: #{path} not accessible (#{e.message}) -- ask its owner to " \
-           "chmod 666 it, or delete it if stale"
+    # The history is worth keeping, because it is what 0o666 was for. The lock
+    # is opened by three different deploy users (brgen, amber, bsdports). Asking
+    # for O_RDWR meant the file had to be writable by all of them, which meant
+    # chmod 666, which meant: the requested 0o666 on File.open is masked by the
+    # creating process's umask down to 0644 (broke amber's deploy 2026-07-20,
+    # EACCES, right after brgen's CI created the file); chmod is not subject to
+    # umask so it was applied explicitly; only an owner may chmod, so the next
+    # app hit EPERM and crashed (bsdports, same incident); and the result was a
+    # world-writable file in a world-writable directory, which is the symlink
+    # hazard OPENBSD/lib/ci_lock.sh was written to remove.
+    #
+    # Opening read-only deletes that entire chain. The file can be 0644 and
+    # owned by whoever created it; every app can still take the lock.
+    def open_shared(path)
+      File.open(path, File::RDONLY)
+    rescue Errno::ENOENT
+      # Create it once, then reopen read-only so the rest of the run holds the
+      # same kind of descriptor whether or not it was here already.
+      File.open(path, File::CREAT | File::WRONLY, 0o644).close
+      File.open(path, File::RDONLY)
+    rescue Errno::EACCES, Errno::EPERM => e
+      warn "pub4-ci-guard: #{path} not readable (#{e.message}) -- ask its owner to " \
+           "chmod 644 it, or delete it if stale"
       exit 1
     end
 
-    def write_holder!
-      file = open_shared(HOLDER_PATH, File::CREAT | File::WRONLY | File::TRUNC)
-      file.write(holder_info)
-    ensure
-      file&.close
+    # Best effort. A holder note is a diagnostic; a mutex that refuses to be
+    # taken because it could not write a comment about itself would be worse
+    # than one nobody can attribute. The 2026-08-14 collision between two agents
+    # deploying at once was read straight off this file.
+    def write_holder!(path = holder_path)
+      File.write(path, holder_info)
+    rescue SystemCallError
+      nil
     end
 
     def safe_read(path)

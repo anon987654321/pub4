@@ -873,7 +873,7 @@ repo_topics:
     confidence: high
     local_evidence:
     - MASTER/lib/voice/production_dna.rb
-    - studio/dilla/dilla.rb
+    - STUDIO/dilla/dilla.rb
     pattern: 'Dilla/Madlib/FlyLo timing, chord voicings, analog drift, low-pass warmth,
       sampler grit, and live-triggered imperfection are encoded as reusable production
       DNA.
@@ -1520,8 +1520,8 @@ operator_playbook:
     - id: vps_one_ssh_no_parallel_ci
       area: deploy
       signal: "load averages >10 on vm23; dozens of ruby in D state; rcctl master/amber failed; SSH hangs"
-      action: "Never open parallel SSH sessions to vm23. Use zsh OPENBSD/vps_ci.sh APP (mutex via /var/tmp/pub4-ci.lock) or vps_ci_all.sh for serial six-app proof. MASTER scan: zsh OPENBSD/vps_master_scan.sh. resource_guard cron runs stale_ci_cleanup.ksh when load>=4. Kill stale local ssh clients first; doas rcctl restart master amber after cleanup. If D-state ruby won't die: host console vmctl stop/start vm23."
-      proof: "uptime load <4; test -f /var/tmp/pub4-ci.lock; zsh OPENBSD/vps_ci.sh brgen; doas rcctl check master brgen amber"
+      action: "Never open parallel SSH sessions to vm23. Use zsh OPENBSD/vps_ci.sh APP (mutex via /var/db/pub4/ci.lock) or vps_ci_all.sh for serial six-app proof. MASTER scan: zsh OPENBSD/vps_master_scan.sh. resource_guard cron runs stale_ci_cleanup.ksh when load>=4. Kill stale local ssh clients first; doas rcctl restart master amber after cleanup. If D-state ruby won't die: host console vmctl stop/start vm23."
+      proof: "uptime load <4; test -f /var/db/pub4/ci.lock; zsh OPENBSD/vps_ci.sh brgen; doas rcctl check master brgen amber"
 
     - id: vps_ci_shared_tree_path
       area: deploy
@@ -1532,8 +1532,8 @@ operator_playbook:
     - id: vps_ci_lock_perms
       area: deploy
       signal: "pub4-ci-guard: EACCES on flock or EPERM deleting lock.holder"
-      action: "Lock at /var/tmp/pub4-ci.lock mode 666 (vps_ci ensure_ci_lock). Do not pre-create .holder as root — vps_ci removes stale holder before CI. CiGuard swallows EPERM on holder delete."
-      proof: "ls -l /var/tmp/pub4-ci.lock; zsh OPENBSD/vps_ci.sh brgen exits 0"
+      action: "Lock at /var/db/pub4/ci.lock mode 644 (vps_ci pub4_ensure_ci_lock), taken with flock(2) by CiGuard and OPENBSD/bin/with-ci-lock. Opened read-only, so it does not need to be world-writable. Do not pre-create .holder as root — vps_ci removes stale holder before CI; CiGuard tolerates a holder it cannot write or delete."
+      proof: "ls -l /var/db/pub4/ci.lock; zsh OPENBSD/vps_ci.sh brgen exits 0"
 
     - id: git_shared_worktree_commit_scope
       area: process

@@ -283,6 +283,45 @@ class DeployGatesContractTest < Minitest::Test
   # nothing was going to execute them. That is an argument for fixing it before
   # a worker exists, not after: the first deploy with one would throw away the
   # password-reset emails enqueued while it was running.
+  # OpenBSD ships neither lockf(1) nor flock(1) — both are FreeBSD/Linux
+  # utilities. `command -v lockf` on vm23 prints nothing.
+  #
+  # vps_master_scan.sh called `lockf -k "$lock" env ... bin/cli "$@"`, so the
+  # documented way to run a MASTER scan on the box exited with "command not
+  # found" every time, having taken no lock and run no scan. The failure is
+  # silent in the sense that matters: the script's own output says it locked.
+  #
+  # OPENBSD/bin/with-ci-lock is the same idea in Ruby, which this box has.
+  def test_no_script_reaches_for_a_locking_utility_openbsd_lacks
+    scripts = Dir.glob("#{File.expand_path("../OPENBSD", ROOT)}/**/*.{sh,ksh,zsh}") +
+              Dir.glob("#{ROOT}/**/*.sh").reject { |p| p.include?("/vendor/") }
+
+    offenders = scripts.flat_map do |path|
+      File.read(path, encoding: "UTF-8").lines.each_with_index.filter_map do |line, i|
+        next if line.strip.start_with?("#")
+        next unless line.match?(/(?:\A|[|;&(]|\s)(?:lockf|flock)\s+-/)
+
+        "#{path.sub("#{File.dirname(ROOT)}/", "")}:#{i + 1}"
+      end
+    end
+
+    assert_empty offenders, "OpenBSD has no lockf(1)/flock(1) — use OPENBSD/bin/with-ci-lock"
+  end
+
+  # One CI mutex, not two. The Ruby guard and the shell helper have to name the
+  # same file or neither excludes the other, which is what happened: CiGuard
+  # locked /var/tmp/pub4-ci.lock while ci_lock.sh pointed three scripts at
+  # /var/db/pub4/ci.lock and called itself the single source.
+  def test_the_ruby_and_shell_ci_locks_are_the_same_file
+    shell = File.read(File.expand_path("../OPENBSD/lib/ci_lock.sh", ROOT), encoding: "UTF-8")
+    ruby = File.read(File.join(ROOT, "shared/lib/pub4/ci_guard.rb"), encoding: "UTF-8")
+
+    assert_includes shell, "PUB4_CI_LOCK_DIR=/var/db/pub4"
+    assert_includes shell, "PUB4_CI_LOCK_NAME=ci.lock"
+    assert_includes ruby, 'LOCK_DIR = "/var/db/pub4"'
+    assert_includes ruby, 'DEFAULT_LOCK_PATH = File.join(LOCK_DIR, "ci.lock")'
+  end
+
   def test_secondary_schema_load_is_guarded_by_an_initialisation_check
     source = File.read(File.join(ROOT, "_database.sh"), encoding: "UTF-8")
 

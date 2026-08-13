@@ -1,0 +1,92 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# with-ci-lock CMD [ARGS...] — run CMD while holding the pub4 CI mutex.
+#
+# OpenBSD has neither lockf(1) nor flock(1). Both are FreeBSD/Linux utilities,
+# and `vps_master_scan.sh` called the first of them:
+#
+#     lockf -k "$lock" env MASTER_SCAN_ONLY=1 ... bundle34 exec ruby bin/cli "$@"
+#
+# On vm23 that is `lockf: Command not found`, every time. The documented way to
+# run a MASTER scan on the box has never once acquired a lock, and never once
+# run the scan. `command -v lockf` on vm23 prints nothing.
+#
+# So the primitive has to come from somewhere that exists here, and the machine
+# has Ruby. This flocks the shared lock and execs the command still holding it —
+# close_on_exec off, so the descriptor and its lock survive into the child, and
+# the kernel releases it when the child exits however it exits.
+#
+# Non-blocking. If the lock is held it names the holder and exits 1, matching
+# Pub4::CiGuard, because the point of a serial gate on a one-vCPU box is to
+# refuse rather than to queue up behind whatever is already busy.
+
+LOCK_DIR = "/var/db/pub4"
+DEFAULT_LOCK = File.join(LOCK_DIR, "ci.lock")
+
+def die(message)
+  warn "with-ci-lock: #{message}"
+  exit 1
+end
+
+# An override is honoured only when its directory is not world-writable.
+#
+# The path used to be caller-chosen under /var/tmp and then chmod'ed by root,
+# which is a symlink waiting to happen — any local account could plant one at
+# the name and redirect the chmod. Checking the directory checks the actual
+# property rather than hardcoding one blessed path, so tests can point this at
+# a private tmpdir without reopening the hole.
+def lock_path
+  requested = ENV["PUB4_CI_LOCK"].to_s
+  return DEFAULT_LOCK if requested.empty?
+
+  dir = File.dirname(requested)
+  unless File.directory?(dir)
+    die "PUB4_CI_LOCK=#{requested}: #{dir} does not exist"
+  end
+
+  if (File.stat(dir).mode & 0o002) != 0
+    warn "with-ci-lock: ignoring PUB4_CI_LOCK=#{requested} — #{dir} is world-writable"
+    return DEFAULT_LOCK
+  end
+
+  requested
+end
+
+def holder_of(path)
+  File.read("#{path}.holder").strip
+rescue StandardError
+  "unknown"
+end
+
+die "usage: with-ci-lock CMD [ARGS...]" if ARGV.empty?
+
+path = lock_path
+# Read-only is enough for flock(2), and it is the reason this file no longer has
+# to be world-writable: every app's deploy user can take the lock without ever
+# needing write permission on it.
+file = begin
+  File.open(path, File::RDONLY)
+rescue Errno::ENOENT
+  die "#{path} does not exist — run pub4_ensure_ci_lock first"
+rescue SystemCallError => e
+  die "#{path}: #{e.message}"
+end
+
+unless file.flock(File::LOCK_EX | File::LOCK_NB)
+  warn "with-ci-lock: #{path} busy (#{holder_of(path)})"
+  exit 1
+end
+
+# Best effort, and deliberately not fatal: the holder note is a diagnostic, and
+# a lock that refuses to be taken because it could not write a comment about
+# itself would be worse than one nobody can attribute. Tonight's collision was
+# read straight off this file — "root@app pid=63315" — so it earns its keep.
+begin
+  File.write("#{path}.holder", "#{ENV["USER"] || "unknown"}@#{File.basename(Dir.pwd)} pid=#{Process.pid}\n")
+rescue SystemCallError
+  nil
+end
+
+file.close_on_exec = false
+exec(*ARGV)

@@ -37,9 +37,23 @@ pub4_ci_lock_path() {
 }
 
 # Creates the directory root-owned, then the lock file dev-owned. The lock file is
-# never removed here: lockf(1) may be holding it, and unlinking it would let a
+# never removed here: a holder may have it open, and unlinking it would let a
 # second holder open a fresh inode and run concurrently — the one thing a mutex
 # exists to prevent.
+#
+# The lock itself is taken by OPENBSD/bin/with-ci-lock and Pub4::CiGuard, both
+# flock(2). This comment used to say lockf(1), and vps_master_scan.sh called it:
+# OpenBSD has no lockf(1) and no flock(1) either, so that line was `command not
+# found` on every run and the documented way to scan vm23 never took a lock or
+# ran a scan.
+#
+# Note what this function does and does not do. It ENSURES the file — creates it
+# with the right owner and mode. It does not lock anything. vps_ci.sh calls it
+# and prints "sync + mutex + load gate"; the mutex in that sentence is the one
+# bin/ci takes through CiGuard, on this same path since 2026-08-14. Before that
+# CiGuard locked /var/tmp/pub4-ci.lock instead, so the file created here was
+# never locked by anyone and the file that was locked was the world-writable one
+# this helper exists to replace.
 pub4_ensure_ci_lock() {
   lock=$(pub4_ci_lock_path)
   doas sh -c "
