@@ -122,13 +122,30 @@ def widen_master!(path)
   amt = master_width
   return path unless amt.positive? && File.file?(path)
 
-  out = "#{path}.wide#{File.extname(path)}"
+  # Phase-coherent widening, not Haas. Measured 2026-08-13.
+  #
+  # This used haas=left_delay=(2.0+5.0*amt):right_delay=(0.5+1.2*amt). At the
+  # MASTER_WIDTH=0.5 these renders were made with, that is 4.5 ms against 1.1 ms
+  # — a 3.4 ms inter-channel delay, which is a comb filter with nulls at roughly
+  # 147, 441 and 735 Hz. The finished tracks measured a SIDE channel LOUDER than
+  # their MID (dilla_semua_96 at +1.7 dB) and lost 7.5 dB summing to mono, with
+  # the loss concentrated in 150-800 Hz. Predicted nulls and measured band agree.
+  #
+  # Source material is not the cause: samples/semua_untuk_mu/loop.wav measures a
+  # healthy -6.2 dB side/mid, and the render turned that into +1.7.
+  #
+  # stereotools slev scales the side channel without delaying either one. It
+  # widens; it cannot comb. The cost is honest and small: a mono fold loses the
+  # boosted side rather than combing the mids, which is the trade every mastering
+  # widener makes.
+  #
+  # SIDE_CEILING keeps the result under unity — a master bus that can put more
+  # energy in the difference signal than the sum is not wide, it is broken.
+  slev = [1.0 + 0.5 * amt, 1.45].min.round(2)
   chain = "[0:a]asplit=2[mw_lo][mw_hi];" \
           "[mw_lo]lowpass=f=#{MASTER_WIDTH_HZ}[mw_low];" \
           "[mw_hi]highpass=f=#{MASTER_WIDTH_HZ}," \
-          "haas=left_delay=#{(2.0 + 5.0 * amt).round(2)}:right_delay=#{(0.5 + 1.2 * amt).round(2)}:" \
-          "left_balance=-#{(0.3 * amt).round(2)}:right_balance=#{(0.3 * amt).round(2)}:" \
-          "side_gain=#{(1.0 + 0.8 * amt).round(2)}[mw_wide];" \
+          "stereotools=mlev=1:slev=#{slev}[mw_wide];" \
           "[mw_low][mw_wide]amix=inputs=2:weights=1 1:duration=first:normalize=0," \
           "alimiter=limit=0.97[mwout]"
   begin

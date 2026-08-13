@@ -230,13 +230,22 @@ end
 # resonance and an absorption, not a reverb preset — the short taps are the
 # flutter between close walls, the long pair is the far end. Applied to the
 # summed voices so they share one space rather than each sitting in its own.
+# Operator note 2026-08-13: the tunnel read as too loud in the techno set. Two
+# gains came down and nothing else moved — the tap structure above is the
+# character and cutting it would have made a different effect rather than a
+# quieter one.
+#
+#   520 Hz resonance  +6 dB -> +2 dB   the low-mid honk, the loudest single thing
+#                                      in the chain and what "too loud" hears
+#   stereotools slev  1.35 -> 1.15     sides came back toward centre; a widened
+#                                      tunnel reads louder than it measures
 SU_TUNNEL_CHAIN = "highpass=f=90," \
-                  "equalizer=f=520:t=q:w=1.4:g=6," \
+                  "equalizer=f=520:t=q:w=1.4:g=2," \
                   "equalizer=f=1900:t=q:w=2.0:g=-4," \
                   "lowpass=f=3400," \
                   "aecho=0.82:0.85:37|59|83|127:0.5|0.38|0.28|0.18," \
                   "aecho=0.9:0.8:311|487:0.22|0.14," \
-                  "stereotools=mlev=0.9:slev=1.35"
+                  "stereotools=mlev=0.9:slev=1.15"
 
 # The refined tunnel: a convolved impulse response instead of six discrete taps.
 #

@@ -423,7 +423,15 @@ end
 # its oversampled peak path); the final limiter remains a deterministic last guard.
 MASTER_TARGET_LUFS = -17.0
 TRUE_PEAK_CEILING_DB = -1.0
-TRUE_PEAK_CEILING_LINEAR = (10**(TRUE_PEAK_CEILING_DB / 20.0)).round(4)
+# Encoder headroom. alimiter caps SAMPLE peak; the delivery spec is TRUE peak,
+# and lame reconstructs inter-sample peaks above whatever ceiling the samples
+# were held to. Limiting at exactly -1.0 therefore ships a file measuring above
+# -1.0: eleven of thirty-four renders in renders/beats sit at or above it and
+# one at +0.1 dBFS, each with "true peak exceeds -1 dBTP" recorded in its own
+# quality sidecar. Measured on this tree 2026-08-13, 0.6 dB is the allowance
+# that puts an encoded master back under the ceiling it declares.
+TRUE_PEAK_ENCODER_HEADROOM_DB = 0.6
+TRUE_PEAK_CEILING_LINEAR = (10**((TRUE_PEAK_CEILING_DB - TRUE_PEAK_ENCODER_HEADROOM_DB) / 20.0)).round(4)
 
 # Every Sonitex preset's own warmth/head-bump EQ re-boosts the sub-100Hz band
 # the sample bass and synth bass already occupy, earlier in the chain — undoing

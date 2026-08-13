@@ -238,6 +238,23 @@ def dilla_quality(path, baseline_path = nil)
   end
   sidecar = "#{path}.quality.json"
   File.write(sidecar, JSON.pretty_generate(report) + "\n")
+
+  # Say the warnings out loud, not only inside a JSON blob.
+  #
+  # These were computed correctly and written to a sidecar nobody opens, then
+  # printed as part of a forty-line pretty-printed hash where a warning reads as
+  # one more field. techno1.mp3.quality.json has carried "master is outside the
+  # -20.5..-15.5 LUFS range" since 2026-08-11 and the take shipped at -14.0 LUFS
+  # anyway. Eleven of thirty-four renders sit at or above -1.0 dBTP with the same
+  # warning recorded and unread.
+  #
+  # This does not block a render — a gate that refuses to write a file the
+  # operator asked for is a different decision, and one for the operator. It
+  # makes the finding visible at the moment it is produced.
+  Array(report[:warnings]).each do |warning|
+    dmesg_warn("quality: #{warning}")
+  end
+
   puts JSON.pretty_generate(report.merge(sidecar:))
   report
 end

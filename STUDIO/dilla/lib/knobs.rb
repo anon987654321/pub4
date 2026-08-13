@@ -187,6 +187,14 @@ module DillaKnobs
           # A path knob usually carries an off-switch too (SAMPLE_LOOP=0 means
           # "no bed"), and "0" is not a missing file.
           next if TRUTHY.include?(value.downcase) || FALSY.include?(value.downcase)
+          # A crate slug is not a missing file. SAMPLE_LOOP takes both a path and
+          # a slug -- assets_manifest.rb says so in as many words -- and the slug
+          # is what every recipe in renders/beats actually carries. Checking only
+          # File.exist? made the correct spelling warn: every render with
+          # SAMPLE_LOOP=semua_untuk_mu printed "no such file exists" and then went
+          # on to load samples/semua_untuk_mu/loop.wav and use it. A warning that
+          # fires on the working case is the one people learn to scroll past.
+          next if sample_slug?(value)
 
           problems << "#{name}=#{value} is read as a file path and no such file exists" unless File.exist?(value)
         end
@@ -195,6 +203,18 @@ module DillaKnobs
     end
 
     private
+
+    # A crate slug that resolves to a loop, which is how every recipe in
+    # renders/beats spells SAMPLE_LOOP. Guarded on SAMPLE_DIR because dilla.rb
+    # defines it and this file is loadable on its own.
+    def sample_slug?(value)
+      return false unless defined?(SAMPLE_DIR)
+      return false if value.include?("/") || value.empty?
+
+      !Dir.glob(File.join(SAMPLE_DIR, value, "*.{wav,mp3,aiff}")).empty?
+    rescue StandardError
+      false
+    end
 
     # Names that match the knob-ish prefixes but are the operator's own shell.
     ENV_IGNORE = %w[SAMPLE_RATE RENDER_SEED].freeze
