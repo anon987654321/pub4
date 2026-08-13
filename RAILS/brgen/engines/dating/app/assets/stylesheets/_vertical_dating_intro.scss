@@ -47,9 +47,30 @@
   color: var(--dating-muted);
 }
 
-/* The bankID badge rules were here until 2026-08-13. d35b40ec0 removed the
-   badge from dating/home/index.html.erb and left three rules with nothing to
-   style — the two selectors that put unused_selector over its recorded 266. */
+/* The bankID badge. Removed from the markup in d35b40ec0 and deleted here as
+   dead in 16370042a; both restored on 2026-08-13 once the original art turned
+   up showing the badge was part of the design rather than leftover. */
+.dating-intro-bankid {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--weight-bold);
+  color: var(--dating-accent-ink);
+  letter-spacing: -0.02em;
+}
+
+.dating-intro-bankid-mark {
+  display: inline-grid;
+  grid-template-columns: repeat(3, var(--space-1));
+  gap: var(--space-1);
+}
+
+.dating-intro-bankid-mark span {
+  width: var(--space-1);
+  height: var(--space-1);
+  border-radius: var(--radius-sm);
+  background: currentColor;
+}
 
 /* Progressive profile form — essentials first, optional under details. */
 .dating-profile-essentials {
