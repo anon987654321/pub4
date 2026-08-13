@@ -22,6 +22,12 @@ section held a copy and the copy drifted — it read "38,294, allowance 1 of 2" 
 `spine.yml` had ratcheted to 38,285 and cleared the log, which is the two-source
 failure this register warns about elsewhere in its own words.
 
+Worth knowing without becoming a second copy: on 2026-08-13 `rake lint:spine`
+reports `38869/38869`. Exactly at the ceiling, no headroom — so the next line
+added to `lib/` breaks the ratchet, and the paragraph below about paying a breach
+out of `lib/` is not hypothetical. Read the current number from the task, never
+from here.
+
 What belongs here is the rule the ratchet taught, because it is not in the
 mechanism:
 
@@ -43,10 +49,10 @@ countdown.
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **0 findings as of 2026-08-12**, after the three the
-merge exposed in the fold spine were closed — see "The fold spine had never been
-scanned" below. Unlike the 0 of 2026-08-11, this one is measured over a tree that
-includes the fold. Treat any count here as
+`rake selftest` reports **0 findings, re-measured 2026-08-13** and unchanged from
+the 0 recorded 2026-08-12, after the three the fold-spine merge exposed were
+closed — see "The fold spine had never been scanned" below. Unlike the 0 of
+2026-08-11, both are measured over a tree that includes the fold. Treat any count here as
 true for the commit that carries it and no further: it has been 0, 1, 2, 3, 6 and
 7 on different days of the same fortnight, and a "clean since" claim in
 `START_HERE.md` was already stale once.
@@ -167,8 +173,15 @@ the same long line.
 
 ## Scanner noise
 
-`rake selfcheck` is **17 violations across 3 rules** (measured 2026-08-12):
-`SILENT_RESCUE` 10, `guard_expensive_ops` 5, `UNBOUNDED_RETRY` 2.
+`rake selfcheck` is **18 violations across 3 rules** (re-measured 2026-08-13):
+`SILENT_RESCUE` 11, `guard_expensive_ops` 5, `UNBOUNDED_RETRY` 2.
+
+It read 17 with `SILENT_RESCUE` 10 on 2026-08-12. The +1 arrived without a new
+`rescue` anywhere in `lib/` — `git log -p` over the range shows zero added rescue
+lines and the tree is clean — so it came from a rule moving under the code rather
+than code moving under the rule, most likely the scan narrowing in `fca0883e5`.
+Left as measured rather than explained away, which is what the caveat below is
+for.
 
 It was 34 across 6 the day before, and 17 of the 17 that went were the rules
 misreading their own tree rather than code getting fixed:
