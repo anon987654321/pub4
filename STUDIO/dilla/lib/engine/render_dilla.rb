@@ -90,6 +90,28 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # the progression table happened to hold. Presence of a bed is reason enough --
   # there is no case where you lay pads over a record and want a different key.
   keep_key = HARMONIC_KEEP || !loop_for_key.nil?
+
+  # A record that already states its chords needs nothing added.
+  #
+  # The guard below mutes the tonal layers when it cannot READ the loop's key,
+  # on the reasoning that guessing a progression against an unknown key is worse
+  # than silence. That is the right rule for an illegible loop and the wrong
+  # question for this one: semua_untuk_mu reads Eb major at fit 0.79 — perfectly
+  # legible — and the guard therefore transposed the pads to match and played
+  # them over a record whose first ten seconds are vocal chords. Legible is not
+  # the same as needs accompanying.
+  #
+  # Declared per record in TRACK_SAMPLE_LOOPS_BUILTIN, because only the crate
+  # knows which records are like this, and the other loops there want their
+  # progressions. SAMPLE_HARMONY=0 overrides for a one-off render.
+  if sample_loop_for(ENV["TRACK"])&.dig(:carries_own_harmony) && ENV["SAMPLE_HARMONY"] != "0"
+    dmesg("harmony: the record carries it — tonal layers muted", unit: "harm0", parent: "dilla0")
+    %w[PAD_VOL HARM_MIX_WEIGHT].each { |k| ENV[k] = "0" }
+    %w[MELODIC_LEAD SCALE_LEAD LEAD_ARP HARMONY_LEAD PAD_LAYERS PAD_TEXTURE
+       CHOIR_VOX LUSH_SYNTH].each { |k| ENV[k] = "0" }
+    pads = []
+  end
+
   if loop_for_key && !pads.empty? && HARMONIC_GUARD
     key = sample_key(loop_for_key)
     fit = key ? key[2] : 0.0

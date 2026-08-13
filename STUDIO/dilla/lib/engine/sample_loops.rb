@@ -54,8 +54,23 @@ TRACK_SAMPLE_LOOPS_BUILTIN = {
   # known-good boundary is the only honest way to get a tempo here.
   #
   # Low end left flat: see the note above, this one does not need correcting.
+  # carries_own_harmony: Anuar Zain's record states its chords with voices, and
+  # the first ten seconds are those voices and their backing and nothing else --
+  # separated, only the vocals and `other` stems carry signal there, the rest
+  # measuring -78 dB or lower. A generated progression on top is a second piece
+  # of music in the same bar.
+  #
+  # render_dilla.rb's harmonic guard already argues exactly this ("there is no
+  # case where you lay pads over a record and want a different key") but decides
+  # it from whether the loop's key is READABLE. This loop reads Eb major at fit
+  # 0.79 -- legible, so the guard concluded it could transpose the pads to match
+  # and play them. Legibility is the wrong question for a record that has already
+  # stated the chords; the right one is whether anything needs adding, and only
+  # the crate knows that.
+  #
+  # Per record, not a mode. The other loops here want their progressions.
   semua_untuk_mu: { path: File.join(SAMPLE_DIR, "semua_untuk_mu", "loop.wav"), bpm: 96.0,
-                    hp: 45, sub_db: 0.0, lp: 5200 },
+                    hp: 45, sub_db: 0.0, lp: 5200, carries_own_harmony: true },
 
   # 4 bars from 0.32s, where the music starts. The cleanest-looping source of
   # the three by a distance: self-similarity 0.654 against 0.300 for the next
