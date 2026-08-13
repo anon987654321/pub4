@@ -40,6 +40,12 @@ class Post < ApplicationRecord
 
   broadcasts_refreshes
 
+  # Federate public posts only. A post in a community is scoped to that
+  # community's rules and privacy setting, and an anonymous one has no author to
+  # attribute — neither belongs in an outbox that says who wrote what.
+  after_commit :federate_creation, on: :create
+  after_commit :federate_deletion, on: :destroy
+
   VOTE_SQL = Arel.sql("SUM(COALESCE(votes.value,0)) DESC, posts.created_at DESC")
   TOP_SQL  = Arel.sql("SUM(COALESCE(votes.value,0)) DESC")
   # "hot" = score decayed by age, so it is a live ranking rather than an all-time
@@ -100,6 +106,30 @@ class Post < ApplicationRecord
   end
 
   private
+
+  def federatable_post?
+    community_id.nil? && !anonymous? && !live? && strict_safe(:user)&.federated?
+  end
+
+  def federate_creation
+    return unless federatable_post?
+
+    Fediverse::DistributeJob.perform_later(
+      user_id: user_id, payload: Fediverse::Serializer.create(self).to_json
+    )
+  end
+
+  # Sent on destroy rather than left to expire: a follower's instance keeps its
+  # copy indefinitely, so a post deleted here stays visible there forever unless
+  # we say so. The payload is built here, while the record is still in memory —
+  # a job given an id would have nothing left to load.
+  def federate_deletion
+    return unless federatable_post?
+
+    Fediverse::DistributeJob.perform_later(
+      user_id: user_id, payload: Fediverse::Serializer.delete(self).to_json
+    )
+  end
 
   def live_content_length
     return if content.blank?

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_170000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -395,6 +395,46 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_160000) do
     t.index ["identity_provider_id", "subject"], name: "index_external_identities_on_provider_and_subject", unique: true
     t.index ["identity_provider_id"], name: "index_external_identities_on_identity_provider_id"
     t.index ["user_id"], name: "index_external_identities_on_user_id"
+  end
+
+  create_table "fedi_activities", force: :cascade do |t|
+    t.string "activity_type"
+    t.datetime "created_at", null: false
+    t.integer "fedi_actor_id"
+    t.datetime "received_at"
+    t.datetime "updated_at", null: false
+    t.string "uri", null: false
+    t.index ["fedi_actor_id"], name: "index_fedi_activities_on_fedi_actor_id"
+    t.index ["uri"], name: "index_fedi_activities_on_uri", unique: true
+  end
+
+  create_table "fedi_actors", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "display_name"
+    t.string "domain"
+    t.string "followers_url"
+    t.string "inbox_url", null: false
+    t.datetime "last_fetched_at"
+    t.text "public_key_pem"
+    t.string "shared_inbox_url"
+    t.datetime "updated_at", null: false
+    t.string "uri", null: false
+    t.string "username"
+    t.index ["uri"], name: "index_fedi_actors_on_uri", unique: true
+    t.index ["username", "domain"], name: "index_fedi_actors_on_username_and_domain"
+  end
+
+  create_table "fedi_follows", force: :cascade do |t|
+    t.string "activity_uri"
+    t.datetime "created_at", null: false
+    t.integer "fedi_actor_id", null: false
+    t.string "state", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["fedi_actor_id", "user_id"], name: "index_fedi_follows_on_fedi_actor_id_and_user_id", unique: true
+    t.index ["fedi_actor_id"], name: "index_fedi_follows_on_fedi_actor_id"
+    t.index ["user_id", "state"], name: "index_fedi_follows_on_user_id_and_state"
+    t.index ["user_id"], name: "index_fedi_follows_on_user_id"
   end
 
   create_table "follows", force: :cascade do |t|
@@ -1404,6 +1444,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_160000) do
     t.string "otp_secret"
     t.string "password_digest", null: false
     t.text "persona"
+    t.text "private_key"
+    t.text "public_key"
     t.string "remember_token"
     t.datetime "remember_token_expires_at"
     t.boolean "two_factor_enabled", default: false, null: false
@@ -1462,6 +1504,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_160000) do
   add_foreign_key "events", "users"
   add_foreign_key "external_identities", "identity_providers"
   add_foreign_key "external_identities", "users"
+  add_foreign_key "fedi_activities", "fedi_actors"
+  add_foreign_key "fedi_follows", "fedi_actors"
+  add_foreign_key "fedi_follows", "users"
   add_foreign_key "identity_assurances", "users"
   add_foreign_key "marketplace_deals", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "marketplace_listings", column: "listing_id"

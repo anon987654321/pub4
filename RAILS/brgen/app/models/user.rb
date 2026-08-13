@@ -19,6 +19,9 @@ class User < ApplicationRecord
   include User::TvAssociations
   include User::DatingAssociations
   include User::SocialAssociations
+  # The local side of an ActivityPub actor: identity is scoped to the user's
+  # city domain, because that is already how brgen is partitioned.
+  include Federatable
 
   has_secure_password
 

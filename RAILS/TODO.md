@@ -172,19 +172,55 @@ names the courier and their distance from the kitchen; it does not move.
 
 ## Tier 2 — structurally absent
 
-### 2.1 No federation (Mastodon)
+### 2.1 No federation (Mastodon) — **done, outbound half**
 
-No ActivityPub, WebFinger or nodeinfo anywhere in the tree.
+A brgen account can now be followed from anywhere in the fediverse and its
+public posts deliver outward. WebFinger, NodeInfo, actor documents, outbox,
+followers, a verified inbox, HTTP signatures, per-inbox delivery with retry.
 
-This is the only item on the list that is not parity work. brgen is already
-partitioned by city subdomain through `Brgen::DomainRegistry`, so a city is
-already shaped like an instance. Federating cities to each other, and then
-outward to the fediverse, is a differentiator rather than a clone. It also has
-the largest surface: actor documents, inbox/outbox, HTTP signatures, delivery
-retry, and a moderation story for remote content that `ModerationReport` does
-not currently model.
+The city partitioning does the work: `@kari@brgen.no` and `@kari@oshlo.no` are
+different accounts because the cities are already different origins with
+different populations, which is the same shape as two Mastodon instances. Every
+lookup resolves against the *requested host* — answering for the wrong city
+would hand a stranger's posts to whoever asked.
 
-Depends on 1.1 — `Announce` is repost.
+Security decisions, since the inbox is where an unverified string becomes an
+action:
+
+- **The signer and the claimed author must match.** Without that check a valid
+  signature from any actor authorises an activity attributed to any other, and
+  every account is forgeable by anyone with an account anywhere.
+- **Partial coverage fails closed.** A signature over nothing but `Date` is a
+  valid signature that proves nothing about the request, so
+  `(request-target)`, `host`, `date` and `digest` are all required.
+- **The Digest header is checked**, or a signed request can carry any body.
+- **Signatures expire** (5 minutes), so a captured request cannot be replayed.
+- **Delete only removes what its sender owns.** A verified signature proves who
+  is asking, not what they may ask for.
+- Bodies are capped before parsing; keys are cached, because re-fetching an
+  actor per inbox POST makes our inbox an amplifier pointed at whoever is being
+  impersonated.
+- The followers collection reports a count and lists nobody. Who follows a
+  small-city account is worth more to a scraper than to anyone else, and the
+  protocol does not require publishing it.
+
+Keys are RSA-2048 generated on first use, not at signup — brgen mints a real
+`User` row for every cookieless visitor and almost none of them federate.
+
+**Check:** `brgen/test/lib/fediverse_signature_test.rb` (10, every way
+verification can be got wrong), `brgen/test/controllers/fediverse_test.rb` (10,
+discovery and the city boundary), `brgen/test/controllers/fediverse_inbox_test.rb`
+(12, including impersonation, body-swap, replay and duplicate delivery).
+
+**Still open — the inbound half.** Remote `Create`, `Announce` and `Like` are
+verified, recorded as seen and then dropped: brgen does not store remote posts.
+That is deliberate rather than unfinished — ingesting them means remote media
+proxying, remote content moderation (`ModerationReport` has no model for
+content whose author is not local) and a blocklist story, each of which is
+larger than everything above. The handler says so instead of pretending.
+
+Also open: outbound *following* (a brgen user following a remote account),
+instance-level blocklists, and `Update` on edit.
 
 ### 2.2 No `Event` model (Facebook) — **done**
 

@@ -70,6 +70,27 @@ Rails.application.routes.draw do
     resource :repost, only: [ :create ], controller: "reposts"
   end
 
+  # ActivityPub. Each city is a separate origin with its own population, which
+  # is the same shape as two Mastodon instances — so an actor is resolved
+  # against the requested host, not globally.
+  get ".well-known/webfinger" => "well_known#webfinger", as: :webfinger
+  get ".well-known/nodeinfo"  => "well_known#nodeinfo_index"
+  get "nodeinfo/2.1"          => "well_known#nodeinfo", as: :nodeinfo
+  # The shared inbox: one POST per instance instead of one per follower.
+  post "inbox" => "fediverse/inboxes#create", as: :shared_inbox
+  get  "users/:username/outbox"    => "fediverse/actors#outbox",    as: :actor_outbox
+  get  "users/:username/followers" => "fediverse/actors#followers", as: :actor_followers
+  post "users/:username/inbox"     => "fediverse/inboxes#create",   as: :actor_inbox
+  # The actor document shares its URL with the HTML profile, told apart by
+  # Accept. A path constraint would not do: /users/5 is the existing profile
+  # route and a username is not guaranteed to be non-numeric, so the header is
+  # the only thing that actually distinguishes the two requests.
+  activitypub_request = lambda do |request|
+    request.headers["Accept"].to_s.match?(%r{application/(activity|ld)\+json})
+  end
+  get "users/:username" => "fediverse/actors#show", as: :actor, constraints: activitypub_request
+
+
   # Stories delete themselves after 24h; `alive` hides an expired one from every
   # surface whether or not the sweep has run yet.
   resources :stories, only: %i[index show new create destroy]

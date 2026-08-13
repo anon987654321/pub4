@@ -47,6 +47,52 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_nil activity_event_href(event)
   end
 
+  test "activity_event_title uses the subject's name, not humanize of CamelCase" do
+    user = User.strict_loading(false).create!(
+      email_address: "title-#{SecureRandom.hex(4)}@example.com",
+      password: "password123",
+      username: "ttl#{SecureRandom.hex(3)}",
+      city: @city
+    )
+    category = Marketplace::Category.create!(
+      name: "Ski",
+      slug: "ski-#{SecureRandom.hex(4)}"
+    )
+    listing = Marketplace::Listing.create!(
+      user: user,
+      title: "Telemarkski",
+      description: "Pent brukt",
+      price_cents: 1000,
+      status: "active",
+      category: category,
+      city: @city
+    )
+    event = ActivityEvent.new(
+      source_vertical: "marketplace",
+      event_name: "ListingCreated",
+      object_type: "Marketplace::Listing",
+      object_id: listing.id
+    )
+
+    I18n.with_locale(:nb) do
+      assert_equal "Telemarkski", activity_event_title(event)
+      assert_equal "markedsplass", activity_event_vertical(event)
+    end
+  end
+
+  test "activity_event_title translates the event when the subject has no name" do
+    event = ActivityEvent.new(
+      source_vertical: "takeaway",
+      event_name: "TakeawayRestaurantCreated",
+      object_type: "Takeaway::Restaurant",
+      object_id: 9_999_999
+    )
+    I18n.with_locale(:nb) do
+      refute_equal "Takeawayrestaurantcreated", activity_event_title(event)
+      assert_equal "Ny restaurant", activity_event_title(event)
+    end
+  end
+
   test "activity_event_href marketplace listing uses subdomain host" do
     user = User.strict_loading(false).create!(
       email_address: "list-#{SecureRandom.hex(4)}@example.com",

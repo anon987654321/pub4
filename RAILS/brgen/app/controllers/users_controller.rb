@@ -6,7 +6,11 @@ class UsersController < ApplicationController
     with: -> { redirect_to new_user_path, alert: t("shared.flash.rate_limited") }
 
   def show
-    @user = User.includes(:dating_profile).find(params[:id])
+    # By username as well as id, because the ActivityPub actor advertises
+    # https://<city>/users/<username> as its `url` — and a profile link handed
+    # to the fediverse that 404s in a browser is worse than not federating.
+    scope = User.includes(:dating_profile)
+    @user = scope.find_by(username: params[:id]) || scope.find(params[:id])
     @posts = @user.posts.includes(:community, :votes).order(created_at: :desc).limit(20)
     @followers_count = @user.followers.count
     @following_count = @user.following.count

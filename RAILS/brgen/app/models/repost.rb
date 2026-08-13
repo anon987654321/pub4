@@ -32,9 +32,20 @@ class Repost < ApplicationRecord
   end
 
   after_create_commit :notify_author
+  # Announce is repost. This is the dependency 2.1 had on 1.1.
+  after_create_commit :federate
 
   # Reposting your own post is allowed — it is how you resurface something you
   # wrote, the same as on x.com — but you do not get notified about yourself.
+  def federate
+    booster = strict_safe(:user)
+    return unless booster&.federated?
+
+    Fediverse::DistributeJob.perform_later(
+      user_id: booster.id, payload: Fediverse::Serializer.announce(self).to_json
+    )
+  end
+
   def notify_author
     author = strict_safe(:post)&.then { |p| User.find_by(id: p.user_id) }
     return if author.nil? || author.id == user_id
