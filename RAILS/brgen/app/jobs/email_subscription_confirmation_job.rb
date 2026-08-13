@@ -2,6 +2,7 @@
 
 class EmailSubscriptionConfirmationJob < ApplicationJob
   queue_as :critical
+  run_inline!
 
   def perform(subscription_id)
     subscription = EmailSubscription.find_by(id: subscription_id)

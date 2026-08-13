@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'ostruct'
+require 'minitest/mock'
 require 'test_helper'
 
 class EmailSubscriptionConfirmationJobTest < ActiveSupport::TestCase

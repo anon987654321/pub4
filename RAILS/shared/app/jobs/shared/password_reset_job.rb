@@ -3,6 +3,7 @@
 module Shared
   class PasswordResetJob < ApplicationJob
     queue_as :critical
+    run_inline!
 
     def perform(user_id)
       user = User.find_by(id: user_id)

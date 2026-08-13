@@ -21,7 +21,13 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, 'class="ai-embed-frame"'
     assert_not_includes response.body, 'class="master-embed-frame"'
     assert_match(/aside class="sidebar"[\s\S]*?#{Regexp.escape(Rails.application.config.x.master_web_url)}/, response.body)
-    assert_includes response.body, 'aria-label="AI assistant"'
+    # Through the key, not the English. The sidebar link stopped carrying a
+    # hardcoded aria-label="AI assistant" when it became link_to
+    # t("nav.ai_assistant") — its visible text is its accessible name now — and
+    # this assertion went red on a page that was rendering the link correctly,
+    # in Norwegian, exactly as intended. brgen renders nb; an English literal in
+    # an assertion here is testing the locale, not the markup.
+    assert_includes response.body, I18n.t("nav.ai_assistant", locale: :nb)
   end
 
   # The verticals stay reachable from root, and reachable exactly once.
