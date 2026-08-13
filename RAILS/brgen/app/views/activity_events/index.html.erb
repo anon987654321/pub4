@@ -10,7 +10,7 @@
 <div class="chips chips--bar">
   <% %w[marketplace takeaway dating tv playlist core].each do |vertical| %>
     <% active = params[:vertical] == vertical %>
-    <%= link_to vertical.humanize, activity_events_path(vertical: vertical), class: "chip#{" active" if active}", aria: { current: active ? "page" : nil } %>
+    <%= link_to t("activity.verticals.#{vertical}", default: vertical), activity_events_path(vertical: vertical), class: "chip#{" active" if active}", aria: { current: active ? "page" : nil } %>
   <% end %>
 </div>
 

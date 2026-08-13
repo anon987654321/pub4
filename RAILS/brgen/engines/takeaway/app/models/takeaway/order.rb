@@ -76,13 +76,13 @@ class Takeaway::Order < ApplicationRecord
     # development — this raised immediately after update! had committed the new
     # status: the order advanced, the customer was never told, and the caller saw
     # a 500. See Shared::StrictSafeAssociations.
-    label = status.humanize.downcase
+    label = I18n.t("takeaway.statuses.#{status}", default: status.to_s)
     restaurant_record = strict_safe(:restaurant)
     courier = courier_display_name
-    body = "Your order from #{restaurant_record&.name} is now #{label}."
-    body += " #{courier} is bringing it." if courier
+    body = I18n.t("takeaway.order_status_body", restaurant: restaurant_record&.name, status: label)
+    body += " #{I18n.t("takeaway.order_status_courier", courier: courier)}" if courier
     deliver_notification(strict_safe(:user),
-      title: "Order #{label}",
+      title: I18n.t("takeaway.order_status_title", status: label),
       body: body,
       source: self)
     record_activity!("TakeawayOrderUpdated",

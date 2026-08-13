@@ -1,0 +1,69 @@
+# Merged into the host locale. Own file so this session does not touch the
+# already-dirty en.yml another session is writing listing-expiry keys into.
+en:
+  takeaway:
+    order_title: "Order #%{id}"
+    order_details: "Order details"
+    order_item: "Order item"
+    order_items: "Items"
+    order_actions: "Order actions"
+    delivered: "Delivered"
+    eta_calculating: "Est. delivery — calculating…"
+    delivery_to: "Delivery to: %{address}"
+    instructions: "Instructions:"
+    subtotal: "Subtotal: %{amount}"
+    delivery: "Delivery: %{amount}"
+    total: "Total: %{amount}"
+    vehicle_unset: "Vehicle not set"
+    available: "Available"
+    unavailable: "Unavailable"
+    drivers_empty_body: "Check back when drivers come online."
+    order_status_title: "Order %{status}"
+    order_status_body: "Your order from %{restaurant} is now %{status}."
+    order_status_courier: "%{courier} is bringing it."
+    statuses:
+      pending: "Pending"
+      confirmed: "Confirmed"
+      preparing: "Preparing"
+      out_for_delivery: "Out for delivery"
+      delivered: "Delivered"
+      cancelled: "Cancelled"
+  playlist:
+    public: "Public"
+    public_access: "Public"
+    tracks:
+      one: "%{count} track"
+      other: "%{count} tracks"
+    privacy:
+      public: "Public"
+      unlisted: "Unlisted"
+      private: "Private"
+  notifications:
+    kinds:
+      like: "Likes"
+      reaction: "Reactions"
+      follow: "Follows"
+      mention: "Mentions"
+      reply: "Replies"
+      message: "Messages"
+      match: "Matches"
+      custom: "Other"
+  marketplace:
+    verticals:
+      groceries: "Groceries"
+      homewares: "Homewares"
+      furniture: "Furniture"
+      electronics: "Electronics"
+      fashion: "Fashion"
+      beauty: "Beauty"
+      sports: "Sports"
+      toys: "Toys"
+      garden: "Garden"
+      automotive: "Automotive"
+      pets: "Pets"
+      books: "Books"
+      health: "Health"
+      local_services: "Local services"
+      other: "Other"
+  search:
+    vertical_heading: "%{vertical}"

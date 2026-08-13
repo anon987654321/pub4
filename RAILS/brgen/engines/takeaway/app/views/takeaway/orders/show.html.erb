@@ -1,18 +1,18 @@
-<% content_for :title, "Order ##{@order.id}" %>
+<% content_for :title, t("takeaway.order_title", id: @order.id) %>
 
-<div class="page-header" role="banner" aria-label="Order details header">
+<div class="page-header" role="banner" aria-label="<%= t("takeaway.order_details") %>">
   <div>
     <p class="dim"><%= link_to @order.restaurant.name, restaurant_path(@order.restaurant) %></p>
-    <h1>Order #<%= @order.id %></h1>
+    <h1><%= t("takeaway.order_title", id: @order.id) %></h1>
   </div>
-  <span class="chip"><%= @order.status.humanize %></span>
+  <span class="chip"><%= t("takeaway.statuses.#{@order.status}") %></span>
 </div>
 
 <div class="order-status" role="status" aria-live="polite">
   <h2><%= t("takeaway.status_timeline") %></h2>
   <div class="chips">
     <% Takeaway::Order::STATUSES.each do |status| %>
-      <span class="chip"><%= status.humanize %><%= " ✓" if @order.status == status %></span>
+      <span class="chip"><%= t("takeaway.statuses.#{status}") %><%= " ✓" if @order.status == status %></span>
     <% end %>
   </div>
   <% if (fraction = @order.progress_fraction) %>
@@ -21,11 +21,11 @@
     </div>
   <% end %>
   <% if @order.status == "delivered" %>
-    <p class="eta-badge eta-badge--done">Delivered</p>
+    <p class="eta-badge eta-badge--done"><%= t("takeaway.delivered") %></p>
   <% elsif @order.status == "cancelled" %>
     <p class="eta-badge eta-badge--cancelled"><%= t("takeaway.order_cancelled") %></p>
   <% else %>
-    <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.estimated_ready_at.iso8601 %>">Est. delivery — calculating…</p>
+    <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.estimated_ready_at.iso8601 %>"><%= t("takeaway.eta_calculating") %></p>
   <% end %>
 
   <%# Named courier once one is dispatched. Absence is a real state — nobody
@@ -45,15 +45,15 @@
   <% end %>
 </div>
 
-<article role="article" aria-label="Order item">
-  <p class="dim">Delivery to: <%= @order.delivery_address %></p>
+<article role="article" aria-label="<%= t("takeaway.order_item") %>">
+  <p class="dim"><%= t("takeaway.delivery_to", address: @order.delivery_address) %></p>
   <% if @order.special_instructions.present? %>
-    <p><strong>Instructions:</strong> <%= @order.special_instructions %></p>
+    <p><strong><%= t("takeaway.instructions") %></strong> <%= @order.special_instructions %></p>
   <% end %>
 </article>
 
-<section role="region" aria-label="Order items">
-  <h2>Items</h2>
+<section role="region" aria-label="<%= t("takeaway.order_items") %>">
+  <h2><%= t("takeaway.order_items") %></h2>
   <% @order.order_items.each do |order_item| %>
     <article role="article" aria-label="Order item">
       <strong><%= order_item.menu_item.name %></strong> × <%= order_item.quantity %>
@@ -62,18 +62,18 @@
   <% end %>
 </section>
 
-<article role="article" aria-label="Order item">
-  <p class="dim">Subtotal: <%= @order.subtotal_display %></p>
-  <p class="dim">Delivery: <%= @order.delivery_fee_display %></p>
-  <strong>Total: <%= @order.total_display %></strong>
+<article role="article" aria-label="<%= t("takeaway.order_item") %>">
+  <p class="dim"><%= t("takeaway.subtotal", amount: @order.subtotal_display) %></p>
+  <p class="dim"><%= t("takeaway.delivery", amount: @order.delivery_fee_display) %></p>
+  <strong><%= t("takeaway.total", amount: @order.total_display) %></strong>
 </article>
 
-<nav role="navigation" aria-label="Order actions">
+<nav role="navigation" aria-label="<%= t("takeaway.order_actions") %>">
   <%= link_to t("actions.reorder"), restaurant_path(@order.restaurant), class: "btn" %>
   <%= link_to t("actions.all_orders"), orders_path, class: "btn btn-ghost" %>
   <% if authenticated? && @order.restaurant.owner?(Current.user) && @order.advanceable? %>
     <% Takeaway::Order::TRANSITIONS.fetch(@order.status, []).each do |status| %>
-      <%= button_to status.humanize, order_path(@order), method: :patch, params: { status: status }, class: "btn btn-primary" %>
+      <%= button_to t("takeaway.statuses.#{status}"), order_path(@order), method: :patch, params: { status: status }, class: "btn btn-primary" %>
     <% end %>
   <% end %>
 </nav>

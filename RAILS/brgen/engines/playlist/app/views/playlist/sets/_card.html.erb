@@ -1,8 +1,8 @@
 <%= render "shared/feed_card",
   avatar_url: nil,
   name: set.name,
-  handle: set.privacy.presence&.humanize || "Public",
-  meta: "#{set.tracks.count} tracks · #{set.formatted_duration}",
+  handle: t("playlist.privacy.#{set.privacy.presence || "public"}"),
+  meta: "#{t("playlist.tracks", count: set.tracks.count)} · #{set.formatted_duration}",
   content: set.description,
   url: set_path(set),
   class: "playlist" %>

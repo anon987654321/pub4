@@ -3,7 +3,7 @@
     <% items = @grouped_notifications[kind] || [] %>
     <% next if items.empty? %>
     <section class="mb-12">
-      <h2 class="section-heading--md"><%= kind.humanize %></h2>
+      <h2 class="section-heading--md"><%= t("notifications.kinds.#{kind}") %></h2>
       <% items.each do |notification| %>
         <%= render "notifications/notification", notification: notification %>
       <% end %>

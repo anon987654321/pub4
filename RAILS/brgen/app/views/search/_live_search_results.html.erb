@@ -10,7 +10,7 @@
     <% rows = records.limit(8).to_a %>
     <% next if rows.empty? %>
     <section>
-      <h2><%= vertical.to_s.humanize %></h2>
+      <h2><%= t("activity.verticals.#{vertical}", default: vertical.to_s) %></h2>
       <ul>
         <% rows.each do |record| %>
           <% label = record.try(:title) || record.try(:name) || record.try(:display_name) || record.try(:username) %>

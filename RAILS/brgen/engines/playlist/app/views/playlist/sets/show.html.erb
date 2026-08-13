@@ -21,7 +21,7 @@
   <% if @set.description.present? %>
     <p><%= @set.description %></p>
   <% end %>
-  <p class="dim"><%= @set.privacy.presence&.humanize || "Public" %> · <%= @tracks.count %> tracks · <%= @set.formatted_duration %></p>
+  <p class="dim"><%= t("playlist.privacy.#{@set.privacy.presence || "public"}") %> · <%= t("playlist.tracks", count: @tracks.count) %> · <%= @set.formatted_duration %></p>
   <% if @set.collaborative? %>
     <p class="dim">Collaborative</p>
   <% end %>

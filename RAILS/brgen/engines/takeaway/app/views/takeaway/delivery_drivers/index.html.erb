@@ -13,7 +13,7 @@
       <% label = driver.user&.display_name || "anon" %>
       <%= render "shared/feed_card",
         name: label,
-        meta: "#{driver.vehicle_type.presence&.humanize || 'Vehicle not set'} · #{driver.available? ? 'Available' : 'Unavailable'}",
+        meta: "#{driver.vehicle_type.presence || t("takeaway.vehicle_unset")} · #{driver.available? ? t("takeaway.available") : t("takeaway.unavailable")}",
         content: (driver.location? ? "#{driver.current_lat}, #{driver.current_lng}" : nil),
         url: delivery_driver_path(driver),
         class: "takeaway" %>
@@ -22,6 +22,6 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_drivers"),
-        body: "Check back when drivers come online.",
-        action: { label: "Restaurants", path: restaurants_path } %>
+        body: t("takeaway.drivers_empty_body"),
+        action: { label: t("takeaway.nearby_restaurants"), path: restaurants_path } %>
 <% end %>

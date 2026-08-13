@@ -13,7 +13,7 @@
   <%= f.text_area :description, rows: 3 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field field--check"><%= f.check_box :public_access %><%= f.label :public_access, "Public" %></div>
+    <div class="field field--check"><%= f.check_box :public_access %><%= f.label :public_access, t("playlist.public_access") %></div>
     <div class="field field--check"><%= f.check_box :collaborative %><%= f.label :collaborative, "Collaborative" %></div>
     <div class="field"><%= f.submit t("playlist.create"), class: "btn btn-primary" %></div>
   <% end %>
