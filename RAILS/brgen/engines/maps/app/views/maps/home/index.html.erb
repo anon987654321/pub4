@@ -4,7 +4,7 @@
   <script src="/vendor/maplibre-gl.js"></script>
 <% end %>
 
-<section role="application" aria-label="<%= t("maps.aria_map") %>" data-controller="map" data-map-points-value="<%= json_escape(@places_json) %>" data-map-center-lat-value="<%= @map_center_lat %>" data-map-center-lng-value="<%= @map_center_lng %>" data-map-zoom-value="12" data-map-style-url-value="https://tiles.openfreemap.org/styles/liberty">
+<section role="application" aria-label="<%= t("maps.aria_map") %>" data-controller="map" data-map-points-value="<%= json_escape(@points_json) %>" data-map-center-lat-value="<%= @map_center_lat %>" data-map-center-lng-value="<%= @map_center_lng %>" data-map-zoom-value="12" data-map-style-url-value="https://tiles.openfreemap.org/styles/liberty">
   <div id="map" class="map-canvas" data-map-target="canvas" aria-hidden="true"></div>
 
   <div class="map-hud" role="region" aria-label="<%= t("maps.hud_aria") %>">

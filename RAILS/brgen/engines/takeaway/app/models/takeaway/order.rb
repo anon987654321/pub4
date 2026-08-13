@@ -84,7 +84,9 @@ class Takeaway::Order < ApplicationRecord
     deliver_notification(strict_safe(:user),
       title: I18n.t("takeaway.order_status_title", status: label),
       body: body,
-      source: self)
+      source: self,
+      # Waiting on food is the case a push exists for.
+      kind: "order")
     record_activity!("TakeawayOrderUpdated",
       actor: restaurant_record&.user,
       source_vertical: "takeaway",

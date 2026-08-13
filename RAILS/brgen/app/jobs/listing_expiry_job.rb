@@ -16,7 +16,8 @@ class ListingExpiryJob < ApplicationJob
         listing.user,
         title: I18n.t("marketplace.expiry_notice.title", title: listing.title),
         body: I18n.t("marketplace.expiry_notice.body", days: listing.expires_in_days.to_i),
-        source: listing
+        source: listing,
+        kind: "alert"
       )
       # Marked after sending, so a failure mid-run means a repeat rather than a
       # seller who is never told.

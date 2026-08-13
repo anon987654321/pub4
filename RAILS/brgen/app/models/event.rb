@@ -112,7 +112,11 @@ class Event < ApplicationRecord
         rsvp.user,
         title: I18n.t("events.cancelled_notification", title: title),
         body: I18n.t("events.cancelled_body"),
-        source: self
+        source: self,
+        # Someone who said they were coming has it in their calendar; a
+        # cancellation they find out about on arrival is the failure this
+        # notification exists to prevent.
+        kind: "alert"
       )
     end
   end

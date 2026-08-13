@@ -943,6 +943,7 @@ nb:
       one: "%{count} lagret"
       other: "%{count} lagret"
   maps:
+    your_courier: "Budet ditt"
     recent_check_ins: "Nylige innsjekkinger"
     hud_aria: "Kartsøk og informasjon"
     browse_list: "Bla i listen"

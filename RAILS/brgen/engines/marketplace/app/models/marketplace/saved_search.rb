@@ -53,7 +53,10 @@ class Marketplace::SavedSearch < ApplicationRecord
       user,
       title: I18n.t("marketplace.saved_search_alert.title", search: title, count: listings.size),
       body: listings.first(3).map(&:title).join(" · "),
-      source: self
+      source: self,
+      # A saved search matching is exactly what the reader asked to be told
+      # about, which is what makes it worth a lock screen.
+      kind: "alert"
     )
     update!(last_notified_at: now)
     true

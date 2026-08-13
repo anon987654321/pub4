@@ -25,7 +25,7 @@ class WebPushJob < ApplicationJob
     payload = {
       title: notification.try(:title).presence || "brgen",
       body: notification.try(:body).to_s,
-      url: "/",
+      url: target_path(notification),
       tag: "brgen-#{notification.kind}",
     }.to_json
 
@@ -35,6 +35,31 @@ class WebPushJob < ApplicationJob
   end
 
   private
+
+  # The payload url was hardcoded to "/", so tapping a push about a parcel, an
+  # order or a saved-search match landed on the city home page and left the
+  # reader to find the thing themselves — which is most of the value of a push
+  # gone.
+  #
+  # Paths are built by hand rather than through url_helpers: a job has no
+  # request, so it has no host, and the service worker opens a path anyway.
+  # Anything unrecognised still falls back to "/" rather than guessing.
+  def target_path(notification)
+    id = notification.source_id
+    return "/notifications" if id.blank?
+
+    case notification.source_type
+    when "Takeaway::Order"    then "/orders/#{id}"
+    when "Marketplace::Order" then "/orders/#{id}"
+    when "Marketplace::Listing" then "/listings/#{id}"
+    when "Marketplace::SavedSearch" then "/saved_searches"
+    when "Event"    then "/events/#{id}"
+    when "Post"     then "/posts/#{id}"
+    when "Message"  then "/conversations"
+    when "Community" then "/communities/#{id}"
+    else "/notifications"
+    end
+  end
 
   def deliver(subscription, payload, vapid)
     Webpush.payload_send(

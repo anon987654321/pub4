@@ -527,6 +527,27 @@ data plus per-vertical fields rather than new machinery.
 
 ---
 
+## 4. The gates cannot see a WebGL surface
+
+`gates/support/cdp_session.rb` launches Chrome with `--disable-gpu`, so
+`webglSupported` is `false` in every rendered gate. MapLibre and the MASTER face
+both need WebGL, so **both measure as an empty canvas** — a gate asserting "the
+map draws" would pass or fail for reasons that have nothing to do with the map.
+
+Found on 2026-08-13 while checking a report that `maps.brgen.no` was broken. It
+is not: with `--use-angle=swiftshader` the map renders Bergen, its tiles and its
+markers, with zero console errors. The blank screenshot came from the
+instrument, and any gate built on that instrument would have inherited it.
+
+`--disable-gpu` is right for the layout and CSS gates it was written for —
+software GL is slow and its text rasterisation differs — so the fix is probably
+a separate opt-in flag for the WebGL surfaces rather than dropping it globally.
+
+**Check:** none. Nothing asserts that a WebGL surface drew anything, which is
+the point of the entry.
+
+---
+
 ## Blocked — do not chase
 
 These are recorded in `RAILS/apps.yml` with verified blockers. Repeated here

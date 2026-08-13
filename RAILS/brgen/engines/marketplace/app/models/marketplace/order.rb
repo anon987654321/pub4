@@ -53,12 +53,12 @@ class Marketplace::Order < ApplicationRecord
 
   def accept!
     update!(status: "accepted")
-    deliver_notification(buyer_record, title: "Offer accepted", body: "Your offer for #{listing_title} was accepted.", source: self)
+    deliver_notification(buyer_record, title: "Offer accepted", body: "Your offer for #{listing_title} was accepted.", source: self, kind: "order")
   end
 
   def decline!
     update!(status: "declined")
-    deliver_notification(buyer_record, title: "Offer declined", body: "Your offer for #{listing_title} was declined.", source: self)
+    deliver_notification(buyer_record, title: "Offer declined", body: "Your offer for #{listing_title} was declined.", source: self, kind: "order")
   end
 
   def mark_payment_pending!(provider:, reference:)
@@ -78,8 +78,8 @@ class Marketplace::Order < ApplicationRecord
       status: "paid"
     )
     title = listing_title
-    deliver_notification(seller, title: "Payment received", body: "Payment for #{title} cleared.", source: self)
-    deliver_notification(buyer_record, title: "Payment confirmed", body: "Your payment for #{title} is confirmed.", source: self)
+    deliver_notification(seller, title: "Payment received", body: "Payment for #{title} cleared.", source: self, kind: "order")
+    deliver_notification(buyer_record, title: "Payment confirmed", body: "Your payment for #{title} is confirmed.", source: self, kind: "order")
   end
 
   # The payment services used to read order.listing.currency and .title
@@ -104,11 +104,11 @@ class Marketplace::Order < ApplicationRecord
       shipped_at: Time.current
     )
     detail = tracking_code.presence ? "#{listing_title} — #{carrier.presence || 'Tracking'}: #{tracking_code}" : listing_title
-    deliver_notification(buyer_record, title: "On its way", body: detail, source: self)
+    deliver_notification(buyer_record, title: "On its way", body: detail, source: self, kind: "order")
   end
 
   def mark_delivered!
     update!(fulfilment_status: "delivered", delivered_at: Time.current)
-    deliver_notification(buyer_record, title: "Delivered", body: listing_title, source: self)
+    deliver_notification(buyer_record, title: "Delivered", body: listing_title, source: self, kind: "order")
   end
 end

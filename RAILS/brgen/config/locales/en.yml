@@ -937,6 +937,7 @@ en:
       one: "%{count} save"
       other: "%{count} saves"
   maps:
+    your_courier: "Your courier"
     recent_check_ins: "Recent check-ins"
     hud_aria: "Map search and info"
     browse_list: "Browse list"

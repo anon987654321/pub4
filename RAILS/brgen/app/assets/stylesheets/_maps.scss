@@ -42,12 +42,33 @@
   background: var(--accent);
 }
 
+/* The layers besides places. These join the two colour declarations that were
+   already here rather than introducing new hex values: --color-success and
+   --color-info are not tokens (which is why the rules above carry literal
+   fallbacks and why css_constitution already counts them), and inventing a
+   third and fourth palette entry is a design decision, not a wiring one.
+
+   Flat throughout — no shadow, blur or glow, per the design rules. */
+.map-marker--courier span,
 .map-marker--food span {
   background: var(--color-success, #00ba7c);
 }
 
+.map-marker--place span,
 .map-marker--resource span {
   background: var(--color-info, #5b9fd4);
+}
+
+/* event falls through to the base rule, which is already --accent. */
+.map-marker--story span {
+  background: var(--text);
+}
+
+/* The viewer's own courier, and nobody else's: larger because it is the one pin
+   on the map that moves, and the reason they opened the page. */
+.map-marker--courier span {
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .map-popup {

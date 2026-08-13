@@ -30,6 +30,16 @@ module Shared
             source_type: source&.class&.name,
             source_id: source&.id,
           }.merge(extra).compact
+          # kind was dropped on this branch, so every title/body notification —
+          # an order advancing, a saved search matching, a listing about to
+          # lapse — was written with the column default "custom". brgen pushes
+          # on kind, and "custom" is not in PUSHABLE_KINDS, so none of them ever
+          # reached a lock screen however urgent they were.
+          #
+          # Guarded on the column because the other apps' notification model is
+          # a different shape and passing an attribute it lacks would raise
+          # inside a rescue that swallows it.
+          attrs[:kind] = kind if kind.present? && notif_klass.column_names.include?("kind")
           if recipient.respond_to?(:notifications)
             recipient.notifications.create!(attrs)
           else
