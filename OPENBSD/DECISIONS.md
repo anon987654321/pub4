@@ -65,7 +65,22 @@ Falcon does not hot-reload production assets. MASTER web changes require `rails 
 
 Production app servers on vm23 are Falcon (`falcon serve` in `/etc/rc.d/*`). Do not add Puma or run `bin/rails server` with Puma in production.
 
-Solid Queue inline mode uses the env var `SOLID_QUEUE_IN_PUMA=true` — that name comes from Solid Queue/Rails 8 defaults and means "run the supervisor inside the web server process," not "use Puma." Falcon honors it the same way.
+**Corrected 2026-08-13. Falcon does not honour `SOLID_QUEUE_IN_PUMA`, and this paragraph saying it did is why nobody looked.** The variable is not a Rails-wide switch: it is read by Solid Queue's *Puma plugin*, activated by `plugin :solid_queue` in `config/puma.rb`. None of the three apps has a `config/puma.rb` at all, so no plugin ever loaded and the variable was read by nothing.
+
+Measured on vm23 that day: brgen had 1670 jobs enqueued, 0 finished, 0 registered processes and 0 recurring tasks; amber 103 and 0. No background job had ever run — including 150 `MessageExpirationJob`, so disappearing messages had never disappeared, and `PruneGuestUsersJob`, so 143,000 stale guest rows had never been pruned.
+
+The variable is gone from all three `rc.d` files and the template. A Solid Queue worker under Falcon needs its own process: `etc/rc.d/<app>_jobs` exists for each app and is deliberately not enabled — read its footer, because vm23 is 1 GB and already cannot hold what it runs. `health_check.rb` fails when a queue has unfinished work and no registered process, so whichever way that goes it is visible.
+
+## A Foreign Key To `users` Needs A `has_many` On `User` (2026-08-13)
+
+Any table with an FK to `users` must have a matching association on `User` with an explicit `dependent:`. Without one, `User#destroy` raises `SQLite3::ConstraintException: FOREIGN KEY constraint failed` — from the database, not from Rails, with nothing in the model to explain it.
+
+`message_receipts` and `typing_indicators` were declared only on `Message` and `Conversation`. The consequence was not theoretical: account deletion was impossible for any user who had ever been in a conversation, which is precisely what the `deletion_scheduled_at` and `deleted_at` columns exist for, and `PruneGuestUsersJob` had never removed a row.
+
+Two related traps found the same day:
+
+- `db:migrate:status` cannot see a migration that ran and created nothing. `20260514120000_create_identity_and_trust_primitives` was recorded as applied with none of its seven tables present, and the migration system reported 0 pending. Compare `schema.rb`'s `create_table` list against the live tables instead.
+- `in_batches(of: N, &:destroy_all)` over a relation carrying a JOIN does not survive deleting from that relation. It removed 3,832 of 143,339 eligible rows and returned success. Pluck ids, delete by id, re-query.
 
 ## Deploy Script Names
 

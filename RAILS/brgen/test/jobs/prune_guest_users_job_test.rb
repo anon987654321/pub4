@@ -33,6 +33,39 @@ class PruneGuestUsersJobTest < ActiveSupport::TestCase
     assert User.exists?(real.id), 'real accounts are never guest rows'
   end
 
+  # in_batches(of: 500, &:destroy_all) over a relation carrying a LEFT OUTER JOIN
+  # removed 3,832 of 143,339 eligible rows on production and reported success.
+  # More rows than one batch is the condition that exposed it, so the test uses
+  # more than one batch.
+  test "removes every eligible guest, not just the first batch" do
+    over_one_batch = Shared::PruneGuestUsersJob::BATCH + 20
+    ids = Array.new(over_one_batch) { build_guest(created_at: 30.days.ago).id }
+
+    Shared::PruneGuestUsersJob.perform_now
+
+    assert_equal 0, User.where(id: ids).count,
+                 "left #{User.where(id: ids).count} of #{over_one_batch} behind — batching stopped early again"
+  end
+
+  # A guest who has been in a conversation owns message_receipts, which carry an
+  # FK to users. Without has_many on User the destroy raises FOREIGN KEY
+  # constraint failed from SQLite, and the job dies on the first batch containing
+  # one. Guests owned 194,295 receipts on production when this was found.
+  test "destroys a guest that owns message receipts" do
+    guest = build_guest(created_at: 30.days.ago)
+    author = User.create!(email_address: "author_#{SecureRandom.hex(4)}@example.com",
+                          password: "secret123", guest: false)
+    conversation = Conversation.create!(conversation_type: "direct")
+    conversation.conversation_participants.create!(user: author)
+    conversation.conversation_participants.create!(user: guest)
+    message = conversation.messages.create!(sender: author, content: "hei", message_type: "text")
+    message.message_receipts.create!(user: guest)
+
+    Shared::PruneGuestUsersJob.perform_now
+
+    refute User.exists?(guest.id), "a guest with a message receipt must still be prunable"
+  end
+
   test 'is scheduled in production' do
     schedule = YAML.safe_load_file(Rails.root.join('config/recurring.yml')).fetch('production')
     entry = schedule.fetch('prune_guest_users')

@@ -23,32 +23,6 @@
 #    it, the rule belongs in DECISIONS.md, and the line here points at it.
 
 open:
-  - id: seven_tables_recorded_as_migrated_and_absent
-    tag: operator-priority
-    summary: >
-      Seven tables exist in brgen's schema.rb and not in the production database,
-      and `rails db:migrate:status` reports 0 pending — the migration that creates
-      them, 20260514120000_create_identity_and_trust_primitives, is recorded in
-      schema_migrations as applied. It ran, was marked done, and left nothing.
-      Measured 2026-08-12: schema.rb 92 tables, production 87.
-      Missing: account_merges, external_identities, identity_assurances,
-      identity_providers, moderation_flags, reputation_scores, trust_signals.
-      What that breaks, all of it silently until something touches it:
-      User#destroy raises ActiveRecord::StatementInvalid on the
-      `has_many :account_merges, dependent: :destroy` — so account deletion, which
-      the users table has deletion_scheduled_at and deleted_at columns for, cannot
-      complete, and PruneGuestUsersJob cannot delete a single row.
-      ModerationWorkflow#penalize_owner writes trust_signals, so resolving a
-      moderation report raises. TrustScore has no table. OAuth's
-      external_identities has no table.
-      Found by trying to prune 141,753 stale guest rows and getting "removed 0"
-      with no error — in_batches(&:destroy_all) swallowed it; a single
-      user.destroy on the same row raises immediately.
-      Repair migration is in the tree: 20260813230000_repair_missing_identity_and_trust_tables
-      (create_table if_not_exists for all seven). Next action is operator: deploy
-      brgen so db:prepare runs it, then re-run the prune. Note there is also one
-      genuinely unapplied migration, 20260812190000, from the same day's engine work.
-
   - id: solid_queue_worker_never_ran
     tag: operator-priority
     summary: >
@@ -430,6 +404,26 @@ not_debt:
 
 # One line each. The how is in git log; the rule, if there is one, is in DECISIONS.md.
 closed:
+  - id: seven_tables_recorded_as_migrated_and_absent
+    resolution: >
+      Closed 2026-08-13. Ran 20260514120000_create_identity_and_trust_primitives'
+      up against production by hand — it was recorded in schema_migrations as
+      applied and had created nothing — after a full backup. Schema drift is 0:
+      account_merges, external_identities, identity_assurances, identity_providers,
+      moderation_flags, reputation_scores and trust_signals all exist, and a guest
+      user destroys cleanly. amber and bsdports were checked for the same fault
+      and have none.
+      It hid a second bug that mattered more. With account_merges present, destroy
+      still raised FOREIGN KEY constraint failed — from SQLite, not from Rails —
+      because User declared no association for message_receipts or
+      typing_indicators, both of which carry an FK to users. Guests owned 194,295
+      receipts. So account deletion was impossible for any user with chat history,
+      which is what deletion_scheduled_at and deleted_at exist for. Fixed in
+      User::CoreAssociations with a test that destroys a guest owning a receipt.
+      See DECISIONS.md for the rule this taught: a table with an FK to users and
+      no has_many on User is a row nobody can delete, and db:migrate:status cannot
+      see a migration that ran and did nothing.
+
   - id: playlist_engine_untested
     resolution: >
       Closed 2026-08-12. engines/playlist has a test directory: 13 tests over
