@@ -268,23 +268,32 @@ open:
   - id: scanner_overlaps_two_installed_linters
     tag: agent-workable
     summary: >
-      MASTER carries 143 executable rule classes and 28 of them cover ground rubocop
-      and reek already cover: DOUBLE_QUOTES_RUBY, TRAILING_WHITESPACE, LONG_LINE,
-      EMPTY_RESCUE, FROZEN_LITERAL, NO_PUTS, CONSECUTIVE_BLANK_LINES and twenty-one
-      more. Both gems are in MASTER/Gemfile, both are bridged in
-      lib/review/scan/rules/external_linter_rules.rb, and the bridge is gated behind
-      MASTER_EXTERNAL_LINT=1 which nothing in lib/, bin/, data/ or OPENBSD sets --
-      .reek.yml:7 records exactly that. So the duplication is known and undecided
-      rather than accidental.
-      The other 115 rules are this product's own law (COMPLETION_THEATER,
-      HOST_CAPACITY, PRINCIPLE_MAP, EIGHT_PX_RHYTHM, the ARIA and BEM families) and
-      are not outsourceable to a Ruby linter, which cannot see ERB or SCSS at all.
-      Cheapest next step is measurement rather than a decision: set
-      MASTER_EXTERNAL_LINT=1 in one check profile and record how many of the 28 fire
-      on findings the bespoke rules already report. That number decides whether the
-      28 retire in favour of custom cops -- rubocop's 2026 plugin API is built for it
-      and holds config stability between minor versions -- or stay as they are.
-
+      Measured 2026-08-13, which is what this entry asked for, and the answer is
+      neither of the two options it offered.
+      Method: 25 Ruby files sampled evenly across MASTER/lib, scanned twice through
+      the real scanner — once as it ships, once with MASTER_EXTERNAL_LINT=1.
+      108 bespoke findings; 174 with the bridge on, so the externals add 66, a 61%
+      increase in volume. 24 of those 66 land on a line a bespoke rule already
+      flags. 42 do not.
+      So the 28 should NOT retire in favour of rubocop and reek. Where the two
+      overlap the bespoke rule fires at least as often — LONG_LINE 15 against
+      Layout/LineLength 14, TRAILING_COMMAS 8 against
+      Style/TrailingCommaInArrayLiteral 1 — so swapping them out loses coverage,
+      and the bespoke rules also read ERB and SCSS, which rubocop cannot see at all.
+      Nor is the bridge pure duplication, which is the other thing this entry
+      assumed. Two concepts have no bespoke equivalent at all: Metrics/AbcSize (13
+      of the 42 unique findings, the largest single signal either side produces)
+      and reek's TooManyMethods (5). Style/MethodCalledOnDoEndBlock and
+      Metrics/ClassLength add 7 more.
+      Measured conclusion: keep the 28, leave MASTER_EXTERNAL_LINT off, and write
+      AbcSize and TooManyMethods as bespoke rules if they are wanted. That buys the
+      only new signal without a per-file rubocop and reek subprocess and without 24
+      duplicate findings — and the whole reason a bespoke scanner exists here is
+      that it covers file types a Ruby linter cannot.
+      One correction: the entry said 143 executable rule classes. The registry
+      reports 181 active rules as of 2026-08-13, so that count had drifted too.
+      rubocop and reek stay in the Gemfile regardless: RAILS/<app>/bin/ci runs
+      rubocop directly, which is a separate and working use.
   - id: gate_result_is_a_shared_kernel_filed_under_deploy
     tag: agent-workable
     summary: >
