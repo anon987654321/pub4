@@ -1514,13 +1514,6 @@ canvas#face,
 [data-face-canvas] {
   outline: none;
 }
-.face-status-live[aria-live] {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-}
 .face-bar button,
 .face-bar a,
 .bar-btn {

@@ -355,15 +355,44 @@ function resumeSttAfterSpeech() {
 
 let evtSrc = null;
 let stageTimer = null;
+let stageSlowTimer = null;
 let thinkingAloudTimer = null;
+// ms = 0 holds the label until something clears it, which is what a stage that
+// means "waiting for the model" needs: "routing…" expired after a second while
+// the request was still in flight, so anyone listening to this region heard the
+// question acknowledged and then nothing for as long as the model took. The
+// reply path already calls showStage("") when the first token lands, so the
+// hold has a real end rather than a guessed duration.
+//
+// Two bounds on the hold. At STAGE_SLOW_MS the label says so, because silence
+// and slowness are indistinguishable otherwise. At STAGE_MAX_MS it clears
+// regardless — a request that dies without reaching any clear path should not
+// leave a stale "routing…" sitting in a live region forever.
+const STAGE_SLOW_MS = 4000;
+const STAGE_MAX_MS = 90000;
 function showStage(label, ms = 1200) {
   if (!uiStatus) return;
   uiStatus.textContent = label;
   uiStatus.style.opacity = "1";
-  if (stageTimer) clearTimeout(stageTimer);
+  if (stageTimer) { clearTimeout(stageTimer); stageTimer = null; }
+  if (stageSlowTimer) { clearTimeout(stageSlowTimer); stageSlowTimer = null; }
+  if (!label) return;
+
+  if (ms > 0) {
+    stageTimer = setTimeout(() => {
+      if (uiStatus.textContent === label) uiStatus.textContent = "";
+    }, ms);
+    return;
+  }
+
+  stageSlowTimer = setTimeout(() => {
+    if (uiStatus.textContent === label) uiStatus.textContent = `${label} still working`;
+  }, STAGE_SLOW_MS);
   stageTimer = setTimeout(() => {
-    if (uiStatus.textContent === label) uiStatus.textContent = "";
-  }, ms);
+    if (uiStatus.textContent === label || uiStatus.textContent === `${label} still working`) {
+      uiStatus.textContent = "";
+    }
+  }, STAGE_MAX_MS);
 }
 
 function clearThinkingAloud() {
@@ -631,7 +660,7 @@ async function sendMessage(text) {
   if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:send_message_close_stream", err); } }
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
-  showStage("routing…", 1000);
+  showStage("routing…", 0);
 
   let finalText = text, preEnhanced = false;
   try {
@@ -648,7 +677,7 @@ async function sendMessage(text) {
   const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
   tts.prependTimestamp = isTimeSensitive;
   State.mode = 'thinking'; State.pulse = 0.4; window.MASTER_FACE?.setAmbientHum?.(true);
-  showStage("scanning…", 1200);
+  showStage("scanning…", 0);
   scheduleThinkingAloud("scanning");
   syncShareStateUrl();
   if (input.length > 180) State.lean = 0.14;
