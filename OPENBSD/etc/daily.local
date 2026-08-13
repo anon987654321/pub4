@@ -25,6 +25,36 @@ export PATH
 su dev -c 'cd /home/dev/pub4 && zsh OPENBSD/backup_priv.sh' ||
   logger -t daily.local "backup_priv failed - ~/priv was not backed up (see OPENBSD/backup_priv.sh header)"
 
+# Guest hygiene, from cron because nothing else will call it.
+#
+# Shared::PruneGuestUsersJob is an ActiveJob, and no Solid Queue worker runs on
+# this box (OPENBSD/DECISIONS.md, "Falcon Only"), so perform_later means never:
+# 1670 jobs were enqueued for brgen and 0 had ever finished. The job is real, it
+# is safe, and until the worker question is settled the only thing that can run
+# it is a runner invocation on a timer.
+#
+# Measured on 2026-08-14: 500 rows in 41.9s, load holding at 1.67 — roughly
+# twelve a second, because a guest destroy cascades into message_receipts. At
+# the job's own MAX_PER_RUN of 20000 that is about half an hour a night, which
+# clears the 147,000 backlog in something over a week and then costs nothing,
+# since a night's fresh arrivals are a few hundred.
+#
+# The job stops itself when the box is busy (Pub4::LoadAverage against
+# LOAD_CEILING) and pauses between batches. Both of those exist because running
+# it unpaced took the whole site down on 2026-08-12 — resource_guard shed amber
+# and bsdports, then relayd died and 443 refused for every domain. 01:30 is
+# after the nightly quiet starts and the guard is the real protection.
+#
+# Two apps, measured rather than assumed: brgen holds 146,885 eligible rows and
+# amber 207. bsdports has no `guest` column on users at all, so it is not in the
+# loop — the first draft of this said amber had none either, which counting
+# disproved.
+for app in brgen amber; do
+  su -m "$app" -c "cd /home/$app/app && set -a && . /etc/$app.env && set +a && RAILS_ENV=production /usr/local/bin/ruby34 bin/rails runner 'Shared::PruneGuestUsersJob.new.perform'" \
+    >>/tmp/prune-guests.out 2>&1 ||
+    logger -t daily.local "guest prune failed for $app - see /tmp/prune-guests.out"
+done
+
 if command -v drill >/dev/null 2>&1; then
   drill @127.0.0.1 brgen.no SOA >/tmp/nsd-check.out 2>&1 || \
     logger -t daily.local "NSD smoke check failed for brgen.no"
