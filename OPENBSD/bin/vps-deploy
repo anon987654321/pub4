@@ -3,6 +3,29 @@
 # Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|master
 set -euo pipefail
 
+# Run as dev, not under doas. This script escalates for the individual steps
+# that need root and pulls as dev for the one that must not: root has no
+# github.com host key, so `doas vps-deploy master` dies at step one with
+#
+#   ==> git pull
+#   Host key verification failed.
+#   fatal: Could not read from remote repository.
+#   Please make sure you have the correct access rights and the repository exists.
+#
+# which reads as a revoked deploy key rather than a wrong user. Adding the host
+# key to root's known_hosts would "fix" it by giving root a path to fetch and
+# execute code from the network, which is the thing the split avoids.
+#
+# The habit is easy to acquire because everything else on this box is doas'd, and
+# RUNBOOK.md listed OPERATOR.sh, vps-deploy and vps_ci.sh in one breath after the
+# word doas. That line now says which is which.
+if [[ $(id -u) -eq 0 ]]; then
+  print -u2 "vps-deploy: run this as dev, not root — it escalates per step, and"
+  print -u2 "            root cannot reach github (no host key). Try:"
+  print -u2 "            cd /home/dev/pub4 && zsh OPENBSD/bin/vps-deploy ${1:-all}"
+  exit 2
+fi
+
 app=${1:-}
 [[ -n $app ]] || { print -u2 "usage: vps-deploy all|APP|master"; exit 2 }
 

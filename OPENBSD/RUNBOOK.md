@@ -100,7 +100,19 @@ console or resource guard only to restore access or health, then document the fi
 | `OPERATOR.sh --stage-1` without `I_UNDERSTAND_DNS_WIPE=1` | Destructive DNS wipe |
 | Parallel SSH deploys, parallel `bin/ci`, or broad `rcctl restart` without a named target | 1 GiB VPS; contention causes outages |
 
-When SSH to vm23 is required, use normal paths: `doas zsh OPERATOR.sh`, `vps-deploy`, `vps_ci.sh`.
+When SSH to vm23 is required, use normal paths — but note which of them takes
+`doas` and which must not:
+
+| | |
+|---|---|
+| `doas zsh OPERATOR.sh` | root, it installs `/etc` |
+| `zsh OPENBSD/bin/vps-deploy <app>` | **dev**; it escalates per step |
+| `zsh OPENBSD/vps_ci.sh <app>` | **dev** |
+
+Under `doas`, `vps-deploy` fails at its first step with `Host key verification
+failed` — root has no github host key, and giving it one would hand root a way
+to fetch and run code from the network. It now refuses that invocation and says
+so; this line used to name all three after the word `doas`.
 
 **Rules:**
 
