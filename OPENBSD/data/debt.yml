@@ -222,7 +222,19 @@ open:
       1. The design-craft stack warns and returns when the app port is closed, which
          off the deploy host is always — so a down app reads as green. The mechanism
          to fix it exists and is unused; see amber_bsdports_stop_and_stay_down (b).
-      2. Nothing calls gates/runner.rb --all.
+      2. Nothing calls gates/runner.rb --all. Measured 2026-08-13 rather than left as
+         a worry: of the 47 registered gates, 46 are named by some script directly or
+         through their composite, and exactly one was not -- dns_zones, registered,
+         complete, and never run. It is now in check-openbsd, where what it compares
+         (OPENBSD/var/nsd/zones against bin/render_dns.rb, plus a live query to our
+         own nameserver) actually lives. Its first run produced a false block; see
+         gates_have_no_precision_ledger. So --all remains uncalled and that is now a
+         choice rather than a gap: the full suite takes ~25 minutes on a laptop, and
+         the coverage it was standing in for is a property a test can assert.
+         DeployGatesContractTest#test_every_registered_gate_is_named_by_some_caller
+         asserts it, stripping comment lines first -- written without that, it passed
+         with the wiring deleted, because a comment naming the gate satisfied a check
+         for whether anything ran it.
 
   - id: rails_coverage_contract_is_tautological
     tag: operator-priority
@@ -268,20 +280,6 @@ open:
       reports 181 active rules as of 2026-08-13, so that count had drifted too.
       rubocop and reek stay in the Gemfile regardless: RAILS/<app>/bin/ci runs
       rubocop directly, which is a separate and working use.
-  - id: gate_result_is_a_shared_kernel_filed_under_deploy
-    tag: agent-workable
-    summary: >
-      Measured 2026-08-11 by counting require_relative across trees rather than prose
-      mentions: RAILS requires OPENBSD/lib/gate_result at 53 sites, deploy_inventory
-      at 16 and utf8 at 5, so 74 in total. OPENBSD requires MASTER/lib/pub4 at 3.
-      MASTER requires nothing from either tree and reads only their data (apps.yml,
-      debt.yml) -- an independence worth protecting deliberately.
-      So RAILS's whole 59-file gate framework is built on a type owned by the deploy
-      tree, and the directory names say the opposite. Nothing is broken; it is an
-      ownership question with 74 dependents. The answer is either a repo-level shared
-      kernel or a DECISIONS.md entry saying the deploy tree owns it on purpose.
-      Either beats the current silence, because the next person to move a file will
-      not know which of the two it is.
 
   - id: gates_have_no_precision_ledger
     tag: agent-workable
@@ -305,6 +303,39 @@ open:
       localised a real defect. Making that mechanical here means every gate carries
       its known-bad input and is re-run against it, instead of depending on whoever
       wrote it having mutated it once and remembered to say so.
+      ---
+      FAIL-OPEN IS CLOSED, 2026-08-13. GateResult has a fourth outcome, :errored,
+      recorded by errored! and never counted as a pass; runner.rb rescues
+      StandardError and ScriptError around klass.run and turns the exception into a
+      result. GATE_STRICT_ERRORS=1 promotes it for the deploy host. The defect was
+      worse than the entry says: `outcomes` is built by one to_h over every gate with
+      klass.run unguarded inside it, so a single raising gate ended the process --
+      measured against the committed runner with a 4-gate fixture registry, it died
+      at gate 2 and the two after it never ran. Pinned by
+      RAILS/test/gate_failopen_test.rb (9 tests), which runs the real runner over
+      RAILS/gates/fixtures/failopen/.
+      PRECISION IS PART-CLOSED. OPENBSD/lib/gate_ledger.rb records one JSONL line per
+      gate per run (local-only, gitignored) and `runner.rb --ledger` reports per-gate
+      fire rate, error rate and inconclusive rate, flagging a gate that errors on
+      >=50% of runs or fails on >=90%. That is a triage order, not precision in the
+      paper's sense: real precision needs ground truth about whether each block was
+      correct, which here lives in whether someone fixed the finding or exempted the
+      rule, and nothing mechanical can see that. Do not describe the ledger as a
+      precision ledger; it is an outcome ledger, and gate_ledger.rb says so.
+      The ledger earned itself immediately. dns_zones -- see rails_gates_not_wired --
+      hard-failed on its first ever run with "frankfrt.de ... does not answer for
+      maps.frankfrt.de" while dig answered instantly and three re-runs passed: one
+      dropped UDP packet out of ~500 sequential queries, reported as a missing DNS
+      record. A false block, from the one gate nobody had ever run. Fixed by
+      distinguishing Resolv::ResolvTimeout (retry 3x, then skipped_live -- not
+      measured) from Resolv::ResolvError (NXDOMAIN -- still a hard failure).
+      KNOWN-BAD SELF-CHECK: first instance built, not yet general. STUDIO/gate.rb
+      declares PREDICTED_FINDINGS before building a deliberately broken temporary
+      tree, runs a second instance of itself over it, and hard-fails if any predicted
+      finding no longer appears. It self-invalidated on its first run, exactly as
+      2608.04066 describes: two predictions did not match, because soft failures
+      render as "[soft] studio inventory: ..." and the matcher was anchored. What is
+      open is doing this for the other 47 gates, one per gate.
 
   - id: rails_audit_backlog_2026_08_10
     tag: agent-workable
@@ -316,8 +347,32 @@ open:
       with strict_loading_by_default — a decision per association).
       102 CSS selectors with no literal match in ERB/JS/Ruby (class names are also
       composed at runtime, so a literal search cannot prove death).
-      64 controllers with a create and no rate_limit — the subset worth doing is the
-      write endpoints a guest can reach, not all 64 at an arbitrary threshold.
+      64 controllers with a create and no rate_limit — DONE 2026-08-13, and the
+      subset was right: of 98 controllers with a write action, 84 had no rate_limit
+      and 6 of those were write actions a request with no session can reach. All six
+      now carry one, and the guest-reachable question is asserted rather than
+      recounted by RAILS/test/guest_write_rate_limit_test.rb, which also asserts its
+      own detector still finds guest writes at all — a source-text checker that stops
+      matching reports zero gaps and reads exactly like a clean tree.
+      The one that mattered was Fediverse::InboxesController#create: unauthenticated
+      by protocol, and it calls ActorFetcher.for_key_id BEFORE verifying the
+      signature, which is an outbound HTTPS GET to a URL taken from the sender's own
+      Signature header. Verifying first is not available as a fix — the key needed to
+      verify is what the fetch goes to get. The others were amber's signup (brgen's
+      equivalent had carried 10/10min all along) and brgen's email-subscription
+      create, which queues mail to an arbitrary address over brgen.no's SPF and DKIM.
+      Found on the way and worth more than the entry: FOUR controllers declared two
+      rate_limits and named neither. ActionController::RateLimiting builds its key as
+      ["rate-limit", scope, name, by] with name defaulting to nil, so two unnamed
+      limits in one controller share a counter — Rails documents this on the method
+      itself. MessagesController's 30/minute and 40/3-minutes on :create therefore
+      shared a key for every signed-out sender, incremented it twice per request, and
+      blocked at 15; the 3-minute limit never existed, because whichever call created
+      the key set its TTL. Two correct-looking lines, no code change needed to
+      introduce it, and the same defect class as everything else in this file.
+      RAILS/test/rate_limit_naming_test.rb holds it, and also re-reads actionpack's
+      rate_limiting.rb to check the upstream behaviour the rule depends on is still
+      true rather than enforcing a rule about nothing.
       56 raw hex values in stylesheets (var() fallbacks and dialect token definitions
       are correct by design).
       29 destructive links with no confirmation interstitial.
@@ -404,6 +459,21 @@ not_debt:
 
 # One line each. The how is in git log; the rule, if there is one, is in DECISIONS.md.
 closed:
+  - id: gate_result_is_a_shared_kernel_filed_under_deploy
+    resolution: >
+      Closed 2026-08-13 by the second of the two options the entry named: an
+      OPENBSD/DECISIONS.md entry, "OPENBSD/lib/ Owns The Gate Kernel, On Purpose".
+      The deploy tree owns Deploy::GateResult and the types every gate returns;
+      RAILS, MASTER and STUDIO consume them across the boundary and add nothing.
+      Forced rather than chosen at leisure -- gate_ledger.rb landed beside
+      gate_result.rb the same day, so the question was being answered by accretion.
+      A repo-level shared kernel was rejected: it would be a fourth top-level tree
+      holding three files, to remove a dependency RAILS already has and does not
+      suffer from, while eroding the asymmetry that does matter -- MASTER requires
+      nothing from either tree. MASTER reaches STUDIO/gate.rb by subprocess for
+      exactly that reason. Revisit if a fifth consumer appears: three is a
+      convention, five is a library. Measured facts kept: 74 cross-tree requires
+      from RAILS (gate_result 53, deploy_inventory 16, utf8 5), OPENBSD -> MASTER 3.
   - id: seven_tables_recorded_as_migrated_and_absent
     resolution: >
       Closed 2026-08-13. Ran 20260514120000_create_identity_and_trust_primitives'

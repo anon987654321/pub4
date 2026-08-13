@@ -1,13 +1,22 @@
 # frozen_string_literal: true
 
 class MessagesController < ApplicationController
-  rate_limit to: 30, within: 1.minute, only: :create,
+  # Burst and sustained, and they only work as two limits because of `name:`.
+  # The cache key is ["rate-limit", controller_path, name, by], so unnamed these
+  # two shared one counter whenever `by` resolved the same way — which is every
+  # request from a signed-out sender, where both fall back to remote_ip. One
+  # request then incremented the shared count twice, the 30/minute filter ran
+  # first and blocked at 15, and the 40/3-minute limit was unreachable: its TTL
+  # was set by whichever call created the key, so it expired after a minute and
+  # never accumulated three minutes of anything. See
+  # RAILS/test/rate_limit_naming_test.rb.
+  rate_limit to: 30, within: 1.minute, only: :create, name: "burst",
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_verified_email, only: :create
   before_action :require_user_session
   before_action :set_conversation
 
-  rate_limit to: 40, within: 3.minutes, only: :create,
+  rate_limit to: 40, within: 3.minutes, only: :create, name: "sustained",
     with: -> { redirect_back fallback_location: root_path, alert: t("flash.messages_rate_limited") }
 
   def create

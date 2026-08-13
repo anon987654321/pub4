@@ -3,6 +3,16 @@
 
 class OmniauthCallbacksController < ::ApplicationController
   allow_unauthenticated_access
+  # create calls User.create! for an unrecognised uid, so a callback that gets
+  # this far makes an account. Reaching it needs a real roundtrip through the
+  # provider, which is the actual barrier — this is a ceiling on the damage if
+  # that assumption is ever wrong, not the thing standing in the way.
+  #
+  # Deliberately loose. A person signs in once; 30 a minute from one address is
+  # already far past that, and a tighter number would lock out an office or a
+  # campus behind one NAT for a threat this endpoint does not really face.
+  rate_limit to: 30, within: 1.minute, only: :create,
+    with: -> { redirect_to new_session_path, alert: t("shared.flash.rate_limited") }
 
   def passthru
     render plain: "OAuth not configured", status: :not_found unless request.env["omniauth.strategy"]

@@ -3,12 +3,15 @@
 class PostsController < ApplicationController
   include Shared::FindableBySlug
   # Flood protection on content creation (Rails 8 built-in), per-user or per-IP.
-  rate_limit to: 12, within: 1.minute, only: :create,
+  # `name:` is what keeps this and the sustained limit below separate — unnamed,
+  # both build the cache key ["rate-limit", controller_path, nil, by] and share a
+  # counter for every signed-out request. See RAILS/test/rate_limit_naming_test.rb.
+  rate_limit to: 12, within: 1.minute, only: :create, name: "burst",
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_verified_email, only: :create
   include Shared::LiveSearchable
 
-  rate_limit to: 30, within: 3.minutes, only: %i[create share],
+  rate_limit to: 30, within: 3.minutes, only: %i[create share], name: "sustained",
     with: -> { redirect_to posts_path, alert: t("shared.flash.rate_limited") }
 
 # ONE declaration. Rails deduplicates callbacks by filter name, so declaring
