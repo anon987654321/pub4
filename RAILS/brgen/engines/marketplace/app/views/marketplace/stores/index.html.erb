@@ -11,7 +11,7 @@
 
   <%= tag.nav class: "deal-cats", role: "navigation", "aria-label": "Store categories" do %>
     <% Marketplace::Store::VERTICALS.each do |vertical| %>
-      <%= link_to vertical.humanize, shops_path(vertical: vertical),
+      <%= link_to t("marketplace.verticals.#{vertical}"), shops_path(vertical: vertical),
             class: "deal-cat#{" active" if params[:vertical].to_s == vertical}" %>
     <% end %>
   <% end %>

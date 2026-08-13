@@ -17,7 +17,7 @@
 
   <%= tag.fieldset do %>
     <%= form.label :vertical %>
-    <%= form.select :vertical, Marketplace::Store::VERTICALS.map { |vertical| [vertical.humanize, vertical] }, include_blank: true %>
+    <%= form.select :vertical, Marketplace::Store::VERTICALS.map { |vertical| [t("marketplace.verticals.#{vertical}"), vertical] }, include_blank: true %>
   <% end %>
 
   <%= tag.fieldset do %>

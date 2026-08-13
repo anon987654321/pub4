@@ -453,28 +453,77 @@ said yes are a different decision from people who have not seen you.
 **Still open:** super-like and boost (both purchases — `apps.horizon.yml` has
 them as `agent: ignore`), rewind, unmatch, photo verification, daily picks.
 
-### Takeaway (DoorDash / Foodora)
+### Takeaway (DoorDash / Foodora) — **hours, tips, scheduling done**
 
-Beyond 1.4: `Takeaway::Restaurant` has no opening hours, so nothing models
-closed. `estimated_ready_at` is the only estimate — no delivery ETA. Missing:
-live courier map, tipping, scheduled orders, group orders, order-again, and a
-push notification on each `transition_to!` (the transition already sends an
-in-app notification; `PushSubscription` is not on that path).
+`Takeaway::OpeningHour` is a row per weekday, not a JSON blob: "is this open
+now" is a query, and a blob turns the restaurant list into a Ruby loop over
+every row on the page. Minutes past midnight rather than a `Time` (which
+carries a date and a zone that mean nothing here), and `closes_minute` may
+exceed 1440 — because closing after midnight is normal for a kitchen, and
+reading only today's row says a place open until 02:00 is shut at 00:30.
 
-### Messenger
+- **No hours recorded = open.** Most restaurants have none yet and defaulting
+  to closed would empty the listing; `active` stays the "not trading" switch.
+- **A closed kitchen still takes a scheduled order** — that is most of what
+  scheduling is for. Enforced in the controller, because a hidden button is not
+  a closing time.
+- The tip is in the total from `calculate_totals!`, not added somewhere later.
+- A scheduled order estimates from **when it was asked for**, or it is
+  permanently late for having been placed that morning.
 
-Done already: typing indicators, read receipts, reactions, presence,
-disappearing messages, attachments with variants.
+**Check:** `brgen/test/models/takeaway_hours_test.rb` (8).
 
-Missing: voice messages, reply-to-a-message, edit/unsend, forwarding, link
+**Still open:** the live courier map (the driver has coordinates and the maps
+engine exists; nothing draws them yet), group orders, order-again, and web push
+on each `transition_to!` — the transition sends an in-app notification and
+`PushSubscription` is still not on that path.
+
+### Messenger — **reply, edit and unsend done**
+
+Typing indicators, read receipts, reactions, presence, disappearing messages and
+attachments were already there.
+
+- **Reply-to**: in a channel with several conversations at once, a message with
+  no referent is one nobody can follow.
+- **Editing is bounded to 15 minutes.** A message that can be rewritten hours
+  later is one a reader cannot trust, and the receipt saying they read it is
+  already gone.
+- **Unsending has no window at all** — a message sent to the wrong room, on a
+  chat where people post real addresses, is a safety problem rather than a typo.
+- **The unsend is soft.** The row stays and the body goes, because a hard delete
+  leaves a hole in a thread and orphans whatever replied to it. That required
+  exempting deleted messages from the content presence validation, or the record
+  is permanently invalid and every later save on it — a receipt, a reaction —
+  fails.
+
+**Check:** `brgen/test/models/message_edit_test.rb` (7).
+
+**Still open:** voice messages (`duration_seconds` is on the table and the
+attachment path already exists, but no recorder is wired), forwarding, link
 previews, message search, group naming and admin roles, pinned conversations.
-No WebRTC anywhere, so no voice or video calls.
+No WebRTC anywhere, so still no voice or video calls.
 
-### Craigslist
+### Craigslist — **expiry and renewal done**
 
-Nearly complete — geo listings, categories, city subdomains, casual (no-store)
-listings, buyer–seller chat and FTS all exist. Missing: an anonymised contact
-relay, post expiry-and-renew, and the non-goods verticals (jobs, housing, gigs).
+Geo listings, categories, city subdomains, casual (no-store) listings,
+buyer–seller chat and FTS were already there. Listings now expire after 45 days
+and can be renewed.
+
+**Expiry is a scope, not a state change.** `live` (active *and* unexpired) is
+what the policy scope resolves for public surfaces; `active` still includes a
+lapsed listing, which is what lets its owner see and renew it. A listing that
+silently vanished from its own seller's account would read as a bug rather than
+a policy. Renewing restarts the window from now, so renewing late does not
+immediately expire again, and it clears the notice flag so the next lapse is
+announced too.
+
+**Check:** `brgen/test/models/listing_expiry_test.rb` (5).
+
+**Still open:** the anonymised contact relay — it needs mail infrastructure
+(inbound routing and per-listing addresses), which is an operator change on
+vm23 rather than app code, and `brgen.no` mail is only outbound-verified today.
+Also the non-goods verticals (jobs, housing, gigs), which are mostly category
+data plus per-vertical fields rather than new machinery.
 
 ---
 

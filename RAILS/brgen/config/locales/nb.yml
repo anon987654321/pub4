@@ -778,6 +778,9 @@ nb:
     privacy_private: "privat"
     expires_on: "· utløper %{date}"
   marketplace:
+    expiry_notice:
+      title: "«%{title}» utløper snart"
+      body: "Annonsen forsvinner fra markedsplassen om %{days} dager. Forny den hvis du fortsatt har varen."
     addresses: "Leveringsadresser"
     add_address: "Legg til adresse"
     change_address: "Bytt adresse"

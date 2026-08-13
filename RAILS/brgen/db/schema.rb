@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_220000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -569,11 +569,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_210000) do
     t.datetime "created_at", null: false
     t.string "currency"
     t.text "description"
+    t.datetime "expires_at"
     t.decimal "latitude", precision: 10, scale: 7
     t.string "location"
     t.decimal "longitude", precision: 10, scale: 7
     t.integer "price_cents"
     t.decimal "rating", precision: 3, scale: 2, default: "0.0", null: false
+    t.datetime "renewal_notice_sent_at"
     t.integer "reviews_count", default: 0, null: false
     t.string "slug"
     t.string "status"
@@ -587,6 +589,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_210000) do
     t.index ["city_id", "slug"], name: "index_marketplace_listings_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_marketplace_listings_on_city_id"
     t.index ["latitude", "longitude"], name: "index_marketplace_listings_on_latitude_and_longitude"
+    t.index ["status", "expires_at"], name: "index_marketplace_listings_on_status_and_expires_at"
     t.index ["store_id"], name: "index_marketplace_listings_on_store_id"
     t.index ["user_id"], name: "index_marketplace_listings_on_user_id"
   end

@@ -62,7 +62,24 @@ class Marketplace::Listing < ApplicationRecord
 
   after_create_commit { broadcast_append_later_to "marketplace:listings", partial: "marketplace/listings/card", locals: { listing: self } }
 
+  # A classifieds listing has a life. Without one the marketplace fills with
+  # things sold two years ago that nobody took down, and the honest listings
+  # drown in them.
+  LIFETIME = 45.days
+  # Told a week before, so renewing is a choice rather than a surprise.
+  RENEWAL_NOTICE = 7.days
+
+  before_validation :set_expiry, on: :create
+
+  # `live` is what every public surface should read: active AND not expired.
+  # `active` stays as it was, because seller-facing pages legitimately want
+  # their own expired listings back.
   scope :active,   -> { where(status: "active") }
+  scope :live,     -> { active.where("expires_at IS NULL OR expires_at > ?", Time.current) }
+  scope :expired,  -> { active.where("expires_at IS NOT NULL AND expires_at <= ?", Time.current) }
+  scope :expiring_soon, lambda {
+    live.where(renewal_notice_sent_at: nil).where("expires_at <= ?", Time.current + RENEWAL_NOTICE)
+  }
   scope :recent,   -> { order(created_at: :desc) }
   scope :popular,  -> { order(views_count: :desc) }
   scope :from_store, ->(store) { where(store: store) }
@@ -97,6 +114,15 @@ class Marketplace::Listing < ApplicationRecord
 
   def mark_sold! = update_columns(status: "sold", updated_at: Time.current)
 
+  def expired? = expires_at.present? && expires_at <= Time.current
+  def expires_in_days = expires_at.nil? ? nil : ((expires_at - Time.current) / 1.day).ceil
+
+  # Renewing restarts the window from now rather than extending the old one, so
+  # a listing renewed a week late does not immediately expire again.
+  def renew!
+    update!(expires_at: Time.current + LIFETIME, renewal_notice_sent_at: nil)
+  end
+
   def price_display = Shared::MoneyDisplay.format(price_cents, currency)
   def casual? = store_id.nil?
   def sold? = status == "sold"
@@ -114,5 +140,11 @@ class Marketplace::Listing < ApplicationRecord
     # updated_at with it -- the rating is on every listing card, and skipping the
     # timestamp leaves [listing] fragment caches serving the pre-review score.
     update_columns(rating: reviews.average(:rating)&.round(2) || 0, updated_at: Time.current)
+  end
+
+  private
+
+  def set_expiry
+    self.expires_at ||= Time.current + LIFETIME
   end
 end

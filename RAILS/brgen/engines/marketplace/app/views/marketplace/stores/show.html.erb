@@ -5,7 +5,7 @@
 <%= tag.section class: "marketplace-store" do %>
   <%= tag.header do %>
     <%= tag.h1 @store.name %>
-    <%= tag.p @store.vertical&.humanize if @store.vertical.present? %>
+    <%= tag.p t("marketplace.verticals.#{@store.vertical}") if @store.vertical.present? %>
     <%= tag.p @store.description if @store.description.present? %>
     <% if @store.place.present? %>
       <%= tag.p link_to(t("maps.on_the_map"), record_public_href(@store.place), class: "btn btn-ghost btn-sm") %>

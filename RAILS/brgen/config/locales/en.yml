@@ -772,6 +772,9 @@ en:
     privacy_private: "private"
     expires_on: "· expires %{date}"
   marketplace:
+    expiry_notice:
+      title: "%{title} expires soon"
+      body: "This listing leaves the marketplace in %{days} days. Renew it if you still have the item."
     addresses: "Delivery addresses"
     add_address: "Add an address"
     change_address: "Change address"

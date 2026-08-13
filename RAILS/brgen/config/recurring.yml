@@ -88,6 +88,14 @@ production:
     queue: bulk
     schedule: every 15 minutes
 
+  # Tells a seller a week before their listing lapses. Nothing is deleted or
+  # hidden by it — `live` already keeps an expired listing off public surfaces —
+  # so this is only the warning.
+  listing_expiry_notices:
+    class: ListingExpiryJob
+    queue: bulk
+    schedule: every day at 9am
+
   # `alive` already hides an expired story everywhere, so this is about the bytes
   # rather than the visibility: without it the rows and their Active Storage
   # blobs accumulate forever on a 1 GB VPS.
