@@ -3753,21 +3753,39 @@ function resumeSttAfterSpeech() {
 // It matters most where nobody can reach the mic button. This was reported from
 // an Android TV, where the recovery for a grey mic is a remote control and a
 // pointer that does not exist.
+// Two states are covered, because the parking above created the second one.
+// resumeSttAfterSpeech() is reached from ttsTick()'s empty-queue branch, so a
+// greeting that finishes without passing through ttsTick -- the browser
+// speechSynthesis fallback has done exactly that -- would leave
+// autoVoicePending set and never honoured, and the invariant tick would not see
+// it either, because voice mode was never entered. Handing the timeout's intent
+// to one call site made that call site load-bearing; this is the backstop for it.
 let _micIdleTicks = 0;
+let _autoVoiceIdleTicks = 0;
 setInterval(() => {
-  if (document.hidden) { _micIdleTicks = 0; return; }
-  const stuck = State.voiceMode && !State.sttActive && !tts.playing && !tts.paused;
-  if (!stuck) { _micIdleTicks = 0; return; }
+  if (document.hidden) { _micIdleTicks = 0; _autoVoiceIdleTicks = 0; return; }
+  const quiet = !tts.playing && !tts.paused;
 
-  _micIdleTicks += 1;
-  if (_micIdleTicks < 2) return;
+  const stuck = State.voiceMode && !State.sttActive && quiet;
+  _micIdleTicks = stuck ? _micIdleTicks + 1 : 0;
+  if (_micIdleTicks >= 2) {
+    _micIdleTicks = 0;
+    // Named at warn, not repaired silently. A self-healing loop that says nothing
+    // hides the break it is healing, and the break is the thing worth fixing.
+    window.MASTER_LOG?.warn?.("face_runtime:mic_rearm", "voice mode on with an idle recogniser — reopening");
+    _voiceModeRearmFails = 0;
+    startSTT();
+    return;
+  }
 
-  _micIdleTicks = 0;
-  // Named at warn, not repaired silently. A self-healing loop that says nothing
-  // hides the break it is healing, and the break is the thing worth fixing.
-  window.MASTER_LOG?.warn?.("face_runtime:mic_rearm", "voice mode on with an idle recogniser — reopening");
-  _voiceModeRearmFails = 0;
-  startSTT();
+  const parked = State.autoVoicePending && !State.voiceMode && quiet && voiceAutoEnabled();
+  _autoVoiceIdleTicks = parked ? _autoVoiceIdleTicks + 1 : 0;
+  if (_autoVoiceIdleTicks >= 2) {
+    _autoVoiceIdleTicks = 0;
+    State.autoVoicePending = false;
+    window.MASTER_LOG?.warn?.("face_runtime:auto_voice_late", "speech drained without resuming — entering voice mode");
+    enterVoiceMode({ fromAuto: true });
+  }
 }, 3000);
 
 let evtSrc = null;
