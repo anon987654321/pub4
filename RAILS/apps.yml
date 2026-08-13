@@ -61,6 +61,7 @@ apps:
         - { name: AI feed ranking,                                         status: planned, agent: ignore }
         - { name: creator monetization,                                    status: planned, agent: ignore }
         - { name: maps surface,                                            status: done, notes: "maps. subdomain, Places index/show, Mapbox home" }
+        - { name: Events (city listing, RSVP, capacity, cancellation),      status: done, notes: "Event + EventRsvp; upcoming keeps running multi-day events; three-way RSVP because interested is the majority answer on every event platform; cancel! notifies attendees rather than deleting; emits EventCreated to the city strip" }
       subapp_tv:
         - { name: "Tv::Channel (slug, avatar, banner, subscribers_count)", status: done, notes: "patch_tv_models.sh" }
         - { name: "Tv::Video (status machine, duration_formatted)", status: done }

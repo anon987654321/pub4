@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_140000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -327,6 +327,52 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_130000) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_email_subscriptions_on_email", unique: true
     t.index ["token"], name: "index_email_subscriptions_on_token", unique: true
+  end
+
+  create_table "event_rsvps", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "event_id", null: false
+    t.string "status", default: "going", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["event_id", "status"], name: "index_event_rsvps_on_event_id_and_status"
+    t.index ["event_id", "user_id"], name: "index_event_rsvps_on_event_id_and_user_id", unique: true
+    t.index ["event_id"], name: "index_event_rsvps_on_event_id"
+    t.index ["user_id"], name: "index_event_rsvps_on_user_id"
+  end
+
+  create_table "events", force: :cascade do |t|
+    t.string "address"
+    t.datetime "cancelled_at"
+    t.integer "capacity"
+    t.integer "city_id"
+    t.integer "comments_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "currency"
+    t.text "description"
+    t.datetime "ends_at"
+    t.string "external_url"
+    t.integer "going_count", default: 0, null: false
+    t.integer "interested_count", default: 0, null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.integer "neighborhood_id"
+    t.integer "place_id"
+    t.integer "price_cents"
+    t.string "slug"
+    t.datetime "starts_at", null: false
+    t.string "status", default: "published", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.string "venue_name"
+    t.index ["city_id", "slug"], name: "index_events_on_city_id_and_slug", unique: true
+    t.index ["city_id", "status", "starts_at"], name: "index_events_on_city_id_and_status_and_starts_at"
+    t.index ["city_id"], name: "index_events_on_city_id"
+    t.index ["neighborhood_id"], name: "index_events_on_neighborhood_id"
+    t.index ["place_id"], name: "index_events_on_place_id"
+    t.index ["starts_at"], name: "index_events_on_starts_at"
+    t.index ["user_id"], name: "index_events_on_user_id"
   end
 
   create_table "external_identities", force: :cascade do |t|
@@ -1373,6 +1419,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_130000) do
   add_foreign_key "dating_matches", "users", column: "receiver_id"
   add_foreign_key "dating_profiles", "cities"
   add_foreign_key "dating_profiles", "users"
+  add_foreign_key "event_rsvps", "events"
+  add_foreign_key "event_rsvps", "users"
+  add_foreign_key "events", "cities"
+  add_foreign_key "events", "neighborhoods"
+  add_foreign_key "events", "places"
+  add_foreign_key "events", "users"
   add_foreign_key "external_identities", "identity_providers"
   add_foreign_key "external_identities", "users"
   add_foreign_key "identity_assurances", "users"

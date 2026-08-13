@@ -1,0 +1,77 @@
+<%= form_with model: @event do |f| %>
+  <% if @event.errors.any? %>
+    <ul class="form-errors" role="alert">
+      <% @event.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+    </ul>
+  <% end %>
+
+  <p>
+    <%= f.label :title, t("events.form.title") %>
+    <%= f.text_field :title, required: true, maxlength: 200 %>
+  </p>
+
+  <p>
+    <%= f.label :starts_at, t("events.form.starts_at") %>
+    <%= f.datetime_field :starts_at, required: true %>
+  </p>
+
+  <p>
+    <%= f.label :ends_at, t("events.form.ends_at") %>
+    <%= f.datetime_field :ends_at %>
+  </p>
+
+  <%# Two ways to answer "where", because requiring a Place means nobody can
+      post a party in their own flat, and requiring coordinates means nobody can
+      post one before the venue is settled. Picking a Place fills the rest in. %>
+  <p>
+    <%= f.label :place_id, t("events.form.place") %>
+    <%= f.collection_select :place_id, Place.in_current_city.order(:name), :id, :name,
+          { include_blank: t("events.form.no_place") } %>
+  </p>
+
+  <p>
+    <%= f.label :venue_name, t("events.form.venue_name") %>
+    <%= f.text_field :venue_name %>
+  </p>
+
+  <p>
+    <%= f.label :address, t("events.form.address") %>
+    <%= f.text_field :address %>
+  </p>
+
+  <p>
+    <%= f.label :description, t("events.form.description") %>
+    <div data-controller="character-counter" data-character-counter-countdown-value="true">
+      <%= f.text_area :description, rows: 5, maxlength: 20_000,
+            data: { character_counter_target: "input" } %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+    </div>
+  </p>
+
+  <p>
+    <%= f.label :capacity, t("events.form.capacity") %>
+    <%= f.number_field :capacity, min: 1 %>
+    <span class="dim"><%= t("events.form.capacity_hint") %></span>
+  </p>
+
+  <p>
+    <%= f.label :price_cents, t("events.form.price") %>
+    <%= f.number_field :price_cents, min: 0, step: 100 %>
+    <span class="dim"><%= t("events.form.price_hint") %></span>
+  </p>
+
+  <p>
+    <%= f.label :external_url, t("events.form.external_url") %>
+    <%= f.url_field :external_url %>
+  </p>
+
+  <p>
+    <%= f.label :cover, t("events.form.cover") %>
+    <%= f.file_field :cover, accept: "image/*", direct_upload: true %>
+  </p>
+
+  <p>
+    <%= f.submit t("events.form.submit"), class: "btn btn-primary" %>
+    <%= link_to t("actions.cancel"), events_path, class: "btn btn-ghost" %>
+  </p>
+<% end %>

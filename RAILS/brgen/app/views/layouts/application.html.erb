@@ -193,6 +193,10 @@
             <%= icon :nearby, size: 26 %>
             <span><%= t("nav.nearby") %></span>
           <% end %>
+          <%= link_to main_app.events_path, class: nav_cls.(main_app.events_path) do %>
+            <%= icon :calendar, size: 26 %>
+            <span><%= t("nav.events") %></span>
+          <% end %>
           <% if authenticated? %>
             <%= link_to main_app.user_path(Current.user), class: nav_cls.(main_app.user_path(Current.user)) do %>
               <%= icon :profile, size: 26 %>

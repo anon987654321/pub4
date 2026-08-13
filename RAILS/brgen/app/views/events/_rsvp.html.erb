@@ -1,0 +1,33 @@
+<%# locals: event, rsvp: nil %>
+<%# Three buttons rather than one toggle, because "interested" is the majority
+    answer on every event platform and collapsing it into going/not-going both
+    overstates attendance and loses the reminder signal.
+
+    Pressing the answer you already hold withdraws it — otherwise there is no
+    way back out of "going" without a fourth button. %>
+<div class="rsvp-bar" role="group" aria-label="<%= t("events.rsvp") %>">
+  <% if authenticated? %>
+    <% if event.cancelled? %>
+      <p class="dim"><%= t("events.cancelled_body") %></p>
+    <% else %>
+      <% EventRsvp::STATUSES.each do |status| %>
+        <% held = rsvp&.status == status %>
+        <%# A full event still takes "interested" — the waiting list is the point. %>
+        <% blocked = status == "going" && event.full? && !held %>
+        <%= button_to rsvp_event_path(event, status: status),
+              method: :post,
+              disabled: blocked,
+              class: "btn btn-sm#{" active" if held}",
+              form_class: "rsvp-form",
+              aria: { pressed: held } do %>
+          <%= t("events.rsvp_#{status}") %>
+        <% end %>
+      <% end %>
+      <% if event.full? && rsvp&.status != "going" %>
+        <p class="dim"><%= t("events.full_body") %></p>
+      <% end %>
+    <% end %>
+  <% else %>
+    <p class="dim"><%= link_to t("auth.sign_in"), new_session_path %> <%= t("events.sign_in_to_rsvp") %></p>
+  <% end %>
+</div>

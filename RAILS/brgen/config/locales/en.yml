@@ -1,6 +1,9 @@
 # Mirrors nb.yml. A key present in one file and absent from the other is a
 # finding — see RAILS/test/nb_locale_completeness_test.rb.
 en:
+  time:
+    formats:
+      event: "%b %-d at %H:%M"
   hello: "Hello"
   affiliate:
     deals_title: "Deals"
@@ -40,6 +43,7 @@ en:
     new_community: "+ New community"
     messages: "Messages"
     nearby: "Nearby"
+    events: "What is on"
     profile: "Profile"
     more: "More"
     post: "Post"
@@ -151,6 +155,65 @@ en:
     unread_count:
       one: "%{count} unread"
       other: "%{count} unread"
+  events:
+    title: "What is on"
+    new: "New event"
+    edit: "Edit event"
+    upcoming: "Upcoming"
+    past: "Past"
+    where: "Where"
+    about: "About"
+    nearby: "Nearby"
+    who_is_going: "Who is going"
+    nobody_yet: "Nobody has answered yet."
+    free: "Free"
+    tickets: "Tickets"
+    on_the_map: "Show on the map"
+    happening_now: "Happening now"
+    cancelled: "Cancelled"
+    cancel_event: "Cancel event"
+    confirm_cancel: "Cancel this event? Everyone who answered is told."
+    cancelled_notification: "%{title} is cancelled"
+    cancelled_body: "The organiser has cancelled this event."
+    full_body: "Full — you can still mark yourself interested."
+    organiser_actions: "Organiser actions"
+    rsvp: "Answer"
+    rsvp_going: "Going"
+    rsvp_interested: "Interested"
+    rsvp_not_going: "Cannot make it"
+    sign_in_to_rsvp: "to answer."
+    empty_title: "Nothing on yet"
+    empty_body: "The first event in the city could be yours."
+    empty_search: "No events matched that search."
+    going_count:
+      one: "%{count} going"
+      other: "%{count} going"
+    interested_count:
+      one: "%{count} interested"
+      other: "%{count} interested"
+    places_left:
+      one: "%{count} place left"
+      other: "%{count} places left"
+    your_answer:
+      going: "You are going"
+      interested: "You are interested"
+      not_going: "You cannot make it"
+    form:
+      title: "Title"
+      starts_at: "Starts"
+      ends_at: "Ends (optional)"
+      place: "Place from the map"
+      no_place: "Not a listed place"
+      venue_name: "Venue name"
+      address: "Address"
+      description: "Description"
+      capacity: "Places"
+      capacity_hint: "Leave blank for unlimited."
+      price: "Price (minor units)"
+      price_hint: "Leave blank or 0 for free."
+      external_url: "Ticket link"
+      cover: "Cover image"
+      submit: "Save event"
   search:
     title: "Search Brgen"
     placeholder: "Search posts, listings, TV, playlists…"
@@ -165,6 +228,8 @@ en:
     places_label: "Place search"
     restaurants: "Search restaurants…"
     restaurants_label: "Restaurant search"
+    events: "Search events…"
+    events_label: "Event search"
     marketplace: "Search Markedsplass"
     marketplace_label: "Search marketplace"
     marketplace_dots: "Search…"
@@ -925,6 +990,11 @@ en:
   # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb
   # fails if either file gains a key the other lacks.
   flash:
+    event_created: "Event created"
+    event_updated: "Event updated"
+    event_cancelled: "Event cancelled"
+    event_removed: "Event removed"
+    event_full: "That event is full"
     # Flash messages from the five brgen engines. These were the last 49
     # hardcoded English strings the controller_flash lint counted, shown over
     # an nb UI. Nested per engine because that is how the call sites are

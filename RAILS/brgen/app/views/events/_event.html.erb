@@ -1,0 +1,48 @@
+<%# locals: event, rsvp_status: nil %>
+<%# Cached on the event alone: nothing user-specific renders here. The viewer's
+    own RSVP is passed in from a single query in the controller rather than
+    asked per card, and it only changes the chip below. %>
+<% cache [event, local_assigns[:rsvp_status]] do %>
+  <article class="event-card" role="article" aria-labelledby="event-<%= event.id %>-title">
+    <% if event.cover.attached? %>
+      <%= link_to event_path(event), class: "event-card-media", tabindex: -1, aria: { hidden: true } do %>
+        <%= responsive_image_tag event.cover, alt: "" %>
+      <% end %>
+    <% end %>
+
+    <div class="event-card-body">
+      <p class="dim event-when">
+        <time datetime="<%= event.starts_at.iso8601 %>"><%= l(event.starts_at, format: :event) %></time>
+        <% if event.in_progress? %>
+          <span class="chip chip--live"><%= t("events.happening_now") %></span>
+        <% end %>
+        <% if event.cancelled? %>
+          <span class="chip chip--cancelled"><%= t("events.cancelled") %></span>
+        <% end %>
+      </p>
+
+      <h3 id="event-<%= event.id %>-title"><%= link_to event.title, event_path(event) %></h3>
+
+      <% if event.location_name.present? %>
+        <p class="dim"><%= event.location_name %><%= " · #{event.neighborhood.name}" if event.neighborhood %></p>
+      <% end %>
+
+      <p class="chips">
+        <span class="chip"><%= t("events.going_count", count: event.going_count) %></span>
+        <% if event.interested_count.positive? %>
+          <span class="chip"><%= t("events.interested_count", count: event.interested_count) %></span>
+        <% end %>
+        <span class="chip"><%= event.free? ? t("events.free") : event.price_display %></span>
+        <%# places_left is nil when no capacity was set — "unlimited" must not
+            render as "0 places left". %>
+        <% if (left = event.places_left) %>
+          <span class="chip"><%= t("events.places_left", count: left) %></span>
+        <% end %>
+      </p>
+
+      <% if local_assigns[:rsvp_status].present? %>
+        <p class="dim"><%= t("events.your_answer.#{local_assigns[:rsvp_status]}") %></p>
+      <% end %>
+    </div>
+  </article>
+<% end %>

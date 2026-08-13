@@ -1,0 +1,18 @@
+<% if live_search_query.present? %>
+  <p class="dim"><%= t("search.results_for", count: @events.size, query: live_search_query) %></p>
+<% end %>
+
+<% if @events.any? %>
+  <%= turbo_frame_tag "events-list", target: "_top" do %>
+    <div class="event-list" id="events-list">
+      <% @events.each do |event| %>
+        <%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %>
+      <% end %>
+    </div>
+  <% end %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("events.empty_title"),
+        body: t("events.empty_search"),
+        action: { label: t("empty.clear_search"), path: events_path } %>
+<% end %>

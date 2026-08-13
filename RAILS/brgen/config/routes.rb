@@ -70,6 +70,16 @@ Rails.application.routes.draw do
     resource :repost, only: [ :create ], controller: "reposts"
   end
 
+  # Cancelling is a member-facing state change, not a delete: people have it in
+  # their calendar. RSVP is nested because it only exists against an event.
+  resources :events do
+    member do
+      post :rsvp, to: "event_rsvps#create"
+      patch :cancel
+    end
+    resources :comments, shallow: true, only: %i[create destroy]
+  end
+
   resources :communities do
     resources :posts, shallow: true do
       resources :comments, shallow: true, only: %i[create destroy] do

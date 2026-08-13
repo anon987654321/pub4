@@ -7,6 +7,9 @@
 # RAILS/test/nb_locale_completeness_test.rb fails if a t() call's whole
 # default chain is missing from this file again.
 nb:
+  time:
+    formats:
+      event: "%-d. %b kl. %H:%M"
   hello: "Hei"
   affiliate:
     deals_title: "Tilbud"
@@ -46,6 +49,7 @@ nb:
     new_community: "+ Nytt fellesskap"
     messages: "Meldinger"
     nearby: "I nærheten"
+    events: "Hva skjer"
     profile: "Profil"
     more: "Mer"
     post: "Post"
@@ -157,6 +161,65 @@ nb:
     unread_count:
       one: "%{count} ulest"
       other: "%{count} uleste"
+  events:
+    title: "Hva skjer"
+    new: "Nytt arrangement"
+    edit: "Rediger arrangement"
+    upcoming: "På plakaten"
+    past: "Tidligere"
+    where: "Sted"
+    about: "Om"
+    nearby: "I nærheten"
+    who_is_going: "Hvem kommer"
+    nobody_yet: "Ingen har svart ennå."
+    free: "Gratis"
+    tickets: "Billetter"
+    on_the_map: "Vis på kartet"
+    happening_now: "Skjer nå"
+    cancelled: "Avlyst"
+    cancel_event: "Avlys"
+    confirm_cancel: "Avlyse arrangementet? Alle som har svart får beskjed."
+    cancelled_notification: "%{title} er avlyst"
+    cancelled_body: "Arrangøren har avlyst dette arrangementet."
+    full_body: "Fullt — du kan fortsatt melde interesse."
+    organiser_actions: "Arrangørhandlinger"
+    rsvp: "Svar"
+    rsvp_going: "Kommer"
+    rsvp_interested: "Interessert"
+    rsvp_not_going: "Kan ikke"
+    sign_in_to_rsvp: "for å svare."
+    empty_title: "Ingenting på plakaten ennå"
+    empty_body: "Det første arrangementet i byen kan være ditt."
+    empty_search: "Ingen arrangementer matchet søket."
+    going_count:
+      one: "%{count} kommer"
+      other: "%{count} kommer"
+    interested_count:
+      one: "%{count} interessert"
+      other: "%{count} interesserte"
+    places_left:
+      one: "%{count} plass igjen"
+      other: "%{count} plasser igjen"
+    your_answer:
+      going: "Du kommer"
+      interested: "Du er interessert"
+      not_going: "Du kan ikke"
+    form:
+      title: "Tittel"
+      starts_at: "Starter"
+      ends_at: "Slutter (valgfritt)"
+      place: "Sted fra kartet"
+      no_place: "Ikke et registrert sted"
+      venue_name: "Stedsnavn"
+      address: "Adresse"
+      description: "Beskrivelse"
+      capacity: "Antall plasser"
+      capacity_hint: "La stå tomt for ubegrenset."
+      price: "Pris (øre)"
+      price_hint: "La stå tomt eller 0 for gratis."
+      external_url: "Billettlenke"
+      cover: "Bilde"
+      submit: "Lagre arrangement"
   search:
     title: "Søk i Brgen"
     placeholder: "Søk innlegg, annonser, TV, spillelister…"
@@ -171,6 +234,8 @@ nb:
     places_label: "Søk steder"
     restaurants: "Søk restauranter…"
     restaurants_label: "Søk restauranter"
+    events: "Søk arrangementer…"
+    events_label: "Søk arrangementer"
     marketplace: "Søk Markedsplass"
     marketplace_label: "Søk markedsplass"
     marketplace_dots: "Søk…"
@@ -933,6 +998,11 @@ nb:
   # sentence are NOT here: they reuse shared.flash.*, which the engine owns for all
   # three apps.
   flash:
+    event_created: "Arrangement opprettet"
+    event_updated: "Arrangement oppdatert"
+    event_cancelled: "Arrangementet er avlyst"
+    event_removed: "Arrangement slettet"
+    event_full: "Arrangementet er fullt"
     # Flash messages from the five brgen engines. These were the last 49
     # hardcoded English strings the controller_flash lint counted, shown over
     # an nb UI. Nested per engine because that is how the call sites are

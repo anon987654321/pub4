@@ -25,6 +25,7 @@ class ActivityEvent < ApplicationRecord
     MarketplaceStoreCreated
     MarketplaceDealCreated
     VideoPublished
+    EventCreated
   ].freeze
 
   def self.for_city_home(city, limit: 8)

@@ -1,0 +1,48 @@
+<% content_for :title, t("events.title") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("events.title") %>">
+  <h1><%= t("events.title") %></h1>
+  <% if authenticated? %>
+    <%= link_to t("events.new"), new_event_path, class: "btn btn-sm" %>
+  <% end %>
+</div>
+
+<%= live_search_index url: events_path,
+      results_partial: "events/live_search_results",
+      placeholder: t("search.events"),
+      label: t("search.events_label"),
+      frame_id: "brgen-events" %>
+
+<section role="region" aria-label="<%= t("events.upcoming") %>">
+  <% if @events.any? %>
+    <div class="event-list">
+      <% @events.each do |event| %>
+        <%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %>
+      <% end %>
+    </div>
+    <% if @pagy.next %>
+      <%= link_to t("actions.load_more", default: "More"),
+                  events_path(page: @pagy.next), rel: "next", class: "btn btn-ghost" %>
+    <% end %>
+  <% else %>
+    <%# empty_state: the action is posting one, and anyone signed in can. %>
+    <%= render "shared/empty_state",
+          title: t("events.empty_title"),
+          body: t("events.empty_body"),
+          action: (authenticated? ? { label: t("events.new"), path: new_event_path } : nil) %>
+  <% end %>
+</section>
+
+<% if @past.any? %>
+  <%# A separate strip, not mixed into the listing: an archive and a listing
+      answer different questions, and interleaving them means scrolling past
+      last month to find tonight. %>
+  <section role="region" aria-label="<%= t("events.past") %>">
+    <h2><%= t("events.past") %></h2>
+    <div class="event-list event-list--past">
+      <% @past.each do |event| %>
+        <%= render "events/event", event: event %>
+      <% end %>
+    </div>
+  </section>
+<% end %>

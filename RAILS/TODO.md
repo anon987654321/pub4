@@ -186,12 +186,38 @@ not currently model.
 
 Depends on 1.1 — `Announce` is repost.
 
-### 2.2 No `Event` model (Facebook)
+### 2.2 No `Event` model (Facebook) — **done**
 
-Nothing in `brgen/db/schema.rb`. For a city-scoped social network this is the largest
-missing noun on the list — larger than Stories or Reels. `Place`,
-`PlaceCheckIn`, `Neighborhood` and the maps engine already sit underneath it,
-and `ActivityEvent.for_city_home` already has a slot on the home page for it.
+The largest missing noun on the list, and the one with the most already sitting
+underneath it: `Place`, `PlaceCheckIn`, `Neighborhood`, the maps engine, and a
+city-strip on the home page that now carries `EventCreated`.
+
+`Event` + `EventRsvp`, with the decisions worth keeping:
+
+- **Location is two-sided.** An event either points at a `Place` (which fills in
+  coordinates, venue name and neighbourhood at validation) or carries free text.
+  Requiring a Place means nobody can post a party in their own flat; requiring
+  coordinates means nobody can post before the venue is settled.
+- **`upcoming` means "has not finished", not "has not started"** — a three-day
+  festival is still on during day two, and dropping it at the opening minute is
+  how a what's-on page lies.
+- **RSVP is three-way.** "Interested" is the majority answer on every event
+  platform; collapsing it into going/not-going both overstates attendance and
+  loses the reminder signal. Pressing the answer you hold withdraws it.
+- **The counts are recounted, not counter-cached.** Rails increments on create
+  and decrements on destroy, and a status moving from going to interested is
+  neither. `update_columns` writes `updated_at` by hand, because the card is
+  fragment-cached on `[event]`.
+- **Cancelling is not deleting.** People have it in their calendar; `cancel!`
+  notifies everyone who said they were coming and the event stays readable.
+- `capacity` nil means unlimited, and `places_left` returns nil rather than 0 so
+  it cannot render as "0 places left". A full event still takes "interested".
+
+**Check:** `brgen/test/models/event_test.rb` (12) and
+`brgen/test/controllers/events_controller_test.rb` (9).
+
+**Still open:** recurring events, ticketing beyond an external link, and an
+event's own map pin on the maps engine (it has coordinates; nothing draws them).
 
 ### 2.3 No Story / ephemeral media (Snapchat)
 

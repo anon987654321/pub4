@@ -1,0 +1,106 @@
+<% content_for :title, @event.title %>
+<% content_for :description, truncate(@event.description.to_s, length: 160) %>
+<% content_for :og_image, seo_image_url(@event.cover) %>
+
+<article class="event-detail" role="article">
+  <div class="page-header" role="banner">
+    <div>
+      <p class="dim">
+        <time datetime="<%= @event.starts_at.iso8601 %>"><%= l(@event.starts_at, format: :event) %></time>
+        <% if @event.ends_at %>–<time datetime="<%= @event.ends_at.iso8601 %>"><%= l(@event.ends_at, format: :event) %></time><% end %>
+      </p>
+      <h1><%= @event.title %></h1>
+    </div>
+    <% if @event.cancelled? %>
+      <span class="chip chip--cancelled"><%= t("events.cancelled") %></span>
+    <% elsif @event.in_progress? %>
+      <span class="chip chip--live"><%= t("events.happening_now") %></span>
+    <% end %>
+  </div>
+
+  <% if @event.cover.attached? %>
+    <div class="event-hero">
+      <%= responsive_image_tag @event.cover, alt: "" %>
+    </div>
+  <% end %>
+
+  <section role="region" aria-label="<%= t("events.where") %>">
+    <% if @event.location_name.present? %>
+      <p>
+        <strong><%= @event.location_name %></strong>
+        <% if @event.place %>· <%= link_to t("events.on_the_map"), place_path(@event.place) %><% end %>
+      </p>
+    <% end %>
+    <% if @event.address.present? %><p class="dim"><%= @event.address %></p><% end %>
+    <p class="chips">
+      <span class="chip"><%= @event.free? ? t("events.free") : @event.price_display %></span>
+      <% if (left = @event.places_left) %>
+        <span class="chip"><%= t("events.places_left", count: left) %></span>
+      <% end %>
+      <% if @event.external_url.present? %>
+        <%= link_to t("events.tickets"), @event.external_url, class: "chip", rel: "nofollow noopener" %>
+      <% end %>
+    </p>
+  </section>
+
+  <%= turbo_frame_tag dom_id(@event, :rsvp) do %>
+    <%= render "events/rsvp", event: @event, rsvp: @rsvp %>
+  <% end %>
+
+  <% if @event.description.present? %>
+    <section role="region" aria-label="<%= t("events.about") %>">
+      <%= simple_format @event.description %>
+    </section>
+  <% end %>
+
+  <section role="region" aria-label="<%= t("events.who_is_going") %>">
+    <h2><%= t("events.going_count", count: @event.going_count) %></h2>
+    <% if @attendees.any? %>
+      <ul class="attendee-list">
+        <% @attendees.each do |rsvp| %>
+          <li><%= rsvp.user.display_name %></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="dim"><%= t("events.nobody_yet") %></p>
+    <% end %>
+  </section>
+
+  <% if @nearby.any? %>
+    <section role="region" aria-label="<%= t("events.nearby") %>">
+      <h2><%= t("events.nearby") %></h2>
+      <div class="event-list">
+        <% @nearby.each { |event| %><%= render "events/event", event: event %><% } %>
+      </div>
+    </section>
+  <% end %>
+
+  <section role="region" aria-label="<%= t("comments.submit") %>">
+    <h2><%= t("comments.submit") %></h2>
+    <% if @comment %>
+      <%= form_with model: [ @event, @comment ] do |f| %>
+        <%= f.text_area :content, placeholder: t("comments.placeholder"), rows: 2 %>
+        <%= f.submit t("comments.submit"), class: "btn btn-sm" %>
+      <% end %>
+    <% end %>
+    <% @comments.each do |comment| %>
+      <article class="comment" role="article">
+        <p class="dim"><%= comment.user.display_name %></p>
+        <p><%= comment.content %></p>
+      </article>
+    <% end %>
+  </section>
+
+  <% if authenticated? && Current.user.id == @event.user_id %>
+    <nav role="navigation" aria-label="<%= t("events.organiser_actions") %>">
+      <%= link_to t("actions.edit"), edit_event_path(@event), class: "btn btn-ghost btn-sm" %>
+      <% unless @event.cancelled? %>
+        <%# Cancel, not delete: people have it in their calendar, and an event
+            that vanishes tells them nothing. %>
+        <%= button_to t("events.cancel_event"), cancel_event_path(@event), method: :patch,
+              class: "btn btn-ghost btn-sm",
+              data: { turbo_confirm: t("events.confirm_cancel") } %>
+      <% end %>
+    </nav>
+  <% end %>
+</article>

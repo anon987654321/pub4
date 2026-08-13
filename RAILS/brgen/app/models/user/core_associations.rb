@@ -24,6 +24,9 @@ class User
       has_many :votes, dependent: :destroy
       has_many :reposts, dependent: :destroy
       has_many :reposted_posts, through: :reposts, source: :post
+      has_many :events, dependent: :destroy
+      has_many :event_rsvps, dependent: :destroy
+      has_many :attending_events, through: :event_rsvps, source: :event
     end
   end
 end
