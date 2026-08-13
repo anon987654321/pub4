@@ -80,6 +80,18 @@ module ApplicationHelper
   # ENTRIES_BY_DOMAIN is the frozen index of the same rows. The linear find this
   # replaced ran per record through schema_url_for -> record_public_href, so a
   # 25-listing index page walked all 44 entries 25 times.
+# One affiliate lookup per request, however many surfaces ask for it.
+#
+# The in-feed unit renders once every AFFILIATE_EVERY posts, so a single home
+# feed asked Affiliate.deals six times for the same rows and query_budget_test
+# caught it at 21 queries against a ceiling of 20. The sidebar unit asks a
+# seventh time with a different limit. Keyed by the arguments, memoised on the
+# request, so the units stay independent of each other without re-querying.
+def affiliate_deals_for(category: nil, limit: 8)
+  @affiliate_deals_cache ||= {}
+  @affiliate_deals_cache[[category, limit]] ||= Affiliate.deals(category: category, limit: limit)
+end
+
   def marketplace_subdomain
     Brgen::DomainRegistry::ENTRIES_BY_DOMAIN[Current.domain.to_s]&.marketplace_subdomain || "marketplace"
   end

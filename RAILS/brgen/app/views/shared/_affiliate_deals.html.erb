@@ -1,6 +1,6 @@
 <%# Affiliate, not Tradedoubler: one read path over every network, so a new
     one appears here without editing this view. %>
-<% deals = Affiliate.deals(category: local_assigns[:category], limit: 6) %>
+<% deals = affiliate_deals_for(category: local_assigns[:category], limit: 6) %>
 <% if deals.any? %>
   <div class="sidebar-card">
     <h3><%= t("affiliate.deals_title") %></h3>

@@ -9,7 +9,7 @@
 
     Reads Affiliate.deals, the same single path over every network the sidebar
     unit uses, so a new network appears here without editing this view. %>
-<% deals = Affiliate.deals(category: local_assigns[:category], limit: 8) %>
+<% deals = affiliate_deals_for(category: local_assigns[:category], limit: 8) %>
 <% if deals.any? %>
   <aside class="affiliate_feed_unit"
          aria-label="<%= t("affiliate.feed_unit_label") %>"
