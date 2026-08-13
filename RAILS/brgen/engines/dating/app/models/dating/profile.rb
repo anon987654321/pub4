@@ -74,10 +74,19 @@ class Dating::Profile < ApplicationRecord
 
   def self.ranked_for(viewer, seed: Date.current.to_s)
     multiplier = (Digest::MD5.hexdigest("#{seed}:#{viewer&.id}")[0, 6].to_i(16) % (SHUFFLE_MODULUS - 1)) + 1
+    # Integer() rather than the bare local: both values are integers by
+    # construction — to_i(16) % 996 + 1, and a literal constant — but Brakeman
+    # cannot follow that through the digest and reported the interpolation as
+    # possible SQL injection, which failed brgen's CI. Integer() is the
+    # narrowest way to make it provable: it raises rather than coerces, so it
+    # states the invariant instead of hiding a violation of it. ORDER BY cannot
+    # take a bind parameter, so interpolation is the only shape available here.
+    multiplier = Integer(multiplier)
+    modulus = Integer(SHUFFLE_MODULUS)
     order(Arel.sql(<<~SQL.squish))
       #{RECENCY_SQL} ASC,
       (SELECT COUNT(*) FROM dating_prompts WHERE dating_prompts.profile_id = dating_profiles.id) DESC,
-      ((dating_profiles.id * #{multiplier}) % #{SHUFFLE_MODULUS}) ASC
+      ((dating_profiles.id * #{multiplier}) % #{modulus}) ASC
     SQL
   end
 
