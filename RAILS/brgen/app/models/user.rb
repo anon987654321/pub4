@@ -82,8 +82,14 @@ class User < ApplicationRecord
 
   def following?(other) = follows_as_follower.exists?(followed: other)
 
+  # Posts by people you follow, plus posts they reposted. A repost that only
+  # showed on the reposter's profile would be a bookmark with extra steps — the
+  # whole point is that it reaches the followers.
   def timeline_posts
-    Post.where(user: [ self ] + following).order(created_at: :desc)
+    author_ids = [ id ] + following.ids
+    Post.where(user_id: author_ids)
+        .or(Post.where(id: Repost.where(user_id: author_ids).select(:post_id)))
+        .order(created_at: :desc)
   end
 
   def unfollow!(other)

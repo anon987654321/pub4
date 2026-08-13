@@ -26,20 +26,50 @@ The schema and the model exist. Nothing reads or writes them. These are the
 cheapest items here and they gate most of Tier 2, because ranking and
 notification both need a signal that is currently never recorded.
 
-### 1.1 Repost is a decorative button
+### 1.1 Repost was a decorative button — **done, built**
 
-`brgen/app/views/posts/_post.html.erb:23-39` renders the repost control with no
-`data-controller` and a comment saying there is no repost feature.
-`shared/app/views/shared/_action_bar.html.erb` renders its own repost button
-with no behaviour either. A user pressing it saw optimistic UI that reverted on
-the next render, so the optimism was removed and the button kept.
+The call was build rather than drop, because brgen is aiming at x.com and
+Mastodon parity and `Announce` is repost (2.1 depends on it).
 
-Decide first: build it or drop it. Both are correct; rendering an inert control
-is not. Building it means a `Repost` model (or `Post#reposted_from_id`), feed
-inclusion, and the quote-post variant that x.com and Mastodon both depend on.
+A repost is a `Repost` row, not a `Post`: `Post` includes `Shared::Sluggable`,
+whose slug is derived from the title and unique per city, so a repost-as-post
+would have collided with the thing it reposted. It carries no content, boosts
+into followers' timelines via `User#timeline_posts`, notifies the author (but
+not for reposting yourself), and toggles off on a second press.
 
-**Check:** none today. A view test asserting every `feed-action` button resolves
-to a controller or a form would catch the whole class.
+The button is a `button_to`, not the `action` Stimulus controller the vote
+button uses. Two reasons: that controller's optimistic toggle is exactly what
+made the broken version look like it worked, and a third Stimulus instance per
+card breaks `FrontPageWeightTest`'s five-per-post budget.
+
+Three things the repo's own gates caught, all of them real:
+
+- `reposted_by?` as an `exists?` per card is a 25-query N+1 on the feed;
+  `QueryBudgetTest` failed on it. It is now one pluck per request memoised on
+  `Current`.
+- the card is fragment-cached and `reposted_by?` is per-viewer output, so the
+  flag had to go into the cache key or one viewer's repost state renders for
+  everyone.
+- `FrontPageWeightTest` had a test asserting *no repost backend exists* and the
+  button stays inert. It is inverted now: the button must reach the endpoint.
+
+**Found while wiring it, and fixed:** `post_vote_path(post)` carries the slug
+(`Sluggable#to_param`), and `VotesController#find_votable` called `Post.find` on
+it — a 404 that the `action` controller rolls back silently, so **every vote
+cast from a feed card was discarded**. Fixing that exposed a second layer:
+`Vote#update_author_karma` lazily read `votable.user` on a strict-loading record
+and raised after the vote had been written. Both pinned by tests.
+
+**Check:** `brgen/test/models/repost_test.rb` (counter cache, uniqueness, undo,
+timeline inclusion, author notification, cascade) and
+`brgen/test/controllers/reposts_controller_test.rb` (POST toggle, guest
+behaviour, removed posts, cache-key leakage, and voting by slug).
+
+**Still open:** quote-post — a repost carrying a comment — which x.com and
+Mastodon both lean on. Also `shared/app/views/shared/_action_bar.html.erb` is
+wired the same way but **no view in any of the three apps renders that
+partial**; it is contract-pinned by `RAILS/test/design_contract_test.rb` and
+otherwise dead. Deleting it is a call for whoever added it.
 
 ### 1.2 `Tv::ViewEvent` recorded that a page opened, not that anything was watched — **done**
 

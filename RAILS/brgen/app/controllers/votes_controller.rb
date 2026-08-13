@@ -5,6 +5,13 @@
 # karma side-effects and city-specific behavior.
 # See RAILS/shared/WIRING_NOTES.md "Deferred DRY".
 class VotesController < ApplicationController
+  # Post includes Shared::Sluggable, so to_param is the slug and
+  # post_vote_path(post) carries "sol-pa-floyen". find_votable called
+  # Post.find on that, which raises RecordNotFound -> 404, and the action
+  # Stimulus controller rolls the optimistic count back on a non-ok response.
+  # Every vote cast from a feed card was silently discarded.
+  include Shared::FindableBySlug
+
   rate_limit to: 60, within: 1.minute, only: :create,
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_user_session
@@ -29,8 +36,10 @@ class VotesController < ApplicationController
   private
 
   def find_votable
-    return Post.find(params[:post_id])       if params[:post_id]
-    return Comment.find(params[:comment_id]) if params[:comment_id]
+    # Comments have no slug column at all, so find_by_slug_or_id would raise on
+    # the missing column rather than falling through — id lookup stays.
+    return find_by_slug_or_id(Post, params[:post_id]) if params[:post_id]
+    return Comment.find(params[:comment_id])          if params[:comment_id]
     raise ActiveRecord::RecordNotFound, "no votable in params"
   end
 end

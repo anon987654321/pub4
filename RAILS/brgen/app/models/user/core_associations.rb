@@ -22,6 +22,8 @@ class User
       has_many :sessions, dependent: :destroy
       has_many :trust_signals, dependent: :destroy
       has_many :votes, dependent: :destroy
+      has_many :reposts, dependent: :destroy
+      has_many :reposted_posts, through: :reposts, source: :post
     end
   end
 end

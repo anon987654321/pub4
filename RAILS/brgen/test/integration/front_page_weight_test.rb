@@ -91,18 +91,24 @@ class FrontPageWeightTest < ActionDispatch::IntegrationTest
                     "on a #{POSTS}-post feed that is #{per_post.size * POSTS} instances"
   end
 
-  test "the repost button does not claim to persist a feature that does not exist" do
-    tree = Rails.root.join("..").to_s
-    backend = Dir.glob(File.join(tree, "brgen/{app,config,db}/**/*.{rb,yml}")).select do |path|
-      File.read(path).match?(/\brepost/i)
-    end
-    assert_empty backend,
-                 "a repost backend now exists — wire the button to it rather than leaving it inert"
+  # This test used to assert the opposite: that no repost backend existed and
+  # the button stayed inert, because for months a press toggled a class and
+  # discarded the click. The backend exists now, so the contract inverts —
+  # the button must reach it, and must not go back to being decorative.
+  test "the repost button reaches a real endpoint" do
+    assert Post.new.respond_to?(:reposted_by?), "Post lost its repost predicate"
+    assert defined?(Repost), "the Repost model is gone but the button remains"
 
-    repost_button = post_partial[/<button[^>]*repost.*?<\/button>/m].to_s
-    refute_empty repost_button, "the repost button has moved; re-point this test"
-    refute_match(/data-controller="[^"]*action/, repost_button,
-                 "action#toggle with no url-value toggles a class and discards the click")
+    assert_match(/post_repost_path/, post_partial,
+                 "the repost button must post to the repost endpoint, not sit inert")
+
+    # button_to, not data-controller="action": the action controller's optimistic
+    # toggle is what let a failed request look like a success, and a third
+    # Stimulus instance per card breaks PER_POST_BUDGET.
+    repost_markup = post_partial[/button_to post_repost_path.*?<% end %>/m].to_s
+    refute_empty repost_markup, "the repost button has moved; re-point this test"
+    refute_match(/data-controller="[^"]*action/, repost_markup,
+                 "action#toggle would restore the optimistic-success bug this replaced")
   end
 
   test "hover-only popovers stay out of the feed" do

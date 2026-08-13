@@ -1,4 +1,4 @@
-<%# locals: record, reply_path: nil, share_url: nil, liked: false, like_count: 0, repost_count: 0, view_count: nil, comment_count: 0 %>
+<%# locals: record, reply_path: nil, share_url: nil, liked: false, like_count: 0, repost_count: 0, repost_path: nil, reposted: false, view_count: nil, comment_count: 0 %>
 <% like_count = local_assigns.fetch(:like_count, 0).to_i %>
 <div class="feed-card-actions">
   <% if local_assigns[:reply_path].present? %>
@@ -14,12 +14,29 @@
     </button>
   <% end %>
 
-  <button type="button" class="feed-action feed-action--repost" aria-label="Repost">
-    <%= icon(:repost, size: 18) %>
-    <% if local_assigns.fetch(:repost_count, 0).to_i.positive? %>
-      <span class="feed-action-count"><%= repost_count %></span>
+  <%# repost_path is passed only by surfaces that have somewhere to send it —
+      brgen posts today. Everywhere else the button stays disabled rather than
+      accepting a press and discarding it, which is what it did for months. %>
+  <% if local_assigns[:repost_path].present? %>
+    <%# button_to rather than the `action` controller: a form costs no Stimulus
+        instance on a feed of cards, and the count comes back from the server
+        instead of an optimistic guess that needs rolling back. %>
+    <%= button_to repost_path,
+                  method: :post,
+                  class: "feed-action feed-action--repost#{" active" if local_assigns[:reposted]}",
+                  form_class: "feed-action-form",
+                  aria: { label: "Repost", pressed: !!local_assigns[:reposted] } do %>
+      <%= icon(:repost, size: 18) %>
+      <span class="feed-action-count"><%= local_assigns.fetch(:repost_count, 0).to_i.positive? ? repost_count : "" %></span>
     <% end %>
-  </button>
+  <% else %>
+    <button type="button" class="feed-action feed-action--repost" aria-label="Repost" disabled>
+      <%= icon(:repost, size: 18) %>
+      <% if local_assigns.fetch(:repost_count, 0).to_i.positive? %>
+        <span class="feed-action-count"><%= repost_count %></span>
+      <% end %>
+    </button>
+  <% end %>
 
   <button type="button"
           class="feed-action feed-action--like<%= " active" if local_assigns[:liked] %>"

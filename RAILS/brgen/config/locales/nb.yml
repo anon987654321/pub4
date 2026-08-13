@@ -328,6 +328,8 @@ nb:
             menu_item:
               unavailable: "er utsolgt"
   post:
+    repost: "Del igjen"
+    repost_notification: "%{user} delte innlegget ditt"
     new: "Nytt innlegg"
     guest_sign_in: " for å bruke navnet ditt."
     posting_as_anon: "Poster som"

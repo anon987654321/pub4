@@ -322,6 +322,8 @@ en:
             menu_item:
               unavailable: "is unavailable"
   post:
+    repost: "Repost"
+    repost_notification: "%{user} reposted your post"
     new: "New post"
     guest_sign_in: " to use your name."
     posting_as_anon: "Posting as"

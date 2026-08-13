@@ -8,7 +8,11 @@
     never hit once and each visit wrote 25 single-use entries into the store.
     voted_by? has three outcomes, so this collapses to at most three variants
     per post and renders identically. %>
-  <% cache [post, post.voted_by?(Current.user)] do %>
+  <%# reposted_by? is user-specific output inside a shared fragment, so it has to
+      be in the key or one viewer's repost state renders for everyone. Computed
+      once here and passed down rather than called three times per card. %>
+  <% reposted = post.reposted_by?(Current.user) %>
+  <% cache [post, post.voted_by?(Current.user), reposted] do %>
     <% post_actions = capture do %>
       <button type="button" class="feed-action"
               aria-label="<%= t("post.comment_aria", count: post.comment_count, default: "Comment, %{count} comments") %>"
@@ -20,24 +24,27 @@
         <%= render "shared/feed_icon", name: "comment" %>
         <span class="feed-action-count" data-action-target="count"><%= post.comment_count %></span>
       </button>
-      <%# No data-controller here, deliberately. There is no repost feature: no
-          route, no model, no controller, no column — grep the tree. The button
-          carried data-controller="action" with no data-action-url-value, and
-          action_controller#toggle guards its fetch on `if (this.urlValue)`, so
-          clicking it added the `active` class, sent nothing, and told the user
-          their repost had landed. It reverted on the next render.
-          shared/_action_bar.html.erb already renders its repost button with no
-          controller at all, which is the honest version of the same thing.
+      <%# This button spent a long time with nothing behind it — first carrying
+          data-controller="action" with no URL, so a press added the active
+          class, sent nothing, and claimed the repost had landed until the next
+          render took it back; then with no controller at all, which was at
+          least honest. Repost exists now, so it is wired.
 
-          A button that silently discards the action is worse than one that does
-          nothing visible, so the pretence goes and the affordance stays exactly
-          where the design puts it. Whether to build repost or drop the button is
-          a product call, not this partial's. Costs 25 controller instances on the
-          front page — the same shape as the 100 popovers removed here earlier. %>
-      <button type="button" class="feed-action" aria-label="<%= t("post.repost", default: "Repost") %>"
-              title="<%= t("post.repost", default: "Repost") %>">
+          button_to, not the `action` controller the vote button uses: that
+          would be a third Stimulus instance on every card, and
+          FrontPageWeightTest caps a post at five. A form costs none, works
+          without JS, and Turbo swaps the card from the turbo_stream response —
+          so the count comes back from the server rather than from an optimistic
+          guess that has to be rolled back when the request fails. %>
+      <%= button_to post_repost_path(post),
+                    method: :post,
+                    class: "feed-action#{" active" if reposted}",
+                    form_class: "feed-action-form",
+                    aria: { label: t("post.repost", default: "Repost"), pressed: reposted },
+                    title: t("post.repost", default: "Repost") do %>
         <%= render "shared/feed_icon", name: "repost" %>
-      </button>
+        <span class="feed-action-count"><%= post.reposts_count.positive? ? post.reposts_count : "" %></span>
+      <% end %>
       <button type="button" class="feed-action<%= " active" if Current.user.present? && post.upvoted_by?(Current.user) %>"
               aria-label="<%= t("post.vote_aria", score: post.score, default: "Vote, score %{score}") %>"
               aria-pressed="<%= Current.user.present? && post.upvoted_by?(Current.user) %>"

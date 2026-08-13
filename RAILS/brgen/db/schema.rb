@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_130000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -934,6 +934,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
     t.datetime "removed_at"
+    t.integer "reposts_count", default: 0, null: false
     t.string "slug"
     t.string "title", null: false
     t.datetime "updated_at", null: false
@@ -968,6 +969,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
     t.index ["reactable_type", "reactable_id"], name: "index_reactions_on_reactable"
     t.index ["user_id", "reactable_type", "reactable_id", "post_id", "kind"], name: "idx_reactions_unique_user_target_kind", unique: true
     t.index ["user_id"], name: "index_reactions_on_user_id"
+  end
+
+  create_table "reposts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "post_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["post_id"], name: "index_reposts_on_post_id"
+    t.index ["user_id", "post_id"], name: "index_reposts_on_user_id_and_post_id", unique: true
+    t.index ["user_id"], name: "index_reposts_on_user_id"
   end
 
   create_table "reputation_scores", force: :cascade do |t|
@@ -1437,6 +1448,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
   add_foreign_key "posts", "users"
   add_foreign_key "reactions", "posts"
   add_foreign_key "reactions", "users"
+  add_foreign_key "reposts", "posts"
+  add_foreign_key "reposts", "users"
   add_foreign_key "reputation_scores", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "streams", "posts"

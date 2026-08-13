@@ -66,6 +66,8 @@ Rails.application.routes.draw do
   resources :posts do
     resources :comments, shallow: true, only: %i[create destroy]
     resource :vote, only: [ :create ], controller: "votes"
+    # POST toggles: the action Stimulus controller only ever sends POST.
+    resource :repost, only: [ :create ], controller: "reposts"
   end
 
   resources :communities do
@@ -74,6 +76,7 @@ Rails.application.routes.draw do
         resources :comments, shallow: true, only: %i[create destroy], as: :replies
       end
       resource :vote, only: [ :create ], controller: "votes"
+      resource :repost, only: [ :create ], controller: "reposts"
     end
   end
   patch "drafts/:id", to: "drafts#update", as: :draft

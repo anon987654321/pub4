@@ -31,6 +31,8 @@ class Post < ApplicationRecord
   belongs_to :community, optional: true
 
   has_many :mentions, as: :mentionable, dependent: :destroy
+  has_many :reposts, dependent: :destroy
+  has_many :reposters, through: :reposts, source: :user
 
   validates :title,   presence: true, length: { maximum: 300 }
   validates :content, length: { maximum: 40_000 }
@@ -64,6 +66,8 @@ class Post < ApplicationRecord
   }
 
   def live? = latitude.present? && longitude.present?
+
+  def reposted_by?(user) = Repost.reposted_post_ids_for(user).include?(id)
 
   def stamp_live_location!(lat:, lng:)
     self.latitude  = lat.to_f.round(LIVE_LOCATION_PRECISION)
