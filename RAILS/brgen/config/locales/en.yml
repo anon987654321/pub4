@@ -747,6 +747,8 @@ en:
     nearby_restaurants: "Nearby"
     leave_review: "Leave a review"
     status_timeline: "Status timeline"
+    courier_distance: "%{km} km away"
+    courier_unassigned: "No free courier nearby yet."
     order_cancelled: "Order cancelled"
     order_from: "Order from %{restaurant}"
     sold_out: "Sold out"

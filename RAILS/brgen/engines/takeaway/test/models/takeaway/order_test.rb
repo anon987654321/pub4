@@ -161,4 +161,114 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
       assert order.save, order.errors.full_messages.join("; ")
     end
   end
+
+  # Dispatch. takeaway_orders.delivery_driver_id and its composite
+  # [delivery_driver_id, status] index shipped with the table, and nothing ever
+  # wrote the column: every order went out for delivery with no courier on it.
+  # These pin the write, not just the association.
+
+  def kitchen(name:, address:, lat: 60.3913, lng: 5.3221)
+    Takeaway::Restaurant.create!(
+      user: @owner, name: name, address: address, cuisine_type: "Norwegian",
+      city: @city, active: true, latitude: lat, longitude: lng
+    )
+  end
+
+  def courier(email:, lat:, lng:, available: true)
+    rider = User.strict_loading(false).create!(email_address: email, password: "password123", city: @city)
+    Takeaway::DeliveryDriver.create!(
+      user: rider, vehicle_type: "bicycle", available: available,
+      current_lat: lat, current_lng: lng
+    )
+  end
+
+  def out_for_delivery!(order)
+    order.confirm!
+    order.prepare!
+    order.dispatch!
+  end
+
+  test "dispatch assigns the nearest free courier, not merely one in the box" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = kitchen(name: "Dispatch Kitchen", address: "Marken 20")
+      # `nearby` is a bounding box, so the far courier is inside it. Only real
+      # haversine ordering picks the near one — a bbox alone would take either.
+      far  = courier(email: "far@brgen.no",  lat: 60.4180, lng: 5.3700)
+      near = courier(email: "near@brgen.no", lat: 60.3920, lng: 5.3230)
+
+      order = Takeaway::Order.create!(
+        user: @buyer, restaurant: restaurant,
+        delivery_address: "Torget 2", status: "pending"
+      )
+      out_for_delivery!(order)
+
+      assert_equal near.id, order.reload.delivery_driver_id
+      refute_equal far.id, order.delivery_driver_id
+    end
+  end
+
+  test "a courier already carrying an order is not dispatched again" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = kitchen(name: "Busy Kitchen", address: "Marken 22")
+      only_rider = courier(email: "onlyone@brgen.no", lat: 60.3915, lng: 5.3225)
+
+      first = Takeaway::Order.create!(
+        user: @buyer, restaurant: restaurant,
+        delivery_address: "Torget 3", status: "pending"
+      )
+      out_for_delivery!(first)
+      assert_equal only_rider.id, first.reload.delivery_driver_id
+
+      second = Takeaway::Order.create!(
+        user: @buyer, restaurant: restaurant,
+        delivery_address: "Torget 4", status: "pending"
+      )
+      out_for_delivery!(second)
+
+      assert_nil second.reload.delivery_driver_id,
+                 "the only courier is mid-delivery; dispatch must not double-book"
+      assert only_rider.on_delivery?
+    end
+  end
+
+  # Nobody on shift at 03:00 is an operational state, not a validation failure.
+  # Blocking the transition would strand the order in `preparing` forever.
+  test "no free courier still lets the order leave the kitchen" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = kitchen(name: "Lonely Kitchen", address: "Marken 24")
+      courier(email: "offshift@brgen.no", lat: 60.3915, lng: 5.3225, available: false)
+
+      order = Takeaway::Order.create!(
+        user: @buyer, restaurant: restaurant,
+        delivery_address: "Torget 5", status: "pending"
+      )
+      out_for_delivery!(order)
+
+      assert_equal "out_for_delivery", order.reload.status
+      assert_nil order.delivery_driver_id
+      assert_nil order.courier_display_name
+    end
+  end
+
+  test "dispatch survives an order loaded without preloads" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = kitchen(name: "Strict Dispatch", address: "Marken 26")
+      rider = courier(email: "strict-rider@brgen.no", lat: 60.3916, lng: 5.3226)
+
+      created = Takeaway::Order.create!(
+        user: @buyer, restaurant: restaurant,
+        delivery_address: "Torget 6", status: "pending"
+      )
+      created.confirm!
+      created.prepare!
+
+      bare = Takeaway::Order.find_by(id: created.id)
+      refute bare.association(:restaurant).loaded?, "guard: restaurant must NOT be preloaded"
+
+      assert bare.dispatch!
+      assert_equal rider.id, created.reload.delivery_driver_id
+      assert_equal rider.user.display_name, created.courier_display_name
+      assert created.courier_distance_km < 1.0
+    end
+  end
 end

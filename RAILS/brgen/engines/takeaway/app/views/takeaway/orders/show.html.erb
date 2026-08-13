@@ -27,6 +27,22 @@
   <% else %>
     <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.estimated_ready_at.iso8601 %>">Est. delivery — calculating…</p>
   <% end %>
+
+  <%# Named courier once one is dispatched. Absence is a real state — nobody
+      free within the dispatch radius — so it says so rather than rendering an
+      empty row. %>
+  <% if @order.status == "out_for_delivery" %>
+    <% if (courier = @order.courier_display_name) %>
+      <p class="courier">
+        <strong><%= courier %></strong>
+        <% if (km = @order.courier_distance_km) %>
+          <span class="dim"><%= t("takeaway.courier_distance", km: km.round(1)) %></span>
+        <% end %>
+      </p>
+    <% else %>
+      <p class="dim courier"><%= t("takeaway.courier_unassigned") %></p>
+    <% end %>
+  <% end %>
 </div>
 
 <article role="article" aria-label="Order item">

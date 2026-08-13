@@ -68,25 +68,29 @@ Price-drop alerts fall out of the same job once `Deal` is joined in.
 
 **Check:** none today. `brgen/config/recurring.yml` would name the job.
 
-### 1.4 `takeaway_orders.delivery_driver_id` has no association and no writer
+### 1.4 `takeaway_orders.delivery_driver_id` had no writer — **done**
 
-Sharper than it looks. The column **exists** and carries two indexes, including
-a composite `["delivery_driver_id", "status"]` — someone designed the courier
-query. But `Takeaway::Order` declares only `user`, `restaurant`, `order_items`
-and `reviews`: there is no `belongs_to :delivery_driver`, and nothing in the
-tree ever writes the column. `Order::TRANSITIONS` reaches `out_for_delivery`
-with no courier attached.
+The column had shipped with the table, carrying two indexes including a
+composite `["delivery_driver_id", "status"]`, and
+`Takeaway::DeliveryDriver has_many :orders` had always resolved through it.
+There was no `belongs_to` on `Takeaway::Order` and nothing ever wrote the
+column, so every order reached `out_for_delivery` with no courier attached.
 
-`Takeaway::DeliveryDriver` meanwhile has `available`, a `nearby` scope, live
-`current_lat`/`current_lng` and its own CRUD screen — a driver directory with
-nothing to drive to.
+Now: `belongs_to :delivery_driver`, and `transition_to!` dispatches the nearest
+free courier on the same write as the status change, so an order is never
+observable as out for delivery with nobody on it.
+`DeliveryDriver.nearest_free` post-sorts the `nearby` bounding box by real
+haversine distance — the box alone would take a courier in the corner over one
+on the doorstep — and excludes anyone already mid-delivery. No free courier in
+range is left as a real state rather than a failed transition: the order still
+leaves the kitchen and the page says nobody is assigned yet.
 
-The link between an order and a moving courier is the whole DoorDash product.
-Needs the association, assignment on the `preparing → out_for_delivery`
-transition, and the driver's position rendered on the existing maps engine. The
-migration is already paid for.
+**Check:** `engines/takeaway/test/models/takeaway/order_test.rb` — four tests
+covering nearest-not-merely-in-box, no double-booking, dispatch with no courier
+available, and dispatch on an order loaded without preloads.
 
-**Check:** none today.
+**Still open:** the courier's live position on the maps engine. The order page
+names the courier and their distance from the kitchen; it does not move.
 
 ---
 

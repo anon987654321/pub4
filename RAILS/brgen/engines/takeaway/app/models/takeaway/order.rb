@@ -6,6 +6,12 @@ class Takeaway::Order < ApplicationRecord
 
   belongs_to :user
   belongs_to :restaurant, class_name: "Takeaway::Restaurant"
+  # delivery_driver_id and its composite [delivery_driver_id, status] index have
+  # been on this table since it was created, and Takeaway::DeliveryDriver has
+  # had the matching has_many :orders — but there was no belongs_to here and
+  # nothing ever wrote the column, so every order went out for delivery with no
+  # courier attached. See #dispatch_driver_id below.
+  belongs_to :delivery_driver, class_name: "Takeaway::DeliveryDriver", optional: true
   has_many :order_items, class_name: "Takeaway::OrderItem", dependent: :destroy
   has_many :reviews, class_name: "Takeaway::Review", dependent: :destroy
 
@@ -52,7 +58,16 @@ class Takeaway::Order < ApplicationRecord
       return false
     end
 
-    update!(status: next_status)
+    attrs = { status: next_status }
+    # Dispatch on the same write as the status change, so an order is never
+    # observable as out_for_delivery with no courier attached. A nil id is left
+    # out rather than written: no free driver in range means the order still
+    # leaves the kitchen, it just has nobody named on it yet.
+    if next_status.to_s == "out_for_delivery" && delivery_driver_id.blank?
+      assigned = dispatch_driver_id
+      attrs[:delivery_driver_id] = assigned if assigned
+    end
+    update!(attrs)
     # `user`, `restaurant.name` and `restaurant.user` are all lazy reads, and an
     # order loaded by id (controller, driver request, job) has none of them
     # preloaded. Under strict loading — on in every environment, raising outside
@@ -61,9 +76,12 @@ class Takeaway::Order < ApplicationRecord
     # a 500. See Shared::StrictSafeAssociations.
     label = status.humanize.downcase
     restaurant_record = strict_safe(:restaurant)
+    courier = courier_display_name
+    body = "Your order from #{restaurant_record&.name} is now #{label}."
+    body += " #{courier} is bringing it." if courier
     deliver_notification(strict_safe(:user),
       title: "Order #{label}",
-      body: "Your order from #{restaurant_record&.name} is now #{label}.",
+      body: body,
       source: self)
     record_activity!("TakeawayOrderUpdated",
       actor: restaurant_record&.user,
@@ -107,6 +125,31 @@ class Takeaway::Order < ApplicationRecord
     (stages.index(status).to_i + 1) / stages.size.to_f
   end
 
+  # How far from the kitchen dispatch will look for a courier. Bergen end to end
+  # is about 10 km, so this is "anywhere in the city" rather than a tuned value.
+  DISPATCH_RADIUS_KM = 10
+
+  # The courier's name for customer-facing copy, or nil when nobody is assigned.
+  # strict_safe because an order loaded by id has no association preloaded.
+  def courier_display_name
+    strict_safe(:delivery_driver)&.display_name
+  end
+
+  # Kitchen to customer, as the courier actually has to travel it. nil unless
+  # both ends have coordinates — the order page falls back to the status ETA.
+  def courier_distance_km
+    driver = strict_safe(:delivery_driver)
+    return nil unless driver&.location?
+
+    restaurant_record = strict_safe(:restaurant)
+    return nil unless restaurant_record&.latitude && restaurant_record&.longitude
+
+    Takeaway::DeliveryDriver.haversine(
+      driver.current_lat, driver.current_lng,
+      restaurant_record.latitude, restaurant_record.longitude
+    )
+  end
+
   def next_status = TRANSITIONS.fetch(status, []).first
   def cancel! = transition_to!("cancelled")
   def confirm! = transition_to!("confirmed")
@@ -127,6 +170,21 @@ class Takeaway::Order < ApplicationRecord
   end
 
   private
+
+  # Nearest free courier to the kitchen, or nil. Deliberately not a validation
+  # or a callback: an order with nobody to carry it is a real operational state
+  # (nobody on shift at 3am), and refusing the transition would strand it in
+  # `preparing` forever rather than surfacing the problem.
+  def dispatch_driver_id
+    restaurant_record = strict_safe(:restaurant)
+    return nil unless restaurant_record&.latitude && restaurant_record&.longitude
+
+    Takeaway::DeliveryDriver.nearest_free(
+      restaurant_record.latitude,
+      restaurant_record.longitude,
+      DISPATCH_RADIUS_KM
+    )&.id
+  end
 
   def amount_display(cents)
     Shared::MoneyDisplay.format(cents)

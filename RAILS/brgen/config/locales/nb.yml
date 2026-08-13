@@ -753,6 +753,8 @@ nb:
     nearby_restaurants: "I nærheten"
     leave_review: "Legg igjen en omtale"
     status_timeline: "Statusforløp"
+    courier_distance: "%{km} km unna"
+    courier_unassigned: "Ingen ledig bud i nærheten ennå."
     order_cancelled: "Bestillingen er kansellert"
     order_from: "Bestill fra %{restaurant}"
     sold_out: "Utsolgt"
