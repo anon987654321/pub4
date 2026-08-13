@@ -624,6 +624,8 @@ nb:
     expires_on: "· utløper %{date}"
   marketplace:
     home_title: "Markedsplass · %{city}"
+    saved_search_alert:
+      title: "%{count} nye treff for «%{search}»"
     browse_listings: "Bla i annonser"
     listing_kind: "Hvem selger"
     from_anyone: "Alle"

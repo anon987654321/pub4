@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -486,6 +486,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_190000) do
   create_table "marketplace_saved_searches", force: :cascade do |t|
     t.integer "category_id"
     t.datetime "created_at", null: false
+    t.datetime "last_notified_at"
     t.string "location"
     t.string "name"
     t.boolean "notify", default: false, null: false
@@ -493,6 +494,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_190000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["category_id"], name: "index_marketplace_saved_searches_on_category_id"
+    t.index ["notify", "last_notified_at"], name: "idx_marketplace_saved_searches_alerting"
     t.index ["user_id"], name: "index_marketplace_saved_searches_on_user_id"
   end
 

@@ -618,6 +618,8 @@ en:
     expires_on: "· expires %{date}"
   marketplace:
     home_title: "Market · %{city}"
+    saved_search_alert:
+      title: "%{count} new matches for “%{search}”"
     browse_listings: "Browse listings"
     listing_kind: "Who is selling"
     from_anyone: "Anyone"

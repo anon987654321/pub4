@@ -84,20 +84,35 @@ event; the page carries the progress URL).
 
 **Still open:** the vertical feed that would consume this ranking — see 2.5.
 
-### 1.3 `Marketplace::SavedSearch` never runs itself
+### 1.3 `Marketplace::SavedSearch` never ran itself — **done**
 
-The model persists `query`, `category` and `name`, and the saved-searches index
-(`brgen/engines/marketplace/app/views/marketplace/saved_searches/`) renders each
-one as a *manual* `listings_path` link. So a saved search is a bookmark: nothing
-ever runs it on your behalf — no job, no mailer, no digest, no match on new
-inventory.
+Worse than a bookmark, as it turned out. The table carries a `notify` boolean,
+the create form permits it, and the saved-searches page renders an "alerts on"
+chip from it — while nothing in the tree ever ran a saved search on anyone's
+behalf. Ticking "notify me" changed a label. The only other reader was a manual
+"run search" link.
 
-Craigslist and Amazon both run substantially on that notification. Needs a
-recurring job matching new `Marketplace::Listing` rows against saved searches
-and delivering through the existing `Notification` + `PushSubscription` path.
-Price-drop alerts fall out of the same job once `Deal` is joined in.
+Now `SavedSearchAlertJob` runs every 30 minutes over searches with `notify` on,
+matching new listings through `Shared::LiveSearch` on the same columns the
+listings page searches, so an alert cannot disagree with what that row's own
+"run search" link would show. Three things it deliberately does:
 
-**Check:** none today. `brgen/config/recurring.yml` would name the job.
+- a new `last_notified_at` column, anchored to `created_at` on first run, so
+  switching alerts on does not mail you the entire back catalogue;
+- a 6-hour floor per search, independent of the schedule, so the cadence of the
+  job is not the cadence of the interruption;
+- a quiet run leaves `last_notified_at` alone, so the next run still measures
+  from the last thing the user was actually told about rather than silently
+  stepping over listings posted in between.
+
+**Check:** `brgen/test/jobs/saved_search_alert_job_test.rb` — eight tests
+covering first alert, back-catalogue suppression, alerts-off, the interval floor
+and its expiry, category scoping, the untouched watermark, and one broken search
+not stopping everyone else's.
+
+**Still open:** price-drop alerts, which fall out of the same job once `Deal` is
+joined in, and web push — the alert lands in `Notification`, and
+`PushSubscription` only fires for `PUSHABLE_KINDS`.
 
 ### 1.4 `takeaway_orders.delivery_driver_id` had no writer — **done**
 

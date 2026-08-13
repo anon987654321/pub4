@@ -88,6 +88,14 @@ production:
     queue: bulk
     schedule: every 15 minutes
 
+  # Runs saved searches that have alerts switched on. The job self-limits to one
+  # alert per search per 6 hours, so the schedule sets how fresh an alert can be,
+  # not how often anyone is interrupted.
+  saved_search_alerts:
+    class: SavedSearchAlertJob
+    queue: bulk
+    schedule: every 30 minutes
+
   # Written but never scheduled. resume_session mints a real User row for every
   # cookieless visitor, so this table grows with crawler traffic and nothing was
   # ever going to remove those rows. Needs the (guest, created_at) index from
