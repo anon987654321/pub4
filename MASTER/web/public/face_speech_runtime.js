@@ -928,6 +928,17 @@ function ttsTick() {
   // Voice Mode default: speak instantly via the browser, skip the Edge
   // round-trip entirely. Opt into server TTS quality via the "high-quality
   // voice" toggle if the latency is acceptable for this conversation.
+  // Say which voice this is, once per session. Voice Mode deliberately speaks
+  // through the browser rather than the server — see browserTtsFallbackAllowed,
+  // the VPS latency floor is incompatible with a live conversation — so the
+  // voice here is the operating system's, not the one data/voice.yml names.
+  // That is a reasonable trade and an unreasonable surprise: someone who has
+  // just changed the configured voice hears an unrelated one and concludes the
+  // change did not take. The toggle is hq_voice=1 or master:voice-mode-hq.
+  if (State.voiceMode && !highQualityVoiceEnabled() && !tts.browserVoiceNoticeShown) {
+    tts.browserVoiceNoticeShown = true;
+    setTtsHealthStatus('voice mode: browser voice (hq off)');
+  }
   if (State.voiceMode && !highQualityVoiceEnabled() && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0) && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) { tts.playing = false; tts.current = null; setTTSLoading(false); ttsTick(); return; }
