@@ -1,4 +1,4 @@
-<% content_for :title, "Planner" %>
+<% content_for :title, t("pages.planner") %>
 <%= turbo_stream_from "planned_outfits" %>
 <h1><%= t("pages.planner") %></h1>
 <%= form_with model: PlannedOutfit.new, url: planned_outfits_path do |f| %>
@@ -17,23 +17,6 @@
     <%= f.submit t("planned.plan_it"), class: "btn" %>
   </div>
 <% end %>
-<%= turbo_frame_tag "planned-outfits" do %>
-<div class="plan-list">
-  <% @planned.each do |plan| %>
-    <div class="plan-row">
-      <span class="plan-date"><%= plan.planned_date.strftime("%A %-d %b") %></span>
-      <%= link_to plan.outfit.name, plan.outfit %>
-      <% if plan.notes.present? %><span class="dim"><%= plan.notes %></span><% end %>
-      <%= button_to t("actions.remove"), planned_outfit_path(plan), method: :delete, class: "btn-link" %>
-    </div>
-  <% end %>
-  <% if @planned.empty? %>
-    <%= render "shared/empty_state",
-          title: t("empty.no_planned"),
-          body: "Pick a date and an outfit above to plan your week.",
-          action: { label: "Browse outfits", path: outfits_path } %>
-  <% end %>
-</div>
-<% end %>
+<%= render "planned_outfits/list" %>
 
 <%= render "shared/pager", pagy: @pagy %>

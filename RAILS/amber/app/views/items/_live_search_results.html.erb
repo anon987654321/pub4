@@ -7,7 +7,7 @@
 <div class="field">
   <label for="category-filter"><%= t("items.filter_by_category", default: "Filter by category") %></label>
   <select id="category-filter" data-action="change->filter#filter" data-filter-target="select">
-    <option value="">All</option>
+    <option value=""><%= t("items.filter_all") %></option>
     <% Item::CATEGORIES.each do |category| %>
       <option value="<%= category %>"><%= category %></option>
     <% end %>
@@ -29,5 +29,7 @@
 <%= render "shared/infinite_scroll_sentinel",
            pagy: @pagy,
            reflex: "ItemsInfiniteScrollReflex#load_more",
-           sentinel_id: "amber-items-sentinel" %>
+           sentinel_id: "amber-items-sentinel",
+           q: live_search_query,
+           lifecycle: @lifecycle_filter %>
 <% end %>

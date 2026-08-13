@@ -27,7 +27,10 @@ class LiveStreamsController < ApplicationController
     @live_stream.start! if params[:start] && owns_stream?
     @live_stream.end! if params[:end] && owns_stream?
     @live_stream.cancel! if params[:cancel] && owns_stream?
-    redirect_to live_streams_path
+    respond_to do |format|
+      format.turbo_stream { load_streams }
+      format.html { redirect_to live_streams_path }
+    end
   end
 
   def destroy
@@ -42,4 +45,10 @@ class LiveStreamsController < ApplicationController
   # strict_loading_by_default raises on the association read.
   def owns_stream? = Current.user.present? && Current.user.id == @live_stream.user_id
   def live_stream_params = params.require(:live_stream).permit(:title, :description, :scheduled_at)
+
+  def load_streams
+    @pagy, @live_streams = pagy(
+      LiveStream.where(status: %w[scheduled live]).includes(:user).order(:scheduled_at, :created_at)
+    )
+  end
 end

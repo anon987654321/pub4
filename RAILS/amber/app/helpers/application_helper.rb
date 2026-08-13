@@ -21,14 +21,20 @@ module ApplicationHelper
   end
 
   def analysis_status_label(status)
-    case status.to_s
-    when "photo_polish_done" then "Photo polished"
-    when "photo_polish_failed" then "Photo polish failed"
-    when "photo_polish_skipped", "no_photos" then "No photo polish"
-    when "pending" then "Pending media"
-    when /segmentation|background/ then "Legacy media status (polish pipeline)"
-    else status.to_s.humanize
+    key = case status.to_s
+    when "photo_polish_done" then "photo_polish_done"
+    when "photo_polish_failed" then "photo_polish_failed"
+    when "photo_polish_skipped", "no_photos" then status.to_s
+    when "pending" then "pending"
+    when /segmentation|background/ then "legacy"
     end
+    return t("items.analysis.#{key}") if key
+
+    status.to_s.humanize
+  end
+
+  def live_stream_status_label(status)
+    t("live_streams.status.#{status}", default: status.to_s)
   end
 
   # preset: :thumb | :card | :detail uses named variants when available.

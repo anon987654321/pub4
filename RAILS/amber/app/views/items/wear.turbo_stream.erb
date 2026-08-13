@@ -1,0 +1,11 @@
+<%= turbo_stream.replace dom_id(@item, :stats) do %>
+  <%= turbo_frame_tag dom_id(@item, :stats), class: "tag-row luxury-tags" do %>
+    <span class="tag"><%= t("items.wear_count", count: @item.times_worn.to_i) %></span>
+    <% if @item.price? && @item.times_worn.to_i.positive? %>
+      <span class="tag"><%= t("items.per_wear", amount: number_to_currency(@item.cost_per_wear || (@item.price / @item.times_worn.to_i))) %></span>
+    <% end %>
+    <% if @item.lifecycle_state.present? %><span class="tag"><%= @item.lifecycle_state.humanize %></span><% end %>
+    <% if @item.analysis_status.present? %><span class="tag"><%= analysis_status_label(@item.analysis_status) %></span><% end %>
+  <% end %>
+<% end %>
+<%= turbo_stream.update dom_id(@item, :worn), t("items.worn_times", count: @item.times_worn.to_i) %>

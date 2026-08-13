@@ -1,29 +1,9 @@
-<% content_for :title, "Connections" %>
+<% content_for :title, t("connections.title") %>
 
-<header role="banner" aria-label="Connections header">
+<header role="banner" aria-label="<%= t("connections.title") %>">
   <h1><%= t("pages.connections") %></h1>
 </header>
 
-<%= turbo_frame_tag "connections" do %>
-  <section>
-    <% @connections.each do |connection| %>
-      <% other = connection.requester == Current.user ? connection.addressee : connection.requester %>
-      <article>
-        <strong><%= other.email_address %></strong>
-        <span class="dim"><%= connection.status %></span>
-        <% if connection.addressee == Current.user && connection.status == "pending" %>
-          <%= button_to t("actions.accept"), connection_path(connection), method: :patch, params: { accept: true }, class: "btn" %>
-          <%= button_to t("actions.block"), connection_path(connection), method: :patch, params: { block: true }, class: "btn btn-ghost" %>
-        <% end %>
-      </article>
-    <% end %>
-    <% if @connections.empty? %>
-      <%= render "shared/empty_state",
-            title: t("empty.no_connections"),
-            body: "Follow creators to build your circle.",
-            action: { label: t("nav.home", default: "Home"), path: root_path } %>
-    <% end %>
-  </section>
-<% end %>
+<%= render "connections/list" %>
 
 <%= render "shared/pager", pagy: @pagy %>

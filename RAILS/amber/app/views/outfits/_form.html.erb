@@ -7,15 +7,15 @@
   </div>
   <div class="field">
     <%= f.label :category %>
-    <%= f.select :category, %w[Casual Formal Work Workout Evening], include_blank: "Select…" %>
+    <%= f.select :category, %w[Casual Formal Work Workout Evening].map { |c| [t("outfits.categories.#{c}"), c] }, include_blank: t("outfits.select_blank") %>
   </div>
   <div class="field">
     <%= f.label :season %>
-    <%= f.select :season, Item::SEASONS, include_blank: "Select…" %>
+    <%= f.select :season, Item::SEASONS, include_blank: t("outfits.select_blank") %>
   </div>
   <div class="field"><%= f.label :occasion %><%= f.text_field :occasion %></div>
   <section class="nested-form" data-controller="nested-form">
-    <h3>Items</h3>
+    <h3><%= t("outfits.items_heading") %></h3>
     <template data-nested-form-target="template">
       <%= f.fields_for :outfit_items, OutfitItem.new, child_index: "NEW_RECORD" do |outfit_item_fields| %>
         <%= render "outfit_item_fields", f: outfit_item_fields %>

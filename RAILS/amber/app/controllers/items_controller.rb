@@ -140,7 +140,10 @@ class ItemsController < ApplicationController
   def wear
     @item.wear!
     @item.record_activity!("AmberItemWorn", source_vertical: "amber")
-    redirect_to @item, notice: t("flash.worn_today")
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @item, notice: t("flash.worn_today") }
+    end
   end
 
   def archive_seasonal
@@ -192,14 +195,7 @@ class ItemsController < ApplicationController
   end
 
   def apply_lifecycle_filter(scope)
-    case params[:lifecycle].to_s
-    when "all" then scope
-    when "box", "declutter_box" then scope.declutter_box
-    when "memory", "sentimental" then scope.sentimental
-    when "seasonal" then scope.seasonal_archived
-    when "repair" then scope.where(lifecycle_state: "repair")
-    else scope.active_wardrobe
-    end
+    scope.merge(Item.for_lifecycle(params[:lifecycle]))
   end
 
   def item_params

@@ -1,7 +1,7 @@
 <div class="tag-row">
-  <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.items.count }, "linked item") %></span>
-  <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.likes_count.to_i }, "like") %></span>
-  <span class="tag"><%= pluralize(@outfits.sum(&:total_wears), "combined wear") %></span>
+  <span class="tag"><%= t("outfits.linked_items", count: @outfits.sum { |outfit| outfit.items.count }) %></span>
+  <span class="tag"><%= t("outfits.likes_on_page", count: @outfits.sum { |outfit| outfit.likes_count.to_i }) %></span>
+  <span class="tag"><%= t("outfits.combined_wears", count: @outfits.sum(&:total_wears)) %></span>
 </div>
 
 <%= turbo_frame_tag "outfits", target: "_top" do %>
@@ -10,7 +10,7 @@
 <% if @outfits.empty? %>
   <%= render "shared/empty_state",
         title: t("empty.no_outfits"),
-        body: "Start with a capsule, event, season, or mood.",
+        body: t("empty.outfits_start"),
         action: { label: t("actions.compose_outfit"), path: new_outfit_path } %>
 <% end %>
 

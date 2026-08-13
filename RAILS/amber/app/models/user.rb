@@ -49,6 +49,20 @@ class User < ApplicationRecord
   broadcasts_refreshes
 
   def following?(other) = follows_as_follower.exists?(followee: other)
+
+  def connected_with?(other)
+    return false if other.blank? || other.id == id
+
+    Connection.accepted.where(requester_id: id, addressee_id: other.id)
+              .or(Connection.accepted.where(requester_id: other.id, addressee_id: id))
+              .exists?
+  end
+
+  def messageable_users
+    requested = Connection.accepted.where(requester_id: id).select(:addressee_id)
+    received  = Connection.accepted.where(addressee_id: id).select(:requester_id)
+    User.where(id: requested).or(User.where(id: received)).includes(:profile).order(:email_address)
+  end
   def feed_posts        = Post.where(user: [ self ] + following.to_a).recent
 
   def public_creator? = creator_profile&.public? || false

@@ -50,7 +50,7 @@ class AmberBacklogTest < Minitest::Test
     assert_includes routes, "resources :connections"
     assert_includes routes, "resources :live_streams"
     assert_includes routes, "resources :messages"
-    assert_includes read("app/views/connections/index.html.erb"), "Connection"
+    assert_includes read("app/views/connections/index.html.erb"), "connections.title"
     assert_localised "app/views/live_streams/index.html.erb", "live_streams.title", "Style sessions"
     # Was assert_includes … "Message sent", which is the same coupling the helper
     # above exists to remove: the flash went through I18n on 2026-08-11 and the
@@ -59,7 +59,9 @@ class AmberBacklogTest < Minitest::Test
     # "New message" was the compose form's heading before the page was
     # localised; the form is what the assertion was really about, and it does
     # not move when the copy does.
-    assert_includes read("app/views/messages/index.html.erb"), "form_with model: @message"
+    assert_includes read("app/views/messages/index.html.erb"), 'render "messages/form"'
+    assert_localised "app/views/messages/index.html.erb", "messages.title", "Messages"
+    assert_localised "app/views/connections/index.html.erb", "connections.title", "Connections"
   end
 
   def test_wardrobe_analytics_upload_pipeline_and_outfit_generation_are_wired

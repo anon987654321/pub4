@@ -72,6 +72,17 @@ class Item < ApplicationRecord
   scope :sentimental, -> { where(lifecycle_state: "sentimental_archive") }
   scope :seasonal_archived, -> { where(lifecycle_state: "seasonal_archive") }
 
+  def self.for_lifecycle(key)
+    case key.to_s
+    when "all" then all
+    when "box", "declutter_box" then declutter_box
+    when "memory", "sentimental" then sentimental
+    when "seasonal" then seasonal_archived
+    when "repair" then where(lifecycle_state: "repair")
+    else active_wardrobe
+    end
+  end
+
   CATEGORIES   = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
   SEASONS      = %w[Spring Summer Autumn Winter All-Season].freeze
   MOOD_EFFECTS = %w[energising calming confident playful neutral].freeze

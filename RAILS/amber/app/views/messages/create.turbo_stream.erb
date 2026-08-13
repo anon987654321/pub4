@@ -1,0 +1,2 @@
+<%= turbo_stream.prepend "message-list", partial: "messages/message", locals: { message: @message } %>
+<%= turbo_stream.replace "message-form", partial: "messages/form", locals: { message: Current.user.sent_messages.build, recipients: Current.user.messageable_users } %>

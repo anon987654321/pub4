@@ -5,9 +5,11 @@
 <article class="item-detail item-detail--luxury">
   <div class="luxury-detail-grid">
   <% if @item.photos.attached? %>
-    <div class="luxury-photos">
+    <div class="luxury-photos" data-controller="lightbox">
       <% @item.photos.each do |photo| %>
-        <%= responsive_image_tag photo, alt: @item.title, preset: :detail, sizes: "(max-width: 768px) 100vw, 520px", class: "item-photo luxury-photo" %>
+        <a href="<%= url_for(photo) %>" data-turbo="false">
+          <%= responsive_image_tag photo, alt: @item.title, preset: :detail, sizes: "(max-width: 768px) 100vw, 520px", class: "item-photo luxury-photo" %>
+        </a>
       <% end %>
     </div>
   <% end %>
@@ -24,14 +26,14 @@
       <% end %>
     </header>
 
-  <div class="tag-row luxury-tags">
-    <span class="tag"><%= pluralize(@item.times_worn.to_i, "wear") %></span>
+  <%= turbo_frame_tag dom_id(@item, :stats), class: "tag-row luxury-tags" do %>
+    <span class="tag"><%= t("items.wear_count", count: @item.times_worn.to_i) %></span>
     <% if @item.price? && @item.times_worn.to_i.positive? %>
-      <span class="tag"><%= number_to_currency(@item.cost_per_wear || (@item.price / @item.times_worn.to_i)) %> per wear</span>
+      <span class="tag"><%= t("items.per_wear", amount: number_to_currency(@item.cost_per_wear || (@item.price / @item.times_worn.to_i))) %></span>
     <% end %>
     <% if @item.lifecycle_state.present? %><span class="tag"><%= @item.lifecycle_state.humanize %></span><% end %>
     <% if @item.analysis_status.present? %><span class="tag"><%= analysis_status_label(@item.analysis_status) %></span><% end %>
-  </div>
+  <% end %>
 
   <dl class="meta luxury-meta-list">
     <dt><%= t("items.category") %></dt><dd><%= @item.category %></dd>
@@ -40,7 +42,7 @@
     <% if @item.material.present? %><dt><%= t("items.material") %></dt><dd><%= @item.material %></dd><% end %>
     <% if @item.brand.present? %><dt><%= t("items.brand") %></dt><dd><%= @item.brand %></dd><% end %>
     <% if @item.price? %><dt><%= t("items.price") %></dt><dd><%= number_to_currency(@item.price) %></dd><% end %>
-    <dt><%= t("items.worn") %></dt><dd><%= @item.times_worn.to_i %> times</dd>
+    <dt><%= t("items.worn") %></dt><dd id="<%= dom_id(@item, :worn) %>"><%= t("items.worn_times", count: @item.times_worn.to_i) %></dd>
     <% if @item.purchase_date? %><dt><%= t("items.purchased") %></dt><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
   </dl>
 
@@ -69,9 +71,9 @@
     <% else %>
       <%= button_to t("items.sparks_joy"), spark_joy_item_path(@item), method: :post, class: "btn" %>
     <% end %>
-    <%= button_to amber_ai_available? ? "AI analyse joy" : "Heuristic joy check", ai_analyze_item_path(@item), method: :post, class: "btn" %>
-    <%= button_to amber_ai_available? ? "AI tag mood" : "Default mood tags", ai_tag_item_path(@item), method: :post, class: "btn" %>
-    <%= link_to "Declutter review", review_declutter_path(@item), class: "btn" %>
+    <%= button_to amber_ai_available? ? t("items.analyze_ai") : t("items.analyze_heuristic"), ai_analyze_item_path(@item), method: :post, class: "btn" %>
+    <%= button_to amber_ai_available? ? t("items.tag_ai") : t("items.tag_heuristic"), ai_tag_item_path(@item), method: :post, class: "btn" %>
+    <%= link_to t("items.declutter_review"), review_declutter_path(@item), class: "btn" %>
     <%= link_to t("actions.edit"), edit_item_path(@item), class: "btn" %>
     <% if @item.lifecycle_state == "sentimental_archive" %>
       <%= button_to t("items.restore"), restore_item_path(@item), method: :post, class: "btn" %>

@@ -1,0 +1,24 @@
+<%= turbo_frame_tag "connections" do %>
+  <section>
+    <% @connections.each do |connection| %>
+      <% other = connection.requester == Current.user ? connection.addressee : connection.requester %>
+      <article>
+        <strong><%= other.display_name %></strong>
+        <span class="dim"><%= t("connections.status.#{connection.status}", default: connection.status) %></span>
+        <% if connection.requester == Current.user && connection.status == "pending" %>
+          <span class="dim"><%= t("connections.you_requested") %></span>
+        <% end %>
+        <% if connection.addressee == Current.user && connection.status == "pending" %>
+          <%= button_to t("actions.accept"), connection_path(connection), method: :patch, params: { accept: true }, class: "btn", data: { turbo_frame: "connections" } %>
+          <%= button_to t("actions.block"), connection_path(connection), method: :patch, params: { block: true }, class: "btn btn-ghost", data: { turbo_frame: "connections" } %>
+        <% end %>
+      </article>
+    <% end %>
+    <% if @connections.empty? %>
+      <%= render "shared/empty_state",
+            title: t("empty.no_connections"),
+            body: t("connections.empty_body"),
+            action: { label: t("nav.home"), path: root_path } %>
+    <% end %>
+  </section>
+<% end %>

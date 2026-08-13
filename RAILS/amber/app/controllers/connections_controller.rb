@@ -4,10 +4,7 @@ class ConnectionsController < ApplicationController
   before_action :require_real_user
 
   def index
-    @pagy, @connections = pagy(
-      Connection.where(requester: Current.user).or(Connection.where(addressee: Current.user))
-                .includes(:requester, :addressee).order(created_at: :desc)
-    )
+    load_connections
   end
 
   def create
@@ -18,8 +15,28 @@ class ConnectionsController < ApplicationController
 
   def update
     connection = Current.user.connections_received.find(params[:id])
-    connection.accept! if params[:accept]
-    connection.block! if params[:block]
-    redirect_to connections_path
+    if params[:accept]
+      connection.accept!
+      notice = t("flash.connection_accepted")
+    elsif params[:block]
+      connection.block!
+      notice = t("flash.connection_blocked")
+    end
+    respond_to do |format|
+      format.turbo_stream do
+        load_connections
+        flash.now[:notice] = notice
+      end
+      format.html { redirect_to connections_path, notice: notice }
+    end
+  end
+
+  private
+
+  def load_connections
+    @pagy, @connections = pagy(
+      Connection.where(requester: Current.user).or(Connection.where(addressee: Current.user))
+                .includes(requester: :profile, addressee: :profile).order(created_at: :desc)
+    )
   end
 end

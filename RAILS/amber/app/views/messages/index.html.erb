@@ -9,46 +9,13 @@
   <% end %>
 </header>
 
-<section class="form-wrap" aria-label="<%= t("messages.title") %>">
-  <%= form_with model: @message do |f| %>
-    <%= render "shared/errors", object: @message if lookup_context.exists?("shared/errors", [], true) %>
-    <div class="field">
-      <%= f.label :recipient_id %>
-      <%= f.collection_select :recipient_id, User.where.not(id: Current.user.id).order(:email_address), :id, :email_address, include_blank: t("messages.choose_recipient") %>
-    </div>
-    <div class="field">
-      <%= f.label :body %>
-      <div data-controller="character-counter" data-character-counter-countdown-value="true">
-        <%= f.text_area :body, rows: 3,
-              placeholder: t("chat.dm_placeholder"),
-              data: { character_counter_target: "input", controller: "textarea-autogrow" } %>
-        <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-      </div>
-    </div>
-    <div class="field"><%= f.submit t("actions.send"), class: "btn" %></div>
-  <% end %>
+<section class="form-wrap" aria-label="<%= t("messages.composer") %>">
+  <%= render "messages/form", message: @message, recipients: @recipients %>
 </section>
 
-<section aria-label="<%= t("messages.title") %>">
+<section aria-label="<%= t("messages.title") %>" id="message-list">
   <% if @messages.any? %>
-    <% @messages.each do |message| %>
-      <article class="<%= "message--unread" if message.read_at.nil? && message.recipient_id == Current.user.id %>">
-        <strong>
-          <%= message.sender == Current.user ?
-                t("messages.to", name: message.recipient.display_name) :
-                t("messages.from", name: message.sender.display_name) %>
-        </strong>
-        <p><%= message.body %></p>
-        <p class="dim">
-          <%= time_ago_in_words(message.created_at) %>
-          <% if message.read_at.nil? && message.recipient_id == Current.user.id %>
-            · <%= t("messages.unread") %>
-          <% elsif message.read_at %>
-            · <%= t("messages.read") %>
-          <% end %>
-        </p>
-      </article>
-    <% end %>
+    <%= render partial: "messages/message", collection: @messages, as: :message %>
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_messages"),

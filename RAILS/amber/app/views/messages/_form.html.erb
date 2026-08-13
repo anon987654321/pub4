@@ -1,0 +1,16 @@
+<%= form_with model: message, id: "message-form", data: { turbo: true } do |f| %>
+  <%= render "shared/errors", object: message if lookup_context.exists?("shared/errors", [], true) %>
+  <div class="field">
+    <%= f.label :recipient_id %>
+    <% if recipients.any? %>
+      <%= f.collection_select :recipient_id, recipients, :id, :display_name, include_blank: t("messages.choose_recipient") %>
+    <% else %>
+      <p class="dim"><%= t("messages.no_recipients") %></p>
+    <% end %>
+  </div>
+  <div class="field">
+    <%= f.label :body %>
+    <%= character_counter_field f, :body, max: 2000, autogrow: true, rows: 3, placeholder: t("chat.dm_placeholder") %>
+  </div>
+  <div class="field"><%= f.submit t("actions.send"), class: "btn", disabled: recipients.empty? %></div>
+<% end %>

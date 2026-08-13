@@ -4,7 +4,7 @@
   <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
   <div class="field">
     <%= f.label :category %>
-    <%= f.select :category, Item::CATEGORIES, include_blank: "Select…" %>
+    <%= f.select :category, Item::CATEGORIES, include_blank: t("outfits.select_blank") %>
   </div>
   <div class="field"><%= f.label :color %><%= f.text_field :color %></div>
   <div class="field"><%= f.label :size %><%= f.text_field :size %></div>
@@ -14,19 +14,19 @@
   <div class="field"><%= f.label :purchase_date %><%= f.date_field :purchase_date %></div>
   <div class="field">
     <%= f.label :season %>
-    <%= f.select :season, Item::SEASONS, include_blank: "Select…" %>
+    <%= f.select :season, Item::SEASONS, include_blank: t("outfits.select_blank") %>
   </div>
   <div class="field">
-    <%= f.label :occasion_tags, "Occasions (comma-separated)" %>
+    <%= f.label :occasion_tags, t("items.occasions_label") %>
     <%= f.text_field :occasion_tags, placeholder: t("items.occasion_tags") %>
   </div>
   <div class="field">
-    <%= f.label :mood_effect, "Mood effect" %>
-    <%= f.select :mood_effect, Item::MOOD_EFFECTS, include_blank: "Not set" %>
+    <%= f.label :mood_effect, t("items.mood_effect") %>
+    <%= f.select :mood_effect, Item::MOOD_EFFECTS, include_blank: t("items.not_set") %>
   </div>
   <div class="field">
-    <%= f.label :life_phase, "Life phase" %>
-    <%= f.select :life_phase, Item::LIFE_PHASES, include_blank: "Not set" %>
+    <%= f.label :life_phase, t("items.life_phase") %>
+    <%= f.select :life_phase, Item::LIFE_PHASES, include_blank: t("items.not_set") %>
   </div>
   <div class="field media-picker" data-controller="media-picker direct-upload" data-action="dragover->media-picker#dragover dragleave->media-picker#dragleave drop->media-picker#drop">
     <%= f.label :photos %>

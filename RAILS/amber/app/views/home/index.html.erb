@@ -14,7 +14,7 @@
   <% if @weather %>
     <div class="weather-bar">
       <%= @weather[:description] %> · <%= @weather[:temp] %>°C
-      <% if @weather[:temp] < 10 %>· Wear layers<% elsif @weather[:temp] > 20 %>· Light fabrics<% end %>
+      <% if @weather[:temp] < 10 %>· <%= t("home.wear_layers") %><% elsif @weather[:temp] > 20 %>· <%= t("home.light_fabrics") %><% end %>
     </div>
   <% end %>
 

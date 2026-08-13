@@ -1,18 +1,12 @@
 <%= turbo_stream_from @user %>
 <header class="profile-header" role="banner" aria-label="<%= t("users.profile_header") %>">
-  <h1><%= @user.email_address.split("@").first %></h1>
+  <h1><%= @user.display_name %></h1>
   <p><%= t("users.profile_counts", items: @user.items.count, followers: @user.followers.count, following: @user.following.count) %></p>
-  <% if authenticated? && Current.user != @user %>
-    <% if Current.user.following?(@user) %>
-      <%= button_to t("actions.unfollow"), unfollow_user_path(@user), method: :delete, class: "btn" %>
-    <% else %>
-      <%= button_to t("actions.follow"), follow_user_path(@user), method: :post, class: "btn btn--primary" %>
-    <% end %>
-  <% end %>
+  <%= render "users/follow", user: @user %>
   <% if @user.public_creator? %>
-    <p><%= link_to t("actions.creator_profile", default: "Creator profile"), creator_profile_path(@user.creator_profile.handle), class: "btn btn-sm" %></p>
+    <p><%= link_to t("actions.creator_profile"), creator_profile_path(@user.creator_profile.handle), class: "btn btn-sm" %></p>
   <% elsif authenticated? && Current.user == @user %>
-    <p><%= link_to t("actions.setup_creator", default: "Set up creator profile"), new_my_creator_profile_path, class: "btn btn-sm" %></p>
+    <p><%= link_to t("actions.setup_creator"), new_my_creator_profile_path, class: "btn btn-sm" %></p>
   <% end %>
 </header>
 <h2><%= t("users.recent_items") %></h2>
@@ -20,7 +14,7 @@
   <% @items.each do |item| %>
     <%= link_to item_path(item) do %>
       <% if item.photos.attached? %>
-        <%= image_tag item.photos.first, alt: item.title %>
+        <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card, sizes: "(max-width: 768px) 50vw, 240px" %>
       <% else %>
         <div class="item-placeholder"><%= item.category %></div>
       <% end %>
@@ -28,5 +22,5 @@
     <% end %>
   <% end %>
 </div>
-<h2>Posts</h2>
+<h2><%= t("users.posts") %></h2>
 <%= render @posts %>

@@ -3,6 +3,14 @@
 require "test_helper"
 
 class ItemTest < ActiveSupport::TestCase
+  test "for_lifecycle maps chips onto the inventory scopes" do
+    assert_equal Item.declutter_box.to_sql, Item.for_lifecycle("box").to_sql
+    assert_equal Item.sentimental.to_sql, Item.for_lifecycle("memory").to_sql
+    assert_equal Item.seasonal_archived.to_sql, Item.for_lifecycle("seasonal").to_sql
+    assert_equal Item.active_wardrobe.to_sql, Item.for_lifecycle("active").to_sql
+    assert_equal Item.all.to_sql, Item.for_lifecycle("all").to_sql
+  end
+
   test "cost_per_wear is nil until price and wears are usable" do
     item = Item.new(price: 100, times_worn: 0)
     assert_nil item.cost_per_wear
