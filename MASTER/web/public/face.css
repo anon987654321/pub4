@@ -332,11 +332,18 @@ body[data-tts-loading="true"] .ui-status {
    drawn, grey when idle. One 18px glyph is the price of not having to guess. */
 .model-badge,
 .sound-on-chip,
-.ui-status,
 .provider-chip,
 body[data-council-persona]::after {
   display: none !important;
 }
+
+/* .ui-status left the list above on 2026-08-13, on the same argument #mic-dot
+   is exempt for: it is the only feedback about whether MASTER is still working.
+   showStage writes "routing…", "scanning…" and "speaking…" here, and while this
+   rule applied they reached nobody — display: none also takes the element out
+   of the accessibility tree, so the aria-live on it never announced either.
+   The label is empty except while something is in flight, so pristine chrome is
+   unchanged at rest; this costs the same nothing #mic-dot costs when idle. */
 
 /* Top-left logo — brgen wordmark (shared x tokens) */
 .top-left-logo {
