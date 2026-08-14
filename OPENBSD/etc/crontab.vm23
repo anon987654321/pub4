@@ -42,3 +42,12 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # /usr/local/bin so root cron does not exec the checkout. Wrapper lives
 # in OPENBSD/usr/local/bin/uptime-check.sh.
 */5 * * * * /usr/local/bin/uptime-check.sh >> /var/log/uptime-check.log 2>&1
+
+# prune-guests — nightly guest-row hygiene, because nothing runs the job queue.
+#
+# 04:20 and not daily.local, which is where this started. daily.local runs at the
+# tail of /etc/daily, and /etc/daily has the box at load 4.12 by then — over
+# PruneGuestUsersJob's own ceiling of 3.0, so the guard refused and the first
+# night removed nothing at all. Its own slot is after daily(8) finishes, and the
+# wrapper waits for the load to fall rather than skipping the night.
+20 4 * * * /usr/local/bin/prune-guests.sh >> /var/log/prune-guests.log 2>&1
