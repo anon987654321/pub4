@@ -44,7 +44,28 @@ tts:
   single_voice: osman
   neural: ms-MY-OsmanNeural
   persona_affects_text_only: true
-  stream_live_default: false
+  # ON as of 2026-08-14. pushLiveStreamTts (face.part1.txt) pulls each finished
+  # sentence off the model's stream and speaks it while the rest is still being
+  # generated. With this false, nothing is spoken until the whole reply has been
+  # generated AND the whole thing synthesised — two serial waits before any
+  # sound, on a box with one CPU.
+  #
+  # Measured on the live box, same text, /chat/tts round trip:
+  #
+  #   idle          four sentences 3.05s   one sentence 2.16s
+  #   under deploy  four sentences 19.31s  split by sentence: first audio 1.98s,
+  #                 all four done by 8.6s
+  #
+  # So splitting is never worse and is dramatically better exactly when the box
+  # is busy, which is when the wait is noticed. It also removes the whole
+  # generation time from the wait, which no synthesis tuning can.
+  #
+  # It was `false` because it shipped as opt-in ("optional /voice stream on",
+  # c129719c2), not because it broke. The guards were already here: listings are
+  # not spoken mid-stream (looksLikeListingStream), and fragments below
+  # TTS_MIN_CHUNK are held back. `/voice stream off` still turns it off per
+  # browser, and that preference wins over this default.
+  stream_live_default: true
   # With persona_affects_text_only these two ARE the effective rate/pitch for
   # every utterance (Personality#browser_profile substitutes them for the
   # persona's own).

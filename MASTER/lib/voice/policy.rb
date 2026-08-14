@@ -14,7 +14,7 @@ module Master
         "single_voice" => "osman",
         "neural" => "ms-MY-OsmanNeural",
         "persona_affects_text_only" => true,
-        "stream_live_default" => false,
+        "stream_live_default" => true,
         "default_rate" => "-22%",
         "default_pitch" => "-35Hz",
         "default_volume" => "+40%",
