@@ -63,7 +63,11 @@ class TestGuardState < Minitest::Test
   # changes, and have been twice. What must hold across recalibrations is that
   # restore sits above warn, or shed and restore chase each other.
   def test_the_guard_keeps_hysteresis_between_shed_and_restore
-    guard = File.read(File.expand_path("../resource_guard.sh", __dir__))
+    # encoding: named, not inherited. Under a C locale — which is how the
+    # integrity chain invokes everything on vm23 — Ruby reads files as US-ASCII,
+    # and resource_guard.sh's comments are full of em-dashes. A bare File.read
+    # passed on a Mac and raised "invalid byte sequence in US-ASCII" on the box.
+    guard = File.read(File.expand_path("../resource_guard.sh", __dir__), encoding: "UTF-8")
     warn_at = guard[/^MEM_WARN=(\d+)/, 1].to_i
     restore_at = guard[/^MEM_RESTORE=(\d+)/, 1].to_i
 
