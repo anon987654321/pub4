@@ -42,7 +42,16 @@ daemon_logger="daemon.notice"
 daemon_timeout="120"
 
 . /etc/rc.d/rc.subr
-pexp="ruby34.*solid_queue"
+# Underscore AND hyphen, because the process renames itself after it starts.
+# rake solid_queue:start becomes "ruby34: solid-queue-supervisor(1.2.4)" and
+# friends, so a pexp matching only solid_queue matched the command line for a
+# moment and nothing afterwards. Consequence, observed on vm23 2026-08-14
+# during a one-shot drain: `rcctl stop brgen_jobs` exits 0, reports nothing,
+# and leaves the supervisor, dispatcher, worker and scheduler running. The
+# worker had to be stopped by sending TERM to the supervisor pid by hand.
+# rcctl check has the same blindness in reverse: it would call a running
+# worker stopped.
+pexp="ruby34.*solid[-_]queue"
 rc_bg=YES
 rc_reload=NO
 

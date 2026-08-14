@@ -267,38 +267,32 @@ if on_box
     queue_db = "/home/#{name}/app/storage/production_queue.sqlite3"
     next unless File.readable?(queue_db)
 
-    counts = %w[
-      SELECT\ COUNT(*)\ FROM\ solid_queue_jobs\ WHERE\ finished_at\ IS\ NULL
-      SELECT\ COUNT(*)\ FROM\ solid_queue_processes
+    counts = [
+      "SELECT COUNT(*) FROM solid_queue_jobs WHERE finished_at IS NULL " \
+      "AND (scheduled_at IS NULL OR scheduled_at <= datetime('now'))",
+      "SELECT COUNT(*) FROM solid_queue_processes",
     ].map do |sql|
-      ok, out = run("/usr/local/bin/sqlite3", "-readonly", queue_db, sql.tr("\\ ", " "))
+      ok, out = run("/usr/local/bin/sqlite3", "-readonly", queue_db, sql)
       ok ? out.strip.to_i : nil
     end
     pending, workers = counts
     next if pending.nil? || workers.nil?
 
-    # Zero workers is only a fault when there is work waiting. An idle app with a
-    # drained queue and no worker is a deployment choice, not a broken one.
+    # Zero workers is only a fault when there is work waiting, and "waiting"
+    # means due. MessageExpirationJob is enqueued with wait_until set to the
+    # moment the message should vanish, so a healthy brgen always has a pile of
+    # jobs scheduled into the future — 57 of them right after a drain that left
+    # nothing overdue. Counting those made this fire permanently on a queue with
+    # nothing wrong with it, which is how a check becomes a line people skip.
     if pending.positive? && workers.zero?
-      failures << "#{name} queue: #{pending} unfinished job(s) and no registered Solid Queue process " \
+      failures << "#{name} queue: #{pending} job(s) due and no registered Solid Queue process " \
                   "— see OPENBSD/etc/rc.d/#{name}_jobs"
     end
   end
 end
 
-# Something is shed and the mechanism that un-sheds it cannot fire.
-#
-# resource_guard.sh sheds amber/bsdports under load and restores them when
-# pressure clears. The restore is gated on mem_avail >= MEM_RESTORE, and twice
-# now that floor has drifted above the range this box actually operates in —
-# 20% against a median of 13 (found 2026-07-29), then 14% against a median of 9
-# (found 2026-08-14). Both times the guard sank to shed-only and the two apps
-# stayed down for days, and both times it was noticed by a person wondering why
-# amber was off rather than by anything here. TLS keeps answering when they are
-# down, so the outage reads as a hang and nothing else reports it.
-#
-# The thresholds are read out of the guard rather than copied, so this cannot
-# pass while describing a gate the guard no longer has.
+# Anything resource_guard.sh shed that is still down. Why it matters, and why
+# an earlier version of this check could not see it, is in lib/guard_state.rb.
 if on_box && File.readable?(Deploy::GuardState::SHED_STATE)
   shed_list = File.read(Deploy::GuardState::SHED_STATE)
   running = ->(svc) { service_running?(svc).first }
