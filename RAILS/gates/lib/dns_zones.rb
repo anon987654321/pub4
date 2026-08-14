@@ -126,8 +126,23 @@ module Deploy
     # registered in gates.yml and invoked by nothing — so its first impression on
     # anyone wiring it up would have been a block that was not true.
     #
-    # NXDOMAIN keeps failing. That is the gate's actual job, and it is a
-    # different exception class from the one that was costing precision.
+    # Both failures are retried, because Resolv cannot tell them apart.
+    #
+    # The first version of this retried only Resolv::ResolvTimeout, on the
+    # assumption that NXDOMAIN arrived as ResolvError and was therefore a
+    # different class. It is not: Resolv::DNS#getaddress raises ResolvError
+    # reading "no address for <name>" both for a real NXDOMAIN and for a query
+    # that got no usable response, so a dropped packet is indistinguishable from
+    # a missing record at this API. That fix held for one run and then blocked
+    # again on three names — takeaway.brgen.no, takeaway.oshlo.no,
+    # playlist.trndheim.no — all three of which `dig` answered immediately.
+    #
+    # So retry both, and only believe the answer after RETRIES agree. A genuine
+    # NXDOMAIN is still NXDOMAIN three times and still fails the gate, which is
+    # the gate's job; a lost packet almost never repeats three times. The two
+    # verdicts stay separate in the message because they mean different things to
+    # whoever reads it — one is "the record is gone", the other is "the network
+    # ate it and this gate measured nothing".
     RETRIES = 3
 
     def answer(resolver, name)
@@ -140,6 +155,7 @@ module Deploy
         retry if attempts < RETRIES
         :timeout
       rescue Resolv::ResolvError
+        retry if attempts < RETRIES
         :missing
       end
     end
