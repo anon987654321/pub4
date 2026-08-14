@@ -170,7 +170,83 @@ class CiGuardTest < Minitest::Test
     assert_includes err, "cannot read load average"
   end
 
+  # check_load! used to exit(1) the moment load was over the limit. It runs from
+  # inside bin/ci, which vps_ci starts *after* syncing the tracked tree into
+  # /home/<app>/app — so an exit there abandoned a half-applied deploy rather
+  # than declining to start one. The spike it fires on is the deploy's own wake:
+  # brgen measured 3.32/4.04/3.43 during a four-app pass and 0.32 alone.
+  def test_load_under_the_limit_returns_without_waiting
+    with_load(1.0) do
+      slept = record_sleeps { Pub4::CiGuard.check_load! }
+
+      assert_empty slept, "a quiet box must not wait at all"
+    end
+  end
+
+  def test_load_over_the_limit_waits_and_proceeds_when_it_falls
+    readings = [9.0, 9.0, 0.5]
+    with_load_sequence(readings) do
+      slept = nil
+      err = capture_stderr { slept = record_sleeps { Pub4::CiGuard.check_load! } }
+
+      assert_equal [20, 20], slept, "must poll twice, then proceed on the third reading"
+      assert_includes err, "waiting"
+    end
+  end
+
+  def test_load_that_never_falls_gives_up_rather_than_waiting_forever
+    with_env("PUB4_CI_LOAD_WAIT" => "0") do
+      with_load(9.0) do
+        code = nil
+        # SystemExit unwinds through capture_stderr, so the raise has to be caught
+        # inside it or the captured string never gets returned.
+        err = capture_stderr { code = assert_raises(SystemExit) { Pub4::CiGuard.check_load! } }
+
+        assert_equal 1, code.status
+        assert_includes err, "giving up"
+      end
+    end
+  end
+
   private
+
+  def with_load(value, &block) = with_load_sequence([value], &block)
+
+  # minitest/mock is unavailable to these bare-ruby tests, so the seam is a
+  # singleton override. Saved and re-aliased rather than removed: module_function
+  # defines current_load *as* the singleton method, so remove_method deletes the
+  # real one and every later test in the file dies on NoMethodError.
+  def with_load_sequence(values)
+    queue = values.dup
+    stub_singleton(:current_load) { queue.size > 1 ? queue.shift : queue.first }
+    yield
+  ensure
+    unstub_singleton(:current_load)
+  end
+
+  def record_sleeps
+    slept = []
+    stub_singleton(:sleep) { |n| slept << n }
+    yield
+    slept
+  ensure
+    unstub_singleton(:sleep)
+  end
+
+  def stub_singleton(name, &body)
+    meta = Pub4::CiGuard.singleton_class
+    meta.send(:alias_method, :"__real_#{name}", name) if Pub4::CiGuard.respond_to?(name)
+    Pub4::CiGuard.define_singleton_method(name, &body)
+  end
+
+  def unstub_singleton(name)
+    meta = Pub4::CiGuard.singleton_class
+    meta.send(:remove_method, name)
+    return unless meta.method_defined?(:"__real_#{name}") || meta.private_method_defined?(:"__real_#{name}")
+
+    meta.send(:alias_method, name, :"__real_#{name}")
+    meta.send(:remove_method, :"__real_#{name}")
+  end
 
   # Runs the block with the guard pointed at a private lock file, so the tests
   # never touch /var/db/pub4 and never depend on being root.

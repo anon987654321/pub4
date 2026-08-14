@@ -67,12 +67,45 @@ module Pub4
       with_lock { with_timeout { yield } }
     end
 
-    def check_load!
-      load = current_load
-      return if load <= MAX_LOAD
+    # Waits for the box to settle rather than giving up on it.
+    #
+    # This exited immediately, and it runs from inside bin/ci — which vps_ci
+    # starts *after* it has already synced the tracked tree into /home/<app>/app.
+    # So a load spike did not decline to run CI, it abandoned a half-applied
+    # deploy: new code live, and on 2026-08-14 no compiled assets behind it.
+    #
+    # Waiting is the right shape because the spike is self-inflicted and short.
+    # `vps-deploy all` deploys four apps back to back, and brgen's CI met the
+    # load of the three around it: measured at 3.32, 4.04, 3.43 across the run
+    # and 0.32 half an hour later on the same commit, which then passed. A
+    # deploy that waits four minutes for its own predecessor to finish is a
+    # deploy that works; one that exits is an outage plus a retry.
+    #
+    # Bounded, because waiting forever on a genuinely wedged box is just a
+    # slower failure — and it still exits 1 at the end, so nothing downstream
+    # has to learn a new outcome.
+    # Read per call, not frozen at require time — the same reason the note above
+    # MAX_LOAD gives, and the reason a test can set the budget to zero and get
+    # the give-up branch without sleeping for ten minutes to reach it.
+    def load_wait_total_s = Integer(ENV.fetch("PUB4_CI_LOAD_WAIT", "600"))
+    def load_wait_step_s = Integer(ENV.fetch("PUB4_CI_LOAD_WAIT_STEP", "20"))
 
-      warn "pub4-ci-guard: load #{load} exceeds PUB4_CI_MAX_LOAD=#{MAX_LOAD}"
-      exit 1
+    def check_load!
+      budget = load_wait_total_s
+      waited = 0
+      loop do
+        load = current_load
+        return if load <= MAX_LOAD
+
+        if waited >= budget
+          warn "pub4-ci-guard: load #{load} still over PUB4_CI_MAX_LOAD=#{MAX_LOAD} after #{waited}s — giving up"
+          exit 1
+        end
+
+        warn "pub4-ci-guard: load #{load} over #{MAX_LOAD}, waiting (#{waited}/#{budget}s)"
+        sleep load_wait_step_s
+        waited += load_wait_step_s
+      end
     end
 
     # Unreadable load fails open here, unlike PruneGuestUsersJob, and on

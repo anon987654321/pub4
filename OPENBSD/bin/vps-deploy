@@ -45,7 +45,24 @@ app=${1:-}
 DEPLOY_ALL=(master brgen amber bsdports)
 
 if [[ $app == all ]]; then
+  typeset -i first=1
   for one in $DEPLOY_ALL; do
+    # Let the previous app's deploy drain before starting the next one's CI.
+    #
+    # One CPU, four apps back to back: each deploy leaves precompile, a restart
+    # and a settling app server behind it, and the next app's test suite walks
+    # straight into that. brgen's CI was killed mid-run on 2026-08-14 at load
+    # 3.43 during exactly this loop, and the same commit passed at load 0.32
+    # when run alone. The load is the pass's own wake, so the pass should wait
+    # for it rather than hand the bill to whichever app is next.
+    #
+    # CiGuard also waits now, so this is the cheap half — a fixed pause costs a
+    # minute and avoids most of the waiting the guard would otherwise do.
+    if (( ! first )); then
+      print "vps-deploy: all — settling for ${PUB4_DEPLOY_COOLDOWN:-60}s before $one"
+      sleep ${PUB4_DEPLOY_COOLDOWN:-60}
+    fi
+    first=0
     print "vps-deploy: all -> $one"
     # Re-entrant rather than inlined: each app gets the full path including its
     # own health gate and deploy stamp, and a failure halts the pass instead of
