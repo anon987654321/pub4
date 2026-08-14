@@ -102,6 +102,28 @@ module Master
         # the same id (SINGULARITY) and double-counted every hit — test_rule_ids_unique.
 
       # A02 MAGIC_COLOR — raw color values must reference design tokens (MAGIC_COLOR).
+      #
+      # Before trying to fix these in bulk, read this. It has been measured twice,
+      # from two directions, and the answer both times was that there is no
+      # mechanical substitution available in this repo.
+      #
+      # A substitution is only safe if it preserves the rendered value. The tokens
+      # whose values match the commonest literals — --bg, --surface, --border,
+      # --search-bg — are theme-responsive: _dialect_tokens.scss defines them
+      # inside @mixin brgen-old-dark-tokens and @mixin brgen-old-light-tokens, and
+      # brgen includes both, under different selectors. So `--bg` is #000000 in
+      # dark and #ffffff in light *within one app*. A literal is theme-independent
+      # by construction; swapping it for the token makes it follow the theme,
+      # which changes the other theme. That is a behaviour change wearing the
+      # clothes of a lint fix.
+      #
+      # Scoping per app does not rescue it: brgen defines four single-valued
+      # tokens of its own and no remaining literal equals any of them.
+      #
+      # So the question each finding actually asks is not "which token is this" —
+      # it is "should this colour follow the theme or not", which only the person
+      # who chose it can answer. Six passes over this rule removed 596 findings
+      # and every one was the rule misreading something; none was a substitution.
         RuleDSL.rule :MAGIC_COLOR,
           severity: :warning, tags: %i[DESIGN], applies_to: %i[css scss javascript html],
           description: "color values must reference design tokens, not raw hex/rgb" do |src, path:|
