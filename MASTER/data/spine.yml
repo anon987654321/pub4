@@ -290,7 +290,27 @@ spine:
   # readers for security/defaults.yml keys that lived under planned: and enforced
   # nothing — the same category as worn_type. Public stays AskLlm/WebSearch/
   # SubdomainOrchestrator; messaging never includes Shell.
-  lib_code_ceiling: 39258
+  # RAISED 2026-08-14, 39258 -> 39288 (+30, measured from a tree already 16 under
+  # at 39242, so +46 written). All of it is scan-rule correctness in
+  # review/scan/rule.rb and scanner.rb: ERB-aware and quote-aware tag reading,
+  # implicit <label> association, background-aware contrast, and a skip list that
+  # means the same thing from the repo root as from MASTER.
+  #
+  # Same category as the 2026-07-31 raise — "rules that measure code instead of
+  # their own regexes" — and for the same reason. These rules could not pass on
+  # correct input: `<img\s+(?![^>]*alt=)` cannot cross the `>` in `<%= … %>`, so
+  # every Rails <img> with a dynamic src and a trailing alt was a finding, and all
+  # four IMG_ALT hits across the fleet were on tags that had alt. 68 findings went
+  # away and not one was fixed in a view; the rules had been reporting the
+  # well-formed markup. A gate whose zero is unreachable is not a gate.
+  #
+  # The 2026-08-01 note warns the next raise should not be granted on "it was only
+  # a bug fix" and that lib/ should fall back first. Read as written that is about
+  # a supervisor fix core/ had no verb for. This is the reader for rules that
+  # already exist and were mis-measuring; absorbing it into core/ fails the same
+  # test — core/ takes a handler per verb and a rule per constraint, and "ERB tags
+  # end in >" is neither.
+  lib_code_ceiling: 39288
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

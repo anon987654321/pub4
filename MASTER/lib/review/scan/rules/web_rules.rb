@@ -9,7 +9,7 @@ module Master
           severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           description: "lang attribute on <html>" do |src, path:|
           next [] unless src.match?(/<html\b/i)
-          scan_lines(src, /<html(?!\s+[^>]*lang=)/, message: "<html> missing lang= attribute")
+          scan_lines(tag_source(src), /<html(?!\s+[^>]*lang=)/, message: "<html> missing lang= attribute")
         end
 
         RuleDSL.rule :SEMANTIC_ELEMENTS,
@@ -29,7 +29,7 @@ module Master
         RuleDSL.rule :IMG_ALT,
           severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           description: "require alt on every <img>" do |src, path:|
-          scan_lines(src, /<img\s+(?![^>]*alt=)/, message: "<img> missing alt= attribute")
+          scan_lines(tag_source(src), /<img\s+(?![^>]*alt=)/, message: "<img> missing alt= attribute")
         end
 
         RuleDSL.rule :BUTTON_OVER_ANCHOR,
@@ -48,7 +48,7 @@ module Master
         RuleDSL.rule :LAZY_IMAGES,
           severity: :info, tags: %i[PERFORMANCE], applies_to: %i[html],
           description: "loading=lazy on below-fold images" do |src, path:|
-          scan_lines(src, /<img\s+(?![^>]*loading=)/, message: "<img> missing loading=lazy")
+          scan_lines(tag_source(src), /<img\s+(?![^>]*loading=)/, message: "<img> missing loading=lazy")
         end
 
         RuleDSL.rule :NO_INLINE_STYLES,
@@ -102,7 +102,7 @@ module Master
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           description: "interactive controls need accessible names" do |src, path:|
           next [] unless path.include?("/app/views/")
-          scan_lines(src, /<(button|input|select|textarea)\s+(?![^>]*(?:aria-label|aria-labelledby|id=))/i,
+          scan_lines(control_source(src), /<(button|input|select|textarea)\s+(?![^>]*(?:aria-label|aria-labelledby|id=))/i,
             message: "control missing aria-label, aria-labelledby, or id for label association")
         end
 
@@ -178,7 +178,7 @@ module Master
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           description: "inputs require labels or aria-label" do |src, path:|
           next [] unless path.include?("/app/views/")
-          scan_lines(src, /<input\s+(?![^>]*(?:type=["']hidden|aria-label|aria-labelledby|id=))/i,
+          scan_lines(control_source(src), /<input\s+(?![^>]*(?:type=["']hidden|aria-label|aria-labelledby|id=))/i,
             message: "input missing label association — add <label for> or aria-label")
         end
 
@@ -186,6 +186,11 @@ module Master
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           description: "layouts expose skip link to main content" do |src, path:|
           next [] unless path.include?("/app/views/layouts/")
+          # Mailer layouts are not pages. There is no viewport to skip past, no
+          # #main-content to land on, and mailer.text.erb is plain text — it asked
+          # a text email for a skip link. Both SKIP_TO_MAIN findings in this repo
+          # were mailer layouts and neither was actionable.
+          next [] if File.basename(path).start_with?("mailer", "_mailer") || path.include?("/mailer")
           next [] if src.match?(/skip|#main-content/i)
           [finding(line: 1, message: "layout missing skip link to #main-content")]
         end
@@ -220,7 +225,14 @@ module Master
           fires: "@keyframes spin { to { transform: rotate(360deg); } }\n",
           does_not_fire: "@keyframes spin { to { transform: rotate(360deg); } }\n@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }\n" do |src, path:|
           next [] unless src.match?(/@keyframes|animation\s*:/i)
-          next [] if src.match?(/prefers-reduced-motion:\s*reduce/i)
+          # Either direction of the query satisfies this. `reduce` turns motion off
+          # for people who asked; `no-preference` never turns it on for them in the
+          # first place, which is the stronger form — motion is opt-in rather than
+          # opt-out, so a browser that reports nothing gets the still version.
+          # visualizer.css wraps every animation in `no-preference` and was the last
+          # REDUCED_MOTION finding in the tree: the rule was flagging the better
+          # pattern for not being the one it knew.
+          next [] if src.match?(/prefers-reduced-motion:\s*(?:reduce|no-preference)/i)
           [finding(line: 1, message: "animation without prefers-reduced-motion override")]
         end
 

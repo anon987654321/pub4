@@ -222,9 +222,16 @@ module Master
             hex = line[/color\s*:\s*#([0-9a-f]{3,8})/i, 1].to_s
             next if hex.empty?
             # crude: very light gray text
-            if hex.match?(/\A([ef]{3}|[ef]{6}|ccc|ddd|eee)\z/i)
-              findings << finding(line: num, message: "low-contrast light gray text ##{hex} — use semantic token with AAA body contrast")
-            end
+            next unless hex.match?(/\A([ef]{3}|[ef]{6}|ccc|ddd|eee)\z/i)
+            # …but light text is only low-contrast against a light background, and
+            # this read the foreground alone. #navBar declares `background-color:
+            # #131921` and `color: #fff` on adjacent lines — white on near-black,
+            # about 17:1 — and was reported as low-contrast. Every finding here was
+            # light-on-dark. If the enclosing block sets a dark background, the pair
+            # is the high-contrast case and saying otherwise is backwards.
+            next if dark_background_near?(src, num)
+
+            findings << finding(line: num, message: "low-contrast light gray text ##{hex} — use semantic token with AAA body contrast")
           end
           findings
         end
