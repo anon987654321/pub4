@@ -82,7 +82,7 @@ module Master
           # prefers-contrast/forced-colors/print, which override for the same
           # reason. Telling an accessibility reset to "fix specificity instead" is
           # telling it to stop working.
-          scan_lines(without_override_media(src), /!\s*important/,
+          scan_lines(without_block_comments(without_override_media(src)), /!\s*important/,
                      message: "!important overrides cascade — fix specificity instead")
         end
 

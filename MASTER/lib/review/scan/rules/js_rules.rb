@@ -139,7 +139,7 @@ module Master
           # material colours. Asking these to cite a token asks for something that
           # does not render.
           canvas_sink = /\b(?:fillStyle|strokeStyle|shadowColor|backgroundColor|setHexColor)\b|\bnew\s+THREE\.Color\b/
-          without_comment_lines(src).each_line.with_index(1).flat_map do |line, number|
+          without_var_fallbacks(without_block_comments(without_comment_lines(src))).each_line.with_index(1).flat_map do |line, number|
             next [] if line.match?(/scan:\s*intentional/) || line.match?(definition)
             next [] if line.match?(canvas_sink)
 

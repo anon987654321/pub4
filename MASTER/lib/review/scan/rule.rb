@@ -187,6 +187,21 @@ module Master
         # An element, not a line: ERB blanked, the whole tag read quote-aware, and
         # the text between open and close counted for the elements that can carry
         # a name that way. <input> cannot, so it still needs an attribute.
+        # CSS block comments, which without_comment_lines cannot see: it matches a
+        # leading # or //, and `/* … */` spans lines whose continuations start
+        # with prose. A rationale paragraph explaining *why* a colour was pinned —
+        # "the 4.78 above was measured against (#202020)" — was reported as a raw
+        # colour needing a token, which is the same self-referential failure that
+        # helper's own note describes.
+        BLOCK_COMMENT = %r{/\*.*?\*/}m
+        def without_block_comments(code) = code.gsub(BLOCK_COMMENT) { |c| c.gsub(/[^\n]/, " ") }
+
+        # `var(--token, #hex)` is the token being used, with the literal as the
+        # fallback the spec asks for. Flagging it tells correct, defensive CSS to
+        # stop citing a token — the opposite of the rule's own point.
+        VAR_FALLBACK = /var\(\s*--[a-z0-9-]+\s*,[^)]*\)/i
+        def without_var_fallbacks(code) = code.gsub(VAR_FALLBACK) { |v| v.gsub(/[^\n]/, " ") }
+
         # Blanks the media queries that exist in order to override: reduced
         # motion, forced colors, contrast preferences and print. Brace-counted
         # from the @media rather than regexed, because these blocks nest, and

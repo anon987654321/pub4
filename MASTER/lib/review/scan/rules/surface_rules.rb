@@ -34,7 +34,9 @@ module Master
           next [] unless Rules.ui_path?(path)
 
           findings = []
-          src.each_line.with_index(1) do |line, num|
+          # Block comments blanked: a rationale paragraph explaining a measured
+          # value is prose, and its continuation lines do not start with * .
+          without_block_comments(src).each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("//", "/*", "*")
             # Allow a suppressed shadow — `none`, or an all-zero value. The old
             # pattern matched `0\s`, which is the first token of every real
