@@ -133,6 +133,42 @@ module Shared
       ::User.column_names.include?("guest")
     end
 
+    # A row per uncookied request, and almost none of them are anybody.
+    #
+    # Measured on production 2026-08-14: brgen writes 10,461 guest rows a day.
+    # Of the 10,463 created in the preceding 24 hours, ZERO had a session row
+    # and ONE had authored a post. The table holds 206,497 guests against 719
+    # real users, and 146,885 of them are old enough to prune.
+    #
+    # This is the other half of the finding recorded at GUEST_BCRYPT_COST below.
+    # That pass measured what each row COST — 1,025 ms of BCrypt on every
+    # uncookied request — fixed the cost, and noted in passing that it "had also
+    # written 102,778 throwaway guest rows". The rows kept being written and the
+    # count has doubled since.
+    #
+    # Mitigated, not fixed: OPENBSD/etc/daily.local now runs
+    # Shared::PruneGuestUsersJob nightly, which clears about 20,000 a night
+    # against 10,000 arriving. The table stays bounded. The writes continue.
+    #
+    # The obvious fix does not work, and it is worth saying why so the next
+    # person does not spend the evening finding out again. Returning an UNSAVED
+    # ::User here on the first request and persisting only once the browser
+    # returns the session cookie is a small change, reads fine, and fails 18
+    # controller tests — because a persisted guest is not an implementation
+    # detail of this method, it is an assumption several features are built on:
+    #
+    #   - NearbyController#widget calls Conversation#join! on a GET. The ambient
+    #     chat widget is on the home page, so a first page view creates a
+    #     membership row, which needs a user id. This is the forcing function.
+    #   - Channel seeding, cross-subdomain guest identity, repost-as-guest and
+    #     the signup carryover (UsersController) all assume Current.user.id.
+    #
+    # So the real question is a product one: should reading the lobby join you
+    # to it? If the widget rendered the room and joined on first message
+    # instead, the unsaved-guest approach would follow, and a crawler reading a
+    # page would cost nothing. That is a deliberate change to how anonymous chat
+    # works, not a refactor of this method, and it belongs to whoever owns that
+    # decision.
     def find_or_create_guest_user
       return nil unless supports_guests?
 
