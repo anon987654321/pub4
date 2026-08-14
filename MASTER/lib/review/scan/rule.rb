@@ -202,6 +202,16 @@ module Master
         VAR_FALLBACK = /var\(\s*--[a-z0-9-]+\s*,[^)]*\)/i
         def without_var_fallbacks(code) = code.gsub(VAR_FALLBACK) { |v| v.gsub(/[^\n]/, " ") }
 
+        # A mask gradient's colour stops are opacity, not colour.
+        #
+        # `mask-image: linear-gradient(to right, transparent 0%, #000 3%, #000 97%,
+        # transparent)` fades the edges of a scroller. In a mask the alpha channel
+        # is what renders and black simply means "fully opaque" — the hex is doing
+        # arithmetic, and nothing themeable is being expressed. Tokenising it would
+        # make a fade follow the theme, which is not a thing a fade can do.
+        MASK_DECLARATION = /(?:-webkit-)?mask(?:-image)?\s*:[^;]*;/
+        def without_mask_gradients(code) = code.gsub(MASK_DECLARATION) { |m| m.gsub(/[^\n]/, " ") }
+
         # Only what sits in a declaration value, for stylesheets.
         #
         # An id selector whose name happens to be valid hex is not a colour, and

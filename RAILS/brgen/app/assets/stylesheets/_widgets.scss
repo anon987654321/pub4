@@ -58,12 +58,15 @@
   height: 100%;
 }
 
-.monogram--0 { background: #4b2e83; color: #fff; }
-.monogram--1 { background: #7a3e12; color: #fff; }
-.monogram--2 { background: #075e54; color: #fff; }
-.monogram--3 { background: #7b1e3a; color: #fff; }
-.monogram--4 { background: #184e77; color: #fff; }
-.monogram--5 { background: #5f4b32; color: #fff; }
+/* Six categorical avatar backgrounds, each carrying white ink. A palette, not
+   a usage: there is no prior token for these to cite. Local to brgen — unlike
+   $vertical-accents they are not in design_tokens.yml. */
+.monogram--0 { background: #4b2e83; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--1 { background: #7a3e12; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--2 { background: #075e54; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--3 { background: #7b1e3a; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--4 { background: #184e77; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
+.monogram--5 { background: #5f4b32; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 article h2 { font-size: var(--text-base); font-weight: var(--weight-bold); margin-bottom: 4px; }
 article p { color: var(--text-dim); font-size: var(--text-base); }

@@ -120,7 +120,13 @@ module Master
           # nothing else renders into a mail client.
           next [] if path.to_s.match?(/mailer/)
 
-          definition = /\A\s*(--[\w-]+|\$[\w-]+)\s*:/
+          # Anchored to line start OR to an opening brace, because a theme override
+          # is routinely written on one line: `:root { --border: #2c2824; }` inside
+          # a media query. Anchored only at the start, the guard saw `:root {` and
+          # called the definition a usage — and this was the last MAGIC_COLOR
+          # finding in the tree that looked substitutable, which is what sent me
+          # looking at it.
+          definition = /(?:\A|\{)\s*(--[\w-]+|\$[\w-]+)\s*:/
           messages = {
             /#[0-9a-fA-F]{3,6}\b/ => "raw hex color — use CSS custom property or design token",
             /\brgba?\s*\(/ => "raw rgb() color — use CSS custom property or design token",
@@ -142,7 +148,7 @@ module Master
           scanned = without_var_fallbacks(without_block_comments(without_comment_lines(src)))
           # Stylesheets get the value-position filter; JS and HTML do not, because
           # a colour there is an argument or an attribute, not a declaration.
-          scanned = declaration_values_only(scanned) if path.to_s.match?(/\.(css|scss)\z/)
+          scanned = declaration_values_only(without_mask_gradients(scanned)) if path.to_s.match?(/\.(css|scss)\z/)
           # Guards read the ORIGINAL line, the search reads the filtered one. The
           # value filter strips the `--token:` prefix, so asking `definition` about
           # the filtered line stopped recognising token definitions and counted
