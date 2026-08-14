@@ -132,8 +132,8 @@ module Deploy
       end
 
       unless File.read(sw_build).include?("workbox:core")
-        result.warn("#{app_name}: service-worker.js is hand-rolled, not built — npm run build:pwa " \
-                    "would overwrite it with the Workbox precache bundle it deliberately replaced")
+        result.warn("#{app_name}: service-worker.js is hand-rolled, not built — and is no longer in " \
+                    "build_workbox.mjs's APPS, so npm run build:pwa leaves it alone")
         return
       end
 

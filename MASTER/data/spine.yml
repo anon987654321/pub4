@@ -290,8 +290,10 @@ spine:
   # readers for security/defaults.yml keys that lived under planned: and enforced
   # nothing — the same category as worn_type. Public stays AskLlm/WebSearch/
   # SubdomainOrchestrator; messaging never includes Shell.
-  # RAISED 2026-08-14, 39258 -> 39288 (+30, measured from a tree already 16 under
-  # at 39242, so +46 written). All of it is scan-rule correctness in
+  # RAISED 2026-08-14, 39258 -> 39295 (+37, measured from a tree already 16 under
+  # at 39242, so +46 written here and +7 arriving underneath by rebase from the
+  # face-autostart and guest-rows commits, which were within the old ceiling on
+  # their own). All of the 46 is scan-rule correctness in
   # review/scan/rule.rb and scanner.rb: ERB-aware and quote-aware tag reading,
   # implicit <label> association, background-aware contrast, and a skip list that
   # means the same thing from the repo root as from MASTER.
@@ -310,7 +312,7 @@ spine:
   # already exist and were mis-measuring; absorbing it into core/ fails the same
   # test — core/ takes a handler per verb and a rule per constraint, and "ERB tags
   # end in >" is neither.
-  lib_code_ceiling: 39288
+  lib_code_ceiling: 39295
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
