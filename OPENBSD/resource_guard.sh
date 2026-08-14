@@ -65,8 +65,39 @@ LOAD_RESTORE=2.0
 # self-recovering, which is not what OPENBSD/CLAUDE.md claims. 8/14 keeps the
 # same 6-point hysteresis gap, straddling p50 instead of sitting above it.
 # Cost: more paging for the two optional apps. Swap is 1264M and was at 365M.
+#
+# Recalibrated again 2026-08-14, MEM_RESTORE 14 -> 10, from 1550 ticks
+# (~5.4 days). The 2026-07-29 pass above was right for its dataset and the
+# dataset moved: it measured mem_avail p50=13 p75=24 and set 14 to straddle the
+# median. Today the same log reads **p50=9, p75=10, p90=16** — the box carries
+# more than it did — so 14 had drifted back above p75, which is the exact
+# condition that pass was fixing. Second occurrence of one failure.
+#
+# Measured against the real gate, not guessed: it opened on 7% of ticks, and
+# memory alone blocked 89% of the non-shed ones. Sweeping the floor: 14 -> 7%,
+# 12 -> 9%, 10 -> 23%, 9 -> 67%, 8 -> 83%. 10 is p75 and buys a restore
+# opportunity roughly every 20 minutes instead of every 70.
+#
+# Why not 9, which opens the gate on two thirds of ticks: it leaves one point of
+# hysteresis above MEM_WARN, so a shed at 7% would restore at 9% and shed again.
+# 10 keeps a 2-point band. It is narrower than the 6 points this file has
+# defended twice, and that is the deliberate trade — a wide band on a box whose
+# whole operating range is 8-16% is a band with no room to sit in.
+#
+# To be exact about the symptom, because the first draft of this note overstated
+# it: restore is not dead, it is slow. Both apps were shed at 05:55 on 2026-08-14
+# and the shed list had cleared itself by 08:55 — three hours, spent waiting for
+# availability to climb past 14 on a box that sits at 9. At 10 that wait is the
+# 23%-of-ticks case, well under an hour.
+#
+# What made it recur is that nothing watched the window at all. health_check.rb
+# now fails while anything the guard shed is still down, which is the outage
+# rather than a theory about thresholds — an earlier version of that check did
+# reason from this log about whether the gate was reachable, and measured against
+# the real 1550 ticks it stayed silent through the very incident it was written
+# for.
 MEM_WARN=8
-MEM_RESTORE=14
+MEM_RESTORE=10
 
 load=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}')
 load=${load:-9.9}

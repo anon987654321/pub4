@@ -8,9 +8,11 @@ require "open3"
 require "optparse"
 require "yaml"
 require_relative "lib/utf8"
+require_relative "lib/guard_state"
 
 ROOT = File.expand_path("..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
+
 
 options = {
   all_ready_apps: false,
@@ -282,6 +284,26 @@ if on_box
                   "— see OPENBSD/etc/rc.d/#{name}_jobs"
     end
   end
+end
+
+# Something is shed and the mechanism that un-sheds it cannot fire.
+#
+# resource_guard.sh sheds amber/bsdports under load and restores them when
+# pressure clears. The restore is gated on mem_avail >= MEM_RESTORE, and twice
+# now that floor has drifted above the range this box actually operates in —
+# 20% against a median of 13 (found 2026-07-29), then 14% against a median of 9
+# (found 2026-08-14). Both times the guard sank to shed-only and the two apps
+# stayed down for days, and both times it was noticed by a person wondering why
+# amber was off rather than by anything here. TLS keeps answering when they are
+# down, so the outage reads as a hang and nothing else reports it.
+#
+# The thresholds are read out of the guard rather than copied, so this cannot
+# pass while describing a gate the guard no longer has.
+if on_box && File.readable?(Deploy::GuardState::SHED_STATE)
+  shed_list = File.read(Deploy::GuardState::SHED_STATE)
+  running = ->(svc) { service_running?(svc).first }
+  down = Deploy::GuardState.shed_and_down(shed: shed_list, running:)
+  failures << down if down
 end
 
 up_checks = on_box ? { "master" => 53_187 } : {}
