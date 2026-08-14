@@ -76,20 +76,7 @@ window._endlessWhite = (() => {
 
 window._dillaBg = (() => {
   let ctx, master, padFilt, padGain, bassBus, kickBus, shelf, hatGain, conv, convGain;
-  let playing = false, barIv = null, duckIv = null, speakIv = null;
-  const PICKUP_LINES = [
-    "is your name Google? because you're everything I've been searching for",
-    "are you made of copper and tellurium? because you're Cu-Te",
-    "do you have a map? I just keep getting lost in your eyes",
-    "if you were a vegetable, you'd be a cute-cumber",
-    "are you a parking ticket? because you've got fine written all over you",
-    "do you believe in love at first sight, or should I walk by again",
-    "are you a magician? because whenever I look at you, everyone else disappears",
-    "excuse me, I think you dropped something: my jaw",
-    "are you French? because Eiffel for you",
-    "is it hot in here, or is it just you",
-    "I'm not a photographer, but I can picture us together"
-  ];
+  let playing = false, barIv = null, duckIv = null;
   const CHORDS = [
     [123.47, 146.83, 185.00, 220.00, 277.18],
     [82.41,  123.47, 196.00, 246.94, 329.63],
@@ -212,22 +199,13 @@ window._dillaBg = (() => {
       if (Math.random() > (isOff ? 0.30 : 0.58)) hat(t);
     }
   }
-  function speakPickup() {
-    if (!playing) return;
-    if (F_FACE_TTS?.muted) return;
-    if (F_FACE_TTS?.playing) return;
-    if (F_FACE_TTS?.queue?.length >= 2) return;
-    const line = PICKUP_LINES[Math.floor(Math.random() * PICKUP_LINES.length)];
-    if (!line) return;
-    try {
-      if (typeof enqueueSpeech === 'function') enqueueSpeech(line, { quirky: true, lane: 'nudge' });
-      else window.MASTER_FACE?.speak?.(line);
-    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:speak_pickup", err); }
-  }
+// speakPickup() removed 2026-08-14: it spoke a random pick-up line 12s after
+// the loop started and every 48s after that, unprompted. The music stays; the
+// flirting does not. MASTER speaks when spoken to.
   return () => {
     if (playing) {
       playing = false;
-      try { clearInterval(barIv); clearInterval(duckIv); clearInterval(speakIv); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:stop", err); }
+      try { clearInterval(barIv); clearInterval(duckIv); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:stop", err); }
       try { master?.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:fade_out", err); }
       setTimeout(() => { try { ctx?.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:close", err); } }, 900);
       return false;
@@ -247,8 +225,6 @@ window._dillaBg = (() => {
         const target = speaking ? 0.025 : 0.14;
         try { master.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:duck_ramp", err); }
       }, 500);
-      speakIv = setInterval(speakPickup, 48000);
-      setTimeout(speakPickup, 12000);
       master.gain.setValueAtTime(0, ctx.currentTime);
       master.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 5);
       return true;

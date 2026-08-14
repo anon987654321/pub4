@@ -90,17 +90,37 @@ module Master
         @disclaimer = persona["disclaimer"].to_s.strip
       end
 
+      # The operator's tone notes, and only those.
+      #
+      # This used to return the file whole, so everything IDENTITY.md said
+      # *about itself* was pasted inside <master_identity> and handed to the
+      # model as who it is — a heading, then a paragraph explaining that the
+      # file holds persona and operator preferences and that constitutional
+      # identity comes from soul.yml. Documentation about a config file, read
+      # as self-description, in the one block of the prompt the model treats as
+      # its sense of self. It answered accordingly: asked to remember a name,
+      # it opened with an unprompted paragraph about being the world's first AI
+      # written in pure Ruby.
+      #
+      # Headings and HTML comments are for the human reading the file. What
+      # reaches the prompt is the prose left over.
       def load_identity
-        data_path = File.join(Master::ROOT, "data", "IDENTITY.md")
-        return File.read(data_path, encoding: "UTF-8").strip if File.exist?(data_path)
+        path = [File.join(Master::ROOT, "data", "IDENTITY.md"), File.join(Master::ROOT, "IDENTITY.md")]
+               .find { |candidate| File.exist?(candidate) }
+        return "" unless path
 
-        legacy = File.join(Master::ROOT, "IDENTITY.md")
-        return File.read(legacy, encoding: "UTF-8").strip if File.exist?(legacy)
-
-        ""
+        identity_notes(File.read(path, encoding: "UTF-8"))
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "personality.load_identity", path:)
         ""
+      end
+
+      def identity_notes(raw)
+        raw.gsub(/<!--.*?-->/m, "")
+           .lines
+           .reject { |line| line.start_with?("#") }
+           .join
+           .strip
       end
 
       def persona_knowledge_sources
