@@ -202,6 +202,13 @@ module Master
         VAR_FALLBACK = /var\(\s*--[a-z0-9-]+\s*,[^)]*\)/i
         def without_var_fallbacks(code) = code.gsub(VAR_FALLBACK) { |v| v.gsub(/[^\n]/, " ") }
 
+        # `<%# … %>` — the ERB comment. without_comment_lines matches a leading #
+        # or //, and an ERB comment opens with `<`, so a note explaining a colour
+        # in a view was read as a colour. Third spelling of the same failure, after
+        # // in JavaScript and /* */ in CSS.
+        ERB_COMMENT = /<%#.*?%>/m
+        def without_erb_comments(code) = code.gsub(ERB_COMMENT) { |c| c.gsub(/[^\n]/, " ") }
+
         # A mask gradient's colour stops are opacity, not colour.
         #
         # `mask-image: linear-gradient(to right, transparent 0%, #000 3%, #000 97%,

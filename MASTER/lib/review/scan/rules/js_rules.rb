@@ -119,6 +119,11 @@ module Master
           # one. The rest of the fleet is unaffected by this exemption because
           # nothing else renders into a mail client.
           next [] if path.to_s.match?(/mailer/)
+          # The OS-level colour declarations, which are not CSS and cannot hold a
+          # var(). A web app manifest is JSON the operating system reads to paint
+          # the task switcher and splash screen, and <meta name="theme-color">
+          # colours the browser chrome itself — both take a literal or nothing.
+          next [] if File.basename(path.to_s).start_with?("manifest.json")
 
           # Anchored to line start OR to an opening brace, because a theme override
           # is routinely written on one line: `:root { --border: #2c2824; }` inside
@@ -144,8 +149,8 @@ module Master
           # CSS custom properties do not resolve inside canvas, WebGL or Three.js
           # material colours. Asking these to cite a token asks for something that
           # does not render.
-          canvas_sink = /\b(?:fillStyle|strokeStyle|shadowColor|backgroundColor|setHexColor)\b|\bnew\s+THREE\.Color\b/
-          scanned = without_var_fallbacks(without_block_comments(without_comment_lines(src)))
+          canvas_sink = /\b(?:fillStyle|strokeStyle|shadowColor|backgroundColor|setHexColor)\b|\bnew\s+THREE\.Color\b|theme-color|theme_color/
+          scanned = without_var_fallbacks(without_block_comments(without_erb_comments(without_comment_lines(src))))
           # Stylesheets get the value-position filter; JS and HTML do not, because
           # a colour there is an argument or an attribute, not a declaration.
           scanned = declaration_values_only(without_mask_gradients(scanned)) if path.to_s.match?(/\.(css|scss)\z/)

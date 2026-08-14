@@ -164,8 +164,19 @@ module Master
           max = Rules.thresholds.max_visible_choices.to_i
           findings = []
           # count sibling <li> or nav links in a single block
+          #
+          # A bare <ul> is not a choice surface. Hick's law is about how long it
+          # takes to decide between alternatives, and a tag cloud, a search-results
+          # list and "what is on in the city today" are content being browsed, not
+          # options being chosen between — advising "group or progressive
+          # disclosure" on search results says to hide the results. <nav> and
+          # <select> are choice surfaces by definition and still count; a <ul> only
+          # counts when it says it is one.
+          menu_ul = /<ul[^>]*(?:role=["']menu|class=["'][^"']*(?:menu|nav|tabs|filters))/i
           src.scan(/<(?:ul|nav|select)[^>]*>(.*?)<\/(?:ul|nav|select)>/im) do |body|
             chunk = body[0].to_s
+            opening = src[src.index(chunk) ? (src.rindex("<", src.index(chunk)) || 0) : 0, 200].to_s
+            next if opening.start_with?("<ul") && !opening.match?(menu_ul)
             count = chunk.scan(/<li\b/i).size
             count = chunk.scan(/<option\b/i).size if count.zero?
             count = chunk.scan(/<a\b/i).size if count.zero?
@@ -196,7 +207,14 @@ module Master
           severity: :info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
           description: "advanced controls should not dump all options at once" do |src, path:|
           next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
+          # "Dumping all options at once" needs options to dump. This fired on any
+          # view containing the word settings/options/advanced anywhere — a link
+          # label, a translation key, a URL — so a community's edit page and a
+          # playlist embed page were reported as settings UI without a disclosure
+          # pattern. The structural signal is a form with enough controls to be
+          # worth collapsing; below that there is nothing to progressively reveal.
           next [] unless src.match?(/advanced|settings|options|preferences/i)
+          next [] unless src.scan(/<(?:input|select|textarea)\b|f\.(?:text_field|select|check_box|number_field|text_area)/i).size >= 6
           next [] if src.match?(/details|disclosure|collapsed|hidden|aria-expanded|data-controller=["'][^"']*disclosure/i)
 
           [finding(line: 1, message: "settings/advanced UI without disclosure pattern — collapse secondary controls")]
@@ -206,7 +224,13 @@ module Master
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: false,
           description: "ma — breathing room via gap/section spacing tokens" do |src, path:|
           next [] unless Rules.ui_path?(path)
-          next [] unless src.match?(/section|hero|card|panel|main/i)
+          # The keyword has to be a selector this file styles, not a word anywhere
+          # in it. brgen's application.scss is a list of @use lines and nothing
+          # else; it was reported for lacking section spacing because one of the
+          # partials it imports is named _marketplace_cards. A file with no
+          # declaration block cannot have spacing to set.
+          next [] unless src.include?("{")
+          next [] unless src.match?(/^[^{}\n]*\b(section|hero|card|panel|main)\b[^{}\n]*\{/i)
           next [] if src.match?(/gap\s*:|section.*padding|padding-block|margin-block/i)
 
           [finding(line: 1, message: "layout surface without gap/section spacing — set rhythm tokens (design_rules negative_space)")]
