@@ -160,6 +160,30 @@ for i in {1..30}; do
 done
 [[ $up_ok -eq 1 ]] || { write_stamp "$app" failed; print -u2 "vps-deploy: $app /up not ready on :${port}"; exit 1; }
 
+# /up answers before Propshaft is involved, so it says nothing about whether the
+# page a visitor gets is styled. On 2026-08-14 brgen served every page with a
+# <link> to a stylesheet that 404'd — public/assets held zero files — and /up,
+# rcctl check, the port probe and the public TLS check all passed. The site was
+# plainly broken and the only thing that noticed was a person looking at it.
+#
+# So ask for the stylesheet the page actually links, through the Host that owns
+# it: these apps are domain-constrained and a bare-IP request is a 403, which
+# would make this check pass by never finding a link to test.
+domain=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","domain")')
+css_href=$(curl -fsS --max-time 30 -H "Host: ${domain}" "http://127.0.0.1:${port}/" 2>/dev/null \
+  | grep -oE '/assets/[^"]+\.css' | head -1)
+if [[ -n $css_href ]]; then
+  if curl -fsS -o /dev/null --max-time 30 -H "Host: ${domain}" "http://127.0.0.1:${port}${css_href}" 2>/dev/null; then
+    print "vps-deploy: $app stylesheet ok (${css_href})"
+  else
+    write_stamp "$app" failed
+    print -u2 "vps-deploy: $app serves ${css_href} as 404 — precompiled assets missing, the site is unstyled"
+    exit 1
+  fi
+else
+  print "vps-deploy: $app no /assets stylesheet linked on / — nothing to verify"
+fi
+
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! grep -q 'define(version: 0)' "$queue_schema" 2>/dev/null; then
   print "vps-deploy: $app (solid_queue proof)"

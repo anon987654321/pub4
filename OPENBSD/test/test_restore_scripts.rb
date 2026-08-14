@@ -39,6 +39,33 @@ class RestoreScriptsTest < Minitest::Test
     assert_includes source, "public"
   end
 
+  # public/assets is the one synced directory git does not carry — Propshaft
+  # writes it on the box at precompile. Pruning public/ wholesale deleted the
+  # running site's stylesheets, and it happened before bin/ci, so a CI failure
+  # left the new code live with no assets: brgen served every page with a 404ing
+  # <link> on 2026-08-14 while /up, rcctl check and the TLS probe all passed.
+  def test_vps_ci_keeps_compiled_assets_across_the_prune
+    source = File.read(File.join(ROOT, "vps_ci.sh"))
+    prune = source[/for dir_rel in test app lib config bin db engines public.*?done/m]
+    assert prune, "the prune loop moved — re-read this before trusting the assertions below"
+    assert_includes prune, "public/assets", "the prune must special-case the one directory git does not carry"
+    assert_match(/mv .*public\/assets.*assets-carry/, prune, "assets must be held aside, not deleted")
+    assert_match(/mv .*assets-carry.*public\/assets/, prune, "…and put back")
+  end
+
+  # /up answers before Propshaft is reached, so it cannot tell a styled site from
+  # an unstyled one. The deploy asks for the stylesheet the page links, through
+  # the Host that owns it — a bare-IP request 403s on these apps, which would
+  # pass by finding no link at all.
+  def test_vps_deploy_verifies_the_page_stylesheet_resolves
+    source = File.read(File.join(ROOT, "bin/vps-deploy"))
+    assert_includes source, "css_href", "no stylesheet verification after restart"
+    assert_match(%r{grep -oE '/assets/\[\^"\]\+\\\.css'}, source, "must read the href off the rendered page")
+    assert_includes source, 'Host: ${domain}', "must ask through the app's own Host or it 403s"
+    assert_match(/css_href.*\n.*write_stamp "\$app" failed/m.freeze, source[/if \[\[ -n \$css_href \]\].*?^fi/m].to_s,
+                 "a 404 stylesheet must fail the deploy, not warn")
+  end
+
   def test_extract_legacy_installers_targets_top_level_rails
     source = File.read(File.join(ROOT, "extract_legacy_installers.sh"))
     assert_includes source, 'scripts_root="$ROOT_DIR/RAILS"'

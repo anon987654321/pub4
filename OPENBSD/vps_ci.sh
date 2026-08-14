@@ -66,7 +66,28 @@ sync_from_repo() {
     # copy instead of surviving as stale dead code indefinitely.
     local dir_rel
     for dir_rel in test app lib config bin db engines public vendor/javascript; do
-      [[ -d $src/$dir_rel ]] && doas rm -rf "${app_dir}/${dir_rel}"
+      [[ -d $src/$dir_rel ]] || continue
+      # public/assets is the one synced directory that is not in git: Propshaft
+      # writes it here, on this box, at the precompile step further down the
+      # deploy. Pruning public/ wholesale therefore DELETES the running site's
+      # stylesheets and scripts, and it does so before bin/ci has run — so a CI
+      # failure exits the deploy with the new code live and no assets at all.
+      # brgen served every page with a 404ing <link> that way on 2026-08-14:
+      # public/assets held zero files, `/` still answered 200, and no gate
+      # noticed because the health check never asks for a stylesheet.
+      #
+      # Held aside and put back. A failed deploy then leaves the previous
+      # assets serving the previous markup, which is stale but whole; a
+      # successful one overwrites them at precompile a few steps later.
+      if [[ $dir_rel == public && -d ${app_dir}/public/assets ]]; then
+        doas rm -rf "${app_dir}/.assets-carry"
+        doas mv "${app_dir}/public/assets" "${app_dir}/.assets-carry"
+        doas rm -rf "${app_dir}/public"
+        doas mkdir -p "${app_dir}/public"
+        doas mv "${app_dir}/.assets-carry" "${app_dir}/public/assets"
+        continue
+      fi
+      doas rm -rf "${app_dir}/${dir_rel}"
     done
     doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
     doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
