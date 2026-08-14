@@ -22,11 +22,11 @@ section held a copy and the copy drifted — it read "38,294, allowance 1 of 2" 
 `spine.yml` had ratcheted to 38,285 and cleared the log, which is the two-source
 failure this register warns about elsewhere in its own words.
 
-Worth knowing without becoming a second copy: on 2026-08-13 `rake lint:spine`
-reports `38869/38869`. Exactly at the ceiling, no headroom — so the next line
-added to `lib/` breaks the ratchet, and the paragraph below about paying a breach
-out of `lib/` is not hypothetical. Read the current number from the task, never
-from here.
+Worth knowing without becoming a second copy: the ceiling has ended each of the
+last two days exactly at `lib/`, no headroom, so the next line added breaks the
+ratchet and the paragraph below about paying a breach out of `lib/` is not
+hypothetical. Read the current number from the task, never from here — the
+figure this paragraph used to quote was stale within a day, twice.
 
 What belongs here is the rule the ratchet taught, because it is not in the
 mechanism:
@@ -44,6 +44,40 @@ it needed the operator to sponsor it because the orphan account was empty. That
 sequence is the mechanism working. `rake lint:spine RATCHET=1` clears the raise log
 when `lib/` genuinely falls, which is what makes the allowance a budget and not a
 countdown.
+
+**Measure in a clean worktree, never in the shared checkout.** On 2026-08-14 the
+same change read `39251/39258` here and `39298/39295` at `origin/main` — 47 lines
+of skew, entirely other sessions' uncommitted `lib/` edits. The shared-tree number
+is not wrong about that tree; it is a reading of a tree nobody is going to commit.
+`git worktree add --detach <path> origin/main` and run the task there.
+
+### Three raises, no ratchet, in one day — 2026-08-14
+
+Not a complaint about any of them. Each was argued in `spine.yml` and each bought
+something: +3 for per-visitor chat conversations, +44 and +10 for design-gate rules
+that could not pass on correct markup, retiring 381 and then 434 findings. Net +57,
+zero reductions, and `lib/` closed the day at exactly its ceiling again.
+
+What that costs is legibility rather than lines. The header of `spine.yml` already
+says it — "a ceiling that rises whenever a day's work pushes against it measures
+nothing" — and the 2026-08-01 note already asked that the next raise not be granted
+on "it was only a bug fix". A note left that same morning asking the following
+session to ratchet rather than raise was read and raised past, twice, by sessions
+doing legitimate work. So the honest reading is not that anyone misbehaved: it is
+that the mechanism currently has no move available except assent.
+
+**The orphan account is empty, verified rather than assumed.** Hunted before asking
+for the +3: zero dead private methods across `lib/`, zero unreferenced constants,
+and the fourteen classes a conservative sweep flagged are all false positives —
+scanner rules reached through `RuleDSL`, `RubyRunner` called from `RAILS`.
+`RiskClassifier`, the orphan the last audit named, was already deleted. Same
+conclusion as 2026-08-12.
+
+So "make `lib/` fall back first" no longer names a cleanup anybody can do on the way
+past. It needs a decision that some subsystem is worth deleting or absorbing, which
+is design work with an owner, not a sweep. Until someone takes that decision, expect
+every feature to arrive as a raise, and read a green `lint:spine` as "the ceiling was
+moved to meet it" rather than as "the spine held".
 
 ## Self-Test Debt
 

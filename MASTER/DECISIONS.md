@@ -21,7 +21,9 @@ Two things the old split was carrying, and where each went:
 
 What the merge removed, beyond a directory: `bin/master-core` put `core/` on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb` files won was decided by load-path order. `bin/nsaudit` had to hand-require the second spine so the first one's constants would resolve. Both are gone.
 
-`lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved files `lib/` fell 28. The arithmetic is in `data/spine.yml` so the claim is checkable rather than asserted. It has since been raised three times, to 38869 <!-- cite: data/spine.yml#spine.lib_code_ceiling -->: once for `Review::Scan::CodeMetrics` — one line counter where there had been three — once to close the fold-spine findings the merge exposed, and once for `d35b40ec0`'s `worn_type` accessors, which took an operator decision to clear the raise log because nothing was left to absorb.
+`lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved files `lib/` fell 28. The arithmetic is in `data/spine.yml` so the claim is checkable rather than asserted. It was raised three times after that: once for `Review::Scan::CodeMetrics` — one line counter where there had been three — once to close the fold-spine findings the merge exposed, and once for `d35b40ec0`'s `worn_type` accessors, which took an operator decision to clear the raise log because nothing was left to absorb.
+
+The figure that used to sit in that sentence is deliberately gone. It carried a `cite:` marker, so `rake lint:doc_citations` held it to the value `data/` currently holds — and the sentence is about a past sequence, so every subsequent raise made a true statement about history read as a false claim about now. It drifted within two days and failed the gate. `data/spine.yml` has the number and the whole log; this paragraph has the story.
 
 ---
 
