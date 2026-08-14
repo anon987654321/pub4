@@ -80,8 +80,12 @@ self.addEventListener("push", event => {
   const data = event.data?.json() || {}
   event.waitUntil(self.registration.showNotification(data.title || APP_NAME, {
     body: data.body || "",
-    icon: "/icon.png",
-    badge: "/icon.png",
+    // The badge is the small monochrome glyph Android punches into the status
+    // bar; a full-colour icon there renders as a grey blob. brgen's hand-rolled
+    // worker had this right and the shared one did not, so this arrives with
+    // brgen rather than being lost on the way in. All three apps ship both files.
+    icon: "/icon-192.png",
+    badge: "/icon-mono-192.png",
     data: { url: data.url || "/" },
   }))
 })

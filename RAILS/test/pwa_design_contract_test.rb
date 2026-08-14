@@ -9,13 +9,20 @@ class PwaDesignContractTest < Minitest::Test
   SHARED_ROOT = File.join(ROOT, "shared")
   APPS = %w[amber brgen bsdports].freeze
 
-  # brgen's worker is hand-rolled on purpose: the Workbox build froze ~89
-  # fingerprinted asset URLs in its precache manifest, every deploy re-digested
-  # them, and `install` failed with bad-precaching-response — which broke the PWA
-  # on playlist.brgen.no. Precaching content-addressed bundles is the wrong tool.
-  # The worker's own header records this. So assert what every worker must do,
-  # and let the Workbox build be one way of doing it rather than the contract.
-  HAND_ROLLED_WORKERS = %w[brgen].freeze
+  # Empty as of 2026-08-14, and kept rather than deleted because the exemption is
+  # the thing worth being able to say.
+  #
+  # brgen was hand-rolled because the Workbox build froze ~89 fingerprinted asset
+  # URLs in its precache manifest, every deploy re-digested them, `install` failed
+  # with bad-precaching-response, and the PWA broke on playlist.brgen.no.
+  # Precaching content-addressed bundles is the wrong tool — but the tool was the
+  # glob, not Workbox: build_workbox now ignores assets/**, so the manifest holds
+  # only stable URLs and brgen is back on the shared worker with the offline form
+  # queue and periodic sync its escape had cost it.
+  #
+  # If an app needs to leave again, put it here rather than weakening the checks
+  # every worker owes regardless of how it is built.
+  HAND_ROLLED_WORKERS = [].freeze
 
   def test_all_apps_ship_a_service_worker_meeting_the_cache_contract
     each_app do |app, root|
@@ -31,6 +38,18 @@ class PwaDesignContractTest < Minitest::Test
         assert_includes worker, "Workbox 7.4.1 generated for #{app}"
         assert_includes worker, "offline-forms"
       end
+    end
+  end
+
+  # The bug that sent brgen away, asserted rather than remembered. A digested URL
+  # in a precache manifest is pinned at build time and 404s at the next deploy.
+  def test_no_worker_precaches_a_fingerprinted_asset
+    each_app do |app, root|
+      worker = read(root, "app/views/pwa/service-worker.js")
+      pinned = worker.scan(%r{/assets/[^"']*-[0-9a-f]{8,}\.(?:js|css)}).uniq
+
+      assert_empty pinned, "#{app}: precache pins #{pinned.size} digested URL(s); " \
+                           "they 404 on the next deploy and fail install"
     end
   end
 

@@ -4,19 +4,14 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
-// brgen is deliberately absent. It does not build its service worker: after the
-// precache manifest broke the PWA on playlist.brgen.no it was replaced by a
-// hand-rolled minimal worker, whose header says so and which precaches only
-// /offline. Listing it here meant `npm run build:pwa` silently overwrote that
-// file with the Workbox bundle it exists to replace — a one-command
-// reintroduction of the outage, and the generated_asset gate used to print that
-// very command as brgen's remediation. Running this must not undo a decision.
-//
-// Now that the manifest no longer pins digested URLs (globIgnores below), moving
-// brgen back onto the shared worker would give it the offline form queue and
-// periodic sync it lost. That is a product change, not a build fix, so it is not
-// made here.
-const APPS = ["amber", "bsdports"]
+// brgen is back, 2026-08-14. It had been hand-rolled since the precache manifest
+// pinned ~89 digested asset URLs and broke the PWA on playlist.brgen.no; escaping
+// that cost it the offline form queue, periodic sync and the page cache, which
+// amber and bsdports kept. The manifest no longer pins digests (globIgnores
+// below, proved by putting two digested files under public/assets and watching
+// the entry count stay put), so the reason to stay hand-rolled is gone and the
+// three apps share one worker again.
+const APPS = ["amber", "brgen", "bsdports"]
 const root = resolve(import.meta.dirname, "..")
 const source = join(root, "shared", "pwa", "service_worker.js")
 const temp = await mkdtemp(join(tmpdir(), "pub4-workbox-"))

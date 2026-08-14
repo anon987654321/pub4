@@ -544,12 +544,15 @@ class DeployBacklogTest < Minitest::Test
                     'navigator.clearAppBadge'
     assert_includes read_source(File.join(ROOT, 'shared/pwa/service_worker.js')), 'setAppBadge'
     brgen_sw = read_source(File.join(ROOT, 'brgen/app/views/pwa/service-worker.js'))
-    # Replaced the Workbox precache bundle (frozen fingerprint manifest that drifted
-    # every deploy and 404'd install) with a minimal SW: precache only /offline,
-    # runtime stale-while-revalidate for /assets/. No Workbox precache manifest.
+    # Back on the shared Workbox worker as of 2026-08-14. It left because the
+    # precache manifest froze fingerprinted asset URLs that 404'd at the next
+    # deploy; build_workbox now ignores assets/**, so the manifest carries only
+    # stable URLs and brgen regains the offline form queue and periodic sync.
+    # What is asserted is the property that matters, not which builder produced
+    # it: an offline fallback, and no digested URL pinned in the precache.
     assert_includes brgen_sw, '/offline'
-    assert_includes brgen_sw, "url.pathname.startsWith(\"/assets/\")"
-    refute_includes brgen_sw, 'workbox:core'
+    assert_includes brgen_sw, 'offline-forms'
+    assert_empty brgen_sw.scan(%r{/assets/[^"']*-[0-9a-f]{8,}\.(?:js|css)}).uniq, 'precache pins a digested URL'
     # The layout and the chrome it renders, read as one surface. brgen_ai_url is
     # reached from the mobile sheet, which moved into shared/_mobile_chrome when
     # the layout was split at its length ceiling — the link did not move, the
