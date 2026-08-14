@@ -85,18 +85,32 @@ module Shared
     # hygiene job that runs blind against a 1-vCPU box cost the site once
     # already. The log line is there so a permanently-blind guard shows up as
     # a job that never removes anything, rather than as silence.
+    #
+    # The FIVE-minute average, not the one-minute, and that is the whole
+    # difference between this guard working and not. Measured on vm23
+    # 2026-08-14: the wrapper waited until the 1-minute load was 1.85, started
+    # the runner, and booting Rails drove the 1-minute average to 3.31 — over
+    # the 3.0 ceiling — so the job's first check saw the spike it had itself
+    # just caused and quit having removed nothing. On one vCPU a Rails boot
+    # alone clears 3, so a guard reading the 1-minute average can never let this
+    # job start.
+    #
+    # The 5-minute average was 1.77 at that same moment: it describes the box
+    # rather than the last thing to touch it. A prune that genuinely loads the
+    # machine still raises it, just over minutes instead of instantly, which is
+    # the behaviour wanted from a brake. Pub4::CiGuard gates on the same field.
     def busy?
       return false if Rails.env.test?
 
-      load1 = Pub4::LoadAverage.one
-      if load1.nil?
+      load5 = Pub4::LoadAverage.five
+      if load5.nil?
         Rails.logger.warn("PruneGuestUsersJob: cannot read load average, skipping this run")
         return true
       end
 
-      return false unless load1 > LOAD_CEILING
+      return false unless load5 > LOAD_CEILING
 
-      Rails.logger.info("PruneGuestUsersJob: load #{load1} over #{LOAD_CEILING}, leaving the rest for the next run")
+      Rails.logger.info("PruneGuestUsersJob: load #{load5} over #{LOAD_CEILING} (5-min), leaving the rest for the next run")
       true
     end
   end
