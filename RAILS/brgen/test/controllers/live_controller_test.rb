@@ -22,11 +22,16 @@ class LiveControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "guest with location can post to live" do
-    # Soft guest is created via resume_session on first hit.
+    # Two hits for one guest: the first sighting builds a soft guest without
+    # saving it, and the row is written once the browser returns the session
+    # cookie (Shared::Authentication). In the product the location itself
+    # arrives by POST, which persists the guest before it is stored.
     get live_path
     assert_response :success
+    get live_path
 
     guest = User.where(guest: true).order(created_at: :desc).first
+    assert guest.persisted?
     assert guest
     guest.update_columns(latitude: 60.39, longitude: 5.32, location_updated_at: Time.current)
 

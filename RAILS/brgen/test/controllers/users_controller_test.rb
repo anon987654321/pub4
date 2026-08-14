@@ -44,7 +44,10 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "signup carries the guest's posts onto the new account" do
-    get live_path # resume_session mints the guest
+    # The first hit builds a soft guest without writing a row; the second, which
+    # carries the session cookie back, is what mints it (Shared::Authentication).
+    get live_path
+    get live_path
     guest = User.where(guest: true).order(created_at: :desc).first
     guest.update_columns(latitude: 60.39, longitude: 5.32, location_updated_at: Time.current)
     post live_path, params: { post: { content: "Guest note before signing up" } }

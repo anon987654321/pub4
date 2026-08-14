@@ -40,8 +40,15 @@ class CrossSubdomainSessionTest < ActionDispatch::IntegrationTest
 
   test "a guest keeps one identity across verticals" do
     host! "brgen.no"
+    # Two requests to get one guest, on purpose: the first sighting builds a
+    # soft guest without saving it, and the row is written when the browser
+    # returns the session cookie. See Shared::Authentication.
+    assert_no_difference -> { User.where(guest: true).count } do
+      get root_path
+    end
     get root_path
     guest = User.where(guest: true).order(created_at: :desc).first
+    assert guest.persisted?
 
     host! "takeaway.brgen.no"
     get takeaway.root_path

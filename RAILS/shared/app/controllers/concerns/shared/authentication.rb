@@ -10,6 +10,11 @@ module Shared
 
     included do
       before_action :resume_session
+      # A request that is not a GET intends to write something, and writing needs
+      # an id. The three GET actions that also write call ensure_guest_user!
+      # themselves.
+      before_action :ensure_guest_user!, unless: :read_only_request?
+      after_action :remember_persisted_guest
       helper_method :authenticated?, :current_user, :guest?
     end
 
@@ -146,36 +151,84 @@ module Shared
     # written 102,778 throwaway guest rows". The rows kept being written and the
     # count has doubled since.
     #
-    # Mitigated, not fixed: OPENBSD/etc/daily.local now runs
-    # Shared::PruneGuestUsersJob nightly, which clears about 20,000 a night
-    # against 10,000 arriving. The table stays bounded. The writes continue.
+    # OPENBSD/etc/daily.local prunes about 20,000 a night against 10,000
+    # arriving, so the table stays bounded. That is the mitigation. This is the
+    # fix: nothing is written until something is on the other end.
     #
-    # The obvious fix does not work, and it is worth saying why so the next
-    # person does not spend the evening finding out again. Returning an UNSAVED
-    # ::User here on the first request and persisting only once the browser
-    # returns the session cookie is a small change, reads fine, and fails 18
-    # controller tests — because a persisted guest is not an implementation
-    # detail of this method, it is an assumption several features are built on:
+    # The first uncookied request gets an UNSAVED ::User. It answers every read a
+    # view or a policy makes — display_name, guest?, empty associations — and its
+    # nil id makes the rate limiters fall back to their IP bucket, which is the
+    # right bucket for a visitor with no identity yet. A marker goes in the
+    # session at the same time; a browser that keeps cookies returns it on the
+    # next request, and that is the evidence worth a row. A crawler that discards
+    # cookies never comes back and never costs anything.
     #
-    #   - NearbyController#widget calls Conversation#join! on a GET. The ambient
-    #     chat widget is on the home page, so a first page view creates a
-    #     membership row, which needs a user id. This is the forcing function.
-    #   - Channel seeding, cross-subdomain guest identity, repost-as-guest and
-    #     the signup carryover (UsersController) all assume Current.user.id.
+    # Real browsers are persisted almost immediately and nothing about the
+    # product changes for them: the page they land on fetches the ambient chat
+    # frame, and that fetch is a second HTTP request carrying the cookie the
+    # first response just set.
     #
-    # So the real question is a product one: should reading the lobby join you
-    # to it? If the widget rendered the room and joined on first message
-    # instead, the unsaved-guest approach would follow, and a crawler reading a
-    # page would cost nothing. That is a deliberate change to how anonymous chat
-    # works, not a refactor of this method, and it belongs to whoever owns that
-    # decision.
+    # What needed care is the handful of places that need an id rather than a
+    # user — Conversation#join!, mark_read_for!, anything building a row with a
+    # foreign key. ensure_guest_user! covers them, wired as a before_action for
+    # every non-GET and called explicitly by the three GET actions that write.
+    #
+    # Measured before and after on the same numbers this comment quotes, so the
+    # claim is checkable: guest rows per day, and participant rows per day as the
+    # control that the chat path is unaffected.
     def find_or_create_guest_user
       return nil unless supports_guests?
 
       guest_id = session[:guest_user_id]
-      return create_guest_user unless guest_id
+      if guest_id
+        found = ::User.find_by(id: guest_id, guest: true)
+        return found if found
+      end
 
-      ::User.find_by(id: guest_id, guest: true) || create_guest_user
+      # Second sighting: the cookie came back, so there is a browser here.
+      return create_guest_user if session[:guest_pending]
+
+      session[:guest_pending] = true
+      build_guest_user
+    end
+
+    # Persist the soft guest, for callers that need an id rather than a user.
+    #
+    # A GET that writes a row is the interesting case and there are three of
+    # them: the ambient chat widget and the geo room both join the visitor to a
+    # conversation, and a channel page seeds and joins. They call this directly.
+    # Everything else is covered by the before_action, on the rule that a request
+    # which is not a GET is a request that intends to write something.
+    #
+    # Idempotent, and a no-op for real users and already-saved guests.
+    def ensure_guest_user!
+      user = Current.user
+      return user unless user&.new_record?
+
+      user.save!
+      session.delete(:guest_pending)
+      session[:guest_user_id] = user.id
+      user
+    end
+
+    def read_only_request?
+      request.get? || request.head?
+    end
+
+    # An unsaved guest that a write persisted on its own has to be remembered, or
+    # the next request builds a fresh one and the author loses what they just
+    # wrote. `user: Current.user` is how every create site here attaches the
+    # actor, and ActiveRecord saves an unsaved belongs_to target before saving
+    # the owner — so this fires even where ensure_guest_user! was never called.
+    def remember_persisted_guest
+      return unless supports_guests?
+
+      user = Current.user
+      return unless user&.persisted? && user.guest?
+      return if session[:guest_user_id] == user.id
+
+      session.delete(:guest_pending)
+      session[:guest_user_id] = user.id
     end
 
     # A guest's password exists only to satisfy has_secure_password. It is random,
@@ -195,13 +248,19 @@ module Shared
     # guest that later becomes a real account gets a full-cost digest then.
     GUEST_BCRYPT_COST = BCrypt::Engine::MIN_COST
 
-    def create_guest_user
+    def build_guest_user
       guest = ::User.new(
         email_address: "guest_#{SecureRandom.hex(8)}@guest.local",
         guest: true,
       )
       guest.password_digest = BCrypt::Password.create(SecureRandom.hex(16), cost: GUEST_BCRYPT_COST)
+      guest
+    end
+
+    def create_guest_user
+      guest = build_guest_user
       guest.save!
+      session.delete(:guest_pending)
       session[:guest_user_id] = guest.id
       guest
     end

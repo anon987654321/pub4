@@ -21,8 +21,11 @@ class ChannelsController < ApplicationController
     return redirect_to(channels_path, alert: t("flash.no_such_channel")) unless @conversation
 
     if Current.user.present?
-      @conversation.join!(Current.user)
-      @conversation.mark_read_for!(Current.user)
+      # A GET that writes. ensure_guest_user! persists a soft guest that is still
+      # unsaved on a first visit; a no-op for everyone else.
+      me = ensure_guest_user!
+      @conversation.join!(me)
+      @conversation.mark_read_for!(me)
     end
 
     ActsAsTenant.without_tenant do

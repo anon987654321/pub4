@@ -30,7 +30,9 @@ class NearbyController < ApplicationController
     return redirect_to(nearby_path, alert: t("flash.location_required_for_nearby")) unless lat && lng
 
     conversation = Conversation.find_or_create_geo_room(lat: lat, lng: lng)
-    conversation.join!(Current.user)
+    # A GET that writes: joining needs an id, and a soft guest may still be
+    # unsaved on a first visit (Shared::Authentication#find_or_create_guest_user).
+    conversation.join!(ensure_guest_user!)
     redirect_to channel_path(conversation.slug)
   end
 
@@ -60,6 +62,11 @@ class NearbyController < ApplicationController
       end
     return render_widget_shell unless @conversation
 
+    # A GET that writes. `me` above may be a soft guest that has not been saved
+    # yet — the first uncookied request builds one without persisting it, so a
+    # crawl of this page costs no rows. Joining needs an id, so this is where it
+    # becomes real; a no-op for a returning visitor or a signed-in user.
+    me = ensure_guest_user!
     @conversation.join!(me)
     @conversation.mark_read_for!(me)
     ActsAsTenant.without_tenant do
