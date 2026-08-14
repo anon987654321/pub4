@@ -218,18 +218,43 @@ module Master
           | <(input)\b(?:"[^"]*"|'[^']*'|[^<>"'])*>
         }mix
 
+        # `<%= t("nav.more") %>` is text — it is how nearly every label in this
+        # repo is written — so blanking all ERB before reading content made every
+        # translated button look empty. Output tags become a placeholder and keep
+        # naming their control; `<% if %>` and `<%# comment %>` render nothing and
+        # are still blanked. (First draft of this rule blanked all three and
+        # reported 20 correctly-labelled buttons.)
+        ERB_OUTPUT_TAG = /<%=+.*?%>/m
+        ERB_SILENT_TAG = /<%(?!=).*?%>/m
+        # Length-preserving, so this copy stays index-aligned with the attribute
+        # copy and one match can be read against both.
+        def with_erb_output_as_text(code)
+          code.gsub(ERB_OUTPUT_TAG) { |t|
+            t.each_char.with_index.map { |c, i| c == "\n" ? "\n" : (i.zero? ? "x" : " ") }.join
+          }.gsub(ERB_SILENT_TAG) { |t| t.gsub(/[^\n]/, " ") }
+        end
+
         def nameless_control_lines(code)
-          source = without_labelled_controls(without_erb_tags(code))
+          attrs = without_labelled_controls(without_erb_tags(code))
+          content = without_labelled_controls(with_erb_output_as_text(code))
           lines = []
-          source.to_enum(:scan, CONTROL_ELEMENT).each do
+          attrs.to_enum(:scan, CONTROL_ELEMENT).each do
             m = Regexp.last_match
-            tag = m[0]
-            next if tag.match?(NAMED_ATTR)
+            next if m[0].match?(NAMED_ATTR)
+            # A hidden input is not in the accessibility tree, so it has no name
+            # to give and nothing to announce. FORM_LABEL already excluded these;
+            # this rule did not, and every one of its four remaining findings was
+            # a hidden field — three carrying ids for a form to submit and one
+            # already marked aria-hidden.
+            next if m[0].match?(/type\s*=\s*["']hidden["']|aria-hidden\s*=\s*["']true["']/i)
+
             # Text content names button/select/textarea; input has none to give.
-            inner = m[2].to_s.gsub(/<[^>]*>/, "").strip
+            # Read from the copy where ERB output survived as text.
+            same = content[m.begin(0), m[0].length].to_s
+            inner = same[/>(.*)<\/[a-z]+\s*>\z/m, 1].to_s.gsub(/<[^>]*>/, "").strip
             next unless inner.empty?
 
-            lines << source[0...m.begin(0)].count("\n") + 1
+            lines << attrs[0...m.begin(0)].count("\n") + 1
           end
           lines
         end

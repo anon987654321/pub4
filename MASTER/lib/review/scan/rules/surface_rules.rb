@@ -63,7 +63,16 @@ module Master
               if line.match?(/imageSmoothingEnabled\s*=\s*true/i)
                 findings << finding(line: num, message: "imageSmoothingEnabled=true — pixel field requires false (integer scale)")
               end
-              if line.match?(/\b(particle|bloom|scanline|vaporwave|crt)\b/i) && !line.strip.start_with?("//", "*", "/*")
+              # `particle` is out of this list. bloom, scanline, vaporwave and crt
+              # name decorative effects a flat surface does not want; a particle
+              # is a rendering primitive, and this product's face is built from
+              # them — face_vision_b.js opens "MASTER particle face 2026" and
+              # face.part1.txt says it eight times. The rule was telling MASTER's
+              # own particle face to stop calling itself one, and objecting to the
+              # physics of a named feature (radio_brgen_tunnel's particle tunnel)
+              # as though `particle.z += zDelta` were a style choice. 35 findings,
+              # none actionable.
+              if line.match?(/\b(bloom|scanline|vaporwave|crt)\b/i) && !line.strip.start_with?("//", "*", "/*")
                 findings << finding(line: num, message: "decorative particle/CRT language — use pixel-field/semantic cell terms per design_rules")
               end
             end
@@ -368,7 +377,15 @@ module Master
               next [] if src.match?(/error|invalid|aria-invalid|field_with_errors|empty|blank/i)
               [finding(line: 1, message: "form without visible error/empty handling — Rams thorough")]
             when "UNOBTRUSIVE"
-              scan_lines(src, /modal|overlay|popup|interstitial/i,
+              # ERB blanked, and aria-modal exempt. This word-matched raw lines,
+              # so it fired on `aria-modal="true"` — the attribute that makes a
+              # dialog announce itself correctly, i.e. the compliant spelling of
+              # the thing it is checking — and on ERB comments that merely say
+              # "showModal()". Neither is attention-capturing chrome. What is left
+              # is markup that actually builds an overlay, which is the soft
+              # signal this was written to give.
+              scan_lines(without_erb_tags(src).gsub(/aria-modal\s*=\s*"[^"]*"/, ""),
+                         /modal|overlay|popup|interstitial/i,
                 message: "attention-capturing chrome — keep unobtrusive unless blocking is required")
             when "UNDERSTANDABLE"
               scan_lines(src, /placeholder=["'][^"']{1,3}["']/,
