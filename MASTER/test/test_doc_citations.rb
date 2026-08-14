@@ -34,7 +34,20 @@ class TestDocCitations < Minitest::Test
     # `core_files: 6` references removed most of them — rewriting prose to drop
     # the number is a real loss of coverage, so the floor is asserted rather than
     # quietly followed downward.
-    assert_operator @report["quotations"] + @report["citations"], :>=, 4,
+    #
+    # 4 -> 3 on 2026-08-14, and this is the case that comment is about, so it gets
+    # the argument it asks for. DECISIONS.md carried a `cite:` on the spine ceiling
+    # inside the sentence "It has since been raised three times, to 38869" — a
+    # claim about a past sequence, wearing a marker that holds it to the value
+    # data/ currently has. Every later raise turned a true statement about history
+    # into a failing claim about the present, and it drifted within two days.
+    #
+    # So this is not prose dropping a number to dodge the gate: the citation was
+    # wrong to exist, because the sentence was never asserting a current value.
+    # The story stayed and the figure moved to data/spine.yml, which is the one
+    # place that owns it. Coverage genuinely fell by one and the floor follows,
+    # visibly.
+    assert_operator @report["quotations"] + @report["citations"], :>=, 3,
                     "only #{@report['quotations']} quotation(s) and #{@report['citations']} " \
                     "citation(s) found — the checker stopped matching"
     assert_includes Pub4::DocCitations.keys.keys, "core_files",

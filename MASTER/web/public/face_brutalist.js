@@ -32,29 +32,6 @@
   if (aesthetic === "wscons") applyWscons();
   else if (aesthetic !== "phosphor") applyBrutalist(); // brutalist (flat) default; phosphor keeps its glow CSS
 
-  let strip = document.getElementById("brutalist-strip");
-  if (!strip) {
-    strip = document.createElement("pre");
-    strip.id = "brutalist-strip";
-    strip.className = "brutalist-strip";
-    strip.setAttribute("aria-hidden", "true");
-    document.body.appendChild(strip);
-  }
-
-  const ring = [];
-  function pushLine(tag, val) {
-    ring.push(`${tag}=${val}`);
-    while (ring.length > 6) ring.shift();
-    strip.textContent = ring.join(" ");
-  }
-
-  window.addEventListener("master:visual", (ev) => {
-    const d = ev.detail || {};
-    pushLine("mode", (d.mode || "idle").toString().slice(0, 12));
-    if (d.entropy != null) pushLine("H", Number(d.entropy).toFixed(2));
-    if (d.confidence != null) pushLine("C", Number(d.confidence).toFixed(2));
-  });
-
   const primer = document.getElementById("primer");
   if (primer) {
     primer.addEventListener("pointerdown", () => {

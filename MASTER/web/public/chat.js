@@ -875,38 +875,6 @@ document.querySelectorAll('.tool').forEach(btn => {
   window.MASTERHistory = { toggle, open: () => setOpen(true), close: () => setOpen(false), reload: loadHistory };
 })();
 
-(function wireEmotionSparkline() {
-  let bar = document.getElementById('mood-sparkline');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'mood-sparkline';
-    bar.className = 'mood-sparkline';
-    bar.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(bar);
-  }
-  const ring = [];
-  const cap = 20;
-
-  function render() {
-    bar.innerHTML = ring.map((entry) => {
-      const h = Math.max(3, Math.round(entry.entropy * 18));
-      return `<i data-mood="${entry.mode || 'idle'}" style="height:${h}px"></i>`;
-    }).join('');
-  }
-
-  function push(detail = {}) {
-    const entropy = Number(detail.entropy ?? 0.2);
-    const mode = (detail.mode || detail.topology || 'idle').toString().slice(0, 12);
-    ring.push({ entropy: Math.min(1, Math.max(0, entropy)), mode });
-    while (ring.length > cap) ring.shift();
-    render();
-  }
-
-  window.addEventListener('master:visual', (ev) => push(ev.detail || {}));
-  push({ entropy: 0.2, mode: 'idle' });
-  window.MASTEREmotionSparkline = { push, snapshot: () => ring.slice() };
-})();
-
 (function wireSessionExport() {
   function collectMarkdown() {
     const started = new Date(sessionStartedAt).toISOString();

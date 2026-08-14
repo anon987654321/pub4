@@ -66,9 +66,6 @@ function updateMoodHistory(mood) {
   if (!mood) return;
   moodHistory.push(mood);
   while (moodHistory.length > 20) moodHistory.shift();
-  const bar = document.getElementById('mood-sparkline');
-  if (!bar) return;
-  bar.innerHTML = moodHistory.map(entry => `<i data-mood="${entry}"></i>`).join('');
 }
 
 function renderNoCanvasFallback() {

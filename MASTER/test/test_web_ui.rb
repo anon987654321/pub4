@@ -324,7 +324,9 @@ class TestWebUI < Minitest::Test
     assert_includes service, '"felt:sense"'
     assert_includes agent, "felt_sense"
     assert_includes File.read(File.expand_path("../lib/review/agent/prompt_builder.rb", __dir__)), "felt_sense_section"
-    assert_includes File.read(File.expand_path("../web/public/chat.js", __dir__)), "mood-sparkline"
+    # The mood sparkline used to be asserted here too. It was the visible end of
+    # this chain and it is gone (see test_no_corner_hud_readouts_return); the
+    # felt-sense wiring above it is what this test is actually for.
   end
 
   def test_ui_backlog_wired
@@ -346,7 +348,7 @@ class TestWebUI < Minitest::Test
     assert_dashboard_copy dashboard, "dashboard.panels.repair", "repair queue"
   end
 
-  def test_wave3_history_export_sparkline_wired
+  def test_wave3_history_and_export_wired
     chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
     css = File.read(File.expand_path("../web/public/face.css", __dir__))
 
@@ -355,12 +357,41 @@ class TestWebUI < Minitest::Test
     assert_includes chat, "/chat/history"
     assert_includes chat, "wireSessionExport"
     assert_includes chat, "MASTERExport"
-    assert_includes chat, "wireEmotionSparkline"
     assert_includes chat, "master:visual"
     assert_includes chat, "action: 'history'"
     assert_includes chat, "action: 'export'"
     assert_includes css, "#chat-history-panel"
     assert_includes css, "#history-list"
+  end
+
+  # The corners stay empty.
+  #
+  # Two HUD readouts sat in them and were removed on 2026-08-14 at the operator's
+  # request: #brutalist-strip, a <pre> in the top-left printing "mode=idle H=0.42
+  # C=0.88", and #mood-sparkline, a row of <i> bars flush beside the mic icon
+  # (pinned 22px in from the right against the mic's 2px).
+  #
+  # Four separate files created or rendered them — chat.js, face.part1.txt,
+  # face_speech_runtime.js and face_vision_c.js for the sparkline, face_brutalist.js
+  # for the strip — and each would have put it back on its own, since every one
+  # creates the element if it is missing. That is why this asserts across the whole
+  # served tree rather than one file: removing three of four leaves the HUD on
+  # screen and the diff looking done.
+  #
+  # public/assets/ is excluded: it is precompiled output, gitignored, and
+  # regenerated from these sources.
+  def test_no_corner_hud_readouts_return
+    root = File.expand_path("../web/public", __dir__)
+    sources = Dir[File.join(root, "*.js"), File.join(root, "*.css"), File.join(root, "*.txt")]
+              .reject { |path| path.include?("/assets/") }
+
+    offenders = sources.select do |path|
+      File.read(path, encoding: "UTF-8").match?(/mood-sparkline|brutalist-strip/)
+    end.map { |path| File.basename(path) }
+
+    assert_empty offenders,
+                 "a corner HUD readout is back. Every one of these files creates the element if it is " \
+                 "absent, so one is enough to put it on screen: #{offenders.join(', ')}"
   end
 
   def test_ecology_render_pauses_when_tab_hidden

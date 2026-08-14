@@ -211,26 +211,6 @@
     });
   });
 
-  V.register(104, "sparkline baseline", (ctx) => {
-    let strip = document.getElementById("mood-sparkline");
-    if (!strip) {
-      strip = document.createElement("div");
-      strip.id = "mood-sparkline";
-      strip.className = "mood-sparkline";
-      strip.setAttribute("aria-hidden", "true");
-      body.appendChild(strip);
-    }
-    const ent = Number(ctx.detail.entropy ?? 0.2);
-    if (!strip._ring) strip._ring = [];
-    strip._ring.push(ent);
-    while (strip._ring.length > 32) strip._ring.shift();
-    const max = Math.max(...strip._ring, 0.01);
-    strip.innerHTML = strip._ring.map((v) => {
-      const h = 2 + (v / max) * 12;
-      return `<span style="height:${h}px"></span>`;
-    }).join("");
-  });
-
   V.register(105, "logo disintegration", () => {
     const logo = document.querySelector(".top-left-logo");
     if (!logo) return;

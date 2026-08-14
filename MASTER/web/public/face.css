@@ -116,7 +116,6 @@ body[data-runtime-profile="full"] canvas { filter: none; }
 body[data-runtime-profile="calm"] canvas { filter: none; }
 body[data-runtime-profile="calm"] #cognition-ecology { opacity: 0.72; mix-blend-mode: normal; }
 body[data-runtime-profile="calm"] #ascii-star { display: none; }
-body[data-runtime-profile="calm"] .mood-sparkline { opacity: 0.35; }
 body[data-long-silence="1"] canvas { filter: none; }
 body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
 body[data-face-flash="1"] canvas {
@@ -309,10 +308,6 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
   transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);
 }
 
-body[data-tts-loading="true"] .ui-status {
-  opacity: .9;
-  animation: ttsPulse 620ms steps(4,end) infinite;
-}
 
 @keyframes faceBootPulse {
   0%, 100% { opacity: .42; }
@@ -337,13 +332,17 @@ body[data-council-persona]::after {
   display: none !important;
 }
 
-/* .ui-status left the list above on 2026-08-13, on the same argument #mic-dot
-   is exempt for: it is the only feedback about whether MASTER is still working.
-   showStage writes "routing…", "scanning…" and "speaking…" here, and while this
-   rule applied they reached nobody — display: none also takes the element out
-   of the accessibility tree, so the aria-live on it never announced either.
-   The label is empty except while something is in flight, so pristine chrome is
-   unchanged at rest; this costs the same nothing #mic-dot costs when idle. */
+/* .ui-status is sr-only as of 2026-08-14, at the operator's request: no visible
+   status text in the bottom-right corner.
+
+   It is sr-only rather than display: none, and that distinction is the whole of
+   what the 2026-08-13 exemption was defending. showStage writes "routing…",
+   "scanning…" and "speaking…" here through an aria-live region, and display:
+   none takes an element out of the accessibility tree entirely, so the
+   announcements reached nobody — not the screen, not a screen reader. .sr-only
+   clips instead, so the element still exists to assistive tech while rendering
+   nothing. Sighted users lost a label they had for one day; screen reader users
+   keep what that commit restored. Do not "simplify" this to display: none. */
 
 /* Top-left logo — brgen wordmark (shared x tokens) */
 .top-left-logo {
@@ -412,22 +411,6 @@ body[data-mode="speaking"] #mic-dot {
 }
 
 /* Bottom-right status label */
-.ui-status {
-  position: fixed;
-  inset-inline-end: var(--inset-r);
-  bottom: var(--hud-tier-status);
-  z-index: var(--z-ui);
-  font: 9px/1.1 var(--font-label);
-  text-transform: uppercase;
-  letter-spacing: .15em;
-  color: color-mix(in srgb, var(--c-text) 38%, transparent);
-  opacity: 1;
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-  cursor: default;
-}
-
 .face-controls {
   position: fixed;
   inset-inline-start: var(--inset-l);
@@ -469,8 +452,7 @@ body[data-mode="speaking"] #mic-dot {
   transform: translateY(0);
 }
 
-.soul-drift,
-.mood-sparkline {
+.soul-drift {
   position: fixed;
   top: var(--inset-t);
   z-index: var(--z-ui);
@@ -489,29 +471,6 @@ body[data-mode="speaking"] #mic-dot {
   text-transform: uppercase;
 }
 
-.mood-sparkline {
-  top: calc(var(--inset-t) + 2px);
-  inset-inline-end: calc(var(--inset-r) + 22px);
-  display: flex;
-  align-items: end;
-  gap: 2px;
-  height: 18px;
-}
-
-.mood-sparkline i {
-  display: block;
-  width: 4px;
-  border-radius: 2px 2px 0 0;
-  background: color-mix(in srgb, var(--canvas-mood-accent, var(--c-accent)) 62%, transparent);
-  opacity: .82;
-  transition: height 320ms var(--ease-out), opacity 320ms var(--ease-out), background 420ms var(--ease-out);
-}
-
-.mood-sparkline i[data-mood="weary"] { height: 4px; opacity: .4; }
-.mood-sparkline i[data-mood="curious"] { height: 14px; }
-.mood-sparkline i[data-mood="focused"] { height: 12px; }
-.mood-sparkline i[data-mood="tense"] { height: 16px; }
-.mood-sparkline i[data-mood="idle"] { height: 6px; opacity: .5; }
 
 .face-scale {
   display: inline-flex;
@@ -674,23 +633,6 @@ body[data-mode="speaking"] #mic-dot {
 .provider-chip:empty { display: none; }
 html[data-model-provider] .provider-chip { opacity: .92; }
 
-.brutalist-strip {
-  position: fixed;
-  top: calc(8px + var(--safe-top));
-  inset-inline-start: calc(8px + var(--safe-left));
-  z-index: calc(var(--z-ui) + 2);
-  margin: 0;
-  padding: 4px 8px;
-  font: 10px/1.3 var(--font-label);
-  color: var(--face-fg);
-  background: color-mix(in srgb, var(--face-bg) 82%, transparent);
-  border: 1px solid var(--border-strong);
-  border-radius: 0;
-  pointer-events: none;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  opacity: .78;
-}
 body.brutalist-mode * { border-radius: 0 !important; }
 body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; }
 body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08); transition: filter 0ms steps(2,end); }
@@ -798,59 +740,6 @@ body.mission-control a:focus-visible {
   opacity: .75;
 }
 
-#scope-row {
-  position: fixed;
-  inset-inline: 16px;
-  inset-block-end: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
-  z-index: var(--z-chrome);
-  display: flex;
-  flex-wrap: wrap;
-  /* 8px both ways. This was `6px 10px` — two values off the rhythm in one
-     declaration, which is the whole of the +2 that put css_constitution over its
-     91 ceiling. Its own children already use `gap: 8px` (#pair-form,
-     #pair-issue-form, #pair-list li), so this aligns the row with the rule its
-     siblings were written to rather than inventing a spacing decision. */
-  gap: 8px;
-  align-items: baseline;
-  max-width: min(92vw, 28rem);
-  font: 11px/1.4 var(--font-label);
-  letter-spacing: .08em;
-  color: color-mix(in srgb, var(--face-fg) 48%, transparent);
-  pointer-events: auto;
-}
-#scope-label { text-transform: lowercase; color: color-mix(in srgb, var(--face-fg) 72%, transparent); }
-#pair-form, #pair-issue-form { display: flex; gap: 8px; align-items: baseline; }
-#scope-row input {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--face-fg) 28%, transparent);
-  color: var(--face-fg);
-  font: inherit;
-  width: 9ch;
-  /* .15em, not .16em: css_constitution caps uppercase tracking at 0.15em, and
-     ea1748593 brought eight rules in this file down to exactly that. The pair
-     field arrived a commit later at .16em and put the gate back into failure. */
-  letter-spacing: .15em;
-  text-transform: uppercase;
-}
-#pair-issue-form input { width: 12ch; text-transform: none; letter-spacing: 0; }
-#scope-row button {
-  background: none;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  letter-spacing: .12em;
-  padding: 0;
-  cursor: pointer;
-}
-#pair-hint, #pair-status { margin: 0; flex: 1 1 100%; max-width: 36rem; }
-#pair-list { list-style: none; margin: 0; padding: 0; flex: 1 1 100%; }
-#pair-list li { display: flex; gap: 8px; align-items: baseline; }
-body.face-loading #scope-row { opacity: 0; pointer-events: none; }
-body.zen #scope-row { opacity: .12; }
-body.zen:has(#zsh.live) #scope-row,
-body:has(#zsh.live) #scope-row,
-body.zen[data-edge-hover="1"] #scope-row { opacity: .92; }
 
 #zsh {
   position: fixed;
@@ -876,7 +765,6 @@ body.zen #zsh,
 body.zen #chat-log { opacity: .08; }
 body.zen.zen-hidden .face-controls,
 body.zen.zen-hidden #ui-status,
-body.zen.zen-hidden #mood-sparkline { opacity: 0; pointer-events: none; transition: opacity 220ms var(--ease-out); }
 body.zen[data-edge-hover="1"] .face-controls,
 body.zen[data-edge-hover="1"] #zsh { opacity: 1; pointer-events: auto; }
 
@@ -1025,7 +913,6 @@ body[data-mode="thinking"] #spin-btn { will-change: opacity; animation:cancelPul
 @keyframes cancelPulse { 0%,100%{opacity:.45} 50%{opacity:.85} }
 
 /* #49 Idle help trail */
-body[data-long-silence="1"] .ui-status { opacity: .72; letter-spacing: .34em; }
 body[data-long-silence="1"] #cognition-ecology { opacity: .38; }
 
 /* #51 Disabled state during boot — hide ghost prompt until primer tap */

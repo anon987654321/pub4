@@ -81,11 +81,6 @@
     canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
     #primer { background: transparent; }
     #zsh { background: #000; }
-    #scope-row { position: fixed; inset-inline: 16px; inset-block-end: 56px; z-index: 40;
-      display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline;
-      max-width: min(92vw, 28rem); font: 11px/1.4 system-ui, sans-serif; letter-spacing: .08em;
-      color: rgba(216,214,224,.7); }
-    body.face-loading #scope-row { opacity: 0; pointer-events: none; }
   </style>
 </head>
 <body class="zen face-loading"
@@ -316,28 +311,9 @@
   <main id="chat-shell" role="main" aria-label="<%= t("face.chat_aria", default: "MASTER chat") %>">
     <div id="chat-log" aria-live="polite" aria-relevant="additions text" tabindex="-1"></div>
   </main>
-  <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
+  <div class="ui-status sr-only" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
-  <div id="scope-row">
-    <span id="scope-label"><%= @profile.to_s %></span>
-    <% if @profile == "public" %>
-      <form id="pair-form">
-        <label for="pair-code">have a code?</label>
-        <input id="pair-code" name="code" maxlength="8" autocomplete="off" spellcheck="false" autocapitalize="characters" inputmode="text" aria-label="Pairing code">
-        <button type="submit">pair</button>
-      </form>
-      <p id="pair-hint">Code from your own clone. Messaging only — not operator access, not a bodyguard.</p>
-    <% elsif @profile == "messaging" %>
-      <p id="pair-hint">messaging — fetch and personal notes. Shell stays off.</p>
-    <% else %>
-      <form id="pair-issue-form">
-        <input id="pair-label" maxlength="40" autocomplete="off" placeholder="label" aria-label="Code label">
-        <button type="submit">issue code</button>
-      </form>
-      <ul id="pair-list"></ul>
-    <% end %>
-    <p id="pair-status" role="status" aria-live="polite"></p>
-  </div>
+
   <form id="zsh" role="search" aria-label="<%= t("face.prompt_aria", default: "MASTER prompt") %>" autocomplete="off">
     <button id="photo-button" type="button" aria-label="<%= t("face.attach_photo", default: "Attach photo") %>">+</button>
     <input id="photo" type="file" accept="image/*" capture="environment" hidden>
@@ -356,54 +332,6 @@
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
-    (function(){
-      var status=document.getElementById('pair-status');
-      function say(t){if(status)status.textContent=t||'';}
-      var form=document.getElementById('pair-form');
-      if(form){
-        form.addEventListener('submit',function(e){
-          e.preventDefault();
-          var input=document.getElementById('pair-code');
-          var code=(input&&input.value||'').trim();
-          if(!code){say('enter a code');return;}
-          fetch('/pair',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({code:code}),credentials:'same-origin'}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});}).then(function(res){
-            if(res.ok){say(res.j.notice||'paired');location.reload();}
-            else say(res.j.error||'invalid or expired code');
-          }).catch(function(){say('pair failed');});
-        });
-      }
-      var issue=document.getElementById('pair-issue-form');
-      if(issue){
-        function refreshList(){
-          fetch('/pair/list',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():{rows:[]};}).then(function(data){
-            var ul=document.getElementById('pair-list');
-            if(!ul)return;
-            ul.textContent='';
-            (data.rows||[]).forEach(function(row){
-              var li=document.createElement('li');
-              li.textContent=(row.subject||'')+' '+(row.label||'');
-              var btn=document.createElement('button');
-              btn.type='button';
-              btn.textContent='revoke';
-              btn.addEventListener('click',function(){
-                fetch('/pair/'+encodeURIComponent(row.subject),{method:'DELETE',credentials:'same-origin'}).then(function(){refreshList();});
-              });
-              li.appendChild(btn);
-              ul.appendChild(li);
-            });
-          }).catch(function(){});
-        }
-        issue.addEventListener('submit',function(e){
-          e.preventDefault();
-          var label=(document.getElementById('pair-label')||{}).value||'';
-          fetch('/pair/issue',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({label:label}),credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
-            say(j.code?('code '+j.code+' — '+j.expires_in+'s'):(j.error||'issue denied'));
-            refreshList();
-          }).catch(function(){say('issue failed');});
-        });
-        refreshList();
-      }
-    })();
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
       if (cfg && typeof cfg === 'object') {
         window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };

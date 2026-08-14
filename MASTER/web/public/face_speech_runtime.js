@@ -208,12 +208,6 @@ function pushEmotionHistory(entry) {
   ring.push({ ts: Date.now(), ...entry });
   while (ring.length > EMOTION_HISTORY_CAP) ring.shift();
   try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:emotion_history_store", err); }
-  const bar = document.getElementById('mood-sparkline');
-  if (!bar) return;
-  bar.innerHTML = ring.slice(-20).map((e) => {
-    const h = Math.max(3, Math.round((e.entropy ?? 0.2) * 18));
-    return `<i data-mood="${e.mood || e.mode || 'idle'}" style="height:${h}px"></i>`;
-  }).join('');
   window.MASTEREmotionHistory = ring;
 }
 window.addEventListener('master:visual', (ev) => {
