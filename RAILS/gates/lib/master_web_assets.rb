@@ -12,6 +12,9 @@ module Deploy
     ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
     MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
     REQUIRED = %w[face.css face.js face.runtime.js chat.js three.face.module.js].freeze
+    # Same two files Pub4::CiGuard uses to recognise vm23. Only there is a missing
+    # precompiled manifest a deploy fault rather than an unbuilt checkout.
+    DEPLOY_HOST_MARKERS = ["/etc/relayd.conf", "/var/db/pub4_vps"].freeze
     DEPLOY_SCRIPTS = {
       "OPENBSD/OPERATOR.sh" => :start_or_restart,
       "OPENBSD/vps_install_all.sh" => :start_or_restart,
@@ -31,7 +34,25 @@ module Deploy
       end
 
       unless File.file?(MANIFEST)
-        result.fail("missing #{MANIFEST} — run: cd MASTER/web && RAILS_ENV=production bundle exec rails assets:precompile")
+        # MASTER/web/public/assets is gitignored — precompile writes it, and only
+        # where something has run precompile. So its absence means two different
+        # things, and this reported the harsher one everywhere: on the deploy host
+        # a missing manifest is a real broken deploy, but in a fresh clone or a
+        # `bin/pub4 worktree` checkout it just means nobody has built assets here
+        # yet. That made `production` fail on arrival in any new working copy,
+        # which is a gate people learn to read past — and this one guards the
+        # face's assets.
+        #
+        # Inconclusive off the host, per the same rule the rendered gates follow:
+        # a gate that measured nothing says so rather than picking a verdict.
+        # GATE_STRICT_INCONCLUSIVE=1 still turns it into a failure.
+        if DEPLOY_HOST_MARKERS.any? { |marker| File.exist?(marker) }
+          result.fail("missing #{MANIFEST} — run: cd MASTER/web && RAILS_ENV=production bundle exec rails assets:precompile")
+        else
+          result.inconclusive!("MASTER/web assets not precompiled in this checkout — " \
+                               "gitignored, so nothing to read until `cd MASTER/web && " \
+                               "RAILS_ENV=production bundle exec rails assets:precompile` has run here")
+        end
       else
         manifest = JSON.parse(File.read(MANIFEST))
         REQUIRED.each do |logical|

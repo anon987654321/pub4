@@ -123,7 +123,20 @@ module Pub4
       # So these two are set to the measured truth rather than chased down again,
       # and the next move on either is to lower it once, deliberately, when the
       # tree is quiet — not opportunistically because a measurement came in low.
-      "aria_label" => 118,
+      #
+      # → 107 (2026-08-14). This is that deliberate lowering, and the condition
+      # above is what took the time: 107 is not a measurement that came in low,
+      # it is the number this rule has returned on every run across an eleven-hour
+      # session, re-measured three times back to back before being written down.
+      # The eleven that went are aria-labels that became keys while the engines
+      # were being worked over.
+      #
+      # What the note above is really guarding is that this file is read from the
+      # shared engine, so the number is the whole family's: a +1 in a brgen view
+      # fails amber's CI, which is how amber sat undeployed for a day. Recording
+      # the true low is still right — a baseline nobody trusts is worse — but
+      # anyone adding an unlocalised aria-label will meet it in another app.
+      "aria_label" => 107,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -150,7 +163,9 @@ module Pub4
       # affiliate.* keys in both brgen locales.
       # → 215 (2026-08-13), raised for the same reason as aria_label above; read
       # that comment before lowering either of them.
-      "translate_default" => 215,
+      # → 211 (2026-08-14), lowered with it and on the same evidence: stable
+      # across the session and across three consecutive measurements.
+      "translate_default" => 211,
     }.freeze
 
     # Kept for callers that referenced the old single number.

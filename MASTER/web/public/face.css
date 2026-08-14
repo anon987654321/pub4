@@ -805,7 +805,12 @@ body.mission-control a:focus-visible {
   z-index: var(--z-chrome);
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 10px;
+  /* 8px both ways. This was `6px 10px` — two values off the rhythm in one
+     declaration, which is the whole of the +2 that put css_constitution over its
+     91 ceiling. Its own children already use `gap: 8px` (#pair-form,
+     #pair-issue-form, #pair-list li), so this aligns the row with the rule its
+     siblings were written to rather than inventing a spacing decision. */
+  gap: 8px;
   align-items: baseline;
   max-width: min(92vw, 28rem);
   font: 11px/1.4 var(--font-label);
