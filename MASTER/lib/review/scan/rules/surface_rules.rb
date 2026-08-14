@@ -84,7 +84,11 @@ module Master
           findings = []
           src.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("//", "/*", "*")
-            line.scan(/(?:margin|padding|gap|top|left|right|bottom|inset)(?:-\w+)?\s*:\s*(-?\d+)px/i) do |raw|
+            # (?<![\w-]) so a property name is not matched inside a longer one.
+            # Without it `border-bottom-width: 1px` matched as `bottom-width` and
+            # a one-pixel border was reported as spacing off the rhythm — which is
+            # both wrong and unfixable, since 1px is what a hairline is.
+            line.scan(/(?<![\w-])(?:margin|padding|gap|top|left|right|bottom|inset)(?:-\w+)?\s*:\s*(-?\d+)px/i) do |raw|
               px = raw[0].to_i.abs
               next if allowed.include?(px) || px.zero?
               next if px % 4 == 0 && px <= 96 # 4px grid hairlines
@@ -319,7 +323,22 @@ module Master
           description: "clickable non-buttons need clear affordance" do |src, path:|
           next [] unless Rules.ui_path?(path)
 
-          scan_lines(src, /<(div|span)[^>]*(data-action|onclick|data-controller)[^>]*>/i,
+          # An element is interactive when something activates it, not when a
+          # Stimulus controller is attached to it. `data-controller` was in this
+          # list and produced 79 of the 87 findings — `<div
+          # data-controller="character-counter">` is a wrapper that watches a
+          # textarea and prints a number, with no handler and nothing to press.
+          # Advising a <button> there is advice nobody can take, and eleven
+          # unusable findings per usable one is how a rule stops being read.
+          #
+          # data-action is kept but narrowed to element-scoped activation.
+          # Stimulus writes the global form as `click@window->dropdown#hide`,
+          # which is a click-outside listener on the *window* and says nothing
+          # about the div carrying it; drag and scroll bindings are drop zones and
+          # observers, which are correctly divs. Element-scoped click/keydown on a
+          # bare div is the case this rule is actually about.
+          activation = /onclick|data-action="[^"]*(?<!@window|@document)\b(?:click|keydown|keyup)->/i
+          scan_lines(src, /<(div|span)[^>]*#{activation}[^>]*>/i,
             message: "interactive div/span — use <button> or explicit role+tabindex+keyboard handler")
         end
 

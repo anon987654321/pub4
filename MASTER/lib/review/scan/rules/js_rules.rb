@@ -112,6 +112,13 @@ module Master
           # out with an inline `scan: intentional`. A `--x:`/`$x:` line is a token
           # definition — where a raw value belongs — not a usage that should cite one.
           next [] if src.lines.first(20).join.match?(/scan:\s*intentional-colors/)
+          # Email cannot use custom properties. Outlook, Gmail's web client and
+          # every other mail renderer drop var() and leave the declaration
+          # unresolved, so _mailer_styles.html.erb is written in hex on purpose —
+          # 25 findings telling the one file that must not cite a token to cite
+          # one. The rest of the fleet is unaffected by this exemption because
+          # nothing else renders into a mail client.
+          next [] if path.to_s.match?(/mailer/)
 
           definition = /\A\s*(--[\w-]+|\$[\w-]+)\s*:/
           messages = {
@@ -119,8 +126,22 @@ module Master
             /\brgba?\s*\(/ => "raw rgb() color — use CSS custom property or design token",
             /\bhsla?\s*\(/ => "raw hsl() color — use CSS custom property or design token",
           }
-          src.each_line.with_index(1).flat_map do |line, number|
+          # Comment lines blanked, which is what without_comment_lines exists for
+          # and what its own note predicts: "a comment that names the thing the
+          # rule forbids [becomes] a finding about itself". Here that was a
+          # comment explaining *why* a colour was chosen — `// #d8d6e0 is brgen's
+          # own --text` — reported as a raw colour, and the note recording that a
+          # source pen used #fe9900 reported as a colour to tokenise.
+          #
+          # Canvas is the other one. `ctx.fillStyle = "#222"` is not a style
+          # choice avoiding a token, it is the only form the 2D context accepts:
+          # CSS custom properties do not resolve inside canvas, WebGL or Three.js
+          # material colours. Asking these to cite a token asks for something that
+          # does not render.
+          canvas_sink = /\b(?:fillStyle|strokeStyle|shadowColor|backgroundColor|setHexColor)\b|\bnew\s+THREE\.Color\b/
+          without_comment_lines(src).each_line.with_index(1).flat_map do |line, number|
             next [] if line.match?(/scan:\s*intentional/) || line.match?(definition)
+            next [] if line.match?(canvas_sink)
 
             messages.filter_map { |pattern, message| finding(line: number, message:) if line.match?(pattern) }
           end

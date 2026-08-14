@@ -347,7 +347,27 @@ spine:
   # someone ratchets down on a settled tree. This raise does not fix that; it buys
   # three lines. The next session to find the tree quiet should run
   # `rake lint:spine RATCHET=1` rather than granting another raise.
-  lib_code_ceiling: 39298
+  # RAISED 2026-08-14, 39298 -> 39342 (+44), and this one bought a 381-finding
+  # reduction in what the design gates report — 981 to 600 across brgen, amber,
+  # bsdports, shared and MASTER/web, without a single view or stylesheet being
+  # edited to achieve it. Every line is in review/scan: reading an element rather
+  # than a line for accessible names, blanking the media queries whose whole job
+  # is to override, and a property-name boundary.
+  #
+  # The note directly above asks the next session to ratchet rather than raise,
+  # and that is the right instinct and the wrong case. What these lines buy is
+  # not features; it is rules that can pass on correct input. ARIA_LABELS
+  # reported 39 buttons whose visible text already names them, AFFORDANCE_CLARITY
+  # reported 79 Stimulus wrappers with nothing to press, NO_IMPORTANT reported 73
+  # reduced-motion resets that need !important to work at all, and
+  # EIGHT_PX_RHYTHM read `border-bottom-width: 1px` as spacing. A gate whose zero
+  # is unreachable is not measuring the tree, and no amount of not-writing-code
+  # in lib/ fixes that.
+  #
+  # Absorption into core/ fails the same test it always does: core/ takes a
+  # handler per verb and a rule per constraint, and "a button's text content is
+  # its accessible name" is neither.
+  lib_code_ceiling: 39342
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

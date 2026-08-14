@@ -72,7 +72,18 @@ module Master
         RuleDSL.rule :NO_IMPORTANT,
           severity: :warning, tags: %i[MAINTAINABILITY], applies_to: %i[css scss],
           description: "no !important" do |src, path:|
-          scan_lines(src, /!\s*important/, message: "!important overrides cascade — fix specificity instead")
+          # Not inside the media queries whose entire job is to override.
+          #
+          # `@media (prefers-reduced-motion: reduce) { * { animation: none
+          # !important } }` is the recommended spelling, and it needs !important
+          # precisely because it must beat whatever the author set — dropping it
+          # would leave motion running for someone who asked the OS to stop it.
+          # 73 of the 139 findings in this repo were that block, plus three in
+          # prefers-contrast/forced-colors/print, which override for the same
+          # reason. Telling an accessibility reset to "fix specificity instead" is
+          # telling it to stop working.
+          scan_lines(without_override_media(src), /!\s*important/,
+                     message: "!important overrides cascade — fix specificity instead")
         end
 
         RuleDSL.rule :LOGICAL_PROPERTIES,
@@ -102,8 +113,10 @@ module Master
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           description: "interactive controls need accessible names" do |src, path:|
           next [] unless path.include?("/app/views/")
-          scan_lines(control_source(src), /<(button|input|select|textarea)\s+(?![^>]*(?:aria-label|aria-labelledby|id=))/i,
-            message: "control missing aria-label, aria-labelledby, or id for label association")
+          nameless_control_lines(src).map do |line|
+            finding(line:, message: "control has no accessible name — give it text content, aria-label, " \
+                                    "aria-labelledby, or an id a <label for> points at")
+          end
         end
 
         RuleDSL.rule :NO_TODO_IN_VIEWS,

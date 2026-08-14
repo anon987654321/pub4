@@ -174,6 +174,66 @@ module Master
         # <label> wrapper already names them.
         def control_source(code) = with_tags_flattened(without_labelled_controls(without_erb_tags(code)))
 
+        # Line numbers of controls with no accessible name, by any of the routes
+        # the accessibility tree actually accepts.
+        #
+        # Asking this per line could only ever see the opening tag, so the most
+        # ordinary correct spelling in HTML — `<button>Save</button>`, where the
+        # element's own text IS its name — read as nameless. That was 39 of the 55
+        # ARIA_LABELS findings across this repo, against 4 genuinely nameless
+        # controls. A rule that reports correct markup eleven times for each real
+        # defect is one people learn to scroll past.
+        #
+        # An element, not a line: ERB blanked, the whole tag read quote-aware, and
+        # the text between open and close counted for the elements that can carry
+        # a name that way. <input> cannot, so it still needs an attribute.
+        # Blanks the media queries that exist in order to override: reduced
+        # motion, forced colors, contrast preferences and print. Brace-counted
+        # from the @media rather than regexed, because these blocks nest, and
+        # blanked to spaces with newlines kept so line numbers still line up.
+        OVERRIDE_MEDIA = /@media[^{]*\((?:prefers-reduced-motion|prefers-contrast|forced-colors)[^{]*\{|@media\s+print[^{]*\{/
+        def without_override_media(code)
+          out = code.dup
+          while (m = out.match(OVERRIDE_MEDIA))
+            start = m.begin(0)
+            depth = 0
+            finish = start
+            out[start..].each_char.with_index do |ch, i|
+              depth += 1 if ch == "{"
+              if ch == "}"
+                depth -= 1
+                (finish = start + i; break) if depth.zero?
+              end
+            end
+            break if finish <= start
+
+            out[start..finish] = out[start..finish].gsub(/[^\n]/, " ")
+          end
+          out
+        end
+
+        NAMED_ATTR = /aria-label\s*=|aria-labelledby\s*=|\btitle\s*=|\bid\s*=/
+        CONTROL_ELEMENT = %r{
+          <(button|select|textarea)\b(?:"[^"]*"|'[^']*'|[^<>"'])*>(.*?)</\1>
+          | <(input)\b(?:"[^"]*"|'[^']*'|[^<>"'])*>
+        }mix
+
+        def nameless_control_lines(code)
+          source = without_labelled_controls(without_erb_tags(code))
+          lines = []
+          source.to_enum(:scan, CONTROL_ELEMENT).each do
+            m = Regexp.last_match
+            tag = m[0]
+            next if tag.match?(NAMED_ATTR)
+            # Text content names button/select/textarea; input has none to give.
+            inner = m[2].to_s.gsub(/<[^>]*>/, "").strip
+            next unless inner.empty?
+
+            lines << source[0...m.begin(0)].count("\n") + 1
+          end
+          lines
+        end
+
         # Does the CSS block containing `line_number` paint a dark background?
         #
         # Contrast is a relation, so a rule that reads only the foreground cannot
