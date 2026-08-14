@@ -63,8 +63,40 @@ wait_for_quiet() {
   return 1
 }
 
-pending_for() {
-  su -m "$1" -c "sqlite3 /home/$1/app/storage/production_queue.sqlite3 'select count(*) from solid_queue_jobs where finished_at is null;'" 2>/dev/null
+# Count what is actually RUNNABLE, not what is unfinished.
+#
+# The first version of this reported unfinished jobs and printed "brgen pending
+# 85 -> 85 (ran 150s)", which reads as a worker that did nothing. It had drained
+# everything there was: 82 of those 85 were MessageExpirationJob rows scheduled
+# hours ahead, which is the feature working, and 1 was a permanently failed job.
+# A number that cannot go down is not a progress report.
+#
+# due            — ready now, or scheduled for a time that has passed
+# ahead          — scheduled for later, nothing to do about it
+# failed         — gave up after its retries; needs a person, not another tick
+queue_counts() {
+  su -m "$1" -c "sqlite3 /home/$1/app/storage/production_queue.sqlite3 \"
+    select
+      (select count(*) from solid_queue_jobs j
+        where j.finished_at is null
+          and (j.scheduled_at is null or j.scheduled_at <= datetime('now'))
+          and not exists (select 1 from solid_queue_failed_executions f where f.job_id = j.id)),
+      (select count(*) from solid_queue_jobs j
+        where j.finished_at is null and j.scheduled_at > datetime('now')),
+      (select count(*) from solid_queue_failed_executions);
+  \"" 2>/dev/null
+}
+
+# cut, not ruby34 -e: the first version was
+#
+#   printf '%s\n' "$1" | ruby34 -e 'print(ARGF.read...)' "$2"
+#
+# and ARGF treats a trailing argument as a FILENAME, so it tried to open "0" and
+# died with ENOENT while the caller quietly substituted a default. Every field
+# came back 0 and the report read "nothing due (ahead=0 failed=0)" against a
+# queue holding 82 scheduled jobs — plausible, and wrong. cut has no such trap.
+field() {
+  printf '%s\n' "$1" | cut -d'|' -f"$2"
 }
 
 if ! wait_for_quiet; then
@@ -76,10 +108,16 @@ for app in brgen amber bsdports; do
   [ -d "/home/$app/app" ] || continue
   [ -f "/home/$app/app/storage/production_queue.sqlite3" ] || continue
 
-  before=$(pending_for "$app")
-  [ -n "$before" ] || before=0
-  if [ "$before" -eq 0 ]; then
-    echo "$(stamp) $app nothing pending"
+  counts=$(queue_counts "$app")
+  due=$(field "$counts" 1)
+  ahead=$(field "$counts" 2)
+  failed=$(field "$counts" 3)
+  [ -n "$due" ] || due=0
+  [ -n "$ahead" ] || ahead=0
+  [ -n "$failed" ] || failed=0
+
+  if [ "$due" -eq 0 ]; then
+    echo "$(stamp) $app nothing due (ahead=$ahead failed=$failed)"
     continue
   fi
 
@@ -88,7 +126,6 @@ for app in brgen amber bsdports; do
   su -m "$app" -c "cd /home/$app/app && set -a && . /etc/$app.env && set +a && HOME=/home/$app RAILS_ENV=production timeout -k 20 -s TERM $SECONDS_PER_APP /usr/local/bin/bundle34 exec rake solid_queue:start" \
     >>/var/log/drain-jobs.detail.log 2>&1
 
-  after=$(pending_for "$app")
-  [ -n "$after" ] || after=0
-  echo "$(stamp) $app pending $before -> $after (ran ${SECONDS_PER_APP}s)"
+  after=$(queue_counts "$app")
+  echo "$(stamp) $app due $due -> $(field "$after" 1)  ahead=$(field "$after" 2) failed=$(field "$after" 3) (ran ${SECONDS_PER_APP}s)"
 done
