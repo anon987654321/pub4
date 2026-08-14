@@ -18,7 +18,30 @@ module Master
       FULL_MESSAGE_WINDOW = 40
       SUMMARY_MAX_CHARS = 240
 
-      attr_reader :name, :messages, :cost, :phase, :snapshots, :budget_max
+      # One Session object, many conversations.
+      #
+      # The container is a process singleton (web/config/initializers/
+      # master_container.rb), so before this there was one @messages array for
+      # every visitor to ai.brgen.no at once. Agent#conversation_context feeds
+      # the model `messages.last(17)`, so a stranger's turns became your
+      # context: it could answer you with what someone else had just said, and
+      # two people typing at the same time interleaved into one transcript.
+      # /chat/history is auth-gated, so the endpoint never leaked — the model
+      # did.
+      #
+      # Absent key means :local, which is the CLI, every test, and any caller
+      # that never heard of conversations. One process, one person, unchanged
+      # behaviour. Only the web sets the key, and it sets it per request.
+      LOCAL = :local
+
+      # The fiber-local exists for the runtime path only, where the caller is
+      # Agent#conversation_context several frames down and has no key to pass.
+      # Everywhere the caller does know its key — persistence pinning :local, the
+      # history endpoint, tests — it passes one, because a fiber-local set and
+      # restored around a block is a worse way to say the same thing.
+      def self.conversation_key = Fiber[:master_conversation] || LOCAL
+
+      attr_reader :cost, :phase, :snapshots, :budget_max
       attr_accessor :topic, :last_inferred_command, :last_inferred_args
 
       def initialize(root: Dir.pwd, budget_max: 10.0, req_max: 1.0)
@@ -26,12 +49,10 @@ module Master
         @budget_max = budget_max
         @req_max = req_max
         @mutex = Mutex.new
-        @messages = []
-        @token_est = 0
+        @conversations = {}
         @snapshots = {}
         @cost = 0.0
         @phase = :discover
-        @name = nil
         @topic = nil
         @last_inferred_command = nil
         @last_inferred_args = nil
@@ -40,12 +61,18 @@ module Master
         Dir.mkdir(File.join(root, ".master")) unless Dir.exist?(File.join(root, ".master"))
       end
 
+      # The current conversation's transcript. Returned by reference, not
+      # copied: callers append to it (test_llm_dispatcher does) and every
+      # existing reader expects the same array identity it always got.
+      def messages(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:messages] }
+      def name(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:name] }
+
       def add_message(role:, content:)
         msg = { role:, content:, ts: Time.now.to_i }
         @mutex.synchronize do
-          @messages << msg
-          @token_est += Session.estimate_tokens(content)
-          @name ||= auto_name(content) if role == :user
+          conversation[:messages] << msg
+          conversation[:token_est] += Session.estimate_tokens(content)
+          conversation[:name] ||= auto_name(content) if role == :user
         end
         msg
       end
@@ -64,23 +91,32 @@ module Master
       def self.estimate_tokens(text) = text.to_s.bytesize / TOKENS_PER_CHAR
 
       def exists? = File.exist?(@path)
+
+      # Clears the caller's own conversation, not everyone's. Cost is deliberately
+      # still global — it is money spent by the process, and no visitor's /clear
+      # should zero the operator's spend.
       def clear!
-        @mutex.synchronize { @messages = []; @token_est = 0; @cost = 0.0; @name = nil; @topic = nil }
+        @mutex.synchronize { @conversations[Session.conversation_key] = blank_conversation; @topic = nil }
         self
       end
 
-      def token_est
-        @mutex.synchronize { @token_est }
-      end
+      def token_est(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:token_est] }
 
       private
 
-      def pruned_messages
-        @mutex.synchronize do
-          return @messages if @messages.size <= FULL_MESSAGE_WINDOW
+      # Always call inside @mutex. Created on read rather than up front, so a key
+      # that has never spoken costs nothing.
+      def conversation(key = Session.conversation_key) = @conversations[key] ||= blank_conversation
 
-          older = @messages[0...-FULL_MESSAGE_WINDOW]
-          recent = @messages.last(FULL_MESSAGE_WINDOW)
+      def blank_conversation = { messages: [], token_est: 0, name: nil }
+
+      def pruned_messages(key = Session.conversation_key)
+        @mutex.synchronize do
+          msgs = conversation(key)[:messages]
+          return msgs if msgs.size <= FULL_MESSAGE_WINDOW
+
+          older = msgs[0...-FULL_MESSAGE_WINDOW]
+          recent = msgs.last(FULL_MESSAGE_WINDOW)
           older.map { |msg| summarize_message(msg) } + recent
         end
       end

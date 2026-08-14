@@ -117,9 +117,35 @@ class ApplicationController < ActionController::Base
     }
   end
 
+  # Which conversation this browser is having.
+  #
+  # The container is a process singleton, so Trace::Session held one transcript
+  # for every visitor at once and Agent#conversation_context fed the model
+  # `messages.last(17)` regardless of who wrote them. /chat/history is auth-
+  # gated so the endpoint never leaked; the model did, by answering one person
+  # with what another had just said.
+  #
+  # master_session cannot key this — it is the shared auth token, identical for
+  # every authenticated client and absent for visitors, so it names nobody. This
+  # is its own opaque id, minted on first use and meaning nothing beyond "same
+  # browser". Same attributes as the pair cookie: HttpOnly and SameSite=Strict,
+  # so it is not readable from script and does not ride cross-site requests.
+  def conversation_id
+    existing = cookies[:master_conversation].to_s
+    return existing unless existing.empty?
+
+    minted = SecureRandom.hex(16)
+    cookies[:master_conversation] = {
+      value: minted, expires: 1.year.from_now,
+      secure: request.ssl?, httponly: true, same_site: :strict,
+    }
+    minted
+  end
+
   def with_master_fiber(unlocked: false)
     Fiber[:master_visitor] = visitor?
     Fiber[:master_elevated] = unlocked
+    Fiber[:master_conversation] = conversation_id
     Master::Ground::Pairing.apply_token!(cookies[:master_paired].to_s)
     yield
   ensure
@@ -127,6 +153,9 @@ class ApplicationController < ActionController::Base
     Fiber[:master_elevated] = nil
     Fiber[:master_paired] = nil
     Fiber[:master_pair_subject] = nil
+    # Cleared with the rest: a fiber that keeps this set would serve the next
+    # request on this thread someone else's transcript, which is the bug.
+    Fiber[:master_conversation] = nil
   end
 
   def enforce_chat_rate_limit

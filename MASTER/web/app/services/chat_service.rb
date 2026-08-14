@@ -14,7 +14,7 @@ class ChatService
   ].freeze
   BUS_THOUGHT_RE = /:(?:done|error|warn|crit|resolved|confidence|detected)\b/.freeze
 
-  def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:, paired: false, pair_token: nil)
+  def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:, paired: false, pair_token: nil, conversation: nil)
     @container = container
     @params = params
     @stream = stream
@@ -24,6 +24,7 @@ class ChatService
     @author = author
     @paired = paired
     @pair_token = pair_token
+    @conversation = conversation
     @subscriptions = []
     @mutated_paths = []
     @mutated = false
@@ -92,6 +93,10 @@ class ChatService
     end
     @container[:bus].publish("user:interrupt", reason: "new_turn", source: "chat")
     @container[:bus]&.publish("input:long", length: input.length) if input.length > 180
+    # Which transcript this turn belongs to. Without it every visitor shares
+    # one, and Agent#conversation_context hands the model whatever a stranger
+    # typed last.
+    Fiber[:master_conversation] = @conversation
     Fiber[:master_visitor] = @tier != "authenticated"
     Fiber[:master_elevated] = @unlocked || @author
     Fiber[:master_paired] = @paired
@@ -310,6 +315,7 @@ class ChatService
   end
 
   def clear_fiber_flags
+    Fiber[:master_conversation] = nil
     Fiber[:master_visitor] = nil
     Fiber[:master_elevated] = nil
     Fiber[:master_paired] = nil

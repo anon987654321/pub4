@@ -312,7 +312,42 @@ spine:
   # already exist and were mis-measuring; absorbing it into core/ fails the same
   # test — core/ takes a handler per verb and a rule per constraint, and "ERB tags
   # end in >" is neither.
-  lib_code_ceiling: 39295
+  #
+  # RAISED 2026-08-14, 39295 -> 39298 (+3), operator-sponsored. Per-visitor chat
+  # conversations: Trace::Session held one @messages array for every visitor to
+  # ai.brgen.no at once, because the web container is a process singleton and
+  # nothing under it scoped the session. Agent#conversation_context feeds the
+  # model `messages.last(17)`, so a stranger's turns were the context of your
+  # turn. /chat/history is auth-gated and never leaked; the model did.
+  #
+  # The raise is +3 and the change was +34. The other 32 were absorbed, twice by
+  # a better design rather than by compression: `with_conversation(key) { }` set
+  # a fiber-local and restored it around a block, and two of its three callers
+  # already knew their key, so they pass it (-9); `clear!` wrote a blank hash
+  # where `delete` says the same thing, which retired the blank_conversation
+  # helper; `load!` rebuilds the partition inline rather than through a helper
+  # with one caller. What is left is the mechanism: the LOCAL constant and
+  # conversation_key. Removing those two means inlining `:local` as a magic
+  # symbol in three places, which is worse code for one line.
+  #
+  # The number is +3, not the +2 first proposed. That +2 was measured in the
+  # shared checkout, which carried another session’s uncommitted lib/ edits, so it
+  # read a tree nobody was going to commit. Measured again in a clean worktree at
+  # origin/main: 39295 before, 39298 after.
+  #
+  # The orphan account was checked before asking, not assumed: zero dead private
+  # methods in lib/, zero unreferenced constants, and the fourteen classes a
+  # conservative sweep flagged are all false positives — scanner rules load via
+  # RuleDSL, RubyRunner is called from RAILS. RiskClassifier, the orphan the last
+  # audit named, is already deleted. Same empty account DEBT.md found 2026-08-12.
+  #
+  # Worth more than this entry: lib/ was at 39295/39295 when this landed — exactly
+  # the ceiling, zero headroom, which is the state DEBT.md predicted in the words
+  # "the next line added to lib/ breaks the ratchet". Every feature breaches until
+  # someone ratchets down on a settled tree. This raise does not fix that; it buys
+  # three lines. The next session to find the tree quiet should run
+  # `rake lint:spine RATCHET=1` rather than granting another raise.
+  lib_code_ceiling: 39298
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

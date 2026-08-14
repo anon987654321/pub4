@@ -15,6 +15,12 @@ class ChatController < ApplicationController
 
   def index
     c = container
+    # Mint the conversation cookie here rather than on the first chat POST.
+    # That POST is an SSE stream, and a Set-Cookie added after the response has
+    # begun committing is a cookie the browser never sees — the visitor would
+    # get a fresh transcript on every turn. A plain HTML render has no such
+    # problem, and every chat begins with this page.
+    conversation_id
     @model = c&.[](:agent)&.model.to_s.split("/").last.presence || "booting"
     @tier  = request.env["master.tier"].to_s
     @profile = face_profile
@@ -62,7 +68,10 @@ class ChatController < ApplicationController
     c = container
     return render(json: { error: "warming up" }, status: :service_unavailable) unless c
 
-    messages = c[:session].messages.last(200).map { |m| { role: m[:role], content: m[:content].to_s[0, 2000] } }
+    # Keyed, or an authenticated operator opening the page is served whatever
+    # the :local partition happens to hold rather than their own transcript.
+    messages = c[:session].messages(conversation_id)
+                          .last(200).map { |m| { role: m[:role], content: m[:content].to_s[0, 2000] } }
     render json: messages
   end
 
@@ -173,6 +182,7 @@ class ChatController < ApplicationController
       author: false,
       paired: pairing_active?,
       pair_token: cookies[:master_paired].to_s,
+      conversation: conversation_id,
     ).call
   rescue IOError, ActionController::Live::ClientDisconnected
     nil
