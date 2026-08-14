@@ -202,6 +202,26 @@ module Master
         VAR_FALLBACK = /var\(\s*--[a-z0-9-]+\s*,[^)]*\)/i
         def without_var_fallbacks(code) = code.gsub(VAR_FALLBACK) { |v| v.gsub(/[^\n]/, " ") }
 
+        # Only what sits in a declaration value, for stylesheets.
+        #
+        # An id selector whose name happens to be valid hex is not a colour, and
+        # this repo has one in the most-scanned file it owns: `canvas#face` is the
+        # face's own canvas, and `#face` is f-a-c-e. Six findings in face.css told
+        # the element to reference a design token. `#dad`, `#beef`, `#cafe` and
+        # `#added` would all read the same way.
+        #
+        # Values only: everything between a `:` and the `;`/`}` that ends it, with
+        # newlines kept so the finding still lands on its own line.
+        DECLARATION_VALUE = /:([^;{}]*)/
+        def declaration_values_only(code)
+          blanked = code.gsub(/[^\n]/, " ")
+          code.to_enum(:scan, DECLARATION_VALUE).each do
+            m = Regexp.last_match
+            blanked[m.begin(1), m[1].length] = m[1]
+          end
+          blanked
+        end
+
         # Blanks the media queries that exist in order to override: reduced
         # motion, forced colors, contrast preferences and print. Brace-counted
         # from the @media rather than regexed, because these blocks nest, and

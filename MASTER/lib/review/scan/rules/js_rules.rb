@@ -139,9 +139,19 @@ module Master
           # material colours. Asking these to cite a token asks for something that
           # does not render.
           canvas_sink = /\b(?:fillStyle|strokeStyle|shadowColor|backgroundColor|setHexColor)\b|\bnew\s+THREE\.Color\b/
-          without_var_fallbacks(without_block_comments(without_comment_lines(src))).each_line.with_index(1).flat_map do |line, number|
-            next [] if line.match?(/scan:\s*intentional/) || line.match?(definition)
-            next [] if line.match?(canvas_sink)
+          scanned = without_var_fallbacks(without_block_comments(without_comment_lines(src)))
+          # Stylesheets get the value-position filter; JS and HTML do not, because
+          # a colour there is an argument or an attribute, not a declaration.
+          scanned = declaration_values_only(scanned) if path.to_s.match?(/\.(css|scss)\z/)
+          # Guards read the ORIGINAL line, the search reads the filtered one. The
+          # value filter strips the `--token:` prefix, so asking `definition` about
+          # the filtered line stopped recognising token definitions and counted
+          # every one of them — 234 findings became 333 before this was split.
+          original = src.lines
+          scanned.each_line.with_index(1).flat_map do |line, number|
+            raw = original[number - 1].to_s
+            next [] if raw.match?(/scan:\s*intentional/) || raw.match?(definition)
+            next [] if raw.match?(canvas_sink)
 
             messages.filter_map { |pattern, message| finding(line: number, message:) if line.match?(pattern) }
           end
