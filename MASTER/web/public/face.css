@@ -822,7 +822,10 @@ body.mission-control a:focus-visible {
   color: var(--face-fg);
   font: inherit;
   width: 9ch;
-  letter-spacing: .16em;
+  /* .15em, not .16em: css_constitution caps uppercase tracking at 0.15em, and
+     ea1748593 brought eight rules in this file down to exactly that. The pair
+     field arrived a commit later at .16em and put the gate back into failure. */
+  letter-spacing: .15em;
   text-transform: uppercase;
 }
 #pair-issue-form input { width: 12ch; text-transform: none; letter-spacing: 0; }
