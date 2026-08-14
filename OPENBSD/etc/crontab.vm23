@@ -51,3 +51,15 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # night removed nothing at all. Its own slot is after daily(8) finishes, and the
 # wrapper waits for the load to fall rather than skipping the night.
 20 4 * * * /usr/local/bin/prune-guests.sh >> /var/log/prune-guests.log 2>&1
+
+# drain-jobs — run the background queue for a few minutes each hour.
+#
+# No Solid Queue worker runs here: it needs its own process under Falcon, and
+# with 60 MB free and 1032 MB of 1264 MB of swap in use a resident one per app
+# does not fit. So `perform_later` meant never, and brgen was holding 178
+# MessageExpirationJob rows — disappearing messages that had never disappeared.
+#
+# A bounded run does fit: 180 seconds drained 96 of 181 with load under 2. What
+# it does not fix is latency, and ChannelBotReplyJob is the case that needs it —
+# a bot answering an hour late is not answering. That wants a bigger box.
+5 * * * * /usr/local/bin/drain-jobs.sh >> /var/log/drain-jobs.log 2>&1
