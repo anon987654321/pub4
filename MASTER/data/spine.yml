@@ -379,7 +379,18 @@ spine:
   # checkable: lib/ reads 39023 on the merge commit, 38971 on the branch tip, and
   # 39023 on main before the merge minus nothing — the branch deleted six pipeline
   # stages (-408) and main gained +52 elsewhere.
-  lib_code_ceiling: 39023
+#
+# Then 39023 -> PENDING for this branch. Two partitions that were declared
+# complete and were not: Homeostat::DerivedSignals returned nil for a calm
+# mood and for twelve hours of the day, so two of Personality::MOOD_LINES
+# four moods and two of its four phases had never been emitted and the gap
+# rendered as a blank line inside <master_runtime_state>. And
+# Result::ErrClassification classified five of Result::CATEGORIES fourteen,
+# so rate_limit -- the one failure that is retriable by definition --
+# answered false to retriable?. Neither is feature code; both are declared
+# behaviour with no implementation reaching it, and the tests assert totality
+# so the next one added without a side fails rather than falling through.
+lib_code_ceiling: PENDING
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
