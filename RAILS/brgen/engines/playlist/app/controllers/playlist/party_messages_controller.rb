@@ -16,5 +16,8 @@ class Playlist::PartyMessagesController < Playlist::BaseController
     def set_party
       set = Playlist::Set.find(params[:set_id])
       @party = set.listening_party || raise(ActiveRecord::RecordNotFound)
+      host = Current.user && @party.host_id == Current.user.id
+      joined = Array(session[:listening_party_ok]).include?(@party.id)
+      raise ActiveRecord::RecordNotFound unless host || joined
     end
   end

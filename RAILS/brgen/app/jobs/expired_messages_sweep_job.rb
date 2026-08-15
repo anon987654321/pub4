@@ -4,6 +4,6 @@ class ExpiredMessagesSweepJob < ApplicationJob
   queue_as :bulk
 
   def perform
-    Message.where(expires_at: ..Time.current).find_each(&:destroy)
+    Message.where(expires_at: ..Time.current).find_each(&:expire!)
   end
 end

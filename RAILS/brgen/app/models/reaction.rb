@@ -63,7 +63,7 @@ class Reaction < ApplicationRecord
     msg = target
     return unless msg.is_a?(Message) && msg.conversation
 
-    Turbo::StreamsChannel.broadcast_replace_later_to(
+    Turbo::StreamsChannel.broadcast_replace_to(
       msg.conversation,
       target: "reactions_#{ActionView::RecordIdentifier.dom_id(msg)}",
       partial: "messages/reactions",

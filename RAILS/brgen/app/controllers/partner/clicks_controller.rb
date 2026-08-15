@@ -8,6 +8,9 @@ module Partner
     def show
       membership = Partner::Membership.find_by!(token: params[:token])
       listing = Marketplace::Listing.find_by(id: params[:listing_id]) if params[:listing_id].present?
+      if listing && membership.program.store_id && listing.store_id != membership.program.store_id
+        listing = nil
+      end
 
       digest = Partner::Click.digest_for(request.remote_ip, request.user_agent)
       Partner::Click.record!(
@@ -25,16 +28,16 @@ module Partner
       # host guard reject anything that somehow resolves off-site.
       target = if listing
                  marketplace_listing_url_for(listing)
-               else
+      else
                  marketplace_store_url_for(membership.program.store)
-               end
+      end
       redirect_to target
     end
 
     private
 
     def marketplace_listing_url_for(listing)
-      if respond_to?(:marketplace.listing_path)
+      if respond_to?(:marketplace)
         marketplace.listing_path(listing)
       else
         "/listings/#{listing.id}"
@@ -44,7 +47,7 @@ module Partner
     end
 
     def marketplace_store_url_for(store)
-      if respond_to?(:marketplace.shop_path)
+      if respond_to?(:marketplace)
         marketplace.shop_path(store.slug)
       else
         "/shops/#{store.slug}"

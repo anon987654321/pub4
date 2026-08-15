@@ -148,6 +148,11 @@ nb:
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
+    view: "Vis"
+    back: "Tilbake"
+    edit: "Rediger"
+    delete: "Slett"
+    confirm: "Er du sikker?"
     errors: "Se over skjemaet"
     # Norwegian marks a past span on both sides — "for … siden" — so a relative
     # time cannot be built by appending a suffix to time_ago_in_words. Fourteen

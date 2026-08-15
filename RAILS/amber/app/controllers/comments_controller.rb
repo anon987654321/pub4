@@ -25,7 +25,7 @@ class CommentsController < ApplicationController
 
   def destroy
     @comment = @post.comments.find(params[:id])
-    return unless @comment.user == Current.user
+    return unless Current.user && @comment.user_id == Current.user.id
 
     @comment.record_activity!("AmberCommentRemoved", source_vertical: "amber")
     @comment.destroy!

@@ -5,6 +5,6 @@ class Marketplace::CategoriesController < Marketplace::BaseController
 
   def show
     @category = Marketplace::Category.find_by!(slug: params[:id])
-    @pagy, @listings = pagy(@category.listings.active.recent)
+    @pagy, @listings = pagy(@category.listings.live.recent)
   end
 end

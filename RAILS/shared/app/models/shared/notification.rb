@@ -4,7 +4,7 @@ module Shared
   class Notification < ApplicationRecord
     self.table_name = "notifications"
 
-    KINDS = %w[like reaction follow mention reply message custom].freeze
+    KINDS = %w[like reaction follow mention reply message match order alert custom].freeze
 
     belongs_to :user
     belongs_to :actor, class_name: "User", optional: true

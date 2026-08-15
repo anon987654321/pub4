@@ -44,7 +44,7 @@ module Maps
              point(event.latitude, event.longitude,
                    type: "event", title: event.title,
                    subtitle: I18n.l(event.starts_at, format: :event),
-                   url: "/events/#{event.to_param}")
+                   url: public_href(event))
            end
     end
 
@@ -59,7 +59,7 @@ module Maps
              point(story.latitude, story.longitude,
                    type: "story", title: story.user.display_name,
                    subtitle: story.caption.to_s.truncate(60),
-                   url: "/stories/#{story.id}")
+                   url: public_href(story))
            end
     end
 
@@ -84,8 +84,14 @@ module Maps
                              type: "courier",
                              title: I18n.t("maps.your_courier"),
                              subtitle: driver.display_name.to_s,
-                             url: "/orders/#{order.id}")
+                             url: public_href(order))
                      end
+    end
+
+    def public_href(record)
+      view_context.record_public_href(record)
+    rescue StandardError
+      nil
     end
 
     def point(lat, lng, type:, title:, subtitle:, url:)

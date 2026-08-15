@@ -25,7 +25,10 @@ class Admin::ReportsController < ApplicationController
   end
 
   def require_admin!
-    return if Current.user&.email_address == ENV.fetch("BRGEN_ADMIN_EMAIL", "admin@brgen.no")
+    expected = ENV["BRGEN_ADMIN_EMAIL"].to_s.strip
+    if expected.present? && Current.user&.email_address == expected
+      return if !Current.user.respond_to?(:email_verified?) || Current.user.email_verified?
+    end
 
     redirect_to(root_path, alert: t("shared.flash.not_authorized"))
   end

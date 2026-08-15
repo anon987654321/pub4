@@ -131,6 +131,10 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   end
 
   def find_payable_order
-    Current.user.marketplace_orders.includes(:listing).order(created_at: :desc).find_by(id: params[:order_id])
+    # Must be payable, not merely owned. Without that, POST /checkout?order_id=
+    # of a paid/declined row walked into StripeCheckout.start!, which then
+    # called mark_payment_pending! and rewound payment_status back to pending.
+    order = Current.user.marketplace_orders.includes(:listing).find_by(id: params[:order_id])
+    order if order&.payable?
   end
 end

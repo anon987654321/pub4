@@ -18,7 +18,7 @@ class Marketplace::Review < ApplicationRecord
   private
 
   def buyer_has_completed_interaction
-    return if listing&.orders&.where(buyer: user, status: %w[accepted completed])&.exists?
+    return if listing&.orders&.where(buyer: user, status: %w[accepted completed paid])&.exists?
 
     errors.add(:base, :requires_completed_order)
   end

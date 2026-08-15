@@ -112,6 +112,6 @@ end
     record.strict_loading!(false)
     return record.user if record.respond_to?(:user)
     return record.seller if record.respond_to?(:seller)
-    return record.owner if record.respond_to?(:owner)
+    record.owner if record.respond_to?(:owner)
   end
 end

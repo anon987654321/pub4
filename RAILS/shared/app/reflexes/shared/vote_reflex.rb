@@ -30,7 +30,7 @@ module Shared
     end
 
     def vote_partial
-      element.dataset["partial"].presence || "shared/vote"
+      "shared/vote"
     end
 
     def current_user

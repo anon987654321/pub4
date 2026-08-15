@@ -11,15 +11,15 @@ module Partner
       @programs = Partner::Program.open_now.includes(:store).order(created_at: :desc).limit(100)
       @mine = if Current.user.present? && !guest?
                 Partner::Membership.where(user: Current.user).includes(:program)
-              else
+      else
                 []
-              end
+      end
     end
 
     def show
       @membership = if Current.user.present?
                       Partner::Membership.find_by(program: @program, user: Current.user)
-                    end
+      end
     end
 
     def new
@@ -51,7 +51,7 @@ module Partner
     end
 
     def edit
-      return unless require_owner_of!(@program.store)
+      nil unless require_owner_of!(@program.store)
     end
 
     def update
@@ -88,4 +88,3 @@ module Partner
     end
   end
 end
-

@@ -86,7 +86,7 @@ class ChannelPresence
     end
 
     def broadcast(conversation)
-      Turbo::StreamsChannel.broadcast_replace_later_to(
+      Turbo::StreamsChannel.broadcast_replace_to(
         conversation,
         target: "presence_#{conversation.id}",
         partial: "conversations/presence",

@@ -6,11 +6,15 @@ class Playlist::TracksController < Playlist::BaseController
   before_action :authorize_editor!
 
   def create
-    track = Playlist::Track.find_or_create_by!(title: params.dig(:playlist_track, :title),
-                                               artist: params.dig(:playlist_track, :artist),
-                                               source_url: params.dig(:playlist_track, :source_url)) do |record|
-      record.assign_attributes(track_params.except(:title, :artist))
-    end
+    title = params.dig(:playlist_track, :title)
+    artist = params.dig(:playlist_track, :artist)
+    source_url = params.dig(:playlist_track, :source_url)
+    # find_or_create_by on title/artist/url used to attach someone else's
+    # private upload (and its audio_file) to this playlist. Reuse only a
+    # row the editor is allowed to see; otherwise mint one they own.
+    track = Playlist::Track.find_by(title:, artist:, source_url:)
+    track = nil unless track && track_visible_to?(track)
+    track ||= Playlist::Track.create!(track_params.merge(user: Current.user, title:, artist:, source_url:))
 
     if @set
       @set.add_track!(track, user: Current.user)
@@ -65,5 +69,11 @@ class Playlist::TracksController < Playlist::BaseController
 
   def target_path(target)
     target.is_a?(Playlist::Set) ? set_path(target) : playlist_path(target)
+  end
+
+  def track_visible_to?(track)
+    privacy = track.privacy.to_s
+    return true if privacy.blank? || privacy == "public"
+    Current.user && track.user_id == Current.user.id
   end
 end

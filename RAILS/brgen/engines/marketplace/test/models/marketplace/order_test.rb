@@ -86,4 +86,36 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
       assert_equal "declined", declined.reload.status
     end
   end
+
+  test "mark_payment_pending! refuses to rewind a paid order" do
+    ActsAsTenant.with_tenant(@city) do
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Paid", price_cents: 2_000, currency: "NOK")
+      order = Marketplace::Order.create!(buyer: @buyer, listing: listing, status: "paid", payment_status: "paid")
+
+      assert_raises(RuntimeError) { order.mark_payment_pending!(provider: "stripe", reference: "cs_x") }
+      assert_equal "paid", order.reload.payment_status
+    end
+  end
+
+  test "accept and decline refuse a paid order" do
+    ActsAsTenant.with_tenant(@city) do
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Paid offer", price_cents: 2_000, currency: "NOK")
+      order = Marketplace::Order.create!(buyer: @buyer, listing: listing, status: "paid", payment_status: "paid")
+
+      assert_raises(RuntimeError) { order.accept! }
+      assert_raises(RuntimeError) { order.decline! }
+      assert_equal "paid", order.reload.status
+    end
+  end
+
+  test "create refuses an expired listing" do
+    ActsAsTenant.with_tenant(@city) do
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Gone", price_cents: 1_000, currency: "NOK")
+      listing.update_columns(expires_at: 1.hour.ago)
+
+      order = Marketplace::Order.new(buyer: @buyer, listing: listing, status: "pending")
+      assert_not order.valid?
+      assert order.errors[:listing].any?
+    end
+  end
 end

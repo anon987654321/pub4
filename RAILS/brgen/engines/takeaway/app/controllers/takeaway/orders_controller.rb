@@ -10,7 +10,10 @@ class Takeaway::OrdersController < Takeaway::BaseController
   end
 
   def show
-    @order = Current.user.takeaway_orders.includes(:restaurant, order_items: :menu_item).find(params[:id])
+    @order = Takeaway::Order.includes(:restaurant, order_items: :menu_item).find(params[:id])
+    buyer = Current.user && @order.user_id == Current.user.id
+    kitchen = @order.restaurant.owner?(Current.user)
+    raise ActiveRecord::RecordNotFound unless buyer || kitchen
   end
 
   def new

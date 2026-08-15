@@ -26,6 +26,9 @@ module Marketplace
         .where("ends_at IS NULL OR ends_at >= ?", now)
         .order(priority: :desc, created_at: :desc)
     }
+    # A deal whose listing has lapsed is still "active" on its own dates, and
+    # used to keep a sold-two-months-ago chair on the marketplace front page.
+    scope :live, -> { active.joins(:listing).merge(Marketplace::Listing.live) }
 
     scope :featured, -> { where(featured: true) }
 

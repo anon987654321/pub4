@@ -19,7 +19,7 @@ module Tv
     # also had the #video_notes_<id> container but no turbo_stream_from, so this
     # stream had no subscriber either; that is now declared next to the container.
     after_create_commit do
-      broadcast_append_later_to "tv:video:#{video_id}:notes",
+      broadcast_append_to "tv:video:#{video_id}:notes",
                                 target: "video_notes_#{video_id}",
                                 partial: "tv/video_notes/video_note",
                                 locals: { video_note: self }

@@ -29,7 +29,7 @@ module Playlist
 
     def sync!(track:, position_seconds:)
       update!(current_track: track, position_seconds: position_seconds.to_i)
-      broadcast_replace_later_to stream_name,
+      broadcast_replace_to stream_name,
         target: "listening_party_sync",
         partial: "playlist/listening_parties/sync",
         locals: { party: self, track: track }

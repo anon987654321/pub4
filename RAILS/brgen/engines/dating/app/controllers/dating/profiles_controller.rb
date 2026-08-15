@@ -45,7 +45,7 @@ class Dating::ProfilesController < Dating::BaseController
   end
 
   def profile_params
-    params.require(:dating_profile).permit(:bio, :gender, :looking_for, :age, :location, :latitude, :longitude, :neighborhood_id, :bydel, :visible, photos: [])
+    params.require(:dating_profile).permit(:bio, :gender, :looking_for, :age, :location, :neighborhood_id, :bydel, :visible, photos: [])
   end
 
   def purge_removed_photos

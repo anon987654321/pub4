@@ -15,9 +15,9 @@ class ChannelsController < ApplicationController
                       # created by NearbyController#room from the visitor's own
                       # real stored location.
                       Conversation.find_by(slug: params[:slug], city_id: nil)
-                    else
+    else
                       Conversation.find_or_create_channel(params[:slug], city: Current.city_record)
-                    end
+    end
     return redirect_to(channels_path, alert: t("flash.no_such_channel")) unless @conversation
 
     if Current.user.present?
@@ -29,7 +29,7 @@ class ChannelsController < ApplicationController
     end
 
     ActsAsTenant.without_tenant do
-      @messages = @conversation.messages.unexpired.includes(:sender).order(:created_at).last(100).to_a
+      @messages = @conversation.messages.visible.unexpired.includes(:sender).order(:created_at).last(100).to_a
     end
     @message = Message.new
   end

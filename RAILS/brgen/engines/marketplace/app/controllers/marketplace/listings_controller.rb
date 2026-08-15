@@ -134,7 +134,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     return [] if live_search_query.present? || params[:category_id].present?
 
     limit = 6
-    deals = Marketplace::Deal.active.featured
+    deals = Marketplace::Deal.live.featured
       .includes(listing: { photos_attachments: :blob })
       .limit(limit)
       .to_a

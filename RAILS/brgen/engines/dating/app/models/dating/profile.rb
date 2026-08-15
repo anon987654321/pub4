@@ -33,11 +33,15 @@ class Dating::Profile < ApplicationRecord
   validates :age, numericality: { greater_than_or_equal_to: 18, less_than: 100 }
   validates :gender,      inclusion: { in: GENDERS },     allow_nil: true
   validates :looking_for, inclusion: { in: LOOKING_FOR }, allow_nil: true
-  validate :photos_present_when_visible, on: :update
+  validate :photos_present_when_visible
 
   has_many :prompts, class_name: "Dating::Prompt", dependent: :destroy
 
   scope :visible, -> { where(visible: true).where("age >= 18") }
+  # Visible-without-photos used to be creatable (the validation ran on :update
+  # only) and then sat in the deck as a blank card. The attribute-named
+  # `visible` scope stays the flag+age filter; deck surfaces add this.
+  scope :with_photos, -> { joins(:photos_attachments).distinct }
 
   # The deck was ORDER BY RANDOM(). Orientation, neighbourhood and a 20 km
   # radius filtered the pool and nothing ranked it, so someone who last opened

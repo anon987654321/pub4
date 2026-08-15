@@ -20,6 +20,12 @@ class EventRsvpsController < ApplicationController
     if rsvp&.status == status
       rsvp.destroy
     elsif rsvp
+      # full? used to run only on insert, so "interested" → "going" walked
+      # onto a sold-out event.
+      if status == "going" && rsvp.status != "going" && event.reload.full?
+        redirect_back fallback_location: event_path(event), alert: t("flash.event_full")
+        return
+      end
       rsvp.update!(status: status)
     else
       # A full event still takes "interested" — the waiting list is the point.

@@ -7,7 +7,9 @@ module Marketplace
     end
 
     def show?
-      record.status != "removed" || owner?
+      return true if owner?
+
+      record.status != "removed" && !record.expired?
     end
 
     def create?

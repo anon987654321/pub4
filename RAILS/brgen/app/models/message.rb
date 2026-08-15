@@ -17,7 +17,7 @@ class Message < ApplicationRecord
   has_one_attached :attachment
   process_media_variants :attachment, variants: {
     inline: { resize_to_limit: [ 900, 900 ], format: :webp },
-    thumb: { resize_to_limit: [ 320, 320 ], format: :webp },
+    thumb: { resize_to_limit: [ 320, 320 ], format: :webp }
   }
 
   # unless deleted?: unsend! empties the body and keeps the row, and without
@@ -80,6 +80,13 @@ def unsend!
   update_columns(
     content: "", deleted_at: Time.current, updated_at: Time.current
   )
+end
+
+# Expiry is unsend, not destroy: a hard delete holes a thread and orphans
+# replies (the reason unsend! exists). Attachments go with the body.
+def expire!
+  unsend!
+  attachment.purge if attachment.attached?
 end
 
   # Urgency tier for the fading-bubble treatment in the message thread —

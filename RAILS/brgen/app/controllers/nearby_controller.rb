@@ -70,7 +70,7 @@ class NearbyController < ApplicationController
     @conversation.join!(me)
     @conversation.mark_read_for!(me)
     ActsAsTenant.without_tenant do
-      @messages = @conversation.messages.unexpired.includes(:sender).order(:created_at).last(50).to_a
+      @messages = @conversation.messages.visible.unexpired.includes(:sender).order(:created_at).last(50).to_a
     end
     @message = Message.new
   end

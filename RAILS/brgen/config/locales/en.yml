@@ -92,6 +92,8 @@ en:
     oauth_google: "Sign in with Google"
     oauth_snapchat: "Sign in with Snapchat"
     oauth_github: "Sign in with GitHub"
+    takeaway: "takeaway"
+    marketplace: "marketplace"
     opens_new_tab: "%{label} (opens in a new tab)"
   skip_to_content: "Skip to main content"
   home:
@@ -331,6 +333,8 @@ en:
     start_chat: "Start chat"
     empty_title: "No conversations yet"
     empty_body: "Send a message to get started."
+    push_body_disappearing: "New message"
+    read: "read"
     back_all: "← all"
     back_channels: "← channels"
     disappearing: "Disappearing messages"
@@ -344,6 +348,8 @@ en:
     submit: "Comment"
     reply_placeholder: "Reply…"
     reply: "Reply"
+    empty_body: "Be the first to reply — guests can comment without an account."
+    write_reply: "Write a reply"
     ai_summary: "Show AI summary (via MASTER)"
   theme:
     region: "Theme"
@@ -446,6 +452,10 @@ en:
           attributes:
             photos:
               required_when_visible: "must include at least one photo when visible"
+        marketplace/order:
+          attributes:
+            listing:
+              unavailable: "is no longer available"
         marketplace/review:
           attributes:
             base:
@@ -462,6 +472,7 @@ en:
               bad_transition: "cannot go from %{from} to %{to}"
             base:
               below_minimum: "Minimum order at %{restaurant} is %{minimum} — your subtotal is %{subtotal}."
+              empty_order: "Choose at least one item."
         takeaway/order_item:
           attributes:
             menu_item:
@@ -750,6 +761,10 @@ en:
     queue: "Queue"
     party_chat: "Party chat"
     back_to_set: "Back to set"
+    back_to_radio: "← radio"
+    management: "Playlist management"
+    actions: "Playlist actions"
+    collaborators_sketches: "Collaborators & dilla sketches"
     join_code: "Join code"
     confirm_end_party: "End the party for everyone listening?"
     add_track: "Add a track"
@@ -1005,6 +1020,13 @@ en:
     map: "Map"
     inbox: "Inbox"
     activity: "Activity"
+    desc_playlist: "Playlists, sets, and radio for %{city}."
+    desc_dating: "Dating in %{city}."
+    desc_tv: "Live streams and channels for %{city}."
+    desc_marketplace: "Marketplace for %{city}."
+    desc_takeaway: "Takeaway for %{city}."
+    desc_maps: "Maps for %{city}."
+    desc_messenger: "Messages for %{city}."
   live:
     page_title: "Live · nearby"
     heading: "Live"
@@ -1050,6 +1072,8 @@ en:
     join: "Join"
     chat: "Chat"
     distance_away: "%{km} km away · anonymous"
+    push_title: "Someone nearby"
+    push_body: "%{handle} is within %{km} km — tap to chat"
     empty_located_body: "Check back later — or drop a Live note while you wait."
     open_live: "Open Live"
   install:
@@ -1158,6 +1182,7 @@ en:
       collaborator_added: "Collaborator added."
       collaborator_removed: "Collaborator removed."
       party_started: "Listening party started."
+      party_code_required: "That party needs a join code."
       party_ended: "Listening party ended."
       message_failed: "Message could not be sent."
       playlist_created: "Playlist created."
@@ -1184,6 +1209,7 @@ en:
     community_removed: "Community removed."
     disappearing_messages_updated: "Disappearing messages updated."
     settings_update_failed: "Could not update settings."
+    channel_ttl_locked: "Public rooms keep disappearing messages on."
     user_not_found: "User not found."
     confirm_your_inbox: "Check your inbox to confirm."
     already_subscribed: "Already subscribed."
@@ -1222,8 +1248,10 @@ en:
     empty_body: "Tap Save on any post to keep it here."
     empty_title: "Nothing saved yet"
     save: "Save"
+    saved: "Saved."
     saved_title: "Saved"
     unsave: "Unsave"
+    removed: "Removed."
   common:
     close: "Close"
   community:

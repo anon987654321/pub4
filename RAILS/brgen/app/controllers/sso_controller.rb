@@ -15,6 +15,6 @@ class SsoController < ApplicationController
     return unless defined?(Session)
 
     session_record = Session.create!(user:)
-    cookies.signed.permanent[:session_id] = { value: session_record.id, httponly: true, same_site: :lax }
+    cookies.signed.permanent[:session_id] = { value: session_record.id, httponly: true, same_site: :lax, domain: :all }
   end
 end

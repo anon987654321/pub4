@@ -75,7 +75,14 @@ class I18nResolutionTest < Minitest::Test
       offset = match.end(0)
       body = call_body(source, match.end(0) - 1) or next
       key = body[/\A\s*["']([a-z0-9_][a-zA-Z0-9_.]*)["']/, 1]
-      keys << key if key && !body.include?("default:")
+      next unless key
+
+      # default: "English" still requires the primary key. default: t("other")
+      # is a fallback key — do not fail the suite on the inner name.
+      prefix = source[[match.begin(0) - 16, 0].max...match.begin(0)]
+      next if prefix.match?(/default:\s*\z/)
+
+      keys << key
     end
     keys
   end

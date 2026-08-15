@@ -102,8 +102,10 @@
   <h2><%= t("playlist.listening_party") %></h2>
   <p class="dim"><%= t("playlist.party_blurb") %></p>
   <% if @set.listening_party&.active? %>
-    <%= link_to "Join party", set_listening_party_path(@set), class: "btn btn-primary btn-sm" %>
-    <span class="dim">Code: <%= @set.listening_party.join_code %></span>
+    <%= link_to t("playlist.listening_party"), set_listening_party_path(@set), class: "btn btn-primary btn-sm" %>
+    <% if Current.user && @set.user_id == Current.user.id %>
+      <span class="dim"><%= t("playlist.join_code") %>: <%= @set.listening_party.join_code %></span>
+    <% end %>
   <% else %>
     <%= button_to t("playlist.start_party"), set_listening_party_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
   <% end %>

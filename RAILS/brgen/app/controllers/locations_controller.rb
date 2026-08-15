@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class LocationsController < ApplicationController
+  rate_limit to: 30, within: 1.minute, only: :update, name: "geo_ping",
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   ALERT_RADIUS_KM = NearbyController::DEFAULT_RADIUS_KM
   # Coarsen the stored/matched position to a ~1 km grid so an exact location
   # can't be triangulated from proximity pings — ample precision for a
@@ -52,7 +54,10 @@ class LocationsController < ApplicationController
         partial: "nearby/alert",
         locals: { handle: me.anon_handle, user_id: me.id }
       )
-      Shared::Pushable.push_to(other, title: "Someone nearby", body: "#{me.anon_handle} is within #{ALERT_RADIUS_KM.to_i} km — tap to chat", url: "/nearby")
+      Shared::Pushable.push_to(other,
+        title: t("nearby.push_title"),
+        body: t("nearby.push_body", handle: me.anon_handle, km: ALERT_RADIUS_KM.to_i),
+        url: "/nearby")
     end
 
     head :ok

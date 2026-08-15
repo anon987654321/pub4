@@ -29,10 +29,8 @@ module Shared
 
     def normalize_style(style)
       s = style.to_s.downcase.tr("-", "_")
-      s = "neo-soul" if s == "neo_soul"
-      return "dilla" unless STYLES.map { |x| x.tr("-", "_") }.include?(s.tr("-", "_")) || STYLES.include?(style.to_s.downcase)
-
-      style.to_s.downcase
+      allowed = STYLES.map { |name| name.tr("-", "_") }
+      allowed.include?(s) ? s : "dilla"
     end
 
     def normalize_bars(bars)

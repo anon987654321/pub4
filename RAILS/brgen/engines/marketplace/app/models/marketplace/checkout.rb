@@ -53,6 +53,8 @@ class Marketplace::Checkout < ApplicationRecord
   end
 
   def mark_payment_pending!(provider:, reference:)
+    raise "checkout is not payable" unless payable?
+
     transaction do
       update!(status: "pending_payment", payment_provider: provider, payment_reference: reference)
       order_lines.each { |order| order.mark_payment_pending!(provider: provider, reference: reference) }

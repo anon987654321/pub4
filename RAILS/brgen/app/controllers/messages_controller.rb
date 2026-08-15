@@ -30,7 +30,7 @@ class MessagesController < ApplicationController
 
         Shared::Pushable.push_to(recipient,
           title: Current.user.display_name,
-          body:  @message.content.to_s.truncate(120),
+          body:  push_body_for(@message),
           url:   conversation_path(@conversation)
         )
       end
@@ -84,6 +84,12 @@ class MessagesController < ApplicationController
   private
 
   def from_widget? = params[:origin] == "widget"
+
+  def push_body_for(message)
+    return t("messages.push_body_disappearing") if message.should_expire?
+
+    message.content.to_s.truncate(120)
+  end
 
   def set_conversation
     @conversation = Conversation.for_user(Current.user).find(params[:conversation_id])

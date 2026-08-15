@@ -22,7 +22,7 @@ module Partner
     end
 
     def show
-      @membership = Partner::Membership.find(params[:id])
+      @membership = Partner::Membership.includes(program: :store).find(params[:id])
       unless @membership.user_id == Current.user.id || @membership.program.store.owner_id == Current.user.id
         redirect_to partner_programs_path, alert: t("shared.flash.not_authorized") and return
       end

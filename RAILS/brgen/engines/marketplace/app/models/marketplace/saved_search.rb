@@ -37,7 +37,7 @@ class Marketplace::SavedSearch < ApplicationRecord
   # — otherwise switching alerts on mails you the entire back catalogue.
   def new_matches(since: nil)
     cutoff = since || last_notified_at || created_at
-    scope = Marketplace::Listing.active.where("marketplace_listings.created_at > ?", cutoff)
+    scope = Marketplace::Listing.live.where("marketplace_listings.created_at > ?", cutoff)
     scope = scope.where(category_id: category_id) if category_id.present?
     scope = scope.where(location: location) if location.present?
     # Same columns the listings page searches, so an alert cannot disagree with

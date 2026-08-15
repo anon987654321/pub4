@@ -64,26 +64,41 @@ relayd_add_relay() {
     return 0
   fi
 
+  # OpenBSD sed -i takes the next arg as a backup suffix. GNU `sed -i "1a\\"`
+  # without one is a no-op or a corrupt edit on the box. Rewrite in ruby.
   if ! grep -q "table <${app}>" "$conf" 2>/dev/null; then
-    ${_PRIV} sed -i "1a\\
-table <${app}> { 127.0.0.1 }\\
-" "$conf" 2>/dev/null \
+    ${_PRIV} ruby34 -e '
+      path, app = ARGV
+      body = File.read(path)
+      line = "table <#{app}> { 127.0.0.1 }\n"
+      File.write(path, line + body) unless body.include?("table <#{app}>")
+    ' "$conf" "$app" \
       || { log_err "relayd: could not add table <${app}>"; return 1; }
     log_ok "relayd: added table <${app}>"
     changed=1
   fi
   if ! grep -q "forward to <${app}>" "$conf" 2>/dev/null; then
-    ${_PRIV} sed -i "/match request header.*forward to <master>/a\\
-  match request header \"Host\" value \"${domain}\" forward to <${app}>\\
-" "$conf" 2>/dev/null \
+    ${_PRIV} ruby34 -e '
+      path, app, domain = ARGV
+      body = File.read(path)
+      line = "  match request header \"Host\" value \"#{domain}\" forward to <#{app}>\n"
+      unless body.include?(line)
+        File.write(path, body.sub(/match request header.*forward to <master>.*\n/) { |m| m + line })
+      end
+    ' "$conf" "$app" "$domain" \
       || { log_err "relayd: could not add Host routing for ${domain}"; return 1; }
     log_ok "relayd: added Host routing for ${domain}"
     changed=1
   fi
   if ! grep -q "forward to <${app}> port" "$conf" 2>/dev/null; then
-    ${_PRIV} sed -i "/forward to <master> port/a\\
-  forward to <${app}> port ${port} check http \"/up\" code 200\\
-" "$conf" 2>/dev/null \
+    ${_PRIV} ruby34 -e '
+      path, app, port = ARGV
+      body = File.read(path)
+      line = "  forward to <#{app}> port #{port} check http \"/up\" code 200\n"
+      unless body.include?("forward to <#{app}> port")
+        File.write(path, body.sub(/forward to <master> port.*\n/) { |m| m + line })
+      end
+    ' "$conf" "$app" "$port" \
       || { log_err "relayd: could not add forward for ${app}:${port}"; return 1; }
     log_ok "relayd: added forward to <${app}> port ${port}"
     changed=1

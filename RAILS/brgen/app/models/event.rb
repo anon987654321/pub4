@@ -53,7 +53,10 @@ class Event < ApplicationRecord
     published.where("COALESCE(events.ends_at, events.starts_at) < ?", Time.current)
              .order(starts_at: :desc)
   }
-  scope :search, ->(q) { where("title LIKE :q OR description LIKE :q OR venue_name LIKE :q", q: "%#{q}%") }
+  scope :search, ->(q) {
+    needle = "%#{sanitize_sql_like(q.to_s)}%"
+    where("title LIKE :q OR description LIKE :q OR venue_name LIKE :q", q: needle)
+  }
 
   def cancelled? = status == "cancelled"
   def free? = price_cents.to_i.zero?

@@ -60,4 +60,15 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to marketplace.cart_path
     assert_equal I18n.t("flash.marketplace.cart_not_payable"), flash[:alert]
   end
+
+  test "create with a paid order_id does not rewind payment_status" do
+    sign_in(@buyer)
+    @order.update!(payment_status: "paid", status: "paid")
+    post marketplace.checkout_path, params: { provider: "stripe", order_id: @order.id }
+    assert_redirected_to marketplace.cart_path
+    assert_equal I18n.t("flash.marketplace.cart_not_payable"), flash[:alert]
+    @order.reload
+    assert_equal "paid", @order.payment_status
+    assert_equal "paid", @order.status
+  end
 end

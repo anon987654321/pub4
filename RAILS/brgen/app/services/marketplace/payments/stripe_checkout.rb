@@ -33,6 +33,7 @@ module Marketplace
 
       def self.start!(order:, success_url:, cancel_url:)
         raise NotConfigured, "Stripe" unless configured?
+        raise ArgumentError, "order is not payable" unless order.respond_to?(:payable?) && order.payable?
 
         if production? && test_key? && ENV["STRIPE_TEST_MODE"].to_s.strip.empty?
           raise NotConfigured,
@@ -40,6 +41,7 @@ module Marketplace
                 "set STRIPE_TEST_MODE=1 to allow it deliberately)"
         end
 
+        payable_kind = order.is_a?(Marketplace::Checkout) ? "checkout_id" : "order_id"
         body = URI.encode_www_form(
           "mode" => "payment",
           "success_url" => success_url,
@@ -48,8 +50,8 @@ module Marketplace
           "line_items[0][price_data][product_data][name]" => order.payment_description.to_s.truncate(120),
           "line_items[0][price_data][unit_amount]" => order.total_cents.to_i,
           "line_items[0][quantity]" => 1,
-          "client_reference_id" => order.id.to_s,
-          "metadata[order_id]" => order.id.to_s
+          "client_reference_id" => "#{payable_kind}:#{order.id}",
+          "metadata[#{payable_kind}]" => order.id.to_s
         )
         uri = URI(API)
         req = Net::HTTP::Post.new(uri)

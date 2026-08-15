@@ -95,6 +95,8 @@ nb:
     oauth_options: "Innloggingsvalg"
     oauth_or_email: "eller e-post"
     oauth_vipps: "Logg inn med Vipps"
+    takeaway: "takeaway"
+    marketplace: "markedsplass"
     oauth_google: "Logg inn med Google"
     oauth_snapchat: "Logg inn med Snapchat"
     oauth_github: "Logg inn med GitHub"
@@ -337,6 +339,8 @@ nb:
     start_chat: "Start chat"
     empty_title: "Ingen samtaler ennå"
     empty_body: "Send en melding for å starte."
+    push_body_disappearing: "Ny melding"
+    read: "lest"
     back_all: "← alle"
     back_channels: "← kanaler"
     disappearing: "Forsvinnende meldinger"
@@ -350,6 +354,8 @@ nb:
     submit: "Kommenter"
     reply_placeholder: "Svar…"
     reply: "Svar"
+    empty_body: "Vær den første til å svare — gjester kan kommentere uten konto."
+    write_reply: "Skriv et svar"
     ai_summary: "Vis AI-sammendrag (via MASTER)"
   theme:
     region: "Tema"
@@ -452,6 +458,10 @@ nb:
           attributes:
             photos:
               required_when_visible: "må ha minst ett bilde når profilen er synlig"
+        marketplace/order:
+          attributes:
+            listing:
+              unavailable: "er ikke lenger tilgjengelig"
         marketplace/review:
           attributes:
             base:
@@ -468,6 +478,7 @@ nb:
               bad_transition: "kan ikke gå fra %{from} til %{to}"
             base:
               below_minimum: "Minste ordre hos %{restaurant} er %{minimum} — din delsum er %{subtotal}."
+              empty_order: "Velg minst én rett."
         takeaway/order_item:
           attributes:
             menu_item:
@@ -752,6 +763,10 @@ nb:
     queue: "Kø"
     party_chat: "Festchat"
     back_to_set: "Tilbake til sett"
+    back_to_radio: "← radio"
+    management: "Administrasjon av spilleliste"
+    actions: "Spillelistehandlinger"
+    collaborators_sketches: "Samarbeidspartnere og dilla-skisser"
     join_code: "Kode"
     confirm_end_party: "Avslutte lytteselskapet for alle som lytter?"
     add_track: "Legg til et spor"
@@ -1007,6 +1022,13 @@ nb:
     map: "Kart"
     inbox: "Innboks"
     activity: "Aktivitet"
+    desc_playlist: "Spillelister, sett og radio for %{city}."
+    desc_dating: "Dating i %{city}."
+    desc_tv: "Direktesendinger og kanaler for %{city}."
+    desc_marketplace: "Markedsplass for %{city}."
+    desc_takeaway: "Takeaway for %{city}."
+    desc_maps: "Kart for %{city}."
+    desc_messenger: "Meldinger for %{city}."
   live:
     page_title: "Live · i nærheten"
     heading: "Live"
@@ -1052,6 +1074,8 @@ nb:
     join: "Bli med"
     chat: "Chat"
     distance_away: "%{km} km unna · anonym"
+    push_title: "Noen i nærheten"
+    push_body: "%{handle} er innen %{km} km — trykk for å chatte"
     empty_located_body: "Kom tilbake senere — eller legg igjen en Live-notat mens du venter."
     open_live: "Åpne Live"
   install:
@@ -1162,6 +1186,7 @@ nb:
       collaborator_added: "Samarbeidspartneren er lagt til."
       collaborator_removed: "Samarbeidspartneren er fjernet."
       party_started: "Lyttefesten er i gang."
+      party_code_required: "Den festen trenger en kode."
       party_ended: "Lyttefesten er avsluttet."
       message_failed: "Meldingen kunne ikke sendes."
       playlist_created: "Spillelisten er opprettet."
@@ -1188,6 +1213,7 @@ nb:
     community_removed: "Fellesskapet er fjernet."
     disappearing_messages_updated: "Forsvinnende meldinger er oppdatert."
     settings_update_failed: "Kunne ikke oppdatere innstillingene."
+    channel_ttl_locked: "Offentlige rom beholder forsvinnende meldinger."
     user_not_found: "Fant ikke brukeren."
     confirm_your_inbox: "Sjekk innboksen for å bekrefte."
     already_subscribed: "Du abonnerer allerede."
@@ -1226,8 +1252,10 @@ nb:
     empty_body: "Trykk Lagre på et innlegg for å beholde det her."
     empty_title: "Ingenting lagret ennå"
     save: "Lagre"
+    saved: "Lagret."
     saved_title: "Lagret"
     unsave: "Fjern fra lagret"
+    removed: "Fjernet."
   common:
     close: "Lukk"
   community:

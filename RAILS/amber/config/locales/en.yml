@@ -26,6 +26,19 @@ en:
       post_action: "Post"
       guest_hint: "Posting as anon · %{remaining} of %{limit} posts left this browser"
       advanced_post: "Tag outfit or item →"
+    nav:
+      ai_suggest: "Outfit suggestions"
+    wardrobe:
+      title: "Wardrobe"
+      add: "Add item"
+      new: "Add wardrobe item"
+      edit: "Edit wardrobe item"
+      untitled: "Untitled item"
+      empty: "No wardrobe items yet."
+      condition: "Condition"
+      acquired: "Acquired"
+      age_days: "Age (days)"
+      notes: "Notes"
   nav:
     home: "Home"
     feed: "Feed"

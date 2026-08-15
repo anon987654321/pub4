@@ -57,6 +57,7 @@ module Marketplace
 
       def self.start!(order:, return_url:)
         raise NotConfigured, "Vipps" unless configured?
+        raise ArgumentError, "order is not payable" unless order.respond_to?(:payable?) && order.payable?
 
         token = access_token
         reference = "brgen-order-#{order.id}-#{SecureRandom.hex(4)}"

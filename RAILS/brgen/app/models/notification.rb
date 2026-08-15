@@ -29,7 +29,7 @@ class Notification < ApplicationRecord
   PUSHABLE_KINDS = %w[message match reply mention follow order alert].freeze
 
   after_create_commit do
-    broadcast_prepend_later_to "brgen:notifications:#{user_id}"
+    broadcast_prepend_to "brgen:notifications:#{user_id}"
     WebPushJob.perform_later(id) if PUSHABLE_KINDS.include?(kind)
   end
 

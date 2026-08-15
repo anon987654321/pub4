@@ -18,6 +18,12 @@ class DillaProcessorTest < Minitest::Test
     assert_equal false, ok
   end
 
+  def test_normalize_style_collapses_hyphen_and_underscore
+    assert_equal "neo_soul", Shared::DillaProcessor.normalize_style("neo-soul")
+    assert_equal "neo_soul", Shared::DillaProcessor.normalize_style("neo_soul")
+    assert_equal "dilla", Shared::DillaProcessor.normalize_style("not-a-style")
+  end
+
   def test_hung_command_times_out_quickly_instead_of_blocking
     with_env("DILLA_SH_TIMEOUT" => "1") do
       started = Time.now

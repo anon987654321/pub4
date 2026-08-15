@@ -76,6 +76,21 @@ class Playlist::SetsController < ApplicationController
 
   def set_set
     @set = Playlist::Set.find(params[:id])
+    return if set_visible_to_viewer?
+
+    raise ActiveRecord::RecordNotFound
+  end
+
+  def set_visible_to_viewer?
+    case @set.privacy.to_s
+    when "", "public", "unlisted" then true
+    when "private"
+      Current.user && (
+        @set.user_id == Current.user.id ||
+        @set.collaborations.exists?(user_id: Current.user.id)
+      )
+    else true
+    end
   end
 
   # The form scope is the model's param_key, "playlist_set" -- same as

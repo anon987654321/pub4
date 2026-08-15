@@ -2,6 +2,7 @@
 
 module Tv
   class LiveStreamsController < ApplicationController
+    before_action :require_user_session, only: %i[new create]
     before_action :set_live_stream, only: %i[show update destroy go_live end_live]
     before_action :require_live_stream_owner!, only: %i[update destroy go_live end_live]
 
@@ -20,9 +21,15 @@ module Tv
 
     def create
       @channel = resolve_channel(params[:channel_slug]) if params[:channel_slug].present?
+      if @channel && @channel.user_id != Current.user&.id
+        redirect_to live_streams_path, alert: t("shared.flash.not_authorized")
+        return
+      end
       @live_stream = Tv::LiveStream.new(live_stream_params)
       @live_stream.channel ||= @channel
-      @live_stream.user = current_user if respond_to?(:current_user, true)
+      @live_stream.user = Current.user
+      @live_stream.status = "scheduled"
+      @live_stream.stream_key ||= SecureRandom.hex(16)
 
       if @live_stream.save
         redirect_to live_stream_path(@live_stream), notice: t("tv.live_stream_created", default: "Live stream created")
@@ -72,7 +79,7 @@ module Tv
 
     # form_with model: @live_stream scopes fields under the model's param_key.
     def live_stream_params
-      params.require(:tv_live_stream).permit(:title, :description, :status, :stream_key)
+      params.require(:tv_live_stream).permit(:title, :description)
     end
   end
 end

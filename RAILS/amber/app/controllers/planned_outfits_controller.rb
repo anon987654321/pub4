@@ -33,7 +33,13 @@ class PlannedOutfitsController < ApplicationController
 
   private
 
-  def plan_params = params.require(:planned_outfit).permit(:outfit_id, :planned_date, :notes)
+  def plan_params
+    permitted = params.require(:planned_outfit).permit(:outfit_id, :planned_date, :notes)
+    unless Current.user.outfits.exists?(id: permitted[:outfit_id])
+      permitted[:outfit_id] = nil
+    end
+    permitted
+  end
 
   def load_planner
     @pagy, @planned = pagy(Current.user.planned_outfits.upcoming.includes(:outfit))

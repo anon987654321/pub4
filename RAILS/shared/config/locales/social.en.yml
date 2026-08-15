@@ -149,6 +149,11 @@ en:
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
+    view: "View"
+    back: "Back"
+    edit: "Edit"
+    delete: "Delete"
+    confirm: "Are you sure?"
     errors: "Please review the form"
     # See the nb file for why this is a whole phrase and not a suffix.
     time_ago: "%{time} ago"

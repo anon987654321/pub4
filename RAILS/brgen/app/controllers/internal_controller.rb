@@ -16,7 +16,7 @@ class InternalController < ApplicationController
       tv_live_streams: Tv::LiveStream.live.count,
       dating_profiles: Dating::Profile.count,
       dilla_engine: Shared::DillaProcessor.available?,
-      master_client: Shared::MasterClient.configured?,
+      master_client: Shared::MasterClient.configured?
     }
   end
 
@@ -59,9 +59,7 @@ class InternalController < ApplicationController
     if params[:user_id].present?
       User.find_by(id: params[:user_id])
     elsif params[:user_email].present?
-      User.find_by(email: params[:user_email].to_s.downcase.strip)
-    else
-      User.order(:id).first
+      User.find_by(email_address: params[:user_email].to_s.downcase.strip)
     end
   end
 end

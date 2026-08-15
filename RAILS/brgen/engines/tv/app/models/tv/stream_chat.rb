@@ -20,7 +20,7 @@ module Tv
     # that only the submitter — served by create.turbo_stream.erb — ever saw a new
     # line, and everyone else watching the stream saw nothing.
     after_create_commit do
-      broadcast_append_later_to "tv:live_stream:#{live_stream_id}:entries",
+      broadcast_append_to "tv:live_stream:#{live_stream_id}:entries",
                                 target: "tv-live-stream-#{live_stream_id}-entries",
                                 partial: "tv/stream_chats/stream_chat",
                                 locals: { stream_chat: self }

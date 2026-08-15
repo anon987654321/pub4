@@ -12,7 +12,7 @@ module Playlist
     scope :chronological, -> { order(:created_at) }
 
     after_create_commit do
-      broadcast_append_later_to listening_party.stream_name,
+      broadcast_append_to listening_party.stream_name,
         target: "party_messages",
         partial: "playlist/party_messages/message",
         locals: { message: self }

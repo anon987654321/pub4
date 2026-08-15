@@ -51,7 +51,7 @@ module Brgen
 
       # Web -> IRC relay: everything newer than the last id the client has seen.
       def messages_since(channel, last_id)
-        channel.messages.where("id > ?", last_id.to_i).order(:id).map { |m| line_for(m) }
+        channel.messages.visible.unexpired.where("id > ?", last_id.to_i).order(:id).map { |m| line_for(m) }
       end
 
       def roster(channel)

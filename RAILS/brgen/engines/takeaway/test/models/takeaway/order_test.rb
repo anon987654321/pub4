@@ -29,10 +29,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
         user: @owner, name: "Strict Kitchen", address: "Marken 4",
         cuisine_type: "Norwegian", city: @city, active: true
       )
-      created = Takeaway::Order.create!(
-        user: @buyer, restaurant: restaurant,
-        delivery_address: "Nordnesveien 2", status: "pending"
-      )
+      created = ticket!(restaurant, delivery_address: "Nordnesveien 2")
 
       bare = Takeaway::Order.find_by(id: created.id)
       refute bare.association(:restaurant).loaded?, "guard: restaurant must NOT be preloaded or this proves nothing"
@@ -52,11 +49,12 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
         active: true
       )
       item = Takeaway::MenuItem.create!(restaurant: restaurant, name: "Fiskesuppe", price_cents: 18_900, available: true)
-      created = Takeaway::Order.create!(
+      created = restaurant.orders.build(
         user: @buyer, restaurant: restaurant,
         delivery_address: "Nordnesveien 4", status: "pending"
       )
-      created.order_items.create!(menu_item: item, quantity: 2, unit_price_cents: item.price_cents)
+      created.order_items.build(menu_item: item, quantity: 2, unit_price_cents: item.price_cents)
+      created.save!
 
       bare = Takeaway::Order.includes(:order_items).find_by(id: created.id)
       bare.calculate_totals!
@@ -76,12 +74,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
         cuisine_type: "Norwegian",
         city: @city
       )
-      order = Takeaway::Order.create!(
-        user: @buyer,
-        restaurant: restaurant,
-        delivery_address: "Kong Oscars gate 1",
-        status: "pending"
-      )
+      order = ticket!(restaurant, delivery_address: "Kong Oscars gate 1")
 
       assert order.confirm!
       assert order.prepare!
@@ -101,12 +94,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
         cuisine_type: "Pizza",
         city: @city
       )
-      order = Takeaway::Order.create!(
-        user: @buyer,
-        restaurant: restaurant,
-        delivery_address: "Torget 3",
-        status: "pending"
-      )
+      order = ticket!(restaurant, delivery_address: "Torget 3")
 
       assert_not order.transition_to!("delivered")
       # The key, not the sentence. default_locale is nb, so asserting the
@@ -129,6 +117,19 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
 
       assert_not order.save, "30 kr order must not clear a 150 kr minimum"
       assert_includes order.errors.details[:base].map { |d| d[:error] }, :below_minimum
+    end
+  end
+
+  test "an empty ticket is rejected even when the restaurant has no minimum" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = Takeaway::Restaurant.create!(
+        user: @owner, name: "No Minimum", address: "Marken 8",
+        cuisine_type: "Norwegian", city: @city, active: true, min_order_cents: 0
+      )
+      order = restaurant.orders.build(user: @buyer, delivery_address: "Torget 1")
+
+      assert_not order.save
+      assert_includes order.errors.details[:base].map { |d| d[:error] }, :empty_order
     end
   end
 
@@ -202,6 +203,19 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
     )
   end
 
+  def ticket!(restaurant, **attrs)
+    restaurant.update!(active: true) unless restaurant.active?
+    item = restaurant.menu_items.find_by(available: true) || Takeaway::MenuItem.create!(
+      restaurant: restaurant, name: "Rett", price_cents: 10_000, available: true
+    )
+    order = restaurant.orders.build({
+      user: @buyer, delivery_address: "Torget 1", status: "pending"
+    }.merge(attrs))
+    order.order_items.build(menu_item: item, quantity: 1, unit_price_cents: item.price_cents)
+    order.save!
+    order
+  end
+
   def courier(email:, lat:, lng:, available: true)
     rider = User.strict_loading(false).create!(email_address: email, password: "password123", city: @city)
     Takeaway::DeliveryDriver.create!(
@@ -224,10 +238,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
       far  = courier(email: "far@brgen.no",  lat: 60.4180, lng: 5.3700)
       near = courier(email: "near@brgen.no", lat: 60.3920, lng: 5.3230)
 
-      order = Takeaway::Order.create!(
-        user: @buyer, restaurant: restaurant,
-        delivery_address: "Torget 2", status: "pending"
-      )
+      order = ticket!(restaurant, delivery_address: "Torget 2")
       out_for_delivery!(order)
 
       assert_equal near.id, order.reload.delivery_driver_id
@@ -240,17 +251,11 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
       restaurant = kitchen(name: "Busy Kitchen", address: "Marken 22")
       only_rider = courier(email: "onlyone@brgen.no", lat: 60.3915, lng: 5.3225)
 
-      first = Takeaway::Order.create!(
-        user: @buyer, restaurant: restaurant,
-        delivery_address: "Torget 3", status: "pending"
-      )
+      first = ticket!(restaurant, delivery_address: "Torget 3")
       out_for_delivery!(first)
       assert_equal only_rider.id, first.reload.delivery_driver_id
 
-      second = Takeaway::Order.create!(
-        user: @buyer, restaurant: restaurant,
-        delivery_address: "Torget 4", status: "pending"
-      )
+      second = ticket!(restaurant, delivery_address: "Torget 4")
       out_for_delivery!(second)
 
       assert_nil second.reload.delivery_driver_id,
@@ -266,10 +271,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
       restaurant = kitchen(name: "Lonely Kitchen", address: "Marken 24")
       courier(email: "offshift@brgen.no", lat: 60.3915, lng: 5.3225, available: false)
 
-      order = Takeaway::Order.create!(
-        user: @buyer, restaurant: restaurant,
-        delivery_address: "Torget 5", status: "pending"
-      )
+      order = ticket!(restaurant, delivery_address: "Torget 5")
       out_for_delivery!(order)
 
       assert_equal "out_for_delivery", order.reload.status
@@ -283,10 +285,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
       restaurant = kitchen(name: "Strict Dispatch", address: "Marken 26")
       rider = courier(email: "strict-rider@brgen.no", lat: 60.3916, lng: 5.3226)
 
-      created = Takeaway::Order.create!(
-        user: @buyer, restaurant: restaurant,
-        delivery_address: "Torget 6", status: "pending"
-      )
+      created = ticket!(restaurant, delivery_address: "Torget 6")
       created.confirm!
       created.prepare!
 

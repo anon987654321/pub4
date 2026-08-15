@@ -5,8 +5,8 @@ class MessageExpirationJob < ApplicationJob
 
   def perform(message_id)
     message = Message.find_by(id: message_id)
-    return unless message
+    return unless message&.expired?
 
-    message.destroy
+    message.expire!
   end
 end

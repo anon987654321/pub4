@@ -19,7 +19,7 @@ module Marketplace
     end
 
     def show
-      @listings = @store.listings.active.recent.limit(100)
+      @listings = @store.listings.live.recent.limit(100)
       @other_stores = Marketplace::Store.active.where.not(id: @store.id).limit(6)
     end
 

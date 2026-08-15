@@ -19,10 +19,18 @@ class Marketplace::WebhooksController < ActionController::Base
 
     event = JSON.parse(payload)
     if event["type"] == "checkout.session.completed"
-      ref = event.dig("data", "object", "id")
-      order_id = event.dig("data", "object", "metadata", "order_id") || event.dig("data", "object", "client_reference_id")
-      order = payable_scope.find_by(id: order_id) || payable_scope.find_by(payment_reference: ref)
-      mark_paid(order, ref)
+      obj = event.dig("data", "object") || {}
+      ref = obj["id"]
+      meta = obj["metadata"] || {}
+      # Basket sessions stamp checkout_id. Looking that number up on Order
+      # used to mark a colliding sequential Order paid and leave the basket open.
+      if meta["checkout_id"].present?
+        mark_paid_checkout(Marketplace::Checkout.find_by(id: meta["checkout_id"]), ref)
+      else
+        order_id = meta["order_id"].presence || obj["client_reference_id"].to_s.delete_prefix("order_id:")
+        order = payable_scope.find_by(id: order_id) || payable_scope.find_by(payment_reference: ref)
+        mark_paid(order, ref)
+      end
     end
     head :ok
   rescue JSON::ParserError
@@ -58,6 +66,10 @@ class Marketplace::WebhooksController < ActionController::Base
   # duplicated event cannot re-open a refunded or cancelled order.
   def mark_paid(order, reference)
     order&.mark_paid!(reference: reference) if order&.payable?
+  end
+
+  def mark_paid_checkout(checkout, reference)
+    checkout&.mark_paid!(reference: reference) if checkout&.payable?
   end
 
   # Stripe's documented scheme: `Stripe-Signature: t=<unix>,v1=<hex hmac>`,

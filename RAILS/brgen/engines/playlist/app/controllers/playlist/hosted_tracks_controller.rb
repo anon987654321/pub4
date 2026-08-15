@@ -69,6 +69,17 @@ class Playlist::HostedTracksController < Playlist::BaseController
 
   def set_track
     @track = Playlist::Track.find(params[:id])
+    return if track_visible_to_viewer?
+
+    raise ActiveRecord::RecordNotFound
+  end
+
+  def track_visible_to_viewer?
+    case @track.privacy.to_s
+    when "", "public", "unlisted" then true
+    when "private" then Current.user && @track.user_id == Current.user.id
+    else true
+    end
   end
 
   def track_params

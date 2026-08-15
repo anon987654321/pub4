@@ -25,8 +25,8 @@ class SitemapCityScopeContractTest < Minitest::Test
   SCOPED = {
     "Post.hot" => :own, "Community" => :own, "Tv::Channel" => :own,
     "Takeaway::Restaurant.active" => :own, "Marketplace::Store.active" => :own,
-    "Marketplace::Listing.active" => :own, "Place" => :own,
-    "Tv::Video.published" => :parent, "Marketplace::Deal.active" => :parent,
+    "Marketplace::Listing.live" => :own, "Place" => :own,
+    "Tv::Video.published" => :parent, "Marketplace::Deal.live" => :parent,
   }.freeze
 
   def source

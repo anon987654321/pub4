@@ -19,7 +19,7 @@ class Takeaway::ReviewsController < Takeaway::BaseController
 
     # note: unique(order,user) + delivered gate; no mutex needed
     # law_of_demeter: direct model context here is fine for reviews
-    review = @restaurant.reviews.build(review_params.merge(user: user))
+    review = @restaurant.reviews.build(review_params.merge(user: user, order: delivered_orders.first))
     if user.latitude.present?
       review.reviewer_lat = user.latitude
       review.reviewer_lng = user.longitude

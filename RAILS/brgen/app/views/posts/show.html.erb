@@ -139,8 +139,8 @@
     <% else %>
       <li><%= render "shared/empty_state",
             title: t("empty.no_comments"),
-            body: t("comments.empty_body", default: "Be the first to reply — guests can comment without an account."),
-            action: { label: t("comments.write_reply", default: "Write a reply"), path: "#comments-section" } %></li>
+            body: t("comments.empty_body"),
+            action: { label: t("comments.write_reply"), path: "#comments-section" } %></li>
     <% end %>
   </ul>
 </section>

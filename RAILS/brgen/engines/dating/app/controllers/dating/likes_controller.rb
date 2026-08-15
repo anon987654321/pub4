@@ -7,6 +7,10 @@ class Dating::LikesController < Dating::BaseController
   # interaction — or neither, which is still a like.
   def create
     user = User.find(params[:user_id])
+    if Current.user.respond_to?(:blocking?) && (Current.user.blocking?(user) || user.blocking?(Current.user))
+      redirect_back fallback_location: root_path, alert: t("shared.flash.not_authorized")
+      return
+    end
     like = Dating::Like.find_or_initialize_by(liker: Current.user, likee: user)
     like.dating_prompt_id = prompt_id_for(user)
     like.comment = params[:comment].presence

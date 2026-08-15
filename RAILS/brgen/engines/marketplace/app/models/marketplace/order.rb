@@ -23,6 +23,7 @@ class Marketplace::Order < ApplicationRecord
   validates :fulfilment_status, inclusion: { in: FULFILMENT_STATUSES }
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
   validates :payment_provider, inclusion: { in: PAYMENT_PROVIDERS }, allow_nil: true
+  validate :listing_must_be_live, on: :create
   before_validation { self.status ||= "pending" }
   before_validation { self.payment_status ||= "unpaid" }
   before_validation { self.fulfilment_status ||= "unfulfilled" }
@@ -52,16 +53,26 @@ class Marketplace::Order < ApplicationRecord
   def total_display = Shared::MoneyDisplay.format(total_cents, listing.currency || "NOK")
 
   def accept!
+    raise "order cannot be accepted" unless open_offer?
+
     update!(status: "accepted")
     deliver_notification(buyer_record, title: "Offer accepted", body: "Your offer for #{listing_title} was accepted.", source: self, kind: "order")
   end
 
   def decline!
+    raise "order cannot be declined" unless open_offer?
+
     update!(status: "declined")
     deliver_notification(buyer_record, title: "Offer declined", body: "Your offer for #{listing_title} was declined.", source: self, kind: "order")
   end
 
+  def open_offer?
+    status == "pending" && payment_status == "unpaid"
+  end
+
   def mark_payment_pending!(provider:, reference:)
+    raise "order is not payable" unless payable?
+
     update!(
       payment_provider: provider,
       payment_status: "pending",
@@ -71,15 +82,20 @@ class Marketplace::Order < ApplicationRecord
   end
 
   def mark_paid!(reference: payment_reference)
-    update!(
-      payment_status: "paid",
-      payment_reference: reference.presence || payment_reference,
-      paid_at: Time.current,
-      status: "paid"
-    )
+    transaction do
+      listed = listing_id && Marketplace::Listing.lock.find_by(id: listing_id)
+      listed&.consume_stock!(quantity.presence || 1)
+      update!(
+        payment_status: "paid",
+        payment_reference: reference.presence || payment_reference,
+        paid_at: Time.current,
+        status: "paid"
+      )
+    end
     title = listing_title
     deliver_notification(seller, title: "Payment received", body: "Payment for #{title} cleared.", source: self, kind: "order")
     deliver_notification(buyer_record, title: "Payment confirmed", body: "Your payment for #{title} is confirmed.", source: self, kind: "order")
+    PartnerMarketing.attribute_order!(self, visitor_digest: nil)
   end
 
   # The payment services used to read order.listing.currency and .title
@@ -110,5 +126,14 @@ class Marketplace::Order < ApplicationRecord
   def mark_delivered!
     update!(fulfilment_status: "delivered", delivered_at: Time.current)
     deliver_notification(buyer_record, title: "Delivered", body: listing_title, source: self, kind: "order")
+  end
+
+  private
+
+  def listing_must_be_live
+    return if listing.blank?
+    return if listing.status == "active" && !listing.expired? && listing.in_stock?
+
+    errors.add(:listing, :unavailable)
   end
 end

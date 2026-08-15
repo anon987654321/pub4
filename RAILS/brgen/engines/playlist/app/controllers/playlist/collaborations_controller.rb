@@ -14,7 +14,10 @@ class Playlist::CollaborationsController < Playlist::BaseController
       redirect_to(target_path, alert: t("flash.playlist.user_not_found")) and return
     end
 
-    role = params[:role].presence || "editor"
+    # Editors used to pass role=owner and then destroy the playlist. The
+    # real owner is @target.user_id; this endpoint only mints editor/viewer.
+    role = params[:role].to_s
+    role = "editor" unless %w[editor viewer].include?(role)
     collab = @target.collaborations.build(user: target_user, role: role)
     if collab.save
       redirect_to(target_path, notice: t("flash.playlist.collaborator_added"))
@@ -57,7 +60,7 @@ class Playlist::CollaborationsController < Playlist::BaseController
 
   def owner_or_editor?
     return false unless @target
-    owner = Current.user == (@target.respond_to?(:user) ? @target.user : nil)
+    owner = Current.user && @target.respond_to?(:user_id) && @target.user_id == Current.user.id
     return true if owner
     collab = @target.collaborations.find_by(user: Current.user)
     collab && %w[owner editor].include?(collab.role)

@@ -50,7 +50,7 @@ module Dating
       excluded_ids += Dating::Like.where(liker: user).pluck(:likee_id)
       excluded_ids += Dating::Dislike.where(disliker: user).pluck(:dislikee_id)
 
-      scope = Dating::Profile.visible.where.not(user_id: excluded_ids)
+      scope = Dating::Profile.visible.with_photos.where.not(user_id: excluded_ids)
       if profile.neighborhood
         scope = scope.in_neighborhood(profile.neighborhood)
       end

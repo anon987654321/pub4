@@ -33,6 +33,7 @@ class Takeaway::Order < ApplicationRecord
   before_validation { self.status ||= "pending" }
   validate :status_transition_allowed, on: :update
   validate :meets_minimum_order, on: :create
+  validate :has_line_items, on: :create
 
   scope :active, -> { where.not(status: TERMINAL_STATUSES) }
   scope :recent, -> { order(created_at: :desc) }
@@ -235,6 +236,12 @@ class Takeaway::Order < ApplicationRecord
   # a 150-kr minimum. Read items in memory (like calculate_totals!) so this holds
   # during create-with-build under strict loading; `restaurant` is the in-memory
   # object the controller assigned, not a lazy DB read.
+  def has_line_items
+    return if order_items.target.any?
+
+    errors.add(:base, :empty_order)
+  end
+
   def meets_minimum_order
     min = restaurant&.min_order_cents.to_i
     return if min <= 0

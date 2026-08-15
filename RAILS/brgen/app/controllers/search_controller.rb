@@ -17,7 +17,7 @@ class SearchController < ApplicationController
     )
     @results[:posts] = apply_live_search(Post.kept, columns: %w[title content], vertical: "feed")
     @results[:listings] = apply_live_search(
-      Marketplace::Listing.active.includes(:category),
+      Marketplace::Listing.live.includes(:category),
       columns: %w[title description location],
       vertical: "marketplace"
     )

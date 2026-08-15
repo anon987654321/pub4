@@ -1,14 +1,14 @@
 <% content_for :title, @playlist.name %>
 <% content_for :json_ld, json_ld_for(@playlist, type: :music_playlist) if @playlist.public_access? %>
 
-<p class="radio-back-link"><%= link_to "← radio", root_path %></p>
+<p class="radio-back-link"><%= link_to t("playlist.back_to_radio"), root_path %></p>
 <%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, color: params[:color] || "#00d4ff", comments: @comments, track_comments: @track_comments %>
 
 <p class="dim"><%= t("playlist.set_stats", plays: @playlist.plays_count.to_i, tracks: @tracks.size, comments: @comments.size) %></p>
 
 <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-  <section class="playlist-admin" aria-label="Playlist management">
-    <nav class="cluster" role="navigation" aria-label="Playlist actions">
+  <section class="playlist-admin" aria-label="<%= t("playlist.management") %>">
+    <nav class="cluster" role="navigation" aria-label="<%= t("playlist.actions") %>">
       <%= link_to t("actions.edit"), edit_playlist_path(@playlist), class: "btn btn-ghost btn-sm" %>
       <%= button_to t("actions.delete"), playlist_path(@playlist), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger btn-sm" %>
     </nav>
@@ -39,9 +39,9 @@
 
     <div class="section-divider">
       <p class="section-heading"><%= t("playlist.embed_customize") %></p>
-      <input type="text" readonly value="<iframe src=&quot;<%= embed_playlist_playlist_url(@playlist) %>&quot; loading=&quot;lazy&quot; width=&quot;100%&quot; height=&quot;520&quot;></iframe>" class="field--grow"
-             aria-label="<%= t("playlist.embed_code", default: "Embed code") %>">
-      <small>Examples: <a href="<%= embed_playlist_playlist_url(@playlist, color: "ff0000") %>">red</a> | <a href="<%= embed_playlist_playlist_url(@playlist, color: "00ff00", show_artwork: "0") %>">no artwork</a> | <a href="<%= embed_playlist_playlist_url(@playlist, compact: "1", hide_branding: "1") %>">compact clean</a></small>
+      <input type="text" readonly value="<iframe src=&quot;<%= embed_playlist_url(@playlist) %>&quot; loading=&quot;lazy&quot; width=&quot;100%&quot; height=&quot;520&quot;></iframe>" class="field--grow"
+             aria-label="<%= t("playlist.embed_code") %>">
+      <small>Examples: <a href="<%= embed_playlist_url(@playlist, color: "ff0000") %>">red</a> | <a href="<%= embed_playlist_url(@playlist, color: "00ff00", show_artwork: "0") %>">no artwork</a> | <a href="<%= embed_playlist_url(@playlist, compact: "1", hide_branding: "1") %>">compact clean</a></small>
     </div>
   </section>
 <% end %>
@@ -49,7 +49,7 @@
 <% if authenticated? %>
   <% pl_can_manage = Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
   <details class="playlist-details">
-    <summary>Collaborators &amp; dilla sketches</summary>
+    <summary><%= t("playlist.collaborators_sketches") %></summary>
     <%= render "playlist/shared/collaborators",
           parent: @playlist,
           collaborations: @playlist.collaborations,
@@ -60,7 +60,7 @@
           parent: @playlist,
           sketches: @dilla_sketches,
           create_url: playlist_dilla_sketches_path(@playlist),
-          render_path_proc: ->(sk) { render_audio_playlist_playlist_dilla_sketch_path(@playlist, sk) },
+          render_path_proc: ->(sk) { render_audio_playlist_dilla_sketch_path(@playlist, sk) },
           can_manage: pl_can_manage,
           lab_query: "?playlist_id=#{@playlist.id}",
           rich_form: true %>

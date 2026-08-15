@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class CommentsController < ApplicationController
+  include Shared::FindableBySlug
   rate_limit to: 20, within: 1.minute, only: :create,
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_verified_email, only: :create
@@ -53,8 +54,13 @@ class CommentsController < ApplicationController
   private
 
   def set_commentable
-    if params[:post_id]
-      @commentable = Post.find(params[:post_id])
+    # Posts and events are slug-routed. Post.find("konsert-pa-landmark") 404s
+    # the comment form on every post show; Event was never even looked up, so
+    # events#show's form_with [@event, @comment] 500'd on comments.build.
+    if params[:event_id]
+      @commentable = find_by_slug_or_id(Event, params[:event_id])
+    elsif params[:post_id]
+      @commentable = find_by_slug_or_id(Post, params[:post_id])
     elsif params[:comment_id]
       @commentable = Comment.find(params[:comment_id])
     end

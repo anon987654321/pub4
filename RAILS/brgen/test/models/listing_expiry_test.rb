@@ -85,4 +85,35 @@ class ListingExpiryTest < ActiveSupport::TestCase
     soon.renew!
     assert_nil soon.reload.renewal_notice_sent_at
   end
+
+  test "a shop page and a saved-search alert omit expired stock" do
+    store = Marketplace::Store.create!(owner: @seller, name: "Butikk #{SecureRandom.hex(3)}")
+    fresh = listing(store: store)
+    lapsed = listing(store: store)
+    lapsed.update_columns(expires_at: 1.hour.ago)
+
+    assert_includes store.listings.live.map(&:id), fresh.id
+    refute_includes store.listings.live.map(&:id), lapsed.id
+
+    search = Marketplace::SavedSearch.create!(user: @seller, query: "Ting")
+    search.update_columns(created_at: 1.day.ago, last_notified_at: 1.day.ago)
+    ids = search.new_matches.map(&:id)
+    assert_includes ids, fresh.id
+    refute_includes ids, lapsed.id
+  end
+
+  test "strangers cannot view or order an expired listing; the owner still can" do
+    lapsed = listing
+    lapsed.update_columns(expires_at: 1.hour.ago)
+    buyer = User.strict_loading(false).create!(
+      email_address: "le_buyer@brgen.no", password: "password123", city: @city
+    )
+
+    refute Marketplace::ListingPolicy.new(buyer, lapsed).show?
+    assert Marketplace::ListingPolicy.new(@seller, lapsed).show?
+
+    order = Marketplace::Order.new(buyer: buyer, listing: lapsed, status: "pending")
+    assert_not order.valid?
+    assert order.errors[:listing].any?
+  end
 end

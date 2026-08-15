@@ -7,6 +7,6 @@ class CategoryListingsInfiniteScrollReflex < Shared::InfiniteScrollReflex
 
   def scope
     category = Marketplace::Category.find(element.dataset["categoryId"])
-    category.listings.active.recent.includes(:user, :category)
+    category.listings.live.recent.includes(:user, :category)
   end
 end

@@ -25,6 +25,19 @@ nb:
       post_action: "Publiser"
       guest_hint: "Poster som anon · %{remaining} av %{limit} innlegg igjen i denne nettleseren"
       advanced_post: "Merk antrekk eller plagg →"
+    nav:
+      ai_suggest: "Antrekkforslag"
+    wardrobe:
+      title: "Garderobe"
+      add: "Legg til plagg"
+      new: "Nytt garderobeplagg"
+      edit: "Rediger garderobeplagg"
+      untitled: "Uten tittel"
+      empty: "Ingen plagg i garderoben ennå."
+      condition: "Tilstand"
+      acquired: "Anskaffet"
+      age_days: "Alder (dager)"
+      notes: "Notater"
   nav:
     home: "Hjem"
     feed: "Feed"

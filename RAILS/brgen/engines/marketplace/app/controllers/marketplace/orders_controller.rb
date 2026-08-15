@@ -19,11 +19,16 @@ class Marketplace::OrdersController < Marketplace::BaseController
     authorize @order
     other = @order.buyer == Current.user ? @order.seller : @order.buyer
     @conversation = Conversation.find_or_create_direct(Current.user, other)
-    @messages = @conversation.messages.order(:created_at)
+    @messages = @conversation.messages.visible.unexpired.order(:created_at)
     @message = Message.new
   end
 
   def create
+    if @listing.expired? || @listing.status != "active"
+      redirect_to listing_path(@listing), alert: t("flash.marketplace.offer_failed")
+      return
+    end
+
     quantity = params[:quantity].to_i.positive? ? params[:quantity].to_i : 1
 
     @order = @listing.orders.build(
@@ -43,7 +48,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
 
   def update
     authorize @order
-    if @order.seller == Current.user
+    if @order.seller == Current.user && @order.open_offer?
       @order.accept! if params[:accept]
       @order.decline! if params[:decline]
     end

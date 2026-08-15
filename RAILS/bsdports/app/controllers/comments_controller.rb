@@ -19,8 +19,10 @@ class CommentsController < ApplicationController
 
   def destroy
     @comment = @port.comments.find(params[:id])
-    @comment.destroy! if @comment.user == Current.user
-    @comment.record_activity!("PortCommentRemoved", source_vertical: "bsdports")
+    if Current.user && @comment.user_id == Current.user.id
+      @comment.destroy!
+      @comment.record_activity!("PortCommentRemoved", source_vertical: "bsdports")
+    end
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_to @port }

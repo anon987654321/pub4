@@ -2,7 +2,7 @@
 
 class Playlist::PlaylistsController < Playlist::BaseController
   include Shared::FindableBySlug
-  allow_unauthenticated_access only: %i[index show]
+  allow_unauthenticated_access only: %i[index show embed]
   before_action :require_user_session, only: %i[new create]
   before_action :set_playlist, only: %i[show embed edit update destroy]
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
@@ -63,6 +63,18 @@ class Playlist::PlaylistsController < Playlist::BaseController
 
   def set_playlist
     @playlist = find_by_slug_or_id(Playlist::Playlist.includes(:user), params[:id])
+    return if playlist_visible_to_viewer?
+
+    raise ActiveRecord::RecordNotFound
+  end
+
+  def playlist_visible_to_viewer?
+    return true if @playlist.public_access?
+
+    Current.user && (
+      @playlist.user_id == Current.user.id ||
+      @playlist.collaborations.exists?(user_id: Current.user.id)
+    )
   end
 
   def playlist_params
