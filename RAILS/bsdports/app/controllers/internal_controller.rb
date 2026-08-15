@@ -11,7 +11,7 @@ class InternalController < ApplicationController
       categories: Category.count,
       platforms: Platform.count,
       advisories: (defined?(SecurityAdvisory) ? SecurityAdvisory.count : 0),
-      master_client: Shared::MasterClient.configured?,
+      master_client: Shared::MasterClient.configured?
     }
   end
 end
