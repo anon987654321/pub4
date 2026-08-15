@@ -59,9 +59,9 @@ module Master
 
       AGENTS = <<~TEXT.strip
         Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider). Authority: data/soul.yml → data/rules.yml → CONVENTIONS (via /orient conventions) → this runtime.
-        Modules: now (pipeline/CLI), loop (fix/rule/watch), judge (scanner/council), voice (render/TTS), ground (constitution/memory), reach (tools), trace (events/session).
+        Modules: cli (pipeline/CLI), fix (fix/rule/watch), review (scanner/council), voice (render/TTS), ground (constitution/memory), io (tools), trace (events/session), core (the fold).
         Flat Hierarchy: standing order aggressive_merge on every write — merge thin siblings, rename to dense Rails-parameterize slugs (snake_case, Strunk-clean tokens), OpenBSD-flat, Zeitwerk-true, Roda-tight.
-        Pipeline: #{Master::CLI::RuntimeMode::PIPELINE_STAGES}. Review runs Council when enabled, then Lint on written paths, then Prune.
+        Pipeline (slash commands and inferred commands): #{Master::CLI::RuntimeMode::PIPELINE_STAGES}. Plain-language goals go to Core::Fold instead, which is the only lane the constitution judges. Council/Lint/Prune belong to Stages::Review, which no turn constructs — see DEBT.md.
         VPS/deploy: OPENBSD/RUNBOOK.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
       TEXT
 

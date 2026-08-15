@@ -20,12 +20,15 @@ module Master
               File.exist?(File.join(@root, "bin", name))
           end
 
-          # Returns parsed JSON, or nil on empty output or a parse error.
+          # Returns parsed JSON, or nil on empty output or a parse error. nil
+          # also means "this linter found nothing", so an unreadable payload
+          # cannot go by unsaid.
           def linter_json(*argv)
             stdout, = Master::Io::Exec.capture3(Master::BUNDLE_BIN, "exec", *argv, chdir: @root)
             return if stdout.empty?
             JSON.parse(stdout)
-          rescue JSON::ParserError
+          rescue JSON::ParserError => e
+            Master::Ground::Swallow.log(e, context: "linter_json #{argv.first}", severity: :load_bearing)
             nil
           end
         end

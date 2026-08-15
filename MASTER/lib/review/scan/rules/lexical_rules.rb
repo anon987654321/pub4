@@ -69,14 +69,15 @@ module Master
   RuleDSL.rule :SILENT_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     description: "blanket rescue discards error without logging or re-raising" do |src, path:|
-    next [] if path.to_s.include?("/review/scan/rules/")
+    # No path exemption for the scanner's own rules: a rule that returns [] on
+    # error calls the file it failed on clean, so a swallow costs more in this
+    # directory than anywhere else.
     SilentRescue.scan(src, narrow: false).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
   RuleDSL.rule :NARROW_SILENT_RESCUE,
     severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
     description: "narrow-class rescue discards error without logging or re-raising" do |src, path:|
-    next [] if path.to_s.include?("/review/scan/rules/")
     SilentRescue.scan(src, narrow: true).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
@@ -208,12 +209,16 @@ module Master
       false
     end
 
+    # Swallow.log is written three ways in this tree: bare, Ground:: and
+    # Master::Ground::. All three are a report, so all three are handled.
     def handled_body?(body)
-      body.match?(/\A(?:raise\b|warn\b|logger\.|@bus\.publish|Ground::Swallow\.log)/)
+      body.match?(/\A(?:raise\b|warn\b|logger\.|@bus\.publish|(?:Master::)?(?:Ground::)?Swallow\.log)/)
     end
 
+    # `end` on the first non-blank line after a rescue means an empty body:
+    # nothing can open between the two. An empty body discards completely.
     def discard_token?(body)
-      body.match?(/\A(?:nil|false|\[\]|\{\}|_\w+)\s*\z/)
+      body.match?(/\A(?:nil|false|\[\]|\{\}|_\w+|end)\s*\z/)
     end
   end
   end

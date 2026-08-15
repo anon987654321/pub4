@@ -48,7 +48,10 @@ module Master
           return [] unless path.to_s.end_with?(".rb", ".rake")
 
           check_ast(Prism.parse(code).value, code, path:)
-        rescue StandardError
+        rescue StandardError => e
+          # [] is also what a clean file returns, and one broken rule must not
+          # end a 2,000-file scan, so only this report separates the two.
+          Master::Ground::Swallow.log(e, context: "#{self.class}#check_ast", severity: :load_bearing, path:)
           []
         end
 

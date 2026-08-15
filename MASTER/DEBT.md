@@ -205,10 +205,77 @@ Both pinned in `test/test_scan_rule_false_positives.rb`, and generalised: no
 learned smell may share an id with a registered rule, and no two rules may report
 the same long line.
 
+## The post-execution review pass runs on no turn — opened 2026-08-15
+
+**operator-priority** — a design decision, not noise.
+
+`Stages::Review` is constructed nowhere in `lib/`, `bin/` or `web/`. It is the
+stage that runs Council feedback, then Lint on written paths, then Prune, and it
+builds `Lint` and `Prune` in its own initializer, so all three go dark with it.
+`Stages::Deliberate` and `Stages::Guard` are likewise never constructed;
+`Stages::Enhance` runs only from `web/app/controllers/chat_controller.rb`, off
+the turn path. `TurnRouter` assembles Intake → Infer → Route → DestructiveReview
+→ Execute → Render, and nothing else.
+
+`/review on` still answers "review: enabled in pipeline". It sets
+`council_stage.enable!`, a flag on an object no pipeline reads.
+
+Two consequences worth separating. The first is closed: `RuntimeMode::PIPELINE_STAGES`
+advertised the ten-stage sequence through `Ground::BootstrapDocs::AGENTS`, which
+is the orientation every coding agent boots on, and `test_runtime_mode.rb`
+asserted the string contained `"Deliberate"` — so correcting it would have failed
+the test that existed to protect it (Scanner Conventions #5, in this file, in
+the file's own subject matter). The string now names the live sequence and the
+test reads `turn_router.rb` instead of a literal.
+
+The second is open and is the actual question: **should a turn end with a review
+pass at all?** Wiring `Stages::Review` back into `run_command_pipeline` is four
+lines and would put Council, Lint and Prune on every command — a behaviour change
+with a cost per turn that nobody has chosen. Deleting the four stages is the
+other honest answer. What is not defensible is the present state, where the
+capability exists, is toggleable, reports itself enabled, and never runs.
+
 ## Scanner noise
 
-`rake selfcheck` is **18 violations across 3 rules** (re-measured 2026-08-13):
-`SILENT_RESCUE` 11, `guard_expensive_ops` 5, `UNBOUNDED_RETRY` 2.
+`rake selfcheck` is **20 violations across 3 rules** (re-measured 2026-08-15):
+`SILENT_RESCUE` 13, `guard_expensive_ops` 5, `UNBOUNDED_RETRY` 2.
+
+The 13 is not the 11 of 2026-08-13 plus the exemption lifted below. Measured both
+ways on one tree: the same 13 sites outside `lib/review/scan/rules/` are reported
+by the old predicate and the new one, so the two that arrived since are drift in
+`lib/`, and every finding the exemption had been hiding is fixed rather than
+counted.
+
+### The rescue rules exempted the scanner from itself — closed 2026-08-15
+
+`SILENT_RESCUE` and `NARROW_SILENT_RESCUE` both carried
+`next [] if path.to_s.include?("/review/scan/rules/")`, with no comment, no gate
+and no false positive to justify it: all **11 findings it suppressed were real
+code**, none a comment or a regex literal. The directory it excused is the one
+where a swallowed error does the most damage, because a rule that returns `[]`
+reports the file it failed on as clean.
+
+Two of the 11 were law failing open rather than ordinary swallowing.
+`VetoPatternRule#load_patterns` rescued to `{}` and `#check` returns `[]` on an
+empty pattern set, so an unreadable `data/rules.yml` retired every veto pattern
+in silence; `YamlDeclarativeRule` dropped any declared rule whose
+`detect_lexical` would not compile, which is inert law arriving by exception.
+Both now report through `Swallow.log(..., severity: :load_bearing)`, as does
+`Rule#check`, the shared AST default whose `rescue → []` made a bug in any
+`check_ast` indistinguishable from a clean tree.
+
+Three `rules_mtime` methods rescued `File.mtime` to `nil`; they ask
+`File.exist?` now, since a missing file was the only failure they meant. One
+inner rescue in `NestingDepthRule#scan_depth` was deleted outright rather than
+made to report: it duplicated the base-class rescue one frame down, and two
+layers of swallowing over the same call is how the first one stays invisible.
+
+**An empty rescue body is a discard again.** `EMPTY_RESCUE` was deleted on
+2026-08-12 as a pure duplicate, and "coverage is unchanged by construction" held
+for every shape but one: `discard_body?` walked to the first non-blank line,
+found `end`, and called it neither handled nor discarded. Probed rather than
+argued, which is the only reason it was found. `lib/pub4/check_runner.rb` held
+the single live instance.
 
 It read 17 with `SILENT_RESCUE` 10 on 2026-08-12. The +1 arrived without a new
 `rescue` anywhere in `lib/` — `git log -p` over the range shows zero added rescue
