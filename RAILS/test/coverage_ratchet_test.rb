@@ -42,7 +42,14 @@ class CoverageRatchetTest < Minitest::Test
     # zero was visible here the whole time and nobody had raised it because a
     # floor of 11 does not complain about an engine sitting at nothing.
     "brgen" => { "controllers" => 14, "models" => 18 },
-    "bsdports" => { "controllers" => 2, "models" => 1 },
+    # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
+    # thirteen models, and it was the smallest tree in the repo — Port, the record
+    # everything else hangs off, had nothing naming it. Writing them found two
+    # real defects: maintainers.name carried a unique index with no matching
+    # validation, so a duplicate came back as RecordNotUnique rather than as a
+    # form error, and ports_fts turned out to be absent from every schema-loaded
+    # database (RAILS/test/raw_schema_objects_test.rb).
+    "bsdports" => { "controllers" => 2, "models" => 8 },
   }.freeze
 
   # The app's own app/ dir, plus any mounted vertical engines (engines/*/app).
