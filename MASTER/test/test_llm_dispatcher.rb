@@ -145,4 +145,18 @@ class TestLLMDispatcher < Minitest::Test
     dispatcher.instance_variable_set(:@bus, bus)
     [dispatcher, session, bus]
   end
+
+# Every LLM call in the tree passes through send_with_cache. With no provider
+# key each caller used to fail slowly somewhere below it — the council spent
+# its whole budget discovering this one persona at a time — so the refusal
+# belongs at the door, before the breaker, the cache or the request.
+def test_no_provider_key_refuses_at_the_door
+  dispatcher = Master::Review::LLMDispatcher.allocate
+  result = Master.stub(:any_api_key_present?, false) do
+    dispatcher.send_with_cache("any-model", [{ role: "user", content: "hi" }])
+  end
+
+  assert_predicate result, :err?
+  assert_equal :no_api_key, result.category
+end
 end
