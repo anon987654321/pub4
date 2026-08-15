@@ -59,7 +59,24 @@ module Pub4
     # control's tablet band started one pixel above the edge the rest of the family
     # uses, so at exactly 768px it fell through to base styling while the shell
     # around it was already in its tablet band.
-    BASELINES = { "unknown_edge" => 0, "ambiguous_edge" => 0 }.freeze
+    # unknown_edge 0 -> 1 on 2026-08-16, and the raise is a correction rather
+    # than a tolerance for something new.
+    #
+    # The note above said all three were gone from the sheets. Two of them never
+    # were findings: `@container grid (min-width: 400px)` and `(min-width: 600px)`
+    # in shared/_zen_shell are container queries, and a container query measures
+    # the element's own container rather than the viewport, so neither number
+    # means anything on this scale. QUERY matched them because the eight
+    # characters are identical in both at-rules. See CONTAINER below.
+    #
+    # The third is real and is still there: `(max-width: 700px)` in
+    # brgen/_marketplace_nav_bar:256, the band where the marketplace search takes
+    # its own row. The family's tablet edge is 768, max-bound 767, so viewports
+    # between 701 and 767 get the wide marketplace nav while every other surface
+    # already treats them as a tablet. Moving it to 767 closes that and changes
+    # what renders at those widths, which is an operator's decision and not a
+    # lint's.
+    BASELINES = { "unknown_edge" => 1, "ambiguous_edge" => 0 }.freeze
 
     Finding = Struct.new(:file, :line, :kind, :value)
 
@@ -98,12 +115,29 @@ module Pub4
       raw.gsub(%r{//[^\n]*}) { |line| " " * line.length }.lines
     end
 
+    # `@container grid (min-width: 400px)` is not a breakpoint.
+    #
+    # A container query measures the element's own container, not the viewport,
+    # so a card grid switching to a row at 400px of container width is a
+    # component decision that can happen at any viewport size — 400 and 600 mean
+    # nothing on the viewport scale and there is no edge for them to be wrong
+    # against. QUERY matched them anyway, because `(min-width: 400px)` is the
+    # same eight characters in both, and the lint reported two correct container
+    # queries in _zen_shell as unrecognised viewport widths.
+    #
+    # That is the shape this repo's own DEBT.md calls Scanner Convention 1 and
+    # breakpoint_lint already learned once with comments: a check that reports
+    # correct code gets the correct code changed. The header's note that the
+    # three tolerated edges "are gone from the sheets" is true of one of them.
+    CONTAINER = /@container\b/
+
     # Every media-query bound in the tree: [file, line, bound, pixels, spelling].
     def bounds
       stylesheets.uniq.sort.reject { |path| path =~ SKIP }.flat_map do |path|
         lines = source_lines(path)
         lines.each_with_index.flat_map do |line, index|
           next [] if opted_out?(lines, index)
+          next [] if line.match?(CONTAINER)
 
           line.to_enum(:scan, QUERY).map { Regexp.last_match }.map do |match|
             [rel(path), index + 1, match[:bound], to_px(match[:value], match[:unit]).round,

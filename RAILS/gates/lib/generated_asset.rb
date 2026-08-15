@@ -104,24 +104,28 @@ module Deploy
         result.fail("#{app_name}: stale asset build — #{rel} newer than application.css")
       end
 
-      # tools/build_workbox.mjs writes app/views/pwa/service-worker.js — it is
-      # served through a route, not from public/. This compared public/, which no
-      # app has, so both File.file? guards were false and the whole check was
-      # unreachable: shared/pwa/service_worker.js could change and no app's
-      # bundle was ever reported stale.
-      #
-      # Making it reachable then made it wrong for brgen, which no longer builds
-      # its service worker at all. Workbox froze ~89 fingerprinted asset URLs in
-      # a precache manifest; every deploy re-digests those assets, so `install`
-      # started failing with bad-precaching-response and the PWA broke on
-      # playlist.brgen.no. brgen replaced the bundle with a hand-rolled worker
-      # that precaches only /offline. Telling that app to "run npm run build:pwa"
-      # is telling it to reintroduce the outage — and the freshness comparison is
-      # meaningless for a file no generator writes.
-      #
-      # So: check each app against the source it actually has. amber and bsdports
-      # still ship the Workbox bundle and are still worth a staleness check;
-      # brgen gets the opposite check, that the bundle has not crept back.
+      service_worker_stale?(app_dir, result, app_name)
+    end
+
+    # tools/build_workbox.mjs writes app/views/pwa/service-worker.js — it is
+    # served through a route, not from public/. This compared public/, which no
+    # app has, so both File.file? guards were false and the whole check was
+    # unreachable: shared/pwa/service_worker.js could change and no app's
+    # bundle was ever reported stale.
+    #
+    # Making it reachable then made it wrong for brgen, which no longer builds
+    # its service worker at all. Workbox froze ~89 fingerprinted asset URLs in
+    # a precache manifest; every deploy re-digests those assets, so `install`
+    # started failing with bad-precaching-response and the PWA broke on
+    # playlist.brgen.no. brgen replaced the bundle with a hand-rolled worker
+    # that precaches only /offline. Telling that app to "run npm run build:pwa"
+    # is telling it to reintroduce the outage — and the freshness comparison is
+    # meaningless for a file no generator writes.
+    #
+    # So: check each app against the source it actually has. amber and bsdports
+    # still ship the Workbox bundle and are still worth a staleness check;
+    # brgen gets the opposite check, that the bundle has not crept back.
+    def service_worker_stale?(app_dir, result, app_name)
       sw_source = File.join(RAILS_ROOT, "shared", "pwa", "service_worker.js")
       sw_build = File.join(app_dir, "app", "views", "pwa", "service-worker.js")
       return unless File.file?(sw_source)
@@ -138,6 +142,21 @@ module Deploy
       end
 
       return unless File.mtime(sw_source) > File.mtime(sw_build)
+
+      # The same correction the CSS check above already carries, and this one was
+      # written without it. `git checkout` writes every file in one pass in path
+      # order, so shared/ lands after amber/, brgen/ and bsdports/ — which makes
+      # shared/pwa/service_worker.js newer than all three builds in every fresh
+      # clone and worktree, deterministically, on a commit where all four files
+      # were last changed together. Measured in a clean worktree of 06ddd0b16:
+      # 240ms of write-order, reported as three stale service workers, and
+      # `npm run build:pwa` would have rebuilt three files into byte-identical
+      # content.
+      #
+      # An edit the working tree has and the build does not is the real failure
+      # here, exactly as it is for the stylesheets.
+      dirty = dirty_paths
+      return if dirty && !(dirty.include?(sw_source) && !dirty.include?(sw_build))
 
       result.fail("#{app_name}: stale service-worker.js relative to shared/pwa/service_worker.js " \
                   "— run npm run build:pwa")
