@@ -13,7 +13,7 @@ module Master
           ui: ["User Advocate", "Accessibility", "NNGroup UX Researcher", "Web Designer", "Typographer", "Cognitive Psychologist", "Graphic Designer"],
           auth_mutation: ["Security", "Reliability", "Maintainer", "Ethics & Policy"],
           security_audit: %w[Security Reliability Maintainer Skeptic],
-          architecture: %w[Architect Maintainer Reliability Skeptic Minimalist],
+          architecture: %w[Architect Maintainer Reliability Skeptic Pragmatist],
           migration: ["Architect", "Maintainer", "Data Steward", "Reliability"],
           performance: ["Performance", "Maintainer", "QA Engineer"],
           data: ["Data Steward", "Maintainer", "Reliability"],
@@ -24,12 +24,12 @@ module Master
           ],
           product: ["Product Strategist", "User Advocate", "Pragmatist"],
           docs: ["Maintainer", "Layperson", "QA Engineer"],
-          code_review: ["Maintainer", "Skeptic", "QA Engineer", "Architect", "Minimalist"],
-          destructive: %w[Security Reliability Maintainer Architect Skeptic Chaos],
+          code_review: ["Maintainer", "Skeptic", "QA Engineer", "Architect", "Pragmatist"],
+          destructive: %w[Security Reliability Maintainer Architect Skeptic],
         }.freeze
 
         RISK_PERSONAS = {
-          critical: %w[Security Reliability Maintainer Architect Skeptic Chaos],
+          critical: %w[Security Reliability Maintainer Architect Skeptic],
           high: %w[Security Reliability Maintainer],
           medium: %w[Maintainer Skeptic],
           low: ["Maintainer"],
@@ -54,11 +54,17 @@ module Master
         def base_personas(task, risk)
           task_set = task ? TASK_PERSONAS[task.to_sym] : nil
           risk_set = risk ? RISK_PERSONAS[risk.to_sym] : nil
-          task_set || risk_set || ALWAYS_INCLUDED if task_set.nil? || risk_set.nil?
+          return ALWAYS_INCLUDED.dup if task_set.nil? && risk_set.nil?
+          return task_set.dup if risk_set.nil?
+          return risk_set.dup if task_set.nil?
+
+          (task_set + risk_set).uniq
         end
 
         def normalize_available(available)
-          nil unless available
+          return nil if available.nil?
+
+          Array(available).map(&:to_s)
         end
       end
     end

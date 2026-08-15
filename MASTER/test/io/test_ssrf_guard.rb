@@ -15,6 +15,11 @@ class SsrfGuardTest < Minitest::Test
     end
   end
 
+  def test_blocks_ipv4_mapped_loopback_and_metadata
+    assert Guard.blocked_ip?(IPAddr.new("::ffff:127.0.0.1")), "mapped loopback must be blocked"
+    assert Guard.blocked_ip?(IPAddr.new("::ffff:169.254.169.254")), "mapped metadata must be blocked"
+  end
+
   # The cloud metadata endpoint is the reason this guard exists; keep it named.
   def test_blocks_the_cloud_metadata_address
     assert Guard.blocked_ip?(IPAddr.new("169.254.169.254"))

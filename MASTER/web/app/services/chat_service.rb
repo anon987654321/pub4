@@ -47,6 +47,7 @@ class ChatService
       felt_sense: felt_sense_payload,
       on_turn: method(:stream_fold_turn),
       on_chunk: method(:write_chunk),
+      image: image_payload,
     )
     write_fallback(result)
     write_turn_ctx_footer
@@ -303,7 +304,15 @@ class ChatService
   end
 
   def subscribe(event, &block)
-    @subscriptions << @container[:bus].subscribe(event, &block)
+    # The container bus is process-wide. Without this gate, every named
+    # subscribe (and the "**" dmesg/thought catch-alls) writes other visitors'
+    # tool paths, prompts, and council speech into this SSE.
+    mine = @conversation
+    @subscriptions << @container[:bus].subscribe(event) do |ev|
+      next unless mine && ev[:conversation] == mine
+
+      block.call(ev)
+    end
   end
 
   def unsubscribe_all

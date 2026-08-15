@@ -12,7 +12,7 @@ class DashboardController < ApplicationController
     c = container
     return render(json: { error: "warming up" }, status: :service_unavailable) unless c
 
-    root = Rails.root.join("..", "..").to_s
+    root = Master::ROOT
     render json: mission_payload(c, root)
   rescue StandardError => e
     render json: { error: e.message }, status: :service_unavailable

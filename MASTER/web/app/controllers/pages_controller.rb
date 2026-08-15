@@ -2,9 +2,9 @@
 
 class PagesController < ApplicationController
   def radio_bergen
-    path = Rails.root.join("..", "..", "web", "radio_bergen.html")
-    return head(:not_found) unless File.file?(path)
-
-    send_file path, type: "text/html", disposition: "inline"
+    # There is no radio_bergen.html in this tree. The face still publishes
+    # client_action radio_open → /radio_bergen, and the live radio is the
+    # playlist vertical. Sending people to a 404 was the whole feature.
+    redirect_to "https://playlist.brgen.no/", allow_other_host: true, status: :see_other
   end
 end

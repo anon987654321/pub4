@@ -74,9 +74,23 @@ module Master::Core
     # Prefix match against the immutable list; a trailing "/" entry guards a
     # whole subtree, a bare entry guards that exact path.
     def self.immutable_hit?(path, immutable)
-      norm = path.delete_prefix("./")
-      immutable.any? { |g| g.end_with?("/") ? norm.start_with?(g) : norm == g }
+      # Lexical match used to miss data/./soul.yml and data/foo/../soul.yml
+      # while World#within expands those to the real file and writes it.
+      norm = expand_guard_path(path)
+      immutable.any? do |guard|
+        target = expand_guard_path(guard)
+        if guard.to_s.end_with?("/")
+          norm == target || norm.start_with?("#{target}/")
+        else
+          norm == target
+        end
+      end
     end
+
+    def self.expand_guard_path(path)
+      File.expand_path(path.to_s.delete_prefix("./"), "/")
+    end
+    private_class_method :expand_guard_path
 
     # No credential ever reaches disk or the transcript.
     def self.no_secret_rule(veto)
@@ -129,7 +143,7 @@ module Master::Core
 
     def self.git_commit_evidence_rule
       Rule.new(id: :git_commit_evidence, verbs: %i[git], judge: lambda { |effect, memory|
-        next nil unless effect.args[:operation].to_sym == :commit
+        next nil unless effect.args[:operation].to_s.to_sym == :commit
         next nil if memory.proof.proved?
 
         Verdict::Block.new(reason: "cannot commit before evidence threshold", by: :git_commit_evidence)

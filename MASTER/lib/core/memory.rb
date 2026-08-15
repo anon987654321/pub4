@@ -93,7 +93,11 @@ module Master::Core
       keep = []
       total = 0
       @entries.reverse_each do |e|
-        break if total >= @budget && e.role == :note # cut on a turn-ish boundary
+        # Cut when the next piece would blow the budget. Waiting for a :note
+        # after the budget is already exceeded never fires: Fold writes one
+        # note (the goal) then only :act/:obs, so the only note is the oldest
+        # entry and compact kept every act/obs and dropped only the goal.
+        break if !keep.empty? && (total + e.text.length) > @budget
 
         keep.unshift(e)
         total += e.text.length

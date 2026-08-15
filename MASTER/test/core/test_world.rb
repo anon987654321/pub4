@@ -58,6 +58,30 @@ class WorldTest < Minitest::Test
     end
   end
 
+  def test_a_symlink_out_of_the_workspace_cannot_be_read
+    with_world do |world, root|
+      outside = File.join(File.dirname(root), "outside-#{SecureRandom.hex(4)}.txt")
+      File.write(outside, "secret\n")
+      File.symlink(outside, File.join(root, "leak"))
+      obs = world.perform(E.read("leak"))
+      assert obs.err?, "symlink out of the sandbox must not be readable"
+      refute_match(/secret/, obs.message.to_s)
+    ensure
+      File.delete(outside) if outside && File.exist?(outside)
+    end
+  end
+
+  def test_exec_does_not_honor_model_chosen_env
+    with_world do |world|
+      obs = world.perform(E.exec(
+        [RbConfig.ruby, "-e", "print ENV['WORLD_PROBE'].to_s"],
+        env: { "WORLD_PROBE" => "injected" },
+      ))
+      assert obs.ok?
+      assert_equal "", obs.value!
+    end
+  end
+
   def test_exec_success_returns_stdout
     with_world do |world|
       obs = world.perform(E.exec([RbConfig.ruby, "-e", "print 'ok'"]))
@@ -70,6 +94,18 @@ class WorldTest < Minitest::Test
     with_world do |world|
       obs = world.perform(E.exec([RbConfig.ruby, "-e", "exit 3"]))
       assert obs.err?
+    end
+  end
+
+  def test_do_exec_kills_a_wedged_child
+    with_world do |world|
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      obs = world.perform(E.exec([RbConfig.ruby, "-e", "sleep 30"], timeout: 1))
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+      assert obs.err?
+      assert_match(/TIMEOUT/, obs.message)
+      assert_operator elapsed, :<, 10, "do_exec still used Timeout.timeout around Open3"
     end
   end
 

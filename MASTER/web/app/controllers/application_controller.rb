@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "openssl"
+
 $LOAD_PATH.unshift File.expand_path("../../../../lib", __FILE__)
 require "master"
 
@@ -7,7 +9,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   VISITOR_ALLOWED_TOOLS = Master::Ground::ToolProfile.public_names.freeze
-  AUTHENTICATED_ACTIONS = %i[dmesg history live metrics].freeze
+  AUTHENTICATED_ACTIONS = %i[dmesg history live metrics metrics_prometheus].freeze
   TTS_SYNTH_ACTIONS = %i[show].freeze
   TTS_POLL_ACTIONS = %i[status stream].freeze
   CHAT_RATE_LIMIT = 30  # requests per 60s per IP
@@ -62,6 +64,28 @@ class ApplicationController < ActionController::Base
 
   def authenticated?
     master_tier == "authenticated"
+  end
+
+  def unlocked?
+    expected = unlock_cookie_value
+    given = cookies[:master_unlocked].to_s
+    return false if expected.empty? || given.bytesize != expected.bytesize
+
+    Rack::Utils.secure_compare(given, expected)
+  end
+
+  def set_unlock_cookie
+    cookies[:master_unlocked] = {
+      value: unlock_cookie_value, expires: 1.year.from_now,
+      secure: request.ssl?, httponly: true, same_site: :strict,
+    }
+  end
+
+  def unlock_cookie_value
+    secret = MasterWebToken.read.to_s
+    return "" if secret.empty?
+
+    OpenSSL::HMAC.hexdigest("SHA256", secret, "master_unlocked")
   end
 
   def visitor_tool_permitted?(tool_name)
@@ -132,7 +156,7 @@ class ApplicationController < ActionController::Base
   # so it is not readable from script and does not ride cross-site requests.
   def conversation_id
     existing = cookies[:master_conversation].to_s
-    return existing unless existing.empty?
+    return existing if existing.match?(/\A[0-9a-f]{32}\z/)
 
     minted = SecureRandom.hex(16)
     cookies[:master_conversation] = {

@@ -39,6 +39,10 @@ module Master
       def codes_path(root = Master::ROOT) = File.join(File.dirname(allowlist_path(root)), "codes.yml")
 
       def issue(root: Master::ROOT, label: nil)
+        with_store_lock(root) { issue_unlocked(root:, label:) }
+      end
+
+      def issue_unlocked(root:, label:)
         code = CODE_BYTES.times.map { ALPHABET[SecureRandom.random_number(ALPHABET.length)] }.join
         now = Time.now.to_i
         codes = load_yaml(codes_path(root))
@@ -51,24 +55,26 @@ module Master
         needle = code.to_s.strip.upcase
         return if needle.empty?
 
-        codes = load_yaml(codes_path(root))
-        row = codes[needle]
-        return if row.nil?
-        return if row["expires_at"].to_i < Time.now.to_i
+        with_store_lock(root) do
+          codes = load_yaml(codes_path(root))
+          row = codes[needle]
+          return if row.nil?
+          return if row["expires_at"].to_i < Time.now.to_i
 
-        codes.delete(needle)
-        persist(codes_path(root), codes)
-        token = SecureRandom.urlsafe_base64(TOKEN_BYTES)
-        subject = SecureRandom.hex(8)
-        allow = load_yaml(allowlist_path(root))
-        allow[token] = {
-          "subject" => subject,
-          "paired_at" => Time.now.to_i,
-          "label" => row["label"].to_s,
-        }
-        persist(allowlist_path(root), allow)
-        PersonalWorkspace.ensure!(root:, subject:)
-        { token:, subject:, label: row["label"].to_s }
+          codes.delete(needle)
+          persist(codes_path(root), codes)
+          token = SecureRandom.urlsafe_base64(TOKEN_BYTES)
+          subject = SecureRandom.hex(8)
+          allow = load_yaml(allowlist_path(root))
+          allow[token] = {
+            "subject" => subject,
+            "paired_at" => Time.now.to_i,
+            "label" => row["label"].to_s,
+          }
+          persist(allowlist_path(root), allow)
+          PersonalWorkspace.ensure!(root:, subject:)
+          { token:, subject:, label: row["label"].to_s }
+        end
       end
 
       def valid_token?(token, root: Master::ROOT) = token.to_s != "" && load_yaml(allowlist_path(root)).key?(token.to_s)
@@ -121,6 +127,15 @@ module Master
         File.rename(tmp, path)
         File.chmod(0o600, path)
         path
+      end
+
+      def with_store_lock(root)
+        path = File.join(File.dirname(codes_path(root)), "store.lock")
+        FileUtils.mkdir_p(File.dirname(path))
+        File.open(path, File::RDWR | File::CREAT, 0o600) do |io|
+          io.flock(File::LOCK_EX)
+          yield
+        end
       end
     end
   end

@@ -12,7 +12,9 @@ module ApplicationCable
 
     def cable_authenticated?
       tok = MasterWebToken.read
-      return true if tok.empty?
+      # Empty token used to fail open, so /cable streamed the process-wide
+      # bus to anyone whenever MASTER_WEB_TOKEN was unset or unreadable.
+      return false if tok.empty?
 
       candidate = cable_token_candidate
       !candidate.empty? && Rack::Utils.secure_compare(candidate, tok)

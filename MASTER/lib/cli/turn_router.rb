@@ -11,7 +11,7 @@ module Master
       # Chained elsif nests one IfNode inside the previous one's else-branch,
       # so a 6-way route chain reads flat but is 6 deep in the AST. Guard
       # clauses keep each check a standalone, unnested IfNode.
-      def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil)
+      def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
         return dispatch_slash(text, container:, felt_sense:, on_turn:) if text.start_with?("/")
@@ -25,12 +25,12 @@ module Master
         # whose argv/env are model-chosen. Fiber[:master_visitor] previously
         # gated only the advertised LLM tool list (tool_registry.rb), never the
         # Fold or the command registry.
-        return casual_reply(text, container:, felt_sense:, on_chunk:) if visitor?
+        return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
 
         inferred = infer_operator_command(text, container:)
         return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
         return dispatch_through_workflow(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
-        return casual_reply(text, container:, felt_sense:, on_chunk:) if casual?(text)
+        return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if casual?(text)
 
         run_fold(text, container:, on_turn:)
       end
@@ -135,13 +135,13 @@ module Master
         Ground::IntentRouter.new.classify(text) == :unknown
       end
 
-      def casual_reply(text, container:, felt_sense: nil, on_chunk: nil)
+      def casual_reply(text, container:, felt_sense: nil, on_chunk: nil, image: nil)
         return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
 
         agent = container[:agent]
         return Master::Result.err("agent unavailable", category: :infrastructure) unless agent
 
-        result = agent.call({ message: text, on_chunk:, felt_sense:, task_type: "chat" })
+        result = agent.call({ message: text, on_chunk:, felt_sense:, task_type: "chat", image: })
         return result if result.is_a?(Master::Result::Err)
 
         reply = result.value!.to_s

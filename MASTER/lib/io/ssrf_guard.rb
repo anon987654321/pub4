@@ -51,6 +51,7 @@ module Master
       end
 
       def self.blocked_ip?(ip)
+        ip = ip.native if ip.respond_to?(:ipv4_mapped?) && ip.ipv4_mapped?
         ip.loopback? || ip.link_local? || ip.private? ||
           (ip.respond_to?(:multicast?) && ip.multicast?) ||
           RESERVED_RANGES.any? { |range| range.include?(ip) }

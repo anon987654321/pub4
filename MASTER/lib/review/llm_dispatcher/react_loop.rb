@@ -79,6 +79,9 @@ module Master
           unless Ground::SubagentContext.permits?(name) && Ground::SubagentContext.permits?(runtime)
             return "<tool_result name=\"#{name}\">error: tool denied for subagent #{Ground::SubagentContext.active_type}</tool_result>"
           end
+          unless Ground::ToolProfile.allow?(name) && Ground::ToolProfile.allow?(runtime)
+            return "<tool_result name=\"#{name}\">error: tool denied</tool_result>"
+          end
 
           sym_args = args.transform_keys(&:to_sym)
           raw = tool.respond_to?(:call) ? tool.call(**sym_args) : "unsupported"

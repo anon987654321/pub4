@@ -25,4 +25,20 @@ class HostBudgetTest < Minitest::Test
   def test_default_memory_uses_a_positive_budget
     assert_operator M.new.instance_variable_get(:@budget), :>, 0
   end
+
+  def test_compact_drops_oldest_acts_once_the_budget_is_exceeded
+    memory = M.new(budget: 80, summarize: ->(dropped) { "SUM #{dropped.length}" })
+    memory.note(:goal, "do the thing")
+    12.times do |i|
+      memory.record(
+        Master::Core::Effect.exec(["echo", "act-#{i}-xxxxxxxx"]),
+        Master::Core::Observation.no("obs-#{i}-xxxxxxxx"),
+      )
+    end
+
+    ctx = memory.context
+    text = ctx.map(&:text).join
+    assert_operator text.length, :<=, 80 + 20, "compact left #{text.length} chars"
+    assert ctx.any? { |e| e.text.start_with?("SUM") }, "oldest turns were not summarised"
+  end
 end

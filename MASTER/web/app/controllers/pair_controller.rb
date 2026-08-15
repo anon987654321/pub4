@@ -7,7 +7,7 @@ class PairController < ApplicationController
   before_action :require_authenticated!, only: %i[issue list destroy]
 
   def show
-    with_master_fiber(unlocked: cookies[:master_unlocked].to_s == "1") do
+    with_master_fiber(unlocked: unlocked?) do
       render json: Master::Ground::Pairing.status(cookies[:master_paired].to_s).merge(
         profile: face_profile,
         notice: face_profile == "public" ? Master::Ground::Pairing::REDEEM_NOTICE : nil,

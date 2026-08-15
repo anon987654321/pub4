@@ -2854,4 +2854,69 @@ class TestDilla < Minitest::Test
     assert_in_delta result.fetch("quality_max"), result.fetch("max"), 0.01,
                     "loss_gates LUFS ceiling must be DILLA_QUALITY_LUFS_TARGET.end, not a second number"
   end
+
+  def test_asoftclip_filter_strings_carry_oversample
+    result = eval_in_engine(<<~RUBY)
+      misses = ENGINE_SOURCES.flat_map do |path|
+        File.read(path).each_line.with_index(1).filter_map do |line, number|
+          next if line.lstrip.start_with?("#")
+          next unless line.include?("asoftclip=type=")
+          next if line.include?("oversample=")
+
+          "\#{File.basename(path)}:\#{number}"
+        end
+      end
+      puts JSON.generate(misses)
+    RUBY
+    assert_empty result, "asoftclip without oversample aliases above Nyquist"
+  end
+
+  def test_sample_modern_chain_is_called_from_the_loop_filter
+    result = eval_in_engine(<<~RUBY)
+      body = File.read(File.join(ROOT, "lib/engine/sample_loops.rb")).gsub(/^\\s*#(?!\\{).*$/, "")
+      puts JSON.generate(called: body.include?("sample_modern_chain"))
+    RUBY
+    assert result.fetch("called"), "sample_modern_chain must run on the sample loop bus"
+  end
+
+  def test_melodic_lead_is_the_default_counter_line
+    result = eval_in_engine(<<~RUBY)
+      apply_dilla_style!(force: true)
+      puts JSON.generate(
+        melodic: ENV["MELODIC_LEAD"],
+        arp: ENV["LEAD_ARP"],
+        true_arp: lead_true_arp_mode?
+      )
+    RUBY
+    assert_equal "1", result.fetch("melodic")
+    assert_equal "0", result.fetch("arp")
+    refute result.fetch("true_arp"), "default DNA is a counter-line, not subdiv arps"
+  end
+
+  def test_drum_vol_pin_moves_the_main_mix_weight
+    result = eval_in_engine(<<~RUBY, env: { "DRUM_VOL" => "0.55" })
+      puts JSON.generate(weight: resolved_drum_mix_weight, pinned: USER_PINNED_ENV["DRUM_VOL"])
+    RUBY
+    assert_equal "0.55", result.fetch("pinned")
+    assert_in_delta 0.55, result.fetch("weight"), 0.001
+  end
+
+  def test_stream_rotation_keeps_operator_lead_pins
+    result = eval_in_engine(<<~RUBY, env: { "LEAD_ARP" => "0", "HARMONY_LEAD" => "0" })
+      ENV["STREAM_ROTATE_LEAD"] = "1"
+      stream_rotate_voices_and_arps!(0)
+      puts JSON.generate(arp: ENV["LEAD_ARP"], harmony: ENV["HARMONY_LEAD"])
+    RUBY
+    assert_equal "0", result.fetch("arp")
+    assert_equal "0", result.fetch("harmony")
+  end
+
+  def test_wiring_dead_methods_do_not_rise
+    result = eval_in_engine(<<~RUBY)
+      dead = wiring_dead_methods
+      puts JSON.generate(orphans: dead.keys.sort, n: dead.length, baseline: WIRING_DEAD_METHOD_BASELINE)
+    RUBY
+    assert_operator result.fetch("n"), :<=, result.fetch("baseline"),
+                    "uncalled methods rose: #{result.fetch('orphans').inspect}"
+  end
 end

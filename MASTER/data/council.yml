@@ -481,10 +481,15 @@ presets:
 
   motion_critique:
     description: Adversarial review of generated cinematic video for motion coherence and identity consistency.
+    # These names have to exist under personas: above. Cinematographer / Film
+    # Editor / Physicist never did, so build_panel silently sat QA + Skeptic
+    # and called that a five-hat review. Graphic Designer and Web Designer
+    # already own composition and temporal UX; Reliability owns the physics
+    # of failure. Add new hats as personas first, then name them here.
     panel:
-      - Cinematographer
-      - Film Editor
-      - Physicist
+      - Graphic Designer
+      - Web Designer
+      - Reliability
       - QA Engineer
       - Skeptic
     mode: deliberation
@@ -514,7 +519,7 @@ presets:
       - lib/voice/production_dna.rb
 
   dilla_critique:
-    description: Perfect the Dilla engine via MASTER council — multi-solution per issue, cherry-pick best; no parallel crit stack in studio/dilla.
+    description: Perfect the Dilla engine via MASTER council — multi-solution per issue, cherry-pick best; no parallel crit stack in STUDIO/dilla.
     panel:
       - Electronic Music Producer
       - Sound Engineer
@@ -529,8 +534,12 @@ presets:
     cycles: 2
     cherry_pick: true
     files:
-      - ../studio/dilla/dilla.rb
-      - ../studio/dilla/lib/master_heuristics.rb
+      - ../STUDIO/dilla/dilla.rb
+      - ../STUDIO/dilla/lib/engine/master_chain.rb
+      - ../STUDIO/dilla/lib/engine/bus_filters.rb
+      - ../STUDIO/dilla/lib/engine/drum_bus_filter.rb
+      - ../STUDIO/dilla/lib/engine/groove_timing.rb
+      - ../STUDIO/dilla/lib/master_heuristics.rb
       - lib/voice/dilla.rb
       - lib/voice/production_dna.rb
       - lib/io/analog_capabilities.rb

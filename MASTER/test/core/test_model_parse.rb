@@ -70,4 +70,10 @@ class TestModelParse < Minitest::Test
     assert e.done?
     assert_nil e.args[:summary]
   end
+
+  def test_non_hash_args_do_not_raise
+    e = parse('{"verb":"exec","args":[1]}')
+    assert_equal :exec, e.verb
+    assert_equal({}, e.args)
+  end
 end

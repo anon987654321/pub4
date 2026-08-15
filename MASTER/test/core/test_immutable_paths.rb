@@ -44,6 +44,11 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked Master::Core::Effect.write("./data/soul.yml", "x"), by: :immutable_paths
   end
 
+  def test_dot_and_parent_segments_cannot_walk_onto_an_immutable_file
+    assert_blocked Master::Core::Effect.write("data/./soul.yml", "x"), by: :immutable_paths
+    assert_blocked Master::Core::Effect.write("data/foo/../soul.yml", "x"), by: :immutable_paths
+  end
+
   def test_git_stage_of_immutable_path_is_blocked
     effect = Master::Core::Effect.git(:stage, paths: ["lib/core/fold.rb"])
     assert_blocked effect, by: :immutable_paths

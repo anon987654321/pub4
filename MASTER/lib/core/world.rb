@@ -86,16 +86,23 @@ module Master::Core
       raise ArgumentError, "argv cannot be empty" if argv.empty?
       raise ArgumentError, "argv entries must be strings" unless argv.all? { |arg| arg.is_a?(String) }
 
-      out = nil
-      status = nil
-      Timeout.timeout(Integer(timeout)) do
-        out, status = Open3.capture2e(env.transform_keys(&:to_s), *argv, chdir: @root)
-      end
-      status.success? ? Observation.ok(out.strip) : Observation.no(out.strip)
+      # Model-chosen env used to ride through (LD_PRELOAD, PATH, …). The
+      # constitution only inspects argv. Inherit nothing from the effect.
+      _ignored_env = env
+      seconds = timeout.to_i
+      seconds = EXEC_TIMEOUT if seconds <= 0 || seconds > EXEC_TIMEOUT
+
+      out, status = bounded_capture2e(
+        *argv,
+        env: nil,
+        chdir: @root,
+        timeout: seconds,
+      )
+      status.success? ? Observation.ok(out.to_s.strip) : Observation.no(out.to_s.strip)
     end
 
     def do_git(operation:, paths: [], message: nil, **)
-      case operation.to_sym
+      case operation.to_s.to_sym
       when :diff then Observation.ok(git_capture("diff"))
       when :stage then Observation.ok(git_capture("add", "--", *Array(paths)))
       when :commit then Observation.ok(git_capture("commit", "-m", message.to_s))
@@ -123,9 +130,20 @@ module Master::Core
     # Paths are sandboxed to root; nothing escapes the workspace.
     def within(path)
       abs = File.expand_path(path, @root)
-      raise "path escapes workspace: #{path}" unless abs == @root || abs.start_with?(@root + File::SEPARATOR)
+      raise "path escapes workspace: #{path}" unless under_root?(abs, @root)
+
+      # expand_path does not follow a symlink the agent just created with ln.
+      # realpath of the existing ancestor must still sit under the real root.
+      real_root = File.realpath(@root)
+      existing = abs
+      existing = File.dirname(existing) until File.exist?(existing)
+      raise "path escapes workspace: #{path}" unless under_root?(File.realpath(existing), real_root)
 
       abs
+    end
+
+    def under_root?(abs, root)
+      abs == root || abs.start_with?(root + File::SEPARATOR)
     end
 
     # Write via tmp+rename: an OOM kill or crash mid-write can never leave a
@@ -185,10 +203,13 @@ module Master::Core
     # 30 seconds to return, so the bound this method exists to provide did not
     # exist. popen3 gives us the pid, so the deadline can actually be enforced:
     # TERM, a short grace period, then KILL.
-    def bounded_capture2e(*cmd, stdin_data: nil)
-      timeout_sec = Integer(ENV.fetch("MASTER_EXEC_TIMEOUT", EXEC_TIMEOUT))
+    def bounded_capture2e(*cmd, stdin_data: nil, env: nil, chdir: nil, timeout: nil)
+      timeout_sec = Integer(timeout || ENV.fetch("MASTER_EXEC_TIMEOUT", EXEC_TIMEOUT))
+      popen = env ? [env, *cmd] : cmd
+      opts = {}
+      opts[:chdir] = chdir if chdir
 
-      Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thread|
+      Open3.popen3(*popen, pgroup: true, **opts) do |stdin, stdout, stderr, wait_thread|
         write_stdin(stdin, stdin_data)
         # Readers run off-thread: a child that fills its stdout pipe blocks on
         # write, so draining only after wait_thread returns would deadlock
@@ -218,12 +239,13 @@ module Master::Core
     # TERM first so the child can clean up, KILL if it ignores that. ESRCH means
     # it exited between the join timing out and this call — already gone.
     def terminate(pid)
-      Process.kill("TERM", pid)
+      target = -Process.getpgid(pid)
+      Process.kill("TERM", target)
       return if wait_for_exit(pid, TERM_GRACE)
 
-      Process.kill("KILL", pid)
+      Process.kill("KILL", target)
       wait_for_exit(pid, TERM_GRACE)
-    rescue Errno::ESRCH
+    rescue Errno::ESRCH, Errno::EPERM
       nil
     end
 

@@ -98,7 +98,7 @@ module Master
             return [] unless data.is_a?(Hash)
 
             depths = data["scan_depths"] || {}
-            rules_dir = File.join(@root, "lib", "judge", "scan", "rules")
+            rules_dir = File.join(@root, "lib", "review", "scan", "rules")
             depths.each_value.flat_map do |class_names|
               next [] unless class_names.is_a?(Array)
 

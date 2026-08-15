@@ -84,12 +84,14 @@ module Master::Core
       return Effect.note(:parse_error, "unknown verb: #{verb}") unless verbs.include?(verb)
 
       Effect.new(verb:, args: symbolize(data["args"] || {}))
-    rescue JSON::ParserError => e
+    rescue StandardError => e
       Effect.note(:parse_error, e.message)
     end
 
     def self.symbolize(hash)
-      hash.each_with_object({}) { |(k, v), out| out[k.to_sym] = v }
+      return {} unless hash.is_a?(Hash)
+
+      hash.each_with_object({}) { |(k, v), out| out[k.to_s.to_sym] = v }
     end
 
     private

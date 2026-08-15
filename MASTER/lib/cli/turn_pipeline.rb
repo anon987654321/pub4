@@ -25,6 +25,7 @@ module Master
           message:,
           container: @container,
           felt_sense: ctx[:felt_sense],
+          image: ctx[:image],
         )
       end
 

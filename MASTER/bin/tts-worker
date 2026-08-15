@@ -58,10 +58,15 @@ require "fileutils"
 require "open3"
 require "securerandom"
 
-# Edge endpoint TLS verification fails on OpenBSD; disable peer check.
+# OpenBSD verify failed because worker_env wiped SSL_CERT_FILE. Keep
+# verification on and point at the system bundle.
 Faye::WebSocket::Client.singleton_class.prepend(Module.new do
   def new(url, protocols = [], options = {})
-    super(url, protocols, options.merge(tls: { verify_peer: false }))
+    cert = ENV["SSL_CERT_FILE"].to_s
+    cert = %w[/etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt].find { |p| File.file?(p) }.to_s if cert.empty?
+    tls = { verify_peer: true }
+    tls[:cert_chain_file] = cert unless cert.empty?
+    super(url, protocols, options.merge(tls: options.fetch(:tls, {}).merge(tls)))
   end
 end)
 
@@ -78,7 +83,9 @@ def worker_env
     "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
     "LANG" => ENV.fetch("LANG", "C.UTF-8"),
     "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
-    "BUNDLE_GEMFILE" => File.join(ROOT, "Gemfile")
+    "BUNDLE_GEMFILE" => File.join(ROOT, "Gemfile"),
+    "SSL_CERT_FILE" => ENV["SSL_CERT_FILE"].to_s.empty? ? "/etc/ssl/cert.pem" : ENV["SSL_CERT_FILE"],
+    "SSL_CERT_DIR" => ENV.fetch("SSL_CERT_DIR", "/etc/ssl")
   )
 end
 

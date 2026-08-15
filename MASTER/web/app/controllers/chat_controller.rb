@@ -93,7 +93,7 @@ class ChatController < ApplicationController
       if token.empty? || pw.bytesize != token.bytesize || !Rack::Utils.secure_compare(pw, token)
         render(json: { output: "unlock denied" }, status: 401) and return
       end
-      cookies[:master_unlocked] = { value: "1", expires: 1.year.from_now, secure: true, httponly: true, same_site: :strict }
+      set_unlock_cookie
       render(json: { output: "unlocked — full tool access enabled." }) and return
     end
     if (code = pair_redeem_arg(cmd))
@@ -112,7 +112,7 @@ class ChatController < ApplicationController
     end
     return head(:forbidden) if visitor?
 
-    with_master_fiber(unlocked: cookies[:master_unlocked].to_s == "1") do
+    with_master_fiber(unlocked: unlocked?) do
       result = container[:gateway].receive(channel: :cli, message: cmd)
       value = result.ok? ? result.value! : nil
       output = value.is_a?(Hash) ? (value[:rendered] || value.to_s) : (value || result.message)
@@ -149,8 +149,13 @@ class ChatController < ApplicationController
     msg = params[:message].to_s.strip
     return render(json: { changed: false }) if msg.empty?
 
-    result = Master::CLI::Stages::Enhance.run(msg, agent: container[:agent], event_bus: container[:bus])
-    render json: result
+    # Same fiber flags as /chat/message. Without them ToolProfile.current is
+    # :full, so a visitor enhance turn advertised ReadFile and could have the
+    # model open .master/config.yml for the web token.
+    with_master_fiber(unlocked: unlocked?) do
+      result = Master::CLI::Stages::Enhance.run(msg, agent: container[:agent], event_bus: container[:bus])
+      render json: result
+    end
   rescue StandardError => e
     render json: { changed: false, error: e.message }
   end
@@ -178,7 +183,7 @@ class ChatController < ApplicationController
       stream: response.stream,
       logger: web_logger,
       tier: request.env["master.tier"].to_s,
-      unlocked: cookies[:master_unlocked].to_s == "1",
+      unlocked: unlocked?,
       author: false,
       paired: pairing_active?,
       pair_token: cookies[:master_paired].to_s,

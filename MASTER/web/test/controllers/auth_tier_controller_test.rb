@@ -48,6 +48,19 @@ class AuthTierControllerTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  test "visitor cannot scrape prometheus metrics" do
+    get "/metrics"
+
+    assert_response :unauthorized
+  end
+
+  test "authenticated client can scrape prometheus metrics" do
+    get "/metrics", headers: auth_headers
+
+    assert_response :success
+    assert_includes response.body, "master_up"
+  end
+
   test "visitor can still smoke ping chat stream" do
     get "/chat/message", params: { message: "ping" }
 
@@ -83,6 +96,15 @@ class AuthTierControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "unlocked"
+    refute_equal "1", cookies[:master_unlocked]
+    assert cookies[:master_unlocked].to_s.match?(/\A[0-9a-f]{64}\z/)
+  end
+
+  test "a forged master_unlocked=1 cookie is not elevation" do
+    cookies[:master_unlocked] = "1"
+    post "/chat/command", params: { command: "/help" }, as: :json
+
+    assert_response :forbidden
   end
 
   test "visitor cannot unlock with wrong token" do

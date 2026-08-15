@@ -105,6 +105,28 @@ class TurnRouterTest < Minitest::Test
     assert_match(/status-ok/, result.value[:rendered].to_s)
   end
 
+  # ChatService builds image_payload from the upload token, but the face used
+  # to drop it: TurnRouter.casual_reply never put :image on the agent ctx, so
+  # a visitor who attached a photo talked to a model that could not see it.
+  def test_casual_reply_forwards_image_to_the_agent
+    image = { data: "abc", mime: "image/jpeg", name: "x.jpg" }
+    seen = nil
+    agent = Object.new
+    agent.define_singleton_method(:call) do |ctx|
+      seen = ctx
+      Master::Result.ok("ok")
+    end
+    container = build_container.merge(agent: agent)
+
+    Master.stub(:any_api_key_present?, true) do
+      result = Master::CLI::TurnRouter.casual_reply("what is this", container:, image:)
+      assert result.ok?
+    end
+
+    assert_equal image, seen[:image]
+    assert_equal "what is this", seen[:message]
+  end
+
   def test_run_promotes_to_fold
     fold = { reason: :complete, turns: 1, summary: "shipped", transcript: [] }
     Master.stub(:any_api_key_present?, true) do

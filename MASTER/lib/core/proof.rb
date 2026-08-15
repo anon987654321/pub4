@@ -47,7 +47,7 @@ module Master::Core
     def record_evidence(effect, observation)
       return unless effect.verb == :exec && observation.ok?
 
-      kind = effect.args[:evidence]&.to_sym
+      kind = effect.args[:evidence].to_s.to_sym
       score = SCORING.fetch(kind, 0)
       @evidence << Evidence.new(kind:, ok: true, score:, detail: observation.message, at: Time.now.utc) if score.positive?
     end

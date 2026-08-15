@@ -61,7 +61,8 @@ class EventsController < ApplicationController
         next unless event
         next if visitor_tier && !visitor_safe_event?(event)
 
-        response.stream.write("data: #{event.to_json}\n\n")
+        payload = visitor_tier ? visitor_safe_payload(event) : event
+        response.stream.write("data: #{payload.to_json}\n\n")
       end
     end
   rescue IOError, ActionController::Live::ClientDisconnected
@@ -76,5 +77,15 @@ class EventsController < ApplicationController
   def visitor_safe_event?(event)
     type = event[:type].to_s
     type.match?(VISITOR_SAFE_PREFIX)
+  end
+
+  # tts:* is on the visitor-safe prefix so the orb can pulse, but the job id
+  # is a capability: GET /chat/tts/stream?job= plays the utterance, and
+  # DELETE /chat/tts/status?job= cancels it. Strip it from the public SSE.
+  def visitor_safe_payload(event)
+    data = event[:data]
+    return event unless data.is_a?(Hash)
+
+    event.merge(data: data.except(:job_id, "job_id"))
   end
 end

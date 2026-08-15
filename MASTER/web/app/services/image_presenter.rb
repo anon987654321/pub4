@@ -26,8 +26,7 @@ class ImagePresenter
   def store(upload)
     return [:bad_request, { error: "missing photo" }] unless upload.respond_to?(:read)
 
-    mime = upload.content_type.to_s.downcase
-    ext = PHOTO_MIME_EXT[mime]
+    ext, mime = sniffed_image(upload)
     return [:unsupported_media_type, { error: "unsupported image type" }] unless ext
     return [:payload_too_large, { error: "photo too large" }] if upload_size(upload) > PHOTO_MAX_BYTES
 
@@ -65,6 +64,23 @@ class ImagePresenter
 
   def upload_size(upload)
     upload.respond_to?(:size) ? upload.size.to_i : 0
+  end
+
+  # Client Content-Type is not evidence. A .exe labelled image/jpeg used to
+  # pass the allowlist and land in postpro/libvips as the Falcon user.
+  def sniffed_image(upload)
+    head = upload.read(16).to_s
+    upload.rewind if upload.respond_to?(:rewind)
+    case head
+    when /\A\xFF\xD8\xFF/n
+      [".jpg", "image/jpeg"]
+    when /\A\x89PNG\r\n\x1A\n/n
+      [".png", "image/png"]
+    when /\ARIFF.{4}WEBP/n
+      [".webp", "image/webp"]
+    when /\A....ftyp(?:heic|heif|mif1|msf1)/n
+      [".heic", "image/heic"]
+    end
   end
 
   def write_upload(upload, mime, ext)
@@ -105,7 +121,7 @@ class ImagePresenter
 
   def sanitize_filename(name, fallback_ext: ".jpg")
     ext = File.extname(name.to_s).downcase
-    ext = fallback_ext if ext.empty?
+    ext = fallback_ext unless PHOTO_MIME_EXT.value?(ext)
     stem = File.basename(name.to_s, ext).gsub(/[^A-Za-z0-9._-]+/, "_").sub(/\A[._-]+/, "")
     stem = "photo" if stem.empty?
     "#{stem}#{ext}"
@@ -120,7 +136,7 @@ class ImagePresenter
   end
 
   def postpro_photo(input_path, output_path)
-    script = Rails.root.join("..", "tools", "postpro", "postpro.rb").to_s
+    script = File.join(Master::REPO_ROOT, "STUDIO", "postpro", "postpro.rb")
     return false unless File.file?(script)
 
     out, status = Open3.capture2e(
@@ -129,7 +145,7 @@ class ImagePresenter
       "--input", input_path,
       "--output", output_path,
       "--preset", DEFAULT_POSTPRO_PRESET,
-      chdir: Rails.root.join("..", "..").to_s
+      chdir: File.dirname(script)
     )
     @logger.info("postpro photo=#{File.basename(input_path)} status=#{status.exitstatus} out=#{out.lines.last}")
     status.success?

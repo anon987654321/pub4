@@ -25,7 +25,13 @@ module Master
 
       def publish(event, payload = {})
         ts = elapsed_ms
+        # One process-wide bus. ChatService (and anything else that writes a
+        # visitor's SSE from a handler) must be able to ignore another
+        # conversation's events — without this stamp, subscribe("**") and even
+        # named tool:before handlers dump visitor B's turn into visitor A's stream.
         enriched = payload.merge(event:, ts:)
+        conversation = Fiber[:master_conversation]
+        enriched[:conversation] = conversation if conversation
         handlers = synchronize { matching_handlers(event) }
 
         persist_event(event, enriched)

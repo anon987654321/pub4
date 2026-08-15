@@ -89,7 +89,7 @@ module Master
         end
 
         def timeout_findings
-          targets = ruby_lib_paths.select { |p| p.include?("/io/") || p.include?("/review/llm") }
+          targets = ruby_lib_paths.select { |p| p.include?("/io/") || p.include?("/review/llm") || p.include?("/core/") }
           targets.flat_map do |path|
             # Strip full-line comments first -- a file that only *mentions*
             # Open3/Net::HTTP in prose (e.g. explaining a caller's behavior)
@@ -215,7 +215,7 @@ module Master
         end
 
         def rule_test_proximity_findings
-          Dir.glob(File.join(@root, "lib", "judge", "scan", "rules", "*_rule.rb")).sort.filter_map do |path|
+          Dir.glob(File.join(@root, "lib", "review", "scan", "rules", "*_rule.rb")).sort.filter_map do |path|
             base = File.basename(path, ".rb")
             test_path = File.join(@root, "test", "test_#{base}.rb")
             next if File.exist?(test_path)
