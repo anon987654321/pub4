@@ -46,7 +46,16 @@ module Pub4
         "at"
       end
 
-      def ok? = !over? && !slack?
+      # An unreadable ratchet is not a passing ratchet.
+      #
+      # `state` has always had a word for `current.nil?` — "unreadable" — while
+      # `ok?` said `!over? && !slack?`, and both of those are false when there is
+      # no number, so a row that could not be measured reported as fine. That is
+      # the shape of every defect this file exists to catch: the instrument goes
+      # blind and the gate goes green. Seen 2026-08-15 running the ratchets from
+      # a detached worktree, where `require "master"` does not resolve and the
+      # spine row vanished from the output entirely rather than failing.
+      def ok? = !current.nil? && !over? && !slack?
     end
 
     module_function

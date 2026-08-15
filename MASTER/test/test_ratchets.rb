@@ -26,11 +26,42 @@ class TestRatchets < Minitest::Test
   end
 
   # The half that had one owner and now has all of them.
+  #
+  # Skipped when the measured trees are dirty, and that is not a loophole. This
+  # assertion's advice is "lower the recorded number", which writes a permanent
+  # value from a transient measurement — and this repo's working tree is shared
+  # by several sessions at once, routinely carrying 30-80 uncommitted files.
+  #
+  # Measured 2026-08-15: MASTER/lib came to 39,251 code lines in the shared tree
+  # and 39,379 on a clean checkout of the same commit, because another session
+  # was midway through deleting about 128 lines. The ceiling is 39,258. So the
+  # shared tree said "slack, lower it to 39,251" while the committed truth was
+  # 121 lines OVER. Following the advice would have recorded a number nobody's
+  # checkout agrees with and hidden real growth behind it.
+  #
+  # Over-ceiling stays a hard failure in either state: over-reporting something
+  # to fix is safe, and recording a wrong number is not.
   def test_no_ratchet_is_slack
+    if (dirty = uncommitted_measured_paths).any?
+      skip "measured trees are dirty (#{dirty.size} file(s), e.g. #{dirty.first}) — " \
+           "slack advice writes a permanent number from a transient measurement; " \
+           "re-run in a clean checkout"
+    end
+
     slack = readable.select(&:slack?)
 
     assert_empty slack.map { |row| "#{row.name} #{row.current}/#{row.ceiling} — lower it in #{row.source}" },
                  "a ceiling above the real number is room the next change grows into silently"
+  end
+
+  # Shelling out is fine here and deliberately not in tools/ratchets.rb, whose
+  # header promises that fast mode only reads files.
+  def uncommitted_measured_paths
+    root = Pub4::Ratchets::ROOT
+    out = `cd #{root.inspect} && git status --porcelain -- MASTER/lib MASTER/data RAILS 2>/dev/null`
+    out.to_s.lines.map { |line| line[3..].to_s.strip }.reject(&:empty?)
+  rescue StandardError
+    []
   end
 
   # A tool that reports nothing is not a passing tool. This is the guard against
