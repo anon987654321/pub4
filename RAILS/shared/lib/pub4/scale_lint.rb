@@ -81,13 +81,41 @@ module Pub4
       end
     end
 
-    def stylesheets
-      @stylesheets ||= (
+    REPO_ROOT = File.expand_path("..", RAILS_ROOT)
+
+    # MASTER's web face is the fourth surface of this family and it is governed
+    # from here already: design_tokens.yml carries a `face_root:` section and
+    # RAILS/tools/generate_face_root_css.rb writes it into face.css's :root. The
+    # tokens were shared and the rhythm was not -- face.css sits on a 2px
+    # sub-grid (6px x14, 10px x10, 14px x5, 5px x3) while the three apps are on
+    # 4px, so a button in the face and the same button in brgen are a pixel or
+    # two apart for no reason either file records.
+    #
+    # Counted separately from the apps, because they have different histories
+    # and a single number would hide which surface moved. Measured against the
+    # same scale, because that is the whole point.
+    FACE = File.join(REPO_ROOT, "MASTER", "web", "public")
+
+    def app_stylesheets
+      @app_stylesheets ||= (
         Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
         Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
         Dir.glob(File.join(RAILS_ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}"))
       ).uniq.sort.reject { |path| path.match?(SKIP) }
     end
+
+    # face.css only. The face's :root is generated; the rest is hand-written and
+    # is what this measures. chat_upload.css joins it because it paints the same
+    # surface.
+    def face_stylesheets
+      @face_stylesheets ||= Dir.glob(File.join(FACE, "*.css")).sort.reject { |path| path.match?(SKIP) }
+    end
+
+    def stylesheets = app_stylesheets + face_stylesheets
+
+    # Which surface a path belongs to, so a finding can be counted against the
+    # right baseline.
+    def surface(path) = path.start_with?(FACE) ? "face" : "apps"
 
     # Comments blanked, line numbering preserved. Same reasoning as
     # breakpoint_lint: a paragraph explaining why a value was changed contains
@@ -157,6 +185,14 @@ module Pub4
       end
     end
 
+    def findings_for(surface_name)
+      findings.select { |finding| surface(File.join(REPO_ROOT, finding.file)) == surface_name }
+    end
+
+    def counts_for(surface_name)
+      findings_for(surface_name).group_by(&:kind).transform_values(&:size)
+    end
+
     def check(file, line, prop, value)
       case prop
       when *SPACE_PROPS
@@ -201,11 +237,17 @@ module Pub4
       [Finding.new(file, line, "off_scale_font_weight", bare, prop)]
     end
 
-    def rel(path) = path.sub("#{RAILS_ROOT}/", "")
+    # Relative to the repo root, not to RAILS: the corpus spans two trees now
+    # and a path that resolves against the wrong one points at nothing.
+    def rel(path) = path.sub("#{REPO_ROOT}/", "")
 
     def counts = findings.group_by(&:kind).transform_values(&:size)
 
+    SURFACES = %w[apps face].freeze
+
     def baselines = @baselines ||= scale.fetch("baselines")
+
+    def baselines_for(surface_name) = baselines.fetch(surface_name)
 
     # The nearest declared step, for a report that says what to write instead.
     def nearest(finding)

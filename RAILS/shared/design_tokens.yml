@@ -370,15 +370,36 @@ scale:
 
   # Measured, never raised to silence a finding. Same contract as
   # BreakpointLint::BASELINES and the chrome_i18n_lint baselines.
+  #
+  # Two surfaces, counted apart. The three Rails apps and MASTER's web face are
+  # measured against the same scale -- that is the point of putting the face in
+  # the corpus at all -- but they have different histories, and one combined
+  # number would hide which of them moved.
   baselines:
-    # Measured 2026-08-16. Every one of the 88 is a sub-grid fraction --
-    # 0.35rem is 5.6px at a 16px root and 6.3px at brgen 18px, so it lands on
-    # a fractional device pixel and the browser antialiases the edge. That is
-    # what "the spacing looks unsettled" is, and it is 21 sites of one value.
-    off_scale_space: 88
-    # 1.55 and 1.45 are four sites each, sitting either side of the 1.5 that
-    # carries the other 44 declarations.
-    off_scale_line_height: 13
-    absolute_line_height: 1
-    off_scale_radius: 2
-    off_scale_font_weight: 0
+    apps:
+      # Measured 2026-08-16. Every one of the 88 is a sub-grid fraction --
+      # 0.35rem is 5.6px at a 16px root and 6.3px at brgen's 18px, so it lands
+      # on a fractional device pixel and the browser antialiases the edge. That
+      # is what "the spacing looks unsettled" is, and it is 21 sites of one
+      # value.
+      off_scale_space: 88
+      # 1.55 and 1.45 are four sites each, sitting either side of the 1.5 that
+      # carries the other 44 declarations.
+      off_scale_line_height: 13
+      absolute_line_height: 1
+      off_scale_radius: 2
+      off_scale_font_weight: 0
+    face:
+      # face.css is on a 2px sub-grid where the apps are on 4px: 6px x14,
+      # 10px x10, 14px x5, 5px x3. Nothing records that as a decision, and it
+      # is why a control in the face and the same control in brgen sit a pixel
+      # or two apart. design_tokens already governs the face -- face_root: is
+      # generated into its :root -- so the tokens were shared and the rhythm
+      # was not.
+      off_scale_space: 32
+      # 999px is a pill written as a number, three lines under a
+      # --radius-pill that means the same thing.
+      off_scale_radius: 2
+      off_scale_line_height: 1
+      absolute_line_height: 0
+      off_scale_font_weight: 0

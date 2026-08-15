@@ -23,16 +23,19 @@ class ScaleLintTest < Minitest::Test
 
   def findings_for(kind) = LINT.findings.select { |f| f.kind == kind }
 
-  def test_no_kind_exceeds_its_baseline
-    regressions = LINT.baselines.filter_map do |kind, baseline|
-      count = counts.fetch(kind, 0)
-      next if count <= baseline
+  def test_no_kind_exceeds_its_baseline_on_either_surface
+    regressions = LINT::SURFACES.flat_map do |surface|
+      found = LINT.counts_for(surface)
+      LINT.baselines_for(surface).filter_map do |kind, baseline|
+        count = found.fetch(kind, 0)
+        next if count <= baseline
 
-      examples = findings_for(kind).first(6).map do |f|
-        near = LINT.nearest(f)
-        "#{f.file}:#{f.line} #{f.property}: #{f.value}#{near ? " (nearest step #{near})" : ""}"
+        examples = LINT.findings_for(surface).select { |f| f.kind == kind }.first(6).map do |f|
+          near = LINT.nearest(f)
+          "#{f.file}:#{f.line} #{f.property}: #{f.value}#{near ? " (nearest step #{near})" : ""}"
+        end
+        "#{surface}/#{kind}: #{count}, baseline #{baseline}\n    #{examples.join("\n    ")}"
       end
-      "#{kind}: #{count}, baseline #{baseline}\n    #{examples.join("\n    ")}"
     end
 
     assert_empty regressions, "a value off the declared scale:\n  #{regressions.join("\n  ")}"
@@ -41,17 +44,60 @@ class ScaleLintTest < Minitest::Test
   # A baseline that has been beaten and never lowered is a baseline nobody
   # trusts -- the same contract breakpoint_lint holds itself to.
   def test_baselines_are_not_stale
-    stale = LINT.baselines.filter_map do |kind, baseline|
-      count = counts.fetch(kind, 0)
-      "#{kind}: #{count} found, baseline still #{baseline}" if count < baseline
+    stale = LINT::SURFACES.flat_map do |surface|
+      found = LINT.counts_for(surface)
+      LINT.baselines_for(surface).filter_map do |kind, baseline|
+        count = found.fetch(kind, 0)
+        "#{surface}/#{kind}: #{count} found, baseline still #{baseline}" if count < baseline
+      end
     end
 
     assert_empty stale, "lower these in design_tokens.yml scale.baselines:\n  #{stale.join("\n  ")}"
   end
 
-  def test_every_kind_the_lint_can_report_has_a_baseline
-    unbaselined = counts.keys - LINT.baselines.keys
-    assert_empty unbaselined, "these findings are counted and bounded by nothing: #{unbaselined.inspect}"
+  def test_every_kind_the_lint_can_report_has_a_baseline_on_every_surface
+    LINT::SURFACES.each do |surface|
+      unbaselined = LINT.counts_for(surface).keys - LINT.baselines_for(surface).keys
+      assert_empty unbaselined, "#{surface}: counted and bounded by nothing: #{unbaselined.inspect}"
+    end
+  end
+
+  def test_the_two_surfaces_declare_the_same_kinds
+    apps, face = LINT::SURFACES.map { |surface| LINT.baselines_for(surface).keys.sort }
+
+    assert_equal apps, face,
+                 "one surface is exempt from a kind the other is measured on, which is how they diverge"
+  end
+
+  # --- one scale, two surfaces --------------------------------------------
+
+  # The reason the face is in the corpus at all. MASTER's web face and the three
+  # Rails apps are one family: design_tokens.yml already generates the face's
+  # :root, so the colours and the motion curves are shared. The rhythm was not,
+  # and a control in the face sitting 2px off the same control in brgen is the
+  # visible half of that.
+  def test_the_face_is_measured_against_the_same_scale_as_the_apps
+    refute_empty LINT.face_stylesheets, "face.css is not in the corpus, so the face is measured by nothing"
+    assert LINT.face_stylesheets.any? { |path| path.end_with?("face.css") }
+
+    assert_operator LINT.app_stylesheets.size, :>, 50
+    assert_empty LINT.app_stylesheets & LINT.face_stylesheets, "a sheet is counted on both surfaces"
+  end
+
+  def test_every_finding_is_attributed_to_exactly_one_surface
+    attributed = LINT::SURFACES.sum { |surface| LINT.findings_for(surface).size }
+
+    assert_equal LINT.findings.size, attributed,
+                 "a finding belongs to no surface or to both, so a baseline cannot bound it"
+  end
+
+  # The gap this is here to close, stated as a number so closing it is visible.
+  def test_the_face_sits_off_the_grid_the_apps_are_on
+    face = LINT.counts_for("face").fetch("off_scale_space", 0)
+
+    assert_operator face, :>=, 0
+    assert_equal LINT.baselines_for("face").fetch("off_scale_space"), face,
+                 "the face's spacing drift moved; the baseline is the record of it"
   end
 
   # --- the scale itself ---------------------------------------------------
@@ -243,7 +289,8 @@ class ScaleLintTest < Minitest::Test
 
   def test_every_finding_points_at_a_file_that_exists_and_a_real_line
     LINT.findings.first(40).each do |finding|
-      path = File.join(Pub4::ScaleLint::RAILS_ROOT, finding.file)
+      # Repo-relative since the corpus spans MASTER/web as well as RAILS.
+      path = File.join(Pub4::ScaleLint::REPO_ROOT, finding.file)
       assert File.file?(path), "#{finding.file} is not on disk"
       assert_operator finding.line, :>, 0
       assert_operator finding.line, :<=, File.readlines(path).size, "#{finding.file}:#{finding.line} is past EOF"
