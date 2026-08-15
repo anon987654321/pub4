@@ -533,49 +533,6 @@ end
 # file for `load` and `require` exactly as the wrapper would, and re-indenting
 # the whole dispatch would have buried the change in a diff nobody could read.
 # Running it as a script is unaffected — that is the branch that continues.
-return unless __FILE__ == $PROGRAM_NAME
-
-cache = File.expand_path(ENV.fetch("REPLIGEN_CATALOG", "~/.cache/repligen/models.json"))
-blob_cache_dir = File.expand_path(ENV.fetch("REPLIGEN_BLOB_CACHE", "~/.cache/repligen/blobs"))
-options = { model: ENV.fetch("REPLIGEN_MODEL", "black-forest-labs/flux-1.1-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
-parser = OptionParser.new do |p|
-  p.banner = "Usage: repligen.rb generate|search|sync|stats|capabilities|vocab-check [options]"
-  p.on("--prompt TEXT") { |v| options[:prompt] = v }
-  p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
-  p.on("--aspect-ratio RATIO") { |v| options[:aspect_ratio] = v }
-  p.on("--output FILE") { |v| options[:output] = File.expand_path(v) }
-  p.on("--limit N", Integer) { |v| options[:limit] = v.clamp(1, 1_000) }
-  p.on("--dry-run") { options[:dry_run] = true }
-  p.on("--stock NAME") { |v| options[:stock] = v }
-  p.on("--lens NAME") { |v| options[:lens] = v }
-  p.on("--camera-height NAME") { |v| options[:camera_height] = v }
-  p.on("--distance NAME") { |v| options[:distance] = v }
-  p.on("--lighting NAME") { |v| options[:lighting] = v }
-  p.on("--weather NAME") { |v| options[:weather] = v }
-  p.on("--time-of-day NAME") { |v| options[:time_of_day] = v }
-  p.on("--negative TEXT") { |v| options[:negative] = v }
-  p.on("--no-negative") { options[:no_negative] = true }
-  p.on("--allow-beautify") { options[:allow_beautify] = true }
-  p.on("--batch N", Integer) { |v| options[:batch] = v.clamp(1, 20) }
-  p.on("--seed N", Integer) { |v| options[:seed] = v }
-  # Both knobs are per-model: --guidance is `guidance` on flux-dev and `cfg` on
-  # SD 3.5, --steps is `num_inference_steps` on Flux and `steps` on SD 3.5, and
-  # the ranges differ. build_input maps and checks; here they are just numbers.
-  p.on("--guidance N", Float) { |v| options[:guidance] = v }
-  p.on("--steps N", Integer) { |v| options[:steps] = v }
-  p.on("--preview") { options[:preview] = true }
-  p.on("--final") { options[:final] = true }
-  p.on("--raw") { options[:raw] = true }
-  p.on("--no-raw") { options[:no_raw] = true }
-  p.on("--image FILE") { |v| options[:image] = File.expand_path(v) }
-  p.on("--postpro PRESET") { |v| options[:postpro] = v }
-end
-command = ARGV.shift || "help"
-parser.parse!(ARGV)
-if command == "help"
-  puts parser
-  exit 0
-end
 # Does everything this file can be asked for actually exist and reach the model?
 #
 # No API calls, no credentials, no cost. It is here because every failure this
@@ -589,7 +546,7 @@ end
 # Keep in step with the literal hash there.
 PRODUCIBLE_INPUT_KEYS = %w[prompt aspect_ratio output_format safety_tolerance seed raw input_image].freeze
 
-def vocab_check
+def vocab_problems
   problems = []
 
   VOCABULARIES.each do |field, table|
@@ -664,10 +621,62 @@ def vocab_check
   # nothing and the gallery loses that part of its description.
   (ALT_TEXT_FIELDS - VOCABULARIES.keys).each { |f| problems << "ALT_TEXT_FIELDS names #{f}, which is not a vocabulary" }
 
+  problems
+end
+
+return unless __FILE__ == $PROGRAM_NAME
+
+# The reporter. vocab_problems sits above the CLI guard so a test or a gate
+# can ask the question without a process exit; this half is the command-line
+# face of the same answer.
+def vocab_check
+  problems = vocab_problems
   problems.each { |line| puts "BROKEN #{line}" }
   counts = VOCABULARIES.map { |f, t| "#{f}=#{t.length}" }.join(" ")
   puts "#{counts}, #{MODEL_CAPABILITIES.length} models — #{problems.length} problem(s)"
   exit(1) if problems.any?
+end
+
+cache = File.expand_path(ENV.fetch("REPLIGEN_CATALOG", "~/.cache/repligen/models.json"))
+blob_cache_dir = File.expand_path(ENV.fetch("REPLIGEN_BLOB_CACHE", "~/.cache/repligen/blobs"))
+options = { model: ENV.fetch("REPLIGEN_MODEL", "black-forest-labs/flux-1.1-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
+parser = OptionParser.new do |p|
+  p.banner = "Usage: repligen.rb generate|search|sync|stats|capabilities|vocab-check [options]"
+  p.on("--prompt TEXT") { |v| options[:prompt] = v }
+  p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
+  p.on("--aspect-ratio RATIO") { |v| options[:aspect_ratio] = v }
+  p.on("--output FILE") { |v| options[:output] = File.expand_path(v) }
+  p.on("--limit N", Integer) { |v| options[:limit] = v.clamp(1, 1_000) }
+  p.on("--dry-run") { options[:dry_run] = true }
+  p.on("--stock NAME") { |v| options[:stock] = v }
+  p.on("--lens NAME") { |v| options[:lens] = v }
+  p.on("--camera-height NAME") { |v| options[:camera_height] = v }
+  p.on("--distance NAME") { |v| options[:distance] = v }
+  p.on("--lighting NAME") { |v| options[:lighting] = v }
+  p.on("--weather NAME") { |v| options[:weather] = v }
+  p.on("--time-of-day NAME") { |v| options[:time_of_day] = v }
+  p.on("--negative TEXT") { |v| options[:negative] = v }
+  p.on("--no-negative") { options[:no_negative] = true }
+  p.on("--allow-beautify") { options[:allow_beautify] = true }
+  p.on("--batch N", Integer) { |v| options[:batch] = v.clamp(1, 20) }
+  p.on("--seed N", Integer) { |v| options[:seed] = v }
+  # Both knobs are per-model: --guidance is `guidance` on flux-dev and `cfg` on
+  # SD 3.5, --steps is `num_inference_steps` on Flux and `steps` on SD 3.5, and
+  # the ranges differ. build_input maps and checks; here they are just numbers.
+  p.on("--guidance N", Float) { |v| options[:guidance] = v }
+  p.on("--steps N", Integer) { |v| options[:steps] = v }
+  p.on("--preview") { options[:preview] = true }
+  p.on("--final") { options[:final] = true }
+  p.on("--raw") { options[:raw] = true }
+  p.on("--no-raw") { options[:no_raw] = true }
+  p.on("--image FILE") { |v| options[:image] = File.expand_path(v) }
+  p.on("--postpro PRESET") { |v| options[:postpro] = v }
+end
+command = ARGV.shift || "help"
+parser.parse!(ARGV)
+if command == "help"
+  puts parser
+  exit 0
 end
 
 case command

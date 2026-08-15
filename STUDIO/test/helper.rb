@@ -1,0 +1,71 @@
+# frozen_string_literal: true
+#
+# STUDIO's first test suite.
+#
+# STUDIO/gate.rb parses every file and probes that three entry points boot.
+# That is the floor, and it is the wrong floor for a tree whose defects are
+# arithmetic: a swing offset applied to the wrong role, a seed that reads as
+# pinned and is not, a chord template that voices a ninth as a second. All of
+# those parse, all of those boot, and all of them have shipped.
+#
+# The engine defines its methods at top level on Object, so they arrive as
+# private instance methods on every object including the test case. `send` is
+# how a test calls one; that is a property of the engine's layout, not a smell
+# in the test.
+#
+# Each subject loads in its own process (see Rakefile): dilla, postpro and
+# repligen all define top-level constants and several of the names collide.
+
+ENV["MT_NO_PLUGINS"] = "1"
+gem "minitest", "~> 5.25"
+require "minitest/autorun"
+require "timeout"
+
+module Studio
+  ROOT = File.expand_path("..", __dir__)
+
+  # Bound every test. A dilla method that shells out to ffmpeg without a file
+  # will sit on a pipe forever, and an unbounded suite hangs the gate that runs
+  # it rather than failing it.
+  TIMEOUT = Integer(ENV.fetch("STUDIO_TEST_TIMEOUT", "30"))
+
+  # ENV is the engine's entire configuration surface -- 600-odd knobs, read at
+  # call time by the methods under test. A test that sets one and does not put
+  # it back changes the next test's subject, so every case runs inside a
+  # restore.
+  module EnvSandbox
+    def before_setup
+      super
+      @studio_env = ENV.to_h
+    end
+
+    def after_teardown
+      ENV.replace(@studio_env) if @studio_env
+      super
+    end
+
+    # Set knobs for the duration of the block, restoring exactly -- including
+    # keys that were absent, which `ENV[k] = old` cannot express.
+    def with_env(pairs)
+      saved = pairs.keys.to_h { |key| [key, ENV[key]] }
+      pairs.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value.to_s }
+      yield
+    ensure
+      saved.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+    end
+  end
+end
+
+Minitest::Test.class_eval do
+  include Studio::EnvSandbox
+
+  alias_method :run_without_timeout, :run
+  def run(*args)
+    Timeout.timeout(Studio::TIMEOUT) { run_without_timeout(*args) }
+  rescue Timeout::Error
+    failures << Minitest::UnexpectedError.new(
+      Timeout::Error.new("timed out after #{Studio::TIMEOUT}s")
+    )
+    self
+  end
+end

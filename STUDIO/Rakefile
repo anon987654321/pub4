@@ -1,0 +1,45 @@
+# frozen_string_literal: true
+
+require "rake/testtask"
+
+# One process per subject, because every subject here defines its constants and
+# methods at top level on Object and the names collide. postpro and repligen
+# both define `vocab_check`; dilla, postpro and repligen all define PRESETS.
+# Rake::TestTask runs the files it is given in a single process, so isolation
+# has to come from the task split. The tools get one task each -- grouping them
+# was enough to make repligen's self-check assertion read postpro's method.
+#
+# dilla's files share one process deliberately: the engine takes half a second
+# to load and the six files under test/dilla have no name of their own to
+# collide over.
+Rake::TestTask.new("test:dilla") do |t|
+  t.libs << "test"
+  t.test_files = FileList["test/dilla/test_*.rb"]
+  t.warning = false
+end
+
+TOOL_SUITES = FileList["test/tools/test_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_/, "") }
+
+TOOL_SUITES.each do |tool|
+  Rake::TestTask.new("test:#{tool}") do |t|
+    t.libs << "test"
+    t.test_files = ["test/tools/test_#{tool}.rb"]
+    t.warning = false
+  end
+end
+
+Rake::TestTask.new("test:gate") do |t|
+  t.libs << "test"
+  t.test_files = FileList["test/test_*.rb"]
+  t.warning = false
+end
+
+desc "STUDIO's suite — dilla engine arithmetic, the single-file tools, and the gate itself"
+task test: ["test:gate", "test:dilla", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
+
+desc "The parse/inventory/load gate (also reachable as MASTER's `rake studio`)"
+task :gate do
+  ruby File.expand_path("gate.rb", __dir__)
+end
+
+task default: %i[gate test]

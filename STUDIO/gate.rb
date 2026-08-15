@@ -74,7 +74,7 @@ module Deploy
         name: "gate",
         glob: "*.rb",
         entry: nil,
-        owner: "this file — pinned by RAILS/test/studio_gate_test.rb",
+        owner: "this file — pinned by STUDIO/test/test_studio_gate.rb",
       },
     ].freeze
 
