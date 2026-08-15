@@ -3,10 +3,22 @@
 require "test_helper"
 
 class DashboardControllerTest < ActionDispatch::IntegrationTest
+  # Through the key, not the English literal. This app serves nb by default, so
+  # "mission control" is not what the page says — and a test that pins the
+  # English spelling is a test that fails on a correct translation.
   test "index renders the mission control shell" do
     get "/dashboard"
 
     assert_response :success
+    assert_includes response.body, I18n.t("dashboard.heading_mission")
+  end
+
+  test "index is Norwegian by default and English when the browser asks" do
+    get "/dashboard"
+    assert_includes response.body, 'lang="nb"'
+
+    get "/dashboard", headers: { "HTTP_ACCEPT_LANGUAGE" => "en-GB,en;q=0.9" }
+    assert_includes response.body, 'lang="en"'
     assert_includes response.body, "mission control"
   end
 
