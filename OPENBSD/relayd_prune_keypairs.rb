@@ -13,6 +13,5 @@ lines = body.each_line.filter_map do |line|
   line
 end
 text = lines.join
-text.sub!(/^timeout \d+/, "timeout 30000") unless text.include?("timeout 30000")
 File.write(path, text)
 puts "relayd_prune_keypairs: #{path}"

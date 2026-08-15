@@ -121,7 +121,7 @@ if [[ -x $repo/OPENBSD/resource_guard.sh ]]; then
   doas ksh "$repo/OPENBSD/resource_guard.sh" || true
 fi
 
-if [[ -n ${SKIP_CI:-} ]]; then
+if [[ ${SKIP_CI:-} == 1 ]]; then
   print "vps-deploy: $app (sync via ${app}.sh, SKIP_CI=1)"
   zsh "$repo/RAILS/${app}/${app}.sh"
 else
@@ -151,6 +151,10 @@ print "vps-deploy: $app (primary db migrate + secondary schemas)"
 . "$repo/RAILS/_runtime_gate.sh"
 . "$repo/RAILS/_database.sh"
 . "$repo/RAILS/_assets.sh"
+# Same reason RAILS/_deploy.sh stops first: db:prepare hangs on the write
+# lock a live Falcon worker already holds on production.sqlite3.
+print "vps-deploy: $app (stop for sqlite migrate)"
+doas rcctl stop "$app" 2>/dev/null || true
 db_create_migrate_as_app "$app" "/home/${app}/app"
 
 # The SKIP_CI=1 path (${app}.sh -> deploy_tracked_app -> rails_runtime_gate)
@@ -205,7 +209,7 @@ queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! grep -q 'define(version: 0)' "$queue_schema" 2>/dev/null; then
   print "vps-deploy: $app (solid_queue proof)"
   ksh "$repo/OPENBSD/solid_queue_proof.sh" "$app" \
-    || { print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
+    || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
 fi
 
 print "vps-deploy: $app ok"

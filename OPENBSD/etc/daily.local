@@ -13,8 +13,11 @@ export PATH
 
 /usr/local/bin/ruby34 /usr/local/bin/nsd-resign
 /usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
-/usr/local/bin/ruby34 /home/dev/pub4/OPENBSD/config_drift_gate.rb >/tmp/config-drift.out 2>&1 || \
-  logger -t daily.local "repo/live config drift — see /tmp/config-drift.out (e.g. sshd PasswordAuthentication)"
+# Installed copy only. Root must not execute the writable checkout.
+if [ -x /usr/local/bin/config_drift_gate.rb ]; then
+  /usr/local/bin/ruby34 /usr/local/bin/config_drift_gate.rb >/tmp/config-drift.out 2>&1 || \
+    logger -t daily.local "repo/live config drift — see /tmp/config-drift.out"
+fi
 # su without -l, and its failure is now audible. `su -l` runs dev's login profile,
 # which boots MASTER's sqlite store and prints "disk I/O error" and "Must be
 # connected to a terminal" before the backup even starts — noise that made the

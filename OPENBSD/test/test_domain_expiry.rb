@@ -75,4 +75,14 @@ class TestDomainExpiry < Minitest::Test
     known = @rows.count { |_, row| row["state"] == "registered" }
     assert_operator known, :>, 10, "only #{known} domains resolved to a registration record"
   end
+
+  # Source-level: the query used to be `timeout 15 #{cmd}`, which needed a
+  # cron PATH that had GNU timeout and parsed the zone name in a shell. The
+  # Open3 argv form is the whole fix; a regression here is invisible until
+  # a whois hangs or a name is interpolated.
+  def test_whois_runs_through_open3_and_usr_bin_timeout
+    source = File.read(File.expand_path("../bin/domain_watch.rb", __dir__))
+    refute_match(/`timeout\s/, source, "whois went back through a shell timeout")
+    assert_includes source, 'Open3.capture2e("/usr/bin/timeout"'
+  end
 end

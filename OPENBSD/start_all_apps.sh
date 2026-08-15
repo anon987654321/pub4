@@ -24,5 +24,5 @@ for svc in $SERVICES; do
   rcctl check "$svc" || exit 1
 done
 
-ruby34 "$ROOT/OPENBSD/health_check.rb"
+ruby34 "$ROOT/OPENBSD/health_check.rb" --all-ready-apps
 echo "all apps up (resource_guard shedding disabled via $ALL_APPS_FLAG)"

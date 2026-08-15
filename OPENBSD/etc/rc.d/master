@@ -15,7 +15,9 @@ CACHE_VERSION="${CACHE_VERSION:-$(cd /home/dev/pub4 2>/dev/null && git rev-parse
 CACHE_VERSION="${CACHE_VERSION:-v2}"
 daemon="/bin/ksh"
 # Falcon workers: keep at 1 on 1GB VPS so amber/bsdports can boot alongside master+brgen.
-daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} SECRET_KEY_BASE_DUMMY=1 MASTER_BRIDGE_TOKEN=${MASTER_BRIDGE_TOKEN} MASTER_INGRESS_TOKEN=${MASTER_INGRESS_TOKEN} PUB4_CSP_ENFORCE=${PUB4_CSP_ENFORCE} DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+# Secrets stay in /etc/master.env and are sourced inside the child so they
+# do not appear in `ps` argv. CACHE_VERSION is not a secret.
+daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env && set +a && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} SECRET_KEY_BASE_DUMMY=1 && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 # Prod safety flags (MASTER_SAFE_MODE etc.) live in /etc/master.env (see master.env.sample).
 # rc.d sets a minimal set; env can override for the face runtime. See DeployPaths and
 # MASTER/data/limits.yml for resource budgets on 1GB VPS.

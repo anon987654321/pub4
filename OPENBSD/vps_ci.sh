@@ -52,7 +52,7 @@ sync_from_repo() {
     # engines/ carries brgen's vertical Rails engines (path gems in the Gemfile);
     # without it the copy-tree Gemfile's `path: 'engines/<v>'` resolves to a missing
     # dir and bundle aborts. See RAILS/brgen/ENGINES.md.
-    local -a paths=(test app lib config bin db engines public vendor/javascript Gemfile Gemfile.lock)
+    local -a paths=(test app lib config bin db engines public vendor/javascript Gemfile Gemfile.lock config.ru Rakefile)
     local -a existing=()
     local rel
     for rel in "${paths[@]}"; do

@@ -773,7 +773,7 @@ configure_relayd() {
     print -r -- "  match response header set \"X-Content-Type-Options\" value \"nosniff\""
     print -r -- "  match response header set \"X-XSS-Protection\" value \"0\""
     print -r -- "  # No global X-Frame-Options — MASTER uses CSP frame-ancestors for brgen/amber embeds."
-    print -r -- "  match response header set \"Permissions-Policy\" value \"accelerometer=(self), camera=(), geolocation=(), gyroscope=(self), magnetometer=(), microphone=(self), payment=(), usb=()\""
+    print -r -- "  match response header set \"Permissions-Policy\" value \"accelerometer=(self), camera=(), geolocation=(self), gyroscope=(self), magnetometer=(), microphone=(self), payment=(), usb=()\""
     print -r -- "  match response header remove \"X-Frame-Options\""
     print -r -- "  match response header remove \"Server\""
     print -r -- "  http websockets"

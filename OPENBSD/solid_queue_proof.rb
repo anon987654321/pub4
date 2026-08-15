@@ -41,10 +41,8 @@ runner = <<~RUBY
     exit 0
   end
 
-  # Falcon production does not always register SolidQueue::Process rows the way
-  # SOLID_QUEUE_IN_PUMA does under Puma; /up and rcctl already passed in vps-deploy.
-  warn "solid_queue: #{app} processes=0 (queue adapter ok; falcon may omit process rows)"
-  exit 0
+  warn "solid_queue: #{app} processes=0 — adapter present, no worker registered"
+  exit 1
 RUBY
 
 cmd = [

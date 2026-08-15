@@ -158,7 +158,8 @@ if on_box
   end
   unless dns_ok
     nsd_ok, nsd_out = run(*privileged("/usr/sbin/rcctl", "check", "nsd"))
-    failures << "dns: no local SOA (nsd #{nsd_out.strip})" unless nsd_ok && nsd_out.include?("(ok)")
+    nsd_note = nsd_ok && nsd_out.include?("(ok)") ? "nsd reports ok" : nsd_out.to_s.strip
+    failures << "dns: no local SOA (#{nsd_note.empty? ? 'nsd check failed' : nsd_note})"
   end
 
   # DNSSEC signature freshness, which nothing else can see.
@@ -376,7 +377,7 @@ end
 
 if options[:public]
   https_checks = {
-    "ai.brgen.no" => "https://ai.brgen.no/",
+    "ai.brgen.no" => "https://ai.brgen.no/up",
     "brgen.no" => "https://brgen.no/up"
   }
   ready_apps.each do |name|

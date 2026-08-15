@@ -282,7 +282,11 @@ fi
 
 if awk -v l="$load" -v c="$LOAD_CRIT" 'BEGIN{exit !(l>=c)}'; then
   logger -t resource-guard "crit load=$load — running emergency_cpu"
-  ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh 2>&1 | logger -t resource-guard
+  if [ -x /usr/local/bin/emergency_cpu.sh ]; then
+    ksh /usr/local/bin/emergency_cpu.sh 2>&1 | logger -t resource-guard
+  else
+    logger -t resource-guard "emergency_cpu not installed under /usr/local/bin"
+  fi
 fi
 
 exit 0

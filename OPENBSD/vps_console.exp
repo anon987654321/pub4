@@ -27,7 +27,7 @@ proc at_prompt_loose {} {
 
 proc console_open {} {
   global keyfile
-  spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
+  spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=accept-new dev@server4.openbsd.amsterdam vmctl console vm23
   expect -re {Connected to /dev/ttypx}
   send "\r"
 }
@@ -60,7 +60,7 @@ switch -- $mode {
   }
   probe {
     set timeout 60
-    spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
+    spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=accept-new dev@server4.openbsd.amsterdam vmctl console vm23
     sleep 2
     send "\r\r\r"
     expect {

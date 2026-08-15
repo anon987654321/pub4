@@ -23,6 +23,7 @@
 
 require "date"
 require "json"
+require "open3"
 require "yaml"
 
 module Deploy
@@ -54,9 +55,15 @@ module Deploy
 
     def query(domain)
       server = SERVERS[domain.split(".").last]
-      cmd = server ? "whois -h #{server} #{domain}" : "whois #{domain}"
-      out = `timeout 15 #{cmd} 2>&1`
-      return { "state" => "unknown", "note" => "lookup failed" } if out.strip.empty?
+      argv = ["whois"]
+      argv += ["-h", server] if server
+      argv << domain
+      # Unqualified `timeout` is a cron PATH bug this tree has already shipped
+      # (the snapshot was right and nothing looked at it). The interpolated
+      # string was also a shell, so a zone name from nsd.conf would be parsed.
+      # /usr/bin/timeout is the OpenBSD binary OPERATOR.sh already calls.
+      out, = Open3.capture2e("/usr/bin/timeout", "15", *argv)
+      return { "state" => "unknown", "note" => "lookup failed" } if out.to_s.strip.empty?
 
       # A referral answer describes the TLD, not the name. Without this, .us and
       # .org queries returned the registry's own record and every domain looked

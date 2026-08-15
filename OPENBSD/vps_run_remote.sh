@@ -15,11 +15,11 @@ log() { printf '[vps_run] %s\n' "$*" }
 [[ -f $INSTALL_SH ]] || { log "missing $INSTALL_SH"; exit 1 }
 
 log "upload install script"
-scp -i "$KEY" -P "$HYP_PORT" -o StrictHostKeyChecking=no "$INSTALL_SH" "${HYP}:/tmp/vps_install_all.sh"
+scp -i "$KEY" -P "$HYP_PORT" -o StrictHostKeyChecking=accept-new "$INSTALL_SH" "${HYP}:/tmp/vps_install_all.sh"
 
 log "start install on VM (nohup — may take 30–60 min on 1GB RAM)"
-ssh -i "$KEY" -p "$HYP_PORT" -o StrictHostKeyChecking=no "$HYP" \
-  "scp -o StrictHostKeyChecking=no /tmp/vps_install_all.sh ${VM}:/tmp/vps_install_all.sh && \
-   ssh -o StrictHostKeyChecking=no ${VM} 'chmod +x /tmp/vps_install_all.sh; nohup /tmp/vps_install_all.sh > ${REMOTE_LOG} 2>&1 & echo PID:\$!'"
+ssh -i "$KEY" -p "$HYP_PORT" -o StrictHostKeyChecking=accept-new "$HYP" \
+  "scp -o StrictHostKeyChecking=accept-new /tmp/vps_install_all.sh ${VM}:/tmp/vps_install_all.sh && \
+   ssh -o StrictHostKeyChecking=accept-new ${VM} 'chmod +x /tmp/vps_install_all.sh; nohup /tmp/vps_install_all.sh > ${REMOTE_LOG} 2>&1 & echo PID:\$!'"
 
 log "tail log: ssh jump → ssh ${VM} tail -f ${REMOTE_LOG}"
