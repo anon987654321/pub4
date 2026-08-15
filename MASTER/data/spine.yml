@@ -379,18 +379,31 @@ spine:
   # checkable: lib/ reads 39023 on the merge commit, 38971 on the branch tip, and
   # 39023 on main before the merge minus nothing — the branch deleted six pipeline
   # stages (-408) and main gained +52 elsewhere.
-#
-# Then 39023 -> PENDING for this branch. Two partitions that were declared
-# complete and were not: Homeostat::DerivedSignals returned nil for a calm
-# mood and for twelve hours of the day, so two of Personality::MOOD_LINES
-# four moods and two of its four phases had never been emitted and the gap
-# rendered as a blank line inside <master_runtime_state>. And
-# Result::ErrClassification classified five of Result::CATEGORIES fourteen,
-# so rate_limit -- the one failure that is retriable by definition --
-# answered false to retriable?. Neither is feature code; both are declared
-# behaviour with no implementation reaching it, and the tests assert totality
-# so the next one added without a side fails rather than falling through.
-lib_code_ceiling: PENDING
+  #
+  # Then 39023 -> PENDING on this branch, and that IS a raise. Three partitions
+  # that were declared complete and were not:
+  #
+  #   Homeostat::DerivedSignals returned nil for a calm mood and for twelve hours
+  #   of the day, so two of Personality::MOOD_LINES four moods and two of its four
+  #   phases had never been emitted — and PersonalityPromptBuilder does
+  #   `MOOD_LINES[mood]` and joins, so the gap rendered as a blank line inside
+  #   <master_runtime_state>.
+  #
+  #   Result::ErrClassification classified five of Result::CATEGORIES fourteen, so
+  #   rate_limit — the one failure that is retriable by definition — answered
+  #   false to retriable?. Neither predicate has a caller yet, which is why nobody
+  #   noticed and why closing it changes no behaviour.
+  #
+  #   Council::Selector#base_personas ended in a trailing `if`, so being given
+  #   both a task and a risk returned nil and `select` called nil +
+  #   ALWAYS_INCLUDED. And normalize_available was `nil unless available`, which
+  #   returns nil either way, so the `available:` filter had never run.
+  #
+  # None of it is feature code; all three are declared behaviour with no
+  # implementation reaching it, and each now has a test asserting the partition
+  # is total, so the next category or mood added without a side fails rather than
+  # falling through.
+  lib_code_ceiling: PENDING
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

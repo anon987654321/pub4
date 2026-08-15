@@ -142,10 +142,37 @@ module Pub4
            .sort
     end
 
+    # Directories a Rails app creates when it runs, not when it is cloned.
+    # `untracked_dirs` finds them by walking the disk, which works on a machine
+    # that has booted the app and on the deploy host, and fails everywhere else:
+    # in a fresh clone or a new `bin/pub4 worktree` they have never been created,
+    # so START_HERE's `web/storage/` and `web/log/` and DEBT.md's `public/assets`
+    # were reported as documents pointing at nothing.
+    #
+    # That is a check whose verdict depends on which checkout it runs in, which
+    # is the same defect RAILS/gates/lib/generated_asset.rb carries a paragraph
+    # about for mtimes. A path is here because Rails will make it, and a
+    # reference to it is correct whether or not this machine has run the app.
+    RUNTIME_LEAVES = %w[assets log storage tmp cache pids sockets].freeze
+
+    def self.runtime_dir?(candidate)
+      leaf = File.basename(candidate)
+      return false unless RUNTIME_LEAVES.include?(leaf)
+
+      parent = File.dirname(candidate)
+      return true if parent == "."
+
+      # The parent has to be real, so `nonsense/log` stays dead.
+      TREES.any? { |tree| File.directory?(File.join(ROOT, tree, parent)) } ||
+        File.directory?(File.join(ROOT, parent)) ||
+        tracked_suffix?(parent)
+    end
+
     def self.resolve(token, doc)
       candidate = token.chomp("/")
       return true if roots_for(doc).any? { |root| File.exist?(File.join(root, candidate)) }
       return true if tracked_suffix?(candidate)
+      return true if runtime_dir?(candidate)
 
       loose_match?(candidate)
     end
