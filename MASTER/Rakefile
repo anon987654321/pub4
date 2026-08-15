@@ -27,8 +27,11 @@ task :security_sweep do
   sh RbConfig.ruby, "tools/security_sweep.rb"
 end
 
+desc "STUDIO parses, has no orphans, its entry points boot, and its suite is green"
+task studio: %i[studio_gate studio_test]
+
 desc "STUDIO parses, has no orphans, and its entry points still boot"
-task :studio do
+task :studio_gate do
   # A subprocess, not a require. `bin/gate`'s /fix step mutates the whole shared
   # worktree, and STUDIO was the only tree with nothing that fails when it
   # breaks -- dilla and postpro have each been broken by it silently. Running it
@@ -44,6 +47,30 @@ task :studio do
   else
     warn "studio: #{gate} not found — skipping (STUDIO tree absent?)"
   end
+end
+
+# The gate's three checks are parse, inventory and load: they catch a tree that
+# has stopped being valid Ruby. They cannot catch a swing offset applied to the
+# wrong role, a seed that reads as pinned and is not, or a chord template that
+# voices a ninth as a second -- all of which parse, boot, and have shipped.
+# STUDIO/test is that half. Same subprocess reasoning as above.
+desc "STUDIO's own suite — engine arithmetic, the single-file tools, the gate"
+task :studio_test do
+  studio = File.expand_path("../STUDIO", __dir__)
+  unless File.file?(File.join(studio, "Rakefile"))
+    warn "studio: no suite at #{studio} — skipping (STUDIO tree absent?)"
+    next
+  end
+
+  # Outside MASTER's bundle. STUDIO's tools resolve their own gems -- postpro
+  # needs ruby-vips and dilla needs coltrane/midilib/wavefile, none of which are
+  # in MASTER's Gemfile and none of which should be: the trees are independent
+  # and that is the point of the subprocess. Inheriting BUNDLE_GEMFILE makes
+  # bundler refuse every one of them, which reads as "postpro is broken".
+  clean = %w[BUNDLE_GEMFILE BUNDLE_BIN_PATH BUNDLE_PATH RUBYOPT RUBYLIB]
+          .to_h { |key| [key, nil] }
+
+  Dir.chdir(studio) { sh clean, RbConfig.ruby, "-S", "rake", "test" }
 end
 
 desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
