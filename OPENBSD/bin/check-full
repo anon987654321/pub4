@@ -11,8 +11,16 @@ runner = Pub4::CheckRunner.new(prefix: "deploy-full", root: ROOT, timeout: STEP_
 
 failures = []
 failures << "local check" unless runner.run("local check", RUBY, "OPENBSD/bin/check")
-contract_loader = 'Dir["RAILS/test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }'
-failures << "rails contracts" unless runner.run("rails contracts", RUBY, "-e", contract_loader)
+# One process per file, via RAILS/test/run_all.rb. This step was an inline
+# `Dir["RAILS/test/**/*_test.rb"].sort.each { |f| require File.expand_path(f) }`,
+# which loaded all sixty-nine into a single process: every constant they declare
+# at class scope shared one namespace, and one `exit` in any of them -- four
+# shell out to the gate runner, which exits on its own failure paths -- would
+# have ended the run with Minitest reporting on whatever it had collected so far.
+# It also attributed a red file to nothing in particular. Same 496 runs; the
+# runner names the file and this is now runnable on its own, which is why three
+# of these were found red on main.
+failures << "rails contracts" unless runner.run("rails contracts", RUBY, "RAILS/test/run_all.rb")
 failures << "integrity" unless runner.run("integrity", RUBY, "OPENBSD/integrity_gate.rb")
 
 exit(failures.empty? ? 0 : 1)
