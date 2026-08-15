@@ -322,3 +322,63 @@ vertical_accents:
   playlist: { accent: "#12b6c4", hover: "#0f9aa6" }
   maps: { accent: "#5b8fd4", hover: "#4a7ab8" }         # cool cartography blue-gray
   messenger: { accent: "#6b7fd7", hover: "#5566c4" }    # soft slate-indigo chat; 4.68:1 on brgen dark elevated — already AA, left alone
+
+# The rhythm scale. Every spacing, radius, line-height and weight literal in the
+# family's stylesheets must land on a step below, or on a token that resolves to
+# one. Pub4::ScaleLint reads this; scale_lint_test.rb ratchets the findings.
+#
+# This is the same argument `viewport:` above makes, applied to the axis it says
+# is already single-sourced and is not. Colour, motion, elevation and the dialect
+# maps are single-sourced. Rhythm was never measured, and on 2026-08-15 it
+# measured 539 spacing literals over 93 distinct values, and 13 distinct
+# line-heights for what is one body-text rhythm.
+#
+# NOT CSS custom properties, and mostly cannot be: `padding: 0.35rem` is a
+# literal an author typed, and no variable exists that would have stopped them.
+# Like `viewport:`, this is a declared set that a lint asserts the sheets obey,
+# not a variable the sheets consume.
+scale:
+  # Powers-of-two-ish, in px. rem is normalised at 16 for membership: 0.75rem and
+  # 12px are the same design decision written twice, which is what shared_chrome
+  # says when it explains why chrome_inset is absolute.
+  #
+  # 1, 2 and 3 are hairlines -- a 1px pull to close a border seam is not a
+  # spacing decision and has no smaller step to round to. 44 is tap_min and 12 is
+  # chrome_inset, both already in shared_chrome above.
+  space_px: [0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
+
+  # Unitless only. An absolute line-height does not inherit: a child at another
+  # font-size gets the parent's pixel figure anyway, and brgen's 18px root makes
+  # that worse here than in a default-root tree. stylelint-a11y has this exact
+  # rule (line-height-is-vertical-rhythmed) and it is the one type defect that
+  # reads as "the page looks unsettled" rather than as a bug.
+  #
+  # 1 is a deliberate no-leading for icon and badge text. 1.5 is the body rhythm
+  # and carries 44 of the 83 declarations already; 1.25/1.4/1.6 are the heading,
+  # dense and relaxed steps.
+  line_height: [1, 1.25, 1.4, 1.5, 1.6]
+
+  # 0 is not an absence of a decision here -- face and bsdports are CRT-flat by
+  # intent (shared_chrome's dialect map says so). 50% and 100% are shapes, not
+  # steps, and the lint does not measure them.
+  radius_px: [0, 2, 4, 8, 12, 16]
+
+  # The four weights the loaded faces actually carry. A weight outside this set
+  # is synthesised by the browser, which is a different glyph shape than the one
+  # the design was drawn against.
+  font_weight: [400, 500, 600, 700]
+
+  # Measured, never raised to silence a finding. Same contract as
+  # BreakpointLint::BASELINES and the chrome_i18n_lint baselines.
+  baselines:
+    # Measured 2026-08-16. Every one of the 88 is a sub-grid fraction --
+    # 0.35rem is 5.6px at a 16px root and 6.3px at brgen 18px, so it lands on
+    # a fractional device pixel and the browser antialiases the edge. That is
+    # what "the spacing looks unsettled" is, and it is 21 sites of one value.
+    off_scale_space: 88
+    # 1.55 and 1.45 are four sites each, sitting either side of the 1.5 that
+    # carries the other 44 declarations.
+    off_scale_line_height: 13
+    absolute_line_height: 1
+    off_scale_radius: 2
+    off_scale_font_weight: 0

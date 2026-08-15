@@ -161,7 +161,26 @@ class DeployGatesContractTest < Minitest::Test
     source = File.read(File.join(OPENBSD_ROOT, "bin", "check-full"))
 
     assert_includes source, 'runner.run("rails contracts"'
-    assert_includes source, 'RAILS/test/**/*_test.rb'
+    # Was an inline Dir[...].each { require } that loaded all sixty-nine files
+    # into one process. run_all.rb runs them one process per file over the same
+    # `**/*_test.rb` glob -- pinned there, and pinned here so the step cannot
+    # quietly go back to a loader that shares a namespace across the suite.
+    assert_includes source, "RAILS/test/run_all.rb"
+
+    runner = File.read(File.join(ROOT, "test", "run_all.rb"))
+    assert_includes runner, '"**", "*_test.rb"',
+                    "run_all.rb must glob recursively or test/gates/ stops being run"
+  end
+
+  # The runner must actually see every file the old loader saw. A narrower glob
+  # here would run 401 of the 496 and print a green line about it.
+  def test_the_contract_runner_sees_the_whole_suite
+    expected = Dir.glob(File.join(ROOT, "test", "**", "*_test.rb")).sort
+
+    refute_empty expected
+    assert_operator expected.size, :>, 50
+    assert_includes expected.map { |p| p.sub("#{ROOT}/", "") }, "test/gates/calibration_test.rb",
+                    "test/gates/ is part of the suite; a top-level-only glob drops nine files"
   end
 
   def test_production_gate_does_not_require_deleted_retired_app_gate
