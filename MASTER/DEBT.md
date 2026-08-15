@@ -228,12 +228,25 @@ the test that existed to protect it (Scanner Conventions #5, in this file, in
 the file's own subject matter). The string now names the live sequence and the
 test reads `turn_router.rb` instead of a literal.
 
-The second is open and is the actual question: **should a turn end with a review
-pass at all?** Wiring `Stages::Review` back into `run_command_pipeline` is four
-lines and would put Council, Lint and Prune on every command — a behaviour change
-with a cost per turn that nobody has chosen. Deleting the four stages is the
-other honest answer. What is not defensible is the present state, where the
-capability exists, is toggleable, reports itself enabled, and never runs.
+Two of the orphans are gone. `Stages::Deliberate` wrapped a coding message with
+"list four approaches first", which the Fold now enforces constitutionally
+through `Proof#ideation_satisfied?` — the same rule, at the gate instead of in
+the prompt. `Stages::Guard` scanned incoming messages for prompt injection;
+`Ground::ToolContract` and `Builder::AiBoot` still scan through
+`Review::Security::InjectionGuard`, so the capability did not go with it, only
+the copy that ran on nothing. Both deletions paid for `WriteGuard` (`spine.yml`,
+2026-08-15).
+
+What is open is `Stages::Review` and the three it owns — Council, Lint, Prune.
+`WriteGuard` has taken Lint's job and gone further, since it runs on every write
+rather than at the end of a turn. Council and Prune have no such replacement:
+Prune is the Strunk pass over output, which currently reaches speech and the
+chat reply but not the command lane, and Council is deliberation, which the Fold
+reaches directly through `council_for_done_rule`. Wiring `Stages::Review` into
+`run_command_pipeline` is four lines and puts both on every command, at a cost
+per turn nobody has chosen. Deleting them is the other honest answer. The
+present state — capability toggleable through `/review on`, reporting itself
+enabled, running never — is the one that is not defensible.
 
 ## Scanner noise
 
@@ -522,7 +535,7 @@ Two facts with no home of their own, kept because both were expensive to find.
 
 ## Scanner Conventions
 
-Five shapes of one defect: **each converts the absence of a property into
+Six shapes of one defect: **each converts the absence of a property into
 evidence of it.** A gate, a test or a reader accepts something that merely looks
 like the thing it was checking for, and the result is a defect that arrives
 carrying its own certificate of compliance. All five were found in the same week
@@ -634,7 +647,24 @@ The tell is a test whose failure message describes something good happening.
 Invert it and ask what a successful fix looks like in CI; if the answer is "red",
 the assertion points the wrong way.
 
-### What follows from all five
+### 6. A writer that reports an edit it did not make
+
+`rake lint:spine RATCHET=1` printed "raise log cleared" and cleared nothing. Its
+substitution matched continuation lines only (`    .*`), deliberately, after an
+earlier version matched dashed lines only and left the file unparseable — the
+fix for a loud failure introduced a silent one, and the comment above it
+explained the reasoning for a pattern that had stopped matching anything. The
+allowance was therefore a countdown to permanent failure rather than the budget
+`spine.yml` describes, and nothing could show it: a cleared log and a log that
+was never touched look identical from outside.
+
+The fix is not the regex. It is that the task now **reads back what it wrote**
+and aborts if `raised` is not empty. A writer that can claim an edit it did not
+make belongs to the same family as the four above — the absence of a property
+reported as evidence of it — and the remedy is the same: assert the outcome, not
+the attempt.
+
+### What follows from all six
 
 - **A new gate's first run must be against a known-bad input, not a clean tree.**
   A green first run is the least informative outcome available: it is equally

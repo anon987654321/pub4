@@ -35,12 +35,21 @@ module Master
       def build_fold(root:, model:, model_id:, memory:, critique_runner:, max_turns:, observer:)
         Master::Core::Fold.new(
           model:       model || Master::Core::Model.new(**{ model_id: }.compact),
-          constitution: Master::Core::Constitution.load(data_dir: Master.data_path),
+          constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier),
           world:       Master::Core::World.new(root:, critique_runner:),
           memory:,
           max_turns:,
           observer:,
         )
+      end
+
+      # The Fold writes through World, not through the Io tools, so it needs the
+      # same guard handed to it. Returns the blocking findings as strings.
+      def scan_verifier
+        lambda do |path:, content:|
+          Master::Review::Scan::WriteGuard.default.verdict(path:, content:).blocking
+                                          .map { |f| "#{f[:rule]}:#{f[:line]} #{f[:message]}" }
+        end
       end
 
       def run_string(goal, root:, bus: nil, model: nil, model_id: nil)

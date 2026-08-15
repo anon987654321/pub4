@@ -10,6 +10,8 @@ module Master
         def call
           scanner = @container[:scanner]
           return Result.err("no scanner in container") unless scanner
+
+          report = build_report(scanner)
           publish_drift(report)
           persist(report)
           Result.ok(report)
@@ -45,18 +47,16 @@ module Master
         # improved | regressed | steady — caught the moment a defect lands.
         def publish_drift(report)
           delta = report[:delta]
-          kind = if delta.negative?
-"improved"
-else
-(delta.positive? ? "regressed" : "steady")
-end
+          kind = delta.negative? ? "improved" : (delta.positive? ? "regressed" : "steady")
           bus&.publish("constitution_drift:#{kind}", **report)
         end
 
         def state_file = File.join(root, STATE_PATH)
 
         def load_previous
-          { total: 0 } unless File.exist?(state_file)
+          return { total: 0 } unless File.exist?(state_file)
+
+          JSON.parse(File.read(state_file), symbolize_names: true)
         rescue StandardError => e
           Swallow.log(e, context: "constitution_drift.load_previous", event_bus: bus)
           { total: 0 }

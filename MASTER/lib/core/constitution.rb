@@ -18,8 +18,14 @@ module Master::Core
       def watches?(verb) = verbs.include?(verb)
     end
 
-    def self.load(data_dir:)
-      new(rules: default_rules(YAML.safe_load_file(File.join(data_dir, "rules.yml"), aliases: true)))
+    # verify is the scanner, supplied rather than required: the spine reaches
+    # nothing in lib/. It takes (path:, content:) and answers what the write
+    # introduces, so the design law judges a write on the way in, like every
+    # other rule here, instead of waiting for someone to run a scan.
+    def self.load(data_dir:, verify: nil)
+      rules = default_rules(YAML.safe_load_file(File.join(data_dir, "rules.yml"), aliases: true))
+      rules += [scan_clean_rule(verify)] if verify
+      new(rules:)
     end
 
     def initialize(rules:)
@@ -96,6 +102,18 @@ module Master::Core
 
         err = ruby_syntax_error(effect.args[:content].to_s)
         err ? Verdict::Block.new(reason: err, by: :ruby_parses) : nil
+      })
+    end
+
+    # A write may carry the debt already in the file it replaces; it may not add
+    # to it. Blocking on the whole file would refuse the first repair of any file
+    # that already breaks a rule.
+    def self.scan_clean_rule(verify)
+      Rule.new(id: :scan_clean, verbs: %i[write], judge: lambda { |effect, _memory|
+        blocking = verify.call(path: effect.args[:path], content: effect.args[:content].to_s)
+        next nil if blocking.empty?
+
+        Verdict::Block.new(reason: "write introduces #{blocking.join("; ")}", by: :scan_clean)
       })
     end
 
@@ -177,7 +195,7 @@ module Master::Core
     # is the idiom being measured, not the surface — see DEBT.md, "The fold spine
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
-    private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule,
+    private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule,
                          :safe_exec_rule, :structured_exec_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :council_for_done_rule,
                          :ideation_before_write_rule, :ruby_syntax_error, :safe_rx
