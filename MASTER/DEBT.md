@@ -205,49 +205,6 @@ Both pinned in `test/test_scan_rule_false_positives.rb`, and generalised: no
 learned smell may share an id with a registered rule, and no two rules may report
 the same long line.
 
-## The post-execution review pass runs on no turn — opened 2026-08-15
-
-**operator-priority** — a design decision, not noise.
-
-`Stages::Review` is constructed nowhere in `lib/`, `bin/` or `web/`. It is the
-stage that runs Council feedback, then Lint on written paths, then Prune, and it
-builds `Lint` and `Prune` in its own initializer, so all three go dark with it.
-`Stages::Deliberate` and `Stages::Guard` are likewise never constructed;
-`Stages::Enhance` runs only from `web/app/controllers/chat_controller.rb`, off
-the turn path. `TurnRouter` assembles Intake → Infer → Route → DestructiveReview
-→ Execute → Render, and nothing else.
-
-`/review on` still answers "review: enabled in pipeline". It sets
-`council_stage.enable!`, a flag on an object no pipeline reads.
-
-Two consequences worth separating. The first is closed: `RuntimeMode::PIPELINE_STAGES`
-advertised the ten-stage sequence through `Ground::BootstrapDocs::AGENTS`, which
-is the orientation every coding agent boots on, and `test_runtime_mode.rb`
-asserted the string contained `"Deliberate"` — so correcting it would have failed
-the test that existed to protect it (Scanner Conventions #5, in this file, in
-the file's own subject matter). The string now names the live sequence and the
-test reads `turn_router.rb` instead of a literal.
-
-Two of the orphans are gone. `Stages::Deliberate` wrapped a coding message with
-"list four approaches first", which the Fold now enforces constitutionally
-through `Proof#ideation_satisfied?` — the same rule, at the gate instead of in
-the prompt. `Stages::Guard` scanned incoming messages for prompt injection;
-`Ground::ToolContract` and `Builder::AiBoot` still scan through
-`Review::Security::InjectionGuard`, so the capability did not go with it, only
-the copy that ran on nothing. Both deletions paid for `WriteGuard` (`spine.yml`,
-2026-08-15).
-
-What is open is `Stages::Review` and the three it owns — Council, Lint, Prune.
-`WriteGuard` has taken Lint's job and gone further, since it runs on every write
-rather than at the end of a turn. Council and Prune have no such replacement:
-Prune is the Strunk pass over output, which currently reaches speech and the
-chat reply but not the command lane, and Council is deliberation, which the Fold
-reaches directly through `council_for_done_rule`. Wiring `Stages::Review` into
-`run_command_pipeline` is four lines and puts both on every command, at a cost
-per turn nobody has chosen. Deleting them is the other honest answer. The
-present state — capability toggleable through `/review on`, reporting itself
-enabled, running never — is the one that is not defensible.
-
 ## Scanner noise
 
 `rake selfcheck` is **20 violations across 3 rules** (re-measured 2026-08-15):

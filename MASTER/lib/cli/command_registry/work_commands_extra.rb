@@ -13,21 +13,8 @@ module Master
         .git .bundle node_modules vendor tmp log coverage storage cache dist build knowledge public var
       ].freeze
 
-      def dispatch_review(council_stage:, deliberation:, root:, bus:, review_crew:, ctx: nil)
-        arg = arg_for(ctx)
-        case arg
-        when "on"
-          return "review: lean boot (set MASTER_FULL_BOOT=1 for pipeline toggle)" unless council_stage
-          council_stage.enable!; "review: enabled in pipeline"
-        when "off"
-          return "review: lean boot (set MASTER_FULL_BOOT=1 for pipeline toggle)" unless council_stage
-          council_stage.disable!; "review: disabled in pipeline"
-        when "status"
-          return "review: lean boot (deliberation tribunal available)" unless council_stage
-          "review: #{council_stage.enabled? ? "on" : "off"} in pipeline"
-        else
-          review_target(arg, root:, deliberation:, bus:, review_crew:)
-        end
+      def dispatch_review(deliberation:, root:, bus:, review_crew:, ctx: nil)
+        review_target(arg_for(ctx), root:, deliberation:, bus:, review_crew:)
       end
 
       def review_target(arg, root:, deliberation:, bus:, review_crew:)

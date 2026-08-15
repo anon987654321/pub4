@@ -26,9 +26,10 @@ module Master
         return target if target.err?
 
         @bus&.publish("tool:before", tool: NAME, old: old_str, new: new_str)
+        @refused = []
         changed = replace_contents(target.value!, old_str, new_str)
         changed += rename_paths(target.value!, old_str, new_str) if rename_files
-        Result.ok("replaced in #{changed} file(s)")
+        Result.ok("replaced in #{changed} file(s)#{refused_note}")
       rescue StandardError => e
         Result.err("replace: #{e.message}", category: :unknown)
       end
@@ -42,15 +43,35 @@ module Master
         Result.err("replace: path escapes root: #{directory}", category: :validation)
       end
 
+      # This tool predates Io::Base and writes through AtomicWrite, so it misses
+      # commit_write's guard. A bulk edit is the easiest way to introduce the
+      # same violation in fifty files at once, so it is the last one that should
+      # be exempt. Per file, not per batch: one refusal must not lose the rest.
       def replace_contents(target, old_string, new_string)
         candidate_paths(target).count do |path|
           content = read_text(path)
           next false unless content&.include?(old_string)
 
-          write_atomic(path, content.gsub(old_string, new_string))
+          updated = content.gsub(old_string, new_string)
+          verdict = Master::Review::Scan::WriteGuard.default.verdict(path:, content: updated)
+          next refuse(path, verdict) if verdict.blocked?
+
+          write_atomic(path, updated)
           record_change(path)
           true
         end
+      end
+
+      def refuse(path, verdict)
+        @refused << path
+        @bus&.publish("write:guard", path:, introduced: verdict.introduced.size, blocked: true)
+        false
+      end
+
+      def refused_note
+        return "" if @refused.empty?
+
+        " — #{@refused.size} refused, each would introduce a finding: #{@refused.join(", ")}"
       end
 
       def rename_paths(target, old_string, new_string)

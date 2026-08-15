@@ -86,7 +86,7 @@ module Master
           "graph" => command(:dispatch_graph, d[:root], d[:code_index], d[:reference_graph]),
           "resync" => command(:dispatch_resync, d[:root], d[:fix_loop], d[:git], d[:bus]),
           "tail" => command(:dispatch_tail, d[:root]),
-          "review" => command(:dispatch_review, d[:council_stage], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
+          "review" => command(:dispatch_review, d[:deliberation], d[:root], d[:bus], d[:review_crew]),
           "critique" => command(:dispatch_critique, d[:deliberation], d[:root]),
         }
       end

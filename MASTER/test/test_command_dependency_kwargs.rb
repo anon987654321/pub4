@@ -10,12 +10,9 @@ class TestCommandDependencyKwargs < Minitest::Test
     end
   end
 
-  # Regression: dispatch_review's council_stage is nil in lean boot mode.
-  # command() is called with it as a positional arg; the positional call
-  # fails (dispatch_review takes only keywords), so Command retries via
-  # dependency_kwargs, which used to `.compact` away every nil value --
-  # including required ones -- turning a legitimate nil dependency into
-  # "missing keyword: :council_stage".
+  # A dependency passed positionally to a keyword-only method reaches it
+  # through dependency_kwargs. A nil one is still a value, and dropping it
+  # there reads to the callee as a missing keyword.
   def test_required_nil_dependency_is_still_passed_through
     command = Master::CLI::CommandRegistry::Command.new(Receiver.new, :keyword_only, nil, "explicit optional")
     result = command.call(nil)

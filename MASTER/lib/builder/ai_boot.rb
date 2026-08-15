@@ -18,7 +18,7 @@ module Master
       finalize_ai_boot(bus:, root:, infra:, agent:, autonomous:, scanner:, lean_boot: services[:lean_boot])
 
       { agent:, soul: bundle[:soul], scanner:, ecology: infra[:ecology], swarm: services[:swarm],
-        deliberation: council[:deliberation], council_stage: council[:council_stage],
+        deliberation: council[:deliberation],
         ideation: council[:ideation], guard: services[:guard],
         reference_graph: infra[:reference_graph], agent_pool: bundle[:agent_pool],
         context_window: bundle[:context_window], tools: }.merge(autonomous)
@@ -30,7 +30,7 @@ module Master
       scanner = build_scanner(root:, agent:, bus:, ecology: infra[:ecology])
       lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
       swarm = lean_boot ? nil : Review::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
-      council = build_council(infra:, agent:, bus:, root:, lean_boot:)
+      council = build_council(agent:, bus:, root:)
       # Permissive for user chat (CLI + web); strict guard remains in ToolContract for shell/git.
       guard = Review::Security::InjectionGuard.new(mode: :permissive)
       { scanner:, lean_boot:, swarm:, council:, guard: }
@@ -68,18 +68,12 @@ module Master
       { agent:, tools:, soul: soul_doc, context_window: ctx, agent_pool: }
     end
 
-    def build_council(infra:, agent:, bus:, root:, lean_boot:)
+    def build_council(agent:, bus:, root:)
       personas = Review::Council::Personas.load(Master::COUNCIL_PATH)
       axioms = Ground::Rules.new(root:)
       deliberation = Review::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
       ideation = Review::Council::Ideation.new(agent:, event_bus: bus)
-      council_stage = if lean_boot
-                        nil
-                      else
-                        CLI::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus,
-                                                 ground_truth: infra[:ground_truth])
-                      end
-      { axioms:, deliberation:, ideation:, council_stage: }
+      { axioms:, deliberation:, ideation: }
     end
 
     def subscribe_graph_retriever(bus:, infra:, root:)

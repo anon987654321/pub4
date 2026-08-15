@@ -45,7 +45,7 @@ entries:
 
     All coding happens on the VPS via sshpass SSH—never local edits. Patches go through `~/pub4/tmp/patch.rb`. Shell work uses zsh builtins only; no sed, awk, grep, find, head, or tail.
 
-    The command pipeline is Intake → Infer → Route → DestructiveReview → Execute → Render; plain-language goals go to Core::Fold instead. Council/Lint/Prune belong to Stages::Review, which no turn constructs (DEBT.md). Pipe commands with `echo "cmd" | bundle exec ruby bin/cli`. Startup YAML includes `state.yml`, `limits.yml`, `rules.yml`, `voice.yml`, `style.yml`, and `models.yml`. The web tier is Falcon on port 53187; relayd terminates TLS at `https://ai.brgen.no` on 443. Deploy checks: `ruby OPENBSD/integrity_gate.rb` and `bin/probe integrity`.
+    The command pipeline is Intake → Infer → Route → DestructiveReview → Execute → Render; plain-language goals go to Core::Fold instead. Every write on either lane is judged by Review::Scan::WriteGuard before it lands. Pipe commands with `echo "cmd" | bundle exec ruby bin/cli`. Startup YAML includes `state.yml`, `limits.yml`, `rules.yml`, `voice.yml`, `style.yml`, and `models.yml`. The web tier is Falcon on port 53187; relayd terminates TLS at `https://ai.brgen.no` on 443. Deploy checks: `ruby OPENBSD/integrity_gate.rb` and `bin/probe integrity`.
 - key: project_master_dual_gemfile
   name: MASTER has two Gemfiles
   description: MASTER/Gemfile (CLI) and MASTER/web/Gemfile (Falcon web) are independent

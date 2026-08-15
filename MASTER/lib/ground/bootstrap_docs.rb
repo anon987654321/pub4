@@ -61,7 +61,7 @@ module Master
         Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider). Authority: data/soul.yml → data/rules.yml → CONVENTIONS (via /orient conventions) → this runtime.
         Modules: cli (pipeline/CLI), fix (fix/rule/watch), review (scanner/council), voice (render/TTS), ground (constitution/memory), io (tools), trace (events/session), core (the fold).
         Flat Hierarchy: standing order aggressive_merge on every write — merge thin siblings, rename to dense Rails-parameterize slugs (snake_case, Strunk-clean tokens), OpenBSD-flat, Zeitwerk-true, Roda-tight.
-        Pipeline (slash commands and inferred commands): #{Master::CLI::RuntimeMode::PIPELINE_STAGES}. Plain-language goals go to Core::Fold instead, which is the only lane the constitution judges. Council/Lint/Prune belong to Stages::Review, which no turn constructs — see DEBT.md.
+        Pipeline (slash commands and inferred commands): #{Master::CLI::RuntimeMode::PIPELINE_STAGES}. Plain-language goals go to Core::Fold instead, which is the only lane the constitution judges. Every write on either lane is judged by Review::Scan::WriteGuard, which refuses one that introduces an error-severity finding — the design law is enforced on the write, not on /scan.
         VPS/deploy: OPENBSD/RUNBOOK.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
       TEXT
 
