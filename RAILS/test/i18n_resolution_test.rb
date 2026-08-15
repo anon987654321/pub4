@@ -32,7 +32,7 @@ class I18nResolutionTest < Minitest::Test
     LOCALES.flat_map do |locale|
       known = app_keys(app, locale)
       keys_used_by(app).filter_map do |key, file|
-        next if framework?(key) || known.key?(key) || plural?(known, key)
+        next if framework?(key) || known.key?(key) || subtree?(known, key)
 
         [app, locale, key, file]
       end
@@ -94,22 +94,35 @@ class I18nResolutionTest < Minitest::Test
     nil
   end
 
-  # Branch keys count as resolvable, not just leaves. `t` on a namespace returns
-  # the subtree as a Hash, and _affiliate_feed_unit deliberately does that —
-  # t("affiliate.cta").values cycles the call-to-action tiles — so recording only
-  # leaves reported a key that resolves fine as translation_missing. A branch
-  # that does not exist still fails, which is the part worth keeping.
   def flat_keys(relative, node = nil, prefix = [], out = {})
     node ||= (YAML.safe_load_file(File.join(ROOT, relative), aliases: true) || {}).values.first || {}
     node.each do |key, value|
       path = prefix + [key.to_s]
-      out[path.join(".")] = true
-      flat_keys(relative, value, path, out) if value.is_a?(Hash)
+      value.is_a?(Hash) ? flat_keys(relative, value, path, out) : out[path.join(".")] = true
     end
     out
   end
 
-  def plural?(known, key) = known.key?("#{key}.one") || known.key?("#{key}.other")
+  # A key naming a SUBTREE resolves too, to the Hash under it.
+  #
+  # This was `known.key?("#{key}.one") || known.key?("#{key}.other")`, which
+  # covers pluralisation and nothing else, so it reported
+  #
+  #   brgen [en] affiliate.cta <- shared/_affiliate_feed_unit.html.erb
+  #   brgen [nb] affiliate.cta <- shared/_affiliate_feed_unit.html.erb
+  #
+  # as missing translations. They are not missing: affiliate.cta.buy, .happy and
+  # .good are present in both locales, and the partial deliberately fetches the
+  # branch — `t("affiliate.cta").values[...]` rotates through the calls to
+  # action. flat_keys records leaves only, so the branch itself never appears in
+  # `known` and any caller that wants a Hash reads as broken.
+  #
+  # Pluralisation is one instance of this rather than the rule, so the check is
+  # now "does anything live under this key", which covers both.
+  def subtree?(known, key)
+    prefix = "#{key}."
+    known.any? { |known_key, _| known_key.start_with?(prefix) }
+  end
 
   def framework?(key) = FRAMEWORK_PREFIXES.any? { |prefix| key.start_with?(prefix) }
 end

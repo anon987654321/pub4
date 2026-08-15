@@ -50,16 +50,16 @@ module Pub4
     # min-width author had already declared. It is a ratchet at zero now, not a
     # tolerance: the next collision is a new one.
     #
-    # unknown_edge is 3 and each is a design decision rather than a typo: 700px in
-    # brgen/_marketplace_nav_bar, 400px and 600px in shared/_zen_shell. Adopt them
-    # as viewport edges or move them to the nearest one; either way the number in
-    # design_tokens.yml goes first.
+    # unknown_edge is 0 as of 2026-08-15, down from 3. The three that were "design
+    # decisions rather than typos" — 700px in brgen/_marketplace_nav_bar, 400px and
+    # 600px in shared/_zen_shell — are gone from the sheets, so the tolerance that
+    # existed for them is gone too. The next unrecognised width is a new one.
     #
     # A fourth, 769px in brgen/_root, was a genuine gap and is fixed: the compose
     # control's tablet band started one pixel above the edge the rest of the family
     # uses, so at exactly 768px it fell through to base styling while the shell
     # around it was already in its tablet band.
-    BASELINES = { "unknown_edge" => 3, "ambiguous_edge" => 0 }.freeze
+    BASELINES = { "unknown_edge" => 0, "ambiguous_edge" => 0 }.freeze
 
     Finding = Struct.new(:file, :line, :kind, :value)
 
