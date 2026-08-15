@@ -471,7 +471,18 @@ path** rather than returning silently.
 
 ## Live gotchas
 
-Two facts with no home of their own, kept because both were expensive to find.
+Three facts with no home of their own, kept because each was expensive to find.
+
+- **A council pass looks exactly like a hang.** On a dev Mac the provider is the
+  `claude` CLI (`send_claude_cli`), not an HTTP API, so a run with no
+  `*_API_KEY` in the environment still reaches a model and `Master.any_api_key_present?`
+  is not the question. `CLAUDE_CLI_TIMEOUT_S` is 300 and the council runs 26
+  personas four at a time, capped by `TOTAL_BUDGET_S` at 600. Add four scans of
+  ~90s each and `/through master` needs roughly sixteen minutes. It spends most
+  of that at 0% CPU with an empty pipe, because the CLI buffers when stdout is
+  not a TTY and every persona thread is blocked on `IO#read`. Two sessions have
+  now killed it believing it was stuck. `ps` shows the truth: count the
+  `claude --print` subprocesses before concluding anything.
 
 - **Constructing a `CLI` object flips a process-wide flag.** `CLI#initialize`
   calls `set_visitor_mode_if_unauthenticated`, which sets
