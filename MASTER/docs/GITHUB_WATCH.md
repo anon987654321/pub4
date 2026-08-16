@@ -16,7 +16,7 @@ This file tracks public GitHub projects relevant to MASTER's architecture, const
 ### Priority 2: LLM Agent Frameworks
 - **langchain-ai/langchain** (Python, but architecture is language-agnostic)
   - Watch for: Multi-agent patterns, tool orchestration, state management
-  - Relevant to: MASTER's NOW/JUDGE/REACH pipeline
+  - Relevant to: MASTER's cli/review/io pipeline
 
 - **huggingface/transformers** — Model loading and inference patterns
   - Watch for: Token budgeting, streaming, provider integration
@@ -29,12 +29,12 @@ This file tracks public GitHub projects relevant to MASTER's architecture, const
 
 - **golangci/golangci-lint** — Linter composition framework
   - Watch for: How they organize scanner rules, priority hierarchy, exceptions
-  - Relevant to: MASTER's judge/scan architecture (rule composition similar)
+  - Relevant to: MASTER's review/scan architecture (rule composition similar)
 
 - **github/super-linter** — Multi-language governance enforcement
   - Watch for: Cross-language consistency patterns, custom rule extensions
 
-- **rubocop/rubocop** — Ruby linter (most similar to MASTER's Judge/Scan)
+- **rubocop/rubocop** — Ruby linter (most similar to MASTER's Review::Scan)
   - Watch for: Ruby-specific governance patterns, exception handling
 
 ### Priority 4: Code Quality Metrics

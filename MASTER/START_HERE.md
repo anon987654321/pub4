@@ -96,6 +96,8 @@ Rules live in one file because rules split across several grow definitions that 
 
 - UI/face topology, event registry, routing notes — consolidated behind `RuntimeCatalog.load(section)`.
 
+Documents outside `data/` that nothing links to are found by nobody: the gap audit behind the principle map is `PRINCIPLE_MAP_AUDIT.md`, repair procedures are `REPAIR_PLAYBOOKS.md`, the UI polish authority is `docs/UI_POLISH_PLAYBOOK.md`, and external projects worth reading are `docs/GITHUB_WATCH.md`.
+
 **Tier 4 — Prose (3 allowed markdown files in `data/`):**
 
 - `SOUL.md` — human mirror of absolute tier (pairs with `soul.yml`)
