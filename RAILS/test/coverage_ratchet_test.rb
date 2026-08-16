@@ -33,7 +33,13 @@ class CoverageRatchetTest < Minitest::Test
   # Check-in is still asserted from host integration tests; the engine source
   # no longer basename-collides with a host maps_places test that was never there.
   FLOORS = {
-    "amber" => { "controllers" => 1, "models" => 5 },
+    # models 5 -> 10 on 2026-08-16: wear_log, outfit_item, packing_list,
+    # planned_outfit, sustainability_metric. Writing them found three live 500s
+    # — deleting an outfit you had worn, deleting an outfit you had planned, and
+    # deleting a garment on a packing list all raised InvalidForeignKey, because
+    # the schema had the constraint and the model declared no dependent option.
+    # foreign_key_dependency_test.rb holds the remaining fifteen.
+    "amber" => { "controllers" => 1, "models" => 10 },
     # models raised 10 -> 11 on 2026-08-03; the ratchet asked for it.
     # 11 -> 13 on 2026-08-12: engines/playlist got its first tests, covering
     # Playlist::Playlist and Playlist::ListeningParty. It was the only one of the

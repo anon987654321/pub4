@@ -18,6 +18,11 @@ class Item < ApplicationRecord
   has_many :wear_logs, dependent: :destroy
   has_many :affiliate_links, dependent: :destroy
   has_many :declutter_challenges, dependent: :destroy
+  # packing_list_items carries a foreign key to items and nothing here declared
+  # it, so deleting a garment that was on any packing list raised
+  # ActiveRecord::InvalidForeignKey. destroy rather than nullify: a packing entry
+  # naming a garment that no longer exists is a row that renders as a blank line.
+  has_many :packing_list_items, dependent: :destroy, strict_loading: false
 
   # Named variants match WardrobeMediaJob — keep dimensions in lockstep so
   # list/show helpers hit preprocessed digests instead of inventing new sizes.
