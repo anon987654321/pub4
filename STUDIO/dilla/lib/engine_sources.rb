@@ -31,11 +31,9 @@ module DillaSources
   ENGINE_PARTS = %w[
     source_learn
     track_tables
-    patch_catalog
     voice_presets
-    patch_select
     render_seed
-    patch_pools
+    patch
     radio_bergen
     resolve_config
     progression_build
