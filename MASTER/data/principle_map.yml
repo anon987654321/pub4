@@ -1,5 +1,9 @@
 ---
 schema: 1
+# Reverse of the integrity check: registered scan rules that no principle claims.
+# 2026-08-07: closed 8 gaps (circuit_breaker, least_privilege, secure_by_default,
+# composition_over_inheritance, boy_scout_rule, durability, user_control, sovereignty)
+# by linking existing kernel/unit rules.
 rule_trace_ceiling: 101
 version: v110.0-restored
 source: merged master.yml fossil → MASTER runtime principle_map
@@ -408,10 +412,13 @@ principles:
     severity: high
     confidence: 0.9
     operation: improve
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - BROKEN_WINDOWS
+    - ENTROPY_RESISTANCE
+    status: covered
     tags:
     - code
+    - linked-2026-08-07
   building_enhances_site:
     meaning: 'Architecture improves its natural context  '
     detects: weak_structure
@@ -460,10 +467,14 @@ principles:
     severity: critical
     confidence: 0.85
     operation: add_recovery
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - DEGRADE_GRACEFULLY
+    - GRACEFUL_BOUNDARIES
+    - CONSISTENT_ERROR_STRATEGY
+    status: covered
     tags:
     - code
+    - linked-2026-08-07
   clarity:
     meaning: obvious intent
     detects: unclear_naming
@@ -569,10 +580,12 @@ principles:
     severity: medium
     confidence: 0.75
     operation: compose
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - COMPOSITION_OVER_INHERITANCE
+    status: covered
     tags:
     - code
+    - linked-2026-08-07
   connectivity:
     meaning: 'Link spaces, communities, and systems  '
     detects: isolated_components
@@ -812,10 +825,13 @@ principles:
     severity: critical
     confidence: 0.95
     operation: add_tests
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - PROPERTY_BASED_TESTING
+    - REVERSIBILITY
+    status: covered
     tags:
     - code
+    - linked-2026-08-07
     immutable: true
   durability_and_longevity:
     meaning: 'Built to last generations  '
@@ -1693,10 +1709,12 @@ principles:
     severity: critical
     confidence: 0.9
     operation: reduce_permissions
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - LEAST_PRIVILEGE
+    status: covered
     tags:
     - code
+    - linked-2026-08-07
   less_but_better:
     meaning: focus on quality over quantity
     detects: low_quality_abundance
@@ -2611,10 +2629,12 @@ principles:
     severity: critical
     confidence: 0.9
     operation: harden
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - FAIL_SAFE_DEFAULTS
+    status: covered
     tags:
     - code
+    - linked-2026-08-07
   security:
     meaning:
     detects:
@@ -2778,10 +2798,13 @@ principles:
     severity: critical
     confidence: 0.95
     operation: add_recovery
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - REVERSIBILITY
+    - GRACEFUL_BOUNDARIES
+    status: covered
     tags:
     - code
+    - linked-2026-08-07
   stimulus_progressive:
     meaning: Stimulus progressive enhancement, focused controllers
     detects: js_soup
@@ -3053,10 +3076,12 @@ principles:
     severity: high
     confidence: 0.85
     operation: add_undo
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - REVERSIBILITY
+    status: covered
     tags:
     - ui
+    - linked-2026-08-07
   utilitas:
     meaning: functional utility and purpose
     detects: purposeless_code

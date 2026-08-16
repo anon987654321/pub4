@@ -1,5 +1,17 @@
 # Principle-map gap audit: v110 → HEAD (key-by-key)
 
+## Update 2026-08-07 / applied 2026-08-16
+
+Closed 8 gaps by linking existing kernel/unit rules (no new scanners):
+`circuit_breaker`, `least_privilege`, `secure_by_default`,
+`composition_over_inheritance`, `boy_scout_rule`, `durability`,
+`user_control`, `sovereignty`.
+
+Remaining critical gaps (`pledge_unveil`, `secrets_rotation`, `audit_logging`)
+need real evidence sources, not empty `rule_ids`.
+
+---
+
 Codified 2026-08-03. Baseline of the audit: pub4 @ `48ed968c`. Headline counts
 re-verified against `data/principle_map.yml` at `1eaeefec1` and match exactly
 (138 entries, `status` covered 51 / gap 86 / unmapped 1, 72 distinct operations,

@@ -73,3 +73,15 @@ self.addEventListener('fetch', e => {
       .catch(() => caches.match(e.request).then(cached => cached || caches.match(OFFLINE_URL)))
   );
 });
+
+// Offline-first memory bridge. Clients can postMessage({ type: 'offline:drain' })
+// after coming online. The actual drain lives in offline_memory.js (page
+// context); the SW only forwards so a future Background Sync registration has
+// a single entry point.
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type === 'offline:drain' && event.source) {
+    event.source.postMessage({ type: 'offline:drain-ack', ts: Date.now() });
+  }
+});
+
