@@ -469,6 +469,49 @@ through `Swallow.log(..., severity: :load_bearing)` naming the consequence. **An
 future post-synthesis DSP must call `report_missing_ffmpeg` on its own fallback
 path** rather than returning silently.
 
+## The model registry names fifteen models the provider no longer serves — opened 2026-08-16
+
+**operator-priority.** `/through master` completed its scans, spent ¢390, and
+ended `critique failed: StandardError: No endpoints found for
+google/gemma-2-9b-it:free`. That id is an anchor in `data/models.yml` aliased
+into four fallback chains, so the council walked its chain into a model that
+does not exist.
+
+It is not the only one. `bin/provider-catalog refresh openrouter` fetches the
+live catalogue — 413 models, and no key is needed because the endpoint is
+public. Cross-checking every openrouter-routed `id:` in `models.yml` against it
+gives fifteen that are gone:
+
+```
+deepseek/deepseek-chat-v3.1:free          meta-llama/llama-4-scout:free
+google/gemini-flash-lite-latest           microsoft/phi-4:free
+google/gemma-2-9b-it:free                 mistralai/mistral-small-3.1-24b
+groq/llama-3.3-70b-versatile              nousresearch/hermes-3-llama-3.1-405b:free
+meta-llama/llama-3.3-70b-instruct:free    openai/gpt-oss-120b:free
+meta-llama/llama-4-maverick:free          qwen/qwen3-coder:free
+qwen/qwen3-next-80b-a3b-instruct:free     rekaai/reka-flash-3:free
+z-ai/glm-4.5-air:free
+```
+
+Thirteen of the fifteen are `:free` tiers, which is the pattern: a free endpoint
+is withdrawn without notice, and a chain padded with them degrades one dead
+model at a time until something visible breaks.
+
+Not fixed here, deliberately. Each id is a YAML anchor with aliases in several
+chains, so removing one means removing its definition and every alias of it, and
+a half-done edit changes routing silently rather than loudly. It wants one
+focused pass that re-measures after each removal.
+
+What stops it recurring is a check rather than a cleanup. The cross-check is
+eight lines and the catalogue refresh already exists. It cannot live in
+`bin/check`, which must run without a network, but it belongs in the operator
+profile or in `bin/probe`, where a stale registry is exactly what an operator
+wants to hear about before a deploy.
+
+Separately, that run reported `cost: +¢390.02 · 0 tok`. A non-zero cost beside a
+zero token count means the meter reads one provider's accounting and bills
+another's. The number to trust is the cents.
+
 ## Live gotchas
 
 Three facts with no home of their own, kept because each was expensive to find.
