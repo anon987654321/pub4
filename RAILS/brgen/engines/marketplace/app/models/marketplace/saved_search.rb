@@ -46,12 +46,58 @@ class Marketplace::SavedSearch < ApplicationRecord
     scope.order(created_at: :desc)
   end
 
-  def deliver_alert!(listings, now: Time.current)
+  # Listings that gained a live Deal (price reduction) matching this search
+  # since the last alert. This is the missing half of the original "price-drop
+  # alerts" opportunity — new_matches only saw brand-new rows.
+  #
+  # LiveSearch prefixes columns with the relation's table, so a Deal scope
+  # cannot be asked for marketplace_listings.title. Search each table on its
+  # own columns and union the ids.
+  def price_drop_matches(since: nil)
+    cutoff = since || last_notified_at || created_at
+    scope = Marketplace::Deal.live
+              .joins(:listing)
+              .merge(Marketplace::Listing.live)
+              .where("marketplace_deals.created_at > ?", cutoff)
+
+    scope = scope.where(marketplace_listings: { category_id: category_id }) if category_id.present?
+    scope = scope.where(marketplace_listings: { location: location }) if location.present?
+
+    if query.present?
+      listing_hits = Shared::LiveSearch.call(
+        Marketplace::Listing.live, query: query, columns: %w[title description location]
+      )
+      headline_hits = Shared::LiveSearch.call(
+        Marketplace::Deal.live, query: query, columns: %w[headline]
+      )
+      scope = scope.where(listing_id: listing_hits.select(:id))
+                   .or(scope.where(id: headline_hits.select(:id)))
+    end
+
+    scope.includes(:listing).order("marketplace_deals.created_at DESC")
+  end
+
+  # Unified entry used by the job. Prefers price drops over plain new listings
+  # so a deal on an existing match is not hidden behind "N new listings".
+  # Returns [kind, listings] where kind is :price_drop, :new, or nil.
+  def matches_for_alert(since: nil)
+    drops = price_drop_matches(since: since).limit(MAX_LISTINGS_PER_ALERT).to_a
+    return [ :price_drop, drops.map(&:listing) ] if drops.any?
+
+    news = new_matches(since: since).limit(MAX_LISTINGS_PER_ALERT).to_a
+    return [ :new, news ] if news.any?
+
+    [ nil, [] ]
+  end
+
+  def deliver_alert!(listings, now: Time.current, kind: :new)
     return false if listings.empty?
+
+    title_key = kind == :price_drop ? "marketplace.saved_search_alert.price_drop_title" : "marketplace.saved_search_alert.title"
 
     deliver_notification(
       user,
-      title: I18n.t("marketplace.saved_search_alert.title", search: title, count: listings.size),
+      title: I18n.t(title_key, search: title, count: listings.size),
       body: listings.first(3).map(&:title).join(" · "),
       source: self,
       # A saved search matching is exactly what the reader asked to be told

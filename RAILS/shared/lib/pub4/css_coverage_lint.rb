@@ -92,10 +92,10 @@ module Pub4
     # Deliberately not written here. Inventing a visual design for eleven
     # components is not a lint's decision and not a passing agent's; the numbers
     # and the cluster names are what makes it someone's.
-    # unused 269 → 272: battery-aware helpers are html classes toggled by JS
-    # (listed in EXTERNAL); the remaining +3 are leftover modifiers from the
-    # dating overflow/rewind pass whose markup no longer names them.
-    BASELINES = { "undefined_class" => 35, "unused_selector" => 272 }.freeze
+    # unused 269 → 272 → 279: typography foundation adds opt-in measure
+    # classes (prose, reading-column, form-measure, …) worn by tokens, not
+    # yet by every view. undefined 35 → 34: feed-action-form is now styled.
+    BASELINES = { "undefined_class" => 34, "unused_selector" => 279 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

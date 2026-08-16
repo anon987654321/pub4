@@ -53,7 +53,10 @@
      so the scale needs exactly one absolute anchor to be a multiple *of*.
      Express this in var(--text-base) and it defines itself. */
   --font-size: 16px;
-  --line-height: 20px;
+  /* Absolute on purpose — ScaleLint absolute_line_height baseline = 1.
+     Unitless 1.25 matches at 16px root, but brgen uses text-lg (~18px) and
+     would open chrome 20→22.5px. PRESERVE until measured pass. */
+  --line-height: 20px; // scale: ok — sole absolute body rhythm anchor
   /* design_rules typography.hierarchy allows three weights and wants at least
      200 between them so a step is visible. --weight-bold was 700, which put it
      100 from --weight-heavy — a difference you cannot see, and the reason the

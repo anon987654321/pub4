@@ -199,3 +199,79 @@
     transition: none !important;
   }
 }
+
+/* PRESERVE_THEN_IMPROVE action bar — mobile optical distribution.
+   Spaces and taps on scale (4 / 8 / 44). Line-heights on scale only. */
+.feed-action-form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.feed-action-form .feed-action {
+  width: 100%;
+}
+
+@media (max-width: 639px) {
+  .feed-card-actions {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-top: var(--space-3, 0.75rem);
+    padding-inline: var(--space-1, 0.25rem);
+  }
+
+  .feed-card-actions > .feed-action,
+  .feed-card-actions > .feed-action-form,
+  .feed-card-actions > span {
+    flex: 1 1 0;
+    display: inline-flex;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .feed-action {
+    justify-content: center;
+    padding-block: var(--space-2, 0.5rem);
+    padding-inline: var(--space-1, 0.25rem);
+    min-height: var(--tap-min, 44px);
+    min-width: var(--tap-min, 44px);
+  }
+
+  .feed-action-count {
+    font-size: var(--text-xs, 0.75rem);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--leading-none, 1);
+  }
+
+  .feed-action--views {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .feed-card-actions {
+    justify-content: flex-start;
+    gap: var(--space-1, 0.25rem);
+  }
+}
+
+.feed-post-show .post_body,
+.feed-post-show .post-body {
+  max-width: var(--measure, 66ch);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal, 1.5);
+  letter-spacing: var(--tracking-normal, 0);
+  hanging-punctuation: first allow-end last;
+  hyphens: auto;
+}
+
+.feed-post-show h1 {
+  max-width: var(--measure-wide, 75ch);
+  line-height: var(--leading-tight, 1.25);
+  letter-spacing: var(--tracking-tight, -0.01em);
+}

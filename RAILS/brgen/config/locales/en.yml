@@ -854,6 +854,7 @@ en:
     home_title: "Market · %{city}"
     saved_search_alert:
       title: "%{count} new matches for “%{search}”"
+      price_drop_title: "%{count} price drops for “%{search}”"
     browse_listings: "Browse listings"
     listing_kind: "Who is selling"
     from_anyone: "Anyone"

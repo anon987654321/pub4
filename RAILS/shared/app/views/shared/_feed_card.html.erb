@@ -10,6 +10,10 @@
   #     actions: capture { ... },
   #     url: path,
   #     class: "listing"
+  #
+  # When `record:` is passed and `actions:` is blank, the shared action_bar is
+  # rendered automatically (like / repost / reply / share). Surfaces that need
+  # a richer row (e.g. posts with upvote + quote) still pass custom `actions:`.
 %>
 
 <article class="feed-card <%= local_assigns[:class] %>" <%= local_assigns[:data_attributes] || "" %>>
@@ -65,6 +69,18 @@
       <div class="feed-card-actions">
         <%= local_assigns[:actions] %>
       </div>
+    <% elsif local_assigns[:record].present? %>
+      <%= render "shared/action_bar",
+            record: local_assigns[:record],
+            reply_path: local_assigns[:reply_path],
+            repost_path: local_assigns[:repost_path],
+            reposted: local_assigns.fetch(:reposted, false),
+            repost_count: local_assigns.fetch(:repost_count, 0),
+            liked: local_assigns.fetch(:liked, false),
+            like_count: local_assigns.fetch(:like_count, 0),
+            comment_count: local_assigns.fetch(:comment_count, 0),
+            view_count: local_assigns[:view_count],
+            share_url: local_assigns[:share_url] || local_assigns[:url] %>
     <% end %>
   </div>
 </article>

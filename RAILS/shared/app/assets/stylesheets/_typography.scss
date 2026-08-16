@@ -1,0 +1,126 @@
+// Typographic foundation — vertical rhythm + optical margins.
+//
+// PRESERVE_THEN_IMPROVE_NEVER_BREAK:
+//   • Every line-height here is on design_tokens.yml scale.line_height
+//     and MASTER design_rules typography.line_height.allowed:
+//     [1, 1.25, 1.4, 1.5, 1.6]. Off-scale (1.45, 1.55, …) is ScaleLint debt.
+//   • Measure is design_tokens measure_body / design_rules ideal_ch (66ch).
+//   • Absolute --line-height: 20px on dialect :root stays until a measured
+//     screenshot pass (brgen 18px root would open chrome 20→22.5px).
+//
+// Enforced by: Pub4::ScaleLint (RAILS), MASTER LINE_HEIGHT_ON_SCALE (surface_rules).
+
+:root {
+  --measure: 66ch;
+  --measure-narrow: 45ch;
+  --measure-wide: 75ch;
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.4;
+  --leading-normal: 1.5;
+  --leading-loose: 1.6;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+}
+
+.prose,
+.post_body,
+.post-body,
+.feed-post-body,
+.feed-post-prose,
+.article-body,
+.editorial-body {
+  max-width: var(--measure);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text);
+  letter-spacing: var(--tracking-normal);
+  text-align: start;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  hanging-punctuation: first allow-end last;
+
+  p + p {
+    margin-block-start: var(--space-3, 0.75rem);
+  }
+
+  h1, h2, h3, h4 {
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    max-width: var(--measure-wide);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-heavy, 800);
+  }
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold, 600);
+  }
+  h3 {
+    font-size: var(--text-title);
+    font-weight: var(--weight-bold, 600);
+  }
+
+  ul, ol {
+    padding-inline-start: 1.25em;
+    max-width: var(--measure);
+  }
+
+  li + li {
+    margin-block-start: var(--space-1, 0.25rem);
+  }
+
+  blockquote {
+    margin-block: 1em;
+    margin-inline: 0;
+    padding-inline-start: var(--space-4, 1rem);
+    border-inline-start: 2px solid var(--border);
+    color: var(--text-dim, var(--text-secondary));
+    max-width: var(--measure);
+    line-height: var(--leading-loose);
+  }
+}
+
+.prose-meta,
+.feed-post-meta,
+.feed-post-byline,
+.editorial-meta {
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--text-dim, var(--text-secondary));
+  letter-spacing: var(--tracking-normal);
+  max-width: var(--measure);
+}
+
+.page-title,
+.feed-post-show h1,
+main#main-content > header h1 {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: var(--weight-heavy, 800);
+  max-width: var(--measure-wide);
+  margin-block-end: var(--space-4, 1rem);
+}
+
+.section-title,
+main#main-content > section > h2 {
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: var(--weight-bold, 600);
+  margin-block-end: var(--space-3, 0.75rem);
+}
+
+.reading-column {
+  width: 100%;
+  max-width: var(--measure);
+  margin-inline: auto;
+}
+
+.form-measure {
+  width: 100%;
+  max-width: min(var(--measure-narrow), 100%);
+}

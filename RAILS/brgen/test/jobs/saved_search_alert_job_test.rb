@@ -114,6 +114,31 @@ class SavedSearchAlertJobTest < ActiveJob::TestCase
     end
   end
 
+  test "a live deal on an older listing is a price-drop alert" do
+    search = saved_search(query: "sykkel")
+    bike = listing(title: "Terrengsykkel til salgs", created_at: 2.days.ago)
+    Marketplace::Deal.create!(listing: bike, headline: "Sykkel -20%")
+
+    assert_difference -> { @watcher.notifications.count }, 1 do
+      SavedSearchAlertJob.perform_now
+    end
+    note = @watcher.notifications.order(:id).last
+    assert_match(/price drops|prisreduksjon/i, note.title)
+    assert_not_nil search.reload.last_notified_at
+  end
+
+  test "a price drop is preferred over a brand-new listing" do
+    saved_search(query: "sykkel")
+    bike = listing(title: "Gammel sykkel", created_at: 2.days.ago)
+    listing(title: "Ny sykkel i dag")
+    Marketplace::Deal.create!(listing: bike, headline: "Priskutt på sykkel")
+
+    SavedSearchAlertJob.perform_now
+    note = @watcher.notifications.order(:id).last
+    assert_match(/price drops|prisreduksjon/i, note.title)
+    assert_includes note.body, "Gammel sykkel"
+  end
+
   test "nothing matching leaves the watermark alone" do
     search = saved_search(query: "kajakk")
     listing(title: "Terrengsykkel til salgs", description: "Pent brukt")

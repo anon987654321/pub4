@@ -856,6 +856,7 @@ nb:
     home_title: "Markedsplass · %{city}"
     saved_search_alert:
       title: "%{count} nye treff for «%{search}»"
+      price_drop_title: "%{count} prisreduksjoner for «%{search}»"
     browse_listings: "Bla i annonser"
     listing_kind: "Hvem selger"
     from_anyone: "Alle"

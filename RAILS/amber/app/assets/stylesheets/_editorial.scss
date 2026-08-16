@@ -1,6 +1,10 @@
-/* Feed prose — scoped to post cards, not global chrome */
+/* Feed prose — scoped to post cards, not global chrome.
+   Vertical rhythm: only scale.line_height steps (1.25 / 1.5).
+   Optical margin: meta and body share the same measure edge.
+   Enforced by MASTER design_rules + RAILS ScaleLint. */
+
 .feed-post {
-  padding: 1rem 0;
+  padding: var(--space-4, 1rem) 0;
   border-bottom: 1px solid var(--border);
   transition: background var(--transition-fast) var(--ease-out);
 }
@@ -11,22 +15,25 @@
 
 .feed-post-body,
 .feed-post-prose {
+  max-width: var(--measure, 66ch);
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--leading-normal, 1.5);
   color: var(--text);
   font-family: var(--font);
+  letter-spacing: var(--tracking-normal, 0);
+  hanging-punctuation: first allow-end last;
+  hyphens: auto;
 }
 
 .feed-post-meta,
 .feed-post-byline {
   font-size: var(--text-sm);
+  line-height: var(--leading-tight, 1.25);
   color: var(--text-dim);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2, 0.5rem);
+  max-width: var(--measure, 66ch);
 }
 
-/* Editorial credit line — the one place feed prose picks up Amber's own
-   serif register instead of falling back to the shared system stack, so
-   reading a post feels like the same product as the guest hero and logo. */
 .feed-post-meta-author {
   color: var(--text);
   font-family: var(--amber-editorial-serif, var(--font));
@@ -36,11 +43,12 @@
 
 .newsletter-cta,
 .subscribe-box {
-  margin: 1.5rem 0;
-  padding: 1rem;
+  margin: var(--space-6, 1.5rem) 0;
+  padding: var(--space-4, 1rem);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface2);
+  max-width: var(--measure, 66ch);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -21,10 +21,13 @@ main[role="main"] {
 
 h1,
 h2 {
+  /* On-scale leading only (1.25). PRESERVE existing weights/faces. */
   margin-bottom: var(--space-sm);
   font-family: var(--font);
   font-weight: var(--weight-heavy);
-  letter-spacing: -0.01em;
+  line-height: var(--leading-tight, 1.25);
+  letter-spacing: var(--tracking-tight, -0.01em);
+  max-width: var(--measure-wide, 75ch);
 }
 
 main#main-content > :first-child:not(.flash) {
