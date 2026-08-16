@@ -22,6 +22,7 @@ def usage
       bin/pub4 vps logs <app> [--lines N] [--remote]
       bin/pub4 post-pull
       bin/pub4 measure [--deep] [--json]
+      bin/pub4 land -m <msg> <path>...  commit, rebase, re-check, push
       bin/pub4 worktree <name>        own checkout + branch, so agents never share an index
       bin/pub4 hooks                  install the shared-tree commit guard
 
@@ -58,6 +59,63 @@ when "measure"
   rows = Pub4::Ratchets.all(deep:)
   puts ARGV.include?("--json") ? Pub4::Ratchets.json(rows) : Pub4::Ratchets.render(rows)
   exit(Pub4::Ratchets.ok?(rows) ? 0 : 1)
+when "land"
+  # Commit, rebase onto origin/main, re-check, push — in that order, because the
+  # order is where it goes wrong.
+  #
+  # Every landing in a worktree is the same five steps, and the two that get
+  # skipped are the two that matter. Rebasing onto a main that moved can
+  # invalidate a green run, so the checks run again AFTER the rebase and not
+  # only before it. And `git push` sends every commit beneath yours, so this
+  # prints what is going before it goes.
+  #
+  # Path-scoped by construction: with no paths it commits nothing, rather than
+  # sweeping up whatever else is in a shared checkout.
+  message = nil
+  message_file = nil
+  OptionParser.new do |o|
+    o.on("-m MSG") { |v| message = v }
+    o.on("-F FILE") { |v| message_file = v }
+  end.parse!(ARGV)
+  paths = ARGV
+  abort("usage: bin/pub4 land -m <message> <path>...  (paths are required; nothing is swept)") if paths.empty?
+  abort("usage: bin/pub4 land needs -m <message> or -F <file>") unless message || message_file
+
+  def run!(*cmd, chdir: ROOT)
+    out, status = Open3.capture2e(*cmd, chdir: chdir)
+    [out.strip, status.success?]
+  end
+
+  measure_out, measure_ok = run!(File.join(ROOT, "bin", "pub4"), "measure")
+  unless measure_ok
+    warn measure_out
+    abort("land: a ratchet is off before you started — fix that first, or it lands with your change")
+  end
+  puts "land: ratchets clean"
+
+  commit = ["git", "commit", "-q"]
+  commit += message_file ? ["-F", message_file] : ["-m", message]
+  _, ok = run!(*commit, "--", *paths)
+  abort("land: nothing committed (paths matched no changes?)") unless ok
+
+  run!("git", "fetch", "-q", "origin")
+  rebase_out, rebased = run!("git", "rebase", "-q", "origin/main")
+  abort("land: rebase onto origin/main failed — resolve, then run land again\n#{rebase_out}") unless rebased
+
+  # The same measurement again. A rebase brings other people's commits under
+  # yours, and theirs can put a ceiling over the edge that yours did not.
+  after_out, after_ok = run!(File.join(ROOT, "bin", "pub4"), "measure")
+  unless after_ok
+    warn after_out
+    abort("land: green before the rebase, off after it — origin/main moved under you")
+  end
+
+  ahead, = run!("git", "log", "--oneline", "origin/main..HEAD")
+  puts "land: publishing"
+  ahead.lines.each { |line| puts "  #{line.chomp}" }
+  push_out, pushed = run!("git", "push", "origin", "HEAD:main")
+  abort("land: push refused\n#{push_out}") unless pushed
+  puts "land: on origin/main"
 when "post-pull"
   script = File.join(OPENBSD_OPS, "bin", "post-pull-checklist")
   exec(script, *ARGV)
