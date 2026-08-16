@@ -78,7 +78,9 @@ module Master
               end
             end
             findings
-          rescue Psych::SyntaxError
+          rescue Psych::SyntaxError => e
+            # A file too broken to parse is not a file without duplicate keys.
+            Master::Ground::Swallow.log(e, context: "duplicate_key_findings", severity: :load_bearing)
             []
           end
 

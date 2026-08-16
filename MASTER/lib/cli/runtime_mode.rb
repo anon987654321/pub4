@@ -3,7 +3,10 @@
 module Master
   module CLI
     module RuntimeMode
-      PIPELINE_STAGES = "Intake → Enhance → Infer → Route → Guard → Deliberate → Execute → Review → Memory → Render".freeze
+      # Ground::BootstrapDocs::AGENTS serves this to coding agents as
+      # orientation, so it must name the sequence TurnRouter runs and nothing
+      # else. Assert against that assembly, never against this literal.
+      PIPELINE_STAGES = "Intake → Infer → Route → DestructiveReview → Execute → Render".freeze
 
       module_function
 

@@ -11,8 +11,12 @@ module Master
           severity: :warning, tags: %i[SMALL_PARTS],
           description: "one medium per artifact" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
-          scan_lines(src, /<%|<script\b|<style\b/,
-            message: "mixed medium — extract to a dedicated file")
+          # `<%` in a .erb file is the medium, not a mixture of media. No Rails
+          # view can be written without it, and a rule whose zero is unreachable
+          # measures nothing — it was 6,619 of the 14,552 findings across RAILS,
+          # every one of them on a template being a template. An inline <script>
+          # or <style> is still a second language in the file, whatever the file.
+          scan_lines(src, path.to_s.end_with?(".erb") ? /<script\b|<style\b/ : /<%|<script\b|<style\b/, message: "mixed medium — extract to a dedicated file")
         end
 
         RuleDSL.rule :SAFE_NAVIGATION,

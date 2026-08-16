@@ -8,6 +8,48 @@ This file records intentional shapes that may otherwise look like bugs.
 
 See `OPENBSD/DECISIONS.md` — **No Fourth Public App Until brgen Boundaries Hold**. MASTER work should prefer subtraction (one generated agent context, structural vs cosmetic scan severity) over new portfolio apps. Do not invent a seventh product surface from agent sessions without that ADR being revisited.
 
+## Enforcement Is On The Write, Not On The Command (2026-08-15)
+
+`/scan` and `/fix` are diagnostics now, not the enforcement path. Every write
+goes through `Review::Scan::WriteGuard` on both lanes — `Io::Base#commit_write`
+for the tools, an injected `:write` rule in `Core::Constitution` for the Fold —
+and a write that introduces an error-, critical- or veto-severity finding is
+refused with the findings as the reason.
+
+Three shapes here look wrong from outside and are not:
+
+- **It judges the delta, not the file.** A file already carrying a violation
+  stays writable; only a new one blocks. Blocking on file state would refuse the
+  first repair of every file that needs repairing, which is the opposite of the
+  ratchet intended.
+- **Semantic rules are excluded.** 126 of the 225 need an LLM, at one call per
+  file, and a before-and-after gate pays that twice per write. They belong to a
+  per-turn pass over the files a turn touched. Until that exists, the semantic
+  half of the law still waits for `/scan`.
+- **The Constitution takes the scanner as a parameter.** `Constitution.load`
+  accepts `verify:` and `lib/cli/core_bridge.rb` supplies it. A `require` would
+  have been shorter and would have put `lib/review/` inside the fold spine,
+  which `test/core/test_no_lib_backedges.rb` exists to prevent.
+
+Six stages were deleted to pay for it, and every one was constructed nowhere or
+only by another of the six. `Stages::Guard` scanned messages for prompt
+injection — `Ground::ToolContract` and `Builder::AiBoot` still run the same
+`InjectionGuard`. `Stages::Deliberate` wrapped a coding message with "list four
+approaches first" — `Proof#ideation_satisfied?` enforces that at the gate now.
+`Stages::Review` orchestrated the other three and was built by nothing.
+`Stages::Lint` scanned written paths after the fact, which is `WriteGuard`'s job
+and now happens before the write. `Stages::Prune` duplicated `Voice::StrunkPass`
+constant for constant, both loading `voice.strunk` from `data/voice.yml`; the one
+thing it had that StrunkPass does not is a prose-level evidence nag, and
+`evidence_for_done_rule` blocks the effect rather than annotating the sentence.
+`Stages::Council` existed so `/review on|off` could toggle a flag on it; the
+deliberation subsystem it wrapped is live and reached three other ways —
+`Stages::DestructiveReview`, `CouncilCrit` behind the Fold's `critique` verb, and
+`/critique`. `/review <path>` still runs the reviewer personas, which is the only
+thing that command ever did that ran.
+
+`lib/` fell 392 code lines, from 39222 to 38830.
+
 ## One Spine, With The Dependency Rule Kept (2026-08-12)
 
 **This reverses "Two Master Spines", which stood from 2026-07-30 to 2026-08-12 and is superseded by operator instruction.** The prior text is below the line, because a decision that was reversed is more useful than a decision that was quietly deleted.

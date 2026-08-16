@@ -90,6 +90,7 @@ module Pub4
       sleep 1
       Process.kill("KILL", -pid)
     rescue Errno::ESRCH
+      :already_exited
     end
   end
 end

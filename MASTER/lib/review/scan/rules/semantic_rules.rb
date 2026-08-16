@@ -144,9 +144,7 @@ module Master
           end
 
           def rules_mtime
-            File.mtime(Master::RULES_PATH).to_i
-          rescue StandardError
-            nil
+            File.exist?(Master::RULES_PATH) ? File.mtime(Master::RULES_PATH).to_i : nil
           end
 
           def semantic_cache_key(path, code)
@@ -273,7 +271,9 @@ module Master
             return [] if pairs.empty?
             response = @agent.ask(build_prompt(pairs, path), operation: :scan_comment_drift).to_s
             parse_findings(response, pairs)
-          rescue StandardError => _e
+          rescue StandardError => e
+            # An unreachable or misbehaving agent must not read as "no drift".
+            Master::Ground::Swallow.log(e, context: "CommentDriftRule", severity: :load_bearing, path:)
             []
           end
 

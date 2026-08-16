@@ -457,6 +457,63 @@ class TestScanRuleFalsePositives < Minitest::Test
     end
   end
 
+  # The shape a line-walking predicate misses: the line it lands on is `end`.
+  def test_an_empty_rescue_body_is_still_a_discard
+    {
+      "rescue\n" => :SILENT_RESCUE,
+      "rescue StandardError\n" => :SILENT_RESCUE,
+      "rescue Errno::ESRCH\n" => :NARROW_SILENT_RESCUE,
+    }.each do |clause, owner|
+      source = "def probe\n  work\n#{clause}end\n"
+
+      assert_equal [owner.to_s], discard_reporters(source),
+                   "an empty #{clause.strip.inspect} body discards the error and says nothing"
+    end
+  end
+
+  # NO_DEBUG and TODO_FIXME exempt this directory because their patterns are
+  # code in it — `binding.pry` appears as a regex literal. SILENT_RESCUE matches
+  # a line opening with `rescue`, which no regex literal does, so it has no such
+  # claim and takes the whole directory out of its own reach.
+  def test_the_scan_rules_directory_is_not_exempt
+    source = rescue_source("rescue StandardError\n")
+
+    refute_empty findings(:SILENT_RESCUE, source, path: "lib/review/scan/rules/example_rules.rb"),
+                 "the scanner's own rules are subject to the rescue rules"
+  end
+
+  # handled_body? has to name all three spellings itself; two of them otherwise
+  # fall through discard_token? and reach the right verdict for the wrong reason.
+  def test_swallow_log_is_recognised_however_it_is_spelled
+    ["Swallow.log(e)", "Ground::Swallow.log(e)", "Master::Ground::Swallow.log(e)"].each do |call|
+      source = "def probe\n  work\nrescue StandardError => e\n  #{call}\n  nil\nend\n"
+
+      assert_empty discard_reporters(source), "#{call} is a report, not a discard"
+    end
+  end
+
+  # --- a rule that raises must not read as a clean file ----------------------
+  class RaisingRule < Master::Review::Scan::Rule
+    def self.auto_build? = false
+
+    def initialize
+      super()
+      @id = "PROBE_RAISER"
+    end
+
+    def check_ast(_ast, _code, path:) = raise("check_ast is broken")
+  end
+
+  def test_a_rule_that_raises_reports_the_failure_it_swallows
+    before = Master::Ground::Swallow.recent(limit: 200, context: "TestScanRuleFalsePositives::RaisingRule#check_ast").size
+    result = RaisingRule.new.check("x = 1\n", path: File.join(Master::ROOT, "lib/example.rb"))
+    after = Master::Ground::Swallow.recent(limit: 200, context: "TestScanRuleFalsePositives::RaisingRule#check_ast")
+
+    assert_empty result, "the scan continues past a broken rule"
+    assert_operator after.size, :>, before, "and the broken rule is on the record"
+    assert_equal "load_bearing", after.last["severity"]
+  end
+
   # --- the YAML lexical bridge reading comments ------------------------------
   #
   # detect_lexical is a raw regex over raw lines, so the paragraph above

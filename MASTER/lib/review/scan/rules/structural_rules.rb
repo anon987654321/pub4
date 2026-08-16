@@ -181,8 +181,6 @@ module Master
               violations << node.location.start_line
             end
             node.child_nodes.compact.each { |child| scan_depth(node: child, depth: new_depth, violations:) }
-          rescue StandardError
-            nil
           end
         end
 

@@ -79,12 +79,6 @@ exemplars:
     beauty_score: 7
     virtue: composability
     why: "Initial request parsing, validates input, isolates side‑effects"
-  - name: "Master::Stages::Lint#call"
-    file: "lib/stages/lint.rb"
-    lines: 10
-    beauty_score: 7
-    virtue: composability
-    why: "Stage pattern, thin wrapper, delegates to scanner, easy to test"
   - name: "Master::Stages::Render#call"
     file: "lib/stages/render.rb"
     lines: 6

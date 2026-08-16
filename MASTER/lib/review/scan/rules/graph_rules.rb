@@ -131,8 +131,10 @@ module Master
                 names << instance.id.to_s.downcase
                 short = klass.name&.split("::")&.last
                 names << short.downcase if short&.match?(/\A[A-Z]/)
-              rescue StandardError
-                nil
+              rescue StandardError => e
+                # A rule that will not build drops out of the name set, and
+                # `/scan <that name>` is then rejected as unknown.
+                Master::Ground::Swallow.log(e, context: "registered_scan_names #{klass}", severity: :load_bearing)
               end
               names.freeze
             end

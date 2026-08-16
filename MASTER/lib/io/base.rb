@@ -20,6 +20,11 @@ module Master
         written = path || full
         bytes = content.bytesize
         @bus&.publish("tool:before", tool: self.class::NAME, path: written, bytes:, op: "write")
+
+        guard = Master::Review::Scan::WriteGuard.default.verdict(path: full, content:)
+        @bus&.publish("write:guard", path: written, introduced: guard.introduced.size, blocked: guard.blocked?) unless guard.introduced.empty?
+        return Result.err("write refused — #{guard.reason}", category: :policy) if guard.blocked?
+
         return @diff_stager.stage(path: full, new_content: content, tool: self.class::NAME) if @diff_stager
 
         @undo.snapshot(full)

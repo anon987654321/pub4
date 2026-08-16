@@ -113,11 +113,22 @@ class TestSilentRescueRule < Minitest::Test
     assert_empty @narrow.check(code, path: "x.rb")
   end
 
-  # --- both rules skip the rule definitions themselves ------------------------
+  # --- the rule definitions are not exempt from the rules ---------------------
 
-  def test_both_rules_skip_rule_source_files
+  def test_both_rules_apply_to_rule_source_files
     code = "def f\n  go\nrescue StandardError\n  nil\nend\n"
+    rule_source = "lib/review/scan/rules/lexical_rules.rb"
+
+    refute_empty @silent.check(code, path: rule_source)
+    refute_empty @narrow.check(code.sub("StandardError", "JSON::ParserError"), path: rule_source)
+  end
+
+  # A rule file quotes the shapes it matches, and prose about a rescue is not a
+  # rescue. Rule#without_comment_lines settles that for every rule; no directory
+  # needs excusing.
+  def test_prose_about_a_rescue_is_not_a_rescue
+    code = "# rescue StandardError\n# nil\ndef f = go\n"
+
     assert_empty @silent.check(code, path: "lib/review/scan/rules/lexical_rules.rb")
-    assert_empty @narrow.check(code, path: "lib/review/scan/rules/lexical_rules.rb")
   end
 end

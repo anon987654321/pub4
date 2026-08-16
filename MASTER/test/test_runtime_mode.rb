@@ -12,11 +12,54 @@ class TestRuntimeMode < Minitest::Test
     assert_includes line, "cli"
   end
 
-  def test_pipeline_stages_match_plugin_assembly
-    stages = Master::CLI::RuntimeMode::PIPELINE_STAGES
-    assert_includes stages, "Deliberate"
-    assert_includes stages, "Review"
-    refute_includes stages, "Prune → Memo"
+  # What matters is that PIPELINE_STAGES agrees with the assembly, not with any
+  # particular literal. TurnRouter assembles a turn, so these read TurnRouter.
+  TURN_ROUTER = File.join(Master::ROOT, "lib", "cli", "turn_router.rb")
+
+  def constructed_stages
+    File.read(TURN_ROUTER).scan(/Stages::(\w+)\.new/).flatten.uniq
+  end
+
+  def named_stages
+    Master::CLI::RuntimeMode::PIPELINE_STAGES.split("→").map(&:strip)
+  end
+
+  def test_every_named_pipeline_stage_is_one_turnrouter_constructs
+    missing = named_stages - constructed_stages
+    assert_empty missing,
+                 "PIPELINE_STAGES names #{missing.join(", ")}, which TurnRouter never constructs — " \
+                 "the string is served to agents as orientation, so it has to be the live sequence"
+  end
+
+  def test_every_stage_turnrouter_constructs_is_named
+    unnamed = constructed_stages - named_stages
+    assert_empty unnamed,
+                 "TurnRouter constructs #{unnamed.join(", ")} and PIPELINE_STAGES does not say so"
+  end
+
+  def test_named_pipeline_stages_are_in_the_order_turnrouter_runs_them
+    assert_equal constructed_stages.sort, named_stages.sort
+    assert_equal "Intake", named_stages.first, "a turn starts at Intake"
+    assert_equal "Render", named_stages.last, "a turn ends at Render"
+  end
+
+  # The module lines name directories. A rename in lib/ has to reach them, and
+  # only a check against the filesystem notices when it does not.
+  def test_orient_module_line_names_directories_that_exist
+    line = Master::CLI::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
+             .lines.find { |l| l.start_with?("modules:") }
+    refute_nil line, "/orient no longer prints a modules line"
+    named = line.sub("modules:", "").split("·").map(&:strip)
+    missing = named.reject { |m| Dir.exist?(File.join(Master::ROOT, "lib", m)) }
+    assert_empty missing, "/orient names lib/ directories that do not exist: #{missing.join(", ")}"
+  end
+
+  def test_agents_bootstrap_names_directories_that_exist
+    line = Master::Ground::BootstrapDocs::AGENTS.lines.find { |l| l.start_with?("Modules:") }
+    refute_nil line, "the agent bootstrap no longer names its modules"
+    named = line.sub("Modules:", "").split(",").map { |m| m.strip[/\A\w+/] }.compact
+    missing = named.reject { |m| Dir.exist?(File.join(Master::ROOT, "lib", m)) }
+    assert_empty missing, "the agent bootstrap names lib/ directories that do not exist: #{missing.join(", ")}"
   end
 
   def test_orient_includes_reading_tiers_and_trace_pointer
@@ -25,12 +68,12 @@ class TestRuntimeMode < Minitest::Test
     assert_includes output, "/orient trace"
     assert_includes output, "pairing:"
     assert_includes output, "bundle exec ruby bin/cli"
-    assert_includes output, "Deliberate"
+    assert_includes output, named_stages.first
   end
 
-  def test_tools_command_lists_reach_tools
+  def test_tools_command_lists_registered_tools
     output = Master::CLI::CommandRegistry.dispatch_tools(Master::ROOT, nil, ctx: { args: "" })
     assert_includes output, "ReadFile"
-    assert_includes output, "reach"
+    assert_includes output, "io"
   end
 end

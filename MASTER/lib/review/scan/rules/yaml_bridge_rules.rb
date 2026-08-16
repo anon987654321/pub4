@@ -36,10 +36,14 @@ module Master
 
           private
 
+          # #check returns [] for every file when the pattern set is empty,
+          # which reads as a tree with no veto violations. An unreadable
+          # rules.yml retires every veto at once, so say so.
           def load_patterns(root)
             data = Master.load_yaml(File.join(root, "data", "rules.yml")) || {}
             data.fetch("veto_patterns", {})
-          rescue StandardError
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "VetoPatternRule.load_patterns", severity: :load_bearing)
             {}
           end
         end
@@ -129,7 +133,10 @@ module Master
                   languages: Array(r["languages"]),
                   path_match: r["path_match"],
                 }
-              rescue RegexpError
+              rescue RegexpError => e
+                # A rule declared in rules.yml with an uncompilable regex is
+                # inert law: listed, counted, never run. Drop it, but say which.
+                Master::Ground::Swallow.log(e, context: "YamlDeclarativeRule #{r["id"]}", severity: :load_bearing)
                 nil
               end
           end
@@ -139,9 +146,8 @@ module Master
           end
 
           def rules_mtime
-            File.mtime(File.join(@root, "data", "rules.yml")).to_i
-          rescue StandardError
-            nil
+            path = File.join(@root, "data", "rules.yml")
+            File.exist?(path) ? File.mtime(path).to_i : nil
           end
 
           def declarative_hits(code, entry)

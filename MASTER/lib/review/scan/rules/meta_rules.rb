@@ -198,9 +198,7 @@ module Master
           end
 
           def rules_mtime
-            File.mtime(rules_path).to_i
-          rescue StandardError
-            nil
+            File.exist?(rules_path) ? File.mtime(rules_path).to_i : nil
           end
 
           def smell_pattern(smell)
@@ -208,7 +206,9 @@ module Master
             return unless raw
 
             Regexp.new(raw.to_s)
-          rescue RegexpError
+          rescue RegexpError => e
+            # A learned smell whose pattern will not compile is inert law.
+            Master::Ground::Swallow.log(e, context: "smell_pattern #{smell["id"]}", severity: :load_bearing)
             nil
           end
 

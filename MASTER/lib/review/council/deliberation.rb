@@ -89,9 +89,13 @@ module Master
           Result.ok(Array(history.last))
         end
 
+        # The key check is one layer down, in LLMDispatcher#send_with_cache,
+        # because ideation and the semantic rules reach a model without passing
+        # through here. This one still refuses early rather than spending
+        # TOTAL_BUDGET_S discovering it per persona.
         def review(code, context: nil, personas: nil)
           active = active_personas(personas)
-          return Result.err("council: no personas configured", category: :validation) if active.empty?
+          return Result.err("council: no personas, or no provider key", category: :validation) if active.empty? || !Master.any_api_key_present?
 
           context = reflexion_context(context)
           feedback = collect_feedback(active, code, context)

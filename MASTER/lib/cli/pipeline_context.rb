@@ -17,7 +17,6 @@ module Master
         handler model last_tool_tier
         output tool_calls written_files source
         council_feedback
-        lint_report lint_error
         review_error review_verdict review_preapproved
         destructive_route
         pre_enhanced
@@ -36,7 +35,6 @@ module Master
         output: [String, NilClass],
         output_findings: [Array, NilClass],
         pressure: [TrueClass, FalseClass, NilClass],
-        lint_report: [Array, NilClass],
         voice: [String, NilClass],
         felt_sense: [Hash, NilClass],
       }.freeze

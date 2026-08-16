@@ -36,19 +36,17 @@ module Master
           @auto_fix = true
         end
 
-        # Default for AST-based rules: subclasses implement check_ast(ast, code,
-        # path:) and get this for free instead of repeating it. This exact body
-        # was copy-pasted byte-for-byte across 11 rule classes in
-        # structural_rules.rb/convention_rules.rb before being hoisted here.
-        # Rules with non-AST logic (e.g. SmallFilesRule's line-count check)
-        # override #check directly and never hit this default.
+        # Default for AST-based rules: a subclass implements check_ast and gets
+        # this for free. Rules with non-AST logic override #check instead.
         def check(code, path:)
           raise NotImplementedError, "#{self.class}#check not implemented" unless respond_to?(:check_ast)
 
           return [] unless path.to_s.end_with?(".rb", ".rake")
 
           check_ast(Prism.parse(code).value, code, path:)
-        rescue StandardError
+        rescue StandardError => e
+          # [] is also a clean file's answer, so only this report separates them.
+          Master::Ground::Swallow.log(e, context: "#{self.class}#check_ast", severity: :load_bearing, path:)
           []
         end
 

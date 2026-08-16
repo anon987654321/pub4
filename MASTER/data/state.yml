@@ -31,7 +31,9 @@
   callable: constitution_drift
   # Disabled: fires a full deep-scan of lib/ on every source write — the exact
   # repo-wide scan HostBudget exists to prevent from OOM-killing the 1GB VPS.
-  # Re-enable only with a per-file (not whole-lib) scan.
+  # The per-write job belongs to Review::Scan::WriteGuard, which judges one file
+  # before it lands. What is left here is the tree-wide trend line, and it runs
+  # from the boot path under MASTER_DRIFT=1.
   enabled: false
 
 - name: autocommit_post_chat

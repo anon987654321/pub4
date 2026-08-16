@@ -68,7 +68,7 @@ module Master
       def orient_overview_lines(root)
         [
           "MASTER — constitutional AI runtime for any text artifact",
-          "modules: now · loop · judge · voice · ground · reach · trace",
+          "modules: cli · fix · review · voice · ground · io · trace · core",
           "rules: #{Master.rule_count(root:)} registered",
           "pipeline: #{Master::CLI::RuntimeMode::PIPELINE_STAGES}",
           "trace:   /orient trace — /tail /replay /status",
@@ -198,11 +198,11 @@ module Master
       end
 
       def dispatch_tools(_root, ai, ctx: nil)
-        reach = Master::Builder.tool_map.keys.sort
+        registered = Master::Builder.tool_map.keys.sort
         wired = Array(ai&.dig(:tools)).map { |t| t.class.name.split("::").last }.sort
         [
           "tools",
-          "reach  #{reach.join(' ')}",
+          "io     #{registered.join(' ')}",
           "agent  #{wired.size} wired #{wired.empty? ? '' : wired.join(' ')}",
           "docs   data/tools.yml · /orient trace",
         ].join("\n")

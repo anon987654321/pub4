@@ -30,4 +30,4 @@ reader_singularity:
     soul.yml: 8
     tools.yml: 2
     tts.yml: 2
-    voice.yml: 4
+    voice.yml: 3

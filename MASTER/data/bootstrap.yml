@@ -12,7 +12,7 @@ sections:
     Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider). Authority: data/soul.yml → data/rules.yml → CONVENTIONS (via /orient conventions) → this runtime.
     Modules: now (pipeline/CLI), loop (fix/rule/watch), judge (scanner/council), voice (render/TTS), ground (constitution/memory), reach (tools), trace (events/session).
     Flat Hierarchy: standing order aggressive_merge on every write — merge thin siblings, rename to dense Rails-parameterize slugs (snake_case, Strunk-clean tokens), OpenBSD-flat, Zeitwerk-true, Roda-tight.
-    Pipeline: Intake → Enhance → Infer → Route → Guard → Deliberate → Execute → Review → Memory → Render. Review runs Council when enabled, then Lint on written paths, then Prune.
+    Pipeline (slash and inferred commands): Intake → Infer → Route → DestructiveReview → Execute → Render. Plain-language goals go to Core::Fold, the only lane the constitution judges. Every write is scanned by WriteGuard on both lanes.
     VPS/deploy: OPENBSD/RUNBOOK.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
   trace: |-
     Trace map: Trace::EventBus carries pipeline, tools, scans. CLI: /tail 20 pipeline. Web: /events/stream.

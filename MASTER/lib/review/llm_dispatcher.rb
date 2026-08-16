@@ -94,7 +94,13 @@ module Master
         @tool_registry = load_tool_registry
       end
 
+      # Every LLM call in the tree arrives here — ideation, the council, the
+      # semantic rules, the fix loop. With no provider key each one fails slowly
+      # somewhere below, so a /through pass sat at "crit0 deliberation" for ten
+      # minutes and printed nothing. One refusal, at the one door.
       def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, &blk)
+        return Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
+
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         selected_model = vision_model_for(selected_model) if image_present?(image)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system)

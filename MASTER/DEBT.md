@@ -207,8 +207,45 @@ the same long line.
 
 ## Scanner noise
 
-`rake selfcheck` is **18 violations across 3 rules** (re-measured 2026-08-13):
-`SILENT_RESCUE` 11, `guard_expensive_ops` 5, `UNBOUNDED_RETRY` 2.
+`rake selfcheck` is **20 violations across 3 rules** (re-measured 2026-08-15):
+`SILENT_RESCUE` 13, `guard_expensive_ops` 5, `UNBOUNDED_RETRY` 2.
+
+The 13 is not the 11 of 2026-08-13 plus the exemption lifted below. Measured both
+ways on one tree: the same 13 sites outside `lib/review/scan/rules/` are reported
+by the old predicate and the new one, so the two that arrived since are drift in
+`lib/`, and every finding the exemption had been hiding is fixed rather than
+counted.
+
+### The rescue rules exempted the scanner from itself — closed 2026-08-15
+
+`SILENT_RESCUE` and `NARROW_SILENT_RESCUE` both carried
+`next [] if path.to_s.include?("/review/scan/rules/")`, with no comment, no gate
+and no false positive to justify it: all **11 findings it suppressed were real
+code**, none a comment or a regex literal. The directory it excused is the one
+where a swallowed error does the most damage, because a rule that returns `[]`
+reports the file it failed on as clean.
+
+Two of the 11 were law failing open rather than ordinary swallowing.
+`VetoPatternRule#load_patterns` rescued to `{}` and `#check` returns `[]` on an
+empty pattern set, so an unreadable `data/rules.yml` retired every veto pattern
+in silence; `YamlDeclarativeRule` dropped any declared rule whose
+`detect_lexical` would not compile, which is inert law arriving by exception.
+Both now report through `Swallow.log(..., severity: :load_bearing)`, as does
+`Rule#check`, the shared AST default whose `rescue → []` made a bug in any
+`check_ast` indistinguishable from a clean tree.
+
+Three `rules_mtime` methods rescued `File.mtime` to `nil`; they ask
+`File.exist?` now, since a missing file was the only failure they meant. One
+inner rescue in `NestingDepthRule#scan_depth` was deleted outright rather than
+made to report: it duplicated the base-class rescue one frame down, and two
+layers of swallowing over the same call is how the first one stays invisible.
+
+**An empty rescue body is a discard again.** `EMPTY_RESCUE` was deleted on
+2026-08-12 as a pure duplicate, and "coverage is unchanged by construction" held
+for every shape but one: `discard_body?` walked to the first non-blank line,
+found `end`, and called it neither handled nor discarded. Probed rather than
+argued, which is the only reason it was found. `lib/pub4/check_runner.rb` held
+the single live instance.
 
 It read 17 with `SILENT_RESCUE` 10 on 2026-08-12. The +1 arrived without a new
 `rescue` anywhere in `lib/` — `git log -p` over the range shows zero added rescue
@@ -432,9 +469,63 @@ through `Swallow.log(..., severity: :load_bearing)` naming the consequence. **An
 future post-synthesis DSP must call `report_missing_ffmpeg` on its own fallback
 path** rather than returning silently.
 
+## The model registry names fifteen models the provider no longer serves — opened 2026-08-16
+
+**operator-priority.** `/through master` completed its scans, spent ¢390, and
+ended `critique failed: StandardError: No endpoints found for
+google/gemma-2-9b-it:free`. That id is an anchor in `data/models.yml` aliased
+into four fallback chains, so the council walked its chain into a model that
+does not exist.
+
+It is not the only one. `bin/provider-catalog refresh openrouter` fetches the
+live catalogue — 413 models, and no key is needed because the endpoint is
+public. Cross-checking every openrouter-routed `id:` in `models.yml` against it
+gives fifteen that are gone:
+
+```
+deepseek/deepseek-chat-v3.1:free          meta-llama/llama-4-scout:free
+google/gemini-flash-lite-latest           microsoft/phi-4:free
+google/gemma-2-9b-it:free                 mistralai/mistral-small-3.1-24b
+groq/llama-3.3-70b-versatile              nousresearch/hermes-3-llama-3.1-405b:free
+meta-llama/llama-3.3-70b-instruct:free    openai/gpt-oss-120b:free
+meta-llama/llama-4-maverick:free          qwen/qwen3-coder:free
+qwen/qwen3-next-80b-a3b-instruct:free     rekaai/reka-flash-3:free
+z-ai/glm-4.5-air:free
+```
+
+Thirteen of the fifteen are `:free` tiers, which is the pattern: a free endpoint
+is withdrawn without notice, and a chain padded with them degrades one dead
+model at a time until something visible breaks.
+
+Not fixed here, deliberately. Each id is a YAML anchor with aliases in several
+chains, so removing one means removing its definition and every alias of it, and
+a half-done edit changes routing silently rather than loudly. It wants one
+focused pass that re-measures after each removal.
+
+What stops it recurring is a check rather than a cleanup. The cross-check is
+eight lines and the catalogue refresh already exists. It cannot live in
+`bin/check`, which must run without a network, but it belongs in the operator
+profile or in `bin/probe`, where a stale registry is exactly what an operator
+wants to hear about before a deploy.
+
+Separately, that run reported `cost: +¢390.02 · 0 tok`. A non-zero cost beside a
+zero token count means the meter reads one provider's accounting and bills
+another's. The number to trust is the cents.
+
 ## Live gotchas
 
-Two facts with no home of their own, kept because both were expensive to find.
+Three facts with no home of their own, kept because each was expensive to find.
+
+- **A council pass looks exactly like a hang.** On a dev Mac the provider is the
+  `claude` CLI (`send_claude_cli`), not an HTTP API, so a run with no
+  `*_API_KEY` in the environment still reaches a model and `Master.any_api_key_present?`
+  is not the question. `CLAUDE_CLI_TIMEOUT_S` is 300 and the council runs 26
+  personas four at a time, capped by `TOTAL_BUDGET_S` at 600. Add four scans of
+  ~90s each and `/through master` needs roughly sixteen minutes. It spends most
+  of that at 0% CPU with an empty pipe, because the CLI buffers when stdout is
+  not a TTY and every persona thread is blocked on `IO#read`. Two sessions have
+  now killed it believing it was stuck. `ps` shows the truth: count the
+  `claude --print` subprocesses before concluding anything.
 
 - **Constructing a `CLI` object flips a process-wide flag.** `CLI#initialize`
   calls `set_visitor_mode_if_unauthenticated`, which sets
@@ -455,7 +546,7 @@ Two facts with no home of their own, kept because both were expensive to find.
 
 ## Scanner Conventions
 
-Five shapes of one defect: **each converts the absence of a property into
+Six shapes of one defect: **each converts the absence of a property into
 evidence of it.** A gate, a test or a reader accepts something that merely looks
 like the thing it was checking for, and the result is a defect that arrives
 carrying its own certificate of compliance. All five were found in the same week
@@ -567,7 +658,24 @@ The tell is a test whose failure message describes something good happening.
 Invert it and ask what a successful fix looks like in CI; if the answer is "red",
 the assertion points the wrong way.
 
-### What follows from all five
+### 6. A writer that reports an edit it did not make
+
+`rake lint:spine RATCHET=1` printed "raise log cleared" and cleared nothing. Its
+substitution matched continuation lines only (`    .*`), deliberately, after an
+earlier version matched dashed lines only and left the file unparseable — the
+fix for a loud failure introduced a silent one, and the comment above it
+explained the reasoning for a pattern that had stopped matching anything. The
+allowance was therefore a countdown to permanent failure rather than the budget
+`spine.yml` describes, and nothing could show it: a cleared log and a log that
+was never touched look identical from outside.
+
+The fix is not the regex. It is that the task now **reads back what it wrote**
+and aborts if `raised` is not empty. A writer that can claim an edit it did not
+make belongs to the same family as the four above — the absence of a property
+reported as evidence of it — and the remedy is the same: assert the outcome, not
+the attempt.
+
+### What follows from all six
 
 - **A new gate's first run must be against a known-bad input, not a clean tree.**
   A green first run is the least informative outcome available: it is equally

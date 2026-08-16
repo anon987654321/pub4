@@ -59,12 +59,10 @@ module Master
         def dependency_kwargs(ctx)
           parameters = @receiver.method(@method_name).parameters
           keys = parameters.filter_map { |type, name| name if %i[key keyreq].include?(type) && name != :ctx }
-          # A dependency can legitimately *be* nil (e.g. council_stage in lean
-          # boot) -- compacting those away alongside genuinely-absent optional
-          # args used to drop required keywords too, turning a working nil
-          # dependency into a "missing keyword" crash. Only optional (:key)
-          # params may fall back to their own default when nil; required
-          # (:keyreq) params must always be passed through, nil or not.
+          # A dependency can legitimately *be* nil, so only optional (:key)
+          # params may fall back to their own default when one is. Required
+          # (:keyreq) params are passed through nil and all: compacting them
+          # away turns a working nil dependency into a missing-keyword crash.
           required = parameters.filter_map { |type, name| name if type == :keyreq }
           mapped = keys.zip(@args).each_with_object({}) do |(name, value), acc|
             next if value.nil? && !required.include?(name)

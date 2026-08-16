@@ -245,6 +245,12 @@ namespace :lint do
     puts "lint:autoload: #{groups.values.flatten.size} ignores, all still necessary"
   end
 
+  desc "every model data/models.yml names is one the provider still serves (needs network)"
+  task :models do
+    ok = system(RbConfig.ruby, File.join(__dir__, "tools", "model_catalog_check.rb"))
+    abort "lint:models: a fallback chain has no live model left" unless ok
+  end
+
   desc "Ratchet: lib/ may shrink or hold, never grow past data/spine.yml's ceiling"
   task :spine do
     require "yaml"
@@ -315,19 +321,22 @@ namespace :lint do
       # budget rather than a countdown to a permanent failure. Earning back a
       # raise requires lib/ to actually come down first.
       #
-      # `    .*` and not `    - .*`: every entry in that list is a wrapped YAML
-      # scalar whose continuation lines are indented past the dash, and matching
-      # only the dashed line deleted the first line of the entry and stranded
-      # the rest as a bare scalar under `raised: []`. That is not a cosmetic
-      # slip — it made spine.yml unparseable, so the next reader of the file
-      # died on Psych::SyntaxError, including this task. It happened on
-      # 2026-08-12 and cost a green tree until someone read the YAML by hand.
-      body = body.sub(/^  raised:\n(?:    .*\n)+/, "  raised: []\n")
-      # And never write a file this task cannot read back. A ratchet whose
-      # failure mode is corrupting its own ledger has no business writing
-      # unattended.
+      # An entry is a dashed line plus the wrapped continuation lines indented
+      # past the dash, so the pattern has to take both. Matching only the dashed
+      # line strands the continuation as a bare scalar and leaves spine.yml
+      # unparseable; matching only the continuation, as this did, matches
+      # nothing at all and clears no entry while reporting that it had.
+      # `consecutive_raises_allowed:` sits at two spaces with no dash, so it is
+      # outside both alternatives.
+      body = body.sub(/^  raised:\n(?:  - .*\n(?:    +.*\n)*)+/, "  raised: []\n")
+      # And never write a file this task cannot read back, or claim an edit it
+      # did not make. A ratchet whose failure mode is corrupting its own ledger
+      # has no business writing unattended; one whose failure mode is a false
+      # report is worse, because nothing looks wrong.
       begin
-        YAML.safe_load(body).fetch("spine").fetch("lib_code_ceiling")
+        spine = YAML.safe_load(body).fetch("spine")
+        spine.fetch("lib_code_ceiling")
+        raise "raise log still holds #{spine["raised"].size} entries" unless Array(spine["raised"]).empty?
       rescue StandardError => e
         abort "lint:spine: refusing to write data/spine.yml — the rewrite does not parse " \
               "(#{e.class}: #{e.message}). The file on disk is untouched; ratchet it by hand."
