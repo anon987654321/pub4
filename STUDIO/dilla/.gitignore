@@ -11,3 +11,6 @@ crate/
 samples/
 project/learnings/vocals/**/*.wav
 *.320kbps.original.mp3
+# A sidecar for a render that is not tracked is not tracked either.
+demo.wav
+demo.wav.dilla
