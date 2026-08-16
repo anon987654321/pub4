@@ -51,24 +51,11 @@
     window.MASTER_SOUL_SUMMARY = "persona <%= persona&.name || 'anchor' %>; voice <%= Master::Voice::Policy.neural_voice %> (TTS fixed; persona affects text only); constitutional face";
     window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json %>;
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <%# non-blocking font load: preload as style, then promote to stylesheet on load via a
-      nonce'd script (CSP forbids inline onload handlers). Keeps the Inter CSS request off
-      the render-blocking critical path; display=swap already prevents invisible-text FOIT. %>
-  <link rel="preload" as="style" id="inter-font" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap"></noscript>
-  <script nonce="<%= content_security_policy_nonce %>">
-    (function(){var f=document.getElementById('inter-font');if(!f)return;
-      var on=function(){f.rel='stylesheet';};
-      f.addEventListener('load',on);if(f.sheet)on();})();
-  </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
   <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <%# chat upload widget CSS isn't needed for the initial primer/face paint --
-      defer it off the render-blocking path the same CSP-safe way as the Inter
-      font above (inline onload= is blocked by CSP here). %>
+      defer it off the render-blocking path (inline onload= is blocked by CSP here). %>
   <link rel="preload" as="style" id="chat-upload-css" href="<%= asset_path("chat_upload.css") %>">
   <noscript><link rel="stylesheet" href="<%= asset_path("chat_upload.css") %>"></noscript>
   <script nonce="<%= content_security_policy_nonce %>">
