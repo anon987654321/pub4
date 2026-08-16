@@ -278,7 +278,17 @@ def enhanced_resolve_config
     voicing: (ENV["VOICING"] || preset[:voicing] || (family == :flylo ? :quartal : :spread)).to_sym,
     engine_progression: sonic&.dig("harmonic", "engine_progression")&.to_sym,
     half_time_bars: preset[:half_time_bars],
-    intro_bars: preset.fetch(:intro_bars, family == :flylo ? 8 : 4),
+    # INTRO_BARS overrides the preset. There was no way to say "start on the
+    # one" — the value came only from the track preset, and SECTION_LAYER_GAIN
+    # mutes drums outright for the whole intro (drums: 0.0, sample: 0.55). On a
+    # 16-bar beat the default 4 bars is a quarter of the render with no drums
+    # under it, and the rap vocal is not section-gated, so it plays alone for
+    # ten seconds at 96 BPM before anything joins it.
+    #
+    # That is the right default for a full track and the wrong one for a loop.
+    # INTRO_BARS=0 starts everything on bar one; the default is unchanged.
+    intro_bars: (ENV["INTRO_BARS"].to_s.strip.empty? ? nil : ENV["INTRO_BARS"].to_i) ||
+                preset.fetch(:intro_bars, family == :flylo ? 8 : 4),
     master_lufs: resolve_master_lufs(family, sonic),
     master_lra: resolve_master_lra(family, sonic),
     # Full darken (1.0) on FlyLo was muting kick beater + snare air under pads.
