@@ -295,7 +295,7 @@ def render_native_pad_wav(path, pad_events, duration)
     filters << "#{labels.join}amix=inputs=#{labels.length}:duration=longest:normalize=0," \
                "atrim=0:#{duration},alimiter=limit=0.95:level_out=0.96[pads]"
   end
-  sh_filter_complex!(filters.join(";"), "-map", "[pads]", "-c:a", "pcm_s16le", path)
+  sh_filter_complex!(filters.join(";"), "-map", "[pads]", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path)
   path
 end
 

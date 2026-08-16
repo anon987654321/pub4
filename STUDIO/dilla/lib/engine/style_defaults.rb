@@ -146,19 +146,17 @@ DILLA_STYLE_DEFAULTS = {
   # the leads destroying everything: three arp layers over the chords the pads
   # were already holding, at close to twice their level.
   #
-  # MELODIC_LEAD=1 is now the default so lead_events_melodic runs everywhere,
-  # not only inside demo-each's steady mode. Rendering a track directly still
-  # produced the old arps until this changed, which meant the fix only existed
-  # in the demo path.
+  # MELODIC_LEAD=1 is the one remaining lead: the counter-line. The table used
+  # to leave this at 0 while the comment said 1, so a direct render still had
+  # no lead at all and only demo-each's steady path produced the line.
   #
-  # HARMONY_LEAD, SCALE_LEAD and CREATIVE_LEAD go to 0 for the same reason: the
-  # counter-line is written to answer the chords, and that only works if nothing
-  # else is talking over them. LEAD_ARP stays available for anyone who wants the
-  # old behaviour back explicitly.
+  # HARMONY_LEAD, SCALE_LEAD and CREATIVE_LEAD stay 0: the counter-line answers
+  # the chords, and that only works if nothing else talks over them. LEAD_ARP
+  # stays available for anyone who wants the old stack back explicitly.
   "HARMONY_LEAD" => "0",
   "SCALE_LEAD" => "0",
   "CREATIVE_LEAD" => "0",
-  "MELODIC_LEAD" => "0",
+  "MELODIC_LEAD" => "1",
   "LEAD_ARP" => "0",
   "LEAD_ARP_MODE" => "flylo_spiral",
   "LEAD_VOICE" => "soul_prophet",

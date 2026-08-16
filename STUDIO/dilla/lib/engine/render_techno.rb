@@ -535,7 +535,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
               hit.call(t, 0.22, 0.98, 7, "sin(2*PI*(58*(t-#{t})+190*(t-#{t})*exp(-(t-#{t})*26)))")
             }.join("+"),
             "acrusher=bits=10:samples=1:mix=0.22," \
-            "asoftclip=type=tanh:threshold=0.72:output=0.9," \
+            "asoftclip=type=tanh:threshold=0.72:output=0.9:oversample=4," \
             "acompressor=threshold=-12dB:ratio=9:attack=1:release=38:makeup=4," \
             "asubboost=dry=0.9:wet=0.4:decay=0.6:feedback=0.5:cutoff=90," \
             "equalizer=f=58:t=o:w=0.8:g=5,lowpass=f=7000")
@@ -546,7 +546,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
             gather.call(ghost_per_bar, :ghost).map { |t|
               hit.call(t, 0.1, 0.24, 16, "sin(2*PI*(64*(t-#{t})+120*(t-#{t})*exp(-(t-#{t})*30)))")
             }.join("+"),
-            "asoftclip=type=atan:threshold=0.6,lowpass=f=2400,pan=stereo|c0=0.9*c0|c1=1.0*c1")
+            "asoftclip=type=atan:threshold=0.6:oversample=4,lowpass=f=2400,pan=stereo|c0=0.9*c0|c1=1.0*c1")
 
   # The sub takes the tonic rather than a per-bar root. A sub that moves with
   # every chord stops reading as the floor of the record and starts reading as a
@@ -576,7 +576,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
             HATE_CYCLE_BARS.times.flat_map { |b|
               acid_steps.map { |s| hit.call(at.call(b, s), 0.16, 0.55, 11, "sin(2*PI*#{acid_notes[b]}*(t-#{at.call(b, s)}))") }
             }.join("+"),
-            "asoftclip=type=tanh:threshold=0.35:output=0.85," \
+            "asoftclip=type=tanh:threshold=0.35:output=0.85:oversample=4," \
             "asplit=2[ad][aw];" \
             "[aw]afreqshift=shift=63,volume=0.34[af];" \
             "[ad][af]amix=inputs=2:normalize=0," \
@@ -669,7 +669,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
               "afreqshift=shift=#{(37 + (w_root % 23)).round}," \
               "flanger=delay=14:depth=8:regen=45:speed=0.13," \
               "aphaser=speed=0.12:decay=0.6:delay=3.2," \
-              "asoftclip=type=tanh:threshold=0.4:output=0.7," \
+              "asoftclip=type=tanh:threshold=0.4:output=0.7:oversample=4," \
               "bandpass=f=1400:width_type=h:width=2200," \
               "crystalizer=i=3," \
               "aecho=0.6:0.7:#{(step * 4500).round}|#{(step * 9000).round}:0.45|0.3," \
@@ -760,7 +760,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
             # 12dB/oct sweep with the resonance up, which is what gives a DFAM
             # hit its pitched ring rather than a flat thud.
             "lowpass=f=#{dfam_patch[:filter_hz]}:width_type=q:width=#{dfam_res}," \
-            "asoftclip=type=atan:threshold=#{heavy ? '0.32' : '0.55'}:output=#{heavy ? '1.0' : '0.9'}," \
+            "asoftclip=type=atan:threshold=#{heavy ? '0.32' : '0.55'}:output=#{heavy ? '1.0' : '0.9'}:oversample=4," \
             "#{dfam_tail}")
   end
 
@@ -782,7 +782,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
              drum_chain.call([
                "bandpass=f=1600:w=2200",
                "acrusher=bits=12:samples=2:mix=0.3",
-               "asoftclip=type=atan:threshold=0.6:output=0.9",
+               "asoftclip=type=atan:threshold=0.6:output=0.9:oversample=4",
                "flanger=delay=2:depth=3:regen=40:speed=0.3",
                "adynamicequalizer=dfrequency=1800:tfrequency=1800:threshold=0.1:ratio=4",
                "aecho=0.6:0.45:37|74|151:0.28|0.18|0.09",
@@ -843,7 +843,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   noise.call(:tom, "brown", gather.call(tom_per_bar, :ghost), 0.5, 7, 0.34,
              drum_chain.call([
                "bandpass=f=180:w=140",
-               "asoftclip=type=atan:threshold=0.7",
+               "asoftclip=type=atan:threshold=0.7:oversample=4",
                "asubboost=dry=0.9:wet=0.35:decay=0.5:feedback=0.4:cutoff=120",
                "aphaser=speed=0.2:decay=0.5:delay=3.4",
                "aecho=0.7:0.5:130|260|520:0.3|0.16|0.08",
@@ -950,7 +950,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   master = "highpass=f=26," \
            "adynamicequalizer=dfrequency=220:dqfactor=1.2:tfrequency=220:tqfactor=1.2:threshold=0.08:ratio=3," \
            "acompressor=threshold=-15dB:ratio=7:attack=2:release=60:makeup=3.5," \
-           "asoftclip=type=tanh:threshold=0.86:output=0.95," \
+           "asoftclip=type=tanh:threshold=0.86:output=0.95:oversample=4," \
            "aexciter=amount=1.2:blend=1:freq=6800," \
            "crossfeed=strength=0.32:range=0.6," \
            "alimiter=limit=0.96:level_out=0.94"
@@ -1040,5 +1040,6 @@ def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
       *lavfi("aevalsrc='#{expr_sum(acid_sig)}':d=#{total}:s=#{SAMPLE_RATE}"),
       *lavfi("anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.5:d=#{total}:seed=#{noise_seed(19)}"),
       "-filter_complex", filt.tr("\n", " "), "-map", "[out]", "-b:a", "320k", destination
+  normalise_genre_master!(destination, :techno)
   puts "wrote #{destination}"
 end

@@ -45,8 +45,7 @@ def vlc_audio_filters(input_tag, out_tag: "out")
   c = VLC_COMPRESSOR
   eq = vlc_eq_chain
   [
-    "[#{input_tag}]loudnorm=I=-17:TP=-1.2:LRA=8[vln]",
-    "[vln]#{eq}[veq]",
+    "[#{input_tag}]#{eq}[veq]",
     "[veq]acompressor=threshold=#{c[:threshold]}dB:ratio=#{c[:ratio]}:attack=#{c[:attack]}:release=#{c[:release]}:" \
     "makeup=#{c[:makeup]}:mix=#{c[:mix]}[vcomp]",
     "[vcomp]aphaser=in_gain=0.42:out_gain=0.72:delay=3:decay=0.28:speed=0.35:type=triangular[vph]",

@@ -49,9 +49,8 @@ def stream_iterate_after_render!(path)
     notes << "kick=#{ENV['KICK_GAIN']} harm=#{ENV['DEBUG_HARM_WEIGHT']}"
   end
   if harsh[:needs_notch]
-    dv = [(ENV["DRUM_VOL"] || "0.38").to_f - 0.03, 0.22].max
-    ENV["DRUM_VOL"] = dv.round(2).to_s
-    notes << "drum_vol=#{ENV['DRUM_VOL']}"
+    dv = [(resolved_drum_mix_weight - 0.03), 0.22].max
+    notes << "drum_vol=#{apply_drum_vol!(dv)}"
   end
   if sk[:recommendation] == "boost_sub" && (ENV["PAD_VOL"] || "52").to_i < 58
     ENV["PAD_VOL"] = ((ENV["PAD_VOL"] || "52").to_i + 2).to_s

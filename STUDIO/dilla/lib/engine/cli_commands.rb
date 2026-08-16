@@ -627,32 +627,20 @@ WIRING_EXTERNAL_CALLERS = %w[engine_source].freeze
 
 # The same ratchet as WIRING_DEAD_BASELINE, for methods.
 #
-# A constant with no reader and a method with no caller are the same defect and
-# only one of them was being counted. Three methods were sitting in the engine
-# when this was written, and none of them is a leftover: each is a sound stage
-# somebody designed, commented at length, and never connected.
+# A constant with no reader and a method with no caller are the same defect.
+# One designed stage remains uncalled on purpose:
 #
-#   sample_modern_chain            denoise/exciter/subboost/widen for sampled
-#                                  beds. sonitex_enabled? already turns Sonitex
-#                                  OFF for exactly those renders because this
-#                                  was meant to replace it, so today they get
-#                                  the subtraction and not the addition. Four
-#                                  ENV knobs (SAMPLE_MODERN, SAMPLE_DENOISE_DB,
-#                                  SAMPLE_AIR, SAMPLE_SUB) read by nothing.
-#   dilla_mix_preprocess_filters   the Dilla drum bus: NY parallel compression,
-#                                  sub bump, mix low-pass. mix_bass_chord_
-#                                  balance_filter's comment cited its bass bump
-#                                  as one of the two things it corrects for.
-#   log_progression!               logs every chord with its frequencies.
-#                                  Superseded in practice by log_progression_
-#                                  phases!, which render_dilla does call but
-#                                  which records no Hz.
+#   dilla_mix_preprocess_filters   NY parallel + sub bump + mix low-pass.
+#                                  mix_bass_chord_balance_filter's numbers were
+#                                  tuned by ear against the master that actually
+#                                  shipped (without this stage). Wiring it would
+#                                  double-correct. Not a tidy-up's call.
 #
-# Not deleted, and not wired either: wiring any of the first two changes how
-# renders SOUND, which is the operator's call, and deleting them would throw
-# away the design and leave the live code beside them arguing with itself. They
-# are counted here so they stay visible and so a fourth cannot arrive quietly.
-WIRING_DEAD_METHOD_BASELINE = 3
+# sample_modern_chain now runs on the sample loop bus. log_progression! is the
+# writer log_progression_phases! calls. Wiring the remaining stage still
+# changes how renders SOUND — operator's call. The baseline is the count, not
+# a target.
+WIRING_DEAD_METHOD_BASELINE = 1
 
 def wiring_dead_methods
   defined_at = {}
@@ -694,6 +682,12 @@ def wiring_check
   if orphans.length > WIRING_DEAD_METHOD_BASELINE
     puts "BROKEN uncalled methods rose #{WIRING_DEAD_METHOD_BASELINE} -> #{orphans.length}; " \
          "call it or say why in WIRING_DEAD_METHOD_BASELINE"
+    status = 1
+  end
+  missing = SECTION_LAYERS_APPLIED - SECTION_LAYERS_DECLARED
+  unread = SECTION_LAYERS_DECLARED - SECTION_LAYERS_APPLIED
+  if missing.any? || unread.any?
+    puts "BROKEN section layers applied-not-declared=#{missing.inspect} declared-not-applied=#{unread.inspect}"
     status = 1
   end
   status

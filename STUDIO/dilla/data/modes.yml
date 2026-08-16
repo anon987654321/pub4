@@ -1,0 +1,166 @@
+# The modes the harmony spine can walk, and what walking each one means.
+#
+# Until now `mode:` took exactly two values, :major and :minor, and three
+# separate constants in chord_theory.rb had to agree about them —
+# SCALE_SEMITONES, SCALE_DEGREE_QUALITY and DEGREE_TRANSITIONS. Nothing made
+# them agree, and all six call sites in the progression builder indexed
+# `semitones[(degree - 1) % 7]`, so the spine was structurally heptatonic: a
+# five-note scale added to that table would have indexed past the end and
+# produced a nil pitch somewhere deep inside a render.
+#
+# That is why the engine had no Ethio-jazz. Not a missing scale — a spine that
+# could only hold seven-note ones.
+#
+# A mode here declares three things and they are checked against each other:
+#
+#   semitones   the scale, from the root, ascending, no octave. Its LENGTH is
+#               the degree count; nothing assumes seven.
+#   qualities   degree -> chord quality. One entry per degree, no gaps.
+#   transitions degree -> {next_degree => relative weight}. The functional
+#               motion. Every degree named must exist in the scale.
+#
+# Sources are recorded per mode because two of them disagree, and a table that
+# hides a disagreement is how the engine ended up with two CHORD_TEMPLATES that
+# said different things about 7alt.
+
+modes:
+  # --- the two the engine already had ------------------------------------
+  #
+  # Unchanged in value. Moved here so that adding a mode is one edit rather
+  # than three, and so the pentatonic modes below are held to the same shape.
+  major:
+    semitones: [0, 2, 4, 5, 7, 9, 11]
+    qualities: { 1: maj9, 2: m9, 3: m7, 4: maj9, 5: "7", 6: m9, 7: dim }
+    # Tonic radiates outward, predominants (ii/IV) gravitate to the dominant,
+    # the dominant resolves home, vi is the deceptive detour.
+    transitions:
+      1: { 4: 3, 5: 3, 6: 2, 2: 1 }
+      2: { 5: 4, 7: 1, 4: 1 }
+      3: { 6: 2, 4: 1, 2: 1 }
+      4: { 5: 3, 1: 2, 2: 1 }
+      5: { 1: 4, 6: 1, 4: 1 }
+      6: { 2: 2, 4: 2, 5: 1 }
+      7: { 1: 3, 3: 1 }
+    source: functional harmony, unchanged from chord_theory.rb
+
+  minor:
+    semitones: [0, 2, 3, 5, 7, 8, 10]
+    qualities: { 1: m9, 2: dim, 3: maj9, 4: m9, 5: "7", 6: maj9, 7: "7" }
+    transitions:
+      1: { 4: 3, 5: 3, 6: 2, 2: 1 }
+      2: { 5: 4, 7: 1, 4: 1 }
+      3: { 6: 2, 4: 1, 2: 1 }
+      4: { 5: 3, 1: 2, 2: 1 }
+      5: { 1: 4, 6: 1, 4: 1 }
+      6: { 2: 2, 4: 2, 5: 1 }
+      7: { 1: 3, 3: 1 }
+    source: functional harmony, unchanged from chord_theory.rb
+
+  # --- the four Ethiopian qenit (ቅኝት) ------------------------------------
+  #
+  # Mulatu Astatke, on what Ethio-jazz is: the four modes underneath, and the
+  # world — Latin, American jazz, European — on top. That is the arrangement
+  # this file makes possible, because the modes can now be the bottom.
+  #
+  # All four are pentatonic, which is the whole reason the spine had to stop
+  # assuming seven degrees. The transitions are deliberately sparser than the
+  # heptatonic ones: with five degrees there is no ii-V, and the motion these
+  # modes actually make is stepwise around a strong tonic rather than
+  # cadential. Weighted toward returning to 1, because in every recording of
+  # these the tonic is where the phrase lands.
+  #
+  # Qualities lean on sus and triads rather than on the ninths the heptatonic
+  # modes use: a pentatonic scale has no seventh degree to build a maj7 from,
+  # and stacking one anyway is how a modal line stops sounding modal.
+
+  tizita:
+    # The best known of the four — the nostalgic one, major-pentatonic in shape.
+    semitones: [0, 2, 4, 7, 9]
+    qualities: { 1: maj, 2: sus, 3: min, 4: maj, 5: min }
+    transitions:
+      1: { 4: 3, 5: 2, 2: 2 }
+      2: { 1: 3, 4: 2 }
+      3: { 1: 2, 5: 2 }
+      4: { 1: 4, 5: 2 }
+      5: { 1: 4, 4: 1 }
+    source: chromatone.center Ethiopian kignit — C D E G A
+
+  tizita_minor:
+    semitones: [0, 2, 3, 7, 9]
+    qualities: { 1: min, 2: sus, 3: maj, 4: min, 5: min }
+    transitions:
+      1: { 4: 3, 5: 2, 3: 2 }
+      2: { 1: 3, 4: 2 }
+      3: { 1: 3, 5: 1 }
+      4: { 1: 4, 5: 2 }
+      5: { 1: 4, 4: 1 }
+    source: chromatone.center Ethiopian kignit — C D Eb G A
+
+  bati:
+    semitones: [0, 2, 5, 7, 9]
+    qualities: { 1: maj, 2: min, 3: sus, 4: maj, 5: min }
+    transitions:
+      1: { 3: 3, 4: 2, 2: 2 }
+      2: { 1: 3, 3: 2 }
+      3: { 1: 3, 4: 2 }
+      4: { 1: 4, 3: 1 }
+      5: { 1: 4, 3: 1 }
+    source: chromatone.center Ethiopian kignit — C D F G A
+
+  bati_minor:
+    semitones: [0, 1, 5, 7, 9]
+    qualities: { 1: min, 2: maj, 3: sus, 4: maj, 5: min }
+    transitions:
+      1: { 3: 3, 2: 2, 4: 2 }
+      2: { 1: 4, 3: 1 }
+      3: { 1: 3, 4: 2 }
+      4: { 1: 4, 3: 1 }
+      5: { 1: 4, 3: 1 }
+    source: chromatone.center Ethiopian kignit — C Db F G A
+
+  ambassel:
+    # DISAGREEMENT, recorded rather than resolved.
+    #
+    # chromatone.center gives Ambassel major as C D E G Ab -> [0, 2, 4, 7, 8].
+    # A separate source describes it as C Db F G Ab -> [0, 1, 5, 7, 8], calling
+    # the intervals a minor 2nd, major 3rd, major 2nd, minor 2nd and major 3rd,
+    # and places it in the Gonder and Wollo regions.
+    #
+    # Those are different scales, not two spellings of one. Both are carried:
+    # `ambassel` is the first, `ambassel_wollo` the second. Neither is guessed
+    # at, and picking one silently would have made the engine confidently wrong
+    # about a mode it cannot check.
+    semitones: [0, 2, 4, 7, 8]
+    qualities: { 1: maj, 2: sus, 3: min, 4: maj, 5: maj }
+    transitions:
+      1: { 5: 3, 4: 2, 2: 2 }
+      2: { 1: 3, 5: 2 }
+      3: { 1: 3, 5: 1 }
+      4: { 1: 3, 5: 2 }
+      5: { 1: 4, 4: 1 }
+    source: chromatone.center Ethiopian kignit — C D E G Ab
+
+  ambassel_wollo:
+    semitones: [0, 1, 5, 7, 8]
+    qualities: { 1: min, 2: maj, 3: sus, 4: min, 5: maj }
+    transitions:
+      1: { 3: 3, 2: 2, 5: 2 }
+      2: { 1: 4, 3: 1 }
+      3: { 1: 3, 5: 2 }
+      4: { 1: 3, 3: 1 }
+      5: { 1: 4, 3: 1 }
+    source: second source, Gonder/Wollo — C Db F G Ab; see the note on `ambassel`
+
+  anchihoye:
+    # The most distinctive of the four and the least like anything in Western
+    # practice: a minor 2nd, then a major 3rd, then a minor 2nd. The wide gap
+    # in the middle is what makes it unmistakable.
+    semitones: [0, 1, 5, 6, 9]
+    qualities: { 1: min, 2: maj, 3: sus, 4: dim, 5: maj }
+    transitions:
+      1: { 3: 3, 2: 2, 5: 1 }
+      2: { 1: 4, 3: 1 }
+      3: { 1: 3, 5: 1 }
+      4: { 3: 2, 1: 2 }
+      5: { 1: 4, 3: 1 }
+    source: chromatone.center Ethiopian kignit — C Db F Gb A

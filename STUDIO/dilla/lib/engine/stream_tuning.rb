@@ -85,7 +85,7 @@ STREAM_EXTRA_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   # path has to handle this voice, so this is what it runs against.
   # Vocals off by default. RAP_VOCAL=<slug> or CHOIR_VOX=1 re-enables.
   "RAP_VOCAL" => "0",
-  "LEAD_FORCE_ARP" => "1",
+  "LEAD_FORCE_ARP" => "0",
   "ARTIST_VERIFIED_ONLY" => "0",
   # Stay aligned with style DNA — creative wildness is opt-in (STREAM_CREATIVE=1).
   "STREAM_CREATIVE_FREEDOM" => "1",
@@ -150,7 +150,6 @@ STREAM_ITERATE_TUNING = {
   "RENDER_RETRIES" => "1",
   "RENDER_BEAUTY_MIN" => "55",
   "EVOLVE_EVERY" => "1",
-  "LEAD_ARP" => "1",
   "EXPERIMENTAL_LEADS" => "1",
   "SYNTH_CYCLE" => "1",
   "SYNTH_MORPH" => "1",

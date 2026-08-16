@@ -1,7 +1,7 @@
 ---
 meta:
   source: playlist.brgen.no
-  manifest: "/Users/mac/Documents/GitHub/pub4/MASTER/tools/audio/radio_bergen_tracks.yml"
+  manifest: RAILS/brgen/config/radio_bergen/tracks.yml
   studied_at: '2026-07-18T19:42:57Z'
   track_count: 29
   local_count: 9

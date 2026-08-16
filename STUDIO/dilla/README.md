@@ -14,7 +14,8 @@ including `redo_nine.sh`, live under `scripts/`.
 cd STUDIO/dilla
 ruby dilla.rb out.wav 18                 # one render, 18 bars
 TRACK=kembara_rindu ruby dilla.rb out.wav 18
-ruby dilla.rb                            # continuous stream
+ruby dilla.rb                            # showcase_demo! → demo.wav
+ruby dilla.rb stream                     # continuous stream
 ruby dilla.rb help
 ```
 
@@ -268,10 +269,11 @@ ruby dilla.rb separate <file>          # demucs 4-stem
 Each of these cost real debugging time. They are listed because the failures
 were all silent — the code ran, returned success, and did nothing.
 
-- **`DRUM_VOL` does nothing in the main render.** It is read inside
-  `build_harmony_loud`, a different path. Muting the drums with it measures
-  identically to pushing it to 0.72. Use `DRUM_MIX_WEIGHT`, `DRUM_BUS_VOL`,
-  `DRUM_BUS_GAIN`.
+- **`DRUM_VOL` is an alias for `DRUM_MIX_WEIGHT` on the main render.** Stream
+  iterate and the composition loop used to mutate `DRUM_VOL` and move nothing.
+  `resolved_drum_mix_weight` reads a pinned `DRUM_VOL` when `DRUM_MIX_WEIGHT`
+  was not pinned. Prefer `DRUM_MIX_WEIGHT` / `DRUM_BUS_VOL` / `DRUM_BUS_GAIN`
+  in new recipes.
 - **`KICK_GAIN` will not fix a loud low end** if the loop is making it. Muting
   the kick moved the 40–100 Hz band by 0.0 dB; muting the loop moved it 4.0 dB.
   Reach for `SAMPLE_LOOP_HP` first.
@@ -312,9 +314,9 @@ were all silent — the code ran, returned success, and did nothing.
   reaches for it when `TRACK` matches `/bach|baroque|circle|fugue/i`. Of the
   whole catalogue only `circle_fifths_descent` does, so asking for "a fugue
   concept" on any other track silently gets none.
-- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` (+2.4, or +2.2
-  on flylo) and `DRUM_PRESENCE_DB` (+2.5) both push the same region that
-  `MASTER_SMOOTH_DB` takes 2 dB out of at 3.2 kHz. Net is a boost into the band
+- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` (+1.6) and
+  `DRUM_PRESENCE_DB` (+1.5) both push the same region that `MASTER_SMOOTH_DB`
+  takes 2 dB out of at 3.2 kHz. Net is still a boost into the band
   `master_smooth!` itself calls "where distortion and harshness actually live".
   The de-harsher is no longer switched off, but it is outnumbered.
 - **`analyze_harshness` is a three-band meter.** Presence (2–4 kHz) minus body
@@ -346,15 +348,10 @@ fix just didn't travel. So: grep the shape, then fix at a choke point —
 `synth_patch` for patch fx, `pick_patch_from_pool` plus `weighted_patch_pick`
 for selection — not at the call sites.
 
-*Measured again 2026-08-11, on the entry two sections up.* "`asoftclip` needs
-`oversample`" is written down, correct, and applied to **10 of 19** real filter
-invocations. Of the 9 without it, **8 are inside `render_hate_techno`** and the
-ninth is `flylo_top_dirt`. So the aliasing this engine calls "the digital
-harshness it was supposed to remove" is concentrated almost entirely in one
-renderer — the same fork whose harmony had to be closed separately, and whose
-master had to be closed separately after that, and which is the renderer people
-describe as sounding harsh and simple. Three layers of the same fork, each found
-and closed on its own.
+*Measured again 2026-08-13.* "`asoftclip` needs `oversample`" is written down
+and now applied to every real `asoftclip=type=` filter string, including the
+eight inside `render_hate_techno` and `flylo_top_dirt`. A bare `asoftclip`
+scan still hits comments that describe the old miss — count filter strings.
 
 Count when grepping, too: a bare `asoftclip` scan returns 28 hits and 18
 "without oversample", because prose in the comments is describing the bug. Only

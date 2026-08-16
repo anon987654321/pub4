@@ -534,6 +534,8 @@ def lead_events_scale_arp(pad_events, cfg, duration: nil, n_bars: nil)
 end
 
 def arp_degrees_for(style, tone_count, rng)
+  return [] if tone_count.to_i <= 0
+
   builder = ARP_PATTERN_BUILDERS[style] || ARP_PATTERN_BUILDERS[:updown]
   raw = builder.arity >= 2 ? builder.call(tone_count, rng) : builder.call(tone_count)
   raw.map { |d| d % tone_count }
@@ -647,6 +649,8 @@ def lead_pattern_mode(chord_i, cfg, rng)
 end
 
 def arp_pattern_for_chord(chord, variation, tone_count, rng)
+  return [] if tone_count.to_i <= 0 || chord.nil?
+
   case variation[:pattern_mode]
   when :motif
     chord_motif_for(chord).map { |d| d % tone_count }

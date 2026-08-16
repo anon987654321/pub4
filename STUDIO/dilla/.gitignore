@@ -3,3 +3,11 @@
 # A/B comparison renders from master-chain work; regenerate, do not track.
 full_track_*.wav
 full_track_*.wav.quality.json
+
+# Audio is irreplaceable and does not belong in git. Source loops, vocal takes
+# and synthesised drums are on disk and backed up as files; a 4.1 GB .git is
+# already the cost of the ones that got in.
+crate/
+samples/
+project/learnings/vocals/**/*.wav
+*.320kbps.original.mp3

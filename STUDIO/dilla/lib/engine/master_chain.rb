@@ -142,6 +142,7 @@ def widen_master!(path)
   # SIDE_CEILING keeps the result under unity — a master bus that can put more
   # energy in the difference signal than the sum is not wide, it is broken.
   slev = [1.0 + 0.5 * amt, 1.45].min.round(2)
+  out = "#{path}.wide#{File.extname(path)}"
   chain = "[0:a]asplit=2[mw_lo][mw_hi];" \
           "[mw_lo]lowpass=f=#{MASTER_WIDTH_HZ}[mw_low];" \
           "[mw_hi]highpass=f=#{MASTER_WIDTH_HZ}," \

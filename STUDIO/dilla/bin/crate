@@ -1,0 +1,225 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# The crate: fetch a source, split it, cut loops out of it.
+#
+# The old samples/ tree was 2.5 GB of derived audio with no record of where any
+# of it came from — nine directories (dug, chopped, acapella, own, drums, irs,
+# demux, …) each named in a different file, and a provenance.json that covered
+# one of them. When it was cleared, nothing could say what had been in it.
+#
+# This is the replacement, and its shape is the point:
+#
+#   crate/sources/<slug>/   what was downloaded, plus source.json — the URL, the
+#                           title, the uploader, the duration, the sha256, and
+#                           when. Never edited after the fetch.
+#   crate/stems/<slug>/     demucs output, one directory per source. The old
+#                           layout wrote {stem}.{ext} into a model-named folder,
+#                           so a second track silently overwrote the first.
+#   crate/loops/<slug>/     the usable material, each with a sidecar naming the
+#                           source, the offset and the length it was cut at.
+#
+# Every loop can be traced to a timestamp in a named recording, and every one
+# can be re-cut from the source without touching the network.
+#
+#   bin/crate fetch "anuar zain semua untukmu"      # or a URL
+#   bin/crate split semua_untukmu
+#   bin/crate cut   semua_untukmu 35 10 --name verse_choir
+#   bin/crate cut   semua_untukmu 35 10 --stem vocals
+#   bin/crate loop  semua_untukmu/verse_choir 6     # concat and play
+#   bin/crate list
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "shellwords"
+
+module Crate
+  ROOT = File.expand_path("../crate", __dir__)
+  SOURCES = File.join(ROOT, "sources")
+  STEMS = File.join(ROOT, "stems")
+  LOOPS = File.join(ROOT, "loops")
+
+  DEMUCS = File.expand_path("../scratch/venv-demucs/bin/demucs", __dir__)
+  MODEL = ENV.fetch("CRATE_DEMUCS_MODEL", "htdemucs_6s")
+
+  # YouTube answers a plain yt-dlp request with HTTP 403 on the audio stream
+  # while still serving the metadata, so a fetch looks like it half-worked. The
+  # android player client is served normally. Ordered by what has actually
+  # worked here; the list is walked until one produces a file.
+  PLAYER_CLIENTS = %w[android ios web_safari tv mweb].freeze
+
+  module_function
+
+  def slugify(text)
+    text.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")[0, 60]
+  end
+
+  def sh(*argv)
+    out, status = Open3.capture2e(*argv)
+    [out, status.success?]
+  end
+
+  def die(message)
+    warn("crate: #{message}")
+    exit 1
+  end
+
+  # --- fetch ---------------------------------------------------------------
+
+  def fetch(query, slug: nil)
+    target = query.start_with?("http") ? query : "ytsearch1:#{query}"
+    probe, ok = sh("yt-dlp", "-q", "--no-warnings", "--skip-download", "--print",
+                   "%(title)s\t%(uploader)s\t%(duration)s\t%(webpage_url)s\t%(id)s", target)
+    die("could not resolve #{query.inspect}") unless ok
+
+    title, uploader, duration, url, id = probe.strip.split("\t")
+    slug ||= slugify(title)
+    dir = File.join(SOURCES, slug)
+    FileUtils.mkdir_p(dir)
+    wav = File.join(dir, "source.wav")
+
+    if File.file?(wav)
+      puts "crate: #{slug} already fetched (#{(File.size(wav) / 1_048_576.0).round(1)} MB)"
+      return slug
+    end
+
+    client = PLAYER_CLIENTS.find do |name|
+      sh("yt-dlp", "-q", "--no-warnings", "--extractor-args", "youtube:player_client=#{name}",
+         "-x", "--audio-format", "wav", "--audio-quality", "0",
+         "-o", File.join(dir, "source.%(ext)s"), url)
+      File.file?(wav)
+    end
+    die("every player client was refused for #{url} — yt-dlp may need updating") unless client
+
+    File.write(File.join(dir, "source.json"), JSON.pretty_generate(
+      "slug" => slug, "title" => title, "uploader" => uploader,
+      "duration_s" => duration.to_f, "url" => url, "video_id" => id,
+      "player_client" => client, "sha256" => Digest::SHA256.file(wav).hexdigest,
+      "bytes" => File.size(wav), "fetched_at" => Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    ) + "\n")
+
+    puts "crate: #{slug} — #{title} (#{uploader}, #{duration.to_i}s) via #{client}"
+    slug
+  end
+
+  # --- split ---------------------------------------------------------------
+
+  def split(slug)
+    source = File.join(SOURCES, slug, "source.wav")
+    die("no source for #{slug} — fetch it first") unless File.file?(source)
+    die("demucs not found at #{DEMUCS}") unless File.executable?(DEMUCS)
+
+    out = File.join(STEMS, slug)
+    return puts("crate: #{slug} already split") if Dir.exist?(out) && !Dir.empty?(out)
+
+    # demucs writes <out>/<model>/<track>/<stem>.wav. Given --filename it writes
+    # <out>/<model>/<stem>.wav, which collides across tracks — so let it use its
+    # own layout and move the leaves into one directory per source.
+    staging = File.join(STEMS, ".staging-#{slug}")
+    FileUtils.rm_rf(staging)
+    _log, ok = sh(DEMUCS, "-n", MODEL, "-o", staging, source)
+    die("demucs failed for #{slug}") unless ok
+
+    stems = Dir.glob(File.join(staging, "**", "*.wav"))
+    die("demucs produced no stems for #{slug}") if stems.empty?
+    FileUtils.mkdir_p(out)
+    stems.each { |path| FileUtils.mv(path, File.join(out, File.basename(path))) }
+    FileUtils.rm_rf(staging)
+
+    puts "crate: #{slug} split into #{stems.size} stems — #{stems.map { |s| File.basename(s, '.wav') }.sort.join(', ')}"
+  end
+
+  # --- cut -----------------------------------------------------------------
+
+  # A 15 ms fade in and a 30 ms fade out. Not taste: a cut that starts or ends
+  # mid-cycle clicks, and a click at the seam is the one artefact a loop cannot
+  # hide however good the material is.
+  FADE_IN = 0.015
+  FADE_OUT = 0.030
+
+  def cut(slug, start_s, length_s, name: nil, stem: nil)
+    source = if stem
+               File.join(STEMS, slug, "#{stem}.wav")
+             else
+               File.join(SOURCES, slug, "source.wav")
+             end
+    die("no such audio: #{source}") unless File.file?(source)
+
+    name ||= format("%s_%02d_%02d", stem || "full", start_s.to_i, (start_s + length_s).to_i)
+    dir = File.join(LOOPS, slug)
+    FileUtils.mkdir_p(dir)
+    wav = File.join(dir, "#{name}.wav")
+
+    fade_out_at = [length_s - FADE_OUT, 0].max
+    _log, ok = sh("ffmpeg", "-v", "error", "-y", "-ss", start_s.to_s, "-t", length_s.to_s,
+                  "-i", source,
+                  "-af", "afade=t=in:st=0:d=#{FADE_IN},afade=t=out:st=#{fade_out_at}:d=#{FADE_OUT}",
+                  wav)
+    die("ffmpeg refused the cut") unless ok
+
+    File.write("#{wav.chomp('.wav')}.json", JSON.pretty_generate(
+      "slug" => slug, "name" => name, "from" => stem ? "stems/#{slug}/#{stem}.wav" : "sources/#{slug}/source.wav",
+      "start_s" => start_s.to_f, "length_s" => length_s.to_f,
+      "fade_in_s" => FADE_IN, "fade_out_s" => FADE_OUT,
+      "cut_at" => Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    ) + "\n")
+
+    puts "crate: #{slug}/#{name} — #{length_s}s from #{start_s}s#{stem ? " of the #{stem} stem" : ""}"
+    wav
+  end
+
+  # --- loop ----------------------------------------------------------------
+
+  def loop(ref, times = 6, play: true)
+    slug, name = ref.split("/", 2)
+    wav = File.join(LOOPS, slug, "#{name}.wav")
+    die("no such loop: #{ref}") unless File.file?(wav)
+
+    list = File.join(Dir.tmpdir, "crate-#{slug}-#{name}.txt")
+    File.write(list, Array.new(times) { "file '#{wav}'" }.join("\n"))
+    out = File.join(LOOPS, slug, "#{name}_x#{times}.wav")
+    _log, ok = sh("ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out)
+    die("ffmpeg refused the concat") unless ok
+
+    puts "crate: #{ref} x#{times} -> #{out.sub("#{ROOT}/", '')}"
+    system("afplay #{Shellwords.escape(out)} >/dev/null 2>&1 &") if play
+    out
+  end
+
+  # --- list ----------------------------------------------------------------
+
+  def list
+    slugs = Dir.children(SOURCES).sort rescue []
+    return puts("crate: empty") if slugs.empty?
+
+    slugs.each do |slug|
+      meta = JSON.parse(File.read(File.join(SOURCES, slug, "source.json"))) rescue {}
+      stems = Dir.glob(File.join(STEMS, slug, "*.wav")).size
+      loops = Dir.glob(File.join(LOOPS, slug, "*.wav")).reject { |f| f =~ /_x\d+\.wav\z/ }.size
+      puts format("%-28s %-34s %5ds  %d stems  %d loops", slug,
+                  (meta["title"] || "?")[0, 34], meta["duration_s"].to_i, stems, loops)
+    end
+  end
+end
+
+require "tmpdir"
+
+command = ARGV.shift
+args = ARGV.reject { |a| a.start_with?("--") }
+flags = ARGV.select { |a| a.start_with?("--") }.to_h { |f| k, v = f.sub("--", "").split("=", 2); [k, v || true] }
+# `--name x` and `--stem x` as two tokens, which is how they read on a command line.
+ARGV.each_with_index { |a, i| flags[a.sub("--", "")] = ARGV[i + 1] if a.start_with?("--") && ARGV[i + 1] && !ARGV[i + 1].start_with?("--") }
+args -= flags.values.select { |v| v.is_a?(String) }
+
+case command
+when "fetch" then Crate.fetch(args.join(" "), slug: flags["slug"])
+when "split" then Crate.split(args.fetch(0))
+when "cut"   then Crate.cut(args.fetch(0), args.fetch(1).to_f, args.fetch(2).to_f,
+                            name: flags["name"], stem: flags["stem"])
+when "loop"  then Crate.loop(args.fetch(0), (args[1] || 6).to_i)
+when "list"  then Crate.list
+else
+  puts File.read(__FILE__).lines[4..30].map { |l| l.sub(/\A# ?/, "") }.join
+end

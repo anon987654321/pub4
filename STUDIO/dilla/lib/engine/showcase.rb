@@ -43,10 +43,14 @@ def showcase_demo!(dest = File.join(ROOT, "demo.wav"))
       part = File.join(tmp, format("%03d_%s.wav", i, style))
       env = {
         "PATH" => ENV["PATH"], "HOME" => ENV["HOME"],
+        "TMPDIR" => ENV["TMPDIR"], "TMP" => ENV["TMP"], "TEMP" => ENV["TEMP"],
+        "GEM_HOME" => ENV["GEM_HOME"], "GEM_PATH" => ENV["GEM_PATH"],
+        "BUNDLE_GEMFILE" => ENV["BUNDLE_GEMFILE"], "BUNDLE_PATH" => ENV["BUNDLE_PATH"],
+        "RUBYOPT" => ENV["RUBYOPT"], "SSL_CERT_FILE" => ENV["SSL_CERT_FILE"],
         "SPEAK" => "0", "RAP_VOCAL" => "0", "CHOIR_VOX" => "0", "SELF_SAMPLE" => "0",
         "STREAM_CONTINUOUS" => "0", "DILLA_STREAMING" => "0",
         "TRACK" => style, "PROGRESSION" => style, "BARS" => bars.to_s,
-      }
+      }.compact
       dmesg("showcase [#{i + 1}/#{styles.length}] #{style}", unit: "demo0", parent: "dilla0")
       rendered = false
       timed_out = false

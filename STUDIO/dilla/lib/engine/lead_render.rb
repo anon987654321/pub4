@@ -683,16 +683,24 @@ end
 # Every chord walked during a render, appended so nothing explored is lost —
 # generated progressions especially never repeat, so this is the only
 # record of what actually played if it's worth turning into a real song.
-def log_progression!(track, bpm, pads)
+def log_progression!(track, bpm, pads, phases = nil)
   return if pads.empty?
+
   FileUtils.mkdir_p(SCRATCH_DIR)
   migrate_legacy_progression_logs!
-  lines = pads.map do |chord|
+  lines = pads.each_with_index.map do |chord, i|
     notes = chord[:hz].map { |hz| nearest_note(hz) }.join(" ")
-    "  #{chord[:name]}: #{notes}  (#{chord[:hz].map { |h| h.round(1) }.join(', ')} Hz)"
+    hz = chord[:hz].map { |h| h.round(1) }.join(", ")
+    phase = phases&.[](i)
+    prefix = phase ? "[#{phase}] " : ""
+    "  #{prefix}#{chord[:name]}: #{notes}  (#{hz} Hz)"
   end
   File.open(PROGRESSION_LOG_PATH, "a") do |f|
-    f.puts "=== #{Time.now.iso8601} — TRACK=#{track} BPM=#{bpm.round(1)} ==="
+    # Tagged (fugue) only when there are fugue phases. render_dilla calls this
+    # for every render, not just fugues, so the tag was hardcoded onto all of
+    # them -- all 133 entries in the log say (fugue), including batucada and
+    # afrobeats_pocket. A label that is always printed identifies nothing.
+    f.puts "=== #{Time.now.iso8601} — TRACK=#{track} BPM=#{bpm.round(1)}#{phases ? ' (fugue)' : ''} ==="
     f.puts lines
     f.puts
   end

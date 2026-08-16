@@ -16,9 +16,9 @@ def help
   puts <<~HELP
     Dilla Lab — unified audio engine (#{ROOT})
 
-    DEFAULT (no command — continuous stream, one DNA, rotating progressions + drums)
-      ruby dilla.rb                    Bare invoke: continuous stream (same as `stream` below)
-      ruby dilla.rb stream [bars]      Same as bare default (#{STREAM_BARS_COUNT}/BARS bars)
+    DEFAULT (no command — finite catalogue showcase to demo.wav)
+      ruby dilla.rb                    Bare invoke: showcase_demo! (every named track, a few bars)
+      ruby dilla.rb stream [bars]      Continuous stream (speakers via afplay/ffplay)
       ruby dilla.rb out.wav [bars]     One-shot render to path (not stream)
       ruby dilla.rb dilla [out] [bars] One-shot kit-forward render
       DILLA_DEEP=0                     One-shot: standard render (no quality gate / refine)
@@ -59,12 +59,12 @@ def help
       STREAM_DEEP=1 stream [bars]      Full deep pipeline + quality gate per track (~1–2 min)
       DILLA_FORCE_TERMINAL=1         macOS: open Terminal.app for speaker playback
       KICKS=1 (default in stream)      Layered 808-style kicks in the drum bus
-      KICK_GAIN=0.42 (stream default)  Kick/sub level — lower if still loud
-      SPEAK=1 (default in stream)      TTS pickup lines over the beat (dry, no echo)
+      KICK_GAIN=0.88 (style DNA wins after stream extra defaults)
+      SPEAK=0 (stream default)         TTS off; SPEAK=1 overlays pickup lines
       SPEAK_VOICE=en-US-AndrewNeural   Funny-clear voice (GuyNeural also works)
       SPEAK_RATE=-48%                  Slower speech (default in stream)
       SPEAK=0                          Beat only — skip speech overlay
-      RADIO_BERGEN=1 (stream default)  Bias TRACK from playlist.brgen.no learnings
+      RADIO_BERGEN=0 (stream default)  Set 1 to bias TRACK from playlist.brgen.no
       radio-bergen-study [--audio-root PATH]  Refresh learnings YAML from manifest
       radio-bergen-analyze [--audio-root PATH]  Per-track dossiers (drums/texture/harmony)
       radio-bergen-librosa            Librosa deep analysis (optional .venv)
@@ -73,7 +73,7 @@ def help
       loose_pocket [out.wav|mp3]         Dirty pocket drums + VLC FX (default on)
       loose_pocket beats [dir]           Batch beat_01..14 wav+mp3 → renders/beats/
       DELICIOUS=1 (default)        0.72x pocket BPM | VLC=1 (default) all audio effects
-      dilla | beat [out.mp3]       J Dilla beat — TRACK= preset (default chromatic_minor_descent)
+      dilla [out.mp3]              J Dilla beat — TRACK= preset (default pedal_e_descent)
       hiphop [out.mp3]             Slum Village engine (default TRACK=syncopated_slash_ninth)
       slum [dir]                   Batch session_01..14 → renders/ (Sonitex on)
       industrial [out.mp3]         Industrial techno (default renders/foundry_pulse.mp3)
@@ -83,7 +83,6 @@ def help
       render [out.mp3]             Core pad + drum synthesis
       electronium [out.mid]        MIDI (--electronium-classic=1 | --electronium-render=1)
       electronium-full [out.wav]   Full engine render of electronium_loop (--electronium-classic=1)
-      midi [out.mid]               Alias for electronium
 
     VOCAL MIXES (Sirkel Sag × Voicemails)
       mix | v11                    Latest mix recipe (default v11)
@@ -92,7 +91,7 @@ def help
     SAMPLE PIPELINE
       prepare [path]               Drum kit + FFmpeg stem rack (neosoul.mp3 default)
       sample                       source → demucs → clean harmonic
-      source | download [url|path] [out]  yt-dlp / ffmpeg capture audio
+      source [url|path] [out]      yt-dlp / ffmpeg capture audio
       separate [path]              Demucs 4-stem (htdemucs_ft)
       demux <url|path> [deep]      6-stem demucs (htdemucs_6s) + optional EQ sub-bands
       chop [path]                  Long recording → bar-aligned sample loops with
@@ -173,7 +172,7 @@ def help
      KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
          KICK_GAIN=0.88 (0.78 on flylo) kick/sub level scale — lower if still loud
          SONITEX=donuts_warm (default) | SONITEX=classic | SONITEX=heavy | SONITEX=0 dry
-         SONITEX_SAMPLING=0 (crush off) SONITEX_NOISE=0 TAPE_BIAS=1 TAPE_LOSS_HZ=0
+         crush off: SONITEX_SAMPLING=0  noise off: SONITEX_NOISE=0  TAPE_BIAS=1 TAPE_LOSS_HZ=0
          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)
          FORCE_KIT=1 regenerate synth drums
          samples/drums/custom/ overrides kit

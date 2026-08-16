@@ -51,10 +51,10 @@ USER_PINNED_ENV = begin
   captured = ENV.to_h
   captured.delete("DILLA_USER_PINNED_KEYS")
   if declared.nil?
-    captured.freeze
+    captured
   else
     keys = declared.split(",")
-    captured.select { |k, _| keys.include?(k) }.freeze
+    captured.select { |k, _| keys.include?(k) }
   end
 end
 
@@ -202,6 +202,305 @@ def engine_mtime
 end
 
 # =============================================================================
+# Sidecar replay, balance audition, demo matrix, album master
+# =============================================================================
+
+# Every .dilla sidecar pins the whole environment of a render. Replaying it with
+# the seed keys dropped draws a fresh performance from the same recipe, which is
+# what a new take means here: seed and performer rotate per run and renders are
+# not reproducible bit for bit, so pinning the seed buys nothing and hides that
+# this is a new take.
+def replay_environment(src, overrides = {})
+  path = src.end_with?(".dilla") ? src : "#{src}.dilla"
+  abort "no sidecar at #{path}" unless File.file?(path)
+
+  JSON.parse(File.read(path)).fetch("environment")
+      .reject { |key, _| key.match?(/RENDER_SEED\z/) }
+      .merge(overrides)
+end
+
+# KEY=VAL pairs left on the command line. One command covers the fresh-take,
+# lossless-re-render and remake-from-another-sample cases.
+def replay_overrides(tokens)
+  tokens.each_with_object({}) do |token, out|
+    key, value = token.split("=", 2)
+    out[key] = value if value
+  end
+end
+
+# A .wav destination masters from a first-generation source instead of decoding
+# an mp3 and re-encoding it. Width comes from master_chain's stereotools rather
+# than a Haas delay, so the result does not comb in mono. True peak is NOT fixed
+# here: cli_commands measures it and appends a warning, then ships anyway.
+def rerender_from_sidecar(src, dest, overrides = {})
+  env = replay_environment(src, overrides)
+  bars = env["BARS"] || "32"
+  warn "rerender #{File.basename(src)} -> #{dest}"
+  warn "  #{env.size} vars replayed, seed dropped, BARS=#{bars} " \
+       "SAMPLE_LOOP=#{env['SAMPLE_LOOP'].inspect} MASTER_WIDTH=#{env['MASTER_WIDTH'].inspect}"
+  exec(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "dilla", "--bars=#{bars}", dest)
+end
+
+# Sample-to-pad balance, so it can be chosen by ear rather than by argument.
+#
+# The record carries its own harmony, so nothing else should state one.
+# semua_untuk_mu has vocal chords in it, and a curated progression played by pads
+# on top is a second piece of music in the same bar — which is what the harmonic
+# guard says in as many words. That guard only fires when the loop's key is
+# unreadable; this loop reads G minor at fit 0.75, so the pads played.
+#
+# DRUM_FORWARD=0 throughout: the default carves the bed at 180/3000 Hz to clear
+# room for drums, which removes the sample's body and leaves the noisy middle.
+BALANCE_VARIANTS = {
+  # Mutes exactly the layer list the harmonic guard mutes, plus the synth voices.
+  # FLIP=0 because the chords are IN the record and chopping it destroys them.
+  "chordless" => { "PAD_VOL" => "0", "HARM_MIX_WEIGHT" => "0", "MELODIC_LEAD" => "0",
+                   "SCALE_LEAD" => "0", "LEAD_ARP" => "0", "HARMONY_LEAD" => "0",
+                   "PAD_LAYERS" => "0", "PAD_TEXTURE" => "0", "CHOIR_VOX" => "0",
+                   "LUSH_SYNTH" => "0", "SYNTH_MORPH" => "0", "LEAD_MORPH" => "0",
+                   "SAMPLE_LOOP_VOL" => "1.2", "SAMPLE_LOOP_WEIGHT" => "1.5",
+                   "DRUM_FORWARD" => "0", "FLIP" => "0" },
+  "flip_only" => { "FLIP" => "1", "FLIP_RECORDS" => "1", "VOCAL_CHOPS" => "0", "DRUM_FORWARD" => "0" },
+  "flip" => { "FLIP" => "1", "DRUM_FORWARD" => "0" },
+  "a_sample_forward" => { "SAMPLE_LOOP_VOL" => "1.3", "SAMPLE_LOOP_WEIGHT" => "1.6",
+                          "HARM_BUS_VOL" => "1.4", "DRUM_FORWARD" => "0" },
+  "b_pads_back" => { "SAMPLE_LOOP_VOL" => "1.3", "SAMPLE_LOOP_WEIGHT" => "1.6",
+                     "HARM_BUS_VOL" => "1.0", "DRUM_FORWARD" => "0" },
+  "c_sample_leads" => { "SAMPLE_LOOP_VOL" => "1.5", "SAMPLE_LOOP_WEIGHT" => "1.8",
+                        "HARM_BUS_VOL" => "0.7", "DRUM_FORWARD" => "0" },
+}.freeze
+
+BALANCE_RECIPE = "renders/beats/dilla_semua_96.mp3"
+
+def render_balance(name)
+  overrides = BALANCE_VARIANTS.fetch(name) { abort "unknown variant #{name}" }
+  dest = File.join(ROOT, "renders", "wav", "semua_#{name}.wav")
+  warn "#{name} -> #{dest}"
+  warn "  sample vol #{overrides['SAMPLE_LOOP_VOL']} weight #{overrides['SAMPLE_LOOP_WEIGHT']}  " \
+       "pads #{overrides['HARM_BUS_VOL']}  bed carve off"
+  rerender_from_sidecar(File.join(ROOT, BALANCE_RECIPE), dest, overrides)
+end
+
+# A demo of dilla is generated, not assembled from whatever is sitting in
+# renders/beats — that would treat old output as the work. SAMPLE_LOOP picks the
+# record and TRACK picks the progression, chosen independently so each record is
+# heard against more than one harmonic setting.
+#
+# semua_untuk_mu carries carries_own_harmony in the crate, so its beats mute the
+# tonal layers automatically. Nothing here special-cases it; the flag does.
+DEMO_PROGRESSIONS = %w[pedal_e_descent circle_fifths_descent minor_iv_loop].freeze
+DEMO_SAMPLES = %w[semua_untuk_mu arat_swost_wolet kembara_rindu lo_borges rauingar].freeze
+DEMO_MIN_BYTES = 1_000_000
+
+def generate_demo(bars: ENV.fetch("BARS", "32"), parallel: ENV.fetch("PARALLEL", "3").to_i)
+  out = File.join(ROOT, "renders", "demo")
+  FileUtils.mkdir_p(out)
+  base = replay_environment(File.join(ROOT, BALANCE_RECIPE))
+
+  jobs = DEMO_SAMPLES.flat_map do |sample|
+    DEMO_PROGRESSIONS.map do |progression|
+      { sample:, progression:, dest: File.join(out, "#{sample}__#{progression}.wav") }
+    end
+  end
+  jobs.reject! { |job| File.file?(job[:dest]) && File.size(job[:dest]) > DEMO_MIN_BYTES }
+
+  puts "#{jobs.size} beats to render (#{DEMO_SAMPLES.size} records x " \
+       "#{DEMO_PROGRESSIONS.size} progressions), #{bars} bars, #{parallel} at a time"
+
+  jobs.each_slice(parallel) { |batch| demo_render_batch(batch, base, bars) }
+  puts "#{jobs.count { |job| File.file?(job[:dest]) }}/#{jobs.size} beats in #{out}/"
+end
+
+def demo_render_batch(batch, base, bars)
+  pids = batch.map do |job|
+    env = base.merge("SAMPLE_LOOP" => job[:sample], "TRACK" => job[:progression],
+                     "PROGRESSION" => job[:progression], "BARS" => bars)
+    log = File.join(Dir.tmpdir, "demo_#{job[:sample]}__#{job[:progression]}.log")
+    puts "  -> #{File.basename(job[:dest])}"
+    spawn(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "dilla", "--bars=#{bars}", job[:dest],
+          out: log, err: log)
+  end
+  pids.each { |pid| Process.wait(pid) }
+  batch.each do |job|
+    ok = File.file?(job[:dest]) && File.size(job[:dest]) > DEMO_MIN_BYTES
+    puts format("  %-46s %s", File.basename(job[:dest]),
+                ok ? "ok #{File.size(job[:dest]) / 1_048_576}MB" : "FAILED")
+  end
+end
+
+# Album master. The chain per track, in this order:
+#
+#   1. side-gain correction     The fix. Five tracks measured a SIDE channel
+#                               louder than their MID, which is not a wide mix
+#                               but out-of-phase content, and it collapses 6-8 dB
+#                               summed to mono. Their source samples are healthy
+#                               (-5 to -7.5 dB side/mid), so the width comes from
+#                               the render chain. Applied only where measurement
+#                               says it is needed.
+#   2. true-peak limit          Recovers level without compressing. Pure gain left
+#                               the album at -15.4 LUFS because one track peaked
+#                               at +0.1 dBFS.
+#   3. dither to 16-bit         Triangular with high-pass noise shaping, so
+#                               truncation noise is not quantised into the
+#                               program material.
+#
+# What it cannot fix: a source that is a lossy mp3 makes the deliverable a
+# second-generation encode. `rerender` to .wav first is the answer to that.
+#
+# -19.0 is the house target for dilla material, NOT the -14 streaming figure.
+# MASTER_LUFS_BY_STYLE records why: pulled down ~3 dB across the board after
+# direct feedback that it read as fatiguing even when true peak was safe. -14 is
+# the number this project rejected; techno is the one exception.
+ALBUM_TARGET_TP = -1.0
+ALBUM_XFADE = 1.5
+# 0.6 dB of encoder headroom: alimiter works on SAMPLE peak while the delivery
+# spec is TRUE peak, and lame reconstructs inter-sample peaks above the sample
+# ceiling — limiting at exactly -1.0 produced a -0.7 dBTP file.
+ALBUM_ENCODER_HEADROOM = 0.6
+
+# How far under mid the side channel may sit. -7.0 narrowed eight tracks by
+# 8.7 dB in one step; the spectrum survived (no band lost more than 1.1 dB) but
+# the record lost the analog spread that reads as warmth. Measurement said the
+# mono problem was real; it did not say to fix all of it at once.
+# SIDE_TARGET=none disables the correction for comparison.
+def album_side_target = ENV.fetch("SIDE_TARGET", "-7.0")
+def album_target_lufs = ENV.fetch("TARGET_LUFS", "-19.0").to_f
+
+def album_channel_db(path, pan)
+  `ffmpeg -hide_banner -nostats -i "#{path}" -af "pan=mono|c0=#{pan},volumedetect" -f null - 2>&1`
+    [/mean_volume:\s*(-?[\d.]+)/, 1].to_f
+end
+
+def album_loudness(path)
+  out = `ffmpeg -hide_banner -nostats -i "#{path}" -af ebur128=peak=true -f null - 2>&1`
+  { i: out[/Integrated loudness:\s*\n\s*I:\s*(-?[\d.]+)/m, 1].to_f,
+    lra: out[/Loudness range:\s*\n\s*LRA:\s*(-?[\d.]+)/m, 1].to_f,
+    tp: out[/True peak:\s*\n\s*Peak:\s*(-?[\d.]+)/m, 1].to_f }
+end
+
+def album_side_over_mid(path)
+  (album_channel_db(path, "0.5*c0-0.5*c1") - album_channel_db(path, "0.5*c0+0.5*c1")).round(1)
+end
+
+def album_tracklist
+  path = File.join(ROOT, "data", "album_tracks.yml")
+  abort "no album tracklist at #{path}" unless File.file?(path)
+
+  YAML.safe_load_file(path).fetch("tracks").map do |row|
+    [File.join(ROOT, row.fetch("path")), row.fetch("title"), row["why"]]
+  end
+end
+
+# Two passes per track. Guessing a compensation for the side cut was wrong:
+# removing ~9 dB of side takes far more than the 0.6 dB first assumed, so those
+# tracks landed 3 dB quiet and the limiter rescued them — which is limiting for
+# level rather than for peaks. Pass A does the M/S and is measured; pass B sets
+# the gain from that measurement so the limiter only ever catches peaks.
+def album_stem(src, title, index, out_dir)
+  abort "missing: #{src}" unless File.file?(src)
+
+  side_over_mid = album_side_over_mid(src)
+  target = album_side_target == "none" ? nil : album_side_target.to_f
+  side_cut = target && side_over_mid > target ? (target - side_over_mid).round(2) : 0.0
+  dest = File.join(out_dir, format("%02d_%s.wav", index + 1, title.tr(" ()", "_")))
+  staged = album_stage_mid_side(src, side_cut, index, out_dir)
+
+  gain = (album_target_lufs - album_loudness(staged)[:i]).round(2)
+  chain = "volume=#{gain}dB," \
+          "alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled," \
+          "aresample=44100:out_sample_fmt=s16:dither_method=triangular_hp"
+  `ffmpeg -hide_banner -nostats -y -i "#{staged}" -af "#{chain}" -ac 2 "#{dest}" 2>&1`
+  FileUtils.rm_f(staged)
+
+  after = album_loudness(dest)
+  puts format("%-24s %7.1f %7.1f -> %7.1f %7.1f %7.2f", title, side_over_mid,
+              album_loudness(src)[:i], album_side_over_mid(dest), after[:i], after[:tp])
+  dest
+end
+
+def album_stage_mid_side(src, side_cut, index, out_dir)
+  staged = File.join(out_dir, ".ms_#{index}.wav")
+  unless side_cut.negative?
+    copy = staged.sub(".wav", File.extname(src))
+    FileUtils.cp(src, copy)
+    return copy
+  end
+
+  graph = "asplit=2[m_a][m_b];" \
+          "[m_a]pan=mono|c0=0.5*c0+0.5*c1[mid];" \
+          "[m_b]pan=mono|c0=0.5*c0-0.5*c1,volume=#{side_cut}dB[sid];" \
+          "[mid][sid]join=inputs=2:channel_layout=stereo[ms];" \
+          "[ms]pan=stereo|c0=c0+c1|c1=c0-c1,"
+  command = "ffmpeg -hide_banner -nostats -y -i \"#{src}\" " \
+            "-filter_complex \"[0:a]#{graph}anull[o]\" -map \"[o]\" -ac 2 -ar 44100 \"#{staged}\" 2>&1"
+  `#{command}`
+  staged
+end
+
+# A trim pass, not a level match: the limiter has already put every track within
+# a decibel of target, so this closes the residual gap only.
+def album_trim_to_target(stems)
+  levels = stems.map { |stem| album_loudness(stem)[:i] }
+  puts
+  puts "after limiting: #{levels.min.round(1)} to #{levels.max.round(1)} LUFS " \
+       "(spread #{(levels.max - levels.min).round(1)} LU)"
+
+  stems.each_with_index.map do |stem, index|
+    trim = (album_target_lufs - levels[index]).round(2)
+    next stem if trim.abs < 0.1
+
+    dest = stem.sub(".wav", "_lvl.wav")
+    command = "ffmpeg -hide_banner -nostats -y -i \"#{stem}\" " \
+              "-af \"volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled\" " \
+              "-ac 2 -ar 44100 \"#{dest}\" 2>&1"
+    `#{command}`
+    dest
+  end
+end
+
+# A limiter on the album itself sits at -1.6 rather than the -1.0 target, because
+# crossfades overlap two tracks and the sum can exceed what either peaked at.
+def album_stitch(stems, dest)
+  graph = +""
+  previous = "[0:a]"
+  stems.each_index do |index|
+    next if index.zero?
+
+    label = index == stems.size - 1 ? "[out]" : "[a#{index}]"
+    graph << "#{previous}[#{index}:a]acrossfade=d=#{ALBUM_XFADE}:c1=tri:c2=tri#{label};"
+    previous = label
+  end
+  ceiling = 10**((ALBUM_TARGET_TP - ALBUM_ENCODER_HEADROOM) / 20.0)
+  graph << "[out]alimiter=limit=#{ceiling}:level=disabled[lim]"
+
+  script = File.join(Dir.tmpdir, "album_graph.txt")
+  File.write(script, graph)
+  inputs = stems.map { |stem| "-i \"#{stem}\"" }.join(" ")
+  system("ffmpeg -hide_banner -loglevel error -y #{inputs} -filter_complex_script #{script} " \
+         "-map \"[lim]\" -c:a libmp3lame -q:a 0 \"#{dest}\"")
+end
+
+def album_master(dest)
+  out_dir = File.join(ROOT, "renders", "mastered")
+  FileUtils.rm_rf(out_dir)
+  FileUtils.mkdir_p(out_dir)
+
+  puts format("%-24s %7s %7s   %7s %7s %7s", "track", "S/M in", "LUFS in", "S/M out", "LUFS", "peak")
+  stems = album_tracklist.each_with_index.map do |(src, title, _why), index|
+    album_stem(src, title, index, out_dir)
+  end
+
+  album_stitch(album_trim_to_target(stems), dest)
+
+  measured = album_loudness(dest)
+  duration = `ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "#{dest}"`.to_f
+  puts
+  puts "album: #{stems.size} tracks, #{(duration / 60).round(2)} min, #{ALBUM_XFADE}s crossfades"
+  puts "  I=#{measured[:i]} LUFS  LRA=#{measured[:lra]}  peak=#{measured[:tp]} dBTP  " \
+       "S/M=#{album_side_over_mid(dest)} dB"
+end
+
+# =============================================================================
 # CLI — one table is the command list, the dispatch, and (via COMMANDS) the
 # debug/introspection surface. Adding a command = adding one entry here.
 # =============================================================================
@@ -269,6 +568,7 @@ FLAGS_REQUIRING_VALUE = %w[
   bars bpm track progression swing voicing seed-text form section-map render-mode
   drum-preset lead-voice pad-voice pad-arp-mode lead-arp-mode synth-cycle
   external-kit generations listen-passes stream-track pad-vol kick-gain
+  sonitex analog-chain genre sidechain-style
 ].freeze
 
 def apply_flags!(argv)
@@ -280,6 +580,11 @@ def apply_flags!(argv)
       abort "--#{key} needs a value, and it has to be attached: --#{key}=VALUE (not --#{key} VALUE)"
     end
     ENV[env_name] = value.empty? ? "1" : value
+    USER_PINNED_ENV[env_name] = ENV[env_name]
+    # --sonitex writes SONITEX_PRESET; sonitex_enabled? only treats SONITEX
+    # as an explicit on. The stream rotator already writes both.
+    ENV["SONITEX"] = ENV[env_name] if env_name == "SONITEX_PRESET"
+    USER_PINNED_ENV["SONITEX"] = ENV["SONITEX"] if env_name == "SONITEX_PRESET"
     true
   end
 end
@@ -648,6 +953,23 @@ DISPATCH = {
     mins = (ARGV.shift || LIVESET_MIN).to_i
     render_liveset(set, minutes: mins)
   end,
+  # Replay a render's own sidecar with a fresh seed. KEY=VAL overrides on the
+  # command line cover a plain fresh take, a lossless .wav re-render, and a
+  # remake from a different sample.
+  "rerender" => lambda do
+    src = ARGV.shift or abort "usage: ruby dilla.rb rerender <src.mp3|sidecar> <dest> [KEY=VAL...]"
+    dest = ARGV.shift or abort "usage: ruby dilla.rb rerender <src.mp3|sidecar> <dest> [KEY=VAL...]"
+    rerender_from_sidecar(src, dest, replay_overrides(ARGV))
+  end,
+  # Audition the sample-to-pad balance by ear rather than by argument.
+  "balance" => lambda do
+    name = ARGV.shift or abort "usage: ruby dilla.rb balance <#{BALANCE_VARIANTS.keys.join("|")}>"
+    render_balance(name)
+  end,
+  # Every record in the demo crate against three progressions.
+  "demo" => -> { generate_demo },
+  # Master the tracklist in data/album_tracks.yml into one crossfaded record.
+  "album" => -> { album_master(ARGV.shift || File.join(ROOT, "renders", "ALBUM.mp3")) },
 }.freeze
 
 # No command aliases — every name is a real DISPATCH key (or help).
@@ -663,13 +985,10 @@ if __FILE__ == $PROGRAM_NAME
   # made again. DILLA_NO_PROVENANCE=1 restores the old unrecorded behaviour.
   DillaProvenance.begin!(root: OUTPUT_DIR, argv: ARGV)
 
-  pad_voice_before = ENV["PAD_VOICE"]
-  pad_arp_before = ENV["PAD_ARP_MODE"]
   apply_best_defaults!
   apply_flags!(ARGV)
   unless ENV["DILLA_RAW"] == "1"
-    pad_locked = (pad_voice_before && !pad_voice_before.empty?) ||
-                 (pad_arp_before && !pad_arp_before.empty?)
+    pad_locked = USER_PINNED_ENV.key?("PAD_VOICE") || USER_PINNED_ENV.key?("PAD_ARP_MODE")
     apply_track_soul_profile!(ENV["TRACK"], force: !pad_locked) if ENV["TRACK"] && !ENV["TRACK"].empty?
   end
   # After the defaults tables have run, because half the environment a render

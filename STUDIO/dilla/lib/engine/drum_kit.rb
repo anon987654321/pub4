@@ -277,9 +277,10 @@ else
 (name.start_with?("snare") ? 0.22 : 0.12)
 end
     out = File.join(dest, name)
-    system("ffmpeg", "-y", "-ss", t0.to_s, "-t", dur.to_s, "-i", src,
-           "-af", "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=30,alimiter=limit=0.95",
-           "-c:a", "pcm_s16le", out, out: File::NULL, err: File::NULL)
+    ok = system("ffmpeg", "-y", "-ss", t0.to_s, "-t", dur.to_s, "-i", src,
+                "-af", "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=30,alimiter=limit=0.95",
+                "-c:a", "pcm_s16le", out, out: File::NULL, err: File::NULL)
+    FileUtils.rm_f(out) unless ok
   end
   File.file?(File.join(dest, "kick.wav")) ? dest : nil
 end

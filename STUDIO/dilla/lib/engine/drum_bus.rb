@@ -32,7 +32,7 @@ def flylo_top_dirt
     "flanger=delay=#{(3.0 + (4.0 * d)).round(2)}:depth=#{(2.0 * d).round(2)}:" \
     "regen=#{(12.0 * d).round(1)}:speed=#{(0.28 + (0.4 * d)).round(3)}," \
     "acrusher=bits=#{(16 - (5 * d)).round}:mode=log:aa=1," \
-    "asoftclip=type=tanh:threshold=#{(1.0 - (0.35 * d)).round(3)},"
+    "asoftclip=type=tanh:threshold=#{(1.0 - (0.35 * d)).round(3)}:oversample=4,"
 end
 
 # Duck the hats and cymbals out of the kick's way.

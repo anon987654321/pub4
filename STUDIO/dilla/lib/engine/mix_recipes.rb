@@ -266,7 +266,7 @@ def install_stems_from_audio(src, bpm: 90, label: nil)
   }
   slices.each do |dest, eq|
     mix_render "stem: #{File.basename(dest)}", dest, inputs: ["-i", src], map: "[out]",
-               filter: "[0:a]aformat=channel_layouts=stereo,#{eq},loudnorm=I=-20:TP=-1.5:LRA=9[out]",
+               filter: "[0:a]aformat=channel_layouts=stereo,#{eq}[out]",
                args: ["-ar", SAMPLE_RATE.to_s, *codec_for(dest)]
   end
   name = label || File.basename(src, ".*").gsub(/[^A-Za-z0-9_-]/, "_")[0, 32]

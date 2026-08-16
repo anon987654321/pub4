@@ -625,8 +625,13 @@ end
            ""
          end
 
+  # sample_modern_chain is the addition that matches sonitex_enabled? turning
+  # Sonitex off for a sampled bed: denoise / air / sub / width on the LOOP,
+  # not the master. SAMPLE_MODERN=0 keeps the old subtraction-only path.
+  modern = sample_modern_chain
+  modern_s = modern && !modern.empty? ? "#{modern}," : ""
   common = "aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
-           "#{wow}#{echo}" \
+           "#{wow}#{echo}#{modern_s}" \
            "highpass=f=#{hp}," \
            "#{sub_eq}" \
            "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \

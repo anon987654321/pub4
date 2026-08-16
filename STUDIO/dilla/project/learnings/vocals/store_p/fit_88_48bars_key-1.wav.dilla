@@ -1,0 +1,33 @@
+{
+  "schema": "dilla.render.v1",
+  "note": "Reproduce with: RENDER_SEED=1312557762 ruby dilla.rb dilla renders/beats/direction_v4.wav",
+  "render_seed": 1312557762,
+  "seed_was": "drawn and recorded",
+  "command": {
+    "argv": [
+      "dilla",
+      "renders/beats/direction_v4.wav"
+    ],
+    "cwd": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+  },
+  "engine": {
+    "file": "dilla.rb",
+    "commit": "c35365c4c769ccd7f0e62b141c22e9f8639a286e",
+    "working_tree_clean": true,
+    "ruby": "3.4.9"
+  },
+  "environment": {
+    "TRACK": "circle_fifths_descent",
+    "BARS": "64",
+    "BPM": "87",
+    "PROGRESSION": "pedal_e_descent",
+    "PAD_VOICE": "stack_soul",
+    "PAD_ARP_MODE": "held"
+  },
+  "artifact": {
+    "path": "project/learnings/vocals/store_p/fit_88_48bars_key-1.wav",
+    "bytes": 22998226,
+    "sha256": "075650501ad76a1c2c992e8446916cc676d055f96fa2bc13d180726d446f56e8"
+  },
+  "rendered_at": "2026-08-11T03:53:58Z"
+}

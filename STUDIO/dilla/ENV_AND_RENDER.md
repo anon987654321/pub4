@@ -1,7 +1,10 @@
 # Dilla — ENV layers + render path
 
-**One engine. One DNA.** There are no style profiles or command aliases.
-The style is `dilla.rb` itself. Optional ENV knobs only.
+**One DNA table, several renderers.** Command aliases (`comfort`, `camel`, `warp`)
+are gone — those are ENV overlays on `RENDER_MODE=dilla`. Genre *renderers*
+(`techno`, `hate`, `industrial`, `analog`, `loose_pocket`) are real DISPATCH
+keys with their own arrangement. Optional ENV knobs only; `config-provenance`
+after a render beats memorizing the table.
 
 Sources of truth:
 
@@ -89,8 +92,8 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `DILLA_COMFORT` | Sofa overlay on one-shot |
 | `RENDER_MODE` | `dilla` (default) or `warp` / sketch modes |
 | `POCKET_SET` | `neo_soul` (default), `classic`, `dusty`, `industrial` |
-| `KICK_GAIN` / `DRUM_BUS_VOL` | Quiet kit bus (~0.68 / 0.95) |
-| `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah on chord tones (`1` / `0.28` default; soft-fails) |
+| `KICK_GAIN` / `DRUM_BUS_VOL` | Kit bus (`0.88` / `0.95` in `DILLA_STYLE_DEFAULTS`) |
+| `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah (`0` / `0.16` default; `CHOIR_VOX=1` re-enables) |
 | `STREAM_CREATIVE` / `STREAM_PUNCH` | Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — **off** by default |
 | `DILLA_SH_TIMEOUT` | Kill hung ffmpeg/fluidsynth (default 120s) |
 | `DILLA_FS_DRY` | Fluidsynth with its own chorus/reverb off — **off** by default; costs 12.6 dB of pad side-channel |
@@ -102,13 +105,14 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `STREAM_NORMALIZE` / `STREAM_LUFS` | Loudnorm target |
 | `SPEAK` | TTS over beat (`0` product default) |
 | `STREAM_DRUM_ROTATE` | Cycle drum preset/pocket each stream slot |
-| `FLYLO_DRUM_OVERLAY` / `DRUM_CHOPS` / `FM_DRUMS` | Off by default (sparse soul kit) |
+| `FLYLO_DRUM_OVERLAY` / `DRUM_CHOPS` | Off by default (sparse soul kit) |
+| `FM_DRUMS` | On (`1`) — FM kit is the default replacement |
 | `DILLA_RAW` | Skip best soft defaults |
 | `GROOVE_ENGINE` / `POCKET_DNA` | Pocket humanize (default on) |
 | `GROOVE_FEEL` | `boom_bap` (**default**), `dilla_drag`, `camel` — the microtiming table |
 | `LA_BEAT_PROGRESSION` | LA-beat arranger — **off**; see the Camel warning below |
 | `MASTER_SMOOTH_DB` / `MASTER_SMOOTH_HZ` | De-harsher: 2 dB out at 3200 Hz by default |
-| `HARM_PRESENCE_DB` / `DRUM_PRESENCE_DB` | Presence boosts, +2.4 and +2.5 — same band the de-harsher cuts |
+| `HARM_PRESENCE_DB` / `DRUM_PRESENCE_DB` | Presence boosts, +1.6 and +1.5 — same band the de-harsher cuts |
 | `RENDER_SEED` | Pins the whole render. Drawn and recorded when unset — see Provenance |
 | `DEMO_TRACKS` | Explicit comma-separated order; beats every other rule in `demo_all_order` |
 | `RENDER_BEAUTY_MIN` | Harmony floor before a render is kept (55–78 across profiles) |
@@ -124,9 +128,9 @@ capability that is off, or a default that surprises:
   forcing it on Camel injected random planing-style chords and made streams
   sound broken. It and the fugue arranger both rewrite the progression, so
   running both means two arrangers fighting over the same chords.
-- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` adds ~2.4 dB
-  and `DRUM_PRESENCE_DB` ~2.5 dB around the presence band; `MASTER_SMOOTH_DB`
-  takes 2 dB back out at 3.2 kHz. The net is a boost into the band the comment
+- **Presence is boosted twice and cut once.** `HARM_PRESENCE_DB` adds 1.6 dB
+  and `DRUM_PRESENCE_DB` 1.5 dB around the presence band; `MASTER_SMOOTH_DB`
+  takes 2 dB back out at 3.2 kHz. Net is still a boost into the band the comment
   at `master_smooth!` calls "where distortion and harshness actually live". If a
   render is rough on the ears, this arithmetic is the first place to look, not
   the tape stage.

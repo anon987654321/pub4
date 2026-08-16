@@ -380,21 +380,5 @@ def arrange_loop_progression(pads, needed_chords, _cfg)
 end
 
 def log_progression_phases!(track, bpm, pads, phases)
-  return if pads.empty?
-  lines = pads.each_with_index.map do |chord, i|
-    phase = phases&.[](i) || "—"
-    notes = chord[:hz].map { |hz| nearest_note(hz) }.join(" ")
-    "  [#{phase}] #{chord[:name]}: #{notes}"
-  end
-  File.open(PROGRESSION_LOG_PATH, "a") do |f|
-    # Tagged (fugue) only when there are fugue phases. render_dilla calls this
-    # for every render, not just fugues, so the tag was hardcoded onto all of
-    # them -- all 133 entries in the log say (fugue), including batucada and
-    # afrobeats_pocket. A label that is always printed identifies nothing.
-    f.puts "=== #{Time.now.iso8601} — TRACK=#{track} BPM=#{bpm.round(1)}#{phases ? ' (fugue)' : ''} ==="
-    f.puts lines
-    f.puts
-  end
-rescue StandardError => e
-  warn "progression log write failed: #{e.message}"
+  log_progression!(track, bpm, pads, phases)
 end

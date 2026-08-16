@@ -541,7 +541,7 @@ module DillaComposition
         groove = critique[:scores][:groove]
         puts "pass #{pass + 1}: LUFS=#{lufs} groove=#{groove}"
         break if lufs && lufs.to_f >= targets[:lufs_min] && lufs.to_f <= targets[:lufs_max] && groove >= targets[:groove_min]
-        ENV["DRUM_VOL"] = (ENV["DRUM_VOL"] || "0.3").to_f + 0.02 if groove < targets[:groove_min]
+        apply_drum_vol!((resolved_drum_mix_weight + 0.02)) if groove < targets[:groove_min]
         ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05 if lufs && lufs.to_f < targets[:lufs_min]
       end
       path

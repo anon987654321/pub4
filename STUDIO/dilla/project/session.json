@@ -1,5 +1,5 @@
 {
-  "track": "maj7_minor_cycle",
+  "track": "pedal_e_descent",
   "performer": "yancey",
   "groove_dna": "donuts",
   "generation": 59,
@@ -90,6 +90,22 @@
     {
       "bar": "3",
       "section": "intro"
+    },
+    {
+      "bar": "4",
+      "section": "verse"
+    },
+    {
+      "bar": "5",
+      "section": "verse"
+    },
+    {
+      "bar": "6",
+      "section": "verse"
+    },
+    {
+      "bar": "7",
+      "section": "verse"
     }
   ],
   "critique_log": [

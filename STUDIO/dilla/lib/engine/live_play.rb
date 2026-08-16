@@ -33,10 +33,11 @@ def play(preset_name = nil, bars_count = 8)
   attempts = play_render_attempts
   attempts.times do |try|
     pick_render_seed! if try.positive?
-    if preset_name == "dilla"
-      render_dilla(out)
-    else
+    if preset_name.to_s == "sketch"
       render(out)
+    else
+      ENV["TRACK"] = preset_name unless preset_name.to_s.empty? || preset_name == "dilla"
+      render_dilla(out)
     end
     ok = if quality_gate_enabled?
            render_quality_acceptable?(out)
@@ -107,7 +108,7 @@ def build_harmony_loud(
   dur = capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
                 "-of", "default=noprint_wrappers=1:nokey=1", harmonic).first.to_f
   dur = [dur, 8.0].max
-  drum_vol = (ENV["DRUM_VOL"] || "0.38").to_f
+  drum_vol = (ENV["DRUM_VOL"] || ENV["DRUM_MIX_WEIGHT"] || "0.38").to_f
   harm_gain = (ENV["HARM_VOL"] || "2.45").to_f
   harm_chain = "aformat=channel_layouts=stereo,lowpass=f=3200,aecho=0.35:0.4:120:0.32," \
                "volume=#{harm_gain},alimiter=limit=0.96:level_out=0.99"

@@ -205,11 +205,9 @@ end
 # is what sample_modern_chain below was written to do: definition, extension,
 # and the room the broadcast lost, rather than more wear.
 #
-# Only half of that shipped. This gate is live and removes Sonitex from every
-# sample-backed render; sample_modern_chain has no caller, so nothing takes its
-# place, and those renders get the subtraction without the addition. Wiring it
-# changes how every sampled bed sounds, which is the operator's call and not a
-# tidy-up's -- see the dead-method ratchet in cli_commands.rb.
+# The gate is live and removes Sonitex from every sample-backed render.
+# sample_modern_chain runs on the loop bus (build_sample_loop_filter) unless
+# SAMPLE_MODERN=0, so the bed gets the addition that matches the subtraction.
 #
 # Synthesised material is the opposite case. It has no age of its own, and
 # giving it some is exactly what the emulation is for, so nothing changes there.
