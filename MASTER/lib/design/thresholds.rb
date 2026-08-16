@@ -35,6 +35,23 @@ module Master
         feed.merge(spec).merge("name" => name.to_s)
       end
 
+      def self.allowed_line_heights(root: Master::ROOT)
+        raw = dig("typography", "line_height", "allowed", root:)
+        return raw.map(&:to_f) if raw.is_a?(Array) && !raw.empty?
+
+        # Same steps as RAILS/shared/design_tokens.yml scale.line_height / ScaleLint
+        [1.0, 1.25, 1.4, 1.5, 1.6]
+      end
+
+      def self.body_line_height_preferred(root: Master::ROOT)
+        dig("typography", "line_height", "body_preferred", root:) || 1.5
+      end
+
+      def self.measure_ideal_ch(root: Master::ROOT)
+        dig("typography", "optical_margins", "measure_ideal_ch", root:) ||
+          dig("typography", "line_length", "ideal_ch", root:) || 66
+      end
+
       def self.eight_px_rhythm(root: Master::ROOT)
         dig("pixel_perfection", "eight_px_rhythm", root:) ||
           dig("layout_rules", "grid", "allowed_spacing_px", root:) ||

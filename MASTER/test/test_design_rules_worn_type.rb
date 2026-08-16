@@ -53,4 +53,12 @@ class TestDesignRulesWornType < Minitest::Test
     refute_equal feed["measure_max_ch"].to_i, prose,
                  "feed and legal/prose must stay different jobs"
   end
+
+  def test_line_height_scale_matches_rails_and_has_a_preferred_body
+    allowed = Master::Design::Thresholds.allowed_line_heights(root: Master::ROOT)
+    assert_equal [1.0, 1.25, 1.4, 1.5, 1.6], allowed
+    assert_in_delta 1.5, Master::Design::Thresholds.body_line_height_preferred(root: Master::ROOT), 0.001
+    assert_equal 66, Master::Design::Thresholds.measure_ideal_ch(root: Master::ROOT)
+    assert_includes @data.dig("typography", "line_height", "allowed"), 1.25
+  end
 end

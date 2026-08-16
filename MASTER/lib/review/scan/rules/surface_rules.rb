@@ -123,6 +123,43 @@ module Master
           findings.uniq { |f| [f[:line], f[:message]] }
         end
 
+        RuleDSL.rule :LINE_HEIGHT_ON_SCALE,
+          severity: :warning, tags: %i[DESIGN TYPOGRAPHY RHYTHM], applies_to: CSS_LANGS, autofix: false,
+          description: "unitless line-height must be on design_rules / ScaleLint scale",
+          example_path: "/repo/app/assets/stylesheets/_example.scss",
+          fires: ".prose { line-height: 1.45; }\n",
+          does_not_fire: ".prose { line-height: 1.5; }\n.h1 { line-height: 1.25; }\n" do |src, path:|
+          next [] unless Rules.ui_path?(path)
+
+          allowed = Rules.thresholds.allowed_line_heights.map { |v| v.to_f.round(3) }
+          findings = []
+          without_block_comments(src).each_line.with_index(1) do |line, num|
+            next if line.strip.start_with?("//", "/*", "*")
+            next if line.include?("scale: ok")
+
+            if line.match?(/line-height\s*:\s*\d+px\b/i)
+              findings << finding(
+                line: num,
+                message: "absolute px line-height — prefer unitless step #{allowed.join('/')} " \
+                         "(design_rules.typography.line_height; ScaleLint absolute_line_height)"
+              )
+            end
+
+            line.scan(/line-height\s*:\s*([\d.]+)\s*;/i) do |raw|
+              val = raw[0].to_f
+              next if val >= 4
+              next if allowed.any? { |a| (a - val).abs < 0.001 }
+
+              findings << finding(
+                line: num,
+                message: "line-height #{val} off scale — use #{allowed.join('/')} " \
+                         "(design_rules.typography.line_height.allowed; RAILS ScaleLint)"
+              )
+            end
+          end
+          findings.uniq { |f| [f[:line], f[:message]] }
+        end
+
         RuleDSL.rule :TOUCH_TARGET_MIN,
           severity: :warning, tags: %i[DESIGN UX ACCESSIBILITY], applies_to: CSS_LANGS, autofix: false,
           description: "Fitts — interactive targets ≥44px" do |src, path:|

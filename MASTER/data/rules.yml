@@ -3141,14 +3141,25 @@ design_rules:
       feed_max_ch: 55
       action: Flag readable prose blocks outside range. Prefer max-width in ch units. Count worn characters, not the CSS token.
     line_height:
+      # Must match RAILS/shared/design_tokens.yml scale.line_height and ScaleLint.
+      # Off-scale values (1.45, 1.55, 1.3, …) are debt — do not invent new ones.
+      # PRESERVE_THEN_IMPROVE_NEVER_BREAK: absolute px line-heights on :root stay
+      # until a measured screenshot pass; unitless steps only for new prose rules.
+      allowed: [1, 1.25, 1.4, 1.5, 1.6]
       body_min: 1.4
       body_max: 1.6
       body_accessibility_min: 1.5
+      body_preferred: 1.5
       heading_min: 1.0
-      heading_max: 1.2
+      heading_max: 1.25
+      heading_preferred: 1.25
       long_line_threshold_ch: 60
       long_line_min: 1.5
-      action: Increase leading when lines exceed 60ch; tighten only display headings.
+      forbid_absolute_px: true
+      action: >
+        Use only allowed unitless steps. Prefer 1.5 for prose, 1.25 for titles,
+        1.6 for relaxed quotes. Flag absolute px line-heights and off-scale ratios.
+        Cross-check RAILS Pub4::ScaleLint baselines before inventing a step.
     type_scale:
       default_ratio: 1.25
       marketing_ratio: 1.333
@@ -3178,6 +3189,19 @@ design_rules:
       max_font_weights: 3
       max_font_sizes: 8
       action: Ensure hierarchy is visible by size, weight, placement, or contrast.
+    optical_margins:
+      # Bringhurst: geometric box edge ≠ optical text edge.
+      hanging_punctuation: true
+      list_marker_hang: true
+      blockquote_border_in_margin: true
+      measure_css_token: "--measure"
+      measure_ideal_ch: 66
+      apply_to: [prose, editorial, legal, post_show]
+      do_not_apply_to: [feed_card, nav, marketplace_tile, chrome]
+      action: >
+        Prefer hanging-punctuation on prose; hang list markers and quote rules
+        into the margin so the text edge reads true. Wire max-width: var(--measure)
+        (66ch) on continuous reading surfaces, not on dense social chrome.
     accessibility:
       normal_text_contrast: 7.0
       large_text_contrast: 4.5
@@ -3523,6 +3547,9 @@ design_rules:
     flag:
     - line length outside typography.line_length bounds
     - line height below typography.line_height.body_min for prose
+    - off-scale unitless line-height not in typography.line_height.allowed
+    - absolute px line-height on prose (prefer unitless; ScaleLint absolute_line_height)
+    - continuous prose without max-width measure (66ch / var(--measure))
     - all caps without letter spacing
     - body text below 16px
     - contrast below WCAG AAA thresholds (7:1 body, 4.5:1 large)
