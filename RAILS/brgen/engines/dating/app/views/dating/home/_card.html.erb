@@ -61,11 +61,11 @@
 
   <% if Current.user.present? %>
     <div class="swipe-actions">
-      <%= button_tag "✕", type: "button", class: "swipe-action swipe-action--pass", title: t("dating.pass"), aria: { label: t("dating.pass") }, data: { action: "click->swipe#pass" } %>
-      <%= button_to rewind_path, method: :post, class: "swipe-action swipe-action--rewind", title: t("dating.rewind"), aria: { label: t("dating.rewind") } do %>
+      <%= button_tag "✕", type: "button", class: "swipe-action swipe-action--pass", title: t("dating.pass"), aria: { label: t("dating.pass") }, data: { controller: "haptics", action: "click->swipe#pass click->haptics#warning" } %>
+      <%= button_to rewind_path, method: :post, class: "swipe-action swipe-action--rewind", title: t("dating.rewind"), aria: { label: t("dating.rewind") }, data: { controller: "haptics", action: "click->haptics#tick" } do %>
         ↺
       <% end %>
-      <%= button_tag "♥", type: "button", class: "swipe-action swipe-action--like", title: t("actions.like"), aria: { label: t("actions.like") }, data: { action: "click->swipe#like" } %>
+      <%= button_tag "♥", type: "button", class: "swipe-action swipe-action--like", title: t("actions.like"), aria: { label: t("actions.like") }, data: { controller: "haptics", action: "click->swipe#like click->haptics#tick" } %>
     </div>
   <% else %>
     <p class="dim swipe-signin"><%= t("dating.swipe_guest") %></p>

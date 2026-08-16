@@ -81,7 +81,7 @@ class DeployBacklogTest < Minitest::Test
   def test_nearby_geolocation_uses_explicit_radius_and_exact_distance
     nearby = read_source(File.join(ROOT, 'brgen/app/controllers/nearby_controller.rb'))
     locations = read_source(File.join(ROOT, 'brgen/app/controllers/locations_controller.rb'))
-    geolocation = read_source(File.join(ROOT, 'brgen/app/javascript/controllers/geolocation_controller.js'))
+    geolocation = read_source(File.join(ROOT, 'shared/frontend/geolocation_controller.js'))
     layout = read_source(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
     nearby_view = read_source(File.join(ROOT, 'brgen/app/views/nearby/index.html.erb'))
     dating_matchmaking = read_source(File.join(ROOT, 'brgen/app/services/dating/matchmaking.rb'))

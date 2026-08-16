@@ -4,7 +4,7 @@ import { clientsClaim, setCacheNameDetails } from "workbox-core"
 import { ExpirationPlugin } from "workbox-expiration"
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching"
 import { registerRoute, setCatchHandler } from "workbox-routing"
-import { CacheFirst, NetworkFirst, NetworkOnly } from "workbox-strategies"
+import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategies"
 
 const APP_NAME = __APP_NAME__
 const CACHE_VERSION = "__CACHE_VERSION__"
@@ -26,6 +26,14 @@ const pages = new NetworkFirst({
   ],
 })
 
+const dynamic = new StaleWhileRevalidate({
+  cacheName: `${APP_NAME}-dynamic-${CACHE_VERSION}`,
+  plugins: [
+    new CacheableResponsePlugin({ statuses: [0, 200] }),
+    new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 12 * 60 * 60 }),
+  ],
+})
+
 const assets = new CacheFirst({
   cacheName: `${APP_NAME}-assets-${CACHE_VERSION}`,
   plugins: [
@@ -35,6 +43,28 @@ const assets = new CacheFirst({
 })
 
 registerRoute(({ request }) => request.mode === "navigate", pages)
+
+registerRoute(
+  ({ request, url }) => {
+    if (url.origin !== self.location.origin) return false
+    if (request.mode === "navigate") return false
+
+    const path = url.pathname
+    return (
+      path.startsWith("/feed") ||
+      path.startsWith("/activity") ||
+      path.startsWith("/nearby") ||
+      path.startsWith("/listings") ||
+      path.startsWith("/outfits") ||
+      path.startsWith("/items") ||
+      path.startsWith("/posts") ||
+      path.includes(".json") ||
+      (request.destination === "" && request.headers.get("Accept")?.includes("application/json"))
+    )
+  },
+  dynamic
+)
+
 registerRoute(
   ({ request, url }) => url.origin === self.location.origin &&
     ["style", "script", "worker", "image", "font"].includes(request.destination),
@@ -53,9 +83,12 @@ setCatchHandler(async ({ event, request }) => {
   try {
     return await pages.handle({ event, request })
   } catch (_error) {
-    const cached = await caches.match(request) || await caches.match("/")
+    const cached =
+      (await caches.match(request)) ||
+      (await caches.match("/")) ||
+      (await caches.match(OFFLINE_URL))
     if (cached) return cached
-    return (await caches.match(OFFLINE_URL)) || Response.error()
+    return Response.error()
   }
 })
 
@@ -80,6 +113,7 @@ self.addEventListener("push", event => {
   const data = event.data?.json() || {}
   event.waitUntil(self.registration.showNotification(data.title || APP_NAME, {
     body: data.body || "",
+    actions: data.actions || [],
     // The badge is the small monochrome glyph Android punches into the status
     // bar; a full-colour icon there renders as a grey blob. brgen's hand-rolled
     // worker had this right and the shared one did not, so this arrives with
@@ -92,9 +126,21 @@ self.addEventListener("push", event => {
 
 self.addEventListener("notificationclick", event => {
   event.notification.close()
-  const target = event.notification.data?.url || "/"
-  event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(windows => {
-    const open = windows.find(windowClient => new URL(windowClient.url).pathname === target)
-    return open ? open.focus() : clients.openWindow(target)
-  }))
+
+  const data = event.notification.data || {}
+  const action = event.action
+  let target = data.url || "/"
+
+  if (action === "view" || action === "open") {
+    target = data.url || "/"
+  } else if (action && data.actions?.[action]) {
+    target = data.actions[action]
+  }
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(windows => {
+      const open = windows.find(w => new URL(w.url).pathname === new URL(target, self.location.origin).pathname)
+      return open ? open.focus() : clients.openWindow(target)
+    })
+  )
 })

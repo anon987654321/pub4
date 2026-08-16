@@ -46,6 +46,10 @@ import OptimisticSend from "pub4/optimistic_send"
 import Presence from "pub4/presence"
 import OfflineFeed from "pub4/offline_feed"
 import PwaStandalone from "pub4/pwa_standalone"
+import BatteryAware from "pub4/battery_aware"
+import NetworkAware from "pub4/network_aware"
+import Haptics from "pub4/haptics"
+import Geolocation from "pub4/geolocation"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -182,6 +186,10 @@ export function bootPub4Stimulus(application) {
   application.register("presence", Presence)
   application.register("offline-feed", OfflineFeed)
   application.register("pwa-standalone", PwaStandalone)
+  application.register("battery-aware", BatteryAware)
+  application.register("network-aware", NetworkAware)
+  application.register("haptics", Haptics)
+  application.register("geolocation", Geolocation)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     if (component) application.register(name, component)

@@ -34,6 +34,11 @@ body.vertical-playlist main {
   overflow: hidden;
 }
 
+body.vertical-playlist .playlist-reorder {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}
+
 body.vertical-playlist .app-shell {
   background: var(--color-bg);
   overflow: hidden;
