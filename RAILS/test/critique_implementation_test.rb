@@ -124,10 +124,20 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes layout, "feed-hotkey"
   end
 
+  # Through the key and the locale file, not the literal in the template. The
+  # primer is localised now, so the English spelling only appears in en.yml —
+  # and an assertion on the spelling fails on a view that has got more correct.
+  # Both halves: the template must name the key, and the key must still carry
+  # the three things a visitor has to be told before they tap.
   def test_master_primer_names_consent_and_text_fallback
-    primer = File.read(File.expand_path("../../MASTER/web/app/views/chat/index.html.erb", __dir__))
-    assert_includes primer, "Starts visuals and sound"
-    assert_includes primer, "Microphone access is requested only"
-    assert_includes primer, "text remains available if graphics fail"
+    master = File.expand_path("../../MASTER/web", __dir__)
+    primer = File.read(File.join(master, "app/views/chat/index.html.erb"))
+    assert_includes primer, 't("face.primer_consent")'
+
+    consent = YAML.safe_load_file(File.join(master, "config/locales/en.yml"))
+                  .fetch("en").fetch("face").fetch("primer_consent")
+    assert_includes consent, "Starts visuals and sound"
+    assert_includes consent, "Microphone access is requested only"
+    assert_includes consent, "text remains available if graphics fail"
   end
 end
