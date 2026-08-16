@@ -44,19 +44,7 @@
   <title><%= page_title ? "#{page_title} — #{city_name}" : city_name %></title>
   <meta name="description" content="<%= page_description %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
-  <meta property="og:site_name" content="<%= city_name %>">
-  <meta property="og:title" content="<%= page_title || city_name %>">
-  <meta property="og:description" content="<%= page_description %>">
-  <meta property="og:url" content="<%= request.original_url %>">
-  <meta property="og:type" content="<%= content_for(:og_type).presence || "website" %>">
-  <meta name="twitter:card" content="<%= content_for(:og_image).present? ? "summary_large_image" : "summary" %>">
-  <meta name="twitter:title" content="<%= page_title || city_name %>">
-  <meta name="twitter:description" content="<%= page_description %>">
-  <%# Share thumbnail: a per-page override (content_for :og_image) or the brand mark,
-      so every link shared to social/chat renders a card instead of bare text. %>
-  <% share_image = content_for(:og_image).presence || "#{request.base_url}/icon.png" %>
-  <meta property="og:image" content="<%= share_image %>">
-  <meta name="twitter:image" content="<%= share_image %>">
+  <%= render "layouts/social_card_meta", page_title: page_title, page_description: page_description %>
   <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
@@ -262,20 +250,7 @@
         <%= yield %>
       </main>
 
-      <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
-      <button type="button" class="edge-grip edge-grip-right" data-edge-swiper-target="grip"
-              data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_widgets") %>" aria-expanded="false"></button>
-      <aside class="widgets" aria-label="<%= t("nav.widgets") %>" data-edge-swiper-target="root">
-        <%= form_with url: main_app.global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
-          <%= icon :search, size: 19 %>
-          <%= form.search_field :q, value: params[:q], placeholder: t("nav.search_placeholder"), aria: { label: t("nav.search_placeholder") } %>
-          <%= form.submit t("nav.search"), class: "visually-hidden", tabindex: -1 %>
-        <% end %>
-        <%= yield :widgets %>
-        <%= render "shared/sidebar_discovery" %>
-        <%= render "shared/newsletter_cta" %>
-      </aside>
-      </div>
+      <%= render "shared/widgets_rail" %>
     </div>
 
     <%= render "shared/mobile_chrome" %>

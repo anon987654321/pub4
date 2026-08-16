@@ -1,0 +1,20 @@
+<%# The right-hand rail and its edge grip. Split out of
+    layouts/application.html.erb, which was over the 150-code-line view ceiling.
+
+    Both yields stay here rather than moving to the layout: content_for is
+    resolved at render time and this partial is rendered inside the layout, so
+    `yield :widgets` reads the same buffer a page filled. %>
+<div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
+  <button type="button" class="edge-grip edge-grip-right" data-edge-swiper-target="grip"
+          data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_widgets") %>" aria-expanded="false"></button>
+  <aside class="widgets" aria-label="<%= t("nav.widgets") %>" data-edge-swiper-target="root">
+    <%= form_with url: main_app.global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
+      <%= icon :search, size: 19 %>
+      <%= form.search_field :q, value: params[:q], placeholder: t("nav.search_placeholder"), aria: { label: t("nav.search_placeholder") } %>
+      <%= form.submit t("nav.search"), class: "visually-hidden", tabindex: -1 %>
+    <% end %>
+    <%= yield :widgets %>
+    <%= render "shared/sidebar_discovery" %>
+    <%= render "shared/newsletter_cta" %>
+  </aside>
+</div>
