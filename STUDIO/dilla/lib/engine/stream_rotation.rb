@@ -77,7 +77,7 @@ def drum_rotation_full
                when /straight/ then "classic"
                else "dusty"
                end
-      { preset:, pocket:, kit: "03-soulful-vintage", fm: "0",
+      { preset:, pocket:, kit: "03-soulful-vintage",
         flylo: preset.start_with?("flylo") ? "1" : "0" }
     end
   end
@@ -109,14 +109,14 @@ def stream_rotate_drums!(index)
   ENV["DRUM_PRESET"] = d[:preset]
   ENV["POCKET_SET"] = d[:pocket]
   ENV["EXTERNAL_KIT"] = d[:kit] if d[:kit] && !d[:kit].empty?
-  ENV["FM_DRUMS"] = d[:fm] if d[:fm]
+  ENV["FM_DRUMS"] = d[:fm] if d[:fm] == "1" && !USER_PINNED_ENV.key?("FM_DRUMS")
   ENV["FLYLO_DRUM_OVERLAY"] = d[:flylo] || "0"
   ENV["DRUM_CHOPS"] = "0" unless ENV["FORCE_DRUM_CHOPS"] == "1"
   ENV["ECLECTIC_PERC"] ||= "0"
   ENV["RAW_KICK"] = "1"
   ENV["DRUM_SAMPLE_RAW"] = "1"
   preset = DillaLofiMachine::DRUM_PRESETS[d[:preset].to_sym]
-  ENV["SWING"] = preset[:swing].to_s if preset
+  ENV["SWING"] = preset[:swing].to_s if ENV["STREAM_DRUM_SWING"] == "1" && preset && !USER_PINNED_ENV.key?("SWING")
   ENV["BPM"] = preset[:bpm].to_s if ENV["STREAM_DRUM_BPM"] == "1" && preset&.dig(:bpm)
   @current_external_kit = nil
   record_config_provenance!("DRUM_PRESET", "stream_rotate_drums![#{index}]", "force")
@@ -147,7 +147,7 @@ end
 STREAM_EXPLICIT_ENV = USER_PINNED_ENV.slice(
   *%w[
     PAD_VOICE PAD_ARP_MODE PAD_LAYERS PAD_VOL
-    LEAD_VOICE LEAD_ARP_MODE LEAD_ARP LEAD_MORPH MELODIC_LEAD
+    LEAD_VOICE LEAD_ARP_MODE LEAD_ARP LEAD_FORCE_ARP LEAD_MORPH MELODIC_LEAD
     SCALE_LEAD HARMONY_LEAD CREATIVE_LEAD EXPERIMENTAL_LEADS
     ANALOG_PAD_DETUNE_CENTS
   ]
@@ -211,9 +211,6 @@ def stream_rotate_voices_and_arps!(track_index)
   @stream_iterate_count = (@stream_iterate_count || 0)
   i = track_index + @stream_iterate_count
   if ENV.fetch("STREAM_ROTATE_LEAD", "1") != "0"
-    ENV["LEAD_ARP"] = "1"
-    ENV["LEAD_FORCE_ARP"] = "1"
-    ENV["MELODIC_LEAD"] = "0"
     ENV["LEAD_ARP_MODE"] = STREAM_LEAD_ARP_ROTATION[i % STREAM_LEAD_ARP_ROTATION.length].to_s
     ENV["LEAD_VOICE"] = STREAM_LEAD_VOICE_ROTATION[i % STREAM_LEAD_VOICE_ROTATION.length]
     ENV["SCALE_LEAD"] = "1"
@@ -244,6 +241,11 @@ def stream_rotate_voices_and_arps!(track_index)
       ENV["SONITEX_PRESET"] = ENV["SONITEX"]
     end
   end
+  # Rotation writes ENV directly. Operator pins captured in STREAM_EXPLICIT_ENV
+  # have to win after that, or `LEAD_ARP=0` on the command line still produces
+  # full arps — the guard above only looks at STREAM_ROTATE_LEAD, not at what
+  # was asked for.
+  restore_explicit_stream_env!
   # Clears the patch cache too, so pick_synth_patches! re-rolls for this track.
   pick_render_seed!
 end
@@ -252,19 +254,26 @@ end
 def normalize_track_loudness!(path, lufs: nil)
   return path unless path && File.file?(path)
   return path if ENV["DEBUG_NO_LOUDNORM"] == "1"
-  lufs ||= (ENV["STREAM_LUFS"] || ENV["MASTER_LUFS"] || "-16.5").to_f
-  tp = (ENV["STREAM_TRUE_PEAK"] || "-1.5").to_f
-  lra = (ENV["STREAM_LRA"] || "11").to_f
-  ext = File.extname(path)
-  tmp = "#{path}.norm#{ext}"
+
+  # Single-pass loudnorm is a dynamic ride. Measure then apply a static
+  # volume= the way normalise_master! already does on the main bus.
+  target = (lufs || ENV["STREAM_LUFS"] || ENV["MASTER_LUFS"] || "-16.5").to_f
+  previous = ENV["MASTER_LUFS"]
+  ENV["MASTER_LUFS"] = target.to_s
   begin
-    sh! "ffmpeg", "-y", "-i", path,
-        "-af", "loudnorm=I=#{lufs}:TP=#{tp}:LRA=#{lra},alimiter=limit=0.95:level_out=0.96",
-        "-ar", SAMPLE_RATE.to_s, "-ac", "2", *codec_for(tmp), tmp
-    FileUtils.mv(tmp, path) if File.file?(tmp)
-  rescue StandardError => e
-    warn "normalize_track_loudness: #{e.message}"
-    FileUtils.rm_f(tmp)
+    # Both, and neither is redundant. normalise_master! reads ENV["MASTER_LUFS"]
+    # ahead of cfg, so the assignment above is what actually carries the stream
+    # target through — but the second argument is not optional, and calling with
+    # one raised ArgumentError on every render that reached this line, which is
+    # every render: render_dilla:761 -> here -> master_chain:164. The engine
+    # could not finish a single track.
+    normalise_master!(path, { master_lufs: target })
+  ensure
+    if previous.nil?
+      ENV.delete("MASTER_LUFS")
+    else
+      ENV["MASTER_LUFS"] = previous
+    end
   end
   path
 end

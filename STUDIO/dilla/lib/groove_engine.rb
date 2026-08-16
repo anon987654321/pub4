@@ -401,9 +401,20 @@ module DillaGroove
              keys: 6, lead: 8 },
   }.freeze
 
+  # dilla_drag, not boom_bap.
+  #
+  # ENV_AND_RENDER.md listed the old default under "a default that surprises",
+  # and it was the plainest one there: an engine named for Dilla did not apply
+  # the Dilla microtiming unless a knob was set, so every render anyone made
+  # without reading that document came out boom-bap — snare four ticks EARLY
+  # where the whole point is four ticks late. The table existed, was correct,
+  # and was reached by nobody.
+  #
+  # GROOVE_FEEL still takes boom_bap and camel; what changed is which one you
+  # get for free.
   def groove_feel
-    key = ENV.fetch("GROOVE_FEEL", "boom_bap").to_s.downcase.to_sym
-    GROOVE_FEELS.fetch(key, GROOVE_FEELS[:boom_bap])
+    key = ENV.fetch("GROOVE_FEEL", "dilla_drag").to_s.downcase.to_sym
+    GROOVE_FEELS.fetch(key, GROOVE_FEELS[:dilla_drag])
   end
 
   def role_timing_offset(role, beat_p, _bar, _step)
