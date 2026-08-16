@@ -1585,6 +1585,24 @@ rules:
     - ruby
     path_match: "/db/migrate/"
   line:
+  - id: NO_JQUERY
+    source: RAILS/shared frontend convention
+    name: Use a Stimulus controller or the DOM API, not jQuery
+    tier: design
+    severity: warning
+    autofix: false
+    detect_lexical: 'jQuery\(|\$\((?=\s*["\x27#.])'
+    fix: Replace the selector call with a Stimulus target or querySelector.
+    languages: [javascript, html]
+  - id: NO_INLINE_ASSETS_IN_SHELL
+    source: RAILS/shared frontend convention
+    name: Shell scripts do not carry markup or style
+    tier: design
+    severity: warning
+    autofix: false
+    detect_lexical: '<style\b|<script\b'
+    fix: Move the markup into app/views and the style into a tracked stylesheet.
+    languages: [zsh]
   - id: EXPLICIT
     source: The Zen of Python — explicit is better than implicit (Tim Peters)
     name: Explicit contracts over implicit coupling
