@@ -5,6 +5,10 @@ class CommunityMembershipsController < ApplicationController
 
   def create
     community = Community.find(params[:community_id])
+    if community.privacy == "private" && !community.member?(Current.user)
+      redirect_to main_app.communities_path, alert: t("flash.community.members_only")
+      return
+    end
     Current.user.join_community!(community)
     redirect_back fallback_location: main_app.community_path(community), notice: t("community.joined", default: "Joined.")
   end

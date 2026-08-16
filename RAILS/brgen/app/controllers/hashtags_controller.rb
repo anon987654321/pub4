@@ -8,7 +8,7 @@ class HashtagsController < ApplicationController
     @hashtag = Hashtag.find_by(name: normalized)
     raise ActiveRecord::RecordNotFound unless @hashtag
 
-    scope = Post.kept
+    scope = Post.kept.visible_to(Current.user)
                 .where(id: Tagging.where(hashtag_id: @hashtag.id, taggable_type: "Post").select(:taggable_id))
                 .hot
                 .with_attached_image

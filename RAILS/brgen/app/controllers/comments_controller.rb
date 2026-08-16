@@ -60,10 +60,12 @@ class CommentsController < ApplicationController
     if params[:event_id]
       @commentable = find_by_slug_or_id(Event, params[:event_id])
     elsif params[:post_id]
-      @commentable = find_by_slug_or_id(Post, params[:post_id])
+      @commentable = find_by_slug_or_id(Post.includes(:community), params[:post_id])
     elsif params[:comment_id]
       @commentable = Comment.find(params[:comment_id])
     end
+    return unless @commentable.respond_to?(:readable_by?)
+    raise ActiveRecord::RecordNotFound unless @commentable.readable_by?(Current.user)
   end
 
   def comment_params

@@ -61,6 +61,20 @@ class Post < ApplicationRecord
 
   # Content a moderator has removed never appears in any feed.
   scope :kept,   -> { where(removed_at: nil) }
+  # Community#show already refuses a private community. Feeds, search, and
+  # /posts/:slug did not, so a hidden link was the whole permission model.
+  scope :visible_to, lambda { |user|
+    rel = left_outer_joins(:community)
+    if user.present?
+      member_ids = user.community_memberships.select(:community_id)
+      rel.where(
+        "communities.id IS NULL OR communities.privacy != ? OR communities.id IN (?) OR communities.user_id = ?",
+        "private", member_ids, user.id
+      )
+    else
+      rel.where("communities.id IS NULL OR communities.privacy != ?", "private")
+    end
+  }
   scope :hot,    -> { kept.left_joins(:votes).group(:id).order(HOT_SQL) }
   scope :fresh,  -> { kept.order(created_at: :desc) }
   scope :top,    -> { kept.left_joins(:votes).group(:id).order(TOP_SQL) }
@@ -72,6 +86,10 @@ class Post < ApplicationRecord
   }
 
   def live? = latitude.present? && longitude.present?
+
+  def readable_by?(user)
+    community.blank? || community.readable_by?(user)
+  end
 
   def reposted_by?(user) = Repost.reposted_post_ids_for(user).include?(id)
   def quote_comment_by(user) = Repost.quote_comments_for(user)[id]

@@ -25,6 +25,8 @@ class EventsController < ApplicationController
   end
 
   def show
+    raise ActiveRecord::RecordNotFound unless @event.readable_by?(Current.user)
+
     @rsvp = @event.rsvp_for(Current.user)
     @attendees = @event.rsvps.going.includes(:user).limit(24)
     @comments = @event.comments.includes(:user).order(created_at: :desc)
@@ -106,7 +108,7 @@ class EventsController < ApplicationController
     params.require(:event).permit(
       :title, :description, :starts_at, :ends_at, :venue_name, :address,
       :place_id, :neighborhood_id, :latitude, :longitude, :capacity,
-      :price_cents, :currency, :external_url, :status, :cover
+      :price_cents, :currency, :external_url, :cover
     )
   end
 end

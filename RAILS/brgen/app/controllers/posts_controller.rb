@@ -34,6 +34,7 @@ before_action :require_real_user, only: %i[edit update destroy share]
             when "top" then Post.top
             else Post.hot
             end
+    scope = Post.visible_to(Current.user).merge(scope)
     scope = scope.with_attached_image.includes(:user, :community, :votes)
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
     @pagy, @posts = pagy(scope)
@@ -138,6 +139,7 @@ before_action :require_real_user, only: %i[edit update destroy share]
     @post = find_by_slug_or_id(Post.includes(:user, :community), params[:id])
     # A moderator-removed post is gone for everyone, including via direct link.
     raise ActiveRecord::RecordNotFound if @post&.removed_at?
+    raise ActiveRecord::RecordNotFound unless @post.readable_by?(Current.user)
   end
 
   def authorize_owner

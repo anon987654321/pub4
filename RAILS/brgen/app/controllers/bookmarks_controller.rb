@@ -13,7 +13,8 @@ class BookmarksController < ApplicationController
   end
 
   def create
-    post = find_by_slug_or_id(Post, params[:post_id])
+    post = find_by_slug_or_id(Post.includes(:community), params[:post_id])
+    raise ActiveRecord::RecordNotFound unless post.readable_by?(Current.user)
     Current.user.bookmark!(post)
     redirect_back fallback_location: main_app.post_path(post), notice: t("bookmark.saved")
   end

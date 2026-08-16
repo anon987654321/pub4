@@ -23,8 +23,10 @@ module Playlist
 
     def import_line(line)
       attrs = attributes_for(line)
-      track = ::Playlist::Track.find_or_initialize_by(source_url: attrs[:source_url])
-      created = track.new_record?
+      existing = ::Playlist::Track.find_by(source_url: attrs[:source_url])
+      track = existing if existing&.visible_to?(user)
+      created = track.nil?
+      track ||= ::Playlist::Track.new(attrs.merge(user: user))
       track.assign_attributes(attrs) if created
       track.save!
       playlist.add_track!(track, user: user)

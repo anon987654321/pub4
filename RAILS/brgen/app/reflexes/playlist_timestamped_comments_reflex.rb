@@ -2,9 +2,11 @@
 
 class PlaylistTimestampedCommentsReflex < ApplicationReflex
   def create
+    return unless Current.user
+
     params = element.dataset
     track = Playlist::Track.find(params.track_id || params["track-id"])
-    return unless track
+    return unless track&.visible_to?(Current.user)
 
     comment = track.timestamped_comments.build(
       user: Current.user,

@@ -456,6 +456,8 @@ en:
           attributes:
             listing:
               unavailable: "is no longer available"
+            quantity:
+              exceeds_stock: "exceeds what is left"
         marketplace/review:
           attributes:
             base:

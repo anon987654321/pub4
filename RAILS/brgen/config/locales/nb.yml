@@ -462,6 +462,8 @@ nb:
           attributes:
             listing:
               unavailable: "er ikke lenger tilgjengelig"
+            quantity:
+              exceeds_stock: "er mer enn det som er igjen"
         marketplace/review:
           attributes:
             base:

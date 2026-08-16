@@ -26,7 +26,7 @@ class ListingsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   end
 
   def scope
-    scope = Marketplace::Listing.includes(:user, :category).recent
+    scope = Marketplace::Listing.live.includes(:user, :category).recent
     scope = scope.where(category_id: element.dataset["categoryId"]) if element.dataset["categoryId"].present?
     scope = scope.casual if element.dataset["from"] == "person"
     scope = scope.from_shops if element.dataset["from"] == "shop"

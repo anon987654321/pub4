@@ -24,6 +24,7 @@ class Marketplace::Order < ApplicationRecord
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
   validates :payment_provider, inclusion: { in: PAYMENT_PROVIDERS }, allow_nil: true
   validate :listing_must_be_live, on: :create
+  validate :quantity_fits_stock, on: :create
   before_validation { self.status ||= "pending" }
   before_validation { self.payment_status ||= "unpaid" }
   before_validation { self.fulfilment_status ||= "unfulfilled" }
@@ -149,5 +150,14 @@ class Marketplace::Order < ApplicationRecord
     return if listing.status == "active" && !listing.expired? && listing.in_stock?
 
     errors.add(:listing, :unavailable)
+  end
+
+  def quantity_fits_stock
+    return if listing.blank? || listing.one_of_a_kind?
+
+    qty = (quantity.presence || 1).to_i
+    return if qty <= listing.available_quantity
+
+    errors.add(:quantity, :exceeds_stock)
   end
 end

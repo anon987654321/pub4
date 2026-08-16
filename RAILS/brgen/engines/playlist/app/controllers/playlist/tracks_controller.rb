@@ -72,8 +72,6 @@ class Playlist::TracksController < Playlist::BaseController
   end
 
   def track_visible_to?(track)
-    privacy = track.privacy.to_s
-    return true if privacy.blank? || privacy == "public"
-    Current.user && track.user_id == Current.user.id
+    track.visible_to?(Current.user)
   end
 end

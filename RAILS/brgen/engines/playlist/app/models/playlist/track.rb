@@ -41,6 +41,12 @@ class Playlist::Track < ApplicationRecord
   }
   scope :recent, -> { order(created_at: :desc) }
 
+  def visible_to?(viewer)
+    level = privacy.to_s
+    return true if level.blank? || level == "public"
+    viewer.present? && user_id == viewer.id
+  end
+
   def duration_formatted
     return "—" unless duration_seconds
     min, sec = duration_seconds.divmod(60)

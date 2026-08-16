@@ -84,7 +84,7 @@ class Community < ApplicationRecord
   # Reading and posting are separate questions. Restricted is the interesting
   # one: the whole city can read it, only members can post.
   def readable_by?(user)
-    privacy != "private" || member?(user)
+    privacy != "private" || owner?(user) || member?(user)
   end
 
   def postable_by?(user)

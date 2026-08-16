@@ -59,6 +59,10 @@ class Event < ApplicationRecord
   }
 
   def cancelled? = status == "cancelled"
+
+  def readable_by?(user)
+    status == "published" || (user.present? && user.id == user_id)
+  end
   def free? = price_cents.to_i.zero?
   def price_display = free? ? nil : Shared::MoneyDisplay.format(price_cents, currency)
 

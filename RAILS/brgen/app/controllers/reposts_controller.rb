@@ -13,7 +13,8 @@ class RepostsController < ApplicationController
   before_action :require_user_session
 
   def create
-    post = find_by_slug_or_id(Post.kept, params[:post_id])
+    post = find_by_slug_or_id(Post.kept.includes(:community), params[:post_id])
+    raise ActiveRecord::RecordNotFound unless post.readable_by?(Current.user)
     comment = params[:comment].to_s.strip.presence
     repost = Current.user.reposts.find_by(post_id: post.id)
 

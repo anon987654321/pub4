@@ -99,6 +99,8 @@ class CommunitiesController < ApplicationController
   end
 
   def community_params
-    params.require(:community).permit(:name, :description, :rules, :privacy, :flairs, :icon, :banner)
+    allowed = %i[name description rules flairs icon banner]
+    allowed << :privacy if action_name == "create" || @community&.owner?(Current.user)
+    params.require(:community).permit(*allowed)
   end
 end

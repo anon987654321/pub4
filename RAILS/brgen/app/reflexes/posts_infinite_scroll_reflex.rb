@@ -11,6 +11,7 @@ class PostsInfiniteScrollReflex < Shared::InfiniteScrollReflex
             when "top" then Post.top
             else Post.hot
             end
+    scope = Post.visible_to(Current.user).merge(scope)
     scope = scope.includes(:user, :community, :votes)
     return scope unless element.dataset["q"].present?
 

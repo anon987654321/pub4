@@ -51,11 +51,11 @@ class SitemapsController < ApplicationController
   end
 
   def posts_entries
-    entries_for(Post.hot.in_current_city, changefreq: "daily", priority: "0.6") { |p| post_url(p) }
+    entries_for(Post.hot.in_current_city.merge(Post.visible_to(nil)), changefreq: "daily", priority: "0.6") { |p| post_url(p) }
   end
 
   def community_entries
-    entries_for(Community.in_current_city, changefreq: "weekly", priority: "0.5") { |c| community_url(c) }
+    entries_for(Community.in_current_city.where.not(privacy: "private"), changefreq: "weekly", priority: "0.5") { |c| community_url(c) }
   end
 
   # Public profiles whose home-city hint is this city. User is not a tenant row

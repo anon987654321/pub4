@@ -29,7 +29,7 @@ module Brgen
         else
           Post.hot
         end
-      exclude_blocked(base, user)
+      exclude_blocked(Post.visible_to(user).merge(base), user)
     end
 
     # A blocker never sees blocked users' posts in any feed.
