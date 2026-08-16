@@ -9,8 +9,8 @@ module Master
                              :semantic_only, :structural_unwired, :dep_graph_gaps) do
           # "clean" over 99 rules and "clean" over 225 are different claims, and
           # until now they printed identically everywhere except rake constitution.
-          def coverage_line = "#{yaml_rules - semantic_only.size} of #{yaml_rules} rules active " \
-                              "(#{semantic_only.size} semantic need an LLM agent; none attached)"
+          def coverage_line = "#{yaml_rules - semantic_only.size} of #{yaml_rules} rules run without a model " \
+                              "(see rake lint:rule_reach for what the rest need)"
 
           def adherence_pct
             return 100.0 if yaml_rules.zero?

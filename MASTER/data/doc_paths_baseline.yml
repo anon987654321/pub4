@@ -34,3 +34,16 @@
 
       So this is not a dead reference to repair. It is a path waiting for its
       file, and the fix is to add the public key, not to reword the document.
+
+"MASTER/DECISIONS.md":
+  - path: data/design_rules.yml
+    why: >
+      A decision record naming the file whose fold it records. The path is
+      meant to be dead; the entry explains why proximity to a consumer lost to
+      having one definition. Repairing the reference would erase the decision.
+
+"MASTER/EXAMPLES.md":
+  - path: data/design_rules.yml
+    why: >
+      The worked example of this judgement, quoting the same file for the same
+      reason as the DECISIONS.md entry above.

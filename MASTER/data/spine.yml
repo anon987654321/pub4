@@ -404,7 +404,7 @@ spine:
   # implementation reaching it, and each now has a test asserting the partition
   # is total, so the next category or mood added without a side fails rather than
   # falling through.
-  lib_code_ceiling: 39034
+  lib_code_ceiling: 39032
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

@@ -4,6 +4,17 @@ module Master
   module Review
     module Scan
       module Rules
+        # The rules that call a model share how they receive one, and the
+        # scanner finds them by asking whether they respond to it.
+        module NeedsModel
+          def set_agent(agent)
+            @agent = agent
+            self
+          end
+
+          def agent? = !@agent.nil?
+        end
+
         # Steelman-first red-team: the model must defend the code before it can attack it.
         # This suppresses false positives by forcing consideration of legitimate reasons
         # before a violation can survive. Deep depth only; one LLM call per file.
@@ -47,10 +58,7 @@ module Master
 
           def self.auto_build? = false
 
-          def set_agent(agent)
-            @agent = agent
-            self
-          end
+          include NeedsModel
 
           def check(code, path:)
             return [] unless @agent
@@ -107,10 +115,7 @@ module Master
 
           def self.auto_build? = false
 
-          def set_agent(agent)
-            @agent = agent
-            self
-          end
+          include NeedsModel
 
           def check(code, path:)
             return [] unless language(path) && @agent
@@ -260,10 +265,7 @@ module Master
 
           def self.auto_build? = false
 
-          def set_agent(agent)
-            @agent = agent
-            self
-          end
+          include NeedsModel
 
           def check(code, path:)
             return [] unless path.end_with?(".rb") && @agent

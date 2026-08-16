@@ -60,7 +60,7 @@ This hides the count, the command, and whether findings were fixed or merely rec
 ## Good Refusal To Refactor
 
 ```text
-I am leaving `data/design_rules.yml` separate from `data/rules.yml`. It has a distinct consumer and merging it would move data away from its owner.
+I am folding `data/design_rules.yml` into `data/rules.yml`. It has a distinct consumer, which argues for keeping it; it also defines `typography` a second time with numbers that disagree with `style.yml`, which argues louder. One definition beats proximity.
 ```
 
 ## Bad Refactor

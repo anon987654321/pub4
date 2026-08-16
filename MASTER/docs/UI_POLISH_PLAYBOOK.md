@@ -1,6 +1,6 @@
 # UI polish playbook (family + MASTER)
 
-Authority: `MASTER/data/design_rules.yml` → `ui_polish` + `pixel_perfection`.
+Authority: `MASTER/data/rules.yml` → `design_rules.ui_polish` + `design_rules.pixel_perfection`.
 RAILS CI ratchets under `RAILS/shared/lib/pub4/*_lint.rb`.
 Scan rules: `MASTER/lib/review/scan/rules/surface_rules.rb`.
 

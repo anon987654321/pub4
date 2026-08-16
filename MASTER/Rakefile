@@ -89,15 +89,15 @@ task :constitution do
   paths = Master.scan_roots(root:).flat_map { |dir| Dir.glob(File.join(root, dir, Master::Review::Scan::Scanner::SCAN_GLOB)) }
                 .select { |path| File.file?(path) && !Master::Review::Scan::Scanner.skip_path?(path, root:) }
   puts "constitution: #{paths.size} file(s) across #{Master.scan_roots(root:).join(', ')}"
-  # Which half of the law is actually running. 126 of the 225 declared rules are
-  # detect_semantic only, and SemanticRule#check returns [] with no LLM agent
-  # attached — which is every local gate. "clean" over 99 rules and "clean" over
-  # 225 are different claims and used to print identically.
+  # Which half of the law is running. Rules needing a model return [] without
+  # one, and no local gate attaches one, so "clean" over 99 rules and "clean"
+  # over 225 are different claims that otherwise print the same.
   audit = Master::Review::Scan::RuleRegistryAudit.new(root:).call
-  semantic = audit.semantic_only.size
-  agent = scanner.rules.any? { |rule| rule.id.to_s == "semantic" && rule.instance_variable_get(:@agent) }
-  puts "constitution: #{audit.yaml_rules - semantic} of #{audit.yaml_rules} declared rules active" \
-       "#{agent ? '' : " (#{semantic} semantic need an LLM agent; none attached)"}"
+  # Rules that need a model and did not get one return [] and say nothing, so
+  # a report that omits them offers the mechanical half as the whole law.
+  idle = scanner.rules.select { |rule| rule.respond_to?(:agent?) && !rule.agent? }
+  puts "constitution: #{audit.yaml_rules - audit.semantic_only.size} of #{audit.yaml_rules} declared rules active" \
+       "#{idle.empty? ? '' : " (#{idle.map(&:id).join(', ')} idle without a model — rake lint:rule_reach)"}"
 
   violations = paths.each_with_index.flat_map do |path, index|
     puts "constitution: scanned #{index}/#{paths.size}" if index.positive? && (index % 25).zero?
@@ -159,7 +159,7 @@ task :selfcheck do
   require "master"
   audit = Master::Review::Scan::RuleRegistryAudit.new(root: __dir__).call
   puts "selfcheck: #{audit.yaml_rules - audit.semantic_only.size} of #{audit.yaml_rules} declared " \
-       "rules active (#{audit.semantic_only.size} semantic need an LLM agent), " \
+       "rules active (rake lint:rule_reach for what the rest need), " \
        "error/critical only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
   puts report.summary
@@ -285,7 +285,14 @@ namespace :lint do
       puts "lint:cohesion: #{target} absent — skipping"
     end
   end
-  
+
+  desc "every rule can fire somehow — none is law that no configuration enforces"
+  task :rule_reach do
+    ok = system(RbConfig.ruby, File.join(__dir__, "tools", "rule_reach.rb"))
+    abort "lint:rule_reach: a rule reaches no detector" unless ok
+  end
+
+
   desc "every model data/models.yml names is one the provider still serves (needs network)"
   task :models do
     ok = system(RbConfig.ruby, File.join(__dir__, "tools", "model_catalog_check.rb"))

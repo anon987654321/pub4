@@ -148,7 +148,9 @@ The fold was textual rather than a Psych round-trip, so every comment in the sha
 
 The old entry's argument was proximity to consumers. It did not hold up: the shards had **one** consumer between them — `load_rules`, which concatenated all four back into a single hash before any scanner saw them. The split was proximity for readers, not for code, and it cost a directory plus a merge step that could disagree with itself.
 
-`data/design_rules.yml`, `data/llm_output_rules.yml`, and `data/rule_deps.yml` **do** each have separate consumers (`Master::Design`, `Master::Review::OutputCheck`, `Master::Fix::FixLoop`) and stay where they are. That part of the old entry was right and is not affected.
+`data/llm_output_rules.yml` and `data/rule_deps.yml` **do** each have separate consumers (`Master::Design`, `Master::Review::OutputCheck`, `Master::Fix::FixLoop`) and stay where they are. That part of the old entry was right and is not affected.
+
+`data/design_rules.yml` had one too, and folded anyway: proximity to a consumer is worth less than a single definition. Split from `style.yml`, it defined `typography` twice with different numbers, under a `SelfTest` exemption that named the duplication and allowed it.
 
 ## Local Knowledge Stays Local
 
