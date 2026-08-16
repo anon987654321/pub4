@@ -9,6 +9,14 @@
   const nativePush = Array.prototype.push;
   let last = 0;
   let hiddenWaiters = [];
+  // Every caller shares one native frame, and a passing frame releases all of
+  // them together. Gating each callback against a shared `last` instead lets
+  // whichever loop registers first reset the clock every frame, so every other
+  // loop reads now-last === 0 forever and never gets a single frame -- the face
+  // renders and the ecology canvas beside it sits frozen.
+  let pending = new Map();
+  let nextId = 1;
+  let nativeHandle = 0;
 
   function frozen() {
     // Visuals freeze only on an explicit visualRuntime=frozen signal — NOT on
@@ -44,21 +52,45 @@
     if (document.hidden) return;
     const waiters = hiddenWaiters;
     hiddenWaiters = [];
-    waiters.forEach((callback) => window.requestAnimationFrame(callback));
+    waiters.forEach(({ id, callback }) => pending.set(id, callback));
+    pump();
   }, { passive: true });
 
-  window.requestAnimationFrame = (callback) => {
-    if (document.hidden || frozen()) {
-      hiddenWaiters.push(callback);
-      return hiddenWaiters.length;
-    }
-
-    return nativeRaf((now) => {
-      if (now - last < minFrameMs) {
-        return window.requestAnimationFrame(callback);
-      }
-      last = now;
-      callback(now);
+  function runFrame(now) {
+    nativeHandle = 0;
+    if (now - last < minFrameMs) { pump(); return; }
+    last = now;
+    const batch = pending;
+    pending = new Map();
+    batch.forEach((callback) => {
+      // One throwing callback must not swallow the rest of the frame; rethrow
+      // async so the browser still reports it as an uncaught error.
+      try { callback(now); } catch (err) { setTimeout(() => { throw err; }); }
     });
+  }
+
+  function pump() {
+    if (nativeHandle || pending.size === 0) return;
+    nativeHandle = nativeRaf(runFrame);
+  }
+
+  window.requestAnimationFrame = (callback) => {
+    const id = nextId;
+    nextId += 1;
+    if (document.hidden || frozen()) {
+      hiddenWaiters.push({ id, callback });
+      return id;
+    }
+    pending.set(id, callback);
+    pump();
+    return id;
+  };
+
+  // The ids above are ours, so cancellation has to be ours too: handing back a
+  // native handle that a re-queue had already replaced made cancel a silent
+  // no-op.
+  window.cancelAnimationFrame = (id) => {
+    pending.delete(id);
+    hiddenWaiters = hiddenWaiters.filter((waiter) => waiter.id !== id);
   };
 })();
