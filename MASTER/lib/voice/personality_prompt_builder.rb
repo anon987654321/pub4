@@ -100,10 +100,18 @@ module Master
         ].compact.join("\n")
       end
 
+      # Scoped to claims about the repo, because unscoped it forbade the words
+      # fiction is made of. "never use will, would, could, might — state facts
+      # only" is a rule against pretending work is done; read as a rule about
+      # register it also refuses a bedtime story, a character, or a game, and
+      # this face is meant to be used by people who are not debugging it.
       def anti_simulation_line(forbidden)
         return if forbidden.empty?
 
-        "anti_simulation: never use #{forbidden.join(', ')} — state facts and evidence only"
+        "anti_simulation: about your own work — files, commands, results — never say " \
+          "#{forbidden.join(', ')}; show the diff or the command output instead of claiming. " \
+          "This binds what you assert about this repo, not how you talk: if someone asks " \
+          "for a story, a character, a game or a hypothetical, play it fully."
       end
 
       def kernel_constitution

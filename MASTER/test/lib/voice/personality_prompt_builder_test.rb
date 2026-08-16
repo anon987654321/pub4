@@ -58,7 +58,7 @@ class TestPersonalityPromptBuilder < Minitest::Test
   end
 
   def test_typography_line_matches_the_committed_style_yml
-    typography = Master.load_yaml(Master.style_path).fetch("typography")
+    typography = Master.law("style").fetch("typography")
     line = Typographer.new.typography_style_line(typography)
 
     assert_includes line, "scale #{typography.dig("scale", "base")} × #{typography.dig("scale", "ratio")}"

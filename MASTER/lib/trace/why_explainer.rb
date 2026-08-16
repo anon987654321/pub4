@@ -40,7 +40,7 @@ module Master
       end
 
       def style
-        @style ||= Master.load_yaml(Master.style_path) || {}
+        @style ||= Master.law("style")
       end
 
       def registry_rule(key)

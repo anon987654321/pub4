@@ -86,7 +86,6 @@ module Master
 
   def self.limits_path = data_file("limits.yml", "workflow.yml")
   def self.state_path = data_file("state.yml", "standing_orders.yml")
-  def self.style_path = data_file("style.yml", "ruby_style.yml")
 
   def self.data_file(*names)
     names.each do |name|
