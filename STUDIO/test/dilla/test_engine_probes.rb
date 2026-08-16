@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "test_helper"
+require_relative "../helper"
 require "json"
 require "open3"
 require "rbconfig"
@@ -10,7 +10,7 @@ require "timeout"
 # load it in a subprocess — loading here would leak ROOT/OUTPUT_DIR into the
 # shared test process. CLI dispatch is guarded by `__FILE__ == $PROGRAM_NAME`.
 class TestDilla < Minitest::Test
-  ENGINE = File.expand_path("../../STUDIO/dilla/dilla.rb", __dir__)
+  ENGINE = File.expand_path("../../dilla/dilla.rb", __dir__)
 
   # A hung probe (coltrane-gem hang — see README) used to pin a
   # dilla_test_probe process near 100% CPU forever with no output and no
@@ -39,7 +39,7 @@ class TestDilla < Minitest::Test
     project/session.json
     project/learnings/learned_engine.json
     project/learnings/playlist_catalog.json
-  ].map { |rel| File.expand_path("../../STUDIO/dilla/#{rel}", __dir__) }.freeze
+  ].map { |rel| File.expand_path("../../dilla/#{rel}", __dir__) }.freeze
 
   STATE_AT_LOAD = STATE_FILES.to_h { |path| [path, (File.binread(path) if File.exist?(path))] }.freeze
 
@@ -2097,7 +2097,7 @@ class TestDilla < Minitest::Test
   end
 
   def test_mix_metrics_returns_band_levels_when_demo_present
-    demo = File.expand_path("../../STUDIO/dilla/demo.wav", __dir__)
+    demo = File.expand_path("../../dilla/demo.wav", __dir__)
     skip "demo.wav missing" unless File.file?(demo)
     skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
     result = eval_in_engine(<<~RUBY)
@@ -2121,7 +2121,7 @@ class TestDilla < Minitest::Test
   # "the demo is broken", not a taste judgement, and a demo the operator
   # deliberately masters differently should not fail it.
   def test_shipped_demo_has_no_dead_stretch_and_lands_near_its_loudness_target
-    demo = File.expand_path("../../STUDIO/dilla/demo.mp3", __dir__)
+    demo = File.expand_path("../../dilla/demo.mp3", __dir__)
     skip "demo.mp3 missing" unless File.file?(demo)
     skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
 
@@ -2427,7 +2427,7 @@ class TestDilla < Minitest::Test
   # any 610 strings, and these six are the ones the module's own comment records
   # as having gone missing the first time.
   def test_provenance_records_the_knobs_the_engine_reads_from_every_engine_file
-    require File.expand_path("../../STUDIO/dilla/lib/provenance", __dir__)
+    require File.expand_path("../../dilla/lib/provenance", __dir__)
     keys = DillaProvenance.engine_env_keys
 
     %w[PROGRESSION SONITEX RAP_VOCAL ANALOG_CHAIN PAD_VOL KICK_GAIN].each do |knob|
@@ -2444,7 +2444,7 @@ class TestDilla < Minitest::Test
   # the check MASTER's autofix has broken this engine past before. The fix is
   # DillaSources; this test is what stops a sixth answer appearing.
   def test_engine_sources_is_the_only_definition_of_what_the_engine_is
-    require File.expand_path("../../STUDIO/dilla/lib/engine_sources", __dir__)
+    require File.expand_path("../../dilla/lib/engine_sources", __dir__)
     root = DillaSources.root
 
     assert_empty DillaSources.unlisted_parts,
@@ -2474,7 +2474,7 @@ class TestDilla < Minitest::Test
   # including the two it got wrong on the first attempt, both in the direction of
   # telling the operator a working value was a mistake.
   def test_knob_registry_reads_each_knob_as_the_engine_reads_it
-    require File.expand_path("../../STUDIO/dilla/lib/knobs", __dir__)
+    require File.expand_path("../../dilla/lib/knobs", __dir__)
 
     assert_operator DillaKnobs.all.length, :>=, 600, "the engine reads 610 knobs"
 
@@ -2501,7 +2501,7 @@ class TestDilla < Minitest::Test
   end
 
   def test_knob_check_finds_real_mistakes_and_stays_quiet_otherwise
-    require File.expand_path("../../STUDIO/dilla/lib/knobs", __dir__)
+    require File.expand_path("../../dilla/lib/knobs", __dir__)
 
     # Each of these is a mistake the engine used to accept in silence.
     problems = DillaKnobs.validate(
@@ -2531,7 +2531,7 @@ class TestDilla < Minitest::Test
   # pins, which locks out the tables that chose them -- so the recipe is not the
   # environment, it is the part of it the caller typed.
   def test_provenance_separates_what_the_operator_pinned_from_what_the_engine_filled
-    require File.expand_path("../../STUDIO/dilla/lib/provenance", __dir__)
+    require File.expand_path("../../dilla/lib/provenance", __dir__)
 
     Dir.mktmpdir do |dir|
       output = File.join(dir, "pins.wav")
@@ -2564,7 +2564,7 @@ class TestDilla < Minitest::Test
   # all -- and it has to be provable in both directions, or "frozen" is a claim
   # rather than a behaviour.
   def test_dilla_frozen_reads_the_learned_state_and_writes_none_of_it
-    session = File.expand_path("../../STUDIO/dilla/project/session.json", __dir__)
+    session = File.expand_path("../../dilla/project/session.json", __dir__)
     skip "no session state on this machine yet" unless File.file?(session)
 
     # One render, not two: the suite gives each test 30 seconds and a render is
@@ -2678,7 +2678,7 @@ class TestDilla < Minitest::Test
   # against a difference that was known in advance, which is what this test is.
   def test_taste_separates_two_piles_on_a_difference_it_was_given
     skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
-    require File.expand_path("../../STUDIO/dilla/lib/taste", __dir__)
+    require File.expand_path("../../dilla/lib/taste", __dir__)
 
     Dir.mktmpdir do |dir|
       # The piles differ in level and in nothing else.
@@ -2759,7 +2759,7 @@ class TestDilla < Minitest::Test
   # point at it: renders are gitignored and the seed rotates, so a manifest
   # referring to a deleted wav records nothing at all.
   def test_an_assembly_records_its_parts_with_offsets_and_their_recipes
-    require File.expand_path("../../STUDIO/dilla/lib/provenance", __dir__)
+    require File.expand_path("../../dilla/lib/provenance", __dir__)
 
     Dir.mktmpdir do |dir|
       parts = %w[a b].map { |name| File.join(dir, "#{name}.wav") }
@@ -2805,7 +2805,7 @@ class TestDilla < Minitest::Test
   # The control for the test above, and the mechanism on its own: frozen has to
   # be the only difference, or "it did not write" proves nothing about freezing.
   def test_frozen_state_writes_when_thawed_and_announces_every_skip
-    require File.expand_path("../../STUDIO/dilla/lib/frozen_state", __dir__)
+    require File.expand_path("../../dilla/lib/frozen_state", __dir__)
 
     Dir.mktmpdir do |dir|
       target = File.join(dir, "state.json")
@@ -2831,7 +2831,7 @@ class TestDilla < Minitest::Test
   # read as harsh; the same numbers on the old two-band shape must not, so a
   # caller that has not been updated keeps its previous result.
   def test_analyze_harshness_sees_the_presence_band
-    require File.expand_path("../../STUDIO/dilla/lib/master_heuristics", __dir__)
+    require File.expand_path("../../dilla/lib/master_heuristics", __dir__)
 
     old_shape = { mid: -18.0, high: -42.5 }
     old = DillaMaster.analyze_harshness(old_shape)
@@ -2848,7 +2848,7 @@ class TestDilla < Minitest::Test
   end
 
   def test_loss_gates_reject_true_peak_and_lufs_and_share_the_quality_window
-    require File.expand_path("../../STUDIO/dilla/lib/master_heuristics", __dir__)
+    require File.expand_path("../../dilla/lib/master_heuristics", __dir__)
 
     gates = DillaMaster.loss_gates
     assert gates["true_peak_max_dbtp"], "loss_gates must name a true-peak ceiling"

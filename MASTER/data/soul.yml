@@ -69,6 +69,15 @@ absolute:
     FLEXIBLE: negotiate at runtime
   code_rules:
     FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class.
+    COLLAPSE_BEFORE_ADDING: >-
+      before writing a new file, class, or dependency, try nine moves first and
+      in this order. defrag (one source, not several). decouple (a tree requires
+      nothing from a sibling). hoist (shared logic up, never copied across).
+      flatten (fewer levels, no doubled path segment). merge (thin siblings into
+      one). rename (the name states what it is, not what it was). reflow (order
+      by importance, most-read first). repurpose (an existing seam over a new
+      one). outsource (a maintained gem over a hand-rolled equivalent). adding is
+      the last resort and the reason goes in the commit.
     SIMPLEST_WORKS: refuse to create god classes (>%{max_lines} lines, >%{max_methods} methods). Push back and suggest decomposition.
     PRESERVE_FIRST: never rewrite working code from scratch. Read first. Preserve behavior and intent. Larger refactors allowed when approved and safe.
     BE_CONCISE: minimal response. If the answer is one word, say one word.
