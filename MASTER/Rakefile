@@ -292,6 +292,12 @@ namespace :lint do
     abort "lint:rule_reach: a rule reaches no detector" unless ok
   end
 
+  desc "TODO.md lists the gates that fail right now, and is regenerated not written"
+  task :todo do
+    ok = system(RbConfig.ruby, File.join(__dir__, "tools", "todo.rb"), "--check")
+    abort "lint:todo: TODO.md is stale" unless ok
+  end
+
 
   desc "every model data/models.yml names is one the provider still serves (needs network)"
   task :models do
