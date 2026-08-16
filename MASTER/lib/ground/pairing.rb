@@ -63,18 +63,20 @@ module Master
 
           codes.delete(needle)
           persist(codes_path(root), codes)
-          token = SecureRandom.urlsafe_base64(TOKEN_BYTES)
-          subject = SecureRandom.hex(8)
-          allow = load_yaml(allowlist_path(root))
-          allow[token] = {
-            "subject" => subject,
-            "paired_at" => Time.now.to_i,
-            "label" => row["label"].to_s,
-          }
-          persist(allowlist_path(root), allow)
-          PersonalWorkspace.ensure!(root:, subject:)
-          { token:, subject:, label: row["label"].to_s }
+          issue_token(row, root)
         end
+      end
+
+      # Called with the store lock already held and the pairing code already
+      # spent: this mints what replaces it.
+      def issue_token(row, root)
+        token = SecureRandom.urlsafe_base64(TOKEN_BYTES)
+        subject = SecureRandom.hex(8)
+        allow = load_yaml(allowlist_path(root))
+        allow[token] = { "subject" => subject, "paired_at" => Time.now.to_i, "label" => row["label"].to_s }
+        persist(allowlist_path(root), allow)
+        PersonalWorkspace.ensure!(root:, subject:)
+        { token:, subject:, label: row["label"].to_s }
       end
 
       def valid_token?(token, root: Master::ROOT) = token.to_s != "" && load_yaml(allowlist_path(root)).key?(token.to_s)

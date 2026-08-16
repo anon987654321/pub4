@@ -20,6 +20,12 @@ module Master
           path.to_s.match?(UI_PATH) || path.to_s.include?("views") || path.to_s.end_with?(".erb", ".html", ".scss", ".css")
         end
 
+        # Comparing a float against a scale needs a tolerance, and asking inline
+        # puts a block inside a block inside a block.
+        def off_scale?(value, allowed)
+          allowed.none? { |step| (step - value).abs < 0.001 }
+        end
+
         def thresholds
           Master::Design::Thresholds
         end
@@ -148,7 +154,7 @@ module Master
             line.scan(/line-height\s*:\s*([\d.]+)\s*;/i) do |raw|
               val = raw[0].to_f
               next if val >= 4
-              next if allowed.any? { |a| (a - val).abs < 0.001 }
+              next unless Rules.off_scale?(val, allowed)
 
               findings << finding(
                 line: num,
