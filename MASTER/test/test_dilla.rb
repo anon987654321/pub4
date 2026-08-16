@@ -25,6 +25,33 @@ class TestDilla < Minitest::Test
   # overrides it for slower hosts.
   PROBE_TIMEOUT = Integer(ENV.fetch("DILLA_PROBE_TIMEOUT", "90"))
 
+  # Loading the engine writes dilla's session and learnings JSON, and those are
+  # tracked files in a tree this suite does not own. STUDIO's own helper restores
+  # them; these probes shell out to the engine directly and never reach it, so
+  # `rake test` here left three files modified under STUDIO every run. A suite
+  # that dirties a sibling checkout turns every later `git status` into a
+  # question about who did it — which cost two sessions an afternoon on
+  # 2026-08-16, when 46 unrelated files arrived in the same tree by other means.
+  #
+  # Restores what was there at load, not what git has: the point is to leave the
+  # tree as found, and it is routinely found dirty.
+  STATE_FILES = %w[
+    project/session.json
+    project/learnings/learned_engine.json
+    project/learnings/playlist_catalog.json
+  ].map { |rel| File.expand_path("../../STUDIO/dilla/#{rel}", __dir__) }.freeze
+
+  STATE_AT_LOAD = STATE_FILES.to_h { |path| [path, (File.binread(path) if File.exist?(path))] }.freeze
+
+  Minitest.after_run do
+    STATE_AT_LOAD.each do |path, body|
+      next File.delete(path) if body.nil? && File.exist?(path)
+      next if body.nil? || File.exist?(path) && File.binread(path) == body
+
+      File.binwrite(path, body)
+    end
+  end
+
   # `env:` is injected before the engine loads, which is the only point at which
   # it can matter: the engine reads most switches into constants and memoizes
   # pools at load, so setting ENV inside `script` is too late and silently reads
