@@ -64,6 +64,35 @@ Full aliases and GitHub keys: `OPENBSD/SSH_ACCESS.md`. Network table: `OPENBSD/R
 The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`) are one Rails
 app served under subdomains via `<brgen>`; relayd already routes them all (`etc/relayd.conf`).
 
+### Bringing a city domain up
+
+Seven city domains serve brgen, each scoped to its own city: `brgen.no`,
+`oshlo.no`, `trndheim.no`, `stvanger.no`, `cardff.uk`, `edinbrgh.uk`,
+`frankfrt.de`. Six more are registered, in `ALL_DOMAINS`, hold a zone that nsd
+serves and an `acme-client.conf` block, and are waiting on one thing each:
+`brmingham.uk`, `brssels.be`, `dnver.us`, `glasgw.uk`, `lverpool.uk`,
+`mnchester.uk`. None of them has an NS record at its registrar, so nothing asks
+our nameserver for them.
+
+The order below is not a preference. Each step needs the one above it, and the
+last step is the one that bites: relayd refuses to start when a `tls keypair`
+names a certificate that is not on disk, so adding the keypair early takes down
+every site relayd serves, not just the new one.
+
+1. **Delegate at the registrar** — NS to `ns.hyp.net` and `ns.brgen.no`, matching
+   `oshlo.no`. This is the only step that is not on this box.
+2. **Confirm it resolves to us**, or acme cannot answer its own challenge:
+   `ruby -rresolv -e 'puts Resolv.getaddress("glasgw.uk")'` → `46.23.89.226`.
+3. **Issue the certificate.** The `domain` block already exists in
+   `/etc/acme-client.conf`; `doas /usr/local/bin/renew-certs.sh` picks it up, or
+   `doas acme-client -v glasgw.uk` for one.
+4. **Check the certificate is on disk** before touching relayd:
+   `doas ls -l /etc/ssl/glasgw.uk.fullchain.pem`.
+5. **Add `tls keypair "glasgw.uk"`** to `etc/relayd.conf` beside the other city
+   keypairs, then `doas relayd -n` and only then `doas rcctl reload relayd`.
+6. **Verify**: `curl -sS -o /dev/null -w '%{http_code}' https://glasgw.uk/` is
+   200, and the page title names the city.
+
 The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl`,
 `blognet` and `hjerterom` are retired; on 2026-08-12 their users, home directories
 (1.6 GB between them), rc.d scripts, `/etc/*.env` files, login classes, certificate
