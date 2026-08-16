@@ -27,7 +27,7 @@ class TtsJob
   @workers = []
 
   def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil,
-                   lane: "response")
+                   lane: "response", conversation: nil)
     job = new(
       text:,
       voice:,
@@ -37,6 +37,7 @@ class TtsJob
       voice_locked:,
       style_locked:,
       bus:,
+      conversation:,
     )
     return job if job.ready?
 
@@ -120,12 +121,9 @@ class TtsJob
   end
 
   def self.find(job_id)
-    return unless job_id.to_s.match?(/\A[0-9a-f]{32}\z/)
+    data = read_token(job_id)
+    return unless data
 
-    token_path = CACHE_DIR.join("#{job_id}.job")
-    return unless File.file?(token_path)
-
-    data = JSON.parse(File.read(token_path))
     new(
       text: data.fetch("text"),
       voice: data.fetch("voice").to_sym,
@@ -134,17 +132,23 @@ class TtsJob
       pitch: data["pitch"],
       voice_locked: data.fetch("voice_locked", false),
       style_locked: data.fetch("style_locked", false),
+      conversation: data["conversation"],
     )
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "TtsJob.find", job_id: job_id.to_s)
     nil
   end
 
-  def self.cancel(job_id)
-    return false unless job_id.to_s.match?(/\A[0-9a-f]{32}\z/)
+  def self.owned?(job_id, conversation)
+    data = read_token(job_id)
+    return false unless data
 
-    token_path = CACHE_DIR.join("#{job_id}.job")
-    return false unless File.file?(token_path)
+    stored = data["conversation"].to_s
+    stored.present? && stored == conversation.to_s
+  end
+
+  def self.cancel(job_id, conversation: nil)
+    return false unless owned?(job_id, conversation)
 
     FileUtils.mkdir_p(CACHE_DIR)
     %w[.mp3 .job .err].each do |ext|
@@ -157,9 +161,20 @@ class TtsJob
     false
   end
 
+  def self.read_token(job_id)
+    return unless job_id.to_s.match?(/\A[0-9a-f]{32}\z/)
+
+    token_path = CACHE_DIR.join("#{job_id}.job")
+    return unless File.file?(token_path)
+
+    JSON.parse(File.read(token_path))
+  end
+  private_class_method :read_token
+
   attr_reader :job_id
 
-  def initialize(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil)
+  def initialize(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil,
+                 conversation: nil)
     @text = text.to_s
     @voice = voice.to_sym
     @style = style.to_sym
@@ -168,6 +183,7 @@ class TtsJob
     @voice_locked = voice_locked
     @style_locked = style_locked
     @bus = bus
+    @conversation = conversation.to_s.presence
     @fingerprint = Digest::SHA256.hexdigest("#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}")
     @job_id = @fingerprint[0, 32]
   end
@@ -209,8 +225,11 @@ class TtsJob
 
   def write_token
     FileUtils.mkdir_p(CACHE_DIR)
+    path = CACHE_DIR.join("#{@job_id}.job")
+    existing = File.file?(path) ? (JSON.parse(File.read(path)) rescue {}) : {}
+    conversation = existing["conversation"].presence || @conversation
     File.write(
-      CACHE_DIR.join("#{@job_id}.job"),
+      path,
       JSON.generate(
         text: @text,
         voice: @voice,
@@ -219,6 +238,7 @@ class TtsJob
         pitch: @pitch,
         voice_locked: @voice_locked,
         style_locked: @style_locked,
+        conversation: conversation,
       ),
     )
   end

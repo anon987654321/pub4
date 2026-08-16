@@ -28,6 +28,7 @@ class TtsController < ApplicationController
       # visitor is waiting on. Unknown or absent lane means response, which is
       # the safe default: a reply never loses its place to an unlabelled job.
       lane: params[:lane].to_s,
+      conversation: conversation_id,
     )
     stream = Master::Voice::Expression.viseme_stream(text, style: synth_style, rate:)
     etag = %("#{job.job_id}")
@@ -60,6 +61,7 @@ class TtsController < ApplicationController
   def status
     job = TtsJob.find(params[:job].to_s)
     return head(:not_found) unless job
+    return head(:not_found) if job.pending? && !TtsJob.owned?(params[:job].to_s, conversation_id)
 
     TtsJob.materialize!(job) if job.pending?
     tts_job_response(job)
@@ -68,6 +70,7 @@ class TtsController < ApplicationController
   def stream
     job = TtsJob.find(params[:job].to_s)
     return head(:not_found) unless job
+    return head(:not_found) if job.pending? && !TtsJob.owned?(params[:job].to_s, conversation_id)
 
     TtsJob.materialize!(job) if job.pending?
 
@@ -91,7 +94,7 @@ class TtsController < ApplicationController
     job_id = params[:job].to_s
     return head(:bad_request) if job_id.empty?
 
-    cancelled = TtsJob.cancel(job_id)
+    cancelled = TtsJob.cancel(job_id, conversation: conversation_id)
     return head(:not_found) unless cancelled
 
     container[:bus]&.publish("tts:job_cancelled", job_id:)
