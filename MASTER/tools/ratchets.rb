@@ -220,6 +220,10 @@ module Pub4
       [
         shell_row("selftest", "MASTER", "bundle exec rake selftest", /self-test: (\d+) violation/, 0),
         shell_row("selfcheck", "MASTER", "bundle exec rake selfcheck", /selfcheck: (\d+) violation/, nil),
+        # Deep because the rule registry is global and a suite run has test-defined
+        # rules in it: measured in-process it reads high and fails a green tree.
+        shell_row("principle_trace", "MASTER", "bundle exec rake lint:principle_trace",
+                  /principle_trace: (\d+)[\/ ]/, 101),
       ].compact
     end
 

@@ -2510,8 +2510,8 @@ principles:
     severity: low
     confidence: 0.7
     operation: rebalance
-    rule_ids: []
-    status: gap
+    rule_ids: [LINE_HEIGHT_ON_SCALE]
+    status: covered
     root: proportion
     tags:
     - visual_design
