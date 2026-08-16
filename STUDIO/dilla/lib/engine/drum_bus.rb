@@ -147,6 +147,28 @@ def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
   FileUtils.mv(merged, drum_path)
 end
 
+# DRUM_VOL looks like the kit fader and is what stream_iterate / composition
+# mutate. The main render reads DRUM_MIX_WEIGHT. Treat an explicit DRUM_VOL as
+# the mix weight when DRUM_MIX_WEIGHT was not pinned, so those writers move
+# the bus they think they are moving.
+def resolved_drum_mix_weight
+  mix = ENV["DRUM_MIX_WEIGHT"]
+  vol = ENV["DRUM_VOL"]
+  pinned_mix = USER_PINNED_ENV["DRUM_MIX_WEIGHT"]
+  pinned_vol = USER_PINNED_ENV["DRUM_VOL"]
+  return pinned_vol.to_f if pinned_vol && pinned_mix.to_s.empty?
+  return mix.to_f if mix && !mix.empty?
+
+  (vol.nil? || vol.empty? ? 0.88 : vol).to_f
+end
+
+def apply_drum_vol!(value)
+  s = value.to_f.round(2).to_s
+  ENV["DRUM_VOL"] = s
+  ENV["DRUM_MIX_WEIGHT"] = s
+  s
+end
+
 def drum_drop_enabled?
   ENV.fetch("DRUM_DROP", "1") != "0"
 end
