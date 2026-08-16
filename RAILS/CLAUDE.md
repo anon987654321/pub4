@@ -77,6 +77,7 @@ preflight.
 ## Traps
 
 - **Visual/CSS work:** read `shared/WIRING_NOTES.md` "Visual design system" first.
+  The layout chrome contract every surface shares is `shared/LAYOUT.md`.
   Tokens live in `shared/app/assets/stylesheets/_dialect_tokens.scss`; flat only,
   no shadow/blur/glow. Most layout "bugs" here are stale deployed CSS — diff live
   against source before changing anything.
@@ -91,3 +92,27 @@ preflight.
   looks like `curl 000` rather than a 5xx. Check ports 61352 and 47312 directly.
 - **Horizon features** in `apps.horizon.yml` are `agent: ignore` — do not
   implement unprompted.
+
+## Editing frontend code
+
+Stimulus packages are vendored, never fetched from a CDN; `shared/frontend/STIMULUS_COMPONENTS_BASELINE.md` explains the gate that holds it and why a `pin` costs a `modulepreload`.
+
+The visual design is deliberate and the user is a trained architect. Restore or
+ask; never invent a layout fix. Hidden swipe-reveal navigation is intended.
+
+Split large mixed HTML/CSS/JS documents before editing them, and never ask a
+model to rewrite one unless the output is a minimal unified diff. Structure goes
+in `app/views`, styles in `app/assets/stylesheets`, Stimulus controllers in
+`app/javascript/controllers` (or `shared/frontend/` when more than one app uses
+them), and chart config, animations, fonts and SVG icons each in their own file.
+
+Extract styling verbatim. Do not normalize, minify, rename classes, drop vendor
+prefixes, collapse custom animations into generic transitions, or replace CSS
+custom properties with literals while moving code. Do not alter chart options
+while editing chart data. Prefer an additive class over changing an existing one,
+and leave `PROTECTED` sections alone unless the task names them.
+
+Scanners hold the parts of this that one file can show: `NO_JQUERY`,
+`NO_INLINE_ASSETS_IN_SHELL`, `NO_MULTIPLE_LANGUAGES`, `NO_INLINE_STYLES`,
+`MAGIC_COLOR`. The rest are properties of a diff, so they are checked by reading
+one. Numbers come from `shared/design_tokens.yml`, never from a document.

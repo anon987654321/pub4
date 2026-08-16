@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-# Two files carrying the same dimension will eventually disagree, and the gates
-# will pick different ones. That already happened here: LLM_SAFE_FRONTEND_RULES.md
-# prescribed a 16px step where design_tokens.yml defines space_sm as 0.75rem,
-# and 82831623a had to settle which scale the gates read.
+# Two files carrying the same dimension eventually disagree, and the gates pick
+# different ones — a document prescribing a 16px step against design_tokens.yml's
+# 0.75rem space_sm leaves no way to tell which scale governs.
 #
 # A document may mention a value. It may not prescribe one without naming where
 # the value lives, because a reader who cannot find the source cannot tell which

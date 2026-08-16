@@ -3,10 +3,8 @@
 # A dimension written in prose is a second source of truth for a number the
 # tokens already own.
 #
-# LLM_SAFE_FRONTEND_RULES.md prescribed an 8px scale of 4, 8, 16, 24, 32, 48, 64
-# while design_tokens.yml defined space_sm as 0.75rem -- 12px, not 16. One law
-# carrying two spacing scales is not hypothetical here: the gates read different
-# ones and disagreed until 82831623a settled it.
+# A document prescribing an 8px step while design_tokens.yml defines space_sm as
+# 0.75rem gives the tree two spacing scales, and the gates read different ones.
 #
 # Mentioning a value is fine. Prescribing one without saying where it comes from
 # is what drifts, because the reader has no way to find the value that governs.
