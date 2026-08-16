@@ -3,13 +3,12 @@
 require_relative "test_helper"
 require "open3"
 
-# A suite that reports 106 and runs 10 is an instrument reporting on itself.
+# A suite that reports 106 tests and runs 10 is an instrument reporting on itself.
 #
-# MASTER's `rake test` ran test_dilla.rb for months. Deleting that file dropped
-# the aggregate by ten runs, not by its hundred and six — so ninety-six tests
-# never executed, and the nine failures among them were invisible to every gate.
-# Nothing detected it, because nothing compared a file's own run count to what
-# it contributed to the suite.
+# A file can be loaded by the suite and contribute none of its own runs: its
+# tests never execute, its failures reach no gate, and the aggregate count hides
+# it, because the aggregate is the number being misreported. Asking each file
+# what it reports alone is the only view from outside.
 #
 # Slow by construction: it runs each file in its own process. Opt in with
 # SUITE_AUDIT=1, or a full `rake test` would fork the whole suite per file.

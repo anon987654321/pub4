@@ -2,21 +2,10 @@
 
 module Master
   module Design
-    # Loads data/design_rules.yml for scanners and UI critique.
+    # The design_rules section of data/rules.yml, for scanners and UI critique.
     class Thresholds
-      PATH = File.join(Master::DATA, "design_rules.yml").freeze
-
       def self.load(root: Master::ROOT)
-        @cache ||= {}
-        path = File.join(root, "data", "design_rules.yml")
-        path = PATH unless File.file?(path)
-        mtime = File.mtime(path).to_i
-        hit = @cache[path]
-        return hit[:data] if hit && hit[:mtime] == mtime
-
-        data = Master.load_yaml(path, default: {}) || {}
-        @cache[path] = { mtime:, data: }
-        data
+        Master.law("design_rules", root:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Design::Thresholds.load")
         {}

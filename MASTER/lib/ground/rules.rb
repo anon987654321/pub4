@@ -35,7 +35,7 @@ module Master
       def data(name)
         key = name.to_sym
         path = resolve_data_path(key)
-        return @cache[key]&.first || {} unless path && File.exist?(path)
+        return @cache[key]&.first || folded(key) unless path && File.exist?(path)
 
         mtime = File.mtime(path)
         cached = @cache[key]
@@ -80,6 +80,14 @@ module Master
       def empty? = @data.empty?
 
       private
+
+      # A section of rules.yml answers to its own stem, so a call site may ask
+      # for :style or :design_rules without knowing they share a file. A stem
+      # with no section returns {}, the same as an absent optional file.
+      def folded(key)
+        stems = DATA_ALIASES.fetch(key, [key.to_s])
+        stems.filter_map { |stem| @data[stem] }.first || {}
+      end
 
       def resolve_data_path(key)
         stems = DATA_ALIASES.fetch(key, [key.to_s])

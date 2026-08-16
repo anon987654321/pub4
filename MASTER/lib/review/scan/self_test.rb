@@ -189,9 +189,7 @@ module Master
           {
             "defaults" => %w[mcp_servers.yml models.yml],
             "openrouter" => %w[models.yml providers.yml],
-            "principles" => %w[operator_principles.yml principle_map.yml],
             "thresholds" => %w[load.yml rules.yml],
-            "typography" => %w[design_rules.yml style.yml],
             "voice" => %w[soul.yml voice.yml],
           }.fetch(key, []).include?(relative)
         end

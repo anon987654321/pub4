@@ -3,11 +3,9 @@
 # Files that are one concept wearing several names.
 #
 # Every structural rule in data/rules.yml points one way: SMALL_FILES,
-# NO_GOD_CLASS and INTEGRATED_SYSTEMS all say "split further". Nothing says
-# "these three are one thing", so no scan has ever proposed a merge — which is
-# why STUDIO/dilla carried patch_catalog, patch_pools and patch_select as three
-# files referring to each other in both directions, in one flat namespace, for
-# as long as it did.
+# NO_GOD_CLASS and INTEGRATED_SYSTEMS all say "split further". None says "these
+# three are one thing", so no scan proposes a merge, and one concept spread over
+# three files that reference each other in both directions stays that way.
 #
 #   ruby MASTER/tools/cohesion.rb STUDIO/dilla/lib/engine
 #   ruby MASTER/tools/cohesion.rb --json RAILS/shared/lib

@@ -2,20 +2,18 @@
 
 # Files that declare no module or class, counted, and allowed only to fall.
 #
-# STUDIO/dilla/lib/engine is 76 of 79 files with no namespace at all — 863
-# methods defined directly on Object. That flatness is why a method could be
-# called from one committed file and defined in another that was never
-# committed, with nothing to break at load: there is no import to fail. It is
-# also why the tree needs a bespoke test asking whether methods are called,
-# which a module boundary answers for free.
+# STUDIO/dilla/lib/engine is 76 of 79 files with no namespace — 863 methods on
+# Object. In a flat namespace a call and its definition need not share a file,
+# or live in any committed file, and nothing fails at load, because there is no
+# import to fail. A module boundary answers for free the question that tree
+# needs a bespoke test to ask.
 #
 #   ruby MASTER/tools/namespace_ratchet.rb
 #   ruby MASTER/tools/namespace_ratchet.rb --ratchet
 #
-# Ratchets rather than demands. A wholesale refactor of 863 methods is not a
-# patch anyone should take in one go; recording the number and refusing to let
-# it rise makes every new file a module and every merge progress. Same mechanism
-# as lint:spine, which has already refused a raise and forced a real deletion.
+# Ratchets rather than demands: 863 methods is not one patch. Recording the
+# count and refusing a rise makes every new file a module and every merge
+# progress — the mechanism lint:spine uses.
 
 require "yaml"
 require "json"

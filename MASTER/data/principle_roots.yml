@@ -2,10 +2,10 @@
 #
 # DRY, "omit needless words" and Bringhurst's measure are not three rules that
 # happen to rhyme. They are one law read in code, in prose and in type. The
-# principle map had 272 entries and 15 clusters, and the clusters were by
-# discipline — visual_design, clean_code, refactoring — so the map recorded the
-# separation rather than dissolving it, and a finding in CSS could not inherit
-# the argument already won in Ruby.
+# principle map's 272 entries cluster by discipline — visual_design, clean_code,
+# refactoring — which records the separation rather than dissolving it, so a
+# finding in CSS cannot inherit the argument already won in Ruby. These roots
+# are the axis the clusters cut across.
 #
 # Each root states the law once, then states what it looks like in each medium.
 # A principle carries `root:` naming one of these. Anything that fits none of

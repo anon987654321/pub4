@@ -3106,3 +3106,1201 @@ rules:
     detect_semantic: Apply Dieter Rams useful/understandable/unobtrusive/honest/thorough
       to this UI surface. Flag dishonest progress, missing empty/error states, chrome
       that competes with content. CLEAN if solid.
+
+# Folded from data/design_rules.yml — one file for all rules.
+design_rules:
+  typography:
+    line_length:
+      min_ch: 45
+      max_ch: 75
+      ideal_ch: 66
+      mobile_min_ch: 35
+      mobile_max_ch: 50
+      # The x.com-shaped feed is a short measure on purpose: --feed-max 600px at
+      # brgen's 18px root is ~45ch, not 66. Legal/prose keeps ideal_ch. Worn
+      # measure is geometry_type.rb reading worn_type.profiles, not this token.
+      feed_min_ch: 35
+      feed_max_ch: 55
+      action: Flag readable prose blocks outside range. Prefer max-width in ch units. Count worn characters, not the CSS token.
+    line_height:
+      body_min: 1.4
+      body_max: 1.6
+      body_accessibility_min: 1.5
+      heading_min: 1.0
+      heading_max: 1.2
+      long_line_threshold_ch: 60
+      long_line_min: 1.5
+      action: Increase leading when lines exceed 60ch; tighten only display headings.
+    type_scale:
+      default_ratio: 1.25
+      marketing_ratio: 1.333
+      allowed_ratios:
+        minor_third: 1.2
+        major_third: 1.25
+        perfect_fourth: 1.333
+        golden: 1.618
+      base_px: 16
+      action: Prefer a modular scale; flag arbitrary one-off font sizes.
+    letter_spacing:
+      all_caps_min_em: 0.05
+      all_caps_max_em: 0.15
+      heading_tight_min_em: -0.02
+      lowercase_body_should_letterspace: false
+      action: Add tracking to all-caps labels; reject letter-spaced lowercase prose.
+    hierarchy:
+      min_size_ratio_between_levels: 1.2
+      h1_body_min_ratio: 2.0
+      h1_body_max_ratio: 3.0
+      h2_body_min_ratio: 1.5
+      h2_body_max_ratio: 2.0
+      h3_body_min_ratio: 1.25
+      h3_body_max_ratio: 1.5
+      min_weight_delta: 200
+      max_font_families: 2
+      max_font_weights: 3
+      max_font_sizes: 8
+      action: Ensure hierarchy is visible by size, weight, placement, or contrast.
+    accessibility:
+      normal_text_contrast: 7.0
+      large_text_contrast: 4.5
+      body_min_px: 16
+      recommended_body_px: 18
+      mobile_input_min_px: 16
+      action: Reject unreadable contrast and mobile input text below 16px.
+  layout_rules:
+    grid:
+      columns: 12
+      base_unit_px: 8
+      allowed_spacing_px:
+      - 4
+      - 8
+      - 16
+      - 24
+      - 32
+      - 48
+      - 64
+      action: Prefer 8px rhythm and 12-column structure; allow 4px for hairline adjustments.
+    proportion:
+      golden_ratio: 1.618
+      split_main_ratio: 0.618
+      split_sidebar_ratio: 0.382
+      action: Use proportional splits for major panels instead of arbitrary widths.
+    whitespace:
+      internal_not_greater_than_external: true
+      gap_over_margin: true
+      paragraph_margin_em: 1.5
+      section_padding_min_rem: 4
+      section_padding_max_rem: 8
+      action: Padding should not exceed separation between unrelated groups; use gap before margin hacks.
+    reading_patterns:
+      text_heavy: f_pattern
+      landing_page: z_pattern
+      primary_area: top_left
+      terminal_area: bottom_right
+      weak_area: bottom_left
+      action: Place critical information along the dominant scan path.
+    alignment:
+      avoid_default_center_alignment: true
+      center_text_max_lines: 3
+      body_text_alignment: left
+      rag: right
+      action: Use asymmetry and alignment before decoration.
+    touch:
+      target_min_px: 44
+      target_recommended_px: 48
+      thumb_zone_primary_actions: bottom_center
+      action: Flag critical mobile interactions in unreachable top corners.
+  ultraminimalism:
+    philosophy:
+      typography_is_design: true
+      absence_is_material: true
+      remove_until_nothing_left_to_remove: true
+      less_but_better: true
+      action: Prefer absence, typography, alignment, and whitespace over ornamental UI.
+    swiss_style:
+      left_aligned_ragged_right: true
+      sans_serif_default: Inter
+      alternative_faces:
+      - Helvetica
+      - Akzidenz-Grotesk
+      - IBM Plex Sans
+      visible_grid_optional: false
+      font_feature_settings:
+        Inter: '"ss03" 1'
+      action: Use an invisible mathematical grid with type-led hierarchy.
+    negative_space:
+      primary_design_material: true
+      chunk_forms_by_proximity: true
+      avoid_tunnel_vision_distance: true
+      card_padding_px: 24
+      section_gap_px: 48
+      hero_breathing_room_px: 96
+      content_width: min(65ch, 100% - 3rem)
+      action: Space communicates grouping; whitespace must clarify relationships.
+    color:
+      max_palette_roles: 4
+      roles:
+      - primary
+      - secondary
+      - accent
+      - highlight
+      prefer_monochrome_with_one_accent: true
+      action: Reject color variety when value, spacing, and type can do the work.
+    interaction:
+      minimal_js_default: Stimulus
+      no_build_options:
+      - Stimulus
+      - PetiteVue
+      - Alpine
+      - VanJS
+      - HTMX
+      progressive_enhancement_required: true
+      data_attributes_bridge_behavior: true
+      action: Keep behavior small, recoverable, and legible in HTML.
+    design_tokens:
+      required_for_generation: true
+      exact_token_use: true
+      token_categories:
+      - color
+      - spacing
+      - radius
+      - typography
+      - motion
+      action: Inject tokens before generation; flag new ad-hoc values.
+    prompting:
+      constitutional_rules: true
+      positive_constraints_over_negative: true
+      self_refine_loop: true
+      designer_personas:
+      - Dieter Rams
+      - Massimo Vignelli
+      - Josef Mueller-Brockmann
+      require_design_rationale_before_code: true
+      action: Force design decisions before code; iterate by critique then revision.
+    automated_iteration:
+      screenshot_first: true
+      ferrum_capture: true
+      visual_regression: BackstopJS
+      max_iterations: 5
+      target_score: 95
+      action: Capture, compare, critique, patch, and repeat until differences are intentional.
+    mcp:
+      enabled_targets:
+      - filesystem
+      - puppeteer
+      - git
+      - figma
+      - accessibility
+      primitives:
+      - tools
+      - resources
+      - prompts
+      action: Prefer standard tool bridges over bespoke glue when integrating design automation.
+  pixel_field:
+    identity:
+      call_it:
+      - Pixel Field
+      - Semantic Bitmap Field
+      - Cognitive Field
+      - Runtime Field
+      - Systems Topology
+      not:
+      - particles
+      - FX
+      - VFX
+      - shaders
+      - retro particles
+      reason: The visual units are semantic computational cells, not decorative particles.
+      action: Reject "particle system" language in code/comments/UI copy for this layer; name it by what
+        it represents.
+    bitmap_not_retro:
+      description: Bitmap constraints are a living visual grammar, not nostalgia.
+      ban:
+      - fake CRT scanlines
+      - synthwave
+      - vaporwave gradients
+      - decorative glow
+      - fake terminal cosplay
+      - arcade nostalgia
+      - decorative noise
+      require:
+      - integer scaling
+      - crisp edges
+      - semantic pixels
+      - limited palettes
+      - hard geometry
+      - low-resolution intent
+      - deterministic rendering
+      - readable systems topology
+      action: Flag any renderer touching this layer that adds blur, bloom, glow, or CRT/scanline effects.
+    rendering_rules:
+      never:
+      - blur
+      - bloom
+      - soft glow
+      - glassmorphism
+      - subpixel smoothing
+      - motion blur
+      - noise overlays
+      - fake scanlines
+      always:
+      - integer scaling
+      - hard edges
+      - palette limitation
+      - cell rendering
+      - ordered dithering
+      - pixel exactness
+      image_smoothing_enabled: false
+      internal_resolutions:
+      - 320x180
+      - 480x270
+      - 640x360
+      upscale: integer only, never arbitrary
+      action: Canvas contexts in this layer must set imageSmoothingEnabled=false and upscale by integer
+        factor only.
+    semantic_cell_fields:
+    - id
+    - kind
+    - zone
+    - source
+    - confidence
+    - pressure
+    - valence
+    - arousal
+    - attention
+    - age
+    - decay
+    - evidence
+    cell_grammar:
+      single_pixel: signal
+      2x2_block: stable entity
+      checker_dither: uncertainty
+      solid_rectangle: confidence
+      split_cluster: disagreement
+      jagged_edge: risk
+      marching_pixels: data flow
+      fading_residue: memory decay
+      pulsation: active attention
+      static_tile: persistence
+      pixel_spray: entropy
+      collapsing_lattice: failure
+      converging_cells: consensus
+      action: A cell's visual form must be derivable from its semantic state via this table, not chosen
+        freely.
+    systemic_emotion_mapping:
+      confidence: solidity
+      uncertainty: dithering
+      pressure: density
+      focus: convergence
+      overload: fragmentation
+      agreement: synchronization
+      risk: instability
+      memory: persistence
+      volatility: flicker
+      recovery: gradual recomposition
+      action: Map runtime state to visuals through this table, not through emoji or literal emotion icons.
+    event_bus:
+      canonical_events:
+      - master:emotion
+      - master:clusters
+      - master:topology
+      - master:runtime
+      - master:attention
+      - master:pressure
+      - master:tooling
+      pipeline: runtime -> visual_bridge -> cluster_miner -> emotion bus -> pixel field kernel -> topology
+        renderer
+      action: No renderer may consume raw runtime events directly; route through the canonical bus.
+    runtime_modes:
+      operator:
+        background: black
+        foreground: white
+        accents: 1
+        density: maximum
+        ornament: minimum
+      review:
+        motion: slower
+        spacing: expanded
+        readability: prioritized
+      visitor:
+        complexity: reduced
+        topology_exposure: reduced
+        runtime_visibility: reduced
+      action: Pick chrome density from the active tier (operator/review/visitor), not a single fixed layout.
+    performance:
+      required:
+      - typed arrays
+      - object pooling
+      - fixed timestep
+      - bounded allocations
+      - no layout reads in animation loop
+      - deterministic updates
+      - frame budget limits
+      - automatic degradation
+      future_not_first:
+      - OffscreenCanvas
+      - WebWorkers
+      - WASM kernels
+      action: New visual layers must degrade gracefully under frame-budget pressure before adding motion.
+    explainability:
+      every_visible_structure_inspectable: true
+      action: Any rendered cell/cluster must resolve to a source, confidence, and state a user or operator
+        can query — visuals are observability, not decoration.
+  visual_design:
+    semantics:
+      reject_arbitrary_decoration: true
+      action: Every ornament must communicate state, hierarchy, affordance, or tone.
+    syntactics:
+      enforce_visual_grammar: true
+      action: Reuse spacing, color, radius, and type tokens consistently.
+    pragmatics:
+      must_be_understandable: true
+      action: Prefer self-explanatory affordances over clever ambiguity.
+    rams:
+      useful: true
+      understandable: true
+      unobtrusive: true
+      honest: true
+      thorough: true
+      action: Score design changes against Dieter Rams-style usefulness and honesty.
+    font_personality:
+      traditional_trustworthy: serif
+      modern_innovative: geometric_sans
+      accessible_interface: humanist_sans
+      impact: bold_display
+      action: Match typography mood to content rather than trend.
+    screen_legibility:
+      prefer_high_x_height: true
+      prefer_open_apertures: true
+      disambiguate_characters:
+      - 1/l/I
+      - 0/O
+      - B/8
+      action: Design for degraded conditions and small sizes first.
+  motion_and_sound:
+    timing:
+      avoid_quantized_feel: true
+      preserve_silence: true
+      action: Treat pauses, decay, and negative space as first-class design elements.
+    audio_accessibility:
+      no_autoplay_without_intent: true
+      mute_path_required: true
+      must_not_mask_speech: true
+      must_not_conflict_with_screen_readers: true
+      graceful_failure_required: true
+      action: Sound is feedback, not surprise; silence must always be available.
+    sonic_hierarchy:
+      foreground: critical_state_change
+      midground: interaction_confirmation
+      background: ambience_or_texture
+      action: Layer sounds like UI depth; avoid frequency and attention masking.
+  data_visualization:
+    data_ink_ratio_target: 1.0
+    lie_factor_target: 1.0
+    reject_chartjunk: true
+    small_multiples_require_identical_scales: true
+    sparklines_no_frames_or_ticks: true
+    action: Remove non-data ink unless it adds comprehension.
+  automated_css_analysis:
+    flag:
+    - line length outside typography.line_length bounds
+    - line height below typography.line_height.body_min for prose
+    - all caps without letter spacing
+    - body text below 16px
+    - contrast below WCAG AAA thresholds (7:1 body, 4.5:1 large)
+    - more than two font families
+    - more than three font weights
+    - spacing off the 4px or 8px grid
+    - touch targets below 44px
+    - centered prose longer than three lines
+    - justified text without hyphenation
+    - heading hierarchy ratios below 1.2
+    - font weight differences below 200
+    - decorative chart ink that does not encode data
+    - decorative UI elements that do not encode state, hierarchy, affordance, or tone
+    - non-token spacing, radius, color, or typography values in generated UI
+  ux_laws:
+    fitts:
+      target_min_px: 44
+      target_recommended_px: 48
+      primary_action_min_px: 48
+      action: Flag interactive controls smaller than 44px; prefer 48px for primary actions.
+    hick:
+      max_visible_choices: 7
+      nav_items_warn: 9
+      action: Flag navigation or action groups with more than 7 peer choices without progressive disclosure.
+    chunking:
+      max_items_per_group: 7
+      action: Group long lists; flag flat menus over 7±2 items.
+    progressive_disclosure:
+      require_advanced_hidden: true
+      action: Advanced/secondary controls should start collapsed or on secondary surfaces.
+
+  # Worn type — what the visitor sees, not what the stylesheet declares.
+  # Reader: RAILS/gates/support/geometry_type.rb (and GeometryProbe TYPE_WALK).
+  # MASTER/lib/design/thresholds.rb#worn_profile is the Ruby face.
+  # A profile with no reader is inert; test_design_rules_worn_type.rb holds that.
+  worn_type:
+    type_scale_ratio: 1.25
+    type_scale_tolerance_px: 1.5
+    baseline_module_px: 4
+    hanging_marker_max_inset_px: 0
+    golden_split:
+      min: 0.55
+      max: 0.70
+    profiles:
+      feed:
+        measure_min_ch: 35
+        measure_max_ch: 55
+        mobile_min_ch: 30
+        mobile_max_ch: 50
+        rhythm_off_max_pct: 25
+        empty_min_pct: 20
+        empty_max_pct: 75
+        accents_max: 2
+      catalog:
+        measure_min_ch: 20
+        measure_max_ch: 50
+        rhythm_off_max_pct: 15
+        empty_min_pct: 15
+        empty_max_pct: 70
+        accents_max: 2
+        require_tabular_nums: true
+      chat:
+        measure_min_ch: 0
+        measure_max_ch: 0
+        rhythm_off_max_pct: 45
+        empty_min_pct: 10
+        empty_max_pct: 85
+        accents_max: 2
+      immersive:
+        measure_min_ch: 0
+        measure_max_ch: 0
+        rhythm_off_max_pct: 40
+        empty_min_pct: 8
+        empty_max_pct: 90
+        accents_max: 2
+      map:
+        measure_min_ch: 0
+        measure_max_ch: 0
+        label_min_px: 12
+        rhythm_off_max_pct: 40
+        empty_min_pct: 0
+        empty_max_pct: 100
+        accents_max: 2
+      legal:
+        measure_min_ch: 55
+        measure_max_ch: 75
+        rhythm_off_max_pct: 20
+        empty_min_pct: 25
+        empty_max_pct: 70
+        accents_max: 1
+      auth:
+        measure_min_ch: 0
+        measure_max_ch: 0
+        rhythm_off_max_pct: 30
+        empty_min_pct: 20
+        empty_max_pct: 80
+        accents_max: 2
+    action: >
+      Judge each surface under its profile. Count worn characters, computed
+      sizes, baselines, tabular figures, accent hues, empty ratio, and
+      main/aside split. Do not grep stylesheets for these.
+  pixel_perfection:
+    forbidden_css:
+    - box-shadow
+    - text-shadow
+    - 'filter: blur'
+    - backdrop-filter
+    - glassmorphism
+    - soft glow
+    forbidden_patterns:
+    - 'box-shadow\s*:'
+    - 'text-shadow\s*:'
+    - filter\s*:\s*[^;]*blur\s*\(
+    - 'backdrop-filter\s*:'
+    - 'text-shadow\s*:'
+    forbid_arbitrary_radius_px_above: 16
+    eight_px_rhythm:
+    - 0
+    - 4
+    - 8
+    - 12
+    - 16
+    - 20
+    - 24
+    - 32
+    - 40
+    - 48
+    - 64
+    - 96
+    magic_color_hex_ban_inline: true
+    image_smoothing_enabled: false
+    exception_policy:
+      allowed: true
+      scope: single named component, not a blanket relaxation
+      must_document_at_point_of_use: true
+      must_state_reason: true
+      action: A forbidden pattern may be used for one specific, named element when flatness
+        would remove its only legible depth or affordance cue -- document the reason in
+        a comment where the exception lives, the same way a one-off structural exception
+        gets documented, rather than relaxing the rule generally or leaving it unexplained.
+    action: 'Pixel-perfect flat UI: no blur/glow/shadow ornament; spacing on 8px rhythm; tokens over magic
+      colors. Exceptions follow exception_policy -- scoped and documented, not silent.'
+  rams_checklist:
+    useful: Does this control or surface serve a concrete user goal?
+    understandable: Is hierarchy and affordance obvious without decoration?
+    unobtrusive: Does chrome recede so content leads?
+    honest: Does UI state match system state without fake progress?
+    thorough: Are empty, loading, error, and reduced-motion states designed?
+    action: Score UI diffs against Rams criteria in council and aesthetic scan tags.
+
+  # Family UI polish playbook — MASTER scanners + RAILS CI ratchets apply these.
+  # Implemented 2026-07-31 polish waves; keep automated so re-introduction fails.
+  ui_polish:
+    default_locale: nb
+    available_locales: [nb, en]
+    chrome_i18n:
+      action: >
+        Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
+        nav.*, auth.*). Hardcoded English "No …" titles and "Search …" placeholders
+        are debt. Ratchet: RAILS/shared/lib/pub4/chrome_i18n_lint.rb (CI).
+        Opt-out: <%# chrome_i18n: ok %> above the line.
+      empty_partial: shared/empty_state
+      empty_requires_action: true
+      empty_cta_lint: RAILS/shared/lib/pub4/empty_state_lint.rb
+      adhoc_empty_lint: RAILS/shared/lib/pub4/adhoc_empty_lint.rb
+    space_not_lines:
+      action: >
+        List/grid cards separate with gap + surface elevation, not hairline
+        box borders. Forms and CRT dialect (bsdports) may keep 1px borders.
+        Prefer border: 0; background: var(--surface-elevated).
+    type_tokens:
+      action: >
+        Page titles use var(--text-title, 1.25rem) and var(--font). Do not hardcode
+        font-size: 20px for headers. Dialect fonts (Caprasimo luxury, JetBrains
+        mono CRT) only on named brand surfaces.
+      tokens:
+        text_title: 1.25rem
+        text_display: 1.75rem
+        page_header_min_height: 48px
+    flat_ui:
+      action: >
+        No ornamental box-shadow/text-shadow/backdrop-filter/filter blur.
+        Floating chrome uses 1px border + elevated surface. GATE_AUTOFIX strips
+        shadows. Exception policy under pixel_perfection.exception_policy.
+    btn_aliases:
+      action: >
+        Family supports both btn-primary and btn--primary (and btn-ghost /
+        btn--ghost). Empty-state CTAs should emit both class names.
+    playbook_order:
+      - strip_flat_ui_shadows
+      - wire_empty_search_to_t
+      - align_page_header_type_tokens
+      - space_not_lines_list_cards
+      - verify_empty_state_cta_lint
+      - verify_chrome_i18n_lint
+    action: >
+      When polishing RAILS or MASTER/web UI, run this playbook. Prefer mechanical
+      autofix + CI ratchets over one-off manual style. Never raise lint baselines
+      to silence new debt.
+
+# Folded from data/operator_principles.yml — one file for all rules.
+operator_principles:
+  meta:
+    source: runtime authority — edit operator_principles.yml directly; never add data/principles/*.md
+    count: 27
+    order: importance — workflow, verification, architecture, code craft, presentation, git, voice
+    resolves: soul.yml aesthetic_rules and style.yml line_order defer here for operator intent; scan rules in rules.yml unit scope
+  principles:
+  - id: feedback_operator_autonomy
+    name: "Operator Autonomy — decisive execution without permission loops"
+    description: Scan→sweep without ask; one approval runs the backlog; short directives bind; pause only for destructive or ambiguous forks
+    type: feedback
+    body: |-
+      When scan finds violations, sweep to convergence immediately—never pause for fix confirmation. One approved direction runs the entire backlog without per-step want-me-to prompts. Ship all, yes, do it, and kill X keep Y are binding orders. Ask only before destructive shared-state edits, material ambiguity, or genuine either-or forks.
+  - id: feedback_execute_not_instruct
+    name: "Fail Fast — execute, never instruct"
+    description: Run probes, gates, tests, and fixes in this environment; command output is the definition of done
+    type: feedback
+    body: |-
+      Run probes, gates, tests, and fixes yourself. Never end with you should run X when X is executable here. Gate stdout and test output beat narrative completion. On failure, diagnose and retry—do not hand the chore to the operator. Aligns with soul FAIL_VISIBLY and rules.yml unit FAIL_VISIBLY.
+  - id: feedback_scan_sweep_convergence
+    name: "Fixed Point — deep scan then sweep to convergence"
+    description: Run through MASTER means deep scan plus sweep; standing orders handle post-write lint and drift
+    type: feedback
+    body: |-
+      Run through MASTER means deep scan on the path, then sweep until clean or blocked. Standing orders lint written paths and audit lib/ for constitution drift after mutations. Use plain language—check my edits, fix path—not memorized /scan /fix chains. Soul DEEP_SCAN_ONLY forbids quick or standard scan depths.
+  - id: feedback_council_when_risky
+    name: "Deliberative Review — council only when risky"
+    description: Six-persona Review-stage council with Security veto on dangerous diffs—not every single-file fix
+    type: feedback
+    body: |-
+      Council is Review-stage deliberation with Security veto—the operator says tribunal, the code says council. Run it on dangerous patterns, multi-file diffs, or when config enables council. Scan plus sweep is the default loop; council is conditional, not automatic.
+  - id: feedback_probe_before_ship
+    name: "Verify Before Ship — integrity gates block done"
+    description: OPERATOR or web edits require integrity or crawl probes; gate failure keeps the task open
+    type: feedback
+    body: |-
+      After OPENBSD/ or MASTER/web/ edits, run bin/probe integrity or ruby OPENBSD/integrity_gate.rb before declaring done. HTTP crawl syncs apps.yml to deploy_inventory.json. On VPS use MASTER_CRAWL_BROWSER=1 when primer, face-session, or ping/pong matter. Gate failure means the task is still open.
+  - id: feedback_vps_serial_truth
+    name: "Single Source of Truth — VPS serial production verify"
+    description: One SSH session, verify on dev@46.23.89.226, copy openbsd edits back to git same session
+    type: feedback
+    body: |-
+      One SSH session—no parallel bin/ci. Production truth is dev@46.23.89.226. macOS may edit locally and HTTP-probe; Ferrum face crawl defaults to VPS unless MASTER_CRAWL_BROWSER=1. Copy any OPENBSD/ VPS edit back to git in the same session. Use tmux for long deploys.
+  - id: feedback_restart_rails
+    name: "No Hot Reload — restart master per web deploy"
+    description: Falcon does not reload; one file one doas rcctl restart master; wait before curl
+    type: feedback
+    body: |-
+      After each MASTER/web/, live lib/, or data YAML deploy on VPS, run doas rcctl restart master—one file, one restart. Wait about two seconds before curl. CLI-only local edits skip restart. Never batch web edits and restart once at the end.
+  - id: feedback_device_limits
+    name: "Offload Compute — VPS not device"
+    description: Builds, bundle, git, and CI on VPS; device is lightweight fallback only
+    type: feedback
+    body: |-
+      Default edits, bundle, git, clones, and builds to the VPS. Termux or Android only when SSH is down. macOS is for local edit plus HTTP probe—not CPU-heavy CI. Ferrum browser tests belong on VPS or when explicitly forced.
+  - id: feedback_configuration_as_code
+    name: "Configuration as Code — YAML authority and living stubs"
+    description: Runtime truth in YAML and /orient; stub READMEs track surface changes only
+    type: feedback
+    body: |-
+      Runtime-read material lives in operator_principles.yml, patterns.yml#skills_registry, project_context.yml, and Ground::BootstrapDocs (/orient). Allowed data markdown only SOUL.md, CANON.md, IDENTITY.md, skills/README.md. Top-level README files are one-paragraph stubs pointing at runtime truth—not prose duplication. When commands or behavior change, refresh stubs in the same or next commit without being asked.
+  - id: feedback_flat_hierarchy
+    name: "Flat Hierarchy — aggressive merge and rename"
+    description: OpenBSD-flat layout; paths named like dense Rails parameterize slugs—Strunk-clean snake_case
+    type: feedback
+    body: |-
+      After every mutation, aggressively merge thin siblings and rename misfit paths before creating files. Name every path like a Rails parameterize slug at max information density: lowercase snake_case (Ruby paths, not URL hyphens), each underscore token a concrete noun or verb, Strunk omit needless words—no main, misc, util, helper, handler, or abbreviation filler. crawl_browser and domain_alignment_gate are good; misc_util, cbp, and foo_helper are not. Target OpenBSD-flat layout, Zeitwerk truth (path equals constant), Roda-tight trees. Fold *_support into parents; extend integrity_gate, crawl_support, browser_probe_support, or bin/probe CHECKS instead of new scripts; lib/ depth ≤4 unless the domain warrants more. Standing order aggressive_merge flags low-density slugs on every write—default merge or rename unless council blocks.
+  - id: feedback_merge_before_multiply
+    name: "DRY — one expression per idea in code"
+    description: Extract or parameterize duplicated logic; singularity wins for YAML data
+    type: feedback
+    body: |-
+      Before copying a block to vary one literal, extract or parameterize. Scan enforces via rules.yml unit DRY; limits.yml singularity wins for YAML data. File and module sprawl is Flat Hierarchy—not a second copy of the same gate script.
+  - id: feedback_no_new_files
+    name: "YAGNI — edit in place, no new files without approval"
+    description: Patch originals; Flat Hierarchy merge/rename runs before any new path
+    type: feedback
+    body: |-
+      Edit the original path—no _fixed.rb, staging copies, or new files without approval. Try Flat Hierarchy merge/rename first on every touch. Transient /tmp/patch.rb on VPS is fine for in-place runs. Do not add config tiers that only weaken quality. Scan enforces via rules.yml unit speculative-generality rules.
+  - id: feedback_importance_order
+    name: "Inverted Pyramid — importance-ordered file lines"
+    description: Public API and main flow in the top third; helpers and constants last
+    type: feedback
+    body: |-
+      Every touched file flows high-to-low importance: requires, declaration, public API, core algorithm, private helpers, constants, edge cases. Applies to ruby, yaml, erb, js, css, html, sh, md. Soul IMPORTANCE_ORDER and style.yml line_order are the machine sequence; INVERTED_PYRAMID (same name, prose/commits/logs) means lead with the fact—context trails.
+  - id: feedback_style
+    name: "KISS — minimal correct code"
+    description: Shortest form that preserves behavior; no filler, ceremony, or defensive noise
+    type: feedback
+    body: |-
+      Write the shortest correct form in every language—no filler, redundant branches, or ceremonial patterns. No defensive over-engineering or comments that restate code. Scan enforces via rules.yml unit KISS and soul SIMPLEST_WORKS. Distinct from Craft (proactive polish beyond scope) and Boy Scout Rule (full-file lint on touch).
+  - id: feedback_strunk_white
+    name: "Strunk & White — active prose and casing"
+    description: Active voice, sentence case, no ASCII banners; commits imperative ≤72 chars
+    type: feedback
+    body: |-
+      Active voice, omit needless words, concrete nouns and verbs, one idea per sentence. Sentence case in prose, comments, logs, and CLI; snake_case in code; capitalize commit subjects. No equals banners or bracket tags—use ok: and warn: prefixes. Soul STRUNK_ACTIVE and NO_ASCII_DECORATION enforce this in scan.
+  - id: feedback_lint_beautify
+    name: "Boy Scout Rule — full-file lint and comment hygiene on touch"
+    description: Lint and beautify the whole file; delete stale comments; keep one-line WHY only
+    type: feedback
+    body: |-
+      Touching a file obligates a full-file lint and beautify pass—not only edited lines. Collapse double blanks, fix spacing, verify syntax. Reassess every comment: delete what-comments and banners; keep one-line WHY only when non-obvious. style.yml comments.reassess_on_touch and sweep RECOMMENT enforce this; soul NO_CONSECUTIVE_BLANK_LINES caps blank lines.
+  - id: feedback_shell_discipline
+    name: "OpenBSD Shell Discipline — Ruby and zsh, not GNU text tools"
+    description: Agent session and repo scripts ban sed, awk, grep pipes, python; use Ruby and doas
+    type: feedback
+    body: |-
+      Ban sed, awk, grep, head, tail, find, wc, sudo, perl, and python in agent shell calls and committed scripts—BSD sed breaks GNU idioms. Use Ruby read/write, Grep and Glob tools, doas, zsh builtins. No pipe chains when a single Ruby or tool call suffices. git, bundle, and ssh stay allowed.
+  - id: feedback_html_css_style
+    name: "Semantic HTML — structure over class soup"
+    description: Bare element selectors; Rails tag helpers; no divitis or utility-class strings
+    type: feedback
+    body: |-
+      Prefer bare selectors—nav a, main, h1—over nav-link or container class soup. Use Rails tag helpers over content_tag; omit class attributes unless brand, btn, or badge semantics require them. Structure and tags carry meaning; classes are a last resort.
+  - id: feedback_flat_pixels
+    name: "Flat Design — uniform pixels unless collective 3D"
+    description: No fake depth, z-scale, or parallax; exception when pixels resemble a 3D model
+    type: feedback
+    body: |-
+      UI and particles stay flat two-dimensional—uniform size and alpha, no fake depth or parallax. Exception: pixels collectively resemble a three-dimensional model such as face mode. Soul FLAT_UI enforces the same rule in scan.
+  - id: feedback_motion_color_grading
+    name: "Motion Design — eased transitions and cinema palette"
+    description: Cubic easing and shadow-midtone-highlight triplets; no linear snap or raw primaries
+    type: feedback
+    body: |-
+      Ease all motion with frame-independent delta time—ease-out arrivals, ease-in-out crossfades, never linear snap. Palettes use complementary anchors and shadow-midtone-highlight triplets with roughly six-hundred-millisecond lerps. Soul CINEMA_PALETTE enforces the same rule in scan.
+  - id: feedback_git_commits
+    name: "Atomic Commits — frequent, one concern each"
+    description: Commit after meaningful change; trust autocommit standing order; Strunk messages
+    type: feedback
+    body: |-
+      Commit after every meaningful change—do not batch unrelated work. Standing order autocommit_post_chat handles post-mutation turns; avoid duplicate hand commits unless splitting logical units. One concern per commit when practical; Strunk-style imperative messages.
+  - id: feedback_diverged_branch_sync
+    name: "Cherry-Pick — diverged main onto origin tip"
+    description: Tag backup, reset to origin/main, cherry-pick intended commits; no force-push main
+    type: feedback
+    body: |-
+      When push rejects diverged main with overlapping commits, tag backup-pre-sync-YYYY-MM-DD, reset hard to origin/main, cherry-pick only intended commits, resolve conflicts, push. Prefer cherry-pick over rebasing mixed history. Never force-push main.
+  - id: feedback_universal_cross_disciplinary_rules
+    name: "Gestalt — one principle, many media adapters"
+    description: SMALL_PARTS and kin apply to Ruby, HTML, CSS, and prose via rules.yml adapters
+    type: feedback
+    body: |-
+      MASTER rules express medium-agnostic principles with per-language adapters in rules.yml. SMALL_PARTS, vertical rhythm, nesting depth, and naming silhouette are the same law in Ruby, markup, and prose—only the detector changes. Design, structure, and copy are one discipline.
+  - id: feedback_meta_framing
+    name: "Systems Thinking — meta questions over diff dumps"
+    description: End batches with shape questions; ranked options with payoff and risk
+    type: feedback
+    body: |-
+      After a batch, surface what is missing or structurally off—not an itemized diff dump. End with one consolidation question. Are we missing X gets five to eight ranked options with payoff and risk. Land all means batch and commit without per-item reconfirmation.
+  - id: feedback_micro_refinements
+    name: "Craft — micro-refinements without being asked"
+    description: Tighter words, honest names, spacing fixes adjacent to the task
+    type: feedback
+    body: |-
+      Notice and fix micro-refinements—tighter words, honest names, correct spacing, better glyphs—even beyond the stated task. Apply without asking; mention only non-obvious changes. Complements KISS (minimal scope) and Boy Scout Rule (lint on touch)—this is proactive polish when you see it.
+  - id: feedback_master_prompt_aesthetic
+    name: "Prompt Lock — oh-my-zsh MASTER line is canonical"
+    description: bold-red master, dim metadata, dollar terminator; ornament elsewhere
+    type: feedback
+    body: |-
+      Keep Master::Renderer prompt_line unchanged: bold-red master, dim branch and phase, dim token bar, dollar terminator. Do not simplify or recolor it. New ornamentation belongs in reply tags, status rows, or dmesg—not the prompt line.
+  - id: feedback_voice_terse_unix
+    name: "Unix Philosophy — terse, composable, perfectionist voice"
+    description: One job per unit; silence on success; cut filler in MASTER and agent output
+    type: feedback
+    body: |-
+      Voice is terse and unix-like: one job per unit, silence on success, composable lines, no corporate filler. Perfectionism means zero violations and fixed-point convergence. Operator replies use plain English with proper casing; kernel and dmesg stay lowercase terse.
+
+# Folded from data/style.yml — one file for all rules.
+style:
+  # Ruby, shell, and git style rules enforced by MASTER.
+  # Scan rules reference these; Personality injects them into every LLM system prompt.
+  # Authoritative upstream clones: script/clone_style_guides.sh → knowledge/style_guides/
+  # Codified index: data/runtime.yml#style_guides (ruby/rails/js/css/seo gates)
+
+  ruby:
+    quotes: double  # always double-quoted strings; single only inside regex or '\1' backrefs
+    frozen_string: true  # every .rb file must start with # frozen_string_literal: true
+
+    comments:
+      max_lines: 1           # class/module/method comments: 1 line or none
+      require_why: true      # only add when WHY is non-obvious (hidden constraint, workaround)
+      reassess_on_touch: true  # every edit re-reads each comment in the file: delete if obvious,
+                               # rewrite Strunk-and-White style if kept (active voice, omit needless
+                               # words, concrete verbs, one line). No grandfathered fluff.
+      forbidden:
+        - what_comments      # never describe what the code does — identifiers do that
+        - yard_doc_blocks    # no # Public:, # Returns, # param - style blocks
+        - section_separators # no # ----, # ====, # ---- Public API ---- etc.
+        - numbered_steps     # no # 1., # 2. inline step comments
+        - multi_line_prose   # cut verbosity; one line survives, paragraph does not
+
+    line_order:
+      rule: "Inverted Pyramid — reorder lines/blocks so the most important content comes first."
+      rationale: "Reader who stops at the top third still has the gist. Public API > primary behavior > helpers > privates > edge cases."
+      sequence:
+        - "frozen_string_literal + requires"
+        - "module/class declaration + headline docstring (≤1 line)"
+        - "public API methods, ordered by call-frequency / importance"
+        - "primary algorithm or main loop"
+        - "private helpers in order of dependency"
+        - "constants and lookup tables (unless small enough to inline at top)"
+        - "edge-case handlers, rescue branches, fallback paths"
+      applies_to: [ruby, yaml, erb, js, css, html, sh, md]
+      enforced_by: "sweep IMPORTANCE_ORDER technique; council Maintainer + Layperson personas"
+
+    bugs_to_avoid:
+      - pattern: "Dir.chdir"
+        reason: "process-wide; thread-unsafe in multi-threaded agents"
+        fix: "pass -C root to git; expand paths with File.expand_path"
+
+      - pattern: "Prism.parse(src, freeze: true)"
+        reason: "freeze: kwarg dropped in Ruby 3.4"
+        fix: "Prism.parse(src)"
+
+      - pattern: "next if condition inside flat_map"
+        reason: "next if returns nil into flat_map, producing nil entries in output"
+        fix: "next [] if condition"
+
+      - pattern: "rescue => e (multi-line bare rescue)"
+        reason: "unclear; explicitly name StandardError for clarity"
+        fix: "rescue StandardError => e"
+
+      - pattern: "rescue nil (inline rescue returning nil)"
+        reason: "inline rescue already catches StandardError; rescue nil is correct idiom"
+        note: "do NOT change to rescue StandardError — that returns the class object, not nil"
+
+      - pattern: "@bus&.publish(...) || value"
+        reason: "when bus is present, returns bus result (truthy), masking the real value"
+        fix: "call @bus&.publish(...) on its own line; return value separately"
+
+      - pattern: "backtick shell commands with interpolation"
+        reason: "shell injection risk"
+        fix: "Open3.capture2e('cmd', '-flag', arg) with arg arrays"
+
+      - pattern: "system/Open3 with string interpolation"
+        reason: "shell injection risk"
+        fix: "Open3.capture2e(*%w[cmd -flag], variable) with separate arguments"
+
+      - pattern: "mutate state before publishing event that reads old state"
+        reason: "event receives new state instead of previous state"
+        fix: "capture prev = current before mutation; use prev in publish/return"
+
+    naming:
+      spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
+      paths:
+        rule: "Rails-parameterized slug density — snake_case paths; each token a concrete noun or verb; Strunk omit needless words."
+        inspired_by: "ActiveSupport::Inflector#parameterize (meaning and density, not hyphen separator)"
+        format: snake_case
+        max_tokens: 4
+        forbidden_tokens: [main, misc, base, util, helper, handlers, handler, manager, service, object, thing, stuff, tmp, old, new, copy, final, v2, data, info]
+        examples_good: [crawl_browser, domain_alignment_gate, browser_probe_support, operator_principles]
+        examples_bad: [misc_util, cbp, foo_helper, main_base, util_service]
+      forbidden_abbreviations:
+        - idx
+        - sig
+        - tmp
+        - buf
+        - val
+        - ret
+        - obj
+        - str
+        - arr
+        - num
+        - cnt
+        - ptr
+        - msg   # unless it IS the domain term (e.g., a Message object named msg is ok if short-lived)
+      rule: "Spell identifiers out. Domain names can be short (id, url, ip) — abbreviations cannot."
+
+    prefer_string_methods:
+      rule: "Prefer start_with? / include? / end_with? / split over regex when string methods suffice."
+      rationale: "Regex is expressive but noisy. Use it when patterns require it, not as a default."
+      prefer:
+        - "str.start_with?(prefix)        over  str.match?(/^prefix/)"
+        - "str.include?(substr)           over  str.match?(/substr/)"
+        - "str.end_with?(suffix)          over  str.match?(/suffix$/)"
+        - "str.split(sep, n)              over  str.scan(/pattern/)"
+      still_use_regex_for:
+        - 'Character classes: /[a-z]/, /\d+/'
+        - "Anchored multiline patterns"
+        - "Alternation with more than 2 branches"
+
+    outsource_to_gems:
+      rule: "If a well-maintained gem solves the problem correctly, use it. Do not reimplement."
+      rationale: "Gems carry tests, edge cases, and maintenance. Home-grown duplicates carry bugs."
+      examples:
+        - "flay for AST-level duplicate detection"
+        - "reek for code smell analysis"
+        - "rubocop for style enforcement"
+        - "prism for Ruby parsing"
+      caveat: "Evaluate gem quality first: maintained, tested, minimal footprint."
+
+    blank_lines:
+      max_consecutive: 1     # no double blank lines anywhere
+
+    rails_stack:
+      # Current stable versions (May 2026)
+      rails: "8.1.3"
+      turbo_rails: "2.0.23"    # 9 actions: append prepend before after replace update remove morph refresh
+      stimulus: "3.x"          # static targets, values, outlets API
+      pagy: "43.x"             # Pagy::OPTIONS (not Pagy::DEFAULT — redesigned API in 43.0)
+      stimulus_reflex: "3.5"   # complementary to Turbo; opt-in only for advanced reactive features
+
+      asset_pipeline: propshaft  # default in Rails 8; do not use Sprockets
+      javascript: importmap      # default; esbuild only when CSS-in-JS components needed
+      queue: solid_queue         # SQLite-backed by default
+      cache: solid_cache         # SQLite-backed by default
+      cable: solid_cable         # SQLite-backed by default
+
+      authentication: "rails generate authentication"  # built-in, no devise
+      database: sqlite3          # default; PostgreSQL only when explicitly required
+
+      pagy_api:
+        backend:  "include Pagy::Backend"   # in ApplicationController
+        frontend: "include Pagy::Frontend"  # in ApplicationHelper
+        options:  "Pagy::OPTIONS[:limit] = 25"  # NOT Pagy::DEFAULT (that was 8.x)
+        overflow: "Pagy::OPTIONS[:overflow] = :last_page"
+
+      turbo_stream_actions:
+        - append
+        - prepend
+        - before
+        - after
+        - replace
+        - update
+        - remove
+        - morph   # morphs DOM — preserves element state; opt-in via data-turbo-permanent
+        - refresh  # triggers full page refresh with morphing
+
+      stimulus_api:
+        targets: "static targets = [\"name\"]"       # auto-generates nameTarget, nameTargets, hasNameTarget
+        values:  "static values = { url: String }"   # auto-generates urlValue, hasUrlValue, urlValueChanged
+        outlets: "static outlets = [\"other\"]"      # cross-controller communication
+        lifecycle: [connect, disconnect, initialize]  # + nameTargetConnected/Disconnected
+
+      stimulus_components:
+        source: "https://stimulus-components.com"
+        install: "bin/importmap pin @stimulus-components/<name>"
+        available:
+          - { name: character-counter, use: "post/comment character limits" }
+          - { name: clipboard, use: "copy URL/code to clipboard" }
+          - { name: dialog, use: "modal dialogs, confirmations" }
+          - { name: dropdown, use: "nav menus, user menus" }
+          - { name: notification, use: "toast alerts" }
+          - { name: carousel, use: "image galleries, product photos" }
+          - { name: sortable, use: "drag-reorder lists" }
+          - { name: rails-nested-form, use: "dynamic has-many form fields" }
+          - { name: password-visibility, use: "show/hide password toggle" }
+
+      # Default StimulusReflex stack — Julian Rubisch's pattern set.
+      # Install for every new Rails 8 + StimulusReflex 3.5 app unless explicitly opted out.
+      stimulus_reflex_stack:
+        cubism:                 "resource-scoped presence (who's-here, typing indicators) over Kredis"
+        futurism:               "lazy-load expensive list rows; futurize(@record) placeholder + IntersectionObserver"
+        optimism:               "real-time ActiveModel validation broadcast as selector morphs (drop-in)"
+        all_futures:            "Redis-backed virtual ActiveModel for facets/wizards without session bloat"
+        solder:                 "auto-cache <details>/accordion open state per [user, key]"
+        cable_ready_callbacks:  "after_create_commit / after_update_commit CableReady DSL on AR models"
+
+      stimulus_reflex_patterns:
+        morph_heuristics:
+          page_morph:     "spans multiple regions OR want regular controller render. Always scope with data-reflex-root."
+          selector_morph: "single element, side-stepping the controller. Inline edit, list-item update, validation hint."
+          nothing_morph:  "no DOM patch — only CableReady ops or dispatch_event to a Stimulus controller."
+        tool_choice: "Turbo for anything covered by an HTTP verb (navigation, forms). StimulusReflex for everything else."
+        cable_ready_ops:
+          morph:                "list bodies — pass children_only: true"
+          inner_html:           "form reset (morph won't clear inputs)"
+          insert_adjacent_html: "infinite scroll, append-only feeds"
+          outer_html:           "Futurism replacement, inline-edit toggle"
+          dispatch_event:       "nothing morphs that kick a Stimulus controller"
+          add_css_class:        "validation hints (Optimism-style)"
+          set_focus:            "post-edit UX"
+        anti_patterns:
+          - "mutating state via GET — REST violation"
+          - "hidden form + Turbo Stream for state — flickers; SR fits better"
+          - "inline render in reflex — always partials/components, never heredocs"
+          - "overusing connect lifecycle — prefer Outlets and useIntersection"
+          - "morph to clear form inputs — use inner_html"
+          - "class attributes where a tag selector works"
+          - "hardcoded step counts in wizards"
+          - "session-backed wizard state on multi-server — use kredis or all_futures"
+        named_patterns:
+          infinite_scroll:    "InfiniteScrollReflex#load_more + sentinel div + insert_adjacent_html before sentinel"
+          inline_edit:        "ToggleReflex toggles show ↔ edit partial via selector morph"
+          wizard:             "WizardReflex#step dispatching on @current_step; state in kredis or all_futures"
+          nested_form:        "NestedFormReflex#add_fields uses .build + fields_for; needs accepts_nested_attributes_for"
+          validation_inline:  "Optimism + debounced:input event (not raw input — prevents flooding)"
+          autosave:           "Submittable concern; before_reflex branches create/update via element.dataset.signed_id"
+
+      core_web_vitals:
+        lcp: "<2.0s"   # Largest Contentful Paint (tightened from 2.5s in March 2026)
+        inp: "responsive"  # Interaction to Next Paint
+        cls: "< 0.1"   # no layout shifts — set explicit width/height on images and embeds
+        font_display: "swap"  # font-display: swap in all font-face rules
+
+      rubocop_omakase:
+        quotes: double       # double-quoted strings everywhere in app/
+        hash_syntax: modern  # { a: :b } not { :a => :b }
+        trailing_commas: true  # in multi-line arrays/hashes/arguments
+        method_calls: "Foo.method not Foo::method"
+        test_assertions: "assert_not not assert !"
+
+      realtime_hierarchy:
+        - "Turbo Drive — full-page navigation"
+        - "Turbo Frames — scoped page updates"
+        - "Turbo Streams — server-push DOM operations"
+        - "Stimulus — client-side interactivity"
+        - "StimulusReflex — opt-in for advanced RPC reactive features"
+
+  shell:
+    decorations_forbidden:
+      - "=== banner ===" # no ASCII section banners
+      - "--- separator ---"
+      - "*** header ***"
+      - "emoji in print/echo output"  # no ✅ ❌ 🚀 etc. in scripts
+      - "numbered step comments"      # no # Step 1:, # Phase 2: etc.
+
+    credentials_forbidden: true  # never hardcode passwords/tokens in scripts
+
+    prefer:
+      - "pure zsh parameter expansion over external tools (see zsh_patterns.yml)"
+      - "Open3.capture2e with arg arrays in Ruby over shell interpolation"
+      - "File.expand_path over pwd + concatenation"
+      - "print -r -- \"$(<file)\" to read files in zsh (not cat, not bare < file via SSH — triggers pager)"
+      - "lines=(\"${(@f)$(<file)}\") for line arrays; last 50: print -l $lines[-50,-1]"
+
+  git:
+    commit_style:
+      voice: active           # "Fix bug" not "Fixed bug", "Add feature" not "Added feature"
+      format: "type: short summary\n\nBody if needed."
+      subject_max: 72
+      no_what_if_diff_shows: true  # don't describe what changed if the diff makes it obvious
+      separate_concerns: true      # don't mix bug fixes with style changes in one commit
+
+    forbidden:
+      - "Dir.chdir in Ruby before git commands"
+      - "string-interpolated git commands"
+      - "rm -rf in deploy scripts without explicit guard"
+
+  # Operator directives moved to data/operator_principles.yml (27 principles,
+  # runtime authority) — this block was a fossilized parallel copy that also
+  # duplicated this file's own ruby.comments.reassess_on_touch and html/css
+  # sections. Deleted 2026-07-12; see operator_principles.yml instead.
+
+  erb:
+    html_safe: explicit_only_after_sanitize
+    partials: locals_over_instance_variables
+    content_for: [title, description, head, json_ld, widgets, scripts]
+    helpers: [tag, class_names, dom_id, sanitize]
+    forbidden: [raw_user_html_safe, heredoc_views, inline_script_blocks, bem_classes, utility_class_soup]
+    on_edit:
+      - flatten_if_divitis
+      - extract_repeated_to_partial
+      - wire_i18n_for_literals
+      # Family polish (design_rules.ui_polish / MASTER/docs/UI_POLISH_PLAYBOOK.md)
+      - strip_flat_ui_shadows
+      - wire_empty_search_to_t
+      - align_page_header_type_tokens
+      - space_not_lines_list_cards
+
+  # Conversation directives — how MASTER addresses the user. Operator_directives
+  # above shape MASTER's coding work; these shape its dialogue, voice, and
+  # social register. Personality injects them verbatim into the system prompt.
+  conversation_directives:
+    - "Track what the user already knows; don't restate background they've established this session."
+    - "Use the user's name when they've shared it; never invent one."
+    - "When the user asks X, surface adjacent Y they likely also want — don't wait to be asked."
+    - "Mirror the user's politeness register; terse to terse, formal to formal, profane to profane."
+    - "When uncertain about intent, ask one focused question instead of guessing and acting."
+    - "After a heavy exchange, respect silence; don't fill space with unprompted new threads."
+    - "Note relational milestones in memory: first share of X, breakthroughs, recurring concerns."
+    - "Disagree gracefully and concretely; never sycophantically agree to keep rapport."
+    - "Calibrate humor to the user's register; never humor a tense moment."
+    - "When looping the same point, acknowledge it; don't restate."
+    - "Trust differs by domain: high in OpenBSD/Ruby, lower in subjective UI/voice calls — say so."
+
+  # html, css, typography, nielsen, a11y — restored from master4.yml/master7.yml
+  # (universal_quality_framework v66)
+
+  html:
+    semantic_only: true
+    bare_tag_targeting: true        # nav a not .nav__link; section, article, aside, etc.
+    forbidden:
+      - divitis                     # no excessive nesting; no styling-only divs
+      - class_attribute_when_tag_targetable
+      - non_semantic_markup
+      - copy_paste_html
+      - framework_class_explosion   # no class="row col-md-6 mt-4 px-2 d-flex" soup
+    landmarks:
+      - header
+      - nav
+      - main
+      - article
+      - section
+      - aside
+      - footer
+    forms:
+      label_required: every input has a label
+      input_type_specific: email/url/tel/date — never bare type=text
+      autocomplete: "set autocomplete on every meaningful input"
+
+  css:
+    targeting: bare_tag_first        # tag selectors > attribute selectors > id; class only when nothing else fits
+    layer_order: [base, components, utilities]
+    custom_properties: ":root with --safe-top, --safe-right, --safe-bottom, --safe-left"
+    units:
+      length: rem                    # px only for borders <2px and 1px hairlines
+      typography: "rem with clamp() for fluid type"
+      # Was "rem multiples of .25 (4px grid)" -- silently allowed 28/36/44/52/
+      # 56/60px, which design_rules.yml's eight_px_rhythm (the rule real code
+      # actually enforces, per Master::Design::Thresholds) rejects. Matches
+      # design_rules.yml now instead of a looser, unenforced rule of its own.
+      spacing: "design_rules.yml pixel_perfection.eight_px_rhythm: 4/8/12/16/20/24/32/40/48/64/96px only"
+    forbidden:
+      - "!important except for utility overrides"
+      - inline_style_attributes
+      - vendor_prefixes_in_2026     # autoprefixer or skip
+      - framework_class_bloat
+    perf:
+      content_visibility: "auto on long-scroll sections"
+      will_change: "only when actually animating, then remove"
+
+  typography:
+    style: swiss                     # objective, hierarchical, generous whitespace
+    families:
+      # Was "Helvetica, Arial, system-ui, sans-serif" -- didn't match either
+      # design_rules.yml's stated default (Inter) or what the RAILS apps
+      # actually ship (shared/_dialect_tokens.scss's real stack, below). Synced to
+      # the real shipped stack rather than picking a third, different value.
+      sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+      mono: "ui-monospace, Menlo, Consolas, monospace"
+    scale:
+      base: 16px
+      ratio: 1.25                    # major-third
+    leading: 1.5                     # body
+    measure: 65ch                    # ideal line length
+    rules:
+      - "one type family per surface (mono OR sans, not both unless purposeful)"
+      - "size hierarchy via scale — never arbitrary px values"
+      - "color contrast >= WCAG 2.2 AAA on body text (7:1)"
+      - "tracking: tighten display, loosen all-caps (.08em)"
+      - "no centered body copy; left-align for left-to-right languages"
+
+  # Canonical 10-item reference — style.yml is not globbed by Master.load_rules,
+  # so this list feeds no detector directly. All 10 now have live semantic
+  # entries in the unit scope of data/rules.yml: SYSTEM_STATUS/MATCH_REAL_WORLD/USER_CONTROL/
+  # CONSISTENCY/GUARD_EXPENSIVE_OPS/RECOGNITION_OVER_RECALL/FLEXIBILITY_EFFICIENCY/
+  # AESTHETIC_MINIMALISM/ERROR_RECOVERY/HELP_AND_DOCUMENTATION.
+  nielsen_heuristics:
+    - { id: 1, name: visibility_of_system_status,        rule: "every async action shows progress within 100ms" }
+    - { id: 2, name: match_real_world,                   rule: "use users' language; mirror real-world conventions" }
+    - { id: 3, name: user_control_and_freedom,           rule: "undo, cancel, escape from every flow" }
+    - { id: 4, name: consistency_and_standards,          rule: "platform conventions; consistent terminology across surface" }
+    - { id: 5, name: error_prevention,                   rule: "constraints + confirmation > error messages" }
+    - { id: 6, name: recognition_over_recall,            rule: "show options; don't make users remember" }
+    - { id: 7, name: flexibility_and_efficiency,         rule: "shortcuts for experts; defaults for novices" }
+    - { id: 8, name: aesthetic_and_minimalist_design,    rule: "every element earns its place; cut ruthlessly" }
+    - { id: 9, name: help_users_recognize_recover_errors, rule: "plain language; suggest the fix; one-click recovery" }
+    - { id: 10, name: help_and_documentation,            rule: "context-sensitive; concrete examples; searchable" }
+
+  accessibility:
+    # Body text earns AAA in both modes (12.51:1 dark, 16.26:1 light, measured
+    # 2026-08-03). The secondary/accent tier does not, and saying "AAA" flatly made
+    # a blanket claim the palette has never met. The live number is a ceiling in
+    # RAILS/gates/data/css_budget.yml (contrast_below_aa / contrast_below_aaa) so it
+    # falls rather than drifts; design_rules.yml keeps 7.0 as the target it moves toward.
+    target: wcag_2_2_aa_with_aaa_body_text
+    requirements:
+      - keyboard_navigation_complete
+      - focus_visible_always
+      - aria_only_when_html_insufficient
+      - reduced_motion_respected         # @media (prefers-reduced-motion: reduce)
+      - color_scheme_respected           # @media (prefers-color-scheme: dark)
+      - color_not_only_signal
+      - text_resizable_to_200pct
+      - skip_to_main_link
+      - alt_text_meaningful_or_empty
+    forbidden:
+      - tabindex_above_zero
+      - autoplay_media_with_sound
+      - removing_focus_outline_without_replacement
+      - text_in_images_for_meaning
+
+  parametric_design:
+    principle: "components vary along measured axes (density, scale, contrast) — not by copy-paste variants"
+    examples:
+      - "spacing: --gap-{xs,sm,md,lg,xl} = .25/.5/1/2/4 rem"
+      - "color: oklch with hue/chroma/lightness vars; light+dark via lightness flip"
+      - "type: clamp(min, fluid, max) per scale step, no per-breakpoint overrides"
+
+  cultural_sensitivity:
+    text_direction: "honor dir=rtl; mirror layouts; logical properties (margin-inline-start)"
+    locale_specific: "use Intl.DateTimeFormat / NumberFormat; never assume MM/DD/YYYY"
+    color_meaning: "red=danger is Western; verify per locale"
+    imagery: "diverse representation; avoid culture-specific idioms in core UI"

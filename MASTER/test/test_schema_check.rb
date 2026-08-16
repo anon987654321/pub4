@@ -10,11 +10,11 @@ class TestSchemaCheck < Minitest::Test
   def test_missing_and_mismatched_files_are_reported
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
-      File.write(File.join(root, "data", "design_rules.yml"), "schema: 2\n")
+      File.write(File.join(root, "data", "council.yml"), "schema: 2\n")
       result = Master::Ground::SchemaCheck.verify!(root:)
 
       assert result.err?
-      assert_match(/design_rules.yml: expected v1, found v2/, result.message)
+      assert_match(/council.yml: expected v1, found v2/, result.message)
       assert_match(/llm_output_rules.yml: expected v1, found \(missing\)/, result.message)
     end
   end

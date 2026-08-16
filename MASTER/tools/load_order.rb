@@ -1,21 +1,19 @@
 # frozen_string_literal: true
 
-# An ordered manifest whose order is only guaranteed by a comment.
+# An ordered manifest is ordered only while something checks it.
 #
-# STUDIO/dilla's ENGINE_PARTS lists 77 files and says, in prose, that "the order
-# is load-bearing: constants in these files are computed at load time from ones
-# above them, and reordering silently changes their values." Nothing checked it.
-# Merging three patch files nearly moved one of them four places earlier, past
-# the two files defining seven constants it reads at load time — a NameError at
-# best and a silently different value at worst.
+# STUDIO/dilla's ENGINE_PARTS lists 77 files whose order is load-bearing:
+# constants in them are computed at load time from constants above them, so
+# moving a file changes values rather than raising. A merge that relocates one
+# file past the definitions it reads is the ordinary way that happens.
 #
 #   ruby MASTER/tools/load_order.rb STUDIO/dilla
 #
 # The distinction that matters is load time versus call time. A constant named
-# inside a method body is resolved when the method runs, so its definition can
-# come later; a constant named at the top level of a file is resolved as the
-# file loads, and its definition must already exist. Only the second constrains
-# the manifest.
+# inside a method body resolves when the method runs, so its definition may come
+# later; a constant named at a file top level resolves as the file loads, and its
+# definition must already exist. Only the second constrains the manifest, and
+# only the syntax tree separates them.
 
 require "json"
 
@@ -32,25 +30,24 @@ module Pub4
 
     def defines(path) = File.read(path).scan(/^([A-Z][A-Z0-9_]*)\s*=/).flatten
 
-# Load time versus call time is a question about the syntax tree, not about
-# lines. Three line-based heuristics got it wrong here in a row: counting
-# `def` without its `end` made every later line call time, and excluding
-# endless defs by looking for `=` swept up every default argument. Prism is
-# already a dependency and answers it exactly — a constant read is load time
-# when no DefNode encloses it.
-def reads_at_load(path)
-  require "prism"
-  found = []
-  walk = lambda do |node, in_def|
-    return unless node.is_a?(Prism::Node)
+    # Load time versus call time is a question about the syntax tree, not about
+    # lines: counting `def` without its `end` marks every later line call time, and
+    # excluding endless defs by looking for `=` sweeps up every default argument.
+    # Prism answers it exactly — a constant read is load time when no DefNode
+    # encloses it.
+    def reads_at_load(path)
+      require "prism"
+      found = []
+      walk = lambda do |node, in_def|
+        return unless node.is_a?(Prism::Node)
 
-    inside = in_def || node.is_a?(Prism::DefNode)
-    found << node.name.to_s if node.is_a?(Prism::ConstantReadNode) && !inside
-    node.compact_child_nodes.each { |child| walk.call(child, inside) }
-  end
-  walk.call(Prism.parse_file(path).value, false)
-  found
-end
+        inside = in_def || node.is_a?(Prism::DefNode)
+        found << node.name.to_s if node.is_a?(Prism::ConstantReadNode) && !inside
+        node.compact_child_nodes.each { |child| walk.call(child, inside) }
+      end
+      walk.call(Prism.parse_file(path).value, false)
+      found
+    end
 
     def violations(root)
       parts = manifest(root)

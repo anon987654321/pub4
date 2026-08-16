@@ -73,6 +73,17 @@ module Master
   def self.deploy_path(*parts) = operator_path(*parts)
   def self.tool_path(*parts) = File.join(TOOLS_ROOT, *parts)
   def self.data_path(*parts) = File.join(DATA, *parts)
+  # The one reader of data/rules.yml. A missing section raises rather than
+  # returning {}, because data_file answers a missing file with a path to it and
+  # every caller reads the empty result as a law with nothing in it.
+  def self.law(section, root: ROOT)
+    path = File.join(root, "data", "rules.yml")
+    mtime = File.mtime(path)
+    @law = nil unless @law_stamp == [path, mtime]
+    @law ||= (load_yaml(path, default: {}) || {}).tap { @law_stamp = [path, mtime] }
+    @law.fetch(section.to_s) { raise KeyError, "data/rules.yml has no #{section}: section" }
+  end
+
   def self.limits_path = data_file("limits.yml", "workflow.yml")
   def self.state_path = data_file("state.yml", "standing_orders.yml")
   def self.style_path = data_file("style.yml", "ruby_style.yml")

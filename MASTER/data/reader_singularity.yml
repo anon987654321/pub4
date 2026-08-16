@@ -26,7 +26,7 @@ reader_singularity:
     models.yml: 9
     patterns.yml: 9
     rule_deps.yml: 2
-    rules.yml: 9
+    rules.yml: 10
     soul.yml: 8
     tools.yml: 2
     tts.yml: 2

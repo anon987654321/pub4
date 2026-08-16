@@ -6,8 +6,7 @@ module Master
     class SchemaCheck
       EXPECTED = {
         "council.yml" => 1,
-        "design_rules.yml" => 1,
-        "llm_output_rules.yml" => 1,
+          "llm_output_rules.yml" => 1,
         "limits.yml" => 1,
         "models.yml" => 1,
         "patterns.yml" => 1,

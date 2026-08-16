@@ -73,19 +73,20 @@ gates it names exist.
 
 ## Data File Budget (why so many YAML files)
 
-`data/` is 46 yml (37 at the root) as of 2026-08-12, after the 2026-05 defrag plan's Tier-5 pass (2026-07-15) and the rule-shard fold: 9 files removed outright (dead — no code path ever loaded their content, despite some claiming otherwise in their own header comments), 13 folded into `patterns.yml` under namespaced keys, 1 folded despite having no enforced consumer (kept as reference documentation). **Do not merge blindly** — each remaining path has Ruby loaders and tests.
+`data/` is 47 yml (38 at the root) as of 2026-08-16, after the 2026-05 defrag plan's Tier-5 pass (2026-07-15) and the rule-shard fold: 9 files removed outright (dead — no code path ever loaded their content, despite some claiming otherwise in their own header comments), 13 folded into `patterns.yml` under namespaced keys, 1 folded despite having no enforced consumer (kept as reference documentation). **Do not merge blindly** — each remaining path has Ruby loaders and tests.
 
 A handful of Tier-5-looking files were deliberately left alone rather than folded: `council.yml` (8+ consumers across the whole deliberation subsystem, protected by its own scanner rule), `state.yml` (backs standing-orders/autocommit via `DATA_ALIASES`), `topologies.yml`/`tts.yml` (feed the live web boot payload and TTS), `tools.dynamic.yml` (two-tier repo+user-override merge), `exemplars.yml`/`openbsd.yml` (active read-modify-write targets, not static config — folding would make routine runtime events rewrite the shared source-of-truth file). Folding any of these needs a real design decision, not a mechanical move.
 
 `visual_clusters.yml` and `mobile_web_opportunities.yml` were on that list, defended as "deliberately parallel sources in `ClusterRegistry`". `ClusterRegistry` was deleted 2026-08-03 — 109 lines with zero callers — so the defense described a reader that did not run. **Both files deleted 2026-08-11.** Checked before cutting, because `data/runtime.yml` still listed `visual_clusters.yml` as the "canonical cluster registry" and that file *is* loaded (`lib/ground/runtime_catalog.rb`): the entry was a claim, not a reader. The live cluster source is `web/public/cluster_miner.js`, which mines them from events at runtime and never opens the YAML, and nothing serves either file to the browser. The `SelfTest` `clusters` SINGULARITY exemption went with them — an exemption outliving its subject is a hole in a gate nobody can see (`soul.yml` EXEMPTIONS_EXPIRE).
 
-**Tier 1 — Law (5 files, do not collapse without a migration):**
+**Tier 1 — Law (4 files, do not collapse without a migration):**
 
-- `soul.yml` — constitutional schema, sacred paths, anti-simulation
-- `rules.yml` — scanner law, all four scopes (`codebase`, `file`, `line`, `unit`) under one `rules:` key since the 2026-08-12 fold
-- `limits.yml` — budgets, scan profiles, standing orders
+- `soul.yml` — constitutional schema, sacred paths, anti-simulation. Separate from `rules.yml` because it outranks it: the constitution cannot sit inside the law it governs.
+- `rules.yml` — every normative statement, whether it binds code, prose, or visual design: scanner law under `rules:` (four scopes, `codebase`/`file`/`line`/`unit`), plus `design_rules:`, `style:` and `operator_principles:`. Read it through `Master.law(section)`; `Ground::Rules#data(stem)` answers the call sites that ask by file stem.
+- `limits.yml` — budgets, scan profiles, standing orders. Values, not law: a number folded in among rules reads as a rule.
 - `voice.yml` — persona, TTS, speech
-- `style.yml` — output shape, line order
+
+Rules live in one file because rules split across several grow definitions that disagree with nothing to notice. Split, `typography` carried two — `65ch` against an ideal of `66ch` — under a `SelfTest` exemption that permitted the duplication by name, and Nielsen's heuristics carried two sets, ten feeding a prompt and twelve feeding nothing.
 
 **Tier 2 — Registries (edit when adding providers, models, tools):**
 
@@ -103,9 +104,9 @@ A handful of Tier-5-looking files were deliberately left alone rather than folde
 
 **Tier 5 — Everything else:**
 
-- `bootstrap.yml`, `operator_principles.yml`, `project_context.yml`, `patterns.yml`, etc. — operational memory. Consolidation target: fold into `patterns.yml` + `operator_principles.yml` per the 2026-05 defrag plan in `project_context.yml`.
+- `bootstrap.yml`, `project_context.yml`, `patterns.yml`, etc. — operational memory. Consolidation target: fold into `patterns.yml` per the 2026-05 defrag plan in `project_context.yml`.
 
-**Target end state:** 5 law YAMLs + 1 patterns + registries + 1 runtime catalog + 3 data markdown stubs. Top-level MASTER markdown: this file + `README.md` stub + `DEBT.md` / `DECISIONS.md` / `EXAMPLES.md` / `REPAIR_PLAYBOOKS.md` only when they hold living entries.
+**Target end state:** 4 law YAMLs + 1 patterns + registries + 1 runtime catalog + 3 data markdown stubs. Top-level MASTER markdown: this file + `README.md` stub + `DEBT.md` / `DECISIONS.md` / `EXAMPLES.md` / `REPAIR_PLAYBOOKS.md` only when they hold living entries.
 
 OPENBSD mirror: `OPENBSD/START_HERE.md` + `OPENBSD/RUNBOOK.md` — not duplicate MASTER law.
 

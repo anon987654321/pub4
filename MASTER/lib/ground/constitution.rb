@@ -63,7 +63,7 @@ module Master
         private
 
         def load_dir(dir, max_principles:, max_body_chars:)
-          return load_yaml(max_principles:, max_body_chars:).freeze if dir == DIR && File.file?(YAML_PATH)
+          return load_yaml(max_principles:, max_body_chars:).freeze if dir == DIR
           return [].freeze unless File.directory?(dir)
 
           Dir.glob(File.join(dir, "*.md")).sort.filter_map { |path| parse(path, max_body_chars:) }
@@ -76,7 +76,7 @@ module Master
         end
 
         def load_yaml(max_principles:, max_body_chars:)
-          data = Master.load_yaml(YAML_PATH)
+          data = Master.law("operator_principles")
           Array(data["principles"]).first(max_principles).filter_map do |row|
             next unless row.is_a?(Hash)
 
@@ -110,7 +110,6 @@ module Master
         end
       end
 
-      YAML_PATH = File.join(Master::ROOT, "data", "operator_principles.yml").freeze
       DIR = File.join(Master::ROOT, "data", "principles").freeze
       MAX_BODY_CHARS = 480
       @constitution_cache = {}
