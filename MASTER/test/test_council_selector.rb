@@ -49,7 +49,7 @@ class TestCouncilSelector < Minitest::Test
 
     assert_includes names, "Layperson", "the task's own people were dropped"
     assert_includes names, "Security", "the risk floor was dropped"
-    assert_includes names, "Chaos"
+    assert_includes names, "Skeptic"
   end
 
   def test_nobody_is_seated_twice

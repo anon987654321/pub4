@@ -70,7 +70,7 @@ module Master
         # Union rather than a precedence, because the two axes answer different
         # questions: the task says who understands the change, the risk says who
         # must sign it off. A critical-risk docs edit still wants Security and
-        # Chaos in the room, and a UI change at low risk still wants the
+        # the Skeptic in the room, and a UI change at low risk still wants the
         # typographer.
         def base_personas(task, risk)
           task_set = task ? TASK_PERSONAS[task.to_sym] : nil
