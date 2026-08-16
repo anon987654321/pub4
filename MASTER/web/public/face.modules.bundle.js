@@ -700,5 +700,5 @@
     }
     document.body.dataset.longSilence = "1";
   }, 2e3);
-  window.MASTER_BRUTALIST = Object.freeze({ apply: applyBrutalist, pushLine });
+  window.MASTER_BRUTALIST = Object.freeze({ apply: applyBrutalist });
 })();

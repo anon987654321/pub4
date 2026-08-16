@@ -68,5 +68,5 @@
     document.body.dataset.longSilence = "1";
   }, 2000);
 
-  window.MASTER_BRUTALIST = Object.freeze({ apply: applyBrutalist, pushLine });
+  window.MASTER_BRUTALIST = Object.freeze({ apply: applyBrutalist });
 })();
