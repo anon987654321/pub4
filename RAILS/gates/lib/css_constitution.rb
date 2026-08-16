@@ -33,6 +33,7 @@ module Deploy
     LONG_TRANSITION = /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i
     PHYSICAL_LR = /^\s*(margin|padding|inset)-(left|right)\s*:|^\s*left\s*:|^\s*right\s*:/
     IMPORTANT = /!important\b/
+    REDUCED_MOTION = /@media[^{]*prefers-reduced-motion/
     SPACING = /\b(?:margin|padding|gap|row-gap|column-gap|inset)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?\s*:\s*([^;{]+)/
     HEX = /#[0-9a-fA-F]{3,8}\b/
     COMMENT = %r{\A\s*(?://|/\*|\*)}
@@ -252,6 +253,8 @@ module Deploy
       token_source = TOKEN_SOURCES.include?(File.basename(path))
       allowed = rhythm_allowlist
       in_face = false
+      depth = 0
+      motion_depth = nil
       strip_comments(body).each_line.with_index do |line, index|
         next if line.match?(COMMENT)
 
@@ -262,10 +265,16 @@ module Deploy
         face_line = in_face
         in_face = false if in_face && line.match?(/\A\s*\}\s*\z/)
 
+        # A reduced-motion override has to beat whatever specificity set the
+        # animation, so !important is the pattern there rather than a lapse.
+        # 70 of this tree's 137 sit inside one.
+        motion_depth ||= depth if line.match?(REDUCED_MOTION)
+        depth += line.count("{") - line.count("}")
         where = "#{rel}:#{index + 1}"
-        @tally["important"] << where if line.match?(IMPORTANT)
+        @tally["important"] << where if line.match?(IMPORTANT) && motion_depth.nil?
         @tally["magic_hex"] << where if !token_source && line.match?(HEX)
         count_typography(where, line) unless token_source || face_line
+        motion_depth = nil if motion_depth && depth <= motion_depth
         next if allowed.empty?
 
         spacing = line.match(SPACING)

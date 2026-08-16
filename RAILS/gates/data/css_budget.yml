@@ -58,7 +58,7 @@
 # not a licence.
 schema: 1
 rules:
-  important: 130
+  important: 66
   rhythm: 91
   # 150 -> 151 on 2026-08-11, and this one is a ceiling raise rather than a
   # measurement, so it is worth being exact about what it is.
