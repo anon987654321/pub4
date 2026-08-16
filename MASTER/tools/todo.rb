@@ -3,14 +3,13 @@
 # The work queue, derived from the gates rather than written by hand.
 #
 # A backlog someone types is out of date the next time anyone commits, and this
-# repo already carries three of them. Every entry below comes from a gate that
-# is failing right now, and carries the command that reproduces it — so the
-# queue cannot claim work that is already done, and cannot miss work that no
-# one wrote down.
+# repo already carries three of them. Every entry comes from a gate that is
+# failing right now and carries the command that reproduces it, so the queue
+# cannot claim work that is done or miss work nobody wrote down. Nothing is
+# committed: run it when you want the list.
 #
 #   ruby MASTER/tools/todo.rb            # print
-#   ruby MASTER/tools/todo.rb --write    # regenerate TODO.md at the repo root
-#   ruby MASTER/tools/todo.rb --check    # fail if TODO.md is stale
+#   ruby MASTER/tools/todo.rb --write    # write TODO.md at the repo root
 #
 # Only fast, deterministic gates run here. The constitutional scan takes 45
 # minutes and needs a model for half its rules; its ceilings live in

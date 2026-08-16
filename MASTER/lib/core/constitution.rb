@@ -187,9 +187,22 @@ module Master::Core
       })
     end
 
+    # The fold blocks on this answer before it admits a write, so a parser that
+    # does not return holds up every write. join returns nil on timeout rather
+    # than raising, which is where the child gets killed.
+    SYNTAX_CHECK_TIMEOUT_S = 5
+
     def self.ruby_syntax_error(content)
-      out, status = Open3.capture2e("ruby", "-c", stdin_data: content)
-      status.success? ? nil : out.strip.lines.first&.strip
+      Open3.popen2e("ruby", "-c") do |stdin, out, wait_thr|
+        stdin.write(content)
+        stdin.close
+        unless wait_thr.join(SYNTAX_CHECK_TIMEOUT_S)
+          Process.kill("KILL", wait_thr.pid)
+          next "syntax check exceeded #{SYNTAX_CHECK_TIMEOUT_S}s"
+        end
+
+        wait_thr.value.success? ? nil : out.read.strip.lines.first&.strip
+      end
     end
 
     def self.safe_rx(pattern)
