@@ -9,11 +9,33 @@ Rails.application.config.after_initialize do
   next if Rails.application.config.x.master_bootstrap_started
 
   Rails.application.config.x.master_bootstrap_started = true
+  MasterContainerLoader.warm_shared_namespace!
   Thread.new { MasterContainerLoader.ensure! }
 end
 
 module MasterContainerLoader
   module_function
+
+  # Master::Ground is loaded here, on the main thread, before the bootstrap
+  # thread below exists.
+  #
+  # Master carries its own Zeitwerk loader and never eager-loads, so its
+  # constants resolve by autoload on first reference. Zeitwerk autoloading is
+  # not thread-safe, and the web tier arranges the one collision that matters:
+  # ApplicationController names Master::Ground::ToolProfile in its class body,
+  # which Rails evaluates on the first request — inside the window where the
+  # bootstrap thread is autoloading Master constants of its own. The collision
+  # surfaces as `uninitialized constant Master::Ground::ToolProfile`, and it
+  # takes out any request that lands in the window, including a warming probe.
+  #
+  # 160 ms for the namespace, once, against a container bootstrap measured in
+  # seconds. Eager-loading all of Master would cost 941 ms and delay /up, which
+  # is the thing the bootstrap thread exists to avoid.
+  def warm_shared_namespace!
+    Master::LOADER.eager_load_namespace(Master::Ground)
+  rescue StandardError => e
+    Rails.logger.warn("master_container: could not warm Master::Ground: #{e.class}: #{e.message}")
+  end
 
   def ensure!(config = Rails.application.config)
     return config.x.master_container if config.x.master_container

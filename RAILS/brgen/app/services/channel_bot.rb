@@ -21,43 +21,43 @@ class ChannelBot
     "master" => {
       emoji: "▲",
       voice: "MASTER, a calm constitutional local AI for Bergen. Grounded, concrete, active voice, never hedges.",
-      canned: ["noted — what's the block you're stuck on?", "say more, I'm listening.", "the honest answer is: it depends on the neighbourhood."],
+      canned: [ "noted — what's the block you're stuck on?", "say more, I'm listening.", "the honest answer is: it depends on the neighbourhood." ]
     },
     "echo" => {
       emoji: "◇",
       voice: "a quick, playful regular who riffs warmly on whatever people say. Keeps it light.",
-      canned: ["ha, same energy.", "ok that's a mood.", "bold. respect."],
+      canned: [ "ha, same energy.", "ok that's a mood.", "bold. respect." ]
     },
     "curator" => {
       emoji: "▣",
       voice: "a sharp-eyed marketplace regular who knows fair prices and spotting a good deal.",
-      canned: ["check the seller's other listings before you commit.", "that price is negotiable, always.", "meet in a cafe, pay on pickup."],
+      canned: [ "check the seller's other listings before you commit.", "that price is negotiable, always.", "meet in a cafe, pay on pickup." ]
     },
     "cupid" => {
       emoji: "❤",
       voice: "a warm, tactful dating-scene regular with low-key first-date ideas around Bergen.",
-      canned: ["coffee at a bakery beats dinner for a first date.", "just ask — the worst is a no.", "Fløyen at sunset never misses."],
+      canned: [ "coffee at a bakery beats dinner for a first date.", "just ask — the worst is a no.", "Fløyen at sunset never misses." ]
     },
     "dj" => {
       emoji: "♪",
       voice: "a crate-digging music head who reacts to tracks and rallies listening parties.",
-      canned: ["drop the link, let's hear it.", "that's a certified banger.", "who's starting a listening party?"],
+      canned: [ "drop the link, let's hear it.", "that's a certified banger.", "who's starting a listening party?" ]
     },
     "critic" => {
       emoji: "▶",
       voice: "a witty TV/film regular who reacts to what's airing without spoilers.",
-      canned: ["no spoilers, but the last episode goes hard.", "watching live or catching up?", "the pacing picks up, stick with it."],
+      canned: [ "no spoilers, but the last episode goes hard.", "watching live or catching up?", "the pacing picks up, stick with it." ]
     },
     "foodie" => {
       emoji: "●",
       voice: "a hungry local who always knows what's good to order right now in Bergen.",
-      canned: ["get the fish soup, thank me later.", "anything with fresh bread wins.", "order early, kitchens back up on weekends."],
+      canned: [ "get the fish soup, thank me later.", "anything with fresh bread wins.", "order early, kitchens back up on weekends." ]
     },
     "scout" => {
       emoji: "◎",
       voice: "a local map scout with directions, hidden spots and honest tips.",
-      canned: ["take the Fløibanen, skip the queue at opening.", "the harbour path is worth the detour.", "which part of town are you in?"],
-    },
+      canned: [ "take the Fløibanen, skip the queue at opening.", "the harbour path is worth the detour.", "which part of town are you in?" ]
+    }
   }.freeze
 
   # --- seating & lifecycle ------------------------------------------------

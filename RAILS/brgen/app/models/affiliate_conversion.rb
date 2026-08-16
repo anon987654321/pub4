@@ -23,13 +23,13 @@ class AffiliateConversion < ApplicationRecord
   validates :message_type_id, presence: true, inclusion: { in: MESSAGE_TYPES.keys }
   validates :transaction_id, uniqueness: { scope: %i[source message_type_id] }, allow_nil: true
 
-  scope :approved, -> { where(message_type_id: [5, 6]) }
+  scope :approved, -> { where(message_type_id: [ 5, 6 ]) }
   scope :paid, -> { where(message_type_id: 9) }
   scope :for_epi_prefix, ->(prefix) { where("epi LIKE ?", "#{sanitize_sql_like(prefix)}%") if prefix.present? }
 
   def status_name = MESSAGE_TYPES[message_type_id] || "unknown"
 
-  def approved? = [5, 6].include?(message_type_id)
+  def approved? = [ 5, 6 ].include?(message_type_id)
   def paid? = message_type_id == 9
 
   # Parse EPI segments city:bergen|surface:newsletter_weekly|…

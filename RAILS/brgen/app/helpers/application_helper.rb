@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
-
   # The city this request is for, resolved from the domain by
   # Brgen::DomainRegistry (oshlo.no -> Oslo, lndon.uk -> London). Copy must
   # interpolate this rather than name a city: pages.home_title was the literal
@@ -51,7 +50,7 @@ module ApplicationHelper
             srcset: fallback_srcset,
             sizes: sizes,
             **image_options
-          ),
+          )
         ]
       )
     end
@@ -73,9 +72,9 @@ module ApplicationHelper
     nil
   end
 
-  # ENTRIES_BY_DOMAIN is the frozen index of the same rows. The linear find this
-  # replaced ran per record through schema_url_for -> record_public_href, so a
-  # 25-listing index page walked all 44 entries 25 times.
+# ENTRIES_BY_DOMAIN is the frozen index of the same rows. The linear find this
+# replaced ran per record through schema_url_for -> record_public_href, so a
+# 25-listing index page walked all 44 entries 25 times.
 # One affiliate lookup per request, however many surfaces ask for it.
 #
 # The in-feed unit renders once every AFFILIATE_EVERY posts, so a single home
@@ -85,7 +84,7 @@ module ApplicationHelper
 # request, so the units stay independent of each other without re-querying.
 def affiliate_deals_for(category: nil, limit: 8)
   @affiliate_deals_cache ||= {}
-  @affiliate_deals_cache[[category, limit]] ||= Affiliate.deals(category: category, limit: limit)
+  @affiliate_deals_cache[[ category, limit ]] ||= Affiliate.deals(category: category, limit: limit)
 end
 
   def marketplace_subdomain
@@ -113,18 +112,18 @@ end
   def brgen_nav_items
     domain = Current.domain
     [
-      ["front", main_app.root_path],
-      ["live", main_app.live_path],
-      ["AI", brgen_ai_url],
-      ["marketplace", "//#{marketplace_host}/"],
-      ["dating", "//dating.#{domain}/"],
-      ["playlist", "//playlist.#{domain}/"],
-      ["TV", "//tv.#{domain}/"],
-      ["takeaway", "//takeaway.#{domain}/"],
-      ["maps", "//maps.#{domain}/"],
-      ["messenger", "//messenger.#{domain}/"],
-      ["channels", main_app.channels_path],
-      *(authenticated? ? [] : [["sign up", main_app.new_session_path]])
+      [ "front", main_app.root_path ],
+      [ "live", main_app.live_path ],
+      [ "AI", brgen_ai_url ],
+      [ "marketplace", "//#{marketplace_host}/" ],
+      [ "dating", "//dating.#{domain}/" ],
+      [ "playlist", "//playlist.#{domain}/" ],
+      [ "TV", "//tv.#{domain}/" ],
+      [ "takeaway", "//takeaway.#{domain}/" ],
+      [ "maps", "//maps.#{domain}/" ],
+      [ "messenger", "//messenger.#{domain}/" ],
+      [ "channels", main_app.channels_path ],
+      *(authenticated? ? [] : [ [ "sign up", main_app.new_session_path ] ])
     ]
   end
 
@@ -135,7 +134,7 @@ end
   # peer choices instead of one flat 10-11 item row.
   def brgen_nav_groups
     verticals, platform = brgen_nav_items.partition { |label, _| VERTICAL_NAV_LABELS.include?(label) }
-    [["brgen", platform], ["explore", verticals]]
+    [ [ "brgen", platform ], [ "explore", verticals ] ]
   end
 
   def active_vertical
@@ -183,6 +182,8 @@ end
 
     domain = Current.domain.presence || (respond_to?(:request) ? request.host : nil) || "brgen.no"
     case record
+    when Event then main_app.event_url(record, host: domain)
+    when Story then main_app.story_url(record, host: domain)
     when Post then main_app.post_path(record)
     when Community then main_app.community_path(record)
     when Comment then record.commentable.present? ? polymorphic_path(record.commentable) : nil

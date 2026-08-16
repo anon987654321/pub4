@@ -67,7 +67,7 @@ module Marketplace
           reference: reference,
           returnUrl: return_url,
           userFlow: "WEB_REDIRECT",
-          paymentDescription: order.payment_description.to_s.truncate(100),
+          paymentDescription: order.payment_description.to_s.truncate(100)
         }
         uri = URI("#{api_base}/epayment/v1/payments")
         req = Net::HTTP::Post.new(uri)

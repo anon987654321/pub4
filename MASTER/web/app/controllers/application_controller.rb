@@ -31,6 +31,7 @@ class ApplicationController < ActionController::Base
   WEB_WRITE_RATE_LIMIT = 60
   WEB_WRITE_WINDOW_S   = 60
 
+  before_action :set_locale
   before_action :set_html_no_store, if: -> { request.format.html? }
   after_action :set_html_no_store, if: -> { request.format.html? }
   before_action :require_container!
@@ -42,6 +43,41 @@ class ApplicationController < ActionController::Base
   before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }
 
   private
+
+  # nb unless the browser asks for something this app has.
+  #
+  # Set per request, not once at boot: I18n.locale is per-thread state that
+  # survives into the next request served on the same thread, so one English
+  # visitor would otherwise leave the following Norwegian one on :en.
+  def set_locale
+    I18n.locale = preferred_locale
+  end
+
+  # Accept-Language, highest q first, matched on the primary subtag so nb-NO and
+  # en-GB both land. `no` is the macrolanguage tag and several browsers still
+  # send it for Norwegian; without the alias it falls through to the default,
+  # which happens to be right today and would stop being right the moment the
+  # default changes.
+  LOCALE_ALIASES = { "no" => :nb, "nn" => :nb }.freeze
+
+  def preferred_locale
+    ranked_language_tags.each do |tag|
+      primary = tag.split("-").first
+      match = I18n.available_locales.find { |locale| locale.to_s == primary } || LOCALE_ALIASES[primary]
+      return match if match && I18n.available_locales.include?(match)
+    end
+    I18n.default_locale
+  end
+
+  def ranked_language_tags
+    request.get_header("HTTP_ACCEPT_LANGUAGE").to_s.split(",").filter_map do |part|
+      tag, quality = part.split(";q=")
+      tag = tag.to_s.strip.downcase
+      next if tag.empty? || tag == "*"
+
+      [ tag, Float(quality || 1, exception: false) || 0.0 ]
+    end.sort_by { |_, quality| -quality }.map(&:first)
+  end
 
   def set_html_no_store
     response.headers.delete("ETag")

@@ -123,9 +123,9 @@ module Tradedoubler
       ids.each do |fid|
         written += if import_mode == "unlimited"
                      import_unlimited!(fid, category: category)
-                   else
+        else
                      import_search!(fid, category: category, pages: pages)
-                   end
+        end
       end
       written
     end
@@ -189,7 +189,7 @@ module Tradedoubler
         fid: fid,
         page: page,
         pageSize: page_size,
-        limit: [page * page_size, SEARCH_HARD_CAP].min
+        limit: [ page * page_size, SEARCH_HARD_CAP ].min
       }
       matrix[:category] = category if category.present?
       matrix[:language] = language_param if language_param.present?
@@ -245,9 +245,9 @@ module Tradedoubler
         image = product["productImage"]
         image_url = if image.is_a?(Hash)
                       image["url"]
-                    else
+        else
                       dig.call("imageUrl", "productImage", "imageURL")
-                    end
+        end
 
         price_raw = dig.call("price", "Price", "priceValue")
         if price_raw.is_a?(Hash)
@@ -271,10 +271,10 @@ module Tradedoubler
 
         availability = dig.call("availability", "inStock")
         in_stock = case availability.to_s.downcase
-                   when "out of stock", "outofstock", "false", "0", "n", "no" then false
-                   else
-                     ![false, "false", "0", 0].include?(dig.call("inStock"))
-                   end
+        when "out of stock", "outofstock", "false", "0", "n", "no" then false
+        else
+                     ![ false, "false", "0", 0 ].include?(dig.call("inStock"))
+        end
 
         {
           external_id: dig.call("productId", "id", "productID", "sourceProductId", "asin").to_s.presence,
@@ -300,7 +300,7 @@ module Tradedoubler
 
       products = body["products"] || body["product"] || body["items"]
       products = products["product"] if products.is_a?(Hash) && products.key?("product")
-      products = [products] if products.is_a?(Hash)
+      products = [ products ] if products.is_a?(Hash)
       products
     end
 

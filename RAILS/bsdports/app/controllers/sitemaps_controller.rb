@@ -12,7 +12,7 @@ class SitemapsController < ApplicationController
   def sitemap_entries
     entries = [
       Shared::SitemapBuilder::Entry.new(loc: root_url, changefreq: "daily", priority: "1.0"),
-      Shared::SitemapBuilder::Entry.new(loc: categories_url, changefreq: "weekly", priority: "0.7"),
+      Shared::SitemapBuilder::Entry.new(loc: categories_url, changefreq: "weekly", priority: "0.7")
     ]
 
     Category.find_each do |category|

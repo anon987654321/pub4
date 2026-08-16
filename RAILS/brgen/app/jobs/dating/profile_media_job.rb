@@ -5,7 +5,7 @@ class Dating::ProfileMediaJob < ApplicationJob
 
   VARIANTS = {
     thumb: { resize_to_limit: [ 400, 600 ], format: :webp },
-    card: { resize_to_limit: [ 800, 1_200 ], format: :webp },
+    card: { resize_to_limit: [ 800, 1_200 ], format: :webp }
   }.freeze
 
   def perform(profile_id)

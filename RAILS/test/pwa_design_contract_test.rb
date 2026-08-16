@@ -53,6 +53,36 @@ class PwaDesignContractTest < Minitest::Test
     end
   end
 
+  # A worker that will not install is a PWA that does not exist, and the failure
+  # is silent: registration rejects in the browser and the page renders fine.
+  #
+  # `render js:` goes through verify_same_origin_request, so without
+  # skip_forgery_protection the response is 422 — which is what amber and
+  # bsdports answered while brgen, holding the only fixed copy of the same
+  # controller, answered 200. app_duplication_test could not see it, because it
+  # compares files byte-for-byte and three copies stop being identical the
+  # moment one is fixed.
+  #
+  # Asserted on the shared concern rather than in each app, since that is now the
+  # only place the behaviour exists — and asserted per app that they reach it, or
+  # the concern could be correct and unused.
+  def test_every_app_serves_its_service_worker_through_the_shared_hardening
+    concern = read(SHARED_ROOT, "app/controllers/concerns/shared/pwa_serving.rb")
+    assert_includes concern, "skip_forgery_protection",
+                    "render js: answers 422 without it, so no worker installs"
+    assert_includes concern, 'response.headers["Service-Worker-Allowed"] = "/"',
+                    "a worker without this controls only its own directory"
+    assert_match(/def allow_browser\(\*\)/, concern,
+                 "the install fetch does not carry the user agent the modern-browser gate reads")
+
+    each_app do |app, root|
+      controller = read(root, "app/controllers/rails/pwa_controller.rb")
+      assert_includes controller, "include Shared::PwaServing", "#{app}: serves its own PWA files"
+      assert_includes controller, "def pwa_app_name", "#{app}: offline page has no name to show"
+      assert_includes controller, "def pwa_storage_key", "#{app}: offline page has no storage key"
+    end
+  end
+
   def test_all_apps_register_service_worker_via_pub4_hotwire
     hotwire = read(SHARED_ROOT, "frontend/hotwire.js")
     assert_match(/serviceWorker\.register/, hotwire)

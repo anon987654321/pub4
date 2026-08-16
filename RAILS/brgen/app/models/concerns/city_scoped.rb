@@ -21,7 +21,7 @@ module CityScoped
       tenant = ActsAsTenant.current_tenant
       next all unless tenant
 
-      where(city_id: [tenant.id, nil])
+      where(city_id: [ tenant.id, nil ])
     }
   end
 end

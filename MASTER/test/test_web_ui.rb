@@ -257,8 +257,13 @@ class TestWebUI < Minitest::Test
     assert_includes css, "body:not(.face-ready) #zsh:not(.live)"
     assert_includes part5, "primerFired = true"
     assert_includes index, 'aria-describedby="primer-capabilities primer-consent"'
-    assert_includes index, "Microphone access is requested only when you choose voice input"
-    assert_includes index, "text remains available if graphics fail"
+    # The consent sentence is the one thing on the primer a visitor has to be
+    # able to read before deciding to tap, so it is pinned by content and not
+    # only by presence. Through the key, because the template now localises it —
+    # the literal spelling would fail on a view that had got more correct.
+    assert_localised_copy index, "face.primer_consent",
+                          "Starts visuals and sound. Microphone access is requested only when " \
+                          "you choose voice input; text remains available if graphics fail."
     assert_includes index, "if(e.key===' '||e.key==='Enter')"
     assert_includes index, "fallbackUi()"
     assert_includes css, "@media (prefers-reduced-motion: reduce)"
@@ -288,7 +293,7 @@ class TestWebUI < Minitest::Test
     assert_includes actions, "startsWith('!')"
     assert_includes service, "compaction:done"
     assert_includes service, "ctx:footer"
-    assert_dashboard_copy dashboard, "dashboard.heading_mission", "mission control"
+    assert_localised_copy dashboard, "dashboard.heading_mission", "mission control"
     refute_includes dashboard, 'location.replace("/")'
   end
 
@@ -297,7 +302,7 @@ class TestWebUI < Minitest::Test
   # view that was more correct, not less. Pin the key in the template and the
   # copy in the locale file, so the assertion survives a second locale and still
   # says which words the panel is meant to show.
-  def assert_dashboard_copy(template, key, english)
+  def assert_localised_copy(template, key, english)
     assert_includes template, %(t("#{key}"))
     locale = YAML.safe_load_file(File.expand_path("../web/config/locales/en.yml", __dir__))
     value = key.split(".").reduce(locale.fetch("en")) { |node, segment| node.fetch(segment) }
@@ -344,8 +349,8 @@ class TestWebUI < Minitest::Test
     assert_includes index, "skip-link"
     assert_includes index, "error-live"
     assert_includes index, "<textarea id=\"zin\""
-    assert_dashboard_copy dashboard, "dashboard.panels.pressure", "context pressure"
-    assert_dashboard_copy dashboard, "dashboard.panels.repair", "repair queue"
+    assert_localised_copy dashboard, "dashboard.panels.pressure", "context pressure"
+    assert_localised_copy dashboard, "dashboard.panels.repair", "repair queue"
   end
 
   def test_wave3_history_and_export_wired

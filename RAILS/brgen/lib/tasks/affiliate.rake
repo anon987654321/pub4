@@ -100,6 +100,4 @@ namespace :affiliate do
     days = (args[:days] || 7).to_i
     puts PartnerAttributionReport.new(window: days.days).render
   end
-
 end
-

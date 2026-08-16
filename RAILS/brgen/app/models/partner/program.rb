@@ -50,7 +50,7 @@ class Partner::Program < ApplicationRecord
 
     case commission_model
     when "cpa_percent" then value * commission_rate / 10_000
-    when "cpa_flat", "cpl" then [commission_rate, value].min
+    when "cpa_flat", "cpl" then [ commission_rate, value ].min
     else 0
     end
   end

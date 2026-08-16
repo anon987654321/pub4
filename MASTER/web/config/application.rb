@@ -56,6 +56,21 @@ module Web
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    # nb is the default because ai.brgen.no is the only host relayd forwards
+    # here, and it is the same Norwegian audience brgen, amber and bsdports all
+    # default to nb for. ApplicationController#set_locale hands English back to a
+    # browser that asks for it — the face answers whoever reaches it, and a
+    # Norwegian frame around an English conversation is worse than either.
+    #
+    # The fallback is what makes nb safe to switch on: a key nb has not got yet
+    # renders its English rather than translation_missing. It is also what makes
+    # nb/en parity worth enforcing in web/test/locale_contract_test.rb, since
+    # a gap is invisible at runtime by design. The RAILS contract of the same
+    # name does not see this app.
+    config.i18n.default_locale = :nb
+    config.i18n.available_locales = %i[nb en]
+    config.i18n.fallbacks = { nb: :en }
+
     # Don't generate system test files.
     config.generators.system_tests = nil
 

@@ -7,7 +7,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_includes response.body, "launch AI"
+    assert_includes response.body, I18n.t("face.primer_title")
     assert_includes response.body, "MASTER_ASSET_PATHS"
     assert_includes response.body, "function loadFace"
     assert_includes response.body, "window.__MASTER_FACE_IMPORT__"
@@ -28,18 +28,35 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "face-controls"
     assert_includes response.body, "spin-btn"
     assert_includes response.body, 'data-profile="public"'
-    assert_includes response.body, "have a code?"
-    assert_includes response.body, "scope-label"
+    # #scope-row — the scope word, the pairing form and its hint — came off the
+    # corners on operator request (10fabb8ae). The page must not grow it back.
+    refute_includes response.body, "scope-label"
+    refute_includes response.body, "have a code?"
     refute_includes response.body, "operator surface"
+    assert_includes response.body, 'lang="nb"'
   end
 
-  test "authenticated index offers issue not redeem" do
-    get root_path, headers: auth_headers
+  test "index is English when the browser asks" do
+    get root_path, headers: { "HTTP_ACCEPT_LANGUAGE" => "en-GB,en;q=0.9" }
 
     assert_response :success
+    assert_includes response.body, 'lang="en"'
+    assert_includes response.body, I18n.with_locale(:en) { I18n.t("face.primer_title") }
+  end
+
+  # The visible pairing panel is gone; pairing is not. Redeeming still works
+  # through PairControllerTest and through `/pair <code>` in the prompt
+  # (test_visitor_can_redeem_a_pairing_code_in_chat below), so what is left to
+  # assert here is the profile mark — it is what decides which tools the face
+  # will run, and it is the half that survived the panel.
+  test "index marks the profile for a visitor and for an operator" do
+    get root_path
+    assert_response :success
+    assert_includes response.body, 'data-profile="public"'
+
+    get root_path, headers: auth_headers
+    assert_response :success
     assert_includes response.body, 'data-profile="operator"'
-    assert_includes response.body, "issue code"
-    refute_includes response.body, "have a code?"
   end
 
   test "index face asset paths are wired for blob import replacement" do

@@ -248,7 +248,10 @@ class DeployBacklogTest < Minitest::Test
     tracks_controller = read_source(File.join(ROOT, 'brgen/app/controllers/playlist/tracks_controller.rb'))
     routes = read_source(File.join(ROOT, 'brgen/config/routes.rb'))
     schema_helper = read_source(File.join(ROOT, 'shared/app/helpers/schema_helper.rb'))
-    player = read_source(File.join(ROOT, 'brgen/app/views/playlist/playlists/_player.html.erb'))
+    # The player and the queue partial it renders, read as one — same reason
+    # read_source joins brgen's routes with its engines': the split is a file
+    # boundary, not a change to what the page carries.
+    player = %w[_player _queue].sum('') { |f| read_source(File.join(ROOT, "brgen/app/views/playlist/playlists/#{f}.html.erb")) }
     show = read_source(File.join(ROOT, 'brgen/app/views/playlist/playlists/show.html.erb'))
     index = read_source(File.join(ROOT, 'brgen/app/views/playlist/playlists/index.html.erb'))
     hosted_form = read_source(File.join(ROOT, 'brgen/app/views/playlist/hosted_tracks/_form.html.erb'))
@@ -282,7 +285,8 @@ class DeployBacklogTest < Minitest::Test
     assert_includes stimulus, 'embedTarget'
     assert_includes show, 'json_ld_for(@playlist, type: :music_playlist)'
     assert_includes show, 'playlist_imports_path'
-    assert_includes show, 'embed_playlist_playlist_url'
+    assert_includes show, 'embed_playlist_url'
+    refute_includes show, 'embed_playlist_playlist_url'
     assert_includes hosted_form, 'form.datetime_field :expires_at'
   end
 
@@ -560,10 +564,12 @@ class DeployBacklogTest < Minitest::Test
     # regression.
     brgen_layout = %w[layouts/application shared/_mobile_chrome].sum("") { |v| read_source(File.join(ROOT, "brgen/app/views/#{v}.html.erb")) }
     assert_includes brgen_layout, 'data-push-unread-value='
-    assert_includes brgen_layout, 'render "shared/ai_nav_link"'
-    assert_includes brgen_layout, 'brgen_ai_url'
-    refute_includes brgen_layout, 'javascript_include_tag "face"'
-    refute_includes brgen_layout, 'javascript_include_tag "particle_kernel"'
+    # The sheet that links out to the AI surface is shared/_mobile_chrome, which
+    # the layout renders. The invariant is that the shell reaches it, not which
+    # of the two files spells the helper.
+    %w[ai_nav_link mobile_chrome].each { |p| assert_includes brgen_layout, %(render "shared/#{p}") }
+    assert_includes read_source(File.join(ROOT, 'brgen/app/views/shared/_mobile_chrome.html.erb')), 'brgen_ai_url'
+    refute_match(/javascript_include_tag "(face|particle_kernel)"/, brgen_layout)
     assert_match(/pwa\.create_outfit|Create outfit/, read_source(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')))
     assert_match(/pwa\.search_ports|Search ports/, read_source(File.join(ROOT, 'bsdports/app/views/pwa/manifest.json.erb')))
     assert_includes read_source(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), '"file_handlers"'

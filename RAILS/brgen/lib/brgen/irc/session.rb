@@ -28,12 +28,12 @@ module Brgen
         case message.command
         when "NICK"    then on_nick(message)
         when "USER"    then on_user(message)
-        when "PING"    then [build("PONG", [message.params.first || @server])]
+        when "PING"    then [ build("PONG", [ message.params.first || @server ]) ]
         when "JOIN"    then on_join(message)
         when "PART"    then on_part(message)
         when "PRIVMSG" then on_privmsg(message)
         when "NAMES"   then names(message.params.first)
-        when "QUIT"    then @channels.clear; [build("ERROR", ["Closing link"])]
+        when "QUIT"    then @channels.clear; [ build("ERROR", [ "Closing link" ]) ]
         when "CAP"     then [] # no capabilities negotiated
         else []
         end
@@ -47,7 +47,7 @@ module Brgen
             state[:last_id] = m[:id]
             next if m[:nick] == @nick # don't echo our own line back
 
-            out << build("PRIVMSG", ["##{state[:channel].slug}", m[:text]], prefix: m[:nick])
+            out << build("PRIVMSG", [ "##{state[:channel].slug}", m[:text] ], prefix: m[:nick])
           end
         end
         out
@@ -76,7 +76,7 @@ module Brgen
           numeric("004", "#{@server} brgen-bridge o ov"),
           numeric("375", "- #{@server} -"),
           numeric("372", "- IRC's honesty, a city's chat. Try /join #brgen"),
-          numeric("376", "End of /MOTD command"),
+          numeric("376", "End of /MOTD command")
         ]
       end
 
@@ -84,23 +84,23 @@ module Brgen
         return [] unless @registered
 
         channel = @bridge.channel_for(message.params.first)
-        return [numeric("403", "No such channel", extra: message.params.first)] unless channel
+        return [ numeric("403", "No such channel", extra: message.params.first) ] unless channel
 
         cname = @bridge.channel_name(channel)
         history = @bridge.history(channel)
         @channels[cname] = { channel: channel, last_id: history.map { |h| h[:id] }.max.to_i }
 
-        lines = [build("JOIN", [cname], prefix: user_prefix)]
+        lines = [ build("JOIN", [ cname ], prefix: user_prefix) ]
         lines << numeric("332", @bridge.topic(channel), extra: cname)
         lines.concat(names(cname))
-        history.each { |h| lines << build("PRIVMSG", [cname, h[:text]], prefix: h[:nick]) }
+        history.each { |h| lines << build("PRIVMSG", [ cname, h[:text] ], prefix: h[:nick]) }
         lines
       end
 
       def on_part(message)
         cname = message.params.first
         @channels.delete(cname)
-        [build("PART", [cname], prefix: user_prefix)]
+        [ build("PART", [ cname ], prefix: user_prefix) ]
       end
 
       def on_privmsg(message)
@@ -124,13 +124,13 @@ module Brgen
         nicks = @bridge.roster(channel).map { |r| "#{r[:mode]}#{r[:nick]}" }
         nicks << @nick if @nick && nicks.none? { |n| n.sub(/\A[@+]/, "") == @nick }
         [
-          build("353", [@nick, "=", cname, nicks.join(" ")]),
-          build("366", [@nick, cname, "End of /NAMES list"]),
+          build("353", [ @nick, "=", cname, nicks.join(" ") ]),
+          build("366", [ @nick, cname, "End of /NAMES list" ])
         ]
       end
 
       def numeric(code, text, extra: nil)
-        params = [@nick || "*"]
+        params = [ @nick || "*" ]
         params << extra if extra
         params << text
         build(code, params)

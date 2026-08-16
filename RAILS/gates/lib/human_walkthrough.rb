@@ -24,11 +24,13 @@ module Deploy
       "brgen" => {
         layout: "app/views/layouts/application.html.erb",
         home: "app/views/home/index.html.erb",
-        nav_partials: [
-          "app/views/shared/_ai_nav_link.html.erb",
-          "app/views/shared/_tab_bar.html.erb",
-          "app/views/layouts/application.html.erb",
-        ],
+        # _tab_bar.html.erb was listed here and has never existed in this tree;
+        # read_app_file returns "" for a missing file, so the list has been one
+        # third decorative. It is gone, and missing entries now fail rather than
+        # read as an empty file — see verify_listed_partials!. _ai_nav_link and
+        # the layout are both reached by resolve_rendered_partials now, so the
+        # list is empty rather than restating them.
+        nav_partials: [],
         nav: [
           [/Home|t\(["']nav\.home["']\)/i, "Home"],
           [/Explore|t\(["']nav\.explore["']\)/i, "Explore"],
@@ -77,11 +79,47 @@ module Deploy
       File.file?(path) ? File.read(path) : ""
     end
 
+    # Partials the layout and home page render, resolved out of their source
+    # rather than listed by hand.
+    #
+    # The hand-list was a second inventory of the chrome, and it could only ever
+    # go stale in the direction of passing: splitting brgen's layout moved the
+    # mobile tab bar and its sheet into shared/_mobile_chrome, and four of the
+    # five mobile-tab markers were still found in the layout while the fifth was
+    # not — a gate reporting one missing label for a page that had lost none of
+    # them. The blindness is the same shape as the four scanners that stopped
+    # seeing 57 views when the verticals became engines.
+    #
+    # One level deep, deliberately. Every marker this gate looks for is chrome
+    # the layout itself renders; recursing would widen the haystack for markers
+    # that are supposed to be in the frame, and a marker found three partials
+    # down is not evidence the frame carries it.
+    RENDER_CALL = /render(?:\s+partial:)?\s+"([a-z0-9_]+(?:\/[a-z0-9_]+)+)"/
+
+    def resolve_rendered_partials(app, sources)
+      sources.join("\n").scan(RENDER_CALL).flatten.uniq.filter_map do |name|
+        dir, base = File.split(name)
+        rel = "app/views/#{dir}/_#{base}.html.erb"
+        rel if File.file?(File.join(RAILS_ROOT, app, rel))
+      end
+    end
+
+    # A listed path that does not exist reads as an empty file, which is a check
+    # that cannot fail. Say so instead.
+    def verify_listed_partials!(result, app, paths)
+      paths.reject { |rel| File.file?(File.join(RAILS_ROOT, app, rel)) }.each do |rel|
+        result.fail("#{app}: nav_partials names #{rel}, which does not exist")
+      end
+    end
+
     def source_checks(result, app)
       files = APP_FILES.fetch(app.name)
       layout = read_app_file(app.name, files.fetch(:layout))
       home = read_app_file(app.name, files.fetch(:home))
-      nav_source = ([layout, home] + files.fetch(:nav_partials, []).map { |path| read_app_file(app.name, path) }).join("\n")
+      listed = files.fetch(:nav_partials, [])
+      verify_listed_partials!(result, app.name, listed)
+      partials = (listed + resolve_rendered_partials(app.name, [layout, home])).uniq
+      nav_source = ([layout, home] + partials.map { |path| read_app_file(app.name, path) }).join("\n")
 
       result.fail("#{app.name}: layout needs skip link to main content") unless layout.include?('href="#main-content"')
       result.fail("#{app.name}: layout needs main-content landmark") unless layout.include?('id="main-content"')

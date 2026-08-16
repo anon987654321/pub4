@@ -22,7 +22,7 @@ class UserPurgeJob < ApplicationJob
     attrs = {
       deleted_at: Time.current,
       deletion_scheduled_at: nil,
-      updated_at: Time.current,
+      updated_at: Time.current
     }
     attrs[:email_address] = "purged-#{user.id}@deleted.invalid" if user.has_attribute?(:email_address)
     attrs[:username]      = "deleted_#{user.id}"                if user.has_attribute?(:username)

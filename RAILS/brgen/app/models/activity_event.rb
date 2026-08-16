@@ -33,7 +33,7 @@ class ActivityEvent < ApplicationRecord
 
     candidates = visible.public_only.where(event_name: HOME_STRIP_EVENTS).recent.limit(limit * 4).to_a
     subjects = subjects_for(candidates)
-    candidates.each { |event| event.activity_subject = subjects[[event.object_type.to_s, event.object_id]] }
+    candidates.each { |event| event.activity_subject = subjects[[ event.object_type.to_s, event.object_id ]] }
     candidates.select { |event| in_city?(event, city, subjects) }.first(limit)
   end
 
@@ -50,23 +50,23 @@ class ActivityEvent < ApplicationRecord
 
       preload = %i[channel listing].select { |name| klass.reflect_on_association(name) }
       scope = preload.any? ? klass.includes(*preload) : klass
-      scope.where(id: group.map(&:object_id)).each { |record| out[[type.to_s, record.id]] = record }
+      scope.where(id: group.map(&:object_id)).each { |record| out[[ type.to_s, record.id ]] = record }
     rescue StandardError
       next
     end
   end
 
   def self.in_city?(event, city, subjects = nil)
-    labels = [city.try(:name), city.try(:domain)].compact
+    labels = [ city.try(:name), city.try(:domain) ].compact
     if event.locality.present? && labels.any? { |label| event.locality.to_s.casecmp?(label.to_s) }
       return true
     end
 
     record = if subjects
-               subjects[[event.object_type.to_s, event.object_id]]
-             else
+               subjects[[ event.object_type.to_s, event.object_id ]]
+    else
                event.object_type.to_s.safe_constantize&.find_by(id: event.object_id)
-             end
+    end
     return false unless record
 
     city_id = record.try(:city_id)

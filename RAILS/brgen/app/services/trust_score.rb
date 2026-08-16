@@ -10,7 +10,7 @@ class TrustScore
     "successful_trade" => 15,
     "post_removed" => -20,
     "spam_report" => -40,
-    "moderation_ban" => -200,
+    "moderation_ban" => -200
   }.freeze
 
   def initialize(user:, scope: "global")

@@ -27,7 +27,7 @@ module Brgen
       "frankfrt.de" => %w[frankfurt germany],
       "mrseille.fr" => %w[marseille france],
       "mlan.it" => %w[milan italy],
-      "lisbon.pt" => %w[lisbon portugal],
+      "lisbon.pt" => %w[lisbon portugal]
     }.freeze
 
     COMMUNITY_SLUGS = {
@@ -46,7 +46,7 @@ module Brgen
       "PL" => %w[lokalne wiadomosci],
       "BE" => %w[local actualites],
       "CH" => %w[lokal news],
-      "LI" => %w[lokal news],
+      "LI" => %w[lokal news]
     }.freeze
 
     # Faker locale ids, keyed to the same country codes as COMMUNITY_SLUGS, so
@@ -85,7 +85,7 @@ module Brgen
       "LI" => "de-CH",
       "IT" => "it",
       "PT" => "pt",
-      "PL" => "pl",
+      "PL" => "pl"
     }.freeze
 
     module_function

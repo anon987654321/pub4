@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= I18n.locale %>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
@@ -92,11 +92,11 @@
       data-theme="dark"
       data-profile="<%= @profile.to_s %>"
       data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
-  <a href="#zin" class="skip-link"><%= t("skip_to_prompt", default: "Skip to prompt") %></a>
+  <a href="#zin" class="skip-link"><%= t("skip_to_prompt") %></a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <div id="ascii-star" aria-hidden="true"></div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
-  <canvas id="face" role="img" aria-label="<%= t("face.face_aria", default: "MASTER face — visual state mirror") %>" tabindex="-1"></canvas>
+  <canvas id="face" role="img" aria-label="<%= t("face.face_aria") %>" tabindex="-1"></canvas>
   <%# Mic state, always on screen. It used to be a 10px dot at opacity 0 that
       appeared only while listening, so "off" and "not rendered" looked
       identical and the only way to learn the mic was off was to talk and get
@@ -105,7 +105,7 @@
       whether the microphone is open, which is not something to hide from a
       screen reader. %>
   <div id="mic-dot" class="mic-indicator" role="status"
-       aria-label="<%= t("face.mic_state", default: "Microphone") %>">
+       aria-label="<%= t("face.mic_state") %>">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/>
       <path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -121,10 +121,17 @@
   <%# Small synchronous prerequisite: every deferred ecology/worker module and
       the post-primer face import may assume window.ParticleKernel exists. %>
   <script src="<%= asset_path("particle_kernel.js") %>"></script>
-  <div id="primer" role="button" aria-labelledby="primer-title" aria-describedby="primer-capabilities primer-consent" tabindex="0">
-    <h1 id="primer-title">launch AI</h1>
-    <p class="tagline" id="primer-capabilities">voice · image · music · code</p>
-    <p class="primer-consent" id="primer-consent">Starts visuals and sound. Microphone access is requested only when you choose voice input; text remains available if graphics fail.</p>
+  <div id="primer" role="button" aria-labelledby="primer-title" aria-describedby="primer-capabilities primer-consent" tabindex="0"
+       data-i18n-starting="<%= t("face.starting") %>"
+       data-i18n-loading-title="<%= t("face.loading_title") %>"
+       data-i18n-loading-status="<%= t("face.loading_status") %>"
+       data-i18n-still-loading="<%= t("face.still_loading") %>"
+       data-i18n-retrying="<%= t("face.retrying") %>"
+       data-i18n-failed="<%= t("face.failed") %>"
+       data-i18n-failed-live="<%= t("face.failed_live") %>">
+    <h1 id="primer-title"><%= t("face.primer_title") %></h1>
+    <p class="tagline" id="primer-capabilities"><%= t("face.primer_capabilities") %></p>
+    <p class="primer-consent" id="primer-consent"><%= t("face.primer_consent") %></p>
   </div>
   <%# Boot + primer tap must run synchronously right after #primer — before ANY other
       script (including face_2d_fallback). A blocking <script src> above this line delays
@@ -141,6 +148,11 @@
       function zshEl(){return document.getElementById('zsh');}
       function uiEl(){return document.getElementById('ui-status');}
       function titleEl(){return document.getElementById('primer-title');}
+      function i18n(key, fallback, vars){
+        var raw=(p&&p.getAttribute('data-i18n-'+key))||fallback;
+        if(!vars)return raw;
+        return raw.replace(/%\{(\w+)\}/g,function(_,name){return vars[name]});
+      }
       function primeAudio(){
         try{
           var Ctx=window.AudioContext||window.webkitAudioContext;
@@ -159,7 +171,7 @@
       function revealPrompt(){
         var z=zshEl(),ui=uiEl();
         if(z)z.classList.add('live');
-        if(ui&&!ui.textContent)ui.textContent='starting';
+        if(ui&&!ui.textContent)ui.textContent=i18n('starting','starting…');
         // Keyboard users: land focus in the prompt after primer dismiss.
         var zin=document.getElementById('zin');
         if(zin){try{zin.focus({preventScroll:true});}catch(_e){try{zin.focus();}catch(__e){}}}
@@ -178,7 +190,7 @@
         clearInterval(timer);timer=null;
         if(typeof window.stop2DFallback==='function')window.stop2DFallback();
         var ui=uiEl();
-        if(ui&&/^loading face /i.test(ui.textContent||''))ui.textContent='';
+        if(ui&&ui.dataset.bootLoading){ui.textContent='';delete ui.dataset.bootLoading;}
       }
       function bootFailed(){
         clearWatch();
@@ -188,17 +200,17 @@
       function showProgress(pct){
         var n=Math.max(0,Math.min(100,Math.round(pct)));
         var title=titleEl(),ui=uiEl();
-        if(title)title.textContent='loading… '+n+'%';
-        if(ui)ui.textContent='loading face '+n+'%';
+        if(title)title.textContent=i18n('loading-title','loading… %{n}%',{n:n});
+        if(ui){ui.dataset.bootLoading='1';ui.textContent=i18n('loading-status','loading face %{n}%',{n:n});}
       }
       function showLoadState(){showProgress(0);}
       function fallbackUi(){
         dismissPrimer();
         revealPrompt();
         var ui=uiEl();
-        if(ui)ui.textContent='face failed to load — reload or check console';
+        if(ui)ui.textContent=i18n('failed','face failed to load — reload or check console');
         var errLive=document.getElementById('error-live');
-        if(errLive)errLive.textContent='face failed to load (WebGL/primer timing?). Reload or see browser console for MASTER_FACE errors.';
+        if(errLive)errLive.textContent=i18n('failed-live','face failed to load (WebGL/primer timing?). Reload or see browser console for MASTER_FACE errors.');
       }
       function resetFaceCanvasForWebGL(){
         var cv=document.getElementById('face');
@@ -218,7 +230,7 @@
           window.__MASTER_FACE_IMPORT__=false;
           if(retried){bootFailed();return;}
           var ui=uiEl();
-          if(ui)ui.textContent='retrying…';
+          if(ui)ui.textContent=i18n('retrying','retrying…');
           window.MASTER?.boot?.transition?.('RECOVERING', { source: 'loadFace_catch' });
           retryT=setTimeout(function(){loadFace(true);},1200);
         });
@@ -228,7 +240,7 @@
         fired=true;
         window.MASTER?.boot?.transition?.('PRIMER', { source: 'primer_tap' });
         var title=titleEl();
-        if(title)title.textContent='starting…';
+        if(title)title.textContent=i18n('starting','starting…');
         window._primerFired=true;
         window.dispatchEvent(new CustomEvent('primer:ready'));
         primeAudio();
@@ -239,7 +251,7 @@
         if(boot())return;
         showLoadState();
         var progPct=0;
-        hintT=setTimeout(function(){var ui=uiEl();if(ui)ui.textContent='still loading the face…';},8000);
+        hintT=setTimeout(function(){var ui=uiEl();if(ui)ui.textContent=i18n('still-loading','still loading the face…');},8000);
         timer=setInterval(function(){
           if(boot()){clearWatch();return;}
           if(progPct<90){
@@ -308,20 +320,20 @@
     })();
   </script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
-  <main id="chat-shell" role="main" aria-label="<%= t("face.chat_aria", default: "MASTER chat") %>">
+  <main id="chat-shell" role="main" aria-label="<%= t("face.chat_aria") %>">
     <div id="chat-log" aria-live="polite" aria-relevant="additions text" tabindex="-1"></div>
   </main>
   <div class="ui-status sr-only" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
-  <form id="zsh" role="search" aria-label="<%= t("face.prompt_aria", default: "MASTER prompt") %>" autocomplete="off">
-    <button id="photo-button" type="button" aria-label="<%= t("face.attach_photo", default: "Attach photo") %>">+</button>
+  <form id="zsh" role="search" aria-label="<%= t("face.prompt_aria") %>" autocomplete="off">
+    <button id="photo-button" type="button" aria-label="<%= t("face.attach_photo") %>">+</button>
     <input id="photo" type="file" accept="image/*" capture="environment" hidden>
     <span class="pp" aria-hidden="true">user</span><span class="sep2" aria-hidden="true">$ </span>
-    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder", default: "ask anything") %>" aria-label="<%= t("face.message_aria", default: "Message") %>" required></textarea>
+    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder") %>" aria-label="<%= t("face.message_aria") %>" required></textarea>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
 
-    <button id="spin-btn" type="button" aria-label="<%= t("face.pause_speech", default: "Pause or resume speech") %>"></button>
+    <button id="spin-btn" type="button" aria-label="<%= t("face.pause_speech") %>"></button>
   </form>
   <script src="<%= asset_path("container_gate.js") %>" defer></script>
   <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>

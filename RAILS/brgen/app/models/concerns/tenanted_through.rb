@@ -22,7 +22,7 @@ module TenantedThrough
         next all unless tenant
 
         parent = klass.reflect_on_association(association).klass
-        joins(association).where(parent.table_name => { city_id: [tenant.id, nil] })
+        joins(association).where(parent.table_name => { city_id: [ tenant.id, nil ] })
       }
     end
   end

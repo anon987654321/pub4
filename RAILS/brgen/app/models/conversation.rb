@@ -24,7 +24,7 @@ class Conversation < ApplicationRecord
     "playlist"    => { name: "#playlist",    vertical: "playlist",    blurb: "Now playing — share tracks and listening parties.", bots: %w[dj echo] },
     "tv"          => { name: "#tv",          vertical: "tv",          blurb: "Live threads for shows and streams.",               bots: %w[critic echo] },
     "takeaway"    => { name: "#takeaway",    vertical: "takeaway",    blurb: "What's good to order right now?",                   bots: %w[foodie echo] },
-    "maps"        => { name: "#maps",        vertical: "maps",        blurb: "Local spots, tips, and directions.",                bots: %w[scout echo] },
+    "maps"        => { name: "#maps",        vertical: "maps",        blurb: "Local spots, tips, and directions.",                bots: %w[scout echo] }
   }.freeze
 
   # Channels are ephemeral: messages fade so a room reads as "what's happening
@@ -214,7 +214,7 @@ class Conversation < ApplicationRecord
     "1m" => 60,
     "5m" => 300,
     "1h" => 3600,
-    "24h" => 86_400,
+    "24h" => 86_400
   }.freeze
 
   def disappearing_messages? = disappearing_duration.present? && disappearing_duration.positive?
