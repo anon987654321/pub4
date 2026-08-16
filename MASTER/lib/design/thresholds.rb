@@ -57,18 +57,6 @@ module Master
           dig("layout_rules", "grid", "allowed_spacing_px", root:) ||
           [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96]
       end
-
-      def self.forbidden_css_patterns(root: Master::ROOT)
-        patterns = Array(dig("pixel_perfection", "forbidden_patterns", root:))
-        return patterns unless patterns.empty?
-
-        [
-          /box-shadow\s*:/i,
-          /text-shadow\s*:/i,
-          /filter\s*:\s*[^;]*blur\s*\(/i,
-          /backdrop-filter\s*:/i,
-        ]
-      end
     end
   end
 end

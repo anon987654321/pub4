@@ -268,7 +268,12 @@ module Master
           registered = Master::Review::Scan::Rule.registry.filter_map do |klass|
             Master::Review::Scan::RuleFactory.registry_id(klass, root: @root)&.upcase
           end
-          map.integrity(registered_rule_ids: registered).map do |msg|
+          # A rule declared in rules.yml with no Ruby class is still a rule — 126
+          # of the 227 are semantic-only. Checking a principle's rule_ids against
+          # the registry alone calls those unknown and reads as a broken map.
+          declared = Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
+                           .map { |rule| rule["id"].to_s.upcase }
+          map.integrity(registered_rule_ids: registered | declared).map do |msg|
             finding(path:, line: 1, message: msg)
           end
         rescue StandardError => e
