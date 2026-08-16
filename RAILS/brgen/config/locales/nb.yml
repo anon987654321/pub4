@@ -498,6 +498,7 @@ nb:
     submit: "Post"
     text_optional: "Tekst (valgfritt)"
   empty:
+    add_tracks: "Legg til eller importer spor for å spille."
     no_posts: "Ingen innlegg"
     no_posts_search: "Ingen innlegg matcher søket."
     no_posts_yet: "Ingen innlegg ennå"

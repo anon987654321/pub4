@@ -77,7 +77,7 @@ class FileLengthRatchetTest < Minitest::Test
     # Both were over: the layout by 8 and the player by 1. Split rather than
     # raised — the mobile bottom chrome moved to shared/_mobile_chrome and the
     # timestamped-comment composer to playlist/playlists/_comment_form.
-    "brgen/app/views/layouts/application.html.erb" => 213,
+    "brgen/app/views/layouts/application.html.erb" => 190,
     "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 155,
   }.freeze
 

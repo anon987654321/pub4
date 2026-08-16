@@ -492,6 +492,7 @@ en:
     submit: "Post"
     text_optional: "Text (optional)"
   empty:
+    add_tracks: "Add or import tracks to play."
     no_posts: "No posts"
     no_posts_search: "No posts match this search."
     no_posts_yet: "No posts yet"
