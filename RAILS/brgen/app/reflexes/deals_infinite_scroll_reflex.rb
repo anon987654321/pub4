@@ -6,7 +6,7 @@ class DealsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   private
 
   def scope
-    scope = Marketplace::Deal.active.includes(:listing)
+    scope = Marketplace::Deal.live.includes(:listing)
     return scope unless element.dataset["q"].present?
 
     like = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"

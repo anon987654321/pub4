@@ -108,7 +108,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   end
 
   def payable_orders
-    Current.user.marketplace_orders.includes(:listing).select(&:payable?)
+    Current.user.marketplace_orders.includes(:listing).select(&:startable?)
   end
 
   # Everything payable gathered under one Checkout. The address is required: a
@@ -135,6 +135,6 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     # of a paid/declined row walked into StripeCheckout.start!, which then
     # called mark_payment_pending! and rewound payment_status back to pending.
     order = Current.user.marketplace_orders.includes(:listing).find_by(id: params[:order_id])
-    order if order&.payable?
+    order if order&.startable?
   end
 end

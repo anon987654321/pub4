@@ -33,7 +33,7 @@ module Marketplace
 
       def self.start!(order:, success_url:, cancel_url:)
         raise NotConfigured, "Stripe" unless configured?
-        raise ArgumentError, "order is not payable" unless order.respond_to?(:payable?) && order.payable?
+        raise ArgumentError, "order is not payable" unless order.respond_to?(:startable?) && order.startable?
 
         if production? && test_key? && ENV["STRIPE_TEST_MODE"].to_s.strip.empty?
           raise NotConfigured,

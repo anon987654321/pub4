@@ -84,6 +84,10 @@ class Marketplace::Order < ApplicationRecord
   def mark_paid!(reference: payment_reference)
     transaction do
       listed = listing_id && Marketplace::Listing.lock.find_by(id: listing_id)
+      if listed && !listed.in_stock?
+        raise "listing is not in stock"
+      end
+
       listed&.consume_stock!(quantity.presence || 1)
       update!(
         payment_status: "paid",
@@ -107,6 +111,16 @@ class Marketplace::Order < ApplicationRecord
 
   def payable?
     payment_status.in?(%w[unpaid pending failed]) && status.in?(%w[pending pending_payment])
+  end
+
+  # start! / find_payable_order. pending means a PSP session already exists —
+  # starting another overwrote payment_reference and the first webhook missed.
+  def startable?
+    return false unless payment_status.in?(%w[unpaid failed])
+    return false unless status.in?(%w[pending pending_payment])
+
+    listed = association(:listing).loaded? ? listing : Marketplace::Listing.find_by(id: listing_id)
+    listed.nil? || (listed.status == "active" && !listed.expired? && listed.in_stock?)
   end
 
   # Shipping is the seller telling the buyer where the parcel is. Notified on

@@ -39,6 +39,9 @@ class Marketplace::Checkout < ApplicationRecord
 
   def payable? = status.in?(%w[open pending_payment]) && order_lines.any?
 
+  # A basket already sent to the PSP is payable (webhook) but not startable.
+  def startable? = status == "open" && order_lines.any?
+
   def total_display = Shared::MoneyDisplay.format(total_cents, currency)
 
   # The payable interface the payment services read. A basket has no single

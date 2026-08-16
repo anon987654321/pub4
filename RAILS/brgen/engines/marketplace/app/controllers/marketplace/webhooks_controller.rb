@@ -43,9 +43,17 @@ class Marketplace::WebhooksController < ActionController::Base
 
     payload = JSON.parse(body)
     ref = payload["reference"] || payload.dig("payment", "reference")
-    order = payable_scope.find_by(payment_reference: ref)
     state = payload["name"] || payload["state"] || payload.dig("payment", "state")
-    mark_paid(order, ref) if state.to_s.match?(/AUTHORIZED|CAPTURED|SALE|RESERVED/i)
+    if state.to_s.match?(/AUTHORIZED|CAPTURED|SALE|RESERVED/i)
+      # Checkout and its lines share one payment_reference. Looking the Order
+      # up first paid a single seller and left the basket open.
+      checkout = Marketplace::Checkout.find_by(payment_reference: ref)
+      if checkout
+        mark_paid_checkout(checkout, ref)
+      else
+        mark_paid(payable_scope.find_by(payment_reference: ref), ref)
+      end
+    end
     head :ok
   rescue JSON::ParserError
     head :bad_request
@@ -65,11 +73,19 @@ class Marketplace::WebhooksController < ActionController::Base
   # Only transition orders that are actually awaiting payment, so a replayed or
   # duplicated event cannot re-open a refunded or cancelled order.
   def mark_paid(order, reference)
-    order&.mark_paid!(reference: reference) if order&.payable?
+    return unless order&.payable?
+
+    order.mark_paid!(reference: reference)
+  rescue RuntimeError => e
+    raise unless e.message.include?("not in stock")
   end
 
   def mark_paid_checkout(checkout, reference)
-    checkout&.mark_paid!(reference: reference) if checkout&.payable?
+    return unless checkout&.payable?
+
+    checkout.mark_paid!(reference: reference)
+  rescue RuntimeError => e
+    raise unless e.message.include?("not in stock")
   end
 
   # Stripe's documented scheme: `Stripe-Signature: t=<unix>,v1=<hex hmac>`,

@@ -116,4 +116,15 @@ class ListingExpiryTest < ActiveSupport::TestCase
     assert_not order.valid?
     assert order.errors[:listing].any?
   end
+
+  test "a deal on an expired listing is not live" do
+    fresh = listing
+    lapsed = listing
+    lapsed.update_columns(expires_at: 1.hour.ago)
+    live_deal = Marketplace::Deal.create!(listing: fresh, headline: "Live #{SecureRandom.hex(3)}")
+    dead_deal = Marketplace::Deal.create!(listing: lapsed, headline: "Dead #{SecureRandom.hex(3)}")
+
+    assert_includes Marketplace::Deal.live.map(&:id), live_deal.id
+    refute_includes Marketplace::Deal.live.map(&:id), dead_deal.id
+  end
 end

@@ -86,6 +86,33 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_not_equal "paid", @order.reload.payment_status
   end
 
+  test "vipps pays the checkout, not a single colliding order line" do
+    secret = "vipps_whsec"
+    prior = ENV["VIPPS_WEBHOOK_SECRET"]
+    ENV["VIPPS_WEBHOOK_SECRET"] = secret
+    other = Marketplace::Listing.create!(title: "Line two", price_cents: 500, user: @seller, category: @category)
+    second = Marketplace::Order.create!(listing: other, buyer: @buyer)
+    address = Marketplace::Address.create!(
+      user: @buyer, recipient: "Kari", line1: "Torget 1",
+      postcode: "5003", city_name: "Bergen", country_code: "NO"
+    )
+    checkout = Marketplace::Checkout.create!(user: @buyer, marketplace_address: address, currency: "NOK")
+    [@order, second].each { |row| row.update!(marketplace_checkout_id: checkout.id, payment_reference: "vipps_basket") }
+    checkout.update!(status: "pending_payment", payment_reference: "vipps_basket")
+    payload = { reference: "vipps_basket", state: "AUTHORIZED" }.to_json
+    mac = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", secret, payload))
+
+    post "/webhooks/vipps", params: payload,
+         headers: { "CONTENT_TYPE" => "application/json", "Authorization" => "HMAC #{mac}" }
+
+    assert_response :ok
+    assert_equal "paid", checkout.reload.status
+    assert_equal "paid", @order.reload.payment_status
+    assert_equal "paid", second.reload.payment_status
+  ensure
+    ENV["VIPPS_WEBHOOK_SECRET"] = prior
+  end
+
   private
 
   def with_secret

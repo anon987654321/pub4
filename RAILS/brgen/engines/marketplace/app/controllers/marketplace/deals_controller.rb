@@ -7,7 +7,7 @@ module Marketplace
     allow_unauthenticated_access only: %i[index show]
 
     def index
-      scope = Marketplace::Deal.active.includes(listing: { photos_attachments: :blob })
+      scope = Marketplace::Deal.live.includes(listing: { photos_attachments: :blob })
       if live_search_query.present?
         like = "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%"
         scope = scope.joins(:listing).where(
@@ -21,7 +21,7 @@ module Marketplace
     end
 
     def show
-      @deal = Marketplace::Deal.find(params[:id])
+      @deal = Marketplace::Deal.live.find(params[:id])
       @listing = @deal.listing
     end
   end

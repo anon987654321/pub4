@@ -108,6 +108,32 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
     end
   end
 
+  test "a second payment cannot consume an already sold unique listing" do
+    ActsAsTenant.with_tenant(@city) do
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "One chair", price_cents: 2_000, currency: "NOK")
+      first = Marketplace::Order.create!(buyer: @buyer, listing: listing, status: "pending")
+      other = User.strict_loading(false).create!(email_address: "second@brgen.no", password: "password123", city: @city)
+      second = Marketplace::Order.create!(buyer: other, listing: listing, status: "pending")
+
+      first.mark_paid!(reference: "cs_first")
+      assert_equal "sold", listing.reload.status
+      assert_raises(RuntimeError) { second.mark_paid!(reference: "cs_second") }
+      refute_equal "paid", second.reload.payment_status
+    end
+  end
+
+  test "startable? is false once a PSP session is pending" do
+    ActsAsTenant.with_tenant(@city) do
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Pending", price_cents: 2_000, currency: "NOK")
+      order = Marketplace::Order.create!(buyer: @buyer, listing: listing, status: "pending")
+      assert order.startable?
+
+      order.mark_payment_pending!(provider: "stripe", reference: "cs_pending")
+      refute order.reload.startable?
+      assert order.payable?
+    end
+  end
+
   test "create refuses an expired listing" do
     ActsAsTenant.with_tenant(@city) do
       listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Gone", price_cents: 1_000, currency: "NOK")

@@ -106,6 +106,8 @@ class Marketplace::Listing < ApplicationRecord
   # since-tightened validation cannot block a sale that has already been paid
   # for, and updated_at goes with it because the card is cached on [listing].
   def consume_stock!(quantity = 1)
+    raise "listing is not in stock" unless in_stock?
+
     return mark_sold! if one_of_a_kind?
 
     remaining = [ stock.to_i - quantity.to_i, 0 ].max

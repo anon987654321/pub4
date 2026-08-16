@@ -61,6 +61,17 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("flash.marketplace.cart_not_payable"), flash[:alert]
   end
 
+  test "create with a pending-payment order_id does not start a second session" do
+    sign_in(@buyer)
+    @order.update!(payment_status: "pending", status: "pending_payment", payment_reference: "cs_first")
+    post marketplace.checkout_path, params: { provider: "stripe", order_id: @order.id }
+    assert_redirected_to marketplace.cart_path
+    assert_equal I18n.t("flash.marketplace.cart_not_payable"), flash[:alert]
+    @order.reload
+    assert_equal "pending", @order.payment_status
+    assert_equal "cs_first", @order.payment_reference
+  end
+
   test "create with a paid order_id does not rewind payment_status" do
     sign_in(@buyer)
     @order.update!(payment_status: "paid", status: "paid")
