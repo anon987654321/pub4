@@ -136,7 +136,10 @@ module Pub4
       # fails amber's CI, which is how amber sat undeployed for a day. Recording
       # the true low is still right — a baseline nobody trusts is worse — but
       # anyone adding an unlocalised aria-label will meet it in another app.
-      "aria_label" => 107,
+      # 107 -> 105 on 2026-08-16. Two aria-labels were translated on main and
+      # the baseline did not follow them down, which is the half of this ratchet
+      # that keeps it honest: a floor nobody lowers stops being a floor.
+      "aria_label" => 105,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -165,7 +168,8 @@ module Pub4
       # that comment before lowering either of them.
       # → 211 (2026-08-14), lowered with it and on the same evidence: stable
       # across the session and across three consecutive measurements.
-      "translate_default" => 211,
+      # 211 -> 208, same reason and same day as aria_label above.
+      "translate_default" => 208,
     }.freeze
 
     # Kept for callers that referenced the old single number.

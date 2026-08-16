@@ -47,7 +47,10 @@ class CoverageRatchetTest < Minitest::Test
     # surface in the tree — this ratchet already counted engines/*/app, so the
     # zero was visible here the whole time and nobody had raised it because a
     # floor of 11 does not complain about an engine sitting at nothing.
-    "brgen" => { "controllers" => 14, "models" => 18 },
+    # models 18 -> 19 on 2026-08-16. Not this branch: the test arrived with
+    # main and the floor was not raised with it, which is the direction this
+    # ratchet exists to catch.
+    "brgen" => { "controllers" => 14, "models" => 19 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two
