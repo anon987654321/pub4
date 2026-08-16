@@ -2,18 +2,25 @@
     named the city was removed on purpose; this is interconnection, a handful
     of new listings / restaurants / videos that already exist on other hosts. %>
 <aside class="city-today sidebar-card" aria-label="<%= t("home.intro_title", city: city_name) %>">
-  <h2><%= t("home.intro_title", city: city_name) %></h2>
-  <ul class="city-today-list">
-    <% events.each do |event| %>
-      <% href = activity_event_href(event) %>
-      <li>
-        <% if href.present? %>
-          <%= link_to activity_event_title(event), href %>
-        <% else %>
-          <%= activity_event_title(event) %>
-        <% end %>
-        <span class="dim"><%= activity_event_vertical(event) %></span>
-      </li>
-    <% end %>
-  </ul>
+  <%# Closed until asked for. The strip is interconnection, not the feed, so it
+      states what it is and opens on a tap rather than spending the top of the
+      page on links to other hosts. <details> because the browser already has
+      this: keyboard, screen-reader state and the open/closed toggle are the
+      element's, not a controller's. %>
+  <details>
+    <summary><h2><%= t("home.intro_title", city: city_name) %></h2></summary>
+    <ul class="city-today-list">
+      <% events.each do |event| %>
+        <% href = activity_event_href(event) %>
+        <li>
+          <% if href.present? %>
+            <%= link_to activity_event_title(event), href %>
+          <% else %>
+            <%= activity_event_title(event) %>
+          <% end %>
+          <span class="dim"><%= activity_event_vertical(event) %></span>
+        </li>
+      <% end %>
+    </ul>
+  </details>
 </aside>

@@ -79,6 +79,23 @@
   font-weight: var(--weight-heavy);
 }
 
+/* The city strip opens on a tap. summary carries the real heading so the
+   browser own disclosure state, keyboard handling and screen-reader
+   announcement apply to the title rather than to a wrapper, and the h2 goes
+   inline so the marker sits beside it instead of above. */
+.city-today summary {
+  cursor: pointer;
+}
+
+.city-today summary h2 {
+  display: inline;
+  margin: 0;
+}
+
+.city-today details[open] .city-today-list {
+  margin-top: var(--space-3);
+}
+
 .sidebar-card ul,
 .city-today-list,
 .also-nearby ul,
