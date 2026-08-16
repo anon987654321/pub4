@@ -229,6 +229,7 @@ principles:
     - SKIP_TO_MAIN
     - HTML_LANG
     status: covered
+    root: reach
     tags:
     - ui
   adaptive_reuse:
@@ -239,6 +240,7 @@ principles:
     operation: organize
     rule_ids: []
     status: gap
+    root: stewardship
     tags:
     - code
   aesthetic_integrity:
@@ -261,6 +263,7 @@ principles:
     rule_ids:
     - AFFORDANCE_CLARITY
     status: covered
+    root: reach
     tags:
     - aesthetic
     - ui
@@ -282,6 +285,7 @@ principles:
     operation: add_logging
     rule_ids: []
     status: gap
+    root: least_authority
     tags:
     - code
   avoid_duplicate_code:
@@ -292,6 +296,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: one_source
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -303,6 +308,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -326,6 +332,7 @@ principles:
     rule_ids:
     - COMMENTS_AS_DEODORANT
     status: covered
+    root: no_surplus
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -337,6 +344,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -348,6 +356,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -360,6 +369,7 @@ principles:
     rule_ids:
     - CQS
     status: covered
+    root: visible_state
     tags:
     - code
   balance:
@@ -371,6 +381,7 @@ principles:
     rule_ids:
     - EIGHT_PX_RHYTHM
     status: covered
+    root: proportion
     tags:
     - aesthetic
     - ui
@@ -392,6 +403,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: stewardship
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -403,6 +415,7 @@ principles:
     operation: improve
     rule_ids: []
     status: gap
+    root: stewardship
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -416,6 +429,7 @@ principles:
     - BROKEN_WINDOWS
     - ENTROPY_RESISTANCE
     status: covered
+    root: stewardship
     tags:
     - code
     - linked-2026-08-07
@@ -427,6 +441,7 @@ principles:
     operation: improve
     rule_ids: []
     status: gap
+    root: stewardship
     tags:
     - code
   carrying_capacity:
@@ -438,6 +453,7 @@ principles:
     rule_ids:
     - HOST_CAPACITY
     status: covered
+    root: bounded_load
     tags:
     - code
   chroot_isolation:
@@ -448,6 +464,7 @@ principles:
     operation: isolate
     rule_ids: []
     status: gap
+    root: least_authority
     tags:
     - code
   chunking:
@@ -459,6 +476,7 @@ principles:
     rule_ids:
     - CHOICE_OVERLOAD
     status: covered
+    root: bounded_load
     tags:
     - ui
   circuit_breaker:
@@ -472,6 +490,7 @@ principles:
     - GRACEFUL_BOUNDARIES
     - CONSISTENT_ERROR_STRATEGY
     status: covered
+    root: visible_state
     tags:
     - code
     - linked-2026-08-07
@@ -484,6 +503,7 @@ principles:
     rule_ids:
     - MEANINGFUL_NAMES
     status: covered
+    root: least_surprise
     tags:
     - ui
   clean_geometric_lines:
@@ -494,6 +514,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -505,6 +526,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -516,6 +538,7 @@ principles:
     operation: clarify
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -527,6 +550,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -561,6 +585,7 @@ principles:
     rule_ids:
     - CQS
     status: covered
+    root: one_responsibility
     tags:
     - code
   complexity_budget:
@@ -572,6 +597,7 @@ principles:
     rule_ids:
     - SMALL_FUNCTIONS
     status: covered
+    root: bounded_load
     tags:
     - code
   composition_over_inheritance:
@@ -583,6 +609,7 @@ principles:
     rule_ids:
     - COMPOSITION_OVER_INHERITANCE
     status: covered
+    root: stewardship
     tags:
     - code
     - linked-2026-08-07
@@ -594,6 +621,7 @@ principles:
     operation: add_whitespace
     rule_ids: []
     status: gap
+    root: least_authority
     tags:
     - aesthetic
   consistency:
@@ -608,6 +636,7 @@ principles:
     - RUBY_CAMEL_CLASS
     - NO_ABBREVIATED_IDENTIFIERS
     status: covered
+    root: least_surprise
     tags:
     - ui
   consistent_visual_language:
@@ -642,6 +671,7 @@ principles:
     operation: improve
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -653,6 +683,7 @@ principles:
     operation: improve
     rule_ids: []
     status: gap
+    root: stewardship
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -665,6 +696,7 @@ principles:
     rule_ids:
     - CONTRAST_TOKENS
     status: covered
+    root: reach
     tags:
     - ui
   convention_over_configuration:
@@ -696,6 +728,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: one_source
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -709,6 +742,7 @@ principles:
     - MIGRATION_ADD_REFERENCE_NO_FK
     - MIGRATION_FIND_OR_CREATE_BY
     status: covered
+    root: proportion
     tags:
     - code
   datsuzoku:
@@ -719,6 +753,7 @@ principles:
     operation: question_pattern
     rule_ids: []
     status: gap
+    root: least_surprise
     tags:
     - code
   decompose_conditional:
@@ -740,6 +775,7 @@ principles:
     operation: introduce_interface
     rule_ids: []
     status: gap
+    root: stable_contract
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -752,6 +788,7 @@ principles:
     rule_ids:
     - DEPENDENCY_INVERSION
     status: covered
+    root: stable_contract
     tags:
     - code
   design_invisibility:
@@ -805,6 +842,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -817,6 +855,7 @@ principles:
     rule_ids:
     - DEAD_CODE
     status: covered
+    root: one_source
     tags:
     - code
   durability:
@@ -829,6 +868,7 @@ principles:
     - PROPERTY_BASED_TESTING
     - REVERSIBILITY
     status: covered
+    root: least_authority
     tags:
     - code
     - linked-2026-08-07
@@ -876,6 +916,7 @@ principles:
     rule_ids:
     - WHITESPACE_RHYTHM
     status: covered
+    root: proportion
     tags:
     - aesthetic
   encapsulate_variable:
@@ -920,6 +961,7 @@ principles:
     rule_ids:
     - FORM_LABEL
     status: covered
+    root: visible_state
     tags:
     - aesthetic
   essential_elements_only:
@@ -930,6 +972,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -941,6 +984,7 @@ principles:
     operation: add_evidence
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -952,6 +996,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -964,6 +1009,7 @@ principles:
     rule_ids:
     - SILENT_RESCUE
     status: covered
+    root: visible_state
     tags:
     - code
   extend_dont_replace:
@@ -974,6 +1020,7 @@ principles:
     operation: extend
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -986,6 +1033,7 @@ principles:
     rule_ids:
     - OPEN_CLOSED
     status: covered
+    root: stable_contract
     tags:
     - code
   extract_class:
@@ -996,6 +1044,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: one_responsibility
     tags:
     - refactoring
     source: master.yml@30dad7ead
@@ -1018,6 +1067,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: reach
     tags:
     - refactoring
     source: master.yml@30dad7ead
@@ -1030,6 +1080,7 @@ principles:
     rule_ids:
     - SILENT_RESCUE
     status: covered
+    root: visible_state
     tags:
     - code
   feedback:
@@ -1040,6 +1091,7 @@ principles:
     operation: add_feedback
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - code
   file_sprawl_prevention:
@@ -1050,6 +1102,7 @@ principles:
     operation: consolidate
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -1072,6 +1125,7 @@ principles:
     rule_ids:
     - TOUCH_TARGET_MIN
     status: covered
+    root: reach
     tags:
     - ui
   fittss_law:
@@ -1082,6 +1136,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: reach
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -1096,6 +1151,7 @@ principles:
     - NO_DECORATIVE_FX
     - FLAT_PIXELS
     status: covered
+    root: bounded_load
     tags:
     - aesthetic
   flexibility_and_adaptability:
@@ -1106,6 +1162,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: reach
     tags:
     - aesthetic
   flush_left_alignment:
@@ -1160,6 +1217,7 @@ principles:
     operation: organize
     rule_ids: []
     status: gap
+    root: stable_contract
     tags:
     - code
   free_plan:
@@ -1170,6 +1228,7 @@ principles:
     operation: organize
     rule_ids: []
     status: gap
+    root: stable_contract
     tags:
     - code
   fukinsei:
@@ -1204,6 +1263,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1215,6 +1275,7 @@ principles:
     operation: improve
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1292,6 +1353,7 @@ principles:
     operation: make_timeless
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1304,6 +1366,7 @@ principles:
     rule_ids:
     - RAMS_THOROUGH
     status: covered
+    root: bounded_load
     tags:
     - ui
   good_design_is_understandable:
@@ -1315,6 +1378,7 @@ principles:
     rule_ids:
     - RAMS_UNDERSTANDABLE
     status: covered
+    root: stable_contract
     tags:
     - ui
   good_design_is_unobtrusive:
@@ -1337,6 +1401,7 @@ principles:
     rule_ids:
     - RAMS_USEFUL
     status: covered
+    root: no_surplus
     tags:
     - ui
   grid_based_layouts:
@@ -1347,6 +1412,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1358,6 +1424,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1369,6 +1436,7 @@ principles:
     operation: standardize
     rule_ids: []
     status: gap
+    root: least_surprise
     tags:
     - code
   hicks_law:
@@ -1380,6 +1448,7 @@ principles:
     rule_ids:
     - CHOICE_OVERLOAD
     status: covered
+    root: bounded_load
     tags:
     - ui
   hide_implementation_details:
@@ -1390,6 +1459,7 @@ principles:
     operation: encapsulate
     rule_ids: []
     status: gap
+    root: stable_contract
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -1424,6 +1494,7 @@ principles:
     rule_ids:
     - CONTRAST_TOKENS
     status: covered
+    root: reach
     tags:
     - aesthetic
   human_scale:
@@ -1435,6 +1506,7 @@ principles:
     rule_ids:
     - SMALL_FUNCTIONS
     status: covered
+    root: proportion
     tags:
     - ui
   idempotency:
@@ -1446,6 +1518,7 @@ principles:
     rule_ids:
     - CONST_BY_DEFAULT
     status: covered
+    root: one_source
     tags:
     - code
   ikigai:
@@ -1456,6 +1529,7 @@ principles:
     operation: clarify_purpose
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
@@ -1480,6 +1554,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -1504,6 +1579,7 @@ principles:
     - COUPLER_SMELLS
     - FEATURE_ENVY
     status: covered
+    root: stable_contract
     tags:
     - aesthetic
   inline_function:
@@ -1536,6 +1612,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1547,6 +1624,7 @@ principles:
     operation: analyze_first
     rule_ids: []
     status: gap
+    root: stewardship
     tags:
     - code
   introduce_parameter_object:
@@ -1568,6 +1646,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: least_surprise
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -1579,6 +1658,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: stable_contract
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -1612,6 +1692,7 @@ principles:
     rule_ids:
     - DEAD_CODE
     status: covered
+    root: no_surplus
     tags:
     - ui
   kanso:
@@ -1624,6 +1705,7 @@ principles:
     - AESTHETIC_MINIMALISM
     - NO_DECORATIVE_FX
     status: covered
+    root: no_surplus
     tags:
     - ui
   keep_it_simple:
@@ -1635,6 +1717,7 @@ principles:
     rule_ids:
     - DEAD_CODE
     status: covered
+    root: no_surplus
     tags:
     - code
   kintsugi:
@@ -1656,6 +1739,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
@@ -1667,6 +1751,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1689,6 +1774,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: bounded_load
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -1700,6 +1786,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: reach
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -1712,6 +1799,7 @@ principles:
     rule_ids:
     - LEAST_PRIVILEGE
     status: covered
+    root: least_authority
     tags:
     - code
     - linked-2026-08-07
@@ -1724,6 +1812,7 @@ principles:
     rule_ids:
     - AESTHETIC_MINIMALISM
     status: covered
+    root: no_surplus
     tags:
     - ui
   less_is_more:
@@ -1736,6 +1825,7 @@ principles:
     - AESTHETIC_MINIMALISM
     - UTILITY_CLASS_SOUP
     status: covered
+    root: no_surplus
     tags:
     - ui
   limited_color_palette:
@@ -1746,6 +1836,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: bounded_load
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1791,6 +1882,7 @@ principles:
     rule_ids:
     - CO_CHANGE_COUPLING
     status: covered
+    root: stable_contract
     tags:
     - code
   loose_coupling:
@@ -1805,6 +1897,7 @@ principles:
     - LAW_OF_DEMETER
     - CO_CHANGE_COUPLING
     status: covered
+    root: stable_contract
     tags:
     - code
   ma:
@@ -1816,6 +1909,7 @@ principles:
     rule_ids:
     - WHITESPACE_RHYTHM
     status: covered
+    root: proportion
     tags:
     - aesthetic
     - ui
@@ -1837,6 +1931,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -1861,6 +1956,7 @@ principles:
     - EIGHT_PX_RHYTHM
     - PIXEL_EXACT
     status: covered
+    root: proportion
     tags:
     - code
   mental_models:
@@ -1871,6 +1967,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: least_surprise
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -1892,6 +1989,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1927,6 +2025,7 @@ principles:
     - DEPENDENCY_INVERSION
     - INTERFACE_SEGREGATION
     status: covered
+    root: stable_contract
     tags:
     - code
   mono_no_aware:
@@ -1948,6 +2047,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: bounded_load
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -1970,6 +2070,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -1981,6 +2082,7 @@ principles:
     operation: optimize_resources
     rule_ids: []
     status: gap
+    root: stewardship
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
@@ -2003,6 +2105,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
@@ -2060,6 +2163,7 @@ principles:
     rule_ids:
     - WHITESPACE_RHYTHM
     status: covered
+    root: proportion
     tags:
     - aesthetic
   net_zero_design:
@@ -2082,6 +2186,7 @@ principles:
     rule_ids:
     - NO_GOD_CLASS
     status: covered
+    root: one_responsibility
     tags:
     - code
   no_privilege_escalation:
@@ -2092,6 +2197,7 @@ principles:
     operation: add_guards
     rule_ids: []
     status: unmapped
+    root: least_authority
     tags:
     - code
   null_safety:
@@ -2105,6 +2211,7 @@ principles:
     - NULL_BLINDNESS
     - HASH_FETCH
     status: covered
+    root: least_authority
     tags:
     - code
   objective_clarity:
@@ -2127,6 +2234,7 @@ principles:
     rule_ids:
     - SILENT_RESCUE
     status: covered
+    root: visible_state
     tags:
     - code
     immutable: true
@@ -2138,6 +2246,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
@@ -2161,6 +2270,7 @@ principles:
     rule_ids:
     - OPEN_CLOSED
     status: covered
+    root: stable_contract
     tags:
     - code
   open_floor_plan:
@@ -2193,6 +2303,7 @@ principles:
     operation: isolate
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - refactoring
     source: master.yml@30dad7ead
@@ -2204,6 +2315,7 @@ principles:
     operation: organize
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -2217,6 +2329,7 @@ principles:
     - CO_CHANGE_COUPLING
     - COUPLER_SMELLS
     status: covered
+    root: stable_contract
     tags:
     - code
   pareto_principle:
@@ -2227,6 +2340,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: one_responsibility
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -2250,6 +2364,7 @@ principles:
     rule_ids:
     - PATTERN_EXTRACTION
     status: covered
+    root: one_source
     tags:
     - aesthetic
   peak_end_rule:
@@ -2271,6 +2386,7 @@ principles:
     operation: delete
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -2282,6 +2398,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -2314,6 +2431,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: one_source
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -2325,6 +2443,7 @@ principles:
     operation: add_restrictions
     rule_ids: []
     status: gap
+    root: least_authority
     tags:
     - code
   prefer_polymorphism:
@@ -2335,6 +2454,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: stewardship
     tags:
     - refactoring
     source: master.yml@30dad7ead
@@ -2358,6 +2478,7 @@ principles:
     rule_ids:
     - LAW_OF_DEMETER
     status: covered
+    root: least_surprise
     tags:
     - code
   privilege_separation:
@@ -2368,6 +2489,7 @@ principles:
     operation: separate
     rule_ids: []
     status: gap
+    root: one_responsibility
     tags:
     - code
   progressive_disclosure:
@@ -2379,6 +2501,7 @@ principles:
     rule_ids:
     - PROGRESSIVE_DISCLOSURE
     status: covered
+    root: bounded_load
     tags:
     - ui
   proportion_and_scale:
@@ -2389,6 +2512,7 @@ principles:
     operation: rebalance
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -2400,6 +2524,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -2412,6 +2537,7 @@ principles:
     rule_ids:
     - RATE_LIMITING_MISSING
     status: covered
+    root: bounded_load
     tags:
     - code
   rational_objectivity:
@@ -2422,6 +2548,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -2433,6 +2560,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -2455,6 +2583,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: bounded_load
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -2468,6 +2597,7 @@ principles:
     - NO_DECORATIVE_FX
     - FLAT_PIXELS
     status: covered
+    root: no_surplus
     tags:
     - ui
   remove_non_essentials:
@@ -2478,6 +2608,7 @@ principles:
     operation: delete
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -2489,6 +2620,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: reach
     tags:
     - refactoring
     source: master.yml@30dad7ead
@@ -2500,6 +2632,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - refactoring
     source: master.yml@30dad7ead
@@ -2545,6 +2678,7 @@ principles:
     rule_ids:
     - EIGHT_PX_RHYTHM
     status: covered
+    root: proportion
     tags:
     - aesthetic
     - ui
@@ -2600,6 +2734,7 @@ principles:
     rule_ids:
     - SECRET_PROXIMITY
     status: covered
+    root: least_authority
     tags:
     - code
   secrets_rotation:
@@ -2610,6 +2745,7 @@ principles:
     operation: add_rotation
     rule_ids: []
     status: gap
+    root: least_authority
     tags:
     - code
   sectionitis_prevention:
@@ -2620,6 +2756,7 @@ principles:
     operation: flatten
     rule_ids: []
     status: gap
+    root: bounded_load
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -2644,6 +2781,7 @@ principles:
     rule_ids:
     - SECRET_PROXIMITY
     status: covered
+    root: least_authority
     tags:
     - code
   seijaku:
@@ -2656,6 +2794,7 @@ principles:
     - SIGNAL_NOISE
     - NO_ASCII_LINE_ART
     status: covered
+    root: no_surplus
     tags:
     - code
   sense_of_place:
@@ -2691,6 +2830,7 @@ principles:
     - HELPER_VIEW_ONLY
     - NO_GOD_CLASS
     status: covered
+    root: one_responsibility
     tags:
     - code
   shadows_create_hierarchy:
@@ -2701,6 +2841,7 @@ principles:
     severity: medium
     rule_ids: []
     status: gap
+    root: bounded_load
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -2712,6 +2853,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: least_authority
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
@@ -2724,6 +2866,7 @@ principles:
     rule_ids:
     - AESTHETIC_MINIMALISM
     status: covered
+    root: no_surplus
     tags:
     - aesthetic
     - ui
@@ -2735,6 +2878,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
@@ -2779,6 +2923,7 @@ principles:
     rule_ids:
     - SIGNAL_NOISE
     status: covered
+    root: no_surplus
     tags:
     - ui
   single_responsibility:
@@ -2790,6 +2935,7 @@ principles:
     rule_ids:
     - NO_GOD_CLASS
     status: covered
+    root: one_responsibility
     tags:
     - code
   sovereignty:
@@ -2815,6 +2961,7 @@ principles:
     - STIMULUS_CONTROLLER_SIZE
     - STIMULUS_PROGRESSIVE
     status: covered
+    root: one_responsibility
     tags:
     - rails
     - ui
@@ -2840,6 +2987,7 @@ principles:
     - SIMULATION
     - COMPLETION_THEATER
     status: covered
+    root: visible_state
     tags:
     - code
   structured_logging:
@@ -2850,6 +2998,7 @@ principles:
     operation: standardize
     rule_ids: []
     status: gap
+    root: least_surprise
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -2872,6 +3021,7 @@ principles:
     operation: align
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - aesthetic
   system_status_visibility:
@@ -2882,6 +3032,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -2893,6 +3044,7 @@ principles:
     operation: add_whitespace
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - aesthetic
   tell_dont_ask:
@@ -2903,6 +3055,7 @@ principles:
     operation: move_method
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - clean_code
     source: master.yml@30dad7ead
@@ -2935,6 +3088,7 @@ principles:
     operation: isolate
     rule_ids: []
     status: gap
+    root: least_authority
     tags:
     - code
   test_pyramid:
@@ -2945,6 +3099,7 @@ principles:
     operation: rebalance
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - engineering
     source: master.yml@30dad7ead
@@ -2978,6 +3133,7 @@ principles:
     operation: reveal_intent
     rule_ids: []
     status: gap
+    root: visible_state
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -3002,6 +3158,7 @@ principles:
     operation: improve
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -3047,6 +3204,7 @@ principles:
     - TOUCH_TARGET_MIN
     - SEMANTIC_ELEMENTS
     status: covered
+    root: reach
     tags:
     - code
   universal_visual_language:
@@ -3090,6 +3248,7 @@ principles:
     operation: clarify_purpose
     rule_ids: []
     status: gap
+    root: no_surplus
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -3103,6 +3262,7 @@ principles:
     - PIXEL_EXACT
     - AESTHETIC_MINIMALISM
     status: covered
+    root: no_surplus
     tags:
     - aesthetic
     - ui
@@ -3138,6 +3298,7 @@ principles:
     operation: improve
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - visual_design
     source: master.yml@30dad7ead
@@ -3149,6 +3310,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: reach
     tags:
     - ux_laws
     source: master.yml@30dad7ead
@@ -3160,6 +3322,7 @@ principles:
     operation: organize
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - code
   wabi_sabi:
@@ -3181,6 +3344,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: reach
     tags:
     - aesthetic
   waste_reduction:
@@ -3191,6 +3355,7 @@ principles:
     operation: simplify
     rule_ids: []
     status: gap
+    root: proportion
     tags:
     - architecture
     source: master.yml@30dad7ead
@@ -3204,6 +3369,7 @@ principles:
     - WHITESPACE_RHYTHM
     - EIGHT_PX_RHYTHM
     status: covered
+    root: proportion
     tags:
     - aesthetic
   yohaku_no_bi:
@@ -3215,6 +3381,7 @@ principles:
     rule_ids:
     - WHITESPACE_RHYTHM
     status: covered
+    root: proportion
     tags:
     - aesthetic
   yoin:
@@ -3237,6 +3404,7 @@ principles:
     rule_ids:
     - DEAD_CODE
     status: covered
+    root: no_surplus
     tags:
     - code
   yugen:
@@ -3247,6 +3415,7 @@ principles:
     operation: deepen
     rule_ids: []
     status: gap
+    root: bounded_load
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
