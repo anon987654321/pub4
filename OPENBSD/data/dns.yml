@@ -54,7 +54,10 @@ mail_domain: brgen.no
 #
 # Measured 2026-08-12: every one of these that is not brgen-adjacent is NXDOMAIN
 # at its registrar. The anti-gambling trio and foodielicio.us are older ideas;
-# bsdports.net is a defensive registration for bsdports.org.
+# bsdports.net is a defensive registration for bsdports.org and has no zone:
+# it resolved to this box with no relayd entry, no acme-client block and no
+# certificate, so the name completed DNS and then failed TLS. Owning a name is
+# not a reason to answer for it.
 #
 # baibl.no, blognet.no and hjerterom.no were here until 2026-08-12, when all
 # three apps were deleted. Their users, homes, rc.d scripts, /etc/*.env files,
@@ -64,7 +67,6 @@ extra_zones:
   antibettingblog.com: {}
   anticasinoblog.com: {}
   antigamblingblog.com: {}
-  bsdports.net: {}
   bsdports.org: {}
   discordb.org: {}
   bsddocs.org: {}
