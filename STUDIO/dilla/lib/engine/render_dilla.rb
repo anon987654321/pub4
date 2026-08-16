@@ -49,7 +49,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   @render_pad_gain = (cfg[:sonic]&.dig("synth", "pad_volume_pct") || 40).to_f / 100.0
   composition_session!(n_bars:, track: cfg[:track].to_s)
   if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
-    cfg = cfg.merge(swing: @composition_session.groove_profile[:swing].to_f)
+    # ENV/SWING is the style DNA (56). The donuts groove table is 61 and
+    # used to overwrite it on every composition render.
+    dna = ENV["SWING"].to_s
+    cfg = cfg.merge(swing: dna.empty? ? @composition_session.groove_profile[:swing].to_f : dna.to_f)
   end
   pick_synth_patches!(cfg, bar: n_bars / 2, n_bars:)
   beat_p   = 60.0 / cfg[:bpm]
@@ -104,12 +107,41 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # Declared per record in TRACK_SAMPLE_LOOPS_BUILTIN, because only the crate
   # knows which records are like this, and the other loops there want their
   # progressions. SAMPLE_HARMONY=0 overrides for a one-off render.
-  if sample_loop_for(ENV["TRACK"])&.dig(:carries_own_harmony) && ENV["SAMPLE_HARMONY"] != "0"
+  #
+  # SAMPLE_CARRIES_HARMONY=1 says the same thing for a loop the crate has never
+  # heard of. That gap was invisible while every loop came from the crate, and
+  # opened the moment one did not: a SAMPLE_LOOP=<path> render has no TRACK to
+  # look up, so this test was always false and the pads came back over the top
+  # of a choir — the exact fault the paragraph above describes, on the exact
+  # record it names. Expressing it needed ten environment variables set by hand
+  # (PAD_VOL, HARM_MIX_WEIGHT, and the eight tonal layers below), which is a
+  # list nobody will get right twice.
+  #
+  # One fact about the sample, one knob.
+  carries_own_harmony = sample_loop_for(ENV["TRACK"])&.dig(:carries_own_harmony) ||
+                        ENV["SAMPLE_CARRIES_HARMONY"] == "1"
+  if carries_own_harmony && ENV["SAMPLE_HARMONY"] != "0"
     dmesg("harmony: the record carries it — tonal layers muted", unit: "harm0", parent: "dilla0")
-    %w[PAD_VOL HARM_MIX_WEIGHT].each { |k| ENV[k] = "0" }
+    # ANALOG_PAD_WEIGHT belongs in the first list and was not in it. The branch
+    # logs "tonal layers muted" and then rendered `analog pad: warm_pad on real
+    # oscillators` anyway — a pad voicing the progression, over a record that
+    # states its own chords, which is the whole thing this branch exists to
+    # prevent. It survived because it is weighted separately from PAD_VOL at
+    # render_dilla:615 and the list was written against the other one.
+    %w[PAD_VOL HARM_MIX_WEIGHT ANALOG_PAD_WEIGHT].each { |k| ENV[k] = "0" }
     %w[MELODIC_LEAD SCALE_LEAD LEAD_ARP HARMONY_LEAD PAD_LAYERS PAD_TEXTURE
        CHOIR_VOX LUSH_SYNTH].each { |k| ENV[k] = "0" }
-    pads = []
+    # `pads` is deliberately NOT cleared, and that is the difference between this
+    # and the guard below.
+    #
+    # Emptying it raised NoMethodError in lead_arp.rb's chord_variation_rng —
+    # `stable_hash(chord[:name].to_s)` on a nil chord — because dilla_schedule
+    # still walks the progression for timing whether or not anything voices it.
+    # The guard below does `pads = []` too, so it carries the same crash; it has
+    # simply never fired, because it only triggers on a loop whose key cannot be
+    # read and every loop in the crate reads cleanly. A muted layer and an absent
+    # progression are not the same thing: the chords still shape the schedule,
+    # nothing renders them.
   end
 
   if loop_for_key && !pads.empty? && HARMONIC_GUARD
@@ -123,7 +155,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
       %w[PAD_VOL HARM_MIX_WEIGHT].each { |k| ENV[k] = "0" }
       %w[MELODIC_LEAD SCALE_LEAD LEAD_ARP HARMONY_LEAD PAD_LAYERS PAD_TEXTURE
          CHOIR_VOX].each { |k| ENV[k] = "0" }
-      pads = []
+      # Keep the progression for schedule timing. Emptying pads used to crash
+      # lead_arp on chord[:name] of nil. Volumes already mute the tonal layers.
     elsif fit < HARMONIC_GUARD_MIN
       # The middle tier: the root is legible, the mode is not.
       #
@@ -500,7 +533,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # Drums sat at 0.72 under a 0.90 sampled bed and a 1.15 bass -- the quietest
   # thing in a genre built on them. The carve above buys most of the clarity
   # back without level, so this is a nudge rather than a shove.
-  mix_weights = [ENV.fetch("DRUM_MIX_WEIGHT", "0.88").to_s]
+  mix_weights = [resolved_drum_mix_weight.to_s]
   intro_bars = cfg.fetch(:intro_bars, 4)
   harm_fade_start = (beat_p * 4.0 * [intro_bars, 2].min).round(2)
   harm_fade_dur = (beat_p * 4.0 * 1.25).round(2)
