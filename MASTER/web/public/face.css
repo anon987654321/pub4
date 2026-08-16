@@ -1478,3 +1478,35 @@ canvas#face,
   min-height: var(--tap-min);
   padding: 0 1rem;
 }
+
+/* The wordmark the three RAILS apps carry, saying which host this is.
+   Same markup and class names as shared/_brand_mark so the two surfaces read
+   as one family; the tokens are this surface own, because face.css has its
+   own palette and z-scale and reaching for brgen would name variables that do
+   not exist here. Type only: no chip, no border, no background.
+
+   width: fit-content and inset-inline-end: auto together are what stop a fixed
+   box spanning the viewport — without them the whole top strip becomes a link
+   home and swallows taps on everything up there. */
+.brand-mark {
+  position: fixed;
+  z-index: var(--z-chrome);
+  top: calc(var(--chrome-inset) + var(--safe-top));
+  inset-inline-start: calc(var(--chrome-inset) + var(--safe-left));
+  inset-inline-end: auto;
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0.25rem 0.35rem;
+  font: 700 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-label);
+  letter-spacing: -0.03em;
+  color: var(--c-text);
+  text-decoration: none;
+  text-rendering: optimizeLegibility;
+}
+
+.brand-text {
+  text-transform: none;
+  letter-spacing: -0.03em;
+}

@@ -80,6 +80,17 @@
       data-profile="<%= @profile.to_s %>"
       data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
   <a href="#zin" class="skip-link"><%= t("skip_to_prompt") %></a>
+  <%# The same wordmark the three RAILS apps carry, saying which host this is.
+      Type only, fixed top-left, no chip or border — the mark is shared/_brand_mark
+      there and cannot be rendered from here (MASTER/web does not mount the engine),
+      so it is the same markup and the same class names rather than a second design.
+      <header> because it is page content that would otherwise sit outside any
+      landmark, which is what axe flagged on the RAILS side. %>
+  <header>
+    <a class="brand-mark" href="/" aria-label="<%= t("nav.brand_home", default: "ai.brgen.no") %>">
+      <span class="brand-text">ai.brgen.no</span>
+    </a>
+  </header>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <div id="ascii-star" aria-hidden="true"></div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
