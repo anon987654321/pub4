@@ -242,7 +242,22 @@ def enhanced_resolve_config
   preset = track_preset(track)
   prog = (ENV["PROGRESSION"] || preset.fetch(:progression, track)).to_s.downcase.tr("-", "_").to_sym
   sonic = sonic_profile_for(track)
-  feel = preset[:feel] || :default
+  # DRUM_FEEL names the drum PATTERN vocabulary — DRUM_PATTERN_SETS — and it had
+  # no way in. The value came only from the track preset, so a set no preset
+  # declared could not be reached at all: dilla_canon, flylo_canon and one_drop
+  # were written, commented, and selected by nothing. dilla_canon is the one
+  # carrying Dilla's own kick anchors (0/3/10), the ghosts and the displaced
+  # snares, in an engine named after him.
+  #
+  # Not to be confused with GROOVE_FEEL, which is the microtiming TICK table in
+  # DillaGroove::GROOVE_FEELS (boom_bap/dilla_drag/camel). The two share the word
+  # "feel", have disjoint vocabularies, and feed different code paths — setting
+  # GROOVE_FEEL=dilla_canon silently gives you dilla_drag timing and whatever
+  # patterns the track already had, which reads as the knob working.
+  #
+  # Default is unchanged, so no existing render moves.
+  feel = (ENV["DRUM_FEEL"].to_s.strip.empty? ? nil : ENV["DRUM_FEEL"].downcase.tr("-", "_").to_sym) ||
+         preset[:feel] || :default
   family = style_family(track, feel:)
   {
     track:,
