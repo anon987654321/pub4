@@ -15,7 +15,7 @@ class SitemapsController < ApplicationController
 
   def sitemap_entries
     subapp = Brgen::DomainRegistry.resolve(request.host).subapp
-    entries = [Shared::SitemapBuilder::Entry.new(loc: root_url, changefreq: "daily", priority: "1.0")]
+    entries = [ Shared::SitemapBuilder::Entry.new(loc: root_url, changefreq: "daily", priority: "1.0") ]
 
     case subapp
     when :tv then entries.concat(tv_entries)

@@ -45,7 +45,7 @@ module Brgen
         pl:    %i[en de],
         "de-CH": %i[de en],
         "de-LI": %i[de en],
-        "fr-BE": %i[fr en],
+        "fr-BE": %i[fr en]
       }
     end
   end

@@ -9,7 +9,7 @@ class WeeklyStatsJob < ApplicationJob
       comments: Comment.count,
       users: User.count,
       communities: Community.count,
-      reactions: Reaction.count,
+      reactions: Reaction.count
     }
     Rails.cache.write("brgen:weekly_stats", stats, expires_in: cache_ttl_for(:weekly_stats))
   end

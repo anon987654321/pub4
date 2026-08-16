@@ -117,7 +117,7 @@ module AmazonAssociates
           ItemInfo.ByLineInfo
           Offers.Listings.Price
           Offers.Listings.Availability.Message
-        ],
+        ]
       }
       parse(post("SearchItems", payload))
     end
@@ -169,7 +169,7 @@ module AmazonAssociates
         "x-amz-date" => amz_date,
         "x-amz-target" => target,
         "Authorization" => "AWS4-HMAC-SHA256 Credential=#{access_key}/#{scope}, " \
-                           "SignedHeaders=#{signed}, Signature=#{signature}",
+                           "SignedHeaders=#{signed}, Signature=#{signature}"
       }
     end
 
@@ -189,7 +189,7 @@ module AmazonAssociates
           # hand or the click stops being attributed and stops paying.
           click_url: item["DetailPageURL"].to_s,
           category: nil,
-          in_stock: listing&.dig("Availability", "Message").to_s !~ /unavailable/i,
+          in_stock: listing&.dig("Availability", "Message").to_s !~ /unavailable/i
         }
       end
     end

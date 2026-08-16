@@ -66,7 +66,7 @@ class PartnerAttributionReport
 
   # Plain text, because it goes to a log the operator greps and to a terminal.
   def render
-    lines = ["partner attribution — #{@window.inspect} to #{@now.utc.iso8601}"]
+    lines = [ "partner attribution — #{@window.inspect} to #{@now.utc.iso8601}" ]
     lines << format("  clicks              %d (%d with no epi)", clicks_total, clicks_without_epi)
     lines << format("  conversions         %d", conversions.count)
     lines << format("  unattributed        %d  (conversion with an epi we never recorded)",

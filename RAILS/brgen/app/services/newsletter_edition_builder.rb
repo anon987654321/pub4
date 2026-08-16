@@ -27,7 +27,7 @@ class NewsletterEditionBuilder
     return Array(@city) if @city.present?
 
     slugs = EmailSubscription.marketing_opted_in.distinct.pluck(:city).compact
-    slugs.presence || City.limit(12).pluck(:slug).presence || ["brgen"]
+    slugs.presence || City.limit(12).pluck(:slug).presence || [ "brgen" ]
   end
 
   def compose_daily_for(city_name)
@@ -82,7 +82,7 @@ class NewsletterEditionBuilder
       {
         "title" => v.title.to_s,
         "url" => v.track_url.to_s,
-        "description" => [v.short_description, v.code.present? ? "Code: #{v.code}" : nil].compact.join(" — "),
+        "description" => [ v.short_description, v.code.present? ? "Code: #{v.code}" : nil ].compact.join(" — "),
         "price" => v.discount_amount.to_s,
         "currency" => v.currency.to_s,
         "merchant" => v.program_name.to_s,

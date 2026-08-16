@@ -53,7 +53,7 @@ module BrgenSpamSweep
     "%çmimin tuaj%"        # ... Albanian
   ].freeze
 
-  TITLE_PATTERNS = ["Hello%,", "Hi,%", "Greetings%"].freeze
+  TITLE_PATTERNS = [ "Hello%,", "Hi,%", "Greetings%" ].freeze
 
   module_function
 
@@ -80,8 +80,8 @@ module BrgenSpamSweep
   def pattern_matched
     conditions = CONTENT_PATTERNS.map { "content LIKE ?" } +
                  TITLE_PATTERNS.map { "title LIKE ?" } +
-                 ["title = ?", "content LIKE ?"]
-    values = CONTENT_PATTERNS + TITLE_PATTERNS + ["Hi,", "%\r%"]
+                 [ "title = ?", "content LIKE ?" ]
+    values = CONTENT_PATTERNS + TITLE_PATTERNS + [ "Hi,", "%\r%" ]
 
     Post.where(conditions.join(" OR "), *values)
   end

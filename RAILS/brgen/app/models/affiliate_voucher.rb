@@ -24,7 +24,7 @@ class AffiliateVoucher < ApplicationRecord
     where("(starts_at IS NULL OR starts_at <= ?) AND (ends_at IS NULL OR ends_at >= ?)", now, now)
   }
   scope :exclusive_or_site, -> { where(site_specific: true).or(where(exclusive: true)) }
-  scope :for_market, ->(market) { where(market: [market.to_s.upcase, nil]) if market.present? }
+  scope :for_market, ->(market) { where(market: [ market.to_s.upcase, nil ]) if market.present? }
 
   def type_name = TYPES[voucher_type_id] || "unknown"
 

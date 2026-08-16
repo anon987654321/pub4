@@ -9,7 +9,7 @@ class MonthlyAnalyticsRollupJob < ApplicationJob
       comments: Comment.count,
       notifications: Notification.count,
       messages: Message.count,
-      taken_up: Marketplace::Listing.count,
+      taken_up: Marketplace::Listing.count
     }
     Rails.cache.write(
       "brgen:analytics:monthly:#{Date.current.beginning_of_month}",

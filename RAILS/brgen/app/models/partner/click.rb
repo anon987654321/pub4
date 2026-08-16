@@ -44,6 +44,6 @@ class Partner::Click < ApplicationRecord
   def self.digest_for(ip, user_agent, salt: Rails.application.secret_key_base)
     return nil if ip.blank?
 
-    OpenSSL::Digest::SHA256.hexdigest([salt, ip, user_agent.to_s].join("\n"))
+    OpenSSL::Digest::SHA256.hexdigest([ salt, ip, user_agent.to_s ].join("\n"))
   end
 end

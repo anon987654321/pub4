@@ -75,7 +75,7 @@ module BrgenTitleSpread
   # Least-used first, ties broken by pool order, so the result is deterministic
   # given the same starting distribution.
   def next_title(usage, pool)
-    pool.min_by { |title| [usage[title], pool.index(title)] }
+    pool.min_by { |title| [ usage[title], pool.index(title) ] }
   end
 end
 
