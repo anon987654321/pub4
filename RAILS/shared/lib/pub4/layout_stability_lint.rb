@@ -232,7 +232,9 @@ module Pub4
       # the instrument get read.
       # 26 -> 24 with dc7d0efe3 recovered: the takeaway and tv engine sheets it
       # brings size their own card and hero images instead of leaving the tag bare.
-      "unreserved_media" => 24,
+      # 24 -> 23 with the Event/Story fill, which reserves the event card and hero
+      # images the same way.
+      "unreserved_media" => 23,
       "layout_transition" => 3,
       "font_without_display" => 0,
     }.freeze

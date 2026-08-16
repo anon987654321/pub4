@@ -83,3 +83,224 @@
   gap: var(--space-xs);
   margin-block-end: var(--space-sm);
 }
+
+// Surfaces shipped after the 2026-08-11 fill: Event, Story, community
+// governance, quote-posts. Token-only, space-not-lines, no hex.
+
+.event-list,
+.attendee-list,
+.viewer-list,
+.ban-list,
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-card);
+}
+
+.event-card-media {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+
+.event-card-media img,
+.event-hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.event-card-body h3 {
+  margin: 0;
+  font-size: var(--text-title);
+  font-family: var(--font);
+}
+
+.event-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: var(--measure-body);
+}
+
+.event-hero {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.rsvp-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rsvp-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.story-rings {
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-2) 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+.story-rings > li {
+  flex: 0 0 var(--space-16);
+  scroll-snap-align: start;
+}
+
+.story-rings a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  text-decoration: none;
+  color: inherit;
+}
+
+.story-rings img {
+  display: block;
+  width: var(--space-16);
+  height: var(--space-16);
+  object-fit: cover;
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+}
+
+.story-ring-name {
+  max-width: var(--space-16);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+.story-ring-count {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.story-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: var(--measure-body);
+}
+
+.story-viewer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.story-media img {
+  display: block;
+  width: 100%;
+  max-height: 100dvh;
+  height: auto;
+  object-fit: contain;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-md);
+}
+
+.story-caption {
+  margin: 0;
+  max-width: var(--measure-body);
+}
+
+.story-ring-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.community-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: var(--measure-body);
+}
+
+.community-rules ol {
+  margin: 0;
+  padding-inline-start: var(--space-6);
+}
+
+.mod-queue {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mod-queue th,
+.mod-queue td {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  vertical-align: top;
+}
+
+.mod-queue th {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-secondary);
+}
+
+.post-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-block-start: var(--space-6);
+}
+
+.post-quotes ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// button_to wraps the feed repost control. Without this the form breaks
+// the action row into a stacked block.
+.feed-action-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.chip--live {
+  color: var(--accent);
+  font-weight: var(--weight-bold);
+}
+
+.chip--cancelled {
+  color: var(--danger);
+}
