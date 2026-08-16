@@ -29,6 +29,16 @@ fi
 app=${1:-}
 [[ -n $app ]] || { print -u2 "usage: vps-deploy all|APP|master"; exit 2 }
 
+# A full deploy outlives the ssh session that starts it. When that session is
+# cut — a timeout, a dropped link — the pipe carrying its output dies with it and
+# the only record of what happened is gone, while the deploy itself carries on to
+# completion on the box. Twice now the outcome had to be reconstructed from
+# rcctl and curl afterwards. tee keeps a copy that survives the caller.
+deploy_log=${VPS_DEPLOY_LOG:-$HOME/vps-deploy.log}
+print "vps-deploy: $app, logging to $deploy_log"
+exec > >(tee -a "$deploy_log") 2>&1
+print "==> vps-deploy $app started $(date '+%Y-%m-%d %H:%M:%S')"
+
 # The whole fleet, in the order that survives its own side effects.
 #
 # There was no way to say "deploy everything", so the list lived in whoever was
