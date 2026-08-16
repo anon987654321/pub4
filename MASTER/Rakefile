@@ -245,6 +245,12 @@ namespace :lint do
     puts "lint:autoload: #{groups.values.flatten.size} ignores, all still necessary"
   end
 
+  desc "every model data/models.yml names is one the provider still serves (needs network)"
+  task :models do
+    ok = system(RbConfig.ruby, File.join(__dir__, "tools", "model_catalog_check.rb"))
+    abort "lint:models: a fallback chain has no live model left" unless ok
+  end
+
   desc "Ratchet: lib/ may shrink or hold, never grow past data/spine.yml's ceiling"
   task :spine do
     require "yaml"
