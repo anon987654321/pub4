@@ -111,13 +111,47 @@ module Pub4
     # <img ...> written by hand, and image_tag/video_tag through the helper.
     MEDIA = /<(?:img|video|iframe)\b[^>]*>|(?:image_tag|video_tag)\s*\(?[^%]*/
 
-    def sized?(tag)
+    # Classes that reserve the box of an image BELOW them, via a descendant
+    # selector — `.playlist-queue-art img { width: 48px; height: 48px }`.
+    #
+    # This is the common shape and the first version of this lint could not see
+    # it: it read the class attribute on the tag itself, and in that markup the
+    # tag carries no class at all — the reservation hangs off the wrapping span.
+    # It reported a correctly sized 48x48 queue thumbnail as unreserved, which
+    # is DEBT.md's Scanner Convention 1 exactly: a check that reports correct
+    # code gets the correct code changed.
+    def wrapper_classes
+      @wrapper_classes ||= begin
+        found = Set.new
+        stylesheets.each do |path|
+          body = strip_comments(File.read(path, encoding: "UTF-8"))
+          body.scan(/([^{}]+)\{([^{}]*)\}/m) do |selector, block|
+            next unless block.match?(RESERVING)
+            next unless selector.match?(/\bimg\s*\z/) || selector.match?(/>\s*img\s*\z/)
+
+            selector.scan(/\.([a-zA-Z][\w-]*)/) { |name| found << name.first }
+          end
+        end
+        found
+      end
+    end
+
+    # `context` is the handful of lines above the tag, which is as much ancestry
+    # as a line-oriented reader of ERB can honestly claim. Deliberately not a
+    # parser: the question is only whether a reserving wrapper is plausibly open
+    # around this tag, and being generous here costs a missed finding while
+    # being strict costs a false one — and a false one gets correct markup
+    # edited.
+    def sized?(tag, context = nil)
       return true if tag.match?(/\bwidth\s*[:=]/) && tag.match?(/\bheight\s*[:=]/)
       return true if tag.match?(/\bsize\s*:/)
       return true if tag.match?(/\bstyle\s*=\s*"[^"]*aspect-ratio/)
 
-      tag.scan(/class\s*[:=]\s*[("']?([^"')]*)/).flatten.join(" ")
-         .scan(/[\w-]+/).any? { |name| reserved_classes.include?(name) }
+      own = tag.scan(/class\s*[:=]\s*[("']?([^"')]*)/).flatten.join(" ").scan(/[\w-]+/)
+      return true if own.any? { |name| reserved_classes.include?(name) }
+
+      enclosing = context.to_s.scan(/class\s*=\s*"([^"]*)"/).flatten.join(" ").scan(/[\w-]+/)
+      enclosing.any? { |name| wrapper_classes.include?(name) }
     end
 
     def media_findings
@@ -126,8 +160,13 @@ module Pub4
         lines.each_with_index.flat_map do |line, index|
           next [] if opted_out?(lines, index)
 
+          # Six lines of lead-in. An ERB wrapper and the tag it wraps are
+          # normally within two or three; six is slack for a conditional and a
+          # blank line between them.
+          context = lines[[index - 6, 0].max...index].join
+
           line.scan(MEDIA).flat_map do |tag|
-            next [] if sized?(tag)
+            next [] if sized?(tag, context)
 
             [Finding.new(rel(path), index + 1, "unreserved_media", tag.to_s.strip[0, 90])]
           end
@@ -182,7 +221,16 @@ module Pub4
     # low enough that the next one is a new one rather than a backlog.
     # font_without_display is already zero: all ten @font-face blocks declare it.
     BASELINES = {
-      "unreserved_media" => 34,
+      # 34 -> 26. Eight of the original findings were the lint reading its own
+      # blind spot: an image whose box is reserved by a wrapper class rather
+      # than by its own, which is the common shape. `.playlist-queue-art img {
+      # width: 48px; height: 48px }` is fully sized and was reported as
+      # unreserved because the tag carries no class at all.
+      #
+      # Found because the recovery merge pushed the count to 35 and the file it
+      # named turned out to be correct markup. The count moving is what made
+      # the instrument get read.
+      "unreserved_media" => 26,
       "layout_transition" => 3,
       "font_without_display" => 0,
     }.freeze
