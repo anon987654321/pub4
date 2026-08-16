@@ -86,6 +86,6 @@ class EventsController < ApplicationController
     data = event[:data]
     return event unless data.is_a?(Hash)
 
-    event.merge(data: data.except(:job_id, "job_id"))
+    event.merge(data: data.except(:job_id, "job_id", :conversation, "conversation"))
   end
 end

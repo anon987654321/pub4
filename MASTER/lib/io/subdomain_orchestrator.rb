@@ -104,8 +104,10 @@ module Master
 
       def app_url(name)
         entry = app_registry.find { |row| row["name"] == name }
-        host = entry&.fetch("domain", nil)
-        host ? "https://#{host}/up" : "http://127.0.0.1:#{entry&.fetch('port', 0)}/up"
+        host = entry&.fetch("domain", nil).to_s.strip
+        return if host.empty?
+
+        "https://#{host}/up"
       end
 
       def probe_ok?(name)
@@ -121,7 +123,11 @@ module Master
       end
 
       def probe_http(url, timeout: 4)
+        return { ok: false, status: 0, body: "blocked" } if url.to_s.empty?
+
         uri = URI(url)
+        return { ok: false, status: 0, body: "blocked" } unless SsrfGuard.safe_uri?(uri)
+
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
         http.open_timeout = timeout

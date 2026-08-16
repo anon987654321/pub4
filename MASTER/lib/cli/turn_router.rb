@@ -15,7 +15,6 @@ module Master
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
         return dispatch_slash(text, container:, felt_sense:, on_turn:) if text.start_with?("/")
-        return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
         # conversational path only. Everything below this line can reach real
@@ -25,7 +24,12 @@ module Master
         # whose argv/env are model-chosen. Fiber[:master_visitor] previously
         # gated only the advertised LLM tool list (tool_registry.rb), never the
         # Fold or the command registry.
+        #
+        # MediaIntent used to sit above this gate. "generate a photo" / "make me
+        # a beat" / a VHS look on a path then ran repligen/dilla/postpro as the
+        # Falcon user and wrote under ~.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
+        return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
 
         inferred = infer_operator_command(text, container:)
         return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred

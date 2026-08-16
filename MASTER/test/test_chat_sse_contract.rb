@@ -40,4 +40,9 @@ class TestChatSseContract < Minitest::Test
     assert_includes source, "return false if tok.empty?"
     refute_includes source, "return true if tok.empty?"
   end
+
+  def test_visitor_sse_strips_conversation_as_well_as_job_id
+    source = File.read(File.join(WEB_ROOT, "app", "controllers", "events_controller.rb"))
+    assert_includes source, ':conversation, "conversation"'
+  end
 end

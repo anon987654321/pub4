@@ -50,6 +50,17 @@ class TurnRouterTest < Minitest::Test
     end
   end
 
+  def test_visitor_cannot_reach_media_intent
+    Fiber[:master_visitor] = true
+    reached = :none
+    Master::Io::MediaIntent.stub(:dispatch, ->(*) { reached = :media; Master::Result.ok({ rendered: "" }) }) do
+      Master::CLI::TurnRouter.stub(:casual_reply, ->(*, **) { reached = :casual; Master::Result.ok({ rendered: "" }) }) do
+        Master::CLI::TurnRouter.call(message: "generate a photo of bergen", container: build_container)
+      end
+    end
+    assert_equal :casual, reached
+  end
+
   def test_run_fold_refuses_visitors_directly
     Fiber[:master_visitor] = true
     result = Master::CLI::TurnRouter.run_fold("do something", container: build_container)
