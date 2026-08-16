@@ -91,10 +91,16 @@ module Pub4
     # Deliberately not written here. Inventing a visual design for eleven
     # components is not a lint's decision and not a passing agent's; the numbers
     # and the cluster names are what makes it someone's.
-    # unused 269 → 272 → 279: typography foundation adds opt-in measure
-    # classes (prose, reading-column, form-measure, …) worn by tokens, not
-    # yet by every view. undefined 35 → 34: feed-action-form is now styled.
-    BASELINES = { "undefined_class" => 34, "unused_selector" => 279 }.freeze
+    # unused 279: the typography foundation adds opt-in measure classes (prose,
+    # reading-column, form-measure, ...) worn by tokens, not yet by every view.
+    #
+    # undefined 0: _coverage_fills.scss gives Event, Story and the moderation
+    # pages a box model. The fill is structural and token-only -- flex, gap,
+    # var(--space-*), var(--surface-elevated), var(--radius-*), no colour and no
+    # hex -- so an unstyled page gets geometry without anyone deciding what it
+    # looks like. Past that the design is still someone's, and this is a floor
+    # rather than a licence to style from a lint.
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 279 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

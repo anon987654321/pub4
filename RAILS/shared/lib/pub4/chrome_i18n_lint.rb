@@ -139,9 +139,10 @@ module Pub4
       # 107 -> 105 on 2026-08-16. Two aria-labels were translated on main and
       # the baseline did not follow them down, which is the half of this ratchet
       # that keeps it honest: a floor nobody lowers stops being a floor.
-      # 105 -> 95: marketplace buy bar / filter, dating pass/like, and the
-      # playlist player chrome went through t().
-      "aria_label" => 95,
+      # 95 -> 74: twenty-one aria-labels became keys — follow, report, the nav
+      # sections, the AI link, profile, admin reports, and the takeaway and tv
+      # engines. Measured on this tree rather than carried from the branch.
+      "aria_label" => 74,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -171,9 +172,10 @@ module Pub4
       # → 211 (2026-08-14), lowered with it and on the same evidence: stable
       # across the session and across three consecutive measurements.
       # 211 -> 208, same reason and same day as aria_label above.
-      # 208 -> 203: playlist add-track/source/expires and dating empty-state
-      # defaults became primary keys.
-      "translate_default" => 203,
+      # 203 -> 197: six views carrying a `default:` beside the key stopped needing
+      # one, because the key exists in both locales now. This moves with
+      # aria_label — a string becoming a key is one fewer literal in each column.
+      "translate_default" => 197,
     }.freeze
 
     # Kept for callers that referenced the old single number.
