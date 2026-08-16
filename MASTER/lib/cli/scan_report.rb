@@ -149,8 +149,13 @@ module Master
         @total ||= by_rule.values.sum(&:size)
       end
 
+      # Blast radius, not firing count: an error across five files outranks an
+      # info across five hundred. impact_radius was computed already, for display.
       def ranked
-        @ranked ||= by_rule.sort_by { |rule, violations| [-violations.size, rule] }
+        @ranked ||= by_rule.sort_by do |rule, v|
+          radius = impact_radius(v)
+          [-(radius[:files_affected] * radius[:severity_multiplier]), -v.size, rule]
+        end
       end
 
       def evidence_line

@@ -139,6 +139,10 @@ task :selftest do
   abort result.message unless result.ok?
 
   summary = result.value!
+  # What this gate did not measure, said before what it did. bin/check
+  # --profile=agent runs this task, and "0 findings" over 99 rules and over 225
+  # are different claims that printed identically.
+  puts "selftest: #{Master::Review::Scan::RuleRegistryAudit.new(root: __dir__).call.coverage_line}"
   puts summary.line
   summary.checks.each do |check|
     puts "  [#{check.law}] #{check.findings.size}"
@@ -272,6 +276,16 @@ namespace :lint do
     puts "lint:autoload: #{groups.values.flatten.size} ignores, all still necessary"
   end
 
+  desc "files that are one concept under several names — proposes merges, never performs one"
+  task :cohesion do
+    target = ENV.fetch("COHESION_DIR", File.expand_path("../STUDIO/dilla/lib/engine", __dir__))
+    if Dir.exist?(target)
+      system(RbConfig.ruby, File.join(__dir__, "tools", "cohesion.rb"), target)
+    else
+      puts "lint:cohesion: #{target} absent — skipping"
+    end
+  end
+  
   desc "every model data/models.yml names is one the provider still serves (needs network)"
   task :models do
     ok = system(RbConfig.ruby, File.join(__dir__, "tools", "model_catalog_check.rb"))

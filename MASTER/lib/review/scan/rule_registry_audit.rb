@@ -7,6 +7,11 @@ module Master
       class RuleRegistryAudit
         Report = Data.define(:yaml_rules, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
                              :semantic_only, :structural_unwired, :dep_graph_gaps) do
+          # "clean" over 99 rules and "clean" over 225 are different claims, and
+          # until now they printed identically everywhere except rake constitution.
+          def coverage_line = "#{yaml_rules - semantic_only.size} of #{yaml_rules} rules active " \
+                              "(#{semantic_only.size} semantic need an LLM agent; none attached)"
+
           def adherence_pct
             return 100.0 if yaml_rules.zero?
             lexical_total = lexical_wired.size + lexical_unwired.size

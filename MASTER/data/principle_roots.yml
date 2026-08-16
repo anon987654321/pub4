@@ -1,0 +1,70 @@
+# The eight invariants the 272 principles are readings of.
+#
+# DRY, "omit needless words" and Bringhurst's measure are not three rules that
+# happen to rhyme. They are one law read in code, in prose and in type. The
+# principle map had 272 entries and 15 clusters, and the clusters were by
+# discipline — visual_design, clean_code, refactoring — so the map recorded the
+# separation rather than dissolving it, and a finding in CSS could not inherit
+# the argument already won in Ruby.
+#
+# Each root states the law once, then states what it looks like in each medium.
+# A principle carries `root:` naming one of these. Anything that fits none of
+# them is a candidate ninth root, not a rounding error — leave it unassigned
+# and argue it.
+
+roots:
+  one_source:
+    law: every fact has exactly one definition
+    because: copies do not stay equal, and the drift is silent
+    in_code: DRY, normalization, single source of truth
+    in_prose: one statement of a claim, referenced after
+    in_visual: one token per colour, spacing step and face
+
+  no_surplus:
+    law: remove what carries no weight
+    because: what is absent cannot be wrong, and every part costs attention
+    in_code: KISS, YAGNI, dead code, speculative generality
+    in_prose: omit needless words
+    in_visual: as little design as possible; negative space is the composition
+
+  one_responsibility:
+    law: a unit names one thing and does it
+    because: a unit with two reasons to change is changed for one and broken for the other
+    in_code: single responsibility, separation of concerns, short methods
+    in_prose: one idea per paragraph
+    in_visual: one message per view; one job per component
+
+  least_surprise:
+    law: behaviour matches the expectation the name and the convention set
+    because: a reader who must verify every name reads nothing else
+    in_code: POLA, convention over configuration, idiom, consistent naming
+    in_prose: the word means what it usually means
+    in_visual: Jakob's law — it works the way the rest of the web works
+
+  visible_state:
+    law: the system shows what is true, including failure
+    because: a hidden failure is indistinguishable from success until it is expensive
+    in_code: surface errors first, no silent rescue, no swallowed exceptions
+    in_prose: say what happened, not what was attempted
+    in_visual: visibility of system status; honest materials
+
+  bounded_load:
+    law: never exceed what the reader can hold at once
+    because: capacity is a property of people, not of the design
+    in_code: nesting depth, parameter count, method and file length
+    in_prose: sentence length; one clause deep
+    in_visual: Miller's and Hick's laws; measure, leading, choice count
+
+  stable_contract:
+    law: a boundary is explicit and changes deliberately
+    because: an implicit boundary is crossed accidentally and cannot be defended
+    in_code: open/closed, Liskov, interface segregation, dependency inversion
+    in_prose: defined terms keep their definition
+    in_visual: a component's props are its contract; variants are declared
+
+  proportion:
+    law: relationships follow a declared scale, never an arbitrary value
+    because: a number with no derivation cannot be checked or changed as a set
+    in_code: named constants over magic numbers, configuration over literals
+    in_prose: parallel structure; consistent register
+    in_visual: modular scale, vertical rhythm, grid, ma as measured interval
