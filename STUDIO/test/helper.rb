@@ -24,6 +24,47 @@ require "timeout"
 module Studio
   ROOT = File.expand_path("..", __dir__)
 
+  # Running dilla rewrites tracked files.
+  #
+  # Not rendering — loading. `require`ing dilla.rb rewrites project/session.json
+  # (it rerolls `track` and truncates the section map), learnings/learned_engine
+  # .json and learnings/playlist_catalog.json, all three of which are committed.
+  # So the suite dirtied the working tree every time, which in a repo where
+  # several agents share one checkout is how engine state ends up swept into
+  # somebody else's `git commit -a`.
+  #
+  # This lives in the shared helper rather than in test/dilla/helper.rb, where it
+  # started, because test_studio_gate.rb dirties them too: the gate's load probe
+  # boots dilla in a subprocess of its own. With the guard only on the dilla
+  # suite, `rake test` came out clean solely because test:dilla runs after
+  # test:gate and restored what the gate had written — and `rake test:gate` alone
+  # left three modified files behind. Ordering luck is not a guard.
+  #
+  # The engine writing session state at load is dilla's business and not a
+  # test's to change: those files are the running record of a production tool,
+  # and rewriting when they are written would change what the next render sounds
+  # like. What a test owes is to put back exactly what it found.
+  #
+  # Byte-for-byte, from memory rather than from git, so it holds in an export
+  # with no repository and does not depend on what was committed.
+  MUTABLE_STATE = Dir[File.join(ROOT, "dilla", "project", "**", "*.json")].sort.freeze
+
+  STATE_BEFORE = MUTABLE_STATE.to_h { |path| [path, (File.binread(path) if File.file?(path))] }.freeze
+
+  def self.restore_engine_state!
+    STATE_BEFORE.each do |path, contents|
+      next if contents.nil?
+      next if File.file?(path) && File.binread(path) == contents
+
+      File.binwrite(path, contents)
+    end
+  end
+end
+
+at_exit { Studio.restore_engine_state! }
+
+module Studio
+
   # Bound every test. A dilla method that shells out to ffmpeg without a file
   # will sit on a pipe forever, and an unbounded suite hangs the gate that runs
   # it rather than failing it.
