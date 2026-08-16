@@ -61,9 +61,36 @@ module Pub4
     module_function
 
     def all(deep: false)
-      rows = spine_rows + rails_lint_rows + css_budget_rows + file_length_rows + coverage_rows
+      rows = spine_rows + master_yaml_rows + rails_lint_rows + css_budget_rows +
+             file_length_rows + coverage_rows
       rows += deep_rows if deep
       rows.compact
+    end
+
+    # Rules that reach no detector, and files that declare no namespace. Both
+    # recompute the current value rather than reading the recorded one twice —
+    # a row whose current IS its ceiling is a row that can never fail, which is
+    # the shape of defect the rest of this file exists to catch.
+    def master_yaml_rows
+      [master_row("rule_reach", "data/rule_reach.yml", "rules no configuration can run") do
+         require File.join(MASTER, "tools/rule_reach")
+         [Pub4::RuleReach.unreachable.size, YAML.safe_load_file(File.join(MASTER, "data/rule_reach.yml")).fetch("unreachable")]
+       end,
+       master_row("namespace", "data/namespace_ceilings.yml", "files declaring no module or class") do
+         require File.join(MASTER, "tools/namespace_ratchet")
+         [Pub4::NamespaceRatchet.measure.values.sum, Pub4::NamespaceRatchet.ceilings.values.sum]
+       end].compact
+    end
+
+    def master_row(name, relative, note)
+      return nil unless File.file?(File.join(MASTER, relative))
+
+      current, ceiling = yield
+      Row.new(name: name, current: current, ceiling: ceiling, direction: :down,
+              source: "MASTER/#{relative}", note: note)
+    rescue StandardError => e
+      Row.new(name: name, current: nil, ceiling: nil, direction: :down,
+              source: "MASTER/#{relative}", note: "unreadable: #{e.class}")
     end
 
     # MASTER: the spine ratchet, read from data/spine.yml.
@@ -241,3 +268,4 @@ module Pub4
     end
   end
 end
+
