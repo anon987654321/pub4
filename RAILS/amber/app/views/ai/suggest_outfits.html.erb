@@ -1,5 +1,5 @@
 <% content_for :title, t("pages.suggest_outfits") %>
-<header role="banner" aria-label="AI outfit suggestions header">
+<header role="banner" aria-label="<%= t("ai.suggest_header") %>">
   <h1><%= t("pages.suggest_outfits") %></h1>
   <% if @ai_available %>
     <p class="dim"><%= t("ai.suggest_lead", vision: (Current.user.items.joins(:photos_attachments).exists? ? t("ai.suggest_vision") : "")) %></p>
@@ -12,7 +12,7 @@
 </header>
 
 <turbo-frame id="amber-ai-suggest" data-turbo-action="replace">
-<%= form_with url: ai_suggest_outfits_path, method: :get, class: "form", html: { role: "form", "aria-label": "Generate outfit suggestions" } do |f| %>
+<%= form_with url: ai_suggest_outfits_path, method: :get, class: "form", html: { role: "form", "aria-label": t("ai.generate_form") } do |f| %>
   <%# f.label rather than a bare <label> beside the field — see packing_list. %>
   <div class="field">
     <%= f.label :occasion, t("ai.occasion") %>
@@ -20,11 +20,11 @@
   </div>
   <div class="field">
     <%= f.label :season, t("ai.season") %>
-    <%= f.select :season, Item::SEASONS, { selected: params[:season] }, { include_blank: "Any" } %>
+    <%= f.select :season, Item::SEASONS, { selected: params[:season] }, { include_blank: t("ai.any_season") } %>
   </div>
   <div class="actions">
     <%= f.submit @ai_available ? t("ai.generate_suggestions") : t("ai.generate_rules"), class: "btn btn--primary" %>
-    <%= button_to t("ai_forms.generate_save"), ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn", form_class: "inline" %>
+    <%= button_to t("ai_forms.generate_save"), ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn" %>
   </div>
 <% end %>
 

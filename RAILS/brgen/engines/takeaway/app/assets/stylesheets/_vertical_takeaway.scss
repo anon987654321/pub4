@@ -62,7 +62,6 @@ body.vertical-takeaway select {
   background: var(--surface-elevated);
 }
 
-body.vertical-takeaway article,
 body.vertical-takeaway .restaurant-card {
   display: grid;
   grid-template-columns: 96px 1fr auto;
@@ -71,7 +70,6 @@ body.vertical-takeaway .restaurant-card {
   padding: var(--space-3) var(--space-4);
 }
 
-body.vertical-takeaway article:hover,
 body.vertical-takeaway .restaurant-card:hover {
   background: var(--hover-subtle);
 }
@@ -123,6 +121,13 @@ body.vertical-takeaway .order-progress-fill {
   transition: width var(--transition-normal) var(--ease-out);
 }
 
+body.vertical-takeaway .courier {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
 @media (prefers-reduced-motion: reduce) {
   body.vertical-takeaway .order-progress-fill {
     transition: none;
@@ -152,6 +157,11 @@ body.vertical-takeaway .feed-card.takeaway .feed-card-meta {
 
 body.vertical-takeaway .feed-card.takeaway .feed-card-meta:first-of-type {
   color: var(--food-dash-ink);
+}
+
+body.vertical-takeaway .qty-field {
+  width: var(--space-16);
+  min-height: var(--tap-min);
 }
 
 body.vertical-takeaway .order-status {

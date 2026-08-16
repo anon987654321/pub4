@@ -6,9 +6,9 @@
       [@restaurant.name, request.original_url.split("?").first]
     ])) %>
 
-<div class="page-header" role="banner" aria-label="Takeaway restaurant header">
+<div class="page-header" role="banner" aria-label="<%= t("takeaway.restaurant_header") %>">
   <h1><%= @restaurant.name %></h1>
-  <nav role="navigation" aria-label="Restaurant actions">
+  <nav role="navigation" aria-label="<%= t("takeaway.restaurant_actions") %>">
     <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? && @favorited %>
@@ -32,7 +32,7 @@
 
 <% if authenticated? && @restaurant.owner?(Current.user) %>
   <section>
-    <h2><%= t("takeaway.add_menu_item", default: "Add menu item") %></h2>
+    <h2><%= t("takeaway.add_menu_item") %></h2>
     <div class="form-wrap">
       <%= form_with scope: :takeaway_menu_item, url: restaurant_menu_items_path(@restaurant) do |f| %>
         <div class="field"><%= f.text_field :name, placeholder: t("takeaway.item_name"), aria: { label: t("takeaway.item_name") }, required: true %></div>
@@ -48,11 +48,11 @@
 <% end %>
 
 <section id="menu">
-  <h2>Menu</h2>
+  <h2><%= t("takeaway.menu") %></h2>
   <% if @menu_items.empty? %>
     <%= render "shared/empty_state",
           title: t("empty.no_menu"),
-          body: "The kitchen has not listed food yet.",
+          body: t("empty.kitchen_no_food"),
           action: { label: t("actions.all_restaurants"), path: restaurants_path } %>
 
   <% elsif Current.user.present? %>
@@ -65,14 +65,14 @@
           <div>
             <strong><%= item.name %></strong> · <%= item.price_display %>
             <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
-            <% if item.vegetarian? %><span class="chip">Vegetarian</span><% end %>
-            <% if item.vegan? %><span class="chip">Vegan</span><% end %>
+            <% if item.vegetarian? %><span class="chip"><%= t("takeaway.vegetarian") %></span><% end %>
+            <% if item.vegan? %><span class="chip"><%= t("takeaway.vegan") %></span><% end %>
             <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
           </div>
           <% if item.available? %>
-            <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: "Quantity for #{item.name}" } %>
+            <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: t("takeaway.qty_for", name: item.name) } %>
           <% else %>
-            <span class="dim" aria-label="<%= item.name %> sold out">—</span>
+            <span class="dim" aria-label="<%= t("takeaway.item_sold_out", name: item.name) %>">—</span>
           <% end %>
         </article>
       <% end %>
@@ -103,33 +103,33 @@
       </article>
     <% end %>
     <p class="dim"><%= t("takeaway.reload_to_order") %></p>
-    <p><%= link_to "Reload", restaurant_path(@restaurant), class: "btn btn-primary" %></p>
+    <p><%= link_to t("actions.reload"), restaurant_path(@restaurant), class: "btn btn-primary" %></p>
 
   <% end %>
 </section>
 
 <section>
-  <h2><%= t("takeaway.reviews_heading", default: "Reviews from neighbours") %></h2>
+  <h2><%= t("takeaway.reviews_heading") %></h2>
   <% if @reviews.any? %>
     <% @reviews.each do |r| %>
       <article>
-        <p>★<%= r.rating %> · <%= r.user&.display_name || "anon" %> · <span><%= time_ago(r.created_at) %></span></p>
+        <p>★<%= r.rating %> · <%= r.user&.display_name || t("takeaway.anon") %> · <span><%= time_ago(r.created_at) %></span></p>
         <% if r.body.present? %><p class="dim"><%= r.body %></p><% end %>
       </article>
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_reviews"),
-          body: "Order, then leave a rating for neighbours.",
-          action: { label: "Browse menu", path: restaurant_path(@restaurant, anchor: "menu") } %>
+          body: t("empty.order_then_rate"),
+          action: { label: t("takeaway.browse_menu"), path: restaurant_path(@restaurant, anchor: "menu") } %>
   <% end %>
 </section>
 
-<%= render "shared/also_nearby", items: @nearby_restaurants, title: t("takeaway.nearby_restaurants", default: "Nearby") %>
+<%= render "shared/also_nearby", items: @nearby_restaurants, title: t("takeaway.nearby_restaurants") %>
 
 <% if @can_review %>
 <section>
-  <h2><%= t("takeaway.leave_review", default: "Leave a review") %></h2>
+  <h2><%= t("takeaway.leave_review") %></h2>
   <%= form_with scope: :takeaway_review, url: restaurant_reviews_path(@restaurant) do |f| %>
     <div class="field">
       <%= f.label :rating, t("takeaway.rating") %>

@@ -55,7 +55,7 @@
 <section role="region" aria-label="<%= t("takeaway.order_items") %>">
   <h2><%= t("takeaway.order_items") %></h2>
   <% @order.order_items.each do |order_item| %>
-    <article role="article" aria-label="Order item">
+    <article role="article" aria-label="<%= t("takeaway.order_item") %>">
       <strong><%= order_item.menu_item.name %></strong> × <%= order_item.quantity %>
       <span class="dim item-subtotal"><%= order_item.subtotal_display %></span>
     </article>

@@ -5,6 +5,6 @@
   <input type="text" placeholder="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
          aria-label="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
          data-playlist-player-target="commentInput">
-  <button type="button" data-action="playlist-player#submitComment">Add</button>
-  <button type="button" data-action="playlist-player#cancelComment">Cancel</button>
+  <button type="button" data-action="playlist-player#submitComment"><%= t("actions.save") %></button>
+  <button type="button" data-action="playlist-player#cancelComment"><%= t("actions.cancel") %></button>
 </div>

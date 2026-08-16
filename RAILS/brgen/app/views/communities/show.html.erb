@@ -10,19 +10,19 @@
       [@community.name, request.original_url.split("?").first]
     ])) %>
 
-<header class="community-header" role="banner" aria-label="Community">
+<header class="community-header" role="banner" aria-label="<%= t("community.header") %>">
   <h1><%= @community.name %></h1>
   <% if @community.description.present? %><p><%= @community.description %></p><% end %>
-  <p><strong><%= @community.posts.count %></strong> posts · <strong><%= @community.members_count %></strong> members</p>
+  <p><%= t("community.posts_count", count: @community.posts.count) %> · <%= t("community.members_count", count: @community.members_count) %></p>
   <%# user_id, not user: comparing the association is a lazy read on a
       strict-loading record. Preloaded in the controller too, but the id
       comparison is what makes this page independent of that. %>
   <% if authenticated? && Current.user.id != @community.user_id %>
     <p class="cluster">
       <% if Current.user.member_of?(@community) %>
-        <%= button_to t("community.leave", default: "Leave"), leave_community_path(@community), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("community.leave"), leave_community_path(@community), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% else %>
-        <%= button_to t("community.join", default: "Join"), join_community_path(@community), method: :post, class: "btn btn-sm" %>
+        <%= button_to t("community.join"), join_community_path(@community), method: :post, class: "btn btn-sm" %>
       <% end %>
     </p>
   <% end %>
@@ -63,7 +63,7 @@
     city read and only members post, and offering a compose link that will be
     refused on submit is worse than not offering it. %>
 <% if @community.postable_by?(Current.user) %>
-  <p><%= link_to "+ New post in #{@community.name}", new_community_post_path(@community) %></p>
+  <p><%= link_to t("community.new_post", name: @community.name), new_community_post_path(@community) %></p>
 <% elsif Current.user.present? && @community.privacy != "public" %>
   <p class="dim"><%= t("community.members_only_posting") %></p>
 <% end %>

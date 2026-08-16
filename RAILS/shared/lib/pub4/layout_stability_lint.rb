@@ -230,7 +230,9 @@ module Pub4
       # Found because the recovery merge pushed the count to 35 and the file it
       # named turned out to be correct markup. The count moving is what made
       # the instrument get read.
-      "unreserved_media" => 26,
+      # 26 -> 24 with dc7d0efe3 recovered: the takeaway and tv engine sheets it
+      # brings size their own card and hero images instead of leaving the tag bare.
+      "unreserved_media" => 24,
       "layout_transition" => 3,
       "font_without_display" => 0,
     }.freeze

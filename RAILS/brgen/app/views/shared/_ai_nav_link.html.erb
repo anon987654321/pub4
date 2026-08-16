@@ -1,7 +1,7 @@
 <%# locals: (class_name: "nav-item", show_label: true) %>
 <%= link_to brgen_ai_url,
       class: local_assigns.fetch(:class_name, "nav-item"),
-      aria: { label: "AI assistant" },
+      aria: { label: t("a11y.ai_assistant") },
       data: { turbo: false } do %>
   <%= icon :sparkles, size: 26 %>
   <% if local_assigns.fetch(:show_label, true) %>

@@ -217,6 +217,12 @@ en:
     channels_title: "Channels"
     shows_title: "Shows"
     thumbnail_hint: "postpro.rb grades thumbnails — blockbuster for Odyssey-style cinematic."
+    episode_count:
+      one: "%{count} episode"
+      other: "%{count} episodes"
+    episodes: "Episodes"
+    episode_line: "Episode %{number}: %{title}"
+    back_to_channel: "Back to channel"
   stories:
     title: "Stories"
     new: "New story"
@@ -545,6 +551,11 @@ en:
     reports_clear: "Moderation queue is clear."
     no_sessions: "No sessions scheduled"
     create_playlist: "Create one to start the radio."
+    first_restaurant: "Add the first restaurant for this area."
+    restaurants_appear: "Restaurants will appear here."
+    kitchen_no_food: "The kitchen has not listed food yet."
+    order_then_rate: "Order, then leave a rating for neighbours."
+    episodes_when_published: "Episodes will show up when published."
   actions:
     close: "Close"
     load_more: "Older posts"
@@ -585,6 +596,7 @@ en:
     copyable_text: "Text to copy"
     select_all: "Select all"
     select_all_reports: "Select all reports"
+    reload: "Reload"
   pages:
     account: "Account"
     two_factor: "Two-factor authentication"
@@ -961,6 +973,7 @@ en:
     no_reviews_body: "Buyers can review after an order."
     no_offers_body: "Incoming offers will list here."
     offers: "Offers"
+    add_address_body: "Save an address so the next purchase does not ask again."
     conditions:
       new: "new"
       like_new: "like new"
@@ -1015,6 +1028,28 @@ en:
     saves:
       one: "%{count} save"
       other: "%{count} saves"
+    driver_header: "Delivery driver"
+    anon: "anon"
+    driver_details: "Driver details"
+    restaurant_header: "Restaurant"
+    restaurant_info: "Restaurant info"
+    min_order_delivery: "Min order: %{min} · Delivery: %{fee}"
+    available_count:
+      one: "%{count} available item"
+      other: "%{count} available items"
+    place_order_from: "Place takeaway order from %{restaurant}"
+    menu: "Menu"
+    vegetarian: "Vegetarian"
+    vegan: "Vegan"
+    qty: "Qty"
+    back_to_restaurant: "Back to restaurant"
+    delivery_details: "Delivery details"
+    delivery_heading: "Delivery"
+    restaurant_results: "Restaurant results"
+    restaurant_actions: "Restaurant actions"
+    qty_for: "Quantity for %{name}"
+    item_sold_out: "%{name} sold out"
+    browse_menu: "Browse menu"
   maps:
     your_courier: "Your courier"
     recent_check_ins: "Recent check-ins"
@@ -1171,6 +1206,15 @@ en:
       maps: "maps"
   a11y:
     skip_to_content: "Skip to main content"
+    reports_header: "Reports"
+    report: "Report"
+    select_report: "Select report %{id}"
+    ai_assistant: "AI assistant"
+    unfollow_user: "Unfollow %{name}"
+    follow_user: "Follow %{name}"
+    sections: "Sections"
+    report_target: "Report %{type}"
+    user_profile: "User profile"
   # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb
   # fails if either file gains a key the other lacks.
   flash:
@@ -1367,6 +1411,15 @@ en:
       owner: "Owner"
     join: "Join"
     leave: "Leave"
+    no_bans_body: "Bans from this community show up here."
+    header: "Community"
+    posts_count:
+      one: "%{count} post"
+      other: "%{count} posts"
+    members_count:
+      one: "%{count} member"
+      other: "%{count} members"
+    new_post: "New post in %{name}"
   hashtag:
     count: "%{count} posts"
     empty_body: "No posts use #%{name} yet."
@@ -1384,5 +1437,15 @@ en:
     channels: "Channels"
     playlists: "Playlists"
     posts: "Posts"
+    followers:
+      one: "%{count} follower"
+      other: "%{count} followers"
+    following:
+      one: "following %{count}"
+      other: "following %{count}"
   showcase:
     devices: "The app on desktop and mobile"
+  admin:
+    reports_title: "Moderation reports"
+    moderation: "Admin / moderation"
+    reported_by: "by %{name}"

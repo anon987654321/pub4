@@ -26,5 +26,8 @@
     <% end %>
   </ul>
 <% else %>
-  <p class="dim"><%= t("community.no_bans") %></p>
+  <%= render "shared/empty_state",
+        title: t("community.no_bans"),
+        body: t("community.no_bans_body"),
+        action: { label: t("community.mod_queue"), path: community_moderation_index_path(@community) } %>
 <% end %>

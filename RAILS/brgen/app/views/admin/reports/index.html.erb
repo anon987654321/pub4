@@ -1,13 +1,13 @@
-<% content_for :title, "Moderation reports" %>
+<% content_for :title, t("admin.reports_title") %>
 
-<div class="page-header" role="banner" aria-label="Reports header">
+<div class="page-header" role="banner" aria-label="<%= t("a11y.reports_header") %>">
   <div>
-    <p class="dim">Admin / moderation</p>
-    <h1>Reports</h1>
+    <p class="dim"><%= t("admin.moderation") %></p>
+    <h1><%= t("a11y.reports_header") %></h1>
   </div>
   <div class="chips">
-    <span class="chip"><%= pluralize(@open_count, "open") %></span>
-    <span class="chip"><%= pluralize(@reviewing_count, "reviewing") %></span>
+    <span class="chip"><%= t("community.open_count", count: @open_count) %></span>
+    <span class="chip"><%= t("community.reviewing_count", count: @reviewing_count) %></span>
   </div>
 </div>
 
@@ -17,20 +17,20 @@
       <label><input type="checkbox" data-checkbox-select-all-target="checkboxAll" aria-label="<%= t("actions.select_all_reports") %>"> <%= t("actions.select_all") %></label>
     </p>
     <% @reports.each do |report| %>
-      <article role="article" aria-label="Report">
+      <article role="article" aria-label="<%= t("a11y.report") %>">
         <p class="cluster">
-          <input type="checkbox" data-checkbox-select-all-target="checkbox" value="<%= report.id %>" aria-label="Select report <%= report.id %>">
+          <input type="checkbox" data-checkbox-select-all-target="checkbox" value="<%= report.id %>" aria-label="<%= t("a11y.select_report", id: report.id) %>">
           <strong><%= report.reason.humanize %> · <%= report.status.humanize %></strong>
         </p>
         <p class="dim">
           <%= report.reportable_type %>#<%= report.reportable_id %>
-          · by <%= report.user.display_name %>
+          · <%= t("admin.reported_by", name: report.user.display_name) %>
           · <span><%= time_ago(report.created_at) %></span>
         </p>
         <% if report.details.present? %><p><%= report.details %></p><% end %>
         <nav role="navigation" class="cluster">
           <% %w[open reviewing resolved dismissed].each do |status| %>
-            <%= button_to status.humanize, admin_report_path(report, status: status), method: :patch, class: "btn btn-ghost btn-sm" %>
+            <%= button_to t("community.mark_#{status}"), admin_report_path(report, status: status), method: :patch, class: "btn btn-ghost btn-sm" %>
           <% end %>
         </nav>
       </article>

@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "takeaway-restaurants-list", target: "_top" do %>
-<section role="region" aria-label="Restaurant results" id="takeaway-restaurants-list">
+<section role="region" aria-label="<%= t("takeaway.restaurant_results") %>" id="takeaway-restaurants-list">
   <% @restaurants.each do |r| %>
     <%= render "takeaway/restaurants/card", restaurant: r %>
   <% end %>
@@ -7,12 +7,12 @@
     <% if authenticated? %>
       <%= render "shared/empty_state",
             title: t("empty.no_restaurants"),
-            body: "Add the first restaurant for this area.",
+            body: t("empty.first_restaurant"),
             action: { label: t("actions.add_one"), path: new_restaurant_path } %>
     <% else %>
       <%= render "shared/empty_state",
             title: t("empty.no_restaurants"),
-            body: "Restaurants will appear here.",
+            body: t("empty.restaurants_appear"),
             action: { label: t("empty.city_feed"), path: root_path } %>
     <% end %>
   <% end %>

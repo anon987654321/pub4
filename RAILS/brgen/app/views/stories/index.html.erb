@@ -16,7 +16,7 @@
       <li class="story-ring<%= " story-ring--seen" if newest.seen_by?(Current.user) %>">
         <%= link_to story_path(newest), aria: { label: t("stories.open_ring", user: newest.user.display_name) } do %>
           <% if newest.media.attached? %>
-            <%= image_tag newest.media.variant(resize_to_limit: [ 240, 320 ], format: :webp), alt: "" %>
+            <%= image_tag newest.media.variant(resize_to_limit: [ 240, 320 ], format: :webp), alt: "", width: 240, height: 240 %>
           <% end %>
           <span class="story-ring-name"><%= newest.user.display_name %></span>
           <% if stories.size > 1 %>

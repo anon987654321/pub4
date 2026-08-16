@@ -2,9 +2,9 @@
   <% if current_user == user %>
   <% elsif active %>
     <%= button_to t("actions.unfollow"), main_app.unfollow_user_path(user), method: :delete,
-        data: { turbo_stream: true }, aria: { label: "Unfollow #{user.display_name}" } %>
+        data: { turbo_stream: true }, aria: { label: t("a11y.unfollow_user", name: user.display_name) } %>
   <% else %>
     <%= button_to t("actions.follow"), main_app.follow_user_path(user), method: :post,
-        data: { turbo_stream: true }, aria: { label: "Follow #{user.display_name}" } %>
+        data: { turbo_stream: true }, aria: { label: t("a11y.follow_user", name: user.display_name) } %>
   <% end %>
 </span>

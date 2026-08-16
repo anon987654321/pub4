@@ -343,6 +343,10 @@ body.vertical-playlist .playlist-index {
   flex-shrink: 0;
 }
 
+.playlist-comment .text {
+  color: var(--color-text, var(--text));
+}
+
 .vote-form {
   display: inline;
   margin: 0;

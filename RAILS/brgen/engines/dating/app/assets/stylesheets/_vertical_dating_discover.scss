@@ -78,3 +78,27 @@ body.vertical-dating .empty {
   color: var(--dating-muted);
   padding: var(--space-8) var(--space-4);
 }
+
+.like-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: min(100%, 420px);
+}
+
+.like-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--dating-card, var(--surface-elevated));
+  border-radius: var(--radius-card);
+}
+
+.like-comment {
+  margin: 0;
+  font-style: italic;
+}

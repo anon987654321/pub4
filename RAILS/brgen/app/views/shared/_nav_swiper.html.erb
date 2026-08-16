@@ -9,7 +9,7 @@
       active entry, which is the correct signal for a nav and was already here.
       Roving tabindex went with the tab roles: a tablist is one tab stop by
       design, but a nav should let Tab reach every link. %>
-  <nav id="nav_sections" class="nav_swiper_bar" aria-label="Sections" data-brgen-shell-target="navSections">
+  <nav id="nav_sections" class="nav_swiper_bar" aria-label="<%= t("a11y.sections") %>" data-brgen-shell-target="navSections">
     <% brgen_nav_groups.each do |group_label, items| %>
       <div class="nav_swiper_group" role="group" aria-label="<%= group_label.capitalize %>">
         <% items.each do |label, href| %>

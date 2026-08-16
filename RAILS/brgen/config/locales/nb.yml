@@ -223,6 +223,12 @@ nb:
     channels_title: "Kanaler"
     shows_title: "Serier"
     thumbnail_hint: "postpro.rb graderer miniatyrbilder — blockbuster for Odyssey-aktig kino."
+    episode_count:
+      one: "%{count} episode"
+      other: "%{count} episoder"
+    episodes: "Episoder"
+    episode_line: "Episode %{number}: %{title}"
+    back_to_channel: "Tilbake til kanalen"
   stories:
     title: "Historier"
     new: "Ny historie"
@@ -551,6 +557,11 @@ nb:
     reports_clear: "Moderasjonskøen er tom."
     no_sessions: "Ingen økter planlagt"
     create_playlist: "Opprett en for å starte radioen."
+    first_restaurant: "Legg til den første restauranten i området."
+    restaurants_appear: "Restauranter dukker opp her."
+    kitchen_no_food: "Kjøkkenet har ikke lagt ut mat ennå."
+    order_then_rate: "Bestill, og gi naboene en vurdering etterpå."
+    episodes_when_published: "Episoder vises når de publiseres."
   actions:
     close: "Lukk"
     load_more: "Eldre innlegg"
@@ -591,6 +602,7 @@ nb:
     copyable_text: "Tekst som kopieres"
     select_all: "Velg alle"
     select_all_reports: "Velg alle rapporter"
+    reload: "Last inn på nytt"
   pages:
     account: "Konto"
     two_factor: "Tofaktorautentisering"
@@ -963,6 +975,7 @@ nb:
     no_reviews_body: "Kjøpere kan omtale etter en ordre."
     no_offers_body: "Innkommende bud vises her."
     offers: "Bud"
+    add_address_body: "Lagre en adresse så neste kjøp ikke krever den på nytt."
     conditions:
       new: "ny"
       like_new: "som ny"
@@ -1017,6 +1030,28 @@ nb:
     saves:
       one: "%{count} lagret"
       other: "%{count} lagret"
+    driver_header: "Budsjåfør"
+    anon: "anonym"
+    driver_details: "Sjåførdetaljer"
+    restaurant_header: "Restaurant"
+    restaurant_info: "Restaurantinfo"
+    min_order_delivery: "Minstebeløp: %{min} · Levering: %{fee}"
+    available_count:
+      one: "%{count} tilgjengelig rett"
+      other: "%{count} tilgjengelige retter"
+    place_order_from: "Bestill fra %{restaurant}"
+    menu: "Meny"
+    vegetarian: "Vegetar"
+    vegan: "Vegansk"
+    qty: "Antall"
+    back_to_restaurant: "Tilbake til restauranten"
+    delivery_details: "Leveringsdetaljer"
+    delivery_heading: "Levering"
+    restaurant_results: "Restauranttreff"
+    restaurant_actions: "Restauranthandlinger"
+    qty_for: "Antall av %{name}"
+    item_sold_out: "%{name} er utsolgt"
+    browse_menu: "Se menyen"
   maps:
     your_courier: "Budet ditt"
     recent_check_ins: "Nylige innsjekkinger"
@@ -1173,6 +1208,15 @@ nb:
       maps: "kart"
   a11y:
     skip_to_content: "Hopp til innholdet"
+    reports_header: "Rapporter"
+    report: "Rapport"
+    select_report: "Velg rapport %{id}"
+    ai_assistant: "AI-assistent"
+    unfollow_user: "Avfølg %{name}"
+    follow_user: "Følg %{name}"
+    sections: "Seksjoner"
+    report_target: "Rapporter %{type}"
+    user_profile: "Brukerprofil"
   # Flash messages. 44 hardcoded English strings until 2026-08-11 — English toasts
   # over an nb city feed. "Unauthorized"/"Not allowed" and the generic rate-limit
   # sentence are NOT here: they reuse shared.flash.*, which the engine owns for all
@@ -1371,6 +1415,15 @@ nb:
       owner: "Eier"
     join: "Bli med"
     leave: "Forlat"
+    no_bans_body: "Utestengelser fra dette fellesskapet vises her."
+    header: "Fellesskap"
+    posts_count:
+      one: "%{count} innlegg"
+      other: "%{count} innlegg"
+    members_count:
+      one: "%{count} medlem"
+      other: "%{count} medlemmer"
+    new_post: "Nytt innlegg i %{name}"
   hashtag:
     count: "%{count} innlegg"
     empty_body: "Ingen innlegg bruker #%{name} ennå."
@@ -1388,5 +1441,15 @@ nb:
     channels: "Kanaler"
     playlists: "Spillelister"
     posts: "Innlegg"
+    followers:
+      one: "%{count} følger"
+      other: "%{count} følgere"
+    following:
+      one: "følger %{count}"
+      other: "følger %{count}"
   showcase:
     devices: "Appen på skrivebord og mobil"
+  admin:
+    reports_title: "Moderasjonsrapporter"
+    moderation: "Admin / moderering"
+    reported_by: "av %{name}"

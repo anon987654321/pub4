@@ -25,10 +25,13 @@
     <% end %>
   </ul>
 <% else %>
-  <p class="dim"><%= t("marketplace.no_address_yet") %></p>
+  <%= render "shared/empty_state",
+        title: t("marketplace.no_address_yet"),
+        body: t("marketplace.add_address_body"),
+        action: { label: t("marketplace.add_address"), path: "#new-address" } %>
 <% end %>
 
-<h2><%= t("marketplace.add_address") %></h2>
+<h2 id="new-address"><%= t("marketplace.add_address") %></h2>
 <%= form_with model: @address, url: addresses_path, scope: :marketplace_address do |f| %>
   <p><%= f.label :recipient, t("marketplace.address_form.recipient") %><%= f.text_field :recipient, required: true %></p>
   <p><%= f.label :line1, t("marketplace.address_form.line1") %><%= f.text_field :line1, required: true %></p>

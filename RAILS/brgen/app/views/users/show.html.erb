@@ -2,10 +2,10 @@
 <% content_for :json_ld, json_ld_for(@user, type: :person) %>
 <%= turbo_stream_from @user %>
 
-<header class="profile-header" role="banner" aria-label="User profile">
+<header class="profile-header" role="banner" aria-label="<%= t("a11y.user_profile") %>">
   <h1><%= @user.display_name %></h1>
   <p class="dim">
-    <%= @followers_count %> followers · <%= @following_count %> following · <%= @posts.size %> posts
+    <%= t("profile.followers", count: @followers_count) %> · <%= t("profile.following", count: @following_count) %> · <%= t("community.posts_count", count: @posts.size) %>
   </p>
 
   <% if authenticated? && Current.user != @user %>

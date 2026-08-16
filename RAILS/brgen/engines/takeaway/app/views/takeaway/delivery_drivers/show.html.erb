@@ -1,14 +1,14 @@
 <% content_for :title, t("takeaway.delivery_driver") %>
 
-<div class="page-header" role="banner" aria-label="Delivery driver header">
+<div class="page-header" role="banner" aria-label="<%= t("takeaway.driver_header") %>">
   <div>
     <p class="dim"><%= t("takeaway.operations") %></p>
-    <h1><%= @delivery_driver.user&.display_name || "anon" %></h1>
+    <h1><%= @delivery_driver.user&.display_name || t("takeaway.anon") %></h1>
   </div>
   <%= link_to t("actions.all_drivers"), delivery_drivers_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
-<article role="article" aria-label="Driver details">
+<article role="article" aria-label="<%= t("takeaway.driver_details") %>">
   <p class="dim"><%= @delivery_driver.vehicle_type.presence || t("takeaway.vehicle_unset") %> · <%= @delivery_driver.available? ? t("takeaway.available") : t("takeaway.unavailable") %></p>
   <% if @delivery_driver.location? && Current.user && Current.user.id == @delivery_driver.user_id %>
     <p><%= @delivery_driver.current_lat %>, <%= @delivery_driver.current_lng %></p>

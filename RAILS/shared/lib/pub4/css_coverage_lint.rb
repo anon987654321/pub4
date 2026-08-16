@@ -85,9 +85,8 @@ module Pub4
     # with no styling whatsoever — not mis-styled, unstyled.
     #
     # The rest are smaller clusters of the same kind: communities moderation
-    # (ban-list, mod-queue, member-list, community-rules), dating likes
-    # (like-list, like-card, like-comment), marketplace addresses (address-list,
-    # cart-address), takeaway (courier), plus feed-action-form and post-quotes.
+    # (ban-list, mod-queue, member-list, community-rules), plus feed-action-form,
+    # post-quotes and viewer-list.
     #
     # Deliberately not written here. Inventing a visual design for eleven
     # components is not a lint's decision and not a passing agent's; the numbers
