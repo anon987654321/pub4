@@ -118,6 +118,7 @@ class Marketplace::Listing < ApplicationRecord
 
   def expired? = expires_at.present? && expires_at <= Time.current
   def expires_in_days = expires_at.nil? ? nil : ((expires_at - Time.current) / 1.day).ceil
+  def buyable? = status == "active" && !expired? && in_stock?
 
   # Renewing restarts the window from now rather than extending the old one, so
   # a listing renewed a week late does not immediately expire again.

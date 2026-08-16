@@ -1,0 +1,7 @@
+<% content_for :title, t("restricted.title") %>
+<%= render "shared/empty_state",
+      title: t("restricted.title"),
+      body: t("restricted.body"),
+      action: authenticated? ?
+        { label: t("nav.explore"), path: main_app.communities_path } :
+        { label: t("nav.sign_in"), path: main_app.new_session_path } %>

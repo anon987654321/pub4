@@ -25,6 +25,10 @@ module Marketplace
       owner?
     end
 
+    def renew?
+      owner?
+    end
+
     class Scope < Scope
       # `live`, not `active`: a listing whose window has lapsed is still active
       # — that is what lets its owner see and renew it — but it does not belong

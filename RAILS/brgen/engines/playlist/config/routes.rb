@@ -7,7 +7,7 @@ Playlist::Engine.routes.draw do
     resources :playlists do
       member { get :embed }
       resources :imports, only: :create
-      resources :tracks, only: %i[create destroy]
+      resources :tracks, only: %i[create update destroy]
       resources :collaborations, only: %i[create destroy]
       resources :dilla_sketches, only: %i[create update destroy] do
         member { post :render_audio }

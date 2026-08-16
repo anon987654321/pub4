@@ -111,6 +111,8 @@ class ListingExpiryTest < ActiveSupport::TestCase
 
     refute Marketplace::ListingPolicy.new(buyer, lapsed).show?
     assert Marketplace::ListingPolicy.new(@seller, lapsed).show?
+    refute lapsed.buyable?
+    assert Marketplace::ListingPolicy.new(@seller, lapsed).renew?
 
     order = Marketplace::Order.new(buyer: buyer, listing: lapsed, status: "pending")
     assert_not order.valid?

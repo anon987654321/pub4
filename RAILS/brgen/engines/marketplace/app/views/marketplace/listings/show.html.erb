@@ -28,12 +28,20 @@
 
 <article class="marketplace-listing">
   <p class="listing-price"><%= @listing.price_display %></p>
-  <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user&.display_name || "anon" %></p>
+  <% if @listing.sold? %>
+    <p class="listing-status"><%= t("marketplace.sold_notice") %></p>
+  <% elsif @listing.expired? %>
+    <p class="listing-status"><%= t("marketplace.expired_notice") %></p>
+    <% if Current.user.present? && Current.user == @listing.user %>
+      <%= button_to t("marketplace.renew"), renew_listing_path(@listing), method: :post, class: "btn btn-primary btn-sm" %>
+    <% end %>
+  <% end %>
+  <p class="dim"><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location, @listing.user&.display_name || "anon"].compact.join(" · ") %></p>
   <p class="dim"><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %> · <%= t("marketplace.reviews_count", count: @listing.reviews_count.to_i) %></p>
   <% if @listing.reviews_count.to_i.positive? %>
     <p class="dim"><%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %></p>
   <% end %>
-  <div class="listing-description"><%= simple_format(@listing.description) %></div>
+  <div class="listing-description"><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div>
   <button class="btn-share" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
@@ -44,7 +52,7 @@
       main_app.user_conversations_path(nil) raises UrlGenerationError, 500ing the whole
       listing page. %>
   <% seller = @listing.user %>
-  <% if !@listing.sold? && Current.user.present? && seller.present? && Current.user != seller %>
+  <% if @listing.buyable? && Current.user.present? && seller.present? && Current.user != seller %>
     <div class="listing-actions listing-actions--inline">
       <%= button_to t("marketplace.message_seller_btn"), main_app.user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
     </div>
@@ -79,12 +87,12 @@
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_reviews"),
-          body: "Buyers can review after an order.",
+          body: t("marketplace.no_reviews_body"),
           action: { label: t("marketplace.browse_listings"), path: listings_path } %>
   <% end %>
 </div>
 
-<% if Current.user.present? && Current.user != @listing.user && !@listing.sold? %>
+<% if Current.user.present? && Current.user != @listing.user && @listing.buyable? %>
   <div id="make-offer" class="section-divider">
     <p class="section-heading--md"><%= t("marketplace.make_offer", default: "Make an offer") %></p>
     <p class="dim"><%= t("marketplace.message_seller_hint") %></p>
@@ -105,15 +113,15 @@
   <div class="section-divider">
     <p class="section-heading--md"><%= t("marketplace.seller_dashboard") %></p>
     <div class="chips">
-      <span class="chip"><%= pluralize(@listing.views_count.to_i, "view") %></span>
-      <span class="chip"><%= pluralize(@listing.orders.size, "offer") %></span>
-      <span class="chip"><%= pluralize(@listing.favorites.size, "save") %></span>
+      <span class="chip"><%= t("marketplace.views", count: @listing.views_count.to_i) %></span>
+      <span class="chip"><%= t("marketplace.offers") %>: <%= @listing.orders.size %></span>
+      <span class="chip"><%= t("marketplace.saves", count: @listing.favorites.size) %></span>
       <span class="chip"><%= @listing.status %></span>
     </div>
   </div>
 
   <div class="section-divider">
-    <p class="section-heading--md">Offers</p>
+    <p class="section-heading--md"><%= t("marketplace.offers") %></p>
     <% if @listing.orders.any? %>
       <% @listing.orders.includes(:buyer).each do |order| %>
         <article>
@@ -131,8 +139,8 @@
     <% else %>
       <%= render "shared/empty_state",
             title: t("empty.no_offers"),
-            body: "Incoming offers will list here.",
-            action: { label: "Edit listing", path: edit_listing_path(@listing) } %>
+            body: t("marketplace.no_offers_body"),
+            action: { label: t("marketplace.edit_listing"), path: edit_listing_path(@listing) } %>
     <% end %>
     <%= button_to t("marketplace.remove_listing"), listing_path(@listing), method: :delete,
         data: { turbo_confirm: t("marketplace.confirm_remove_listing") }, class: "btn btn-danger btn-sm m-16" %>

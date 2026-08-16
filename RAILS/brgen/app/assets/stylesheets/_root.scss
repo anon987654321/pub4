@@ -57,6 +57,27 @@ $brgen-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", 
   --font: #{$brgen-font};
 }
 
+/* Shared [data-theme=light] is the social indigo palette and outranks a bare
+   :root. Restate brgen-old here so the checkbox path and the dataset path
+   wear the same 2014 light, not two lights. */
+:root[data-theme="light"] {
+  @include x.brgen-old-light-tokens;
+  @include x.app-root-tokens;
+  color-scheme: light;
+  --font-size: var(--text-lg);
+  --font: #{$brgen-font};
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="light"] {
+    @include x.brgen-old-light-tokens;
+    @include x.app-root-tokens;
+    color-scheme: light;
+    --font-size: var(--text-lg);
+    --font: #{$brgen-font};
+  }
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {

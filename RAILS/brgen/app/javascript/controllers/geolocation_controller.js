@@ -61,6 +61,30 @@ export default class extends Controller {
     )
   }
 
+  // One-shot fill of a search form's hidden lat/lng, then submit. Dating's
+  // watchPosition path needs a URL to persist; marketplace "near me" only
+  // wants coordinates on this request.
+  pin(event) {
+    event?.preventDefault()
+    if (!navigator.geolocation) {
+      this.#announceError("unavailable")
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const form = this.element.form || this.element.closest("form")
+        if (!form) return
+        const lat = form.querySelector("[name='lat']")
+        const lng = form.querySelector("[name='lng']")
+        if (lat) lat.value = pos.coords.latitude
+        if (lng) lng.value = pos.coords.longitude
+        form.requestSubmit()
+      },
+      err => this.#onGeoError(err),
+      { enableHighAccuracy: true, timeout: 10_000 }
+    )
+  }
+
   // Called by Turbo Stream when a nearby user is detected server-side.
   // Deduplicates so each stranger only triggers one alert per page session.
   alertArrival(handle, userId) {

@@ -139,7 +139,9 @@ module Pub4
       # 107 -> 105 on 2026-08-16. Two aria-labels were translated on main and
       # the baseline did not follow them down, which is the half of this ratchet
       # that keeps it honest: a floor nobody lowers stops being a floor.
-      "aria_label" => 105,
+      # 105 -> 95: marketplace buy bar / filter, dating pass/like, and the
+      # playlist player chrome went through t().
+      "aria_label" => 95,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -169,7 +171,9 @@ module Pub4
       # → 211 (2026-08-14), lowered with it and on the same evidence: stable
       # across the session and across three consecutive measurements.
       # 211 -> 208, same reason and same day as aria_label above.
-      "translate_default" => 208,
+      # 208 -> 203: playlist add-track/source/expires and dating empty-state
+      # defaults became primary keys.
+      "translate_default" => 203,
     }.freeze
 
     # Kept for callers that referenced the old single number.

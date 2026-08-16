@@ -35,6 +35,12 @@ class Playlist::TracksController < Playlist::BaseController
     end
   end
 
+  def update
+    join = @set ? @set.set_tracks.find(params[:id]) : @playlist.playlist_tracks.find(params[:id])
+    join.update!(position: params[:position].to_i)
+    head :ok
+  end
+
   private
 
   def set_container

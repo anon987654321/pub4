@@ -51,6 +51,25 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Original", post.reload.title
   end
 
+  test "a private community post is members-only, not a 404" do
+    owner = User.create!(email_address: "post-priv-own-#{SecureRandom.hex(4)}@example.com", password: "password12345", city: brgen_city)
+    stranger = User.create!(email_address: "post-priv-str-#{SecureRandom.hex(4)}@example.com", password: "password12345", city: brgen_city)
+    community = nil
+    post_record = nil
+    ActsAsTenant.with_tenant(brgen_city) do
+      community = Community.create!(user: owner, name: "Hemmelig #{SecureRandom.hex(3)}", privacy: "private")
+      community.community_memberships.create!(user: owner, role: "owner")
+      post_record = Post.create!(user: owner, community: community, title: "Inne", content: "kun medlemmer", city: brgen_city)
+    end
+
+    host! "brgen.no"
+    post session_url, params: { email_address: stranger.email_address, password: "password12345" }
+    get post_url(post_record)
+
+    assert_response :forbidden
+    assert_select "h2.empty-state-title"
+  end
+
   test "non-owner cannot destroy another user's post" do
     owner  = User.create!(email_address: "post-owner2-#{SecureRandom.hex(4)}@example.com", password: "password12345")
     other  = User.create!(email_address: "post-other2-#{SecureRandom.hex(4)}@example.com", password: "password12345")

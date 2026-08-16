@@ -104,6 +104,17 @@ class Dating::Profile < ApplicationRecord
 
   def name = user.display_name
 
+  def recency_key
+    return "dating.recency.unknown" if last_active_at.blank?
+
+    age = Time.current - last_active_at
+    if age < 2.hours then "dating.recency.now"
+    elsif age < 2.days then "dating.recency.recent"
+    elsif age < 14.days then "dating.recency.week"
+    else "dating.recency.older"
+    end
+  end
+
   def liked_by?(user)    = Dating::Like.exists?(liker: user, likee: self.user)
   def disliked_by?(user) = Dating::Dislike.exists?(disliker: user, dislikee: self.user)
   def matched_with?(user)

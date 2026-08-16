@@ -37,6 +37,9 @@
   <%= link_to main_app.communities_path, class: "tab-item", aria: { label: t("nav.explore"), current: current_page?(main_app.communities_path) ? "page" : nil } do %>
     <%= icon :explore, size: 26 %>
   <% end %>
+  <%= link_to main_app.new_post_path, class: "tab-item", aria: { label: t("nav.new_post"), current: current_page?(main_app.new_post_path) ? "page" : nil } do %>
+    <%= icon :compose, size: 26 %>
+  <% end %>
   <%= render "shared/ai_nav_link", class_name: "tab-item", show_label: false %>
   <%= link_to main_app.conversations_path, class: "tab-item", aria: { label: t("nav.messages"), current: current_page?(main_app.conversations_path) ? "page" : nil } do %>
     <%= icon :messages, size: 26 %>

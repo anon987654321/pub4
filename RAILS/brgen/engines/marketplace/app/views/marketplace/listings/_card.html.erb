@@ -25,7 +25,7 @@
       <% elsif listing.casual? %>
         <span class="deal-badge deal-badge--soft"><%= t("marketplace.from_a_person") %></span>
       <% elsif listing.condition.present? %>
-        <span class="deal-badge deal-badge--soft"><%= listing.condition.tr("_", " ") %></span>
+        <span class="deal-badge deal-badge--soft"><%= t("marketplace.conditions.#{listing.condition}", default: listing.condition.tr("_", " ")) %></span>
       <% end %>
     </div>
 
@@ -35,18 +35,18 @@
       <div class="deal-meta">
         <% meta_bits = [
              listing.location,
-             (distance_km ? "#{number_with_precision(distance_km, precision: 1)} km away" : nil),
+             (distance_km ? t("marketplace.distance_km", km: number_with_precision(distance_km, precision: 1)) : nil),
              listing.category&.name,
-             pluralize(listing.views_count.to_i, "view")
+             t("marketplace.views", count: listing.views_count.to_i)
            ].compact %>
         <%= meta_bits.join(" · ") %>
       </div>
       <% if listing.reviews_count.to_i.positive? %>
         <div class="deal-meta deal-meta--rating">
-          <span class="deal-rating" aria-label="<%= number_with_precision(listing.rating, precision: 1) %> of 5">
+          <span class="deal-rating" aria-label="<%= t("marketplace.rating_of_five", rating: number_with_precision(listing.rating, precision: 1)) %>">
             <%= number_with_precision(listing.rating, precision: 1) %> ★
           </span>
-          <%= pluralize(listing.reviews_count, "review") %>
+          <%= t("marketplace.reviews_count", count: listing.reviews_count) %>
         </div>
       <% end %>
     </div>

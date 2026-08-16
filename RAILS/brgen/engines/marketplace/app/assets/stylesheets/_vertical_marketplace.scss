@@ -41,6 +41,11 @@ body.vertical-marketplace .deal-price {
   font-weight: var(--weight-heavy);
 }
 
+body.vertical-marketplace .listing-status {
+  margin: 0 0 var(--space-2);
+  font-weight: var(--weight-bold);
+}
+
 body.vertical-marketplace .deal-cat.active,
 body.vertical-marketplace .marketplace-subnav .feed-tab.active {
   border-bottom-color: var(--accent);

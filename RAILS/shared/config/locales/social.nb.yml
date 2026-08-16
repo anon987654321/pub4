@@ -21,6 +21,9 @@ nb:
     search: "Søk"
     accept: "Godta"
     block: "Blokker"
+    read_more: "Les mer"
+    read_less: "Vis mindre"
+    more: "Mer"
   comments:
     placeholder: "Hva tenker du?"
     submit: "Kommenter"

@@ -1,10 +1,10 @@
 <%# Sticky PDP action bar — Tise/Bol pattern; sits above mobile tab bar. %>
-<% if !@listing.sold? && authenticated? && Current.user != @listing.user %>
-<div class="listing-buy-bar" role="region" aria-label="Buy actions">
+<% if @listing.buyable? && authenticated? && Current.user != @listing.user %>
+<div class="listing-buy-bar" role="region" aria-label="<%= t("marketplace.buy_actions") %>">
   <div class="listing-buy-bar-price">
     <span class="listing-buy-bar-amount"><%= @listing.price_display %></span>
     <% if @listing.condition.present? %>
-      <span class="listing-buy-bar-meta dim"><%= @listing.condition.tr("_", " ") %></span>
+      <span class="listing-buy-bar-meta dim"><%= t("marketplace.conditions.#{@listing.condition}", default: @listing.condition.tr("_", " ")) %></span>
     <% end %>
   </div>
   <div class="listing-buy-bar-actions">
@@ -12,7 +12,7 @@
           listing_orders_path(@listing),
           params: { quantity: 1 },
           class: "btn btn-primary listing-buy-bar-cta" %>
-    <a href="#make-offer" class="btn btn-ghost listing-buy-bar-secondary">Offer</a>
+    <a href="#make-offer" class="btn btn-ghost listing-buy-bar-secondary"><%= t("marketplace.offer") %></a>
   </div>
 </div>
 <% end %>

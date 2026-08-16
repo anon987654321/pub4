@@ -29,7 +29,7 @@
 <section data-tabs-target="panel" data-tabs-hash-value="#about" aria-labelledby="profile-about-tab" hidden>
   <article>
     <% if @profile.bio.present? %>
-      <%= read_more(@profile.bio, lines: 3, more: "Read bio", less: "Show less") %>
+      <%= read_more(@profile.bio, lines: 3, more: t("dating.read_bio"), less: t("dating.show_less")) %>
     <% else %>
       <p><span class="dim">Bio</span><br>—</p>
     <% end %>

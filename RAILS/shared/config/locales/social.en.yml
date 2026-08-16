@@ -23,6 +23,9 @@ en:
     search: "Search"
     accept: "Accept"
     block: "Block"
+    read_more: "Read more"
+    read_less: "Read less"
+    more: "More"
   comments:
     placeholder: "What do you think?"
     submit: "Comment"

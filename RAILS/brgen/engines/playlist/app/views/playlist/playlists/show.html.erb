@@ -13,36 +13,56 @@
       <%= button_to t("actions.delete"), playlist_path(@playlist), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger btn-sm" %>
     </nav>
 
-    <div class="section-divider">
-      <p class="section-heading"><%= t("playlist.add_track", default: "Add a track") %></p>
+    <details class="playlist-details">
+      <summary><%= t("playlist.add_track") %></summary>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_tracks_path(@playlist), scope: :playlist_track do |f| %>
           <div class="field"><%= f.text_field :title, placeholder: t("playlist.title"), aria: { label: t("playlist.title") } %></div>
           <div class="field"><%= f.text_field :artist, placeholder: t("playlist.artist"), aria: { label: t("playlist.artist") } %></div>
-          <div class="field"><%= f.select :source_type, Playlist::Track::SOURCE_TYPES.reject { |type| type == "whyp" }.map { |type| [type.humanize, type] }, { include_blank: t("playlist.source", default: "Source") }, { aria: { label: t("playlist.source", default: "Source") } } %></div>
+          <div class="field"><%= f.select :source_type, Playlist::Track::SOURCE_TYPES.reject { |type| type == "whyp" }.map { |type| [type.humanize, type] }, { include_blank: t("playlist.source") }, { aria: { label: t("playlist.source") } } %></div>
           <div class="field"><%= f.url_field :source_url, placeholder: t("playlist.url_optional"), aria: { label: t("playlist.url_optional") } %></div>
-          <div class="field"><%= f.datetime_field :expires_at, aria: { label: t("playlist.expires_at", default: "Expires at") } %></div>
+          <div class="field"><%= f.datetime_field :expires_at, aria: { label: t("playlist.expires_at") } %></div>
           <div class="field"><%= f.submit t("takeaway.add"), class: "btn btn-primary btn-sm" %></div>
         <% end %>
       </div>
-    </div>
+    </details>
 
-    <div class="section-divider">
-      <p class="section-heading"><%= t("playlist.import_links") %></p>
+    <details class="playlist-details">
+      <summary><%= t("playlist.import_links") %></summary>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_imports_path(@playlist), method: :post do |f| %>
           <div class="field"><%= f.text_area :urls, rows: 4, placeholder: t("playlist.import_urls_placeholder"), aria: { label: t("playlist.import_urls_placeholder") } %></div>
           <div class="field"><%= f.submit t("playlist.import"), class: "btn btn-primary btn-sm" %></div>
         <% end %>
       </div>
-    </div>
+    </details>
 
-    <div class="section-divider">
-      <p class="section-heading"><%= t("playlist.embed_customize") %></p>
-      <input type="text" readonly value="<iframe src=&quot;<%= embed_playlist_url(@playlist) %>&quot; loading=&quot;lazy&quot; width=&quot;100%&quot; height=&quot;520&quot;></iframe>" class="field--grow"
-             aria-label="<%= t("playlist.embed_code") %>">
-      <small>Examples: <a href="<%= embed_playlist_url(@playlist, color: "ff0000") %>">red</a> | <a href="<%= embed_playlist_url(@playlist, color: "00ff00", show_artwork: "0") %>">no artwork</a> | <a href="<%= embed_playlist_url(@playlist, compact: "1", hide_branding: "1") %>">compact clean</a></small>
-    </div>
+    <details class="playlist-details">
+      <summary><%= t("playlist.embed_customize") %></summary>
+      <% embed_html = %(<iframe src="#{embed_playlist_url(@playlist)}" loading="lazy" width="100%" height="520"></iframe>) %>
+      <%= render "shared/copyable", text: embed_html, label: t("playlist.embed_code") %>
+      <small>
+        <%= t("playlist.embed_examples") %>:
+        <%= link_to t("playlist.embed_red"), embed_playlist_url(@playlist, color: "ff0000") %>
+        |
+        <%= link_to t("playlist.embed_no_artwork"), embed_playlist_url(@playlist, color: "00ff00", show_artwork: "0") %>
+        |
+        <%= link_to t("playlist.embed_compact"), embed_playlist_url(@playlist, compact: "1", hide_branding: "1") %>
+      </small>
+    </details>
+
+    <% if @tracks.any? %>
+      <details class="playlist-details">
+        <summary><%= t("playlist.reorder_tracks") %></summary>
+        <ol class="playlist-reorder" data-controller="sortable" data-sortable-param-name-value="position">
+          <% @tracks.each do |entry| %>
+            <li data-sortable-update-url="<%= playlist_track_path(@playlist, entry) %>">
+              <%= entry.track.title %>
+            </li>
+          <% end %>
+        </ol>
+      </details>
+    <% end %>
   </section>
 <% end %>
 

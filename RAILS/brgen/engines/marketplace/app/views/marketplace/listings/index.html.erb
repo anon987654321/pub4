@@ -21,9 +21,12 @@
 <%= live_search_index url: listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.marketplace_label"), frame_id: "marketplace-listings" do |f| %>
   <%= f.select :category_id,
         options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
-        { include_blank: "All categories" }, aria: { label: "Filter by category" } %>
-  <%= f.number_field :lat, value: @search_lat, step: "0.000001", placeholder: t("marketplace.latitude"), aria: { label: t("marketplace.latitude") } %>
-  <%= f.number_field :lng, value: @search_lng, step: "0.000001", placeholder: t("marketplace.longitude"), aria: { label: t("marketplace.longitude") } %>
+        { include_blank: t("actions.all_categories") }, aria: { label: t("marketplace.filter_category") } %>
+  <%= f.hidden_field :lat, value: @search_lat %>
+  <%= f.hidden_field :lng, value: @search_lng %>
+  <button type="button" class="btn btn-ghost btn-sm" data-controller="geolocation" data-action="geolocation#pin">
+    <%= t("marketplace.near_me") %>
+  </button>
   <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), aria: { label: t("marketplace.radius_label") } %>
   <%= f.select :sort,
         options_for_select([[t("marketplace.sort_recent", default: "Newest"), "recent"],

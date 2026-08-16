@@ -36,12 +36,12 @@
       <h1 class="playlist-top-title" itemprop="name"><%= heading %></h1>
     </div>
     <% if authenticated? %>
-      <%= link_to "New", new_playlist_path, class: "playlist-top-action" %>
+      <%= link_to t("playlist.new_playlist"), new_playlist_path, class: "playlist-top-action" %>
     <% end %>
   </header>
 <% end %>
 
-  <section class="playlist-stage" aria-label="Now playing">
+  <section class="playlist-stage" aria-label="<%= t("playlist.now_playing") %>">
     <% show_art = local_assigns[:show_artwork].nil? ? true : local_assigns[:show_artwork] %>
     <% if show_art %>
     <div class="playlist-artwork-wrap">
@@ -58,20 +58,20 @@
       data-playlist-player-target="waveform"
       data-action="click->playlist-player#waveformScrub"
       role="img"
-      aria-label="Waveform"
+      aria-label="<%= t("playlist.waveform") %>"
     ></canvas>
 
     <div class="playlist-now-playing <%= local_assigns[:compact] ? 'is-compact' : '' %>">
-      <h2 class="playlist-now-playing-title" data-playlist-player-target="title" itemprop="track"><%= active&.title || "Select a track" %></h2>
-      <p class="playlist-now-playing-artist" data-playlist-player-target="artist"><%= active&.artist.presence || "Unknown artist" %></p>
+      <h2 class="playlist-now-playing-title" data-playlist-player-target="title" itemprop="track"><%= active&.title || t("playlist.select_track") %></h2>
+      <p class="playlist-now-playing-artist" data-playlist-player-target="artist"><%= active&.artist.presence || t("playlist.unknown_artist") %></p>
       <p class="playlist-now-playing-meta dim">
-        <%= total_tracks %> tracks · <%= total_plays %> plays
+        <%= t("playlist.queue_stats", tracks: total_tracks, plays: total_plays) %>
         <% if active&.duration_formatted.present? %> · <%= active.duration_formatted %><% end %>
       </p>
     </div>
   </section>
 
-  <footer class="playlist-transport" aria-label="Playback controls">
+  <footer class="playlist-transport" aria-label="<%= t("playlist.transport") %>">
     <button
       type="button"
       class="playlist-transport-play"
@@ -79,7 +79,7 @@
       data-action="playlist-player#toggle"
       aria-pressed="false"
       <%= "disabled" unless active_src %>
-    >Play</button>
+    ><%= t("playlist.play") %></button>
 
     <span class="playlist-transport-time" data-playlist-player-target="currentTime">0:00</span>
 
@@ -94,7 +94,7 @@
       data-action="click->playlist-player#scrub keydown->playlist-player#scrubKey"
       role="slider"
       tabindex="0"
-      aria-label="Seek"
+      aria-label="<%= t("playlist.seek") %>"
       aria-valuemin="0"
       aria-valuemax="100"
       aria-valuenow="0"
@@ -105,7 +105,7 @@
     <span class="playlist-transport-time" data-playlist-player-target="duration">0:00</span>
 
     <% unless local_assigns[:embedded] %>
-    <button type="button" class="playlist-add-comment" data-action="playlist-player#addComment" aria-label="Add timestamped comment at current time">+ Comment</button>
+    <button type="button" class="playlist-add-comment" data-action="playlist-player#addComment" aria-label="<%= t("playlist.add_comment_aria") %>"><%= t("playlist.add_comment") %></button>
     <% end %>
   </footer>
 
@@ -120,8 +120,8 @@
     <audio data-playlist-player-target="audio" preload="metadata"></audio>
   <% end %>
 
-  <section class="playlist-queue" aria-label="Track queue">
-    <h2 class="playlist-queue-heading">Queue</h2>
+  <section class="playlist-queue" aria-label="<%= t("playlist.queue") %>">
+    <h2 class="playlist-queue-heading"><%= t("playlist.queue") %></h2>
     <% rows.each_with_index do |track, index| %>
       <% track_src = track.audio_file.attached? ? main_app.url_for(track.audio_file) : (track.source_type == "direct" ? track.source_url : nil) %>
       <% track_embed = track.external_embed_url %>
@@ -151,14 +151,14 @@
         </span>
         <span class="playlist-queue-meta">
           <strong itemprop="name"><%= track.title %></strong>
-          <span><span itemprop="byArtist"><%= track.artist.presence || "Unknown artist" %></span> · <%= track.duration_formatted %></span>
+          <span><span itemprop="byArtist"><%= track.artist.presence || t("playlist.unknown_artist") %></span> · <%= track.duration_formatted %></span>
         </span>
       </button>
     <% end %>
     <% if tracks.empty? %>
       <%= render "shared/empty_state",
             title: t("empty.no_tracks"),
-            body: "Add or import tracks to play.",
+            body: t("playlist.no_tracks_body"),
             action: { label: t("playlist.library"), path: root_path } %>
     <% end %>
   </section>

@@ -10,7 +10,12 @@
   data-live-search-updated-value="<%= t("status.results_updated") %>"
   data-live-search-failed-value="<%= t("status.search_failed") %>"
 >
-  <%= form_with url: url, method: :get, data: { turbo_stream: true, live_search_target: "form" } do |f| %>
+  <%= form_with url: url, method: :get, data: {
+        controller: "auto-submit",
+        action: "change->auto-submit#submit",
+        turbo_stream: true,
+        live_search_target: "form"
+      } do |f| %>
     <div class="search-form">
       <%= f.search_field :q,
             value: query,

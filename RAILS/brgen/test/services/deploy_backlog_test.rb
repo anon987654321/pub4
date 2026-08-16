@@ -232,7 +232,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes reviews_controller, 'reviewer_lat'
     assert_includes routes, 'resources :reviews, only: %i[create]'
     assert_includes index, ':radius_km'
-    assert_includes card, 'km away'
+    assert_includes card, 'marketplace.distance_km'
     assert_includes card, 'reviews_count'
     assert_includes show, 'listing_reviews_path'
     assert_includes show, '@reviews'

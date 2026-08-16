@@ -8,6 +8,7 @@ Marketplace::Engine.routes.draw do
   resources :shops, controller: "stores"
   resources :deals, only: %i[index show]
   resources :listings do
+    member { post :renew }
     resource :favorite, only: %i[create destroy]
     resources :orders, only: %i[create update]
     resources :reviews, only: %i[create]

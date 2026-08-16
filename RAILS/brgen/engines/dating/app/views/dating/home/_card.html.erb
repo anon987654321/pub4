@@ -1,4 +1,5 @@
 <% display_name = profile.user&.display_name.presence || "anon" %>
+<% first_prompt = profile.prompts.min_by { |prompt| [prompt.position.to_i, prompt.id] } %>
 <article
   class="swipe-card swipe-card--stack-<%= index %>"
   data-user-id="<%= profile.user_id %>"
@@ -11,8 +12,8 @@
         <span><%= display_name.to_s.first.upcase %></span>
       </div>
     <% end %>
-    <span class="swipe-stamp swipe-stamp--like" aria-hidden="true">LIKE</span>
-    <span class="swipe-stamp swipe-stamp--pass" aria-hidden="true">NOPE</span>
+    <span class="swipe-stamp swipe-stamp--like" aria-hidden="true"><%= t("dating.stamp_like") %></span>
+    <span class="swipe-stamp swipe-stamp--pass" aria-hidden="true"><%= t("dating.stamp_pass") %></span>
     <div class="swipe-overlay">
       <div class="swipe-meta">
         <h2 class="swipe-name">
@@ -24,35 +25,49 @@
             <%= [profile.location, profile.neighborhood&.name].compact.join(" · ") %>
           </p>
         <% end %>
+        <p class="swipe-recency"><%= t(profile.recency_key) %></p>
       </div>
     </div>
   </div>
 
   <div class="swipe-body">
-    <% if profile.bio.present? %><p class="swipe-bio"><%= profile.bio %></p><% end %>
+    <% if profile.bio.present? %>
+      <%= read_more(profile.bio, lines: 3, more: t("dating.read_bio"), less: t("dating.show_less")) %>
+    <% end %>
+    <% if first_prompt %>
+      <p class="swipe-prompt">
+        <span class="dim"><%= first_prompt.question_text %></span>
+        <%= first_prompt.answer %>
+      </p>
+    <% end %>
     <div class="chips swipe-chips">
       <% if profile.gender.present? %><span class="chip"><%= profile.gender %></span><% end %>
       <% if profile.looking_for.present? %><span class="chip"><%= t("dating.looking_for") %> <%= profile.looking_for %></span><% end %>
-      <span class="chip chip--status"><%= profile.visible? ? "visible" : "paused" %></span>
     </div>
     <% if Current.user.present? && Current.user != profile.user %>
-      <div class="swipe-safety cluster">
-        <%= render "shared/report_button", target: profile.user, reason: nil %>
-        <% if Current.user.blocking?(profile.user) %>
-          <%= button_to t("block.unblock", default: "Unblock"), main_app.unblock_user_path(profile.user), method: :delete, class: "btn btn-ghost btn-sm" %>
-        <% else %>
-          <%= button_to t("block.block", default: "Block"), main_app.block_user_path(profile.user), method: :post, class: "btn btn-ghost btn-sm" %>
-        <% end %>
-      </div>
+      <details class="swipe-overflow">
+        <summary aria-label="<%= t("dating.more") %>"><%= icon :more, size: 18 %></summary>
+        <div class="swipe-overflow-menu cluster">
+          <%= render "shared/report_button", target: profile.user, reason: nil %>
+          <% if Current.user.blocking?(profile.user) %>
+            <%= button_to t("block.unblock"), main_app.unblock_user_path(profile.user), method: :delete, class: "btn btn-ghost btn-sm" %>
+          <% else %>
+            <%= button_to t("block.block"), main_app.block_user_path(profile.user), method: :post, class: "btn btn-ghost btn-sm" %>
+          <% end %>
+        </div>
+      </details>
     <% end %>
   </div>
 
   <% if Current.user.present? %>
     <div class="swipe-actions">
-      <%= button_tag "✕", type: "button", class: "swipe-action swipe-action--pass", title: "Pass", aria: { label: "Pass" }, data: { action: "click->swipe#pass" } %>
-      <%= button_tag "♥", type: "button", class: "swipe-action swipe-action--like", title: "Like", aria: { label: "Like" }, data: { action: "click->swipe#like" } %>
+      <%= button_tag "✕", type: "button", class: "swipe-action swipe-action--pass", title: t("dating.pass"), aria: { label: t("dating.pass") }, data: { action: "click->swipe#pass" } %>
+      <%= button_to rewind_path, method: :post, class: "swipe-action swipe-action--rewind", title: t("dating.rewind"), aria: { label: t("dating.rewind") } do %>
+        ↺
+      <% end %>
+      <%= button_tag "♥", type: "button", class: "swipe-action swipe-action--like", title: t("actions.like"), aria: { label: t("actions.like") }, data: { action: "click->swipe#like" } %>
     </div>
   <% else %>
-    <p class="dim swipe-signin">Refresh to start swiping — no signup needed.</p>
+    <p class="dim swipe-signin"><%= t("dating.swipe_guest") %></p>
   <% end %>
 </article>

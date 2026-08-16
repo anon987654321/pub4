@@ -65,7 +65,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
     @playlist = find_by_slug_or_id(Playlist::Playlist.includes(:user), params[:id])
     return if playlist_visible_to_viewer?
 
-    raise ActiveRecord::RecordNotFound
+    render template: "shared/members_only", status: :forbidden
   end
 
   def playlist_visible_to_viewer?

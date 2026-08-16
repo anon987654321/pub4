@@ -44,6 +44,8 @@ before_action :require_real_user, only: %i[edit update destroy share]
   COMMENT_SORTS = %w[best new top controversial].freeze
 
   def show
+    return render_members_only unless @post.readable_by?(Current.user)
+
     @comment_sort = COMMENT_SORTS.include?(params[:sort]) ? params[:sort] : "best"
     roots = @post.comments.where(parent_id: nil)
     roots = case @comment_sort
@@ -139,7 +141,10 @@ before_action :require_real_user, only: %i[edit update destroy share]
     @post = find_by_slug_or_id(Post.includes(:user, :community), params[:id])
     # A moderator-removed post is gone for everyone, including via direct link.
     raise ActiveRecord::RecordNotFound if @post&.removed_at?
-    raise ActiveRecord::RecordNotFound unless @post.readable_by?(Current.user)
+  end
+
+  def render_members_only
+    render template: "shared/members_only", status: :forbidden
   end
 
   def authorize_owner

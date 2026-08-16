@@ -10,7 +10,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   allow_unauthenticated_access only: %i[index show]
   before_action :require_user_session, only: %i[new create]
-  before_action :set_listing, only: %i[show edit update destroy]
+  before_action :set_listing, only: %i[show edit update destroy renew]
   # 2FA only for real accounts; guests list without identity ceremony.
   before_action -> { require_two_factor!(Current.user) }, only: %i[new create], if: :authenticated?
 
@@ -97,6 +97,12 @@ class Marketplace::ListingsController < Marketplace::BaseController
     authorize @listing
     @listing.update!(status: "removed")
     redirect_to listings_path
+  end
+
+  def renew
+    authorize @listing
+    @listing.renew!
+    redirect_to listing_path(@listing), notice: t("flash.marketplace.listing_renewed")
   end
 
   private

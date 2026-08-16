@@ -15,7 +15,7 @@
     aria-label="Brgen dating"
     aria-modal="true"
   >
-    <p class="dating-intro-hint">sveip for å begynne</p>
+    <p class="dating-intro-hint"><%= t("dating.swipe_to_start") %></p>
 
     <div class="dating-intro-center">
       <%= render "dating/home/heart" %>
@@ -76,10 +76,10 @@
           <%# Soft guests can like/dislike (require_user_session) — do not auth-wall discover. %>
           <%= render "shared/empty_state",
                 title: t("empty.no_nearby"),
-                body: "Utvid radius, kom tilbake senere, eller fullfør profilen din så andre finner deg.",
+                body: t("dating.empty_nearby_body"),
                 action: Current.user&.dating_profile.present? ?
-                  { label: "Rediger profil", path: edit_profile_path } :
-                  { label: "Lag profil", path: new_profile_path } %>
+                  { label: t("dating.edit_profile"), path: edit_profile_path } :
+                  { label: t("dating.create_profile"), path: new_profile_path } %>
         <% end %>
         <turbo-frame id="dating-next" src="<%= next_path %>" loading="lazy" hidden></turbo-frame>
       </section>
