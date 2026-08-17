@@ -27,7 +27,7 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
 
   config.log_tags = [:request_id]
   config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "warn")
   config.silence_healthcheck_path = "/up"
 
   if vapid_note
