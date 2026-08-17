@@ -23,6 +23,13 @@ module Master
         # pitch. The cost is one Edge round trip per phrase, bounded by
         # Melody::MAX_PHRASES; set false to go back to a single call.
         "phrase_rhythm_enabled" => true,
+        # Read a Norwegian clause with a Norwegian voice instead of putting it
+        # through ms-MY-OsmanNeural. Off, because data/voice.yml sets
+        # single_voice: osman and persona_affects_text_only: true — one voice is
+        # a recorded decision, and this is the one thing that would break it.
+        # The machinery is here so the choice is a flag rather than a rewrite.
+        "phrase_language_switching" => false,
+        "phrase_language_voices" => { "nb" => "finn", "en" => nil },
         "max_chars" => 900,
         "mlx_model" => "mlx-community/chatterbox-fp16",
         "mlx_voice" => "default",
@@ -62,7 +69,7 @@ module Master
         return if clean.empty? || clean.length < MIN_SYNTHESIZABLE_CHARS
 
         emotion = Emotion.analyze(clean)
-        melody = Melody.plan(clean, emotion, melodic: melodic_contour?(cfg, emotion))
+        melody = Melody.plan(clean, emotion, melodic: melodic_contour?(cfg, emotion), languages: phrase_languages(cfg))
         resolved_voice, resolved_rate, resolved_pitch = resolve_voice_and_prosody(
           clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
         )
@@ -126,6 +133,17 @@ module Master
       # phrase rhythm does; the engine is the same, the plan differs.
       def phrase_rendered?(cfg, emotion)
         melodic_contour?(cfg, emotion) || cfg["phrase_rhythm_enabled"] == true
+      end
+
+      # nil when switching is off, so Melody attaches no :voice at all and every
+      # phrase inherits the single locked voice.
+      def phrase_languages(cfg)
+        return nil unless cfg["phrase_language_switching"] == true
+
+        voices = cfg["phrase_language_voices"]
+        return nil unless voices.is_a?(Hash)
+
+        voices.filter_map { |lang, key| [lang.to_s.to_sym, key.to_s.to_sym] if key.to_s != "" }.to_h
       end
 
       def build_engine_chain(cfg, emotion)

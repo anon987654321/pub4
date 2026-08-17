@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "language"
+
 module Master
   module Voice
     # Phrase segmentation and inter-phrase rests, plus the pentatonic contour that
@@ -25,7 +27,7 @@ module Master
 
       module_function
 
-      def plan(text, emotion, melodic: true)
+      def plan(text, emotion, melodic: true, languages: nil)
         phrases = segment(text)
         arousal = emotion.dig(:scores, :arousal).to_f
 
@@ -33,7 +35,7 @@ module Master
           mode: emotion.fetch(:mode, :melodic),
           melodic:,
           base_pitch: arousal > 0.6 ? "+8Hz" : "+0Hz",
-          phrases: build_phrase_plan(phrases, arousal, melodic:),
+          phrases: build_phrase_plan(phrases, arousal, melodic:, languages:),
         }
       end
 
@@ -51,14 +53,24 @@ module Master
         arousal > 0.55 ? 90 : 140
       end
 
-      def build_phrase_plan(phrases, arousal, melodic: true)
+      def build_phrase_plan(phrases, arousal, melodic: true, languages: nil)
         phrases.each_with_index.map do |phrase, i|
           entry = { text: phrase, pause_ms: pause_ms_for(i, arousal) }
+          entry = entry.merge(voice_for(phrase, languages)) if languages
           next entry unless melodic
 
           semitone = PENTATONIC[i % PENTATONIC.length]
           entry.merge(rate: RHYTHM[i % RHYTHM.length], pitch: format("%+dHz", semitone * 7), semitone:)
         end
+      end
+
+      # `languages` is the map of detected language to registered voice key, so
+      # the caller owns which voices are in play and this owns only the split.
+      # A phrase with no entry carries no :voice and inherits the resolved one
+      # through Engines.synthesize_phrase_parts' fetch default.
+      def voice_for(phrase, languages)
+        key = languages[Language.detect(phrase)]
+        key ? { voice: key, language: Language.detect(phrase) } : {}
       end
     end
   end

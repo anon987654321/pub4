@@ -258,7 +258,8 @@ module Master
         parts = []
         plan.each_with_index do |phrase, i|
           part = File.join(tmp_dir, "part_#{Process.pid}_#{i}.mp3")
-          ok = copy_if_synthesized(phrase[:text], part, voice, phrase.fetch(:rate, rate), phrase.fetch(:pitch, pitch))
+          ok = copy_if_synthesized(phrase[:text], part, phrase.fetch(:voice, voice),
+                                   phrase.fetch(:rate, rate), phrase.fetch(:pitch, pitch))
           parts << [part, i.zero? ? 0 : phrase.fetch(:pause_ms, 0).to_i] if ok
         end
         parts
