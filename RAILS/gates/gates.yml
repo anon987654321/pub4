@@ -287,3 +287,12 @@ gate_mutation:
   require: lib/gate_mutation
   class: Deploy::GateMutationGate
   pass: "ok: gates detect the defects they exist to prevent"
+
+# Does a press on this control reach this control? elementFromPoint at each
+# control centre, so deliberate stacking (fixed nav, modal, chat widget) is
+# not mistaken for a defect the way rect intersection would.
+occlusion:
+  require: lib/occlusion
+  class: Deploy::OcclusionGate
+  pass: "ok: every control answers a press at its own centre"
+  covered_by: rendered_suite
