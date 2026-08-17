@@ -88,6 +88,38 @@ module Deploy
           if (!hit) return;
           if (hit === el || el.contains(hit) || hit.contains(el)) return;
 
+          // Fixed chrome covers whatever is beneath it at the current scroll
+          // position, and that is the design: the chat tab and the tab-bar peel
+          // own the bottom 44px of every screen. A control in the flow can be
+          // scrolled out from under them, so reporting it says only where the
+          // page happened to be parked.
+          //
+          // A control with nowhere to scroll to cannot be moved, so the press is
+          // lost for good — which is the case worth failing on, and the one that
+          // caught the nav links under the theme toggle.
+          //
+          // Deliberately not "is the control pinned too": brgen's .app-shell is
+          // `position: fixed; inset: 0`, which makes every element on the page
+          // answer yes to that and reports the whole feed.
+          const pinned = (node) => {
+            for (let p = node; p; p = p.parentElement) {
+              const position = getComputedStyle(p).position;
+              if (position === 'fixed' || position === 'sticky') return true;
+            }
+            return false;
+          };
+          // Not the document: brgen's .app-shell is `position: fixed; inset: 0`,
+          // so the page scrolls inside a container and documentElement never
+          // does. Ask whatever actually scrolls this control.
+          const canScrollAway = (node) => {
+            for (let p = node; p; p = p.parentElement) {
+              const oy = getComputedStyle(p).overflowY;
+              if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight + 4) return true;
+            }
+            return document.documentElement.scrollHeight > innerHeight + 4;
+          };
+          if (pinned(hit) && canScrollAway(el)) return;
+
           out.push({
             control: name(el),
             label: (el.innerText || el.value || el.getAttribute('aria-label') || '').trim().slice(0, 40),
