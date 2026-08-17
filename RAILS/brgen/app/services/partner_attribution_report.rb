@@ -8,7 +8,7 @@
 # them apart, and it is the reason the click table exists.
 #
 # The join is `epi`, not the merchant name. Shared::OutboundClick records the
-# merchant we linked to; AffiliateConversion records a program_id and the epi
+# merchant we linked to; Shared::AffiliateConversion records a program_id and the epi
 # TradeDoubler echoed back. Only the epi appears on both sides, which is what epi
 # is for.
 #
@@ -44,14 +44,14 @@ class PartnerAttributionReport
   def clicks_without_epi = Shared::OutboundClick.where(created_at: since.., epi: nil).count
 
   def conversions
-    return AffiliateConversion.none unless defined?(AffiliateConversion)
+    return Shared::AffiliateConversion.none unless defined?(Shared::AffiliateConversion)
 
-    AffiliateConversion.where(created_at: since..)
+    Shared::AffiliateConversion.where(created_at: since..)
   end
 
   def conversions_by_state
     conversions.group(:message_type_id).count.transform_keys do |id|
-      AffiliateConversion::MESSAGE_TYPES.fetch(id, "unknown(#{id})")
+      Shared::AffiliateConversion::MESSAGE_TYPES.fetch(id, "unknown(#{id})")
     end
   end
 

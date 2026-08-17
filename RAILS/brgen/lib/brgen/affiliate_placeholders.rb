@@ -4,7 +4,7 @@ module Brgen
   # Placeholder affiliate inventory, for demoing the deals surface before
   # brgen.no is an approved TradeDoubler publisher.
   #
-  # Every row is written with placeholder: true, which AffiliateProduct.real
+  # Every row is written with placeholder: true, which Shared::AffiliateProduct.real
   # excludes. That flag is the whole point: seed data that looked like real
   # affiliate inventory would be indistinguishable from payable inventory in
   # reporting, and someone would eventually reconcile a payout against it.
@@ -63,10 +63,10 @@ module Brgen
     module_function
 
     def seed!(market: "NO")
-      return 0 unless AffiliateProduct.table_exists?
+      return 0 unless Shared::AffiliateProduct.table_exists?
 
       PRODUCTS.count do |row|
-        AffiliateProduct.upsert_from_feed!(
+        Shared::AffiliateProduct.upsert_from_feed!(
           source: SOURCE,
           external_id: row[:external_id],
           title: row[:title],

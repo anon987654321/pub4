@@ -61,12 +61,18 @@ class ShopSmarterTest < ActionDispatch::IntegrationTest
     assert_not ShopTheLook.remote_available?
   end
 
-  test "a configured token alone does not make the feed available in amber" do
-    # Tradedoubler lives in brgen and is never loaded here, so a token set in
-    # /etc/amber.env used to pass the first gate and then silently do nothing.
+  # This test used to assert :no_feed_client — the feed client lived in brgen's
+  # app/services and was never loaded in amber, so a token in /etc/amber.env
+  # passed the first gate and then silently did nothing. The client is
+  # Shared::Tradedoubler now and amber loads it, so the same token reaches
+  # something that can answer, and this asserts the reversal rather than being
+  # deleted: it is the one behaviour the move was for.
+  test "a configured token now reaches a feed client amber can load" do
     ENV["TRADEDOUBLER_TOKEN"] = "test-token"
 
-    assert_equal :no_feed_client, ShopTheLook.remote_unavailable_reason
+    assert defined?(Shared::Tradedoubler), "the feed client must be loadable in amber"
+    assert Shared::Tradedoubler.respond_to?(:deals)
+    assert_not_equal :no_feed_client, ShopTheLook.remote_unavailable_reason
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
   end

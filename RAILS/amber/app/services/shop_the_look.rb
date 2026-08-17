@@ -43,15 +43,20 @@ module ShopTheLook
 
     # Why the remote feed cannot answer, or nil when it can.
     #
-    # This used to be two silent `return []` guards, and the second one is
-    # unconditional in amber: `Tradedoubler` is defined in brgen's app/services
-    # and is never loaded in this process. So setting TRADEDOUBLER_TOKEN in
-    # /etc/amber.env passed the first gate, hit the second, and produced
-    # nothing — configuration with no reader, reporting nothing. Name the
-    # reason so the UI can say which of the two it is.
+    # This used to be two silent `return []` guards, and the second one was
+    # unconditional in amber: the feed client lived in brgen's app/services and
+    # was never loaded in this process, so setting TRADEDOUBLER_TOKEN in
+    # /etc/amber.env passed the first gate, hit the second, and produced nothing
+    # — configuration with no reader, reporting nothing. Naming the reason is
+    # what made that visible instead of empty.
+    #
+    # It is `Shared::Tradedoubler` now and amber loads it, so a token set here
+    # reaches a client that can answer. The guard stays because the reasons are
+    # still distinct and still worth telling apart: no token, no client, no
+    # query. It is no longer the one that is always true.
     def remote_unavailable_reason(item = nil)
       return :no_token unless ENV["TRADEDOUBLER_TOKEN"].present? || ENV["TRADEDOUBLER_PRODUCTS_TOKEN"].present?
-      return :no_feed_client unless defined?(Tradedoubler) && Tradedoubler.respond_to?(:deals)
+      return :no_feed_client unless defined?(Shared::Tradedoubler) && Shared::Tradedoubler.respond_to?(:deals)
       return :no_query if item && query_for(item).blank?
 
       nil
@@ -68,7 +73,7 @@ module ShopTheLook
 
       query = query_for(item)
 
-      Tradedoubler.deals(limit: limit).filter_map do |deal|
+      Shared::Tradedoubler.deals(limit: limit).filter_map do |deal|
         next if deal.placeholder
 
         score = text_score(query, "#{deal.title} #{deal.merchant}")

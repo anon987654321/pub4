@@ -16,7 +16,7 @@ module Webhooks
       return head(:unauthorized) unless authorized?
 
       payload = request.request_parameters.presence || parse_body
-      record = AffiliateConversion.record_from_postback!(payload)
+      record = Shared::AffiliateConversion.record_from_postback!(payload)
       return head(:unprocessable_entity) if record.nil?
 
       head :ok

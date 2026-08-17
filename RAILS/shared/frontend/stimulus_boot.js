@@ -28,6 +28,7 @@ import DirectUpload from "pub4/direct_upload"
 import OutboundClick from "pub4/outbound_click"
 import CharacterCounter from "pub4/character_counter"
 import LuxuryProduct from "pub4/luxury_product"
+import ParallaxTilt from "pub4/parallax_tilt"
 import ScrollReveal from "pub4/scroll_reveal"
 import ScrollChrome from "pub4/scroll_chrome"
 import BrgenShell from "pub4/brgen_shell"
@@ -192,6 +193,9 @@ export function bootPub4Stimulus(application) {
   application.register("network-aware", NetworkAware)
   application.register("haptics", Haptics)
   application.register("geolocation", Geolocation)
+  // The in-feed affiliate band tilts under the pointer. Registered here rather
+  // than in one app since the band itself is shared now.
+  application.register("parallax-tilt", ParallaxTilt)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     if (component) application.register(name, component)

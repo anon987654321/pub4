@@ -2,11 +2,11 @@
 
 module Brgen
   module HomeFeed
-    # Posts between in-feed affiliate units. Here rather than in the view
-    # because the view is not the place to decide how often a reader is sold
-    # to, and because the infinite-scroll reflex will need the same number when
-    # it learns to interleave.
-    AFFILIATE_EVERY = 4
+    # Posts between in-feed affiliate units. The reflex needs the same number
+    # the first screen uses, and since amber renders the same unit now, so does
+    # amber — so the number lives with the unit and this is the local name for
+    # it rather than a second copy.
+    AFFILIATE_EVERY = Shared::AffiliateHelper::FEED_EVERY
 
     module_function
 

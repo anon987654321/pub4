@@ -3,7 +3,17 @@
   <%= link_to t("actions.new_post"), new_post_path, class: "btn" %>
 </div>
 <%= turbo_frame_tag "amber-feed" do %>
-<%= render @posts %>
+<%# One affiliate band after every FEED_EVERY posts, never before the first and
+    never trailing the last — a band in the last slot reads as the end of the
+    feed. Category-filtered to fashion rather than showing brgen's whole
+    inventory: an electronics deal between two outfits reads as a banner, and a
+    garment reads as the app working. %>
+<% @posts.each_with_index do |post, index| %>
+  <%= render post %>
+  <% if ((index + 1) % Shared::AffiliateHelper::FEED_EVERY).zero? && index + 1 < @posts.size %>
+    <%= render "shared/affiliate_feed_unit", category: "fashion" %>
+  <% end %>
+<% end %>
 <%= render "shared/newsletter_cta",
       heading: t("newsletter.style_notes"),
       blurb: t("newsletter.style_blurb"),

@@ -8,7 +8,7 @@ require "test_helper"
 class PartnerAttributionReportTest < ActiveSupport::TestCase
   setup do
     Shared::OutboundClick.delete_all
-    AffiliateConversion.delete_all if defined?(AffiliateConversion)
+    Shared::AffiliateConversion.delete_all if defined?(Shared::AffiliateConversion)
   end
 
   def click(merchant:, epi: nil, at: Time.current)
@@ -55,12 +55,12 @@ class PartnerAttributionReportTest < ActiveSupport::TestCase
   end
 
   test "a conversion whose epi matches no recorded click is unattributed" do
-    skip "AffiliateConversion not loaded" unless defined?(AffiliateConversion)
+    skip "Shared::AffiliateConversion not loaded" unless defined?(Shared::AffiliateConversion)
 
     click(merchant: "Zalando", epi: "city:bergen|surface:marketplace")
-    AffiliateConversion.create!(source: "tradedoubler", message_type_id: 1,
+    Shared::AffiliateConversion.create!(source: "tradedoubler", message_type_id: 1,
                                 epi: "city:bergen|surface:marketplace")
-    AffiliateConversion.create!(source: "tradedoubler", message_type_id: 1, epi: "epi:we:never:sent")
+    Shared::AffiliateConversion.create!(source: "tradedoubler", message_type_id: 1, epi: "epi:we:never:sent")
 
     assert_equal 1, PartnerAttributionReport.new.unattributed_conversions
   end

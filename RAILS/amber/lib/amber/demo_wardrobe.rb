@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Amber
-  # Public demo capsule wardrobe for guests (production marketing / Tradedoubler).
+  # Public demo capsule wardrobe for guests (production marketing / TradeDoubler).
   module DemoWardrobe
     DEMO_EMAIL = "demo@amber.brgen.no"
     DEMO_DISPLAY_NAME = "Amber demo"

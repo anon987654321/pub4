@@ -47,9 +47,9 @@ class NewsletterEditionBuilder
   def compose_weekly_for(city_name)
     city_record = City.find_by(slug: city_name) || City.find_by(domain: "#{city_name}.no")
     # Prefer real inventory; fall back to any sellable (incl. placeholders) only if empty.
-    deals = Affiliate.deals(limit: 6)
+    deals = Shared::Affiliate.deals(limit: 6)
     deals = attach_epi(deals, city: city_name, surface: "newsletter_weekly")
-    vouchers = Tradedoubler.vouchers(limit: 3, site_specific: true)
+    vouchers = Shared::Tradedoubler.vouchers(limit: 3, site_specific: true)
     hero = hero_for(city_name:, theme: "curated shopping still life", seed: nil)
     edition = Shared::NewsletterComposer.weekly_deals(
       city_name: label_for(city_name, city_record),
@@ -63,11 +63,11 @@ class NewsletterEditionBuilder
   end
 
   def attach_epi(deals, city:, surface:)
-    epi = Tradedoubler.epi_for(city: city, surface: surface, edition: Date.current.iso8601)
+    epi = Shared::Tradedoubler.epi_for(city: city, surface: surface, edition: Date.current.iso8601)
     Array(deals).map do |deal|
       next deal unless deal.respond_to?(:click_url)
 
-      url = Tradedoubler.append_epi(deal.click_url, epi: epi)
+      url = Shared::Tradedoubler.append_epi(deal.click_url, epi: epi)
       if deal.respond_to?(:with)
         deal.with(click_url: url)
       else

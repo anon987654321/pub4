@@ -63,7 +63,20 @@ class User < ApplicationRecord
     received  = Connection.accepted.where(addressee_id: id).select(:requester_id)
     User.where(id: requested).or(User.where(id: received)).includes(:profile).order(:email_address)
   end
-  def feed_posts        = Post.where(user: [ self ] + following.to_a).recent
+  # A subquery over the join table, not `following.to_a`.
+  #
+  # User is strict_loading, so materialising the association raised
+  # StrictLoadingViolationError for every signed-in visitor and PostsController#feed
+  # was a 500 nobody had seen — the surface had no test until the shared affiliate
+  # band was placed on it. `following?` and `messageable_users` above already query
+  # their join tables directly for the same reason; this is the one that did not.
+  #
+  # It also stops loading every followed user into memory to throw them away: the
+  # ids are all the WHERE needs.
+  def feed_posts
+    followee_ids = Follow.where(follower_id: id).select(:followee_id)
+    Post.where(user_id: followee_ids).or(Post.where(user_id: id)).recent
+  end
 
   def public_creator? = creator_profile&.public? || false
   def wardrobe_public? = privacy_setting&.public_wardrobe? || false

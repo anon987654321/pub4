@@ -18,6 +18,7 @@ class ApplicationController < ActionController::Base
   # whose gate raises NoMethodError would take the page down instead of
   # rendering nothing.
   helper Shared::ConsentHelper
+  helper Shared::AffiliateHelper
   turbo_refreshes_with :morph, scroll: :preserve
   stale_when_importmap_changes
 
