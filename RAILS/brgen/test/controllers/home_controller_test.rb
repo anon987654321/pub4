@@ -71,4 +71,17 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "auth-form-lead"
     assert_match(new_user_path, response.body)
   end
+  # sort=latest was implemented in the controller with nothing on the page
+  # pointing at it. It is a tab now — for signed-in users only, because guest
+  # root carries no feed-tabs by the rule the test above pins.
+  def test_the_latest_sort_is_reachable_without_typing_a_query_string
+    host! "brgen.no"
+    user = User.create!(email_address: "latest-#{SecureRandom.hex(4)}@brgen.no",
+                        password: "password12345", username: "lt#{SecureRandom.hex(3)}",
+                        city: City.find_by(domain: "brgen.no"))
+    post session_url, params: { email_address: user.email_address, password: "password12345" }
+    get root_url
+    assert_response :success
+    assert_includes response.body, root_path(sort: "latest")
+  end
 end

@@ -99,6 +99,7 @@ en:
     feed_communities: Communities
     feed_following: Following
     feed_hot: Hot
+    feed_latest: New
     feed_sort: Feed
     intro_title: "%{city}, right now"
     live: Live

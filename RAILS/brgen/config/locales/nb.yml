@@ -99,6 +99,7 @@ nb:
     feed_communities: Fellesskap
     feed_following: Følger
     feed_hot: Hot
+    feed_latest: Nytt
     feed_sort: Strøm
     intro_title: "%{city}, akkurat nå"
     live: Live

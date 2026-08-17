@@ -37,10 +37,18 @@
 <% end %>
 
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation>
+  <%# Guest root carries no feed-tabs — that is a rule, pinned by
+      test_root_offers_the_verticals_once, and the reason is that the swiper is
+      already the wayfinding on this page and a second scroller competes with it.
+      So New joins the tabs rather than being offered to visitors: sort=latest was
+      implemented in the controller and reachable only by typing the query string,
+      which made it nobody's. %>
   <% if authenticated? %>
     <nav class="feed-tabs" aria-label="<%= t("home.feed_sort", default: "Feed") %>">
       <%= link_to t("home.feed_hot", default: "Hot"), main_app.root_path,
-            class: "feed-tab#{" active" if params[:feed].blank?}" %>
+            class: "feed-tab#{" active" if params[:feed].blank? && params[:sort].blank?}" %>
+      <%= link_to t("home.feed_latest"), main_app.root_path(sort: "latest"),
+            class: "feed-tab#{" active" if params[:sort] == "latest"}" %>
       <%= link_to t("home.feed_following", default: "Following"), main_app.root_path(feed: "following"),
             class: "feed-tab#{" active" if params[:feed] == "following"}" %>
       <%= link_to t("home.feed_communities", default: "Communities"), main_app.root_path(feed: "communities"),
