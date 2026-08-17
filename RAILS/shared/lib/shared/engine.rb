@@ -27,10 +27,13 @@ module Shared
     %w[app/channels].each { |dir| config.autoload_paths << root.join(dir).to_s }
 
     initializer "shared.i18n" do |app|
-      # Fleet-wide social chrome keys (actions, comments, chat, post).
-      %w[en nb].each do |locale|
-        path = root.join("config/locales/social.#{locale}.yml")
-        app.config.i18n.load_path << path.to_s if path.exist?
+      # Every locale file the engine carries, not one named set. This listed
+      # social.<locale>.yml literally, so affiliate.en.yml — added when the
+      # affiliate stack moved here so amber could render the same in-feed unit —
+      # was on disk and never loaded, and the unit would have rendered
+      # translation-missing spans in the app it was moved for.
+      Dir[root.join("config/locales/*.{en,nb}.yml").to_s].sort.each do |path|
+        app.config.i18n.load_path << path
       end
     end
 

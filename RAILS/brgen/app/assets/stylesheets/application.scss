@@ -28,6 +28,9 @@
 @use "_share";
 @use "_media";
 @use "_affiliate";
+// Immediately after _affiliate: these rules were its tail before the move, and
+// this keeps the cascade order they had.
+@use "affiliate_feed_unit";
 @use "dating_stack";
 @use "dating_actions";
 @use "dating_media";

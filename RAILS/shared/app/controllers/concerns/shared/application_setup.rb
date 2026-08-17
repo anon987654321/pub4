@@ -14,6 +14,7 @@ module Shared
       # not pub4-shared's (a separate engine gem) -- see brgen's
       # ApplicationController for the same fix and the full explanation.
       helper Shared::StimulusFormHelper
+      helper Shared::AffiliateHelper
       allow_browser versions: :modern
       turbo_refreshes_with :morph, scroll: :preserve
       stale_when_importmap_changes
