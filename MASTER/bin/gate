@@ -24,7 +24,7 @@ SAFE_ENV = {
   "MASTER_SCAN_AUTOFIX" => "0",
   "MASTER_WATCH" => "0",
   "MASTER_WATCHER" => "0",
-  "MASTER_HEARTBEAT" => "0"
+  "MASTER_HEARTBEAT" => "0",
 }.freeze
 
 # Full chain mutates the tree via /fix, and only via /fix -- see SAFE_ENV above.
@@ -41,7 +41,7 @@ COMMANDS = {
         "/fix .",
         "/scan .",
         "/critique .",
-        "/review ."
+        "/review .",
       ].freeze
     end
   ),
@@ -65,7 +65,7 @@ COMMANDS = {
     else
       ["/scan #{path}", "/fix #{path}", "/scan #{path}", "/critique #{path}", "/review #{path}"]
     end
-  }.freeze
+  }.freeze,
 }.freeze
 
 def run_command(*argv, chdir: ROOT)

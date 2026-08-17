@@ -52,7 +52,7 @@ script = [
   "what is next?",
   "/cost",
   "/cmd",
-  "/exit"
+  "/exit",
 ].join("\n") + "\n"
 
 failures = []

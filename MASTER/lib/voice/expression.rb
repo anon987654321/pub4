@@ -163,12 +163,12 @@ module Master
 
       STYLE_RATE_SCALE = {
         whispered: 1.35, ethereal: 1.22, dramatic: 1.18, calm: 1.08,
-        energetic: 0.82, brief: 0.88, intense: 0.90, storyteller: 1.05,
+        energetic: 0.82, brief: 0.88, intense: 0.90, storyteller: 1.05
       }.freeze
 
       CONSONANT_SHAPES = {
         "m" => "M", "b" => "M", "p" => "M",
-        "f" => "M", "v" => "M", "w" => "O",
+        "f" => "M", "v" => "M", "w" => "O"
       }.freeze
 
       def viseme_hints(text)

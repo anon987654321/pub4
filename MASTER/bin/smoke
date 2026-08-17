@@ -72,7 +72,7 @@ failures << "auth_tier" unless step("auth tier") do
     base_env = {
       "PATH_INFO" => "/",
       "QUERY_STRING" => "",
-      "rack.url_scheme" => "https"
+      "rack.url_scheme" => "https",
     }
 
     visitor_status, _visitor_headers, visitor_body = middleware.call(base_env.dup)

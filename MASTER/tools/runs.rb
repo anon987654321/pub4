@@ -101,7 +101,7 @@ module Pub4
         tests: reached.size,
         reached: reached.size - orphans.size,
         orphans: orphans,
-        runners: globs.transform_values(&:sort)
+        runners: globs.transform_values(&:sort),
       }
     end
   end

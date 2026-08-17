@@ -31,7 +31,7 @@ class StandingOrdersTest < Minitest::Test
     {
       "name" => "test_order", "description" => "d", "trigger" => "scheduled",
       "interval_s" => 60, "command" => "noop", "enabled" => true,
-      "state" => "pending", "last_run_at" => 0,
+      "state" => "pending", "last_run_at" => 0
     }.merge(overrides)
   end
 

@@ -156,7 +156,7 @@ checks = [
   check_model_quota,
   check_cache_efficiency,
   check_provider_catalog,
-  check_safety_tests
+  check_safety_tests,
 ]
 
 puts "MASTER doctor"

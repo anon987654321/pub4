@@ -18,7 +18,7 @@ class NullModel
       Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :test_pass),
       Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :scan_clean),
       Master::Core::Effect.exec([RbConfig.ruby, "-e", "exit 0"], evidence: :code_review),
-      Master::Core::Effect.done("noop complete: #{@goal}")
+      Master::Core::Effect.done("noop complete: #{@goal}"),
     ]
   end
 

@@ -24,7 +24,7 @@ Dir.chdir(root) do
     "spec/social/tool_honesty_spec.rb",
     "spec/providers/catalog_index_spec.rb",
     "spec/smoke/static_syntax_spec.rb",
-    "spec/tools/lifecycle_tools_spec.rb"
+    "spec/tools/lifecycle_tools_spec.rb",
   ]
 
   failed = specs.reject do |spec|

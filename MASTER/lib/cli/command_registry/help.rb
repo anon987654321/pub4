@@ -177,7 +177,7 @@ module Master
           detail: [
             "/reasoning", "/reasoning react",
             "Sets config.reasoning_mode; templates live in data/prompts/mode_<name>.yml.",
-            "Distinct from /mode, which is the loose|balanced|strict session posture.",
+            "Distinct from /mode, which is the loose|balanced|strict session posture."
           ],
         },
         "memory" => {
@@ -194,7 +194,7 @@ module Master
             "/pair issue [label]",
             "/pair <code> — redeem (also POST /pair)",
             "/pair status", "/pair list", "/pair revoke <token>",
-            "Paired visitors get the messaging profile (fetch + personal memory), never Shell.",
+            "Paired visitors get the messaging profile (fetch + personal memory), never Shell."
           ],
         },
         "security-audit" => {

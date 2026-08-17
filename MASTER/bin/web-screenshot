@@ -14,7 +14,7 @@ options = {
   out: DEFAULT_OUT,
   wait_ms: 1200,
   width: 1440,
-  height: 1200
+  height: 1200,
 }
 
 OptionParser.new do |opts|
@@ -45,7 +45,7 @@ args = [
   "--window-size=#{options[:width]},#{options[:height]}",
   "--virtual-time-budget=#{options[:wait_ms]}",
   "--screenshot=#{options[:out]}",
-  options[:url]
+  options[:url],
 ]
 
 stdout, stderr, status = Open3.capture3(*args)

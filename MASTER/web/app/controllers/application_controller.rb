@@ -113,7 +113,7 @@ class ApplicationController < ActionController::Base
   def set_unlock_cookie
     cookies[:master_unlocked] = {
       value: unlock_cookie_value, expires: 1.year.from_now,
-      secure: request.ssl?, httponly: true, same_site: :strict,
+      secure: request.ssl?, httponly: true, same_site: :strict
     }
   end
 
@@ -173,7 +173,7 @@ class ApplicationController < ActionController::Base
   def set_pair_cookie(token)
     cookies[:master_paired] = {
       value: token, expires: 1.year.from_now,
-      secure: request.ssl?, httponly: true, same_site: :strict,
+      secure: request.ssl?, httponly: true, same_site: :strict
     }
   end
 
@@ -197,7 +197,7 @@ class ApplicationController < ActionController::Base
     minted = SecureRandom.hex(16)
     cookies[:master_conversation] = {
       value: minted, expires: 1.year.from_now,
-      secure: request.ssl?, httponly: true, same_site: :strict,
+      secure: request.ssl?, httponly: true, same_site: :strict
     }
     minted
   end

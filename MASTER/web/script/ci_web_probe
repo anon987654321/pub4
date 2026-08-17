@@ -29,7 +29,7 @@ chrome = [
   ENV["CHROME_PATH"],
   "/usr/local/bin/chromium",
   "/usr/local/bin/chrome",
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
 ].compact.find { |path| File.executable?(path) }
 if skip_browser || chrome.nil?
   reason = if ENV["PROBE_SKIP_BROWSER"] == "1"

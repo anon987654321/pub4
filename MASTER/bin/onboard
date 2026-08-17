@@ -15,7 +15,7 @@ options = {
   model: nil,
   budget_max: nil,
   req_max: nil,
-  token: nil
+  token: nil,
 }
 
 OptionParser.new do |opts|

@@ -29,7 +29,7 @@ module Master
     ["voice", "data/voice.yml"], ["limits", "data/limits.yml"], ["orders", "data/state.yml"],
     ["playbook", "data/patterns.yml"], ["principles", "data/operator_principles.yml"],
     ["skills", "data/patterns.yml"], ["context", "data/project_context.yml"],
-    ["operator", "../OPENBSD/RUNBOOK.md"],
+    ["operator", "../OPENBSD/RUNBOOK.md"]
   ].freeze
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
@@ -50,7 +50,7 @@ module Master
     ".js" => "javascript", ".ts" => "javascript", ".jsx" => "javascript", ".tsx" => "javascript",
     ".sh" => "zsh", ".zsh" => "zsh", ".bash" => "zsh", ".md" => "markdown",
     ".html" => "html", ".htm" => "html", ".erb" => "html", ".css" => "css",
-    ".scss" => "scss", ".sass" => "scss",
+    ".scss" => "scss", ".sass" => "scss"
   }.freeze
 
   # NUL-byte sniff on the first 4KB. Errs on the side of "binary" so scanners

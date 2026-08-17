@@ -29,7 +29,7 @@ LANG = {
   ".yml" => "yaml", ".yaml" => "yaml", ".json" => "json", ".toml" => "toml",
   ".md" => "markdown", ".markdown" => "markdown", ".erb" => "erb", ".sh" => "bash",
   ".bash" => "bash", ".zsh" => "bash", ".css" => "css", ".scss" => "scss",
-  ".html" => "html", ".sql" => "sql", ".xml" => "xml",
+  ".html" => "html", ".sql" => "sql", ".xml" => "xml"
 }.freeze
 
 out = REPO_ROOT
