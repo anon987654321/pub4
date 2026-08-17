@@ -31,7 +31,28 @@ module Pub4
       Master.flatten_rules(Master.load_rules(root: ROOT).fetch("rules", {}))
     end
 
-    def mechanical(all) = all.select { |rule| rule["detect_lexical"] || rule["detect_structural"] }
+    # A rule is mechanical if something can run it. law/ is one of those places
+    # now: a migrated rule has detect_lexical: ~ in the yml and a detector, a bad
+    # fixture and a good one in law/<id>.rb. Counting only the yml column reported
+    # eighty-one of them as reaching nothing on the day they became the only rules
+    # in the tree that prove themselves before they may judge anything.
+    def enacted
+      dir = File.join(ROOT, "law")
+      return Set.new unless Dir.exist?(dir)
+
+      Dir.glob(File.join(dir, "*.rb")).flat_map { |f| File.read(f).scan(/Law\.define\(:(\w+)\)/) }.flatten.to_set
+    end
+
+    # folded_into names the law that carries a rule whose detector was identical
+    # to another's. The id survives so principle_map can still trace it; the
+    # detector does not exist twice. Reachable through the law it folded into.
+    def mechanical(all)
+      laws = enacted
+      all.select do |rule|
+        rule["detect_lexical"] || rule["detect_structural"] ||
+          laws.include?(rule["id"].to_s) || laws.include?(rule["folded_into"].to_s)
+      end
+    end
 
     # Mirrors SemanticRule#load_semantic_rules. Kept in step by test_rule_reach.
     def prompted(all)

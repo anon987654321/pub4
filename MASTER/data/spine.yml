@@ -407,7 +407,13 @@ spine:
   # RAISED 2026-08-17, 38740 -> 38773 (+33). Hashed-read transcript,
   # unread-path ask, and the decorator-massacre skip on NO_ASCII_LINE_ART.
   # No new fold concept; core_files stays 7.
-  lib_code_ceiling: 38773
+  # RAISED 2026-08-17, 38773 -> 38815 (+42), operator-sponsored. law_bridge_rule.rb,
+  # the 51 lines that let the scanner run law/. Eighty-five rules moved out of
+  # data/rules.yml into files that carry a detector, a fixture they must flag and
+  # a fixture they must not — so the bridge buys a false-positive rate that is
+  # measured rather than assumed, which is the failure the decorator massacre was.
+  # law/ carries its own budget in limits.yml and ratchets separately.
+  lib_code_ceiling: 38815
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

@@ -5,7 +5,7 @@ module Master
     module Scan
       # Single instantiation path for scan rule classes (avoids ArgumentError drift).
       module RuleFactory
-        BRIDGE_CLASSES = %w[YamlDeclarativeRule VetoPatternRule].freeze
+        BRIDGE_CLASSES = %w[YamlDeclarativeRule VetoPatternRule LawBridgeRule].freeze
 
         module_function
 
@@ -20,7 +20,7 @@ module Master
           case klass.name
           when /CoChangeCouplingRule/ then klass.new(root:, ecology:)
           when /SemanticRule|AdversarialRule|CommentDriftRule/ then klass.new(agent:)
-          when /RuleCoverageRule|RubocopRule|ReekRule|InterconnectRule|YamlDeclarativeRule|VetoPatternRule|AstOmissionRule/
+          when /RuleCoverageRule|RubocopRule|ReekRule|InterconnectRule|YamlDeclarativeRule|VetoPatternRule|LawBridgeRule|AstOmissionRule/
             klass.new(root:)
           else klass.new(root:)
           end

@@ -495,7 +495,7 @@ namespace :lint do
 end
 
 desc "Full audit: constitution + selftest + the lint:* gates"
-task audit: %i[constitution selftest studio lint:frozen lint:data_singularity lint:spine lint:autoload
+task audit: %i[dogfood constitution selftest studio lint:frozen lint:data_singularity lint:spine lint:autoload
                lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
                lint:do_not_touch lint:instruments lint:constant_collisions
                lint:capability] do
@@ -588,4 +588,9 @@ task :loc_budget do
     abort "loc_budget: #{over.size} subsystem(s) over budget — shrink or split, never raise the budget"
   end
   puts "loc_budget: ok"
+end
+
+desc "Every law/ rule flags its bad fixture and spares its good one, then every law judges law/ itself"
+task :dogfood do
+  ruby "-Ilib", "spec/dogfood_spec.rb"
 end

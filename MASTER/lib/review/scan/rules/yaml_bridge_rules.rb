@@ -121,8 +121,10 @@ module Master
           end
 
           def build_lexical_entries(yaml_rules, registry_ids)
+            law_ids = defined?(::Law) ? ::Law.rules.keys.map(&:to_s).to_set : Set.new
             yaml_rules
               .select { |r| r["detect_lexical"] && !registry_ids.include?(r["id"].to_s.downcase) }
+              .reject { |r| law_ids.include?(r["id"].to_s) } # law/ owns it now
               .filter_map do |r|
                 {
                   id: r["id"],

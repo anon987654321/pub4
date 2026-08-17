@@ -17,7 +17,7 @@ module Master
           end
           %w[
             CoChangeCouplingRule RuleCoverageRule RubocopRule ReekRule InterconnectRule
-            YamlDeclarativeRule VetoPatternRule SemanticRule AdversarialRule CommentDriftRule AstOmissionRule
+            YamlDeclarativeRule VetoPatternRule LawBridgeRule SemanticRule AdversarialRule CommentDriftRule AstOmissionRule
             LibRootDisciplineRule
           ].each do |name|
             klass = Review::Scan::Rules.const_get(name)
