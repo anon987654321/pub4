@@ -758,12 +758,16 @@ function highQualityVoiceEnabled() {
   return false;
 }
 function browserTtsFallbackAllowed() {
-  // Inside Voice Mode, browser speechSynthesis is the deliberate default
-  // (instant, zero server load) rather than an opt-in fallback — the VPS's
-  // server-TTS latency floor is incompatible with a live conversation. The
-  // "high-quality voice" toggle opts back into server TTS and accepts the
-  // latency. Outside Voice Mode, normal chat keeps server TTS as primary.
-  if (State.voiceMode && !highQualityVoiceEnabled()) return true;
+  // Browser speechSynthesis is the default everywhere, not a fallback: it
+  // starts speaking immediately and costs the VPS nothing, and the server's
+  // TTS latency floor is what a reply waits on. The "high-quality voice"
+  // toggle opts back into Osman/Pernille and accepts that wait.
+  //
+  // This was scoped to Voice Mode, on the reasoning that only a live
+  // conversation cannot afford the latency. But typed chat pays the same
+  // wait for the same sentence, and the person who typed it is watching the
+  // screen while it is paid.
+  if (!highQualityVoiceEnabled()) return true;
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
   try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
   return false;
@@ -922,18 +926,17 @@ function ttsTick() {
   // Voice Mode default: speak instantly via the browser, skip the Edge
   // round-trip entirely. Opt into server TTS quality via the "high-quality
   // voice" toggle if the latency is acceptable for this conversation.
-  // Say which voice this is, once per session. Voice Mode deliberately speaks
-  // through the browser rather than the server — see browserTtsFallbackAllowed,
-  // the VPS latency floor is incompatible with a live conversation — so the
-  // voice here is the operating system's, not the one data/voice.yml names.
-  // That is a reasonable trade and an unreasonable surprise: someone who has
-  // just changed the configured voice hears an unrelated one and concludes the
-  // change did not take. The toggle is hq_voice=1 or master:voice-mode-hq.
-  if (State.voiceMode && !highQualityVoiceEnabled() && !tts.browserVoiceNoticeShown) {
+  // Say which voice this is, once per session. MASTER speaks through the
+  // browser rather than the server by default — see browserTtsFallbackAllowed —
+  // so the voice here is the operating system's, not the one data/voice.yml
+  // names. That is a reasonable trade and an unreasonable surprise: someone who
+  // has just changed the configured voice hears an unrelated one and concludes
+  // the change did not take. The toggle is hq_voice=1 or master:voice-mode-hq.
+  if (!highQualityVoiceEnabled() && !tts.browserVoiceNoticeShown) {
     tts.browserVoiceNoticeShown = true;
-    setTtsHealthStatus('voice mode: browser voice (hq off)');
+    setTtsHealthStatus('browser voice (hq off)');
   }
-  if (State.voiceMode && !highQualityVoiceEnabled() && speakWithBrowserTTS(text, token)) return;
+  if (!highQualityVoiceEnabled() && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0) && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) { tts.playing = false; tts.current = null; setTTSLoading(false); ttsTick(); return; }
   if (tts.serverUnavailable) tts.serverUnavailable = false;
