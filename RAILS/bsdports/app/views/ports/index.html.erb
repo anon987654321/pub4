@@ -12,13 +12,43 @@
   <div><%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: t("ports.search_placeholder"), label: t("ports.search_label"), frame_id: "bsdports-ports" %></div>
 </header>
 
-<% if @categories&.any? %>
-<section class="categories" aria-label="<%= t("ports.categories_section_label") %>">
-  <h2 class="dim"><%= t("ports.categories") %></h2>
-  <ul class="category-list">
-    <% @categories.each do |cat| %>
-      <li><%= link_to cat.name, ports_path(category_id: cat.id), class: "chip" %></li>
+<%# An empty tree and a quiet tree look identical once the category list renders
+    empty, and only one of them is a problem someone can fix. The controller has
+    known which it was all along; nothing asked it. %>
+<% if @catalog_empty %>
+  <section class="ports-empty" aria-label="<%= t("ports.categories_section_label") %>">
+    <p><%= t("ports.empty_unimported") %></p>
+  </section>
+<% else %>
+  <%# A ports tree with no date is a ports tree nobody can trust. %>
+  <p class="dim ports-freshness">
+    <% if @last_import %>
+      <%= t("ports.last_import",
+            status: @last_import.status,
+            count: @last_import.ports_count.to_i,
+            when: time_ago_in_words(@last_import.started_at)) %>
+    <% else %>
+      <%= t("ports.never_imported") %>
     <% end %>
-  </ul>
-</section>
+  </p>
+
+  <%# sort=updated was written in the controller and reachable only by typing the
+      query string. Name is the implicit default, so both are named here. %>
+  <nav class="ports-sort" role="navigation" aria-label="<%= t("ports.list_label") %>">
+    <%= link_to t("pages.ports"), ports_path(category_id: params[:category_id]),
+                class: "chip#{' active' if params[:sort] != 'updated'}" %>
+    <%= link_to t("ports.updated"), ports_path(category_id: params[:category_id], sort: "updated"),
+                class: "chip#{' active' if params[:sort] == 'updated'}" %>
+  </nav>
+
+  <% if @categories&.any? %>
+    <section class="categories" aria-label="<%= t("ports.categories_section_label") %>">
+      <h2 class="dim"><%= t("ports.categories") %></h2>
+      <ul class="category-list">
+        <% @categories.each do |cat| %>
+          <li><%= link_to cat.name, ports_path(category_id: cat.id), class: "chip" %></li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
 <% end %>
