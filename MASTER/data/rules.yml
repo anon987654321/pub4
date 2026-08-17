@@ -76,12 +76,6 @@ laws:
         url: "https://www.gutenberg.org/ebooks/37134"
       - name: "Signal-to-Noise Ratio in Code"
         url: "https://ar5iv.labs.arxiv.org/html/2310.19102"
-zen:
-  observe: Read current behavior before changing anything.
-  simplify: Reduce moving parts before adding new components.
-  isolate: Change one axis at a time with clear boundaries.
-  verify: Run checks and gather objective evidence.
-  reflect: Capture learning and improve defaults.
 engineering_fit:
   classify: 'For every problem, decide: under-engineered, over-engineered, or perfectly
     engineered — and say why.'
@@ -95,48 +89,6 @@ engineering_fit:
 # Output-text bias patterns (scanned by the RuleDSL text scanner). Distinct from
 # data/biases.yml's decision-proposal biases (confirmation/sunk-cost/authority),
 # which BiasGuard reads separately — same word, two different pipeline stages.
-biases:
-  critical:
-    hallucination:
-      detect:
-      - claim_without_reading
-      - quote_without_source
-      - invented_stats
-      apply: cite_or_remove
-      violates_law: ROBUSTNESS
-    simulation:
-      detect:
-      - future_tense
-      - imperative_we_must
-      - lets_do_this
-      apply: rewrite_indicative_past
-      violates_law: DENSITY
-    completion_theater:
-      detect:
-      - ellipsis
-      - etcetera
-      - rest_of_placeholder
-      apply: complete_or_delete
-      violates_law: ROBUSTNESS
-  high:
-    sycophancy:
-      detect:
-      - great question
-      - absolutely
-      - excellent
-      - wonderful
-      apply: delete
-      violates_law: DENSITY
-    false_confidence:
-      detect: hidden_uncertainty
-      apply: state_uncertainty_explicitly
-      violates_law: ROBUSTNESS
-  cognitive_traps:
-  - anchoring
-  - recency
-  - verbosity
-  - pattern_completion
-  - premature_commitment
 beauty:
   typography_bringhurst:
   - choose_appropriate_typeface_for_function
@@ -799,91 +751,6 @@ learned_smells:
 # n_plus_one's regex matched the FIX keywords (includes/preload/eager_load),
 # not the problem, riding alongside the real N_PLUS_ONE rule
 # (universal_rules.rb:40). Both were redundant, one was backwards.
-foundations:
-  information_theory:
-    source: Shannon (1948); Kolmogorov complexity / minimum description length
-    grounds:
-    - DENSITY
-    - ENTROPY_RESISTANCE
-    - BE_CONCISE
-    - SIMPLEST_WORKS
-    principle: Maximise signal per token. The shortest faithful description wins;
-      noise is measurable, not a matter of taste.
-  cognitive_load:
-    source: Sweller (cognitive load theory); Miller 7±2; Cowan ~4
-    grounds:
-    - SMALL_FUNCTIONS
-    - FEW_ARGUMENTS
-    - STEPDOWN
-    - ONE_ABSTRACTION_LEVEL
-    principle: Working memory holds ~4 chunks. Keep each unit within one mental grasp.
-      ruby.max_params:3 is this limit, not a style choice.
-  gestalt:
-    source: Wertheimer, Koffka — Gestalt perception
-    grounds:
-    - PROXIMITY
-    - CONSISTENT_FILE_STRUCTURE
-    - AESTHETIC_MINIMALISM
-    principle: Proximity, similarity, common region, and closure govern grouping in
-      code layout and visual design alike.
-  software_evolution:
-    source: Lehman's laws of software evolution
-    grounds:
-    - ENTROPY_RESISTANCE
-    - BROKEN_WINDOWS
-    - PRESERVE_FIRST
-    principle: A system in use must change; unmanaged change raises complexity and
-      lowers quality. Spend work against decay every pass.
-  cooperative_principle:
-    source: Grice — maxims of conversation (quantity, quality, relation, manner)
-    grounds:
-    - BE_CONCISE
-    - WHY_NOT_WHAT
-    - SELF_EXPLAINING
-    - GRICE_COOPERATIVE
-    principle: 'Every artifact obeys four maxims: say enough and no more (quantity),
-      assert nothing false (quality), stay relevant (relation), be clear and orderly
-      (manner).'
-substrate:
-  metaphysics:
-    axiom: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-    principle: No inside-check of a self-describing ruleset is complete; never
-      change more than an imperfect check could catch. Humility as axiom.
-    acknowledged_limits:
-      self_application:
-        name: "Gödel / liar's paradox"
-        symptom: sweep grades the code that runs sweep
-        mitigation: bounded diffs; council quorum; lint as external second witness
-      mimesis:
-        name: anti-simulation paradox (Plato)
-        symptom: pretending not to pretend is still pretending
-        mitigation: ground_truth_check; evidence_scoring over self-report
-      incommensurability:
-        name: value pluralism (Berlin)
-        symptom: security and typography share no common scale
-        mitigation: schedule values in pipeline time; never rank across domains
-      akrasia:
-        name: cheap-path degradation (Aristotle)
-        symptom: shortcuts compound until the shortcut is the road
-        mitigation: veto_patterns; violation_age; work spent against decay each pass
-  semantics:
-    principle: rules.yml is a translation layer. Each foundation speaks its own
-      language (math, grammar, type, security); all are rendered into one shared
-      dialect of yaml promises. Meaning lives in the mapping, not the words.
-    grounds:
-    - foundations
-    - principle_map
-    - rule_deps
-  logic:
-    principle: Values are scheduled, not ranked. Order in time replaces rank in
-      value wherever domains are incommensurable.
-    scheduling:
-      pre_execute_veto: guard
-      post_execute_review:
-      - council
-      - lint
-    note: principle_priorities ranks within domains only; cross-domain conflicts
-      resolve by pipeline position.
 rules:
   codebase:
   - id: PRESERVE_FIRST

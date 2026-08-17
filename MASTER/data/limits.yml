@@ -847,6 +847,6 @@ loc_budgets:
   lib/rails: 1158
   lib/pub4: 412
   core: 916
-  data/rules.yml: 4407
+  data/rules.yml: 4278
   # law/ — executable rules with fixtures (see law/law.rb). Ratchets like lib/.
   law: 1201
