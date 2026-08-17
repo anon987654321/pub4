@@ -16,26 +16,40 @@ module Master
         return proposal if hits.empty?
 
         note = hits.map { |name| "#{name}: #{countermeasure(name)}" }.join("; ")
+        note += " | compounding: #{cascades(hits).join(', ')}" if cascades(hits).any?
         proposal.to_h.merge(
           reason: "#{proposal.reason} | bias check: #{note}",
           confidence: [proposal.confidence.to_f - 0.1, 0.1].max,
         )
       end
 
+      # The patterns live in data/biases.yml beside the countermeasure they earn.
+      # They were fourteen lines of Ruby here, which meant adding a bias took two
+      # edits and the yml drifted from what actually fired — the spec-versus-
+      # enforcement split this guard exists to notice in other people's work.
+      #
+      # `clears` is the evidence that acquits: a proposal that measured something
+      # is not accused of calling it small.
       def detect(proposal)
         text = "#{proposal.action} #{proposal.reason}".downcase
-        hits = []
-        hits << "confirmation_bias" if text.match?(/\b(fix|violation|same fix|still carries|scanner result)\b/) && !text.match?(/\b(alternative|tradeoff|counter|review|why)\b/)
-        hits << "sunk_cost_bias" if text.match?(/\b(continue|more|again|retry)\b/) && !text.match?(/\brollback|simpler|stop\b/)
-        hits << "authority_bias" if text.match?(/\b(llm|model|scanner|rubocop|reek)\b/) && !text.match?(/\bevidence|local|test|scan:/)
-        hits << "sycophancy" if text.match?(/\b(great idea|absolutely|of course|as you wish)\b/) && !text.match?(/\brisk|tradeoff|however|but\b/)
-        hits << "simulation_bias" if text.match?(/\b(will fix|would work|should pass|going to|plan to)\b/) && !text.match?(/\bdiff|passed|exit|sha256|applied\b/)
-        hits << "anchoring_bias" if text.match?(/\b(first approach|initial fix|as before)\b/) && !text.match?(/\balternative|option b|second pass\b/)
-        hits << "availability_bias" if text.match?(/\b(new (file|class|module|pattern))\b/) && !text.match?(/\bexisting|reuse|search|found\b/)
-        hits << "premature_optimization" if text.match?(/\b(cache|optimize|perf|benchmark)\b/) && !text.match?(/\bmeasured|profile|hot path|n\+\s*1\b/)
-        hits << "aesthetic_neglect" if text.match?(/\b(view|scss|css|ui|erb|face)\b/) && !text.match?(/\baesthetic|spacing|contrast|touch|flat|token\b/)
-        hits << "recency_bias" if text.match?(/\b(latest|just added|newest)\b/) && !text.match?(/\bseverity|age|frequency\b/)
-        hits.uniq
+        @biases.filter_map do |name, body|
+          next unless body["detect"] && text.match?(Regexp.new(body["detect"]))
+          next if body["clears"] && text.match?(Regexp.new(body["clears"]))
+
+          name
+        end
+      end
+
+      # Which biases feed each other. The register that asked for these asked for
+      # the chains too: anchoring narrows the search, confirmation then only looks
+      # for agreement, and availability supplies the first example that fits. Named
+      # here so a proposal carrying two links of one chain says so, rather than
+      # reporting two unrelated-looking notes.
+      def cascades(hits)
+        hits.filter_map do |name|
+          linked = Array(@biases.dig(name, "compounds_with")) & hits
+          "#{name}->#{linked.join('+')}" unless linked.empty?
+        end
       end
 
       def priority_score(severity:, frequency:, age_days:)
