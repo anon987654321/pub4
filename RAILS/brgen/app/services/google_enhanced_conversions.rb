@@ -76,7 +76,18 @@ module GoogleEnhancedConversions
       gclid = order.try(:gclid).presence
       event["adIdentifiers"] = { "gclid" => gclid } if gclid
 
-      identifiers = user_identifiers_for(order)
+      # consent_for already refuses to claim consent it does not have. The same
+      # rule has to reach the data, not only the flag: a hashed email is still
+      # the customer's, and it is uploaded whether or not a consent block rides
+      # along. No order carries ad_user_data_consent today, so unknown is every
+      # order, and sending under it would mean sending for all of them.
+      consent = consent_for(order)
+      event["consent"] = consent if consent
+
+      # Granted, not merely known: consent_for returns a block for a denial too,
+      # so testing the block sends the customer's details on the one answer that
+      # most clearly refuses them.
+      identifiers = order.try(:ad_user_data_consent) == true ? user_identifiers_for(order) : []
       if identifiers.any?
         event["userData"] = {
           "userIdentifiers" => identifiers
@@ -85,9 +96,6 @@ module GoogleEnhancedConversions
 
       cart = cart_data_for(order)
       event["cartData"] = cart if cart
-
-      consent = consent_for(order)
-      event["consent"] = consent if consent
 
       event
     end
