@@ -99,6 +99,7 @@ shell_early:
 # and face_vision's felt_state rule read an empty string forever.
 shell_manifest:
   - felt_state
+  - ui_presence
   - face_state
   - visual_governor
   - topology_registry

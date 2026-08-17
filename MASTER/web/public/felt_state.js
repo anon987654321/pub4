@@ -38,6 +38,12 @@
 
   // Partial by design: visual_bridge knows entropy/confidence/mode, the
   // blendshape bridge knows arousal/valence, the face runtime knows all six.
+  //
+  // These six and only these six. chat_service.rb splits the felt string by
+  // position into mood, mode, entropy, confidence, arousal, valence and
+  // hist_entropy, so the string is a wire format and a seventh field would
+  // shift everything after it. Anything else the store learns belongs on
+  // snapshot(), which callers read by name — see attention below.
   function publish(fields = {}) {
     if (!fields || typeof fields !== "object") return;
     publishText("mood", fields.mood);
@@ -46,6 +52,18 @@
     publishNumber("confidence", fields.confidence);
     publishNumber("arousal", fields.arousal);
     publishNumber("valence", fields.valence);
+  }
+
+  // Whether anyone is actually looking, 0..1. Off the wire format on purpose:
+  // it is a property of the person rather than of MASTER's own state, and the
+  // seven fields are positional.
+  let attention = 1;
+
+  function publishAttention(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return;
+    attention = Math.max(0, Math.min(1, parsed));
+    document.documentElement.dataset.attention = attention.toFixed(2);
   }
 
   function feltCssNumber(name, fallback) {
@@ -80,6 +98,7 @@
       arousal: published.arousal ?? felt.arousal ?? (st.pulse ?? 0.4),
       valence: published.valence ?? felt.valence ?? 0,
       histEntropy,
+      attention,
     };
   }
 
@@ -122,6 +141,7 @@
     validateFeltState,
     feltStateOrFallback,
     publish,
+    publishAttention,
     snapshot,
     FIELD_COUNT: FELT_FIELD_COUNT,
   });
