@@ -8,6 +8,7 @@ require "json"
 require "timeout"
 require_relative "policy"
 require_relative "strunk_pass"
+require_relative "lexicon"
 
 module Master
   module Voice
@@ -177,7 +178,8 @@ module Master
             .gsub(/[*_#>\[\]{}|]/, " "),
         )
           .gsub(/\.{3,}/, ".")
-          .strip[0, MAX_CHARS]
+          .strip
+          .then { |t| Lexicon.apply(t) }[0, MAX_CHARS]
       end
 
       def chunks(text, max: CHUNK_CHARS)

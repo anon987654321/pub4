@@ -1,0 +1,51 @@
+---
+# Speech respellings for TTS. See lib/voice/lexicon.rb for why this is a
+# respelling table and not a phoneme lexicon: rb_edge_tts takes plain text, so
+# there is no SSML and no <phoneme> to address.
+#
+# The bar for an entry is that the written form is *wrong* when read aloud, not
+# that it is unusual. A voice reading "OpenBSD" says "open bee ess dee" only by
+# luck; it reads "relayd" as a word, "nsd" as "nssd", and "i18n" as a number
+# with letters stuck to it. Those earn entries. "Falcon", "Rails" and "Ruby" are
+# ordinary English words and do not.
+#
+# Matching is whole-word and case-insensitive, longest key first, so DNSSEC is
+# not eaten by DNS. An exact-case key wins over a case-insensitive one.
+respellings:
+  # Daemons and commands whose spelling is not their sound.
+  relayd: relay D
+  httpd: H T T P D
+  nsd: N S D
+  rcctl: R C control
+  doas: do as
+  ffmpeg: F F M peg
+  nginx: engine X
+
+  # Acronyms a voice otherwise runs together into a syllable.
+  OpenBSD: Open B S D
+  BSD: B S D
+  DNSSEC: DNS sec
+  SSHFP: S S H F P
+  TLS: T L S
+  SSE: S S E
+  CDP: C D P
+  SSML: S S M L
+  TTS: T T S
+  STT: S T T
+  CSP: C S P
+  ERB: E R B
+  YAML: yammel
+  SQLite: sequel light
+  PostgreSQL: Postgres
+  WebGL: web G L
+
+  # Numeronyms, which are read as a number with letters attached.
+  i18n: internationalization
+  a11y: accessibility
+  l10n: localization
+
+  # This project.
+  brgen: Bergen
+  vm23: V M twenty three
+  bsdports: B S D ports
+  oshlo: Oslo
