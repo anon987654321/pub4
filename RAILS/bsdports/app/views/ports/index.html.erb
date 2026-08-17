@@ -16,7 +16,7 @@
     empty, and only one of them is a problem someone can fix. The controller has
     known which it was all along; nothing asked it. %>
 <% if @catalog_empty %>
-  <section class="ports-empty" aria-label="<%= t("ports.categories_section_label") %>">
+  <section aria-label="<%= t("ports.categories_section_label") %>">
     <p><%= t("ports.empty_unimported") %></p>
   </section>
 <% else %>
@@ -34,7 +34,7 @@
 
   <%# sort=updated was written in the controller and reachable only by typing the
       query string. Name is the implicit default, so both are named here. %>
-  <nav class="ports-sort" role="navigation" aria-label="<%= t("ports.list_label") %>">
+  <nav role="navigation" aria-label="<%= t("ports.list_label") %>">
     <%= link_to t("pages.ports"), ports_path(category_id: params[:category_id]),
                 class: "chip#{' active' if params[:sort] != 'updated'}" %>
     <%= link_to t("ports.updated"), ports_path(category_id: params[:category_id], sort: "updated"),
