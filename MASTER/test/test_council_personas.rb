@@ -75,4 +75,14 @@ class TestCouncilPersonas < Minitest::Test
     assert_empty missing,
                  "preset panel names with no persona (Critique.build_panel drops them):\n  #{missing.join("\n  ")}"
   end
+  # consensus_threshold sat in council.yml with no reader while Deliberation
+  # carried the same 0.70 as a literal. Wiring it is only worth anything if it
+  # stays wired, and an inert config key looks exactly like a live one.
+  def test_consensus_threshold_governs_the_convergence_overlap
+    configured = YAML.safe_load_file(Master::COUNCIL_PATH, aliases: true)
+                     .dig("parameters", "consensus_threshold")
+    refute_nil configured, "council.yml lost parameters.consensus_threshold"
+    assert_equal Float(configured), Master::Review::Council::Deliberation::CONVERGENCE_OVERLAP,
+                 "Deliberation stopped reading the configured threshold"
+  end
 end

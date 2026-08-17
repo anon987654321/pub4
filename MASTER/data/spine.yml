@@ -413,7 +413,13 @@ spine:
   # a fixture they must not — so the bridge buys a false-positive rate that is
   # measured rather than assumed, which is the failure the decorator massacre was.
   # law/ carries its own budget in limits.yml and ratchets separately.
-  lib_code_ceiling: 38815
+  # RAISED 2026-08-17, 38815 -> 38816 (+1), operator-sponsored. One line, and
+  # what it buys is that council.yml parameters.consensus_threshold is read.
+  # The same 0.70 lived twice — once as a literal in Deliberation and once in
+  # the data file nothing consumed — which is the duplication SINGULARITY
+  # forbids, with the unread copy being the one the requirements register
+  # names. Changing the yaml now moves the constant; a test proves it does.
+  lib_code_ceiling: 38816
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

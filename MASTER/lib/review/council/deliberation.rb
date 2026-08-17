@@ -40,7 +40,16 @@ module Master
         TOTAL_BUDGET_S = 600
         MIN_QUORUM = 3
         CONVERGENCE_ROUNDS = 3
-        CONVERGENCE_OVERLAP = 0.7
+        # How much of the council must agree before a round counts as converged.
+        # The same number lived twice: here as a literal, and in council.yml as
+        # `parameters.consensus_threshold`, which nothing read. Two copies of one
+        # constant is the shape SINGULARITY forbids, and the unread one was the
+        # one the requirements register names. It is the source now; the literal
+        # is the fallback for a council.yml that cannot be read at all.
+        # load_yaml already answers {} for a missing or unparseable file, so the
+        # literal below is the fallback and no rescue is needed to reach it.
+        council_params = Master.load_yaml(Master::COUNCIL_PATH, default: {})["parameters"]
+        CONVERGENCE_OVERLAP = Float(council_params.to_h["consensus_threshold"] || 0.7)
         CONVERGENCE_TEXT_SIM = 0.6
         LEGACY_PROMPTS_PATH = Master.data_path("prompts", "council.yml").freeze
 

@@ -330,7 +330,10 @@ personas:
 
 # Council deliberation parameters. Source: master2 v4 reunification.
 parameters:
-  consensus_threshold:  0.70   # weighted majority required to accept proposal
+  # Fraction of the council whose feedback must agree before a round counts as
+  # converged. Read by Deliberation::CONVERGENCE_OVERLAP. Not a weighted
+  # majority — personas carry no weight; they carry a temperature and a veto.
+  consensus_threshold:  0.70
   max_iterations:       25     # oscillation halt — forces explicit human decision
   oscillation_detection: true
   veto_precedence:     [Security, Reliability, Maintainer]   # order of veto evaluation
