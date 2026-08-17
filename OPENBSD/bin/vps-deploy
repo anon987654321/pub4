@@ -34,10 +34,16 @@ app=${1:-}
 # the only record of what happened is gone, while the deploy itself carries on to
 # completion on the box. Twice now the outcome had to be reconstructed from
 # rcctl and curl afterwards. tee keeps a copy that survives the caller.
+# Once per run, not once per app. `vps-deploy all` re-invokes itself for each
+# app, and without this guard every child added its own tee to the same file:
+# the child output then passed through both and every line landed twice.
 deploy_log=${VPS_DEPLOY_LOG:-$HOME/vps-deploy.log}
-print "vps-deploy: $app, logging to $deploy_log"
-exec > >(tee -a "$deploy_log") 2>&1
-print "==> vps-deploy $app started $(date '+%Y-%m-%d %H:%M:%S')"
+if [[ -z ${VPS_DEPLOY_LOGGING:-} ]]; then
+  export VPS_DEPLOY_LOGGING=1
+  print "vps-deploy: $app, logging to $deploy_log"
+  exec > >(tee -a "$deploy_log") 2>&1
+  print "==> vps-deploy $app started $(date '+%Y-%m-%d %H:%M:%S')"
+fi
 
 # The whole fleet, in the order that survives its own side effects.
 #
