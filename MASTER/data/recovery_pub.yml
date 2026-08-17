@@ -1,0 +1,59 @@
+---
+name: pub_restore_contract
+source_repo: anon987654321/pub
+target_repo: anon987654321/pub4
+updated: "2026-06-26"
+layout_note: >-
+  Paths naming DEPLOY/ predate its split into RAILS/, OPENBSD/ and STUDIO/.
+  Those three are repointed; DEPLOY/bp and DEPLOY/sh have no successor here.
+
+law:
+  - Never mark renamed material as restored.
+  - Absorbed concepts still require provenance.
+  - Old generated installers are evidence, not production scripts.
+  - Every legacy item needs one of: restored, ported, archived, retired.
+
+critical_items:
+  - id: mega_all_apps
+    source: __OLD_BACKUPS/MEGA_ALL_APPS.md
+    expected_target: RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
+    current_state: missing
+    gate: file_exists
+
+  - id: ai3_standalone
+    source: ai3/
+    expected_target: RECOVERY/pub/ai3/legacy/
+    current_state: absorbed
+    gate: source_archived_or_importer_tested
+
+  - id: bplans_pipeline
+    source: bplans/
+    expected_target: DEPLOY/bp/generate.rb
+    current_state: partial
+    gate: generator_reproduces_pages
+
+  - id: privcam_active_decision
+    source: __OLD_BACKUPS/MEGA_ALL_APPS.md
+    expected_target: RAILS/privcam/ or retired decision
+    current_state: archived_port
+    gate: active_app_or_retirement_note
+
+checks:
+  file_presence:
+    - RESTORE_FROM_PUB.md
+    - RECOVERY/pub/LEGACY_MANIFEST.yml
+    - RECOVERY/pub/README.md
+    - RECOVERY/pub/plugin_schema_v1.json
+    - DEPLOY/bp/RESTORE_SOURCE_PIPELINE.md
+    - STUDIO/postpro/IMAGE_ENGINE_POSITIONING.md
+
+  missing_until_restored:
+    - RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
+    - RECOVERY/pub/ai3/legacy/ai3.rb
+    - DEPLOY/bp/generate.rb
+    - DEPLOY/bp/__shared/template.html.erb
+
+agent_prompt: >
+  Before claiming pub4 restored pub, read RESTORE_FROM_PUB.md and this file.
+  For every item in critical_items, prove it is restored, ported, archived, or
+  retired. Do not infer completion from naming similarity.

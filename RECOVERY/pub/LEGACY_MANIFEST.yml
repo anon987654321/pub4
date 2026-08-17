@@ -1,0 +1,189 @@
+---
+source_repo: anon987654321/pub
+target_repo: anon987654321/pub4
+audit_date: 2026-06-26
+purpose: >
+  Machine-readable restore ledger for legacy pub material that pub4 has not
+  fully restored as source, behavior, or explicit retirement decision.
+
+states:
+  restored: source and behavior exist in pub4
+  ported: behavior exists in new architecture
+  absorbed: concept exists, but old source/provenance is not preserved
+  archived: source is kept but not active
+  missing: neither active nor archived
+  retired: intentionally rejected with reason
+
+legacy_roots:
+  - path: __OLD_BACKUPS/MEGA_ALL_APPS.md
+    state: missing
+    priority: critical
+    target_path: RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
+    sha_seen: 1649c9d03e5b6981cf5d76e843f2296810807d4a
+    reason: >
+      Canonical old mega-ledger for Rails/OpenBSD app restoration. It records
+      install payloads, checksums, app scope, and old assumptions.
+    action: >
+      Copy full file from pub into RECOVERY/pub/__OLD_BACKUPS/ and port intent
+      into RAILS/apps.yml. Do not execute old generated installers.
+
+  - path: ai3/
+    state: absorbed
+    priority: critical
+    target_path: RECOVERY/pub/ai3/
+    reason: >
+      MASTER absorbed the idea, but the old standalone Ruby CLI, assistant
+      inventory, LangChain/Weaviate/Ferrum layout, installers, and config
+      provenance are not preserved.
+    known_files:
+      - ai3/README.md
+      - ai3/ai3.rb
+      - ai3/install.sh
+      - ai3/install_ass.sh
+      - ai3/Gemfile
+      - ai3/config/config.yml
+      - ai3/config/locales/en.yml
+      - ai3/lib/cognitive.rb
+      - ai3/lib/multimedia.rb
+      - ai3/lib/scraper.rb
+      - ai3/lib/utils/config.rb
+      - ai3/lib/utils/file.rb
+      - ai3/lib/utils/llm.rb
+    action: >
+      Preserve source under RECOVERY/pub/ai3/legacy or implement a deterministic
+      importer into MASTER plugins/council roles.
+
+  - path: bplans/consolidated/
+    state: partial
+    priority: high
+    target_path: RECOVERY/pub/bplans/consolidated/
+    reason: >
+      pub4 has static DEPLOY/bp pages, but the old markdown/source collection and
+      the generator/data/template pipeline described by IMPLEMENTATION_SUMMARY
+      are not present.
+    known_files:
+      - bplans/consolidated/README.md
+      - bplans/technology/rails-ecosystem-overview.md
+      - bplans/__letters/thor.html
+    action: >
+      Rebuild DEPLOY/bp/generate.rb, DEPLOY/bp/__shared/template.html.erb, and
+      DEPLOY/bp/data/*.json or explicitly retire generated BP workflows.
+
+  - path: plugin_schema_v1.json
+    state: archived
+    priority: medium
+    target_path: RECOVERY/pub/plugin_schema_v1.json
+    reason: >
+      Old framework plugin/module schema. MASTER has a runtime plugin registry,
+      but schema provenance should stay available.
+
+  - path: README.md
+    state: archived
+    priority: medium
+    target_path: STUDIO/postpro/IMAGE_ENGINE_POSITIONING.md
+    reason: >
+      Old root README described the image-processing/analog-engine product
+      positioning that belongs with postpro.
+
+  - path: misc/vulcheck/
+    state: ported
+    priority: low
+    target_path: DEPLOY/sh/tools/vulcheck.rb
+    reason: >
+      vulcheck exists in pub4 deploy tools. Keep source mapping for provenance.
+
+  - path: brgen_app/
+    state: partial
+    priority: medium
+    target_path: RAILS/brgen/
+    reason: >
+      Old Rails app shell exists in pub but pub4 uses a cleaner generated app.
+      Preserve intent only; do not restore placeholder README as product truth.
+
+rails_restore_debt:
+  brgen:
+    state: partial
+    missing:
+      - proximity/geolocation filtering
+      - moderation tools
+      - media pipeline with Active Storage variants
+      - Tv::Show
+      - Tv::Episode
+      - video upload and variants
+      - VideoPublished and BroadcastScheduled events
+      - dating city/radius filter
+      - dating match to messaging handoff
+      - dating profile photos
+      - marketplace geo-localized listings
+      - marketplace locale subdomain routing
+      - marketplace FTS filtering completion
+      - playlist listens
+      - embeddable player completion
+      - Spotify/YouTube/SoundCloud import
+      - city-scoped trending feed
+      - expiration dates on tracks
+      - takeaway restaurant model/geocoding
+      - menu item availability state machine
+      - full takeaway order state machine
+
+  amber:
+    state: partial
+    missing:
+      - wardrobe upload UI
+      - garment segmentation/background removal
+      - outfit generation by weather/season/event
+      - style evolution timeline
+      - underused item surfacing
+      - wardrobe analytics dashboard completion
+      - closet organisation tips AI
+
+  blognet:
+    state: partial
+    missing:
+      - author profile
+      - RSS/Atom feed
+      - semantic search
+      - membership/subscription/paywall
+      - AI narration/TTS article
+      - citation system
+      - editorial workflow
+      - recipe model
+      - ingredient model
+      - step-by-step cooking view
+      - recipe collections/playlists
+      - rich media gallery
+      - short-form food clips
+      - locality-aware restaurant references
+      - seasonal food guides
+      - article to podcast
+      - article to summary
+      - article to video
+      - article to thread
+
+  bsdports:
+    state: partial
+    missing:
+      - dependency tree visualization
+      - ports tree scheduled re-import job
+      - WCAG AAA compliance pass
+      - AI exploration assistant
+
+  hjerterom:
+    state: partial
+    missing:
+      - clothing/toy/book reuse tracking
+      - distribution route optimization
+
+active_app_decisions:
+  privcam:
+    legacy_state: active_app
+    pub4_state: archived_port
+    decision_needed: restore_as_seventh_app_or_mark_retired
+  pub_attorney:
+    legacy_state: archived_or_external
+    pub4_state: archived_port
+    decision_needed: restore_or_retire
+  mytoonz:
+    legacy_state: archived_or_external
+    pub4_state: archived_port
+    decision_needed: restore_or_retire
