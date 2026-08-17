@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: 36522c1b05b30778
+    digest: e520b5edbbdd0f42
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -143,8 +143,6 @@ apps:
       - "/nearby/room"
       nearby#widget:
       - "/nearby/widget"
-      live#index:
-      - "/live"
       channels#index:
       - "/channels"
       channels#show:

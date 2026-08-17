@@ -94,6 +94,21 @@
         </div>
       </div>
 
+      <%# The Live layer, folded in. Its posts always went to this feed; what the
+          separate page added was this stamp. Shown only to someone who has
+          already shared coordinates, because a checkbox that silently does
+          nothing is worse than no checkbox. %>
+      <% if Current.user&.latitude.present? && Current.user.longitude.present? %>
+        <%# No class: the stylesheet selects this with
+            .composer-form label:has(> input[type="checkbox"]), which describes
+            what it is rather than restating it. %>
+        <label>
+          <%= f.check_box :nearby %>
+          <%= t("feed.post_nearby") %>
+          <small><%= t("feed.post_nearby_hint") %></small>
+        </label>
+      <% end %>
+
       <%= f.submit t("feed.post_action"), class: "btn btn-primary composer-submit" %>
 
       <%# The guest hint used to be a <details> whose summary repeated the author

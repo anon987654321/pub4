@@ -103,20 +103,6 @@ labels:
     rater: seed
     notes: "Auth wall + missing nav/landmarks"
 
-  - id: live_feed_schema_good
-    fixture: fixtures/surfaces/good_live_feed.html
-    surface: live
-    quality: true
-    human: pass
-    rater: seed
-
-  - id: live_feed_schema_bad
-    fixture: fixtures/surfaces/bad_live_feed.html
-    surface: live
-    quality: true
-    human: fail
-    rater: seed
-
   - id: dating_home_schema_good
     fixture: fixtures/surfaces/good_dating_home.html
     surface: dating

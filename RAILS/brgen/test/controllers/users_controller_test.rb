@@ -46,11 +46,14 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   test "signup carries the guest's posts onto the new account" do
     # The first hit builds a soft guest without writing a row; the second, which
     # carries the session cookie back, is what mints it (Shared::Authentication).
-    get live_path
-    get live_path
+    get root_path
+    get root_path
     guest = User.where(guest: true).order(created_at: :desc).first
     guest.update_columns(latitude: 60.39, longitude: 5.32, location_updated_at: Time.current)
-    post live_path, params: { post: { content: "Guest note before signing up" } }
+    # Was `post live_path`. The Live surface is gone and its one distinct step —
+    # the coarsened geo stamp — is `nearby` on the ordinary composer now, so this
+    # still posts the same kind of row through the path that replaced it.
+    post posts_path, params: { post: { content: "Guest note before signing up", nearby: "1" } }
     guest_post = Post.where(user: guest).order(created_at: :desc).first
     assert guest_post, "expected the guest to have posted"
 

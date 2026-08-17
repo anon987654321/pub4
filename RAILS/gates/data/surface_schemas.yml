@@ -92,51 +92,6 @@ schemas:
         principle: clarity
         note: guest cart is a core capability
 
-  live_feed:
-    label: live hyperlocal feed
-    principle: clarity / hyperlocal
-    dialect: social
-    severity_default: hard
-    counts:
-      page_heading:
-        pattern: '<h1\b'
-        min: 1
-        max: 1
-        principle: hierarchy
-      primary_actions:
-        pattern: 'btn-primary'
-        max: 6
-        principle: hicks_law
-    markers:
-      nav:
-        pattern: '<nav\b'
-        principle: consistency
-      main_landmark:
-        pattern: '<main\b|role="main"'
-        principle: accessibility
-      skip_link:
-        pattern: 'skip-link|Skip to main|#main-content'
-        principle: accessibility
-      live_heading:
-        pattern: '<h1[^>]*>\s*Live|Live · nearby|>Live<'
-      sort_tabs:
-        pattern: 'live-sort|sort=hot|sort=fresh|>Hot<|>New<'
-      rules_or_compose:
-        pattern: 'live-rules|live-compose|ground rules|Local &amp; anonymous|Local & anonymous|Share location'
-      feed_region:
-        pattern: 'live-feed|live-card|Quiet around here|Waiting for'
-    order:
-      - [live_heading, feed_region]
-    forbidden:
-      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
-        principle: accessibility
-        note: button with no accessible name
-      - pattern: 'Sign in to continue'
-        principle: clarity
-      - pattern: 'Logg inn for å sveipe'
-        principle: clarity
-        severity: soft
-
   dating_home:
     label: dating discover
     principle: hierarchy / face
@@ -231,7 +186,11 @@ schemas:
         principle: accessibility
       home:
         pattern: 'Home|feed|Bergen|local-feed|compose'
-      live_entry:
-        pattern: 'href="/live"|Live →|live_path|>live<'
+      # The door to the ambient hyperlocal layer. It was href="/live" while that
+      # was a separate Jodel-shaped feed; /live is the geo chat room now, and the
+      # home page reaches it through the floating chat widget rather than a link
+      # in the body, so the pattern has to admit both.
+      chat_entry:
+        pattern: 'href="/live"|href="/nearby|nearby-chat|nearby_room_path|nearby_widget'
         principle: progressive_disclosure
         severity: soft

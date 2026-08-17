@@ -39,6 +39,8 @@ en:
   app:
     name: Brgen
   feed:
+    post_nearby: "Attach my area"
+    post_nearby_hint: "Shows up nearby — the location is rounded to about a kilometre."
     title: Local news
     compose_prompt: What are you up to today?
     compose_title: Create post
@@ -1133,41 +1135,9 @@ en:
     desc_takeaway: Takeaway for %{city}.
     desc_maps: Maps for %{city}.
     desc_messenger: Messages for %{city}.
-  live:
-    page_title: Live · nearby
-    heading: Live
-    header_label: Live feed header
-    kicker: What’s happening around you — short, anonymous, vote-ranked.
-    within_km: Within %{km} km.
-    enable_location_hint: Enable location for the nearby bubble.
-    sort_label: Live sort
-    sort_hot: Hot
-    sort_new: New
-    also_open: Also open without signup
-    rules_label: Live rules
-    rules_summary: Local & anonymous — ground rules
-    rule_names: No real names, addresses, or doxxing of private people.
-    rule_short: Posts are short (max %{max} chars) and shown as anon.
-    rule_gps: Exact GPS is coarsened — only a rough area is stored.
-    rule_votes: Upvotes surface useful local signal; downvotes bury spam.
-    compose_label: Post to Live as anon
-    compose_placeholder: What’s going on near you?
-    compose_hint: Local · anonymous · no signup needed
-    post_live: Post Live
-    share_to_post_title: Share location to post
-    share_to_post_body: A rough position keeps your note to people nearby. Your exact
-      location is never shown.
-    feed_label: Live posts nearby
-    vote_label: Vote, score %{score}
-    comment_label: Comment
-    empty_located_title: Quiet around here
-    empty_located_body: Be the first to drop a short anonymous note nearby.
-    empty_waiting_title: Waiting for the first Live notes
-    empty_waiting_body: Enable location or check back when locals start posting.
   nearby:
     is_nearby_html: "%{handle} is nearby"
     page_title: Nearby
-    live_link: Live feed (anonymous notes nearby)
     prefer_room: Prefer a room?
     channels_link: Join a public channel →
     share_location_title: Share your location
@@ -1183,7 +1153,6 @@ en:
     push_title: Someone nearby
     push_body: "%{handle} is within %{km} km — tap to chat"
     empty_located_body: Check back later — or drop a Live note while you wait.
-    open_live: Open Live
   install:
     title: Install Brgen
     body: Live notes, marketplace, and nearby — one tap from your home screen.
@@ -1328,13 +1297,10 @@ en:
     already_confirmed: Already confirmed.
     subscribed: Subscribed — you'll receive city updates.
     unsubscribed: Unsubscribed.
-    live_rate_limited: Slow down — too many Live posts. Try again shortly.
-    location_required_to_post: Enable location to post on Live.
     anonymous_post_limit: Sign up to post more (%{limit} anonymous posts per browser).
     post_blocked_by_moderation: Post blocked by moderation.
     link_requires_verified_account: Sign in and confirm your email address to post
       links or offers.
-    posted_to_live: Posted to Live.
     checked_in_at: Checked in at %{place}.
     check_in_failed: Could not check in.
     messages_rate_limited: Slow down — too many messages. Try again shortly.

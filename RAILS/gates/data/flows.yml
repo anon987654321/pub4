@@ -91,18 +91,6 @@ flows:
         expect_any:
           - '(?i)password|sign in|logg inn|vipps|google'
 
-  - id: brgen_live_is_guest_open
-    app: brgen
-    description: The hyperlocal feed is the product's core loop and must not gate on signup.
-    steps:
-      - name: live
-        get: /live
-        host: brgen.no
-        expect_status: [200]
-        expect_final_path: /live
-        forbid_body:
-          - "Sign in to continue"
-
   - id: amber_wardrobe_browse
     app: amber
     description: Wardrobe index must render for a visitor and link to individual items.
@@ -119,7 +107,7 @@ flows:
 
   - id: brgen_guest_nearby_and_live
     app: brgen
-    description: Nearby and Live form the hyperlocal loop; both stay guest-open.
+    description: The hyperlocal loop is one surface now and stays guest-open.
     steps:
       - name: nearby
         get: /nearby
@@ -130,11 +118,16 @@ flows:
           - "Sign in to continue"
         expect_any:
           - '(?i)nearby|location|live|share'
-      - name: live
+      # /live is a redirect to the geo room since the Jodel feed was folded into
+      # the front page. A visitor with no coordinates cannot be in a geo room, so
+      # #room sends them back to /nearby to turn location on -- two redirects,
+      # landing where they can act. What this step proves is that neither hop
+      # puts a signup wall in front of the hyperlocal layer.
+      - name: live_redirects_to_the_room
         get: /live
         host: brgen.no
         expect_status: [200]
-        expect_final_path: /live
+        expect_final_path: /nearby
         forbid_body:
           - "Sign in to continue"
 

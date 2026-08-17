@@ -71,9 +71,10 @@ before_action :require_real_user, only: %i[edit update destroy share]
       return
     end
 
-    @post           = Post.new(post_params)
+    @post           = Post.new(post_params.except(:nearby))
     @post.user      = Current.user
     @post.anonymous = true if Current.user.guest? || ActiveModel::Type::Boolean.new.cast(post_params[:anonymous])
+    stamp_nearby!
     if @post.title.blank? && @post.content.present?
       @post.title = @post.content.to_s.lines.first.to_s.strip.presence || @post.content.to_s.strip
       @post.title = @post.title.truncate(300)
@@ -158,7 +159,31 @@ before_action :require_real_user, only: %i[edit update destroy share]
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :video, :audio, :preset, :flair)
+    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :video, :audio, :preset, :flair, :nearby)
+  end
+
+  # What is left of the Live layer, and the only part of it the front page did
+  # not already have.
+  #
+  # /live was a separate Jodel-shaped surface, but its posts were never a
+  # separate pool: they are ordinary rows in `posts`, Brgen::HomeFeed applies no
+  # geo exclusion, and Post#author_name already renders a geo-stamped post as
+  # "anon" wherever it appears. The Live page was a radius-filtered, locally
+  # vote-ranked *view* of the same feed, plus this one compose step. So folding
+  # the surface into the front page costs nothing except the stamp, which moves
+  # here.
+  #
+  # Opt-in, and only offered to someone who has already shared coordinates —
+  # attaching a location to a post because the author happened to have GPS on
+  # would be a privacy change made silently. stamp_live_location! coarsens to
+  # ~1km (LIVE_LOCATION_PRECISION) so it marks an area, not a doorway.
+  def stamp_nearby!
+    return unless ActiveModel::Type::Boolean.new.cast(post_params[:nearby])
+
+    user = Current.user
+    return unless user&.latitude.present? && user.longitude.present?
+
+    @post.stamp_live_location!(lat: user.latitude, lng: user.longitude)
   end
 
   # A restricted community lets the whole city read it and only members post;

@@ -36,17 +36,22 @@
     This is where that survives, so it sits on the same page rather than behind
     another click: the question "who let them back in" is asked while looking at
     the list the person is no longer on. %>
-<section class="stack" aria-labelledby="moderation_log_heading">
+<%# No class on the section or the list. The stylesheet reaches them through
+    [aria-labelledby="moderation_log_heading"], which is the attribute that
+    already has to be correct for the heading to name the region — so a styled
+    log and an announced log cannot drift apart, and there is no third name to
+    keep in sync. %>
+<section aria-labelledby="moderation_log_heading">
   <h2 id="moderation_log_heading"><%= t("community.moderation_log") %></h2>
 
   <% if @audit_events.any? %>
-    <ol class="audit-list" role="list">
+    <ol role="list">
       <% @audit_events.each do |event| %>
-        <li class="cluster">
-          <span><%= event.summary %></span>
+        <li>
+          <%= event.summary %>
           <%# The machine-readable time is the audited fact; the visible text is
-              the human one. %>
-          <time class="dim" datetime="<%= event.occurred_at.iso8601 %>">
+              the human one. <time> needs no class — it is the only one here. %>
+          <time datetime="<%= event.occurred_at.iso8601 %>">
             <%= l(event.occurred_at, format: :event) %>
           </time>
         </li>

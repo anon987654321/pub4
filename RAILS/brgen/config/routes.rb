@@ -222,9 +222,15 @@ Rails.application.routes.draw do
   get "nearby/room" => "nearby#room", as: :nearby_room
   get "nearby/widget" => "nearby#widget", as: :nearby_widget
   post "nearby" => "nearby#create"
-  # Jodel-shaped hyperlocal Live feed (short, anonymous, radius-ranked).
-  get "live" => "live#index", as: :live
-  post "live" => "live#create"
+  # /live was a Jodel-shaped feed of short anonymous posts ranked by local
+  # votes. It is the ambient chat room now, per operator 2026-08-17: brgen had
+  # two hyperlocal surfaces that cross-linked to each other and competed for the
+  # same visitor, and the room is the one the operator means by "live".
+  #
+  # A redirect rather than a deletion because the path is public and was linked
+  # from /nearby and the city home. #room handles the unlocated case already —
+  # it sends you back to /nearby with a "turn on location" alert.
+  get "live" => redirect("/nearby/room"), as: :live
   resources :channels, only: %i[index show], param: :slug
   get "search" => "search#index", as: :global_search
   get "sitemap.xml" => "sitemaps#index", as: :sitemap

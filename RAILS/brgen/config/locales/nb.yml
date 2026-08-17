@@ -39,6 +39,8 @@ nb:
   app:
     name: Brgen
   feed:
+    post_nearby: "Legg ved posisjon (omtrentlig)"
+    post_nearby_hint: "Vises i «i nærheten» — stedet rundes av til ca. én kilometer."
     title: Lokale nyheter
     compose_prompt: Del noe spennende nå
     compose_title: Opprett innlegg
@@ -1136,41 +1138,9 @@ nb:
     desc_takeaway: Takeaway for %{city}.
     desc_maps: Kart for %{city}.
     desc_messenger: Meldinger for %{city}.
-  live:
-    page_title: Live · i nærheten
-    heading: Live
-    header_label: Live-feed-overskrift
-    kicker: Det som skjer rundt deg — kort, anonymt, stemme-rangert.
-    within_km: Innen %{km} km.
-    enable_location_hint: Slå på posisjon for boblen i nærheten.
-    sort_label: Live-sortering
-    sort_hot: Hot
-    sort_new: Nye
-    also_open: Også åpent uten registrering
-    rules_label: Live-regler
-    rules_summary: Lokalt og anonymt — spilleregler
-    rule_names: Ingen ekte navn, adresser eller doxing av privatpersoner.
-    rule_short: Innlegg er korte (maks %{max} tegn) og vises som anon.
-    rule_gps: Eksakt GPS grovkornes — bare et omtrentlig område lagres.
-    rule_votes: Oppstemmer løfter nyttig lokalt signal; nedstemmer graver spam.
-    compose_label: Post til Live som anon
-    compose_placeholder: Hva skjer i nærheten?
-    compose_hint: Lokalt · anonymt · ingen registrering
-    post_live: Post Live
-    share_to_post_title: Del posisjon for å poste
-    share_to_post_body: En grov posisjon holder notatet til folk i nærheten. Nøyaktig
-      posisjon vises aldri.
-    feed_label: Live-innlegg i nærheten
-    vote_label: Stem, poeng %{score}
-    comment_label: Kommentar
-    empty_located_title: Stille her
-    empty_located_body: Vær den første som legger igjen et kort anonymt notat i nærheten.
-    empty_waiting_title: Venter på de første Live-notatene
-    empty_waiting_body: Slå på posisjon eller kom tilbake når lokale begynner å poste.
   nearby:
     is_nearby_html: "%{handle} er i nærheten"
     page_title: I nærheten
-    live_link: Live-feed (anonyme notater i nærheten)
     prefer_room: Vil du ha et rom?
     channels_link: Bli med i en offentlig kanal →
     share_location_title: Del posisjonen din
@@ -1187,7 +1157,6 @@ nb:
     push_body: "%{handle} er innen %{km} km — trykk for å chatte"
     empty_located_body: Kom tilbake senere — eller legg igjen en Live-notat mens du
       venter.
-    open_live: Åpne Live
   install:
     title: Installer Brgen
     body: Live, markedsplass og i nærheten — ett trykk fra hjem-skjermen.
@@ -1333,14 +1302,11 @@ nb:
     already_confirmed: Allerede bekreftet.
     subscribed: Abonnementet er registrert — du får oppdateringer fra byen.
     unsubscribed: Abonnementet er avsluttet.
-    live_rate_limited: Rolig nå — for mange Live-innlegg. Prøv igjen om litt.
-    location_required_to_post: Slå på posisjon for å poste på Live.
     anonymous_post_limit: Registrer deg for å poste mer (%{limit} anonyme innlegg
       per nettleser).
     post_blocked_by_moderation: Innlegget ble stoppet av moderering.
     link_requires_verified_account: Logg inn og bekreft e-postadressen din for å legge
       ut lenker eller tilbud.
-    posted_to_live: Publisert til Live.
     checked_in_at: Sjekket inn på %{place}.
     check_in_failed: Kunne ikke sjekke inn.
     messages_rate_limited: Rolig nå — for mange meldinger. Prøv igjen om litt.

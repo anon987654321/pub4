@@ -2,8 +2,10 @@
 
 <div class="page-header" role="banner"><h1><%= t("nearby.page_title") %></h1></div>
 
+<%# The Live link that used to head this list pointed at a second hyperlocal
+    surface. /live is this page's own room now, so the link would have sent you
+    to the Join button six lines below it. %>
 <p class="channel-crosslink dim">
-  <%= link_to t("nearby.live_link"), live_path %> ·
   <%= t("nearby.prefer_room") %>
   <%= link_to t("nearby.channels_link"), channels_path %>
 </p>
@@ -28,10 +30,13 @@
       </article>
     <% end %>
   <% else %>
+    <%# Nobody in range is exactly when the room is the useful answer: it is
+        radius-bucketed rather than person-to-person, so it has people in it when
+        this list does not. %>
     <%= render "shared/empty_state",
           title: t("empty.no_nearby"),
           body: t("nearby.empty_located_body"),
-          action: { label: t("nearby.open_live"), path: live_path } %>
+          action: { label: t("nearby.join"), path: nearby_room_path } %>
   <% end %>
 <% else %>
   <div class="section-divider--24" data-controller="request-location">
@@ -42,7 +47,6 @@
               class="btn btn-primary btn-sm"
               data-action="request-location#request"><%= t("chat.use_location") %></button>
       <%= link_to t("chat.open_brgen_channel"), channel_path("brgen"), class: "btn btn-sm" %>
-      <%= link_to t("nearby.open_live"), live_path, class: "btn btn-sm" %>
     </p>
     <p class="dim">
       <%= t("nearby.lobby_hint_before") %>

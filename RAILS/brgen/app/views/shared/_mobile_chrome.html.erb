@@ -62,7 +62,9 @@
   <div class="mobile-sheet-handle"></div>
   <div class="mobile-sheet-links">
     <%= link_to t("nav.ai_assistant"), brgen_ai_url, data: { turbo: false } %>
-    <%= link_to t("home.live"), main_app.live_path %>
+    <%# Was Live, the separate hyperlocal feed. /nearby is that layer's hub now
+        and it handles the no-location case, which the room itself cannot. %>
+    <%= link_to t("nav.nearby"), main_app.nearby_path %>
     <%= link_to t("nav.channels"), main_app.channels_path %>
     <%= link_to t("nav.new_post"), main_app.new_post_path %>
     <%= link_to t("nav.new_community"), main_app.new_community_path %>

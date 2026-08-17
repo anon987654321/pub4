@@ -119,7 +119,10 @@ class ModerationAuditTest < ActionDispatch::IntegrationTest
     get community_bans_path(@community)
     assert_response :success
     assert_select "#moderation_log_heading"
-    assert_select ".audit-list li", 1
+    # Selected the way the stylesheet selects it: by the region's accessible
+    # name, not by a class. An assertion on a class would keep passing after the
+    # heading that names the region was renamed.
+    assert_select "[aria-labelledby=moderation_log_heading] li", 1
     assert_match @nuisance.display_name, response.body
   end
 

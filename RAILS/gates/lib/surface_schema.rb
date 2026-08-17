@@ -8,7 +8,7 @@ require_relative "../../tools/crawl_support"
 require_relative "../support/dom_surface_schema"
 
 module Deploy
-  # Live + fixture DOM surface schemas (marketplace, live, dating, messenger).
+  # Live + fixture DOM surface schemas (home, marketplace, dating, messenger).
   class SurfaceSchemaGate
     ROOT = File.expand_path("../../..", __dir__)
     FIXTURES = File.join(File.expand_path("..", __dir__), "fixtures", "surfaces")
@@ -16,7 +16,8 @@ module Deploy
     # schema_id => { app, path, host }
     LIVE_SURFACES = [
       { schema: "brgen_home", app: "brgen", path: "/", host: "brgen.no" },
-      { schema: "live_feed", app: "brgen", path: "/live", host: "brgen.no" },
+      # live_feed went with the Jodel surface. /live is a redirect to the geo
+      # room now, so there is no page here to hold to a schema of its own.
       { schema: "marketplace_listings", app: "brgen", path: "/", host: "markedsplass.brgen.no" },
       { schema: "marketplace_cart", app: "brgen", path: "/cart", host: "markedsplass.brgen.no" },
       { schema: "dating_home", app: "brgen", path: "/", host: "dating.brgen.no" },

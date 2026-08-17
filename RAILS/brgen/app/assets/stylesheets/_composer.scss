@@ -193,6 +193,33 @@
   font-weight: var(--weight-bold);
 }
 
+/* The "attach my area" opt-in, selected by what it is rather than by a class
+   the markup has to carry. :has() is the reason this is possible at all — a
+   label wrapping a checkbox is a structural fact, so the ERB stays a plain
+   <label> and this rule cannot fall out of sync with a renamed class.
+   > in the :has() so a label containing a nested fieldset never matches. */
+.composer-form label:has(> input[type="checkbox"]) {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: var(--space-3) var(--space-4) 0;
+  /* The whole row is the target, not the 13px box the browser draws. */
+  min-height: var(--tap-min);
+  cursor: pointer;
+}
+
+/* The hint. <small> rather than a second <span class="dim">: the element
+   already means "side comment", so the markup carries the meaning and this rule
+   only sets how it looks.
+   Tokens rather than .dim deliberately — .dim is declared twice in the cascade
+   with different values (_minimal.scss: --dark-grey/--text-base,
+   _shell_widgets.scss: --text-secondary/--text-sm), so which one an element
+   gets depends on import order rather than on intent. */
+.composer-form label:has(> input[type="checkbox"]) small {
+  color: var(--text-dim);
+  font-size: var(--text-sm, 0.875rem);
+}
+
 .composer-submit {
   width: calc(100% - var(--space-4) * 2);
   margin: var(--space-3) var(--space-4);
