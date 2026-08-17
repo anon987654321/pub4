@@ -199,6 +199,44 @@ that respells a word as itself. Before extending it, check whether the word is
 actually wrong when read aloud — "Falcon" and "Rails" are ordinary English words
 and do not belong there.
 
+## Names State The Assertion, Directories State The Precondition (2026-08-17)
+
+Two rules, meant for the whole tree and not only for `RAILS/gates/`.
+
+**A name says what the thing asserts, not what it is near.** `geometry` and
+`layout_geometry` were one gate that measures boxes in a browser and one that
+greps SCSS for a string, and the pair invited the reading that touch targets
+were covered. They were not: the grep matched the literal `44px` while the tree
+writes `var(--tap-min)`, so it passed on every app while checking no app. They
+are `rendered_geometry` and `first_screen` now.
+
+**Each gate owns one assertion.** Two gates asserting the same property is two
+places to change it and two places for it to rot. `gates/lib/` was sliced by
+mode — first screen, phone width, width sweep, keyboard, baseline — and every
+mode then re-asserted whatever it happened to see: touch targets in three
+gates, landmarks in four, overflow in four. Slice by assertion and the mode
+becomes a parameter.
+
+**MASTER names the law; RAILS names the measurement.** The Rails gate called
+`reflow` measured horizontal overflow and restated 320px as "the WCAG 1.4.10
+floor" — while `MASTER/lib/ground/axioms/wcag.rb` already declares that
+criterion and `REFLOW_WIDTH_PX = 320`. `soul.yml` uses "reflow" for a third
+thing, a refactoring verb beside "rename". A gate named after a criterion
+invites the criterion to be re-declared inside it, which is this tree's dominant
+defect wearing a new hat. Name the gate for what it measures and have it read
+the number from MASTER.
+
+**A directory says what the thing needs before it can run.** `gates/lib/` is
+`source/ live/ rendered/ host/ research/ meta/`: files only, a booted app, a
+browser, the machine, scores rather than verdicts, and gates about gates. The
+precondition was previously a comment, and a gate with a missing precondition
+reported a clean pass — see the exit-3 work in the same day's commits.
+
+**A directory tree and a declared hierarchy must not be two sources.**
+`gates.yml`'s `covered_by` and the directory both classify a gate. If they can
+disagree they eventually will, so `covered_by` is derived from the path, never
+maintained beside it.
+
 ## Local Knowledge Stays Local
 
 `knowledge/` is gitignored and skipped by scanners/snapshots, but it still powers `Master::Io::SearchKnowledge`. Do not move it unless the search tool learns the new location first.
