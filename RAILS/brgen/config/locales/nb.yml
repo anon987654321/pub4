@@ -847,6 +847,10 @@ nb:
     embed_no_artwork: uten omslag
     embed_compact: kompakt
   marketplace:
+    hero_kicker: "Kjøp og selg i byen din"
+    hero_title: "Markedsplass %{city}"
+    hero_lede: "Ting fra folk som bor i nærheten. Ingen frakt over hele landet, ingen mellomledd — bare det som finnes noen gater unna."
+    hero_count_suffix: "annonser i %{city} akkurat nå"
     expiry_notice:
       title: "«%{title}» utløper snart"
       body: Annonsen forsvinner fra markedsplassen om %{days} dager. Forny den hvis

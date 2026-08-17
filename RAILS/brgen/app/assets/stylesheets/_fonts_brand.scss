@@ -25,6 +25,33 @@ $latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,
   }
 }
 
+// Bricolage Grotesque — the display face, marketplace hero first.
+//
+// Chosen 2026-08-17 as the free stand-in for the Pangram Pangram grotesques the
+// operator asked for: a contemporary neo-grotesque with actual character in the
+// heavy weights, which is what a headline needs and what Inter deliberately
+// does not have. OFL-1.1, so it ships in the repo rather than being licensed
+// per seat.
+//
+// One variable file for the whole 200-800 range, 41KB — less than the five
+// static Inter cuts above it together, and the hero can sit at any weight
+// between them without another request.
+//
+// font-display: swap here rather than optional. optional is right for body text
+// on a text-first surface, where a late swap reflows a paragraph you are already
+// reading; a hero is the first thing painted and the whole point is the face, so
+// it is worth the swap.
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: local("Bricolage Grotesque"),
+       url("/fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations"),
+       url("#{$fs}/bricolage-grotesque:vf/files/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: #{$latin};
+}
+
 // Libre Baskerville — kept for optional editorial surfaces; not marketplace UI.
 @font-face {
   font-family: "Libre Baskerville";

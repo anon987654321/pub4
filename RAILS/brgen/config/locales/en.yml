@@ -845,6 +845,10 @@ en:
     embed_no_artwork: no artwork
     embed_compact: compact clean
   marketplace:
+    hero_kicker: "Buy and sell in your city"
+    hero_title: "Marketplace %{city}"
+    hero_lede: "Things from people who live nearby. No nationwide shipping, no middlemen — just what is a few streets away."
+    hero_count_suffix: "listings in %{city} right now"
     expiry_notice:
       title: "%{title} expires soon"
       body: This listing leaves the marketplace in %{days} days. Renew it if you still

@@ -1,7 +1,9 @@
-/* Top offers rail — only place Pangram Pangram display type is applied. */
+/* Top offers rail. Shares the vertical's display face with the front-page hero;
+   --offer-display is kept as its own name because every rule below already
+   reads it. */
 
 .marketplace-top-offers {
-  --offer-display: "PP Neue Montreal", "Neue Montreal", Arial, Helvetica, sans-serif;
+  --offer-display: var(--font-display);
   padding: var(--space-4) 0;
 }
 

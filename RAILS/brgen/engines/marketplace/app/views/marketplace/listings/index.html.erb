@@ -8,7 +8,26 @@
       search_placeholder: t("search.marketplace"),
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
-<h1 class="visually-hidden"><%= market_title %></h1>
+<%# The front page opened on a hidden h1 and a seven-control filter bar: the
+    densest surface in the family had no entry point and nothing to look at, and
+    its only headline was invisible. Operator instruction 2026-08-17.
+
+    Typography rather than an image. A photograph here would have to be of
+    something, and a marketplace whose stock changes hourly has nothing
+    permanent to photograph — so the city's name at display size is the honest
+    hero, and it costs one font file instead of a picture per city. Set in
+    Bricolage Grotesque, which _fonts_brand vendors for this. %>
+<header class="market-hero">
+  <%= tag.p t("marketplace.hero_kicker"), class: "market-hero-kicker" %>
+  <h1><%= t("marketplace.hero_title", city: city_name) %></h1>
+  <%= tag.p t("marketplace.hero_lede") %>
+  <%# @pagy.count is everything the current filter matches, not the 25 on this
+      page — the number is only worth printing if it is the real one. %>
+  <%= tag.p safe_join([ tag.strong(number_with_delimiter(@pagy&.count.to_i)),
+                        t("marketplace.hero_count_suffix", city: city_name) ], " "),
+            class: "market-hero-count" %>
+</header>
+
 <nav class="deal-cats" aria-label="<%= t("marketplace.listing_kind") %>">
   <%= link_to t("marketplace.from_anyone"), listings_path(category_id: params[:category_id], q: params[:q].presence),
         class: "deal-cat#{" active" if params[:from].blank?}" %>
