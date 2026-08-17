@@ -43,7 +43,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_response :success
 
-    %w[marketplace dating playlist TV takeaway maps messenger].each do |vertical|
+    %w[markedsplass dating playlist TV takeaway maps messenger].each do |vertical|
       assert_match(/class="nav_link[^"]*"[^>]*>#{Regexp.escape(vertical)}/, response.body,
                    "#{vertical} should be reachable from the nav swiper")
     end

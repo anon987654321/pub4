@@ -111,15 +111,22 @@ end
   # AI → the shared MASTER face; the rest are per-city verticals on subdomains.
   def brgen_nav_items
     domain = Current.domain
+    # Operator order, 2026-08-17: Front AI Markedsplass Playlist Dating Takeaway
+    # TV Maps Messenger. The marketplace is named in Norwegian here because that
+    # is the name on its own host — markedsplass.brgen.no — and the bar is the one
+    # place all nine names sit together, so one of them reading in English was the
+    # only one that did.
     [
       [ "front", main_app.root_path ],
-      [ "live", main_app.live_path ],
+      # live (the hyperlocal anonymous layer) is off this bar per operator, 2026-08-17.
+      # The surface stays — its route, controller and rate limit are untouched, and
+      # _mobile_chrome and nearby still link to it. It is not one of the nine names.
       [ "AI", brgen_ai_url ],
-      [ "marketplace", "//#{marketplace_host}/" ],
-      [ "dating", "//dating.#{domain}/" ],
+      [ "markedsplass", "//#{marketplace_host}/" ],
       [ "playlist", "//playlist.#{domain}/" ],
-      [ "TV", "//tv.#{domain}/" ],
+      [ "dating", "//dating.#{domain}/" ],
       [ "takeaway", "//takeaway.#{domain}/" ],
+      [ "TV", "//tv.#{domain}/" ],
       [ "maps", "//maps.#{domain}/" ],
       [ "messenger", "//messenger.#{domain}/" ],
       [ "channels", main_app.channels_path ],
@@ -127,7 +134,7 @@ end
     ]
   end
 
-  VERTICAL_NAV_LABELS = %w[marketplace dating playlist TV takeaway maps messenger].freeze
+  VERTICAL_NAV_LABELS = %w[markedsplass dating playlist TV takeaway maps messenger].freeze
 
   # brgen_nav_items chunked into two Hick's-law-sized groups for the swiper:
   # platform links, then the seven verticals. Keeps each group at or under 7

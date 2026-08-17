@@ -1,6 +1,10 @@
-<div class="nav_swiper">
-  <%# These are links that navigate — /live, /channels, another host entirely —
-      and there is no tabpanel anywhere on the page. Dressing them as
+<%# The bar rests visible, then retires — nav_autohide holds the timing and the
+    reasoning. The hidden class is passed rather than hardcoded so the stylesheet
+    keeps naming its own states. %>
+<div class="nav_swiper" data-controller="nav-autohide"
+     data-nav-autohide-hidden-class="nav_swiper--hidden">
+  <%# These are links that navigate — /channels, another host entirely — and
+      there is no tabpanel anywhere on the page. Dressing them as
       role="tablist" > role="group" > role="tab" produced three axe violations at
       once: the group broke the tablist's required children, the tabs lost their
       required tablist parent through it, and role="tablist" on <nav> overrode
@@ -27,6 +31,33 @@
                 "aria-label": t("nav.opens_new_tab", label: label, default: "%{label} (opens in a new tab)"),
                 "aria-current": ("page" if active) %>
         <% end %>
+      </div>
+    <% end %>
+    <%# Hot and New are orderings of the front page, so they ride the bar that is
+        already the wayfinding rather than a second row beneath it: root carries
+        exactly one horizontal scroller and test_root_offers_the_verticals_once
+        pins that. Front page only — on a vertical these would order a feed that
+        is not on screen. These navigate in place, so no target="_blank". %>
+    <% if !vertical_surface? && authenticated? %>
+      <% hot = params[:sort].blank? && params[:feed].blank? %>
+      <div class="nav_swiper_group" role="group" aria-label="<%= t("home.feed_sort", default: "Feed") %>">
+        <%= link_to t("home.feed_hot", default: "Hot"), main_app.root_path,
+              class: "nav_link#{" active" if hot}",
+              "aria-current": ("page" if hot) %>
+        <%= link_to t("home.feed_latest"), main_app.root_path(sort: "latest"),
+              class: "nav_link#{" active" if params[:sort] == "latest"}",
+              "aria-current": ("page" if params[:sort] == "latest") %>
+        <%# Following and Communities move with Hot and New rather than being left
+            behind on a row that no longer exists. Dropping them here would leave
+            feed=following and feed=communities implemented in the controller and
+            reachable only by typing the query string — which is the state New was
+            in before today. %>
+        <%= link_to t("home.feed_following"), main_app.root_path(feed: "following"),
+              class: "nav_link#{" active" if params[:feed] == "following"}",
+              "aria-current": ("page" if params[:feed] == "following") %>
+        <%= link_to t("home.feed_communities"), main_app.root_path(feed: "communities"),
+              class: "nav_link#{" active" if params[:feed] == "communities"}",
+              "aria-current": ("page" if params[:feed] == "communities") %>
       </div>
     <% end %>
   </nav>

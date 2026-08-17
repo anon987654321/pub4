@@ -172,10 +172,11 @@ module Pub4
       # → 211 (2026-08-14), lowered with it and on the same evidence: stable
       # across the session and across three consecutive measurements.
       # 211 -> 208, same reason and same day as aria_label above.
-      # 203 -> 197: six views carrying a `default:` beside the key stopped needing
-      # one, because the key exists in both locales now. This moves with
-      # aria_label — a string becoming a key is one fewer literal in each column.
-      "translate_default" => 197,
+      # 195 is what is left after the front page stopped carrying a second row of
+      # feed tabs. Following and Communities moved onto the nav bar with their
+      # keys rather than their English defaults; a string becoming a key is one
+      # fewer literal in this column and in aria_label.
+      "translate_default" => 195,
     }.freeze
 
     # Kept for callers that referenced the old single number.

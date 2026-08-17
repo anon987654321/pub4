@@ -14,6 +14,26 @@
   inset-inline: 0;
   z-index: var(--z-nav);
   pointer-events: auto;
+  transition: transform var(--transition-normal) var(--ease-out),
+              opacity var(--transition-normal) var(--ease-out);
+}
+
+/* Rests visible, then gets out of the way — operator instruction 2026-08-17,
+   which supersedes the "always visible" note above. The collision that made it a
+   drawer is still resolved; this is a bar that retires, not a drawer that hides.
+
+   It translates rather than collapsing: the wordmark and the theme control are
+   fixed above this bar at a higher z-index, so the band stays occupied when the
+   links leave. Nothing reflows and the page does not jump under a thumb at the
+   moment the timer fires.
+
+   pointer-events stays auto so the band is still a target to bring it back.
+   Visibility and display are both wrong here: the links keep their place in the
+   tab order, and nav_autohide reveals on focusin so a keyboard reader never
+   lands on something they cannot see. */
+.nav_swiper--hidden {
+  transform: translateY(calc(-100% - var(--safe-top, 0px)));
+  opacity: 0;
 }
 
 .nav_swiper_bar {
@@ -88,7 +108,10 @@
      the run should cost as little width as it can while keeping the 44px tap
      target that comes from min-height in _chrome_polish. */
   padding: var(--space-3) var(--space-3);
-  font: var(--text-sm)/1 var(--font);
+  /* Big letters — operator, 2026-08-17. --text-sm was sized for twelve
+     destinations in a drawer; there are nine on a bar that now retires, so the
+     run can afford the width and the primary nav should read as primary. */
+  font: var(--text-lg)/1 var(--font);
   font-weight: var(--weight-bold);
   color: var(--text-dim);
   white-space: nowrap;

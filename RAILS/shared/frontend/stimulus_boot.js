@@ -31,6 +31,7 @@ import LuxuryProduct from "pub4/luxury_product"
 import ScrollReveal from "pub4/scroll_reveal"
 import ScrollChrome from "pub4/scroll_chrome"
 import BrgenShell from "pub4/brgen_shell"
+import NavAutohide from "pub4/nav_autohide"
 import ActionController from "pub4/action"
 import BottomSheet from "pub4/bottom_sheet"
 import Dismiss from "pub4/dismiss"
@@ -171,6 +172,7 @@ export function bootPub4Stimulus(application) {
   application.register("scroll-reveal", ScrollReveal)
   application.register("scroll-chrome", ScrollChrome)
   application.register("brgen-shell", BrgenShell)
+  application.register("nav-autohide", NavAutohide)
   application.register("action", ActionController)
   application.register("bottom-sheet", BottomSheet)
   application.register("dismiss", Dismiss)
