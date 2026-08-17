@@ -697,26 +697,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_120100) do
     t.index ["mentioned_user_id"], name: "index_mentions_on_mentioned_user_id"
   end
 
-  create_table "merchant_offers", force: :cascade do |t|
-    t.string "brand"
-    t.string "condition"
-    t.string "content_language", default: "nb", null: false
-    t.datetime "created_at", null: false
-    t.boolean "curated", default: true, null: false
-    t.string "feed_label", default: "NO", null: false
-    t.string "google_status", default: "pending"
-    t.string "gtin"
-    t.string "last_error", limit: 500
-    t.datetime "last_pushed_at"
-    t.bigint "listing_id"
-    t.string "listing_type"
-    t.string "offer_id", limit: 50, null: false
-    t.datetime "updated_at", null: false
-    t.index ["google_status"], name: "index_merchant_offers_on_google_status"
-    t.index ["listing_type", "listing_id"], name: "index_merchant_offers_on_listing_type_and_listing_id"
-    t.index ["offer_id"], name: "index_merchant_offers_on_offer_id", unique: true
-  end
-
   create_table "message_receipts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "delivered_at"
