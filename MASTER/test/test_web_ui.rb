@@ -233,7 +233,8 @@ class TestWebUI < Minitest::Test
   def test_face_asset_paths_script_emits_every_declared_asset
     web = File.expand_path("../web", __dir__)
     manifest = YAML.safe_load_file(File.join(web, "config", "face_assets.yml"))
-    declared = %w[face_eager face_runtime_deferred face_vision_deferred shell_blocking shell_early shell_late]
+    declared = %w[face_eager face_runtime_deferred face_vision_deferred
+                  shell_blocking shell_boot shell_early shell_late]
                .flat_map { |group| Array(manifest[group]) }
     declared += manifest.fetch("singletons").values
     declared += Array(manifest["shell_manifest"]).map { |name| "#{name}.js" }
@@ -575,7 +576,7 @@ class TestWebUI < Minitest::Test
     manifest_js = Array(manifest["shell_manifest"]).map { |name| "#{name}.js" }
     face_parts = index.scan(/face\.part\d+\.txt/).uniq.sort
 
-    (manifest_js + Array(manifest["shell_blocking"]) + face_parts).uniq
+    (manifest_js + Array(manifest["shell_blocking"]) + Array(manifest["shell_boot"]) + face_parts).uniq
   end
 
   def test_face_tts_audio_graph_uses_compressor_before_analyser

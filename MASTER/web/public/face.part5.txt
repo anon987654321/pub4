@@ -1260,20 +1260,27 @@ function meanPoolField(pool, field) {
   }
   return n ? sum / n : 0;
 }
+// The mouth pool is the only real arousal/valence in the page and State is the
+// authoritative mood/mode/entropy/confidence, so this publishes them and lets
+// felt_state.js format the string. It used to build a second one itself and
+// reassign window.collectFeltState on top of felt_state's — so the string this
+// runtime sent and the string chat_actions and face_vision read through
+// MASTERFeltState could describe the same instant differently, and the server
+// splits whichever arrived into felt_sense.
 function collectFeltState() {
-  let history = [];
-  try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:collect_felt_state", err); }
-  const histEntropy = history.length
-    ? history.reduce((s, e) => s + Number(e.entropy ?? 0.2), 0) / history.length
-    : (State.entropy ?? 0.2);
-  const arousal = meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.arousal ?? 9);
-  const valence = meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.valence ?? 8);
-  const mood = (State.mood || 'idle').toString();
-  const mode = (State.mode || 'idle').toString();
-  const entropy = Number.isFinite(State.entropy) ? State.entropy : histEntropy;
-  const confidence = Number.isFinite(State.confidence) ? State.confidence : 0.86;
-  return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}|${arousal.toFixed(2)}|${valence.toFixed(2)}|${histEntropy.toFixed(2)}`;
+  window.MASTERFeltState?.publish?.({
+    mood: State.mood,
+    mode: State.mode,
+    entropy: State.entropy,
+    confidence: State.confidence,
+    arousal: meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.arousal ?? 9),
+    valence: meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.valence ?? 8),
+  });
+  return window.MASTERFeltState?.collectFeltState?.() || null;
 }
+// Still the global, but as the publisher wrapper rather than a second formatter:
+// the send paths below call it, so the pool fields are refreshed at the moment
+// the state is read. MASTERFeltState.collectFeltState stays the one formatter.
 window.collectFeltState = collectFeltState;
 
 function startEverything() {

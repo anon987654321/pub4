@@ -875,7 +875,8 @@ function speakWithBrowserTTS(text, token) {
     started = true;
     clearGuard();
     emitTtsEvent('tts:playback:start', { text, backend: 'browser', duration: null });
-    startVisemeAnim(text);
+    // No media element on this path, and onstart is real playback start.
+    startVisemeAnim(text, { clock: 'wall' });
     setTTSLoading(false);
   };
   utterance.onend = utterance.onerror = () => {

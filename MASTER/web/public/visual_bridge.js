@@ -135,34 +135,14 @@
     return Math.max(min, Math.min(max, Number(value)));
   }
 
-  let _visemePlanTimers = [];
-
-  function clearVisemePlanTimers() {
-    _visemePlanTimers.forEach((id) => clearTimeout(id));
-    _visemePlanTimers = [];
-  }
-
-  function forwardVisemePlan(plan) {
-    clearVisemePlanTimers();
-    if (window.MASTER_FACE?.tts) return;
-    const frames = Array.isArray(plan)
-      ? plan
-      : (plan?.frames || plan?.visemes || null);
-    if (!Array.isArray(frames) || !frames.length) return;
-    frames.forEach((frame, i) => {
-      const at = Number(frame.t ?? frame.at ?? (i * 90));
-      if (!Number.isFinite(at)) return;
-      const id = setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("tts:viseme", {
-          detail: {
-            shape: frame.shape || frame.v || "neutral",
-            amp: Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1
-          }
-        }));
-      }, at);
-      _visemePlanTimers.push(id);
-    });
-  }
+  // A viseme plan is played by face_speech_playback.js against the clock of the
+  // audio it belongs to. This file used to play a second copy of it on
+  // setTimeout, guarded by `if (window.MASTER_FACE?.tts) return` — so it ran
+  // only when the face runtime was absent, which is exactly when every listener
+  // for tts:viseme is absent too: face_semantics.js and face_vision_c.js are
+  // face modules, and face_2d_fallback.js has no mouth. It emitted into an empty
+  // room on timers that outlived the condition they were armed under. The plan
+  // itself still forwards below, as every other named runtime event does.
 
   function handleRuntimeEvent(event) {
     const type = event?.type || event?.event || event?.data?.event || "runtime:event";
@@ -192,11 +172,9 @@
       window.dispatchEvent(new CustomEvent(type, { detail: event }));
     }
     if (type === "tts:viseme:plan") {
-      forwardVisemePlan(event);
       window.dispatchEvent(new CustomEvent("tts:viseme:plan", { detail: event }));
     }
     if (type === "tts:job_cancelled") {
-      clearVisemePlanTimers();
       window.dispatchEvent(new CustomEvent("tts:job_cancelled", { detail: event }));
       window.MASTER_FACE?.ttsSkip?.();
     }

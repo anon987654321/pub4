@@ -57,11 +57,26 @@ singletons:
   visemePacks: viseme_packs.json
   clusterMiner: cluster_miner.js
 
-# The one synchronous, non-deferred script: every deferred ecology/worker module
+# Synchronous, and loaded before #primer: every deferred ecology/worker module
 # and the post-primer face import may assume window.ParticleKernel already
 # exists, so it cannot be deferred with the rest.
 shell_blocking:
   - particle_kernel.js
+
+# Synchronous, and loaded *after* #primer — which is why this is its own group
+# rather than another shell_blocking entry, whose contract is before the primer.
+# It sits immediately above the inline boot script so window.MASTER.boot exists
+# for the whole tap path, and it installs listeners for master:face-ready and
+# master:container-ready that must be armed before either can fire.
+#
+# It was the one asset the view loaded that this file did not name, allowlisted
+# out of the "every script the view loads is in the manifest" test. That is the
+# hole the manifest exists to close: rc.d's precompile-skip digest enumerates
+# this file through script/face_asset_paths.rb, so an undeclared module could be
+# edited and restarted with precompile silently skipped and the stale
+# fingerprint still live.
+shell_boot:
+  - boot_fsm.js
 
 # Plain <script defer> tags in the shell. These stay written out literally in
 # index.html.erb rather than rendered from here: their *positions* differ and
@@ -75,7 +90,15 @@ shell_early:
 
 # javascript_include_tag, deferred, in this order. Written as bare names because
 # that is what the tag takes; every entry is a real public/<name>.js.
+#
+# felt_state leads: it installs the master:visual/master:emotion listeners that
+# make it the presence store, and visual_bridge below starts emitting both on
+# load. It was undeclared and therefore never loaded at all, which left
+# window.MASTERFeltState undefined — so chat_actions' own send path dropped the
+# felt state from every message and logged "invalid felt state payload" instead,
+# and face_vision's felt_state rule read an empty string forever.
 shell_manifest:
+  - felt_state
   - face_state
   - visual_governor
   - topology_registry

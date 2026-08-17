@@ -34,7 +34,7 @@ module FaceAssets
   # include_tag group carries no extension, so it gets one here.
   def all_filenames
     names = MODULE_GROUPS.flat_map { |name| group(name) } + singletons.values
-    names += group("shell_blocking") + group("shell_early") + group("shell_late")
+    names += group("shell_blocking") + group("shell_boot") + group("shell_early") + group("shell_late")
     names += group("shell_manifest").map { |name| "#{name}.js" }
     names.uniq.sort.freeze
   end
