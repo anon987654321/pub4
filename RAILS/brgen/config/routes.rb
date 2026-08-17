@@ -196,6 +196,8 @@ Rails.application.routes.draw do
 
   # TradeDoubler Conversions API postback (not marketplace-scoped).
   post "webhooks/tradedoubler" => "webhooks/tradedoubler#create", as: :webhooks_tradedoubler
+  post "webhooks/stripe" => "webhooks/stripe#create", as: :webhooks_stripe
+  post "webhooks/vipps" => "webhooks/vipps#create", as: :webhooks_vipps
 
   # Partner click redirect (last-click attribution for local programs).
   get "p/:token" => "partner/clicks#show", as: :partner_click
