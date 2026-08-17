@@ -1399,6 +1399,8 @@ nb:
     subject_gone: "Innholdet er borte"
     mark_reviewing: "Under vurdering"
     mark_resolved: "Løst"
+    mark_open: "Åpen"
+    mark_dismissed: "Avvist"
     mark_dismissed: "Avvist"
     queue_empty: "Ingenting i køen"
     queue_empty_body: "Rapporter fra dette fellesskapet dukker opp her."

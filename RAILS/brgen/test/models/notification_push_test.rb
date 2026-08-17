@@ -69,7 +69,7 @@ class NotificationPushTest < ActiveSupport::TestCase
       user: owner, name: "Kjokken #{SecureRandom.hex(3)}", address: "Marken 4",
       cuisine_type: "Norwegian", city: @city, active: true
     )
-    order = Takeaway::Order.create!(user: @user, restaurant: restaurant, delivery_address: "Torget 1")
+    order = place_takeaway_order!(user: @user, restaurant: restaurant)
 
     order.confirm!
     assert_equal "order", @user.notifications.last.kind

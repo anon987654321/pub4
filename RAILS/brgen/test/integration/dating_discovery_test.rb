@@ -14,7 +14,10 @@ class DatingDiscoveryTest < ActiveSupport::TestCase
   def profile(gender, looking_for)
     u = User.create!(email_address: "d-#{SecureRandom.hex(4)}@brgen.no",
                      password: "password12345", username: "d_#{SecureRandom.hex(3)}", city: @city)
-    Dating::Profile.create!(user: u, gender:, looking_for:, visible: true, age: 30)
+    profile = Dating::Profile.new(user: u, gender:, looking_for:, visible: true, age: 30)
+    attach_pixel!(profile.photos)
+    profile.save!
+    profile
   end
 
   test "a man looking for women sees women who want men, not other men" do

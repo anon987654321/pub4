@@ -69,6 +69,14 @@ class AuthorizationBoundariesTest < ActionDispatch::IntegrationTest
         ModerationReport.create!(user: reporter, reportable: post, reason: "spam", status:)
       end
 
+      # require_admin! reads BRGEN_ADMIN_EMAIL and denies when it is unset —
+      # there is deliberately no default, since a default would be an account
+      # that grants itself the queue. The test has to supply what production
+      # supplies, rather than assume a fallback the controller does not have.
+      previous = ENV["BRGEN_ADMIN_EMAIL"]
+      ENV["BRGEN_ADMIN_EMAIL"] = admin_email
+      admin.update!(email_verified_at: Time.current) if admin.respond_to?(:email_verified_at)
+
       sign_in(admin)
       get admin_reports_path
 
@@ -79,6 +87,8 @@ class AuthorizationBoundariesTest < ActionDispatch::IntegrationTest
       # query shape.
       assert_select "body", /2/
       assert_includes response.body, "1"
+    ensure
+      ENV["BRGEN_ADMIN_EMAIL"] = previous
     end
   end
 

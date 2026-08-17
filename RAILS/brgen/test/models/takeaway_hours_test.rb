@@ -80,10 +80,7 @@ class TakeawayHoursTest < ActiveSupport::TestCase
 
   test "the tip is part of the total, not added somewhere else later" do
     item = Takeaway::MenuItem.create!(restaurant: @restaurant, name: "Fiskesuppe", price_cents: 18_900, available: true)
-    order = Takeaway::Order.create!(
-      user: @buyer, restaurant: @restaurant, delivery_address: "Torget 1", tip_cents: 3_000
-    )
-    order.order_items.create!(menu_item: item, quantity: 1, unit_price_cents: item.price_cents)
+    order = place_takeaway_order!(user: @buyer, restaurant: @restaurant, item: item, tip_cents: 3_000)
     order.calculate_totals!
 
     assert_equal 18_900 + order.delivery_fee_cents.to_i + 3_000, order.reload.total_cents
@@ -92,16 +89,12 @@ class TakeawayHoursTest < ActiveSupport::TestCase
   # A scheduled order is not late because it was placed hours ago.
   test "a scheduled order estimates from when it was asked for" do
     later = 6.hours.from_now
-    order = Takeaway::Order.create!(
-      user: @buyer, restaurant: @restaurant, delivery_address: "Torget 1", scheduled_for: later
-    )
+    order = place_takeaway_order!(user: @buyer, restaurant: @restaurant, scheduled_for: later)
 
     assert order.scheduled?
     assert_in_delta later.to_i, order.estimated_ready_at.to_i, 5
 
-    immediate = Takeaway::Order.create!(
-      user: @buyer, restaurant: @restaurant, delivery_address: "Torget 1"
-    )
+    immediate = place_takeaway_order!(user: @buyer, restaurant: @restaurant)
     assert_operator immediate.estimated_ready_at, :<, later
   end
 

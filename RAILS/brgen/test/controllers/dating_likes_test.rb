@@ -23,7 +23,10 @@ class DatingLikesTest < ActionDispatch::IntegrationTest
       email_address: "dl_#{handle}@brgen.no", password: "password123",
       username: "dl_#{handle}", guest: false, city: @city
     )
-    Dating::Profile.create!(user: user, age: 30, bio: "hei", visible: true)
+    profile = Dating::Profile.new(user: user, age: 30, bio: "hei", visible: true)
+    attach_pixel!(profile.photos)
+    profile.save!
+    profile
     user
   end
 

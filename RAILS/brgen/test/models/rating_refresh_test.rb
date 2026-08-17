@@ -47,10 +47,10 @@ class RatingRefreshTest < ActiveSupport::TestCase
       diner = user("rating-diner")
       restaurant = Takeaway::Restaurant.create!(
         user: user("rating-owner"), name: "Kro #{SecureRandom.hex(3)}",
-        address: "Storgata 1", cuisine_type: "nordic", city: @city,
+        address: "Storgata 1", cuisine_type: "nordic", city: @city, active: true,
       )
-      order = Takeaway::Order.create!(
-        user: diner, restaurant:, delivery_address: "Storgata 2", status: "pending",
+      order = place_takeaway_order!(
+        user: diner, restaurant: restaurant, delivery_address: "Storgata 2", status: "pending"
       )
       review = Takeaway::Review.create!(user: diner, restaurant:, order:, rating: 4)
 

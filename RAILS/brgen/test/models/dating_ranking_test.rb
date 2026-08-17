@@ -24,7 +24,9 @@ class DatingRankingTest < ActiveSupport::TestCase
     user = User.strict_loading(false).create!(
       email_address: "dr_#{handle}@brgen.no", password: "password123", username: "dr_#{handle}", city: @city
     )
-    p = Dating::Profile.create!(user: user, age: 30, bio: "hei", visible: true, last_active_at: last_active)
+    p = Dating::Profile.new(user: user, age: 30, bio: "hei", visible: true, last_active_at: last_active)
+    attach_pixel!(p.photos)
+    p.save!
     prompts.times do |i|
       Dating::Prompt.create!(profile: p, question: Dating::Prompt::QUESTIONS[i], answer: "svar #{i}", position: i)
     end

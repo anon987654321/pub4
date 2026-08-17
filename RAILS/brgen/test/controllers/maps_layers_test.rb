@@ -56,7 +56,7 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
     get "/"
     pin = points.find { |p| p["type"] == "event" }
     assert_equal event.title, pin["title"]
-    assert_equal "/events/#{event.to_param}", pin["url"]
+    assert_equal "http://brgen.no/events/#{event.to_param}", pin["url"]
   end
 
   test "an event beyond the horizon is not clutter on the map" do
@@ -88,7 +88,7 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
     get "/"
     story_pins = points.select { |p| p["type"] == "story" }
     assert_equal 1, story_pins.size
-    assert_equal "/stories/#{fresh.id}", story_pins.first["url"]
+    assert_equal "http://brgen.no/stories/#{fresh.id}", story_pins.first["url"]
   end
 
   # A live position is the courier's, not the city's. Publishing every rider's
@@ -109,10 +109,7 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
       user: rider_user, vehicle_type: "bicycle", available: true,
       current_lat: 60.3930, current_lng: 5.3250
     )
-    order = Takeaway::Order.create!(
-      user: @user, restaurant: restaurant, delivery_address: "Torget 1",
-      status: "out_for_delivery", delivery_driver: driver
-    )
+    order = place_takeaway_order!(user: @user, restaurant: restaurant, status: "out_for_delivery", delivery_driver: driver)
 
     # A stranger sees no courier at all.
     stranger = User.strict_loading(false).create!(
@@ -129,7 +126,9 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
     get "/"
     courier = points.find { |p| p["type"] == "courier" }
     assert_not_nil courier, "the person waiting for the food is who this is for"
-    assert_equal "/orders/#{order.id}", courier["url"]
+    # The pin has to carry the host, not just the path: an order lives on the
+    # takeaway subdomain and the map is drawn on the apex.
+    assert_equal "http://takeaway.brgen.no/orders/#{order.id}", courier["url"]
   end
 
   test "a delivered order stops drawing its courier" do
@@ -146,10 +145,7 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
     driver = Takeaway::DeliveryDriver.create!(
       user: rider_user, available: true, current_lat: 60.393, current_lng: 5.325
     )
-    Takeaway::Order.create!(
-      user: @user, restaurant: restaurant, delivery_address: "Torget 2",
-      status: "delivered", delivery_driver: driver
-    )
+    place_takeaway_order!(user: @user, restaurant: restaurant, delivery_address: "Torget 2", status: "delivered", delivery_driver: driver)
 
     sign_in_as(@user)
     in_maps

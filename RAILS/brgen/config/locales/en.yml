@@ -1395,6 +1395,8 @@ en:
     subject_gone: "The content is gone"
     mark_reviewing: "Reviewing"
     mark_resolved: "Resolve"
+    mark_open: "Open"
+    mark_dismissed: "Dismiss"
     mark_dismissed: "Dismiss"
     queue_empty: "Nothing in the queue"
     queue_empty_body: "Reports from this community show up here."
