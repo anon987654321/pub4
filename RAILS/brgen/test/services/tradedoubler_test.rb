@@ -7,7 +7,7 @@ class TradedoublerTest < ActiveSupport::TestCase
   # Live response shape is still unverified without a publisher token. parse
   # accepts nested XML-ish, flat JSON, and official offers[] documents.
 
-  # These tests count `AffiliateProduct.where(source: "tradedoubler")` across the
+  # These tests count `Shared::AffiliateProduct.where(source: "tradedoubler")` across the
   # whole table, so they assert on a clean database rather than on what they
   # created. That holds on a laptop and fails on the VPS, whose CI seeds ten
   # placeholder tradedoubler rows before the suite runs
@@ -19,7 +19,7 @@ class TradedoublerTest < ActiveSupport::TestCase
   # the database it happened to run against. Scoped to source: "tradedoubler" so
   # nothing else's fixtures are touched.
   setup do
-    AffiliateProduct.where(source: "tradedoubler").delete_all
+    Shared::AffiliateProduct.where(source: "tradedoubler").delete_all
   end
 
   test "parses the nested products.product shape" do
@@ -39,7 +39,7 @@ class TradedoublerTest < ActiveSupport::TestCase
       }
     }
 
-    rows = Tradedoubler.parse(body)
+    rows = Shared::Tradedoubler.parse(body)
     assert_equal 1, rows.size
     row = rows.first
     assert_equal "abc123", row[:external_id]
@@ -65,7 +65,7 @@ class TradedoublerTest < ActiveSupport::TestCase
       ]
     }
 
-    rows = Tradedoubler.parse(body)
+    rows = Shared::Tradedoubler.parse(body)
     assert_equal 1, rows.size
     assert_equal "xyz789", rows.first[:external_id]
     assert_equal "Salomon Speedcross 6", rows.first[:title]
@@ -98,7 +98,7 @@ class TradedoublerTest < ActiveSupport::TestCase
       ]
     }
 
-    rows = Tradedoubler.parse(body)
+    rows = Shared::Tradedoubler.parse(body)
     assert_equal 1, rows.size
     row = rows.first
     assert_equal "519de2b6", row[:external_id]
@@ -113,42 +113,42 @@ class TradedoublerTest < ActiveSupport::TestCase
 
   test "collapses a single-object response into one row" do
     body = { "products" => { "productId" => "solo", "name" => "One", "clickUrl" => "https://x.test/c" } }
-    assert_equal [ "solo" ], Tradedoubler.parse(body).map { |r| r[:external_id] }
+    assert_equal [ "solo" ], Shared::Tradedoubler.parse(body).map { |r| r[:external_id] }
   end
 
   test "parse tolerates junk without raising" do
-    assert_equal [], Tradedoubler.parse({})
-    assert_equal [], Tradedoubler.parse({ "products" => nil })
-    assert_equal [], Tradedoubler.parse({ "products" => [ "not a hash" ] })
-    assert_equal [], Tradedoubler.parse("a string")
+    assert_equal [], Shared::Tradedoubler.parse({})
+    assert_equal [], Shared::Tradedoubler.parse({ "products" => nil })
+    assert_equal [], Shared::Tradedoubler.parse({ "products" => [ "not a hash" ] })
+    assert_equal [], Shared::Tradedoubler.parse("a string")
   end
 
   test "to_cents strips currency noise and thousands separators" do
-    assert_equal 24_990, Tradedoubler.to_cents("249.90")
-    assert_equal 24_990, Tradedoubler.to_cents("249,90")
-    assert_equal 24_990, Tradedoubler.to_cents("NOK 249.90")
-    assert_nil Tradedoubler.to_cents(nil)
-    assert_nil Tradedoubler.to_cents("")
+    assert_equal 24_990, Shared::Tradedoubler.to_cents("249.90")
+    assert_equal 24_990, Shared::Tradedoubler.to_cents("249,90")
+    assert_equal 24_990, Shared::Tradedoubler.to_cents("NOK 249.90")
+    assert_nil Shared::Tradedoubler.to_cents(nil)
+    assert_nil Shared::Tradedoubler.to_cents("")
   end
 
   test "missing availability is treated as in stock" do
-    row = Tradedoubler.parse({ "products" => [ { "id" => "a", "name" => "n", "clickUrl" => "u" } ] }).first
+    row = Shared::Tradedoubler.parse({ "products" => [ { "id" => "a", "name" => "n", "clickUrl" => "u" } ] }).first
     assert row[:in_stock]
 
-    out = Tradedoubler.parse({ "products" => [ { "id" => "b", "name" => "n", "clickUrl" => "u", "inStock" => "false" } ] }).first
+    out = Shared::Tradedoubler.parse({ "products" => [ { "id" => "b", "name" => "n", "clickUrl" => "u", "inStock" => "false" } ] }).first
     refute out[:in_stock]
   end
 
   test "matrix_uri builds feed-scoped Products URL" do
-    uri = Tradedoubler.matrix_uri("products", matrix: { fid: 42, page: 1, pageSize: 100 }, token: "abc")
+    uri = Shared::Tradedoubler.matrix_uri("products", matrix: { fid: 42, page: 1, pageSize: 100 }, token: "abc")
     assert_includes uri.to_s, "/1.0/products.json;fid=42;page=1;pageSize=100"
     assert_includes uri.query, "token=abc"
   end
 
   test "epi helpers compose and append" do
-    epi = Tradedoubler.epi_for(city: "bergen", surface: "newsletter_weekly", edition: "2026-08-01")
+    epi = Shared::Tradedoubler.epi_for(city: "bergen", surface: "newsletter_weekly", edition: "2026-08-01")
     assert_equal "city:bergen|surface:newsletter_weekly|edition:2026-08-01", epi
-    url = Tradedoubler.append_epi("https://clk.test/x?a=1", epi: epi)
+    url = Shared::Tradedoubler.append_epi("https://clk.test/x?a=1", epi: epi)
     assert_includes url, "epi=city"
   end
 
@@ -178,10 +178,10 @@ class TradedoublerTest < ActiveSupport::TestCase
       assert_includes uri.to_s, "fid=99"
       FakeResponse.new(JSON.generate("products" => [ product_row("a"), product_row("b") ]))
     end
-    stub_http(responder) { assert_equal 2, Tradedoubler.import! }
+    stub_http(responder) { assert_equal 2, Shared::Tradedoubler.import! }
 
-    assert_equal 2, AffiliateProduct.where(source: "tradedoubler").count
-    row = AffiliateProduct.find_by!(source: "tradedoubler", external_id: "a")
+    assert_equal 2, Shared::AffiliateProduct.where(source: "tradedoubler").count
+    row = Shared::AffiliateProduct.find_by!(source: "tradedoubler", external_id: "a")
     assert_equal "Produkt a", row.title
     assert_equal 19_900, row.price_cents
     assert_equal "NOK", row.currency
@@ -189,8 +189,8 @@ class TradedoublerTest < ActiveSupport::TestCase
     refute row.placeholder
     assert_not_nil row.last_seen_at
 
-    stub_http(responder) { Tradedoubler.import! }
-    assert_equal 2, AffiliateProduct.where(source: "tradedoubler").count
+    stub_http(responder) { Shared::Tradedoubler.import! }
+    assert_equal 2, Shared::AffiliateProduct.where(source: "tradedoubler").count
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
     ENV.delete("TRADEDOUBLER_FEED_IDS")
@@ -199,7 +199,7 @@ class TradedoublerTest < ActiveSupport::TestCase
   test "import! paginates until a short page ends the walk" do
     ENV["TRADEDOUBLER_TOKEN"] = "tok_test"
     ENV["TRADEDOUBLER_FEED_IDS"] = "1"
-    full = Array.new(Tradedoubler::PAGE_SIZE) { |i| product_row("p#{i}") }
+    full = Array.new(Shared::Tradedoubler::PAGE_SIZE) { |i| product_row("p#{i}") }
     requested = []
     responder = lambda do |uri|
       requested << uri.to_s
@@ -209,7 +209,7 @@ class TradedoublerTest < ActiveSupport::TestCase
       FakeResponse.new(JSON.generate("products" => body))
     end
     stub_http(responder) do
-      assert_equal Tradedoubler::PAGE_SIZE + 1, Tradedoubler.import!
+      assert_equal Shared::Tradedoubler::PAGE_SIZE + 1, Shared::Tradedoubler.import!
       assert_equal 2, requested.size
     end
   ensure
@@ -228,8 +228,8 @@ class TradedoublerTest < ActiveSupport::TestCase
         product_row("good")
       ]))
     end
-    stub_http(responder) { assert_equal 1, Tradedoubler.import! }
-    assert_equal [ "good" ], AffiliateProduct.where(source: "tradedoubler").pluck(:external_id)
+    stub_http(responder) { assert_equal 1, Shared::Tradedoubler.import! }
+    assert_equal [ "good" ], Shared::AffiliateProduct.where(source: "tradedoubler").pluck(:external_id)
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
     ENV.delete("TRADEDOUBLER_FEED_IDS")
@@ -240,7 +240,7 @@ class TradedoublerTest < ActiveSupport::TestCase
     ENV.delete("TRADEDOUBLER_PRODUCTS_TOKEN")
     called = false
     stub_http(->(_uri) { called = true; FakeResponse.new("{}") }) do
-      assert_equal 0, Tradedoubler.import!
+      assert_equal 0, Shared::Tradedoubler.import!
     end
     refute called
   end
@@ -255,7 +255,7 @@ class TradedoublerTest < ActiveSupport::TestCase
         flunk "should not search without feeds: #{uri}"
       end
     end
-    stub_http(responder) { assert_equal 0, Tradedoubler.import! }
+    stub_http(responder) { assert_equal 0, Shared::Tradedoubler.import! }
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
   end
@@ -265,9 +265,9 @@ class TradedoublerTest < ActiveSupport::TestCase
     ENV["TRADEDOUBLER_FEED_IDS"] = "1"
     failure = Net::HTTPForbidden.new(nil, "403", "Forbidden")
     Net::HTTP.stub(:get_response, ->(_uri) { failure }) do
-      assert_equal 0, Tradedoubler.import!
+      assert_equal 0, Shared::Tradedoubler.import!
     end
-    assert_equal 0, AffiliateProduct.where(source: "tradedoubler").count
+    assert_equal 0, Shared::AffiliateProduct.where(source: "tradedoubler").count
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
     ENV.delete("TRADEDOUBLER_FEED_IDS")
@@ -276,15 +276,15 @@ class TradedoublerTest < ActiveSupport::TestCase
   test "not configured without a token, and deals falls back to stored rows" do
     ENV.delete("TRADEDOUBLER_TOKEN")
     ENV.delete("TRADEDOUBLER_PRODUCTS_TOKEN")
-    refute Tradedoubler.configured?
+    refute Shared::Tradedoubler.configured?
 
-    AffiliateProduct.upsert_from_feed!(
+    Shared::AffiliateProduct.upsert_from_feed!(
       source: "tradedoubler", external_id: "stored-1", title: "Stored product",
       click_url: "https://example.test/p", market: "NO", category: "electronics",
       price_cents: 10_000, currency: "NOK", merchant: "Elkjøp", in_stock: true, placeholder: true
     )
 
-    deals = Tradedoubler.deals(category: "electronics", limit: 5)
+    deals = Shared::Tradedoubler.deals(category: "electronics", limit: 5)
     assert_equal 1, deals.size
     assert_equal "Stored product", deals.first.title
     assert deals.first.placeholder

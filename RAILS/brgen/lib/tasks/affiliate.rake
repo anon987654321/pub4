@@ -3,7 +3,7 @@
 namespace :affiliate do
   desc "Import affiliate products from every configured network"
   task :import, [ :category ] => :environment do |_, args|
-    configured = Affiliate.configured_networks
+    configured = Shared::Affiliate.configured_networks
     if configured.empty?
       warn <<~MSG
         No affiliate network is configured — nothing imported.
@@ -26,20 +26,20 @@ namespace :affiliate do
       exit 1
     end
 
-    results = Affiliate.import_all!(category: args[:category])
+    results = Shared::Affiliate.import_all!(category: args[:category])
     results.each { |network, written| puts "affiliate:import — #{network}: #{written} product(s) upserted" }
-    vouchers = Tradedoubler.import_vouchers!
+    vouchers = Shared::Tradedoubler.import_vouchers!
     puts "affiliate:import — vouchers: #{vouchers}"
-    puts "  total live product rows: #{AffiliateProduct.sellable.real.count}"
+    puts "  total live product rows: #{Shared::AffiliateProduct.sellable.real.count}"
   end
 
   desc "List TradeDoubler product feeds (needs TRADEDOUBLER_TOKEN)"
   task feeds: :environment do
-    unless Tradedoubler.configured?
+    unless Shared::Tradedoubler.configured?
       warn "TRADEDOUBLER_TOKEN not set"
       exit 1
     end
-    feeds = Tradedoubler.list_feeds
+    feeds = Shared::Tradedoubler.list_feeds
     if feeds.empty?
       puts "No feeds (not approved / no programmes / API empty)."
     else
@@ -54,7 +54,7 @@ namespace :affiliate do
 
   desc "Sync TradeDoubler Link Converter script to public/js/td-lc.js"
   task sync_link_converter: :environment do
-    unless Tradedoubler.link_converter_configured?
+    unless Shared::Tradedoubler.link_converter_configured?
       warn "Set TRADEDOUBLER_WEBSITE_ID first"
       exit 1
     end
@@ -65,21 +65,21 @@ namespace :affiliate do
 
   desc "Report affiliate inventory health (counts, staleness, placeholders)"
   task health: :environment do
-    total = AffiliateProduct.count
+    total = Shared::AffiliateProduct.count
     puts "affiliate_products: #{total} row(s)"
-    puts "  live (in stock, seen within #{AffiliateProduct::STALE_AFTER.inspect}): #{AffiliateProduct.sellable.count}"
-    puts "  real: #{AffiliateProduct.real.count}   placeholder: #{AffiliateProduct.where(placeholder: true).count}"
-    puts "  stale: #{AffiliateProduct.where.not(id: AffiliateProduct.fresh).count}"
-    if defined?(AffiliateVoucher) && AffiliateVoucher.table_exists?
-      puts "affiliate_vouchers: #{AffiliateVoucher.count} (live: #{AffiliateVoucher.live.count})"
+    puts "  live (in stock, seen within #{Shared::AffiliateProduct::STALE_AFTER.inspect}): #{Shared::AffiliateProduct.sellable.count}"
+    puts "  real: #{Shared::AffiliateProduct.real.count}   placeholder: #{Shared::AffiliateProduct.where(placeholder: true).count}"
+    puts "  stale: #{Shared::AffiliateProduct.where.not(id: Shared::AffiliateProduct.fresh).count}"
+    if defined?(Shared::AffiliateVoucher) && Shared::AffiliateVoucher.table_exists?
+      puts "affiliate_vouchers: #{Shared::AffiliateVoucher.count} (live: #{Shared::AffiliateVoucher.live.count})"
     end
-    if defined?(AffiliateConversion) && AffiliateConversion.table_exists?
-      puts "affiliate_conversions: #{AffiliateConversion.count} " \
-           "(approved: #{AffiliateConversion.approved.count}, paid: #{AffiliateConversion.paid.count})"
+    if defined?(Shared::AffiliateConversion) && Shared::AffiliateConversion.table_exists?
+      puts "affiliate_conversions: #{Shared::AffiliateConversion.count} " \
+           "(approved: #{Shared::AffiliateConversion.approved.count}, paid: #{Shared::AffiliateConversion.paid.count})"
     end
-    Affiliate.networks.each { |n| puts "  #{n.name}: configured=#{n.configured?}" }
-    puts "  link_converter website_id=#{Tradedoubler.website_id.present?}"
-    AffiliateProduct.group(:source).count.each { |source, count| puts "  #{source}: #{count}" }
+    Shared::Affiliate.networks.each { |n| puts "  #{n.name}: configured=#{n.configured?}" }
+    puts "  link_converter website_id=#{Shared::Tradedoubler.website_id.present?}"
+    Shared::AffiliateProduct.group(:source).count.each { |source, count| puts "  #{source}: #{count}" }
   end
 
   desc "Seed clearly-flagged placeholder affiliate products (no network needed)"
@@ -92,7 +92,7 @@ namespace :affiliate do
 
   desc "Delete placeholder rows (run once real import works)"
   task drop_placeholders: :environment do
-    deleted = AffiliateProduct.where(placeholder: true).delete_all
+    deleted = Shared::AffiliateProduct.where(placeholder: true).delete_all
     puts "affiliate:drop_placeholders — removed #{deleted} row(s)."
   end
   desc "Clicks sent vs conversions returned, and the gap between them"

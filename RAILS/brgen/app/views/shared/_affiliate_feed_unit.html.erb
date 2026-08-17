@@ -7,7 +7,7 @@
     uneven images and tilt them. CSS grid packs them, and one Stimulus
     controller does the tilt.
 
-    Reads Affiliate.deals, the same single path over every network the sidebar
+    Reads Shared::Affiliate.deals, the same single path over every network the sidebar
     unit uses, so a new network appears here without editing this view. %>
 <% deals = affiliate_deals_for(category: local_assigns[:category], limit: 8) %>
 <% if deals.any? %>

@@ -8,10 +8,10 @@ class LinkConverterSyncJob < ApplicationJob
   RELATIVE_PATH = "js/td-lc.js"
 
   def perform
-    return false unless Tradedoubler.link_converter_configured?
+    return false unless Shared::Tradedoubler.link_converter_configured?
 
     path = Rails.public_path.join(RELATIVE_PATH)
-    ok = Tradedoubler.sync_link_converter!(local_path: path.to_s)
+    ok = Shared::Tradedoubler.sync_link_converter!(local_path: path.to_s)
     Rails.logger.info("[link_converter_sync] ok=#{ok} path=#{path}")
     ok
   end

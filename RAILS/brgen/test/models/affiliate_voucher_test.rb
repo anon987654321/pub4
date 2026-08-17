@@ -4,9 +4,9 @@ require "test_helper"
 
 class AffiliateVoucherTest < ActiveSupport::TestCase
   test "upserts from API struct" do
-    skip "migration not applied" unless AffiliateVoucher.table_exists?
+    skip "migration not applied" unless Shared::AffiliateVoucher.table_exists?
 
-    voucher = Tradedoubler::Voucher.new(
+    voucher = Shared::Tradedoubler::Voucher.new(
       external_id: "v1",
       program_id: "10",
       program_name: "Boozt",
@@ -26,10 +26,10 @@ class AffiliateVoucherTest < ActiveSupport::TestCase
       ends_at: 7.days.from_now
     )
 
-    record = AffiliateVoucher.upsert_from_api!(voucher)
+    record = Shared::AffiliateVoucher.upsert_from_api!(voucher)
     assert record.persisted?
     assert_equal "SAVE10", record.code
-    assert_includes AffiliateVoucher.live, record
+    assert_includes Shared::AffiliateVoucher.live, record
     assert_equal "voucher", record.type_name
   end
 end

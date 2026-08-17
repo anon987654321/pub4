@@ -4,7 +4,7 @@ require "test_helper"
 
 class Webhooks::TradedoublerControllerTest < ActionDispatch::IntegrationTest
   setup do
-    skip "migration not applied" unless AffiliateConversion.table_exists?
+    skip "migration not applied" unless Shared::AffiliateConversion.table_exists?
   end
 
   test "rejects when webhook secret unset" do
@@ -33,7 +33,7 @@ class Webhooks::TradedoublerControllerTest < ActionDispatch::IntegrationTest
       epi: "city:bergen"
     }
     assert_response :ok
-    assert AffiliateConversion.exists?(transaction_id: "t-accept", message_type_id: 5)
+    assert Shared::AffiliateConversion.exists?(transaction_id: "t-accept", message_type_id: 5)
   ensure
     ENV.delete("TRADEDOUBLER_WEBHOOK_SECRET")
   end

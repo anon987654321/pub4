@@ -3,7 +3,7 @@
 require "yaml"
 
 module Brgen
-  # Realistic Bergen / r/bergen-inspired demo content for brgen.no (Tradedoubler, demos).
+  # Realistic Bergen / r/bergen-inspired demo content for brgen.no (TradeDoubler, demos).
   # Norwegian copy, local handles, staggered timestamps, optional picsum + postpro attachments.
   class BergenDemoSeeder
     RADIO_BERGEN_PLAYLIST = "Radio Bergen"

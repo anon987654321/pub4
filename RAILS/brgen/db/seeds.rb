@@ -513,13 +513,13 @@ puts 'Messages: conversations and messages seeded'
 # placeholders so the deals sidebar and the weekly_deals newsletter have
 # something to render; `rake affiliate:import` replaces them with real rows and
 # `rake affiliate:drop_placeholders` clears these out.
-if defined?(AffiliateProduct) && AffiliateProduct.table_exists?
-  if Tradedoubler.configured?
-    imported = Tradedoubler.import!
+if defined?(Shared::AffiliateProduct) && Shared::AffiliateProduct.table_exists?
+  if Shared::Tradedoubler.configured?
+    imported = Shared::Tradedoubler.import!
     puts "Affiliate: imported #{imported} real TradeDoubler product(s)"
   else
     placed = Brgen::AffiliatePlaceholders.seed!
-    puts "Affiliate: #{placed} placeholder product(s) (TRADEDOUBLER_TOKEN unset — flagged placeholder: true)"
+    puts "Shared::Affiliate: #{placed} placeholder product(s) (TRADEDOUBLER_TOKEN unset — flagged placeholder: true)"
   end
 end
 
