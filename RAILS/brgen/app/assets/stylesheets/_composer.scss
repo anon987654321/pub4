@@ -211,10 +211,10 @@
 /* The hint. <small> rather than a second <span class="dim">: the element
    already means "side comment", so the markup carries the meaning and this rule
    only sets how it looks.
-   Tokens rather than .dim deliberately — .dim is declared twice in the cascade
-   with different values (_minimal.scss: --dark-grey/--text-base,
-   _shell_widgets.scss: --text-secondary/--text-sm), so which one an element
-   gets depends on import order rather than on intent. */
+   Tokens rather than .dim deliberately: .dim resolves to a different colour in
+   each of the three apps, and the built stylesheets carry seven rules matching
+   it here, six in amber and four in bsdports. This wants one colour, so it
+   names it. */
 .composer-form label:has(> input[type="checkbox"]) small {
   color: var(--text-dim);
   font-size: var(--text-sm, 0.875rem);
