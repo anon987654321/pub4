@@ -9,9 +9,9 @@
  <%= render "posts/post", post: post %>
  <%# One unit after every AFFILIATE_EVERY posts, never before the first and
      never trailing the last — an ad in the last slot reads as the end of the
-     feed. Posts appended by HomeInfiniteScrollReflex do not carry one yet:
-     the reflex renders "posts/post" per row and has no slot for anything
-     else, so extending it is its own change. %>
+     feed. HomeInfiniteScrollReflex#after_row carries the same cadence onto
+     appended pages, counting slots from the top of the feed rather than the top
+     of the page, so the rhythm does not restart on every scroll. %>
  <% if ((index + 1) % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && index + 1 < @posts.size %>
  <%= render "shared/affiliate_feed_unit" %>
  <% end %>

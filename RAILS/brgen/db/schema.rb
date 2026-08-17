@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_140000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1574,6 +1574,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_000000) do
     t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
     t.index ["remember_token"], name: "index_users_on_remember_token", unique: true
     t.index ["username"], name: "index_users_on_username", unique: true
+  end
+
+  create_table "visit_counts", force: :cascade do |t|
+    t.string "app", null: false
+    t.bigint "count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.date "day", null: false
+    t.string "host", null: false
+    t.string "route", null: false
+    t.datetime "updated_at", null: false
+    t.index ["app", "host", "route", "day"], name: "index_visit_counts_on_key", unique: true
+    t.index ["day", "host"], name: "index_visit_counts_on_day_and_host"
   end
 
   create_table "votes", force: :cascade do |t|
