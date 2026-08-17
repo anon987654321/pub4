@@ -32,6 +32,8 @@ module Master::Core
       @council_pass = false
       @write_trees = []
       @write_lines = 0
+      @read_paths = []
+      @asked = false
       @started_at = Time.now
     end
 
@@ -45,7 +47,8 @@ module Master::Core
     end
 
     def scope
-      { trees: @write_trees.dup, elapsed_s: Time.now - @started_at, write_lines: @write_lines }
+      { trees: @write_trees.dup, elapsed_s: Time.now - @started_at, write_lines: @write_lines,
+        read_paths: @read_paths.dup, asked: @asked }
     end
 
     def mark_council_pass!(detail: "council pass")
@@ -56,6 +59,8 @@ module Master::Core
 
     def record_evidence(effect, observation)
       remember_write(effect) if effect.verb == :write
+      remember_read(effect) if effect.verb == :read && observation.ok?
+      @asked = true if effect.verb == :ask && observation.ok?
       return unless effect.verb == :exec && observation.ok?
 
       kind = effect.args[:evidence].to_s.to_sym
@@ -74,6 +79,10 @@ module Master::Core
       tree = effect.args[:path].to_s.split("/").find { |part| Constitution::REPO_TREES.include?(part) }
       @write_trees << tree if tree
       @write_lines += effect.args[:content].to_s.lines.size
+    end
+
+    def remember_read(effect)
+      @read_paths << effect.args[:path].to_s
     end
   end
 end

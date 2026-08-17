@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Master::Core
   # Memory — the record. Holds the conversation the model sees, compacted to a
   # budget. Compaction is turn-aware: it summarises the oldest turns and keeps
@@ -73,7 +75,7 @@ module Master::Core
 
     def record(effect, observation)
       @entries << Entry.new(role: :act, text: effect.to_s)
-      @entries << Entry.new(role: :obs, text: observation.to_s)
+      @entries << Entry.new(role: :obs, text: observe_text(effect, observation))
       @proof.record_evidence(effect, observation)
       @proof.mark_council_pass!(detail: observation.message) if effect.verb == :critique && observation.ok?
       self
@@ -86,6 +88,14 @@ module Master::Core
     end
 
     private
+
+    def observe_text(effect, observation)
+      text = observation.to_s
+      return text unless effect.verb == :read && observation.ok?
+
+      hex = Digest::SHA256.hexdigest(observation.message)[0, 12]
+      "#{text} sha256=#{hex} #{observation.message.bytesize}b"
+    end
 
     def size = @entries.sum { |e| e.text.length }
 

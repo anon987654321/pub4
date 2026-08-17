@@ -404,12 +404,10 @@ spine:
   # implementation reaching it, and each now has a test asserting the partition
   # is total, so the next category or mood added without a side fails rather than
   # falling through.
-  # RAISED 2026-08-17, 38606 -> 38740 (+134). origin/main already sat 58 over
-  # this ceiling (a shipped breach). The rest is three Constitution rules
-  # (forbidden_file, scope_creep, two_hats), Proof.scope + 15-alternatives,
-  # Design::Thresholds.micro_typography, WriteGuard sidecar check, and
-  # Ideation#fill_quota. No new fold concept; core_files stays 7.
-  lib_code_ceiling: 38740
+  # RAISED 2026-08-17, 38740 -> 38773 (+33). Hashed-read transcript,
+  # unread-path ask, and the decorator-massacre skip on NO_ASCII_LINE_ART.
+  # No new fold concept; core_files stays 7.
+  lib_code_ceiling: 38773
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -422,6 +420,7 @@ spine:
   # full in the comments; what was reset is the counter, not the record.
   raised:
   - "2026-08-17 38606 -> 38740 (+134) forbidden_file/scope_creep/two_hats/15-alternatives/micro-typography"
+  - "2026-08-17 38740 -> 38773 (+33) hashed-read/new-path-ask/decorator-skip"
   # How many raises may stand before lint:spine refuses another. The allowance was
   # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
   # mechanism working: a genuine fall earns the budget back, so this is a budget

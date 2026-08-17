@@ -74,6 +74,7 @@ module Master::Core
         two_hats_rule,
         council_for_done_rule,
         ideation_before_write_rule,
+        new_path_rule,
       ]
     end
 
@@ -302,6 +303,23 @@ module Master::Core
       })
     end
 
+    # Medium+ unread path: read it first (edit) or ask (new file). The January
+    # delete-and-recreate incident wrote over approved work without a read.
+    def self.new_path_reason(path, proof)
+      return unless %i[medium high critical].include?(proof.risk)
+      return if Array(proof.scope[:read_paths]).include?(path.to_s)
+      return if proof.scope[:asked]
+
+      "unread path #{path} — read it or ask before writing"
+    end
+
+    def self.new_path_rule
+      Rule.new(id: :new_path_ask, verbs: %i[write], judge: lambda { |effect, memory|
+        reason = new_path_reason(effect.args[:path], memory.proof)
+        reason ? Verdict::Block.new(reason:, by: :new_path_ask) : nil
+      })
+    end
+
     # The fold blocks on this answer before it admits a write, so a parser that
     # does not return holds up every write. join returns nil on timeout rather
     # than raising, which is where the child gets killed.
@@ -342,6 +360,6 @@ module Master::Core
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :council_for_done_rule,
-                         :ideation_before_write_rule, :ruby_syntax_error, :safe_rx
+                         :ideation_before_write_rule, :new_path_rule, :ruby_syntax_error, :safe_rx
   end
 end

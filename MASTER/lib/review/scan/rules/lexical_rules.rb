@@ -161,7 +161,13 @@ module Master
   RuleDSL.rule :NO_ASCII_LINE_ART,
     severity: :warning, tags: %i[BE_CONCISE],
     description: "ASCII divider decorations" do |src, path:|
-    scan_lines(src, /(?:^|\s)(?:={3,}|-{3,})(?:\s|$)/, message: "remove ASCII divider decorations")
+    next [] if path.to_s.match?(%r{(^|/)(test|spec)/})
+
+    scan_lines(src, /(?:^|\s)(?:={3,}|-{3,}|_{3,})(?:\s|$)/, message: "remove ASCII divider decorations").reject do |finding|
+      line = src.lines[finding[:line].to_i - 1].to_s
+      path.to_s.end_with?(".yml", ".yaml") && line.strip == "---" ||
+        line.match?(/\b(assert|refute|expect|must_|wont_)/)
+    end
   end
 
   module SilentRescue

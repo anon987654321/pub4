@@ -129,4 +129,8 @@ class TestKernelSpine < Minitest::Test
   def test_two_hats_allows_a_small_mixed_message
     assert_nil Master::Core::Constitution.two_hats_reason("fix the bug and refactor the helper", 20)
   end
+
+  def test_low_risk_new_path_does_not_need_ask
+    assert_nil Master::Core::Constitution.new_path_reason("a.rb", Master::Core::Memory.new.proof)
+  end
 end

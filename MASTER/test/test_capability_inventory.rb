@@ -27,7 +27,7 @@ class TestCapabilityInventory < Minitest::Test
 
   def test_constitution_still_names_the_incident_rules
     ids = @report[:current][:constitution]
-    %w[batch_delete forbidden_file scope_creep two_hats ideation_before_write].each do |id|
+    %w[batch_delete forbidden_file scope_creep two_hats ideation_before_write new_path_ask].each do |id|
       assert_includes ids, id
     end
   end

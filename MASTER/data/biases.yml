@@ -82,3 +82,11 @@ framing_bias:
   - confirmation_bias
   detect: "\\b(the real (problem|issue)|actually about|boils down to)\\b"
   clears: "\\balternativ|another (way|reading)|reframe|or it is\\b"
+survivorship_bias:
+  countermeasure: Study the failures and the paths that never shipped, not only the
+    green cases that survived selection.
+  compounds_with:
+  - availability_bias
+  - recency_bias
+  detect: "\\b(always works|never fails|every (time|case)|proven pattern)\\b"
+  clears: "\\bfail(ed|ure)|missed|never shipped|counterexample\\b"

@@ -565,4 +565,14 @@ class TestScanRuleFalsePositives < Minitest::Test
            "EMPTY_RESCUE was collapsed into SILENT_RESCUE/NARROW_SILENT_RESCUE — re-registering it " \
            "restores the double-report this test exists to prevent"
   end
+
+  def test_ascii_dividers_in_tests_and_assertions_are_not_decorations
+    assert_empty findings(:NO_ASCII_LINE_ART, "assert_equal '===', sep\n", path: "test/example.rb")
+    assert_empty findings(:NO_ASCII_LINE_ART, "assert_match(/---/, line)\n")
+    assert_empty findings(:NO_ASCII_LINE_ART, "---\nkey: 1\n", path: "data/example.yml")
+  end
+
+  def test_ascii_dividers_in_lib_prose_still_fire
+    refute_empty findings(:NO_ASCII_LINE_ART, "# ===== section =====\n")
+  end
 end

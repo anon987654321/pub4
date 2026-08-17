@@ -51,6 +51,7 @@ class FoldDeliberationTest < Minitest::Test
     memory = Master::Core::Memory.new(risk: :medium)
     memory.note(:chosen, "use option 2")
     memory.proof.mark_ideation_complete!
+    memory.record(Master::Core::Effect.ask("create a.rb?"), Master::Core::Observation.ok("yes"))
     law = Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
     verdict = law.admit(Master::Core::Effect.write("a.rb", "x"), memory)
 
@@ -70,10 +71,32 @@ class FoldDeliberationTest < Minitest::Test
   def test_fifteen_approaches_satisfy_ideation
     memory = Master::Core::Memory.new(risk: :medium)
     memory.proof.mark_ideation_complete!(approaches: 15)
+    memory.record(Master::Core::Effect.ask("create a.rb?"), Master::Core::Observation.ok("yes"))
     law = Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
     verdict = law.admit(Master::Core::Effect.write("a.rb", "x"), memory)
 
     assert_instance_of Master::Core::Verdict::Allow, verdict
+  end
+
+  def test_medium_write_of_unread_path_needs_ask
+    memory = Master::Core::Memory.new(risk: :medium)
+    memory.proof.mark_ideation_complete!
+    law = Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
+    verdict = law.admit(Master::Core::Effect.write("a.rb", "x"), memory)
+
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_equal :new_path_ask, verdict.by
+  end
+
+  def test_medium_write_after_hashed_read_is_an_edit
+    memory = Master::Core::Memory.new(risk: :medium)
+    memory.proof.mark_ideation_complete!
+    memory.record(Master::Core::Effect.read("a.rb"), Master::Core::Observation.ok("old\n"))
+    law = Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
+    verdict = law.admit(Master::Core::Effect.write("a.rb", "new\n"), memory)
+
+    assert_instance_of Master::Core::Verdict::Allow, verdict
+    assert memory.context.any? { |entry| entry.text.include?("sha256=") }
   end
 
   def test_fold_risk_assess_bumps_ship_to_high
