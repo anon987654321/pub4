@@ -30,9 +30,9 @@
 # already the loudest thing in the low end and driving it turns definition into
 # mud. Harmony sits between, where a little bloom thickens pads without
 # blurring their attacks.
-# 0.3. Per-bus colour plus the small phase offsets below, so the buses do not
+# 0.18. Per-bus colour plus the small phase offsets below, so the buses do not
 # sum perfectly coherently. Off by default meant every bus summed like maths.
-BUS_ANALOG = (ENV["BUS_ANALOG"] || 0.3).to_f.clamp(0.0, 1.0)
+BUS_ANALOG = (ENV["BUS_ANALOG"] || 0.18).to_f.clamp(0.0, 1.0)
 
 BUS_ANALOG_CHARACTER = {
   drums: { drive: 1.0, tilt: 2.2, hz: 3200 },
@@ -69,7 +69,7 @@ def bus_analog_filter(bus)
   # dB of genuine harmonic content. Two earlier attempts here failed because
   # they tuned the parameters of a filter that was transparent to begin with --
   # the primitive was wrong, not the settings.
-  drive = 1.0 + (5.0 * d)
+  drive = 1.0 + (2.2 * d)
   parts << "volume=#{drive.round(3)}"
   parts << "alimiter=limit=#{(0.45 - (0.28 * d)).round(3)}:level_out=1:attack=1:release=20"
   parts << "volume=#{(1.0 / (1.0 + (2.2 * d))).round(3)}"

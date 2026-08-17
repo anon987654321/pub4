@@ -506,7 +506,7 @@ end
 # four_seven; a sample that already has air needs far less or none.
 SAMPLE_EXCITE_MIX = (ENV["SAMPLE_EXCITE"] || "0").to_f.clamp(0.0, 1.0)
 SAMPLE_EXCITE_HZ = (ENV["SAMPLE_EXCITE_HZ"] || "2200").to_f
-SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "4.0").to_f.clamp(1.0, 20.0)
+SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "1.8").to_f.clamp(1.0, 20.0)
 SAMPLE_EXCITE_CHARACTER = (ENV["SAMPLE_EXCITE_CHARACTER"] || "even").to_s.downcase
 
 def sample_excite_shaper

@@ -20,10 +20,10 @@
 # adding harmonics and sounding like a machine.
 #
 # Ruby per-sample DSP is slow, so this is opt-in and reports its cost.
-# Default 0.25 (drive 1.75), not 0. A Jiles-Atherton magnetisation model sat
+# Default 0.16 (drive 1.48), not 0. A Jiles-Atherton magnetisation model sat
 # in lib/ fully built and switched off, so nothing rendered by this engine
 # had ever been through it. Tape character was being asked of an EQ curve.
-TAPE_HYSTERESIS = (ENV["TAPE_HYSTERESIS"] || 0.25).to_f.clamp(0.0, 1.0)
+TAPE_HYSTERESIS = (ENV["TAPE_HYSTERESIS"] || 0.16).to_f.clamp(0.0, 1.0)
 # 0.6 ms of Ornstein-Uhlenbeck wow. Real wow is subtle — enough that held
 # notes are never quite steady, not enough to read as an effect.
 TAPE_WOW_MS = (ENV["TAPE_WOW_MS"] || 0.6).to_f.clamp(0.0, 8.0)
@@ -41,9 +41,9 @@ TAPE_LOSS_HZ = (ENV["TAPE_LOSS_HZ"] || 0).to_f.clamp(0.0, 20_000.0)
 # instance with its own seed, so the drums and the pads are coloured by
 # different "hardware" rather than by one shared curve -- which is the whole
 # point, and is not reproducible by running the same stage on the mix.
-# 0.35. Left and right run as separate instances one seed apart, which is the
+# 0.22. Left and right run as separate instances one seed apart, which is the
 # whole reason this exists — see the note below on why it is not mono.
-CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.35).to_f.clamp(0.0, 1.0)
+CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.22).to_f.clamp(0.0, 1.0)
 
 # Left and right run as separate instances, offset by one seed. On a desk a
 # stereo pair IS two channels, built to the same design and measuring
@@ -91,7 +91,7 @@ def console_strip!(path, seed: 1, amount: CONSOLE_STRIP)
     File.binwrite(cooked, merged.pack("s<*"))
     # Same DC problem as the tape stage, an order of magnitude smaller but real:
     # ConsoleStrip.process turns a DC-free input into one offset by 1.31% of
-    # peak at the default amount of 0.35, 3.84% at 1.0. Any asymmetric
+    # peak at 0.35, 3.84% at 1.0. Any asymmetric
     # saturation does this, and both models run after the master chain's
     # highpasses, so nothing downstream was removing it.
     sh! "ffmpeg", "-y", "-f", "s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
@@ -142,7 +142,7 @@ def tape_hysteresis!(path)
         # highpass=24 is load-bearing, not tidying. Jiles-Atherton models
         # remanent magnetisation, and remanence is a DC phenomenon: a DC-free
         # input comes out of TapeHysteresis.process with DC at 10.3% of peak at
-        # the default drive of 1.75, rising to 15.7% at 4.0. This stage runs
+        # drive 1.75, rising to 15.7% at 4.0. This stage runs
         # after every highpass in the master chain and then peak-normalises,
         # which preserves the offset instead of removing it.
         #
