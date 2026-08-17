@@ -96,7 +96,7 @@ Rules live in one file because rules split across several grow definitions that 
 
 - UI/face topology, event registry, routing notes — consolidated behind `RuntimeCatalog.load(section)`.
 
-Documents outside `data/` that nothing links to are found by nobody: the gap audit behind the principle map is `PRINCIPLE_MAP_AUDIT.md`, repair procedures are `REPAIR_PLAYBOOKS.md`, the UI polish authority is `docs/UI_POLISH_PLAYBOOK.md`, and external projects worth reading are `docs/GITHUB_WATCH.md`.
+Documents outside `data/` that nothing links to are found by nobody — this sentence was the only thing linking two of them, which is not the same as being read. The principle-map audit is gone: its eight closed gaps are in git and its three open ones are in `DEBT.md`, where open work is looked for. The rest live under `docs/`: `REPAIR_PLAYBOOKS.md` for a red gate, `UI_POLISH_PLAYBOOK.md` for visual authority, `GITHUB_WATCH.md` for external projects worth reading.
 
 **Tier 4 — Prose (3 allowed markdown files in `data/`):**
 

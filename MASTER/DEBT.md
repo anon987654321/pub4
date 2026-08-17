@@ -352,6 +352,17 @@ and retuned on 2026-08-10, and an assertion that the welcome greeting still
 existed after it was deliberately removed. Those two were the tests being
 wrong and are fixed; these two need someone who can look at the page.
 
+## Three principles with no evidence source — carried from the map audit
+
+`pledge_unveil`, `secrets_rotation` and `audit_logging` are named by
+`data/principle_map.yml` with empty `rule_ids`. They are not gaps a link can
+close: each needs a real evidence source, which is why they outlived the eight
+the audit did close by linking existing kernel and unit rules.
+
+Carried here from PRINCIPLE_MAP_AUDIT.md, a point-in-time file at the repo root
+that nothing referenced. Its closed findings are in git; these three were the
+only part still open, and open work belongs where open work is read.
+
 ## Inert law and config
 
 The dominant defect class in this tree: a declaration with no reader. Both named
