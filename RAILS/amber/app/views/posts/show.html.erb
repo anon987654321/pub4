@@ -12,7 +12,7 @@
     · <time datetime="<%= @post.created_at.iso8601 %>"><%= time_ago(@post.created_at) %></time>
   </header>
   <h1 class="post-title"><%= @post.body.truncate(80, separator: " ") %></h1>
-  <div class="feed-post-body feed-post-prose"><%= @post.body %></div>
+  <div class="feed-post-body feed-post-prose prose"><%= @post.body %></div>
   <% if @post.outfit %><p class="dim"><em><%= t("post.outfit_label") %>: <%= link_to @post.outfit.name, outfit_path(@post.outfit) %></em></p><% end %>
   <% if @post.item %><p class="dim"><em><%= t("post.item_label") %>: <%= link_to @post.item.title, item_path(@post.item) %></em></p><% end %>
   <footer>

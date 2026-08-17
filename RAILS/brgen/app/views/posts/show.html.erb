@@ -64,7 +64,7 @@
   <% end %>
 
   <% if @post.content.present? %>
-    <div class="post_body"><%= sanitize @post.content, tags: %w[p br strong em b i ul ol li], attributes: [] %></div>
+    <div class="post_body prose"><%= sanitize @post.content, tags: %w[p br strong em b i ul ol li], attributes: [] %></div>
   <% end %>
 
   <section id="quotes" class="post-quotes">

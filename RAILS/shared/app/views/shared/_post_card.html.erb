@@ -58,7 +58,7 @@
         <h2 class="feed-post-title"><%= url.present? ? link_to(title, url) : title %></h2>
       <% end %>
       <% if content.present? %>
-        <div class="feed-post-body feed-post-prose"><%= content %></div>
+        <div class="feed-post-body feed-post-prose prose"><%= content %></div>
       <% end %>
       <% if meta.present? %>
         <div class="feed-post-meta-extra dim"><%= meta %></div>
@@ -84,6 +84,16 @@
           meta: meta,
           media: media,
           actions: actions,
+          record: (post if actions.blank?),
+          reply_path: local_assigns[:reply_path],
+          repost_path: local_assigns[:repost_path],
+          reposted: local_assigns.fetch(:reposted, false),
+          repost_count: local_assigns.fetch(:repost_count, 0),
+          liked: local_assigns.fetch(:liked, false),
+          like_count: local_assigns.fetch(:like_count, 0),
+          comment_count: local_assigns.fetch(:comment_count, 0),
+          view_count: local_assigns[:view_count],
+          share_url: local_assigns[:share_url] || url,
           url: url,
           class: [ "feed-card", css_class ].compact.join(" ") %>
   <% end %>

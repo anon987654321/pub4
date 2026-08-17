@@ -3213,15 +3213,24 @@ design_rules:
     grid:
       columns: 12
       base_unit_px: 8
+      # Subset used by surface_rules eight_px_rhythm. Full membership is
+      # RAILS/shared/design_tokens.yml scale.space_px (incl. 12/20/28/36/40/44…).
+      # Do not invent steps outside that scale; prefer tokens over literals.
+      source: RAILS/shared/design_tokens.yml#scale.space_px
       allowed_spacing_px:
       - 4
       - 8
+      - 12
       - 16
+      - 20
       - 24
       - 32
+      - 40
+      - 44
       - 48
       - 64
-      action: Prefer 8px rhythm and 12-column structure; allow 4px for hairline adjustments.
+      - 96
+      action: Prefer 8px rhythm and 12-column structure; allow 4px for hairline adjustments. Full scale in design_tokens.
     proportion:
       golden_ratio: 1.618
       split_main_ratio: 0.618
@@ -3277,7 +3286,7 @@ design_rules:
       card_padding_px: 24
       section_gap_px: 48
       hero_breathing_room_px: 96
-      content_width: min(65ch, 100% - 3rem)
+      content_width: min(66ch, 100% - 3rem)  # aligned with typography.line_length.ideal_ch / --measure
       action: Space communicates grouping; whitespace must clarify relationships.
     color:
       max_palette_roles: 4
@@ -3544,6 +3553,22 @@ design_rules:
     sparklines_no_frames_or_ticks: true
     action: Remove non-data ink unless it adds comprehension.
   automated_css_analysis:
+    # Each flag should name an enforcer. Flags without enforce: are guidance only.
+    checks:
+    - id: off_scale_line_height
+      enforce: [LINE_HEIGHT_ON_SCALE, Pub4::ScaleLint]
+    - id: absolute_line_height
+      enforce: [LINE_HEIGHT_ON_SCALE, Pub4::ScaleLint]
+    - id: measure_bounds
+      enforce: [geometry_type worn_type.profiles]
+    - id: hanging_list_markers
+      enforce: [geometry_type check_hanging]
+    - id: touch_target
+      enforce: [TOUCH_TARGET_MIN]
+    - id: eight_px_rhythm
+      enforce: [surface_rules spacing scan, Pub4::ScaleLint]
+    - id: chrome_i18n
+      enforce: [Pub4::ChromeI18nLint]
     flag:
     - line length outside typography.line_length bounds
     - line height below typography.line_height.body_min for prose

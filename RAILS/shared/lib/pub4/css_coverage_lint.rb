@@ -100,7 +100,7 @@ module Pub4
     # hex -- so an unstyled page gets geometry without anyone deciding what it
     # looks like. Past that the design is still someone's, and this is a floor
     # rather than a licence to style from a lint.
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 279 }.freeze
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 278 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
