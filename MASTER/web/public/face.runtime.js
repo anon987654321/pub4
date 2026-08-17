@@ -2991,16 +2991,39 @@ function primeBrowserVoices() {
     speechSynthesis.addEventListener('voiceschanged', () => {}, { once: true });
   } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:voices_prime", err); }
 }
+// macOS ships novelty voices — Albert, Bad News, Bubbles, Zarvox, and one
+// actually called Whisper — and Chrome puts them in getVoices() beside the real
+// ones, tagged with the same en-US. Taking the first match by language is
+// therefore a coin flip that lands on a joke voice often enough to be the first
+// thing a visitor hears. It did: ai.brgen.no was answering in a whisper.
+const NOVELTY_VOICE_RE = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|princess|deranged|hysterical|bruce|agnes|victoria)\b/i;
+
+// Names that are natural-sounding on the platforms that ship them. Ordered:
+// the enhanced/neural families first, then the reliable defaults.
+const PREFERRED_VOICE_RE = /(neural|natural|enhanced|premium|siri|google\s|microsoft\s|samantha|alex|nora|serena|daniel|karen|moira|tessa)/i;
+
 function pickBrowserVoice(lang) {
   let voices = [];
   try { voices = speechSynthesis.getVoices() || []; } catch (_) { return null; }
   if (!voices.length) return null;
   const want = String(lang).toLowerCase();
   const base = want.split('-')[0];
-  return voices.find((v) => (v.lang || '').toLowerCase() === want)
-      || voices.find((v) => (v.lang || '').toLowerCase().startsWith(base))
-      || voices.find((v) => v.default)
-      || voices[0];
+  const named = (v) => `${v.name || ''} ${v.voiceURI || ''}`;
+  const sane = voices.filter((v) => !NOVELTY_VOICE_RE.test(named(v)));
+  const pool = sane.length ? sane : voices;
+  const exact = pool.filter((v) => (v.lang || '').toLowerCase() === want);
+  const loose = pool.filter((v) => (v.lang || '').toLowerCase().startsWith(base));
+
+  // Preferred name in the exact locale beats the platform default, because the
+  // default is often the oldest voice the platform still ships.
+  return exact.find((v) => PREFERRED_VOICE_RE.test(named(v)))
+      || exact.find((v) => v.default)
+      || exact[0]
+      || loose.find((v) => PREFERRED_VOICE_RE.test(named(v)))
+      || loose.find((v) => v.default)
+      || loose[0]
+      || pool.find((v) => v.default)
+      || pool[0];
 }
 // Warm the voice list as soon as this segment loads, so the first thing said
 // in Voice Mode is not the one utterance that finds getVoices() still empty.
