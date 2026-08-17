@@ -23,6 +23,7 @@ module Master
           end
 
           return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+          fill_quota(prompt:, ideas:, constraints:, deadline:)
           synth_result = synthesize(prompt:, ideas:, critiques:, constraints:)
           return synth_result if synth_result.err?
 
@@ -30,6 +31,13 @@ module Master
         end
 
         private
+
+        def fill_quota(prompt:, ideas:, constraints:, deadline:)
+          return if ideas.uniq.size >= Master::Core::Proof::ALTERNATIVES_REQUIRED || Time.now >= deadline
+
+          more = brainstorm(prompt:, prior: ideas, constraints:)
+          ideas.concat(more.value!) if more.ok?
+        end
 
         def run_ideation_cycle(cycle, prompt:, ideas:, critiques:, constraints:, deadline:)
           return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
@@ -57,7 +65,7 @@ module Master
         def brainstorm(prompt:, prior:, constraints:)
           context = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
           constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
-          system_msg = "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix)."
+          system_msg = "Generate at least 8 distinct approaches. One idea per bullet (- prefix)."
           raw = @agent.ask_once(<<~PROMPT, system: system_msg)
           #{constraint_prefix}#{context}Generate ideas for: #{prompt}
         PROMPT

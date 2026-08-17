@@ -57,6 +57,25 @@ class FoldDeliberationTest < Minitest::Test
     assert_instance_of Master::Core::Verdict::Allow, verdict
   end
 
+  def test_fourteen_approaches_do_not_satisfy_ideation
+    memory = Master::Core::Memory.new(risk: :medium)
+    memory.proof.mark_ideation_complete!(approaches: 14)
+    law = Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
+    verdict = law.admit(Master::Core::Effect.write("a.rb", "x"), memory)
+
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_match(/ideation/, verdict.reason)
+  end
+
+  def test_fifteen_approaches_satisfy_ideation
+    memory = Master::Core::Memory.new(risk: :medium)
+    memory.proof.mark_ideation_complete!(approaches: 15)
+    law = Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
+    verdict = law.admit(Master::Core::Effect.write("a.rb", "x"), memory)
+
+    assert_instance_of Master::Core::Verdict::Allow, verdict
+  end
+
   def test_fold_risk_assess_bumps_ship_to_high
     assessment = Master::CLI::FoldRisk.assess("commit the auth fix")
     assert_equal :high, assessment[:risk]

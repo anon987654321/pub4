@@ -18,6 +18,14 @@ module Master::Core
       def watches?(verb) = verbs.include?(verb)
     end
 
+    REPO_TREES = %w[MASTER RAILS OPENBSD STUDIO bin dotfiles].freeze
+    FORBIDDEN_BASENAMES = %w[summary.md analysis.md report.md todo.md notes.md changelog.md].freeze
+    TWO_HATS_LINES = 200
+    SCOPE_TREES = 3
+    SCOPE_SECONDS = 1_800
+    FEAT_RX = /\b(feat|fix|add|ship|implement)\b/i
+    REFACTOR_RX = /\b(refactor|cleanup|clean up|restructure|rewrite)\b/i
+
     # verify is the scanner, supplied rather than required: the spine reaches
     # nothing in lib/. It takes (path:, content:) and answers what the write
     # introduces, so the design law judges a write on the way in, like every
@@ -59,8 +67,11 @@ module Master::Core
         structured_exec_rule,
         safe_exec_rule(veto),
         batch_delete_rule,
+        forbidden_file_rule,
+        scope_creep_rule,
         evidence_for_done_rule,
         git_commit_evidence_rule,
+        two_hats_rule,
         council_for_done_rule,
         ideation_before_write_rule,
       ]
@@ -158,6 +169,56 @@ module Master::Core
       Rule.new(id: :batch_delete, verbs: %i[exec], judge: lambda { |effect, _memory|
         reason = batch_delete_reason(effect.args[:argv])
         reason ? Verdict::Block.new(reason:, by: :batch_delete) : nil
+      })
+    end
+
+    def self.forbidden_file_reason(path)
+      name = File.basename(path.to_s).downcase
+      return unless FORBIDDEN_BASENAMES.include?(name)
+
+      "forbidden file: #{name} — deliver code, not a sidecar markdown"
+    end
+
+    def self.forbidden_file_rule
+      Rule.new(id: :forbidden_file, verbs: %i[write], judge: lambda { |effect, _memory|
+        reason = forbidden_file_reason(effect.args[:path])
+        reason ? Verdict::Block.new(reason:, by: :forbidden_file) : nil
+      })
+    end
+
+    def self.scope_creep_reason(path, proof)
+      tree = path.to_s.split("/").find { |part| REPO_TREES.include?(part) }
+      trees = Array(proof.scope[:trees]) | [tree].compact
+      return "scope creep: #{trees.size} trees (#{trees.join(", ")})" if trees.size >= SCOPE_TREES
+
+      elapsed = proof.scope[:elapsed_s].to_f
+      return unless elapsed >= SCOPE_SECONDS && tree && proof.scope[:trees].any? && !proof.scope[:trees].include?(tree)
+
+      "scope creep: #{(elapsed / 60).to_i} min tangent into #{tree}"
+    end
+
+    def self.scope_creep_rule
+      Rule.new(id: :scope_creep, verbs: %i[write], judge: lambda { |effect, memory|
+        reason = scope_creep_reason(effect.args[:path], memory.proof)
+        reason ? Verdict::Block.new(reason:, by: :scope_creep) : nil
+      })
+    end
+
+    def self.two_hats_reason(message, lines)
+      return if lines.to_i <= TWO_HATS_LINES
+
+      text = message.to_s
+      return unless text.match?(FEAT_RX) && text.match?(REFACTOR_RX)
+
+      "two hats: #{lines} lines mix a feature/fix with a refactor"
+    end
+
+    def self.two_hats_rule
+      Rule.new(id: :two_hats, verbs: %i[git], judge: lambda { |effect, memory|
+        next nil unless effect.args[:operation].to_s.to_sym == :commit
+
+        reason = two_hats_reason(effect.args[:message], memory.proof.scope[:write_lines])
+        reason ? Verdict::Block.new(reason:, by: :two_hats) : nil
       })
     end
 
@@ -278,7 +339,8 @@ module Master::Core
     # its count was the idiom, and Memory's was the design.
     private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule,
                          :safe_exec_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
-                         :operands_after_flags, :git_clean_all?, :evidence_for_done_rule,
+                         :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
+                         :two_hats_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :council_for_done_rule,
                          :ideation_before_write_rule, :ruby_syntax_error, :safe_rx
   end

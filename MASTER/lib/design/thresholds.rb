@@ -52,6 +52,10 @@ module Master
           dig("typography", "line_length", "ideal_ch", root:) || 66
       end
 
+      def self.micro_typography(root: Master::ROOT)
+        dig("typography", "micro", root:) || {}
+      end
+
       def self.eight_px_rhythm(root: Master::ROOT)
         dig("pixel_perfection", "eight_px_rhythm", root:) ||
           dig("layout_rules", "grid", "allowed_spacing_px", root:) ||

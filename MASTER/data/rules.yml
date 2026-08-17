@@ -3202,6 +3202,30 @@ design_rules:
         Prefer hanging-punctuation on prose; hang list markers and quote rules
         into the margin so the text edge reads true. Wire max-width: var(--measure)
         (66ch) on continuous reading surfaces, not on dense social chrome.
+    micro:
+      orphans: 3
+      widows: 3
+      hyphens: auto
+      hyphenate_limit_chars: [6, 3, 2]
+      hyphenate_limit_lines: 2
+      default_features: [kern, liga, clig, onum, pnum]
+      contextual_features:
+        abbreviations: [smcp, c2sc]
+        tables: [lnum, tnum]
+        all_caps: [case]
+      body_numerals: oldstyle-nums
+      table_numerals: tabular-nums
+      river_word_spacing_em: -0.05
+      justify_only_with_hyphens: true
+      justify_never_on_mobile: true
+      quotes: locale
+      norwegian_guillemets: true
+      print_margins: [2, 3, 4, 6]
+      void_target: 0.70
+      action: >
+        Enable OpenType kern/liga/clig/onum/pnum on prose; oldstyle-nums in
+        body, tabular-nums in tables; hyphens auto with 6/3/2 limits;
+        orphans/widows 3. Reader is Design::Thresholds.micro_typography.
     accessibility:
       normal_text_contrast: 7.0
       large_text_contrast: 4.5
@@ -3563,6 +3587,8 @@ design_rules:
       enforce: [geometry_type worn_type.profiles]
     - id: hanging_list_markers
       enforce: [geometry_type check_hanging]
+    - id: micro_typography
+      enforce: [Design::Thresholds.micro_typography]
     - id: touch_target
       enforce: [TOUCH_TARGET_MIN]
     - id: eight_px_rhythm
@@ -3584,6 +3610,11 @@ design_rules:
     - touch targets below 44px
     - centered prose longer than three lines
     - justified text without hyphenation
+    - prose missing orphans/widows 3
+    - hyphenation without hyphenate-limit-chars 6 3 2
+    - prose missing default OpenType kern/liga/clig/onum/pnum
+    - body numerals not oldstyle-nums
+    - tables missing tabular/lining numerals
     - heading hierarchy ratios below 1.2
     - font weight differences below 200
     - decorative chart ink that does not encode data

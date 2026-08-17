@@ -35,6 +35,10 @@ module Master
         end
 
         def verdict(path:, content:)
+          if (reason = Master::Core::Constitution.forbidden_file_reason(path))
+            return Verdict.new(introduced: [{ rule: :forbidden_file, line: 0, message: reason, severity: :error }])
+          end
+
           before = tally(findings(path:, content: (File.read(path) if File.exist?(path))))
           Verdict.new(introduced: findings(path:, content:).select { |f| (before[key(f)] -= 1).negative? })
         rescue StandardError => e

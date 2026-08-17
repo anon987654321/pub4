@@ -832,6 +832,9 @@ guidance:
 # Counts every line, comments included — the same unit as lint:spine, and so
 # the same unresolved tension with [DENSITY], which deliberately counts code
 # lines only. Whoever settles that for lint:spine settles it for both.
+#
+# data/rules.yml is a file budget, not a directory. The Ruby loc_budget reader
+# counts a file path as that file's lines so this key cannot regrow unseen.
 loc_budgets:
   lib/cli: 8924
   lib/review: 12651
@@ -844,3 +847,4 @@ loc_budgets:
   lib/rails: 1158
   lib/pub4: 412
   core: 916
+  data/rules.yml: 4407

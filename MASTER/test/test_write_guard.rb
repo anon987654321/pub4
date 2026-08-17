@@ -49,6 +49,13 @@ class WriteGuardTest < Minitest::Test
     refute_predicate @guard.verdict(path: path, content: "# frozen_string_literal: true\n\ndef work = 1\n"), :blocked?
   end
 
+  def test_sidecar_markdown_is_blocked_even_when_clean
+    verdict = @guard.verdict(path: path("summary.md"), content: "# notes\n")
+
+    assert_predicate verdict, :blocked?
+    assert_match(/forbidden file/, verdict.reason)
+  end
+
   # Semantic rules are 126 of the 225 and cost an LLM call per file. A per-write
   # gate would pay that twice for every write, so the guard holds the mechanical
   # half and the per-turn pass holds the rest.

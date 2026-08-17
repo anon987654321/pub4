@@ -463,6 +463,11 @@ namespace :lint do
     sh RbConfig.ruby, File.join(__dir__, "tools", "scan_coverage.rb")
   end
 
+  desc "Named capabilities must not disappear vs origin/main"
+  task :capability do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "capability_inventory.rb")
+  end
+
   desc "One loader per data file — a second direct reader is a second implementation"
   task :reader_singularity do
     sh RbConfig.ruby, File.join(__dir__, "tools", "reader_singularity.rb")
@@ -492,7 +497,8 @@ end
 desc "Full audit: constitution + selftest + the lint:* gates"
 task audit: %i[constitution selftest studio lint:frozen lint:data_singularity lint:spine lint:autoload
                lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
-               lint:do_not_touch lint:instruments lint:constant_collisions] do
+               lint:do_not_touch lint:instruments lint:constant_collisions
+               lint:capability] do
   puts "audit: passed"
 end
 
@@ -566,9 +572,13 @@ task :loc_budget do
 
   over = budgets.filter_map do |dir, budget|
     path = File.join(__dir__, dir)
-    next unless File.directory?(path)
+    actual = if File.file?(path)
+      File.foreach(path).count
+    elsif File.directory?(path)
+      Dir.glob(File.join(path, "**", "*.rb")).sum { |file| File.foreach(file).count }
+    end
+    next unless actual
 
-    actual = Dir.glob(File.join(path, "**", "*.rb")).sum { |file| File.foreach(file).count }
     puts "loc_budget: #{dir} #{actual}/#{budget}"
     [dir, actual, budget] if actual > budget
   end

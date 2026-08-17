@@ -87,4 +87,46 @@ class TestKernelSpine < Minitest::Test
 
     refute memory.proof.proved?
   end
+
+  def test_sidecar_markdown_write_is_blocked
+    effect = Master::Core::Effect.write("notes.md", "# leftover\n")
+    verdict = constitution.admit(effect, Master::Core::Memory.new)
+
+    assert_kind_of Master::Core::Verdict::Block, verdict
+    assert_equal :forbidden_file, verdict.by
+  end
+
+  def test_single_markdown_that_is_not_forbidden_is_allowed
+    assert_nil Master::Core::Constitution.forbidden_file_reason("README.md")
+    assert_nil Master::Core::Constitution.forbidden_file_reason("MASTER/lib/core.rb")
+  end
+
+  def test_third_top_level_tree_is_scope_creep
+    memory = Master::Core::Memory.new
+    memory.record(Master::Core::Effect.write("MASTER/a.rb", "x"), Master::Core::Observation.ok("ok"))
+    memory.record(Master::Core::Effect.write("RAILS/b.rb", "x"), Master::Core::Observation.ok("ok"))
+    verdict = constitution.admit(Master::Core::Effect.write("OPENBSD/c.rb", "x"), memory)
+
+    assert_kind_of Master::Core::Verdict::Block, verdict
+    assert_equal :scope_creep, verdict.by
+  end
+
+  def test_two_hats_blocks_a_mixed_large_commit
+    memory = Master::Core::Memory.new
+    memory.record(Master::Core::Effect.write("MASTER/a.rb", "x\n" * 201), Master::Core::Observation.ok("ok"))
+    %i[test_pass scan_clean code_review].each do |kind|
+      memory.record(Master::Core::Effect.exec(["true"], evidence: kind), Master::Core::Observation.ok("ok"))
+    end
+    verdict = constitution.admit(
+      Master::Core::Effect.git(:commit, message: "fix the bug and refactor the helper"),
+      memory,
+    )
+
+    assert_kind_of Master::Core::Verdict::Block, verdict
+    assert_equal :two_hats, verdict.by
+  end
+
+  def test_two_hats_allows_a_small_mixed_message
+    assert_nil Master::Core::Constitution.two_hats_reason("fix the bug and refactor the helper", 20)
+  end
 end

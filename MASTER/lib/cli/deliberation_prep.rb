@@ -43,7 +43,7 @@ module Master
           memory.note(:approach, "#{index + 1}. #{idea}")
         end
         memory.note(:chosen, payload[:final].to_s)
-        memory.proof.mark_ideation_complete!
+        memory.proof.mark_ideation_complete!(approaches: Array(payload[:ideas]).size)
         memory
       end
 

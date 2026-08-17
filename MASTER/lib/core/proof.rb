@@ -21,6 +21,7 @@ module Master::Core
     # evidence_scoring the lib spine still reads until that spine is severed.
     SCORING = { test_pass: 35, scan_clean: 25, code_review: 20, log_analysis: 10, profiling_data: 10 }.freeze
     PASS_THRESHOLD = 80
+    ALTERNATIVES_REQUIRED = 15
 
     attr_reader :risk
 
@@ -29,6 +30,9 @@ module Master::Core
       @evidence = []
       @ideation_complete = false
       @council_pass = false
+      @write_trees = []
+      @write_lines = 0
+      @started_at = Time.now
     end
 
     def council_required? = %i[high critical].include?(@risk)
@@ -36,7 +40,13 @@ module Master::Core
     def ideation_satisfied? = !ideation_required? || @ideation_complete
     def proved? = evidence_score >= PASS_THRESHOLD
 
-    def mark_ideation_complete! = tap { @ideation_complete = true }
+    def mark_ideation_complete!(approaches: nil)
+      tap { @ideation_complete = approaches.nil? || approaches.to_i >= ALTERNATIVES_REQUIRED }
+    end
+
+    def scope
+      { trees: @write_trees.dup, elapsed_s: Time.now - @started_at, write_lines: @write_lines }
+    end
 
     def mark_council_pass!(detail: "council pass")
       @council_pass = true
@@ -45,6 +55,7 @@ module Master::Core
     end
 
     def record_evidence(effect, observation)
+      remember_write(effect) if effect.verb == :write
       return unless effect.verb == :exec && observation.ok?
 
       kind = effect.args[:evidence].to_s.to_sym
@@ -58,5 +69,11 @@ module Master::Core
     # count back where this split started.
     def ideation_required? = %i[medium high critical].include?(@risk)
     def evidence_score = @evidence.select(&:ok).sum(&:score)
+
+    def remember_write(effect)
+      tree = effect.args[:path].to_s.split("/").find { |part| Constitution::REPO_TREES.include?(part) }
+      @write_trees << tree if tree
+      @write_lines += effect.args[:content].to_s.lines.size
+    end
   end
 end

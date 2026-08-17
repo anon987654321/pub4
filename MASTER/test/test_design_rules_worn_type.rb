@@ -61,4 +61,16 @@ class TestDesignRulesWornType < Minitest::Test
     assert_equal 66, Master::Design::Thresholds.measure_ideal_ch(root: Master::ROOT)
     assert_includes @data.dig("typography", "line_height", "allowed"), 1.25
   end
+
+  def test_micro_typography_tokens_have_a_reader
+    micro = Master::Design::Thresholds.micro_typography(root: Master::ROOT)
+    assert_equal 3, micro.fetch("orphans")
+    assert_equal 3, micro.fetch("widows")
+    assert_equal [6, 3, 2], micro.fetch("hyphenate_limit_chars")
+    assert_equal "oldstyle-nums", micro.fetch("body_numerals")
+    assert_includes micro.fetch("default_features"), "kern"
+    assert_in_delta 0.7, micro.fetch("void_target"), 0.001
+    assert_includes File.read(File.join(Master::ROOT, "data", "rules.yml")),
+                    "Design::Thresholds.micro_typography"
+  end
 end
