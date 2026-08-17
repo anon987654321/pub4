@@ -38,6 +38,9 @@ face_runtime_deferred:
   - face_minimal_ui.js
   - face_loops_music.js
   - face_loops_nudge.js
+  # Opt-in semantic endpointing. The module is small; the 21MB it can fetch
+  # (WASM runtime + ONNX model) is not fetched until it is switched on.
+  - smart_turn.js
 
 # Loaded by public/face_deferred_loader.js once it sees primer:ready — a second,
 # independent layer from the core face runtime.

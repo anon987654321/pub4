@@ -274,17 +274,62 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     // A completed segment is a clause boundary — the place a listener says
     // "mm". Acknowledge it.
     if (final.trim()) backchannel();
+    // Bumped on every result, so a decision that awaited Smart Turn can tell
+    // whether the person carried on talking while it was thinking.
+    _sttGeneration += 1;
     if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
-    sttSilenceTimer = setTimeout(() => {
-      if (sttPartial) {
-        const t2 = sttPartial; sttPartial = ''; sttFinalSoFar = ''; State.sttActive = false;
-        try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
-        if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
-        _voiceModeRearmFails = 0;
-        sendMessage(t2);
-      }
-    }, quietMsFor(sttPartial));
+    sttSilenceTimer = setTimeout(commitOrExtend, quietMsFor(sttPartial));
   };
+
+  let _sttGeneration = 0;
+  async function commitOrExtend() {
+    if (!sttPartial) return;
+    const generation = _sttGeneration;
+
+    if (await smartTurnSaysContinue()) {
+      // Speech during the await already restarted the timer; leave it alone.
+      if (generation !== _sttGeneration) return;
+      _smartTurnExtensions += 1;
+      if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
+      sttSilenceTimer = setTimeout(commitOrExtend, SMART_TURN_EXTRA_MS);
+      return;
+    }
+    if (generation !== _sttGeneration || !sttPartial) return;
+
+    const t2 = sttPartial;
+    sttPartial = ''; sttFinalSoFar = ''; State.sttActive = false;
+    _smartTurnExtensions = 0;
+    try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
+    if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
+    _voiceModeRearmFails = 0;
+    sendMessage(t2);
+  }
+
+  // Smart Turn refines the wait rather than replacing it. The words and the
+  // sound answer different halves of the same question, and the words are the
+  // half that always works — this one needs a second microphone stream, an
+  // AudioWorklet and 21MB of model, any of which can be missing.
+  //
+  // It runs when the linguistic timer has already elapsed, so it costs ~15ms on
+  // top of a decision that was about to be made anyway, and never delays the
+  // common case. A confident "still going" buys one more window; anything else
+  // commits, because the timer had already decided to.
+  const SMART_TURN_EXTRA_MS = 900;
+  const SMART_TURN_MAX_EXTENSIONS = 2;
+  let _smartTurnExtensions = 0;
+  async function smartTurnSaysContinue() {
+    if (!window.MASTER_SMART_TURN?.smartTurnEnabled?.()) return false;
+    if (_smartTurnExtensions >= SMART_TURN_MAX_EXTENSIONS) return false;
+    try {
+      const p = await window.MASTER_SMART_TURN.predictEndpoint();
+      if (p === null || p === undefined) return false;
+      emitTtsEvent('stt:smart_turn', { p: Number(p.toFixed(3)) });
+      return p < window.MASTER_SMART_TURN.COMPLETE_THRESHOLD;
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("face_runtime:smart_turn", err);
+      return false;
+    }
+  }
   recognition.onend = () => {
     State.sttActive = false; State.sttDuck = 0;
     if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
@@ -344,6 +389,9 @@ function enterVoiceMode(opts = {}) {
   rootBody.dataset.voiceMode = '1';
   if (uiStatus) uiStatus.textContent = 'listening — say "stop listening" to exit';
   if (!opts.fromWake) beep(1100, 0.05);
+  // Fetch the model and open the second mic stream now rather than on the
+  // first pause, so the download is not paid inside a decision.
+  window.MASTER_SMART_TURN?.warmUp?.().catch((err) => window.MASTER_LOG?.warn?.("face_runtime:smart_turn_warm", err));
   startSTT();
 }
 function exitVoiceMode(opts = {}) {
@@ -351,6 +399,10 @@ function exitVoiceMode(opts = {}) {
   State.voiceMode = false;
   delete rootBody.dataset.voiceMode;
   stopSTT();
+  // Close the capture stream too. Leaving it open holds the recording
+  // indicator on after the person said stop listening, which is the one
+  // thing a second microphone stream must never do.
+  window.MASTER_SMART_TURN?.releaseMic?.();
   // Any exit that isn't the device-unreliable safety bail is a user choice —
   // remember it so we don't force the mic back on next reload.
   if (opts.reason !== 'unreliable') setVoiceAuto(false);
@@ -1538,6 +1590,12 @@ function _deferFaceMod(name) {
   // ("/assets/…") can't resolve — same class of bug that blocked the THREE import.
   return new URL(window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`, document.baseURI).href;
 }
+// Smart Turn is opt-in and its assets are 21MB, so the module is imported
+// for its enable check only — nothing is fetched until warmUp() or a
+// prediction actually asks for it.
+import(_deferFaceMod('smart_turn.js'))
+  .then((m) => { window.MASTER_SMART_TURN = m; })
+  .catch((err) => window.MASTER_LOG?.warn?.("face_runtime:smart_turn_import", err));
 await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));
