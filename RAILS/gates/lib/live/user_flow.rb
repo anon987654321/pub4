@@ -172,7 +172,6 @@ module Deploy
       "brgen" => {
         "marketplace cart" => ["#{MP}/controllers/marketplace/carts_controller.rb", "#{MP}/views/marketplace/carts/show.html.erb"],
         "marketplace nav bar" => ["#{MP}/views/marketplace/_nav_bar.html.erb"],
-        "live hyperlocal feed" => %w[app/controllers/live_controller.rb app/views/live/index.html.erb],
         "yep search surface" => %w[../shared/app/assets/stylesheets/_search_yep.scss],
         "payment scaffold or honest stub" => [
           "app/services/marketplace/payments/stripe_checkout.rb",

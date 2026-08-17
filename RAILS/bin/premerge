@@ -1,0 +1,145 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# One command that reproduces what GitHub Actions would run, because nothing
+# runs it automatically.
+#
+# .github/workflows/rails-tests.yml and layout-suite.yml both trigger on
+# workflow_dispatch only. Their own header says why: "GitHub account billing
+# lock prevents job start." So the protection those workflows describe exists
+# and fires only when somebody remembers to fire it, and this session alone
+# found four gates that had silently stopped measuring — affiliate_honesty
+# ERRORED for hours after the files it reads moved, first_screen matched a
+# literal 44px the tree stopped writing, visual_contract passed with no Chrome,
+# and PostsController#feed was a 500 with no test of any kind.
+#
+# The steps here are not a new opinion about what should be checked. They are
+# the two workflows, in order, and a test asserts that they stay that way — see
+# RAILS/test/premerge_mirrors_ci_test.rb. If a workflow gains a step and this
+# does not, that test fails rather than this quietly checking less.
+#
+# The exit codes follow the gate runner rather than a shell's 0/1, for the
+# reason today's exit-3 work exists: a step that could not run is not a step
+# that passed.
+#
+#   0  every step ran and passed
+#   1  a step ran and failed
+#   3  a step could not run at all — nothing is claimed about the tree
+#
+# Usage:
+#   RAILS/bin/premerge              # everything
+#   RAILS/bin/premerge --apps       # per-app bin/ci only
+#   RAILS/bin/premerge --gates      # layout_suite + inventory only
+#   RAILS/bin/premerge --list       # what would run, and skip nothing
+
+require "yaml"
+
+ROOT = File.expand_path("..", __dir__)
+APPS = %w[amber brgen bsdports].freeze
+
+PASSED = :passed
+FAILED = :failed
+BLOCKED = :blocked
+
+def ruby_cmd = [RbConfig.ruby]
+
+def heading(text)
+  puts
+  puts "== #{text}"
+end
+
+# A step names what it needs, so "could not run" is distinguishable from
+# "ran and was fine". Returning BLOCKED is never an error in itself; it is a
+# refusal to report a result nothing measured.
+Step = Struct.new(:name, :group, :run, keyword_init: true)
+
+def app_steps
+  APPS.map do |app|
+    Step.new(name: "#{app}: bin/ci", group: :apps, run: lambda {
+      dir = File.join(ROOT, app)
+      next [BLOCKED, "no #{app}/ directory"] unless File.directory?(dir)
+      next [BLOCKED, "#{app} has no bin/ci"] unless File.file?(File.join(dir, "bin", "ci"))
+
+      ok = system({ "PUB4_CI_APP" => app }, "bundle", "exec", "bin/ci", chdir: dir)
+      ok ? [PASSED, nil] : [FAILED, "bin/ci exited non-zero"]
+    })
+  end
+end
+
+def gate_steps
+  [
+    Step.new(name: "layout_suite (source + fixture gates)", group: :gates, run: lambda {
+      runner = File.join(ROOT, "gates", "runner.rb")
+      next [BLOCKED, "gates/runner.rb is missing"] unless File.file?(runner)
+
+      # GATE_AUTOFIX=0 to match the workflow: a pre-merge check that repairs the
+      # tree while measuring it is measuring a tree that does not exist yet.
+      ok = system({ "GATE_AUTOFIX" => "0" }, *ruby_cmd, runner, "layout_suite")
+      ok ? [PASSED, nil] : [FAILED, "layout_suite reported failures"]
+    }),
+    Step.new(name: "apps.yml inventory", group: :gates, run: lambda {
+      path = File.join(ROOT, "apps.yml")
+      next [BLOCKED, "apps.yml is missing"] unless File.file?(path)
+
+      apps = YAML.safe_load_file(path).fetch("apps")
+      problems = []
+      APPS.each do |name|
+        entry = apps[name]
+        next problems << "missing app #{name}" unless entry
+
+        problems << "#{name} missing port" unless entry["port"]
+        problems << "#{name} missing deploy_script" unless entry["deploy_script"]
+      end
+      ports = apps.values.filter_map { |m| m["port"]&.to_i }
+      problems << "duplicate ports" unless ports.uniq.size == ports.size
+
+      problems.empty? ? [PASSED, nil] : [FAILED, problems.join("; ")]
+    }),
+  ]
+end
+
+def steps_for(groups)
+  (app_steps + gate_steps).select { |s| groups.include?(s.group) }
+end
+
+groups = if ARGV.include?("--apps") then [:apps]
+         elsif ARGV.include?("--gates") then [:gates]
+         else %i[apps gates]
+         end
+
+steps = steps_for(groups)
+
+if ARGV.include?("--list")
+  steps.each { |s| puts "  #{s.group}  #{s.name}" }
+  exit 0
+end
+
+results = steps.map do |step|
+  heading(step.name)
+  outcome, reason = step.run.call
+  [step, outcome, reason]
+end
+
+failed = results.select { |(_, outcome, _)| outcome == FAILED }
+blocked = results.select { |(_, outcome, _)| outcome == BLOCKED }
+passed = results.count { |(_, outcome, _)| outcome == PASSED }
+
+puts
+puts "=" * 60
+failed.each { |(step, _, reason)| puts "FAILED   #{step.name}: #{reason}" }
+blocked.each { |(step, _, reason)| puts "BLOCKED  #{step.name}: #{reason}" }
+
+if failed.any?
+  puts "premerge: #{failed.size} step(s) failed, #{passed} passed"
+  exit 1
+end
+
+if blocked.any?
+  # Not a pass. A step that could not run has measured nothing, and reporting
+  # that as green is the failure this whole file exists to prevent.
+  puts "premerge: #{blocked.size} step(s) could not run — nothing is claimed for them"
+  exit 3
+end
+
+puts "premerge: #{passed} step(s) passed — this is what CI would have run"
+exit 0

@@ -69,7 +69,7 @@ class FileLengthRatchetTest < Minitest::Test
     # asked for, so it now pins one.
     "gates/support/geometry_probe.rb" => 415,
     "amber/app/services/wardrobe_ai.rb" => 319,
-    "gates/lib/live/user_flow.rb" => 314,
+    "gates/lib/live/user_flow.rb" => 313,
     "shared/app/assets/stylesheets/_minimal.scss" => 486,
     "shared/app/assets/stylesheets/_zen_shell.scss" => 486,
     "shared/app/assets/stylesheets/_shell.scss" => 466,

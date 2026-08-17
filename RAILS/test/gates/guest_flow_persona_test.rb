@@ -10,7 +10,7 @@ class GuestFlowPersonaTest < Minitest::Test
   end
 
   def test_capabilities_defined
-    %i[no_auth_wall has_main messenger_compose live_surface marketplace_browse marketplace_cart dating_browse].each do |cap|
+    %i[no_auth_wall has_main messenger_compose marketplace_browse marketplace_cart dating_browse].each do |cap|
       assert Deploy::GuestFlowPersona::CAPABILITIES.key?(cap), "missing capability #{cap}"
     end
   end
@@ -40,7 +40,10 @@ class GuestFlowPersonaTest < Minitest::Test
 
   def test_brgen_probes_cover_guest_open_surfaces
     labels = Deploy::GuestFlowPersona::BRGEN_PROBES.map { |p| p[:label] }
-    %w[home live messenger marketplace marketplace_cart dating].each do |need|
+    # "live" is not here: 76612fd0b folded /live into /nearby/room, so probing
+    # it asserted live-feed markup against a redirect. The capability went with
+    # it -- a rule nothing can reach is a rule that cannot fail.
+    %w[home messenger marketplace marketplace_cart dating].each do |need|
       assert_includes labels, need
     end
   end

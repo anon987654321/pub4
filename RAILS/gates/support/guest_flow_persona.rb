@@ -25,11 +25,6 @@ module Deploy
         require: /messenger-compose|Messages|Start chat|New message/i,
         severity: :hard,
       },
-      live_surface: {
-        principle: "hyperlocal",
-        require: /live-feed|Live|live-compose|Share location|ground rules/i,
-        severity: :hard,
-      },
       marketplace_browse: {
         principle: "catalog_retail",
         require: /navBar|deal-grid|deal-card|Markedsplass|listings/i,
@@ -50,7 +45,9 @@ module Deploy
     # path/host probes for brgen guest-open core
     BRGEN_PROBES = [
       { label: "home", path: "/", host: "brgen.no", capabilities: %i[no_auth_wall has_main] },
-      { label: "live", path: "/live", host: "brgen.no", capabilities: %i[no_auth_wall has_main live_surface] },
+      # /live folded into /nearby/room in 76612fd0b — two hyperlocal surfaces
+      # where one already contained the other. It is a redirect now, so probing
+      # it for live-feed markup asserted against a page that no longer renders.
       { label: "messenger", path: "/conversations", host: "brgen.no", capabilities: %i[no_auth_wall has_main messenger_compose] },
       { label: "messenger_host", path: "/", host: "messenger.brgen.no", capabilities: %i[no_auth_wall messenger_compose] },
       { label: "marketplace", path: "/", host: "markedsplass.brgen.no", capabilities: %i[no_auth_wall marketplace_browse] },
