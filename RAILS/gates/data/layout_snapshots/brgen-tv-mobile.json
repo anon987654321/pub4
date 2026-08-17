@@ -176,9 +176,9 @@
       "key": "#nav_sections",
       "tag": "nav",
       "rect": {
-        "x": 0,
+        "x": 86,
         "y": 0,
-        "w": 390,
+        "w": 219,
         "h": 65
       },
       "color": "#e0e0e0",

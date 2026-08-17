@@ -42,10 +42,14 @@
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  /* Full-bleed now that it IS the page header rather than a panel. max-content
-     was right for a drawer and wrong for permanent chrome: it left the bar
-     ending mid-viewport with the page showing past its edge. */
-  width: 100%;
+  /* auto, not 100%: 100% is the full viewport, and with the inline margins
+     below that made the box wider than what contains it — so its right edge
+     still ran under the theme toggle and the margin bought nothing. auto fills
+     what is left between the two chrome footprints, which is the whole point of
+     the margins.
+     (max-content was the older mistake here, from when this was a drawer: it
+     left the bar ending mid-viewport with the page showing past its edge.) */
+  width: auto;
   padding-block: var(--space-2);
   padding-block-start: calc(var(--space-2) + var(--safe-top));
   /* Leading inset clears the fixed wordmark, which sits above this bar in the
@@ -64,7 +68,15 @@
      unreachable behind the leading edge. `safe center` falls back to flex-start
      exactly then, which is also when the bar becomes a swiper again. */
   --nav-clear: max(var(--brand-mark-inline), var(--chrome-toggle-inline));
-  padding-inline: var(--nav-clear);
+  /* margin, not padding. Padding insets where the content *starts*; it cannot
+     say where the scrolling viewport ends, so once the run overflows — 1208px
+     against a 390px screen — any link can be dragged under the fixed wordmark
+     or the theme toggle. "sign up" was measured at x 315-410 with its centre at
+     362, directly beneath a toggle occupying 337-381: visible, faded by the
+     mask below, and not pressable. The occlusion gate found it on six surfaces.
+     Making the box itself stop short of both controls means no scroll position
+     can put a link under them. */
+  margin-inline: var(--nav-clear);
   justify-content: safe center;
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--brand-mark-inline) var(--space-2xs);

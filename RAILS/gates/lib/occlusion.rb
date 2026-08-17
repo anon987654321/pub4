@@ -32,22 +32,56 @@ module Deploy
           const cls = String(el.className || '').split(/\\s+/).filter(Boolean).slice(0, 2).join('.');
           return el.tagName.toLowerCase() + (el.id ? '#' + el.id : (cls ? '.' + cls : ''));
         };
+        // What part of this element is actually on screen.
+        //
+        // getBoundingClientRect reports where an element is laid out, not where
+        // it is painted. A nav link scrolled past the end of a horizontal
+        // swiper has a rect beyond the scroller's edge: clipped, invisible, and
+        // its "centre" lands on whatever fixed chrome happens to sit there. Six
+        // surfaces reported exactly that. So intersect with every ancestor that
+        // clips, and probe the middle of what survives — which is also the
+        // honest point for an element only half scrolled into view.
+        const visibleRect = (el) => {
+          let box = el.getBoundingClientRect();
+          box = { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
+          for (let p = el.parentElement; p; p = p.parentElement) {
+            const cs = getComputedStyle(p);
+            if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+            const c = p.getBoundingClientRect();
+            box.left = Math.max(box.left, c.left);
+            box.top = Math.max(box.top, c.top);
+            box.right = Math.min(box.right, c.right);
+            box.bottom = Math.min(box.bottom, c.bottom);
+            if (box.right <= box.left || box.bottom <= box.top) return null;
+          }
+          box.left = Math.max(box.left, 0);
+          box.top = Math.max(box.top, 0);
+          box.right = Math.min(box.right, innerWidth);
+          box.bottom = Math.min(box.bottom, innerHeight);
+          return (box.right - box.left >= 2 && box.bottom - box.top >= 2) ? box : null;
+        };
+
         const out = [];
         document.querySelectorAll(SELECTOR).forEach((el) => {
           const r = el.getBoundingClientRect();
           if (r.width < 2 || r.height < 2) return;
 
-          const cs = getComputedStyle(el);
-          if (cs.visibility === 'hidden' || cs.display === 'none') return;
-          if (parseFloat(cs.opacity) === 0) return;
+          // checkVisibility rather than this element's own computed style.
+          // opacity does not inherit, so a control inside a fully transparent
+          // parent computes opacity 1 and still has a rect — it is invisible and
+          // unpressable, and reading only its own style reported every link in
+          // a collapsed panel as occluded. This asks the browser the whole
+          // question, ancestors included.
+          if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true })) return;
           // A control inside a closed dialog, a collapsed panel or an inert
           // region is not on screen to be pressed, and the browser agrees.
           if (el.closest('[hidden], [inert], [aria-hidden="true"]')) return;
 
-          const cx = Math.round(r.left + r.width / 2);
-          const cy = Math.round(r.top + r.height / 2);
-          // Off-viewport centres cannot be probed; elementFromPoint is defined
-          // in terms of the viewport, not the document.
+          const vis = visibleRect(el);
+          if (!vis) return;
+
+          const cx = Math.round((vis.left + vis.right) / 2);
+          const cy = Math.round((vis.top + vis.bottom) / 2);
           if (cx < 0 || cy < 0 || cx >= innerWidth || cy >= innerHeight) return;
 
           const hit = document.elementFromPoint(cx, cy);
