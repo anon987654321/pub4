@@ -216,6 +216,34 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     const said = normaliseHeard(heard);
     return said.length > 0 && spoken.includes(said);
   }
+  // Length alone had the turn backwards in both directions. A refusal is short
+  // -- "no wait" is seven characters, under the floor, so the one thing a person
+  // says when they need the sentence to stop was the one thing that did not stop
+  // it. An agreement is long -- "yeah yeah okay" is fourteen, over the floor, so
+  // signalling attention cut the sentence off. Both are the same mistake: the
+  // floor measures effort, and what matters is what was meant.
+  //
+  // So the two ends are named and the floor keeps only the middle, where it is
+  // a fair proxy: a fragment too short to be a real attempt is bleed.
+  const BARGE_IN_STOP_RE = /^(?:no|nope|nei|wait|vent|hold|stop|stopp|hey|hei|sorry|unnskyld|shut)\b/;
+  const BACKCHANNEL_WORDS = new Set([
+    'm', 'mm', 'mmm', 'hm', 'hmm', 'mhm', 'uh', 'huh', 'ah', 'oh',
+    'yeah', 'yea', 'yep', 'yes', 'ja', 'jo', 'ok', 'okay', 'okey', 'greit',
+    'right', 'sure', 'true', 'cool', 'nice', 'exactly', 'absolutely',
+    'got', 'it', 'i', 'see', 'akkurat', 'nettopp', 'skjonner',
+  ]);
+  function isBackchannelOnly(said) {
+    const words = said.split(' ').filter(Boolean);
+    return words.length > 0 && words.every((w) => BACKCHANNEL_WORDS.has(w));
+  }
+  // 'stop' yields immediately at any length; 'backchannel' never yields at any
+  // length; 'turn' is the floor as before.
+  function bargeIntent(said) {
+    if (!said) return 'none';
+    if (BARGE_IN_STOP_RE.test(said)) return 'stop';
+    if (isBackchannelOnly(said)) return 'backchannel';
+    return said.length >= BARGE_IN_MIN_CHARS ? 'turn' : 'none';
+  }
   // A backchannel is the "mm" a listener gives while the other person is still
   // talking: it signals attention without taking the turn. MASTER gave none —
   // the face held still until the whole utterance was committed, so the
@@ -241,10 +269,14 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   function bargeInIfSpeaking(heard) {
     if (!tts.playing && !tts.loading) return;
     const said = normaliseHeard(heard);
-    if (said.length < BARGE_IN_MIN_CHARS) return;
+    // Before intent, not after: a stop word yields at any length now, and "no"
+    // is exactly what the mic picks up out of MASTER saying "no, that path is
+    // closed". Echo has to be excluded first or the sentence interrupts itself.
     if (speechIsEchoOfSelf(said)) return;
+    const intent = bargeIntent(said);
+    if (intent === 'none' || intent === 'backchannel') return;
 
-    emitTtsEvent('tts:barge_in', { heard: said.slice(0, 40) });
+    emitTtsEvent('tts:barge_in', { heard: said.slice(0, 40), intent });
     ttsSkip();
   }
 
