@@ -13,7 +13,7 @@ module Deploy
   class DesignMetricsGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    MASTER_RULES = File.join(ROOT, "MASTER", "data", "design_rules.yml")
+    MASTER_RULES = File.join(ROOT, "MASTER", "data", "rules.yml")
     TOKENS = File.join(RAILS, "shared", "design_tokens.yml")
     APPS = %w[brgen amber bsdports shared].freeze
 
@@ -43,10 +43,10 @@ module Deploy
     def run
       @result = GateResult.new
       unless File.file?(MASTER_RULES)
-        @result.fail("design_metrics: missing MASTER/data/design_rules.yml")
+        @result.fail("design_metrics: missing MASTER/data/rules.yml")
         return @result
       end
-      @rules = YAML.safe_load_file(MASTER_RULES)
+      @rules = (YAML.safe_load_file(MASTER_RULES, aliases: true) || {})["design_rules"] || {}
       @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
 
       check_rules_floor

@@ -21,7 +21,7 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
     MASTER = File.join(ROOT, "MASTER")
-    DESIGN_RULES = File.join(MASTER, "data", "design_rules.yml")
+    DESIGN_RULES = File.join(MASTER, "data", "rules.yml")
     PRINCIPLE_MAP = File.join(MASTER, "data", "principle_map.yml")
     WIRING_NOTES = File.join(RAILS_ROOT, "shared", "WIRING_NOTES.md")
 
@@ -191,10 +191,10 @@ module Deploy
     private
 
     def load_master_context
-      @design_rules = File.file?(DESIGN_RULES) ? YAML.safe_load_file(DESIGN_RULES) : {}
+      @design_rules = ((YAML.safe_load_file(DESIGN_RULES, aliases: true) if File.file?(DESIGN_RULES)) || {})["design_rules"] || {}
       @principle_map = File.file?(PRINCIPLE_MAP) ? YAML.safe_load_file(PRINCIPLE_MAP) : {}
       unless File.file?(DESIGN_RULES)
-        @result.fail("user_flow: missing MASTER/data/design_rules.yml")
+        @result.fail("user_flow: missing MASTER/data/rules.yml")
       end
       unless File.file?(PRINCIPLE_MAP)
         @result.fail("user_flow: missing MASTER/data/principle_map.yml")

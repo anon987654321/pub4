@@ -6,7 +6,7 @@ require "set"
 module Pub4
   # Validates every spacing-tagged token in design_tokens.yml and the shared
   # _tokens.scss/_dialect_tokens.scss custom properties against MASTER's own
-  # design_rules.yml pixel_perfection.eight_px_rhythm allowlist. Reads that
+  # rules.yml design_rules.pixel_perfection.eight_px_rhythm allowlist. Reads that
   # allowlist from MASTER directly rather than duplicating it, so the two
   # can never drift apart the way _tokens.scss and design_tokens.yml did
   # (the --color-warning bug found 2026-07-21).
@@ -21,7 +21,7 @@ module Pub4
     def run
       rules = load_design_rules
       unless rules
-        warn "rhythm_lint: could not find MASTER/data/design_rules.yml -- skipping"
+        warn "rhythm_lint: could not find MASTER/data/rules.yml -- skipping"
         return true
       end
 
@@ -49,12 +49,12 @@ module Pub4
 
     def load_design_rules
       candidates = [
-        ENV["PUB4_RAILS_ROOT"] && File.join(File.dirname(ENV["PUB4_RAILS_ROOT"]), "MASTER/data/design_rules.yml"),
-        "/home/dev/pub4/MASTER/data/design_rules.yml",
-        File.expand_path("../../../../MASTER/data/design_rules.yml", __dir__),
+        ENV["PUB4_RAILS_ROOT"] && File.join(File.dirname(ENV["PUB4_RAILS_ROOT"]), "MASTER/data/rules.yml"),
+        "/home/dev/pub4/MASTER/data/rules.yml",
+        File.expand_path("../../../../MASTER/data/rules.yml", __dir__),
       ].compact
       path = candidates.find { |c| File.readable?(c) }
-      path && YAML.safe_load_file(path)
+      path && (YAML.safe_load_file(path, aliases: true) || {})["design_rules"]
     end
 
     def design_tokens_path

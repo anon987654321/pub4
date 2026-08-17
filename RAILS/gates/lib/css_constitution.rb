@@ -11,7 +11,7 @@ module Deploy
   class CssConstitutionGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    MASTER_DESIGN = File.join(ROOT, "MASTER", "data", "design_rules.yml")
+    MASTER_DESIGN = File.join(ROOT, "MASTER", "data", "rules.yml")
     APPS = %w[brgen amber bsdports shared].freeze
 
     PEN_ALLOW = %r{(?:^|/)(?:_search_yep|_jsfiddle_chrome|_marketplace_nav_bar|_marketplace_animated_logo)\.scss\z}
@@ -86,7 +86,7 @@ module Deploy
 
     def run_once
       @result = GateResult.new
-      @design = File.file?(MASTER_DESIGN) ? YAML.safe_load_file(MASTER_DESIGN) : {}
+      @design = ((YAML.safe_load_file(MASTER_DESIGN, aliases: true) if File.file?(MASTER_DESIGN)) || {})["design_rules"] || {}
       check_tap_token
 
       files = css_files

@@ -3,11 +3,11 @@
 require "yaml"
 
 module Deploy
-  # Worn-type contracts. design_rules.yml worn_type is the law; this module
+  # Worn-type contracts. rules.yml design_rules.worn_type is the law; this module
   # is the reader. A profile that exists only in YAML is inert — MASTER
   # test_design_rules_worn_type.rb fails if a profile name is missing here.
   module GeometryType
-    RULES = File.join(File.expand_path("../../..", __dir__), "MASTER", "data", "design_rules.yml")
+    RULES = File.join(File.expand_path("../../..", __dir__), "MASTER", "data", "rules.yml")
 
     LABEL_PROFILES = {
       "marketplace" => "catalog", "marketplace_cart" => "catalog",
@@ -36,7 +36,7 @@ module Deploy
     end
 
     def rules
-      @rules ||= File.file?(RULES) ? (YAML.safe_load_file(RULES) || {}) : {}
+      @rules ||= ((YAML.safe_load_file(RULES, aliases: true) if File.file?(RULES)) || {})["design_rules"] || {}
     end
 
     def worn

@@ -19,7 +19,7 @@ module Deploy
   class GeometryGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    MASTER_RULES = File.join(ROOT, "MASTER", "data", "design_rules.yml")
+    MASTER_RULES = File.join(ROOT, "MASTER", "data", "rules.yml")
     TOKENS = File.join(RAILS_ROOT, "shared", "design_tokens.yml")
 
     # Controls whose failure costs the user the interaction outright. Everything
@@ -50,7 +50,7 @@ module Deploy
 
     def run
       @result = Result.new
-      @rules = File.file?(MASTER_RULES) ? YAML.safe_load_file(MASTER_RULES) : {}
+      @rules = ((YAML.safe_load_file(MASTER_RULES, aliases: true) if File.file?(MASTER_RULES)) || {})["design_rules"] || {}
       @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
       @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
       @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f

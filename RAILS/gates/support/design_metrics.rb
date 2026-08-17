@@ -3,7 +3,7 @@
 require "set"
 
 module Deploy
-  # Pure-Ruby design measurements against MASTER/data/design_rules.yml.
+  # Pure-Ruby design measurements against MASTER/data/rules.yml design_rules.
   # No browser required. Used by DesignMetricsGate + unit tests.
   module DesignMetrics
     module_function
