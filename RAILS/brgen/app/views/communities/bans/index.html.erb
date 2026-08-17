@@ -1,10 +1,10 @@
 <% content_for :title, t("community.bans") %>
 
 <div class="page-header" role="banner">
-  <div>
+  <hgroup>
     <p><%= link_to @community.name, community_path(@community) %></p>
     <%= tag.h1 t("community.bans") %>
-  </div>
+  </hgroup>
   <%= link_to t("community.mod_queue"), community_moderation_index_path(@community), class: "btn btn-ghost btn-sm" %>
 </div>
 

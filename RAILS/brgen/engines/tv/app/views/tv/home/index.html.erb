@@ -1,10 +1,10 @@
 <% content_for :title, t("tv.home_title") %>
 
 <div class="page-header" role="banner" aria-label="TV header" data-visitor-orientation>
-  <div>
+  <hgroup>
     <%= tag.h1 t("tv.home_title") %>
     <p><%= t("tv.home_blurb") %></p>
-  </div>
+  </hgroup>
   <div>
     <%# The other shape of this page: no choosing, just the next thing. %>
     <%= link_to t("tv.feed.title"), feed_path, class: "btn" %>

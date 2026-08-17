@@ -2,9 +2,9 @@
 
 <%= turbo_frame_tag "notifications" do %>
   <div class="page-header" role="banner" aria-label="<%= t("notifications.title", default: "Notifications") %>">
-    <div>
+    <hgroup>
       <%= tag.h1 t("notifications.title", default: "Notifications") %>
-    </div>
+    </hgroup>
     <% unread = @notifications.count { |n| !n.read? } %>
     <% if unread.positive? %>
       <%= button_to t("notifications.mark_all", default: "Mark all read"), read_all_notifications_path, method: :patch, class: "btn btn-primary", data: { turbo_stream: true } %>

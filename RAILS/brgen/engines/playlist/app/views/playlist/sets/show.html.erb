@@ -2,10 +2,10 @@
 <% content_for :json_ld, json_ld_for(@set, type: :music_playlist) if @set.privacy.blank? || @set.privacy == "public" %>
 
 <div class="page-header" role="banner">
-  <div>
+  <hgroup>
     <p><%= t("playlist.set_kicker") %></p>
     <%= tag.h1 @set.name %>
-  </div>
+  </hgroup>
   <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
     <div class="cluster">
       <%= link_to t("actions.edit"), edit_set_path(@set), class: "btn btn-ghost btn-sm" %>

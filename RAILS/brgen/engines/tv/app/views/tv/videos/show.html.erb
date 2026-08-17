@@ -5,10 +5,10 @@
 <% content_for :og_image, seo_image_url(@video.thumbnail) %>
 
 <div class="page-header" role="banner">
-  <div>
+  <hgroup>
     <p><%= link_to @video.channel.name, channel_path(@video.channel) %></p>
     <%= tag.h1 @video.title %>
-  </div>
+  </hgroup>
   <button class="btn-share" data-controller="share"
           data-share-title-value="<%= @video.title %>"
           data-share-url-value="<%= request.original_url %>"

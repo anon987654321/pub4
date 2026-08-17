@@ -3,10 +3,10 @@
 
 <section data-controller="filter" role="region" aria-label="<%= t("wardrobe.items_region") %>">
   <header role="banner" aria-label="<%= t("wardrobe.header") %>">
-    <div>
+    <hgroup>
       <p><%= t("wardrobe.closet_intelligence") %></p>
       <h1><%= t("pages.wardrobe") %> (<%= @pagy.count %>)</h1>
-    </div>
+    </hgroup>
     <div class="wardrobe-action-groups">
       <nav role="navigation" aria-label="<%= t("wardrobe.primary_actions") %>" class="wardrobe-action-group">
         <%= link_to t("home.add_item"), new_item_path, class: "btn btn--primary" %>

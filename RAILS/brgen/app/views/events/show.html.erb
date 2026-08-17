@@ -4,13 +4,13 @@
 
 <article class="event-detail" role="article">
   <div class="page-header" role="banner">
-    <div>
+    <hgroup>
       <p>
         <time datetime="<%= @event.starts_at.iso8601 %>"><%= l(@event.starts_at, format: :event) %></time>
         <% if @event.ends_at %>–<time datetime="<%= @event.ends_at.iso8601 %>"><%= l(@event.ends_at, format: :event) %></time><% end %>
       </p>
       <%= tag.h1 @event.title %>
-    </div>
+    </hgroup>
     <% if @event.cancelled? %>
       <span class="chip chip--cancelled"><%= t("events.cancelled") %></span>
     <% elsif @event.in_progress? %>

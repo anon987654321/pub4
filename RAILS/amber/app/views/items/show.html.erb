@@ -16,10 +16,10 @@
 
   <div class="luxury-meta">
     <header role="banner" aria-label="<%= t("items.header_label") %>">
-      <div>
+      <hgroup>
         <p><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
         <h1 class="luxury-title"><%= @item.title %></h1>
-      </div>
+      </hgroup>
       <% if @item.spark_joy? %><span class="badge"><%= t("items.sparks_joy") %></span><% end %>
       <% if @item.color.present? %>
         <span class="color-swatch" style="--swatch: <%= wardrobe_color_swatch(@item.color) %>" title="<%= @item.color %>" aria-label="Color <%= @item.color %>"></span>

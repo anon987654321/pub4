@@ -1,10 +1,10 @@
 <% content_for :title, "Style evolution" %>
 
 <header role="banner" aria-label="<%= t("wardrobe.evolution_header") %>">
-  <div>
+  <hgroup>
     <p><%= t("wardrobe.phases_over_time") %></p>
     <%= tag.h1 t("pages.timeline") %>
-  </div>
+  </hgroup>
   <nav role="navigation" aria-label="<%= t("wardrobe.evolution_actions") %>">
     <%= link_to t("pages.analytics"), analytics_wardrobe_items_path, class: "btn" %>
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>

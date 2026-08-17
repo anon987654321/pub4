@@ -2,10 +2,10 @@
 <%= turbo_stream_from "outfits" %>
 
 <header role="banner" aria-label="<%= t("pages.outfits") %>">
-  <div>
+  <hgroup>
     <p><%= t("outfits.style_combinations") %></p>
     <%= tag.h1 t("pages.outfits") %>
-  </div>
+  </hgroup>
   <nav role="navigation" aria-label="<%= t("pages.outfits") %>">
     <%= link_to t("pages.new_outfit"), new_outfit_path, class: "btn" %>
     <%= link_to t("pages.dressing_room", default: "Dressing room"), dressing_room_outfits_path, class: "btn" %>

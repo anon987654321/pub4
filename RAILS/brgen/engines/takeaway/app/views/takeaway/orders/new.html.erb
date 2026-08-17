@@ -1,11 +1,11 @@
 <% content_for :title, t("takeaway.order_from", restaurant: @restaurant.name) %>
 
 <header class="page-header" role="banner" aria-label="<%= t("takeaway.restaurant_header") %>">
-  <div>
+  <hgroup>
     <p><%= @restaurant.cuisine_type %> · <%= @restaurant.city_label %></p>
     <%= tag.h1 t("takeaway.order_from", restaurant: @restaurant.name) %>
     <%= tag.p @restaurant.address %>
-  </div>
+  </hgroup>
 </header>
 
 <article role="article" aria-label="<%= t("takeaway.restaurant_info") %>">
@@ -24,7 +24,7 @@
     <% if @menu_items.any? %>
       <% @menu_items.each do |item| %>
         <article class="grid-menu-row">
-          <div>
+          <hgroup>
             <%= tag.h3 item.name %>
             <% if item.description.present? %>
               <%= tag.p item.description %>
@@ -34,7 +34,7 @@
               <% if item.vegetarian? %> · <%= t("takeaway.vegetarian") %><% end %>
               <% if item.vegan? %> · <%= t("takeaway.vegan") %><% end %>
             </p>
-          </div>
+          </hgroup>
           <div>
             <%= label_tag "takeaway_order_items_#{item.id}", t("takeaway.qty") %>
             <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, id: "takeaway_order_items_#{item.id}", class: "qty-field" %>

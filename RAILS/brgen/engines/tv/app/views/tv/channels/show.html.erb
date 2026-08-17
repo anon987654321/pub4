@@ -2,10 +2,10 @@
 <% content_for :json_ld, json_ld_for(@channel, type: :broadcast_channel) %>
 
 <div class="page-header" role="banner">
-  <div>
+  <hgroup>
     <p><%= t("tv.channel_subtitle", default: "Brgen TV channel") %></p>
     <%= tag.h1 @channel.name %>
-  </div>
+  </hgroup>
   <nav role="navigation">
     <% if authenticated? && Current.user == @channel.user %>
       <%= link_to t("tv.upload_video"), new_channel_video_path(@channel), class: "btn btn-primary btn-sm" %>

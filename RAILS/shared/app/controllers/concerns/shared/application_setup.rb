@@ -9,6 +9,7 @@ module Shared
       include Authentication
       include Shared::PunditAuthorization
       include Shared::PagyPagination
+      include Shared::VisitCounting
       # Rails' automatic helper inclusion only scans the host app's app/helpers/,
       # not pub4-shared's (a separate engine gem) -- see brgen's
       # ApplicationController for the same fix and the full explanation.

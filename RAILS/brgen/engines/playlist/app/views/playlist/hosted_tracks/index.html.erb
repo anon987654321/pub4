@@ -1,10 +1,10 @@
 <% content_for :title, t("playlist.hosted_tracks") %>
 
 <div class="page-header" role="banner">
-  <div>
+  <hgroup>
     <p>Playlist</p>
     <%= tag.h1 t("playlist.hosted_tracks") %>
-  </div>
+  </hgroup>
   <% if authenticated? %>
     <%= link_to "Upload track", new_hosted_track_path, class: "btn btn-primary btn-sm" %>
   <% end %>

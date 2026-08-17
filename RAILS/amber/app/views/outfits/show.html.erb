@@ -1,10 +1,10 @@
 <% content_for :title, @outfit.name %>
 
 <header role="banner" aria-label="Outfit header">
-  <div>
+  <hgroup>
     <p><%= @outfit.context_label.presence || "Outfit" %></p>
     <%= tag.h1 @outfit.name %>
-  </div>
+  </hgroup>
 </header>
 
 <div class="tag-row">

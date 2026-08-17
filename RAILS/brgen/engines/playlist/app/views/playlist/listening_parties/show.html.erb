@@ -2,11 +2,11 @@
 <%= turbo_stream_from @party.stream_name %>
 
 <div class="page-header" role="banner">
-  <div>
+  <hgroup>
     <p><%= t("playlist.listening_party") %></p>
     <%= tag.h1 @set.name %>
     <p><%= t("playlist.join_code") %>: <%= tag.strong @party.join_code %></p>
-  </div>
+  </hgroup>
   <% if @party.host == Current.user %>
     <%= button_to t("playlist.end_party"), set_listening_party_path(@set), method: :delete,
           data: { turbo_confirm: t("playlist.confirm_end_party") }, class: "btn btn-danger btn-sm" %>

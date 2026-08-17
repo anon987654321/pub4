@@ -31,10 +31,10 @@
 >
   <% unless local_assigns[:embedded] %>
 <header class="playlist-top">
-    <div>
+    <hgroup>
       <p class="playlist-top-eyebrow">brgen</p>
       <h1 class="playlist-top-title" itemprop="name"><%= heading %></h1>
-    </div>
+    </hgroup>
     <% if authenticated? %>
       <%= link_to t("playlist.new_playlist"), new_playlist_path, class: "playlist-top-action" %>
     <% end %>

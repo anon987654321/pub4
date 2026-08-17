@@ -1,10 +1,10 @@
 <% content_for :title, t("pages.organize") %>
 
 <header role="banner" aria-label="<%= t("pages.organize") %>">
-  <div>
+  <hgroup>
     <p><%= t("organize.lead") %></p>
     <%= tag.h1 t("pages.organize") %>
-  </div>
+  </hgroup>
   <nav role="navigation" aria-label="<%= t("organize.actions") %>">
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
     <%= link_to t("pages.analytics"), analytics_wardrobe_items_path, class: "btn" %>

@@ -13,7 +13,7 @@
       <%= button_to t("actions.delete"), playlist_path(@playlist), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger btn-sm" %>
     </nav>
 
-    <details class="playlist-details">
+    <details>
       <summary><%= t("playlist.add_track") %></summary>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_tracks_path(@playlist), scope: :playlist_track do |f| %>
@@ -27,7 +27,7 @@
       </div>
     </details>
 
-    <details class="playlist-details">
+    <details>
       <summary><%= t("playlist.import_links") %></summary>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_imports_path(@playlist), method: :post do |f| %>
@@ -37,7 +37,7 @@
       </div>
     </details>
 
-    <details class="playlist-details">
+    <details>
       <summary><%= t("playlist.embed_customize") %></summary>
       <% embed_html = %(<iframe src="#{embed_playlist_url(@playlist)}" loading="lazy" width="100%" height="520"></iframe>) %>
       <%= render "shared/copyable", text: embed_html, label: t("playlist.embed_code") %>
@@ -52,7 +52,7 @@
     </details>
 
     <% if @tracks.any? %>
-      <details class="playlist-details">
+      <details>
         <summary><%= t("playlist.reorder_tracks") %></summary>
         <ol class="playlist-reorder" data-controller="sortable" data-sortable-param-name-value="position">
           <% @tracks.each do |entry| %>
@@ -68,7 +68,7 @@
 
 <% if authenticated? %>
   <% pl_can_manage = Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
-  <details class="playlist-details">
+  <details>
     <summary><%= t("playlist.collaborators_sketches") %></summary>
     <%= render "playlist/shared/collaborators",
           parent: @playlist,

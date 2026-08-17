@@ -1,10 +1,10 @@
 <% content_for :title, t("playlist.sets") %>
 
 <div class="page-header" role="banner" aria-label="<%= t("aria.playlist_sets_header") %>">
-  <div>
+  <hgroup>
     <p><%= t("playlist.sets_subtitle", default: "Local audio collections") %></p>
     <%= tag.h1 t("playlist.sets") %>
-  </div>
+  </hgroup>
   <nav role="navigation" aria-label="<%= t("aria.playlist_set_actions") %>">
     <%= link_to "New set", new_set_path, class: "btn btn-primary btn-sm" if authenticated? %>
   </nav>

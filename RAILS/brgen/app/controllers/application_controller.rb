@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
   include Authentication
   include Shared::PunditAuthorization
   include Shared::PagyPagination
+  include Shared::VisitCounting
   # Rails' automatic helper inclusion (config.action_controller.include_all_helpers)
   # scans the HOST app's app/helpers/, but pub4-shared is mounted as a separate
   # engine gem -- its helpers aren't in that scan path and need an explicit
