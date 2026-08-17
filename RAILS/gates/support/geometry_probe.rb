@@ -544,10 +544,23 @@ module Deploy
       end
     end
 
+    # Pinned so a measurement does not depend on the machine doing the measuring.
+    # amber negotiates its language from Accept-Language and remembers the answer
+    # in the session (LocalizedRequest), so an unpinned probe recorded a Norwegian
+    # page one run and an English one the next -- the whole layout differed, not
+    # only the title, and no amount of re-recording could settle it. English
+    # because that is what the committed baselines already hold.
+    PROBE_HEADERS = { "Accept-Language" => "en-US,en;q=0.9" }.freeze
+
     def self.walk(cdp, surface, width: nil, height: nil)
       w = width || surface.width
       h = height || surface.height
       cdp.viewport(w, h, mobile: w < 500)
+      cdp.headers(PROBE_HEADERS)
+      # A session cookie carried from the previously measured surface is the
+      # other half of the same problem: it outranks Accept-Language, so one page
+      # visited with a stale locale choice re-answers in that language.
+      cdp.clear_cookies
       cdp.navigate(surface.url)
       wait_for_fonts(cdp)
       # Status first. A 403 host-authorization page or a 500 renders a
