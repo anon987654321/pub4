@@ -46,14 +46,14 @@ class Post < ApplicationRecord
   after_commit :federate_creation, on: :create
   after_commit :federate_deletion, on: :destroy
 
-  VOTE_SQL = Arel.sql("SUM(COALESCE(votes.value,0)) DESC, posts.created_at DESC")
-  TOP_SQL  = Arel.sql("SUM(COALESCE(votes.value,0)) DESC")
+  VOTE_SQL = Arel.sql("posts.score DESC, posts.created_at DESC")
+  TOP_SQL  = Arel.sql("posts.score DESC")
   # "hot" = score decayed by age, so it is a live ranking rather than an all-time
   # leaderboard: score/(age_hours + 2). A high-vote post sinks as it ages and a
   # fresh well-received one can surface. julianday keeps it a single SQLite
   # expression (prod is SQLite); the created_at tiebreaker keeps it deterministic.
   HOT_SQL = Arel.sql(
-    "(SUM(COALESCE(votes.value,0)) + 1.0) / " \
+    "(posts.score + 1.0) / " \
     "(((julianday('now') - julianday(posts.created_at)) * 24.0) + 2.0) DESC, " \
     "posts.created_at DESC"
   )
@@ -75,9 +75,9 @@ class Post < ApplicationRecord
       rel.where("communities.id IS NULL OR communities.privacy != ?", "private")
     end
   }
-  scope :hot,    -> { kept.left_joins(:votes).group(:id).order(HOT_SQL) }
+  scope :hot,    -> { kept.order(HOT_SQL) }
   scope :fresh,  -> { kept.order(created_at: :desc) }
-  scope :top,    -> { kept.left_joins(:votes).group(:id).order(TOP_SQL) }
+  scope :top,    -> { kept.order(TOP_SQL) }
   # Geo-stamped Live posts (Jodel layer). Not all posts are Live.
   scope :live,   -> { where.not(latitude: nil).where.not(longitude: nil) }
   scope :search, ->(q) {
