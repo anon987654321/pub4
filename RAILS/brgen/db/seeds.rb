@@ -231,8 +231,14 @@ puts "Marketplace: #{stores.size} stores, #{listings.size} listings, some orders
 
 # --- Dating subapp ---
 num_dating = (35 * SEED_SCALE).clamp(10, 1000)
+# Visible is derived from the photo, not asserted alongside it, the same way
+# Brgen::BergenDemoSeeder derives it. A profile may not be visible without one
+# — a visible profile with no photo sits in the deck as a blank card — and
+# Shared::DemoMedia.skip_attach? is true in the test environment, which is the
+# environment CI seeds in. Asking for visible: true there produced a profile
+# the validation had to refuse, and one refusal aborts the whole seed run.
 dating_profiles = users.sample(num_dating).map do |user|
-  Dating::Profile.create!(
+  profile = Dating::Profile.new(
     user: user,
     bio: Faker::Lorem.paragraph(sentence_count: 3),
     age: rand(22..45),
@@ -240,9 +246,14 @@ dating_profiles = users.sample(num_dating).map do |user|
     looking_for: Dating::Profile::LOOKING_FOR.sample,
     latitude: user.latitude,
     longitude: user.longitude,
-    bydel: %w[Sentrum Nordnes Sandviken Kalfaret].sample,
-    visible: true
+    bydel: %w[Sentrum Nordnes Sandviken Kalfaret].sample
   )
+  Brgen::DemoMedia.attach_remote_postpro!(
+    profile, :photos, seed: "dating-#{user.id}", preset: "portrait", width: 600, height: 900
+  )
+  profile.visible = profile.photos.attached?
+  profile.save!
+  profile
 end
 
 # Generate many likes for popular feel
