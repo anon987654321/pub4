@@ -615,7 +615,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     { action: 'mute', label: 'toggle TTS mute', hint: 'keyboard: t' },
     { action: 'preview', label: 'preview voice', hint: 'play voice blurb' },
     { action: 'shortcuts', label: 'keyboard shortcuts', hint: 'press ?' },
-    { action: 'continuous_stt', label: 'continuous listening', hint: 'STT mode toggle' }
+    { action: 'voice_mode', label: 'hands-free voice mode', hint: 'continuous listening, no mic press' }
   ];
 
   fetch('/chat/skills').then(r => r.json()).then((skills) => {
@@ -654,13 +654,11 @@ document.querySelectorAll('.tool').forEach(btn => {
     if (entry.action === 'mute') { window.MASTERVoice?.toggleMute?.(); return; }
     if (entry.action === 'preview') { window.MASTERVoice?.previewVoice?.(); return; }
     if (entry.action === 'shortcuts') { window.MASTERShortcuts?.open?.(); return; }
-    if (entry.action === 'continuous_stt') {
-      window.MASTER_STT = window.MASTER_STT || { mode: 'ptt' };
-      window.MASTER_STT.mode = window.MASTER_STT.mode === 'continuous' ? 'ptt' : 'continuous';
-      const ui = document.getElementById('ui-status');
-      if (ui) ui.textContent = `stt: ${window.MASTER_STT.mode}`;
-      return;
-    }
+    // Voice Mode is where continuous listening lives — recognition.continuous
+    // with a quiet timer and barge-in. This entry used to set a window.MASTER_STT
+    // flag that nothing read, and print "stt: continuous" into the status line,
+    // so the one visible sign of hands-free was the only part of it that worked.
+    if (entry.action === 'voice_mode') { window.MASTER_FACE?.toggleVoiceMode?.(); return; }
     const text = entry.cmd || '';
     if (!text) return;
     if (input) { input.value = text; input.focus(); }

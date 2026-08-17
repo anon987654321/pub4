@@ -124,10 +124,11 @@ function wakeWordEnabled() {
 let _voiceModeRearmFails = 0;
 let _voiceModeArmedAt = 0;
 
-// Implicit-mic preference: default ON, so a fresh visitor drops into hands-free
-// Voice Mode after the primer tap. A deliberate opt-out ("stop listening" / mic
-// tap / a denied permission) persists so we don't force a hot mic every reload.
-// Off until the visitor has chosen voice mode once. Absent pref means no, not yes.
+// Implicit-mic preference: off until the visitor has chosen Voice Mode once.
+// Absent pref means no, not yes — a cold visitor otherwise met a microphone
+// permission prompt with nothing on screen having asked for one. A deliberate
+// opt-out ("stop listening" / mic tap / a denied permission) persists too, so
+// neither answer forces a hot mic on the next reload.
 //
 // This read was `!== '0'`, so a first-time visitor with no preference stored got
 // true and maybeAutoVoice() opened the microphone 1.2s after the page loaded.
