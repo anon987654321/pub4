@@ -1,6 +1,6 @@
 <div class="sidebar-card newsletter-cta subscribe-box" data-controller="scroll-reveal" data-minimal-reveal>
   <%= tag.h2 local_assigns.fetch(:heading, t("newsletter.heading")) %>
-  <p class="dim"><%= local_assigns.fetch(:blurb, t("newsletter.blurb")) %></p>
+  <p><%= local_assigns.fetch(:blurb, t("newsletter.blurb")) %></p>
   <% if defined?(email_subscriptions_path) %>
     <%= form_with url: email_subscriptions_path, method: :post do |form| %>
       <div class="field mb-8">
@@ -10,11 +10,11 @@
       </div>
       <label class="field--check-label">
         <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1">
-        <span class="dim"><%= t("newsletter.marketing_opt_in") %></span>
+        <%= t("newsletter.marketing_opt_in") %>
       </label>
       <%= form.submit local_assigns.fetch(:button_label, t("newsletter.subscribe")), class: "btn btn-primary btn-sm btn-block" %>
     <% end %>
   <% else %>
-    <p class="dim"><%= t("newsletter.unavailable") %></p>
+    <p><%= t("newsletter.unavailable") %></p>
   <% end %>
 </div>

@@ -12,7 +12,7 @@
           <span class="order-title"><%= order.listing&.title || t("marketplace.orders.listing", default: "Listing") %></span>
         <% end %>
         <span class="order-status chip"><%= order.try(:status) %></span>
-        <time datetime="<%= order.created_at.iso8601 %>" class="dim"><%= time_ago(order.created_at) %></time>
+        <time datetime="<%= order.created_at.iso8601 %>"><%= time_ago(order.created_at) %></time>
       </li>
     <% end %>
   </ul>

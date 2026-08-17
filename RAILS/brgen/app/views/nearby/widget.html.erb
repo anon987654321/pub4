@@ -2,13 +2,13 @@
   <% if @conversation.present? && Current.user.present? %>
     <%= turbo_stream_from @conversation %>
 
-    <div class="nearby-chat-widget-mode dim" data-nearby-chat-target="mode">
+    <div class="nearby-chat-widget-mode" data-nearby-chat-target="mode">
       <% if @located %>
         <strong>#<%= ambient_chat_room_label %></strong>
         <span aria-hidden="true">·</span>
-        <span>~10&nbsp;km</span>
+        ~10&nbsp;km
         <span aria-hidden="true">·</span>
-        <span><%= Current.user.anon_handle %></span>
+        <%= Current.user.anon_handle %>
         <button type="button"
                 class="nearby-chat-widget-linkish"
                 data-action="nearby-chat#locate"
@@ -17,9 +17,9 @@
       <% else %>
         <strong>#<%= ambient_chat_room_label %></strong>
         <span aria-hidden="true">·</span>
-        <span><%= t("chat.city_lobby") %></span>
+        <%= t("chat.city_lobby") %>
         <span aria-hidden="true">·</span>
-        <span><%= Current.user.channel_handle %></span>
+        <%= Current.user.channel_handle %>
         <button type="button"
                 class="nearby-chat-widget-linkish"
                 data-action="nearby-chat#locate"><%= t("chat.use_location") %></button>

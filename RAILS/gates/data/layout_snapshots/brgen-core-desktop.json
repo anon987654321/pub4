@@ -67,7 +67,7 @@
         "x": 420,
         "y": 62,
         "w": 600,
-        "h": 6241
+        "h": 6240
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -285,7 +285,7 @@
       "position": "static"
     },
     {
-      "key": "html>body>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 465,

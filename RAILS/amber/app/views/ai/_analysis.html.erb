@@ -1,12 +1,12 @@
 <aside class="ai-card">
   <% if result["sparks_joy"].nil? %>
-    <p class="dim"><%= t("ai.analysis_unavailable") %></p>
+    <p><%= t("ai.analysis_unavailable") %></p>
   <% else %>
     <%= tag.strong result["sparks_joy"] ? "Sparks joy" : "Does not spark joy" %>
     <%= tag.p result["reason"] %>
-    <p class="dim"><%= tag.em result["suggestion"] %></p>
+    <p><%= tag.em result["suggestion"] %></p>
     <% if result["source"] %>
-      <p class="dim">Source: <%= result["source"] == "heuristic" ? "local heuristic (no OpenRouter key or model empty)" : result["source"] %></p>
+      <p>Source: <%= result["source"] == "heuristic" ? "local heuristic (no OpenRouter key or model empty)" : result["source"] %></p>
     <% end %>
   <% end %>
 </aside>

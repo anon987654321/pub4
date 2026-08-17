@@ -12,7 +12,7 @@
         <% end %>
         <div>
           <p class="affiliate-title"><%= d.title %></p>
-          <p class="affiliate-merchant dim"><%= d.merchant %></p>
+          <p class="affiliate-merchant"><%= d.merchant %></p>
           <% if d.price.present? %>
             <p class="deal-price"><%= d.currency %> <%= d.price %></p>
           <% end %>
@@ -21,7 +21,7 @@
               unlabelled placeholder is indistinguishable from a paid deal, both
               to the visitor and to whoever reconciles the payout. %>
           <% if d.placeholder %>
-            <p class="affiliate-placeholder dim"><%= t("affiliate.placeholder_notice") %></p>
+            <p><%= t("affiliate.placeholder_notice") %></p>
           <% end %>
         </div>
       </a>

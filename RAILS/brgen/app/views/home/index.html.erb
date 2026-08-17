@@ -42,7 +42,7 @@
       are on the swiper now — one bar, one scroller. shared/_nav_swiper.html.erb
       holds them and the reasoning. %>
   <% if home_feed_following? && !authenticated? %>
-    <p class="dim feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>
+    <p class="feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>
   <% end %>
   <%= render "home/live_search_results" %>
 </section>

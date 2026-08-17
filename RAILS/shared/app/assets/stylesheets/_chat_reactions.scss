@@ -219,6 +219,6 @@ li[data-optimistic="true"] article[data-failed="true"] {
   opacity: 1;
 }
 
-li[data-optimistic="true"] article[data-failed="true"] .dim {
+li[data-optimistic="true"] article[data-failed="true"] .send-status {
   color: var(--danger, #a9483c);
 }

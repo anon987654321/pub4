@@ -65,7 +65,7 @@
 <% if @community.postable_by?(Current.user) %>
   <p><%= link_to t("community.new_post", name: @community.name), new_community_post_path(@community) %></p>
 <% elsif Current.user.present? && @community.privacy != "public" %>
-  <p class="dim"><%= t("community.members_only_posting") %></p>
+  <p><%= t("community.members_only_posting") %></p>
 <% end %>
 
 <% if @posts.any? %>

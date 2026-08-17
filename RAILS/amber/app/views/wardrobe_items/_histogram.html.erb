@@ -10,7 +10,7 @@
   <figcaption class="viz-head">
     <h3 class="viz-title" id="viz-<%= id %>-title"><%= title %></h3>
     <% if local_assigns[:caption].present? %>
-      <p class="viz-caption dim"><%= caption %></p>
+      <p class="viz-caption"><%= caption %></p>
     <% end %>
   </figcaption>
 
@@ -21,7 +21,7 @@
         <% if column[:share].to_f.positive? %>
           <span class="viz-column-fill" style="--share: <%= column[:share] %>"></span>
         <% else %>
-          <span></span>
+          
         <% end %>
         <span class="viz-column-label"><%= column[:label] %></span>
       </li>

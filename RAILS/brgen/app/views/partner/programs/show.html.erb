@@ -3,7 +3,7 @@
 <article class="partner-program">
   <header>
     <%= tag.h1 @program.name %>
-    <p class="dim"><%= @program.store&.name %> · <%= @program.status %></p>
+    <p><%= @program.store&.name %> · <%= @program.status %></p>
   </header>
 
   <dl class="meta">
@@ -35,7 +35,7 @@
       <% if @membership %>
         <p><%= t("partner.status_label") %> <%= tag.strong @membership.status %></p>
         <% if @membership.earning? %>
-          <p class="dim"><%= t("partner.link_token") %> <code><%= @membership.token %></code></p>
+          <p><%= t("partner.link_token") %> <code><%= @membership.token %></code></p>
           <p>
             <%= t("partner.share") %>
             <code><%= partner_click_url(token: @membership.token, host: request.host, protocol: request.protocol.delete("://")) rescue "https://#{request.host}/p/#{@membership.token}" %></code>

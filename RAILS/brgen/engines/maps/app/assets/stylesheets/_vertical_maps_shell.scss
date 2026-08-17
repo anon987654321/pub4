@@ -4,9 +4,8 @@
 body.vertical-maps {
   /* The basemap is pinned dark, so the whole dialect is pinned dark with it.
      Without this only the --maps-* aliases below were dark and every SHARED
-     component dropped on this surface still read the theme: `.dim` is
-     `color: var(--text-secondary)`, which in light mode is #5c586e and measured
-     2.44:1 on the place cards. Pinning the palette fixes the aliases and the
+     component dropped on this surface still read the theme: secondary text
+     resolved to #5c586e in light mode and measured 2.44:1 on the place cards. Pinning the palette fixes the aliases and the
      shared widgets in one place instead of patching each component.
 
      $accent/$bg are passed rather than defaulted so this does not depend on

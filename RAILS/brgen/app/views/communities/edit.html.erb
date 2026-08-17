@@ -18,18 +18,18 @@
   </p>
   <p>
     <%= f.label :rules, t("community.rules") %>
-    <span class="dim"><%= t("community.rules_hint") %></span>
+    <%= t("community.rules_hint") %>
     <%= f.text_area :rules, rows: 6, maxlength: 10_000 %>
   </p>
   <p>
     <%= f.label :flairs, t("community.flairs") %>
-    <span class="dim"><%= t("community.flairs_hint") %></span>
+    <%= t("community.flairs_hint") %>
     <%= f.text_area :flairs, rows: 4 %>
   </p>
   <p>
     <%= f.label :privacy, t("community.privacy") %>
     <%= f.select :privacy, Community::PRIVACIES.map { |p| [ t("community.privacy_options.#{p}"), p ] } %>
-    <span class="dim"><%= t("community.privacy_hint") %></span>
+    <%= t("community.privacy_hint") %>
   </p>
   <p>
     <%= f.label :icon, t("community.icon") %>

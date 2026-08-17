@@ -64,7 +64,7 @@
     <div class="playlist-now-playing <%= local_assigns[:compact] ? 'is-compact' : '' %>">
       <h2 class="playlist-now-playing-title" data-playlist-player-target="title" itemprop="track"><%= active&.title || t("playlist.select_track") %></h2>
       <p class="playlist-now-playing-artist" data-playlist-player-target="artist"><%= active&.artist.presence || t("playlist.unknown_artist") %></p>
-      <p class="playlist-now-playing-meta dim">
+      <p class="playlist-now-playing-meta">
         <%= t("playlist.queue_stats", tracks: total_tracks, plays: total_plays) %>
         <% if active&.duration_formatted.present? %> · <%= active.duration_formatted %><% end %>
       </p>

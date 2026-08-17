@@ -7,7 +7,7 @@
   </div>
 <% end %>
 <% if @explanation.present? %>
-  <p class="dim"><%= @explanation %></p>
+  <p><%= @explanation %></p>
 <% end %>
 <% if @items&.any? %>
   <div class="item-grid"><%= render @items %></div>

@@ -51,13 +51,13 @@
   <p>
     <%= f.label :capacity, t("events.form.capacity") %>
     <%= f.number_field :capacity, min: 1 %>
-    <span class="dim"><%= t("events.form.capacity_hint") %></span>
+    <%= t("events.form.capacity_hint") %>
   </p>
 
   <p>
     <%= f.label :price_cents, t("events.form.price") %>
     <%= f.number_field :price_cents, min: 0, step: 100 %>
-    <span class="dim"><%= t("events.form.price_hint") %></span>
+    <%= t("events.form.price_hint") %>
   </p>
 
   <p>

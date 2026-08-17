@@ -2,7 +2,7 @@
 
 <div class="page-header" role="banner">
   <div>
-    <p class="dim">Playlist</p>
+    <p>Playlist</p>
     <%= tag.h1 t("playlist.hosted_tracks") %>
   </div>
   <% if authenticated? %>
@@ -15,7 +15,7 @@
     <% @tracks.each do |track| %>
       <article>
         <h2><%= link_to track.title, hosted_track_path(track) %></h2>
-        <p class="dim"><%= track.artist.presence || "Unknown artist" %> · <%= track.duration_formatted %></p>
+        <p><%= track.artist.presence || "Unknown artist" %> · <%= track.duration_formatted %></p>
       </article>
     <% end %>
   <% else %>

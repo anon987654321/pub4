@@ -11,7 +11,7 @@
 <section class="today-look" aria-labelledby="today-look-title">
   <div class="today-look-head">
     <h2 id="today-look-title"><%= t("assistant.today") %></h2>
-    <p class="dim">
+    <p>
       <%= t("assistant.lead") %>
       <% if look.notes.any? %>
         <span aria-hidden="true">·</span>
@@ -28,7 +28,7 @@
         <% if pick.reasons.any? %>
           <%# Symbols are the assistant's own reasons; strings come from
               TasteRanker and are already prose. %>
-          <span class="today-look-why dim">
+          <span class="today-look-why">
             <%= pick.reasons.map { |reason| reason.is_a?(Symbol) ? t("assistant.reasons.#{reason}") : reason }.join(", ") %>
           </span>
         <% end %>

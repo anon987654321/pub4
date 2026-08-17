@@ -4,7 +4,7 @@
   <div class="listing-buy-bar-price">
     <span class="listing-buy-bar-amount"><%= @listing.price_display %></span>
     <% if @listing.condition.present? %>
-      <span class="listing-buy-bar-meta dim"><%= t("marketplace.conditions.#{@listing.condition}", default: @listing.condition.tr("_", " ")) %></span>
+      <span class="listing-buy-bar-meta"><%= t("marketplace.conditions.#{@listing.condition}", default: @listing.condition.tr("_", " ")) %></span>
     <% end %>
   </div>
   <div class="listing-buy-bar-actions">

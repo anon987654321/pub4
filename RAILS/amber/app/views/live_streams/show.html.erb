@@ -2,11 +2,11 @@
 
 <header role="banner" aria-label="<%= t("live_streams.header_label") %>">
   <div>
-    <p class="dim"><%= t("live_streams.style_session", status: @live_stream.status) %></p>
+    <p><%= t("live_streams.style_session", status: @live_stream.status) %></p>
     <%= tag.h1 @live_stream.title %>
   </div>
 </header>
 
 <%= tag.p @live_stream.description %>
-<% if @live_stream.scheduled_at %><p class="dim">Scheduled: <%= @live_stream.scheduled_at %></p><% end %>
+<% if @live_stream.scheduled_at %><p>Scheduled: <%= @live_stream.scheduled_at %></p><% end %>
 <%= link_to t("live_streams.all"), live_streams_path, class: "btn" %>

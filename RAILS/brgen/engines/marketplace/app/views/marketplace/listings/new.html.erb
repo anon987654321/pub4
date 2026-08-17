@@ -2,7 +2,7 @@
 
 <div class="page-header" role="banner" aria-label="<%= t("aria.new_marketplace_listing_header") %>">
   <%= tag.h1 t("marketplace.new_listing") %>
-  <p class="dim"><%= t("marketplace.casual_hint") %></p>
+  <p><%= t("marketplace.casual_hint") %></p>
 </div>
 
 <turbo-frame id="marketplace-new-listing" data-turbo-action="replace">
@@ -46,7 +46,7 @@
         <% %w[none portrait landscape street blockbuster].each do |p| %>
           <label class="preset-opt">
             <%= f.radio_button :preset, p %>
-            <span><%= p.capitalize %></span>
+            <%= p.capitalize %>
           </label>
         <% end %>
       </div>

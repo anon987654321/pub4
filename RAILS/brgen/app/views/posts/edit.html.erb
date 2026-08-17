@@ -39,7 +39,7 @@
         <% %w[none portrait landscape street blockbuster].each do |preset| %>
           <label class="preset-opt">
             <%= f.radio_button :preset, preset %>
-            <span><%= preset.capitalize %></span>
+            <%= preset.capitalize %>
           </label>
         <% end %>
       </div>
@@ -51,7 +51,7 @@
     <div class="field">
       <%= f.submit t("actions.save"), class: "btn btn-primary" %>
       <%= link_to t("actions.cancel"), @post, class: "btn btn-ghost" %>
-      <span class="dim" data-autosave-target="status" aria-live="polite"></span>
+      <span data-autosave-target="status" aria-live="polite"></span>
     </div>
   <% end %>
 </div>

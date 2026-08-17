@@ -14,14 +14,14 @@
       <li class="like-card">
         <p>
           <%= tag.strong profile&.name || like.liker.display_name %>
-          <% if profile&.age %><span class="dim"><%= profile.age %></span><% end %>
+          <% if profile&.age %><%= profile.age %><% end %>
         </p>
 
         <%# The comment is the whole point of the Hinge interaction: it says
             what they liked, so the reply has somewhere to start. %>
         <% if like.commented? %>
           <% if like.dating_prompt %>
-            <p class="dim"><%= like.dating_prompt.question_text %></p>
+            <p><%= like.dating_prompt.question_text %></p>
             <p><%= tag.em like.dating_prompt.answer %></p>
           <% end %>
           <blockquote class="like-comment"><%= like.comment %></blockquote>

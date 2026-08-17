@@ -5,8 +5,8 @@
     <% end %>
   <% end %>
   <h2><%= link_to place.name, place_path(place) %></h2>
-  <p class="dim"><%= place.kind %><% if place.city %> · <%= place.city.name %><% end %><% if place.neighborhood %> · <%= place.neighborhood.name %><% end %></p>
+  <p><%= place.kind %><% if place.city %> · <%= place.city.name %><% end %><% if place.neighborhood %> · <%= place.neighborhood.name %><% end %></p>
   <% if place.address.present? %>
-    <p class="dim"><%= place.address %></p>
+    <p><%= place.address %></p>
   <% end %>
 </article>

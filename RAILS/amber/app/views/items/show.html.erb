@@ -17,7 +17,7 @@
   <div class="luxury-meta">
     <header role="banner" aria-label="<%= t("items.header_label") %>">
       <div>
-        <p class="dim luxury-dim"><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
+        <p><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
         <h1 class="luxury-title"><%= @item.title %></h1>
       </div>
       <% if @item.spark_joy? %><span class="badge"><%= t("items.sparks_joy") %></span><% end %>
@@ -56,9 +56,9 @@
   <section class="luxury-section">
     <%= tag.h2 t("items.wardrobe_intelligence") %>
     <% if amber_ai_available? %>
-      <p class="dim luxury-dim"><%= t("items.openrouter_set") %></p>
+      <p><%= t("items.openrouter_set") %></p>
     <% else %>
-      <p class="dim luxury-dim"><%= t("items.openrouter_unset_html") %></p>
+      <p><%= t("items.openrouter_unset_html") %></p>
     <% end %>
     <div id="item_<%= @item.id %>_analysis"></div>
     <div id="item_<%= @item.id %>_tags"></div>
@@ -87,7 +87,7 @@
     <%# Was a hardcoded English sentence that also stood in for a disclosure. The
         real disclosure is the engine partial: it names the partner programmes that
         are actually configured, and says nothing when none are. %>
-    <p class="dim luxury-dim"><%= t("items.affiliate_help") %></p>
+    <p><%= t("items.affiliate_help") %></p>
     <%= render "shared/affiliate_disclosure" %>
     <% if @item.affiliate_links.any? %>
       <ul>
@@ -115,7 +115,7 @@
                   data: { controller: "outbound-click", action: "click->outbound-click#record",
                           outbound_click_merchant_value: suggestion.merchant,
                           outbound_click_surface_value: "shop_the_look" } %>
-            <span class="tag dim"><%= suggestion.source %></span>
+            <span class="tag"><%= suggestion.source %></span>
           </li>
         <% end %>
       </ul>
@@ -129,7 +129,7 @@
 
   <details class="danger-zone">
     <summary><%= t("items.permanent_removal") %></summary>
-    <p class="dim luxury-dim"><%= t("items.archiving_safer") %></p>
+    <p><%= t("items.archiving_safer") %></p>
     <%= button_to t("items.delete_permanent"), @item, method: :delete, data: { turbo_confirm: t("items.confirm_delete") }, class: "btn btn-danger" %>
   </details>
 </div>

@@ -8,7 +8,7 @@
 <div class="rsvp-bar" role="group" aria-label="<%= t("events.rsvp") %>">
   <% if authenticated? %>
     <% if event.cancelled? %>
-      <p class="dim"><%= t("events.cancelled_body") %></p>
+      <p><%= t("events.cancelled_body") %></p>
     <% else %>
       <% EventRsvp::STATUSES.each do |status| %>
         <% held = rsvp&.status == status %>
@@ -24,10 +24,10 @@
         <% end %>
       <% end %>
       <% if event.full? && rsvp&.status != "going" %>
-        <p class="dim"><%= t("events.full_body") %></p>
+        <p><%= t("events.full_body") %></p>
       <% end %>
     <% end %>
   <% else %>
-    <p class="dim"><%= link_to t("auth.sign_in"), new_session_path %> <%= t("events.sign_in_to_rsvp") %></p>
+    <p><%= link_to t("auth.sign_in"), new_session_path %> <%= t("events.sign_in_to_rsvp") %></p>
   <% end %>
 </div>

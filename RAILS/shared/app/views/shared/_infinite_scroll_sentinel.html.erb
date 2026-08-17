@@ -22,6 +22,6 @@
        <% if local_assigns[:feed].present? %>data-feed="<%= feed %>"<% end %>
        <% if local_assigns[:maintainer_id].present? %>data-maintainer-id="<%= maintainer_id %>"<% end %>
        aria-live="polite">
-    <span class="dim"><%= t("status.loading_more") %></span>
+    <%= t("status.loading_more") %>
   </div>
 <% end %>

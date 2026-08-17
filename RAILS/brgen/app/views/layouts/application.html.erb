@@ -158,46 +158,46 @@
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to main_app.root_path, class: nav_cls.(main_app.root_path) do %>
             <%= icon :home, size: 26 %>
-            <span><%= t("nav.home") %></span>
+            <%= t("nav.home") %>
           <% end %>
           <%= render "shared/ai_nav_link" %>
           <%= link_to main_app.communities_path, class: nav_cls.(main_app.communities_path) do %>
             <%= icon :explore, size: 26 %>
-            <span><%= t("nav.explore") %></span>
+            <%= t("nav.explore") %>
           <% end %>
           <%= link_to main_app.global_search_path, class: nav_cls.(main_app.global_search_path) do %>
             <%= icon :search, size: 26 %>
-            <span><%= t("nav.search") %></span>
+            <%= t("nav.search") %>
           <% end %>
           <%= link_to main_app.notifications_path, class: nav_cls.(main_app.notifications_path) do %>
             <%= icon :notifications, size: 26 %>
-            <span><%= t("nav.notifications") %></span>
+            <%= t("nav.notifications") %>
           <% end %>
           <%= link_to main_app.conversations_path, class: nav_cls.(main_app.conversations_path) do %>
             <%= icon :messages, size: 26 %>
-            <span><%= t("nav.messages") %></span>
+            <%= t("nav.messages") %>
           <% end %>
           <%= link_to main_app.nearby_path, class: nav_cls.(main_app.nearby_path) do %>
             <%= icon :nearby, size: 26 %>
-            <span><%= t("nav.nearby") %></span>
+            <%= t("nav.nearby") %>
           <% end %>
           <%= link_to main_app.events_path, class: nav_cls.(main_app.events_path) do %>
             <%= icon :calendar, size: 26 %>
-            <span><%= t("nav.events") %></span>
+            <%= t("nav.events") %>
           <% end %>
           <%= link_to main_app.stories_path, class: nav_cls.(main_app.stories_path) do %>
             <%= icon :camera, size: 26 %>
-            <span><%= t("nav.stories") %></span>
+            <%= t("nav.stories") %>
           <% end %>
           <% if authenticated? %>
             <%= link_to main_app.user_path(Current.user), class: nav_cls.(main_app.user_path(Current.user)) do %>
               <%= icon :profile, size: 26 %>
-              <span><%= t("nav.profile") %></span>
+              <%= t("nav.profile") %>
             <% end %>
           <% else %>
             <%= link_to main_app.new_session_path, class: nav_cls.(main_app.new_session_path) do %>
               <%= icon :sign_in, size: 26 %>
-              <span><%= t("nav.sign_in") %></span>
+              <%= t("nav.sign_in") %>
             <% end %>
           <% end %>
         </nav>

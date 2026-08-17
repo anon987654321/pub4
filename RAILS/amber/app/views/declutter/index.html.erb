@@ -22,7 +22,7 @@
         <span class="chip"><%= number_to_currency(@summary[:amount_recovered]) %> recovered</span>
       </div>
       <% if @summary[:matrix].present? %>
-        <p class="dim"><%= t("declutter.joy_use_matrix") %> <%= @summary[:matrix].map { |k, v| "#{k.to_s.humanize}: #{v}" }.join(" · ") %></p>
+        <p><%= t("declutter.joy_use_matrix") %> <%= @summary[:matrix].map { |k, v| "#{k.to_s.humanize}: #{v}" }.join(" · ") %></p>
       <% end %>
     </section>
   <% end %>
@@ -56,7 +56,7 @@
   <% if @aging_box.present? %>
     <section role="region" aria-label="<%= t("declutter.box_label") %>">
       <%= tag.h2 t("declutter.box_heading") %>
-      <p class="dim"><%= t("declutter.box_waited") %></p>
+      <p><%= t("declutter.box_waited") %></p>
       <div class="items-grid">
         <% @aging_box.each do |item| %>
           <%= render "items/item", item: item %>

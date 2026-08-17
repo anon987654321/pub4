@@ -1,7 +1,7 @@
 <% content_for :title, t("stories.new") %>
 
 <%= tag.h1 t("stories.new") %>
-<p class="dim"><%= t("stories.lifetime_notice") %></p>
+<p><%= t("stories.lifetime_notice") %></p>
 
 <%= form_with model: @story do |f| %>
   <% if @story.errors.any? %>
@@ -39,7 +39,7 @@
         <%= f.check_box :attach_area %>
         <%= t("stories.add_area") %>
       <% end %>
-      <span class="dim"><%= t("stories.area_hint") %></span>
+      <%= t("stories.area_hint") %>
     </p>
   <% end %>
 

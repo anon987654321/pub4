@@ -80,9 +80,9 @@
       "key": "#main-content>form.amber-compose-box",
       "tag": "form",
       "rect": {
-        "x": 299,
+        "x": 309,
         "y": 5292,
-        "w": 427,
+        "w": 406,
         "h": 156
       },
       "color": "#2c2824",
@@ -189,7 +189,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>section.amber-guest-hero>p.dim.amber-guest-secondary>a",
+      "key": "#main-content>section.amber-guest-hero>p.amber-guest-secondary>a",
       "tag": "a",
       "rect": {
         "x": 436,
@@ -208,9 +208,9 @@
       "key": "#post_body",
       "tag": "textarea",
       "rect": {
-        "x": 368,
+        "x": 378,
         "y": 5309,
-        "w": 341,
+        "w": 320,
         "h": 44
       },
       "color": "#2c2824",
@@ -272,7 +272,7 @@
       "key": "div.amber-compose-inner>div.amber-compose-footer>div.amber-compose-submit>input.btn.btn--primary.amber-compose-btn",
       "tag": "input",
       "rect": {
-        "x": 630,
+        "x": 620,
         "y": 5361,
         "w": 78,
         "h": 44
@@ -317,7 +317,7 @@
       "position": "fixed"
     },
     {
-      "key": "div.theme-root>div.app-shell>footer.site-legal>p.dim.affiliate-fine",
+      "key": "div.theme-root>div.app-shell>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 20,

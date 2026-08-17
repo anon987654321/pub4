@@ -2,7 +2,7 @@
 <%= tag.h1 t("pages.declutter_guide") %>
 <p><%= link_to t("ai.declutter_dashboard"), declutter_index_path, class: "btn" %></p>
 <% if @candidates.any? %>
-  <p class="dim"><%= t("ai.letting_go") %></p>
+  <p><%= t("ai.letting_go") %></p>
   <div class="item-grid"><%= render @candidates %></div>
 <% else %>
   <%= tag.p t("ai.no_candidates") %>

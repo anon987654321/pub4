@@ -1,7 +1,7 @@
 <% content_for :title, t("pages.style_profile") %>
 
 <%= tag.h1 t("pages.style_profile") %>
-<p class="dim"><%= t("ai.style_profile_lead") %></p>
+<p><%= t("ai.style_profile_lead") %></p>
 
 <%= form_with url: ai_style_profile_path, method: :post, class: "form" do |f| %>
   <%# Five selects all named :answers, so Rails would give all five the same

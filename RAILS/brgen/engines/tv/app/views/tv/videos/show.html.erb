@@ -6,7 +6,7 @@
 
 <div class="page-header" role="banner">
   <div>
-    <p class="dim"><%= link_to @video.channel.name, channel_path(@video.channel) %></p>
+    <p><%= link_to @video.channel.name, channel_path(@video.channel) %></p>
     <%= tag.h1 @video.title %>
   </div>
   <button class="btn-share" data-controller="share"
@@ -41,7 +41,7 @@
                              data-animated-number-duration-value="900"><%= @video.views_count.to_i %></span> views</span>
     <span class="chip"><%= @video.duration_formatted %></span>
     <span class="chip"><%= @video.status %></span>
-    <% if @video.published_at.present? %><span class="chip"><span><%= time_ago(@video.published_at) %></span></span><% end %>
+    <% if @video.published_at.present? %><span class="chip"><%= time_ago(@video.published_at) %></span><% end %>
   </div>
   <% if @video.description.present? %>
     <p class="mt-12"><%= simple_format(@video.description) %></p>
@@ -55,7 +55,7 @@
   <h2>Channel</h2>
   <article>
     <strong><%= link_to @video.channel.name, channel_path(@video.channel) %></strong>
-    <p class="dim">
+    <p>
       <span data-controller="animated-number"
             data-animated-number-start-value="0"
             data-animated-number-end-value="<%= @video.channel.subscribers_count.to_i %>"
@@ -107,7 +107,7 @@
   <% if @video.comments.any? %>
     <% @video.comments.order(created_at: :asc).each do |comment| %>
       <article>
-        <p class="dim"><%= comment.user&.display_name || "anon" %></p>
+        <p><%= comment.user&.display_name || "anon" %></p>
         <%= tag.p comment.body %>
       </article>
     <% end %>

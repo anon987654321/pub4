@@ -103,7 +103,7 @@
       <%= link_to t("home.browse_demo"), demo_wardrobe_path, class: "btn btn--primary" %>
       <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn--ghost" %>
     </p>
-    <p class="dim amber-guest-secondary">
+    <p class="amber-guest-secondary">
       <%= link_to t("nav.sign_in"), new_session_path %>
       <span aria-hidden="true"> · </span>
       <%= link_to t("home.ask_ai"), root_path(master: 1), data: { turbo: false } %>
@@ -127,7 +127,7 @@
   <% if @demo_items&.any? %>
     <section>
       <%= tag.h2 t("home.demo_capsule") %>
-      <p class="dim"><%= t("home.demo_counts", pieces: t("items.pieces", count: @demo_items.size), outfits: t("outfits.count", count: @demo_outfits&.size.to_i)) %></p>
+      <p><%= t("home.demo_counts", pieces: t("items.pieces", count: @demo_items.size), outfits: t("outfits.count", count: @demo_outfits&.size.to_i)) %></p>
       <div class="item-grid"><%= render partial: "demo_wardrobe/item", collection: @demo_items %></div>
       <p><%= link_to t("demo.full_wardrobe"), demo_wardrobe_path %></p>
     </section>

@@ -4,7 +4,7 @@
       aria: { label: store.name } do %>
   <div class="deal-card-img deal-card-img--store">
     <div class="deal-card-placeholder" aria-hidden="true">
-      <span><%= store.name.to_s.first&.upcase || "S" %></span>
+      <%= store.name.to_s.first&.upcase || "S" %>
     </div>
     <% if store.verified? %>
       <span class="deal-badge deal-badge--soft">Verified</span>

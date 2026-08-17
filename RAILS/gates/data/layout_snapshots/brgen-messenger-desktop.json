@@ -173,7 +173,7 @@
       "position": "static"
     },
     {
-      "key": "html>body.vertical-messenger>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body.vertical-messenger>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 465,

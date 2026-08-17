@@ -5,7 +5,7 @@
 <article class="event-detail" role="article">
   <div class="page-header" role="banner">
     <div>
-      <p class="dim">
+      <p>
         <time datetime="<%= @event.starts_at.iso8601 %>"><%= l(@event.starts_at, format: :event) %></time>
         <% if @event.ends_at %>–<time datetime="<%= @event.ends_at.iso8601 %>"><%= l(@event.ends_at, format: :event) %></time><% end %>
       </p>
@@ -31,7 +31,7 @@
         <% if @event.place %>· <%= link_to t("events.on_the_map"), place_path(@event.place) %><% end %>
       </p>
     <% end %>
-    <% if @event.address.present? %><p class="dim"><%= @event.address %></p><% end %>
+    <% if @event.address.present? %><p><%= @event.address %></p><% end %>
     <p class="chips">
       <span class="chip"><%= @event.free? ? t("events.free") : @event.price_display %></span>
       <% if (left = @event.places_left) %>
@@ -62,7 +62,7 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="dim"><%= t("events.nobody_yet") %></p>
+      <p><%= t("events.nobody_yet") %></p>
     <% end %>
   </section>
 

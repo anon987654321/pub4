@@ -2,7 +2,7 @@
 
 <div class="page-header" role="banner">
   <div>
-    <p class="dim"><%= link_to @community.name, community_path(@community) %></p>
+    <p><%= link_to @community.name, community_path(@community) %></p>
     <%= tag.h1 t("community.mod_queue") %>
   </div>
   <p class="chips">
@@ -32,7 +32,7 @@
             <% elsif report.reportable.present? %>
               <%= truncate(report.reportable.try(:content).to_s, length: 80) %>
             <% else %>
-              <span class="dim"><%= t("community.subject_gone") %></span>
+              <%= t("community.subject_gone") %>
             <% end %>
           </td>
           <td><%= report.reason %></td>

@@ -29,13 +29,6 @@
   color: var(--luxury-text);
 }
 
-.luxury-card .dim,
-.item-card--luxury .dim {
-  font-size: var(--luxury-font-meta);
-  color: var(--luxury-muted);
-  line-height: 1.5;
-}
-
 /* Title + one meta line stay always-visible -- the image does the rest of
    the talking. The action nav overlays the photo, revealed on hover/focus,
    so the resting grid reads as pure photography. */
@@ -101,10 +94,6 @@
   letter-spacing: var(--luxury-letter-tight);
   line-height: var(--luxury-line-relaxed);
   margin: 0.25rem 0;
-}
-
-.luxury-dim {
-  color: var(--luxury-muted);
 }
 
 .luxury-tags {

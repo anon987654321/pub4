@@ -23,15 +23,15 @@
     </div>
 
     <footer class="dating-intro-trust">
-      <span><%= t("legal.dating_age") %></span>
+      <%= t("legal.dating_age") %>
       <%# Restored 2026-08-13. Removed in d35b40ec0, and its CSS then deleted as
           dead in 16370042a — correctly, since nothing rendered it. The original
           art (RAILS/shared/reference/banner_art/) shows the badge was part of
           the design, and dating.protected_with survived in both locales the
           whole time with no call site. %>
-      <span><%= t("dating.protected_with") %></span>
+      <%= t("dating.protected_with") %>
       <span class="dating-intro-bankid" aria-label="bankID">
-        <span class="dating-intro-bankid-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="dating-intro-bankid-mark" aria-hidden="true"></span>
         bankID
       </span>
       <nav aria-label="<%= t("legal.aria") %>">
@@ -45,7 +45,7 @@
   <section class="dating-discover-panel" data-dating-intro-target="discover" hidden aria-hidden="true">
     <div class="page-header" role="banner" aria-label="<%= t("dating.discover") %>">
       <div>
-        <p class="dim"><%= t("dating.local") %></p>
+        <p><%= t("dating.local") %></p>
         <%= tag.h1 t("dating.discover") %>
       </div>
       <nav role="navigation" aria-label="<%= t("dating.home_title") %>">

@@ -5,7 +5,7 @@
 <header class="page-header" role="banner" aria-label="<%= t("ports.header_page_label") %>" data-visitor-orientation>
   <%= tag.h1 t("pages.ports") %>
   <p class="ports-purpose"><%= t("ports.purpose") %></p>
-  <p class="dim"><%= t("ports.search_hint") %></p>
+  <p><%= t("ports.search_hint") %></p>
   <nav role="navigation" aria-label="<%= t("nav.ports") %>">
     <%= link_to t("ports.rss_link"), ports_path(format: :rss) %>
   </nav>
@@ -21,7 +21,7 @@
   </section>
 <% else %>
   <%# A ports tree with no date is a ports tree nobody can trust. %>
-  <p class="dim ports-freshness">
+  <p>
     <% if @last_import %>
       <%= t("ports.last_import",
             status: @last_import.status,
@@ -43,7 +43,7 @@
 
   <% if @categories&.any? %>
     <section class="categories" aria-label="<%= t("ports.categories_section_label") %>">
-      <h2 class="dim"><%= t("ports.categories") %></h2>
+      <h2><%= t("ports.categories") %></h2>
       <ul class="category-list">
         <% @categories.each do |cat| %>
           <li><%= link_to cat.name, ports_path(category_id: cat.id), class: "chip" %></li>

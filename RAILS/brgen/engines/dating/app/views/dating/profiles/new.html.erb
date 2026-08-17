@@ -2,7 +2,7 @@
 
 <div class="page-header" role="banner">
   <%= tag.h1 t("dating.create_profile") %>
-  <p class="dim"><%= t("dating.create_profile_blurb") %></p>
+  <p><%= t("dating.create_profile_blurb") %></p>
 </div>
 
 <div class="form-wrap dating-profile-form">
@@ -15,7 +15,7 @@
       <div class="field">
         <%= f.label :photos, t("dating.photos") %>
         <%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>
-        <p class="dim"><%= t("dating.photo_hint") %></p>
+        <p><%= t("dating.photo_hint") %></p>
       </div>
       <div class="field">
         <%= f.label :bio, t("dating.about_you") %>
@@ -34,7 +34,7 @@
       <summary><%= t("dating.more_details_optional") %></summary>
       <div class="field"><%= f.label :gender %><%= f.select :gender, Dating::Profile::GENDERS, { include_blank: "—" } %></div>
       <div class="field"><%= f.label :age %><%= f.number_field :age, min: 18, max: 99, required: true %></div>
-      <p class="dim"><%= t("legal.dating_age") %></p>
+      <p><%= t("legal.dating_age") %></p>
       <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
       <div class="field">
         <%= f.label :neighborhood_id, t("dating.neighborhood") %>
@@ -45,7 +45,7 @@
 
     <div class="field">
       <%= f.submit t("dating.save"), class: "btn btn-primary" %>
-      <span class="dim" data-autosave-target="status" aria-live="polite"></span>
+      <span data-autosave-target="status" aria-live="polite"></span>
     </div>
   <% end %>
 </div>

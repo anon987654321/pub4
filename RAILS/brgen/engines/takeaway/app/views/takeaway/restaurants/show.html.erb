@@ -21,13 +21,13 @@
 
 <article>
   <%= tag.p @restaurant.description %>
-  <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
+  <p><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
   <% if @restaurant.place.present? %>
     <p><%= link_to t("maps.on_the_map"), record_public_href(@restaurant.place), class: "btn btn-ghost btn-sm" %></p>
   <% end %>
   <%# pluralize() takes an English noun and applies English rules; t(count:)
       goes through the locale's own plural rules instead. %>
-  <p class="dim"><%= t("takeaway.min_order_line", min: @restaurant.min_order_display, fee: @restaurant.delivery_fee_display) %> <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>
+  <p><%= t("takeaway.min_order_line", min: @restaurant.min_order_display, fee: @restaurant.delivery_fee_display) %> <%= t("takeaway.saves", count: @restaurant.favorites.size) %></p>
 </article>
 
 <% if authenticated? && @restaurant.owner?(Current.user) %>
@@ -67,12 +67,12 @@
             <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
             <% if item.vegetarian? %><span class="chip"><%= t("takeaway.vegetarian") %></span><% end %>
             <% if item.vegan? %><span class="chip"><%= t("takeaway.vegan") %></span><% end %>
-            <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
+            <% if item.description.present? %><p><%= item.description %></p><% end %>
           </div>
           <% if item.available? %>
             <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: t("takeaway.qty_for", name: item.name) } %>
           <% else %>
-            <span class="dim" aria-label="<%= t("takeaway.item_sold_out", name: item.name) %>">—</span>
+            <span aria-label="<%= t("takeaway.item_sold_out", name: item.name) %>">—</span>
           <% end %>
         </article>
       <% end %>
@@ -98,11 +98,11 @@
         <div>
           <%= tag.strong item.name %> · <%= item.price_display %>
           <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
-          <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
+          <% if item.description.present? %><p><%= item.description %></p><% end %>
         </div>
       </article>
     <% end %>
-    <p class="dim"><%= t("takeaway.reload_to_order") %></p>
+    <p><%= t("takeaway.reload_to_order") %></p>
     <p><%= link_to t("actions.reload"), restaurant_path(@restaurant), class: "btn btn-primary" %></p>
 
   <% end %>
@@ -113,8 +113,8 @@
   <% if @reviews.any? %>
     <% @reviews.each do |r| %>
       <article>
-        <p>★<%= r.rating %> · <%= r.user&.display_name || t("takeaway.anon") %> · <span><%= time_ago(r.created_at) %></span></p>
-        <% if r.body.present? %><p class="dim"><%= r.body %></p><% end %>
+        <p>★<%= r.rating %> · <%= r.user&.display_name || t("takeaway.anon") %> · <%= time_ago(r.created_at) %></p>
+        <% if r.body.present? %><p><%= r.body %></p><% end %>
       </article>
     <% end %>
   <% else %>

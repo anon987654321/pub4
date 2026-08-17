@@ -3,7 +3,7 @@
 
 <div class="page-header" role="banner">
   <div>
-    <p class="dim"><%= t("playlist.set_kicker") %></p>
+    <p><%= t("playlist.set_kicker") %></p>
     <%= tag.h1 @set.name %>
   </div>
   <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
@@ -21,9 +21,9 @@
   <% if @set.description.present? %>
     <%= tag.p @set.description %>
   <% end %>
-  <p class="dim"><%= t("playlist.privacy.#{@set.privacy.presence || "public"}") %> · <%= t("playlist.tracks", count: @tracks.count) %> · <%= @set.formatted_duration %></p>
+  <p><%= t("playlist.privacy.#{@set.privacy.presence || "public"}") %> · <%= t("playlist.tracks", count: @tracks.count) %> · <%= @set.formatted_duration %></p>
   <% if @set.collaborative? %>
-    <p class="dim">Collaborative</p>
+    <p>Collaborative</p>
   <% end %>
   <% if authenticated? %>
     <div class="cluster">
@@ -32,10 +32,10 @@
       <% else %>
         <%= button_to t("actions.like"), set_like_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
       <% end %>
-      <span class="dim"><%= @set.likes.count %> likes</span>
+      <%= @set.likes.count %> likes
     </div>
   <% else %>
-    <p class="dim"><%= @set.likes.count %> likes</p>
+    <p><%= @set.likes.count %> likes</p>
   <% end %>
 </article>
 
@@ -69,7 +69,7 @@
       <div>
         <%= tag.strong set_track.track.title %>
         <% if set_track.track.artist.present? %> — <%= set_track.track.artist %><% end %>
-        <span class="dim"> · <%= set_track.track.duration_formatted %></span>
+         · <%= set_track.track.duration_formatted %>
       </div>
       <% if authenticated? && (Current.user == set_track.user || Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
         <%= button_to t("actions.remove"), set_track_path(@set, set_track), method: :delete, class: "btn btn-ghost btn-sm" %>
@@ -100,11 +100,11 @@
 <% if authenticated? %>
 <section>
   <%= tag.h2 t("playlist.listening_party") %>
-  <p class="dim"><%= t("playlist.party_blurb") %></p>
+  <p><%= t("playlist.party_blurb") %></p>
   <% if @set.listening_party&.active? %>
     <%= link_to t("playlist.listening_party"), set_listening_party_path(@set), class: "btn btn-primary btn-sm" %>
     <% if Current.user && @set.user_id == Current.user.id %>
-      <span class="dim"><%= t("playlist.join_code") %>: <%= @set.listening_party.join_code %></span>
+      <%= t("playlist.join_code") %>: <%= @set.listening_party.join_code %>
     <% end %>
   <% else %>
     <%= button_to t("playlist.start_party"), set_listening_party_path(@set), method: :post, class: "btn btn-primary btn-sm" %>

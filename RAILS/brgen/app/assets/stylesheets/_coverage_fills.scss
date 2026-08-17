@@ -304,3 +304,30 @@
 .chip--cancelled {
   color: var(--danger);
 }
+
+// The map's no-JS-map fallback: when the tile layer cannot load, map_controller
+// lists the points as cards instead. Neither the container nor the cards had a
+// rule anywhere, which the coverage lint could not see until it learned to read
+// classes out of JavaScript as well as out of templates.
+//
+// Structural and token-only, like the rest of this file: geometry so the
+// fallback is legible, and no colour, because what it should look like is a
+// design decision and this is a floor.
+.map-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+// The cards are the anchors, selected by position rather than by a class the
+// controller has to keep writing.
+.map-fallback a {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-card);
+  min-height: var(--tap-min);
+}

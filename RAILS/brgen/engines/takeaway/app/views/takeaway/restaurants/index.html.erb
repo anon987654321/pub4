@@ -4,7 +4,7 @@
 
 <header class="page-header vertical-purpose" role="banner" data-visitor-orientation>
   <%= tag.h1 t("takeaway.order_food") %>
-  <p class="dim"><%= t("takeaway.intro") %></p>
+  <p><%= t("takeaway.intro") %></p>
 </header>
 
 <%= live_search_index url: restaurants_path, results_partial: "takeaway/restaurants/live_search_results", placeholder: t("search.restaurants"), label: t("search.restaurants_label"), frame_id: "takeaway-restaurants" do |f| %>

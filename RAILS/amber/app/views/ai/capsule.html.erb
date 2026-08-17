@@ -2,7 +2,7 @@
 
 <header role="banner" aria-label="Capsule optimizer header">
   <div>
-    <p class="dim"><%= t("ai.capsule_builder") %></p>
+    <p><%= t("ai.capsule_builder") %></p>
     <%= tag.h1 t("pages.capsule_title") %>
   </div>
   <nav role="navigation" aria-label="Capsule actions">
@@ -12,9 +12,9 @@
 </header>
 
 <% if @result["source"] == "capsule_builder" || !@ai_available %>
-  <p class="dim"><%= t("ai.local_rules_html", note: (@ai_available ? "" : t("ai.openrouter_missing"))).html_safe %></p>
+  <p><%= t("ai.local_rules_html", note: (@ai_available ? "" : t("ai.openrouter_missing"))).html_safe %></p>
 <% elsif @result["source"] %>
-  <p class="dim"><%= t("ai.source", source: @result["source"]) %></p>
+  <p><%= t("ai.source", source: @result["source"]) %></p>
 <% end %>
 
 <% if @result["items"].present? %>
@@ -28,7 +28,7 @@
       <div class="capsule-row capsule-row--<%= item["decision"] %>">
         <span class="capsule-decision"><%= item["decision"].to_s.humanize %></span>
         <%= tag.strong item["title"] %>
-        <span class="dim"><%= item["reason"] %></span>
+        <%= item["reason"] %>
       </div>
     <% end %>
   </div>
@@ -36,7 +36,7 @@
   <% if @result["gap_items"]&.any? %>
     <section>
       <%= tag.h2 t("ai.gap_items", default: "Gap items to consider") %>
-      <p class="dim"><%= t("ai.gap_items_hint") %></p>
+      <p><%= t("ai.gap_items_hint") %></p>
       <ul><% @result["gap_items"].each do |gap_item| %><li><%= gap_item %></li><% end %></ul>
     </section>
   <% end %>

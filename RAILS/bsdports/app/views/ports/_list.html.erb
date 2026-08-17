@@ -11,7 +11,7 @@
         body: unimported ? t("ports.empty_unimported") : t("ports.empty_body"),
         action: { label: t("ports.browse_all"), path: ports_path } %>
   <% if unimported %>
-    <p class="dim">
+    <p>
       <% if @last_import %>
         <%= t("ports.last_import",
               status: @last_import.status,

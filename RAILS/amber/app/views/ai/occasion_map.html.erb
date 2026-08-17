@@ -6,10 +6,10 @@
       <%= tag.h2 occasion.capitalize %>
       <span class="occasion-count"><%= items.size %> items</span>
       <% if items.size < 2 %>
-        <p class="dim occasion-warn">Gap — consider adding pieces</p>
+        <p class="occasion-warn">Gap — consider adding pieces</p>
       <% end %>
       <% items.first(3).each do |item| %>
-        <div class="dim"><%= link_to item.title, item %></div>
+        <div><%= link_to item.title, item %></div>
       <% end %>
     </div>
   <% end %>

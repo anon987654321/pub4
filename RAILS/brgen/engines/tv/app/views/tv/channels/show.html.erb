@@ -3,7 +3,7 @@
 
 <div class="page-header" role="banner">
   <div>
-    <p class="dim"><%= t("tv.channel_subtitle", default: "Brgen TV channel") %></p>
+    <p><%= t("tv.channel_subtitle", default: "Brgen TV channel") %></p>
     <%= tag.h1 @channel.name %>
   </div>
   <nav role="navigation">
@@ -29,7 +29,7 @@
   <% if @channel.description.present? %>
     <%= tag.p simple_format(@channel.description) %>
   <% else %>
-    <p class="dim"><%= t("tv.no_description") %></p>
+    <p><%= t("tv.no_description") %></p>
   <% end %>
 </article>
 

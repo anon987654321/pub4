@@ -5,7 +5,7 @@
 <div class="nearby-alert" data-user-id="<%= user_id %>" role="alert" data-controller="dismiss">
   <div class="nearby-alert-body">
     <span class="nearby-alert-dot"></span>
-    <span><%= t("nearby.is_nearby_html", handle: tag.strong(handle)) %></span>
+    <%= t("nearby.is_nearby_html", handle: tag.strong(handle)) %>
   </div>
   <%= button_to t("nearby.chat"), nearby_path, params: { user_id: user_id }, method: :post, class: "btn btn-primary btn-sm nearby-alert-cta" %>
   <button type="button" class="nearby-alert-close" data-action="dismiss#remove" aria-label="<%= t("actions.dismiss") %>">✕</button>

@@ -2,7 +2,7 @@
 
 <header role="banner" aria-label="Outfit header">
   <div>
-    <p class="dim"><%= @outfit.context_label.presence || "Outfit" %></p>
+    <p><%= @outfit.context_label.presence || "Outfit" %></p>
     <%= tag.h1 @outfit.name %>
   </div>
 </header>
@@ -17,7 +17,7 @@
 <% if @outfit.description.present? %>
   <%= tag.p @outfit.description %>
 <% else %>
-  <p class="dim"><%= t("outfits.no_description") %></p>
+  <p><%= t("outfits.no_description") %></p>
 <% end %>
 
 <% if @outfit.image.attached? %>
@@ -35,7 +35,7 @@
 
 <section>
   <%= tag.h2 t("outfits.style_intelligence") %>
-  <p class="dim"><%= t("outfits.style_intelligence_lead") %></p>
+  <p><%= t("outfits.style_intelligence_lead") %></p>
 </section>
 
 <nav role="navigation" aria-label="Outfit actions">

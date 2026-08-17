@@ -5,6 +5,6 @@
     <div class="item-photo item-photo--placeholder" aria-hidden="true"><%= item.category.first %></div>
   <% end %>
   <%= link_to item.title, demo_wardrobe_item_path(item), class: "item-title" %>
-  <span class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></span>
-  <span class="dim"><%= item.brand %> · worn <%= item.times_worn.to_i %>× · <%= item.value_label %></span>
+  <%= item.category %><%= " · #{item.color}" if item.color.present? %>
+  <%= item.brand %> · worn <%= item.times_worn.to_i %>× · <%= item.value_label %>
 </article>

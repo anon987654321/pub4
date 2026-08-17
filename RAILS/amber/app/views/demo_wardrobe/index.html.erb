@@ -5,7 +5,7 @@
 <% content_for :json_ld, json_ld_script(demo_item_list_schema(@items, title: t("demo.wardrobe"))) %>
 
 <header role="banner" aria-label="<%= t("demo.wardrobe_header") %>">
-  <p class="dim"><%= t("demo.capsule_kicker", name: Amber::DemoWardrobe::DEMO_DISPLAY_NAME) %></p>
+  <p><%= t("demo.capsule_kicker", name: Amber::DemoWardrobe::DEMO_DISPLAY_NAME) %></p>
   <%= tag.h1 t("demo.wardrobe") %>
   <p class="tagline"><%= t("demo.index_tagline") %></p>
   <nav role="navigation" aria-label="<%= t("demo.wardrobe_actions") %>">
@@ -22,7 +22,7 @@
         <% @outfits.each do |outfit| %>
           <div class="plan-row">
             <%= tag.strong outfit.name %>
-            <span class="dim"><%= outfit.context_label %> · <%= pluralize(outfit.items.size, "piece") %></span>
+            <%= outfit.context_label %> · <%= pluralize(outfit.items.size, "piece") %>
           </div>
         <% end %>
       </div>

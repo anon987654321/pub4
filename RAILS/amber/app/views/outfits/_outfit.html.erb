@@ -10,12 +10,12 @@
           <% if item.photos.attached? %>
             <%= responsive_image_tag item.photos.first, alt: item.title, preset: :thumb, sizes: "90px" %>
           <% else %>
-            <span><%= item.category.to_s.first(2).upcase %></span>
+            <%= item.category.to_s.first(2).upcase %>
           <% end %>
         <% end %>
       </div>
     <% end %>
   </div>
   <%= link_to outfit.name, outfit, class: "item-title" %>
-  <span class="dim"><%= outfit.items.count %> items · <%= pluralize(outfit.total_wears, "wear") %></span>
+  <%= outfit.items.count %> items · <%= pluralize(outfit.total_wears, "wear") %>
 </article>

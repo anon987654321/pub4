@@ -48,10 +48,10 @@
       "key": "#main-content>div.dating-app>section.dating-intro>footer.dating-intro-trust",
       "tag": "footer",
       "rect": {
-        "x": 10,
+        "x": 23,
         "y": 732,
-        "w": 371,
-        "h": 140
+        "w": 345,
+        "h": 120
       },
       "color": "#969696",
       "bg": "#000000",
@@ -64,8 +64,8 @@
       "key": "div.dating-app>section.dating-intro>footer.dating-intro-trust>nav",
       "tag": "nav",
       "rect": {
-        "x": 230,
-        "y": 782,
+        "x": 217,
+        "y": 772,
         "w": 151,
         "h": 40
       },
@@ -96,8 +96,8 @@
       "key": "section.dating-intro>footer.dating-intro-trust>nav>a",
       "tag": "a",
       "rect": {
-        "x": 239,
-        "y": 782,
+        "x": 226,
+        "y": 772,
         "w": 85,
         "h": 19
       },

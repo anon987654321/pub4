@@ -17,7 +17,7 @@
         <%= responsive_image_tag photo, alt: "", widths: [360, 720], sizes: "(max-width: 768px) 50vw, 220px" %>
       <% else %>
         <div class="deal-card-placeholder" aria-hidden="true">
-          <span><%= listing.title.to_s.first&.upcase || "?" %></span>
+          <%= listing.title.to_s.first&.upcase || "?" %>
         </div>
       <% end %>
       <% if listing.sold? %>

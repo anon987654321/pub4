@@ -221,7 +221,7 @@
       "position": "fixed"
     },
     {
-      "key": "div.theme-root>div.app-shell>footer.site-legal>p.dim.affiliate-fine",
+      "key": "div.theme-root>div.app-shell>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 55,

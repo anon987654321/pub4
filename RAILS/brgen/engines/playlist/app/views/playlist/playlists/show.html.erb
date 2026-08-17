@@ -4,7 +4,7 @@
 <p class="radio-back-link"><%= link_to t("playlist.back_to_radio"), root_path %></p>
 <%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, color: params[:color] || "#00d4ff", comments: @comments, track_comments: @track_comments %>
 
-<p class="dim"><%= t("playlist.set_stats", plays: @playlist.plays_count.to_i, tracks: @tracks.size, comments: @comments.size) %></p>
+<p><%= t("playlist.set_stats", plays: @playlist.plays_count.to_i, tracks: @tracks.size, comments: @comments.size) %></p>
 
 <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
   <section class="playlist-admin" aria-label="<%= t("playlist.management") %>">

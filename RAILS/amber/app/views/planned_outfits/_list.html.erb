@@ -4,7 +4,7 @@
     <div class="plan-row" id="<%= dom_id(plan) %>">
       <span class="plan-date"><%= l(plan.planned_date, format: :long) %></span>
       <%= link_to plan.outfit.name, plan.outfit %>
-      <% if plan.notes.present? %><span class="dim"><%= plan.notes %></span><% end %>
+      <% if plan.notes.present? %><%= plan.notes %><% end %>
       <%= button_to t("actions.remove"), planned_outfit_path(plan), method: :delete, class: "btn-link", data: { turbo_frame: "planned-outfits" } %>
     </div>
   <% end %>

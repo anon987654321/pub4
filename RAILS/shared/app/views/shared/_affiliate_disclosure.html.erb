@@ -1,4 +1,4 @@
-<p class="dim affiliate-fine" role="note">
+<p class="affiliate-fine" role="note">
   <%= affiliate_disclosure_text %>
   <% if ENV["AMAZON_ASSOCIATE_TAG"].present? || ENV["TRADEDOUBLER_TOKEN"].present? %>
     <% partners = [] %>
@@ -13,7 +13,7 @@
     Each half renders only when its value is configured, so an unconfigured app
     shows nothing rather than an empty label. %>
 <% if tradedoubler_site_id.present? || site_contact_email.present? %>
-  <p class="dim affiliate-fine site-verify" role="note">
+  <p class="affiliate-fine site-verify" role="note">
     <% if tradedoubler_site_id.present? %>
       <span class="site-verify-id">
         <%= t("legal.site_id_label", default: "TradeDoubler Site ID") %>:

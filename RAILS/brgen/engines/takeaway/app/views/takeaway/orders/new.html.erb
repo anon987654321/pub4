@@ -2,7 +2,7 @@
 
 <header class="page-header" role="banner" aria-label="<%= t("takeaway.restaurant_header") %>">
   <div>
-    <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.city_label %></p>
+    <p><%= @restaurant.cuisine_type %> · <%= @restaurant.city_label %></p>
     <%= tag.h1 t("takeaway.order_from", restaurant: @restaurant.name) %>
     <%= tag.p @restaurant.address %>
   </div>
@@ -29,7 +29,7 @@
             <% if item.description.present? %>
               <%= tag.p item.description %>
             <% end %>
-            <p class="dim">
+            <p>
               <%= item.price_display %>
               <% if item.vegetarian? %> · <%= t("takeaway.vegetarian") %><% end %>
               <% if item.vegan? %> · <%= t("takeaway.vegan") %><% end %>
@@ -69,7 +69,7 @@
 
   <section role="region" aria-label="<%= t("takeaway.payment_label") %>">
     <%= tag.h2 t("takeaway.payment") %>
-    <p class="dim"><%= t("takeaway.payment_body") %></p>
+    <p><%= t("takeaway.payment_body") %></p>
   </section>
 
   <%= form.submit t("takeaway.place_order"), class: "btn btn-primary" %>

@@ -93,27 +93,11 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.section-divider--24>p.dim>a",
-      "tag": "a",
-      "rect": {
-        "x": 229,
-        "y": 409,
-        "w": 53,
-        "h": 19
-      },
-      "color": "#e0e0e0",
-      "bg": "#000000",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "inline",
-      "position": "static"
-    },
-    {
       "key": "#main-content>div.section-divider--24>p.nearby-locate-actions>a.btn.btn-sm",
       "tag": "a",
       "rect": {
         "x": 157,
-        "y": 365,
+        "y": 385,
         "w": 126,
         "h": 44
       },
@@ -129,7 +113,7 @@
       "tag": "button",
       "rect": {
         "x": 18,
-        "y": 365,
+        "y": 385,
         "w": 130,
         "h": 44
       },
@@ -141,17 +125,17 @@
       "position": "static"
     },
     {
-      "key": "#main-content>p.channel-crosslink.dim>a",
+      "key": "#main-content>div.section-divider--24>p>a",
       "tag": "a",
       "rect": {
-        "x": 129,
-        "y": 231,
-        "w": 214,
-        "h": 19
+        "x": 259,
+        "y": 428,
+        "w": 61,
+        "h": 21
       },
       "color": "#e0e0e0",
       "bg": "#000000",
-      "font_size": 15.8,
+      "font_size": 18,
       "line_height": 20,
       "display": "inline",
       "position": "static"
@@ -170,6 +154,22 @@
       "font_size": 15.8,
       "line_height": 20,
       "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>p>a",
+      "tag": "a",
+      "rect": {
+        "x": 0,
+        "y": 230,
+        "w": 371,
+        "h": 41
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "inline",
       "position": "static"
     },
     {
@@ -301,7 +301,7 @@
       "position": "static"
     },
     {
-      "key": "html>body>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 20,

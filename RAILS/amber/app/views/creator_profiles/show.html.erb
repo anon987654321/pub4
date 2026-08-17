@@ -3,14 +3,14 @@
 
 <header class="profile-header" role="banner" aria-label="Creator profile">
   <%= tag.h1 @profile.display_name %>
-  <p class="dim">@<%= @profile.handle %></p>
+  <p>@<%= @profile.handle %></p>
   <% if @profile.bio.present? %>
     <%= tag.p @profile.bio %>
   <% end %>
   <% if authenticated? && Current.user == @profile.user %>
     <%= link_to t("wardrobe.edit_profile", default: t("actions.edit")), edit_my_creator_profile_path, class: "btn btn-sm" %>
   <% elsif @can_remix %>
-    <p class="dim">Remix-friendly wardrobe</p>
+    <p>Remix-friendly wardrobe</p>
   <% end %>
 </header>
 

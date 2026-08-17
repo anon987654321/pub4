@@ -24,8 +24,8 @@
     <section role="region" aria-label="<%= t("declutter.recommended_action") %>">
       <%= tag.h2 t("declutter.recommended_action") %>
       <p><%= tag.strong (@action[:recommendation] || @action["recommendation"]).to_s.humanize %></p>
-      <p class="dim"><%= @action[:copy] || @action["copy"] %></p>
-      <p class="dim"><%= t("declutter.destination") %> <%= (@action[:destination] || @action["destination"]).to_s.humanize %></p>
+      <p><%= @action[:copy] || @action["copy"] %></p>
+      <p><%= t("declutter.destination") %> <%= (@action[:destination] || @action["destination"]).to_s.humanize %></p>
     </section>
   <% end %>
 
@@ -79,12 +79,12 @@
   <% if @last_chance.present? %>
     <section>
       <%= tag.h2 t("declutter.last_chance_outfits") %>
-      <p class="dim"><%= t("declutter.one_more_role") %></p>
+      <p><%= t("declutter.one_more_role") %></p>
       <ul>
         <% @last_chance.each_with_index do |suggestion, index| %>
           <li>
             <%= tag.strong Array(suggestion[:titles] || suggestion["titles"]).join(" · ") %>
-            <p class="dim"><%= suggestion[:reason] || suggestion["reason"] %></p>
+            <p><%= suggestion[:reason] || suggestion["reason"] %></p>
             <%= button_to t("declutter.create_outfit"), create_last_chance_outfit_declutter_path(@item, index: index), method: :post, class: "btn-sm" %>
           </li>
         <% end %>

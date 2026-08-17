@@ -6,7 +6,7 @@
   <header class="marketplace-top-offers-header">
     <p class="top-offers-kicker"><%= t("marketplace.top_offers_kicker") %></p>
     <h2 id="top-offers-heading" class="top-offers-heading"><%= t("marketplace.top_offers_heading", default: "Picked for the city") %></h2>
-    <p class="top-offers-lede dim"><%= t("marketplace.top_offers_blurb") %></p>
+    <p class="top-offers-lede"><%= t("marketplace.top_offers_blurb") %></p>
   </header>
 
   <div class="top-offers-rail" role="list">
@@ -20,7 +20,7 @@
             <% if photo %>
               <%= responsive_image_tag photo, alt: "", widths: [480, 960], sizes: "(max-width: 768px) 80vw, 320px" %>
             <% else %>
-              <div class="deal-card-placeholder" aria-hidden="true"><span><%= offer.headline.to_s.first&.upcase || "%" %></span></div>
+              <div class="deal-card-placeholder" aria-hidden="true"><%= offer.headline.to_s.first&.upcase || "%" %></div>
             <% end %>
             <span class="deal-badge"><%= badge %></span>
           </div>
@@ -38,7 +38,7 @@
             <% if photo %>
               <%= responsive_image_tag photo, alt: "", widths: [480, 960], sizes: "(max-width: 768px) 80vw, 320px" %>
             <% else %>
-              <div class="deal-card-placeholder" aria-hidden="true"><span><%= listing.title.to_s.first&.upcase || "?" %></span></div>
+              <div class="deal-card-placeholder" aria-hidden="true"><%= listing.title.to_s.first&.upcase || "?" %></div>
             <% end %>
             <span class="deal-badge deal-badge--soft">Top</span>
           </div>

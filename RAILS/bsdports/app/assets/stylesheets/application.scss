@@ -65,7 +65,7 @@ body {
    accessibility failure regardless of importance, and this class lands on
    <time> and .meta that a reader does need. Now 4.62-5.43 across the three
    surfaces it sits on. */
-.meta, .dim, .text-secondary, time {
+.meta, .text-secondary, time {
   color: var(--text-secondary);
 }
 

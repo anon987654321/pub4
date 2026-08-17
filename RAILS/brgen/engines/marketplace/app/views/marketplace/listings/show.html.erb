@@ -10,7 +10,7 @@
 
 <div class="page-header marketplace-listing-header">
   <div>
-    <p class="dim"><%= t("marketplace.listing_kicker", category: @listing.category&.name || t("marketplace.listing")) %></p>
+    <p><%= t("marketplace.listing_kicker", category: @listing.category&.name || t("marketplace.listing")) %></p>
     <%= tag.h1 @listing.title %>
   </div>
   <nav role="navigation" aria-label="<%= t("aria.listing_actions") %>" class="marketplace-actions">
@@ -36,10 +36,10 @@
       <%= button_to t("marketplace.renew"), renew_listing_path(@listing), method: :post, class: "btn btn-primary btn-sm" %>
     <% end %>
   <% end %>
-  <p class="dim"><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location, @listing.user&.display_name || "anon"].compact.join(" · ") %></p>
-  <p class="dim"><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %> · <%= t("marketplace.reviews_count", count: @listing.reviews_count.to_i) %></p>
+  <p><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location, @listing.user&.display_name || "anon"].compact.join(" · ") %></p>
+  <p><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %> · <%= t("marketplace.reviews_count", count: @listing.reviews_count.to_i) %></p>
   <% if @listing.reviews_count.to_i.positive? %>
-    <p class="dim"><%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %></p>
+    <p><%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %></p>
   <% end %>
   <div class="listing-description"><%= read_more(@listing.description, lines: 6, more: t("actions.read_more"), less: t("actions.read_less")) %></div>
   <button class="btn-share" data-controller="share"
@@ -80,7 +80,7 @@
     <% @reviews.each do |review| %>
       <article>
         <strong><%= number_with_precision(review.rating, precision: 0) %> ★</strong>
-        <span class="dim"> — <%= review.user&.display_name || "anon" %></span>
+         — <%= review.user&.display_name || "anon" %>
         <%= simple_format(review.body) if review.body.present? %>
       </article>
     <% end %>
@@ -95,7 +95,7 @@
 <% if Current.user.present? && Current.user != @listing.user && @listing.buyable? %>
   <div id="make-offer" class="section-divider">
     <p class="section-heading--md"><%= t("marketplace.make_offer", default: "Make an offer") %></p>
-    <p class="dim"><%= t("marketplace.message_seller_hint") %></p>
+    <p><%= t("marketplace.message_seller_hint") %></p>
     <div class="form-wrap form-wrap--flush">
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
       <%= form_with(model: @order, url: listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: main_app.draft_path(draft_key)) }) do |f| %>
@@ -103,7 +103,7 @@
   <%= f.text_area :message, placeholder: t("marketplace.message_seller"), aria: { label: t("marketplace.message_seller") }, rows: 3 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-        <div class="field"><%= f.submit t("marketplace.send_offer"), class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
+        <div class="field"><%= f.submit t("marketplace.send_offer"), class: "btn btn-primary" %> <span data-autosave-target="status" aria-live="polite"></span></div>
       <% end %>
     </div>
   </div>
@@ -126,7 +126,7 @@
       <% @listing.orders.includes(:buyer).each do |order| %>
         <article>
           <%= tag.strong order.buyer&.display_name || "anon" %>
-          <span class="dim"> — <%= order.status %></span>
+           — <%= order.status %>
           <% if order.message.present? %><%= tag.p order.message %><% end %>
           <% if order.status == "pending" %>
             <div class="cluster mt-8">

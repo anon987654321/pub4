@@ -1,6 +1,6 @@
 <%# One note. Same three renderers as tv/stream_chats/_stream_chat: the page loop,
     create.turbo_stream.erb, and Tv::VideoNote's broadcast. %>
 <article id="<%= dom_id(video_note) %>">
-  <p class="dim"><% if video_note.timestamp.present? %><%= video_note.timestamp %> · <% end %><%= video_note.user&.display_name || "viewer" %></p>
+  <p><% if video_note.timestamp.present? %><%= video_note.timestamp %> · <% end %><%= video_note.user&.display_name || "viewer" %></p>
   <%= tag.p video_note.body %>
 </article>

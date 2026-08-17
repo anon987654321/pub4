@@ -12,6 +12,6 @@
 <% if authenticated? %>
   <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
     <%= tag.h3 t("feed.your_feed") %>
-    <p class="dim"><%= link_to t("nav.new_post"), main_app.new_post_path %> · <%= link_to t("nav.messages"), main_app.conversations_path %></p>
+    <p><%= link_to t("nav.new_post"), main_app.new_post_path %> · <%= link_to t("nav.messages"), main_app.conversations_path %></p>
   </div>
 <% end %>

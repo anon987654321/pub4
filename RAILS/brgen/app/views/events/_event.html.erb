@@ -11,7 +11,7 @@
     <% end %>
 
     <div class="event-card-body">
-      <p class="dim event-when">
+      <p>
         <time datetime="<%= event.starts_at.iso8601 %>"><%= l(event.starts_at, format: :event) %></time>
         <% if event.in_progress? %>
           <span class="chip chip--live"><%= t("events.happening_now") %></span>
@@ -24,7 +24,7 @@
       <h3 id="event-<%= event.id %>-title"><%= link_to event.title, event_path(event) %></h3>
 
       <% if event.location_name.present? %>
-        <p class="dim"><%= event.location_name %><%= " · #{event.neighborhood.name}" if event.neighborhood %></p>
+        <p><%= event.location_name %><%= " · #{event.neighborhood.name}" if event.neighborhood %></p>
       <% end %>
 
       <p class="chips">
@@ -41,7 +41,7 @@
       </p>
 
       <% if local_assigns[:rsvp_status].present? %>
-        <p class="dim"><%= t("events.your_answer.#{local_assigns[:rsvp_status]}") %></p>
+        <p><%= t("events.your_answer.#{local_assigns[:rsvp_status]}") %></p>
       <% end %>
     </div>
   </article>

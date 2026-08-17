@@ -69,7 +69,7 @@
         <% %w[none portrait landscape street blockbuster].each do |p| %>
           <label class="preset-opt">
             <%= f.radio_button :preset, p %>
-            <span><%= p.capitalize %></span>
+            <%= p.capitalize %>
           </label>
         <% end %>
       </fieldset>
@@ -80,12 +80,12 @@
         <%= f.label :anonymous, "Post anonymously" %>
       </div>
     <% else %>
-      <p class="dim mb-12"><%= t("post.posting_as_anon") %> <strong>anon</strong>. <%= link_to t("nav.sign_in"), new_session_path %><%= t("post.guest_sign_in") %></p>
+      <p class="mb-12"><%= t("post.posting_as_anon") %> <strong>anon</strong>. <%= link_to t("nav.sign_in"), new_session_path %><%= t("post.guest_sign_in") %></p>
     <% end %>
     <div class="field">
       <%= f.submit t("post.submit"), class: "btn btn-primary" %>
       <%= link_to t("actions.cancel"), posts_path, class: "btn btn-ghost" %>
-      <span class="dim" data-autosave-target="status" aria-live="polite"></span>
+      <span data-autosave-target="status" aria-live="polite"></span>
     </div>
   <% end %>
 </div>

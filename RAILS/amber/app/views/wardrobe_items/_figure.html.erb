@@ -11,13 +11,13 @@
   <figcaption class="viz-head">
     <h3 class="viz-title" id="viz-<%= id %>-title"><%= title %></h3>
     <% if local_assigns[:caption].present? %>
-      <p class="viz-caption dim"><%= caption %></p>
+      <p class="viz-caption"><%= caption %></p>
     <% end %>
   </figcaption>
 
   <% if rows.blank? %>
     <%# empty_state: no-action-ok — nothing to plot is a legible answer %>
-    <p class="dim"><%= local_assigns[:empty] %></p>
+    <p><%= local_assigns[:empty] %></p>
   <% else %>
     <ol class="viz-rows">
       <% rows.each do |row| %>
@@ -26,7 +26,7 @@
             <span class="viz-label-text">
               <%= row[:href].present? ? link_to(row[:label], row[:href]) : row[:label] %>
             </span>
-            <% if row[:note].present? %><span class="viz-note dim"><%= row[:note] %></span><% end %>
+            <% if row[:note].present? %><span class="viz-note"><%= row[:note] %></span><% end %>
           </span>
           <%# The value printed beside the bar is the accessible reading of it,
               so the track itself carries no semantics. A zero share draws no

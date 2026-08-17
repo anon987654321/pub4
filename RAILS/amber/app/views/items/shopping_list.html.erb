@@ -2,7 +2,7 @@
 
 <header role="banner" aria-label="<%= t("pages.shop_smarter") %>">
   <div>
-    <p class="dim"><%= t("shop.lead") %></p>
+    <p><%= t("shop.lead") %></p>
     <%= tag.h1 t("pages.shop_smarter") %>
   </div>
   <nav role="navigation" aria-label="<%= t("shop.actions") %>">
@@ -41,9 +41,9 @@
       <% @duplicate_groups.each do |group| %>
         <li>
           <%= tag.strong t("shop.duplicate_count", count: group[:count]) %>
-          <p class="dim"><%= group[:reason] %></p>
+          <p><%= group[:reason] %></p>
           <% if group[:keeper] %>
-            <p class="dim"><%= t("shop.keeper") %> <%= link_to group[:keeper].title, group[:keeper] %></p>
+            <p><%= t("shop.keeper") %> <%= link_to group[:keeper].title, group[:keeper] %></p>
           <% end %>
         </li>
       <% end %>
@@ -53,7 +53,7 @@
 
 <section aria-labelledby="shop-affiliates">
   <h2 id="shop-affiliates"><%= t("shop.your_links") %></h2>
-  <p class="dim"><%= t("shop.your_links_body") %></p>
+  <p><%= t("shop.your_links_body") %></p>
   <% if @affiliate_links.any? %>
     <ul class="shop-links">
       <% @affiliate_links.group_by(&:merchant).each do |merchant, links| %>
@@ -67,7 +67,7 @@
                     user-supplied; the destination is not amber's to vouch for. %>
                 <%= link_to t("shop.open"), link.url, rel: "nofollow noopener sponsored", target: "_blank", class: "btn-link" %>
                 <% if link.commission_rate.present? %>
-                  <span class="dim"><%= number_to_percentage(link.commission_rate, precision: 1) %></span>
+                  <%= number_to_percentage(link.commission_rate, precision: 1) %>
                 <% end %>
               </li>
             <% end %>
@@ -89,7 +89,7 @@
     fire — say so rather than leaving an empty section that looks broken. %>
 <section aria-labelledby="shop-feeds">
   <h2 id="shop-feeds"><%= t("shop.store_feeds") %></h2>
-  <p class="dim shop-feed-note">
+  <p class="shop-feed-note">
     <%= t("shop.feed_unavailable.#{@feed_reason || :available}") %>
     <span class="tag"><%= t("shop.no_feed_tag") %></span>
   </p>

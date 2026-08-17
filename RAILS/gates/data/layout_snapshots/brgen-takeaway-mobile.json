@@ -99,7 +99,7 @@
         "x": 0,
         "y": 62,
         "w": 390,
-        "h": 5003
+        "h": 5008
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -113,7 +113,7 @@
       "tag": "form",
       "rect": {
         "x": 1,
-        "y": 511,
+        "y": 515,
         "w": 388,
         "h": 53
       },
@@ -131,7 +131,7 @@
         "x": 0,
         "y": 310,
         "w": 390,
-        "h": 187
+        "h": 191
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -193,7 +193,7 @@
       "tag": "input",
       "rect": {
         "x": 1,
-        "y": 511,
+        "y": 515,
         "w": 388,
         "h": 53
       },
@@ -225,7 +225,7 @@
       "tag": "section",
       "rect": {
         "x": 0,
-        "y": 565,
+        "y": 569,
         "w": 390,
         "h": 4491
       },
@@ -397,7 +397,7 @@
       "position": "static"
     },
     {
-      "key": "html>body.vertical-takeaway>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body.vertical-takeaway>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 20,

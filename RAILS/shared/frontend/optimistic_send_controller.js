@@ -70,7 +70,7 @@ export default class extends Controller {
     li.dataset.optimistic = "true"
     li.innerHTML = `<article data-from="self" aria-busy="true">
       <header><span class="msg-nick">${this.#escape(this.handleValue)}</span>
-      <span class="dim">· ${this.#escape(this.pendingLabelValue)}</span></header>
+      <span class="send-status">· ${this.#escape(this.pendingLabelValue)}</span></header>
       <p></p></article>`
     li.querySelector("p").textContent = text
     log.appendChild(li)
@@ -84,7 +84,7 @@ export default class extends Controller {
     if (event.detail?.success === false) {
       // Put the text back rather than lose it, and say so.
       this.pending.querySelector("article")?.setAttribute("data-failed", "true")
-      const note = this.pending.querySelector(".dim")
+      const note = this.pending.querySelector(".send-status")
       if (note) note.textContent = `· ${this.failedLabelValue}`
       const field = this.#field
       if (field && !field.value) field.value = this.sentText

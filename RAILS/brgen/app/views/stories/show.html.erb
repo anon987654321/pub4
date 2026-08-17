@@ -2,7 +2,7 @@
 
 <article class="story-viewer" role="article" aria-label="<%= t("stories.by", user: @story.user.display_name) %>">
   <header class="story-viewer-head">
-    <p class="dim">
+    <p>
       <%= tag.strong @story.user.display_name %>
       ·
       <%# The countdown reads the row's own expires_at rather than re-deriving
@@ -49,6 +49,6 @@
             data: { turbo_confirm: t("stories.confirm_delete") } %>
     </section>
   <% else %>
-    <p class="dim"><%= t("stories.seen_count", count: @story.views_count) %></p>
+    <p><%= t("stories.seen_count", count: @story.views_count) %></p>
   <% end %>
 </article>

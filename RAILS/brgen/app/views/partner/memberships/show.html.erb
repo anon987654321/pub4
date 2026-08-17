@@ -2,7 +2,7 @@
 
 <section class="partner-membership">
   <%= tag.h1 @membership.program.name %>
-  <p class="dim">
+  <p>
     <%= t("partner.status_label") %> <%= @membership.status %> ·
     <%= t("partner.token_label") %> <code><%= @membership.token %></code>
   </p>
@@ -23,7 +23,7 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="dim"><%= t("partner.no_clicks") %><%# adhoc_empty: ok — terse inline sub-section note, not a page-level empty state %></p>
+      <p><%= t("partner.no_clicks") %><%# adhoc_empty: ok — terse inline sub-section note, not a page-level empty state %></p>
     <% end %>
   </section>
 
@@ -39,7 +39,7 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="dim"><%= t("partner.no_conversions") %><%# adhoc_empty: ok — terse inline sub-section note, not a page-level empty state %></p>
+      <p><%= t("partner.no_conversions") %><%# adhoc_empty: ok — terse inline sub-section note, not a page-level empty state %></p>
     <% end %>
   </section>
 </section>

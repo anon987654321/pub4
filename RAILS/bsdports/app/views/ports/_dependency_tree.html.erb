@@ -6,7 +6,7 @@
       <ul role="tree" aria-label="<%= heading %>">
         <% tree.each do |node| %>
           <li role="treeitem" aria-label="<%= node[:label] %>">
-            <span><%= node[:label] %></span>
+            <%= node[:label] %>
             <% if node[:children].any? %>
               <%= render "ports/dependency_tree", tree: node[:children] %>
             <% end %>
@@ -18,7 +18,7 @@
     <ul role="group">
       <% tree.each do |node| %>
         <li role="treeitem" aria-label="<%= node[:label] %>">
-          <span><%= node[:label] %></span>
+          <%= node[:label] %>
           <% if node[:children].any? %>
             <%= render "ports/dependency_tree", tree: node[:children] %>
           <% end %>

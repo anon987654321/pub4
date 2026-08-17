@@ -13,11 +13,11 @@
         than having one room description with two names. %>
     <% blurb = Conversation.channel_blurb(@conversation.slug) %>
     <% if blurb.present? %>
-      <p class="dim channel-topic"><%= t("channels.topic", topic: blurb) %></p>
+      <p class="channel-topic"><%= t("channels.topic", topic: blurb) %></p>
     <% end %>
     <%# Heartbeat lives on the header, not the log, so it keeps running while the
         reader scrolls back through history. %>
-    <p class="dim" data-controller="presence"
+    <p data-controller="presence"
        data-presence-url-value="<%= conversation_presence_path(@conversation) %>">
       <%= render "conversations/presence", conversation: @conversation %>
     </p>
@@ -34,7 +34,7 @@
     <% end %>
   </ul>
 
-  <p id="typing-indicator" class="dim" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
+  <p id="typing-indicator" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
 
   <% if Current.user.present? %>
     <% handle = Current.user.channel_handle %>
@@ -58,12 +58,12 @@
       <%= f.hidden_field :message_type, value: "text" %>
       <%= f.submit t("actions.send"), class: "btn btn-primary" %>
     <% end %>
-    <p class="dim channel-guest-hint">
+    <p>
       <%= t("chat.posting_as") %> <%= tag.strong handle %><% if Current.user.guest? %> — <%= t("chat.no_signup") %><% end %>.
     </p>
   <% else %>
     <%# Soft guest should already exist; if not, one round-trip mints it. %>
-    <p class="channel-signin dim"><%= t("chat.anyone_join") %></p>
+    <p class="channel-signin"><%= t("chat.anyone_join") %></p>
     <p><%= link_to t("chat.join_room"), channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
   <% end %>
 </section>

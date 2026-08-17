@@ -19,7 +19,7 @@
         "x": 132,
         "y": 64,
         "w": 760,
-        "h": 2449
+        "h": 2443
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
@@ -35,7 +35,7 @@
         "x": 156,
         "y": 118,
         "w": 712,
-        "h": 2265
+        "h": 2259
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
@@ -65,7 +65,7 @@
       "tag": "nav",
       "rect": {
         "x": 156,
-        "y": 275,
+        "y": 270,
         "w": 712,
         "h": 44
       },
@@ -81,7 +81,7 @@
       "tag": "a",
       "rect": {
         "x": 156,
-        "y": 275,
+        "y": 270,
         "w": 166,
         "h": 44
       },
@@ -93,11 +93,11 @@
       "position": "static"
     },
     {
-      "key": "#main-content>section.categories>h2.dim",
+      "key": "#main-content>section.categories>h2",
       "tag": "h2",
       "rect": {
         "x": 156,
-        "y": 2425,
+        "y": 2419,
         "w": 712,
         "h": 19
       },
@@ -113,7 +113,7 @@
       "tag": "a",
       "rect": {
         "x": 156,
-        "y": 414,
+        "y": 409,
         "w": 16,
         "h": 12
       },
@@ -129,7 +129,7 @@
       "tag": "a",
       "rect": {
         "x": 156,
-        "y": 436,
+        "y": 431,
         "w": 59,
         "h": 9
       },
@@ -145,7 +145,7 @@
       "tag": "input",
       "rect": {
         "x": 157,
-        "y": 332,
+        "y": 327,
         "w": 710,
         "h": 48
       },
@@ -157,11 +157,11 @@
       "position": "static"
     },
     {
-      "key": "body.wscons>div.app-shell>footer.site-legal>p.dim.affiliate-fine",
+      "key": "body.wscons>div.app-shell>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 20,
-        "y": 2572,
+        "y": 2566,
         "w": 984,
         "h": 18
       },
@@ -209,7 +209,7 @@
       "tag": "form",
       "rect": {
         "x": 157,
-        "y": 332,
+        "y": 327,
         "w": 710,
         "h": 48
       },
@@ -225,7 +225,7 @@
       "tag": "footer",
       "rect": {
         "x": 0,
-        "y": 2553,
+        "y": 2547,
         "w": 1024,
         "h": 65
       },
@@ -273,7 +273,7 @@
       "tag": "a",
       "rect": {
         "x": 156,
-        "y": 2450,
+        "y": 2444,
         "w": 84,
         "h": 18
       },

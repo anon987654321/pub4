@@ -3,7 +3,7 @@
           t("messages.to", name: message.recipient.display_name) :
           t("messages.from", name: message.sender.display_name) %>
   <%= tag.p message.body %>
-  <p class="dim">
+  <p>
     <%= time_ago_in_words(message.created_at) %>
     <% if message.read_at.nil? && message.recipient_id == Current.user.id %>
       · <%= t("messages.unread") %>

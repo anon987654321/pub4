@@ -53,7 +53,7 @@
           <%= f.submit t("maps.check_in"), class: "btn" %>
         <% end %>
       <% else %>
-        <p class="dim"><%= t("maps.checked_in_recently") %></p>
+        <p><%= t("maps.checked_in_recently") %></p>
       <% end %>
     <% end %>
   </p>
@@ -82,7 +82,7 @@
           <li>
             <%= check_in.user.display_name %>
             <% if check_in.note.present? %> — <%= check_in.note %><% end %>
-            <span class="dim">· <time datetime="<%= check_in.checked_in_at.iso8601 %>"><%= time_ago(check_in.checked_in_at) %></time></span>
+            · <time datetime="<%= check_in.checked_in_at.iso8601 %>"><%= time_ago(check_in.checked_in_at) %></time>
           </li>
         <% end %>
       </ul>

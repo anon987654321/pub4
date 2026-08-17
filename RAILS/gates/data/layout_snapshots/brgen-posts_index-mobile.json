@@ -67,7 +67,7 @@
         "x": 0,
         "y": 62,
         "w": 390,
-        "h": 7202
+        "h": 7201
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -81,7 +81,7 @@
       "tag": "aside",
       "rect": {
         "x": 0,
-        "y": 7066,
+        "y": 7065,
         "w": 390,
         "h": 189
       },
@@ -97,7 +97,7 @@
       "tag": "h2",
       "rect": {
         "x": 0,
-        "y": 7066,
+        "y": 7065,
         "w": 390,
         "h": 20
       },
@@ -241,7 +241,7 @@
       "tag": "a",
       "rect": {
         "x": 0,
-        "y": 7094,
+        "y": 7093,
         "w": 42,
         "h": 21
       },
@@ -349,7 +349,7 @@
       "position": "static"
     },
     {
-      "key": "html>body>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 20,

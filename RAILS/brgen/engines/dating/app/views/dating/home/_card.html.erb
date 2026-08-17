@@ -9,7 +9,7 @@
       <%= lazy_image_tag profile.photos.first, alt: display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash") %>
     <% else %>
       <div class="swipe-placeholder">
-        <span><%= display_name.to_s.first.upcase %></span>
+        <%= display_name.to_s.first.upcase %>
       </div>
     <% end %>
     <span class="swipe-stamp swipe-stamp--like" aria-hidden="true"><%= t("dating.stamp_like") %></span>
@@ -36,7 +36,7 @@
     <% end %>
     <% if first_prompt %>
       <p class="swipe-prompt">
-        <span class="dim"><%= first_prompt.question_text %></span>
+        <%= first_prompt.question_text %>
         <%= first_prompt.answer %>
       </p>
     <% end %>
@@ -68,6 +68,6 @@
       <%= button_tag "♥", type: "button", class: "swipe-action swipe-action--like", title: t("actions.like"), aria: { label: t("actions.like") }, data: { controller: "haptics", action: "click->swipe#like click->haptics#tick" } %>
     </div>
   <% else %>
-    <p class="dim swipe-signin"><%= t("dating.swipe_guest") %></p>
+    <p class="swipe-signin"><%= t("dating.swipe_guest") %></p>
   <% end %>
 </article>

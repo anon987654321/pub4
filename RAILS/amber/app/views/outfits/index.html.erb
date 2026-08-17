@@ -3,7 +3,7 @@
 
 <header role="banner" aria-label="<%= t("pages.outfits") %>">
   <div>
-    <p class="dim"><%= t("outfits.style_combinations") %></p>
+    <p><%= t("outfits.style_combinations") %></p>
     <%= tag.h1 t("pages.outfits") %>
   </div>
   <nav role="navigation" aria-label="<%= t("pages.outfits") %>">
@@ -15,7 +15,7 @@
 
 <section class="form-wrap" aria-label="<%= t("outfits.generate_label") %>">
   <% if @weather.present? %>
-    <p class="dim"><%= t("outfits.weather_now", description: @weather[:description]) %><% if @weather[:temp] %><%= t("outfits.weather_temp", temp: @weather[:temp].round) %><% end %><% if @weather[:wind] %><%= t("outfits.weather_wind", wind: @weather[:wind]) %><% end %></p>
+    <p><%= t("outfits.weather_now", description: @weather[:description]) %><% if @weather[:temp] %><%= t("outfits.weather_temp", temp: @weather[:temp].round) %><% end %><% if @weather[:wind] %><%= t("outfits.weather_wind", wind: @weather[:wind]) %><% end %></p>
   <% end %>
   <%= form_with url: generate_outfits_path, method: :post do |f| %>
     <div class="field"><%= f.text_field :weather, value: @default_weather, placeholder: t("outfits.weather_placeholder"), aria: { label: t("outfits.weather_placeholder") } %></div>

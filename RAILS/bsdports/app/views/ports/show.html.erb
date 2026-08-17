@@ -8,7 +8,7 @@
   <section class="install-panel" aria-labelledby="install-heading">
     <h2 id="install-heading"><%= t("ports.install") %></h2>
     <%= render "shared/copyable", text: "doas pkg_add #{@port.name}" %>
-    <p class="dim"><%= t("ports.install_note_html", platform: @port.platform.name) %></p>
+    <p><%= t("ports.install_note_html", platform: @port.platform.name) %></p>
   </section>
   <% if @port.description.present? %>
     <%= read_more(@port.description, lines: 4) %>

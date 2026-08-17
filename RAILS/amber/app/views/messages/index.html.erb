@@ -3,9 +3,9 @@
 <header role="banner" aria-label="<%= t("messages.title") %>">
   <%= tag.h1 t("pages.messages") %>
   <% if @unread_count.to_i.positive? %>
-    <p class="dim"><%= t("messages.unread_count", count: @unread_count) %></p>
+    <p><%= t("messages.unread_count", count: @unread_count) %></p>
   <% else %>
-    <p class="dim"><%= t("messages.inbox_clear") %></p>
+    <p><%= t("messages.inbox_clear") %></p>
   <% end %>
 </header>
 

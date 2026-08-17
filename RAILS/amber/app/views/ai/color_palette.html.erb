@@ -1,6 +1,6 @@
 <% content_for :title, t("pages.colour_palette") %>
 <%= tag.h1 t("pages.colour_palette_title") %>
-<% if @result["source"] %><p class="dim">Source: <%= @result["source"] %></p><% end %>
+<% if @result["source"] %><p>Source: <%= @result["source"] %></p><% end %>
 
 <% if @swatches.present? %>
   <section aria-label="<%= t("ai.palette_aria") %>">
@@ -30,6 +30,6 @@
     <ul><% @result["suggestions"].each do |s| %><li><%= s %></li><% end %></ul>
   <% end %>
 <% else %>
-  <p class="dim"><%= t("ai.not_enough_items") %></p>
+  <p><%= t("ai.not_enough_items") %></p>
 <% end %>
 <p><%= link_to t("ai.dashboard_back"), root_path %></p>

@@ -100,14 +100,15 @@ module Pub4
     # hex -- so an unstyled page gets geometry without anyone deciding what it
     # looks like. Past that the design is still someone's, and this is a floor
     # rather than a licence to style from a lint.
-    # 278 -> 276 on 2026-08-17: deleting the Live surface orphaned the whole
-    # inline compose block in _nav.scss (.compose-box and its --expanded state,
-    # .compose-label-visible, .compose-inner, .compose-prompt, .compose-footer,
-    # .compose-submit, .compose-as, .compose-action--attached), which had one
-    # caller left because the front page had already moved to the dialog
-    # composer. A ratchet fails on slack as well as on excess, so the number
-    # comes down with the code rather than sitting there as headroom.
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 276 }.freeze
+    # Comes down with the code, never up to meet it: this ratchet fails on slack
+    # as well as on excess.
+    #
+    #   278 -> 276  the Live surface went, orphaning the inline compose block in
+    #               _nav.scss whose last caller it was
+    #   276 -> 275  the presentational class `dim` went from markup and
+    #               stylesheets alike, with the seven naming hooks that had been
+    #               riding on its styling
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 275 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -117,7 +118,21 @@ module Pub4
 
     def views
       TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/views/**/*.erb")) } +
-        engine_dirs.flat_map { |d| Dir.glob(File.join(d, "app/views/**/*.erb")) }
+        engine_dirs.flat_map { |d| Dir.glob(File.join(d, "app/views/**/*.erb")) } +
+        rendered_by_javascript
+    end
+
+    # Not every element is rendered by a template. optimistic_send_controller
+    # builds the pending message it later marks failed, so the class naming that
+    # status appears only in JavaScript — and a scan of the views alone called
+    # the rule styling it unused, which is the opposite of true.
+    #
+    # Read as views because that is what they are: the markup exists, it is just
+    # assembled at runtime. Both frontend homes are covered, so a controller
+    # promoted from an app into shared/frontend does not change the count.
+    def rendered_by_javascript
+      TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/javascript/**/*.js")) } +
+        Dir.glob(File.join(RAILS_ROOT, "shared", "frontend", "**", "*.js"))
     end
 
     def stylesheets

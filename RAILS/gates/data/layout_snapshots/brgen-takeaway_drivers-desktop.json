@@ -81,7 +81,7 @@
       "tag": "h1",
       "rect": {
         "x": 18,
-        "y": 159,
+        "y": 163,
         "w": 148,
         "h": 34
       },
@@ -221,7 +221,7 @@
       "position": "static"
     },
     {
-      "key": "html>body.vertical-takeaway>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body.vertical-takeaway>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 465,

@@ -3,7 +3,7 @@
 
 <div class="page-header" role="banner" aria-label="<%= t("aria.order_details_header") %>">
   <h1>Order #<%= @order.id %></h1>
-  <p class="dim">For <%= link_to @order.listing.title, listing_path(@order.listing) %></p>
+  <p>For <%= link_to @order.listing.title, listing_path(@order.listing) %></p>
 </div>
 
 <div class="order-meta">

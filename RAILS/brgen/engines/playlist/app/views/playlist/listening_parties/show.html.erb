@@ -3,9 +3,9 @@
 
 <div class="page-header" role="banner">
   <div>
-    <p class="dim"><%= t("playlist.listening_party") %></p>
+    <p><%= t("playlist.listening_party") %></p>
     <%= tag.h1 @set.name %>
-    <p class="dim"><%= t("playlist.join_code") %>: <%= tag.strong @party.join_code %></p>
+    <p><%= t("playlist.join_code") %>: <%= tag.strong @party.join_code %></p>
   </div>
   <% if @party.host == Current.user %>
     <%= button_to t("playlist.end_party"), set_listening_party_path(@set), method: :delete,

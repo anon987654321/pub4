@@ -23,7 +23,7 @@
         <% if index.positive? && (index % 3).zero? %>
           <% cta = t("affiliate.cta").values[(index / 3 - 1) % t("affiliate.cta").size] %>
           <div class="affiliate_feed_cta" data-parallax-tilt-target="tile" data-parallax-tilt-depth="0.14">
-            <span><%= cta %></span>
+            <%= cta %>
           </div>
         <% end %>
 
@@ -46,7 +46,7 @@
               indistinguishable from a paid deal, to the visitor and to whoever
               reconciles the payout. %>
           <% if deal.placeholder %>
-            <span class="affiliate_feed_placeholder dim"><%= t("affiliate.placeholder_notice") %></span>
+            <span class="affiliate_feed_placeholder"><%= t("affiliate.placeholder_notice") %></span>
           <% end %>
         </a>
       <% end %>

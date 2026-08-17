@@ -1,4 +1,4 @@
 <%= link_to playlist_path(playlist), class: "radio-library-item playlist-row" do %>
   <%= tag.strong playlist.name %>
-  <span><%= playlist.tracks_count.to_i %> tracks · <%= playlist.plays_count.to_i %> plays</span>
+  <%= playlist.tracks_count.to_i %> tracks · <%= playlist.plays_count.to_i %> plays
 <% end %>

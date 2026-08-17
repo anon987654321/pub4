@@ -40,7 +40,7 @@
     <%= form.label :audio_file, track.persisted? ? "Replace audio file (keeps URL)" : "Audio file(s) - bulk upload supported" %>
     <%= form.file_field :audio_file, direct_upload: true, data: { controller: "direct-upload" }, multiple: !track.persisted? %>
     <% if track.persisted? && track.audio_file.attached? %>
-      <small class="dim"><%= t("playlist.current_file", name: track.audio_file.filename) %></small>
+      <small><%= t("playlist.current_file", name: track.audio_file.filename) %></small>
     <% end %>
   </div>
 

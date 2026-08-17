@@ -2,7 +2,7 @@
 
 <header role="banner" aria-label="<%= t("pages.analytics") %>">
   <div>
-    <p class="dim"><%= t("wardrobe.closet_signals") %></p>
+    <p><%= t("wardrobe.closet_signals") %></p>
     <%= tag.h1 t("pages.analytics") %>
   </div>
   <nav role="navigation" aria-label="<%= t("wardrobe.analytics_actions") %>">
@@ -74,12 +74,12 @@
 
 <section>
   <h2><%= t("wardrobe.coach_tips") %> <span class="tag"><%= t("wardrobe.coach_rules") %></span></h2>
-  <p class="dim"><%= t("wardrobe.coach_body") %></p>
+  <p><%= t("wardrobe.coach_body") %></p>
   <% if @analytics[:tips].any? %>
     <% @analytics[:tips].each do |tip| %><%= tag.p tip %><% end %>
   <% else %>
     <%# empty_state: no-action-ok — calm state when heuristics have nothing urgent %>
-    <p class="dim"><%= t("wardrobe.no_urgent_tips") %></p>
+    <p><%= t("wardrobe.no_urgent_tips") %></p>
   <% end %>
 </section>
 
@@ -94,7 +94,7 @@
     <% @recommendations.each do |recommendation| %>
       <article>
         <%= tag.strong recommendation.kind.humanize %>
-        <p class="dim"><%= recommendation.reason %></p>
+        <p><%= recommendation.reason %></p>
       </article>
     <% end %>
   <% end %>

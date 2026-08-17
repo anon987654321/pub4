@@ -19,7 +19,7 @@
         "x": 0,
         "y": 62,
         "w": 1440,
-        "h": 1038
+        "h": 1043
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -35,7 +35,7 @@
         "x": 438,
         "y": 139,
         "w": 564,
-        "h": 127
+        "h": 132
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -109,7 +109,7 @@
       "position": "static"
     },
     {
-      "key": "html>body.vertical-messenger>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body.vertical-messenger>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 465,
@@ -145,7 +145,7 @@
       "tag": "a",
       "rect": {
         "x": 438,
-        "y": 284,
+        "y": 288,
         "w": 564,
         "h": 101
       },

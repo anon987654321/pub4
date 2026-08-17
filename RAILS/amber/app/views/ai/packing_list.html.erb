@@ -1,7 +1,7 @@
 <% content_for :title, t("pages.packing_list") %>
 
 <%= tag.h1 t("pages.packing_list") %>
-<p class="dim"><%= t("ai.packing_lead") %></p>
+<p><%= t("ai.packing_lead") %></p>
 
 <%= form_with url: ai_packing_list_path, method: :get, class: "form" do |f| %>
   <%# f.label, not a bare <label>. These were <label>text</label> sitting beside
@@ -31,7 +31,7 @@
       <% end %>
     </ul>
   <% end %>
-  <% if @result["tips"] %><p class="dim"><%= @result["tips"] %></p><% end %>
+  <% if @result["tips"] %><p><%= @result["tips"] %></p><% end %>
   <%= tag.p t("ai.packing_created") %>
 <% end %>
 

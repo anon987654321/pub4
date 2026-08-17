@@ -8,7 +8,7 @@
   <h2>Collaborators</h2>
   <% if collaborations.any? %>
     <% collaborations.includes(:user).each do |c| %>
-      <span class="dim"><%= c.user&.username || c.user&.email %> (<%= c.role %>)</span>
+      <%= c.user&.username || c.user&.email %> (<%= c.role %>)
       <% if Current.user == parent.user || c.user == Current.user %>
         <%= button_to t("actions.remove"), collaboration_path_proc.call(c), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% end %>

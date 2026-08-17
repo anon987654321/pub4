@@ -3,7 +3,7 @@
 <section class="partner-programs">
   <header class="cluster">
     <%= tag.h1 t("partner.programs_title") %>
-    <p class="dim"><%= t("partner.programs_lead") %></p>
+    <p><%= t("partner.programs_lead") %></p>
   </header>
 
   <% if @mine.any? %>
@@ -28,7 +28,7 @@
         <% @programs.each do |program| %>
           <li class="sidebar-card">
             <h3><%= link_to program.name, partner_program_path(program) %></h3>
-            <p class="dim"><%= program.store&.name %></p>
+            <p><%= program.store&.name %></p>
             <p>
               <% if program.percent? %>
                 <%= t("partner.commission_percent", rate: program.commission_rate / 100.0) %>
@@ -42,7 +42,7 @@
       </ul>
     <% else %>
       <%# adhoc_empty: ok — no viewer-actionable CTA here; programs are created by store owners, not this reader %>
-      <p class="dim"><%= t("partner.none_open") %></p>
+      <p><%= t("partner.none_open") %></p>
     <% end %>
   </section>
 </section>

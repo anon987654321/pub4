@@ -5,11 +5,11 @@
   <% else %>
     <%= tag.h2 activity_event_title(event) %>
   <% end %>
-  <p class="dim">
+  <p>
     <%= activity_event_vertical(event) %> · <%= event.object_type.to_s.demodulize %>
-    · <span><%= time_ago(event.created_at) %></span>
+    · <%= time_ago(event.created_at) %>
   </p>
-  <% if event.locality.present? %><p class="dim"><%= event.locality %></p><% end %>
+  <% if event.locality.present? %><p><%= event.locality %></p><% end %>
   <% if href.present? %>
     <p class="activity-event-cta"><%= link_to t("actions.open"), href, class: "btn btn-ghost btn-sm" %></p>
   <% end %>

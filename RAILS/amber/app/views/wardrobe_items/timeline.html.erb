@@ -2,7 +2,7 @@
 
 <header role="banner" aria-label="<%= t("wardrobe.evolution_header") %>">
   <div>
-    <p class="dim"><%= t("wardrobe.phases_over_time") %></p>
+    <p><%= t("wardrobe.phases_over_time") %></p>
     <%= tag.h1 t("pages.timeline") %>
   </div>
   <nav role="navigation" aria-label="<%= t("wardrobe.evolution_actions") %>">
@@ -26,14 +26,14 @@
       <article class="style-phase-card" aria-labelledby="phase-<%= group[:phase] %>">
         <header>
           <h3 id="phase-<%= group[:phase] %>"><%= group[:label] %></h3>
-          <p class="dim"><%= group[:count] %> items</p>
+          <p><%= group[:count] %> items</p>
         </header>
         <% if group[:items].any? %>
           <ol class="style-phase-list" role="list" data-controller="scroll-reveal">
             <% group[:items].each do |item| %>
               <li role="listitem" class="timeline-item">
                 <%= link_to item[:title], item_path(item[:id]) %>
-                <span class="dim"><%= item[:category] %></span>
+                <%= item[:category] %>
                 <% if item[:mood_effect].present? %>
                   <span class="tag"><%= item[:mood_effect] %></span>
                 <% end %>
@@ -61,14 +61,14 @@
           <p>
             <%= link_to event[:item_title], item_path(event[:item_id]) %>
             <% if event[:outfit_title].present? %>
-              <span class="dim">in <%= event[:outfit_title] %></span>
+              in <%= event[:outfit_title] %>
             <% end %>
           </p>
           <% if event[:life_phase].present? %>
             <span class="tag tag--phase"><%= event[:life_phase] %></span>
           <% end %>
           <% if event[:context].present? %>
-            <p class="dim"><%= event[:context] %></p>
+            <p><%= event[:context] %></p>
           <% end %>
         </li>
       <% end %>

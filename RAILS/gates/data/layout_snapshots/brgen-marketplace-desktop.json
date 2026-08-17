@@ -163,7 +163,7 @@
         "x": 0,
         "y": 62,
         "w": 1440,
-        "h": 1752
+        "h": 1751
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -461,7 +461,7 @@
       "position": "static"
     },
     {
-      "key": "html>body.vertical-marketplace>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body.vertical-marketplace>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 465,

@@ -25,7 +25,7 @@
       <span class="expiry-chip" data-expiry="<%= message.expiry_urgency %>">· <%= t("messages.disappears_in", time: time_ago_in_words(message.expires_at)) %></span>
     <% end %>
     <% receipt = message.message_receipts.find_by(user: Current.user) %>
-    <% if receipt&.read? %><span class="dim">· <%= t("messages.read") %></span><% end %>
+    <% if receipt&.read? %><span class="read-receipt">· <%= t("messages.read") %></span><% end %>
   </header>
   <%= tag.p format_chat_body(message.content) %>
   <%= render "messages/reactions", message: message %>

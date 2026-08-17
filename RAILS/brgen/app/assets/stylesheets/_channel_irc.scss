@@ -108,7 +108,7 @@ body.vertical-messenger #messages.channel-log article > header time {
    same sentence 100 times and it would break the gutter. The read receipt is a
    DM concept — there is no "read" in a room with N lurkers. */
 body.vertical-messenger #messages.channel-log article > header .expiry-chip,
-body.vertical-messenger #messages.channel-log article > header .dim {
+body.vertical-messenger #messages.channel-log article > header .read-receipt {
   display: none;
 }
 

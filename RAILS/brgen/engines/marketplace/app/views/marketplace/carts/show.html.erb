@@ -8,7 +8,7 @@
 
 <div class="page-header" role="banner" aria-label="<%= t("marketplace.cart_header") %>">
   <%= tag.h1 t("pages.cart") %>
-  <p class="dim"><%= t("marketplace.item", count: @cart_items.size) %></p>
+  <p><%= t("marketplace.item", count: @cart_items.size) %></p>
 </div>
 
 <% if @cart_items.any? %>
@@ -17,7 +17,7 @@
       <div class="cart-item">
         <div>
           <strong><%= link_to item.listing.title, listing_path(item.listing) %></strong>
-          <div class="dim"><%= item.listing.price_display %> × <%= item.quantity || 1 %></div>
+          <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div>
         </div>
         <div class="text-end">
           <%= tag.strong item.total_display %>
@@ -32,7 +32,7 @@
 
   <div class="cart-summary">
     <p><%= tag.strong t("marketplace.cart_total", amount: Shared::MoneyDisplay.format(@cart_total)) %></p>
-    <p class="dim"><%= t("marketplace.cart_pay_hint") %></p>
+    <p><%= t("marketplace.cart_pay_hint") %></p>
 
     <%# Paying the whole basket needs somewhere to send it. Shown before the pay
         buttons rather than discovered after the money has moved. %>
@@ -41,7 +41,7 @@
         <p><%= tag.strong t("marketplace.deliver_to") %> <%= @delivery_address %></p>
         <%= link_to t("marketplace.change_address"), addresses_path, class: "btn btn-ghost btn-sm" %>
       <% else %>
-        <p class="dim"><%= t("marketplace.no_address_yet") %></p>
+        <p><%= t("marketplace.no_address_yet") %></p>
         <%= link_to t("marketplace.add_address"), addresses_path, class: "btn btn-sm" %>
       <% end %>
     </div>

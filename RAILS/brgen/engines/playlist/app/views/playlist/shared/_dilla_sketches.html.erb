@@ -8,7 +8,7 @@
 <% rich_form = local_assigns.fetch(:rich_form, false) %>
 <section role="region" aria-label="<%= t("aria.dilla_sketches") %>">
   <h2>Dilla sketches / beats</h2>
-  <p class="dim">
+  <p>
     Collaborative beat patterns. Lab:
     <a href="/dilla/dilla.html<%= local_assigns[:lab_query] %>" target="_blank" rel="noopener">dilla.html</a>
   </p>
@@ -16,11 +16,11 @@
     <% sketches.each do |sk| %>
       <div class="dilla-sketch">
         <%= tag.strong sk.name %>
-        <span class="dim">
+        
           <%= sk.try(:style).presence || "dilla" %>
           · <%= sk.try(:bars).presence || 12 %> bars
           · <%= sk.render_status || "idle" %>
-        </span>
+        
         by <%= sk.user&.try(:display_name) || sk.user&.email || "anon" %>
         <% if sk.lab_url.present? %>
           <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm"><%= t("playlist.open_in_lab") %></a>
@@ -35,12 +35,12 @@
           <audio controls preload="none" src="<%= main_app.url_for(sk.render) %>"></audio>
         <% end %>
         <% if sk.try(:track_id).present? %>
-          <span class="dim">track #<%= sk.track_id %></span>
+          track #<%= sk.track_id %>
         <% end %>
         <% if sk.try(:render_error).present? %>
-          <p class="dim" role="alert"><%= sk.render_error %></p>
+          <p role="alert"><%= sk.render_error %></p>
         <% end %>
-        <% if sk.notes.present? %><p class="dim"><%= sk.notes %></p><% end %>
+        <% if sk.notes.present? %><p><%= sk.notes %></p><% end %>
       </div>
     <% end %>
   <% else %>

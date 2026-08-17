@@ -1,6 +1,6 @@
 <div class="sidebar-card">
   <%= tag.h3 t("newsletter.title") %>
-  <p class="dim"><%= t("newsletter.body") %></p>
+  <p><%= t("newsletter.body") %></p>
   <%= form_with url: main_app.email_subscriptions_path, method: :post do |f| %>
     <div class="field mb-8">
       <%= f.email_field :email, name: "email_subscription[email]",
@@ -9,7 +9,7 @@
     </div>
     <label class="field--check-label">
       <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1">
-      <span class="dim"><%= t("newsletter.marketing_consent") %></span>
+      <%= t("newsletter.marketing_consent") %>
     </label>
     <%= f.submit t("newsletter.subscribe"), class: "btn btn-primary btn-sm btn-block" %>
   <% end %>

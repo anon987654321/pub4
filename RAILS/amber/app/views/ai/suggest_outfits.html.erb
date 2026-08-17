@@ -2,12 +2,12 @@
 <header role="banner" aria-label="<%= t("ai.suggest_header") %>">
   <%= tag.h1 t("pages.suggest_outfits") %>
   <% if @ai_available %>
-    <p class="dim"><%= t("ai.suggest_lead", vision: (Current.user.items.joins(:photos_attachments).exists? ? t("ai.suggest_vision") : "")) %></p>
+    <p><%= t("ai.suggest_lead", vision: (Current.user.items.joins(:photos_attachments).exists? ? t("ai.suggest_vision") : "")) %></p>
   <% else %>
-    <p class="dim"><%= t("ai.suggest_local_html").html_safe %></p>
+    <p><%= t("ai.suggest_local_html").html_safe %></p>
   <% end %>
   <% if @master_photo %>
-    <p class="dim"><%= t("ai.master_photo_html").html_safe %></p>
+    <p><%= t("ai.master_photo_html").html_safe %></p>
   <% end %>
 </header>
 
@@ -32,21 +32,21 @@
   <% @suggestions.each_with_index do |s, i| %>
     <article class="ai-card">
       <%= tag.h2 s["name"] || "Option #{i + 1}" %>
-      <p class="dim"><%= Array(s["items"]).join(", ") %></p>
+      <p><%= Array(s["items"]).join(", ") %></p>
       <%# The rationale was rendered bare, so a reader couldn't tell it *was* the
           reasoning rather than a product blurb. Labelling it is the point of the
           suggestion: you should be able to judge the advice, not just take it. %>
       <% if s["description"].present? %>
         <p><%= tag.strong t("ai.why_it_works") %> <%= s["description"] %></p>
       <% end %>
-      <% if s["source"] %><p class="dim">Source: <%= s["source"] %></p><% end %>
+      <% if s["source"] %><p>Source: <%= s["source"] %></p><% end %>
       <% if s["outfit_id"] %>
         <p><%= link_to t("actions.view_outfit", default: "View outfit"), outfit_path(s["outfit_id"]), class: "btn" %></p>
       <% end %>
     </article>
   <% end %>
 <% else %>
-  <p class="dim"><%= t("ai.submit_to_compose") %></p>
+  <p><%= t("ai.submit_to_compose") %></p>
 <% end %>
 
 <p><%= link_to t("actions.back_to_wardrobe"), items_path %></p>

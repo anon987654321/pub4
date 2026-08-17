@@ -2,7 +2,7 @@
 
 <div class="page-header" role="banner" aria-label="<%= t("a11y.reports_header") %>">
   <div>
-    <p class="dim"><%= t("admin.moderation") %></p>
+    <p><%= t("admin.moderation") %></p>
     <%= tag.h1 t("a11y.reports_header") %>
   </div>
   <div class="chips">
@@ -22,10 +22,10 @@
           <input type="checkbox" data-checkbox-select-all-target="checkbox" value="<%= report.id %>" aria-label="<%= t("a11y.select_report", id: report.id) %>">
           <strong><%= report.reason.humanize %> · <%= report.status.humanize %></strong>
         </p>
-        <p class="dim">
+        <p>
           <%= report.reportable_type %>#<%= report.reportable_id %>
           · <%= t("admin.reported_by", name: report.user.display_name) %>
-          · <span><%= time_ago(report.created_at) %></span>
+          · <%= time_ago(report.created_at) %>
         </p>
         <% if report.details.present? %><%= tag.p report.details %><% end %>
         <nav role="navigation" class="cluster">

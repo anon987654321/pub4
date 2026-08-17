@@ -31,7 +31,7 @@
     <% if @profile.bio.present? %>
       <%= read_more(@profile.bio, lines: 3, more: t("dating.read_bio"), less: t("dating.show_less")) %>
     <% else %>
-      <p><span class="dim">Bio</span><br>—</p>
+      <p>Bio<br>—</p>
     <% end %>
   </article>
 </section>
@@ -42,20 +42,20 @@
         rather than characters. Bare text nodes between spans would become
         anonymous flex items and the gap would land inside a pair, not between. %>
     <p class="profile-meta">
-      <span><span class="dim"><%= t("dating.age") %></span> · <%= @profile.age || "—" %></span>
-      <span><span class="dim">Gender</span> · <%= @profile.gender || "—" %></span>
-      <span><span class="dim"><%= t("dating.looking_for") %></span> · <%= @profile.looking_for || "—" %></span>
+      <span><%= t("dating.age") %> · <%= @profile.age || "—" %></span>
+      <span>Gender · <%= @profile.gender || "—" %></span>
+      <span><%= t("dating.looking_for") %> · <%= @profile.looking_for || "—" %></span>
     </p>
   </article>
 
   <article>
     <p class="profile-meta">
       <span>
-        <span class="dim">Location</span> · <%= @profile.location.presence || "—" %>
-        <% if @profile.neighborhood&.name.present? %> · <span class="dim">Bydel</span> · <%= @profile.neighborhood.name %><% end %>
+        Location · <%= @profile.location.presence || "—" %>
+        <% if @profile.neighborhood&.name.present? %> · Bydel · <%= @profile.neighborhood.name %><% end %>
       </span>
       <span>
-        <span class="dim">Visibility</span> ·
+        Visibility ·
         <% if @profile.visible? %>
           <span class="text-visible">visible</span>
         <% else %>
@@ -66,7 +66,7 @@
   </article>
 
   <article>
-    <p class="dim text-sm">
+    <p class="text-sm">
       Your profile is <%= @profile.visible? ? "visible to others in your city" : "hidden — no one can see it" %>.
       <%= link_to(@profile.visible? ? "Hide profile" : "Show profile", edit_profile_path, class: "link-inherit") %>.
     </p>

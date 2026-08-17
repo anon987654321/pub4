@@ -4,7 +4,7 @@
 
 <header class="profile-header" role="banner" aria-label="<%= t("a11y.user_profile") %>">
   <%= tag.h1 @user.display_name %>
-  <p class="dim">
+  <p>
     <%= t("profile.followers", count: @followers_count) %> · <%= t("profile.following", count: @following_count) %> · <%= t("community.posts_count", count: @posts.size) %>
   </p>
 
@@ -70,7 +70,7 @@
     <%= tag.h2 t("profile.activity", default: "Recent activity") %>
     <ul class="activity-list">
       <% @activity.each do |event| %>
-        <li class="dim">
+        <li>
           <%= activity_event_title(event) %>
           <span class="activity-vertical">· <%= activity_event_vertical(event) %></span>
           <time datetime="<%= event.created_at.iso8601 %>"><%= time_ago(event.created_at) %></time>

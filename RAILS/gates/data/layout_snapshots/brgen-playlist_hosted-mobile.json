@@ -17,7 +17,7 @@
       "tag": "section",
       "rect": {
         "x": 0,
-        "y": 227,
+        "y": 232,
         "w": 390,
         "h": 245
       },
@@ -33,7 +33,7 @@
       "tag": "a",
       "rect": {
         "x": 116,
-        "y": 396,
+        "y": 401,
         "w": 159,
         "h": 44
       },
@@ -49,7 +49,7 @@
       "tag": "h2",
       "rect": {
         "x": 38,
-        "y": 313,
+        "y": 318,
         "w": 315,
         "h": 34
       },
@@ -81,7 +81,7 @@
       "tag": "h1",
       "rect": {
         "x": 18,
-        "y": 159,
+        "y": 163,
         "w": 144,
         "h": 28
       },
@@ -141,7 +141,7 @@
       "position": "static"
     },
     {
-      "key": "html>body.vertical-playlist>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body.vertical-playlist>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 20,

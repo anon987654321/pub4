@@ -189,7 +189,7 @@
       "position": "static"
     },
     {
-      "key": "html>body.auth-surface>footer.site-legal>p.dim.affiliate-fine",
+      "key": "html>body.auth-surface>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
         "x": 20,

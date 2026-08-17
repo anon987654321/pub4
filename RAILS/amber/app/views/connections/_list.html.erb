@@ -4,9 +4,9 @@
       <% other = connection.requester == Current.user ? connection.addressee : connection.requester %>
       <article>
         <%= tag.strong other.display_name %>
-        <span class="dim"><%= t("connections.status.#{connection.status}", default: connection.status) %></span>
+        <%= t("connections.status.#{connection.status}", default: connection.status) %>
         <% if connection.requester == Current.user && connection.status == "pending" %>
-          <span class="dim"><%= t("connections.you_requested") %></span>
+          <%= t("connections.you_requested") %>
         <% end %>
         <% if connection.addressee == Current.user && connection.status == "pending" %>
           <%= button_to t("actions.accept"), connection_path(connection), method: :patch, params: { accept: true }, class: "btn", data: { turbo_frame: "connections" } %>

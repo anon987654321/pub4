@@ -1,5 +1,5 @@
 <% if live_search_query.present? %>
-  <p class="dim"><%= t("search.results_for", count: @sets.size, query: live_search_query) %></p>
+  <p><%= t("search.results_for", count: @sets.size, query: live_search_query) %></p>
 <% end %>
 
 <% if @sets.any? %>

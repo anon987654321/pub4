@@ -16,5 +16,5 @@
     </nav>
   </div>
   <%= link_to item.title, item, class: "item-title" %>
-  <span class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></span>
+  <%= item.category %><%= " · #{item.color}" if item.color.present? %>
 </article>

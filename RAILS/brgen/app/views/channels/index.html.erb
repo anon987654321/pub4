@@ -3,7 +3,7 @@
 <section class="channels-index" aria-label="<%= t("channels.aria") %>">
   <header class="page-header">
     <h1><%= t("channels.title") %><%= " · #{@city.name}" if @city %></h1>
-    <p class="dim"><%= t("channels.intro", city: (@city ? t("channels.intro_city", name: @city.name) : "")) %></p>
+    <p><%= t("channels.intro", city: (@city ? t("channels.intro_city", name: @city.name) : "")) %></p>
   </header>
 
   <ul class="channel-list" role="list">
@@ -13,7 +13,7 @@
         <%= link_to channel_path(slug), class: "channel-card-link" do %>
           <span class="channel-name"><%= spec[:name] %></span>
           <span class="channel-blurb"><%= Conversation.channel_blurb(slug) %></span>
-          <span class="channel-meta dim">
+          <span class="channel-meta">
             <% if room %>
               <% active = room.recent_active_count %>
               <% if active.positive? %>
