@@ -9,8 +9,25 @@ require_relative "../support/brgen_vertical_surfaces"
 require_relative "../support/dom_surface_schema"
 
 module Deploy
-  # First-screen contract + hierarchy + touch geometry (MASTER layout_rules / Fitts).
-  class LayoutGeometryGate
+  # The first screen carries a skip link, a main landmark and an h1, and the
+  # stylesheets declare a tap minimum. Both halves are text: the markup is
+  # fetched and matched, the tap minimum is grepped out of SCSS.
+  #
+  # It was called layout_geometry, which claimed something it does not do. It
+  # measures no boxes. A tap minimum declared in a stylesheet says nothing about
+  # whether the element carrying it is overlapped, clipped or overridden at this
+  # breakpoint — RenderedGeometryGate is what measures that, in a browser, and
+  # its own header records that this gate is the one it was named after.
+  #
+  # The distinction is worth the rename because the old pair invited the reading
+  # that touch targets were already covered. They were not, and this gate had
+  # already been caught measuring nothing once: the tree writes
+  # `min-height: var(--tap-min)` and the pattern here matched only the literal
+  # `44px`, so it passed on every app while checking no app.
+  #
+  # A source-and-markup floor is still worth having. It runs in seconds without
+  # Chrome, which is what makes it a floor rather than a substitute.
+  class FirstScreenGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
 
@@ -29,10 +46,13 @@ module Deploy
 
     # Map surface labels (from SURFACES / verticals) → schema ids.
     # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
-    SCHEMA_FOR_LABEL = {
+# /live had a live_feed schema until 76612fd0b folded it into /nearby/room —
+# two hyperlocal surfaces where one already contained the other. The schema
+# went with the surface and these two mappings did not, so this gate probed
+# /live, got the redirect, and raised "unknown surface schema: live_feed".
+SCHEMA_FOR_LABEL = {
       "vertical_marketplace" => "marketplace_listings",
       "vertical_marketplace_cart" => "marketplace_cart",
-      "vertical_live" => "live_feed",
       "vertical_dating" => "dating_home",
       "vertical_messenger" => "messenger_inbox",
       "vertical_core" => "brgen_home",
@@ -40,7 +60,6 @@ module Deploy
       "core" => "brgen_home",
       "marketplace" => "marketplace_listings",
       "marketplace_cart" => "marketplace_cart",
-      "live" => "live_feed",
       "dating" => "dating_home",
       "messenger" => "messenger_inbox",
     }.freeze
@@ -96,7 +115,7 @@ module Deploy
 
       SURFACES.each do |surface|
         app = inventory[surface[:app]]
-        next @result.fail("layout_geometry: unknown app #{surface[:app]}") unless app
+        next @result.fail("first_screen: unknown app #{surface[:app]}") unless app
 
         source_touch_checks(surface)
         live_first_screen(app, surface)
@@ -118,15 +137,15 @@ module Deploy
 
       @token_floor_checked = true
       unless File.file?(TOKENS)
-        @result.fail("layout_geometry: missing #{TOKENS} — --tap-min is unreadable, so the touch floor is unverified")
+        @result.fail("first_screen: missing #{TOKENS} — --tap-min is unreadable, so the touch floor is unverified")
         return
       end
 
       declared = File.read(TOKENS)[/--tap-min:\s*([0-9]+)px/, 1]
       if declared.nil?
-        @result.fail("layout_geometry: _dialect_tokens.scss declares no --tap-min — sheets spell the floor with a token that does not exist")
+        @result.fail("first_screen: _dialect_tokens.scss declares no --tap-min — sheets spell the floor with a token that does not exist")
       elsif declared.to_i < 44
-        @result.fail("layout_geometry: --tap-min is #{declared}px, below the 44px Fitts floor — every sheet spelling it var(--tap-min) is under target")
+        @result.fail("first_screen: --tap-min is #{declared}px, below the 44px Fitts floor — every sheet spelling it var(--tap-min) is under target")
       end
     end
 
@@ -135,18 +154,18 @@ module Deploy
       Array(surface[:css_touch]).each do |rel, needle|
         path = File.join(RAILS, rel)
         unless File.file?(path)
-          @result.fail("layout_geometry: missing #{rel}")
+          @result.fail("first_screen: missing #{rel}")
           next
         end
         body = File.read(path)
-        @result.fail("layout_geometry: #{rel} missing #{needle}") unless body.match?(Regexp.new(needle, Regexp::IGNORECASE))
+        @result.fail("first_screen: #{rel} missing #{needle}") unless body.match?(Regexp.new(needle, Regexp::IGNORECASE))
       end
     end
 
     def live_first_screen(app, surface)
       label = [app.name, surface[:label] || surface[:path]].join("/")
       unless CrawlSupport.port_open?("127.0.0.1", app.port)
-        @result.skipped_live("layout_geometry: #{label} skipped (port #{app.port} closed)")
+        @result.skipped_live("first_screen: #{label} skipped (port #{app.port} closed)")
         return
       end
 
@@ -154,22 +173,22 @@ module Deploy
       res = fetch(url, host: surface[:host])
       code = res.code.to_i
       unless code.between?(200, 399)
-        @result.fail("layout_geometry: #{label} HTTP #{code}")
+        @result.fail("first_screen: #{label} HTTP #{code}")
         return
       end
       body = utf8_body(res.body)
       %w[Exception Routing\ Error].each do |bad|
-        @result.fail("layout_geometry: #{label} saw #{bad}") if body.include?(bad.tr("\\", ""))
+        @result.fail("first_screen: #{label} saw #{bad}") if body.include?(bad.tr("\\", ""))
       end
       Array(surface[:first_screen]).each do |pat|
-        @result.fail("layout_geometry first_screen: #{label} missing #{pat.inspect}") unless body.match?(pat)
+        @result.fail("first_screen first_screen: #{label} missing #{pat.inspect}") unless body.match?(pat)
       end
 
       # Hierarchy: at most one h1 in document source (skip auth-only shells / JSON APIs)
       unless label.include?("messenger") || label.include?("cart") || surface[:skip_h1]
         h1s = body.scan(/<h1\b/i).size
-        @result.fail("layout_geometry hierarchy: #{label} has #{h1s} h1 (want ≤1)") if h1s > 1
-        @result.warn("layout_geometry hierarchy: #{label} has no h1") if h1s.zero?
+        @result.fail("first_screen hierarchy: #{label} has #{h1s} h1 (want ≤1)") if h1s > 1
+        @result.warn("first_screen hierarchy: #{label} has no h1") if h1s.zero?
       end
 
       # Scan-path: marketplace search/nav before product grid
@@ -177,7 +196,7 @@ module Deploy
         search_i = body =~ /class=["'][^"']*search|id=["']navBar/i
         grid_i = body =~ /deal-grid|deal-card/i
         if search_i && grid_i && search_i > grid_i
-          @result.fail("layout_geometry scan_path: #{label} search appears after product grid")
+          @result.fail("first_screen scan_path: #{label} search appears after product grid")
         end
       end
 
@@ -191,7 +210,7 @@ module Deploy
         @schema_checker.apply_to_result!(@result, body, schema_id)
       end
     rescue StandardError => e
-      @result.fail("layout_geometry: #{label} #{e.class}: #{e.message}")
+      @result.fail("first_screen: #{label} #{e.class}: #{e.message}")
     end
 
     def fetch(url, host: nil)

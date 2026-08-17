@@ -54,10 +54,10 @@ class FileLengthRatchetTest < Minitest::Test
     "brgen/lib/brgen/bergen_demo_seeder.rb" => 839,
     "brgen/test/services/deploy_backlog_test.rb" => 746,
     "gates/lib/design_metrics.rb" => 522,
-    "gates/lib/geometry.rb" => 498, # held; type checks live in geometry_type.rb
+    "gates/lib/rendered_geometry.rb" => 498, # held; type checks live in geometry_type.rb
     "gates/support/page_inventory.rb" => 434,
     "gates/support/cdp_session.rb" => 428,
-    "brgen/app/services/tradedoubler.rb" => 391,
+    "shared/app/services/shared/tradedoubler.rb" => 391,
     "brgen/db/seeds.rb" => 421,
     "gates/support/geometry_probe.rb" => 412,
     "amber/app/services/wardrobe_ai.rb" => 319,

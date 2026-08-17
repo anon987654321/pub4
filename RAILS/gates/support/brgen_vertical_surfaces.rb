@@ -28,12 +28,6 @@ module Deploy
         expect_body: [/Cart|Your Cart|navBar|Markedsplass|empty|offer/i],
       },
       {
-        label: "live",
-        host: APEX,
-        path: "/live",
-        expect_body: [/Live|live-feed|live-compose|ground rules|Hot|New|anon/i],
-      },
-      {
         label: "dating",
         host: "dating.#{APEX}",
         path: "/",

@@ -52,7 +52,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   # The other half of the same gap, and the one that let a dead app read as green
   # without anybody setting a flag: a gate whose ENTIRE check set is live-skipped
   # reported PASSED, because skipped_live files a warning rather than an unchecked
-  # precondition, leaving both counts at zero. layout_geometry said PASSED having
+  # precondition, leaving both counts at zero. first_screen (then layout_geometry) said PASSED having
   # skipped all 17 of its checks.
   def test_a_gate_that_skipped_every_live_check_measured_nothing
     result = Deploy::GateResult.new

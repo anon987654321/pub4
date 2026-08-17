@@ -56,7 +56,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes post, "shared/post_card"
     # Either spelling. The sheet writes min-height: var(--tap-min) and the token
     # is 44px; pinning the literal made this fail on a card whose tap targets are
-    # exactly what the assertion is about. layout_geometry asserts the token's
+    # exactly what the assertion is about. first_screen asserts the token's
     # value, so accepting the name here is not accepting a promise.
     assert_match(/min-height:\s*(?:44px|var\(--tap-min\))/, css)
   end

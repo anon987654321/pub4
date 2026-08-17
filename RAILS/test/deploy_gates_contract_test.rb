@@ -243,7 +243,7 @@ class DeployGatesContractTest < Minitest::Test
       "master_web_assets" => "production", "apps_yml" => "production",
       "domain_alignment" => "release", "surface_schema" => "layout_suite",
       "design_metrics" => "layout_suite", "visual_quality" => "layout_suite",
-      "calibration" => "layout_suite", "geometry" => "rendered_suite",
+      "calibration" => "layout_suite", "rendered_geometry" => "rendered_suite",
     }.each do |leaf, parent|
       assert_equal parent, GATES.dig(leaf, "covered_by"), "#{leaf} should be covered by #{parent}"
     end

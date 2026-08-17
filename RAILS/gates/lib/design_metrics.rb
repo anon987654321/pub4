@@ -366,7 +366,7 @@ module Deploy
     #
     # Severity is deliberately soft here: this enumerates pairings that *could*
     # occur, and a token pair the UI never actually renders is not a defect.
-    # GeometryGate hard-fails the same threshold on pairs it observes rendered,
+    # RenderedGeometryGate hard-fails the same threshold on pairs it observes rendered,
     # which is the difference between a possibility and a fact.
     def check_token_contrast
       normal_min = @rules.dig("typography", "accessibility", "normal_text_contrast").to_f

@@ -4,7 +4,7 @@ require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../support/gate_autofix"
 require_relative "css_constitution"
 require_relative "css_minify_integrity"
-require_relative "layout_geometry"
+require_relative "first_screen"
 require_relative "dialect_purity"
 require_relative "payment_honesty"
 require_relative "affiliate_honesty"
@@ -27,7 +27,7 @@ module Deploy
       CssConstitutionGate,
       CssMinifyIntegrityGate,
       DialectPurityGate,
-      LayoutGeometryGate,
+      FirstScreenGate,
       LayoutSearchGate,
       PaymentHonestyGate,
       AffiliateHonestyGate,

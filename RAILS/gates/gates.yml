@@ -128,10 +128,10 @@ css_minify_integrity:
   pass: "css_minify_integrity: ok"
   covered_by: layout_suite
 
-layout_geometry:
-  require: lib/layout_geometry
-  class: Deploy::LayoutGeometryGate
-  pass: "Layout geometry / first-screen gate passed."
+first_screen:
+  require: lib/first_screen
+  class: Deploy::FirstScreenGate
+  pass: "ok: first-screen markers present, tap minimum declared"
   covered_by: layout_suite
 
 dialect_purity:
@@ -223,10 +223,10 @@ rendered_suite:
   class: Deploy::RenderedSuiteGate
   pass: "ok: rendered browser suite clean"
 
-geometry:
-  require: lib/geometry
-  class: Deploy::GeometryGate
-  pass: "ok: geometry contracts satisfied (rendered)"
+rendered_geometry:
+  require: lib/rendered_geometry
+  class: Deploy::RenderedGeometryGate
+  pass: "ok: rendered geometry contracts satisfied"
   covered_by: rendered_suite
 
 layout_snapshot:

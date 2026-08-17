@@ -2,7 +2,7 @@
 
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../support/gate_autofix"
-require_relative "geometry"
+require_relative "rendered_geometry"
 require_relative "layout_snapshot"
 require_relative "journey_invariant"
 require_relative "reflow"
@@ -22,7 +22,7 @@ module Deploy
   # re-runs everything once more if anything was patched.
   class RenderedSuiteGate
     LEAVES = [
-      GeometryGate,
+      RenderedGeometryGate,
       ReflowGate,
       KeyboardFlowGate,
       MobileFlowGate,

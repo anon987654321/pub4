@@ -11,12 +11,15 @@ module Deploy
   # Rendered-geometry contracts: Fitts, occlusion, overflow, computed contrast,
   # token conformance, 8px rhythm — all measured in a real browser.
   #
-  # This is the gate the existing layout_geometry_gate is named after but does
-  # not do: that one greps `_nav.scss` for the literal string "min-height: 44px"
-  # and calls the touch contract satisfied. A 44px min-height on an element that
-  # is overlapped, clipped, or overridden at this breakpoint passes there and
-  # fails here.
-  class GeometryGate
+  # The gate that layout_geometry was named after and did not do. That one is
+  # FirstScreenGate now, named for what it actually asserts: a skip link, a main
+  # landmark, an h1, and a tap minimum declared in SCSS — all of it text. A tap
+  # minimum on an element that is overlapped, clipped or overridden at this
+  # breakpoint satisfies it and fails here, because here the box is measured.
+  #
+  # Both are worth keeping. That one runs in seconds without Chrome and is the
+  # floor; this one needs a browser and a booted app and is the assertion.
+  class RenderedGeometryGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
     MASTER_RULES = File.join(ROOT, "MASTER", "data", "rules.yml")

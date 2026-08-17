@@ -164,7 +164,7 @@ warning rather than failing.
 | `flow_journey` | `gates/data/flows.yml` journeys with postconditions on state |
 | `gate_mutation` | Breaks good fixtures and asserts the suite notices |
 
-**Why geometry rather than grepping CSS.** `layout_geometry_gate` asserts
+**Why geometry rather than grepping CSS.** `first_screen` asserts
 `_nav.scss` contains the string `min-height: 44px`. `geometry` asserts the box
 is 44px tall (`--tap-min`) in a real browser at that viewport, that nothing covers its centre
 pixel, and that its text clears WCAG AA against its composited background — with
