@@ -29,7 +29,7 @@ daemon="/bin/ksh"
 # job worker and it had never started one — 1670 jobs enqueued on brgen and 0
 # finished, measured 2026-08-12. rc.d/<app>_jobs is the real worker; read its
 # footer before enabling it, because vm23 has 1 GB.
-daemon_flags="-c 'cd ${APP_DIR} && . /etc/amber.env && export RAILS_ENV=production SECRET_KEY_BASE HOME=/home/amber && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+daemon_flags="-c 'cd ${APP_DIR} && . /etc/amber.env && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production SECRET_KEY_BASE HOME=/home/amber && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="amber"
 daemon_execdir="/home/amber/app"
 daemon_logger="daemon.notice"
