@@ -9,6 +9,13 @@
   --c-code: oklch(74% 0.11 275);
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --font-label: "JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  /* The wordmark, and only the wordmark. ai.brgen.no is the same brand as
+     brgen.no and has to be set in the same type; this is $brgen-font from
+     RAILS/brgen/app/assets/stylesheets/_root.scss verbatim. Neither site ships
+     Inter as a webfont, so both land on it where it is installed and on
+     system-ui where it is not — matching the stack is what makes them agree.
+     Everything else on this surface stays monospace. */
+  --font-brand: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -1499,7 +1506,9 @@ canvas#face,
   align-items: center;
   min-height: var(--tap-min);
   padding: 0.25rem 0.35rem;
-  font: 700 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-label);
+  /* 800 is brgen's --weight-heavy. The literal 700 here was the other half of
+     the mismatch: monospace at 700 beside a sans at 800 reads as two brands. */
+  font: 800 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-brand);
   letter-spacing: -0.03em;
   color: var(--c-text);
   text-decoration: none;
