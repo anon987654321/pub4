@@ -64,17 +64,17 @@ module Master
         Result.err("agent: #{chat_error.message}", category: :handler_exception)
       end
 
-      def ask(prompt, context: nil, operation: nil, image: nil)
+      def ask(prompt, context: nil, operation: nil, image: nil, temperature: nil)
         messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]
         selected_model = operation ? model_for(operation:) : routed_models.first
-        result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:)
+        result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:, temperature:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
 
-      def ask_once(prompt, system: nil, model: nil, image: nil)
+      def ask_once(prompt, system: nil, model: nil, image: nil, temperature: nil)
         messages = [{ role: "user", content: filter_prompt(prompt) }]
-        result   = @dispatcher.send_with_cache(model || self.model, messages, system: filter_prompt(system), stream: false, image:)
+        result   = @dispatcher.send_with_cache(model || self.model, messages, system: filter_prompt(system), stream: false, image:, temperature:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end

@@ -58,6 +58,7 @@ module Master::Core
         ruby_parses_rule,
         structured_exec_rule,
         safe_exec_rule(veto),
+        batch_delete_rule,
         evidence_for_done_rule,
         git_commit_evidence_rule,
         council_for_done_rule,
@@ -139,6 +140,59 @@ module Master::Core
 
         Verdict::Block.new(reason: "unsafe command", by: :safe_exec)
       })
+    end
+
+    # One path at a time. Added after a 16-file untracked wipe; the operator
+    # sentence is the Fold's next exec, not a batch argv.
+    def self.batch_delete_reason(argv)
+      argv = Array(argv).map(&:to_s)
+      return "batch delete refused: git clean without a pathspec" if git_clean_all?(argv)
+
+      paths = delete_operands(argv)
+      return if paths.size <= 1
+
+      "batch delete refused: #{paths.size} paths — one path at a time"
+    end
+
+    def self.batch_delete_rule
+      Rule.new(id: :batch_delete, verbs: %i[exec], judge: lambda { |effect, _memory|
+        reason = batch_delete_reason(effect.args[:argv])
+        reason ? Verdict::Block.new(reason:, by: :batch_delete) : nil
+      })
+    end
+
+    def self.git_clean_all?(argv)
+      File.basename(argv[0].to_s) == "git" && argv[1] == "clean" &&
+        operands_after_flags(argv.drop(2)).empty?
+    end
+
+    def self.delete_operands(argv)
+      return [] if argv.empty?
+
+      cmd = File.basename(argv.first)
+      rest = argv.drop(1)
+      case cmd
+      when "rm"
+        operands_after_flags(rest)
+      when "git"
+        return [] unless rest[0] == "rm"
+
+        operands_after_flags(rest.drop(1))
+      else
+        []
+      end
+    end
+
+    def self.operands_after_flags(args)
+      past = false
+      args.reject do |arg|
+        next false if past
+        if arg == "--"
+          past = true
+          next true
+        end
+        arg.start_with?("-")
+      end
     end
 
     def self.structured_exec_rule
@@ -223,7 +277,8 @@ module Master::Core
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
     private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule,
-                         :safe_exec_rule, :structured_exec_rule, :evidence_for_done_rule,
+                         :safe_exec_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
+                         :operands_after_flags, :git_clean_all?, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :council_for_done_rule,
                          :ideation_before_write_rule, :ruby_syntax_error, :safe_rx
   end

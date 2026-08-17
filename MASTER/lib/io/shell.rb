@@ -72,7 +72,15 @@ module Master
 
       def preflight_error(command)
         verify_binaries(command) || blocked_error(command) || force_error(command) ||
-          writable_error(command) || interactive_error(command)
+          batch_delete_error(command) || writable_error(command) || interactive_error(command)
+      end
+
+      def batch_delete_error(command)
+        argv = Shellwords.split(command.to_s)
+        reason = Master::Core::Constitution.batch_delete_reason(argv)
+        Result.err(reason, category: :validation) if reason
+      rescue ArgumentError
+        nil
       end
 
       def blocked_error(command)

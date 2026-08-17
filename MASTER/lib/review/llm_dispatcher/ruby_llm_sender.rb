@@ -10,8 +10,8 @@ module Master
       module RubyLLMSender
         private
 
-        def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, &blk)
-          chat_session = build_chat_session(selected_model, messages, sys:, image:)
+        def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, temperature: nil, &blk)
+          chat_session = build_chat_session(selected_model, messages, sys:, image:, temperature:)
           last_text = (messages.last || {})[:content].to_s
           ask_arg, temp_file = build_ask_arg(last_text, image)
 
@@ -28,10 +28,11 @@ module Master
           end
         end
 
-        def build_chat_session(selected_model, messages, sys:, image:)
+        def build_chat_session(selected_model, messages, sys:, image:, temperature: nil)
           chat_session = RubyLLM.chat(model: selected_model)
           final_sys = build_final_system(selected_model, sys)
           chat_session.with_instructions(final_sys) if final_sys
+          chat_session.with_temperature(temperature) if temperature && chat_session.respond_to?(:with_temperature)
 
           messages[0...-1].each do |message_entry|
             chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s)

@@ -1,5 +1,5 @@
 # Council personas — deliberation panel for code review decisions.
-# Each persona carries a weight (sum = 1.00), a sharp question, and the laws it
+# Each persona carries a temperature (precise 0.1 … loose 0.5), a sharp question, and the laws it
 # emphasizes from rules.yml. can_veto: true blocks merge unconditionally.
 
 schema: 1
@@ -8,7 +8,7 @@ personas:
     aliases: [architect]
     role: System Design
     bias: Structure
-    weight: 0.07
+    temperature: 0.2
     question: "What couples too tight to evolve?"
     cognitive_lens: assumptions
     emphasizes: [PROXIMITY, ABSTRACTION]
@@ -19,7 +19,7 @@ personas:
     aliases: [data_steward, data]
     role: Data Integrity
     bias: Consistency
-    weight: 0.06
+    temperature: 0.2
     question: "Where can the data go inconsistent?"
     cognitive_lens: consistency
     emphasizes: [SINGULARITY, ROBUSTNESS]
@@ -30,7 +30,7 @@ personas:
     aliases: [ethics, policy]
     role: Responsible Use
     bias: Compliance
-    weight: 0.05
+    temperature: 0.2
     question: "Who could this harm if misused?"
     cognitive_lens: harm
     emphasizes: [ROBUSTNESS, ABSTRACTION]
@@ -41,7 +41,7 @@ personas:
     aliases: [maintainer]
     role: Code Health
     bias: Sustainability
-    weight: 0.12
+    temperature: 0.2
     question: "Will this be clear at 3am six months from now?"
     cognitive_lens: clarity
     emphasizes: [LINEARITY, SINGULARITY, DENSITY]
@@ -52,7 +52,7 @@ personas:
     aliases: [performance]
     role: Runtime Efficiency
     bias: Throughput
-    weight: 0.07
+    temperature: 0.25
     question: "Where is the Big-O bottleneck?"
     cognitive_lens: bottlenecks
     emphasizes: [DENSITY]
@@ -63,7 +63,7 @@ personas:
     aliases: [product, strategist]
     role: Product Fit
     bias: Value
-    weight: 0.04
+    temperature: 0.3
     question: "Is this worth shipping at all?"
     cognitive_lens: economics
     emphasizes: [DENSITY]
@@ -74,7 +74,7 @@ personas:
     aliases: [qa]
     role: Test Strategy
     bias: Verification
-    weight: 0.08
+    temperature: 0.1
     question: "What evidence proves this works?"
     cognitive_lens: evidence
     emphasizes: [ROBUSTNESS]
@@ -85,7 +85,7 @@ personas:
     aliases: [pragmatist, realist, minimalist]
     role: Delivery Pressure
     bias: Shipping
-    weight: 0.07
+    temperature: 0.25
     question: "What can be deleted without loss?"
     cognitive_lens: scope
     emphasizes: [DENSITY, SINGULARITY]
@@ -96,7 +96,7 @@ personas:
     aliases: [reliability, chaos]
     role: Failure Engineering
     bias: Resilience
-    weight: 0.10
+    temperature: 0.15
     question: "What is the cascade if the weakest link snaps?"
     cognitive_lens: failure_modes
     emphasizes: [ROBUSTNESS]
@@ -107,7 +107,7 @@ personas:
     aliases: [security, attacker]
     role: Security Review
     bias: Safety
-    weight: 0.13
+    temperature: 0.1
     question: "Where are the injection vectors and exposed surface?"
     cognitive_lens: attacker
     emphasizes: [ROBUSTNESS, ABSTRACTION]
@@ -118,7 +118,7 @@ personas:
     aliases: [skeptic, absence]
     role: Devil's Advocate
     bias: Caution
-    weight: 0.10
+    temperature: 0.25
     question: "What did we miss? What evidence is required?"
     cognitive_lens: failure_modes
     emphasizes: [ROBUSTNESS]
@@ -129,7 +129,7 @@ personas:
     aliases: [user_advocate, user]
     role: UX Advocate
     bias: Usability
-    weight: 0.06
+    temperature: 0.5
     question: "What would the user complain about first?"
     cognitive_lens: edge_cases
     emphasizes: [ABSTRACTION]
@@ -140,7 +140,7 @@ personas:
     aliases: [accessibility, a11y]
     role: Inclusive Use
     bias: Reach
-    weight: 0.05
+    temperature: 0.35
     question: "Can a keyboard-only or screen-reader user complete the task?"
     cognitive_lens: a11y_ux
     emphasizes: [ROBUSTNESS, ABSTRACTION]
@@ -151,7 +151,7 @@ personas:
     aliases: [graphic_designer, designer]
     role: Visual Composition
     bias: Hierarchy
-    weight: 0.04
+    temperature: 0.4
     question: "Where does the eye land first, and is that what matters most?"
     cognitive_lens: visual
     emphasizes: [PROXIMITY, DENSITY]
@@ -162,7 +162,7 @@ personas:
     aliases: [web_designer, frontend_designer]
     role: Browser-Native UX
     bias: Idiom
-    weight: 0.04
+    temperature: 0.35
     question: "Does this respect the medium — fluid, responsive, keyboard-first, link-shaped?"
     cognitive_lens: visual
     emphasizes: [ROBUSTNESS, ABSTRACTION]
@@ -173,7 +173,7 @@ personas:
     aliases: [music_producer, producer]
     role: Sonic Texture & Timing
     bias: Groove
-    weight: 0.03
+    temperature: 0.4
     question: "Does the timing breathe, or is everything quantised to death?"
     cognitive_lens: sound
     emphasizes: [DENSITY, SINGULARITY]
@@ -184,7 +184,7 @@ personas:
     aliases: [layperson, novice, fresh_eyes]
     role: Outsider Comprehension
     bias: Plain Speech
-    weight: 0.05
+    temperature: 0.45
     question: "If I'd never seen this code/UI before, what would confuse me first?"
     cognitive_lens: clarity
     emphasizes: [LINEARITY, SINGULARITY]
@@ -195,7 +195,7 @@ personas:
     aliases: [hiphop_producer, hiphop, rap_producer]
     role: Street Aesthetics & Groove
     bias: Pulse
-    weight: 0.04
+    temperature: 0.4
     question: "Does this hit, or does it just sit there?"
     cognitive_lens: sound
     emphasizes: [DENSITY, SINGULARITY]
@@ -211,7 +211,7 @@ personas:
     aliases: [sound_engineer, mix_engineer, engineer]
     role: Mix & Master Integrity
     bias: Fidelity
-    weight: 0.04
+    temperature: 0.3
     question: "Where does the mix fail on small speakers or true-peak meters?"
     cognitive_lens: sound
     emphasizes: [ROBUSTNESS, DENSITY]
@@ -225,7 +225,7 @@ personas:
     aliases: [sound_designer, sfx]
     role: Texture & Articulation
     bias: Detail
-    weight: 0.03
+    temperature: 0.4
     question: "What texture or articulation is missing for this to feel intentional?"
     cognitive_lens: sound
     emphasizes: [DENSITY, SINGULARITY]
@@ -239,7 +239,7 @@ personas:
     aliases: [label_executive, a_and_r, label]
     role: Release Fitness
     bias: Market
-    weight: 0.03
+    temperature: 0.35
     question: "Would this survive a playlist DSP and still feel like a single?"
     cognitive_lens: sound
     emphasizes: [DENSITY, ECONOMICS]
@@ -253,7 +253,7 @@ personas:
     aliases: [organ_composer, organist, sustained_register]
     role: Sustained Harmony
     bias: Voice-leading
-    weight: 0.03
+    temperature: 0.4
     question: "Does the sustained register carry form the way a great organ registration would?"
     cognitive_lens: sound
     emphasizes: [LINEARITY, PROXIMITY]
@@ -267,7 +267,7 @@ personas:
     aliases: [google_css, css_engineer, google_frontend]
     role: Browser-Native CSS
     bias: Precision
-    weight: 0.05
+    temperature: 0.3
     question: "What CSS property is doing three jobs it shouldn't?"
     cognitive_lens: visual
     emphasizes: [SINGULARITY, DENSITY]
@@ -284,7 +284,7 @@ personas:
     aliases: [typographer, type]
     role: Reading System
     bias: Rhythm
-    weight: 0.04
+    temperature: 0.35
     question: "Can the text be read before it is admired?"
     cognitive_lens: visual
     emphasizes: [LINEARITY, DENSITY]
@@ -299,7 +299,7 @@ personas:
     aliases: [cognitive_psychologist, cognition]
     role: Cognitive Load
     bias: Comprehension
-    weight: 0.05
+    temperature: 0.35
     question: "What must the user hold in working memory to continue?"
     cognitive_lens: clarity
     emphasizes: [LINEARITY, ABSTRACTION]
@@ -314,7 +314,7 @@ personas:
     aliases: [nngroup, ux_researcher, nielsen_norman]
     role: Empirical UX
     bias: Evidence
-    weight: 0.05
+    temperature: 0.35
     question: "Which Nielsen heuristic is violated most severely here?"
     cognitive_lens: a11y_ux
     emphasizes: [ROBUSTNESS, ABSTRACTION]

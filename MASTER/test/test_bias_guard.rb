@@ -38,6 +38,20 @@ class TestBiasGuard < Minitest::Test
     assert_operator annotated[:confidence], :<, proposal.confidence
   end
 
+  def test_detects_the_four_decision_biases
+    guard = Master::Ground::BiasGuard.new
+    hits = {
+      "optimism_bias" => Proposal.new(action: "/through", reason: "quick trivial simple fix", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+      "dunning_kruger_bias" => Proposal.new(action: "/through", reason: "obviously clearly straightforward", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+      "bandwagon_bias" => Proposal.new(action: "/through", reason: "everyone uses this best practice", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+      "framing_bias" => Proposal.new(action: "/through", reason: "the real problem is naming", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+    }
+    hits.each do |name, proposal|
+      assert_includes guard.detect(proposal), name
+      assert_includes guard.annotate(proposal)[:reason], name
+    end
+  end
+
   def test_priority_score_combines_severity_frequency_and_age
     guard = Master::Ground::BiasGuard.new
     fresh = guard.priority_score(severity: :warning, frequency: 3, age_days: 0)

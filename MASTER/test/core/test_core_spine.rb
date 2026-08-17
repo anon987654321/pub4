@@ -45,6 +45,24 @@ class TestKernelSpine < Minitest::Test
     assert_equal :structured_exec, verdict.by
   end
 
+  def test_batch_delete_of_two_paths_is_blocked
+    effect = Master::Core::Effect.exec(%w[rm -rf tmp/a tmp/b])
+    verdict = constitution.admit(effect, Master::Core::Memory.new)
+
+    assert_kind_of Master::Core::Verdict::Block, verdict
+    assert_equal :batch_delete, verdict.by
+  end
+
+  def test_single_path_rm_is_not_a_batch_delete
+    assert_nil Master::Core::Constitution.batch_delete_reason(%w[rm -rf tmp/a])
+    assert_nil Master::Core::Constitution.batch_delete_reason(%w[git rm -- tmp/a])
+  end
+
+  def test_git_clean_without_pathspec_is_batch_delete
+    reason = Master::Core::Constitution.batch_delete_reason(%w[git clean -fd])
+    assert_match(/git clean/, reason)
+  end
+
   def test_ruby_write_must_parse
     effect = Master::Core::Effect.write("bad.rb", "def nope")
     verdict = constitution.admit(effect, Master::Core::Memory.new)

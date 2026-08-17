@@ -221,8 +221,13 @@ module Master
 
         def ask_persona(persona:, code:, context:)
           model = persona.respond_to?(:model) ? persona.model : nil
+          temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           prompt = build_prompt(persona:, code:, context:)
-          response = model ? @agent.ask_once(prompt, model:) : @agent.ask(prompt)
+          response = if model
+                       @agent.ask_once(prompt, model:, temperature:)
+                     else
+                       @agent.ask(prompt, temperature:)
+                     end
           entry = persona_entry(persona, response, model)
           @bus&.publish(:council_feedback, entry)
           entry

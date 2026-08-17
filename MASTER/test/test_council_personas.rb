@@ -5,6 +5,25 @@ require "review/council/personas"
 require "review/council/selector"
 
 class TestCouncilPersonas < Minitest::Test
+  def test_personas_carry_temperature_not_weight
+    loaded = Master::Review::Council::Personas.load
+    refute_includes Master::Review::Council::Personas::Persona.members, :weight
+    security = loaded.find { |p| p.name == "Security" }
+    user = loaded.find { |p| p.name == "User Advocate" }
+    assert_in_delta 0.1, security.temperature, 0.001
+    assert_operator user.temperature, :>, security.temperature
+  end
+
+  def test_ask_persona_forwards_temperature
+    seen = nil
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_prompt, temperature: nil, **| seen = temperature; "ok" }
+    persona = Master::Review::Council::Personas.load.find { |p| p.name == "Security" }
+    delib = Master::Review::Council::Deliberation.new(personas: [persona], agent:, event_bus: nil)
+    delib.send(:ask_persona, persona:, code: "x = 1", context: nil)
+    assert_in_delta 0.1, seen, 0.001
+  end
+
   def test_loads_rich_personas_from_council_yaml
     names = Master::Review::Council::Personas.load.map(&:name)
 

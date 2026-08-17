@@ -98,15 +98,15 @@ module Master
       # semantic rules, the fix loop. With no provider key each one fails slowly
       # somewhere below, so a /through pass sat at "crit0 deliberation" for ten
       # minutes and printed nothing. One refusal, at the one door.
-      def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, &blk)
+      def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, &blk)
         return Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
 
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         selected_model = vision_model_for(selected_model) if image_present?(image)
-        cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system)
+        cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
           @cache.fetch(cache_key, selected_model) do
-            send_llm_request(selected_model, messages, system:, stream:, image:, &blk)
+            send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, &blk)
           end
         end
         record_provider_result(model: selected_model, result:, started:)
@@ -165,14 +165,14 @@ module Master
         [result[:static], result[:dynamic]].compact.join("\n\n").then { |s| s.empty? ? nil : s }
       end
 
-      def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, &blk)
+      def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, &blk)
         sys = system || system_prompt
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:)     if web_chat_model?(selected_model)
         if !tool_capable?(selected_model) && @tools.any?
           return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
         end
-        send_ruby_llm(selected_model, messages, sys:, stream:, image:, &blk)
+        send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, &blk)
       end
 
       def send_claude_cli(model_alias, messages, sys:)
@@ -241,9 +241,10 @@ module Master
       # the identical user message) but mean entirely different requests
       # under different instructions — omitting it let one call's cached
       # completion serve back as the other's answer.
-      def cache_key_for(message, context, model = nil, system = nil)
+      def cache_key_for(message, context, model = nil, system = nil, temperature = nil)
         parts = model ? "#{model}\n#{message}" : message
         parts = "#{parts}\nsys:#{system}" if system
+        parts = "#{parts}\ntemp:#{temperature}" if temperature
         return Digest::SHA256.hexdigest(parts) if context.empty?
         window = context.last(CACHE_WINDOW).map { |msg| "#{msg[:role]}:#{msg[:content]}" }.join("\n")
         Digest::SHA256.hexdigest("#{parts}\n#{window}")
