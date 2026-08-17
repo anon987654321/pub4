@@ -121,6 +121,16 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
                     "response past 8192, so the audio would never reach the browser"
   end
 
+  # TtsJob.owned? requires the .job token to name the conversation that created
+  # it, so cancelling somebody else's job is a 404 rather than a deletion. This
+  # fixture predated that check and wrote a token with no conversation at all,
+  # so every run took the not-found branch and the test had been red on main.
+  OWNER = "a" * 32
+
+  def owned_token(text:, voice:, style:, conversation: OWNER)
+    { text:, voice:, style:, conversation: }.to_json
+  end
+
   test "destroy cancels cached job" do
     text = "cancel me"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
@@ -128,11 +138,31 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     job = track(TtsJob.new(text:, voice:, style:))
     cache_path = @cache_dir.join("#{job.job_id}.mp3")
     File.binwrite(cache_path, "ID3\x03\x00fake-mp3")
-    File.write(@cache_dir.join("#{job.job_id}.job"), { text:, voice:, style: }.to_json)
+    File.write(@cache_dir.join("#{job.job_id}.job"), owned_token(text:, voice:, style:))
 
+    cookies[:master_conversation] = OWNER
     delete "/chat/tts/status", params: { job: job.job_id }
 
     assert_response :no_content
     refute File.exist?(cache_path)
+  end
+
+  # The property the stale fixture was bypassing: job ids are a hash of the
+  # synthesis inputs, so anyone who can guess the text can name the id. Ownership
+  # is what stops that being a delete.
+  test "destroy refuses a job belonging to another conversation" do
+    text = "not yours"
+    voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
+    style = Master::Voice::Speech.default_style
+    job = track(TtsJob.new(text:, voice:, style:))
+    cache_path = @cache_dir.join("#{job.job_id}.mp3")
+    File.binwrite(cache_path, "ID3\x03\x00fake-mp3")
+    File.write(@cache_dir.join("#{job.job_id}.job"), owned_token(text:, voice:, style:))
+
+    cookies[:master_conversation] = "b" * 32
+    delete "/chat/tts/status", params: { job: job.job_id }
+
+    assert_response :not_found
+    assert File.exist?(cache_path), "another conversation's audio must survive"
   end
 end

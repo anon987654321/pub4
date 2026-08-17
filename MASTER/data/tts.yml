@@ -1,7 +1,18 @@
-# Transcendent TTS — emotion-aware multi-engine orchestration (CLI / MLX / Replicate).
-# Web /chat/tts uses Edge socket synthesis only — see data/voice.yml and TtsJob.
-# Production overrides: OPENBSD/etc/rc.d/master sets MASTER_TTS_MODE=classic.
-# Replicate (Cloudflare) added as production cloud engine for OpenBSD VPS (supplements local MLX).
+# Transcendent TTS — emotion-aware multi-engine orchestration (MLX / Replicate).
+#
+# NOTHING RUNNING READS THIS. Voice::Speech has three consumers -- health_controller,
+# tts_controller and TtsJob -- and all three enter through
+# synthesize_streaming_to_file, which goes socket -> oneshot -> espeak and never
+# reaches Transcendent. The only door in is Speech.synthesize, whose only caller
+# is synthesize_audio, whose only caller is synthesize_bytes, which nothing calls.
+# So every key below, the engine chain included, is inert. See MASTER/DEBT.md
+# ("Transcendent TTS is unreached") before believing a value here describes
+# production, and MASTER/DECISIONS.md for why it is not simply wired up.
+#
+# The line this replaces claimed "Production overrides: OPENBSD/etc/rc.d/master
+# sets MASTER_TTS_MODE=classic". That variable is set nowhere -- not in the repo
+# rc.d, not in /etc/master.env on vm23 -- so the comment described a control that
+# did not exist, over a subsystem nothing reached.
 transcendent:
   enabled: true
   default_mode: transcendent
@@ -9,8 +20,21 @@ transcendent:
   # mlx needs Python 3.10+ (brew install python@3.11). Until then: fast Edge voices.
   engine_chain: replicate_kokoro, edge_melodic, edge, say
   emotion_enabled: true
+  # The pentatonic contour: a stylistic mode, for lyrical text only.
   melodic_enabled: true
   melodic_threshold: 0.28
+  # Phrase segmentation and the rests between phrases, without the contour.
+  # Separate from melodic_* because it is rhythm rather than style. Costs one
+  # Edge round trip per phrase, capped at Melody::MAX_PHRASES; false restores a
+  # single call at one rate and one pitch.
+  phrase_rhythm_enabled: true
+  # Read a Norwegian clause with a Norwegian voice. Off: data/voice.yml sets
+  # single_voice: osman and persona_affects_text_only: true, and this is the one
+  # thing that contradicts it. See MASTER/DECISIONS.md.
+  phrase_language_switching: false
+  phrase_language_voices:
+    nb: finn
+    en: ~
   max_chars: 900
   # Local MLX (Apple Silicon)
   mlx_model: mlx-community/Kokoro-82M-bf16

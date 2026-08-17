@@ -380,9 +380,29 @@ themselves.
   ingress rate limit was *also* hardcoded in `IngressController`, so file and code
   could disagree in silence.
 
+- `data/tts.yml` and the whole Transcendent path — **open**, and the largest
+  instance found so far. `Voice::Speech` has exactly three consumers —
+  `health_controller`, `tts_controller`, `TtsJob` — and all three enter through
+  `synthesize_streaming_to_file`, which goes socket → oneshot → espeak and never
+  reaches `Transcendent`. The only door in is `Speech.synthesize`, whose only
+  caller is `synthesize_audio`, whose only caller is `synthesize_bytes`, which
+  nothing calls. So `Transcendent`, `Melody`, `Emotion`, the five-engine chain,
+  `replicate_kokoro` and `WarmErratic`'s prosody table are all unreached by
+  anything running: roughly 1,500 lines that look configured and live.
+  The tell was a comment, as usual — `data/tts.yml` claimed
+  `OPENBSD/etc/rc.d/master` sets `MASTER_TTS_MODE=classic`, and that variable is
+  set nowhere, in the repo or in `/etc/master.env` on vm23. A control that does
+  not exist, described over a subsystem nothing reaches.
+  `DECISIONS.md` records why it is not simply wired to the streaming path.
+
 What is open is the class, not an instance. When you find one: find the reader
 before trusting a config key, and **add the gate, not just the fix** — a
 two-direction test is what stops the two halves blurring back together.
+
+The `data/tts.yml` instance is also a warning about *when* to trace: it was found
+after three fixes had already been written against that subsystem, not before.
+Trace the caller first — the fixes were real, and their reach was not what the
+config implied.
 
 ### A general "every data key has a reader" gate does not work here — tried 2026-08-12
 
@@ -502,6 +522,28 @@ without ffmpeg served un-concatenated audio with nothing logged. They now report
 through `Swallow.log(..., severity: :load_bearing)` naming the consequence. **Any
 future post-synthesis DSP must call `report_missing_ffmpeg` on its own fallback
 path** rather than returning silently.
+
+Measured on vm23 2026-08-17: ffmpeg 6.1.3 and ffprobe are both in
+`/usr/local/bin`, and `Engines.ffmpeg?` evaluates true inside MASTER's own bundle
+there — so the PATH the daemon actually runs with resolves it, which the cron
+PATH lesson elsewhere in this file says not to assume.
+
+### The one-shot Edge worker does not work on vm23 — opened 2026-08-17
+
+**operator-priority.** `bin/tts-worker` in one-shot mode exits 1 and writes a
+zero-byte file on the box, while the same worker in `--daemon` mode serves real
+audio: `GET /chat/tts` returns a valid 7 KB LAME-encoded MP3. So production TTS
+is healthy and its fallback is not.
+
+That matters because `Speech.synthesize_edge` tries the socket twice and then
+falls to `synthesize_edge_oneshot`. If the daemon dies, that fallback is the
+thing meant to keep the voice alive, and on this host it yields nothing — the
+next stop is espeak, which is a different voice entirely. `GET /health` reports
+`tts: true` throughout, because it is a capability check and not a synthesis.
+
+Not diagnosed further; found while trying to measure phrase fan-out, which is
+also still unmeasured for the same reason. A synthesis-not-capability probe in
+`/health` would have caught it.
 
 ## The model registry names fifteen models the provider no longer serves — opened 2026-08-16
 

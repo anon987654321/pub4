@@ -152,6 +152,53 @@ The old entry's argument was proximity to consumers. It did not hold up: the sha
 
 `data/design_rules.yml` had one too, and folded anyway: proximity to a consumer is worth less than a single definition. Split from `style.yml`, it defined `typography` twice with different numbers, under a `SelfTest` exemption that named the duplication and allowed it.
 
+## Phrase Rhythm Ships On, Phrase Language Ships Off (2026-08-17)
+
+`Melody` plans phrase segmentation, inter-phrase rests, a pentatonic pitch
+contour, and — since this date — a per-phrase voice. Three switches, not one, and
+the asymmetry between them is deliberate:
+
+- **`phrase_rhythm_enabled: true`.** Segmentation and rests are rhythm, which
+  every utterance wants. They used to sit behind `melodic_threshold` with the
+  contour, so ordinary speech was one Edge call at one rate and one pitch.
+- **`melodic_threshold`** still gates the pentatonic contour alone. That is a
+  stylistic mode and belongs to lyrical text only.
+- **`phrase_language_switching: false`.** `data/voice.yml` sets
+  `single_voice: osman` and `persona_affects_text_only: true`. Reading a
+  Norwegian clause with `nb-NO-FinnNeural` means two voices in one utterance,
+  which is the one thing that contradicts that policy. The mechanism is built so
+  the choice is a flag rather than a rewrite; flipping it is an operator
+  decision about identity, not a bug fix.
+
+Do not "fix" the asymmetry by aligning the three defaults.
+
+## Transcendent Is Not Wired To The Streaming Path (2026-08-17)
+
+The Transcendent engine chain is unreached — see `DEBT.md`, "Inert law and
+config". The obvious repair is to call it from `synthesize_streaming_to_file`,
+and that is wrong as stated: `Transcendent.synthesize` returns a finished file,
+while the streaming path exists to hand `TtsJob` progressive chunks through
+`on_chunk` so audio starts before synthesis ends. Wiring one to the other means
+buffering the whole utterance first, which trades the thing the streaming path
+was built for.
+
+So the choice is a real one — progressive playback, or emotion/melody/multi-engine
+— and not a missing line. Whoever makes it should measure phrase fan-out first
+(one Edge round trip per phrase, on one vCPU); that measurement is still owed.
+
+## Pronunciation Is Respelling, Not Phonemes (2026-08-17)
+
+`data/lexicon.yml` maps written forms to spoken ones — `relayd` to `relay D` —
+rather than to IPA or SSML `<phoneme>`. That is not a shortcut. `rb_edge_tts`
+takes plain text and exposes no SSML, so there is no phoneme element and no
+engine-side lexicon to address; substituting a word the voice already says
+correctly is the only pronunciation control that exists on this path.
+
+The table is therefore narrow on purpose, and `test_lexicon.rb` refuses any entry
+that respells a word as itself. Before extending it, check whether the word is
+actually wrong when read aloud — "Falcon" and "Rails" are ordinary English words
+and do not belong there.
+
 ## Local Knowledge Stays Local
 
 `knowledge/` is gitignored and skipped by scanners/snapshots, but it still powers `Master::Io::SearchKnowledge`. Do not move it unless the search tool learns the new location first.
