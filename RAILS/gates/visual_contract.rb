@@ -10,6 +10,18 @@ require "fileutils"
 require "uri"
 require "time"
 
+# Drift past which a run blocks rather than reports. VISUAL_DRIFT_MAX_RATIO
+# overrides it; nothing set it before, so drift_max was nil and drift was purely
+# informational — the ratio was computed on every run and could never fail one.
+#
+# Deliberately loose. The baseline is the previous run's screenshot, so any
+# intended change drifts once and then re-baselines to zero on the next run; a
+# tight ceiling would fire on every deliberate tweak and teach people to ignore
+# it. A quarter of the viewport changing is not a tweak — it is a stylesheet
+# that failed to load or a grid that collapsed, which is the class of failure
+# worth blocking on and the one a geometry gate can miss entirely.
+DEFAULT_DRIFT_MAX_RATIO = "0.25"
+
 # Seeded screenshot contract for every product grammar and failure state. Run
 # under any Rails app bundle:
 #   bundle exec ruby ../visual_contract_gate.rb --capture --base http://127.0.0.1:3000 --app brgen
@@ -141,15 +153,32 @@ module VisualContractGate
     }
   end
 
+  # Raised, not returned, so the caller decides the exit code. A missing driver
+  # gem or an unreachable Chrome is a precondition this machine does not meet —
+  # not a verdict about the tree — and it used to surface as an uncaught
+  # LoadError, which exits 1 and reads as FAILED. Wrong in both directions: it
+  # blocks on nothing, and it hides that nothing was measured.
+  CannotMeasure = Class.new(StandardError)
+
   def capture(base:, app:, output: File.expand_path("../visual_contract", __dir__))
-    require "selenium-webdriver"
+    begin
+      require "selenium-webdriver"
+    rescue LoadError => e
+      raise CannotMeasure, "selenium-webdriver is not installed (#{e.message})"
+    end
     FileUtils.mkdir_p(output)
     options = Selenium::WebDriver::Chrome::Options.new
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_option("goog:loggingPrefs", { browser: "ALL" })
-    driver = Selenium::WebDriver.for(:chrome, options:)
+    driver = begin
+      Selenium::WebDriver.for(:chrome, options:)
+    rescue StandardError => e
+      # No Chrome on PATH, or a driver that will not start. Same category as the
+      # gem being absent: a precondition, not a finding.
+      raise CannotMeasure, "could not start Chrome (#{e.class}: #{e.message})"
+    end
     matrix(app).map do |cell|
       width, height = cell[:dimensions]
       driver.manage.window.resize_to(width, height)
@@ -185,7 +214,13 @@ app_i = ARGV.index("--app")
 base_i = ARGV.index("--base")
 app = (app_i && ARGV[app_i + 1]) || abort("--app brgen|amber|bsdports required")
 base = (base_i && ARGV[base_i + 1]) || abort("--base URL required")
-results = VisualContractGate.capture(base:, app:)
+results = begin
+  VisualContractGate.capture(base:, app:)
+rescue VisualContractGate::CannotMeasure => e
+  warn "visual_contract: #{e.message}"
+  warn "visual_contract: nothing measured, so nothing is claimed"
+  exit 3
+end
 path = File.expand_path("../visual_contract/#{app}-manifest.json", __dir__)
 File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
 
@@ -196,8 +231,21 @@ File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, result
 verdict = VisualContractGate.grade(
   results,
   strict: %w[1 true yes on].include?(ENV["VISUAL_STRICT"].to_s.strip.downcase),
-  drift_max: ENV["VISUAL_DRIFT_MAX_RATIO"]&.then { |value| Float(value) }
+  drift_max: Float(ENV.fetch("VISUAL_DRIFT_MAX_RATIO", DEFAULT_DRIFT_MAX_RATIO))
 )
+
+# Nothing navigated, so nothing was compared. `grade` already skips a row whose
+# status is 0 as "navigation timing unavailable", and if every row is that row
+# the run has no opinion about the tree: no 5xx found because no page loaded, no
+# drift found because no pixels were diffed. Exiting 0 here reported that as a
+# clean pass, and Chrome-absent is the normal state on a machine that has not
+# booted the apps. 3 is the runner's code for inconclusive.
+measured = results.count { |row| row[:status].to_i.positive? }
+if measured.zero?
+  warn "visual_contract: no state navigated (#{results.length} attempted) — Chrome and a booted app are required"
+  warn "visual_contract: nothing measured, so nothing is claimed"
+  exit 3
+end
 
 drift = verdict[:drift]
 if drift[:states].positive?

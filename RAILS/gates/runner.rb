@@ -25,6 +25,18 @@ require "rbconfig"
 require "yaml"
 
 GATES_DIR = __dir__
+
+# The exit code a subprocessed gate uses for "preconditions missing, nothing
+# measured". Not 0, which claims a clean run, and not 1, which claims a verdict
+# about the tree.
+#
+# visual_contract.rb is the only one of the three subprocess gates that uses it,
+# and deliberately so. release.rb and rails_runtime.rb each always run a static
+# half — eight contract tests and four gate classes, a source scan — and only
+# their live halves can be skipped, which is a partial rather than a blind run.
+# They already list what they skipped, and GATE_STRICT_INCONCLUSIVE makes that
+# blocking. visual_contract without Chrome measures nothing at all.
+SUBPROCESS_INCONCLUSIVE = 3
 RAILS_ROOT = File.expand_path("..", __dir__)
 REPO_ROOT = File.expand_path("../..", __dir__)
 
@@ -175,8 +187,17 @@ def run_subprocess(key, row)
   return :errored if ok.nil?
   return :errored if status.respond_to?(:signaled?) && status.signaled?
 
-  # An inconclusive gate run this way still reads as a pass: a subprocess only
-  # tells us its exit status. Its own output names what it skipped.
+  # Exit 3 is "I could not measure", the state the in-process gates express with
+  # GateResult#inconclusive! and the runner already counts and prints apart from
+  # passes. A subprocess can only speak in exit codes, so it gets one.
+  #
+  # Without it these three gates reported a clean pass whenever their
+  # preconditions were missing — and for visual_contract the precondition is
+  # Chrome plus a booted app, which is exactly the situation where "no pixels
+  # differed" is true because no pixels were compared. 44 of 47 gates run
+  # in-process and never had this hole; these are the three that did.
+  return :inconclusive if status.exitstatus == SUBPROCESS_INCONCLUSIVE
+
   status.success? ? :passed : :failed
 end
 

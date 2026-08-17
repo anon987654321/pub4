@@ -11,13 +11,13 @@ module Deploy
     RAILS = File.join(ROOT, "RAILS")
 
     REQUIRED = {
-      "brgen/app/models/affiliate_product.rb" => /placeholder|scope :real|STALE_AFTER/,
-      "brgen/app/services/tradedoubler.rb" => /configured\?|matrix_uri|products_token|placeholder/,
-      "brgen/app/services/affiliate.rb" => /NETWORK_NAMES|stored_deals|import_all!/,
+      "shared/app/models/shared/affiliate_product.rb" => /placeholder|scope :real|STALE_AFTER/,
+      "shared/app/services/shared/tradedoubler.rb" => /configured\?|matrix_uri|products_token|placeholder/,
+      "shared/app/services/shared/affiliate.rb" => /NETWORK_NAMES|stored_deals|import_all!/,
       "brgen/lib/brgen/affiliate_placeholders.rb" => /placeholder: true/,
       "brgen/app/views/shared/_affiliate_deals.html.erb" => /placeholder|sponsored|affiliate_disclosure/,
       "shared/app/views/shared/_affiliate_disclosure.html.erb" => /affiliate_disclosure_text/,
-      "brgen/app/models/affiliate_conversion.rb" => /message_type_id|record_from_postback!/,
+      "shared/app/models/shared/affiliate_conversion.rb" => /message_type_id|record_from_postback!/,
       "brgen/app/controllers/webhooks/tradedoubler_controller.rb" => /unauthorized|TRADEDOUBLER_WEBHOOK_SECRET|secure_compare/,
       "brgen/app/jobs/affiliate_import_job.rb" => /AffiliateImportJob|import_all!/,
       "brgen/app/jobs/link_converter_sync_job.rb" => /LinkConverterSyncJob|td-lc/,
@@ -55,7 +55,7 @@ module Deploy
         @result.fail("affiliate_honesty: #{rel} must not invent TD tracking URLs") if body.match?(pat)
       end
 
-      client = File.read(File.join(RAILS, "brgen/app/services/tradedoubler.rb"))
+      client = File.read(File.join(RAILS, "shared/app/services/shared/tradedoubler.rb"))
       unless client.match?(/def configured\?.*products_token|def configured\? = products_token/)
         @result.fail("affiliate_honesty: Tradedoubler.configured? must gate on token")
       end
