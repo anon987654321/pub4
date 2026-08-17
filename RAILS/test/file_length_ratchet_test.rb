@@ -55,19 +55,25 @@ class FileLengthRatchetTest < Minitest::Test
     "brgen/test/services/deploy_backlog_test.rb" => 746,
     "gates/lib/research/design_metrics.rb" => 522,
     "gates/lib/rendered/rendered_geometry.rb" => 498, # held; type checks live in geometry_type.rb
-    "gates/support/page_inventory.rb" => 434,
+    # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
+    # being hand-edited and the inventory learned to tell the two apart.
+    "gates/support/page_inventory.rb" => 440,
     "gates/support/cdp_session.rb" => 428,
     # +2 for the `module Shared` wrapper when the affiliate stack moved into the
     # engine. No code was added.
     "shared/app/services/shared/tradedoubler.rb" => 393,
-    "brgen/db/seeds.rb" => 421,
-    "gates/support/geometry_probe.rb" => 412,
+    # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
+    # which gated every deploy.
+    "brgen/db/seeds.rb" => 426,
+    # +3 in 539bcd42e — the probe measured whichever language the machine Chrome
+    # asked for, so it now pins one.
+    "gates/support/geometry_probe.rb" => 415,
     "amber/app/services/wardrobe_ai.rb" => 319,
     "gates/lib/live/user_flow.rb" => 314,
-    "shared/app/assets/stylesheets/_minimal.scss" => 490,
+    "shared/app/assets/stylesheets/_minimal.scss" => 486,
     "shared/app/assets/stylesheets/_zen_shell.scss" => 486,
     "shared/app/assets/stylesheets/_shell.scss" => 466,
-    "shared/app/assets/stylesheets/_shell_widgets.scss" => 448,
+    "shared/app/assets/stylesheets/_shell_widgets.scss" => 444,
     # 435 -> 436 on 2026-08-11, and it is the only raise in this file. The header says
     # never raise, and the reason it gives is to force a split when a file grows by
     # CONTENT. This grew by a single `@use "shared_coverage_fills"`: bsdports renders

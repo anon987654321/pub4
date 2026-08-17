@@ -307,10 +307,15 @@ header {
   min-width: 0;
   width: 100%;
   min-height: 48px;
-  /* Without this the field inherits --font-size (0.75rem), which renders at
-     13.5px against this dialect's larger root — and iOS Safari zooms the
-     viewport on any text field under 16px, then does not zoom back. */
-  font-size: var(--text-base);
+  /* 16px absolute, not a token. iOS Safari zooms the viewport on any text field
+     under 16px and does not zoom back, and that threshold is the user agent's —
+     it is not relative to anything this stylesheet controls.
+     var(--text-base) was the previous attempt and it does not hold here:
+     --text-base is 1rem, and this dialect sets its own :root font-size to
+     --text-xs (0.75rem) for CRT density, so a rem is 12px on this app and the
+     field rendered at exactly the size the rule was written to prevent. Every
+     rem token shrinks with that root; only an absolute unit clears a UA floor. */
+  font-size: 16px;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
