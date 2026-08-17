@@ -78,6 +78,14 @@ module Deploy
     # Rendered by MasterGuestHome inside each app's own home action, so the home row covers it.
     SHARED_VIEWS_WITHOUT_ROUTE = [%w[shared master_guest]].freeze
 
+    # These live under an app's `shared/` directory so controllers can render
+    # them as error templates. They are not controller actions, and inventing a
+    # URL from their filename makes the live probe report a 404 for a route that
+    # must not exist.
+    APP_VIEWS_WITHOUT_ROUTE = {
+      "brgen" => [%w[shared members_only]],
+    }.freeze
+
     MASTER_PAGES = [
       { id: "master/face", view: "MASTER/web/app/views/chat/index.html.erb", path: "/", persona: "guest" },
       { id: "master/dashboard", view: "MASTER/web/app/views/dashboard/index.html.erb", path: "/dashboard", persona: "guest" },
@@ -195,7 +203,7 @@ module Deploy
       root = APPS["brgen"][:views]
       discover(root).filter_map do |abs|
         parts = relative_parts(abs, root)
-        next if mailer_parts?(parts)
+        next if mailer_parts?(parts) || app_view_without_route?("brgen", parts)
 
         host, path, action = brgen_route(parts)
         rel = parts.join("/")
@@ -329,6 +337,10 @@ module Deploy
 
     def mailer_parts?(parts)
       parts.any? { |p| p.end_with?("_mailer") || p == "mailer" }
+    end
+
+    def app_view_without_route?(app, parts)
+      Array(APP_VIEWS_WITHOUT_ROUTE[app]).include?(parts)
     end
 
     def mailer?(page)

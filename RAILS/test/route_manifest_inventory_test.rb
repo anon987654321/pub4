@@ -88,6 +88,12 @@ class RouteManifestInventoryTest < Minitest::Test
     assert Deploy::PageInventory.guest_open_brgen?("/registration/new", "registrations/new")
   end
 
+  def test_app_local_error_templates_are_not_invented_as_routes
+    refute find("brgen/shared/members_only"),
+           "members_only is rendered with a 403 from other actions, not served at /shared/members_only"
+    assert Deploy::PageInventory.app_view_without_route?("brgen", %w[shared members_only])
+  end
+
   def test_digest_moves_when_a_route_source_changes
     before = Deploy::RouteManifest.digest("brgen")
 

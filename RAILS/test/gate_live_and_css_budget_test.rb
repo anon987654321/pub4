@@ -109,6 +109,27 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     end
   end
 
+  def test_reduced_motion_overrides_are_not_important_debt
+    gate = Deploy::CssConstitutionGate.new
+    gate.run_once
+
+    refute_includes gate.tally.fetch("important"), "brgen/app/assets/stylesheets/_canvas.scss:108"
+    assert_includes gate.tally.fetch("important"), "brgen/app/assets/stylesheets/_root.scss:154"
+  end
+
+  def test_reduced_motion_exception_stays_inside_its_media_block
+    gate = Deploy::CssConstitutionGate.new
+    gate.instance_variable_set(:@design, {})
+    gate.instance_variable_set(:@tally, { "important" => [], "rhythm" => [], "magic_hex" => [], "type_scale" => [], "weight_ladder" => [] })
+
+    gate.send(:count_budget_rules, "fixture.scss", "fixture.scss", <<~CSS)
+      @media (prefers-reduced-motion: reduce) { .still { animation: none !important; } }
+      .override { display: none !important; }
+    CSS
+
+    assert_equal ["fixture.scss:2"], gate.tally.fetch("important")
+  end
+
   def test_contrast_ceilings_exist_for_both_bands
     assert_kind_of Integer, budget["contrast_below_aa"]
     assert_kind_of Integer, budget["contrast_below_aaa"]
