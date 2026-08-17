@@ -120,7 +120,7 @@ export default class extends Controller {
         overlay.alt = item.name || "Wardrobe item"
         overlay.style.opacity = "1"
       } else {
-        overlay.src = ""
+        overlay.removeAttribute("src")
         overlay.style.opacity = "0"
         overlay.alt = ""
       }

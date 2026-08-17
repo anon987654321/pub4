@@ -30,22 +30,13 @@ class OutfitsController < ApplicationController
   # insertion, so the first garment a carousel shows is the one this wardrobe's
   # behaviour says the owner reaches for — that is the "ever-evolving knowledge
   # of your taste" the feature is named for.
-  DRESSING_ROOM_ZONES = {
-    head:   [ "Accessories" ],
-    top:    %w[Tops Outerwear],
-    bottom: %w[Bottoms Dresses],
-    shoes:  [ "Shoes" ]
-  }.freeze
-
   def dressing_room
     # in_rotation: the carousels offer garments to wear, and active_wardrobe
     # keeps declutter-box items, so a garment you had already decided to release
     # kept riding round the Tops zone.
     base = Current.user.items.in_rotation.with_photos_for_display
     ranker = TasteRanker.new(Current.user)
-    @zones = DRESSING_ROOM_ZONES.transform_values do |categories|
-      ranker.rank(base.where(category: categories))
-    end
+    @zones = Amber::DressingRoom.zones_for(base, ranker: ranker)
     @taste_reasons = @zones.values.flatten.to_h { |item| [ item.id, ranker.explain(item) ] }
   end
 
@@ -64,7 +55,7 @@ class OutfitsController < ApplicationController
     )
     # Position head-to-toe so the saved outfit reads in the same order the
     # dressing room stacked it on the mannequin.
-    zone_order = DRESSING_ROOM_ZONES.keys.each_with_index.to_h
+    zone_order = Amber::DressingRoom::ZONES.keys.each_with_index.to_h
     items.sort_by { |item| [ zone_order.fetch(zone_for(item), zone_order.size), item.id ] }
          .each_with_index { |item, index| outfit.outfit_items.build(item: item, position: index) }
 
@@ -180,7 +171,7 @@ class OutfitsController < ApplicationController
   end
 
   def zone_for(item)
-    DRESSING_ROOM_ZONES.find { |_zone, categories| categories.include?(item.category) }&.first
+    Amber::DressingRoom::ZONES.find { |_zone, categories| categories.include?(item.category) }&.first
   end
 
   def default_look_name(items)

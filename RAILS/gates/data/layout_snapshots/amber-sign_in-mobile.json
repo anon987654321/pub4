@@ -17,7 +17,7 @@
       "tag": "input",
       "rect": {
         "x": 35,
-        "y": 399,
+        "y": 472,
         "w": 320,
         "h": 47
       },
@@ -33,7 +33,7 @@
       "tag": "main",
       "rect": {
         "x": 19,
-        "y": -29,
+        "y": 44,
         "w": 352,
         "h": 844
       },
@@ -49,7 +49,7 @@
       "tag": "form",
       "rect": {
         "x": 35,
-        "y": 372,
+        "y": 445,
         "w": 320,
         "h": 256
       },
@@ -65,7 +65,7 @@
       "tag": "h1",
       "rect": {
         "x": 35,
-        "y": 255,
+        "y": 328,
         "w": 320,
         "h": 30
       },
@@ -81,7 +81,7 @@
       "tag": "input",
       "rect": {
         "x": 35,
-        "y": 485,
+        "y": 558,
         "w": 256,
         "h": 47
       },
@@ -97,7 +97,7 @@
       "tag": "footer",
       "rect": {
         "x": 39,
-        "y": 880,
+        "y": 953,
         "w": 312,
         "h": 138
       },
@@ -113,7 +113,7 @@
       "tag": "footer",
       "rect": {
         "x": 39,
-        "y": 1084,
+        "y": 1157,
         "w": 312,
         "h": 66
       },
@@ -129,7 +129,7 @@
       "tag": "nav",
       "rect": {
         "x": 39,
-        "y": 805,
+        "y": 878,
         "w": 312,
         "h": 75
       },
@@ -145,7 +145,7 @@
       "tag": "nav",
       "rect": {
         "x": 39,
-        "y": 764,
+        "y": 837,
         "w": 312,
         "h": 116
       },
@@ -161,7 +161,7 @@
       "tag": "a",
       "rect": {
         "x": 52,
-        "y": 1043,
+        "y": 1116,
         "w": 43,
         "h": 35
       },
@@ -177,7 +177,7 @@
       "tag": "input",
       "rect": {
         "x": 35,
-        "y": 547,
+        "y": 621,
         "w": 94,
         "h": 44
       },
@@ -193,7 +193,7 @@
       "tag": "a",
       "rect": {
         "x": 35,
-        "y": 607,
+        "y": 681,
         "w": 105,
         "h": 20
       },
@@ -209,7 +209,7 @@
       "tag": "nav",
       "rect": {
         "x": 39,
-        "y": 1037,
+        "y": 1110,
         "w": 312,
         "h": 48
       },
@@ -225,7 +225,7 @@
       "tag": "p",
       "rect": {
         "x": 55,
-        "y": 1099,
+        "y": 1172,
         "w": 280,
         "h": 29
       },
@@ -237,11 +237,27 @@
       "position": "static"
     },
     {
+      "key": "div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>div.amber-nav-actions>a.btn-sm",
+      "tag": "a",
+      "rect": {
+        "x": 24,
+        "y": 0,
+        "w": 63,
+        "h": 44
+      },
+      "color": "#2c2824",
+      "bg": "#f8f8f8",
+      "font_size": 12,
+      "line_height": 0,
+      "display": "block",
+      "position": "static"
+    },
+    {
       "key": "footer.amber-footer>div.amber-footer-cols>nav.amber-footer-locales>a",
       "tag": "a",
       "rect": {
         "x": 179,
-        "y": 797,
+        "y": 870,
         "w": 31,
         "h": 35
       },
@@ -257,7 +273,7 @@
       "tag": "h2",
       "rect": {
         "x": 162,
-        "y": 770,
+        "y": 843,
         "w": 66,
         "h": 14
       },
@@ -273,7 +289,7 @@
       "tag": "a",
       "rect": {
         "x": 176,
-        "y": 838,
+        "y": 912,
         "w": 39,
         "h": 35
       },
@@ -289,7 +305,7 @@
       "tag": "h2",
       "rect": {
         "x": 161,
-        "y": 812,
+        "y": 885,
         "w": 69,
         "h": 14
       },
@@ -305,7 +321,7 @@
       "tag": "button",
       "rect": {
         "x": 299,
-        "y": 486,
+        "y": 559,
         "w": 56,
         "h": 44
       },
@@ -315,6 +331,22 @@
       "line_height": 19.2,
       "display": "flex",
       "position": "static"
+    },
+    {
+      "key": "html>body.auth-surface>div.theme-root>header.amber-logo-banner.amber-logo-banner--nav",
+      "tag": "header",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 44
+      },
+      "color": "#2c2824",
+      "bg": "#ffffff",
+      "font_size": 16,
+      "line_height": 0,
+      "display": "flex",
+      "position": "sticky"
     },
     {
       "key": "html>body.auth-surface>header>a.brand-mark",

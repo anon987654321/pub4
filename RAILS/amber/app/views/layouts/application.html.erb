@@ -66,10 +66,11 @@
   </div>
 </header>
 
-<% unless authenticated? %>
-  <%= render "shared/wardrobe_showcase" %>
-<% end %>
-
+<%# shared/_wardrobe_showcase used to render here — four auto-advancing carousel
+    rows, above the content of every page a signed-out visitor could reach, at
+    1235px each. On the home page that put the logo 5,410 pixels down. A landing
+    feature does not belong in the layout; the mannequin that replaces it is
+    rendered by home/index, which is the one page it is for. %>
 <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
   <div class="layout">
     <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>

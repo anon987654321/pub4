@@ -518,7 +518,9 @@ class DeployBacklogTest < Minitest::Test
     assert_includes helper_source, 'type: "image/webp"'
     assert_includes helper_source, 'loading: "lazy"'
     assert_includes read_source(File.join(ROOT, 'amber/app/views/items/show.html.erb')), 'responsive_image_tag photo'
-    assert_includes read_source(File.join(ROOT, 'amber/app/views/outfits/dressing_room.html.erb')),
+    # The dressing room composition moved into a partial when the guest landing
+    # page started rendering the same mannequin.
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/shared/_dressing_room.html.erb')),
                     'responsive_image_url(item.photos.first'
 
   end

@@ -440,11 +440,6 @@ h1, .display, .wordmark {
 }
 
 /* Swiper peek */
-.wardrobe-swiper .swiper-slide {
-  width: auto;
-  max-width: 70%;
-  aspect-ratio: 3 / 4;
-}
 
 :where(button, .btn, a.btn):focus-visible {
   outline: var(--focus-ring);

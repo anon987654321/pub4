@@ -87,24 +87,6 @@
   font-size: var(--font-size);
 }
 
-.wardrobe-carousel-row-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-xs);
-  margin-block-end: var(--space-xs);
-}
-
-.wardrobe-carousel-row-label {
-  margin: 0;
-  font-weight: var(--weight-bold);
-}
-
-.wardrobe-carousel-row-hint {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
 // Single-purpose containers the markup names and nothing styled.
 .declutter-page,
 .wardrobe-items,

@@ -14,7 +14,7 @@
       <legend class="visually-hidden">Essentials</legend>
       <% if @profile.photos.attached? %>
         <div class="field">
-          <span class="label"><%= t("dating.current_photos") %></span>
+          <%= t("dating.current_photos") %>
           <div class="photo-strip">
             <% @profile.photos.each do |photo| %>
               <label class="photo-thumb-wrap">

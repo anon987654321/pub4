@@ -24,10 +24,17 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # default) rather than pinning the English copy — same fix as b369c6213
     # made for brgen's home and signup pages.
     assert_includes response.body, I18n.t("home.guest_title")
-    assert_includes response.body, "amber-wardrobe-showcase"
-    assert_includes response.body, 'data-controller="carousel"'
-    assert_includes response.body, "Headwear"
-    assert_includes response.body, "Shoes"
+    # The mannequin, not the four stacked carousels it replaced. Operator order
+    # 2026-08-17: logo, then this, then the posts. The old assertions pinned
+    # shared/_wardrobe_showcase, which rendered from the layout and so appeared
+    # above every page in the app.
+    assert_includes response.body, "dressing-room"
+    assert_includes response.body, 'data-controller="wardrobe-carousel"'
+    assert_includes response.body, "mannequin-svg"
+    # A garment name reaches the page whether or not a demo wardrobe is seeded.
+    assert_includes response.body, "Gold hoop earrings"
+    # Saving belongs to an account, so the guest gets the rotation without it.
+    assert_not_includes response.body, "dressing-room-save"
     assert_includes response.body, "amber-compose-box"
     assert_includes response.body, I18n.t("empty.guest_post")
     assert_not_includes response.body, 'class="master-embed-frame"'

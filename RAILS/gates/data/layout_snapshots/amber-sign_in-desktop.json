@@ -17,7 +17,7 @@
       "tag": "input",
       "rect": {
         "x": 540,
-        "y": 424,
+        "y": 517,
         "w": 360,
         "h": 52
       },
@@ -33,7 +33,7 @@
       "tag": "main",
       "rect": {
         "x": 522,
-        "y": -49,
+        "y": 44,
         "w": 396,
         "h": 900
       },
@@ -49,7 +49,7 @@
       "tag": "form",
       "rect": {
         "x": 540,
-        "y": 394,
+        "y": 487,
         "w": 360,
         "h": 281
       },
@@ -65,7 +65,7 @@
       "tag": "h1",
       "rect": {
         "x": 540,
-        "y": 262,
+        "y": 355,
         "w": 360,
         "h": 34
       },
@@ -81,7 +81,7 @@
       "tag": "input",
       "rect": {
         "x": 540,
-        "y": 521,
+        "y": 614,
         "w": 288,
         "h": 52
       },
@@ -97,7 +97,7 @@
       "tag": "footer",
       "rect": {
         "x": 0,
-        "y": 905,
+        "y": 998,
         "w": 1440,
         "h": 169
       },
@@ -113,7 +113,7 @@
       "tag": "footer",
       "rect": {
         "x": 170,
-        "y": 1114,
+        "y": 1207,
         "w": 1100,
         "h": 65
       },
@@ -129,7 +129,7 @@
       "tag": "input",
       "rect": {
         "x": 540,
-        "y": 591,
+        "y": 684,
         "w": 104,
         "h": 44
       },
@@ -145,7 +145,7 @@
       "tag": "a",
       "rect": {
         "x": 540,
-        "y": 653,
+        "y": 746,
         "w": 117,
         "h": 22
       },
@@ -161,7 +161,7 @@
       "tag": "p",
       "rect": {
         "x": 190,
-        "y": 1133,
+        "y": 1226,
         "w": 1060,
         "h": 18
       },
@@ -173,11 +173,27 @@
       "position": "static"
     },
     {
+      "key": "div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>div.amber-nav-actions>a.btn-sm",
+      "tag": "a",
+      "rect": {
+        "x": 27,
+        "y": 0,
+        "w": 71,
+        "h": 44
+      },
+      "color": "#2c2824",
+      "bg": "#f8f8f8",
+      "font_size": 13.5,
+      "line_height": 0,
+      "display": "block",
+      "position": "static"
+    },
+    {
       "key": "form>div.field>div.password-field>button.btn.btn-ghost.btn-sm",
       "tag": "button",
       "rect": {
         "x": 837,
-        "y": 525,
+        "y": 618,
         "w": 63,
         "h": 44
       },
@@ -187,6 +203,22 @@
       "line_height": 21.6,
       "display": "flex",
       "position": "static"
+    },
+    {
+      "key": "html>body.auth-surface>div.theme-root>header.amber-logo-banner.amber-logo-banner--nav",
+      "tag": "header",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 44
+      },
+      "color": "#2c2824",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 0,
+      "display": "flex",
+      "position": "sticky"
     },
     {
       "key": "html>body.auth-surface>header>a.brand-mark",

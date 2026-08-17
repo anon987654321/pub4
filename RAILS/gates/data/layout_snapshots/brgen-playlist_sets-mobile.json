@@ -29,7 +29,7 @@
       "position": "static"
     },
     {
-      "key": "#main-content>div.page-header>div>h1",
+      "key": "#main-content>div.page-header>hgroup>h1",
       "tag": "h1",
       "rect": {
         "x": 18,

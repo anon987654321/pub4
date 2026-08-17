@@ -6,10 +6,14 @@
   <% content_for :json_ld, json_ld_script(demo_item_list_schema(@demo_items, title: t("home.demo_capsule"))) %>
 <% end %>
 
-<%# amber had no MASTER face surface at all; brgen has carried it on its home
-    page since the embed landed. Same shared partial, amber's own heading. %>
-<%= render "shared/master_embed", heading: "ask amber" %>
+<%# The MASTER face is not embedded here. The iframe points at ai.brgen.no, and
+    a document's load event waits on its frames — so amber's home page never
+    reached readyState "complete" while MASTER was slow or down, which on the
+    1 vCPU host is often. Measured 2026-08-17: readyState stuck at "interactive"
+    indefinitely, and in production the stylesheet behind it took 13.4s.
 
+    The face is one click away instead: the guest hero links to ?master=1, which
+    is the same route brgen already uses for the same reason. %>
 <% if authenticated? %>
   <% if @weather %>
     <div class="weather-bar">
@@ -109,6 +113,15 @@
       <%= link_to t("home.ask_ai"), root_path(master: 1), data: { turbo: false } %>
     </p>
   </section>
+
+  <%# The mannequin, wearing the demo wardrobe. Operator order, 2026-08-17: the
+      logo, then this, then the posts. It replaces shared/_wardrobe_showcase,
+      which was four mannequin-less carousels rendered from the layout — so they
+      appeared above the content of every page in the app, 1235px each, and put
+      this page's own logo 5,410px down. %>
+  <% if @dressing_room_zones.present? && @dressing_room_zones.values.any?(&:any?) %>
+    <%= render "shared/dressing_room", zones: @dressing_room_zones, savable: false %>
+  <% end %>
 
   <%= render "shared/feed_compose" %>
 
