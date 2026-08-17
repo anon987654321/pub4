@@ -131,9 +131,16 @@
    sizing above is hero-scale (up to 500px tall), fine for a one-time
    full-bleed splash but far too tall for chrome that stays sticky on every
    scroll position. Cap it to ordinary nav height instead. */
+/* The leading inset clears the fixed brand mark, which is painted over this bar
+   at z-index 120. --brand-mark-inline is published for exactly this — brgen's
+   nav swiper reads the same token — and this bar used --space-md instead, so it
+   reserved 24px where the wordmark occupies 76. The Sign in link began at x=24,
+   which put its centre under the letters: the occlusion gate found it on twelve
+   surfaces, and it is the overlap visible in the top-left of every amber
+   screenshot. The trailing side clears the theme control opposite it. */
 .amber-logo-banner--nav {
   justify-content: space-between;
-  padding-inline: var(--space-md, 1rem);
+  padding-inline: var(--brand-mark-inline) var(--chrome-toggle-inline);
 }
 
 .amber-logo-banner--nav .amber-instance {

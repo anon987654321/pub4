@@ -3,6 +3,17 @@
 class OutfitsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   renders "outfits/outfit", as: :outfit
 
+  # The band on appended pages too. The first screen interleaves in its own
+  # loop, and this reflex renders one partial per row, so without a seam here
+  # everything past page one was outfits with no band at all. The slot counts
+  # from the top of the gallery, not the top of the page, so the rhythm does
+  # not restart on every scroll.
+  def after_row(_record, slot)
+    return unless (slot % Shared::AffiliateHelper::FEED_EVERY).zero?
+
+    render(partial: "shared/affiliate_feed_unit", locals: { category: "fashion", in_grid: true })
+  end
+
   private
 
   def scope

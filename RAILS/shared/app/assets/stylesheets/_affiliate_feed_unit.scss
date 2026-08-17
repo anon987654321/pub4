@@ -103,3 +103,11 @@
     transition: none;
   }
 }
+
+/* Placed inside a grid of records rather than a list of them: span every
+   column so the band keeps its own packing, instead of being sized as one
+   more tile. Additive — the base rule is untouched, and brgen's feed, which
+   is not a grid, never gets this class. */
+.affiliate_feed_unit--in_grid {
+  grid-column: 1 / -1;
+}

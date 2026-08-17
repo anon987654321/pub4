@@ -9,9 +9,14 @@
 
     Reads Shared::Affiliate.deals, the same single path over every network the sidebar
     unit uses, so a new network appears here without editing this view. %>
+<%# in_grid: the band is being placed inside a CSS grid of records rather than a
+    vertical list of them. Without it the aside becomes one more grid cell the
+    width of a garment tile, and the packed band inside it collapses. The
+    modifier spans the row instead; amber's wardrobe and outfit galleries are
+    both grids, brgen's feed is not. %>
 <% deals = affiliate_deals_for(category: local_assigns[:category], limit: 8) %>
 <% if deals.any? %>
-  <aside class="affiliate_feed_unit"
+  <aside class="affiliate_feed_unit<%= " affiliate_feed_unit--in_grid" if local_assigns[:in_grid] %>"
          aria-label="<%= t("affiliate.feed_unit_label") %>"
          data-controller="parallax-tilt"
          data-action="pointermove->parallax-tilt#move pointerleave->parallax-tilt#leave">

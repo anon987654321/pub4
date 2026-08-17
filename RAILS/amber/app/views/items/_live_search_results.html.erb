@@ -15,8 +15,18 @@
 </div>
 
 <%= turbo_frame_tag "items", target: "_top" do %>
+<%# One band after every FEED_EVERY garments, never trailing the last — a band in
+    the final slot reads as the end of the wardrobe. in_grid because this is a
+    grid: the band spans the row rather than sitting in it as a tile.
+    ItemsInfiniteScrollReflex#after_row keeps the same rhythm on appended pages,
+    counting slots from the top rather than restarting each scroll. %>
 <div class="item-grid item-grid--luxury" id="items" data-filter-target="grid">
-  <%= render @items %>
+  <% @items.each_with_index do |item, index| %>
+    <%= render item %>
+    <% if ((index + 1) % Shared::AffiliateHelper::FEED_EVERY).zero? && index + 1 < @items.size %>
+      <%= render "shared/affiliate_feed_unit", category: "fashion", in_grid: true %>
+    <% end %>
+  <% end %>
 </div>
 
 <% if @items.empty? %>

@@ -5,7 +5,16 @@
 </div>
 
 <%= turbo_frame_tag "outfits", target: "_top" do %>
-<div class="item-grid item-grid--luxury" id="outfits"><%= render @outfits %></div>
+<%# Same cadence and the same grid caveat as the wardrobe — see
+    items/_live_search_results. %>
+<div class="item-grid item-grid--luxury" id="outfits">
+  <% @outfits.each_with_index do |outfit, index| %>
+    <%= render outfit %>
+    <% if ((index + 1) % Shared::AffiliateHelper::FEED_EVERY).zero? && index + 1 < @outfits.size %>
+      <%= render "shared/affiliate_feed_unit", category: "fashion", in_grid: true %>
+    <% end %>
+  <% end %>
+</div>
 
 <% if @outfits.empty? %>
   <%= render "shared/empty_state",
