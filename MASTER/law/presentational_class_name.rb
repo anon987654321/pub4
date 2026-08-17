@@ -5,11 +5,16 @@
 # that decision means editing every view carrying the word, and the markup ends
 # up asserting a colour it cannot guarantee.
 #
-# In this tree the cost already shows. The word dim sits on 302 elements and two
-# stylesheets declare it with different values — _minimal.scss picks
-# --dark-grey and --text-base, _shell_widgets.scss picks --text-secondary and
-# --text-sm. Import order decides which one an element gets, and nothing in the
-# markup tells you which one you asked for.
+# In this tree the cost already shows. The word dim sits on 301 elements across
+# three apps and resolves to a different colour in each: --text-secondary in
+# brgen, --color-grey-text in amber, --text-secondary in bsdports. The built
+# stylesheets carry seven, six and four rules matching it. Two of amber's three
+# bare declarations never take effect, and two of bsdports' do not either — they
+# lose to a later rule of equal specificity, so the earlier ones are dead weight
+# that would come alive if anyone reordered an @use.
+#
+# Nothing in the markup says which of those a given element asked for, because
+# the markup asked only for "dim".
 #
 # The fix is often an element, not another class: small for a side comment,
 # strong and em for emphasis, time for a timestamp. Those carry meaning to
