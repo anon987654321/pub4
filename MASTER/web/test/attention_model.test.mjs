@@ -24,12 +24,22 @@ function loadAttention(now = 0) {
   };
 }
 
+// blinkInterval is the gap BETWEEN blinks, so a smaller number is a face that
+// blinks more. People blink most while speaking and least while holding a
+// thought, which is the order these intervals encode. Asserting the ordering
+// rather than a single pair states the intent, and the numbers were set by
+// measuring ten simulated minutes per mode against a 15-20/min human resting
+// rate — so they are a finding, not a preference to be nudged.
 test("attention model varies blink intervals by cognitive mode", () => {
   const { attn } = loadAttention();
   const thinking = attn.policyFor("thinking", false);
   const listening = attn.policyFor("listening", false);
-  assert.ok(listening.blinkInterval[0] > thinking.blinkInterval[0]);
-  assert.ok(thinking.fixationPitch < 0);
+  const speaking = attn.policyFor("speaking", false);
+  assert.ok(speaking.blinkInterval[0] < listening.blinkInterval[0],
+    "speaking should blink more often than listening");
+  assert.ok(listening.blinkInterval[0] < thinking.blinkInterval[0],
+    "listening should blink more often than holding a thought");
+  assert.ok(thinking.fixationPitch < 0, "thinking should look down");
 });
 
 test("attention tick returns gaze offsets and eye close envelope", () => {

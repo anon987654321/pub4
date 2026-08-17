@@ -161,6 +161,37 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   // segment cut people off mid-sentence, so final and interim text are both
   // banked and only committed after this much real quiet.
   const STT_QUIET_MS = 1600;
+  // But silence alone cannot tell thinking from finishing, so one fixed window
+  // has to be long enough for the slowest hesitation mid-sentence — which makes
+  // every finished sentence wait that long too. The words already say which is
+  // happening: someone who has just said "og" or "fordi" still holds the floor,
+  // and someone who ended on a question mark has handed it over.
+  //
+  // The two directions carry different costs, so they get different evidence.
+  // Waiting too long is a pause; cutting someone off loses what they said and
+  // makes them repeat it. So the floor-holding cues only ever LENGTHEN the
+  // wait, and shortening needs a strong signal — real terminal punctuation, or
+  // an utterance short enough to be a whole answer.
+  const STT_QUIET_MS_MIN = 700;
+  const STT_QUIET_MS_MAX = 2600;
+  // Norwegian first: nb is the default locale, and these are the words a
+  // sentence cannot end on. Conjunctions, prepositions, articles, the copula,
+  // and the hesitation sounds recognisers do transcribe.
+  const HOLDING_FLOOR_RE =
+    /(?:^|\s)(og|eller|men|så|fordi|som|at|hvis|når|enn|er|var|har|hadde|skal|vil|kan|må|på|til|av|med|for|om|fra|den|det|en|et|eh+|øh+|hmm+|altså|liksom|bare|litt|and|or|but|so|because|that|which|if|when|than|is|was|has|had|will|would|can|could|should|might|must|do|does|did|are|were|been|being|to|of|with|for|from|at|in|on|by|about|into|the|a|an|um+|uh+|er+|like|well)\s*$/i;
+  const HANDED_OVER_RE = /[?!.]["'”»)]?\s*$/;
+  function quietMsFor(text) {
+    const t = String(text || '').trim();
+    if (!t) return STT_QUIET_MS;
+    // Checked first: "er det fordi?" ends on a question mark AND a floor word,
+    // and the question mark is the one the speaker chose to put there.
+    if (HANDED_OVER_RE.test(t)) return STT_QUIET_MS_MIN;
+    if (HOLDING_FLOOR_RE.test(t)) return STT_QUIET_MS_MAX;
+    // "ja", "nei takk", "det stemmer" — a whole turn, and holding it open
+    // after two words is the wait people notice most.
+    if (t.split(/\s+/).length <= 3) return STT_QUIET_MS_MIN;
+    return STT_QUIET_MS;
+  }
   let sttSilenceTimer = null, sttPartial = '', sttFinalSoFar = '';
   // Barge-in. Someone who starts talking has taken the turn, so stop rather
   // than duck: applySttDuck only lowers the voice to 0.12 and State.sttDuck
@@ -184,6 +215,28 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     if (!spoken) return false;
     const said = normaliseHeard(heard);
     return said.length > 0 && spoken.includes(said);
+  }
+  // A backchannel is the "mm" a listener gives while the other person is still
+  // talking: it signals attention without taking the turn. MASTER gave none —
+  // the face held still until the whole utterance was committed, so the
+  // difference between listening and not being there was nothing at all.
+  //
+  // Visual only, and deliberately so. A spoken backchannel would arrive over a
+  // person mid-sentence, and the mic would then hear MASTER talking during
+  // their turn — the same echo the duck and speechIsEchoOfSelf above exist to
+  // handle. A pulse costs no audio, no turn and no latency.
+  //
+  // Rate-limited because an acknowledgement on every clause of a long sentence
+  // stops reading as attention and starts reading as a twitch.
+  const BACKCHANNEL_MIN_GAP_MS = 900;
+  let _lastBackchannelAt = 0;
+  function backchannel() {
+    if (!State.sttActive || tts.playing || tts.loading) return;
+    const now = performance.now();
+    if (now - _lastBackchannelAt < BACKCHANNEL_MIN_GAP_MS) return;
+    _lastBackchannelAt = now;
+    State.pulse = Math.max(State.pulse || 0, 0.3);
+    emitTtsEvent('stt:backchannel', {});
   }
   function bargeInIfSpeaking(heard) {
     if (!tts.playing && !tts.loading) return;
@@ -218,6 +271,9 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     bargeInIfSpeaking(`${final} ${interim}`);
     if (final.trim()) sttFinalSoFar = sttFinalSoFar ? `${sttFinalSoFar} ${final.trim()}` : final.trim();
     sttPartial = `${sttFinalSoFar} ${interim.trim()}`.trim();
+    // A completed segment is a clause boundary — the place a listener says
+    // "mm". Acknowledge it.
+    if (final.trim()) backchannel();
     if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
     sttSilenceTimer = setTimeout(() => {
       if (sttPartial) {
@@ -227,7 +283,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         _voiceModeRearmFails = 0;
         sendMessage(t2);
       }
-    }, STT_QUIET_MS);
+    }, quietMsFor(sttPartial));
   };
   recognition.onend = () => {
     State.sttActive = false; State.sttDuck = 0;

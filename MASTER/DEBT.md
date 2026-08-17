@@ -329,6 +329,29 @@ path never got. It is now per-pattern: `unfinished` declares `reads_comments`
 because a work marker lives in a comment, and nothing else does.
 `without_comment_lines` moved to the shared `Rule` base rather than being copied.
 
+## Two touch targets under 44px, and a sparkline that lost its accent — opened 2026-08-17
+
+`web/test/face_boot.test.mjs` carries two skipped assertions, and they are
+skipped because the answer is the operator's rather than because the check is
+wrong.
+
+`.tool` and `#spin-btn` set no `min-height`, so both compute under the 44px
+touch target `design_rules` requires. face.css defines `--tap-min: 44px` and
+applies it to `.panel` and the skip link, so the token exists and these two
+controls do not use it. Adding it changes the toolbar's height, which is a
+visual decision and not a thing to make by satisfying a test.
+
+`.mood-sparkline` no longer carries `--canvas-mood-accent`. Either the
+sparkline lost its accent colour or the feature was retired; the CSS alone
+cannot say which.
+
+Both surfaced the day `web/test/*.test.mjs` entered `bin/check --profile=web`.
+They had been failing since before that, invisibly, because nothing ran the
+suite — along with a blink-rate assertion stale since the rates were measured
+and retuned on 2026-08-10, and an assertion that the welcome greeting still
+existed after it was deliberately removed. Those two were the tests being
+wrong and are fixed; these two need someone who can look at the page.
+
 ## Inert law and config
 
 The dominant defect class in this tree: a declaration with no reader. Both named

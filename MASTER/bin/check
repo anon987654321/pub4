@@ -34,6 +34,10 @@ abort "check: unknown format '#{format}' (have: human, brief)" unless %w[human b
 rake = ->(*task) { [task.join(" "), BUNDLE, "exec", "rake", *task] }
 run_bin = ->(name, *args) { ["bin/#{name} #{args.join(' ')}".strip, RUBY, File.join(ROOT, "bin", name), *args] }
 web_live = ENV["MASTER_WEB_LIVE"] == "1"
+# vm23 has node at /usr/local/bin, which is not on cron's PATH — so resolve it
+# rather than assuming the shell will.
+node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
+                      .map { |dir| File.join(dir, "node") }.find { |p| File.executable?(p) }
 
 # test:subsystems ran in no profile but full (i.e. only through bin/ci), so the 14
 # files under test/{cli,io,fix,lib} were skipped by the gate START_HERE.md tells
@@ -51,7 +55,15 @@ PROFILES = {
   "contributor" => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
                     rake["lint:data_singularity"], rake["studio"]],
   "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["studio"]],
+  # web/test/*.test.mjs evaluate the shipped face sources under node:vm, which is
+  # the only way to assert anything about code that only exists inside a browser
+  # feature check. Twenty-five of them were in the tree and in no profile, so
+  # nothing ran them: one had been failing since the blink rates were retuned on
+  # 2026-08-10, and another asserted face.runtime.js matches its sources while
+  # being unable to report that it did not. Skipped rather than failed where node
+  # is absent — a missing interpreter is not a red gate.
   "web"         => [["web ui static", RUBY, "-Ilib:test", "test/test_web_ui.rb"],
+                    *(node_bin ? [["web ui behaviour", node_bin, "--test", *Dir[File.join(ROOT, "web/test/*.test.mjs")].sort]] : []),
                     *(web_live ? [rake["test:web"], rake["test:integration_web"]] : [])],
   "full"        => [run_bin["ci"], run_bin["probe", "all"], rake["audit"]],
 }.freeze
