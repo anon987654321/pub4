@@ -1,5 +1,5 @@
 {
-  "title": "dating — Brgen",
+  "title": "Dating — Bergen",
   "viewport": [
     390,
     844
@@ -17,7 +17,7 @@
       "tag": "main",
       "rect": {
         "x": 0,
-        "y": 0,
+        "y": 62,
         "w": 390,
         "h": 912
       },
@@ -48,10 +48,10 @@
       "key": "#main-content>div.dating-app>section.dating-intro>footer.dating-intro-trust",
       "tag": "footer",
       "rect": {
-        "x": 102,
-        "y": 779,
-        "w": 186,
-        "h": 20
+        "x": 10,
+        "y": 732,
+        "w": 371,
+        "h": 140
       },
       "color": "#969696",
       "bg": "#000000",
@@ -61,12 +61,28 @@
       "position": "static"
     },
     {
-      "key": "html>body.vertical-dating>a.brgen-logo-mark",
+      "key": "div.dating-app>section.dating-intro>footer.dating-intro-trust>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 230,
+        "y": 782,
+        "w": 151,
+        "h": 40
+      },
+      "color": "#969696",
+      "bg": "#000000",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-dating>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
-        "x": 14,
-        "y": 14,
-        "w": 63,
+        "x": 12,
+        "y": 9,
+        "w": 68,
         "h": 44
       },
       "color": "#e0e0e0",
@@ -77,19 +93,19 @@
       "position": "fixed"
     },
     {
-      "key": "html>body.vertical-dating>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
+      "key": "section.dating-intro>footer.dating-intro-trust>nav>a",
+      "tag": "a",
       "rect": {
-        "x": 265,
-        "y": 787,
-        "w": 112,
-        "h": 44
+        "x": 239,
+        "y": 782,
+        "w": 85,
+        "h": 19
       },
       "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "flex",
+      "bg": "#000000",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "inline",
       "position": "static"
     }
   ]

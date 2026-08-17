@@ -17,9 +17,9 @@
       "tag": "main",
       "rect": {
         "x": 340,
-        "y": 58,
+        "y": 64,
         "w": 760,
-        "h": 723
+        "h": 736
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
@@ -33,9 +33,9 @@
       "tag": "header",
       "rect": {
         "x": 364,
-        "y": 112,
+        "y": 118,
         "w": 712,
-        "h": 523
+        "h": 516
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
@@ -49,14 +49,14 @@
       "tag": "h1",
       "rect": {
         "x": 364,
-        "y": 112,
+        "y": 118,
         "w": 712,
-        "h": 45
+        "h": 26
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
-      "font_size": 30,
-      "line_height": 45,
+      "font_size": 21,
+      "line_height": 26.3,
       "display": "block",
       "position": "static"
     },
@@ -65,7 +65,7 @@
       "tag": "nav",
       "rect": {
         "x": 364,
-        "y": 276,
+        "y": 275,
         "w": 712,
         "h": 44
       },
@@ -81,13 +81,13 @@
       "tag": "a",
       "rect": {
         "x": 364,
-        "y": 276,
-        "w": 156,
+        "y": 275,
+        "w": 166,
         "h": 44
       },
       "color": "#5c586e",
       "bg": "#f7f6fa",
-      "font_size": 11.3,
+      "font_size": 12,
       "line_height": 28,
       "display": "flex",
       "position": "static"
@@ -97,14 +97,14 @@
       "tag": "h2",
       "rect": {
         "x": 364,
-        "y": 665,
+        "y": 692,
         "w": 712,
-        "h": 28
+        "h": 19
       },
       "color": "#5c586e",
       "bg": "#f7f6fa",
-      "font_size": 10.5,
-      "line_height": 28,
+      "font_size": 15,
+      "line_height": 18.8,
       "display": "block",
       "position": "static"
     },
@@ -113,14 +113,14 @@
       "tag": "section",
       "rect": {
         "x": 504,
-        "y": 438,
+        "y": 437,
         "w": 432,
         "h": 197
       },
       "color": "#5c586e",
       "bg": "#f7f6fa",
-      "font_size": 11.3,
-      "line_height": 16.9,
+      "font_size": 12,
+      "line_height": 18,
       "display": "grid",
       "position": "static"
     },
@@ -128,15 +128,15 @@
       "key": "#ports>section.empty.empty-state>a.btn.btn-primary.btn--primary",
       "tag": "a",
       "rect": {
-        "x": 656,
-        "y": 566,
-        "w": 127,
+        "x": 653,
+        "y": 565,
+        "w": 134,
         "h": 44
       },
       "color": "#f7f6fa",
       "bg": "#1a1824",
-      "font_size": 11.3,
-      "line_height": 16.9,
+      "font_size": 12,
+      "line_height": 18,
       "display": "flex",
       "position": "static"
     },
@@ -145,7 +145,7 @@
       "tag": "h2",
       "rect": {
         "x": 654,
-        "y": 499,
+        "y": 498,
         "w": 132,
         "h": 16
       },
@@ -161,13 +161,13 @@
       "tag": "input",
       "rect": {
         "x": 365,
-        "y": 333,
+        "y": 332,
         "w": 710,
         "h": 48
       },
       "color": "#1a1824",
       "bg": "#e8e6ef",
-      "font_size": 18,
+      "font_size": 12,
       "line_height": 28,
       "display": "inline-block",
       "position": "static"
@@ -177,7 +177,7 @@
       "tag": "p",
       "rect": {
         "x": 364,
-        "y": 385,
+        "y": 384,
         "w": 417,
         "h": 29
       },
@@ -194,14 +194,30 @@
       "rect": {
         "x": 509,
         "y": 391,
-        "w": 34,
-        "h": 17
+        "w": 33,
+        "h": 16
       },
       "color": "#5c586e",
       "bg": "#e1dfe4",
-      "font_size": 9.6,
+      "font_size": 9,
       "line_height": 28,
       "display": "inline",
+      "position": "static"
+    },
+    {
+      "key": "body.wscons>div.app-shell>footer.site-legal>p.dim.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 190,
+        "y": 859,
+        "w": 1060,
+        "h": 18
+      },
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
       "position": "static"
     },
     {
@@ -210,12 +226,12 @@
       "rect": {
         "x": 63,
         "y": 6,
-        "w": 41,
+        "w": 43,
         "h": 44
       },
       "color": "#5c586e",
       "bg": "#f7f6fa",
-      "font_size": 11.3,
+      "font_size": 12,
       "line_height": 28,
       "display": "flex",
       "position": "static"
@@ -224,14 +240,14 @@
       "key": "div.app-shell>nav>div.nav-actions>a.btn-ghost",
       "tag": "a",
       "rect": {
-        "x": 282,
+        "x": 294,
         "y": 6,
-        "w": 54,
+        "w": 58,
         "h": 44
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
-      "font_size": 11.3,
+      "font_size": 12,
       "line_height": 28,
       "display": "flex",
       "position": "static"
@@ -241,15 +257,31 @@
       "tag": "form",
       "rect": {
         "x": 365,
-        "y": 333,
+        "y": 332,
         "w": 710,
         "h": 48
       },
       "color": "#1a1824",
-      "bg": "#0f1a0f",
-      "font_size": 18,
+      "bg": "#e8e6ef",
+      "font_size": 13.5,
       "line_height": 28,
       "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.wscons>div.app-shell>footer.site-legal",
+      "tag": "footer",
+      "rect": {
+        "x": 170,
+        "y": 840,
+        "w": 1100,
+        "h": 65
+      },
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
+      "font_size": 13,
+      "line_height": 28,
+      "display": "flex",
       "position": "static"
     },
     {
@@ -269,27 +301,11 @@
       "position": "fixed"
     },
     {
-      "key": "html>body.wscons>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
-      "rect": {
-        "x": 1371,
-        "y": 812,
-        "w": 69,
-        "h": 44
-      },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
-      "font_size": 9.8,
-      "line_height": 9.8,
-      "display": "flex",
-      "position": "static"
-    },
-    {
       "key": "html>body.wscons>header>a.brand-mark",
       "tag": "a",
       "rect": {
-        "x": 9,
-        "y": 9,
+        "x": 12,
+        "y": 6,
         "w": 70,
         "h": 44
       },
@@ -305,7 +321,7 @@
       "tag": "a",
       "rect": {
         "x": 364,
-        "y": 710,
+        "y": 729,
         "w": 84,
         "h": 18
       },

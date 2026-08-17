@@ -1,5 +1,5 @@
 {
-  "title": "Map — Brgen",
+  "title": "Kart — Bergen",
   "viewport": [
     1440,
     900
@@ -17,13 +17,13 @@
       "tag": "main",
       "rect": {
         "x": 0,
-        "y": 0,
+        "y": 62,
         "w": 1440,
         "h": 900
       },
       "color": "#d8d6e0",
       "bg": "#12151c",
-      "font_size": 16,
+      "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "static"
@@ -34,12 +34,12 @@
       "rect": {
         "x": 86,
         "y": 25,
-        "w": 239,
+        "w": 245,
         "h": 40
       },
       "color": "#d8d6e0",
       "bg": "#201e27",
-      "font_size": 15.8,
+      "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "static"
@@ -61,28 +61,76 @@
       "position": "absolute"
     },
     {
-      "key": "html>body.vertical-maps>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
+      "key": "body.vertical-maps>footer.site-legal>nav>a",
+      "tag": "a",
       "rect": {
-        "x": 1348,
-        "y": 856,
-        "w": 92,
-        "h": 44
+        "x": 190,
+        "y": 959,
+        "w": 70,
+        "h": 20
+      },
+      "color": "#b6b3c8",
+      "bg": "#12151c",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal",
+      "tag": "footer",
+      "rect": {
+        "x": 170,
+        "y": 940,
+        "w": 1100,
+        "h": 67
       },
       "color": "#d8d6e0",
-      "bg": "#211f28",
-      "font_size": 14.6,
-      "line_height": 14.6,
+      "bg": "#12151c",
+      "font_size": 13,
+      "line_height": 20,
       "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 190,
+        "y": 959,
+        "w": 257,
+        "h": 20
+      },
+      "color": "#d8d6e0",
+      "bg": "#12151c",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal>p.dim.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 465,
+        "y": 961,
+        "w": 785,
+        "h": 18
+      },
+      "color": "#b6b3c8",
+      "bg": "#12151c",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
       "position": "static"
     },
     {
       "key": "html>body.vertical-maps>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
-        "x": 14,
-        "y": 14,
-        "w": 64,
+        "x": 12,
+        "y": 9,
+        "w": 68,
         "h": 44
       },
       "color": "#d8d6e0",
@@ -96,12 +144,12 @@
       "key": "section>div.map-hud>div.cluster>a.btn.btn-ghost.btn-sm",
       "tag": "a",
       "rect": {
-        "x": 333,
+        "x": 340,
         "y": 27,
-        "w": 112,
+        "w": 106,
         "h": 44
       },
-      "color": "#8a879c",
+      "color": "#b6b3c8",
       "bg": "#12151c",
       "font_size": 15.8,
       "line_height": 20,

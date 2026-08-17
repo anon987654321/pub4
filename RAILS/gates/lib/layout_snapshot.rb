@@ -133,11 +133,35 @@ module Deploy
     # habit this filter exists to prevent. Match the record anchor itself
     # (`#post_2206`, `#comment_88`) rather than trying to enumerate the class
     # names hung off it, since that is the part that is actually a database id.
+    # A generated id is the same problem as a database id and worse: Swiper mints
+    # `#swiper-wrapper-89838f8a227d649d` fresh on every page load, so the key of
+    # every element beneath a carousel changed between two runs of this gate with
+    # nothing touched in between. Re-recording could never converge, because the
+    # next run invents new ids again. Matched by shape — a hex run of eight or
+    # more — rather than by library name, so the next widget that does this is
+    # already covered. No real id in this tree looks like that (#main-content,
+    # #email_address, #app-tab-bar, #nav_sections).
     VOLATILE_KEY = /
       \#(?:post|comment|listing|item|message|conversation)_\d+ |
+      \#[\w-]*[-_][0-9a-f]{8,}\b |
       feed-card|feed-post|deal-card|live-card|live-item|comment_item|post-meta |
+      nearby-chat-widget-tab |
       \[\d+\]
     /x
+
+    # nearby-chat-widget-tab is in that list for a reason worth stating, because
+    # it is chrome rather than a feed row. Its label is the room the visitor will
+    # land in — Shared::UiHelper#ambient_chat_room_label returns "nearby" when
+    # Current.user has coordinates and the lobby channel when it does not — so
+    # the tab is 94px or 104px wide depending on visitor state, and the two
+    # alternate between runs of this gate. The partial's own comment records an
+    # earlier fix for the same symptom: the label used to be rewritten by
+    # nearby_chat_controller after the frame arrived, and moving it server-side
+    # stopped the visible relabel without making the width one value.
+    # Excluded rather than re-recorded, because re-recording could not converge.
+    # The design question underneath — whether a tab whose width depends on
+    # whether GPS is on is the intended behaviour — is the operator's, not this
+    # gate's.
     STRUCTURAL_TAG = %w[header nav main footer aside form h1 h2 button a input select textarea].freeze
 
     def distill(payload)

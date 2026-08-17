@@ -1,5 +1,5 @@
 {
-  "title": "Live · i nærheten — Brgen",
+  "title": "I nærheten — Bergen",
   "viewport": [
     1440,
     900
@@ -21,8 +21,8 @@
         "w": 1440,
         "h": 54
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -34,11 +34,11 @@
       "rect": {
         "x": 0,
         "y": 900,
-        "w": 240,
+        "w": 206,
         "h": 54
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -48,160 +48,160 @@
       "key": "#app-tab-bar>button.tab-item.tab-item-button",
       "tag": "button",
       "rect": {
-        "x": 1200,
+        "x": 1234,
         "y": 900,
-        "w": 240,
+        "w": 206,
         "h": 54
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "relative"
     },
     {
-      "key": "#live-feed>div.live-pagination>nav.pagy.series-nav",
-      "tag": "nav",
-      "rect": {
-        "x": 420,
-        "y": 5389,
-        "w": 600,
-        "h": 20
-      },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
-      "key": "#live-feed>div.live-pagination>nav.pagy.series-nav>a",
-      "tag": "a",
-      "rect": {
-        "x": 420,
-        "y": 5389,
-        "w": 11,
-        "h": 20
-      },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "inline",
-      "position": "static"
-    },
-    {
       "key": "#main-content",
       "tag": "main",
       "rect": {
         "x": 420,
-        "y": 0,
+        "y": 62,
         "w": 600,
-        "h": 5418
+        "h": 900
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "static"
     },
     {
-      "key": "#main-content>div.live-locate.section-divider--24>p.nearby-locate-actions>a.btn.btn-sm",
-      "tag": "a",
-      "rect": {
-        "x": 579,
-        "y": 382,
-        "w": 123,
-        "h": 44
-      },
-      "color": "#f7f6fa",
-      "bg": "#5b4fc4",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "flex",
-      "position": "static"
-    },
-    {
-      "key": "#main-content>div.live-locate.section-divider--24>p.nearby-locate-actions>button.btn.btn-primary.btn-sm",
-      "tag": "button",
-      "rect": {
-        "x": 438,
-        "y": 382,
-        "w": 132,
-        "h": 44
-      },
-      "color": "#f7f6fa",
-      "bg": "#1a1824",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "flex",
-      "position": "static"
-    },
-    {
-      "key": "#main-content>div.page-header.live-header>div>h1",
+      "key": "#main-content>div.page-header>h1",
       "tag": "h1",
       "rect": {
         "x": 438,
-        "y": 18,
-        "w": 564,
+        "y": 143,
+        "w": 115,
         "h": 28
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 22.5,
       "line_height": 28.1,
       "display": "block",
       "position": "static"
     },
     {
-      "key": "#main-content>div.page-header.live-header>nav.live-sort.feed-tabs",
-      "tag": "nav",
-      "rect": {
-        "x": 438,
-        "y": 104,
-        "w": 314,
-        "h": 49
-      },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "flex",
-      "position": "static"
-    },
-    {
-      "key": "#main-content>div.page-header.live-header>nav.live-sort.feed-tabs>a.feed-tab",
+      "key": "#main-content>div.section-divider--24>p.dim>a",
       "tag": "a",
       "rect": {
-        "x": 524,
-        "y": 104,
-        "w": 75,
-        "h": 49
+        "x": 649,
+        "y": 369,
+        "w": 53,
+        "h": 19
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "flex",
-      "position": "static"
-    },
-    {
-      "key": "#main-content>p.live-crosslinks.dim>a",
-      "tag": "a",
-      "rect": {
-        "x": 420,
-        "y": 190,
-        "w": 97,
-        "h": 17
-      },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 15.8,
       "line_height": 20,
       "display": "inline",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.section-divider--24>p.nearby-locate-actions>a.btn.btn-sm",
+      "tag": "a",
+      "rect": {
+        "x": 577,
+        "y": 325,
+        "w": 126,
+        "h": 44
+      },
+      "color": "#17161c",
+      "bg": "#f2f2f2",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.section-divider--24>p.nearby-locate-actions>button.btn.btn-primary.btn-sm",
+      "tag": "button",
+      "rect": {
+        "x": 438,
+        "y": 325,
+        "w": 130,
+        "h": 44
+      },
+      "color": "#000000",
+      "bg": "#e0e0e0",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>p.channel-crosslink.dim>a",
+      "tag": "a",
+      "rect": {
+        "x": 549,
+        "y": 211,
+        "w": 214,
+        "h": 19
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "inline",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>p.flash-alert",
+      "tag": "p",
+      "rect": {
+        "x": 438,
+        "y": 76,
+        "w": 564,
+        "h": 49
+      },
+      "color": "#969696",
+      "bg": "#1c0c0a",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 65
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections>div.nav_swiper_group>a.nav_link",
+      "tag": "a",
+      "rect": {
+        "x": 180,
+        "y": 9,
+        "w": 74,
+        "h": 47
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
       "position": "static"
     },
     {
@@ -213,28 +213,12 @@
         "w": 48,
         "h": 44
       },
-      "color": "#5c586e",
-      "bg": "#f7f6fa",
+      "color": "#969696",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "fixed"
-    },
-    {
-      "key": "body>div.theme-root>div.nav_swiper>button.nav_swiper_reveal",
-      "tag": "button",
-      "rect": {
-        "x": 0,
-        "y": 0,
-        "w": 1,
-        "h": 1
-      },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "block",
-      "position": "absolute"
     },
     {
       "key": "body>footer.site-legal>nav>a",
@@ -242,11 +226,11 @@
       "rect": {
         "x": 190,
         "y": 959,
-        "w": 66,
+        "w": 70,
         "h": 20
       },
-      "color": "#5c586e",
-      "bg": "#f7f6fa",
+      "color": "#969696",
+      "bg": "#000000",
       "font_size": 13,
       "line_height": 20,
       "display": "block",
@@ -261,8 +245,8 @@
         "w": 44,
         "h": 48
       },
-      "color": "#000000",
-      "bg": "#f7f6fa",
+      "color": "#ffffff",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -277,60 +261,12 @@
         "w": 44,
         "h": 48
       },
-      "color": "#000000",
-      "bg": "#f7f6fa",
+      "color": "#ffffff",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "fixed"
-    },
-    {
-      "key": "div.app-shell>div.tab-bar-coach>div.tab-bar-coach-actions>button.tab-bar-coach-dismiss",
-      "tag": "button",
-      "rect": {
-        "x": 694,
-        "y": 793,
-        "w": 90,
-        "h": 44
-      },
-      "color": "#1a1824",
-      "bg": "#d9d7de",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "block",
-      "position": "static"
-    },
-    {
-      "key": "div.app-shell>div.tab-bar-coach>div.tab-bar-coach-actions>button.tab-bar-coach-show",
-      "tag": "button",
-      "rect": {
-        "x": 793,
-        "y": 793,
-        "w": 91,
-        "h": 44
-      },
-      "color": "#f7f6fa",
-      "bg": "#5b4fc4",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "block",
-      "position": "static"
-    },
-    {
-      "key": "html>body>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
-      "rect": {
-        "x": 1338,
-        "y": 856,
-        "w": 102,
-        "h": 44
-      },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "flex",
-      "position": "static"
     },
     {
       "key": "html>body>footer.site-legal",
@@ -341,8 +277,8 @@
         "w": 1100,
         "h": 67
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 13,
       "line_height": 20,
       "display": "flex",
@@ -354,11 +290,11 @@
       "rect": {
         "x": 190,
         "y": 959,
-        "w": 243,
+        "w": 257,
         "h": 20
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 13,
       "line_height": 20,
       "display": "flex",
@@ -368,13 +304,13 @@
       "key": "html>body>footer.site-legal>p.dim.affiliate-fine",
       "tag": "p",
       "rect": {
-        "x": 451,
-        "y": 960,
-        "w": 799,
+        "x": 465,
+        "y": 961,
+        "w": 785,
         "h": 18
       },
-      "color": "#5c586e",
-      "bg": "#f7f6fa",
+      "color": "#969696",
+      "bg": "#000000",
       "font_size": 12,
       "line_height": 18,
       "display": "block",
@@ -384,13 +320,13 @@
       "key": "html>body>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
-        "x": 14,
-        "y": 14,
-        "w": 63,
+        "x": 12,
+        "y": 9,
+        "w": 68,
         "h": 44
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 20.3,
       "line_height": 20.3,
       "display": "flex",

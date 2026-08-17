@@ -1,5 +1,5 @@
 {
-  "title": "Steder — Brgen",
+  "title": "Steder — Bergen",
   "viewport": [
     390,
     844
@@ -17,13 +17,13 @@
       "tag": "main",
       "rect": {
         "x": 0,
-        "y": 0,
+        "y": 62,
         "w": 390,
-        "h": 2861
+        "h": 2866
       },
       "color": "#d8d6e0",
       "bg": "#12151c",
-      "font_size": 16,
+      "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "static"
@@ -33,8 +33,8 @@
       "tag": "h1",
       "rect": {
         "x": 16,
-        "y": 80,
-        "w": 66,
+        "y": 142,
+        "w": 68,
         "h": 28
       },
       "color": "#d8d6e0",
@@ -49,13 +49,13 @@
       "tag": "nav",
       "rect": {
         "x": 295,
-        "y": 75,
+        "y": 137,
         "w": 79,
         "h": 44
       },
       "color": "#d8d6e0",
       "bg": "#12151c",
-      "font_size": 16,
+      "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "static"
@@ -65,11 +65,11 @@
       "tag": "a",
       "rect": {
         "x": 295,
-        "y": 75,
+        "y": 137,
         "w": 79,
         "h": 44
       },
-      "color": "#8a879c",
+      "color": "#b6b3c8",
       "bg": "#12151c",
       "font_size": 15.8,
       "line_height": 20,
@@ -81,13 +81,13 @@
       "tag": "form",
       "rect": {
         "x": 1,
-        "y": 151,
+        "y": 213,
         "w": 388,
-        "h": 52
+        "h": 57
       },
       "color": "#d8d6e0",
       "bg": "#cccccc",
-      "font_size": 18,
+      "font_size": 20.3,
       "line_height": 20,
       "display": "block",
       "position": "static"
@@ -97,7 +97,7 @@
       "tag": "h2",
       "rect": {
         "x": 34,
-        "y": 219,
+        "y": 286,
         "w": 322,
         "h": 20
       },
@@ -113,8 +113,8 @@
       "tag": "a",
       "rect": {
         "x": 34,
-        "y": 218,
-        "w": 141,
+        "y": 285,
+        "w": 149,
         "h": 21
       },
       "color": "#d8d6e0",
@@ -129,40 +129,88 @@
       "tag": "input",
       "rect": {
         "x": 1,
-        "y": 151,
+        "y": 213,
         "w": 388,
-        "h": 52
+        "h": 57
       },
       "color": "#aaaaaa",
       "bg": "#cccccc",
-      "font_size": 18,
+      "font_size": 20.3,
       "line_height": 20,
       "display": "inline-block",
       "position": "static"
     },
     {
-      "key": "html>body.vertical-maps>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
+      "key": "body.vertical-maps>footer.site-legal>nav>a",
+      "tag": "a",
       "rect": {
-        "x": 298,
-        "y": 800,
-        "w": 92,
-        "h": 44
+        "x": 20,
+        "y": 903,
+        "w": 70,
+        "h": 20
+      },
+      "color": "#b6b3c8",
+      "bg": "#12151c",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal",
+      "tag": "footer",
+      "rect": {
+        "x": 0,
+        "y": 884,
+        "w": 390,
+        "h": 113
       },
       "color": "#d8d6e0",
-      "bg": "#211f28",
-      "font_size": 14.6,
-      "line_height": 14.6,
+      "bg": "#12151c",
+      "font_size": 13,
+      "line_height": 20,
       "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 20,
+        "y": 903,
+        "w": 257,
+        "h": 20
+      },
+      "color": "#d8d6e0",
+      "bg": "#12151c",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>footer.site-legal>p.dim.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 20,
+        "y": 933,
+        "w": 350,
+        "h": 36
+      },
+      "color": "#b6b3c8",
+      "bg": "#12151c",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
       "position": "static"
     },
     {
       "key": "html>body.vertical-maps>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
-        "x": 14,
-        "y": 14,
-        "w": 65,
+        "x": 12,
+        "y": 9,
+        "w": 69,
         "h": 44
       },
       "color": "#d8d6e0",

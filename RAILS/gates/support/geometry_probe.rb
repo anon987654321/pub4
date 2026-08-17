@@ -218,7 +218,22 @@ module Deploy
         // websocket has attached yet, and because keys are ancestor paths that
         // one class flipped the key of every element on the page — which reads
         // as "everything was removed and re-added" on the next comparison.
-        const VOLATILE_CLASS = /^(ng-|js-|is-|has-|turbo-)|(-|^)(connected|disconnected|loading|loaded|ready|active|open|closed|revealed|hidden|visible|scrolled|pending|selected)$/;
+        //
+        // network-/battery-/power- are the same defect one step worse: those are
+        // toggled on <html> from the *measured* connection, battery and CPU
+        // (network_aware_controller, battery_aware_controller), so they key on
+        // the machine and the moment the probe ran rather than on anything in
+        // the tree. Missing them put html.network-slow into the ancestor path of
+        // every element on every page — 78 of 436 drift lines in one run were
+        // the same element reported as both removed and added. -hidden was
+        // already covered by the suffix group, which is why page-hidden and
+        // chrome-hidden never showed up here.
+        // next/prev/duplicate are carousel position, which moves on its own:
+        // Swiper writes swiper-slide-next onto whichever slide is currently
+        // queued, so one autoplay tick between two runs of the snapshot gate
+        // renamed a slide that nothing in the tree had touched. -active was
+        // already covered by this group, which is why only its siblings showed.
+        const VOLATILE_CLASS = /^(ng-|js-|is-|has-|turbo-|network-|battery-|power-)|(-|^)(connected|disconnected|loading|loaded|ready|active|open|closed|revealed|hidden|visible|scrolled|pending|selected|next|prev|duplicate)$/;
         const classSig = (el) => {
           const cls = (el.getAttribute('class') || '').trim().split(/\\s+/)
             .filter(c => c && !VOLATILE_CLASS.test(c)).slice(0, 3);

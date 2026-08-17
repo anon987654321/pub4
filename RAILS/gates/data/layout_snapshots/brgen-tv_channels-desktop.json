@@ -1,5 +1,5 @@
 {
-  "title": "Channels — Brgen",
+  "title": "Kanaler — Bergen",
   "viewport": [
     1440,
     900
@@ -21,8 +21,8 @@
         "w": 1440,
         "h": 54
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -34,11 +34,11 @@
       "rect": {
         "x": 0,
         "y": 900,
-        "w": 240,
+        "w": 206,
         "h": 54
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -48,13 +48,13 @@
       "key": "#app-tab-bar>button.tab-item.tab-item-button",
       "tag": "button",
       "rect": {
-        "x": 1200,
+        "x": 1234,
         "y": 900,
-        "w": 240,
+        "w": 206,
         "h": 54
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -65,12 +65,12 @@
       "tag": "main",
       "rect": {
         "x": 420,
-        "y": 0,
+        "y": 62,
         "w": 600,
-        "h": 1222
+        "h": 1227
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -81,12 +81,12 @@
       "tag": "h1",
       "rect": {
         "x": 438,
-        "y": 77,
-        "w": 88,
+        "y": 139,
+        "w": 72,
         "h": 25
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 20.3,
       "line_height": 25.3,
       "display": "block",
@@ -97,15 +97,47 @@
       "tag": "form",
       "rect": {
         "x": 421,
-        "y": 143,
+        "y": 205,
         "w": 478,
-        "h": 52
+        "h": 57
       },
-      "color": "#1a1824",
+      "color": "#e0e0e0",
       "bg": "#cccccc",
-      "font_size": 18,
+      "font_size": 20.3,
       "line_height": 20,
       "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 65
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections>div.nav_swiper_group>a.nav_link",
+      "tag": "a",
+      "rect": {
+        "x": 180,
+        "y": 9,
+        "w": 74,
+        "h": 47
+      },
+      "color": "#969696",
+      "bg": "#000000",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
       "position": "static"
     },
     {
@@ -113,13 +145,13 @@
       "tag": "input",
       "rect": {
         "x": 421,
-        "y": 143,
+        "y": 205,
         "w": 478,
-        "h": 52
+        "h": 57
       },
       "color": "#aaaaaa",
       "bg": "#cccccc",
-      "font_size": 18,
+      "font_size": 20.3,
       "line_height": 20,
       "display": "inline-block",
       "position": "static"
@@ -129,12 +161,12 @@
       "tag": "section",
       "rect": {
         "x": 420,
-        "y": 196,
+        "y": 263,
         "w": 600,
         "h": 1008
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -149,28 +181,28 @@
         "w": 48,
         "h": 44
       },
-      "color": "#5c586e",
-      "bg": "#f7f6fa",
+      "color": "#969696",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "fixed"
     },
     {
-      "key": "body.vertical-tv>div.theme-root>div.nav_swiper>button.nav_swiper_reveal",
-      "tag": "button",
+      "key": "body.vertical-tv>footer.site-legal>nav>a",
+      "tag": "a",
       "rect": {
-        "x": 0,
-        "y": 0,
-        "w": 1,
-        "h": 1
+        "x": 190,
+        "y": 959,
+        "w": 70,
+        "h": 20
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
-      "font_size": 18,
+      "color": "#969696",
+      "bg": "#000000",
+      "font_size": 13,
       "line_height": 20,
       "display": "block",
-      "position": "absolute"
+      "position": "static"
     },
     {
       "key": "div.app-shell>div.layout>div.sidebar-swiper>button.edge-grip.edge-grip-left",
@@ -181,8 +213,8 @@
         "w": 44,
         "h": 48
       },
-      "color": "#000000",
-      "bg": "#f7f6fa",
+      "color": "#ffffff",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -197,40 +229,72 @@
         "w": 44,
         "h": 48
       },
-      "color": "#000000",
-      "bg": "#f7f6fa",
+      "color": "#ffffff",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "fixed"
     },
     {
-      "key": "html>body.vertical-tv>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
+      "key": "html>body.vertical-tv>footer.site-legal",
+      "tag": "footer",
       "rect": {
-        "x": 1348,
-        "y": 856,
-        "w": 92,
-        "h": 44
+        "x": 170,
+        "y": 940,
+        "w": 1100,
+        "h": 67
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
-      "font_size": 14.6,
-      "line_height": 14.6,
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 13,
+      "line_height": 20,
       "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-tv>footer.site-legal>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 190,
+        "y": 959,
+        "w": 257,
+        "h": 20
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-tv>footer.site-legal>p.dim.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 465,
+        "y": 961,
+        "w": 785,
+        "h": 18
+      },
+      "color": "#969696",
+      "bg": "#000000",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
       "position": "static"
     },
     {
       "key": "html>body.vertical-tv>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
-        "x": 14,
-        "y": 14,
-        "w": 63,
+        "x": 12,
+        "y": 9,
+        "w": 68,
         "h": 44
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 20.3,
       "line_height": 20.3,
       "display": "flex",

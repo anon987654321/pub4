@@ -1,5 +1,5 @@
 {
-  "title": "Bergen — Brgen",
+  "title": "Bergen — Bergen",
   "viewport": [
     1440,
     900
@@ -21,8 +21,8 @@
         "w": 1440,
         "h": 54
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -34,11 +34,11 @@
       "rect": {
         "x": 0,
         "y": 900,
-        "w": 240,
+        "w": 206,
         "h": 54
       },
-      "color": "#5b4fc4",
-      "bg": "#e8e7ec",
+      "color": "#f2f2f2",
+      "bg": "#202020",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -48,13 +48,13 @@
       "key": "#app-tab-bar>button.tab-item.tab-item-button",
       "tag": "button",
       "rect": {
-        "x": 1200,
+        "x": 1234,
         "y": 900,
-        "w": 240,
+        "w": 206,
         "h": 54
       },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -65,12 +65,28 @@
       "tag": "main",
       "rect": {
         "x": 420,
-        "y": 0,
+        "y": 62,
         "w": 600,
-        "h": 5629
+        "h": 6241
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>aside.city-today.sidebar-card",
+      "tag": "aside",
+      "rect": {
+        "x": 420,
+        "y": 139,
+        "w": 600,
+        "h": 56
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -81,12 +97,12 @@
       "tag": "button",
       "rect": {
         "x": 438,
-        "y": 14,
+        "y": 76,
         "w": 564,
         "h": 50
       },
-      "color": "#5c586e",
-      "bg": "#eeedf3",
+      "color": "#969696",
+      "bg": "#1a1a1a",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -97,16 +113,64 @@
       "tag": "h1",
       "rect": {
         "x": 420,
-        "y": 0,
+        "y": 62,
         "w": 36,
         "h": 27
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 22.5,
       "line_height": 20,
       "display": "block",
       "position": "absolute"
+    },
+    {
+      "key": "#nav_sections",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 65
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections>div.nav_swiper_group>a.nav_link",
+      "tag": "a",
+      "rect": {
+        "x": 180,
+        "y": 9,
+        "w": 74,
+        "h": 47
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "aside.city-today.sidebar-card>details>summary>h2",
+      "tag": "h2",
+      "rect": {
+        "x": 457,
+        "y": 156,
+        "w": 167,
+        "h": 21
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "inline",
+      "position": "static"
     },
     {
       "key": "body>div.theme-root>div.app-shell>button.tab-bar-peel",
@@ -117,28 +181,12 @@
         "w": 48,
         "h": 44
       },
-      "color": "#5c586e",
-      "bg": "#f7f6fa",
+      "color": "#969696",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "fixed"
-    },
-    {
-      "key": "body>div.theme-root>div.nav_swiper>button.nav_swiper_reveal",
-      "tag": "button",
-      "rect": {
-        "x": 0,
-        "y": 0,
-        "w": 1,
-        "h": 1
-      },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "block",
-      "position": "absolute"
     },
     {
       "key": "body>footer.site-legal>nav>a",
@@ -146,12 +194,28 @@
       "rect": {
         "x": 190,
         "y": 959,
-        "w": 66,
+        "w": 70,
         "h": 20
       },
-      "color": "#5c586e",
-      "bg": "#f7f6fa",
+      "color": "#969696",
+      "bg": "#000000",
       "font_size": 13,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "details>ul.city-today-list>li>a",
+      "tag": "a",
+      "rect": {
+        "x": 438,
+        "y": 191,
+        "w": 94,
+        "h": 20
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
+      "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "static"
@@ -165,8 +229,8 @@
         "w": 44,
         "h": 48
       },
-      "color": "#000000",
-      "bg": "#f7f6fa",
+      "color": "#ffffff",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -181,28 +245,12 @@
         "w": 44,
         "h": 48
       },
-      "color": "#000000",
-      "bg": "#f7f6fa",
+      "color": "#ffffff",
+      "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
       "position": "fixed"
-    },
-    {
-      "key": "html>body>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
-      "rect": {
-        "x": 1338,
-        "y": 856,
-        "w": 102,
-        "h": 44
-      },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
-      "font_size": 14.6,
-      "line_height": 14.6,
-      "display": "flex",
-      "position": "static"
     },
     {
       "key": "html>body>footer.site-legal",
@@ -213,8 +261,8 @@
         "w": 1100,
         "h": 67
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 13,
       "line_height": 20,
       "display": "flex",
@@ -226,11 +274,11 @@
       "rect": {
         "x": 190,
         "y": 959,
-        "w": 243,
+        "w": 257,
         "h": 20
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 13,
       "line_height": 20,
       "display": "flex",
@@ -240,13 +288,13 @@
       "key": "html>body>footer.site-legal>p.dim.affiliate-fine",
       "tag": "p",
       "rect": {
-        "x": 451,
-        "y": 960,
-        "w": 799,
+        "x": 465,
+        "y": 961,
+        "w": 785,
         "h": 18
       },
-      "color": "#5c586e",
-      "bg": "#f7f6fa",
+      "color": "#969696",
+      "bg": "#000000",
       "font_size": 12,
       "line_height": 18,
       "display": "block",
@@ -256,13 +304,13 @@
       "key": "html>body>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
-        "x": 14,
-        "y": 14,
-        "w": 63,
+        "x": 12,
+        "y": 9,
+        "w": 68,
         "h": 44
       },
-      "color": "#1a1824",
-      "bg": "#f7f6fa",
+      "color": "#e0e0e0",
+      "bg": "#000000",
       "font_size": 20.3,
       "line_height": 20.3,
       "display": "flex",

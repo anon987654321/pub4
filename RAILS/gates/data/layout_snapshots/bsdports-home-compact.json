@@ -17,9 +17,9 @@
       "tag": "main",
       "rect": {
         "x": 132,
-        "y": 58,
+        "y": 64,
         "w": 760,
-        "h": 2436
+        "h": 2449
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
@@ -33,9 +33,9 @@
       "tag": "header",
       "rect": {
         "x": 156,
-        "y": 112,
+        "y": 118,
         "w": 712,
-        "h": 2272
+        "h": 2265
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
@@ -49,14 +49,14 @@
       "tag": "h1",
       "rect": {
         "x": 156,
-        "y": 112,
+        "y": 118,
         "w": 712,
-        "h": 45
+        "h": 26
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
-      "font_size": 30,
-      "line_height": 45,
+      "font_size": 21,
+      "line_height": 26.3,
       "display": "block",
       "position": "static"
     },
@@ -65,7 +65,7 @@
       "tag": "nav",
       "rect": {
         "x": 156,
-        "y": 276,
+        "y": 275,
         "w": 712,
         "h": 44
       },
@@ -81,13 +81,13 @@
       "tag": "a",
       "rect": {
         "x": 156,
-        "y": 276,
-        "w": 156,
+        "y": 275,
+        "w": 166,
         "h": 44
       },
       "color": "#5c586e",
       "bg": "#f7f6fa",
-      "font_size": 11.3,
+      "font_size": 12,
       "line_height": 12,
       "display": "flex",
       "position": "static"
@@ -97,14 +97,14 @@
       "tag": "h2",
       "rect": {
         "x": 156,
-        "y": 2414,
+        "y": 2425,
         "w": 712,
-        "h": 12
+        "h": 19
       },
       "color": "#5c586e",
       "bg": "#f7f6fa",
-      "font_size": 10.5,
-      "line_height": 12,
+      "font_size": 15,
+      "line_height": 18.8,
       "display": "block",
       "position": "static"
     },
@@ -113,7 +113,7 @@
       "tag": "a",
       "rect": {
         "x": 156,
-        "y": 415,
+        "y": 414,
         "w": 16,
         "h": 12
       },
@@ -129,7 +129,7 @@
       "tag": "a",
       "rect": {
         "x": 156,
-        "y": 437,
+        "y": 436,
         "w": 59,
         "h": 9
       },
@@ -145,15 +145,31 @@
       "tag": "input",
       "rect": {
         "x": 157,
-        "y": 333,
+        "y": 332,
         "w": 710,
         "h": 48
       },
       "color": "#1a1824",
       "bg": "#e8e6ef",
-      "font_size": 18,
+      "font_size": 12,
       "line_height": 12,
       "display": "inline-block",
+      "position": "static"
+    },
+    {
+      "key": "body.wscons>div.app-shell>footer.site-legal>p.dim.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 20,
+        "y": 2572,
+        "w": 984,
+        "h": 18
+      },
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
       "position": "static"
     },
     {
@@ -162,12 +178,12 @@
       "rect": {
         "x": 63,
         "y": 6,
-        "w": 41,
+        "w": 43,
         "h": 44
       },
       "color": "#5c586e",
       "bg": "#f7f6fa",
-      "font_size": 11.3,
+      "font_size": 12,
       "line_height": 12,
       "display": "flex",
       "position": "static"
@@ -176,14 +192,14 @@
       "key": "div.app-shell>nav>div.nav-actions>a.btn-ghost",
       "tag": "a",
       "rect": {
-        "x": 282,
+        "x": 294,
         "y": 6,
-        "w": 54,
+        "w": 58,
         "h": 44
       },
       "color": "#1a1824",
       "bg": "#f7f6fa",
-      "font_size": 11.3,
+      "font_size": 12,
       "line_height": 12,
       "display": "flex",
       "position": "static"
@@ -193,15 +209,31 @@
       "tag": "form",
       "rect": {
         "x": 157,
-        "y": 333,
+        "y": 332,
         "w": 710,
         "h": 48
       },
       "color": "#1a1824",
-      "bg": "#0f1a0f",
-      "font_size": 18,
+      "bg": "#e8e6ef",
+      "font_size": 13.5,
       "line_height": 12,
       "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.wscons>div.app-shell>footer.site-legal",
+      "tag": "footer",
+      "rect": {
+        "x": 0,
+        "y": 2553,
+        "w": 1024,
+        "h": 65
+      },
+      "color": "#5c586e",
+      "bg": "#f7f6fa",
+      "font_size": 13,
+      "line_height": 12,
+      "display": "flex",
       "position": "static"
     },
     {
@@ -221,27 +253,11 @@
       "position": "fixed"
     },
     {
-      "key": "html>body.wscons>div.nearby-chat-widget>button.nearby-chat-widget-tab",
-      "tag": "button",
-      "rect": {
-        "x": 955,
-        "y": 680,
-        "w": 69,
-        "h": 44
-      },
-      "color": "#1a1824",
-      "bg": "#eeedf3",
-      "font_size": 9.8,
-      "line_height": 9.8,
-      "display": "flex",
-      "position": "static"
-    },
-    {
       "key": "html>body.wscons>header>a.brand-mark",
       "tag": "a",
       "rect": {
-        "x": 9,
-        "y": 9,
+        "x": 12,
+        "y": 6,
         "w": 70,
         "h": 44
       },
@@ -257,7 +273,7 @@
       "tag": "a",
       "rect": {
         "x": 156,
-        "y": 2431,
+        "y": 2450,
         "w": 84,
         "h": 18
       },
