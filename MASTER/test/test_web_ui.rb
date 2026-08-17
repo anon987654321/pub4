@@ -286,8 +286,13 @@ class TestWebUI < Minitest::Test
     assert_includes chat, "_chatOnCompaction"
     assert_includes chat, "_chatOnCtxFooter"
     assert_includes chat, "_chatOnPhantom"
-    assert_includes chat, "/btw research"
-    assert_includes chat, "/rebuild"
+    # /btw research and /rebuild were retired by 7c23a5ee5, which cut the slash
+    # surface to a sentence and eight verbs: work is plain language or /through.
+    # Asserting a command the surface deliberately dropped tests the old design.
+    # What still matters is that the eight it kept are reachable.
+    %w[/through /status /undo /commit /model /pair /doctor /help].each do |verb|
+      assert_includes chat, verb, "the slash surface lost #{verb}"
+    end
     assert_includes File.read(File.expand_path("../web/public/visual_bridge.js", __dir__)), "phantom:detected"
     assert_includes actions, "addEventListener('compaction'"
     assert_includes actions, "startsWith('!')"

@@ -534,6 +534,28 @@ body[data-mode="speaking"] #mic-dot {
 
 #primer:focus-visible { outline: 1px solid var(--face-fg); outline-offset: -8px; }
 
+/* The voice offer. One layer above #primer so its own tap is not swallowed by
+   the full-viewport button underneath, and placed low enough that the thumb
+   resting position for "just start" is still the primer itself. */
+.primer-voice {
+  position: fixed;
+  inset-block-end: calc(18vh + var(--safe-bottom));
+  inset-inline: 0;
+  margin-inline: auto;
+  width: fit-content;
+  z-index: calc(var(--z-modal) + 1);
+  min-height: var(--tap-min);
+  padding: 0 1rem;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--face-muted);
+  font: 400 0.875rem/1 var(--font-brand);
+  cursor: pointer;
+}
+.primer-voice:hover { color: var(--face-fg); border-color: var(--border-strong); }
+.primer-voice:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 2px; }
+body.face-ready .primer-voice { display: none; }
+
 [id="face"]:focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
 
 #primer h1 {

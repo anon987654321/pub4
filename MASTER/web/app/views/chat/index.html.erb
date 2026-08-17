@@ -131,6 +131,18 @@
     <p class="tagline" id="primer-capabilities"><%= t("face.primer_capabilities") %></p>
     <p class="primer-consent" id="primer-consent"><%= t("face.primer_consent") %></p>
   </div>
+  <%# The mic is off by default and the reason is in face.part5: the tap that
+      starts the face says "show me this", not "listen to me", and a permission
+      prompt nobody asked for gets denied — which the browser then remembers for
+      the origin, costing the feature permanently for that visitor.
+
+      So it is offered instead of assumed. This is a sibling of #primer rather
+      than a child because #primer is itself role="button" covering the viewport,
+      and a control inside a control is a nested interactive. It sits one layer
+      above so the tap lands here when aimed here, and on the primer otherwise. %>
+  <button type="button" id="primer-voice" class="primer-voice">
+    <%= t("face.primer_start_with_voice", default: "Start with voice") %>
+  </button>
   <%# Boot + primer tap must run synchronously right after #primer — before ANY other
       script (including face_2d_fallback). A blocking <script src> above this line delays
       handler wiring; early taps look dead. #zsh and #ui-status are below this block —
@@ -269,6 +281,17 @@
       }
       window.__MASTER_PRIMER_GO__=go;
       window.__MASTER_PRIMER_TAP__=go;
+// The voice offer starts the same way, and additionally records the
+// consent that maybeAutoVoice() looks for on every later load. Setting
+// the flag BEFORE go() matters: the face reads it during boot.
+var pv=document.getElementById('primer-voice');
+if(pv){
+  pv.addEventListener('click',function(e){
+    e.stopPropagation();
+    try{localStorage.setItem('master:voice-auto','1');}catch(_e){}
+    go();
+  });
+}
       if(p){
         ['pointerdown','click','touchend'].forEach(function(ev){
           p.addEventListener(ev,go,{capture:true,passive:true});

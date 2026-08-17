@@ -1200,7 +1200,15 @@ if (_hasWebGL && THREE) {
     // Normal (not additive) blending on the main point layer so individual
     // pixels stay crisp and discrete instead of bleeding into neighbors —
     // the glow layer below still uses additive blending for its soft halo.
-    transparent: true, depthWrite: false, blending: THREE.NormalBlending
+    // No `blending:` here, deliberately. THREE.NormalBlending is not one of the
+    // symbols script/three_face_entry.js re-exports, so naming it set this
+    // material's blending to `undefined` rather than to normal alpha blending.
+    // A THREE.Points sprite carries no map, so its quad is a square: without
+    // alpha blending the layer draws those squares instead of points, which is
+    // the large translucent squares over the face. The material default already
+    // IS normal blending — the same gap the phosphor quad above sidesteps by
+    // saying nothing, after it turned the whole screen white.
+    transparent: true, depthWrite: false
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
 
