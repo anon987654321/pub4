@@ -52,6 +52,22 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # wrapper waits for the load to fall rather than skipping the night.
 20 4 * * * /usr/local/bin/prune-guests.sh >> /var/log/prune-guests.log 2>&1
 
+# core-reclaim — give brgen's grown resident set back to the box.
+#
+# resource_guard sheds OPTIONAL apps and never touches CORE="master brgen", so
+# nothing ever returned brgen's growth. Measured 2026-08-17: it boots at 225M,
+# had reached 355M, and one restart took swap from 1142M/1264M (91%) to 812M
+# (64%). The box had been paging continuously at rest, and a page-in is what a
+# visitor feels — amber's home was 12.19s to first byte cold against 0.40s warm.
+40 * * * * /usr/local/bin/core-reclaim.sh >> /var/log/core-reclaim.log 2>&1
+
+# keep-warm — so a visitor is never the one paying for the page-in.
+#
+# One loopback render of brgen and amber every ten minutes keeps their working
+# sets resident. Deliberately not bsdports or master: those are resource_guard's
+# to shed, and warming what another job exists to shed is how two jobs fight.
+*/10 * * * * /usr/local/bin/keep-warm.sh >> /var/log/keep-warm.log 2>&1
+
 # drain-jobs — run the background queue for a few minutes each hour.
 #
 # No Solid Queue worker runs here: it needs its own process under Falcon, and
