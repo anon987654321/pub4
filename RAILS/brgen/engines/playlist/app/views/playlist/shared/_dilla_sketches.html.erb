@@ -6,7 +6,7 @@
 <% sketches = local_assigns[:sketches] || [] %>
 <% can_manage = local_assigns.fetch(:can_manage, false) %>
 <% rich_form = local_assigns.fetch(:rich_form, false) %>
-<section role="region" aria-label="Dilla sketches">
+<section role="region" aria-label="<%= t("aria.dilla_sketches") %>">
   <h2>Dilla sketches / beats</h2>
   <p class="dim">
     Collaborative beat patterns. Lab:

@@ -1,278 +1,282 @@
-# Mirrors nb.yml. A key present in one file and absent from the other is a
-# finding — see RAILS/test/nb_locale_completeness_test.rb.
+---
 en:
   errors:
     messages:
-      last_owner: "cannot be removed — the community would have no owner"
-      before_start: "cannot be before the start"
-    not_found_title: "Page not found"
-    not_found_body: "That address does not match a page. Try home, Live, or the marketplace."
-    unprocessable_title: "Could not process that"
-    unprocessable_body: "Something in the request was invalid. Go back and try again."
-    server_title: "Something went wrong"
-    server_body: "We hit an unexpected error. Try again in a moment."
-    go_home: "Home"
-    go_live: "Live"
-    go_marketplace: "Marketplace"
-    go_search: "Search"
-    retry: "Try again"
+      last_owner: cannot be removed — the community would have no owner
+      before_start: cannot be before the start
+    not_found_title: Page not found
+    not_found_body: That address does not match a page. Try home, Live, or the marketplace.
+    unprocessable_title: Could not process that
+    unprocessable_body: Something in the request was invalid. Go back and try again.
+    server_title: Something went wrong
+    server_body: We hit an unexpected error. Try again in a moment.
+    go_home: Home
+    go_live: Live
+    go_marketplace: Marketplace
+    go_search: Search
+    retry: Try again
   time:
     formats:
       event: "%b %-d at %H:%M"
-  hello: "Hello"
+  hello: Hello
   affiliate:
-    deals_title: "Deals"
-    deal_alt: "Affiliate deal"
-    placeholder_notice: "Example listing — not a tracked affiliate link"
-    sponsored: "Sponsored"
-    feed_unit_label: "Sponsored products"
+    deals_title: Deals
+    deal_alt: Affiliate deal
+    placeholder_notice: Example listing — not a tracked affiliate link
+    sponsored: Sponsored
+    feed_unit_label: Sponsored products
     cta:
-      buy: "Buy now!"
-      happy: "Be happy!"
-      good: "Feel good!"
+      buy: Buy now!
+      happy: Be happy!
+      good: Feel good!
   legal:
-    aria: "Legal and information"
-    privacy: "Privacy"
-    terms: "Terms"
-    cookies: "Cookies"
-    site_id_label: "TradeDoubler Site ID"
-    contact_label: "Contact"
+    aria: Legal and information
+    privacy: Privacy
+    terms: Terms
+    cookies: Cookies
+    site_id_label: TradeDoubler Site ID
+    contact_label: Contact
   app:
-    name: "Brgen"
+    name: Brgen
   feed:
-    title: "Local news"
-    compose_prompt: "What are you up to today?"
-    compose_title: "Create post"
-    add_to_post: "Add to your post"
-    posting_as_guest: "Anon"
-    post_action: "Post"
-    guest_hint: "Posting as anon · %{remaining} of %{limit} posts left in this browser"
-    guest_limit_why: "The limit slows spam without asking for an account."
-    advanced_post: "Advanced post with photo"
-    your_feed: "Your feed"
+    title: Local news
+    compose_prompt: What are you up to today?
+    compose_title: Create post
+    add_to_post: Add to your post
+    posting_as_guest: Anon
+    post_action: Post
+    guest_hint: Posting as anon · %{remaining} of %{limit} posts left in this browser
+    guest_limit_why: The limit slows spam without asking for an account.
+    advanced_post: Advanced post with photo
+    your_feed: Your feed
   nav:
-    pagination: "Pagination"
-    trending_tags: "Trending tags"
-    home: "Home"
-    explore: "Explore"
-    notifications: "Notifications"
-    sign_in: "Sign in"
-    sign_out: "Sign out"
-    new_post: "New post"
-    communities: "Communities"
-    hide: "Hide"
+    pagination: Pagination
+    trending_tags: Trending tags
+    home: Home
+    explore: Explore
+    notifications: Notifications
+    sign_in: Sign in
+    sign_out: Sign out
+    new_post: New post
+    communities: Communities
+    hide: Hide
     new_community: "+ New community"
-    messages: "Messages"
-    nearby: "Nearby"
-    events: "What is on"
-    stories: "Stories"
-    profile: "Profile"
-    more: "More"
-    post: "Post"
-    channels: "Channels"
-    ai_assistant: "AI assistant"
-    search: "Search"
-    search_placeholder: "Search Brgen"
-    show_sidebar: "Show sidebar"
-    show_widgets: "Show widgets"
-    show_menu: "Show menu"
-    menu_coach: "Menu is down here — tap the bar or scroll up."
-    menu_coach_dismiss: "Got it"
-    mobile_nav: "Mobile navigation"
-    primary_nav: "Primary navigation"
-    sidebar: "Sidebar"
-    widgets: "Widgets"
-    quick_actions: "Quick actions"
-    brand_home: "Brgen home"
-    main: "Main content"
-    city_network: "City network"
-    oauth_options: "Sign in options"
-    oauth_or_email: "or email"
-    oauth_vipps: "Sign in with Vipps"
-    oauth_google: "Sign in with Google"
-    oauth_snapchat: "Sign in with Snapchat"
-    oauth_github: "Sign in with GitHub"
-    takeaway: "takeaway"
-    marketplace: "marketplace"
+    messages: Messages
+    nearby: Nearby
+    events: What is on
+    stories: Stories
+    profile: Profile
+    more: More
+    post: Post
+    channels: Channels
+    ai_assistant: AI assistant
+    search: Search
+    search_placeholder: Search Brgen
+    show_sidebar: Show sidebar
+    show_widgets: Show widgets
+    show_menu: Show menu
+    menu_coach: Menu is down here — tap the bar or scroll up.
+    menu_coach_dismiss: Got it
+    mobile_nav: Mobile navigation
+    primary_nav: Primary navigation
+    sidebar: Sidebar
+    widgets: Widgets
+    quick_actions: Quick actions
+    brand_home: Brgen home
+    main: Main content
+    city_network: City network
+    oauth_options: Sign in options
+    oauth_or_email: or email
+    oauth_vipps: Sign in with Vipps
+    oauth_google: Sign in with Google
+    oauth_snapchat: Sign in with Snapchat
+    oauth_github: Sign in with GitHub
+    takeaway: takeaway
+    marketplace: marketplace
     opens_new_tab: "%{label} (opens in a new tab)"
-  skip_to_content: "Skip to main content"
+  skip_to_content: Skip to main content
   home:
-    feed_communities: "Communities"
-    feed_following: "Following"
-    feed_hot: "Hot"
-    feed_sort: "Feed"
+    feed_communities: Communities
+    feed_following: Following
+    feed_hot: Hot
+    feed_sort: Feed
     intro_title: "%{city}, right now"
-    live: "Live"
-    marketplace: "Marketplace"
-    messages: "Messages"
+    live: Live
+    marketplace: Marketplace
+    messages: Messages
     no_signup: " — no signup required"
-    ask_ai: "Ask Brgen AI"
-    follow_sign_in: "Sign in"
+    ask_ai: Ask Brgen AI
+    follow_sign_in: Sign in
     follow_hint: " to see posts from people you follow."
-    local_posts: "Local posts"
-    today_empty: "Nothing new across the city yet."
+    local_posts: Local posts
+    today_empty: Nothing new across the city yet.
   auth:
-    sign_in: "Sign in"
-    sign_in_lead: "You can browse and post without an account. Sign in to keep your posts and lift the guest limit."
-    email: "Email"
-    password: "Password"
-    create_account: "Create account"
-    forgot_password: "Forgot password?"
-    create_lead: "You can read and post without one. An account lifts the anonymous limit and keeps what you have already written."
-    username_optional: "Username (optional)"
-    confirm_password: "Confirm password"
-    already_have_account: "Already have an account? Sign in"
-    forgot_title: "Forgot your password?"
-    forgot_lead: "We will email a link to set a new password."
-    email_reset: "Email reset instructions"
-    back_to_sign_in: "Back to sign in"
-    update_password: "Update your password"
-    update_password_lead: "Choose a new password for your account."
-    new_password: "New password"
-    save_password: "Save password"
+    sign_in: Sign in
+    sign_in_lead: You can browse and post without an account. Sign in to keep your
+      posts and lift the guest limit.
+    email: Email
+    password: Password
+    create_account: Create account
+    forgot_password: Forgot password?
+    create_lead: You can read and post without one. An account lifts the anonymous
+      limit and keeps what you have already written.
+    username_optional: Username (optional)
+    confirm_password: Confirm password
+    already_have_account: Already have an account? Sign in
+    forgot_title: Forgot your password?
+    forgot_lead: We will email a link to set a new password.
+    email_reset: Email reset instructions
+    back_to_sign_in: Back to sign in
+    update_password: Update your password
+    update_password_lead: Choose a new password for your account.
+    new_password: New password
+    save_password: Save password
   chat:
-    roster: "In this channel"
-    title: "chat"
-    nearby_tab: "nearby"
-    close: "Close"
-    loading: "Loading the room…"
-    lobby_title: "City lobby"
-    lobby_body: "Anonymous chat without GPS. Share location anytime for the hyperlocal room."
-    nearby_title: "You’re in the nearby room"
-    nearby_body: "No messages yet within ~10 km. Say hi — no signup."
-    use_location: "Use location"
-    refresh_location: "Refresh location"
-    city_lobby: "city lobby"
-    sign_in_inbox: "Sign in for this app’s inbox, or chat anonymously on Brgen."
-    open_brgen: "Open Brgen chat"
-    open_brgen_channel: "Open #brgen"
-    open_inbox: "Open your inbox to read and send messages on this app."
-    open_messages: "Open messages"
-    on_brgen: "Chat on Brgen"
-    recovery_body: "Could not open the corner room. Use the city lobby instead — no signup."
-    placeholder: "Message as %{handle}…"
-    channel_placeholder: "Message %{name} as %{handle}…"
-    dm_placeholder: "Send a message…"
-    message_label: "Message"
-    log_label: "Messages"
-    anon: "anon"
-    posting_as: "Posting as"
-    no_signup: "no signup"
-    anyone_join: "Anyone can join — no signup."
-    join_room: "Join room"
-    status_asking: "Asking for location…"
-    status_denied: "Location blocked — staying in #brgen. Enable location in the browser for #nearby."
-    status_timeout: "Location timed out — staying in #brgen."
-    status_unavailable: "Location unavailable — staying in #brgen."
-    status_blocked: "This page cannot read location — #brgen still works."
-    status_server: "Could not save location — try again."
-    status_network: "Network error saving location — try again."
+    roster: In this channel
+    title: chat
+    nearby_tab: nearby
+    close: Close
+    loading: Loading the room…
+    lobby_title: City lobby
+    lobby_body: Anonymous chat without GPS. Share location anytime for the hyperlocal
+      room.
+    nearby_title: You’re in the nearby room
+    nearby_body: No messages yet within ~10 km. Say hi — no signup.
+    use_location: Use location
+    refresh_location: Refresh location
+    city_lobby: city lobby
+    sign_in_inbox: Sign in for this app’s inbox, or chat anonymously on Brgen.
+    open_brgen: Open Brgen chat
+    open_brgen_channel: 'Open #brgen'
+    open_inbox: Open your inbox to read and send messages on this app.
+    open_messages: Open messages
+    on_brgen: Chat on Brgen
+    recovery_body: Could not open the corner room. Use the city lobby instead — no
+      signup.
+    placeholder: Message as %{handle}…
+    channel_placeholder: Message %{name} as %{handle}…
+    dm_placeholder: Send a message…
+    message_label: Message
+    log_label: Messages
+    anon: anon
+    posting_as: Posting as
+    no_signup: no signup
+    anyone_join: Anyone can join — no signup.
+    join_room: Join room
+    status_asking: Asking for location…
+    status_denied: 'Location blocked — staying in #brgen. Enable location in the browser
+      for #nearby.'
+    status_timeout: 'Location timed out — staying in #brgen.'
+    status_unavailable: 'Location unavailable — staying in #brgen.'
+    status_blocked: 'This page cannot read location — #brgen still works.'
+    status_server: Could not save location — try again.
+    status_network: Network error saving location — try again.
   notifications:
-    title: "Notifications"
-    mark_all: "Mark all read"
-    empty_title: "No notifications yet"
-    empty_body: "Offers, orders, and local updates will appear here."
-    inbox_kicker: "Brgen inbox"
-    open: "Open"
-    mark_as_read: "Mark notification as read"
-    aria: "Notification"
+    title: Notifications
+    mark_all: Mark all read
+    empty_title: No notifications yet
+    empty_body: Offers, orders, and local updates will appear here.
+    inbox_kicker: Brgen inbox
+    open: Open
+    mark_as_read: Mark notification as read
+    aria: Notification
     unread_count:
       one: "%{count} unread"
       other: "%{count} unread"
   tv:
     feed:
-      title: "Feed"
-      sound_on: "Sound"
-      empty_title: "No videos yet"
-      empty_body: "When someone uploads something it shows up here."
-      empty_action: "Browse channels"
+      title: Feed
+      sound_on: Sound
+      empty_title: No videos yet
+      empty_body: When someone uploads something it shows up here.
+      empty_action: Browse channels
       views:
         one: "%{count} view"
         other: "%{count} views"
     live_streams:
-      chat: "Chat"
-      new: "New live stream"
-      title: "Live streams"
+      chat: Chat
+      new: New live stream
+      title: Live streams
       viewers: "%{count} viewers"
-    create_channel: "Create channel"
-    upload: "Upload"
-    note_placeholder: "Timestamped note…"
-    save_note: "Save note"
-    comment_placeholder: "Write something…"
-    post_comment: "Post comment"
-    subscribe: "Subscribe"
-    unsubscribe: "Unsubscribe"
-    live_badge: "Live"
-    live_now: "Live now"
-    live_streams_label: "Live streams now"
-    channel_subtitle: "Brgen TV channel"
-    edit_channel: "Edit channel"
-    new_channel: "New channel"
-    upload_video: "Upload video"
-    shows_on: "Shows on %{channel}"
-    uploading_to_html: "Uploading to %{channel}"
-    no_description: "This channel has not added a description yet."
-    home_blurb: "Local channels, shows, and live stages — watch without an account."
-    home_title: "TV"
-    channels_title: "Channels"
-    shows_title: "Shows"
-    thumbnail_hint: "postpro.rb grades thumbnails — blockbuster for Odyssey-style cinematic."
+    create_channel: Create channel
+    upload: Upload
+    note_placeholder: Timestamped note…
+    save_note: Save note
+    comment_placeholder: Write something…
+    post_comment: Post comment
+    subscribe: Subscribe
+    unsubscribe: Unsubscribe
+    live_badge: Live
+    live_now: Live now
+    live_streams_label: Live streams now
+    channel_subtitle: Brgen TV channel
+    edit_channel: Edit channel
+    new_channel: New channel
+    upload_video: Upload video
+    shows_on: Shows on %{channel}
+    uploading_to_html: Uploading to %{channel}
+    no_description: This channel has not added a description yet.
+    home_blurb: Local channels, shows, and live stages — watch without an account.
+    home_title: TV
+    channels_title: Channels
+    shows_title: Shows
+    thumbnail_hint: postpro.rb grades thumbnails — blockbuster for Odyssey-style cinematic.
     episode_count:
       one: "%{count} episode"
       other: "%{count} episodes"
-    episodes: "Episodes"
-    episode_line: "Episode %{number}: %{title}"
-    back_to_channel: "Back to channel"
+    episodes: Episodes
+    episode_line: 'Episode %{number}: %{title}'
+    back_to_channel: Back to channel
   stories:
-    title: "Stories"
-    new: "New story"
-    post: "Post"
-    media: "Photo or clip"
-    caption: "Caption"
-    add_area: "Tag roughly where I am"
-    area_hint: "Coarsened to about a kilometre."
-    lifetime_notice: "Stories delete themselves after 24 hours."
-    expires_in: "gone in %{time}"
-    by: "Story by %{user}"
-    open_ring: "Open the story from %{user}"
-    more_from: "More from %{user}"
-    seen_by: "Seen by"
-    confirm_delete: "Delete this story?"
-    empty_title: "No stories right now"
-    empty_body: "They disappear after 24 hours, so this is only what is fresh."
+    title: Stories
+    new: New story
+    post: Post
+    media: Photo or clip
+    caption: Caption
+    add_area: Tag roughly where I am
+    area_hint: Coarsened to about a kilometre.
+    lifetime_notice: Stories delete themselves after 24 hours.
+    expires_in: gone in %{time}
+    by: Story by %{user}
+    open_ring: Open the story from %{user}
+    more_from: More from %{user}
+    seen_by: Seen by
+    confirm_delete: Delete this story?
+    empty_title: No stories right now
+    empty_body: They disappear after 24 hours, so this is only what is fresh.
     seen_count:
       one: "%{count} has seen it"
       other: "%{count} have seen it"
   events:
-    title: "What is on"
-    new: "New event"
-    edit: "Edit event"
-    upcoming: "Upcoming"
-    past: "Past"
-    where: "Where"
-    about: "About"
-    nearby: "Nearby"
-    who_is_going: "Who is going"
-    nobody_yet: "Nobody has answered yet."
-    free: "Free"
-    tickets: "Tickets"
-    on_the_map: "Show on the map"
-    happening_now: "Happening now"
-    cancelled: "Cancelled"
-    cancel_event: "Cancel event"
-    confirm_cancel: "Cancel this event? Everyone who answered is told."
+    title: What is on
+    new: New event
+    edit: Edit event
+    upcoming: Upcoming
+    past: Past
+    where: Where
+    about: About
+    nearby: Nearby
+    who_is_going: Who is going
+    nobody_yet: Nobody has answered yet.
+    free: Free
+    tickets: Tickets
+    on_the_map: Show on the map
+    happening_now: Happening now
+    cancelled: Cancelled
+    cancel_event: Cancel event
+    confirm_cancel: Cancel this event? Everyone who answered is told.
     cancelled_notification: "%{title} is cancelled"
-    cancelled_body: "The organiser has cancelled this event."
-    full_body: "Full — you can still mark yourself interested."
-    organiser_actions: "Organiser actions"
-    rsvp: "Answer"
-    rsvp_going: "Going"
-    rsvp_interested: "Interested"
-    rsvp_not_going: "Cannot make it"
-    sign_in_to_rsvp: "to answer."
-    empty_title: "Nothing on yet"
-    empty_body: "The first event in the city could be yours."
-    empty_search: "No events matched that search."
+    cancelled_body: The organiser has cancelled this event.
+    full_body: Full — you can still mark yourself interested.
+    organiser_actions: Organiser actions
+    rsvp: Answer
+    rsvp_going: Going
+    rsvp_interested: Interested
+    rsvp_not_going: Cannot make it
+    sign_in_to_rsvp: to answer.
+    empty_title: Nothing on yet
+    empty_body: The first event in the city could be yours.
+    empty_search: No events matched that search.
     going_count:
       one: "%{count} going"
       other: "%{count} going"
@@ -283,99 +287,101 @@ en:
       one: "%{count} place left"
       other: "%{count} places left"
     your_answer:
-      going: "You are going"
-      interested: "You are interested"
-      not_going: "You cannot make it"
+      going: You are going
+      interested: You are interested
+      not_going: You cannot make it
     form:
-      title: "Title"
-      starts_at: "Starts"
-      ends_at: "Ends (optional)"
-      place: "Place from the map"
-      no_place: "Not a listed place"
-      venue_name: "Venue name"
-      address: "Address"
-      description: "Description"
-      capacity: "Places"
-      capacity_hint: "Leave blank for unlimited."
-      price: "Price (minor units)"
-      price_hint: "Leave blank or 0 for free."
-      external_url: "Ticket link"
-      cover: "Cover image"
-      submit: "Save event"
+      title: Title
+      starts_at: Starts
+      ends_at: Ends (optional)
+      place: Place from the map
+      no_place: Not a listed place
+      venue_name: Venue name
+      address: Address
+      description: Description
+      capacity: Places
+      capacity_hint: Leave blank for unlimited.
+      price: Price (minor units)
+      price_hint: Leave blank or 0 for free.
+      external_url: Ticket link
+      cover: Cover image
+      submit: Save event
   search:
-    title: "Search Brgen"
-    placeholder: "Search posts, listings, TV, playlists…"
-    label: "Search all verticals"
-    query: "Search query"
-    submit: "Search"
-    posts: "Search posts…"
-    posts_label: "Post search"
-    communities: "Search communities…"
-    communities_label: "Community search"
-    places: "Search places…"
-    places_label: "Place search"
-    restaurants: "Search restaurants…"
-    restaurants_label: "Restaurant search"
-    events: "Search events…"
-    events_label: "Event search"
-    marketplace: "Search Markedsplass"
-    marketplace_label: "Search marketplace"
-    marketplace_dots: "Search…"
-    deals_label: "Deals search"
-    stores_label: "Store search"
-    playlist: "Search sets, tracks, artists…"
-    playlist_label: "Playlist search"
-    tv: "Search channels and videos…"
-    tv_label: "TV search"
+    title: Search Brgen
+    placeholder: Search posts, listings, TV, playlists…
+    label: Search all verticals
+    query: Search query
+    submit: Search
+    posts: Search posts…
+    posts_label: Post search
+    communities: Search communities…
+    communities_label: Community search
+    places: Search places…
+    places_label: Place search
+    restaurants: Search restaurants…
+    restaurants_label: Restaurant search
+    events: Search events…
+    events_label: Event search
+    marketplace: Search Markedsplass
+    marketplace_label: Search marketplace
+    marketplace_dots: Search…
+    deals_label: Deals search
+    stores_label: Store search
+    playlist: Search sets, tracks, artists…
+    playlist_label: Playlist search
+    tv: Search channels and videos…
+    tv_label: TV search
     results_for:
       one: "%{count} result for “%{query}”"
       other: "%{count} results for “%{query}”"
   messages:
-    from_aria: "Message from %{name}"
-    disappears_in: "disappears in %{time}"
-    title: "Messages"
-    new_message: "New message"
-    username: "Username"
-    start_chat: "Start chat"
-    empty_title: "No conversations yet"
-    empty_body: "Send a message to get started."
-    push_body_disappearing: "New message"
-    read: "read"
+    from_aria: Message from %{name}
+    disappears_in: disappears in %{time}
+    title: Messages
+    new_message: New message
+    username: Username
+    start_chat: Start chat
+    empty_title: No conversations yet
+    empty_body: Send a message to get started.
+    push_body_disappearing: New message
+    read: read
     back_all: "← all"
     back_channels: "← channels"
-    disappearing: "Disappearing messages"
-    header_label: "Conversation header"
-    nav_label: "Conversation nav"
+    disappearing: Disappearing messages
+    header_label: Conversation header
+    nav_label: Conversation nav
     unread_one: "%{count} new message ↓"
     unread_other: "%{count} new messages ↓"
   comments:
-    sort_label: "Sort comments"
-    placeholder: "What do you think?"
-    submit: "Comment"
-    reply_placeholder: "Reply…"
-    reply: "Reply"
-    empty_body: "Be the first to reply — guests can comment without an account."
-    write_reply: "Write a reply"
-    ai_summary: "Show AI summary (via MASTER)"
+    sort_label: Sort comments
+    placeholder: What do you think?
+    submit: Comment
+    reply_placeholder: Reply…
+    reply: Reply
+    empty_body: Be the first to reply — guests can comment without an account.
+    write_reply: Write a reply
+    ai_summary: Show AI summary (via MASTER)
   theme:
-    region: "Theme"
-    toggle: "Toggle light theme"
+    region: Theme
+    toggle: Toggle light theme
   push:
-    enable: "Enable notifications"
+    enable: Enable notifications
   partner:
-    programs_title: "Partner programs"
-    programs_lead: "Local stores pay city creators for sales you send. Last click wins; no self-referral."
-    your_memberships: "Your memberships"
-    open_programs: "Open programs"
-    dashboard: "Dashboard"
-    none_open: "No open partner programs yet. Store owners can create one from their shop page."
-    commission: "Commission"
+    programs_title: Partner programs
+    programs_lead: Local stores pay city creators for sales you send. Last click wins;
+      no self-referral.
+    your_memberships: Your memberships
+    open_programs: Open programs
+    dashboard: Dashboard
+    none_open: No open partner programs yet. Store owners can create one from their
+      shop page.
+    commission: Commission
     commission_percent: "%{rate}% commission"
     commission_flat: "%{rate} øre flat"
     commission_of_order: "%{rate}% of order value"
     commission_flat_model: "%{rate} (model: %{model})"
-    attribution_window: "Attribution window"
-    hold_before_payable: "Hold before payable"
+    attribution_window: Attribution window
+    hold_before_payable: Hold before payable
     hold:
       one: "%{count} day hold"
       other: "%{count} day hold"
@@ -385,500 +391,504 @@ en:
     days:
       one: "%{count} day"
       other: "%{count} days"
-    terms: "Terms"
-    actions: "Actions"
-    edit_program: "Edit program"
-    status_label: "Status:"
-    link_token: "Your link token:"
-    share: "Share:"
-    membership_dashboard: "Membership dashboard"
-    join: "Join program"
-    sign_in_to_join: "Sign in to join"
-    all_programs: "All programs"
-    membership_title: "Partner membership"
-    token_label: "Token:"
-    tracking_link: "Tracking link:"
-    recent_clicks: "Recent clicks"
-    no_clicks: "No clicks yet."
-    click_expires: "expires %{at}"
-    click_listing: "listing #%{id}"
-    conversions: "Conversions"
-    no_conversions: "No conversions yet."
+    terms: Terms
+    actions: Actions
+    edit_program: Edit program
+    status_label: 'Status:'
+    link_token: 'Your link token:'
+    share: 'Share:'
+    membership_dashboard: Membership dashboard
+    join: Join program
+    sign_in_to_join: Sign in to join
+    all_programs: All programs
+    membership_title: Partner membership
+    token_label: 'Token:'
+    tracking_link: 'Tracking link:'
+    recent_clicks: Recent clicks
+    no_clicks: No clicks yet.
+    click_expires: expires %{at}
+    click_listing: 'listing #%{id}'
+    conversions: Conversions
+    no_conversions: No conversions yet.
     conversion_row: "%{commission} øre on %{value}"
-    payable_after: "payable after %{on}"
-    new_title: "New partner program"
-    new_heading: "New partner program for %{store}"
-    rate_hint: "Rate (basis points for %, cents for flat)"
-    create: "Create program"
-    edit_title: "Edit %{name}"
-    edit_heading: "Edit partner program"
-    save: "Save"
+    payable_after: payable after %{on}
+    new_title: New partner program
+    new_heading: New partner program for %{store}
+    rate_hint: Rate (basis points for %, cents for flat)
+    create: Create program
+    edit_title: Edit %{name}
+    edit_heading: Edit partner program
+    save: Save
   activerecord:
     attributes:
       partner/program:
-        name: "Name"
-        status: "Status"
-        commission_model: "Commission model"
-        commission_rate: "Commission rate"
-        attribution_hours: "Attribution window (hours)"
-        hold_days: "Hold before payable (days)"
-        auto_approve_partners: "Approve partners automatically"
-        terms: "Terms"
+        name: Name
+        status: Status
+        commission_model: Commission model
+        commission_rate: Commission rate
+        attribution_hours: Attribution window (hours)
+        hold_days: Hold before payable (days)
+        auto_approve_partners: Approve partners automatically
+        terms: Terms
     errors:
       models:
         block:
           attributes:
             base:
-              self_block: "cannot block yourself"
+              self_block: cannot block yourself
         follow:
           attributes:
             base:
-              self_follow: "cannot follow yourself"
+              self_follow: cannot follow yourself
         partner/conversion:
           attributes:
             commission_cents:
-              exceeds_order_value: "cannot exceed the order value"
+              exceeds_order_value: cannot exceed the order value
         partner/program:
           attributes:
             commission_rate:
-              exceeds_max_percent: "cannot exceed %{percent}%% of the order value"
+              exceeds_max_percent: cannot exceed %{percent}%% of the order value
         post:
           attributes:
             content:
-              too_long_for_live: "is too long for Live (max %{count} characters)"
+              too_long_for_live: is too long for Live (max %{count} characters)
         dating/dislike:
           attributes:
             dislikee:
-              self_dislike: "cannot dislike yourself"
+              self_dislike: cannot dislike yourself
         dating/like:
           attributes:
             likee:
-              self_like: "cannot like yourself"
+              self_like: cannot like yourself
         dating/profile:
           attributes:
             photos:
-              required_when_visible: "must include at least one photo when visible"
+              required_when_visible: must include at least one photo when visible
         marketplace/order:
           attributes:
             listing:
-              unavailable: "is no longer available"
+              unavailable: is no longer available
             quantity:
-              exceeds_stock: "exceeds what is left"
+              exceeds_stock: exceeds what is left
         marketplace/review:
           attributes:
             base:
-              requires_completed_order: "requires an accepted or completed order"
+              requires_completed_order: requires an accepted or completed order
             user:
-              own_listing: "cannot review your own listing"
+              own_listing: cannot review your own listing
         playlist/like:
           attributes:
             base:
-              target_required: "needs something to like"
+              target_required: needs something to like
         takeaway/order:
           attributes:
             status:
-              bad_transition: "cannot go from %{from} to %{to}"
+              bad_transition: cannot go from %{from} to %{to}
             base:
-              below_minimum: "Minimum order at %{restaurant} is %{minimum} — your subtotal is %{subtotal}."
-              empty_order: "Choose at least one item."
+              below_minimum: Minimum order at %{restaurant} is %{minimum} — your subtotal
+                is %{subtotal}.
+              empty_order: Choose at least one item.
         takeaway/order_item:
           attributes:
             menu_item:
-              unavailable: "is unavailable"
+              unavailable: is unavailable
   post:
-    repost: "Repost"
+    repost: Repost
     repost_notification: "%{user} reposted your post"
-    quote: "Quote"
-    quote_placeholder: "Add a comment…"
-    quotes: "Quotes"
+    quote: Quote
+    quote_placeholder: Add a comment…
+    quotes: Quotes
     quote_notification: "%{user} quoted your post"
-    new: "New post"
+    new: New post
     guest_sign_in: " to use your name."
-    posting_as_anon: "Posting as"
-    submit: "Post"
-    text_optional: "Text (optional)"
+    posting_as_anon: Posting as
+    submit: Post
+    text_optional: Text (optional)
   empty:
-    add_tracks: "Add or import tracks to play."
-    no_posts: "No posts"
-    no_posts_search: "No posts match this search."
-    no_posts_yet: "No posts yet"
-    be_first: "Be the first — guests can post without an account."
-    post_to_city: "Post to %{city}"
-    clear_search: "Clear search"
-    create_one: "Create one"
-    start_city: "Start the conversation for your city."
-    nothing_yet: "Nothing here yet."
-    start_community: "Start the conversation in %{name} — guests can post without an account."
-    profile_empty: "Nothing published on this profile."
-    city_feed: "City feed"
-    no_communities: "No communities"
-    no_communities_search: "No communities match this search."
-    no_listings: "No listings"
-    no_deals: "No deals"
-    no_deals_search: "No deals match this search."
-    no_stores: "No stores"
-    no_stores_search: "No stores match this search."
-    no_places: "No places"
-    no_places_search: "No places match this search."
-    no_restaurants: "No restaurants yet"
-    no_menu: "No menu items yet"
-    no_reviews: "No reviews yet"
-    no_channels: "No channels"
-    no_videos: "No videos yet"
-    no_shows: "No shows yet"
-    no_episodes: "No episodes yet"
-    no_live_streams: "No live streams"
-    no_trending: "No trending videos"
-    no_description: "No description"
-    no_description_body: "This video has no write-up yet."
-    no_comments: "No comments yet"
-    no_tracks: "No tracks yet"
-    no_playlists: "No playlists yet"
-    no_sets: "No sets yet"
-    no_hosted_tracks: "No hosted tracks yet"
-    no_collaborators: "No collaborators yet"
-    no_sketches: "No sketches yet"
-    no_activity: "No activity yet"
-    no_nearby: "No one nearby"
-    no_photos: "No photos yet"
-    no_offers: "No offers yet"
-    no_saved_searches: "No saved searches"
-    no_category: "Nothing in this category yet"
-    no_drivers: "No available drivers"
-    nothing_available: "Nothing available"
-    no_menu_available: "No menu items are currently available."
-    no_reports: "No reports yet"
-    reports_clear: "Moderation queue is clear."
-    no_sessions: "No sessions scheduled"
-    create_playlist: "Create one to start the radio."
-    first_restaurant: "Add the first restaurant for this area."
-    restaurants_appear: "Restaurants will appear here."
-    kitchen_no_food: "The kitchen has not listed food yet."
-    order_then_rate: "Order, then leave a rating for neighbours."
-    episodes_when_published: "Episodes will show up when published."
+    add_tracks: Add or import tracks to play.
+    no_posts: No posts
+    no_posts_search: No posts match this search.
+    no_posts_yet: No posts yet
+    be_first: Be the first — guests can post without an account.
+    post_to_city: Post to %{city}
+    clear_search: Clear search
+    create_one: Create one
+    start_city: Start the conversation for your city.
+    nothing_yet: Nothing here yet.
+    start_community: Start the conversation in %{name} — guests can post without an
+      account.
+    profile_empty: Nothing published on this profile.
+    city_feed: City feed
+    no_communities: No communities
+    no_communities_search: No communities match this search.
+    no_listings: No listings
+    no_deals: No deals
+    no_deals_search: No deals match this search.
+    no_stores: No stores
+    no_stores_search: No stores match this search.
+    no_places: No places
+    no_places_search: No places match this search.
+    no_restaurants: No restaurants yet
+    no_menu: No menu items yet
+    no_reviews: No reviews yet
+    no_channels: No channels
+    no_videos: No videos yet
+    no_shows: No shows yet
+    no_episodes: No episodes yet
+    no_live_streams: No live streams
+    no_trending: No trending videos
+    no_description: No description
+    no_description_body: This video has no write-up yet.
+    no_comments: No comments yet
+    no_tracks: No tracks yet
+    no_playlists: No playlists yet
+    no_sets: No sets yet
+    no_hosted_tracks: No hosted tracks yet
+    no_collaborators: No collaborators yet
+    no_sketches: No sketches yet
+    no_activity: No activity yet
+    no_nearby: No one nearby
+    no_photos: No photos yet
+    no_offers: No offers yet
+    no_saved_searches: No saved searches
+    no_category: Nothing in this category yet
+    no_drivers: No available drivers
+    nothing_available: Nothing available
+    no_menu_available: No menu items are currently available.
+    no_reports: No reports yet
+    reports_clear: Moderation queue is clear.
+    no_sessions: No sessions scheduled
+    create_playlist: Create one to start the radio.
+    first_restaurant: Add the first restaurant for this area.
+    restaurants_appear: Restaurants will appear here.
+    kitchen_no_food: The kitchen has not listed food yet.
+    order_then_rate: Order, then leave a rating for neighbours.
+    episodes_when_published: Episodes will show up when published.
   actions:
-    close: "Close"
-    load_more: "Older posts"
-    add_one: "Add one"
-    dismiss: "Dismiss"
-    sell_something: "Sell something"
-    new_set: "New set"
-    tv_home: "TV home"
-    city_feed: "City feed"
-    compose_outfit: "Compose an outfit"
-    all_categories: "All categories"
-    all_maintainers: "All maintainers"
-    save_search_body: "Search the marketplace, then save the search."
-    all_restaurants: "All restaurants"
-    all_orders: "All orders"
-    all_drivers: "All drivers"
-    all_cuisines: "All cuisines"
-    save: "Save"
-    send: "Send"
-    cancel: "Cancel"
-    edit: "Edit"
-    back: "Back"
-    open: "Open"
-    review: "Review"
-    reorder: "Reorder"
-    delete: "Delete"
-    remove: "Remove"
-    update: "Update"
-    create: "Create"
-    follow: "Follow"
-    unfollow: "Unfollow"
-    like: "Like"
-    unlike: "Unlike"
-    report: "Report"
-    message: "Message"
-    mark_read: "Mark read"
-    confirm_delete: "Delete?"
-    copyable_text: "Text to copy"
-    select_all: "Select all"
-    select_all_reports: "Select all reports"
-    reload: "Reload"
+    close: Close
+    load_more: Older posts
+    add_one: Add one
+    dismiss: Dismiss
+    sell_something: Sell something
+    new_set: New set
+    tv_home: TV home
+    city_feed: City feed
+    compose_outfit: Compose an outfit
+    all_categories: All categories
+    all_maintainers: All maintainers
+    save_search_body: Search the marketplace, then save the search.
+    all_restaurants: All restaurants
+    all_orders: All orders
+    all_drivers: All drivers
+    all_cuisines: All cuisines
+    save: Save
+    send: Send
+    cancel: Cancel
+    edit: Edit
+    back: Back
+    open: Open
+    review: Review
+    reorder: Reorder
+    delete: Delete
+    remove: Remove
+    update: Update
+    create: Create
+    follow: Follow
+    unfollow: Unfollow
+    like: Like
+    unlike: Unlike
+    report: Report
+    message: Message
+    mark_read: Mark read
+    confirm_delete: Delete?
+    copyable_text: Text to copy
+    select_all: Select all
+    select_all_reports: Select all reports
+    reload: Reload
   pages:
-    account: "Account"
-    two_factor: "Two-factor authentication"
-    cart: "Your Cart"
-    my_orders: "My Orders"
-    all_posts: "All posts"
-    edit_post: "Edit post"
-    channels: "Channels"
-    places: "Places"
-    new_message: "New message"
+    account: Account
+    two_factor: Two-factor authentication
+    cart: Your Cart
+    my_orders: My Orders
+    all_posts: All posts
+    edit_post: Edit post
+    channels: Channels
+    places: Places
+    new_message: New message
     home_title: "%{city}"
-    default_description: "Posts, shops, food and people in %{city}."
+    default_description: Posts, shops, food and people in %{city}.
   hotkeys:
-    help: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
-    coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."
-    coach_dismiss: "Got it"
+    help: j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help
+    coach: 'Keyboard: press ? anytime for shortcuts (j/k to move, / to search).'
+    coach_dismiss: Got it
   sort:
-    hot: "Hot"
-    fresh: "Fresh"
-    top: "Top"
-    posts: "Sort posts"
+    hot: Hot
+    fresh: Fresh
+    top: Top
+    posts: Sort posts
   posts:
-    score: "Post score"
-    upvote: "Upvote"
-    downvote: "Downvote"
-    share: "Share"
-    share_post: "Share post"
-    view_community: "View community"
-    about: "About"
-    community_platform: "brgen — %{city} community platform"
-    community_optional: "Community (optional)"
+    score: Post score
+    upvote: Upvote
+    downvote: Downvote
+    share: Share
+    share_post: Share post
+    view_community: View community
+    about: About
+    community_platform: brgen — %{city} community platform
+    community_optional: Community (optional)
     no_community: "— no community —"
-    body_optional: "Body (optional)"
-    photo_camera: "Photo / Camera"
-    post_anonymously: "Post anonymously"
+    body_optional: Body (optional)
+    photo_camera: Photo / Camera
+    post_anonymously: Post anonymously
     min_read: "%{n} min read"
-    add_photo: "Add photo"
+    add_photo: Add photo
   channels:
-    topic: "Topic: %{topic}"
-    # The seven public rooms. These were English literals in
-    # Conversation::CHANNELS, read by the channels index, the room header,
-    # the IRC topic and the bot welcome — four Norwegian surfaces.
+    topic: 'Topic: %{topic}'
     blurb:
-      brgen: "The city-wide lobby — anything goes."
-      marketplace: "Buying, selling, haggling, and finds."
-      dating: "Flirt, vent, and swap first-date ideas."
-      playlist: "Now playing — share tracks and listening parties."
-      tv: "Live threads for shows and streams."
-      takeaway: "What's good to order right now?"
-      maps: "Local spots, tips, and directions."
+      brgen: The city-wide lobby — anything goes.
+      marketplace: Buying, selling, haggling, and finds.
+      dating: Flirt, vent, and swap first-date ideas.
+      playlist: Now playing — share tracks and listening parties.
+      tv: Live threads for shows and streams.
+      takeaway: What's good to order right now?
+      maps: Local spots, tips, and directions.
     welcome:
       host: "%{blurb} you're anonymous here — say hi."
-      echo: "type `/help` any time, and keep it local."
-      prompt: "so — what's happening in your city right now?"
-    title: "Channels"
-    aria: "Public channels"
-    intro: "Public rooms%{city} — you're anonymous here. Jump in, a few local agents are already around."
+      echo: type `/help` any time, and keep it local.
+      prompt: so — what's happening in your city right now?
+    title: Channels
+    aria: Public channels
+    intro: Public rooms%{city} — you're anonymous here. Jump in, a few local agents
+      are already around.
     intro_city: " in %{name}"
-    active: "active"
-    message: "message"
-    new_room: "new room"
+    active: active
+    message: message
+    new_room: new room
   storefront:
-    deliver_to: "Deliver to"
-    sign_in: "sign in"
-    account: "Account"
-    orders: "Orders"
-    cart: "Cart"
-    listings: "Listings"
-    todays_deals: "Today's Deals"
-    stores: "Stores"
-    sell: "Sell"
-    restaurants: "Restaurants"
-    your_orders: "Your orders"
-    drivers: "Drivers"
-    add_restaurant: "Add restaurant"
-    saved_searches: "Saved searches"
+    deliver_to: Deliver to
+    sign_in: sign in
+    account: Account
+    orders: Orders
+    cart: Cart
+    listings: Listings
+    todays_deals: Today's Deals
+    stores: Stores
+    sell: Sell
+    restaurants: Restaurants
+    your_orders: Your orders
+    drivers: Drivers
+    add_restaurant: Add restaurant
+    saved_searches: Saved searches
   dating:
-    who_liked_you: "Who liked you"
-    back_to_deck: "Back to the deck"
-    like_back: "Like back"
-    pass: "Pass"
-    no_likes_title: "Nobody has liked you yet"
-    no_likes_body: "Answer a couple of prompts on your profile — it gives people something to reply to."
-    add_prompt: "Add an answer"
-    remove_prompt: "Remove"
-    your_prompts: "Your answers"
-    comment_placeholder: "Say something about this answer…"
-    like_with_comment: "Like and say something"
+    who_liked_you: Who liked you
+    back_to_deck: Back to the deck
+    like_back: Like back
+    pass: Pass
+    no_likes_title: Nobody has liked you yet
+    no_likes_body: Answer a couple of prompts on your profile — it gives people something
+      to reply to.
+    add_prompt: Add an answer
+    remove_prompt: Remove
+    your_prompts: Your answers
+    comment_placeholder: Say something about this answer…
+    like_with_comment: Like and say something
     prompts:
-      q_sunday: "A perfect Sunday is"
-      # Key keeps its original name: it is the stored value of dating_prompts.question
-      # on every row already written, and the inclusion validation reads that list.
-      # The copy is what had to change — brgen serves a different city per domain,
-      # so "Bergen" here asked someone in Oslo about Bergen.
-      q_bergen: "The best thing about %{city} is"
-      q_unpopular: "My most unpopular opinion"
-      q_teach: "I could teach you"
-      q_never: "I will never"
-      q_meal: "The meal I cook best"
-      q_song: "The song I never tire of"
-      q_weekend: "Next weekend I am"
-    about_tab: "About"
-    edit_profile: "Edit profile"
-    your_profile: "Your profile"
-    create_profile: "Create profile"
-    add_photos: "Add photos"
-    photos: "Photos"
-    about_you: "About you"
-    looking_for: "Looking for"
-    neighborhood: "Neighbourhood"
-    save: "Save"
-    no_photos_body: "Add photos on your profile edit screen."
-    matches: "Matches"
-    no_matches: "No matches yet"
-    no_matches_body: "Keep swiping — mutual likes show up here."
-    discover: "Discover"
-    local: "Local"
-    ready_to_chat: "is ready to chat."
-    someone: "Someone"
-    its_a_match: "It's a match!"
-    home_title: "Dating"
-    open_messages: "Open messages"
-    current_photos: "Current photos"
-    more_details: "More details"
-    protected_with: "Protected with"
-    age: "Age"
-    edit_profile_blurb: "Photos and about you matter most — other details stay optional."
-    create_profile_blurb: "Three steps to start — photos, about you, who you are looking for. Details can wait."
-    photo_hint: "Add at least one clear photo when you can."
-    essentials: "Essentials"
-    more_details_optional: "More details (optional)"
-    unmatch: "Unmatch"
-    matched_on: "Matched on %{date}"
-    rewind: "Rewind"
-    stamp_like: "LIKE"
-    stamp_pass: "NOPE"
-    swipe_guest: "Refresh to start swiping — no signup needed."
-    more: "More"
-    read_bio: "Read bio"
-    show_less: "Show less"
+      q_sunday: A perfect Sunday is
+      q_bergen: The best thing about %{city} is
+      q_unpopular: My most unpopular opinion
+      q_teach: I could teach you
+      q_never: I will never
+      q_meal: The meal I cook best
+      q_song: The song I never tire of
+      q_weekend: Next weekend I am
+    about_tab: About
+    edit_profile: Edit profile
+    your_profile: Your profile
+    create_profile: Create profile
+    add_photos: Add photos
+    photos: Photos
+    about_you: About you
+    looking_for: Looking for
+    neighborhood: Neighbourhood
+    save: Save
+    no_photos_body: Add photos on your profile edit screen.
+    matches: Matches
+    no_matches: No matches yet
+    no_matches_body: Keep swiping — mutual likes show up here.
+    discover: Discover
+    local: Local
+    ready_to_chat: is ready to chat.
+    someone: Someone
+    its_a_match: It's a match!
+    home_title: Dating
+    open_messages: Open messages
+    current_photos: Current photos
+    more_details: More details
+    protected_with: Protected with
+    age: Age
+    edit_profile_blurb: Photos and about you matter most — other details stay optional.
+    create_profile_blurb: Three steps to start — photos, about you, who you are looking
+      for. Details can wait.
+    photo_hint: Add at least one clear photo when you can.
+    essentials: Essentials
+    more_details_optional: More details (optional)
+    unmatch: Unmatch
+    matched_on: Matched on %{date}
+    rewind: Rewind
+    stamp_like: LIKE
+    stamp_pass: NOPE
+    swipe_guest: Refresh to start swiping — no signup needed.
+    more: More
+    read_bio: Read bio
+    show_less: Show less
     recency:
-      unknown: "Last seen unknown"
-      now: "Active now"
-      recent: "Active recently"
-      week: "Seen this week"
-      older: "Last seen a while ago"
-    empty_nearby_body: "Widen the radius, come back later, or finish your profile so others can find you."
-    swipe_to_start: "swipe to start"
+      unknown: Last seen unknown
+      now: Active now
+      recent: Active recently
+      week: Seen this week
+      older: Last seen a while ago
+    empty_nearby_body: Widen the radius, come back later, or finish your profile so
+      others can find you.
+    swipe_to_start: swipe to start
   playlist:
-    home_title: "Playlist"
-    tap_to_start: "tap to start"
-    next: "Next track"
-    play: "Play"
-    play_pause: "Play or pause"
-    previous: "Previous track"
-    stop: "Stop"
-    transport: "Playback"
-    volume: "Volume"
-    sets: "Sets"
-    new_set: "New set"
-    edit_set: "Edit set"
-    hosted_tracks: "Hosted tracks"
-    upload_track: "Upload track"
-    edit_track: "Edit track"
-    edit_playlist: "Edit playlist"
-    new_playlist: "New playlist"
-    browse_sets: "Browse sets"
-    browse_playlists: "Browse playlists"
-    library: "Library"
-    title: "Title"
-    artist: "Artist"
-    url_optional: "URL (optional)"
-    say_something: "Say something…"
-    create: "Create"
-    add: "Add"
-    import: "Import"
-    import_urls_placeholder: "Paste Spotify, YouTube, SoundCloud, or direct audio URLs, one per line"
-    username: "username"
-    add_collaborator: "Add collaborator"
-    sketch_name: "Sketch name"
-    notes_optional: "Notes (optional)"
-    save_sketch: "Save sketch"
-    beat_name: "Beat name (e.g. dusty flip)"
-    notes_instructions: "Notes / instructions (optional)"
-    save_sketch_collab: "Save sketch for collab"
-    start_party: "Start party"
-    end_party: "End party"
-    render: "Render"
-    listening_party: "Listening party"
-    listening_party_title: "Listening party — %{name}"
-    queue: "Queue"
+    home_title: Playlist
+    tap_to_start: tap to start
+    next: Next track
+    play: Play
+    play_pause: Play or pause
+    previous: Previous track
+    stop: Stop
+    transport: Playback
+    volume: Volume
+    sets: Sets
+    new_set: New set
+    edit_set: Edit set
+    hosted_tracks: Hosted tracks
+    upload_track: Upload track
+    edit_track: Edit track
+    edit_playlist: Edit playlist
+    new_playlist: New playlist
+    browse_sets: Browse sets
+    browse_playlists: Browse playlists
+    library: Library
+    title: Title
+    artist: Artist
+    url_optional: URL (optional)
+    say_something: Say something…
+    create: Create
+    add: Add
+    import: Import
+    import_urls_placeholder: Paste Spotify, YouTube, SoundCloud, or direct audio URLs,
+      one per line
+    username: username
+    add_collaborator: Add collaborator
+    sketch_name: Sketch name
+    notes_optional: Notes (optional)
+    save_sketch: Save sketch
+    beat_name: Beat name (e.g. dusty flip)
+    notes_instructions: Notes / instructions (optional)
+    save_sketch_collab: Save sketch for collab
+    start_party: Start party
+    end_party: End party
+    render: Render
+    listening_party: Listening party
+    listening_party_title: Listening party — %{name}
+    queue: Queue
     queue_stats: "%{tracks} tracks · %{plays} plays"
-    waveform: "Waveform"
-    seek: "Seek"
-    select_track: "Select a track"
-    unknown_artist: "Unknown artist"
-    party_chat: "Party chat"
-    back_to_set: "Back to set"
+    waveform: Waveform
+    seek: Seek
+    select_track: Select a track
+    unknown_artist: Unknown artist
+    party_chat: Party chat
+    back_to_set: Back to set
     back_to_radio: "← radio"
-    management: "Playlist management"
-    actions: "Playlist actions"
-    collaborators_sketches: "Collaborators & dilla sketches"
-    join_code: "Join code"
-    confirm_end_party: "End the party for everyone listening?"
-    add_track: "Add a track"
-    add_track_body: "Add a track to build this set."
-    sets_subtitle: "Local audio collections"
-    source: "Source"
-    expires_at: "Expires at"
-    embed_code: "Embed code"
-    comment_at_time: "Comment at this time…"
-    role: "Role"
-    style: "Style"
-    bars: "Bars"
-    sketch_state: "Sketch state (JSON)"
-    paste_state: "Paste JSON state from lab"
-    timestamped_comments: "Timestamped comments"
-    import_links: "Import links"
-    render_now: "Render now"
-    publish_as_track: "Publish as playlist track"
-    set_kicker: "Playlist set"
-    upload_blurb: "Direct upload here. High quality 320kbps MP3 / FLAC supported. Replace keeps share links (no URL change)."
-    current_file: "Current: %{name} — replace keeps your share/embed links"
-    track_stats: "%{plays} plays · %{comments} timestamped comments · %{versions} prior versions"
+    management: Playlist management
+    actions: Playlist actions
+    collaborators_sketches: Collaborators & dilla sketches
+    join_code: Join code
+    confirm_end_party: End the party for everyone listening?
+    add_track: Add a track
+    add_track_body: Add a track to build this set.
+    sets_subtitle: Local audio collections
+    source: Source
+    expires_at: Expires at
+    embed_code: Embed code
+    comment_at_time: Comment at this time…
+    role: Role
+    style: Style
+    bars: Bars
+    sketch_state: Sketch state (JSON)
+    paste_state: Paste JSON state from lab
+    timestamped_comments: Timestamped comments
+    import_links: Import links
+    render_now: Render now
+    publish_as_track: Publish as playlist track
+    set_kicker: Playlist set
+    upload_blurb: Direct upload here. High quality 320kbps MP3 / FLAC supported. Replace
+      keeps share links (no URL change).
+    current_file: 'Current: %{name} — replace keeps your share/embed links'
+    track_stats: "%{plays} plays · %{comments} timestamped comments · %{versions}
+      prior versions"
     set_stats: "%{plays} plays across %{tracks} tracks · %{comments} comments total."
-    now_playing: "Now playing:"
-    waiting_for_host: "Waiting for the host to pick a track…"
-    comments_seek: "Comments (click to seek)"
-    embed_customize: "Embed (customize: ?color=ff0000&amp;show_artwork=0&amp;compact=1)"
-    party_blurb: "Start or join a real-time synced listening session with embedded player and chat."
-    open_in_lab: "open in lab"
-    analytics: "Analytics"
-    privacy_line: "Privacy: %{value}"
-    privacy_private: "private"
+    now_playing: 'Now playing:'
+    waiting_for_host: Waiting for the host to pick a track…
+    comments_seek: Comments (click to seek)
+    embed_customize: 'Embed (customize: ?color=ff0000&amp;show_artwork=0&amp;compact=1)'
+    party_blurb: Start or join a real-time synced listening session with embedded
+      player and chat.
+    open_in_lab: open in lab
+    analytics: Analytics
+    privacy_line: 'Privacy: %{value}'
+    privacy_private: private
     expires_on: "· expires %{date}"
-    public_access: "Public"
-    collaborative: "Collaborative"
+    public_access: Public
+    collaborative: Collaborative
     add_comment: "+ Comment"
-    add_comment_aria: "Add timestamped comment at current time"
-    no_tracks_body: "Add or import tracks to play."
-    reorder_tracks: "Reorder tracks"
-    embed_examples: "Examples"
-    embed_red: "red"
-    embed_no_artwork: "no artwork"
-    embed_compact: "compact clean"
+    add_comment_aria: Add timestamped comment at current time
+    no_tracks_body: Add or import tracks to play.
+    reorder_tracks: Reorder tracks
+    embed_examples: Examples
+    embed_red: red
+    embed_no_artwork: no artwork
+    embed_compact: compact clean
   marketplace:
     expiry_notice:
       title: "%{title} expires soon"
-      body: "This listing leaves the marketplace in %{days} days. Renew it if you still have the item."
-    addresses: "Delivery addresses"
-    add_address: "Add an address"
-    change_address: "Change address"
-    save_address: "Save address"
-    default_address: "Default"
-    make_default: "Make default"
-    confirm_delete_address: "Delete this address?"
-    deliver_to: "Deliver to"
-    no_address_yet: "No delivery address saved yet."
+      body: This listing leaves the marketplace in %{days} days. Renew it if you still
+        have the item.
+    addresses: Delivery addresses
+    add_address: Add an address
+    change_address: Change address
+    save_address: Save address
+    default_address: Default
+    make_default: Make default
+    confirm_delete_address: Delete this address?
+    deliver_to: Deliver to
+    no_address_yet: No delivery address saved yet.
     address_form:
-      recipient: "Recipient"
-      line1: "Address"
-      line2: "Address 2 (optional)"
-      postcode: "Postcode"
-      city: "Town"
-      country: "Country (two letters)"
-      phone: "Phone (optional)"
-    home_title: "Market · %{city}"
+      recipient: Recipient
+      line1: Address
+      line2: Address 2 (optional)
+      postcode: Postcode
+      city: Town
+      country: Country (two letters)
+      phone: Phone (optional)
+    home_title: Market · %{city}
     saved_search_alert:
       title: "%{count} new matches for “%{search}”"
       price_drop_title: "%{count} price drops for “%{search}”"
-    browse_listings: "Browse listings"
-    listing_kind: "Who is selling"
-    from_anyone: "Anyone"
-    from_a_person: "Person"
-    from_a_shop: "Shop"
-    casual_hint: "No shop needed — a listing without a store is you selling one thing."
-    sold: "Sold"
-    nearby_listings: "Nearby"
-    listing: "Listing"
-    listing_kicker: "Marketplace / %{category}"
-    share: "Share"
-    reviews: "Reviews"
+    browse_listings: Browse listings
+    listing_kind: Who is selling
+    from_anyone: Anyone
+    from_a_person: Person
+    from_a_shop: Shop
+    casual_hint: No shop needed — a listing without a store is you selling one thing.
+    sold: Sold
+    nearby_listings: Nearby
+    listing: Listing
+    listing_kicker: Marketplace / %{category}
+    share: Share
+    reviews: Reviews
     seller_rating: "%{rating} ★ seller interaction rating"
     views:
       one: "%{count} view"
@@ -890,517 +900,522 @@ en:
       one: "%{count} review"
       other: "%{count} reviews"
     deals:
-      featured: "Featured deals"
-      title: "Deals"
+      featured: Featured deals
+      title: Deals
       show_title: "%{headline} · %{city}"
-    max_price: "Max price"
-    min_price: "Min price"
+    max_price: Max price
+    min_price: Min price
     orders:
-      empty_action: "Browse listings"
-      empty_body: "Your marketplace orders will show up here."
-      empty_title: "No orders yet"
-      listing: "Listing"
-      title: "Your orders"
-    sort_label: "Sort"
-    sort_price_high: "Price ↓"
-    sort_price_low: "Price ↑"
-    sort_recent: "Newest"
+      empty_action: Browse listings
+      empty_body: Your marketplace orders will show up here.
+      empty_title: No orders yet
+      listing: Listing
+      title: Your orders
+    sort_label: Sort
+    sort_price_high: Price ↓
+    sort_price_low: Price ↑
+    sort_recent: Newest
     stores:
-      delete: "Delete store"
-      delete_confirm: "Delete store?"
-      edit: "Edit store"
-      new: "Open a store"
-      title: "Stores"
-      also_in_city: "Also in %{city}"
-    new_listing: "New listing"
-    edit_listing: "Edit listing"
-    saved_searches: "Saved searches"
-    price_ore: "Price (øre)"
-    price_help: "Enter the price in øre; for example, 25000 is NOK 250."
-    post_review: "Post review"
-    send_offer: "Send offer"
-    send: "Send"
-    list_it: "List it"
-    save_search: "Save this search"
-    message_seller: "Message to seller (optional)"
-    message_seller_btn: "Message seller"
-    latitude: "Latitude"
-    longitude: "Longitude"
-    radius_km: "Radius km"
-    radius_label: "Radius in kilometres"
-    accept: "Accept"
-    decline: "Decline"
-    add_to_cart: "Add to cart"
-    pay_vipps: "Pay with Vipps"
-    pay_stripe: "Pay with Stripe"
-    send_all_offers: "Send all offers"
-    send_offers_confirm: "Notify all sellers about your pending offers?"
-    cart_empty_title: "Your cart is empty"
-    cart_empty_body: "Browse listings and send offers — guests can shop without signup."
-    browse_marketplace: "Browse marketplace"
-    cart_total: "Total: %{amount}"
-    cart_pay_hint: "Pay with Vipps (NO) or Stripe (cards), or send classic offers sellers accept/decline."
-    cart_honest_pay: "If a payment provider is unavailable we say so. We never take a payment we cannot process."
-    cart_pay_unavailable: "Card and Vipps checkout are not configured. Send the seller an offer, or arrange payment directly."
-    cart_sellers_hint: "Sellers get a notification for each pending offer. They accept or decline individually."
-    payment_methods: "Payment methods"
-    cart_header: "Cart header"
+      delete: Delete store
+      delete_confirm: Delete store?
+      edit: Edit store
+      new: Open a store
+      title: Stores
+      also_in_city: Also in %{city}
+    new_listing: New listing
+    edit_listing: Edit listing
+    saved_searches: Saved searches
+    price_ore: Price (øre)
+    price_help: Enter the price in øre; for example, 25000 is NOK 250.
+    post_review: Post review
+    send_offer: Send offer
+    send: Send
+    list_it: List it
+    save_search: Save this search
+    message_seller: Message to seller (optional)
+    message_seller_btn: Message seller
+    latitude: Latitude
+    longitude: Longitude
+    radius_km: Radius km
+    radius_label: Radius in kilometres
+    accept: Accept
+    decline: Decline
+    add_to_cart: Add to cart
+    pay_vipps: Pay with Vipps
+    pay_stripe: Pay with Stripe
+    send_all_offers: Send all offers
+    send_offers_confirm: Notify all sellers about your pending offers?
+    cart_empty_title: Your cart is empty
+    cart_empty_body: Browse listings and send offers — guests can shop without signup.
+    browse_marketplace: Browse marketplace
+    cart_total: 'Total: %{amount}'
+    cart_pay_hint: Pay with Vipps (NO) or Stripe (cards), or send classic offers sellers
+      accept/decline.
+    cart_honest_pay: If a payment provider is unavailable we say so. We never take
+      a payment we cannot process.
+    cart_pay_unavailable: Card and Vipps checkout are not configured. Send the seller
+      an offer, or arrange payment directly.
+    cart_sellers_hint: Sellers get a notification for each pending offer. They accept
+      or decline individually.
+    payment_methods: Payment methods
+    cart_header: Cart header
     item:
       one: "%{count} item"
       other: "%{count} items"
-    remove_listing: "Remove listing"
-    confirm_delete_saved_search: "Delete this saved search?"
-    confirm_remove_listing: "Remove this listing? It is taken out of the marketplace and stays visible only to you. Orders and reviews are kept."
-    run_search: "Run"
-    top_offers_heading: "Picked for the city"
-    make_offer: "Make an offer"
-    add_photos: "Add photos"
-    top_offers_kicker: "Top offers"
-    seller_dashboard: "Seller dashboard"
-    alerts: "Marketplace alerts"
-    chat_with: "Chat with %{name}"
-    top_offers_blurb: "Featured deals and high-signal listings — denser than the feed, still flat."
-    message_seller_hint: "Send a short message to the seller. They can accept or decline from this listing page."
-    near_me: "Near me"
-    filter_category: "Filter by category"
-    buy_actions: "Buy actions"
-    offer: "Offer"
-    sold_notice: "This listing has been sold."
-    expired_notice: "This listing has expired."
-    renew: "Renew listing"
+    remove_listing: Remove listing
+    confirm_delete_saved_search: Delete this saved search?
+    confirm_remove_listing: Remove this listing? It is taken out of the marketplace
+      and stays visible only to you. Orders and reviews are kept.
+    run_search: Run
+    top_offers_heading: Picked for the city
+    make_offer: Make an offer
+    add_photos: Add photos
+    top_offers_kicker: Top offers
+    seller_dashboard: Seller dashboard
+    alerts: Marketplace alerts
+    chat_with: Chat with %{name}
+    top_offers_blurb: Featured deals and high-signal listings — denser than the feed,
+      still flat.
+    message_seller_hint: Send a short message to the seller. They can accept or decline
+      from this listing page.
+    near_me: Near me
+    filter_category: Filter by category
+    buy_actions: Buy actions
+    offer: Offer
+    sold_notice: This listing has been sold.
+    expired_notice: This listing has expired.
+    renew: Renew listing
     distance_km: "%{km} km away"
     rating_of_five: "%{rating} of 5"
-    no_reviews_body: "Buyers can review after an order."
-    no_offers_body: "Incoming offers will list here."
-    offers: "Offers"
-    add_address_body: "Save an address so the next purchase does not ask again."
+    no_reviews_body: Buyers can review after an order.
+    no_offers_body: Incoming offers will list here.
+    offers: Offers
+    add_address_body: Save an address so the next purchase does not ask again.
     conditions:
-      new: "new"
-      like_new: "like new"
-      good: "good"
-      fair: "fair"
-      poor: "poor"
+      new: new
+      like_new: like new
+      good: good
+      fair: fair
+      poor: poor
   takeaway:
-    intro: "This is a menu and order demo, not a live restaurant network. Payment is arranged with the kitchen. No signup to place a trial order."
-    unsave: "Unsave"
-    save_restaurant: "Save"
-    order_food: "Menus nearby"
-    add_restaurant: "Add restaurant"
-    edit_restaurant: "Edit restaurant"
-    delivery_drivers: "Delivery drivers"
-    delivery_driver: "Delivery driver"
-    delivery_address: "Delivery address"
-    special_instructions: "Special instructions (optional)"
-    special_instructions_placeholder: "Door code, allergies, delivery notes…"
-    payment: "Payment"
-    payment_label: "Payment info"
-    payment_body: "Payment is arranged directly with the restaurant for now."
-    place_order: "Place order"
-    rating: "Rating (1-5)"
-    comments_optional: "Comments (optional)"
-    post_review: "Post review"
-    add: "Add"
-    save: "Save"
-    update: "Update"
-    active: "Active"
-    delivery_fee: "Delivery fee (øre)"
-    min_order: "Min order (øre)"
-    item_name: "Name"
-    item_price: "Price (øre)"
-    item_description: "Description"
-    license_number: "License number"
-    latitude: "Latitude"
-    longitude: "Longitude"
-    add_menu_item: "Add menu item"
-    reviews_heading: "Reviews from neighbours"
-    nearby_restaurants: "Nearby"
-    leave_review: "Leave a review"
-    status_timeline: "Status timeline"
+    intro: This is a menu and order demo, not a live restaurant network. Payment is
+      arranged with the kitchen. No signup to place a trial order.
+    unsave: Unsave
+    save_restaurant: Save
+    order_food: Menus nearby
+    add_restaurant: Add restaurant
+    edit_restaurant: Edit restaurant
+    delivery_drivers: Delivery drivers
+    delivery_driver: Delivery driver
+    delivery_address: Delivery address
+    special_instructions: Special instructions (optional)
+    special_instructions_placeholder: Door code, allergies, delivery notes…
+    payment: Payment
+    payment_label: Payment info
+    payment_body: Payment is arranged directly with the restaurant for now.
+    place_order: Place order
+    rating: Rating (1-5)
+    comments_optional: Comments (optional)
+    post_review: Post review
+    add: Add
+    save: Save
+    update: Update
+    active: Active
+    delivery_fee: Delivery fee (øre)
+    min_order: Min order (øre)
+    item_name: Name
+    item_price: Price (øre)
+    item_description: Description
+    license_number: License number
+    latitude: Latitude
+    longitude: Longitude
+    add_menu_item: Add menu item
+    reviews_heading: Reviews from neighbours
+    nearby_restaurants: Nearby
+    leave_review: Leave a review
+    status_timeline: Status timeline
     courier_distance: "%{km} km away"
-    courier_unassigned: "No free courier nearby yet."
-    order_cancelled: "Order cancelled"
-    order_from: "Order from %{restaurant}"
-    sold_out: "Sold out"
-    operations: "Takeaway operations"
-    available_items: "available items"
-    min_order_line: "Min order: %{min} · Delivery: %{fee} ·"
-    reload_to_order: "Reload to place an order — guests can order without signup."
+    courier_unassigned: No free courier nearby yet.
+    order_cancelled: Order cancelled
+    order_from: Order from %{restaurant}
+    sold_out: Sold out
+    operations: Takeaway operations
+    available_items: available items
+    min_order_line: 'Min order: %{min} · Delivery: %{fee} ·'
+    reload_to_order: Reload to place an order — guests can order without signup.
     saves:
       one: "%{count} save"
       other: "%{count} saves"
-    driver_header: "Delivery driver"
-    anon: "anon"
-    driver_details: "Driver details"
-    restaurant_header: "Restaurant"
-    restaurant_info: "Restaurant info"
-    min_order_delivery: "Min order: %{min} · Delivery: %{fee}"
+    driver_header: Delivery driver
+    anon: anon
+    driver_details: Driver details
+    restaurant_header: Restaurant
+    restaurant_info: Restaurant info
+    min_order_delivery: 'Min order: %{min} · Delivery: %{fee}'
     available_count:
       one: "%{count} available item"
       other: "%{count} available items"
-    place_order_from: "Place takeaway order from %{restaurant}"
-    menu: "Menu"
-    vegetarian: "Vegetarian"
-    vegan: "Vegan"
-    qty: "Qty"
-    back_to_restaurant: "Back to restaurant"
-    delivery_details: "Delivery details"
-    delivery_heading: "Delivery"
-    restaurant_results: "Restaurant results"
-    restaurant_actions: "Restaurant actions"
-    qty_for: "Quantity for %{name}"
+    place_order_from: Place takeaway order from %{restaurant}
+    menu: Menu
+    vegetarian: Vegetarian
+    vegan: Vegan
+    qty: Qty
+    back_to_restaurant: Back to restaurant
+    delivery_details: Delivery details
+    delivery_heading: Delivery
+    restaurant_results: Restaurant results
+    restaurant_actions: Restaurant actions
+    qty_for: Quantity for %{name}
     item_sold_out: "%{name} sold out"
-    browse_menu: "Browse menu"
+    browse_menu: Browse menu
   maps:
-    your_courier: "Your courier"
-    recent_check_ins: "Recent check-ins"
-    hud_aria: "Map search and info"
-    browse_list: "Browse list"
-    needs_js: "Map needs JavaScript."
-    browse_as_list: "Browse places as a list"
-    map: "Map"
-    aria_map: "Interactive map of places in the city"
-    open_in_map: "Open in map"
-    optional_note: "Optional note"
-    check_in: "I'm here (check-in)"
-    all_types: "All types"
-    filter_by_kind: "Filter by type"
-    checked_in_recently: "You checked in here recently."
-    on_the_map: "On the map"
-    at_this_place: "Here"
-    nearby_places: "Nearby"
-    no_place: "Not on the map"
+    your_courier: Your courier
+    recent_check_ins: Recent check-ins
+    hud_aria: Map search and info
+    browse_list: Browse list
+    needs_js: Map needs JavaScript.
+    browse_as_list: Browse places as a list
+    map: Map
+    aria_map: Interactive map of places in the city
+    open_in_map: Open in map
+    optional_note: Optional note
+    check_in: I'm here (check-in)
+    all_types: All types
+    filter_by_kind: Filter by type
+    checked_in_recently: You checked in here recently.
+    on_the_map: On the map
+    at_this_place: Here
+    nearby_places: Nearby
+    no_place: Not on the map
   communities:
-    about: "About %{name}"
-    name_placeholder: "e.g. bergen, tech, musikk"
-    description_placeholder: "What is this community about?"
-    create: "Create"
-    save: "Save"
-    confirm_delete: "Delete community?"
-    new_community: "New community"
-    also_in_city: "Also in %{city}"
+    about: About %{name}
+    name_placeholder: e.g. bergen, tech, musikk
+    description_placeholder: What is this community about?
+    create: Create
+    save: Save
+    confirm_delete: Delete community?
+    new_community: New community
+    also_in_city: Also in %{city}
   newsletter:
-    email_placeholder: "your@email.com"
-    subscribe: "Subscribe"
-    title: "City updates"
-    body: "News and deals from your city, once a week."
-    marketing_consent: "I agree to receive deals and partner offers (optional, unsubscribe any time)"
-    view_offer: "View offer"
-    curated_offers: "Curated offers"
-    today_in: "Today in %{city}"
+    email_placeholder: your@email.com
+    subscribe: Subscribe
+    title: City updates
+    body: News and deals from your city, once a week.
+    marketing_consent: I agree to receive deals and partner offers (optional, unsubscribe
+      any time)
+    view_offer: View offer
+    curated_offers: Curated offers
+    today_in: Today in %{city}
   pwa:
-    home: "Home"
-    new: "New"
-    post: "Post"
-    listing: "Listing"
-    feed: "Feed"
-    playlists: "Playlists"
-    new_playlist: "New playlist"
-    sets: "Sets"
-    discover: "Discover"
-    matches: "Matches"
-    profile: "Profile"
-    live: "Live"
-    listings: "Listings"
-    new_listing: "New listing"
-    restaurants: "Restaurants"
-    map: "Map"
-    inbox: "Inbox"
-    activity: "Activity"
-    desc_playlist: "Playlists, sets, and radio for %{city}."
-    desc_dating: "Dating in %{city}."
-    desc_tv: "Live streams and channels for %{city}."
-    desc_marketplace: "Marketplace for %{city}."
-    desc_takeaway: "Takeaway for %{city}."
-    desc_maps: "Maps for %{city}."
-    desc_messenger: "Messages for %{city}."
+    home: Home
+    new: New
+    post: Post
+    listing: Listing
+    feed: Feed
+    playlists: Playlists
+    new_playlist: New playlist
+    sets: Sets
+    discover: Discover
+    matches: Matches
+    profile: Profile
+    live: Live
+    listings: Listings
+    new_listing: New listing
+    restaurants: Restaurants
+    map: Map
+    inbox: Inbox
+    activity: Activity
+    desc_playlist: Playlists, sets, and radio for %{city}.
+    desc_dating: Dating in %{city}.
+    desc_tv: Live streams and channels for %{city}.
+    desc_marketplace: Marketplace for %{city}.
+    desc_takeaway: Takeaway for %{city}.
+    desc_maps: Maps for %{city}.
+    desc_messenger: Messages for %{city}.
   live:
-    page_title: "Live · nearby"
-    heading: "Live"
-    header_label: "Live feed header"
-    kicker: "What’s happening around you — short, anonymous, vote-ranked."
-    within_km: "Within %{km} km."
-    enable_location_hint: "Enable location for the nearby bubble."
-    sort_label: "Live sort"
-    sort_hot: "Hot"
-    sort_new: "New"
-    also_open: "Also open without signup"
-    rules_label: "Live rules"
-    rules_summary: "Local & anonymous — ground rules"
-    rule_names: "No real names, addresses, or doxxing of private people."
-    rule_short: "Posts are short (max %{max} chars) and shown as anon."
-    rule_gps: "Exact GPS is coarsened — only a rough area is stored."
-    rule_votes: "Upvotes surface useful local signal; downvotes bury spam."
-    compose_label: "Post to Live as anon"
-    compose_placeholder: "What’s going on near you?"
-    compose_hint: "Local · anonymous · no signup needed"
-    post_live: "Post Live"
-    share_to_post_title: "Share location to post"
-    share_to_post_body: "A rough position keeps your note to people nearby. Your exact location is never shown."
-    feed_label: "Live posts nearby"
-    vote_label: "Vote, score %{score}"
-    comment_label: "Comment"
-    empty_located_title: "Quiet around here"
-    empty_located_body: "Be the first to drop a short anonymous note nearby."
-    empty_waiting_title: "Waiting for the first Live notes"
-    empty_waiting_body: "Enable location or check back when locals start posting."
+    page_title: Live · nearby
+    heading: Live
+    header_label: Live feed header
+    kicker: What’s happening around you — short, anonymous, vote-ranked.
+    within_km: Within %{km} km.
+    enable_location_hint: Enable location for the nearby bubble.
+    sort_label: Live sort
+    sort_hot: Hot
+    sort_new: New
+    also_open: Also open without signup
+    rules_label: Live rules
+    rules_summary: Local & anonymous — ground rules
+    rule_names: No real names, addresses, or doxxing of private people.
+    rule_short: Posts are short (max %{max} chars) and shown as anon.
+    rule_gps: Exact GPS is coarsened — only a rough area is stored.
+    rule_votes: Upvotes surface useful local signal; downvotes bury spam.
+    compose_label: Post to Live as anon
+    compose_placeholder: What’s going on near you?
+    compose_hint: Local · anonymous · no signup needed
+    post_live: Post Live
+    share_to_post_title: Share location to post
+    share_to_post_body: A rough position keeps your note to people nearby. Your exact
+      location is never shown.
+    feed_label: Live posts nearby
+    vote_label: Vote, score %{score}
+    comment_label: Comment
+    empty_located_title: Quiet around here
+    empty_located_body: Be the first to drop a short anonymous note nearby.
+    empty_waiting_title: Waiting for the first Live notes
+    empty_waiting_body: Enable location or check back when locals start posting.
   nearby:
     is_nearby_html: "%{handle} is nearby"
-    page_title: "Nearby"
-    live_link: "Live feed (anonymous notes nearby)"
-    prefer_room: "Prefer a room?"
-    channels_link: "Join a public channel →"
-    share_location_title: "Share your location"
-    share_location_body: "Find strangers within %{km} km and chat anonymously. Your exact position is never shown."
-    lobby_hint_before: "Or open the corner chat for"
+    page_title: Nearby
+    live_link: Live feed (anonymous notes nearby)
+    prefer_room: Prefer a room?
+    channels_link: Join a public channel →
+    share_location_title: Share your location
+    share_location_body: Find strangers within %{km} km and chat anonymously. Your
+      exact position is never shown.
+    lobby_hint_before: Or open the corner chat for
     lobby_hint_after: "— no GPS needed."
-    room_title: "Nearby chat room"
-    room_body: "Everyone within %{km} km, one shared room, anonymous."
-    join: "Join"
-    chat: "Chat"
+    room_title: Nearby chat room
+    room_body: Everyone within %{km} km, one shared room, anonymous.
+    join: Join
+    chat: Chat
     distance_away: "%{km} km away · anonymous"
-    push_title: "Someone nearby"
+    push_title: Someone nearby
     push_body: "%{handle} is within %{km} km — tap to chat"
-    empty_located_body: "Check back later — or drop a Live note while you wait."
-    open_live: "Open Live"
+    empty_located_body: Check back later — or drop a Live note while you wait.
+    open_live: Open Live
   install:
-    title: "Install Brgen"
-    body: "Live notes, marketplace, and nearby — one tap from your home screen."
-    not_now: "Not now"
-    action: "Install"
+    title: Install Brgen
+    body: Live notes, marketplace, and nearby — one tap from your home screen.
+    not_now: Not now
+    action: Install
   mailer:
-    confirm_subscription: "Confirm your subscription"
-    permission_marketing: "Permission marketing"
-    confirm_button: "Confirm subscription"
-    verify_welcome: "Welcome to Brgen."
-    verify_body: "Confirm this email address to start posting under your account:"
-    verify_cta: "Confirm my email"
-    verify_ignore: "If you didn’t create a Brgen account, ignore this message — nothing happens until you confirm."
+    confirm_subscription: Confirm your subscription
+    permission_marketing: Permission marketing
+    confirm_button: Confirm subscription
+    verify_welcome: Welcome to Brgen.
+    verify_body: 'Confirm this email address to start posting under your account:'
+    verify_cta: Confirm my email
+    verify_ignore: If you didn’t create a Brgen account, ignore this message — nothing
+      happens until you confirm.
     signoff: "— The Brgen editors"
-    not_you: "If you did not sign up, ignore this email."
+    not_you: If you did not sign up, ignore this email.
   pagination:
-    label: "Pagination"
-    previous: "Previous"
-    next: "Next"
-    position: "Page %{page} of %{pages}"
+    label: Pagination
+    previous: Previous
+    next: Next
+    position: Page %{page} of %{pages}
   compose:
-    add_photo: "Add photo"
-    record_video: "Record video"
-    record_audio: "Record audio"
+    add_photo: Add photo
+    record_video: Record video
+    record_audio: Record audio
   activity:
-    local_graph: "Local graph"
-    title: "Activity"
-    listing_created: "New listing"
-    takeaway_restaurant_created: "New restaurant"
-    marketplace_store_created: "New store"
-    marketplace_deal_created: "New deal"
-    video_published: "New video"
-    event_created: "New event"
-    post_created: "New post"
+    local_graph: Local graph
+    title: Activity
+    listing_created: New listing
+    takeaway_restaurant_created: New restaurant
+    marketplace_store_created: New store
+    marketplace_deal_created: New deal
+    video_published: New video
+    event_created: New event
+    post_created: New post
     verticals:
-      takeaway: "takeaway"
-      marketplace: "marketplace"
-      social: "posts"
-      tv: "TV"
-      dating: "dating"
-      playlist: "playlist"
-      maps: "maps"
+      takeaway: takeaway
+      marketplace: marketplace
+      social: posts
+      tv: TV
+      dating: dating
+      playlist: playlist
+      maps: maps
   a11y:
-    skip_to_content: "Skip to main content"
-    reports_header: "Reports"
-    report: "Report"
-    select_report: "Select report %{id}"
-    ai_assistant: "AI assistant"
-    unfollow_user: "Unfollow %{name}"
-    follow_user: "Follow %{name}"
-    sections: "Sections"
-    report_target: "Report %{type}"
-    user_profile: "User profile"
-  # Mirrors nb.yml's flash: block, key for key. RAILS/test/app_flash_i18n_test.rb
-  # fails if either file gains a key the other lacks.
+    skip_to_content: Skip to main content
+    reports_header: Reports
+    report: Report
+    select_report: Select report %{id}
+    ai_assistant: AI assistant
+    unfollow_user: Unfollow %{name}
+    follow_user: Follow %{name}
+    sections: Sections
+    report_target: Report %{type}
+    user_profile: User profile
   flash:
-    story_posted: "Story posted"
-    story_removed: "Story removed"
+    story_posted: Story posted
+    story_removed: Story removed
     community:
-      banned: "Banned"
-      ban_lifted: "Ban lifted"
-      no_such_person: "No such person"
-      not_a_member: "That person is not a member"
-      moderator_added: "Moderator added"
-      moderator_removed: "Moderator removed"
-      members_only: "Members only"
-    event_created: "Event created"
-    event_updated: "Event updated"
-    event_cancelled: "Event cancelled"
-    event_removed: "Event removed"
-    event_full: "That event is full"
-    # Flash messages from the five brgen engines. These were the last 49
-    # hardcoded English strings the controller_flash lint counted, shown over
-    # an nb UI. Nested per engine because that is how the call sites are
-    # organised; "Not allowed" and "Not authorized" became
-    # shared.flash.not_authorized rather than an eleventh copy.
+      banned: Banned
+      ban_lifted: Ban lifted
+      no_such_person: No such person
+      not_a_member: That person is not a member
+      moderator_added: Moderator added
+      moderator_removed: Moderator removed
+      members_only: Members only
+    event_created: Event created
+    event_updated: Event updated
+    event_cancelled: Event cancelled
+    event_removed: Event removed
+    event_full: That event is full
     dating:
-      prompt_saved: "Answer saved"
-      prompt_removed: "Answer removed"
-      profile_created: "Profile created."
-      profile_updated: "Profile updated."
-      rewound: "Last pass undone."
-      nothing_to_rewind: "Nothing to rewind."
+      prompt_saved: Answer saved
+      prompt_removed: Answer removed
+      profile_created: Profile created.
+      profile_updated: Profile updated.
+      rewound: Last pass undone.
+      nothing_to_rewind: Nothing to rewind.
     marketplace:
-      address_saved: "Address saved"
-      address_default: "Default address set"
-      address_removed: "Address removed"
-      address_needed: "Add a delivery address first"
-      cart_empty: "Your cart is empty."
-      cart_not_payable: "Nothing in the cart can be paid for."
-      unknown_provider: "Unknown payment provider."
-      checkout_failed: "Checkout failed: %{message}"
-      payment_recorded: "Payment %{status} via %{provider}."
-      listing_saved: "Listing saved."
-      listing_unsaved: "Listing removed from saved."
-      listing_published: "Listing published."
-      listing_renewed: "Listing renewed."
-      offer_sent: "Offer sent."
+      address_saved: Address saved
+      address_default: Default address set
+      address_removed: Address removed
+      address_needed: Add a delivery address first
+      cart_empty: Your cart is empty.
+      cart_not_payable: Nothing in the cart can be paid for.
+      unknown_provider: Unknown payment provider.
+      checkout_failed: 'Checkout failed: %{message}'
+      payment_recorded: Payment %{status} via %{provider}.
+      listing_saved: Listing saved.
+      listing_unsaved: Listing removed from saved.
+      listing_published: Listing published.
+      listing_renewed: Listing renewed.
+      offer_sent: Offer sent.
       offers_sent:
-        one: "Sent 1 offer to the seller."
-        other: "Sent %{count} offers to sellers."
-      offer_failed: "Could not send the offer."
-      review_saved: "Review saved."
-      search_saved: "Search saved."
-      search_deleted: "Saved search deleted."
+        one: Sent 1 offer to the seller.
+        other: Sent %{count} offers to sellers.
+      offer_failed: Could not send the offer.
+      review_saved: Review saved.
+      search_saved: Search saved.
+      search_deleted: Saved search deleted.
       payment_statuses:
-        unpaid: "unpaid"
-        pending: "pending"
-        paid: "paid"
-        failed: "failed"
-        refunded: "refunded"
+        unpaid: unpaid
+        pending: pending
+        paid: paid
+        failed: failed
+        refunded: refunded
     playlist:
-      user_not_found: "User not found."
-      collaborator_added: "Collaborator added."
-      collaborator_removed: "Collaborator removed."
-      party_started: "Listening party started."
-      party_code_required: "That party needs a join code."
-      party_ended: "Listening party ended."
-      message_failed: "Message could not be sent."
-      playlist_created: "Playlist created."
-      track_added: "Track added."
+      user_not_found: User not found.
+      collaborator_added: Collaborator added.
+      collaborator_removed: Collaborator removed.
+      party_started: Listening party started.
+      party_code_required: That party needs a join code.
+      party_ended: Listening party ended.
+      message_failed: Message could not be sent.
+      playlist_created: Playlist created.
+      track_added: Track added.
     takeaway:
-      restaurant_saved: "Restaurant saved."
-      restaurant_unsaved: "Restaurant removed from saved."
-      menu_item_added: "Menu item added."
-      order_placed: "Order placed."
-      closed_now: "The kitchen is closed right now."
-      reorder_empty: "Nothing from that order is still on the menu."
-      restaurant_created: "Restaurant created."
-      not_the_owner: "You do not own this restaurant."
-      review_requires_sign_in: "Sign in to leave a review."
-      review_requires_delivery: "You can review after a delivered order."
-      review_saved: "Review saved."
+      restaurant_saved: Restaurant saved.
+      restaurant_unsaved: Restaurant removed from saved.
+      menu_item_added: Menu item added.
+      order_placed: Order placed.
+      closed_now: The kitchen is closed right now.
+      reorder_empty: Nothing from that order is still on the menu.
+      restaurant_created: Restaurant created.
+      not_the_owner: You do not own this restaurant.
+      review_requires_sign_in: Sign in to leave a review.
+      review_requires_delivery: You can review after a delivered order.
+      review_saved: Review saved.
     tv:
-      channel_created: "Channel created."
-      comment_added: "Comment added."
-      video_uploaded: "Video uploaded."
-    no_such_channel: "No such channel."
-    community_created: "Community created."
-    community_updated: "Community updated."
-    community_removed: "Community removed."
-    disappearing_messages_updated: "Disappearing messages updated."
-    settings_update_failed: "Could not update settings."
-    channel_ttl_locked: "Public rooms keep disappearing messages on."
-    user_not_found: "User not found."
-    confirm_your_inbox: "Check your inbox to confirm."
-    already_subscribed: "Already subscribed."
-    already_confirmed: "Already confirmed."
-    subscribed: "Subscribed — you'll receive city updates."
-    unsubscribed: "Unsubscribed."
-    live_rate_limited: "Slow down — too many Live posts. Try again shortly."
-    location_required_to_post: "Enable location to post on Live."
-    anonymous_post_limit: "Sign up to post more (%{limit} anonymous posts per browser)."
-    post_blocked_by_moderation: "Post blocked by moderation."
-    link_requires_verified_account: "Sign in and confirm your email address to post links or offers."
-    posted_to_live: "Posted to Live."
-    checked_in_at: "Checked in at %{place}."
-    check_in_failed: "Could not check in."
-    messages_rate_limited: "Slow down — too many messages. Try again shortly."
-    chats_rate_limited: "Slow down — too many chats started. Try again shortly."
-    listings_rate_limited: "Slow down — too many listings. Try again shortly."
-    location_required_for_nearby: "Enable location to join the nearby chat room."
-    thats_you: "That's you."
-    no_longer_nearby: "That person isn't nearby anymore."
-    program_not_open: "This program is not open."
-    already_joined_program: "You already joined this program."
-    application_submitted: "Application submitted."
-    partner_program_created: "Partner program created."
-    program_updated: "Program updated."
-    posted: "Posted."
-    shared_into_draft: "Shared into a draft."
-    draft_failed: "Could not create draft."
-    content_unavailable: "That content is no longer available."
-    report_submitted: "Report submitted."
-    welcome: "Welcome to Brgen."
+      channel_created: Channel created.
+      comment_added: Comment added.
+      video_uploaded: Video uploaded.
+    no_such_channel: No such channel.
+    community_created: Community created.
+    community_updated: Community updated.
+    community_removed: Community removed.
+    disappearing_messages_updated: Disappearing messages updated.
+    settings_update_failed: Could not update settings.
+    channel_ttl_locked: Public rooms keep disappearing messages on.
+    user_not_found: User not found.
+    confirm_your_inbox: Check your inbox to confirm.
+    already_subscribed: Already subscribed.
+    already_confirmed: Already confirmed.
+    subscribed: Subscribed — you'll receive city updates.
+    unsubscribed: Unsubscribed.
+    live_rate_limited: Slow down — too many Live posts. Try again shortly.
+    location_required_to_post: Enable location to post on Live.
+    anonymous_post_limit: Sign up to post more (%{limit} anonymous posts per browser).
+    post_blocked_by_moderation: Post blocked by moderation.
+    link_requires_verified_account: Sign in and confirm your email address to post
+      links or offers.
+    posted_to_live: Posted to Live.
+    checked_in_at: Checked in at %{place}.
+    check_in_failed: Could not check in.
+    messages_rate_limited: Slow down — too many messages. Try again shortly.
+    chats_rate_limited: Slow down — too many chats started. Try again shortly.
+    listings_rate_limited: Slow down — too many listings. Try again shortly.
+    location_required_for_nearby: Enable location to join the nearby chat room.
+    thats_you: That's you.
+    no_longer_nearby: That person isn't nearby anymore.
+    program_not_open: This program is not open.
+    already_joined_program: You already joined this program.
+    application_submitted: Application submitted.
+    partner_program_created: Partner program created.
+    program_updated: Program updated.
+    posted: Posted.
+    shared_into_draft: Shared into a draft.
+    draft_failed: Could not create draft.
+    content_unavailable: That content is no longer available.
+    report_submitted: Report submitted.
+    welcome: Welcome to Brgen.
   restricted:
-    title: "Members only"
-    body: "This is only for members of this space."
+    title: Members only
+    body: This is only for members of this space.
   block:
-    block: "Block"
-    unblock: "Unblock"
+    block: Block
+    unblock: Unblock
   bookmark:
-    empty_body: "Tap Save on any post to keep it here."
-    empty_title: "Nothing saved yet"
-    save: "Save"
-    saved: "Saved."
-    saved_title: "Saved"
-    unsave: "Unsave"
-    removed: "Removed."
+    empty_body: Tap Save on any post to keep it here.
+    empty_title: Nothing saved yet
+    save: Save
+    saved: Saved.
+    saved_title: Saved
+    unsave: Unsave
+    removed: Removed.
   common:
-    close: "Close"
+    close: Close
   community:
-    confirm_ban: "Ban this person from the community?"
-    bans: "Banned people"
-    ban_author: "Ban"
-    lift_ban: "Lift"
-    ban_reason: "Reason"
-    ban_days: "Days (blank = permanent)"
-    banned_notification: "You can no longer post in %{community}"
-    ban_permanent: "Permanent"
-    ban_until: "Until %{time}"
-    banned_here: "You are banned from this community."
-    no_bans: "Nobody is banned"
-    rules: "Rules"
-    rules_hint: "One rule per line."
-    flairs: "Flair"
-    flairs_hint: "One label per line. Used to filter posts."
-    filter_by_flair: "Filter by flair"
-    all_flair: "All"
-    privacy: "Visibility"
-    privacy_hint: "Restricted: anyone reads, members post. Private: members only."
+    confirm_ban: Ban this person from the community?
+    bans: Banned people
+    ban_author: Ban
+    lift_ban: Lift
+    ban_reason: Reason
+    ban_days: Days (blank = permanent)
+    banned_notification: You can no longer post in %{community}
+    ban_permanent: Permanent
+    ban_until: Until %{time}
+    banned_here: You are banned from this community.
+    no_bans: Nobody is banned
+    rules: Rules
+    rules_hint: One rule per line.
+    flairs: Flair
+    flairs_hint: One label per line. Used to filter posts.
+    filter_by_flair: Filter by flair
+    all_flair: All
+    privacy: Visibility
+    privacy_hint: 'Restricted: anyone reads, members post. Private: members only.'
     privacy_options:
-      public: "Public"
-      restricted: "Restricted"
-      private: "Private"
-    icon: "Icon"
-    banner: "Banner"
-    mod_queue: "Mod queue"
-    moderators: "Moderators"
-    moderators_hint: "Only the owner can appoint and remove moderators."
-    make_moderator: "Make moderator"
-    remove_moderator: "Remove as moderator"
-    owner_locked: "Owner"
-    moderator_appointed: "You are a moderator of %{community}"
-    moderator_appointed_body: "You can now work reports and edit the rules."
-    members_only_posting: "Only members can post here."
-    reported: "Reported"
-    reason: "Reason"
-    status: "Status"
-    action: "Action"
-    subject_gone: "The content is gone"
-    mark_reviewing: "Reviewing"
-    mark_resolved: "Resolve"
-    mark_open: "Open"
-    mark_dismissed: "Dismiss"
-    mark_dismissed: "Dismiss"
-    queue_empty: "Nothing in the queue"
-    queue_empty_body: "Reports from this community show up here."
-    back_to_community: "Back to %{community}"
+      public: Public
+      restricted: Restricted
+      private: Private
+    icon: Icon
+    banner: Banner
+    mod_queue: Mod queue
+    moderators: Moderators
+    moderators_hint: Only the owner can appoint and remove moderators.
+    make_moderator: Make moderator
+    remove_moderator: Remove as moderator
+    owner_locked: Owner
+    moderator_appointed: You are a moderator of %{community}
+    moderator_appointed_body: You can now work reports and edit the rules.
+    members_only_posting: Only members can post here.
+    reported: Reported
+    reason: Reason
+    status: Status
+    action: Action
+    subject_gone: The content is gone
+    mark_reviewing: Reviewing
+    mark_resolved: Resolve
+    mark_open: Open
+    mark_dismissed: Dismiss
+    queue_empty: Nothing in the queue
+    queue_empty_body: Reports from this community show up here.
+    back_to_community: Back to %{community}
     open_count:
       one: "%{count} open"
       other: "%{count} open"
@@ -1408,46 +1423,88 @@ en:
       one: "%{count} reviewing"
       other: "%{count} reviewing"
     role:
-      member: "Member"
-      moderator: "Moderator"
-      owner: "Owner"
-    join: "Join"
-    leave: "Leave"
-    no_bans_body: "Bans from this community show up here."
-    header: "Community"
+      member: Member
+      moderator: Moderator
+      owner: Owner
+    join: Join
+    leave: Leave
+    no_bans_body: Bans from this community show up here.
+    header: Community
     posts_count:
       one: "%{count} post"
       other: "%{count} posts"
     members_count:
       one: "%{count} member"
       other: "%{count} members"
-    new_post: "New post in %{name}"
+    new_post: New post in %{name}
   hashtag:
     count: "%{count} posts"
-    empty_body: "No posts use #%{name} yet."
-    empty_title: "Nothing here yet"
-    also_in_city: "Communities in %{city}"
+    empty_body: 'No posts use #%{name} yet.'
+    empty_title: Nothing here yet
+    also_in_city: Communities in %{city}
   profile:
-    activity: "Recent activity"
-    display_name: "Display name"
-    edit: "Edit profile"
-    username: "Username"
-    across_the_city: "Across the city"
-    stores: "Shops"
-    listings: "Listings"
-    restaurants: "Restaurants"
-    channels: "Channels"
-    playlists: "Playlists"
-    posts: "Posts"
+    activity: Recent activity
+    display_name: Display name
+    edit: Edit profile
+    username: Username
+    across_the_city: Across the city
+    stores: Shops
+    listings: Listings
+    restaurants: Restaurants
+    channels: Channels
+    playlists: Playlists
+    posts: Posts
     followers:
       one: "%{count} follower"
       other: "%{count} followers"
     following:
-      one: "following %{count}"
-      other: "following %{count}"
+      one: following %{count}
+      other: following %{count}
   showcase:
-    devices: "The app on desktop and mobile"
+    devices: The app on desktop and mobile
   admin:
-    reports_title: "Moderation reports"
-    moderation: "Admin / moderation"
-    reported_by: "by %{name}"
+    reports_title: Moderation reports
+    moderation: Admin / moderation
+    reported_by: by %{name}
+  aria:
+    channel: Channel
+    conversations: Conversations
+    react: React
+    brgen_dating: Brgen dating
+    profile_sections: Profile sections
+    places: Places
+    place_details_header: Place details header
+    place_navigation: Place navigation
+    place_information: Place information
+    marketplace_category_header: Marketplace category header
+    category_listings: Category listings
+    featured_deals: Featured deals
+    categories: Categories
+    listings: Listings
+    new_marketplace_listing_header: New marketplace listing header
+    listing_actions: Listing actions
+    order_details_header: Order details header
+    order_messages: Order messages
+    saved_searches_header: Saved searches header
+    stores_list: Stores list
+    store_listings: Store listings
+    track_management: Track management
+    track_analytics: Track analytics
+    playlist_library: Playlist library
+    close_library: Close library
+    timestamped_comments: Timestamped comments
+    playlist_navigation: Playlist navigation
+    git_archaeology_log: Git archaeology log
+    new_playlist_header: New playlist header
+    playlist_sets_header: Playlist sets header
+    playlist_set_actions: Playlist set actions
+    collaborators: Collaborators
+    dilla_sketches: Dilla sketches
+    delivery_drivers_header: Delivery drivers header
+    delivery_drivers: Delivery drivers
+    my_orders_header: My orders header
+    order_history: Order history
+    channel_videos: Channel videos
+    trending_videos: Trending videos
+    trending_content: Trending content
+    recent_content: Recent content

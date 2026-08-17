@@ -4,7 +4,7 @@
 %>
 <% collaborations = local_assigns[:collaborations] || parent.collaborations %>
 <% can_manage = local_assigns.fetch(:can_manage) { authenticated? && (Current.user == parent.user || collaborations.exists?(user: Current.user, role: %w[owner editor])) } %>
-<section role="region" aria-label="Collaborators">
+<section role="region" aria-label="<%= t("aria.collaborators") %>">
   <h2>Collaborators</h2>
   <% if collaborations.any? %>
     <% collaborations.includes(:user).each do |c| %>

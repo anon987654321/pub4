@@ -139,10 +139,10 @@ module Pub4
       # 107 -> 105 on 2026-08-16. Two aria-labels were translated on main and
       # the baseline did not follow them down, which is the half of this ratchet
       # that keeps it honest: a floor nobody lowers stops being a floor.
-      # 95 -> 74: twenty-one aria-labels became keys — follow, report, the nav
-      # sections, the AI link, profile, admin reports, and the takeaway and tv
-      # engines. Measured on this tree rather than carried from the branch.
-      "aria_label" => 74,
+      # 34 is what is left after every literal aria-label in brgen and its five
+      # verticals became an aria.* key. The remainder is amber, bsdports and
+      # shared, measured on this tree.
+      "aria_label" => 34,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps

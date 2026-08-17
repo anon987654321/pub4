@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "tv-channel-videos", target: "_top" do %>
-  <section id="tv-channel-videos" class="video-grid" role="list" aria-label="Channel videos">
+  <section id="tv-channel-videos" class="video-grid" role="list" aria-label="<%= t("aria.channel_videos") %>">
     <% @videos.each do |video| %>
       <%= render "tv/videos/tv_video", tv_video: video %>
     <% end %>

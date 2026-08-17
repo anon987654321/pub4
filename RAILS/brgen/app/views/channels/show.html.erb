@@ -4,7 +4,7 @@
 <%= turbo_stream_from @conversation %>
 <% content_for :body_attrs do %>data-push-seen="true"<% end %>
 
-<section class="channel-room" aria-label="Channel">
+<section class="channel-room" aria-label="<%= t("aria.channel") %>">
   <header class="channel-room-header" role="banner">
     <%= link_to t("messages.back_channels"), channels_path, class: "channel-back" %>
     <h1><%= @conversation.channel_title %></h1>

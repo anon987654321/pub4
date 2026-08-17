@@ -1,284 +1,283 @@
-# 55 of the keys below were added 2026-08-12. Each already had a call site
-# passing an English string as its t() default, and no nb entry — so the
-# default is what a Norwegian visitor read. They are spread through the
-# sections rather than gathered in one block, because the next person to
-# add a key belongs in the section, not in an appendix.
-#
-# RAILS/test/nb_locale_completeness_test.rb fails if a t() call's whole
-# default chain is missing from this file again.
+---
 nb:
   errors:
     messages:
-      last_owner: "kan ikke fjernes — fellesskapet ville stå uten eier"
-      before_start: "kan ikke være før start"
-    not_found_title: "Siden finnes ikke"
-    not_found_body: "Adressen matcher ingen side. Prøv hjem, Live eller markedsplassen."
-    unprocessable_title: "Kunne ikke behandle det"
-    unprocessable_body: "Noe i forespørselen var ugyldig. Gå tilbake og prøv igjen."
-    server_title: "Noe gikk galt"
-    server_body: "Vi traff en uventet feil. Prøv igjen om et øyeblikk."
-    go_home: "Hjem"
-    go_live: "Live"
-    go_marketplace: "Markedsplass"
-    go_search: "Søk"
-    retry: "Prøv igjen"
+      last_owner: kan ikke fjernes — fellesskapet ville stå uten eier
+      before_start: kan ikke være før start
+    not_found_title: Siden finnes ikke
+    not_found_body: Adressen matcher ingen side. Prøv hjem, Live eller markedsplassen.
+    unprocessable_title: Kunne ikke behandle det
+    unprocessable_body: Noe i forespørselen var ugyldig. Gå tilbake og prøv igjen.
+    server_title: Noe gikk galt
+    server_body: Vi traff en uventet feil. Prøv igjen om et øyeblikk.
+    go_home: Hjem
+    go_live: Live
+    go_marketplace: Markedsplass
+    go_search: Søk
+    retry: Prøv igjen
   time:
     formats:
       event: "%-d. %b kl. %H:%M"
-  hello: "Hei"
+  hello: Hei
   affiliate:
-    deals_title: "Tilbud"
-    deal_alt: "Partnertilbud"
-    placeholder_notice: "Eksempeloppføring — ikke en sporet partnerlenke"
-    sponsored: "Annonse"
-    feed_unit_label: "Sponsede produkter"
+    deals_title: Tilbud
+    deal_alt: Partnertilbud
+    placeholder_notice: Eksempeloppføring — ikke en sporet partnerlenke
+    sponsored: Annonse
+    feed_unit_label: Sponsede produkter
     cta:
-      buy: "Kjøp nå!"
-      happy: "Bli glad!"
-      good: "Føl deg bra!"
+      buy: Kjøp nå!
+      happy: Bli glad!
+      good: Føl deg bra!
   legal:
-    aria: "Juridisk og informasjon"
-    privacy: "Personvern"
-    terms: "Vilkår"
-    cookies: "Informasjonskapsler"
-    site_id_label: "TradeDoubler nettsted-ID"
-    contact_label: "Kontakt"
+    aria: Juridisk og informasjon
+    privacy: Personvern
+    terms: Vilkår
+    cookies: Informasjonskapsler
+    site_id_label: TradeDoubler nettsted-ID
+    contact_label: Kontakt
   app:
-    name: "Brgen"
+    name: Brgen
   feed:
-    title: "Lokale nyheter"
-    compose_prompt: "Del noe spennende nå"
-    compose_title: "Opprett innlegg"
-    add_to_post: "Legg til i innlegget"
-    posting_as_guest: "Anon"
-    post_action: "Publiser"
-    guest_hint: "Poster som anon · %{remaining} av %{limit} innlegg igjen i denne nettleseren"
-    guest_limit_why: "Grensen bremser spam uten å kreve konto."
-    advanced_post: "Utvidet innlegg med bilde"
-    your_feed: "Din strøm"
+    title: Lokale nyheter
+    compose_prompt: Del noe spennende nå
+    compose_title: Opprett innlegg
+    add_to_post: Legg til i innlegget
+    posting_as_guest: Anon
+    post_action: Publiser
+    guest_hint: Poster som anon · %{remaining} av %{limit} innlegg igjen i denne nettleseren
+    guest_limit_why: Grensen bremser spam uten å kreve konto.
+    advanced_post: Utvidet innlegg med bilde
+    your_feed: Din strøm
   nav:
-    pagination: "Sidenavigasjon"
-    trending_tags: "Populære emneknagger"
-    home: "Hjem"
-    explore: "Utforsk"
-    notifications: "Varsler"
-    sign_in: "Logg inn"
-    sign_out: "Logg ut"
-    new_post: "Nytt innlegg"
-    communities: "Fellesskap"
-    hide: "Skjul"
+    pagination: Sidenavigasjon
+    trending_tags: Populære emneknagger
+    home: Hjem
+    explore: Utforsk
+    notifications: Varsler
+    sign_in: Logg inn
+    sign_out: Logg ut
+    new_post: Nytt innlegg
+    communities: Fellesskap
+    hide: Skjul
     new_community: "+ Nytt fellesskap"
-    messages: "Meldinger"
-    nearby: "I nærheten"
-    events: "Hva skjer"
-    stories: "Historier"
-    profile: "Profil"
-    more: "Mer"
-    post: "Post"
-    channels: "Kanaler"
-    ai_assistant: "AI-assistent"
-    search: "Søk"
-    search_placeholder: "Søk i Brgen"
-    show_sidebar: "Vis sidemeny"
-    show_widgets: "Vis widgets"
-    show_menu: "Vis meny"
-    menu_coach: "Menyen er nederst — trykk på stripen eller scroll opp."
-    menu_coach_dismiss: "Skjønner"
-    mobile_nav: "Mobilnavigasjon"
-    primary_nav: "Hovednavigasjon"
-    sidebar: "Sidemeny"
-    widgets: "Widgets"
-    quick_actions: "Hurtighandlinger"
-    brand_home: "Brgen hjem"
-    main: "Hovedinnhold"
-    city_network: "By-nettverk"
-    oauth_options: "Innloggingsvalg"
-    oauth_or_email: "eller e-post"
-    oauth_vipps: "Logg inn med Vipps"
-    takeaway: "takeaway"
-    marketplace: "markedsplass"
-    oauth_google: "Logg inn med Google"
-    oauth_snapchat: "Logg inn med Snapchat"
-    oauth_github: "Logg inn med GitHub"
+    messages: Meldinger
+    nearby: I nærheten
+    events: Hva skjer
+    stories: Historier
+    profile: Profil
+    more: Mer
+    post: Post
+    channels: Kanaler
+    ai_assistant: AI-assistent
+    search: Søk
+    search_placeholder: Søk i Brgen
+    show_sidebar: Vis sidemeny
+    show_widgets: Vis widgets
+    show_menu: Vis meny
+    menu_coach: Menyen er nederst — trykk på stripen eller scroll opp.
+    menu_coach_dismiss: Skjønner
+    mobile_nav: Mobilnavigasjon
+    primary_nav: Hovednavigasjon
+    sidebar: Sidemeny
+    widgets: Widgets
+    quick_actions: Hurtighandlinger
+    brand_home: Brgen hjem
+    main: Hovedinnhold
+    city_network: By-nettverk
+    oauth_options: Innloggingsvalg
+    oauth_or_email: eller e-post
+    oauth_vipps: Logg inn med Vipps
+    takeaway: takeaway
+    marketplace: markedsplass
+    oauth_google: Logg inn med Google
+    oauth_snapchat: Logg inn med Snapchat
+    oauth_github: Logg inn med GitHub
     opens_new_tab: "%{label} (åpnes i ny fane)"
-  skip_to_content: "Hopp til hovedinnhold"
+  skip_to_content: Hopp til hovedinnhold
   home:
-    feed_communities: "Fellesskap"
-    feed_following: "Følger"
-    feed_hot: "Hot"
-    feed_sort: "Strøm"
+    feed_communities: Fellesskap
+    feed_following: Følger
+    feed_hot: Hot
+    feed_sort: Strøm
     intro_title: "%{city}, akkurat nå"
-    live: "Live"
-    marketplace: "Markedsplass"
-    messages: "Meldinger"
+    live: Live
+    marketplace: Markedsplass
+    messages: Meldinger
     no_signup: " — ingen registrering"
-    ask_ai: "Spør Brgen AI"
-    follow_sign_in: "Logg inn"
+    ask_ai: Spør Brgen AI
+    follow_sign_in: Logg inn
     follow_hint: " for å se innlegg fra folk du følger."
-    local_posts: "Lokale innlegg"
-    today_empty: "Ingenting nytt i byen ennå."
+    local_posts: Lokale innlegg
+    today_empty: Ingenting nytt i byen ennå.
   auth:
-    sign_in: "Logg inn"
-    sign_in_lead: "Du kan lese og poste uten konto. Logg inn for å beholde innleggene og heve gjestegrensen."
-    email: "E-post"
-    password: "Passord"
-    create_account: "Opprett konto"
-    forgot_password: "Glemt passord?"
-    create_lead: "Du kan lese og poste uten konto. En konto løfter den anonyme grensen og beholder det du allerede har skrevet."
-    username_optional: "Brukernavn (valgfritt)"
-    confirm_password: "Bekreft passord"
-    already_have_account: "Har du allerede konto? Logg inn"
-    forgot_title: "Glemt passord?"
-    forgot_lead: "Vi sender en lenke for å sette nytt passord."
-    email_reset: "Send tilbakestilling på e-post"
-    back_to_sign_in: "Tilbake til innlogging"
-    update_password: "Oppdater passord"
-    update_password_lead: "Velg et nytt passord for kontoen din."
-    new_password: "Nytt passord"
-    save_password: "Lagre passord"
+    sign_in: Logg inn
+    sign_in_lead: Du kan lese og poste uten konto. Logg inn for å beholde innleggene
+      og heve gjestegrensen.
+    email: E-post
+    password: Passord
+    create_account: Opprett konto
+    forgot_password: Glemt passord?
+    create_lead: Du kan lese og poste uten konto. En konto løfter den anonyme grensen
+      og beholder det du allerede har skrevet.
+    username_optional: Brukernavn (valgfritt)
+    confirm_password: Bekreft passord
+    already_have_account: Har du allerede konto? Logg inn
+    forgot_title: Glemt passord?
+    forgot_lead: Vi sender en lenke for å sette nytt passord.
+    email_reset: Send tilbakestilling på e-post
+    back_to_sign_in: Tilbake til innlogging
+    update_password: Oppdater passord
+    update_password_lead: Velg et nytt passord for kontoen din.
+    new_password: Nytt passord
+    save_password: Lagre passord
   chat:
-    roster: "I denne kanalen"
-    title: "chat"
-    nearby_tab: "nærheten"
-    close: "Lukk"
-    loading: "Laster rommet…"
-    lobby_title: "By-lobby"
-    lobby_body: "Anonym chat uten GPS. Del posisjon når som helst for det hyperlokale rommet."
-    nearby_title: "Du er i nærheten-rommet"
-    nearby_body: "Ingen meldinger ennå innen ~10 km. Si hei — ingen registrering."
-    use_location: "Bruk posisjon"
-    refresh_location: "Oppdater posisjon"
-    city_lobby: "by-lobby"
-    sign_in_inbox: "Logg inn for denne appens innboks, eller chat anonymt på Brgen."
-    open_brgen: "Åpne Brgen-chat"
-    open_brgen_channel: "Åpne #brgen"
-    open_inbox: "Åpne innboksen for å lese og sende meldinger i denne appen."
-    open_messages: "Åpne meldinger"
-    on_brgen: "Chat på Brgen"
-    recovery_body: "Kunne ikke åpne hjørnerommet. Bruk by-lobbyen i stedet — ingen registrering."
-    placeholder: "Melding som %{handle}…"
-    channel_placeholder: "Melding i %{name} som %{handle}…"
-    dm_placeholder: "Send en melding…"
-    message_label: "Melding"
-    log_label: "Meldinger"
-    anon: "anon"
-    posting_as: "Poster som"
-    no_signup: "ingen registrering"
-    anyone_join: "Alle kan bli med — ingen registrering."
-    join_room: "Bli med i rommet"
-    status_asking: "Ber om posisjon…"
-    status_denied: "Posisjon blokkert — blir i #brgen. Slå på posisjon i nettleseren for #nearby."
-    status_timeout: "Posisjon tok for lang tid — blir i #brgen."
-    status_unavailable: "Posisjon utilgjengelig — blir i #brgen."
-    status_blocked: "Denne siden kan ikke lese posisjon — #brgen fungerer fortsatt."
-    status_server: "Kunne ikke lagre posisjon — prøv igjen."
-    status_network: "Nettverksfeil ved lagring av posisjon — prøv igjen."
+    roster: I denne kanalen
+    title: chat
+    nearby_tab: nærheten
+    close: Lukk
+    loading: Laster rommet…
+    lobby_title: By-lobby
+    lobby_body: Anonym chat uten GPS. Del posisjon når som helst for det hyperlokale
+      rommet.
+    nearby_title: Du er i nærheten-rommet
+    nearby_body: Ingen meldinger ennå innen ~10 km. Si hei — ingen registrering.
+    use_location: Bruk posisjon
+    refresh_location: Oppdater posisjon
+    city_lobby: by-lobby
+    sign_in_inbox: Logg inn for denne appens innboks, eller chat anonymt på Brgen.
+    open_brgen: Åpne Brgen-chat
+    open_brgen_channel: 'Åpne #brgen'
+    open_inbox: Åpne innboksen for å lese og sende meldinger i denne appen.
+    open_messages: Åpne meldinger
+    on_brgen: Chat på Brgen
+    recovery_body: Kunne ikke åpne hjørnerommet. Bruk by-lobbyen i stedet — ingen
+      registrering.
+    placeholder: Melding som %{handle}…
+    channel_placeholder: Melding i %{name} som %{handle}…
+    dm_placeholder: Send en melding…
+    message_label: Melding
+    log_label: Meldinger
+    anon: anon
+    posting_as: Poster som
+    no_signup: ingen registrering
+    anyone_join: Alle kan bli med — ingen registrering.
+    join_room: Bli med i rommet
+    status_asking: Ber om posisjon…
+    status_denied: 'Posisjon blokkert — blir i #brgen. Slå på posisjon i nettleseren
+      for #nearby.'
+    status_timeout: 'Posisjon tok for lang tid — blir i #brgen.'
+    status_unavailable: 'Posisjon utilgjengelig — blir i #brgen.'
+    status_blocked: 'Denne siden kan ikke lese posisjon — #brgen fungerer fortsatt.'
+    status_server: Kunne ikke lagre posisjon — prøv igjen.
+    status_network: Nettverksfeil ved lagring av posisjon — prøv igjen.
   notifications:
-    title: "Varsler"
-    mark_all: "Merk alle som lest"
-    empty_title: "Ingen varsler ennå"
-    empty_body: "Tilbud, ordrer og lokale oppdateringer vises her."
-    inbox_kicker: "Brgen-innboks"
-    open: "Åpne"
-    mark_as_read: "Merk varsel som lest"
-    aria: "Varsel"
+    title: Varsler
+    mark_all: Merk alle som lest
+    empty_title: Ingen varsler ennå
+    empty_body: Tilbud, ordrer og lokale oppdateringer vises her.
+    inbox_kicker: Brgen-innboks
+    open: Åpne
+    mark_as_read: Merk varsel som lest
+    aria: Varsel
     unread_count:
       one: "%{count} ulest"
       other: "%{count} uleste"
   tv:
     feed:
-      title: "Strøm"
-      sound_on: "Lyd"
-      empty_title: "Ingen videoer ennå"
-      empty_body: "Når noen laster opp noe, dukker det opp her."
-      empty_action: "Se kanaler"
+      title: Strøm
+      sound_on: Lyd
+      empty_title: Ingen videoer ennå
+      empty_body: Når noen laster opp noe, dukker det opp her.
+      empty_action: Se kanaler
       views:
         one: "%{count} visning"
         other: "%{count} visninger"
     live_streams:
-      chat: "Chat"
-      new: "Ny direktesending"
-      title: "Direktesendinger"
+      chat: Chat
+      new: Ny direktesending
+      title: Direktesendinger
       viewers: "%{count} seere"
-    create_channel: "Opprett kanal"
-    upload: "Last opp"
-    note_placeholder: "Tidsstemplet notat…"
-    save_note: "Lagre notat"
-    comment_placeholder: "Skriv noe…"
-    post_comment: "Publiser kommentar"
-    subscribe: "Abonner"
-    unsubscribe: "Avmeld"
-    live_badge: "Direkte"
-    live_now: "Direkte nå"
-    live_streams_label: "Direktesendinger nå"
-    channel_subtitle: "Brgen TV-kanal"
-    edit_channel: "Rediger kanal"
-    new_channel: "Ny kanal"
-    upload_video: "Last opp video"
-    shows_on: "Serier på %{channel}"
-    uploading_to_html: "Laster opp til %{channel}"
-    no_description: "Denne kanalen har ikke lagt til en beskrivelse ennå."
-    home_blurb: "Lokale kanaler, programmer og direktesendte scener — se uten konto."
-    home_title: "TV"
-    channels_title: "Kanaler"
-    shows_title: "Serier"
-    thumbnail_hint: "postpro.rb graderer miniatyrbilder — blockbuster for Odyssey-aktig kino."
+    create_channel: Opprett kanal
+    upload: Last opp
+    note_placeholder: Tidsstemplet notat…
+    save_note: Lagre notat
+    comment_placeholder: Skriv noe…
+    post_comment: Publiser kommentar
+    subscribe: Abonner
+    unsubscribe: Avmeld
+    live_badge: Direkte
+    live_now: Direkte nå
+    live_streams_label: Direktesendinger nå
+    channel_subtitle: Brgen TV-kanal
+    edit_channel: Rediger kanal
+    new_channel: Ny kanal
+    upload_video: Last opp video
+    shows_on: Serier på %{channel}
+    uploading_to_html: Laster opp til %{channel}
+    no_description: Denne kanalen har ikke lagt til en beskrivelse ennå.
+    home_blurb: Lokale kanaler, programmer og direktesendte scener — se uten konto.
+    home_title: TV
+    channels_title: Kanaler
+    shows_title: Serier
+    thumbnail_hint: postpro.rb graderer miniatyrbilder — blockbuster for Odyssey-aktig
+      kino.
     episode_count:
       one: "%{count} episode"
       other: "%{count} episoder"
-    episodes: "Episoder"
-    episode_line: "Episode %{number}: %{title}"
-    back_to_channel: "Tilbake til kanalen"
+    episodes: Episoder
+    episode_line: 'Episode %{number}: %{title}'
+    back_to_channel: Tilbake til kanalen
   stories:
-    title: "Historier"
-    new: "Ny historie"
-    post: "Publiser"
-    media: "Bilde eller klipp"
-    caption: "Tekst"
-    add_area: "Merk omtrent hvor jeg er"
-    area_hint: "Grovkornet til omtrent én kilometer."
-    lifetime_notice: "Historier forsvinner av seg selv etter 24 timer."
-    expires_in: "borte om %{time}"
-    by: "Historie av %{user}"
-    open_ring: "Åpne historien til %{user}"
-    more_from: "Flere fra %{user}"
-    seen_by: "Sett av"
-    confirm_delete: "Slette historien?"
-    empty_title: "Ingen historier akkurat nå"
-    empty_body: "De forsvinner etter 24 timer, så her er det bare det ferske."
+    title: Historier
+    new: Ny historie
+    post: Publiser
+    media: Bilde eller klipp
+    caption: Tekst
+    add_area: Merk omtrent hvor jeg er
+    area_hint: Grovkornet til omtrent én kilometer.
+    lifetime_notice: Historier forsvinner av seg selv etter 24 timer.
+    expires_in: borte om %{time}
+    by: Historie av %{user}
+    open_ring: Åpne historien til %{user}
+    more_from: Flere fra %{user}
+    seen_by: Sett av
+    confirm_delete: Slette historien?
+    empty_title: Ingen historier akkurat nå
+    empty_body: De forsvinner etter 24 timer, så her er det bare det ferske.
     seen_count:
       one: "%{count} har sett den"
       other: "%{count} har sett den"
   events:
-    title: "Hva skjer"
-    new: "Nytt arrangement"
-    edit: "Rediger arrangement"
-    upcoming: "På plakaten"
-    past: "Tidligere"
-    where: "Sted"
-    about: "Om"
-    nearby: "I nærheten"
-    who_is_going: "Hvem kommer"
-    nobody_yet: "Ingen har svart ennå."
-    free: "Gratis"
-    tickets: "Billetter"
-    on_the_map: "Vis på kartet"
-    happening_now: "Skjer nå"
-    cancelled: "Avlyst"
-    cancel_event: "Avlys"
-    confirm_cancel: "Avlyse arrangementet? Alle som har svart får beskjed."
+    title: Hva skjer
+    new: Nytt arrangement
+    edit: Rediger arrangement
+    upcoming: På plakaten
+    past: Tidligere
+    where: Sted
+    about: Om
+    nearby: I nærheten
+    who_is_going: Hvem kommer
+    nobody_yet: Ingen har svart ennå.
+    free: Gratis
+    tickets: Billetter
+    on_the_map: Vis på kartet
+    happening_now: Skjer nå
+    cancelled: Avlyst
+    cancel_event: Avlys
+    confirm_cancel: Avlyse arrangementet? Alle som har svart får beskjed.
     cancelled_notification: "%{title} er avlyst"
-    cancelled_body: "Arrangøren har avlyst dette arrangementet."
-    full_body: "Fullt — du kan fortsatt melde interesse."
-    organiser_actions: "Arrangørhandlinger"
-    rsvp: "Svar"
-    rsvp_going: "Kommer"
-    rsvp_interested: "Interessert"
-    rsvp_not_going: "Kan ikke"
-    sign_in_to_rsvp: "for å svare."
-    empty_title: "Ingenting på plakaten ennå"
-    empty_body: "Det første arrangementet i byen kan være ditt."
-    empty_search: "Ingen arrangementer matchet søket."
+    cancelled_body: Arrangøren har avlyst dette arrangementet.
+    full_body: Fullt — du kan fortsatt melde interesse.
+    organiser_actions: Arrangørhandlinger
+    rsvp: Svar
+    rsvp_going: Kommer
+    rsvp_interested: Interessert
+    rsvp_not_going: Kan ikke
+    sign_in_to_rsvp: for å svare.
+    empty_title: Ingenting på plakaten ennå
+    empty_body: Det første arrangementet i byen kan være ditt.
+    empty_search: Ingen arrangementer matchet søket.
     going_count:
       one: "%{count} kommer"
       other: "%{count} kommer"
@@ -289,99 +288,101 @@ nb:
       one: "%{count} plass igjen"
       other: "%{count} plasser igjen"
     your_answer:
-      going: "Du kommer"
-      interested: "Du er interessert"
-      not_going: "Du kan ikke"
+      going: Du kommer
+      interested: Du er interessert
+      not_going: Du kan ikke
     form:
-      title: "Tittel"
-      starts_at: "Starter"
-      ends_at: "Slutter (valgfritt)"
-      place: "Sted fra kartet"
-      no_place: "Ikke et registrert sted"
-      venue_name: "Stedsnavn"
-      address: "Adresse"
-      description: "Beskrivelse"
-      capacity: "Antall plasser"
-      capacity_hint: "La stå tomt for ubegrenset."
-      price: "Pris (øre)"
-      price_hint: "La stå tomt eller 0 for gratis."
-      external_url: "Billettlenke"
-      cover: "Bilde"
-      submit: "Lagre arrangement"
+      title: Tittel
+      starts_at: Starter
+      ends_at: Slutter (valgfritt)
+      place: Sted fra kartet
+      no_place: Ikke et registrert sted
+      venue_name: Stedsnavn
+      address: Adresse
+      description: Beskrivelse
+      capacity: Antall plasser
+      capacity_hint: La stå tomt for ubegrenset.
+      price: Pris (øre)
+      price_hint: La stå tomt eller 0 for gratis.
+      external_url: Billettlenke
+      cover: Bilde
+      submit: Lagre arrangement
   search:
-    title: "Søk i Brgen"
-    placeholder: "Søk innlegg, annonser, TV, spillelister…"
-    label: "Søk i alle flater"
-    query: "Søkeord"
-    submit: "Søk"
-    posts: "Søk innlegg…"
-    posts_label: "Søk innlegg"
-    communities: "Søk fellesskap…"
-    communities_label: "Søk fellesskap"
-    places: "Søk steder…"
-    places_label: "Søk steder"
-    restaurants: "Søk restauranter…"
-    restaurants_label: "Søk restauranter"
-    events: "Søk arrangementer…"
-    events_label: "Søk arrangementer"
-    marketplace: "Søk Markedsplass"
-    marketplace_label: "Søk markedsplass"
-    marketplace_dots: "Søk…"
-    deals_label: "Søk tilbud"
-    stores_label: "Søk butikker"
-    playlist: "Søk sett, spor, artister…"
-    playlist_label: "Søk spillelister"
-    tv: "Søk kanaler og videoer…"
-    tv_label: "Søk TV"
+    title: Søk i Brgen
+    placeholder: Søk innlegg, annonser, TV, spillelister…
+    label: Søk i alle flater
+    query: Søkeord
+    submit: Søk
+    posts: Søk innlegg…
+    posts_label: Søk innlegg
+    communities: Søk fellesskap…
+    communities_label: Søk fellesskap
+    places: Søk steder…
+    places_label: Søk steder
+    restaurants: Søk restauranter…
+    restaurants_label: Søk restauranter
+    events: Søk arrangementer…
+    events_label: Søk arrangementer
+    marketplace: Søk Markedsplass
+    marketplace_label: Søk markedsplass
+    marketplace_dots: Søk…
+    deals_label: Søk tilbud
+    stores_label: Søk butikker
+    playlist: Søk sett, spor, artister…
+    playlist_label: Søk spillelister
+    tv: Søk kanaler og videoer…
+    tv_label: Søk TV
     results_for:
       one: "%{count} treff for «%{query}»"
       other: "%{count} treff for «%{query}»"
   messages:
-    from_aria: "Melding fra %{name}"
-    disappears_in: "forsvinner om %{time}"
-    title: "Meldinger"
-    new_message: "Ny melding"
-    username: "Brukernavn"
-    start_chat: "Start chat"
-    empty_title: "Ingen samtaler ennå"
-    empty_body: "Send en melding for å starte."
-    push_body_disappearing: "Ny melding"
-    read: "lest"
+    from_aria: Melding fra %{name}
+    disappears_in: forsvinner om %{time}
+    title: Meldinger
+    new_message: Ny melding
+    username: Brukernavn
+    start_chat: Start chat
+    empty_title: Ingen samtaler ennå
+    empty_body: Send en melding for å starte.
+    push_body_disappearing: Ny melding
+    read: lest
     back_all: "← alle"
     back_channels: "← kanaler"
-    disappearing: "Forsvinnende meldinger"
-    header_label: "Samtaleoverskrift"
-    nav_label: "Samtalenavigasjon"
+    disappearing: Forsvinnende meldinger
+    header_label: Samtaleoverskrift
+    nav_label: Samtalenavigasjon
     unread_one: "%{count} ny melding ↓"
     unread_other: "%{count} nye meldinger ↓"
   comments:
-    sort_label: "Sorter kommentarer"
-    placeholder: "Hva tenker du?"
-    submit: "Kommenter"
-    reply_placeholder: "Svar…"
-    reply: "Svar"
-    empty_body: "Vær den første til å svare — gjester kan kommentere uten konto."
-    write_reply: "Skriv et svar"
-    ai_summary: "Vis AI-sammendrag (via MASTER)"
+    sort_label: Sorter kommentarer
+    placeholder: Hva tenker du?
+    submit: Kommenter
+    reply_placeholder: Svar…
+    reply: Svar
+    empty_body: Vær den første til å svare — gjester kan kommentere uten konto.
+    write_reply: Skriv et svar
+    ai_summary: Vis AI-sammendrag (via MASTER)
   theme:
-    region: "Tema"
-    toggle: "Bytt til lyst tema"
+    region: Tema
+    toggle: Bytt til lyst tema
   push:
-    enable: "Slå på varsler"
+    enable: Slå på varsler
   partner:
-    programs_title: "Partnerprogrammer"
-    programs_lead: "Lokale butikker betaler byens skapere for salg du sender. Siste klikk vinner; ingen selvhenvisning."
-    your_memberships: "Dine medlemskap"
-    open_programs: "Åpne programmer"
-    dashboard: "Oversikt"
-    none_open: "Ingen åpne partnerprogrammer ennå. Butikkeiere kan opprette ett fra butikksiden."
-    commission: "Provisjon"
+    programs_title: Partnerprogrammer
+    programs_lead: Lokale butikker betaler byens skapere for salg du sender. Siste
+      klikk vinner; ingen selvhenvisning.
+    your_memberships: Dine medlemskap
+    open_programs: Åpne programmer
+    dashboard: Oversikt
+    none_open: Ingen åpne partnerprogrammer ennå. Butikkeiere kan opprette ett fra
+      butikksiden.
+    commission: Provisjon
     commission_percent: "%{rate} % provisjon"
     commission_flat: "%{rate} øre fast"
     commission_of_order: "%{rate} % av ordreverdien"
     commission_flat_model: "%{rate} (modell: %{model})"
-    attribution_window: "Attribusjonsvindu"
-    hold_before_payable: "Hold før utbetaling"
+    attribution_window: Attribusjonsvindu
+    hold_before_payable: Hold før utbetaling
     hold:
       one: "%{count} dags hold"
       other: "%{count} dagers hold"
@@ -391,496 +392,506 @@ nb:
     days:
       one: "%{count} dag"
       other: "%{count} dager"
-    terms: "Vilkår"
-    actions: "Handlinger"
-    edit_program: "Rediger program"
-    status_label: "Status:"
-    link_token: "Din lenketoken:"
-    share: "Del:"
-    membership_dashboard: "Medlemsoversikt"
-    join: "Bli med i programmet"
-    sign_in_to_join: "Logg inn for å bli med"
-    all_programs: "Alle programmer"
-    membership_title: "Partnermedlemskap"
-    token_label: "Token:"
-    tracking_link: "Sporingslenke:"
-    recent_clicks: "Siste klikk"
-    no_clicks: "Ingen klikk ennå."
-    click_expires: "utløper %{at}"
-    click_listing: "annonse #%{id}"
-    conversions: "Konverteringer"
-    no_conversions: "Ingen konverteringer ennå."
+    terms: Vilkår
+    actions: Handlinger
+    edit_program: Rediger program
+    status_label: 'Status:'
+    link_token: 'Din lenketoken:'
+    share: 'Del:'
+    membership_dashboard: Medlemsoversikt
+    join: Bli med i programmet
+    sign_in_to_join: Logg inn for å bli med
+    all_programs: Alle programmer
+    membership_title: Partnermedlemskap
+    token_label: 'Token:'
+    tracking_link: 'Sporingslenke:'
+    recent_clicks: Siste klikk
+    no_clicks: Ingen klikk ennå.
+    click_expires: utløper %{at}
+    click_listing: 'annonse #%{id}'
+    conversions: Konverteringer
+    no_conversions: Ingen konverteringer ennå.
     conversion_row: "%{commission} øre på %{value}"
-    payable_after: "utbetales etter %{on}"
-    new_title: "Nytt partnerprogram"
-    new_heading: "Nytt partnerprogram for %{store}"
-    rate_hint: "Sats (basispunkter for %, øre for fast)"
-    create: "Opprett program"
-    edit_title: "Rediger %{name}"
-    edit_heading: "Rediger partnerprogram"
-    save: "Lagre"
+    payable_after: utbetales etter %{on}
+    new_title: Nytt partnerprogram
+    new_heading: Nytt partnerprogram for %{store}
+    rate_hint: Sats (basispunkter for %, øre for fast)
+    create: Opprett program
+    edit_title: Rediger %{name}
+    edit_heading: Rediger partnerprogram
+    save: Lagre
   activerecord:
     attributes:
       partner/program:
-        name: "Navn"
-        status: "Status"
-        commission_model: "Provisjonsmodell"
-        commission_rate: "Provisjonssats"
-        attribution_hours: "Attribusjonsvindu (timer)"
-        hold_days: "Hold før utbetaling (dager)"
-        auto_approve_partners: "Godkjenn partnere automatisk"
-        terms: "Vilkår"
+        name: Navn
+        status: Status
+        commission_model: Provisjonsmodell
+        commission_rate: Provisjonssats
+        attribution_hours: Attribusjonsvindu (timer)
+        hold_days: Hold før utbetaling (dager)
+        auto_approve_partners: Godkjenn partnere automatisk
+        terms: Vilkår
     errors:
       models:
         block:
           attributes:
             base:
-              self_block: "du kan ikke blokkere deg selv"
+              self_block: du kan ikke blokkere deg selv
         follow:
           attributes:
             base:
-              self_follow: "du kan ikke følge deg selv"
+              self_follow: du kan ikke følge deg selv
         partner/conversion:
           attributes:
             commission_cents:
-              exceeds_order_value: "kan ikke overstige ordreverdien"
+              exceeds_order_value: kan ikke overstige ordreverdien
         partner/program:
           attributes:
             commission_rate:
-              exceeds_max_percent: "kan ikke overstige %{percent} %% av ordreverdien"
+              exceeds_max_percent: kan ikke overstige %{percent} %% av ordreverdien
         post:
           attributes:
             content:
-              too_long_for_live: "er for langt for Live (maks %{count} tegn)"
+              too_long_for_live: er for langt for Live (maks %{count} tegn)
         dating/dislike:
           attributes:
             dislikee:
-              self_dislike: "du kan ikke avvise deg selv"
+              self_dislike: du kan ikke avvise deg selv
         dating/like:
           attributes:
             likee:
-              self_like: "du kan ikke like deg selv"
+              self_like: du kan ikke like deg selv
         dating/profile:
           attributes:
             photos:
-              required_when_visible: "må ha minst ett bilde når profilen er synlig"
+              required_when_visible: må ha minst ett bilde når profilen er synlig
         marketplace/order:
           attributes:
             listing:
-              unavailable: "er ikke lenger tilgjengelig"
+              unavailable: er ikke lenger tilgjengelig
             quantity:
-              exceeds_stock: "er mer enn det som er igjen"
+              exceeds_stock: er mer enn det som er igjen
         marketplace/review:
           attributes:
             base:
-              requires_completed_order: "du kan bare vurdere etter en akseptert eller fullført ordre"
+              requires_completed_order: du kan bare vurdere etter en akseptert eller
+                fullført ordre
             user:
-              own_listing: "du kan ikke vurdere din egen annonse"
+              own_listing: du kan ikke vurdere din egen annonse
         playlist/like:
           attributes:
             base:
-              target_required: "mangler et mål å like"
+              target_required: mangler et mål å like
         takeaway/order:
           attributes:
             status:
-              bad_transition: "kan ikke gå fra %{from} til %{to}"
+              bad_transition: kan ikke gå fra %{from} til %{to}
             base:
-              below_minimum: "Minste ordre hos %{restaurant} er %{minimum} — din delsum er %{subtotal}."
-              empty_order: "Velg minst én rett."
+              below_minimum: Minste ordre hos %{restaurant} er %{minimum} — din delsum
+                er %{subtotal}.
+              empty_order: Velg minst én rett.
         takeaway/order_item:
           attributes:
             menu_item:
-              unavailable: "er utsolgt"
+              unavailable: er utsolgt
   post:
-    repost: "Del igjen"
+    repost: Del igjen
     repost_notification: "%{user} delte innlegget ditt"
-    quote: "Siter"
-    quote_placeholder: "Legg til en kommentar…"
-    quotes: "Sitater"
+    quote: Siter
+    quote_placeholder: Legg til en kommentar…
+    quotes: Sitater
     quote_notification: "%{user} siterte innlegget ditt"
-    new: "Nytt innlegg"
+    new: Nytt innlegg
     guest_sign_in: " for å bruke navnet ditt."
-    posting_as_anon: "Poster som"
-    submit: "Post"
-    text_optional: "Tekst (valgfritt)"
+    posting_as_anon: Poster som
+    submit: Post
+    text_optional: Tekst (valgfritt)
   empty:
-    add_tracks: "Legg til eller importer spor for å spille."
-    no_posts: "Ingen innlegg"
-    no_posts_search: "Ingen innlegg matcher søket."
-    no_posts_yet: "Ingen innlegg ennå"
-    be_first: "Vær den første — gjester kan poste uten konto."
-    post_to_city: "Post til %{city}"
-    clear_search: "Tøm søk"
-    create_one: "Opprett et"
-    start_city: "Start samtalen for byen din."
-    nothing_yet: "Ingenting her ennå."
-    start_community: "Start samtalen i %{name} — gjester kan poste uten konto."
-    profile_empty: "Ingenting publisert på denne profilen."
-    city_feed: "Byfeed"
-    no_communities: "Ingen fellesskap"
-    no_communities_search: "Ingen fellesskap matcher søket."
-    no_listings: "Ingen annonser"
-    no_deals: "Ingen tilbud"
-    no_deals_search: "Ingen tilbud matcher søket."
-    no_stores: "Ingen butikker"
-    no_stores_search: "Ingen butikker matcher søket."
-    no_places: "Ingen steder"
-    no_places_search: "Ingen steder matcher søket."
-    no_restaurants: "Ingen restauranter ennå"
-    no_menu: "Ingen menyelementer ennå"
-    no_reviews: "Ingen anmeldelser ennå"
-    no_channels: "Ingen kanaler"
-    no_videos: "Ingen videoer ennå"
-    no_shows: "Ingen serier ennå"
-    no_episodes: "Ingen episoder ennå"
-    no_live_streams: "Ingen livesendinger"
-    no_trending: "Ingen populære videoer"
-    no_description: "Ingen beskrivelse"
-    no_description_body: "Denne videoen har ingen tekst ennå."
-    no_comments: "Ingen kommentarer ennå"
-    no_tracks: "Ingen spor ennå"
-    no_playlists: "Ingen spillelister ennå"
-    no_sets: "Ingen sett ennå"
-    no_hosted_tracks: "Ingen hostede spor ennå"
-    no_collaborators: "Ingen samarbeidspartnere ennå"
-    no_sketches: "Ingen skisser ennå"
-    no_activity: "Ingen aktivitet ennå"
-    no_nearby: "Ingen i nærheten"
-    no_photos: "Ingen bilder ennå"
-    no_offers: "Ingen tilbud ennå"
-    no_saved_searches: "Ingen lagrede søk"
-    no_category: "Ingenting i denne kategorien ennå"
-    no_drivers: "Ingen tilgjengelige sjåfører"
-    nothing_available: "Ingenting tilgjengelig"
-    no_menu_available: "Ingen menyelementer er tilgjengelige nå."
-    no_reports: "Ingen rapporter ennå"
-    reports_clear: "Moderasjonskøen er tom."
-    no_sessions: "Ingen økter planlagt"
-    create_playlist: "Opprett en for å starte radioen."
-    first_restaurant: "Legg til den første restauranten i området."
-    restaurants_appear: "Restauranter dukker opp her."
-    kitchen_no_food: "Kjøkkenet har ikke lagt ut mat ennå."
-    order_then_rate: "Bestill, og gi naboene en vurdering etterpå."
-    episodes_when_published: "Episoder vises når de publiseres."
+    add_tracks: Legg til eller importer spor for å spille.
+    no_posts: Ingen innlegg
+    no_posts_search: Ingen innlegg matcher søket.
+    no_posts_yet: Ingen innlegg ennå
+    be_first: Vær den første — gjester kan poste uten konto.
+    post_to_city: Post til %{city}
+    clear_search: Tøm søk
+    create_one: Opprett et
+    start_city: Start samtalen for byen din.
+    nothing_yet: Ingenting her ennå.
+    start_community: Start samtalen i %{name} — gjester kan poste uten konto.
+    profile_empty: Ingenting publisert på denne profilen.
+    city_feed: Byfeed
+    no_communities: Ingen fellesskap
+    no_communities_search: Ingen fellesskap matcher søket.
+    no_listings: Ingen annonser
+    no_deals: Ingen tilbud
+    no_deals_search: Ingen tilbud matcher søket.
+    no_stores: Ingen butikker
+    no_stores_search: Ingen butikker matcher søket.
+    no_places: Ingen steder
+    no_places_search: Ingen steder matcher søket.
+    no_restaurants: Ingen restauranter ennå
+    no_menu: Ingen menyelementer ennå
+    no_reviews: Ingen anmeldelser ennå
+    no_channels: Ingen kanaler
+    no_videos: Ingen videoer ennå
+    no_shows: Ingen serier ennå
+    no_episodes: Ingen episoder ennå
+    no_live_streams: Ingen livesendinger
+    no_trending: Ingen populære videoer
+    no_description: Ingen beskrivelse
+    no_description_body: Denne videoen har ingen tekst ennå.
+    no_comments: Ingen kommentarer ennå
+    no_tracks: Ingen spor ennå
+    no_playlists: Ingen spillelister ennå
+    no_sets: Ingen sett ennå
+    no_hosted_tracks: Ingen hostede spor ennå
+    no_collaborators: Ingen samarbeidspartnere ennå
+    no_sketches: Ingen skisser ennå
+    no_activity: Ingen aktivitet ennå
+    no_nearby: Ingen i nærheten
+    no_photos: Ingen bilder ennå
+    no_offers: Ingen tilbud ennå
+    no_saved_searches: Ingen lagrede søk
+    no_category: Ingenting i denne kategorien ennå
+    no_drivers: Ingen tilgjengelige sjåfører
+    nothing_available: Ingenting tilgjengelig
+    no_menu_available: Ingen menyelementer er tilgjengelige nå.
+    no_reports: Ingen rapporter ennå
+    reports_clear: Moderasjonskøen er tom.
+    no_sessions: Ingen økter planlagt
+    create_playlist: Opprett en for å starte radioen.
+    first_restaurant: Legg til den første restauranten i området.
+    restaurants_appear: Restauranter dukker opp her.
+    kitchen_no_food: Kjøkkenet har ikke lagt ut mat ennå.
+    order_then_rate: Bestill, og gi naboene en vurdering etterpå.
+    episodes_when_published: Episoder vises når de publiseres.
   actions:
-    close: "Lukk"
-    load_more: "Eldre innlegg"
-    add_one: "Legg til en"
-    dismiss: "Lukk"
-    sell_something: "Selg noe"
-    new_set: "Nytt sett"
-    tv_home: "TV-hjem"
-    city_feed: "Byfeed"
-    compose_outfit: "Sett sammen antrekk"
-    all_categories: "Alle kategorier"
-    all_maintainers: "Alle maintainere"
-    save_search_body: "Søk i markedsplassen, og lagre søket."
-    all_restaurants: "Alle restauranter"
-    all_orders: "Alle ordrer"
-    all_drivers: "Alle sjåfører"
-    all_cuisines: "Alle kjøkken"
-    save: "Lagre"
-    send: "Send"
-    cancel: "Avbryt"
-    edit: "Rediger"
-    back: "Tilbake"
-    open: "Åpne"
-    review: "Gjennomgå"
-    reorder: "Bestill på nytt"
-    delete: "Slett"
-    remove: "Fjern"
-    update: "Oppdater"
-    create: "Opprett"
-    follow: "Følg"
-    unfollow: "Avfølg"
-    like: "Lik"
-    unlike: "Fjern lik"
-    report: "Rapporter"
-    message: "Melding"
-    mark_read: "Merk som lest"
-    confirm_delete: "Slette?"
-    copyable_text: "Tekst som kopieres"
-    select_all: "Velg alle"
-    select_all_reports: "Velg alle rapporter"
-    reload: "Last inn på nytt"
+    close: Lukk
+    load_more: Eldre innlegg
+    add_one: Legg til en
+    dismiss: Lukk
+    sell_something: Selg noe
+    new_set: Nytt sett
+    tv_home: TV-hjem
+    city_feed: Byfeed
+    compose_outfit: Sett sammen antrekk
+    all_categories: Alle kategorier
+    all_maintainers: Alle maintainere
+    save_search_body: Søk i markedsplassen, og lagre søket.
+    all_restaurants: Alle restauranter
+    all_orders: Alle ordrer
+    all_drivers: Alle sjåfører
+    all_cuisines: Alle kjøkken
+    save: Lagre
+    send: Send
+    cancel: Avbryt
+    edit: Rediger
+    back: Tilbake
+    open: Åpne
+    review: Gjennomgå
+    reorder: Bestill på nytt
+    delete: Slett
+    remove: Fjern
+    update: Oppdater
+    create: Opprett
+    follow: Følg
+    unfollow: Avfølg
+    like: Lik
+    unlike: Fjern lik
+    report: Rapporter
+    message: Melding
+    mark_read: Merk som lest
+    confirm_delete: Slette?
+    copyable_text: Tekst som kopieres
+    select_all: Velg alle
+    select_all_reports: Velg alle rapporter
+    reload: Last inn på nytt
   pages:
-    account: "Konto"
-    two_factor: "Tofaktorautentisering"
-    cart: "Handlekurv"
-    my_orders: "Mine ordrer"
-    all_posts: "Alle innlegg"
-    edit_post: "Rediger innlegg"
-    channels: "Kanaler"
-    places: "Steder"
-    new_message: "Ny melding"
+    account: Konto
+    two_factor: Tofaktorautentisering
+    cart: Handlekurv
+    my_orders: Mine ordrer
+    all_posts: Alle innlegg
+    edit_post: Rediger innlegg
+    channels: Kanaler
+    places: Steder
+    new_message: Ny melding
     home_title: "%{city}"
-    default_description: "Innlegg, butikker, mat og folk i %{city}."
+    default_description: Innlegg, butikker, mat og folk i %{city}.
   hotkeys:
-    help: "j/k · ↓↑ nav · Enter åpne · / søk · n ny · esc nullstill · ? hjelp"
-    coach: "Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for søk)."
-    coach_dismiss: "Skjønner"
+    help: j/k · ↓↑ nav · Enter åpne · / søk · n ny · esc nullstill · ? hjelp
+    coach: 'Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for
+      søk).'
+    coach_dismiss: Skjønner
   sort:
-    hot: "Hot"
-    fresh: "Fersk"
-    top: "Topp"
-    posts: "Sorter innlegg"
+    hot: Hot
+    fresh: Fersk
+    top: Topp
+    posts: Sorter innlegg
   posts:
-    score: "Poengsum"
-    upvote: "Stem opp"
-    downvote: "Stem ned"
-    share: "Del"
-    share_post: "Del innlegg"
-    view_community: "Se fellesskap"
-    about: "Om"
-    community_platform: "brgen — %{city}s fellesskapsplattform"
-    community_optional: "Fellesskap (valgfritt)"
+    score: Poengsum
+    upvote: Stem opp
+    downvote: Stem ned
+    share: Del
+    share_post: Del innlegg
+    view_community: Se fellesskap
+    about: Om
+    community_platform: brgen — %{city}s fellesskapsplattform
+    community_optional: Fellesskap (valgfritt)
     no_community: "— uten fellesskap —"
-    body_optional: "Brødtekst (valgfritt)"
-    photo_camera: "Foto / Kamera"
-    post_anonymously: "Post anonymt"
+    body_optional: Brødtekst (valgfritt)
+    photo_camera: Foto / Kamera
+    post_anonymously: Post anonymt
     min_read: "%{n} min lesing"
-    add_photo: "Legg til bilde"
+    add_photo: Legg til bilde
   channels:
-    topic: "Emne: %{topic}"
-    # The seven public rooms. These were English literals in
-    # Conversation::CHANNELS, read by the channels index, the room header,
-    # the IRC topic and the bot welcome — four Norwegian surfaces.
+    topic: 'Emne: %{topic}'
     blurb:
-      brgen: "Byens felles lobby — alt er lov."
-      marketplace: "Kjøp, salg, prute og funn."
-      dating: "Flørt, frustrasjon og forslag til første date."
-      playlist: "Spilles nå — del spor og lyttefester."
-      tv: "Direktetråder for program og sendinger."
-      takeaway: "Hva er verdt å bestille akkurat nå?"
-      maps: "Lokale steder, tips og veibeskrivelser."
+      brgen: Byens felles lobby — alt er lov.
+      marketplace: Kjøp, salg, prute og funn.
+      dating: Flørt, frustrasjon og forslag til første date.
+      playlist: Spilles nå — del spor og lyttefester.
+      tv: Direktetråder for program og sendinger.
+      takeaway: Hva er verdt å bestille akkurat nå?
+      maps: Lokale steder, tips og veibeskrivelser.
     welcome:
       host: "%{blurb} Du er anonym her — si hei."
-      echo: "Skriv `/help` når som helst, og hold det lokalt."
-      prompt: "Så — hva skjer i byen din akkurat nå?"
-    title: "Kanaler"
-    aria: "Offentlige kanaler"
-    intro: "Offentlige rom%{city} — du er anonym her. Hopp inn, noen lokale agenter er allerede her."
+      echo: Skriv `/help` når som helst, og hold det lokalt.
+      prompt: Så — hva skjer i byen din akkurat nå?
+    title: Kanaler
+    aria: Offentlige kanaler
+    intro: Offentlige rom%{city} — du er anonym her. Hopp inn, noen lokale agenter
+      er allerede her.
     intro_city: " i %{name}"
-    active: "aktive"
-    message: "melding"
-    new_room: "nytt rom"
+    active: aktive
+    message: melding
+    new_room: nytt rom
   storefront:
-    deliver_to: "Leveres til"
-    sign_in: "logg inn"
-    account: "Konto"
-    orders: "Ordrer"
-    cart: "Kurv"
-    listings: "Annonser"
-    todays_deals: "Dagens tilbud"
-    stores: "Butikker"
-    sell: "Selg"
-    restaurants: "Restauranter"
-    your_orders: "Dine ordrer"
-    drivers: "Sjåfører"
-    add_restaurant: "Legg til restaurant"
-    saved_searches: "Lagrede søk"
+    deliver_to: Leveres til
+    sign_in: logg inn
+    account: Konto
+    orders: Ordrer
+    cart: Kurv
+    listings: Annonser
+    todays_deals: Dagens tilbud
+    stores: Butikker
+    sell: Selg
+    restaurants: Restauranter
+    your_orders: Dine ordrer
+    drivers: Sjåfører
+    add_restaurant: Legg til restaurant
+    saved_searches: Lagrede søk
   dating:
-    who_liked_you: "Hvem har likt deg"
-    back_to_deck: "Tilbake til bunken"
-    like_back: "Lik tilbake"
-    pass: "Hopp over"
-    no_likes_title: "Ingen har likt deg ennå"
-    no_likes_body: "Svar på et par spørsmål i profilen — det gir folk noe å svare på."
-    add_prompt: "Legg til svar"
-    remove_prompt: "Fjern"
-    your_prompts: "Dine svar"
-    comment_placeholder: "Si noe om svaret…"
-    like_with_comment: "Lik og si noe"
+    who_liked_you: Hvem har likt deg
+    back_to_deck: Tilbake til bunken
+    like_back: Lik tilbake
+    pass: Hopp over
+    no_likes_title: Ingen har likt deg ennå
+    no_likes_body: Svar på et par spørsmål i profilen — det gir folk noe å svare på.
+    add_prompt: Legg til svar
+    remove_prompt: Fjern
+    your_prompts: Dine svar
+    comment_placeholder: Si noe om svaret…
+    like_with_comment: Lik og si noe
     prompts:
-      q_sunday: "En perfekt søndag er"
-      q_bergen: "Det beste med %{city} er"
-      q_unpopular: "Min mest upopulære mening"
-      q_teach: "Jeg kan lære deg"
-      q_never: "Jeg kommer aldri til å"
-      q_meal: "Måltidet jeg lager best"
-      q_song: "Sangen jeg aldri blir lei"
-      q_weekend: "Neste helg skal jeg"
-    about_tab: "Om"
-    edit_profile: "Rediger profil"
-    your_profile: "Din profil"
-    create_profile: "Opprett profil"
-    add_photos: "Legg til bilder"
-    photos: "Bilder"
-    about_you: "Om deg"
-    looking_for: "Ser etter"
-    neighborhood: "Bydel"
-    save: "Lagre"
-    no_photos_body: "Legg til bilder under rediger profil."
-    matches: "Matcher"
-    no_matches: "Ingen matcher ennå"
-    no_matches_body: "Fortsett å sveipe — gjensidige likes dukker opp her."
-    discover: "Oppdag"
-    local: "Lokalt"
-    ready_to_chat: "er klar til å chatte."
-    someone: "Noen"
-    its_a_match: "Det er en match!"
-    home_title: "Dating"
-    open_messages: "Åpne meldinger"
-    current_photos: "Bilder du har nå"
-    more_details: "Flere detaljer"
-    protected_with: "Beskyttet med"
-    age: "Alder"
-    edit_profile_blurb: "Bilder og «om deg» betyr mest — resten er valgfritt."
-    create_profile_blurb: "Tre steg for å komme i gang — bilder, om deg, hvem du ser etter. Detaljene kan vente."
-    photo_hint: "Legg til minst ett tydelig bilde når du har mulighet."
-    essentials: "Det viktigste"
-    more_details_optional: "Flere detaljer (valgfritt)"
-    unmatch: "Fjern match"
-    matched_on: "Match %{date}"
-    rewind: "Angre"
-    stamp_like: "LIKER"
-    stamp_pass: "NEI"
-    swipe_guest: "Oppdater for å sveipe — ingen registrering."
-    more: "Mer"
-    read_bio: "Les bio"
-    show_less: "Vis mindre"
+      q_sunday: En perfekt søndag er
+      q_bergen: Det beste med %{city} er
+      q_unpopular: Min mest upopulære mening
+      q_teach: Jeg kan lære deg
+      q_never: Jeg kommer aldri til å
+      q_meal: Måltidet jeg lager best
+      q_song: Sangen jeg aldri blir lei
+      q_weekend: Neste helg skal jeg
+    about_tab: Om
+    edit_profile: Rediger profil
+    your_profile: Din profil
+    create_profile: Opprett profil
+    add_photos: Legg til bilder
+    photos: Bilder
+    about_you: Om deg
+    looking_for: Ser etter
+    neighborhood: Bydel
+    save: Lagre
+    no_photos_body: Legg til bilder under rediger profil.
+    matches: Matcher
+    no_matches: Ingen matcher ennå
+    no_matches_body: Fortsett å sveipe — gjensidige likes dukker opp her.
+    discover: Oppdag
+    local: Lokalt
+    ready_to_chat: er klar til å chatte.
+    someone: Noen
+    its_a_match: Det er en match!
+    home_title: Dating
+    open_messages: Åpne meldinger
+    current_photos: Bilder du har nå
+    more_details: Flere detaljer
+    protected_with: Beskyttet med
+    age: Alder
+    edit_profile_blurb: Bilder og «om deg» betyr mest — resten er valgfritt.
+    create_profile_blurb: Tre steg for å komme i gang — bilder, om deg, hvem du ser
+      etter. Detaljene kan vente.
+    photo_hint: Legg til minst ett tydelig bilde når du har mulighet.
+    essentials: Det viktigste
+    more_details_optional: Flere detaljer (valgfritt)
+    unmatch: Fjern match
+    matched_on: Match %{date}
+    rewind: Angre
+    stamp_like: LIKER
+    stamp_pass: NEI
+    swipe_guest: Oppdater for å sveipe — ingen registrering.
+    more: Mer
+    read_bio: Les bio
+    show_less: Vis mindre
     recency:
-      unknown: "Sist sett ukjent"
-      now: "Aktiv nå"
-      recent: "Aktiv nylig"
-      week: "Sett denne uken"
-      older: "Sist sett for en stund siden"
-    empty_nearby_body: "Utvid radius, kom tilbake senere, eller fullfør profilen din så andre finner deg."
-    swipe_to_start: "sveip for å begynne"
+      unknown: Sist sett ukjent
+      now: Aktiv nå
+      recent: Aktiv nylig
+      week: Sett denne uken
+      older: Sist sett for en stund siden
+    empty_nearby_body: Utvid radius, kom tilbake senere, eller fullfør profilen din
+      så andre finner deg.
+    swipe_to_start: sveip for å begynne
   playlist:
-    home_title: "Spilleliste"
-    tap_to_start: "trykk for å starte"
-    next: "Neste spor"
-    play: "Spill av"
-    play_pause: "Spill av eller pause"
-    previous: "Forrige spor"
-    stop: "Stopp"
-    transport: "Avspilling"
-    volume: "Volum"
-    sets: "Sett"
-    new_set: "Nytt sett"
-    edit_set: "Rediger sett"
-    hosted_tracks: "Hostede spor"
-    upload_track: "Last opp spor"
-    edit_track: "Rediger spor"
-    edit_playlist: "Rediger spilleliste"
-    new_playlist: "Ny spilleliste"
-    browse_sets: "Bla i sett"
-    browse_playlists: "Bla i spillelister"
-    library: "Bibliotek"
-    title: "Tittel"
-    artist: "Artist"
-    url_optional: "URL (valgfritt)"
-    say_something: "Si noe…"
-    create: "Opprett"
-    add: "Legg til"
-    import: "Importer"
-    import_urls_placeholder: "Lim inn Spotify-, YouTube-, SoundCloud- eller direkte lyd-URLer, én per linje"
-    username: "brukernavn"
-    add_collaborator: "Legg til samarbeidspartner"
-    sketch_name: "Skissenavn"
-    notes_optional: "Notater (valgfritt)"
-    save_sketch: "Lagre skisse"
-    beat_name: "Beat-navn (f.eks. dusty flip)"
-    notes_instructions: "Notater / instruksjoner (valgfritt)"
-    save_sketch_collab: "Lagre skisse for collab"
-    start_party: "Start fest"
-    end_party: "Avslutt fest"
-    render: "Render"
-    listening_party: "Lyttefest"
-    listening_party_title: "Lyttefest — %{name}"
-    queue: "Kø"
+    home_title: Spilleliste
+    tap_to_start: trykk for å starte
+    next: Neste spor
+    play: Spill av
+    play_pause: Spill av eller pause
+    previous: Forrige spor
+    stop: Stopp
+    transport: Avspilling
+    volume: Volum
+    sets: Sett
+    new_set: Nytt sett
+    edit_set: Rediger sett
+    hosted_tracks: Hostede spor
+    upload_track: Last opp spor
+    edit_track: Rediger spor
+    edit_playlist: Rediger spilleliste
+    new_playlist: Ny spilleliste
+    browse_sets: Bla i sett
+    browse_playlists: Bla i spillelister
+    library: Bibliotek
+    title: Tittel
+    artist: Artist
+    url_optional: URL (valgfritt)
+    say_something: Si noe…
+    create: Opprett
+    add: Legg til
+    import: Importer
+    import_urls_placeholder: Lim inn Spotify-, YouTube-, SoundCloud- eller direkte
+      lyd-URLer, én per linje
+    username: brukernavn
+    add_collaborator: Legg til samarbeidspartner
+    sketch_name: Skissenavn
+    notes_optional: Notater (valgfritt)
+    save_sketch: Lagre skisse
+    beat_name: Beat-navn (f.eks. dusty flip)
+    notes_instructions: Notater / instruksjoner (valgfritt)
+    save_sketch_collab: Lagre skisse for collab
+    start_party: Start fest
+    end_party: Avslutt fest
+    render: Render
+    listening_party: Lyttefest
+    listening_party_title: Lyttefest — %{name}
+    queue: Kø
     queue_stats: "%{tracks} spor · %{plays} avspillinger"
-    waveform: "Bølgeform"
-    seek: "Søk i sporet"
-    select_track: "Velg et spor"
-    unknown_artist: "Ukjent artist"
-    party_chat: "Festchat"
-    back_to_set: "Tilbake til sett"
+    waveform: Bølgeform
+    seek: Søk i sporet
+    select_track: Velg et spor
+    unknown_artist: Ukjent artist
+    party_chat: Festchat
+    back_to_set: Tilbake til sett
     back_to_radio: "← radio"
-    management: "Administrasjon av spilleliste"
-    actions: "Spillelistehandlinger"
-    collaborators_sketches: "Samarbeidspartnere og dilla-skisser"
-    join_code: "Kode"
-    confirm_end_party: "Avslutte lytteselskapet for alle som lytter?"
-    add_track: "Legg til et spor"
-    add_track_body: "Legg til et spor for å bygge dette settet."
-    sets_subtitle: "Lokale lydsamlinger"
-    source: "Kilde"
-    expires_at: "Utløper"
-    embed_code: "Innbyggingskode"
-    comment_at_time: "Kommenter her…"
-    role: "Rolle"
-    style: "Stil"
-    bars: "Takter"
-    sketch_state: "Skissetilstand (JSON)"
-    paste_state: "Lim inn JSON-tilstand fra lab"
-    timestamped_comments: "Kommentarer med tidspunkt"
-    import_links: "Importer lenker"
-    render_now: "Render nå"
-    publish_as_track: "Publiser som spor i spillelisten"
-    set_kicker: "Spilleliste"
-    upload_blurb: "Direkte opplasting her. Høy kvalitet, 320 kbps MP3 / FLAC støttes. Erstatning beholder delingslenkene (ingen URL-endring)."
-    current_file: "Nåværende: %{name} — erstatning beholder delings- og innbyggingslenkene"
-    track_stats: "%{plays} avspillinger · %{comments} kommentarer med tidspunkt · %{versions} tidligere versjoner"
-    set_stats: "%{plays} avspillinger på %{tracks} spor · %{comments} kommentarer totalt."
-    now_playing: "Spilles nå:"
-    waiting_for_host: "Venter på at verten skal velge et spor…"
-    comments_seek: "Kommentarer (klikk for å hoppe)"
-    embed_customize: "Innbygging (tilpass: ?color=ff0000&amp;show_artwork=0&amp;compact=1)"
-    party_blurb: "Start eller bli med i en synkronisert lytteøkt med innebygd spiller og chat."
-    open_in_lab: "åpne i lab"
-    analytics: "Statistikk"
-    privacy_line: "Synlighet: %{value}"
-    privacy_private: "privat"
+    management: Administrasjon av spilleliste
+    actions: Spillelistehandlinger
+    collaborators_sketches: Samarbeidspartnere og dilla-skisser
+    join_code: Kode
+    confirm_end_party: Avslutte lytteselskapet for alle som lytter?
+    add_track: Legg til et spor
+    add_track_body: Legg til et spor for å bygge dette settet.
+    sets_subtitle: Lokale lydsamlinger
+    source: Kilde
+    expires_at: Utløper
+    embed_code: Innbyggingskode
+    comment_at_time: Kommenter her…
+    role: Rolle
+    style: Stil
+    bars: Takter
+    sketch_state: Skissetilstand (JSON)
+    paste_state: Lim inn JSON-tilstand fra lab
+    timestamped_comments: Kommentarer med tidspunkt
+    import_links: Importer lenker
+    render_now: Render nå
+    publish_as_track: Publiser som spor i spillelisten
+    set_kicker: Spilleliste
+    upload_blurb: Direkte opplasting her. Høy kvalitet, 320 kbps MP3 / FLAC støttes.
+      Erstatning beholder delingslenkene (ingen URL-endring).
+    current_file: 'Nåværende: %{name} — erstatning beholder delings- og innbyggingslenkene'
+    track_stats: "%{plays} avspillinger · %{comments} kommentarer med tidspunkt ·
+      %{versions} tidligere versjoner"
+    set_stats: "%{plays} avspillinger på %{tracks} spor · %{comments} kommentarer
+      totalt."
+    now_playing: 'Spilles nå:'
+    waiting_for_host: Venter på at verten skal velge et spor…
+    comments_seek: Kommentarer (klikk for å hoppe)
+    embed_customize: 'Innbygging (tilpass: ?color=ff0000&amp;show_artwork=0&amp;compact=1)'
+    party_blurb: Start eller bli med i en synkronisert lytteøkt med innebygd spiller
+      og chat.
+    open_in_lab: åpne i lab
+    analytics: Statistikk
+    privacy_line: 'Synlighet: %{value}'
+    privacy_private: privat
     expires_on: "· utløper %{date}"
-    public_access: "Offentlig"
-    collaborative: "Samarbeid"
+    public_access: Offentlig
+    collaborative: Samarbeid
     add_comment: "+ Kommentar"
-    add_comment_aria: "Legg til tidsstemplet kommentar på nåværende tidspunkt"
-    no_tracks_body: "Legg til eller importer spor for å spille."
-    reorder_tracks: "Endre rekkefølge"
-    embed_examples: "Eksempler"
-    embed_red: "rød"
-    embed_no_artwork: "uten omslag"
-    embed_compact: "kompakt"
+    add_comment_aria: Legg til tidsstemplet kommentar på nåværende tidspunkt
+    no_tracks_body: Legg til eller importer spor for å spille.
+    reorder_tracks: Endre rekkefølge
+    embed_examples: Eksempler
+    embed_red: rød
+    embed_no_artwork: uten omslag
+    embed_compact: kompakt
   marketplace:
     expiry_notice:
       title: "«%{title}» utløper snart"
-      body: "Annonsen forsvinner fra markedsplassen om %{days} dager. Forny den hvis du fortsatt har varen."
-    addresses: "Leveringsadresser"
-    add_address: "Legg til adresse"
-    change_address: "Bytt adresse"
-    save_address: "Lagre adresse"
-    default_address: "Standard"
-    make_default: "Bruk som standard"
-    confirm_delete_address: "Slette adressen?"
-    deliver_to: "Leveres til"
-    no_address_yet: "Ingen leveringsadresse lagret ennå."
+      body: Annonsen forsvinner fra markedsplassen om %{days} dager. Forny den hvis
+        du fortsatt har varen.
+    addresses: Leveringsadresser
+    add_address: Legg til adresse
+    change_address: Bytt adresse
+    save_address: Lagre adresse
+    default_address: Standard
+    make_default: Bruk som standard
+    confirm_delete_address: Slette adressen?
+    deliver_to: Leveres til
+    no_address_yet: Ingen leveringsadresse lagret ennå.
     address_form:
-      recipient: "Mottaker"
-      line1: "Adresse"
-      line2: "Adresse 2 (valgfritt)"
-      postcode: "Postnummer"
-      city: "Poststed"
-      country: "Land (to bokstaver)"
-      phone: "Telefon (valgfritt)"
-    home_title: "Markedsplass · %{city}"
+      recipient: Mottaker
+      line1: Adresse
+      line2: Adresse 2 (valgfritt)
+      postcode: Postnummer
+      city: Poststed
+      country: Land (to bokstaver)
+      phone: Telefon (valgfritt)
+    home_title: Markedsplass · %{city}
     saved_search_alert:
       title: "%{count} nye treff for «%{search}»"
       price_drop_title: "%{count} prisreduksjoner for «%{search}»"
-    browse_listings: "Bla i annonser"
-    listing_kind: "Hvem selger"
-    from_anyone: "Alle"
-    from_a_person: "Person"
-    from_a_shop: "Butikk"
-    casual_hint: "Ingen butikk nødvendig — en annonse uten butikk er deg som selger én ting."
-    sold: "Solgt"
-    nearby_listings: "I nærheten"
-    listing: "Annonse"
-    listing_kicker: "Markedsplass / %{category}"
-    share: "Del"
-    reviews: "Omtaler"
+    browse_listings: Bla i annonser
+    listing_kind: Hvem selger
+    from_anyone: Alle
+    from_a_person: Person
+    from_a_shop: Butikk
+    casual_hint: Ingen butikk nødvendig — en annonse uten butikk er deg som selger
+      én ting.
+    sold: Solgt
+    nearby_listings: I nærheten
+    listing: Annonse
+    listing_kicker: Markedsplass / %{category}
+    share: Del
+    reviews: Omtaler
     seller_rating: "%{rating} ★ vurdering av selger"
     views:
       one: "%{count} visning"
@@ -892,519 +903,525 @@ nb:
       one: "%{count} omtale"
       other: "%{count} omtaler"
     deals:
-      featured: "Utvalgte tilbud"
-      title: "Tilbud"
+      featured: Utvalgte tilbud
+      title: Tilbud
       show_title: "%{headline} · %{city}"
-    max_price: "Maks pris"
-    min_price: "Min. pris"
+    max_price: Maks pris
+    min_price: Min. pris
     orders:
-      empty_action: "Se annonser"
-      empty_body: "Bestillingene dine fra markedsplassen dukker opp her."
-      empty_title: "Ingen bestillinger ennå"
-      listing: "Annonse"
-      title: "Dine bestillinger"
-    sort_label: "Sorter"
-    sort_price_high: "Pris ↓"
-    sort_price_low: "Pris ↑"
-    sort_recent: "Nyeste"
+      empty_action: Se annonser
+      empty_body: Bestillingene dine fra markedsplassen dukker opp her.
+      empty_title: Ingen bestillinger ennå
+      listing: Annonse
+      title: Dine bestillinger
+    sort_label: Sorter
+    sort_price_high: Pris ↓
+    sort_price_low: Pris ↑
+    sort_recent: Nyeste
     stores:
-      delete: "Slett butikk"
-      delete_confirm: "Slette butikken?"
-      edit: "Rediger butikk"
-      new: "Åpne butikk"
-      title: "Butikker"
-      also_in_city: "Også i %{city}"
-    new_listing: "Ny annonse"
-    edit_listing: "Rediger annonse"
-    saved_searches: "Lagrede søk"
-    price_ore: "Pris (øre)"
-    price_help: "Skriv prisen i øre; for eksempel er 25000 NOK 250."
-    post_review: "Publiser anmeldelse"
-    send_offer: "Send bud"
-    send: "Send"
-    list_it: "Legg ut"
-    save_search: "Lagre dette søket"
-    message_seller: "Melding til selger (valgfritt)"
-    message_seller_btn: "Meld selger"
-    latitude: "Breddegrad"
-    longitude: "Lengdegrad"
-    radius_km: "Radius km"
-    radius_label: "Radius i kilometer"
-    accept: "Godta"
-    decline: "Avslå"
-    add_to_cart: "Legg i handlekurv"
-    pay_vipps: "Betal med Vipps"
-    pay_stripe: "Betal med Stripe"
-    send_all_offers: "Send alle bud"
-    send_offers_confirm: "Varsle alle selgere om ventende bud?"
-    cart_empty_title: "Handlekurven er tom"
-    cart_empty_body: "Bla i annonser og send bud — gjester kan handle uten registrering."
-    browse_marketplace: "Bla i markedsplassen"
-    cart_total: "Totalt: %{amount}"
-    cart_pay_hint: "Betal med Vipps (NO) eller Stripe (kort), eller send klassiske bud selgere godtar/avslår."
-    cart_honest_pay: "Hvis en betalingsleverandør er utilgjengelig, sier vi det. Vi tar aldri betaling vi ikke kan behandle."
-    cart_pay_unavailable: "Nettbetaling er ikke satt opp ennå. Send et tilbud til selgeren, eller avtal betaling direkte."
-    cart_sellers_hint: "Selgere får varsel for hvert ventende bud. De godtar eller avslår individuelt."
-    payment_methods: "Betalingsmetoder"
-    cart_header: "Handlekurv-header"
+      delete: Slett butikk
+      delete_confirm: Slette butikken?
+      edit: Rediger butikk
+      new: Åpne butikk
+      title: Butikker
+      also_in_city: Også i %{city}
+    new_listing: Ny annonse
+    edit_listing: Rediger annonse
+    saved_searches: Lagrede søk
+    price_ore: Pris (øre)
+    price_help: Skriv prisen i øre; for eksempel er 25000 NOK 250.
+    post_review: Publiser anmeldelse
+    send_offer: Send bud
+    send: Send
+    list_it: Legg ut
+    save_search: Lagre dette søket
+    message_seller: Melding til selger (valgfritt)
+    message_seller_btn: Meld selger
+    latitude: Breddegrad
+    longitude: Lengdegrad
+    radius_km: Radius km
+    radius_label: Radius i kilometer
+    accept: Godta
+    decline: Avslå
+    add_to_cart: Legg i handlekurv
+    pay_vipps: Betal med Vipps
+    pay_stripe: Betal med Stripe
+    send_all_offers: Send alle bud
+    send_offers_confirm: Varsle alle selgere om ventende bud?
+    cart_empty_title: Handlekurven er tom
+    cart_empty_body: Bla i annonser og send bud — gjester kan handle uten registrering.
+    browse_marketplace: Bla i markedsplassen
+    cart_total: 'Totalt: %{amount}'
+    cart_pay_hint: Betal med Vipps (NO) eller Stripe (kort), eller send klassiske
+      bud selgere godtar/avslår.
+    cart_honest_pay: Hvis en betalingsleverandør er utilgjengelig, sier vi det. Vi
+      tar aldri betaling vi ikke kan behandle.
+    cart_pay_unavailable: Nettbetaling er ikke satt opp ennå. Send et tilbud til selgeren,
+      eller avtal betaling direkte.
+    cart_sellers_hint: Selgere får varsel for hvert ventende bud. De godtar eller
+      avslår individuelt.
+    payment_methods: Betalingsmetoder
+    cart_header: Handlekurv-header
     item:
       one: "%{count} vare"
       other: "%{count} varer"
-    remove_listing: "Fjern annonse"
-    confirm_delete_saved_search: "Slette dette lagrede søket?"
-    confirm_remove_listing: "Fjerne denne annonsen? Den tas ut av markedsplassen og blir bare synlig for deg. Ordrer og omtaler beholdes."
-    run_search: "Kjør"
-    top_offers_heading: "Plukket ut for byen"
-    make_offer: "Gi et bud"
-    add_photos: "Legg til bilder"
-    top_offers_kicker: "Beste tilbud"
-    seller_dashboard: "Selgeroversikt"
-    alerts: "Varsler fra markedsplassen"
-    chat_with: "Chat med %{name}"
-    top_offers_blurb: "Utvalgte tilbud og annonser med høy signalverdi — tettere enn strømmen, fortsatt flatt."
-    message_seller_hint: "Send en kort melding til selgeren. De kan godta eller avslå fra denne annonsesiden."
-    near_me: "Nær meg"
-    filter_category: "Filtrer etter kategori"
-    buy_actions: "Kjøp"
-    offer: "Bud"
-    sold_notice: "Denne annonsen er solgt."
-    expired_notice: "Denne annonsen har utløpt."
-    renew: "Forny annonsen"
+    remove_listing: Fjern annonse
+    confirm_delete_saved_search: Slette dette lagrede søket?
+    confirm_remove_listing: Fjerne denne annonsen? Den tas ut av markedsplassen og
+      blir bare synlig for deg. Ordrer og omtaler beholdes.
+    run_search: Kjør
+    top_offers_heading: Plukket ut for byen
+    make_offer: Gi et bud
+    add_photos: Legg til bilder
+    top_offers_kicker: Beste tilbud
+    seller_dashboard: Selgeroversikt
+    alerts: Varsler fra markedsplassen
+    chat_with: Chat med %{name}
+    top_offers_blurb: Utvalgte tilbud og annonser med høy signalverdi — tettere enn
+      strømmen, fortsatt flatt.
+    message_seller_hint: Send en kort melding til selgeren. De kan godta eller avslå
+      fra denne annonsesiden.
+    near_me: Nær meg
+    filter_category: Filtrer etter kategori
+    buy_actions: Kjøp
+    offer: Bud
+    sold_notice: Denne annonsen er solgt.
+    expired_notice: Denne annonsen har utløpt.
+    renew: Forny annonsen
     distance_km: "%{km} km unna"
     rating_of_five: "%{rating} av 5"
-    no_reviews_body: "Kjøpere kan omtale etter en ordre."
-    no_offers_body: "Innkommende bud vises her."
-    offers: "Bud"
-    add_address_body: "Lagre en adresse så neste kjøp ikke krever den på nytt."
+    no_reviews_body: Kjøpere kan omtale etter en ordre.
+    no_offers_body: Innkommende bud vises her.
+    offers: Bud
+    add_address_body: Lagre en adresse så neste kjøp ikke krever den på nytt.
     conditions:
-      new: "ny"
-      like_new: "som ny"
-      good: "bra"
-      fair: "grei"
-      poor: "slitt"
+      new: ny
+      like_new: som ny
+      good: bra
+      fair: grei
+      poor: slitt
   takeaway:
-    intro: "Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling."
-    unsave: "Fjern lagring"
-    save_restaurant: "Lagre"
-    order_food: "Menyer i nærheten"
-    add_restaurant: "Legg til restaurant"
-    edit_restaurant: "Rediger restaurant"
-    delivery_drivers: "Budsjåfører"
-    delivery_driver: "Budsjåfør"
-    delivery_address: "Leveringsadresse"
-    special_instructions: "Spesielle instruksjoner (valgfritt)"
-    special_instructions_placeholder: "Dørkode, allergier, leveringsnotater…"
-    payment: "Betaling"
-    payment_label: "Betalingsinfo"
-    payment_body: "Betaling avtales direkte med restauranten for nå."
-    place_order: "Legg inn bestilling"
-    rating: "Vurdering (1–5)"
-    comments_optional: "Kommentarer (valgfritt)"
-    post_review: "Publiser anmeldelse"
-    add: "Legg til"
-    save: "Lagre"
-    update: "Oppdater"
-    active: "Aktiv"
-    delivery_fee: "Leveringsgebyr (øre)"
-    min_order: "Minsteordre (øre)"
-    item_name: "Navn"
-    item_price: "Pris (øre)"
-    item_description: "Beskrivelse"
-    license_number: "Lisensnummer"
-    latitude: "Breddegrad"
-    longitude: "Lengdegrad"
-    add_menu_item: "Legg til menyelement"
-    reviews_heading: "Omtaler fra naboer"
-    nearby_restaurants: "I nærheten"
-    leave_review: "Legg igjen en omtale"
-    status_timeline: "Statusforløp"
+    intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
+      avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.
+    unsave: Fjern lagring
+    save_restaurant: Lagre
+    order_food: Menyer i nærheten
+    add_restaurant: Legg til restaurant
+    edit_restaurant: Rediger restaurant
+    delivery_drivers: Budsjåfører
+    delivery_driver: Budsjåfør
+    delivery_address: Leveringsadresse
+    special_instructions: Spesielle instruksjoner (valgfritt)
+    special_instructions_placeholder: Dørkode, allergier, leveringsnotater…
+    payment: Betaling
+    payment_label: Betalingsinfo
+    payment_body: Betaling avtales direkte med restauranten for nå.
+    place_order: Legg inn bestilling
+    rating: Vurdering (1–5)
+    comments_optional: Kommentarer (valgfritt)
+    post_review: Publiser anmeldelse
+    add: Legg til
+    save: Lagre
+    update: Oppdater
+    active: Aktiv
+    delivery_fee: Leveringsgebyr (øre)
+    min_order: Minsteordre (øre)
+    item_name: Navn
+    item_price: Pris (øre)
+    item_description: Beskrivelse
+    license_number: Lisensnummer
+    latitude: Breddegrad
+    longitude: Lengdegrad
+    add_menu_item: Legg til menyelement
+    reviews_heading: Omtaler fra naboer
+    nearby_restaurants: I nærheten
+    leave_review: Legg igjen en omtale
+    status_timeline: Statusforløp
     courier_distance: "%{km} km unna"
-    courier_unassigned: "Ingen ledig bud i nærheten ennå."
-    order_cancelled: "Bestillingen er kansellert"
-    order_from: "Bestill fra %{restaurant}"
-    sold_out: "Utsolgt"
-    operations: "Takeaway-drift"
-    available_items: "tilgjengelige retter"
-    min_order_line: "Minstebeløp: %{min} · Levering: %{fee} ·"
-    reload_to_order: "Last inn på nytt for å bestille — gjester kan bestille uten registrering."
+    courier_unassigned: Ingen ledig bud i nærheten ennå.
+    order_cancelled: Bestillingen er kansellert
+    order_from: Bestill fra %{restaurant}
+    sold_out: Utsolgt
+    operations: Takeaway-drift
+    available_items: tilgjengelige retter
+    min_order_line: 'Minstebeløp: %{min} · Levering: %{fee} ·'
+    reload_to_order: Last inn på nytt for å bestille — gjester kan bestille uten registrering.
     saves:
       one: "%{count} lagret"
       other: "%{count} lagret"
-    driver_header: "Budsjåfør"
-    anon: "anonym"
-    driver_details: "Sjåførdetaljer"
-    restaurant_header: "Restaurant"
-    restaurant_info: "Restaurantinfo"
-    min_order_delivery: "Minstebeløp: %{min} · Levering: %{fee}"
+    driver_header: Budsjåfør
+    anon: anonym
+    driver_details: Sjåførdetaljer
+    restaurant_header: Restaurant
+    restaurant_info: Restaurantinfo
+    min_order_delivery: 'Minstebeløp: %{min} · Levering: %{fee}'
     available_count:
       one: "%{count} tilgjengelig rett"
       other: "%{count} tilgjengelige retter"
-    place_order_from: "Bestill fra %{restaurant}"
-    menu: "Meny"
-    vegetarian: "Vegetar"
-    vegan: "Vegansk"
-    qty: "Antall"
-    back_to_restaurant: "Tilbake til restauranten"
-    delivery_details: "Leveringsdetaljer"
-    delivery_heading: "Levering"
-    restaurant_results: "Restauranttreff"
-    restaurant_actions: "Restauranthandlinger"
-    qty_for: "Antall av %{name}"
+    place_order_from: Bestill fra %{restaurant}
+    menu: Meny
+    vegetarian: Vegetar
+    vegan: Vegansk
+    qty: Antall
+    back_to_restaurant: Tilbake til restauranten
+    delivery_details: Leveringsdetaljer
+    delivery_heading: Levering
+    restaurant_results: Restauranttreff
+    restaurant_actions: Restauranthandlinger
+    qty_for: Antall av %{name}
     item_sold_out: "%{name} er utsolgt"
-    browse_menu: "Se menyen"
+    browse_menu: Se menyen
   maps:
-    your_courier: "Budet ditt"
-    recent_check_ins: "Nylige innsjekkinger"
-    hud_aria: "Kartsøk og informasjon"
-    browse_list: "Bla i listen"
-    needs_js: "Kartet krever JavaScript."
-    browse_as_list: "Se stedene som liste"
-    map: "Kart"
-    aria_map: "Interaktivt kart over steder i byen"
-    open_in_map: "Åpne i kart"
-    optional_note: "Valgfri merknad"
-    check_in: "Jeg er her (sjekk inn)"
-    all_types: "Alle typer"
-    filter_by_kind: "Filtrer på type"
-    checked_in_recently: "Du sjekket inn her nylig."
-    on_the_map: "På kartet"
-    at_this_place: "Her"
-    nearby_places: "I nærheten"
-    no_place: "Ikke på kartet"
+    your_courier: Budet ditt
+    recent_check_ins: Nylige innsjekkinger
+    hud_aria: Kartsøk og informasjon
+    browse_list: Bla i listen
+    needs_js: Kartet krever JavaScript.
+    browse_as_list: Se stedene som liste
+    map: Kart
+    aria_map: Interaktivt kart over steder i byen
+    open_in_map: Åpne i kart
+    optional_note: Valgfri merknad
+    check_in: Jeg er her (sjekk inn)
+    all_types: Alle typer
+    filter_by_kind: Filtrer på type
+    checked_in_recently: Du sjekket inn her nylig.
+    on_the_map: På kartet
+    at_this_place: Her
+    nearby_places: I nærheten
+    no_place: Ikke på kartet
   communities:
-    about: "Om %{name}"
-    name_placeholder: "f.eks. bergen, tech, musikk"
-    description_placeholder: "Hva handler dette fellesskapet om?"
-    create: "Opprett"
-    save: "Lagre"
-    confirm_delete: "Slette fellesskapet?"
-    new_community: "Nytt fellesskap"
-    also_in_city: "Også i %{city}"
+    about: Om %{name}
+    name_placeholder: f.eks. bergen, tech, musikk
+    description_placeholder: Hva handler dette fellesskapet om?
+    create: Opprett
+    save: Lagre
+    confirm_delete: Slette fellesskapet?
+    new_community: Nytt fellesskap
+    also_in_city: Også i %{city}
   newsletter:
-    email_placeholder: "din@epost.com"
-    subscribe: "Abonner"
-    title: "Byoppdateringer"
-    body: "Nyheter og tilbud fra byen din, én gang i uken."
-    marketing_consent: "Jeg godtar å motta tilbud og partnerforslag (valgfritt, avmeld når som helst)"
-    view_offer: "Se tilbudet"
-    curated_offers: "Utvalgte tilbud"
-    today_in: "I dag i %{city}"
+    email_placeholder: din@epost.com
+    subscribe: Abonner
+    title: Byoppdateringer
+    body: Nyheter og tilbud fra byen din, én gang i uken.
+    marketing_consent: Jeg godtar å motta tilbud og partnerforslag (valgfritt, avmeld
+      når som helst)
+    view_offer: Se tilbudet
+    curated_offers: Utvalgte tilbud
+    today_in: I dag i %{city}
   pwa:
-    home: "Hjem"
-    new: "Ny"
-    post: "Post"
-    listing: "Annonse"
-    feed: "Feed"
-    playlists: "Spillelister"
-    new_playlist: "Ny spilleliste"
-    sets: "Sett"
-    discover: "Oppdag"
-    matches: "Matcher"
-    profile: "Profil"
-    live: "Live"
-    listings: "Annonser"
-    new_listing: "Ny annonse"
-    restaurants: "Restauranter"
-    map: "Kart"
-    inbox: "Innboks"
-    activity: "Aktivitet"
-    desc_playlist: "Spillelister, sett og radio for %{city}."
-    desc_dating: "Dating i %{city}."
-    desc_tv: "Direktesendinger og kanaler for %{city}."
-    desc_marketplace: "Markedsplass for %{city}."
-    desc_takeaway: "Takeaway for %{city}."
-    desc_maps: "Kart for %{city}."
-    desc_messenger: "Meldinger for %{city}."
+    home: Hjem
+    new: Ny
+    post: Post
+    listing: Annonse
+    feed: Feed
+    playlists: Spillelister
+    new_playlist: Ny spilleliste
+    sets: Sett
+    discover: Oppdag
+    matches: Matcher
+    profile: Profil
+    live: Live
+    listings: Annonser
+    new_listing: Ny annonse
+    restaurants: Restauranter
+    map: Kart
+    inbox: Innboks
+    activity: Aktivitet
+    desc_playlist: Spillelister, sett og radio for %{city}.
+    desc_dating: Dating i %{city}.
+    desc_tv: Direktesendinger og kanaler for %{city}.
+    desc_marketplace: Markedsplass for %{city}.
+    desc_takeaway: Takeaway for %{city}.
+    desc_maps: Kart for %{city}.
+    desc_messenger: Meldinger for %{city}.
   live:
-    page_title: "Live · i nærheten"
-    heading: "Live"
-    header_label: "Live-feed-overskrift"
-    kicker: "Det som skjer rundt deg — kort, anonymt, stemme-rangert."
-    within_km: "Innen %{km} km."
-    enable_location_hint: "Slå på posisjon for boblen i nærheten."
-    sort_label: "Live-sortering"
-    sort_hot: "Hot"
-    sort_new: "Nye"
-    also_open: "Også åpent uten registrering"
-    rules_label: "Live-regler"
-    rules_summary: "Lokalt og anonymt — spilleregler"
-    rule_names: "Ingen ekte navn, adresser eller doxing av privatpersoner."
-    rule_short: "Innlegg er korte (maks %{max} tegn) og vises som anon."
-    rule_gps: "Eksakt GPS grovkornes — bare et omtrentlig område lagres."
-    rule_votes: "Oppstemmer løfter nyttig lokalt signal; nedstemmer graver spam."
-    compose_label: "Post til Live som anon"
-    compose_placeholder: "Hva skjer i nærheten?"
-    compose_hint: "Lokalt · anonymt · ingen registrering"
-    post_live: "Post Live"
-    share_to_post_title: "Del posisjon for å poste"
-    share_to_post_body: "En grov posisjon holder notatet til folk i nærheten. Nøyaktig posisjon vises aldri."
-    feed_label: "Live-innlegg i nærheten"
-    vote_label: "Stem, poeng %{score}"
-    comment_label: "Kommentar"
-    empty_located_title: "Stille her"
-    empty_located_body: "Vær den første som legger igjen et kort anonymt notat i nærheten."
-    empty_waiting_title: "Venter på de første Live-notatene"
-    empty_waiting_body: "Slå på posisjon eller kom tilbake når lokale begynner å poste."
+    page_title: Live · i nærheten
+    heading: Live
+    header_label: Live-feed-overskrift
+    kicker: Det som skjer rundt deg — kort, anonymt, stemme-rangert.
+    within_km: Innen %{km} km.
+    enable_location_hint: Slå på posisjon for boblen i nærheten.
+    sort_label: Live-sortering
+    sort_hot: Hot
+    sort_new: Nye
+    also_open: Også åpent uten registrering
+    rules_label: Live-regler
+    rules_summary: Lokalt og anonymt — spilleregler
+    rule_names: Ingen ekte navn, adresser eller doxing av privatpersoner.
+    rule_short: Innlegg er korte (maks %{max} tegn) og vises som anon.
+    rule_gps: Eksakt GPS grovkornes — bare et omtrentlig område lagres.
+    rule_votes: Oppstemmer løfter nyttig lokalt signal; nedstemmer graver spam.
+    compose_label: Post til Live som anon
+    compose_placeholder: Hva skjer i nærheten?
+    compose_hint: Lokalt · anonymt · ingen registrering
+    post_live: Post Live
+    share_to_post_title: Del posisjon for å poste
+    share_to_post_body: En grov posisjon holder notatet til folk i nærheten. Nøyaktig
+      posisjon vises aldri.
+    feed_label: Live-innlegg i nærheten
+    vote_label: Stem, poeng %{score}
+    comment_label: Kommentar
+    empty_located_title: Stille her
+    empty_located_body: Vær den første som legger igjen et kort anonymt notat i nærheten.
+    empty_waiting_title: Venter på de første Live-notatene
+    empty_waiting_body: Slå på posisjon eller kom tilbake når lokale begynner å poste.
   nearby:
     is_nearby_html: "%{handle} er i nærheten"
-    page_title: "I nærheten"
-    live_link: "Live-feed (anonyme notater i nærheten)"
-    prefer_room: "Vil du ha et rom?"
-    channels_link: "Bli med i en offentlig kanal →"
-    share_location_title: "Del posisjonen din"
-    share_location_body: "Finn fremmede innen %{km} km og chat anonymt. Nøyaktig posisjon vises aldri."
-    lobby_hint_before: "Eller åpne hjørnechatten for"
+    page_title: I nærheten
+    live_link: Live-feed (anonyme notater i nærheten)
+    prefer_room: Vil du ha et rom?
+    channels_link: Bli med i en offentlig kanal →
+    share_location_title: Del posisjonen din
+    share_location_body: Finn fremmede innen %{km} km og chat anonymt. Nøyaktig posisjon
+      vises aldri.
+    lobby_hint_before: Eller åpne hjørnechatten for
     lobby_hint_after: "— ingen GPS trengs."
-    room_title: "Chat-rom i nærheten"
-    room_body: "Alle innen %{km} km, ett felles rom, anonymt."
-    join: "Bli med"
-    chat: "Chat"
+    room_title: Chat-rom i nærheten
+    room_body: Alle innen %{km} km, ett felles rom, anonymt.
+    join: Bli med
+    chat: Chat
     distance_away: "%{km} km unna · anonym"
-    push_title: "Noen i nærheten"
+    push_title: Noen i nærheten
     push_body: "%{handle} er innen %{km} km — trykk for å chatte"
-    empty_located_body: "Kom tilbake senere — eller legg igjen en Live-notat mens du venter."
-    open_live: "Åpne Live"
+    empty_located_body: Kom tilbake senere — eller legg igjen en Live-notat mens du
+      venter.
+    open_live: Åpne Live
   install:
-    title: "Installer Brgen"
-    body: "Live, markedsplass og i nærheten — ett trykk fra hjem-skjermen."
-    not_now: "Ikke nå"
-    action: "Installer"
+    title: Installer Brgen
+    body: Live, markedsplass og i nærheten — ett trykk fra hjem-skjermen.
+    not_now: Ikke nå
+    action: Installer
   mailer:
-    confirm_subscription: "Bekreft abonnementet"
-    permission_marketing: "Samtykkebasert markedsføring"
-    confirm_button: "Bekreft abonnementet"
-    verify_welcome: "Velkommen til Brgen."
-    verify_body: "Bekreft denne e-postadressen for å begynne å publisere under kontoen din:"
-    verify_cta: "Bekreft e-postadressen min"
-    verify_ignore: "Har du ikke opprettet en Brgen-konto, kan du se bort fra denne meldingen — ingenting skjer før du bekrefter."
+    confirm_subscription: Bekreft abonnementet
+    permission_marketing: Samtykkebasert markedsføring
+    confirm_button: Bekreft abonnementet
+    verify_welcome: Velkommen til Brgen.
+    verify_body: 'Bekreft denne e-postadressen for å begynne å publisere under kontoen
+      din:'
+    verify_cta: Bekreft e-postadressen min
+    verify_ignore: Har du ikke opprettet en Brgen-konto, kan du se bort fra denne
+      meldingen — ingenting skjer før du bekrefter.
     signoff: "— Redaksjonen i Brgen"
-    not_you: "Har du ikke meldt deg på, kan du se bort fra denne e-posten."
+    not_you: Har du ikke meldt deg på, kan du se bort fra denne e-posten.
   pagination:
-    label: "Paginering"
-    previous: "Forrige"
-    next: "Neste"
-    position: "Side %{page} av %{pages}"
+    label: Paginering
+    previous: Forrige
+    next: Neste
+    position: Side %{page} av %{pages}
   compose:
-    add_photo: "Legg til bilde"
-    record_video: "Ta opp video"
-    record_audio: "Ta opp lyd"
+    add_photo: Legg til bilde
+    record_video: Ta opp video
+    record_audio: Ta opp lyd
   activity:
-    local_graph: "Lokal graf"
-    title: "Aktivitet"
-    listing_created: "Ny annonse"
-    takeaway_restaurant_created: "Ny restaurant"
-    marketplace_store_created: "Ny butikk"
-    marketplace_deal_created: "Nytt tilbud"
-    video_published: "Ny video"
-    event_created: "Nytt arrangement"
-    post_created: "Nytt innlegg"
+    local_graph: Lokal graf
+    title: Aktivitet
+    listing_created: Ny annonse
+    takeaway_restaurant_created: Ny restaurant
+    marketplace_store_created: Ny butikk
+    marketplace_deal_created: Nytt tilbud
+    video_published: Ny video
+    event_created: Nytt arrangement
+    post_created: Nytt innlegg
     verticals:
-      takeaway: "takeaway"
-      marketplace: "markedsplass"
-      social: "innlegg"
-      tv: "TV"
-      dating: "dating"
-      playlist: "spilleliste"
-      maps: "kart"
+      takeaway: takeaway
+      marketplace: markedsplass
+      social: innlegg
+      tv: TV
+      dating: dating
+      playlist: spilleliste
+      maps: kart
   a11y:
-    skip_to_content: "Hopp til innholdet"
-    reports_header: "Rapporter"
-    report: "Rapport"
-    select_report: "Velg rapport %{id}"
-    ai_assistant: "AI-assistent"
-    unfollow_user: "Avfølg %{name}"
-    follow_user: "Følg %{name}"
-    sections: "Seksjoner"
-    report_target: "Rapporter %{type}"
-    user_profile: "Brukerprofil"
-  # Flash messages. 44 hardcoded English strings until 2026-08-11 — English toasts
-  # over an nb city feed. "Unauthorized"/"Not allowed" and the generic rate-limit
-  # sentence are NOT here: they reuse shared.flash.*, which the engine owns for all
-  # three apps.
+    skip_to_content: Hopp til innholdet
+    reports_header: Rapporter
+    report: Rapport
+    select_report: Velg rapport %{id}
+    ai_assistant: AI-assistent
+    unfollow_user: Avfølg %{name}
+    follow_user: Følg %{name}
+    sections: Seksjoner
+    report_target: Rapporter %{type}
+    user_profile: Brukerprofil
   flash:
-    story_posted: "Historie publisert"
-    story_removed: "Historie slettet"
+    story_posted: Historie publisert
+    story_removed: Historie slettet
     community:
-      banned: "Utestengt"
-      ban_lifted: "Utestengelse opphevet"
-      no_such_person: "Fant ikke personen"
-      not_a_member: "Denne personen er ikke medlem"
-      moderator_added: "Moderator lagt til"
-      moderator_removed: "Moderator fjernet"
-      members_only: "Bare for medlemmer"
-    event_created: "Arrangement opprettet"
-    event_updated: "Arrangement oppdatert"
-    event_cancelled: "Arrangementet er avlyst"
-    event_removed: "Arrangement slettet"
-    event_full: "Arrangementet er fullt"
-    # Flash messages from the five brgen engines. These were the last 49
-    # hardcoded English strings the controller_flash lint counted, shown over
-    # an nb UI. Nested per engine because that is how the call sites are
-    # organised; "Not allowed" and "Not authorized" became
-    # shared.flash.not_authorized rather than an eleventh copy.
+      banned: Utestengt
+      ban_lifted: Utestengelse opphevet
+      no_such_person: Fant ikke personen
+      not_a_member: Denne personen er ikke medlem
+      moderator_added: Moderator lagt til
+      moderator_removed: Moderator fjernet
+      members_only: Bare for medlemmer
+    event_created: Arrangement opprettet
+    event_updated: Arrangement oppdatert
+    event_cancelled: Arrangementet er avlyst
+    event_removed: Arrangement slettet
+    event_full: Arrangementet er fullt
     dating:
-      prompt_saved: "Svar lagret"
-      prompt_removed: "Svar fjernet"
-      profile_created: "Profilen er opprettet."
-      profile_updated: "Profilen er oppdatert."
-      rewound: "Siste pass er angret."
-      nothing_to_rewind: "Ingenting å angre."
+      prompt_saved: Svar lagret
+      prompt_removed: Svar fjernet
+      profile_created: Profilen er opprettet.
+      profile_updated: Profilen er oppdatert.
+      rewound: Siste pass er angret.
+      nothing_to_rewind: Ingenting å angre.
     marketplace:
-      address_saved: "Adresse lagret"
-      address_default: "Standardadresse satt"
-      address_removed: "Adresse slettet"
-      address_needed: "Legg til en leveringsadresse først"
-      cart_empty: "Handlekurven er tom."
-      cart_not_payable: "Ingenting i handlekurven kan betales."
-      unknown_provider: "Ukjent betalingsleverandør."
-      checkout_failed: "Betalingen gikk ikke gjennom: %{message}"
-      payment_recorded: "Betaling %{status} via %{provider}."
-      listing_saved: "Annonsen er lagret."
-      listing_unsaved: "Annonsen er fjernet fra lagrede."
-      listing_published: "Annonsen er lagt ut."
-      listing_renewed: "Annonsen er fornyet."
-      offer_sent: "Budet er sendt."
+      address_saved: Adresse lagret
+      address_default: Standardadresse satt
+      address_removed: Adresse slettet
+      address_needed: Legg til en leveringsadresse først
+      cart_empty: Handlekurven er tom.
+      cart_not_payable: Ingenting i handlekurven kan betales.
+      unknown_provider: Ukjent betalingsleverandør.
+      checkout_failed: 'Betalingen gikk ikke gjennom: %{message}'
+      payment_recorded: Betaling %{status} via %{provider}.
+      listing_saved: Annonsen er lagret.
+      listing_unsaved: Annonsen er fjernet fra lagrede.
+      listing_published: Annonsen er lagt ut.
+      listing_renewed: Annonsen er fornyet.
+      offer_sent: Budet er sendt.
       offers_sent:
-        one: "1 bud er sendt til selgeren."
+        one: 1 bud er sendt til selgeren.
         other: "%{count} bud er sendt til selgerne."
-      offer_failed: "Kunne ikke sende budet."
-      review_saved: "Vurderingen er lagret."
-      search_saved: "Søket er lagret."
-      search_deleted: "Det lagrede søket er slettet."
+      offer_failed: Kunne ikke sende budet.
+      review_saved: Vurderingen er lagret.
+      search_saved: Søket er lagret.
+      search_deleted: Det lagrede søket er slettet.
       payment_statuses:
-        unpaid: "ubetalt"
-        pending: "under behandling"
-        paid: "gjennomført"
-        failed: "mislyktes"
-        refunded: "refundert"
+        unpaid: ubetalt
+        pending: under behandling
+        paid: gjennomført
+        failed: mislyktes
+        refunded: refundert
     playlist:
-      user_not_found: "Fant ikke brukeren."
-      collaborator_added: "Samarbeidspartneren er lagt til."
-      collaborator_removed: "Samarbeidspartneren er fjernet."
-      party_started: "Lyttefesten er i gang."
-      party_code_required: "Den festen trenger en kode."
-      party_ended: "Lyttefesten er avsluttet."
-      message_failed: "Meldingen kunne ikke sendes."
-      playlist_created: "Spillelisten er opprettet."
-      track_added: "Sporet er lagt til."
+      user_not_found: Fant ikke brukeren.
+      collaborator_added: Samarbeidspartneren er lagt til.
+      collaborator_removed: Samarbeidspartneren er fjernet.
+      party_started: Lyttefesten er i gang.
+      party_code_required: Den festen trenger en kode.
+      party_ended: Lyttefesten er avsluttet.
+      message_failed: Meldingen kunne ikke sendes.
+      playlist_created: Spillelisten er opprettet.
+      track_added: Sporet er lagt til.
     takeaway:
-      restaurant_saved: "Restauranten er lagret."
-      restaurant_unsaved: "Restauranten er fjernet fra lagrede."
-      menu_item_added: "Retten er lagt til."
-      order_placed: "Bestillingen er sendt."
-      closed_now: "Kjøkkenet er stengt akkurat nå."
-      reorder_empty: "Ingenting fra den bestillingen er på menyen lenger."
-      restaurant_created: "Restauranten er opprettet."
-      not_the_owner: "Du eier ikke denne restauranten."
-      review_requires_sign_in: "Logg inn for å skrive en vurdering."
-      review_requires_delivery: "Du kan vurdere etter en levert bestilling."
-      review_saved: "Vurderingen er lagret."
+      restaurant_saved: Restauranten er lagret.
+      restaurant_unsaved: Restauranten er fjernet fra lagrede.
+      menu_item_added: Retten er lagt til.
+      order_placed: Bestillingen er sendt.
+      closed_now: Kjøkkenet er stengt akkurat nå.
+      reorder_empty: Ingenting fra den bestillingen er på menyen lenger.
+      restaurant_created: Restauranten er opprettet.
+      not_the_owner: Du eier ikke denne restauranten.
+      review_requires_sign_in: Logg inn for å skrive en vurdering.
+      review_requires_delivery: Du kan vurdere etter en levert bestilling.
+      review_saved: Vurderingen er lagret.
     tv:
-      channel_created: "Kanalen er opprettet."
-      comment_added: "Kommentaren er lagt til."
-      video_uploaded: "Videoen er lastet opp."
-    no_such_channel: "Kanalen finnes ikke."
-    community_created: "Fellesskapet er opprettet."
-    community_updated: "Fellesskapet er oppdatert."
-    community_removed: "Fellesskapet er fjernet."
-    disappearing_messages_updated: "Forsvinnende meldinger er oppdatert."
-    settings_update_failed: "Kunne ikke oppdatere innstillingene."
-    channel_ttl_locked: "Offentlige rom beholder forsvinnende meldinger."
-    user_not_found: "Fant ikke brukeren."
-    confirm_your_inbox: "Sjekk innboksen for å bekrefte."
-    already_subscribed: "Du abonnerer allerede."
-    already_confirmed: "Allerede bekreftet."
-    subscribed: "Abonnementet er registrert — du får oppdateringer fra byen."
-    unsubscribed: "Abonnementet er avsluttet."
-    live_rate_limited: "Rolig nå — for mange Live-innlegg. Prøv igjen om litt."
-    location_required_to_post: "Slå på posisjon for å poste på Live."
-    anonymous_post_limit: "Registrer deg for å poste mer (%{limit} anonyme innlegg per nettleser)."
-    post_blocked_by_moderation: "Innlegget ble stoppet av moderering."
-    link_requires_verified_account: "Logg inn og bekreft e-postadressen din for å legge ut lenker eller tilbud."
-    posted_to_live: "Publisert til Live."
-    checked_in_at: "Sjekket inn på %{place}."
-    check_in_failed: "Kunne ikke sjekke inn."
-    messages_rate_limited: "Rolig nå — for mange meldinger. Prøv igjen om litt."
-    chats_rate_limited: "Rolig nå — for mange samtaler startet. Prøv igjen om litt."
-    listings_rate_limited: "Rolig nå — for mange annonser. Prøv igjen om litt."
-    location_required_for_nearby: "Slå på posisjon for å bli med i chatten i nærområdet."
-    thats_you: "Det er deg."
-    no_longer_nearby: "Den personen er ikke i nærheten lenger."
-    program_not_open: "Dette programmet er ikke åpent."
-    already_joined_program: "Du er allerede med i dette programmet."
-    application_submitted: "Søknaden er sendt."
-    partner_program_created: "Partnerprogrammet er opprettet."
-    program_updated: "Programmet er oppdatert."
-    posted: "Publisert."
-    shared_into_draft: "Delt inn i et utkast."
-    draft_failed: "Kunne ikke opprette utkast."
-    content_unavailable: "Innholdet er ikke tilgjengelig lenger."
-    report_submitted: "Rapporten er sendt."
-    welcome: "Velkommen til Brgen."
+      channel_created: Kanalen er opprettet.
+      comment_added: Kommentaren er lagt til.
+      video_uploaded: Videoen er lastet opp.
+    no_such_channel: Kanalen finnes ikke.
+    community_created: Fellesskapet er opprettet.
+    community_updated: Fellesskapet er oppdatert.
+    community_removed: Fellesskapet er fjernet.
+    disappearing_messages_updated: Forsvinnende meldinger er oppdatert.
+    settings_update_failed: Kunne ikke oppdatere innstillingene.
+    channel_ttl_locked: Offentlige rom beholder forsvinnende meldinger.
+    user_not_found: Fant ikke brukeren.
+    confirm_your_inbox: Sjekk innboksen for å bekrefte.
+    already_subscribed: Du abonnerer allerede.
+    already_confirmed: Allerede bekreftet.
+    subscribed: Abonnementet er registrert — du får oppdateringer fra byen.
+    unsubscribed: Abonnementet er avsluttet.
+    live_rate_limited: Rolig nå — for mange Live-innlegg. Prøv igjen om litt.
+    location_required_to_post: Slå på posisjon for å poste på Live.
+    anonymous_post_limit: Registrer deg for å poste mer (%{limit} anonyme innlegg
+      per nettleser).
+    post_blocked_by_moderation: Innlegget ble stoppet av moderering.
+    link_requires_verified_account: Logg inn og bekreft e-postadressen din for å legge
+      ut lenker eller tilbud.
+    posted_to_live: Publisert til Live.
+    checked_in_at: Sjekket inn på %{place}.
+    check_in_failed: Kunne ikke sjekke inn.
+    messages_rate_limited: Rolig nå — for mange meldinger. Prøv igjen om litt.
+    chats_rate_limited: Rolig nå — for mange samtaler startet. Prøv igjen om litt.
+    listings_rate_limited: Rolig nå — for mange annonser. Prøv igjen om litt.
+    location_required_for_nearby: Slå på posisjon for å bli med i chatten i nærområdet.
+    thats_you: Det er deg.
+    no_longer_nearby: Den personen er ikke i nærheten lenger.
+    program_not_open: Dette programmet er ikke åpent.
+    already_joined_program: Du er allerede med i dette programmet.
+    application_submitted: Søknaden er sendt.
+    partner_program_created: Partnerprogrammet er opprettet.
+    program_updated: Programmet er oppdatert.
+    posted: Publisert.
+    shared_into_draft: Delt inn i et utkast.
+    draft_failed: Kunne ikke opprette utkast.
+    content_unavailable: Innholdet er ikke tilgjengelig lenger.
+    report_submitted: Rapporten er sendt.
+    welcome: Velkommen til Brgen.
   restricted:
-    title: "Bare for medlemmer"
-    body: "Dette er bare for medlemmer av dette rommet."
+    title: Bare for medlemmer
+    body: Dette er bare for medlemmer av dette rommet.
   block:
-    block: "Blokker"
-    unblock: "Opphev blokkering"
+    block: Blokker
+    unblock: Opphev blokkering
   bookmark:
-    empty_body: "Trykk Lagre på et innlegg for å beholde det her."
-    empty_title: "Ingenting lagret ennå"
-    save: "Lagre"
-    saved: "Lagret."
-    saved_title: "Lagret"
-    unsave: "Fjern fra lagret"
-    removed: "Fjernet."
+    empty_body: Trykk Lagre på et innlegg for å beholde det her.
+    empty_title: Ingenting lagret ennå
+    save: Lagre
+    saved: Lagret.
+    saved_title: Lagret
+    unsave: Fjern fra lagret
+    removed: Fjernet.
   common:
-    close: "Lukk"
+    close: Lukk
   community:
-    confirm_ban: "Utestenge denne personen fra fellesskapet?"
-    bans: "Utestengte"
-    ban_author: "Utesteng"
-    lift_ban: "Opphev"
-    ban_reason: "Grunn"
-    ban_days: "Dager (tom = permanent)"
-    banned_notification: "Du kan ikke lenger poste i %{community}"
-    ban_permanent: "Permanent"
-    ban_until: "Til %{time}"
-    banned_here: "Du er utestengt fra dette fellesskapet."
-    no_bans: "Ingen er utestengt"
-    rules: "Regler"
-    rules_hint: "Én regel per linje."
-    flairs: "Merkelapper"
-    flairs_hint: "Én merkelapp per linje. Brukes til å filtrere innlegg."
-    filter_by_flair: "Filtrer på merkelapp"
-    all_flair: "Alle"
-    privacy: "Synlighet"
-    privacy_hint: "Begrenset: alle leser, bare medlemmer poster. Privat: bare medlemmer."
+    confirm_ban: Utestenge denne personen fra fellesskapet?
+    bans: Utestengte
+    ban_author: Utesteng
+    lift_ban: Opphev
+    ban_reason: Grunn
+    ban_days: Dager (tom = permanent)
+    banned_notification: Du kan ikke lenger poste i %{community}
+    ban_permanent: Permanent
+    ban_until: Til %{time}
+    banned_here: Du er utestengt fra dette fellesskapet.
+    no_bans: Ingen er utestengt
+    rules: Regler
+    rules_hint: Én regel per linje.
+    flairs: Merkelapper
+    flairs_hint: Én merkelapp per linje. Brukes til å filtrere innlegg.
+    filter_by_flair: Filtrer på merkelapp
+    all_flair: Alle
+    privacy: Synlighet
+    privacy_hint: 'Begrenset: alle leser, bare medlemmer poster. Privat: bare medlemmer.'
     privacy_options:
-      public: "Åpent"
-      restricted: "Begrenset"
-      private: "Privat"
-    icon: "Ikon"
-    banner: "Bannerbilde"
-    mod_queue: "Modkø"
-    moderators: "Moderatorer"
-    moderators_hint: "Bare eieren kan utnevne og fjerne moderatorer."
-    make_moderator: "Gjør til moderator"
-    remove_moderator: "Fjern som moderator"
-    owner_locked: "Eier"
-    moderator_appointed: "Du er moderator i %{community}"
-    moderator_appointed_body: "Du kan nå behandle rapporter og redigere regler."
-    members_only_posting: "Bare medlemmer kan poste her."
-    reported: "Rapportert"
-    reason: "Grunn"
-    status: "Status"
-    action: "Handling"
-    subject_gone: "Innholdet er borte"
-    mark_reviewing: "Under vurdering"
-    mark_resolved: "Løst"
-    mark_open: "Åpen"
-    mark_dismissed: "Avvist"
-    mark_dismissed: "Avvist"
-    queue_empty: "Ingenting i køen"
-    queue_empty_body: "Rapporter fra dette fellesskapet dukker opp her."
-    back_to_community: "Tilbake til %{community}"
+      public: Åpent
+      restricted: Begrenset
+      private: Privat
+    icon: Ikon
+    banner: Bannerbilde
+    mod_queue: Modkø
+    moderators: Moderatorer
+    moderators_hint: Bare eieren kan utnevne og fjerne moderatorer.
+    make_moderator: Gjør til moderator
+    remove_moderator: Fjern som moderator
+    owner_locked: Eier
+    moderator_appointed: Du er moderator i %{community}
+    moderator_appointed_body: Du kan nå behandle rapporter og redigere regler.
+    members_only_posting: Bare medlemmer kan poste her.
+    reported: Rapportert
+    reason: Grunn
+    status: Status
+    action: Handling
+    subject_gone: Innholdet er borte
+    mark_reviewing: Under vurdering
+    mark_resolved: Løst
+    mark_open: Åpen
+    mark_dismissed: Avvist
+    queue_empty: Ingenting i køen
+    queue_empty_body: Rapporter fra dette fellesskapet dukker opp her.
+    back_to_community: Tilbake til %{community}
     open_count:
       one: "%{count} åpen"
       other: "%{count} åpne"
@@ -1412,46 +1429,88 @@ nb:
       one: "%{count} under vurdering"
       other: "%{count} under vurdering"
     role:
-      member: "Medlem"
-      moderator: "Moderator"
-      owner: "Eier"
-    join: "Bli med"
-    leave: "Forlat"
-    no_bans_body: "Utestengelser fra dette fellesskapet vises her."
-    header: "Fellesskap"
+      member: Medlem
+      moderator: Moderator
+      owner: Eier
+    join: Bli med
+    leave: Forlat
+    no_bans_body: Utestengelser fra dette fellesskapet vises her.
+    header: Fellesskap
     posts_count:
       one: "%{count} innlegg"
       other: "%{count} innlegg"
     members_count:
       one: "%{count} medlem"
       other: "%{count} medlemmer"
-    new_post: "Nytt innlegg i %{name}"
+    new_post: Nytt innlegg i %{name}
   hashtag:
     count: "%{count} innlegg"
-    empty_body: "Ingen innlegg bruker #%{name} ennå."
-    empty_title: "Ingenting her ennå"
-    also_in_city: "Fellesskap i %{city}"
+    empty_body: 'Ingen innlegg bruker #%{name} ennå.'
+    empty_title: Ingenting her ennå
+    also_in_city: Fellesskap i %{city}
   profile:
-    activity: "Nylig aktivitet"
-    display_name: "Visningsnavn"
-    edit: "Rediger profil"
-    username: "Brukernavn"
-    across_the_city: "På tvers av byen"
-    stores: "Butikker"
-    listings: "Annonser"
-    restaurants: "Restauranter"
-    channels: "Kanaler"
-    playlists: "Spillelister"
-    posts: "Innlegg"
+    activity: Nylig aktivitet
+    display_name: Visningsnavn
+    edit: Rediger profil
+    username: Brukernavn
+    across_the_city: På tvers av byen
+    stores: Butikker
+    listings: Annonser
+    restaurants: Restauranter
+    channels: Kanaler
+    playlists: Spillelister
+    posts: Innlegg
     followers:
       one: "%{count} følger"
       other: "%{count} følgere"
     following:
-      one: "følger %{count}"
-      other: "følger %{count}"
+      one: følger %{count}
+      other: følger %{count}
   showcase:
-    devices: "Appen på skrivebord og mobil"
+    devices: Appen på skrivebord og mobil
   admin:
-    reports_title: "Moderasjonsrapporter"
-    moderation: "Admin / moderering"
-    reported_by: "av %{name}"
+    reports_title: Moderasjonsrapporter
+    moderation: Admin / moderering
+    reported_by: av %{name}
+  aria:
+    channel: Kanal
+    conversations: Samtaler
+    react: Reager
+    brgen_dating: Brgen dating
+    profile_sections: Profilseksjoner
+    places: Steder
+    place_details_header: Overskrift for stedsdetaljer
+    place_navigation: Stedsnavigasjon
+    place_information: Stedsinformasjon
+    marketplace_category_header: Overskrift for kategori i markedsplassen
+    category_listings: Annonser i kategorien
+    featured_deals: Utvalgte tilbud
+    categories: Kategorier
+    listings: Annonser
+    new_marketplace_listing_header: Overskrift for ny annonse
+    listing_actions: Handlinger for annonsen
+    order_details_header: Overskrift for bestillingsdetaljer
+    order_messages: Meldinger om bestillingen
+    saved_searches_header: Overskrift for lagrede søk
+    stores_list: Butikkliste
+    store_listings: Annonser i butikken
+    track_management: Sporadministrasjon
+    track_analytics: Sporstatistikk
+    playlist_library: Spillelistebibliotek
+    close_library: Lukk bibliotek
+    timestamped_comments: Kommentarer med tidsstempel
+    playlist_navigation: Spillelistenavigasjon
+    git_archaeology_log: Git-arkeologilogg
+    new_playlist_header: Overskrift for ny spilleliste
+    playlist_sets_header: Overskrift for sett
+    playlist_set_actions: Handlinger for settet
+    collaborators: Medskapere
+    dilla_sketches: Dilla-skisser
+    delivery_drivers_header: Overskrift for bud
+    delivery_drivers: Bud
+    my_orders_header: Overskrift for mine bestillinger
+    order_history: Bestillingshistorikk
+    channel_videos: Kanalvideoer
+    trending_videos: Populære videoer
+    trending_content: Populært innhold
+    recent_content: Nytt innhold

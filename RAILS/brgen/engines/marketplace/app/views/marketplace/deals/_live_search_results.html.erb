@@ -3,7 +3,7 @@
 <% end %>
 
 <% if @featured_deals&.any? && live_search_query.blank? %>
- <section class="featured-deals" aria-label="Featured deals">
+ <section class="featured-deals" aria-label="<%= t("aria.featured_deals") %>">
  <h2><%= t("marketplace.deals.featured", default: "Featured deals") %></h2>
  <div class="deal-grid deal-grid--featured">
  <% @featured_deals.each do |deal| %>

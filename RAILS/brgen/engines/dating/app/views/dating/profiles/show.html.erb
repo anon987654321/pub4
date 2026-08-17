@@ -5,7 +5,7 @@
   <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
-<nav class="sort-tabs" aria-label="Profile sections" role="tablist" data-controller="tabs">
+<nav class="sort-tabs" aria-label="<%= t("aria.profile_sections") %>" role="tablist" data-controller="tabs">
   <a href="#photos" class="sort-tab active" id="profile-photos-tab" role="tab" aria-selected="true" data-tabs-target="tab" data-tabs-hash-value="#photos" data-action="click->tabs#select">Photos</a>
   <a href="#about" class="sort-tab" id="profile-about-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tabs-hash-value="#about" data-action="click->tabs#select"><%= t("dating.about_tab") %></a>
   <a href="#details" class="sort-tab" id="profile-details-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tabs-hash-value="#details" data-action="click->tabs#select">Details</a>

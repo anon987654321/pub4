@@ -19,7 +19,7 @@
     <% end %>
   <% end %>
 
-  <div class="deal-grid" aria-label="Store listings">
+  <div class="deal-grid" aria-label="<%= t("aria.store_listings") %>">
     <% @listings.each do |listing| %>
       <%= render "marketplace/listings/card", listing: listing %>
     <% end %>

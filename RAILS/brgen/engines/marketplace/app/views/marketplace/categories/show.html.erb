@@ -1,11 +1,11 @@
 <% content_for :title, @category.name %>
 
-<div class="page-header" role="banner" aria-label="Marketplace category header">
+<div class="page-header" role="banner" aria-label="<%= t("aria.marketplace_category_header") %>">
   <h1><%= @category.name %></h1>
 </div>
 
 <turbo-frame id="marketplace-category" data-turbo-action="replace">
-<div id="marketplace-category-listings" class="deal-grid" role="region" aria-label="Category listings">
+<div id="marketplace-category-listings" class="deal-grid" role="region" aria-label="<%= t("aria.category_listings") %>">
 <% @listings.each do |listing| %>
   <%= render "marketplace/listings/card", listing: %>
 <% end %>

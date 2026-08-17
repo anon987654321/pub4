@@ -1,6 +1,6 @@
 <% if @places.any? %>
   <%= turbo_frame_tag "maps-places", target: "_top" do %>
-    <div class="place-list" id="maps-places-list" role="list" aria-label="Places">
+    <div class="place-list" id="maps-places-list" role="list" aria-label="<%= t("aria.places") %>">
       <% @places.each do |place| %>
         <%= render "maps/places/card", place: %>
       <% end %>

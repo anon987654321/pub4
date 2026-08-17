@@ -31,7 +31,7 @@
   </header>
 
   <% unless local_assigns.fetch(:minimal, false) %>
-  <nav class="radio-nav" aria-label="Playlist navigation">
+  <nav class="radio-nav" aria-label="<%= t("aria.playlist_navigation") %>">
     <% if authenticated? %>
       <%= link_to "New", new_playlist_path %>
       <%= link_to "Upload", new_hosted_track_path %>
@@ -41,7 +41,7 @@
     <% end %>
   </nav>
 
-  <aside class="radio-archaeology" data-radio-tunnel-target="archaeology" hidden aria-label="Git archaeology log">
+  <aside class="radio-archaeology" data-radio-tunnel-target="archaeology" hidden aria-label="<%= t("aria.git_archaeology_log") %>">
     <% radio_archaeology_lines.each do |line| %>
       <div class="radio-archaeology-line"><%= line %></div>
     <% end %>

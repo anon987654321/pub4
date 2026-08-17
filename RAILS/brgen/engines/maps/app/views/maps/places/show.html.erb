@@ -7,14 +7,14 @@
       [@place.name, request.original_url.split("?").first]
     ])) %>
 
-<div class="page-header" role="banner" aria-label="Place details header">
+<div class="page-header" role="banner" aria-label="<%= t("aria.place_details_header") %>">
   <h1><%= @place.name %></h1>
-  <nav role="navigation" aria-label="Place navigation">
+  <nav role="navigation" aria-label="<%= t("aria.place_navigation") %>">
     <%= link_to t("actions.back"), :back, class: "btn" %>
   </nav>
 </div>
 
-<article class="place" role="article" aria-label="Place information">
+<article class="place" role="article" aria-label="<%= t("aria.place_information") %>">
   <% if @place.photo.attached? %>
     <figure class="place-hero">
       <%= responsive_image_tag(@place.photo, alt: @place.name, class: "place-hero__image") %>

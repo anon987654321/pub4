@@ -3,7 +3,7 @@
 <% end %>
 
 <% if @stores.any? %>
-<div class="store-grid" id="marketplace-stores-grid" role="list" aria-label="Stores list">
+<div class="store-grid" id="marketplace-stores-grid" role="list" aria-label="<%= t("aria.stores_list") %>">
  <% @stores.each do |store| %>
    <%= render "marketplace/stores/card", store: store %>
  <% end %>

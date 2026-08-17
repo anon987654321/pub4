@@ -163,7 +163,7 @@
     <% end %>
   </section>
 
-  <section class="playlist-comments" aria-label="Timestamped comments" id="playlist:track:<%= active&.id %>:comments" data-playlist-player-target="commentsList">
+  <section class="playlist-comments" aria-label="<%= t("aria.timestamped_comments") %>" id="playlist:track:<%= active&.id %>:comments" data-playlist-player-target="commentsList">
     <h3><%= t("playlist.comments_seek") %></h3>
     <% (local_assigns[:comments] || []).each do |c| %>
       <div class="playlist-comment" data-time="<%= c[:time] %>" data-action="click->playlist-player#seekToComment">

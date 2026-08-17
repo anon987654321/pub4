@@ -1,7 +1,7 @@
-<aside class="radio-library" id="radio-library" hidden aria-label="Playlist library">
+<aside class="radio-library" id="radio-library" hidden aria-label="<%= t("aria.playlist_library") %>">
   <header class="radio-library-header">
     <h2>Library</h2>
-    <button type="button" class="radio-library-close" data-action="click->radio-tunnel#closeLibrary" aria-label="Close library">×</button>
+    <button type="button" class="radio-library-close" data-action="click->radio-tunnel#closeLibrary" aria-label="<%= t("aria.close_library") %>">×</button>
   </header>
   <div id="playlist-library-list" class="radio-library-list">
     <% playlists.each do |playlist| %>

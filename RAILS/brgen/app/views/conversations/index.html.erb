@@ -13,7 +13,7 @@
 </section>
 
 <% if @conversations.any? %>
-  <ul role="list" aria-label="Conversations">
+  <ul role="list" aria-label="<%= t("aria.conversations") %>">
     <% @conversations.each do |c| %>
       <% other = (c.participants - [Current.user]).first %>
       <% last  = c.messages.last %>

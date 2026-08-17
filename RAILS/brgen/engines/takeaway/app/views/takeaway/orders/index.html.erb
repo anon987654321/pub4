@@ -1,8 +1,8 @@
 <% content_for :title, t("pages.my_orders") %>
 
-<div class="page-header" role="banner" aria-label="My orders header"><h1><%= t("pages.my_orders") %></h1></div>
+<div class="page-header" role="banner" aria-label="<%= t("aria.my_orders_header") %>"><h1><%= t("pages.my_orders") %></h1></div>
 
-<section id="takeaway-orders-list" class="order-list" role="list" aria-label="Order history">
+<section id="takeaway-orders-list" class="order-list" role="list" aria-label="<%= t("aria.order_history") %>">
   <% @orders.each do |order| %>
     <%= render "takeaway/orders/order", order: %>
   <% end %>

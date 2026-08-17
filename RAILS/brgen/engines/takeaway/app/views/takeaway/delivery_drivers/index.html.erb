@@ -1,6 +1,6 @@
 <% content_for :title, t("takeaway.delivery_drivers") %>
 
-<div class="page-header" role="banner" aria-label="Delivery drivers header">
+<div class="page-header" role="banner" aria-label="<%= t("aria.delivery_drivers_header") %>">
   <div>
     <p class="dim"><%= t("takeaway.operations") %></p>
     <h1><%= t("takeaway.delivery_drivers") %></h1>
@@ -8,7 +8,7 @@
 </div>
 
 <% if @delivery_drivers.any? %>
-  <div class="order-list" role="list" aria-label="Delivery drivers">
+  <div class="order-list" role="list" aria-label="<%= t("aria.delivery_drivers") %>">
     <% @delivery_drivers.each do |driver| %>
       <% label = driver.user&.display_name || "anon" %>
       <%= render "shared/feed_card",

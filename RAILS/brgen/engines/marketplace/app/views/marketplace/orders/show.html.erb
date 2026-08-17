@@ -1,7 +1,7 @@
 <% content_for :title, "Order ##{@order.id}" %>
 <%= turbo_stream_from @conversation if @conversation %>
 
-<div class="page-header" role="banner" aria-label="Order details header">
+<div class="page-header" role="banner" aria-label="<%= t("aria.order_details_header") %>">
   <h1>Order #<%= @order.id %></h1>
   <p class="dim">For <%= link_to @order.listing.title, listing_path(@order.listing) %></p>
 </div>
@@ -30,7 +30,7 @@
       region to name, so a screen reader can jump to the conversation. %>
   <section class="order-chat" aria-labelledby="order-chat-heading">
   <h2 id="order-chat-heading"><%= t("marketplace.chat_with", name: @order.buyer == Current.user ? @order.seller.display_name : @order.buyer.display_name) %></h2>
-  <ul id="messages" role="list" aria-label="Order messages">
+  <ul id="messages" role="list" aria-label="<%= t("aria.order_messages") %>">
     <% @messages.each do |m| %>
       <%= render "messages/message", message: m %>
     <% end %>

@@ -11,7 +11,7 @@
 <% end %>
 
 <% if @categories.any? %>
-  <div class="deal-cats" aria-label="Categories">
+  <div class="deal-cats" aria-label="<%= t("aria.categories") %>">
     <%= link_to "All", listings_path, class: "deal-cat#{" active" unless params[:category_id]}" %>
     <% @categories.each do |cat| %>
       <%= link_to cat.name, listings_path(category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
@@ -25,7 +25,7 @@
 
 <% if @listings.any? %>
   <%= turbo_frame_tag "marketplace-listings", target: "_top" do %>
-    <div class="deal-grid" id="marketplace-listings" aria-label="Listings">
+    <div class="deal-grid" id="marketplace-listings" aria-label="<%= t("aria.listings") %>">
       <% @listings.each do |listing| %>
         <%= render "marketplace/listings/card", listing: listing, distance_km: @listing_distances&.fetch(listing.id, nil) %>
       <% end %>

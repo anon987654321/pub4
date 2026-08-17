@@ -27,7 +27,7 @@
   </section>
 <% end %>
 
-<section role="region" aria-label="Trending content">
+<section role="region" aria-label="<%= t("aria.trending_content") %>">
   <h2>Trending</h2>
   <% if @trending.any? %>
     <%= render "tv/home/trending_videos" %>
@@ -39,7 +39,7 @@
   <% end %>
 </section>
 
-<section role="region" aria-label="Recent content">
+<section role="region" aria-label="<%= t("aria.recent_content") %>">
   <h2>Recent</h2>
   <%= render partial: "tv/videos/tv_video", collection: @recent, as: :tv_video %>
 </section>
