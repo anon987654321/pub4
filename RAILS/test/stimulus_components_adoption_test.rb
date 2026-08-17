@@ -10,7 +10,7 @@ class StimulusComponentsAdoptionTest < Minitest::Test
     row = YAML.safe_load_file(File.join(ROOT, "gates/gates.yml")).fetch("stimulus_components")
 
     assert_equal "Deploy::StimulusComponentsGate", row.fetch("class")
-    assert File.file?(File.join(ROOT, "gates/lib/stimulus_components.rb"))
+    assert File.file?(File.join(ROOT, "gates/lib/source/stimulus_components.rb"))
   end
 
   def test_boot_registers_password_visibility_and_nested_form

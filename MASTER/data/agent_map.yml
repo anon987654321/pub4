@@ -77,7 +77,7 @@ topics:
     files:
       - OPENBSD/vps_deploy_master.sh
       - OPENBSD/etc/rc.d/master
-      - RAILS/gates/lib/master_web_assets.rb
+      - RAILS/gates/lib/host/master_web_assets.rb
       - OPENBSD/bin/vps-deploy
     tests:
       - web/script/probe_http

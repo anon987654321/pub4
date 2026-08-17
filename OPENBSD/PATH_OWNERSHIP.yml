@@ -46,11 +46,11 @@ ownership:
     purpose: the gate registry — every RAILS gate is declared here and nowhere else
     risk: critical
     check: OPENBSD/bin/check-rails
-  rails/gates/lib/production.rb:
+  rails/gates/lib/host/production.rb:
     purpose: production Rails contract
     risk: high
     check: OPENBSD/bin/check-rails
-  rails/gates/lib/domain_alignment.rb:
+  rails/gates/lib/host/domain_alignment.rb:
     purpose: domain and inventory consistency
     risk: high
     check: OPENBSD/bin/check-rails

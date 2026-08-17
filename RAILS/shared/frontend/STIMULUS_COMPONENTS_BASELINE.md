@@ -6,7 +6,7 @@ survive verbatim — the install shape it prescribed is now a gate failure. What
 follows is the current contract; the divergences are listed at the end so the old
 text is not restored by someone who finds it in history.
 
-Enforced by `Deploy::StimulusComponentsGate` (`RAILS/gates/lib/stimulus_components.rb`),
+Enforced by `Deploy::StimulusComponentsGate` (`RAILS/gates/lib/source/stimulus_components.rb`),
 run as `ruby RAILS/gates/runner.rb stimulus_components`. That class is the source
 of truth. This document explains it; it does not redefine it.
 

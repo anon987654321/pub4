@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "fileutils"
 require_relative "../../gates/support/gate_calibration"
-require_relative "../../gates/lib/calibration"
+require_relative "../../gates/lib/research/calibration"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class CalibrationTest < Minitest::Test

@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "fileutils"
 require "tmpdir"
 require "yaml"
-require_relative "../gates/lib/stimulus_wiring"
+require_relative "../gates/lib/source/stimulus_wiring"
 
 class StimulusWiringGateTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -12,7 +12,7 @@ class StimulusWiringGateTest < Minitest::Test
   def test_manifest_registers_the_gate_under_layout_suite
     row = YAML.safe_load_file(File.join(ROOT, "gates/gates.yml")).fetch("stimulus_wiring")
 
-    assert_equal "lib/stimulus_wiring", row.fetch("require")
+    assert_equal "lib/source/stimulus_wiring", row.fetch("require")
     assert_equal "Deploy::StimulusWiringGate", row.fetch("class")
     assert_equal "layout_suite", row.fetch("covered_by")
   end

@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "yaml"
-require_relative "../gates/lib/constitutional_scan"
+require_relative "../gates/lib/meta/constitutional_scan"
 
 # The gate ran four full MASTER scans — twenty-one minutes — and routed every
 # finding to result.warn, failing only when the output matched a crash marker. It

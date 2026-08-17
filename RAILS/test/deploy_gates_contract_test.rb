@@ -92,7 +92,7 @@ class DeployGatesContractTest < Minitest::Test
   # name differed only by a suffix.
   def test_gates_lib_holds_only_declared_gates
     declared = GATES.reject { |_, row| row.key?("script") }.map { |_, row| File.basename(row["require"]) }
-    present = Dir.glob(File.join(ROOT, "gates", "lib", "*.rb")).map { |path| File.basename(path, ".rb") }
+    present = Dir.glob(File.join(ROOT, "gates", "lib", "**", "*.rb")).map { |path| File.basename(path, ".rb") }
 
     assert_equal declared.sort, present.sort,
                  "gates/lib/ holds exactly the gates in gates.yml; support code belongs in gates/support/"
@@ -184,13 +184,13 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_production_gate_does_not_require_deleted_retired_app_gate
-    source = File.read(File.join(ROOT, "gates", "lib", "production.rb"))
+    source = File.read(File.join(ROOT, "gates", "lib", "host", "production.rb"))
 
     refute_includes source, "archive_restore_gate"
   end
 
   def test_rails_runtime_gate_runs_production_in_process
-    assert File.file?(File.join(ROOT, "gates", "lib", "production.rb"))
+    assert File.file?(File.join(ROOT, "gates", "lib", "host", "production.rb"))
     source = File.read(File.join(ROOT, "gates", "rails_runtime.rb"))
     assert_includes source, "Deploy::ProductionGate.run(skip_nested: true)"
     refute_includes source, "GATE_SKIP_NESTED"
@@ -251,9 +251,9 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_production_gate_runs_apps_yml_validator_in_process
-    source = File.read(File.join(ROOT, "gates", "lib", "production.rb"))
+    source = File.read(File.join(ROOT, "gates", "lib", "host", "production.rb"))
     assert_includes source, "AppsYmlValidator.run"
-    assert File.file?(File.join(ROOT, "gates", "lib", "apps_yml.rb"))
+    assert File.file?(File.join(ROOT, "gates", "lib", "source", "apps_yml.rb"))
   end
 
   def test_deploy_at_aliases_are_retired

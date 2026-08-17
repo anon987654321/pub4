@@ -14,7 +14,7 @@ require "tmpdir"
 # paragraph of rationale above the tricky line. Four of the recorded 24 findings
 # were only ever over the limit on their comments: _brand.scss (441 raw / 379
 # code), _chrome_polish.scss (405/366), amber's application layout (153/143) and
-# gates/lib/page_simulation.rb (360/295).
+# gates/lib/live/page_simulation.rb (360/295).
 #
 # Generated files are excluded rather than exempted-in-place, because "split it"
 # is not an available action for them: db/schema.rb is written by Rails from the
@@ -53,15 +53,17 @@ class FileLengthRatchetTest < Minitest::Test
   CEILINGS = {
     "brgen/lib/brgen/bergen_demo_seeder.rb" => 839,
     "brgen/test/services/deploy_backlog_test.rb" => 746,
-    "gates/lib/design_metrics.rb" => 522,
-    "gates/lib/rendered_geometry.rb" => 498, # held; type checks live in geometry_type.rb
+    "gates/lib/research/design_metrics.rb" => 522,
+    "gates/lib/rendered/rendered_geometry.rb" => 498, # held; type checks live in geometry_type.rb
     "gates/support/page_inventory.rb" => 434,
     "gates/support/cdp_session.rb" => 428,
-    "shared/app/services/shared/tradedoubler.rb" => 391,
+    # +2 for the `module Shared` wrapper when the affiliate stack moved into the
+    # engine. No code was added.
+    "shared/app/services/shared/tradedoubler.rb" => 393,
     "brgen/db/seeds.rb" => 421,
     "gates/support/geometry_probe.rb" => 412,
     "amber/app/services/wardrobe_ai.rb" => 319,
-    "gates/lib/user_flow.rb" => 314,
+    "gates/lib/live/user_flow.rb" => 314,
     "shared/app/assets/stylesheets/_minimal.scss" => 490,
     "shared/app/assets/stylesheets/_zen_shell.scss" => 486,
     "shared/app/assets/stylesheets/_shell.scss" => 466,
