@@ -21,6 +21,8 @@ module Webhooks
   #   brgen-order-{id}-{hex}
   # We resolve the order from that reference.
   class VippsController < ActionController::Base
+    TOLERANCE_SECONDS = 300
+
     skip_forgery_protection
 
     # Events that mean money is reserved / taken — treat as paid for marketplace.
@@ -57,6 +59,17 @@ module Webhooks
       host = request.headers["Host"].presence || request.host
       raise SignatureError, "missing auth headers" if date.blank? || content_hash_hdr.blank? || auth.blank?
 
+      # x-ms-date is inside the signed string, so it cannot be edited without
+      # breaking the signature — but a signature stays valid forever unless its
+      # age is checked. Without this, one captured request replays indefinitely.
+      # Stripe bounds the same window at TOLERANCE_SECONDS.
+      begin
+        age = (Time.now - Time.httpdate(date)).abs
+      rescue ArgumentError
+        raise SignatureError, "unparseable x-ms-date"
+      end
+      raise SignatureError, "timestamp outside tolerance (#{age.round}s)" if age > TOLERANCE_SECONDS
+
       # 1) Content hash: SHA-256 of raw body → base64
       computed_hash = Base64.strict_encode64(Digest::SHA256.digest(payload))
       unless ActiveSupport::SecurityUtils.secure_compare(computed_hash, content_hash_hdr)
@@ -68,11 +81,14 @@ module Webhooks
       string_to_sign = "POST\n#{path_and_query}\n#{date};#{host};#{content_hash_hdr}"
 
       # 3) HMAC-SHA256 with webhook secret (secret is base64 from Vipps registration)
-      begin
-        key = Base64.decode64(secret_b64)
+      # Vipps returns this secret base64-encoded at registration, but some
+      # setups store it raw. Only strict_decode64 rejects a non-base64 string;
+      # decode64 mangles it into plausible-looking bytes instead, so the raw
+      # branch never runs and every signature fails with nothing to show why.
+      key = begin
+        Base64.strict_decode64(secret_b64)
       rescue ArgumentError
-        # Some setups store the secret as raw string; try as-is
-        key = secret_b64
+        secret_b64
       end
 
       signature = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", key, string_to_sign))
