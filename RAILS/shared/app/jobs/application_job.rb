@@ -38,6 +38,8 @@ class ApplicationJob < ActiveJob::Base
   #
   # When a worker exists, delete the `run_inline!` calls. Nothing else changes.
   def self.run_inline!
+    return unless ENV.fetch("RUN_JOBS_INLINE", "true") == "true"
+
     self.queue_adapter = :inline
 
     # Registered after retry_on, and ActiveSupport::Rescuable checks handlers in
