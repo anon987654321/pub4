@@ -231,27 +231,42 @@ module Master
         parts = synthesize_phrase_parts(plan, tmp_dir, voice, rate, pitch)
 
         return false if parts.empty?
-        return FileUtils.cp(parts.first, out_path) if parts.length == 1
+        return copy_single_part(parts, out_path) if parts.length == 1
         return concat_mp3(parts, out_path, tmp_dir) if ffmpeg?
 
+        # Without ffmpeg the remaining phrases cannot be joined, and afplay does
+        # not exist on the deploy host — so the fallback below is silent there
+        # and the caller receives phrase one alone. Load-bearing on purpose:
+        # ffmpeg is what makes phrase rendering safe to enable at all.
         report_missing_ffmpeg("synth_edge_melodic", "phrases played separately, output holds only the first")
-        FileUtils.cp(parts.first, out_path)
-        parts.drop(1).each { |p| system("afplay", p, out: File::NULL, err: File::NULL); File.delete(p) }
+        FileUtils.cp(parts.first.first, out_path)
+        parts.drop(1).each do |(path, _pause)|
+          system("afplay", path, out: File::NULL, err: File::NULL)
+          File.delete(path)
+        end
         File.size?(out_path)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Engines.synth_edge_melodic")
         false
       end
 
+      # Returns [path, pause_ms_before] per rendered phrase. The pause used to be
+      # `sleep(pause_ms / 1000.0)` right here, which spent the rest as latency in
+      # the synthesis loop and put nothing in the audio — concat_mp3 then joined
+      # the phrases back to back. Melody planned rests that were never audible.
       def synthesize_phrase_parts(plan, tmp_dir, voice, rate, pitch)
         parts = []
         plan.each_with_index do |phrase, i|
           part = File.join(tmp_dir, "part_#{Process.pid}_#{i}.mp3")
           ok = copy_if_synthesized(phrase[:text], part, voice, phrase.fetch(:rate, rate), phrase.fetch(:pitch, pitch))
-          parts << part if ok
-          sleep(phrase.fetch(:pause_ms, 0) / 1000.0) if i.positive? && ok
+          parts << [part, i.zero? ? 0 : phrase.fetch(:pause_ms, 0).to_i] if ok
         end
         parts
+      end
+
+      def copy_single_part(parts, out_path)
+        FileUtils.cp(parts.first.first, out_path)
+        File.size?(out_path)
       end
 
       def copy_if_synthesized(text, out_path, voice, rate, pitch)
@@ -263,12 +278,56 @@ module Master
         true
       end
 
+      # Silence is generated to match the speech parts rather than at a fixed
+      # format, because the concat demuxer runs with -c copy: an mp3 at a
+      # different sample rate or channel count joins without an error and plays
+      # back at the wrong speed from that point on. Probed once, from the first
+      # part, so a change in the Edge output format follows automatically.
+      def silence_format(part)
+        out, _err, status = Master::Io::Exec.capture3(
+          "ffprobe", "-v", "error", "-select_streams", "a:0",
+          "-show_entries", "stream=sample_rate,channels,bit_rate",
+          "-of", "default=noprint_wrappers=1:nokey=1", part
+        )
+        rate, channels, bitrate = out.to_s.split("\n").map(&:strip)
+        return nil unless status.success? && rate.to_i.positive? && channels.to_i.positive?
+
+        { rate: rate.to_i, channels: channels.to_i, bitrate: bitrate.to_i.positive? ? bitrate.to_i : 48_000 }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Engines.silence_format")
+        nil
+      end
+
+      def silence_part(ms, fmt, tmp_dir, index)
+        path = File.join(tmp_dir, "rest_#{Process.pid}_#{index}.mp3")
+        layout = fmt[:channels] > 1 ? "stereo" : "mono"
+        ok = system("ffmpeg", "-y", "-f", "lavfi",
+                    "-i", "anullsrc=r=#{fmt[:rate]}:cl=#{layout}",
+                    "-t", format("%.3f", ms / 1000.0),
+                    "-b:a", fmt[:bitrate].to_s, "-ar", fmt[:rate].to_s, "-ac", fmt[:channels].to_s,
+                    path, out: File::NULL, err: File::NULL)
+        ok && File.size?(path) ? path : nil
+      end
+
+      # parts is [[path, pause_ms_before], ...].
+      def concat_sequence(parts, tmp_dir)
+        fmt = silence_format(parts.first.first)
+        sequence = []
+        parts.each_with_index do |(path, pause_ms), i|
+          rest = (fmt && pause_ms.positive? ? silence_part(pause_ms, fmt, tmp_dir, i) : nil)
+          sequence << rest if rest
+          sequence << path
+        end
+        sequence
+      end
+
       def concat_mp3(parts, out_path, tmp_dir)
+        sequence = concat_sequence(parts, tmp_dir)
         list = File.join(tmp_dir, "concat_#{Process.pid}.txt")
-        File.write(list, parts.map { |p| "file '#{p}'" }.join("\n"))
+        File.write(list, sequence.map { |p| "file '#{p}'" }.join("\n"))
         ok = system("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out_path,
                     out: File::NULL, err: File::NULL)
-        parts.each { |p| File.delete(p) if File.exist?(p) }
+        sequence.each { |p| File.delete(p) if File.exist?(p) }
         File.delete(list) if File.exist?(list)
         ok && File.size?(out_path)
       end

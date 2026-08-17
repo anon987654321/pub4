@@ -16,6 +16,13 @@ module Master
         "emotion_enabled" => true,
         "melodic_enabled" => true,
         "melodic_threshold" => 0.45,
+        # Phrase segmentation and inter-phrase rests, without the pentatonic
+        # contour. Separate from melodic_* because it is rhythm rather than
+        # style: melodic_threshold kept the whole phrase plan for lyrical text
+        # only, so every ordinary reply was one Edge call at one rate and one
+        # pitch. The cost is one Edge round trip per phrase, bounded by
+        # Melody::MAX_PHRASES; set false to go back to a single call.
+        "phrase_rhythm_enabled" => true,
         "max_chars" => 900,
         "mlx_model" => "mlx-community/chatterbox-fp16",
         "mlx_voice" => "default",
@@ -55,7 +62,7 @@ module Master
         return if clean.empty? || clean.length < MIN_SYNTHESIZABLE_CHARS
 
         emotion = Emotion.analyze(clean)
-        melody = Melody.plan(clean, emotion)
+        melody = Melody.plan(clean, emotion, melodic: melodic_contour?(cfg, emotion))
         resolved_voice, resolved_rate, resolved_pitch = resolve_voice_and_prosody(
           clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
         )
@@ -108,11 +115,22 @@ module Master
         [resolved_voice, pick[:rate], pick[:pitch]]
       end
 
+      # The pentatonic contour. Lyrical text only — this is the stylistic mode.
+      def melodic_contour?(cfg, emotion)
+        return false unless cfg["emotion_enabled"] && cfg["melodic_enabled"]
+
+        emotion.dig(:scores, :lyrical).to_f >= cfg["melodic_threshold"].to_f
+      end
+
+      # Whether to render phrase by phrase at all. Either the contour wants it or
+      # phrase rhythm does; the engine is the same, the plan differs.
+      def phrase_rendered?(cfg, emotion)
+        melodic_contour?(cfg, emotion) || cfg["phrase_rhythm_enabled"] == true
+      end
+
       def build_engine_chain(cfg, emotion)
         chain = cfg["engine_chain"].to_s.split(",").map(&:strip).reject(&:empty?)
-        melodic_on = cfg["emotion_enabled"] && cfg["melodic_enabled"]
-        melodic_on &&= emotion.dig(:scores, :lyrical).to_f >= cfg["melodic_threshold"].to_f
-        chain = chain.reject { |e| e == "edge_melodic" } unless melodic_on
+        chain = chain.reject { |e| e == "edge_melodic" } unless phrase_rendered?(cfg, emotion)
         chain = chain.reject { |e| %w[mlx chatterbox].include?(e) } unless cfg["emotion_enabled"]
         chain
       end
