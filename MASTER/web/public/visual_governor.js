@@ -1,9 +1,31 @@
 // MASTER visual governor: state-aware animation pressure control before mask.js loads.
-// Limits sourced from data/ops/visual.yml (SINGULARITY / ONE_SOURCE). Do not duplicate.
+//
+// These numbers are the source. The header used to say "Limits sourced from
+// data/ops/visual.yml (SINGULARITY / ONE_SOURCE). Do not duplicate." and nothing
+// here read that file: 930a35ca5, a revert to fix tap-to-start, removed the
+// `window.MASTER_RUNTIME.visual_limits` read as collateral and the comment
+// survived it. The file then drifted on all five values, including
+// freeze_on_fail: true against the freezeOnFail: false below -- so honouring
+// that comment would have restored the black deployed face it was fixed for.
+// The file is deleted; this is the one place the limits live.
 (() => {
-  const maxFps = 24;
-  const maxParticles = 200;
+  // Restored with the read, from the same revert. Every other visual module
+  // checks this media query for itself, so the governor's cap is the floor
+  // under all of them rather than the only guard.
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  // documentElement, not body: face_brutalist.js and face_vision_d.js both write
+  // runtimeProfile there. The pre-revert version read body.dataset and so never
+  // saw a profile at all.
+  const profile = document.documentElement?.dataset?.runtimeProfile
+    || document.querySelector('meta[name="master-visual-profile"]')?.content
+    || "auto";
+
+  let maxFps = 24;
+  let maxParticles = 200;
   const reducedMotionParticles = 64;
+  if (reducedMotion) maxFps = Math.min(maxFps, 8);
+  else if (profile === "battery") maxFps = Math.min(maxFps, 12);
+  if (reducedMotion) maxParticles = reducedMotionParticles;
   const minFrameMs = 1000 / maxFps;
   const nativeRaf = window.requestAnimationFrame.bind(window);
   const nativePush = Array.prototype.push;

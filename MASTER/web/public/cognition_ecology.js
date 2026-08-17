@@ -72,8 +72,10 @@
     state.height = innerHeight;
 
     // Low internal resolution + integer upscale per data/topologies.yml + visual_clusters.yml.
-    const limits = window.MASTER_VISUAL_LIMITS || {};
-    const isReduced = reducedMotion || (limits.reducedMotionParticles && limits.reducedMotionParticles < 100);
+    // The media query alone — see mask.js. `limits.reducedMotionParticles < 100`
+    // asked a particle budget a yes/no question and got "yes" every time, so the
+    // 640x360 branch below had never run for anyone.
+    const isReduced = reducedMotion;
     let res = { w: 640, h: 360 };
     if (isReduced || (state.width * state.height) < 400000) res = { w: 320, h: 180 };
 

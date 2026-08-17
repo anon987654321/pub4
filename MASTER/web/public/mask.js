@@ -41,8 +41,12 @@ function resize() {
   state.height = window.innerHeight;
 
   // Low internal resolution + integer upscale (data/topologies.yml resolutions + kernel spec).
-  const limits = window.MASTER_VISUAL_LIMITS || {};
-  const isReduced = prefersReducedMotion || (limits.reducedMotionParticles && limits.reducedMotionParticles < 100);
+  // The media query alone. This used to also read
+  // `limits.reducedMotionParticles < 100`, which is a particle budget being
+  // asked a yes/no question: the value is the constant 64, so the clause was
+  // true for everyone and isReduced never depended on the preference at all.
+  // The 480x270 branch below had never run.
+  const isReduced = prefersReducedMotion;
   let res = { w: 480, h: 270 };
   if (isReduced) res = { w: 320, h: 180 };
 
