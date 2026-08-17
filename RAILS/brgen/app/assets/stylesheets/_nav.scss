@@ -90,38 +90,16 @@
 
 a.feed-tab { text-decoration: none; }
 
-/* MASTER AI embed -- frontpage only, above the compose box. Fixed height
-   (not the dedicated /ai page's 100% -- that page IS the iframe; here it's
-   one element among the feed chrome above it and the compose row below).
-   Shorter on narrow phones so it doesn't eat the whole first screen. */
-/* Compose — styled input box (rounded), expands into the full Tiptap composer on focus. */
-.compose-box {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface-elevated);
-  border: 1px solid var(--border);
-  margin: var(--space-3) var(--space-4);
-  border-radius: var(--radius-sm);
-  transition: background var(--transition-fast, 180ms) var(--ease-out), border-color var(--transition-fast, 180ms) var(--ease-out);
-}
+/* The inline compose box went with the Live surface, 2026-08-17. Everything it
+   styled — .compose-box and its --expanded state, .compose-label-visible,
+   .compose-inner, .compose-prompt, .compose-footer, .compose-submit,
+   .compose-as, .compose-action--attached — had exactly one caller left in
+   live/index.html.erb, because the front page moved to the <dialog> composer in
+   _composer.scss some time before. The rules below are the parts the dialog
+   still uses.
 
-/* At rest the compose is one input line and nothing else — the placeholder
-   carries the prompt, so the heading is for screen readers only, and the hint
-   waits until there is something to hint about. Both come back on focus, when
-   feed_compose_controller adds .compose-box--expanded. */
-.compose-label-visible {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.compose-box:not(.compose-box--expanded) .compose-hint { display: none; }
-
-.compose-box:focus-within { background: var(--hover); outline: 1px solid var(--accent); outline-offset: 1px; }
+   The orphaned comment above this one described a MASTER AI embed rule that had
+   already been deleted out from under it. */
 .compose-hint details summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
 
 .compose-avatar {
@@ -137,18 +115,6 @@ a.feed-tab { text-decoration: none; }
   font-size: var(--font-size);
   color: var(--text-secondary);
 }
-
-.compose-inner { flex: 1; min-width: 0; }
-
-.compose-prompt {
-  display: block;
-  color: var(--text-secondary);
-  font-size: var(--text-lg);
-  padding: var(--space-2) 0;
-  margin-bottom: var(--space-3);
-}
-
-.compose-prompt:hover { color: var(--text); text-decoration: none; }
 
 .compose-input {
   width: 100%;
@@ -166,20 +132,6 @@ a.feed-tab { text-decoration: none; }
 .compose-input::placeholder { color: var(--text-secondary); }
 .compose-input:focus { outline: none; }
 
-.compose-box--expanded .compose-input {
-  margin-bottom: var(--space-3);
-}
-
-/* Wraps. On a 390px phone the toolbar, six media actions and the submit came
-   to ~700px on one nowrap row, so the post button sat 300px off the right edge
-   of the screen and could not be reached at all. */
-.compose-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
 .compose-actions { display: flex; gap: var(--space-3); color: var(--text-secondary); font-size: var(--text-base); }
 .compose-action {
   display: inline-flex;
@@ -201,9 +153,6 @@ label.compose-action {
   transition: color var(--transition-fast, 180ms) var(--ease-out);
 }
 label.compose-action:hover { color: var(--text); }
-.compose-action--attached { color: var(--accent); }
-.compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
-.compose-as { font-size: var(--font-size); }
 .compose-hint { font-size: var(--font-size); margin: var(--space-2) 0 0; }
 
 @media (prefers-reduced-motion: reduce) {

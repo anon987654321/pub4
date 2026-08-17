@@ -100,7 +100,14 @@ module Pub4
     # hex -- so an unstyled page gets geometry without anyone deciding what it
     # looks like. Past that the design is still someone's, and this is a floor
     # rather than a licence to style from a lint.
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 278 }.freeze
+    # 278 -> 276 on 2026-08-17: deleting the Live surface orphaned the whole
+    # inline compose block in _nav.scss (.compose-box and its --expanded state,
+    # .compose-label-visible, .compose-inner, .compose-prompt, .compose-footer,
+    # .compose-submit, .compose-as, .compose-action--attached), which had one
+    # caller left because the front page had already moved to the dialog
+    # composer. A ratchet fails on slack as well as on excess, so the number
+    # comes down with the code rather than sitting there as headroom.
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 276 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
