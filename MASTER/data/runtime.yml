@@ -2709,7 +2709,7 @@ style_guides:
     rubocop: true
     enforce_via:
     - ".rubocop.yml"
-    - data/style.yml#ruby
+    - data/rules.yml#style.ruby
   - id: rails
     repo: https://github.com/rubocop/rails-style-guide
     local: rails-style-guide
@@ -2722,12 +2722,12 @@ style_guides:
     eslint: true
     enforce_via:
     - web/eslint.config.mjs
-    - data/style.yml#html
+    - data/rules.yml#style.html
   - id: css
     repo: https://github.com/airbnb/css
     local: css
     enforce_via:
-    - data/style.yml#css
+    - data/rules.yml#style.css
     - RAILS/shared/frontend
   - id: thoughtbot
     repo: https://github.com/thoughtbot/guides

@@ -52,7 +52,6 @@ absolute:
   sacred_paths:
     - data/
     - data/SOUL.md
-    - data/operator_principles.yml
     - data/project_context.yml
     - lib/review/scan/
     - bin/cli
@@ -95,7 +94,7 @@ absolute:
     NO_ASCII_DECORATION: "Strunk & White — no box-drawing or === / ### banners in code, comments, docs, or CLI; content is the separator."
     NO_COLUMN_ALIGN: "KISS — one space between tokens; never pad columns (alignment decays on every edit)."
     NO_CONSECUTIVE_BLANK_LINES: "Boy Scout Rule — one blank line between sections; zero between related lines."
-    IMPORTANCE_ORDER: "Inverted Pyramid (files) — public API first, primary logic next, helpers and constants last; see style.yml line_order."
+    IMPORTANCE_ORDER: "Inverted Pyramid (files) — public API first, primary logic next, helpers and constants last; see rules.yml style.line_order."
     FLAT_UI: "Flat Design — uniform size at rest; depth only when pixels collectively resemble a 3D model."
     CINEMA_PALETTE: "Motion Design — shadow/midtone/highlight triplets; cubic-bezier easing on every transition."
     STRUNK_ACTIVE: "Strunk & White — active voice in code, comments, commits, CLI, TTS; omit needless words."

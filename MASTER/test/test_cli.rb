@@ -116,13 +116,12 @@ class TestCLI < Minitest::Test
 
   def test_help_uses_progressive_disclosure
     summary = Master::CLI::CommandRegistry.help_text
-    detail = Master::CLI::CommandRegistry.help_text("scan")
+    detail = Master::CLI::CommandRegistry.help_text("through")
 
-    assert_includes summary, "/scan - deep-scan files or directories"
-    refute_includes summary, "Report filters"
-    assert_includes detail, "/scan [--dry-run] [--no-autofix] [report-filter] [path]"
-    assert_includes detail, "Always runs at deep depth"
-    assert_includes detail, "Report filters"
+    assert_includes summary, "/through - scan → fix → critique a path"
+    refute_includes summary, "--dry-run previews"
+    assert_includes detail, "/through [path]"
+    assert_includes detail, "--dry-run"
   end
 
   def test_prompt_refreshes_skills_before_rendering
@@ -230,13 +229,13 @@ class TestCLI < Minitest::Test
     assert_equal "core", profile
   end
 
-  def test_orient_reports_generated_rule_count_and_authority_paths
-    output = Master::CLI::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
-
-    assert_includes output, "rules: #{Master.rule_count(root: Master::ROOT)} registered"
-    assert_includes output, "authority:"
-    assert_includes output, "data/rules.yml"
-    assert_includes output, "reading tiers"
+  def test_help_names_the_closed_set
+    summary = Master::CLI::CommandRegistry.help_text
+    %w[through status undo commit model pair doctor help clear].each do |name|
+      assert_includes summary, "/#{name}"
+    end
+    refute_includes summary, "/scan"
+    refute_includes summary, "/orient"
   end
 
   def test_publish_snapshot_includes_tree_and_full_file_contents

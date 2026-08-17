@@ -587,20 +587,15 @@ document.querySelectorAll('.tool').forEach(btn => {
 
 (function wireCommandPalette() {
   const COMMANDS = [
-    { cmd: '/run ', hint: 'natural-language task entry' },
-    { cmd: '/scan ', hint: 'deep-scan path' },
-    { cmd: '/fix ', hint: 'autofix target' },
-    { cmd: '/review ', hint: 'review changes' },
-    { cmd: '/why ', hint: 'explain rule or law' },
-    { cmd: '/btw research ', hint: 'parallel side agent' },
-    { cmd: '/rtk', hint: 'shell output filter stats' },
-    { cmd: '/plan', hint: 'show pinned plan' },
-    { cmd: '/rebuild', hint: 'hot-restart web face' },
-    { cmd: '/grep ', hint: 'search session history' },
-    { cmd: '/propose ', hint: 'suggest improvement' },
+    { cmd: '/through ', hint: 'scan → fix → critique a path' },
+    { cmd: '/status', hint: 'one-frame health' },
+    { cmd: '/undo', hint: 'revert last recorded change' },
+    { cmd: '/commit', hint: 'record the current diff' },
+    { cmd: '/model', hint: 'show or switch the model' },
+    { cmd: '/pair', hint: 'issue or redeem a pairing code' },
+    { cmd: '/doctor', hint: 'host and exposure health' },
     { cmd: '/help', hint: 'list commands' },
-    { cmd: '/status', hint: 'service and repo health' },
-    { cmd: '/self', hint: 'scan MASTER itself' },
+    { cmd: '/clear', hint: 'clear the session transcript' },
     { cmd: 'ping', hint: 'smoke test connection' },
     { cmd: '/voice last', hint: 'replay last reply (Ryan en-GB)' },
     { cmd: '/voice stream on', hint: 'sentence TTS during stream' },
@@ -621,7 +616,7 @@ document.querySelectorAll('.tool').forEach(btn => {
   fetch('/chat/skills').then(r => r.json()).then((skills) => {
     if (!Array.isArray(skills)) return;
     skills.forEach((skill) => {
-      COMMANDS.push({ cmd: `/run ${skill.name}`, label: skill.name, hint: skill.description || 'skill' });
+      COMMANDS.push({ cmd: skill.name, label: skill.name, hint: skill.description || 'skill' });
     });
   }).catch(() => {});
 

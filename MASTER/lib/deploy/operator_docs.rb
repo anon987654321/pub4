@@ -4,7 +4,7 @@ require "yaml"
 
 module Master
   module Deploy
-    # Serves /orient deploy (Ground::BootstrapDocs#section) and owns the one read
+    # Serves BootstrapDocs#section("deploy") and owns the one read
     # of the debt register: Pub4::StatusReport#backlog_open_count delegates here
     # rather than parsing the same YAML a second way, which is how one of the two
     # copies stayed broken unnoticed for as long as it did.

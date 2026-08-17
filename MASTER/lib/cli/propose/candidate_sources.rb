@@ -39,9 +39,9 @@ module Master
 
         def from_phase
           case @session.phase.to_s
-          when "discover" then [prop(action: "/scan", reason: "discover phase — survey state", weight: 0.4)]
-          when "implement" then [prop(action: "/diff", reason: "implement phase — review staging", weight: 0.45)]
-          when "audit" then [prop(action: "/review", reason: "audit phase — convene council", weight: 0.5)]
+          when "discover" then [prop(action: "/through --dry-run", reason: "discover phase — survey state", weight: 0.4)]
+          when "implement" then [prop(action: "/status", reason: "implement phase — check the tree", weight: 0.45)]
+          when "audit" then [prop(action: "/through", reason: "audit phase — full pass", weight: 0.5)]
           else []
           end
         end
@@ -55,7 +55,7 @@ module Master
 
           age = (Time.now - timestamp).to_i
           return [] if age < IDLE_SUGGESTION_AGE_SECONDS
-          [prop(action: "/history", reason: "idle #{age / 60} min — review what happened", weight: 0.3 + [age / 7200.0, 0.2].min)]
+          [prop(action: "/status", reason: "idle #{age / 60} min — check the tree", weight: 0.3 + [age / 7200.0, 0.2].min)]
         end
 
         def coerce_time(value)
@@ -116,9 +116,9 @@ module Master
           return [] if events.empty?
           out = []
           escalations = events.count { |e| e[:event].to_s.include?("escalation") }
-          out << prop(action: "/why", reason: "#{escalations} model escalation(s) recently", weight: 0.55) if escalations >= 2
+          out << prop(action: "/status", reason: "#{escalations} model escalation(s) recently", weight: 0.55) if escalations >= 2
           errors = events.count { |e| e[:event].to_s.match?(/error|fail/) }
-          out << prop(action: "/dmesg", reason: "#{errors} error event(s) on bus", weight: 0.6) if errors >= 3
+          out << prop(action: "/doctor", reason: "#{errors} error event(s) on bus", weight: 0.6) if errors >= 3
           out
         end
 
@@ -193,7 +193,7 @@ module Master
 
           module_name, total = hot
           [prop(
-            action: "/review",
+            action: "/through",
             reason: "#{module_name} accumulated #{total} violation(s) across 3 recent scans; architectural attention needed",
             weight: 0.67,
           )]
@@ -224,7 +224,7 @@ module Master
           return [] unless new_patterns
 
           [prop(
-            action: "/review",
+            action: "/through",
             reason: "#{new_patterns.first(3).join(', ')} surfaced repeatedly but are not in soul.yml; consider adding a constitutional axiom",
             weight: 0.64,
           )]
@@ -251,7 +251,7 @@ module Master
 
           rel, total = hot
           [prop(
-            action: "/review",
+            action: "/through",
             reason: "#{rel} has grown by #{total} lines across 3 recent commits; warn before it crosses the god_class threshold",
             weight: 0.66,
           )]

@@ -10,9 +10,8 @@ class TestDomainCommands < Minitest::Test
     assert_includes out, "rails-multi-tenant"
   end
 
-  def test_help_domain
+  def test_help_does_not_advertise_domain
     text = Master::CLI::CommandRegistry.help_text("domain")
-    refute_includes text, "unknown"
-    assert_includes text, "/domain"
+    assert_includes text, "unknown command"
   end
 end

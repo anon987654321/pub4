@@ -43,32 +43,12 @@ class TestRuntimeMode < Minitest::Test
     assert_equal "Render", named_stages.last, "a turn ends at Render"
   end
 
-  # The module lines name directories. A rename in lib/ has to reach them, and
-  # only a check against the filesystem notices when it does not.
-  def test_orient_module_line_names_directories_that_exist
-    line = Master::CLI::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
-             .lines.find { |l| l.start_with?("modules:") }
-    refute_nil line, "/orient no longer prints a modules line"
-    named = line.sub("modules:", "").split("·").map(&:strip)
-    missing = named.reject { |m| Dir.exist?(File.join(Master::ROOT, "lib", m)) }
-    assert_empty missing, "/orient names lib/ directories that do not exist: #{missing.join(", ")}"
-  end
-
   def test_agents_bootstrap_names_directories_that_exist
     line = Master::Ground::BootstrapDocs::AGENTS.lines.find { |l| l.start_with?("Modules:") }
     refute_nil line, "the agent bootstrap no longer names its modules"
     named = line.sub("Modules:", "").split(",").map { |m| m.strip[/\A\w+/] }.compact
     missing = named.reject { |m| Dir.exist?(File.join(Master::ROOT, "lib", m)) }
     assert_empty missing, "the agent bootstrap names lib/ directories that do not exist: #{missing.join(", ")}"
-  end
-
-  def test_orient_includes_reading_tiers_and_trace_pointer
-    output = Master::CLI::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
-    assert_includes output, "reading tiers"
-    assert_includes output, "/orient trace"
-    assert_includes output, "pairing:"
-    assert_includes output, "bundle exec ruby bin/cli"
-    assert_includes output, named_stages.first
   end
 
   def test_tools_command_lists_registered_tools

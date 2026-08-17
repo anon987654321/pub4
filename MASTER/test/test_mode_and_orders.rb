@@ -74,19 +74,14 @@ class TestModeAndOrders < Minitest::Test
     assert_empty duplicated, "same dispatch name defined in two files; the later load silently wins: #{duplicated}"
   end
 
-  # Every /orient topic with no file behind it is served by BootstrapDocs. When
-  # a key is missing there, cat_orient falls through to the nil-path branch and
-  # answers "use /orient <the thing you just typed>" — which is what /orient
-  # bootstrap did, the first runtime dump START_HERE.md advertises.
-  def test_every_fileless_orient_topic_resolves_to_a_document
-    fileless = Master::CLI::CommandRegistry::ORIENT_FILES.select { |_, (path, _)| path.nil? }.keys
-
-    refute_empty fileless
-    fileless.each do |topic|
+  def test_every_bootstrap_docs_section_resolves
+    keys = Master::Ground::BootstrapDocs.keys - ["bootstrap"]
+    refute_empty keys
+    keys.each do |topic|
       body = Master::Ground::BootstrapDocs.section(topic)
-      refute_nil body, "/orient #{topic} has no file and no BootstrapDocs section"
+      refute_nil body, "BootstrapDocs #{topic} is empty"
       refute_includes body.to_s, "/orient #{topic}",
-                      "/orient #{topic} answers by telling you to run /orient #{topic}"
+                      "BootstrapDocs #{topic} answers by naming a removed /orient command"
     end
   end
 

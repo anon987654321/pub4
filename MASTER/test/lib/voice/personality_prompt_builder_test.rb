@@ -33,10 +33,10 @@ class TestPersonalityPromptBuilder < Minitest::Test
     assert_includes core_prompt, "master_output_format"
   end
 
-  # data/style.yml puts the scale at typography.scale.ratio; this line read
-  # typography["ratio"], one level too shallow, so the hardcoded 1.25 fallback was
-  # the only value the prompt ever carried and editing style.yml did nothing.
-  # `measure` and `leading` were literals beside it for the same reason.
+  # rules.yml style.typography puts the scale at typography.scale.ratio; this
+  # line read typography["ratio"], one level too shallow, so the hardcoded 1.25
+  # fallback was the only value the prompt ever carried and editing the section
+  # did nothing. `measure` and `leading` were literals beside it for the same reason.
   class Typographer
     include Master::Voice::PersonalityPromptBuilder
     public :typography_style_line

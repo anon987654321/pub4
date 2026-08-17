@@ -100,15 +100,15 @@ module Master
           next [] if allowed.include?(rel)
 
           target = case rel
-                   when %r{\Adata/principles/} then "data/operator_principles.yml"
+                   when %r{\Adata/principles/} then "data/rules.yml#operator_principles"
                    when %r{\Adata/claude/} then "data/project_context.yml"
                    when %r{\Adata/skills/} then "data/patterns.yml#skills_registry"
-                   else "YAML runtime (operator_principles.yml, patterns.yml#skills_registry, project_context.yml, or /orient bootstrap)"
+                   else "YAML runtime (rules.yml#operator_principles, patterns.yml#skills_registry, project_context.yml)"
                    end
 
           [finding(
             line: 1,
-            message: "runtime docs belong in #{target} — delete #{rel} (see Ground::BootstrapDocs, /orient)",
+            message: "runtime docs belong in #{target} — delete #{rel} (see Ground::BootstrapDocs)",
           )]
         end
 

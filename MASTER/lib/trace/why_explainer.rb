@@ -40,7 +40,7 @@ module Master
       end
 
       def style
-        @style ||= Master.law("style")
+        @style ||= Master.law("style", root: @root)
       end
 
       def registry_rule(key)

@@ -19,7 +19,7 @@ module Master
 
       DEFAULT_FILES = %w[
         data/soul.yml data/rules.yml data/principle_map.yml
-        data/patterns.yml data/style.yml
+        data/patterns.yml
       ].freeze
 
       Duplicate = Struct.new(:text, :count, :locations, keyword_init: true)

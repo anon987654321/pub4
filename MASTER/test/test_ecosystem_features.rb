@@ -40,6 +40,6 @@ class TestEcosystemFeatures < Minitest::Test
     infra = { session: Master::Trace::Session.new, config: {}, root: Master::ROOT, bus: nil }
     ai = { agent: nil }
     registry = Master::CLI::CommandRegistry.build(infra:, ai:, root: Master::ROOT)
-    assert registry.key?("doctor")
+    assert_equal %w[clear commit doctor help model pair rollback status through undo], registry.keys.sort
   end
 end

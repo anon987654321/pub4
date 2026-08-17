@@ -3,17 +3,13 @@
 module Master
   module Ground
     # Agent/bootstrap prose formerly scattered across top-level .md files.
-    # Served via /orient bootstrap|agents|trace|replicate|conventions — not read from disk.
+    # Read via BootstrapDocs.section(name) or the YAML under data/bootstrap.yml.
     module BootstrapDocs
       PATH = File.join(Master::DATA, "bootstrap.yml").freeze
 
       module_function
 
-      # /orient bootstrap is the first runtime dump START_HERE.md points at, and
-      # it is an index over the other sections rather than one of them. Without
-      # this key, cat_orient fell through to the nil-path branch of ORIENT_FILES
-      # and answered "use /orient bootstrap" — telling you to run what you had
-      # just run.
+      # bootstrap is an index over the other sections rather than one of them.
       INDEX_KEY = "bootstrap"
 
       def section(name)
@@ -41,7 +37,7 @@ module Master
       # take one line off the top.
       def index
         rows = (keys - [INDEX_KEY]).map { |key| "  #{key.ljust(12)} #{summary_for(key)}" }
-        (["bootstrap — runtime agent docs. Read one with /orient <name>:", ""] + rows).join("\n")
+        (["bootstrap — runtime agent docs. Read START_HERE.md or data/soul.yml, data/rules.yml, data/limits.yml:", ""] + rows).join("\n")
       end
 
       def summary_for(key)
@@ -58,11 +54,11 @@ module Master
       TEXT
 
       AGENTS = <<~TEXT.strip
-        Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider). Authority: data/soul.yml → data/rules.yml → CONVENTIONS (via /orient conventions) → this runtime.
+        Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider). Authority: data/soul.yml → data/rules.yml → this runtime.
         Modules: cli (pipeline/CLI), fix (fix/rule/watch), review (scanner/council), voice (render/TTS), ground (constitution/memory), io (tools), trace (events/session), core (the fold).
         Flat Hierarchy: standing order aggressive_merge on every write — merge thin siblings, rename to dense Rails-parameterize slugs (snake_case, Strunk-clean tokens), OpenBSD-flat, Zeitwerk-true, Roda-tight.
-        Pipeline (slash commands and inferred commands): #{Master::CLI::RuntimeMode::PIPELINE_STAGES}. Plain-language goals go to Core::Fold instead, which is the only lane the constitution judges. Every write on either lane is judged by Review::Scan::WriteGuard, which refuses one that introduces an error-severity finding — the design law is enforced on the write, not on /scan.
-        VPS/deploy: OPENBSD/RUNBOOK.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
+        Pipeline (slash commands and inferred commands): #{Master::CLI::RuntimeMode::PIPELINE_STAGES}. Plain-language goals go to Core::Fold instead, which is the only lane the constitution judges. Every write on either lane is judged by Review::Scan::WriteGuard. Work is one pass: scan → fix → critique.
+        VPS/deploy: OPENBSD/RUNBOOK.md (human runbook). Say the path — through runs the sequence.
       TEXT
 
       TRACE = <<~TEXT.strip

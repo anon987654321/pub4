@@ -52,12 +52,6 @@ module Master
         )
       end
 
-      def dispatch_triad(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
-        dispatch_workflow(
-          scanner:, fix_loop:, deliberation:,
-          root:, bus:, ctx:, review_crew:
-        )
-      end
 
       def parse_through_flags(raw)
         apply = nil

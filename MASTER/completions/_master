@@ -3,52 +3,22 @@
 _master() {
   local -a commands
   commands=(
-    'clear:Clear conversation context'
-    'save:Save session to disk'
-    'undo:Revert last file change'
-    'tokens:Show estimated token count'
-    'cost:Show session cost'
-    'dmesg:Show system event log'
-    'config:Show configuration'
-    'model:Show or list models (/model list)'
-    'mode:Get/set reasoning mode (direct|react|rewoo)'
-    'task:Get/set task type for model routing'
-    'cache:Cache stats or clear (/cache clear)'
-    'diff:Show git diff since HEAD'
-    'commit:Generate LLM commit message and commit'
-    'snapshot:Export full codebase to markdown'
-    'memory:Query or manage memory (/memory search <q>)'
-    'knowledge:Add URL to knowledge base (/knowledge add <url>)'
-    'why:Explain a scan rule (/why ExplicitRule)'
-    'explain:Describe MASTER architecture and axiom coverage'
-    'persona:Switch LLM persona (anchor|malay|british|norwegian; TTS stays Pernille)'
-    'council:Enable/disable multi-agent council'
-    'swarm:Dispatch a swarm worker (/swarm <role> <task>)'
-    'sweep:Sweep-refactor a directory'
-    'autoloop:Iteratively fix violations'
-    'scan:Scan codebase for violations'
-    'autotest:Toggle auto-testing on/off'
-    'help:List commands'
-    'exit:Exit MASTER'
+    'through:scan → fix → critique a path'
+    'status:one-frame health'
+    'undo:revert last recorded change'
+    'commit:record the current diff'
+    'model:show or switch the model'
+    'pair:issue or redeem a pairing code'
+    'doctor:host and exposure health'
+    'help:list commands'
+    'clear:clear the session transcript'
+    'exit:exit MASTER'
   )
 
   _arguments -C '1: :->command' '*:: :->args'
 
   case $state in
     command) _describe 'master commands' commands ;;
-    args)
-      case $words[1] in
-        model)   _values 'subcommand' list ;;
-        cache)   _values 'subcommand' clear stats ;;
-        mode)    _values 'mode' direct react rewoo ;;
-        persona) _values 'persona' anchor malay british norwegian ;;
-        council) _values 'toggle' on off ;;
-        autotest) _values 'toggle' on off ;;
-        scan)    _values 'depth' deep standard ;;
-        memory)  _values 'subcommand' search remember forget ;;
-        knowledge) _values 'subcommand' add ;;
-      esac
-      ;;
   esac
 }
 

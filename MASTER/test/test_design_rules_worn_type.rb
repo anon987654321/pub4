@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 # worn_type is law only if something reads it. A profile that exists only in
-# design_rules.yml is the inert-config hole this tree keeps cutting.
+# rules.yml design_rules is the inert-config hole this tree keeps cutting.
 class TestDesignRulesWornType < Minitest::Test
   PROFILES = %w[feed catalog chat immersive map legal auth].freeze
 

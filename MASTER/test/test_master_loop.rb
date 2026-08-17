@@ -36,7 +36,12 @@ class TestMasterLoop < Minitest::Test
     assert File.exist?(Master.limits_path)
     assert Master.limits_path.end_with?("limits.yml")
     assert File.exist?(Master.state_path)
-    assert Master.law("style").key?("ruby")
+    refute File.exist?(Master.data_path("style.yml"))
+    refute File.exist?(Master.data_path("operator_principles.yml"))
+    refute File.exist?(Master.data_path("design_rules.yml"))
+    assert Master.law("style").key?("typography")
+    assert Master.law("operator_principles").key?("principles")
+    assert Master.law("design_rules").key?("worn_type")
   end
 
   def test_council_prompts_load_from_council_yml

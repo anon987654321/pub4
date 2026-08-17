@@ -34,7 +34,6 @@ module Master
         INFER_ALIASES = {
           "restart" => "rebuild",
           "principles" => "axioms",
-          "explain" => "orient",
         }.freeze
 
         INFER_DESTRUCTIVE = %w[clear rebuild resync shell rollback].freeze

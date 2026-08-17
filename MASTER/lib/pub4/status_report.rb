@@ -86,7 +86,7 @@ module Pub4
       Master::Deploy::OperatorDocs::DEBT_RELATIVE
     end
 
-    # One reader for the register, in the module /orient deploy already uses. The
+    # One reader for the register, in the module BootstrapDocs deploy already uses. The
     # second copy that used to live here answered the same question with its own
     # path arithmetic, and a register with two readers is how the broken one goes
     # unnoticed — it was, for weeks.

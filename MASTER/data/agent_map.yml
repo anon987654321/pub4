@@ -1,5 +1,5 @@
 # Machine-readable map for coding agents — "touching X → edit these files".
-# Human mirror: AGENTS.md + START_HERE.md. Dump: /orient agent_map
+# Human mirror: AGENTS.md + START_HERE.md. Read this file.
 schema: 1
 
 topics:
@@ -61,7 +61,7 @@ topics:
 
   worn_type:
     files:
-      - data/design_rules.yml
+      - data/rules.yml
       - lib/design/thresholds.rb
       - RAILS/gates/support/geometry_type.rb
       - RAILS/gates/support/geometry_type_walk.js

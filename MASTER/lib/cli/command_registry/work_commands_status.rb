@@ -49,9 +49,9 @@ module Master
           "git     #{d[:branch]}@#{d[:head]} ahead=#{ahead} behind=#{behind} #{d[:dirty] ? "dirty" : "clean"}",
           "fix     bg=#{d[:bg]} autofix=#{d[:af]}",
           "bundle  #{d[:bndl]}",
-          "trace   #{d[:turn_hint]}  (/replay turn)",
+          "trace   #{d[:turn_hint]}",
           "pipeline last=#{d[:stage_name]} #{d[:verdict_line]}",
-          "events  (last #{d[:evts].size})  (/replay failures)",
+          "events  (last #{d[:evts].size})",
         ]
         d[:evts].each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
         d[:failures].each { |e| lines << "  !#{e[:ago]} #{e[:event]} #{e[:summary]}" }
@@ -213,8 +213,8 @@ module Master
           "fix: #{message}",
           "alternatives:",
           "  1. /fix --dry-run #{target} to inspect intended changes without writing",
-          "  2. /scan #{target} to isolate the highest-confidence findings first",
-          "  3. /review #{target} to get a council critique before retrying the repair",
+          "  2. /through --dry-run #{target} for the full preview pass",
+          "  3. /through #{target} to scan, fix, and critique in one sequence",
         ].join("\n")
       end
     end

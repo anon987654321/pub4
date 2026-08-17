@@ -9,7 +9,7 @@ sections:
     Smoke: bin/probe. Full readiness: bin/probe all. Deploy integrity: bin/probe integrity. Ferrum crawl: bin/probe crawl-browser (MASTER_CRAWL_BROWSER=1 on macOS).
     VPS: ruby34, bundle34 under /home/dev/pub4/MASTER. After web/ edits: doas rcctl restart master.
   agents: |-
-    Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider). Authority: data/soul.yml → data/rules.yml → CONVENTIONS (via /orient conventions) → this runtime.
+    Bootstrap for coding agents (Cursor, Claude Code, Codex, Aider). Authority: data/soul.yml → data/rules.yml → this runtime.
     Modules: now (pipeline/CLI), loop (fix/rule/watch), judge (scanner/council), voice (render/TTS), ground (constitution/memory), reach (tools), trace (events/session).
     Flat Hierarchy: standing order aggressive_merge on every write — merge thin siblings, rename to dense Rails-parameterize slugs (snake_case, Strunk-clean tokens), OpenBSD-flat, Zeitwerk-true, Roda-tight.
     Pipeline (slash and inferred commands): Intake → Infer → Route → DestructiveReview → Execute → Render. Plain-language goals go to Core::Fold, the only lane the constitution judges. Every write is scanned by WriteGuard on both lanes.
@@ -27,7 +27,7 @@ sections:
     Inviolable law: data/soul.yml, data/rules.yml. Evidence mandatory — no hedges without command output or diffs.
     Ruby 3.3+ on OpenBSD. Style: frozen_string_literal, double quotes, no bare rescue, guard clauses, Result monad, files ≤300 lines, methods ≤10 lines.
     Shell on zsh/SSH: no sed/awk/grep/find — Ruby and zsh builtins. Scan before structural edits.
-    VPS: dev@46.23.89.226, ruby34, bundle34. Deploy operator: /orient deploy (OPENBSD/data/operator.yml). Full rule index: data/CANON.md (generated).
+    VPS: dev@46.23.89.226, ruby34, bundle34. Deploy: OPENBSD/RUNBOOK.md. Full rule index: data/CANON.md (generated).
   deploy: |-
     RAILS/<app>/ is a full Rails 8 tree (app/views, config, db) — not a stub. <app>.sh copies it to /home/<app>/app on vm23.
     Feature truth: RAILS/apps.yml. Debt: OPENBSD/data/debt.yml. Horizon (agent ignore): apps.horizon.yml.

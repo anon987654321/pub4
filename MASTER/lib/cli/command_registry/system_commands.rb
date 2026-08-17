@@ -15,8 +15,6 @@ module Master
       def system_commands(agent:, diag:, root:, session: nil, bus: nil, scanner: nil, ai: nil)
         container = { session:, config: {}, root:, bus: }
         {
-          "orient" => command(:dispatch_orient, root),
-          "explain" => command(:dispatch_orient, root),
           "tools" => command(:dispatch_tools, root, ai),
           "tree" => command(:dispatch_tree, root),
           "diff" => command(:dispatch_diff, root),
@@ -31,88 +29,6 @@ module Master
           "pair" => command(:dispatch_pair, root),
           "security-audit" => command(:dispatch_security_audit, root),
         }
-      end
-
-      ORIENT_FILES = {
-        "soul" => ["data/soul.yml", "constitution: axioms, voice, persona, prompt order"],
-        "rules" => ["data/rules.yml", "universal cross-disciplinary rules"],
-        "style" => ["data/style.yml", "ruby/shell/git/css/html/typography idioms"],
-        "limits" => ["data/limits.yml", "agent loops, pipeline, council, gates"],
-        "workflow" => ["data/limits.yml", "legacy alias for limits"],
-        "orders" => ["data/state.yml", "event triggers and standing operating procedures"],
-        "patterns" => ["data/patterns.yml", "gh/openbsd/zsh tool idioms"],
-        "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"],
-        "principles" => ["data/operator_principles.yml", "operator feedback injected into prompts"],
-        "skills" => ["data/patterns.yml#skills_registry", "slash-command skill triggers and bodies"],
-        "context" => ["data/project_context.yml", "durable project context for memory"],
-        "bootstrap" => [nil, "agent bootstrap — quickstart/agents/trace/replicate/conventions"],
-        "agents" => [nil, "alias for bootstrap agents section"],
-        "quickstart" => [nil, "alias for bootstrap quickstart section"],
-        "trace" => [nil, "event paths and triage"],
-        "replicate" => [nil, "media generation authority pointers"],
-        "conventions" => [nil, "external LLM coding conventions"],
-        "agent_map" => ["data/agent_map.yml", "machine-readable touch-map for agents (TTS, face boot, deploy)"],
-      }.freeze
-
-      def dispatch_orient(root, ctx: nil)
-        arg = arg_for(ctx)
-        if arg.start_with?("patch ")
-          rel = arg.delete_prefix("patch ").strip
-          return Master::Ground::AgentMap.patch_brief(rel) || "no patch brief for #{rel} — try /orient agent_map"
-        end
-        return cat_orient(root, arg) unless arg.empty?
-
-        orient_overview_lines(root).join("\n")
-      end
-
-      def orient_overview_lines(root)
-        [
-          "MASTER — constitutional AI runtime for any text artifact",
-          "modules: cli · fix · review · voice · ground · io · trace · core",
-          "rules: #{Master.rule_count(root:)} registered",
-          "pipeline: #{Master::CLI::RuntimeMode::PIPELINE_STAGES}",
-          "trace:   /orient trace — /tail /replay /status",
-          "pairing: /pair issue then redeem — public face stays messaging-only",
-          "clone:   bundle exec ruby bin/cli · /pair issue · point the phone PWA at your host",
-          "",
-          "reading tiers:",
-          "  explore     /orient bootstrap + /orient soul|rules|limits",
-          "  structural  soul.yml + rules.yml + limits.yml before edits",
-          "  production  + patterns.yml#operator_playbook + bin/playbook on VPS friction",
-          "",
-          "authority:",
-          *Master.authority_paths(root:).map { |label, path| "  #{label.ljust(10)} #{relative_or_absolute(root, path)}" },
-          "",
-          "constitution:",
-          *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{(path || "runtime").ljust(28)} #{desc}" },
-        ]
-      end
-
-      def relative_or_absolute(root, path)
-        expanded_root = File.expand_path(root)
-        expanded_path = File.expand_path(path)
-        return expanded_path.delete_prefix("#{expanded_root}/") if expanded_path.start_with?("#{expanded_root}/")
-
-        expanded_path
-      end
-
-      def cat_orient(root, arg)
-        return Master::Ground::AgentMap.format_topics if arg == "agent_map"
-
-        runtime = Master::Ground::BootstrapDocs.section(arg)
-        return runtime if runtime
-
-        entry = ORIENT_FILES[arg]
-        return "unknown: #{arg} (try: #{ORIENT_FILES.keys.join(", ")})" unless entry
-        return "orient: #{arg} has no file path — use /orient #{arg}" if entry[0].nil?
-
-        relative, fragment = entry[0].split("#", 2)
-        full = File.join(root, relative)
-        return "missing: #{full}" unless File.exist?(full)
-        return File.read(full) unless fragment
-
-        section = (Master.load_yaml(full) || {})[fragment]
-        section ? section.to_yaml : "missing: #{full}##{fragment}"
       end
 
       def dispatch_tree(root, ctx: nil)
@@ -204,7 +120,7 @@ module Master
           "tools",
           "io     #{registered.join(' ')}",
           "agent  #{wired.size} wired #{wired.empty? ? '' : wired.join(' ')}",
-          "docs   data/tools.yml · /orient trace",
+          "docs   data/tools.yml",
         ].join("\n")
       end
 
@@ -239,11 +155,15 @@ module Master
 
       def dispatch_doctor(root, ctx: nil)
         script = File.join(root, "bin", "doctor")
-        return "doctor: missing #{script}" unless File.file?(script)
-
-        out, err, status = Master::Io::Exec.capture3(Gem.ruby, script, chdir: root)
-        body = [out, err].map(&:strip).reject(&:empty?).join("\n")
-        status.success? ? body : "#{body}\ndoctor: exit #{status.exitstatus}"
+        body = if File.file?(script)
+                 out, err, status = Master::Io::Exec.capture3(Gem.ruby, script, chdir: root)
+                 text = [out, err].map(&:strip).reject(&:empty?).join("\n")
+                 status.success? ? text : "#{text}\ndoctor: exit #{status.exitstatus}"
+               else
+                 "doctor: missing #{script}"
+               end
+        audit = Master::Ground::SecurityAudit.report(root:)
+        [body, audit].reject { |part| part.to_s.strip.empty? }.join("\n")
       end
 
       def snapshot_output_dir = Master::Trace::SnapshotPublisher.output_dir

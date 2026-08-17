@@ -25,9 +25,9 @@ module Master
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   RULES_PATH = File.join(DATA, "rules.yml").freeze
   BOOTSTRAP_AUTHORITY_FILES = [
-    ["soul", "data/soul.yml"], ["rules", "data/rules.yml"], ["style", "data/style.yml"],
+    ["soul", "data/soul.yml"], ["rules", "data/rules.yml"],
     ["voice", "data/voice.yml"], ["limits", "data/limits.yml"], ["orders", "data/state.yml"],
-    ["playbook", "data/patterns.yml"], ["principles", "data/operator_principles.yml"],
+    ["playbook", "data/patterns.yml"],
     ["skills", "data/patterns.yml"], ["context", "data/project_context.yml"],
     ["operator", "../OPENBSD/RUNBOOK.md"]
   ].freeze

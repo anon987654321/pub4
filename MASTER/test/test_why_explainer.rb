@@ -34,4 +34,10 @@ class WhyExplainerTest < Minitest::Test
     assert_nil explainer.explain("")
     assert_nil explainer.explain("   ")
   end
+
+  def test_explain_style_section
+    out = explainer.explain("ruby.quotes")
+    assert_includes out, "style: ruby.quotes"
+    assert_includes out, "double"
+  end
 end

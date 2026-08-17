@@ -7,7 +7,7 @@ require_relative "test_helper"
 # ~70% of 794 lines of Tier-1 'law' is decoration."
 #
 # Measured 2026-08-02: 29 of 38, 477 of 794 lines. Both generic accessors are gone
-# and the unread keys moved under `guidance:`, which is a relabelling — `/orient
+# and the unread keys moved under `guidance:`, which is a relabelling — reading
 # limits` still serves the file whole. This test is what stops the two halves blurring
 # back together, and it is the same shape as test_security_defaults.rb.
 class TestLimitsSplit < Minitest::Test
@@ -80,9 +80,9 @@ class TestLimitsSplit < Minitest::Test
     refute_respond_to rules, :workflow
   end
 
-  # /orient limits reads the file off disk, so the guidance is still served whole —
+  # limits.yml is still read whole, so the guidance is still served —
   # the split relabels it, it does not hide it.
-  def test_orient_still_serves_the_whole_file
+  def test_limits_file_still_contains_guidance
     assert_includes Master::BOOTSTRAP_AUTHORITY_FILES.flatten, "data/limits.yml"
     assert_includes File.read(PATH), "guidance:"
   end

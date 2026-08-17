@@ -1211,7 +1211,7 @@ stale_namespaces:
     - old: data/standing_orders.yml
       new: data/state.yml
     - old: data/ruby_style.yml
-      new: data/style.yml
+      new: data/rules.yml#style
     - old: data/injection_patterns.yml
       new: data/patterns.yml#injection
     - old: data/zsh.yml

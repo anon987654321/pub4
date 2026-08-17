@@ -54,7 +54,7 @@
   # Disabled: pushes the entire working tree to a remote host. Every other
   # callable in the registry is declared here; this one was the exception, so
   # `callable: backup` resolved to nothing. Declared now so it is reachable and
-  # visible via /orient orders — turn it on deliberately, not by default.
+  # visible in data/state.yml — turn it on deliberately, not by default.
   enabled: false
 
 - name: restart_master_on_web_edit

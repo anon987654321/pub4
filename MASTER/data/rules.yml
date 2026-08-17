@@ -3778,7 +3778,7 @@ design_rules:
 # Folded from data/operator_principles.yml — one file for all rules.
 operator_principles:
   meta:
-    source: runtime authority — edit operator_principles.yml directly; never add data/principles/*.md
+    source: runtime authority — edit rules.yml operator_principles:; never add data/principles/*.md
     count: 27
     order: importance — workflow, verification, architecture, code craft, presentation, git, voice
     resolves: soul.yml aesthetic_rules and style.yml line_order defer here for operator intent; scan rules in rules.yml unit scope
@@ -3833,10 +3833,10 @@ operator_principles:
       Default edits, bundle, git, clones, and builds to the VPS. Termux or Android only when SSH is down. macOS is for local edit plus HTTP probe—not CPU-heavy CI. Ferrum browser tests belong on VPS or when explicitly forced.
   - id: feedback_configuration_as_code
     name: "Configuration as Code — YAML authority and living stubs"
-    description: Runtime truth in YAML and /orient; stub READMEs track surface changes only
+    description: Runtime truth in YAML; stub READMEs track surface changes only
     type: feedback
     body: |-
-      Runtime-read material lives in operator_principles.yml, patterns.yml#skills_registry, project_context.yml, and Ground::BootstrapDocs (/orient). Allowed data markdown only SOUL.md, CANON.md, IDENTITY.md, skills/README.md. Top-level README files are one-paragraph stubs pointing at runtime truth—not prose duplication. When commands or behavior change, refresh stubs in the same or next commit without being asked.
+      Runtime-read material lives in rules.yml#operator_principles, patterns.yml#skills_registry, project_context.yml, and Ground::BootstrapDocs. Allowed data markdown only SOUL.md, CANON.md, IDENTITY.md, skills/README.md. Top-level README files are one-paragraph stubs pointing at runtime truth—not prose duplication. When commands or behavior change, refresh stubs in the same or next commit without being asked.
   - id: feedback_flat_hierarchy
     name: "Flat Hierarchy — aggressive merge and rename"
     description: OpenBSD-flat layout; paths named like dense Rails parameterize slugs—Strunk-clean snake_case

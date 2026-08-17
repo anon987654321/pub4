@@ -2,7 +2,7 @@
 
 Constitutional AI runtime in Ruby, OpenBSD-first. Models propose; the constitution validates before durable writes. The web face in `web/` mirrors pipeline state at `https://ai.brgen.no`.
 
-Local boot: `bundle install`, then `bundle exec ruby bin/cli`. Pipeline stages are in `CLI::RuntimeMode::PIPELINE_STAGES`; dump with `/orient`. Law is `data/soul.yml` and `data/rules.yml`. Deploy: `OPENBSD/RUNBOOK.md`. Licensed MIT.
+Local boot: `bundle install`, then `bundle exec ruby bin/cli`. Work is a sentence. Slash set: `/through` `/status` `/undo` `/commit` `/model` `/pair` `/doctor` `/help`. Law is `data/soul.yml` and `data/rules.yml`. Deploy: `OPENBSD/RUNBOOK.md`. Licensed MIT.
 
 Start with `AGENTS.md` (task-scoped agent entry) or `START_HERE.md` (full contract). Use `EXAMPLES.md` for patch shapes. Checks: `bin/check`, `--profile=agent`, `--profile=web`, `--profile=full`, `--format=brief`.
 

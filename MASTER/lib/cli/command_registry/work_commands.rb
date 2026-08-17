@@ -31,10 +31,6 @@ module Master
       SNAPSHOT_DIR_FILE_LIMIT = 40
       SCAN_RULE_GROUP_LIMIT = 10
 
-      def work_commands(ai:, root:, infra:)
-        build_work_command_table(work_command_deps(ai:, root:, infra:))
-      end
-
       def work_command_deps(ai:, root:, infra:)
         { root: }.merge(ai_command_deps(ai:, root:, infra:)).merge(infra_command_deps(infra:))
       end
@@ -65,55 +61,6 @@ module Master
           learnings: infra[:learnings],
           trace: infra[:trace],
         }
-      end
-
-      def build_work_command_table(d)
-        build_scan_and_fix_commands(d).merge(build_review_and_meta_commands(d))
-      end
-
-      def build_scan_and_fix_commands(d)
-        {
-          "scan" => command(:dispatch_scan, d[:scanner], d[:root]),
-          "self" => command(:dispatch_self, d[:scanner], d[:root], d[:bus]),
-          "core" => command(:dispatch_core, d[:root]),
-          "fix" => command(:dispatch_fix, d[:fix_loop], d[:root], d[:scanner]),
-          "mode" => command(:dispatch_mode, d[:root]),
-          "map" => command(:dispatch_map, d[:root]),
-          "maturity" => command(:dispatch_maturity, d[:root]),
-          "laws" => command(:dispatch_laws, d[:root]),
-          "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
-          "replay" => command(:dispatch_replay, d[:root], d[:trace]),
-          "graph" => command(:dispatch_graph, d[:root], d[:code_index], d[:reference_graph]),
-          "resync" => command(:dispatch_resync, d[:root], d[:fix_loop], d[:git], d[:bus]),
-          "tail" => command(:dispatch_tail, d[:root]),
-          "review" => command(:dispatch_review, d[:deliberation], d[:root], d[:bus], d[:review_crew]),
-          "critique" => command(:dispatch_critique, d[:deliberation], d[:root]),
-        }
-      end
-
-      def build_review_and_meta_commands(d)
-        {
-          "workflow" => command(:dispatch_workflow, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
-          "through" => command(:dispatch_through, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
-          "triad" => command(:dispatch_triad, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
-          "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
-          "why" => command(:dispatch_why, d[:agent], d[:root]),
-          "axioms" => command(:dispatch_axioms, d[:scanner], d[:root]),
-          "rules" => command(:dispatch_rules),
-          "edge-cases" => command(:dispatch_edge_cases, d[:root]),
-          "analyze-self" => command(:dispatch_analyze_self, d[:learnings]),
-          "topic" => command(:dispatch_topic, d[:session]),
-          "process" => command(:dispatch_process),
-          "propose-tree" => command(:dispatch_propose_tree, d[:propose_tree]),
-          "ecology" => command(:dispatch_ecology, d[:ecology]),
-        }
-      end
-
-      def dispatch_self(scanner:, root:, bus:, ctx: nil)
-        result = Master::Review::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(stream: true, autofix: true)
-        return result.message unless result.ok?
-
-        result.value!.line
       end
 
       def dispatch_mode(root:, ctx: nil)

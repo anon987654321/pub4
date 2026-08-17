@@ -34,13 +34,12 @@ class InferStageTest < Minitest::Test
     assert_equal "scan", out.inferred_command
   end
 
-  def test_explain_alias_maps_to_orient
+  def test_explain_is_not_a_work_command_alias
     result = @infer.call(ctx("explain your architecture"))
     assert result.ok?
     out = result.value!
     assert_equal :command, out.intent
-    assert_equal "orient", out.command
-    assert_equal "orient", out.inferred_command
+    assert_equal "explain", out.command
   end
 
   def test_publishes_infer_resolved

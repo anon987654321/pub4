@@ -114,10 +114,8 @@ class TestScanAutofix < Minitest::Test
     end
   end
 
-  def test_help_documents_scan_autofix
-    detail = Master::CLI::CommandRegistry.help_text("scan")
-    assert_includes detail, "--no-autofix"
-    assert_includes detail, "Mechanical autofix"
-    assert_includes detail, "Always runs at deep depth"
+  def test_help_documents_through_dry_run
+    detail = Master::CLI::CommandRegistry.help_text("through")
+    assert_includes detail, "--dry-run"
   end
 end

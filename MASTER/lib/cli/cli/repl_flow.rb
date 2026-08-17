@@ -85,18 +85,7 @@ module Master
 
       NL_DISPATCH = [
         [/\A(?:hi|hello|hey|yo|good (?:morning|afternoon|evening))[\s!.?]*\z/i, :run_chitchat],
-        [/\b(?:show|print|list)\s+(?:undo\s+)?histor/i, :run_history],
-        [/\b(?:why|how)\s+(?:this|that)\s+(?:fail(?:ed)?|break|broke|error|wrong|happen(?:ed)?)\b/i, :run_why],
         [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i, :toggle_focus],
-        [/\b(?:last|prev(?:ious)?)\s+(?:input|message|prompt)\b/i, :run_last],
-        [/\b(?:suggest|what(?:'s|\s+is)\s+next|next\s+steps?)\b/i, :run_propose],
-        [/\b(?:show|list)\s+(?:my\s+)?principles\b/i, :run_principles],
-        [/\brestart\b|\bhot[\s-]?reload\b/i, :run_restart],
-        [/\brebuild\b/i, :run_rebuild],
-        [/\bshow\s+context\b|\bcontext\s+window\b/i, :run_context],
-        [/\bswallow[\s-]?report\b|\berror\s+ledger\b/i, :run_swallow_report],
-        [/\btoggle\s+chips?\b|\bchips?\s+(?:on|off)\b/i, :toggle_chips],
-        [/\btoggle\s+dmesg\b|\bdmesg\s+(?:on|off)\b/i, :toggle_dmesg],
       ].freeze
 
       def handle_repl_line(line)
@@ -107,67 +96,23 @@ module Master
         handled = dispatch_core_slash_command(stripped)
         return handled unless handled == :unhandled
 
-        handled = dispatch_extra_slash_command(stripped)
-        return handled unless handled == :unhandled
+        return run_input(read_multiline) if stripped == "<<"
 
-        dispatch_final_slash_command(stripped, line)
+        run_agent_turn(line)
       end
 
       def dispatch_core_slash_command(stripped)
         case stripped
-        when /\A\/(?:help|\?)(?:\s+(.+))?\z/ then run_help(Regexp.last_match(1))
+        when %r{\A/(?:help|\?)(?:\s+(.+))?\z} then run_help(Regexp.last_match(1))
         when "/exit", "/quit" then exit_cli
-        when "/undo" then run_undo
-        when "/rollback" then run_rollback
-        when "/redo" then run_redo
-        when "/checkpoint" then run_checkpoint
-        when "/history" then run_history
-        when /\A\/grep\s+(.+)\z/ then run_grep(Regexp.last_match(1))
-        when "/audit" then run_audit
-        when "/cost" then run_cost
-        when /\A\/watch(?:\s+(on|off|status))?\z/ then run_watch(Regexp.last_match(1) || "status")
-        when "/why" then run_why
-        when "/focus" then toggle_focus
-        when "/last" then run_last
-        when "/cmd" then run_cmd
+        when "/undo", "/rollback" then run_undo
+        when "/clear" then run_input("/clear")
         else :unhandled
-        end
-      end
-
-      def dispatch_extra_slash_command(stripped)
-        case stripped
-        when /\A\/dmesg\s+(\d+)\z/ then run_dmesg(Regexp.last_match(1).to_i)
-        when "/dmesg" then toggle_dmesg
-        when "/chips" then toggle_chips
-        when /\A\/propose(?:\s+(.+))?\z/ then run_propose(Regexp.last_match(1))
-        when "/principles" then run_principles
-        when "/restart" then run_restart
-        when "/self" then run_self_scan
-        when /\A\/phase(?:\s+(.+))?\z/ then run_phase(Regexp.last_match(1).to_s)
-        when "/ui-critique" then run_ui_critique
-        when "/sound-critique" then run_sound_critique
-        when "/dilla-critique" then run_dilla_critique
-        else :unhandled
-        end
-      end
-
-      def dispatch_final_slash_command(stripped, line)
-        case stripped
-        when "/rebuild" then run_rebuild
-        when "/context" then run_context
-        when "/snapshot" then run_snapshot
-        when "/reap" then run_reap
-        when "/verify" then run_verify
-        when "/rails-pwa-audit" then run_rails_pwa_audit
-        when "/rails-pwa-fix" then run_rails_pwa_fix
-        when "/swallow-report" then run_swallow_report
-        when "<<" then run_input(read_multiline)
-        else run_agent_turn(line)
         end
       end
 
       def run_chitchat
-        puts @refs.renderer.render("hello. MASTER is awake. describe a goal or use /cmd for operator commands.", mode: :dim)
+        puts @refs.renderer.render("hello. MASTER is awake. describe a goal.", mode: :dim)
       end
 
       def run_agent_turn(line)

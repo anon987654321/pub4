@@ -26,104 +26,27 @@ module Master
           "status" => Command.new do |ctx|
             dispatch_status(root:, fix_loop: nil, bus:, git:, trace:, ctx:)
           end,
-          "orient" => command(:dispatch_orient, root),
-          "explain" => command(:dispatch_orient, root),
-          "tools" => command(:dispatch_tools, root, ai),
           "help" => command(:help_text, nil),
         }
       end
 
+      # Closed public surface. Scan/fix/critique stay as methods ThroughPipeline
+      # calls; they are not slash verbs.
       def build(infra:, ai:, root:)
-        commands = build_core_commands(infra:, ai:, root:)
-        commands.merge!(build_agent_and_system_commands(infra:, ai:, root:))
-        commands["help"] = command(:help_text, nil)
-        commands["restart"] = commands["rebuild"] if commands["rebuild"]
-        commands["principles"] = commands["axioms"] if commands["axioms"]
-        commands
-      end
-
-      def build_core_commands(infra:, ai:, root:)
-        commands = {}
-        commands.merge!(session_commands(infra))
-        commands.merge!(mode_commands(infra[:config]))
-        commands.merge!(memory_commands(infra[:memory], ai[:agent], root:))
-        commands.merge!(work_commands(ai:, root:, infra:))
-        commands.merge!(media_commands(bus: infra[:bus]))
-        commands.merge!(core_commands(root:, bus: infra[:bus], model_id: ai[:agent]&.model))
-        commands.merge!(domain_commands(root:))
-        commands.merge!(reach_commands(root:, agent: ai[:agent], bus: infra[:bus]))
-        commands
-      end
-
-      def build_agent_and_system_commands(infra:, ai:, root:)
-        shell_tool = Array(ai[:tools]).find { |t| t.is_a?(Io::Shell) }
-        commands = agent_commands(
-          agent: ai[:agent],
-          agent_pool: ai[:agent_pool],
-          shell: shell_tool,
-          root:,
-          bus: infra[:bus],
-          session: infra[:session],
-        )
-        commands.merge!(control_commands(ai[:standing], ai[:soul]))
-        commands.merge!(system_commands(
-          agent: ai[:agent], diag: infra[:diag], root:,
-          session: infra[:session], bus: infra[:bus], scanner: ai[:scanner], ai:
-        ))
-        commands
-      end
-
-      def session_commands(infra)
-        session = infra[:session]
+        d = work_command_deps(ai:, root:, infra:)
         undo = infra[:undo]
-        logging = infra[:logging]
-        config = infra[:config]
         {
-          "clear" => command(:dispatch_clear, session),
-          "save" => command(:dispatch_save, session),
-          "history" => command(:dispatch_history, session),
-          "grep" => command(:dispatch_grep, session),
-          "audit" => command(:dispatch_audit, config),
-          "tokens" => command(:dispatch_tokens, session),
-          "cost" => command(:dispatch_cost, session),
+          "through" => command(:dispatch_through, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
+          "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
           "undo" => command(:dispatch_undo, undo),
-          "rollback" => command(:dispatch_rollback, undo),
-          "redo" => command(:dispatch_redo, undo),
-          "dmesg" => command(:dispatch_dmesg, logging),
-          "config" => command(:dispatch_config, config),
+          "rollback" => command(:dispatch_undo, undo),
+          "clear" => command(:dispatch_clear, infra[:session]),
+          "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
+          "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
+          "pair" => command(:dispatch_pair, root),
+          "doctor" => command(:dispatch_doctor, root),
+          "help" => command(:help_text, nil),
         }
-      end
-
-      def mode_commands(config)
-        reasoning_commands(config).merge(persona_commands(config)).merge(flag_commands(config))
-      end
-
-      # `/reasoning`, not `/mode`. Two unrelated features both claimed "mode":
-      # this one (config.reasoning_mode — the prompt wrapper, direct|react|
-      # rewoo|code_agent) and Ground::ModePosture (loose|balanced|strict, which
-      # caps fix passes and scan profile). Both defined `dispatch_mode` in this
-      # same module, so the later load silently shadowed the earlier one while
-      # work_commands' table entry won the key — every `/mode` form reached this
-      # method holding a String root and died on `config.reasoning_mode`.
-      # help.rb documents `/mode` as the posture, so the posture keeps the name.
-      def reasoning_commands(config)
-        {
-          "reasoning" => command(:dispatch_reasoning, config),
-          "task" => command(:dispatch_task, config),
-        }
-      end
-
-      def persona_commands(config)
-        {
-          "persona" => command(:dispatch_persona, config),
-        }
-      end
-
-      def flag_commands(config)
-        flags = %w[auto_review auto_lint auto_commit]
-        flags.each_with_object({}) do |flag, h|
-          h[flag] = command(:dispatch_flag, config, flag)
-        end
       end
 
       def dispatch_clear(session, ctx: nil)

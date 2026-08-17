@@ -14,7 +14,7 @@ module Master
       def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
-        return dispatch_slash(text, container:, felt_sense:, on_turn:) if text.start_with?("/")
+        return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:) if text.start_with?("/")
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
         # conversational path only. Everything below this line can reach real
@@ -45,9 +45,11 @@ module Master
         dispatch_inferred({ command: "through", args: through_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
       end
 
-      # Promote plain language to operator commands via Infer (scan/fix/through/…).
-      # Users should not need to memorize slash commands for the singularity loop.
-      THROUGH_COMMANDS = %w[through workflow triad sweep scan fix self].freeze
+      # Promote plain language to the full pass. Stage names are leftovers.
+      THROUGH_COMMANDS = %w[through workflow triad sweep scan fix self critique review].freeze
+      FOLD_SLASH = %w[fold run].freeze
+      READ_SLASH = %w[explain why laws axioms principles].freeze
+      THROUGH_SLASH = %w[scan fix critique self workflow triad review sweep].freeze
       INFER_MIN_CONFIDENCE = 0.62
 
       def infer_operator_command(text, container:)
@@ -60,6 +62,8 @@ module Master
         return if !THROUGH_COMMANDS.include?(command) && conf < INFER_MIN_CONFIDENCE
 
         command = normalize_inferred_command(command, text)
+        return if READ_SLASH.include?(command)
+
         args = command == "through" ? through_command_args(value, text) : value.args.to_s
 
         { command:, args:, confidence: conf }
@@ -77,12 +81,11 @@ module Master
         value.intent == :command ? value : nil
       end
 
-      # Broad improve/sweep language becomes full through-pass (apply), not a single fix.
       def normalize_inferred_command(command, text)
-        if command == "sweep" || (command == "fix" && text.match?(/\b(?:all|every|rails|master|codebase|through|itself)\b/i))
-          return "through"
-        end
-        command == "workflow" ? "through" : command
+        return command if text.match?(/--dry-run|--no-autofix|\bpreview\b/i)
+        return "through" if THROUGH_COMMANDS.include?(command)
+
+        command
       end
 
       def through_command_args(value, text)
@@ -203,7 +206,18 @@ module Master
         memory
       end
 
+      def rewrite_slash(input)
+        name, rest = input.sub(%r{\A/}, "").split(/\s+/, 2)
+        name = name.to_s.downcase
+        return rest.to_s.strip.empty? ? "/through" : "/through #{rest}" if THROUGH_SLASH.include?(name)
+
+        input
+      end
+
       def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil)
+        name, rest = input.sub(%r{\A/}, "").split(/\s+/, 2)
+        return run_fold(rest.to_s, container:, on_turn:) if FOLD_SLASH.include?(name.to_s.downcase)
+
         ctx = PipelineContext.wrap(user_message: input, felt_sense:)
         ctx = unwrap(Stages::Intake.new.call(ctx))
         return ctx if ctx.is_a?(Master::Result)

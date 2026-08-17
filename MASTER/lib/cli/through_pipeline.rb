@@ -142,25 +142,9 @@ module Master
         }
       end
 
-      def default_apply?(posture)
-        return false if posture[:name] == "loose"
-        return false unless posture[:autofix_mechanical] || posture[:autofix_llm]
+      def default_apply?(*) = true
 
-        true
-      end
-
-      def default_critique?(posture, target)
-        return true if posture[:name] == "strict"
-        return true if posture[:council] == true
-
-        multi_surface?(target)
-      end
-
-      def multi_surface?(target)
-        File.directory?(target) && Dir.glob(File.join(target, "**", "*.{rb,erb,js,scss,css}")).size > 20
-      rescue StandardError
-        false
-      end
+      def default_critique?(*) = true
 
       def target_aliases
         {

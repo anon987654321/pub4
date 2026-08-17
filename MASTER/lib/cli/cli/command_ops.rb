@@ -107,9 +107,9 @@ module Master
       end
 
       def run_cmd
-        puts @refs.renderer.render("describe what you want — the router infers scan/fix/review workflows", mode: :dim)
+        puts @refs.renderer.render("describe what you want — work is a sentence", mode: :dim)
         puts @refs.renderer.render("ops: #{SLASH_COMMANDS.join("  ")}", mode: :dim)
-        puts @refs.renderer.render("work: /scan /fix /workflow … or plain language", mode: :dim)
+        puts @refs.renderer.render("work: say the path. /help lists the eight commands.", mode: :dim)
       end
 
       def run_phase(arg = "")
@@ -157,7 +157,7 @@ module Master
         c = Master::Ground::Constitution.new
         lines = c.list
         if lines.empty?
-          puts @refs.renderer.render("no principles loaded (data/operator_principles.yml)", mode: :dim)
+          puts @refs.renderer.render("no principles loaded (data/rules.yml#operator_principles)", mode: :dim)
         else
           puts @refs.renderer.render("constitution: #{lines.size} principle(s)", mode: :dim)
           lines.each { |l| puts @refs.renderer.render("  #{l}", mode: :dim) }

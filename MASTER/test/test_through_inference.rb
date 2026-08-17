@@ -23,6 +23,14 @@ class TestThroughInference < Minitest::Test
     assert_equal "through", inferred[:command]
   end
 
+  def test_turn_router_promotes_scan_and_fix_to_through
+    %w[scan\ lib fix\ lib].each do |text|
+      inferred = Master::CLI::TurnRouter.infer_operator_command(text, container: { bus: nil, session: nil })
+      refute_nil inferred, "#{text} should infer a work command"
+      assert_equal "through", inferred[:command], "#{text} should run the full pass"
+    end
+  end
+
   def test_turn_router_itself_maps_to_master
     inferred = Master::CLI::TurnRouter.infer_operator_command(
       "run master through itself",

@@ -12,7 +12,7 @@
 # changed nothing; the Ruby is what ran.
 #
 # So the split is a relabelling, not a deletion. Everything under `guidance:` is
-# still served verbatim by `/orient limits` and is genuinely useful to read — it is
+# still in this file for humans to read — it is
 # simply not enforced by anything, and saying so is the point. test/test_limits_split.rb
 # fails in both directions: an enforced key that loses its reader, and a guidance
 # key that gains one without being promoted.
@@ -338,7 +338,7 @@ session_modes:
       description: Full rules, council on, full fix budget
 
 # ---------------------------------------------------------------------------
-# Read by nothing. Reference material for agents via `/orient limits`, kept
+# Read by nothing. Reference material for agents, kept
 # because it is worth reading and deleted from no-one's reach — but it does not
 # constrain the runtime, and a rule that constrains nothing must not sit beside
 # ones that do.
@@ -458,7 +458,7 @@ guidance:
     - application.scss
     on_view_or_css_edit:
     - flatten divitis and use semantic landmarks
-    - bare tag targeting per style.yml — no BEM or utility soup in ERB
+    - bare tag targeting per rules.yml style — no BEM or utility soup in ERB
     - run Shared::FrontendAuditor on touched paths
     mailer_exempt:
     - inline styles in mailer views (email clients require them)
@@ -504,8 +504,8 @@ guidance:
     - todo.md
     - notes.md
     - changelog.md
-    slug_naming: Rails-parameterized density — snake_case, concrete tokens only, Strunk-clean; see style.yml
-      naming.paths
+    slug_naming: Rails-parameterized density — snake_case, concrete tokens only, Strunk-clean; see rules.yml
+      style.naming.paths
     rule: Flat Hierarchy — merge thin siblings and rename misfit paths before creating files. OpenBSD-flat
       paths, Zeitwerk-true dense slugs, Roda-tight trees.
   phases:
@@ -601,7 +601,7 @@ guidance:
     reading_tiers:
       explore:
         required:
-        - /orient bootstrap
+        - START_HERE.md
         optional:
         - data/soul.yml ABSOLUTE sections
         note: Recon and analysis — pair with llm_ergonomics; external rg allowed.
@@ -612,17 +612,16 @@ guidance:
         - data/limits.yml
         optional:
         - data/voice.yml
-        - data/style.yml
         - data/state.yml
         note: Before production edits and deploy-touching changes.
       production_ops:
         required:
         - data/patterns.yml#operator_playbook
         optional:
-        - /orient trace
+        - data/bootstrap.yml#trace
         note: VPS friction, relayd, recovery — run bin/playbook when signals match.
     mandatory_reads:
-    - See reading_tiers — /orient bootstrap first; full constitution only for structural edits.
+    - See reading_tiers — START_HERE.md first; full constitution only for structural edits.
     playbook_command: bin/playbook — print codified operator lessons when signals match production friction
     check_standing_orders: Verify FSM state before any mutation -- UNCHANGE blocks refactoring
     scan_before_analysis: Use /scan deep via MASTER, not external agents, for code analysis
@@ -739,7 +738,7 @@ guidance:
   llm_ergonomics:
     core_principle: Optimize for actual LLM behavior and context limits, not idealized super-agents.
     guidance:
-    - Provide high-density mental models (/orient bootstrap) before requiring deep constitution reads.
+    - Provide high-density mental models (START_HERE.md) before requiring deep constitution reads.
     - Allow external tools (grep, rg, find) for reconnaissance and understanding. Require constitutional
       tools only for production changes.
     - When full strict adherence would cause context exhaustion or paralysis, prefer 'good enough + evidence'

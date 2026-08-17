@@ -133,7 +133,7 @@ module Master
     def fast_agent_stub
       Object.new.tap do |stub|
         stub.define_singleton_method(:call) do |_ctx|
-          Master::Result.err("fast mode: /status /orient /tools /help only", category: :validation)
+          Master::Result.err("fast mode: /status /help only", category: :validation)
         end
         stub.define_singleton_method(:model) { "fast" }
       end
