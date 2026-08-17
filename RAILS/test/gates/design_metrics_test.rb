@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require_relative "../../gates/support/design_metrics"
-require_relative "../../gates/lib/design_metrics"
+require_relative "../../gates/lib/research/design_metrics"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class DesignMetricsTest < Minitest::Test
@@ -75,7 +75,7 @@ class DesignMetricsTest < Minitest::Test
   def test_gate_reports_principle_tags_on_failures
     # synthetic: force a contrast fail via monkeypatch is heavy; assert method exists
     assert Deploy::DesignMetricsGate.instance_methods(false).empty? || true
-    source = File.read(File.expand_path("../../gates/lib/design_metrics.rb", __dir__))
+    source = File.read(File.expand_path("../../gates/lib/research/design_metrics.rb", __dir__))
     assert_includes source, "principle=fitts_law"
     assert_includes source, "principle=accessibility"
   end

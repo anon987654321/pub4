@@ -13,7 +13,9 @@ class DomSurfaceSchemaTest < Minitest::Test
 
   def test_schemas_yml_loads
     assert Deploy::DomSurfaceSchema.load_all.key?("marketplace_listings")
-    assert Deploy::DomSurfaceSchema.load_all.key?("live_feed")
+    # live_feed went with /live when 76612fd0b folded it into /nearby/room, and
+    # its two fixtures went with it. The schema, the mappings and these tests
+    # were the three places that outlived the surface.
   end
 
   def test_good_marketplace_fixture_passes
@@ -29,18 +31,6 @@ class DomSurfaceSchemaTest < Minitest::Test
     assert findings.any? { |f| f.message.include?("missing marker") || f.message.include?("forbidden") },
            "expected structural findings, got #{findings.inspect}"
     assert findings.any? { |f| f.message.include?("Sign in") || f.message.include?("forbidden") }
-  end
-
-  def test_good_live_fixture_passes
-    html = File.read(File.join(FIXTURES, "good_live_feed.html"))
-    hard = @schema.check(html, "live_feed").select { |f| f.severity == :hard }
-    assert_empty hard.map(&:message)
-  end
-
-  def test_bad_live_fixture_catches_auth_wall
-    html = File.read(File.join(FIXTURES, "bad_live_feed.html"))
-    findings = @schema.check(html, "live_feed")
-    assert findings.any?, "gate must not be blind to bad live fixture"
   end
 
   def test_order_violation_detected
@@ -62,12 +52,18 @@ class DomSurfaceSchemaTest < Minitest::Test
     assert result.failures.any?
   end
 
-  def test_mutation_inject_auth_wall_is_caught
-    good = File.read(File.join(FIXTURES, "good_live_feed.html"))
-    mutated = good.sub("</main>", "<p>Sign in to continue</p></main>")
-    findings = @schema.check(mutated, "live_feed")
-    assert findings.any? { |f| f.message.match?(/forbidden|Sign in/i) }, findings.map(&:message).inspect
-  end
+# Was inject_auth_wall against good_live_feed: live_feed was the guest-open
+# surface whose schema forbade a sign-in prompt, and it went with /live. The
+# test is about the schema not being blind to a mutation, not about that one
+# pattern, so it mutates a surface that still exists against a rule that still
+# exists — an unlabelled button, which every surviving schema forbids.
+def test_mutation_inject_unlabelled_button_is_caught
+  good = File.read(File.join(FIXTURES, "good_brgen_home.html"))
+  mutated = good.sub("</main>", "<button></button></main>")
+  findings = @schema.check(mutated, "brgen_home")
+
+  assert findings.any? { |f| f.message.match?(/forbidden/i) }, findings.map(&:message).inspect
+end
 
   def test_mutation_strip_nav_is_caught
     good = File.read(File.join(FIXTURES, "good_marketplace_listings.html"))

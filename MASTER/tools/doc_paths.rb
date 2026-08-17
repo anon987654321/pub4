@@ -150,7 +150,7 @@ module Pub4
     # were reported as documents pointing at nothing.
     #
     # That is a check whose verdict depends on which checkout it runs in, which
-    # is the same defect RAILS/gates/lib/generated_asset.rb carries a paragraph
+    # is the same defect RAILS/gates/lib/source/generated_asset.rb carries a paragraph
     # about for mtimes. A path is here because Rails will make it, and a
     # reference to it is correct whether or not this machine has run the app.
     RUNTIME_LEAVES = %w[assets log storage tmp cache pids sockets].freeze

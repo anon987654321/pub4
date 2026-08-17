@@ -2,13 +2,13 @@
 
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../support/gate_autofix"
-require_relative "rendered_geometry"
-require_relative "layout_snapshot"
-require_relative "journey_invariant"
-require_relative "reflow"
-require_relative "keyboard_flow"
-require_relative "mobile_flow"
-require_relative "cross_app"
+require_relative "rendered/rendered_geometry"
+require_relative "rendered/layout_snapshot"
+require_relative "rendered/journey_invariant"
+require_relative "rendered/reflow"
+require_relative "rendered/keyboard_flow"
+require_relative "rendered/mobile_flow"
+require_relative "rendered/cross_app"
 
 module Deploy
   # Composite for every gate that measures a real browser.

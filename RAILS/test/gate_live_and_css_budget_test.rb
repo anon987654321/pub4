@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "yaml"
 require_relative "../../OPENBSD/lib/gate_result"
-require_relative "../gates/lib/css_constitution"
+require_relative "../gates/lib/source/css_constitution"
 require_relative "../gates/support/design_metrics"
 
 # Two gaps, same shape: a rule that exists and measures nothing.

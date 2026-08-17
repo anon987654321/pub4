@@ -65,7 +65,7 @@ gates it names exist.
 5. VPS: one app CI/deploy at a time on vm23. — no gate: concurrency on a remote host, enforced by the deploy lock on vm23 rather than by anything in this repo; a local check would assert against state it cannot see.
 6. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets. — gate: `rake security_sweep`, `RAILS/test/tracked_secrets_test.rb`
 7. After `git pull` on vm23, run `vps-deploy` before expecting live health. — no gate: an ordering rule for two commands run on the VPS; nothing in the repo observes whether the box was deployed after its last pull.
-8. Feature truth: `RAILS/apps.yml`; debt: `OPENBSD/data/debt.yml`. — gate: `RAILS/gates/lib/apps_yml.rb`
+8. Feature truth: `RAILS/apps.yml`; debt: `OPENBSD/data/debt.yml`. — gate: `RAILS/gates/lib/source/apps_yml.rb`
 9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPENBSD/RUNBOOK.md`. — no gate: a prohibition on an action, not a property of the tree; the guard is the human-only env var in item 11.
 10. Production VM is vm23 only (`dev@brgen.no`). — no gate: a deployment fact about the world; the repo cannot assert which host is production, only which one its scripts name.
 11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only gates. — gate: `OPENBSD/vps_safety_gate.rb`
