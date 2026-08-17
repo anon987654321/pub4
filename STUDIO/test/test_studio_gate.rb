@@ -49,8 +49,10 @@ class TestStudioGate < Minitest::Test
         owners[path] << tree[:name] if File.fnmatch?(File.join(GATE::ROOT, tree[:glob]), path, File::FNM_PATHNAME)
       end
     end
+    unowned = owners.select { |_, names| names.empty? }
     doubled = owners.select { |_, names| names.size > 1 }
 
+    assert_empty unowned, "these files belong to no declared tree: #{unowned.keys.inspect}"
     assert_empty doubled, "these files are claimed by two trees, so they are parsed twice: #{doubled.keys.inspect}"
   end
 

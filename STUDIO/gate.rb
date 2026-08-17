@@ -76,6 +76,12 @@ module Deploy
         entry: nil,
         owner: "this file — pinned by STUDIO/test/test_studio_gate.rb",
       },
+      {
+        name: "test",
+        glob: "test/**/*.rb",
+        entry: nil,
+        owner: "STUDIO/Rakefile — isolated test suite",
+      },
     ].freeze
 
     # Directories that hold Ruby but are not first-party source: vendored
