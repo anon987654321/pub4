@@ -13,7 +13,9 @@ class Communities::ModeratorsController < ApplicationController
   end
 
   def create
-    membership = @community.community_memberships.find_by(user_id: params[:user_id])
+    # includes(:user): both the audit metadata and the notification below read
+    # the person off this row, and strict_loading_by_default is on everywhere.
+    membership = @community.community_memberships.includes(:user).find_by(user_id: params[:user_id])
     unless membership
       redirect_back fallback_location: community_moderators_path(@community),
                     alert: t("flash.community.not_a_member")
@@ -21,6 +23,13 @@ class Communities::ModeratorsController < ApplicationController
     end
 
     membership.update!(role: "moderator")
+    # A role change leaves no trace of its own: community_memberships.role is
+    # overwritten in place, so the previous value and who changed it are gone.
+    Shared::Audit.record!(
+      action: "community.moderator.appointed", actor: Current.user,
+      target: membership, context: @community,
+      metadata: { subject: membership.user.display_name, subject_id: membership.user_id }
+    )
     membership.deliver_notification(
       membership.user,
       title: t("community.moderator_appointed", community: @community.name),
@@ -33,8 +42,13 @@ class Communities::ModeratorsController < ApplicationController
   end
 
   def destroy
-    membership = @community.community_memberships.find(params[:id])
+    membership = @community.community_memberships.includes(:user).find(params[:id])
     if membership.update(role: "member")
+      Shared::Audit.record!(
+        action: "community.moderator.removed", actor: Current.user,
+        target: membership, context: @community,
+        metadata: { subject: membership.user.display_name, subject_id: membership.user_id }
+      )
       redirect_back fallback_location: community_moderators_path(@community),
                     notice: t("flash.community.moderator_removed")
     else

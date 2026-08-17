@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_16_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_000000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -159,6 +159,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_120100) do
     t.integer "post_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
+  end
+
+  create_table "audit_events", force: :cascade do |t|
+    t.string "action", null: false
+    t.integer "actor_id"
+    t.integer "context_id"
+    t.string "context_type"
+    t.datetime "created_at", null: false
+    t.json "metadata", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.integer "target_id"
+    t.string "target_type"
+    t.datetime "updated_at", null: false
+    t.index ["action", "occurred_at"], name: "index_audit_events_on_action_and_occurred_at"
+    t.index ["actor_id"], name: "index_audit_events_on_actor_id"
+    t.index ["context_type", "context_id", "occurred_at"], name: "idx_on_context_type_context_id_occurred_at_75c71d77bc"
+    t.index ["target_type", "target_id"], name: "index_audit_events_on_target_type_and_target_id"
   end
 
   create_table "blocks", force: :cascade do |t|
@@ -1576,6 +1593,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_120100) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "activity_events", "users", column: "actor_id"
+  add_foreign_key "audit_events", "users", column: "actor_id"
   add_foreign_key "blocks", "users", column: "blocked_id"
   add_foreign_key "blocks", "users", column: "blocker_id"
   add_foreign_key "bookmarks", "posts"

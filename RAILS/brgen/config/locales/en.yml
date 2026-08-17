@@ -1368,9 +1368,22 @@ en:
     saved_title: Saved
     unsave: Unsave
     removed: Removed.
+  # The log of what moderators and owners have done. The key is the action, so a
+  # newly audited operation is one line here and no case statement in a view.
+  audit:
+    deleted_actor: Deleted account
+    community:
+      ban:
+        created: "%{actor} banned %{subject}"
+        lifted: "%{actor} lifted the ban on %{subject}"
+      moderator:
+        appointed: "%{actor} made %{subject} a moderator"
+        removed: "%{actor} removed %{subject} as a moderator"
   common:
     close: Close
   community:
+    moderation_log: Moderation log
+    no_moderation_log: Nothing has been done here yet.
     confirm_ban: Ban this person from the community?
     bans: Banned people
     ban_author: Ban

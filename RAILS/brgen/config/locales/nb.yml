@@ -1374,9 +1374,22 @@ nb:
     saved_title: Lagret
     unsave: Fjern fra lagret
     removed: Fjernet.
+  # Loggen over hva moderatorer og eiere har gjort. Nøkkelen er handlingen, så
+  # en ny revidert operasjon er én linje her og ingen case-setning i en view.
+  audit:
+    deleted_actor: Slettet konto
+    community:
+      ban:
+        created: "%{actor} utestengte %{subject}"
+        lifted: "%{actor} opphevet utestengelsen av %{subject}"
+      moderator:
+        appointed: "%{actor} gjorde %{subject} til moderator"
+        removed: "%{actor} fjernet %{subject} som moderator"
   common:
     close: Lukk
   community:
+    moderation_log: Moderatorlogg
+    no_moderation_log: Ingenting er gjort her ennå.
     confirm_ban: Utestenge denne personen fra fellesskapet?
     bans: Utestengte
     ban_author: Utesteng

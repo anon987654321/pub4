@@ -31,3 +31,28 @@
         body: t("community.no_bans_body"),
         action: { label: t("community.mod_queue"), path: community_moderation_index_path(@community) } %>
 <% end %>
+
+<%# Lifting a ban destroys the row above, and with it who imposed it and why.
+    This is where that survives, so it sits on the same page rather than behind
+    another click: the question "who let them back in" is asked while looking at
+    the list the person is no longer on. %>
+<section class="stack" aria-labelledby="moderation_log_heading">
+  <h2 id="moderation_log_heading"><%= t("community.moderation_log") %></h2>
+
+  <% if @audit_events.any? %>
+    <ol class="audit-list" role="list">
+      <% @audit_events.each do |event| %>
+        <li class="cluster">
+          <span><%= event.summary %></span>
+          <%# The machine-readable time is the audited fact; the visible text is
+              the human one. %>
+          <time class="dim" datetime="<%= event.occurred_at.iso8601 %>">
+            <%= l(event.occurred_at, format: :event) %>
+          </time>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p class="dim"><%= t("community.no_moderation_log") %></p>
+  <% end %>
+</section>
