@@ -23,7 +23,21 @@ daemon="/bin/ksh"
 # job worker and it had never started one — 1670 jobs enqueued on brgen and 0
 # finished, measured 2026-08-12. rc.d/<app>_jobs is the real worker; read its
 # footer before enabling it, because vm23 has 1 GB.
-daemon_flags="-c 'cd ${APP_DIR} && . /etc/brgen.env && export RAILS_ENV=production SECRET_KEY_BASE HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+#
+# RUBY_YJIT_ENABLE=0 is a decision, not a default.
+#
+# Ruby 3.4 on vm23 has YJIT built in and switched off, so today this changes
+# nothing — which is the point. YJIT reserves an executable code region and costs
+# tens of megabytes per process to buy 15-30% more speed, and here the scarce
+# resource is memory rather than CPU: measured 2026-08-17 at 918M real with swap
+# 91% full and the single core 84% idle. Four Rails processes' worth of code
+# cache is the wrong trade on this box.
+#
+# Pinned because the default is drifting the other way: the Dockerfile Rails
+# generates sets RUBY_YJIT_ENABLE=1, and a future Ruby may turn it on at build
+# time. Without this line the box would quietly start paying for it, and the
+# symptom would be swap rather than anything that names YJIT.
+daemon_flags="-c 'cd ${APP_DIR} && . /etc/brgen.env && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production SECRET_KEY_BASE HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"
