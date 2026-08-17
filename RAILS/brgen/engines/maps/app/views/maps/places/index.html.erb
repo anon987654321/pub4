@@ -1,7 +1,7 @@
 <% content_for :title, t("pages.places") %>
 
 <div class="page-header" role="banner" aria-label="<%= t("pages.places") %>">
-  <h1><%= t("pages.places") %></h1>
+  <%= tag.h1 t("pages.places") %>
   <nav role="navigation" aria-label="<%= t("pages.places") %>">
     <%= link_to t("maps.map"), root_path, class: "btn btn-ghost" %>
   </nav>

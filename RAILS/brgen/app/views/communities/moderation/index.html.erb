@@ -3,7 +3,7 @@
 <div class="page-header" role="banner">
   <div>
     <p class="dim"><%= link_to @community.name, community_path(@community) %></p>
-    <h1><%= t("community.mod_queue") %></h1>
+    <%= tag.h1 t("community.mod_queue") %>
   </div>
   <p class="chips">
     <span class="chip"><%= t("community.open_count", count: @open_count) %></span>

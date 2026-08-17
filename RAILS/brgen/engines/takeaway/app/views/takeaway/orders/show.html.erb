@@ -3,13 +3,13 @@
 <div class="page-header" role="banner" aria-label="<%= t("takeaway.order_details") %>">
   <div>
     <p class="dim"><%= link_to @order.restaurant.name, restaurant_path(@order.restaurant) %></p>
-    <h1><%= t("takeaway.order_title", id: @order.id) %></h1>
+    <%= tag.h1 t("takeaway.order_title", id: @order.id) %>
   </div>
   <span class="chip"><%= t("takeaway.statuses.#{@order.status}") %></span>
 </div>
 
 <div class="order-status" role="status" aria-live="polite">
-  <h2><%= t("takeaway.status_timeline") %></h2>
+  <%= tag.h2 t("takeaway.status_timeline") %>
   <div class="chips">
     <% Takeaway::Order::STATUSES.each do |status| %>
       <span class="chip"><%= t("takeaway.statuses.#{status}") %><%= " ✓" if @order.status == status %></span>
@@ -34,7 +34,7 @@
   <% if @order.status == "out_for_delivery" %>
     <% if (courier = @order.courier_display_name) %>
       <p class="courier">
-        <strong><%= courier %></strong>
+        <%= tag.strong courier %>
         <% if (km = @order.courier_distance_km) %>
           <span class="dim"><%= t("takeaway.courier_distance", km: km.round(1)) %></span>
         <% end %>
@@ -48,15 +48,15 @@
 <article role="article" aria-label="<%= t("takeaway.order_item") %>">
   <p class="dim"><%= t("takeaway.delivery_to", address: @order.delivery_address) %></p>
   <% if @order.special_instructions.present? %>
-    <p><strong><%= t("takeaway.instructions") %></strong> <%= @order.special_instructions %></p>
+    <p><%= tag.strong t("takeaway.instructions") %> <%= @order.special_instructions %></p>
   <% end %>
 </article>
 
 <section role="region" aria-label="<%= t("takeaway.order_items") %>">
-  <h2><%= t("takeaway.order_items") %></h2>
+  <%= tag.h2 t("takeaway.order_items") %>
   <% @order.order_items.each do |order_item| %>
     <article role="article" aria-label="<%= t("takeaway.order_item") %>">
-      <strong><%= order_item.menu_item.name %></strong> × <%= order_item.quantity %>
+      <%= tag.strong order_item.menu_item.name %> × <%= order_item.quantity %>
       <span class="dim item-subtotal"><%= order_item.subtotal_display %></span>
     </article>
   <% end %>
@@ -65,7 +65,7 @@
 <article role="article" aria-label="<%= t("takeaway.order_item") %>">
   <p class="dim"><%= t("takeaway.subtotal", amount: @order.subtotal_display) %></p>
   <p class="dim"><%= t("takeaway.delivery", amount: @order.delivery_fee_display) %></p>
-  <strong><%= t("takeaway.total", amount: @order.total_display) %></strong>
+  <%= tag.strong t("takeaway.total", amount: @order.total_display) %>
 </article>
 
 <nav role="navigation" aria-label="<%= t("takeaway.order_actions") %>">

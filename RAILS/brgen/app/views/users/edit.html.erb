@@ -1,7 +1,7 @@
 <% content_for :title, t("profile.edit", default: "Edit profile") %>
 
 <header class="page-header" role="banner">
-  <h1><%= t("profile.edit", default: "Edit profile") %></h1>
+  <%= tag.h1 t("profile.edit", default: "Edit profile") %>
 </header>
 
 <%= form_with model: @user, url: main_app.user_path(@user), method: :patch, class: "stack" do |f| %>

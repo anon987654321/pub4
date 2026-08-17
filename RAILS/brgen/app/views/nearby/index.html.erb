@@ -1,6 +1,6 @@
 <% content_for :title, t("nearby.page_title") %>
 
-<div class="page-header" role="banner"><h1><%= t("nearby.page_title") %></h1></div>
+<div class="page-header" role="banner"><%= tag.h1 t("nearby.page_title") %></div>
 
 <%# The Live link that used to head this list pointed at a second hyperlocal
     surface. /live is this page's own room now, so the link would have sent you
@@ -13,7 +13,7 @@
 <% if @located %>
   <article class="row-between section-divider--24">
     <div>
-      <strong><%= t("nearby.room_title") %></strong>
+      <%= tag.strong t("nearby.room_title") %>
       <p class="dim"><%= t("nearby.room_body", km: Conversation::GEO_ROOM_RADIUS_KM.to_i) %></p>
     </div>
     <%= link_to t("nearby.join"), nearby_room_path, class: "btn btn-primary btn-sm" %>
@@ -23,7 +23,7 @@
     <% @nearby.each do |u, distance| %>
       <article class="row-between">
         <div>
-          <strong><%= u.anon_handle %></strong>
+          <%= tag.strong u.anon_handle %>
           <p class="dim"><%= t("nearby.distance_away", km: number_with_precision(distance, precision: 1)) %></p>
         </div>
         <%= button_to t("nearby.chat"), nearby_path, params: { user_id: u.id }, method: :post, class: "btn btn-primary btn-sm" %>

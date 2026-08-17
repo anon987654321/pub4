@@ -1,5 +1,5 @@
 <div class="auth-form">
-  <h1><%= t("auth.sign_in") %></h1>
+  <%= tag.h1 t("auth.sign_in") %>
   <p class="auth-form-lead"><%= t("auth.sign_in_lead") %></p>
   <%= render "shared/oauth_links" %>
   <%= form_with url: session_path do |f| %>

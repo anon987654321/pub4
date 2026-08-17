@@ -1,5 +1,5 @@
 <div class="page-header">
-  <h1><%= t("pages.feed") %></h1>
+  <%= tag.h1 t("pages.feed") %>
   <%= link_to t("actions.new_post"), new_post_path, class: "btn" %>
 </div>
 <%= turbo_frame_tag "amber-feed" do %>

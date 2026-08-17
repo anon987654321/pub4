@@ -27,7 +27,7 @@
     <% receipt = message.message_receipts.find_by(user: Current.user) %>
     <% if receipt&.read? %><span class="dim">· <%= t("messages.read") %></span><% end %>
   </header>
-  <p><%= format_chat_body(message.content) %></p>
+  <%= tag.p format_chat_body(message.content) %>
   <%= render "messages/reactions", message: message %>
   <% if message.attachment.attached? %>
     <% if message.message_type == "image" %>

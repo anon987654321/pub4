@@ -3,7 +3,7 @@
 <% content_for :widgets do %>
   <aside class="sidebar-card" data-controller="toggle" data-toggle-class="hidden">
     <div class="row-between">
-      <h2><%= t("nav.communities") %></h2>
+      <%= tag.h2 t("nav.communities") %>
       <button type="button" class="btn btn-ghost btn-sm" data-action="click->toggle#toggle" aria-label="<%= t("nav.hide") %>"><%= t("nav.hide") %></button>
     </div>
     <ul data-toggle-target="item">
@@ -18,7 +18,7 @@
   <% trending_tags = Hashtag.trending.where("usage_count > 0").limit(8) %>
   <% if trending_tags.any? %>
     <aside class="sidebar-card">
-      <h2><%= t("nav.trending_tags", default: "Trending tags") %></h2>
+      <%= tag.h2 t("nav.trending_tags", default: "Trending tags") %>
       <ul class="tag-cloud">
         <% trending_tags.each do |tag| %>
           <li><%= link_to "##{tag.name}", hashtag_path(tag.name) %></li>

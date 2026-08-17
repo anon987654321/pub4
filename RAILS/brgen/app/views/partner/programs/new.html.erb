@@ -1,7 +1,7 @@
 <% content_for :title, t("partner.new_title") %>
 
 <section>
-  <h1><%= t("partner.new_heading", store: @store.name) %></h1>
+  <%= tag.h1 t("partner.new_heading", store: @store.name) %>
   <%= form_with model: @program, url: partner_programs_path(store_id: @store.slug), class: "form-wrap" do |f| %>
     <%= hidden_field_tag :store_id, @store.slug %>
     <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>

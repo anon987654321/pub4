@@ -1,5 +1,5 @@
 <% content_for :title, t("pages.search_wardrobe_title") %>
-<h1><%= t("pages.search_wardrobe") %></h1>
+<%= tag.h1 t("pages.search_wardrobe") %>
 <%= form_with url: ai_search_path, method: :get do |f| %>
   <div class="field-row">
     <%= f.search_field :q, value: @query, placeholder: t("ai_forms.search_placeholder"), aria: { label: t("ai_forms.search_placeholder") }, autofocus: true, class: "input input--wide" %>

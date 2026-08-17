@@ -53,7 +53,7 @@
     <% end %>
   </p>
 
-  <h1><%= @post.title %></h1>
+  <%= tag.h1 @post.title %>
 
   <% if @post.image.attached? %>
     <div data-controller="lightbox">
@@ -68,7 +68,7 @@
   <% end %>
 
   <section id="quotes" class="post-quotes">
-    <h2><%= t("post.quotes") %></h2>
+    <%= tag.h2 t("post.quotes") %>
     <%= form_with url: post_repost_path(@post), method: :post, class: "feed-quote-form" do %>
       <%= text_area_tag :comment, @quote_comment, maxlength: Repost::COMMENT_MAX, required: true,
             rows: 3, placeholder: t("post.quote_placeholder"),
@@ -80,7 +80,7 @@
         <% @quotes.each do |repost| %>
           <li>
             <blockquote>
-              <p><%= repost.comment %></p>
+              <%= tag.p repost.comment %>
               <cite><%= repost.user.display_name %></cite>
             </blockquote>
           </li>
@@ -114,7 +114,7 @@
 <section id="comments-section">
   <h2>
     <%= t("comments.submit") %>
-    <strong><%= Current.user&.guest? ? t("chat.anon") : (Current.user&.username || t("chat.anon")) %></strong>
+    <%= tag.strong Current.user&.guest? ? t("chat.anon") : (Current.user&.username || t("chat.anon")) %>
     <% unless authenticated? %> · <%= link_to t("nav.sign_in"), new_session_path %><% end %>
   </h2>
   <% if authenticated? || guest? %>
@@ -146,11 +146,11 @@
 </section>
 
 <aside class="post-show-aside">
-  <h2><%= t("posts.about") %></h2>
+  <%= tag.h2 t("posts.about") %>
   <% if @post.community %>
-    <p><%= @post.community.description.presence || @post.community.name %></p>
+    <%= tag.p @post.community.description.presence || @post.community.name %>
     <%= link_to t("posts.view_community"), community_path(@post.community) %>
   <% else %>
-    <p><%= t("posts.community_platform", city: city_name) %></p>
+    <%= tag.p t("posts.community_platform", city: city_name) %>
   <% end %>
 </aside>

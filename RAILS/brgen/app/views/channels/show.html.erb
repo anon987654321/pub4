@@ -7,7 +7,7 @@
 <section class="channel-room" aria-label="<%= t("aria.channel") %>">
   <header class="channel-room-header" role="banner">
     <%= link_to t("messages.back_channels"), channels_path, class: "channel-back" %>
-    <h1><%= @conversation.channel_title %></h1>
+    <%= tag.h1 @conversation.channel_title %>
     <%# This blurb is what lib/brgen/irc/bridge.rb:27 already serves to a real
         IRC client as the TOPIC reply, so name it that on the web too rather
         than having one room description with two names. %>
@@ -59,7 +59,7 @@
       <%= f.submit t("actions.send"), class: "btn btn-primary" %>
     <% end %>
     <p class="dim channel-guest-hint">
-      <%= t("chat.posting_as") %> <strong><%= handle %></strong><% if Current.user.guest? %> — <%= t("chat.no_signup") %><% end %>.
+      <%= t("chat.posting_as") %> <%= tag.strong handle %><% if Current.user.guest? %> — <%= t("chat.no_signup") %><% end %>.
     </p>
   <% else %>
     <%# Soft guest should already exist; if not, one round-trip mints it. %>

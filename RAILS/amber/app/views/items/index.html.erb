@@ -15,13 +15,13 @@
       <details class="wardrobe-more-tools">
         <summary><%= t("wardrobe.more_tools") %></summary>
         <nav role="navigation" aria-label="<%= t("wardrobe.use_what_i_own") %>" class="wardrobe-action-group">
-          <h2><%= t("wardrobe.use_what_i_own") %></h2>
+          <%= tag.h2 t("wardrobe.use_what_i_own") %>
           <%= link_to t("wardrobe.ai_pair"), ai_suggest_outfits_path, class: "btn" %>
           <%= link_to t("wardrobe.packing_list"), ai_packing_list_path, class: "btn" %>
           <%= link_to t("wardrobe.declutter_thoughtfully"), declutter_index_path, class: "btn" %>
         </nav>
         <nav role="navigation" aria-label="<%= t("wardrobe.records_gaps_nav") %>" class="wardrobe-action-group wardrobe-action-group--secondary">
-          <h2><%= t("wardrobe.records_gaps") %></h2>
+          <%= tag.h2 t("wardrobe.records_gaps") %>
           <%= link_to t("wardrobe.wear_analytics"), analytics_wardrobe_items_path, class: "btn" %>
           <%= link_to t("pages.organize"), organize_wardrobe_items_path, class: "btn" %>
           <%= link_to t("wardrobe.color_palette"), ai_palette_path, class: "btn" %>

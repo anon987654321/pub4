@@ -3,7 +3,7 @@
   <% if href.present? %>
     <h2><%= link_to activity_event_title(event), href, class: "activity-event-link" %></h2>
   <% else %>
-    <h2><%= activity_event_title(event) %></h2>
+    <%= tag.h2 activity_event_title(event) %>
   <% end %>
   <p class="dim">
     <%= activity_event_vertical(event) %> · <%= event.object_type.to_s.demodulize %>

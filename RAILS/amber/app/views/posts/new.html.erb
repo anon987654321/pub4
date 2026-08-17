@@ -1,4 +1,4 @@
-<h1><%= t("post.share_look") %></h1>
+<%= tag.h1 t("post.share_look") %>
 <%= form_with model: @post do |f| %>
   <%= render "shared/errors", object: @post %>
   <div class="field">

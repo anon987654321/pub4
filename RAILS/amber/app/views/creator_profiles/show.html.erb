@@ -2,10 +2,10 @@
 <%= turbo_stream_from @profile %>
 
 <header class="profile-header" role="banner" aria-label="Creator profile">
-  <h1><%= @profile.display_name %></h1>
+  <%= tag.h1 @profile.display_name %>
   <p class="dim">@<%= @profile.handle %></p>
   <% if @profile.bio.present? %>
-    <p><%= @profile.bio %></p>
+    <%= tag.p @profile.bio %>
   <% end %>
   <% if authenticated? && Current.user == @profile.user %>
     <%= link_to t("wardrobe.edit_profile", default: t("actions.edit")), edit_my_creator_profile_path, class: "btn btn-sm" %>
@@ -24,7 +24,7 @@
         <% else %>
           <div class="item-placeholder"><%= showcase.item.category %></div>
         <% end %>
-        <p><%= showcase.caption.presence || showcase.item.title %></p>
+        <%= tag.p showcase.caption.presence || showcase.item.title %>
       <% end %>
     <% end %>
   </div>

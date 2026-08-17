@@ -27,7 +27,7 @@
 
   <% if @other_stores.present? %>
     <aside>
-      <h2><%= t("marketplace.stores.also_in_city", city: city_name) %></h2>
+      <%= tag.h2 t("marketplace.stores.also_in_city", city: city_name) %>
       <ul>
         <% @other_stores.each do |store| %>
           <li><%= link_to store.name, shop_path(store) %></li>

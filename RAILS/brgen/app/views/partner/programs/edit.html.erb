@@ -1,7 +1,7 @@
 <% content_for :title, t("partner.edit_title", name: @program.name) %>
 
 <section>
-  <h1><%= t("partner.edit_heading") %></h1>
+  <%= tag.h1 t("partner.edit_heading") %>
   <%= form_with model: @program, url: partner_program_path(@program), method: :patch, class: "form-wrap" do |f| %>
     <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>
     <div class="field"><%= f.label :status %><%= f.select :status, Partner::Program::STATUSES %></div>

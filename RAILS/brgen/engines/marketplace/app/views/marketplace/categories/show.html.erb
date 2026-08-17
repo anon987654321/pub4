@@ -1,7 +1,7 @@
 <% content_for :title, @category.name %>
 
 <div class="page-header" role="banner" aria-label="<%= t("aria.marketplace_category_header") %>">
-  <h1><%= @category.name %></h1>
+  <%= tag.h1 @category.name %>
 </div>
 
 <turbo-frame id="marketplace-category" data-turbo-action="replace">

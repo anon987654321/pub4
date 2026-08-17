@@ -4,7 +4,7 @@
 <section class="offline-page" data-controller="offline-page" data-offline-page-storage-key-value="<%= storage_key %>">
   <div>
     <p class="offline-page-meta"><%= t("offline.badge") %></p>
-    <h1><%= t("offline.title", app: app_name) %></h1>
+    <%= tag.h1 t("offline.title", app: app_name) %>
     <p class="offline-page-lead"><%= t("offline.lead") %></p>
     <button type="button" class="offline-page-retry btn btn-primary" data-action="offline-page#retry">
       <%= t("offline.retry") %>

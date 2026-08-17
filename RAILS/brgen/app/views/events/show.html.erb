@@ -9,7 +9,7 @@
         <time datetime="<%= @event.starts_at.iso8601 %>"><%= l(@event.starts_at, format: :event) %></time>
         <% if @event.ends_at %>–<time datetime="<%= @event.ends_at.iso8601 %>"><%= l(@event.ends_at, format: :event) %></time><% end %>
       </p>
-      <h1><%= @event.title %></h1>
+      <%= tag.h1 @event.title %>
     </div>
     <% if @event.cancelled? %>
       <span class="chip chip--cancelled"><%= t("events.cancelled") %></span>
@@ -27,7 +27,7 @@
   <section role="region" aria-label="<%= t("events.where") %>">
     <% if @event.location_name.present? %>
       <p>
-        <strong><%= @event.location_name %></strong>
+        <%= tag.strong @event.location_name %>
         <% if @event.place %>· <%= link_to t("events.on_the_map"), place_path(@event.place) %><% end %>
       </p>
     <% end %>
@@ -54,7 +54,7 @@
   <% end %>
 
   <section role="region" aria-label="<%= t("events.who_is_going") %>">
-    <h2><%= t("events.going_count", count: @event.going_count) %></h2>
+    <%= tag.h2 t("events.going_count", count: @event.going_count) %>
     <% if @attendees.any? %>
       <ul class="attendee-list">
         <% @attendees.each do |rsvp| %>
@@ -68,7 +68,7 @@
 
   <% if @nearby.any? %>
     <section role="region" aria-label="<%= t("events.nearby") %>">
-      <h2><%= t("events.nearby") %></h2>
+      <%= tag.h2 t("events.nearby") %>
       <div class="event-list">
         <% @nearby.each { |event| %><%= render "events/event", event: event %><% } %>
       </div>
@@ -76,7 +76,7 @@
   <% end %>
 
   <section role="region" aria-label="<%= t("comments.submit") %>">
-    <h2><%= t("comments.submit") %></h2>
+    <%= tag.h2 t("comments.submit") %>
     <%# Was a hand-rolled form and a hand-rolled comment row. The form's textarea
         had no accessible name — a screen reader announced "edit text, blank" —
         because the aria-label the shared fields carry was the one thing the copy

@@ -1,6 +1,6 @@
 <% content_for :title, t("pages.add_item") %>
 <header role="banner" aria-label="Add wardrobe item header">
-  <h1><%= t("pages.add_item") %></h1>
+  <%= tag.h1 t("pages.add_item") %>
 </header>
 <turbo-frame id="amber-item-form" data-turbo-action="replace">
 <%= render "form", item: @item %>

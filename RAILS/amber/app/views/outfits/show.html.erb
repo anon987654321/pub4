@@ -3,7 +3,7 @@
 <header role="banner" aria-label="Outfit header">
   <div>
     <p class="dim"><%= @outfit.context_label.presence || "Outfit" %></p>
-    <h1><%= @outfit.name %></h1>
+    <%= tag.h1 @outfit.name %>
   </div>
 </header>
 
@@ -15,7 +15,7 @@
 </div>
 
 <% if @outfit.description.present? %>
-  <p><%= @outfit.description %></p>
+  <%= tag.p @outfit.description %>
 <% else %>
   <p class="dim"><%= t("outfits.no_description") %></p>
 <% end %>
@@ -34,7 +34,7 @@
 </section>
 
 <section>
-  <h2><%= t("outfits.style_intelligence") %></h2>
+  <%= tag.h2 t("outfits.style_intelligence") %>
   <p class="dim"><%= t("outfits.style_intelligence_lead") %></p>
 </section>
 

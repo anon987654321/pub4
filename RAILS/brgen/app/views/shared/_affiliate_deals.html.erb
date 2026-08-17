@@ -3,7 +3,7 @@
 <% deals = affiliate_deals_for(category: local_assigns[:category], limit: 6) %>
 <% if deals.any? %>
   <div class="sidebar-card">
-    <h3><%= t("affiliate.deals_title") %></h3>
+    <%= tag.h3 t("affiliate.deals_title") %>
     <% deals.each do |d| %>
       <a href="<%= d.click_url %>" target="_blank" rel="noopener sponsored" class="affiliate-deal">
         <% if d.image_url.present? %>

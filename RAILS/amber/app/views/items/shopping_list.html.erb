@@ -3,7 +3,7 @@
 <header role="banner" aria-label="<%= t("pages.shop_smarter") %>">
   <div>
     <p class="dim"><%= t("shop.lead") %></p>
-    <h1><%= t("pages.shop_smarter") %></h1>
+    <%= tag.h1 t("pages.shop_smarter") %>
   </div>
   <nav role="navigation" aria-label="<%= t("shop.actions") %>">
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
@@ -17,8 +17,8 @@
     <ul>
       <% @gaps.each do |gap| %>
         <li>
-          <strong><%= gap[:category] || gap[:name] %></strong>
-          <p><%= gap[:reason] %></p>
+          <%= tag.strong gap[:category] || gap[:name] %>
+          <%= tag.p gap[:reason] %>
           <% if gap[:missing] %><span class="tag"><%= t("shop.missing", count: gap[:missing]) %></span><% end %>
           <% if gap[:owned] %><span class="tag"><%= t("shop.owned", count: gap[:owned], target: gap[:target]) %></span><% end %>
         </li>
@@ -40,7 +40,7 @@
     <ul>
       <% @duplicate_groups.each do |group| %>
         <li>
-          <strong><%= t("shop.duplicate_count", count: group[:count]) %></strong>
+          <%= tag.strong t("shop.duplicate_count", count: group[:count]) %>
           <p class="dim"><%= group[:reason] %></p>
           <% if group[:keeper] %>
             <p class="dim"><%= t("shop.keeper") %> <%= link_to group[:keeper].title, group[:keeper] %></p>
@@ -58,7 +58,7 @@
     <ul class="shop-links">
       <% @affiliate_links.group_by(&:merchant).each do |merchant, links| %>
         <li>
-          <strong><%= merchant %></strong> <span class="tag"><%= t("shop.link_count", count: links.size) %></span>
+          <%= tag.strong merchant %> <span class="tag"><%= t("shop.link_count", count: links.size) %></span>
           <ul>
             <% links.each do |link| %>
               <li>
@@ -95,7 +95,7 @@
   </p>
 </section>
 
-<h2><%= t("wardrobe.master_recs") %></h2>
+<%= tag.h2 t("wardrobe.master_recs") %>
 <% if @recommendations.any? %>
   <ul>
     <% @recommendations.each do |rec| %>

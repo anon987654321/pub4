@@ -3,7 +3,7 @@
 <div class="page-header" role="banner">
   <div>
     <p class="dim">Playlist</p>
-    <h1><%= t("playlist.hosted_tracks") %></h1>
+    <%= tag.h1 t("playlist.hosted_tracks") %>
   </div>
   <% if authenticated? %>
     <%= link_to "Upload track", new_hosted_track_path, class: "btn btn-primary btn-sm" %>

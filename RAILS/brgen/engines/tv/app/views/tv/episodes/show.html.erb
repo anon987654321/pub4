@@ -2,7 +2,7 @@
 
 <div class="page-header" role="banner">
   <h1><%= @show.title %> — Episode <%= @episode.number %></h1>
-  <h2><%= @episode.title %></h2>
+  <%= tag.h2 @episode.title %>
 </div>
 
 <% if @video %>

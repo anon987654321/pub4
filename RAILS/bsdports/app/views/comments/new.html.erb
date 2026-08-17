@@ -1,6 +1,6 @@
 <% content_for :title, t("ports.comment_on", name: @port.name) %>
 
-<h1><%= t("pages.comment") %></h1>
+<%= tag.h1 t("pages.comment") %>
 <%= render "shared/errors", object: @comment %>
 <%= form_with url: port_comments_path(@port), data: { turbo: true } do |f| %>
   <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">

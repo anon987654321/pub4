@@ -1,5 +1,5 @@
 <article id="<%= dom_id(notification) %>" class="<%= notification.read? ? "read" : "unread" %>">
-  <p><%= notification.title %></p>
+  <%= tag.p notification.title %>
   <% if notification.body.present? %><p class="dim"><%= notification.body %></p><% end %>
   <time datetime="<%= notification.created_at.iso8601 %>"><%= time_ago(notification.created_at) %></time>
   <% unless notification.read? %>

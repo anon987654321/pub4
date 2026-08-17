@@ -10,8 +10,8 @@
 <% else %>
   <tr>
     <td class="mail-typo-hero">
-      <h1><%= edition.city_name %></h1>
-      <p><%= edition.kind == :weekly_deals ? "Curated offers" : "City letter" %></p>
+      <%= tag.h1 edition.city_name %>
+      <%= tag.p edition.kind == :weekly_deals ? "Curated offers" : "City letter" %>
     </td>
   </tr>
 <% end %>

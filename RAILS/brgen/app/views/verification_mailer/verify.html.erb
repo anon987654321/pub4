@@ -1,7 +1,7 @@
-<p><%= t("mailer.verify_welcome") %></p>
+<%= tag.p t("mailer.verify_welcome") %>
 
-<p><%= t("mailer.verify_body") %></p>
+<%= tag.p t("mailer.verify_body") %>
 
 <p><%= link_to t("mailer.verify_cta"), verify_email_url(@token) %></p>
 
-<p><%= t("mailer.verify_ignore") %></p>
+<%= tag.p t("mailer.verify_ignore") %>

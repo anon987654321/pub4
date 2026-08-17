@@ -8,7 +8,7 @@
     ])) %>
 
 <div class="page-header" role="banner" aria-label="<%= t("aria.place_details_header") %>">
-  <h1><%= @place.name %></h1>
+  <%= tag.h1 @place.name %>
   <nav role="navigation" aria-label="<%= t("aria.place_navigation") %>">
     <%= link_to t("actions.back"), :back, class: "btn" %>
   </nav>
@@ -23,17 +23,17 @@
   <dl role="list">
     <% if @place.address.present? %>
       <dt>Address</dt>
-      <dd><%= @place.address %></dd>
+      <%= tag.dd @place.address %>
     <% end %>
     <dt>Type</dt>
-    <dd><%= @place.kind %></dd>
+    <%= tag.dd @place.kind %>
     <% if @place.city %>
       <dt>City</dt>
-      <dd><%= @place.city.name %></dd>
+      <%= tag.dd @place.city.name %>
     <% end %>
     <% if @place.neighborhood %>
       <dt>Neighborhood</dt>
-      <dd><%= @place.neighborhood.name %></dd>
+      <%= tag.dd @place.neighborhood.name %>
     <% end %>
     <dt>Coordinates</dt>
     <dd><%= @place.latitude %>, <%= @place.longitude %></dd>
@@ -60,7 +60,7 @@
 
   <% if @place.restaurants.active.any? || @place.stores.active.any? %>
     <section>
-      <h2><%= t("maps.at_this_place") %></h2>
+      <%= tag.h2 t("maps.at_this_place") %>
       <ul>
         <% @place.restaurants.active.limit(8).each do |restaurant| %>
           <li><%= link_to restaurant.name, record_public_href(restaurant) %> · <%= t("nav.takeaway", default: "takeaway") %></li>
@@ -76,7 +76,7 @@
 
   <% if @recent_check_ins.any? %>
     <section>
-      <h2><%= t("maps.recent_check_ins") %></h2>
+      <%= tag.h2 t("maps.recent_check_ins") %>
       <ul>
         <% @recent_check_ins.each do |check_in| %>
           <li>

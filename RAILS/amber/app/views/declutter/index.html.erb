@@ -1,7 +1,7 @@
 <div class="declutter-page">
   <header role="banner" aria-label="<%= t("declutter.header_label") %>">
-    <h1><%= t("pages.declutter") %></h1>
-    <p><%= t("declutter.kondo_lead") %></p>
+    <%= tag.h1 t("pages.declutter") %>
+    <%= tag.p t("declutter.kondo_lead") %>
     <%# ai_declutter was routed and linked from nowhere: reachable only by typing
         the URL. It belongs on this page rather than in a tools drawer — someone
         already here has decided to declutter. %>
@@ -12,7 +12,7 @@
 
   <% if @summary.present? %>
     <section role="region" aria-label="<%= t("declutter.summary_label") %>">
-      <h2><%= t("declutter.summary") %></h2>
+      <%= tag.h2 t("declutter.summary") %>
       <div class="chips">
         <span class="chip"><%= @summary[:active_items] %> active</span>
         <span class="chip"><%= @summary[:declutter_box] %> in box</span>
@@ -29,7 +29,7 @@
 
   <% if @overdue_challenges.present? %>
     <section role="region" aria-label="<%= t("declutter.overdue_label") %>">
-      <h2><%= t("declutter.overdue_challenges") %></h2>
+      <%= tag.h2 t("declutter.overdue_challenges") %>
       <ul>
         <% @overdue_challenges.each do |challenge| %>
           <li>
@@ -44,7 +44,7 @@
 
   <% if @active_challenges.present? %>
     <section role="region" aria-label="<%= t("declutter.active_label") %>">
-      <h2><%= t("declutter.active_challenges") %></h2>
+      <%= tag.h2 t("declutter.active_challenges") %>
       <ul>
         <% @active_challenges.each do |challenge| %>
           <li><%= link_to challenge.item.title, item_path(challenge.item) %> — due <%= challenge.due_on %></li>
@@ -55,7 +55,7 @@
 
   <% if @aging_box.present? %>
     <section role="region" aria-label="<%= t("declutter.box_label") %>">
-      <h2><%= t("declutter.box_heading") %></h2>
+      <%= tag.h2 t("declutter.box_heading") %>
       <p class="dim"><%= t("declutter.box_waited") %></p>
       <div class="items-grid">
         <% @aging_box.each do |item| %>
@@ -68,7 +68,7 @@
 
   <% if @box_items.present? %>
     <section role="region" aria-label="<%= t("declutter.declutter_box") %>">
-      <h2><%= t("declutter.declutter_box") %></h2>
+      <%= tag.h2 t("declutter.declutter_box") %>
       <div class="items-grid">
         <% @box_items.each do |item| %>
           <%= render "items/item", item: item %>
@@ -80,7 +80,7 @@
 
   <% if @summary[:top_candidates].present? %>
     <section role="region" aria-label="<%= t("declutter.top_release_label") %>">
-      <h2><%= t("declutter.highest_release") %></h2>
+      <%= tag.h2 t("declutter.highest_release") %>
       <div class="items-grid">
         <% @summary[:top_candidates].each do |item| %>
           <%= render "items/item", item: item %>
@@ -92,12 +92,12 @@
 
   <%= turbo_frame_tag "declutter-duplicates" do %>
     <section role="region" aria-label="<%= t("declutter.duplicate_groups") %>">
-      <h2><%= t("declutter.duplicate_groups") %></h2>
+      <%= tag.h2 t("declutter.duplicate_groups") %>
       <% if @duplicates.present? %>
         <% @duplicates.each do |group| %>
           <article role="article" aria-label="<%= t("declutter.duplicate_group") %>">
             <% items = group.respond_to?(:items) ? group.items : Array(group[:items] || group["items"] || group) %>
-            <h3><%= pluralize(items.size, "item") %></h3>
+            <%= tag.h3 pluralize(items.size, "item") %>
             <div class="items-grid">
               <% items.each do |item| %>
                 <%= render "items/item", item: item %>
@@ -107,7 +107,7 @@
           </article>
         <% end %>
       <% else %>
-        <p><%= t("declutter.no_duplicates") %></p>
+        <%= tag.p t("declutter.no_duplicates") %>
       <% end %>
     </section>
   <% end %>

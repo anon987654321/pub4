@@ -3,7 +3,7 @@
 <header role="banner" aria-label="<%= t("pages.analytics") %>">
   <div>
     <p class="dim"><%= t("wardrobe.closet_signals") %></p>
-    <h1><%= t("pages.analytics") %></h1>
+    <%= tag.h1 t("pages.analytics") %>
   </div>
   <nav role="navigation" aria-label="<%= t("wardrobe.analytics_actions") %>">
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
@@ -76,7 +76,7 @@
   <h2><%= t("wardrobe.coach_tips") %> <span class="tag"><%= t("wardrobe.coach_rules") %></span></h2>
   <p class="dim"><%= t("wardrobe.coach_body") %></p>
   <% if @analytics[:tips].any? %>
-    <% @analytics[:tips].each do |tip| %><p><%= tip %></p><% end %>
+    <% @analytics[:tips].each do |tip| %><%= tag.p tip %><% end %>
   <% else %>
     <%# empty_state: no-action-ok — calm state when heuristics have nothing urgent %>
     <p class="dim"><%= t("wardrobe.no_urgent_tips") %></p>
@@ -84,7 +84,7 @@
 </section>
 
 <section>
-  <h2><%= t("wardrobe.recommendations") %></h2>
+  <%= tag.h2 t("wardrobe.recommendations") %>
   <% if @recommendations.blank? %>
     <%= render "shared/empty_state",
           title: t("empty.no_recommendations"),
@@ -93,7 +93,7 @@
   <% else %>
     <% @recommendations.each do |recommendation| %>
       <article>
-        <strong><%= recommendation.kind.humanize %></strong>
+        <%= tag.strong recommendation.kind.humanize %>
         <p class="dim"><%= recommendation.reason %></p>
       </article>
     <% end %>

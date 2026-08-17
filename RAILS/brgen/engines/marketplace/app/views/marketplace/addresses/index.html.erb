@@ -4,14 +4,14 @@
       search_url: listings_path, search_placeholder: t("search.marketplace") %>
 
 <div class="page-header" role="banner" aria-label="<%= t("marketplace.addresses") %>">
-  <h1><%= t("marketplace.addresses") %></h1>
+  <%= tag.h1 t("marketplace.addresses") %>
 </div>
 
 <% if @addresses.any? %>
   <ul class="address-list">
     <% @addresses.each do |address| %>
       <li class="address<%= " address--default" if address.default_address? %>">
-        <p><%= address %></p>
+        <%= tag.p address %>
         <% if address.default_address? %>
           <span class="chip"><%= t("marketplace.default_address") %></span>
         <% else %>

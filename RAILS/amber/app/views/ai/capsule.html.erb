@@ -3,7 +3,7 @@
 <header role="banner" aria-label="Capsule optimizer header">
   <div>
     <p class="dim"><%= t("ai.capsule_builder") %></p>
-    <h1><%= t("pages.capsule_title") %></h1>
+    <%= tag.h1 t("pages.capsule_title") %>
   </div>
   <nav role="navigation" aria-label="Capsule actions">
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
@@ -27,7 +27,7 @@
     <% @result["items"].each do |item| %>
       <div class="capsule-row capsule-row--<%= item["decision"] %>">
         <span class="capsule-decision"><%= item["decision"].to_s.humanize %></span>
-        <strong><%= item["title"] %></strong>
+        <%= tag.strong item["title"] %>
         <span class="dim"><%= item["reason"] %></span>
       </div>
     <% end %>
@@ -35,7 +35,7 @@
 
   <% if @result["gap_items"]&.any? %>
     <section>
-      <h2><%= t("ai.gap_items", default: "Gap items to consider") %></h2>
+      <%= tag.h2 t("ai.gap_items", default: "Gap items to consider") %>
       <p class="dim"><%= t("ai.gap_items_hint") %></p>
       <ul><% @result["gap_items"].each do |gap_item| %><li><%= gap_item %></li><% end %></ul>
     </section>

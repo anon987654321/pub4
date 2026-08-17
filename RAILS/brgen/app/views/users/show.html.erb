@@ -3,7 +3,7 @@
 <%= turbo_stream_from @user %>
 
 <header class="profile-header" role="banner" aria-label="<%= t("a11y.user_profile") %>">
-  <h1><%= @user.display_name %></h1>
+  <%= tag.h1 @user.display_name %>
   <p class="dim">
     <%= t("profile.followers", count: @followers_count) %> · <%= t("profile.following", count: @following_count) %> · <%= t("community.posts_count", count: @posts.size) %>
   </p>
@@ -27,7 +27,7 @@
 
 <% if [@stores, @casual_listings, @restaurants, @channels, @playlists].any?(&:present?) %>
   <section class="profile-verticals">
-    <h2><%= t("profile.across_the_city") %></h2>
+    <%= tag.h2 t("profile.across_the_city") %>
     <% {
          @stores => "profile.stores",
          @casual_listings => "profile.listings",
@@ -36,7 +36,7 @@
          @playlists => "profile.playlists"
        }.each do |records, key| %>
       <% next if records.blank? %>
-      <h3><%= t(key) %></h3>
+      <%= tag.h3 t(key) %>
       <ul>
         <% records.each do |record| %>
           <% href = record_public_href(record) %>
@@ -54,7 +54,7 @@
 <% end %>
 
 <section>
-  <h2><%= t("profile.posts") %></h2>
+  <%= tag.h2 t("profile.posts") %>
   <% if @posts.any? %>
     <%= render partial: "posts/post", collection: @posts %>
   <% else %>
@@ -67,7 +67,7 @@
 
 <% if @activity.any? %>
   <section class="profile-activity">
-    <h2><%= t("profile.activity", default: "Recent activity") %></h2>
+    <%= tag.h2 t("profile.activity", default: "Recent activity") %>
     <ul class="activity-list">
       <% @activity.each do |event| %>
         <li class="dim">

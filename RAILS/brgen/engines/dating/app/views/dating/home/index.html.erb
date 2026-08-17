@@ -46,7 +46,7 @@
     <div class="page-header" role="banner" aria-label="<%= t("dating.discover") %>">
       <div>
         <p class="dim"><%= t("dating.local") %></p>
-        <h1><%= t("dating.discover") %></h1>
+        <%= tag.h1 t("dating.discover") %>
       </div>
       <nav role="navigation" aria-label="<%= t("dating.home_title") %>">
         <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "btn btn-ghost" %>

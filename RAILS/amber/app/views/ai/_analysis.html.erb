@@ -2,9 +2,9 @@
   <% if result["sparks_joy"].nil? %>
     <p class="dim"><%= t("ai.analysis_unavailable") %></p>
   <% else %>
-    <strong><%= result["sparks_joy"] ? "Sparks joy" : "Does not spark joy" %></strong>
-    <p><%= result["reason"] %></p>
-    <p class="dim"><em><%= result["suggestion"] %></em></p>
+    <%= tag.strong result["sparks_joy"] ? "Sparks joy" : "Does not spark joy" %>
+    <%= tag.p result["reason"] %>
+    <p class="dim"><%= tag.em result["suggestion"] %></p>
     <% if result["source"] %>
       <p class="dim">Source: <%= result["source"] == "heuristic" ? "local heuristic (no OpenRouter key or model empty)" : result["source"] %></p>
     <% end %>

@@ -2,13 +2,13 @@
 
 <section class="partner-programs">
   <header class="cluster">
-    <h1><%= t("partner.programs_title") %></h1>
+    <%= tag.h1 t("partner.programs_title") %>
     <p class="dim"><%= t("partner.programs_lead") %></p>
   </header>
 
   <% if @mine.any? %>
     <section aria-label="<%= t("partner.your_memberships") %>">
-      <h2><%= t("partner.your_memberships") %></h2>
+      <%= tag.h2 t("partner.your_memberships") %>
       <ul class="stack">
         <% @mine.each do |m| %>
           <li>
@@ -22,7 +22,7 @@
   <% end %>
 
   <section aria-label="<%= t("partner.open_programs") %>">
-    <h2><%= t("partner.open_programs") %></h2>
+    <%= tag.h2 t("partner.open_programs") %>
     <% if @programs.any? %>
       <ul class="stack">
         <% @programs.each do |program| %>

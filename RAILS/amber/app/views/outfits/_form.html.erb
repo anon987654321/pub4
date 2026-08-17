@@ -15,7 +15,7 @@
   </div>
   <div class="field"><%= f.label :occasion %><%= f.text_field :occasion %></div>
   <section class="nested-form" data-controller="nested-form">
-    <h3><%= t("outfits.items_heading") %></h3>
+    <%= tag.h3 t("outfits.items_heading") %>
     <template data-nested-form-target="template">
       <%= f.fields_for :outfit_items, OutfitItem.new, child_index: "NEW_RECORD" do |outfit_item_fields| %>
         <%= render "outfit_item_fields", f: outfit_item_fields %>

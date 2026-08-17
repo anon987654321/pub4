@@ -3,9 +3,9 @@
   <% if href.present? %>
     <h3><%= link_to notification.title, href, class: "notification-title-link" %></h3>
   <% else %>
-    <h3><%= notification.title %></h3>
+    <%= tag.h3 notification.title %>
   <% end %>
-  <% if notification.body.present? %><p><%= notification.body %></p><% end %>
+  <% if notification.body.present? %><%= tag.p notification.body %><% end %>
   <p class="dim">
     <time datetime="<%= notification.created_at.iso8601 %>"><%= time_ago(notification.created_at) %></time>
     <% if notification.read? %> · read<% end %>

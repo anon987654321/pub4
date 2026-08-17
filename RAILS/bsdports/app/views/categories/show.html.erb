@@ -1,7 +1,7 @@
 <% content_for :title, @category.name %>
 <header role="banner" aria-label="<%= t("ports.category_header_label") %>">
-  <h1><%= @category.name %></h1>
-  <p><%= @category.description %></p>
+  <%= tag.h1 @category.name %>
+  <%= tag.p @category.description %>
 </header>
 <%# ports/index is a full template, not a partial — rendering it raised
     MissingTemplate on every category page. The list body lives in ports/_list. %>

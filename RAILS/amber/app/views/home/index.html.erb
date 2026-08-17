@@ -20,10 +20,10 @@
 
   <header class="dash-stats">
     <dl>
-      <div><dt><%= t("home.items") %></dt><dd><%= @items_count %></dd></div>
-      <div><dt><%= t("home.spark_joy") %></dt><dd><%= @joy_count %></dd></div>
-      <div><dt><%= t("home.never_worn") %></dt><dd><%= @never_worn_count %></dd></div>
-      <div><dt><%= t("home.utilisation") %></dt><dd class="<%= @utilization_rate < 20 ? 'stat-warn' : '' %>"><%= @utilization_rate %>%</dd></div>
+      <div><%= tag.dt t("home.items") %><%= tag.dd @items_count %></div>
+      <div><%= tag.dt t("home.spark_joy") %><%= tag.dd @joy_count %></div>
+      <div><%= tag.dt t("home.never_worn") %><%= tag.dd @never_worn_count %></div>
+      <div><%= tag.dt t("home.utilisation") %><dd class="<%= @utilization_rate < 20 ? 'stat-warn' : '' %>"><%= @utilization_rate %>%</dd></div>
     </dl>
     <nav role="navigation" aria-label="<%= t("home.dashboard") %>">
       <%= link_to t("home.add_item"), new_item_path, class: "btn btn--primary" %>
@@ -36,7 +36,7 @@
 
   <% if @planned_this_week.any? %>
     <section>
-      <h2><%= t("home.this_week") %></h2>
+      <%= tag.h2 t("home.this_week") %>
       <div class="plan-list">
         <% @planned_this_week.each do |plan| %>
           <div class="plan-row">
@@ -51,7 +51,7 @@
 
   <% if @worst_cpw.any? %>
     <section>
-      <h2><%= t("home.worst_cpw") %></h2>
+      <%= tag.h2 t("home.worst_cpw") %>
       <div class="cpw-list">
         <% @worst_cpw.each do |item| %>
           <div class="cpw-row">
@@ -68,13 +68,13 @@
 
   <% if @aging_unworn.any? %>
     <section>
-      <h2><%= t("home.aging_unworn") %></h2>
+      <%= tag.h2 t("home.aging_unworn") %>
       <div class="item-grid"><%= render @aging_unworn %></div>
     </section>
   <% end %>
 
   <% if @recent_items.any? %>
-    <h2><%= t("home.recent") %></h2>
+    <%= tag.h2 t("home.recent") %>
     <div class="item-grid"><%= render @recent_items %></div>
     <p><%= link_to t("home.all_items"), items_path %></p>
   <% else %>
@@ -126,7 +126,7 @@
 
   <% if @demo_items&.any? %>
     <section>
-      <h2><%= t("home.demo_capsule") %></h2>
+      <%= tag.h2 t("home.demo_capsule") %>
       <p class="dim"><%= t("home.demo_counts", pieces: t("items.pieces", count: @demo_items.size), outfits: t("outfits.count", count: @demo_outfits&.size.to_i)) %></p>
       <div class="item-grid"><%= render partial: "demo_wardrobe/item", collection: @demo_items %></div>
       <p><%= link_to t("demo.full_wardrobe"), demo_wardrobe_path %></p>

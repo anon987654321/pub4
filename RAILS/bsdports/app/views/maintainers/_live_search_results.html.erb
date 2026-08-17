@@ -7,7 +7,7 @@
  <% @maintainers.each do |maintainer| %>
  <li>
  <%= link_to maintainer.name, maintainer_path(maintainer) %>
- <% if maintainer.email.present? %><small><%= maintainer.email %></small><% end %>
+ <% if maintainer.email.present? %><%= tag.small maintainer.email %><% end %>
  <small>(<%= maintainer.ports.size %> ports)</small>
  </li>
  <% end %>

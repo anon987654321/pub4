@@ -33,7 +33,7 @@
 
 <% if @city_communities.present? %>
   <aside>
-    <h2><%= t("hashtag.also_in_city", city: city_name) %></h2>
+    <%= tag.h2 t("hashtag.also_in_city", city: city_name) %>
     <ul>
       <% @city_communities.each do |community| %>
         <li><%= link_to community.name, community_path(community) %></li>

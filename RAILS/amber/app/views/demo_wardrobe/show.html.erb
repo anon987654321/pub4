@@ -6,7 +6,7 @@
   <% if @item.photos.attached? %>
     <%= responsive_image_tag @item.photos.first, alt: @item.title, preset: :detail, sizes: "(max-width: 768px) 100vw, 600px", class: "item-photo item-photo--detail" %>
   <% end %>
-  <h1><%= @item.title %></h1>
+  <%= tag.h1 @item.title %>
   <p class="dim"><%= [@item.brand, @item.category, @item.color, @item.size].compact.join(" · ") %></p>
   <p>Worn <%= @item.times_worn.to_i %>× · <%= @item.value_label %></p>
   <% if @item.spark_joy? %>

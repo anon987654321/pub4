@@ -1,7 +1,7 @@
 <% content_for :title, "Edit #{@track.title}" %>
 
 <div class="page-header" role="banner">
-  <h1><%= t("playlist.edit_track") %></h1>
+  <%= tag.h1 t("playlist.edit_track") %>
 </div>
 
 <%= render "form", track: @track %>

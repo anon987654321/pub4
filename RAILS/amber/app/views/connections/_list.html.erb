@@ -3,7 +3,7 @@
     <% @connections.each do |connection| %>
       <% other = connection.requester == Current.user ? connection.addressee : connection.requester %>
       <article>
-        <strong><%= other.display_name %></strong>
+        <%= tag.strong other.display_name %>
         <span class="dim"><%= t("connections.status.#{connection.status}", default: connection.status) %></span>
         <% if connection.requester == Current.user && connection.status == "pending" %>
           <span class="dim"><%= t("connections.you_requested") %></span>

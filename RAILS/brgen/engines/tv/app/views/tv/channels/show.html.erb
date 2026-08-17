@@ -4,7 +4,7 @@
 <div class="page-header" role="banner">
   <div>
     <p class="dim"><%= t("tv.channel_subtitle", default: "Brgen TV channel") %></p>
-    <h1><%= @channel.name %></h1>
+    <%= tag.h1 @channel.name %>
   </div>
   <nav role="navigation">
     <% if authenticated? && Current.user == @channel.user %>
@@ -27,7 +27,7 @@
     <span class="chip"><%= pluralize(@videos.count, "video") %> shown</span>
   </div>
   <% if @channel.description.present? %>
-    <p><%= simple_format(@channel.description) %></p>
+    <%= tag.p simple_format(@channel.description) %>
   <% else %>
     <p class="dim"><%= t("tv.no_description") %></p>
   <% end %>

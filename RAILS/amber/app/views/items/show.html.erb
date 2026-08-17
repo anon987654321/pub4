@@ -36,14 +36,14 @@
   <% end %>
 
   <dl class="meta luxury-meta-list">
-    <dt><%= t("items.category") %></dt><dd><%= @item.category %></dd>
-    <% if @item.color.present? %><dt><%= t("items.color") %></dt><dd><%= @item.color %></dd><% end %>
-    <% if @item.size.present? %><dt><%= t("items.size") %></dt><dd><%= @item.size %></dd><% end %>
-    <% if @item.material.present? %><dt><%= t("items.material") %></dt><dd><%= @item.material %></dd><% end %>
-    <% if @item.brand.present? %><dt><%= t("items.brand") %></dt><dd><%= @item.brand %></dd><% end %>
-    <% if @item.price? %><dt><%= t("items.price") %></dt><dd><%= number_to_currency(@item.price) %></dd><% end %>
-    <dt><%= t("items.worn") %></dt><dd id="<%= dom_id(@item, :worn) %>"><%= t("items.worn_times", count: @item.times_worn.to_i) %></dd>
-    <% if @item.purchase_date? %><dt><%= t("items.purchased") %></dt><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
+    <%= tag.dt t("items.category") %><%= tag.dd @item.category %>
+    <% if @item.color.present? %><%= tag.dt t("items.color") %><%= tag.dd @item.color %><% end %>
+    <% if @item.size.present? %><%= tag.dt t("items.size") %><%= tag.dd @item.size %><% end %>
+    <% if @item.material.present? %><%= tag.dt t("items.material") %><%= tag.dd @item.material %><% end %>
+    <% if @item.brand.present? %><%= tag.dt t("items.brand") %><%= tag.dd @item.brand %><% end %>
+    <% if @item.price? %><%= tag.dt t("items.price") %><%= tag.dd number_to_currency(@item.price) %><% end %>
+    <%= tag.dt t("items.worn") %><dd id="<%= dom_id(@item, :worn) %>"><%= t("items.worn_times", count: @item.times_worn.to_i) %></dd>
+    <% if @item.purchase_date? %><%= tag.dt t("items.purchased") %><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
   </dl>
 
   <% if @item.mood_effect.present? || @item.life_phase.present? %>
@@ -54,7 +54,7 @@
   <% end %>
 
   <section class="luxury-section">
-    <h2><%= t("items.wardrobe_intelligence") %></h2>
+    <%= tag.h2 t("items.wardrobe_intelligence") %>
     <% if amber_ai_available? %>
       <p class="dim luxury-dim"><%= t("items.openrouter_set") %></p>
     <% else %>
@@ -83,7 +83,7 @@
   </nav>
 
   <section class="luxury-section" aria-label="<%= t("items.affiliate_label") %>">
-    <h2><%= t("items.affiliate_link") %></h2>
+    <%= tag.h2 t("items.affiliate_link") %>
     <%# Was a hardcoded English sentence that also stood in for a disclosure. The
         real disclosure is the engine partial: it names the partner programmes that
         are actually configured, and says nothing when none are. %>
@@ -106,7 +106,7 @@
       </ul>
     <% end %>
     <% if @shop_the_look.present? && @shop_the_look.any? %>
-      <h3><%= t("items.shop_the_look") %></h3>
+      <%= tag.h3 t("items.shop_the_look") %>
       <ul class="stack">
         <% @shop_the_look.each do |suggestion| %>
           <li>

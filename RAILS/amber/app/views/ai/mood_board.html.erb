@@ -1,5 +1,5 @@
 <% content_for :title, t("pages.mood_board") %>
-<h1><%= t("pages.mood_board") %></h1>
+<%= tag.h1 t("pages.mood_board") %>
 <%= form_with url: ai_mood_board_path, method: :get do |f| %>
   <div class="field">
     <%= f.label :description, t("ai.mood_describe") %>
@@ -12,8 +12,8 @@
 <% end %>
 <% if @outfit_name.present? %>
   <div class="ai-card">
-    <h2><%= @outfit_name %></h2>
-    <p><%= @reasoning %></p>
+    <%= tag.h2 @outfit_name %>
+    <%= tag.p @reasoning %>
   </div>
   <div class="item-grid"><%= render @items %></div>
 <% end %>

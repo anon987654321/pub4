@@ -1,9 +1,9 @@
-<h1><%= t("pages.account", default: "Account") %></h1>
+<%= tag.h1 t("pages.account", default: "Account") %>
 
-<p><%= Current.user.email_address %></p>
+<%= tag.p Current.user.email_address %>
 
 <% if Current.user.deletion_pending? %>
-  <p><%= t("account.deletion_scheduled", on: l(Current.user.deletion_scheduled_at, format: :long)) %></p>
+  <%= tag.p t("account.deletion_scheduled", on: l(Current.user.deletion_scheduled_at, format: :long)) %>
   <%= button_to t("account.cancel_deletion"), cancel_deletion_account_path, method: :post %>
 <% else %>
   <%= link_to t("account.export"), export_account_path %>

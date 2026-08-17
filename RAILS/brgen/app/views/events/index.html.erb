@@ -1,7 +1,7 @@
 <% content_for :title, t("events.title") %>
 
 <div class="page-header" role="banner" aria-label="<%= t("events.title") %>">
-  <h1><%= t("events.title") %></h1>
+  <%= tag.h1 t("events.title") %>
   <% if authenticated? %>
     <%= link_to t("events.new"), new_event_path, class: "btn btn-sm" %>
   <% end %>
@@ -38,7 +38,7 @@
       answer different questions, and interleaving them means scrolling past
       last month to find tonight. %>
   <section role="region" aria-label="<%= t("events.past") %>">
-    <h2><%= t("events.past") %></h2>
+    <%= tag.h2 t("events.past") %>
     <div class="event-list event-list--past">
       <% @past.each do |event| %>
         <%= render "events/event", event: event %>

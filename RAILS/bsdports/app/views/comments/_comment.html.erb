@@ -1,6 +1,6 @@
 <article id="<%= dom_id(comment) %>">
-  <small><%= comment.user.email_address.split("@").first %></small>
-  <p><%= comment.content %></p>
+  <%= tag.small comment.user.email_address.split("@").first %>
+  <%= tag.p comment.content %>
   <% if authenticated? && comment.user == Current.user %>
     <%= button_to t("actions.delete"), port_comment_path(comment.port || @port, comment), method: :delete, data: { turbo_stream: true, turbo_confirm: t("ports.confirm_delete_comment") } %>
   <% end %>

@@ -20,18 +20,18 @@
 <% end %>
 
 <section class="playlist-analytics" aria-label="<%= t("aria.track_analytics") %>">
-  <h3><%= t("playlist.analytics") %></h3>
+  <%= tag.h3 t("playlist.analytics") %>
   <p class="dim"><%= t("playlist.track_stats", plays: @track.listens.count, comments: @comments.size, versions: @track.audio_versions.count) %></p>
   <p class="dim"><%= t("playlist.privacy_line", value: @track.privacy.presence || t("playlist.privacy_private")) %> <% if @track.expires_at %><%= t("playlist.expires_on", date: l(@track.expires_at.to_date)) %><% end %></p>
 </section>
 
 <% if @comments.any? %>
   <section class="playlist-details">
-    <h2><%= t("playlist.timestamped_comments") %></h2>
+    <%= tag.h2 t("playlist.timestamped_comments") %>
     <% @comments.each do |comment| %>
       <article>
         <p class="dim"><%= comment.timestamp_seconds %>s</p>
-        <p><%= comment.body %></p>
+        <%= tag.p comment.body %>
       </article>
     <% end %>
   </section>

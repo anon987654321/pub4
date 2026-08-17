@@ -3,7 +3,7 @@
 <header role="banner" aria-label="<%= t("wardrobe.evolution_header") %>">
   <div>
     <p class="dim"><%= t("wardrobe.phases_over_time") %></p>
-    <h1><%= t("pages.timeline") %></h1>
+    <%= tag.h1 t("pages.timeline") %>
   </div>
   <nav role="navigation" aria-label="<%= t("wardrobe.evolution_actions") %>">
     <%= link_to t("pages.analytics"), analytics_wardrobe_items_path, class: "btn" %>
@@ -20,7 +20,7 @@
 </section>
 
 <section aria-label="<%= t("wardrobe.life_phase_groups") %>">
-  <h2><%= t("wardrobe.life_phases") %></h2>
+  <%= tag.h2 t("wardrobe.life_phases") %>
   <div class="style-phase-grid">
     <% @timeline[:phases].each do |group| %>
       <article class="style-phase-card" aria-labelledby="phase-<%= group[:phase] %>">
@@ -52,7 +52,7 @@
 </section>
 
 <section aria-label="<%= t("wardrobe.wear_history_label") %>">
-  <h2><%= t("wardrobe.wear_history") %></h2>
+  <%= tag.h2 t("wardrobe.wear_history") %>
   <% if @timeline[:wear_events].any? %>
     <ol class="style-timeline" role="list">
       <% @timeline[:wear_events].each do |event| %>

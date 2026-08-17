@@ -1,6 +1,6 @@
 <% content_for :title, @maintainer.name %>
 <header>
-  <h1><%= @maintainer.name %></h1>
+  <%= tag.h1 @maintainer.name %>
   <% if @maintainer.email.present? %>
     <p><%= link_to @maintainer.email, "mailto:#{@maintainer.email}" %></p>
   <% end %>

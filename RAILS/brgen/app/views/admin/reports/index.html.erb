@@ -3,7 +3,7 @@
 <div class="page-header" role="banner" aria-label="<%= t("a11y.reports_header") %>">
   <div>
     <p class="dim"><%= t("admin.moderation") %></p>
-    <h1><%= t("a11y.reports_header") %></h1>
+    <%= tag.h1 t("a11y.reports_header") %>
   </div>
   <div class="chips">
     <span class="chip"><%= t("community.open_count", count: @open_count) %></span>
@@ -27,7 +27,7 @@
           · <%= t("admin.reported_by", name: report.user.display_name) %>
           · <span><%= time_ago(report.created_at) %></span>
         </p>
-        <% if report.details.present? %><p><%= report.details %></p><% end %>
+        <% if report.details.present? %><%= tag.p report.details %><% end %>
         <nav role="navigation" class="cluster">
           <% %w[open reviewing resolved dismissed].each do |status| %>
             <%= button_to t("community.mark_#{status}"), admin_report_path(report, status: status), method: :patch, class: "btn btn-ghost btn-sm" %>

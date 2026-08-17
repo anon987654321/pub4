@@ -2,5 +2,5 @@
     create.turbo_stream.erb, and Tv::VideoNote's broadcast. %>
 <article id="<%= dom_id(video_note) %>">
   <p class="dim"><% if video_note.timestamp.present? %><%= video_note.timestamp %> · <% end %><%= video_note.user&.display_name || "viewer" %></p>
-  <p><%= video_note.body %></p>
+  <%= tag.p video_note.body %>
 </article>

@@ -3,7 +3,7 @@
 <div class="page-header" role="banner">
   <div>
     <p class="dim"><%= link_to @community.name, community_path(@community) %></p>
-    <h1><%= t("community.bans") %></h1>
+    <%= tag.h1 t("community.bans") %>
   </div>
   <%= link_to t("community.mod_queue"), community_moderation_index_path(@community), class: "btn btn-ghost btn-sm" %>
 </div>
@@ -12,7 +12,7 @@
   <ul class="ban-list" role="list">
     <% @bans.each do |ban| %>
       <li class="cluster">
-        <span><strong><%= ban.user.display_name %></strong></span>
+        <span><%= tag.strong ban.user.display_name %></span>
         <span class="chip">
           <%= ban.permanent? ? t("community.ban_permanent") : t("community.ban_until", time: l(ban.expires_at, format: :event)) %>
         </span>

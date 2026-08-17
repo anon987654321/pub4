@@ -4,7 +4,7 @@
 <div class="page-header" role="banner">
   <div>
     <p class="dim"><%= t("playlist.set_kicker") %></p>
-    <h1><%= @set.name %></h1>
+    <%= tag.h1 @set.name %>
   </div>
   <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
     <div class="cluster">
@@ -19,7 +19,7 @@
 
 <article>
   <% if @set.description.present? %>
-    <p><%= @set.description %></p>
+    <%= tag.p @set.description %>
   <% end %>
   <p class="dim"><%= t("playlist.privacy.#{@set.privacy.presence || "public"}") %> · <%= t("playlist.tracks", count: @tracks.count) %> · <%= @set.formatted_duration %></p>
   <% if @set.collaborative? %>
@@ -67,7 +67,7 @@
       class="track-row"
     >
       <div>
-        <strong><%= set_track.track.title %></strong>
+        <%= tag.strong set_track.track.title %>
         <% if set_track.track.artist.present? %> — <%= set_track.track.artist %><% end %>
         <span class="dim"> · <%= set_track.track.duration_formatted %></span>
       </div>
@@ -99,7 +99,7 @@
 
 <% if authenticated? %>
 <section>
-  <h2><%= t("playlist.listening_party") %></h2>
+  <%= tag.h2 t("playlist.listening_party") %>
   <p class="dim"><%= t("playlist.party_blurb") %></p>
   <% if @set.listening_party&.active? %>
     <%= link_to t("playlist.listening_party"), set_listening_party_path(@set), class: "btn btn-primary btn-sm" %>

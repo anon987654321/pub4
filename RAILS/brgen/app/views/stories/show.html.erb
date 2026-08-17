@@ -3,7 +3,7 @@
 <article class="story-viewer" role="article" aria-label="<%= t("stories.by", user: @story.user.display_name) %>">
   <header class="story-viewer-head">
     <p class="dim">
-      <strong><%= @story.user.display_name %></strong>
+      <%= tag.strong @story.user.display_name %>
       ·
       <%# The countdown reads the row's own expires_at rather than re-deriving
           24 hours from created_at, so the label, the alive scope and the sweep
@@ -38,7 +38,7 @@
   <%# The viewer list is the author's alone. Everyone else sees the count. %>
   <% if @viewers %>
     <section role="region" aria-label="<%= t("stories.seen_by") %>">
-      <h2><%= t("stories.seen_count", count: @story.views_count) %></h2>
+      <%= tag.h2 t("stories.seen_count", count: @story.views_count) %>
       <ul class="viewer-list">
         <% @viewers.each do |view| %>
           <li><%= view.user.display_name %></li>

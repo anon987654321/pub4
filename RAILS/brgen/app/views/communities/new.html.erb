@@ -1,4 +1,4 @@
-<h1><%= t("communities.new_community") %></h1>
+<%= tag.h1 t("communities.new_community") %>
 <%= form_with model: @community do |f| %>
   <% if @community.errors.any? %>
     <ul>

@@ -1,7 +1,7 @@
 <% classes = ["card", local_assigns[:class]].compact.join(" ") %>
 <%= content_tag :article, class: classes, data: (local_assigns[:state] ? { state: local_assigns[:state] } : {}) do %>
   <% if local_assigns[:title].present? %>
-    <h2><%= local_assigns[:title] %></h2>
+    <%= tag.h2 local_assigns[:title] %>
   <% end %>
   <%= local_assigns[:body] if local_assigns[:body].present? %>
 <% end %>

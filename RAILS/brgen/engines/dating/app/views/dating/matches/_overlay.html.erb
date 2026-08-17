@@ -1,7 +1,7 @@
 <div class="match-overlay">
   <div class="match-overlay-card">
     <p class="match-overlay-eyebrow">Dating</p>
-    <h2><%= t("dating.its_a_match") %></h2>
+    <%= tag.h2 t("dating.its_a_match") %>
     <% other = current_user == match.initiator ? match.receiver : match.initiator %>
     <p><%= other&.display_name || t("dating.someone") %> <%= t("dating.ready_to_chat") %></p>
     <%= link_to t("dating.open_messages"), main_app.conversations_path, class: "btn btn-primary btn-sm", data: { controller: "haptics", action: "click->haptics#match" } %>

@@ -3,7 +3,7 @@
 <header role="banner" aria-label="<%= t("pages.organize") %>">
   <div>
     <p class="dim"><%= t("organize.lead") %></p>
-    <h1><%= t("pages.organize") %></h1>
+    <%= tag.h1 t("pages.organize") %>
   </div>
   <nav role="navigation" aria-label="<%= t("organize.actions") %>">
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
@@ -31,8 +31,8 @@
       <p class="dim"><%= t("organize.register_leads.#{register}") %></p>
       <% tips.each do |tip| %>
         <article class="organize-tip">
-          <h3><%= tip.title %></h3>
-          <p><%= tip.body %></p>
+          <%= tag.h3 tip.title %>
+          <%= tag.p tip.body %>
           <%# The principle is named on every tip so the advice is auditable
               rather than oracular — you can disagree with the principle. %>
           <p class="organize-principle dim"><%= tip.principle %></p>

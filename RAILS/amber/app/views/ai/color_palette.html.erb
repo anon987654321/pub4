@@ -1,10 +1,10 @@
 <% content_for :title, t("pages.colour_palette") %>
-<h1><%= t("pages.colour_palette_title") %></h1>
+<%= tag.h1 t("pages.colour_palette_title") %>
 <% if @result["source"] %><p class="dim">Source: <%= @result["source"] %></p><% end %>
 
 <% if @swatches.present? %>
   <section aria-label="<%= t("ai.palette_aria") %>">
-    <h2><%= t("ai.swatches_from_items", default: "Swatches from your items") %></h2>
+    <%= tag.h2 t("ai.swatches_from_items", default: "Swatches from your items") %>
     <div class="tag-row color-swatch-row">
       <% @swatches.each do |title, color| %>
         <span class="chip" title="<%= title %>">
@@ -22,7 +22,7 @@
     <% if @result["season_type"].present? %><p><strong>Seasonal type:</strong> <%= @result["season_type"] %></p><% end %>
   </div>
   <% if @result["clashing"]&.any? %>
-    <h2><%= t("ai.clashing_items") %></h2>
+    <%= tag.h2 t("ai.clashing_items") %>
     <ul><% @result["clashing"].each do |i| %><li><%= i %></li><% end %></ul>
   <% end %>
   <% if @result["suggestions"]&.any? %>

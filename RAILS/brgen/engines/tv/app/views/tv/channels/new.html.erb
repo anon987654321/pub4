@@ -1,6 +1,6 @@
 <% content_for :title, t("tv.new_channel") %>
 
-<div class="page-header" role="banner"><h1><%= t("tv.new_channel") %></h1></div>
+<div class="page-header" role="banner"><%= tag.h1 t("tv.new_channel") %></div>
 
 <div class="form-wrap">
   <%= form_with model: @channel, url: channels_path do |f| %>

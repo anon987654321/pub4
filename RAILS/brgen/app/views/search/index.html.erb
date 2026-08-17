@@ -1,7 +1,7 @@
 <% content_for :title, t("nav.search") %>
 
 <header class="page-header" role="banner">
-  <h1><%= t("search.title") %></h1>
+  <%= tag.h1 t("search.title") %>
 </header>
 
 <%= live_search_index url: global_search_path, results_partial: "search/live_search_results", placeholder: t("search.placeholder"), label: t("search.label"), query: @query %>

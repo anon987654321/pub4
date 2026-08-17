@@ -3,7 +3,7 @@
 <div class="page-header" role="banner" aria-label="<%= t("takeaway.driver_header") %>">
   <div>
     <p class="dim"><%= t("takeaway.operations") %></p>
-    <h1><%= @delivery_driver.user&.display_name || t("takeaway.anon") %></h1>
+    <%= tag.h1 @delivery_driver.user&.display_name || t("takeaway.anon") %>
   </div>
   <%= link_to t("actions.all_drivers"), delivery_drivers_path, class: "btn btn-ghost btn-sm" %>
 </div>

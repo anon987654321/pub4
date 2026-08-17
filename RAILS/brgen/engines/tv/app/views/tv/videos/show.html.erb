@@ -7,7 +7,7 @@
 <div class="page-header" role="banner">
   <div>
     <p class="dim"><%= link_to @video.channel.name, channel_path(@video.channel) %></p>
-    <h1><%= @video.title %></h1>
+    <%= tag.h1 @video.title %>
   </div>
   <button class="btn-share" data-controller="share"
           data-share-title-value="<%= @video.title %>"
@@ -108,7 +108,7 @@
     <% @video.comments.order(created_at: :asc).each do |comment| %>
       <article>
         <p class="dim"><%= comment.user&.display_name || "anon" %></p>
-        <p><%= comment.body %></p>
+        <%= tag.p comment.body %>
       </article>
     <% end %>
   <% else %>

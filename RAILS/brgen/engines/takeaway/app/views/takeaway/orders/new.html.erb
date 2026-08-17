@@ -3,13 +3,13 @@
 <header class="page-header" role="banner" aria-label="<%= t("takeaway.restaurant_header") %>">
   <div>
     <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.city_label %></p>
-    <h1><%= t("takeaway.order_from", restaurant: @restaurant.name) %></h1>
-    <p><%= @restaurant.address %></p>
+    <%= tag.h1 t("takeaway.order_from", restaurant: @restaurant.name) %>
+    <%= tag.p @restaurant.address %>
   </div>
 </header>
 
 <article role="article" aria-label="<%= t("takeaway.restaurant_info") %>">
-  <p><%= @restaurant.description %></p>
+  <%= tag.p @restaurant.description %>
   <div class="chips">
     <span class="chip"><%= t("takeaway.min_order_delivery", min: @restaurant.min_order_display, fee: @restaurant.delivery_fee_display) %></span>
     <span class="chip"><%= t("takeaway.available_count", count: @menu_items.size) %></span>
@@ -20,14 +20,14 @@
   <%= render "shared/errors", object: @order %>
 
   <section role="region" aria-label="<%= t("takeaway.menu") %>">
-    <h2><%= t("takeaway.menu") %></h2>
+    <%= tag.h2 t("takeaway.menu") %>
     <% if @menu_items.any? %>
       <% @menu_items.each do |item| %>
         <article class="grid-menu-row">
           <div>
-            <h3><%= item.name %></h3>
+            <%= tag.h3 item.name %>
             <% if item.description.present? %>
-              <p><%= item.description %></p>
+              <%= tag.p item.description %>
             <% end %>
             <p class="dim">
               <%= item.price_display %>
@@ -50,7 +50,7 @@
   </section>
 
   <section role="region" aria-label="<%= t("takeaway.delivery_details") %>">
-    <h2><%= t("takeaway.delivery_heading") %></h2>
+    <%= tag.h2 t("takeaway.delivery_heading") %>
     <div class="field">
       <%= form.label :delivery_address %>
       <%= form.text_field :delivery_address, required: true, autocomplete: "street-address" %>
@@ -68,7 +68,7 @@
   </section>
 
   <section role="region" aria-label="<%= t("takeaway.payment_label") %>">
-    <h2><%= t("takeaway.payment") %></h2>
+    <%= tag.h2 t("takeaway.payment") %>
     <p class="dim"><%= t("takeaway.payment_body") %></p>
   </section>
 

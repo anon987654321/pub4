@@ -1,5 +1,5 @@
 <div class="auth-form">
-  <h1><%= t("pages.two_factor", default: "Two-factor authentication") %></h1>
+  <%= tag.h1 t("pages.two_factor", default: "Two-factor authentication") %>
   <p class="auth-form-lead"><%= t("auth.two_factor_lead") %></p>
 
   <% if @qr.present? %>

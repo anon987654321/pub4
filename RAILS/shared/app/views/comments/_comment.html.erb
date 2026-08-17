@@ -45,7 +45,7 @@
     <% if threaded && comment.respond_to?(:long_thread?) && comment.long_thread? %>
       <% if comment.respond_to?(:has_thread_summary?) && comment.has_thread_summary? %>
         <p class="thread-summary">
-          <strong><%= t("comments.master_summary", default: "MASTER summary:") %></strong>
+          <%= tag.strong t("comments.master_summary", default: "MASTER summary:") %>
           <%= comment.thread_summary %>
         </p>
       <% elsif can_interact && respond_to?(:generate_summary_comment_path) %>

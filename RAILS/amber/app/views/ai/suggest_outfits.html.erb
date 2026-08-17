@@ -1,6 +1,6 @@
 <% content_for :title, t("pages.suggest_outfits") %>
 <header role="banner" aria-label="<%= t("ai.suggest_header") %>">
-  <h1><%= t("pages.suggest_outfits") %></h1>
+  <%= tag.h1 t("pages.suggest_outfits") %>
   <% if @ai_available %>
     <p class="dim"><%= t("ai.suggest_lead", vision: (Current.user.items.joins(:photos_attachments).exists? ? t("ai.suggest_vision") : "")) %></p>
   <% else %>
@@ -31,13 +31,13 @@
 <% if @suggestions.present? %>
   <% @suggestions.each_with_index do |s, i| %>
     <article class="ai-card">
-      <h2><%= s["name"] || "Option #{i + 1}" %></h2>
+      <%= tag.h2 s["name"] || "Option #{i + 1}" %>
       <p class="dim"><%= Array(s["items"]).join(", ") %></p>
       <%# The rationale was rendered bare, so a reader couldn't tell it *was* the
           reasoning rather than a product blurb. Labelling it is the point of the
           suggestion: you should be able to judge the advice, not just take it. %>
       <% if s["description"].present? %>
-        <p><strong><%= t("ai.why_it_works") %></strong> <%= s["description"] %></p>
+        <p><%= tag.strong t("ai.why_it_works") %> <%= s["description"] %></p>
       <% end %>
       <% if s["source"] %><p class="dim">Source: <%= s["source"] %></p><% end %>
       <% if s["outfit_id"] %>

@@ -1,5 +1,5 @@
 <div class="sidebar-card newsletter-cta subscribe-box" data-controller="scroll-reveal" data-minimal-reveal>
-  <h2><%= local_assigns.fetch(:heading, t("newsletter.heading")) %></h2>
+  <%= tag.h2 local_assigns.fetch(:heading, t("newsletter.heading")) %>
   <p class="dim"><%= local_assigns.fetch(:blurb, t("newsletter.blurb")) %></p>
   <% if defined?(email_subscriptions_path) %>
     <%= form_with url: email_subscriptions_path, method: :post do |form| %>

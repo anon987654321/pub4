@@ -1,6 +1,6 @@
 <% content_for :title, t("stories.new") %>
 
-<h1><%= t("stories.new") %></h1>
+<%= tag.h1 t("stories.new") %>
 <p class="dim"><%= t("stories.lifetime_notice") %></p>
 
 <%= form_with model: @story do |f| %>

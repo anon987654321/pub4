@@ -1,6 +1,6 @@
 <% content_for :title, t("pages.planner") %>
 <%= turbo_stream_from "planned_outfits" %>
-<h1><%= t("pages.planner") %></h1>
+<%= tag.h1 t("pages.planner") %>
 <%= form_with model: PlannedOutfit.new, url: planned_outfits_path do |f| %>
   <%# aria-label rather than visible <label>s: .field-row lays these out as one
       horizontal strip ending in the submit, and stacking three labels over it

@@ -1,5 +1,5 @@
 <div class="page-header" role="banner" aria-label="<%= t("messages.title") %>">
-  <h1><%= t("messages.title") %></h1>
+  <%= tag.h1 t("messages.title") %>
 </div>
 
 <section class="messenger-compose" aria-label="<%= t("messages.new_message") %>">
@@ -19,7 +19,7 @@
       <% last  = c.messages.last %>
       <li role="listitem">
         <%= link_to conversation_path(c) do %>
-          <strong><%= other&.display_name || "anon" %></strong>
+          <%= tag.strong other&.display_name || "anon" %>
           <% if last %>
             <span><%= truncate(last.content.to_s, length: 80) %></span>
             <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>

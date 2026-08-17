@@ -1,7 +1,7 @@
 <% content_for :title, t("playlist.new_playlist") %>
 
 <div class="page-header" role="banner" aria-label="<%= t("aria.new_playlist_header") %>">
-  <h1><%= t("playlist.new_playlist") %></h1>
+  <%= tag.h1 t("playlist.new_playlist") %>
 </div>
 
 <turbo-frame id="playlist-new" data-turbo-action="replace">

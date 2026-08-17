@@ -1,6 +1,6 @@
 <% if items.present? %>
   <aside class="also-nearby">
-    <h2><%= title %></h2>
+    <%= tag.h2 title %>
     <ul>
       <% items.each do |item| %>
         <% href = record_public_href(item) %>

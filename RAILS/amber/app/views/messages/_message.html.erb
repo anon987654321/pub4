@@ -1,10 +1,8 @@
 <article id="<%= dom_id(message) %>" class="<%= "message--unread" if message.read_at.nil? && message.recipient_id == Current.user.id %>">
-  <strong>
-    <%= message.sender == Current.user ?
+  <%= tag.strong message.sender == Current.user ?
           t("messages.to", name: message.recipient.display_name) :
           t("messages.from", name: message.sender.display_name) %>
-  </strong>
-  <p><%= message.body %></p>
+  <%= tag.p message.body %>
   <p class="dim">
     <%= time_ago_in_words(message.created_at) %>
     <% if message.read_at.nil? && message.recipient_id == Current.user.id %>

@@ -11,7 +11,7 @@
 
 <% if authenticated? && defined?(@items_count) %>
   <div class="sidebar-card">
-    <h3><%= t("wardrobe.your_wardrobe") %></h3>
+    <%= tag.h3 t("wardrobe.your_wardrobe") %>
     <ul>
       <li><%= @items_count %> items</li>
       <li><%= @joy_count %> spark joy</li>
@@ -23,14 +23,14 @@
   </div>
 <% elsif @demo_items&.any? %>
   <div class="sidebar-card">
-    <h3><%= t("wardrobe.demo_capsule") %></h3>
+    <%= tag.h3 t("wardrobe.demo_capsule") %>
     <p class="dim"><%= pluralize(@demo_items.size, "piece") %> · <%= pluralize(@demo_outfits&.size.to_i, "outfit") %></p>
     <p><%= link_to "Browse demo →", demo_wardrobe_path %></p>
   </div>
 <% end %>
 
 <div class="sidebar-card">
-  <h3><%= t("wardrobe.style_notes") %></h3>
+  <%= tag.h3 t("wardrobe.style_notes") %>
   <p class="dim"><%= t("wardrobe.style_notes_body") %></p>
   <p><%= link_to "Talk to MASTER", root_path(master: 1) %></p>
 </div>

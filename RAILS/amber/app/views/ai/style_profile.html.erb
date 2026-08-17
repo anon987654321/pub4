@@ -1,6 +1,6 @@
 <% content_for :title, t("pages.style_profile") %>
 
-<h1><%= t("pages.style_profile") %></h1>
+<%= tag.h1 t("pages.style_profile") %>
 <p class="dim"><%= t("ai.style_profile_lead") %></p>
 
 <%= form_with url: ai_style_profile_path, method: :post, class: "form" do |f| %>

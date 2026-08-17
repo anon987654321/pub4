@@ -1,7 +1,7 @@
 <% content_for :title, t("tv.channels_title") %>
 
 <div class="page-header" role="banner" aria-label="TV channels header">
-  <h1><%= t("tv.channels_title") %></h1>
+  <%= tag.h1 t("tv.channels_title") %>
   <nav role="navigation" aria-label="TV channel actions">
     <%= link_to "New channel", new_channel_path, class: "btn btn-primary btn-sm" if authenticated? %>
   </nav>

@@ -10,8 +10,8 @@
 <% title = local_assigns[:title].presence || t("install.title", default: "Install this app") %>
 <% body = local_assigns[:body].presence || t("install.body", default: "Get quicker access from your home screen.") %>
 <div id="install-prompt" class="install-prompt" hidden data-controller="install-prompt">
-  <strong><%= title %></strong>
-  <p><%= body %></p>
+  <%= tag.strong title %>
+  <%= tag.p body %>
   <div class="install-prompt-actions">
     <button type="button" class="install-prompt-secondary" data-action="click->install-prompt#dismiss"><%= t("install.not_now", default: "Not now") %></button>
     <button type="button" class="install-prompt-primary" data-action="click->install-prompt#install"><%= t("install.action", default: "Install") %></button>

@@ -15,7 +15,7 @@
   <% if sketches.any? %>
     <% sketches.each do |sk| %>
       <div class="dilla-sketch">
-        <strong><%= sk.name %></strong>
+        <%= tag.strong sk.name %>
         <span class="dim">
           <%= sk.try(:style).presence || "dilla" %>
           · <%= sk.try(:bars).presence || 12 %> bars

@@ -3,7 +3,7 @@
     only, so the rest of the app had no search shortcut at all. Both keys are in the
     shared feed-hotkey controller now, declared once on the layout body. %>
 <header class="page-header" role="banner" aria-label="<%= t("ports.header_page_label") %>" data-visitor-orientation>
-  <h1><%= t("pages.ports") %></h1>
+  <%= tag.h1 t("pages.ports") %>
   <p class="ports-purpose"><%= t("ports.purpose") %></p>
   <p class="dim"><%= t("ports.search_hint") %></p>
   <nav role="navigation" aria-label="<%= t("nav.ports") %>">
@@ -17,7 +17,7 @@
     known which it was all along; nothing asked it. %>
 <% if @catalog_empty %>
   <section aria-label="<%= t("ports.categories_section_label") %>">
-    <p><%= t("ports.empty_unimported") %></p>
+    <%= tag.p t("ports.empty_unimported") %>
   </section>
 <% else %>
   <%# A ports tree with no date is a ports tree nobody can trust. %>

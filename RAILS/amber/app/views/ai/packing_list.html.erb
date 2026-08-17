@@ -1,6 +1,6 @@
 <% content_for :title, t("pages.packing_list") %>
 
-<h1><%= t("pages.packing_list") %></h1>
+<%= tag.h1 t("pages.packing_list") %>
 <p class="dim"><%= t("ai.packing_lead") %></p>
 
 <%= form_with url: ai_packing_list_path, method: :get, class: "form" do |f| %>
@@ -20,19 +20,19 @@
 <% end %>
 
 <% if @result %>
-  <h2><%= t("ai.suggested_outfits", days: @duration, climate: @climate) %></h2>
+  <%= tag.h2 t("ai.suggested_outfits", days: @duration, climate: @climate) %>
   <% if @result["outfits"] %>
     <ul>
       <% @result["outfits"].each do |o| %>
         <li>
-          <strong><%= o["name"] %></strong>
+          <%= tag.strong o["name"] %>
           <ul><% Array(o["items"]).each do |it| %><li><%= it %></li><% end %></ul>
         </li>
       <% end %>
     </ul>
   <% end %>
   <% if @result["tips"] %><p class="dim"><%= @result["tips"] %></p><% end %>
-  <p><%= t("ai.packing_created") %></p>
+  <%= tag.p t("ai.packing_created") %>
 <% end %>
 
 <%= link_to t("actions.back_to_ai"), ai_suggest_outfits_path %>

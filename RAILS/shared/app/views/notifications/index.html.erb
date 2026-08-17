@@ -3,7 +3,7 @@
 <%= turbo_frame_tag "notifications" do %>
   <div class="page-header" role="banner" aria-label="<%= t("notifications.title", default: "Notifications") %>">
     <div>
-      <h1><%= t("notifications.title", default: "Notifications") %></h1>
+      <%= tag.h1 t("notifications.title", default: "Notifications") %>
     </div>
     <% unread = @notifications.count { |n| !n.read? } %>
     <% if unread.positive? %>

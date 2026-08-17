@@ -1,5 +1,5 @@
 <div class="auth-form">
-  <h1><%= t("auth.update_password") %></h1>
+  <%= tag.h1 t("auth.update_password") %>
   <p class="auth-form-lead"><%= t("auth.update_password_lead") %></p>
   <% if flash[:alert] %><p class="flash-alert" role="alert"><%= flash[:alert] %></p><% end %>
   <%= form_with url: password_path(params[:token]), method: :put do |form| %>

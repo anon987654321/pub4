@@ -1,6 +1,6 @@
 <% content_for :title, t("tv.edit_channel") %>
 
-<div class="page-header" role="banner"><h1><%= t("tv.edit_channel") %></h1></div>
+<div class="page-header" role="banner"><%= tag.h1 t("tv.edit_channel") %></div>
 
 <div class="form-wrap">
   <%= form_with model: @channel, url: channel_path(@channel), method: :patch do |f| %>

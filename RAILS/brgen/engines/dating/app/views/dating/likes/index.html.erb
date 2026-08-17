@@ -1,7 +1,7 @@
 <% content_for :title, t("dating.who_liked_you") %>
 
 <div class="page-header" role="banner" aria-label="<%= t("dating.who_liked_you") %>">
-  <h1><%= t("dating.who_liked_you") %></h1>
+  <%= tag.h1 t("dating.who_liked_you") %>
   <%= link_to t("dating.back_to_deck"), root_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
@@ -13,7 +13,7 @@
       <% profile = like.liker.dating_profile %>
       <li class="like-card">
         <p>
-          <strong><%= profile&.name || like.liker.display_name %></strong>
+          <%= tag.strong profile&.name || like.liker.display_name %>
           <% if profile&.age %><span class="dim"><%= profile.age %></span><% end %>
         </p>
 
@@ -22,7 +22,7 @@
         <% if like.commented? %>
           <% if like.dating_prompt %>
             <p class="dim"><%= like.dating_prompt.question_text %></p>
-            <p><em><%= like.dating_prompt.answer %></em></p>
+            <p><%= tag.em like.dating_prompt.answer %></p>
           <% end %>
           <blockquote class="like-comment"><%= like.comment %></blockquote>
         <% end %>

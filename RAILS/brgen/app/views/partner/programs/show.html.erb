@@ -2,12 +2,12 @@
 
 <article class="partner-program">
   <header>
-    <h1><%= @program.name %></h1>
+    <%= tag.h1 @program.name %>
     <p class="dim"><%= @program.store&.name %> · <%= @program.status %></p>
   </header>
 
   <dl class="meta">
-    <dt><%= t("partner.commission") %></dt>
+    <%= tag.dt t("partner.commission") %>
     <dd>
       <% if @program.percent? %>
         <%= t("partner.commission_of_order", rate: @program.commission_rate / 100.0) %>
@@ -15,15 +15,15 @@
         <%= t("partner.commission_flat_model", rate: @program.commission_rate, model: @program.commission_model) %>
       <% end %>
     </dd>
-    <dt><%= t("partner.attribution_window") %></dt>
-    <dd><%= t("partner.hours", count: @program.attribution_hours) %></dd>
-    <dt><%= t("partner.hold_before_payable") %></dt>
-    <dd><%= t("partner.days", count: @program.hold_days) %></dd>
+    <%= tag.dt t("partner.attribution_window") %>
+    <%= tag.dd t("partner.hours", count: @program.attribution_hours) %>
+    <%= tag.dt t("partner.hold_before_payable") %>
+    <%= tag.dd t("partner.days", count: @program.hold_days) %>
   </dl>
 
   <% if @program.terms.present? %>
     <section>
-      <h2><%= t("partner.terms") %></h2>
+      <%= tag.h2 t("partner.terms") %>
       <p><%= simple_format @program.terms %></p>
     </section>
   <% end %>
@@ -33,7 +33,7 @@
       <%= link_to t("partner.edit_program"), edit_partner_program_path(@program), class: "btn" %>
     <% elsif authenticated? %>
       <% if @membership %>
-        <p><%= t("partner.status_label") %> <strong><%= @membership.status %></strong></p>
+        <p><%= t("partner.status_label") %> <%= tag.strong @membership.status %></p>
         <% if @membership.earning? %>
           <p class="dim"><%= t("partner.link_token") %> <code><%= @membership.token %></code></p>
           <p>

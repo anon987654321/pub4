@@ -1,6 +1,6 @@
 <% content_for :title, t("post.new") %>
 
-<div class="page-header" role="banner"><h1><%= t("post.new") %></h1></div>
+<div class="page-header" role="banner"><%= tag.h1 t("post.new") %></div>
 
 <div class="form-wrap">
   <% draft_key = "brgen-post-#{@community&.to_param || 'global'}-new" %>

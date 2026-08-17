@@ -1,7 +1,7 @@
 <% content_for :title, t("partner.membership_title") %>
 
 <section class="partner-membership">
-  <h1><%= @membership.program.name %></h1>
+  <%= tag.h1 @membership.program.name %>
   <p class="dim">
     <%= t("partner.status_label") %> <%= @membership.status %> ·
     <%= t("partner.token_label") %> <code><%= @membership.token %></code>
@@ -13,7 +13,7 @@
   </p>
 
   <section>
-    <h2><%= t("partner.recent_clicks") %></h2>
+    <%= tag.h2 t("partner.recent_clicks") %>
     <% if @clicks.any? %>
       <ul>
         <% @clicks.each do |click| %>
@@ -28,7 +28,7 @@
   </section>
 
   <section>
-    <h2><%= t("partner.conversions") %></h2>
+    <%= tag.h2 t("partner.conversions") %>
     <% if @conversions.any? %>
       <ul>
         <% @conversions.each do |c| %>

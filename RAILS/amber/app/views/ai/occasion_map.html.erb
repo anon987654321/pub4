@@ -1,9 +1,9 @@
 <% content_for :title, t("pages.occasion_map") %>
-<h1><%= t("pages.occasion_map") %></h1>
+<%= tag.h1 t("pages.occasion_map") %>
 <div class="occasion-grid">
   <% @coverage.each do |occasion, items| %>
     <div class="occasion-card occasion-card--<%= items.size < 2 ? 'sparse' : 'covered' %>">
-      <h2><%= occasion.capitalize %></h2>
+      <%= tag.h2 occasion.capitalize %>
       <span class="occasion-count"><%= items.size %> items</span>
       <% if items.size < 2 %>
         <p class="dim occasion-warn">Gap — consider adding pieces</p>

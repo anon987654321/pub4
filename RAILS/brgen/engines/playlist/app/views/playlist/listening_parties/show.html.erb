@@ -4,8 +4,8 @@
 <div class="page-header" role="banner">
   <div>
     <p class="dim"><%= t("playlist.listening_party") %></p>
-    <h1><%= @set.name %></h1>
-    <p class="dim"><%= t("playlist.join_code") %>: <strong><%= @party.join_code %></strong></p>
+    <%= tag.h1 @set.name %>
+    <p class="dim"><%= t("playlist.join_code") %>: <%= tag.strong @party.join_code %></p>
   </div>
   <% if @party.host == Current.user %>
     <%= button_to t("playlist.end_party"), set_listening_party_path(@set), method: :delete,
@@ -18,7 +18,7 @@
 </div>
 
 <section>
-  <h2><%= t("playlist.queue") %></h2>
+  <%= tag.h2 t("playlist.queue") %>
   <ol>
     <% @tracks.each do |track| %>
       <li><%= track.title %> — <%= track.artist %></li>
@@ -27,7 +27,7 @@
 </section>
 
 <section>
-  <h2><%= t("playlist.party_chat") %></h2>
+  <%= tag.h2 t("playlist.party_chat") %>
   <div id="party_messages">
     <%= render partial: "playlist/party_messages/message", collection: @messages, as: :message %>
   </div>

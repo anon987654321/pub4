@@ -6,7 +6,7 @@
 
 <header role="banner" aria-label="<%= t("demo.wardrobe_header") %>">
   <p class="dim"><%= t("demo.capsule_kicker", name: Amber::DemoWardrobe::DEMO_DISPLAY_NAME) %></p>
-  <h1><%= t("demo.wardrobe") %></h1>
+  <%= tag.h1 t("demo.wardrobe") %>
   <p class="tagline"><%= t("demo.index_tagline") %></p>
   <nav role="navigation" aria-label="<%= t("demo.wardrobe_actions") %>">
     <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn--primary" %>
@@ -21,7 +21,7 @@
       <div class="plan-list">
         <% @outfits.each do |outfit| %>
           <div class="plan-row">
-            <strong><%= outfit.name %></strong>
+            <%= tag.strong outfit.name %>
             <span class="dim"><%= outfit.context_label %> · <%= pluralize(outfit.items.size, "piece") %></span>
           </div>
         <% end %>
@@ -31,7 +31,7 @@
 <% end %>
 
 <section>
-  <h2><%= t("demo.all_pieces") %></h2>
+  <%= tag.h2 t("demo.all_pieces") %>
   <div class="item-grid">
     <%= render partial: "demo_wardrobe/item", collection: @items %>
   </div>

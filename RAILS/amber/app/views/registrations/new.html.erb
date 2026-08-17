@@ -1,5 +1,5 @@
 <div class="auth-form">
-  <h1><%= t("auth.create_account") %></h1>
+  <%= tag.h1 t("auth.create_account") %>
   <p class="auth-form-lead"><%= t("auth.create_lead") %></p>
   <%= form_with model: User.new, url: registration_path do |f| %>
     <div class="field">

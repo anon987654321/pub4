@@ -39,11 +39,11 @@
         <li class="nearby-chat-widget-empty-item" role="status">
           <div class="nearby-chat-widget-empty">
             <% if @located %>
-              <strong><%= t("chat.nearby_title") %></strong>
-              <p><%= t("chat.nearby_body") %></p>
+              <%= tag.strong t("chat.nearby_title") %>
+              <%= tag.p t("chat.nearby_body") %>
             <% else %>
-              <strong><%= t("chat.lobby_title") %></strong>
-              <p><%= t("chat.lobby_body") %></p>
+              <%= tag.strong t("chat.lobby_title") %>
+              <%= tag.p t("chat.lobby_body") %>
             <% end %>
           </div>
         </li>
@@ -58,8 +58,8 @@
     <%# Soft guests are minted every request on brgen; this branch is recovery
         if identity or channel create failed — never a pure loading dead end. %>
     <div class="nearby-chat-widget-empty">
-      <strong><%= t("chat.lobby_title") %></strong>
-      <p><%= t("chat.recovery_body", default: "Could not open the corner room. Use the city lobby instead — no signup.") %></p>
+      <%= tag.strong t("chat.lobby_title") %>
+      <%= tag.p t("chat.recovery_body", default: "Could not open the corner room. Use the city lobby instead — no signup.") %>
       <%= link_to t("chat.open_brgen_channel", default: "Open #brgen"), channel_path("brgen"),
             class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
     </div>

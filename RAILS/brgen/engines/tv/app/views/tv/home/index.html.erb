@@ -2,7 +2,7 @@
 
 <div class="page-header" role="banner" aria-label="TV header" data-visitor-orientation>
   <div>
-    <h1><%= t("tv.home_title") %></h1>
+    <%= tag.h1 t("tv.home_title") %>
     <p class="dim"><%= t("tv.home_blurb") %></p>
   </div>
   <div>
@@ -15,7 +15,7 @@
 
 <% if @live.any? %>
   <section role="region" aria-label="<%= t("tv.live_streams_label") %>">
-    <h2><%= t("tv.live_now") %></h2>
+    <%= tag.h2 t("tv.live_now") %>
     <% @live.each do |b| %>
       <%= render "shared/feed_card",
         name: b.title,

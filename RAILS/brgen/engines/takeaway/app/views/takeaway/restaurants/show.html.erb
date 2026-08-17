@@ -7,7 +7,7 @@
     ])) %>
 
 <div class="page-header" role="banner" aria-label="<%= t("takeaway.restaurant_header") %>">
-  <h1><%= @restaurant.name %></h1>
+  <%= tag.h1 @restaurant.name %>
   <nav role="navigation" aria-label="<%= t("takeaway.restaurant_actions") %>">
     <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
@@ -20,7 +20,7 @@
 </div>
 
 <article>
-  <p><%= @restaurant.description %></p>
+  <%= tag.p @restaurant.description %>
   <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
   <% if @restaurant.place.present? %>
     <p><%= link_to t("maps.on_the_map"), record_public_href(@restaurant.place), class: "btn btn-ghost btn-sm" %></p>
@@ -32,7 +32,7 @@
 
 <% if authenticated? && @restaurant.owner?(Current.user) %>
   <section>
-    <h2><%= t("takeaway.add_menu_item") %></h2>
+    <%= tag.h2 t("takeaway.add_menu_item") %>
     <div class="form-wrap">
       <%= form_with scope: :takeaway_menu_item, url: restaurant_menu_items_path(@restaurant) do |f| %>
         <div class="field"><%= f.text_field :name, placeholder: t("takeaway.item_name"), aria: { label: t("takeaway.item_name") }, required: true %></div>
@@ -48,7 +48,7 @@
 <% end %>
 
 <section id="menu">
-  <h2><%= t("takeaway.menu") %></h2>
+  <%= tag.h2 t("takeaway.menu") %>
   <% if @menu_items.empty? %>
     <%= render "shared/empty_state",
           title: t("empty.no_menu"),
@@ -63,7 +63,7 @@
             <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
           <% end %>
           <div>
-            <strong><%= item.name %></strong> · <%= item.price_display %>
+            <%= tag.strong item.name %> · <%= item.price_display %>
             <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
             <% if item.vegetarian? %><span class="chip"><%= t("takeaway.vegetarian") %></span><% end %>
             <% if item.vegan? %><span class="chip"><%= t("takeaway.vegan") %></span><% end %>
@@ -96,7 +96,7 @@
           <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
         <% end %>
         <div>
-          <strong><%= item.name %></strong> · <%= item.price_display %>
+          <%= tag.strong item.name %> · <%= item.price_display %>
           <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
           <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
         </div>
@@ -109,7 +109,7 @@
 </section>
 
 <section>
-  <h2><%= t("takeaway.reviews_heading") %></h2>
+  <%= tag.h2 t("takeaway.reviews_heading") %>
   <% if @reviews.any? %>
     <% @reviews.each do |r| %>
       <article>
@@ -129,7 +129,7 @@
 
 <% if @can_review %>
 <section>
-  <h2><%= t("takeaway.leave_review") %></h2>
+  <%= tag.h2 t("takeaway.leave_review") %>
   <%= form_with scope: :takeaway_review, url: restaurant_reviews_path(@restaurant) do |f| %>
     <div class="field">
       <%= f.label :rating, t("takeaway.rating") %>

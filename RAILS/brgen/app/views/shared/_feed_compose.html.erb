@@ -105,7 +105,7 @@
         <label>
           <%= f.check_box :nearby %>
           <%= t("feed.post_nearby") %>
-          <small><%= t("feed.post_nearby_hint") %></small>
+          <%= tag.small t("feed.post_nearby_hint") %>
         </label>
       <% end %>
 
@@ -125,9 +125,9 @@
               left" since it shipped; brgen stated the cap and left you to find the
               remainder by hitting it, which is an error message doing the work of a
               status. %>
-          <p><%= t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT,
-                   remaining: Shared::AnonymousPost.new(request: request, user: Current.user).remaining) %></p>
-          <p><%= t("feed.guest_limit_why") %></p>
+          <%= tag.p t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT,
+                   remaining: Shared::AnonymousPost.new(request: request, user: Current.user).remaining) %>
+          <%= tag.p t("feed.guest_limit_why") %>
         <% else %>
           <%= link_to t("feed.advanced_post"), main_app.new_post_path, class: "link-inherit" %>
         <% end %>

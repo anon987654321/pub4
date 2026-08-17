@@ -1,7 +1,7 @@
 <% content_for :title, t("bookmark.saved_title", default: "Saved") %>
 
 <header class="page-header" role="banner">
-  <h1><%= t("bookmark.saved_title", default: "Saved") %></h1>
+  <%= tag.h1 t("bookmark.saved_title", default: "Saved") %>
 </header>
 
 <% if @posts.any? %>

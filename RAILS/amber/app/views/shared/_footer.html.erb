@@ -4,25 +4,25 @@
         nb. With a language switcher below them, untranslated chrome would make
         switching look broken. %>
     <nav aria-label="<%= t("footer.wardrobe") %>">
-      <h2><%= t("footer.wardrobe") %></h2>
+      <%= tag.h2 t("footer.wardrobe") %>
       <%= link_to t("footer.browse"), authenticated? ? items_path : demo_wardrobe_path %>
       <%= link_to t("pages.outfits"), outfits_path if authenticated? %>
       <%= link_to t("footer.ai_styling"), ai_search_path if authenticated? %>
     </nav>
     <nav aria-label="<%= t("footer.about") %>">
-      <h2><%= t("footer.about") %></h2>
+      <%= tag.h2 t("footer.about") %>
       <%= link_to t("app.name"), root_path %>
       <%= link_to t("nav.sign_in"), new_session_path unless authenticated? %>
     </nav>
     <nav aria-label="<%= t("footer.support") %>">
-      <h2><%= t("footer.support") %></h2>
+      <%= tag.h2 t("footer.support") %>
       <%= mail_to legal_contact_email, t("footer.contact") %>
     </nav>
     <%# The only route into the English half of the locale files. Plain links,
         so it works before any JavaScript runs; the choice sticks in the
         session. %>
     <nav aria-label="<%= t("footer.language") %>" class="amber-footer-locales">
-      <h2><%= t("footer.language") %></h2>
+      <%= tag.h2 t("footer.language") %>
       <% available_locales.each do |locale| %>
         <%= link_to t("footer.locales.#{locale}"),
               locale_url(locale),

@@ -2,17 +2,17 @@
 <% content_for :json_ld, json_ld_for(@show, type: :tv_series) %>
 
 <div class="page-header" role="banner">
-  <h1><%= @show.title %></h1>
+  <%= tag.h1 @show.title %>
   <p class="dim"><%= @show.description %></p>
 </div>
 
-<h2><%= t("tv.episodes") %></h2>
+<%= tag.h2 t("tv.episodes") %>
 <% if @episodes.any? %>
   <ul class="episode-list">
     <% @episodes.each do |ep| %>
       <li>
         <%= link_to channel_show_episode_path(@channel, @show, ep.number), class: "episode-link" do %>
-          <strong><%= t("tv.episode_line", number: ep.number, title: ep.title) %></strong>
+          <%= tag.strong t("tv.episode_line", number: ep.number, title: ep.title) %>
           <% if ep.video %>
             <span class="chip"><%= ep.video.duration_formatted %></span>
           <% end %>

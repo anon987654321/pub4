@@ -1,10 +1,10 @@
 <% content_for :title, @port.name %>
 <article aria-label="<%= t("ports.details_label") %>">
   <header aria-label="<%= t("ports.header_label") %>">
-    <h1><%= @port.name %> <small><%= @port.version %></small></h1>
+    <h1><%= @port.name %> <%= tag.small @port.version %></h1>
     <small><%= link_to @port.category.name, category_path(@port.category) %></small>
   </header>
-  <p><%= @port.comment %></p>
+  <%= tag.p @port.comment %>
   <section class="install-panel" aria-labelledby="install-heading">
     <h2 id="install-heading"><%= t("ports.install") %></h2>
     <%= render "shared/copyable", text: "doas pkg_add #{@port.name}" %>
@@ -14,23 +14,23 @@
     <%= read_more(@port.description, lines: 4) %>
   <% end %>
   <dl>
-    <dt><%= t("ports.exact_identity") %></dt><dd><code><%= @port.pkgpath %>@<%= @port.version %></code></dd>
-    <dt><%= t("ports.platform") %></dt><dd><code><%= @port.platform.name %></code> · <%= t("ports.platform_unknown") %></dd>
-    <dt><%= t("ports.maintainer") %></dt><dd><% if @maintainer %><%= link_to @maintainer.name, maintainer_path(@maintainer) %><% else %><span class="data-state"><%= @port[:maintainer].presence || t("ports.unknown") %></span><% end %></dd>
-    <dt><%= t("ports.local_install") %></dt><dd><%= @pkg_info.present? ? t("ports.installed", info: @pkg_info) : t("ports.not_installed") %></dd>
-    <dt><%= t("ports.pkgpath") %></dt><dd><code><%= @port.pkgpath %></code></dd>
-    <% if @port.homepage.present? %><dt><%= t("ports.homepage") %></dt><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
+    <%= tag.dt t("ports.exact_identity") %><dd><code><%= @port.pkgpath %>@<%= @port.version %></code></dd>
+    <%= tag.dt t("ports.platform") %><dd><code><%= @port.platform.name %></code> · <%= t("ports.platform_unknown") %></dd>
+    <%= tag.dt t("ports.maintainer") %><dd><% if @maintainer %><%= link_to @maintainer.name, maintainer_path(@maintainer) %><% else %><span class="data-state"><%= @port[:maintainer].presence || t("ports.unknown") %></span><% end %></dd>
+    <%= tag.dt t("ports.local_install") %><%= tag.dd @pkg_info.present? ? t("ports.installed", info: @pkg_info) : t("ports.not_installed") %>
+    <%= tag.dt t("ports.pkgpath") %><dd><code><%= @port.pkgpath %></code></dd>
+    <% if @port.homepage.present? %><%= tag.dt t("ports.homepage") %><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
     <% update_age = @port.last_updated && (Date.current - @port.last_updated).to_i %>
-    <dt><%= t("ports.updated") %></dt><dd><span class="data-state <%= update_age && update_age > 365 ? "data-state--stale" : "" %>"><%= @port.last_updated&.strftime("%Y-%m-%d") || t("ports.unknown") %><%= " #{t("ports.stale", count: update_age)}" if update_age && update_age > 365 %></span></dd>
+    <%= tag.dt t("ports.updated") %><dd><span class="data-state <%= update_age && update_age > 365 ? "data-state--stale" : "" %>"><%= @port.last_updated&.strftime("%Y-%m-%d") || t("ports.unknown") %><%= " #{t("ports.stale", count: update_age)}" if update_age && update_age > 365 %></span></dd>
   </dl>
 
   <% if @dependencies.any? %>
-    <h2><%= t("ports.requires") %></h2>
+    <%= tag.h2 t("ports.requires") %>
     <ul aria-label="<%= t("ports.dependencies_label") %>">
       <% @dependencies.each do |dep| %>
         <li>
           <%= link_to dep.depends_on.name, port_path(dep.depends_on) %>
-          <small><%= dep.dep_type %></small>
+          <%= tag.small dep.dep_type %>
         </li>
       <% end %>
     </ul>
@@ -39,7 +39,7 @@
   <%= render "ports/dependency_tree", tree: @dependency_tree, heading: t("ports.tree_heading") %>
 
   <% if @rdeps.any? %>
-    <h2><%= t("ports.required_by") %></h2>
+    <%= tag.h2 t("ports.required_by") %>
     <ul aria-label="<%= t("ports.rdeps_label") %>">
       <% @rdeps.each do |reverse| %>
         <li><%= link_to reverse.name, port_path(reverse) %></li>
@@ -48,7 +48,7 @@
   <% end %>
 
   <section aria-label="<%= t("ports.explore_section") %>">
-    <h2><%= t("ports.explore") %></h2>
+    <%= tag.h2 t("ports.explore") %>
     <p id="port-explore-summary"><%= @explore_summary %></p>
     <p><%= link_to t("ports.json_summary"), explore_port_path(@port), data: { turbo: false } %></p>
   </section>
@@ -67,7 +67,7 @@
   <% end %>
 
   <% if @updates.any? %>
-    <h2><%= t("ports.version_history") %></h2>
+    <%= tag.h2 t("ports.version_history") %>
     <ul>
       <% @updates.each do |update| %>
         <li>
@@ -83,7 +83,7 @@
     </ul>
   <% end %>
 
-  <h2><%= t("ports.advisories") %></h2>
+  <%= tag.h2 t("ports.advisories") %>
   <% if @advisories&.any? %>
     <ul>
       <% @advisories.each do |adv| %>
@@ -95,7 +95,7 @@
           <% else %>
             <%= adv.identifier %>
           <% end %>
-          <small><%= adv.severity %></small>
+          <%= tag.small adv.severity %>
           <small><%= adv.published_at&.strftime("%Y-%m-%d") %></small>
         </li>
       <% end %>
@@ -105,8 +105,8 @@
   <% end %>
   <%= button_to t("ports.crossref_nvd"), crossref_cves_port_path(@port), method: :post %>
 
-  <h2><%= t("ports.master_review") %></h2>
-  <p><%= t("ports.master_review_lead_html") %></p>
+  <%= tag.h2 t("ports.master_review") %>
+  <%= tag.p t("ports.master_review_lead_html") %>
   <%= button_to t("ports.run_master_review"), review_port_path(@port), method: :post %>
 
   <nav role="navigation" aria-label="<%= t("ports.actions_label") %>">

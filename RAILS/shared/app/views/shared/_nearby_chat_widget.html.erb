@@ -53,18 +53,18 @@
       <% if (chat_frame_src = ambient_chat_frame_path) %>
         <%= turbo_frame_tag "nearby-chat-widget-frame", src: chat_frame_src, class: "nearby-chat-widget-frame" do %>
           <div class="nearby-chat-widget-empty">
-            <strong><%= t("chat.title") %></strong>
-            <p><%= t("chat.loading") %></p>
+            <%= tag.strong t("chat.title") %>
+            <%= tag.p t("chat.loading") %>
           </div>
         <% end %>
       <% elsif respond_to?(:messages_path) %>
         <div class="nearby-chat-widget-empty">
-          <strong><%= t("nav.messages") %></strong>
+          <%= tag.strong t("nav.messages") %>
           <% if respond_to?(:authenticated?) && authenticated? %>
-            <p><%= t("chat.open_inbox") %></p>
+            <%= tag.p t("chat.open_inbox") %>
             <%= link_to t("chat.open_messages"), messages_path, class: "nearby-chat-widget-cta" %>
           <% else %>
-            <p><%= t("chat.sign_in_inbox") %></p>
+            <%= tag.p t("chat.sign_in_inbox") %>
             <% if respond_to?(:new_session_path) %>
               <%= link_to t("nav.sign_in"), new_session_path, class: "nearby-chat-widget-cta" %>
             <% end %>
@@ -73,8 +73,8 @@
         </div>
       <% else %>
         <div class="nearby-chat-widget-empty">
-          <strong><%= t("chat.on_brgen") %></strong>
-          <p><%= t("chat.lobby_body") %></p>
+          <%= tag.strong t("chat.on_brgen") %>
+          <%= tag.p t("chat.lobby_body") %>
           <%= link_to t("chat.open_brgen_channel"), "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
         </div>
       <% end %>

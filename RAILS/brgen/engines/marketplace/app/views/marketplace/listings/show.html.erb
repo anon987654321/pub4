@@ -11,7 +11,7 @@
 <div class="page-header marketplace-listing-header">
   <div>
     <p class="dim"><%= t("marketplace.listing_kicker", category: @listing.category&.name || t("marketplace.listing")) %></p>
-    <h1><%= @listing.title %></h1>
+    <%= tag.h1 @listing.title %>
   </div>
   <nav role="navigation" aria-label="<%= t("aria.listing_actions") %>" class="marketplace-actions">
     <% if Current.user.present? && Current.user == @listing.user %>
@@ -125,9 +125,9 @@
     <% if @listing.orders.any? %>
       <% @listing.orders.includes(:buyer).each do |order| %>
         <article>
-          <strong><%= order.buyer&.display_name || "anon" %></strong>
+          <%= tag.strong order.buyer&.display_name || "anon" %>
           <span class="dim"> — <%= order.status %></span>
-          <% if order.message.present? %><p><%= order.message %></p><% end %>
+          <% if order.message.present? %><%= tag.p order.message %><% end %>
           <% if order.status == "pending" %>
             <div class="cluster mt-8">
               <%= button_to t("marketplace.accept"), listing_order_path(@listing, order), params: { accept: true }, method: :patch, class: "btn btn-primary btn-sm" %>

@@ -11,8 +11,8 @@
     ])) %>
 
 <header class="community-header" role="banner" aria-label="<%= t("community.header") %>">
-  <h1><%= @community.name %></h1>
-  <% if @community.description.present? %><p><%= @community.description %></p><% end %>
+  <%= tag.h1 @community.name %>
+  <% if @community.description.present? %><%= tag.p @community.description %><% end %>
   <p><%= t("community.posts_count", count: @community.posts.count) %> · <%= t("community.members_count", count: @community.members_count) %></p>
   <%# user_id, not user: comparing the association is a lazy read on a
       strict-loading record. Preloaded in the controller too, but the id
@@ -41,7 +41,7 @@
 
 <% if @community.rule_list.any? %>
   <section class="community-rules" role="region" aria-label="<%= t("community.rules") %>">
-    <h2><%= t("community.rules") %></h2>
+    <%= tag.h2 t("community.rules") %>
     <ol>
       <% @community.rule_list.each do |rule| %><li><%= rule %></li><% end %>
     </ol>
@@ -91,7 +91,7 @@
 
 <% if @other_communities.present? %>
   <aside>
-    <h2><%= t("communities.also_in_city", city: city_name) %></h2>
+    <%= tag.h2 t("communities.also_in_city", city: city_name) %>
     <ul>
       <% @other_communities.each do |community| %>
         <li><%= link_to community.name, community_path(community) %></li>
@@ -101,8 +101,8 @@
 <% end %>
 
 <aside>
-  <h2><%= t("communities.about", name: @community.name) %></h2>
-  <p><%= @community.description.presence || "No description." %></p>
+  <%= tag.h2 t("communities.about", name: @community.name) %>
+  <%= tag.p @community.description.presence || "No description." %>
   <% if Current.user.present? %>
     <p><%= link_to t("nav.new_post"), new_community_post_path(@community) %></p>
   <% end %>

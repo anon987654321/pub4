@@ -2,7 +2,7 @@
 <% if tree.any? %>
   <% if heading.present? %>
     <section aria-label="<%= heading %>">
-      <h2><%= heading %></h2>
+      <%= tag.h2 heading %>
       <ul role="tree" aria-label="<%= heading %>">
         <% tree.each do |node| %>
           <li role="treeitem" aria-label="<%= node[:label] %>">
