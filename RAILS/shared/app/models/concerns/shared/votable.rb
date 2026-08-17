@@ -19,7 +19,14 @@ module Shared
     #
     # strict_loading did not catch it because nothing was lazily *loaded* — an
     # aggregate on an association is a fresh query, not an association load.
+    # A table carrying its own score column is the authority; Vote maintains it
+    # on write. Posts have one because `hot` and `top` order by it and an
+    # aggregate cannot be indexed. Comments and Takeaway::Review do not, because
+    # nothing ranks them — they read a score one record at a time, where the sum
+    # is a single cheap query and a counter would be a second thing to keep true.
     def score
+      return self[:score].to_i if has_attribute?(:score)
+
       votes.loaded? ? votes.sum(&:value) : votes.sum(:value)
     end
 

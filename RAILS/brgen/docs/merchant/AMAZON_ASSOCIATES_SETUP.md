@@ -32,7 +32,7 @@ Legacy aliases still accepted: `AMAZON_ACCESS_KEY` / `AMAZON_SECRET_KEY` map to 
 
 Replace:
 
-- `RAILS/brgen/app/services/amazon_associates.rb` ← new file in this folder  
+- `RAILS/shared/app/services/shared/amazon_associates.rb` ← new file in this folder  
 - Add `RAILS/brgen/lib/tasks/affiliate_amazon.rake` ← new rake tasks  
 
 `Shared::AmazonMarketplace` already has SE/NL/FR/DE — no change required unless you want different SERVED_BY defaults.
@@ -94,6 +94,6 @@ bin/rails affiliate:import          # pulls Amazon + TradeDoubler
 
 | File | Action |
 |------|--------|
-| `amazon_associates.rb` | Replace `RAILS/brgen/app/services/amazon_associates.rb` |
+| `amazon_associates.rb` | Replace `RAILS/shared/app/services/shared/amazon_associates.rb` |
 | `affiliate_amazon.rake` | Add as `RAILS/brgen/lib/tasks/affiliate_amazon.rake` |
 | `SETUP.md` | This guide |
