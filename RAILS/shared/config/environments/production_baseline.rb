@@ -35,7 +35,15 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   end
 
   config.active_support.report_deprecations = false
-  config.cache_store = :solid_cache_store
+  # Compressed, because on vm23 the scarce resource is memory and the spare one
+  # is CPU. brgen's production cache is 56M of mostly rendered HTML, which is
+  # about as compressible as data gets, and every megabyte of it competes for a
+  # page cache that had 155M to work with while swap sat at 91%. The box idles at
+  # 84% on one core, so the deflate is paid out of what is already spare.
+  #
+  # 1KB threshold: below that the header costs more than the saving, and cache
+  # entries that small are counters rather than fragments.
+  config.cache_store = :solid_cache_store, { compress: true, compress_threshold: 1.kilobyte }
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
