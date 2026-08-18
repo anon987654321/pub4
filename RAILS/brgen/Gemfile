@@ -54,6 +54,9 @@ group :development, :test do
   gem 'brakeman'
   gem 'bundler-audit'
   gem 'rubocop-rails-omakase'
+
+  gem 'bullet', require: false
+  gem 'rack-mini-profiler', require: false
 end
 
 group :test do
