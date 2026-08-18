@@ -97,8 +97,13 @@ module Master
 
           def freeze_mutable_constants(src)
             changed = false
-            out = src.lines.map do |line|
+            lines = src.lines
+            out = lines.each_with_index.map do |line, index|
               next line unless line.match?(SINGLE_LINE_MUTABLE_CONST_RE)
+              # A leading-dot continuation below means the literal heads a
+              # method chain — .freeze there freezes a temporary the chain
+              # immediately replaces (OPENBSD/health_check.rb CURL).
+              next line if lines[index + 1]&.lstrip&.start_with?(".")
 
               changed = true
               line.chomp.rstrip + ".freeze\n"
@@ -150,6 +155,11 @@ module Master
             lines = src.lines
             shebang_idx = lines.index { |line| line.start_with?("#!") }
             return src unless shebang_idx
+            # The rule is STRICT_MODE_ZSH. sh and ksh scripts written to
+            # tolerate failure (cron drains, uptime checks) change behaviour
+            # under -e, and pipefail is not portable sh — the shebang, not the
+            # extension, says which shell this is.
+            return src unless lines[shebang_idx].match?(/\bzsh\b/)
 
             lines.insert(shebang_idx + 1, STRICT_MODE)
             @transforms << :strict_mode

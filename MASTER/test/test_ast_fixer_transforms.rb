@@ -132,6 +132,73 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:content], "const label = `Hello ${user.name}!`;"
   end
 
+  # Every case in this block shipped as a live break on 2026-08-18, out of one
+  # /through pass over OPENBSD: verbatim /etc mirrors re-indented, cron sh/ksh
+  # scripts given -euo pipefail, Markdown hard breaks stripped, a chained
+  # constant frozen mid-expression, and three executable scripts written back
+  # 0644.
+  def test_fixer_leaves_verbatim_openbsd_mirrors_alone
+    conf = "#\tcomment with tab\ndefault:\\\n\t:path=/usr/bin:\\\n\t:umask=022:\n"
+    result = fix("OPENBSD/etc/login.conf", conf)
+
+    assert_equal conf, result[:content]
+    assert_empty result[:transforms]
+  end
+
+  def test_strict_mode_reads_the_shebang_not_the_extension
+    ksh = "#!/bin/ksh\ncurl -fsS https://brgen.no/up || fail=1\n"
+    result = fix("uptime-check.sh", ksh)
+    refute_includes result[:content], "set -euo pipefail"
+
+    zsh = "#!/usr/bin/env zsh\nprint hi\n"
+    result = fix("deploy.sh", zsh)
+    assert_includes result[:content], "set -euo pipefail"
+  end
+
+  def test_expand_tabs_skips_tab_significant_files
+    make = "all:\n\techo build\n"
+    result = fix("Makefile", make)
+    assert_includes result[:content], "\techo build"
+
+    conf = "/var/log/daemon\t640  5\n"
+    result = fix("newsyslog.conf", conf)
+    assert_includes result[:content], "\t640"
+  end
+
+  def test_markdown_hard_breaks_survive_whitespace_strip
+    md = "**Status:** accepted  \n**Context:** brgen hosts many verticals.\nplain trailing \n   \n"
+    result = fix("DECISIONS.md", md)
+
+    assert_includes result[:content], "**Status:** accepted  \n", "two-space hard break stripped"
+    assert_includes result[:content], "plain trailing\n"
+    refute_match(/^[ \t]+$/, result[:content])
+  end
+
+  def test_freeze_declines_a_constant_that_heads_a_chain
+    src = <<~RUBY
+      # frozen_string_literal: true
+
+      CURL = [ENV["CURL"], "/usr/bin/curl"]
+             .compact.find { |path| File.executable?(path) } || "curl"
+    RUBY
+    result = fix("health.rb", src)
+
+    refute_includes result[:content], "].freeze\n"
+    refute_includes result[:transforms], :freeze_constants
+  end
+
+  def test_write_back_preserves_the_executable_bit
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "cron-job.zsh")
+      File.write(path, "#!/usr/bin/env zsh\nprint hi\n")
+      File.chmod(0o755, path)
+      Master::Review::Scan::AstFixer.fix(path, File.read(path))
+
+      assert_equal 0o755, File.stat(path).mode & 0o777, "executable bit lost on write_back"
+      assert_includes File.read(path), "set -euo pipefail"
+    end
+  end
+
   def test_keeps_reassigned_var
     result = fix("counter.js", <<~JS)
       var count = 0;

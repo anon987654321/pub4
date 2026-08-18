@@ -64,7 +64,19 @@ module Master
           @transforms = []
         end
 
+        # OPENBSD/etc, /usr and /var mirror files installed verbatim on the VPS
+        # — newsyslog.conf's own header says taken verbatim from etc.tgz and
+        # validated before installing, and tabs are load-bearing in
+        # termcap-style files like login.conf. A rewrite here breaks
+        # diffability against upstream at best and a daemon at worst; on
+        # 2026-08-18 one pass re-indented login.conf, newsyslog.conf and an
+        # rc.d script and injected strict mode into cron scripts written to
+        # tolerate failure.
+        VERBATIM_MIRROR_RE = %r{/OPENBSD/(?:etc|usr|var)/}
+
         def apply
+          return Result.new(path: @path, changed: false, transforms: []) if verbatim_mirror?
+
           out = @source
           out = apply_strategies(out)
           changed = out != @source
@@ -192,8 +204,13 @@ module Master
           depth.zero?
         end
 
+        # Tabs are syntax in make recipes and convention in .conf mirrors —
+        # expanding them is a break, not a cleanup.
+        TAB_SIGNIFICANT_RE = /\A(?:makefile.*|.*\.mk|.*\.conf)\z/i
+
         def expand_tabs(src)
           return src unless src.include?("\t")
+          return src if TAB_SIGNIFICANT_RE.match?(File.basename(@path.to_s))
 
           out = src.gsub("\t", "  ")
           @transforms << :expand_tabs if out != src
@@ -207,7 +224,14 @@ module Master
         end
 
         def strip_trailing_whitespace(src)
-          out = src.gsub(/[ \t]+(?=\n|\z)/, "")
+          out = if markdown?
+                  # Two or more trailing spaces are a Markdown hard line
+                  # break. Strip whitespace-only lines and single stray
+                  # blanks; leave the breaks standing.
+                  src.gsub(/^[ \t]+$/, "").gsub(/(?<=[^ \t\n])[ \t](?=\n|\z)/, "")
+                else
+                  src.gsub(/[ \t]+(?=\n|\z)/, "")
+                end
           @transforms << :trailing_whitespace if out != src
           out
         end
@@ -226,6 +250,10 @@ module Master
 
         def ruby? = File.extname(@path).downcase == ".rb"
 
+        def markdown? = File.extname(@path).downcase == ".md"
+
+        def verbatim_mirror? = @path.to_s.match?(VERBATIM_MIRROR_RE)
+
         def shell? = %w[.zsh .sh .bash].include?(File.extname(@path).downcase)
 
         def html? = %w[.html .erb .html.erb].any? { |ext| @path.to_s.downcase.end_with?(ext) }
@@ -241,6 +269,10 @@ module Master
         def write_back(content)
           temporary_path = "#{@path}.ast_fix.#{Process.pid}.tmp"
           File.write(temporary_path, content, encoding: "UTF-8")
+          # rename replaces the inode, so the original's mode must travel with
+          # the content — three executable cron scripts came back 0644 from
+          # one pass before this line existed.
+          File.chmod(File.stat(@path).mode, temporary_path) if File.exist?(@path)
           File.rename(temporary_path, @path)
         rescue StandardError => e
           delete_temporary_path(temporary_path) if defined?(temporary_path)
