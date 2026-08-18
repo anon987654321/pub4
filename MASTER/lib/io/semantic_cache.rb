@@ -102,9 +102,43 @@ module Master
       private
 
       def cacheable_result?(result)
+        return false if phantom?(result)
         return true unless defined?(Master::Result::Err) && result.is_a?(Master::Result::Err)
 
         !TRANSIENT_ERROR_CATEGORIES.include?(result.category)
+      end
+
+      # A response the phantom guard rejects must not be stored, because storing
+      # it makes the rejection the permanent answer to that prompt. The guard
+      # runs after this cache returns, so a degenerate response is served again
+      # on the next identical question, trips the same detector again, and the
+      # ladder in PhantomRecovery — which counts consecutive phantoms — climbs
+      # to a halt with no clean response in between to reset it. Measured on
+      # vm23: the same question halted on the second and third ask while the
+      # first, on a cache miss, answered correctly.
+      #
+      # Only a positively identified degenerate string refuses the cache.
+      # Anything this cannot read as text is stored as before, so an unfamiliar
+      # result shape loses caching rather than silently skipping it.
+      def phantom?(result)
+        return false unless defined?(Master::PhantomRecovery)
+
+        text = cacheable_text(result)
+        return false if text.nil? || text.empty?
+
+        # bus: nil by default, so probing here publishes no phantom:detected.
+        !Master::PhantomRecovery.detect(text).nil?
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Io::SemanticCache.phantom?") if defined?(Master::Ground::Swallow)
+        false
+      end
+
+      def cacheable_text(result)
+        value = result.respond_to?(:value) ? result.value : result
+        case value
+        when String then value
+        when Hash then value[:rendered].is_a?(String) ? value[:rendered] : nil
+        end
       end
 
       def cache_key(prompt, model) = Digest::SHA256.hexdigest("#{prompt}::#{model}")
