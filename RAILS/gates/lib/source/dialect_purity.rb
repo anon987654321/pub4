@@ -58,7 +58,13 @@ module Deploy
       shell_body = File.read(shell)
       @result.fail("dialect_purity: _vertical_shell missing $vertical-accents map") unless shell_body.include?("$vertical-accents")
 
-      Dir.glob(File.join(RAILS, "brgen/app/assets/stylesheets/_vertical_*.scss")).each do |path|
+      # The verticals moved to engines/ and their sheets went with them: the host
+      # keeps _vertical_shell and messenger, the other twelve _vertical_*.scss
+      # live under engines/<name>/app/assets/stylesheets. Globbing the host alone
+      # left this gate reading two files and calling it the dialect.
+      vertical_sheets = Dir.glob(File.join(RAILS, "brgen/app/assets/stylesheets/_vertical_*.scss")) +
+                        Dir.glob(File.join(RAILS, "brgen/engines/*/app/assets/stylesheets/_vertical_*.scss"))
+      vertical_sheets.each do |path|
         next if path.end_with?("_vertical_shell.scss")
 
         body = File.read(path)
@@ -69,7 +75,9 @@ module Deploy
     end
 
     def check_no_twitter_blue
-      Dir.glob(File.join(RAILS, "{brgen,amber,bsdports,shared}/app/assets/stylesheets/**/*.{scss,css}")).each do |path|
+      sheets = Dir.glob(File.join(RAILS, "{brgen,amber,bsdports,shared}/app/assets/stylesheets/**/*.{scss,css}")) +
+               Dir.glob(File.join(RAILS, "brgen/engines/*/app/assets/stylesheets/**/*.{scss,css}"))
+      sheets.each do |path|
         next if path.include?("/builds/")
         body = File.read(path)
         if body.match?(/#1d9bf0|#1DA1F2/i)
