@@ -21,6 +21,9 @@ class Story < ApplicationRecord
   belongs_to :user
 
   has_many :story_views, dependent: :destroy
+  # Replies are messages in the pair's own DM thread, so they outlive the story:
+  # :nullify, because the sweep takes the photo and not the conversation.
+  has_many :replies, class_name: "Message", dependent: :nullify
   has_many :viewers, through: :story_views, source: :user
 
   has_one_attached :media

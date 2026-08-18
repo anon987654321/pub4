@@ -35,6 +35,16 @@
     </nav>
   <% end %>
 
+  <%# Answering goes to the pair's DM thread, so it is still there tomorrow when
+      the story is not. The author has nobody to answer but themselves. %>
+  <% if Current.user && Current.user.id != @story.user_id %>
+    <%= form_with url: story_replies_path(@story), method: :post, class: "story-reply" do |f| %>
+      <%= f.label :content, t("stories.reply_label") %>
+      <%= f.text_field :content, required: true, maxlength: 500, placeholder: t("stories.reply_placeholder") %>
+      <%= f.submit t("actions.send"), class: "btn btn-sm" %>
+    <% end %>
+  <% end %>
+
   <%# The viewer list is the author's alone. Everyone else sees the count. %>
   <% if @viewers %>
     <section role="region" aria-label="<%= t("stories.seen_by") %>">

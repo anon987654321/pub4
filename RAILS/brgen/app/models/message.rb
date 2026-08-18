@@ -54,6 +54,11 @@ class Message < ApplicationRecord
   # request, and shared with every other message carrying the same URL.
   belongs_to :link_preview, optional: true
 
+  # The story this message answers, if it is a story reply. The story expires in
+  # 24 hours and the reply does not, so the thread keeps the answer after the
+  # thing it answered is gone.
+  belongs_to :story, optional: true
+
   after_create :attach_link_preview
   after_create :deliver_receipts
   after_create :clear_typing_indicators

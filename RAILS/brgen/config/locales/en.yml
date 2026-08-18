@@ -253,6 +253,8 @@ en:
     seen_count:
       one: "%{count} has seen it"
       other: "%{count} have seen it"
+    reply_label: Reply to this story
+    reply_placeholder: Send a reply
   events:
     title: What is on
     new: New event
@@ -371,6 +373,7 @@ en:
     forward: Forward
     forward_to: Forward to
     forwarded: Forwarded
+    replying_to_story: Replied to your story
     new_group: New group
     group_name: Group name
     group_members_label: People
@@ -1341,6 +1344,9 @@ en:
     wiki_created: Page created.
     wiki_updated: Page updated.
     wiki_reverted: Page restored.
+    story_replied: Reply sent.
+    story_reply_self: That is your own story.
+    story_reply_failed: That reply did not send.
     crosspost_failed: That crosspost did not go through.
     community_not_postable: You cannot post in that community.
     message_forwarded: Message forwarded.

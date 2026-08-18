@@ -27,6 +27,9 @@
     <% receipt = message.message_receipts.find_by(user: Current.user) %>
     <% if receipt&.read? %><span class="read-receipt">· <%= t("messages.read") %></span><% end %>
   </header>
+  <% if message.story_id %>
+    <p class="msg-reply-context"><%= t("messages.replying_to_story") %></p>
+  <% end %>
   <% if message.forwarded? %>
     <p class="msg-forwarded"><%= t("messages.forwarded") %></p>
   <% end %>

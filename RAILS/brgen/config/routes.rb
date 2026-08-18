@@ -95,7 +95,10 @@ Rails.application.routes.draw do
 
   # Stories delete themselves after 24h; `alive` hides an expired one from every
   # surface whether or not the sweep has run yet.
-  resources :stories, only: %i[index show new create destroy]
+  resources :stories, only: %i[index show new create destroy] do
+    # A reply is a DM carrying the story it answers, so it outlives the story.
+    resources :replies, only: [ :create ], controller: "story_replies"
+  end
 
   # Cancelling is a member-facing state change, not a delete: people have it in
   # their calendar. RSVP is nested because it only exists against an event.

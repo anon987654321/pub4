@@ -167,8 +167,18 @@ class Conversation < ApplicationRecord
     "WHERE m.conversation_id = conversations.id), conversations.created_at) DESC"
   )
 
+  # Two subqueries, not two calls to for_user. `for_user(a).for_user(b)` reads
+  # as an intersection and is not one: both scopes join the SAME association, so
+  # Rails collapses them into one join and ANDs the predicates on it —
+  # `user_id = a AND user_id = b` on a single row, which no row satisfies. This
+  # method therefore always answered nil, find_or_create_direct always created,
+  # and every pair of people got a fresh thread each time they opened a DM from
+  # a different button, splitting their history across duplicates.
   def self.direct_between(a, b)
-    for_user(a).for_user(b).where(conversation_type: "direct").first
+    where(conversation_type: "direct")
+      .where(id: ConversationParticipant.where(user_id: a.id).select(:conversation_id))
+      .where(id: ConversationParticipant.where(user_id: b.id).select(:conversation_id))
+      .order(:id).first
   end
 
   def self.find_or_create_direct(a, b)

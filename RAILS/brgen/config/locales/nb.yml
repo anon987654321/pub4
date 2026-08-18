@@ -254,6 +254,8 @@ nb:
     seen_count:
       one: "%{count} har sett den"
       other: "%{count} har sett den"
+    reply_label: Svar på historien
+    reply_placeholder: Send et svar
   events:
     title: Hva skjer
     new: Nytt arrangement
@@ -372,6 +374,7 @@ nb:
     forward: Videresend
     forward_to: Videresend til
     forwarded: Videresendt
+    replying_to_story: Svarte på historien din
     new_group: Ny gruppe
     group_name: Gruppenavn
     group_members_label: Deltakere
@@ -1346,6 +1349,9 @@ nb:
     wiki_created: Siden er laget.
     wiki_updated: Siden er oppdatert.
     wiki_reverted: Siden er gjenopprettet.
+    story_replied: Svaret er sendt.
+    story_reply_self: Det er din egen historie.
+    story_reply_failed: Svaret ble ikke sendt.
     crosspost_failed: Kryssposten gikk ikke gjennom.
     community_not_postable: Du kan ikke poste i den communityen.
     message_forwarded: Meldingen er videresendt.

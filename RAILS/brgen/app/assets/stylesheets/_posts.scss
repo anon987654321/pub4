@@ -204,3 +204,12 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .post-crosspost {
   margin-block: var(--space-3);
 }
+
+/* Answering a story: one line under the photo, in the viewer's own chrome. */
+.story-reply {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-block: var(--space-3);
+}

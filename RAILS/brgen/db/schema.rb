@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_18_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_150000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -775,6 +775,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_140000) do
     t.string "message_type"
     t.integer "parent_id"
     t.integer "sender_id"
+    t.integer "story_id"
     t.datetime "updated_at", null: false
     t.index ["conversation_id", "deleted_at"], name: "index_messages_on_conversation_id_and_deleted_at"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
@@ -782,6 +783,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_140000) do
     t.index ["link_preview_id"], name: "index_messages_on_link_preview_id"
     t.index ["parent_id"], name: "index_messages_on_parent_id"
     t.index ["sender_id"], name: "index_messages_on_sender_id"
+    t.index ["story_id"], name: "index_messages_on_story_id"
   end
 
   create_table "moderation_flags", force: :cascade do |t|
@@ -1717,6 +1719,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_140000) do
   add_foreign_key "messages", "link_previews"
   add_foreign_key "messages", "messages", column: "forwarded_from_id"
   add_foreign_key "messages", "messages", column: "parent_id"
+  add_foreign_key "messages", "stories"
   add_foreign_key "moderation_flags", "users"
   add_foreign_key "moderation_reports", "users"
   add_foreign_key "neighborhoods", "cities"
