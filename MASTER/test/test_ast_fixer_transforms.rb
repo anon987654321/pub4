@@ -109,6 +109,29 @@ class TestAstFixerTransforms < Minitest::Test
                  "produced a template literal called as a function")
   end
 
+  # Prose about code contains code. A JSDoc continuation line reading
+  # `drain queue on 'online' + SW 'sync'` is a concat chain as far as
+  # CONCAT_CHAIN can tell, and converting it rewrote documentation into a
+  # template literal in web/public/offline_memory.js on 2026-08-18 — the
+  # comment-reading defect Scanner Conventions #1 records, on the writer
+  # side. A comment cannot need a code fix.
+  def test_lexical_js_transforms_leave_comments_alone
+    result = fix("queue.js", <<~JS)
+      /*
+       * render; drain queue on 'online' + SW 'sync' if available.
+       * check a && a.b before use; for (const k in xs) is fine here.
+       */
+      const label = "Hello " + user.name + "!"; // greet with "Hi " + name
+      // also fine: base + "/path/" + id
+    JS
+
+    assert_includes result[:content], "drain queue on 'online' + SW 'sync' if available."
+    assert_includes result[:content], "check a && a.b before use; for (const k in xs) is fine here."
+    assert_includes result[:content], %(// also fine: base + "/path/" + id)
+    assert_includes result[:content], %(// greet with "Hi " + name)
+    assert_includes result[:content], "const label = `Hello ${user.name}!`;"
+  end
+
   def test_keeps_reassigned_var
     result = fix("counter.js", <<~JS)
       var count = 0;

@@ -67,10 +67,26 @@ module Master
             declared = src.scan(/\bvar\s+([A-Za-z_$][\w$]*)\b/).flatten
             reassigned = declared.select { |name| src.match?(/(?<!\bvar\s)(?<!\bconst\s)(?<!\blet\s)\b#{Regexp.escape(name)}\s*=(?!=)/) }
             out = src.gsub(/\bvar\s+([A-Za-z_$][\w$]*)/) do |match|
+              next match if comment_context?(Regexp.last_match)
+
               reassigned.include?(Regexp.last_match(1)) ? match : match.sub("var", "const")
             end
             @transforms << :no_var if out != src
             out
+          end
+
+          # Prose about code contains code. These transforms read raw source, so
+          # a JSDoc line quoting `'online' + SW` is a concat chain to
+          # CONCAT_CHAIN, and converting it rewrites documentation
+          # (web/public/offline_memory.js). A comment cannot need a code fix:
+          # decline any match whose line is a `//` comment, a block-comment
+          # opener, a `*` continuation, or sits after a whitespace-preceded `//`
+          # — the whitespace requirement keeps `http://` inside string URLs
+          # convertible.
+          def comment_context?(md)
+            pre = md.pre_match
+            line = pre[(pre.rindex("\n") || -1) + 1..]
+            line.match?(%r{\A\s*(?:\*|/\*)}) || line.match?(%r{(?:\A|\s)//})
           end
 
           # for-in yields KEYS, for-of yields VALUES, so this rewrite is only
@@ -86,6 +102,8 @@ module Master
           def convert_for_in_arrays(src)
             changed = false
             out = src.gsub(FOR_IN_HEAD) do |match|
+              next match if comment_context?(Regexp.last_match)
+
               variable = Regexp.last_match(1)
               collection = Regexp.last_match(2)
               next match if indexes_collection?(src, collection:, variable:)
@@ -137,6 +155,7 @@ module Master
           def convert_string_concat(src)
             changed = false
             out = src.gsub(CONCAT_CHAIN) do |match|
+              next match if comment_context?(Regexp.last_match)
               next match if Regexp.last_match.post_match.start_with?("(")
 
               literal = template_literal_for(match)
@@ -188,6 +207,8 @@ module Master
 
           def link_optional_chain(src)
             src.gsub(OPTIONAL_LINK) do |match|
+              next match if comment_context?(Regexp.last_match)
+
               base = Regexp.last_match(1)
               guarded = Regexp.last_match(2)
               property = Regexp.last_match(3)
