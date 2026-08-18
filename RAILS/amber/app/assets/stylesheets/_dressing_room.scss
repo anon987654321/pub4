@@ -40,7 +40,11 @@
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    /* contain, not cover: these are garment cut-outs, and cover crops a
+       silhouette to the zone box — a coat loses its shoulders and a pair of
+       boots loses one boot. A photograph with a background still fills the box
+       the way it always did, it just is not cropped to it. */
+    object-fit: contain;
     opacity: 0;
     transition: opacity var(--transition-fast) var(--ease-out);
   }

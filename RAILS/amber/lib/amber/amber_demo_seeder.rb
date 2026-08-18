@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "stringio"
+
 module Amber
   # Credible female capsule wardrobe demo — safe to run idempotently on production.
   class AmberDemoSeeder
@@ -108,13 +110,38 @@ module Amber
           last_worn_on: rand(1..21).days.ago.to_date
         )
         item.save!
-        if attach_media && row[:image] && !item.photos.attached?
-          Shared::DemoMedia.attach_remote_postpro!(
-            item, :photos, seed: row[:image], preset: "portrait", width: 720, height: 960
-          )
-        end
+        attach_photo!(item, row) if attach_media && row[:image]
         index[row[:title]] = item
       end
+    end
+
+    # A drawn cut-out first, a photograph only if this box cannot rasterise one.
+    #
+    # The photographs came from picsum keyed by the garment's name, which is a
+    # random landscape: the mannequin on the landing page wore a doorway, a
+    # street scene and a beach, because the zone overlays are object-fit boxes
+    # over the figure and a photograph fills them edge to edge.
+    def attach_photo!(item, row)
+      png = GarmentSilhouette.png(title: row[:title], color: row[:color], category: row[:category])
+      if png.nil?
+        return true if item.photos.attached?
+
+        return Shared::DemoMedia.attach_remote_postpro!(
+          item, :photos, seed: row[:image], preset: "portrait", width: 720, height: 960
+        )
+      end
+      return true if silhouette_attached?(item)
+
+      # Replaces rather than skips: every demo item already wears a picsum
+      # photograph, and leaving it there is the bug. Scoped to the demo user's
+      # own wardrobe, which nobody else edits.
+      item.photos.purge
+      item.photos.attach(io: StringIO.new(png), filename: "#{row[:image]}.png", content_type: "image/png")
+      true
+    end
+
+    def silhouette_attached?(item)
+      item.photos.attached? && item.photos.any? { |photo| photo.blob.content_type == "image/png" }
     end
 
     def seed_outfits!(user, items_by_title)
