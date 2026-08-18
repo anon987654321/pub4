@@ -83,9 +83,16 @@ moved to meet it" rather than as "the spine held".
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **0 findings, re-measured 2026-08-13** and unchanged from
-the 0 recorded 2026-08-12, after the three the fold-spine merge exposed were
-closed — see "The fold spine had never been scanned" below. Unlike the 0 of
+`rake selftest` reports **1 finding, re-measured 2026-08-18**: `[ABSTRACTION]
+lib/core/constitution.rb:16 — god class Constitution is 348 lines`. It was 0 on
+2026-08-13; the finding reopened when `972894e70` reverted the Constitution
+split the same morning (the split cleared the count but stopped `rm -rf` being
+blocked — four core-spine guard tests failed, so the revert was right). The
+operational cost is larger than the count: `self_test.laws_apply_to_self`
+halts the fix loop on any self-violation, so **`/through`'s fix stage refuses
+every target** — `fix_loop halted: self_violation 1 violations` — until a
+split lands that keeps the guards guarding. That repair belongs to the
+split's author per the revert message; it is a design decision, not a sweep. Unlike the 0 of
 2026-08-11, both are measured over a tree that includes the fold. Treat any count here as
 true for the commit that carries it and no further: it has been 0, 1, 2, 3, 6 and
 7 on different days of the same fortnight, and a "clean since" claim in
@@ -545,48 +552,18 @@ Not diagnosed further; found while trying to measure phrase fan-out, which is
 also still unmeasured for the same reason. A synthesis-not-capability probe in
 `/health` would have caught it.
 
-## The model registry names fifteen models the provider no longer serves — opened 2026-08-16
+## The cost meter bills one provider's accounting against another's tokens
 
-**operator-priority.** `/through master` completed its scans, spent ¢390, and
-ended `critique failed: StandardError: No endpoints found for
-google/gemma-2-9b-it:free`. That id is an anchor in `data/models.yml` aliased
-into four fallback chains, so the council walked its chain into a model that
-does not exist.
+A `/through master` run reported `cost: +¢390.02 · 0 tok`. A non-zero cost
+beside a zero token count means the meter reads one provider's accounting and
+bills another's. The number to trust is the cents.
 
-It is not the only one. `bin/provider-catalog refresh openrouter` fetches the
-live catalogue — 413 models, and no key is needed because the endpoint is
-public. Cross-checking every openrouter-routed `id:` in `models.yml` against it
-gives fifteen that are gone:
-
-```
-deepseek/deepseek-chat-v3.1:free          meta-llama/llama-4-scout:free
-google/gemini-flash-lite-latest           microsoft/phi-4:free
-google/gemma-2-9b-it:free                 mistralai/mistral-small-3.1-24b
-groq/llama-3.3-70b-versatile              nousresearch/hermes-3-llama-3.1-405b:free
-meta-llama/llama-3.3-70b-instruct:free    openai/gpt-oss-120b:free
-meta-llama/llama-4-maverick:free          qwen/qwen3-coder:free
-qwen/qwen3-next-80b-a3b-instruct:free     rekaai/reka-flash-3:free
-z-ai/glm-4.5-air:free
-```
-
-Thirteen of the fifteen are `:free` tiers, which is the pattern: a free endpoint
-is withdrawn without notice, and a chain padded with them degrades one dead
-model at a time until something visible breaks.
-
-Not fixed here, deliberately. Each id is a YAML anchor with aliases in several
-chains, so removing one means removing its definition and every alias of it, and
-a half-done edit changes routing silently rather than loudly. It wants one
-focused pass that re-measures after each removal.
-
-What stops it recurring is a check rather than a cleanup. The cross-check is
-eight lines and the catalogue refresh already exists. It cannot live in
-`bin/check`, which must run without a network, but it belongs in the operator
-profile or in `bin/probe`, where a stale registry is exactly what an operator
-wants to hear about before a deploy.
-
-Separately, that run reported `cost: +¢390.02 · 0 tok`. A non-zero cost beside a
-zero token count means the meter reads one provider's accounting and bills
-another's. The number to trust is the cents.
+(The dead-model registry this run also surfaced — opened here 2026-08-16 as
+fifteen stale ids — was closed 2026-08-18: a fresh catalogue refresh counted
+twenty, the pass in `3f3543e81` removed or renamed all of them, and the
+recurring check is `bin/probe models`, which rides `probe all`. The rule it
+taught: a chain padded with `:free` tiers decays one dead model at a time,
+so the registry is only ever as true as its last `lint:models` run.)
 
 ## Live gotchas
 
