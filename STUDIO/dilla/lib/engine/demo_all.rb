@@ -172,7 +172,17 @@ def demo_all(bars_count = 12, destination = nil)
   # each-mode writes neither.
   unless demo_each?
     File.write(File.join(out_dir, "order.txt"), order.map(&:to_s).join("\n") + "\n")
-    File.write(catalog_path, "")
+    # Truncate only when there is nothing to lose. The catalogue is appended one
+    # line per track from inside the render loop, and a resumed track takes the
+    # `next` above that line -- so a run that resumes every part writes no lines
+    # at all. Truncating unconditionally then meant the join run, which is
+    # exactly the run that resumes everything, erased the record of the demo it
+    # was assembling: 86 pieces joined and a 0-byte catalogue saying which pad,
+    # lead, voicing and drum preset each one used.
+    #
+    # Same rule the manifest below already follows: the file is a ledger across
+    # runs, not an artifact of the last one, so only --force starts it over.
+    File.write(catalog_path, "") if force || !File.file?(catalog_path)
   end
   if demo_each?
     manifest = DEMO_EACH_MANIFEST
