@@ -15,6 +15,8 @@ module Master
         load(root:).dig(*keys)
       end
 
+      private_class_method :load, :dig
+
       def self.touch_min_px(root: Master::ROOT)
         dig("ux_laws", "fitts", "target_min_px", root:) ||
           dig("layout_rules", "touch", "target_min_px", root:) || 44
