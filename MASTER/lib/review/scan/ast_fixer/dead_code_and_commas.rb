@@ -27,7 +27,15 @@ module Master
               end
               keep << line
               next_line = lines[index + 1].to_s
+              # A trailing backslash means the statement continues on the next
+              # physical line — usually its guard: `return {...} \` + `if c`.
+              # Deleting that "dead" line makes the return unconditional and
+              # the file still parses, so nothing downstream notices. It broke
+              # RadioChop's multiple-margin check in e7a48-era history, and
+              # again on 2026-08-18, against the comment narrating the first
+              # time.
               skip_next = !protected_lines.include?(lineno) && !protected_lines.include?(lineno + 1) &&
+                !line.rstrip.end_with?("\\") &&
                 unconditional_terminal?(line) && skippable_dead_line?(next_line) && !open_collection?(line)
             end
             @transforms << :dead_code if changed

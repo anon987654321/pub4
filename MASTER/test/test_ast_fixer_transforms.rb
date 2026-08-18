@@ -247,6 +247,27 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :no_var
   end
 
+  # `return {...} \` + `if guard` is one statement over two physical lines.
+  # Deleting the guard as "immediately dead" leaves `return {...} end`, which
+  # parses, so the file stays Syntax OK while the return goes unconditional.
+  # It broke RadioChop#multiple_margin twice — the second time against the
+  # comment narrating the first.
+  def test_dead_code_keeps_a_backslash_continued_guard
+    src = <<~RUBY
+      def best(candidates)
+        candidates.each do |c|
+          return { multiple: 4 } \\
+            if c && c >= 0.9
+        end
+        { multiple: 1 }
+      end
+    RUBY
+    result = fix("chop.rb", src)
+
+    assert_includes result[:content], "if c && c >= 0.9"
+    refute_includes result[:transforms], :dead_code
+  end
+
   def test_dead_code_and_trailing_commas
     result = fix("sample.rb", <<~RUBY)
       ITEMS = [
