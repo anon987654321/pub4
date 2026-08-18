@@ -16,8 +16,14 @@ class TestPhantomRecovery < Minitest::Test
     end
   end
 
+  # Every scope these tests touch, not just :default. The occurrence counter is
+  # per-scope process state and Minitest randomises order, so resetting one
+  # scope left test_handle_escalates_then_halts able to inherit a count of 3
+  # from a neighbour and halt on its first call.
+  SCOPES = %i[default test clean ladder].freeze
+
   def setup
-    Master::PhantomRecovery.reset!
+    SCOPES.each { |scope| Master::PhantomRecovery.reset!(scope:) }
   end
 
   def test_handle_escalates_then_halts
@@ -39,6 +45,39 @@ class TestPhantomRecovery < Minitest::Test
     bus = FakeBus.new
     result = Master::PhantomRecovery.handle("Done. Tests pass.", bus:, scope: :clean)
     assert_equal :continue, result[:action]
+  end
+
+  # The ladder counts consecutive phantoms, not every phantom the process has
+  # ever seen. A clean response between two phantoms must put the next one back
+  # at step one; without that the third phantom a process encounters halts it,
+  # and so does every phantom after that, for the life of the process.
+  #
+  # This is not a rare corner. gaslighting_preamble matches any reply opening
+  # "I'll", "I can", "I would", "Let me" or "Sure," — so on a live box the
+  # budget is spent within minutes and every turn after it returns an error.
+  def test_a_clean_response_resets_the_ladder
+    bus = FakeBus.new
+    phantom = "Let me take a look at that for you."
+
+    assert_equal :discard, Master::PhantomRecovery.handle(phantom, bus:, scope: :ladder)[:action]
+    assert_equal :escalate, Master::PhantomRecovery.handle(phantom, bus:, scope: :ladder)[:action]
+    assert_equal :continue, Master::PhantomRecovery.handle("Done. Tests pass.", bus:, scope: :ladder)[:action]
+
+    assert_equal :discard, Master::PhantomRecovery.handle(phantom, bus:, scope: :ladder)[:action],
+                 "a clean response did not reset the ladder — the next phantom escalated instead of discarding, " \
+                 "so the graduated recovery in data/rules.yml can only ever run once per process"
+  end
+
+  # Resetting one conversation must not clear another's progress toward escalation.
+  def test_the_reset_is_scoped
+    bus = FakeBus.new
+    phantom = "Sure, here is what I found."
+
+    Master::PhantomRecovery.handle(phantom, bus:, scope: :test)
+    Master::PhantomRecovery.handle("Done. Tests pass.", bus:, scope: :clean)
+
+    assert_equal :escalate, Master::PhantomRecovery.handle(phantom, bus:, scope: :test)[:action],
+                 "a clean response in one scope reset the counter in another"
   end
 
   def test_judge_agent_calls_master_phantom_recovery

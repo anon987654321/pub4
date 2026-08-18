@@ -42,7 +42,17 @@ module Master
 
     def handle(text, bus: nil, session: nil, scope: :default)
       finding = detect(text, bus:)
-      return { action: :continue } unless finding
+      unless finding
+        # A clean response closes the episode, so the count below is consecutive
+        # phantoms rather than every phantom this process has ever seen. That is
+        # what the ladder needs to mean: data/rules.yml describes discard first,
+        # escalate "on second occurrence", halt "on third", and a counter that
+        # only rises reaches three once and then halts every phantom for the
+        # life of the process — with gaslighting_preamble matching any reply
+        # that opens "I can", "Let me" or "Sure,", which is most of them.
+        reset!(scope:)
+        return { action: :continue }
+      end
 
       count = record_occurrence(scope)
       bus&.publish("phantom:occurrence", count:, scope:)
