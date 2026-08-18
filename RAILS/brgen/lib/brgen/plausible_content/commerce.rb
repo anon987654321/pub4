@@ -111,7 +111,7 @@ module Brgen
         "Matematikkundervisning, ungdomsskole", "Fotograf til portrett",
         "Hundepassing i helgene", "Gitartimer for nybegynnere",
         "Norskundervisning, privat"
-      ]
+      ],
       }.freeze
 
       LISTING_BODIES = [
@@ -158,7 +158,7 @@ module Brgen
       [ "Bien Snackbar", "Norwegian" ],
       [ "Marken Mat", "Norwegian" ],
       [ "Casa Mexicana", "Mexican" ],
-      [ "Taqueria Nordnes", "Mexican" ]
+      [ "Taqueria Nordnes", "Mexican" ],
       ].freeze
 
       DISHES_BY_CUISINE = {
@@ -167,63 +167,63 @@ module Brgen
         [ "Raspeballer", "Serveres med kjøtt, kålrabistappe og smeltet smør." ],
         [ "Laks med potet", "Ovnsbakt laks, kokte poteter og rømmedressing." ],
         [ "Kjøttkaker i brun saus", "Med ertestuing og tyttebær." ],
-        [ "Fiskekaker", "Hjemmelagde, med rå løk og flatbrød." ]
+        [ "Fiskekaker", "Hjemmelagde, med rå løk og flatbrød." ],
       ],
       "Pizza" => [
         [ "Margherita", "Tomat, mozzarella og fersk basilikum." ],
         [ "Pepperoni", "Dobbel pepperoni og ekstra ost." ],
         [ "Vesuvio", "Skinke, ost og oregano." ],
         [ "Kebabpizza", "Kebabkjøtt, løk, jalapeño og hvitløksdressing." ],
-        [ "Vegetar", "Paprika, sopp, løk, oliven og squash." ]
+        [ "Vegetar", "Paprika, sopp, løk, oliven og squash." ],
       ],
       "Kebab" => [
         [ "Kebab i pita", "Salat, løk, dressing etter ønske." ],
         [ "Kebabtallerken", "Med pommes frites og salat." ],
         [ "Falafelrull", "Vegetar, med hummus og syltet rødløk." ],
-        [ "Kyllingwrap", "Grillet kyllingfilet, salat og hvitløksdressing." ]
+        [ "Kyllingwrap", "Grillet kyllingfilet, salat og hvitløksdressing." ],
       ],
       "Burger" => [
         [ "Cheeseburger", "125 g storfe, cheddar, sylteagurk og dressing." ],
         [ "Baconburger", "Med sprøstekt bacon og karamellisert løk." ],
         [ "Vegetarburger", "Bønnebasert, med avokado og chilimajones." ],
-        [ "Pommes frites", "Med aioli eller ketchup." ]
+        [ "Pommes frites", "Med aioli eller ketchup." ],
       ],
       "Italian" => [
         [ "Pasta carbonara", "Guanciale, egg, pecorino og pepper." ],
         [ "Lasagne", "Langtidskokt kjøttsaus og bechamel." ],
         [ "Risotto med sopp", "Arborio-ris, skogsopp og parmesan." ],
-        [ "Tiramisu", "Klassisk, med mascarpone og espresso." ]
+        [ "Tiramisu", "Klassisk, med mascarpone og espresso." ],
       ],
       "Chinese" => [
         [ "Wok med kylling", "Nudler, grønnsaker og østerssaus." ],
         [ "Sursøt svin", "Med ris og paprika." ],
         [ "Vårruller", "Fire stykk, med dipp." ],
-        [ "Dumplings", "Dampet, med soya og ingefær." ]
+        [ "Dumplings", "Dampet, med soya og ingefær." ],
       ],
       "Japanese" => [
         [ "Laksenigiri", "Åtte biter, fersk laks." ],
         [ "California roll", "Krabbe, avokado og agurk." ],
         [ "Ramen med svin", "Tonkotsu-kraft, egg og vårløk." ],
-        [ "Edamame", "Dampede soyabønner med havsalt." ]
+        [ "Edamame", "Dampede soyabønner med havsalt." ],
       ],
       "Indian" => [
         [ "Chicken tikka masala", "Med basmatiris og naan." ],
         [ "Palak paneer", "Spinat og fersk paneer." ],
         [ "Lammekarri", "Mildt krydret, med raita." ],
-        [ "Naan med hvitløk", "Bakt i tandoor." ]
+        [ "Naan med hvitløk", "Bakt i tandoor." ],
       ],
       "Thai" => [
         [ "Pad thai", "Risnudler, tamarind, peanøtter og lime." ],
         [ "Grønn curry", "Kokosmelk, bambus og thaibasilikum." ],
         [ "Tom yum", "Syrlig og sterk suppe med sitrongress." ],
-        [ "Mango sticky rice", "Klebrig ris med kokosmelk." ]
+        [ "Mango sticky rice", "Klebrig ris med kokosmelk." ],
       ],
       "Mexican" => [
         [ "Tacos, tre stk", "Mais-tortilla, salsa og koriander." ],
         [ "Burrito", "Ris, bønner, ost og salsa." ],
         [ "Quesadilla", "Ost, kylling og guacamole." ],
-        [ "Nachos", "Med jalapeño, ost og rømme." ]
-      ]
+        [ "Nachos", "Med jalapeño, ost og rømme." ],
+      ],
       }.freeze
     end
   end

@@ -50,7 +50,7 @@ module ApplicationHelper
             srcset: fallback_srcset,
             sizes: sizes,
             **image_options
-          )
+          ),
         ]
       )
     end
@@ -122,7 +122,7 @@ module ApplicationHelper
       [ "maps", "//maps.#{domain}/" ],
       [ "messenger", "//messenger.#{domain}/" ],
       [ "channels", main_app.channels_path ],
-      *(authenticated? ? [] : [ [ "sign up", main_app.new_session_path ] ])
+      *(authenticated? ? [] : [ [ "sign up", main_app.new_session_path ] ]),
     ]
   end
 

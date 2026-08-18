@@ -31,7 +31,7 @@ class CapsuleBuilder
         id: item.id,
         title: item.title,
         category: item.category,
-        reason: reason_for(item)
+        reason: reason_for(item),
       }
     end
   end

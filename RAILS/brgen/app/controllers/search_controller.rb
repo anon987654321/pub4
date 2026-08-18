@@ -36,7 +36,7 @@ class SearchController < ApplicationController
         render json: {
           query: @query,
           suggestions: search_suggestions,
-          results: @results.transform_values { |scope| scope.limit(8).map { |record| { id: record.id, type: record.class.name, label: global_search_label(record) } } }
+          results: @results.transform_values { |scope| scope.limit(8).map { |record| { id: record.id, type: record.class.name, label: global_search_label(record) } } },
         }
       end
       format.html { }

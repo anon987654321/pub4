@@ -37,7 +37,7 @@ module Shared
       "3.3" => "https://api.amazon.co.jp/auth/o2/token",    # FE
       "2.1" => "https://creatorsapi.auth.us-east-1.amazoncognito.com/oauth2/token",
       "2.2" => "https://creatorsapi.auth.eu-south-2.amazoncognito.com/oauth2/token",
-      "2.3" => "https://creatorsapi.auth.ap-northeast-1.amazoncognito.com/oauth2/token"
+      "2.3" => "https://creatorsapi.auth.ap-northeast-1.amazoncognito.com/oauth2/token",
     }.freeze
     PAGE_SIZE = 10
     MAX_PAGES = 10

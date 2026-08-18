@@ -50,7 +50,7 @@ module Amber
         "wool wrap coat", "trench coat", "quilted liner jacket", "cropped bomber",
         "oversized blazer", "faux-fur jacket", "denim jacket", "puffer vest",
         "cashmere coat", "leather moto jacket"
-      ]
+      ],
     }.freeze
 
     OUTFIT_VIBES = [
@@ -92,7 +92,7 @@ module Amber
           last_worn_on: rand(1..120).days.ago.to_date,
           purchase_date: rand(30..800).days.ago.to_date,
           lifecycle_state: "active",
-          metadata: { notes: item_note }
+          metadata: { notes: item_note },
         }
       end
 
@@ -102,7 +102,7 @@ module Amber
         [
           "Built around texture and proportion — #{MATERIALS.sample} with #{COLORS.sample} accents.",
           "A #{OCCASIONS.sample} look that repeats well in a capsule wardrobe.",
-          "Layering play: #{PIECES.values.flatten.sample} over #{PIECES.values.flatten.sample}."
+          "Layering play: #{PIECES.values.flatten.sample} over #{PIECES.values.flatten.sample}.",
         ].sample
       end
 
@@ -112,7 +112,7 @@ module Amber
           "Finally styled my #{COLORS.sample} #{PIECES.values.flatten.sample}",
           "Capsule check-in",
           "Outfit repeat — still sparking joy",
-          "Decluttered three pieces, kept this hero item"
+          "Decluttered three pieces, kept this hero item",
         ].sample
 
         detail = Faker::Lorem.sentence(word_count: rand(8..14)).sub(/\.$/, "")
@@ -134,7 +134,7 @@ module Amber
           "Pairs with #{COLORS.sample} accessories.",
           "Dry clean only — bought on sale at #{BRANDS.sample}.",
           "Needs hemming; otherwise perfect #{OCCASIONS.sample} piece.",
-          "Cost-per-wear finally under £2."
+          "Cost-per-wear finally under £2.",
         ].sample
       end
     end

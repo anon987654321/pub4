@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 class PagesSmokeTest < ActionDispatch::IntegrationTest
   setup { Brgen::CitySeed.sync! if City.table_exists?; host! "brgen.no" }

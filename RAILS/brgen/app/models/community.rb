@@ -20,10 +20,10 @@ class Community < ApplicationRecord
   has_one_attached :icon
   has_one_attached :banner
   process_media_variants :icon, variants: {
-    thumb: { resize_to_limit: [ 128, 128 ], format: :webp }
+    thumb: { resize_to_limit: [ 128, 128 ], format: :webp },
   }
   process_media_variants :banner, variants: {
-    hero: { resize_to_limit: [ 1_600, 400 ], format: :webp }
+    hero: { resize_to_limit: [ 1_600, 400 ], format: :webp },
   }
 
   validates :name, presence: true, length: { maximum: 100 }

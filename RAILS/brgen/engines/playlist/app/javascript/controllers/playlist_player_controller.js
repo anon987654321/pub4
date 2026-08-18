@@ -382,7 +382,7 @@ export default class extends Controller {
     })
 
     // Draw timestamped comment markers
-    if (this.commentsValue && this.commentsValue.length > 0 && this.audioTarget && this.audioTarget.duration) {
+    if (this.commentsValue?.length > 0 && this.audioTarget?.duration) {
       const duration = this.audioTarget.duration
       ctx.fillStyle = "#ffeb3b"
       this.commentsValue.forEach(comment => {

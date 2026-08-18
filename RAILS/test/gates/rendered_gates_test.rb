@@ -23,7 +23,7 @@ class RenderedGatesTest < Minitest::Test
   def test_token_pairs_matches_light_and_dark_modes_separately
     dialect = {
       "light_text" => "#000000", "light_bg" => "#ffffff",
-      "dark_text" => "#ffffff", "dark_bg" => "#000000"
+      "dark_text" => "#ffffff", "dark_bg" => "#000000",
     }
     labels = M.token_pairs("luxury", dialect).map { |p| p[:label] }
     assert_includes labels, "luxury.light_text/light_bg"
@@ -205,7 +205,7 @@ class RenderedGatesTest < Minitest::Test
       "elements" => [{
         "key" => "nav.tab-bar", "tag" => "nav", "rect" => { "x" => 0, "y" => 0, "w" => 390, "h" => 48 },
         "color" => "#ffffff", "bg" => "#000000", "font_size" => 16.0,
-        "line_height" => 24.0, "display" => "flex", "position" => "fixed"
+        "line_height" => 24.0, "display" => "flex", "position" => "fixed",
       }],
     }.merge(overrides)
   end

@@ -24,7 +24,7 @@ export default class extends Controller {
   }
 
   toggle() {
-    if (this.recorder && this.recorder.state === "recording") {
+    if (this.recorder?.state === "recording") {
       this.#stop()
     } else {
       this.#start()
@@ -42,7 +42,7 @@ export default class extends Controller {
     this.startedAt = Date.now()
     this.recorder = new MediaRecorder(this.stream)
     this.recorder.ondataavailable = (event) => {
-      if (event.data && event.data.size > 0) this.chunks.push(event.data)
+      if (event.data?.size > 0) this.chunks.push(event.data)
     }
     this.recorder.onstop = () => this.#finish()
     this.recorder.start()

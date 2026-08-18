@@ -45,7 +45,7 @@ class ClosetOrganization
     linen: /linen/i,
     leather: /leather|suede/i,
     denim: /denim/i,
-    cotton: /cotton/i
+    cotton: /cotton/i,
   }.freeze
 
   # Rod-density thresholds. Below `AIRY` a closet reads as composed; above

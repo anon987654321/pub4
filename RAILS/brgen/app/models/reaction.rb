@@ -23,7 +23,7 @@ class Reaction < ApplicationRecord
   # how it is drawn.
   GLYPHS = {
     "like" => "👍", "love" => "❤️", "laugh" => "😂",
-    "wow" => "😮", "sad" => "😢", "angry" => "😠", "local" => "📍"
+    "wow" => "😮", "sad" => "😢", "angry" => "😠", "local" => "📍",
   }.freeze
 
   def self.glyph(kind) = GLYPHS.fetch(kind.to_s, "👍")

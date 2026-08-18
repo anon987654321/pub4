@@ -30,14 +30,13 @@ module Brgen
       "Øvre Korskirkeallmenningen", "Fjøsangerveien", "Møllendalsveien",
       "Sandviksveien", "Fantoftvegen", "Ibsens gate", "Lars Hilles gate",
       "Christies gate", "Olav Kyrres gate", "Vestre Torggaten",
-      "Neumanns gate", "Danmarksplass"
+      "Neumanns gate", "Danmarksplass",
     ].freeze
 
     BERGEN_BYDELER = %w[
       Sentrum Nordnes Sandviken Kalfaret Møhlenpris Laksevåg
       Fyllingsdalen Fana Årstad Åsane Arna Ytrebygda
     ].freeze
-
 
     # --- TV ----------------------------------------------------------------
 

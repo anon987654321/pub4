@@ -13,7 +13,7 @@ function updateCarouselPrefix() {
   slides.forEach(s => {
     const host = prefix + s.dataset.base;
     s.textContent = host;
-    s.href = "https://" + host + "/";
+    s.href = `https://${host}/`;
   });
 }
 

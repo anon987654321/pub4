@@ -56,7 +56,6 @@ def subject_for(report)
   klass.respond_to?(:strict_loading) ? klass.strict_loading(false).find_by(id: report.reportable_id) : nil
 end
 
-
   def flag_for(report, status:)
     subject = subject_for(report)
     user = accountable_user(subject) || report.user

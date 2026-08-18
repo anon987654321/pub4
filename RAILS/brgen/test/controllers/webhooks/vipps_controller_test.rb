@@ -27,7 +27,7 @@ class Webhooks::VippsControllerTest < ActionDispatch::IntegrationTest
       "x-ms-content-sha256" => content_hash,
       "Host" => host,
       "Authorization" => "HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=#{signature}",
-      "CONTENT_TYPE" => "application/json"
+      "CONTENT_TYPE" => "application/json",
     }
   end
 

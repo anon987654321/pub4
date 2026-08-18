@@ -5,7 +5,6 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "shared/test_defaults"
 
-
 module ActiveSupport
   class TestCase
     Shared::TestDefaults.install!(self)

@@ -26,7 +26,7 @@ module Brgen
         flag: enabled?,
         gems: gems_loaded?,
         mountable: mountable?,
-        fallback: "Marketplace::* native listings remain the runtime until cutover"
+        fallback: "Marketplace::* native listings remain the runtime until cutover",
       }
     end
   end

@@ -13,7 +13,7 @@ anime
     delay: (el, i) => 800 * i
   });
 
-var circle = anime({
+const circle = anime({
   targets: ['.lp'],
   rotate: 3000,
   duration: 100000,

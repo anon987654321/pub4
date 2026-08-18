@@ -75,7 +75,7 @@ module Shared
       # shared/config/initializers/session_store.rb): the verticals are
       # subdomains, and a host-only cookie signed you out on the way to them.
       cookies.signed.permanent[:session_id] = {
-        value: Current.session.id, httponly: true, same_site: :lax, domain: :all
+        value: Current.session.id, httponly: true, same_site: :lax, domain: :all,
       }
     end
 

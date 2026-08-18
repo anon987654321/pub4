@@ -31,7 +31,7 @@ class WardrobeCharts
     [ :"3_5",    3,  5 ],
     [ :"6_10",   6,  10 ],
     [ :"11_20",  11, 20 ],
-    [ :"21_plus", 21, nil ]
+    [ :"21_plus", 21, nil ],
   ].freeze
 
   # Ranked figures are a shortlist, not a leaderboard — past eight rows a bar
@@ -47,7 +47,7 @@ class WardrobeCharts
       category_mix: category_mix,
       wear_distribution: wear_distribution,
       cost_per_wear: cost_per_wear,
-      idle: idle
+      idle: idle,
     }
   end
 

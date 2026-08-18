@@ -23,11 +23,11 @@ module Deploy
       "brgen/app/jobs/link_converter_sync_job.rb" => /LinkConverterSyncJob|td-lc/,
       "brgen/config/recurring.yml" => /affiliate_import|link_converter_sync/,
       "brgen/app/services/partner_marketing.rb" => /SELF_REFERRAL|attribute_order!/,
-      "amber/app/services/shop_the_look.rb" => /ShopTheLook|Suggestion/
+      "amber/app/services/shop_the_look.rb" => /ShopTheLook|Suggestion/,
     }.freeze
 
     FORBIDDEN = {
-      "brgen/lib/brgen/affiliate_placeholders.rb" => %r{clk\.tradedoubler|pdt\.tradedoubler}
+      "brgen/lib/brgen/affiliate_placeholders.rb" => %r{clk\.tradedoubler|pdt\.tradedoubler},
     }.freeze
 
     def self.run

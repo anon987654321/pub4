@@ -72,7 +72,6 @@ production:
     queue: bulk
     schedule: every monday at 6am
 
-
   link_converter_sync:
     class: LinkConverterSyncJob
     queue: bulk

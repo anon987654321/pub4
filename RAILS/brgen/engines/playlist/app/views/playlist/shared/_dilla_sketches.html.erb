@@ -16,11 +16,11 @@
     <% sketches.each do |sk| %>
       <div class="dilla-sketch">
         <%= tag.strong sk.name %>
-        
+
           <%= sk.try(:style).presence || "dilla" %>
           · <%= sk.try(:bars).presence || 12 %> bars
           · <%= sk.render_status || "idle" %>
-        
+
         by <%= sk.user&.try(:display_name) || sk.user&.email || "anon" %>
         <% if sk.lab_url.present? %>
           <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm"><%= t("playlist.open_in_lab") %></a>

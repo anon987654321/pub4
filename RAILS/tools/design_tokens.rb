@@ -20,7 +20,7 @@ module DesignTokens
     "transition_fast" => "transition-fast",
     "transition_normal" => "transition-normal",
     "ease_out" => "ease-out",
-    "ease_spring" => "ease-spring"
+    "ease_spring" => "ease-spring",
   }.freeze
 
   LUXURY_MAP = {
@@ -42,7 +42,7 @@ module DesignTokens
     "font_size_title" => "luxury-font-title",
     "font_size_meta" => "luxury-font-meta",
     "letter_spacing_tight" => "luxury-letter-tight",
-    "line_height_relaxed" => "luxury-line-relaxed"
+    "line_height_relaxed" => "luxury-line-relaxed",
   }.freeze
 
   module_function

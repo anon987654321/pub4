@@ -22,7 +22,7 @@ module Shared
       6 => "pending_approved",
       7 => "paused_deleted",
       8 => "deleted",
-      9 => "paid"
+      9 => "paid",
     }.freeze
 
     validates :source, inclusion: { in: SOURCES }
@@ -57,7 +57,7 @@ module Shared
         source: source,
         transaction_id: attrs[:transaction_id].presence ||
                         "order:#{attrs[:order_number]}:msg:#{attrs[:message_type_id]}",
-        message_type_id: attrs[:message_type_id]
+        message_type_id: attrs[:message_type_id],
       }
 
       record = find_or_initialize_by(key)
@@ -98,7 +98,7 @@ module Shared
         visitor_id: p[:visitorId] || p[:visitor_id],
         sequence_number: p[:sequenceNumber] || p[:sequence_number],
         time_of_event: parse_time(p[:timeOfEvent] || p[:time_of_event]),
-        time_of_visit: parse_time(p[:timeOfVisit] || p[:time_of_visit])
+        time_of_visit: parse_time(p[:timeOfVisit] || p[:time_of_visit]),
       }
     end
 

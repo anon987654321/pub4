@@ -84,7 +84,7 @@ class PortsController < ApplicationController
     render json: {
       summary: Ports::ExploreAssistant.summarize(@port),
       pkgpath: @port.pkgpath,
-      tree: Dependency.tree_for(@port)
+      tree: Dependency.tree_for(@port),
     }
   end
 

@@ -3,11 +3,11 @@
   const vw = de.clientWidth, vh = de.clientHeight;
 
   const selFor = (el) => {
-    if (el.id) return '#' + el.id;
+    if (el.id) return `#${el.id}`;
     const parts = [];
     let node = el, depth = 0;
-    while (node && node.nodeType === 1 && depth < 4) {
-      if (node.id) { parts.unshift('#' + node.id); break; }
+    while (node?.nodeType === 1 && depth < 4) {
+      if (node.id) { parts.unshift(`#${node.id}`); break; }
       const cls = (el === node ? (node.getAttribute('class') || '') : (node.getAttribute('class') || ''))
         .trim().split(/\s+/).filter(Boolean).slice(0, 2);
       parts.unshift(node.tagName.toLowerCase() + (cls.length ? '.' + cls.join('.') : ''));

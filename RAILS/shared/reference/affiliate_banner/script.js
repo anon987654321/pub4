@@ -6,8 +6,8 @@ $("#scene").imagesLoaded(function () {
     $(this).attr("data-depth", Math.floor(Math.random() * 30) / 200);
   });
 
-  var scene = document.getElementById("scene");
-  var parallaxInstance = new Parallax(scene, {
+  const scene = document.getElementById("scene");
+  const parallaxInstance = new Parallax(scene, {
     relativeInput: true,
     scalarY: 100,
     scalarX: 100

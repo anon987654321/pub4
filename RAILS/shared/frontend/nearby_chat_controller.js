@@ -101,7 +101,7 @@ export default class extends Controller {
 
   // Only count a real send toward install-value (not validation failures).
   markInstallValue(event) {
-    if (event?.detail && event.detail.success === false) return
+    if (event?.detail?.success === false) return
     window.dispatchEvent(new CustomEvent("pub4:install-value"))
   }
 

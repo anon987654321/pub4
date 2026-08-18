@@ -29,9 +29,9 @@ module AmberSchemaHelper
         {
           "@type" => "ListItem",
           "position" => position,
-          "item" => demo_garment_schema(item, context: false)
+          "item" => demo_garment_schema(item, context: false),
         }
-      end
+      end,
     }.compact
   end
 
@@ -47,7 +47,7 @@ module AmberSchemaHelper
       "color" => schema_colour(item),
       "material" => item.material.presence,
       "brand" => ({ "@type" => "Brand", "name" => item.brand } if item.brand.present?),
-      "image" => demo_photo_url(item)
+      "image" => demo_photo_url(item),
     }.compact
   end
 

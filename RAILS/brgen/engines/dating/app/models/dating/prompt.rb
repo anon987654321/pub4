@@ -20,7 +20,7 @@ class Dating::Prompt < ApplicationRecord
     "dating.prompts.q_never",
     "dating.prompts.q_meal",
     "dating.prompts.q_song",
-    "dating.prompts.q_weekend"
+    "dating.prompts.q_weekend",
   ].freeze
 
   MAX_PER_PROFILE = 3

@@ -90,7 +90,6 @@ Rails.application.routes.draw do
   end
   get "users/:username" => "fediverse/actors#show", as: :actor, constraints: activitypub_request
 
-
   # Stories delete themselves after 24h; `alive` hides an expired one from every
   # surface whether or not the sweep has run yet.
   resources :stories, only: %i[index show new create destroy]

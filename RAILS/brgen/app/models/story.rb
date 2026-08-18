@@ -26,7 +26,7 @@ class Story < ApplicationRecord
   has_one_attached :media
   process_media_variants :media, variants: {
     full: { resize_to_limit: [ 1_080, 1_920 ], format: :webp },
-    thumb: { resize_to_limit: [ 240, 320 ], format: :webp }
+    thumb: { resize_to_limit: [ 240, 320 ], format: :webp },
   }
 
   validates :caption, length: { maximum: 280 }

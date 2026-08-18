@@ -5,7 +5,7 @@ module Fediverse
   module Serializer
     CONTEXT = [
       "https://www.w3.org/ns/activitystreams",
-      "https://w3id.org/security/v1"
+      "https://w3id.org/security/v1",
     ].freeze
 
     PUBLIC = "https://www.w3.org/ns/activitystreams#Public"
@@ -29,8 +29,8 @@ module Fediverse
         "publicKey" => {
           "id" => user.key_id,
           "owner" => user.actor_uri,
-          "publicKeyPem" => user.public_key_pem
-        }
+          "publicKeyPem" => user.public_key_pem,
+        },
       }
     end
 
@@ -47,7 +47,7 @@ module Fediverse
         "published" => post.created_at.iso8601,
         "url" => note_uri(post),
         "to" => [ PUBLIC ],
-        "cc" => [ "#{author.actor_uri}/followers" ]
+        "cc" => [ "#{author.actor_uri}/followers" ],
       }
     end
 
@@ -61,7 +61,7 @@ module Fediverse
         "published" => post.created_at.iso8601,
         "to" => [ PUBLIC ],
         "cc" => [ "#{author.actor_uri}/followers" ],
-        "object" => note(post).except("@context")
+        "object" => note(post).except("@context"),
       }
     end
 
@@ -81,7 +81,7 @@ module Fediverse
         "published" => repost.created_at.iso8601,
         "to" => [ PUBLIC ],
         "cc" => [ "#{booster.actor_uri}/followers" ],
-        "object" => note_uri(post)
+        "object" => note_uri(post),
       }
     end
 
@@ -95,8 +95,8 @@ module Fediverse
           "id" => follow_activity_uri,
           "type" => "Follow",
           "actor" => actor_uri,
-          "object" => local_actor_uri
-        }
+          "object" => local_actor_uri,
+        },
       }
     end
 
@@ -107,7 +107,7 @@ module Fediverse
         "type" => "Delete",
         "actor" => post.user.actor_uri,
         "to" => [ PUBLIC ],
-        "object" => { "id" => note_uri(post), "type" => "Tombstone" }
+        "object" => { "id" => note_uri(post), "type" => "Tombstone" },
       }
     end
 
@@ -117,7 +117,7 @@ module Fediverse
         "id" => "#{user.actor_uri}/outbox",
         "type" => "OrderedCollection",
         "totalItems" => posts.size,
-        "orderedItems" => posts.map { |post| create(post).except("@context") }
+        "orderedItems" => posts.map { |post| create(post).except("@context") },
       }
     end
 
@@ -130,7 +130,7 @@ module Fediverse
         # The list itself is not published. Who follows a small-city account is
         # a social graph worth more to a scraper than to anyone else, and
         # nothing in the protocol requires exposing it.
-        "orderedItems" => []
+        "orderedItems" => [],
       }
     end
 

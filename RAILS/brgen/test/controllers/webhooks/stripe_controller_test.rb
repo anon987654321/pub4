@@ -17,7 +17,7 @@ class Webhooks::StripeControllerTest < ActionDispatch::IntegrationTest
   def event(payment_status: "paid", reference: nil)
     {
       type: "checkout.session.completed",
-      data: { object: { payment_status:, client_reference_id: reference } }
+      data: { object: { payment_status:, client_reference_id: reference } },
     }.to_json
   end
 

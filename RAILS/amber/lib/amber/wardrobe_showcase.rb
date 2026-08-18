@@ -26,26 +26,26 @@ module Amber
         { title: "Gold hoop earrings", brand: "Mejuri", color: "gold" },
         { title: "Silk square scarf", brand: "H&M", color: "rust" },
         { title: "Oatmeal ribbed beanie", brand: "Arket", color: "oatmeal" },
-        { title: "Cat-eye sunglasses", brand: "Ray-Ban", color: "tortoise" }
+        { title: "Cat-eye sunglasses", brand: "Ray-Ban", color: "tortoise" },
       ],
       tops: [
         { title: "Oatmeal cashmere crew", brand: "COS", color: "oatmeal" },
         { title: "Blush satin blouse", brand: "& Other Stories", color: "blush" },
         { title: "Striped Breton tee", brand: "Arket", color: "navy/white" },
-        { title: "Navy oversized blazer", brand: "The Frankie Shop", color: "navy" }
+        { title: "Navy oversized blazer", brand: "The Frankie Shop", color: "navy" },
       ],
       bottoms: [
         { title: "Charcoal wide-leg trousers", brand: "Arket", color: "charcoal" },
         { title: "Indigo straight-leg jeans", brand: "Everlane", color: "indigo" },
         { title: "Sage pleated midi skirt", brand: "Sézane", color: "sage" },
-        { title: "Ivory silk slip dress", brand: "Reformation", color: "ivory" }
+        { title: "Ivory silk slip dress", brand: "Reformation", color: "ivory" },
       ],
       shoes: [
         { title: "Black pointed-toe ankle boots", brand: "Vagabond", color: "black" },
         { title: "White leather trainers", brand: "Veja", color: "white" },
         { title: "Tan suede loafers", brand: "Ganni", color: "tan" },
-        { title: "Block-heel pumps", brand: "Samsoe Samsoe", color: "nude" }
-      ]
+        { title: "Block-heel pumps", brand: "Samsoe Samsoe", color: "nude" },
+      ],
     }.freeze
 
     class << self
@@ -87,8 +87,8 @@ module Amber
             delay: 3_600,
             disableOnInteraction: false,
             reverseDirection: reverse,
-            pauseOnMouseEnter: true
-          }
+            pauseOnMouseEnter: true,
+          },
         }
       end
 
