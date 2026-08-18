@@ -15,6 +15,20 @@
 # disables coltrane/midilib/wavefile/head_music for the rest of the process
 # (bootstrap! rescues LoadError). Real invocations run plain `ruby dilla.rb`,
 # not `bundle exec`, so this ordering is the only thing that pins it correctly.
+# Before anything reads a file. The engine's own sources carry UTF-8 — em dashes
+# and Norwegian vowels in comments and track names — and 37 File.read/readlines
+# sites across lib/ ask for no encoding, so they inherit the locale's. Under a C
+# or POSIX locale that is US-ASCII, and the first thing to read a source file
+# raises: `env -i ruby dilla.rb help` died at lib/knobs.rb:228 building the knob
+# table, before printing a word of help.
+#
+# It never bit interactively because a login shell exports a UTF-8 LANG. It bites
+# anything that does not: cron, a minimal deploy shell, an agent's non-login
+# invocation. One assignment here rather than an encoding: argument on all 37,
+# which is also how RAILS/gates/runner.rb solved the identical problem — see
+# OPENBSD/lib/utf8.rb and the comment above its require.
+Encoding.default_external = Encoding::UTF_8
+
 require_relative "lib/music_gems"
 DillaMusicGems.bootstrap!
 # The one definition of which files the engine is made of. Required this early
