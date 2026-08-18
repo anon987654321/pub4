@@ -429,7 +429,7 @@ open:
       same fix advice in different words, so every bare rescue in this tree is two
       findings. Both were edited in step on 2026-08-12 when the regex was corrected
       for symbols and comments, which is the maintenance cost the duplication buys.
-      Not collapsed on my own judgement: FAIL_VISIBLY is a soul.yml `code_rules`
+      Not collapsed on my own judgement: FAIL_VISIBLY is a soul.yml `absolute.rules`
       entry and BARE_RESCUE is a borrowed style-guide rule, so deciding which one
       keeps the regex — or whether the constitutional principle should be measured
       by something other than a line-level regex at all — is a constitutional
