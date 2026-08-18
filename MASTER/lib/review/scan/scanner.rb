@@ -29,6 +29,7 @@ module Master
         SKIP_PATH_SEGMENTS = %w[
           .git vendor node_modules tmp log coverage .bundle storage cache dist build
           knowledge fixtures var .cache scratch
+          site-packages venv .venv venv-demucs __pycache__
           # reports/ is generated output. Scanning it meant the top
           # COPY_PASTE_BLOCK findings were JSON manifests from three
           # screenshot-calibration runs, which share keys because they share a
