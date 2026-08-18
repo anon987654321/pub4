@@ -98,7 +98,15 @@ HATE_LAYERS = {
 # last block left off instead of replaying its own intro every few minutes. A
 # render with no phase set behaves exactly as before.
 def hate_position(block, blocks)
-  base = blocks < 2 ? 0.0 : block.to_f / (blocks - 1)
+  # One block is the whole set, so its place in the arc is the end of it, not
+  # the start. Position drives which of the eighteen layers have arrived, and
+  # at 0.0 only three have -- drone, hiss and hat, the ambient ones. A
+  # single-block render asking to open the set therefore renders the opening
+  # and nothing else: measured at -50.5 dB against -14.3 for a full block.
+  #
+  # That is the whole of what a demo slot renders, so a demo slot wants the
+  # music rather than the way in to it.
+  base = blocks < 2 ? 1.0 : block.to_f / (blocks - 1)
   # Presence, not value. Guarding on `phase.zero?` made the FIRST streamed block
   # -- the one that should open the set at position 0 -- fall through to the
   # unphased branch and land mid-arc, so a stream started at its own midpoint
@@ -299,42 +307,31 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   if hate_forbid_tonal!
     dmesg("HATE_TONAL=0 — melody, dfam and drone all off", unit: "techno0", parent: "dilla0")
   end
-  # The lower clamp is 0.1, not 1.0, and that single number was the whole reason
-  # the demo did not sound like one record.
-  #
-  # demo-all sets HATE_MIN to whatever the hip-hop slot beside it will run to --
-  # 0.33 minutes for 12 bars -- precisely so the two sit side by side, and says so
-  # in a comment at the call site. clamp(1.0, ..) then raised it back to a full
-  # minute without a word. A minute yields ceil(60 / (bar*16)) = 3 blocks = 79.4s
-  # against the hip-hop track's 31.3s, which is the 2.5x the call site exists to
-  # prevent. Measured across 42 parts: techno was 38% of the tracks and 61% of the
-  # runtime.
-  #
-  # The floor is 0.5, and it was 0.1 for one commit. That was wrong, and wrong in
-  # the expensive direction: below half a minute this renderer does not produce a
-  # short track, it produces near-silence. The layers are built over an eight-bar
-  # cycle and gated in across the arc, so a request too short for the arc to open
-  # leaves almost nothing switched on.
-  #
-  # Measured through this method, overall RMS:
-  #
-  #   HATE_MIN 0.33  ->  -47.7 dB, 26.5s   near-silent, low end at -79.4 (nothing)
-  #   HATE_MIN 0.50  ->  -13.8 dB, 53.0s   healthy, low end -13.9
-  #   HATE_MIN 1.00  ->  -15.6 dB, 79.4s   healthy
-  #
-  # The block floor is not involved: 0.33 measures -47.9 dB at two blocks and
-  # -47.7 at one. It is the requested length alone.
-  #
-  # This shipped. b36edcf5e lowered the clamp to let demo-all ask for 0.33, and
-  # 28 of the 86 tracks in the demo committed at c0d00f488 are effectively silent
-  # because of it -- 26 dB under every other track. The original clamp(1.0) was
-  # not the oversight it was described as; it was load-bearing, and the comment
-  # claiming 0.1 "still guards what the clamp was guarding" was false.
-  #
-  # 0.5 is the shortest length measured to render properly, so a demo slot now
-  # runs 53s against the hip-hop track's 31.3s rather than 79.4s. Re-measure
-  # before lowering it again; the failure is silent and does not raise.
-  minutes = (ENV["HATE_MIN"] || 16).to_f.clamp(0.5, 60.0)
+# The floor is what a render is allowed to ask for, not what it is allowed to
+# sound like. Those were confused here for a long time, at real cost.
+#
+# demo-all asks for 0.33 minutes -- the length of the hip-hop slot beside it,
+# so the two sit side by side rather than one running twice the other. Below
+# half a minute this renderer used to answer with near-silence, so the floor
+# was raised to 0.5 to stop it. Measured through this method, overall RMS:
+#
+#   HATE_MIN 0.33  ->  -47.7 dB, 26.5s   near-silent, low end at -79.4
+#   HATE_MIN 0.50  ->  -13.8 dB, 53.0s   healthy overall
+#   HATE_MIN 1.00  ->  -15.6 dB, 79.4s   healthy
+#
+# Overall RMS is the wrong instrument and 0.50 is the proof. It renders two
+# blocks: the near-silent one, then a full one. Per block that is -50.5 dB
+# then -14.3, and the average of those is -14.3 -- so the row above reads
+# healthy while half the file is inaudible. Every techno slot in the demo has
+# this shape, identical to 0.1 dB across all 27, because the dead half carries
+# no progression: at position 0.0 only drone, hiss and hat have arrived.
+#
+# The cause was never the requested length. It is hate_position returning 0.0
+# for a single block, which is fixed where it lives, so the floor no longer
+# has to stand in for it: one block now renders fully arrived at -14.6 dB
+# across its whole 26.5s. Measure per block, not overall, before changing
+# either number -- the failure is silent and does not raise.
+  minutes = (ENV["HATE_MIN"] || 16).to_f.clamp(0.1, 60.0)
   beat = 60.0 / HATE_BPM
   bar = beat * 4
   step = beat / 4
