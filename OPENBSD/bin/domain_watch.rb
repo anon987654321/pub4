@@ -39,7 +39,7 @@ module Deploy
       "no" => "whois.norid.no", "com" => "whois.verisign-grs.com",
       "net" => "whois.verisign-grs.com", "se" => "whois.iis.se",
       "dk" => "whois.dk-hostmaster.dk", "fi" => "whois.fi", "is" => "whois.isnic.is",
-      "de" => "whois.denic.de", "fr" => "whois.nic.fr", "be" => "whois.dns.be"
+      "de" => "whois.denic.de", "fr" => "whois.nic.fr", "be" => "whois.dns.be",
     }.freeze
 
     AVAILABLE = /No match|NOT FOUND|not found|No entries found|is free|Status:\s*free|
@@ -91,7 +91,7 @@ module Deploy
           # that on 2026-08-12, having expired in June, and the state field alone
           # reported all four as healthy.
           "status" => out[/Registration status:\s*\n?\s*(\S[^\n]*)/i, 1]&.strip,
-          "registrar" => out[/Registrar:\s*\n?\s*(\S[^\n]*)/i, 1]&.strip
+          "registrar" => out[/Registrar:\s*\n?\s*(\S[^\n]*)/i, 1]&.strip,
         }.compact
       else
         { "state" => "unknown", "note" => out.lines.first.to_s.strip[0, 60] }

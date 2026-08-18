@@ -13,7 +13,6 @@ require_relative "lib/guard_state"
 ROOT = File.expand_path("..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 
-
 options = {
   all_ready_apps: false,
   public: false,
