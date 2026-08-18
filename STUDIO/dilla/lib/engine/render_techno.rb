@@ -98,14 +98,20 @@ HATE_LAYERS = {
 # last block left off instead of replaying its own intro every few minutes. A
 # render with no phase set behaves exactly as before.
 def hate_position(block, blocks)
-  # One block is the whole set, so its place in the arc is the end of it, not
-  # the start. Position drives which of the eighteen layers have arrived, and
-  # at 0.0 only three have -- drone, hiss and hat, the ambient ones. A
-  # single-block render asking to open the set therefore renders the opening
-  # and nothing else: measured at -50.5 dB against -14.3 for a full block.
+  # Position decides which of the eighteen layers have arrived. At 0.0 three
+  # have -- drone, hiss and hat, the ambient ones -- and a block rendered there
+  # measures -50.5 dB against a full block's -14.3.
   #
-  # That is the whole of what a demo slot renders, so a demo slot wants the
-  # music rather than the way in to it.
+  # HATE_ARRIVED plays every block fully arrived, for a caller rendering a
+  # sample rather than a set. A short render cannot express the arc: blocks are
+  # its only resolution, so two blocks means positions 0.0 and 1.0 and nothing
+  # between, and the first half of the piece is the three ambient layers alone.
+  # That is right for the opening of a sixteen-minute set and wrong for a demo
+  # slot, where it is half of everything the listener hears.
+  return 1.0 if ENV["HATE_ARRIVED"] == "1"
+
+  # One block is the whole set, so its place in the arc is the end of it rather
+  # than the start -- otherwise it renders the way in and nothing else.
   base = blocks < 2 ? 1.0 : block.to_f / (blocks - 1)
   # Presence, not value. Guarding on `phase.zero?` made the FIRST streamed block
   # -- the one that should open the set at position 0 -- fall through to the

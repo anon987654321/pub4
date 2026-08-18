@@ -349,12 +349,20 @@ def demo_all(bars_count = 12, destination = nil)
           # sit side by side in a demo rather than one being twice the other.
           prev = ENV["HATE_MIN"]
           prev_blocks = ENV["HATE_MIN_BLOCKS"]
+          prev_arrived = ENV["HATE_ARRIVED"]
           ENV["HATE_MIN"] = ((bars_count * 4 * (60.0 / HATE_BPM)) / 60.0).round(2).to_s
           # A demo slot is a sample, not a set: one block is a legitimate length
           # here even though it is not one for a standalone techno render. Without
           # this the renderer's own floor doubles the slot back and the length
           # matching on the line above is discarded a second time.
           ENV["HATE_MIN_BLOCKS"] = "1"
+          # ...and a sample is of the music, not of the way in to it. The arc's
+          # only resolution is the block, so a slot short enough to be two blocks
+          # puts the listener at position 0.0 for the whole first half -- three of
+          # eighteen layers, -50.5 dB against the second half's -14.3. Every
+          # techno slot in the demo had that shape, identical to 0.1 dB across all
+          # 27, because a dead block carries no progression to tell them apart.
+          ENV["HATE_ARRIVED"] = "1"
           begin
             dmesg("slot #{idx} -> techno", unit: "demo0", parent: "dilla0")
             techno_mp3 = part.sub(/\.wav\z/, ".mp3")
@@ -376,6 +384,7 @@ def demo_all(bars_count = 12, destination = nil)
           ensure
             prev ? ENV["HATE_MIN"] = prev : ENV.delete("HATE_MIN")
             prev_blocks ? ENV["HATE_MIN_BLOCKS"] = prev_blocks : ENV.delete("HATE_MIN_BLOCKS")
+            prev_arrived ? ENV["HATE_ARRIVED"] = prev_arrived : ENV.delete("HATE_ARRIVED")
           end
         else
           render_dilla(part, bars_count)
