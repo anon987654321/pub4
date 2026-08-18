@@ -51,7 +51,15 @@ daemon_timeout="120"
 # worker had to be stopped by sending TERM to the supervisor pid by hand.
 # rcctl check has the same blindness in reverse: it would call a running
 # worker stopped.
-pexp="ruby34.*solid[-_]queue"
+# The trailing .* is load-bearing. rc.subr rc_check is
+# `pgrep -q -xf "${pexp}"`, and -x anchors the pattern to the WHOLE argv --
+# which for these processes continues past the name: "ruby34:
+# solid-queue-supervisor(1.2.4): supervising 12341, 38064, 60158". Without
+# it the pattern stops at solid-queue, -x fails, and rcctl check reports a
+# healthy supervisor, dispatcher, worker and scheduler as failed. Measured on
+# vm23 2026-08-18: pgrep -f matched four pids while pgrep -xf matched none,
+# and rcctl check said failed with the queue draining 14 jobs in the hour.
+pexp="ruby34.*solid[-_]queue.*"
 rc_bg=YES
 rc_reload=NO
 
