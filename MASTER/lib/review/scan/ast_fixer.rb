@@ -74,8 +74,16 @@ module Master
         # tolerate failure.
         VERBATIM_MIRROR_RE = %r{/OPENBSD/(?:etc|usr|var)/}
 
+        # A line no human wrote: minified Workbox bundles run 23k chars/line,
+        # while the densest hand-written file in the repo peaks at ~2.7k.
+        # Rewriting a generated bundle is churn at best (it comes back on the
+        # next build) and a broken service worker at worst — one pass
+        # converted var to const across four Workbox bundles twice in one day.
+        GENERATED_LINE_LENGTH = 5000
+
         def apply
           return Result.new(path: @path, changed: false, transforms: []) if verbatim_mirror?
+          return Result.new(path: @path, changed: false, transforms: []) if generated_bundle?
 
           out = @source
           out = apply_strategies(out)
@@ -255,6 +263,8 @@ module Master
         def markdown? = File.extname(@path).downcase == ".md"
 
         def verbatim_mirror? = @path.to_s.match?(VERBATIM_MIRROR_RE)
+
+        def generated_bundle? = @source.each_line.any? { |line| line.length > GENERATED_LINE_LENGTH }
 
         def shell? = %w[.zsh .sh .bash].include?(File.extname(@path).downcase)
 

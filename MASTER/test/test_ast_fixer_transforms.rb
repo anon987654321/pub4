@@ -225,6 +225,16 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :freeze_constants
   end
 
+  # A 23k-character line is a build artifact, not authored code. Rewriting it
+  # is churn (the next build reverts it) or a broken service worker.
+  def test_fixer_declines_minified_bundles
+    minified = "/* Workbox generated */\n(()=>{var a=1;#{"x" * 6000}})();\n"
+    result = fix("workbox-sw.js", minified)
+
+    assert_equal minified, result[:content]
+    assert_empty result[:transforms]
+  end
+
   def test_write_back_preserves_the_executable_bit
     Dir.mktmpdir do |dir|
       path = File.join(dir, "cron-job.zsh")
