@@ -14,6 +14,16 @@ class ChatService
   ].freeze
   BUS_THOUGHT_RE = /:(?:done|error|warn|crit|resolved|confidence|detected)\b/.freeze
 
+  # The face's SSE contract, in face.part5.txt's onMessage: a chunk beginning
+  # with this prefix takes the error branch — written to the transcript, veto
+  # tint, shake, and a short spoken "Sorry, I hit a snag." Anything without it
+  # is ordinary reply content, which is appended to `pending` and synthesised.
+  #
+  # So an unprefixed error message is not merely displayed, it is read aloud in
+  # MASTER's own voice as though it were the answer. The failure the visitor
+  # hears is "An internal error occurred. Retry or check server logs."
+  ERROR_PREFIX = "ERROR: "
+
   def initialize(container:, params:, stream:, logger:, tier:, unlocked:, author:, paired: false, pair_token: nil, conversation: nil)
     @container = container
     @params = params
@@ -55,7 +65,7 @@ class ChatService
     trigger_post_mutation_work
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "ChatService.call", event_bus: @container&.dig(:bus))
-    @stream.write("data: #{escape_sse(Master::Ground::Redactor.public_error_message)}\n\n")
+    @stream.write("data: #{escape_sse(ERROR_PREFIX + Master::Ground::Redactor.public_error_message)}\n\n")
     @stream.write("data: [DONE]\n\n")
   ensure
     clear_fiber_flags
@@ -202,7 +212,7 @@ class ChatService
         result.message
       else
         log_turn_failure(result)
-        Master::Ground::Redactor.public_error_message
+        ERROR_PREFIX + Master::Ground::Redactor.public_error_message
       end
     end
   end

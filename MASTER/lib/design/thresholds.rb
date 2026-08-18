@@ -15,7 +15,16 @@ module Master
         load(root:).dig(*keys)
       end
 
-      private_class_method :load, :dig
+      # `dig` is private because every key worth reading has a named accessor
+      # below, and a bare dig from outside is how a second spelling of the same
+      # threshold gets introduced.
+      #
+      # `load` is public because the section is also read wholesale: the voice
+      # personality builds one prompt line per design concern and wants the
+      # whole hash, not eight separate calls. Making it private satisfies an
+      # abstraction count and breaks that caller, and a private method with two
+      # callers outside the class is not an abstraction — it is an outage.
+      private_class_method :dig
 
       def self.touch_min_px(root: Master::ROOT)
         dig("ux_laws", "fitts", "target_min_px", root:) ||
