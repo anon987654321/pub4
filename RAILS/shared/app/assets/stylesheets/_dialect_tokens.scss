@@ -111,7 +111,11 @@
 
 // Amber luxury dialect (Aesop/Toteme warm paper) — design_tokens.yml luxury:
 @mixin luxury-light-tokens {
-  --bg: #f8f5f0;
+  // White, not the warm off-white this used to carry. Operator decision
+  // 2026-08-18: amber is a white page. The warm cast stays in the elevated
+  // surfaces and the border, which is where it reads as paper rather than as a
+  // tint over everything.
+  --bg: #ffffff;
   --surface: #ffffff;
   --surface-elevated: #f0ebe3;
   --search-bg: #ebe4da;

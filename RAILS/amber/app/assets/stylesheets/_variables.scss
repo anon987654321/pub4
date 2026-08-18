@@ -11,8 +11,12 @@
   @include x.luxury-light-tokens;
   @include x.app-root-tokens;
   color-scheme: light;
-  --color-black: var(--bg);
-  --color-white: var(--text);
+  // Not inverted. These read as "the ink colour" and "the paper colour", and
+  // .btn paints background: var(--color-black) — pointing them at --bg/--text
+  // the other way round made every button in the app the same colour as the
+  // page it sits on, with border: none, so only its label rendered.
+  --color-black: var(--text);
+  --color-white: var(--bg);
   --color-extra-light-grey: var(--border);
   --color-grey-text: var(--text-secondary);
   --color-success: #00ba7c;
@@ -59,8 +63,8 @@
   @include x.luxury-dark-tokens;
   @include x.app-root-tokens;
   color-scheme: dark;
-  --color-black: var(--bg);
-  --color-white: var(--text);
+  --color-black: var(--text);
+  --color-white: var(--bg);
   --color-extra-light-grey: var(--border);
   --color-grey-text: var(--text-secondary);
   --color-danger: var(--danger);

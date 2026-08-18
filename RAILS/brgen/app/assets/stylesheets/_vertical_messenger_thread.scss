@@ -262,3 +262,19 @@ body.vertical-messenger .link-preview-body {
   color: var(--msg-muted);
   font-size: var(--text-sm);
 }
+
+/* Who is in a group DM, and the controls for changing that. A quiet block
+   above the log: the roster is reference, the conversation is the page. */
+body.vertical-messenger .group-roster {
+  margin-block: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--msg-muted);
+}
+
+body.vertical-messenger .group-roster ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+}
