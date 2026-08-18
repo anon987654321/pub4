@@ -512,8 +512,52 @@ end
 # because on a codec mismatch it does not fail. It writes the wrong stream into a
 # WAV container and exits 0, so the rescue that used to guard this never fired and
 # the demo shipped a file that opens nowhere. Check the parts first, then copy.
+# Crossfade the parts into one piece rather than butting them together.
+#
+# The concat demuxer joins sample to sample. That is right for one recording cut
+# into parts and wrong for eighty-six separate pieces in eighty-six keys: every
+# join is a hard edge, and a demo meant to be listened through end to end reads
+# as a folder of clips instead.
+#
+# This is album_stitch's graph applied to the demo's parts -- the same 1.5s
+# tri/tri curves and the same limiter ceiling, for the same reason. A crossfade
+# sums two tracks, so the overlap peaks above whatever either part reached alone.
+#
+# DEMO_CROSSFADE=0 restores the butt-splice.
+def demo_crossfade_parts!(parts, out, seconds)
+  graph = +""
+  previous = "[0:a]"
+  (1...parts.length).each do |i|
+    label = i == parts.length - 1 ? "[x]" : "[a#{i}]"
+    graph << "#{previous}[#{i}:a]acrossfade=d=#{seconds}:c1=tri:c2=tri#{label};"
+    previous = label
+  end
+  ceiling = 10**((ALBUM_TARGET_TP - ALBUM_ENCODER_HEADROOM) / 20.0)
+  graph << "[x]alimiter=limit=#{ceiling}:level=disabled[out]"
+
+  # A script file, not an argument: eighty-five chained filters is tens of
+  # kilobytes of graph, and it is the one argument that grows with the catalogue.
+  script = File.join(Dir.tmpdir, "demo_graph_#{Process.pid}.txt")
+  File.write(script, graph)
+  begin
+    sh! "ffmpeg", "-y", "-loglevel", "error", *parts.flat_map { |p| ["-i", p] },
+        "-filter_complex_script", script, "-map", "[out]",
+        "-c:a", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2", out
+  ensure
+    FileUtils.rm_f(script)
+  end
+  dmesg("join: #{parts.length} parts, #{seconds}s crossfades", unit: "demo0", parent: "dilla0")
+  DillaProvenance.record_assembly!(
+    out, parts:,
+    how: "#{seconds}s tri crossfades, limited to #{(ALBUM_TARGET_TP - ALBUM_ENCODER_HEADROOM).round(2)} dBTP",
+  )
+  out
+end
+
 def demo_join_parts!(parts, list, out)
   level = demo_level_parts?
+  xfade = ENV.fetch("DEMO_CROSSFADE", ALBUM_XFADE.to_s).to_f
+  return demo_crossfade_parts!(parts, out, xfade) if xfade.positive? && parts.length > 1
 
   # The fast path, and the only one that avoids touching 86 files: hand the
   # caller's list straight to the concat demuxer and copy. It is legal only when
