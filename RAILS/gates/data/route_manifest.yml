@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: 24e32d359aa0e6a6
+    digest: 9af88956c5de3b2f
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -102,6 +102,14 @@ apps:
       - "/communities/:community_id/moderators"
       communities/bans#index:
       - "/communities/:community_id/bans"
+      communities/wiki#index:
+      - "/communities/:community_id/wiki"
+      communities/wiki#new:
+      - "/communities/:community_id/wiki/new"
+      communities/wiki#edit:
+      - "/communities/:community_id/wiki/:id/edit"
+      communities/wiki#show:
+      - "/communities/:community_id/wiki/:id"
       communities#index:
       - "/communities"
       communities#new:

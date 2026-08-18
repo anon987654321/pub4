@@ -21,7 +21,11 @@ require "test_helper"
 class OwnershipGuardContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
 
-  GUARD_BEFORE_ACTION_RE = /before_action\s+(?:->\s*\{.*?\}|:?"?[a-z_!?]*(?:authorize|owner|admin|host)[a-z_!?]*"?)/i
+  # moderator counts: in this app a community's moderators are who may write its
+  # queue, its bans and its wiki, and require_moderator! is that check spelled
+  # the way the domain spells it. Without the word here, adding a moderated
+  # surface reads as an unguarded one.
+  GUARD_BEFORE_ACTION_RE = /before_action\s+(?:->\s*\{.*?\}|:?"?[a-z_!?]*(?:authorize|owner|admin|host|moderator)[a-z_!?]*"?)/i
   INLINE_AUTHORIZE_RE = /\bauthorize[\s(]/
   INLINE_EQUALITY_RE = /Current\.user\s*==|==\s*Current\.user|\.owner\?\(Current\.user\)/
   SELF_SCOPED_FINDER_RE = %r{

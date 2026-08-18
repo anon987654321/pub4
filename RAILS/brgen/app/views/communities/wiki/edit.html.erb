@@ -1,0 +1,17 @@
+<% content_for :title, @page.title %>
+
+<div class="page-header" role="banner" aria-label="<%= @page.title %>">
+  <%= tag.h1 @page.title %>
+</div>
+
+<%= form_with model: @page, url: community_wiki_path(@community, @page), method: :patch, class: "form-wrap" do |f| %>
+  <%= render "shared/errors", record: @page %>
+  <div class="field">
+    <%= f.label :body, t("wiki.body") %>
+    <%= f.text_area :body, rows: 14, required: true %>
+  </div>
+  <p>
+    <%= f.submit t("actions.save"), class: "btn btn-primary" %>
+    <%= link_to t("actions.cancel"), community_wiki_path(@community, @page), class: "btn btn-ghost" %>
+  </p>
+<% end %>

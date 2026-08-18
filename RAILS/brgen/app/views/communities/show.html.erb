@@ -26,6 +26,11 @@
       <% end %>
     </p>
   <% end %>
+  <%# The wiki is readable by whoever can read the community, so the link is not
+      moderator-only — only writing it is. %>
+  <p class="cluster">
+    <%= link_to t("wiki.heading"), community_wiki_index_path(@community), class: "btn btn-ghost btn-sm" %>
+  </p>
   <%# Moderators maintain rules and flair; only an owner can delete the place. %>
   <% if @moderator %>
     <p class="cluster">

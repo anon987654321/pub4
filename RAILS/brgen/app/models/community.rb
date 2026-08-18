@@ -15,6 +15,9 @@ class Community < ApplicationRecord
            class_name: "CommunityMembership", inverse_of: :community, dependent: nil
   has_many :moderators, through: :moderator_memberships, source: :user
   has_many :community_bans, dependent: :destroy
+  # The community's own reference pages. Moderators write them; see
+  # Communities::WikiController for why not every member.
+  has_many :wiki_pages, class_name: "CommunityWikiPage", dependent: :destroy
   has_many :banned_users, through: :community_bans, source: :user
 
   has_one_attached :icon

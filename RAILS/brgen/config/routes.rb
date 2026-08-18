@@ -116,6 +116,11 @@ Rails.application.routes.draw do
     # Scoped to this community, never site-wide: one community's moderator
     # silencing someone everywhere is not a lever that should exist.
     resources :bans, only: %i[index create destroy], controller: "communities/bans"
+    # The community's own reference pages. Readable by whoever can read the
+    # community, written by its moderators.
+    resources :wiki, only: %i[index show new create edit update], controller: "communities/wiki" do
+      member { post :revert }
+    end
     resources :posts, shallow: true do
       resources :comments, shallow: true, only: %i[create destroy] do
         resources :comments, shallow: true, only: %i[create destroy], as: :replies

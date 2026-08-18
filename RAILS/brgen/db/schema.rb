@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_18_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_140000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -276,6 +276,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_130000) do
     t.index ["community_id"], name: "index_community_memberships_on_community_id"
     t.index ["user_id", "community_id"], name: "index_community_memberships_on_user_id_and_community_id", unique: true
     t.index ["user_id"], name: "index_community_memberships_on_user_id"
+  end
+
+  create_table "community_wiki_pages", force: :cascade do |t|
+    t.text "body", null: false
+    t.integer "community_id", null: false
+    t.datetime "created_at", null: false
+    t.string "slug", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "updated_by_id"
+    t.index ["community_id", "slug"], name: "index_community_wiki_pages_on_community_id_and_slug", unique: true
+    t.index ["community_id"], name: "index_community_wiki_pages_on_community_id"
+    t.index ["updated_by_id"], name: "index_community_wiki_pages_on_updated_by_id"
+  end
+
+  create_table "community_wiki_revisions", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.integer "page_id", null: false
+    t.integer "user_id"
+    t.index ["page_id", "created_at"], name: "index_community_wiki_revisions_on_page_id_and_created_at"
+    t.index ["page_id"], name: "index_community_wiki_revisions_on_page_id"
+    t.index ["user_id"], name: "index_community_wiki_revisions_on_user_id"
   end
 
   create_table "conversation_participants", force: :cascade do |t|
@@ -1640,6 +1663,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_130000) do
   add_foreign_key "community_bans", "users", column: "banned_by_id"
   add_foreign_key "community_memberships", "communities"
   add_foreign_key "community_memberships", "users"
+  add_foreign_key "community_wiki_pages", "communities"
+  add_foreign_key "community_wiki_pages", "users", column: "updated_by_id"
+  add_foreign_key "community_wiki_revisions", "community_wiki_pages", column: "page_id"
+  add_foreign_key "community_wiki_revisions", "users"
   add_foreign_key "conversation_participants", "conversations"
   add_foreign_key "conversation_participants", "users"
   add_foreign_key "dating_dislikes", "users", column: "dislikee_id"

@@ -1,0 +1,18 @@
+<% content_for :title, t("wiki.new_page") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("wiki.new_page") %>">
+  <%= tag.h1 t("wiki.new_page") %>
+</div>
+
+<%= form_with model: @page, url: community_wiki_index_path(@community), class: "form-wrap" do |f| %>
+  <%= render "shared/errors", record: @page %>
+  <div class="field">
+    <%= f.label :title, t("wiki.page_title") %>
+    <%= f.text_field :title, maxlength: 120, required: true %>
+  </div>
+  <div class="field">
+    <%= f.label :body, t("wiki.body") %>
+    <%= f.text_area :body, rows: 14, required: true %>
+  </div>
+  <p><%= f.submit t("actions.create"), class: "btn btn-primary" %></p>
+<% end %>

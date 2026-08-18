@@ -60,3 +60,25 @@
     transition: none !important;
   }
 }
+
+/* The community's own reference pages. Reading measure for the body, the
+   history quiet under it — the page is what someone came for. */
+.wiki-page .prose {
+  max-width: var(--measure);
+}
+
+.wiki-byline {
+  margin-block: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.wiki-history {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.wiki-history ul {
+  list-style: none;
+  padding: 0;
+}

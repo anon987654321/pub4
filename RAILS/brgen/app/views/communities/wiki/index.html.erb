@@ -1,0 +1,24 @@
+<% content_for :title, t("wiki.title", community: @community.name) %>
+
+<div class="page-header" role="banner" aria-label="<%= t("wiki.title", community: @community.name) %>">
+  <hgroup>
+    <p><%= link_to @community.name, community_path(@community) %></p>
+    <%= tag.h1 t("wiki.heading") %>
+  </hgroup>
+  <% if @community.moderator?(Current.user) %>
+    <%= link_to t("wiki.new_page"), new_community_wiki_path(@community), class: "btn btn-sm" %>
+  <% end %>
+</div>
+
+<% if @pages.any? %>
+  <ul role="list" class="community-list">
+    <% @pages.each do |page| %>
+      <li role="listitem"><%= link_to page.title, community_wiki_path(@community, page) %></li>
+    <% end %>
+  </ul>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("wiki.empty_title"),
+        body: t("wiki.empty_body"),
+        action: @community.moderator?(Current.user) ? { label: t("wiki.new_page"), path: new_community_wiki_path(@community) } : nil %>
+<% end %>

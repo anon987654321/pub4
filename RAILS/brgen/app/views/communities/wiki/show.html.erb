@@ -1,0 +1,39 @@
+<% content_for :title, @page.title %>
+
+<article class="wiki-page">
+  <div class="page-header" role="banner" aria-label="<%= @page.title %>">
+    <hgroup>
+      <p><%= link_to t("wiki.heading"), community_wiki_index_path(@community) %></p>
+      <%= tag.h1 @page.title %>
+    </hgroup>
+    <% if @community.moderator?(Current.user) %>
+      <%= link_to t("actions.edit"), edit_community_wiki_path(@community, @page), class: "btn btn-sm" %>
+    <% end %>
+  </div>
+
+  <div class="prose"><%= simple_format(@page.body) %></div>
+
+  <p class="wiki-byline">
+    <%= t("wiki.last_edited", who: @page.updated_by&.display_name || t("wiki.someone")) %>
+    <time datetime="<%= @page.updated_at.iso8601 %>"><%= time_ago(@page.updated_at) %></time>
+  </p>
+
+  <% if @revisions.any? %>
+    <section class="wiki-history" aria-label="<%= t("wiki.history") %>">
+      <%= tag.h2 t("wiki.history") %>
+      <ul role="list">
+        <% @revisions.each do |revision| %>
+          <li role="listitem">
+            <time datetime="<%= revision.created_at.iso8601 %>"><%= time_ago(revision.created_at) %></time>
+            <%= revision.user&.display_name || t("wiki.someone") %>
+            <% if @community.moderator?(Current.user) %>
+              <%= button_to t("wiki.revert"), revert_community_wiki_path(@community, @page, revision_id: revision.id),
+                    method: :post, class: "btn btn-ghost btn-sm",
+                    data: { turbo_confirm: t("wiki.confirm_revert") } %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</article>

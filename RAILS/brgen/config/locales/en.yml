@@ -15,6 +15,19 @@ en:
     go_marketplace: Marketplace
     go_search: Search
     retry: Try again
+  wiki:
+    title: "%{community} wiki"
+    heading: Wiki
+    new_page: New page
+    page_title: Page title
+    body: Page
+    history: History
+    revert: Revert to this
+    confirm_revert: Restore this version? The newer ones stay in the history.
+    last_edited: "Last edited by %{who}"
+    someone: someone
+    empty_title: No wiki pages yet
+    empty_body: Moderators write the pages the community keeps coming back to.
   time:
     formats:
       event: "%b %-d at %H:%M"
@@ -1325,6 +1338,9 @@ en:
     conversation_pinned: Conversation pinned.
     conversation_unpinned: Conversation unpinned.
     crossposted: Crossposted.
+    wiki_created: Page created.
+    wiki_updated: Page updated.
+    wiki_reverted: Page restored.
     crosspost_failed: That crosspost did not go through.
     community_not_postable: You cannot post in that community.
     message_forwarded: Message forwarded.

@@ -15,6 +15,19 @@ nb:
     go_marketplace: Markedsplass
     go_search: Søk
     retry: Prøv igjen
+  wiki:
+    title: "%{community}-wiki"
+    heading: Wiki
+    new_page: Ny side
+    page_title: Sidetittel
+    body: Side
+    history: Historikk
+    revert: Gå tilbake til denne
+    confirm_revert: Gjenopprette denne versjonen? De nyere blir liggende i historikken.
+    last_edited: "Sist endret av %{who}"
+    someone: noen
+    empty_title: Ingen wiki-sider ennå
+    empty_body: Moderatorene skriver sidene fellesskapet kommer tilbake til.
   time:
     formats:
       event: "%-d. %b kl. %H:%M"
@@ -1330,6 +1343,9 @@ nb:
     conversation_pinned: Samtalen er festet.
     conversation_unpinned: Samtalen er løsnet.
     crossposted: Krysspostet.
+    wiki_created: Siden er laget.
+    wiki_updated: Siden er oppdatert.
+    wiki_reverted: Siden er gjenopprettet.
     crosspost_failed: Kryssposten gikk ikke gjennom.
     community_not_postable: Du kan ikke poste i den communityen.
     message_forwarded: Meldingen er videresendt.
