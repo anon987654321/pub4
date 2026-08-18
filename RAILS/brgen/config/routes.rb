@@ -142,11 +142,16 @@ Rails.application.routes.draw do
   end
 
   resources :conversations, only: %i[index show update] do
+    # Search over the reader's own threads; ?conversation_id= narrows it to one.
+    collection { get :search }
     # update is a bounded edit; destroy is an unsend, which keeps the row so a
-    # threaded reply is not orphaned.
-    resources :messages, only: %i[create update destroy]
+    # threaded reply is not orphaned. forward writes a copy into another thread.
+    resources :messages, only: %i[create update destroy] do
+      member { post :forward }
+    end
     resources :typing_indicators, only: [ :create ]
     resource :presence, only: %i[create destroy]
+    resource :pin, only: %i[create destroy], controller: "conversation_pins"
   end
 
   # TV vertical, extracted to a mountable engine (engines/tv). Routes now live in
@@ -191,6 +196,7 @@ Rails.application.routes.draw do
       resources :messages, only: %i[create]
       resources :typing_indicators, only: %i[create]
       resource :presence, only: %i[create destroy]
+      resource :pin, only: %i[create destroy], controller: "conversation_pins"
     end
   end
 

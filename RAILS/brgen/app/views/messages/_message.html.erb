@@ -27,8 +27,38 @@
     <% receipt = message.message_receipts.find_by(user: Current.user) %>
     <% if receipt&.read? %><span class="read-receipt">· <%= t("messages.read") %></span><% end %>
   </header>
+  <% if message.forwarded? %>
+    <p class="msg-forwarded"><%= t("messages.forwarded") %></p>
+  <% end %>
+  <% if message.reply? && message.parent %>
+    <p class="msg-reply-context"><%= t("messages.replying_to", name: message.parent.sender.display_name) %>: <%= truncate(message.parent.content.to_s, length: 60) %></p>
+  <% end %>
   <%= tag.p format_chat_body(message.content) %>
   <%= render "messages/reactions", message: message %>
+  <%# Reply, edit, unsend and forward all had a route, a model method and no
+      control anywhere in the tree, so none of them could be reached from a
+      page. Plain forms and links rather than a Stimulus controller: the state
+      each one needs lives in the URL, and a message list is long. %>
+  <% unless in_channel || message.deleted? %>
+    <details class="msg-actions">
+      <summary><%= t("messages.actions") %></summary>
+      <%= link_to t("messages.reply"), conversation_path(message.conversation, reply_to: message.id) %>
+      <% if message.editable_by?(Current.user) %>
+        <%= link_to t("actions.edit"), conversation_path(message.conversation, edit: message.id) %>
+      <% end %>
+      <% if message.deletable_by?(Current.user) %>
+        <%= button_to t("messages.unsend"), conversation_message_path(message.conversation, message), method: :delete,
+              data: { turbo_confirm: t("messages.confirm_unsend") } %>
+      <% end %>
+      <% if message.forwardable? && local_assigns[:forward_targets].present? %>
+        <%= form_with url: forward_conversation_message_path(message.conversation, message), method: :post do |f| %>
+          <%= f.label :target_conversation_id, t("messages.forward_to") %>
+          <%= f.select :target_conversation_id, forward_targets %>
+          <%= f.submit t("messages.forward") %>
+        <% end %>
+      <% end %>
+    </details>
+  <% end %>
   <% if message.attachment.attached? %>
     <% if message.message_type == "image" %>
       <%= lazy_image_tag message.attachment, alt: message.attachment.filename.base, blurhash: message.attachment.try(:metadata).try(:[], "blurhash") %>

@@ -50,7 +50,9 @@ class CoverageRatchetTest < Minitest::Test
     # models 18 -> 19 on 2026-08-16. Not this branch: the test arrived with
     # main and the floor was not raised with it, which is the direction this
     # ratchet exists to catch.
-    "brgen" => { "controllers" => 14, "models" => 19 },
+    # controllers 14 -> 16 on 2026-08-18: conversation_pins arrived with its
+    # test, and the floor was already one behind that.
+    "brgen" => { "controllers" => 16, "models" => 19 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two

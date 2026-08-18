@@ -205,3 +205,31 @@ body.vertical-messenger p[role="status"] {
   color: var(--msg-muted);
   padding: var(--space-4) var(--space-3);
 }
+
+/* Forward attribution and the reply referent: quiet lines that say where a
+   message came from and what it answers, at the thread's muted tier so they
+   never outweigh the message itself. */
+body.vertical-messenger .msg-forwarded,
+body.vertical-messenger .msg-reply-context {
+  margin: 0 0 var(--space-1);
+  color: var(--msg-muted);
+  font-size: var(--text-sm);
+}
+
+/* Reply, edit, unsend and forward, folded away until asked for — a message
+   list is long, and four controls per line would outweigh the lines. */
+body.vertical-messenger .msg-actions {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+body.vertical-messenger .msg-actions summary {
+  color: var(--msg-muted);
+  cursor: pointer;
+}
+
+body.vertical-messenger .msg-actions a,
+body.vertical-messenger .msg-actions button {
+  margin-inline-end: var(--space-2);
+  color: var(--msg-accent);
+}

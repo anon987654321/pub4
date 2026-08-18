@@ -14,6 +14,11 @@ class Message < ApplicationRecord
   # follow.
   belongs_to :parent, class_name: "Message", optional: true
   has_many :replies, class_name: "Message", foreign_key: :parent_id, dependent: :nullify, inverse_of: :parent
+  # Where a forwarded copy came from. :nullify, because unsending the original
+  # must not take the copy with it — the copy is the forwarder's message in
+  # someone else's thread, and it is quoting what was said, not linking to it.
+  belongs_to :forwarded_from, class_name: "Message", optional: true
+  has_many :forwards, class_name: "Message", foreign_key: :forwarded_from_id, dependent: :nullify, inverse_of: :forwarded_from
   has_one_attached :attachment
   process_media_variants :attachment, variants: {
     inline: { resize_to_limit: [ 900, 900 ], format: :webp },
@@ -55,6 +60,12 @@ def edited? = edited_at.present?
 def deleted? = deleted_at.present?
 def reply? = parent_id.present?
 def voice? = message_type == "audio"
+def forwarded? = forwarded_from_id.present?
+
+# A forward carries the body into another thread. Same promise as search: a
+# message that has disappeared or been unsent is gone, so there is nothing to
+# carry.
+def forwardable? = !deleted? && !expired?
 
 # Editing is bounded: a message that can be rewritten hours later is a
 # message a reader cannot trust, and the receipt they already read is gone.

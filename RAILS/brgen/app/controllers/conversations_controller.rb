@@ -5,31 +5,64 @@ class ConversationsController < ApplicationController
 
   def index
     # DMs only — public channels live under /channels, not the messenger list.
-    # Order by newest message via a correlated subquery, not a raw
-    # "messages.created_at" order on an unjoined table — the latter needs
-    # .references(:messages) and then LEFT-JOIN-duplicates each conversation once
-    # per message. COALESCE to created_at keeps empty conversations in order.
+    # Ordered by Conversation::INBOX_ORDER: pins first, then newest message via
+    # a correlated subquery rather than a raw "messages.created_at" order on an
+    # unjoined table — the latter needs .references(:messages) and then
+    # LEFT-JOIN-duplicates each conversation once per message.
     @pagy, @conversations = pagy(
       Conversation.for_user(Current.user)
                   .where(slug: nil)
                   .includes(:participants, :messages)
-                  .order(Arel.sql(
-                    "COALESCE((SELECT MAX(m.created_at) FROM messages m " \
-                    "WHERE m.conversation_id = conversations.id), " \
-                    "conversations.created_at) DESC"
-                  ))
+                  .order(Conversation::INBOX_ORDER)
     )
     # One grouped COUNT for the whole list. The view used to call
     # unread_count_for per row, which includes(:messages) does not help with —
     # it is a find_by plus its own COUNT, so the preload was paid and ignored.
     @unread_counts = Conversation.unread_counts_for(Current.user)
+    # One pluck for the pin state of the page, for the same reason.
+    @pinned_ids = ConversationParticipant.pinned
+                                         .where(user_id: Current.user.id, conversation_id: @conversations.map(&:id))
+                                         .pluck(:conversation_id).to_set
+  end
+
+  # Search the reader's own messages. Scoped through the conversations they
+  # take part in, so a query cannot reach a thread they are not in, and it reads
+  # `visible.unexpired` like every render does: a message that has disappeared
+  # or been unsent must not come back through a search box, or ephemerality is
+  # a rendering choice rather than a promise.
+  def search
+    @query = params[:q].to_s.strip
+    @conversation = Conversation.for_user(Current.user).find(params[:conversation_id]) if params[:conversation_id].present?
+    @messages = []
+    return if @query.blank?
+
+    scope = Message.visible.unexpired.where(conversation_id: searchable_conversation_ids)
+    scope = scope.where(conversation_id: @conversation.id) if @conversation
+    @pagy, @messages = pagy(
+      Shared::LiveSearch.call(scope, query: @query, columns: %w[content])
+                        .includes(:sender, :conversation).order(created_at: :desc)
+    )
   end
 
   def show
     @conversation = Conversation.for_user(Current.user).find(params[:id])
     @conversation.mark_read_for!(Current.user)
-    @messages = @conversation.messages.visible.unexpired.recent.limit(50).reverse
+    # parent: :sender for the reply line, message_receipts for the read chip —
+    # both are read once per message, so both are preloaded once per page.
+    @messages = @conversation.messages.visible.unexpired
+                             .includes(:sender, :message_receipts, parent: :sender)
+                             .recent.limit(50).reverse
     @message  = Message.new
+    # Where a forward can go: the reader's other threads. Built once for the
+    # page rather than per message.
+    @forward_targets = Conversation.for_user(Current.user).where(slug: nil).where.not(id: @conversation.id)
+                                   .includes(:participants)
+                                   .map { |other| [ other.display_name_for(Current.user), other.id ] }
+    # A reply or an edit is chosen by a link, so the composer reads it off the
+    # URL: no client state, and the choice survives a reload.
+    @reply_to = @conversation.messages.visible.unexpired.find_by(id: params[:reply_to])
+    @editing = @conversation.messages.find_by(id: params[:edit])
+    @editing = nil unless @editing&.editable_by?(Current.user)
   end
 
   def update
@@ -66,6 +99,13 @@ class ConversationsController < ApplicationController
   end
 
   private
+
+  # DMs only, matching the list this search sits on. Public rooms are ambient
+  # and already searchable by anyone who opens them; folding them in would make
+  # "your messages" mean "everything you have ever walked past".
+  def searchable_conversation_ids
+    Conversation.for_user(Current.user).where(slug: nil).select(:id)
+  end
 
   def resolve_conversation_partner
     if params[:username].present?

@@ -70,6 +70,22 @@ class MessagesController < ApplicationController
     end
   end
 
+  # Forwarding copies the body into another of the reader's threads. Both ends
+  # are scoped to conversations they take part in, so a forward can neither read
+  # a thread they are not in nor drop a message into one.
+  def forward
+    message = @conversation.messages.visible.unexpired.find(params[:id])
+    target = Conversation.for_user(Current.user).find(params[:target_conversation_id])
+    forwarded = target.messages.create!(
+      sender: Current.user, content: message.content, message_type: message.message_type,
+      duration_seconds: message.duration_seconds, forwarded_from: message
+    )
+    # The same blob, not a second upload: a forwarded photo is the photo that
+    # was sent, and copying the bytes would double the storage on a 1 GB box.
+    forwarded.attachment.attach(message.attachment.blob) if message.attachment.attached?
+    redirect_to conversation_path(target), notice: t("flash.message_forwarded")
+  end
+
   def destroy
     message = @conversation.messages.find(params[:id])
     return head :forbidden unless message.deletable_by?(Current.user)

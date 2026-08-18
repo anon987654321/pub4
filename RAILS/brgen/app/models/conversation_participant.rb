@@ -12,6 +12,12 @@ class ConversationParticipant < ApplicationRecord
 
   validates :role, inclusion: { in: ROLES }
 
+  # A pin is the viewer's own ordering of their inbox, which is why it lives
+  # here rather than on the conversation both sides share.
+  scope :pinned, -> { where.not(pinned_at: nil) }
+
+  def pinned? = pinned_at.present?
+
   # Ops, then voices, then members; stable by id within a tier.
   scope :by_rank, lambda {
     order(Arel.sql("CASE role WHEN 'op' THEN 0 WHEN 'voice' THEN 1 ELSE 2 END"), :id)

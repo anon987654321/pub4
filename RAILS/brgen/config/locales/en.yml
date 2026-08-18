@@ -345,6 +345,26 @@ en:
     nav_label: Conversation nav
     unread_one: "%{count} new message ↓"
     unread_other: "%{count} new messages ↓"
+    pin: Pin
+    unpin: Unpin
+    pinned: Pinned
+    search_title: Search messages
+    actions: Message actions
+    reply: Reply
+    replying_to: "Replying to %{name}"
+    editing: Edit message
+    unsend: Unsend
+    confirm_unsend: Unsend this message? The text goes, the thread keeps its shape.
+    forward: Forward
+    forward_to: Forward to
+    forwarded: Forwarded
+    search_label: Search your messages
+    search_placeholder: Search messages
+    search_submit: Search
+    search_results_aria: Message search results
+    search_empty_title: Nothing matched
+    search_empty_body: Disappeared and unsent messages are not searchable.
+    search: Search
   comments:
     sort_label: Sort comments
     placeholder: What do you think?
@@ -1283,6 +1303,9 @@ en:
     community_updated: Community updated.
     community_removed: Community removed.
     disappearing_messages_updated: Disappearing messages updated.
+    conversation_pinned: Conversation pinned.
+    conversation_unpinned: Conversation unpinned.
+    message_forwarded: Message forwarded.
     settings_update_failed: Could not update settings.
     channel_ttl_locked: Public rooms keep disappearing messages on.
     user_not_found: User not found.

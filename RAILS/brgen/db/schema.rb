@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_110000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -282,10 +282,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_230000) do
     t.integer "conversation_id", null: false
     t.datetime "created_at", null: false
     t.datetime "last_read_at"
+    t.datetime "pinned_at"
     t.string "role", default: "member", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["conversation_id"], name: "index_conversation_participants_on_conversation_id"
+    t.index ["user_id", "pinned_at"], name: "index_conversation_participants_on_user_id_and_pinned_at"
     t.index ["user_id"], name: "index_conversation_participants_on_user_id"
   end
 
@@ -733,12 +735,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_230000) do
     t.integer "duration_seconds"
     t.datetime "edited_at"
     t.datetime "expires_at"
+    t.integer "forwarded_from_id"
     t.string "message_type"
     t.integer "parent_id"
     t.integer "sender_id"
     t.datetime "updated_at", null: false
     t.index ["conversation_id", "deleted_at"], name: "index_messages_on_conversation_id_and_deleted_at"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["forwarded_from_id"], name: "index_messages_on_forwarded_from_id"
     t.index ["parent_id"], name: "index_messages_on_parent_id"
     t.index ["sender_id"], name: "index_messages_on_sender_id"
   end
@@ -1666,6 +1670,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_230000) do
   add_foreign_key "message_receipts", "messages"
   add_foreign_key "message_receipts", "users"
   add_foreign_key "messages", "conversations"
+  add_foreign_key "messages", "messages", column: "forwarded_from_id"
   add_foreign_key "messages", "messages", column: "parent_id"
   add_foreign_key "moderation_flags", "users"
   add_foreign_key "moderation_reports", "users"

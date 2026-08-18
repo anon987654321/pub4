@@ -346,6 +346,26 @@ nb:
     nav_label: Samtalenavigasjon
     unread_one: "%{count} ny melding ↓"
     unread_other: "%{count} nye meldinger ↓"
+    pin: Fest
+    unpin: Løsne
+    pinned: Festet
+    search_title: Søk i meldinger
+    actions: Meldingsvalg
+    reply: Svar
+    replying_to: "Svarer %{name}"
+    editing: Rediger melding
+    unsend: Angre
+    confirm_unsend: Angre denne meldingen? Teksten forsvinner, tråden beholder formen.
+    forward: Videresend
+    forward_to: Videresend til
+    forwarded: Videresendt
+    search_label: Søk i meldingene dine
+    search_placeholder: Søk i meldinger
+    search_submit: Søk
+    search_results_aria: Søkeresultater for meldinger
+    search_empty_title: Ingen treff
+    search_empty_body: Meldinger som er forsvunnet eller angret kan ikke søkes fram.
+    search: Søk
   comments:
     sort_label: Sorter kommentarer
     placeholder: Hva tenker du?
@@ -1288,6 +1308,9 @@ nb:
     community_updated: Fellesskapet er oppdatert.
     community_removed: Fellesskapet er fjernet.
     disappearing_messages_updated: Forsvinnende meldinger er oppdatert.
+    conversation_pinned: Samtalen er festet.
+    conversation_unpinned: Samtalen er løsnet.
+    message_forwarded: Meldingen er videresendt.
     settings_update_failed: Kunne ikke oppdatere innstillingene.
     channel_ttl_locked: Offentlige rom beholder forsvinnende meldinger.
     user_not_found: Fant ikke brukeren.

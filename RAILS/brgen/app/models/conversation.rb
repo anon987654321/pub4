@@ -155,6 +155,18 @@ class Conversation < ApplicationRecord
     membership
   end
 
+  # The messenger list, in one SQL order: the viewer's pins first, newest pin
+  # above older ones, then everything else by its last message. Ordering in Ruby
+  # after the fact would pin nothing on page two, because the page is chosen
+  # before the sort. Reads the joined participant row that `for_user` already
+  # filters to the viewer, so it is their pins and nobody else's.
+  INBOX_ORDER = Arel.sql(
+    "CASE WHEN conversation_participants.pinned_at IS NULL THEN 1 ELSE 0 END, " \
+    "conversation_participants.pinned_at DESC, " \
+    "COALESCE((SELECT MAX(m.created_at) FROM messages m " \
+    "WHERE m.conversation_id = conversations.id), conversations.created_at) DESC"
+  )
+
   def self.direct_between(a, b)
     for_user(a).for_user(b).where(conversation_type: "direct").first
   end

@@ -5,6 +5,7 @@
   <%= tag.h1 @conversation.display_name_for(Current.user) %>
   <nav role="navigation" aria-label="<%= t("messages.nav_label") %>">
     <%= link_to t("messages.back_all"), conversations_path %>
+    <%= link_to t("messages.search"), search_conversations_path(conversation_id: @conversation.id) %>
   </nav>
   <%= form_with url: conversation_path(@conversation), method: :patch,
         class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
@@ -20,12 +21,25 @@
 <%= turbo_frame_tag "messages", target: "_top" do %>
 <ul id="messages" data-turbo-permanent>
   <% @messages.each do |m| %>
-    <%= render "messages/message", message: m %>
+    <%= render "messages/message", message: m, forward_targets: @forward_targets %>
   <% end %>
 </ul>
 <% end %>
 
 <p id="typing-indicator" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
+
+<% if @editing %>
+  <%= form_with model: @editing, url: conversation_message_path(@conversation, @editing), method: :patch do |f| %>
+    <div class="field">
+      <%= f.label :content, t("messages.editing") %>
+      <%= f.text_area :content, rows: 3, value: @editing.content %>
+    </div>
+    <p>
+      <%= f.submit t("actions.save"), class: "btn btn-primary" %>
+      <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "btn btn-ghost" %>
+    </p>
+  <% end %>
+<% end %>
 
 <%= form_with model: @message, url: conversation_messages_path(@conversation),
               id: "new_message",
@@ -45,5 +59,16 @@
     <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
   </div>
   <%= f.hidden_field :message_type, value: "text" %>
+  <% if @reply_to %>
+    <%# The referent travels in the form, so a reply is still a reply after a
+        reload — and the line says what is being answered, because a reply with
+        no visible referent is one nobody can follow. %>
+    <p class="msg-reply-context">
+      <%= t("messages.replying_to", name: @reply_to.sender.display_name) %>:
+      <%= truncate(@reply_to.content.to_s, length: 60) %>
+      <%= link_to t("actions.cancel"), conversation_path(@conversation) %>
+    </p>
+    <%= f.hidden_field :parent_id, value: @reply_to.id %>
+  <% end %>
   <p><%= f.submit t("actions.send"), class: "btn btn-primary" %></p>
 <% end %>

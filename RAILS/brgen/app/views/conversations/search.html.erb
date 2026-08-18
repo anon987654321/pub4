@@ -1,0 +1,38 @@
+<% content_for :title, t("messages.search_title") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("messages.search_title") %>">
+  <hgroup>
+    <p><%= t("messages.title") %></p>
+    <%= tag.h1 @conversation ? @conversation.display_name_for(Current.user) : t("messages.search_title") %>
+  </hgroup>
+  <%= link_to t("messages.back_all"), conversations_path, class: "btn btn-ghost" %>
+</div>
+
+<%= form_with url: search_conversations_path, method: :get, class: "messenger-compose-form" do |f| %>
+  <%= f.hidden_field :conversation_id, value: @conversation&.id %>
+  <%= f.label :q, t("messages.search_label") %>
+  <div class="messenger-compose-row">
+    <%= f.search_field :q, value: @query, placeholder: t("messages.search_placeholder"), autocomplete: "off" %>
+    <%= f.submit t("messages.search_submit"), class: "btn" %>
+  </div>
+<% end %>
+
+<% if @messages.any? %>
+  <ul role="list" aria-label="<%= t("messages.search_results_aria") %>">
+    <% @messages.each do |message| %>
+      <li role="listitem">
+        <%= link_to conversation_path(message.conversation) do %>
+          <%= tag.strong message.sender&.display_name || "anon" %>
+          <%= truncate(message.content.to_s, length: 140) %>
+          <time datetime="<%= message.created_at.iso8601 %>"><%= time_ago(message.created_at) %></time>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+  <%= render "shared/pager", pagy: @pagy %>
+<% elsif @query.present? %>
+  <%= render "shared/empty_state",
+        title: t("messages.search_empty_title"),
+        body: t("messages.search_empty_body"),
+        action: { label: t("messages.title"), path: conversations_path } %>
+<% end %>
