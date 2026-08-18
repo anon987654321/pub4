@@ -73,6 +73,34 @@ wrong for whichever loop it was not tuned against.
 Older ingest names (`four_seven`, `nightbus`, `dmaj_open`) still resolve through
 `TRACK_SAMPLE_LOOP_ALIASES`, including for layer-profile lookup.
 
+### Restoring a loop
+
+`samples/` and `crate/` are gitignored, so a lost checkout loses the audio and
+keeps every decision made about it. Drop the file back at the path the table's
+track name gives and nothing else is needed — `demo_sampled_order` reads the
+disk, so a restored loop rejoins the demo on the next run:
+
+| track | file |
+|---|---|
+| `kembara_rindu` | `samples/kembara_rindu/loop.wav` |
+| `semua_untuk_mu` | `samples/semua_untuk_mu/loop.wav` |
+| `lo_borges` | `samples/lo_borges/loop.wav` |
+| `rauingar` | `samples/rauingar/loop.wav` |
+| `arat_swost_wolet` | `samples/arat_swost_wolet/loop.wav` |
+
+`crate/` is what makes a restore cheap, and it is worth keeping whole. For
+`semua_untuk_mu` it holds `sources/` (the fetched `source.wav` plus a `fetch.txt`
+naming the artist, duration and URL), `stems/` (a six-stem `htdemucs_6s` pass over
+the whole record and a second pass over the sampled window), and `loops/` (the
+cut itself and its variants). Restoring from that is a copy, with no re-fetch and
+no re-separation — and `fetch.txt`'s duration is what proves the source is the
+same upload the cut was measured against, which a fresh search cannot promise.
+
+Verify a restore by rendering it: the loop should report the tempo and key this
+table gives. `semua_untuk_mu` reads Eb major at fit 0.82 against the 0.79 in
+`sample_loops.rb`, and 96 BPM, which is close enough to identify the passage and
+not close enough to be a coincidence.
+
 ### Finding a loop's boundaries is a manual job
 
 Onset and energy detection finds where something *changes*, which is not where a
