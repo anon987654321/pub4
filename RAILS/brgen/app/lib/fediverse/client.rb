@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require "ipaddr"
 require "json"
 require "net/http"
 require "openssl"
 require "resolv"
 require "uri"
+
+require_relative "../outbound_http"
 
 module Fediverse
   # Outgoing HTTP. Net::HTTP from stdlib rather than a gem, because this deploys
@@ -58,33 +59,13 @@ module Fediverse
       nil
     end
 
-    NETWORK_ERRORS = [
-      Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ETIMEDOUT, Errno::ECONNRESET,
-      Net::OpenTimeout, Net::ReadTimeout, OpenSSL::SSL::SSLError, SocketError, URI::InvalidURIError,
-      Resolv::ResolvError
-    ].freeze
+    NETWORK_ERRORS = OutboundHttp::NETWORK_ERRORS
 
-    # Inbox/key fetches run before signature verify. HTTPS alone is not enough:
-    # a keyId of https://127.0.0.1/ or a name that resolves to RFC1918 is SSRF.
-    UNSAFE_NETS = %w[
-      0.0.0.0/8 10.0.0.0/8 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16
-      ::1/128 fc00::/7 fe80::/10
-    ].map { |cidr| IPAddr.new(cidr) }.freeze
-
-    def public_https?(uri)
-      return false unless uri.port.nil? || uri.port == 443
-
-      addrs = Resolv.getaddresses(uri.host)
-      return false if addrs.empty?
-
-      addrs.none? { |addr| unsafe_ip?(addr) }
-    end
-
-    def unsafe_ip?(addr)
-      ip = IPAddr.new(addr)
-      UNSAFE_NETS.any? { |net| net.include?(ip) }
-    rescue IPAddr::InvalidAddressError
-      true
-    end
+    # Inbox/key fetches run before signature verify, so the SSRF rule bites here
+    # first. It lives in OutboundHttp because link previews fetch remote URLs
+    # too, and a network allowlist written twice ends up disagreeing with
+    # itself.
+    def public_https?(uri) = OutboundHttp.public_https?(uri)
+    def unsafe_ip?(addr) = OutboundHttp.unsafe_ip?(addr)
   end
 end

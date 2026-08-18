@@ -34,6 +34,18 @@
     <p class="msg-reply-context"><%= t("messages.replying_to", name: message.parent.sender.display_name) %>: <%= truncate(message.parent.content.to_s, length: 60) %></p>
   <% end %>
   <%= tag.p format_chat_body(message.content) %>
+  <% if message.link_preview&.ok? %>
+    <%# Title, site and summary — no remote image. Hotlinking one would tell
+        that server the IP of everyone reading the thread, and proxying it is
+        remote media hosting, which is a larger problem than a chat preview. %>
+    <%= link_to message.link_preview.url, class: "link-preview", rel: "nofollow noopener", target: "_blank" do %>
+      <span class="link-preview-site"><%= message.link_preview.site_name.presence || message.link_preview.host %></span>
+      <span class="link-preview-title"><%= message.link_preview.title.presence || message.link_preview.url %></span>
+      <% if message.link_preview.description.present? %>
+        <span class="link-preview-body"><%= truncate(message.link_preview.description, length: 160) %></span>
+      <% end %>
+    <% end %>
+  <% end %>
   <%= render "messages/reactions", message: message %>
   <%# Reply, edit, unsend and forward all had a route, a model method and no
       control anywhere in the tree, so none of them could be reached from a

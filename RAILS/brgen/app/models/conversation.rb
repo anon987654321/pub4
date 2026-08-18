@@ -177,6 +177,43 @@ class Conversation < ApplicationRecord
     end
   end
 
+  # A group DM: a named conversation with more than two people in it, as opposed
+  # to a #channel, which is a public room with a slug. Both are
+  # conversation_type "group"; slug is what tells them apart, and every DM
+  # surface already filters on `slug: nil`.
+  MAX_GROUP_PARTICIPANTS = 50
+
+  def self.create_group!(creator:, name:, users: [])
+    transaction do
+      group = create!(conversation_type: "group", name: name.to_s.strip.presence, city: Current.city_record)
+      # The creator is an op. Nothing else in the app appoints one, so a group
+      # created without an op could never be renamed or moderated by anyone.
+      group.join!(creator, role: "op")
+      users.uniq.excluding(creator).each { |user| group.join!(user) }
+      group
+    end
+  end
+
+  def group_dm? = conversation_type == "group" && slug.blank?
+
+  # Ops rename the room and remove people; any member may add. A group chat
+  # where only the founder can bring a friend in is one people work around by
+  # starting a second group.
+  def admin?(user)
+    return false if user.blank?
+
+    conversation_participants.exists?(user_id: user.id, role: "op")
+  end
+
+  # A group without an op can never be renamed or moderated again, so the last
+  # one leaving hands the room to whoever has been in it longest rather than
+  # being refused — refusing would trap someone in a chat they want to leave.
+  def promote_longest_standing!
+    return if conversation_participants.exists?(role: "op")
+
+    conversation_participants.order(:created_at, :id).first&.update!(role: "op")
+  end
+
   def unread_count_for(user)
     participant = conversation_participants.find_by(user:)
     return 0 unless participant

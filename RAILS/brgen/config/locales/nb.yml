@@ -359,6 +359,18 @@ nb:
     forward: Videresend
     forward_to: Videresend til
     forwarded: Videresendt
+    new_group: Ny gruppe
+    group_name: Gruppenavn
+    group_members_label: Deltakere
+    group_members_placeholder: "kari, ola"
+    group_members_help: "Brukernavn, skilt med komma. Navn vi ikke finner hoppes over."
+    create_group: Lag gruppe
+    group_add: Legg til noen
+    group_leave: Forlat
+    confirm_group_remove: Fjerne fra denne gruppen?
+    record_voice: Ta opp
+    stop_recording: Stopp
+    microphone_denied: Ingen tilgang til mikrofon.
     search_label: Søk i meldingene dine
     search_placeholder: Søk i meldinger
     search_submit: Søk
@@ -1311,6 +1323,13 @@ nb:
     conversation_pinned: Samtalen er festet.
     conversation_unpinned: Samtalen er løsnet.
     message_forwarded: Meldingen er videresendt.
+    group_created: Gruppen er laget.
+    group_renamed: Gruppen har fått nytt navn.
+    group_needs_people: En gruppe trenger deltakere. Ingen av brukernavnene passet.
+    group_member_added: Lagt til i gruppen.
+    group_member_removed: Fjernet fra gruppen.
+    group_left: Du forlot gruppen.
+    group_full: Gruppen er full.
     settings_update_failed: Kunne ikke oppdatere innstillingene.
     channel_ttl_locked: Offentlige rom beholder forsvinnende meldinger.
     user_not_found: Fant ikke brukeren.

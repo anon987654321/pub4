@@ -28,7 +28,14 @@ class Message < ApplicationRecord
   # unless deleted?: unsend! empties the body and keeps the row, and without
   # this the record would be permanently invalid — every later save on it, from
   # a receipt or a reaction, would fail.
-  validates :content, presence: true, unless: :deleted?
+  #
+  # An attachment is also a message. A voice note has no words in it by
+  # definition, and requiring some is how a client ends up sending a space.
+  validates :content, presence: true, unless: -> { deleted? || attachment.attached? }
+  # messages.content is NOT NULL and unsend! already writes "" into it, so a
+  # bodyless attachment matches that rather than making the column nullable.
+  # A text message with no body still fails the presence rule above.
+  before_validation { self.content = "" if content.nil? }
   validates :content, length: { maximum: 10_000 }
   validates :message_type, inclusion: { in: %w[text image file audio] }
 
@@ -43,6 +50,11 @@ class Message < ApplicationRecord
   # appends to every open .conversation-log rather than whichever came first.
   after_create_commit :broadcast_to_logs
 
+  # What the link in this message is. Attached on create, filled in off the
+  # request, and shared with every other message carrying the same URL.
+  belongs_to :link_preview, optional: true
+
+  after_create :attach_link_preview
   after_create :deliver_receipts
   after_create :clear_typing_indicators
   after_create :schedule_expiration, if: :should_expire?
@@ -134,13 +146,30 @@ end
   private
 
   def broadcast_to_logs
-    fresh = Message.strict_loading(false).includes(:sender, :conversation).find(id)
+    fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview).find(id)
     fresh.broadcast_append_to(
       conversation,
       targets: ".conversation-log",
       partial: "messages/message",
       locals: { message: fresh }
     )
+  end
+
+  # One LinkPreview per URL, not per message: the same article gets pasted into
+  # twenty rooms, and fetching it twenty times points this app at whoever was
+  # linked. A fresh row is fetched; an existing one is reused unless it has gone
+  # stale.
+  def attach_link_preview
+    url = LinkPreview.first_url_in(content)
+    return if url.blank?
+
+    preview = LinkPreview.find_or_create_by!(url: url)
+    update_column(:link_preview_id, preview.id)
+    LinkPreviewFetchJob.perform_later(preview.id) if preview.stale?
+  rescue ActiveRecord::RecordNotUnique
+    # Two messages carrying the same new URL raced. The loser adopts the row.
+    preview = LinkPreview.find_by(url: url)
+    update_column(:link_preview_id, preview.id) if preview
   end
 
   def deliver_receipts

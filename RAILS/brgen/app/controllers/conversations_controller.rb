@@ -45,12 +45,14 @@ class ConversationsController < ApplicationController
   end
 
   def show
-    @conversation = Conversation.for_user(Current.user).find(params[:id])
+    # participants for the group roster; strict loading makes that a preload
+    # rather than a nice-to-have.
+    @conversation = Conversation.for_user(Current.user).includes(:participants).find(params[:id])
     @conversation.mark_read_for!(Current.user)
     # parent: :sender for the reply line, message_receipts for the read chip —
     # both are read once per message, so both are preloaded once per page.
     @messages = @conversation.messages.visible.unexpired
-                             .includes(:sender, :message_receipts, parent: :sender)
+                             .includes(:sender, :message_receipts, :link_preview, parent: :sender)
                              .recent.limit(50).reverse
     @message  = Message.new
     # Where a forward can go: the reader's other threads. Built once for the
@@ -63,6 +65,7 @@ class ConversationsController < ApplicationController
     @reply_to = @conversation.messages.visible.unexpired.find_by(id: params[:reply_to])
     @editing = @conversation.messages.find_by(id: params[:edit])
     @editing = nil unless @editing&.editable_by?(Current.user)
+    @is_group_admin = @conversation.admin?(Current.user)
   end
 
   def update

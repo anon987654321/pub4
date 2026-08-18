@@ -358,6 +358,18 @@ en:
     forward: Forward
     forward_to: Forward to
     forwarded: Forwarded
+    new_group: New group
+    group_name: Group name
+    group_members_label: People
+    group_members_placeholder: "kari, ola"
+    group_members_help: "Usernames, separated by commas. Names we cannot find are skipped."
+    create_group: Create group
+    group_add: Add someone
+    group_leave: Leave
+    confirm_group_remove: Remove from this group?
+    record_voice: Record
+    stop_recording: Stop
+    microphone_denied: No microphone access.
     search_label: Search your messages
     search_placeholder: Search messages
     search_submit: Search
@@ -1306,6 +1318,13 @@ en:
     conversation_pinned: Conversation pinned.
     conversation_unpinned: Conversation unpinned.
     message_forwarded: Message forwarded.
+    group_created: Group created.
+    group_renamed: Group renamed.
+    group_needs_people: A group needs someone in it. None of those usernames matched.
+    group_member_added: Added to the group.
+    group_member_removed: Removed from the group.
+    group_left: You left the group.
+    group_full: That group is full.
     settings_update_failed: Could not update settings.
     channel_ttl_locked: Public rooms keep disappearing messages on.
     user_not_found: User not found.

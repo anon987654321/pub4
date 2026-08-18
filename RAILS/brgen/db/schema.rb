@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_18_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -528,6 +528,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_110000) do
     t.index ["slug"], name: "index_identity_providers_on_slug", unique: true
   end
 
+  create_table "link_previews", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.datetime "fetched_at"
+    t.string "site_name"
+    t.string "status", default: "pending", null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.index ["url"], name: "index_link_previews_on_url", unique: true
+  end
+
   create_table "marketplace_addresses", force: :cascade do |t|
     t.string "city_name", null: false
     t.string "country_code", default: "NO", null: false
@@ -736,6 +748,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_110000) do
     t.datetime "edited_at"
     t.datetime "expires_at"
     t.integer "forwarded_from_id"
+    t.integer "link_preview_id"
     t.string "message_type"
     t.integer "parent_id"
     t.integer "sender_id"
@@ -743,6 +756,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_110000) do
     t.index ["conversation_id", "deleted_at"], name: "index_messages_on_conversation_id_and_deleted_at"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["forwarded_from_id"], name: "index_messages_on_forwarded_from_id"
+    t.index ["link_preview_id"], name: "index_messages_on_link_preview_id"
     t.index ["parent_id"], name: "index_messages_on_parent_id"
     t.index ["sender_id"], name: "index_messages_on_sender_id"
   end
@@ -1670,6 +1684,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_110000) do
   add_foreign_key "message_receipts", "messages"
   add_foreign_key "message_receipts", "users"
   add_foreign_key "messages", "conversations"
+  add_foreign_key "messages", "link_previews"
   add_foreign_key "messages", "messages", column: "forwarded_from_id"
   add_foreign_key "messages", "messages", column: "parent_id"
   add_foreign_key "moderation_flags", "users"

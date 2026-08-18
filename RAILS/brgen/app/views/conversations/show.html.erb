@@ -7,6 +7,34 @@
     <%= link_to t("messages.back_all"), conversations_path %>
     <%= link_to t("messages.search"), search_conversations_path(conversation_id: @conversation.id) %>
   </nav>
+  <% if @conversation.group_dm? %>
+    <section class="group-roster" aria-label="<%= t("messages.group_members_label") %>">
+      <ul role="list">
+        <% @conversation.participants.each do |participant| %>
+          <li role="listitem">
+            <%= participant.display_name %>
+            <% if @is_group_admin || participant.id == Current.user.id %>
+              <%= button_to participant.id == Current.user.id ? t("messages.group_leave") : t("actions.remove"),
+                    group_member_path(@conversation, participant), method: :delete,
+                    data: { turbo_confirm: t("messages.confirm_group_remove") } %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <%= form_with url: group_members_path(@conversation), method: :post do |f| %>
+        <%= f.label :username, t("messages.group_add") %>
+        <%= f.text_field :username, placeholder: t("messages.username"), autocomplete: "username" %>
+        <%= f.submit t("actions.add_one"), class: "btn btn-sm" %>
+      <% end %>
+      <% if @is_group_admin %>
+        <%= form_with model: @conversation, url: group_path(@conversation), method: :patch do |f| %>
+          <%= f.label :name, t("messages.group_name") %>
+          <%= f.text_field :name, value: @conversation.name, maxlength: 80 %>
+          <%= f.submit t("actions.save"), class: "btn btn-sm" %>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
   <%= form_with url: conversation_path(@conversation), method: :patch,
         class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
     <span class="disappearing-badge" aria-hidden="true"></span>
@@ -58,7 +86,19 @@
           data: { character_counter_target: "input" } %>
     <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
   </div>
-  <%= f.hidden_field :message_type, value: "text" %>
+  <%# The recorder writes into this file field and flips the type to audio, so a
+      voice note goes through the same create path as a photo. %>
+  <%= f.hidden_field :message_type, value: "text", data: { voice_recorder_target: "type" } %>
+  <%= f.file_field :attachment, accept: "audio/*,image/*", class: "media-input-hidden", data: { voice_recorder_target: "file" } %>
+  <%= f.hidden_field :duration_seconds, data: { voice_recorder_target: "duration" } %>
+  <p data-controller="voice-recorder"
+     data-voice-recorder-max-seconds-value="120"
+     data-voice-recorder-record-label-value="<%= t("messages.record_voice") %>"
+     data-voice-recorder-stop-label-value="<%= t("messages.stop_recording") %>"
+     data-denied-text="<%= t("messages.microphone_denied") %>">
+    <button type="button" class="btn btn-ghost btn-sm" data-action="voice-recorder#toggle" data-voice-recorder-target="button"><%= t("messages.record_voice") %></button>
+    <span data-voice-recorder-target="status" aria-live="polite"></span>
+  </p>
   <% if @reply_to %>
     <%# The referent travels in the form, so a reply is still a reply after a
         reload — and the line says what is being answered, because a reply with

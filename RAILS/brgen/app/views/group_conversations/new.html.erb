@@ -1,0 +1,19 @@
+<% content_for :title, t("messages.new_group") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("messages.new_group") %>">
+  <%= tag.h1 t("messages.new_group") %>
+  <%= link_to t("messages.back_all"), conversations_path, class: "btn btn-ghost" %>
+</div>
+
+<%= form_with url: groups_path, method: :post, class: "messenger-compose-form" do |f| %>
+  <div class="field">
+    <%= f.label :name, t("messages.group_name") %>
+    <%= f.text_field :name, maxlength: 80, autocomplete: "off" %>
+  </div>
+  <div class="field">
+    <%= f.label :usernames, t("messages.group_members_label") %>
+    <%= f.text_field :usernames, required: true, placeholder: t("messages.group_members_placeholder"), autocomplete: "off" %>
+    <p class="form-help"><%= t("messages.group_members_help") %></p>
+  </div>
+  <p><%= f.submit t("messages.create_group"), class: "btn btn-primary" %></p>
+<% end %>

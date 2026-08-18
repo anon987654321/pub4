@@ -154,6 +154,13 @@ Rails.application.routes.draw do
     resource :pin, only: %i[create destroy], controller: "conversation_pins"
   end
 
+  # A group DM is a Conversation with a name and no slug; a #channel is one with
+  # a slug. Rename lives here rather than on conversations#update, which owns
+  # the disappearing setting every conversation shares.
+  resources :groups, only: %i[new create update], controller: "group_conversations" do
+    resources :members, only: %i[create destroy], controller: "group_members"
+  end
+
   # TV vertical, extracted to a mountable engine (engines/tv). Routes now live in
   # the engine's config/routes.rb; the host mounts it under the same subdomain
   # constraint. Host references to its helpers are tv.* (see application_helper,
