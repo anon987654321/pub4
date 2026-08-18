@@ -39,4 +39,15 @@ class GarmentSilhouetteTest < ActiveSupport::TestCase
   test "the seam is a darker shade of the garment, not the same hue" do
     assert_equal "#846141", Amber::GarmentSilhouette.shade("#b8875a")
   end
+# The overlay renders object-fit: contain inside a zone box, so transparent
+# margin around the shape is margin the garment loses on the figure.
+test "the cut-out is trimmed to the garment" do
+  png = Amber::GarmentSilhouette.png(title: "Gold hoop earrings", color: "gold", width: 300)
+  skip "vips on this box cannot rasterise SVG" if png.nil?
+
+  image = Vips::Image.new_from_buffer(png, "")
+  assert_equal 300, image.width
+  assert_operator image.height, :<, 200, "a pair of hoops should not carry a garment-length canvas"
+  assert_operator image.extract_band(3).max, :>, 200, "something should be drawn"
+end
 end

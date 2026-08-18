@@ -60,12 +60,23 @@ module Amber
     # attaching nothing.
     def png(title:, color:, category: nil, width: 720)
       svg = svg_for(shape_for(title: title, category: category), hex_for(color))
-      image = Vips::Image.new_from_buffer(svg, "")
+      image = trim_transparent(Vips::Image.new_from_buffer(svg, ""))
       image = image.resize(width.to_f / image.width) if image.width != width
       image.write_to_buffer(".png")
     rescue Vips::Error, LoadError => error
       warn_once(error)
       nil
+    end
+
+    # Cut to the garment. The overlay renders object-fit: contain inside a zone
+    # box, so transparent margin around the shape is margin the garment loses:
+    # a coat drawn on a tall canvas sat as a narrow strip in the middle of a
+    # wide chest. One viewBox per shape would drift the moment a path moved.
+    def trim_transparent(image)
+      left, top, width, height = image.extract_band(3).find_trim(threshold: 1, background: [ 0 ])
+      return image if width.zero? || height.zero?
+
+      image.extract_area(left, top, width, height)
     end
 
     def svg_for(shape, fill)
