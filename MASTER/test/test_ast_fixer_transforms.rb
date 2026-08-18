@@ -163,6 +163,10 @@ class TestAstFixerTransforms < Minitest::Test
     conf = "/var/log/daemon\t640  5\n"
     result = fix("newsyslog.conf", conf)
     assert_includes result[:content], "\t640"
+
+    tsv = "# idx\ttitle\tseed\n00\tmercury_lantern\t4242\n"
+    result = fix("demo_manifest.tsv", tsv)
+    assert_equal tsv, result[:content], "TSV delimiter tabs expanded"
   end
 
   def test_markdown_hard_breaks_survive_whitespace_strip

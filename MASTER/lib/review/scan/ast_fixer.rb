@@ -204,9 +204,11 @@ module Master
           depth.zero?
         end
 
-        # Tabs are syntax in make recipes and convention in .conf mirrors —
-        # expanding them is a break, not a cleanup.
-        TAB_SIGNIFICANT_RE = /\A(?:makefile.*|.*\.mk|.*\.conf)\z/i
+        # Tabs are syntax in make recipes, the delimiter in TSV, gofmt's
+        # output in Go, and convention in .conf mirrors — expanding them is a
+        # break, not a cleanup. dilla's demo_manifest.tsv lost its columns to
+        # this on 2026-08-18.
+        TAB_SIGNIFICANT_RE = /\A(?:makefile.*|.*\.(?:mk|conf|tsv|go))\z/i
 
         def expand_tabs(src)
           return src unless src.include?("\t")
