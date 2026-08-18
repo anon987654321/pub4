@@ -27,17 +27,13 @@ brmingham.uk:
   state: registered
   created: 24-Jun-2021
   expires: 24-Jun-2026
+  status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 brssels.be:
   state: registered
 bsddocs.org:
   state: unknown
   note: registry referral, not a domain record
-bsdports.net:
-  state: registered
-  created: '2022-08-08T14:15:12Z'
-  expires: '2027-08-08T14:15:12Z'
-  registrar: Domeneshop AS dba domainnameshop.com
 bsdports.org:
   state: registered
   created: '2022-08-08T14:15:10Z'
@@ -47,6 +43,7 @@ cardff.uk:
   state: registered
   created: 13-Aug-2021
   expires: 13-Aug-2026
+  status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 chcago.us:
   state: unknown
@@ -74,6 +71,7 @@ edinbrgh.uk:
   state: registered
   created: 13-Aug-2021
   expires: 13-Aug-2026
+  status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 foball.no:
   state: registered
@@ -93,6 +91,7 @@ glasgw.uk:
   state: registered
   created: 24-Jun-2021
   expires: 24-Jun-2026
+  status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 gtebrg.se:
   state: unknown
@@ -125,6 +124,7 @@ lverpool.uk:
   state: registered
   created: 25-Jun-2021
   expires: 25-Jun-2026
+  status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 mlan.it:
   state: unknown
@@ -136,6 +136,7 @@ mnchester.uk:
   state: registered
   created: 25-Jun-2021
   expires: 25-Jun-2026
+  status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 mnnesota.com:
   state: unknown
