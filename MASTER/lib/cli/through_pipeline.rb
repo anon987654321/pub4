@@ -167,8 +167,13 @@ module Master
         if text.match?(%r{\Arails[:/]}i)
           return File.join(Master::RAILS_ROOT, text.sub(%r{\Arails[:/]}i, ""))
         end
+        # The pattern admits a leading ../ (bin/gate says ../RAILS from
+        # MASTER), but the base here is already the repo root, so expanding
+        # the ../ walks OUT of the repo to a sibling that does not exist —
+        # and a nonexistent target falls back to scanning MASTER, so the
+        # gate's RAILS stage measured the wrong tree and called it RAILS.
         if text.match?(%r{\A(?:\.\./)?RAILS(?:/|\z)})
-          return File.expand_path(text, Master::REPO_ROOT)
+          return File.expand_path(text.delete_prefix("../"), Master::REPO_ROOT)
         end
 
         path = File.expand_path(text, @root)

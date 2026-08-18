@@ -59,9 +59,19 @@ class TestThroughInference < Minitest::Test
         bus: nil,
       )
       result = pipe.call(target: "rails", apply: false, critique: false, aesthetic: false)
-      assert result.target == Master::RAILS_ROOT || result.target.to_s.end_with?("RAILS")
+      # Strict equality: the old `end_with?("RAILS")` disjunct accepted
+      # /Users/…/GitHub/RAILS — the nonexistent sibling ../RAILS used to
+      # resolve to — so the test passed while the gate scanned MASTER.
+      assert_equal Master::RAILS_ROOT, result.target
       # dmesg-style unit id (through0), not a literal "through:" label
       assert_match(/through\d+:\s*complete/, result.render)
+
+      # bin/gate's spelling. Expanding the ../ against the repo root walked
+      # out of the repo, and a target that does not exist falls back to
+      # scanning MASTER — the RAILS stage measured the wrong tree.
+      assert_equal Master::RAILS_ROOT, pipe.send(:resolve_target, "../RAILS")
+      assert_equal File.join(Master::RAILS_ROOT, "brgen"), pipe.send(:resolve_target, "../RAILS/brgen")
+      assert File.exist?(pipe.send(:resolve_target, "../RAILS")), "resolved RAILS target must exist"
     end
   end
 
