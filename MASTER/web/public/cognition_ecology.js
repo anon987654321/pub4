@@ -71,13 +71,22 @@
     state.width = innerWidth;
     state.height = innerHeight;
 
-    // Low internal resolution + integer upscale per data/topologies.yml + visual_clusters.yml.
+    // Low internal resolution + upscale per data/topologies.yml + visual_clusters.yml.
     // The media query alone — see mask.js. `limits.reducedMotionParticles < 100`
     // asked a particle budget a yes/no question and got "yes" every time, so the
-    // 640x360 branch below had never run for anyone.
+    // small branch below had never run for anyone.
+    //
+    // The buffer takes the viewport's own aspect rather than a fixed landscape
+    // one. It was 640x360 / 320x180 stretched to 100vw x 100vh: on a desktop
+    // window that is nearly uniform and invisible, on a phone held upright it is
+    // 1.2x across and 4.7x down, so every cell this layer draws — the agent
+    // spirits are fillRect/strokeRect — landed on the face as a tall translucent
+    // rectangle, and the terrain grid as long stretched wires.
     const isReduced = reducedMotion;
-    let res = { w: 640, h: 360 };
-    if (isReduced || (state.width * state.height) < 400000) res = { w: 320, h: 180 };
+    const budget = (isReduced || (state.width * state.height) < 400000) ? 320 * 180 : 640 * 360;
+    const aspect = Math.max(0.2, Math.min(5, state.width / Math.max(1, state.height)));
+    const h = Math.max(120, Math.round(Math.sqrt(budget / aspect)));
+    const res = { w: Math.max(120, Math.round(h * aspect)), h: h };
 
     internalW = res.w;
     internalH = res.h;
