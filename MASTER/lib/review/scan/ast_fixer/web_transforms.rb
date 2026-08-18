@@ -208,6 +208,12 @@ module Master
           def link_optional_chain(src)
             src.gsub(OPTIONAL_LINK) do |match|
               next match if comment_context?(Regexp.last_match)
+              # `a && a.b !== x` short-circuits to FALSE on null a, but
+              # `a?.b !== x` evaluates to undefined !== x — TRUE — so the
+              # conversion flips the guard and the guarded call throws on
+              # exactly the input the && existed for. Two live sites shipped
+              # that way on 2026-08-18. Inequality keeps its &&.
+              next match if Regexp.last_match.post_match.match?(/\A\s*!==?/)
 
               base = Regexp.last_match(1)
               guarded = Regexp.last_match(2)

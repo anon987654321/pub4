@@ -38,6 +38,23 @@ class TestAstFixerTransforms < Minitest::Test
   # after one link, for-in only matched `const`, and the concat fix only matched
   # literal + identifier + literal.
 
+  # `a && a.b !== x` is FALSE when a is null; `a?.b !== x` is TRUE
+  # (undefined !== x), so the conversion flips the guard — and the guarded
+  # statement then runs against the null the && was protecting. Shipped live
+  # in voice_recorder_controller.js and nearby_chat_controller.js.
+  def test_optional_chaining_declines_inequality_guards
+    src = <<~JS
+      if (recorder && recorder.state !== "inactive") recorder.stop();
+      if (el && el.textContent != value) el.textContent = value;
+      if (recorder && recorder.state === "recording") record();
+    JS
+    result = fix("guard.js", src)
+
+    assert_includes result[:content], 'recorder && recorder.state !== "inactive"'
+    assert_includes result[:content], "el && el.textContent != value"
+    assert_includes result[:content], 'recorder?.state === "recording"'
+  end
+
   def test_optional_chaining_converges_over_a_whole_chain
     result = fix("chain.js", "const x = a && a.b && a.b.c && a.b.c.d;\n")
 
