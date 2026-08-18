@@ -28,16 +28,18 @@ module Master
           result = deliberate(panel, payload)
           return result unless result.ok?
 
-          ideation_result = ideate(preset)
           feedback = result.value!
+          ideation_result = ideate(preset, feedback:)
           cherry = CherryPick.call(feedback, ideation_result)
           @bus&.publish(@mode[:done_event], cherry_picks: cherry.size)
+          harvest = harvest_path(payload:, feedback:, ideation_result:, cherry:)
           Master::Result.ok({
             feedback:,
             ideas: CherryPick.ideation_value(ideation_result),
             cherry_picks: cherry,
             metrics: payload[:metrics],
             mode: @mode[:preset_key],
+            harvest:,
           })
         end
 
@@ -48,12 +50,44 @@ module Master
           delib.review(payload[:combined], context: build_context)
         end
 
-        def ideate(preset)
+        def ideate(preset, feedback: nil)
           Ideation.new(agent: @agent, event_bus: @bus).ideate(
-            @mode[:ideation_prompt],
+            ideation_prompt(feedback),
             constraints: @mode[:constraints],
             cycles: (preset["cycles"] || @mode[:cycles_default]).to_i,
           )
+        end
+
+        # Ideation used to run on the mode's canned prompt alone, blind to what
+        # the panel just found — proposals for nothing in particular, ranked
+        # against complaints they never addressed. The panel's issues ARE the
+        # prompt: several proposals per issue, so the challenge round has
+        # something to eliminate.
+        def ideation_prompt(feedback)
+          issues = Array(feedback).filter_map { |entry| entry[:feedback].to_s.lines.first&.strip }
+                                  .reject(&:empty?).uniq.first(12)
+          return @mode[:ideation_prompt] if issues.empty?
+
+          <<~PROMPT
+            #{@mode[:ideation_prompt]}
+
+            The council raised these issues. Propose at least two distinct
+            fixes for each, so the weaker can be discarded:
+            #{issues.map { |issue| "- #{issue}" }.join("\n")}
+          PROMPT
+        end
+
+        def harvest_path(payload:, feedback:, ideation_result:, cherry:)
+          Harvest.write(
+            mode: @mode[:preset_key],
+            files: payload[:files],
+            feedback:,
+            ideas: CherryPick.ideation_value(ideation_result),
+            cherry:,
+          )
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Critique.harvest", severity: :load_bearing)
+          nil
         end
 
         def build_context

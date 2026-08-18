@@ -79,7 +79,13 @@ module Master
 
         def critique(ideas)
           list = ideas.map { |idea| "- #{idea}" }.join("\n")
-          system_msg = "Critique these ideas. Identify weaknesses, blind spots, risks. Be direct."
+          # Adversarial, per proposal, with a verdict — a critique that only
+          # muses about the pool eliminates nothing, and the synthesis then
+          # keeps everything. Each proposal gets attacked and either survives
+          # or is rejected by name.
+          system_msg = "Attack each idea separately: state the strongest argument that it is wrong, " \
+                       "breaks existing behavior, or fights a decision already made. " \
+                       "End each with 'VERDICT: keep' or 'VERDICT: reject — <reason>'. Be direct."
           raw = @agent.ask_once(<<~PROMPT, system: system_msg)
           #{list}
         PROMPT
@@ -94,6 +100,7 @@ module Master
           list = ideas.map { |idea| "- #{idea}" }.join("\n")
           crits = critiques.join("\n\n")
           system_msg = "Synthesize the best elements into a concrete, practical recommendation. " \
+                       "Drop every idea the critiques rejected; keep only survivors and say which. " \
                        "Preserve innovation. Address valid critiques."
           raw = @agent.ask_once(<<~PROMPT, system: system_msg)
           Goal: #{prompt}

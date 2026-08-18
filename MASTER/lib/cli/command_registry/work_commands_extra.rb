@@ -188,6 +188,7 @@ module Master
           lines << "  [#{f[:persona]}] #{first}"
         end
         Array(data[:cherry_picks]).each { |p| lines << "  cherry: #{p}" }
+        lines << "  harvested: #{data[:harvest]}" if data[:harvest]
         lines.join("\n")
       end
 
