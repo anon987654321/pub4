@@ -234,9 +234,11 @@ DILLA_STYLE_DEFAULTS = {
   "STREAM_CROSSFADE" => "0.08",
   "STREAM_DEMO" => "demo.wav",
   "STREAM_NORMALIZE" => "1",
+  # Loudness target only. True peak and loudness range are gates, not knobs:
+  # dilla_reference.yml holds true_peak_max_dbtp and master_heuristics checks
+  # the finished file against it. The stream master is a measure-then-static-
+  # gain ride, so there is no limiter here for a ceiling to steer.
   "STREAM_LUFS" => "-16.5",
-  "STREAM_TRUE_PEAK" => "-1.5",
-  "STREAM_LRA" => "11",
   # Dilla's documented MPC sweet spot is 54-58% (Dilla Time + producer
   # consensus); 60+ reads as over-swung rather than the authentic pocket.
   "SWING" => "56",
@@ -496,8 +498,6 @@ DILLA_COMFORT_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "HARSHNESS_NOTCH" => "1",
   "PERCEPTUAL_LIMIT" => "1",
   "STREAM_LUFS" => "-17.5",
-  "STREAM_TRUE_PEAK" => "-2.0",
-  "STREAM_LRA" => "9",
   # Autorotate progressions/patches/leads between tracks so a stream session
   # actually surfaces variety instead of settling on one sound -- these were
   # all forced off ("less chaos"), which is exactly why a listening session
