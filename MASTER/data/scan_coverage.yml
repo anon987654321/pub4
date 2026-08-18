@@ -21,6 +21,16 @@ scan_coverage:
   # Scanned by the self-directed gates. Relative to MASTER/.
   roots:
   - lib
+  # The rules are subject to the rules. law/ arrived with 85 rules migrated out
+  # of rules.yml and was classified as neither, which is the state this file
+  # exists to make impossible — 91 Ruby files that no gate looked at, in the one
+  # tree whose whole subject is what the gates look at.
+  #
+  # Scanned rather than exempt because it scans clean: adding it here produces no
+  # finding beyond the one constitution.rb already carries. The `bad` fixture in
+  # each Law.define does trip the security sweep, which is a different gate and
+  # is handled where it belongs, in tools/security_sweep.rb.
+  - law
   # Not scanned, and why. A reason is required: the lint fails on a blank one,
   # because "exempt: true" records the exemption without recording the argument,
   # and the argument is the part that rots.

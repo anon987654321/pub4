@@ -69,6 +69,23 @@ TRACKED_DENY_GLOBS = [
   "**/.master/**",
 ].freeze
 
+# MASTER/law/*.rb is the instrument, not the subject. Every Law.define carries a
+# `bad` fixture that must violate the rule it declares, so SECRET_PROXIMITY's
+# reads `api_key = 'sk_live_abcdef123456'` and this sweep called it a finding —
+# the same shape as scanning test/, which SKIP_PATH_RE already refuses for the
+# same reason.
+#
+# The tree is not skipped wholesale, because a real credential committed beside
+# a fixture would then be the one thing here nobody is looking at. Only the two
+# declared fixture lines are dropped; everything else in the file is scanned.
+LAW_FIXTURE_RE = /^[ \t]*(?:bad|good)[ \t]+["'].*$/.freeze
+
+def strip_law_fixtures(path, body)
+  return body unless path.start_with?("MASTER/law/")
+
+  body.gsub(LAW_FIXTURE_RE, "")
+end
+
 def git_ls_files(pattern)
   out, status = Open3.capture2("git", "-C", SWEEP_ROOT, "ls-files", pattern)
   status.success? ? out.lines.map(&:chomp).reject(&:empty?) : []
@@ -84,6 +101,8 @@ def scan_tracked_secrets
 
     body = File.read(File.join(SWEEP_ROOT, path), mode: "rb").force_encoding(Encoding::UTF_8)
     next unless body.valid_encoding?
+
+    body = strip_law_fixtures(path, body)
 
     SECRET_PATTERNS.each do |pattern|
       next if pattern.source.include?("api_key") && body.include?("API_KEY_PROVIDERS")
