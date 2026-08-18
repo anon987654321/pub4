@@ -156,13 +156,28 @@ def demo_all_order
   (curated + loops + tail).uniq
 end
 
+# The crate opens the demo. Its three sources below union to 86 entries and
+# not one of them is a sampled track, so a demo of what this engine does
+# played 86 synthesised pieces and never put on a record -- the one thing it
+# does that a synthesiser cannot.
+#
+# Only records whose loop is on disk. TRACK_SAMPLE_LOOPS names five and four
+# of them are currently missing their audio; listing a record with no file
+# buys a failed slot or a silence placeholder in the middle of a demo. This
+# reads the disk so restoring a loop is the whole of putting it back in.
+def demo_sampled_order
+  lead = :semua_untuk_mu
+  present = TRACK_SAMPLE_LOOPS.select { |_, spec| File.file?(spec[:path].to_s) }.keys
+  ([lead] & present) + (present - [lead])
+end
+
 # The curated head of the catalogue, on its own. Named because three places want
 # it: demo_all_order builds from it, DEMO_CURATED_ONLY returns it, and the help
 # text has to be able to say how big it is without guessing.
 def demo_curated_order
   base = STREAM_TRACKS.map(&:to_sym)
   extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
-  (base + extra).uniq
+  (demo_sampled_order + base + extra).uniq
 end
 
 # Catalogue sizes, derived rather than written down.
