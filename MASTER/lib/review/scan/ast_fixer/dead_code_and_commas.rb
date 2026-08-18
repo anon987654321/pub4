@@ -41,7 +41,7 @@ module Master
           LITERAL_NODES = [
             Prism::StringNode, Prism::InterpolatedStringNode,
             Prism::XStringNode, Prism::InterpolatedXStringNode,
-            Prism::RegularExpressionNode, Prism::InterpolatedRegularExpressionNode
+            Prism::RegularExpressionNode, Prism::InterpolatedRegularExpressionNode,
           ].freeze
 
           # Memoized by source content: remove_immediate_dead_code and add_trailing_commas

@@ -11,7 +11,7 @@ class ModelCatalogCheckTest < Minitest::Test
     "z-ai/glm-4.5-air", "z-ai/glm-4.6",
     "meta-llama/llama-4-scout", "meta-llama/llama-3.3-70b-instruct",
     "cohere/command-a", "cohere/command-r-plus-08-2024",
-    "google/gemma-3-4b-it"
+    "google/gemma-3-4b-it",
   ].freeze
 
   def classify(id) = Pub4::ModelCatalogCheck.nearest(id, LIVE)

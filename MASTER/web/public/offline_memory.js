@@ -158,7 +158,7 @@
           await txDone(tx);
           results.push({ id: ev.id, ok: true });
         } catch (err) {
-          results.push({ id: ev.id, ok: false, error: String(err && err.message || err) });
+          results.push({ id: ev.id, ok: false, error: String(err?.message || err) });
         }
       }
       return results;

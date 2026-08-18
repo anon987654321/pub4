@@ -323,7 +323,6 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
   transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);
 }
 
-
 @keyframes faceBootPulse {
   0%, 100% { opacity: .42; }
   50% { opacity: .78; }
@@ -485,7 +484,6 @@ body[data-mode="speaking"] #mic-dot {
   letter-spacing: .14em;
   text-transform: uppercase;
 }
-
 
 .face-scale {
   display: inline-flex;
@@ -776,7 +774,6 @@ body.mission-control a:focus-visible {
   user-select: none;
   opacity: .75;
 }
-
 
 #zsh {
   position: fixed;

@@ -18,7 +18,7 @@ class TestRecoveryPubManifest < Minitest::Test
       "RECOVERY/pub/LEGACY_MANIFEST.yml",
       "RECOVERY/pub/README.md",
       "RECOVERY/pub/plugin_schema_v1.json",
-      "MASTER/data/recovery_pub.yml"
+      "MASTER/data/recovery_pub.yml",
     ]
 
     missing = required.reject { |path| ROOT.join(path).file? }

@@ -52,7 +52,6 @@ module Master
         )
       end
 
-
       def parse_through_flags(raw)
         apply = nil
         critique = nil

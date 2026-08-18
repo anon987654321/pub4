@@ -292,8 +292,6 @@ namespace :lint do
     abort "lint:rule_reach: a rule reaches no detector" unless ok
   end
 
-
-
   desc "every model data/models.yml names is one the provider still serves (needs network)"
   task :models do
     ok = system(RbConfig.ruby, File.join(__dir__, "tools", "model_catalog_check.rb"))
