@@ -3006,9 +3006,25 @@ function primeBrowserVoices() {
 // thing a visitor hears. It did: ai.brgen.no was answering in a whisper.
 const NOVELTY_VOICE_RE = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|princess|deranged|hysterical|bruce|agnes|victoria)\b/i;
 
-// Names that are natural-sounding on the platforms that ship them. Ordered:
-// the enhanced/neural families first, then the reliable defaults.
-const PREFERRED_VOICE_RE = /(neural|natural|enhanced|premium|siri|google\s|microsoft\s|samantha|alex|nora|serena|daniel|karen|moira|tessa)/i;
+// Two tiers, not one list, because they are not the same kind of thing and the
+// difference is audible.
+//
+// NEURAL names the actually-neural synthesisers. DECENT names concatenative
+// voices that are good for their generation — Daniel and Samantha are 2009-era
+// diphone voices, fine as a floor and nobody's idea of good.
+//
+// They were one regex, and selection is `find()` over getVoices() in whatever
+// order the platform returns. So "Ava (Premium)" and "Daniel" matched equally
+// and array position decided, which means installing a premium voice could
+// leave the old one still speaking. Tiering makes the better voice win by being
+// better rather than by being earlier.
+//
+// On macOS this matters more than it looks: the system ships only compact
+// voices, and Enhanced/Premium are a separate download under Spoken Content.
+// A machine without them has no tier-1 voice at all and correctly falls to
+// tier 2.
+const NEURAL_VOICE_RE = /(neural|natural|enhanced|premium|siri|google\s|microsoft\s)/i;
+const DECENT_VOICE_RE = /(samantha|alex|nora|serena|daniel|karen|moira|tessa)/i;
 
 function pickBrowserVoice(lang) {
   let voices = [];
@@ -3022,12 +3038,17 @@ function pickBrowserVoice(lang) {
   const exact = pool.filter((v) => (v.lang || '').toLowerCase() === want);
   const loose = pool.filter((v) => (v.lang || '').toLowerCase().startsWith(base));
 
-  // Preferred name in the exact locale beats the platform default, because the
-  // default is often the oldest voice the platform still ships.
-  return exact.find((v) => PREFERRED_VOICE_RE.test(named(v)))
+  // A neural voice in the right locale beats everything. Below that, a good
+  // concatenative voice in the right locale beats a neural one in the wrong
+  // one — accent errors are more distracting than synthesis age. The platform
+  // default comes last of the named options, because it is usually the oldest
+  // voice still shipped.
+  return exact.find((v) => NEURAL_VOICE_RE.test(named(v)))
+      || exact.find((v) => DECENT_VOICE_RE.test(named(v)))
       || exact.find((v) => v.default)
       || exact[0]
-      || loose.find((v) => PREFERRED_VOICE_RE.test(named(v)))
+      || loose.find((v) => NEURAL_VOICE_RE.test(named(v)))
+      || loose.find((v) => DECENT_VOICE_RE.test(named(v)))
       || loose.find((v) => v.default)
       || loose[0]
       || pool.find((v) => v.default)
