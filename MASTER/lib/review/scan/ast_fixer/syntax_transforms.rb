@@ -95,6 +95,12 @@ module Master
             lines
           end
 
+          # CONST << / CONST.push later in the file means the empty literal is
+          # an accumulator, and freezing it arms a FrozenError that only fires
+          # on the first append — RAILS/gates/release.rb's FAILURES crashed
+          # exactly when it had a failure to report (2026-08-18).
+          MUTATING_SENDS = /\s*(?:<<|\[[^\]]*\]\s*=|\.(?:push|append|unshift|prepend|concat|pop|shift|clear|delete|delete_if|store|update|merge!|replace|insert)\b)/
+
           def freeze_mutable_constants(src)
             changed = false
             lines = src.lines
@@ -104,6 +110,9 @@ module Master
               # method chain — .freeze there freezes a temporary the chain
               # immediately replaces (OPENBSD/health_check.rb CURL).
               next line if lines[index + 1]&.lstrip&.start_with?(".")
+
+              name = line[/\A\s*([A-Z][A-Z_]*)\s*=/, 1]
+              next line if name && src.match?(/\b#{Regexp.escape(name)}#{MUTATING_SENDS}/)
 
               changed = true
               line.chomp.rstrip + ".freeze\n"

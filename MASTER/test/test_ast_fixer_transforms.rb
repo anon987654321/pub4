@@ -178,6 +178,23 @@ class TestAstFixerTransforms < Minitest::Test
     refute_match(/^[ \t]+$/, result[:content])
   end
 
+  def test_freeze_declines_an_accumulator_constant
+    src = <<~RUBY
+      # frozen_string_literal: true
+
+      FAILURES = []
+      APPS = %w[amber brgen]
+
+      def record(msg)
+        FAILURES << msg
+      end
+    RUBY
+    result = fix("gate.rb", src)
+
+    assert_includes result[:content], "FAILURES = []\n", "froze an accumulator — FrozenError on first append"
+    assert_includes result[:content], "APPS = %w[amber brgen].freeze"
+  end
+
   def test_freeze_declines_a_constant_that_heads_a_chain
     src = <<~RUBY
       # frozen_string_literal: true
