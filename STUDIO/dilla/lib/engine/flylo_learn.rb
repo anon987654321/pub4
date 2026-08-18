@@ -8,7 +8,6 @@
 # computed at load time from ones declared above them.
 require_relative "../frozen_state"
 
-
 FLYLO_LEARNINGS_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "flylo_drums").freeze
 
 def flylo_quantize_onsets(onsets, bpm, window: 0.05)
@@ -267,8 +266,8 @@ def chop_ingest!
   src = ARGV.find { |a| !a.start_with?("-") }
   ARGV.delete(src) if src
   cmd = demucs_cmd or abort "demucs required — " \
-    "python3 -m venv #{scratch_path('venv-demucs')} && " \
-    "#{scratch_path('venv-demucs')}/bin/pip install demucs"
+    "python3 -m venv #{DEMUX_VENV_DIR} && " \
+    "#{DEMUX_VENV_DIR}/bin/pip install demucs"
 
   RadioChop.ingest!(
     src ? File.expand_path(src) : RadioChop::DEFAULT_SOURCE,

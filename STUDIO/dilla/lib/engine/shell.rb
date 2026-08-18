@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Per-tool wall-clock cap. Hang-prone fluidsynth/ffmpeg used to block stream
 # forever (waitpid with no timeout). Override: DILLA_SH_TIMEOUT=180.
 def sh_timeout_sec
@@ -185,7 +184,7 @@ rescue StandardError
   0.0
 end
 
-DEMUX_VENV_PYTHON = File.join(scratch_path("venv-demucs"), "bin", "python").freeze
+DEMUX_VENV_PYTHON = File.join(DEMUX_VENV_DIR, "bin", "python").freeze
 
 def demucs_cmd
   return %w[demucs] if tool_available?("demucs")

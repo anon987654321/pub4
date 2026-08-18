@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def learn_source!(src, apply: false, deep: false, start_sec: nil, meta: nil)
   DillaMusicGems.bootstrap! if defined?(DillaMusicGems)
   audio_path = if File.exist?(src.to_s)
@@ -157,7 +156,7 @@ end
 
 def ensure_demucs_ready!
   return if demucs_available?
-  venv = File.join(SCRATCH_DIR, "venv-demucs")
+  venv = DEMUX_VENV_DIR
   unless File.directory?(venv)
     sh! "python3", "-m", "venv", venv
   end

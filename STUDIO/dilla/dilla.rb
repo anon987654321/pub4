@@ -143,6 +143,17 @@ OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR", Dir.pwd)
 # visible directory holds all of it, gitignored as a whole.
 SCRATCH_DIR = ENV.fetch("DILLA_SCRATCH_DIR", File.join(ROOT, "scratch"))
 
+# Installed tools, which are not scratch.
+#
+# The demucs virtualenv lived in scratch/ and is 23,783 files -- 99% of
+# everything under a directory whose name promises it can be deleted, and enough
+# to make the tree unreadable in any file browser. It is an installation: slow to
+# rebuild, unaffected by a render, and the one thing in there that must survive a
+# clean. Named once here because three files were each computing the same path
+# from SCRATCH_DIR, so moving it meant finding all three.
+TOOLS_DIR = ENV.fetch("DILLA_TOOLS_DIR", File.join(ROOT, "tools"))
+DEMUX_VENV_DIR = File.join(TOOLS_DIR, "venv-demucs").freeze
+
 def scratch_path(name)
   FileUtils.mkdir_p(SCRATCH_DIR)
   File.join(SCRATCH_DIR, name)
