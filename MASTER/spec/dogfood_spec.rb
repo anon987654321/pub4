@@ -4,6 +4,9 @@ require "minitest/autorun"
 
 ROOT = File.expand_path("..", __dir__)
 require File.join(ROOT, "law", "law")
+# The one loader for constitutional YAML — see the read below and
+# test_yaml_registries, which asserts nothing reads those files any other way.
+require File.join(ROOT, "lib", "master")
 
 Law.load_all
 
@@ -40,7 +43,10 @@ class DogfoodSpec < Minitest::Test
       when Array then o.each { |v| walk.call(v) }
       end
     end
-    walk.call(YAML.safe_load_file(File.join(ROOT, "data", "rules.yml"), aliases: true))
+    # Master.load_yaml, not YAML directly: test_yaml_registries asserts that
+    # every runtime read of a constitutional file goes through the one loader,
+    # so a second reader here is a second implementation of what rules.yml means.
+    walk.call(Master.load_yaml(Master::RULES_PATH))
     assert_empty left, "detect_lexical belongs in law/ now: #{left.join(', ')}"
   end
 end

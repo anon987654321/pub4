@@ -54,9 +54,35 @@ module Master
         return { action: :continue }
       end
 
+      # A finding made only of style_only detectors is a working model writing
+      # prose somebody dislikes, so it is reported and then left alone. Spending
+      # the ladder on it halts the conversation over phrasing, and the style rule
+      # already has four enforcers that correct rather than halt.
+      if style_only?(finding[:patterns])
+        reset!(scope:)
+        return { action: :continue, **finding }
+      end
+
       count = record_occurrence(scope)
       bus&.publish("phantom:occurrence", count:, scope:)
       recovery_response(count, finding, bus:, session:, scope:)
+    end
+
+    def style_only_detectors
+      @style_only_detectors ||= begin
+        data = Master.load_yaml(Master::RULES_PATH)
+        Array(data.dig("phantom_recovery", "style_only")).map(&:to_s)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PhantomRecovery.style_only_detectors")
+        []
+      end
+    end
+
+    def style_only?(patterns)
+      names = Array(patterns).map(&:to_s)
+      return false if names.empty?
+
+      (names - style_only_detectors).empty?
     end
 
     def record_occurrence(scope)

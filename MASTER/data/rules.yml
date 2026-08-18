@@ -377,6 +377,20 @@ phantom_recovery:
     text_repetition_loop: same 60-char span repeats >= 3 times
     xml_tool_call_failure: "<tool> open without close OR malformed JSON in args"
     empty_tool_response: tool returned nil twice in a row
+  # Detected and reported, but never counted toward the halt ladder below.
+  #
+  # Three of the four detectors name a malfunction: output that loops, a tool
+  # call that will not parse, a tool that answered nothing twice. Discarding,
+  # escalating the model tier and finally halting are all sane answers to those.
+  #
+  # gaslighting_preamble is not one of them. It is a style rule — soul.yml's
+  # anti_simulation, already enforced by voice/output_guard, review/prompt_filter,
+  # ground/maturity_scorecard and the personality prompt — and its pattern matches
+  # any reply opening "I can", "I would", "Let me" or "Sure,". A model writing
+  # ordinary English is working, not malfunctioning, so letting it spend the
+  # ladder ends the conversation for a phrasing preference.
+  style_only:
+  - gaslighting_preamble
   recovery:
   - discard last response, reset context to last successful checkpoint
   - switch model tier (escalate or fall back) on second occurrence
