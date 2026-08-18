@@ -163,7 +163,24 @@ open:
       REPO HALF CLOSED 2026-08-12: etc/crontab.vm23 schedules
       /usr/local/bin/uptime-check.sh every 5 minutes; OPERATOR.sh stage 1
       installs OPENBSD/usr/local/bin/uptime-check.sh. Still open:
-      (a) the root run that copies those two files onto vm23.
+      (a) CLOSED 2026-08-18. The wrapper is installed root:wheel 0755 and the
+          crontab runs it every five minutes; first tick 03:10:16 UTC wrote an
+          empty log, which is the all-2xx case. brgen.no, ai.brgen.no,
+          amber.brgen.no and bsdports.org were each checked by hand first,
+          because a wrong host here mails root a false DOWN every five minutes
+          forever.
+          Why it stayed open six days after the repo half landed: nothing said
+          it had not happened. install_tracked_crontab skips a tracked line
+          whose command is not executable on the box — correct, or cron mails
+          root once a tick — but it skipped without logging, so crontab.vm23
+          listed the job, usr/local/bin/ shipped the wrapper, and root's
+          crontab simply did not contain the line. No file was missing
+          anything. It now logs WARN on the skip, and
+          test/test_tracked_crontab.rb asserts that plus the property
+          underneath: the repo may not schedule a command it does not ship.
+          That test also found four tracked wrappers committed non-executable
+          while five siblings were 0755 (OPERATOR.sh chmods on install, so the
+          box was fine and the checkout was not).
       (b) OPENBSD/bin/check-rails --profile=full now sets GATE_REQUIRE_LIVE=1
           on rendered_suite. Local contributor runs still degrade. A laptop
           `full` with no apps listening will fail rather than skip.

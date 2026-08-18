@@ -143,7 +143,18 @@ install_tracked_crontab() {
     typeset cmdpath=$fields[6]
     typeset tag=${cmdpath:t}
     grep -q "$tag" $root_cron 2>/dev/null && continue
-    [[ $cmdpath == /* && ! -x $cmdpath ]] && continue
+    # Refusing to schedule a command that is not on the box is right: cron would
+    # mail root once per tick forever. Refusing silently is not. A tracked job
+    # then exists in etc/crontab.vm23, is absent from the crontab, and reads as
+    # complete from both ends — nothing is missing from the file you are looking
+    # at. uptime-check.sh sat in crontab.vm23 and in usr/local/bin/ from
+    # 2026-08-12 until 2026-08-18 and had never been scheduled, because the run
+    # that installs the wrapper at stage 1 had not happened and every earlier
+    # install_tracked_crontab call passed over the line without a word.
+    if [[ $cmdpath == /* && ! -x $cmdpath ]]; then
+      log WARN "tracked cron job not installed: $cmdpath is missing or not executable"
+      continue
+    fi
 
     print -r -- "$line" >> $root_cron
     log INFO "installed root cron: $tag"
