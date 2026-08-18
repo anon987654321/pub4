@@ -59,7 +59,7 @@ module Master
 
       def soul_rule(key)
         slug = key.upcase.tr("-", "_")
-        hit = soul.dig("absolute", "code_rules", slug) or return
+        hit = soul.dig("absolute", "rules", slug) or return
         ["constitutional rule: #{slug}", "  #{hit}"].join("\n")
       end
 

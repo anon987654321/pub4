@@ -20,7 +20,7 @@ module Master
           persona: anchor
           absolute:
             golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-            code_rules:
+            rules:
               FAIL_VISIBLY: never rescue Exception silently.
               SIMPLEST_WORKS: refuse god classes.
               PRESERVE_FIRST: read first. preserve behavior. larger changes allowed if safe.

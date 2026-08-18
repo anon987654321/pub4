@@ -72,7 +72,7 @@ module Master
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
           lines  = ["Golden rule: #{golden}",
                     "Minimum change that eliminates the violation. Do not touch unrelated code."]
-          abs.fetch("code_rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
+          abs.fetch("rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
           abs.fetch("aesthetic_rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
         rescue StandardError => e

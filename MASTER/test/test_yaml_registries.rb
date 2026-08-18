@@ -115,7 +115,7 @@ class TestRulesYamlRegistry < Minitest::Test
     assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_rule")
     assert_equal "kernel", preserve_rule.fetch("tier")
     assert_match(/Preserve behavior and intent/, preserve_rule.fetch("fix"))
-    assert_match(/never rewrite working code/i, soul.dig("absolute", "code_rules", "PRESERVE_FIRST"))
+    assert_match(/never rewrite working code/i, soul.dig("absolute", "rules", "PRESERVE_FIRST"))
   end
 
   def test_patterns_do_not_reference_unknown_rules_yml_ids

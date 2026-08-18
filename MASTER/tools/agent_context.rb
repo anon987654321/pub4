@@ -25,9 +25,9 @@ module Pub4
     # Both files go through the accessors the rest of MASTER uses. Opening them
     # directly is what reader_singularity counts, and it refused this file twice
     # before this — a data file with two loaders has two behaviours.
-    def code_rules
+    def rules
       load_master
-      Master::Ground::Rules.new.data("soul").dig("absolute", "code_rules") || {}
+      Master::Ground::Rules.new.data("soul").dig("absolute", "rules") || {}
     end
 
     # Only the rules that can refuse a write. A list of 225 is a reference; a
@@ -66,8 +66,8 @@ module Pub4
     end
 
     def render(query = nil)
-      out = ["MASTER law in force (data/soul.yml absolute.code_rules):"]
-      code_rules.each { |name, text| out << "  #{name}: #{text.to_s.split(/(?<=\.)\s/).first}" }
+      out = ["MASTER law in force (data/soul.yml absolute.rules):"]
+      rules.each { |name, text| out << "  #{name}: #{text.to_s.split(/(?<=\.)\s/).first}" }
       out << ""
       out << "Rules that can refuse a write (#{blocking_rules.size}): #{blocking_rules.join(', ')}"
       out << "Coverage: #{coverage}"

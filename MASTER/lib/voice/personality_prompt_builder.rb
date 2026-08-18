@@ -39,7 +39,7 @@ module Master
       end
 
       def add_contextual_sections(sections)
-        add_code_rules(sections)
+        add_rules(sections)
         add_language_style(sections)
         add_design_rules(sections)
       end
@@ -159,8 +159,8 @@ module Master
         XML
       end
 
-      def add_code_rules(sections)
-        rules = @rules.code_rules
+      def add_rules(sections)
+        rules = @rules.rules
         return if rules.empty?
 
         thresholds = @rules.thresholds

@@ -29,7 +29,7 @@ module Master
           end
         end
 
-        def code_rules = @code_rules ||= (@soul_data.dig("absolute", "code_rules") || {}).freeze
+        def rules = @rules ||= (@soul_data.dig("absolute", "rules") || {}).freeze
         def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
         def scan_depths = @scan_depths ||= (@data["scan_depths"] || {}).freeze
         def languages_config = @languages_config ||= (@data["languages"] || {}).freeze

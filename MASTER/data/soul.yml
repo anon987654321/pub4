@@ -4,7 +4,7 @@
 # Negotiable sections: soul propose -> soul approve -> bump version.
 
 schema: 1
-version: "2.6.0"
+version: "2.7.0"
 persona: anchor
 voice: ms-MY-OsmanNeural
 language:
@@ -66,7 +66,7 @@ absolute:
     PROTECTED: emit warning continue
     NEGOTIABLE: allow if explicitly permitted
     FLEXIBLE: negotiate at runtime
-  code_rules:
+  rules:
     FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class.
     COLLAPSE_BEFORE_ADDING: >-
       before writing a new file, class, or dependency, try nine moves first and
@@ -142,6 +142,10 @@ hooks:
       event: hooks:convergence
 
 evolution_log:
+  - version: "2.7.0"
+    date: "2026-08-18"
+    change: rename absolute.code_rules to absolute.rules — laws and rules are one kind of thing, and a third name for it was noise
+    author: dev
   - version: "2.6.0"
     date: "2026-06-28"
     change: add schema pinning and canonical severity ranking
