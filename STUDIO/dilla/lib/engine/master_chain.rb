@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # The console and the mastering desk, in that order, before the loudness stage.
 #
 # The master bus ran loudnorm into a limiter and nothing else: correct levels,

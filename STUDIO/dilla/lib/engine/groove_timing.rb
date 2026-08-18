@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Different degrees of swing on different voices -- the near-polyrhythmic
 # quality described in accounts of both producers, and the thing a single
 # global swing figure cannot produce however large it is set.

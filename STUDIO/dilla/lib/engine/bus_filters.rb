@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # The bass gets its own bus rather than riding the harmonic one. It used to be
 # mixed into the harmonic render, which is high-passed to keep pad mud out of
 # the kick's way -- and that corner sits ABOVE the bass fundamental (roots land

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # --- the crate ----------------------------------------------------------------
 #
 # One-shots and sustains to chop, synthesised rather than dug for. Every voice

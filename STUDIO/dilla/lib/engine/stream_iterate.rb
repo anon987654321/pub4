@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Loss-gate report for stream promote — RadioBergenStudy#analyze_audio is
 # module-private; DeepAudio has the dynamics block gates need.
 def stream_analyze_for_gates(path)

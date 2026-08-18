@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 STREAM_CHUNK_SECONDS = 4
 PAD_RENDER_SAMPLE_RATE = 22_050
 

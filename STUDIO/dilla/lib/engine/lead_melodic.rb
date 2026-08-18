@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Occasional lead bursts — not every chord gets an arp. When they fire, use
 # intricate patterns (euclidean, fibonacci, flylo wobble, etc.) with
 # call-and-response and patch-specific gate lengths.

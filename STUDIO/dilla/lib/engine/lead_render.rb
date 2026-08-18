@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # 81 Sawtooth (original), 87 Lead 8 "bass+lead" (GM's own name traces to the
 # classic Prophet-5 "BigLead" patch — literally the historical big-lead
 # archetype), 84 Lead 5 Charang (aggressive/bright, cuts through), 86 Lead 7
@@ -37,7 +36,7 @@ COUNTER_LEAD_PROGRAMS = {
   strings: 48,        # string ensemble
   warm_strings: 49,   # slower attack, arrives under the beat
   synth_strings: 50,  # solina-ish, the most obviously synthetic of the five
-  synth: 81,          # the old bright lead, if it is ever wanted back
+  synth: 81,          # the old bright lead, if it is ever wanted back,
 }.freeze
 
 def counter_lead_program

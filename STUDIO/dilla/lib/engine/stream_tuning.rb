@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 SLASH_BASS_PROFILES = %i[
   syncopated_slash_ninth syncopated_slash_alt slash_neo_soul slash_ninth_cycle
   minor_dominant_slash_cycle

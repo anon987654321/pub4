@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # kick.wav deliberately excluded: it's a 4-layer synthesis (sample + sub
 # drop + body punch + click transient via layered_kick_sample) tuned
 # across many iterations — swapping its base sample for a random external
@@ -15,7 +14,7 @@
 # bad-sounding result ("that stupid kickdrum sound" — direct feedback).
 DRUM_SAMPLE_SUBDIR = {
   "snare.wav" => "snares", "hat.wav" => "hi-hats",
-  "open_hat.wav" => "open-hats", "ghost.wav" => "claps", "bass_43.wav" => "808s"
+  "open_hat.wav" => "open-hats", "ghost.wav" => "claps", "bass_43.wav" => "808s",
 }.freeze
 EXTERNAL_DRUM_KITS = %w[01-hard-trap 02-bounce 03-soulful-vintage].freeze
 

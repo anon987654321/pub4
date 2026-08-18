@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 INTERVAL_NAMES = {
   0 => "root", 1 => "b9", 2 => "9", 3 => "b3", 4 => "3", 5 => "11",
   6 => "b5", 7 => "5", 8 => "#5", 9 => "13", 10 => "b7", 11 => "maj7",

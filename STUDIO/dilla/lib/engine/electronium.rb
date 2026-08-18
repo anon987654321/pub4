@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # =============================================================================
 # ELECTRONIUM — Raymond Scott × J Dilla (midilib MIDI + full-engine bridge)
 # All logic lives here; no sidecar electronium.rb. Lazy-loads midilib at runtime.
@@ -20,14 +19,14 @@ module DillaElectronium
   # Lush 9th voicings (merged engine pads + MIDI export).
   CHORDS = {
     fm9: [53, 56, 60, 63, 67], dbmaj9: [49, 53, 56, 60, 63], eb9: [51, 55, 58, 63, 65],
-    bbm9: [46, 49, 53, 56, 60], cm7b5: [48, 51, 54, 58], c7alt: [48, 52, 58, 61, 63]
+    bbm9: [46, 49, 53, 56, 60], cm7b5: [48, 51, 54, 58], c7alt: [48, 52, 58, 61, 63],
   }.freeze
   PROGRESSION = %i[fm9 dbmaj9 eb9 bbm9 cm7b5 fm9 c7alt fm9].freeze
 
   # Classic 7th cycle from the Electronium essay / "The Light" family.
   CHORDS_CLASSIC = {
     fm7: [65, 68, 72, 75], dbmaj7: [61, 65, 68, 72], eb7: [63, 67, 70, 75],
-    bbm7: [58, 61, 65, 68], cm7b5: [60, 63, 66, 70], c7: [60, 64, 67, 70]
+    bbm7: [58, 61, 65, 68], cm7b5: [60, 63, 66, 70], c7: [60, 64, 67, 70],
   }.freeze
   PROGRESSION_CLASSIC = %i[fm7 dbmaj7 eb7 bbm7 cm7b5 fm7 c7 fm7].freeze
 

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 GENERATED_STYLE_ROUTES = {
   major_third_cycle_full: :generate_coltrane_changes,
   backdoor: :generate_backdoor_progression,
@@ -221,7 +220,7 @@ SONITEX_STX1260 = {
   hiss_amp: 0.0028, pop_rate: 0.00035, pop_amp: 0.14, click_rate: 0.0006,
   crush_bits: 12, crush_sr: 1.69, crush_mix: 0.32, crush_post_lp: 3600,
   out_comp_threshold: -19, out_comp_ratio: 2.6, out_comp_makeup: 1.8,
-  limit: 0.92, level_out: 0.90
+  limit: 0.92, level_out: 0.90,
 }.freeze
 # Legacy extreme chain (prior STX-1269 emulation) — SONITEX=extreme
 SONITEX_STX1269 = {
@@ -235,7 +234,7 @@ SONITEX_STX1269 = {
   hiss_amp: 0.0055, pop_rate: 0.0008, pop_amp: 0.22, click_rate: 0.0012,
   crush_bits: 10, crush_sr: 1.69, crush_mix: 0.48, crush_post_lp: 2800,
   out_comp_threshold: -17, out_comp_ratio: 3.2, out_comp_makeup: 2.5,
-  limit: 0.86, level_out: 0.88
+  limit: 0.86, level_out: 0.88,
 }.freeze
 SONITEX_PRESETS = {
   classic:  SONITEX_STX1260,
@@ -385,23 +384,23 @@ SOUL_TRACK_FAMILY = %i[
 FORM_PRESETS = {
   soul_16: {
     map: [[:intro, 4], [:main, 8], [:build, 4]],
-    intro_bars: 4, phrase_bars: 16
+    intro_bars: 4, phrase_bars: 16,
   },
   soul_32: {
     map: [[:intro, 4], [:main, 8], [:build, 8], [:turn, 8], [:outro, 4]],
-    intro_bars: 4, phrase_bars: 32
+    intro_bars: 4, phrase_bars: 32,
   },
   donuts_time: {
     map: [[:intro, 4], [:main, 8], [:turn, 8], [:outro, 4]],
-    intro_bars: 4, phrase_bars: 16
+    intro_bars: 4, phrase_bars: 16,
   },
   camel_32: {
     map: [[:intro, 8], [:main, 12], [:build, 6], [:turn, 4], [:outro, 2]],
-    intro_bars: 8, phrase_bars: 32
+    intro_bars: 8, phrase_bars: 32,
   },
 }.freeze
 SECTION_KIND_ALIASES = {
-  "a" => :main, "a2" => :build, "b" => :turn, "turnaround" => :turn
+  "a" => :main, "a2" => :build, "b" => :turn, "turnaround" => :turn,
 }.freeze
 # Chains with real vinyl playback (not tape) get a turntable-motor sub-bass rumble bed.
 TURNTABLE_RUMBLE_VARIANTS = %i[vinyl_hot vinyl_lab acetate sonitex].freeze

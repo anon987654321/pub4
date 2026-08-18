@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Audio loops that play UNDERNEATH the synth arrangement. Deliberately not the
 # stems path (use_stem_harmony), which REPLACES the harmonic bus wholesale --
 # that swaps the engine's harmony out for the sample rather than putting the

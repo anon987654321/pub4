@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # =============================================================================
 # ENHANCEMENT LAYER — sonic profiles, extended harmony, eclectic drums,
 # FlyLo sidechain, fugue structure, per-style mastering. (Merged in from the
@@ -92,11 +91,11 @@ INLINE_RADIO_BERGEN_LEARNINGS = {
     "minor_iv_loop" => 7, "players_measured" => 6, "modal_quartal_ladder" => 6, "minor_two_five_chain" => 5,
     "circle_fifths_descent" => 5, "walking_bass_descent" => 5, "warm_minor_arc" => 4,
     "slash_neo_soul" => 4, "warm_minor_vamp" => 3, "timeless_authentic" => 3,
-    "fourth_third_sixth_second_turn" => 2, "quartal_west_coast" => 2
+    "fourth_third_sixth_second_turn" => 2, "quartal_west_coast" => 2,
   },
   "stream_env_defaults" => {
     "PERFORMER" => "yancey", "GROOVE_DNA" => "donuts", "SONITEX_PRESET" => "donuts_warm",
-    "KICKS" => "1", "SPEAK" => "0" # speech overlay off for now — set SPEAK=1 to re-enable
+    "KICKS" => "1", "SPEAK" => "0" # speech overlay off for now — set SPEAK=1 to re-enable,
   },
   "sonic_profiles" => {
     "bergen_akmd_local" => INLINE_SONIC_PROFILES[:bergen_akmd_local],

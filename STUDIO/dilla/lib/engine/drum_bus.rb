@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # "All his drums are dirty as fuck, sans the kick" -- and the cymbals in
 # particular are swished through phaser and flanger until they are soupy rather
 # than crisp.
@@ -186,7 +185,7 @@ def drum_bus_mapping
     snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat,
     poly: :ghost, shaker: :shaker, cowbell: :cowbell,
     poly5: :rim, clap: :clap, rim: :rim, glitch: :ind_stab, tabla: :tabla,
-    tambourine: :tambourine, woodblock: :woodblock, agogo: :agogo
+    tambourine: :tambourine, woodblock: :woodblock, agogo: :agogo,
   }
   map[:kick] = :kick if kicks_enabled?
   map

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # --- phrase snapping ---------------------------------------------------------
 #
 # atempo can only fix a take that HAS a tempo. A freely-sung take has no

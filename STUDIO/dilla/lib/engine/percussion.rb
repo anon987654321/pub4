@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
   rng = Random.new(stable_hash(cfg[:track].to_s) + 909)
   step_p = beat_p / 4.0

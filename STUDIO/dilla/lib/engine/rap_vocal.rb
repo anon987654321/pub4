@@ -8,7 +8,6 @@
 # computed at load time from ones declared above them.
 require_relative "../frozen_state"
 
-
 RAP_VOCAL_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "vocals").freeze
 RAP_VOCAL_CATALOG = File.join(RAP_VOCAL_DIR, "catalog.json").freeze
 

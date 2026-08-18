@@ -19,7 +19,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Rich synth patch catalog — GM programs, optional external sf2, native fallback timbres,
 # and per-patch post-FX chains (tremolo/LFO/filter/delay) applied at render time.
 def synth_patch(id, role:, program:, bank: 0, sf2: :default, weight: 1.0, native: nil, mix: 1.0, fx: nil,
@@ -52,7 +51,7 @@ MIDI_FX_LEAD = [
   { cc: 74, curve: :slow_open, start: 68, end: 118 },                 # filter cutoff
   { cc: 91, rate_hz: 0.09, depth: 20, base: 48, curve: :sine },     # reverb send
   { cc: 93, rate_hz: 0.14, depth: 18, base: 40, curve: :sine },     # chorus send
-  { bend: true, rate_hz: 0.38, depth_cents: 8 },                      # pitch LFO
+  { bend: true, rate_hz: 0.38, depth_cents: 8 },                      # pitch LFO,
 ].freeze
 MIDI_FX_SCALE_LEAD = [
   { cc: 1, rate_hz: 0.55, depth: 42, base: 36, curve: :sine },
@@ -900,7 +899,6 @@ SYNTH_PATCH_BY_ID = SYNTH_PATCH_CATALOG.each_with_object({}) { |p, h| h[p[:id]] 
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # GM chromatic percussion is struck metal — celesta, glockenspiel, music box,
 # vibraphone, marimba, xylophone, tubular bells — and 94 is literally "metallic
 # pad", 98 "crystal", 103 "FX 8 (sci-fi)". None of them belong in a Rhodes /
@@ -1263,7 +1261,6 @@ end
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
-
 
 def synth_patch_by_id(id)
   SYNTH_PATCH_BY_ID[id]

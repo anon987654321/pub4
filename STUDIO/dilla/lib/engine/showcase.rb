@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Bare `ruby dilla.rb` (no args, no options) used to mean "continuous live
 # stream" -- a `stream()` infinite loop needing afplay/ffplay to real
 # speakers, which never terminates and can't run headless/over SSH. Sensible

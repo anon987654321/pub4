@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 GHOST_TIERS = {
   whisper: { mul: 0.58, steps_scale: 0.72, fill_mul: 0.35 },
   pocket:  { mul: 1.0,  steps_scale: 1.0,  fill_mul: 1.0 },

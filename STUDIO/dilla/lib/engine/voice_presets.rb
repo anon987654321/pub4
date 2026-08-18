@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Pad voice stacks — classic analog + curated experimental electronic.
 # stack_soul = multi-preset layer (EP + Moog + Prophet + texture) for rich beds.
 PAD_VOICE_PRESETS = {
@@ -612,5 +611,5 @@ EXPERIMENTAL_LEAD_ARP_PRESETS = {
 
 PAD_TO_LEAD_ARP = {
   wash: :soul_wash, shimmer: :donuts_shimmer, pulse: :moog_funk, blend: :neo_quartal,
-  duo: :prophet_glass, figure: :flylo_spiral, held: nil
+  duo: :prophet_glass, figure: :flylo_spiral, held: nil,
 }.freeze

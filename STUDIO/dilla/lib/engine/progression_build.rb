@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def chord_from_quality(root_hz, quality, voices: 5)
   intervals = CHORD_TEMPLATES.fetch(quality)
   hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }

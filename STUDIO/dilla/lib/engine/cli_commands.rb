@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def scan(groove: false)
   groove_pid, groove_tmp = groove ? start_groove_preview : [nil, nil]
   puts JSON.pretty_generate(

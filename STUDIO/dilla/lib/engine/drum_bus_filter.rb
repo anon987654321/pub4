@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def build_drum_bus_filter(cfg, sonic, duration: nil)
   crush_mix = sonic&.dig("synth", "crush_mix")&.to_f
   base = if crush_mix&.positive?

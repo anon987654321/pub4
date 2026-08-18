@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Style-lock keys — reassert after track soul / iterate so the mix doesn't drift.
 # Exclude lead/synth/progression-rotation keys so stream can cycle voices + arps.
 DILLA_STYLE_LOCK_KEYS = (

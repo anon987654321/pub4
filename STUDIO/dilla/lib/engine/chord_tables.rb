@@ -92,7 +92,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
       "harmonies that later underpin the A and B sections of So What",
       "Miles Davis, 1958: 'All my inspiration today comes from the Chicago " \
       "pianist Ahmad Jamal'",
-    ]
+    ],
   },
   # The same two chords as Miles arranged them: 32-bar AABA, Dm7 for 16, Ebm7
   # for 8, Dm7 for 8. Written 2:1:1 because chord_bars scales the proportion
@@ -106,7 +106,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     sources: [
       "Kind of Blue (1959), 32-bar AABA: Dm7 x16, Ebm7 x8, Dm7 x8",
       "Coltrane's Impressions (1961) reuses the form and harmony",
-    ]
+    ],
   },
   # J Dilla — Donuts: "Time (The Donut of the Heart)" — Ab major IV–iii–vi–ii.
   db_major_minor_fall: {
@@ -115,13 +115,13 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     sources: [
       "Hooktheory / Ab IV–iii–vi–ii (Dbmaj7–Cm7–Fm7–Bbm7)",
       "RG-69 researched Donuts symbols",
-    ]
+    ],
   },
   # Same harmonic cycle with 9ths (pad color variant of Time, not a different song).
   maj7_minor_cycle: {
     artist: "J Dilla", title: "Time (The Donut of the Heart)", album: "Donuts",
     chords: %w[Dbmaj9 Cm9 Fm9 Bbm9],
-    sources: ["Same Time cycle with maj9/m9 extensions"]
+    sources: ["Same Time cycle with maj9/m9 extensions"],
   },
   # Slum Village — Fall in Love (prod. Dilla) samples Gap Mangione.
   # r/jdilla (bzaiif): "Gap Mangione - Diana in the Autumn Wind".
@@ -133,7 +133,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     sources: [
       "r/jdilla: chords for Fall in love? — sample ID Diana in the Autumn Wind",
       "ChordU Ebm7/Bbm7 loop transcription",
-    ]
+    ],
   },
   # Slum Village — Get Dis Money. Ethan Hein full transcription of Herbie sample.
   pedal_e_descent: {
@@ -143,43 +143,43 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     sources: [
       "Ethan Hein 2022 transcription https://ethanhein.com/wp/2022/get-dis-money/",
       "D/E = E9sus4; then Db/E C/E Bm/E Bbm/E Am/E over E pedal",
-    ]
+    ],
   },
   # Alias used historically in engine for the same GDM slash cycle.
   syncopated_slash_ninth: {
     artist: "Slum Village", title: "Get Dis Money", producer: "J Dilla",
     sample: "Herbie Hancock — Come Running To Me",
     chords: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
-    sources: ["Ethan Hein Get Dis Money (E9sus4/D naming of D/E)"]
+    sources: ["Ethan Hein Get Dis Money (E9sus4/D naming of D/E)"],
   },
   # Slum Village — Climax (ChordU; was previously wrong-key Fm loop).
   e_major_third_rise: {
     artist: "Slum Village", title: "Climax", producer: "J Dilla",
     chords: %w[Emaj7 G#m7 C#m7 E7climax],
-    sources: ["ChordU Climax transcription"]
+    sources: ["ChordU Climax transcription"],
   },
   major7_relative_minor_turn: {
     artist: "Slum Village", title: "Climax", producer: "J Dilla",
     chords: %w[Emaj7 G#m7 C#m7 E7climax],
-    sources: ["ChordU Climax (alias)"]
+    sources: ["ChordU Climax (alias)"],
   },
   # D'Angelo — Untitled (How Does It Feel), Voodoo (Soulquarians / Dilla era).
   d_add9_soul_arc: {
     artist: "D'Angelo", title: "Untitled (How Does It Feel)", album: "Voodoo",
     chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
-    sources: ["ChordU / Voodoo published chord analysis"]
+    sources: ["ChordU / Voodoo published chord analysis"],
   },
   sus_add9_ballad: {
     artist: "D'Angelo", title: "Untitled (How Does It Feel)", album: "Voodoo",
     chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
-    sources: ["ChordU Untitled (alias)"]
+    sources: ["ChordU Untitled (alias)"],
   },
   # Alternating minor-7 pair = Fall in Love / Diana vamp (explicit name).
   alternating_minor7_pair: {
     artist: "Slum Village", title: "Fall in Love", producer: "J Dilla",
     sample: "Gap Mangione — Diana in the Autumn Wind",
     chords: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
-    sources: ["Same as eb_minor_two_chord"]
+    sources: ["Same as eb_minor_two_chord"],
   },
 }.freeze
 

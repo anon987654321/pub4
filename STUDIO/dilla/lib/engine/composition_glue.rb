@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # --- J Dilla Time beat engine (MPC3000 cyclic microtiming) ---
 
 COMPOSITION_SECTION_KIND = {

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Measured reference sonic profiles. These lived in STUDIO/radio-bergen until
 # that directory was removed — brgen's playlist replaced what it served. The
 # file is dilla's own data: it merges over INLINE_RADIO_BERGEN_LEARNINGS and is
@@ -43,7 +42,7 @@ module RadioBergenStudy
     /akmd|mike t|angelo reira|jan hakim|haisam|johann/i => {
       producer: "bergen", performer: "yancey", groove_dna: "donuts",
       dilla_track: "warm_minor_vamp", sonic_key: "dilla_timeless", bpm: 84..90,
-      mix: "akmd_lofi_mastering"
+      mix: "akmd_lofi_mastering",
     },
     /mochi|itoh/i => { producer: "flylo", performer: "glasper", groove_dna: "wonky",
                        dilla_track: "modal_safe", sonic_key: "flylo_camel", bpm: 120..128 },
@@ -120,7 +119,7 @@ module RadioBergenStudy
         learnings: {
           producer: aff[:producer], performer: aff[:performer], groove_dna: aff[:groove_dna],
           dilla_track: aff[:dilla_track], sonic_key: aff[:sonic_key],
-          bpm_range: aff[:bpm] ? "#{aff[:bpm].begin}-#{aff[:bpm].end}" : nil, mix: aff[:mix]
+          bpm_range: aff[:bpm] ? "#{aff[:bpm].begin}-#{aff[:bpm].end}" : nil, mix: aff[:mix],
         }.compact
       }
     end
@@ -142,7 +141,7 @@ module RadioBergenStudy
         "local_count" => studied.count { |r| r[:source] == "local_mp3" },
         "youtube_count" => studied.count { |r| r[:source] == "youtube_reference" },
         "policy" => manifest.dig("external_reference", "policy"),
-        "note" => "Reference metadata + optional local ffprobe analysis. YouTube rows are lineage only until rights review."
+        "note" => "Reference metadata + optional local ffprobe analysis. YouTube rows are lineage only until rights review.",
       },
       "artist_counts" => studied.group_by { |r| r[:artist] }.transform_values(&:length)
                                 .sort_by { |_, c| -c }.to_h,

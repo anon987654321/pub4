@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Curated rotation — researched progressions only (no random generated_* walks).
 STREAM_TRACKS = DillaLofiMachine::STREAM_ROTATION
 
@@ -316,18 +315,18 @@ RENDER_MODE_DEFAULTS = {
   sketch: {
     "STEM_EXPORT" => "0", "COMPOSITION" => "0", "LISTEN_PASSES" => "0",
     "DILLA_QUALITY_GATE" => "0", "MARKOV_DRUMS" => "1", "GHOST_TIER" => "pocket",
-    "RENDER_BEAUTY_MIN" => "55", "KEEP_STEMS" => "0"
+    "RENDER_BEAUTY_MIN" => "55", "KEEP_STEMS" => "0",
   },
   record: {
     "STEM_EXPORT" => "1", "COMPOSITION" => "1", "LISTEN_PASSES" => "2",
     "DILLA_QUALITY_GATE" => "1", "KEEP_STEMS" => "1", "RENDER_BEAUTY_MIN" => "72",
-    "MOTIF_RECALL" => "1"
+    "MOTIF_RECALL" => "1",
   },
   perform: {
     "STEM_EXPORT" => "1", "COMPOSITION" => "1", "LISTEN_PASSES" => "3",
     "DILLA_QUALITY_GATE" => "1", "STREAM_EVOLVE_PERFORMER" => "1",
     "RENDER_BEAUTY_MIN" => "75", "MOTIF_RECALL" => "1", "SLASH_BASS" => "1",
-    "KEEP_STEMS" => "1", "GHOST_TIER" => "accent"
+    "KEEP_STEMS" => "1", "GHOST_TIER" => "accent",
   },
   long_soul: {
     "FORM" => "soul_32", "COMPOSITION" => "1", "VOICING" => "bill_evans",
@@ -337,7 +336,7 @@ RENDER_MODE_DEFAULTS = {
     "GROOVE_DNA" => "donuts", "PERFORMER" => "yancey",
     "SONITEX" => "donuts_warm", "SONITEX_PRESET" => "donuts_warm",
     "ANALOG_CHAIN" => "vinyl_hot", "CONV_REVERB" => "chamber",
-    "TRACK" => "long_soul", "BARS" => "32"
+    "TRACK" => "long_soul", "BARS" => "32",
   },
   # Ambient — the default. Soothing means removing things, not adding a reverb
   # to a busy arrangement, so this is mostly knobs turned down: no arp, the
@@ -362,7 +361,7 @@ RENDER_MODE_DEFAULTS = {
     "KICKS" => "1", "KICK_GAIN" => "0.62", "GHOST_TIER" => "pocket",
     "SONITEX" => "subtle", "SONITEX_PRESET" => "subtle",
     "ANALOG_CHAIN" => "lo_fi", "CONV_REVERB" => "chamber",
-    "TRACK" => "ambient_major_drift"
+    "TRACK" => "ambient_major_drift",
   },
   golden: {
     "FORM" => "donuts_time", "COMPOSITION" => "1", "VOICING" => "kenny_barron",
@@ -372,7 +371,7 @@ RENDER_MODE_DEFAULTS = {
     "GROOVE_DNA" => "donuts", "PERFORMER" => "yancey",
     "SONITEX" => "donuts_warm", "SONITEX_PRESET" => "donuts_warm",
     "ANALOG_CHAIN" => "cassette", "CONV_REVERB" => "chamber",
-    "TRACK" => "golden", "BARS" => "32"
+    "TRACK" => "golden", "BARS" => "32",
   },
   # Plug Research / Brainfeeder / Warp-leaning — points already-built,
   # normally-dormant knobs at each other rather than adding new engineering:
@@ -387,10 +386,10 @@ RENDER_MODE_DEFAULTS = {
     "PAD_ARP_MODE" => "wash", "LUSH_SYNTH" => "1", "SYNTH_MORPH" => "1",
     "ANALOG_CHAIN" => "dub_chamber", "SONITEX" => "donuts_soul", "SONITEX_PRESET" => "donuts_soul",
     "STEREO_PAN" => "1", "MOTIF_RECALL" => "1", "COMPOSITION" => "1",
-    "BARS" => "32"
+    "BARS" => "32",
   },
   # dilla/camel: empty here — DNA lives in DILLA_STYLE_DEFAULTS (applied via
-  # apply_dilla_style! / apply_render_mode! for mode dilla).
+  # apply_dilla_style! / apply_render_mode! for mode dilla).,
 }.freeze
 
 # Comfortable listening: fewer layers, warmer bed, quieter tops/vox, calmer master.

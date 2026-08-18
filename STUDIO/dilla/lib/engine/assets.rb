@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Explicit, opt-in external asset fetch (never runs on its own — the whole
 # engine is otherwise pure-Ruby/ffmpeg synthesis with zero external assets).
 # Caches into the same ~/.cache/dilla-soundfonts dir GeneralUser-GS already

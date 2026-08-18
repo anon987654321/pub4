@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def extended_drum_kit(base_kit)
   base_kit.merge(
     rim: synth_rim_sample,

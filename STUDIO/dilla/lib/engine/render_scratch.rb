@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def dilla_render_tmp(tag)
   File.join(SCRATCH_DIR, "dilla_#{tag}.#{Process.pid}.wav")
 end

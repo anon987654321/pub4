@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # --- FluidSynth pad rendering (real sampled electric-piano tone instead of ---
 # --- the pure-additive-sine aevalsrc engine above) -------------------------
 

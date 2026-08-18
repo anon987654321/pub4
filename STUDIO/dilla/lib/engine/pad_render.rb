@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # RMS the pad bus is normalised to. Was -17.5, which only balanced against the
 # ~-38 dB drum bus because warm_dilla_pad_post immediately took ~19 dB back off
 # via its aecho/chorus in_gain bug -- the two errors cancelled. With that fixed

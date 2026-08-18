@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # One demo-all at a time, for the same reason stream() takes a lock.
 #
 # Two of them share scratch/all_tracks_demo and they do not share it politely.

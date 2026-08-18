@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # A sampled loop played with -stream_loop is bit-identical every repetition, and
 # nothing acoustic repeats exactly. ORGANIC_VARY=1 pre-builds the bed as N
 # separately-processed copies so each pass differs slightly in pitch, tone and

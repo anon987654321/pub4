@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # =============================================================================
 # TECHNO SYNTH (techno_hate.rb) — acid-industrial hybrid at 142 BPM
 # =============================================================================
@@ -76,7 +75,7 @@ HATE_LAYERS = {
   # rest of the arrangement is built over it, and a record that arrives at 45%
   # reads as a sample drop rather than as the floor of the track. It steps out
   # once across the middle so the return has somewhere to land.
-  bed:   ->(p, _b) { !p.between?(0.42, 0.52) }
+  bed:   ->(p, _b) { !p.between?(0.42, 0.52) },
 }.freeze
 
 # One gate expression per layer, over absolute time: the union of the blocks it

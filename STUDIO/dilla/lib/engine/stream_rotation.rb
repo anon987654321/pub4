@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Non-stop: one engine (dilla.rb DNA). Rotates progressions + drums only.
 # Ctrl-C to stop. Pin one track: STREAM_LOCK=1 + STREAM_TRACK=…
 

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def load_mono_sample(path)
   floats = DillaMusicGems.read_mono_wav(path) if defined?(DillaMusicGems)
   return floats if floats&.any?

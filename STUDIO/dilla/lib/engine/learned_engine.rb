@@ -8,7 +8,6 @@
 # computed at load time from ones declared above them.
 require_relative "../frozen_state"
 
-
 # Sparse boom-bap base. Bar-to-bar phrase rotation is DillaGroove.pocket_* when
 # POCKET_DNA=1. Keep this simple — dense grids are why the kit sounded wrong.
 # Was t6SXXx1Fu_4, which is not the id radio_bergen_tracks.yml gives for Flying

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def drum_feel_key(feel)
   feel = feel.to_sym
   return feel if DRUM_PATTERN_SETS.key?(feel)

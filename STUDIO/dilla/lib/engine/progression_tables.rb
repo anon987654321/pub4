@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Album / track progressions — verified first; rest are experimental / theory pack.
 # --- extended progressions -------------------------------------------------
 #
@@ -803,7 +802,7 @@ TRACK_PRESETS = {
     # reachable as a feel and carries the transcribed kick/clap grid verbatim.
     swing: 52, feel: :four_seven, voicing: :rootless,
     intro_bars: 2,
-    timing: { snare: -6..2, hat_up: 2..8, bass: 4..12, kick_anchor: 0..2, pad: 0..6 }
+    timing: { snare: -6..2, hat_up: 2..8, bass: 4..12, kick_anchor: 0..2, pad: 0..6 },
   },
   # Two of the hand-cut loops, which had no preset and so were unreachable.
   #
@@ -825,12 +824,12 @@ TRACK_PRESETS = {
   semua_untuk_mu: {
     bpm: 96, progression: :minor_ninth_two_chord, chord_bars: 2, phrase_bars: 16,
     swing: 57, feel: :timeless, stereo_pan: true, intro_bars: 4,
-    timing: { snare: -18..-6, hat_up: 12..26, bass: 16..34, kick_anchor: 0..4, pad: 2..14 }
+    timing: { snare: -18..-6, hat_up: 12..26, bass: 16..34, kick_anchor: 0..4, pad: 2..14 },
   },
   lo_borges: {
     bpm: 114, progression: :d_add9_soul_arc, chord_bars: 1, phrase_bars: 8,
     swing: 54, feel: :loose_pocket, stereo_pan: true,
-    timing: { snare: -12..-4, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -4..6 }
+    timing: { snare: -12..-4, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -4..6 },
   },
 
   # The fifth hand-cut loop, added the same day as this preset, so it never had
@@ -847,7 +846,7 @@ TRACK_PRESETS = {
   arat_swost_wolet: {
     bpm: 84, progression: :neo_soul, chord_bars: 2, phrase_bars: 16,
     swing: 56, feel: :timeless, stereo_pan: true,
-    timing: { snare: -16..-6, hat_up: 10..22, bass: 14..30, kick_anchor: 0..4, pad: 0..12 }
+    timing: { snare: -16..-6, hat_up: 10..22, bass: 14..30, kick_anchor: 0..4, pad: 0..12 },
   },
 
   # Sheger, chopped eight ways. Same problem the loops above had and the same
@@ -890,27 +889,27 @@ TRACK_PRESETS = {
   baroque: {
     bpm: 104, progression: :baroque, chord_bars: 1, phrase_bars: 8, swing: 53,
     feel: :chromatic_planing,
-    timing: { snare: -14..-5, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -6..4 }
+    timing: { snare: -14..-5, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -6..4 },
   },
   chromatic_mediant: {
     bpm: 84, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16, swing: 61,
     feel: :loose_pocket, stereo_pan: true, sidechain: true, voicing: :quartal, intro_bars: 8,
-    timing: { snare: -30..-13, hat_up: 18..38, bass: 26..48, kick_anchor: 0..7, pad: 8..24 }
+    timing: { snare: -30..-13, hat_up: 18..38, bass: 26..48, kick_anchor: 0..7, pad: 8..24 },
   },
   neo_soul: {
     bpm: 84, progression: :neo_soul, chord_bars: 2, phrase_bars: 16, swing: 58,
     feel: :timeless, stereo_pan: true,
-    timing: { snare: -20..-8, hat_up: 14..30, bass: 18..38, kick_anchor: 0..5, pad: 2..16 }
+    timing: { snare: -20..-8, hat_up: 14..30, bass: 18..38, kick_anchor: 0..5, pad: 2..16 },
   },
   syncopated_slash_ninth: {
     bpm: 90, progression: :syncopated_slash_ninth, chord_bars: 1, phrase_bars: 7,
     swing: 54, feel: :syncopated_slash_ninth, stereo_pan: true, quintuplet: true,
-    timing: { snare: -24..-10, hat_up: 20..36, bass: 28..48, kick_anchor: 0..3 }
+    timing: { snare: -24..-10, hat_up: 20..36, bass: 28..48, kick_anchor: 0..3 },
   },
   chromatic_planing: {
     bpm: 96, progression: :chromatic_planing, chord_bars: 2, phrase_bars: 2,
     swing: 56, feel: :chromatic_planing,
-    timing: { bass: 10..22, pad: -8..4, kick_sync: 6..16 }
+    timing: { bass: 10..22, pad: -8..4, kick_sync: 6..16 },
   },
   ascending_minor_stack: { bpm: 95, progression: :ascending_minor_stack, chord_bars: 2, swing: 58 },
   minor_soul_loop: { bpm: 90, progression: :minor_soul_loop, chord_bars: 2, phrase_bars: 8, swing: 55 },
@@ -935,40 +934,40 @@ TRACK_PRESETS = {
   timeless: {
     bpm: 86, progression: :fourth_third_sixth_second_turn, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
-    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
+    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 },
   },
   db_major_minor_fall: {
     bpm: 94, progression: :db_major_minor_fall, chord_bars: 2, phrase_bars: 8, swing: 54,
     feel: :timeless, quintuplet: true, voicing: :rootless,
-    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
+    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 },
   },
   pedal_e_descent: {
     bpm: 92, progression: :pedal_e_descent, chord_bars: 1, phrase_bars: 6, swing: 54,
     feel: :syncopated_slash_ninth, stereo_pan: true, quintuplet: true, voicing: :rootless,
-    timing: { snare: -24..-10, hat_up: 20..36, bass: 28..48, kick_anchor: 0..3 }
+    timing: { snare: -24..-10, hat_up: 20..36, bass: 28..48, kick_anchor: 0..3 },
   },
   eb_minor_two_chord: {
     bpm: 91, progression: :eb_minor_two_chord, chord_bars: 2, phrase_bars: 8, swing: 57,
     feel: :dilla_slight, voicing: :rootless, quintuplet: true,
-    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
+    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 },
   },
   e_major_third_rise: {
     bpm: 88, progression: :e_major_third_rise, chord_bars: 2, phrase_bars: 8, swing: 57,
-    feel: :timeless, quintuplet: true, voicing: :rootless
+    feel: :timeless, quintuplet: true, voicing: :rootless,
   },
   d_add9_soul_arc: {
     bpm: 92, progression: :d_add9_soul_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
-    feel: :timeless, stereo_pan: true, voicing: :rootless
+    feel: :timeless, stereo_pan: true, voicing: :rootless,
   },
   timeless_authentic: {
     bpm: 86, progression: :timeless_authentic, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
-    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
+    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 },
   },
   chromatic_minor_descent: {
     bpm: 86, progression: :chromatic_minor_descent, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
-    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
+    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 },
   },
   jazz: { bpm: 88, progression: :jazz, chord_bars: 4, swing: 60 },
   # Not a lookup — dilla_progression detects :generated and calls
@@ -976,33 +975,33 @@ TRACK_PRESETS = {
   # GEN_ROOT/GEN_MODE/GEN_LENGTH/GEN_SEED env vars configure it.
   generated: {
     bpm: 90, progression: :generated, chord_bars: 2, phrase_bars: 16, swing: 58,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   # progression: matches a GENERATED_STYLES entry directly — dilla_progression
   # detects this and routes to the matching generate_*_progression call.
   generated_planing: {
     bpm: 86, progression: :planing, chord_bars: 2, phrase_bars: 16, swing: 56,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   generated_mediant: {
     bpm: 78, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16, swing: 60,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   generated_polytonal: {
     bpm: 92, progression: :polytonal, chord_bars: 2, phrase_bars: 16, swing: 58,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   generated_negative: {
     bpm: 84, progression: :negative_harmony, chord_bars: 2, phrase_bars: 16, swing: 58,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   generated_neapolitan: {
     bpm: 80, progression: :neapolitan, chord_bars: 2, phrase_bars: 16, swing: 56,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   generated_techno: {
     bpm: 80, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16, swing: 0,
-    feel: :techno_house, stereo_pan: true
+    feel: :techno_house, stereo_pan: true,
   },
   # generate_coltrane_changes/generate_modal_interchange (GENERATED_STYLE_ROUTES
   # above) were reachable only via a raw GEN_STYLE=major_third_cycle_full|modal_interchange
@@ -1011,15 +1010,15 @@ TRACK_PRESETS = {
   # chords from the parallel mode) that just had no entry here.
   generated_coltrane: {
     bpm: 88, progression: :major_third_cycle_full, chord_bars: 2, phrase_bars: 16, swing: 58,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   generated_modal_interchange: {
     bpm: 84, progression: :modal_interchange, chord_bars: 2, phrase_bars: 16, swing: 56,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   generated_tritone_sub: {
     bpm: 86, progression: :tritone_sub, chord_bars: 2, phrase_bars: 16, swing: 58,
-    feel: :organic, stereo_pan: true
+    feel: :organic, stereo_pan: true,
   },
   # Hybrid: base feel stays Dilla-character (:syncopated_slash_ninth, same
   # pocket family as pedal_e_descent) so DRUM_STYLE_ALTERNATE genuinely
@@ -1035,62 +1034,62 @@ TRACK_PRESETS = {
   # (see below) then forces the mix harder.
   concrete_soul: {
     bpm: 138, progression: :tritone_sub, chord_bars: 4, phrase_bars: 16, swing: 50,
-    feel: :syncopated_slash_ninth, voicing: :rootless, stereo_pan: true
+    feel: :syncopated_slash_ninth, voicing: :rootless, stereo_pan: true,
   },
   fourth_third_sixth_second_turn: {
     bpm: 86, progression: :fourth_third_sixth_second_turn, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
-    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
+    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 },
   },
   voice_led_minor_arc: {
     bpm: 86, progression: :voice_led_minor_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
-    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14 }
+    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14 },
   },
   borrowed_dominant_turn: {
     bpm: 90, progression: :borrowed_dominant_turn, chord_bars: 2, phrase_bars: 8, swing: 54,
     feel: :timeless, voicing: :spread,
-    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
+    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 },
   },
   soul: {
     bpm: 84, progression: :soul, chord_bars: 4, phrase_bars: 16, swing: 58,
     feel: :timeless, voicing: :spread,
-    timing: { snare: -20..-8, hat_up: 14..28, bass: 20..36, kick_anchor: 0..5 }
+    timing: { snare: -20..-8, hat_up: 14..28, bass: 20..36, kick_anchor: 0..5 },
   },
   players: {
     bpm: 93, progression: :players_measured, chord_bars: 2, phrase_bars: 16, swing: 58,
     feel: :timeless, voicing: :spread,
-    timing: { snare: -20..-8, hat_up: 12..26, bass: 18..34, kick_anchor: 0..5 }
+    timing: { snare: -20..-8, hat_up: 12..26, bass: 18..34, kick_anchor: 0..5 },
   },
   gospel_backdoor: {
     bpm: 86, progression: :gospel_backdoor, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :rootless,
-    timing: { snare: -24..-9, hat_up: 14..30, bass: 20..40, kick_anchor: 0..4, pad: 4..16 }
+    timing: { snare: -24..-9, hat_up: 14..30, bass: 20..40, kick_anchor: 0..4, pad: 4..16 },
   },
   minor_iv_lift: {
     bpm: 88, progression: :minor_iv_lift, chord_bars: 2, phrase_bars: 16, swing: 57,
     feel: :loose_pocket, quintuplet: true, voicing: :bill_evans,
-    timing: { snare: -23..-8, hat_up: 18..34, bass: 22..42, kick_anchor: 0..5, pad: 2..14 }
+    timing: { snare: -23..-8, hat_up: 18..34, bass: 22..42, kick_anchor: 0..5, pad: 2..14 },
   },
   common_tone_sideways: {
     bpm: 84, progression: :common_tone_sideways, chord_bars: 2, phrase_bars: 16, swing: 55,
     feel: :organic, stereo_pan: true, voicing: :rootless,
-    timing: { snare: -18..-6, hat_up: 12..28, bass: 18..36, kick_anchor: 0..4, pad: -2..10 }
+    timing: { snare: -18..-6, hat_up: 12..28, bass: 18..36, kick_anchor: 0..4, pad: -2..10 },
   },
   detroit_suspension: {
     bpm: 91, progression: :detroit_suspension, chord_bars: 1, phrase_bars: 8, swing: 56,
     feel: :syncopated_slash_ninth, quintuplet: true, voicing: :kenny_barron,
-    timing: { snare: -26..-10, hat_up: 20..38, bass: 26..48, kick_anchor: 0..4 }
+    timing: { snare: -26..-10, hat_up: 20..38, bass: 26..48, kick_anchor: 0..4 },
   },
   minor_ninth_two_chord: {
     bpm: 90, progression: :minor_ninth_two_chord, chord_bars: 2, phrase_bars: 8, swing: 57,
     feel: :timeless, quintuplet: true, voicing: :rootless,
-    timing: { snare: -24..-10, hat_up: 16..32, bass: 24..44, kick_anchor: 0..4, pad: 3..15 }
+    timing: { snare: -24..-10, hat_up: 16..32, bass: 24..44, kick_anchor: 0..4, pad: 3..15 },
   },
   fugue_conversation_arc: {
     bpm: 86, progression: :fugue_conversation_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
-    timing: { snare: -24..-8, hat_up: 14..30, bass: 22..42, kick_anchor: 0..5, pad: 2..14 }
+    timing: { snare: -24..-8, hat_up: 14..30, bass: 22..42, kick_anchor: 0..5, pad: 2..14 },
   },
 
   # ==========================================================================
@@ -1109,46 +1108,46 @@ TRACK_PRESETS = {
   two_step: {
     bpm: 134, progression: :dorian_open_window, chord_bars: 2, phrase_bars: 8, swing: 56,
     feel: :two_step, stereo_pan: true, voicing: :rootless,
-    timing: { snare: -8..0, hat_up: 6..16, bass: 4..12, kick_anchor: 0..2, pad: 0..8 }
+    timing: { snare: -8..0, hat_up: 6..16, bass: 4..12, kick_anchor: 0..2, pad: 0..8 },
   },
   broken_beat: {
     bpm: 128, progression: :sub_ladder_down, chord_bars: 2, phrase_bars: 8, swing: 58,
     feel: :broken_beat, stereo_pan: true, voicing: :quartal,
-    timing: { snare: -12..-2, hat_up: 8..20, bass: 6..18, kick_anchor: 0..4, pad: -4..8 }
+    timing: { snare: -12..-2, hat_up: 8..20, bass: 6..18, kick_anchor: 0..4, pad: -4..8 },
   },
   amapiano_offbeat: {
     bpm: 112, progression: :still_water_pedal, chord_bars: 4, phrase_bars: 8, swing: 52,
     feel: :amapiano_offbeat, stereo_pan: true, sidechain: true, voicing: :spread,
-    timing: { snare: -6..2, hat_up: 4..12, bass: 2..10, kick_anchor: 0..2, pad: 0..10 }
+    timing: { snare: -6..2, hat_up: 4..12, bass: 2..10, kick_anchor: 0..2, pad: 0..10 },
   },
   dembow: {
     bpm: 96, progression: :phrygian_dominant_descent, chord_bars: 2, phrase_bars: 8, swing: 50,
     feel: :dembow, stereo_pan: true, voicing: :close,
-    timing: { snare: -4..2, hat_up: 2..10, bass: 0..8, kick_anchor: 0..2, pad: 0..6 }
+    timing: { snare: -4..2, hat_up: 2..10, bass: 0..8, kick_anchor: 0..2, pad: 0..6 },
   },
   tresillo_house: {
     bpm: 122, progression: :double_plagal_open, chord_bars: 2, phrase_bars: 8, swing: 52,
     feel: :tresillo_house, stereo_pan: true, sidechain: true, voicing: :quartal,
-    timing: { snare: -6..0, hat_up: 4..12, bass: 2..10, kick_anchor: 0..2, pad: 0..8 }
+    timing: { snare: -6..0, hat_up: 4..12, bass: 2..10, kick_anchor: 0..2, pad: 0..8 },
   },
   disco_boogie: {
     bpm: 118, progression: :bell_chain_of_fifths, chord_bars: 2, phrase_bars: 8, swing: 50,
     feel: :disco_boogie, stereo_pan: true, sidechain: true, voicing: :drop2,
-    timing: { snare: -4..2, hat_up: 2..8, bass: 0..6, kick_anchor: 0..2, pad: 0..6 }
+    timing: { snare: -4..2, hat_up: 2..8, bass: 0..6, kick_anchor: 0..2, pad: 0..6 },
   },
   batucada: {
     bpm: 104, progression: :picardy_window, chord_bars: 2, phrase_bars: 8, swing: 54,
     feel: :batucada, stereo_pan: true, voicing: :bill_evans,
-    timing: { snare: -10..-2, hat_up: 6..14, bass: 4..14, kick_anchor: 0..3, pad: 0..10 }
+    timing: { snare: -10..-2, hat_up: 6..14, bass: 4..14, kick_anchor: 0..3, pad: 0..10 },
   },
   footwork_triplet: {
     bpm: 160, progression: :hexatonic_cycle_ring, chord_bars: 4, phrase_bars: 8, swing: 50,
     feel: :footwork_triplet, stereo_pan: true, voicing: :cluster,
-    timing: { snare: -4..2, hat_up: 2..8, bass: 0..6, kick_anchor: 0..2, pad: 0..6 }
+    timing: { snare: -4..2, hat_up: 2..8, bass: 0..6, kick_anchor: 0..2, pad: 0..6 },
   },
   afrobeats_pocket: {
     bpm: 104, progression: :parallel_ninth_tide, chord_bars: 2, phrase_bars: 8, swing: 55,
     feel: :afrobeats_pocket, stereo_pan: true, voicing: :spread,
-    timing: { snare: -8..0, hat_up: 6..14, bass: 4..14, kick_anchor: 0..3, pad: 0..10 }
+    timing: { snare: -8..0, hat_up: 6..14, bass: 4..14, kick_anchor: 0..3, pad: 0..10 },
   },
 }.freeze

@@ -8,7 +8,6 @@
 # computed at load time from ones declared above them.
 require_relative "../frozen_state"
 
-
 # One word for genre.
 #
 # Genre was spread across RENDER_MODE, a preset's feel:, GROOVE_DNA, PERFORMER,

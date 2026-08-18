@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # YouTube/local ingest → demucs → rhythm/harmony analysis → engine hints (inlined).
 module DillaSourceLearn
   LEARNINGS_DIR = File.expand_path("project/learnings", ROOT).freeze

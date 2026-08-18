@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def motif_from_chord(chord)
   return [0, 1, 2, 1] unless chord && chord[:hz]&.any?
   tones = chord[:hz].sort

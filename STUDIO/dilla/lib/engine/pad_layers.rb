@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # --- Singers Unlimited chop pads -------------------------------------------
 # The pad bed built from CHOPS of a real Singers Unlimited vocal stem instead
 # of synth pads (classic Dilla move: chop the vocal-harmony record). Per pad

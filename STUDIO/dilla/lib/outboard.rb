@@ -613,7 +613,7 @@ module Outboard
     # are the fast, forward end of the collection.
     snap: %i[api_console fet1176 hedd_pentode gml_matte mono_bass],
 
-    
+
     # BEAUTY. The chain you would reach for if the brief were "make it lovely"
     # rather than "make it loud", and the only rack that reaches pultec_low --
     # which was built, measured, and then put in no rack and given no caller.

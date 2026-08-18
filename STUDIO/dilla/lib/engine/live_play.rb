@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Stream / demo capture — WAV skips lame encode (faster than demo.mp3).
 def stream_demo_path
   name = ENV.fetch("STREAM_DEMO", "demo.wav")

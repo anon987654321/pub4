@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # --- Live playback ---
 
 # Render a short preview and play it immediately via ffplay.

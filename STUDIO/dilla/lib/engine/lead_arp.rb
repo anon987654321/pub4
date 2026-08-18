@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def harmony_lead_enabled?
   # Dilla/camel style DNA enables harmony lead (DILLA_STYLE_DEFAULTS /
   # DILLA_BEST_DEFAULTS). long_soul/golden same. Explicit HARMONY_LEAD=0 wins.

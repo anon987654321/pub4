@@ -45,7 +45,6 @@ module Acapella
   # 70 to 140 is exactly one octave and has no hole in it.
   BPM_RANGE = (70.0..140.0)
 
-
   module_function
 
   # ------------------------------------------------------------------ tempo

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # low/mid/high stay at their historical edges so sub_kick_balance and old
 # quality sidecars keep the same numbers. body/presence/air are the three
 # bands analyze_harshness actually needs (2 kHz and 4 kHz splits).

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # RENDER_SEED reached patch_cycle_seed above and stopped there. It never crossed
 # into ffmpeg, and ffmpeg is where most of this engine's randomness lives:
 # anoisesrc takes a `seed` whose default is -1, meaning a fresh random seed per

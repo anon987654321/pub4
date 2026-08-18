@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # Real tape hysteresis, applied to the finished master.
 #
 # Everything else in this engine that saturates is memoryless -- output is a

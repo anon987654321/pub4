@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def load_radio_bergen_learnings
   return @radio_bergen_learnings if defined?(@radio_bergen_learnings)
   base = Marshal.load(Marshal.dump(INLINE_RADIO_BERGEN_LEARNINGS))

@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 def stream(bars_count = STREAM_BARS_COUNT)
   require_playback_tool!
   # Non-stop outer supervisor: any exit except Ctrl-C restarts stream (agent + interactive).

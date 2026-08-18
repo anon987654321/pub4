@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # --- morphing a sample toward FM -----------------------------------------------
 #
 # You cannot frequency-modulate a recording the way an FM operator modulates an

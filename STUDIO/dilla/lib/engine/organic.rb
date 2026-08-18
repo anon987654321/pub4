@@ -7,7 +7,6 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-
 # --- breathing --------------------------------------------------------------
 #
 # The engine already owns vibrato, chorus, tremolo, phaser and a drift filter.
