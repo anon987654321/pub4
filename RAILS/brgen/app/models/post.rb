@@ -33,10 +33,17 @@ class Post < ApplicationRecord
   has_many :mentions, as: :mentionable, dependent: :destroy
   has_many :reposts, dependent: :destroy
   has_many :reposters, through: :reposts, source: :user
+  # The same content in a second community, with its own comment thread. A
+  # repost is the other act: it boosts into followers' timelines and belongs to
+  # no community. :nullify, because a crosspost outlives its source — the second
+  # community's thread is that community's, not a view of somebody else's post.
+  belongs_to :crossposted_from, class_name: "Post", optional: true, counter_cache: :crossposts_count
+  has_many :crossposts, class_name: "Post", foreign_key: :crossposted_from_id, dependent: :nullify, inverse_of: :crossposted_from
 
   validates :title,   presence: true, length: { maximum: 300 }
   validates :content, length: { maximum: 40_000 }
   validate :live_content_length, if: :live?
+  validate :crosspost_lands_somewhere_new, if: :crosspost?
 
   broadcasts_refreshes
 
@@ -86,6 +93,20 @@ class Post < ApplicationRecord
   }
 
   def live? = latitude.present? && longitude.present?
+  def crosspost? = crossposted_from_id.present?
+
+  # Built rather than created here: the caller saves it, and a crosspost of a
+  # crosspost points at the original — a chain would make "seen in 4 communities"
+  # unanswerable without walking it.
+  def build_crosspost(community:, user:)
+    # strict_safe, because the post was found by slug with nothing preloaded and
+    # this read happens on the way to a write.
+    root = strict_safe(:crossposted_from) || self
+    root.crossposts.build(
+      user: user, community: community, title: root.title, content: root.content,
+      anonymous: root.anonymous?
+    )
+  end
 
   def readable_by?(user)
     community.blank? || community.readable_by?(user)
@@ -155,5 +176,17 @@ class Post < ApplicationRecord
     return if content.to_s.length <= LIVE_CONTENT_MAX
 
     errors.add(:content, :too_long_for_live, count: LIVE_CONTENT_MAX)
+  end
+
+  # A crosspost into the community the post is already in is the post again, and
+  # a second one into a community it already reached is a duplicate thread.
+  def crosspost_lands_somewhere_new
+    source = crossposted_from
+    return errors.add(:community, :blank) if community_id.blank?
+    return errors.add(:community, :same_as_source) if source && source.community_id == community_id
+
+    return unless source&.crossposts&.where(community_id: community_id)&.where&.not(id: id)&.exists?
+
+    errors.add(:community, :already_crossposted)
   end
 end

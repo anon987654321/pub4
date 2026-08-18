@@ -68,6 +68,9 @@ Rails.application.routes.draw do
     resource :vote, only: [ :create ], controller: "votes"
     # POST toggles: the action Stimulus controller only ever sends POST.
     resource :repost, only: [ :create ], controller: "reposts"
+    # A crosspost is the same content in a second community, with its own
+    # comment thread — not a boost, which is what :repost above is.
+    resources :crossposts, only: [ :create ]
   end
 
   # ActivityPub. Each city is a separate origin with its own population, which

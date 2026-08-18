@@ -58,6 +58,11 @@ before_action :require_real_user, only: %i[edit update destroy share]
     @new_comment = Comment.new
     @quotes      = @post.reposts.quoted.includes(:user).order(created_at: :desc)
     @quote_comment = @post.quote_comment_by(Current.user)
+    @crossposts = (@post.crossposted_from || @post).crossposts.includes(:community).where.not(id: @post.id)
+    # Where this post can still go. Communities the reader may post in, minus
+    # the one it is already in and the ones it already reached — an option that
+    # answers "already crossposted" is a control that does nothing.
+    @crosspost_targets = crosspost_targets_for(@post)
   end
 
   def new
@@ -137,6 +142,18 @@ before_action :require_real_user, only: %i[edit update destroy share]
   end
 
   private
+
+  # postable_by? reads bans before privacy, so a community that banned this
+  # account never appears as somewhere to send the post.
+  def crosspost_targets_for(post)
+    return [] if Current.user.blank?
+
+    taken = [ post.community_id, post.crossposted_from&.community_id ].compact +
+            (post.crossposted_from || post).crossposts.pluck(:community_id)
+    Community.where.not(id: taken.uniq).order(:name).limit(50)
+             .select { |community| community.postable_by?(Current.user) }
+             .map { |community| [ community.name, community.slug ] }
+  end
 
   def set_post
     @post = find_by_slug_or_id(Post.includes(:user, :community), params[:id])

@@ -477,6 +477,9 @@ en:
           attributes:
             content:
               too_long_for_live: is too long for Live (max %{count} characters)
+            community:
+              same_as_source: is where the post already is
+              already_crossposted: already has this post
         dating/dislike:
           attributes:
             dislikee:
@@ -523,6 +526,10 @@ en:
     quote: Quote
     quote_placeholder: Add a comment…
     quotes: Quotes
+    crosspost: Crosspost
+    crosspost_to: Crosspost to
+    crossposted_from: Crossposted from
+    also_in: Also in
     quote_notification: "%{user} quoted your post"
     new: New post
     guest_sign_in: " to use your name."
@@ -1317,6 +1324,9 @@ en:
     disappearing_messages_updated: Disappearing messages updated.
     conversation_pinned: Conversation pinned.
     conversation_unpinned: Conversation unpinned.
+    crossposted: Crossposted.
+    crosspost_failed: That crosspost did not go through.
+    community_not_postable: You cannot post in that community.
     message_forwarded: Message forwarded.
     group_created: Group created.
     group_renamed: Group renamed.

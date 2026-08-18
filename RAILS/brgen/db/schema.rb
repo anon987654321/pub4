@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_18_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_130000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1141,6 +1141,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_120000) do
     t.integer "community_id"
     t.text "content"
     t.datetime "created_at", null: false
+    t.integer "crossposted_from_id"
+    t.integer "crossposts_count", default: 0, null: false
     t.string "flair"
     t.integer "karma"
     t.decimal "latitude", precision: 10, scale: 6
@@ -1156,6 +1158,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_120000) do
     t.index ["city_id"], name: "index_posts_on_city_id"
     t.index ["community_id", "flair"], name: "index_posts_on_community_id_and_flair"
     t.index ["community_id"], name: "index_posts_on_community_id"
+    t.index ["crossposted_from_id"], name: "index_posts_on_crossposted_from_id"
     t.index ["latitude", "longitude"], name: "index_posts_on_latitude_and_longitude"
     t.index ["removed_at"], name: "index_posts_on_removed_at"
     t.index ["score", "created_at"], name: "index_posts_on_score_and_created_at"
@@ -1737,6 +1740,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_120000) do
   add_foreign_key "playlist_tracks", "users"
   add_foreign_key "posts", "cities"
   add_foreign_key "posts", "communities"
+  add_foreign_key "posts", "posts", column: "crossposted_from_id"
   add_foreign_key "posts", "users"
   add_foreign_key "reactions", "posts"
   add_foreign_key "reactions", "users"

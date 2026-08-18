@@ -478,6 +478,9 @@ nb:
           attributes:
             content:
               too_long_for_live: er for langt for Live (maks %{count} tegn)
+            community:
+              same_as_source: er der posten allerede står
+              already_crossposted: har allerede denne posten
         dating/dislike:
           attributes:
             dislikee:
@@ -525,6 +528,10 @@ nb:
     quote: Siter
     quote_placeholder: Legg til en kommentar…
     quotes: Sitater
+    crosspost: Kryssposter
+    crosspost_to: Kryssposter til
+    crossposted_from: Krysspostet fra
+    also_in: Også i
     quote_notification: "%{user} siterte innlegget ditt"
     new: Nytt innlegg
     guest_sign_in: " for å bruke navnet ditt."
@@ -1322,6 +1329,9 @@ nb:
     disappearing_messages_updated: Forsvinnende meldinger er oppdatert.
     conversation_pinned: Samtalen er festet.
     conversation_unpinned: Samtalen er løsnet.
+    crossposted: Krysspostet.
+    crosspost_failed: Kryssposten gikk ikke gjennom.
+    community_not_postable: Du kan ikke poste i den communityen.
     message_forwarded: Meldingen er videresendt.
     group_created: Gruppen er laget.
     group_renamed: Gruppen har fått nytt navn.
