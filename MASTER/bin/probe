@@ -47,6 +47,12 @@ CHECKS = {
     cwd: MASTER_ROOT,
     needs_ruby3: true,
   },
+  "models" => {
+    desc: "every declared model id still served by the provider (network)",
+    cmd: [RUBY, "-S", "rake", "lint:models"],
+    cwd: MASTER_ROOT,
+    needs_ruby3: true,
+  },
   "preflight" => {
     desc: "MASTER deploy preflight",
     cmd: [File.join(MASTER_ROOT, "bin", "preflight")],
@@ -137,7 +143,7 @@ CHECKS = {
 
 ALIASES = {
   "quick" => %w[smoke nsaudit selftest data_singularity rails ci],
-  "all" => %w[smoke nsaudit selftest data_singularity core dogfood preflight audit rails phantom_fk],
+  "all" => %w[smoke nsaudit selftest data_singularity core dogfood models preflight audit rails phantom_fk],
   "deploy" => %w[rails phantom_fk crawl crawl-browser integrity health smoke-web playbook],
   "integrity" => %w[integrity crawl crawl-browser rails phantom_fk smoke-web],
   "security" => %w[audit nsaudit selftest data_singularity rails],
