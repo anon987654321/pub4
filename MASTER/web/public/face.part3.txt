@@ -516,21 +516,6 @@ function frame(t) {
     faceMat.uniforms.uTime.value = sec;
     if (idleS2 > 45) rootBody.dataset.longSilence = '1';
     else delete rootBody.dataset.longSilence;
-    const beatEdge = (State.audioBeat || 0) * 0.06 + (State.audioBass || 0) * 0.04;
-    // A phone draws the same wire mesh over a seventh of the points — the grid
-    // is 32x40 on a coarse pointer against 52x66 — so the edges outweigh what
-    // they are drawn from and the face reads as a wireframe rather than as
-    // particles. Operator decision 2026-08-18: dim the wires there, do not add
-    // points a small GPU has to move.
-    const edgeScale = State.coarsePointer ? 0.45 : 1;
-    if (faceEdgeLinesStrong) {
-      const edgeStrong = (0.05 + morphCurrent * 0.09 + (State._heartbeat || 0) * 0.05 + (State.pulse || 0) * 0.04 + beatEdge) * edgeScale;
-      faceEdgeLinesStrong.material.opacity += (edgeStrong - faceEdgeLinesStrong.material.opacity) * 0.08;
-    }
-    if (faceEdgeLinesWeak) {
-      const edgeWeak = (0.02 + morphCurrent * 0.035 + (State.mode === 'thinking' ? 0.02 : 0) + beatEdge * 0.5) * edgeScale;
-      faceEdgeLinesWeak.material.opacity += (edgeWeak - faceEdgeLinesWeak.material.opacity) * 0.06;
-    }
     const driftEl = document.getElementById('soul-drift');
     if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
       driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;

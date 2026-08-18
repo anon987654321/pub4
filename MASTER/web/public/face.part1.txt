@@ -951,20 +951,10 @@ function sampleDepthMapGrid(canvas, cols, rows) {
     else zone[i] = 0.5;
   }
 
-  const edgePosData = new Float32Array(edgeIdx.length * 3);
-  const edgeAlpha = new Float32Array(edgeIdx.length / 2);
-  for (let i = 0; i < edgeIdx.length; i++) {
-    const vi = edgeIdx[i] * 3;
-    edgePosData[i * 3] = home[vi]; edgePosData[i * 3 + 1] = home[vi + 1]; edgePosData[i * 3 + 2] = home[vi + 2];
-  }
-  for (let ei = 0; ei < edgeIdx.length / 2; ei++) {
-    const len = edgeLengthArr[ei], dd = edgeDepthDiffArr[ei];
-    const la = Math.max(0.2, Math.min(1.0, 1.0 - len * 2.5));
-    const da = Math.max(0.3, Math.min(1.0, 1.0 - dd * 4.0));
-    edgeAlpha[ei] = la * da;
-  }
-
-  return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), edgePosData, curvature, boundary, zone, edgeAlpha };
+  // The edge list stays — curvature and boundary above are derived from it, and
+  // both feed the point shader's size. What is gone is the line geometry it used
+  // to also produce: the face draws no wires.
+  return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), curvature, boundary, zone };
 }
 
 function particleScale() {
@@ -975,7 +965,7 @@ function particleScale() {
 const FACE_GRID_COLS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
 const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 40 : 66) * particleScale());
 const FACE_N_2D = Math.round(480 * particleScale());
-let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;
-({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
-   curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
+let faceHome, faceScatter, faceSeeds, faceCurvature, faceBoundary, faceZone;
+({ home: faceHome, scatter: faceScatter, seeds: faceSeeds,
+   curvature: faceCurvature, boundary: faceBoundary, zone: faceZone } =
   sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));

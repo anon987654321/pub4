@@ -953,20 +953,10 @@ function sampleDepthMapGrid(canvas, cols, rows) {
     else zone[i] = 0.5;
   }
 
-  const edgePosData = new Float32Array(edgeIdx.length * 3);
-  const edgeAlpha = new Float32Array(edgeIdx.length / 2);
-  for (let i = 0; i < edgeIdx.length; i++) {
-    const vi = edgeIdx[i] * 3;
-    edgePosData[i * 3] = home[vi]; edgePosData[i * 3 + 1] = home[vi + 1]; edgePosData[i * 3 + 2] = home[vi + 2];
-  }
-  for (let ei = 0; ei < edgeIdx.length / 2; ei++) {
-    const len = edgeLengthArr[ei], dd = edgeDepthDiffArr[ei];
-    const la = Math.max(0.2, Math.min(1.0, 1.0 - len * 2.5));
-    const da = Math.max(0.3, Math.min(1.0, 1.0 - dd * 4.0));
-    edgeAlpha[ei] = la * da;
-  }
-
-  return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), edgePosData, curvature, boundary, zone, edgeAlpha };
+  // The edge list stays — curvature and boundary above are derived from it, and
+  // both feed the point shader's size. What is gone is the line geometry it used
+  // to also produce: the face draws no wires.
+  return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), curvature, boundary, zone };
 }
 
 function particleScale() {
@@ -977,9 +967,9 @@ function particleScale() {
 const FACE_GRID_COLS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
 const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 40 : 66) * particleScale());
 const FACE_N_2D = Math.round(480 * particleScale());
-let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;
-({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
-   curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
+let faceHome, faceScatter, faceSeeds, faceCurvature, faceBoundary, faceZone;
+({ home: faceHome, scatter: faceScatter, seeds: faceSeeds,
+   curvature: faceCurvature, boundary: faceBoundary, zone: faceZone } =
   sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
 
 const VERT_SHADER = `
@@ -1172,8 +1162,11 @@ void main(){
   gl_FragColor=vec4(col,max(0.0,alpha));
 }`;
 
-let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
-let faceEdgeLinesStrong, faceEdgeLinesWeak;
+// No edge lines. The face is points, and nothing else: operator decision
+// 2026-08-18, after a phone made the trade visible — the wire mesh is the same
+// weight whatever the grid density is, so on a coarse pointer it outweighed the
+// points it was derived from and the face read as a wireframe.
+let faceGeom, faceMat, facePoints;
 if (_hasWebGL && THREE) {
   faceGeom = new THREE.BufferGeometry();
   faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
@@ -1211,31 +1204,6 @@ if (_hasWebGL && THREE) {
     transparent: true, depthWrite: false
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
-
-  if (faceEdgePosData && faceEdgePosData.length > 0 && faceEdgeAlpha) {
-    const edgeCount = faceEdgeAlpha.length;
-    const strongIdxArr = [], weakIdxArr = [];
-    for (let ei = 0; ei < edgeCount; ei++) {
-      if (faceEdgeAlpha[ei] > 0.65) { strongIdxArr.push(ei*2, ei*2+1); }
-      else { weakIdxArr.push(ei*2, ei*2+1); }
-    }
-    function buildEdgeLines(idxArr, opacity) {
-      if (!idxArr.length) return null;
-      const posArr = new Float32Array(idxArr.length * 3);
-      for (let i = 0; i < idxArr.length; i++) {
-        const vi = idxArr[i] * 3;
-        posArr[i*3] = faceEdgePosData[vi]; posArr[i*3+1] = faceEdgePosData[vi+1]; posArr[i*3+2] = faceEdgePosData[vi+2];
-      }
-      const geom = new THREE.BufferGeometry();
-      geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-      const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-      return new THREE.LineSegments(geom, mat);
-    }
-    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.14);
-    faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.065);
-    // Legacy single-line ref kept null — two-tier replaces it
-    faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;
-  }
 }
 
 let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
@@ -1379,8 +1347,6 @@ if (_hasWebGL && THREE && scene && facePoints) {
   glowPoints = new THREE.Points(faceGeom, glowMat);
   glowPoints.renderOrder = -1;
   head.add(glowPoints);
-  if (faceEdgeLinesWeak) { faceEdgeLinesWeak.renderOrder = -3; head.add(faceEdgeLinesWeak); }
-  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head.add(faceEdgeLinesStrong); }
 }
 
 async function swapMask(imageUrl) {
@@ -1931,21 +1897,6 @@ function frame(t) {
     faceMat.uniforms.uTime.value = sec;
     if (idleS2 > 45) rootBody.dataset.longSilence = '1';
     else delete rootBody.dataset.longSilence;
-    const beatEdge = (State.audioBeat || 0) * 0.06 + (State.audioBass || 0) * 0.04;
-    // A phone draws the same wire mesh over a seventh of the points — the grid
-    // is 32x40 on a coarse pointer against 52x66 — so the edges outweigh what
-    // they are drawn from and the face reads as a wireframe rather than as
-    // particles. Operator decision 2026-08-18: dim the wires there, do not add
-    // points a small GPU has to move.
-    const edgeScale = State.coarsePointer ? 0.45 : 1;
-    if (faceEdgeLinesStrong) {
-      const edgeStrong = (0.05 + morphCurrent * 0.09 + (State._heartbeat || 0) * 0.05 + (State.pulse || 0) * 0.04 + beatEdge) * edgeScale;
-      faceEdgeLinesStrong.material.opacity += (edgeStrong - faceEdgeLinesStrong.material.opacity) * 0.08;
-    }
-    if (faceEdgeLinesWeak) {
-      const edgeWeak = (0.02 + morphCurrent * 0.035 + (State.mode === 'thinking' ? 0.02 : 0) + beatEdge * 0.5) * edgeScale;
-      faceEdgeLinesWeak.material.opacity += (edgeWeak - faceEdgeLinesWeak.material.opacity) * 0.06;
-    }
     const driftEl = document.getElementById('soul-drift');
     if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
       driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;

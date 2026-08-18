@@ -188,8 +188,11 @@ void main(){
   gl_FragColor=vec4(col,max(0.0,alpha));
 }`;
 
-let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
-let faceEdgeLinesStrong, faceEdgeLinesWeak;
+// No edge lines. The face is points, and nothing else: operator decision
+// 2026-08-18, after a phone made the trade visible — the wire mesh is the same
+// weight whatever the grid density is, so on a coarse pointer it outweighed the
+// points it was derived from and the face read as a wireframe.
+let faceGeom, faceMat, facePoints;
 if (_hasWebGL && THREE) {
   faceGeom = new THREE.BufferGeometry();
   faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
@@ -227,31 +230,6 @@ if (_hasWebGL && THREE) {
     transparent: true, depthWrite: false
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
-
-  if (faceEdgePosData && faceEdgePosData.length > 0 && faceEdgeAlpha) {
-    const edgeCount = faceEdgeAlpha.length;
-    const strongIdxArr = [], weakIdxArr = [];
-    for (let ei = 0; ei < edgeCount; ei++) {
-      if (faceEdgeAlpha[ei] > 0.65) { strongIdxArr.push(ei*2, ei*2+1); }
-      else { weakIdxArr.push(ei*2, ei*2+1); }
-    }
-    function buildEdgeLines(idxArr, opacity) {
-      if (!idxArr.length) return null;
-      const posArr = new Float32Array(idxArr.length * 3);
-      for (let i = 0; i < idxArr.length; i++) {
-        const vi = idxArr[i] * 3;
-        posArr[i*3] = faceEdgePosData[vi]; posArr[i*3+1] = faceEdgePosData[vi+1]; posArr[i*3+2] = faceEdgePosData[vi+2];
-      }
-      const geom = new THREE.BufferGeometry();
-      geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-      const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-      return new THREE.LineSegments(geom, mat);
-    }
-    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.14);
-    faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.065);
-    // Legacy single-line ref kept null — two-tier replaces it
-    faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;
-  }
 }
 
 let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
@@ -395,8 +373,6 @@ if (_hasWebGL && THREE && scene && facePoints) {
   glowPoints = new THREE.Points(faceGeom, glowMat);
   glowPoints.renderOrder = -1;
   head.add(glowPoints);
-  if (faceEdgeLinesWeak) { faceEdgeLinesWeak.renderOrder = -3; head.add(faceEdgeLinesWeak); }
-  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head.add(faceEdgeLinesStrong); }
 }
 
 async function swapMask(imageUrl) {
