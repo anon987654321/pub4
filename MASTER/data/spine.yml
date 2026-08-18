@@ -419,7 +419,39 @@ spine:
   # the data file nothing consumed — which is the duplication SINGULARITY
   # forbids, with the unread copy being the one the requirements register
   # names. Changing the yaml now moves the constant; a test proves it does.
-  lib_code_ceiling: 38816
+  # RAISED 2026-08-18, 38816 -> 39097 (+281), operator-sponsored, and the raise
+  # log cleared by the same decision — the second time the counter has been
+  # reset by hand rather than by a fall (first: 2026-08-13, recorded above as a
+  # single visible event; this is the second such event, granted after the full
+  # accounting was presented and the operator said to proceed).
+  #
+  # The accounting, measured per commit against lib/ code lines:
+  #
+  #   +132  before this session, after the 38816 raise: the Thresholds
+  #         privatization family and its neighbors (through 665ec0932)
+  #    +38  sibling sessions today: phantom ladder +3, cache-vs-guard +17,
+  #         phrasing-preference conversation-ender +18
+  #     +0  the Constitution split and its same-day revert (28254f836 -29,
+  #         972894e70 +29) — the god class stands, and with it the
+  #         self_violation that halts every /through fix stage; that repair
+  #         belongs to the split's author (DEBT.md, Self-Test Debt)
+  #    +35  eleven AstFixer/gate guards from the four-tree audit, each pinned
+  #         red-first against an input that shipped broken the same day:
+  #         comment-context, mode-preserving writes, verbatim-mirror refusal,
+  #         shebang-gated strict mode, tab-significant files, Markdown hard
+  #         breaks, chained/accumulator freezes, inequality optional chains,
+  #         backslash-continued returns, minified bundles, venv skip,
+  #         profile/target collision + loud no-such-target
+  #    +76  Council::Harvest + issue-driven adversarial ideation (operator
+  #         directive: critiques persist, proposals get attacked, cherry-pick
+  #         chooses among survivors)
+  #
+  # Same category as 2026-08-14's raise — rules (here, fixes) that can pass on
+  # correct input; a fixer that corrupts what it cleans is not enforcement.
+  # None of it absorbable by core/'s standard: a handler per verb and a rule
+  # per constraint, and "a TSV's tabs are its delimiter" is neither. The orphan
+  # account was checked again during the audit and remains empty.
+  lib_code_ceiling: 39097
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
@@ -430,9 +462,12 @@ spine:
   # Cleared by operator decision 2026-08-13, not by a fall — see the note above
   # lib_code_ceiling. The two 2026-08-12 entries this replaces are written out in
   # full in the comments; what was reset is the counter, not the record.
-  raised:
-  - "2026-08-17 38606 -> 38740 (+134) forbidden_file/scope_creep/two_hats/15-alternatives/micro-typography"
-  - "2026-08-17 38740 -> 38773 (+33) hashed-read/new-path-ask/decorator-skip"
+  # Cleared by operator decision 2026-08-18 — see the raise note above
+  # lib_code_ceiling. The counter reset, the record kept: the two entries this
+  # replaces, verbatim, because the first had no comment of its own —
+  #   2026-08-17 38606 -> 38740 (+134) forbidden_file/scope_creep/two_hats/15-alternatives/micro-typography
+  #   2026-08-17 38740 -> 38773 (+33) hashed-read/new-path-ask/decorator-skip
+  raised: []
   # How many raises may stand before lint:spine refuses another. The allowance was
   # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
   # mechanism working: a genuine fall earns the budget back, so this is a budget
