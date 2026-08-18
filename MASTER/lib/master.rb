@@ -36,7 +36,9 @@ module Master
   MIN_API_KEY_LENGTH_HEURISTIC = 20
   MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
   YAML_LOAD_TIMEOUT_S = 5
-  OPENROUTER_DEFAULT = "z-ai/glm-4.5-air:free"
+  # glm-4.5-air:free was withdrawn from OpenRouter; nemotron is the one declared
+  # :free slug the live catalogue still serves (measured 2026-08-18).
+  OPENROUTER_DEFAULT = "nvidia/nemotron-3-super-120b-a12b:free"
   # First slug in models.grok_primary — verified working on OpenRouter :free pool (2026-07-11).
   FREE_PRIMARY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze

@@ -2567,7 +2567,7 @@ routing_architecture:
     name: Opus 4.8 primary when funded
     models:
     - claude-cli:claude-opus-4-8
-    - anthropic/claude-opus-4-8
+    - anthropic/claude-opus-4
     entry: affordable and available
   - tier: A
     name: strong paid-cheap

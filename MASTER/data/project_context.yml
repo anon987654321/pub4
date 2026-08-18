@@ -41,7 +41,7 @@ entries:
   body: |-
     The MASTER project runs on VPS dev@brgen.no (46.23.89.226), OpenBSD 7.8, 1GB RAM, with passwordless doas. SSH uses `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@46.23.89.226 'cmd'`—password per session; see `OPENBSD/RUNBOOK.md`. The codebase lives at `~/pub4/MASTER/`—roughly six thousand lines of Ruby, Zeitwerk-autoloaded.
 
-    MASTER is a constitutional AI agent replacing the Claude Code CLI. OpenRouter runs through `ruby_llm` with default model `nvidia/nemotron-3-super-120b-a12b:free`. Fallback order is qwen3-coder:free, then minimax-m2.5:free, then gpt-oss-120b:free, then gemini-2.0-flash.
+    MASTER is a constitutional AI agent replacing the Claude Code CLI. OpenRouter runs through `ruby_llm` with default model `nvidia/nemotron-3-super-120b-a12b:free`. Fallback beyond it comes from the live :free catalogue (`use_live_catalog` in models.yml) — the static free chain thinned to one entry when OpenRouter withdrew its free tiers in 2026-08.
 
     All coding happens on the VPS via sshpass SSH—never local edits. Patches go through `~/pub4/tmp/patch.rb`. Shell work uses zsh builtins only; no sed, awk, grep, find, head, or tail.
 

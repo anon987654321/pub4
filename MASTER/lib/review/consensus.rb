@@ -5,9 +5,11 @@ require "json"
 module Master
   module Review
     class Consensus
+      # Restates models.yml three_mirror_redundancy.pool — keep the two in step
+      # until one of them grows a reader of the other.
       DEFAULT_MODELS = [
-        "anthropic/claude-sonnet-4-6",
-        "z-ai/glm-4.5-air:free",
+        "anthropic/claude-sonnet-4",
+        "z-ai/glm-4.5-air",
         "moonshotai/kimi-k2",
       ].freeze
       QUORUM = 2

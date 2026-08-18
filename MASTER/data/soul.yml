@@ -104,7 +104,7 @@ absolute:
 
 negotiable:
   style: sentence_case
-  default_model: z-ai/glm-4.5-air:free
+  default_model: nvidia/nemotron-3-super-120b-a12b:free
   tts_voice: ms-MY-OsmanNeural
   language_detection: true
   conflict_resolution:

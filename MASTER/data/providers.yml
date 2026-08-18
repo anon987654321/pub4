@@ -26,7 +26,7 @@ openrouter:
   ruby_llm_key: openrouter_api_key
   min_key_length: 40
   strengths: [cheap, routing, free_tier]
-  default_model: z-ai/glm-4.5-air:free
+  default_model: nvidia/nemotron-3-super-120b-a12b:free
 
 deepseek:
   env: [DEEPSEEK_API_KEY]

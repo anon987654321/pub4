@@ -61,7 +61,7 @@ model_defs:
     <<: *model_defaults
     score: { quality: 0.90, speed: 0.75, cost: 0.70 }
   mistral_small: &mistral_small
-    id: mistralai/mistral-small-3.1-24b
+    id: mistralai/mistral-small-3.1-24b-instruct
     <<: *model_defaults
     score: { quality: 0.78, speed: 0.85, cost: 0.90 }
   deepseek_chat: &deepseek_chat
@@ -80,7 +80,7 @@ model_defs:
     context_window: 64000
     score: { quality: 0.85, speed: 0.70, cost: 0.95 }
   claude_sonnet: &claude_sonnet
-    id: anthropic/claude-sonnet-4-6
+    id: anthropic/claude-sonnet-4
     <<: *model_defaults
     context_window: 200000
     score: { quality: 0.95, speed: 0.75, cost: 0.60 }
@@ -92,26 +92,6 @@ model_defs:
     id: nvidia/nemotron-3-super-120b-a12b:free
     <<: *model_defaults
     score: { quality: 0.90, speed: 0.05, cost: 1.0 }
-  qwen_coder: &qwen_coder
-    id: qwen/qwen3-coder:free
-    <<: *model_defaults
-    score: { quality: 0.75, speed: 0.65, cost: 1.0 }
-  qwen3_next: &qwen3_next
-    id: qwen/qwen3-next-80b-a3b-instruct:free
-    <<: *model_defaults
-    score: { quality: 0.82, speed: 0.88, cost: 1.0 }
-  gpt_oss_120b: &gpt_oss_120b
-    id: openai/gpt-oss-120b:free
-    <<: *model_defaults
-    score: { quality: 0.86, speed: 0.70, cost: 1.0 }
-  llama_70b: &llama_70b
-    id: meta-llama/llama-3.3-70b-instruct:free
-    <<: *model_defaults
-    score: { quality: 0.78, speed: 0.70, cost: 1.0 }
-  hermes_405b: &hermes_405b
-    id: nousresearch/hermes-3-llama-3.1-405b:free
-    <<: *model_defaults
-    score: { quality: 0.85, speed: 0.50, cost: 1.0 }
   gpt_4o: &gpt_4o
     id: openai/gpt-4o
     <<: *model_defaults
@@ -127,40 +107,16 @@ model_defs:
     context_window: 200000
     score: { quality: 0.99, speed: 0.55, cost: 1.0 }
   claude_opus_api: &claude_opus_api
-    id: anthropic/claude-opus-4-8
+    id: anthropic/claude-opus-4
     <<: *model_defaults
     context_window: 200000
     score: { quality: 0.99, speed: 0.50, cost: 0.20 }
-  gemma_2_9b_free: &gemma_2_9b_free
-    id: google/gemma-2-9b-it:free
-    <<: *model_defaults
-    score: { quality: 0.72, speed: 0.88, cost: 1.0 }
   gemma_2_27b: &gemma_2_27b
     id: google/gemma-2-27b-it
     <<: *model_defaults
     score: { quality: 0.82, speed: 0.78, cost: 0.92 }
-  gemini_2_flash_exp_free: &gemini_2_flash_exp_free
-    id: z-ai/glm-4.5-air:free
-    <<: *model_defaults
-    score: { quality: 0.85, speed: 0.92, cost: 1.0 }
-  gemini_flash_lite: &gemini_flash_lite
-    id: google/gemini-flash-lite-latest
-    <<: *model_defaults
-    score: { quality: 0.78, speed: 0.96, cost: 0.97 }
-  phi_4_free: &phi_4_free
-    id: microsoft/phi-4:free
-    <<: *model_defaults
-    score: { quality: 0.74, speed: 0.90, cost: 1.0 }
-  glm_4_5_air_free: &glm_4_5_air_free
-    id: z-ai/glm-4.5-air:free
-    <<: *model_defaults
-    score: { quality: 0.80, speed: 0.82, cost: 1.0 }
-  yi_lightning: &yi_lightning
-    id: 01-ai/yi-lightning
-    <<: *model_defaults
-    score: { quality: 0.78, speed: 0.94, cost: 0.94 }
   command_r_plus: &command_r_plus
-    id: cohere/command-r-plus
+    id: cohere/command-r-plus-08-2024
     <<: *model_defaults
     score: { quality: 0.86, speed: 0.72, cost: 0.65 }
   grok_4_3: &grok_4_3
@@ -183,30 +139,6 @@ model_defs:
     id: web-chat:gemini
     <<: *model_defaults
     score: { quality: 0.83, speed: 0.35, cost: 1.0 }
-  reka_flash: &reka_flash
-    id: rekaai/reka-flash-3:free
-    <<: *model_defaults
-    score: { quality: 0.74, speed: 0.86, cost: 1.0 }
-  deepseek_v3_free: &deepseek_v3_free
-    id: deepseek/deepseek-chat-v3.1:free
-    <<: *model_defaults
-    score: { quality: 0.95, speed: 0.85, cost: 1.0 }
-  llama_4_scout_free: &llama_4_scout_free
-    id: meta-llama/llama-4-scout:free
-    <<: *model_defaults
-    score: { quality: 0.84, speed: 0.78, cost: 1.0 }
-  groq_llama_3_3_70b: &groq_llama_3_3_70b
-    id: groq/llama-3.3-70b-versatile
-    <<: *model_defaults
-    score: { quality: 0.85, speed: 0.99, cost: 0.85 }
-  cerebras_llama_3_1_8b: &cerebras_llama_3_1_8b
-    id: cerebras/llama-3.1-8b
-    <<: *model_defaults
-    score: { quality: 0.70, speed: 0.99, cost: 0.92 }
-  llama_4_maverick_free: &llama_4_maverick_free
-    id: meta-llama/llama-4-maverick:free
-    <<: *model_defaults
-    score: { quality: 0.85, speed: 0.75, cost: 1.0 }
 ollama_qwen: &ollama_qwen
   id: ollama:qwen2.5-coder:7b
   <<: *model_defaults
@@ -223,10 +155,6 @@ ollama_phi: &ollama_phi
 models:
   grok_primary:
     - *nemotron_super
-    - *gemma_2_9b_free
-    - *gpt_oss_120b
-    - *qwen3_next
-    - *llama_70b
   keyless:
     - *web_chat_grok
     - *web_chat_chatgpt
@@ -234,12 +162,6 @@ models:
     - *web_chat_gemini
   default:
     - *nemotron_super
-    - *gemma_2_9b_free
-    - *gpt_oss_120b
-    - *qwen3_next
-    - *llama_70b
-    - *qwen_coder
-    - *gemini_2_flash_exp_free
     - *gemini_flash_openrouter
   primary:
     - *claude_cli_opus
@@ -257,8 +179,6 @@ models:
     - *gemini_flash
     - *command_r_plus
   vision:
-    - *llama_4_scout_free
-    - *llama_4_maverick_free
     - *gemini_flash
     - *claude_sonnet
   medium:
@@ -269,31 +189,15 @@ models:
     - *nemotron_super
     - *command_r_plus
   cheap:
-    - *gemini_2_flash_exp_free
     - *gemini_flash_openrouter
     - *gemini_flash
     - *mistral_small
-    - *llama_70b
-    - *qwen_coder
-    - *gemma_2_9b_free
-    - *gemini_flash_lite
-    - *yi_lightning
   fast:
-    - *groq_llama_3_3_70b
-    - *cerebras_llama_3_1_8b
-    - *gemini_flash_lite
-    - *gemini_2_flash_exp_free
+    - *grok_4_3
+    - *gemini_flash
+    - *gemini_flash_openrouter
   free:
-    - *gemini_2_flash_exp_free
-    - *gemma_2_9b_free
-    - *llama_4_scout_free
-    - *phi_4_free
-    - *deepseek_v3_free
-    - *reka_flash
     - *nemotron_super
-    - *qwen_coder
-    - *llama_70b
-    - *hermes_405b
   claude_code:
     - *claude_cli_sonnet
     - *claude_cli_opus
@@ -351,7 +255,7 @@ tool_capable_prefixes:
 operation_constraints:
   # Operations that write files, run autoloop/sweep, or execute destructive commands
   # require a model with quality score >= 0.88 (default and cheap tiers excluded).
-  # Equivalent to: claude-sonnet-4-6, gemini-2.5-pro, mistral-large, gpt-4o.
+  # Equivalent to: claude-sonnet-4, gemini-2.5-pro, mistral-large, gpt-4o.
   file_write:       { min_quality: 0.88, preferred_tier: strong }
   autoloop:         { min_quality: 0.88, preferred_tier: strong }
   sweep:            { min_quality: 0.88, preferred_tier: strong }
@@ -379,15 +283,7 @@ openrouter:
     - OPENROUTER_API_KEY_2
     - OPENROUTER_API_KEY_3
   free_latest:
-    - z-ai/glm-4.5-air:free
     - nvidia/nemotron-3-super-120b-a12b:free
-    - openai/gpt-oss-120b:free
-    - qwen/qwen3-coder:free
-    - qwen/qwen3-next-80b-a3b-instruct:free
-    - deepseek/deepseek-chat-v3.1:free
-    - meta-llama/llama-3.3-70b-instruct:free
-    - meta-llama/llama-4-scout:free
-    - google/gemma-2-9b-it:free
 
 # Keyless free fallback via headless Chrome (ferrum gem). Auto-activates when no API keys
 # are configured; opt-in anytime with MASTER_WEB_CHAT=1 or MASTER_KEYLESS=1.
@@ -438,7 +334,7 @@ three_mirror_redundancy:
   # Three models vote; ship only on >= 2 agreement for critical fixes.
   # Source: cross-cutting reunification (#95).
   enabled_for:   [tier1_critical, security_relevant, irreversible]
-  pool:          ["anthropic/claude-sonnet-4-6", "z-ai/glm-4.5-air:free", "moonshotai/kimi-k2"]
+  pool:          ["anthropic/claude-sonnet-4", "z-ai/glm-4.5-air", "moonshotai/kimi-k2"]
   quorum:        2
   on_disagreement: "fall back to council vote with all dissent recorded"
 
