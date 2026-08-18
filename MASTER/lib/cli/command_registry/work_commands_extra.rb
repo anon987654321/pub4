@@ -61,6 +61,9 @@ module Master
         tokens.each do |tok|
           case tok.downcase
           when "--dry-run", "preview", "dry" then apply = false
+          # bin/gate's scan-only spelling. Unrecognised, it fell into the
+          # path, resolved nowhere, and the scan quietly ran over MASTER.
+          when "--no-autofix", "no-autofix" then apply = false
           when "--apply", "apply", "fix" then apply = true
           when "--no-critique", "no-critique" then critique = false
           when "--critique", "critique" then critique = true

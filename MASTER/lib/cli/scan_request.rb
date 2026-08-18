@@ -39,8 +39,13 @@ module Master
       def collect_pairs
         target = target_arg
         return [[target, scanner.scan(target, depth:)]] if target && File.file?(target)
+        # A target that was asked for and does not resolve must not quietly
+        # become the root — that fallback is how `/scan ../RAILS` measured
+        # MASTER and called it RAILS. bin/gate reads this prefix as
+        # inconclusive, which is what an unmeasured stage is.
+        return "scan failed: no such target: #{target}" if target && !File.directory?(target)
 
-        dir = (target && File.directory?(target)) ? target : root
+        dir = target || root
         scan_dir = scanner.scan_dir(dir, depth:, glob: "**/*", stream: true)
         scan_dir.ok? ? scan_dir.value! : "scan failed"
       end
@@ -68,15 +73,21 @@ module Master
       def raw_target_arg
         parts = arg_parts.dup
         return parts[2..]&.join(" ").to_s.strip if parts.first == EXPLICIT_PROFILE_FLAG
-        return parts[1..]&.join(" ").to_s.strip if profile_keyword?(parts.first)
-
-        # When only a profile keyword is given, default target is empty (root).
-        # Strip profile from multi-word args: "aesthetic rails/brgen"
-        if profile_keyword?(parts.first) && parts.size > 1
-          return parts[1..].join(" ")
-        end
+        # A word can name both a scan profile and a target — "rails" is a
+        # limits.yml profile AND pub4/RAILS. When it names both, it is the
+        # target: reading `/scan rails` as "scan MASTER with the rails
+        # ruleset" sent the gate's whole deploy stage back over MASTER.
+        # requested_profile still sees the word, so the rails tree is scanned
+        # under the rails profile, which is the only reading that uses both.
+        return parts[1..]&.join(" ").to_s.strip if profile_keyword?(parts.first) && !target_word?(parts.first)
 
         arg
+      end
+
+      def target_word?(word)
+        return false if word.to_s.empty?
+
+        TARGET_ALIASES.key?(word) || word.include?("/") || File.exist?(File.expand_path(word))
       end
 
       def resolve_profile
