@@ -15,7 +15,7 @@
 
 require "json"
 require "psych"
-require_relative "../lib/providers/catalog_index"
+require_relative "../lib/io/catalog_index"
 
 module Pub4
   module ModelCatalogCheck
@@ -27,7 +27,7 @@ module Pub4
     module_function
 
     def live_ids
-      Master::Providers::CatalogIndex.new
+      Master::Io::CatalogIndex.new
                                      .search("", source: "openrouter", limit: 5000)
                                      .filter_map { |row| row["id"] || row[:id] }
                                      .to_set

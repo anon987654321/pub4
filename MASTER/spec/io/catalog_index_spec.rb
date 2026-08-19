@@ -3,12 +3,12 @@
 require "json"
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../../lib/providers/catalog_index"
+require_relative "../../lib/io/catalog_index"
 
 class ProviderCatalogIndexSpec < Minitest::Test
   def with_index
     Dir.mktmpdir do |dir|
-      yield Master::Providers::CatalogIndex.new(db_path: File.join(dir, "catalog.sqlite3")), dir
+      yield Master::Io::CatalogIndex.new(db_path: File.join(dir, "catalog.sqlite3")), dir
     end
   end
 

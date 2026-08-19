@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# Indexes external model catalogs into ~/.master/provider_catalog.sqlite3.
+#
+# Adding a source: add an entry to SOURCES with url/kind/normalizer,
+# implement normalize_<name> (or reuse one), refresh via
+# MASTER/bin/provider-catalog or CatalogIndex#refresh. Built-ins:
+# openrouter (llm_router), replicate (model_marketplace), replicate_github
+# (github_model_index, URL from REPLICATE_MODELS_INDEX_URL). File imports
+# use import_file(source_name, path, normalizer:).
+
 require "fileutils"
 require "json"
 require "net/http"
@@ -13,7 +22,7 @@ require_relative "../boot/paths"
 # ensure the Master namespace shell exists before reopening it below.
 module Master; end
 
-module Master::Providers
+module Master::Io
   class CatalogIndex
     DEFAULT_DB = MasterPaths.state("provider_catalog.sqlite3")
     SOURCES = {

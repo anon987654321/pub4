@@ -76,6 +76,5 @@ autoload:
     # require_relative "boot/boot" at the bottom of lib/master.rb, which must
     # run after loader.setup.
     - boot
-    - providers/catalog_index.rb
     # The directory; llm_dispatcher.rb itself autoloads as LLMDispatcher.
     - review/llm_dispatcher

@@ -3,7 +3,7 @@
 
 require "json"
 require "optparse"
-require_relative "../lib/providers/catalog_index"
+require_relative "../lib/io/catalog_index"
 
 options = { limit: 50 }
 command = ARGV.shift
@@ -17,7 +17,7 @@ parser = OptionParser.new do |opts|
 end
 parser.parse!(ARGV)
 
-index = Master::Providers::CatalogIndex.new
+index = Master::Io::CatalogIndex.new
 
 case command
 when "refresh"
@@ -36,7 +36,7 @@ when "search"
   query = ARGV.join(" ")
   puts JSON.pretty_generate(index.search(query, source: options[:source], limit: options[:limit]))
 when "sources"
-  puts JSON.pretty_generate(Master::Providers::CatalogIndex::SOURCES)
+  puts JSON.pretty_generate(Master::Io::CatalogIndex::SOURCES)
 else
   abort parser.to_s
 end

@@ -74,10 +74,10 @@ module Master
           # Live free slugs refreshed into the SQLite catalog; read-only, never creates the DB.
           def live_free_models
             return [] unless @rules.dig("openrouter", "use_live_catalog")
-            require_relative "../../../providers/catalog_index"
-            db = Master::Providers::CatalogIndex::DEFAULT_DB
+            require_relative "../../../io/catalog_index"
+            db = Master::Io::CatalogIndex::DEFAULT_DB
             return [] unless File.exist?(db)
-            rows = Master::Providers::CatalogIndex.new(db_path: db).search(":free", source: "openrouter", limit: 40)
+            rows = Master::Io::CatalogIndex.new(db_path: db).search(":free", source: "openrouter", limit: 40)
             rows.filter_map { |row| row["id"] }.select { |id| id.to_s.end_with?(":free") }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "model_router.live_free_models")

@@ -3,7 +3,7 @@
 require "yaml"
 
 module Master
-  module Deploy
+  module Pub4
     # Serves BootstrapDocs#section("deploy") and owns the one read
     # of the debt register: Pub4::StatusReport#backlog_open_count delegates here
     # rather than parsing the same YAML a second way, which is how one of the two

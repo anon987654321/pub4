@@ -6,7 +6,7 @@ require "yaml"
 require_relative "environment"
 # Only "yaml" itself is behind this — requiring it does not boot the Master
 # runtime, so the standalone contract above holds.
-require_relative "../deploy/operator_docs"
+require_relative "../pub4/operator_docs"
 
 module Pub4
   class StatusReport
@@ -83,7 +83,7 @@ module Pub4
     end
 
     def backlog_source
-      Master::Deploy::OperatorDocs::DEBT_RELATIVE
+      Master::Pub4::OperatorDocs::DEBT_RELATIVE
     end
 
     # One reader for the register, in the module BootstrapDocs deploy already uses. The
@@ -91,7 +91,7 @@ module Pub4
     # path arithmetic, and a register with two readers is how the broken one goes
     # unnoticed — it was, for weeks.
     def backlog_open_count
-      Master::Deploy::OperatorDocs.open_debt_count(root: @root)
+      Master::Pub4::OperatorDocs.open_debt_count(root: @root)
     end
 
     def horizon_count

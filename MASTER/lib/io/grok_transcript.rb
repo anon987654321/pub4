@@ -3,9 +3,9 @@
 require "json"
 
 module Master
-  module Grok
+  module Io
     # Extract the latest assistant reply from Grok/Cursor session JSONL files.
-    module Transcript
+    module GrokTranscript
       module_function
 
       def extract(path)
