@@ -613,6 +613,24 @@ recurring check is `bin/probe models`, which rides `probe all`. The rule it
 taught: a chain padded with `:free` tiers decays one dead model at a time,
 so the registry is only ever as true as its last `lint:models` run.)
 
+## The fix stage runs and accepts nothing — opened 2026-08-19
+
+The constitutional halt is gone (see Self-Test Debt), and the first unblocked
+`/through` fix stage ran two full LLM passes over `OPENBSD/bin` — 33 minutes,
+claude-CLI lane, 18 files, 245 findings in view — and accepted **zero fixes**
+before its 1800s wall clock expired. `fix0: llm_pass pass=1 violations=245
+fixed=0`, `pass=2 violations=241 fixed=0`, then the honest
+`wall-clock timeout` that bin/gate reads as inconclusive. The 2026-07-31
+full-fix run has the same signature in bin/gate's comments: one pass,
+identical violations on both sides.
+
+So the fix lane's bottleneck is not the halt and not the scanners; it is the
+acceptance path — model proposals either never arrive usable from the CLI
+lane or die in consensus/WriteGuard, and nothing in the output says which.
+The next session here should instrument the rejection reasons per proposal
+(fix0 already publishes skip_breakdown events for the deterministic lane;
+the LLM lane needs the same) before touching any knob.
+
 ## Live gotchas
 
 Three facts with no home of their own, kept because each was expensive to find.
