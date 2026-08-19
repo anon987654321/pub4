@@ -95,8 +95,7 @@ tests hold: no split, no exemption, and `rm -rf` stays blocked. The reverted
 split (`972894e70`) stays reverted; nobody owes one. The day of
 `self_violation` halting every `/through` fix stage ended with the unit
 correction, not with anyone deleting the law's own reasoning to appease its
-counter. Unlike the 0 of
-2026-08-11, both are measured over a tree that includes the fold. Treat any count here as
+counter. Treat any count here as
 true for the commit that carries it and no further: it has been 0, 1, 2, 3, 6 and
 7 on different days of the same fortnight, and a "clean since" claim in
 `START_HERE.md` was already stale once.
@@ -217,12 +216,12 @@ the same long line.
 
 ## Scanner noise
 
-`rake selfcheck` is **37 violations across 8 rules** (re-measured 2026-08-19
-after the law-fixture pass), every one triaged:
+`rake selfcheck` is **31 violations across 7 rules** (re-measured 2026-08-19
+after the law-fixture pass and the first twin retirement), every one triaged:
 
 - `SILENT_RESCUE` 12 — the standing track above.
 - `guard_expensive_ops` 9 — the verified false positives, still counted.
-- **13 are scanner sources describing defects**: the registry UNBOUNDED_RETRY
+- **7 are scanner sources describing defects**: the registry UNBOUNDED_RETRY
   twin's own description/detector/message lines, chaos_agent's report
   strings, the SQL-null normalise transform's regex, FAIL_VISIBLY's detector,
   and `etc` inside a directory-alternation regex read as a placeholder. A
@@ -251,6 +250,14 @@ measured false-positive rate, its own budget — so the pass is: retire
 registry twins one id at a time, moving any narrowing the registry version
 learned into the law version's detector and fixtures first, re-measuring
 after each. Not mechanical; each twin's narrowing history is the value.
+
+UNBOUNDED_RETRY is retired and is the recipe: narrowing ported with each
+false-positive shape as a good fixture, registry block deleted, the contract
+test moved to assert through the bridge, dogfood/selftest/selfcheck/registry
+audit re-measured. The bridge also stopped downcasing ids in the same pass —
+law findings now carry the id every id-keyed consumer (priors, exemptions,
+dedupe) actually keys on, which is what made the twins ambiguous at all.
+71 remain.
 
 Worth naming: `SelfCheck#gate!` — the method that would halt background
 autofix on this count — has **no caller** (verified 2026-08-19), so this

@@ -151,24 +151,14 @@ module Master
 # live). A second copy here with no applies_to double-counted every css/scss color
 # under the same id (a SINGULARITY violation) and added no coverage worth keeping.
 
-      # `loop do` is legitimate for event loops and daemons. Only flag `retry`
-      # without an obvious cap, and bare `while true` in library code.
-        RuleDSL.rule :UNBOUNDED_RETRY,
-          severity: :error, tags: %i[ROBUSTNESS],
-          description: "retry loops must have a max_attempts cap and backoff" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          src.each_line.with_index(1).filter_map do |line, n|
-            stripped = line.strip
-            next if stripped.start_with?("#")
-            next if stripped.match?(/loop\s*do/)
-            next if stripped.match?(/retry\\/)
-            # The `retry` *keyword* is never preceded by `:` (symbol literal), followed
-            # by `?`/`:` (predicate method, hash key), part of a longer identifier like
-            # `retry_index`, or adjacent to `|` (regex-literal alternation, e.g. /retry|loop/).
-            next unless stripped.match?(/(?<![:\w|])retry(?![?:\w|])/) || stripped.match?(/while\s+true/)
-            finding(line: n, message: "unbounded retry — add max_attempts cap and exponential backoff")
-          end
-        end
+      # UNBOUNDED_RETRY lives once, in law/unbounded_retry.rb — the first of the
+      # 72 law/registry twins retired (see DEBT.md). The narrowing this block
+      # learned — keyword not symbol, not predicate, not identifier, not regex
+      # alternation, not a line continuation — moved into the law's detector
+      # with each shape pinned as a good fixture, which is what the registry
+      # version never had. Its /review/scan/rules/ self-exemption dies with it:
+      # law/ text arrives conducted, and rule sources that spell the pattern in
+      # strings are counted and triaged rather than excused by path.
 
         RuleDSL.rule :ONE_SOURCE,
           severity: :warning, tags: %i[COUPLING],

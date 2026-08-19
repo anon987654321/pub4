@@ -46,8 +46,17 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding rule("MAGIC_COLOR", path: "app.css"), ".x { color: #ff00aa; }", "app.css", "raw hex color"
   end
 
-  def test_unbounded_retry_rule_flags_uncapped_retry
-    assert_finding rule("UNBOUNDED_RETRY"), "begin\n  call\nrescue\n  retry\nend\n", "retry.rb", "unbounded retry"
+  # UNBOUNDED_RETRY is the first retired law/registry twin: the registry block
+  # is gone and law/unbounded_retry.rb is the one implementation, so the
+  # contract asserts through the bridge — the id must reach the scanner's
+  # findings, unchanged, not just prove itself inside Law.
+  def test_unbounded_retry_reaches_findings_through_the_bridge
+    bridge = Rules::LawBridgeRule.new
+    hits = bridge.check("begin\n  call\nrescue\n  retry\nend\n", path: "retry.rb")
+    retry_hits = hits.select { |h| h[:rule] == "UNBOUNDED_RETRY" }
+
+    refute_empty retry_hits, "uncapped retry must reach scanner findings via the bridge"
+    assert_equal :error, retry_hits.first[:severity]
   end
 
   def test_strict_mode_zsh_rule_flags_missing_set_e

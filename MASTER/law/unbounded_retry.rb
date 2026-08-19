@@ -10,7 +10,7 @@
 Law.define(:UNBOUNDED_RETRY) do
   source "Release It! — retry budgets / bounded retries (Nygard)"
   severity :error
-  detect { |line| (s = line.strip) && !s.start_with?("#") && (s.match?(/(?<![:\w|])retry(?![?:\w|])/) || s.match?(/while\s+true/)) }
+  detect { |line| (s = line.strip) && !s.start_with?("#") && !s.match?(/retry\\/) && (s.match?(/(?<![:\w|])retry(?![?:\w|])/) || s.match?(/while\s+true/)) }
   fix "Add max_attempts cap and exponential backoff."
   bad  "retry"
   good <<~X

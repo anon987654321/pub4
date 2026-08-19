@@ -33,7 +33,13 @@ module Master
 
               rule.scan(code, file: path).map do |hit|
                 Finding.build(
-                  rule: rule.id.to_s.downcase,
+                  # The id unchanged, not downcased. Downcasing made every
+                  # law-emitted finding a stranger to its own id: violation
+                  # priors, exemptions and dedupe key on UNBOUNDED_RETRY and
+                  # received unbounded_retry, and one line could carry two
+                  # findings that differed only by case while a registry twin
+                  # lived. One id, whatever implements it.
+                  rule: rule.id.to_s,
                   message: "#{rule.id}: #{rule.fix}",
                   line: hit.line,
                   severity: severity_for(rule.severity),
