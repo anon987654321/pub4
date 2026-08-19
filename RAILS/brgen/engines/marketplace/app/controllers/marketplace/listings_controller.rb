@@ -51,6 +51,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @reviews = @listing.reviews.includes(:user).order(created_at: :desc)
     @review = Marketplace::Review.new if Current.user.present? && @listing.reviewable_by?(Current.user)
     @nearby_listings = nearby_listings_for(@listing)
+    @questions = @listing.questions.includes(:user, :answered_by).for_display
+    @question = Marketplace::Question.new if Current.user.present?
   end
 
   def new

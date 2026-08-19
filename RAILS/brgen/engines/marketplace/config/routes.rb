@@ -12,6 +12,8 @@ Marketplace::Engine.routes.draw do
     resource :favorite, only: %i[create destroy]
     resources :orders, only: %i[create update]
     resources :reviews, only: %i[create]
+    # Public questions on the listing, answered by whoever is selling it.
+    resources :questions, only: %i[create update]
   end
   resources :orders, only: %i[index show update]
 

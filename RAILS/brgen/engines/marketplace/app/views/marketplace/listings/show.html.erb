@@ -62,6 +62,44 @@
 
 <%= render "shared/also_nearby", items: @nearby_listings, title: t("marketplace.nearby_listings", default: "Nearby") %>
 
+<div class="section-divider" id="questions">
+  <p class="section-heading--md"><%= t("marketplace.questions") %></p>
+  <%# Public, because a question is worth more to the buyers who never asked it
+      than to the one who did. %>
+  <% if @questions.any? %>
+    <ul role="list" class="listing-questions">
+      <% @questions.each do |question| %>
+        <li role="listitem">
+          <p class="listing-question"><%= question.body %></p>
+          <p class="listing-question-meta"><%= question.user&.display_name || "anon" %> · <%= time_ago(question.created_at) %></p>
+          <% if question.answered? %>
+            <p class="listing-answer"><%= question.answer %></p>
+          <% elsif question.answerable_by?(Current.user) %>
+            <%= form_with model: question, url: listing_question_path(@listing, question), method: :patch do |f| %>
+              <%= f.label :answer, t("marketplace.answer") %>
+              <%= f.text_area :answer, rows: 2, required: true %>
+              <%= f.submit t("marketplace.post_answer"), class: "btn btn-sm" %>
+            <% end %>
+          <% else %>
+            <p class="listing-question-meta"><%= t("marketplace.awaiting_answer") %></p>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <% if @question && Current.user != @listing.user %>
+    <div class="form-wrap form-wrap--flush">
+      <%= form_with model: @question, url: listing_questions_path(@listing) do |f| %>
+        <div class="field">
+          <%= f.label :body, t("marketplace.ask_question") %>
+          <%= f.text_area :body, rows: 2, required: true, placeholder: t("marketplace.ask_placeholder") %>
+        </div>
+        <div class="field"><%= f.submit t("marketplace.post_question"), class: "btn btn-primary" %></div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
 <div class="section-divider">
   <p class="section-heading--md"><%= t("marketplace.reviews") %></p>
   <% if @review %>

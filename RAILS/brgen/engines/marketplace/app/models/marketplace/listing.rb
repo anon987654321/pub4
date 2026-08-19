@@ -35,6 +35,9 @@ class Marketplace::Listing < ApplicationRecord
            foreign_key: :listing_id, dependent: :destroy
   has_many :deals, class_name: "Marketplace::Deal", dependent: :destroy
   has_many :reviews, class_name: "Marketplace::Review", dependent: :destroy
+  # Public questions and the seller's answers — see Marketplace::Question for
+  # why they are on the listing rather than in an offer thread.
+  has_many :questions, class_name: "Marketplace::Question", dependent: :destroy
   has_many :favorited_by_users, through: :favorites, source: :user
   has_many_attached :photos
   process_media_variants :photos, variants: {

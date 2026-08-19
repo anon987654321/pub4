@@ -1055,6 +1055,15 @@ nb:
       good: bra
       fair: grei
       poor: slitt
+    questions: Spørsmål
+    ask_question: Spør om annonsen
+    ask_placeholder: "Er den fortsatt ledig?"
+    post_question: Spør
+    answer: Svar
+    post_answer: Publiser svar
+    awaiting_answer: Venter på selgeren
+    question_notification_title: Et spørsmål på annonsen din
+    answer_notification_title: Selgeren svarte deg
   takeaway:
     intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
       avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.
@@ -1315,6 +1324,8 @@ nb:
         paid: gjennomført
         failed: mislyktes
         refunded: refundert
+      question_asked: Spørsmålet er publisert.
+      question_answered: Svaret er publisert.
     playlist:
       user_not_found: Fant ikke brukeren.
       collaborator_added: Samarbeidspartneren er lagt til.

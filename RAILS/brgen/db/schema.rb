@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_110000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -690,6 +690,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_100000) do
     t.index ["marketplace_checkout_id"], name: "index_marketplace_orders_on_marketplace_checkout_id"
     t.index ["payment_reference"], name: "index_marketplace_orders_on_payment_reference"
     t.index ["payment_status"], name: "index_marketplace_orders_on_payment_status"
+  end
+
+  create_table "marketplace_questions", force: :cascade do |t|
+    t.text "answer"
+    t.datetime "answered_at"
+    t.integer "answered_by_id"
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.integer "listing_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["answered_by_id"], name: "index_marketplace_questions_on_answered_by_id"
+    t.index ["listing_id", "answered_at"], name: "index_marketplace_questions_on_listing_id_and_answered_at"
+    t.index ["listing_id"], name: "index_marketplace_questions_on_listing_id"
+    t.index ["user_id"], name: "index_marketplace_questions_on_user_id"
   end
 
   create_table "marketplace_reviews", force: :cascade do |t|
@@ -1718,6 +1733,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_100000) do
   add_foreign_key "marketplace_orders", "marketplace_checkouts"
   add_foreign_key "marketplace_orders", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_orders", "users", column: "buyer_id"
+  add_foreign_key "marketplace_questions", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_questions", "users"
+  add_foreign_key "marketplace_questions", "users", column: "answered_by_id"
   add_foreign_key "marketplace_reviews", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_reviews", "users"
   add_foreign_key "marketplace_saved_searches", "users"

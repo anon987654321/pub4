@@ -1052,6 +1052,15 @@ en:
       good: good
       fair: fair
       poor: poor
+    questions: Questions
+    ask_question: Ask about this listing
+    ask_placeholder: "Is it still available?"
+    post_question: Ask
+    answer: Answer
+    post_answer: Post answer
+    awaiting_answer: Waiting for the seller
+    question_notification_title: A question on your listing
+    answer_notification_title: The seller answered you
   takeaway:
     intro: This is a menu and order demo, not a live restaurant network. Payment is
       arranged with the kitchen. No signup to place a trial order.
@@ -1310,6 +1319,8 @@ en:
         paid: paid
         failed: failed
         refunded: refunded
+      question_asked: Question posted.
+      question_answered: Answer posted.
     playlist:
       user_not_found: User not found.
       collaborator_added: Collaborator added.

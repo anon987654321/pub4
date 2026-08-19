@@ -181,3 +181,30 @@
     transition: none !important;
   }
 }
+
+/* Questions on a listing. Answered ones read as the answer they carry; an
+   unanswered one still shows, because it is the question the next buyer has. */
+.listing-questions {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.listing-question {
+  margin: 0;
+  font-weight: var(--weight-bold);
+}
+
+.listing-question-meta {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.listing-answer {
+  margin: var(--space-1) 0 0;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 1px solid var(--border);
+}
