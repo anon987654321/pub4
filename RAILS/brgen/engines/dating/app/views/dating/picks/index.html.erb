@@ -1,0 +1,35 @@
+<% content_for :title, t("dating.picks_title") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("dating.picks_title") %>">
+  <hgroup>
+    <p><%= t("dating.picks_eyebrow") %></p>
+    <%= tag.h1 t("dating.picks_title") %>
+  </hgroup>
+  <%= link_to t("dating.back_to_deck"), root_path, class: "btn btn-ghost" %>
+</div>
+
+<% if @picks.any? %>
+  <ul role="list" class="pick-list">
+    <% @picks.each do |profile| %>
+      <li role="listitem" class="pick-card">
+        <% if profile.photos.attached? %>
+          <%# lazy_image_tag, not image_tag(variant): resolving a variant URL inside
+              an engine's routing context raises, which is the same trap the
+              marketplace card hit. %>
+          <%= lazy_image_tag profile.photos.first, alt: "" %>
+        <% end %>
+        <p class="pick-name">
+          <%= profile.user&.display_name %>
+          <% if profile.verified_at %><span class="chip"><%= t("dating.verified") %></span><% end %>
+        </p>
+        <p class="pick-meta"><%= [ profile.age, profile.bydel.presence || profile.location ].compact.join(" · ") %></p>
+        <%= button_to t("dating.like"), likes_path(user_id: profile.user_id), method: :post, class: "btn btn-sm" %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("dating.picks_empty_title"),
+        body: t("dating.picks_empty_body"),
+        action: { label: t("dating.back_to_deck"), path: root_path } %>
+<% end %>

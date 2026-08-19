@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_140000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -327,6 +327,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_130000) do
     t.index ["slug", "city_id"], name: "index_conversations_on_slug_and_city", unique: true
   end
 
+  create_table "dating_daily_picks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "picked_on", null: false
+    t.integer "profile_id", null: false
+    t.integer "user_id", null: false
+    t.index ["profile_id"], name: "index_dating_daily_picks_on_profile_id"
+    t.index ["user_id", "picked_on"], name: "index_dating_daily_picks_on_user_id_and_picked_on"
+    t.index ["user_id", "profile_id", "picked_on"], name: "idx_on_user_id_profile_id_picked_on_9548ad9687", unique: true
+    t.index ["user_id"], name: "index_dating_daily_picks_on_user_id"
+  end
+
   create_table "dating_dislikes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "dislikee_id", null: false
@@ -376,6 +387,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_130000) do
     t.integer "neighborhood_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.datetime "verified_at"
     t.boolean "visible"
     t.index ["city_id"], name: "index_dating_profiles_on_city_id"
     t.index ["neighborhood_id"], name: "index_dating_profiles_on_neighborhood_id"
@@ -392,6 +404,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_130000) do
     t.datetime "updated_at", null: false
     t.index ["profile_id", "position"], name: "index_dating_prompts_on_profile_id_and_position"
     t.index ["profile_id"], name: "index_dating_prompts_on_profile_id"
+  end
+
+  create_table "dating_verifications", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "pose", null: false
+    t.integer "profile_id", null: false
+    t.text "review_note"
+    t.datetime "reviewed_at"
+    t.integer "reviewed_by_id"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id", "status"], name: "index_dating_verifications_on_profile_id_and_status"
+    t.index ["profile_id"], name: "index_dating_verifications_on_profile_id"
+    t.index ["reviewed_by_id"], name: "index_dating_verifications_on_reviewed_by_id"
   end
 
   create_table "email_subscriptions", force: :cascade do |t|
@@ -1737,6 +1763,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_130000) do
   add_foreign_key "community_wiki_revisions", "users"
   add_foreign_key "conversation_participants", "conversations"
   add_foreign_key "conversation_participants", "users"
+  add_foreign_key "dating_daily_picks", "dating_profiles", column: "profile_id"
+  add_foreign_key "dating_daily_picks", "users"
   add_foreign_key "dating_dislikes", "users", column: "dislikee_id"
   add_foreign_key "dating_dislikes", "users", column: "disliker_id"
   add_foreign_key "dating_likes", "dating_prompts"
@@ -1747,6 +1775,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_130000) do
   add_foreign_key "dating_profiles", "cities"
   add_foreign_key "dating_profiles", "users"
   add_foreign_key "dating_prompts", "dating_profiles", column: "profile_id"
+  add_foreign_key "dating_verifications", "dating_profiles", column: "profile_id"
+  add_foreign_key "dating_verifications", "users", column: "reviewed_by_id"
   add_foreign_key "event_rsvps", "events"
   add_foreign_key "event_rsvps", "users"
   add_foreign_key "events", "cities"

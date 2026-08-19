@@ -5,7 +5,7 @@
 </div>
 
 <%= form_with model: @page, url: community_wiki_index_path(@community), class: "form-wrap" do |f| %>
-  <%= render "shared/errors", record: @page %>
+  <%= render "shared/errors", object: @page %>
   <div class="field">
     <%= f.label :title, t("wiki.page_title") %>
     <%= f.text_field :title, maxlength: 120, required: true %>

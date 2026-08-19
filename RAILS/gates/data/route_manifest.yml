@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: e5f4cfbffcc3197b
+    digest: 4e0b31b0caac8ae8
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -229,6 +229,12 @@ apps:
       - "/likes"
       dating/matches#index:
       - "/matches"
+      dating/verifications#index:
+      - "/verifications"
+      dating/verifications#new:
+      - "/verifications/new"
+      dating/picks#index:
+      - "/picks"
       playlist/playlists#index:
       - "/"
       - "/playlists"

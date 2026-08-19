@@ -9,6 +9,10 @@ class Dating::Profile < ApplicationRecord
   include Shared::Reactable
   belongs_to :user
   belongs_to :neighborhood, optional: true
+  has_many :verifications, class_name: "Dating::Verification", dependent: :destroy
+  # Denormalised from the accepted verification: every deck card reads it.
+  scope :verified, -> { where.not(verified_at: nil) }
+
   has_many_attached :photos
   process_media_variants :photos, variants: {
     thumb: { resize_to_limit: [ 400, 600 ], format: :webp },

@@ -5,7 +5,7 @@
 </div>
 
 <%= form_with model: @page, url: community_wiki_path(@community, @page), method: :patch, class: "form-wrap" do |f| %>
-  <%= render "shared/errors", record: @page %>
+  <%= render "shared/errors", object: @page %>
   <div class="field">
     <%= f.label :body, t("wiki.body") %>
     <%= f.text_area :body, rows: 14, required: true %>

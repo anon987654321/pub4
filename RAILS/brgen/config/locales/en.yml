@@ -804,6 +804,31 @@ en:
     empty_nearby_body: Widen the radius, come back later, or finish your profile so
       others can find you.
     swipe_to_start: swipe to start
+    verify_title: Get verified
+    verify_body: "Take a selfie in the pose below. A person checks it against your photos — no face matching, because that fails on exactly the people it should not."
+    verify_selfie: Your selfie
+    verify_send: Send for review
+    verify_queue: Verification queue
+    verify_queue_empty: Nothing waiting
+    verify_queue_empty_body: Requests appear here as they come in.
+    verify_approve: Verify
+    verify_reject: Reject
+    verified: Verified
+    verification_approved_title: You are verified
+    verification_approved_body: Your profile carries the badge now.
+    verification_rejected_title: Verification not accepted
+    verification_rejected_body: Try again with the pose we ask for.
+    picks_title: "Today's picks"
+    picks_eyebrow: "Five, then come back tomorrow"
+    picks_empty_title: No picks today
+    picks_empty_body: "The deck is still there, and tomorrow brings five more."
+    like: Like
+    poses:
+      peace_sign: "Two fingers up, like a peace sign"
+      hand_on_head: One hand flat on your head
+      thumbs_up: Thumbs up
+      palm_out: Open palm towards the camera
+      point_up: Point at the ceiling
   playlist:
     home_title: Playlist
     tap_to_start: tap to start
@@ -1339,6 +1364,10 @@ en:
       profile_updated: Profile updated.
       rewound: Last pass undone.
       nothing_to_rewind: Nothing to rewind.
+      verification_sent: Sent for review.
+      verification_reviewed: Reviewed.
+      verification_no_decision: No decision was given.
+      profile_first: Make a profile first.
     marketplace:
       address_saved: Address saved
       address_default: Default address set

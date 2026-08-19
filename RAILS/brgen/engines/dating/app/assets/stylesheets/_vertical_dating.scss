@@ -43,3 +43,38 @@
   color: var(--text-secondary);
   font-size: var(--text-sm);
 }
+
+/* Today's five, and the verification queue. A picks card is a photo with a name
+   under it — the deck's card carries the whole profile, and this list is a
+   shortlist, not a second deck. */
+.pick-list,
+.verify-queue {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+.pick-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.pick-name {
+  margin: var(--space-1) 0 0;
+  font-weight: var(--weight-bold);
+}
+
+.pick-meta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* The gesture we asked for, stated once and plainly — a reviewer and the person
+   holding the phone have to read the same sentence. */
+.verify-pose {
+  font-weight: var(--weight-bold);
+}

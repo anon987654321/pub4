@@ -1,0 +1,20 @@
+<% content_for :title, t("dating.verify_title") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("dating.verify_title") %>">
+  <%= tag.h1 t("dating.verify_title") %>
+</div>
+
+<p><%= t("dating.verify_body") %></p>
+<p class="verify-pose"><%= t("dating.poses.#{@verification.pose}") %></p>
+
+<%= form_with model: @verification, url: verifications_path, scope: :verification, multipart: true, class: "form-wrap" do |f| %>
+  <%= render "shared/errors", object: @verification %>
+  <%# The pose travels with the form. Drawn at submit time instead, a stale
+      photo could be posted against whichever gesture happened to come up. %>
+  <%= f.hidden_field :pose, value: @verification.pose %>
+  <div class="field">
+    <%= f.label :selfie, t("dating.verify_selfie") %>
+    <%= f.file_field :selfie, accept: "image/*", capture: "user", required: true %>
+  </div>
+  <p><%= f.submit t("dating.verify_send"), class: "btn btn-primary" %></p>
+<% end %>

@@ -805,6 +805,31 @@ nb:
     empty_nearby_body: Utvid radius, kom tilbake senere, eller fullfør profilen din
       så andre finner deg.
     swipe_to_start: sveip for å begynne
+    verify_title: Bli verifisert
+    verify_body: "Ta en selfie i posituren under. Et menneske sammenligner den med bildene dine — ingen ansiktsgjenkjenning, for den svikter nettopp dem den ikke burde."
+    verify_selfie: Selfien din
+    verify_send: Send til vurdering
+    verify_queue: Verifiseringskø
+    verify_queue_empty: Ingenting venter
+    verify_queue_empty_body: Forespørsler dukker opp her etter hvert.
+    verify_approve: Verifiser
+    verify_reject: Avslå
+    verified: Verifisert
+    verification_approved_title: Du er verifisert
+    verification_approved_body: Profilen din har merket nå.
+    verification_rejected_title: Verifiseringen ble ikke godtatt
+    verification_rejected_body: Prøv igjen med posituren vi ber om.
+    picks_title: Dagens utvalg
+    picks_eyebrow: "Fem, så kommer du tilbake i morgen"
+    picks_empty_title: Ingen utvalgte i dag
+    picks_empty_body: "Kortstokken står der fortsatt, og i morgen kommer fem nye."
+    like: Lik
+    poses:
+      peace_sign: "To fingre opp, som et fredstegn"
+      hand_on_head: En flat hånd på hodet
+      thumbs_up: Tommel opp
+      palm_out: Åpen håndflate mot kameraet
+      point_up: Pek i taket
   playlist:
     home_title: Spilleliste
     tap_to_start: trykk for å starte
@@ -1344,6 +1369,10 @@ nb:
       profile_updated: Profilen er oppdatert.
       rewound: Siste pass er angret.
       nothing_to_rewind: Ingenting å angre.
+      verification_sent: Sendt til vurdering.
+      verification_reviewed: Vurdert.
+      verification_no_decision: Ingen avgjørelse ble gitt.
+      profile_first: Lag en profil først.
     marketplace:
       address_saved: Adresse lagret
       address_default: Standardadresse satt

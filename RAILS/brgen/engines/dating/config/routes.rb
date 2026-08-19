@@ -15,4 +15,9 @@ Dating::Engine.routes.draw do
   resources :dislikes, only: :create
   resource :rewind, only: :create, controller: "rewinds"
   resources :matches, only: %i[index destroy]
+  # Proof that the person in the photos is the one holding the phone. index and
+  # update are the reviewer's; new and create are the profile owner's.
+  resources :verifications, only: %i[new create index update]
+  # A short list for today, instead of a deck with no bottom.
+  resources :picks, only: :index
 end
