@@ -17,6 +17,20 @@ REPO_ROOT = File.expand_path("..", MASTER_ROOT)
 RUBY = RbConfig.ruby
 RUBY3 = Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.0.0")
 
+# Inlined from bin/probe_selfscan (2026-08-19 sprawl collapse): deep-scan
+# lib/master.rb and fail on error/critical findings.
+SELFSCAN_SRC = <<~SCRIPT.freeze
+  $LOAD_PATH.unshift File.join(%q{#{MASTER_ROOT}}, "lib")
+  require "master"
+  container = Master.bootstrap_container(root: %q{#{MASTER_ROOT}})
+  result = container[:scanner].scan(File.join(%q{#{MASTER_ROOT}}, "lib", "master.rb"), depth: :deep)
+  findings = result.ok? ? result.value! : []
+  bad = findings.select { |f| %i[error critical].include?(f[:severity].to_sym) }
+  puts "selfscan: findings=" + findings.size.to_s + " critical=" + bad.size.to_s
+  bad.first(10).each { |f| warn "\#{f[:file]}:\#{f[:line]} [\#{f[:severity]}] \#{f[:rule]}: \#{f[:message]}" }
+  exit(bad.empty? ? 0 : 1)
+SCRIPT
+
 CHECKS = {
   "smoke" => {
     desc: "MASTER boot/wiring smoke",
@@ -133,7 +147,7 @@ CHECKS = {
   },
   "selfscan" => {
     desc: "Deep-scan lib/master.rb (set MASTER_PROBE_SELF=1)",
-    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "probe_selfscan")],
+    cmd: [RUBY, "-e", SELFSCAN_SRC],
     cwd: MASTER_ROOT,
     needs_ruby3: true,
     skip: -> { ENV["MASTER_PROBE_SELF"] != "1" },
