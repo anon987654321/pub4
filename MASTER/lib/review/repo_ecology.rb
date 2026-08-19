@@ -7,8 +7,177 @@ require "open3"
 require "set"
 require "time"
 require "yaml"
-require_relative "repo_ecology/co_change_graph"
-require_relative "repo_ecology/report_rendering"
+
+
+# ---- merged from lib/review/repo_ecology/co_change_graph.rb (one-file directory collapse, 2026-08-19) ----
+require "fileutils"
+require "open3"
+require "yaml"
+
+module Master
+  module Review
+    class RepoEcology
+      module CoChangeGraph
+        private
+
+        def build_co_change_graph
+          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "log", "--name-only",
+                                        "--pre#{?t}ty=format:#{COMMIT_SEPARATOR}",
+                                        "-#{CO_CHANGE_COMMITS}")
+          return {} unless status.success?
+
+          pair_counts = count_co_change_pairs(out)
+          graph_from_counts(pair_counts).transform_values(&:freeze).freeze
+        rescue StandardError => e
+          @bus&.publish("repo_ecology:co_change_error", error: e.message)
+          {}
+        end
+
+        def count_co_change_pairs(out)
+          pair_counts = Hash.new(0)
+          out.split(COMMIT_SEPARATOR).each do |chunk|
+            files = chunk.lines.map(&:strip).reject(&:empty?).uniq
+            next if files.size < 2
+            files.combination(2) { |a, b| pair_counts[[a, b].sort] += 1 }
+          end
+          pair_counts
+        end
+
+        def graph_from_counts(pair_counts)
+          graph = Hash.new { |h, k| h[k] = {} }
+          pair_counts.each do |(a, b), count|
+            next if count < CO_CHANGE_MIN_COUNT
+            graph[a][b] = count
+            graph[b][a] = count
+          end
+          graph
+        end
+
+        def load_or_build_co_change_graph
+          cached = read_co_change_cache
+          return cached if cached
+
+          build_co_change_graph.tap { |graph| write_co_change_cache(graph) }
+        end
+
+        def read_co_change_cache
+          path = co_change_cache_path
+          return unless File.exist?(path)
+
+          data = YAML.safe_load_file(path, aliases: true)
+          return unless data.is_a?(Hash) && data["head_mtime"].to_i == git_head_mtime
+
+          thaw_graph(data["graph"] || {})
+        rescue StandardError => e
+          @bus&.publish("repo_ecology:co_change_cache_error", error: e.message)
+          nil
+        end
+
+        def write_co_change_cache(graph)
+          path = co_change_cache_path
+          FileUtils.mkdir_p(File.dirname(path))
+          File.write(path, { "head_mtime" => git_head_mtime, "graph" => graph }.to_yaml)
+        rescue StandardError => e
+          @bus&.publish("repo_ecology:co_change_cache_error", error: e.message)
+        end
+
+        def thaw_graph(graph)
+          graph.each_with_object({}) do |(file, peers), acc|
+            acc[file] = (peers || {}).transform_values(&:to_i).freeze
+          end.freeze
+        end
+
+        def co_change_cache_path
+          File.join(@root, CO_CHANGE_CACHE_PATH)
+        end
+
+        def git_head_mtime
+          File.mtime(File.join(@root, ".git", "HEAD")).to_i
+        rescue StandardError
+          0
+        end
+      end
+    end
+  end
+end
+# ---- merged from lib/review/repo_ecology/report_rendering.rb (one-file directory collapse, 2026-08-19) ----
+module Master
+  module Review
+    class RepoEcology
+      # Converts a computed scan report hash into markdown text — a separate
+      # concern from RepoEcology's own file-analysis/detection responsibility.
+      module ReportRendering
+        def build_scan_report(records, graph)
+          {
+            root: @root,
+            scanned_at: Time.now.utc.iso8601,
+            files: records.size,
+            score: score(records),
+            dead_file_candidates: dead_file_candidates(records),
+            dead_method_candidates: dead_method_candidates(records),
+            duplicate_basenames: duplicate_basenames(records),
+            similar_clusters: similar_clusters(records),
+            sprawl: sprawl(records),
+            large_files: large_files(records),
+            extension_mix: extension_mix(records),
+            co_change_pairs: co_change_pairs(graph),
+          }
+        end
+
+        def render_report_sections(report)
+          render_dead_and_duplicate_sections(report) + render_scale_and_coupling_sections(report)
+        end
+
+        def render_dead_and_duplicate_sections(report)
+          lines = []
+          lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) do |item|
+            "#{item[:path]} — #{item[:reason]}"
+          end)
+          lines.concat(render_section("Dead-method candidates", report[:dead_method_candidates]) do |item|
+            "#{item[:path]}##{item[:method]} — #{item[:reason]}"
+          end)
+          lines.concat(render_section("Duplicate basenames", report[:duplicate_basenames]) do |item|
+            "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
+          end)
+          lines
+        end
+
+        def render_scale_and_coupling_sections(report)
+          lines = []
+          lines.concat(render_section("Similar clusters", report[:similar_clusters]) do |item|
+            "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
+          end)
+          lines.concat(render_section("Large files", report[:large_files]) do |item|
+            "#{item[:path]} — #{item[:lines]} lines (#{item[:symbol_count]} symbols)"
+          end)
+          lines.concat(render_section("Co-change pairs (hidden coupling)", report[:co_change_pairs]) do |item|
+            "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)"
+          end)
+          lines
+        end
+
+        def render_summary_lines(report)
+          sprawl = report[:sprawl]
+          [
+            "sprawl: max_depth=#{sprawl[:max_depth]}, avg_depth=#{sprawl[:avg_depth]}, " \
+            "orphan_dirs=#{sprawl[:orphan_dirs]}",
+            "extensions: #{report[:extension_mix].map { |ext, count| "#{ext}=#{count}" }.join(', ')}",
+          ]
+        end
+
+        def render_section(title, items)
+          lines = ["", "## #{title}"]
+          if items.empty?
+            lines << "none"
+          else
+            items.first(12).each { |item| lines << "- #{yield(item)}" }
+          end
+          lines
+        end
+      end
+    end
+  end
+end
 
 module Master
   module Review

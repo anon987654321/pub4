@@ -3,8 +3,187 @@
 require "prism"
 require "set"
 require "monitor"
-require_relative "code_index/symbol_visitor"
-require_relative "code_index/query_api"
+
+
+# ---- merged from lib/review/code_index/query_api.rb (one-file directory collapse, 2026-08-19) ----
+module Master
+  module Review
+    class CodeIndex
+      # Read-only query surface over the built symbol/reference graph —
+      # separated from CodeIndex's own build/reindex lifecycle.
+      module QueryApi
+        def size
+          @lock.synchronize { @symbols.size }
+        end
+
+        def symbols_in(file)
+          with_built_index do
+            full = File.expand_path(file, @root)
+            @symbols.values.select { |s| s.file == full }
+          end
+        end
+
+        def find(name)
+          with_built_index { find_locked(name) }
+        end
+
+        def references_to(fqn)
+          with_built_index { references_for(fqn) }
+        end
+
+        def impact(fqn)
+          with_built_index do
+            refs = references_for(fqn)
+            files = refs.map(&:from_file).uniq.map { |f| relativize(f) }
+            callers = refs.map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }.uniq
+            { fqn:, reference_count: refs.size, files:, callers: }
+          end
+        end
+
+        def summary(limit: nil)
+          with_built_index do
+            classes = summary_classes
+            lib_count = @symbols.values.count { |s| s.file.include?("/lib/") }
+            stamp = @built_at&.strftime("%H:%M") || "never"
+            [
+              "# Codebase: #{lib_count} lib symbols (indexed #{stamp})",
+              "## Classes & Modules (#{classes.size})",
+              *classes,
+            ].join("\n")
+          end
+        end
+
+        def query(name)
+          with_built_index do
+            hits = find_locked(name)
+            next { error: "not found: #{name}" } if hits.empty?
+            hits.map { |s| query_entry(s) }
+          end
+        end
+
+        # Returns [file, line] for the first symbol matching name, or nil.
+        def lookup(name)
+          with_built_index do
+            hit = find_locked(name).first
+            hit ? [relativize(hit.file), hit.line] : nil
+          end
+        end
+      end
+    end
+  end
+end
+# ---- merged from lib/review/code_index/symbol_visitor.rb (one-file directory collapse, 2026-08-19) ----
+require "prism"
+
+module Master
+  module Review
+    class CodeIndex
+      class SymbolVisitor < Prism::Visitor
+        attr_reader :symbols, :references, :metrics
+
+        def initialize(file:, root:)
+          @file = file; @root = root
+          @symbols = []; @references = []; @scope = []
+          @metrics = { classes: 0, modules: 0, defs: 0 }
+        end
+
+        def visit_class_node(node)
+          name = const_name(node.constant_path)
+          fqn = qualified(name)
+          @symbols << Symbol.new(
+            fqn:,
+            type: :class,
+            file: @file,
+            line: node.location.start_line,
+            parent: node.superclass ? const_name(node.superclass) : "Object",
+            includes: [],
+          )
+          @metrics[:classes] += 1
+          @scope.push(name); super; @scope.pop
+        end
+
+        def visit_module_node(node)
+          name = const_name(node.constant_path)
+          fqn = qualified(name)
+          @symbols << Symbol.new(
+            fqn:,
+            type: :module,
+            file: @file,
+            line: node.location.start_line,
+            parent: nil,
+            includes: [],
+          )
+          @metrics[:modules] += 1
+          @scope.push(name); super; @scope.pop
+        end
+
+        def visit_def_node(node)
+          meth = node.name.to_s
+          owner = @scope.last || "(top)"
+          @symbols << Symbol.new(
+            fqn: "#{qualified(owner)}##{meth}",
+            type: :method,
+            file: @file,
+            line: node.location.start_line,
+            parent: owner,
+            includes: [],
+          )
+          @metrics[:defs] += 1
+          super
+        end
+
+        def visit_call_node(node)
+          method_name = node.name.to_s
+          return super unless method_name.match?(/\A[_a-z][a-z0-9_]*[!?]?\z/i) && method_name.length > 1
+          receiver = receiver_name(node.receiver)
+          to_fqn = receiver ? "#{receiver}##{method_name}" : method_name
+          @references << Reference.new(
+            from_file: @file,
+            from_line: node.location.start_line,
+            to_fqn:,
+            ref_type: :call,
+          )
+          super
+        end
+
+        private
+
+        def qualified(name)
+          return name if @scope.empty? || name.include?("::")
+          (@scope + [name]).join("::")
+        end
+
+        def receiver_name(node)
+          case node
+          when Prism::SelfNode
+            @scope.join("::")
+          when Prism::ConstantReadNode, Prism::ConstantPathNode, Prism::ConstantPathTargetNode
+            const_name_safe(node)
+          else
+            nil
+          end
+        end
+
+        def const_name(node)
+          case node
+          when Prism::ConstantReadNode then node.name.to_s
+          when Prism::ConstantPathNode, Prism::ConstantPathTargetNode
+            "#{const_name(node.parent)}::#{node.name}"
+          else node.respond_to?(:name) ? node.name.to_s : ""
+          end
+        end
+
+        def const_name_safe(node)
+          name = const_name(node)
+          name.empty? ? nil : name
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "code_index.const_name_safe")
+          nil
+        end
+      end
+    end
+  end
+end
 
 module Master
   module Review

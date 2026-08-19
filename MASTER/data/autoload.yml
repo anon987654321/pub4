@@ -19,14 +19,12 @@ autoload:
     # it defines Master::CLI::CLI::Container and autoloads normally.
     - cli/cli/background_scan.rb
     - cli/cli/bridge_run.rb
-    - cli/cli/command_handlers.rb
     - cli/cli/command_ops.rb
+    - cli/cli/command_handlers.rb
     - cli/cli/repl_flow.rb
     - cli/cli/result_display.rb
     - cli/cli/signals.rb
     - cli/cli/thinking_indicator.rb
-    # command_ops is both a file and a directory of helpers for it.
-    - cli/cli/command_ops
     # Master::CLI::CommandRegistry -- one file per command family. command.rb
     # and formatter.rb define their own constants and are left autoloadable.
     - cli/command_registry/agent_commands.rb
