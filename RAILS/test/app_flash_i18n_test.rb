@@ -193,12 +193,27 @@ class AppFlashI18nTest < Minitest::Test
     end
   end
 
-  # The engine ships both files to every app; if the initializer stops loading them
-  # every flash in the family becomes a missing span at once.
-  def test_the_engine_still_loads_its_locale_files
+  # The engine ships its locale files to every app; if the initializer stops
+  # loading them every flash in the family becomes a missing span at once.
+  #
+  # Asserted as "every file it carries is loaded", not as the literal string
+  # `config/locales/social.`, which is what this used to look for. The
+  # initializer named that one file and affiliate.en.yml sat beside it unloaded;
+  # widening it to a glob was the fix, and left this assertion looking for a
+  # string the corrected code no longer contains. A test that fails when the bug
+  # it describes is fixed is a test measuring the wrong thing.
+  def test_the_engine_still_loads_every_locale_file_it_carries
     engine = File.read(File.join(ROOT, "shared/lib/shared/engine.rb"))
+    loaded = engine[/Dir\[root\.join\("(config\/locales\/[^"]+)"\)/, 1]
 
-    assert_includes engine, "config/locales/social."
+    assert loaded, "the i18n initializer no longer globs config/locales"
     assert_includes engine, "i18n.load_path"
+
+    shipped = Dir.glob(File.join(ROOT, "shared/config/locales/*.yml")).map { |path| File.basename(path) }
+    pattern = File.join(ROOT, "shared", loaded)
+    covered = Dir.glob(pattern).map { |path| File.basename(path) }
+
+    assert_equal shipped.sort, covered.sort,
+                 "the engine carries locale files the initializer does not load: #{(shipped - covered).join(', ')}"
   end
 end

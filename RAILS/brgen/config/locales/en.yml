@@ -387,6 +387,7 @@ en:
     group_leave: Leave
     confirm_group_remove: Remove from this group?
     record_voice: Record
+    attachment_label: Attach a photo or a voice note
     stop_recording: Stop
     microphone_denied: No microphone access.
     search_label: Search your messages

@@ -388,6 +388,7 @@ nb:
     group_leave: Forlat
     confirm_group_remove: Fjerne fra denne gruppen?
     record_voice: Ta opp
+    attachment_label: Legg ved et bilde eller et lydklipp
     stop_recording: Stopp
     microphone_denied: Ingen tilgang til mikrofon.
     search_label: Søk i meldingene dine

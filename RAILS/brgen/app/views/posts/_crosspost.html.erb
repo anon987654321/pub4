@@ -1,0 +1,30 @@
+<%# Where this post came from, where else it went, and the control that sends
+    it somewhere new. Its own partial because posts/show carries a length
+    ceiling (RAILS/test/file_length_ratchet_test.rb). %>
+<% if post.crosspost? && post.crossposted_from %>
+  <p class="post-crosspost-source">
+    <%= t("post.crossposted_from") %>
+    <%= link_to post.crossposted_from.community&.name || t("posts.community_platform", city: city_name),
+          post_path(post.crossposted_from) %>
+  </p>
+<% end %>
+
+<% if targets.present? %>
+  <section class="post-crosspost" aria-label="<%= t("post.crosspost") %>">
+    <%= form_with url: post_crossposts_path(post), method: :post do |f| %>
+      <%= f.label :community_id, t("post.crosspost_to") %>
+      <%= f.select :community_id, targets %>
+      <%= f.submit t("post.crosspost"), class: "btn btn-sm" %>
+    <% end %>
+  </section>
+<% end %>
+
+<% if crossposts.present? && crossposts.any? %>
+  <p class="post-crosspost-list">
+    <%= t("post.also_in") %>
+    <% crossposts.each do |crosspost| %>
+      <%= link_to crosspost.community&.name, post_path(crosspost) %>
+    <% end %>
+  </p>
+<% end %>
+

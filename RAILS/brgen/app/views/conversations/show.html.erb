@@ -89,6 +89,7 @@
   <%# The recorder writes into this file field and flips the type to audio, so a
       voice note goes through the same create path as a photo. %>
   <%= f.hidden_field :message_type, value: "text", data: { voice_recorder_target: "type" } %>
+  <%= f.label :attachment, t("messages.attachment_label"), class: "visually-hidden" %>
   <%= f.file_field :attachment, accept: "audio/*,image/*", class: "media-input-hidden", data: { voice_recorder_target: "file" } %>
   <%= f.hidden_field :duration_seconds, data: { voice_recorder_target: "duration" } %>
   <p data-controller="voice-recorder"

@@ -11,9 +11,14 @@ are relative to `RAILS/`.
 This file is **not** a second feature inventory. `apps.yml` is feature truth and
 `apps.horizon.yml` holds aspirational items marked `agent: ignore`. Everything
 below is a gap that neither file records, verified against the tree on
-2026-08-13 — mostly because `apps.yml` records a feature as `done` when the
+2026-08-19 — mostly because `apps.yml` records a feature as `done` when the
 model exists, and several of these models exist with nothing reading or writing
 them.
+
+Several entries were themselves stale by 2026-08-18: price-drop alerts, takeaway
+push, and the courier, event and story map layers were all built while this file
+still listed them as open. A finding is a hypothesis; re-measure before working
+from one.
 
 An item leaves this file when a check proves it, not when it stops being
 mentioned.
@@ -75,10 +80,9 @@ quotes. It is not a `Post`, for the same Sluggable reason as a boost.
 notification body) and `brgen/test/controllers/reposts_controller_test.rb`
 (comment creates, updates a boost, second POST without comment destroys).
 
-**Still open:** `shared/app/views/shared/_action_bar.html.erb` is wired the same
-way but **no view in any of the three apps renders that partial**; it is
-contract-pinned by `RAILS/test/design_contract_test.rb` and otherwise dead.
-Deleting it is a call for whoever added it.
+**Closed 2026-08-18.** The dead-partial note was stale: `shared/_feed_card`
+renders `shared/action_bar` when it is given a `record:` and no `actions:`, so
+the partial is reached by every app that draws a feed card.
 
 ### 1.2 `Tv::ViewEvent` recorded that a page opened, not that anything was watched — **done**
 
@@ -149,9 +153,10 @@ covering first alert, back-catalogue suppression, alerts-off, the interval floor
 and its expiry, category scoping, the untouched watermark, and one broken search
 not stopping everyone else's.
 
-**Still open:** price-drop alerts, which fall out of the same job once `Deal` is
-joined in, and web push — the alert lands in `Notification`, and
-`PushSubscription` only fires for `PUSHABLE_KINDS`.
+**Closed.** Price drops are `SavedSearch#price_drop_matches`, preferred over
+plain new listings so a reduction on an existing match is not hidden behind "N
+new listings", and `alert` is in `PUSHABLE_KINDS`, so the alert reaches a lock
+screen.
 
 ### 1.4 `takeaway_orders.delivery_driver_id` had no writer — **done**
 
@@ -174,8 +179,11 @@ leaves the kitchen and the page says nobody is assigned yet.
 covering nearest-not-merely-in-box, no double-booking, dispatch with no courier
 available, and dispatch on an order loaded without preloads.
 
-**Still open:** the courier's live position on the maps engine. The order page
-names the courier and their distance from the kitchen; it does not move.
+**Closed.** `Maps::HomeController#courier_layer` draws the courier — the
+viewer's own, and only while that order is out for delivery. A live position is
+the courier's, not the city's: publishing every rider's would be tracking people
+who never agreed to it, and the person waiting for the food is the only one who
+needs it.
 
 ---
 
@@ -292,9 +300,26 @@ surface.
 **Check:** `brgen/test/models/story_test.rb` (10) and
 `brgen/test/controllers/stories_controller_test.rb` (7).
 
-**Still open:** streaks, replies to a story (it has no conversation hook), and
-the Snap-Map — `Story` stores coarse coordinates and nothing draws them yet,
-though `Place` and the geo rooms are already there.
+**Closed 2026-08-19.** The Snap-Map is `Maps::HomeController#stories_layer`,
+which is only acceptable because the coordinates are coarsened to ~1 km on write
+— a pin says "around here", not "at this address".
+
+A reply is a direct message carrying the story it answers, so it stays readable
+after the 24 hours are up; only `alive` stories take one, because a reply box
+that still works after the sweep is a promise broken quietly.
+
+`StoryStreak` counts days running that two people have answered *each other* —
+mutual, because a streak one person can hold up alone is a posting counter
+rather than a pair still talking. Whether it is over is computed on read: a
+sweep that has not run yet would leave a dead streak on the page, and the answer
+is one date comparison.
+
+**Found while wiring the reply box, and fixed:** `Conversation.direct_between`
+read `for_user(a).for_user(b)`, which looks like an intersection and is not —
+both scopes join the same association, Rails collapses them, and the predicates
+AND on one participant row. It always answered nil, so `find_or_create_direct`
+always created, and **every pair of people got a new DM thread each time they
+opened one from a different button**.
 
 ### 2.4 `Community` was eight columns (Reddit) — **done**
 
@@ -353,7 +378,26 @@ of reads as the site being broken.
 **Check:** `brgen/test/models/community_ban_test.rb` (10) and
 `brgen/test/controllers/community_bans_controller_test.rb` (6).
 
-**Still open:** crossposts and a wiki.
+**Crossposts and the wiki are built (2026-08-18).** A crosspost is a `Post` in a
+second community with its own comment thread, not a join row — a repost boosts
+into followers' timelines and belongs to no community, which is the other act. A
+crosspost of a crosspost points at the original, or "seen in four communities"
+cannot be answered without walking a chain. `postable_by?` is the whole
+permission check, so a community that banned an account cannot be reached
+through a crosspost either.
+
+The wiki is `CommunityWikiPage` plus `CommunityWikiRevision`: moderators write,
+whoever can read the community reads. Writing goes through `revise!` rather than
+`update!`, so no caller can save a page and forget the revision, and a revert is
+a new revision rather than a deletion of the ones after it — a wiki whose
+history can be edited is a wiki nobody can audit.
+
+**Check:** `brgen/test/controllers/crossposts_controller_test.rb` (5),
+`test/models/community_wiki_page_test.rb` (5),
+`test/models/community_wiki_revision_test.rb` (4),
+`test/controllers/communities/wiki_controller_test.rb` (5).
+
+**Still open:** nothing in this entry.
 
 ### 2.5 No vertical video surface (TikTok) — **done**
 
@@ -435,8 +479,17 @@ split by seller for fulfilment.
 **Check:** `brgen/test/models/marketplace_checkout_test.rb` (8) and
 `brgen/test/controllers/marketplace_basket_test.rb` (5).
 
+**Listing Q&A is built (2026-08-19).** Asking went through the offer thread, so
+the seller answered "is it still available" once per buyer and the answer left
+with them. `Marketplace::Question` is public on the listing, answered by the
+seller, notifying both ways as kind `alert` (which is pushable). Answered
+questions sort first; an unanswered one still shows, because it is the question
+the next buyer has too.
+
+**Check:** `brgen/test/controllers/marketplace_questions_test.rb` (3).
+
 **Still open:** product variants (size/colour — a real schema, not a column),
-returns, seller payouts, listing Q&A, wishlist, and search facets. Temu-flavoured
+returns, seller payouts, wishlist, and search facets. Temu-flavoured
 work is still cheap on top of `Marketplace::Deal`: countdown flash deals,
 coupons, referral credit, bundle pricing.
 
@@ -529,10 +582,12 @@ menu.
 **Check:** `engines/takeaway/test/models/takeaway/order_test.rb` (`build_reorder`)
 and `brgen/test/controllers/takeaway_order_again_test.rb` (copy, skip-empty).
 
-**Still open:** the live courier map (the driver has coordinates and the maps
-engine exists; nothing draws them yet), group orders, and web push on each
-`transition_to!` — the transition sends an in-app notification and
-`PushSubscription` is still not on that path.
+**The live courier map is built** — see 1.4; the maps engine draws the viewer's
+own courier while the order is out for delivery.
+
+**Still open:** group orders, and web push on each `transition_to!` is now on
+the path: `order` is in `PUSHABLE_KINDS`, so a transition reaches a lock screen
+rather than only the in-app list.
 
 ### Messenger — **reply, edit and unsend done**
 
@@ -554,10 +609,47 @@ attachments were already there.
 
 **Check:** `brgen/test/models/message_edit_test.rb` (7).
 
-**Still open:** voice messages (`duration_seconds` is on the table and the
-attachment path already exists, but no recorder is wired), forwarding, link
-previews, message search, group naming and admin roles, pinned conversations.
-No WebRTC anywhere, so still no voice or video calls.
+**Closed 2026-08-18, except the calls.** Voice messages, forwarding, link
+previews, message search, group naming with admin roles, and pinned
+conversations are built.
+
+The recorder writes into the composer's own file field, so a voice note goes
+through the same create path as a photo — `duration_seconds` and `Message#voice?`
+had shipped and nothing in the tree could produce an audio message. An
+attachment is now a message on its own: a voice note has no words in it by
+definition.
+
+Forwarding is a copy, not a pointer: the copy has to outlive the original being
+unsent, it belongs to the forwarder, and its readers usually cannot open the
+thread it came from. Both ends are scoped to the reader's own conversations.
+
+Link previews carry title, site and summary and **no image**: hotlinking one
+tells that server the IP of everyone in the thread, and proxying it is remote
+media hosting — the problem 2.1 defers. One row per URL, so the same article in
+twenty rooms is one fetch rather than twenty pointed at whoever was linked.
+
+Search reads `visible.unexpired` like every render does, or ephemerality would
+be a rendering choice rather than a promise.
+
+A group DM is a `Conversation` with a name and no slug (a #channel is one with a
+slug), and roles reuse the IRC ladder already on the participant row. Ops rename
+and remove; any member may add, because a group where only the founder can bring
+someone in is one people work around by starting a second group. The last op
+leaving hands the room to the longest-standing member rather than trapping them
+in it.
+
+Pinning is per-participant and a timestamp: a pin on the shared row would let
+either side reorder the other's inbox, and pinned threads order among
+themselves.
+
+**Found while wiring the controls, and fixed:** reply, edit and unsend had a
+route, a model method, a test each — and no control on any page. A backend
+nobody can reach is not a feature.
+
+**Check:** `brgen/test/controllers/{conversation_pins_controller,conversation_search,message_forward,group_conversations_controller,voice_message}_test.rb`
+and `test/models/link_preview_test.rb`.
+
+**Still open:** no WebRTC anywhere, so still no voice or video calls.
 
 ### Craigslist — **expiry and renewal done**
 
@@ -621,8 +713,16 @@ only so nothing above reads as available.
 
 ## Sequencing
 
-Tier 1 first. It is mechanical, it is four small changes, and it produces the
-ranking and notification signals that Tier 2 and most of Tier 3 read. Then
-`Event` (2.2) and community moderation depth (2.4), which are the largest
-missing nouns. Then ActivityPub (2.1), which is the item that makes brgen
-something other than a clone.
+Tier 1 and Tier 2 are closed as of 2026-08-19, apart from the inbound half of
+federation, which is deliberate rather than unfinished. What is left is Tier 3
+and one instrument problem:
+
+1. **Marketplace depth** — variants, returns, seller payouts, wishlist, search
+   facets. The densest surface in the family and the one with money on it.
+2. **The verticals' own gaps** — dating photo verification and daily picks, tv
+   sounds and duets, takeaway group orders, the Craigslist non-goods verticals.
+3. **Outbound federation** (2.1) — following a remote account, `Update` on edit,
+   instance blocklists.
+4. **Section 4**, the WebGL blind spot in the rendered gates, which is not a
+   feature at all: it is the reason no gate can currently assert that a map or a
+   face drew anything.
