@@ -23,8 +23,10 @@ module Master
       private
 
       def load_prompt(mode)
-        path = File.join(@root, "data", "prompts", "mode_#{mode}.yml")
-        Master.load_yaml(path) || {}
+        # One prompts.yml keyed by mode — was four mode_<name>.yml files whose
+        # only reader interpolated the filename, which no grep could follow.
+        path = File.join(@root, "data", "prompts.yml")
+        (Master.load_yaml(path) || {})[mode.to_s] || {}
       end
     end
   end

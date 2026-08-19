@@ -73,7 +73,7 @@ gates it names exist.
 
 ## Data File Budget (why so many YAML files)
 
-`data/` is 47 yml (38 at the root) as of 2026-08-16, after the 2026-05 defrag plan's Tier-5 pass (2026-07-15) and the rule-shard fold: 9 files removed outright (dead — no code path ever loaded their content, despite some claiming otherwise in their own header comments), 13 folded into `patterns.yml` under namespaced keys, 1 folded despite having no enforced consumer (kept as reference documentation). **Do not merge blindly** — each remaining path has Ruby loaders and tests.
+`data/` is 43 yml at the root plus `lessons/` as of 2026-08-19, after the 2026-05 defrag plan's Tier-5 pass, the rule-shard fold, and the one-item-directory collapse (agents/ was empty, harnesses/ and skills/ had no reader, prompts/ ops/ security/ templates/ web/ each held one item now folded to the root or beside their consumer, traces/ was runtime output writing into the law tree): 9 files removed outright (dead — no code path ever loaded their content, despite some claiming otherwise in their own header comments), 13 folded into `patterns.yml` under namespaced keys, 1 folded despite having no enforced consumer (kept as reference documentation). **Do not merge blindly** — each remaining path has Ruby loaders and tests.
 
 A handful of Tier-5-looking files were deliberately left alone rather than folded: `council.yml` (8+ consumers across the whole deliberation subsystem, protected by its own scanner rule), `state.yml` (backs standing-orders/autocommit via `DATA_ALIASES`), `topologies.yml`/`tts.yml` (feed the live web boot payload and TTS), `tools.dynamic.yml` (two-tier repo+user-override merge), `exemplars.yml`/`openbsd.yml` (active read-modify-write targets, not static config — folding would make routine runtime events rewrite the shared source-of-truth file). Folding any of these needs a real design decision, not a mechanical move.
 
@@ -90,7 +90,7 @@ Rules live in one file because rules split across several grow definitions that 
 
 **Tier 2 — Registries (edit when adding providers, models, tools):**
 
-- `models.yml`, `providers.yml`, `agents/*.yml`, `personas.yml`, `tools.yml`, `mcp_servers.yml`
+- `models.yml`, `providers.yml`, `personas.yml`, `tools.yml`, `mcp_servers.yml`
 
 **Tier 3 — Runtime catalog (`data/runtime.yml`):**
 

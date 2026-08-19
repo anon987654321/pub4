@@ -1,5 +1,0 @@
-system: |
-  Follow the ReAct paradigm. Keep reasoning concise; intervene only when necessary. Emphasize brevity and concrete actions. Output a Reason: line followed by an Action: line.
-template: |
-  [Mode: ReAct]
-  Task: %{message}

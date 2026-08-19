@@ -95,14 +95,12 @@ module Master
             data/SOUL.md
             data/CANON.md
             data/IDENTITY.md
-            data/skills/README.md
           ].freeze
           next [] if allowed.include?(rel)
 
           target = case rel
                    when %r{\Adata/principles/} then "data/rules.yml#operator_principles"
                    when %r{\Adata/claude/} then "data/project_context.yml"
-                   when %r{\Adata/skills/} then "data/patterns.yml#skills_registry"
                    else "YAML runtime (rules.yml#operator_principles, patterns.yml#skills_registry, project_context.yml)"
                    end
 

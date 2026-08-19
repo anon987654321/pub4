@@ -161,8 +161,10 @@ module Master
         def singularity_yaml_paths(data_dir)
           Dir.glob(File.join(data_dir, "**", "*.yml")).sort.reject do |path|
             rel = path.delete_prefix("#{data_dir}/")
-            rel.start_with?("agents/", "council/", "harnesses/", "lessons/", "ops/", "personas/",
-                            "prompts/", "rules/", "runtime/", "security/") ||
+            # lessons/ is the one data/ subdirectory left — every other prefix
+            # here named a directory that no longer existed (agents/, rules/,
+            # ops/, prompts/, …), each an exemption outliving its subject.
+            rel.start_with?("lessons/") ||
               SINGULARITY_EXEMPT_REGISTERS.include?(rel)
           end
         end

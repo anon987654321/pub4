@@ -7,7 +7,7 @@ require_relative "loop_owner"
 module Master
   module Ops
     module ProcessBudget
-      CONFIG_PATH = File.join(Master::ROOT, "data", "ops", "process.yml").freeze
+      CONFIG_PATH = File.join(Master::ROOT, "data", "limits.yml").freeze
       NON_SLOT_LOOPS = %w[heartbeat].freeze
       @last_run = {}
 
@@ -23,7 +23,7 @@ module Master
 
       def load_config
         return {} unless File.exist?(CONFIG_PATH)
-        YAML.safe_load_file(CONFIG_PATH, aliases: true) || {}
+        (YAML.safe_load_file(CONFIG_PATH, aliases: true) || {}).fetch("process", {})
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ProcessBudget.load_config")
         {}

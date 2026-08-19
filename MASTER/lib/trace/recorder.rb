@@ -6,14 +6,15 @@ require "fileutils"
 module Master
   module Trace
   # Trace — captures all bus events for the current turn into a JSONL log
-  # at data/traces/YYYY-MM-DD.jsonl. Each line is one turn record.
+  # at .master/traces/YYYY-MM-DD.jsonl (local state, never data/ — a runtime
+  # write target inside the law tree read as config). One turn record per line.
   # /why formats the last turn.
     class Recorder
       EVENT_PATTERNS = %w[gateway:* pipeline:* tool:after route:* council:* memo:* lint:* governor:*].freeze
       MAX_EVENTS_PER_TURN = 200
 
       def initialize(root:, event_bus:)
-        @dir   = File.join(root, "data", "traces")
+        @dir   = File.join(root, ".master", "traces")
         @bus   = event_bus
         @mutex = Mutex.new
         @current = nil

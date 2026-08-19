@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# data/security/defaults.yml described a local-first, zero-listener, explicitly
+# data/security.yml described a local-first, zero-listener, explicitly
 # paired, fail-closed system. Exactly one of its keys had a reader. The rest — the
 # gateway bind, the dashboard, the session trust tiers, the pairing TTL, the
 # ingress rate limit, the five tool deny patterns — read as enforced policy and
@@ -16,7 +16,7 @@ require_relative "test_helper"
 # are words like "enabled", "port" and "trust" — a name grep would find those
 # anywhere and call the file enforced.
 class TestSecurityDefaults < Minitest::Test
-  PATH = Master.data_path("security/defaults.yml")
+  PATH = Master.data_path("security.yml")
 
   # enforced path => [file that reads it, the expression it reads it with]
   READERS = {

@@ -70,10 +70,11 @@ entries:
 
     Passes run one commit each with tests green and Zeitwerk ok: skeleton, then voice, trace, ground, reach, judge, loop, and finally now with stages folded into pipeline-as-data in `now/pipeline.rb`. Work happens on VPS dev@brgen.no on branch `refactor/seven-modules`. Time-orientation—now versus loop versus trace—replaces file-type splits; `judge/` unifies four "is this OK?" trees.
 - key: project_master_yml_json_authority
-  name: master.yml/master.json migration is complete — soul.yml/rules.yml are sole authority
+  name: master.yml/master.json migration is complete — soul.yml/rules.yml are sole
+    authority
   description: The predecessor master.yml/master.json drift-closing effort (started
-    2026-05-05) is finished; both predecessor files are deleted. Authority chain
-    is CLAUDE.md's "Authority order" — soul.yml, then rules.yml.
+    2026-05-05) is finished; both predecessor files are deleted. Authority chain is
+    CLAUDE.md's "Authority order" — soul.yml, then rules.yml.
   type: project
   body: |-
     Historical: on 2026-05-05, the directive was that MASTER should implement what predecessor `master.json` (v43.0.1, November–December 2025, 130 commits) and `master.yml` (v31–v49.75, December 2025–February 2026, 668 commits) described, mined from their deleted history. That drift-closing work is done — the priority gaps listed at the time (Universal Laws ladder, Strunk & White safeguards, biases section, structural_ops taxonomy, council personas, evidence logging, beauty section, per-language templates, and the rest) now live in `soul.yml` and `rules.yml`.
@@ -141,11 +142,10 @@ entries:
     HOW TO APPLY: prefer collapse over accretion — one parametric form with data-driven variants over many near-duplicate files (e.g. the four bin/check-* scripts collapsed to one bin/check --profile). Closed minimal surfaces. When in doubt, remove. Match the surrounding restraint. Craft is not accretion — the TTS voice engines were deliberately kept.
 - key: bsdports_openbsd_ports_index
   name: bsdports is the official next-gen OpenBSD ports index (Solene blessing)
-  description: RAILS/bsdports — sanctioned successor to Solene Rapenne's ports
-    index
+  description: RAILS/bsdports — sanctioned successor to Solene Rapenne's ports index
   type: project
-  body: RAILS/bsdports is being built as the official next-generation OpenBSD
-    ports index — the operator has the blessing and go-ahead of Solene Rapenne (solene@,
+  body: RAILS/bsdports is being built as the official next-generation OpenBSD ports
+    index — the operator has the blessing and go-ahead of Solene Rapenne (solene@,
     former OpenBSD developer, now Qubes OS core team; blog at dataswamp.org) to create
     the next version of her ports index. Treat bsdports as a first-class, real-world
     OpenBSD-community deliverable, not a demo.
@@ -168,3 +168,13 @@ entries:
     that pub4-related changes adhere to One Source principle and avoid duplication.
     7) Run full test suite to ensure no regressions. Prioritize checking for any new
     abbreviations in code or paths, as these violate Naming and Flat Hierarchy rules.'
+- key: semantic_index_comment_audit
+  name: semantic index comment audit
+  description: Audit of semantic_index.rb comments for drift - all accurate
+  type: reference
+  body: |-
+    Checked three comment/code pairs in semantic_index.rb:
+    [0] nearest method comment: accurately describes returning nearest entry value within threshold or nil
+    [1] remember method comment: accurately describes storing embedding->value with LRU eviction
+    [2] fetch method comment: accurately describes near-hit return or block computation with storage
+    All comments match code behavior. No drift detected.

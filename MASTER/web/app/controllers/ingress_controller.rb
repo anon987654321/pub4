@@ -10,7 +10,7 @@ class IngressController < ApplicationController
   before_action :require_ingress_token!, except: :health
   before_action :enforce_ingress_rate_limit, except: :health
 
-  # data/security/defaults.yml carried ingress.rate_limit_per_minute: 30 with no
+  # data/security.yml carried ingress.rate_limit_per_minute: 30 with no
   # reader while these two constants carried the same numbers — a policy file and
   # its subject able to disagree without anything noticing. The file is the source
   # now; the literals stay as the fallback for a checkout without it.
@@ -18,7 +18,7 @@ class IngressController < ApplicationController
   DEFAULT_WINDOW_S = 60
 
   def self.security_defaults
-    Master.load_yaml(Master.data_path("security/defaults.yml")) || {}
+    Master.load_yaml(Master.data_path("security.yml")) || {}
   rescue StandardError
     {}
   end

@@ -61,7 +61,7 @@ module Master
         Result.err("fix_app #{app_name}: #{e.message}", category: :unknown)
       end
 
-      OFFLINE_TEMPLATE = File.join(Master::ROOT, "data", "templates", "rails_pwa", "offline.html.erb").freeze
+      OFFLINE_TEMPLATE = File.join(__dir__, "templates", "rails_pwa", "offline.html.erb").freeze
 
       def fix_offline_view(path)
         offline_view = File.join(path, "app", "views", "pages", "offline.html.erb")

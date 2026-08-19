@@ -2,9 +2,9 @@
 
 module Master
   module CLI
-    # Destructive slash commands and configurable blocking review (security/defaults.yml).
+    # Destructive slash commands and configurable blocking review (security.yml).
     module DestructiveRoutes
-      SECURITY_PATH = Master.data_path("security/defaults.yml").freeze
+      SECURITY_PATH = Master.data_path("security.yml").freeze
       PATTERNS_PATH = Master.data_path("patterns.yml").freeze
       FALLBACK = %w[clear rebuild resync shell rollback].freeze
 

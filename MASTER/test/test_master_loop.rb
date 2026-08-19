@@ -23,7 +23,7 @@ class TestMasterLoop < Minitest::Test
     end
   end
 
-  # The early-boot mode map and data/ops/process.yml are the same fact in two
+  # The early-boot mode map and data/limits.yml#process are the same fact in two
   # places; this pins them so heartbeat->env and the "fix"/"autofix" alias cannot
   # drift the way they had ("MASTER_BACKGROUND" vs "MASTER_HEARTBEAT").
   def test_loop_flags_agree_with_process_yaml
