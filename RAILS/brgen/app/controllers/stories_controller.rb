@@ -6,6 +6,9 @@ class StoriesController < ApplicationController
 
   def index
     @rings = Story.rings_for(Current.user)
+    # One query for the whole page: a streak per ring would be a query per ring,
+    # and the ring list is the surface people open first.
+    @streak_days = StoryStreak.days_by_other_user(Current.user)
   end
 
   def show

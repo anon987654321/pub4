@@ -89,4 +89,23 @@ class StoryRepliesControllerTest < ActionDispatch::IntegrationTest
     get story_path(@story)
     assert_not_includes response.body, story_replies_path(@story)
   end
+# A streak is mutual: one person answering every day is a posting habit, not a
+# pair still talking.
+test "an exchange both ways in a day starts a streak, and the ring says so" do
+  sign_in_as(@viewer)
+  post story_replies_path(@story), params: { content: "Fin utsikt" }
+  assert_nil StoryStreak.for_pair(@viewer, @author)
+
+  theirs = Story.new(user: @viewer, caption: "Mitt")
+  attach_pixel!(theirs.media, filename: "mine.png")
+  theirs.save!
+  sign_in_as(@author)
+  post story_replies_path(theirs), params: { content: "Takk" }
+
+  assert_equal 1, StoryStreak.for_pair(@viewer, @author).days
+
+  get stories_path
+  assert_response :success
+  assert_includes response.body, "på rad"
+end
 end

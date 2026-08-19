@@ -256,6 +256,9 @@ nb:
       other: "%{count} har sett den"
     reply_label: Svar på historien
     reply_placeholder: Send et svar
+    streak:
+      one: "%{count} dag på rad"
+      other: "%{count} dager på rad"
   events:
     title: Hva skjer
     new: Nytt arrangement

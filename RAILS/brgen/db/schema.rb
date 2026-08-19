@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_18_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_100000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1261,6 +1261,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_150000) do
     t.index ["user_id"], name: "index_stories_on_user_id"
   end
 
+  create_table "story_streaks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "days", default: 0, null: false
+    t.date "last_day"
+    t.datetime "updated_at", null: false
+    t.integer "user_a_id", null: false
+    t.integer "user_b_id", null: false
+    t.index ["user_a_id", "user_b_id"], name: "index_story_streaks_on_user_a_id_and_user_b_id", unique: true
+    t.index ["user_a_id"], name: "index_story_streaks_on_user_a_id"
+    t.index ["user_b_id"], name: "index_story_streaks_on_user_b_id"
+  end
+
   create_table "story_views", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "story_id", null: false
@@ -1780,6 +1792,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_150000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "stories", "cities"
   add_foreign_key "stories", "users"
+  add_foreign_key "story_streaks", "users", column: "user_a_id"
+  add_foreign_key "story_streaks", "users", column: "user_b_id"
   add_foreign_key "story_views", "stories"
   add_foreign_key "story_views", "users"
   add_foreign_key "streams", "posts"

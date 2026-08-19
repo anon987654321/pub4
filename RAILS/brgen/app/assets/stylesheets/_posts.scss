@@ -213,3 +213,11 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   align-items: center;
   margin-block: var(--space-3);
 }
+
+/* Days running, on the ring it belongs to. Text, not a flame: the family is
+   flat and a badge that shouts outweighs the photograph it sits on. */
+.story-ring-streak {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}

@@ -22,6 +22,13 @@
           <% if stories.size > 1 %>
             <span class="story-ring-count"><%= stories.size %></span>
           <% end %>
+          <%# Days running the two of you have answered each other's stories.
+              Mutual, so it appears only on a ring there is a back-and-forth
+              with. %>
+          <% streak = @streak_days&.dig(newest.user_id).to_i %>
+          <% if streak.positive? %>
+            <span class="story-ring-streak"><%= t("stories.streak", count: streak) %></span>
+          <% end %>
         <% end %>
       </li>
     <% end %>

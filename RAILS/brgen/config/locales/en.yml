@@ -255,6 +255,9 @@ en:
       other: "%{count} have seen it"
     reply_label: Reply to this story
     reply_placeholder: Send a reply
+    streak:
+      one: "%{count} day running"
+      other: "%{count} days running"
   events:
     title: What is on
     new: New event

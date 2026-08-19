@@ -21,6 +21,9 @@ class StoryRepliesController < ApplicationController
       sender: Current.user, content: params[:content].to_s.strip, message_type: "text", story: story
     )
     if message.save
+      # After the save, because the day counts only when both directions have a
+      # reply on it and this one is the half that just arrived.
+      StoryStreak.record_exchange!(Current.user, author)
       redirect_to conversation_path(conversation), notice: t("flash.story_replied")
     else
       redirect_to story_path(story), alert: t("flash.story_reply_failed")
