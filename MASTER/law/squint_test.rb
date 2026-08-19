@@ -10,6 +10,8 @@ Law.define(:SQUINT_TEST) do
   bad <<~X
     a
 
+
+
     b
   X
   good <<~X

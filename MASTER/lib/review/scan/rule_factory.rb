@@ -24,7 +24,15 @@ module Master
             klass.new(root:)
           else klass.new(root:)
           end
-        rescue ArgumentError
+        rescue ArgumentError => e
+          # This rescue exists for one shape: a rule whose initialize does not
+          # take the keywords offered. Law's prove! also raises ArgumentError,
+          # and retrying bare here turned "a fixture stopped flagging" into
+          # half the law silently missing — LawBridgeRule.new re-ran with
+          # Law.rules already half-populated and constructed quietly. A
+          # failure that is not a signature mismatch stays a failure.
+          raise unless e.message.match?(/unknown keyword|wrong number of arguments/)
+
           klass.new
         end
 

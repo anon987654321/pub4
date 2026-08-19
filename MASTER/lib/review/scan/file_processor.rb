@@ -53,7 +53,20 @@ module Master
           return Result.err("file too long: #{path}", category: :validation) if code.lines.count > MAX_LINES
 
           @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
-          Result.ok(code)
+          Result.ok(law_conducted(path, code))
+        end
+
+        # A law file necessarily contains the pattern it forbids — detector,
+        # fix text, bad fixture. Law.conduct neutralizes those lines (keeping
+        # line numbers) before law judges law/; that only covered Law.scan,
+        # so every REGISTRY rule read law/ raw and NULL_BLINDNESS flagged
+        # law/null_blindness.rb's own detector. One read site, so every rule
+        # sees the same conducted text.
+        def law_conducted(path, code)
+          return code unless path.to_s.match?(%r{/law/[^/]+\.rb\z})
+
+          require File.join(Master::ROOT, "law", "law") unless defined?(Law)
+          Law.conduct(code)
         end
 
         def validate_file(path)

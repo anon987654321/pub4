@@ -74,6 +74,14 @@ module Master
         # tolerate failure.
         VERBATIM_MIRROR_RE = %r{/OPENBSD/(?:etc|usr|var)/}
 
+        # law/*.rb fixtures are load-bearing bad inputs: SQUINT_TEST's bad
+        # fixture IS four consecutive blank lines, and collapse_blank_lines
+        # "fixed" it — the fixture stopped flagging, prove! raised at load,
+        # and RuleFactory's keyword-mismatch rescue turned that into half the
+        # law silently missing (every id after squint_test). A file whose job
+        # is to hold the forbidden pattern must never be cleaned of it.
+        LAW_DIR_RE = %r{/law/[^/]+\.rb\z}
+
         # A line no human wrote: minified Workbox bundles run 23k chars/line,
         # while the densest hand-written file in the repo peaks at ~2.7k.
         # Rewriting a generated bundle is churn at best (it comes back on the
@@ -83,6 +91,7 @@ module Master
 
         def apply
           return Result.new(path: @path, changed: false, transforms: []) if verbatim_mirror?
+          return Result.new(path: @path, changed: false, transforms: []) if law_file?
           return Result.new(path: @path, changed: false, transforms: []) if generated_bundle?
 
           out = @source
@@ -263,6 +272,8 @@ module Master
         def markdown? = File.extname(@path).downcase == ".md"
 
         def verbatim_mirror? = @path.to_s.match?(VERBATIM_MIRROR_RE)
+
+        def law_file? = @path.to_s.match?(LAW_DIR_RE)
 
         def generated_bundle? = @source.each_line.any? { |line| line.length > GENERATED_LINE_LENGTH }
 

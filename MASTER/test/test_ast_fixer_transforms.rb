@@ -235,6 +235,17 @@ class TestAstFixerTransforms < Minitest::Test
     assert_empty result[:transforms]
   end
 
+  # A law fixture is a load-bearing bad input. collapse_blank_lines "fixed"
+  # SQUINT_TEST's bad fixture (four consecutive blank lines IS the fixture),
+  # prove! raised at load, and half the law went silently missing.
+  def test_fixer_leaves_law_files_alone
+    fixture = "Law.define(:SQUINT_TEST) do\n  bad <<~X\n    a\n\n\n\n    b\n  X\nend\n"
+    result = fix("law/squint_test.rb", fixture)
+
+    assert_equal fixture, result[:content]
+    assert_empty result[:transforms]
+  end
+
   def test_write_back_preserves_the_executable_bit
     Dir.mktmpdir do |dir|
       path = File.join(dir, "cron-job.zsh")

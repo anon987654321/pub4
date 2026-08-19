@@ -24,6 +24,10 @@ module Master
 
           def check(code, path:)
             lang = language(path)&.to_sym
+            # law/ files arrive already neutralized: FileProcessor#law_conducted
+            # runs Law.conduct at the one read site, so every rule — this
+            # bridge and the registry classes alike — sees fixtures and
+            # detectors as declarations, not conduct.
             Law.rules.each_value.flat_map do |rule|
               next [] unless rule.applies?(path, lang)
 

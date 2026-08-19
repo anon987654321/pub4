@@ -217,31 +217,46 @@ the same long line.
 
 ## Scanner noise
 
-`rake selfcheck` is **46 violations across 10 rules** (re-measured 2026-08-19).
-The jump from 20-across-3 (2026-08-15) is the 2026-08-17 law/ bridge, and most
-of it is the law reading itself:
+`rake selfcheck` is **37 violations across 8 rules** (re-measured 2026-08-19
+after the law-fixture pass), every one triaged:
 
-- **~23 are law/*.rb self-matches.** A law file carries its own detector regex
-  and a `bad` fixture that exists to prove the rule fires — and lexical rules
-  read both as live code, so `never_batch_delete` flags the `rm -rf` example
-  inside `law/never_batch_delete.rb` and NULL_BLINDNESS flags its own
-  `detect` line. Scanner Conventions #1, on the law's own source.
-- **5 are case-twin double-reports.** The bridge registers law ids downcased
-  (`null_blindness`) while registry classes keep them upper (`NULL_BLINDNESS`),
-  so one line yields two findings — the learned-smells duplicate-id defect,
-  evading its 2026-08-12 pin by case. The pin should compare case-insensitively.
-- The remainder is untriaged real code: three NEVER_BATCH_DELETE sites
-  (ground/swallow.rb, io/semantic_cache.rb, voice/engines.rb), chaos_agent's
-  two deliberate-looking UNBOUNDED_RETRYs, one COMPLETION_THEATER in
-  ast_fixer.rb prose, and rule sources matching sibling detectors.
+- `SILENT_RESCUE` 12 — the standing track above.
+- `guard_expensive_ops` 9 — the verified false positives, still counted.
+- **13 are scanner sources describing defects**: the registry UNBOUNDED_RETRY
+  twin's own description/detector/message lines, chaos_agent's report
+  strings, the SQL-null normalise transform's regex, FAIL_VISIBLY's detector,
+  and `etc` inside a directory-alternation regex read as a placeholder. A
+  lexical rule cannot see into a string or regex literal; these are the one
+  place the pattern is legitimately spelled. Counted, per the 2026-08-15
+  precedent.
+- `never_batch_delete` 3 — self-owned temp-file cleanup verified line by
+  line: Swallow rotating its own log backups, SemanticCache#invalidate_all!
+  clearing its own root, Engines deleting the chunks it just concatenated.
+  Not the operator-batch-delete hazard the rule guards.
+
+It was 46-across-10 earlier the same day, and the delta is the law reading
+itself, now closed structurally: `FileProcessor#law_conducted` runs
+`Law.conduct` at the one read site, so every rule — bridge and registry alike
+— sees law/ fixtures and detectors as declarations, not conduct.
+
+### The law has 72 registry twins, and they drift — opened 2026-08-19
+
+72 of 90 law/ ids also exist as registry rule classes, and the drift is
+proven, not theoretical: UNBOUNDED_RETRY's migration to law/ regressed the
+detector to the bare word (24 false findings; the registry twin already
+carried the narrowing, in comments that spell out exactly the discrimination
+the law version lacked). Two implementations of one id is the disagreement
+rules.yml's own header warns about. The direction is law/ — fixtures, a
+measured false-positive rate, its own budget — so the pass is: retire
+registry twins one id at a time, moving any narrowing the registry version
+learned into the law version's detector and fixtures first, re-measuring
+after each. Not mechanical; each twin's narrowing history is the value.
 
 Worth naming: `SelfCheck#gate!` — the method that would halt background
-autofix on this count — currently has **no caller** (verified 2026-08-19), so
-this number gates nothing. The halt that stopped every /through fix stage on
+autofix on this count — has **no caller** (verified 2026-08-19), so this
+number gates nothing. The halt that stopped every /through fix stage on
 2026-08-18 was SelfTest's laws count via ai_boot's `self_violation`
-subscription, cleared when NO_GOD_CLASS switched to code lines. A gate with no
-reader in the self-check of the gate system is this file's dominant defect
-class, at home.
+subscription, cleared when NO_GOD_CLASS switched to code lines.
 
 The 13 is not the 11 of 2026-08-13 plus the exemption lifted below. Measured both
 ways on one tree: the same 13 sites outside `lib/review/scan/rules/` are reported
