@@ -490,6 +490,42 @@ namespace :lint do
   task :constant_collisions do
     sh RbConfig.ruby, File.join(__dir__, "tools", "constant_collisions.rb")
   end
+
+  desc "No fact declared identically in two data files without a named reason"
+  task :dedup do
+    $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+    require "master"
+    # ContentDedupScan sat in lib/ with zero callers since it was written —
+    # a duplicate-content scanner that was itself inert wiring. This task is
+    # its reader. Cross-file exact-line matches only; within-file repeats are
+    # structural YAML.
+    #
+    # Every entry below names a duplicate this task tolerates and why; an
+    # entry that stops matching is a hole in the gate and fails the task
+    # (EXEMPTIONS_EXPIRE). "open:" entries are known debt with a collapse
+    # recorded in DEBT.md — tolerated so the gate can land, never permanent.
+    known = {
+      "- web/app/views/chat/index.html.erb" =>
+        "shared file reference, not a fact — agent_map and council both point at the chat view",
+      "strategy: highest_priority_wins" =>
+        "coincident strings for two different facts: limits.yml rule-conflict strategy, soul.yml conflict resolution",
+      "forbidden: [will, would, could, might]" =>
+        "open: soul absolute.anti_simulation is the source; voice.yml carries a shadowed fallback copy (rule_accessors.rb:26)",
+      "env: [REPLICATE_API_TOKEN, REPLICATE_API_KEY]" =>
+        "open: providers.yml and models.yml media_providers both declare the replicate key env vars",
+      "default_model: nvidia/nemotron-3-super-120b-a12b:free" =>
+        "open: soul negotiable + providers.yml openrouter + Master::OPENROUTER_DEFAULT all hold the default free model",
+    }
+    files = Dir.chdir(__dir__) { Dir.glob("data/**/*.yml").reject { |f| f.include?("baseline") } }
+    dups = Master::Ground::ContentDedupScan.scan(root: __dir__, files: files)
+    cross = dups.select { |d| d.locations.map { |l| l.split(":").first }.uniq.size > 1 }
+    new_dups = cross.reject { |d| known.key?(d.text.strip) }
+    stale = known.keys - cross.map { |d| d.text.strip }
+    new_dups.each { |d| warn "lint:dedup NEW duplicate: #{d.text.strip[0, 90]} @ #{d.locations.join(', ')}" }
+    stale.each { |text| warn "lint:dedup stale exemption (subject gone — remove it): #{text[0, 90]}" }
+    abort "lint:dedup: #{new_dups.size} new duplicate(s), #{stale.size} stale exemption(s)" if new_dups.any? || stale.any?
+    puts "lint:dedup: #{cross.size} known cross-file duplicate(s), 0 new"
+  end
 end
 
 desc "Full audit: constitution + selftest + the lint:* gates"

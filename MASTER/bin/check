@@ -51,10 +51,10 @@ node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
 # and the two load probes are about a second each.
 PROFILES = {
   "operator"    => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
-                    rake["test:core"], rake["lint:data_singularity"], rake["studio"]],
+                    rake["test:core"], rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
   "contributor" => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
-                    rake["lint:data_singularity"], rake["studio"]],
-  "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["studio"]],
+                    rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
+  "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
   # web/test/*.test.mjs evaluate the shipped face sources under node:vm, which is
   # the only way to assert anything about code that only exists inside a browser
   # feature check. Twenty-five of them were in the tree and in no profile, so
