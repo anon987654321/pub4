@@ -193,3 +193,26 @@ body.vertical-tv .show-card:hover {
 @media (prefers-reduced-motion: reduce) {
   .tv-feed-scroller { scroll-behavior: auto; }
 }
+
+/* A sound is a name and a count of what was built on it; a clip's lineage is
+   one quiet line under the title, because it is a way out of the page rather
+   than the page itself. */
+.sound-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sound-count {
+  margin-inline-start: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.video-lineage {
+  margin-block: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}

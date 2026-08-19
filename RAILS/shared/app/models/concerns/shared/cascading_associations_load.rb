@@ -21,7 +21,12 @@ module Shared
   module CascadingAssociationsLoad
     extend ActiveSupport::Concern
 
-    CASCADES = %i[destroy destroy_async delete_all].freeze
+    # :nullify belongs here for the same reason as the rest. A has_one nullify
+    # loads its dependent to clear the foreign key, so `Tv::Video#originated_sound`
+    # — a sound that outlives the clip it came from — raised
+    # StrictLoadingViolationError on destroy, which is the crash this concern
+    # exists to stop and not an N+1 anyone could have preloaded away.
+    CASCADES = %i[destroy destroy_async delete_all nullify].freeze
 
     class_methods do
       def has_many(name, scope = nil, **options, &extension)

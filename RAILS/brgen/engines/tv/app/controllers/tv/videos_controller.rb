@@ -22,13 +22,24 @@ class Tv::VideosController < Tv::BaseController
   def new
     @channel = own_channel
     @video = Tv::Video.new
+    # Answering a clip is a link into this form; the sounds list is the other
+    # way in, for a video that reuses audio without answering anybody.
+    @duet_of = Tv::Video.published.find_by(id: params[:duet_of_id])
+    @sounds = Tv::Sound.popular.limit(20) if @duet_of.nil?
   end
 
   def create
     channel = own_channel
     @channel = channel
-    @video  = channel.videos.build(video_params.merge(user: Current.user, status: "published", published_at: Time.current))
+    @video = channel.videos.build(video_params.merge(user: Current.user, status: "published", published_at: Time.current))
+    apply_sound_and_duet(@video)
     if @video.save
+      # After save, because a sound named after a clip needs the clip to exist.
+      # A video carrying somebody else's sound keeps it; one that carries none
+      # becomes the origin of its own.
+      # update!, not update_column: the counter cache on Tv::Sound#videos_count
+      # is what the sounds list ranks by, and a column write does not touch it.
+      @video.update!(sound: Tv::Sound.original_for(@video)) if @video.sound_id.nil?
       preset = video_params[:preset].presence
       PostproJob.perform_later(@video.to_gid.to_s, preset, "thumbnail") if preset && @video.thumbnail.attached?
       redirect_to video_path(@video), notice: t("flash.tv.video_uploaded")
@@ -49,11 +60,26 @@ class Tv::VideosController < Tv::BaseController
   # `Current.user != @video.channel.user`, which is only reached when
   # authenticated -- so the page rendered for guests and raised for every
   # signed-in viewer, which is why a guest-only smoke test never saw it.
-  def set_video = (@video = find_by_slug_or_id(Tv::Video.includes(:user, comments: :user, video_notes: :user, channel: :user), params[:id]))
+  def set_video = (@video = find_by_slug_or_id(Tv::Video.includes(:user, :sound, :duet_of, :duets, comments: :user, video_notes: :user, channel: :user), params[:id]))
   # No :tv_channel_id -- the channel comes from the route and is ownership
   # checked. Permitting it let a submitted id override that check by
   # reassigning the foreign key on the built record.
-  def video_params = params.require(:video).permit(:title, :description, :video_file, :thumbnail, :preset)
+  def video_params = params.require(:video).permit(:title, :description, :video_file, :thumbnail, :preset, :allow_duets)
+
+  # A duet answers a published video that allows being answered, and inherits
+  # its sound — which is what makes it a duet rather than a second clip that
+  # happens to mention the first. A sound can also be reused on its own.
+  def apply_sound_and_duet(video)
+    original = Tv::Video.published.find_by(id: params.dig(:video, :duet_of_id))
+    if original&.allow_duets?
+      video.duet_of = original
+      video.sound_id = original.sound_id
+      return
+    end
+
+    reused = Tv::Sound.find_by(id: params.dig(:video, :sound_id))
+    video.sound_id = reused.id if reused
+  end
 
   def require_video_owner!
     return if @video.user == Current.user

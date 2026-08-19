@@ -22,6 +22,10 @@ Tv::Engine.routes.draw do
     end
   end
 
+  # The clips built on one piece of audio — a video had no audio identity, so
+  # there was nothing to browse more of.
+  resources :sounds, only: %i[index show]
+
   resources :videos, only: %i[show destroy] do
     resources :video_notes, only: :create
     resources :comments, only: :create

@@ -233,6 +233,23 @@ en:
     episodes: Episodes
     episode_line: 'Episode %{number}: %{title}'
     back_to_channel: Back to channel
+    sounds: Sounds
+    sound_clips:
+      one: "%{count} clip"
+      other: "%{count} clips"
+    sounds_empty: No sounds yet
+    sounds_empty_body: Every clip posted makes one.
+    sound_no_clips: Nothing on this sound
+    sound_no_clips_body: The clip it came from is gone; the sound outlives it.
+    original_sound: "Original sound — %{name}"
+    duet_of: Answering
+    make_a_duet: Make a duet
+    duet_count:
+      one: "%{count} answer"
+      other: "%{count} answers"
+    use_a_sound: Use a sound
+    own_sound: Its own sound
+    allow_duets: Let people answer this
   stories:
     title: Stories
     new: New story

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1604,6 +1604,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_140000) do
     t.index ["channel_id"], name: "index_tv_shows_on_channel_id"
   end
 
+  create_table "tv_sounds", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "source_video_id"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "videos_count", default: 0, null: false
+    t.index ["source_video_id"], name: "index_tv_sounds_on_source_video_id"
+    t.index ["user_id"], name: "index_tv_sounds_on_user_id"
+  end
+
   create_table "tv_stream_chats", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "live_stream_id", null: false
@@ -1639,13 +1650,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_140000) do
   end
 
   create_table "tv_videos", force: :cascade do |t|
+    t.boolean "allow_duets", default: true, null: false
     t.integer "comments_count"
     t.datetime "created_at", null: false
     t.text "description"
+    t.integer "duet_of_id"
     t.integer "duration_seconds"
     t.integer "likes_count"
     t.datetime "published_at"
     t.string "slug"
+    t.integer "sound_id"
     t.string "status"
     t.string "thumbnail_url"
     t.string "title"
@@ -1653,7 +1667,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_140000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.integer "views_count"
+    t.index ["duet_of_id"], name: "index_tv_videos_on_duet_of_id"
     t.index ["slug"], name: "index_tv_videos_on_slug", unique: true
+    t.index ["sound_id"], name: "index_tv_videos_on_sound_id"
     t.index ["tv_channel_id"], name: "index_tv_videos_on_tv_channel_id"
     t.index ["user_id"], name: "index_tv_videos_on_user_id"
   end
@@ -1919,6 +1935,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_140000) do
   add_foreign_key "tv_live_streams", "tv_channels", column: "channel_id"
   add_foreign_key "tv_live_streams", "users"
   add_foreign_key "tv_shows", "tv_channels", column: "channel_id"
+  add_foreign_key "tv_sounds", "tv_videos", column: "source_video_id"
+  add_foreign_key "tv_sounds", "users"
   add_foreign_key "tv_stream_chats", "tv_live_streams", column: "live_stream_id"
   add_foreign_key "tv_stream_chats", "users"
   add_foreign_key "tv_subscriptions", "tv_channels"
@@ -1926,6 +1944,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_140000) do
   add_foreign_key "tv_video_notes", "tv_videos", column: "video_id"
   add_foreign_key "tv_video_notes", "users"
   add_foreign_key "tv_videos", "tv_channels"
+  add_foreign_key "tv_videos", "tv_sounds", column: "sound_id"
+  add_foreign_key "tv_videos", "tv_videos", column: "duet_of_id"
   add_foreign_key "tv_videos", "users"
   add_foreign_key "tv_view_events", "tv_videos"
   add_foreign_key "tv_view_events", "users"

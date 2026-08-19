@@ -41,8 +41,28 @@
                              data-animated-number-duration-value="900"><%= @video.views_count.to_i %></span> views</span>
     <span class="chip"><%= @video.duration_formatted %></span>
     <span class="chip"><%= @video.status %></span>
-    <% if @video.published_at.present? %><span class="chip"><%= time_ago(@video.published_at) %></span><% end %>
-  </div>
+  <% if @video.published_at.present? %><span class="chip"><%= time_ago(@video.published_at) %></span><% end %>
+</div>
+
+<%# The audio this clip is built on, and — where there is one — the clip it
+    answers. Both are links out to more of the same thing, which is the
+    whole point of giving audio an identity. %>
+<p class="video-lineage">
+  <% if @video.sound %>
+    <%= link_to @video.sound.title, sound_path(@video.sound) %>
+  <% end %>
+  <% if @video.duet_of %>
+    · <%= t("tv.duet_of") %> <%= link_to @video.duet_of.title, video_path(@video.duet_of) %>
+  <% end %>
+  <% if @video.duets.any? %>
+    · <%= t("tv.duet_count", count: @video.duets.size) %>
+  <% end %>
+  <% if @video.allow_duets? && Current.user&.tv_channels&.any? %>
+    <%= link_to t("tv.make_a_duet"),
+          new_channel_video_path(Current.user.tv_channels.first, duet_of_id: @video.id),
+          class: "btn btn-ghost btn-sm" %>
+  <% end %>
+</p>
   <% if @video.description.present? %>
     <p class="mt-12"><%= simple_format(@video.description) %></p>
   <% else %>

@@ -15,6 +15,23 @@
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
     <div class="field"><%= f.label :video_file %><%= f.file_field :video_file, accept: "video/*", required: true, direct_upload: true, data: { controller: "direct-upload" } %></div>
+<%# What this clip is built on. Answering another clip carries its sound
+    across, which is what makes a duet a duet rather than a second video
+    that mentions the first — so the two fields are one choice, and the duet
+    wins when both are given. %>
+<% if @duet_of %>
+  <p><%= t("tv.duet_of") %> <%= @duet_of.title %></p>
+  <%= f.hidden_field :duet_of_id, value: @duet_of.id %>
+<% elsif @sounds.present? %>
+  <div class="field">
+    <%= f.label :sound_id, t("tv.use_a_sound") %>
+    <%= f.select :sound_id, @sounds.map { |sound| [ sound.title, sound.id ] }, include_blank: t("tv.own_sound") %>
+  </div>
+<% end %>
+<div class="field">
+  <%= f.label :allow_duets, t("tv.allow_duets") %>
+  <%= f.check_box :allow_duets, checked: true %>
+</div>
     <div class="field">
       <%= f.label :thumbnail %>
       <%= f.file_field :thumbnail, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>

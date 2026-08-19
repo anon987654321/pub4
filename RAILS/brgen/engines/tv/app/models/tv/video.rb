@@ -14,6 +14,17 @@ class Tv::Video < ApplicationRecord
   has_many :view_events,   class_name: "Tv::ViewEvent", foreign_key: :tv_video_id, dependent: :destroy
   has_many :video_notes,   class_name: "Tv::VideoNote", foreign_key: :video_id, dependent: :destroy
   has_many :comments,      class_name: "Tv::Comment", dependent: :destroy
+  # The audio this clip is built on, and — when it answers another clip — the
+  # one it answers. Both nullable: most videos carry their own sound and answer
+  # nothing.
+  belongs_to :sound, class_name: "Tv::Sound", optional: true, counter_cache: :videos_count
+  belongs_to :duet_of, class_name: "Tv::Video", optional: true
+  has_many :duets, class_name: "Tv::Video", foreign_key: :duet_of_id, dependent: :nullify, inverse_of: :duet_of
+# The sound this clip introduced, if it introduced one. :nullify, because the
+# sound outlives the clip — the clips built on it are the reason it is still a
+# thing, and the schema's foreign key would otherwise refuse the delete.
+has_one :originated_sound, class_name: "Tv::Sound", foreign_key: :source_video_id,
+        dependent: :nullify, inverse_of: :source_video
   has_one_attached :video_file
   has_one_attached :thumbnail
   process_media_variants :thumbnail, variants: {

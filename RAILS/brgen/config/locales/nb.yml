@@ -234,6 +234,23 @@ nb:
     episodes: Episoder
     episode_line: 'Episode %{number}: %{title}'
     back_to_channel: Tilbake til kanalen
+    sounds: Lyder
+    sound_clips:
+      one: "%{count} klipp"
+      other: "%{count} klipp"
+    sounds_empty: Ingen lyder ennå
+    sounds_empty_body: Hvert klipp som legges ut lager en.
+    sound_no_clips: Ingenting på denne lyden
+    sound_no_clips_body: Klippet den kom fra er borte; lyden lever videre.
+    original_sound: "Egen lyd — %{name}"
+    duet_of: Svarer
+    make_a_duet: Lag en duett
+    duet_count:
+      one: "%{count} svar"
+      other: "%{count} svar"
+    use_a_sound: Bruk en lyd
+    own_sound: Sin egen lyd
+    allow_duets: La andre svare på denne
   stories:
     title: Historier
     new: Ny historie

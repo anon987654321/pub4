@@ -1,0 +1,22 @@
+<% content_for :title, @sound.title %>
+
+<div class="page-header" role="banner" aria-label="<%= @sound.title %>">
+  <hgroup>
+    <p><%= link_to t("tv.sounds"), sounds_path %></p>
+    <%= tag.h1 @sound.title %>
+  </hgroup>
+  <p><%= t("tv.sound_clips", count: @sound.videos_count) %></p>
+</div>
+
+<% if @videos.any? %>
+  <div class="video-grid">
+    <% @videos.each do |video| %>
+      <%= render "tv/videos/tv_video", tv_video: video %>
+    <% end %>
+  </div>
+  <%= render "shared/pager", pagy: @pagy %>
+<% else %>
+  <%# A sound whose clips are all unpublished is a real state: the sound
+      outlives the video it came from. %>
+  <%= render "shared/empty_state", title: t("tv.sound_no_clips"), body: t("tv.sound_no_clips_body") %>
+<% end %>

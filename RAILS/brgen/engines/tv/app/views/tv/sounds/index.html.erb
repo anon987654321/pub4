@@ -1,0 +1,19 @@
+<% content_for :title, t("tv.sounds") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("tv.sounds") %>">
+  <%= tag.h1 t("tv.sounds") %>
+</div>
+
+<% if @sounds.any? %>
+  <ul role="list" class="sound-list">
+    <% @sounds.each do |sound| %>
+      <li role="listitem">
+        <%= link_to sound.title, sound_path(sound) %>
+        <span class="sound-count"><%= t("tv.sound_clips", count: sound.videos_count) %></span>
+      </li>
+    <% end %>
+  </ul>
+  <%= render "shared/pager", pagy: @pagy %>
+<% else %>
+  <%= render "shared/empty_state", title: t("tv.sounds_empty"), body: t("tv.sounds_empty_body") %>
+<% end %>

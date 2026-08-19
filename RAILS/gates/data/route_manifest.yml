@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: 4e0b31b0caac8ae8
+    digest: 45b8fdc0f6e2898c
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -209,6 +209,10 @@ apps:
       - "/channels/:slug/edit"
       tv/channels#show:
       - "/channels/:slug"
+      tv/sounds#index:
+      - "/sounds"
+      tv/sounds#show:
+      - "/sounds/:id"
       tv/videos#show:
       - "/videos/:id"
       tv/live_streams#index:
