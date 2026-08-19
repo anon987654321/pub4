@@ -109,13 +109,21 @@ module Master
             @auto_fix = false
           end
 
-          def check_ast(ast, _code, path:)
+          def check_ast(ast, code, path:)
             return [] unless ast
+            lines = code.to_s.lines
             findings = []
             visit(ast) do |node|
               next unless node.is_a?(Prism::ClassNode)
               public_defs = count_public_methods(node)
-              line_count = node.location.end_line - node.location.start_line
+              # Code lines, not span. The raw span charged for rationale
+              # comments, so a well-explained class breached while a stripped
+              # one passed — the counter DENSITY and lint:spine already
+              # retired, surviving here. Core::Constitution read 348 under it
+              # while holding 250 lines of code, and the self_violation halted
+              # every /through fix stage; the only "fix" the span offered was
+              # deleting the law's own reasoning.
+              line_count = CodeMetrics.method_code_lines(node, lines)
               if public_defs > METHOD_LIMIT
                 findings << finding(
                   line: node.location.start_line,
@@ -124,7 +132,7 @@ module Master
               elsif line_count > LINE_LIMIT
                 findings << finding(
                   line: node.location.start_line,
-                  message: "god class #{node.constant_path.slice} is #{line_count} lines — split at responsibility boundaries",
+                  message: "god class #{node.constant_path.slice} is #{line_count} code lines (max #{LINE_LIMIT}) — split at responsibility boundaries",
                 )
               end
             end

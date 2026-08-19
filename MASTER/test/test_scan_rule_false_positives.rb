@@ -23,6 +23,29 @@ class TestScanRuleFalsePositives < Minitest::Test
     Array(rule(id).check(source, path: File.join(Master::ROOT, path)))
   end
 
+  # --- NO_GOD_CLASS -------------------------------------------------------
+  # The line branch counted raw AST span, charging for rationale comments —
+  # the counter DENSITY and lint:spine already retired. Core::Constitution
+  # read 348 under it while holding 250 code lines, and the resulting
+  # self_violation halted every /through fix stage (2026-08-18). Both
+  # directions: comments never breach, code still does.
+
+  def test_god_class_line_limit_does_not_charge_for_comments
+    body = (["  # rationale line"] * 320 + ["  def call = :ok"]).join("\n")
+    source = "class WellExplained\n#{body}\nend\n"
+
+    assert_empty findings(:NO_GOD_CLASS, source), "comment lines counted as class size"
+  end
+
+  def test_god_class_line_limit_still_fires_on_code
+    long_method = ->(i) { "  def m#{i}\n" + (["    x = compute"] * 105).join("\n") + "\n  end" }
+    source = "class Sprawl\n#{3.times.map { |i| long_method.call(i) }.join("\n")}\nend\n"
+    hits = findings(:NO_GOD_CLASS, source)
+
+    refute_empty hits, "a 320-code-line class must still be a finding"
+    assert_match(/code lines/, hits.first[:message])
+  end
+
   # --- COMPLETION_THEATER -------------------------------------------------
 
   def test_completion_theater_ignores_the_etc_stdlib_and_etc_paths

@@ -83,16 +83,19 @@ moved to meet it" rather than as "the spine held".
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **1 finding, re-measured 2026-08-18**: `[ABSTRACTION]
-lib/core/constitution.rb:16 — god class Constitution is 348 lines`. It was 0 on
-2026-08-13; the finding reopened when `972894e70` reverted the Constitution
-split the same morning (the split cleared the count but stopped `rm -rf` being
-blocked — four core-spine guard tests failed, so the revert was right). The
-operational cost is larger than the count: `self_test.laws_apply_to_self`
-halts the fix loop on any self-violation, so **`/through`'s fix stage refuses
-every target** — `fix_loop halted: self_violation 1 violations` — until a
-split lands that keeps the guards guarding. That repair belongs to the
-split's author per the revert message; it is a design decision, not a sweep. Unlike the 0 of
+`rake selftest` reports **0 findings, re-measured 2026-08-19**. The 1 of
+2026-08-18 — `god class Constitution is 348 lines` — closed the way the
+2026-08-12 idiom findings did: the count was the instrument, not the design.
+NO_GOD_CLASS's line branch measured raw AST span, charging for rationale
+comments — the counter DENSITY and lint:spine each already retired for the
+same reason — so Constitution read 348 while holding 250 code lines against
+the 300 limit. The branch now counts code lines through CodeMetrics, pinned
+in both directions in `test_scan_rule_false_positives.rb`, and all 79 core
+tests hold: no split, no exemption, and `rm -rf` stays blocked. The reverted
+split (`972894e70`) stays reverted; nobody owes one. The day of
+`self_violation` halting every `/through` fix stage ended with the unit
+correction, not with anyone deleting the law's own reasoning to appease its
+counter. Unlike the 0 of
 2026-08-11, both are measured over a tree that includes the fold. Treat any count here as
 true for the commit that carries it and no further: it has been 0, 1, 2, 3, 6 and
 7 on different days of the same fortnight, and a "clean since" claim in
