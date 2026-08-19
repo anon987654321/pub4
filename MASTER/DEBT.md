@@ -259,6 +259,29 @@ law findings now carry the id every id-keyed consumer (priors, exemptions,
 dedupe) actually keys on, which is what made the twins ambiguous at all.
 71 remain.
 
+### The data layer's duplicate census — opened 2026-08-19
+
+`rake lint:dedup` (ContentDedupScan's first-ever reader) holds the line-level
+census; the collapses are follow-up, each gated on its reader:
+
+- **soul `absolute.anti_simulation` is shadow-copied in voice.yml** —
+  `rule_accessors.rb:26` reads `absolute[...] || voice[...]`, so the voice
+  copy only fires if soul loses the key, and until then can only drift.
+  Collapse = delete the voice copy and the fallback arm, with a test that
+  the constitution accessor still carries the list.
+- **The openrouter default model lives three times**: soul negotiable,
+  providers.yml, `Master::OPENROUTER_DEFAULT`. All three were hand-edited in
+  step during the 2026-08-18 registry fix — the maintenance cost, paid live.
+  One source (providers.yml is the natural owner) and two readers.
+- **Replicate key env vars declared twice** (providers.yml, models.yml
+  media_providers). Trace which the media lane reads before cutting.
+- Structural duplicates the line-matcher cannot see, already recorded:
+  the 70 law/registry twins (above), `operator_principles` (27 entries)
+  vs `principle_map` (272) with zero name overlap — two principle
+  vocabularies and nothing naming the authoritative one — and
+  `Consensus::DEFAULT_MODELS` restating models.yml's three_mirror pool
+  (marked as the copy it is in the source).
+
 Worth naming: `SelfCheck#gate!` — the method that would halt background
 autofix on this count — has **no caller** (verified 2026-08-19), so this
 number gates nothing. The halt that stopped every /through fix stage on
