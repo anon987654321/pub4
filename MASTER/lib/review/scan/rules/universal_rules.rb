@@ -126,7 +126,7 @@ module Master
           end
         end
 
-      # NULL_BLINDNESS lives once, in law/null_blindness.rb — the second
+      # NULL_BLINDNESS lives once, in law/ (domain files) — the second
       # retired twin (see DEBT.md). This block's regex matched IS NULL, the
       # correct form its own message prescribed, and needed a path exemption
       # to stop reporting the fixer that emits that string as a repair. The
@@ -144,7 +144,7 @@ module Master
 # live). A second copy here with no applies_to double-counted every css/scss color
 # under the same id (a SINGULARITY violation) and added no coverage worth keeping.
 
-      # UNBOUNDED_RETRY lives once, in law/unbounded_retry.rb — the first of the
+      # UNBOUNDED_RETRY lives once, in law/ (domain files) — the first of the
       # 72 law/registry twins retired (see DEBT.md). The narrowing this block
       # learned — keyword not symbol, not predicate, not identifier, not regex
       # alternation, not a line continuation — moved into the law's detector

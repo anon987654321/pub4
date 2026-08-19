@@ -79,7 +79,7 @@ class TestScanRuleContracts < Minitest::Test
   end
 
   # UNBOUNDED_RETRY is the first retired law/registry twin: the registry block
-  # is gone and law/unbounded_retry.rb is the one implementation, so the
+  # is gone and law/ is the one implementation, so the
   # contract asserts through the bridge — the id must reach the scanner's
   # findings, unchanged, not just prove itself inside Law.
   def test_unbounded_retry_reaches_findings_through_the_bridge
