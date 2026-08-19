@@ -264,6 +264,10 @@ module Master
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb")
             return [] if path.to_s.match?(SKIP_RE)
+            # A tiny file can be tiny by contract: boot/paths.rb exists so four
+            # files can require paths without boot order. The opt-out names its
+            # reason in the file itself, where the next reader finds it.
+            return [] if code.lines.first(6).any? { |l| l.include?("sprawl: deliberate") }
 
             findings = []
             dir = File.dirname(path)
