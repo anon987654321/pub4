@@ -13,13 +13,13 @@ require "yaml"
 require_relative "../tools/doc_numbers"
 
 class TestDocNumbers < Minitest::Test
-  BASELINE = File.expand_path("../data/doc_numbers_baseline.yml", __dir__)
+  BASELINE = File.expand_path("../data/doc_baselines.yml", __dir__)
 
   def self.report = @report ||= Pub4::DocNumbers.run
 
   def setup
     @report = self.class.report
-    @baseline = YAML.safe_load_file(BASELINE)
+    @baseline = YAML.safe_load_file(BASELINE).fetch("doc_numbers")
   end
 
   def test_no_untraceable_dimensions
@@ -32,7 +32,7 @@ class TestDocNumbers < Minitest::Test
     assert_empty unexpected,
                  "dimensions prescribed in prose without naming the token that owns them. " \
                  "Name the token (`--tap-min`, design_tokens.yml), or add an entry with a reason " \
-                 "to MASTER/data/doc_numbers_baseline.yml:\n  #{unexpected.join("\n  ")}"
+                 "to MASTER/data/doc_baselines.yml (doc_numbers:):\n  #{unexpected.join("\n  ")}"
   end
 
   def test_baseline_has_no_stale_entries

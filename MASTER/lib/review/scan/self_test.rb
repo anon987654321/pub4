@@ -236,8 +236,8 @@ module Master
         end
 
         # Registers whose top-level keys are the SUBJECT of a finding rather than
-        # a configuration namespace. doc_paths_baseline.yml lists dead path
-        # references per document and doc_numbers_baseline.yml lists untraceable
+        # a configuration namespace. doc_baselines.yml#doc_paths lists dead path
+        # references per document and doc_baselines.yml#doc_numbers lists untraceable
         # numbers per document, so any document carrying both debts appears in
         # both — as RAILS/FINAL_TODO.md now does. That is two registers agreeing
         # about which file has problems, not two sources of truth for one value,
@@ -246,8 +246,7 @@ module Master
         # would need a new entry every time a document acquires a second kind of
         # debt.
         SINGULARITY_EXEMPT_REGISTERS = %w[
-          doc_paths_baseline.yml
-          doc_numbers_baseline.yml
+          doc_baselines.yml
         ].freeze
 
         def singularity_yaml_paths(data_dir)

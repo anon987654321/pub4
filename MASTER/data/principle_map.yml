@@ -3419,3 +3419,83 @@ principles:
     tags:
     - japanese_aesthetics
     source: master.yml@30dad7ead
+
+# The eleven root definitions the entries' root: fields reference — folded
+# from data/principle_roots.yml (no reader of its own; the map is the reader).
+roots:
+  one_source:
+    law: every fact has exactly one definition
+    because: copies do not stay equal, and the drift is silent
+    in_code: DRY, normalization, single source of truth
+    in_prose: one statement of a claim, referenced after
+    in_visual: one token per colour, spacing step and face
+
+  no_surplus:
+    law: remove what carries no weight
+    because: what is absent cannot be wrong, and every part costs attention
+    in_code: KISS, YAGNI, dead code, speculative generality
+    in_prose: omit needless words
+    in_visual: as little design as possible; negative space is the composition
+
+  one_responsibility:
+    law: a unit names one thing and does it
+    because: a unit with two reasons to change is changed for one and broken for the other
+    in_code: single responsibility, separation of concerns, short methods
+    in_prose: one idea per paragraph
+    in_visual: one message per view; one job per component
+
+  least_surprise:
+    law: behaviour matches the expectation the name and the convention set
+    because: a reader who must verify every name reads nothing else
+    in_code: POLA, convention over configuration, idiom, consistent naming
+    in_prose: the word means what it usually means
+    in_visual: Jakob's law — it works the way the rest of the web works
+
+  visible_state:
+    law: the system shows what is true, including failure
+    because: a hidden failure is indistinguishable from success until it is expensive
+    in_code: surface errors first, no silent rescue, no swallowed exceptions
+    in_prose: say what happened, not what was attempted
+    in_visual: visibility of system status; honest materials
+
+  bounded_load:
+    law: never exceed what the reader can hold at once
+    because: capacity is a property of people, not of the design
+    in_code: nesting depth, parameter count, method and file length
+    in_prose: sentence length; one clause deep
+    in_visual: Miller's and Hick's laws; measure, leading, choice count
+
+  stable_contract:
+    law: a boundary is explicit and changes deliberately
+    because: an implicit boundary is crossed accidentally and cannot be defended
+    in_code: open/closed, Liskov, interface segregation, dependency inversion
+    in_prose: defined terms keep their definition
+    in_visual: a component's props are its contract; variants are declared
+
+  proportion:
+    law: relationships follow a declared scale, never an arbitrary value
+    because: a number with no derivation cannot be checked or changed as a set
+    in_code: named constants over magic numbers, configuration over literals
+    in_prose: parallel structure; consistent register
+    in_visual: modular scale, vertical rhythm, grid, ma as measured interval
+
+  least_authority:
+    law: a part gets the least power that lets it work, and failure is survivable
+    because: what cannot reach a thing cannot break it, and what is not backed up is not kept
+    in_code: least privilege, pledge/unveil, explicit absence over null, restore-tested backups
+    in_prose: say only what you can stand behind
+    in_visual: a control does one thing, and an irreversible one asks first
+
+  stewardship:
+    law: a change leaves what it touched better, and answers to what was already there
+    because: nobody arrives at an empty site; the context has claims on the work
+    in_code: boy-scout rule, adaptive reuse over rewrite, boring technology
+    in_prose: edit what exists before adding beside it
+    in_visual: the building enhances its site rather than ignoring it
+
+  reach:
+    law: whoever arrives can operate it
+    because: capability, device and attention vary, and the design does not get to choose its user
+    in_code: semantic markup, keyboard paths, no capability assumed
+    in_prose: plain words before jargon
+    in_visual: Fitts and von Restorff — targets big enough to hit, differences big enough to see

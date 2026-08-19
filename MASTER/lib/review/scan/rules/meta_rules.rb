@@ -269,27 +269,32 @@ module Master
             # reason in the file itself, where the next reader finds it.
             return [] if code.lines.first(6).any? { |l| l.include?("sprawl: deliberate") }
 
-            findings = []
             dir = File.dirname(path)
             siblings, subdirs = dir_shape(dir)
-            if siblings == 1 && subdirs.zero? && dir != @root
-              findings << finding(
-                line: 1,
-                message: "FILE_SPRAWL: only file in #{relative(dir)}/ — hoist into #{relative(File.dirname(dir))}/ " \
-                         "or merge into #{File.basename(dir)}.rb (flatten before adding)",
-              )
-            end
-            lines = CodeMetrics.code_lines(code)
-            if lines < TINY_CODE_LINES && siblings > 1
-              findings << finding(
-                line: 1,
-                message: "FILE_SPRAWL: #{lines} code lines — absorb into its closest owner in #{relative(dir)}/ (merge)",
-              )
-            end
-            findings
+            [lone_file_finding(dir, siblings, subdirs), tiny_file_finding(code, dir, siblings)].compact
           end
 
           private
+
+          def lone_file_finding(dir, siblings, subdirs)
+            return unless siblings == 1 && subdirs.zero? && dir != @root
+
+            finding(
+              line: 1,
+              message: "FILE_SPRAWL: only file in #{relative(dir)}/ — hoist into #{relative(File.dirname(dir))}/ " \
+                       "or merge into #{File.basename(dir)}.rb (flatten before adding)",
+            )
+          end
+
+          def tiny_file_finding(code, dir, siblings)
+            lines = CodeMetrics.code_lines(code)
+            return unless lines < TINY_CODE_LINES && siblings > 1
+
+            finding(
+              line: 1,
+              message: "FILE_SPRAWL: #{lines} code lines — absorb into its closest owner in #{relative(dir)}/ (merge)",
+            )
+          end
 
           def dir_shape(dir)
             @dir_entries[dir] ||= [

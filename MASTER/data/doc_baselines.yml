@@ -1,0 +1,41 @@
+# Doc-drift baselines — dimension and path exemptions with reasons.
+# Was doc_numbers_baseline.yml + doc_paths_baseline.yml (one reader each).
+doc_numbers:
+  RAILS/UI_REFINEMENTS.md:
+  - value: 44px
+    why: 'A record of refinements already made. Rewriting a historical note to name
+      today''s token would change what the record says happened. Permanent exemption
+      while the file stays a changelog; if it becomes prescriptive, the numbers come
+      out.
+
+      '
+  RAILS/shared/reference/affiliate_banner/README.md:
+  - value: 44px
+    why: 'Not prescribed — criticised. The line reads "Comic Sans MS at 44px, against
+      a two-family type rule", in a list of what is wrong with a third-party reference
+      banner we chose not to copy. Naming --tap-min here would say the opposite of
+      what the sentence says, and there is no token that owns a font size we rejected.
+      Permanent while the file stays a critique; if it ever prescribes anything, the
+      numbers come out.
+
+      '
+doc_paths:
+  OPENBSD/SSH_ACCESS.md:
+  - path: priv/ssh/id_ed25519_brgen.pub
+    why: |
+      Deliberate, and load-bearing. Permanent exemption.
+      Corrected 2026-08-12: this reason used to read "Keys are never committed; the document names where the operator keeps one locally", and on that reading the sentence was rewritten to send the reader to the VM instead. That was wrong and has been reverted. .gitignore lines 42-43 are `priv/ssh/` followed by `!priv/ssh/*.pub` -- public keys are explicitly un-ignored, so `priv/ssh/id_ed25519_brgen.pub` is where the public half is MEANT to live and "in repo" is accurate about the design. The file is simply not there yet.
+      So this is not a dead reference to repair. It is a path waiting for its file, and the fix is to add the public key, not to reword the document.
+  MASTER/DECISIONS.md:
+  - path: data/design_rules.yml
+    why: 'A decision record naming the file whose fold it records. The path is meant
+      to be dead; the entry explains why proximity to a consumer lost to having one
+      definition. Repairing the reference would erase the decision.
+
+      '
+  MASTER/EXAMPLES.md:
+  - path: data/design_rules.yml
+    why: 'The worked example of this judgement, quoting the same file for the same
+      reason as the DECISIONS.md entry above.
+
+      '

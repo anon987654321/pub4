@@ -8,14 +8,14 @@
 #
 # This reads them. Every backticked path in every markdown file under MASTER,
 # RAILS and OPENBSD must resolve, except the entries in
-# data/doc_paths_baseline.yml, each of which carries its reason.
+# data/doc_baselines.yml (doc_paths:), each of which carries its reason.
 
 require "minitest/autorun"
 require "yaml"
 require_relative "../tools/doc_paths"
 
 class TestDocPaths < Minitest::Test
-  BASELINE = File.expand_path("../data/doc_paths_baseline.yml", __dir__)
+  BASELINE = File.expand_path("../data/doc_baselines.yml", __dir__)
 
   # One scan for the whole class; setup runs per test and the scan reads every
   # document in three trees.
@@ -23,7 +23,7 @@ class TestDocPaths < Minitest::Test
 
   def setup
     @report = self.class.report
-    @baseline = YAML.safe_load_file(BASELINE)
+    @baseline = YAML.safe_load_file(BASELINE).fetch("doc_paths")
   end
 
   def test_no_undocumented_dead_paths
@@ -35,7 +35,7 @@ class TestDocPaths < Minitest::Test
 
     assert_empty unexpected,
                  "documents naming paths that do not exist. Fix the reference, or add it to " \
-                 "MASTER/data/doc_paths_baseline.yml with a reason:\n  #{unexpected.join("\n  ")}"
+                 "MASTER/data/doc_baselines.yml (doc_paths:) with a reason:\n  #{unexpected.join("\n  ")}"
   end
 
   # A baseline that outlives its finding is the same defect one level up: a
@@ -49,7 +49,7 @@ class TestDocPaths < Minitest::Test
 
     assert_empty stale,
                  "baseline entries that now resolve — remove them from " \
-                 "MASTER/data/doc_paths_baseline.yml:\n  #{stale.join("\n  ")}"
+                 "MASTER/data/doc_baselines.yml (doc_paths:):\n  #{stale.join("\n  ")}"
   end
 
   def test_every_baseline_entry_states_a_reason

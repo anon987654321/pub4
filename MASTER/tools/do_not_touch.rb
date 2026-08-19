@@ -43,7 +43,7 @@ module Pub4
     NO_GATE = /—\s*no gate:\s*(.+)/
 
     # Reasons shorter than this are a shrug, not an argument. Same threshold
-    # doc_paths_baseline entries are held to.
+    # doc_baselines.yml#doc_paths entries are held to.
     MIN_REASON = 20
 
     def self.entries
