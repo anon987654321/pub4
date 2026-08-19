@@ -19,26 +19,30 @@ module Master
         # documented (feedback_policy.rs, issue #236) after making the same
         # mistake. :skipped is still recorded (queryable) but excluded from
         # fix_quality's denominator entirely.
+        OUTCOMES = %i[applied no_proposal reflexion_rejected rejected skip_confidence skip_fingerprint].freeze
+
         def fix_batch(violations)
           results = violations.uniq { |violation| violation[:file] }.map { |violation| fix_violation(violation) }
-          @all_skipped = results.any? && results.all? { |r| r.is_a?(Symbol) && r.to_s.start_with?("skip_") }
-          log_skip_breakdown(results)
-          results.count { |r| r == true }
+          @all_skipped = results.any? && results.all? { |r| r.to_s.start_with?("skip_") }
+          log_outcome_breakdown(results)
+          results.count { |r| r == :applied }
         end
 
         # A single aggregate line per rule/pass, not one per violation --
         # thousands of violations would otherwise flood the dmesg stream the
-        # way per-file rubocop output already did earlier this session.
-        def log_skip_breakdown(results)
-          tally = results.tally
-          confidence = tally[:skip_confidence].to_i
-          fingerprint = tally[:skip_fingerprint].to_i
-          return if (confidence + fingerprint).zero?
+        # way per-file rubocop output already did earlier this session. Every
+        # outcome appears, not just the skips: a pass that proposes nothing and
+        # a pass whose proposals all die in review are different problems, and
+        # `fixed=0` says neither.
+        def log_outcome_breakdown(results)
+          return if results.empty?
 
-          Master::Trace::Dmesg.status(
-            "fix0",
-            "skip_breakdown rule=#{@rule.id} confidence=#{confidence} fingerprint=#{fingerprint} total=#{results.size}",
-          )
+          tally = results.tally
+          parts = OUTCOMES.filter_map do |outcome|
+            count = tally[outcome].to_i
+            "#{outcome}=#{count}" if count.positive?
+          end
+          Master::Trace::Dmesg.status("fix0", "outcome rule=#{@rule.id} total=#{results.size} #{parts.join(" ")}")
         end
 
         def pass_outcome(fixed)

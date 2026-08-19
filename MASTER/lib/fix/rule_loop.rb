@@ -112,6 +112,9 @@ module Master
         { fixed:, status: }
       rescue StandardError => e
         @bus&.publish("rule_loop:error", rule: @rule.id, error: e.message)
+        # Bus-only meant a crashed rule pass was indistinguishable from a
+        # quiet one in the dmesg stream the operator actually reads.
+        Master::Trace::Dmesg.status("fix0", "rule_error rule=#{@rule.id} #{e.class}: #{e.message[0, 90]}")
         { fixed: 0, status: :error }
       end
 
@@ -129,14 +132,23 @@ module Master
         end
       end
 
+      # Returns one outcome symbol per violation, never a bare boolean: the
+      # 2026-08-19 proof run reported `fixed=0` for 33 minutes with nothing in
+      # the log saying whether proposals never arrived, died in reflexion, or
+      # were rejected on re-scan — every non-apply collapsed to `false` before
+      # the one line anyone reads. The tally of these symbols is that line.
       def fix_violation(violation)
         return :skip_confidence unless autofix_allowed?(violation)
         return :skip_fingerprint unless fingerprint_matches?(violation)
 
         note_unverified_fix(violation)
         source = violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
-        source = reflexion_verify(violation, source) if source
-        source ? apply(violation[:file], source, violation) : false
+        return :no_proposal if source.to_s.strip.empty?
+
+        verified = reflexion_verify(violation, source)
+        return :reflexion_rejected unless verified
+
+        apply(violation[:file], verified, violation) ? :applied : :rejected
       end
 
       def apply(path, new_src, violation)
@@ -159,6 +171,7 @@ module Master
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original, encoding: "UTF-8")
         @bus&.publish("rule_loop:fix_rejected", rule: @rule.id, file: path, reason:, **details)
+        Master::Trace::Dmesg.status("fix0", "fix_rejected rule=#{@rule.id} file=#{File.basename(path)} reason=#{reason}")
         false
       end
 

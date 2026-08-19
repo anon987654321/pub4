@@ -233,6 +233,33 @@ class TestRuleLoopPolicy < Minitest::Test
 
   private
 
+  class SilentAgent
+    def ask(_prompt) = ""
+    def ask_once(_prompt, **) = ""
+  end
+
+  # The 2026-08-19 proof run reported fixed=0 for 33 minutes and the log could
+  # not say why: every non-apply collapsed to false before the one aggregate
+  # line. Each outcome is a named symbol now, and a model that returns nothing
+  # is :no_proposal — a different problem from a proposal dying in review, and
+  # the breakdown line must say which.
+  def test_a_model_that_returns_nothing_is_a_named_outcome
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: Scanner.new, agent: SilentAgent.new)
+
+      outcome = loop.send(:fix_violation,
+                          Master::Fix::RuleLoop::Violation.from_finding(
+                            { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" },
+                            file: path, ext: ".rb",
+                          ))
+
+      assert_equal :no_proposal, outcome
+    end
+  end
+
   def build_loop(root:, bus:, scanner:, agent:)
     Master::Fix::RuleLoop.new(
       rule: Rule.new("TEST_RULE", :warning),
