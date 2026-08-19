@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_130000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -707,6 +707,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_120000) do
     t.index ["listing_id", "answered_at"], name: "index_marketplace_questions_on_listing_id_and_answered_at"
     t.index ["listing_id"], name: "index_marketplace_questions_on_listing_id"
     t.index ["user_id"], name: "index_marketplace_questions_on_user_id"
+  end
+
+  create_table "marketplace_returns", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "order_id", null: false
+    t.text "reason", null: false
+    t.datetime "refunded_at"
+    t.text "resolution_note"
+    t.datetime "resolved_at"
+    t.integer "resolved_by_id"
+    t.string "status", default: "requested", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id", "status"], name: "index_marketplace_returns_on_order_id_and_status"
+    t.index ["order_id"], name: "index_marketplace_returns_on_order_id"
+    t.index ["resolved_by_id"], name: "index_marketplace_returns_on_resolved_by_id"
   end
 
   create_table "marketplace_reviews", force: :cascade do |t|
@@ -1761,6 +1776,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_120000) do
   add_foreign_key "marketplace_questions", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_questions", "users"
   add_foreign_key "marketplace_questions", "users", column: "answered_by_id"
+  add_foreign_key "marketplace_returns", "marketplace_orders", column: "order_id"
+  add_foreign_key "marketplace_returns", "users", column: "resolved_by_id"
   add_foreign_key "marketplace_reviews", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_reviews", "users"
   add_foreign_key "marketplace_saved_searches", "users"

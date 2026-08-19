@@ -24,6 +24,50 @@
   </div>
 <% end %>
 
+<% if @returns.present? %>
+  <section class="order-returns" aria-label="<%= t("marketplace.returns") %>">
+    <h2><%= t("marketplace.returns") %></h2>
+    <% @returns.each do |sent_back| %>
+      <article>
+        <p class="order-return-status"><%= t("marketplace.return_statuses.#{sent_back.status}") %></p>
+        <p><%= sent_back.reason %></p>
+        <% if sent_back.resolution_note.present? %>
+          <p class="order-return-note"><%= sent_back.resolution_note %></p>
+        <% end %>
+        <%# The money is a separate fact from the decision, and nothing in the
+            tree moves it yet — saying "refunded" here would be a claim the app
+            cannot back. %>
+        <% if sent_back.status == "received" && !sent_back.refunded? %>
+          <p class="order-return-note"><%= t("marketplace.return_refund_pending") %></p>
+        <% end %>
+        <% if @order.seller == Current.user && sent_back.open? %>
+          <div class="order-actions">
+            <% if sent_back.status == "requested" %>
+              <%= button_to t("marketplace.return_approve"), order_return_path(@order, sent_back, decision: "approve"), method: :patch, class: "btn btn-sm" %>
+              <%= button_to t("marketplace.return_refuse"), order_return_path(@order, sent_back, decision: "refuse"), method: :patch, class: "btn btn-ghost btn-sm" %>
+            <% else %>
+              <%= button_to t("marketplace.return_receive"), order_return_path(@order, sent_back, decision: "receive"), method: :patch, class: "btn btn-sm" %>
+            <% end %>
+          </div>
+        <% end %>
+      </article>
+    <% end %>
+  </section>
+<% end %>
+
+<% if @order.returnable_by?(Current.user) %>
+  <section class="order-return-form" aria-label="<%= t("marketplace.return_request") %>">
+    <h2><%= t("marketplace.return_request") %></h2>
+    <%= form_with url: order_returns_path(@order), method: :post, scope: :return do |f| %>
+      <div class="field">
+        <%= f.label :reason, t("marketplace.return_reason") %>
+        <%= f.text_area :reason, rows: 3, required: true %>
+      </div>
+      <p><%= f.submit t("marketplace.return_send"), class: "btn btn-primary" %></p>
+    <% end %>
+  </section>
+<% end %>
+
 <% if @conversation %>
   <%# section + h2, not a bare h3: the h1 above is the order, and this is the
       order's chat -- one level down, not two. The section gives the heading a

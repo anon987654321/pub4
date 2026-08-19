@@ -13,6 +13,7 @@ class Marketplace::Order < ApplicationRecord
   belongs_to :variant, class_name: "Marketplace::Variant", optional: true
   # Optional, because a per-listing offer to a stranger has no basket above it —
   # that shape is still how classifieds work here. See Marketplace::Checkout.
+  has_many :returns, class_name: "Marketplace::Return", dependent: :destroy
   belongs_to :checkout, class_name: "Marketplace::Checkout",
              foreign_key: :marketplace_checkout_id, optional: true, inverse_of: :orders
 
@@ -20,7 +21,7 @@ class Marketplace::Order < ApplicationRecord
   # Fulfilment is a separate axis from payment. A paid order that has not
   # shipped and a shipped order awaiting payment are both real, and collapsing
   # them into one column is why "where is my parcel" goes unanswered.
-  FULFILMENT_STATUSES = %w[unfulfilled shipped delivered cancelled].freeze
+  FULFILMENT_STATUSES = %w[unfulfilled shipped delivered cancelled returned].freeze
   PAYMENT_STATUSES = %w[unpaid pending paid failed refunded].freeze
   PAYMENT_PROVIDERS = %w[stripe vipps].freeze
 
@@ -148,6 +149,32 @@ class Marketplace::Order < ApplicationRecord
     )
     detail = tracking_code.presence ? "#{listing_title} — #{carrier.presence || 'Tracking'}: #{tracking_code}" : listing_title
     deliver_notification(buyer_record, title: "On its way", body: detail, source: self, kind: "order")
+  end
+
+  # Returnable only against a shop. The right to send a purchase back is a right
+  # against a business; a private sale between two people in the same city is
+  # not one, and offering a control that the seller can simply refuse reads as a
+  # promise the app cannot keep.
+  def returnable_by?(user)
+    return false unless user && user.id == buyer_id
+    return false unless payment_status == "paid" && fulfilment_status == "delivered"
+    return false if delivered_at.blank? || delivered_at < Marketplace::Return::WINDOW.ago
+    return false if returns.open_returns.exists?
+
+    Marketplace::Listing.where(id: listing_id).where.not(store_id: nil).exists?
+  end
+
+  # The item is back on the shelf, and the order says so. Called when the seller
+  # confirms receipt, not when the return is approved: an approved return that
+  # never arrives would put a thing back in stock that is still in the post.
+  def restock_returned!
+    transaction do
+      update!(fulfilment_status: "returned")
+      back = variant_id ? Marketplace::Variant.find_by(id: variant_id) : Marketplace::Listing.find_by(id: listing_id)
+      next if back.nil? || (back.respond_to?(:unlimited_stock?) ? back.unlimited_stock? : back.one_of_a_kind?)
+
+      back.update_columns(stock: back.stock.to_i + (quantity.presence || 1).to_i, updated_at: Time.current)
+    end
   end
 
   def mark_delivered!

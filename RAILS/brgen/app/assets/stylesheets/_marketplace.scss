@@ -264,3 +264,27 @@
   color: var(--text-secondary);
   font-size: var(--text-sm);
 }
+
+/* A return on the order page: what was asked, what was answered, and whether
+   the money has moved — three separate facts, and the third is the one people
+   are actually waiting on. */
+.order-returns article {
+  margin-block: var(--space-3);
+  padding-inline-start: var(--space-3);
+  border-inline-start: 1px solid var(--border);
+}
+
+.order-return-status {
+  margin: 0;
+  font-weight: var(--weight-bold);
+}
+
+.order-return-note {
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.order-return-form {
+  margin-block: var(--space-4);
+}

@@ -17,7 +17,10 @@ Marketplace::Engine.routes.draw do
     # Size and colour, the seller's side of it.
     resources :variants, only: %i[index create destroy]
   end
-  resources :orders, only: %i[index show update]
+resources :orders, only: %i[index show update] do
+  # Sending it back. Offered only against a shop — see Marketplace::Return.
+  resources :returns, only: %i[create update]
+end
 
   # Amazon-like cart (pending orders act as cart items for the buyer)
   resource :cart, only: :show, controller: "carts" do

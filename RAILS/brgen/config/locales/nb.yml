@@ -1092,6 +1092,26 @@ nb:
     stock_left: "%{count} igjen"
     choose_variant: Hvilken
     choose_variant_blank: Velg
+    returns: Returer
+    return_request: Send den tilbake
+    return_reason: Hvorfor
+    return_send: Be om retur
+    return_approve: Godkjenn
+    return_refuse: Avslå
+    return_receive: Den er tilbake
+    return_refund_pending: Varen er tilbake. Pengene er ikke sendt ennå.
+    return_requested_title: Noen ber om retur
+    return_approved_title: Returen er godkjent
+    return_approved_body: "Send den tilbake, så bekrefter selgeren."
+    return_refused_title: Returen er avslått
+    return_refused_body: Selgeren avslo returen.
+    return_received_title: Selgeren har den tilbake
+    return_received_body: Pengene kommer etterpå.
+    return_statuses:
+      requested: Retur bedt om
+      approved: Retur godkjent
+      refused: Retur avslått
+      received: Returnert
   takeaway:
     intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
       avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.
@@ -1357,6 +1377,10 @@ nb:
       variant_added: Versjonen er lagt til.
       variant_removed: Versjonen er fjernet.
       variant_has_orders: Den versjonen har bestillinger og blir stående.
+      return_requested: Retur er bedt om.
+      return_updated: Returen er oppdatert.
+      return_not_available: Den bestillingen kan ikke returneres.
+      return_no_decision: Ingen avgjørelse ble gitt.
     playlist:
       user_not_found: Fant ikke brukeren.
       collaborator_added: Samarbeidspartneren er lagt til.

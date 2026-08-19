@@ -21,6 +21,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
     @conversation = Conversation.find_or_create_direct(Current.user, other)
     @messages = @conversation.messages.visible.unexpired.order(:created_at)
     @message = Message.new
+    @returns = @order.returns.includes(:resolved_by).order(created_at: :desc)
   end
 
   def create

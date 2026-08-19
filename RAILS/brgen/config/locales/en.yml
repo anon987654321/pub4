@@ -1089,6 +1089,26 @@ en:
     stock_left: "%{count} left"
     choose_variant: Which one
     choose_variant_blank: Choose
+    returns: Returns
+    return_request: Send it back
+    return_reason: Why
+    return_send: Request a return
+    return_approve: Approve
+    return_refuse: Refuse
+    return_receive: It is back
+    return_refund_pending: The item is back. The refund has not been sent yet.
+    return_requested_title: A return was requested
+    return_approved_title: Your return was approved
+    return_approved_body: Send it back and the seller will confirm.
+    return_refused_title: Your return was refused
+    return_refused_body: The seller refused the return.
+    return_received_title: The seller has it back
+    return_received_body: The refund follows.
+    return_statuses:
+      requested: Return requested
+      approved: Return approved
+      refused: Return refused
+      received: Returned
   takeaway:
     intro: This is a menu and order demo, not a live restaurant network. Payment is
       arranged with the kitchen. No signup to place a trial order.
@@ -1352,6 +1372,10 @@ en:
       variant_added: Version added.
       variant_removed: Version removed.
       variant_has_orders: That version has orders against it and stays.
+      return_requested: Return requested.
+      return_updated: Return updated.
+      return_not_available: That order cannot be returned.
+      return_no_decision: No decision was given.
     playlist:
       user_not_found: User not found.
       collaborator_added: Collaborator added.
