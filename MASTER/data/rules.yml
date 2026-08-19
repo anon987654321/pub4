@@ -955,6 +955,14 @@ rules:
     autofix: false
     detect_structural: god_class
     fix: Decompose into focused classes.
+  - id: FILE_SPRAWL
+    source: soul.yml COLLAPSE_BEFORE_ADDING / FLAT_HIERARCHY — operator standing instruction, clean minimal tree
+    name: One-file directories and tiny files merge into their owners
+    tier: structure
+    severity: warning
+    autofix: false
+    detect_structural: file_sprawl
+    fix: Hoist the only file in a directory into its parent; absorb files under 25 code lines into their closest owner. Fold requires, Zeitwerk names and tests in the same change.
   - id: NO_SHOTGUN_SURGERY
     source: 'Refactoring code smell: Shotgun Surgery (Fowler)'
     name: One change should not require edits in many files

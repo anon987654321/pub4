@@ -46,6 +46,38 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding rule("MAGIC_COLOR", path: "app.css"), ".x { color: #ff00aa; }", "app.css", "raw hex color"
   end
 
+  # FILE_SPRAWL judges the tree's shape: a one-file directory and a tiny file
+  # are both mergeable sprawl (operator standing instruction). law/ and core/
+  # are deliberately outside its reach — one is a per-rule-file design until
+  # the domain-file decision, the other a ratcheted invariant.
+  def test_file_sprawl_flags_lone_files_and_tiny_files_but_not_core_or_law
+    Dir.mktmpdir do |root|
+      lone = File.join(root, "lib", "widgets", "only.rb")
+      FileUtils.mkdir_p(File.dirname(lone))
+      File.write(lone, "module Only\nend\n" + ("x = 1\n" * 30))
+      rule = Rules::FileSprawlRule.new(root:)
+
+      hits = rule.check(File.read(lone), path: lone)
+      assert_equal 1, hits.size
+      assert_match(/only file in lib\/widgets/, hits.first[:message])
+
+      tiny = File.join(root, "lib", "widgets", "tiny.rb")
+      File.write(tiny, "module Tiny\nend\n")
+      fresh = Rules::FileSprawlRule.new(root:)
+      tiny_hits = fresh.check(File.read(tiny), path: tiny)
+      assert_equal 1, tiny_hits.size
+      assert_match(/2 code lines/, tiny_hits.first[:message])
+
+      # a healthy file in a healthy dir is silent
+      assert_empty fresh.check(File.read(lone), path: lone).select { |h| h[:message].include?("only file") }
+
+      core = File.join(root, "lib", "core", "fold.rb")
+      FileUtils.mkdir_p(File.dirname(core))
+      File.write(core, "module Fold\nend\n")
+      assert_empty Rules::FileSprawlRule.new(root:).check(File.read(core), path: core)
+    end
+  end
+
   # UNBOUNDED_RETRY is the first retired law/registry twin: the registry block
   # is gone and law/unbounded_retry.rb is the one implementation, so the
   # contract asserts through the bridge — the id must reach the scanner's
@@ -146,6 +178,9 @@ class TestScanRuleContracts < Minitest::Test
 
     assert_finding rule("RUNTIME_DOCS_YAML"), "# stray\n", bad, "rules.yml#operator_principles"
     assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: good)
-    assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: File.join(Master::ROOT, "data", "skills", "README.md"))
+    # data/skills/README.md left the allowed list when the directory was
+    # deleted (2026-08-19) — a reborn copy is a finding now, not an exemption.
+    assert_finding rule("RUNTIME_DOCS_YAML"), "# reborn\n",
+                   File.join(Master::ROOT, "data", "skills", "README.md"), "delete data/skills/README.md"
   end
 end

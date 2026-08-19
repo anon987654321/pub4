@@ -230,6 +230,72 @@ module Master
             mediums.include?(language)
           end
         end
+
+        # FILE_SPRAWL — the tree's shape is conduct too. A directory holding
+        # one file is a namespace bought for nothing, and a file under
+        # TINY_CODE_LINES code lines is usually a concept that belongs inside
+        # its owner (soul: COLLAPSE_BEFORE_ADDING — flatten, merge). The
+        # 2026-08-19 census found 25 one-or-two-file directories and 34 tiny
+        # files in lib/ alone; the operator's standing instruction is a clean,
+        # minimal tree. Findings only — the merge itself changes requires,
+        # Zeitwerk names and tests, which is the LLM fix lane's job under its
+        # normal accept gates, never a mechanical rewrite.
+        #
+        # Out of scope by design: law/ (one rule per file until the domain-file
+        # consolidation decision), lib/core (the spine's file count is a
+        # ratcheted invariant in data/spine.yml), test/spec (fixture files are
+        # legitimately small), and everything generated.
+        class FileSprawlRule < Rule
+          TINY_CODE_LINES = 25
+          SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
+          def self.auto_build? = false
+
+          def initialize(root: Master::ROOT)
+            super()
+            @id = "FILE_SPRAWL"
+            @description = "one-file directories and tiny files merge into their owners"
+            @severity = :warning
+            @auto_fix = false
+            @rule_tags = %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING]
+            @root = File.expand_path(root)
+            @dir_entries = {}
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb")
+            return [] if path.to_s.match?(SKIP_RE)
+
+            findings = []
+            dir = File.dirname(path)
+            siblings, subdirs = dir_shape(dir)
+            if siblings == 1 && subdirs.zero? && dir != @root
+              findings << finding(
+                line: 1,
+                message: "FILE_SPRAWL: only file in #{relative(dir)}/ — hoist into #{relative(File.dirname(dir))}/ " \
+                         "or merge into #{File.basename(dir)}.rb (flatten before adding)",
+              )
+            end
+            lines = CodeMetrics.code_lines(code)
+            if lines < TINY_CODE_LINES && siblings > 1
+              findings << finding(
+                line: 1,
+                message: "FILE_SPRAWL: #{lines} code lines — absorb into its closest owner in #{relative(dir)}/ (merge)",
+              )
+            end
+            findings
+          end
+
+          private
+
+          def dir_shape(dir)
+            @dir_entries[dir] ||= [
+              Dir.glob(File.join(dir, "*.rb")).size,
+              Dir.glob(File.join(dir, "*/")).size,
+            ]
+          end
+
+          def relative(path) = path.delete_prefix("#{@root}/")
+        end
       end
     end
   end
