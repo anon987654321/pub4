@@ -10,7 +10,7 @@ class TestContextWindow < Minitest::Test
 
   def test_model_context_windows_come_from_registry
     assert_equal 64_000, Master.context_window("deepseek-chat")
-    assert_equal 200_000, Master.context_window("anthropic/claude-sonnet-4-6")
+    assert_equal 200_000, Master.context_window("anthropic/claude-sonnet-4")
     assert_equal 128_000, Master.context_window("x-ai/grok-4.3")
   end
 end

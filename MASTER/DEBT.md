@@ -407,13 +407,13 @@ path never got. It is now per-pattern: `unfinished` declares `reads_comments`
 because a work marker lives in a comment, and nothing else does.
 `without_comment_lines` moved to the shared `Rule` base rather than being copied.
 
-## Two touch targets under 44px, and a sparkline that lost its accent — opened 2026-08-17
+## Two touch targets under the 44px `--tap-min`, and a sparkline that lost its accent — opened 2026-08-17
 
 `web/test/face_boot.test.mjs` carries two skipped assertions, and they are
 skipped because the answer is the operator's rather than because the check is
 wrong.
 
-`.tool` and `#spin-btn` set no `min-height`, so both compute under the 44px
+`.tool` and `#spin-btn` set no `min-height`, so both compute under the 44px `--tap-min`
 touch target `design_rules` requires. face.css defines `--tap-min: 44px` and
 applies it to `.panel` and the skip link, so the token exists and these two
 controls do not use it. Adding it changes the toolbar's height, which is a
@@ -453,7 +453,7 @@ themselves.
   directions: an enforced key that loses its reader, and a guidance key that grows
   one. `/orient limits` still serves the file whole, so the split relabels rather
   than hides.
-- `data/security/defaults.yml` — **closed** the same way, by
+- `data/security.yml` (then `data/security/defaults.yml`) — **closed** the same way, by
   `test/test_security_defaults.rb`. Its worst case was worse than inert: the
   ingress rate limit was *also* hardcoded in `IngressController`, so file and code
   could disagree in silence.
@@ -512,7 +512,7 @@ Two things worth keeping from the attempt:
   unread-key gate would have reported the fix as the defect.
 
 So the honest scope is per-file and by hand, with a two-direction test, the way
-`limits.yml` and `security/defaults.yml` were each closed. A repo-wide gate would
+`limits.yml` and `security.yml` were each closed. A repo-wide gate would
 need a baseline carrying a written reason for all 49, which is a decision about
 49 sections rather than a mechanical step.
 

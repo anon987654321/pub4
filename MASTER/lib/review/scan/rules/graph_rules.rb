@@ -33,8 +33,6 @@ module Master
           def check(code, path:)
             findings = []
             findings.concat(check_phantom_yaml_reads(code, path)) if path.include?("/lib/") && path.end_with?(".rb")
-            findings.concat(check_phantom_scan_classes(code, path)) \
-              if path.end_with?("rules.yml") && path.include?("/data/")
             findings
           end
 
@@ -87,57 +85,6 @@ module Master
               end
             end
             findings
-          end
-
-          def check_phantom_scan_classes(code, _path)
-            data = begin
-              YAML.safe_load(code, aliases: true)
-            rescue StandardError => e
-              return [finding(line: 1, message: "rules.yml failed to parse: #{e.message}")]
-            end
-            return [] unless data.is_a?(Hash)
-
-            depths = data["scan_depths"] || {}
-            rules_dir = File.join(@root, "lib", "review", "scan", "rules")
-            depths.each_value.flat_map do |class_names|
-              next [] unless class_names.is_a?(Array)
-
-              class_names.filter_map { |name| phantom_class_finding(name, code, rules_dir) }
-            end
-          end
-
-          def phantom_class_finding(name, code, rules_dir)
-            return if name == "all"
-            return if registered_scan_names.include?(name.to_s.downcase)
-            return unless name.to_s.match?(/\A[A-Z]/)
-
-            snake = name.gsub(/([A-Z])(?=[A-Z][a-z])|([a-z\d])([A-Z])/) { "#{$1 || $2}_#{$3}" }.downcase
-            file = File.join(rules_dir, "#{snake}.rb")
-            return if File.exist?(file)
-
-            line_num = code.each_line.with_index(1).find { |l, _| l.include?(name) }&.last || 1
-            finding(
-              line: line_num,
-              message: "scan_depths references phantom class #{name} — #{snake}.rb not found in review/scan/rules/",
-            )
-          end
-
-          def registered_scan_names
-            @registered_scan_names ||= begin
-              names = Set.new(%w[all])
-              require_relative "../rule_dsl"
-              Master::Review::Scan::Rule.registry.each do |klass|
-                instance = RuleFactory.build(klass, root: @root)
-                names << instance.id.to_s.downcase
-                short = klass.name&.split("::")&.last
-                names << short.downcase if short&.match?(/\A[A-Z]/)
-              rescue StandardError => e
-                # A rule that will not build drops out of the name set, and
-                # `/scan <that name>` is then rejected as unknown.
-                Master::Ground::Swallow.log(e, context: "registered_scan_names #{klass}", severity: :load_bearing)
-              end
-              names.freeze
-            end
           end
 
           def extract_loaded_yamls(code)

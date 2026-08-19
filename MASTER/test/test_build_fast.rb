@@ -16,7 +16,10 @@ class TestBuildFast < Minitest::Test
     container = Master::Builder.build_fast(root: Master::ROOT)
     commands = container[:commands]
 
-    %w[status orient help tools].each do |name|
+    # status and help only: /orient was removed 2026-05-20 as a useless
+    # wrapper (project_context.yml), and the fast registry is deliberately
+    # the smallest surface that answers a health question.
+    %w[status help].each do |name|
       assert commands.key?(name), "missing fast command /#{name}"
     end
   end

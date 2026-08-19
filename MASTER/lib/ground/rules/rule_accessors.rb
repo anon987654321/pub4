@@ -31,7 +31,6 @@ module Master
 
         def rules = @rules ||= (@soul_data.dig("absolute", "rules") || {}).freeze
         def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
-        def scan_depths = @scan_depths ||= (@data["scan_depths"] || {}).freeze
         def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
       end
     end

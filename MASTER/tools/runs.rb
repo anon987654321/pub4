@@ -82,6 +82,9 @@ module Pub4
       @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD}/**/*.rb")]
                       .map { |path| path.sub("#{ROOT}/", "") }
                       .reject { |path| path =~ %r{/(node_modules|vendor|tmp|\.master|knowledge|output)/} }
+                      # law/ rules are named for what they detect — squint_test.rb
+                      # is a rule, not a test file; its runner is Law.load_all.
+                      .reject { |path| path.start_with?("MASTER/law/") }
                       .select { |path| File.basename(path) =~ /\Atest_.*\.rb\z|_test\.rb\z|_spec\.rb\z/ }
                       .reject { |path| HELPERS.include?(File.basename(path)) }
                       .sort
