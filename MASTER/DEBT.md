@@ -217,8 +217,31 @@ the same long line.
 
 ## Scanner noise
 
-`rake selfcheck` is **20 violations across 3 rules** (re-measured 2026-08-15):
-`SILENT_RESCUE` 13, `guard_expensive_ops` 5, `UNBOUNDED_RETRY` 2.
+`rake selfcheck` is **46 violations across 10 rules** (re-measured 2026-08-19).
+The jump from 20-across-3 (2026-08-15) is the 2026-08-17 law/ bridge, and most
+of it is the law reading itself:
+
+- **~23 are law/*.rb self-matches.** A law file carries its own detector regex
+  and a `bad` fixture that exists to prove the rule fires — and lexical rules
+  read both as live code, so `never_batch_delete` flags the `rm -rf` example
+  inside `law/never_batch_delete.rb` and NULL_BLINDNESS flags its own
+  `detect` line. Scanner Conventions #1, on the law's own source.
+- **5 are case-twin double-reports.** The bridge registers law ids downcased
+  (`null_blindness`) while registry classes keep them upper (`NULL_BLINDNESS`),
+  so one line yields two findings — the learned-smells duplicate-id defect,
+  evading its 2026-08-12 pin by case. The pin should compare case-insensitively.
+- The remainder is untriaged real code: three NEVER_BATCH_DELETE sites
+  (ground/swallow.rb, io/semantic_cache.rb, voice/engines.rb), chaos_agent's
+  two deliberate-looking UNBOUNDED_RETRYs, one COMPLETION_THEATER in
+  ast_fixer.rb prose, and rule sources matching sibling detectors.
+
+Worth naming: `SelfCheck#gate!` — the method that would halt background
+autofix on this count — currently has **no caller** (verified 2026-08-19), so
+this number gates nothing. The halt that stopped every /through fix stage on
+2026-08-18 was SelfTest's laws count via ai_boot's `self_violation`
+subscription, cleared when NO_GOD_CLASS switched to code lines. A gate with no
+reader in the self-check of the gate system is this file's dominant defect
+class, at home.
 
 The 13 is not the 11 of 2026-08-13 plus the exemption lifted below. Measured both
 ways on one tree: the same 13 sites outside `lib/review/scan/rules/` are reported
