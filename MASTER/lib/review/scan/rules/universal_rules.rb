@@ -126,19 +126,12 @@ module Master
           end
         end
 
-        RuleDSL.rule :NULL_BLINDNESS,
-          severity: :error, tags: %i[CORRECTNESS],
-          description: "comparisons against nullable columns must use IS NULL" do |src, path:|
-          # The whole scan tree, not just rules/. This rule matches the literal
-          # "IS NULL", so it fired five times on ast_fixer.rb — the file whose
-          # normalise_null_comparison *emits* that string, in its replacement
-          # values and in the comment explaining them. The fixer already
-          # excludes "/review/scan/"; the rule excluded only "/review/scan/rules/",
-          # and the two need to agree or the scanner reports its own machinery.
-          next [] if path.to_s.include?("/review/scan/")
-          scan_lines(src, /IS NULL|IS NOT NULL|== nil.*column|column.*== nil/,
-            message: "NULL comparison — use IS NULL / IS NOT NULL in SQL; .nil? in Ruby")
-        end
+      # NULL_BLINDNESS lives once, in law/null_blindness.rb — the second
+      # retired twin (see DEBT.md). This block's regex matched IS NULL, the
+      # correct form its own message prescribed, and needed a path exemption
+      # to stop reporting the fixer that emits that string as a repair. The
+      # law version detects `= NULL`, proves itself on fixtures the inverted
+      # detector would have failed, and needs no exemption.
 
         RuleDSL.rule :SECRET_PROXIMITY,
           severity: :error, tags: %i[SECURITY],
