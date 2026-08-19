@@ -77,6 +77,8 @@ module Master
           @rules = axioms
           @judge_enabled = options.fetch(:judge_enabled, true)
           @mode = options.fetch(:mode, :parallel)
+          @persona_failures = []
+          @persona_failures_lock = Mutex.new
           validate_dependencies!
         end
 
@@ -157,7 +159,34 @@ module Master
           return if feedback.size >= quorum
 
           @bus&.publish(:council_timeout, completed: feedback.size, total: @personas.size)
-          Result.err("council: quorum not reached (#{feedback.size}/#{@personas.size})", category: :timeout)
+          # The tally, not just the score. "quorum not reached (2/26)" sent an
+          # operator into the per-persona log lines to learn that the answer
+          # was "OpenRouter is out of credits" — the reasons were already
+          # collected one layer down, and the error is where they get read.
+          Result.err(
+            "council: quorum not reached (#{feedback.size}/#{@personas.size})#{failure_summary}",
+            category: :timeout,
+          )
+        end
+
+        def failure_summary
+          tally = @persona_failures_lock.synchronize { @persona_failures.tally }
+          return "" if tally.empty?
+
+          " — #{tally.sort_by { |_, count| -count }.map { |reason, count| "#{count}x #{reason}" }.join(", ")}"
+        end
+
+        # A stable slug per failure class, so 24 stack-trace variants tally as
+        # three reasons an operator can act on.
+        def failure_reason(message)
+          case message
+          when /insufficient credits/i then "insufficient_credits"
+          when /not wired to any LLM/i then "no_provider_reached"
+          when /claude-cli/i then "claude_cli_error"
+          when /timed out|timeout/i then "timeout"
+          when /rate.?limit/i then "rate_limited"
+          else "error"
+          end
         end
 
         def classify_engineering_fit(code)
@@ -243,6 +272,7 @@ module Master
         rescue StandardError => e
           @bus&.publish("council:persona_error", persona: persona.name, error: e.message)
           Master::Trace::Dmesg.status("council0", "persona_error persona=#{persona.name} #{e.class}: #{e.message}")
+          @persona_failures_lock.synchronize { @persona_failures << failure_reason(e.message) }
           nil
         end
 
