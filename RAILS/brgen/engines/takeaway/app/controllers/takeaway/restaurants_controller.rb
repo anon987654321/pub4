@@ -63,7 +63,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
     redirect_to(restaurants_path, alert: t("flash.takeaway.not_the_owner")) unless @restaurant.owner?(Current.user)
   end
 
-  def restaurant_params = params.require(:takeaway_restaurant).permit(
+  def restaurant_params = params.require(:restaurant).permit(
     :name,
     :description,
     :address,

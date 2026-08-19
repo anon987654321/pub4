@@ -1,0 +1,53 @@
+<% content_for :title, t("marketplace.variants") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("marketplace.variants") %>">
+  <hgroup>
+    <p><%= link_to @listing.title, listing_path(@listing) %></p>
+    <%= tag.h1 t("marketplace.variants") %>
+  </hgroup>
+</div>
+
+<p class="form-help"><%= t("marketplace.variants_help") %></p>
+
+<% if @variants.any? %>
+  <ul role="list" class="variant-list">
+    <% @variants.each do |variant| %>
+      <li role="listitem">
+        <span class="variant-label"><%= variant.label %></span>
+        <span class="variant-price"><%= variant.price_display %></span>
+        <span class="variant-stock">
+          <%= variant.unlimited_stock? ? t("marketplace.stock_unlimited") : t("marketplace.stock_left", count: variant.stock.to_i) %>
+        </span>
+        <%= button_to t("actions.remove"), listing_variant_path(@listing, variant), method: :delete,
+              class: "btn btn-ghost btn-sm", data: { turbo_confirm: t("marketplace.confirm_remove_variant") } %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<div class="form-wrap form-wrap--flush">
+  <%= form_with model: @variant, url: listing_variants_path(@listing) do |f| %>
+    <%= render "shared/errors", record: @variant %>
+    <div class="field">
+      <%= f.label :option_one_name, t("marketplace.option_one") %>
+      <%= f.text_field :option_one_name, value: t("marketplace.option_size"), maxlength: 40 %>
+      <%= f.text_field :option_one_value, placeholder: "M", maxlength: 60, aria: { label: t("marketplace.option_value") } %>
+    </div>
+    <div class="field">
+      <%= f.label :option_two_name, t("marketplace.option_two") %>
+      <%= f.text_field :option_two_name, value: t("marketplace.option_colour"), maxlength: 40 %>
+      <%= f.text_field :option_two_value, placeholder: t("marketplace.option_colour_example"), maxlength: 60, aria: { label: t("marketplace.option_value") } %>
+    </div>
+    <div class="field">
+      <%# Blank price means the listing's own, so a shop varying only the size
+          states the price once. %>
+      <%= f.label :price_cents, t("marketplace.variant_price") %>
+      <%= f.number_field :price_cents, min: 0, step: 1, placeholder: @listing.price_cents.to_s %>
+    </div>
+    <div class="field">
+      <%= f.label :stock, t("marketplace.variant_stock") %>
+      <%= f.number_field :stock, min: 0, step: 1 %>
+    </div>
+    <p><%= f.submit t("marketplace.add_variant"), class: "btn btn-primary" %></p>
+  <% end %>
+</div>

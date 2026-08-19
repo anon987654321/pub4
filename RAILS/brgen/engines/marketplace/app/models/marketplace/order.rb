@@ -6,6 +6,11 @@ class Marketplace::Order < ApplicationRecord
 
   belongs_to :buyer,   class_name: "User"
   belongs_to :listing, class_name: "Marketplace::Listing"
+  # Which version of the listing this is for. Optional, because a classifieds
+  # listing has no variants and that is most of them; required by validation
+  # when the listing does have them, or the order is for "a shirt" and the
+  # seller cannot pack it.
+  belongs_to :variant, class_name: "Marketplace::Variant", optional: true
   # Optional, because a per-listing offer to a stranger has no basket above it —
   # that shape is still how classifieds work here. See Marketplace::Checkout.
   belongs_to :checkout, class_name: "Marketplace::Checkout",
@@ -24,6 +29,8 @@ class Marketplace::Order < ApplicationRecord
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
   validates :payment_provider, inclusion: { in: PAYMENT_PROVIDERS }, allow_nil: true
   validate :listing_must_be_live, on: :create
+  validate :variant_belongs_to_listing
+  validate :variant_chosen_when_the_listing_has_them, on: :create
   validate :quantity_fits_stock, on: :create
   before_validation { self.status ||= "pending" }
   before_validation { self.payment_status ||= "unpaid" }
@@ -50,7 +57,10 @@ class Marketplace::Order < ApplicationRecord
   def buyer_record = strict_safe(:buyer)
 
   # Cart-like helpers (pending orders act as the buyer's cart)
-  def total_cents = (price_cents.presence || listing.price_cents || 0) * (quantity.presence || 1).to_i
+  # The variant's price when there is one: a negotiated offer still wins, since
+  # price_cents on the order is what the two of them agreed.
+  def unit_price_cents = price_cents.presence || variant&.price_cents_or_listing || listing.price_cents || 0
+  def total_cents = unit_price_cents * (quantity.presence || 1).to_i
   def total_display = Shared::MoneyDisplay.format(total_cents, listing.currency || "NOK")
 
   def accept!
@@ -84,12 +94,14 @@ class Marketplace::Order < ApplicationRecord
 
   def mark_paid!(reference: payment_reference)
     transaction do
-      listed = listing_id && Marketplace::Listing.lock.find_by(id: listing_id)
-      if listed && !listed.in_stock?
-        raise "listing is not in stock"
-      end
+      # The variant is what was bought, so the variant is what runs out. Falling
+      # back to the listing's own stock would let four sizes share one count,
+      # which is the thing variants exist to stop.
+      bought = variant_id ? Marketplace::Variant.lock.find_by(id: variant_id) : nil
+      bought ||= listing_id && Marketplace::Listing.lock.find_by(id: listing_id)
+      raise "listing is not in stock" if bought && !bought.in_stock?
 
-      listed&.consume_stock!(quantity.presence || 1)
+      bought&.consume_stock!(quantity.presence || 1)
       update!(
         payment_status: "paid",
         payment_reference: reference.presence || payment_reference,
@@ -150,6 +162,20 @@ class Marketplace::Order < ApplicationRecord
     return if listing.status == "active" && !listing.expired? && listing.in_stock?
 
     errors.add(:listing, :unavailable)
+  end
+
+  def variant_belongs_to_listing
+    return if variant_id.blank?
+
+    errors.add(:variant, :not_on_this_listing) unless Marketplace::Variant.exists?(id: variant_id, listing_id: listing_id)
+  end
+
+  # A listing that has sizes and an order that names none is an order the seller
+  # cannot pack.
+  def variant_chosen_when_the_listing_has_them
+    return if variant_id.present? || listing_id.blank?
+
+    errors.add(:variant, :blank) if Marketplace::Variant.exists?(listing_id: listing_id)
   end
 
   def quantity_fits_stock

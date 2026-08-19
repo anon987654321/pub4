@@ -60,7 +60,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   end
 
   def dilla_sketch_params
-    params.require(:playlist_dilla_sketch).permit(:name, :state, :notes, :style, :bars).tap do |p|
+    params.require(:dilla_sketch).permit(:name, :state, :notes, :style, :bars).tap do |p|
       if p[:state].is_a?(String) && p[:state].present?
         begin
           p[:state] = JSON.parse(p[:state])

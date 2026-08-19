@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: ed130063c07206f4
+    digest: 9401f094da27d85b
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -292,6 +292,8 @@ apps:
       - "/deals"
       marketplace/deals#show:
       - "/deals/:id"
+      marketplace/variants#index:
+      - "/listings/:listing_id/variants"
       marketplace/listings#new:
       - "/listings/new"
       marketplace/listings#edit:

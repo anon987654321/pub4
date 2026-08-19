@@ -6,7 +6,7 @@ class Marketplace::QuestionsController < Marketplace::BaseController
   before_action :set_listing
 
   def create
-    question = @listing.questions.new(user: Current.user, body: params.require(:marketplace_question)[:body])
+    question = @listing.questions.new(user: Current.user, body: params.require(:question)[:body])
     if question.ask!
       redirect_to listing_path(@listing), notice: t("flash.marketplace.question_asked")
     else
@@ -20,7 +20,7 @@ class Marketplace::QuestionsController < Marketplace::BaseController
     question = @listing.questions.find(params[:id])
     return head :forbidden unless question.answerable_by?(Current.user)
 
-    if question.answer!(params.require(:marketplace_question)[:answer], by: Current.user)
+    if question.answer!(params.require(:question)[:answer], by: Current.user)
       redirect_to listing_path(@listing), notice: t("flash.marketplace.question_answered")
     else
       redirect_to listing_path(@listing), alert: question.errors.full_messages.first

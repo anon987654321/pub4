@@ -25,6 +25,6 @@ class Marketplace::ReviewsController < Marketplace::BaseController
   end
 
   def review_params
-    params.require(:marketplace_review).permit(:rating, :body)
+    params.require(:review).permit(:rating, :body)
   end
 end

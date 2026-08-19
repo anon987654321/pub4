@@ -29,6 +29,6 @@ class Dating::PromptsController < Dating::BaseController
   end
 
   def prompt_params
-    params.require(:dating_prompt).permit(:question, :answer, :position)
+    params.require(:prompt).permit(:question, :answer, :position)
   end
 end

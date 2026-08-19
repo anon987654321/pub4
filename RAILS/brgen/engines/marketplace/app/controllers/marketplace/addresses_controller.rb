@@ -40,7 +40,7 @@ class Marketplace::AddressesController < Marketplace::BaseController
   private
 
   def address_params
-    params.require(:marketplace_address).permit(
+    params.require(:address).permit(
       :recipient, :line1, :line2, :postcode, :city_name, :country_code, :phone
     )
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -684,12 +684,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_110000) do
     t.string "status"
     t.string "tracking_code"
     t.datetime "updated_at", null: false
+    t.integer "variant_id"
     t.index ["buyer_id"], name: "index_marketplace_orders_on_buyer_id"
     t.index ["fulfilment_status"], name: "index_marketplace_orders_on_fulfilment_status"
     t.index ["listing_id"], name: "index_marketplace_orders_on_listing_id"
     t.index ["marketplace_checkout_id"], name: "index_marketplace_orders_on_marketplace_checkout_id"
     t.index ["payment_reference"], name: "index_marketplace_orders_on_payment_reference"
     t.index ["payment_status"], name: "index_marketplace_orders_on_payment_status"
+    t.index ["variant_id"], name: "index_marketplace_orders_on_variant_id"
   end
 
   create_table "marketplace_questions", force: :cascade do |t|
@@ -754,6 +756,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_110000) do
     t.index ["place_id"], name: "index_marketplace_stores_on_place_id"
     t.index ["slug"], name: "index_marketplace_stores_on_slug", unique: true
     t.index ["vertical", "active"], name: "index_marketplace_stores_on_vertical_and_active"
+  end
+
+  create_table "marketplace_variant_options", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.string "value", null: false
+    t.integer "variant_id", null: false
+    t.index ["name", "value"], name: "index_marketplace_variant_options_on_name_and_value"
+    t.index ["variant_id", "name"], name: "index_marketplace_variant_options_on_variant_id_and_name", unique: true
+    t.index ["variant_id"], name: "index_marketplace_variant_options_on_variant_id"
+  end
+
+  create_table "marketplace_variants", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "listing_id", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "price_cents"
+    t.string "sku"
+    t.integer "stock"
+    t.datetime "updated_at", null: false
+    t.index ["listing_id"], name: "index_marketplace_variants_on_listing_id"
   end
 
   create_table "mentions", force: :cascade do |t|
@@ -1732,6 +1756,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_110000) do
   add_foreign_key "marketplace_listings", "users"
   add_foreign_key "marketplace_orders", "marketplace_checkouts"
   add_foreign_key "marketplace_orders", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_orders", "marketplace_variants", column: "variant_id"
   add_foreign_key "marketplace_orders", "users", column: "buyer_id"
   add_foreign_key "marketplace_questions", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_questions", "users"
@@ -1742,6 +1767,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_110000) do
   add_foreign_key "marketplace_stores", "cities"
   add_foreign_key "marketplace_stores", "places"
   add_foreign_key "marketplace_stores", "users", column: "owner_id"
+  add_foreign_key "marketplace_variant_options", "marketplace_variants", column: "variant_id"
+  add_foreign_key "marketplace_variants", "marketplace_listings", column: "listing_id"
   add_foreign_key "mentions", "users", column: "mentioned_user_id"
   add_foreign_key "message_receipts", "messages"
   add_foreign_key "message_receipts", "users"

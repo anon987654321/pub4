@@ -56,6 +56,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @review = Marketplace::Review.new if Current.user.present? && @listing.reviewable_by?(Current.user)
     @nearby_listings = nearby_listings_for(@listing)
     @questions = @listing.questions.includes(:user, :answered_by).for_display
+    @variants = @listing.variants.ordered.includes(:options).select(&:in_stock?)
     @question = Marketplace::Question.new if Current.user.present?
   end
 
@@ -69,7 +70,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     authorize Marketplace::Listing
     @listing = Current.user.marketplace_listings.build(listing_params)
     if @listing.save
-      preset = params[:marketplace_listing][:preset].presence
+      preset = params[:listing][:preset].presence
       PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
       Shared::DomainEvent.record!(
         actor: Current.user, action: "listing.created", subject: @listing,
@@ -116,7 +117,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def set_listing = (@listing = find_by_slug_or_id(Marketplace::Listing.includes(:user, :category, photos_attachments: :blob), params[:id]))
 
   def listing_params
-    params.require(:marketplace_listing).permit(
+    params.require(:listing).permit(
       :title, :description, :price_cents, :condition, :status, :location,
       :latitude, :longitude, :category_id, :preset, photos: []
     )

@@ -27,8 +27,15 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match playlist.sets_path, response.body
 
+    # Posted under the key the rendered form actually uses. This test used to
+    # name the key itself (playlist_set), which passed while the form posted
+    # set[name] and the controller answered 400 — a test that agrees with the
+    # controller about a key the form never sends is not a test of the form.
+    scope = response.body[/name="([a-z_]+)\[name\]"/, 1]
+    assert_equal "set", scope, "the form's own scope"
+
     assert_difference -> { Playlist::Set.count }, 1 do
-      post playlist.sets_path, params: { playlist_set: { name: "Contract set" } }
+      post playlist.sets_path, params: { scope => { name: "Contract set" } }
     end
     assert_redirected_to playlist.set_path(Playlist::Set.order(:id).last)
   end
@@ -53,8 +60,11 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
 
     get tv.new_channel_live_stream_path(channel)
     assert_response :success
+    stream_scope = response.body[/name="([a-z_]+)\[title\]"/, 1]
+    assert_equal "live_stream", stream_scope, "the form's own scope"
+
     assert_difference -> { Tv::LiveStream.count }, 1 do
-      post tv.channel_live_streams_path(channel), params: { tv_live_stream: { title: "Contract stream" } }
+      post tv.channel_live_streams_path(channel), params: { stream_scope => { title: "Contract stream" } }
     end
 
     stranger = User.strict_loading(false).create!(email_address: "stranger@brgen.no", password: "password123", guest: false)

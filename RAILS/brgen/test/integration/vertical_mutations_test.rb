@@ -64,7 +64,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { Marketplace::Order.count }, 1 do
       post marketplace.listing_orders_path(listing), params: {
-        marketplace_order: { message: "Still available?" },
+        order: { message: "Still available?" },
         quantity: 1,
       }
     end

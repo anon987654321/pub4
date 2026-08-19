@@ -53,7 +53,7 @@ class Tv::VideosController < Tv::BaseController
   # No :tv_channel_id -- the channel comes from the route and is ownership
   # checked. Permitting it let a submitted id override that check by
   # reassigning the foreign key on the built record.
-  def video_params = params.require(:tv_video).permit(:title, :description, :video_file, :thumbnail, :preset)
+  def video_params = params.require(:video).permit(:title, :description, :video_file, :thumbnail, :preset)
 
   def require_video_owner!
     return if @video.user == Current.user

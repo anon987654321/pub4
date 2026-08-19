@@ -97,7 +97,7 @@ class Playlist::SetsController < ApplicationController
   # PlaylistsController's :playlist_playlist. Requiring :set here meant a
   # submitted form would have raised ParameterMissing, had the form rendered.
   def set_params
-    params.require(:playlist_set).permit(:name, :description, :privacy, :collaborative)
+    params.require(:set).permit(:name, :description, :privacy, :collaborative)
   end
 
   def authorize_owner_or_editor

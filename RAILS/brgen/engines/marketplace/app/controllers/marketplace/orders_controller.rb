@@ -31,10 +31,15 @@ class Marketplace::OrdersController < Marketplace::BaseController
 
     quantity = params[:quantity].to_i.positive? ? params[:quantity].to_i : 1
 
+    # The variant is what is bought when the listing has any, and its price is
+    # the one to record — the listing's is the fallback for a listing with none.
+    variant = @listing.variants.find_by(id: params.dig(:order, :variant_id))
+
     @order = @listing.orders.build(
       buyer: Current.user,
-      message: params.dig(:marketplace_order, :message),
-      price_cents: @listing.price_cents,
+      message: params.dig(:order, :message),
+      variant: variant,
+      price_cents: variant&.price_cents_or_listing || @listing.price_cents,
       quantity: quantity
     )
     if @order.save

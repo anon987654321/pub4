@@ -518,6 +518,8 @@ en:
               unavailable: is no longer available
             quantity:
               exceeds_stock: exceeds what is left
+            variant:
+              not_on_this_listing: is not one of this listing's versions
         marketplace/review:
           attributes:
             base:
@@ -1071,12 +1073,22 @@ en:
     saved_eyebrow: Your list
     saved_empty_title: Nothing saved yet
     saved_empty_body: The star on a listing keeps it here. Sold and withdrawn listings leave on their own.
-    conditions:
-      new: New
-      like_new: Like new
-      good: Good
-      fair: Fair
-      poor: Worn
+    variants: Sizes and colours
+    variants_help: "One row per version you actually stock. Leave the price blank to use the listing's."
+    option_one: First option
+    option_two: Second option
+    option_value: Value
+    option_size: Size
+    option_colour: Colour
+    option_colour_example: Blue
+    variant_price: Price for this version
+    variant_stock: How many in stock
+    add_variant: Add version
+    confirm_remove_variant: Remove this version?
+    stock_unlimited: In stock
+    stock_left: "%{count} left"
+    choose_variant: Which one
+    choose_variant_blank: Choose
   takeaway:
     intro: This is a menu and order demo, not a live restaurant network. Payment is
       arranged with the kitchen. No signup to place a trial order.
@@ -1337,6 +1349,9 @@ en:
         refunded: refunded
       question_asked: Question posted.
       question_answered: Answer posted.
+      variant_added: Version added.
+      variant_removed: Version removed.
+      variant_has_orders: That version has orders against it and stays.
     playlist:
       user_not_found: User not found.
       collaborator_added: Collaborator added.

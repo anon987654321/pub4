@@ -51,7 +51,7 @@ class Tv::ChannelsController < Tv::BaseController
   # — including the ones the index itself renders. The sibling IRC
   # ChannelsController already reads params[:slug].
   def set_channel    = (@channel = Tv::Channel.find_by!(slug: params[:slug]))
-  def channel_params = params.require(:tv_channel).permit(:name, :description, :banner, :avatar)
+  def channel_params = params.require(:channel).permit(:name, :description, :banner, :avatar)
 
   # user_id, not user: set_channel finds by slug with nothing preloaded, and
   # strict_loading_by_default raises on the association read before the

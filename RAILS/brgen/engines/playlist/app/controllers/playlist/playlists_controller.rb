@@ -78,7 +78,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   end
 
   def playlist_params
-    params.require(:playlist_playlist).permit(:name, :description, :public_access, :collaborative)
+    params.require(:playlist).permit(:name, :description, :public_access, :collaborative)
   end
 
   def playlist_tracks

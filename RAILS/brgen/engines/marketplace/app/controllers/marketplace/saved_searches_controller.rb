@@ -19,6 +19,6 @@ class Marketplace::SavedSearchesController < Marketplace::BaseController
   private
 
   def saved_search_params
-    params.require(:marketplace_saved_search).permit(:name, :query, :category_id, :location, :notify)
+    params.require(:saved_search).permit(:name, :query, :category_id, :location, :notify)
   end
 end

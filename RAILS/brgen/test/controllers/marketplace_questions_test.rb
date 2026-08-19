@@ -35,7 +35,7 @@ class MarketplaceQuestionsTest < ActionDispatch::IntegrationTest
     sign_in_as(@buyer)
 
     assert_difference -> { Marketplace::Question.count }, 1 do
-      post marketplace.listing_questions_path(@listing), params: { marketplace_question: { body: "Er den fortsatt ledig?" } }
+      post marketplace.listing_questions_path(@listing), params: { question: { body: "Er den fortsatt ledig?" } }
     end
     question = Marketplace::Question.order(:created_at).last
     assert_equal @buyer.id, question.user_id
@@ -50,12 +50,12 @@ class MarketplaceQuestionsTest < ActionDispatch::IntegrationTest
     question = @listing.questions.create!(user: @buyer, body: "Fungerer girene?")
     sign_in_as(@other)
 
-    patch marketplace.listing_question_path(@listing, question), params: { marketplace_question: { answer: "Nei" } }
+    patch marketplace.listing_question_path(@listing, question), params: { question: { answer: "Nei" } }
     assert_response :forbidden
     assert_not_predicate question.reload, :answered?
 
     sign_in_as(@seller)
-    patch marketplace.listing_question_path(@listing, question), params: { marketplace_question: { answer: "Ja, nettopp overhalt" } }
+    patch marketplace.listing_question_path(@listing, question), params: { question: { answer: "Ja, nettopp overhalt" } }
     assert_predicate question.reload, :answered?
     assert_equal @seller.id, question.answered_by_id
     assert Notification.where(user_id: @buyer.id, kind: "alert").exists?

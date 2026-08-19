@@ -105,6 +105,16 @@
   <%= f.text_area :message, placeholder: t("marketplace.message_seller"), aria: { label: t("marketplace.message_seller") }, rows: 3 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
+        <% if @variants.present? %>
+          <%# A listing with sizes is bought by the size: an order naming none is
+              one the seller cannot pack, and the model refuses it. %>
+          <div class="field">
+            <%= f.label :variant_id, t("marketplace.choose_variant") %>
+            <%= f.select :variant_id,
+                  @variants.map { |variant| [ "#{variant.label} — #{variant.price_display}", variant.id ] },
+                  { include_blank: t("marketplace.choose_variant_blank") } %>
+          </div>
+        <% end %>
         <div class="field"><%= f.submit t("marketplace.send_offer"), class: "btn btn-primary" %> <span data-autosave-target="status" aria-live="polite"></span></div>
       <% end %>
     </div>
@@ -119,6 +129,7 @@
       <span class="chip"><%= t("marketplace.offers") %>: <%= @listing.orders.size %></span>
       <span class="chip"><%= t("marketplace.saves", count: @listing.favorites.size) %></span>
       <span class="chip"><%= @listing.status %></span>
+      <%= link_to t("marketplace.variants"), listing_variants_path(@listing), class: "chip" %>
     </div>
   </div>
 

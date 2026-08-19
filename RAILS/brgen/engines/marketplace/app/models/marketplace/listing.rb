@@ -38,6 +38,9 @@ class Marketplace::Listing < ApplicationRecord
   # Public questions and the seller's answers — see Marketplace::Question for
   # why they are on the listing rather than in an offer thread.
   has_many :questions, class_name: "Marketplace::Question", dependent: :destroy
+  # Size and colour as rows. A listing with variants is bought by the variant,
+  # not by the listing — see Marketplace::Variant.
+  has_many :variants, class_name: "Marketplace::Variant", dependent: :destroy
   has_many :favorited_by_users, through: :favorites, source: :user
   has_many_attached :photos
   process_media_variants :photos, variants: {
@@ -101,6 +104,7 @@ class Marketplace::Listing < ApplicationRecord
   # number means a shop with inventory. Defaulting to 1 would have made every
   # private sale read as a shop with one left.
   def one_of_a_kind? = stock.nil?
+  def varied? = variants.exists?
   def in_stock? = one_of_a_kind? ? !sold? : stock.to_i.positive?
 
   def available_quantity = one_of_a_kind? ? (sold? ? 0 : 1) : stock.to_i

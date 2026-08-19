@@ -79,7 +79,7 @@ module Tv
 
     # form_with model: @live_stream scopes fields under the model's param_key.
     def live_stream_params
-      params.require(:tv_live_stream).permit(:title, :description)
+      params.require(:live_stream).permit(:title, :description)
     end
   end
 end

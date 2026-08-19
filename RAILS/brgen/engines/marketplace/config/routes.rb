@@ -14,6 +14,8 @@ Marketplace::Engine.routes.draw do
     resources :reviews, only: %i[create]
     # Public questions on the listing, answered by whoever is selling it.
     resources :questions, only: %i[create update]
+    # Size and colour, the seller's side of it.
+    resources :variants, only: %i[index create destroy]
   end
   resources :orders, only: %i[index show update]
 

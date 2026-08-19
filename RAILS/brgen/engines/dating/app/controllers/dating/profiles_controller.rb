@@ -45,11 +45,11 @@ class Dating::ProfilesController < Dating::BaseController
   end
 
   def profile_params
-    params.require(:dating_profile).permit(:bio, :gender, :looking_for, :age, :location, :neighborhood_id, :bydel, :visible, photos: [])
+    params.require(:profile).permit(:bio, :gender, :looking_for, :age, :location, :neighborhood_id, :bydel, :visible, photos: [])
   end
 
   def purge_removed_photos
-    ids = Array(params.dig(:dating_profile, :remove_photo_ids)).map(&:to_i).uniq
+    ids = Array(params.dig(:profile, :remove_photo_ids)).map(&:to_i).uniq
     return if ids.empty?
 
     @profile.photos.where(id: ids).find_each(&:purge)

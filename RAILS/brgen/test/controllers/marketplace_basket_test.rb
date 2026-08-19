@@ -43,7 +43,7 @@ class MarketplaceBasketTest < ActionDispatch::IntegrationTest
     in_market
 
     assert_difference -> { Marketplace::Address.count }, 1 do
-      post marketplace.addresses_path, params: { marketplace_address: {
+      post marketplace.addresses_path, params: { address: {
         recipient: "Kari", line1: "Marken 4", postcode: "5017", city_name: "Bergen", country_code: "NO",
       } }
     end

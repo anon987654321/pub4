@@ -519,6 +519,8 @@ nb:
               unavailable: er ikke lenger tilgjengelig
             quantity:
               exceeds_stock: er mer enn det som er igjen
+            variant:
+              not_on_this_listing: hører ikke til denne annonsen
         marketplace/review:
           attributes:
             base:
@@ -1074,12 +1076,22 @@ nb:
     saved_eyebrow: Listen din
     saved_empty_title: Ingenting lagret ennå
     saved_empty_body: Stjernen på en annonse legger den her. Solgte og fjernede annonser forsvinner av seg selv.
-    conditions:
-      new: Ny
-      like_new: Som ny
-      good: God
-      fair: Brukbar
-      poor: Slitt
+    variants: Størrelser og farger
+    variants_help: En rad per versjon du faktisk har. La prisen stå tom for å bruke annonsens.
+    option_one: Første valg
+    option_two: Andre valg
+    option_value: Verdi
+    option_size: Størrelse
+    option_colour: Farge
+    option_colour_example: Blå
+    variant_price: Pris for denne versjonen
+    variant_stock: Antall på lager
+    add_variant: Legg til versjon
+    confirm_remove_variant: Fjerne denne versjonen?
+    stock_unlimited: På lager
+    stock_left: "%{count} igjen"
+    choose_variant: Hvilken
+    choose_variant_blank: Velg
   takeaway:
     intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
       avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.
@@ -1342,6 +1354,9 @@ nb:
         refunded: refundert
       question_asked: Spørsmålet er publisert.
       question_answered: Svaret er publisert.
+      variant_added: Versjonen er lagt til.
+      variant_removed: Versjonen er fjernet.
+      variant_has_orders: Den versjonen har bestillinger og blir stående.
     playlist:
       user_not_found: Fant ikke brukeren.
       collaborator_added: Samarbeidspartneren er lagt til.
