@@ -1,0 +1,39 @@
+<%# What each filter would leave, next to the filter. Counted without its own
+    filter applied, so a number answers "how many if you pick this" rather than
+    repeating the count already on the page. %>
+<nav class="listing-facets" aria-label="<%= t("marketplace.facets") %>">
+  <% if facets.conditions.any? %>
+    <div class="listing-facet">
+      <p class="listing-facet-name"><%= t("marketplace.filter_condition") %></p>
+      <ul role="list">
+        <% facets.conditions.sort_by { |_condition, count| -count }.each do |condition, count| %>
+          <li role="listitem">
+            <%= link_to listings_path(request.query_parameters.merge(condition: (condition unless params[:condition] == condition)).compact),
+                  class: "chip#{" active" if params[:condition] == condition}" do %>
+              <%= t("marketplace.conditions.#{condition}", default: condition.humanize) %>
+              <span class="listing-facet-count"><%= count %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="listing-facet">
+    <p class="listing-facet-name"><%= t("marketplace.filter_price") %></p>
+    <ul role="list">
+      <% facets.price_bands.each do |(low, high), count| %>
+        <% next if count.zero? %>
+        <li role="listitem">
+          <%= link_to listings_path(request.query_parameters.merge(min_price: low, max_price: high).compact),
+                class: "chip" do %>
+            <% if low && high %><%= "#{Shared::MoneyDisplay.format(low * 100)}–#{Shared::MoneyDisplay.format(high * 100)}" %>
+            <% elsif high %><%= t("marketplace.under_price", price: Shared::MoneyDisplay.format(high * 100)) %>
+            <% else %><%= t("marketplace.over_price", price: Shared::MoneyDisplay.format(low * 100)) %><% end %>
+            <span class="listing-facet-count"><%= count %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</nav>

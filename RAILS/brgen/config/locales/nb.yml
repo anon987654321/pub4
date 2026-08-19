@@ -1065,6 +1065,21 @@ nb:
     awaiting_answer: Venter på selgeren
     question_notification_title: Et spørsmål på annonsen din
     answer_notification_title: Selgeren svarte deg
+    facets: Filtre
+    filter_condition: Tilstand
+    filter_price: Pris
+    under_price: "Under %{price}"
+    over_price: "%{price} og opp"
+    saved_listings: Lagrede annonser
+    saved_eyebrow: Listen din
+    saved_empty_title: Ingenting lagret ennå
+    saved_empty_body: Stjernen på en annonse legger den her. Solgte og fjernede annonser forsvinner av seg selv.
+    conditions:
+      new: Ny
+      like_new: Som ny
+      good: God
+      fair: Brukbar
+      poor: Slitt
   takeaway:
     intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
       avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.

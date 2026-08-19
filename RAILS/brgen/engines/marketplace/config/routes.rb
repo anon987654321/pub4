@@ -34,6 +34,13 @@ Marketplace::Engine.routes.draw do
   post "webhooks/vipps", to: "webhooks#vipps", as: :webhooks_vipps
   resources :categories, only: :show, param: :id
   resources :saved_searches, only: %i[index create destroy]
+  # The saved list. The star on every card had nowhere to lead until now.
+  #
+  # /wishlist, not /saved: the host declares `get "saved" => "bookmarks#index"`
+  # before it mounts this engine, so a /saved here resolves to brgen main's
+  # bookmarks page and this controller never runs. The test caught it as an
+  # empty list rather than a 404, which is the quiet way that goes wrong.
+  get "wishlist" => "favorites#index", as: :saved_listings
 
   # Solidus engines mount only when the gem is loaded (SOLIDUS_MARKETPLACE=1 +
   # install). Native Marketplace::* stays the public storefront until explicit

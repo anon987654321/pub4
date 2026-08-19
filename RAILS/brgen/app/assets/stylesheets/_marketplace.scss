@@ -208,3 +208,32 @@
   padding-inline-start: var(--space-3);
   border-inline-start: 1px solid var(--border);
 }
+
+/* Facets: what each filter would leave, next to the filter. Counts sit beside
+   their label rather than under it — a number on its own line reads as a
+   heading. */
+.listing-facets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-block: var(--space-3);
+}
+
+.listing-facet ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+}
+
+.listing-facet-name {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.listing-facet-count {
+  margin-inline-start: var(--space-1);
+  color: var(--text-secondary);
+}

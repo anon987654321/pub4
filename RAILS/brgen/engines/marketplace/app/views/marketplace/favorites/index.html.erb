@@ -1,0 +1,26 @@
+<% content_for :title, t("marketplace.saved_listings") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("marketplace.saved_listings") %>">
+  <hgroup>
+    <p><%= t("marketplace.saved_eyebrow") %></p>
+    <%= tag.h1 t("marketplace.saved_listings") %>
+  </hgroup>
+  <%= link_to t("marketplace.browse_listings"), listings_path, class: "btn btn-ghost" %>
+</div>
+
+<% if @listings.any? %>
+  <div class="listing-grid">
+    <% @listings.each do |listing| %>
+      <%= render "marketplace/listings/card", listing: listing %>
+    <% end %>
+  </div>
+  <%= render "shared/pager", pagy: @pagy %>
+<% else %>
+  <%# A sold or withdrawn listing leaves the list on its own — `live` is what
+      every public surface reads, and a saved list that shows things nobody can
+      buy is a list people stop opening. %>
+  <%= render "shared/empty_state",
+        title: t("marketplace.saved_empty_title"),
+        body: t("marketplace.saved_empty_body"),
+        action: { label: t("marketplace.browse_listings"), path: listings_path } %>
+<% end %>

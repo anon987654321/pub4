@@ -56,6 +56,8 @@
   <%= f.number_field :max_price, value: params[:max_price], min: 0, step: 1, placeholder: t("marketplace.max_price", default: "Max"), aria: { label: t("marketplace.max_price", default: "Max price") } %>
 <% end %>
 
+<%= render "marketplace/listings/facets", facets: @facets %>
+
 <% content_for :widgets do %>
   <%= render "shared/affiliate_deals", category: params[:category_id] %>
   <%= render "shared/newsletter_cta" %>

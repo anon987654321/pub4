@@ -1062,6 +1062,21 @@ en:
     awaiting_answer: Waiting for the seller
     question_notification_title: A question on your listing
     answer_notification_title: The seller answered you
+    facets: Filters
+    filter_condition: Condition
+    filter_price: Price
+    under_price: "Under %{price}"
+    over_price: "%{price} and up"
+    saved_listings: Saved listings
+    saved_eyebrow: Your list
+    saved_empty_title: Nothing saved yet
+    saved_empty_body: The star on a listing keeps it here. Sold and withdrawn listings leave on their own.
+    conditions:
+      new: New
+      like_new: Like new
+      good: Good
+      fair: Fair
+      poor: Worn
   takeaway:
     intro: This is a menu and order demo, not a live restaurant network. Payment is
       arranged with the kitchen. No signup to place a trial order.

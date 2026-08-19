@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: b32b61b7f909e27f
+    digest: ed130063c07206f4
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -312,6 +312,8 @@ apps:
       - "/categories/:id"
       marketplace/saved_searches#index:
       - "/saved_searches"
+      marketplace/favorites#index:
+      - "/wishlist"
       maps/home#index:
       - "/"
       maps/places#index:

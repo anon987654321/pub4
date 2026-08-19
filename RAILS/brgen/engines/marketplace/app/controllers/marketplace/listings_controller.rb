@@ -17,7 +17,11 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def index
     scope = policy_scope(Marketplace::Listing).with_attached_photos.includes(:user, :category)
     scope = apply_live_search(scope, columns: %w[title description location], vertical: "marketplace", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
+    # Counted before the facet filters narrow it: a facet's own number has to be
+    # "how many if you pick this", not "how many of what you already picked".
+    @facets = Marketplace::ListingFacets.new(scope, params)
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+    scope = scope.where(condition: params[:condition]) if params[:condition].present?
     scope = scope.casual if params[:from] == "person"
     scope = scope.from_shops if params[:from] == "shop"
     @search_lat = params[:lat].presence
