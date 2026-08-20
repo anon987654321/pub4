@@ -13,7 +13,7 @@ modules that had been renamed.
 
 ```
 MASTER/    constitutional AI runtime in Ruby — the primary product
-RAILS/     Rails 8 apps and mountable engines (brgen and its verticals, amber, bsdports)
+RAILS/     Rails 8 apps: brgen (one process: city apex + subdomain engines), amber, bsdports
 OPENBSD/   deploy pipeline, VPS runbook, operator debt
 STUDIO/    media tools — dilla (beats), lora, postpro (grading), repligen (images)
 bin/       repo-level entry points: master, cli, pub4, ruby
@@ -29,6 +29,7 @@ dotfiles/  shell and editor config
 | The web face / WebGL / primer tap | `MASTER/web/CLAUDE.md` |
 | Deploy, VPS, rc.d, relayd | `OPENBSD/CLAUDE.md`, then `OPENBSD/RUNBOOK.md` |
 | RAILS app CSS or visual work | `RAILS/shared/WIRING_NOTES.md` "Visual design system" |
+| brgen city hosts / verticals | `RAILS/brgen/AGENTS.md` (apex vs subdomain engines; not a fourth app) |
 | Why something odd-looking is deliberate | `MASTER/DECISIONS.md`, `OPENBSD/DECISIONS.md` |
 | Known debt, and what not to chase | `MASTER/DEBT.md`, `OPENBSD/data/debt.yml` |
 
