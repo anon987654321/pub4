@@ -43,7 +43,7 @@ class Outfit < ApplicationRecord
   validates :name, presence: true
   accepts_nested_attributes_for :outfit_items, allow_destroy: true, reject_if: :reject_blank_outfit_item
 
-  broadcasts_refreshes
+  after_commit :broadcast_live_refresh
 
   def like!
     increment!(:likes_count)
@@ -59,6 +59,13 @@ class Outfit < ApplicationRecord
 
   def estimated_value
     items.sum { |item| item.price_cents.to_i } / 100.0
+  end
+
+  private
+
+  def broadcast_live_refresh
+    broadcast_refresh_to "outfits"
+    broadcast_refresh_to self
   end
 
   def reject_blank_outfit_item(attrs)

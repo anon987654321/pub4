@@ -46,7 +46,11 @@ class User < ApplicationRecord
     profile&.display_name.presence || email_address.to_s.split("@").first
   end
 
-  broadcasts_refreshes
+  after_commit :broadcast_live_refresh
+
+  def broadcast_live_refresh
+    broadcast_refresh_to self
+  end
 
   def following?(other) = follows_as_follower.exists?(followee: other)
 

@@ -24,11 +24,19 @@ module Shared
         attachment = public_send(attachment_name)
         next unless attachment.respond_to?(:attached?) && attachment.attached?
 
-        Shared::MediaProcessingJob.perform_later(
+        # Called on the instance, not perform_later / perform_now: nothing on
+        # vm23 runs the queue, and perform_now still inherits ApplicationJob's
+        # three polynomial retries — a vips failure would hold the upload ~20s.
+        Shared::MediaProcessingJob.new.perform(
           self.class.name,
           id,
           attachment_name,
           variants: variants
+        )
+      rescue StandardError => error
+        Rails.logger.error(
+          "MediaProcessable #{self.class.name}##{id} #{attachment_name}: " \
+          "#{error.class}: #{error.message}"
         )
       end
     end

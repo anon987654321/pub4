@@ -23,7 +23,18 @@ class Post < ApplicationRecord
     has_attribute?(:anonymous) && self[:anonymous]
   end
 
-  broadcasts_refreshes
+  after_commit :broadcast_live_refresh
+
+  def to_markdown
+    body.to_s
+  end
 
   def like! = increment!(:likes_count)
+
+  private
+
+  def broadcast_live_refresh
+    broadcast_refresh_to "posts"
+    broadcast_refresh_to self
+  end
 end

@@ -14,7 +14,9 @@ Rails.application.config.after_initialize do
     private
 
     def enqueue_blurhash_generation
-      GenerateBlurhashJob.perform_later(id)
+      # Instance perform, not the queue: vm23 has no worker, and blurhash is
+      # a 32px vips pass that the next render needs.
+      GenerateBlurhashJob.new.perform(id)
     end
   end
 end

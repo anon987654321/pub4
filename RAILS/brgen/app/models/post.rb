@@ -45,7 +45,14 @@ class Post < ApplicationRecord
   validate :live_content_length, if: :live?
   validate :crosspost_lands_somewhere_new, if: :crosspost?
 
-  broadcasts_refreshes
+  # In-request refresh, not broadcasts_refreshes: that macro enqueues
+  # Turbo::Streams::BroadcastStreamJob, and nothing on vm23 runs the queue.
+  # "posts" is the index stream; self is posts#show.
+  after_commit :broadcast_live_refresh
+
+  def to_markdown
+    [ "# #{title}", content.to_s ].join("\n\n")
+  end
 
   # Federate public posts only. A post in a community is scoped to that
   # community's rules and privacy setting, and an anonymous one has no author to
@@ -147,6 +154,12 @@ class Post < ApplicationRecord
   end
 
   private
+
+  def broadcast_live_refresh
+    broadcast_refresh_to "posts"
+    broadcast_refresh_to self
+  end
+
 
   def federatable_post?
     community_id.nil? && !anonymous? && !live? && strict_safe(:user)&.federated?

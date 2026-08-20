@@ -11,9 +11,6 @@ module Shared
 
       votable.public_send(value == 1 ? :upvote_by : :downvote_by, current_user)
       morph vote_selector, render(partial: vote_partial, locals: { votable: votable })
-
-      # Live update for other connected clients (Hotwire/SR integration)
-      votable.broadcast_replace_later_to "votes", target: vote_selector, partial: vote_partial, locals: { votable: votable }
     end
 
     private

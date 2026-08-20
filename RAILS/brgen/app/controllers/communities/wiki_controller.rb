@@ -19,6 +19,10 @@ class Communities::WikiController < ApplicationController
 
   def show
     @revisions = @page.revisions.includes(:user).limit(20)
+    respond_to do |format|
+      format.html
+      format.md { render markdown: @page }
+    end
   end
 
   def new

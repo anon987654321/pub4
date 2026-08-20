@@ -63,6 +63,10 @@ before_action :require_real_user, only: %i[edit update destroy share]
     # the one it is already in and the ones it already reached — an option that
     # answers "already crossposted" is a control that does nothing.
     @crosspost_targets = crosspost_targets_for(@post)
+    respond_to do |format|
+      format.html
+      format.md { render markdown: @post }
+    end
   end
 
   def new

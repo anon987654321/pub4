@@ -38,6 +38,19 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'type="application/ld+json"'
   end
 
+  test "show answers markdown for AI and ActivityPub clients" do
+    user = User.create!(email_address: "post-md-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    post = Post.create!(user:, title: "Markdown fixture", content: "A body paragraph.", city: brgen_city)
+
+    host! "brgen.no"
+    get post_url(post, format: :md)
+
+    assert_response :success
+    assert_match %r{text/markdown}, response.media_type
+    assert_includes response.body, "# Markdown fixture"
+    assert_includes response.body, "A body paragraph."
+  end
+
   test "non-owner cannot update another user's post" do
     owner  = User.create!(email_address: "post-owner-#{SecureRandom.hex(4)}@example.com", password: "password12345")
     other  = User.create!(email_address: "post-other-#{SecureRandom.hex(4)}@example.com", password: "password12345")

@@ -66,7 +66,10 @@ class Marketplace::Listing < ApplicationRecord
     self.longitude ||= Current.user&.longitude if defined?(Current) && Current.respond_to?(:user)
   end
 
-  after_create_commit { broadcast_append_later_to "marketplace:listings", partial: "marketplace/listings/card", locals: { listing: self } }
+  # Immediate, not later: the queue has no worker. Only searches that already
+  # match this row, and only if they are due — a filtered index is not a
+  # stream we can append into.
+  after_create :alert_matching_saved_searches
 
   # A classifieds listing has a life. Without one the marketplace fills with
   # things sold two years ago that nobody took down, and the honest listings
@@ -156,5 +159,16 @@ class Marketplace::Listing < ApplicationRecord
 
   def set_expiry
     self.expires_at ||= Time.current + LIFETIME
+  end
+
+  def alert_matching_saved_searches
+    Marketplace::SavedSearch.alerting.includes(:user, :category).find_each do |search|
+      next unless search.due_for_alert?
+      next unless search.matches_listing?(self)
+
+      search.deliver_alert!([ self ], kind: :new)
+    rescue StandardError => error
+      Rails.logger.error("Listing##{id} saved-search alert: #{error.class}: #{error.message}")
+    end
   end
 end

@@ -40,5 +40,23 @@ module Marketplace
     # that a controller loaded by id — `listing&.user` was a lazy read that
     # raised under strict loading. See Shared::StrictSafeAssociations.
     def listing_owner = strict_safe(:listing)&.user
+
+    after_create :alert_matching_saved_searches
+
+    private
+
+    def alert_matching_saved_searches
+      listed = strict_safe(:listing) || listing
+      return unless listed
+
+      Marketplace::SavedSearch.alerting.includes(:user, :category).find_each do |search|
+        next unless search.due_for_alert?
+        next unless search.matches_listing?(listed)
+
+        search.deliver_alert!([ listed ], kind: :price_drop)
+      rescue StandardError => error
+        Rails.logger.error("Deal##{id} saved-search alert: #{error.class}: #{error.message}")
+      end
+    end
   end
 end

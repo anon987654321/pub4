@@ -148,4 +148,29 @@ class TurboBroadcastContractTest < Minitest::Test
                    "#{stream} has a subscriber now — restore the broadcast it lost, with an explicit partial")
     end
   end
+
+  # `_later` and `broadcasts_refreshes` enqueue Turbo::Streams::BroadcastStreamJob.
+  # vm23 has no Solid Queue worker, so those writes never happen. In-request
+  # `broadcast_refresh_to` / `broadcast_append_to` write Solid Cable now.
+  def test_models_do_not_enqueue_turbo_broadcast_jobs
+    later = /broadcast_\w+_later_to\b|^\s*broadcasts_refreshes\b/
+    hits = []
+
+    roots = APPS.flat_map { |app|
+      [ File.join(ROOT, app, "app/models"), File.join(ROOT, app, "engines/*/app/models") ]
+    } + [ File.join(ROOT, "shared/app/models"), File.join(ROOT, "shared/app/reflexes") ]
+
+    roots.each do |glob|
+      Dir.glob(File.join(glob, "**", "*.rb")).each do |path|
+        File.readlines(path).each_with_index do |line, index|
+          next if line.strip.start_with?("#")
+          next unless line.match?(later)
+
+          hits << "#{path.sub("#{ROOT}/", "")}:#{index + 1}: #{line.strip}"
+        end
+      end
+    end
+
+    assert_empty hits, "enqueueing a broadcast while no worker runs:\n#{hits.join("\n")}"
+  end
 end

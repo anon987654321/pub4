@@ -32,6 +32,23 @@ class Marketplace::SavedSearch < ApplicationRecord
     notify? && (last_notified_at.nil? || last_notified_at <= now - ALERT_INTERVAL)
   end
 
+  # One listing, on create: the queue never runs, so this is how "alerts on"
+  # actually fires. Same predicates as new_matches so a create-time alert and
+  # the periodic job cannot disagree.
+  def matches_listing?(listing)
+    return false if listing.blank?
+    return false unless listing.status == "active" && !listing.expired?
+    return false if category_id.present? && listing.category_id != category_id
+    return false if location.present? && listing.location != location
+    return true if query.blank?
+
+    Shared::LiveSearch.call(
+      Marketplace::Listing.where(id: listing.id),
+      query: query,
+      columns: %w[title description location]
+    ).exists?
+  end
+
   # Listings that appeared since this search last reported. Anchored to
   # created_at on a search that has never alerted, not to the beginning of time
   # — otherwise switching alerts on mails you the entire back catalogue.

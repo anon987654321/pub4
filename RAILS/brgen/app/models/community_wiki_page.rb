@@ -20,6 +20,10 @@ class CommunityWikiPage < ApplicationRecord
 
   def to_param = slug
 
+  def to_markdown
+    [ "# #{title}", body.to_s ].join("\n\n")
+  end
+
   # Writing keeps what it replaced. Called instead of update! so no caller can
   # save a page and forget the revision — a history with holes reads as if the
   # missing edits never happened.

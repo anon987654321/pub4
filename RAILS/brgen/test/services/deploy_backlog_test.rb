@@ -121,7 +121,8 @@ class DeployBacklogTest < Minitest::Test
 
     assert_includes concern, 'process_media_variants'
     assert_includes concern, 'after_commit :enqueue_media_variant_processing'
-    assert_includes concern, 'Shared::MediaProcessingJob.perform_later'
+    refute_includes concern.gsub(/^\s*#.*\n/, ''), 'perform_later'
+    assert_includes concern, 'Shared::MediaProcessingJob.new.perform'
     assert_includes job, 'file.content_type.to_s.start_with?("image/")'
 
     %w[
