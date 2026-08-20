@@ -99,6 +99,10 @@ def test_ask_once_fails_over_to_the_cli_lane_on_budget_errors
     end
   end.new
   @agent.instance_variable_set(:@dispatcher, fake)
+  # the hop reads the chain head through ModelRouter, the one models.yml reader
+  router = Object.new
+  def router.single_call_fallback_model = "claude-cli:sonnet"
+  @agent.instance_variable_set(:@model_router, router)
 
   out = @agent.ask_once("hi", model: "openrouter/broke")
 
@@ -120,6 +124,10 @@ def test_ask_also_takes_the_hop_on_budget_errors
     end
   end.new
   @agent.instance_variable_set(:@dispatcher, fake)
+  # the hop reads the chain head through ModelRouter, the one models.yml reader
+  router = Object.new
+  def router.single_call_fallback_model = "claude-cli:sonnet"
+  @agent.instance_variable_set(:@model_router, router)
   def @agent.routed_models(*_args, **_kwargs) = ["openrouter/broke"]
 
   assert_equal "cli answer", @agent.ask("hi")

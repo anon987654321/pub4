@@ -136,15 +136,13 @@ end
         @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
       end
 
-      # The claude_code chain's head — the subscription-billed CLI lane,
-      # read from models.yml so retiring the lane retires the failover.
+      # The claude_code chain's head — read through ModelRouter, the one
+      # sanctioned models.yml reader, so retiring the lane retires the failover.
       def single_call_fallback_model
-        @single_call_fallback_model ||= begin
-          tiers = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"), default: {}).fetch("models", {})
-          Array(tiers["claude_code"]).first&.fetch("id", nil)
-        rescue StandardError
-          nil
-        end
+        return nil unless @model_router.respond_to?(:single_call_fallback_model)
+        @single_call_fallback_model ||= @model_router.single_call_fallback_model
+      rescue StandardError
+        nil
       end
 
       def dispatch_chat_response(dispatch, stream:, image:, &blk)
