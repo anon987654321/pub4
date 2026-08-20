@@ -38,6 +38,13 @@ module Master
           # prefers-contrast/forced-colors/print, which override for the same
           # reason. Telling an accessibility reset to "fix specificity instead" is
           # telling it to stop working.
+          #
+          # The same override exists class-shaped: _battery_aware.scss applies
+          # .battery-low/.network-save-data from JS and must beat the author for
+          # the same reason the media reset must. A file whose whole job is
+          # overriding declares it with `scan: intentional-important` in its
+          # head, the way a token source declares intentional-colors.
+          next [] if src.lines.first(20).join.match?(/scan:\s*intentional-important/)
           scan_lines(without_block_comments(without_override_media(src)), /!\s*important/,
                      message: "!important overrides cascade — fix specificity instead")
         end

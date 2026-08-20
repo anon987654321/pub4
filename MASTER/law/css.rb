@@ -26,16 +26,10 @@ Law.define(:LOGICAL_PROPERTIES) do
   good "margin-inline-start: 8px;"
 end
 
-# Migrated from data/rules.yml MAGIC_COLOR.
-Law.define(:MAGIC_COLOR) do
-  source "CSS design tokens — no hardcoded color values"
-  severity :warn
-  languages %i[css scss html javascript]
-  detect { |line| line.match?(/#[0-9a-fA-F]{3,6}\b|rgb\(|rgba\(|hsl\(/) }
-  fix "Reference a CSS custom property or design token."
-  bad  "color: #ff0000;"
-  good "color: var(--accent);"
-end
+# MAGIC_COLOR lives once, in the registry (js_rules.rb): its narrowing —
+# token definitions, intentional markers, the mailer and manifest carve-outs —
+# is behavioural, measured across 596 retired findings, and a bare hex detector
+# beside it double-counted every one it got wrong.
 
 # Migrated from data/rules.yml MEASURE_OPTIMUM.
 Law.define(:MEASURE_OPTIMUM) do

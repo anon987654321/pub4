@@ -139,8 +139,7 @@ end
       # The claude_code chain's head — read through ModelRouter, the one
       # sanctioned models.yml reader, so retiring the lane retires the failover.
       def single_call_fallback_model
-        return nil unless @model_router.respond_to?(:single_call_fallback_model)
-        @single_call_fallback_model ||= @model_router.single_call_fallback_model
+        @single_call_fallback_model ||= (@model_router.single_call_fallback_model if @model_router.respond_to?(:single_call_fallback_model))
       rescue StandardError
         nil
       end

@@ -129,6 +129,7 @@ module Pub4
       "empty_state" => "shared/lib/pub4/empty_state_lint.rb",
       "css_coverage" => "shared/lib/pub4/css_coverage_lint.rb",
       "asset_url" => "shared/lib/pub4/asset_url_lint.rb",
+      "visual_contract" => "shared/lib/pub4/visual_contract_lint.rb",
     }.freeze
 
     def rails_lint_rows

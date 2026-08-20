@@ -48,10 +48,24 @@ module Pub4
     # detector does not exist twice. Reachable through the law it folded into.
     def mechanical(all)
       laws = enacted
+      regs = registry_ids
       all.select do |rule|
         rule["detect_lexical"] || rule["detect_structural"] ||
-          laws.include?(rule["id"].to_s) || laws.include?(rule["folded_into"].to_s)
+          laws.include?(rule["id"].to_s) || laws.include?(rule["folded_into"].to_s) ||
+          regs.include?(rule["id"].to_s.upcase) || regs.include?(rule["folded_into"].to_s.upcase)
       end
+    end
+
+    # The registry (RuleDSL classes) is the third rule population. MAGIC_COLOR
+    # lives only there since its law twin retired; counting law/ and the yml
+    # columns alone reported it as law no configuration can run.
+    def registry_ids
+      require "review/scan/rule_dsl"
+      Master::Review::Scan::Rule.registry
+        .filter_map { |klass| Master::Review::Scan::RuleFactory.registry_id(klass, root: ROOT)&.upcase }
+        .to_set
+    rescue StandardError
+      Set.new
     end
 
     # Mirrors SemanticRule#load_semantic_rules. Kept in step by test_rule_reach.
