@@ -72,9 +72,23 @@ module Master
         result.to_s
       end
 
+      # A category a retry cannot cure but a different lane can. ask/call walk
+      # the full fallback chain; ask_once deliberately does not — but raising
+      # on the FIRST broke model left claude-cli unconsulted, and the fix
+      # strategies and ideation all speak through ask_once, so one empty
+      # OpenRouter balance killed every single-shot call (2026-08-20 proof
+      # run: same seven insufficient-credits deaths after the chain-path fix).
+      SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout].freeze
+
       def ask_once(prompt, system: nil, model: nil, image: nil, temperature: nil)
         messages = [{ role: "user", content: filter_prompt(prompt) }]
-        result   = @dispatcher.send_with_cache(model || self.model, messages, system: filter_prompt(system), stream: false, image:, temperature:)
+        chosen = model || self.model
+        result = @dispatcher.send_with_cache(chosen, messages, system: filter_prompt(system), stream: false, image:, temperature:)
+        if result.is_a?(Master::Result::Err) && SINGLE_CALL_FAILOVER.include?(result.category) &&
+           (fallback = single_call_fallback_model) && fallback != chosen
+          @bus&.publish("llm:ask_once_failover", from: chosen, to: fallback, category: result.category)
+          result = @dispatcher.send_with_cache(fallback, messages, system: filter_prompt(system), stream: false, image:, temperature:)
+        end
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
@@ -105,6 +119,17 @@ module Master
       end
 
       private
+
+      # The claude_code chain's head — the subscription-billed CLI lane,
+      # read from models.yml so retiring the lane retires the failover.
+      def single_call_fallback_model
+        @single_call_fallback_model ||= begin
+          tiers = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"), default: {}).fetch("models", {})
+          Array(tiers["claude_code"]).first&.fetch("id", nil)
+        rescue StandardError
+          nil
+        end
+      end
 
       def dispatch_chat_response(dispatch, stream:, image:, &blk)
         response = attempt_chat_with_fallbacks(candidate_models: dispatch[:candidate_models], prompt: dispatch[:prompt],

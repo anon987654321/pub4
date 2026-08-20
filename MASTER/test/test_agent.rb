@@ -81,4 +81,29 @@ class TestAgent < Minitest::Test
     refute_match(/\b(will|would|could|might)\b/i, prose)
     assert_includes code, "will = :kept"
   end
+# One empty OpenRouter balance killed every single-shot call: ask_once had
+# no chain, so the first broke model raised with claude-cli unconsulted.
+# A :budget/:rate_limit/:timeout Err now takes one hop to the claude_code
+# chain head before raising.
+def test_ask_once_fails_over_to_the_cli_lane_on_budget_errors
+  fake = Class.new do
+    attr_reader :models
+    def initialize = @models = []
+    def send_with_cache(model, *_args, **_kwargs)
+      @models << model
+      if model.to_s.start_with?("claude-cli:")
+        Master::Result.ok("cli answer")
+      else
+        Master::Result.err("Insufficient credits", category: :budget)
+      end
+    end
+  end.new
+  @agent.instance_variable_set(:@dispatcher, fake)
+
+  out = @agent.ask_once("hi", model: "openrouter/broke")
+
+  assert_equal "cli answer", out
+  assert_equal 2, fake.models.size, "expected exactly one failover hop"
+  assert fake.models.last.to_s.start_with?("claude-cli:"), "hop must land on the claude_code chain head"
+end
 end
