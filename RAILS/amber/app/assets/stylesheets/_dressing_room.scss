@@ -7,6 +7,10 @@
   align-items: center;
   gap: var(--space-lg);
   padding: var(--space-lg) 0;
+  /* main is a flex container, so without this the dressing room sizes to its
+     widest zone row rather than to the screen. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .mannequin-stage {
@@ -131,6 +135,10 @@
 
 .zone-info {
   flex: 1;
+  /* A flex item's automatic minimum size is its content, so the truncation
+     this rule asks for could never happen: the row grew to the longest
+     garment name and took the dressing room past the edge of the phone. */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   font-size: var(--text-sm);

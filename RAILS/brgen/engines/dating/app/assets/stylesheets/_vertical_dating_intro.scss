@@ -79,6 +79,9 @@
   padding: 0;
   display: grid;
   gap: var(--space-3, 0.75rem);
+  /* A fieldset resolves min-width to min-content, so this grid sized
+     itself to its widest field and stood 33px wider than the form. */
+  min-width: 0;
 }
 
 .dating-profile-more {

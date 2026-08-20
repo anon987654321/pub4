@@ -248,6 +248,11 @@ body.vertical-marketplace main > [data-controller*="live-search"],
 body.vertical-marketplace .search {
   margin-inline: 16px;
   margin-block: 12px;
+  /* The pill is width: 480px, max-width: 100% — and a percentage max-width
+     is measured against the container, not against what is left after
+     these margins. Without this the search ran 16px past the right edge
+     of every marketplace page on a phone. */
+  max-width: calc(100% - 32px);
 }
 
 /* ---- narrow ----------------------------------------------------------- */

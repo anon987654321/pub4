@@ -150,6 +150,11 @@
 
 label { display: block; font-size: var(--text-sm); color: var(--text-secondary); }
 
+/* Not in the list below, because a file input must keep the browser's own
+   button rather than take the field treatment — but it also ships an
+   intrinsic width wider than a phone, and nothing was capping it. */
+input[type=file] { max-width: 100%; }
+
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=url], input[type=search], textarea, select {
   width: 100%;
   padding: var(--space-2);

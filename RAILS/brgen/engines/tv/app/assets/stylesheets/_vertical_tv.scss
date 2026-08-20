@@ -144,7 +144,11 @@ body.vertical-tv .show-card:hover {
   /* dvh, not vh: mobile browser chrome collapses on scroll, and vh leaves a
      strip of the next video showing under the address bar the whole way down. */
   height: 100dvh;
-  margin-inline: calc(var(--container-pad, 1rem) * -1);
+  /* Edge to edge measured from the viewport, not by undoing a pad this
+     page's main does not have — cancelling 18px of padding that was never
+     applied put 18px of video past each edge. */
+  width: 100dvw;
+  margin-inline: calc(50% - 50dvw);
 }
 
 .tv-feed-scroller {

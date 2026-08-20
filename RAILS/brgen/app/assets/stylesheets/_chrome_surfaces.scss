@@ -190,6 +190,10 @@ aside.city-today,
 /* Forms — reserved error slot */
 .field {
   display: grid;
+  /* minmax(0, 1fr), not the default max-content track: a file input carries an
+     intrinsic width wider than a phone, and an unconstrained track hands it
+     that width instead of the row it is in. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2xs);
 }
 .field .error,

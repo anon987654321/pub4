@@ -38,8 +38,13 @@ class CssCoverageLintTest < Minitest::Test
 
   # Same correction, second instance: brgen's _site_legal_footer carries a <style>
   # block that styles the three legal pages, which are linked from every page.
+  #
+  # legal-nav is not in the list. 240a4e746 dropped the class from all three
+  # navs because the rule that styles them is `.legal-prose nav` — a class named
+  # by a test and by nothing else is the thing this file exists to catch, not a
+  # thing for it to require.
   def test_the_legal_pages_are_styled
-    %w[legal-eyebrow legal-prose legal-updated legal-nav].each do |name|
+    %w[legal-eyebrow legal-prose legal-updated].each do |name|
       assert_includes L.defined_names, name, "#{name} is styled by _site_legal_footer's inline block"
       refute_includes L.undefined_classes, name
     end
