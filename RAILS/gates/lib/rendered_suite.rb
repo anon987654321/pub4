@@ -10,6 +10,7 @@ require_relative "rendered/keyboard_flow"
 require_relative "rendered/mobile_flow"
 require_relative "rendered/cross_app"
 require_relative "rendered/webgl_surfaces"
+require_relative "rendered/viewport_spill"
 
 module Deploy
   # Composite for every gate that measures a real browser.
@@ -30,6 +31,7 @@ module Deploy
       JourneyInvariantGate,
       CrossAppEquivalenceGate,
       LayoutSnapshotGate,
+      ViewportSpillGate,
       # Last, because it is the only leaf that wants a GPU stack: it opens its
       # own session with SwiftShader rather than the shared --disable-gpu one.
       WebglSurfacesGate,

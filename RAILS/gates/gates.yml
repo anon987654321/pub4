@@ -235,6 +235,12 @@ webgl_surfaces:
   pass: "ok: webgl surfaces draw"
   covered_by: rendered_suite
 
+viewport_spill:
+  require: lib/rendered/viewport_spill
+  class: Deploy::ViewportSpillGate
+  pass: "ok: nothing hangs off the right edge at 390px"
+  covered_by: rendered_suite
+
 layout_snapshot:
   require: lib/rendered/layout_snapshot
   class: Deploy::LayoutSnapshotGate
