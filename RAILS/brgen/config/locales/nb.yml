@@ -185,6 +185,7 @@ nb:
     inbox_kicker: Brgen-innboks
     open: Åpne
     mark_as_read: Merk varsel som lest
+    read_state: lest
     aria: Varsel
     unread_count:
       one: "%{count} ulest"
@@ -222,6 +223,15 @@ nb:
     shows_on: Serier på %{channel}
     uploading_to_html: Laster opp til %{channel}
     no_description: Denne kanalen har ikke lagt til en beskrivelse ennå.
+    subscribers:
+      one: "%{count} abonnent"
+      other: "%{count} abonnenter"
+    total_views:
+      one: "%{count} visning totalt"
+      other: "%{count} visninger totalt"
+    videos_shown:
+      one: "%{count} video vist"
+      other: "%{count} videoer vist"
     home_blurb: Lokale kanaler, programmer og direktesendte scener — se uten konto.
     home_title: TV
     channels_title: Kanaler

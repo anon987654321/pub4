@@ -22,9 +22,9 @@
 
 <article>
   <div class="chips">
-    <span class="chip"><%= pluralize(@channel.subscribers_count.to_i, "subscriber") %></span>
-    <span class="chip"><%= pluralize(@channel.total_views.to_i, "total view") %></span>
-    <span class="chip"><%= pluralize(@videos.count, "video") %> shown</span>
+    <span class="chip"><%= t("tv.subscribers", count: @channel.subscribers_count.to_i) %></span>
+    <span class="chip"><%= t("tv.total_views", count: @channel.total_views.to_i) %></span>
+    <span class="chip"><%= t("tv.videos_shown", count: @videos.count) %></span>
   </div>
   <% if @channel.description.present? %>
     <%= tag.p simple_format(@channel.description) %>

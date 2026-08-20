@@ -145,7 +145,8 @@ module Pub4
 # 34 -> 31: shared/_wardrobe_showcase went, and took three literal
 # aria-labels with it — "Wardrobe by body region" and the two carousel
 # labels, none of which had ever been through a locale file.
-"aria_label" => 31,
+# 31 -> 30: tv home header "TV header" became t("tv.home_title").
+"aria_label" => 30,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps

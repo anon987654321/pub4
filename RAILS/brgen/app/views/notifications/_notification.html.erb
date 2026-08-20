@@ -8,7 +8,7 @@
   <% if notification.body.present? %><%= tag.p notification.body %><% end %>
   <p>
     <time datetime="<%= notification.created_at.iso8601 %>"><%= time_ago(notification.created_at) %></time>
-    <% if notification.read? %> · read<% end %>
+    <% if notification.read? %> · <%= t("notifications.read_state") %><% end %>
   </p>
   <div class="notification-actions cluster">
     <% if href.present? %>

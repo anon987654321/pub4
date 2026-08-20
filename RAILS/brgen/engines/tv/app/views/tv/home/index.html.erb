@@ -1,6 +1,6 @@
 <% content_for :title, t("tv.home_title") %>
 
-<div class="page-header" role="banner" aria-label="TV header" data-visitor-orientation>
+<div class="page-header" role="banner" aria-label="<%= t("tv.home_title") %>" data-visitor-orientation>
   <hgroup>
     <%= tag.h1 t("tv.home_title") %>
     <p><%= t("tv.home_blurb") %></p>
@@ -28,14 +28,14 @@
 <% end %>
 
 <section role="region" aria-label="<%= t("aria.trending_content") %>">
-  <h2>Trending</h2>
+  <h2><%= t("aria.trending_videos") %></h2>
   <% if @trending.any? %>
     <%= render "tv/home/trending_videos" %>
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_trending"),
-          body: "Check back as channels publish.",
-          action: { label: "All channels", path: channels_path } %>
+          body: t("tv.feed.empty_body"),
+          action: { label: t("tv.channels_title"), path: channels_path } %>
   <% end %>
 </section>
 

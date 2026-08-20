@@ -30,5 +30,6 @@
     <% end %>
   </ul>
 <% else %>
+  <%# empty_state: no-action-ok — outbound follow of a remote account is not a surface yet (TODO 2.1) %>
   <%= render "shared/empty_state", title: t("fediverse.following_empty"), body: t("fediverse.following_empty_body") %>
 <% end %>

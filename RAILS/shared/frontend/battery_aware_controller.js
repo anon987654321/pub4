@@ -25,7 +25,6 @@ export default class extends Controller {
 
   connect() {
     this.#disconnected = false
-    this.#onVisibility = this.#onVisibility.bind(this)
     document.addEventListener("visibilitychange", this.#onVisibility)
 
     this.#applyVisibility()
@@ -58,7 +57,7 @@ export default class extends Controller {
     }
   }
 
-  #onVisibility() {
+  #onVisibility = () => {
     this.#applyVisibility()
   }
 

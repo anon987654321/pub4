@@ -3,6 +3,6 @@
   <% if notification.body.present? %><p><%= notification.body %></p><% end %>
   <time datetime="<%= notification.created_at.iso8601 %>"><%= time_ago(notification.created_at) %></time>
   <% unless notification.read? %>
-    <%= button_to "Mark read", notification_path(notification), method: :patch, data: { turbo_stream: true }, class: "btn btn-ghost btn-sm" %>
+    <%= button_to t("actions.mark_read"), notification_path(notification), method: :patch, data: { turbo_stream: true }, class: "btn btn-ghost btn-sm" %>
   <% end %>
 </article>

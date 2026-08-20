@@ -185,6 +185,7 @@ en:
     inbox_kicker: Brgen inbox
     open: Open
     mark_as_read: Mark notification as read
+    read_state: read
     aria: Notification
     unread_count:
       one: "%{count} unread"
@@ -222,6 +223,15 @@ en:
     shows_on: Shows on %{channel}
     uploading_to_html: Uploading to %{channel}
     no_description: This channel has not added a description yet.
+    subscribers:
+      one: "%{count} subscriber"
+      other: "%{count} subscribers"
+    total_views:
+      one: "%{count} total view"
+      other: "%{count} total views"
+    videos_shown:
+      one: "%{count} video shown"
+      other: "%{count} videos shown"
     home_blurb: Local channels, shows, and live stages — watch without an account.
     home_title: TV
     channels_title: Channels

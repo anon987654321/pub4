@@ -35,10 +35,7 @@
 
 <article>
   <div class="chips">
-    <span class="chip"><span data-controller="animated-number"
-                             data-animated-number-start-value="0"
-                             data-animated-number-end-value="<%= @video.views_count.to_i %>"
-                             data-animated-number-duration-value="900"><%= @video.views_count.to_i %></span> views</span>
+    <span class="chip"><%= t("tv.feed.views", count: @video.views_count.to_i) %></span>
     <span class="chip"><%= @video.duration_formatted %></span>
     <span class="chip"><%= @video.status %></span>
   <% if @video.published_at.present? %><span class="chip"><%= time_ago(@video.published_at) %></span><% end %>
@@ -72,18 +69,13 @@
 </article>
 
 <section>
-  <h2>Channel</h2>
+  <h2><%= t("tv.channel_subtitle") %></h2>
   <article>
     <strong><%= link_to @video.channel.name, channel_path(@video.channel) %></strong>
     <p>
-      <span data-controller="animated-number"
-            data-animated-number-start-value="0"
-            data-animated-number-end-value="<%= @video.channel.subscribers_count.to_i %>"
-            data-animated-number-duration-value="900"><%= @video.channel.subscribers_count.to_i %></span> subscribers ·
-      <span data-controller="animated-number"
-            data-animated-number-start-value="0"
-            data-animated-number-end-value="<%= @video.channel.total_views.to_i %>"
-            data-animated-number-duration-value="900"><%= @video.channel.total_views.to_i %></span> total views
+      <%= t("tv.subscribers", count: @video.channel.subscribers_count.to_i) %>
+      ·
+      <%= t("tv.total_views", count: @video.channel.total_views.to_i) %>
     </p>
     <% if authenticated? && Current.user != @video.channel.user %>
       <% if @video.channel.subscriptions.exists?(user: Current.user) %>

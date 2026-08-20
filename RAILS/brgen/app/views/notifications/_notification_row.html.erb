@@ -8,20 +8,16 @@
   <% if notification.body.present? %><%= tag.p notification.body %><% end %>
   <p>
     <%= time_ago(notification.created_at) %>
-    <% if notification.read? %> · read<% end %>
+    <% if notification.read? %> · <%= t("notifications.read_state") %><% end %>
   </p>
   <div class="notification-actions cluster">
     <% if href.present? %>
       <%= link_to t("notifications.open"), href, class: "btn btn-ghost btn-sm" %>
     <% end %>
     <% unless notification.read? %>
-      <button type="button"
-        class="btn btn-ghost btn-sm"
-        data-reflex="click->NotificationRead#mark_read"
-        data-notification-id="<%= notification.id %>"
-        aria-label="<%= t("notifications.mark_as_read") %>">
-        <%= t("actions.mark_read") %>
-      </button>
+      <%= button_to t("actions.mark_read"), notification_path(notification), method: :patch,
+            data: { turbo_stream: true }, class: "btn btn-ghost btn-sm",
+            aria: { label: t("notifications.mark_as_read") } %>
     <% end %>
   </div>
 </article>

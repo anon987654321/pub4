@@ -11,6 +11,6 @@
   <% end %>
   <div class="tv-card-meta">
     <%= link_to tv_video.title, video_path(tv_video), class: "tv-card-title" %>
-    <p class="tv-card-sub"><%= tv_video.channel.name %> · <span class="tv-views"><%= tv_video.views_count %></span> views</p>
+    <p class="tv-card-sub"><%= tv_video.channel.name %> · <span class="tv-views"><%= t("tv.feed.views", count: tv_video.views_count.to_i) %></span></p>
   </div>
 </article>
