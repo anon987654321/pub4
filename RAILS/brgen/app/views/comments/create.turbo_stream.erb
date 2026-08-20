@@ -1,4 +1,20 @@
-<%= turbo_stream.append "comments", partial: "comments/comment", locals: { comment: @comment } %>
-<%= turbo_stream.replace "comment_form" do %>
-  <%= render "comments/form", comment: Comment.new, commentable: @commentable %>
+<% if @comment.parent_id.present? %>
+  <%= turbo_stream.append dom_id(Comment.new(id: @comment.parent_id), :replies),
+        partial: "comments/comment", locals: { comment: @comment } %>
+  <%= turbo_stream.replace "reply_form_#{@comment.parent_id}" do %>
+    <%= render "comments/form",
+          comment: Comment.new,
+          commentable: @commentable,
+          parent_id: @comment.parent_id,
+          form_id: "reply_form_#{@comment.parent_id}",
+          rows: 3,
+          placeholder: t("comments.reply_placeholder"),
+          submit: t("comments.reply") %>
+  <% end %>
+<% else %>
+  <%= turbo_stream.remove "comments_empty" %>
+  <%= turbo_stream.append "comments", partial: "comments/comment", locals: { comment: @comment } %>
+  <%= turbo_stream.replace "comment_form" do %>
+    <%= render "comments/form", comment: Comment.new, commentable: @commentable %>
+  <% end %>
 <% end %>

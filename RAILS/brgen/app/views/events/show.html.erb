@@ -85,9 +85,11 @@
     <% if @comment %>
       <%= render "comments/form", comment: @comment, commentable: @event, rows: 2 %>
     <% end %>
-    <% @comments.each do |comment| %>
-      <%= render "comments/comment", comment: comment %>
-    <% end %>
+    <div id="comments">
+      <% @comments.each do |comment| %>
+        <%= render "comments/comment", comment: comment %>
+      <% end %>
+    </div>
   </section>
 
   <% if authenticated? && Current.user.id == @event.user_id %>

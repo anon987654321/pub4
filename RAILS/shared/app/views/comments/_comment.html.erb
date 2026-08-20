@@ -71,14 +71,13 @@
     <% end %>
 
     <% if threaded %>
-      <% kids = comment_children(comment) %>
-      <% if kids.any? %>
-        <div class="comment-replies">
-          <% kids.each do |reply| %>
-            <%= render "comments/comment", comment: reply, threaded: true %>
-          <% end %>
-        </div>
-      <% end %>
+      <%# Always present so a first reply can turbo-append here instead of
+          landing as a sibling of the parent at the bottom of #comments. %>
+      <div class="comment-replies" id="<%= dom_id(comment, :replies) %>">
+        <% comment_children(comment).each do |reply| %>
+          <%= render "comments/comment", comment: reply, threaded: true %>
+        <% end %>
+      </div>
     <% end %>
   </article>
 <% end %>

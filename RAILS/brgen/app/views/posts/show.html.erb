@@ -133,18 +133,22 @@
     </nav>
   <% end %>
 
-  <ul id="comments">
+  <%# A div, not a ul: the shared comment partial is a turbo-frame wrapping an
+      article. A list whose children are neither li was invalid, and turbo
+      append of the first comment left the empty-state li in place because
+      create.turbo_stream only appends. %>
+  <div id="comments">
     <% if @comments.any? %>
       <% @comments.each do |comment| %>
         <%= render "comments/comment", comment: comment %>
       <% end %>
     <% else %>
-      <li><%= render "shared/empty_state",
+      <div id="comments_empty"><%= render "shared/empty_state",
             title: t("empty.no_comments"),
             body: t("comments.empty_body"),
-            action: { label: t("comments.write_reply"), path: "#comments-section" } %></li>
+            action: { label: t("comments.write_reply"), path: "#comments-section" } %></div>
     <% end %>
-  </ul>
+  </div>
 </section>
 
 <aside class="post-show-aside">

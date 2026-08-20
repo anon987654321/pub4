@@ -172,12 +172,14 @@ li:focus-within .msg_reaction_picker {
   line-height: 1.55;
   font-size: var(--text-base);
   margin: 0;
+  white-space: pre-wrap;
 }
 .comment-replies {
   margin-inline-start: var(--space-4, 1rem);
   padding-inline-start: var(--space-3, 0.75rem);
   border-inline-start: 2px solid var(--border);
 }
+.comment-replies:not(:has(*)) { display: none; }
 .comment-reply {
   margin-top: var(--space-2, 0.5rem);
 }

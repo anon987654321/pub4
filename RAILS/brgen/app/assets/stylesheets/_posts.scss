@@ -114,6 +114,10 @@
   border-inline-start: 2px solid var(--border);
   border-bottom: 0;
 }
+/* The replies box is always in the markup so turbo can append a first reply.
+   Without this, an empty box draws a leftover indent rail. :empty is the
+   wrong test — ERB whitespace is a text node. */
+.comment_item .comment-replies:not(:has(*)) { display: none; }
 
 /* Reply disclosure — native details, no Stimulus reply controller. */
 .comment-reply {
@@ -129,7 +133,7 @@
 .comment-reply-toggle::-webkit-details-marker { display: none; }
 .comment-reply-toggle:hover { text-decoration: underline; }
 .comment-reply[open] .comment-reply-toggle { margin-bottom: var(--space-2); }
-.comment-body { margin: 0; }
+.comment-body { margin: 0; white-space: pre-wrap; }
 .comment-delete {
   display: inline;
   padding: 0;
