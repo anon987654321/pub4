@@ -24,7 +24,7 @@ checks:
   - {id: design.compose_no_requestsubmit, in: brgen/app/javascript/controllers/form_submit_controller.js, lack: [".requestSubmit("]}
   # --- feed / compose ---
   - {id: feed.home_orientation, in: brgen/app/views/home/index.html.erb, has: [data-visitor-orientation]}
-  - {id: feed.city_today_inset, in: brgen/app/assets/stylesheets/_chrome_surfaces.scss, has: ["aside.city-today", "margin-inline: var(--space-4)"]}
+  - {id: feed.city_today_inset, in: brgen/app/assets/stylesheets/_chrome_surfaces.scss, has: ["aside.city-today", "#feed-panel", "margin-inline: var(--space-4)"]}
   - {id: feed.compose_dialog, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["<dialog", compose-launcher, form-submit, posts_path]}
   - {id: feed.compose_guest, in: brgen/app/views/shared/_feed_compose.html.erb, has: [anonymous, guest_hint]}
   - {id: feed.compose_tiptap, in: brgen/app/views/shared/_feed_compose.html.erb, has: [tiptap-editor, textarea-autogrow]}

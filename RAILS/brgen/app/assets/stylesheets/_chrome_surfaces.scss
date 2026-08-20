@@ -72,8 +72,11 @@
 
 /* Same inline inset as .compose-launcher. Without this the strip was the
    full main column (500px here) while the compose pill and its trigger sat
-   18px in from each edge, so "Bergen, akkurat nå" read as a wider tab. */
-aside.city-today {
+   18px in from each edge, so "Bergen, akkurat nå" read as a wider tab.
+   #feed-panel is the home post list — it was still full-bleed after the
+   strip was inset, so the cards stuck out past both pills. */
+aside.city-today,
+#feed-panel {
   margin-inline: var(--space-4);
   box-sizing: border-box;
 }
