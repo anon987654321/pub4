@@ -1,0 +1,34 @@
+<% content_for :title, t("fediverse.following_title") %>
+
+<div class="page-header" role="banner" aria-label="<%= t("fediverse.following_title") %>">
+  <hgroup>
+    <p><%= t("fediverse.following_eyebrow") %></p>
+    <%= tag.h1 t("fediverse.following_title") %>
+  </hgroup>
+</div>
+
+<%= form_with url: fediverse_follows_path, method: :post, class: "form-wrap" do |f| %>
+  <div class="field">
+    <%= f.label :uri, t("fediverse.follow_label") %>
+    <%= f.url_field :uri, required: true, placeholder: "https://mastodon.example/users/kari" %>
+    <p class="form-help"><%= t("fediverse.follow_help") %></p>
+  </div>
+  <p><%= f.submit t("fediverse.follow_send"), class: "btn btn-primary" %></p>
+<% end %>
+
+<% if @follows.any? %>
+  <ul role="list" class="fedi-follow-list">
+    <% @follows.each do |follow| %>
+      <li role="listitem">
+        <span class="fedi-follow-handle"><%= follow.fedi_actor.username %>@<%= follow.fedi_actor.domain %></span>
+        <%# Pending is a real state, not a spinner: the Accept may never come,
+            and "asked and not answered" is what a fire-and-forget POST cannot
+            tell you. %>
+        <span class="fedi-follow-state"><%= t("fediverse.states.#{follow.state}") %></span>
+        <%= button_to t("actions.unfollow"), fediverse_follow_path(uri: follow.fedi_actor.uri), method: :delete, class: "btn btn-ghost btn-sm" %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <%= render "shared/empty_state", title: t("fediverse.following_empty"), body: t("fediverse.following_empty_body") %>
+<% end %>

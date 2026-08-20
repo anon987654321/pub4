@@ -52,6 +52,7 @@ class Post < ApplicationRecord
   # attribute — neither belongs in an outbox that says who wrote what.
   after_commit :federate_creation, on: :create
   after_commit :federate_deletion, on: :destroy
+  after_commit :federate_update, on: :update
 
   VOTE_SQL = Arel.sql("posts.score DESC, posts.created_at DESC")
   TOP_SQL  = Arel.sql("posts.score DESC")
@@ -159,17 +160,30 @@ class Post < ApplicationRecord
     )
   end
 
-  # Sent on destroy rather than left to expire: a follower's instance keeps its
-  # copy indefinitely, so a post deleted here stays visible there forever unless
-  # we say so. The payload is built here, while the record is still in memory —
-  # a job given an id would have nothing left to load.
-  def federate_deletion
-    return unless federatable_post?
+# An edit, told to the people who already have the old text. Without it a
+# correction is invisible everywhere but here, which is worse than not being
+# able to edit at all. Only when the words changed: a vote or a counter cache
+# touching the row is not an edit.
+def federate_update
+  return unless federatable_post?
+  return unless saved_change_to_title? || saved_change_to_content?
 
-    Fediverse::DistributeJob.perform_later(
-      user_id: user_id, payload: Fediverse::Serializer.delete(self).to_json
-    )
-  end
+  Fediverse::DistributeJob.perform_later(
+    user_id: user_id, payload: Fediverse::Serializer.update(self).to_json
+  )
+end
+
+# Sent on destroy rather than left to expire: a follower's instance keeps its
+# copy indefinitely, so a post deleted here stays visible there forever unless
+# we say so. The payload is built here, while the record is still in memory —
+# a job given an id would have nothing left to load.
+def federate_deletion
+  return unless federatable_post?
+
+  Fediverse::DistributeJob.perform_later(
+    user_id: user_id, payload: Fediverse::Serializer.delete(self).to_json
+  )
+end
 
   def live_content_length
     return if content.blank?

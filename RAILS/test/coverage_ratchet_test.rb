@@ -56,7 +56,7 @@ class CoverageRatchetTest < Minitest::Test
     # before any of them. models had been RED at 17 against this 19 since before
     # that day; CommunityWikiPage, CommunityWikiRevision, LinkPreview and
     # Conversation close it.
-    "brgen" => { "controllers" => 20, "models" => 21 },
+    "brgen" => { "controllers" => 20, "models" => 22 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two

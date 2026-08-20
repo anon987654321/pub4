@@ -37,8 +37,14 @@ class Fediverse::InboxesController < ApplicationController
     activity = parse(body)
     return head :bad_request if activity.blank?
 
+    # Before the actor is fetched: a blocked instance must not be able to make
+    # this one issue an outbound request just by POSTing here.
+    return head :forbidden if FediBlock.blocked_uri?(signature_key_id)
+
     actor = Fediverse::ActorFetcher.for_key_id(signature_key_id)
     return head :unauthorized if actor.blank?
+
+    return head :forbidden if FediBlock.blocked?(actor.domain)
 
     # The signer and the claimed author must be the same account. Without this,
     # a valid signature from any actor authorises an activity attributed to any

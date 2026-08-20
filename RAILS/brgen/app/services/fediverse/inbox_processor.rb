@@ -8,7 +8,7 @@ module Fediverse
   # allowed to act on the object — a verified actor can still send a Delete for
   # somebody else's post, and each handler checks that separately.
   class InboxProcessor
-    HANDLED = %w[Follow Undo Create Announce Like Delete].freeze
+    HANDLED = %w[Follow Undo Accept Reject Create Announce Like Delete].freeze
 
     def initialize(activity, actor)
       @activity = activity
@@ -43,7 +43,7 @@ module Fediverse
       target = local_user(@activity["object"])
       return :unknown_target unless target
 
-      follow = FediFollow.find_or_initialize_by(fedi_actor: @actor, user: target)
+      follow = FediFollow.find_or_initialize_by(fedi_actor: @actor, user: target, direction: "inbound")
       follow.activity_uri = @activity["id"]
       follow.state = "accepted"
       follow.save!
@@ -63,6 +63,26 @@ module Fediverse
       :accepted
     end
 
+    # The other half of a follow we sent. Until this landed, an outbound follow
+    # stayed pending forever and nothing said whether the remote side had agreed.
+    def handle_accept
+      follow = outbound_follow_for(@activity["object"])
+      return :unknown_target unless follow
+
+      follow.accept!
+      :accepted
+    end
+
+    # A refusal is a real answer, and keeping the row as pending would read as
+    # "still waiting" for good.
+    def handle_reject
+      follow = outbound_follow_for(@activity["object"])
+      return :unknown_target unless follow
+
+      follow.destroy
+      :rejected
+    end
+
     def handle_undo
       inner = @activity["object"]
       return :ignored unless inner.is_a?(Hash) && inner["type"] == "Follow"
@@ -70,7 +90,7 @@ module Fediverse
       target = local_user(inner["object"])
       return :unknown_target unless target
 
-      FediFollow.find_by(fedi_actor: @actor, user: target)&.destroy
+      FediFollow.inbound.find_by(fedi_actor: @actor, user: target)&.destroy
       :unfollowed
     end
 
@@ -95,6 +115,16 @@ module Fediverse
 
     # Accepts either a bare URI or an embedded object, because both are sent in
     # practice.
+    # Accepts either the Follow activity's uri or the embedded object, because
+    # both shapes are sent — and matches on the actor too, so one instance cannot
+    # accept another's follow.
+    def outbound_follow_for(object)
+      uri = object.is_a?(Hash) ? object["id"] : object
+      return nil if uri.blank?
+
+      FediFollow.outbound.find_by(fedi_actor: @actor, activity_uri: uri)
+    end
+
     def local_user(object)
       uri = object.is_a?(Hash) ? object["id"] : object
       return nil unless uri.is_a?(String)

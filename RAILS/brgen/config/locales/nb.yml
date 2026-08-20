@@ -1374,7 +1374,24 @@ nb:
     sections: Seksjoner
     report_target: Rapporter %{type}
     user_profile: Brukerprofil
+  fediverse:
+    following_title: Følger andre steder
+    following_eyebrow: Fødiverset
+    follow_label: Adressen deres
+    follow_help: "Lenken til kontoen, fra Mastodon eller noe annet som snakker ActivityPub."
+    follow_send: Følg
+    following_empty: Følger ingen ennå
+    following_empty_body: "Lim inn en adresse over, så spør vi instansen deres."
+    states:
+      pending: spurt
+      accepted: følger
   flash:
+    fediverse:
+      follow_sent: Spurt. Instansen deres svarer når den svarer.
+      follow_already: Allerede spurt.
+      follow_blocked: Den instansen er blokkert her.
+      follow_not_found: Ingen konto svarte på den adressen.
+      unfollowed: Slutter å følge.
     story_posted: Historie publisert
     story_removed: Historie slettet
     community:

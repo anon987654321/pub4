@@ -16,6 +16,9 @@ module Fediverse
     def perform(inbox_url:, user_id:, payload:)
       user = User.find_by(id: user_id)
       return if user.nil? || !user.federated?
+      # A block that only works on the way in is a block that leaks on the way
+      # out: this instance would still be posting to theirs.
+      return if FediBlock.blocked_uri?(inbox_url)
 
       response = Client.post_signed(
         url: inbox_url,

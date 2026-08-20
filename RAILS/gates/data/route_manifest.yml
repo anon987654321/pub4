@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: d2f9eafa2a9205ea
+    digest: 6a6e243e64fccb54
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -82,6 +82,8 @@ apps:
       - "/users/:username/followers"
       fediverse/actors#show:
       - "/users/:username"
+      fediverse/follows#index:
+      - "/fediverse_follows"
       stories#index:
       - "/stories"
       stories#new:

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -523,14 +523,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_110000) do
     t.index ["username", "domain"], name: "index_fedi_actors_on_username_and_domain"
   end
 
+  create_table "fedi_blocks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "created_by_id"
+    t.string "domain", null: false
+    t.text "reason"
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_fedi_blocks_on_created_by_id"
+    t.index ["domain"], name: "index_fedi_blocks_on_domain", unique: true
+  end
+
   create_table "fedi_follows", force: :cascade do |t|
     t.string "activity_uri"
     t.datetime "created_at", null: false
+    t.string "direction", default: "inbound", null: false
     t.integer "fedi_actor_id", null: false
     t.string "state", default: "pending", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["fedi_actor_id", "user_id"], name: "index_fedi_follows_on_fedi_actor_id_and_user_id", unique: true
+    t.index ["fedi_actor_id", "user_id", "direction"], name: "index_fedi_follows_on_fedi_actor_id_and_user_id_and_direction", unique: true
     t.index ["fedi_actor_id"], name: "index_fedi_follows_on_fedi_actor_id"
     t.index ["user_id", "state"], name: "index_fedi_follows_on_user_id_and_state"
     t.index ["user_id"], name: "index_fedi_follows_on_user_id"
@@ -1807,6 +1818,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_110000) do
   add_foreign_key "external_identities", "identity_providers"
   add_foreign_key "external_identities", "users"
   add_foreign_key "fedi_activities", "fedi_actors"
+  add_foreign_key "fedi_blocks", "users", column: "created_by_id"
   add_foreign_key "fedi_follows", "fedi_actors"
   add_foreign_key "fedi_follows", "users"
   add_foreign_key "identity_assurances", "users"

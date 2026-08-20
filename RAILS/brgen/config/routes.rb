@@ -93,6 +93,10 @@ Rails.application.routes.draw do
   end
   get "users/:username" => "fediverse/actors#show", as: :actor, constraints: activitypub_request
 
+# Following out. The inbound half — somebody on another instance following a
+# brgen account — arrives at the inbox above and needs no route of its own.
+resources :fediverse_follows, only: %i[index create destroy], controller: "fediverse/follows", param: :uri
+
   # Stories delete themselves after 24h; `alive` hides an expired one from every
   # surface whether or not the sweep has run yet.
   resources :stories, only: %i[index show new create destroy] do

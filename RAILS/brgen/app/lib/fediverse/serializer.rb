@@ -100,6 +100,42 @@ module Fediverse
       }
     end
 
+    # Following somebody. The id is ours and is kept: an Accept names it, and
+    # without it back we cannot tell which of our follows was answered.
+    def follow(user, actor_uri, activity_uri)
+      {
+        "@context" => "https://www.w3.org/ns/activitystreams",
+        "id" => activity_uri,
+        "type" => "Follow",
+        "actor" => user.actor_uri,
+        "object" => actor_uri
+      }
+    end
+
+    def undo_follow(user, actor_uri, activity_uri)
+      {
+        "@context" => "https://www.w3.org/ns/activitystreams",
+        "id" => "#{activity_uri}#undo",
+        "type" => "Undo",
+        "actor" => user.actor_uri,
+        "object" => { "id" => activity_uri, "type" => "Follow", "actor" => user.actor_uri, "object" => actor_uri }
+      }
+    end
+
+    # An edit, told to the people who already have the old text. Without it a
+    # correction is invisible everywhere but here, which is worse than not being
+    # able to edit at all.
+    def update(post)
+      {
+        "@context" => "https://www.w3.org/ns/activitystreams",
+        "id" => "#{note_uri(post)}#updates/#{post.updated_at.to_i}",
+        "type" => "Update",
+        "actor" => post.user.actor_uri,
+        "to" => [ PUBLIC ],
+        "object" => note(post)
+      }
+    end
+
     def delete(post)
       {
         "@context" => "https://www.w3.org/ns/activitystreams",

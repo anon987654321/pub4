@@ -1369,7 +1369,24 @@ en:
     sections: Sections
     report_target: Report %{type}
     user_profile: User profile
+  fediverse:
+    following_title: Following elsewhere
+    following_eyebrow: The fediverse
+    follow_label: Their address
+    follow_help: "The account's page URL, from Mastodon or anything else that speaks ActivityPub."
+    follow_send: Follow
+    following_empty: Not following anyone yet
+    following_empty_body: "Paste an address above and we ask their instance."
+    states:
+      pending: asked
+      accepted: following
   flash:
+    fediverse:
+      follow_sent: Asked. Their instance answers when it answers.
+      follow_already: Already asked.
+      follow_blocked: That instance is blocked here.
+      follow_not_found: No account answered at that address.
+      unfollowed: Unfollowed.
     story_posted: Story posted
     story_removed: Story removed
     community:
