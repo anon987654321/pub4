@@ -651,7 +651,7 @@ and `test/models/link_preview_test.rb`.
 
 **Still open:** no WebRTC anywhere, so still no voice or video calls.
 
-### Craigslist — **expiry and renewal done**
+### Craigslist — **expiry, renewal and the non-goods verticals done**
 
 Geo listings, categories, city subdomains, casual (no-store) listings,
 buyer–seller chat and FTS were already there. Listings now expire after 45 days
@@ -667,15 +667,27 @@ announced too.
 
 **Check:** `brgen/test/models/listing_expiry_test.rb` (5).
 
+**A listing has a kind.** `goods`, `job`, `housing` or `gig`, with three detail
+tables behind the three new ones — employment type and a salary range, rent and
+deposit and rooms, gig pay and start time. Price is required only where a price
+means anything, so a job advert no longer has to name one. The index filters by
+kind and defaults to goods, and the top-offers strip filters with it: it drew
+from every listing there is, so the moment a second kind existed a bicycle
+search carried a job advert above it.
+
+**Check:** `brgen/test/controllers/marketplace_kinds_test.rb` (8), which also
+pins the 2FA guard reached from inside an engine — `two_factor_required?` turns
+on once an account has an active listing, so every seller's second listing was
+a `UrlGenerationError` 500 against a host path the engine's route set does not
+hold.
+
 **Still open:** the anonymised contact relay — it needs mail infrastructure
 (inbound routing and per-listing addresses), which is an operator change on
 vm23 rather than app code, and `brgen.no` mail is only outbound-verified today.
-Also the non-goods verticals (jobs, housing, gigs), which are mostly category
-data plus per-vertical fields rather than new machinery.
 
 ---
 
-## 4. The gates cannot see a WebGL surface
+## 4. The gates cannot see a WebGL surface — **done**
 
 `gates/support/cdp_session.rb` launches Chrome with `--disable-gpu`, so
 `webglSupported` is `false` in every rendered gate. MapLibre and the MASTER face
@@ -691,8 +703,13 @@ instrument, and any gate built on that instrument would have inherited it.
 software GL is slow and its text rasterisation differs — so the fix is probably
 a separate opt-in flag for the WebGL surfaces rather than dropping it globally.
 
-**Check:** none. Nothing asserts that a WebGL surface drew anything, which is
-the point of the entry.
+Done that way: `gates/lib/rendered/webgl_surfaces.rb` opts into SwiftShader per
+session rather than changing the default, and asserts the context exists, the
+drawing buffer has size, and MapLibre's own readiness signal fired. A canvas is
+not proof, and neither is a green run over a browser that never started — the
+gate reports `inconclusive` rather than passing when Chrome is missing.
+
+**Check:** `RAILS/test/webgl_surfaces_gate_test.rb` (4).
 
 ---
 
@@ -713,16 +730,19 @@ only so nothing above reads as available.
 
 ## Sequencing
 
-Tier 1 and Tier 2 are closed as of 2026-08-19, apart from the inbound half of
-federation, which is deliberate rather than unfinished. What is left is Tier 3
-and one instrument problem:
+Tier 1 and Tier 2 closed on 2026-08-19, apart from the inbound half of
+federation, which is deliberate rather than unfinished. Tier 3 and the WebGL
+blind spot closed on 2026-08-20: marketplace depth (variants, returns,
+wishlist, facets), the verticals' own gaps (dating verification and daily
+picks, tv sounds, takeaway group orders, the Craigslist kinds), outbound
+federation's remaining half, and a gate that can see a WebGL surface.
 
-1. **Marketplace depth** — variants, returns, seller payouts, wishlist, search
-   facets. The densest surface in the family and the one with money on it.
-2. **The verticals' own gaps** — dating photo verification and daily picks, tv
-   sounds and duets, takeaway group orders, the Craigslist non-goods verticals.
-3. **Outbound federation** (2.1) — following a remote account, `Update` on edit,
-   instance blocklists.
-4. **Section 4**, the WebGL blind spot in the rendered gates, which is not a
-   feature at all: it is the reason no gate can currently assert that a map or a
-   face drew anything.
+What is left is what an app cannot close on its own, and every item is recorded
+with its blocker rather than left implied:
+
+1. **Inbound federation** — accepting remote posts, which is a moderation and
+   spam problem before it is a code one.
+2. **Seller payouts and PSP refund transfer** — the money leaves the platform,
+   and there is no transfer to make it with.
+3. **The anonymised contact relay** — inbound mail routing on vm23.
+4. **Live streaming, Solidus, pgvector** — infrastructure, listed under Blocked.

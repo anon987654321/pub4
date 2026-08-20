@@ -70,6 +70,9 @@ apps:
         - { name: Tier 3 parity (basket, dating ranking, takeaway hours, messenger edit, listing expiry), status: done, notes: "Marketplace::Checkout above the per-listing offers with addresses and fulfilment; Dating ranked_for + Hinge prompts replacing ORDER BY RANDOM(); Takeaway::OpeningHour + tips + scheduling; message reply/edit/unsend; listing expiry as a scope with renewal. See RAILS/TODO.md Tier 3." }
         - { name: ActivityPub federation (outbound half),                    status: done, notes: "WebFinger, NodeInfo, actor/outbox/followers, verified inbox, HTTP signatures, per-inbox delivery with retry. A city is the instance: every lookup resolves against the requested host. Inbound Create/Announce/Like are verified, recorded and dropped — storing remote content needs media proxying and a moderation model ModerationReport does not have. See RAILS/TODO.md 2.1." }
         - { name: Community governance (roles, rules, flair, privacy, per-community mod queue), status: done, notes: "community_memberships.role member/moderator/owner with last-owner protection; owner-only appointment; restricted = whole city reads, members post; queue derived from the community posts because ModerationReport is polymorphic with no community_id" }
+        - { name: Messenger depth (pins, inbox search, forward, group threads, link previews, voice notes), status: done, notes: "ConversationPin + Conversation::INBOX_ORDER puts pinned first; conversations#search over titles and bodies; messages#forward; group_conversations + group_members with an owner; LinkPreview + LinkPreviewFetchJob behind OutboundHttp's SSRF guard; voice_recorder Stimulus records to an attachment. Conversation.direct_between never matched before this, so every pair of users kept getting a new DM thread" }
+        - { name: Crossposting, community wiki, story replies and streaks, status: done, notes: "crossposts#create with already_crossposted and same_as_source refusals; CommunityWikiPage + CommunityWikiRevision with a per-community edit policy; story replies land in the DM thread; StoryStreak counts consecutive days" }
+        - { name: Federation, the remaining outbound half, status: done, notes: "Fediverse::FollowRemote resolves a handle over WebFinger and sends Follow; FediBlock is an instance blocklist read on inbox and on delivery. Inbound Create/Announce is still verified-and-dropped — see RAILS/TODO.md 2.1" }
       subapp_tv:
         - { name: "Tv::Channel (slug, avatar, banner, subscribers_count)", status: done, notes: "patch_tv_models.sh" }
         - { name: "Tv::Video (status machine, duration_formatted)", status: done }
@@ -82,6 +85,7 @@ apps:
         - { name: video upload + Active Storage variants,                  status: done, notes: "Tv::Video video_file + thumbnail; webp poster/thumb variants via MediaProcessable" }
         - { name: live stream infrastructure,                              status: planned, agent: ignore, notes: "BLOCKER: needs a media server (nginx-rtmp / MediaMTX / SRS) plus transcoding, none of which exists. ffmpeg is not installed on vm23 either (see MASTER/DEBT.md), so the transcoding dependency is absent on the target host. Tv::Broadcast already models stream_key/go_live!/end_live! — the gap is infrastructure, not app code." }
         - { name: VideoPublished / BroadcastScheduled events,             status: done, notes: "VideoPublished on status=published; BroadcastScheduled via tracks_activity + BroadcastStarted/Ended" }
+        - { name: "Tv::Sound (reusable audio, per-sound feed)", status: done, notes: "a video carries a sound and a sound lists its videos, which is the TikTok loop; videos_count moves with update! because a counter cache does not move on update_column" }
       subapp_dating:
         - { name: "Dating::Profile (user, bio, interests)", status: done }
         - { name: "Dating::Like (user, liked_user)", status: done }
@@ -91,6 +95,8 @@ apps:
         - { name: city + radius filter,                                     status: done, notes: "Matchmaking radius_km + neighborhood scope" }
         - { name: match → messaging handoff,                                status: done, notes: "Dating::Match#announce_match → Conversation.find_or_create_direct" }
         - { name: photos on profile,                                        status: done, notes: "has_many_attached photos, edit purge, ProfileMediaJob variants" }
+        - { name: "Dating::Verification (pose photo, reviewed)", status: done, notes: "a verified badge on the swipe card; an unreviewed submission queues rather than passing itself" }
+        - { name: "Dating::DailyPick", status: done, notes: "one ranked pick a day per profile, held for the day so the deck does not reshuffle under the reader" }
         - { name: premium memberships / boost purchases,                    status: planned, agent: ignore }
       subapp_marketplace:
         notes: >
@@ -107,6 +113,12 @@ apps:
         - { name: geo-localized listings,                                   status: done, notes: "listing lat/lng + GeoLocatable near scope + radius_km filter in listings#index" }
         - { name: locale subdomain routing (markedsplass/markadur/…),      status: done, notes: "DomainRegistry aliases + routes derived from SUBAPP_ALIASES + marketplace_root_url helper" }
         - { name: FTS filtering,                                            status: done, notes: "live_search on listings/stores/deals + saved searches" }
+        - { name: listing kinds (goods / job / housing / gig), status: done, notes: "Marketplace::Listing.kind plus JobDetail (employment type, salary range), HousingDetail (rent, deposit, rooms, available_from) and GigDetail (pay, starts_at, hours). Price is required only for goods; the index and the top-offers strip both filter by kind and default to goods. The Craigslist non-goods half — RAILS/TODO.md Craigslist" }
+        - { name: "Marketplace::Question (public Q&A on a listing)", status: done, notes: "the seller answers in place, and an unanswered question stays visible so the next buyer sees what was asked" }
+        - { name: "Marketplace::Variant + VariantOption", status: done, notes: "size and colour options carrying their own stock and price delta; an out-of-stock variant is not offered" }
+        - { name: "Marketplace::Return", status: done, notes: "the buyer opens it and the seller accepts or refuses. BLOCKER on the money: the PSP transfer back does not exist, so a refund is recorded rather than sent" }
+        - { name: search facets + wishlist, status: done, notes: "Marketplace::ListingFacets counts before the filters narrow it, so a facet answers how many if you pick this; favourites live at /wishlist because /saved was shadowed by a host route" }
+        - { name: seller payouts, status: planned, notes: "BLOCKER: money leaving the platform needs a PSP transfer that is not configured, and a payout screen over a transfer that cannot happen is a UI over nothing" }
         - { name: solidus core mount (catalog/cart/checkout/admin),         status: planned, notes: "Gemfile + initializer + /solidus mount stub ready; solidus:install on staging only (SOLIDUS_MARKETPLACE=1). BLOCKER: database.yml is sqlite3 in all four environments incl. production, and Solidus supports Postgres/MySQL — not SQLite — for production. So this is a Postgres migration first, not a gem install. Secondary: initializer itself says never run solidus:install on the hot 1GB VPS, and solidus_marketplace is pinned at 0.1.0 (legacy) against Solidus 4.7." }
         - { name: solidus_starter_frontend storefront,                     status: planned, notes: "Amazon-like PDP/cart/checkout UI after solidus:install" }
         - { name: solidus_marketplace multi-seller,                        status: planned, notes: "3P sellers; gem 0.1.0 legacy — validate on Solidus 4.7" }
@@ -128,6 +140,7 @@ apps:
         - { name: Restaurant model (geocoding),                             status: done, notes: "Takeaway::Restaurant geocode_if_needed + city anchor offsets + lat/lng index" }
         - { name: MenuItem availability state machine,                      status: done, notes: "available flag + available_for_order? + order_item menu_item_must_be_available validation" }
         - { name: Order full state machine (placed→delivered),              status: done, notes: "Takeaway::Order TRANSITIONS pending→delivered + transition_to! + status notifications" }
+        - { name: group orders, status: done, notes: "Takeaway::GroupOrdersController — one basket several people add to, each line attributed and the total split, placed by the host" }
 
   amber:
     title: Amber
