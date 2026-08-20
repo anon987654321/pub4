@@ -7,6 +7,10 @@ module Master
 
       # SQL strings embedded in Ruby DB adapter files are expected — only flag
       # actual mixed-medium template files.
+        # Retired registry twins — each lives once, in law/:
+        #   MEANINGFUL_NAMES, WHY_NOT_WHAT
+        # (test_scan_rule_contracts proves each reaches findings through the bridge).
+
         RuleDSL.rule :NO_MULTIPLE_LANGUAGES,
           severity: :warning, tags: %i[SMALL_PARTS],
           description: "one medium per artifact" do |src, path:|
@@ -85,19 +89,6 @@ module Master
 
       # Generic names: only very short or clearly placeholder names. `data` and
       # `result` are contextually meaningful in most Ruby code.
-        RuleDSL.rule :MEANINGFUL_NAMES,
-          severity: :info, tags: %i[READABILITY],
-          description: "names reveal intent" do |src, path:|
-          scan_lines(src, /\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\b\s*=/,
-            message: "generic name — use a name that reveals intent")
-        end
-
-        RuleDSL.rule :WHY_NOT_WHAT,
-          severity: :info, tags: %i[BE_CONCISE],
-          description: "comments explain why, not what" do |src, path:|
-          scan_lines(src, /#\s*(increment|set|get|update|return|initialize|create|add)\s+\w+/,
-            message: "comment describes what the code does — explain why instead")
-        end
 
         RuleDSL.rule :TYPOGRAPHIC_EXCELLENCE,
           severity: :info, tags: %i[TYPOGRAPHY],

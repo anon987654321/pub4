@@ -38,6 +38,11 @@ module Master
         return [] if registry.size < MIN_REGISTRY_SIZE
 
         registered = registry.filter_map { |klass| Master::Review::Scan::RuleFactory.registry_id(klass, root:)&.upcase }.to_set
+        # law/ is the second rule population: a rule whose registry twin
+        # retired lives on there, and its principle-map reference is a live
+        # pointer, not a dangling one. Loaded from Master::ROOT because law/
+        # is global like the registry — `root:` here may be a fixture dir.
+        registered |= law_rule_ids
         map = Master::Ground::PrincipleMap.load(root:)
         map.principles.each_with_object([]) do |(id, entry), acc|
           entry.rule_ids.each { |rid| acc << [id, rid] unless registered.include?(rid.to_s.upcase) }
@@ -61,6 +66,15 @@ module Master
         dangling.each { |principle_id, rule_id| text = remove_rule_id_line(text, principle_id, rule_id) }
         File.write(path, text)
         dangling
+      end
+
+      def law_rule_ids
+        require File.join(Master::ROOT, "law", "law")
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+        ::Law.rules.keys.map { |id| id.to_s.upcase }.to_set
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PrincipleMapRepair.law_rule_ids", severity: :load_bearing)
+        Set.new
       end
 
       def remove_rule_id_line(text, principle_id, rule_id)

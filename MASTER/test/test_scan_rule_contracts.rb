@@ -93,6 +93,37 @@ class TestScanRuleContracts < Minitest::Test
     assert_equal :error, retry_hits.first[:severity]
   end
 
+  # The batch-retired twins: every id whose registry block was a regex-identical
+  # duplicate of its law. Each law already proves itself against its own bad
+  # fixture at load; this asserts the other half of the contract — that the id
+  # still reaches scanner findings through the bridge, at a path its own
+  # scoping (path prefix + language) accepts.
+  RETIRED_TWINS = %w[
+    ARIA_INTERACTIVE BUTTON_OVER_ANCHOR CLAMP_TYPOGRAPHY DOLLAR_PAREN
+    I18N_COVERAGE IMG_ALT LAZY_IMAGES MEANINGFUL_NAMES MEASURE_OPTIMUM
+    MIGRATION_ADD_REFERENCE_NO_FK MIGRATION_FIND_OR_CREATE_BY
+    MIGRATION_REMOVE_COLUMN MOBILE_FIRST NO_IMPORT_SCSS NO_INLINE_STYLES
+    PERCENT_LITERAL QUOTE_VARIABLES RATE_LIMITING_MISSING
+    STRICT_LOADING_MISSING TRANSFORM_KEYS WHY_NOT_WHAT
+  ].freeze
+
+  TWIN_EXT = {
+    "ruby" => ".rb", "html" => ".html", "css" => ".css",
+    "scss" => ".scss", "zsh" => ".zsh", "javascript" => ".js",
+  }.freeze
+
+  def test_every_retired_twin_reaches_findings_through_the_bridge
+    bridge = Rules::LawBridgeRule.new
+    RETIRED_TWINS.each do |id|
+      law = Law.rules[id.to_sym]
+      refute_nil law, "#{id} must exist in law/ — its registry twin is gone"
+      ext = TWIN_EXT.fetch(law.languages.first&.to_s, ".rb")
+      path = "#{law.path || "/lib/"}example#{ext}"
+      hits = bridge.check(law.bad, path:)
+      assert hits.any? { |h| h[:rule] == id }, "#{id} must reach scanner findings via the bridge"
+    end
+  end
+
   def test_strict_mode_zsh_rule_flags_missing_set_e
     assert_finding rule("STRICT_MODE_ZSH"), "#!/usr/bin/env zsh\necho ok\n", "script.zsh", "missing set"
   end

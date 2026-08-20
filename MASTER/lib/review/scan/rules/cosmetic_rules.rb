@@ -4,6 +4,10 @@ module Master
   module Review
     module Scan
       module Rules
+        # Retired registry twins — each lives once, in law/:
+        #   MEASURE_OPTIMUM
+        # (test_scan_rule_contracts proves each reaches findings through the bridge).
+
         ABBREV_IDENT_RE = /\b(?:def|class|module|\|)\s+.*\b(tmp|idx|cfg|ctx|num|val|obj|str|arr|buf|temp|ret)\b/.freeze
         EN_DASH_RANGE_RE = /\b\d+\s?-\s?\d+\b/.freeze
         NUMERIC_UNDERSCORE_RE = /[^\d_.]\d{5,}(?![\d_])/.freeze
@@ -137,13 +141,6 @@ module Master
             next if stripped.match?(/^\s*-\s+\w/) # YAML list item
             finding(line: number, message: "numeric range — use en dash: 45–75 not 45-75")
           end
-        end
-
-        RuleDSL.rule :MEASURE_OPTIMUM,
-          severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[css scss],
-          description: "prose measure in ch/rem, not wide px columns" do |src, path:|
-          scan_lines(src, /max-width:\s*([89]\d{2}|\d{4,})px/i,
-            message: "wide px max-width — bound prose to ~66ch or 33rem")
         end
 
         RuleDSL.rule :ALL_CAPS_NO_TRACKING,

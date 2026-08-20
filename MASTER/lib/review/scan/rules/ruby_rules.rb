@@ -5,28 +5,15 @@ module Master
     module Scan
       module Rules
 
+        # Retired registry twins — each lives once, in law/:
+        #   MIGRATION_ADD_REFERENCE_NO_FK, MIGRATION_FIND_OR_CREATE_BY, MIGRATION_REMOVE_COLUMN, PERCENT_LITERAL
+        #   RATE_LIMITING_MISSING, STRICT_LOADING_MISSING, TRANSFORM_KEYS
+        # (test_scan_rule_contracts proves each reaches findings through the bridge).
+
         RuleDSL.rule :SINGLE_PRIVATE_SECTION,
           severity: :info, tags: %i[SMALL_PARTS], applies_to: %i[ruby],
           description: "one private section at bottom" do |src, path:|
           scan_lines(src, /private\s+:\w+/, message: "inline private call — gather private methods at bottom")
-        end
-
-        RuleDSL.rule :STRICT_LOADING_MISSING,
-          severity: :info, tags: %i[PERFORMANCE], applies_to: %i[ruby],
-          description: "AR model lacks strict_loading_by_default" do |src, path:|
-          next [] unless path.include?("/app/models/")
-          next [] if src.match?(/\bstrict_loading_by_default\b/)
-          next [] unless src.match?(/class\s+\w+\s+<\s+(?:ApplicationRecord|ActiveRecord::Base)\b/)
-          [finding(line: 1, message: "model missing strict_loading_by_default true")]
-        end
-
-        RuleDSL.rule :RATE_LIMITING_MISSING,
-          severity: :error, tags: %i[SECURITY], applies_to: %i[ruby],
-          description: "sensitive controller missing rate_limit/throttle" do |src, path:|
-          next [] unless path.include?("/app/controllers/")
-          next [] if src.match?(/rate_limit|throttle/)
-          next [] unless src.match?(/(login|signup|sign_up|password|reset)/)
-          [finding(line: 1, message: "auth/sensitive controller missing rate_limit or throttle")]
         end
 
         # principle_map: strong_parameters (detects mass_assignment_risk). Two
@@ -47,29 +34,6 @@ module Master
           blanket + raw
         end
 
-        RuleDSL.rule :MIGRATION_ADD_REFERENCE_NO_FK,
-          severity: :error, tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
-          description: "add_reference without foreign_key:" do |src, path:|
-          next [] unless path.include?("/db/migrate/")
-          scan_lines(src, /add_reference(?!.*foreign_key:)/,
-            message: "add_reference without foreign_key: true — data integrity risk")
-        end
-
-        RuleDSL.rule :MIGRATION_REMOVE_COLUMN,
-          severity: :error, tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
-          description: "remove_column is destructive" do |src, path:|
-          next [] unless path.include?("/db/migrate/")
-          scan_lines(src, /remove_column/,
-            message: "remove_column is destructive — confirm column is unused across all deploys")
-        end
-
-        RuleDSL.rule :MIGRATION_FIND_OR_CREATE_BY,
-          severity: :warning, tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
-          description: "find_or_create_by needs unique index" do |src, path:|
-          next [] unless path.include?("/db/migrate/")
-          scan_lines(src, /find_or_create_by/, message: "find_or_create_by is not atomic without a unique index")
-        end
-
         RuleDSL.rule :EACH_WITH_OBJECT,
           severity: :warning, tags: %i[READABILITY], applies_to: %i[ruby],
           description: "prefer each_with_object over inject for hash building" do |src, path:|
@@ -82,13 +46,6 @@ module Master
           next [] if path.to_s.include?("/review/scan/rules/")
           scan_lines(src, /(\w+)\s*\|\|\s*\[\](?!\s*<<)/,
             message: "nil-or-empty array — prefer Array(foo) for nil-safe coercion")
-        end
-
-        RuleDSL.rule :PERCENT_LITERAL,
-          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
-          description: "use %i[] and %w[] for symbol/string arrays" do |src, path:|
-          scan_lines(src, /\[:[a-z_]+,\s*:[a-z_]+,\s*:[a-z_]+/,
-            message: "use %i[...] for symbol arrays")
         end
 
         RuleDSL.rule :HASH_FETCH,
@@ -112,13 +69,6 @@ module Master
 
             finding(line: n, message: "hash symbol lookup with fallback — prefer hash.fetch(:key, default)")
           end
-        end
-
-        RuleDSL.rule :TRANSFORM_KEYS,
-          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
-          description: "use transform_keys/transform_values" do |src, path:|
-          scan_lines(src, /\.each_with_object\(\{\}\)\s*\{\s*\|\(k,\s*v\),\s*h\|/,
-            message: "use transform_keys/transform_values instead of manual each_with_object")
         end
 
         RuleDSL.rule :IMMUTABLE,

@@ -451,7 +451,7 @@ spine:
   # None of it absorbable by core/'s standard: a handler per verb and a rule
   # per constraint, and "a TSV's tabs are its delimiter" is neither. The orphan
   # account was checked again during the audit and remains empty.
-  lib_code_ceiling: 39067
+  lib_code_ceiling: 39012
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

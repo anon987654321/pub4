@@ -4,6 +4,10 @@ module Master
   module Review
     module Scan
       module Rules
+        # Retired registry twins — each lives once, in law/:
+        #   DOLLAR_PAREN, QUOTE_VARIABLES
+        # (test_scan_rule_contracts proves each reaches findings through the bridge).
+
         VENDORED_JS_RE = %r{/public/three\.module\.js\z}.freeze
 
         RuleDSL.rule :CONST_BY_DEFAULT,
@@ -61,24 +65,12 @@ module Master
             message: "for...in iterates keys — use for...of for array values")
         end
 
-        RuleDSL.rule :QUOTE_VARIABLES,
-          severity: :error, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
-          description: "always quote $variables" do |src, path:|
-          scan_lines(src, /(?<!["'\\])\$\w+(?!["'])/, message: "unquoted $variable — wrap in double quotes")
-        end
-
         RuleDSL.rule :DOUBLE_BRACKET,
           severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
           description: "use [[ ]] over [ ]" do |src, path:|
           # POSIX sh shebang — [[ ]] is a keyword only in zsh/bash, not in sh
           next [] if src.lines.first.to_s.match?(%r{#!/(?:usr/bin/env sh|bin/sh)\b})
           scan_lines(src, /(?<!\[)\[\s+[^\[]/, message: "[ ] test — use [[ ]] in zsh")
-        end
-
-        RuleDSL.rule :DOLLAR_PAREN,
-          severity: :warning, tags: %i[READABILITY], applies_to: %i[zsh],
-          description: "replace backticks with $(command)" do |src, path:|
-          scan_lines(src, /`[^`]+`/, message: "backtick substitution — use $(command) for clarity")
         end
 
         RuleDSL.rule :NO_VAR,

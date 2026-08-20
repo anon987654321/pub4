@@ -4,6 +4,12 @@ require_relative "test_helper"
 require "review/scan/rule_dsl"
 
 class TestWebScanFixtures < Minitest::Test
+  # IMG_ALT, LAZY_IMAGES and BUTTON_OVER_ANCHOR live once, in law/ — their
+  # scanner surface is the bridge, so these fixtures assert through it.
+  def law_findings(id, code, path:)
+    Master::Review::Scan::Rules::LawBridgeRule.new.check(code, path:).select { |f| f[:rule] == id }
+  end
+
   def test_html_lang_flags_missing_lang
     assert_finding rule("HTML_LANG"), "<html><body></body></html>", "page.html", "lang="
   end
@@ -13,15 +19,15 @@ class TestWebScanFixtures < Minitest::Test
   end
 
   def test_img_alt_flags_missing_alt
-    assert_finding rule("IMG_ALT"), '<img src="logo.png">', "page.html", "alt="
+    refute_empty law_findings("IMG_ALT", '<img src="logo.png">', path: "page.html")
   end
 
   def test_lazy_images_flags_missing_loading
-    assert_finding rule("LAZY_IMAGES"), '<img src="a.png" alt="a">', "page.html", "loading=lazy"
+    refute_empty law_findings("LAZY_IMAGES", '<img src="a.png" alt="a">', path: "page.html")
   end
 
   def test_button_over_anchor_flags_hash_link
-    assert_finding rule("BUTTON_OVER_ANCHOR"), '<a href="#">Click</a>', "page.html", "<button>"
+    refute_empty law_findings("BUTTON_OVER_ANCHOR", '<a href="#">Click</a>', path: "page.html")
   end
 
   def test_magic_color_flags_raw_hex_in_css
@@ -48,8 +54,11 @@ class TestWebScanFixtures < Minitest::Test
       </html>
     HTML
 
-    %w[HTML_LANG META_CHARSET IMG_ALT BUTTON_OVER_ANCHOR].each do |id|
+    %w[HTML_LANG META_CHARSET].each do |id|
       assert_empty rule(id).check(code, path: "clean.html"), "expected no #{id} findings"
+    end
+    %w[IMG_ALT BUTTON_OVER_ANCHOR].each do |id|
+      assert_empty law_findings(id, code, path: "clean.html"), "expected no #{id} findings"
     end
   end
 end

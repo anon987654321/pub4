@@ -8,7 +8,7 @@
 Law.define(:CLAMP_TYPOGRAPHY) do
   source "CSS fluid typography — clamp() (web.dev)"
   severity :info
-  languages %i[css]
+  languages %i[css scss]
   detect { |line| line.match?(/@media.*\{[^}]*font-size:/) }
   fix "Use font-size: clamp(1rem, 2.5vw, 1.5rem)."
   bad  "@media (min-width: 40em) { h1 { font-size: 2rem; } }"
@@ -41,7 +41,7 @@ end
 Law.define(:MEASURE_OPTIMUM) do
   source "Bringhurst, Elements of Typographic Style — the measure (45–75 chars)"
   severity :info
-  languages %i[css]
+  languages %i[css scss]
   detect { |line| line.match?(/max-width:\s*([89]\d{2}|\d{4,})px/) }
   fix "Bound running-text columns to ~66ch (≈ 33rem), not wide px values."
   bad  "article { max-width: 960px; }"
@@ -52,7 +52,7 @@ end
 Law.define(:MOBILE_FIRST) do
   source "Mobile First (Luke Wroblewski, 2011)"
   severity :warn
-  languages %i[css]
+  languages %i[css scss]
   detect { |line| line.match?(/@media\s*\(\s*max-width/) }
   fix "Use min-width (mobile-first, progressive enhancement)."
   bad  "@media (max-width: 600px) {"
