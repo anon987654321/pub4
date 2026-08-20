@@ -46,6 +46,24 @@ class TestScanRuleFalsePositives < Minitest::Test
     assert_match(/code lines/, hits.first[:message])
   end
 
+
+# --- DOUBLE_BRACKET ----------------------------------------------------
+# [[ ]] is a keyword in zsh and bash, not in POSIX sh — telling an sh
+# script to use it is a syntax error prescription.
+def test_double_bracket_leaves_posix_sh_alone
+  sh = "#!/bin/sh
+if [ -f x ]; then echo ok; fi
+"
+  assert_empty findings(:DOUBLE_BRACKET, sh, path: "script.sh")
+end
+
+def test_double_bracket_still_fires_on_zsh
+  zsh = "#!/usr/bin/env zsh
+if [ -f x ]; then echo ok; fi
+"
+  refute_empty findings(:DOUBLE_BRACKET, zsh, path: "script.zsh")
+end
+
   # --- COMPLETION_THEATER -------------------------------------------------
 
   def test_completion_theater_ignores_the_etc_stdlib_and_etc_paths

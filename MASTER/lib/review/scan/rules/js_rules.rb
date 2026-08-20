@@ -70,6 +70,8 @@ module Master
         RuleDSL.rule :DOUBLE_BRACKET,
           severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
           description: "use [[ ]] over [ ]" do |src, path:|
+          # POSIX sh shebang — [[ ]] is a keyword only in zsh/bash, not in sh
+          next [] if src.lines.first.to_s.match?(%r{#!/(?:usr/bin/env sh|bin/sh)\b})
           scan_lines(src, /(?<!\[)\[\s+[^\[]/, message: "[ ] test — use [[ ]] in zsh")
         end
 
