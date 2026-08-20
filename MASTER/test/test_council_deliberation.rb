@@ -40,6 +40,30 @@ class TestCouncilDeliberation < Minitest::Test
     assert_match(/veto/i, result.message)
   end
 
+  # The CLI-lane posture: a dev Mac cannot hear 26 personas inside the budget
+  # (the file writes the arithmetic down), so local runs take one round of a
+  # capped panel, veto roles surviving the cut first. vm23 hears everyone.
+  def test_local_posture_caps_the_panel_and_rounds
+    old = ENV["MASTER_COUNCIL_LOCAL"]
+    ENV["MASTER_COUNCIL_LOCAL"] = "1"
+    assert Master::Review::Council::Deliberation.local_posture?
+    cap = Master::Review::Council::Deliberation.local_panel_size
+    assert_operator cap, :>=, 3, "a panel below quorum cannot deliberate"
+
+    critic = Master::Review::Council::Critique.new(mode: :general, agent: nil, files: [])
+    panel = Array.new(26) do |i|
+      Persona.new(name: i < 2 ? "Veto#{i}" : "P#{i}", role: "r", bias: "b", prompt: "p", veto_role: i < 2)
+    end
+    localized = critic.send(:localize_panel, panel)
+    assert_equal cap, localized.size
+    assert localized.take(2).all?(&:veto?), "veto roles must survive the cut first"
+
+    ENV["MASTER_COUNCIL_LOCAL"] = "0"
+    assert_equal panel, critic.send(:localize_panel, panel)
+  ensure
+    old.nil? ? ENV.delete("MASTER_COUNCIL_LOCAL") : ENV["MASTER_COUNCIL_LOCAL"] = old
+  end
+
   def test_quorum_error_carries_the_failure_tally
     failing = Class.new do
       def ask(_prompt, **) = raise(StandardError, "Insufficient credits. Add more using https://openrouter.ai")

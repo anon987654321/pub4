@@ -108,6 +108,22 @@ class TestLLMDispatcher < Minitest::Test
     assert_equal 64, k1.length, "SHA256 hex is 64 chars"
   end
 
+  # A billing or rate-limit refusal cannot succeed on an in-place retry, and
+  # :llm_call_failure is not in fallback_policy.on — seven rule passes died
+  # on "Insufficient credits" with claude-cli unused in the same chain
+  # (2026-08-19). :budget and :rate_limit make the chain walk on.
+  def test_billing_and_rate_errors_classify_as_failover_categories
+    dispatcher, = build_dispatcher
+
+    assert dispatcher.send(:billing_error?, StandardError.new("Insufficient credits. Add more using https://openrouter.ai"))
+    assert dispatcher.send(:billing_error?, StandardError.new("402 Payment Required"))
+    refute dispatcher.send(:billing_error?, StandardError.new("connection reset"))
+
+    assert dispatcher.send(:rate_limit_error?, StandardError.new("Rate limit exceeded: free-models-per-min"))
+    assert dispatcher.send(:rate_limit_error?, StandardError.new("HTTP 429 Too Many Requests"))
+    refute dispatcher.send(:rate_limit_error?, StandardError.new("connection reset"))
+  end
+
   def test_send_claude_cli_returns_timeout_error
     dispatcher, _session, _bus = build_dispatcher
     def dispatcher.capture3_with_timeout(_timeout_s, *_args, **)

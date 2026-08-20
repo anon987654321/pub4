@@ -117,6 +117,14 @@ module Master
       rescue StandardError => err
         record_provider_outcome(selected_model, :llm_call_failure, latency_ms: elapsed_ms(started), error: err.message)
         return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
+        # A billing or rate-limit refusal cannot succeed on an in-place retry,
+        # and :llm_call_failure is not in fallback_policy.on — so an
+        # out-of-credit OpenRouter model was retried in place and the pass
+        # died with claude-cli sitting unused in the same chain (2026-08-19
+        # diagnostics: seven rule passes, all "Insufficient credits").
+        # Classified as :budget / :rate_limit, the chain walks on.
+        return Result.err(redact_secrets(err.message.to_s), category: :budget) if billing_error?(err)
+        return Result.err(redact_secrets(err.message.to_s), category: :rate_limit) if rate_limit_error?(err)
         Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
       end
 
@@ -126,15 +134,6 @@ module Master
         out
       end
 
-      def missing_key_error?(err)
-        return false if Master.keyless_llm_enabled?
-        error_message = err.message.to_s
-        error_message.match?(/missing configuration/i) ||
-          error_message.match?(/api[_\- ]?key/i) ||
-          error_message.match?(/unauthorized/i) ||
-          error_message.match?(/401/) ||
-          !Master.any_api_key_present?
-      end
 
       def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
       def web_chat_model?(model_id)   = model_id.to_s.start_with?("web-chat:")
@@ -147,6 +146,24 @@ module Master
       end
 
       private
+
+      def billing_error?(err)
+        err.message.to_s.match?(/insufficient credits|credit balance|payment required|\b402\b|billing/i)
+      end
+
+      def rate_limit_error?(err)
+        err.message.to_s.match?(/rate.?limit|too many requests|\b429\b/i)
+      end
+
+      def missing_key_error?(err)
+        return false if Master.keyless_llm_enabled?
+        error_message = err.message.to_s
+        error_message.match?(/missing configuration/i) ||
+          error_message.match?(/api[_\- ]?key/i) ||
+          error_message.match?(/unauthorized/i) ||
+          error_message.match?(/401/) ||
+          !Master.any_api_key_present?
+      end
 
       def image_present?(image)
         return false if image.nil?

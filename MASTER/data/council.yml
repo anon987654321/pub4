@@ -333,6 +333,13 @@ parameters:
   # Fraction of the council whose feedback must agree before a round counts as
   # converged. Read by Deliberation::CONVERGENCE_OVERLAP. Not a weighted
   # majority — personas carry no weight; they carry a temperature and a veto.
+  # CLI-lane sizing: on a dev Mac the council speaks through the claude CLI,
+  # where hearing all 26 personas needs ~1421s against the 600s budget
+  # (deliberation.rb writes the arithmetic down). local_panel is the panel
+  # size that fits; veto roles and the Maintainer survive the cut first.
+  # Active when MASTER_COUNCIL_LOCAL=1, or by default on darwin; vm23 and
+  # any host with MASTER_COUNCIL_LOCAL=0 hears the full council.
+  local_panel: 7
   consensus_threshold:  0.70
   max_iterations:       25     # oscillation halt — forces explicit human decision
   oscillation_detection: true

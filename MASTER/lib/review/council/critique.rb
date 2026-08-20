@@ -103,10 +103,27 @@ module Master
         def build_panel(preset)
           all = Personas.load
           names = Array(preset["panel"] || @mode[:panel]).map(&:downcase)
-          return all if names.empty?
+          panel = if names.empty?
+                    all
+                  else
+                    chosen = all.select { |persona| names.include?(persona.name.downcase) }
+                    chosen.empty? ? Personas::DEFAULTS : chosen
+                  end
+          localize_panel(panel)
+        end
 
-          panel = all.select { |persona| names.include?(persona.name.downcase) }
-          panel.empty? ? Personas::DEFAULTS : panel
+        # CLI-lane sizing (see Deliberation.local_posture?): a full 26-persona
+        # panel cannot be heard inside the budget on the claude CLI, so local
+        # runs take council.yml's local_panel, veto roles and the Maintainer
+        # surviving the cut first.
+        def localize_panel(panel)
+          return panel unless Deliberation.local_posture?
+
+          cap = Deliberation.local_panel_size
+          return panel if panel.size <= cap
+
+          keep = panel.select { |p| (p.respond_to?(:veto?) && p.veto?) || p.name == "Maintainer" }.first(cap)
+          keep + (panel - keep).first([cap - keep.size, 0].max)
         end
 
         def build_payload(preset)

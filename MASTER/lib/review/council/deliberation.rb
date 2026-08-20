@@ -82,7 +82,21 @@ module Master
           validate_dependencies!
         end
 
-        def review_convergent(code, context: nil, max_rounds: CONVERGENCE_ROUNDS)
+        # The CLI-lane posture: on a dev Mac the council speaks through the
+        # claude CLI, and the arithmetic above says 26 personas need ~1421s
+        # against a 600s budget — so local runs take one round of a panel
+        # council.yml sizes (local_panel), and vm23 hears everyone.
+        # MASTER_COUNCIL_LOCAL overrides in either direction.
+        def self.local_posture?
+          ENV.fetch("MASTER_COUNCIL_LOCAL") { RUBY_PLATFORM.include?("darwin") ? "1" : "0" } == "1"
+        end
+
+        def self.local_panel_size
+          Integer(Master.load_yaml(Master::COUNCIL_PATH, default: {}).dig("parameters", "local_panel") || 7)
+        end
+
+        def review_convergent(code, context: nil, max_rounds: nil)
+          max_rounds ||= self.class.local_posture? ? 1 : CONVERGENCE_ROUNDS
           history = []
           round_context = context
           max_rounds.times do |index|
