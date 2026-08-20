@@ -109,6 +109,13 @@ module Master
             send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, &blk)
           end
         end
+        # The circuit breaker returns provider failures as Err(:provider_error)
+        # rather than raising, so the rescue below never sees them — and
+        # :provider_error is deliberately not failover-eligible (a transient
+        # 5xx wants in-place retry). Billing and rate refusals are not
+        # transient; measured 2026-08-20: an out-of-credit call arrives here
+        # as :provider_error and no lane ever walked.
+        result = reclassify_provider_error(result)
         record_provider_result(model: selected_model, result:, started:)
         result
       rescue Io::CircuitBreaker::CircuitError => err
@@ -146,6 +153,14 @@ module Master
       end
 
       private
+
+      def reclassify_provider_error(result)
+        return result unless result.is_a?(Master::Result::Err) && result.category == :provider_error
+        return Master::Result.err(result.message, category: :budget) if billing_error?(result)
+        return Master::Result.err(result.message, category: :rate_limit) if rate_limit_error?(result)
+
+        result
+      end
 
       def billing_error?(err)
         err.message.to_s.match?(/insufficient credits|credit balance|payment required|\b402\b|billing/i)

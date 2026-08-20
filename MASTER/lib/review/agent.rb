@@ -73,13 +73,12 @@ module Master
         result.to_s
       end
 
-      # A category a retry cannot cure but a different lane can. ask/call walk
-      # the full fallback chain; ask_once deliberately does not — but raising
-      # on the FIRST broke model left claude-cli unconsulted, and the fix
-      # strategies and ideation all speak through ask_once, so one empty
-      # OpenRouter balance killed every single-shot call (2026-08-20 proof
-      # run: same seven insufficient-credits deaths after the chain-path fix).
-      SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout].freeze
+# A category a retry cannot cure but a different lane can. chat/call
+# walk the full fallback chain; the single-shot doors (ask, ask_once)
+# take exactly one hop to the claude_code chain head instead — and the
+# categories that qualify come from the same models.yml
+# fallback_policy.on the chain reads, so the two lists cannot drift.
+SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
 
       def ask_once(prompt, system: nil, model: nil, image: nil, temperature: nil)
         messages = [{ role: "user", content: filter_prompt(prompt) }]
@@ -117,12 +116,18 @@ module Master
 
       private
 
+def single_call_failover_categories
+  @single_call_failover_categories ||=
+    (@model_router.respond_to?(:failover_skip_categories) && @model_router.failover_skip_categories) ||
+    SINGLE_CALL_FAILOVER
+end
+
       # Both single-shot doors — ask and ask_once — used to raise on the first
       # broke model. One hop to the claude_code chain head on any category a
       # retry cannot cure; the 2026-08-20 proof runs showed the error-severity
       # rules die in ask (via FixAttempt) after ask_once was fixed alone.
       def retry_on_broke_lane(result, chosen, messages, system: nil, image: nil, temperature: nil)
-        return result unless result.is_a?(Master::Result::Err) && SINGLE_CALL_FAILOVER.include?(result.category)
+        return result unless result.is_a?(Master::Result::Err) && single_call_failover_categories.include?(result.category)
 
         fallback = single_call_fallback_model
         return result unless fallback && fallback != chosen
