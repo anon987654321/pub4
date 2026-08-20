@@ -1,7 +1,8 @@
 # brgen takeaway
 
-Food-ordering and delivery vertical for brgen, served at `takeaway.<city>`. A
-mountable Rails engine — see [`../../ENGINES.md`](../../ENGINES.md).
+Food-ordering and delivery vertical for brgen, served at `takeaway.<city>`
+(`takeaway.brgen.no`, `takeaway.lsangeles.com`). A mountable Rails engine — see
+[`../../ENGINES.md`](../../ENGINES.md). Topology: [`../../AGENTS.md`](../../AGENTS.md).
 
 ## What it is
 

@@ -1,11 +1,26 @@
 <!-- doc_paths: ignore -->
 # brgen verticals as mountable engines
 
-brgen's subdomain verticals are being pulled out of the host app into mountable
-Rails engines under `engines/`, so each subapp (tv, dating, takeaway, playlist,
-marketplace, messenger) has focused ownership instead of drowning in brgen main.
+brgen is one Falcon process. The main feed lives at the city apex. Each
+vertical below is a **subdomain of that apex** — a namespaced engine, not a
+fourth Rails app. Every `Brgen::DomainRegistry::ENTRIES` city gets this, not
+only Bergen: `dating.oshlo.no`, `dating.lndon.uk`, `dating.lsangeles.com`.
+Apexes are usually the city with a vowel dropped. Topology: `AGENTS.md`.
+
+| Subapp | Engine | Subdomain (Bergen / LA) |
+|---|---|---|
+| marketplace | `engines/marketplace` | markedsplass.brgen.no / marketplace.lsangeles.com |
+| dating | `engines/dating` | dating.\* |
+| takeaway | `engines/takeaway` | takeaway.\* |
+| tv | `engines/tv` | tv.\* |
+| maps | `engines/maps` | maps.\* |
+| playlist | `engines/playlist` | playlist.\* |
+| messenger | host `config/routes.rb` (not an engine) | messenger.\* |
+
+Marketplace is the only localized subdomain word. Messenger was never extracted.
+
 brgen main keeps the x.com-style social feed; the marketplace engine owns every
-listing there is; the rest are their own domains.
+listing there is; the rest are their own hosts.
 
 This paragraph used to say brgen main also kept "the craigslist/airbnb-style
 personal classifieds". It does not and never did: `brgen/app/models/marketplace.rb`

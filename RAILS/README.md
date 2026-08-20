@@ -2,12 +2,18 @@
 
 3 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work lives separately in `apps.horizon.yml`. Per-app notes: `<app>/AGENTS.md`. Debt: `MASTER/DEBT.md`, operator debt in `OPENBSD/data/debt.yml`.
 
+brgen is **one process, many hosts**: every city apex in
+`Brgen::DomainRegistry` (feed) plus namespaced engines on subdomains
+(`dating.brgen.no`, `dating.lsangeles.com`, `marketplace.lndon.uk`, …). Apexes
+are usually the city with a vowel dropped. Not a folder of apps. Read
+`brgen/AGENTS.md` before touching a vertical.
+
 ## Apps
 
 | App | Domain | Port | Role |
 |-----|--------|------|------|
-| brgen | brgen.no | 38182 | City social + marketplace, dating, TV, takeaway, playlist |
-| amber | amber.brgen.no | 61352 | Wardrobe / outfit intelligence |
+| brgen | brgen.no (+ city apexes) | 38182 | City network: feed at the apex, vertical engines on subdomains |
+| amber | amber.brgen.no | 61352 | Wardrobe / outfit intelligence (separate app, not a brgen subapp) |
 | bsdports | bsdports.org | 47312 | Ports search and advisories |
 
 Deploy: `cd RAILS && doas zsh deploy.sh` (default: brgen) or `doas zsh deploy.sh <app>`

@@ -1,9 +1,10 @@
 # brgen marketplace
 
 Amazon-style multi-seller storefront for brgen, served at the marketplace
-subdomain (localized per country, e.g. `markedsplass.brgen.no` — see
-`Brgen::DomainRegistry::SUBAPP_ALIASES`). A mountable Rails engine — see
-[`../../ENGINES.md`](../../ENGINES.md).
+subdomain (localized per country: `markedsplass.brgen.no`,
+`marketplace.lsangeles.com` — see `Brgen::DomainRegistry::SUBAPP_ALIASES`).
+A mountable Rails engine — see [`../../ENGINES.md`](../../ENGINES.md).
+Topology: [`../../AGENTS.md`](../../AGENTS.md).
 
 ## What it is
 

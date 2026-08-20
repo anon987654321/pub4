@@ -1,12 +1,28 @@
 # brgen
 
-Hyperlocal city network — one app, many verticals per host.
+Hyperlocal city network. **One Rails process, many hosts.** Agent map: `AGENTS.md`.
 
-## Surfaces
+A city is an apex. The apex is the social feed. Each vertical is a namespaced
+subapp on a subdomain of **that** apex, not a path and not a second deploy.
+This is true of every row in `Brgen::DomainRegistry::ENTRIES`, not only Bergen
+and LA: apexes are the city with a vowel dropped (`brgen.no`, `oshlo.no`,
+`lsangeles.com`, `lndon.uk`, `chcago.us`, …).
 
-Posts, marketplace, dating, playlist, TV, takeaway, maps, messaging. Tenant: `acts_as_tenant` on `city_id`.
+| Bergen | Los Angeles | Code |
+|---|---|---|
+| brgen.no | lsangeles.com | host `app/` (feed) |
+| markedsplass.brgen.no | marketplace.lsangeles.com | `engines/marketplace` |
+| dating.brgen.no | dating.lsangeles.com | `engines/dating` |
+| takeaway.brgen.no | takeaway.lsangeles.com | `engines/takeaway` |
+| tv.brgen.no | tv.lsangeles.com | `engines/tv` |
+| maps.brgen.no | maps.lsangeles.com | `engines/maps` |
+| playlist.brgen.no | playlist.lsangeles.com | `engines/playlist` |
+| messenger.brgen.no | messenger.lsangeles.com | host routes |
 
-Subdomains: `tv`, `dating`, `playlist`, `takeaway`, marketplace aliases, `maps`, `messenger`. MASTER: `ai.brgen.no`.
+Tenant: `acts_as_tenant` on `city_id`, from the apex. Marketplace subdomain is
+localized (`markedsplass` / `marketplace` / `marktplatz`); the others are the
+same word everywhere. Full city list: `Brgen::DomainRegistry`. `ai.brgen.no` is
+MASTER, not a vertical.
 
 ## Stack
 

@@ -18,6 +18,10 @@ apps:
     title: Brgen
     domain: brgen.no
     port: 38182
+    # One Falcon process. City apexes (brgen.no, lsangeles.com, …) each carry
+    # the feed at the apex and namespaced engines on subdomains
+    # (dating.brgen.no, marketplace.lsangeles.com). See RAILS/brgen/AGENTS.md.
+    # Not a fourth Rails app per vertical. ai.brgen.no is MASTER.
     stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, Solid Queue, Solid Cache, OpenBSD, relayd
     stack_later: PostgreSQL where needed, city graph scaling, richer SNI/domain routing
     deploy_script: RAILS/brgen/brgen.sh

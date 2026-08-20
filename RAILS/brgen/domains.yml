@@ -1,7 +1,28 @@
-# City/branding is determined automatically from the request host/TLD.
-# There is no city switcher. A user on lsangeles.com sees only the Los Angeles instance.
-# The DomainRegistry (lib/brgen/domain_registry.rb) + City records are the source of truth.
-# Vertical subdomains live under the city domain (e.g. tv.lsangeles.com).
+# Host pattern for agents. Not loaded at runtime.
+#
+# Source of truth for cities and marketplace aliases:
+#   Brgen::DomainRegistry  (lib/brgen/domain_registry.rb)
+# Agent entry with the subapp table:
+#   AGENTS.md
+#
+# There is no city switcher. A visitor on lsangeles.com never sees Bergen.
+# Verticals are subdomains of the city apex, not path prefixes and not
+# separate Rails apps. Every DomainRegistry city works this way — Bergen and
+# Los Angeles are examples. Apexes are usually the city with a vowel missing
+# (brgen.no, oshlo.no, lndon.uk, chcago.us).
+
+# <subapp>.<city-apex>
+#
+#   brgen.no                 lsangeles.com                 main feed
+#   markedsplass.brgen.no    marketplace.lsangeles.com     marketplace (word is localized)
+#   dating.brgen.no          dating.lsangeles.com
+#   takeaway.brgen.no        takeaway.lsangeles.com
+#   tv.brgen.no              tv.lsangeles.com
+#   maps.brgen.no            maps.lsangeles.com
+#   playlist.brgen.no        playlist.lsangeles.com
+#   messenger.brgen.no       messenger.lsangeles.com
+#
+# ai.brgen.no is MASTER, not a vertical. amber.brgen.no is a different app.
 
 primary:
   name: Brgen
@@ -12,11 +33,9 @@ primary:
   domains:
     core: brgen.no
     marketplace: markedsplass.brgen.no
-    playlist: playlist.brgen.no
-    tv: tv.brgen.no
+    dating: dating.brgen.no
     takeaway: takeaway.brgen.no
-
-# Additional city domains (examples; full list maintained in DomainRegistry + CitySeed):
-# lsangeles.com (Los Angeles, US)
-# oshlo.no (Oslo)
-# etc.
+    tv: tv.brgen.no
+    maps: maps.brgen.no
+    playlist: playlist.brgen.no
+    messenger: messenger.brgen.no

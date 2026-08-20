@@ -1,8 +1,8 @@
 # brgen playlist
 
-Music-sharing and listening vertical for brgen, served at `playlist.<city>` (the
-immersive home at `playlist.brgen.no`). A mountable Rails engine — see
-[`../../ENGINES.md`](../../ENGINES.md).
+Music-sharing and listening vertical for brgen, served at `playlist.<city>`
+(`playlist.brgen.no`, `playlist.lsangeles.com`). A mountable Rails engine — see
+[`../../ENGINES.md`](../../ENGINES.md). Topology: [`../../AGENTS.md`](../../AGENTS.md).
 
 ## What it is
 

@@ -1,7 +1,8 @@
 # brgen tv
 
-Video and live-streaming vertical for brgen, served at `tv.<city>` (e.g.
-`tv.brgen.no`). A mountable Rails engine — see [`../../ENGINES.md`](../../ENGINES.md).
+Video and live-streaming vertical for brgen, served at `tv.<city>`
+(`tv.brgen.no`, `tv.lsangeles.com`). A mountable Rails engine — see
+[`../../ENGINES.md`](../../ENGINES.md). Topology: [`../../AGENTS.md`](../../AGENTS.md).
 
 ## What it is
 

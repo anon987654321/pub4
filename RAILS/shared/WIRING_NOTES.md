@@ -2,6 +2,10 @@
 
 **Current model (engine-ize 2026):** `shared/` is a real Rails engine gem (`pub4-shared`) loaded via local path in each app Gemfile.
 
+brgen is one process with many hosts, not one site: city apex = feed,
+`engines/*` = subdomain verticals (`dating.brgen.no`, `marketplace.lsangeles.com`).
+Messenger is host routes. `ai.brgen.no` is MASTER. Topology: `RAILS/brgen/AGENTS.md`.
+
 ## Visual system — one `application.css` per app
 
 Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass. No separate `tokens.css`, `animations.css`, or `minimal-ui*.css` links in layouts.

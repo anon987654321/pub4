@@ -1,7 +1,8 @@
 # brgen dating
 
-Matchmaking vertical for brgen, served at `dating.<city>`. A mountable Rails
-engine — see [`../../ENGINES.md`](../../ENGINES.md).
+Matchmaking vertical for brgen, served at `dating.<city>`
+(`dating.brgen.no`, `dating.lsangeles.com`). A mountable Rails engine — see
+[`../../ENGINES.md`](../../ENGINES.md). Topology: [`../../AGENTS.md`](../../AGENTS.md).
 
 ## What it is
 
