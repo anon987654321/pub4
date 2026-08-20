@@ -9,13 +9,59 @@
 <div class="form-wrap">
   <%= form_with model: @listing, url: listings_path, html: { role: "form", "aria-label": "Create marketplace listing" } do |f| %>
     <%= render "shared/errors", object: @listing %>
+    <%# What is being listed, chosen before anything else: a job advert has no
+        price and no condition, and a form that asks for both is a form people
+        fill in with noughts. %>
+    <nav class="listing-kinds" aria-label="<%= t("marketplace.kinds_label") %>">
+      <% Marketplace::Listing::KINDS.each do |kind| %>
+        <%= link_to t("marketplace.kinds.#{kind}"), new_listing_path(kind: kind),
+              class: "chip#{" active" if @kind == kind}" %>
+      <% end %>
+    </nav>
+    <%= f.hidden_field :kind, value: @kind %>
+
     <div class="field"><%= f.label :title %><%= f.text_field :title, required: true, maxlength: 200, autocomplete: "off" %></div>
     <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field"><%= f.label :price_cents, t("marketplace.price_ore") %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help"><%= t("marketplace.price_help") %></p></div>
-    <div class="field"><%= f.label :condition %><%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %></div>
+    <% if @kind == "goods" %>
+      <div class="field"><%= f.label :price_cents, t("marketplace.price_ore") %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help"><%= t("marketplace.price_help") %></p></div>
+      <div class="field"><%= f.label :condition %><%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %></div>
+    <% end %>
+    <% if @kind == "job" %>
+      <%= f.fields_for :job_detail do |jf| %>
+        <div class="field"><%= jf.label :employer, t("marketplace.job_employer") %><%= jf.text_field :employer, maxlength: 120 %></div>
+        <div class="field">
+          <%= jf.label :employment_type, t("marketplace.job_type") %>
+          <%= jf.select :employment_type, Marketplace::JobDetail::EMPLOYMENT_TYPES.map { |type| [ t("marketplace.employment_types.#{type}"), type ] }, include_blank: "—" %>
+        </div>
+        <%# A range, because one number is either a floor read as the offer or a
+            ceiling nobody is paid. Silence about pay stays sayable. %>
+        <div class="field"><%= jf.label :salary_min_cents, t("marketplace.job_salary_min") %><%= jf.number_field :salary_min_cents, min: 0, inputmode: "numeric" %></div>
+        <div class="field"><%= jf.label :salary_max_cents, t("marketplace.job_salary_max") %><%= jf.number_field :salary_max_cents, min: 0, inputmode: "numeric" %></div>
+        <div class="field field--check"><%= jf.label :remote, t("marketplace.job_remote") %><%= jf.check_box :remote %></div>
+      <% end %>
+    <% elsif @kind == "housing" %>
+      <%= f.fields_for :housing_detail do |hf| %>
+        <div class="field"><%= hf.label :rent_cents, t("marketplace.housing_rent") %><%= hf.number_field :rent_cents, min: 0, required: true, inputmode: "numeric" %></div>
+        <div class="field"><%= hf.label :deposit_cents, t("marketplace.housing_deposit") %><%= hf.number_field :deposit_cents, min: 0, inputmode: "numeric" %></div>
+        <div class="field">
+          <%= hf.label :housing_type, t("marketplace.housing_type") %>
+          <%= hf.select :housing_type, Marketplace::HousingDetail::HOUSING_TYPES.map { |type| [ t("marketplace.housing_types.#{type}"), type ] }, include_blank: "—" %>
+        </div>
+        <div class="field"><%= hf.label :rooms, t("marketplace.housing_rooms") %><%= hf.number_field :rooms, min: 0.5, step: 0.5 %></div>
+        <div class="field"><%= hf.label :size_sqm, t("marketplace.housing_size") %><%= hf.number_field :size_sqm, min: 1 %></div>
+        <div class="field"><%= hf.label :available_from, t("marketplace.housing_available") %><%= hf.date_field :available_from %></div>
+      <% end %>
+    <% elsif @kind == "gig" %>
+      <%= f.fields_for :gig_detail do |gf| %>
+        <div class="field"><%= gf.label :pay_cents, t("marketplace.gig_pay") %><%= gf.number_field :pay_cents, min: 0, inputmode: "numeric" %></div>
+        <div class="field"><%= gf.label :starts_at, t("marketplace.gig_starts") %><%= gf.datetime_field :starts_at %></div>
+        <div class="field"><%= gf.label :hours, t("marketplace.gig_hours") %><%= gf.number_field :hours, min: 0.5, step: 0.5 %></div>
+      <% end %>
+    <% end %>
+
     <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
     <details class="advanced-fields">

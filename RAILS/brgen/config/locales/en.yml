@@ -540,6 +540,14 @@ en:
           attributes:
             photos:
               required_when_visible: must include at least one photo when visible
+        marketplace/gig_detail:
+          attributes:
+            starts_at:
+              in_the_past: cannot be in the past
+        marketplace/job_detail:
+          attributes:
+            salary_max_cents:
+              below_minimum: cannot be lower than the salary floor
         marketplace/order:
           attributes:
             listing:
@@ -1162,6 +1170,37 @@ en:
       approved: Return approved
       refused: Return refused
       received: Returned
+    kinds_label: What kind of listing
+    job_employer: Employer
+    job_type: Type of work
+    job_salary_min: "Salary from (øre)"
+    job_salary_max: "Salary to (øre)"
+    job_remote: Can be done remotely
+    housing_rent: "Rent per month (øre)"
+    housing_deposit: "Deposit (øre)"
+    housing_type: Kind of home
+    housing_rooms: Rooms
+    housing_size: "Size (m²)"
+    housing_available: Free from
+    gig_pay: "Pay (øre)"
+    gig_starts: Starts
+    gig_hours: Hours
+    kinds:
+      goods: Things
+      job: Jobs
+      housing: Housing
+      gig: Gigs
+    employment_types:
+      full_time: Full time
+      part_time: Part time
+      contract: Contract
+      seasonal: Seasonal
+      internship: Internship
+    housing_types:
+      room: Room
+      flat: Flat
+      house: House
+      sublet: Sublet
   takeaway:
     intro: This is a menu and order demo, not a live restaurant network. Payment is
       arranged with the kitchen. No signup to place a trial order.

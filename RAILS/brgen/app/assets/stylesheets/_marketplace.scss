@@ -45,7 +45,10 @@
   flex: 1;
 }
 
-.deal-cats {
+/* The kind switcher is the category scroller one row up: goods, jobs,
+   housing, gigs. Same chip geometry, so it reads as the same control. */
+.deal-cats,
+.listing-kinds {
   display: flex;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
@@ -57,7 +60,8 @@
   min-width: 0;
 }
 
-.deal-cats::-webkit-scrollbar {
+.deal-cats::-webkit-scrollbar,
+.listing-kinds::-webkit-scrollbar {
   display: none;
 }
 

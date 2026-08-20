@@ -22,6 +22,9 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @facets = Marketplace::ListingFacets.new(scope, params)
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
     scope = scope.where(condition: params[:condition]) if params[:condition].present?
+    # goods unless asked otherwise: a bicycle search should not turn up a job.
+    @kind = Marketplace::Listing::KINDS.include?(params[:kind]) ? params[:kind] : "goods"
+    scope = scope.where(kind: @kind)
     scope = scope.casual if params[:from] == "person"
     scope = scope.from_shops if params[:from] == "shop"
     @search_lat = params[:lat].presence
@@ -42,7 +45,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @pagy, @listings = pagy(sorted)
     @listing_distances = listing_distances(@listings, @search_lat, @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
-    @top_offers = top_offers_for_index
+    @top_offers = top_offers_for_index(@kind)
     @favorited_listing_ids = favorited_listing_ids_for(@listings, @top_offers)
 
     finish_live_search(partial: "marketplace/listings/live_search_results")
@@ -62,13 +65,17 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def new
     authorize Marketplace::Listing
-    @listing   = Marketplace::Listing.new
+    @kind = Marketplace::Listing::KINDS.include?(params[:kind]) ? params[:kind] : "goods"
+    @listing = Marketplace::Listing.new(kind: @kind)
+    @listing.build_job_detail if @kind == "job"
+    @listing.build_housing_detail if @kind == "housing"
+    @listing.build_gig_detail if @kind == "gig"
     @categories = Marketplace::Category.all
   end
 
   def create
     authorize Marketplace::Listing
-    @listing = Current.user.marketplace_listings.build(listing_params)
+    @listing = Current.user.marketplace_listings.build(listing_params_for_kind)
     if @listing.save
       preset = params[:listing][:preset].presence
       PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
@@ -78,6 +85,12 @@ class Marketplace::ListingsController < Marketplace::BaseController
       )
       redirect_to listing_path(@listing), notice: t("flash.marketplace.listing_published")
     else
+      # The form reads both of these and create set neither, so a refused
+      # listing answered 500 rather than showing the reader what was wrong with
+      # it. Only the kinds work made that reachable — until now every refusal
+      # here was a validation the form itself prevented.
+      @kind = @listing.kind.presence || "goods"
+      @categories = Marketplace::Category.all
       render :new, status: :unprocessable_entity
     end
   end
@@ -89,7 +102,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def update
     authorize @listing
-    if @listing.update(listing_params)
+    if @listing.update(listing_params_for_kind)
       Shared::DomainEvent.record!(
         actor: Current.user, action: "listing.updated", subject: @listing,
         source_vertical: "marketplace", locality: @listing.location
@@ -119,14 +132,32 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def listing_params
     params.require(:listing).permit(
       :title, :description, :price_cents, :condition, :status, :location,
-      :latitude, :longitude, :category_id, :preset, photos: []
+      :latitude, :longitude, :category_id, :preset, :kind, photos: [],
+      job_detail_attributes: %i[employer employment_type salary_min_cents salary_max_cents remote],
+      housing_detail_attributes: %i[rent_cents deposit_cents rooms size_sqm available_from housing_type],
+      gig_detail_attributes: %i[pay_cents starts_at hours]
     )
+  end
+
+  # Only the detail block for the kind being listed. Permitting all three would
+  # let a job advert arrive carrying rent, and the row would sit there with
+  # nothing rendering it.
+  def listing_params_for_kind
+    permitted = listing_params
+    kind = permitted[:kind].presence || "goods"
+    %w[job housing gig].each do |other_kind|
+      permitted.delete("#{other_kind}_detail_attributes") unless kind == other_kind
+    end
+    permitted
   end
 
   def nearby_listings_for(listing)
     return Marketplace::Listing.none unless listing.geo?
 
+    # Nearby means nearby of the same kind: a flat for rent has nothing to say
+    # about the bicycles around it.
     policy_scope(Marketplace::Listing).active
+      .where(kind: listing.kind)
       .where.not(id: listing.id)
       .nearby(listing.latitude, listing.longitude, 5)
       .limit(6)
@@ -143,11 +174,17 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   # Featured deals first; fill with popular active listings. Hidden while
   # searching or category-filtering so the grid stays the primary answer.
-  def top_offers_for_index
+  #
+  # Same kind as the grid below it. The strip used to draw from every listing
+  # there is, so the moment a kind other than goods existed, a bicycle search
+  # carried a job advert above it — the filter the grid applies has to apply
+  # here or the page contradicts itself.
+  def top_offers_for_index(kind)
     return [] if live_search_query.present? || params[:category_id].present?
 
     limit = 6
     deals = Marketplace::Deal.live.featured
+      .merge(Marketplace::Listing.where(kind: kind))
       .includes(listing: { photos_attachments: :blob })
       .limit(limit)
       .to_a
@@ -155,6 +192,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
     seen = deals.filter_map { |deal| deal.listing_id }
     fillers = policy_scope(Marketplace::Listing).active
+      .where(kind: kind)
       .with_attached_photos
       .includes(:category)
       .where.not(id: seen)

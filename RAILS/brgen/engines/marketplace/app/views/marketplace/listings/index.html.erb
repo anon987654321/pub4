@@ -28,6 +28,16 @@
             class: "market-hero-count" %>
 </header>
 
+<%# Goods, jobs, housing, gigs. Separate lists rather than one mixed feed: a
+    bicycle search should not turn up a job, and the filters below mean
+    different things for each. %>
+<nav class="listing-kinds" aria-label="<%= t("marketplace.kinds_label") %>">
+  <% Marketplace::Listing::KINDS.each do |kind| %>
+    <%= link_to t("marketplace.kinds.#{kind}"), listings_path(kind: kind),
+          class: "chip#{" active" if @kind == kind}" %>
+  <% end %>
+</nav>
+
 <nav class="deal-cats" aria-label="<%= t("marketplace.listing_kind") %>">
   <%= link_to t("marketplace.from_anyone"), listings_path(category_id: params[:category_id], q: params[:q].presence),
         class: "deal-cat#{" active" if params[:from].blank?}" %>

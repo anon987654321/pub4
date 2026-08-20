@@ -25,8 +25,7 @@ checks:
   # --- feed / compose ---
   - {id: feed.home_orientation, in: brgen/app/views/home/index.html.erb, has: [data-visitor-orientation]}
   - {id: feed.city_today_inset, in: brgen/app/assets/stylesheets/_chrome_surfaces.scss, has: ["aside.city-today", ".post-feed", "margin-inline: var(--space-4)"]}
-  - {id: feed.city_today_pill, in: brgen/app/assets/stylesheets/_chrome_surfaces.scss, has: ["city-today summary", "min-height: max(var(--tap-min)", "padding: var(--space-2) var(--space-3)", "border-radius: var(--radius-pill)"]}
-  - {id: feed.card_space_tokens, in: brgen/app/assets/stylesheets/_feed_post.scss, has: [".post-feed .feed-card", "padding: var(--space-4) var(--space-3)"]}
+  - {id: feed.city_today_card, in: brgen/app/views/home/_today.html.erb, has: ["city-today sidebar-card", "<details>", "<summary>"]}
   - {id: feed.compose_dialog, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["<dialog", compose-launcher, form-submit, posts_path]}
   - {id: feed.compose_guest, in: brgen/app/views/shared/_feed_compose.html.erb, has: [anonymous, guest_hint]}
   - {id: feed.compose_tiptap, in: brgen/app/views/shared/_feed_compose.html.erb, has: [tiptap-editor, textarea-autogrow]}

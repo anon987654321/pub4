@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_130000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -658,6 +658,44 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_120000) do
     t.index ["starts_at", "ends_at"], name: "index_marketplace_deals_on_starts_at_and_ends_at"
   end
 
+  create_table "marketplace_gig_details", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.decimal "hours", precision: 5, scale: 1
+    t.integer "listing_id", null: false
+    t.integer "pay_cents"
+    t.datetime "starts_at"
+    t.datetime "updated_at", null: false
+    t.index ["listing_id"], name: "idx_gig_details_listing", unique: true
+    t.index ["listing_id"], name: "index_marketplace_gig_details_on_listing_id"
+  end
+
+  create_table "marketplace_housing_details", force: :cascade do |t|
+    t.date "available_from"
+    t.datetime "created_at", null: false
+    t.integer "deposit_cents"
+    t.string "housing_type"
+    t.integer "listing_id", null: false
+    t.integer "rent_cents"
+    t.decimal "rooms", precision: 4, scale: 1
+    t.integer "size_sqm"
+    t.datetime "updated_at", null: false
+    t.index ["listing_id"], name: "idx_housing_details_listing", unique: true
+    t.index ["listing_id"], name: "index_marketplace_housing_details_on_listing_id"
+  end
+
+  create_table "marketplace_job_details", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "employer"
+    t.string "employment_type"
+    t.integer "listing_id", null: false
+    t.boolean "remote", default: false, null: false
+    t.integer "salary_max_cents"
+    t.integer "salary_min_cents"
+    t.datetime "updated_at", null: false
+    t.index ["listing_id"], name: "idx_job_details_listing", unique: true
+    t.index ["listing_id"], name: "index_marketplace_job_details_on_listing_id"
+  end
+
   create_table "marketplace_listing_favorites", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "listing_id", null: false
@@ -676,6 +714,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_120000) do
     t.string "currency"
     t.text "description"
     t.datetime "expires_at"
+    t.string "kind", default: "goods", null: false
     t.decimal "latitude", precision: 10, scale: 7
     t.string "location"
     t.decimal "longitude", precision: 10, scale: 7
@@ -694,6 +733,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_120000) do
     t.index ["category_id"], name: "index_marketplace_listings_on_category_id"
     t.index ["city_id", "slug"], name: "index_marketplace_listings_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_marketplace_listings_on_city_id"
+    t.index ["kind", "city_id"], name: "index_marketplace_listings_on_kind_and_city_id"
     t.index ["latitude", "longitude"], name: "index_marketplace_listings_on_latitude_and_longitude"
     t.index ["status", "expires_at"], name: "index_marketplace_listings_on_status_and_expires_at"
     t.index ["store_id"], name: "index_marketplace_listings_on_store_id"
@@ -1826,6 +1866,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_120000) do
   add_foreign_key "marketplace_checkouts", "marketplace_addresses"
   add_foreign_key "marketplace_checkouts", "users"
   add_foreign_key "marketplace_deals", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_gig_details", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_housing_details", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_job_details", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "users"
   add_foreign_key "marketplace_listings", "cities"

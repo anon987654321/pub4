@@ -30,7 +30,10 @@
     </div>
 
     <div class="deal-card-body">
-      <div class="deal-price"><%= listing.price_display %></div>
+      <%# A job shows its salary and a room its rent; only goods have a
+          price. headline_amount is one reader so the card does not have to know
+          which of the three detail tables to ask. %>
+      <div class="deal-price"><%= listing.headline_amount %></div>
       <h2 class="deal-card-title"><%= listing.title %></h2>
       <div class="deal-meta">
         <% meta_bits = [

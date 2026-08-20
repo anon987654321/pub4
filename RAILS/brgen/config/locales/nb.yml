@@ -541,6 +541,14 @@ nb:
           attributes:
             photos:
               required_when_visible: må ha minst ett bilde når profilen er synlig
+        marketplace/gig_detail:
+          attributes:
+            starts_at:
+              in_the_past: kan ikke være i fortiden
+        marketplace/job_detail:
+          attributes:
+            salary_max_cents:
+              below_minimum: kan ikke være lavere enn lønn fra
         marketplace/order:
           attributes:
             listing:
@@ -1165,6 +1173,37 @@ nb:
       approved: Retur godkjent
       refused: Retur avslått
       received: Returnert
+    kinds_label: Hva slags annonse
+    job_employer: Arbeidsgiver
+    job_type: Type arbeid
+    job_salary_min: "Lønn fra (øre)"
+    job_salary_max: "Lønn til (øre)"
+    job_remote: Kan gjøres hjemmefra
+    housing_rent: "Leie per måned (øre)"
+    housing_deposit: "Depositum (øre)"
+    housing_type: Type bolig
+    housing_rooms: Rom
+    housing_size: "Størrelse (m²)"
+    housing_available: Ledig fra
+    gig_pay: "Betaling (øre)"
+    gig_starts: Starter
+    gig_hours: Timer
+    kinds:
+      goods: Ting
+      job: Jobb
+      housing: Bolig
+      gig: Oppdrag
+    employment_types:
+      full_time: Heltid
+      part_time: Deltid
+      contract: Engasjement
+      seasonal: Sesong
+      internship: Praksis
+    housing_types:
+      room: Rom
+      flat: Leilighet
+      house: Hus
+      sublet: Framleie
   takeaway:
     intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
       avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.

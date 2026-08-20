@@ -41,6 +41,10 @@ class Marketplace::Listing < ApplicationRecord
   # Size and colour as rows. A listing with variants is bought by the variant,
   # not by the listing — see Marketplace::Variant.
   has_many :variants, class_name: "Marketplace::Variant", dependent: :destroy
+  has_one :job_detail, class_name: "Marketplace::JobDetail", dependent: :destroy
+  has_one :housing_detail, class_name: "Marketplace::HousingDetail", dependent: :destroy
+  has_one :gig_detail, class_name: "Marketplace::GigDetail", dependent: :destroy
+  accepts_nested_attributes_for :job_detail, :housing_detail, :gig_detail, allow_destroy: true
   has_many :favorited_by_users, through: :favorites, source: :user
   has_many_attached :photos
   process_media_variants :photos, variants: {
@@ -49,12 +53,22 @@ class Marketplace::Listing < ApplicationRecord
   }
 
   CONDITIONS = %w[new like_new good fair poor].freeze
+  # What is being listed. goods is a thing with a price; the other three are the
+  # Craigslist half — same city scoping, search, expiry and messaging, different
+  # facts about them, which live in a table each rather than in columns that are
+  # null for every bicycle.
+  KINDS = %w[goods job housing gig].freeze
   STATUSES   = %w[active sold reserved removed].freeze
   DEFAULT_RADIUS_KM = 5.0
   MAX_RADIUS_KM = 50.0
 
   validates :title, presence: true, length: { maximum: 200 }
-  validates :price_cents, numericality: { greater_than_or_equal_to: 0 }
+  validates :kind, inclusion: { in: KINDS }
+  # A job advert has no price and a room's number is its rent, so price is only
+  # required of goods. Left required for everything, the form would have made
+  # people type a nought and the index would have sorted jobs by it.
+  validates :price_cents, numericality: { greater_than_or_equal_to: 0 }, if: :goods?
+  validates :price_cents, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true, unless: :goods?
   validates :condition, inclusion: { in: CONDITIONS }, allow_nil: true
   validates :status, inclusion: { in: STATUSES }
   validates :latitude, :longitude, numericality: true, allow_nil: true
@@ -106,6 +120,31 @@ class Marketplace::Listing < ApplicationRecord
   # nil stock means one of a kind, which is what a classifieds listing is; a
   # number means a shop with inventory. Defaulting to 1 would have made every
   # private sale read as a shop with one left.
+  def goods? = kind.to_s == "goods" || kind.blank?
+  def job? = kind == "job"
+  def housing? = kind == "housing"
+  def gig? = kind == "gig"
+
+  # The detail row for whatever this is, or nil for goods. One reader, so a
+  # view does not have to know which of the three tables to ask.
+  def details
+  case kind
+  when "job" then job_detail
+  when "housing" then housing_detail
+  when "gig" then gig_detail
+  end
+  end
+
+  # What a card shows instead of a price. Goods keep price_display.
+  def headline_amount
+    case kind
+    when "job" then job_detail&.salary_display
+    when "housing" then housing_detail&.rent_display
+    when "gig" then gig_detail&.pay_display
+    else price_display
+    end
+  end
+
   def one_of_a_kind? = stock.nil?
   def varied? = variants.exists?
   def in_stock? = one_of_a_kind? ? !sold? : stock.to_i.positive?
