@@ -106,4 +106,23 @@ def test_ask_once_fails_over_to_the_cli_lane_on_budget_errors
   assert_equal 2, fake.models.size, "expected exactly one failover hop"
   assert fake.models.last.to_s.start_with?("claude-cli:"), "hop must land on the claude_code chain head"
 end
+def test_ask_also_takes_the_hop_on_budget_errors
+  fake = Class.new do
+    attr_reader :models
+    def initialize = @models = []
+    def send_with_cache(model, *_args, **_kwargs)
+      @models << model
+      if model.to_s.start_with?("claude-cli:")
+        Master::Result.ok("cli answer")
+      else
+        Master::Result.err("Insufficient credits", category: :budget)
+      end
+    end
+  end.new
+  @agent.instance_variable_set(:@dispatcher, fake)
+  def @agent.routed_models(*_args, **_kwargs) = ["openrouter/broke"]
+
+  assert_equal "cli answer", @agent.ask("hi")
+  assert fake.models.last.to_s.start_with?("claude-cli:"), "ask must land on the claude_code chain head"
+end
 end

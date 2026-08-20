@@ -68,6 +68,7 @@ module Master
         messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]
         selected_model = operation ? model_for(operation:) : routed_models.first
         result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:, temperature:)
+        result = retry_on_broke_lane(result, selected_model, messages, image:, temperature:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
@@ -84,11 +85,7 @@ module Master
         messages = [{ role: "user", content: filter_prompt(prompt) }]
         chosen = model || self.model
         result = @dispatcher.send_with_cache(chosen, messages, system: filter_prompt(system), stream: false, image:, temperature:)
-        if result.is_a?(Master::Result::Err) && SINGLE_CALL_FAILOVER.include?(result.category) &&
-           (fallback = single_call_fallback_model) && fallback != chosen
-          @bus&.publish("llm:ask_once_failover", from: chosen, to: fallback, category: result.category)
-          result = @dispatcher.send_with_cache(fallback, messages, system: filter_prompt(system), stream: false, image:, temperature:)
-        end
+        result = retry_on_broke_lane(result, chosen, messages, system: filter_prompt(system), image:, temperature:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
@@ -119,6 +116,20 @@ module Master
       end
 
       private
+
+      # Both single-shot doors — ask and ask_once — used to raise on the first
+      # broke model. One hop to the claude_code chain head on any category a
+      # retry cannot cure; the 2026-08-20 proof runs showed the error-severity
+      # rules die in ask (via FixAttempt) after ask_once was fixed alone.
+      def retry_on_broke_lane(result, chosen, messages, system: nil, image: nil, temperature: nil)
+        return result unless result.is_a?(Master::Result::Err) && SINGLE_CALL_FAILOVER.include?(result.category)
+
+        fallback = single_call_fallback_model
+        return result unless fallback && fallback != chosen
+
+        @bus&.publish("llm:ask_once_failover", from: chosen, to: fallback, category: result.category)
+        @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
+      end
 
       # The claude_code chain's head — the subscription-billed CLI lane,
       # read from models.yml so retiring the lane retires the failover.
