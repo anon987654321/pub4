@@ -10,7 +10,7 @@
       <li role="listitem">
         <p><%= verification.profile.user&.display_name %> — <%= t("dating.poses.#{verification.pose}") %></p>
         <% if verification.selfie.attached? %>
-          <%= lazy_image_tag verification.selfie, alt: "" %>
+          <%= lazy_image_tag verification.selfie, alt: "", width: 320, height: 320 %>
         <% end %>
         <div class="order-actions">
           <%= button_to t("dating.verify_approve"), verification_path(verification, decision: "approve"), method: :patch, class: "btn btn-sm" %>

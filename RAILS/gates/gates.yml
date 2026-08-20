@@ -229,6 +229,12 @@ rendered_geometry:
   pass: "ok: rendered geometry contracts satisfied"
   covered_by: rendered_suite
 
+webgl_surfaces:
+  require: lib/rendered/webgl_surfaces
+  class: Deploy::WebglSurfacesGate
+  pass: "ok: webgl surfaces draw"
+  covered_by: rendered_suite
+
 layout_snapshot:
   require: lib/rendered/layout_snapshot
   class: Deploy::LayoutSnapshotGate

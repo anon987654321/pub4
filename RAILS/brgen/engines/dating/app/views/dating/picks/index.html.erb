@@ -16,7 +16,7 @@
           <%# lazy_image_tag, not image_tag(variant): resolving a variant URL inside
               an engine's routing context raises, which is the same trap the
               marketplace card hit. %>
-          <%= lazy_image_tag profile.photos.first, alt: "" %>
+          <%= lazy_image_tag profile.photos.first, alt: "", width: 400, height: 600 %>
         <% end %>
         <p class="pick-name">
           <%= profile.user&.display_name %>

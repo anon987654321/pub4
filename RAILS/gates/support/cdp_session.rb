@@ -64,8 +64,8 @@ module Deploy
     # host_map: { "markedsplass.brgen.no" => "127.0.0.1:38182", ... }
     # Rules are applied in order and first match wins, so callers should pass
     # specific hosts before any wildcard.
-    def self.open(host_map: {}, timeout: DEFAULT_TIMEOUT)
-      session = new(host_map: host_map, timeout: timeout)
+    def self.open(host_map: {}, timeout: DEFAULT_TIMEOUT, webgl: false)
+      session = new(host_map: host_map, timeout: timeout, webgl: webgl)
       session.start
       yield session
     ensure
@@ -74,9 +74,13 @@ module Deploy
 
     attr_reader :events
 
-    def initialize(host_map: {}, timeout: DEFAULT_TIMEOUT)
+    # webgl: opt into SwiftShader for a surface that is made of WebGL. Off by
+    # default because software GL is slow and rasterises text differently, which
+    # the layout and CSS gates would feel.
+    def initialize(host_map: {}, timeout: DEFAULT_TIMEOUT, webgl: false)
       @host_map = host_map
       @timeout = timeout
+      @webgl = webgl
       @id = 0
       @events = []
       @pending = {}
@@ -289,7 +293,6 @@ module Deploy
         "--disable-extensions",
         "--disable-background-networking",
         "--disable-sync",
-        "--disable-gpu",
         "--no-sandbox",
         "--disable-dev-shm-usage",
         "--hide-scrollbars",
@@ -299,6 +302,13 @@ module Deploy
         "--disable-lcd-text",
         "--disable-features=NetworkService,TranslateUI,BackForwardCache",
         "--mute-audio",
+        # --disable-gpu turns WebGL off entirely, which is right for the layout
+        # and CSS gates this session was written for — software GL is slow and
+        # rasterises text differently. It is wrong for a surface made of WebGL:
+        # MapLibre and the MASTER face both measured as an empty canvas, so a
+        # gate asserting "the map draws" would have passed or failed for reasons
+        # that had nothing to do with the map. SwiftShader is the opt-in.
+        *(@webgl ? [ "--use-angle=swiftshader", "--enable-unsafe-swiftshader" ] : [ "--disable-gpu" ]),
         "about:blank",
       ]
       unless @host_map.empty?
