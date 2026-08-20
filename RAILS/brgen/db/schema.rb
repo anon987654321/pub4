@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_110000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1439,8 +1439,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
     t.integer "quantity"
     t.integer "unit_price_cents"
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["menu_item_id"], name: "index_takeaway_order_items_on_menu_item_id"
     t.index ["order_id"], name: "index_takeaway_order_items_on_order_id"
+    t.index ["user_id"], name: "index_takeaway_order_items_on_user_id"
   end
 
   create_table "takeaway_orders", force: :cascade do |t|
@@ -1448,6 +1450,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
     t.string "delivery_address"
     t.integer "delivery_driver_id"
     t.integer "delivery_fee_cents"
+    t.boolean "group_open", default: false, null: false
+    t.string "group_token"
     t.integer "restaurant_id", null: false
     t.datetime "scheduled_for"
     t.text "special_instructions"
@@ -1459,6 +1463,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
     t.integer "user_id", null: false
     t.index ["delivery_driver_id", "status"], name: "index_takeaway_orders_on_delivery_driver_id_and_status"
     t.index ["delivery_driver_id"], name: "index_takeaway_orders_on_delivery_driver_id"
+    t.index ["group_token"], name: "index_takeaway_orders_on_group_token", unique: true
     t.index ["restaurant_id", "status", "updated_at"], name: "index_takeaway_orders_on_restaurant_id_and_status_and_updated_at"
     t.index ["restaurant_id"], name: "index_takeaway_orders_on_restaurant_id"
     t.index ["scheduled_for"], name: "index_takeaway_orders_on_scheduled_for"
@@ -1914,6 +1919,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
   add_foreign_key "takeaway_opening_hours", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_order_items", "takeaway_menu_items", column: "menu_item_id"
   add_foreign_key "takeaway_order_items", "takeaway_orders", column: "order_id"
+  add_foreign_key "takeaway_order_items", "users"
   add_foreign_key "takeaway_orders", "takeaway_delivery_drivers", column: "delivery_driver_id"
   add_foreign_key "takeaway_orders", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_orders", "users"

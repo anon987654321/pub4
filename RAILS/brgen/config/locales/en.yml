@@ -1222,6 +1222,17 @@ en:
     qty_for: Quantity for %{name}
     item_sold_out: "%{name} sold out"
     browse_menu: Browse menu
+    group_title: "Group order — %{restaurant}"
+    group_eyebrow: "One ticket, one delivery"
+    group_host: The host
+    group_total: "Ticket so far: %{total}"
+    group_add_line: Add something
+    group_quantity: How many
+    group_add: Add to the ticket
+    group_host_note: "You opened this ticket — send it to the kitchen from your order page when everyone has added theirs."
+    group_guest_note: The person who opened this sends it to the kitchen.
+    open_group: Share this order
+    group_link: The link to share
   maps:
     your_courier: Your courier
     recent_check_ins: Recent check-ins
@@ -1444,6 +1455,11 @@ en:
       review_requires_sign_in: Sign in to leave a review.
       review_requires_delivery: You can review after a delivered order.
       review_saved: Review saved.
+      group_opened: Share the link and people can add to it.
+      group_too_late: That order has already gone to the kitchen.
+      group_closed: That ticket is closed.
+      group_line_added: Added.
+      group_line_removed: Removed.
     tv:
       channel_created: Channel created.
       comment_added: Comment added.

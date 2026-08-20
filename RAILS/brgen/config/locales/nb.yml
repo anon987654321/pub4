@@ -1225,6 +1225,17 @@ nb:
     qty_for: Antall av %{name}
     item_sold_out: "%{name} er utsolgt"
     browse_menu: Se menyen
+    group_title: "Gruppebestilling — %{restaurant}"
+    group_eyebrow: "Én bestilling, én levering"
+    group_host: Verten
+    group_total: "Så langt: %{total}"
+    group_add_line: Legg til noe
+    group_quantity: Hvor mange
+    group_add: Legg på bestillingen
+    group_host_note: "Du åpnet denne bestillingen — send den til kjøkkenet fra ordresiden når alle har lagt til sitt."
+    group_guest_note: Den som åpnet bestillingen sender den til kjøkkenet.
+    open_group: Del denne bestillingen
+    group_link: Lenken du deler
   maps:
     your_courier: Budet ditt
     recent_check_ins: Nylige innsjekkinger
@@ -1449,6 +1460,11 @@ nb:
       review_requires_sign_in: Logg inn for å skrive en vurdering.
       review_requires_delivery: Du kan vurdere etter en levert bestilling.
       review_saved: Vurderingen er lagret.
+      group_opened: Del lenken, så kan andre legge til.
+      group_too_late: Den bestillingen er allerede sendt til kjøkkenet.
+      group_closed: Bestillingen er lukket.
+      group_line_added: Lagt til.
+      group_line_removed: Fjernet.
     tv:
       channel_created: Kanalen er opprettet.
       comment_added: Kommentaren er lagt til.

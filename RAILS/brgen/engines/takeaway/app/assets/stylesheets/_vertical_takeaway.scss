@@ -175,3 +175,44 @@ body.vertical-takeaway .order-status {
   /* Flat UI (design_rules pixel_perfection): sticky bar uses border contrast, not shadow */
   border: 1px solid var(--border);
 }
+
+/* A shared ticket: who asked for what, and what it comes to. The name is the
+   column that matters — the whole point is that nobody has to remember whose
+   pizza is whose. */
+.group-lines {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.group-lines li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.group-line-who {
+  min-width: 8ch;
+  font-weight: var(--weight-bold);
+}
+
+.group-line-what {
+  flex: 1;
+}
+
+.group-line-sum {
+  margin-inline-start: auto;
+}
+
+.group-total {
+  font-weight: var(--weight-bold);
+}
+
+.group-note,
+.group-share {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}

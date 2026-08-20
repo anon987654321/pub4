@@ -8,6 +8,18 @@
   <span class="chip"><%= t("takeaway.statuses.#{@order.status}") %></span>
 </div>
 
+<%# One ticket, several people. Only the host opens it and only the host sends
+    it to the kitchen — that is what makes it one delivery rather than four. %>
+<% if @order.host?(Current.user) && @order.status == "pending" %>
+  <p class="group-share">
+    <% if @order.group? %>
+      <%= link_to t("takeaway.group_link"), group_order_url(@order.group_token) %>
+    <% else %>
+      <%= button_to t("takeaway.open_group"), order_group_path(@order), method: :post, class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </p>
+<% end %>
+
 <div class="order-status" role="status" aria-live="polite">
   <%= tag.h2 t("takeaway.status_timeline") %>
   <div class="chips">

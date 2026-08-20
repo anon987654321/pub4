@@ -1,0 +1,43 @@
+<% content_for :title, t("takeaway.group_title", restaurant: @order.restaurant.name) %>
+
+<div class="page-header" role="banner" aria-label="<%= t("takeaway.group_title", restaurant: @order.restaurant.name) %>">
+  <hgroup>
+    <p><%= t("takeaway.group_eyebrow") %></p>
+    <%= tag.h1 @order.restaurant.name %>
+  </hgroup>
+</div>
+
+<%# Everyone's lines, with a name against each: the point of the shared ticket
+    is that nobody has to remember who asked for what. %>
+<ul role="list" class="group-lines">
+  <% @order.order_items.each do |line| %>
+    <li role="listitem">
+      <span class="group-line-who"><%= line.user&.display_name || t("takeaway.group_host") %></span>
+      <span class="group-line-what"><%= line.quantity %>× <%= line.menu_item.name %></span>
+      <span class="group-line-sum"><%= line.subtotal_display %></span>
+      <% if line.user_id == Current.user&.id %>
+        <%= button_to t("actions.remove"), group_order_path(@order.group_token, line_id: line.id), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% end %>
+    </li>
+  <% end %>
+</ul>
+
+<p class="group-total"><%= t("takeaway.group_total", total: @order.total_display) %></p>
+
+<div class="form-wrap form-wrap--flush">
+  <%= form_with url: group_order_path(@order.group_token), method: :patch do |f| %>
+    <div class="field">
+      <%= f.label :menu_item_id, t("takeaway.group_add_line") %>
+      <%= f.select :menu_item_id, @menu_items.map { |item| [ "#{item.name} — #{Shared::MoneyDisplay.format(item.price_cents)}", item.id ] } %>
+    </div>
+    <div class="field">
+      <%= f.label :quantity, t("takeaway.group_quantity") %>
+      <%= f.number_field :quantity, value: 1, min: 1, max: 20 %>
+    </div>
+    <p><%= f.submit t("takeaway.group_add"), class: "btn btn-primary" %></p>
+  <% end %>
+</div>
+
+<%# Only the host sends it to the kitchen. Everyone else adds and waits, which
+    is what makes this one delivery rather than four. %>
+<p class="group-note"><%= @order.host?(Current.user) ? t("takeaway.group_host_note") : t("takeaway.group_guest_note") %></p>

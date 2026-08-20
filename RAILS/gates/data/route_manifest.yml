@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: 45b8fdc0f6e2898c
+    digest: d2f9eafa2a9205ea
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -287,6 +287,8 @@ apps:
       - "/orders"
       takeaway/orders#show:
       - "/orders/:id"
+      takeaway/group_orders#show:
+      - "/group/:id"
       marketplace/listings#index:
       - "/"
       - "/listings"
