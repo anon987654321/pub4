@@ -1,0 +1,93 @@
+# amber function + layout inventory. Luxury dialect, wardrobe + social feed.
+app: amber
+checks:
+  # --- chrome ---
+  - {id: chrome.skip_link, in: amber/app/views/layouts/application.html.erb, has: [skip-link, 'href="#main-content"']}
+  - {id: chrome.viewport, in: amber/app/views/layouts/application.html.erb, has: [viewport-fit=cover]}
+  - {id: chrome.luxury_surface, in: amber/app/views/layouts/application.html.erb, has: ['data-surface="luxury"', 'color-scheme" content="light"']}
+  - {id: chrome.csrf, in: amber/app/views/layouts/application.html.erb, has: [csrf_meta_tags]}
+  - {id: chrome.importmap, in: amber/app/views/layouts/application.html.erb, has: [javascript_importmap_tags]}
+  - {id: chrome.single_css, in: amber/app/views/layouts/application.html.erb, has: [stylesheet_link_tag], lack: [tokens.css]}
+  - {id: chrome.pwa_manifest, in: amber/app/views/layouts/application.html.erb, has: [pwa_manifest]}
+  - {id: chrome.brand_mark, in: amber/app/views/layouts/application.html.erb, has: [brand-mark]}
+  - {id: chrome.sidebar_nav, in: amber/app/views/shared/_sidebar_nav.html.erb, has: [nav.sign_in]}
+  - {id: chrome.legal, in: amber/app/views/layouts/application.html.erb, has: [site_legal_footer]}
+  # --- design ---
+  - {id: design.stack_entry, in: amber/app/assets/stylesheets/application.scss, has: ['@use "stack"']}
+  - {id: design.luxury_items, in: amber/app/assets/stylesheets/application.scss, has: [items_luxury, guest_compose, dressing_room]}
+  - {id: design.tap_min, in: shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--tap-min: 44px"]}
+  - {id: design.focus_ring, in: shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
+  - {id: design.no_dialog_compose, in: amber/app/views/shared/_feed_compose.html.erb, lack: ["<dialog", form-submit, requestSubmit]}
+  # --- home / compose / posts ---
+  - {id: home.guest_compose, in: amber/app/views/home/index.html.erb, has: [shared/feed_compose]}
+  - {id: home.dressing_room, in: amber/app/views/home/index.html.erb, has: [shared/dressing_room]}
+  - {id: home.empty_posts, in: amber/app/views/home/index.html.erb, has: [empty.no_posts_yet, empty.guest_post]}
+  - {id: compose.box, in: amber/app/views/shared/_feed_compose.html.erb, has: [amber-compose-box, "text_area :body", posts_path, feed-compose]}
+  - {id: compose.guest_anon, in: amber/app/views/shared/_feed_compose.html.erb, has: [anonymous, guest_hint]}
+  - {id: compose.expand, in: amber/app/views/shared/_feed_compose.html.erb, has: [feed-compose#expand, amber-compose-footer]}
+  - {id: compose.blur_keeps_filled, in: shared/frontend/feed_compose_controller.js, has: ["inputTarget.value.trim().length > 0"]}
+  - {id: posts.create_guest, in: amber/app/controllers/posts_controller.rb, has: ["def create", AnonymousPost, "except: %i[index show create]"]}
+  - {id: posts.body_limit, in: amber/app/models/post.rb, has: ["validates :body", "maximum: 500"]}
+  - {id: posts.show, in: amber/app/views/posts/show.html.erb, has: [comments/form, json_ld]}
+  - {id: posts.new, in: amber/app/views/posts/new.html.erb, has: ["text_area :body"]}
+  - {id: posts.card, in: amber/app/views/posts/_post.html.erb, has: [shared/post_card, author_name]}
+  - {id: comments.auth_gate, in: amber/app/views/posts/show.html.erb, has: ["if authenticated?"]}
+  - {id: comments.stream, in: amber/app/views/comments/create.turbo_stream.erb, has: [comment_form, comments]}
+  # --- wardrobe items ---
+  - {id: items.form_title, in: amber/app/views/items/_form.html.erb, has: ["f.label :title", "f.text_field :title"]}
+  - {id: items.form_category, in: amber/app/views/items/_form.html.erb, has: ["f.select :category"]}
+  - {id: items.form_price, in: amber/app/views/items/_form.html.erb, has: ["f.number_field :price"]}
+  - {id: items.form_draft, in: amber/app/views/items/_form.html.erb, has: [draft-store, autosave]}
+  - {id: items.index, in: amber/app/views/items/index.html.erb, has: [item]}
+  - {id: items.show, in: amber/app/views/items/show.html.erb, has: [item]}
+  - {id: items.wear, in: amber/app/controllers/items_controller.rb, has: ["def wear"]}
+  - {id: items.spark_joy, in: amber/app/controllers/items_controller.rb, has: ["def spark_joy"]}
+  - {id: items.declutter, in: amber/app/controllers/items_controller.rb, has: ["def declutter"]}
+  - {id: items.require_real, in: amber/app/controllers/items_controller.rb, has: [require_real_user]}
+  - {id: items.shopping_list, in: amber/app/views/items/shopping_list.html.erb, has: [shop]}
+  # --- outfits / dressing room ---
+  - {id: outfits.form, in: amber/app/views/outfits/_form.html.erb, has: [outfit]}
+  - {id: outfits.dressing_room, in: amber/app/views/outfits/dressing_room.html.erb, has: [dressing]}
+  - {id: outfits.like, in: amber/app/controllers/outfits_controller.rb, has: ["def like"]}
+  - {id: outfits.generate, in: amber/app/controllers/outfits_controller.rb, has: ["def generate"]}
+  - {id: outfits.save_look, in: amber/config/routes.rb, has: [save_look]}
+  - {id: planned.index, in: amber/app/views/planned_outfits/index.html.erb, has: [planned]}
+  # --- wardrobe analytics ---
+  - {id: wardrobe.analytics, in: amber/app/views/wardrobe_items/analytics.html.erb, has: [analytic]}
+  - {id: wardrobe.organize, in: amber/app/views/wardrobe_items/organize.html.erb, has: [organ]}
+  - {id: wardrobe.timeline, in: amber/app/views/wardrobe_items/timeline.html.erb, has: [time]}
+  - {id: wardrobe.index, in: amber/app/views/wardrobe_items/index.html.erb, has: [wardrobe]}
+  # --- demo ---
+  - {id: demo.index, in: amber/app/views/demo_wardrobe/index.html.erb, has: [demo]}
+  - {id: demo.show, in: amber/app/views/demo_wardrobe/show.html.erb, has: [item]}
+  - {id: demo.home_cta, in: amber/app/views/home/index.html.erb, has: [demo_wardrobe_path]}
+  # --- AI ---
+  - {id: ai.capsule, in: amber/app/views/ai/capsule.html.erb, has: [capsule]}
+  - {id: ai.palette, in: amber/app/views/ai/color_palette.html.erb, has: [color]}
+  - {id: ai.declutter_guide, in: amber/app/views/ai/declutter_guide.html.erb, has: [declutter]}
+  - {id: ai.mood_board, in: amber/app/views/ai/mood_board.html.erb, has: [mood]}
+  - {id: ai.occasion, in: amber/app/views/ai/occasion_map.html.erb, has: [occasion]}
+  - {id: ai.packing, in: amber/app/views/ai/packing_list.html.erb, has: [pack]}
+  - {id: ai.style_profile, in: amber/app/views/ai/style_profile.html.erb, has: [style]}
+  - {id: ai.suggest, in: amber/app/views/ai/suggest_outfits.html.erb, has: [outfit]}
+  - {id: ai.search, in: amber/app/views/ai/search.html.erb, has: [search]}
+  - {id: ai.require_real, in: amber/app/controllers/ai_controller.rb, has: [require_real_user]}
+  # --- social / auth ---
+  - {id: auth.registration, in: amber/app/views/registrations/new.html.erb, has: [registration]}
+  - {id: auth.session, in: amber/app/views/sessions/new.html.erb, has: [session]}
+  - {id: auth.passwords, in: amber/app/views/passwords/new.html.erb, has: [password]}
+  - {id: follows.create, in: amber/app/controllers/follows_controller.rb, has: ["def create"]}
+  - {id: messages.index, in: amber/app/views/messages/index.html.erb, has: [message]}
+  - {id: connections.index, in: amber/app/views/connections/index.html.erb, has: [connection]}
+  - {id: live_streams.index, in: amber/app/views/live_streams/index.html.erb, has: [stream]}
+  - {id: creator.profile, in: amber/app/views/creator_profiles/show.html.erb, has: [creator]}
+  - {id: declutter.index, in: amber/app/views/declutter/index.html.erb, has: [declutter]}
+  # --- pwa ---
+  - {id: pwa.manifest, in: amber/app/views/pwa/manifest.json.erb, has: [name, icons]}
+  - {id: pwa.sw, in: amber/app/views/pwa/service-worker.js, has: [offline]}
+  # --- live ---
+  - {id: live.home, live: {path: /, status: 200, has: [amber-compose-box, skip-link, main-content], lack: [Routing Error, "Exception"]}}
+  - {id: live.demo, live: {path: /demo, status: 200, has: [demo]}}
+  - {id: live.sign_in, live: {path: /session/new, status: 200, has: [session]}}
+  - {id: live.sign_up, live: {path: /registration/new, status: 200, has: [registration]}}
+  - {id: live.posts, live: {path: /posts, status: 200, has: [post]}}
