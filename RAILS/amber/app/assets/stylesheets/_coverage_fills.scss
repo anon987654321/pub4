@@ -68,25 +68,6 @@
   max-width: var(--measure-body);
 }
 
-// Carousel slide. The glyph is the first letter of a garment with no photo, so it
-// stands in for an image and must fill the same box.
-.wardrobe-slide-img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-sm);
-}
-
-.wardrobe-slide-glyph {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: var(--font-size);
-}
-
 // Single-purpose containers the markup names and nothing styled.
 .declutter-page,
 .wardrobe-items,

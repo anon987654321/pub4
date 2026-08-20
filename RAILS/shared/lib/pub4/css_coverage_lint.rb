@@ -41,7 +41,7 @@ module Pub4
     EXTERNAL = %w[
       hidden turbo-progress-bar translation_missing
       nav-visible active current selected open
-      adsbygoogle swiper
+      adsbygoogle swiper swiper-wrapper
       icon-sprite hp-field infinite-scroll-sentinel
       battery-low battery-charging page-hidden
       network-slow network-save-data power-constrained decorative-motion
@@ -108,7 +108,20 @@ module Pub4
     #   276 -> 275  the presentational class `dim` went from markup and
     #               stylesheets alike, with the seven naming hooks that had been
     #               riding on its styling
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 275 }.freeze
+    #   275 -> 243  the instrument learned to read a class attribute that embeds
+    #               an ERB conditional — class="unit<%= " unit--wide" if wide %>"
+    #               never matched the plain pattern, so the base name and the
+    #               literal inside the tag both read as dead. swiper-wrapper
+    #               joined its library's other runtime classes in EXTERNAL, and
+    #               the two wardrobe-slide fills whose carousel markup had gone
+    #               were deleted.
+    #
+    # undefined 0 -> 7: the same blindness hid real hooks. Seven classes the
+    # markup composes inside ERB conditionals have no rule anywhere:
+    # message--unread; read and unread on notifications; story-ring and
+    # story-ring--seen; address and address--default in marketplace. State
+    # styling is a design decision, so they are named here rather than filled.
+    BASELINES = { "undefined_class" => 7, "unused_selector" => 243 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -188,6 +201,22 @@ module Pub4
                 (used[name] ||= []) << view
                 (@lists[name] ||= []) << names
               end
+            end
+          end
+
+          # A class attribute that embeds an ERB conditional —
+          # class="unit<%= " unit--wide" if wide %>" — never matches the plain
+          # attribute pattern (the `<` ends the value), so both the base name
+          # and the literal inside the tag read as unused. The browser sees
+          # every quoted fragment; count them.
+          body.scan(/class=["']((?:[^"'<>]|<%=(?:(?!%>).)*?%>)*)["']/m) do |(list)|
+            next unless list.include?("<%=")
+
+            flat = list.gsub(/<%=(?:(?!%>).)*?%>/m) { |tag| tag.scan(/["']([^"']*)["']/).flatten.join(" ") }
+            names = flat.split(/\s+/)
+            names.each do |name|
+              (used[name] ||= []) << view
+              (@lists[name] ||= []) << names
             end
           end
         end
