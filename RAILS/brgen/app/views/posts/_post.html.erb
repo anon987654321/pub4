@@ -1,4 +1,8 @@
-<%= turbo_frame_tag dom_id(post) do %>
+<%# target: _top so a tap on the title leaves the page. Without it, Turbo
+    loads posts#show into this frame — the show template has no matching
+    id, and the card becomes "Content missing". Vote still replaces the
+    frame via turbo_stream; only <a> navigation is affected. %>
+<%= turbo_frame_tag dom_id(post), target: "_top" do %>
 <%# Keyed on the viewer's vote, not the viewer. The only user-specific output in
     here is post.upvoted_by?(Current.user), twice — the active class and
     aria-pressed on the vote button; everything else, shared/_post_card

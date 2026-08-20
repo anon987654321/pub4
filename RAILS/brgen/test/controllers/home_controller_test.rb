@@ -29,6 +29,26 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # an assertion here is testing the locale, not the markup.
     assert_includes response.body, I18n.t("nav.ai_assistant", locale: :nb)
     assert_includes response.body, "form-submit-blank"
+    # The chip is labelled "sign up". Sending it to sign-in made a new visitor
+    # fill a form they have no account for. The sign-in page does link onward
+    # to /users/new — this just skips the extra hop.
+    assert_includes response.body, new_user_path
+  end
+
+  test "a feed card frame does not swallow the title click" do
+    city = City.find_by(domain: "brgen.no") || City.create!(
+      name: "Bergen", slug: "bergen-feed-frame", domain: "brgen.no",
+      country_code: "NO", locale: "nb", currency: "NOK"
+    )
+    user = User.create!(email_address: "feed-frame-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    post = Post.create!(user:, title: "Tap this title", content: "body", city:)
+
+    host! "brgen.no"
+    get root_url
+
+    assert_response :success
+    # Third arg is equality, not a message — see comment_ownership_test.
+    assert_select "turbo-frame##{ActionView::RecordIdentifier.dom_id(post)}[target=_top]"
   end
 
   test "composer submit is not cancelled to replay through requestSubmit" do

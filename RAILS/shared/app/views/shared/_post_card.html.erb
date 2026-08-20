@@ -100,7 +100,7 @@
 <% end %>
 
 <% if frame && post.persisted? %>
-  <%= turbo_frame_tag dom_id(post) do %>
+  <%= turbo_frame_tag dom_id(post), target: "_top" do %>
     <%= card %>
   <% end %>
 <% else %>
