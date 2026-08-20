@@ -123,16 +123,7 @@ module Master
         Result.err(redact_secrets(err.message), category: err.category)
       rescue StandardError => err
         record_provider_outcome(selected_model, :llm_call_failure, latency_ms: elapsed_ms(started), error: err.message)
-        return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
-        # A billing or rate-limit refusal cannot succeed on an in-place retry,
-        # and :llm_call_failure is not in fallback_policy.on — so an
-        # out-of-credit OpenRouter model was retried in place and the pass
-        # died with claude-cli sitting unused in the same chain (2026-08-19
-        # diagnostics: seven rule passes, all "Insufficient credits").
-        # Classified as :budget / :rate_limit, the chain walks on.
-        return Result.err(redact_secrets(err.message.to_s), category: :budget) if billing_error?(err)
-        return Result.err(redact_secrets(err.message.to_s), category: :rate_limit) if rate_limit_error?(err)
-        Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
+        classified_call_failure(err)
       end
 
       def redact_secrets(text)
@@ -153,6 +144,17 @@ module Master
       end
 
       private
+
+      # A billing or rate-limit refusal cannot succeed on an in-place retry,
+      # and :llm_call_failure is not in fallback_policy.on — classified as
+      # :budget / :rate_limit, the chain and the single-shot hop walk on.
+      def classified_call_failure(err)
+        return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
+        return Result.err(redact_secrets(err.message.to_s), category: :budget) if billing_error?(err)
+        return Result.err(redact_secrets(err.message.to_s), category: :rate_limit) if rate_limit_error?(err)
+
+        Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
+      end
 
       def reclassify_provider_error(result)
         return result unless result.is_a?(Master::Result::Err) && result.category == :provider_error
