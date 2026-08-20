@@ -2,11 +2,18 @@
 
 <div class="page-header" role="banner" aria-label="<%= t("aria.my_orders_header") %>"><%= tag.h1 t("pages.my_orders") %></div>
 
+<% if @orders.any? %>
 <section id="takeaway-orders-list" class="order-list" role="list" aria-label="<%= t("aria.order_history") %>">
   <% @orders.each do |order| %>
     <%= render "takeaway/orders/order", order: %>
   <% end %>
 </section>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("takeaway.orders_empty"),
+        body: t("takeaway.orders_empty_body"),
+        action: { label: t("takeaway.order_food"), path: restaurants_path } %>
+<% end %>
 
 <%= render "shared/infinite_scroll_sentinel",
            pagy: @pagy,

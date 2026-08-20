@@ -234,6 +234,7 @@ en:
       one: "%{count} video shown"
       other: "%{count} videos shown"
     home_blurb: Local channels, shows, and live stages — watch without an account.
+    browse: Browse TV
     home_title: TV
     channels_title: Channels
     shows_title: Shows
@@ -1207,6 +1208,8 @@ en:
     unsave: Unsave
     save_restaurant: Save
     order_food: Menus nearby
+    orders_empty: No orders yet
+    orders_empty_body: Your order history collects here once you order from a restaurant.
     add_restaurant: Add restaurant
     edit_restaurant: Edit restaurant
     delivery_drivers: Delivery drivers
@@ -1644,6 +1647,8 @@ en:
     mod_queue: Mod queue
     moderators: Moderators
     moderators_hint: Only the owner can appoint and remove moderators.
+    no_members: No members yet
+    no_members_body: When people join this community, you can promote them to moderators here.
     make_moderator: Make moderator
     remove_moderator: Remove as moderator
     owner_locked: Owner

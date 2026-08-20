@@ -125,6 +125,7 @@ en:
   empty:
     no_posts_yet: "No posts yet"
     guest_post: "Share an #ootd thought above — guests can post without an account."
+    first_post: Write the first post
     no_items: "No wardrobe items yet"
     no_items_body: "Add a photo, tag it, then get an outfit — three steps to a working closet."
     no_outfits: "No outfits yet"

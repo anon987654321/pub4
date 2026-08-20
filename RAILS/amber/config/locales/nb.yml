@@ -124,6 +124,7 @@ nb:
   empty:
     no_posts_yet: "Ingen innlegg ennå"
     guest_post: "Del en #ootd-tanke over — gjester kan poste uten konto."
+    first_post: Skriv det første innlegget
     no_items: "Ingen plagg ennå"
     no_items_body: "Legg til et bilde, merk det, og få et antrekk — tre steg til en fungerende garderobe."
     no_outfits: "Ingen antrekk ennå"

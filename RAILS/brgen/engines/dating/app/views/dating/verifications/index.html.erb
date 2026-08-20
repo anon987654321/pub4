@@ -20,5 +20,6 @@
     <% end %>
   </ul>
 <% else %>
+  <%# empty_state: no-action-ok — a cleared verification queue is the goal state, not a dead end %>
   <%= render "shared/empty_state", title: t("dating.verify_queue_empty"), body: t("dating.verify_queue_empty_body") %>
 <% end %>

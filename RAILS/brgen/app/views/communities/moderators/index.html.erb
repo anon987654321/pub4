@@ -9,6 +9,7 @@
 
 <p><%= t("community.moderators_hint") %></p>
 
+<% if @memberships.any? %>
 <ul class="member-list">
   <% @memberships.each do |membership| %>
     <li class="cluster">
@@ -30,3 +31,9 @@
     </li>
   <% end %>
 </ul>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("community.no_members"),
+        body: t("community.no_members_body"),
+        action: { label: @community.name, path: community_path(@community) } %>
+<% end %>

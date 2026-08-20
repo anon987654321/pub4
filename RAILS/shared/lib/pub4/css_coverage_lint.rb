@@ -204,6 +204,17 @@ module Pub4
             end
           end
 
+          # The tag-helper array form — class: ["card", ("wide" if wide)] —
+          # holds its names as Ruby string literals, invisible to the two
+          # attribute patterns above.
+          body.scan(/class:\s*\[([^\]]*)\]/m) do |(list)|
+            names = list.scan(/["']([\w\s-]+)["']/).flatten.flat_map(&:split)
+            names.each do |name|
+              (used[name] ||= []) << view
+              (@lists[name] ||= []) << names
+            end
+          end
+
           # A class attribute that embeds an ERB conditional —
           # class="unit<%= " unit--wide" if wide %>" — never matches the plain
           # attribute pattern (the `<` ends the value), so both the base name

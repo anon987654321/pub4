@@ -15,5 +15,6 @@
   </ul>
   <%= render "shared/pager", pagy: @pagy %>
 <% else %>
-  <%= render "shared/empty_state", title: t("tv.sounds_empty"), body: t("tv.sounds_empty_body") %>
+  <%= render "shared/empty_state", title: t("tv.sounds_empty"), body: t("tv.sounds_empty_body"),
+        action: { label: t("tv.browse"), path: root_path } %>
 <% end %>

@@ -1,5 +1,6 @@
 <%= turbo_stream_from "posts" %>
 <% content_for :title, t("pages.all_posts") %>
+<%# empty_state: coverage-ok — the feed and its empty state render in posts/_live_search_results %>
 
 <div class="page-header" role="banner" aria-label="<%= t("pages.all_posts") %>">
   <%= tag.h1 t("pages.all_posts") %>

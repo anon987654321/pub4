@@ -1,4 +1,5 @@
 <% content_for :title, t("pages.wardrobe") %>
+<%# empty_state: coverage-ok — the wardrobe list and its empty state render in items/_live_search_results %>
 <%= turbo_stream_from "items" %>
 
 <section data-controller="filter" role="region" aria-label="<%= t("wardrobe.items_region") %>">

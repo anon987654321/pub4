@@ -18,5 +18,6 @@
 <% else %>
   <%# A sound whose clips are all unpublished is a real state: the sound
       outlives the video it came from. %>
-  <%= render "shared/empty_state", title: t("tv.sound_no_clips"), body: t("tv.sound_no_clips_body") %>
+  <%= render "shared/empty_state", title: t("tv.sound_no_clips"), body: t("tv.sound_no_clips_body"),
+        action: { label: t("tv.sounds"), path: sounds_path } %>
 <% end %>

@@ -1,5 +1,8 @@
 // Battery-aware and visibility-aware helpers.
 // Import from shared or per-app application stylesheet.
+// scan: intentional-important — these classes are JS-applied kill switches
+// (.battery-low, .network-save-data); like the reduced-motion reset they must
+// beat whatever the author set, which is the one honest use of !important.
 //
 // html classes are toggled by battery-aware / network-aware controllers.
 // css_coverage: ok

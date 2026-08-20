@@ -234,6 +234,7 @@ nb:
       one: "%{count} video vist"
       other: "%{count} videoer vist"
     home_blurb: Lokale kanaler, programmer og direktesendte scener — se uten konto.
+    browse: Utforsk TV
     home_title: TV
     channels_title: Kanaler
     shows_title: Serier
@@ -1210,6 +1211,8 @@ nb:
     unsave: Fjern lagring
     save_restaurant: Lagre
     order_food: Menyer i nærheten
+    orders_empty: Ingen bestillinger ennå
+    orders_empty_body: Bestillingshistorikken din samles her når du bestiller fra en restaurant.
     add_restaurant: Legg til restaurant
     edit_restaurant: Rediger restaurant
     delivery_drivers: Budsjåfører
@@ -1650,6 +1653,8 @@ nb:
     mod_queue: Modkø
     moderators: Moderatorer
     moderators_hint: Bare eieren kan utnevne og fjerne moderatorer.
+    no_members: Ingen medlemmer ennå
+    no_members_body: Når folk blir med i fellesskapet, kan du gjøre dem til moderatorer her.
     make_moderator: Gjør til moderator
     remove_moderator: Fjern som moderator
     owner_locked: Eier

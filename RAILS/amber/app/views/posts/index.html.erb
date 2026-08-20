@@ -1,6 +1,13 @@
 <%= turbo_stream_from "posts" %>
 <%= turbo_frame_tag "amber-posts" do %>
 <%= tag.h1 t("pages.community") %>
-<%= render @posts %>
-<%= render "shared/pager", pagy: @pagy %>
+<% if @posts.any? %>
+  <%= render @posts %>
+  <%= render "shared/pager", pagy: @pagy %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("empty.no_posts_yet"),
+        body: t("empty.guest_post"),
+        action: { label: t("empty.first_post"), path: new_post_path } %>
+<% end %>
 <% end %>
