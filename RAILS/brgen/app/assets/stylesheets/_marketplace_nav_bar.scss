@@ -225,6 +225,12 @@
 }
 
 #navBar .section {
+  /* 8px of padding around a 21px line is 37px, and the tap floor in
+     shared/LAYOUT.md is 44px. Centring inside the minimum keeps the row
+     reading as one line rather than growing the bar's text. */
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
   padding: 8px;
   color: #fff;
   text-decoration: none;
