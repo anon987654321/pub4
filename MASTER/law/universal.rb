@@ -153,6 +153,7 @@ end
 Law.define(:TYPOGRAPHY_DISCIPLINE) do
   source "Butterick's Practical Typography (Matthew Butterick)"
   severity :info
+  reads_comments true
   detect { |line| line.match?(/[-=]{3,}|[╭╮╰╯│─]/) }
   fix "No ASCII separators. No box drawing. Whitespace is the layout tool."
   bad  "# ------"
@@ -186,6 +187,7 @@ end
 Law.define(:WHY_NOT_WHAT) do
   source "Clean Code / Code Complete — comments explain why, not what"
   severity :info
+  reads_comments true
   detect { |line| line.match?(/#\s*(increment|set|get|update|return|initialize|create|add)\s+\w+/) }
   fix "Comments should explain intent, not restate the code."
   bad  "# increment counter"

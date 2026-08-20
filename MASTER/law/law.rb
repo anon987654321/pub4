@@ -14,7 +14,24 @@
 module Law
   Finding = Data.define(:id, :file, :line, :text)
 
-  MEMBERS = %i[id source severity languages scope path absent detect fix bad good].freeze
+  # A line-scoped detector reads code, and a comment naming a forbidden
+  # construct is prose about it, not an instance of it — "# a bare rescue"
+  # became an error-severity finding when FAIL_VISIBLY moved here from the
+  # yaml bridge, which had learned this once already. Comment-leading lines
+  # are skipped for the file's own comment syntax; a rule whose subject IS
+  # comments (WHY_NOT_WHAT, TYPOGRAPHY_DISCIPLINE) declares `reads_comments
+  # true`. Fixtures prove with file "-", which has no extension and so no
+  # comment syntax — a fixture is always read whole.
+  COMMENT_LEADERS = {
+    ".rb" => ["#"], ".rake" => ["#"], ".gemspec" => ["#"],
+    ".yml" => ["#"], ".yaml" => ["#"],
+    ".zsh" => ["#"], ".sh" => ["#"], ".bash" => ["#"],
+    ".js" => ["//", "/*"], ".ts" => ["//", "/*"], ".jsx" => ["//", "/*"], ".tsx" => ["//", "/*"],
+    ".css" => ["/*"], ".scss" => ["//", "/*"], ".sass" => ["//", "/*"],
+    ".html" => ["<!--"], ".htm" => ["<!--"], ".erb" => ["<!--"],
+  }.freeze
+
+  MEMBERS = %i[id source severity languages scope path absent detect fix bad good reads_comments].freeze
   Rule = Data.define(*MEMBERS) do
     def applies?(file, language)
       return false if path && !file.include?(path)
@@ -41,16 +58,18 @@ module Law
     end
 
     def scan_lines(text, file)
+      leaders = reads_comments ? [] : COMMENT_LEADERS.fetch(File.extname(file), [])
       text.each_line.with_index(1).filter_map do |line, n|
+        next if leaders.any? { |leader| line.lstrip.start_with?(leader) }
         Finding.new(id, file, n, line.chomp) if detect.call(line)
       end
     end
   end
 
   class Builder
-    %i[source severity languages scope path absent fix bad good].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source severity languages scope path absent fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, absent: nil }
+    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, absent: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
     def build

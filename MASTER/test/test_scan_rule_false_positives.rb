@@ -555,50 +555,55 @@ end
     assert_equal "load_bearing", after.last["severity"]
   end
 
-  # --- the YAML lexical bridge reading comments ------------------------------
+  # --- line-scoped laws reading comments -------------------------------------
   #
-  # detect_lexical is a raw regex over raw lines, so the paragraph above
-  # explaining which rescue shape belongs to which rule became two error-severity
-  # findings about itself — BARE_RESCUE and FAIL_VISIBLY, which share one regex.
-  # Skipping comment-only lines took selfcheck from 25 to 17: those two to zero,
-  # and guard_expensive_ops from 9 to 5, all four of which were prose about
-  # truncation and `rm -rf`. Verified line by line that the five survivors are code.
+  # A detector over raw lines flags prose about a construct as the construct:
+  # "# a bare rescue" was an error-severity finding. The yaml bridge learned to
+  # skip comment lines once; when FAIL_VISIBLY, BARE_RESCUE (folded into it) and
+  # GUARD_EXPENSIVE_OPS moved to law/, the lesson stayed behind and the same
+  # false positives came back through the law bridge. Comment skipping lives in
+  # Law's own line scan now, keyed on the file's comment syntax, with
+  # reads_comments as the opt-in for rules whose subject IS comments.
 
-  def bridge = scanner.rules.find { |r| r.id.to_s == "yaml_declarative" } || raise("bridge rule is not registered")
+  def bridge = scanner.rules.find { |r| r.id.to_s == "law_bridge" } || raise("bridge rule is not registered")
 
-  # frozen_string_literal is a file-level `\A` rule in the same bridge and fires on
-  # every fixture here, so this asks about the line rules only. Asserting the whole
-  # list was empty made the test fail for a reason it was not about.
-  LINE_RULES = %w[bare_rescue fail_visibly guard_expensive_ops].freeze
+  LINE_RULES = %w[FAIL_VISIBLY GUARD_EXPENSIVE_OPS].freeze
 
-  def bridge_findings(source)
-    Array(bridge.check(source, path: File.join(Master::ROOT, "lib/example.rb")))
+  def bridge_findings(source, path: "lib/example.rb")
+    Array(bridge.check(source, path: File.join(Master::ROOT, path)))
       .map { |f| f[:rule].to_s }.select { |id| LINE_RULES.include?(id) }
   end
 
   def test_a_comment_naming_a_forbidden_construct_is_not_a_finding
     [
-      "# `rescue Exception` falls to SILENT_RESCUE's non-narrow branch\n",
-      "  # a bare rescue\n",
-      "# Rotate rather than truncate-in-place\n",
-      "  // rm -rf in a JS comment\n",
-    ].each do |source|
-      assert_empty bridge_findings(source), "#{source.strip.inspect} is prose, not code"
+      ["# `rescue Exception` falls to SILENT_RESCUE's non-narrow branch\n", "lib/example.rb"],
+      ["  # a bare rescue\n", "lib/example.rb"],
+      ["# Rotate rather than truncate-in-place\n", "lib/example.rb"],
+      ["  // rm -rf in a JS comment\n", "web/example.js"],
+    ].each do |source, path|
+      assert_empty bridge_findings(source, path:), "#{source.strip.inspect} is prose, not code"
     end
   end
 
   def test_the_same_constructs_in_code_are_still_findings
-    assert_includes bridge_findings("def probe\n  work\nrescue\n  nil\nend\n"), "bare_rescue"
-    assert_includes bridge_findings("def probe\n  work\nrescue Exception\n  nil\nend\n"), "bare_rescue"
-    assert_includes bridge_findings("  Item.delete_all\n"), "guard_expensive_ops"
+    assert_includes bridge_findings("def probe\n  work\nrescue\n  nil\nend\n"), "FAIL_VISIBLY"
+    assert_includes bridge_findings("def probe\n  work\nrescue Exception\n  nil\nend\n"), "FAIL_VISIBLY"
+    assert_includes bridge_findings("  Item.delete_all\n"), "GUARD_EXPENSIVE_OPS"
   end
 
   # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues was an
   # error-severity finding against itself, recorded in DEBT.md as noise rather than
   # fixed. A symbol is not a rescue clause.
   def test_a_symbol_named_bare_rescue_is_not_a_bare_rescue
-    refute_includes bridge_findings("  @transforms << :bare_rescue\n"), "bare_rescue"
-    refute_includes bridge_findings("  def bare_rescue\n"), "bare_rescue"
+    refute_includes bridge_findings("  @transforms << :bare_rescue\n"), "FAIL_VISIBLY"
+    refute_includes bridge_findings("  def bare_rescue\n"), "FAIL_VISIBLY"
+  end
+
+  # The rules whose subject is comments keep their reach: a comment that IS the
+  # violation still fires through the same comment-skipping scan.
+  def test_comment_reading_laws_still_see_comments
+    hits = Array(bridge.check("# increment counter\n", path: File.join(Master::ROOT, "lib/example.rb")))
+    assert(hits.any? { |f| f[:rule] == "WHY_NOT_WHAT" }, "WHY_NOT_WHAT reads comments by design")
   end
 
   def test_the_deleted_rule_does_not_come_back
