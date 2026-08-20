@@ -84,9 +84,12 @@ before_action :require_real_user, only: %i[edit update destroy share]
     @post.user      = Current.user
     @post.anonymous = true if Current.user.guest? || ActiveModel::Type::Boolean.new.cast(post_params[:anonymous])
     stamp_nearby!
-    if @post.title.blank? && @post.content.present?
-      @post.title = @post.content.to_s.lines.first.to_s.strip.presence || @post.content.to_s.strip
-      @post.title = @post.title.truncate(300)
+    if @post.content.present?
+      plain = ActionController::Base.helpers.strip_tags(@post.content.to_s).squish
+      tagged = @post.title.present? && @post.title.match?(/<[^>]+>/)
+      if @post.title.blank? || tagged
+        @post.title = (plain.presence || @post.title.to_s).truncate(300)
+      end
     end
     @post.community = @community if @community
     verdict = PostModeration.new(@post).decide

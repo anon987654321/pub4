@@ -46,6 +46,7 @@ en:
     post_nearby_hint: "Shows up nearby — the location is rounded to about a kilometre."
     title: Local news
     compose_prompt: What are you up to today?
+    compose_blank: Write something first.
     compose_title: Create post
     add_to_post: Add to your post
     posting_as_guest: Anon

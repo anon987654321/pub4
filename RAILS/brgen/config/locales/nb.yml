@@ -46,6 +46,7 @@ nb:
     post_nearby_hint: "Vises i «i nærheten» — stedet rundes av til ca. én kilometer."
     title: Lokale nyheter
     compose_prompt: Del noe spennende nå
+    compose_blank: Skriv noe først.
     compose_title: Opprett innlegg
     add_to_post: Legg til i innlegget
     posting_as_guest: Anon

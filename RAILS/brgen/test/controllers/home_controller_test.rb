@@ -28,6 +28,14 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # in Norwegian, exactly as intended. brgen renders nb; an English literal in
     # an assertion here is testing the locale, not the markup.
     assert_includes response.body, I18n.t("nav.ai_assistant", locale: :nb)
+    assert_includes response.body, "form-submit-blank"
+  end
+
+  test "composer submit is not cancelled to replay through requestSubmit" do
+    source = File.read(Rails.root.join("app/javascript/controllers/form_submit_controller.js"))
+    code = source.gsub(%r{^\s*//.*\n}, "")
+    refute_match(/\.requestSubmit\s*\(/, code,
+                 "requestSubmit from a cancelled submit is a no-op inside <dialog> — Publiser posted nothing")
   end
 
   # The verticals stay reachable from root, and reachable exactly once.

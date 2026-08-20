@@ -84,7 +84,7 @@ export default class extends Controller {
   syncTitle() {
     if (!this.hasTitleTarget || !this.hasInputTarget) return
 
-    const text = this.inputTarget.value.trim()
+    const text = this.inputTarget.value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
     const line = text.split("\n").find((row) => row.trim().length > 0) || text
     this.titleTarget.value = line.slice(0, 300)
   }

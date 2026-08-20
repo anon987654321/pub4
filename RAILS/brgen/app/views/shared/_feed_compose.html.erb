@@ -20,7 +20,9 @@
   <dialog class="composer" data-feed-compose-target="dialog"
           data-action="click->feed-compose#backdropClose close->feed-compose#closed">
     <%= form_with model: Post.new, url: main_app.posts_path, class: "composer-form",
-          data: { controller: "form-submit", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
+          data: { controller: "form-submit", feed_compose_target: "box",
+                  action: "submit->form-submit#lock",
+                  form_submit_blank: t("feed.compose_blank") } do |f| %>
       <header class="composer-header">
         <h2 class="composer-title"><%= t("feed.compose_title", default: "Post to %{city}", city: city_name) %></h2>
         <button type="button" class="composer-close" data-action="click->feed-compose#close"

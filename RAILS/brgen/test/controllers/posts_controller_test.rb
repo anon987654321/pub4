@@ -38,6 +38,17 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'type="application/ld+json"'
   end
 
+  test "compose with only content derives a tag-free title" do
+    host! "brgen.no"
+    get root_url
+    assert_difference -> { Post.count }, 1 do
+      post posts_url, params: { post: { title: "<p>Hello Bergen</p>", content: "<p>Hello Bergen from the dialog</p>" } }
+    end
+    created = Post.order(:id).last
+    assert_equal "Hello Bergen from the dialog", created.title
+    assert_redirected_to post_url(created)
+  end
+
   test "show answers markdown for AI and ActivityPub clients" do
     user = User.create!(email_address: "post-md-#{SecureRandom.hex(4)}@example.com", password: "password12345")
     post = Post.create!(user:, title: "Markdown fixture", content: "A body paragraph.", city: brgen_city)

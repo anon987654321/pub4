@@ -2,7 +2,6 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   connect() {
-    this.replaying = false
     this.onSubmit = this.submit.bind(this)
     this.onSubmitEnd = this.unlock.bind(this)
     this.element.addEventListener("submit", this.onSubmit)
@@ -29,8 +28,6 @@ export default class extends Controller {
   // listener whose order relative to this one is not defined. Nothing can tap
   // twice inside one tick, so deferring costs no protection.
   //
-  // Idempotent — submit() replays the event through requestSubmit(), so this
-  // fires twice per real submission.
   lock() {
     this.locked = true
     setTimeout(() => { if (this.locked) this._setDisabled(true) }, 0)
@@ -53,8 +50,15 @@ export default class extends Controller {
     return Array.from(this.element.querySelectorAll('button[type="submit"], input[type="submit"]'))
   }
 
+  // Do not preventDefault + requestSubmit on the happy path.
+  //
+  // The composer is a <dialog>. Calling requestSubmit() from inside a submit
+  // handler that already cancelled the event is a no-op there: the first
+  // submit is discarded and a second never fires, so Publiser looks dead.
+  // Measured on localhost: button.click() produced zero POST /posts.
+  // Validation failure still cancels. Success lets Turbo take the native event.
   submit(event) {
-    if (this.replaying) return
+    this.deriveTitle()
     const errors = this.validate()
     if (errors.length) {
       event.preventDefault()
@@ -64,27 +68,39 @@ export default class extends Controller {
       this.unlock()
       return
     }
+    this.clearErrors()
+  }
 
-    if (typeof this.element.requestSubmit === "function") {
-      event.preventDefault()
-      this.replaying = true
-      this.clearErrors()
-      this.element.requestSubmit()
-      setTimeout(() => { this.replaying = false }, 0)
-    }
+  // The feed composer has a hidden title filled from content as you type.
+  // If that sync missed a keystroke, PostsController already derives the
+  // title from content — match it here so a filled box is not rejected
+  // for an empty hidden field.
+  deriveTitle() {
+    const title = this.element.querySelector('[name$="[title]"]')
+    const content = this.element.querySelector('[name$="[content]"]')
+    if (!title || !content) return
+
+    const text = content.value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+    if (!text) return
+    // TipTap stores HTML; a title of "<p>Hello</p>" is the first line of that
+    // and renders as markup on the post page. Always prefer the stripped text
+    // when the current title is empty or is itself a tag.
+    if (!title.value.trim() || /<[^>]+>/.test(title.value)) title.value = text.slice(0, 300)
   }
 
   validate() {
     const errors = []
     const title = this.element.querySelector('[name$="[title]"]')
     const content = this.element.querySelector('[name$="[content]"]')
+    const blank = this.element.dataset.formSubmitBlank || "Write something first."
 
     if (title && !title.value.trim()) {
-      errors.push({ field: title, message: "Title is required." })
+      const filled = content && content.value.replace(/<[^>]+>/g, " ").trim()
+      if (!filled) errors.push({ field: content || title, message: blank })
     }
 
-    if (content?.hasAttribute("data-validate-nonempty") && !content.value.trim()) {
-      errors.push({ field: content, message: "Please add a short description." })
+    if (content?.hasAttribute("data-validate-nonempty") && !content.value.replace(/<[^>]+>/g, " ").trim()) {
+      errors.push({ field: content, message: this.element.dataset.formSubmitDescription || blank })
     }
 
     return errors

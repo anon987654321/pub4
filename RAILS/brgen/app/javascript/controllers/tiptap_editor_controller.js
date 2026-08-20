@@ -23,10 +23,14 @@ export default class extends Controller {
     if (!this.hasFieldTarget || !this.hasMountTarget) return
 
     this.mount = this.mount.bind(this)
+    this.flush = this.flush.bind(this)
     // focusin bubbles (focus does not), so one listener on the root covers the
     // textarea and the toolbar buttons.
     this.element.addEventListener("focusin", this.mount, { once: true })
     this.element.addEventListener("pointerdown", this.mount, { once: true })
+    // Capture: copy the editor into the textarea before form-submit validates.
+    this.form = this.element.closest("form")
+    this.form?.addEventListener("submit", this.flush, true)
   }
 
   async mount() {
@@ -85,7 +89,12 @@ export default class extends Controller {
   disconnect() {
     this.element.removeEventListener("focusin", this.mount)
     this.element.removeEventListener("pointerdown", this.mount)
+    this.form?.removeEventListener("submit", this.flush, true)
     if (this.editor) { this.editor.destroy(); this.editor = null }
+  }
+
+  flush() {
+    if (this.editor) this._sync(this.editor)
   }
 
   _sync(editor) {
