@@ -38,8 +38,10 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding Rules::CqsRule.new, code, "cqs.rb", "mutates state and returns"
   end
 
-  def test_secret_proximity_rule_flags_hardcoded_secret
-    assert_finding rule("SECRET_PROXIMITY"), 'api_key = "123456789"', "app.rb", "hardcoded secret"
+  def test_secret_proximity_reaches_findings_through_the_bridge
+    hits = Rules::LawBridgeRule.new.check(%q{api_key = "sk_live_123456789"}, path: "app.rb")
+
+    assert hits.any? { |h| h[:rule] == "SECRET_PROXIMITY" }, "hardcoded secret must reach scanner findings"
   end
 
   def test_magic_color_rule_flags_raw_css_color

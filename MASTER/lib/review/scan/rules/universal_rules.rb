@@ -133,12 +133,8 @@ module Master
       # law version detects `= NULL`, proves itself on fixtures the inverted
       # detector would have failed, and needs no exemption.
 
-        RuleDSL.rule :SECRET_PROXIMITY,
-          severity: :error, tags: %i[SECURITY],
-          description: "secrets and consumers must not share a file" do |src, path:|
-          scan_lines(src, /(password|secret|token|api_key|private_key)\s*=\s*['"][^'"]{8,}/,
-            message: "hardcoded secret — move to environment variable or secrets manager")
-        end
+      # SECRET_PROXIMITY lives once, in law/ — the third retired twin. The two
+      # regexes were byte-identical; the registry block was a pure duplicate.
 
 # MAGIC_COLOR lives once, in js_rules.rb (applies_to css/scss/html/js — where colors
 # live). A second copy here with no applies_to double-counted every css/scss color
