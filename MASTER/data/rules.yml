@@ -3838,7 +3838,7 @@ style:
 
     rails_stack:
       # Current stable versions (May 2026)
-      rails: "8.1.3"
+      rails: "8.1.3.1"
       turbo_rails: "2.0.23"    # 9 actions: append prepend before after replace update remove morph refresh
       stimulus: "3.x"          # static targets, values, outlets API
       pagy: "43.x"             # Pagy::OPTIONS (not Pagy::DEFAULT — redesigned API in 43.0)

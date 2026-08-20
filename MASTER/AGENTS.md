@@ -13,6 +13,7 @@ Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). Full con
 | Law / scanners / loop | `START_HERE.md` → Data File Budget; all scanner law is `data/rules.yml` |
 | Extend runtime behavior | `DECISIONS.md` → One Spine. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
 | Worn type / layout gates | `data/rules.yml` `design_rules.worn_type` + `RAILS/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
+| brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
 
 Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is a sentence, or `/through [path]`. Slash set: `/through` `/status` `/undo` `/commit` `/model` `/pair` `/doctor` `/help` `/clear`.
 
