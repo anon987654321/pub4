@@ -1,7 +1,7 @@
 <%# Compact "in %{city} today" strip. Not a second feed — the banner that
     named the city was removed on purpose; this is interconnection, a handful
     of new listings / restaurants / videos that already exist on other hosts. %>
-<aside class="city-today sidebar-card" aria-label="<%= t("home.intro_title", city: city_name) %>">
+<aside class="city-today" aria-label="<%= t("home.intro_title", city: city_name) %>">
   <%# Closed until asked for. The strip is interconnection, not the feed, so it
       states what it is and opens on a tap rather than spending the top of the
       page on links to other hosts. <details> because the browser already has
