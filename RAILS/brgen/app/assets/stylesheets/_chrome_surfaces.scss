@@ -56,15 +56,15 @@
   border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
 }
 
-/* The city-interconnection surfaces that stay cards — a heading over a list
-   of links to things that already exist on another host — share this
-   treatment rather than each inventing one. .also-nearby is the show-page
-   aside; .profile-verticals is the same list on a public profile.
-   .city-today used to sit in this group and read as a padded card stacked
-   on the column inset, so its heading started 18px inside the compose pill
-   and its summary had no tap target. It is a compose-shaped disclosure now
-   (rules below), not a sidebar card. */
+/* The city-interconnection surfaces are the same shape as a sidebar card — a
+   heading over a list of links to things that already exist on another host —
+   so they share its treatment rather than each inventing one. .city-today and
+   .also-nearby are the home strip and the show-page aside; .profile-verticals
+   is the same list on a public profile. Grouped into the selectors below
+   instead of copied: three near-identical blocks is how the card and its
+   cousins drift apart. Compose is the writing control; this strip is not. */
 .sidebar-card,
+.city-today,
 .also-nearby,
 .profile-verticals {
   padding: var(--space-4);
@@ -80,6 +80,7 @@ aside.city-today,
 }
 
 .sidebar-card h2,
+.city-today h2,
 .also-nearby h2,
 .profile-verticals h2 {
   margin: 0 0 var(--space-3);
@@ -87,80 +88,21 @@ aside.city-today,
   font-weight: var(--weight-heavy);
 }
 
-/* Closed, the strip is the same pill as .compose-trigger: one row, tap-min,
-   space-2/space-3 padding, elevated fill, pill radius. The UA marker is
-   replaced by a trailing caret so the heading starts on the same inline
-   token as the compose prompt's padding, not 18px further in behind a
-   disclosure triangle. Native <details> still owns open/closed, keyboard
-   and the screen-reader name. */
-aside.city-today {
-  padding: 0;
-  margin-block: 0 var(--space-3);
-  background: transparent;
-}
-
+/* The city strip opens on a tap. summary carries the real heading so the
+   browser own disclosure state, keyboard handling and screen-reader
+   announcement apply to the title rather than to a wrapper, and the h2 goes
+   inline so the marker sits beside it instead of above. */
 .city-today summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  width: 100%;
-  box-sizing: border-box;
-  /* Same content-box as .compose-trigger (32px avatar + space-2 padding),
-     floored at tap-min so a root under 16px cannot shrink the row. */
-  min-height: max(var(--tap-min), calc(32px + var(--space-2) * 2));
-  padding: var(--space-2) var(--space-3);
-  background: var(--surface-elevated);
-  border: 0;
-  border-radius: var(--radius-pill);
   cursor: pointer;
-  list-style: none;
-  font: inherit;
-  color: var(--text);
-  text-align: start;
-  transition: background var(--transition-fast, 180ms) var(--ease-out);
-}
-
-.city-today summary:hover {
-  background: var(--hover);
-}
-
-.city-today summary::-webkit-details-marker,
-.city-today summary::marker {
-  display: none;
-  content: "";
 }
 
 .city-today summary h2 {
-  display: block;
-  flex: 1;
-  min-width: 0;
+  display: inline;
   margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--weight-heavy);
-}
-
-.city-today summary::after {
-  content: "";
-  width: 0.45em;
-  height: 0.45em;
-  border-inline-end: 2px solid currentColor;
-  border-block-end: 2px solid currentColor;
-  transform: rotate(45deg);
-  translate: 0 -0.1em;
-  flex-shrink: 0;
-  opacity: 0.7;
-}
-
-.city-today details[open] summary::after {
-  transform: rotate(225deg);
-  translate: 0 0.1em;
 }
 
 .city-today details[open] .city-today-list {
   margin-top: var(--space-3);
-  padding-inline: var(--space-3);
-  padding-block-end: var(--space-2);
 }
 
 .sidebar-card ul,
@@ -184,10 +126,9 @@ aside.city-today {
    column instead of a ragged one. */
 .city-today-list li {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
-  min-height: var(--tap-min);
 }
 
 /* Each vertical's rows under one subheading. */

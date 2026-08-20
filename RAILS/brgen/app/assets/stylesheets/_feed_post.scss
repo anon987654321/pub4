@@ -6,8 +6,8 @@
    starts. Padding does the whole job. */
 .feed-card {
   display: flex;
-  gap: var(--space-3);
-  padding: var(--space-5) var(--space-4);
+  gap: 12px;
+  padding: 20px 16px;
   transition: background var(--transition-fast) var(--ease-out);
 }
 .feed-card:hover { background: var(--hover-subtle); }
@@ -67,7 +67,7 @@
    line-era values. */
 .post-feed .feed-card {
   margin: 0;
-  padding: var(--space-4) var(--space-3);
+  padding: 16px 12px;
   /* Skip rendering off-screen feed cards; the browser remembers each card's
      real height after first paint (auto), falling back to ~320px before then.
      Scoped to .post-feed so grid/match contexts keep normal sizing. */
@@ -77,17 +77,15 @@
 
 @media (min-width: 768px) {
   .post-feed .feed-card {
-    /* Block grows; inline stays space-3 so the avatar column lines up
-       with .compose-trigger's avatar and .city-today's heading. */
-    padding: var(--space-5) var(--space-3);
+    padding: 20px 16px;
   }
 }
 
 @media (max-width: 480px) {
   .feed-card,
   .post-feed .feed-card {
-    padding: var(--space-4) var(--space-3);
-    gap: var(--space-3);
+    padding: 16px 12px;
+    gap: 12px;
   }
 }
 
