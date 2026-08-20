@@ -9,7 +9,7 @@ checks:
   - {id: chrome.importmap, in: amber/app/views/layouts/application.html.erb, has: [javascript_importmap_tags]}
   - {id: chrome.single_css, in: amber/app/views/layouts/application.html.erb, has: [stylesheet_link_tag], lack: [tokens.css]}
   - {id: chrome.pwa_manifest, in: amber/app/views/layouts/application.html.erb, has: [pwa_manifest]}
-  - {id: chrome.brand_mark, in: amber/app/views/layouts/application.html.erb, has: [brand-mark]}
+  - {id: chrome.logo, in: amber/app/views/layouts/application.html.erb, has: ["shared/logo", amber-logo-home], lack: ["shared/brand_mark"]}
   - {id: chrome.sidebar_nav, in: amber/app/views/shared/_sidebar_nav.html.erb, has: [nav.sign_in]}
   - {id: chrome.legal, in: amber/app/views/layouts/application.html.erb, has: [site_legal_footer]}
   # --- design ---

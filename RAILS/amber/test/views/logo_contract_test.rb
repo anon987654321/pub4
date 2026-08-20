@@ -41,6 +41,13 @@ class LogoContractTest < ActionView::TestCase
     assert_includes second, "b-text-mask"
   end
 
+  test "chrome uses the Caprasimo mark, not the shared brgen wordmark" do
+    layout = Rails.root.join("app/views/layouts/application.html.erb").read
+
+    assert_includes layout, 'render "shared/logo"'
+    refute_match(%r{render ["']shared/brand_mark["']}, layout)
+  end
+
   test "public brand icons exist with amber palette" do
     root = Rails.root.join("public")
     %w[icon.svg icon.png icon-192.png apple-touch-icon.png favicon.ico].each do |name|

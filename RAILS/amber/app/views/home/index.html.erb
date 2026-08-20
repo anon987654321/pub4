@@ -93,11 +93,8 @@
       data-visitor-orientation is a bare marker with no controller and no CSS
       behind it, so DOM order was simply render order. %>
   <section class="amber-guest-hero" data-visitor-orientation>
-    <%# The Caprasimo SVG lives here now, on the one landing surface, rather than
-        in chrome. It is a marketing mark: 1000x500, a radial gradient and its own
-        "retro hairlines". Chrome on all three apps is the shared type-only
-        wordmark (shared/_brand_mark), fixed top-left. A guest arriving at the
-        root still meets the full logo; every other surface gets the wordmark. %>
+    <%# Full-bleed Caprasimo mark on the landing surface. Chrome (the layout
+        header) is the same mark at nav size — not the shared brgen wordmark. %>
     <div class="amber-logo-banner amber-logo-banner--hero">
       <%= render "shared/logo" %>
     </div>

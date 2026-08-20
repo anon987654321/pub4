@@ -127,27 +127,38 @@
   }
 }
 
-/* Persistent top-nav instance of the logo: the base .amber-logo-banner
-   sizing above is hero-scale (up to 500px tall), fine for a one-time
-   full-bleed splash but far too tall for chrome that stays sticky on every
-   scroll position. Cap it to ordinary nav height instead. */
-/* The leading inset clears the fixed brand mark, which is painted over this bar
-   at z-index 120. --brand-mark-inline is published for exactly this — brgen's
-   nav swiper reads the same token — and this bar used --space-md instead, so it
-   reserved 24px where the wordmark occupies 76. The Sign in link began at x=24,
-   which put its centre under the letters: the occlusion gate found it on twelve
-   surfaces, and it is the overlap visible in the top-left of every amber
-   screenshot. The trailing side clears the theme control opposite it. */
+/* Persistent top-nav instance of the Caprasimo mark. Hero sizing above is
+   500px tall; chrome has to sit in a bar. The home link is width:auto so it
+   does not inherit the hero's `a { width: 100% }`. Word size is in viewBox
+   units and is raised here so "amber®" still reads at 52px tall. */
 .amber-logo-banner--nav {
   justify-content: space-between;
-  padding-inline: var(--brand-mark-inline) var(--chrome-toggle-inline);
+  align-items: center;
+  padding-inline: var(--space-sm, 0.75rem) var(--chrome-toggle-inline);
+  min-height: var(--bar-height, 44px);
+}
+
+.amber-logo-banner--nav .amber-logo-home {
+  display: block;
+  width: auto;
+  max-width: 220px;
+  flex: 0 1 auto;
+  line-height: 0;
 }
 
 .amber-logo-banner--nav .amber-instance {
-  width: auto;
-  height: 40px;
-  max-height: 40px;
+  width: 200px;
+  height: 52px;
+  max-height: 52px;
   margin-inline: 0;
+}
+
+.amber-logo-banner--nav .amber-logo-svg .amber-logo-word {
+  font-size: 200px;
+}
+
+.amber-logo-banner--nav .amber-logo-svg .amber-logo-mark {
+  font-size: 40px;
 }
 
 .amber-nav-actions {

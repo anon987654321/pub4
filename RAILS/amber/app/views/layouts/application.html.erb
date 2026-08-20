@@ -42,20 +42,18 @@
       data-feed-hotkey-coach-dismiss-value="<%= t("hotkeys.coach_dismiss") %>"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
 <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
-<%# The one shared brand mark, fixed top-left, same as brgen and bsdports.
-    Outside .amber-logo-banner deliberately: that container styles its anchor with
-    `.amber-logo-banner a { display: block; width: 100% }`, which at (0,1,1)
-    outranks .brand-mark (0,1,0) and stretched the wordmark to the full 390px
-    viewport — a link home covering the whole top strip. It is chrome, not banner
-    content, so it does not belong inside the banner at all.
-
-    shared/_logo (the Caprasimo SVG, whose own comment describes "retro
-    hairlines") stays in the repo as a landing/marketing asset. %>
-<%= render "shared/brand_mark", label: "amber" %>
+<%# Amber's own Caprasimo mark, not shared/_brand_mark (the type-only wordmark
+    brgen and bsdports share). The fleet mark is the wrong identity here.
+    It lives inside the banner, not as a second fixed corner, and the nav
+    variant of .amber-logo-banner sizes the home link so it does not stretch
+    to the viewport the way the hero banner's `a { width: 100% }` would. %>
 <%= render "shared/theme_toggle", storage_key: "amber-theme" %>
 
 <div class="theme-root">
-<header class="amber-logo-banner amber-logo-banner--nav" aria-label="<%= t("nav.brand_home") %>">
+<header class="amber-logo-banner amber-logo-banner--nav">
+  <%= link_to root_path, class: "amber-logo-home", aria: { label: t("nav.brand_home") } do %>
+    <%= render "shared/logo", id_prefix: "amber-nav" %>
+  <% end %>
   <div class="amber-nav-actions">
     <% if authenticated? %>
       <%= link_to t("nav.account"), user_path(Current.user), class: "btn-sm" %>
