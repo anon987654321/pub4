@@ -209,7 +209,17 @@ module Master
         send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, &blk)
       end
 
+      # At most two claude subprocesses at once, process-wide. The latency
+      # table above CLAUDE_CLI_TIMEOUT_S measured it: two concurrent finish
+      # together, four roughly double per-call latency for the same total
+      # throughput — and the fix loop runs rule groups in threads, so the
+      # 2026-08-20 proof run showed CLI calls dying empty-stderr under
+      # four-way contention, opening the circuit. Callers block for a slot;
+      # waiting beats thrashing.
+      CLI_SLOTS = SizedQueue.new(2).tap { |queue| 2.times { queue << true } }
+
       def send_claude_cli(model_alias, messages, sys:)
+        CLI_SLOTS.pop
         args = ["claude", "--print", "--model", model_alias]
         args += ["--system-prompt", sys] if sys && !sys.empty?
         timeout_s = claude_cli_timeout_s
@@ -220,6 +230,8 @@ module Master
         Result.err("claude-cli: timed out after #{timeout_s}s", category: :timeout)
       rescue StandardError => e
         Result.err("claude-cli: #{e.message}", category: :provider_error)
+      ensure
+        CLI_SLOTS << true
       end
 
       def capture3_with_timeout(timeout_s, *cmd, stdin_data: nil)

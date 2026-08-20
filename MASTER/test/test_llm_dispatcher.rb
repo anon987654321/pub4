@@ -151,17 +151,6 @@ class TestLLMDispatcher < Minitest::Test
     old.nil? ? ENV.delete("MASTER_CLAUDE_CLI_TIMEOUT") : ENV["MASTER_CLAUDE_CLI_TIMEOUT"] = old
   end
 
-  private
-
-  def build_dispatcher
-    dispatcher = Master::Review::LLMDispatcher.allocate
-    session = FakeSession.new
-    bus = FakeBus.new
-    dispatcher.instance_variable_set(:@session, session)
-    dispatcher.instance_variable_set(:@bus, bus)
-    [dispatcher, session, bus]
-  end
-
 # Every LLM call in the tree passes through send_with_cache. With no provider
 # key each caller used to fail slowly somewhere below it — the council spent
 # its whole budget discovering this one persona at a time — so the refusal
@@ -175,4 +164,42 @@ def test_no_provider_key_refuses_at_the_door
   assert_predicate result, :err?
   assert_equal :no_api_key, result.category
 end
+
+  # Two claude subprocesses at once, process-wide: the dispatcher's latency
+  # table measured four-way contention doubling per-call latency, and the
+  # 2026-08-20 proof run showed CLI calls dying empty-stderr under it.
+  def test_claude_cli_concurrency_is_capped_at_two
+    dispatcher, = build_dispatcher
+    require "monitor"
+    lock = Monitor.new
+    state = { live: 0, max: 0 }
+    ok_status = Struct.new(:success?).new(true)
+    probe = lambda do
+      lock.synchronize { state[:live] += 1; state[:max] = [state[:max], state[:live]].max }
+      sleep 0.05
+      lock.synchronize { state[:live] -= 1 }
+      ["ok", "", ok_status]
+    end
+    dispatcher.define_singleton_method(:capture3_with_timeout) { |_t, *_a, **_k| probe.call }
+
+    threads = 4.times.map do
+      Thread.new { dispatcher.send(:send_claude_cli, "claude-sonnet-4-6", [{ role: "user", content: "hi" }], sys: nil) }
+    end
+    threads.each(&:join)
+
+    assert_operator state[:max], :<=, 2, "expected at most 2 concurrent CLI calls, saw #{state[:max]}"
+    assert_operator state[:max], :>=, 2, "stub never overlapped — the probe is not measuring concurrency"
+  end
+
+  private
+
+  def build_dispatcher
+    dispatcher = Master::Review::LLMDispatcher.allocate
+    session = FakeSession.new
+    bus = FakeBus.new
+    dispatcher.instance_variable_set(:@session, session)
+    dispatcher.instance_variable_set(:@bus, bus)
+    [dispatcher, session, bus]
+  end
+
 end
