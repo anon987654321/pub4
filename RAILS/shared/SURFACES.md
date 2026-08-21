@@ -83,8 +83,27 @@ Token: face joins fleet token names (fenced: the --c-*/--x-text namespace is
 read by the GENERATED bundles — a face.part*.txt session, and the local face
 did not boot under triangle, so no tap-test is currently possible); shared
 edge scale; radius-scale parameter per dialect; scrim unification (operator's
-eye). Components: media-card, card-grid, chat anatomy, event-row, trust strip
-— each needs a second real consumer or a sitting of its own.
+eye). Components: card-grid still needs a second real consumer.
+
+The component sitting ran 2026-08-21; most of the queue refuted the
+purchasable-row way:
+
+- **media-card, landed where it was real**: deals/_card and listings/_card
+  carried one byte-similar image slot (photo/placeholder/badge, same class
+  family, same responsive widths) — now `marketplace/_card_media`. The card
+  BODIES stay local (a deal leads with its discount, a listing with its meta
+  row). Cross-engine (maps place-card, tv-card, event-card) refuted: duration
+  overlays, time chips and address lines are structural differences — a
+  phrase in common, not an anatomy.
+- **chat anatomy refuted**: the four message partials are four animals — an
+  87-line IRC/DM hybrid with receipts and expiry, a one-line party message, a
+  deliberately minimal stream-chat line with its own broadcast contract, and
+  amber's to/from letter. Who + body + when is a phrase.
+- **event-row refuted**: events/_event and activity_events/_event render
+  different models (Event vs polymorphic activity); nothing to unify.
+- **trust strip dropped from the queue**: no view consumer exists at all —
+  TrustSignal/TrustScore are model/service only. A component with zero
+  consumers is not queued, it is unbuilt.
 **Refuted on examination (2026-08-21): purchasable-row** — takeaway's
 form-quantity row, the cart's remove-action row and the listing card share a
 phrase (name · price), not an anatomy; one partial serving all three would be

@@ -4,18 +4,7 @@
 <%= link_to deal_path(deal),
       class: "deal-card deal",
       aria: { label: deal.headline } do %>
-  <div class="deal-card-img">
-    <% if photo %>
-      <%= responsive_image_tag photo, alt: "", widths: [360, 720], sizes: "(max-width: 768px) 50vw, 220px" %>
-    <% else %>
-      <div class="deal-card-placeholder" aria-hidden="true">
-        <%= deal.headline.to_s.first&.upcase || "%" %>
-      </div>
-    <% end %>
-    <% if badge.present? %>
-      <span class="deal-badge"><%= badge %></span>
-    <% end %>
-  </div>
+  <%= render "marketplace/card_media", photo:, fallback_char: deal.headline.to_s.first&.upcase || "%", badge: %>
 
   <div class="deal-card-body">
     <% if listing %>

@@ -12,22 +12,14 @@
   <%= link_to listing_path(listing),
         class: "deal-card-hit",
         aria: { label: "#{listing.title}, #{listing.price_display}" } do %>
-    <div class="deal-card-img">
-      <% if photo %>
-        <%= responsive_image_tag photo, alt: "", widths: [360, 720], sizes: "(max-width: 768px) 50vw, 220px" %>
-      <% else %>
-        <div class="deal-card-placeholder" aria-hidden="true">
-          <%= listing.title.to_s.first&.upcase || "?" %>
-        </div>
-      <% end %>
-      <% if listing.sold? %>
-        <span class="deal-badge"><%= t("marketplace.sold") %></span>
-      <% elsif listing.casual? %>
-        <span class="deal-badge deal-badge--soft"><%= t("marketplace.from_a_person") %></span>
-      <% elsif listing.condition.present? %>
-        <span class="deal-badge deal-badge--soft"><%= t("marketplace.conditions.#{listing.condition}", default: listing.condition.tr("_", " ")) %></span>
-      <% end %>
-    </div>
+    <%# Sold outranks casual outranks condition, and only sold is loud. %>
+    <% badge, badge_soft =
+         if listing.sold? then [t("marketplace.sold"), false]
+         elsif listing.casual? then [t("marketplace.from_a_person"), true]
+         elsif listing.condition.present?
+           [t("marketplace.conditions.#{listing.condition}", default: listing.condition.tr("_", " ")), true]
+         end %>
+    <%= render "marketplace/card_media", photo:, fallback_char: listing.title.to_s.first&.upcase || "?", badge:, badge_soft: badge_soft == true %>
 
     <div class="deal-card-body">
       <%# A job shows its salary and a room its rent; only goods have a
