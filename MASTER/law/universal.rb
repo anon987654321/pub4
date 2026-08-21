@@ -41,14 +41,22 @@ Law.define(:FULL_BY_DEFAULT) do
   good "modes = [deep]"
 end
 
-# Migrated from data/rules.yml GUARD_EXPENSIVE_OPS.
+# Migrated from data/rules.yml GUARD_EXPENSIVE_OPS. Narrowed 2026-08-21 after
+# the fleet-wide deep scan: of twenty production hits sampled, thirteen were
+# Rails' String#truncate (the word was meant for SQL TRUNCATE) and seven were
+# association- or where-scoped deletes bounded by a parent record — zero were
+# the table-wide sweep this law exists to stop. It now fires on a delete with
+# a bare constant receiver (Model.delete_all — the whole table), on
+# drop_table, SQL TRUNCATE, and rm -rf; a scoped chain is proportionate by
+# construction. Seeds, tests and migrations reset data as their job.
 Law.define(:GUARD_EXPENSIVE_OPS) do
   source "MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention"
   severity :error
-  detect { |line| line.match?(/\b(delete_all|destroy_all|drop_table|truncate)\b|rm\s+-rf\b/) }
-  fix "Cost estimate before execution. Require opt-in for danger."
+  path_exclude %r{/test/|/spec/|/db/seeds|/db/migrate/|seeder|demo_seed|_seed\b}
+  detect { |line| line.match?(/\b[A-Z]\w*(?:::\w+)*\.(?:delete_all|destroy_all)\b|\bdrop_table\b|\bTRUNCATE\b|\btruncate_tables?\b|rm\s+-rf\b/) }
+  fix "Cost estimate before execution. Require opt-in for danger; scope the delete to a parent."
   bad  "Session.delete_all"
-  good "Session.where(expired: true).find_each(&:destroy)"
+  good "user.sessions.delete_all"
 end
 
 # Migrated from data/rules.yml LAW_OF_DEMETER. Folds MESSAGE_CHAIN (identical detector).

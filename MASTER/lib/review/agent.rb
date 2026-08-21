@@ -140,7 +140,10 @@ end
       # sanctioned models.yml reader, so retiring the lane retires the failover.
       def single_call_fallback_model
         @single_call_fallback_model ||= (@model_router.single_call_fallback_model if @model_router.respond_to?(:single_call_fallback_model))
-      rescue StandardError
+      rescue StandardError => e
+        # No chain head is a working degradation (the hop is skipped), but a
+        # router that RAISED is worth a line on the record.
+        Master::Ground::Swallow.log(e, context: "Agent.single_call_fallback_model")
         nil
       end
 

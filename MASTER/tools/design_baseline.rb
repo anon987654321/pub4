@@ -48,7 +48,10 @@ module Pub4
         scanner.rules.each do |rule|
           hits = begin
             rule.check(src, path: file) || []
-          rescue StandardError
+          rescue StandardError => e
+            # A broken rule must not silently shrink the baseline: the scan
+            # continues, the breakage is on the record.
+            warn "design_baseline: #{rule.id} raised on #{file}: #{e.class}"
             []
           end
           hits.each do |hit|

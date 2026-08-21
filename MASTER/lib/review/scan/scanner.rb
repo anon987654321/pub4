@@ -208,6 +208,7 @@ module Master
         # arrived minified from jsDelivr.
         SKIP_PATH_PREFIXES = %w[
           RAILS/shared/reference
+          STUDIO/dilla/archive
         ].freeze
         SKIP_PATH_FRAGMENTS = %w[
           app/assets/builds/

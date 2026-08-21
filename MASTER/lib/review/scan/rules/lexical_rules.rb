@@ -209,8 +209,22 @@ module Master
         body = lines[i].strip
         next if body.empty?
         return false if handled_body?(body)
+        return false unless discard_token?(body)
 
-        return discard_token?(body)
+        # In a predicate, false IS the handling: tts_healthy? rescuing to
+        # false has absorbed the error into its answer — the health-check
+        # idiom, not a swallow. The fleet's health endpoints carried seven
+        # error-severity findings for degrading gracefully. Only nil/false
+        # qualify; a predicate rescuing to [] is still discarding.
+        return !(body.match?(/\A(?:nil|false)\s*\z/) && predicate_method?(lines, index))
+      end
+      false
+    end
+
+    def predicate_method?(lines, index)
+      (index - 1).downto(0) do |i|
+        name = lines[i][/^\s*def\s+(?:self\.)?(\w+[?!]?)/, 1]
+        return name.end_with?("?") if name
       end
       false
     end

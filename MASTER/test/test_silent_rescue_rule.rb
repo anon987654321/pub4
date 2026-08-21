@@ -131,4 +131,26 @@ class TestSilentRescueRule < Minitest::Test
 
     assert_empty @silent.check(code, path: "lib/review/scan/rules/lexical_rules.rb")
   end
+# In a predicate, false IS the handling — the health-check idiom: the error
+# becomes the answer. Outside one, the same false is still a discard.
+def test_a_predicate_rescuing_to_false_is_not_silent
+  src = "def tts_healthy?
+  probe
+rescue StandardError => _
+  false
+end
+"
+  assert_empty Master::Review::Scan::Rules::SilentRescue.scan(src, narrow: false)
+end
+
+def test_a_non_predicate_rescuing_to_false_is_still_silent
+  src = "def fetch_config
+  load_it
+rescue StandardError
+  false
+end
+"
+  refute_empty Master::Review::Scan::Rules::SilentRescue.scan(src, narrow: false)
+end
+
 end

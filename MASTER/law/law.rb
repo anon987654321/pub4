@@ -31,10 +31,11 @@ module Law
     ".html" => ["<!--"], ".htm" => ["<!--"], ".erb" => ["<!--"],
   }.freeze
 
-  MEMBERS = %i[id source severity languages scope path absent detect fix bad good reads_comments].freeze
+  MEMBERS = %i[id source severity languages scope path path_exclude absent detect fix bad good reads_comments].freeze
   Rule = Data.define(*MEMBERS) do
     def applies?(file, language)
       return false if path && !file.include?(path)
+      return false if path_exclude && file.match?(path_exclude)
       language.nil? || languages.empty? || languages.include?(language)
     end
 
@@ -70,9 +71,9 @@ module Law
   end
 
   class Builder
-    %i[source severity languages scope path absent fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source severity languages scope path path_exclude absent fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, absent: nil, reads_comments: false }
+    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
     def build
