@@ -1,5 +1,5 @@
 <li role="listitem" class="port-row">
-  <div>
+  <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
     <%= link_to port.name, port, class: "port-name" %>
     <code><%= port.version %></code>
     <code><%= port.pkgpath %></code>

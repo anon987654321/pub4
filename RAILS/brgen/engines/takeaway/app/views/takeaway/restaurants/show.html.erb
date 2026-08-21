@@ -62,7 +62,7 @@
           <% if item.photo.attached? %>
             <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
           <% end %>
-          <div>
+          <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
             <%= tag.strong item.name %> · <%= item.price_display %>
             <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
             <% if item.vegetarian? %><span class="chip"><%= t("takeaway.vegetarian") %></span><% end %>
@@ -95,7 +95,7 @@
         <% if item.photo.attached? %>
           <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
         <% end %>
-        <div>
+        <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
           <%= tag.strong item.name %> · <%= item.price_display %>
           <% unless item.available? %><span class="sold-out-badge"><%= t("takeaway.sold_out") %></span><% end %>
           <% if item.description.present? %><p><%= item.description %></p><% end %>

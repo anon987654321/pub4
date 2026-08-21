@@ -15,13 +15,13 @@
   <div class="cart-items">
     <% @cart_items.each do |item| %>
       <div class="cart-item">
-        <div>
+        <div> <%# scan: intentional — the item's text block; the cart row is the layout %>
           <strong><%= link_to item.listing.title, listing_path(item.listing) %></strong>
-          <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div>
+          <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div> <%# scan: intentional — a line of text inside the item block %>
         </div>
         <div class="text-end">
           <%= tag.strong item.total_display %>
-          <div>
+          <div class="cluster">
             <%= button_to t("actions.remove"), listing_order_path(item.listing, item),
                   method: :patch, params: { decline: true }, class: "btn btn-ghost btn-sm" %>
           </div>

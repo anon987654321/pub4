@@ -9,7 +9,7 @@
   <nav role="navigation" aria-label="<%= t("nav.ports") %>">
     <%= link_to t("ports.rss_link"), ports_path(format: :rss) %>
   </nav>
-  <div><%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: t("ports.search_placeholder"), label: t("ports.search_label"), frame_id: "bsdports-ports" %></div>
+  <div><%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: t("ports.search_placeholder"), label: t("ports.search_label"), frame_id: "bsdports-ports" %></div> <%# scan: intentional — the search slot in the header row %>
 </header>
 
 <%# An empty tree and a quiet tree look identical once the category list renders

@@ -61,7 +61,7 @@
         <div class="feed-post-body feed-post-prose prose"><%= content %></div>
       <% end %>
       <% if meta.present? %>
-        <div><%= meta %></div>
+        <div><%= meta %></div> <%# scan: intentional — the caller-supplied meta slot; its content names itself %>
       <% end %>
       <% if media.present? %>
         <div class="feed-post-media"><%= media %></div>

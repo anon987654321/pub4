@@ -10,7 +10,7 @@
           <%# Was emitting loading="lazy" twice on the same tag. %>
           <img loading="lazy" width="52" height="52" alt="<%= d.title.presence || t("affiliate.deal_alt") %>" src="<%= d.image_url %>">
         <% end %>
-        <div>
+        <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
           <p class="affiliate-title"><%= d.title %></p>
           <p class="affiliate-merchant"><%= d.merchant %></p>
           <% if d.price.present? %>

@@ -12,7 +12,7 @@
 
 <% if @located %>
   <article class="row-between section-divider--24">
-    <div>
+    <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
       <%= tag.strong t("nearby.room_title") %>
       <p><%= t("nearby.room_body", km: Conversation::GEO_ROOM_RADIUS_KM.to_i) %></p>
     </div>
@@ -22,7 +22,7 @@
   <% if @nearby.any? %>
     <% @nearby.each do |u, distance| %>
       <article class="row-between">
-        <div>
+        <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
           <%= tag.strong u.anon_handle %>
           <p><%= t("nearby.distance_away", km: number_with_precision(distance, precision: 1)) %></p>
         </div>

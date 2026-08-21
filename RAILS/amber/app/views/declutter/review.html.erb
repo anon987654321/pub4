@@ -32,15 +32,15 @@
   <section role="region" aria-label="<%= t("declutter.decision_form") %>">
     <%= tag.h2 t("declutter.decision") %>
     <%= form_with model: @review, url: update_review_declutter_path(@item), method: :patch do |form| %>
-      <div>
+      <div class="field">
         <%= form.label :decision %>
         <%= form.select :decision, %w[keep wear_this_week repair sell donate release sentimental_archive], include_blank: true %>
       </div>
-      <div>
+      <div class="field">
         <%= form.label :reason_kept %>
         <%= form.text_field :reason_kept, placeholder: t("declutter.reason_kept") %>
       </div>
-      <div>
+      <div class="field">
         <%= form.label :notes %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
           <%= form.text_area :notes, rows: 4, data: { character_counter_target: "input" } %>
@@ -64,11 +64,11 @@
   <section>
     <%= tag.h2 t("declutter.week_challenge") %>
     <%= form_with url: challenge_declutter_path(@item), method: :post do |form| %>
-      <div>
+      <div class="field">
         <%= form.label :due_on %>
         <%= form.date_field :due_on, value: 7.days.from_now.to_date %>
       </div>
-      <div>
+      <div class="field">
         <%= form.label :note %>
         <%= form.text_field :note, value: "Wear once before deciding." %>
       </div>
