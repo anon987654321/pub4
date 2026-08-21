@@ -238,26 +238,19 @@ itself, now closed structurally: `FileProcessor#law_conducted` runs
 `Law.conduct` at the one read site, so every rule — bridge and registry alike
 — sees law/ fixtures and detectors as declarations, not conduct.
 
-### The law has 72 registry twins, and they drift — opened 2026-08-19
+### The law had 72 registry twins, and they drifted — opened 2026-08-19, closed 2026-08-21
 
-72 of 90 law/ ids also exist as registry rule classes, and the drift is
-proven, not theoretical: UNBOUNDED_RETRY's migration to law/ regressed the
-detector to the bare word (24 false findings; the registry twin already
-carried the narrowing, in comments that spell out exactly the discrimination
-the law version lacked). Two implementations of one id is the disagreement
-rules.yml's own header warns about. The direction is law/ — fixtures, a
-measured false-positive rate, its own budget — so the pass is: retire
-registry twins one id at a time, moving any narrowing the registry version
-learned into the law version's detector and fixtures first, re-measuring
-after each. Not mechanical; each twin's narrowing history is the value.
+Closed in three sittings. The first eleven retired with the reverse-doctrine
+discovery: the richer implementation wins, whichever side it lives on. The
+final 42 (cdc7f7141): 28 registry blocks retired into their laws with the
+narrowing ported and fixture-pinned, 14 laws retired into their richer
+registry twins (Prism, tag_source, shebang awareness, indent walking), and
+KEYWORD_ARGS folded into FEW_ARGUMENTS on both sides. The census also caught
+the constitution's own inert config: law/rails.rb declared `languages
+%i[rails]`, which FILE_LANGUAGE_MAP has never produced — four laws that had
+never matched a file. Twin census reads zero; the twin-census check is the
+regression guard.
 
-UNBOUNDED_RETRY is retired and is the recipe: narrowing ported with each
-false-positive shape as a good fixture, registry block deleted, the contract
-test moved to assert through the bridge, dogfood/selftest/selfcheck/registry
-audit re-measured. The bridge also stopped downcasing ids in the same pass —
-law findings now carry the id every id-keyed consumer (priors, exemptions,
-dedupe) actually keys on, which is what made the twins ambiguous at all.
-71 remain.
 
 ### The data layer's duplicate census — opened 2026-08-19
 
