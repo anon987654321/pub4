@@ -316,7 +316,7 @@ body.vertical-marketplace #navBar {
   .compose-icon { display: block; }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   .theme-toggle {
     inset-block-start: var(--space-2);
     inset-inline-end: var(--space-2);

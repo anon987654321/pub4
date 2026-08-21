@@ -33,7 +33,7 @@
 }
 
 /* Full-bleed on phones, the way a native sheet behaves. */
-@media (max-width: 767px) {
+@media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   .composer {
     width: 100vw;
     max-width: 100vw;

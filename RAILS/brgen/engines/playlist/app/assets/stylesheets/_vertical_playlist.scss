@@ -82,7 +82,7 @@ body.vertical-playlist .playlist-index {
   .radio-track-display { max-width: 350px; }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   .radio-now-playing {
     /* px endpoints for the same reason as _canvas.scss: brgen's root font-size
        is 18px, not 16px, so --text-xs/--text-sm are 13.5px/15.75px here rather

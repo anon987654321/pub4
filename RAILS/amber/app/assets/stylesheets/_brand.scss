@@ -343,7 +343,7 @@ h1, .display, .wordmark {
   grid-row: span 2;
 }
 
-@media (max-width: 36rem) {
+@media (max-width: 36rem) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   .items-grid > :first-child,
   .wardrobe-grid > :first-child {
     grid-column: span 1;

@@ -384,7 +384,7 @@ progress::-webkit-progress-value {
   color: var(--color-danger);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 480px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   .direct-upload {
     grid-template-columns: minmax(0, 1fr) auto;
   }

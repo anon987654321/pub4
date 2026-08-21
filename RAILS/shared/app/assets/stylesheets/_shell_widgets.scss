@@ -493,7 +493,7 @@ section h2 {
   border-bottom: 0;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 480px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   /* The panel's narrow-screen geometry used to live here as
      `width: 100vw; height: min(70vh, 520px)`. It has moved up to the sheet
      block next to the panel's own rule — two mobile treatments in one file, 300

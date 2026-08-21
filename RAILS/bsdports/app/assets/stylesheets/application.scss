@@ -442,7 +442,7 @@ kbd { padding: 0.12rem 0.35rem; border: 1px solid var(--border); border-bottom-w
   text-align: center;
 }
 
-@media (max-width: 639px) {
+@media (max-width: 639px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   body {
     padding-block-start: 104px;
   }

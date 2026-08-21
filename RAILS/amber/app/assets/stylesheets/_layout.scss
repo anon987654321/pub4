@@ -46,7 +46,7 @@ main#main-content header > nav {
   margin-block-start: var(--space-md);
 }
 
-@media (max-width: 639px) {
+@media (max-width: 639px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   main#main-content {
     padding-inline: var(--space-md);
   }

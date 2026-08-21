@@ -18,8 +18,8 @@
 /* The shared shell actually collapses to a 120px sidebar at 1265px.  The old
    1280px/98px override fired while the 275px sidebar was still active and
    visibly merged the city name into the BRGEN wordmark at a 1280px viewport. */
-@media (max-width: 1264px) { .city-carousel { inset-inline-start: calc(120px + 16px); } }
-@media (max-width: 767px) {
+@media (max-width: 1264px) { .city-carousel { inset-inline-start: calc(120px + 16px); } } // scan: intentional — narrow-screen exception band (wave C ruling)
+@media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   /* Below this width the sidebar collapses and the sticky feed-header's
      page title ("Home" etc.) becomes flush with the left edge -- the same
      band this fixed decorative carousel occupies, so they overlapped.

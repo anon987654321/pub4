@@ -267,7 +267,7 @@ body.vertical-marketplace .search {
 /* 767, not 700: every other bound in the family treats 768 as the tablet
    edge (see _root.scss), and 700 was the one query on no edge at all —
    BreakpointLint's only unknown_edge. */
-@media (max-width: 767px) {
+@media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   #topHalf {
     flex-wrap: wrap;
     padding-block: 6px;

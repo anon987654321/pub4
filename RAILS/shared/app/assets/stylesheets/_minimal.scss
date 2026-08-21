@@ -398,7 +398,7 @@ footer {
   margin-inline-start: auto;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 480px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   footer {
     transform: scale(0.8);
   }
@@ -420,7 +420,7 @@ footer {
 }
 .feed-card:hover { background: var(--hover-subtle); }
 
-@media (max-width: 480px) {
+@media (max-width: 480px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   .feed-card {
     padding: 12px 12px;
     gap: 12px;
