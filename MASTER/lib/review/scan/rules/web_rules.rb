@@ -67,9 +67,9 @@ module Master
           # converging styling to nothing cannot start the specificity war
           # this rule exists to prevent — so erase-shaped importants
           # (none/transparent/0) pass and painting ones still fire.
-          erase = /(?:border[\w-]*|outline[\w-]*|background|border-radius|padding|animation|transition|box-shadow)\s*:\s*(?:none|transparent|0)[^;!]*!\s*important/
+          erase = /(?:border[\w-]*|outline[\w-]*|background|border-radius|padding|animation|transition|box-shadow|display)\s*:\s*(?:none|transparent|0)[^;!]*!\s*important/
           source_text = without_block_comments(without_override_media(src))
-          source_text = source_text.each_line.map { |l| l.match?(erase) ? "\n" : l }.join
+          source_text = source_text.each_line.map { |l| l.match?(erase) || l.lstrip.start_with?("//") ? "\n" : l }.join
           scan_lines(source_text, /!\s*important/,
                      message: "!important overrides cascade — fix specificity instead")
         end
