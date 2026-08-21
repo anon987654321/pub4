@@ -39,6 +39,7 @@
            data-parallax-tilt-target="tile"
            data-parallax-tilt-depth="<%= format("%.3f", 0.03 + (index % 5) * 0.022) %>">
           <% if deal.image_url.present? %>
+            <%# reserved: container — .affiliate_feed_tile img is absolute inset 0 %>
             <img loading="lazy" decoding="async"
                  alt="<%= deal.title.presence || t("affiliate.deal_alt") %>"
                  src="<%= deal.image_url %>">

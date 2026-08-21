@@ -315,13 +315,16 @@ light:
 # --accent-ink (#1a1824, 4.70–9.16:1 across the seven), not --bg. Keep that in
 # mind when adding a vertical: check both directions, not just the one you need.
 vertical_accents:
-  marketplace: { accent: "#98876e", hover: "#6f6149" }  # taupe storefront + serif; lifted from #8c7a5e (3.92:1)
-  tv: { accent: "#dc635c", hover: "#b83a33" }        # lifted from #d6473f (3.74:1 on surface_elevated)
-  dating: { accent: "#00d4aa", hover: "#00b391" }       # Nordic teal (not warm coral)
-  takeaway: { accent: "#e07b39", hover: "#c26a30" }
-  playlist: { accent: "#12b6c4", hover: "#0f9aa6" }
-  maps: { accent: "#5b8fd4", hover: "#4a7ab8" }         # cool cartography blue-gray
-  messenger: { accent: "#6b7fd7", hover: "#5566c4" }    # soft slate-indigo chat; 4.68:1 on brgen dark elevated — already AA, left alone
+  # light: what light mode wears — the dark-tuned hue where it already clears
+  # 3:1 on white, a darkened same-hue variant where it did not (dating 1.91:1,
+  # playlist 2.47:1, takeaway 2.97:1 — visual_contract_lint low_contrast).
+  marketplace: { accent: "#98876e", hover: "#6f6149", light: "#98876e" }  # taupe storefront + serif; lifted from #8c7a5e (3.92:1)
+  tv: { accent: "#dc635c", hover: "#b83a33", light: "#dc635c" }        # lifted from #d6473f (3.74:1 on surface_elevated)
+  dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }       # Nordic teal (not warm coral)
+  takeaway: { accent: "#e07b39", hover: "#c26a30", light: "#c26a30" }
+  playlist: { accent: "#12b6c4", hover: "#0f9aa6", light: "#0e8a94" }
+  maps: { accent: "#5b8fd4", hover: "#4a7ab8", light: "#5b8fd4" }         # cool cartography blue-gray
+  messenger: { accent: "#6b7fd7", hover: "#5566c4", light: "#6b7fd7" }    # soft slate-indigo chat; 4.68:1
 
 # The rhythm scale. Every spacing, radius, line-height and weight literal in the
 # family's stylesheets must land on a step below, or on a token that resolves to

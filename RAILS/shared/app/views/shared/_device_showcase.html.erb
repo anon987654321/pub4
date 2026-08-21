@@ -31,6 +31,7 @@
   <div class="device device--desktop">
     <div class="device-screen">
       <% if desktop %>
+        <%# reserved: container — .device--desktop is a 16/10 aspect frame %>
         <%= image_tag desktop, alt: "", loading: "lazy" %>
       <% end %>
     </div>
@@ -41,6 +42,7 @@
   <div class="device device--mobile">
     <div class="device-screen">
       <% if mobile %>
+        <%# reserved: container — .device--mobile is an aspect frame %>
         <%= image_tag mobile, alt: "", loading: "lazy" %>
       <% end %>
     </div>

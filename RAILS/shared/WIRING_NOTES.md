@@ -181,19 +181,21 @@ first, and so described brgen in a palette and radius scale it had left.
   tv `#dc635c`, dating `#00d4aa`, takeaway `#e07b39`, playlist `#12b6c4`,
   maps `#5b8fd4`, messenger `#6b7fd7`)
 
-**The social indigo palette is still compiled into brgen** (`#17161c`/`#d8d6e0`/
-`#897dda`), because `stack_brgen` forwards `_tokens.scss`. Two facts follow, both
-load-bearing and neither a bug to "fix" casually:
-- The brgen-old `:root` beats it **on source order alone** — same specificity.
-  Reordering `@use "_root"` in `application.scss` would silently restore indigo.
-- `_tokens.scss` emits its light half at `[data-theme=light]` and
-  `:root:not([data-theme=dark])`, which **outrank** plain `:root`. So brgen has
-  two light themes: `#dark-toggle` gives the 2014 white/`#222`, `data-theme`
-  gives social `#f7f6fa`/`#1a1824`. Which one a visitor sees depends on which
-  control they used. Amber's luxury `:root` lost that fight too: measured
-  2026-08-13 on amber.brgen.no, OS-light visitors got social paper
-  (`#f7f6fa`/`#5b4fc4`) with luxury radii. `_variables.scss` restates luxury
-  at those two selectors.
+**The social indigo palette is still compiled into brgen** (`#17161c`/`#f7f6fa`/
+`#897dda`), because `stack_brgen` forwards `_tokens.scss`. Verified against the
+built bundle 2026-08-21: it is outranked everywhere it appears, and the "two
+light themes" this section used to warn about is fixed — `_root.scss` restates
+brgen-old under `:root[data-theme="light"]` **and** under
+`@media (prefers-color-scheme: light)`, each emitted after the indigo block and
+winning on specificity as well as order, so the checkbox path and the dataset
+path wear the same 2014 white. What remains true and load-bearing:
+- The brgen-old **dark** `:root` still beats indigo **on source order alone** —
+  same specificity. Reordering `@use "_root"` in `application.scss` would
+  silently restore indigo dark.
+- The indigo emissions are dead weight, not dead code: they come alive if the
+  `_root.scss` restatements are ever removed. Excising them from the stack is
+  the real fix and is deliberately not done casually — `_tokens.scss` also
+  carries non-theme rules brgen wears.
 
 Social dark-tokens is worn intentionally in exactly one brgen place —
 `body.vertical-maps` (`_vertical_maps_shell.scss`) — plus `shared/_minimal.scss`

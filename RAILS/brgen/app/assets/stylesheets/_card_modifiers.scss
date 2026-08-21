@@ -15,8 +15,10 @@
 }
 
 .price {
+  /* Weight alone carries the emphasis: hierarchy via weight and brightness,
+     not decoration, and the accent stays with interactive and state elements
+     (visual_contract_lint accent_on_prose). */
   font-weight: var(--weight-bold);
-  color: var(--accent);
   font-size: var(--text-base);
   margin-top: 4px;
 }

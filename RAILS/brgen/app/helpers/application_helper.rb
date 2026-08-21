@@ -9,7 +9,9 @@ module ApplicationHelper
   def city_name = Current.city_name
 
   def lazy_image_tag(source, alt:, blurhash: nil, **options)
-    image_options = options.dup
+    # Reserved before the bytes arrive: intrinsic dimensions ride every call
+    # through Shared::UiHelper#image_dimensions (caller options win).
+    image_options = image_dimensions(source).merge(options)
     image_options[:loading] ||= "lazy"
     blurhash ||= source.try(:blurhash) || source.try(:blob).try(:blurhash) || source.try(:metadata).try(:[], "blurhash")
     image_options[:data] = (image_options[:data] || {}).merge(
@@ -23,7 +25,7 @@ module ApplicationHelper
   end
 
   def responsive_image_tag(attachment, alt:, widths: [ 400, 800, 1_200 ], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
-    image_options = options.dup
+    image_options = image_dimensions(attachment).merge(options)
     image_options[:loading] ||= loading
 
     return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)

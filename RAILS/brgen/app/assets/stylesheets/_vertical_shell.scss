@@ -13,13 +13,18 @@ body[class*="vertical-"] .compose-box {
 /* Single accent map — keep in sync with design_tokens.yml vertical_accents.
    Do not re-set --accent in ui_refinements or vertical-local sheets. */
 $vertical-accents: (
-  marketplace: (#98876e, #6f6149), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  tv:          (#dc635c, #b83a33), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  dating:      (#00d4aa, #00b391), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  takeaway:    (#e07b39, #c26a30), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  playlist:    (#12b6c4, #0f9aa6), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  maps:        (#5b8fd4, #4a7ab8), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
-  messenger:   (#6b7fd7, #5566c4), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  // (dark accent, hover, light accent). Slot 3 exists because the dark-mode
+  // hues were tuned as ink on dark: on white, dating ran 1.91:1, playlist
+  // 2.47:1 and takeaway 2.97:1 (visual_contract_lint low_contrast, WCAG
+  // 1.4.11 wants 3:1), so light mode wears a darkened variant of the same
+  // hue. Verticals whose dark hue already clears 3:1 on white repeat it.
+  marketplace: (#98876e, #6f6149, #98876e), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  tv:          (#dc635c, #b83a33, #dc635c), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  dating:      (#00d4aa, #00b391, #009579), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  takeaway:    (#e07b39, #c26a30, #c26a30), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  playlist:    (#12b6c4, #0f9aa6, #0e8a94), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  maps:        (#5b8fd4, #4a7ab8, #5b8fd4), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  messenger:   (#6b7fd7, #5566c4, #6b7fd7), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
 );
 /* Ink for anything painted ON these accents. Every one of the seven was tuned
    to be legible as ink on a light surface, which makes them all too light to
@@ -29,12 +34,20 @@ $vertical-accents: (
    one dark ink clears AA for all of them. Verified per accent, not assumed. */
 $vertical-accent-ink: #1a1824;
 @each $v, $c in $vertical-accents {
-  body.vertical-#{$v},
-  body.vertical-#{$v} #dark-toggle:checked ~ .theme-root {
+  body.vertical-#{$v} {
     --accent: #{list.nth($c, 1)};
     --accent-ink: #{$vertical-accent-ink};
     --vertical-#{$v}-accent: #{list.nth($c, 1)};
     --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
+  }
+  /* Light restates rather than carries: both light paths (the checkbox and
+     the dataset) get the slot-3 variant. Immersive verticals hide
+     #dark-toggle, so the first selector simply never matches there. */
+  body.vertical-#{$v} #dark-toggle:checked ~ .theme-root,
+  :root[data-theme="light"] body.vertical-#{$v} {
+    --accent: #{list.nth($c, 3)};
+    --accent-ink: #{$vertical-accent-ink};
+    --vertical-#{$v}-accent: #{list.nth($c, 3)};
   }
 }
 

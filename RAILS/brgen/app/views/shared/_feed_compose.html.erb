@@ -12,7 +12,7 @@
     <% if guest? %>
       <span class="compose-avatar" aria-hidden="true">G</span>
     <% else %>
-      <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "" %>
+      <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "", width: 40, height: 40 %>
     <% end %>
     <span class="compose-trigger-prompt"><%= t("feed.compose_prompt") %></span>
   </button>
@@ -39,7 +39,7 @@
             <%= f.hidden_field :anonymous, value: true %>
           </span>
         <% else %>
-          <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "" %>
+          <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "", width: 40, height: 40 %>
           <span class="composer-author-name"><%= Current.user.display_name %></span>
         <% end %>
       </div>

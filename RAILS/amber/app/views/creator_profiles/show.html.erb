@@ -20,7 +20,7 @@
     <% @showcase_items.each do |showcase| %>
       <%= link_to item_path(showcase.item) do %>
         <% if showcase.item.photos.attached? %>
-          <%= image_tag showcase.item.photos.first, alt: showcase.item.title %>
+          <%= responsive_image_tag showcase.item.photos.first, alt: showcase.item.title %>
         <% else %>
           <div class="item-placeholder"><%= showcase.item.category %></div>
         <% end %>

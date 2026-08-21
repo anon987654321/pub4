@@ -34,18 +34,17 @@ module Pub4
     TEXT_PAIRS = [%w[--text --bg], %w[--text-secondary --surface], %w[--text-secondary --bg]].freeze
     UI_PAIRS = [%w[--accent --bg], %w[--danger --bg]].freeze
 
-    INTERACTIVE_SELECTOR = /\ba\b|button|\.btn|link|tab|chip|badge|action|:hover|:focus|active|vote|toggle|nav|pill|switch|control|icon|spinner|progress|ring|cursor|caret|brand|logo|accent/i
+    INTERACTIVE_SELECTOR = /\ba\b|button|\.btn|link|tab|chip|badge|action|:hover|:focus|active|vote|toggle|nav|pill|switch|control|icon|spinner|progress|ring|cursor|caret|brand|logo|accent|input|select|textarea|summary/i
 
-    # Measured 2026-08-20, first run. The three low_contrast rows are the
-    # light-theme vertical accents (dating #00d4aa 1.91:1, playlist #12b6c4
-    # 2.47:1, takeaway #e07b39 2.97:1 on #ffffff) — recorded debt: each needs
-    # a darkened light-theme variant, a colour decision rather than a lint
-    # edit. The accent_on_prose rows are named by running this file. Lower on
-    # fix; never raise to silence.
+    # All four measured to 0 on 2026-08-21: the light-theme vertical accents
+    # gained darkened same-hue variants, .price dropped the hue its bold
+    # already carries, the image helpers reserve intrinsically and every raw
+    # call site carries its pair or a reserved: container marker. Never raise
+    # to silence.
     BASELINES = {
-      "low_contrast" => 3,
-      "unreserved_image" => 33,
-      "accent_on_prose" => 2,
+      "low_contrast" => 0,
+      "unreserved_image" => 0,
+      "accent_on_prose" => 0,
       "compose_costume" => 0,
     }.freeze
 
@@ -97,12 +96,16 @@ module Pub4
       surface = resolve(tokens, "--surface") || resolve(tokens, "--bg")
       return [] unless surface
 
-      css.scan(/body\.vertical-(\w+)[^{]*\{[^}]*?--accent:\s*(#\h{3,6})/m).filter_map do |vertical, hex|
+      winners = {}
+      css.scan(/(?:body\.vertical-|:root\[data-theme="light"\] body\.vertical-)(\w+)[^{]*\{[^}]*?--accent:\s*(#\h{3,6})/m) do |vertical, hex|
+        winners[vertical] = hex # last declaration wins, matching the cascade in light mode
+      end
+      winners.filter_map do |vertical, hex|
         ratio = contrast_ratio(hex, surface)
         next unless ratio < 3.0
         Finding.new("low_contrast", rel, "vertical-#{vertical} accent #{hex} on #{surface} = #{ratio.round(2)}:1 (needs 3:1)")
       end
-    end
+end
 
     def root_tokens(css)
       tokens = {}
@@ -144,16 +147,27 @@ module Pub4
 
     # --- image reservation ----------------------------------------------------
 
-    IMAGE_CALL = /(?:image_tag[ (]|<img\b)[^\n]*/
+    # Raw <img> and bare image_tag only: responsive_image_tag and
+    # lazy_image_tag reserve intrinsically (Shared::UiHelper#image_dimensions
+    # rides every call), so the helper is the reservation.
+    IMAGE_CALL = /(?:(?<!responsive_)(?<!lazy_)\bimage_tag[ (]|<img\b)[^\n]*/
+
+    # `reserved: container` on the call line or the line above marks a site
+    # whose CONTAINER owns the box — an absolute-inset img, an aspect-ratio
+    # frame — so the call site cannot shift layout and carries no pair.
+    RESERVED_MARKER = "reserved: container"
 
     def image_findings
       views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,shared}/app/views/**/*.erb")) +
               Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views/**/*.erb"))
       views.flat_map do |path|
-        File.read(path, encoding: "UTF-8").each_line.with_index(1).filter_map do |line, n|
+        lines = File.read(path, encoding: "UTF-8").lines
+        lines.each_with_index.filter_map do |line, idx|
+          next if line.lstrip.start_with?("<%#")
           next unless line.match?(IMAGE_CALL)
           next if line.match?(/width|height|aspect|size:/)
-          Finding.new("unreserved_image", path.sub("#{RAILS_ROOT}/", ""), "line #{n}")
+          next if line.include?(RESERVED_MARKER) || (idx.positive? && lines[idx - 1].include?(RESERVED_MARKER))
+          Finding.new("unreserved_image", path.sub("#{RAILS_ROOT}/", ""), "line #{idx + 1}")
         end
       end
     end

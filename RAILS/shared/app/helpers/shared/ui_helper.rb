@@ -219,6 +219,16 @@ module Shared
     # titles, aria-labels, search placeholders and controller flashes; nothing
     # looked at body text, and nothing at all could have seen a bare word typed
     # after a helper call. RAILS/test/view_body_copy_i18n_test.rb does now.
+# Intrinsic dimensions from the analyzed blob, so the browser reserves the
+# box before the bytes arrive (aspect-ratio is derived from the pair even
+# under width:100% CSS). Nothing to reserve is an empty hash, not a guess —
+# unanalyzed blobs and non-attachment sources stay dimensionless.
+def image_dimensions(source)
+  meta = source.try(:metadata).presence || source.try(:blob).try(:metadata) || {}
+  width, height = meta["width"], meta["height"]
+  width && height ? { width: width, height: height } : {}
+end
+
     def time_ago(time)
       return nil if time.blank?
 

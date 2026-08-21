@@ -11,7 +11,7 @@
     <div class="tv-media">
       <% thumb = @live_stream.channel&.banner %>
       <% if thumb&.attached? %>
-        <%= image_tag main_app.url_for(thumb), class: tv_media_image_classes(thumb), alt: @live_stream.title %>
+        <%= image_tag main_app.url_for(thumb), class: tv_media_image_classes(thumb), alt: @live_stream.title, width: 1280, height: 720 %>
       <% else %>
         <div class="tv-media-image repligen-hero" role="img" aria-label="<%= @live_stream.title %>"></div>
       <% end %>

@@ -8,7 +8,7 @@
       <a href="<%= d.click_url %>" target="_blank" rel="noopener sponsored" class="affiliate-deal">
         <% if d.image_url.present? %>
           <%# Was emitting loading="lazy" twice on the same tag. %>
-          <img loading="lazy" alt="<%= d.title.presence || t("affiliate.deal_alt") %>" src="<%= d.image_url %>">
+          <img loading="lazy" width="52" height="52" alt="<%= d.title.presence || t("affiliate.deal_alt") %>" src="<%= d.image_url %>">
         <% end %>
         <div>
           <p class="affiliate-title"><%= d.title %></p>

@@ -19,7 +19,7 @@
 <article class="feed-card <%= local_assigns[:class] %>" <%= local_assigns[:data_attributes] || "" %>>
   <div class="feed-card-avatar">
     <% if local_assigns[:avatar_url].present? %>
-      <%= image_tag local_assigns[:avatar_url], class: "feed-card-avatar-img", alt: local_assigns[:name] || "avatar" %>
+      <%= image_tag local_assigns[:avatar_url], class: "feed-card-avatar-img", alt: local_assigns[:name] || "avatar", width: 40, height: 40 %>
     <% else %>
       <% monogram = (local_assigns[:name] || "?").first.upcase %>
       <div class="feed-card-avatar-placeholder monogram monogram--<%= monogram.ord % 6 %>" role="img" aria-label="<%= local_assigns[:name] || "Anonymous" %> monogram"><%= monogram %></div>
