@@ -108,7 +108,8 @@ module Master
         %w[python3.12 python3.11 python3].each do |bin|
           next unless system("which", bin, out: File::NULL, err: File::NULL)
 
-          ver = `#{bin} -c 'import sys; print(sys.version_info[:major]*10+sys.version_info[:minor])' 2>/dev/null`.strip.to_i
+          out, _status = Open3.capture2(bin, "-c", "import sys; print(sys.version_info[:major]*10+sys.version_info[:minor])", err: File::NULL)
+          ver = out.strip.to_i
           return bin if ver >= MIN_MLX_PYTHON_VERSION_CODE
         end
         nil

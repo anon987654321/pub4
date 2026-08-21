@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 # A "Do Not Touch" entry must name the gate that fails when its claim stops
 # being true — or say plainly that no gate can hold it, and why.
 #
@@ -62,7 +64,7 @@ module Pub4
     # Rakefile — a task can be defined in any file the Rakefile loads.
     def self.rake_tasks
       @rake_tasks ||= begin
-        out = `cd #{MASTER} && bundle exec rake -T 2>/dev/null`
+        out, _status = Open3.capture2("bundle", "exec", "rake", "-T", chdir: MASTER, err: File::NULL)
         out.scan(/^rake (\S+)/).flatten
       end
     end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 require "set"
 require "shellwords"
 
@@ -85,9 +87,10 @@ module Master
       end
 
       def git_tracked_paths(repo_root, label)
-        cmd = ["git", "-C", repo_root, "ls-files", label].map { |part| Shellwords.escape(part) }.join(" ")
-        out = `#{cmd} 2>/dev/null`
-        return [] unless $?.success?
+        # The arg-array form: nothing is parsed by a shell, so nothing needs
+        # escaping — the escape-then-join spelling was the veto's shape anyway.
+        out, status = Open3.capture2("git", "-C", repo_root, "ls-files", label, err: File::NULL)
+        return [] unless status.success?
 
         out.lines.map(&:chomp).reject(&:empty?).filter_map do |rel|
           next if skip_path?(rel)

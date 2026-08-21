@@ -456,6 +456,9 @@ spine:
   # NO_IMPORTANT consults original lines for markers the comment-stripping
   # blanked; TYPOGRAPHIC_EXCELLENCE skips erb doc comments. False positives
   # down, again.
+  # RAISED 2026-08-21 (third), 39033 -> 39036 (+3): six backtick-interpolation
+  # veto sites (the deep scan's only real vetoes) moved to Open3 arg arrays —
+  # the prescribed fix costs a line each.
   # RAISED 2026-08-21 (second), 39025 -> 39029 (+4): the erase-vs-paint
   # narrowing in NO_IMPORTANT and the registry scan honouring the inline
   # intentional marker — again false positives down, not features up.
@@ -465,7 +468,7 @@ spine:
   # multi-line <img> a finding. The 13 lines are those two rules plus the
   # narrowings H1_VISIBILITY, SKIP_TO_MAIN, META_CHARSET and SINGLE_H1 learned
   # in the same pass — every one bought false positives down, not features up.
-  lib_code_ceiling: 39033
+  lib_code_ceiling: 39036
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

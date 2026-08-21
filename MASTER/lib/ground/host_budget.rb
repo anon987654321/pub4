@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 module Master
   module Ground
     # OpenBSD VPS (~1GB RAM) cannot survive full-repo LLM prompts or recursive autofix.
@@ -81,7 +83,8 @@ module Master
       def suspended_ruby_pids(user: ENV["USER"])
         return [] unless user && !user.empty?
 
-        `ps x -o pid=,stat=,command= -U #{user} 2>/dev/null`.each_line.filter_map do |line|
+        out, _status = Open3.capture2("ps", "x", "-o", "pid=,stat=,command=", "-U", user)
+        out.each_line.filter_map do |line|
           pid, stat, *cmd = line.split
           next unless stat&.include?("T")
           next unless cmd.join(" ").match?(/bin\/cli|tts-worker/)

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 # Every ratchet in the repo, in one place, with its current value beside its
 # recorded one.
 #
@@ -234,7 +236,9 @@ module Pub4
     end
 
     def shell_row(name, dir, command, pattern, ceiling)
-      output = `cd #{File.join(ROOT, dir)} && #{command} 2>&1`
+      # The commands in deep_rows are fixed literals with no quoting, so the
+      # split is faithful; the arg-array form keeps the shell out entirely.
+      output, _status = Open3.capture2e(*command.split, chdir: File.join(ROOT, dir))
       current = output[pattern, 1]&.to_i
       Row.new(name: name, current: current, ceiling: ceiling, direction: :down,
               source: "#{dir}: #{command}",

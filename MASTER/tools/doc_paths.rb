@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 # Every path a document names must exist on disk.
 #
 # The DEPLOY/ tree became RAILS/ and four documents kept pointing at the dead
@@ -44,7 +46,7 @@ module Pub4
     # own copy of. A token that is the tail of some real tracked path resolves.
     def self.tracked
       @tracked ||= begin
-        out = `cd #{ROOT} && git ls-files`
+        out, _status = Open3.capture2("git", "ls-files", chdir: ROOT)
         out.split("\n")
       end
     end

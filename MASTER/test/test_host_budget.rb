@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 require "test_helper"
 require "ground/host_budget"
 
@@ -33,7 +35,7 @@ class TestHostBudget < Minitest::Test
       22489 S ruby34: http://127.0.0.1:53187
       63744 T /usr/local/bin/ruby34 tts-worker
     PS
-    Master::Ground::HostBudget.stub(:`, fake) do
+    Open3.stub(:capture2, [fake, nil]) do
       pids = Master::Ground::HostBudget.suspended_ruby_pids(user: "dev")
       assert_includes pids, 60_670
       assert_includes pids, 63_744
