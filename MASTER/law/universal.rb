@@ -149,16 +149,10 @@ Law.define(:TYPOGRAPHIC_EXCELLENCE) do
   good "label = '…'"
 end
 
-# Migrated from data/rules.yml TYPOGRAPHY_DISCIPLINE.
-Law.define(:TYPOGRAPHY_DISCIPLINE) do
-  source "Butterick's Practical Typography (Matthew Butterick)"
-  severity :info
-  reads_comments true
-  detect { |line| line.match?(/[-=]{3,}|[╭╮╰╯│─]/) }
-  fix "No ASCII separators. No box drawing. Whitespace is the layout tool."
-  bad  "# ------"
-  good "# section"
-end
+# TYPOGRAPHY_DISCIPLINE lives once, in the registry (universal_rules.rb): it
+# skips comment-leading lines and yaml frontmatter and wants a 4+ run, where
+# this per-line twin flagged every section comment, diff header and
+# frontmatter delimiter in the tree.
 
 # Migrated from data/rules.yml UNBOUNDED_RETRY. The migration regressed the
 # detector to the bare word — 24 findings on lib/, every one a comment, a

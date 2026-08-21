@@ -40,7 +40,10 @@ Law.define(:BARE_DIV_WRAPPER) do
   source "HTML5 semantics / WCAG 1.3.1 — an element with no meaning carries none"
   severity :warn
   languages %i[html]
-  detect { |line| line.match?(/<div\s*>/) }
+  # A div grouping a dt/dd pair inside a <dl> is the HTML 5.2 idiom, not a
+  # styling wrapper — the spec added it precisely so the pair could share a
+  # layout box.
+  detect { |line| line.match?(/<div\s*>/) && !line.match?(/<div>\s*(?:<%=\s*tag\.dt|<dt)/) }
   fix "Name the group with a semantic element, or drop the wrapper and select its children by structure."
   bad  "<div>"
   good "<section>"
