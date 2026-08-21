@@ -266,7 +266,7 @@ a.brgen-logo-mark:focus-visible,
   text-decoration: none;
   color: var(--text);
   opacity: 0.85;
-  outline: var(--focus-ring, 2px solid var(--accent)) !important;
+  outline: var(--focus-ring, 2px solid var(--accent)) !important; /* scan: intentional — paints the focus indicator the armor must never suppress */
   outline-offset: 2px;
 }
 

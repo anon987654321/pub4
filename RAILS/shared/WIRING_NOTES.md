@@ -188,14 +188,13 @@ light themes" this section used to warn about is fixed — `_root.scss` restates
 brgen-old under `:root[data-theme="light"]` **and** under
 `@media (prefers-color-scheme: light)`, each emitted after the indigo block and
 winning on specificity as well as order, so the checkbox path and the dataset
-path wear the same 2014 white. What remains true and load-bearing:
-- The brgen-old **dark** `:root` still beats indigo **on source order alone** —
-  same specificity. Reordering `@use "_root"` in `application.scss` would
-  silently restore indigo dark.
-- The indigo emissions are dead weight, not dead code: they come alive if the
-  `_root.scss` restatements are ever removed. Excising them from the stack is
-  the real fix and is deliberately not done casually — `_tokens.scss` also
-  carries non-theme rules brgen wears.
+path wear the same 2014 white. Since 2026-08-21 the theme emissions sit in `@layer tokens` (the lowest
+cascade layer), and un-layered styles beat layered ones regardless of source
+order — so an app palette written at plain `:root` wins **by construction**,
+and reordering `@use` lines can no longer restore indigo in either theme.
+The non-theme rules `_tokens.scss` carries (the type/space/z scales, the
+tabular money widths) stay exactly as worn: a layered token still applies
+wherever nothing un-layered redeclares it.
 
 Social dark-tokens is worn intentionally in exactly one brgen place —
 `body.vertical-maps` (`_vertical_maps_shell.scss`) — plus `shared/_minimal.scss`
