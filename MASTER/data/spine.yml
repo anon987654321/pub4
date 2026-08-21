@@ -456,6 +456,9 @@ spine:
   # NO_IMPORTANT consults original lines for markers the comment-stripping
   # blanked; TYPOGRAPHIC_EXCELLENCE skips erb doc comments. False positives
   # down, again.
+  # RAISED 2026-08-21 (fifth), 39046 -> 39083 (+37): QUOTE_VARIABLES becomes a
+  # stateful line lexer — shebang, heredoc and quote state, the shapes that
+  # never split and the one that splits on purpose. 573 errors to zero, priced.
   # RAISED 2026-08-21 (fourth), 39036 -> 39046 (+10): the predicate-fallback
   # narrowing in SilentRescue, path_exclude in the law engine, and the two
   # rescues that now report — the deep scan's follow-through, priced.
@@ -471,7 +474,7 @@ spine:
   # multi-line <img> a finding. The 13 lines are those two rules plus the
   # narrowings H1_VISIBILITY, SKIP_TO_MAIN, META_CHARSET and SINGLE_H1 learned
   # in the same pass — every one bought false positives down, not features up.
-  lib_code_ceiling: 39046
+  lib_code_ceiling: 39083
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
