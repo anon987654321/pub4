@@ -60,7 +60,17 @@ module Master
           # overriding declares it with `scan: intentional-important` in its
           # head, the way a token source declares intentional-colors.
           next [] if src.lines.first(20).join.match?(/scan:\s*intentional-important/)
-          scan_lines(without_block_comments(without_override_media(src)), /!\s*important/,
+          #
+          # An !important that ERASES chrome is a guarantee; one that PAINTS is
+          # an argument. The flat system armours its wordmark, grips and
+          # toggles with border/background/outline erased from anywhere —
+          # converging styling to nothing cannot start the specificity war
+          # this rule exists to prevent — so erase-shaped importants
+          # (none/transparent/0) pass and painting ones still fire.
+          erase = /(?:border[\w-]*|outline[\w-]*|background|border-radius|padding|animation|transition|box-shadow)\s*:\s*(?:none|transparent|0)[^;!]*!\s*important/
+          source_text = without_block_comments(without_override_media(src))
+          source_text = source_text.each_line.map { |l| l.match?(erase) ? "\n" : l }.join
+          scan_lines(source_text, /!\s*important/,
                      message: "!important overrides cascade — fix specificity instead")
         end
 

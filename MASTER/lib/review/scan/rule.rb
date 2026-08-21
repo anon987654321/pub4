@@ -82,6 +82,9 @@ module Master
 
         def scan_lines(code, pattern, message:, fix: nil)
           code.each_line.with_index(1).filter_map do |line, num|
+            # The law engine honours the same marker: a line that declares
+            # itself intentional carries a reviewer's reason beside it.
+            next if line.match?(/scan:\s*intentional\b/)
             finding(line: num, message:, fix:) if line.match?(pattern)
           end
         end
