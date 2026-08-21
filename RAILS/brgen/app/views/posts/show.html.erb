@@ -7,7 +7,7 @@
 <%= turbo_stream_from @post %>
 
 <article class="feed-post-show">
-  <%= turbo_frame_tag "post-vote-#{@post.id}" do %>
+  <%= turbo_frame_tag "post-vote-#{@post.id}", "aria-live": "polite" do %>
     <div class="feed-post-votes" role="group" aria-label="<%= t("posts.score") %>">
       <%# Guests vote everywhere else -- the feed card renders a live vote
           button for them and VotesController only asks for require_user_session.

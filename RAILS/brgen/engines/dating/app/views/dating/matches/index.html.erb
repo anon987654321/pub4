@@ -7,7 +7,7 @@
   </nav>
 </div>
 
-<turbo-frame id="dating-matches" data-turbo-action="replace">
+<turbo-frame aria-live="polite" id="dating-matches" data-turbo-action="replace">
 <% if @matches.none? %>
   <%= render "shared/empty_state",
         title: t("dating.no_matches"),

@@ -11,7 +11,7 @@
   <% end %>
 </header>
 
-<turbo-frame id="amber-ai-suggest" data-turbo-action="replace">
+<turbo-frame aria-live="polite" id="amber-ai-suggest" data-turbo-action="replace">
 <%= form_with url: ai_suggest_outfits_path, method: :get, class: "form", html: { role: "form", "aria-label": t("ai.generate_form") } do |f| %>
   <%# f.label rather than a bare <label> beside the field — see packing_list. %>
   <div class="field">

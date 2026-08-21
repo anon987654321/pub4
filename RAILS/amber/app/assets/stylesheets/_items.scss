@@ -120,7 +120,7 @@
 .timeline-item {
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 420ms var(--ease-out), transform 420ms var(--ease-out);
+  transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out);
 }
 
 .style-phase-card.is-visible,

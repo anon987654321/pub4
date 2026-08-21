@@ -4,7 +4,7 @@
   <%= tag.h1 @category.name %>
 </div>
 
-<turbo-frame id="marketplace-category" data-turbo-action="replace">
+<turbo-frame aria-live="polite" id="marketplace-category" data-turbo-action="replace">
 <div id="marketplace-category-listings" class="deal-grid" role="region" aria-label="<%= t("aria.category_listings") %>">
 <% @listings.each do |listing| %>
   <%= render "marketplace/listings/card", listing: %>

@@ -2,6 +2,7 @@
 <% content_for :title, t("legal.cookies") %>
 <% social = legal_social_network? %>
 
+<%# single_h1: locale-branched — one of the two h1s renders per request %>
 <article class="legal-prose">
   <% if nb %>
     <p class="legal-eyebrow">Informasjonskapsler</p>

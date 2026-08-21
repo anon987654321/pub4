@@ -5,7 +5,7 @@
     <%= tag.h1 t("tv.live_streams.title", default: "Live streams") %>
   <% end %>
 
-  <turbo-frame id="tv-live-streams" data-turbo-action="replace">
+  <turbo-frame aria-live="polite" id="tv-live-streams" data-turbo-action="replace">
   <%= tag.div class: "live-stream-grid", role: "list", "aria-label": "Live streams list" do %>
     <% @live_streams.each do |live_stream| %>
       <%= render "shared/feed_card",

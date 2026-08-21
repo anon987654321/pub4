@@ -2,6 +2,6 @@
 <header role="banner" aria-label="Add wardrobe item header">
   <%= tag.h1 t("pages.add_item") %>
 </header>
-<turbo-frame id="amber-item-form" data-turbo-action="replace">
+<turbo-frame aria-live="polite" id="amber-item-form" data-turbo-action="replace">
 <%= render "form", item: @item %>
 </turbo-frame>
