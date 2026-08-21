@@ -99,15 +99,13 @@
   <%= render "shared/brand_mark", label: "brgen", class_name: "brand-mark brgen-logo-mark" %>
   <% unless vertical_surface? %>
     <div role="region" aria-label="<%= t("theme.region") %>">
-      <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="<%= t("theme.toggle") %>"
-        data-controller="theme-toggle" data-theme-toggle-storage-key-value="brgen-theme" data-action="change->theme-toggle#persist">
-      <%# Restore the saved theme at parse time, before .theme-root paints, so a
-          saved light theme does not flash dark first (the Stimulus controller
-          reapplies the same value on connect). %>
-      <script src="/theme_boot.js"></script>
-      <label for="dark-toggle" class="theme-toggle" title="<%= t("theme.toggle") %>" aria-hidden="true">
-        <%= icon :sun, size: 20 %>
-      </label>
+<%# The one theme mechanism: the shared toggle writes data-theme through
+    the Stimulus controller, and the shared bootstrap restores it at
+    parse time so a saved light theme does not flash dark first. The
+    checkbox-sibling CSS lane this layout used to carry is gone — the
+    dataset is authoritative in every app. %>
+<%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
+<%= render "shared/theme_toggle", storage_key: "brgen-theme" %>
     </div>
   <% end %>
 

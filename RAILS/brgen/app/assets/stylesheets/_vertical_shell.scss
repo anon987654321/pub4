@@ -40,10 +40,7 @@ $vertical-accent-ink: #1a1824;
     --vertical-#{$v}-accent: #{list.nth($c, 1)};
     --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
   }
-  /* Light restates rather than carries: both light paths (the checkbox and
-     the dataset) get the slot-3 variant. Immersive verticals hide
-     #dark-toggle, so the first selector simply never matches there. */
-  body.vertical-#{$v} #dark-toggle:checked ~ .theme-root,
+  /* Light restates rather than carries: the dataset is the one light path. */
   :root[data-theme="light"] body.vertical-#{$v} {
     --accent: #{list.nth($c, 3)};
     --accent-ink: #{$vertical-accent-ink};
