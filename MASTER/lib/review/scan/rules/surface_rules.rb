@@ -88,9 +88,12 @@ module Master
           findings
         end
 
+        # The doctrine is Müller-Brockmann's (Grid Systems in Graphic Design,
+        # 1981): a single spatial module, every dimension a multiple of it —
+        # named here so the rule carries its book, not just its number.
         RuleDSL.rule :EIGHT_PX_RHYTHM,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: false,
-          description: "spacing on 8px rhythm (4px hairline allowed)",
+          description: "spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module",
           example_path: "/repo/app/assets/stylesheets/_example.scss",
           fires: ".card { padding: 10px; }\n",
           # A media condition is not spacing, and 44px is the tap-target token.
@@ -290,7 +293,7 @@ module Master
           unique = sizes.uniq
           next [] if unique.size <= 8
 
-          [finding(line: 1, message: "#{unique.size} distinct px font sizes — prefer modular scale ≤8 sizes (design_rules.type_scale)")]
+          [finding(line: 1, message: "#{unique.size} distinct px font sizes — prefer modular scale (Müller-Brockmann: one scale, few steps) ≤8 sizes (design_rules.type_scale)")]
         end
 
         RuleDSL.rule :CONTRAST_TOKENS,

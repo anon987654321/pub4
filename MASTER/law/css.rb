@@ -106,3 +106,24 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   good "rows = connection.exec(query)"
 end
 
+
+# Every Layout (Bell & Pickering): let the content size the box. A fixed pixel
+# height on a container is a promise about content the container cannot keep —
+# text wraps, translations run long (Norwegian does), and the box clips or
+# spills. min-height states the same floor without the ceiling. Below 100px
+# the element is a control or a media frame sizing itself, not a text
+# container, so the law starts where flowing content starts.
+#
+# The book's other axiom — space between siblings belongs to the parent (gap),
+# not the children (margin-bottom chains) — is not per-line decidable: whether
+# a margin is a chain depends on the siblings, which only the rendered tree
+# knows. It stays a review judgment, not a detector.
+Law.define(:FIXED_HEIGHT) do
+  source "Every Layout (Bell & Pickering) — the content sizes the box"
+  severity :info
+  languages %i[css scss]
+  detect { |line| line.match?(/(?<![a-z-])height:\s*[1-9]\d{2,}px/) }
+  fix "Use min-height for a floor, or let the content size the box."
+  bad  ".card { height: 300px; }"
+  good ".card { min-height: 300px; }"
+end
