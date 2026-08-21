@@ -28,7 +28,7 @@
     <label for="answers_fit"><%= t("ai.fit") %></label>
     <%= f.select :answers, { "Fit" => ["tailored structured fits", "loose comfortable layers"] }, {}, { name: "answers[fit]", id: "answers_fit" } %>
   </div>
-  <div class="actions"><%= f.submit t("ai.infer_master"), class: "btn btn--primary" %></div>
+  <div class="actions"><%= f.submit t("ai.infer_master"), class: "btn btn-primary" %></div>
 <% end %>
 
 <%= link_to t("actions.back_to_ai"), ai_suggest_outfits_path %>

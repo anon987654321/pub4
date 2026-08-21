@@ -16,7 +16,7 @@
     <%= f.label :climate, t("ai.climate") %>
     <%= f.select :climate, ["hot", "cold", "mild", "rainy", "dry"], { selected: params[:climate] } %>
   </div>
-  <div class="actions"><%= f.submit t("ai.generate_master"), class: "btn btn--primary" %></div>
+  <div class="actions"><%= f.submit t("ai.generate_master"), class: "btn btn-primary" %></div>
 <% end %>
 
 <% if @result %>

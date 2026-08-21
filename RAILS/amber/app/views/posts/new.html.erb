@@ -18,5 +18,5 @@
     <%= f.label :item_id, t("post.tag_item") %>
     <%= f.select :item_id, Current.user.items.map { |i| [i.title, i.id] }, { include_blank: "—" } %>
   </div>
-  <div class="actions"><%= f.submit t("post.submit"), class: "btn btn--primary" %></div>
+  <div class="actions"><%= f.submit t("post.submit"), class: "btn btn-primary" %></div>
 <% end %>

@@ -50,9 +50,9 @@
   <div class="nav-actions">
     <% if authenticated? %>
       <%= render "shared/inbox_link" %>
-      <%= link_to t("nav.sign_out"), session_path, class: "btn-ghost", data: { turbo_method: :delete, turbo_prefetch: false } %>
+      <%= link_to t("nav.sign_out"), session_path, class: "btn btn-ghost", data: { turbo_method: :delete, turbo_prefetch: false } %>
     <% else %>
-      <%= link_to t("nav.sign_in"), new_session_path, class: "btn-ghost" %>
+      <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn-ghost" %>
     <% end %>
   </div>
 </nav>

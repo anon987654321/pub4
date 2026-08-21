@@ -287,36 +287,7 @@ footer {
   margin-top: 1rem;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.45rem 1.25rem;
-  border: none;
-  border-radius: var(--radius-pill);
-  background: var(--black);
-  color: var(--white);
-  font: inherit;
-  font-weight: var(--weight-bold);
-  text-decoration: none;
-  cursor: pointer;
-  transition: opacity 180ms var(--ease-out);
-}
-
-.btn:hover {
-  opacity: 0.88;
-  text-decoration: none;
-}
-
-.btn-ghost {
-  background: var(--hover-subtle);
-  color: var(--black);
-}
-
-.btn-ghost:hover {
-  background: var(--hover);
-}
+/* The button family lives in _zen_shell.scss — the position that wins. */
 
 .flash-notice {
   background: var(--hover);

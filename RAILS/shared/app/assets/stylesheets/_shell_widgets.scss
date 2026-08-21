@@ -563,7 +563,7 @@ section h2 {
 }
 
 /* Family primary is inverted type-on-background, not an accent fill — see
-   .btn--primary in _zen_shell.scss. */
+   .btn-primary in _minimal.scss. */
 .install-prompt-primary {
   background: var(--text, #d8d6e0);
   border-color: var(--text, #d8d6e0);

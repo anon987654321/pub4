@@ -34,7 +34,7 @@
     <%# Not the playBtn target. That one is the footer's text button and
         #syncPlayButton writes textContent into it, which would erase an SVG.
         This carries both glyphs and flips them by class instead. %>
-    <button type="button" class="transport-btn transport-btn--primary"
+    <button type="button" class="transport-btn transport-btn-primary"
             data-action="<%= act.call("toggle") %>"
             data-playlist-player-target="playIcon"
             aria-label="<%= t("playlist.play_pause", default: "Play or pause") %>">
@@ -42,7 +42,7 @@
       <%= icon :pause, size: 22, css_class: "transport-icon-pause" %>
     </button>
   <% elsif controls.include?("play") %>
-    <button type="button" class="transport-btn transport-btn--primary"
+    <button type="button" class="transport-btn transport-btn-primary"
             data-action="<%= act.call("play") %>"
             aria-label="<%= t("playlist.play", default: "Play") %>">
       <%= icon :play, size: 22 %>

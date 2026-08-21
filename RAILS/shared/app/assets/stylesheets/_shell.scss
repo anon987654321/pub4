@@ -444,7 +444,7 @@ html.chrome-hidden .tab-bar {
   /* Fill, not outline. These two buttons were the last eight lines on the
      rendered front page (measured 390x844: 8 visible borders, all of them
      here) -- the 2026-08-04 "no lines at all" pass converted .btn-ghost,
-     .btn-danger, .btn--secondary and .compose-trigger and missed this pair,
+     .btn-danger and .compose-trigger and missed this pair,
      because the tab-bar coach renders underneath .hotkey-coach and was never
      in the screenshot the pass was measured from. A button is not a field.
      The sibling .hotkey-coach-dismiss below carries the same note. */

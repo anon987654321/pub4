@@ -1,7 +1,0 @@
-<% label ||= local_assigns[:label] || local_assigns[:text] %>
-<% classes = ["btn", local_assigns[:variant] ? "btn--#{local_assigns[:variant]}" : nil, local_assigns[:size] ? "btn--#{local_assigns[:size]}" : nil].compact.join(" ") %>
-<% if local_assigns[:to] %>
-  <%= link_to label, local_assigns[:to], class: classes, data: local_assigns[:data] || {} %>
-<% else %>
-  <%= button_tag label, class: classes, type: local_assigns[:type] || "button", disabled: local_assigns[:disabled] %>
-<% end %>

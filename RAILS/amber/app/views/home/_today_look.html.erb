@@ -45,6 +45,6 @@
     <%# ISO date rather than l(): amber ships no nb date formats, so a localised
         strftime would raise on the default locale. %>
     <input type="hidden" name="name" value="<%= t("assistant.saved_name", date: look.date.to_s) %>">
-    <%= f.submit t("assistant.save"), class: "btn btn--primary" %>
+    <%= f.submit t("assistant.save"), class: "btn btn-primary" %>
   <% end %>
 </section>

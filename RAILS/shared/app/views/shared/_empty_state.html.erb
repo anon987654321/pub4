@@ -22,7 +22,7 @@
     <p class="empty-state-body"><%= body %></p>
   <% end %>
   <% if action.is_a?(Hash) && action[:label].present? && action[:path].present? %>
-    <%= link_to action[:label], action[:path], class: "btn btn-primary btn--primary empty-state-action" %>
+    <%= link_to action[:label], action[:path], class: "btn btn-primary empty-state-action" %>
   <% elsif local_assigns[:actions].present? %>
     <div class="empty-state-actions"><%= local_assigns[:actions] %></div>
   <% end %>

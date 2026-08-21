@@ -120,50 +120,44 @@ select {
   transform: none;
 }
 
-/* Amber and social share primary; keep legacy btn-primary as an alias. */
-.btn-primary,
-.btn--primary {
+/* The one button family, dash-spelled. Variants are compound (.btn.btn-primary,
+   0-2-0) so they beat any app's later .btn base (0-1-0) by specificity: an app
+   dialect-skins the BASE (brgen's _forms paints it accent), and the variant
+   contract holds everywhere without caring about load order. An app that must
+   re-skin a variant writes the same compound later. Fill instead of outline in
+   every variant — a transparent button with a 1px edge is a line, and the flat
+   system separates by surface. The zen-era btn--primary BEM twins are retired. */
+.btn.btn-primary {
   background: var(--text, var(--color-primary));
   color: var(--bg, var(--color-highlight));
 }
 
-.btn--secondary {
-  background: var(--hover-subtle, var(--hover));
-  color: var(--text, var(--color-primary));
-  border-color: transparent;
+.btn.btn-ghost {
+  background: var(--hover-subtle);
+  border: 0;
+  /* The ink is the context's: a ghost inherits, so wscons ghosts stay green
+     and grayscale ghosts stay grayscale without per-app overrides. */
+  color: inherit;
 }
 
-/* Family alias: brgen/bsdports use btn-ghost; amber often uses btn--ghost */
-.btn-ghost,
-.btn--ghost {
-  background: transparent;
-  color: var(--text, var(--color-primary));
-  border-color: var(--border, var(--color-border));
-}
-
-.btn-ghost:hover,
-.btn--ghost:hover {
+.btn.btn-ghost:hover {
   background: var(--hover, var(--color-midtone-tint));
 }
 
-.btn--danger {
-  background: var(--color-danger);
-  color: var(--text);
+.btn.btn-danger {
+  background: var(--hover);
+  color: var(--danger, var(--text));
+  border: 0;
 }
 
-.btn--sm {
+.btn.btn-sm {
   min-height: var(--tap-min);
-  padding-inline: var(--space-3);
+  padding: var(--space-1) var(--space-3);
   font-size: var(--text-sm);
 }
 
-.btn--lg {
-  min-height: 52px;
-  padding-inline: var(--space-6);
-  font-size: var(--text-base);
-}
-
 .avatar-initials {
+
   display: inline-grid;
   place-items: center;
   width: 100%;

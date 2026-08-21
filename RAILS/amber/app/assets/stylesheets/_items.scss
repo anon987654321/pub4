@@ -170,12 +170,14 @@
 }
 
 .btn:focus-visible,
-.btn-sm:focus-visible {
+.btn-sm:focus-visible,
+.btn.btn-sm:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.btn-sm {
+.btn-sm,
+.btn.btn-sm {
   min-height: var(--tap-min);
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--text-xs);
@@ -186,7 +188,8 @@
   cursor: pointer;
 }
 
-.btn-danger {
+.btn-danger,
+.btn.btn-danger {
   background: var(--color-danger);
 }
 

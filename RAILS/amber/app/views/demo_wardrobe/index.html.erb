@@ -9,8 +9,8 @@
   <%= tag.h1 t("demo.wardrobe") %>
   <p class="tagline"><%= t("demo.index_tagline") %></p>
   <nav role="navigation" aria-label="<%= t("demo.wardrobe_actions") %>">
-    <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn--primary" %>
-    <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn--ghost" %>
+    <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn-primary" %>
+    <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn-ghost" %>
   </nav>
 </header>
 
@@ -36,6 +36,6 @@
     <%= render partial: "demo_wardrobe/item", collection: @items %>
   </div>
   <% if @pagy.next %>
-    <p><%= link_to "Next page", demo_wardrobe_path(page: @pagy.next), class: "btn btn--ghost" %></p>
+    <p><%= link_to "Next page", demo_wardrobe_path(page: @pagy.next), class: "btn btn-ghost" %></p>
   <% end %>
 </section>

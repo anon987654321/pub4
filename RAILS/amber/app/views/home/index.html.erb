@@ -30,7 +30,7 @@
       <div><%= tag.dt t("home.utilisation") %><dd class="<%= @utilization_rate < 20 ? 'stat-warn' : '' %>"><%= @utilization_rate %>%</dd></div>
     </dl>
     <nav role="navigation" aria-label="<%= t("home.dashboard") %>">
-      <%= link_to t("home.add_item"), new_item_path, class: "btn btn--primary" %>
+      <%= link_to t("home.add_item"), new_item_path, class: "btn btn-primary" %>
       <%= link_to t("home.search_wardrobe"), ai_search_path, class: "btn" %>
       <%= link_to t("home.capsule_plan"), ai_capsule_path, class: "btn" %>
     </nav>
@@ -101,8 +101,8 @@
     <h1 class="title"><%= t("home.guest_title") %></h1>
     <p class="body"><%= t("home.guest_body") %></p>
     <p class="actions">
-      <%= link_to t("home.browse_demo"), demo_wardrobe_path, class: "btn btn--primary" %>
-      <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn--ghost" %>
+      <%= link_to t("home.browse_demo"), demo_wardrobe_path, class: "btn btn-primary" %>
+      <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn-ghost" %>
     </p>
     <p class="amber-guest-secondary">
       <%= link_to t("nav.sign_in"), new_session_path %>
