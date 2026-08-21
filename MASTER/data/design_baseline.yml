@@ -1,11 +1,11 @@
 ---
-total: 47
+total: 19
 apps:
-  amber: 11
-  brgen: 15
-  bsdports: 4
-  engines: 15
-  shared: 2
+  amber: 6
+  brgen: 3
+  bsdports: 2
+  engines: 7
+  shared: 1
 rules:
 - ANTI_DIVITIS
 - ARIA_INTERACTIVE

@@ -91,32 +91,36 @@ Law.define(:BUTTON_OVER_ANCHOR) do
   good "<button type=\"button\">Open</button>"
 end
 
-# A header carrying class="page-header" names the element twice: once in the
-# tag, where the browser and every assistive technology already read it, and
-# once in a class that only the stylesheet reads. The second name is the one
-# that rots. It survives when the element changes, and someone must keep it in
-# step by hand.
+# A class that restates its own tag adds a second name that only the
+# stylesheet reads — and the second name is the one that rots.
 #
-# The stylesheet does not need it. `header` selects a header. Where two headers
-# on one page need different treatment, the discriminator is their context
-# (main > header) or their accessible name, and both of those already have to be
-# correct for the page to work — so styling cannot drift away from semantics the
-# way a class can.
+# The first version of this law believed context could always carry the
+# distinction ("main > header"), and named page-header as its bad fixture.
+# The rendered DOM refuted that on 2026-08-21: probed over CDP with all four
+# surfaces booted, .page-header's parent varies by page (main#main-content on
+# search, section.channels-index on channels), and the marketplace front page
+# lays out FOUR header species at once — page-header, composer-header,
+# marketplace-top-offers-header and the market-hero that sits as main's
+# direct child and must NOT share their styling. No context selector
+# discriminates what those prefixes discriminate; the prefix is the honest
+# name for WHICH header this is, exactly the live-feed case the paragraph
+# below always allowed.
 #
-# BEM_IN_VIEWS covers the block__element spelling of this mistake. This covers
-# the plain one, which is far more common in this tree.
+# So the law now claims only what it can defend: a class whose distinguishing
+# half is pure filler (content-, inner-, wrapper-, -area, -block…) restates
+# the tag and goes. A class whose prefix names one of several coexisting
+# species stays — that discrimination is its job.
 #
-# The backreference carries the whole rule: it fires only when the class repeats
-# this element's own tag name. A section classed live-feed describes itself and
-# stays; a section classed content-section restates itself and goes.
+# A section classed live-feed describes itself and stays; a section classed
+# content-section restates itself and goes.
 Law.define(:CLASS_RESTATES_TAG) do
   source "style.yml bare_tag_targeting — the tag is already the name"
   severity :warn
   languages %i[html]
-  detect { |line| line.match?(/<(header|footer|nav|main|section|article|aside|form|figure|dialog|details|summary|table)\b[^>]*class=["'][^"']*\1/) }
-  fix "Select the bare tag in SCSS; discriminate by context or by accessible name, not by a class repeating the tag."
-  bad  "<header class=\"page-header\">"
-  good "<header>"
+  detect { |line| line.match?(/<(header|footer|nav|main|section|article|aside|form|figure|dialog|details|summary|table)\b[^>]*class=["'](?:[^"']*\s)?(?:(?:content|inner|outer|wrapper|container|box|main|site|app)-)?\1(?:-(?:content|inner|outer|wrapper|container|box|area|block))?(?:\s[^"']*)?["']/) }
+  fix "Drop the filler class and select the bare tag; a prefix that names which of several coexisting elements this is may stay."
+  bad  "<header class=\"content-header\">"
+  good "<header class=\"page-header\">"
 end
 
 # Migrated from data/rules.yml HTML_LANG.
