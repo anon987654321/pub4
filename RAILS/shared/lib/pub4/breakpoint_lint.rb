@@ -76,7 +76,7 @@ module Pub4
     # already treats them as a tablet. Moving it to 767 closes that and changes
     # what renders at those widths, which is an operator's decision and not a
     # lint's.
-    BASELINES = { "unknown_edge" => 1, "ambiguous_edge" => 0 }.freeze
+    BASELINES = { "unknown_edge" => 0, "ambiguous_edge" => 0 }.freeze
 
     Finding = Struct.new(:file, :line, :kind, :value)
 

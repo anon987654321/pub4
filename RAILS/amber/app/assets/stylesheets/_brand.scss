@@ -99,7 +99,7 @@
   a {
     display: block;
     width: 100%;
-    max-width: 1000px;
+    max-width: 1000px; // scan: intentional — the brand mark's layout bound, not a text measure
     text-decoration: none;
     line-height: 0;
   }
