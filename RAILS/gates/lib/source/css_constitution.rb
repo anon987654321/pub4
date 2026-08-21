@@ -103,7 +103,8 @@ module Deploy
 
     def budgets
       @budgets ||= (YAML.safe_load_file(BUDGET_PATH)&.dig("rules") || {})
-    rescue StandardError
+    rescue StandardError => e
+      warn "css_constitution: budget unreadable (#{e.class}) — gate runs unbudgeted"
       {}
     end
 

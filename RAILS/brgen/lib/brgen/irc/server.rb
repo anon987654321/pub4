@@ -39,7 +39,10 @@ module Brgen
             sleep 2
             ActiveRecord::Base.connection_pool.with_connection { emit.call(session.poll) }
           end
-        rescue StandardError
+        rescue StandardError => e
+          # One dead client must not kill the broadcast loop, but a ghost
+          # disconnect deserves a line.
+          Rails.logger.debug { "irc emit failed: #{e.class}: #{e.message}" }
           nil
         end
 

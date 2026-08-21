@@ -44,7 +44,8 @@ module Deploy
     # paying for a 21-minute scan.
     def budget
       @budget ||= (YAML.safe_load_file(BUDGET_PATH)&.dig("targets") || {})
-    rescue StandardError
+    rescue StandardError => e
+      warn "constitutional_scan: budget unreadable (#{e.class}) — running unbudgeted"
       {}
     end
 
@@ -128,7 +129,8 @@ module Deploy
       return [] unless status.success?
 
       out.lines.map(&:strip).reject(&:empty?)
-    rescue StandardError
+    rescue StandardError => e
+      warn "constitutional_scan: scan output unreadable (#{e.class})"
       []
     end
 

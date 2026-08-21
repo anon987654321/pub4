@@ -134,7 +134,8 @@ module Shared
       FileUtils.mkdir_p(File.dirname(local_path))
       File.binwrite(local_path, response.body)
       true
-    rescue StandardError
+    rescue StandardError => e
+      Rails.logger.warn("link_converter download failed: #{e.class}: #{e.message}")
       false
     end
   end

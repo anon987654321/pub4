@@ -83,7 +83,7 @@ module SchemaHelper
     href = (record_public_href(resource) if respond_to?(:record_public_href)).presence
     href ||= begin
       polymorphic_url(resource)
-    rescue StandardError
+    rescue StandardError # scan: intentional — the schema omits what it cannot resolve
       nil
     end
     return if href.blank?
@@ -102,7 +102,7 @@ module SchemaHelper
     return if blob.blank?
 
     (respond_to?(:main_app) ? main_app : self).rails_blob_url(blob, only_path: false)
-  rescue StandardError
+  rescue StandardError # scan: intentional — the schema omits what it cannot resolve
     nil
   end
 

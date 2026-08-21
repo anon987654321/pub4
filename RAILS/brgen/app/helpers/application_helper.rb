@@ -228,7 +228,7 @@ module ApplicationHelper
     else
       polymorphic_path(record) if respond_to?(:polymorphic_path)
     end
-  rescue StandardError
+  rescue StandardError # scan: intentional — an unroutable record renders unlinked, which is the correct degradation
     nil
   end
 
@@ -300,7 +300,7 @@ module ApplicationHelper
     end
 
     main_app.user_path(notification.actor) if notification.actor
-  rescue StandardError
+  rescue StandardError # scan: intentional — an actor without a route renders unlinked
     nil
   end
 

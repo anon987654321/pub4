@@ -481,7 +481,8 @@ module Deploy
     def contrast_budget
       path = File.expand_path("../../data/css_budget.yml", __dir__)
       (YAML.safe_load_file(path)&.dig("rules") || {}).slice("contrast_below_aa", "contrast_below_aaa")
-    rescue StandardError
+    rescue StandardError => e
+      warn "design_metrics: rules unreadable (#{e.class}) — gate runs unbudgeted"
       {}
     end
 

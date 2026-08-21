@@ -43,14 +43,14 @@ module Pub4
     def sysctl
       numbers = `sysctl -n vm.loadavg 2>/dev/null`.scan(/\d+(?:\.\d+)?/)
       numbers.size >= 3 ? numbers.first(3) : nil
-    rescue StandardError
+    rescue StandardError # scan: intentional — one probe in a fallback chain; nil advances to the next source
       nil
     end
 
     # Linux, where the first three fields are the same three numbers.
     def procfs
       File.read("/proc/loadavg").split.first(3)
-    rescue StandardError
+    rescue StandardError # scan: intentional — one probe in a fallback chain; nil advances to the next source
       nil
     end
   end

@@ -132,7 +132,7 @@ module Shared
       return false if a.bytesize != b.bytesize
 
       ActiveSupport::SecurityUtils.secure_compare(a, b)
-    rescue StandardError
+    rescue StandardError # scan: intentional — a malformed token compares unequal — fail closed
       false
     end
   end

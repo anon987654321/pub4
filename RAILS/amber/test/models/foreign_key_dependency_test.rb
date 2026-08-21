@@ -95,7 +95,7 @@ class ForeignKeyDependencyTest < ActiveSupport::TestCase
     Rails.application.eager_load!
     models = ActiveRecord::Base.descendants.reject(&:abstract_class?).select do |model|
       model.table_exists?
-    rescue StandardError
+    rescue StandardError # scan: intentional — a model without a table is excluded; false is the filter answer
       false
     end
     by_table = models.index_by(&:table_name)

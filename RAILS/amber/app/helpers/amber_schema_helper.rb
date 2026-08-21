@@ -64,7 +64,7 @@ module AmberSchemaHelper
     return nil unless item.photos.attached?
 
     url_for(item.photos.first)
-  rescue StandardError
+  rescue StandardError # scan: intentional — the schema omits what it cannot resolve; absence is valid JSON-LD
     nil
   end
 end

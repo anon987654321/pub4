@@ -90,7 +90,7 @@ module Maps
 
     def public_href(record)
       view_context.record_public_href(record)
-    rescue StandardError
+    rescue StandardError # scan: intentional — an unroutable record renders unlinked
       nil
     end
 

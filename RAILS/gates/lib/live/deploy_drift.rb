@@ -109,7 +109,8 @@ module Deploy
       @app_roots ||= begin
         yaml = YAML.safe_load_file(APPS_YML, aliases: true)
         Hash(yaml["apps"]).to_h { |name, cfg| [name, Hash(cfg)["deploy_root"] || "RAILS/#{name}"] }
-      rescue StandardError
+      rescue StandardError => e
+        warn "deploy_drift: apps config unreadable (#{e.class})"
         {}
       end
     end
@@ -119,7 +120,7 @@ module Deploy
         app = File.basename(path).sub(/\Alast_deploy_/, "").sub(/\.json\z/, "")
         parsed = JSON.parse(File.read(path))
         [app, parsed]
-      rescue StandardError
+      rescue StandardError # scan: intentional — one app's unreadable state drops from the drift table; the gate reports the table
         nil
       end.sort.to_h
     end

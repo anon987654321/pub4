@@ -155,7 +155,8 @@ module Shared
       return nil unless defined?(Rails) && story.respond_to?(:model_name)
 
       Rails.application.routes.url_helpers.url_for(story)
-    rescue StandardError
+    rescue StandardError => e
+      Rails.logger.warn("newsletter url skipped: #{e.class}")
       nil
     end
 
@@ -163,7 +164,8 @@ module Shared
       return nil unless story.respond_to?(:image) && story.image.attached?
 
       Rails.application.routes.url_helpers.url_for(story.image.variant(resize_to_limit: [800, 450], format: :webp))
-    rescue StandardError
+    rescue StandardError => e
+      Rails.logger.warn("newsletter url skipped: #{e.class}")
       nil
     end
 

@@ -148,7 +148,7 @@ module Pub4
     rescue StandardError
       begin
         Process.kill("KILL", pid)
-      rescue StandardError
+      rescue Errno::ESRCH # scan: intentional — already gone is the goal state
         nil
       end
     end

@@ -87,7 +87,8 @@ module ShopTheLook
           score: score
         )
       end.sort_by { |s| -s.score }.first(limit)
-    rescue StandardError
+    rescue StandardError => e
+      Rails.logger.warn("shop_the_look scoring failed: #{e.class}: #{e.message}")
       []
     end
 

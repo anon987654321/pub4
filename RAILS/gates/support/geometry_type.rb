@@ -31,7 +31,8 @@ module Deploy
 
     def probe(cdp)
       cdp.evaluate(WALK)
-    rescue StandardError
+    rescue StandardError => e
+      warn "geometry_type: DOM walk failed (#{e.class}) — surface measured as empty"
       {}
     end
 

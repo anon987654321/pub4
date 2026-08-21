@@ -87,7 +87,7 @@ module Ports
         line = out.lines[1] or return nil
         available_kb = line.split[3].to_i
         available_kb.positive? ? available_kb * 1024 : nil
-      rescue StandardError
+      rescue StandardError # scan: intentional — an unreadable df line means unknown space; the caller treats unknown as insufficient
         nil
       end
 

@@ -109,7 +109,7 @@ module Deploy
 
     def close
       @socket&.close
-    rescue StandardError
+    rescue StandardError # scan: intentional — teardown; the session is ending either way
       nil
     ensure
       reap_chrome
@@ -118,7 +118,7 @@ module Deploy
       # makes it rare; swallowing makes a leftover tmpdir a non-event.
       begin
         FileUtils.remove_entry(@profile) if @profile && File.directory?(@profile)
-      rescue StandardError
+      rescue StandardError # scan: intentional — teardown; the socket is closing either way
         nil
       end
     end
@@ -338,7 +338,7 @@ module Deploy
       loop do
         body = begin
           Net::HTTP.get(URI("http://127.0.0.1:#{port}/json/list"))
-        rescue StandardError
+        rescue StandardError # scan: intentional — one poll in the discovery loop; nil retries
           nil
         end
         if body
@@ -409,7 +409,7 @@ module Deploy
       @recoveries += 1
       begin
         @socket&.close
-      rescue StandardError
+      rescue StandardError # scan: intentional — teardown; the socket is closing either way
         nil
       end
       @desync = false

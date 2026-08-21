@@ -179,7 +179,7 @@ module Shared
         return nil unless body.is_a?(Hash)
 
         body["lastUpdatedTime"]
-      rescue StandardError
+      rescue StandardError # scan: intentional — an unparseable upstream value is absent, not fatal
         nil
       end
 
@@ -491,7 +491,7 @@ module Shared
         return Time.zone.at(value.to_i / 1000.0) if value.to_s.match?(/\A\d{10,}\z/)
 
         Time.zone.parse(value.to_s)
-      rescue StandardError
+      rescue StandardError # scan: intentional — an unparseable upstream timestamp is absent, not fatal
         nil
       end
     end

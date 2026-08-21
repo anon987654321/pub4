@@ -154,7 +154,8 @@ module Deploy
     def live_apexes(master)
       apps = begin
         Inventory.new(root: ROOT.to_s).apps.map(&:domain)
-      rescue StandardError
+      rescue StandardError => e
+        warn "domain_alignment: inventory unreadable (#{e.class}) — gate measures nothing"
         []
       end
       face = master.dig(:master, "domain")

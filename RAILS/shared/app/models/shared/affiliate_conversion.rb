@@ -106,7 +106,7 @@ module Shared
       return nil if value.blank?
 
       Time.zone.parse(value.to_s)
-    rescue StandardError
+    rescue StandardError # scan: intentional — an unparseable upstream timestamp is absent, not fatal
       nil
     end
   end

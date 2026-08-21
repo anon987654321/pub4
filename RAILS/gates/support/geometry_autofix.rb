@@ -271,7 +271,7 @@ module Deploy
     def app_port(app)
       require_relative "../../../OPENBSD/lib/deploy_inventory"
       Inventory.new(root: File.expand_path("..", RAILS_ROOT)).apps.find { |a| a.name == app }&.port
-    rescue StandardError
+    rescue StandardError # scan: intentional — no inventory means no port; the autofix declines to guess
       nil
     end
 
@@ -282,7 +282,7 @@ module Deploy
       return nil unless href
 
       Net::HTTP.get(URI("http://127.0.0.1:#{port}#{href}"))
-    rescue StandardError
+    rescue StandardError # scan: intentional — an unreachable page yields no geometry; the caller reports it
       nil
     end
   end
