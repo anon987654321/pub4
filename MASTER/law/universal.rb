@@ -139,15 +139,9 @@ Law.define(:SQUINT_TEST) do
   X
 end
 
-# Migrated from data/rules.yml TYPOGRAPHIC_EXCELLENCE.
-Law.define(:TYPOGRAPHIC_EXCELLENCE) do
-  source "Butterick's Practical Typography (Matthew Butterick)"
-  severity :info
-  detect { |line| line.match?(/["']\.\.\.["']|["']--["']/) }
-  fix "Use ellipsis, em dash, curly quotes in UI strings."
-  bad  "label = '...'"
-  good "label = '…'"
-end
+# TYPOGRAPHIC_EXCELLENCE lives once, in the registry (universal_rules.rb):
+# it knows shell arg separators and Open3 calls are not prose; this bare
+# twin flagged doc-comment placeholders and double-counted every hit.
 
 # TYPOGRAPHY_DISCIPLINE lives once, in the registry (universal_rules.rb): it
 # skips comment-leading lines and yaml frontmatter and wants a 4+ run, where

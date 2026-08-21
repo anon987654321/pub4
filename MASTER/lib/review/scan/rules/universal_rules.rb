@@ -97,6 +97,9 @@ module Master
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.match?(/Open3|capture2|capture3|gsub\(|Shellwords/)
             next if line.match?(/,\s*"--"\s*,|,\s*"--"\s*\)|<<\s*["']--/)
+            # A leading-# line in an .erb file is a doc comment inside an ERB
+            # block — its "..." is an example placeholder, not UI copy.
+            next if path.to_s.end_with?(".erb") && line.lstrip.start_with?("#")
             next unless line.match?(/["']\.\.\.[\"']|["']--["']/)
             finding(line: n, message: "ASCII typography — use Unicode ellipsis … and em dash —")
           end

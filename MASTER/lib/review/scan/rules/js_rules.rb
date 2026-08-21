@@ -149,8 +149,12 @@ module Master
           # looking at it.
           definition = /(?:\A|\{)\s*(--[\w-]+|\$[\w-]+)\s*:/
           messages = {
-            /#[0-9a-fA-F]{3,6}\b/ => "raw hex color — use CSS custom property or design token",
-            /\brgba?\s*\(/ => "raw rgb() color — use CSS custom property or design token",
+            # (?<![\w-]): a # preceded by a word char is not a colour — Stimulus
+            # action descriptors (nested-form#add) spell controller#method.
+            /(?<![\w-])#[0-9a-fA-F]{3,6}\b/ => "raw hex color — use CSS custom property or design token",
+            # rgb(from var(--x) ...) is relative colour syntax DERIVING from
+            # the token — that is citing it, not bypassing it.
+            /\brgba?\s*\((?!from\s+var\()/ => "raw rgb() color — use CSS custom property or design token",
             /\bhsla?\s*\(/ => "raw hsl() color — use CSS custom property or design token",
           }
           # Comment lines blanked, which is what without_comment_lines exists for
