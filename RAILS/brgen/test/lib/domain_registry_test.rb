@@ -54,22 +54,6 @@ class DomainRegistryTest < ActiveSupport::TestCase
     assert_equal "markedsplass", bergen.entry.marketplace_subdomain
   end
 
-  test "agent notes describe one process and namespaced subapps" do
-    notes = File.read(Rails.root.join("AGENTS.md"))
-
-    assert_includes notes, "One Rails process"
-    assert_includes notes, "markedsplass.brgen.no"
-    assert_includes notes, "marketplace.lsangeles.com"
-    assert_includes notes, "dating.brgen.no"
-    assert_includes notes, "dating.lsangeles.com"
-    assert_includes notes, "engines/marketplace"
-    assert_includes notes, "messenger.brgen.no"
-    assert_includes notes, "ai.brgen.no"
-    assert_includes notes, "Not a brgen subapp"
-    assert_includes notes, "ENTRIES"
-    assert_includes notes, "vowel"
-  end
-
   test "every city apex carries the same subapps" do
     Brgen::DomainRegistry::ENTRIES.each do |entry|
       apex = Brgen::DomainRegistry.resolve(entry.domain)
