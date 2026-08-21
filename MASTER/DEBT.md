@@ -856,3 +856,21 @@ the attempt.
   training loop needs generation capability again, express it as
   `lib/core/world.rb` handlers per the original absorption plan — do not restore
   the deleted `io/lora_pipeline.rb` / `video_chain.rb`.
+
+## The two per-site queues, re-measured — 2026-08-21
+
+Both queue numbers from the deep scan were stale instruments, not stale work.
+**UNBOUNDED_RETRY "65" closed at 0**: the law's narrowing had already
+dissolved the comment/symbol/kwarg findings, and the final four were the
+WORD retry inside string literals (a scanner's own finding message, an SSE
+body, the SOA field name) — the detector now blanks strings first, because
+the keyword can never be inside one. **NO_GOD_CLASS "98" is 22 → 21**: the
+code-lines switch had collapsed most of it; one was the instrument counting
+a Minitest class's tests as public methods (now excluded), and TtsJob's four
+worker-plumbing class methods went private. The 20 that remain are recorded
+per-site design work, in castes: ten Rails domain models whose public
+methods are their domain API (decomposition is a product decision, and
+amber is another session's active turf); four controllers carrying non-REST
+action sets; TtsJob's real split (job vs status-handle, fragile TTS
+plumbing); ChatService at 417 code lines; and utility APIs (GateResult's 22
+methods are its result vocabulary). Ratchet-held; none can grow silently.

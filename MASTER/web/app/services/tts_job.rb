@@ -169,7 +169,11 @@ class TtsJob
 
     JSON.parse(File.read(token_path))
   end
-  private_class_method :read_token
+  # The worker plumbing is not API: spawn/materialize/ensure are how the
+  # queue runs itself, and every external caller comes through enqueue, find,
+  # owned? or cancel.
+  private_class_method :read_token, :spawn_workers_locked!, :spawn_worker,
+                       :materialize!, :ensure_worker!
 
   attr_reader :job_id
 

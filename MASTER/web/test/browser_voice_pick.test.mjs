@@ -17,9 +17,13 @@ function extract(name, pattern) {
   return match[0];
 }
 
+// c4700163a split PREFERRED_VOICE_RE into a neural tier and a decent tier so
+// a premium voice cannot lose to a 2009 one by array position; the test lifts
+// what the runtime actually declares.
 const code = [
   extract("NOVELTY_VOICE_RE", /const NOVELTY_VOICE_RE = \/.*\/i;/),
-  extract("PREFERRED_VOICE_RE", /const PREFERRED_VOICE_RE = \/.*\/i;/),
+  extract("NEURAL_VOICE_RE", /const NEURAL_VOICE_RE = \/.*\/i;/),
+  extract("DECENT_VOICE_RE", /const DECENT_VOICE_RE = \/.*\/i;/),
   extract("pickBrowserVoice", /function pickBrowserVoice\(lang\) \{[\s\S]*?\n\}/),
 ].join("\n");
 

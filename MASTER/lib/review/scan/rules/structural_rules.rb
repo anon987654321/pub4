@@ -385,6 +385,10 @@ module Master
 
           def check_ast(ast, code, path:)
             return [] unless ast
+            # A Minitest class's public methods ARE its tests — counting them
+            # counts coverage as sin. SolidQueueProofTest carried 12 tests and
+            # an error-severity god-class finding for it.
+            return [] if path.to_s.match?(%r{/test/|/spec/|_test\.rb\z|_spec\.rb\z})
             lines = code.to_s.lines
             findings = []
             visit(ast) do |node|

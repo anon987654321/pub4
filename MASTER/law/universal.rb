@@ -144,10 +144,17 @@ end
 # keyword. The keyword never follows `:` or a word character, never
 # precedes `?`, `:` or a word character, never sits beside `|`; a comment
 # only talks about it.
+#
+# String literals blank before matching (2026-08-21): the queue's final four
+# findings were all the WORD inside quotes — a scanner's own finding message,
+# an SSE body saying "retry in 30s", the SOA retry field name. The keyword
+# can never be inside a string; prose about retrying is not a retry.
 Law.define(:UNBOUNDED_RETRY) do
   source "Release It! — retry budgets / bounded retries (Nygard)"
   severity :error
-  detect { |line| (s = line.strip) && !s.start_with?("#") && !s.match?(/retry\\/) && (s.match?(/(?<![:\w|])retry(?![?:\w|])/) || s.match?(/while\s+true/)) }
+  # One line on purpose: Law.conduct neutralizes `detect` lines when a law
+  # judges law/, and it reads lines, not blocks.
+  detect { |line| (s = line.strip) && !s.start_with?("#") && !s.match?(/retry\\/) && (b = s.gsub(/"(?:\\.|[^"\\])*"/, '""').gsub(/'[^']*'/, "''")) && (b.match?(/(?<![:\w|])retry(?![?:\w|])/) || b.match?(/while\s+true/)) || false }
   fix "Add max_attempts cap and exponential backoff."
   bad  "retry"
   good <<~X
@@ -157,6 +164,8 @@ Law.define(:UNBOUNDED_RETRY) do
     [+0.18, :name, /retry|loop|escalat/],
     # a retry then spawned a duplicate on the same output file
     attempts += 1 and redo if attempts < 3
+    message: "retry with no visible attempt counter",
+    lines << "refresh %s retry" % policy.dig("soa", "retry")
   X
 end
 
