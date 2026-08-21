@@ -186,10 +186,14 @@ Law.define(:NO_INLINE_STYLES) do
   source "CSP / separation of concerns — no inline styles"
   severity :warn
   languages %i[html]
-  detect { |line| line.match?(/\bstyle="[^"]*"/) }
-  fix "Extract to CSS class."
+  # A style attribute carrying only custom properties is a data channel to
+  # the stylesheet — style="--swatch: teal" hands a value to a rule that
+  # lives in CSS (color: var(--swatch)), which is the separation this law
+  # wants. A real property inline still fires.
+  detect { |line| (value = line[/\bstyle="([^"]*)"/, 1]) && !value.match?(/\A\s*(?:--[\w-]+:\s*[^;"]*;?\s*)*\z/) }
+  fix "Extract to CSS class; pass dynamic values as custom properties."
   bad  "<p style=\"color:red\">"
-  good "<p class=\"warn\">"
+  good "<p class=\"warn\" style=\"--share: 40%\">"
 end
 
 # Migrated from data/rules.yml NO_JQUERY.
