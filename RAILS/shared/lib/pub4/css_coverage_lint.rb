@@ -108,6 +108,8 @@ module Pub4
     #   276 -> 275  the presentational class `dim` went from markup and
     #               stylesheets alike, with the seven naming hooks that had been
     #               riding on its styling
+    #   243 -> 240  three selectors regained markup in the parallel visual
+    #               sessions; the ceiling follows the tree down.
     #   275 -> 243  the instrument learned to read a class attribute that embeds
     #               an ERB conditional — class="unit<%= " unit--wide" if wide %>"
     #               never matched the plain pattern, so the base name and the
@@ -120,7 +122,7 @@ module Pub4
     # surfaced are designed now — unread/read and message--unread wear weight
     # plus a leading accent dot, story-ring wears the accent ring that fades
     # when seen, and the default address is the accent-bordered card.
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 243 }.freeze
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 240 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
