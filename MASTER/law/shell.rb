@@ -62,16 +62,11 @@ Law.define(:NO_INLINE_ASSETS_IN_SHELL) do
   good "cp app/assets/site.css out/"
 end
 
-# Migrated from data/rules.yml QUOTE_VARIABLES.
-Law.define(:QUOTE_VARIABLES) do
-  source "ShellCheck / Google Shell Style Guide — quote variables"
-  severity :error
-  languages %i[zsh]
-  detect { |line| line.match?(/(?<!["'\\])\$\w+(?!["'])/) }
-  fix "Use \"$VAR\" to prevent word splitting."
-  bad  "echo $HOME"
-  good "echo \"$HOME\""
-end
+# QUOTE_VARIABLES lives once, in the registry (js_rules.rb): quoting is a
+# fact about the interpreter — zsh does not word-split or glob unquoted
+# parameter expansions; sh, ksh and bash all do — and only the registry can
+# read the shebang. 455 of the deep scan's 573 quoting errors were idiomatic
+# zsh flagged by a sh doctrine.
 
 # Migrated from data/rules.yml STRICT_MODE_ZSH.
 Law.define(:STRICT_MODE_ZSH) do
