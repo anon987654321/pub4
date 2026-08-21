@@ -344,3 +344,30 @@ Law.define(:USE_THEN) do
     parse(src).then { |r| render(r) }
   X
 end
+
+# Polished Ruby Programming (Jeremy Evans), ch. 1-2: reopening a core class
+# changes it for every library in the process — the least polite thing a
+# codebase can do. A refinement or a helper module carries the same behaviour
+# without the blast radius.
+Law.define(:MONKEY_PATCH_CORE) do
+  source "Polished Ruby Programming (Jeremy Evans) — core class hygiene"
+  severity :warn
+  languages %i[ruby]
+  path_exclude %r{/test/|/spec/}
+  detect { |line| line.match?(/\A\s*class\s+(?:String|Array|Hash|Integer|Float|Symbol|Object|Kernel|NilClass|Numeric|Range|Time|Comparable|Enumerable)\s*\z/) }
+  fix "Use a refinement, a helper module, or a wrapping method instead of reopening the core class."
+  bad  "class String"
+  good "module StringHelpers"
+end
+
+# Polished Ruby Programming: __dir__ is the modern spelling and survives
+# symlinks the way the old idiom does not.
+Law.define(:DIRNAME_FILE) do
+  source "Polished Ruby Programming (Jeremy Evans) — prefer __dir__"
+  severity :info
+  languages %i[ruby]
+  detect { |line| line.match?(/File\.dirname\(__FILE__\)/) }
+  fix "Use __dir__."
+  bad  "File.expand_path(File.dirname(__FILE__))"
+  good "File.expand_path(__dir__)"
+end
