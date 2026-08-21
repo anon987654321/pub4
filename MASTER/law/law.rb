@@ -61,6 +61,9 @@ module Law
       leaders = reads_comments ? [] : COMMENT_LEADERS.fetch(File.extname(file), [])
       text.each_line.with_index(1).filter_map do |line, n|
         next if leaders.any? { |leader| line.lstrip.start_with?(leader) }
+        # The registry's one-line opt-out, honoured here too: a line that
+        # declares itself intentional carries a reviewer's reason beside it.
+        next if line.match?(/scan:\s*intentional\b/)
         Finding.new(id, file, n, line.chomp) if detect.call(line)
       end
     end
