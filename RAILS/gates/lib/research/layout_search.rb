@@ -43,11 +43,23 @@ module Deploy
         return nil
       end
       {
-        card: File.read(CARD),
+        card: card_source,
         cards_css: File.read(CARDS_CSS),
         nav: File.read(NAV),
         search: File.read(SEARCH),
       }
+    end
+
+    # The card's media slot lives in marketplace/_card_media.html.erb since the
+    # component sitting (2026-08-21). A source-reading detector must follow the
+    # render or it measures the refactor as a layout regression — the page
+    # still puts the photo first; only the file boundary moved. One level of
+    # expansion is enough: the partial holds the deal-card-img marker.
+    def card_source
+      File.read(CARD).gsub(/render ["']marketplace\/([a-z_]+)["'][^\n]*/) do
+        partial = File.join(ENGINE, "app/views/marketplace/_#{Regexp.last_match(1)}.html.erb")
+        File.file?(partial) ? File.read(partial) : Regexp.last_match(0)
+      end
     end
 
     def emit_report!(report)

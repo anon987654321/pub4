@@ -59,7 +59,7 @@
 schema: 1
 rules:
   important: 66
-  rhythm: 91
+  rhythm: 89
   # 150 -> 151 on 2026-08-11, and this one is a ceiling raise rather than a
   # measurement, so it is worth being exact about what it is.
   #
@@ -77,7 +77,7 @@ rules:
   # use-sites at the worn :root tokens they already matched (#0f1a0f search-bg,
   # #1a3a1a border, #0a140a surface-elevated). Same paint; the literals left
   # the count.
-  magic_hex: 148
+  magic_hex: 140
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical
@@ -110,5 +110,11 @@ rules:
   # MASTER/web/public, outside the asset pipeline that defines --text-* and
   # --weight-*. Snapping the numbers alone would only hide that; the fix is a
   # shared token source, which is a decision, not a ratchet.
-  type_scale: 10
+  # 10 -> 12 on 2026-08-21, a raise in the magic_hex-151 shape: f75050a6d
+  # ("amber chrome is the Caprasimo mark") set the mark at 200px with a 40px
+  # footer variant in _brand.scss — the same deliberate-lockup class as the
+  # recorded 60/120px display type, chosen by that session's own redesign.
+  # Brand display type does not read the body ladder anywhere in this tree;
+  # if the mark is ever cut to the ladder, run with GATE_CSS_RATCHET=1.
+  type_scale: 12
   weight_ladder: 2
