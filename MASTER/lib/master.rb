@@ -36,11 +36,11 @@ module Master
   MIN_API_KEY_LENGTH_HEURISTIC = 20
   MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
   YAML_LOAD_TIMEOUT_S = 5
-  # glm-4.5-air:free was withdrawn from OpenRouter; nemotron is the one declared
-  # :free slug the live catalogue still serves (measured 2026-08-18).
-  OPENROUTER_DEFAULT = "nvidia/nemotron-3-super-120b-a12b:free"
-  # First slug in models.grok_primary — verified working on OpenRouter :free pool (2026-07-11).
-  FREE_PRIMARY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
+  # The OpenRouter default and :free-pool head are Master.openrouter_default
+  # and Master.free_primary_model (boot/runtime.rb) — readers of providers.yml
+  # and models.yml through the sanctioned loaders. They were constants here,
+  # hand-copied from the yml, until the 2026-08-18 registry fix had to edit
+  # three copies of one slug in step.
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   DEFAULT_CONTEXT_WINDOW = 128_000
   CTX_WINDOW_SIZE = DEFAULT_CONTEXT_WINDOW

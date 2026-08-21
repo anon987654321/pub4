@@ -38,4 +38,14 @@ class TestAxioms < Minitest::Test
     refute_nil val
     assert val.length > 5
   end
+  # voice.yml carried a shadow copy of soul absolute.anti_simulation that the
+  # accessor read only if soul lost the key — and it had drifted a word. The
+  # shadow is deleted (2026-08-21); soul is the one source, and this holds it.
+  def test_constitution_carries_anti_simulation_from_soul
+    anti = @rules.constitution["anti_simulation"]
+    refute_nil anti, "soul absolute.anti_simulation must reach the constitution accessor"
+    assert_equal %w[will would could might], anti["forbidden"]
+    assert anti.dig("require_evidence", "completion"), "evidence contract must survive"
+  end
+
 end

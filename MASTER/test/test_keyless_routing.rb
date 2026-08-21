@@ -49,7 +49,7 @@ class TestKeylessRouting < Minitest::Test
   def test_router_prefers_free_chain_when_openrouter_key_present
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     router = Master::CLI::Routing::ModelRouter.new(
-      config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
+      config: FakeConfig.new(Master.free_primary_model), root: Master::ROOT,
     )
     refute router.keyless_mode?
     chain = router.fallback_chain(task_type: :exploration)
@@ -59,7 +59,7 @@ class TestKeylessRouting < Minitest::Test
   def test_web_chat_disabled_when_keys_present_without_opt_in
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     router = Master::CLI::Routing::ModelRouter.new(
-      config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
+      config: FakeConfig.new(Master.free_primary_model), root: Master::ROOT,
     )
     refute router.web_chat_enabled?
     refute_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"
@@ -69,7 +69,7 @@ class TestKeylessRouting < Minitest::Test
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     ENV["MASTER_WEB_CHAT"] = "1"
     router = Master::CLI::Routing::ModelRouter.new(
-      config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
+      config: FakeConfig.new(Master.free_primary_model), root: Master::ROOT,
     )
     assert router.web_chat_enabled?
     assert_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"

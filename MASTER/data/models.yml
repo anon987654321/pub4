@@ -348,11 +348,8 @@ ollama:
   use_for: [exploration, fallback_default]   # cheapest-acceptable tasks only
   never_for: [council, sweep, autoloop, file_write, destructive]
 
-# Replicate media slugs — image/video/TTS; routed via Repligen, VideoChain, Voice::Engines.
-media_providers:
-  replicate:
-    env: [REPLICATE_API_TOKEN, REPLICATE_API_KEY]
-    image_default: black-forest-labs/flux-1.1-pro
-    image_flagship: black-forest-labs/flux-2-pro
-    tts_default: jaaari/kokoro-82m
-    video_default: kwaivgi/kling-v2.1
+# media_providers was deleted here on 2026-08-21: nothing read it. The env
+# vars live in providers.yml replicate.env (ReplicateClient reads ENV
+# directly), the TTS slug in voice/engines.rb, and repligen carries its own
+# image models in STUDIO — this block was a declaration with no reader,
+# claiming a routing that never existed.

@@ -25,7 +25,9 @@ module Master
               "golden_rule" => absolute["golden_rule"] || @data["golden_rule"],
               "protection" => absolute["protection_tiers"] || @data["protection"],
               "banned_output" => voice["banned_output"],
-              "anti_simulation" => absolute["anti_simulation"] || voice["anti_simulation"],
+              # soul is the one source; the voice.yml shadow copy is deleted, so
+              # a fallback arm here would read a key that no longer exists.
+              "anti_simulation" => absolute["anti_simulation"],
               "communication_style" => voice["style"],
             }.freeze
           end

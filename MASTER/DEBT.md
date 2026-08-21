@@ -252,28 +252,31 @@ never matched a file. Twin census reads zero; the twin-census check is the
 regression guard.
 
 
-### The data layer's duplicate census — opened 2026-08-19
+### The data layer's duplicate census — opened 2026-08-19, line-level collapses done 2026-08-21
 
 `rake lint:dedup` (ContentDedupScan's first-ever reader) holds the line-level
-census; the collapses are follow-up, each gated on its reader:
+census. The three recorded collapses landed 2026-08-21, each with its reader
+traced first:
 
-- **soul `absolute.anti_simulation` is shadow-copied in voice.yml** —
-  `rule_accessors.rb:26` reads `absolute[...] || voice[...]`, so the voice
-  copy only fires if soul loses the key, and until then can only drift.
-  Collapse = delete the voice copy and the fallback arm, with a test that
-  the constitution accessor still carries the list.
-- **The openrouter default model lives three times**: soul negotiable,
-  providers.yml, `Master::OPENROUTER_DEFAULT`. All three were hand-edited in
-  step during the 2026-08-18 registry fix — the maintenance cost, paid live.
-  One source (providers.yml is the natural owner) and two readers.
-- **Replicate key env vars declared twice** (providers.yml, models.yml
-  media_providers). Trace which the media lane reads before cutting.
-- Structural duplicates the line-matcher cannot see, already recorded:
-  the 70 law/registry twins (above), `operator_principles` (27 entries)
-  vs `principle_map` (272) with zero name overlap — two principle
-  vocabularies and nothing naming the authoritative one — and
-  `Consensus::DEFAULT_MODELS` restating models.yml's three_mirror pool
-  (marked as the copy it is in the source).
+- **soul `absolute.anti_simulation`** — the voice.yml shadow (already one
+  word drifted) is deleted, the fallback arm removed, and
+  test_rules pins that the constitution accessor still carries the list.
+- **The openrouter default** — providers.yml is the one source;
+  `Master.openrouter_default` / `Master.free_primary_model` (boot/runtime.rb)
+  are readers through the sanctioned loaders, the soul negotiable copy is
+  deleted, and the reader-singularity ratchet is what forced the accessor
+  shape.
+- **Replicate env vars** — models.yml `media_providers` had **no reader at
+  all**: the slugs live in voice/engines.rb and repligen, the env in
+  providers.yml. The whole block was a declaration claiming a routing that
+  never existed; deleted.
+
+Still open, structural (the line-matcher cannot see them):
+`operator_principles` (27) vs `principle_map` (272) with zero name overlap —
+two principle vocabularies, nothing naming the authoritative one — and
+`Consensus::DEFAULT_MODELS` restating models.yml's three_mirror pool
+(marked as the copy it is in the source).
+
 
 Worth naming: `SelfCheck#gate!` — the method that would halt background
 autofix on this count — has **no caller** (verified 2026-08-19), so this

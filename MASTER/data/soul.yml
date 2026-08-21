@@ -104,7 +104,8 @@ absolute:
 
 negotiable:
   style: sentence_case
-  default_model: nvidia/nemotron-3-super-120b-a12b:free
+  # default_model lives once, in providers.yml openrouter.default_model —
+  # the copy that stood here had no reader and could only drift.
   tts_voice: ms-MY-OsmanNeural
   language_detection: true
   conflict_resolution:

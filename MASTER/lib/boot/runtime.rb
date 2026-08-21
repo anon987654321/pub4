@@ -66,6 +66,21 @@ module Master
 
     def provider_config(root: ROOT) = load_yaml(File.join(root, "data", "providers.yml"))
 
+    # One source for the OpenRouter default: providers.yml openrouter.default_model.
+    # It lived three times — a Master constant, providers.yml, soul negotiable —
+    # and the 2026-08-18 registry fix had to hand-edit all three in step. The
+    # next withdrawn-slug swap is one yml line.
+    def openrouter_default(root: ROOT)
+      @openrouter_default ||= provider_config(root:).dig("openrouter", "default_model")
+    end
+
+    # Head of models.grok_primary — the declared :free pool this runtime routes
+    # first when an OpenRouter key is present.
+    def free_primary_model(root: ROOT)
+      @free_primary_model ||= load_yaml(File.join(root, "data", "models.yml"))
+                              .dig("models", "grok_primary")&.first&.fetch("id")
+    end
+
     def api_key_specs(root: ROOT)
       provider_config(root:).flat_map { |_name, config| provider_key_specs(config) }.compact
     end
@@ -78,12 +93,12 @@ module Master
 
     def default_model
       return "grok-4.3" if api_key_present?("XAI_API_KEY") && !api_key_present?("OPENROUTER_API_KEY")
-      return FREE_PRIMARY_MODEL if api_key_present?("OPENROUTER_API_KEY")
+      return free_primary_model if api_key_present?("OPENROUTER_API_KEY")
       return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
       return "gemini-2.5-flash" if api_key_present?("GOOGLE_API_KEY") || api_key_present?("GEMINI_API_KEY")
       return "web-chat:grok" if keyless_llm_enabled?
 
-      OPENROUTER_DEFAULT
+      openrouter_default
     end
 
     def any_api_key_present?

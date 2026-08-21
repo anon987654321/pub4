@@ -104,12 +104,9 @@ tts:
 
 voice:
   style: openbsd_dmesg
-  anti_simulation:
-    forbidden: [will, would, could, might]
-    require_evidence:
-      file_read: "show file content with SHA-256"
-      modification: "show unified diff"
-      completion: "show command output"
+  # anti_simulation lives once, in soul.yml absolute.anti_simulation. The
+  # copy that stood here was a shadow the accessor only read if soul lost
+  # the key — and it had already drifted one word from the original.
   banned_output:
     - headlines
     - section_markers
