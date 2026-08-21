@@ -6,7 +6,7 @@
     <% conversation.conversation_participants.by_rank.includes(:user).each do |member| %>
       <% next unless member.op? || member.voice? %>
       <% handle = member.user.channel_handle %>
-      <li class="roster-nick" data-role="<%= member.role %>" style="<%= nick_style(handle) %>">
+      <li class="roster-nick" data-role="<%= member.role %>" style="<%= nick_style(handle) %>"> <%# scan: intentional — nick_style emits only the --nick-hue custom property %>
         <span class="roster-mode" aria-hidden="true"><%= member.mode_prefix %></span><%= handle %>
       </li>
     <% end %>

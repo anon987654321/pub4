@@ -193,24 +193,24 @@ main[role="main"] {
   color: var(--text-secondary);
   transition: color var(--transition-fast, 180ms) var(--ease-out), opacity var(--transition-fast, 180ms) var(--ease-out);
 }
-.edge-grip-left {
+.edge-grip-start {
   inset-inline-start: 0;
   background: transparent !important;
 }
-.edge-grip-left::after { content: "\203A"; text-align: start; padding-inline-start: 4px; }
-.edge-grip-right {
+.edge-grip-start::after { content: "\203A"; text-align: start; padding-inline-start: 4px; }
+.edge-grip-end {
   inset-inline-end: 0;
   background: transparent !important;
 }
-.edge-grip-right::after { content: "\2039"; text-align: end; padding-inline-end: 4px; }
+.edge-grip-end::after { content: "\2039"; text-align: end; padding-inline-end: 4px; }
 .edge-grip:hover { opacity: 0.9; background: transparent !important; }
 .edge-grip:hover::after { color: var(--text); }
 .edge-grip:focus-visible {
   outline: none;
   opacity: 0.9;
 }
-.sidebar-swiper.revealed .edge-grip-left,
-.widgets-swiper.revealed .edge-grip-right {
+.sidebar-swiper.revealed .edge-grip-start,
+.widgets-swiper.revealed .edge-grip-end {
   opacity: 0;
   pointer-events: none;
 }

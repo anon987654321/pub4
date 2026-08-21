@@ -29,7 +29,7 @@
         indistinguishable from editorial content. %>
     <p class="ad-slot-label">Advertisement</p>
     <ins class="adsbygoogle"
-         style="display:block"
+         style="display:block" <%# scan: intentional — AdSense requires the inline display %>
          data-ad-client="<%= client %>"
          data-ad-slot="<%= slot %>"
          data-ad-format="<%= local_assigns.fetch(:layout, "auto") %>"

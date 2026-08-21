@@ -5,7 +5,7 @@
     resolved at render time and this partial is rendered inside the layout, so
     `yield :widgets` reads the same buffer a page filled. %>
 <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
-  <button type="button" class="edge-grip edge-grip-right" data-edge-swiper-target="grip"
+  <button type="button" class="edge-grip edge-grip-end" data-edge-swiper-target="grip"
           data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_widgets") %>" aria-expanded="false"></button>
   <aside class="widgets" aria-label="<%= t("nav.widgets") %>" data-edge-swiper-target="root">
     <%= form_with url: main_app.global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>

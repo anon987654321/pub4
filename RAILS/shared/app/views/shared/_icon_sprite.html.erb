@@ -33,7 +33,7 @@
     engines, so the container has to stay rendered and be collapsed instead. Kept
     inline because it is a mechanical requirement of the technique rather than a
     visual decision. %>
-<svg class="icon-sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+<svg class="icon-sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute"> <%# scan: intentional — width/height 0 must be inline or <use> stops resolving %>
   <% Shared::UiHelper::ICONS.each do |icon_name| %>
     <symbol id="icon-<%= icon_name %>" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><%= render "shared/icons/#{icon_name}" %></symbol>
   <% end %>

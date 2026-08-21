@@ -29,7 +29,7 @@
   </div>
   <% if (fraction = @order.progress_fraction) %>
     <div class="order-progress" role="presentation">
-      <div class="order-progress-fill" style="width: <%= (fraction * 100).round %>%"></div>
+      <div class="order-progress-fill" style="--progress: <%= (fraction * 100).round %>%"></div>
     </div>
   <% end %>
   <% if @order.status == "delivered" %>

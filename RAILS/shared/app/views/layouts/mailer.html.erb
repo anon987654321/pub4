@@ -8,7 +8,7 @@
       it always yielded :title when any source was present, discarding @edition.subject and @subject. %>
   <title><%= @edition&.subject || @subject || (content_for?(:title) ? yield(:title) : "Newsletter") %></title>
   <% if @edition&.preheader.present? %>
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;"> <%# scan: intentional — the preheader; mail clients load no bundle %>
       <%= @edition.preheader %>
     </div>
   <% end %>

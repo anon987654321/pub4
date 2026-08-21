@@ -39,7 +39,7 @@
     </div>
     <div class="actions">
       <%# Honeypot: hidden from humans, catnip for bots. Any value fails signup. %>
-      <div class="hp-field" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden">
+      <div class="hp-field" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden"> <%# scan: intentional — the honeypot is positioned inline so no stylesheet can accidentally reveal it %>
         <%= label_tag :homepage, "Leave this field empty" %>
         <%= text_field_tag :homepage, nil, tabindex: -1, autocomplete: "off" %>
       </div>

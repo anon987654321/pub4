@@ -117,6 +117,9 @@ body.vertical-takeaway .order-progress {
 
 body.vertical-takeaway .order-progress-fill {
   height: 100%;
+  /* The view hands progress over as a custom property — the value is data,
+     the rule reading it lives here. */
+  width: var(--progress, 0%);
   background: var(--food-dash);
   transition: width var(--transition-normal) var(--ease-out);
 }

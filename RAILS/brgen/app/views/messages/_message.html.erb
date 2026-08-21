@@ -6,7 +6,7 @@
     controller turns it into data-from on arrival. %>
 <article data-sender-id="<%= message.sender_id %>" data-from="<%= message.sender_id == Current.user&.id ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %><%= " data-expiry=\"#{message.expiry_urgency}\"" if message.expiry_urgency %> aria-label="<%= t("messages.from_aria", name: who) %>">
   <header>
-    <span class="msg-nick" style="<%= nick_style(who) %>"><%= who %></span>
+    <span class="msg-nick" style="<%= nick_style(who) %>"><%= who %></span> <%# scan: intentional — nick_style emits only the --nick-hue custom property %>
     <%# A channel is a transcript, so the time is absolute and stable: [19:32],
         the way every IRC client prints it. Relative time ("3 minutes ago")
         suits a DM, where recency is the question, but in a room it rewrites

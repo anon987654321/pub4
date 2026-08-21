@@ -77,7 +77,7 @@
         <%= render "shared/sidebar_nav" %>
       </nav>
     </aside>
-    <button type="button" class="edge-grip edge-grip-left" data-edge-swiper-target="grip"
+    <button type="button" class="edge-grip edge-grip-start" data-edge-swiper-target="grip"
             data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
     </div>
 
@@ -87,7 +87,7 @@
     </main>
 
     <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
-    <button type="button" class="edge-grip edge-grip-right" data-edge-swiper-target="grip"
+    <button type="button" class="edge-grip edge-grip-end" data-edge-swiper-target="grip"
             data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_widgets") %>" aria-expanded="false"></button>
     <aside class="widgets" aria-label="<%= t("nav.show_widgets") %>" data-edge-swiper-target="root">
       <%= render "shared/widgets" %>
