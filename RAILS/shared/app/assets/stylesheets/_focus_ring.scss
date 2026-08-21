@@ -57,7 +57,7 @@ textarea:focus-visible,
 button:focus-visible,
 a:focus-visible,
 [contenteditable]:focus-visible {
-  outline: var(--focus-ring, 2px solid var(--accent)) !important;
+  outline: var(--focus-ring, 2px solid var(--accent)) !important; /* scan: intentional — paints the focus indicator the flat armor must never suppress */
   outline-offset: 2px;
 }
 

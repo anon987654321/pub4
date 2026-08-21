@@ -112,7 +112,7 @@ body.vertical-playlist .dg.ac {
    thing playlist genuinely needs is to win the stacking contest with the
    tunnel canvas. */
 body.vertical-playlist .brgen-logo-mark {
-  display: inline-flex !important;
+  display: inline-flex !important; /* scan: intentional — re-shows the mark the immersive shell hides with its own !important armor */
   z-index: calc(var(--z-toast, 1100) + 1);
   color: var(--color-text, var(--text));
 }

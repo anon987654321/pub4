@@ -38,7 +38,7 @@
 
 .banner path,
 .banner use {
-  stroke: #fff;
+  stroke: #fff; // scan: intentional — the animated mark's drawn stroke, not a theme surface
   fill: none;
   stroke-linecap: round;
   stroke-width: 2;
