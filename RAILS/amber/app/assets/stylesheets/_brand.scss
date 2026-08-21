@@ -121,7 +121,7 @@
 @media (min-width: 768px) {
   .amber-logo-banner .amber-instance {
     width: min(100vw, 1000px);
-    height: 500px;
+    height: 500px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
     max-height: 500px;
     margin-inline: auto;
   }
@@ -199,7 +199,7 @@
 @media (min-width: 768px) {
   .amber-guest-hero .logo .amber-instance {
     width: min(100vw, 1000px);
-    height: 500px;
+    height: 500px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
     margin-inline: auto;
   }
 }

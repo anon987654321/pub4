@@ -24,7 +24,7 @@
 
 .banner {
   width: 300px;
-  height: 280px;
+  height: 280px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
   overflow: hidden;
   position: relative;
   background-color: transparent;
@@ -33,7 +33,7 @@
 
 #logoWrapper .banner {
   width: 100px;
-  height: 100px;
+  height: 100px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
 }
 
 .banner path,

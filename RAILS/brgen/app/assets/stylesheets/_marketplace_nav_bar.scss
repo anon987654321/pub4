@@ -76,7 +76,7 @@
 
 #logoWrapper .banner_wrapper {
   width: 100px;
-  height: 100px;
+  height: 100px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
   margin: 0;
   padding: 0;
   transform: scale(0.44);

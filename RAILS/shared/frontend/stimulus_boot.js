@@ -2,7 +2,6 @@
 import AutoSubmit from "@stimulus-components/auto-submit"
 import CheckboxSelectAll from "@stimulus-components/checkbox-select-all"
 import Clipboard from "@stimulus-components/clipboard"
-import ContentLoader from "@stimulus-components/content-loader"
 import Dropdown from "@stimulus-components/dropdown"
 import Hotkey from "@stimulus-components/hotkey"
 import Lightbox from "@stimulus-components/lightbox"
@@ -59,7 +58,9 @@ const COMPONENT_REGISTRATIONS = [
   ["character-counter", CharacterCounter],
   ["checkbox-select-all", CheckboxSelectAll],
   ["clipboard", Clipboard],
-  ["content-loader", ContentLoader],
+  // content-loader retired 2026-08-21, the timeago precedent: zero call
+  // sites, and a turbo-frame stack does its job natively — a lazy frame
+  // shows its skeleton children until the fetch lands.
   ["dropdown", Dropdown],
   ["hotkey", Hotkey],
   ["lightbox", Lightbox],
