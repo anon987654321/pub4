@@ -23,6 +23,16 @@
 #    it, the rule belongs in DECISIONS.md, and the line here points at it.
 
 open:
+  - id: strict_mode_missing_in_three_cron_scripts
+    tag: agent-workable
+    summary: >
+      drain-jobs.sh (#!/bin/sh), prune-guests.sh (#!/bin/sh) and
+      uptime-check.sh (#!/bin/ksh) in usr/local/bin run without set -e, so a
+      failed step falls through and the script reports success. Found by
+      STRICT_MODE_ZSH when the law learned to accept set -e anywhere in the
+      file (2026-08-21). Fix on vm23 after reading sh(1)/ksh(1) there —
+      pipefail support differs by interpreter, so the right incantation is a
+      per-script decision, not a sed.
   - id: solid_queue_worker_never_ran
     tag: operator-priority
     summary: >
