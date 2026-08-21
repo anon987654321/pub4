@@ -24,4 +24,4 @@ check https://ai.brgen.no/up
 [[ ${ALLOW_AMBER_DOWN:-0} == 1 ]] || check https://amber.brgen.no/up
 [[ ${ALLOW_BSDPORTS_DOWN:-0} == 1 ]] || check https://bsdports.org/up
 
-exit $fail
+exit "$fail"

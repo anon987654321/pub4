@@ -17,7 +17,7 @@ export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 GUARD_HELPER=/usr/local/libexec/stale_ci_cleanup.ksh
 GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
 if [[ -f $GUARD_HELPER ]]; then
-  . $GUARD_HELPER
+  . "$GUARD_HELPER"
 elif [[ -f ${GUARD_REPO}/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh ]]; then
   # Laptop/dev fallback only — on the VM the installed copy above wins.
   . ${GUARD_REPO}/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh

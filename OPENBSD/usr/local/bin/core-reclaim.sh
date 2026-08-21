@@ -52,7 +52,7 @@ MIN_INTERVAL_S=3000
 now=$(date +%s)
 if [ -r "$STATE" ]; then
   last=$(cat "$STATE" 2>/dev/null || echo 0)
-  if [ $(( now - last )) -lt $MIN_INTERVAL_S ]; then
+  if [ "$(( now - last ))" -lt "$MIN_INTERVAL_S" ]; then
     exit 0
   fi
 fi

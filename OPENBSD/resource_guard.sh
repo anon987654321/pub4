@@ -148,7 +148,7 @@ fi
 # OPENBSD/usr/local/libexec/ via OPERATOR.sh install_root_configs.
 GUARD_HELPER=/usr/local/libexec/stale_ci_cleanup.ksh
 if [[ -f $GUARD_HELPER ]]; then
-  . $GUARD_HELPER
+  . "$GUARD_HELPER"
   stale_ci_cleanup "$load" "$mem_avail_pct"
 else
   # Loud, not silent: the previous revision skipped quietly when the helper was

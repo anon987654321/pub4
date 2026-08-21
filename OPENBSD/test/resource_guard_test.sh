@@ -92,25 +92,25 @@ BREACH=40
 
 print "1. a single breaching tick must not shed anything"
 reset
-run_tick $BREACH
+run_tick "$BREACH"
 check "all three still up after 1 breach" "amber bsdports litestream" "$(running)"
 
 print "2. two consecutive breaches shed exactly one — the cheapest"
-run_tick $BREACH
+run_tick "$BREACH"
 check "litestream shed, others up" "amber bsdports" "$(running)"
 
 print "3. a clear tick restores what was shed, and resets the strike counter"
-run_tick $CLEAR
+run_tick "$CLEAR"
 check "litestream restored on the clear tick" "amber bsdports litestream" "$(running)"
-run_tick $BREACH
+run_tick "$BREACH"
 check "first breach after a clear tick sheds nothing" "amber bsdports litestream" "$(running)"
 
 print "4. sustained pressure keeps shedding, one per tick, cheapest first"
-run_tick $BREACH
+run_tick "$BREACH"
 check "litestream goes first" "amber bsdports" "$(running)"
-run_tick $BREACH
+run_tick "$BREACH"
 check "bsdports next" "amber" "$(running)"
-run_tick $BREACH
+run_tick "$BREACH"
 check "amber last" "" "$(running)"
 
 print "5. the old behaviour would have shed all three on tick 1"
