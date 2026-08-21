@@ -50,7 +50,8 @@ module Master::Core
         return kb / 1024 if kb&.positive?
       end
       nil
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "Core::Memory.read")
       nil
     end
 

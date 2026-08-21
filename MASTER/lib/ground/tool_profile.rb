@@ -61,7 +61,8 @@ module Master
         data = Master.load_yaml(CONFIG_PATH) || {}
         hash = data.dig("tools", "profiles")
         hash.is_a?(Hash) ? hash : {}
-      rescue StandardError
+      rescue StandardError => e
+        Swallow.log(e, context: "ToolProfile.profiles")
         {}
       end
     end

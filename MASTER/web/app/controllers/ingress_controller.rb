@@ -19,7 +19,10 @@ class IngressController < ApplicationController
 
   def self.security_defaults
     Master.load_yaml(Master.data_path("security.yml")) || {}
-  rescue StandardError
+  rescue StandardError => e
+    # An unreadable security.yml silently becoming {} is fail-open — the one
+    # place a swallow must at least be on the record.
+    Master::Ground::Swallow.log(e, context: "Ingress.security_defaults", severity: :load_bearing)
     {}
   end
 

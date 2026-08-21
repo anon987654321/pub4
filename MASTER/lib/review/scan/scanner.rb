@@ -442,7 +442,8 @@ module Master
         # Gates autofix below per-rule confidence threshold.
         def prediction_thresholds
           @prediction_thresholds ||= (Master.load_yaml(Master::RULES_PATH)["prediction_engine"] || {})
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Scanner.prediction_thresholds")
           {}
         end
 

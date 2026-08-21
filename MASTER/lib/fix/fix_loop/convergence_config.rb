@@ -14,7 +14,8 @@ module Master
           configured = convergence_cfg["max_iterations"] || MAX_PASSES
           mode_cap = begin
             Master::Ground::ModePosture.current(root: @root)[:max_fix_passes]
-          rescue StandardError
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "ConvergenceConfig.mode_cap")
             nil
           end
           [mode_cap, configured].compact.map(&:to_i).min

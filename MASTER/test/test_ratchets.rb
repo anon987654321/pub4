@@ -60,7 +60,7 @@ class TestRatchets < Minitest::Test
     root = Pub4::Ratchets::ROOT
     out = `cd #{root.inspect} && git status --porcelain -- MASTER/lib MASTER/data RAILS 2>/dev/null`
     out.to_s.lines.map { |line| line[3..].to_s.strip }.reject(&:empty?)
-  rescue StandardError
+  rescue StandardError # scan: intentional — unparseable status becomes unreadable rows, which the assertion reports
     []
   end
 

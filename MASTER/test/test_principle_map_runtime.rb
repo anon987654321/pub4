@@ -46,7 +46,7 @@ class TestPrincipleMapRuntime < Minitest::Test
     ids = Master::Review::Scan::Rule.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s.upcase : nil
-      rescue StandardError
+      rescue StandardError # scan: intentional — non-buildable rules have no id; nil is the census answer
         nil
       end
     end
@@ -114,7 +114,7 @@ class TestPrincipleMapRuntime < Minitest::Test
     registered = Master::Review::Scan::Rule.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s : nil
-      rescue StandardError
+      rescue StandardError # scan: intentional — non-buildable rules have no id; nil is the census answer
         nil
       end
     end

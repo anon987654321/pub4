@@ -388,7 +388,8 @@ class ChatService
       valence: parts[5].to_f,
       hist_entropy: parts[6].to_f,
     }
-  rescue StandardError
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "ChatService.metrics_parse")
     nil
   end
 

@@ -286,7 +286,8 @@ module Master
       def view_helper_names(app_path)
         Dir.glob(File.join(app_path, "app", "helpers", "**", "*.rb")).flat_map do |path|
           File.read(path).scan(/^\s*def\s+([a-z]\w*[!?=]?)/).flatten
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RoutesViewsAudit.helper_names")
           []
         end
       end

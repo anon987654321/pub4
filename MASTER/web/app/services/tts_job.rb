@@ -265,7 +265,8 @@ class TtsJob
     return unless File.file?(meta_path)
 
     JSON.parse(File.read(meta_path))
-  rescue StandardError
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "TtsJob.meta_parse")
     nil
   end
 

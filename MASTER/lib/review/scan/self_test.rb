@@ -31,7 +31,8 @@ module Master
               ids.group_by(&:itself).filter_map do |id, values|
                 finding(path:, line: 1, message: "duplicate id #{id} in OPERATOR config") if values.size > 1
               end
-            rescue StandardError
+            rescue StandardError => e
+              Master::Ground::Swallow.log(e, context: "SelfTest.operator_duplicates", severity: :load_bearing)
               []
             end
           end
@@ -195,7 +196,8 @@ module Master
             # elsewhere in the file can't produce a false "it's bounded".
             next [] if code.match?(/Timeout\.|read_timeout|open_timeout|block_until_ms|\b\w*thr\w*\.join\(/i)
             [finding(path:, line: 1, message: "HTTP/Open3 without bounded timeout (ROBUSTNESS)")]
-          rescue StandardError
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "SelfTest.timeout_scan", severity: :load_bearing)
             []
           end
         end

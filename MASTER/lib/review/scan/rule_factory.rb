@@ -38,7 +38,7 @@ module Master
 
         def registry_id(klass, root: Master::ROOT, agent: nil, ecology: nil)
           build(klass, root:, agent:, ecology:).id.to_s.downcase
-        rescue StandardError
+        rescue StandardError # scan: intentional — non-auto-buildable rules have no registry id; nil IS the census answer
           nil
         end
       end

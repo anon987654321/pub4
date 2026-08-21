@@ -201,7 +201,9 @@ class TtsController < ApplicationController
       rate: data["rate"],
     )
     set_viseme_header("X-TTS-Visemes", stream[:viseme_plan] || stream[:visemes])
-  rescue StandardError
+  rescue StandardError => e
+    # Lost visemes surface as mysterious lipsync gaps — worth a line.
+    Master::Ground::Swallow.log(e, context: "TTS.viseme_header")
     nil
   end
 

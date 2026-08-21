@@ -98,14 +98,14 @@ class HealthController < ActionController::API
     entry = data["face.runtime.js"]
     digested = entry.is_a?(Hash) ? entry["digested_path"].to_s : ""
     digested.empty? ? nil : digested.sub(%r{\Aassets/}, "")
-  rescue StandardError
+  rescue StandardError # scan: intentional — the health payload omits what it cannot read; absence is the report
     nil
   end
 
   def assets_precompile_stamp
     stamp = Rails.root.join("tmp", ".assets_precompile_stamp")
     File.mtime(stamp).utc.iso8601 if File.file?(stamp)
-  rescue StandardError
+  rescue StandardError # scan: intentional — the health payload omits what it cannot read; absence is the report
     nil
   end
 end

@@ -60,7 +60,7 @@ Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
 
   browser.on(:console) do |msg|
     console_msgs << "[#{msg.type}] #{msg.args.map(&:value).join(' ')}"
-  rescue StandardError
+  rescue StandardError # scan: intentional — a raising console hook would kill the probe loop; lost lines are acceptable
     nil
   end
 

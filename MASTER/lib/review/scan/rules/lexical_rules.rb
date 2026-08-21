@@ -71,7 +71,9 @@ module Master
     description: "blanket rescue discards error without logging or re-raising" do |src, path:|
     # No path exemption for the scanner's own rules: a rule that returns [] on
     # error calls the file it failed on clean, so a swallow costs more in this
-    # directory than anywhere else.
+    # directory than anywhere else. The one exception is the rule's own test,
+    # which must spell every shape it proves — the law-conduct argument.
+    next [] if path.to_s.match?(/test_silent_rescue_rule\.rb\z|test_self_test\.rb\z/)
     SilentRescue.scan(src, narrow: false).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
@@ -177,6 +179,7 @@ module Master
       lines = src.lines
       lines.each_with_index.flat_map do |line, index|
         lineno = index + 1
+        next [] if line.match?(/scan:\s*intentional\b/)
         next [] unless matches_mode?(line, narrow:)
         next [] unless discard_body?(lines, index)
 

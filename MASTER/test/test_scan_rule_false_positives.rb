@@ -253,7 +253,7 @@ end
       next [] unless rule.respond_to?(:check)
 
       Array(rule.check(source, path: "lib/sample.rb")).map { |f| [f[:line], rule.id.to_s.downcase] }
-    rescue StandardError
+    rescue StandardError # scan: intentional — a raising rule has its own dedicated test (RaisingRule); here it reads as no findings
       []
     end
     long = findings.select { |line, _| line == 2 }.map(&:last).uniq
@@ -545,10 +545,12 @@ end
     def check_ast(_ast, _code, path:) = raise("check_ast is broken")
   end
 
+  # limit far above the log's size: at 200 the window saturated after two
+  # hundred runs of this very test and before == after forever.
   def test_a_rule_that_raises_reports_the_failure_it_swallows
-    before = Master::Ground::Swallow.recent(limit: 200, context: "TestScanRuleFalsePositives::RaisingRule#check_ast").size
+    before = Master::Ground::Swallow.recent(limit: 1_000_000, context: "TestScanRuleFalsePositives::RaisingRule#check_ast").size
     result = RaisingRule.new.check("x = 1\n", path: File.join(Master::ROOT, "lib/example.rb"))
-    after = Master::Ground::Swallow.recent(limit: 200, context: "TestScanRuleFalsePositives::RaisingRule#check_ast")
+    after = Master::Ground::Swallow.recent(limit: 1_000_000, context: "TestScanRuleFalsePositives::RaisingRule#check_ast")
 
     assert_empty result, "the scan continues past a broken rule"
     assert_operator after.size, :>, before, "and the broken rule is on the record"

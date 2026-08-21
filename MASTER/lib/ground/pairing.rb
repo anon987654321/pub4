@@ -24,7 +24,8 @@ module Master
       def config
         hash = (Master.load_yaml(CONFIG_PATH) || {})["pairing"]
         hash.is_a?(Hash) ? hash : {}
-      rescue StandardError
+      rescue StandardError => e
+        Swallow.log(e, context: "Pairing.config")
         {}
       end
 
@@ -118,7 +119,8 @@ module Master
 
         data = Master.load_yaml(path)
         data.is_a?(Hash) ? data : {}
-      rescue StandardError
+      rescue StandardError => e
+        Swallow.log(e, context: "Pairing.load")
         {}
       end
 

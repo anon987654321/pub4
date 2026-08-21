@@ -65,7 +65,8 @@ class DashboardController < ApplicationController
       lines = File.readlines(path).map(&:chomp).last(8)
       { path: rel, count: File.size(path), recent: lines }
     end
-  rescue StandardError
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "Dashboard.log_listing")
     []
   end
 
@@ -77,7 +78,8 @@ class DashboardController < ApplicationController
 
       { path: rel, bytes: File.size(path), excerpt: File.read(path)[0, 400] }
     end
-  rescue StandardError
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "Dashboard.file_excerpts")
     []
   end
 end
