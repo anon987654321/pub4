@@ -87,6 +87,16 @@
 // Surfaces shipped after the 2026-08-11 fill: Event, Story, community
 // governance, quote-posts. Token-only, space-not-lines, no hex.
 
+/* Admin rosters are indexes, not feeds: hairline rows, tabular density,
+   no card padding — the moderation surfaces share one list pattern. */
+.ban-list > li,
+.member-list > li,
+.attendee-list > li,
+.viewer-list > li {
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--border);
+}
+
 .event-list,
 .attendee-list,
 .viewer-list,
@@ -120,6 +130,13 @@
   display: block;
   width: 100%;
   height: auto;
+}
+
+/* The hero is a cover, not a figure: a fixed 16/9 band that crops rather
+   than reflows, so the page cannot jump when the image lands. */
+.event-hero img {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
 }
 
 .event-card-body {
@@ -192,6 +209,18 @@
   object-fit: cover;
   border-radius: var(--radius-pill);
   background: var(--surface-elevated);
+}
+
+/* The ring is the state: unseen wears the accent, seen fades to the border
+   grey — the one place the hue means "new here" on a grayscale surface. */
+.story-ring img {
+  border: 2px solid var(--accent);
+}
+.story-ring--seen img {
+  border-color: var(--border);
+}
+.story-ring--seen .story-ring-name {
+  color: var(--text-secondary);
 }
 
 .story-ring-name {

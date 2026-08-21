@@ -590,3 +590,23 @@ section h2 {
     transition: none !important;
   }
 }
+
+/* Unread state on a notification row: weight plus a leading accent dot —
+   two signals, so the state survives grayscale and colour-blindness alike
+   (visual_contract undefined_class: read/unread had no rule anywhere). */
+article.unread .notification-title-link {
+  font-weight: var(--weight-bold, 700);
+}
+article.unread .notification-title-link::before {
+  content: "";
+  display: inline-block;
+  inline-size: var(--space-2, 0.5rem);
+  block-size: var(--space-2, 0.5rem);
+  margin-inline-end: var(--space-2, 0.5rem);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--accent);
+  vertical-align: middle;
+}
+article.read {
+  color: var(--text-secondary, inherit);
+}

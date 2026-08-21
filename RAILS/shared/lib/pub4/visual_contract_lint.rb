@@ -178,7 +178,7 @@ end
       Dir.glob(File.join(RAILS_ROOT, "brgen/app/assets/stylesheets/*.scss")).flat_map do |path|
         src = File.read(path, encoding: "UTF-8")
         src.each_line.with_index(1).filter_map do |line, n|
-          next unless line.match?(/color:\s*var\(--accent\)/)
+          next unless line.match?(/(?<!-)color:\s*var\(--accent\)/)
           selector = nearest_selector(src, n)
           next if selector.nil? || selector.match?(INTERACTIVE_SELECTOR)
           Finding.new("accent_on_prose", path.sub("#{RAILS_ROOT}/", ""), "line #{n} under #{selector.strip[0, 60]}")

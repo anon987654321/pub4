@@ -58,3 +58,20 @@ a {
     transition: none !important;
   }
 }
+
+/* Unread message: the same two-signal state the notification list wears —
+   weight and a leading accent dot; the "unread" word in the meta line is
+   the third, textual signal. */
+.message--unread {
+  font-weight: var(--weight-bold, 600);
+}
+.message--unread::before {
+  content: "";
+  display: inline-block;
+  inline-size: var(--space-2, 0.5rem);
+  block-size: var(--space-2, 0.5rem);
+  margin-inline-end: var(--space-2, 0.5rem);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--accent);
+  vertical-align: middle;
+}

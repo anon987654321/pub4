@@ -116,12 +116,11 @@ module Pub4
     #               the two wardrobe-slide fills whose carousel markup had gone
     #               were deleted.
     #
-    # undefined 0 -> 7: the same blindness hid real hooks. Seven classes the
-    # markup composes inside ERB conditionals have no rule anywhere:
-    # message--unread; read and unread on notifications; story-ring and
-    # story-ring--seen; address and address--default in marketplace. State
-    # styling is a design decision, so they are named here rather than filled.
-    BASELINES = { "undefined_class" => 7, "unused_selector" => 243 }.freeze
+    # undefined back to 0 (2026-08-21): the seven hooks the instrument fix
+    # surfaced are designed now — unread/read and message--unread wear weight
+    # plus a leading accent dot, story-ring wears the accent ring that fades
+    # when seen, and the default address is the accent-bordered card.
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 243 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

@@ -292,3 +292,31 @@
 .order-return-form {
   margin-block: var(--space-4);
 }
+
+/* Saved addresses. The default is the selected card: accent border plus the
+   chip the view already renders — state as geometry, not colour alone. */
+.address-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.address {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.address p {
+  flex: 1;
+  min-inline-size: 12ch;
+  margin: 0;
+}
+.address--default {
+  border-color: var(--accent);
+}
