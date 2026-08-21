@@ -39,6 +39,7 @@
   hyphens: auto;
   -webkit-hyphens: auto;
   hanging-punctuation: first allow-end last;
+  text-wrap: pretty;
 
   p + p {
     margin-block-start: var(--space-3, 0.75rem);
@@ -102,6 +103,7 @@ main#main-content > header h1 {
   letter-spacing: var(--tracking-tight);
   font-weight: var(--weight-heavy, 800);
   max-width: var(--measure-wide);
+  text-wrap: balance;
   margin-block-end: var(--space-4, 1rem);
 }
 
@@ -111,6 +113,7 @@ main#main-content > section > h2 {
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
   font-weight: var(--weight-bold, 600);
+  text-wrap: balance;
   margin-block-end: var(--space-3, 0.75rem);
 }
 

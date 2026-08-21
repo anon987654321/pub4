@@ -1221,7 +1221,7 @@ en:
     payment_label: Payment info
     payment_body: Payment is arranged directly with the restaurant for now.
     place_order: Place order
-    rating: Rating (1-5)
+    rating: Rating (1–5)
     comments_optional: Comments (optional)
     post_review: Post review
     add: Add
