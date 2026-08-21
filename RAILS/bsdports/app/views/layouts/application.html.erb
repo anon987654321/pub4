@@ -36,6 +36,10 @@
       data-feed-hotkey-coach-value="<%= t("hotkeys.coach") %>"
       data-feed-hotkey-coach-dismiss-value="<%= t("hotkeys.coach_dismiss") %>">
 <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
+    <%# The shared icon sprite: every icon(...) <use> resolves against it. The
+        shared theme toggle's sun icon was referencing symbols this app never
+        included. %>
+    <%= render "shared/icon_sprite" if icon_sprite? %>
 <%# bsdports had no brand mark at all — only a text link inside the nav, which is
     not the same thing and is not in the same place as brgen's or amber's. After
     the skip link, which must stay the first focusable element. %>

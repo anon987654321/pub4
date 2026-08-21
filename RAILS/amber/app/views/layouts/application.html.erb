@@ -42,6 +42,10 @@
       data-feed-hotkey-coach-dismiss-value="<%= t("hotkeys.coach_dismiss") %>"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
 <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
+    <%# The shared icon sprite: every icon(...) <use> resolves against it. The
+        shared theme toggle's sun icon was referencing symbols this app never
+        included. %>
+    <%= render "shared/icon_sprite" if icon_sprite? %>
 <%# Amber's own Caprasimo mark, not shared/_brand_mark (the type-only wordmark
     brgen and bsdports share). The fleet mark is the wrong identity here.
     It lives inside the banner, not as a second fixed corner, and the nav

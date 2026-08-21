@@ -43,5 +43,10 @@ module App
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # The shared icon sprite is rendered by the layout; icons resolve via
+    # <use> against it. One config value, read by Shared::UiHelper#icon_sprite?
+    # and the layout, so both agree (brgen's arrangement, adopted 2026-08-21).
+    config.x.icon_sprite = true
   end
 end
