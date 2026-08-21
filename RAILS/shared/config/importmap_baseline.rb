@@ -116,7 +116,7 @@ pin "idb-keyval", to: "idb-keyval.js"
 %w[
   animated-number auto-submit character-counter checkbox-select-all clipboard
   content-loader dropdown hotkey lightbox notification read-more
-  reveal sortable password-visibility rails-nested-form
+  reveal sortable password-visibility popover rails-nested-form
 ].each { |name| sc_pin.call(name) }
 
 # Registered on demand by stimulus_boot.js -- its dependency is the swiper CDN

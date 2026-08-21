@@ -13,6 +13,7 @@ import Sortable from "@stimulus-components/sortable"
 import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
 import AnimatedNumber from "@stimulus-components/animated-number"
 import PasswordVisibility from "@stimulus-components/password-visibility"
+import Popover from "@stimulus-components/popover"
 import RailsNestedForm from "@stimulus-components/rails-nested-form"
 import StimulusReflex from "stimulus_reflex"
 import ApplicationController from "controllers/application_controller"
@@ -70,6 +71,9 @@ const COMPONENT_REGISTRATIONS = [
   ["textarea-autogrow", TextareaAutogrow],
   ["animated-number", AnimatedNumber],
   ["password-visibility", PasswordVisibility],
+  // Vendored since the 2014 tooltip port, never registered — the feed-action
+  // tooltips (_popover_tooltip.scss) waited for this line.
+  ["popover", Popover],
   ["nested-form", RailsNestedForm],
 ]
 

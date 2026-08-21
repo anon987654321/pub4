@@ -2,14 +2,15 @@
 <% like_count = local_assigns.fetch(:like_count, 0).to_i %>
 <div class="feed-card-actions">
   <% if local_assigns[:reply_path].present? %>
-    <%= link_to reply_path, class: "feed-action feed-action--reply", aria: { label: "Reply" } do %>
+    <%= link_to reply_path, class: "feed-action feed-action--reply", aria: { label: t("messages.reply") }, data: { controller: "popover", action: "mouseenter->popover#show mouseleave->popover#hide" } do %>
+      <template data-popover-target="content"><div data-popover-target="card"><%= t("messages.reply") %></div></template>
       <%= icon(:reply, size: 18) %>
       <% if comment_count.to_i.positive? %>
         <span class="feed-action-count"><%= comment_count %></span>
       <% end %>
     <% end %>
   <% else %>
-    <button type="button" class="feed-action feed-action--reply" aria-label="Reply" disabled>
+    <button type="button" class="feed-action feed-action--reply" aria-label="<%= t("messages.reply") %>" disabled>
       <%= icon(:reply, size: 18) %>
     </button>
   <% end %>
@@ -25,12 +26,14 @@
                   method: :post,
                   class: "feed-action feed-action--repost#{" active" if local_assigns[:reposted]}",
                   form_class: "feed-action-form",
-                  aria: { label: "Repost", pressed: !!local_assigns[:reposted] } do %>
+                  aria: { label: t("post.repost"), pressed: !!local_assigns[:reposted] },
+                  data: { controller: "popover", action: "mouseenter->popover#show mouseleave->popover#hide" } do %>
+      <template data-popover-target="content"><div data-popover-target="card"><%= t("post.repost") %></div></template>
       <%= icon(:repost, size: 18) %>
       <span class="feed-action-count"><%= local_assigns.fetch(:repost_count, 0).to_i.positive? ? repost_count : "" %></span>
     <% end %>
   <% else %>
-    <button type="button" class="feed-action feed-action--repost" aria-label="Repost" disabled>
+    <button type="button" class="feed-action feed-action--repost" aria-label="<%= t("post.repost") %>" disabled>
       <%= icon(:repost, size: 18) %>
       <% if local_assigns.fetch(:repost_count, 0).to_i.positive? %>
         <span class="feed-action-count"><%= repost_count %></span>
@@ -40,13 +43,14 @@
 
   <button type="button"
           class="feed-action feed-action--like<%= " active" if local_assigns[:liked] %>"
-          data-controller="action"
-          data-action="action#toggle"
+          data-controller="action popover"
+          data-action="action#toggle mouseenter->popover#show mouseleave->popover#hide"
           data-action-url-value="<%= reactions_path %>"
           data-action-target-gid-value="<%= record.to_signed_global_id %>"
           data-action-kind-value="like"
           data-action-count-value="<%= like_count %>"
-          aria-label="Like">
+          aria-label="<%= t("actions.like") %>">
+    <template data-popover-target="content"><div data-popover-target="card"><%= t("actions.like") %></div></template>
     <%= icon(:like, size: 18) %>
     <span class="feed-action-count" data-action-target="count"><%= like_count.positive? ? like_count : "" %></span>
   </button>
@@ -63,14 +67,16 @@
       <input type="hidden" data-clipboard-target="source" value="<%= share_url %>" aria-hidden="true" tabindex="-1">
       <button type="button"
               class="feed-action feed-action--share"
-              aria-label="Share"
-              data-action="click->clipboard#copy"
+              aria-label="<%= t("posts.share") %>"
+              data-controller="popover"
+              data-action="click->clipboard#copy mouseenter->popover#show mouseleave->popover#hide"
               data-clipboard-target="button">
+        <template data-popover-target="content"><div data-popover-target="card"><%= t("posts.share") %></div></template>
         <%= icon(:share, size: 18) %>
       </button>
     </span>
   <% else %>
-    <button type="button" class="feed-action feed-action--share" aria-label="Share" disabled>
+    <button type="button" class="feed-action feed-action--share" aria-label="<%= t("posts.share") %>" disabled>
       <%= icon(:share, size: 18) %>
     </button>
   <% end %>
