@@ -224,4 +224,16 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding rule("RUNTIME_DOCS_YAML"), "# reborn\n",
                    File.join(Master::ROOT, "data", "skills", "README.md"), "delete data/skills/README.md"
   end
+  # The 2026-08-19 twin-drift debt closed at zero on 2026-08-21: an id that
+  # lives in law/ and the registry at once is two detectors free to disagree
+  # about one rule — the exact drift UNBOUNDED_RETRY proved. Zero is held.
+  def test_no_id_lives_in_both_law_and_registry
+    Rules::LawBridgeRule.new
+    law_ids = Law.rules.keys.map(&:to_s)
+    registry_ids = Master::Review::Scan::Rule.registry.filter_map do |klass|
+      Master::Review::Scan::RuleFactory.registry_id(klass, root: Master::ROOT)&.upcase
+    end
+    assert_empty law_ids & registry_ids
+  end
+
 end
