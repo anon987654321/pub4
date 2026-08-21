@@ -1,3 +1,5 @@
+/* scan: intentional-colors — the face is one-theme black by design
+   (SURFACES.md): its #000 grounds and print inversion follow no palette. */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* BEGIN:generated-face-root — ruby RAILS/tools/generate_face_root_css.rb */
@@ -186,7 +188,7 @@ canvas#face {
   pointer-events: none;
   mix-blend-mode: screen;
   opacity: 0.88;
-  transition: opacity 420ms var(--ease-out);
+  transition: opacity 300ms var(--ease-out);
 }
 
 html[data-agent-engagement="thinking"] #cognition-ecology { opacity: 0.94; }
@@ -669,7 +671,7 @@ body.face-ready .primer-voice { display: none; }
 html[data-model-provider] .provider-chip { opacity: .92; }
 
 body.brutalist-mode * { border-radius: 0 !important; }
-body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; }
+body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; } /* scan: intentional — the mode must beat every message's own easing */
 body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08); transition: filter 0ms steps(2,end); }
 
 /* Mission control uses document layout chrome (not immersive face overflow). */

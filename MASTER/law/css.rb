@@ -5,6 +5,12 @@
 # unchanged by the grouping (2026-08-19 file-sprawl consolidation).
 
 # Migrated from data/rules.yml CLAMP_TYPOGRAPHY.
+# REDUCED_MOTION and NO_IMPORTANT live once, in the registry (web_rules.rb).
+# Both judge a FILE's posture — whether the reset block exists, whether an
+# !important erases or paints, whether it sits inside an override media —
+# and the per-line twins here fired on face.css's own reduced-motion reset,
+# twenty-six findings against a file already doing the right thing.
+
 Law.define(:CLAMP_TYPOGRAPHY) do
   source "CSS fluid typography — clamp() (web.dev)"
   severity :info
@@ -65,17 +71,6 @@ Law.define(:NO_IMPORT_SCSS) do
   good "@use \"base\";"
 end
 
-# Migrated from data/rules.yml NO_IMPORTANT.
-Law.define(:NO_IMPORTANT) do
-  source "CSS best practice — avoid !important (MDN)"
-  severity :warn
-  languages %i[css]
-  detect { |line| line.match?(/!\s*important/) }
-  fix "Restructure selectors to avoid specificity bankruptcy."
-  bad  "color: red !important;"
-  good "color: red;"
-end
-
 # Migrated from data/rules.yml NO_LONG_TRANSITION.
 Law.define(:NO_LONG_TRANSITION) do
   source "style.yml motion budget / FrontendRuleSet MOTION"
@@ -111,13 +106,3 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   good "rows = connection.exec(query)"
 end
 
-# Migrated from data/rules.yml REDUCED_MOTION.
-Law.define(:REDUCED_MOTION) do
-  source "WCAG 2.3.3 Animation from Interactions"
-  severity :info
-  languages %i[css]
-  detect { |line| line.match?(/@keyframes|animation\s*:/) }
-  fix "Add @media (prefers-reduced-motion: reduce) override."
-  bad  "animation: spin 1s infinite;"
-  good "@media (prefers-reduced-motion: reduce) { .spin { animation-play-state: paused; } }"
-end

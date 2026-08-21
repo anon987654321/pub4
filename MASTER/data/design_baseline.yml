@@ -1,7 +1,6 @@
 ---
-total: 52
-apps:
-  face: 52
+total: 0
+apps: {}
 rules:
 - ANTI_DIVITIS
 - ARIA_INTERACTIVE

@@ -64,8 +64,8 @@
       f.addEventListener('load',on);if(f.sheet)on();})();
   </script>
   <style nonce="<%= content_security_policy_nonce %>">
-    html, body { background: #000; color: #d8d6e0; }
-    canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
+    html, body { background: #000; color: #d8d6e0; } /* scan: intentional-colors — painted before any stylesheet loads; the FOUC guard cannot cite what has not arrived */
+    canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; } /* scan: intentional-colors — same FOUC guard: the canvas ground exists before the stylesheet */
     #primer { background: transparent; }
     #zsh { background: #000; }
   </style>
@@ -111,10 +111,10 @@
     </svg>
     <span class="sr-only" data-mic-state-text></span>
   </div>
-  <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
-  <div id="yt-player-b" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
-  <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
-  <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
+  <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div> <%# scan: intentional — the radio stash is positioned inline so no stylesheet can accidentally reveal it %>
+  <div id="yt-player-b" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div> <%# scan: intentional — the radio stash is positioned inline so no stylesheet can accidentally reveal it %>
+  <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe> <%# scan: intentional — the radio stash is positioned inline so no stylesheet can accidentally reveal it %>
+  <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe> <%# scan: intentional — the radio stash is positioned inline so no stylesheet can accidentally reveal it %>
   <div id="tts-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <%# Small synchronous prerequisite: every deferred ecology/worker module and
       the post-primer face import may assume window.ParticleKernel exists. %>
