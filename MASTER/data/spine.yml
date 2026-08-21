@@ -451,7 +451,13 @@ spine:
   # None of it absorbable by core/'s standard: a handler per verb and a rule
   # per constraint, and "a TSV's tabs are its delimiter" is neither. The orphan
   # account was checked again during the audit and remains empty.
-  lib_code_ceiling: 39012
+  # RAISED 2026-08-21, 39012 -> 39025 (+13). IMG_ALT and LAZY_IMAGES came back
+  # from law/ to the registry: both judge a TAG and law scans lines, so the
+  # attribute-per-line spelling and ERB inside attributes made every
+  # multi-line <img> a finding. The 13 lines are those two rules plus the
+  # narrowings H1_VISIBILITY, SKIP_TO_MAIN, META_CHARSET and SINGLE_H1 learned
+  # in the same pass — every one bought false positives down, not features up.
+  lib_code_ceiling: 39025
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
