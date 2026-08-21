@@ -79,10 +79,16 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 
 ## Queued refactors (recorded, ratchet-held, unscheduled)
 
-Token: face joins fleet token names; shared edge scale; radius-scale parameter
-per dialect; scrim unification. Components: media-card extraction from tv's
-poster; card-grid primitive; purchasable-row (takeaway/marketplace);
-order-summary (carts/checkout); chat anatomy (messenger/IRC/face); event-row
-(notifications/activity); trust strip (dating BankID → commerce). Face: its
-52-finding design_baseline debt (26 are REDUCED_MOTION — the particle/mesh
-layers need the motion contract most of all).
+Token: face joins fleet token names (fenced: the --c-*/--x-text namespace is
+read by the GENERATED bundles — a face.part*.txt session, and the local face
+did not boot under triangle, so no tap-test is currently possible); shared
+edge scale; radius-scale parameter per dialect; scrim unification (operator's
+eye). Components: media-card, card-grid, chat anatomy, event-row, trust strip
+— each needs a second real consumer or a sitting of its own.
+**Refuted on examination (2026-08-21): purchasable-row** — takeaway's
+form-quantity row, the cart's remove-action row and the listing card share a
+phrase (name · price), not an anatomy; one partial serving all three would be
+a parameter soup shallower than three clear local rows. The face's 52-finding
+debt closed the same day (26 were a line-blind REDUCED_MOTION twin filing
+against face.css's own reset; the primer fade capped at 300ms; the rest were
+fences stated inline).
