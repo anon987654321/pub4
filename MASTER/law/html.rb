@@ -49,11 +49,14 @@ Law.define(:BARE_DIV_WRAPPER) do
   good "<section>"
 end
 
-# Migrated from data/rules.yml BEM_IN_VIEWS.
+# Migrated from data/rules.yml BEM_IN_VIEWS. The registry twin scoped to
+# app/views — a doc snippet or a vendored template is not a view — and the
+# scope moved here with the retirement.
 Law.define(:BEM_IN_VIEWS) do
   source "style.yml bare_tag_targeting — no BEM in ERB"
   severity :warn
   languages %i[html]
+  path "/app/views/"
   detect { |line| line.match?(/class=["'][^"']*__[^"']*["']/) }
   fix "Target bare tags in SCSS; remove __block__element classes from ERB."
   bad  "<div class=\"card__title\">"
@@ -123,16 +126,11 @@ Law.define(:CLASS_RESTATES_TAG) do
   good "<header class=\"page-header\">"
 end
 
-# Migrated from data/rules.yml HTML_LANG.
-Law.define(:HTML_LANG) do
-  source "WCAG 3.1.1 Language of Page (W3C/WAI)"
-  severity :error
-  languages %i[html]
-  detect { |line| line.match?(/<html(?!\s+[^>]*lang=)/) }
-  fix "Add lang=\"en\" or appropriate locale."
-  bad  "<html>"
-  good "<html lang=\"nb\">"
-end
+# HTML_LANG lives once, in the registry (web_rules.rb): it reads through
+# tag_source, so an `<html` inside a comment, a string or an ERB expression
+# is prose about the tag, not the tag. This bare line regex had no such
+# filter — the tag_source family is why ARIA_LABELS and IMG_ALT retired the
+# same way.
 
 # Migrated from data/rules.yml I18N_COVERAGE.
 Law.define(:I18N_COVERAGE) do
@@ -263,11 +261,17 @@ end
 # element. The earlier detector — anything not mentioning a skip target — fired
 # on all 423 partials in RAILS, none of which can hold one, and buried the 5
 # layouts where the question is real.
+# The registry twin knew two more things, ported with its retirement: only
+# layouts own the first focusable element, and a mailer layout is not a page
+# — no viewport to skip past, no #main-content to land on; both findings
+# this rule ever produced in RAILS were mailer layouts.
 Law.define(:SKIP_TO_MAIN) do
   source "WCAG 2.4.1 Bypass Blocks / style.yml accessibility"
   severity :warn
   languages %i[html]
   scope :file
+  path "/app/views/layouts/"
+  path_exclude %r{mailer}
   detect { |text| text.match?(/<body\b/) && !text.match?(/skip|#main-content/) }
   fix "Add a skip link to #main-content in the layout."
   bad  "<body><nav></nav><main></main></body>"
@@ -293,12 +297,15 @@ Law.define(:TAG_HELPER_OVER_MARKUP) do
   good "<%= tag.p t(\"greeting\") %>"
 end
 
-# Migrated from data/rules.yml UTILITY_CLASS_SOUP.
+# Migrated from data/rules.yml UTILITY_CLASS_SOUP. The registry twin knew
+# more utility vocabularies (ml/mr/px/py/flex/grid/w-/h-, case-insensitive)
+# and scoped to app/views; both moved here with the retirement.
 Law.define(:UTILITY_CLASS_SOUP) do
   source "style.yml html.forbidden.framework_class_explosion"
   severity :warn
   languages %i[html]
-  detect { |line| line.match?(/class=["'][^"']*(?:\b(?:mt|mb|col|row|d-flex)\b[^"']*){3,}/) }
+  path "/app/views/"
+  detect { |line| line.match?(/class=["'][^"']*(?:\b(?:mt|mb|ml|mr|px|py|col|row|d-flex|flex|grid|w-|h-)\b[^"']*){3,}[^"']*["']/i) }
   fix "Move layout to SCSS with bare tag targeting."
   bad  "<div class=\"row col mt mb\">"
   good "<div class=\"toolbar\">"

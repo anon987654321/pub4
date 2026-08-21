@@ -1160,7 +1160,7 @@ rules:
     tier: accessibility
     severity: error
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Add lang="en" or appropriate locale.
     languages:
     - html
@@ -1405,7 +1405,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    folded_into: FEW_ARGUMENTS # same parameter-list count; one rule, two ids
     fix: Use keyword arguments for clarity and safety.
     languages:
     - ruby
@@ -1435,7 +1435,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use hash.fetch(:key, default) for nil-vs-false safety.
     languages:
     - ruby
@@ -1489,7 +1489,7 @@ rules:
     tier: performance
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Add .includes(:association).
     languages:
     - rails
@@ -1499,7 +1499,7 @@ rules:
     tier: performance
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: 'Use .find_each(batch_size: 1000).'
     languages:
     - rails
@@ -1509,7 +1509,7 @@ rules:
     tier: safety
     severity: error
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: update_attribute skips validations. Use update!
     languages:
     - rails
@@ -1519,7 +1519,7 @@ rules:
     tier: performance
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use .pluck(:column) to avoid AR object instantiation.
     languages:
     - rails
@@ -1529,7 +1529,7 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use const unless the variable is reassigned.
     languages:
     - javascript
@@ -1599,7 +1599,7 @@ rules:
     tier: safety
     severity: warning
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use [[ ... ]] for safe conditionals.
     languages:
     - zsh
@@ -1705,7 +1705,7 @@ rules:
     tier: clean_code
     severity: warning
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Remove code after return/exit/raise/throw.
   - id: TRAILING_COMMAS
     source: Ruby/JS style — trailing commas in multiline literals
@@ -2134,7 +2134,7 @@ rules:
     tier: clarity
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Expand nested ternary to if/elsif/else or a case.
     languages:
     - ruby
@@ -2144,7 +2144,7 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: 'Ranges take an en dash, not a hyphen: 45-75 -> 45–75.'
     languages:
     - prose
@@ -2311,7 +2311,7 @@ rules:
     tier: design
     severity: warning
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     detect_semantic: Does this code reach through multiple objects?
     fix: Add delegate method. Talk only to direct collaborators.
   - id: COMPOSITION_OVER_INHERITANCE
@@ -2336,7 +2336,7 @@ rules:
     tier: clean_code
     severity: warning
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Group into keyword arguments or parameter object.
     languages:
     - ruby
@@ -2612,7 +2612,7 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     detect_semantic: Does a boolean cause this unit to do two different things? In a
       contract, does one condition branch into contradictory obligations?
     fix: Split into two distinct units. Each does one thing.

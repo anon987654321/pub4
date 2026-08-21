@@ -5,8 +5,7 @@ require "review/scan/rule_dsl"
 
 class TestCosmeticRules < Minitest::Test
   def test_ruby_snake_methods_flags_camel_case
-    findings = rule("RUBY_SNAKE_METHODS").check("def fetchAlbum\nend\n", path: "lib/foo.rb")
-    refute_empty findings
+    refute_empty law_findings("RUBY_SNAKE_METHODS", "def fetchAlbum\nend\n", path: "lib/foo.rb")
   end
 
   def test_en_dash_range_flags_hyphen_range_in_prose

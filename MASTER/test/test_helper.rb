@@ -66,6 +66,12 @@ Minitest::Test.class_eval do
   # Shared by every scan-rule test (test_cosmetic_rules, test_web_rules,
   # test_web_scan_fixtures, test_scan_rule_contracts) -- was copy-pasted
   # byte-identical in all four before this hoist.
+  # A rule that lives in law/ has the bridge as its scanner surface, so its
+  # contract test asserts through it (BUTTON_OVER_ANCHOR set the precedent).
+  def law_findings(id, code, path:)
+    Master::Review::Scan::Rules::LawBridgeRule.new.check(code, path:).select { |f| f[:rule] == id }
+  end
+
   def rule(id, path: nil)
     candidates = Master::Review::Scan::Rule.registry.filter_map do |klass|
       instance = klass.new

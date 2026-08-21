@@ -15,16 +15,11 @@ Law.define(:DOLLAR_PAREN) do
   good "now=$(date)"
 end
 
-# Migrated from data/rules.yml DOUBLE_BRACKET.
-Law.define(:DOUBLE_BRACKET) do
-  source "ShellCheck — [[ ]] over [ ] in bash/zsh"
-  severity :warn
-  languages %i[zsh]
-  detect { |line| line.match?(/(?<!\[)\[\s+[^\[]/) }
-  fix "Use [[ ... ]] for safe conditionals."
-  bad  "if [ -f x ]; then"
-  good "if [[ -f x ]]; then"
-end
+# DOUBLE_BRACKET lives once, in the registry (js_rules.rb): it reads the
+# shebang first — [[ ]] is a keyword in zsh/bash but not POSIX sh, so
+# telling a /bin/sh script to use it is telling it to break. A line
+# detector cannot see the shebang; the shebang-aware twin wins, the same
+# judgment that kept QUOTE_VARIABLES in the registry.
 
 # New. Restores the guard added after the 2026-01-05 incident (16 untracked
 # files batch-deleted before a conversion step) that did not survive the
@@ -68,13 +63,17 @@ end
 # read the shebang. 455 of the deep scan's 573 quoting errors were idiomatic
 # zsh flagged by a sh doctrine.
 
-# Migrated from data/rules.yml STRICT_MODE_ZSH.
+# Migrated from data/rules.yml STRICT_MODE_ZSH. The old detector demanded
+# `set -` on the line immediately after the shebang, so a comment between
+# them — the normal shape — made a strict script a finding. The registry
+# twin accepted `set -e` anywhere in the file; its reading moved here with
+# the retirement, and the good fixture pins the comment-between shape.
 Law.define(:STRICT_MODE_ZSH) do
   source "Shell strict mode set -euo pipefail (Google Shell Style Guide)"
   severity :error
   languages %i[zsh]
   scope :file
-  detect { |text| text.match?(/^#!\/.*(?:ba|z)sh\n(?!set -)/m) }
+  detect { |text| text.start_with?("#!") && !text.match?(/^\s*set\s+-[eE]/) }
   fix "Add 'set -euo pipefail' after shebang."
   bad <<~X
     #!/usr/bin/env zsh
@@ -82,6 +81,7 @@ Law.define(:STRICT_MODE_ZSH) do
   X
   good <<~X
     #!/usr/bin/env zsh
+    # what this script does
     set -euo pipefail
   X
 end

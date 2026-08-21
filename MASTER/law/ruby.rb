@@ -15,16 +15,12 @@ Law.define(:EACH_WITH_OBJECT) do
   good "items.each_with_object({}) { |i, h| h[i] = 1 }"
 end
 
-# Migrated from data/rules.yml FEW_ARGUMENTS.
-Law.define(:FEW_ARGUMENTS) do
-  source "Clean Code — minimize arguments (R.C. Martin)"
-  severity :warn
-  languages %i[ruby]
-  detect { |line| line.match?(/def \w+\([^)]*,[^:)]+,[^:)]+,[^:)]+\)/) }
-  fix "Group into keyword arguments or parameter object."
-  bad  "def build(name, size, color, weight)"
-  good "def build(spec:)"
-end
+# FEW_ARGUMENTS lives once, in the registry (universal_rules.rb): it splits
+# the parameter list and counts only positionals, where this regex counted
+# keywords, defaults, splats and blocks as arguments too — a def with four
+# keyword args is the fix, not the offence. KEYWORD_ARGS folds into it: two
+# ids counted the same parameter list, one at :warn and one at :info, so the
+# same def carried two findings that differed only in name.
 
 # Migrated from data/rules.yml FROZEN_STRING_LITERAL.
 Law.define(:FROZEN_STRING_LITERAL) do
@@ -67,16 +63,10 @@ Law.define(:GUARD_CLAUSE) do
   X
 end
 
-# Migrated from data/rules.yml HASH_FETCH.
-Law.define(:HASH_FETCH) do
-  source "Ruby Style Guide — Hash#fetch over [] for required keys"
-  severity :info
-  languages %i[ruby]
-  detect { |line| line.match?(/\w+\[:\w+\]\s*\|\|/) }
-  fix "Use hash.fetch(:key, default) for nil-vs-false safety."
-  bad  "opts[:size] || 10"
-  good "opts.fetch(:size, 10)"
-end
+# HASH_FETCH lives once, in the registry (ruby_rules.rb): it excludes
+# memoization (`||=`), the string-or-symbol dual-key fallback in either key
+# order, and comparison chains that merely contain a bracket access — none
+# of which are fetch candidates, all of which this bare regex flagged.
 
 # Migrated from data/rules.yml IMMUTABLE.
 Law.define(:IMMUTABLE) do
@@ -89,27 +79,34 @@ Law.define(:IMMUTABLE) do
   good "COLORS = [:red, :blue].freeze"
 end
 
-# Migrated from data/rules.yml KERNEL_COERCION.
+# Migrated from data/rules.yml KERNEL_COERCION. The registry twin learned
+# that `(h[k] || []) << x` is append-to-default, not a coercion candidate —
+# the `(?!\s*<<)` guard moved here with the retirement.
 Law.define(:KERNEL_COERCION) do
   source "Ruby Style Guide — Integer()/Float() over to_i/to_f"
   severity :info
   languages %i[ruby]
-  detect { |line| line.match?(/(\w+)\s*\.\s*nil\?\s*\?\s*\[\]\s*:\s*\1|(\w+)\s*\|\|\s*\[\]/) }
+  path_exclude %r{/review/scan/rules/}
+  detect { |line| line.match?(/(\w+)\s*\.\s*nil\?\s*\?\s*\[\]\s*:\s*\1|(\w+)\s*\|\|\s*\[\](?!\s*<<)/) }
   fix "Use Array(x) instead of x.nil? ? [] : x"
   bad  "list.nil? ? [] : list"
-  good "Array(list)"
+  good <<~X
+    Array(list)
+    held = index[key] || [] << entry
+    errors[key] ||= []
+  X
 end
 
-# Migrated from data/rules.yml KEYWORD_ARGS.
-Law.define(:KEYWORD_ARGS) do
-  source "Ruby Style Guide — keyword args over options hash"
-  severity :info
-  languages %i[ruby]
-  detect { |line| line.match?(/def \w+\([^)]*,\s*[^:)]+,\s*[^:)]+,\s*[^:)]+\)/) }
-  fix "Use keyword arguments for clarity and safety."
-  bad  "def build(name, size, color, weight)"
-  good "def build(name:, size:, color:, weight:)"
-end
+# KEYWORD_ARGS was deleted here on 2026-08-21 — folded into FEW_ARGUMENTS
+# (see that entry above): two ids, one detector concept, double findings.
+
+# law/rails.rb was deleted here on 2026-08-21. Its four rules — FIND_EACH,
+# N_PLUS_ONE, NO_UPDATE_ATTRIBUTE, PLUCK_OVER_MAP — declared `languages
+# %i[rails]`, and FILE_LANGUAGE_MAP produces no such language: every .rb
+# file is "ruby". The four laws had never matched a single file; the
+# registry twins (ruby_rules.rb, universal_rules.rb), path-scoped to
+# /app/, were the only live implementations all along — the inert-config
+# defect, in the constitution itself. They live once, in the registry.
 
 # Migrated from data/rules.yml MIGRATION_ADD_REFERENCE_NO_FK.
 Law.define(:MIGRATION_ADD_REFERENCE_NO_FK) do
@@ -184,6 +181,7 @@ Law.define(:RESCUE_ON_DEF) do
   source "Ruby Style Guide — rescue in method definitions"
   severity :info
   languages %i[ruby]
+  path_exclude %r{/review/scan/rules/}
   scope :file
   detect { |text| text.match?(/^\s*def \w+.*\n\s*begin\n(?:.*\n)*?\s*rescue/m) }
   fix "Put rescue directly on the def block."
@@ -209,6 +207,7 @@ Law.define(:RUBY_BLOCK_DELIMITER) do
   source "Ruby Style Guide / RuboCop Style/BlockDelimiters"
   severity :info
   languages %i[ruby]
+  path_exclude %r{/review/scan/rules/}
   detect { |line| line.match?(/\bdo\b\s*(\|[^|]*\|)?[^\n]*\bend\s*$/) }
   fix "Single-line block on one line -> use { }. Reserve do/end for multi-line."
   bad  "list.each do |x| puts x end"
@@ -220,6 +219,7 @@ Law.define(:RUBY_CAMEL_CLASS) do
   source "Ruby Style Guide / RuboCop Naming/ClassAndModuleCamelCase"
   severity :warn
   languages %i[ruby]
+  path_exclude %r{/review/scan/rules/}
   detect { |line| line.match?(/^\s*(class|module)\s+([a-z]|[A-Z]\w*_)/) }
   fix "Rename to CamelCase: class Album_store -> class AlbumStore."
   bad  "class Album_store"
@@ -231,6 +231,7 @@ Law.define(:RUBY_NUMERIC_UNDERSCORE) do
   source "Ruby Style Guide / RuboCop Style/NumericLiterals"
   severity :info
   languages %i[ruby]
+  path_exclude %r{/review/scan/rules/}
   detect { |line| line.match?(/[^\d_.]\d{5,}(?![\d_])/) }
   fix "Group digits in threes: 1000000 -> 1_000_000."
   bad  "max = 1000000"
@@ -242,6 +243,7 @@ Law.define(:RUBY_SNAKE_METHODS) do
   source "Ruby Style Guide / RuboCop Naming/MethodName"
   severity :warn
   languages %i[ruby]
+  path_exclude %r{/review/scan/rules/}
   detect { |line| line.match?(/\bdef\s+[a-z][a-z0-9_]*[A-Z]/) }
   fix "Rename to snake_case: def fetchAlbum -> def fetch_album."
   bad  "def fetchAlbum"
@@ -253,32 +255,34 @@ Law.define(:RUBY_SYMBOL_TO_PROC) do
   source "Ruby Style Guide / RuboCop Style/SymbolProc"
   severity :info
   languages %i[ruby]
+  path_exclude %r{/review/scan/rules/}
   detect { |line| line.match?(/\{\s*\|(\w+)\|\s*\1\.[a-z_]+\s*\}/) }
   fix "Collapse { |x| x.name } -> (&:name)."
   bad  "names = users.map { |u| u.name }"
   good "names = users.map(&:name)"
 end
 
-# Migrated from data/rules.yml RUBY_TERNARY_NOT_NESTED.
-Law.define(:RUBY_TERNARY_NOT_NESTED) do
-  source "Ruby Style Guide / RuboCop Style/NestedTernaryOperator"
-  severity :warn
-  languages %i[ruby]
-  detect { |line| line.match?(/\?[^?:\n]*\?[^?:\n]*:[^?:\n]*:/) }
-  fix "Expand nested ternary to if/elsif/else or a case."
-  bad  "a ? b ? c : d : e"
-  good "a ? b : c"
-end
+# RUBY_TERNARY_NOT_NESTED lives once, in the registry (cosmetic_rules.rb):
+# it parses with Prism and asks the AST whether a ternary branch holds a
+# ternary. This regex counted `?` and `:` characters, so a string literal
+# containing a question mark or a hash colon made any ternary "nested".
 
-# Migrated from data/rules.yml SAFE_NAVIGATION.
+# Migrated from data/rules.yml SAFE_NAVIGATION. The registry twin learned
+# that `a && a.count > b` is a comparison, not a nil-guard to collapse —
+# `a&.count > b` raises on nil where the original short-circuits. The
+# comparison/ternary guard moved here with the retirement.
 Law.define(:SAFE_NAVIGATION) do
   source "Ruby Style Guide / RuboCop Style/SafeNavigation"
   severity :warn
   languages %i[ruby]
-  detect { |line| line.match?(/(\w+)\s*&&\s*\1\.\w+/) }
+  path_exclude %r{/review/scan/rules/}
+  detect { |line| line.match?(/(\w+)\s*&&\s*\1\.\w+/) && !line.match?(/[!=<>]=|[<>]|\?\s*\w/) }
   fix "Rewrite to x&.foo&.bar"
   bad  "user && user.name"
-  good "user&.name"
+  good <<~X
+    user&.name
+    ok if list && list.size > 3
+  X
 end
 
 # Migrated from data/rules.yml SINGLE_PRIVATE_SECTION.
@@ -333,6 +337,7 @@ Law.define(:USE_THEN) do
   source "Ruby idiom — Object#then (yield_self) for pipelines"
   severity :info
   languages %i[ruby]
+  path_exclude %r{/review/scan/rules/}
   scope :file
   detect { |text| text.match?(/(\w+)\s*=\s*\w+\(.*\)\n\s*\w+\(\1\)/m) }
   fix "Chain with .then { |r| next_step(r) }"

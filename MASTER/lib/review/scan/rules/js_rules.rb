@@ -31,39 +31,17 @@ module Master
           end
         end
 
-        RuleDSL.rule :NULLISH_COALESCING,
-          severity: :info, tags: %i[READABILITY], applies_to: %i[javascript],
-          description: "use ?? over || for defaults" do |src, path:|
-          next [] if path.to_s.match?(VENDORED_JS_RE)
+        # NULLISH_COALESCING lives once, in law/javascript.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-          scan_lines(src, /(\w+)\s*\|\|\s*\w+/, message: "foo || default — use foo ?? default to avoid falsy traps")
-        end
+        # TEMPLATE_LITERALS lives once, in law/javascript.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :TEMPLATE_LITERALS,
-          severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
-          description: "use template literals over concatenation" do |src, path:|
-          next [] if path.to_s.match?(VENDORED_JS_RE)
+        # ASYNC_AWAIT lives once, in law/javascript.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-          scan_lines(src, /["']\s*\+\s*\w+\s*\+\s*["']/,
-                     message: "string concatenation — use template literal \`…\${var}…\`")
-        end
-
-        RuleDSL.rule :ASYNC_AWAIT,
-          severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
-          description: "prefer async/await over .then chains" do |src, path:|
-          next [] if path.to_s.match?(VENDORED_JS_RE)
-
-          scan_lines(src, /\.then\(.*\.then\(.*\.then\(/, message: "3+ .then chain — convert to async/await")
-        end
-
-        RuleDSL.rule :FOR_OF,
-          severity: :error, tags: %i[CORRECTNESS], applies_to: %i[javascript],
-          description: "use for...of instead of for...in for arrays" do |src, path:|
-          next [] if path.to_s.match?(VENDORED_JS_RE)
-
-          scan_lines(src, /for\s*\(\s*(const|let|var)\s+\w+\s+in\s+/,
-            message: "for...in iterates keys — use for...of for array values")
-        end
+        # FOR_OF lives once, in law/javascript.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
         RuleDSL.rule :QUOTE_VARIABLES,
           severity: :error, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
           description: "quote $variables where the shell word-splits" do |src, path:|
@@ -129,13 +107,8 @@ module Master
           scan_lines(src, /(?<!\[)\[\s+[^\[]/, message: "[ ] test — use [[ ]] in zsh")
         end
 
-        RuleDSL.rule :NO_VAR,
-          severity: :error, tags: %i[CORRECTNESS], applies_to: %i[javascript],
-          description: "var is function-scoped and hoisted — use const or let" do |src, path:|
-          next [] if path.to_s.match?(VENDORED_JS_RE)
-
-          scan_lines(src, /\bvar\s+\w/, message: "var declaration — use const (default) or let (when reassigned)")
-        end
+        # NO_VAR lives once, in law/javascript.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
         RuleDSL.rule :JS_MODULE_SIZE,
           severity: :warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],

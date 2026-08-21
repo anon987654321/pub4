@@ -11,28 +11,11 @@ module Master
         #   MEANINGFUL_NAMES, WHY_NOT_WHAT
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
 
-        RuleDSL.rule :NO_MULTIPLE_LANGUAGES,
-          severity: :warning, tags: %i[SMALL_PARTS],
-          description: "one medium per artifact" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          # `<%` in a .erb file is the medium, not a mixture of media. No Rails
-          # view can be written without it, and a rule whose zero is unreachable
-          # measures nothing — it was 6,619 of the 14,552 findings across RAILS,
-          # every one of them on a template being a template. An inline <script>
-          # or <style> is still a second language in the file, whatever the file.
-          scan_lines(src, path.to_s.end_with?(".erb") ? /<script\b|<style\b/ : /<%|<script\b|<style\b/, message: "mixed medium — extract to a dedicated file")
-        end
+        # NO_MULTIPLE_LANGUAGES lives once, in law/css.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :SAFE_NAVIGATION,
-          severity: :warning, tags: %i[READABILITY],
-          description: "use null-safe navigation over nil-guard && chains" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          src.each_line.with_index(1).filter_map do |line, n|
-            next unless line.match?(/(\w+)\s*&&\s*\1\.\w+/)
-            next if line.match?(/[!=<>]=|[<>]|\?\s*\w/)
-            finding(line: n, message: "nil-guard chain — use safe navigation (&.) or (?.) instead")
-          end
-        end
+        # SAFE_NAVIGATION lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
         RuleDSL.rule :FEW_ARGUMENTS,
           severity: :warning, tags: %i[SMALL_PARTS],
@@ -215,29 +198,11 @@ module Master
           end
         end
 
-      # Detects 2+ spaces before hash rocket, assignment, or inline comment to
-      # catch column-alignment padding. Skips heredocs, string content, and
-      # lines that are themselves just operators.
-        RuleDSL.rule :NO_COLUMN_ALIGN,
-          severity: :info, tags: %i[DENSITY],
-          description: "one space before operators — no column padding" do |src, path:|
-          src.each_line.with_index(1).filter_map do |line, n|
-            stripped = line.strip
-            next if stripped.start_with?("#", "//", "*")
-            next if stripped.match?(/\A[-=]+\z/)
-            next unless stripped.match?(/\S {2,}(?:=>|[^=!<>]=[^=>]|:\s)/)
-            finding(line: n, message: "column alignment — one space before operators; padding decays and hides diffs")
-          end
-        end
+        # NO_COLUMN_ALIGN lives once, in law/universal.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :STRICT_MODE_ZSH,
-          severity: :error, tags: %i[ROBUSTNESS], applies_to: %i[zsh bash sh],
-          description: "set -euo pipefail at script top" do |src, path:|
-          next [] unless path.to_s.end_with?(".zsh", ".sh")
-          next [] if src.match?(/^\s*set\s+-[eE]/m)
-
-          [finding(line: 1, message: "missing set -euo pipefail after shebang")]
-        end
+        # STRICT_MODE_ZSH lives once, in law/shell.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
         RuleDSL.rule :CONTROL_CHARS,
           severity: :error, tags: %i[ROBUSTNESS],

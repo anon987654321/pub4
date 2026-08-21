@@ -25,7 +25,10 @@ end
 Law.define(:LOGICAL_PROPERTIES) do
   source "CSS Logical Properties and Values (W3C)"
   severity :info
-  languages %i[css]
+  # scss too: the fleet's styles are authored in .scss, and a css-only scope
+  # made this law inert everywhere it mattered — the registry twin was the
+  # live one until its retirement carried the language here.
+  languages %i[css scss]
   detect { |line| line.match?(/(margin|padding)-(left|right):/) }
   fix "Use margin-inline-start/end, padding-inline-start/end."
   bad  "margin-left: 8px;"
@@ -71,15 +74,19 @@ Law.define(:NO_IMPORT_SCSS) do
   good "@use \"base\";"
 end
 
-# Migrated from data/rules.yml NO_LONG_TRANSITION.
+# Migrated from data/rules.yml NO_LONG_TRANSITION. The registry twin found
+# with its own fixture (2026-08-07) that the duration is rarely the first
+# token — `transition: opacity 500ms var(--ease-out)` is the normal
+# shorthand, and anchoring to the colon missed every one. Its detector and
+# that fixture moved here with the retirement.
 Law.define(:NO_LONG_TRANSITION) do
   source "style.yml motion budget / FrontendRuleSet MOTION"
   severity :warn
-  languages %i[css]
-  detect { |line| line.match?(/transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/) }
+  languages %i[css scss]
+  detect { |line| line.match?(/transition(?:-duration)?\s*:[^;]*?\b(?:[4-9]\d\d|\d{4,})\s*ms/i) }
   fix "Keep transitions ≤300ms."
-  bad  "transition-duration: 600ms;"
-  good "transition-duration: 200ms;"
+  bad  ".card { transition: opacity 500ms var(--ease-out); }"
+  good ".card { transition: opacity var(--transition-fast) var(--ease-out); }"
 end
 
 # One language per layer: a query language inside Ruby, markup inside
@@ -96,11 +103,16 @@ end
 # The genuine html case — an inline script or style block, five files in the
 # whole tree — is NO_INLINE_SCRIPT_BLOCK, where the detector can be honest about
 # what it wants instead of catching a language marker by accident.
+# The registry twin retired 2026-08-21: its non-erb branch duplicated this
+# detector and its erb branch duplicated NO_INLINE_SCRIPT_BLOCK. The bare
+# `SQL|HEREDOC` word-match retired with it — it fired on every heredoc
+# closing delimiter and on prose that mentioned SQL; only an opening heredoc
+# tag smuggles a grammar in.
 Law.define(:NO_MULTIPLE_LANGUAGES) do
   source "MASTER-native (one language per file)"
   severity :warn
   languages %i[ruby javascript css scss zsh]
-  detect { |line| line.match?(/<%|<script|<style|SQL|HEREDOC/) }
+  detect { |line| line.match?(/<%|<script\b|<style\b|<<[~-]?["'`]?(?:SQL|HTML|CSS|JS|JAVASCRIPT)\b/) }
   fix "One language per layer. Separate into distinct files or clearly demarcated sections."
   bad  "rows = connection.exec(<<~SQL)"
   good "rows = connection.exec(query)"

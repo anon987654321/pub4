@@ -4,22 +4,11 @@
 # Was 15 one-rule files; Law.load_all and every fixture proof are
 # unchanged by the grouping (2026-08-19 file-sprawl consolidation).
 
-# Migrated from data/rules.yml DEAD_CODE.
-Law.define(:DEAD_CODE) do
-  source "Refactoring — remove dead code (Fowler) / Clean Code"
-  severity :warn
-  scope :file
-  detect { |text| text.match?(/(?:return|exit|raise|throw)\b(?![^\n]*\b(?:if|unless)\b)[^\n]*\n\s*\w+/m) }
-  fix "Remove code after return/exit/raise/throw."
-  bad <<~X
-    return x
-    cleanup
-  X
-  good <<~X
-    return x if done
-    cleanup
-  X
-end
+# DEAD_CODE lives once, in the registry (ruby_rules.rb): it anchors the
+# terminator to the line start, walks indentation to tell a dedent (block
+# over, next line reachable) from a continuation, and knows else/elsif/when/
+# rescue/ensure open new reachability. This file regex called `x = return_val`
+# a terminator and every method's last line unreachable.
 
 # Migrated from data/rules.yml FAIL_VISIBLY. Folds BARE_RESCUE (identical detector).
 Law.define(:FAIL_VISIBLY) do
@@ -59,15 +48,11 @@ Law.define(:GUARD_EXPENSIVE_OPS) do
   good "user.sessions.delete_all"
 end
 
-# Migrated from data/rules.yml LAW_OF_DEMETER. Folds MESSAGE_CHAIN (identical detector).
-Law.define(:LAW_OF_DEMETER) do
-  source "Law of Demeter (Ian Holland, Northeastern, 1987)"
-  severity :warn
-  detect { |line| line.match?(/\w+\.\w+\.\w+\.\w+/) }
-  fix "Add delegate method. Talk only to direct collaborators."
-  bad  "order.customer.address.city"
-  good "order.shipping_city"
-end
+# LAW_OF_DEMETER lives once, in the registry (universal_rules.rb), which
+# folds MESSAGE_CHAIN: it excludes numeric dot-chains (1.2.3.4 is an IP,
+# not a message chain), stdlib transformation chains (.to_s.strip.empty? is
+# idiomatic), and re-tests after blanking strings and parens. This bare
+# regex flagged every version number and gem constraint in the tree.
 
 # Migrated from data/rules.yml MEANINGFUL_NAMES.
 Law.define(:MEANINGFUL_NAMES) do
@@ -79,25 +64,21 @@ Law.define(:MEANINGFUL_NAMES) do
   good "user_profile = load"
 end
 
-# Migrated from data/rules.yml NO_COLUMN_ALIGN.
+# Migrated from data/rules.yml NO_COLUMN_ALIGN. The registry twin skipped
+# block-comment continuations (`* …`) and ruler lines; both guards moved
+# here with the retirement.
 Law.define(:NO_COLUMN_ALIGN) do
   source "Ruby Style Guide / RuboCop Layout — no token alignment"
   severity :info
-  detect { |line| line.match?(/\S {2,}(?:=>|[^=!<>]=[^=>]|:\s)/) }
+  detect { |line| (s = line.strip) && !s.start_with?("*") && !s.match?(/\A[-=]+\z/) && line.match?(/\S {2,}(?:=>|[^=!<>]=[^=>]|:\s)/) }
   fix "Remove padding; one space before operators. Column alignment decays and hides diffs."
   bad  "name    = 1"
   good "name = 1"
 end
 
-# Migrated from data/rules.yml NO_FLAG_ARGUMENTS.
-Law.define(:NO_FLAG_ARGUMENTS) do
-  source "Clean Code — no flag arguments (Robert C. Martin)"
-  severity :warn
-  detect { |line| line.match?(/def \w+\([^)]*\btrue\b|def \w+\([^)]*\bfalse\b/) }
-  fix "Split into two distinct units. Each does one thing."
-  bad  "def render(doc, true)"
-  good "def render(doc)"
-end
+# NO_FLAG_ARGUMENTS lives once, in the registry (universal_rules.rb): only
+# a positional boolean default is a flag argument; a keyword default
+# (stream: false) is fine API design, and this bare regex flagged every one.
 
 # Migrated from data/rules.yml NULL_BLINDNESS. The second retired twin: the
 # registry version's regex flagged IS NULL — the correct form its own message

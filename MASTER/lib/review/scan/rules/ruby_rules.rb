@@ -10,11 +10,8 @@ module Master
         #   RATE_LIMITING_MISSING, STRICT_LOADING_MISSING, TRANSFORM_KEYS
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
 
-        RuleDSL.rule :SINGLE_PRIVATE_SECTION,
-          severity: :info, tags: %i[SMALL_PARTS], applies_to: %i[ruby],
-          description: "one private section at bottom" do |src, path:|
-          scan_lines(src, /private\s+:\w+/, message: "inline private call — gather private methods at bottom")
-        end
+        # SINGLE_PRIVATE_SECTION lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
         # principle_map: strong_parameters (detects mass_assignment_risk). Two
         # distinct failures, one rule: permit! waives the whitelist wholesale,
@@ -34,19 +31,11 @@ module Master
           blanket + raw
         end
 
-        RuleDSL.rule :EACH_WITH_OBJECT,
-          severity: :warning, tags: %i[READABILITY], applies_to: %i[ruby],
-          description: "prefer each_with_object over inject for hash building" do |src, path:|
-          scan_lines(src, /\.(inject|reduce)\(\s*\{\s*\}\s*\)/, message: "use each_with_object({}) over inject({})")
-        end
+        # EACH_WITH_OBJECT lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :KERNEL_COERCION,
-          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
-          description: "use Array(), Hash(), String() coercions" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          scan_lines(src, /(\w+)\s*\|\|\s*\[\](?!\s*<<)/,
-            message: "nil-or-empty array — prefer Array(foo) for nil-safe coercion")
-        end
+        # KERNEL_COERCION lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
         RuleDSL.rule :HASH_FETCH,
           severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
@@ -71,15 +60,8 @@ module Master
           end
         end
 
-        RuleDSL.rule :IMMUTABLE,
-          severity: :info, tags: %i[PERFORMANCE], applies_to: %i[ruby],
-          description: "default to immutable data" do |src, path:|
-          src.each_line.with_index(1).filter_map do |line, n|
-            next unless line.match?(/^\s*[A-Z][A-Z_]*\s*=\s*[\[{].*[\]}]/)
-            next if line.match?(/\.freeze/)
-            finding(line: n, message: "mutable constant — append .freeze")
-          end
-        end
+        # IMMUTABLE lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
         RuleDSL.rule :FIND_EACH,
           severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],
@@ -103,18 +85,9 @@ module Master
           scan_lines(src, /\.\w+\.map\(&:\w+\)/, message: "use pluck(:column) to avoid loading full objects")
         end
 
-        RuleDSL.rule :KEYWORD_ARGS,
-          severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
-          description: "keyword arguments for 3+ parameters" do |src, path:|
-          src.each_line.with_index(1).filter_map do |line, number|
-            next unless (match = line.match(/\bdef\s+\w+\(([^)]*)\)/))
-
-            positional = match[1].split(",").map(&:strip).reject do |arg|
-              arg.empty? || arg.start_with?("*", "&") || arg.include?(":")
-            end
-            finding(line: number, message: "3+ positional args — use keyword arguments") if positional.size >= 3
-          end
-        end
+        # KEYWORD_ARGS was deleted here on 2026-08-21 — folded into FEW_ARGUMENTS
+        # (universal_rules.rb): two ids counted the same parameter list, one at
+        # :warn and one at :info, and every 3+-positional def carried both.
 
         RuleDSL.rule :DEAD_CODE,
           severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],

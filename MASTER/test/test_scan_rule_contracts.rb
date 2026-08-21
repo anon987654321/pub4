@@ -125,11 +125,19 @@ class TestScanRuleContracts < Minitest::Test
   end
 
   def test_strict_mode_zsh_rule_flags_missing_set_e
-    assert_finding rule("STRICT_MODE_ZSH"), "#!/usr/bin/env zsh\necho ok\n", "script.zsh", "missing set"
+    refute_empty law_findings("STRICT_MODE_ZSH", "#!/usr/bin/env zsh\necho ok\n", path: "script.zsh")
   end
 
-  def test_keyword_args_rule_flags_three_positionals
-    assert_finding rule("KEYWORD_ARGS"), "def call(a, b, c)\nend\n", "args.rb", "positional args"
+  # A comment between the shebang and `set -euo pipefail` is the normal
+  # shape; the pre-retirement law demanded set on the very next line.
+  def test_strict_mode_zsh_accepts_set_e_after_a_comment
+    assert_empty law_findings("STRICT_MODE_ZSH", "#!/usr/bin/env zsh\n# header\nset -euo pipefail\n", path: "script.zsh")
+  end
+
+  # KEYWORD_ARGS folded into FEW_ARGUMENTS (2026-08-21): one parameter
+  # list, one id. The contract it pinned moves to the surviving rule.
+  def test_few_arguments_rule_flags_three_positionals
+    assert_finding rule("FEW_ARGUMENTS"), "def call(a, b, c)\nend\n", "args.rb", "positional args"
   end
 
   def test_few_arguments_rule_allows_keyword_arguments

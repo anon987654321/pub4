@@ -4,16 +4,11 @@
 # Was 3 one-rule files; Law.load_all and every fixture proof are
 # unchanged by the grouping (2026-08-19 file-sprawl consolidation).
 
-# Migrated from data/rules.yml EN_DASH_RANGE.
-Law.define(:EN_DASH_RANGE) do
-  source "Bringhurst, Elements of Typographic Style — en dash for ranges"
-  severity :info
-  languages %i[prose markdown]
-  detect { |line| line.match?(/\b\d+\s?-\s?\d+\b/) }
-  fix "Ranges take an en dash, not a hyphen: 45-75 -> 45–75."
-  bad  "The measure should be 45-75 characters."
-  good "The measure should be 45–75 characters."
-end
+# EN_DASH_RANGE lives once, in the registry (cosmetic_rules.rb): it also
+# covers yaml and html, skips YAML list items and rule-id lines, and —
+# decisive here — `prose` is not a language FILE_LANGUAGE_MAP produces, so
+# half this law's declared scope never matched a file (Bringhurst's credit
+# rides with the registry version).
 
 # Migrated from data/rules.yml PROSE_ACTIVE_VOICE.
 Law.define(:PROSE_ACTIVE_VOICE) do

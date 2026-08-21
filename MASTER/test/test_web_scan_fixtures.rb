@@ -4,18 +4,15 @@ require_relative "test_helper"
 require "review/scan/rule_dsl"
 
 class TestWebScanFixtures < Minitest::Test
-  # BUTTON_OVER_ANCHOR lives once, in law/ — its scanner surface is the
-  # bridge, so its fixture asserts through it.
-  def law_findings(id, code, path:)
-    Master::Review::Scan::Rules::LawBridgeRule.new.check(code, path:).select { |f| f[:rule] == id }
-  end
+  # law_findings hoisted to test_helper 2026-08-21: the twin retirement moved
+  # enough rules to law/ that three test files assert through the bridge.
 
   def test_html_lang_flags_missing_lang
     assert_finding rule("HTML_LANG"), "<html><body></body></html>", "page.html", "lang="
   end
 
   def test_meta_charset_flags_missing_charset
-    assert_finding rule("META_CHARSET"), "<html><head><title>x</title></head></html>", "page.html", "charset"
+    refute_empty law_findings("META_CHARSET", "<html><head><title>x</title></head></html>", path: "page.html")
   end
 
   def test_img_alt_flags_missing_alt
@@ -43,7 +40,7 @@ class TestWebScanFixtures < Minitest::Test
   end
 
   def test_no_var_flags_var_in_js
-    assert_finding rule("NO_VAR"), "var count = 1;\n", "app.js", "var "
+    refute_empty law_findings("NO_VAR", "var count = 1;\n", path: "app.js")
   end
 
   def test_clean_layout_passes_core_rules
@@ -62,9 +59,8 @@ class TestWebScanFixtures < Minitest::Test
       </html>
     HTML
 
-    %w[HTML_LANG META_CHARSET].each do |id|
-      assert_empty rule(id).check(code, path: "clean.html"), "expected no #{id} findings"
-    end
+    assert_empty rule("HTML_LANG").check(code, path: "clean.html"), "expected no HTML_LANG findings"
+    assert_empty law_findings("META_CHARSET", code, path: "clean.html"), "expected no META_CHARSET findings"
     assert_empty rule("IMG_ALT").check(code, path: "clean.html"), "expected no IMG_ALT findings"
     assert_empty law_findings("BUTTON_OVER_ANCHOR", code, path: "clean.html"), "expected no BUTTON_OVER_ANCHOR findings"
   end

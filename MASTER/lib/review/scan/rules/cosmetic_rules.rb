@@ -10,7 +10,6 @@ module Master
 
         ABBREV_IDENT_RE = /\b(?:def|class|module|\|)\s+.*\b(tmp|idx|cfg|ctx|num|val|obj|str|arr|buf|temp|ret)\b/.freeze
         EN_DASH_RANGE_RE = /\b\d+\s?-\s?\d+\b/.freeze
-        NUMERIC_UNDERSCORE_RE = /[^\d_.]\d{5,}(?![\d_])/.freeze
 
         module_function
 
@@ -43,48 +42,20 @@ module Master
           branches.any? { |expr| expr.is_a?(Prism::IfNode) && expr.if_keyword.nil? }
         end
 
-        RuleDSL.rule :RUBY_SNAKE_METHODS,
-          severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
-          description: "methods use snake_case, never camelCase" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          scan_lines(src, /\bdef\s+[a-z][a-z0-9_]*[A-Z]/,
-            message: "camelCase method name — use snake_case: def fetch_album")
-        end
+        # RUBY_SNAKE_METHODS lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :RUBY_CAMEL_CLASS,
-          severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
-          description: "classes and modules use CamelCase without underscores" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          scan_lines(src, /^\s*(class|module)\s+([a-z]|[A-Z]\w*_)/,
-            message: "class/module name — use CamelCase without underscores")
-        end
+        # RUBY_CAMEL_CLASS lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :RUBY_NUMERIC_UNDERSCORE,
-          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
-          description: "large numeric literals use underscore grouping" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          src.each_line.with_index(1).filter_map do |line, number|
-            next if line.strip.start_with?("#")
-            next unless line.match?(NUMERIC_UNDERSCORE_RE)
-            finding(line: number, message: "large literal — group digits: 1_000_000 not 1000000")
-          end
-        end
+        # RUBY_NUMERIC_UNDERSCORE lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :RUBY_SYMBOL_TO_PROC,
-          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
-          description: "use &:method for single-method blocks" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          scan_lines(src, /\{\s*\|(\w+)\|\s*\1\.[a-z_]+\s*\}/,
-            message: "single-method block — collapse to &:method")
-        end
+        # RUBY_SYMBOL_TO_PROC lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :RUBY_BLOCK_DELIMITER,
-          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
-          description: "braces for single-line blocks, do/end for multi-line" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          scan_lines(src, /\bdo\b\s*(\|[^|]*\|)?[^\n]*\bend\s*$/,
-            message: "single-line do/end — use { } delimiters")
-        end
+        # RUBY_BLOCK_DELIMITER lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
         RuleDSL.rule :RUBY_TERNARY_NOT_NESTED,
           severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
@@ -164,31 +135,13 @@ module Master
           [finding(line: src.lines.size, message: "missing final newline at EOF")]
         end
 
-        RuleDSL.rule :USE_THEN,
-          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
-          description: "chain pipeline transforms with .then" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          lines = src.lines
-          lines.each_with_index.filter_map do |line, index|
-            match = line.match(/(\w+)\s*=\s*(\w+)\(.*\)/)
-            next unless match
-            next if index + 1 >= lines.size
+        # USE_THEN lives once, in law/ruby.rb (2026-08-21 twin retirement).
+        # The copy that stood here required the SAME function on both lines
+        # (`r = parse(src)` then `parse(r)`) and so never fired on the pipeline
+        # shape it was written for; the law fixture pins the real one.
 
-            var, callee = match[1], match[2]
-            following = lines[index + 1]
-            next unless following&.match?(/^\s*#{Regexp.escape(callee)}\(#{Regexp.escape(var)}\)/)
-            finding(line: index + 2, message: "sequential transform — chain with .then { |r| ... }")
-          end
-        end
-
-        RuleDSL.rule :RESCUE_ON_DEF,
-          severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
-          description: "rescue belongs on the def line, not wrapped in begin" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
-          next [] unless src.match?(/^\s*def\s+\w+[^\n]*\n\s*begin\b/m)
-          line = src.each_line.with_index(1).find { |l, _| l.match?(/^\s*begin\b/) }&.last || 1
-          [finding(line:, message: "begin/rescue inside def — put rescue on the def line")]
-        end
+        # RESCUE_ON_DEF lives once, in law/ruby.rb — fixtures attached, any narrowing
+        # this version had learned ported there (2026-08-21 twin retirement).
 
         # COMMENTS_AS_DEODORANT declared only a detect_semantic prompt, so it
         # cost an LLM call and reached a file only when the cheap passes had
