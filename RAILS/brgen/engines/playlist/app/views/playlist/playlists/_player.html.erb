@@ -22,7 +22,7 @@
   data-playlist-player-artist-value="<%= active&.artist %>"
   data-playlist-player-artwork-value="<%= active_art %>"
   data-playlist-player-track-id-value="<%= active&.id %>"
-  data-playlist-player-color-value="<%= local_assigns[:color] || "#00d4ff" %>"
+  data-playlist-player-color-value="<%= local_assigns[:color] || "#00d4ff" %>" <%# scan: intentional — canvas visualizer default, read by JS not the cascade %>
   data-playlist-player-comments-value="<%= (local_assigns[:comments] || []).to_json %>"
   data-playlist-player-track-comments-value="<%= (local_assigns[:track_comments] || {}).to_json %>"
   data-playlist-player-show-artwork-value="<%= (local_assigns[:show_artwork].nil? ? true : local_assigns[:show_artwork]) %>"

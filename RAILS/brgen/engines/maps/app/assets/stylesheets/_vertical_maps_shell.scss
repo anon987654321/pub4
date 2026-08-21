@@ -11,7 +11,7 @@ body.vertical-maps {
      $accent/$bg are passed rather than defaulted so this does not depend on
      whether this file or _vertical_shell.scss's @each cascades last — both
      write `body.vertical-maps` at the same specificity. */
-  @include x.dark-tokens($accent: #5b8fd4, $bg: #12151c, $surface: #12151c);
+  @include x.dark-tokens($accent: #5b8fd4, $bg: #12151c, $surface: #12151c); // scan: intentional — definition: the maps dialect instantiated with its own values
 
   /* Cool graphite cartography — aligns with vertical_accents.maps. These stay
      token references rather than literals: the include above puts the dark
@@ -105,5 +105,5 @@ body.vertical-maps .map-place-popup {
 }
 
 body.vertical-maps .map-marker span {
-  border-color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9); // scan: intentional — drawn over map tiles, not theme surfaces
 }

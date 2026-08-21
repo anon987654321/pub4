@@ -1,5 +1,16 @@
 @use "vertical_playlist_tunnel";
 
+body.vertical-playlist {
+  /* The immersive dark-glass idiom: near-black panes with white-alpha
+     hairlines, worn regardless of theme — the player is a stage, not a page.
+     Values defined once here; every pane and edge cites them. */
+  --glass: rgba(18, 18, 18, 0.94);
+  --glass-deep: rgba(8, 8, 8, 0.94);
+  --edge-soft: rgba(255, 255, 255, 0.06);
+  --edge: rgba(255, 255, 255, 0.08);
+  --edge-strong: rgba(255, 255, 255, 0.12);
+}
+
 /* Playlist — immersive vertical branding (SF Pro, radio tunnel). Core x shell hidden via _vertical_shell. */
 body.vertical-playlist {
   --font-mono: "SF Mono", Monaco, "Cascadia Code", monospace;
@@ -118,8 +129,8 @@ body.vertical-playlist .playlist-index {
   align-items: center;
   padding: 12px 16px;
   border-radius: 0;
-  background: rgba(18, 18, 18, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass);
+  border: 1px solid var(--edge);
 }
 
 .playlist-transport-play {
@@ -134,7 +145,7 @@ body.vertical-playlist .playlist-index {
 .playlist-scrub {
   height: 6px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--edge-strong);
   overflow: hidden;
 }
 
@@ -159,7 +170,7 @@ body.vertical-playlist .playlist-index {
   align-items: center;
   padding: 12px 8px;
   border: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--edge-soft);
   background: transparent;
   color: inherit;
   text-align: left;
@@ -188,7 +199,7 @@ body.vertical-playlist .playlist-index {
 
 .playlist-top-action {
   padding: 8px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--edge-strong);
   border-radius: var(--radius-pill);
   color: var(--color-accent);
   text-decoration: none;
@@ -247,7 +258,7 @@ body.vertical-playlist .playlist-index {
 }
 
 .playlist-add-comment {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--edge-strong);
   background: transparent;
   color: var(--color-text);
   border-radius: var(--radius-pill);
@@ -267,15 +278,15 @@ body.vertical-playlist .playlist-index {
   flex: 1 1 12rem;
   min-width: 0;
   padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--edge-strong);
   border-radius: var(--radius-sm);
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.4); // scan: intentional — pane-on-glass dimming, measured for this stage
   color: inherit;
 }
 
 .playlist-queue {
   margin-top: var(--space-8);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--edge);
 }
 
 .playlist-queue-heading {
@@ -322,7 +333,7 @@ body.vertical-playlist .playlist-index {
 .playlist-comments {
   margin-top: var(--space-8);
   padding-top: var(--space-6);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--edge);
 }
 
 .playlist-comments h3 {

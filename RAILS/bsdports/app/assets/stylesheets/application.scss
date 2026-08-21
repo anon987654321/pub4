@@ -21,6 +21,9 @@
 
 /* openbsd_wscons — green terminal identity (UI_REFINEMENTS §E) */
 :root {
+  /* wscons status ambers — stale data warns in the console's own voice. */
+  --status-stale-border: #b7791f;
+  --status-stale-text: #f6c453;
   @include x.app-root-tokens;
   --bg: #000000;
   --surface: #000000;
@@ -396,7 +399,7 @@ turbo-frame {
 .port-row > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
 .port-row > div code, .install-panel input, article dd code, .data-state { font-family: var(--font-mono); }
 .data-state { display: inline-flex; width: fit-content; padding: 0.15rem 0.4rem; border: 1px solid var(--border); border-radius: var(--radius-xs); color: var(--text-secondary); font-size: var(--text-xs); }
-.data-state--stale { border-color: #b7791f; color: #f6c453; }
+.data-state--stale { border-color: var(--status-stale-border); color: var(--status-stale-text); }
 .ports-purpose { max-width: 58ch; font-size: var(--text-lg); line-height: 1.5; color: var(--text); }
 kbd { padding: 0.12rem 0.35rem; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
 .install-panel { margin-block: var(--space-6); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-elevated); }

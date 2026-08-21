@@ -46,5 +46,5 @@
   transform: translateX(-50%);
   border: 6px solid transparent;
   border-top-color: var(--surface2);
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); // scan: intentional — the author's recorded 2026-07-21 exception: the arrow's only depth cue
 }

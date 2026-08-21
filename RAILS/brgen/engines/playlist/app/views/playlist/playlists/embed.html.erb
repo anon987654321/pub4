@@ -1,2 +1,2 @@
 <% content_for :title, @playlist.name %>
-<%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, embedded: true, color: (@embed_options || {})[:color] || params[:color] || "#00d4ff", comments: [], show_artwork: (@embed_options || {})[:show_artwork], compact: (@embed_options || {})[:compact], hide_branding: (@embed_options || {})[:hide_branding] %>
+<%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, embedded: true, color: (@embed_options || {})[:color] || params[:color], comments: [], show_artwork: (@embed_options || {})[:show_artwork], compact: (@embed_options || {})[:compact], hide_branding: (@embed_options || {})[:hide_branding] %>

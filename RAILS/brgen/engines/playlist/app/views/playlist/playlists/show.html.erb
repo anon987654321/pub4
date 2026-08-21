@@ -2,7 +2,7 @@
 <% content_for :json_ld, json_ld_for(@playlist, type: :music_playlist) if @playlist.public_access? %>
 
 <p class="radio-back-link"><%= link_to t("playlist.back_to_radio"), root_path %></p>
-<%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, color: params[:color] || "#00d4ff", comments: @comments, track_comments: @track_comments %>
+<%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, color: params[:color], comments: @comments, track_comments: @track_comments %>
 
 <p><%= t("playlist.set_stats", plays: @playlist.plays_count.to_i, tracks: @tracks.size, comments: @comments.size) %></p>
 

@@ -38,7 +38,7 @@
   width: var(--space-3);
   height: var(--space-3);
   border-radius: var(--radius-pill);
-  border: 2px solid rgba(255, 255, 255, .82);
+  border: 2px solid rgba(255, 255, 255, .82); // scan: intentional — drawn over map tiles, not theme surfaces
   background: var(--accent);
 }
 
@@ -102,7 +102,7 @@
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: rgba(2, 6, 23, .58);
+  background: rgba(2, 6, 23, .58); // scan: intentional — the match veil over map tiles, not theme surfaces
   z-index: 120;
   animation: matchFadeIn .18s var(--ease-out) both;
 }

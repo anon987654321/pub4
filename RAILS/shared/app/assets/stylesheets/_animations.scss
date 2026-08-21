@@ -44,7 +44,7 @@
 .animate-scale-in { animation: scaleIn 180ms var(--ease-out) both; }
 .animate-spin { animation: spin 1s var(--ease-linear) infinite; }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.2), transparent); // scan: intentional — the skeleton glint is white-alpha over any surface
   background-size: 200% 100%;
   animation: shimmer 1.4s var(--ease-linear) infinite;
 }

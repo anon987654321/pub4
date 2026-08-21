@@ -91,6 +91,14 @@
     --ease-linear: cubic-bezier(0, 0, 1, 1);
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
     --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+    /* Overlay scrims, one token per worn density. Five densities across one
+       product is the inconsistency made explicit rather than hidden — unifying
+       them is now a one-line-each edit, and a design decision, not archaeology. */
+    --scrim-45: rgb(0 0 0 / 0.45);
+    --scrim-50: rgb(0 0 0 / 0.5);
+    --scrim-55: rgb(0 0 0 / 0.55);
+    --scrim-65: rgb(0 0 0 / 0.65);
+    --scrim-72: rgb(0 0 0 / 0.72);
     --z-canvas: 1;
     --z-chrome: 10;
     --z-ui: 90;

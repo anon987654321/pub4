@@ -50,9 +50,9 @@
 .radio-nav-btn {
   padding: 8px 12px;
   border-radius: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--scrim-65);
   color: var(--color-text);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--edge-strong);
   font-size: var(--text-sm);
   text-decoration: none;
   cursor: pointer;
@@ -74,9 +74,9 @@
      contrast to hold. Measured where the probe sampled (#4a4a4b) the themed ink
      gave 1.30:1 for the track title and 3.59:1 for the note icon, both below AA.
      A solid #14141a gives 12.77 and 7.44 and cannot drift with the animation. */
-  color: #d8d6e0;
+  color: #d8d6e0; // scan: intentional — stage type on glass, not theme text
   font-family: var(--font-mono);
-  background: #14141a;
+  background: #14141a; // scan: intentional — the tunnel floor, not a theme surface
   border-radius: 0;
   padding: 0.25rem 0.75rem;
 }
@@ -197,8 +197,8 @@
   width: min(360px, 92vw);
   height: 100dvh;
   z-index: 120;
-  background: rgba(8, 8, 8, 0.94);
-  border-inline-start: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass-deep);
+  border-inline-start: 1px solid var(--edge);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -214,7 +214,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-6);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--edge);
 }
 
 .radio-library-header h2 {
@@ -244,13 +244,13 @@
   flex-direction: column;
   gap: 4px;
   padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--edge-soft);
   color: inherit;
   text-decoration: none;
 }
 
 .radio-library-item:hover {
-  background: rgba(78, 205, 196, 0.08);
+  background: rgba(78, 205, 196, 0.08); // scan: intentional — the tunnel's teal wash, its own stage light
 }
 
 .radio-library-item span {

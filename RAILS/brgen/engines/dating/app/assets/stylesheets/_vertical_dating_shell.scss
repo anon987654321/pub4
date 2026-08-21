@@ -85,7 +85,7 @@ body.vertical-dating .nearby-chat-widget {
   cursor: grab;
   touch-action: pan-y;
   user-select: none;
-  transition: opacity 420ms var(--ease-out), transform 420ms var(--ease-spring);
+  transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-spring);
 }
 
 .dating-intro:active {

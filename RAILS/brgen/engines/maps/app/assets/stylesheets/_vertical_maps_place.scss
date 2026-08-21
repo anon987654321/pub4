@@ -21,7 +21,7 @@ body.vertical-maps article.place dl {
   gap: 0.35rem 1rem;
   padding: 1rem;
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.04); // scan: intentional — white-alpha lift on the maps night shell
   border: 0;
 }
 
@@ -68,7 +68,7 @@ body.vertical-maps .place-list {
 body.vertical-maps .place-card {
   padding: 0.85rem 1rem;
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.04); // scan: intentional — white-alpha lift on the maps night shell
   border: 0;
 }
 

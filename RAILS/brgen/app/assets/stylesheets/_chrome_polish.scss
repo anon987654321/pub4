@@ -367,7 +367,7 @@ body.vertical-tv .duration-chip {
   inset-inline-end: var(--space-2xs);
   padding: 0.1rem 0.35rem;
   font: var(--weight-bold) 0.7rem/1 var(--font-mono, ui-monospace, monospace);
-  background: color-mix(in srgb, #000 72%, transparent);
+  background: var(--scrim-72);
   border-radius: 2px;
 }
 body.vertical-tv .live-badge::before {
