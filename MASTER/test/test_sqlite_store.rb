@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestSqliteStore < Minitest::Test
   Store = Class.new do
-    include Master::Ground::Persistence::SqliteStore
+    include Master::Ground::SqliteStore
   end
 
   def test_opens_database_when_chmod_is_not_supported

@@ -28,7 +28,7 @@ module Master
         @pwa = PwaAudit.new(root:)
         @design = Master::Design::MobileFirstPwaProfiles.new
         @routes_views = RoutesViewsAudit.new(root:)
-        @catalog = Master::Ground::RepoMining::MobileWebClusterCatalog.new
+        @catalog = Master::Ground::MobileWebClusterCatalog.new
       end
 
       def call(intent:, app: nil, goal: nil)

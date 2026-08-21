@@ -75,7 +75,7 @@ module Master
   module Ground
   # WAL-mode SQLite ledger for fix quality, strategy outcomes, and RSI feedback events.
     class KnowledgeStore
-      include Master::Ground::Persistence::SqliteStore
+      include Master::Ground::SqliteStore
       include StrategyOutcomes
       include FeedbackEvents
 
