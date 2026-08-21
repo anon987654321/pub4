@@ -35,7 +35,7 @@
               <% if item.vegan? %> · <%= t("takeaway.vegan") %><% end %>
             </p>
           </hgroup>
-          <div>
+          <div class="field">
             <%= label_tag "takeaway_order_items_#{item.id}", t("takeaway.qty") %>
             <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, id: "takeaway_order_items_#{item.id}", class: "qty-field" %>
           </div>

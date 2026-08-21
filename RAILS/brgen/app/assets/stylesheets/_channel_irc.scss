@@ -1,5 +1,5 @@
 /* Channel log as an IRC transcript, not a bubble thread.
-   ------------------------------------------------------
+
    brgen already IS an IRC system underneath: Conversation::CHANNELS holds seven
    #-prefixed rooms, bots are real User rows with op/voice roles and @/+ prefixes
    (ConversationParticipant::PREFIX), humans get `Stranger #A3F1` handles, and
@@ -34,7 +34,7 @@ body.vertical-messenger #messages.channel-log {
 }
 
 /* Phone first, and the phone does not get the aligned column.
-   ----------------------------------------------------------
+
    Measured at 430x900: `19:37 <Stranger #8A0B>` is 21 mono characters, about
    164px at this size, against a 129px gutter. The nick truncated to `#8A…` and
    then wrapped underneath the timestamp, so the one thing the column exists to
@@ -201,7 +201,7 @@ body.vertical-messenger .roster-nick {
 }
 
 /* The aligned nick column, once there is width for it.
-   ----------------------------------------------------
+
    40rem (640px) is the first breakpoint where an 11.5rem gutter still leaves
    more than half the line for text. Below it the inline flow above is the
    layout; there is no third mode. */

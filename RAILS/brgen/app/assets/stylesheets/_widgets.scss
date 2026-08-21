@@ -74,7 +74,7 @@ article mark { background: var(--hover); color: var(--text-dim); padding: 1px 4p
 
 .live-badge { display: inline-block; background: var(--hover); color: var(--text-dim); font: 0.6875rem/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; padding: 1px 8px; border-radius: var(--radius); margin-inline-end: 8px; }
 
-.video-player { width: 100%; max-height: 420px; background: #000; display: block; }
+.video-player { width: 100%; max-height: 420px; background: #000; display: block; } // scan: intentional — letterbox behind video is black in every theme
 
 @media (prefers-reduced-motion: reduce) {
   *,

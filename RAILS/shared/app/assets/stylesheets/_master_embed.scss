@@ -46,7 +46,7 @@
   display: block;
   width: 100%;
   border: 0;
-  background: #000;
+  background: #000; // scan: intentional — the MASTER face renders on black in every theme
   aspect-ratio: 4 / 3;
   max-block-size: min(70vh, 560px);
 
@@ -61,7 +61,7 @@
    instead of the 560px cap the in-feed variant uses. */
 .ai-embed--bare {
   margin-inline: calc(50% - 50vw);
-  background: #000;
+  background: #000; // scan: intentional — the MASTER face renders on black in every theme
 }
 
 .ai-embed--bare .ai-embed-frame {
