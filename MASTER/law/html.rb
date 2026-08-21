@@ -3,6 +3,11 @@
 # law/html.rb — every html law, one Law.define per rule.
 # Was 20 one-rule files; Law.load_all and every fixture proof are
 # unchanged by the grouping (2026-08-19 file-sprawl consolidation).
+#
+# IMG_ALT and LAZY_IMAGES live once, in the registry (web_rules.rb): both
+# judge attributes of a tag, and a tag is not a line — the attribute-per-line
+# spelling put alt= and loading= one line below the detector, so every
+# multi-line <img> was a finding. The registry versions flatten tags first.
 
 # Migrated from data/rules.yml ARIA_INTERACTIVE.
 Law.define(:ARIA_INTERACTIVE) do
@@ -15,16 +20,10 @@ Law.define(:ARIA_INTERACTIVE) do
   good "<button onclick=\"go()\">"
 end
 
-# Migrated from data/rules.yml ARIA_LABELS.
-Law.define(:ARIA_LABELS) do
-  source "WCAG 4.1.2 Name, Role, Value (W3C/WAI)"
-  severity :warn
-  languages %i[html]
-  detect { |line| line.match?(/<(button|input|select|textarea)\s+(?![^>]*(?:aria-label|aria-labelledby|id=))/) }
-  fix "Add aria-label, aria-labelledby, or id paired with <label for>."
-  bad  "<button type=\"button\">"
-  good "<button type=\"button\" aria-label=\"close\">"
-end
+# ARIA_LABELS lives once, in the registry (web_rules.rb): its detector
+# flattens multi-line tags and honours label-wrapping before judging, and the
+# per-line duplicate here flagged every attribute-per-line control as nameless
+# — the playlist transport bar carried six labels and six findings at once.
 
 # SEMANTIC_ELEMENTS catches a div whose class is exactly a landmark name. This is
 # the other half of divitis and the more common one: a div carrying nothing at
@@ -138,28 +137,6 @@ Law.define(:I18N_COVERAGE) do
   fix "Replace literal with t('.key')."
   bad  "<p>Welcome back</p>"
   good "<p><%= t('.welcome') %></p>"
-end
-
-# Migrated from data/rules.yml IMG_ALT.
-Law.define(:IMG_ALT) do
-  source "WCAG 1.1.1 Non-text Content (W3C/WAI)"
-  severity :error
-  languages %i[html]
-  detect { |line| line.match?(/<img\s+(?![^>]*alt=)/) }
-  fix "Add alt= attribute."
-  bad  "<img src=\"a.png\">"
-  good "<img src=\"a.png\" alt=\"logo\">"
-end
-
-# Migrated from data/rules.yml LAZY_IMAGES.
-Law.define(:LAZY_IMAGES) do
-  source "Web performance — loading=\"lazy\" (web.dev / MDN)"
-  severity :info
-  languages %i[html]
-  detect { |line| line.match?(/<img\s+(?![^>]*loading=)/) }
-  fix "Add loading=\"lazy\"."
-  bad  "<img src=\"a.png\" alt=\"a\">"
-  good "<img src=\"a.png\" alt=\"a\" loading=\"lazy\">"
 end
 
 # A document that declares no encoding leaves the browser to guess, and the

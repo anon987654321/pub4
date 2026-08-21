@@ -7,7 +7,7 @@ module Master
 
         # Retired registry twins — each lives once, in law/:
         #   ARIA_INTERACTIVE, BUTTON_OVER_ANCHOR, CLAMP_TYPOGRAPHY, I18N_COVERAGE
-        #   IMG_ALT, LAZY_IMAGES, MOBILE_FIRST, NO_IMPORT_SCSS
+        #   MOBILE_FIRST, NO_IMPORT_SCSS
         #   NO_INLINE_STYLES
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
 
@@ -23,6 +23,21 @@ module Master
           description: "use semantic HTML5 elements" do |src, path:|
           scan_lines(src, /<div\s+class="(header|footer|nav|main|sidebar|article|section)"/,
             message: "use <header>/<footer>/<nav>/<main>/<aside>/<article>/<section> instead of div.class")
+        end
+
+        # IMG_ALT and LAZY_IMAGES returned from the twin batch: both judge a
+        # TAG, and law/ scans lines — the attribute-per-line spelling made
+        # every multi-line <img> a finding. tag_source flattens first.
+        RuleDSL.rule :IMG_ALT,
+          severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          description: "require alt on every <img>" do |src, path:|
+          scan_lines(tag_source(src), /<img\s+(?![^>]*alt=)/, message: "<img> missing alt= attribute")
+        end
+
+        RuleDSL.rule :LAZY_IMAGES,
+          severity: :info, tags: %i[PERFORMANCE], applies_to: %i[html],
+          description: "loading=lazy on below-fold images" do |src, path:|
+          scan_lines(tag_source(src), /<img\s+(?![^>]*loading=)/, message: "<img> missing loading=lazy")
         end
 
         RuleDSL.rule :NO_IMPORTANT,
@@ -62,6 +77,10 @@ module Master
           next [] unless path.to_s.match?(/\.(html|erb|haml|slim)\z/)
           next [] unless src.match?(/<head\b/i) || src.match?(/<html\b/i)
           next [] if src.match?(/<meta\s+charset=/i)
+          # The http-equiv spelling counts: mail clients honour it more
+          # reliably than the HTML5 short form, and the mailer layout uses it
+          # on purpose.
+          next [] if src.match?(/charset=["']?utf-8/i)
           [finding(line: 1, message: "missing <meta charset=UTF-8> — declare encoding as first element in <head>")]
         end
 
@@ -138,6 +157,9 @@ module Master
           severity: :warning, tags: %i[SEO ACCESSIBILITY], applies_to: %i[html],
           description: "one h1 per view surface" do |src, path:|
           next [] unless path.include?("/app/views/")
+          # A locale-branched page renders one h1 per request while carrying
+          # two in source; the marker names that shape.
+          next [] if src.include?("single_h1: locale-branched")
           count = src.scan(/<h1\b/i).size
           next [] if count <= 1
           [finding(line: 1, message: "#{count} <h1> tags — keep one primary heading per view")]
@@ -155,6 +177,9 @@ module Master
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           description: "layouts expose skip link to main content" do |src, path:|
           next [] unless path.include?("/app/views/layouts/")
+          # A meta/head partial in layouts/ has no body and cannot hold a skip
+          # link; only a document with a body owes one.
+          next [] unless src.match?(/<body\b/i)
           # Mailer layouts are not pages. There is no viewport to skip past, no
           # #main-content to land on, and mailer.text.erb is plain text — it asked
           # a text email for a skip link. Both SKIP_TO_MAIN findings in this repo
@@ -168,7 +193,10 @@ module Master
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           description: "async regions expose status for screen readers" do |src, path:|
           next [] unless path.include?("/app/views/")
-          next [] unless src.match?(/data-turbo-frame|turbo-frame|data-controller/i)
+          # data-controller alone is not asynchrony: a theme toggle or a logo
+          # mounts a controller and loads nothing. Only a turbo frame swaps
+          # content in later, so only a turbo frame owes a status surface.
+          next [] unless src.match?(/data-turbo-frame|turbo-frame/i)
           next [] if src.match?(/aria-live|role=["']status|loading|spinner|progress/i)
           [finding(line: 1, message: "async UI without aria-live/status — expose progress within 100ms")]
         end

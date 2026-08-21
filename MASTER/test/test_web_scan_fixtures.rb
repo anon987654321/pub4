@@ -4,8 +4,8 @@ require_relative "test_helper"
 require "review/scan/rule_dsl"
 
 class TestWebScanFixtures < Minitest::Test
-  # IMG_ALT, LAZY_IMAGES and BUTTON_OVER_ANCHOR live once, in law/ — their
-  # scanner surface is the bridge, so these fixtures assert through it.
+  # BUTTON_OVER_ANCHOR lives once, in law/ — its scanner surface is the
+  # bridge, so its fixture asserts through it.
   def law_findings(id, code, path:)
     Master::Review::Scan::Rules::LawBridgeRule.new.check(code, path:).select { |f| f[:rule] == id }
   end
@@ -19,11 +19,19 @@ class TestWebScanFixtures < Minitest::Test
   end
 
   def test_img_alt_flags_missing_alt
-    refute_empty law_findings("IMG_ALT", '<img src="logo.png">', path: "page.html")
+    assert_finding rule("IMG_ALT"), '<img src="logo.png">', "page.html", "alt="
+  end
+
+  # The tag, not the line: attribute-per-line markup and ERB inside an
+  # attribute both defeated the per-line law twin (its lookahead stopped at
+  # the %> of an interpolation), which is why these two live in the registry.
+  def test_img_alt_reads_the_whole_tag
+    multi = %(<img loading="lazy"\n     src="<%= deal.image_url %>"\n     alt="ok">)
+    assert_empty rule("IMG_ALT").check(multi, path: "page.html.erb")
   end
 
   def test_lazy_images_flags_missing_loading
-    refute_empty law_findings("LAZY_IMAGES", '<img src="a.png" alt="a">', path: "page.html")
+    assert_finding rule("LAZY_IMAGES"), '<img src="a.png" alt="a">', "page.html", "loading=lazy"
   end
 
   def test_button_over_anchor_flags_hash_link
@@ -57,8 +65,7 @@ class TestWebScanFixtures < Minitest::Test
     %w[HTML_LANG META_CHARSET].each do |id|
       assert_empty rule(id).check(code, path: "clean.html"), "expected no #{id} findings"
     end
-    %w[IMG_ALT BUTTON_OVER_ANCHOR].each do |id|
-      assert_empty law_findings(id, code, path: "clean.html"), "expected no #{id} findings"
-    end
+    assert_empty rule("IMG_ALT").check(code, path: "clean.html"), "expected no IMG_ALT findings"
+    assert_empty law_findings("BUTTON_OVER_ANCHOR", code, path: "clean.html"), "expected no BUTTON_OVER_ANCHOR findings"
   end
 end
