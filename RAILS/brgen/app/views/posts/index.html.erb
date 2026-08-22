@@ -11,6 +11,11 @@
   <%= link_to t("sort.hot"), posts_path, class: "sort-tab#{" active" unless params[:sort]}" %>
   <%= link_to t("sort.fresh"), posts_path(sort: "fresh"), class: "sort-tab#{" active" if params[:sort] == "fresh"}" %>
   <%= link_to t("sort.top"), posts_path(sort: "top"), class: "sort-tab#{" active" if params[:sort] == "top"}" %>
+  <%# The lane that makes following mean something: without it the follow
+      button wrote a row nothing read. Members only — a guest has no graph. %>
+  <% if Current.user && !Current.user.guest? %>
+    <%= link_to t("sort.following"), posts_path(sort: "following"), class: "sort-tab#{" active" if params[:sort] == "following"}" %>
+  <% end %>
 </nav>
 
 <%= live_search_index url: posts_path(sort: params[:sort]), results_partial: "posts/live_search_results", placeholder: t("search.posts"), label: t("search.posts_label"), frame_id: "brgen-posts" %>

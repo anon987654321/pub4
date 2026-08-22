@@ -598,6 +598,9 @@ nb:
     submit: Post
     text_optional: Tekst (valgfritt)
   empty:
+    find_people: Finn folk i feeden
+    following_none_body: Følg folk du liker, så samles innleggene deres her.
+    following_none: Du følger ingen ennå
     add_tracks: Legg til eller importer spor for å spille.
     no_posts: Ingen innlegg
     no_posts_search: Ingen innlegg matcher søket.
@@ -715,6 +718,7 @@ nb:
       søk).'
     coach_dismiss: Skjønner
   sort:
+    following: Følger
     hot: Hot
     fresh: Fersk
     top: Topp

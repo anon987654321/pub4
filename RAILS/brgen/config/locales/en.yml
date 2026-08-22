@@ -596,6 +596,9 @@ en:
     submit: Post
     text_optional: Text (optional)
   empty:
+    find_people: Find people in the feed
+    following_none_body: Follow people you like and their posts gather here.
+    following_none: You are not following anyone yet
     add_tracks: Add or import tracks to play.
     no_posts: No posts
     no_posts_search: No posts match this search.
@@ -713,6 +716,7 @@ en:
     coach: 'Keyboard: press ? anytime for shortcuts (j/k to move, / to search).'
     coach_dismiss: Got it
   sort:
+    following: Following
     hot: Hot
     fresh: Fresh
     top: Top

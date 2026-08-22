@@ -93,6 +93,30 @@ class Post < ApplicationRecord
   scope :hot,    -> { kept.order(HOT_SQL) }
   scope :fresh,  -> { kept.order(created_at: :desc) }
   scope :top,    -> { kept.order(TOP_SQL) }
+  # The following lane is chronological ON PURPOSE: ranking what chosen people
+  # said is the fenced AI-feed-ranking horizon item; recency is the honest
+  # order for a lane whose whole point is "the people I picked".
+  scope :followed_by, lambda { |user|
+    kept.where(user_id: Follow.where(follower_id: user.id).select(:followed_id))
+        .order(created_at: :desc)
+  }
+
+  # ONE resolver for the feed lanes, used by PostsController AND the
+  # infinite-scroll reflex. They carried twin case statements over the same
+  # param before this, which is the two-implementations defect wearing a
+  # scope: a lane added to one and not the other pages differently than it
+  # renders. A signed-out "following" falls back to hot rather than raising —
+  # the tab is only rendered for signed-in members, so reaching it signed out
+  # is a crafted URL, not a flow.
+  def self.sorted_lane(sort, viewer: nil)
+    case sort
+    when "fresh" then fresh
+    when "top" then top
+    when "following" then viewer ? followed_by(viewer) : hot
+    else hot
+    end
+  end
+
   # Geo-stamped Live posts (Jodel layer). Not all posts are Live.
   scope :live,   -> { where.not(latitude: nil).where.not(longitude: nil) }
   scope :search, ->(q) {

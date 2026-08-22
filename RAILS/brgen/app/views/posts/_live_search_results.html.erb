@@ -22,10 +22,19 @@
              sort: params[:sort],
              q: params[:q] %>
 <% else %>
-  <%= render "shared/empty_state",
-        title: t("empty.no_posts"),
-        body: live_search_query.present? ? t("empty.no_posts_search") : t("empty.nothing_yet"),
-        action: live_search_query.present? ?
-          { label: t("empty.clear_search"), path: posts_path } :
-          { label: t("empty.post_to_city", city: city_name), path: new_post_path } %>
+  <% if params[:sort] == "following" && live_search_query.blank? %>
+    <%# An empty following lane is a different fact from an empty city: the
+        feed exists, the reader just has not picked anyone yet. %>
+    <%= render "shared/empty_state",
+          title: t("empty.following_none"),
+          body: t("empty.following_none_body"),
+          action: { label: t("empty.find_people"), path: posts_path } %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_posts"),
+          body: live_search_query.present? ? t("empty.no_posts_search") : t("empty.nothing_yet"),
+          action: live_search_query.present? ?
+            { label: t("empty.clear_search"), path: posts_path } :
+            { label: t("empty.post_to_city", city: city_name), path: new_post_path } %>
+  <% end %>
 <% end %>

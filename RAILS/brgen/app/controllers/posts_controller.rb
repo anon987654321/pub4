@@ -29,11 +29,7 @@ before_action :require_real_user, only: %i[edit update destroy share]
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
-    scope = case params[:sort]
-            when "fresh" then Post.fresh
-            when "top" then Post.top
-            else Post.hot
-            end
+    scope = Post.sorted_lane(params[:sort], viewer: Current.user)
     scope = Post.visible_to(Current.user).merge(scope)
     scope = scope.with_attached_image.includes(:user, :community, :votes)
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
