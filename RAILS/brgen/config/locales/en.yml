@@ -972,6 +972,7 @@ en:
     embed_no_artwork: no artwork
     embed_compact: compact clean
   marketplace:
+    buy_now_vipps: Buy with Vipps
     hero_kicker: "Buy and sell in your city"
     hero_title: "Marketplace %{city}"
     hero_lede: "Things from people who live nearby. No nationwide shipping, no middlemen — just what is a few streets away."

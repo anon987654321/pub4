@@ -8,10 +8,27 @@
     <% end %>
   </div>
   <div class="listing-buy-bar-actions">
-    <%= button_to t("marketplace.add_to_cart"),
-          listing_orders_path(@listing),
-          params: { quantity: 1 },
-          class: "btn btn-primary listing-buy-bar-cta" %>
+    <%# One click to paid (operator, 2026-08-22): the button posts straight to
+        checkout with listing_id — order created and Vipps started in the same
+        request, confirm in the app, done. Rendered only when Vipps is
+        actually configured: an unkeyed provider must be absent, not a button
+        over nothing (the vipps doctrine). Cart and offer stay as the
+        considered paths. %>
+    <% if Marketplace::Payments::VippsCheckout.configured? %>
+      <%= button_to t("marketplace.buy_now_vipps"),
+            checkout_path,
+            params: { provider: "vipps", listing_id: @listing.id },
+            class: "btn btn-primary listing-buy-bar-cta" %>
+      <%= button_to t("marketplace.add_to_cart"),
+            listing_orders_path(@listing),
+            params: { quantity: 1 },
+            class: "btn btn-ghost listing-buy-bar-secondary" %>
+    <% else %>
+      <%= button_to t("marketplace.add_to_cart"),
+            listing_orders_path(@listing),
+            params: { quantity: 1 },
+            class: "btn btn-primary listing-buy-bar-cta" %>
+    <% end %>
     <a href="#make-offer" class="btn btn-ghost listing-buy-bar-secondary"><%= t("marketplace.offer") %></a>
   </div>
 </div>

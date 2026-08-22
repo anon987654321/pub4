@@ -974,6 +974,7 @@ nb:
     embed_no_artwork: uten omslag
     embed_compact: kompakt
   marketplace:
+    buy_now_vipps: Kjøp med Vipps
     hero_kicker: "Kjøp og selg i byen din"
     hero_title: "Markedsplass %{city}"
     hero_lede: "Ting fra folk som bor i nærheten. Ingen frakt over hele landet, ingen mellomledd — bare det som finnes noen gater unna."

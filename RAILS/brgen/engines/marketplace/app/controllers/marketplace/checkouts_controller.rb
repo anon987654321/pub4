@@ -20,19 +20,31 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       return
     end
 
-    # The order of these four checks is the order a buyer should meet them in.
-    # There is nothing to pay for → say so. The provider has no credentials →
-    # say so before asking anyone to type an address. No address → ask for one.
-    # Only then is there a basket worth creating.
-    payable = params[:order_id].present? ? find_payable_order : payable_orders.presence
+    # Credentials FIRST, before any lane does work: the one-click lane below
+    # CREATES an order, and checking the provider afterwards left order debris
+    # behind every unconfigured click — caught by this lane's own test on its
+    # first run. An unkeyed provider refuses before anything exists.
+    raise Marketplace::Payments::NotConfigured, provider.capitalize unless provider_configured?(provider)
+
+    # listing_id is the ONE-CLICK lane (operator, 2026-08-22): the buy bar
+    # posts here directly and the order is created and paid in the same
+    # request — listing → Vipps app → done, one click on the site. The
+    # single-order path it joins has no address gate on purpose: classifieds
+    # delivery is negotiated between the parties, and Vipps carries the
+    # buyer's identity.
+    payable =
+      if params[:listing_id].present?
+        create_buy_now_order
+      elsif params[:order_id].present?
+        find_payable_order
+      else
+        payable_orders.presence
+      end
+    return if performed?
     unless payable
       redirect_to cart_path, alert: t("flash.marketplace.cart_not_payable")
       return
     end
-
-    # The services raise this themselves; reaching it here just means a buyer
-    # does not fill in a delivery address for a payment that could never start.
-    raise Marketplace::Payments::NotConfigured, provider.capitalize unless provider_configured?(provider)
 
     payable = build_basket(payable) if payable.is_a?(Array)
     # build_basket redirects on its own when there is no delivery address —
@@ -77,6 +89,42 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   end
 
   private
+
+  # The buy bar's one-click order: same construction as OrdersController#create
+  # (variant-aware price, quantity 1) minus the offer framing — this is a
+  # purchase, not a negotiation. The seller still gets the order notification.
+  def create_buy_now_order
+    listing = Marketplace::Listing.find_by(id: params[:listing_id])
+    if listing.nil? || !listing.buyable? || listing.expired? || listing.status != "active"
+      redirect_to(listing ? listing_path(listing) : cart_path, alert: t("flash.marketplace.offer_failed"))
+      return nil
+    end
+    if listing.user_id == Current.user.id
+      redirect_to listing_path(listing), alert: t("flash.marketplace.offer_failed")
+      return nil
+    end
+
+    variant = listing.variants.find_by(id: params[:variant_id])
+    order = listing.orders.create(
+      buyer: Current.user,
+      variant: variant,
+      price_cents: variant&.price_cents_or_listing || listing.price_cents,
+      quantity: 1
+    )
+    unless order.persisted?
+      redirect_to listing_path(listing), alert: t("flash.marketplace.offer_failed")
+      return nil
+    end
+    # By id, not listing.user: the listing arrives bare-loaded and
+    # strict_loading raises on the lazy association — the same trap that hid
+    # in ModerationWorkflow#penalize_owner, caught here by this lane's test
+    # before it could reach a customer mid-payment.
+    seller = User.find_by(id: listing.user_id)
+    order.deliver_notification(seller, title: "New marketplace order",
+                                       body: "#{Current.user.display_name}: #{listing.title}") if seller
+    order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace")
+    order
+  end
 
   def provider_configured?(provider)
     case provider
