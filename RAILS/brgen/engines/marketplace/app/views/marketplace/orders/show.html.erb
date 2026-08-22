@@ -1,21 +1,29 @@
-<% content_for :title, "Order ##{@order.id}" %>
+<% content_for :title, t("marketplace.order_number", id: @order.id) %>
 <%= turbo_stream_from @conversation if @conversation %>
 
 <div class="page-header">
-  <h1>Order #<%= @order.id %></h1>
-  <p>For <%= link_to @order.listing.title, listing_path(@order.listing) %></p>
+  <h1><%= t("marketplace.order_number", id: @order.id) %></h1>
+  <p><%= t("marketplace.order_for") %> <%= link_to @order.listing.title, listing_path(@order.listing) %></p>
 </div>
 
-<div class="order-meta">
-  <p><strong>Status:</strong> <span class="chip"><%= @order.status %></span></p>
-  <p><strong>Quantity:</strong> <%= @order.quantity %></p>
-  <p><strong>Total:</strong> <%= @order.total_display %></p>
-  <p><strong>Buyer:</strong> <%= @order.buyer.display_name %></p>
-  <p><strong>Seller:</strong> <%= @order.seller.display_name %></p>
+<%# A description list, not paragraphs with bold runs: these are label/value
+    pairs, and dl is the element that says so. %>
+<dl class="order-meta">
+  <dt><%= t("marketplace.order_status") %></dt>
+  <dd><span class="chip"><%= t("marketplace.order_statuses.#{@order.status}", default: @order.status.to_s.humanize) %></span></dd>
+  <dt><%= t("marketplace.order_quantity") %></dt>
+  <dd><%= @order.quantity %></dd>
+  <dt><%= t("marketplace.order_total") %></dt>
+  <dd><%= @order.total_display %></dd>
+  <dt><%= t("marketplace.order_buyer") %></dt>
+  <dd><%= @order.buyer.display_name %></dd>
+  <dt><%= t("marketplace.order_seller") %></dt>
+  <dd><%= @order.seller.display_name %></dd>
   <% if @order.message.present? %>
-    <p><strong>Message:</strong> <%= @order.message %></p>
+    <dt><%= t("marketplace.order_message") %></dt>
+    <dd><%= @order.message %></dd>
   <% end %>
-</div>
+</dl>
 
 <% if policy(@order).update? %>
   <div class="order-actions">

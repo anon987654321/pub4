@@ -5,13 +5,16 @@
   <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
-<nav class="sort-tabs" aria-label="<%= t("aria.profile_sections") %>" role="tablist" data-controller="tabs">
-  <a href="#photos" class="sort-tab active" id="profile-photos-tab" role="tab" aria-selected="true" data-tabs-target="tab" data-tabs-hash-value="#photos" data-action="click->tabs#select">Photos</a>
+<%# A tab widget, not navigation: role="tablist" on <nav> replaced the
+    navigation landmark with a tablist, so the page lost a landmark and
+    gained a widget whose panels never claimed role="tabpanel". %>
+<div class="sort-tabs" aria-label="<%= t("aria.profile_sections") %>" role="tablist" data-controller="tabs">
+  <a href="#photos" class="sort-tab active" id="profile-photos-tab" role="tab" aria-selected="true" data-tabs-target="tab" data-tabs-hash-value="#photos" data-action="click->tabs#select"><%= t("dating.photos_tab") %></a>
   <a href="#about" class="sort-tab" id="profile-about-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tabs-hash-value="#about" data-action="click->tabs#select"><%= t("dating.about_tab") %></a>
-  <a href="#details" class="sort-tab" id="profile-details-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tabs-hash-value="#details" data-action="click->tabs#select">Details</a>
-</nav>
+  <a href="#details" class="sort-tab" id="profile-details-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tabs-hash-value="#details" data-action="click->tabs#select"><%= t("dating.details_tab") %></a>
+</div>
 
-<section data-tabs-target="panel" data-tabs-hash-value="#photos" aria-labelledby="profile-photos-tab">
+<section role="tabpanel" tabindex="0" data-tabs-target="panel" data-tabs-hash-value="#photos" aria-labelledby="profile-photos-tab">
   <% if @profile.photos.attached? %>
     <div class="photo-strip">
       <% @profile.photos.each do |photo| %>
@@ -26,7 +29,7 @@
   <% end %>
 </section>
 
-<section data-tabs-target="panel" data-tabs-hash-value="#about" aria-labelledby="profile-about-tab" hidden>
+<section role="tabpanel" tabindex="0" data-tabs-target="panel" data-tabs-hash-value="#about" aria-labelledby="profile-about-tab" hidden>
   <article>
     <% if @profile.bio.present? %>
       <%= read_more(@profile.bio, lines: 3, more: t("dating.read_bio"), less: t("dating.show_less")) %>
@@ -36,7 +39,7 @@
   </article>
 </section>
 
-<section data-tabs-target="panel" data-tabs-hash-value="#details" aria-labelledby="profile-details-tab" hidden>
+<section role="tabpanel" tabindex="0" data-tabs-target="panel" data-tabs-hash-value="#details" aria-labelledby="profile-details-tab" hidden>
   <article>
     <%# Each label/value pair is its own element so the gap can separate pairs
         rather than characters. Bare text nodes between spans would become

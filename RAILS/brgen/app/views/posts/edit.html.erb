@@ -35,14 +35,7 @@
         <button type="button" class="media-btn" data-action="click->media-picker#trigger"><%= t("posts.photo_camera") %></button>
       </div>
       <div class="media-preview" data-media-picker-target="preview"></div>
-      <div class="preset-strip">
-        <% %w[none portrait landscape street blockbuster].each do |preset| %>
-          <label class="preset-opt">
-            <%= f.radio_button :preset, preset %>
-            <%= preset.capitalize %>
-          </label>
-        <% end %>
-      </div>
+      <%= render "shared/preset_strip", f: f %>
     </div>
     <div class="field field--check">
       <%= f.check_box :anonymous %>

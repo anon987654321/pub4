@@ -88,14 +88,7 @@
         </button>
       </div>
       <div class="media-preview" data-media-picker-target="preview"></div>
-      <div class="preset-strip">
-        <% %w[none portrait landscape street blockbuster].each do |p| %>
-          <label class="preset-opt">
-            <%= f.radio_button :preset, p %>
-            <%= p.capitalize %>
-          </label>
-        <% end %>
-      </div>
+      <%= render "shared/preset_strip", f: f %>
     </div>
     <div class="field"><%= f.submit t("marketplace.list_it"), class: "btn btn-primary" %></div>
   <% end %>

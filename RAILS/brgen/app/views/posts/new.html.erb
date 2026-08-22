@@ -64,15 +64,7 @@
       <%# Five unlabelled pills wrapping onto two lines, offering to restyle a
           photo nobody had chosen yet. They belong to the image, so they appear
           with it — media-picker reveals this once a file is picked. %>
-      <fieldset class="preset-strip" data-media-picker-target="presets" hidden>
-        <legend class="preset-strip-legend">Look</legend>
-        <% %w[none portrait landscape street blockbuster].each do |p| %>
-          <label class="preset-opt">
-            <%= f.radio_button :preset, p %>
-            <%= p.capitalize %>
-          </label>
-        <% end %>
-      </fieldset>
+      <%= render "shared/preset_strip", f: f, hidden: true, picker_target: true %>
     </div>
     <% if authenticated? %>
       <div class="field field--check">

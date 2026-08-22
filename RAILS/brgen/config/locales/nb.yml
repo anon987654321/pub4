@@ -798,6 +798,8 @@ nb:
       q_song: Sangen jeg aldri blir lei
       q_weekend: Neste helg skal jeg
     about_tab: Om
+    photos_tab: Bilder
+    details_tab: Detaljer
     edit_profile: Rediger profil
     your_profile: Din profil
     create_profile: Opprett profil
@@ -973,8 +975,31 @@ nb:
     embed_red: rød
     embed_no_artwork: uten omslag
     embed_compact: kompakt
+  media:
+    preset_legend: Uttrykk
+    presets:
+      none: Ingen
+      portrait: Portrett
+      landscape: Landskap
+      street: Gate
+      blockbuster: Storfilm
   marketplace:
     buy_now_vipps: Kjøp med Vipps
+    order_number: "Ordre #%{id}"
+    order_for: Gjelder
+    order_status: Status
+    order_quantity: Antall
+    order_total: Totalt
+    order_buyer: Kjøper
+    order_seller: Selger
+    order_message: Melding
+    order_statuses:
+      pending: Venter
+      pending_payment: Venter på betaling
+      paid: Betalt
+      accepted: Godtatt
+      declined: Avslått
+      completed: Fullført
     hero_kicker: "Kjøp og selg i byen din"
     hero_title: "Markedsplass %{city}"
     hero_lede: "Ting fra folk som bor i nærheten. Ingen frakt over hele landet, ingen mellomledd — bare det som finnes noen gater unna."

@@ -797,6 +797,8 @@ en:
       q_song: The song I never tire of
       q_weekend: Next weekend I am
     about_tab: About
+    photos_tab: Photos
+    details_tab: Details
     edit_profile: Edit profile
     your_profile: Your profile
     create_profile: Create profile
@@ -971,8 +973,31 @@ en:
     embed_red: red
     embed_no_artwork: no artwork
     embed_compact: compact clean
+  media:
+    preset_legend: Look
+    presets:
+      none: None
+      portrait: Portrait
+      landscape: Landscape
+      street: Street
+      blockbuster: Blockbuster
   marketplace:
     buy_now_vipps: Buy with Vipps
+    order_number: "Order #%{id}"
+    order_for: For
+    order_status: Status
+    order_quantity: Quantity
+    order_total: Total
+    order_buyer: Buyer
+    order_seller: Seller
+    order_message: Message
+    order_statuses:
+      pending: Pending
+      pending_payment: Awaiting payment
+      paid: Paid
+      accepted: Accepted
+      declined: Declined
+      completed: Completed
     hero_kicker: "Buy and sell in your city"
     hero_title: "Marketplace %{city}"
     hero_lede: "Things from people who live nearby. No nationwide shipping, no middlemen — just what is a few streets away."

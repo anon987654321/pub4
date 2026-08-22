@@ -35,14 +35,7 @@
     <div class="field">
       <%= f.label :thumbnail %>
       <%= f.file_field :thumbnail, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>
-      <div class="preset-strip">
-        <% %w[none portrait landscape street blockbuster].each do |p| %>
-          <label class="preset-opt">
-            <%= f.radio_button :preset, p, checked: p == "blockbuster" %>
-            <%= p.capitalize %>
-          </label>
-        <% end %>
-      </div>
+      <%= render "shared/preset_strip", f: f, checked: "blockbuster" %>
       <p><%= t("tv.thumbnail_hint") %></p>
     </div>
     <div class="field"><%= f.submit t("tv.upload"), class: "btn btn-primary" %></div>

@@ -28,7 +28,10 @@
   </div>
 <% elsif @video.thumbnail.attached? %>
   <div class="tv-media">
-    <%= image_tag main_app.url_for(@video.thumbnail), class: tv_media_image_classes(@video.thumbnail), width: 1280, height: 720 %>
+    <%# alt names the video, not the still: this branch renders when the video
+        file is missing, so the poster IS the content for anyone who cannot
+        see it. %>
+    <%= image_tag main_app.url_for(@video.thumbnail), alt: @video.title, class: tv_media_image_classes(@video.thumbnail), width: 1280, height: 720 %>
   </div>
 <% end %>
 </div>
