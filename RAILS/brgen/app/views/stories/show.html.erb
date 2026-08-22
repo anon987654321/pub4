@@ -1,6 +1,6 @@
 <% content_for :title, t("stories.by", user: @story.user.display_name) %>
 
-<article class="story-viewer" role="article" aria-label="<%= t("stories.by", user: @story.user.display_name) %>">
+<article class="story-viewer" aria-label="<%= t("stories.by", user: @story.user.display_name) %>">
   <header class="story-viewer-head">
     <p>
       <%= tag.strong @story.user.display_name %>
@@ -26,7 +26,7 @@
   <% end %>
 
   <% if @ring.size > 1 %>
-    <nav class="story-ring-nav" role="navigation" aria-label="<%= t("stories.more_from", user: @story.user.display_name) %>">
+    <nav class="story-ring-nav" aria-label="<%= t("stories.more_from", user: @story.user.display_name) %>">
       <% @ring.each_with_index do |story, index| %>
         <%= link_to (index + 1), story_path(story),
               class: "chip#{" active" if story.id == @story.id}",

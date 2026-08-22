@@ -8,7 +8,7 @@
 
 <div class="page-header">
   <%= tag.h1 @restaurant.name %>
-  <nav role="navigation" aria-label="<%= t("takeaway.restaurant_actions") %>">
+  <nav aria-label="<%= t("takeaway.restaurant_actions") %>">
     <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? && @favorited %>

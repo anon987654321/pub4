@@ -33,12 +33,12 @@
 
 <h2 id="new-address"><%= t("marketplace.add_address") %></h2>
 <%= form_with model: @address, url: addresses_path, scope: :marketplace_address do |f| %>
-  <p><%= f.label :recipient, t("marketplace.address_form.recipient") %><%= f.text_field :recipient, required: true %></p>
-  <p><%= f.label :line1, t("marketplace.address_form.line1") %><%= f.text_field :line1, required: true %></p>
-  <p><%= f.label :line2, t("marketplace.address_form.line2") %><%= f.text_field :line2 %></p>
-  <p><%= f.label :postcode, t("marketplace.address_form.postcode") %><%= f.text_field :postcode, required: true %></p>
-  <p><%= f.label :city_name, t("marketplace.address_form.city") %><%= f.text_field :city_name, required: true %></p>
-  <p><%= f.label :country_code, t("marketplace.address_form.country") %><%= f.text_field :country_code, required: true, maxlength: 2 %></p>
-  <p><%= f.label :phone, t("marketplace.address_form.phone") %><%= f.telephone_field :phone %></p>
+  <p><%= f.label :recipient, t("marketplace.address_form.recipient") %><%= f.text_field :recipient, required: true, autocomplete: "name" %></p>
+  <p><%= f.label :line1, t("marketplace.address_form.line1") %><%= f.text_field :line1, required: true, autocomplete: "address-line1" %></p>
+  <p><%= f.label :line2, t("marketplace.address_form.line2") %><%= f.text_field :line2, autocomplete: "address-line2" %></p>
+  <p><%= f.label :postcode, t("marketplace.address_form.postcode") %><%= f.text_field :postcode, required: true, autocomplete: "postal-code" %></p>
+  <p><%= f.label :city_name, t("marketplace.address_form.city") %><%= f.text_field :city_name, required: true, autocomplete: "address-level2" %></p>
+  <p><%= f.label :country_code, t("marketplace.address_form.country") %><%= f.text_field :country_code, required: true, maxlength: 2, autocomplete: "country" %></p>
+  <p><%= f.label :phone, t("marketplace.address_form.phone") %><%= f.telephone_field :phone, autocomplete: "tel" %></p>
   <p><%= f.submit t("marketplace.save_address"), class: "btn btn-primary" %></p>
 <% end %>

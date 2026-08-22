@@ -4,11 +4,11 @@
 
 <% if @events.any? %>
   <%= turbo_frame_tag "events-list", target: "_top" do %>
-    <div class="event-list" id="events-list">
+    <ul class="event-list feed_list" id="events-list">
       <% @events.each do |event| %>
-        <%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %>
+        <li><%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %></li>
       <% end %>
-    </div>
+    </ul>
   <% end %>
 <% else %>
   <%= render "shared/empty_state",

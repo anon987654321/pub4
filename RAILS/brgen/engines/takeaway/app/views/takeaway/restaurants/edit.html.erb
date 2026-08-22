@@ -14,7 +14,7 @@
     <div class="field"><%= f.label :city %><%= f.text_field :city %></div>
     <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001" %></div>
     <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001" %></div>
-    <div class="field"><%= f.label :phone %><%= f.text_field :phone %></div>
+    <div class="field"><%= f.label :phone %><%= f.telephone_field :phone, autocomplete: "tel" %></div>
     <div class="field"><%= f.label :cuisine_type %><%= f.select :cuisine_type, Takeaway::Restaurant::CUISINE_TYPES, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :delivery_fee_cents, t("takeaway.delivery_fee") %><%= f.number_field :delivery_fee_cents %></div>
     <div class="field"><%= f.label :min_order_cents, t("takeaway.min_order") %><%= f.number_field :min_order_cents %></div>

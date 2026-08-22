@@ -33,7 +33,7 @@
   terms_href = respond_to?(:terms_path) ? terms_path : main_app.terms_path
   cookies_href = respond_to?(:cookies_path) ? cookies_path : main_app.cookies_path
 %>
-<footer class="site-legal" role="contentinfo">
+<footer class="site-legal">
   <nav aria-label="<%= t("legal.aria") %>">
     <%= link_to t("legal.privacy"), privacy_href %>
     <%= link_to t("legal.terms"), terms_href %>

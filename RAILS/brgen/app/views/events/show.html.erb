@@ -2,7 +2,7 @@
 <% content_for :description, truncate(@event.description.to_s, length: 160) %>
 <% content_for :og_image, seo_image_url(@event.cover) %>
 
-<article class="event-detail" role="article">
+<article class="event-detail">
   <div class="page-header">
     <hgroup>
       <p>
@@ -93,7 +93,7 @@
   </section>
 
   <% if authenticated? && Current.user.id == @event.user_id %>
-    <nav role="navigation" aria-label="<%= t("events.organiser_actions") %>">
+    <nav aria-label="<%= t("events.organiser_actions") %>">
       <%= link_to t("actions.edit"), edit_event_path(@event), class: "btn btn-ghost btn-sm" %>
       <% unless @event.cancelled? %>
         <%# Cancel, not delete: people have it in their calendar, and an event

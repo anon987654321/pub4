@@ -13,13 +13,18 @@
       label: t("search.events_label"),
       frame_id: "brgen-events" %>
 
-<section role="region" aria-label="<%= t("events.upcoming") %>">
+<%# The h2 the past section already had. Without it the page ran h1 -> h3
+    (the event cards) -> h2, so anyone navigating by heading met the section
+    structure inverted. role="region" is dropped from both: a <section> with an
+    accessible name is already one. %>
+<section aria-labelledby="events-upcoming-heading">
+  <%= tag.h2 t("events.upcoming"), id: "events-upcoming-heading" %>
   <% if @events.any? %>
-    <div class="event-list">
+    <ul class="event-list feed_list">
       <% @events.each do |event| %>
-        <%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %>
+        <li><%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %></li>
       <% end %>
-    </div>
+    </ul>
     <% if @pagy.next %>
       <%= link_to t("actions.load_more", default: "More"),
                   events_path(page: @pagy.next), rel: "next", class: "btn btn-ghost" %>
@@ -37,12 +42,12 @@
   <%# A separate strip, not mixed into the listing: an archive and a listing
       answer different questions, and interleaving them means scrolling past
       last month to find tonight. %>
-  <section role="region" aria-label="<%= t("events.past") %>">
-    <%= tag.h2 t("events.past") %>
-    <div class="event-list event-list--past">
+  <section aria-labelledby="events-past-heading">
+    <%= tag.h2 t("events.past"), id: "events-past-heading" %>
+    <ul class="event-list event-list--past feed_list">
       <% @past.each do |event| %>
-        <%= render "events/event", event: event %>
+        <li><%= render "events/event", event: event %></li>
       <% end %>
-    </div>
+    </ul>
   </section>
 <% end %>

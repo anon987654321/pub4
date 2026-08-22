@@ -9,11 +9,11 @@
 </div>
 
 <% if @listings.any? %>
-  <div class="listing-grid">
+  <ul class="listing-grid feed_list">
     <% @listings.each do |listing| %>
-      <%= render "marketplace/listings/card", listing: listing %>
+      <li><%= render "marketplace/listings/card", listing: listing %></li>
     <% end %>
-  </div>
+  </ul>
   <%= render "shared/pager", pagy: @pagy %>
 <% else %>
   <%# A sold or withdrawn listing leaves the list on its own — `live` is what

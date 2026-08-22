@@ -3,7 +3,7 @@
 
 <header>
   <%= tag.h1 @conversation.display_name_for(Current.user) %>
-  <nav role="navigation" aria-label="<%= t("messages.nav_label") %>">
+  <nav aria-label="<%= t("messages.nav_label") %>">
     <%= link_to t("messages.back_all"), conversations_path %>
     <%= link_to t("messages.search"), search_conversations_path(conversation_id: @conversation.id) %>
   </nav>

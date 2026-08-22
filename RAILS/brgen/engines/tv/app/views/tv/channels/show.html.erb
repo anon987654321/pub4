@@ -6,7 +6,7 @@
     <p><%= t("tv.channel_subtitle", default: "Brgen TV channel") %></p>
     <%= tag.h1 @channel.name %>
   </hgroup>
-  <nav role="navigation">
+  <nav>
     <% if authenticated? && Current.user == @channel.user %>
       <%= link_to t("tv.upload_video"), new_channel_video_path(@channel), class: "btn btn-primary btn-sm" %>
       <%= link_to t("actions.edit"), edit_channel_path(@channel), class: "btn btn-ghost btn-sm" %>

@@ -6,11 +6,11 @@
 
 <% if @shows.any? %>
   <%= turbo_frame_tag "tv-shows", target: "_top" do %>
-    <div id="tv-shows-grid" class="show-grid card-grid" role="list" aria-label="TV shows">
+    <ul id="tv-shows-grid" class="show-grid card-grid feed_list" aria-label="TV shows">
       <% @shows.each do |show| %>
-        <%= render "tv/shows/card", show:, channel: @channel %>
+        <li><%= render "tv/shows/card", show:, channel: @channel %></li>
       <% end %>
-    </div>
+    </ul>
 
     <%= render "shared/infinite_scroll_sentinel",
                pagy: @pagy,

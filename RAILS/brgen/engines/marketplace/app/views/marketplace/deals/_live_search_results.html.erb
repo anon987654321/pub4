@@ -5,20 +5,20 @@
 <% if @featured_deals&.any? && live_search_query.blank? %>
  <section class="featured-deals" aria-label="<%= t("aria.featured_deals") %>">
  <%= tag.h2 t("marketplace.deals.featured", default: "Featured deals") %>
- <div class="deal-grid deal-grid--featured">
+ <ul class="deal-grid deal-grid--featured feed_list">
  <% @featured_deals.each do |deal| %>
-   <%= render "marketplace/deals/card", deal: deal %>
+   <li><%= render "marketplace/deals/card", deal: deal %></li>
  <% end %>
- </div>
+ </ul>
  </section>
 <% end %>
 
 <% if @deals.any? %>
-<div class="deal-grid" id="marketplace-deals-grid">
+<ul class="deal-grid feed_list" id="marketplace-deals-grid">
  <% @deals.each do |deal| %>
-   <%= render "marketplace/deals/card", deal: deal %>
+   <li><%= render "marketplace/deals/card", deal: deal %></li>
  <% end %>
-</div>
+</ul>
 
 <%= render "shared/infinite_scroll_sentinel",
            pagy: @pagy,

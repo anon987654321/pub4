@@ -4,6 +4,12 @@
     already does momentum, rubber-banding and keyboard paging correctly, and a
     hand-rolled one gets all three wrong on some device. Stimulus only decides
     which video is playing and reports how much of it was watched. %>
+<%# The page had no h1 at all — its only headings were the per-video h2s, so
+    the tv vertical's primary destination announced itself as nothing. Visually
+    hidden because the feed is full-bleed video and a visible title would sit
+    on top of it. %>
+<%= tag.h1 t("tv.feed.title"), class: "visually-hidden" %>
+
 <div class="tv-feed"
      data-controller="tv-feed"
      data-tv-feed-signed-in-value="<%= authenticated? %>"

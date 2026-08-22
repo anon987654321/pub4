@@ -9,12 +9,12 @@
 
 <div class="page-header">
   <%= tag.h1 @place.name %>
-  <nav role="navigation" aria-label="<%= t("aria.place_navigation") %>">
+  <nav aria-label="<%= t("aria.place_navigation") %>">
     <%= link_to t("actions.back"), :back, class: "btn" %>
   </nav>
 </div>
 
-<article class="place" role="article" aria-label="<%= t("aria.place_information") %>">
+<article class="place" aria-label="<%= t("aria.place_information") %>">
   <% if @place.photo.attached? %>
     <figure class="place-hero">
       <%= responsive_image_tag(@place.photo, alt: @place.name, class: "place-hero__image") %>

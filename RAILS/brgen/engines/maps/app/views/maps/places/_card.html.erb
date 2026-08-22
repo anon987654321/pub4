@@ -1,4 +1,4 @@
-<article class="place-card" role="article" aria-label="<%= place.name %>">
+<article class="place-card" aria-label="<%= place.name %>">
   <% if place.photo.attached? %>
     <%= link_to place_path(place), class: "place-card__media" do %>
       <%= responsive_image_tag(place.photo, alt: place.name, loading: "lazy", class: "place-card__image") %>

@@ -9,11 +9,11 @@
 </div>
 
 <% if @videos.any? %>
-  <div class="video-grid">
+  <ul class="video-grid feed_list">
     <% @videos.each do |video| %>
-      <%= render "tv/videos/tv_video", tv_video: video %>
+      <li><%= render "tv/videos/tv_video", tv_video: video %></li>
     <% end %>
-  </div>
+  </ul>
   <%= render "shared/pager", pagy: @pagy %>
 <% else %>
   <%# A sound whose clips are all unpublished is a real state: the sound

@@ -16,11 +16,11 @@
 </header>
 
 <% if @posts.any? %>
-  <div class="post-feed">
+  <ul class="post-feed feed_list">
     <% @posts.each do |post| %>
-      <%= render "posts/post", post: post %>
+      <li><%= render "posts/post", post: post %></li>
     <% end %>
-  </div>
+  </ul>
   <%= render "shared/pager", pagy: @pagy %>
 <% else %>
   <%# The tag name is an i18n argument, not Ruby interpolation into the default.

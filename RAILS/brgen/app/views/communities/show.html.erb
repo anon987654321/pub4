@@ -54,7 +54,7 @@
 <% end %>
 
 <% if @community.flair_options.any? %>
-  <nav class="chips" role="navigation" aria-label="<%= t("community.filter_by_flair") %>">
+  <nav class="chips" aria-label="<%= t("community.filter_by_flair") %>">
     <%= link_to t("community.all_flair"), community_path(@community),
           class: "chip#{" active" if @flair.blank?}" %>
     <% @community.flair_options.each do |flair| %>

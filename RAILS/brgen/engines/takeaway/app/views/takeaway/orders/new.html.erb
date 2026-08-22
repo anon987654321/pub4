@@ -8,7 +8,7 @@
   </hgroup>
 </header>
 
-<article role="article" aria-label="<%= t("takeaway.restaurant_info") %>">
+<article aria-label="<%= t("takeaway.restaurant_info") %>">
   <%= tag.p @restaurant.description %>
   <div class="chips">
     <span class="chip"><%= t("takeaway.min_order_delivery", min: @restaurant.min_order_display, fee: @restaurant.delivery_fee_display) %></span>

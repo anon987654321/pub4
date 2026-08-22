@@ -17,7 +17,7 @@
       <label><input type="checkbox" data-checkbox-select-all-target="checkboxAll" aria-label="<%= t("actions.select_all_reports") %>"> <%= t("actions.select_all") %></label>
     </p>
     <% @reports.each do |report| %>
-      <article role="article" aria-label="<%= t("a11y.report") %>">
+      <article aria-label="<%= t("a11y.report") %>">
         <p class="cluster">
           <input type="checkbox" data-checkbox-select-all-target="checkbox" value="<%= report.id %>" aria-label="<%= t("a11y.select_report", id: report.id) %>">
           <strong><%= report.reason.humanize %> · <%= report.status.humanize %></strong>
@@ -28,7 +28,7 @@
           · <%= time_ago(report.created_at) %>
         </p>
         <% if report.details.present? %><%= tag.p report.details %><% end %>
-        <nav role="navigation" class="cluster">
+        <nav class="cluster">
           <% %w[open reviewing resolved dismissed].each do |status| %>
             <%= button_to t("community.mark_#{status}"), admin_report_path(report, status: status), method: :patch, class: "btn btn-ghost btn-sm" %>
           <% end %>

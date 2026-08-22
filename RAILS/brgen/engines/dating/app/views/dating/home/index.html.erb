@@ -48,7 +48,7 @@
         <p><%= t("dating.local") %></p>
         <%= tag.h1 t("dating.discover") %>
       </hgroup>
-      <nav role="navigation" aria-label="<%= t("dating.home_title") %>">
+      <nav aria-label="<%= t("dating.home_title") %>">
         <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "btn btn-ghost" %>
         <%= link_to t("dating.matches"), matches_path, class: "btn btn-ghost" %>
         <% if Current.user&.dating_profile.present? %>

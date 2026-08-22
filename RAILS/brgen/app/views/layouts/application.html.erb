@@ -155,7 +155,7 @@
           known, hidden once learned (operator, 2026-08-22). %>
       <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-edge-swiper-intro-value="brgen-sidebar" data-turbo-permanent>
       <aside class="sidebar" aria-label="<%= t("nav.sidebar") %>" data-edge-swiper-target="root">
-        <nav role="navigation" data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
+        <nav data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to main_app.root_path, class: nav_cls.(main_app.root_path) do %>
             <%= icon :home, size: 26 %>
@@ -222,7 +222,7 @@
               data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
       </div>
 
-      <main id="main-content" role="main" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
+      <main id="main-content" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
         <% if !vertical_surface? && current_page?(main_app.root_path) %>
           <div class="feed-header">
             <%# Visual brand is the fixed top-left .brgen-logo-mark (all surfaces).

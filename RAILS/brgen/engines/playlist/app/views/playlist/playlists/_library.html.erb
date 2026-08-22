@@ -3,9 +3,9 @@
     <h2>Library</h2>
     <button type="button" class="radio-library-close" data-action="click->radio-tunnel#closeLibrary" aria-label="<%= t("aria.close_library") %>">×</button>
   </header>
-  <div id="playlist-library-list" class="radio-library-list">
+  <ul id="playlist-library-list" class="radio-library-list feed_list">
     <% playlists.each do |playlist| %>
-      <%= render "playlist/playlists/row", playlist: %>
+      <li><%= render "playlist/playlists/row", playlist: %></li>
     <% end %>
     <% if playlists.empty? %>
       <%= render "shared/empty_state",
@@ -13,7 +13,7 @@
             body: t("empty.create_playlist"),
             action: { label: t("playlist.new_playlist"), path: new_playlist_path } %>
     <% end %>
-  </div>
+  </ul>
 
   <% if local_assigns[:pagy]&.next %>
     <%= render "shared/infinite_scroll_sentinel",

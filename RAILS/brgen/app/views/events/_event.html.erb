@@ -3,7 +3,7 @@
     own RSVP is passed in from a single query in the controller rather than
     asked per card, and it only changes the chip below. %>
 <% cache [event, local_assigns[:rsvp_status]] do %>
-  <article class="event-card" role="article" aria-labelledby="event-<%= event.id %>-title">
+  <article class="event-card" aria-labelledby="event-<%= event.id %>-title">
     <% if event.cover.attached? %>
       <%= link_to event_path(event), class: "event-card-media", tabindex: -1, aria: { hidden: true } do %>
         <%= responsive_image_tag event.cover, alt: "" %>

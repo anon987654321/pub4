@@ -57,7 +57,7 @@
   <% end %>
 </div>
 
-<article role="article" aria-label="<%= t("takeaway.order_item") %>">
+<article aria-label="<%= t("takeaway.order_item") %>">
   <p><%= t("takeaway.delivery_to", address: @order.delivery_address) %></p>
   <% if @order.special_instructions.present? %>
     <p><%= tag.strong t("takeaway.instructions") %> <%= @order.special_instructions %></p>
@@ -67,20 +67,20 @@
 <section role="region" aria-label="<%= t("takeaway.order_items") %>">
   <%= tag.h2 t("takeaway.order_items") %>
   <% @order.order_items.each do |order_item| %>
-    <article role="article" aria-label="<%= t("takeaway.order_item") %>">
+    <article aria-label="<%= t("takeaway.order_item") %>">
       <%= tag.strong order_item.menu_item.name %> × <%= order_item.quantity %>
       <span class="item-subtotal"><%= order_item.subtotal_display %></span>
     </article>
   <% end %>
 </section>
 
-<article role="article" aria-label="<%= t("takeaway.order_item") %>">
+<article aria-label="<%= t("takeaway.order_item") %>">
   <p><%= t("takeaway.subtotal", amount: @order.subtotal_display) %></p>
   <p><%= t("takeaway.delivery", amount: @order.delivery_fee_display) %></p>
   <%= tag.strong t("takeaway.total", amount: @order.total_display) %>
 </article>
 
-<nav role="navigation" aria-label="<%= t("takeaway.order_actions") %>">
+<nav aria-label="<%= t("takeaway.order_actions") %>">
   <%= button_to t("actions.reorder"), again_order_path(@order), method: :post, class: "btn" %>
   <%= link_to t("actions.all_orders"), orders_path, class: "btn btn-ghost" %>
   <% if authenticated? && @order.restaurant.owner?(Current.user) && @order.advanceable? %>

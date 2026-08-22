@@ -13,7 +13,7 @@
     <p><%= t("marketplace.listing_kicker", category: @listing.category&.name || t("marketplace.listing")) %></p>
     <%= tag.h1 @listing.title %>
   </hgroup>
-  <nav role="navigation" aria-label="<%= t("aria.listing_actions") %>" class="marketplace-actions">
+  <nav aria-label="<%= t("aria.listing_actions") %>" class="marketplace-actions">
     <% if Current.user.present? && Current.user == @listing.user %>
       <%= link_to t("actions.edit"), edit_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? %>
