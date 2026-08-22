@@ -2,19 +2,34 @@
   gap: 8px;
 }
 
+/* The drawn control stays the 18px bordered square it always was — but the
+   square is ::before now (inset 13px in a 44px button), so the BUTTON meets
+   --tap-min while the optics do not move. The tap probe measured 18x18 on
+   a compose control; state paint moves to the pseudo with the border. */
 #photo-button {
   appearance: none;
-  border: 1px solid var(--face-fg);
+  border: 0;
   background: transparent;
   color: var(--face-fg);
   font: inherit;
-  inline-size: 18px;
-  block-size: 18px;
+  inline-size: var(--tap-min, 44px);
+  block-size: var(--tap-min, 44px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   cursor: pointer;
+  position: relative;
+  /* own stacking context so the ::before at z:-1 stays inside the button */
+  z-index: 0;
+}
+
+#photo-button::before {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border: 1px solid var(--face-fg);
+  z-index: -1;
 }
 
 #photo-button[data-state="busy"] {
@@ -23,17 +38,26 @@
 
 #photo-button[data-state="ready"],
 #photo-button[data-state="raw"] {
-  background: var(--face-fg);
   color: var(--face-bg);
-  transition: background .42s steps(4,end), color .42s steps(4,end);
+  transition: color .42s steps(4,end);
 }
 
-#photo-button.photo-fail {
+#photo-button[data-state="ready"]::before,
+#photo-button[data-state="raw"]::before {
+  background: var(--face-fg);
+  transition: background .42s steps(4,end);
+}
+
+#photo-button.photo-fail::before {
   outline: 1px solid color-mix(in srgb, var(--c-danger) 70%, transparent);
   outline-offset: 2px;
 }
 
 #photo-button:focus-visible {
+  outline: none;
+}
+
+#photo-button:focus-visible::before {
   outline: 1px solid var(--face-fg);
   outline-offset: 2px;
 }

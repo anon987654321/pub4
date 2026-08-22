@@ -15,6 +15,9 @@
      served from web/public, outside the asset pipeline), so these three steps
      ARE its ladder — status chips and diagnostic panes, monospace, on a
      canvas. Values unchanged from the literals they replace. */
+  /* Cited by #photo-button since it was written and never defined here —
+     the min-width was an inert declaration and the button measured 18px. */
+  --tap-min: 44px;
   --hud-lg: 13px;
   --hud-md: 11px;
   --hud-sm: 10px;
@@ -1162,6 +1165,11 @@ body[data-phantom-glitch="1"] canvas {
   font: 16px/1 var(--font-label);
   cursor: pointer;
   padding: 2px 6px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #history-search {
