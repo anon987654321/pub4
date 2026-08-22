@@ -45,13 +45,15 @@ class TestPersonalityPromptBuilder < Minitest::Test
   def test_typography_line_reads_style_yml_rather_than_its_own_fallbacks
     line = Typographer.new.typography_style_line(
       "style" => "brutalist",
-      "families" => { "sans" => "Inter" },
-      "scale" => { "base" => "18px", "ratio" => 1.618 },
+      "families_sans" => "Inter",
+      "scale_base" => "18px",
+      "scale_ratio" => 1.618,
       "leading" => 1.35,
       "measure" => "72ch"
     )
 
     assert_includes line, "brutalist style"
+    assert_includes line, "Inter"
     assert_includes line, "scale 18px × 1.618"
     assert_includes line, "leading 1.35"
     assert_includes line, "measure 72ch"
@@ -61,12 +63,12 @@ class TestPersonalityPromptBuilder < Minitest::Test
     typography = Master.law("style").fetch("typography")
     line = Typographer.new.typography_style_line(typography)
 
-    assert_includes line, "scale #{typography.dig("scale", "base")} × #{typography.dig("scale", "ratio")}"
+    assert_includes line, "scale #{typography.fetch("scale_base")} × #{typography.fetch("scale_ratio")}"
     assert_includes line, "measure #{typography.fetch("measure")}"
   end
 
   def test_typography_line_still_degrades_without_a_scale
-    line = Typographer.new.typography_style_line("families" => { "sans" => "Inter" })
+    line = Typographer.new.typography_style_line("families_sans" => "Inter")
 
     assert_includes line, "swiss style"
     assert_includes line, "× 1.25"

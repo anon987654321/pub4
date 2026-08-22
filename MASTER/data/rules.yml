@@ -3570,32 +3570,30 @@ style:
     quotes: double  # always double-quoted strings; single only inside regex or '\1' backrefs
     frozen_string: true  # every .rb file must start with # frozen_string_literal: true
 
-    comments:
-      max_lines: 1           # class/module/method comments: 1 line or none
-      require_why: true      # only add when WHY is non-obvious (hidden constraint, workaround)
-      reassess_on_touch: true  # every edit re-reads each comment in the file: delete if obvious,
-                               # rewrite Strunk-and-White style if kept (active voice, omit needless
-                               # words, concrete verbs, one line). No grandfathered fluff.
-      forbidden:
-        - what_comments      # never describe what the code does — identifiers do that
-        - yard_doc_blocks    # no # Public:, # Returns, # param - style blocks
-        - section_separators # no # ----, # ====, # ---- Public API ---- etc.
-        - numbered_steps     # no # 1., # 2. inline step comments
-        - multi_line_prose   # cut verbosity; one line survives, paragraph does not
+    comments_max_lines: 1           # class/module/method comments: 1 line or none
+    comments_require_why: true      # only add when WHY is non-obvious (hidden constraint, workaround)
+    comments_reassess_on_touch: true  # every edit re-reads each comment in the file: delete if obvious,
+                             # rewrite Strunk-and-White style if kept (active voice, omit needless
+                             # words, concrete verbs, one line). No grandfathered fluff.
+    comments_forbidden:
+      - what_comments      # never describe what the code does — identifiers do that
+      - yard_doc_blocks    # no # Public:, # Returns, # param - style blocks
+      - section_separators # no # ----, # ====, # ---- Public API ---- etc.
+      - numbered_steps     # no # 1., # 2. inline step comments
+      - multi_line_prose   # cut verbosity; one line survives, paragraph does not
 
-    line_order:
-      rule: "Inverted Pyramid — reorder lines/blocks so the most important content comes first."
-      rationale: "Reader who stops at the top third still has the gist. Public API > primary behavior > helpers > privates > edge cases."
-      sequence:
-        - "frozen_string_literal + requires"
-        - "module/class declaration + headline docstring (≤1 line)"
-        - "public API methods, ordered by call-frequency / importance"
-        - "primary algorithm or main loop"
-        - "private helpers in order of dependency"
-        - "constants and lookup tables (unless small enough to inline at top)"
-        - "edge-case handlers, rescue branches, fallback paths"
-      applies_to: [ruby, yaml, erb, js, css, html, sh, md]
-      enforced_by: "sweep IMPORTANCE_ORDER technique; council Maintainer + Layperson personas"
+    line_order_rule: "Inverted Pyramid — reorder lines/blocks so the most important content comes first."
+    line_order_rationale: "Reader who stops at the top third still has the gist. Public API > primary behavior > helpers > privates > edge cases."
+    line_order_sequence:
+      - "frozen_string_literal + requires"
+      - "module/class declaration + headline docstring (≤1 line)"
+      - "public API methods, ordered by call-frequency / importance"
+      - "primary algorithm or main loop"
+      - "private helpers in order of dependency"
+      - "constants and lookup tables (unless small enough to inline at top)"
+      - "edge-case handlers, rescue branches, fallback paths"
+    line_order_applies_to: [ruby, yaml, erb, js, css, html, sh, md]
+    line_order_enforced_by: "sweep IMPORTANCE_ORDER technique; council Maintainer + Layperson personas"
 
     bugs_to_avoid:
       - pattern: "Dir.chdir"
@@ -3634,172 +3632,53 @@ style:
         reason: "event receives new state instead of previous state"
         fix: "capture prev = current before mutation; use prev in publish/return"
 
-    naming:
-      spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
-      paths:
-        rule: "Rails-parameterized slug density — snake_case paths; each token a concrete noun or verb; Strunk omit needless words."
-        inspired_by: "ActiveSupport::Inflector#parameterize (meaning and density, not hyphen separator)"
-        format: snake_case
-        max_tokens: 4
-        forbidden_tokens: [main, misc, base, util, helper, handlers, handler, manager, service, object, thing, stuff, tmp, old, new, copy, final, v2, data, info]
-        examples_good: [crawl_browser, domain_alignment_gate, browser_probe_support, operator_principles]
-        examples_bad: [misc_util, cbp, foo_helper, main_base, util_service]
-      forbidden_abbreviations:
-        - idx
-        - sig
-        - tmp
-        - buf
-        - val
-        - ret
-        - obj
-        - str
-        - arr
-        - num
-        - cnt
-        - ptr
-        - msg   # unless it IS the domain term (e.g., a Message object named msg is ok if short-lived)
-      rule: "Spell identifiers out. Domain names can be short (id, url, ip) — abbreviations cannot."
+    naming_spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
+    naming_paths_rule: "Rails-parameterized slug density — snake_case paths; each token a concrete noun or verb; Strunk omit needless words."
+    naming_paths_inspired_by: "ActiveSupport::Inflector#parameterize (meaning and density, not hyphen separator)"
+    naming_paths_format: snake_case
+    naming_paths_max_tokens: 4
+    naming_paths_forbidden_tokens: [main, misc, base, util, helper, handlers, handler, manager, service, object, thing, stuff, tmp, old, new, copy, final, v2, data, info]
+    naming_paths_examples_good: [crawl_browser, domain_alignment_gate, browser_probe_support, operator_principles]
+    naming_paths_examples_bad: [misc_util, cbp, foo_helper, main_base, util_service]
+    naming_forbidden_abbreviations:
+      - idx
+      - sig
+      - tmp
+      - buf
+      - val
+      - ret
+      - obj
+      - str
+      - arr
+      - num
+      - cnt
+      - ptr
+      - msg   # unless it IS the domain term (e.g., a Message object named msg is ok if short-lived)
+    naming_rule: "Spell identifiers out. Domain names can be short (id, url, ip) — abbreviations cannot."
 
-    prefer_string_methods:
-      rule: "Prefer start_with? / include? / end_with? / split over regex when string methods suffice."
-      rationale: "Regex is expressive but noisy. Use it when patterns require it, not as a default."
-      prefer:
-        - "str.start_with?(prefix)        over  str.match?(/^prefix/)"
-        - "str.include?(substr)           over  str.match?(/substr/)"
-        - "str.end_with?(suffix)          over  str.match?(/suffix$/)"
-        - "str.split(sep, n)              over  str.scan(/pattern/)"
-      still_use_regex_for:
-        - 'Character classes: /[a-z]/, /\d+/'
-        - "Anchored multiline patterns"
-        - "Alternation with more than 2 branches"
+    prefer_string_methods_rule: "Prefer start_with? / include? / end_with? / split over regex when string methods suffice."
+    prefer_string_methods_rationale: "Regex is expressive but noisy. Use it when patterns require it, not as a default."
+    prefer_string_methods_prefer:
+      - "str.start_with?(prefix)        over  str.match?(/^prefix/)"
+      - "str.include?(substr)           over  str.match?(/substr/)"
+      - "str.end_with?(suffix)          over  str.match?(/suffix$/)"
+      - "str.split(sep, n)              over  str.scan(/pattern/)"
+    prefer_string_methods_still_use_regex_for:
+      - 'Character classes: /[a-z]/, /\d+/'
+      - "Anchored multiline patterns"
+      - "Alternation with more than 2 branches"
 
-    outsource_to_gems:
-      rule: "If a well-maintained gem solves the problem correctly, use it. Do not reimplement."
-      rationale: "Gems carry tests, edge cases, and maintenance. Home-grown duplicates carry bugs."
-      examples:
-        - "flay for AST-level duplicate detection"
-        - "reek for code smell analysis"
-        - "rubocop for style enforcement"
-        - "prism for Ruby parsing"
-      caveat: "Evaluate gem quality first: maintained, tested, minimal footprint."
+    outsource_to_gems_rule: "If a well-maintained gem solves the problem correctly, use it. Do not reimplement."
+    outsource_to_gems_rationale: "Gems carry tests, edge cases, and maintenance. Home-grown duplicates carry bugs."
+    outsource_to_gems_examples:
+      - "flay for AST-level duplicate detection"
+      - "reek for code smell analysis"
+      - "rubocop for style enforcement"
+      - "prism for Ruby parsing"
+    outsource_to_gems_caveat: "Evaluate gem quality first: maintained, tested, minimal footprint."
 
-    blank_lines:
-      max_consecutive: 1     # no double blank lines anywhere
+    blank_lines_max_consecutive: 1     # no double blank lines anywhere
 
-    rails_stack:
-      # Current stable versions (May 2026)
-      rails: "8.1.3.1"
-      turbo_rails: "2.0.23"    # 9 actions: append prepend before after replace update remove morph refresh
-      stimulus: "3.x"          # static targets, values, outlets API
-      pagy: "43.x"             # Pagy::OPTIONS (not Pagy::DEFAULT — redesigned API in 43.0)
-      stimulus_reflex: "3.5"   # complementary to Turbo; opt-in only for advanced reactive features
-
-      asset_pipeline: propshaft  # default in Rails 8; do not use Sprockets
-      javascript: importmap      # default; esbuild only when CSS-in-JS components needed
-      queue: solid_queue         # SQLite-backed by default
-      cache: solid_cache         # SQLite-backed by default
-      cable: solid_cable         # SQLite-backed by default
-
-      authentication: "rails generate authentication"  # built-in, no devise
-      database: sqlite3          # default; PostgreSQL only when explicitly required
-
-      pagy_api:
-        backend:  "include Pagy::Backend"   # in ApplicationController
-        frontend: "include Pagy::Frontend"  # in ApplicationHelper
-        options:  "Pagy::OPTIONS[:limit] = 25"  # NOT Pagy::DEFAULT (that was 8.x)
-        overflow: "Pagy::OPTIONS[:overflow] = :last_page"
-
-      turbo_stream_actions:
-        - append
-        - prepend
-        - before
-        - after
-        - replace
-        - update
-        - remove
-        - morph   # morphs DOM — preserves element state; opt-in via data-turbo-permanent
-        - refresh  # triggers full page refresh with morphing
-
-      stimulus_api:
-        targets: "static targets = [\"name\"]"       # auto-generates nameTarget, nameTargets, hasNameTarget
-        values:  "static values = { url: String }"   # auto-generates urlValue, hasUrlValue, urlValueChanged
-        outlets: "static outlets = [\"other\"]"      # cross-controller communication
-        lifecycle: [connect, disconnect, initialize]  # + nameTargetConnected/Disconnected
-
-      stimulus_components:
-        source: "https://stimulus-components.com"
-        install: "bin/importmap pin @stimulus-components/<name>"
-        available:
-          - { name: character-counter, use: "post/comment character limits" }
-          - { name: clipboard, use: "copy URL/code to clipboard" }
-          - { name: dialog, use: "modal dialogs, confirmations" }
-          - { name: dropdown, use: "nav menus, user menus" }
-          - { name: notification, use: "toast alerts" }
-          - { name: carousel, use: "image galleries, product photos" }
-          - { name: sortable, use: "drag-reorder lists" }
-          - { name: rails-nested-form, use: "dynamic has-many form fields" }
-          - { name: password-visibility, use: "show/hide password toggle" }
-
-      # Default StimulusReflex stack — Julian Rubisch's pattern set.
-      # Install for every new Rails 8 + StimulusReflex 3.5 app unless explicitly opted out.
-      stimulus_reflex_stack:
-        cubism:                 "resource-scoped presence (who's-here, typing indicators) over Kredis"
-        futurism:               "lazy-load expensive list rows; futurize(@record) placeholder + IntersectionObserver"
-        optimism:               "real-time ActiveModel validation broadcast as selector morphs (drop-in)"
-        all_futures:            "Redis-backed virtual ActiveModel for facets/wizards without session bloat"
-        solder:                 "auto-cache <details>/accordion open state per [user, key]"
-        cable_ready_callbacks:  "after_create_commit / after_update_commit CableReady DSL on AR models"
-
-      stimulus_reflex_patterns:
-        morph_heuristics:
-          page_morph:     "spans multiple regions OR want regular controller render. Always scope with data-reflex-root."
-          selector_morph: "single element, side-stepping the controller. Inline edit, list-item update, validation hint."
-          nothing_morph:  "no DOM patch — only CableReady ops or dispatch_event to a Stimulus controller."
-        tool_choice: "Turbo for anything covered by an HTTP verb (navigation, forms). StimulusReflex for everything else."
-        cable_ready_ops:
-          morph:                "list bodies — pass children_only: true"
-          inner_html:           "form reset (morph won't clear inputs)"
-          insert_adjacent_html: "infinite scroll, append-only feeds"
-          outer_html:           "Futurism replacement, inline-edit toggle"
-          dispatch_event:       "nothing morphs that kick a Stimulus controller"
-          add_css_class:        "validation hints (Optimism-style)"
-          set_focus:            "post-edit UX"
-        anti_patterns:
-          - "mutating state via GET — REST violation"
-          - "hidden form + Turbo Stream for state — flickers; SR fits better"
-          - "inline render in reflex — always partials/components, never heredocs"
-          - "overusing connect lifecycle — prefer Outlets and useIntersection"
-          - "morph to clear form inputs — use inner_html"
-          - "class attributes where a tag selector works"
-          - "hardcoded step counts in wizards"
-          - "session-backed wizard state on multi-server — use kredis or all_futures"
-        named_patterns:
-          infinite_scroll:    "InfiniteScrollReflex#load_more + sentinel div + insert_adjacent_html before sentinel"
-          inline_edit:        "ToggleReflex toggles show ↔ edit partial via selector morph"
-          wizard:             "WizardReflex#step dispatching on @current_step; state in kredis or all_futures"
-          nested_form:        "NestedFormReflex#add_fields uses .build + fields_for; needs accepts_nested_attributes_for"
-          validation_inline:  "Optimism + debounced:input event (not raw input — prevents flooding)"
-          autosave:           "Submittable concern; before_reflex branches create/update via element.dataset.signed_id"
-
-      core_web_vitals:
-        lcp: "<2.0s"   # Largest Contentful Paint (tightened from 2.5s in March 2026)
-        inp: "responsive"  # Interaction to Next Paint
-        cls: "< 0.1"   # no layout shifts — set explicit width/height on images and embeds
-        font_display: "swap"  # font-display: swap in all font-face rules
-
-      rubocop_omakase:
-        quotes: double       # double-quoted strings everywhere in app/
-        hash_syntax: modern  # { a: :b } not { :a => :b }
-        trailing_commas: true  # in multi-line arrays/hashes/arguments
-        method_calls: "Foo.method not Foo::method"
-        test_assertions: "assert_not not assert !"
-
-      realtime_hierarchy:
-        - "Turbo Drive — full-page navigation"
-        - "Turbo Frames — scoped page updates"
-        - "Turbo Streams — server-push DOM operations"
-        - "Stimulus — client-side interactivity"
-        - "StimulusReflex — opt-in for advanced RPC reactive features"
 
   shell:
     decorations_forbidden:
@@ -3819,12 +3698,11 @@ style:
       - "lines=(\"${(@f)$(<file)}\") for line arrays; last 50: print -l $lines[-50,-1]"
 
   git:
-    commit_style:
-      voice: active           # "Fix bug" not "Fixed bug", "Add feature" not "Added feature"
-      format: "type: short summary\n\nBody if needed."
-      subject_max: 72
-      no_what_if_diff_shows: true  # don't describe what changed if the diff makes it obvious
-      separate_concerns: true      # don't mix bug fixes with style changes in one commit
+    commit_style_voice: active           # "Fix bug" not "Fixed bug", "Add feature" not "Added feature"
+    commit_style_format: "type: short summary\n\nBody if needed."
+    commit_style_subject_max: 72
+    commit_style_no_what_if_diff_shows: true  # don't describe what changed if the diff makes it obvious
+    commit_style_separate_concerns: true      # don't mix bug fixes with style changes in one commit
 
     forbidden:
       - "Dir.chdir in Ruby before git commands"
@@ -3888,44 +3766,39 @@ style:
       - section
       - aside
       - footer
-    forms:
-      label_required: every input has a label
-      input_type_specific: email/url/tel/date — never bare type=text
-      autocomplete: "set autocomplete on every meaningful input"
+    forms_label_required: every input has a label
+    forms_input_type_specific: email/url/tel/date — never bare type=text
+    forms_autocomplete: "set autocomplete on every meaningful input"
 
   css:
     targeting: bare_tag_first        # tag selectors > attribute selectors > id; class only when nothing else fits
     layer_order: [base, components, utilities]
     custom_properties: ":root with --safe-top, --safe-right, --safe-bottom, --safe-left"
-    units:
-      length: rem                    # px only for borders <2px and 1px hairlines
-      typography: "rem with clamp() for fluid type"
-      # Was "rem multiples of .25 (4px grid)" -- silently allowed 28/36/44/52/
-      # 56/60px, which design_rules.yml's eight_px_rhythm (the rule real code
-      # actually enforces, per Master::Design::Thresholds) rejects. Matches
-      # design_rules.yml now instead of a looser, unenforced rule of its own.
-      spacing: "design_rules.yml pixel_perfection.eight_px_rhythm: 4/8/12/16/20/24/32/40/48/64/96px only"
+    units_length: rem                    # px only for borders <2px and 1px hairlines
+    units_typography: "rem with clamp() for fluid type"
+    # Was "rem multiples of .25 (4px grid)" -- silently allowed 28/36/44/52/
+    # 56/60px, which design_rules.yml's eight_px_rhythm (the rule real code
+    # actually enforces, per Master::Design::Thresholds) rejects. Matches
+    # design_rules.yml now instead of a looser, unenforced rule of its own.
+    units_spacing: "design_rules.yml pixel_perfection.eight_px_rhythm: 4/8/12/16/20/24/32/40/48/64/96px only"
     forbidden:
       - "!important except for utility overrides"
       - inline_style_attributes
       - vendor_prefixes_in_2026     # autoprefixer or skip
       - framework_class_bloat
-    perf:
-      content_visibility: "auto on long-scroll sections"
-      will_change: "only when actually animating, then remove"
+    perf_content_visibility: "auto on long-scroll sections"
+    perf_will_change: "only when actually animating, then remove"
 
   typography:
     style: swiss                     # objective, hierarchical, generous whitespace
-    families:
-      # Was "Helvetica, Arial, system-ui, sans-serif" -- didn't match either
-      # design_rules.yml's stated default (Inter) or what the RAILS apps
-      # actually ship (shared/_dialect_tokens.scss's real stack, below). Synced to
-      # the real shipped stack rather than picking a third, different value.
-      sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-      mono: "ui-monospace, Menlo, Consolas, monospace"
-    scale:
-      base: 16px
-      ratio: 1.25                    # major-third
+    # Was "Helvetica, Arial, system-ui, sans-serif" -- didn't match either
+    # design_rules.yml's stated default (Inter) or what the RAILS apps
+    # actually ship (shared/_dialect_tokens.scss's real stack, below). Synced to
+    # the real shipped stack rather than picking a third, different value.
+    families_sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+    families_mono: "ui-monospace, Menlo, Consolas, monospace"
+    scale_base: 16px
+    scale_ratio: 1.25                    # major-third
     leading: 1.5                     # body
     measure: 65ch                    # ideal line length
     rules:
@@ -3987,3 +3860,122 @@ style:
     locale_specific: "use Intl.DateTimeFormat / NumberFormat; never assume MM/DD/YYYY"
     color_meaning: "red=danger is Western; verify per locale"
     imagery: "diverse representation; avoid culture-specific idioms in core UI"
+# The Rails stack this fleet runs. Lifted out of style.ruby on 2026-08-22:
+# versions, gem APIs and StimulusReflex patterns are stack truth, not a style
+# rule, and burying them under style.ruby put 58 of the file's leaf values
+# three and four levels deep inside a block about how to write Ruby.
+rails_stack:
+  # Current stable versions (May 2026)
+  rails: "8.1.3.1"
+  turbo_rails: "2.0.23"    # 9 actions: append prepend before after replace update remove morph refresh
+  stimulus: "3.x"          # static targets, values, outlets API
+  pagy: "43.x"             # Pagy::OPTIONS (not Pagy::DEFAULT — redesigned API in 43.0)
+  stimulus_reflex: "3.5"   # complementary to Turbo; opt-in only for advanced reactive features
+
+  asset_pipeline: propshaft  # default in Rails 8; do not use Sprockets
+  javascript: importmap      # default; esbuild only when CSS-in-JS components needed
+  queue: solid_queue         # SQLite-backed by default
+  cache: solid_cache         # SQLite-backed by default
+  cable: solid_cable         # SQLite-backed by default
+
+  authentication: "rails generate authentication"  # built-in, no devise
+  database: sqlite3          # default; PostgreSQL only when explicitly required
+
+  pagy_api:
+    backend:  "include Pagy::Backend"   # in ApplicationController
+    frontend: "include Pagy::Frontend"  # in ApplicationHelper
+    options:  "Pagy::OPTIONS[:limit] = 25"  # NOT Pagy::DEFAULT (that was 8.x)
+    overflow: "Pagy::OPTIONS[:overflow] = :last_page"
+
+  turbo_stream_actions:
+    - append
+    - prepend
+    - before
+    - after
+    - replace
+    - update
+    - remove
+    - morph   # morphs DOM — preserves element state; opt-in via data-turbo-permanent
+    - refresh  # triggers full page refresh with morphing
+
+  stimulus_api:
+    targets: "static targets = [\"name\"]"       # auto-generates nameTarget, nameTargets, hasNameTarget
+    values:  "static values = { url: String }"   # auto-generates urlValue, hasUrlValue, urlValueChanged
+    outlets: "static outlets = [\"other\"]"      # cross-controller communication
+    lifecycle: [connect, disconnect, initialize]  # + nameTargetConnected/Disconnected
+
+  stimulus_components:
+    source: "https://stimulus-components.com"
+    install: "bin/importmap pin @stimulus-components/<name>"
+    available:
+      - { name: character-counter, use: "post/comment character limits" }
+      - { name: clipboard, use: "copy URL/code to clipboard" }
+      - { name: dialog, use: "modal dialogs, confirmations" }
+      - { name: dropdown, use: "nav menus, user menus" }
+      - { name: notification, use: "toast alerts" }
+      - { name: carousel, use: "image galleries, product photos" }
+      - { name: sortable, use: "drag-reorder lists" }
+      - { name: rails-nested-form, use: "dynamic has-many form fields" }
+      - { name: password-visibility, use: "show/hide password toggle" }
+
+  # Default StimulusReflex stack — Julian Rubisch's pattern set.
+  # Install for every new Rails 8 + StimulusReflex 3.5 app unless explicitly opted out.
+  stimulus_reflex_stack:
+    cubism:                 "resource-scoped presence (who's-here, typing indicators) over Kredis"
+    futurism:               "lazy-load expensive list rows; futurize(@record) placeholder + IntersectionObserver"
+    optimism:               "real-time ActiveModel validation broadcast as selector morphs (drop-in)"
+    all_futures:            "Redis-backed virtual ActiveModel for facets/wizards without session bloat"
+    solder:                 "auto-cache <details>/accordion open state per [user, key]"
+    cable_ready_callbacks:  "after_create_commit / after_update_commit CableReady DSL on AR models"
+
+  stimulus_reflex_patterns:
+    morph_heuristics:
+      page_morph:     "spans multiple regions OR want regular controller render. Always scope with data-reflex-root."
+      selector_morph: "single element, side-stepping the controller. Inline edit, list-item update, validation hint."
+      nothing_morph:  "no DOM patch — only CableReady ops or dispatch_event to a Stimulus controller."
+    tool_choice: "Turbo for anything covered by an HTTP verb (navigation, forms). StimulusReflex for everything else."
+    cable_ready_ops:
+      morph:                "list bodies — pass children_only: true"
+      inner_html:           "form reset (morph won't clear inputs)"
+      insert_adjacent_html: "infinite scroll, append-only feeds"
+      outer_html:           "Futurism replacement, inline-edit toggle"
+      dispatch_event:       "nothing morphs that kick a Stimulus controller"
+      add_css_class:        "validation hints (Optimism-style)"
+      set_focus:            "post-edit UX"
+    anti_patterns:
+      - "mutating state via GET — REST violation"
+      - "hidden form + Turbo Stream for state — flickers; SR fits better"
+      - "inline render in reflex — always partials/components, never heredocs"
+      - "overusing connect lifecycle — prefer Outlets and useIntersection"
+      - "morph to clear form inputs — use inner_html"
+      - "class attributes where a tag selector works"
+      - "hardcoded step counts in wizards"
+      - "session-backed wizard state on multi-server — use kredis or all_futures"
+    named_patterns:
+      infinite_scroll:    "InfiniteScrollReflex#load_more + sentinel div + insert_adjacent_html before sentinel"
+      inline_edit:        "ToggleReflex toggles show ↔ edit partial via selector morph"
+      wizard:             "WizardReflex#step dispatching on @current_step; state in kredis or all_futures"
+      nested_form:        "NestedFormReflex#add_fields uses .build + fields_for; needs accepts_nested_attributes_for"
+      validation_inline:  "Optimism + debounced:input event (not raw input — prevents flooding)"
+      autosave:           "Submittable concern; before_reflex branches create/update via element.dataset.signed_id"
+
+  core_web_vitals:
+    lcp: "<2.0s"   # Largest Contentful Paint (tightened from 2.5s in March 2026)
+    inp: "responsive"  # Interaction to Next Paint
+    cls: "< 0.1"   # no layout shifts — set explicit width/height on images and embeds
+    font_display: "swap"  # font-display: swap in all font-face rules
+
+  rubocop_omakase:
+    quotes: double       # double-quoted strings everywhere in app/
+    hash_syntax: modern  # { a: :b } not { :a => :b }
+    trailing_commas: true  # in multi-line arrays/hashes/arguments
+    method_calls: "Foo.method not Foo::method"
+    test_assertions: "assert_not not assert !"
+
+  realtime_hierarchy:
+    - "Turbo Drive — full-page navigation"
+    - "Turbo Frames — scoped page updates"
+    - "Turbo Streams — server-push DOM operations"
+    - "Stimulus — client-side interactivity"
+    - "StimulusReflex — opt-in for advanced RPC reactive features"
+

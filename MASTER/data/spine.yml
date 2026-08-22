@@ -481,7 +481,20 @@ spine:
   # multi-line <img> a finding. The 13 lines are those two rules plus the
   # narrowings H1_VISIBILITY, SKIP_TO_MAIN, META_CHARSET and SINGLE_H1 learned
   # in the same pass — every one bought false positives down, not features up.
-  lib_code_ceiling: 38924
+  # RAISED 2026-08-22, 38924 -> 38934 (+10): three dead reads became live ones.
+  # DATA_ALIASES pointed :ruby_style at style.ruby_style, a key that has never
+  # existed, so data(:ruby_style) returned nil, the is_a?(Hash) guard failed,
+  # and the ENTIRE style block — ruby, shell, html, css, typography, Nielsen,
+  # accessibility — reached no prompt at all. Fixing the path turned ten lines
+  # on. css_style_line then had to be made to read its hash instead of
+  # returning a fixed sentence about it (+3), and rails_stack, lifted out of
+  # style.ruby where its 58 leaf values sat unread, got the one accessor that
+  # gives it a code name (+6). Offset by deleting the append_directives read of
+  # style.operator_directives, another key that has never existed.
+  #
+  # This is the ceiling doing its job: the spend is wiring, not features, and
+  # every line of it makes law that was already written start being applied.
+  lib_code_ceiling: 38934
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

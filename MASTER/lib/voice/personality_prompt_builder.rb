@@ -174,6 +174,7 @@ module Master
 
       def add_language_style(sections)
         lines = zsh_style_lines
+        lines << stack_line if stack_line
         style = @rules.data(:ruby_style)
         if style.is_a?(Hash) && !style.empty?
           lines.concat(ruby_style_lines(style))
@@ -183,6 +184,17 @@ module Master
         return if lines.empty?
 
         sections["master_style"] = [sections["master_style"], lines.join("\n")].compact.join("\n")
+      end
+
+      # The versions this fleet actually runs, so advice lands on them rather
+      # than whatever the model saw last. These 58 leaf values sat under
+      # style.ruby.rails_stack and nothing had ever read one of them.
+      def stack_line
+        s = @rules.data(:rails_stack)
+        return unless s.is_a?(Hash) && s["rails"]
+
+        "Stack: Rails #{s['rails']}, Turbo #{s['turbo_rails']}, Stimulus #{s['stimulus']}, " \
+          "#{s['asset_pipeline']} + #{s['javascript']}, #{s['queue']}/#{s['cache']}/#{s['cable']}, #{s['database']}."
       end
 
       def zsh_style_lines
@@ -199,9 +211,9 @@ module Master
         [
           ("Ruby bugs to avoid: #{bug_text}." unless bugs.empty?),
           shell_style_line(style),
-          optional_rule("Naming", style.dig("ruby", "naming", "rule")),
-          optional_rule("String methods", style.dig("ruby", "prefer_string_methods", "rule")),
-          optional_rule("Gems", style.dig("ruby", "outsource_to_gems", "rule")),
+          optional_rule("Naming", style.dig("ruby", "naming_rule")),
+          optional_rule("String methods", style.dig("ruby", "prefer_string_methods_rule")),
+          optional_rule("Gems", style.dig("ruby", "outsource_to_gems_rule")),
         ].compact
       end
 
@@ -235,11 +247,19 @@ module Master
           "forbid: #{forbidden}."
       end
 
+      # Derived from the hash, not restating it. This returned a fixed sentence
+      # for as long as it existed, so style.css.layer_order, .units_* and
+      # .forbidden described a line nothing read them for — editing any of them
+      # changed nothing anywhere, which is the whole inert-config defect in one
+      # method.
       def css_style_line(css)
         return unless css
 
-        "CSS: tag selectors first, classes last; @layer base/components/utilities; " \
-          "rem units; no !important; no inline style attributes."
+        parts = ["CSS: #{css['targeting'] == 'bare_tag_first' ? 'tag selectors first, classes last' : css['targeting']}"]
+        parts << "@layer #{Array(css['layer_order']).join('/')}" if css["layer_order"]
+        parts << "#{css['units_length']} units" if css["units_length"]
+        parts << "avoid: #{Array(css['forbidden']).first(3).join('; ')}" if css["forbidden"]
+        parts.join("; ")
       end
 
       # Reads typography.scale.ratio, not typography["ratio"]: the shallow read meant
@@ -248,9 +268,9 @@ module Master
       def typography_style_line(typography)
         return unless typography
 
-        families = typography.dig("families", "sans") || ""
-        ratio = typography.dig("scale", "ratio") || 1.25
-        base = typography.dig("scale", "base") || "16px"
+        families = typography["families_sans"] || ""
+        ratio = typography["scale_ratio"] || 1.25
+        base = typography["scale_base"] || "16px"
         "Typography: #{typography["style"] || "swiss"} style; one family per surface; #{families}; " \
           "scale #{base} × #{ratio}; leading #{typography["leading"] || 1.5}; " \
           "measure #{typography["measure"] || "65ch"}; left-align body."
@@ -272,7 +292,9 @@ module Master
       end
 
       def append_directives(sections, style)
-        append_priority(sections, "operator_directives", style["operator_directives"])
+        # style.operator_directives has never existed — the operator's standing
+        # rules are `operator_principles` at the root, already read by
+        # Ground::Constitution. This read was always nil.
         append_priority(sections, "conversation_directives", style["conversation_directives"])
       end
 
