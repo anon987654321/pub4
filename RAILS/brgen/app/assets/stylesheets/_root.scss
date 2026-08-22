@@ -140,14 +140,6 @@ a:hover { text-decoration: underline; }
   font-weight: var(--weight-heavy);
 }
 
-.brand-wordmark {
-  justify-content: flex-start;
-  border: none !important;
-  border-radius: 0 !important;
-  outline: none !important;
-  /* autofix: removed box-shadow (flat UI) */
-  background: transparent !important;
-}
 
 /* --brand-mark-inline and --chrome-toggle-inline moved to _layout_chrome.scss
    with the shared .brand-mark that owns them, so they are declared once for all
@@ -275,24 +267,6 @@ body.vertical-marketplace #navBar {
 .feed-hint { padding: 0 var(--space-4) var(--space-2); }
 
 /* Guest open funnel on the home intro (Live → marketplace → messages). */
-.guest-demo-path {
-  margin-top: var(--space-2);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem 0.5rem;
-}
-
-.guest-demo-path a {
-  font-weight: var(--weight-bold);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.guest-demo-hint {
-  opacity: 0.75;
-  font-weight: var(--weight-normal);
-}
 
 @media (min-width: 1265px) {
   .compose-label { display: inline; }

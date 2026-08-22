@@ -253,13 +253,11 @@ html {
 }
 
 /* prefers-contrast + link affordance in body text */
-.card-embed .body a,
 .post-body a,
 .article-body a {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.card-embed .body a:hover,
 .post-body a:hover {
   color: var(--accent);
 }

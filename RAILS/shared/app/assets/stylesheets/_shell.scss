@@ -59,7 +59,6 @@ html .turbo-progress-bar {
     border: none !important;
     background: transparent !important;
   }
-  .card-embed,
   .empty-state,
   .offline-page-item {
     border: 1px solid CanvasText;
@@ -238,15 +237,6 @@ main[role="main"] {
   /* autofix: removed box-shadow (flat UI) */
   opacity: 0.85;
   text-decoration: none;
-}
-.brand-wordmark {
-  width: auto;
-  padding: 0 12px;
-  justify-content: flex-start;
-  border: none !important;
-  outline: none !important;
-  /* autofix: removed box-shadow (flat UI) */
-  background: transparent !important;
 }
 .brand-text {
   font-family: var(--font);

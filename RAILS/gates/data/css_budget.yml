@@ -83,8 +83,14 @@ rules:
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical
   # accent map was never paired against a background at all until 2026-08-03,
   # which is where 15 of these 30 came from.
-  contrast_below_aa: 30
-  contrast_below_aaa: 65
+  # 30 -> 0 on 2026-08-22: the campaigns cleared every below-AA pair without
+  # a sitting ever targeting them — the vertical accent re-pairing and token
+  # work did it as a side effect. Zero is now the floor, not an ambition.
+  contrast_below_aa: 0
+  # 65 -> 41 the same day. style.yml declares AAA; body text earns it and
+  # the remaining 41 pairs are the secondary/accent band — lifting them is a
+  # palette decision (operator), so the band is banked, not forced.
+  contrast_below_aaa: 41
   # Added 2026-08-09, when design_rules.yml's `typography` block finally got a
   # reader. type_scale counts font-size literals off the --text-* ladder in
   # _tokens.scss; weight_ladder counts font-weight literals off

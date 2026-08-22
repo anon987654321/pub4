@@ -134,12 +134,6 @@ section h2 {
 }
 
 // Pixel-art framing for avatars/thumbnails — hard edges, no smoothing.
-.pixel-img {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-  border-radius: 0;
-}
 
 /* Fleet nearby/chat bar — absolute bottom-right corner (no chrome-inset
    padding). Safe-area only for notched devices. When the progressive footer

@@ -7,71 +7,9 @@
   max-width: var(--measure-body, 66ch);
 }
 
-.city-home-intro-title {
-  margin: 0 0 var(--space-2, 0.5rem);
-  font-size: var(--text-title);
-  font-weight: var(--weight-heavy);
-  letter-spacing: -0.02em;
-  color: var(--text);
-}
-
-.city-home-intro-body {
-  margin: 0 0 var(--space-3, 0.75rem);
-  font-size: var(--text-base);
-  line-height: 1.5;
-  color: var(--text-secondary, var(--text-dim));
-}
-
-.city-home-paths {
-  margin: 0 0 var(--space-2, 0.5rem);
-  font-size: var(--text-base);
-  line-height: 1.5;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.25rem 0.35rem;
-}
-
-.city-home-paths a {
-  font-weight: var(--weight-bold);
-  color: var(--accent, var(--text));
-  text-decoration: none;
-}
-
 .city-home-paths a:hover,
-.city-home-paths a:focus-visible {
-  text-decoration: underline;
-}
-
-.city-home-sep {
-  color: var(--text-secondary, var(--text-dim));
-  opacity: 0.7;
-}
-
-.city-home-note {
-  color: var(--text-secondary, var(--text-dim));
-  font-weight: var(--weight-normal);
-}
-
-.city-home-ai {
-  margin: 0;
-}
-
-.city-home-ai-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap-min);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--text-secondary, var(--text-dim));
-  text-decoration: none;
-}
 
 .city-home-ai-link:hover,
-.city-home-ai-link:focus-visible {
-  color: var(--text);
-  text-decoration: underline;
-}
 
 .profile-header {
   display: flex;
@@ -229,18 +167,6 @@ aside:not([class]) > h2 {
   letter-spacing: -0.02em;
 }
 
-.local-feed-intro {
-  padding: var(--space-3) var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--text-dim);
-}
-
-.local-feed-intro h2 {
-  margin: 0;
-  font-size: var(--text-base);
-  font-weight: var(--weight-bold);
-  color: var(--text);
-}
 /* UI_REFINEMENTS pass — tokens, a11y floor, nav, vertical accents.
    Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
 
@@ -272,21 +198,15 @@ time {
 }
 
 /* H · list perf — taller intrinsic for media cards to reduce scroll jump */
-.card-embed,
 .feed-post,
 .restaurant-card,
-.listing-card,
 .item-card {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
 }
 .video-card,
 .channel-card,
-.listing-card:has(img),
 .feed-post:has(.feed-card-media),
-.card-embed:has(.feed-card-media) {
-  contain-intrinsic-size: auto 280px;
-}
 
 /* Flash / toast flat card */
 .flash-notice,
@@ -304,7 +224,6 @@ time {
 .flash-alert { border-color: color-mix(in srgb, var(--danger) 50%, var(--border)); }
 
 /* Post body measure */
-.card-embed .body,
 .post-body,
 .article-body {
   max-width: var(--measure-body);

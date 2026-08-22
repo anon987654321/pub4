@@ -1,22 +1,5 @@
 /* Marketplace chrome — subnav, filters, cats, PDP, store grid. */
 
-.marketplace-page-header {
-  padding-bottom: 0;
-}
-
-.marketplace-page-header-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-bottom: var(--space-2);
-}
-
-.marketplace-page-header-row h1 {
-  margin: 0;
-}
-
 .marketplace-actions {
   display: flex;
   flex-wrap: wrap;
@@ -33,16 +16,6 @@
 
 .marketplace-subnav .feed-tab {
   flex: 0 0 auto;
-}
-
-.deal-search {
-  display: flex;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-}
-
-.deal-search input {
-  flex: 1;
 }
 
 /* The kind switcher is the category scroller one row up: goods, jobs,

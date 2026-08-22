@@ -107,12 +107,6 @@ a.deal-card:hover,
   font-variant-numeric: tabular-nums;
 }
 
-.deal-price-original {
-  font: var(--text-xs) / 1 var(--font);
-  color: var(--text-secondary);
-  text-decoration: line-through;
-}
-
 .deal-card-title {
   margin: 0;
   font: var(--weight-bold) var(--text-sm) / 1.35 var(--font);

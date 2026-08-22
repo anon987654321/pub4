@@ -122,7 +122,13 @@ module Pub4
     # surfaced are designed now — unread/read and message--unread wear weight
     # plus a leading accent dot, story-ring wears the accent ring that fades
     # when seen, and the default address is the accent-bordered card.
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 240 }.freeze
+    # 240 -> 174 on 2026-08-22: 40 proven-dead rules deleted (the .animate-*
+    # utility set the flat contract orphaned, the pre-unification
+    # .brand-wordmark, the city-home intro, legacy card/search shells), and
+    # the DYNAMIC_SEEDS above stopped the census miscounting runtime-built
+    # names. The 174 left are dominated by amber sheets, which belong to
+    # amber\x27s active session — recorded in SURFACES.md, not touched here.
+    BASELINES = { "undefined_class" => 0, "unused_selector" => 174 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -285,10 +291,27 @@ module Pub4
       end
     end
 
+    # Names no template spells whole. Each seed is verified against a real
+    # producer (2026-08-22): vertical-<name> from the shell class map,
+    # monogram--<n> in _feed_card, map-marker--<kind> in map_controller.js,
+    # capsule-row--/occasion-card-- verdicts in amber ai views, chip--<state>
+    # in events, <theme>-tokens in the layouts, match-overlay subtree from the
+    # layout. maplibregl-/ProseMirror-/trix- are vendor-runtime: the library
+    # builds the node, our sheet styles it.
+    DYNAMIC_SEEDS = %w[vertical- monogram-- map-marker-- capsule-row--
+                       occasion-card-- chip-- match-overlay maplibregl-
+                       ProseMirror- trix-].freeze
+    DYNAMIC_SUFFIXES = %w[-tokens].freeze
+
+    def dynamic?(name)
+      DYNAMIC_SEEDS.any? { |seed| name.start_with?(seed) } ||
+        DYNAMIC_SUFFIXES.any? { |suffix| name.end_with?(suffix) }
+    end
+
     def unused_selectors
       markup = used_names.keys.to_set
       defined_names.reject do |name|
-        markup.include?(name) || EXTERNAL.include?(name) ||
+        markup.include?(name) || EXTERNAL.include?(name) || dynamic?(name) ||
           markup.any? { |used| used.start_with?("#{name}--") || used.start_with?("#{name}__") }
       end
     end
