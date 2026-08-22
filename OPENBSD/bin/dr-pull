@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# dr-pull — pull-based disaster recovery, run from the operator Mac.
+#
+# Litestream has never replicated anything (off_host_dr: the binary is not
+# installed), so until that operator decision lands, THIS is the only copy of
+# production data that leaves the box. Chosen over the alternatives priced in
+# the 2026-08-22 sitting — litestream-to-S3 (needs a bucket and a key),
+# borg/restic/tarsnap (money), scp of the raw file (torn copies under WAL) —
+# because it needs nothing but the ssh access the Mac already has:
+#
+#   1. On vm23, `sqlite3 ... "VACUUM INTO ..."` writes a CONSISTENT snapshot
+#      of every production*.sqlite3 (the db files are world-readable; VACUUM
+#      INTO holds a read transaction, so a live writer cannot tear it).
+#   2. The snapshots stream back in one tar over ssh.
+#   3. Every pulled db must pass PRAGMA integrity_check on the Mac — a backup
+#      nobody has opened is a hope, not a backup.
+#   4. The last KEEP pulls are kept; older ones rotate away.
+#
+# Install nightly:   ruby OPENBSD/bin/dr-pull --install-launchd
+# Run once:          ruby OPENBSD/bin/dr-pull
+# Restore drill:     open the newest ~/pub4-dr/<stamp>/<app>-*.sqlite3 and read.
+#
+# A sleeping Mac skips the window and launchd fires on next wake — last-resort
+# DR, honestly labeled, not a substitute for the litestream decision.
+
+require "open3"
+require "fileutils"
+require "time"
+
+HOST = ENV.fetch("PUB4_SSH_HOST", "dev@brgen.no")
+KEY = File.expand_path(ENV.fetch("PUB4_SSH_KEY", "~/.ssh/id_ed25519_brgen"))
+DEST = File.expand_path(ENV.fetch("PUB4_DR_DIR", "~/pub4-dr"))
+KEEP = Integer(ENV.fetch("PUB4_DR_KEEP", "14"))
+APPS = %w[brgen amber bsdports].freeze
+
+def ssh(cmd)
+  Open3.capture2e("ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=20", "-i", KEY, HOST, cmd)
+end
+
+if ARGV.include?("--install-launchd")
+  plist = File.expand_path("~/Library/LaunchAgents/no.brgen.pub4-dr.plist")
+  File.write(plist, <<~XML)
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0"><dict>
+      <key>Label</key><string>no.brgen.pub4-dr</string>
+      <key>ProgramArguments</key><array>
+        <string>#{RbConfig.ruby}</string>
+        <string>#{File.expand_path(__FILE__)}</string>
+      </array>
+      <key>StartCalendarInterval</key><dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>30</integer></dict>
+      <key>StandardOutPath</key><string>#{DEST}/dr-pull.log</string>
+      <key>StandardErrorPath</key><string>#{DEST}/dr-pull.log</string>
+    </dict></plist>
+  XML
+  system("launchctl", "unload", plist, err: File::NULL)
+  system("launchctl", "load", plist) || abort("dr-pull: launchctl load failed")
+  puts "dr-pull: nightly 03:30 installed (#{plist})"
+  exit 0
+end
+
+stamp = Time.now.strftime("%Y%m%d-%H%M")
+target = File.join(DEST, stamp)
+FileUtils.mkdir_p(target)
+
+# The PRIMARY database only, by design: queue (transient jobs), cable
+# (pubsub) and cache rebuild themselves and their hot WAL churn refuses a
+# cross-user read-only snapshot anyway. The primary is the irreplaceable
+# user data, and it snapshots cleanly.
+#
+# mode=ro is load-bearing: the dbs run WAL, and a plain open as dev tries to
+# create the -shm sidecar it cannot write. A read-only URI open snapshots
+# cleanly while writers keep writing.
+snap_cmd = APPS.map { |app|
+  db = "/home/#{app}/app/storage/production.sqlite3"
+  "[ -f #{db} ] && /usr/local/bin/sqlite3 \"file:#{db}?mode=ro\" \"VACUUM INTO '/tmp/dr/#{app}-production.sqlite3'\""
+}.join(" && ")
+out, status = ssh("rm -rf /tmp/dr && mkdir -p /tmp/dr && #{snap_cmd} && ls -l /tmp/dr")
+abort("dr-pull: snapshot failed on vm23\n#{out}") unless status.success?
+
+tar, status = Open3.capture2("ssh", "-o", "BatchMode=yes", "-i", KEY, HOST, "tar -C /tmp/dr -cf - .")
+abort("dr-pull: tar stream failed") unless status.success? && !tar.empty?
+IO.popen(["tar", "-C", target, "-xf", "-"], "wb") { |io| io.write(tar) }
+ssh("rm -rf /tmp/dr")
+
+pulled = Dir[File.join(target, "*.sqlite3")]
+abort("dr-pull: nothing pulled") if pulled.empty?
+bad = pulled.reject do |db|
+  check, = Open3.capture2("sqlite3", db, "PRAGMA integrity_check;")
+  check.strip == "ok"
+end
+abort("dr-pull: integrity_check FAILED for #{bad.join(', ')} — do not trust this pull") unless bad.empty?
+
+Dir[File.join(DEST, "*")].select { |d| File.directory?(d) }.sort[0...-KEEP].each { |d| FileUtils.rm_rf(d) }
+puts "dr-pull: #{pulled.size} database(s) -> #{target}, all integrity_check ok " \
+     "(#{pulled.sum { |f| File.size(f) } / 1024 / 1024}MB; keeping last #{KEEP})"
