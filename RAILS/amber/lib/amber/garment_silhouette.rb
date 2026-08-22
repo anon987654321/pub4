@@ -60,12 +60,31 @@ module Amber
     # attaching nothing.
     def png(title:, color:, category: nil, width: 720)
       svg = svg_for(shape_for(title: title, category: category), hex_for(color))
-      image = trim_transparent(Vips::Image.new_from_buffer(svg, ""))
+      image = trim_transparent(unblocking_svg { Vips::Image.new_from_buffer(svg, "") })
       image = image.resize(width.to_f / image.width) if image.width != width
       image.write_to_buffer(".png")
     rescue Vips::Error, LoadError => error
       warn_once(error)
       nil
+    end
+
+    # Active Storage calls Vips.block_untrusted(true) as it loads, and libvips
+    # marks its SVG loader untrusted — rsvg parses a whole document language, so
+    # for a file that arrived from a stranger that default is right. The string
+    # here is one this class just built from its own PATHS table, so the block
+    # comes off for exactly that one call and goes back on along every path out.
+    #
+    # Without this the loader answers "svgload_buffer: operation is blocked",
+    # which reads like a missing loader and is not one.
+    def unblocking_svg
+      return yield unless Vips.respond_to?(:block)
+
+      Vips.block("VipsForeignLoadSvg", false)
+      begin
+        yield
+      ensure
+        Vips.block("VipsForeignLoadSvg", true)
+      end
     end
 
     # Cut to the garment. The overlay renders object-fit: contain inside a zone

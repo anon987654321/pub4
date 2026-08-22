@@ -50,4 +50,31 @@ test "the cut-out is trimmed to the garment" do
   assert_operator image.height, :<, 200, "a pair of hoops should not carry a garment-length canvas"
   assert_operator image.extract_band(3).max, :>, 200, "something should be drawn"
 end
+
+  # Active Storage blocks libvips' untrusted loaders as it boots, SVG among
+  # them, so on a box where rsvg is present this class still answered nil and
+  # the demo wardrobe kept whatever photos it had. The block belongs to
+  # untrusted input; this markup is built two methods away from here.
+  test "it rasterises even with untrusted loaders blocked" do
+    Vips.block_untrusted(true)
+
+    bytes = Amber::GarmentSilhouette.png(title: "Wool coat", color: "camel", category: "outerwear")
+
+    assert bytes, "a blocked SVG loader has to be lifted for our own markup"
+    assert_equal "PNG", bytes[1, 3], "expected PNG bytes"
+  end
+
+  # And put back: the next caller with a file from a stranger must still meet
+  # the block Active Storage set.
+  test "it restores the block afterwards" do
+    Vips.block_untrusted(true)
+    Amber::GarmentSilhouette.png(title: "Wool coat", color: "camel")
+
+    blocked = assert_raises(Vips::Error) do
+      Vips::Image.new_from_buffer(%(<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"/>), "")
+    end
+    # Blocked, libvips has no loader that admits to reading the buffer, so it
+    # reports the format rather than the block. Either message is the block.
+    assert_match(/blocked|not in a known format/, blocked.message)
+  end
 end
