@@ -1,4 +1,8 @@
 #!/bin/sh
+# set -e with the two deliberate failures guarded: the runner's exit is
+# CAPTURED (status) for the report, and an absent removed= line is the
+# failure signal itself, not a crash.
+set -eo pipefail
 # Nightly guest-row prune, one app at a time, when the box is actually quiet.
 #
 # This ran from daily.local for exactly one night and removed nothing. Three
@@ -68,10 +72,10 @@ fi
 for app in brgen amber; do
   [ -d "/home/$app/app" ] || continue
 
-  out=$(su -m "$app" -c "cd /home/$app/app && set -a && . /etc/$app.env && set +a && HOME=/home/$app RAILS_ENV=production /usr/local/bin/ruby34 bin/rails runner /usr/local/bin/prune_guests.rb" 2>&1)
-  status=$?
+  status=0
+  out=$(su -m "$app" -c "cd /home/$app/app && set -a && . /etc/$app.env && set +a && HOME=/home/$app RAILS_ENV=production /usr/local/bin/ruby34 bin/rails runner /usr/local/bin/prune_guests.rb" 2>&1) || status=$?
 
-  result=$(printf '%s\n' "$out" | grep '^removed=')
+  result=$(printf '%s\n' "$out" | grep '^removed=') || result=""
 
   if [ "$status" -ne 0 ] || [ -z "$result" ]; then
     echo "$(stamp) $app FAILED (exit $status)"

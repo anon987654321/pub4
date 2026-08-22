@@ -1,4 +1,8 @@
 #!/bin/sh
+# set -e with the three deliberate failures guarded below: a drain window
+# ending in timeout(1) killing rake IS the design, and an unreadable queue
+# db defaults to zero counts rather than aborting the sweep.
+set -eo pipefail
 # Run the background job queue for a few minutes, hourly, because vm23 cannot
 # hold a worker that stays up.
 #
@@ -108,7 +112,7 @@ for app in brgen amber bsdports; do
   [ -d "/home/$app/app" ] || continue
   [ -f "/home/$app/app/storage/production_queue.sqlite3" ] || continue
 
-  counts=$(queue_counts "$app")
+  counts=$(queue_counts "$app") || counts=""
   due=$(field "$counts" 1)
   ahead=$(field "$counts" 2)
   failed=$(field "$counts" 3)
@@ -124,8 +128,8 @@ for app in brgen amber bsdports; do
   # SIGTERM, which Solid Queue handles: it stops claiming new work and lets what
   # is in flight finish. -k gives it 20 seconds before SIGKILL.
   su -m "$app" -c "cd /home/$app/app && set -a && . /etc/$app.env && set +a && HOME=/home/$app RAILS_ENV=production timeout -k 20 -s TERM $SECONDS_PER_APP /usr/local/bin/bundle34 exec rake solid_queue:start" \
-    >>/var/log/drain-jobs.detail.log 2>&1
+    >>/var/log/drain-jobs.detail.log 2>&1 || true
 
-  after=$(queue_counts "$app")
+  after=$(queue_counts "$app") || after=""
   echo "$(stamp) $app due $due -> $(field "$after" 1)  ahead=$(field "$after" 2) failed=$(field "$after" 3) (ran ${SECONDS_PER_APP}s)"
 done

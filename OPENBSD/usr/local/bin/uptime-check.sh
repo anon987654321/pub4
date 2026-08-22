@@ -5,11 +5,14 @@
 # Optional apps can be waived the same way deploy-smoke does:
 #   ALLOW_AMBER_DOWN=1 ALLOW_BSDPORTS_DOWN=1
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+# Strict on purpose: every fallible command below already carries its own
+# fallback (curl || print 000), so set -e only guards the plumbing.
+set -eo pipefail
 
 fail=0
 check() {
 	url=$1
-	code=$(curl -fsS -o /dev/null -w '%{http_code}' --max-time "${UPTIME_CHECK_TIMEOUT:-20}" "$url" || print 000)
+	code=$(curl -fsS -o /dev/null -w '%{http_code}' --max-time "${UPTIME_CHECK_TIMEOUT:-20}" "$url") || code=000
 	case $code in
 	2??|3??) ;;
 	*)
