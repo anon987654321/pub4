@@ -1,0 +1,18 @@
+<%# locals: photo, fallback_char, badge: nil, badge_soft: false %>
+<%# The one shared anatomy the card family actually has: the image slot.
+    deals/_card and listings/_card carried this block byte-similar — same
+    class family, same responsive widths — and only the badge text and its
+    softness differ, so those are the locals. The card BODIES stay local:
+    a deal leads with its discount, a listing with its meta row, and one
+    body partial serving both would be the parameter soup the
+    purchasable-row refutation warned about. %>
+<div class="deal-card-img">
+  <% if photo %>
+    <%= responsive_image_tag photo, alt: "", widths: [360, 720], sizes: "(max-width: 768px) 50vw, 220px" %>
+  <% else %>
+    <div class="deal-card-placeholder" aria-hidden="true"><%= fallback_char %></div>
+  <% end %>
+  <% if badge.present? %>
+    <span class="deal-badge<%= " deal-badge--soft" if badge_soft %>"><%= badge %></span>
+  <% end %>
+</div>
