@@ -7,10 +7,23 @@ import { Controller } from "@hotwired/stimulus"
 // duplicating near-identical gesture logic per panel.
 export default class extends Controller {
   static targets = ["root", "grip"]
-  static values = { edge: { type: String, default: "top" } }
+  static values = {
+    edge: { type: String, default: "top" },
+    // First-visit reveal (operator, 2026-08-22): a drawer nobody has ever
+    // seen is a feature nobody knows exists. With intro set, the panel
+    // starts REVEALED until the visitor dismisses it once — swipe, tap
+    // away, Escape, or the grip — and that dismissal is remembered per
+    // panel. The swipe stays the recall gesture forever after.
+    intro: { type: String, default: "" },
+  }
 
   connect() {
     this.revealed = false
+    if (this.introValue) {
+      let seen = null
+      try { seen = localStorage.getItem(`edge-swiper-intro:${this.introValue}`) } catch {}
+      if (!seen) requestAnimationFrame(() => this.show())
+    }
     this.startPos = null
     this.tracking = false
     this.armDistance = 44   // px from the edge that arms a reveal swipe
@@ -92,13 +105,21 @@ export default class extends Controller {
 
   show() {
     this.revealed = true
-    this.rootTarget.classList.add("revealed")
+    // The wrapper, not the root target: the CSS keys .sidebar-swiper.revealed
+    // .sidebar, and classing the aside itself matched nothing — the reveal
+    // toggled state and painted NOTHING, on every panel, since the split.
+    // Found 2026-08-22 proving the first-visit intro; the 'deliberately
+    // hidden' nav was hiding a dead reveal.
+    this.element.classList.add("revealed")
     if (this.hasGripTarget) this.gripTarget.setAttribute("aria-expanded", "true")
   }
 
   hide() {
+    if (this.introValue) {
+      try { localStorage.setItem(`edge-swiper-intro:${this.introValue}`, "1") } catch {}
+    }
     this.revealed = false
-    this.rootTarget.classList.remove("revealed")
+    this.element.classList.remove("revealed")
     if (this.hasGripTarget) this.gripTarget.setAttribute("aria-expanded", "false")
   }
 }

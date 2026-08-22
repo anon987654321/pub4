@@ -150,7 +150,10 @@
 
   <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
     <div class="layout">
-      <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
+      <%# intro: the sidebar starts revealed for a first-time visitor and stays
+          the swipe-reveal drawer after the first dismissal — visible until
+          known, hidden once learned (operator, 2026-08-22). %>
+      <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-edge-swiper-intro-value="brgen-sidebar" data-turbo-permanent>
       <aside class="sidebar" aria-label="<%= t("nav.sidebar") %>" data-edge-swiper-target="root">
         <nav role="navigation" data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>

@@ -182,8 +182,12 @@ a.brgen-logo-mark,
   /* Same corner inset as the theme control and the chat widget, and additive
      over the safe area rather than max()'d against it -- see --chrome-inset.
      This was 0.5rem top / 0.75rem start, so the brand sat 4px higher than the
-     toggle opposite it and lost its inset entirely on a notched phone. */
-  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px));
+     toggle opposite it and lost its inset entirely on a notched phone.
+
+     No `top` here anymore: the shared .brand-mark owns positioning (with
+     --top-band-nudge centring it on the nav link), and this a.-prefixed
+     duplicate outranked it at (0,1,1) — which is why the nudge landed on
+     brgen.no and missed every vertical (rendered_invariants, 2026-08-22). */
   inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
   display: inline-flex;
   align-items: center;

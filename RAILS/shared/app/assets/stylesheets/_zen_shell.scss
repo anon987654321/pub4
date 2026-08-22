@@ -291,8 +291,18 @@ article {
   padding-inline-start: calc(var(--space-3) * 2 + 20px);
 }
 
-input:not(:placeholder-shown) + label,
-input:focus + label {
+/* Text entries only, spelled out. :placeholder-shown never applies to a
+   checkbox, so the bare `input:not(:placeholder-shown) + label` matched the
+   THEME TOGGLE (a checkbox + its icon label) and float-labelled the brand
+   chrome: translateY(-1.5em) scale(0.85) on the top-right corner of every
+   brgen page — found by rendered_invariants reading a 64px band misalignment
+   on 2026-08-22. A form pattern must never be able to reach chrome. */
+input:where([type="text"], [type="email"], [type="password"], [type="tel"],
+            [type="url"], [type="search"], [type="number"], [type="date"],
+            :not([type])):not(:placeholder-shown) + label,
+input:where([type="text"], [type="email"], [type="password"], [type="tel"],
+            [type="url"], [type="search"], [type="number"], [type="date"],
+            :not([type])):focus + label {
   transform: translateY(-1.5em) scale(0.85);
   color: var(--color-midtone);
 }

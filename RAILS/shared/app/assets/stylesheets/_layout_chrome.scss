@@ -19,6 +19,12 @@
      one is a different measurement — it aligns to the bar, so it follows the bar. */
   --chrome-inset-block: var(--space-2);
   --tap-min: 44px;
+  /* The nav link's box is line-height + padding (47.25px) against the fixed
+     chrome's 44px tap boxes, same top — centres 1.6px apart, which
+     rendered_invariants reads as a band misalignment on every surface. The
+     nudge drops the fixed chrome (brand mark, theme toggle) to the LINK's
+     centre; moving text metrics would visibly reflow, this moves nothing. */
+  --top-band-nudge: 1.6px;
   --bar-height: 44px;
   --page-gutter: clamp(16px, 5vw, 48px);
   --feed-max: 600px;
@@ -156,7 +162,12 @@ main[role="main"] {
   position: fixed;
   /* Above app chrome, not merely above the drawer -- see --z-brand. */
   z-index: var(--z-brand, 120);
-  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px));
+  /* +--top-band-nudge: the nav link's box is line-height + padding (47.25px)
+     against this mark's 44px tap box, same top — so their centres sat 1.6px
+     apart and rendered_invariants read the band as misaligned on every
+     surface. The nudge drops the fixed chrome to the LINK's centre, because
+     moving text metrics would visibly reflow and this moves nothing else. */
+  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px));
   inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
   display: inline-flex;
   align-items: center;
