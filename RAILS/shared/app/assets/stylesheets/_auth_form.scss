@@ -19,6 +19,8 @@ body.auth-surface {
   .sidebar-swiper,
   .widgets-swiper,
   .push-enable-btn {
+    /* ERASE guarantee (NO_IMPORTANT doctrine): the auth page must never
+       show feed chrome, whatever a vertical adds later. */
     display: none !important;
   }
 
