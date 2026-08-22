@@ -1,5 +1,3 @@
-# Written by OPENBSD/bin/domain_watch.rb --update. Committed so a domain
-# changing hands is a reviewable diff rather than a surprise outage.
 ---
 amstrdam.nl:
   state: registered
@@ -182,7 +180,7 @@ trndheim.no:
   created: '2020-08-22'
 utrcht.nl:
   state: unknown
-  note: registry referral, not a domain record
+  note: utrcht.nl is free
 wrsawa.pl:
   state: unknown
   note: 'No information available about domain name wrsawa.pl in the '
