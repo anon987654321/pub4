@@ -20,11 +20,15 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       return
     end
 
-    # Credentials FIRST, before any lane does work: the one-click lane below
-    # CREATES an order, and checking the provider afterwards left order debris
-    # behind every unconfigured click — caught by this lane's own test on its
-    # first run. An unkeyed provider refuses before anything exists.
-    raise Marketplace::Payments::NotConfigured, provider.capitalize unless provider_configured?(provider)
+    # Credentials-first is LANE-SCOPED. The one-click lane below CREATES an
+    # order, and checking the provider afterwards left order debris behind
+    # every unconfigured click — caught by that lane's own test. The cart
+    # lanes keep the original order (four tests pin it): an empty cart is
+    # reported before anything about payment providers, because "nothing to
+    # pay" is the buyer's answer and "unconfigured" is the operator's.
+    if params[:listing_id].present? && !provider_configured?(provider)
+      raise Marketplace::Payments::NotConfigured, provider.capitalize
+    end
 
     # listing_id is the ONE-CLICK lane (operator, 2026-08-22): the buy bar
     # posts here directly and the order is created and paid in the same
@@ -45,6 +49,12 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       redirect_to cart_path, alert: t("flash.marketplace.cart_not_payable")
       return
     end
+
+    # The cart lanes' provider check sits here — after empty-cart, before the
+    # address gate — so an unconfigured PSP still fails closed with its reason
+    # instead of sending the buyer to the address form for a payment that
+    # could never start.
+    raise Marketplace::Payments::NotConfigured, provider.capitalize unless provider_configured?(provider)
 
     payable = build_basket(payable) if payable.is_a?(Array)
     # build_basket redirects on its own when there is no delivery address —
