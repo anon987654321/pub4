@@ -88,7 +88,8 @@ end
   end
 
   def penalize_owner(report)
-    user = accountable_user(subject_for(report))
+    subject = subject_for(report)
+    user = accountable_user(subject)
     return unless user
 
     user.trust_signals.find_or_create_by!(
@@ -96,7 +97,12 @@ end
       source: "moderation_report:#{report.id}"
     ) do |signal|
       signal.weight = TrustScore::SIGNAL_WEIGHTS.fetch("spam_report")
-      signal.metadata = { reason: report.reason, reportable: report.reportable.to_global_id.to_s }.to_json
+      # subject, not report.reportable: this metadata line was the one lazy
+      # polymorphic read left behind by the strict_loading fix above, so
+      # resolving a bare-loaded report raised HERE — after update! had
+      # already written the status — the first time the new service test
+      # called the real path.
+      signal.metadata = { reason: report.reason, reportable: subject&.to_global_id.to_s }.to_json
     end
     TrustScore.new(user: user).call
   end
