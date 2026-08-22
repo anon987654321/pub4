@@ -27,19 +27,9 @@ open:
      THE MOVE HAPPENED: amberapp.com serves 200 with its own cert (verified live 2026-08-22) and amber.brgen.no still serves in parallel. DECIDED: amber keeps its own identity space (no cross-apex SSO — separate product, separate accounts); remaining hand work is the canonical/redirect choice for amber.brgen.no and the sitemap/manifest host sweep the entry lists.
 - id: rails_coverage_contract_is_tautological
   tag: operator-priority
-  summary: 'controller_coverage_contract_test.rb and model_coverage_contract_test.rb
-    assert only that source files contain class/def strings — they never boot Rails
-    or call a method, so they pass against a body of `raise`. Both now say so in their
-    own headers and are honest apps.yml claim-checks; the real numbers are ratcheted
-    in RAILS/test/coverage_ratchet_test.rb (amber 1/30 controllers and 5/31 models,
-    brgen 14/87 and 11/98, bsdports 2/11 and 1/13), failing in both directions. What
-    is open is the gap itself: money and trust paths (vipps checkout, moderation_workflow,
-    trust_score, account_merger, identity_assurer) have no tests. Checkout left that
-    list on 2026-08-03 and the reason it read as zero is the lesson — the tests existed
-    and had never run, because `bin/rails test` globbed from the app root and never
-    saw engines/*/test.
-
-    '
+  summary: |-
+    controller_coverage_contract_test.rb and model_coverage_contract_test.rb assert only that source files contain class/def strings — they never boot Rails or call a method, so they pass against a body of `raise`. Both now say so in their own headers and are honest apps.yml claim-checks; the real numbers are ratcheted in RAILS/test/coverage_ratchet_test.rb (amber 1/30 controllers and 5/31 models, brgen 14/87 and 11/98, bsdports 2/11 and 1/13), failing in both directions. What is open is the gap itself: money and trust paths (vipps checkout, moderation_workflow, trust_score, account_merger, identity_assurer) have no tests. Checkout left that list on 2026-08-03 and the reason it read as zero is the lesson — the tests existed and had never run, because `bin/rails test` globbed from the app root and never saw engines/*/test.
+     THE NAMED GAP CLOSED 2026-08-22: trust_score, identity_assurer, account_merger, moderation_workflow and the vipps money contract all have tests that CALL the real paths now (15 tests, brgen test/services/). The moderation test found a live bug on its first run — penalize_owner's metadata line still read the polymorphic lazily, so resolving a bare-loaded report raised AFTER the status write, exactly the trap the service's own comment described two methods up. The vipps test pins the misconfigured-fakes-success refusal. Controller/model floors unchanged (service tests live beside, not inside, those counts); what remains open is only the broad floor-raising grind the ratchet already holds.
 - id: rails_audit_backlog_2026_08_10
   tag: agent-workable
   summary: |-
