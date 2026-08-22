@@ -116,5 +116,5 @@ rules:
   # recorded 60/120px display type, chosen by that session's own redesign.
   # Brand display type does not read the body ladder anywhere in this tree;
   # if the mark is ever cut to the ladder, run with GATE_CSS_RATCHET=1.
-  type_scale: 12
+  type_scale: 0
   weight_ladder: 2

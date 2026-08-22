@@ -1,3 +1,6 @@
+/* --logo-detail: the animated mark's micro-stroke — logo art, not text. */
+:root { --logo-detail: 3px; }
+
 /* zYaJege marketplace banner — exact layout/geometry from source pen.
    Placement only: transparent banner background, white foreground for yellow/dark header. */
 
@@ -124,7 +127,7 @@
 }
 
 #logoWrapper .marketplace .banner > span {
-  font-size: 3px;
+  font-size: var(--logo-detail);
   margin-top: -24px;
   margin-inline-end: -24px;
 }

@@ -69,7 +69,7 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 .photo-thumb { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-sm); }
 .dating-discover { margin-top: var(--space-5); }
 .offline-empty { padding: var(--space-16) var(--space-4); text-align: center; }
-.offline-empty h1 { font-size: 2.2rem; margin-bottom: var(--space-1); }
+.offline-empty h1 { font-size: var(--text-display); margin-bottom: var(--space-1); }
 .offline-empty__actions { margin: var(--space-8) 0; }
 .cart-summary { margin-top: var(--space-6); padding-top: var(--space-4); border-top: 0; }
 .tv-media { border-bottom: 0; }

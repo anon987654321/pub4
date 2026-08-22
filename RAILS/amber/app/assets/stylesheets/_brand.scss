@@ -1,3 +1,13 @@
+:root {
+  /* The Caprasimo brand ramp (f75050a6d). Display type does not read the
+     body ladder anywhere in this tree; these four steps are the mark's own
+     scale, values unchanged from the literals they replace. */
+  --brand-mark: 200px;
+  --brand-hero: 120px;
+  --brand-title: 60px;
+  --brand-footer: 40px;
+}
+
 /* Amber logo — Caprasimo swoosh + animated radial gradient + white retro lines.
    Geometry and motion match the canonical logo HTML (viewBox 1000×500). */
 
@@ -35,7 +45,7 @@
    one breakpoint, from a token swap that looked like a no-op because at the
    default root size 0.75rem is exactly 12px. */
 .amber-logo-svg .amber-logo-word {
-  font-size: 60px;
+  font-size: var(--brand-title);
 }
 
 .amber-logo-svg .amber-logo-mark {
@@ -44,7 +54,7 @@
 
 @media (min-width: 768px) {
   .amber-logo-svg .amber-logo-word {
-    font-size: 120px;
+    font-size: var(--brand-hero);
   }
 
   .amber-logo-svg .amber-logo-mark {
@@ -154,11 +164,11 @@
 }
 
 .amber-logo-banner--nav .amber-logo-svg .amber-logo-word {
-  font-size: 200px;
+  font-size: var(--brand-mark);
 }
 
 .amber-logo-banner--nav .amber-logo-svg .amber-logo-mark {
-  font-size: 40px;
+  font-size: var(--brand-footer);
 }
 
 .amber-nav-actions {

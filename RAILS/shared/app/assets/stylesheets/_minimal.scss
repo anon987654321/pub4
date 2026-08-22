@@ -2,6 +2,7 @@
 // Apps: @use "stack" as *; then add product rules in application.scss.
 
 @use "dialect_tokens" as x;
+:root { --root-scale-wide: 21px; }
 
 // Shared alias set — same 10 x.com-style names regardless of mode, just
 // re-pointed at the light or dark @include. Defined once, applied twice below.
@@ -62,7 +63,7 @@ body {
 @media (min-width: 1280px) {
   html,
   body {
-    font-size: 21px;
+    font-size: var(--root-scale-wide, 21px); /* the large-screen rem base — snapping it to a ladder step would rescale every rem in the system */
     line-height: 28px;
   }
 }
