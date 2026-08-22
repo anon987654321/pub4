@@ -86,10 +86,16 @@ end
 # grouped summary: they will not ride along, and if the staged diff references
 # them the pushed tree breaks while every local run stays green.
 same_tree_untracked = untracked.select { |u| staged_trees.include?(tree_of(u)) }
-unless same_tree_untracked.empty?
-  warn "pre-commit: untracked in the tree(s) you are committing — these will NOT ride along:"
+if !same_tree_untracked.empty? && ENV["PUB4_UNTRACKED"] != "1"
+  warn ""
+  warn "pre-commit: REFUSED — untracked file(s) in the tree(s) you are committing:"
   same_tree_untracked.sort.first(8).each { |file| warn "    #{file}" }
-  warn "    `git add` them first if this change references them."
+  warn ""
+  warn "  These will NOT ride along, and three times in two days a commit has"
+  warn "  referenced a file it did not stage. `git add` them, or say they belong"
+  warn "  to a different change: PUB4_UNTRACKED=1 git commit -- <paths>"
+  warn ""
+  exit 1
 end
 
 # STUDIO belongs to whoever wrote STUDIO/.session (one line: a session name).
