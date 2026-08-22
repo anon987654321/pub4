@@ -318,3 +318,34 @@ an earlier reading of mine that the risks were blocking it was wrong.
 Before treating a prescan number as work: reproduce it with
 `CrossFileAnalysis.new(root:).call(paths)` and read the findings. The printed
 eight are `findings.first(8)`, never a representative sample.
+
+## The Pixel Field Was Law Nobody Read
+
+`design_rules.pixel_field` — 150 lines, ten subkeys — is deleted, not
+deprecated. It mandated ordered dithering, limited palettes, 320x180
+internal resolutions, and a thirteen-entry table mapping semantic states to
+visual cell forms (checker-dither means uncertainty, pixel-spray means
+entropy).
+
+Two facts decided it. Nothing read it: `pixel_field`,
+`semantic_cell_fields`, `cell_grammar`, `systemic_emotion_mapping`,
+`bitmap_not_retro`, `runtime_modes` and `explainability` return zero hits
+across MASTER, RAILS and STUDIO outside the YAML itself, so no scanner, gate
+or prompt has ever applied it to brgen, amber or bsdports. And it
+contradicts the direction the operator chose on 2026-07-18, when the
+IRIX/8-bit/pixel-field aesthetic was dropped for flat brutalism — the
+section was still instructing anything that read it to build the aesthetic
+that had been abandoned.
+
+Its only live agreement with current direction, no blur or bloom or glow, is
+already stated four other ways: `pixel_perfection.forbidden_css`,
+`ui_polish.flat_ui`, `soul.yml FLAT_UI`, and the executable
+`NO_DECORATIVE_FX`. Deleting it removes no enforcement.
+
+The wider finding it came from stands as debt: five of thirteen
+`design_rules` subkeys were wholly inert, and the same value is legal at two
+different paths in three places (touch minimum at `ux_laws.fitts` and
+`layout_rules.touch`; the spacing scale at `pixel_perfection.eight_px_rhythm`
+and `layout_rules.grid`), which is why `Design::Thresholds` reads them as
+fallback chains. Deduplicating those requires editing every reader and is
+not this commit.
