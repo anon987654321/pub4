@@ -456,6 +456,10 @@ spine:
   # NO_IMPORTANT consults original lines for markers the comment-stripping
   # blanked; TYPOGRAPHIC_EXCELLENCE skips erb doc comments. False positives
   # down, again.
+  # RAISED 2026-08-22 (first since the fall to 38882), 38882 -> 38924 (+42):
+  # ABC_SIZE lands bespoke — the one external-linter signal with no
+  # equivalent, per scanner_overlaps' measured conclusion — plus the
+  # container-surface loader stub. Priced.
   # RAISED 2026-08-21 (sixth), 39083 -> 39094 (+11): twenty-one lib rescues
   # now report through Swallow before they degrade — the rescue sitting,
   # priced.
@@ -477,7 +481,7 @@ spine:
   # multi-line <img> a finding. The 13 lines are those two rules plus the
   # narrowings H1_VISIBILITY, SKIP_TO_MAIN, META_CHARSET and SINGLE_H1 learned
   # in the same pass — every one bought false positives down, not features up.
-  lib_code_ceiling: 38882
+  lib_code_ceiling: 38924
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

@@ -182,7 +182,9 @@ module Pub4
       # feed tabs. Following and Communities moved onto the nav bar with their
       # keys rather than their English defaults; a string becoming a key is one
       # fewer literal in this column and in aria_label.
-      "translate_default" => 195,
+      # 195 -> 191 (2026-08-22): the shadow legal footer's defaulted t() calls
+      # left with it. Banked.
+      "translate_default" => 191,
     }.freeze
 
     # Kept for callers that referenced the old single number.

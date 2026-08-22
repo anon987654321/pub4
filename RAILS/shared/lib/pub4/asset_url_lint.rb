@@ -56,7 +56,7 @@ module Pub4
     # last in a `src:` list behind woff2/woff/ttf, so no browser that exists asks
     # for it, and adding a file nothing requests is worse than recording it. The
     # two copies are themselves the register's `rails_duplicate_vendor_css`.
-    BASELINES = { "missing_asset" => 5 }.freeze
+    BASELINES = { "missing_asset" => 4 }.freeze
 
     Finding = Struct.new(:kind, :ref, :sheet, :tried)
 
