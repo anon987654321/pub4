@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ShowsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  renders "tv/shows/card", as: :show
+  renders "tv/shows/card", as: :show, wrap_in: :li
 
   private
 

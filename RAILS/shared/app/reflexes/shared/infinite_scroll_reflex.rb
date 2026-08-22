@@ -28,17 +28,23 @@ module Shared
     end
 
     class << self
-      attr_reader :row_partial, :row_local
+      attr_reader :row_partial, :row_local, :row_wrapper
 
       # renders "posts/post", as: :post
-      def renders(partial, as:)
+      # wrap_in: :li when the container this appends into is a list. The
+      # feeds became ul/li so screen readers announce them; page_html joins
+      # raw partials, so without this the first page was list items and every
+      # appended page was bare articles inside a ul.
+      def renders(partial, as:, wrap_in: nil)
         @row_partial = partial
         @row_local = as
+        @row_wrapper = wrap_in
       end
 
       # Subclasses of subclasses would otherwise lose the declaration.
       def inherited(child)
         super
+        child.instance_variable_set(:@row_wrapper, @row_wrapper)
         child.instance_variable_set(:@row_partial, @row_partial)
         child.instance_variable_set(:@row_local, @row_local)
       end
@@ -112,6 +118,12 @@ module Shared
 
     # Markup to append after a row, or nil for none. `slot` is the row's position
     # in the feed as a whole, not within this page — see #slot_for.
+    def wrap_row(html, wrapper)
+      return html if wrapper.nil?
+
+      "<#{wrapper}>#{html}</#{wrapper}>".html_safe
+    end
+
     def after_row(record, slot) = nil
 
     # The row's position in the feed as a whole. This is the whole subtlety of
@@ -129,10 +141,11 @@ module Shared
       partial = self.class.row_partial
       raise NotImplementedError, "#{self.class} must declare `renders`" if partial.nil?
 
+      wrapper = self.class.row_wrapper
       @records.each_with_index.map { |record, index|
-        row = render(partial: partial, locals: row_locals(record))
+        row = wrap_row(render(partial: partial, locals: row_locals(record)), wrapper)
         extra = after_row(record, slot_for(index))
-        extra ? row + extra : row
+        extra ? row + wrap_row(extra, wrapper) : row
       }.join
     end
   end

@@ -4,19 +4,19 @@
 
 <% if @posts.any? %>
  <%= turbo_frame_tag "home-feed", target: "_top" do %>
- <div class="post-feed" id="home-feed">
+ <ul class="post-feed feed_list" id="home-feed">
  <% @posts.each_with_index do |post, index| %>
- <%= render "posts/post", post: post %>
+ <li><%= render "posts/post", post: post %></li>
  <%# One unit after every AFFILIATE_EVERY posts, never before the first and
      never trailing the last — an ad in the last slot reads as the end of the
      feed. HomeInfiniteScrollReflex#after_row carries the same cadence onto
      appended pages, counting slots from the top of the feed rather than the top
      of the page, so the rhythm does not restart on every scroll. %>
  <% if ((index + 1) % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && index + 1 < @posts.size %>
- <%= render "shared/affiliate_feed_unit" %>
+ <li><%= render "shared/affiliate_feed_unit" %></li>
  <% end %>
  <% end %>
- </div>
+ </ul>
 
  <%= render "shared/infinite_scroll_sentinel",
             pagy: @pagy,

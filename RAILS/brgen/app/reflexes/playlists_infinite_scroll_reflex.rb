@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class PlaylistsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  renders "playlist/playlists/row", as: :playlist
+  renders "playlist/playlists/row", as: :playlist, wrap_in: :li
 
   private
 

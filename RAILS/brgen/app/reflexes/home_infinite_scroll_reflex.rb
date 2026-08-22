@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  renders "posts/post", as: :post
+  renders "posts/post", as: :post, wrap_in: :li
 
   private
 

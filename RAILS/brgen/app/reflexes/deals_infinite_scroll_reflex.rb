@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class DealsInfiniteScrollReflex < Shared::InfiniteScrollReflex
-  renders "marketplace/deals/card", as: :deal
+  renders "marketplace/deals/card", as: :deal, wrap_in: :li
 
   private
 
