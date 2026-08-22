@@ -40,7 +40,7 @@ targets:
   # under `targets:` -- and this comment is in the way. It reported "brgen -> 329,
   # amber -> 164" and left 411/207 on disk. It now rewrites one line at a time and
   # fails the gate if the re-read does not match what it announced.
-  brgen: 247
-  amber: 121
-  bsdports: 59
-  shared: 143
+  brgen: 1
+  amber: 21
+  bsdports: 1
+  shared: 1
