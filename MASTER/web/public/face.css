@@ -11,16 +11,6 @@
   --c-code: oklch(74% 0.11 275);
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --font-label: "JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
-  /* The HUD type ramp. face.css cannot read the RAILS --text-* ladder (it is
-     served from web/public, outside the asset pipeline), so these three steps
-     ARE its ladder — status chips and diagnostic panes, monospace, on a
-     canvas. Values unchanged from the literals they replace. */
-  /* Cited by #photo-button since it was written and never defined here —
-     the min-width was an inert declaration and the button measured 18px. */
-  --tap-min: 44px;
-  --hud-lg: 13px;
-  --hud-md: 11px;
-  --hud-sm: 10px;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -42,12 +32,15 @@
   --border-soft: color-mix(in srgb, var(--face-fg) 14%, transparent);
   --border-strong: color-mix(in srgb, var(--face-fg) 24%, transparent);
   --hover-tint: color-mix(in srgb, var(--face-fg) 8%, transparent);
+  --tap-min: 44px;
+  --hud-lg: 13px;
+  --hud-md: 11px;
+  --hud-sm: 10px;
   --radius-xs: 0;
   --radius-sm: 0;
   --radius-md: 0;
   --radius-lg: 0;
   --radius-pill: 0;
-  --tap-min: 44px;
   --face-bar-height: 44px;
   --bar-height: 44px;
   --hud-tier-status: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);

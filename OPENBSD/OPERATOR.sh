@@ -216,7 +216,7 @@ install_root_configs() {
     install -d -o dev -g dev -m 700 /home/dev 2>/dev/null || true
     cp "$src/etc/.zshrc" /home/dev/.zshrc
     chown dev:dev /home/dev/.zshrc 2>/dev/null || true
-    chmod 644 /home/dev/.zshrc 2>/dev/null || true
+    chmod 600 /home/dev/.zshrc 2>/dev/null || true
     log INFO "synced .zshrc to /home/dev"
   fi
 

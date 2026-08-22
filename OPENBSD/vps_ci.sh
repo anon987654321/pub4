@@ -110,7 +110,13 @@ deploy_status "$app" "sync tree"
 sync_from_repo
 pub4_ensure_ci_lock >/dev/null
 ci_rails_root=/home/${app}/pub4-rails/RAILS
-doas chmod o+x /home/dev 2>/dev/null || true
+# App users traverse /home/dev by GROUP, not other: 710 dev:_pub4ci, members
+# brgen/amber/bsdports (2026-08-22, closes the world-traversable half of the
+# secrets debt entry). Idempotent so a fresh box converges on first CI run.
+doas groupadd _pub4ci 2>/dev/null || true
+doas usermod -G _pub4ci "${app}" 2>/dev/null || true
+doas chgrp _pub4ci /home/dev 2>/dev/null || true
+doas chmod 710 /home/dev 2>/dev/null || true
 doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
 deploy_status "$app" "bundle install + bin/ci"
 doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 config unset without 2>/dev/null || true && bundle34 config unset deployment 2>/dev/null || true && bundle34 install --jobs=2 && bundle34 exec bin/ci'" \

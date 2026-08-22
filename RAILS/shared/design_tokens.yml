@@ -139,6 +139,14 @@ face_root:
     border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"
     hover_tint: "color-mix(in srgb, var(--face-fg) 8%, transparent)"
   layout:
+    # The HUD type ramp and tap floor (2026-08-22): face.css cannot read the
+    # RAILS --text-* ladder, so these ARE its ladder; tap-min was cited by
+    # #photo-button since it was written and never defined — an inert
+    # declaration that measured 18px on a compose control.
+    tap-min: 44px
+    hud-lg: 13px
+    hud-md: 11px
+    hud-sm: 10px
     radius-xs: "0"
     radius-sm: "0"
     radius-md: "0"
