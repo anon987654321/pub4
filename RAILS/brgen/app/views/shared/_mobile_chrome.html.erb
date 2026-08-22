@@ -52,7 +52,10 @@
   </button>
   <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>
 </nav>
-<div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
+<%# Backdrop dismissal is a pointer affordance; Escape is the keyboard's
+    equivalent — without it a keyboard user who opened the sheet had no way
+    back except tabbing to whatever happened to close it. %>
+<div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close keydown.esc@window->bottom-sheet#close"></div>
 <%# Pointer events only. This also bound touchstart/touchmove/touchend to the
     same three methods, and pointer events already cover touch on every
     browser `allow_browser versions: :modern` admits -- so one finger drag ran
