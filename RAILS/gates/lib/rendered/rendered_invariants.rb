@@ -101,6 +101,14 @@ module Deploy
     def check_surface(session, surface)
       host = surface[:host]
       session.navigate("https://#{host}/", settle: 1.5)
+      # A fresh profile gets the first-visit drawer reveal, which slides the
+      # top bar mid-transition and turns steady-state alignment into noise.
+      # Dismiss it the way a user would — Escape is the documented gesture —
+      # and wait out the 300ms slide before measuring.
+      if session.evaluate("!!document.querySelector('.revealed')")
+        session.press("Escape")
+        sleep 0.5
+      end
       measured = session.evaluate(PROBE)
       return @result.skipped_live("rendered_invariants: #{host} unreadable") unless measured
 
