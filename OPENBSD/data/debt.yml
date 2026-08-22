@@ -36,7 +36,11 @@ open:
   - id: solid_queue_worker_never_ran
     tag: operator-priority
     summary: >
-      No background job has ever run on this box. Every app's rc.d exported
+      UPDATE 2026-08-22: jobs RUN now, via the hourly drain — the deploy's
+      solid_queue proof measures it (amber last drained 02:08Z today, all three
+      proofs green). What remains open is the resident-worker decision below;
+      the history stands because it prices it.
+      No background job had ever run on this box before the drain. Every app's rc.d exported
       SOLID_QUEUE_IN_PUMA=true; in-Puma mode is a Puma plugin, all three apps run
       under Falcon, and not one has a config/puma.rb — so the variable was read by
       nothing and no worker ever started. Measured 2026-08-12: brgen 1670 jobs
