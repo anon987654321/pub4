@@ -117,6 +117,64 @@ module Master
           end
         end
 
+        # ABC size, the one external-linter signal with no bespoke equivalent:
+        # the 2026-08-13 overlap measurement (debt: scanner_overlaps_two_
+        # installed_linters) found Metrics/AbcSize produced 13 of the 42
+        # findings nothing here could see — the largest unique signal on
+        # either side. Written bespoke per that entry's conclusion instead of
+        # bridging rubocop per-file: sqrt(A²+B²+C²), counted from the AST,
+        # never from line text, calibrated against rubocop on a shared file
+        # (85.5 here vs 85.91 there for the same method).
+        #
+        # The THRESHOLD is the ratchet. At rubocop's default 17 the fleet
+        # holds 560 findings — a flood that would bury the constitutional
+        # ceilings recorded at 1/21/1/1 the same day. 40 catches the 24
+        # worst (top: 85.5 in brgen's application_helper); walk it down as
+        # they fall: 40 -> 30 (81) -> 25 (169) -> 17 (560).
+        RuleDSL.rule :ABC_SIZE,
+          severity: :warning, tags: %i[COMPLEXITY], applies_to: %i[ruby], autofix: false,
+          description: "method ABC size over the ratchet threshold — extract until the pieces name themselves",
+          example_path: "/repo/lib/example.rb",
+          fires: "def dense(x)\n" + Array.new(20) { |i| "  v#{i} = x.call(#{i}) if x.ok?(#{i})\n" }.join + "end\n",
+          does_not_fire: "def calm(x)\n  y = x.call\n  y ? y.to_s : nil\nend\n" do |src, path:|
+          result = Prism.parse(src)
+          next [] if result.failure?
+
+          findings = []
+          walk = lambda do |node|
+            next unless node.respond_to?(:child_nodes)
+            if node.is_a?(Prism::DefNode)
+              a = b = c = 0
+              inner = lambda do |n|
+                next unless n.respond_to?(:child_nodes)
+                case n
+                when Prism::LocalVariableWriteNode, Prism::InstanceVariableWriteNode,
+                     Prism::ClassVariableWriteNode, Prism::GlobalVariableWriteNode,
+                     Prism::ConstantWriteNode, Prism::LocalVariableOperatorWriteNode,
+                     Prism::InstanceVariableOperatorWriteNode, Prism::MultiWriteNode
+                  a += 1
+                when Prism::CallNode
+                  n.name.to_s.end_with?("=") ? a += 1 : b += 1
+                when Prism::IfNode, Prism::UnlessNode, Prism::WhileNode, Prism::UntilNode,
+                     Prism::CaseNode, Prism::WhenNode, Prism::AndNode, Prism::OrNode,
+                     Prism::RescueNode
+                  c += 1
+                end
+                n.child_nodes.compact.each { |child| inner.call(child) }
+              end
+              node.child_nodes.compact.each { |child| inner.call(child) }
+              abc = Math.sqrt(a**2 + b**2 + c**2)
+              if abc > 40
+                findings << finding(line: node.location.start_line,
+                  message: "ABC size #{abc.round(1)} for ##{node.name} (A=#{a} B=#{b} C=#{c}, ratchet 40) — extract until the pieces name themselves")
+              end
+            end
+            node.child_nodes.compact.each { |child| walk.call(child) }
+          end
+          walk.call(result.value)
+          findings
+        end
+
         RuleDSL.rule :TRAILING_COMMAS,
           severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
           description: "trailing commas in multi-line collections" do |src, path:|

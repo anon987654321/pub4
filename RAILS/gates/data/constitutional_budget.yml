@@ -40,7 +40,13 @@ targets:
   # under `targets:` -- and this comment is in the way. It reported "brgen -> 329,
   # amber -> 164" and left 411/207 on disk. It now rewrites one line at a time and
   # fails the gate if the re-read does not match what it announced.
-  brgen: 1
-  amber: 21
-  bsdports: 1
-  shared: 1
+  # 1/21/1/1 -> 27/28/3/8 on 2026-08-22, the joined-the-scan shape: ABC_SIZE
+  # arrived (the one external-linter signal with no bespoke equivalent,
+  # written per scanner_overlaps_two_installed_linters' measured conclusion,
+  # ratchet threshold 40) and its 42 RAILS findings were always in the tree,
+  # never counted. Nothing regressed; the next GATE_SCAN_RATCHET run trues
+  # any overprice downward.
+  brgen: 27
+  amber: 28
+  bsdports: 3
+  shared: 8

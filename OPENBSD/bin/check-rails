@@ -84,7 +84,11 @@ if deep
   )
   deep_gates.each do |name, gate|
     env = { "GATE_AUTOFIX" => "0" }
-    env["GATE_REQUIRE_LIVE"] = "1" if name == "rendered suite"
+    # On the deploy host every live half is REQUIRED: a closed port reading
+    # as green is how amber and bsdports were once down for days invisibly
+    # (rails_gates_not_wired, final item — closed 2026-08-22). Off-host runs
+    # keep the skip so a laptop without triangle does not false-fail.
+    env["GATE_REQUIRE_LIVE"] = "1" if %w[rendered\ suite release constitutional\ scan].include?(name) || File.exist?("/etc/rc.d/brgen")
     failures << name.tr(" ", "_") unless deep_runner.run(name, RUBY, GATES_RUNNER, gate, env: env)
   end
 else

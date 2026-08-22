@@ -171,3 +171,15 @@ repo copy.
 
 - **No staging environment.** vm23 is the only environment; a full staging copy would worsen 1-vCPU/1GB pressure (see `OPENBSD/resource_guard.sh`).
 - **Auto-commit atomicity.** Unrelated automated commits to `main` sometimes bundle unrelated changes; scope commits to one concern each.
+
+## Every gate carries its known-bad fixture — 2026-08-22
+
+From arXiv 2608.04066 via the precision-ledger debt entry: a gate that has
+never been run against an input it MUST flag is a claim, not an instrument —
+the campaign's own instruments were wrong four times in two days and each
+time only production or accident caught it. Doctrine, adopt-forward: a NEW
+gate ships with the shape it must flag and the shape it must not
+(tap_target_probe and focus_walk_probe are the exemplars; layout_search's
+detector test is the retrofit shape); an EXISTING gate gets its pair when
+next touched. Not a big-bang retrofit of 47 gates — the same enforce-forward
+choice as FILE_SPRAWL.

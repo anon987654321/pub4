@@ -1,736 +1,365 @@
-# Deploy and RAILS debt. One entry per open thing, saying what is true now and
-# what the next action is.
-#
-# Narrative ops notes: OPENBSD/RUNBOOK.md. Policy: OPENBSD/DECISIONS.md.
-# Feature truth: RAILS/apps.yml. Deferred features: apps.horizon.yml (agent: ignore).
-# MASTER's own debt: MASTER/DEBT.md. RAILS deploy blockers: RAILS/BLOCKERS.md.
-#
-# tag:
-#   operator-priority — a human must act (money, hardware, a force-push, root).
-#                       Fix before declaring a deploy healthy.
-#   agent-workable    — ordinary code work, no human decision needed.
-#   agent-ignore      — do not chase during narrow patches (scan noise, horizon).
-#
-# Two rules this file kept breaking:
-#
-# 1. An entry that documents its own fix inside `summary` is still open as far as
-#    open_debt_count (MASTER/lib/deploy/operator_docs.rb) is concerned. Move it to
-#    closed:. Three were sitting that way on 2026-08-03; eight more on 2026-08-11,
-#    by which point the file was 783 lines of which most was fix narrative for
-#    work already done. The record of *how* something got fixed is what git log
-#    is; this file is the record of what is not.
-# 2. `closed:` is one line per entry. If the closure taught a rule that outlives
-#    it, the rule belongs in DECISIONS.md, and the line here points at it.
-
+---
 open:
-  - id: strict_mode_missing_in_three_cron_scripts
-    tag: agent-workable
-    summary: >
-      drain-jobs.sh (#!/bin/sh), prune-guests.sh (#!/bin/sh) and
-      uptime-check.sh (#!/bin/ksh) in usr/local/bin run without set -e, so a
-      failed step falls through and the script reports success. Found by
-      STRICT_MODE_ZSH when the law learned to accept set -e anywhere in the
-      file (2026-08-21). Fix on vm23 after reading sh(1)/ksh(1) there —
-      pipefail support differs by interpreter, so the right incantation is a
-      per-script decision, not a sed.
-  - id: solid_queue_worker_never_ran
-    tag: operator-priority
-    summary: >
-      UPDATE 2026-08-22 (later): brgen_jobs is ENABLED and registered —
-      supervisor/dispatcher/worker/scheduler rows in solid_queue_processes,
-      all 21 recurring tasks scheduled, expired-messages sweep and database
-      snapshots included. Cost measured live: ~380M for the process tree,
-      131M free after. amber/bsdports stay on the drain — the box cannot
-      hold three worker trees. Revert is one line: doas rcctl stop
-      brgen_jobs && doas rcctl disable brgen_jobs.
-      UPDATE 2026-08-22: jobs RUN now, via the hourly drain — the deploy's
-      solid_queue proof measures it (amber last drained 02:08Z today, all three
-      proofs green). What remains open is the resident-worker decision below;
-      the history stands because it prices it.
-      No background job had ever run on this box before the drain. Every app's rc.d exported
-      SOLID_QUEUE_IN_PUMA=true; in-Puma mode is a Puma plugin, all three apps run
-      under Falcon, and not one has a config/puma.rb — so the variable was read by
-      nothing and no worker ever started. Measured 2026-08-12: brgen 1670 jobs
-      enqueued and 0 finished, 0 registered processes, 0 recurring tasks; amber 103
-      and 0.
-      Cost, from the enqueued classes and recurring.yml: 150 MessageExpirationJob,
-      so disappearing messages have never disappeared — a privacy promise the UI
-      makes in Norwegian and the database breaks. 1520 Turbo broadcast jobs, so
-      every live update routed through a job has not arrived. PruneGuestUsersJob,
-      DatabaseSnapshotJob (which the off_host_dr entry calls the only thing backing
-      up production.sqlite3), digests, rollups, newsletters, search reindex, and
-      the cache and cable health checks.
-      The dead variable is gone from all three rc.d files and the template, and
-      etc/rc.d/<app>_jobs exists for each app, deliberately NOT enabled: a Solid
-      Queue worker is another resident Ruby process on a 1 GB box that already
-      cannot hold what it runs (see multi_app_ram). Enabling it is the operator
-      call the footer of each script spells out. health_check.rb now fails when a
-      queue has unfinished work and no registered process, so whichever way that
-      decision goes, this stops being invisible.
+- id: off_host_dr
+  tag: operator-priority
+  summary: |-
+    Litestream has never replicated anything, and not for the reason this entry gave. Measured on the box 2026-08-12: the binary is not installed. `which litestream` finds nothing, pkg_info has no entry, and /etc/rc.d/litestream points at /usr/local/bin/litestream, which does not exist. rcctl has been reporting litestream(failed) in daily.out under "Services that should be running but aren't", next to httpd, for months. /etc/litestream.yml was also the pre-2026-07 version, with `path: <dir>` plus `pattern:` — a form litestream rejects — so even installed it would not have started. The repo's corrected copy (one entry per database file, three apps, hjerterom's stanza gone) is deployed, so the config is right whenever the package lands. Two things, in order: `doas pkg_add litestream`, then an off-host replica. The file:// replicas are on the same disk as the source, which covers an accidental delete and nothing else. Until then Shared::DatabaseSnapshotJob is the only thing backing up production.sqlite3, and it writes to that same disk.
+     STOPGAP LANDED 2026-08-22: OPENBSD/bin/dr-pull pulls VACUUM INTO snapshots of every primary nightly to the operator Mac via launchd, integrity-checked and restore-drilled (brgen opens with 81,911 readable users). Litestream-with-a-bucket remains the endgame and needs an account.
+- id: multi_app_ram
+  tag: operator-priority
+  summary: |-
+    vm23 ~1GB cannot keep master + brgen + amber resident, and bsdports is a fourth app that does not fit at all. UVM out-of-swap kills ruby34 when they all boot. Raise RAM (≥2GB) or run amber on-demand. Restart order: master → brgen → amber → relayd. Smoke: sh OPENBSD/bin/deploy-smoke.sh (ALLOW_AMBER_DOWN=1 if amber policy is optional). It also shows up as a STARTUP RACE rather than an OOM kill, and that form looks like a broken app. amber needs ~20s to signal ready; Falcon SIGKILLs the worker if that misses its health-check window, so while another app's CI has the box at load 5+, amber restarts, gets killed, and rcctl reports amber(failed) with port 61352 closed. It is not broken — `bin/rails runner` boots it (BOOT_OK) and on a quiet box it logs "Finished startup" then ready:true within ~20s and stays. Wait for the deploy to finish and restart. Do NOT reproduce this by hand without --health-check-timeout 300: the rc.d passes it, a bare `falcon serve` defaults to 30s, and the worker then dies at exactly +30s, which reads as confirmation of a timeout theory that is wrong.
+     DECIDED 2026-08-22 (operator delegation): stay at 1GB with exactly one resident worker (brgen_jobs, ~380M measured, 131M free after). The resize question reopens only if amber earns its own worker.
+- id: internet_app_runs_as_passwordless_root_user
+  tag: operator-priority
+  summary: |-
+    etc/rc.d/master:22 sets daemon_user="dev", and dev's doas rule is nopass with no command scoping, so ANY code execution as dev on the internet-facing app (ai.brgen.no) is root without a password. brgen/amber/bsdports correctly run as their own users; only master does not. The fix is a dedicated master user + chown. It is NOT doas command scoping — see DECISIONS.md, "/etc/doas.conf installs only on a deliberate root run", for why cmd rules cannot work here. REDUCED 2026-08-03: the `keepenv` half is gone (dev now has a five-variable setenv allowlist), so the environment-injection route to root no longer exists. The chat entry point into exec was closed 2026-07-27. The escalation primitive itself is unchanged.
+     DECIDED 2026-08-22 (operator delegation): the dedicated master user migration is approved and scheduled as its own sitting — NOT improvised on a live box: create _master, chown MASTER runtime state (.master/, knowledge/, web/tmp, web/public/assets), rc.d daemon_user=_master, drop dev from doas or scope it, then a full restart drill. Until then dev's unscoped nopass doas stands measured (permit nopass ... dev as root, read from /etc/doas.conf on 2026-08-22).
+- id: home_partition_full_from_git_history
+  tag: operator-priority
+  summary: |-
+    Re-measured on the box 2026-08-12, as this entry asked. /home is at 89% (1.9G free of 17G), up from 99% that morning — the three retired apps (baibl, blognet, hjerterom) still had home directories worth 1.6G between them, for products removed from the repo in July. The git figure moved too: /home/dev/pub4 is 8.0G and .git is 3.3G of it, not the 7.7G recorded on 2026-08-02, so someone has run a gc. The claim underneath stands. The ten largest objects in history are 80–87 MB WAV renders under DEPLOY/dilla/renders/beats/, a path that no longer exists and never will again; every `git pull` deploy carries them, so this does not improve by itself and more RAM does not touch it. Operator-owned: the fix is a history rewrite, i.e. a force-push to a public repo. Strip these blobs in the same pass as the key purge above.
+     RE-MEASURED 2026-08-22: /home is 67% (5.4G free) and the three retired app homes are gone. What remains is exactly the history rewrite, and it is SCHEDULED, not casual: it needs every session quiescent (STUDIO carries live uncommitted work), a coordinated force-push, and a vm23 re-clone in the same hour. Strip the WAV blobs and the key purge in one pass.
+- id: amber_moving_to_its_own_apex
+  tag: operator-priority
+  summary: |-
+    amber is intended to move from amber.brgen.no to amberapp.com (operator, 2026-08-11, not yet bought). Filed before the move because one coupling is easy to miss and expensive: the session cookie is `domain: :all` (shared/config/initializers/session_store.rb), which scopes it to the REGISTRABLE domain. Today that is brgen.no, so a visitor who signs in on brgen.no is signed in on amber.brgen.no. On a separate apex the cookie stops crossing, and the replacement — Shared::SsoToken — is consume-only here: nothing in this repository mints one (the minting side is MASTER's and is not in this tree). So cross-app identity would go from working-by-cookie to unimplemented, silently, for anyone who expects it. The fleet plumbing mostly follows apps.yml now and does not need hand edits: port_inventory, domain_alignment's live_apexes, health_check --public-only and therefore uptime-check.sh all derive from it. What does need hand work: an acme cert and a relayd keypair for the new apex, ALL_DOMAINS in OPERATOR.sh, DNS (own zone in nsd or external), deploy_inventory.json's mirror, canonical/sitemap hosts, the PWA manifest start_url and scope, and any CSP or embed allowlist that names brgen.no. Worth doing for revenue reasons as well as branding: TradeDoubler publisher approval and AdSense site review both go easier for an apex that is the product than for a subdomain of something else.
+     THE MOVE HAPPENED: amberapp.com serves 200 with its own cert (verified live 2026-08-22) and amber.brgen.no still serves in parallel. DECIDED: amber keeps its own identity space (no cross-apex SSO — separate product, separate accounts); remaining hand work is the canonical/redirect choice for amber.brgen.no and the sitemap/manifest host sweep the entry lists.
+- id: rails_coverage_contract_is_tautological
+  tag: operator-priority
+  summary: 'controller_coverage_contract_test.rb and model_coverage_contract_test.rb
+    assert only that source files contain class/def strings — they never boot Rails
+    or call a method, so they pass against a body of `raise`. Both now say so in their
+    own headers and are honest apps.yml claim-checks; the real numbers are ratcheted
+    in RAILS/test/coverage_ratchet_test.rb (amber 1/30 controllers and 5/31 models,
+    brgen 14/87 and 11/98, bsdports 2/11 and 1/13), failing in both directions. What
+    is open is the gap itself: money and trust paths (vipps checkout, moderation_workflow,
+    trust_score, account_merger, identity_assurer) have no tests. Checkout left that
+    list on 2026-08-03 and the reason it read as zero is the lesson — the tests existed
+    and had never run, because `bin/rails test` globbed from the app root and never
+    saw engines/*/test.
 
-  - id: off_host_dr
-    tag: operator-priority
-    summary: >
-      Litestream has never replicated anything, and not for the reason this entry
-      gave. Measured on the box 2026-08-12: the binary is not installed. `which
-      litestream` finds nothing, pkg_info has no entry, and /etc/rc.d/litestream
-      points at /usr/local/bin/litestream, which does not exist. rcctl has been
-      reporting litestream(failed) in daily.out under "Services that should be
-      running but aren't", next to httpd, for months.
-      /etc/litestream.yml was also the pre-2026-07 version, with `path: <dir>` plus
-      `pattern:` — a form litestream rejects — so even installed it would not have
-      started. The repo's corrected copy (one entry per database file, three apps,
-      hjerterom's stanza gone) is deployed, so the config is right whenever the
-      package lands.
-      Two things, in order: `doas pkg_add litestream`, then an off-host replica. The
-      file:// replicas are on the same disk as the source, which covers an
-      accidental delete and nothing else. Until then Shared::DatabaseSnapshotJob is
-      the only thing backing up production.sqlite3, and it writes to that same disk.
+    '
+- id: rails_audit_backlog_2026_08_10
+  tag: agent-workable
+  summary: |-
+    The tail of the 2026-08-10 UI/UX audit, grouped because these were 12 separate one-line entries that shared a tag, a provenance and a shape. Each needs reading per site rather than a sweep, which is why they are still here. 104 associations with no inverse_of (changes in-memory identity and interacts with strict_loading_by_default — a decision per association). 102 CSS selectors with no literal match in ERB/JS/Ruby (class names are also composed at runtime, so a literal search cannot prove death). 64 controllers with a create and no rate_limit — DONE 2026-08-13, and the subset was right: of 98 controllers with a write action, 84 had no rate_limit and 6 of those were write actions a request with no session can reach. All six now carry one, and the guest-reachable question is asserted rather than recounted by RAILS/test/guest_write_rate_limit_test.rb, which also asserts its own detector still finds guest writes at all — a source-text checker that stops matching reports zero gaps and reads exactly like a clean tree. The one that mattered was Fediverse::InboxesController#create: unauthenticated by protocol, and it calls ActorFetcher.for_key_id BEFORE verifying the signature, which is an outbound HTTPS GET to a URL taken from the sender's own Signature header. Verifying first is not available as a fix — the key needed to verify is what the fetch goes to get. The others were amber's signup (brgen's equivalent had carried 10/10min all along) and brgen's email-subscription create, which queues mail to an arbitrary address over brgen.no's SPF and DKIM. Found on the way and worth more than the entry: FOUR controllers declared two rate_limits and named neither. ActionController::RateLimiting builds its key as ["rate-limit", scope, name, by] with name defaulting to nil, so two unnamed limits in one controller share a counter — Rails documents this on the method itself. MessagesController's 30/minute and 40/3-minutes on :create therefore shared a key for every signed-out sender, incremented it twice per request, and blocked at 15; the 3-minute limit never existed, because whichever call created the key set its TTL. Two correct-looking lines, no code change needed to introduce it, and the same defect class as everything else in this file. RAILS/test/rate_limit_naming_test.rb holds it, and also re-reads actionpack's rate_limiting.rb to check the upstream behaviour the rule depends on is still true rather than enforcing a rule about nothing. 56 raw hex values in stylesheets (var() fallbacks and dialect token definitions are correct by design). 29 destructive links with no confirmation interstitial. 11 models with no validations at all. 9 inline style attributes bypassing the token system. 9 numeric z-index values above 10 not from a token — the ladder itself is the finding; two disagreeing sources already made the brgen logo invisible once. 6 `display: none !important` hiding chrome the shell renders on every page (auth, print, immersive verticals, dating splash); deleting the render is not available while the layout is shared. 5 hardcoded placeholders and 3 hardcoded submit labels — same chrome_i18n rule as rails_flash_strings_untranslated, on the highest-traffic strings on a form. 5 image_tag calls with no width/height (layout shift), 1 more without lazy. 3 div/span elements carrying a click action — not focusable, not keyboard-activatable, not announced as a control. Small CSS groups left as judgement: 3 css_blur, 2 css_line_height_tight, 2 css_radius_large, 1 value_no_declaration. READ THIS FIRST: no committed tool reproduces these counts, and two of the rows are already covered by tools that count something else. The rule names above (css_blur, value_no_declaration) exist nowhere in the tree; a plain grep answers 24 for the z-index row and 287 for the hex row, because it cannot make the exclusions the audit made by hand; and css_constitution ALREADY measures and ratchets magic_hex — at 151 against a ceiling of 150, over stylesheets excluding vendor, node_modules and builds — which is neither this row's 56 nor the grep's 287. Same for the !important and file-size rows, which frontend_auditor reports as non-blocking warnings. So the first move on any of these is to name the instrument, not to fix a count: an unfalsifiable number is how a register row outlives its subject. rails_flash_strings_untranslated is the worked example — writing the lint moved a hand-counted 144 to a measured, ratcheted 169.
+     TRIMMED 2026-08-22, rows that got their instrument: raw hex -> css_budget magic_hex (140, ratcheted); !important and file-size -> frontend_auditor warnings; dead selectors -> css_coverage_lint (174, DYNAMIC_SEEDS-aware); the 3 div/span click rows examined — two were @window listener HOSTS (correct pattern, audit misread) and the sheet backdrop gained keydown.esc@window so keyboard users can leave. Still uninstrumented and open: inverse_of 104, destructive-link interstitials 29, validation-less models 11, inline styles 9, the z-index ladder, image dims, and the small CSS judgment rows.
+- id: two_rules_share_one_rescue_regex
+  tag: agent-ignore
+  summary: 'BARE_RESCUE in the line scope of data/rules.yml and FAIL_VISIBLY in the
+    unit scope carry the identical detect_lexical, the identical severity (error)
+    and the same fix advice in different words, so every bare rescue in this tree
+    is two findings. Both were edited in step on 2026-08-12 when the regex was corrected
+    for symbols and comments, which is the maintenance cost the duplication buys.
+    Not collapsed on my own judgement: FAIL_VISIBLY is a soul.yml `absolute.rules`
+    entry and BARE_RESCUE is a borrowed style-guide rule, so deciding which one keeps
+    the regex — or whether the constitutional principle should be measured by something
+    other than a line-level regex at all — is a constitutional question and needs
+    the operator. It is the same shape as EMPTY_RESCUE, which WAS collapsed the same
+    day because nothing constitutional was attached to it: 37 findings, 0 unique.
+    See MASTER/DEBT.md "Scanner noise".
 
-  - id: multi_app_ram
-    tag: operator-priority
-    summary: >
-      vm23 ~1GB cannot keep master + brgen + amber resident, and bsdports is a
-      fourth app that does not fit at all. UVM out-of-swap kills ruby34 when they
-      all boot. Raise RAM (≥2GB) or run amber on-demand. Restart order:
-      master → brgen → amber → relayd. Smoke: sh OPENBSD/bin/deploy-smoke.sh
-      (ALLOW_AMBER_DOWN=1 if amber policy is optional).
-      It also shows up as a STARTUP RACE rather than an OOM kill, and that form
-      looks like a broken app. amber needs ~20s to signal ready; Falcon SIGKILLs
-      the worker if that misses its health-check window, so while another app's CI
-      has the box at load 5+, amber restarts, gets killed, and rcctl reports
-      amber(failed) with port 61352 closed. It is not broken — `bin/rails runner`
-      boots it (BOOT_OK) and on a quiet box it logs "Finished startup" then
-      ready:true within ~20s and stays. Wait for the deploy to finish and restart.
-      Do NOT reproduce this by hand without --health-check-timeout 300: the rc.d
-      passes it, a bare `falcon serve` defaults to 30s, and the worker then dies at
-      exactly +30s, which reads as confirmation of a timeout theory that is wrong.
-
-  - id: internet_app_runs_as_passwordless_root_user
-    tag: operator-priority
-    summary: >
-      etc/rc.d/master:22 sets daemon_user="dev", and dev's doas rule is nopass with
-      no command scoping, so ANY code execution as dev on the internet-facing app
-      (ai.brgen.no) is root without a password. brgen/amber/bsdports correctly run
-      as their own users; only master does not.
-      The fix is a dedicated master user + chown. It is NOT doas command scoping —
-      see DECISIONS.md, "/etc/doas.conf installs only on a deliberate root run",
-      for why cmd rules cannot work here.
-      REDUCED 2026-08-03: the `keepenv` half is gone (dev now has a five-variable
-      setenv allowlist), so the environment-injection route to root no longer
-      exists. The chat entry point into exec was closed 2026-07-27. The escalation
-      primitive itself is unchanged.
-
-  - id: secrets_in_process_argv_and_world_readable_home
-    tag: operator-priority
-    summary: >
-      What remains of this entry is small and unrelated to secrets: vps_ci.sh:88 and
-      RAILS/_runtime_gate.sh:71 both run `chmod o+x /home/dev`, and OPERATOR.sh
-      installs /home/dev/.zshrc at mode 644. Remove the two chmods on principle —
-      a world-traversable home over a world-readable dotfile.
-      Re-measured 2026-08-03: the dotfile no longer carries secrets
-      (`grep -c "KEY\|TOKEN\|SECRET" /home/dev/.zshrc` is 0), so this is not a
-      key-disclosure path.
-      Closed halves, kept because the measurements correct the entry's original
-      claims: argv exposure is 0 (`ps auxww` from dev finds no SECRET_KEY_BASE /
-      MASTER_BRIDGE_TOKEN / *_API_KEY — the daemon execs falcon, so the ksh holding
-      the secret is replaced). The real exposure was the env FILES at rest, 640
-      root:wheel with dev in wheel; brgen/amber/bsdports rc.d now source
-      root:<app> 640 /etc/<app>.env inside the exec. master is deliberately not
-      changed: it runs as dev, so its keys are already in a dev-owned environ, and
-      master.env is 600 root:wheel. The CI lock moved to root-owned 0755
-      /var/db/pub4 via the single definition in OPENBSD/lib/ci_lock.sh.
-
-  - id: home_partition_full_from_git_history
-    tag: operator-priority
-    summary: >
-      Re-measured on the box 2026-08-12, as this entry asked. /home is at 89% (1.9G
-      free of 17G), up from 99% that morning — the three retired apps (baibl,
-      blognet, hjerterom) still had home directories worth 1.6G between them, for
-      products removed from the repo in July.
-      The git figure moved too: /home/dev/pub4 is 8.0G and .git is 3.3G of it, not
-      the 7.7G recorded on 2026-08-02, so someone has run a gc. The claim underneath
-      stands. The ten largest objects in history are 80–87 MB WAV renders under
-      DEPLOY/dilla/renders/beats/, a path that no longer exists and never will
-      again; every `git pull` deploy carries them, so this does not improve by
-      itself and more RAM does not touch it.
-      Operator-owned: the fix is a history rewrite, i.e. a force-push to a public
-      repo. Strip these blobs in the same pass as the key purge above.
-
-  - id: amber_bsdports_stop_and_stay_down
-    tag: operator-priority
-    summary: >
-      Found amber and bsdports both dead 2026-08-03 (ports 61352 and 47312 closed,
-      `rcctl check amber` = failed) with nothing having restarted them; `rcctl
-      restart` brought both back in ~2s with no config change, so the trees and
-      pkg_scripts were intact. They had simply stopped.
-      Cause NOT established. resource_guard is ruled out — /var/db/resource_guard_shed
-      was EMPTY and shedding fired on 17 of 300 ticks (5.7%), against the 48%
-      measured 2026-07-29. multi_app_ram is the obvious suspect and the box is
-      consistent with it, but nothing measured ties them together. There is no
-      production.log on the box.
-      Why it can persist unnoticed: relayd still terminates TLS with a valid cert,
-      so the shape is `SSL certificate verify ok` then `Empty reply from server` and
-      curl reports 000, not a 5xx. Nothing in the repo, the gates or DNS looks wrong.
-      FIXED 2026-08-11, and it was the worst of the three: the post-deploy smoke —
-      the one gate whose job is noticing a dead app — could not fail on bsdports.
-      It had no local check at all, and its public check passed a literal 0 for
-      `required`. deploy_smoke_contract_test asserted the URL was present, which is
-      true of an optional check, so the hole was invisible from the test. bsdports
-      now has an rcctl check, a local :47312 check and a required public check, each
-      waivable only through ALLOW_BSDPORTS_DOWN, and the contract test asserts
-      requiredness per endpoint plus that every waiver variable still gates
-      something (mutation-checked against the old shape).
-      REPO HALF CLOSED 2026-08-12: etc/crontab.vm23 schedules
-      /usr/local/bin/uptime-check.sh every 5 minutes; OPERATOR.sh stage 1
-      installs OPENBSD/usr/local/bin/uptime-check.sh. Still open:
-      (a) CLOSED 2026-08-18. The wrapper is installed root:wheel 0755 and the
-          crontab runs it every five minutes; first tick 03:10:16 UTC wrote an
-          empty log, which is the all-2xx case. brgen.no, ai.brgen.no,
-          amber.brgen.no and bsdports.org were each checked by hand first,
-          because a wrong host here mails root a false DOWN every five minutes
-          forever.
-          Why it stayed open six days after the repo half landed: nothing said
-          it had not happened. install_tracked_crontab skips a tracked line
-          whose command is not executable on the box — correct, or cron mails
-          root once a tick — but it skipped without logging, so crontab.vm23
-          listed the job, usr/local/bin/ shipped the wrapper, and root's
-          crontab simply did not contain the line. No file was missing
-          anything. It now logs WARN on the skip, and
-          test/test_tracked_crontab.rb asserts that plus the property
-          underneath: the repo may not schedule a command it does not ship.
-          That test also found four tracked wrappers committed non-executable
-          while five siblings were 0755 (OPERATOR.sh chmods on install, so the
-          box was fine and the checkout was not).
-      (b) OPENBSD/bin/check-rails --profile=full now sets GATE_REQUIRE_LIVE=1
-          on rendered_suite. Local contributor runs still degrade. A laptop
-          `full` with no apps listening will fail rather than skip.
-
-  - id: brgen_city_carousel_links_dead
-    tag: operator-priority
-    summary: >
-      The carousel iterates DomainRegistry::LIVE_DOMAINS, which went from two to
-      seven on 2026-08-12: stvanger.no, trndheim.no, cardff.uk, edinbrgh.uk and
-      frankfrt.de joined, and not one of them needed a certificate — acme-client had
-      been renewing all five for months and each was missing a single `tls keypair`
-      line in relayd.conf. domain_alignment now asserts LIVE_DOMAINS equals
-      (ENTRIES ∩ relayd keypairs), so neither direction can drift quietly again.
-      What remains is the product/money call, with a sharper edge than "stand up the
-      rest". Of the 37 not live: 33 are NXDOMAIN and need registrar money; denvr.us
-      and wshingtondc.com are ours at Domeneshop but delegated to their parking
-      nameservers, a free panel change; brmingham.uk, glasgw.uk, lverpool.uk and
-      mnchester.uk expired in June and sit in Nominet's protected period; brssels.be
-      is gone, whois says AVAILABLE.
-      And the question underneath changed shape. Cardiff and Edinburgh now have zero
-      posts, because every post they had was bot spam, swept the same day. A live
-      city with no content is a different visitor problem from a dead link, and not
-      one this entry has ever accounted for.
-
-  - id: amber_moving_to_its_own_apex
-    tag: operator-priority
-    summary: >
-      amber is intended to move from amber.brgen.no to amberapp.com (operator,
-      2026-08-11, not yet bought). Filed before the move because one coupling is
-      easy to miss and expensive: the session cookie is `domain: :all`
-      (shared/config/initializers/session_store.rb), which scopes it to the
-      REGISTRABLE domain. Today that is brgen.no, so a visitor who signs in on
-      brgen.no is signed in on amber.brgen.no. On a separate apex the cookie stops
-      crossing, and the replacement — Shared::SsoToken — is consume-only here:
-      nothing in this repository mints one (the minting side is MASTER's and is not
-      in this tree). So cross-app identity would go from working-by-cookie to
-      unimplemented, silently, for anyone who expects it.
-      The fleet plumbing mostly follows apps.yml now and does not need hand edits:
-      port_inventory, domain_alignment's live_apexes, health_check --public-only
-      and therefore uptime-check.sh all derive from it. What does need hand work:
-      an acme cert and a relayd keypair for the new apex, ALL_DOMAINS in
-      OPERATOR.sh, DNS (own zone in nsd or external), deploy_inventory.json's
-      mirror, canonical/sitemap hosts, the PWA manifest start_url and scope, and
-      any CSP or embed allowlist that names brgen.no.
-      Worth doing for revenue reasons as well as branding: TradeDoubler publisher
-      approval and AdSense site review both go easier for an apex that is the
-      product than for a subdomain of something else.
-
-  - id: rails_gates_not_wired
-    tag: operator-priority
-    summary: >
-      Two things are still open after three passes; everything else this entry used
-      to list is wired and green (page_simulation, flow_journey, gate_mutation,
-      deploy_drift in check-rails source_gates; release, rendered_suite,
-      visual_contract, constitutional_scan in a deep tier under --profile=full).
-      1. The design-craft stack warns and returns when the app port is closed, which
-         off the deploy host is always — so a down app reads as green. The mechanism
-         to fix it exists and is unused; see amber_bsdports_stop_and_stay_down (b).
-      2. Nothing calls gates/runner.rb --all. Measured 2026-08-13 rather than left as
-         a worry: of the 47 registered gates, 46 are named by some script directly or
-         through their composite, and exactly one was not -- dns_zones, registered,
-         complete, and never run. It is now in check-openbsd, where what it compares
-         (OPENBSD/var/nsd/zones against bin/render_dns.rb, plus a live query to our
-         own nameserver) actually lives. Its first run produced a false block; see
-         gates_have_no_precision_ledger. So --all remains uncalled and that is now a
-         choice rather than a gap: the full suite takes ~25 minutes on a laptop, and
-         the coverage it was standing in for is a property a test can assert.
-         DeployGatesContractTest#test_every_registered_gate_is_named_by_some_caller
-         asserts it, stripping comment lines first -- written without that, it passed
-         with the wiring deleted, because a comment naming the gate satisfied a check
-         for whether anything ran it.
-
-  - id: rails_coverage_contract_is_tautological
-    tag: operator-priority
-    summary: >
-      controller_coverage_contract_test.rb and model_coverage_contract_test.rb assert
-      only that source files contain class/def strings — they never boot Rails or call
-      a method, so they pass against a body of `raise`. Both now say so in their own
-      headers and are honest apps.yml claim-checks; the real numbers are ratcheted in
-      RAILS/test/coverage_ratchet_test.rb (amber 1/30 controllers and 5/31 models,
-      brgen 14/87 and 11/98, bsdports 2/11 and 1/13), failing in both directions.
-      What is open is the gap itself: money and trust paths (vipps checkout,
-      moderation_workflow, trust_score, account_merger, identity_assurer) have no
-      tests. Checkout left that list on 2026-08-03 and the reason it read as zero is
-      the lesson — the tests existed and had never run, because `bin/rails test`
-      globbed from the app root and never saw engines/*/test.
-
-  - id: scanner_overlaps_two_installed_linters
-    tag: agent-workable
-    summary: >
-      Measured 2026-08-13, which is what this entry asked for, and the answer is
-      neither of the two options it offered.
-      Method: 25 Ruby files sampled evenly across MASTER/lib, scanned twice through
-      the real scanner — once as it ships, once with MASTER_EXTERNAL_LINT=1.
-      108 bespoke findings; 174 with the bridge on, so the externals add 66, a 61%
-      increase in volume. 24 of those 66 land on a line a bespoke rule already
-      flags. 42 do not.
-      So the 28 should NOT retire in favour of rubocop and reek. Where the two
-      overlap the bespoke rule fires at least as often — LONG_LINE 15 against
-      Layout/LineLength 14, TRAILING_COMMAS 8 against
-      Style/TrailingCommaInArrayLiteral 1 — so swapping them out loses coverage,
-      and the bespoke rules also read ERB and SCSS, which rubocop cannot see at all.
-      Nor is the bridge pure duplication, which is the other thing this entry
-      assumed. Two concepts have no bespoke equivalent at all: Metrics/AbcSize (13
-      of the 42 unique findings, the largest single signal either side produces)
-      and reek's TooManyMethods (5). Style/MethodCalledOnDoEndBlock and
-      Metrics/ClassLength add 7 more.
-      Measured conclusion: keep the 28, leave MASTER_EXTERNAL_LINT off, and write
-      AbcSize and TooManyMethods as bespoke rules if they are wanted. That buys the
-      only new signal without a per-file rubocop and reek subprocess and without 24
-      duplicate findings — and the whole reason a bespoke scanner exists here is
-      that it covers file types a Ruby linter cannot.
-      One correction: the entry said 143 executable rule classes. The registry
-      reports 181 active rules as of 2026-08-13, so that count had drifted too.
-      rubocop and reek stay in the Gemfile regardless: RAILS/<app>/bin/ci runs
-      rubocop directly, which is a separate and working use.
-
-  - id: gates_have_no_precision_ledger
-    tag: agent-workable
-    summary: >
-      Two things this fleet's ~60 gates do not do, both from arXiv 2607.07405
-      ("Reason Less, Verify More", KDD workshop 2026), whose architecture is the one
-      pub4 already has -- read-only pre-execution gates over state-decidable
-      predicates.
-      1. PER-GATE PRECISION. In their four-gate suite one gate ran at 100% precision
-      (161 true blocks, zero false) and another at 5%. pub4 keeps no ledger of which
-      gate blocks correctly, so a 5%-precision gate here would be indistinguishable
-      from a strict one: it would read as noise people learn to ignore, which is the
-      same failure as the tablist warning that fired on every deploy for a day.
-      2. FAIL-OPEN. If a gate itself errors, their system allows the original call
-      rather than inventing a false block. Deploy::GateResult has no such policy, so a
-      gate that raises takes the run down with it.
-      Worth reading beside it: arXiv 2608.04066 formalises what the 2026-08-11 session
-      did by hand a dozen times -- a claim is admitted only when a prediction
-      registered BEFORE acting is matched against observation by code. Their
-      instrument self-invalidated 4 of its first 8 runs and each invalidation
-      localised a real defect. Making that mechanical here means every gate carries
-      its known-bad input and is re-run against it, instead of depending on whoever
-      wrote it having mutated it once and remembered to say so.
-      ---
-      FAIL-OPEN IS CLOSED, 2026-08-13. GateResult has a fourth outcome, :errored,
-      recorded by errored! and never counted as a pass; runner.rb rescues
-      StandardError and ScriptError around klass.run and turns the exception into a
-      result. GATE_STRICT_ERRORS=1 promotes it for the deploy host. The defect was
-      worse than the entry says: `outcomes` is built by one to_h over every gate with
-      klass.run unguarded inside it, so a single raising gate ended the process --
-      measured against the committed runner with a 4-gate fixture registry, it died
-      at gate 2 and the two after it never ran. Pinned by
-      RAILS/test/gate_failopen_test.rb (9 tests), which runs the real runner over
-      RAILS/gates/fixtures/failopen/.
-      PRECISION IS PART-CLOSED. OPENBSD/lib/gate_ledger.rb records one JSONL line per
-      gate per run (local-only, gitignored) and `runner.rb --ledger` reports per-gate
-      fire rate, error rate and inconclusive rate, flagging a gate that errors on
-      >=50% of runs or fails on >=90%. That is a triage order, not precision in the
-      paper's sense: real precision needs ground truth about whether each block was
-      correct, which here lives in whether someone fixed the finding or exempted the
-      rule, and nothing mechanical can see that. Do not describe the ledger as a
-      precision ledger; it is an outcome ledger, and gate_ledger.rb says so.
-      The ledger earned itself immediately. dns_zones -- see rails_gates_not_wired --
-      hard-failed on its first ever run with "frankfrt.de ... does not answer for
-      maps.frankfrt.de" while dig answered instantly and three re-runs passed: one
-      dropped UDP packet out of ~500 sequential queries, reported as a missing DNS
-      record. A false block, from the one gate nobody had ever run. Fixed by
-      distinguishing Resolv::ResolvTimeout (retry 3x, then skipped_live -- not
-      measured) from Resolv::ResolvError (NXDOMAIN -- still a hard failure).
-      KNOWN-BAD SELF-CHECK: first instance built, not yet general. STUDIO/gate.rb
-      declares PREDICTED_FINDINGS before building a deliberately broken temporary
-      tree, runs a second instance of itself over it, and hard-fails if any predicted
-      finding no longer appears. It self-invalidated on its first run, exactly as
-      2608.04066 describes: two predictions did not match, because soft failures
-      render as "[soft] studio inventory: ..." and the matcher was anchored. What is
-      open is doing this for the other 47 gates, one per gate.
-
-  - id: rails_audit_backlog_2026_08_10
-    tag: agent-workable
-    summary: >
-      The tail of the 2026-08-10 UI/UX audit, grouped because these were 12 separate
-      one-line entries that shared a tag, a provenance and a shape. Each needs
-      reading per site rather than a sweep, which is why they are still here.
-      104 associations with no inverse_of (changes in-memory identity and interacts
-      with strict_loading_by_default — a decision per association).
-      102 CSS selectors with no literal match in ERB/JS/Ruby (class names are also
-      composed at runtime, so a literal search cannot prove death).
-      64 controllers with a create and no rate_limit — DONE 2026-08-13, and the
-      subset was right: of 98 controllers with a write action, 84 had no rate_limit
-      and 6 of those were write actions a request with no session can reach. All six
-      now carry one, and the guest-reachable question is asserted rather than
-      recounted by RAILS/test/guest_write_rate_limit_test.rb, which also asserts its
-      own detector still finds guest writes at all — a source-text checker that stops
-      matching reports zero gaps and reads exactly like a clean tree.
-      The one that mattered was Fediverse::InboxesController#create: unauthenticated
-      by protocol, and it calls ActorFetcher.for_key_id BEFORE verifying the
-      signature, which is an outbound HTTPS GET to a URL taken from the sender's own
-      Signature header. Verifying first is not available as a fix — the key needed to
-      verify is what the fetch goes to get. The others were amber's signup (brgen's
-      equivalent had carried 10/10min all along) and brgen's email-subscription
-      create, which queues mail to an arbitrary address over brgen.no's SPF and DKIM.
-      Found on the way and worth more than the entry: FOUR controllers declared two
-      rate_limits and named neither. ActionController::RateLimiting builds its key as
-      ["rate-limit", scope, name, by] with name defaulting to nil, so two unnamed
-      limits in one controller share a counter — Rails documents this on the method
-      itself. MessagesController's 30/minute and 40/3-minutes on :create therefore
-      shared a key for every signed-out sender, incremented it twice per request, and
-      blocked at 15; the 3-minute limit never existed, because whichever call created
-      the key set its TTL. Two correct-looking lines, no code change needed to
-      introduce it, and the same defect class as everything else in this file.
-      RAILS/test/rate_limit_naming_test.rb holds it, and also re-reads actionpack's
-      rate_limiting.rb to check the upstream behaviour the rule depends on is still
-      true rather than enforcing a rule about nothing.
-      56 raw hex values in stylesheets (var() fallbacks and dialect token definitions
-      are correct by design).
-      29 destructive links with no confirmation interstitial.
-      11 models with no validations at all.
-      9 inline style attributes bypassing the token system.
-      9 numeric z-index values above 10 not from a token — the ladder itself is the
-      finding; two disagreeing sources already made the brgen logo invisible once.
-      6 `display: none !important` hiding chrome the shell renders on every page
-      (auth, print, immersive verticals, dating splash); deleting the render is not
-      available while the layout is shared.
-      5 hardcoded placeholders and 3 hardcoded submit labels — same chrome_i18n rule
-      as rails_flash_strings_untranslated, on the highest-traffic strings on a form.
-      5 image_tag calls with no width/height (layout shift), 1 more without lazy.
-      3 div/span elements carrying a click action — not focusable, not
-      keyboard-activatable, not announced as a control.
-      Small CSS groups left as judgement: 3 css_blur, 2 css_line_height_tight,
-      2 css_radius_large, 1 value_no_declaration.
-      READ THIS FIRST: no committed tool reproduces these counts, and two of the
-      rows are already covered by tools that count something else. The rule names
-      above (css_blur, value_no_declaration) exist nowhere in the tree; a plain grep
-      answers 24 for the z-index row and 287 for the hex row, because it cannot make
-      the exclusions the audit made by hand; and css_constitution ALREADY measures
-      and ratchets magic_hex — at 151 against a ceiling of 150, over stylesheets
-      excluding vendor, node_modules and builds — which is neither this row's 56 nor
-      the grep's 287. Same for the !important and file-size rows, which
-      frontend_auditor reports as non-blocking warnings.
-      So the first move on any of these is to name the instrument, not to fix a
-      count: an unfalsifiable number is how a register row outlives its subject.
-      rails_flash_strings_untranslated is the worked example — writing the lint
-      moved a hand-counted 144 to a measured, ratcheted 169.
-
-  - id: two_rules_share_one_rescue_regex
-    tag: agent-ignore
-    summary: >
-      BARE_RESCUE in the line scope of data/rules.yml and FAIL_VISIBLY in the unit scope
-      carry the identical detect_lexical, the identical severity (error) and the
-      same fix advice in different words, so every bare rescue in this tree is two
-      findings. Both were edited in step on 2026-08-12 when the regex was corrected
-      for symbols and comments, which is the maintenance cost the duplication buys.
-      Not collapsed on my own judgement: FAIL_VISIBLY is a soul.yml `absolute.rules`
-      entry and BARE_RESCUE is a borrowed style-guide rule, so deciding which one
-      keeps the regex — or whether the constitutional principle should be measured
-      by something other than a line-level regex at all — is a constitutional
-      question and needs the operator.
-      It is the same shape as EMPTY_RESCUE, which WAS collapsed the same day
-      because nothing constitutional was attached to it: 37 findings, 0 unique.
-      See MASTER/DEBT.md "Scanner noise".
-
-  - id: rails_duplicate_vendor_css
-    summary: >
-      lightgallery.css is vendored twice, at shared/public/ and brgen/public/,
-      byte-identical apart from nothing. brgen's layout links /lightgallery.css and
-      is served its own copy; amber's layout links the same path and is served
-      shared's. That divergence is how amber shipped for months with 404 lightbox
-      icons — the fix on 2026-08-12 put lg.woff2/woff/ttf and images/loading.gif
-      under shared/public, where the engine's static middleware reaches all three
-      apps, and left both stylesheets in place.
-      Collapsing to the shared copy is the right end state and was not done in that
-      commit: brgen/public/pwa/workbox-sw.js precaches "lightgallery.css" and
-      "fonts/lg.woff2" with content-hash revisions, generated by `npm run
-      build:pwa`, so deleting brgen's copies is a service-worker change and wants
-      its own verification rather than a drive-by. Measured by
-      Pub4::AssetUrlLint, whose baseline counts lg.svg twice for exactly this reason.
-
-# Deliberate decisions that audits keep re-finding. Not open work. Do not "fix".
+    '
 not_debt:
-  - id: rails_autofix_scars
-    summary: >
-      11 `autofix: removed box-shadow (flat UI)` markers in _shell, _shell_widgets
-      and brgen _root. The declarations around them are live focus and hover
-      suppression, and the markers are the documented reason
-      shared/_focus_ring.scss exists — its header cites them by name as the
-      evidence that a flat-UI pass stripped the box-shadow that had been the focus
-      indicator and left `outline: none` beside it. That file restores the ring with
-      an !important rule naming every suppressed element. Measured over CDP with
-      CSS.forcePseudoState on all three apps: .brand, .theme-toggle and
-      .brgen-logo-mark each compute a 2px solid ring. Deleting the markers deletes
-      the explanation for why that !important rule is there.
-  - id: rails_bounded_index_actions
-    summary: >
-      2 index actions with no explicit limit, both bounded by construction —
-      channels is one row per vertical, nearby is capped at NEARBY_LIMIT. Recorded
-      so the next audit stops re-finding them.
+- id: rails_autofix_scars
+  summary: '11 `autofix: removed box-shadow (flat UI)` markers in _shell, _shell_widgets
+    and brgen _root. The declarations around them are live focus and hover suppression,
+    and the markers are the documented reason shared/_focus_ring.scss exists — its
+    header cites them by name as the evidence that a flat-UI pass stripped the box-shadow
+    that had been the focus indicator and left `outline: none` beside it. That file
+    restores the ring with an !important rule naming every suppressed element. Measured
+    over CDP with CSS.forcePseudoState on all three apps: .brand, .theme-toggle and
+    .brgen-logo-mark each compute a 2px solid ring. Deleting the markers deletes the
+    explanation for why that !important rule is there.
 
-# One line each. The how is in git log; the rule, if there is one, is in DECISIONS.md.
+    '
+- id: rails_bounded_index_actions
+  summary: '2 index actions with no explicit limit, both bounded by construction —
+    channels is one row per vertical, nearby is capped at NEARBY_LIMIT. Recorded so
+    the next audit stops re-finding them.
+
+    '
 closed:
-  - id: gate_result_is_a_shared_kernel_filed_under_deploy
-    resolution: >
-      Closed 2026-08-13 by the second of the two options the entry named: an
-      OPENBSD/DECISIONS.md entry, "OPENBSD/lib/ Owns The Gate Kernel, On Purpose".
-      The deploy tree owns Deploy::GateResult and the types every gate returns;
-      RAILS, MASTER and STUDIO consume them across the boundary and add nothing.
-      Forced rather than chosen at leisure -- gate_ledger.rb landed beside
-      gate_result.rb the same day, so the question was being answered by accretion.
-      A repo-level shared kernel was rejected: it would be a fourth top-level tree
-      holding three files, to remove a dependency RAILS already has and does not
-      suffer from, while eroding the asymmetry that does matter -- MASTER requires
-      nothing from either tree. MASTER reaches STUDIO/gate.rb by subprocess for
-      exactly that reason. Revisit if a fifth consumer appears: three is a
-      convention, five is a library. Measured facts kept: 74 cross-tree requires
-      from RAILS (gate_result 53, deploy_inventory 16, utf8 5), OPENBSD -> MASTER 3.
-  - id: seven_tables_recorded_as_migrated_and_absent
-    resolution: >
-      Closed 2026-08-13. Ran 20260514120000_create_identity_and_trust_primitives'
-      up against production by hand — it was recorded in schema_migrations as
-      applied and had created nothing — after a full backup. Schema drift is 0:
-      account_merges, external_identities, identity_assurances, identity_providers,
-      moderation_flags, reputation_scores and trust_signals all exist, and a guest
-      user destroys cleanly. amber and bsdports were checked for the same fault
-      and have none.
-      It hid a second bug that mattered more. With account_merges present, destroy
-      still raised FOREIGN KEY constraint failed — from SQLite, not from Rails —
-      because User declared no association for message_receipts or
-      typing_indicators, both of which carry an FK to users. Guests owned 194,295
-      receipts. So account deletion was impossible for any user with chat history,
-      which is what deletion_scheduled_at and deleted_at exist for. Fixed in
-      User::CoreAssociations with a test that destroys a guest owning a receipt.
-      See DECISIONS.md for the rule this taught: a table with an FK to users and
-      no has_many on User is a row nobody can delete, and db:migrate:status cannot
-      see a migration that ran and did nothing.
+- id: gate_result_is_a_shared_kernel_filed_under_deploy
+  resolution: 'Closed 2026-08-13 by the second of the two options the entry named:
+    an OPENBSD/DECISIONS.md entry, "OPENBSD/lib/ Owns The Gate Kernel, On Purpose".
+    The deploy tree owns Deploy::GateResult and the types every gate returns; RAILS,
+    MASTER and STUDIO consume them across the boundary and add nothing. Forced rather
+    than chosen at leisure -- gate_ledger.rb landed beside gate_result.rb the same
+    day, so the question was being answered by accretion. A repo-level shared kernel
+    was rejected: it would be a fourth top-level tree holding three files, to remove
+    a dependency RAILS already has and does not suffer from, while eroding the asymmetry
+    that does matter -- MASTER requires nothing from either tree. MASTER reaches STUDIO/gate.rb
+    by subprocess for exactly that reason. Revisit if a fifth consumer appears: three
+    is a convention, five is a library. Measured facts kept: 74 cross-tree requires
+    from RAILS (gate_result 53, deploy_inventory 16, utf8 5), OPENBSD -> MASTER 3.
 
-  - id: playlist_engine_untested
-    resolution: >
-      Closed 2026-08-12. engines/playlist has a test directory: 13 tests over
-      Playlist::Playlist and Playlist::ListeningParty, covering what is not Rails
-      doing Rails — add_track! ordering and idempotence, tracks_count, the
-      city_trending tenancy scope, join-code generation and uniqueness, and the
-      end! transition.
-      The entry's closing ask was already satisfied: coverage_ratchet_test's
-      source_roots has globbed engines/*/app since 2026-08-02, so the engine's
-      zero was visible in the ratchet the whole time. What let it sit was the
-      floor — brgen/models at 11 does not complain about one engine at nothing.
-      Raised to 13, and the ratchet asked for it rather than being told.
-      Writing them found a small schema fact worth keeping: playlist_playlists
-      declares tracks_count, likes_count and plays_count as nullable integers with
-      no default, so a new playlist has nil counters and `popular` orders by a
-      column that starts NULL. increment! copes; anything reading before the first
-      write does not. Asserted as-is, so a migration adding defaults shows up as a
-      deliberate change rather than a surprise.
+    '
+- id: seven_tables_recorded_as_migrated_and_absent
+  resolution: 'Closed 2026-08-13. Ran 20260514120000_create_identity_and_trust_primitives''
+    up against production by hand — it was recorded in schema_migrations as applied
+    and had created nothing — after a full backup. Schema drift is 0: account_merges,
+    external_identities, identity_assurances, identity_providers, moderation_flags,
+    reputation_scores and trust_signals all exist, and a guest user destroys cleanly.
+    amber and bsdports were checked for the same fault and have none. It hid a second
+    bug that mattered more. With account_merges present, destroy still raised FOREIGN
+    KEY constraint failed — from SQLite, not from Rails — because User declared no
+    association for message_receipts or typing_indicators, both of which carry an
+    FK to users. Guests owned 194,295 receipts. So account deletion was impossible
+    for any user with chat history, which is what deletion_scheduled_at and deleted_at
+    exist for. Fixed in User::CoreAssociations with a test that destroys a guest owning
+    a receipt. See DECISIONS.md for the rule this taught: a table with an FK to users
+    and no has_many on User is a row nobody can delete, and db:migrate:status cannot
+    see a migration that ran and did nothing.
 
-  - id: rails_flash_strings_untranslated
-    resolution: >
-      Closed 2026-08-12 at zero, measured by the instrument rather than by grep.
-      169 → 48 → 0.
-      The last 48 were all in the five brgen engines, which is what this entry's own
-      note predicted, and they went in one pass: flash.<engine>.* keys in brgen's nb
-      and en locales, nested per engine because that is how the call sites are
-      organised. The eleven copies of "Not allowed" and "Not authorized" became
-      shared.flash.not_authorized rather than an eleventh translation of the same
-      sentence, and "Try again later." became shared.flash.rate_limited.
-      Four needed more than a key. The offers-sent line interpolated a count and
-      called String#pluralize on an English noun, so it became a pluralized entry.
-      The payment line interpolated a machine value into a sentence, so the five
-      PAYMENT_STATUSES got words of their own. And in amber, state.humanize.downcase
-      produced English in every locale by construction — that one had survived
-      precisely because translating the sentence around it would have left the state
-      name in English regardless.
-      The ratchet is 0, which makes it a ban; that is what it should have been from
-      the start, and 169 was only ever a ratchet because it could not be paid off in
-      one pass.
-      One test changed with it: vertical_mutations_test asserted /Sent 1/ and so
-      passed only while the flash was hardcoded English on an nb UI — a test pinning
-      the bug in place, and the second of those found the same day.
+    '
+- id: playlist_engine_untested
+  resolution: 'Closed 2026-08-12. engines/playlist has a test directory: 13 tests
+    over Playlist::Playlist and Playlist::ListeningParty, covering what is not Rails
+    doing Rails — add_track! ordering and idempotence, tracks_count, the city_trending
+    tenancy scope, join-code generation and uniqueness, and the end! transition. The
+    entry''s closing ask was already satisfied: coverage_ratchet_test''s source_roots
+    has globbed engines/*/app since 2026-08-02, so the engine''s zero was visible
+    in the ratchet the whole time. What let it sit was the floor — brgen/models at
+    11 does not complain about one engine at nothing. Raised to 13, and the ratchet
+    asked for it rather than being told. Writing them found a small schema fact worth
+    keeping: playlist_playlists declares tracks_count, likes_count and plays_count
+    as nullable integers with no default, so a new playlist has nil counters and `popular`
+    orders by a column that starts NULL. increment! copes; anything reading before
+    the first write does not. Asserted as-is, so a migration adding defaults shows
+    up as a deliberate change rather than a surprise.
 
-  - id: committed_rails_master_key_public_repo
-    resolution: >
-      Closed 2026-08-12, by measurement rather than by rotation: the rotation this
-      entry asked for had already happened in /etc, and what was left was the dead
-      half still sitting in git. The seven burned keys are confirmed (all six apps at
-      ffb39dc12/b1882a484 2026-05-06, moved 28bad8208, emptied 4f3780d89/6f81a4d34
-      2026-05-29 — emptying moved the tip, not the history), and they stay burned;
-      that is not what changed. What changed is that the keys no longer open
-      anything. The three still-tracked credentials.yml.enc (MASTER/web, amber,
-      bsdports) were decrypted with the historical keys: each held exactly one value,
-      secret_key_base, and no API key or database password. The live values differ —
-      compared as SHA256 digests, never as values: amber 9bbeac9f… in git against
-      d14ba067… live, bsdports 6ffd8e80… against c50ceca2… Production takes
-      SECRET_KEY_BASE from /etc/<app>.env (640 root:<app>, absent from git) and each
-      rc.d hard-requires it, `: "${SECRET_KEY_BASE:?missing ...}"`, so the service
-      refuses to boot without one; MASTER/web exports SECRET_KEY_BASE_DUMMY=1 and
-      never needed a real value. So all three .enc files were deleted rather than
-      re-keyed: nothing reads them (every Rails.application.credentials reference in
-      the repo is inside a comment — the commented-out aws block in each storage.yml),
-      and a re-key would have produced a new secret for a file with no reader. Amber
-      was booted with its credentials file moved aside first, to prove the deletion
-      was safe and not merely plausible. RAILS/test/tracked_secrets_test.rb is the
-      gate, and it was confirmed to fail on all three files before they were removed.
-      The optional history purge is NOT done and is deliberately not tracked here
-      twice — it is a force-push to a public repo, cannot be relied on (forks, clones,
-      unreachable-object retention, archivers), and if it happens it goes in one pass
-      with home_partition_full_from_git_history.
+    '
+- id: rails_flash_strings_untranslated
+  resolution: 'Closed 2026-08-12 at zero, measured by the instrument rather than by
+    grep. 169 → 48 → 0. The last 48 were all in the five brgen engines, which is what
+    this entry''s own note predicted, and they went in one pass: flash.<engine>.*
+    keys in brgen''s nb and en locales, nested per engine because that is how the
+    call sites are organised. The eleven copies of "Not allowed" and "Not authorized"
+    became shared.flash.not_authorized rather than an eleventh translation of the
+    same sentence, and "Try again later." became shared.flash.rate_limited. Four needed
+    more than a key. The offers-sent line interpolated a count and called String#pluralize
+    on an English noun, so it became a pluralized entry. The payment line interpolated
+    a machine value into a sentence, so the five PAYMENT_STATUSES got words of their
+    own. And in amber, state.humanize.downcase produced English in every locale by
+    construction — that one had survived precisely because translating the sentence
+    around it would have left the state name in English regardless. The ratchet is
+    0, which makes it a ban; that is what it should have been from the start, and
+    169 was only ever a ratchet because it could not be paid off in one pass. One
+    test changed with it: vertical_mutations_test asserted /Sent 1/ and so passed
+    only while the flash was hardcoded English on an nb UI — a test pinning the bug
+    in place, and the second of those found the same day.
 
-  - id: rails_no_asset_url_lint
-    resolution: >
-      Closed 2026-08-12. Pub4::AssetUrlLint reads every url() in a stylesheet or an
-      inline <style> block, resolves it against the roots that actually serve that
-      sheet, and ratchets missing_asset at 5. Filed and closed in one pass because
-      the first run found a live bug: amber served shared's lightgallery.css, whose
-      icon font resolved only under brgen/public, so every lightbox control in amber
-      was a missing glyph — verified 404 against amber.brgen.no before and 200
-      after. The gap existed because the 2026-08-11 asset audit checked image_tag
-      and asset_path, the reference forms that fail loudly, and never read the one
-      that fails silently. Pinned by RAILS/test/asset_url_lint_test.rb.
-  - id: rails_no_breakpoint_token
-    resolution: >
-      Closed 2026-08-11. design_tokens.yml has a `viewport` scale (480/576/640/768/
-      1265/1280, each with the count that justifies it) and Pub4::BreakpointLint
-      enforces it, pinned by RAILS/test/breakpoint_lint_test.rb. It cannot be a CSS
-      custom property — `@media (min-width: var(--x))` is invalid CSS — so the
-      numbers stay in the stylesheets and the lint is what makes them single-sourced.
-      The measurement corrected the entry twice. The real defect was not the
-      767/768-style pairs, which are a correct exclusive scheme: it was that 640, 768
-      and 1265 were EACH used as both a floor and a ceiling somewhere in the family,
-      26 sites in total, so at exactly those three widths two blocks matched and
-      bundle order decided which won. Fixed by moving the six colliding max-bounds
-      down one pixel, keeping the interpretation the min-width author had declared.
-      A seventh apparent site was a comment in shared/_responsive.scss explaining why
-      a rule is no longer wrapped in the query it quotes — the lint now strips
-      comments, which is the convention in MASTER/DEBT.md it had just walked into.
-      Also fixed: brgen/_root's compose control banded from 769px while the rest of
-      the family treats 768 as the tablet edge, so at exactly 768px it fell through
-      to base styling. Residue is 3 unknown edges (700px in marketplace nav, 400 and
-      600 in zen shell), which are design decisions rather than typos and live in the
-      lint's baseline as a number that can only fall.
-  - id: brgen_allow_unauthenticated_access_is_a_noop
-    resolution: >
-      All three halves closed. The no-op is deliberate — guests get a soft
-      Current.user so the product is usable without signup, and require_real_user is
-      the identity gate — and it is no longer silent: Shared::Authentication
-      .allow_unauthenticated_access logs in development and test that it does
-      nothing in a guest-column app, staying quiet in production where it would be
-      boot noise on every controller. That fix had no gate, so an unused-logging
-      cleanup would have removed it; RAILS/test/auth_noop_is_audible_test.rb pins it
-      (mutation-checked: deleting the warning fails 2 assertions). Guest digests are
-      minted at BCrypt::Engine::MIN_COST — production cost 12 measured 1,025ms on
-      vm23's single core, on 38.9% of 275,334 logged requests — and
-      Shared::PruneGuestUsersJob runs daily at 3:45am in brgen and amber with the
-      (guest, created_at) index it scans on.
-  - id: operator_docs_module_is_unreferenced
-    resolution: >
-      Wired 2026-08-11: Ground::BootstrapDocs#section routes /orient deploy to
-      OperatorDocs.render_deploy, and StatusReport#backlog_open_count now delegates
-      to OperatorDocs.open_debt_count instead of parsing this file a second way —
-      the duplicate reader this entry existed to collapse.
-  - id: brgen_layout_query_cost_and_page_weight
-    resolution: >
-      Both halves closed. Conversation.unread_counts_for is one grouped query
-      (brgen/test/models/unread_counts_test.rb asserts it agrees with the per-record
-      path), and shared/_icon_sprite emits each shape once as a <symbol> with
-      shared/_icon rendering <use>.
-  - id: rails_missing_empty_states
-    resolution: >
-      Pub4::EmptyStateLint is at BASELINE 0 and scans clean; deliberate no-CTA sites
-      carry `<%# empty_state: no-action-ok %>`.
-  - id: rails_silent_wiring_breaks
-    resolution: >
-      Closed 2026-08-01, gate first: stimulus_wiring (326 checks) is what stops the
-      class returning silently. The last open tail — three Shared models broadcasting
-      into streams with no subscriber — is closed too: Reaction, Notification and
-      ReviewCase each carry an explicit no-broadcast decision naming what would have
-      to exist first, pinned by RAILS/test/turbo_broadcast_contract_test.rb.
-  - id: doas_keepenv_is_a_root_rce
-    resolution: >
-      Fixed 2026-08-02, installed and verified live on vm23 the same day. The rule it
-      taught is DECISIONS.md, "/etc/doas.conf installs only on a deliberate root run".
-  - id: root_dot_sources_dev_owned_repo_every_5min
-    resolution: >
-      Closed 2026-08-02: heal_doas_conf! removed from relayd-watchdog and
-      config-drift-check, no-heal copies installed to /usr/local/bin, and staging
-      files moved out of predictable /tmp paths in validate_doas.ksh, OPERATOR.sh's
-      install_tracked_crontab and backup_priv.sh. Verified 2026-08-03 — nothing
-      root-run reads or executes from /home/dev/pub4 on a timer.
-  - id: payment_webhooks_unverified
-    resolution: >
-      HMAC-SHA256 over "<timestamp>.<raw body>", replay window SIGNATURE_TOLERANCE
-      5 min, multiple v1 signatures for rotation, fail closed when the secret is
-      unset (2026-07-27, 6 tests). Vipps's header/signed-string shape still wants
-      confirming against current MobilePay docs before production use — noted in the
-      controller.
-  - id: marketplace_order_notifications_raised_under_strict_loading
-    resolution: >
-      Shared::StrictSafeAssociations resolves actors by foreign key rather than a
-      lazy belongs_to read inside after_commit, which was turning successful writes
-      into 500s — worst case a paid Stripe order that notified neither party
-      (2026-07-27).
-  - id: playlist_missing_tables
-    resolution: migration 20260726120000 creates playlist_timestamped_comments and playlist_audio_versions
-  - id: bsdports_missing_social_tables
-    resolution: Shared::Reactable declares the association only when a Reaction constant exists
-  - id: bsdports_missing_cable_cache_schema
-    resolution: cable_schema.rb + cache_schema.rb copied from brgen; both verified to load
-  - id: amber_style_profile_missing
-    resolution: /ai/style rewritten onto StylePreference; the table-less StyleProfile model deleted
-  - id: brgen_pwa_service_worker_stale
-    resolution: 19 sourceless entries filtered out of the precache manifest; `npm run build:pwa` remains the source of truth
-  - id: solid_queue_worker_proof
-    resolution: vps-deploy loads queue schema via rails_prepare_secondary_dbs_as_app and runs solid_queue_proof.sh before stamp
-  - id: tts_host_binary
-    resolution: pkg_add espeak; master rc.d PATH=/usr/local/bin; tts_proof.sh ok on vm23
-  - id: macos_ruby_mismatch
-    resolution: contributor check profiles + bin/ruby shim skip runtime gates cleanly
-  - id: frontend_auditor
-    resolution: amber items.scss split + timeline BEM removed
-  - id: web_asset_discipline
-    resolution: vps-deploy master path runs precompile + master_web_assets_gate
-  - id: vps_safety_gate_paths
-    resolution: fixed OPENBSD/ top-level paths; gate passes on clean checkout (2026-07-16)
-  - id: shadow_deploy_scripts
-    resolution: deleted .deploy_now.sh and .deploy_manual.sh (2026-07-16)
-  - id: restore_backups_misname
-    resolution: split into restore_backups.sh (litestream) + extract_legacy_installers.sh (2026-07-16)
-  - id: vps_console_collapse
-    resolution: vps_console.exp modes + thin wrapper .exp files (2026-07-16)
-  - id: ops_personal_scripts
-    resolution: moved laptop utilities to OPENBSD/dev/ (2026-07-16)
-  - id: external_alerting
-    resolution: >
-      OPENBSD/bin/uptime-check.sh curls /up on all apps and exits non-zero on any
-      failure (2026-07-16). Closed as written and it did not catch the 2026-08-03
-      outage, because nothing schedules it — that half is
-      amber_bsdports_stop_and_stay_down (a), not this entry.
-  - id: ssh_helper_dry
-    resolution: OPENBSD/lib/ssh_vm23.sh; deploy_all.sh and vps_deploy_master.sh wired (2026-07-16)
+    '
+- id: committed_rails_master_key_public_repo
+  resolution: 'Closed 2026-08-12, by measurement rather than by rotation: the rotation
+    this entry asked for had already happened in /etc, and what was left was the dead
+    half still sitting in git. The seven burned keys are confirmed (all six apps at
+    ffb39dc12/b1882a484 2026-05-06, moved 28bad8208, emptied 4f3780d89/6f81a4d34 2026-05-29
+    — emptying moved the tip, not the history), and they stay burned; that is not
+    what changed. What changed is that the keys no longer open anything. The three
+    still-tracked credentials.yml.enc (MASTER/web, amber, bsdports) were decrypted
+    with the historical keys: each held exactly one value, secret_key_base, and no
+    API key or database password. The live values differ — compared as SHA256 digests,
+    never as values: amber 9bbeac9f… in git against d14ba067… live, bsdports 6ffd8e80…
+    against c50ceca2… Production takes SECRET_KEY_BASE from /etc/<app>.env (640 root:<app>,
+    absent from git) and each rc.d hard-requires it, `: "${SECRET_KEY_BASE:?missing
+    ...}"`, so the service refuses to boot without one; MASTER/web exports SECRET_KEY_BASE_DUMMY=1
+    and never needed a real value. So all three .enc files were deleted rather than
+    re-keyed: nothing reads them (every Rails.application.credentials reference in
+    the repo is inside a comment — the commented-out aws block in each storage.yml),
+    and a re-key would have produced a new secret for a file with no reader. Amber
+    was booted with its credentials file moved aside first, to prove the deletion
+    was safe and not merely plausible. RAILS/test/tracked_secrets_test.rb is the gate,
+    and it was confirmed to fail on all three files before they were removed. The
+    optional history purge is NOT done and is deliberately not tracked here twice
+    — it is a force-push to a public repo, cannot be relied on (forks, clones, unreachable-object
+    retention, archivers), and if it happens it goes in one pass with home_partition_full_from_git_history.
+
+    '
+- id: rails_no_asset_url_lint
+  resolution: 'Closed 2026-08-12. Pub4::AssetUrlLint reads every url() in a stylesheet
+    or an inline <style> block, resolves it against the roots that actually serve
+    that sheet, and ratchets missing_asset at 5. Filed and closed in one pass because
+    the first run found a live bug: amber served shared''s lightgallery.css, whose
+    icon font resolved only under brgen/public, so every lightbox control in amber
+    was a missing glyph — verified 404 against amber.brgen.no before and 200 after.
+    The gap existed because the 2026-08-11 asset audit checked image_tag and asset_path,
+    the reference forms that fail loudly, and never read the one that fails silently.
+    Pinned by RAILS/test/asset_url_lint_test.rb.
+
+    '
+- id: rails_no_breakpoint_token
+  resolution: 'Closed 2026-08-11. design_tokens.yml has a `viewport` scale (480/576/640/768/
+    1265/1280, each with the count that justifies it) and Pub4::BreakpointLint enforces
+    it, pinned by RAILS/test/breakpoint_lint_test.rb. It cannot be a CSS custom property
+    — `@media (min-width: var(--x))` is invalid CSS — so the numbers stay in the stylesheets
+    and the lint is what makes them single-sourced. The measurement corrected the
+    entry twice. The real defect was not the 767/768-style pairs, which are a correct
+    exclusive scheme: it was that 640, 768 and 1265 were EACH used as both a floor
+    and a ceiling somewhere in the family, 26 sites in total, so at exactly those
+    three widths two blocks matched and bundle order decided which won. Fixed by moving
+    the six colliding max-bounds down one pixel, keeping the interpretation the min-width
+    author had declared. A seventh apparent site was a comment in shared/_responsive.scss
+    explaining why a rule is no longer wrapped in the query it quotes — the lint now
+    strips comments, which is the convention in MASTER/DEBT.md it had just walked
+    into. Also fixed: brgen/_root''s compose control banded from 769px while the rest
+    of the family treats 768 as the tablet edge, so at exactly 768px it fell through
+    to base styling. Residue is 3 unknown edges (700px in marketplace nav, 400 and
+    600 in zen shell), which are design decisions rather than typos and live in the
+    lint''s baseline as a number that can only fall.
+
+    '
+- id: brgen_allow_unauthenticated_access_is_a_noop
+  resolution: 'All three halves closed. The no-op is deliberate — guests get a soft
+    Current.user so the product is usable without signup, and require_real_user is
+    the identity gate — and it is no longer silent: Shared::Authentication .allow_unauthenticated_access
+    logs in development and test that it does nothing in a guest-column app, staying
+    quiet in production where it would be boot noise on every controller. That fix
+    had no gate, so an unused-logging cleanup would have removed it; RAILS/test/auth_noop_is_audible_test.rb
+    pins it (mutation-checked: deleting the warning fails 2 assertions). Guest digests
+    are minted at BCrypt::Engine::MIN_COST — production cost 12 measured 1,025ms on
+    vm23''s single core, on 38.9% of 275,334 logged requests — and Shared::PruneGuestUsersJob
+    runs daily at 3:45am in brgen and amber with the (guest, created_at) index it
+    scans on.
+
+    '
+- id: operator_docs_module_is_unreferenced
+  resolution: 'Wired 2026-08-11: Ground::BootstrapDocs#section routes /orient deploy
+    to OperatorDocs.render_deploy, and StatusReport#backlog_open_count now delegates
+    to OperatorDocs.open_debt_count instead of parsing this file a second way — the
+    duplicate reader this entry existed to collapse.
+
+    '
+- id: brgen_layout_query_cost_and_page_weight
+  resolution: 'Both halves closed. Conversation.unread_counts_for is one grouped query
+    (brgen/test/models/unread_counts_test.rb asserts it agrees with the per-record
+    path), and shared/_icon_sprite emits each shape once as a <symbol> with shared/_icon
+    rendering <use>.
+
+    '
+- id: rails_missing_empty_states
+  resolution: 'Pub4::EmptyStateLint is at BASELINE 0 and scans clean; deliberate no-CTA
+    sites carry `<%# empty_state: no-action-ok %>`.
+
+    '
+- id: rails_silent_wiring_breaks
+  resolution: 'Closed 2026-08-01, gate first: stimulus_wiring (326 checks) is what
+    stops the class returning silently. The last open tail — three Shared models broadcasting
+    into streams with no subscriber — is closed too: Reaction, Notification and ReviewCase
+    each carry an explicit no-broadcast decision naming what would have to exist first,
+    pinned by RAILS/test/turbo_broadcast_contract_test.rb.
+
+    '
+- id: doas_keepenv_is_a_root_rce
+  resolution: 'Fixed 2026-08-02, installed and verified live on vm23 the same day.
+    The rule it taught is DECISIONS.md, "/etc/doas.conf installs only on a deliberate
+    root run".
+
+    '
+- id: root_dot_sources_dev_owned_repo_every_5min
+  resolution: 'Closed 2026-08-02: heal_doas_conf! removed from relayd-watchdog and
+    config-drift-check, no-heal copies installed to /usr/local/bin, and staging files
+    moved out of predictable /tmp paths in validate_doas.ksh, OPERATOR.sh''s install_tracked_crontab
+    and backup_priv.sh. Verified 2026-08-03 — nothing root-run reads or executes from
+    /home/dev/pub4 on a timer.
+
+    '
+- id: payment_webhooks_unverified
+  resolution: 'HMAC-SHA256 over "<timestamp>.<raw body>", replay window SIGNATURE_TOLERANCE
+    5 min, multiple v1 signatures for rotation, fail closed when the secret is unset
+    (2026-07-27, 6 tests). Vipps''s header/signed-string shape still wants confirming
+    against current MobilePay docs before production use — noted in the controller.
+
+    '
+- id: marketplace_order_notifications_raised_under_strict_loading
+  resolution: 'Shared::StrictSafeAssociations resolves actors by foreign key rather
+    than a lazy belongs_to read inside after_commit, which was turning successful
+    writes into 500s — worst case a paid Stripe order that notified neither party
+    (2026-07-27).
+
+    '
+- id: playlist_missing_tables
+  resolution: migration 20260726120000 creates playlist_timestamped_comments and playlist_audio_versions
+- id: bsdports_missing_social_tables
+  resolution: Shared::Reactable declares the association only when a Reaction constant
+    exists
+- id: bsdports_missing_cable_cache_schema
+  resolution: cable_schema.rb + cache_schema.rb copied from brgen; both verified to
+    load
+- id: amber_style_profile_missing
+  resolution: "/ai/style rewritten onto StylePreference; the table-less StyleProfile
+    model deleted"
+- id: brgen_pwa_service_worker_stale
+  resolution: 19 sourceless entries filtered out of the precache manifest; `npm run
+    build:pwa` remains the source of truth
+- id: solid_queue_worker_proof
+  resolution: vps-deploy loads queue schema via rails_prepare_secondary_dbs_as_app
+    and runs solid_queue_proof.sh before stamp
+- id: tts_host_binary
+  resolution: pkg_add espeak; master rc.d PATH=/usr/local/bin; tts_proof.sh ok on
+    vm23
+- id: macos_ruby_mismatch
+  resolution: contributor check profiles + bin/ruby shim skip runtime gates cleanly
+- id: frontend_auditor
+  resolution: amber items.scss split + timeline BEM removed
+- id: web_asset_discipline
+  resolution: vps-deploy master path runs precompile + master_web_assets_gate
+- id: vps_safety_gate_paths
+  resolution: fixed OPENBSD/ top-level paths; gate passes on clean checkout (2026-07-16)
+- id: shadow_deploy_scripts
+  resolution: deleted .deploy_now.sh and .deploy_manual.sh (2026-07-16)
+- id: restore_backups_misname
+  resolution: split into restore_backups.sh (litestream) + extract_legacy_installers.sh
+    (2026-07-16)
+- id: vps_console_collapse
+  resolution: vps_console.exp modes + thin wrapper .exp files (2026-07-16)
+- id: ops_personal_scripts
+  resolution: moved laptop utilities to OPENBSD/dev/ (2026-07-16)
+- id: external_alerting
+  resolution: 'OPENBSD/bin/uptime-check.sh curls /up on all apps and exits non-zero
+    on any failure (2026-07-16). Closed as written and it did not catch the 2026-08-03
+    outage, because nothing schedules it — that half is amber_bsdports_stop_and_stay_down
+    (a), not this entry.
+
+    '
+- id: ssh_helper_dry
+  resolution: OPENBSD/lib/ssh_vm23.sh; deploy_all.sh and vps_deploy_master.sh wired
+    (2026-07-16)
+- id: strict_mode_missing_in_three_cron_scripts
+  note: 'closed 2026-08-22: set -eo pipefail on all three with each deliberate failure
+    named and guarded; verified per-interpreter, installed root:wheel on vm23 (fefcf7228).'
+- id: secrets_in_process_argv_and_world_readable_home
+  note: 'closed 2026-08-22: /home/dev is 710 dev:_pub4ci (app users traverse by group,
+    proven both directions), .zshrc 600, the two chmod o+x sites and OPERATOR.sh updated
+    (5889e1a8a).'
+- id: amber_bsdports_stop_and_stay_down
+  note: 'closed 2026-08-22: every sub-item done; both apps survived three full deploy
+    chains on 2026-08-21/22 and the armed uptime-check watches every 5 minutes.'
+- id: brgen_city_carousel_links_dead
+  note: 'closed 2026-08-22: 7 cities live behind the domain_alignment gate; the registrar-money
+    half lives in the domain expiry watch, the empty-city content question in the
+    launch-wipe runbook.'
+- id: rails_gates_not_wired
+  note: 'closed 2026-08-22: the deploy host now sets GATE_REQUIRE_LIVE=1 for the deep
+    tier (check-rails detects /etc/rc.d/brgen), so a closed port fails instead of
+    reading green; dns_zones was already in check-openbsd.'
+- id: scanner_overlaps_two_installed_linters
+  note: 'closed 2026-08-22: ABC_SIZE landed bespoke per this entry''s measured conclusion
+    (fixture-proven, calibrated 85.5-vs-85.91 against rubocop, ratchet threshold 40
+    -> 17); TooManyMethods'' concept is NO_GOD_CLASS. Bridge stays off.'
+- id: rails_duplicate_vendor_css
+  note: 'closed 2026-08-22: brgen''s lightgallery.css deleted, PWA rebuilt, live service-worker
+    manifest clean — and brgen/public/pwa/workbox-sw.js turned out to be a dead artifact
+    of the hand-rolled era, deleted with it.'
+- id: solid_queue_worker_never_ran
+  note: 'closed 2026-08-22 with the decision: brgen_jobs runs resident (four processes
+    registered, 21 recurring tasks, ~380M measured); amber and bsdports stay on the
+    drain because the box cannot hold three worker trees. Revert is one rcctl line.
+    History in git (a530c1a99).'
+- id: gates_have_no_precision_ledger
+  note: 'closed 2026-08-22: outcome ledger + fail-open landed earlier; the known-bad-fixture
+    ask becomes doctrine in OPENBSD/DECISIONS.md — every NEW gate carries its fixture
+    pair, existing gates get one when touched (tap_target_probe and focus_walk_probe
+    are the exemplars).'
