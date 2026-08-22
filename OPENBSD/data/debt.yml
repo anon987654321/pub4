@@ -36,6 +36,13 @@ open:
   - id: solid_queue_worker_never_ran
     tag: operator-priority
     summary: >
+      UPDATE 2026-08-22 (later): brgen_jobs is ENABLED and registered —
+      supervisor/dispatcher/worker/scheduler rows in solid_queue_processes,
+      all 21 recurring tasks scheduled, expired-messages sweep and database
+      snapshots included. Cost measured live: ~380M for the process tree,
+      131M free after. amber/bsdports stay on the drain — the box cannot
+      hold three worker trees. Revert is one line: doas rcctl stop
+      brgen_jobs && doas rcctl disable brgen_jobs.
       UPDATE 2026-08-22: jobs RUN now, via the hourly drain — the deploy's
       solid_queue proof measures it (amber last drained 02:08Z today, all three
       proofs green). What remains open is the resident-worker decision below;

@@ -382,3 +382,26 @@ script, says only "restarted stuff", or runs the full installer from macOS.
 - Run `ruby34 OPENBSD/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `OPENBSD/etc/`.
 - Record persistent lessons in `OPENBSD/data/debt.yml` or `OPENBSD/DECISIONS.md`.
+
+## Launch wipe (demo data -> cold start)
+
+Written 2026-08-22 as the cherry-picked answer to the demo-content launch
+blocker; a runbook on purpose, not a script — GUARD_EXPENSIVE_OPS exists
+precisely so no bin/ file carries a fleet-wide delete. Run it BY HAND, per
+app, on launch day:
+
+1. `ruby OPENBSD/bin/dr-pull` from the Mac — a verified pre-wipe snapshot.
+2. On vm23, stop the app: `doas rcctl stop <app> <app>_jobs`.
+3. Move the primary aside (never delete):
+   `mv /home/<app>/app/storage/production.sqlite3{,.pre-launch}`.
+4. As the app user: `bundle34 exec bin/rails db:prepare` — schema, no seeds.
+   brgen demo seeds are the DEMO; a launch database starts empty. If a
+   curated skeleton is wanted (cities, categories, admin), seed ONLY
+   `db/seeds/launch.rb` — write it that week, review it that week.
+5. `doas rcctl start <app> <app>_jobs`, then the route-manifest probe.
+6. The .pre-launch file stays until the first week survives; dr-pull keeps
+   pulling nightly either way.
+
+Not before the operator decides: which cities open, whether demo mode
+(clearly-badged fictive content) is wanted instead of a wipe, and the
+announcement noindex question. Those are product calls, not runbook steps.
