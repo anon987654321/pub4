@@ -41,6 +41,13 @@ module Pub4
       lines << "repo: #{payload[:repo]}"
       lines << "mode: #{payload[:mode]} (#{payload[:tree]})"
       lines << "branch: #{payload[:branch]} @ #{payload[:commit]} (#{payload[:dirty]} dirty, #{payload[:behind]} behind upstream)"
+      # Dirty files grouped by top-level tree, so a session sees at a glance
+      # which trees hold ANOTHER session's work-in-progress. Sessions kept
+      # re-deriving "whose are the STUDIO files" from raw porcelain output;
+      # the answer is one line, printed every time.
+      payload[:dirty_by_tree].each do |tree, count|
+        lines << "  dirty in #{tree}: #{count} file(s) — if not yours, another session's; never sweep them"
+      end
       lines << "ruby: #{payload[:ruby]}#{payload[:ruby_ok] ? '' : ' — MISMATCH'}"
       lines << "debt: #{payload[:backlog_open]} open (#{payload[:backlog_source]})"
       lines << "horizon: #{payload[:horizon_count]} planned items (agent: ignore)"
@@ -65,6 +72,7 @@ module Pub4
         branch: git("branch", "--show-current") || "unknown",
         commit: git("rev-parse", "--short", "HEAD") || "unknown",
         dirty: git("status", "--porcelain").to_s.lines.count,
+        dirty_by_tree: dirty_by_tree,
         behind: git("rev-list", "--count", "HEAD..@{u}") || "0",
         ruby: Environment.ruby_label,
         ruby_ok: Environment.ruby_version_ok?,
@@ -75,6 +83,12 @@ module Pub4
         ports: port_states,
         next_command: Environment.next_command_for,
       }
+    end
+
+    def dirty_by_tree
+      git("status", "--porcelain").to_s.lines
+        .map { |l| l[3..].to_s.split("/").first }
+        .compact.tally.sort_by { |_, n| -n }.to_h
     end
 
     def git(*args)
