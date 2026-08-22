@@ -169,11 +169,12 @@ class TtsJob
 
     JSON.parse(File.read(token_path))
   end
-  # The worker plumbing is not API: spawn/materialize/ensure are how the
-  # queue runs itself, and every external caller comes through enqueue, find,
-  # owned? or cancel.
-  private_class_method :read_token, :spawn_workers_locked!, :spawn_worker,
-                       :materialize!, :ensure_worker!
+  # The spawn pair is not API — the queue runs itself. ensure_worker! and
+  # materialize! ARE: master_container.rb boots the worker through one and
+  # tts_controller.rb runs synthesis on the poll path through the other, and
+  # privatizing them took ai.brgen.no down on 2026-08-22 — the caller grep
+  # that said otherwise was wrong, and no local test boots the container.
+  private_class_method :read_token, :spawn_workers_locked!, :spawn_worker
 
   attr_reader :job_id
 
