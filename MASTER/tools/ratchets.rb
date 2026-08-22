@@ -78,6 +78,10 @@ module Pub4
          require File.join(MASTER, "tools/rule_reach")
          [Pub4::RuleReach.unreachable.size, YAML.safe_load_file(File.join(MASTER, "data/rule_reach.yml")).fetch("unreachable")]
        end,
+       master_row("data_reach", "data/data_reach.yml", "data keys no code names") do
+         require File.join(MASTER, "tools/data_reach")
+         [Pub4::DataReach.unnamed.size, Pub4::DataReach.ceiling]
+       end,
        master_row("namespace", "data/namespace_ceilings.yml", "files declaring no module or class") do
          require File.join(MASTER, "tools/namespace_ratchet")
          [Pub4::NamespaceRatchet.measure.values.sum, Pub4::NamespaceRatchet.ceilings.values.sum]
