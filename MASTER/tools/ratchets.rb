@@ -78,6 +78,10 @@ module Pub4
          require File.join(MASTER, "tools/rule_reach")
          [Pub4::RuleReach.unreachable.size, YAML.safe_load_file(File.join(MASTER, "data/rule_reach.yml")).fetch("unreachable")]
        end,
+       master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
+         require File.join(MASTER, "tools/dup_census")
+         [Pub4::DupCensus.sets.size, Pub4::DupCensus.ceiling]
+       end,
        master_row("data_reach", "data/data_reach.yml", "data keys no code names") do
          require File.join(MASTER, "tools/data_reach")
          [Pub4::DataReach.unnamed.size, Pub4::DataReach.ceiling]
