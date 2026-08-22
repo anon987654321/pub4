@@ -79,9 +79,11 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 
 ## Queued refactors (recorded, ratchet-held, unscheduled)
 
-Token: face joins fleet token names (fenced: the --c-*/--x-text namespace is
-read by the GENERATED bundles — a face.part*.txt session, and the local face
-did not boot under triangle, so no tap-test is currently possible); shared
+Token: face joins fleet token names (a face.part*.txt session — the
+--c-*/--x-text namespace is read by the GENERATED bundles. The tap-test
+fence LIFTED 2026-08-22: the local face failing to boot under triangle was
+nothing deeper than MASTER/web's bundle never installed under the pinned
+3.4.9 — one bundle install, four surfaces up, face answers 200); shared
 edge scale; radius-scale parameter per dialect; scrim unification (operator's
 eye). Components: card-grid still needs a second real consumer.
 
