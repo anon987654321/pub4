@@ -56,6 +56,57 @@ unless left.empty?
   warn "pre-commit: some of that may belong to another session. Read before you claim it."
 end
 
+# A staged deletion whose basename reappears as an untracked file is a file
+# MOVE that half-landed: `git commit -- <paths>` stages tracked changes and
+# silently skips untracked files, so the commit records the delete and the
+# replacement stays behind on one machine. On 2026-08-21 exactly this shipped
+# a MASTER tree missing Ground::SqliteStore and a brgen card rendering a
+# partial that did not exist in git — every local suite green, the pushed
+# tree broken. The pair is refused, not warned: the warning above printed
+# both files that day and was scrolled past.
+untracked = paths("ls-files", "--others", "--exclude-standard")
+deleted = paths("diff", "--cached", "--name-only", "--diff-filter=D")
+half_moves = deleted.filter_map do |gone|
+  twin = untracked.find { |u| File.basename(u) == File.basename(gone) && tree_of(u) == tree_of(gone) }
+  [gone, twin] if twin
+end
+if !half_moves.empty? && ENV["PUB4_SPLIT_MOVE"] != "1"
+  warn ""
+  warn "pre-commit: REFUSED — staged deletion + untracked twin = a move that would half-land:"
+  half_moves.each { |gone, twin| warn "    deleting #{gone} while #{twin} is untracked" }
+  warn ""
+  warn "  `git add` the new path so the move lands whole, or set PUB4_SPLIT_MOVE=1"
+  warn "  if the deletion and the untracked file genuinely have nothing to do"
+  warn "  with each other."
+  warn ""
+  exit 1
+end
+
+# New untracked files in the SAME tree as this commit deserve more than the
+# grouped summary: they will not ride along, and if the staged diff references
+# them the pushed tree breaks while every local run stays green.
+same_tree_untracked = untracked.select { |u| staged_trees.include?(tree_of(u)) }
+unless same_tree_untracked.empty?
+  warn "pre-commit: untracked in the tree(s) you are committing — these will NOT ride along:"
+  same_tree_untracked.sort.first(8).each { |file| warn "    #{file}" }
+  warn "    `git add` them first if this change references them."
+end
+
+# STUDIO belongs to whoever wrote STUDIO/.session (one line: a session name).
+# With the file present, committing STUDIO paths requires PUB4_SESSION to
+# match — lore ("never touch dilla's renders") becomes something git enforces.
+session_file = "STUDIO/.session"
+if staged_trees.include?("STUDIO") && File.file?(session_file)
+  owner = File.read(session_file).strip
+  unless owner.empty? || ENV["PUB4_SESSION"].to_s == owner
+    warn ""
+    warn "pre-commit: REFUSED — STUDIO is owned by session '#{owner}' (STUDIO/.session)."
+    warn "  If you are that session: PUB4_SESSION=#{owner} git commit -- <paths>"
+    warn ""
+    exit 1
+  end
+end
+
 if staged_trees.size > 1 && ENV["PUB4_CROSS_TREE"] != "1"
   warn ""
   warn "pre-commit: REFUSED — this commit spans #{staged_trees.size} trees: #{staged_trees.join(', ')}"
