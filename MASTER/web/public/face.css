@@ -11,6 +11,13 @@
   --c-code: oklch(74% 0.11 275);
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --font-label: "JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  /* The HUD type ramp. face.css cannot read the RAILS --text-* ladder (it is
+     served from web/public, outside the asset pipeline), so these three steps
+     ARE its ladder — status chips and diagnostic panes, monospace, on a
+     canvas. Values unchanged from the literals they replace. */
+  --hud-lg: 13px;
+  --hud-md: 11px;
+  --hud-sm: 10px;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -683,7 +690,7 @@ body.mission-control {
            calc(var(--chrome-inset, 0.75rem) + var(--safe-bottom, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
   font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-  font-size: 13px;
+  font-size: var(--hud-lg);
   touch-action: manipulation;
   user-select: text;
   cursor: auto;
@@ -717,7 +724,7 @@ body.mission-control .panel {
   min-height: var(--tap-min, 44px);
 }
 body.mission-control .panel h2 {
-  font-size: 11px;
+  font-size: var(--hud-md);
   text-transform: uppercase;
   letter-spacing: .1em;
   opacity: 0.55;
@@ -807,7 +814,7 @@ body.zen[data-edge-hover="1"] #zsh { opacity: 1; pointer-events: auto; }
 #shortcut-sheet { border: 1px solid var(--face-dim); background: #0a0a0a; color: var(--face-fg); padding: 12px 16px; max-width: 28rem; }
 #shortcut-sheet table { width: 100%; font-size: 12px; }
 #shortcut-sheet kbd { font-family: inherit; opacity: 0.85; }
-.tool-diff pre.diff-body { font-size: 10px; max-height: 12rem; overflow: auto; white-space: pre-wrap; }
+.tool-diff pre.diff-body { font-size: var(--hud-sm); max-height: 12rem; overflow: auto; white-space: pre-wrap; }
 
 body.zen #zsh.revealed { opacity: .96; pointer-events: auto; transform: none; }
 
@@ -957,7 +964,7 @@ body:not(.face-ready) #zsh:not(.live):not(.revealed) { opacity: .22; pointer-eve
 
 body[data-boot-state="ERROR"] #zsh-status {
   color: color-mix(in srgb, var(--c-danger) 78%, var(--face-fg));
-  font-size: 11px;
+  font-size: var(--hud-md);
   letter-spacing: .04em;
   text-transform: none;
 }
@@ -1474,7 +1481,7 @@ body.wscons-mode #face-phosphor-trail {
 .primer-consent {
   color: var(--face-muted);
   max-width: 28rem;
-  font-size: 0.85rem;
+  font-size: var(--hud-lg); /* joined the HUD ramp; was 0.85rem (13.6px) */
 }
 #hud-tier-status,
 #hud-tier-caption,
