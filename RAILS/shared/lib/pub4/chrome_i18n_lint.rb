@@ -148,7 +148,9 @@ module Pub4
 # 31 -> 30: tv home header "TV header" became t("tv.home_title").
 # 30 -> 23 (2026-08-21): the action-bar icons took t() labels in the
 # consistency campaign; banking the fall so it cannot silently regrow.
-"aria_label" => 23,
+# 23 -> 21: the duplicate page banners were deleted and their aria-labels
+# went with them, two of which were English literals.
+"aria_label" => 21,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -184,7 +186,9 @@ module Pub4
       # fewer literal in this column and in aria_label.
       # 195 -> 191 (2026-08-22): the shadow legal footer's defaulted t() calls
       # left with it. Banked.
-      "translate_default" => 191,
+      # 191 -> 190: the tv fallback poster's alt is the video title, not a
+      # defaulted string.
+      "translate_default" => 190,
     }.freeze
 
     # Kept for callers that referenced the old single number.
