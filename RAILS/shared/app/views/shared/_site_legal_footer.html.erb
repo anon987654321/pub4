@@ -5,7 +5,10 @@
     border-top:1px solid var(--border,#e4e2db);display:flex;flex-wrap:wrap;
     gap:10px 18px;align-items:baseline;font-size:13px}
   .site-legal nav{display:flex;flex-wrap:wrap;gap:14px}
-  .site-legal a{color:var(--text-secondary,#6b7178);text-decoration:none}
+  /* Hit area grown to the 44px --tap-min without moving a pixel: padding
+     paints nothing here and the negative margin gives the space back. */
+  .site-legal a{color:var(--text-secondary,#6b7178);text-decoration:none;
+    padding:14px 6px;margin:-14px -6px}
   .site-legal a:hover{color:var(--text,#16181c);text-decoration:underline}
   .site-legal .affiliate-fine{margin:0;flex:1 1 260px;min-width:0;
     color:var(--text-secondary,#6b7178);font-size:12px;line-height:1.5}

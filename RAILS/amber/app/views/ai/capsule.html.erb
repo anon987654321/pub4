@@ -12,7 +12,7 @@
 </header>
 
 <% if @result["source"] == "capsule_builder" || !@ai_available %>
-  <p><%= t("ai.local_rules_html", note: (@ai_available ? "" : t("ai.openrouter_missing"))).html_safe %></p>
+  <p><%= t("ai.local_rules_html", note: (@ai_available ? "" : t("ai.openrouter_missing"))) %></p>
 <% elsif @result["source"] %>
   <p><%= t("ai.source", source: @result["source"]) %></p>
 <% end %>

@@ -113,3 +113,31 @@ a parameter soup shallower than three clear local rows. The face's 52-finding
 debt closed the same day (26 were a line-blind REDUCED_MOTION twin filing
 against face.css's own reset; the primer fade capped at 300ms; the rest were
 fences stated inline).
+
+## Tap-target sweep (gates/support/tap_target_probe.rb) — first run 2026-08-22
+
+The 2026-08-17 hand-found pair is an instrument now: every interactive
+element on 7 pages against the fleet's own --tap-min, in a 390x844 mobile
+viewport over CDP. Landed from the first run: face clean (its --tap-min was
+CITED but never defined — the button drew at 18px; the drawn square is a
+::before inside a 44px button now), legal footer links grown by invisible
+padding, brgen's shadow copy of _site_legal_footer deleted (it was masking
+the shared one), the theme toggle's label carries the 44px box.
+
+Verdicts, recorded not forced:
+- brgen author links (42x21) — feed density vs tap size is the operator's
+  call; the same invisible-padding trick would work if wanted.
+- amber nav row (35px) and author links — amber's active session's design.
+- bsdports .port-name rows (12px) — the index-density identity; one line
+  per port IS the surface. Deliberate, stays.
+
+## Stylesheet size budget (auditor css_file_size, 200 lines) — stance 2026-08-22
+
+Ten sheets exceed it. Not one queue: _zen_shell (474) and _minimal (459)
+are BASE LAYERS — one file is their design, splitting them scatters the
+cascade story; _dialect_tokens (200+) holds tokens AND theme mixins and is
+the one with a real seam (tokens vs mixins) if anyone splits anything.
+face.css (1282) is the whole face by construction. The app sheets
+(_chrome_polish 324, _marketplace 251, _vertical_playlist 378, amber
+_brand 378) are section-seamed and splittable when their surfaces are next
+open; the auditor keeps counting so none of this grows silently.

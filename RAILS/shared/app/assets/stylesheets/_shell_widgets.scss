@@ -91,11 +91,15 @@
   pointer-events: none;
 }
 
-/* Theme control — icon only, no circular sphere/chip behind it. */
+/* Theme control — icon only, no circular sphere/chip behind it. The padding
+   is the invisible half of --tap-min: it paints nothing (no background, no
+   border) and the inset compensation keeps the icon exactly where it was,
+   while the corner hit area reaches 44px (probe: 20px icon, 13px input). */
 .theme-toggle {
   position: fixed;
-  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px));
-  inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px));
+  padding: 12px;
+  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) - 12px);
+  inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px) - 12px);
   z-index: 110;
   width: var(--tap-min);
   height: var(--tap-min);

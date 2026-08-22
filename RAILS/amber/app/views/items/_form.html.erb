@@ -33,7 +33,7 @@
     <%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
     <button type="button" class="btn btn-ghost" data-action="click->media-picker#trigger"><%= t("items.choose_or_drop", default: "Choose or drop photos") %></button>
     <div class="media-picker-preview" data-media-picker-target="preview"></div>
-    <p><%= t("items.photo_processing_html").html_safe %></p>
+    <p><%= t("items.photo_processing_html") %></p>
   </div>
   <div class="actions"><%= f.submit class: "btn" %> <%= link_to t("actions.cancel"), items_path %> <span data-autosave-target="status" aria-live="polite"></span></div>
 <% end %>
