@@ -1,6 +1,6 @@
 <% content_for :title, t("takeaway.delivery_driver") %>
 
-<div class="page-header" role="banner" aria-label="<%= t("takeaway.driver_header") %>">
+<div class="page-header">
   <hgroup>
     <p><%= t("takeaway.operations") %></p>
     <%= tag.h1 @delivery_driver.user&.display_name || t("takeaway.anon") %>

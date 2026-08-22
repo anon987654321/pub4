@@ -1,7 +1,7 @@
 <% content_for :title, t("playlist.listening_party_title", name: @set.name) %>
 <%= turbo_stream_from @party.stream_name %>
 
-<div class="page-header" role="banner">
+<div class="page-header">
   <hgroup>
     <p><%= t("playlist.listening_party") %></p>
     <%= tag.h1 @set.name %>

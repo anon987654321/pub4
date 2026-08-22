@@ -1,6 +1,6 @@
 <% content_for :title, t("messages.search_title") %>
 
-<div class="page-header" role="banner" aria-label="<%= t("messages.search_title") %>">
+<div class="page-header">
   <hgroup>
     <p><%= t("messages.title") %></p>
     <%= tag.h1 @conversation ? @conversation.display_name_for(Current.user) : t("messages.search_title") %>

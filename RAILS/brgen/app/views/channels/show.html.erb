@@ -5,7 +5,7 @@
 <% content_for :body_attrs do %>data-push-seen="true"<% end %>
 
 <section class="channel-room" aria-label="<%= t("aria.channel") %>">
-  <header class="channel-room-header" role="banner">
+  <header class="channel-room-header">
     <%= link_to t("messages.back_channels"), channels_path, class: "channel-back" %>
     <%= tag.h1 @conversation.channel_title %>
     <%# This blurb is what lib/brgen/irc/bridge.rb:27 already serves to a real

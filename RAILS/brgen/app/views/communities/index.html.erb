@@ -1,6 +1,6 @@
 <% content_for :title, t("nav.communities") %>
 
-<div class="page-header" role="banner" aria-label="<%= t("nav.communities") %>">
+<div class="page-header">
   <%= tag.h1 t("nav.communities") %>
   <% if authenticated? %><%= link_to t("nav.new_community"), new_community_path, class: "btn btn-sm" %><% end %>
 </div>

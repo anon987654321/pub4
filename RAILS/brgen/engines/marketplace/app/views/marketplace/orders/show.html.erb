@@ -1,7 +1,7 @@
 <% content_for :title, "Order ##{@order.id}" %>
 <%= turbo_stream_from @conversation if @conversation %>
 
-<div class="page-header" role="banner" aria-label="<%= t("aria.order_details_header") %>">
+<div class="page-header">
   <h1>Order #<%= @order.id %></h1>
   <p>For <%= link_to @order.listing.title, listing_path(@order.listing) %></p>
 </div>

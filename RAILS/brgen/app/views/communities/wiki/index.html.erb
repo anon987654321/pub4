@@ -1,6 +1,6 @@
 <% content_for :title, t("wiki.title", community: @community.name) %>
 
-<div class="page-header" role="banner" aria-label="<%= t("wiki.title", community: @community.name) %>">
+<div class="page-header">
   <hgroup>
     <p><%= link_to @community.name, community_path(@community) %></p>
     <%= tag.h1 t("wiki.heading") %>

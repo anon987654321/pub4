@@ -10,7 +10,7 @@
       [@community.name, request.original_url.split("?").first]
     ])) %>
 
-<header class="community-header" role="banner" aria-label="<%= t("community.header") %>">
+<header class="community-header">
   <%= tag.h1 @community.name %>
   <% if @community.description.present? %><%= tag.p @community.description %><% end %>
   <p><%= t("community.posts_count", count: @community.posts.count) %> · <%= t("community.members_count", count: @community.members_count) %></p>

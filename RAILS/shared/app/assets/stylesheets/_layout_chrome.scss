@@ -26,11 +26,14 @@
      centre; moving text metrics would visibly reflow, this moves nothing. */
   --top-band-nudge: 1.6px;
   --bar-height: 44px;
-  /* Total block-size the fixed top band occupies: --chrome-inset-block plus
-     the nav link's 47.25px box, rounded up. Published so overlays (the edge
-     drawers) can start below the brand mark instead of colliding with it —
-     the first-visit reveal put "Hjem" under the brgen logo. */
-  --top-band-block: 56px;
+  /* Total block-size the fixed top band occupies: the chrome inset plus the
+     nav link's 47.25px box, rounded to the next step MASTER's eight_px_rhythm
+     allows. Published so overlays (the edge drawers) can start below the
+     brand mark instead of colliding with it — the first-visit reveal put
+     "Hjem" under the brgen logo. Written as a calc rather than the 56px it
+     evaluates to because 56 is on RAILS' space scale but NOT on MASTER's
+     rhythm allowlist; the two disagree above 48. */
+  --top-band-block: calc(var(--chrome-inset-block) + 48px);
   --page-gutter: clamp(16px, 5vw, 48px);
   --feed-max: 600px;
   --measure-body: 66ch;

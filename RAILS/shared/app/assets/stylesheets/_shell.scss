@@ -145,7 +145,7 @@ main[role="main"] {
   padding: var(--space-3) 16px;
   /* Clear the fixed top band: without this the revealed drawer's first item
      sits under the brand mark (brgen intro put "Hjem" beneath the logo). */
-  padding-block-start: calc(var(--top-band-block, 56px) + var(--safe-top, 0px));
+  padding-block-start: calc(var(--top-band-block) + var(--safe-top, 0px));
   background: var(--bg);
   transition: transform var(--transition-normal, 300ms) var(--ease-out, cubic-bezier(0.32, 0.72, 0, 1));
   pointer-events: auto;

@@ -10,7 +10,7 @@
       ["##{@hashtag.name}", request.original_url.split("?").first]
     ])) %>
 
-<header class="page-header" role="banner">
+<header class="page-header">
   <h1>#<%= @hashtag.name %></h1>
   <p><%= t("hashtag.count", count: @hashtag.usage_count, default: "%{count} posts") %></p>
 </header>

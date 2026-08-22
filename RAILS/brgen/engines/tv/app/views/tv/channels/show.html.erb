@@ -1,7 +1,7 @@
 <% content_for :title, @channel.name %>
 <% content_for :json_ld, json_ld_for(@channel, type: :broadcast_channel) %>
 
-<div class="page-header" role="banner">
+<div class="page-header">
   <hgroup>
     <p><%= t("tv.channel_subtitle", default: "Brgen TV channel") %></p>
     <%= tag.h1 @channel.name %>

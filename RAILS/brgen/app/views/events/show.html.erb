@@ -3,7 +3,7 @@
 <% content_for :og_image, seo_image_url(@event.cover) %>
 
 <article class="event-detail" role="article">
-  <div class="page-header" role="banner">
+  <div class="page-header">
     <hgroup>
       <p>
         <time datetime="<%= @event.starts_at.iso8601 %>"><%= l(@event.starts_at, format: :event) %></time>

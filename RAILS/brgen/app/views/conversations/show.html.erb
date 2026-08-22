@@ -1,7 +1,7 @@
 <%= turbo_stream_from @conversation %>
 <% content_for :body_attrs do %>data-push-seen="true"<% end %>
 
-<header role="banner" aria-label="<%= t("messages.header_label") %>">
+<header>
   <%= tag.h1 @conversation.display_name_for(Current.user) %>
   <nav role="navigation" aria-label="<%= t("messages.nav_label") %>">
     <%= link_to t("messages.back_all"), conversations_path %>

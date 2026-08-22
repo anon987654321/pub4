@@ -6,7 +6,7 @@
       search_placeholder: t("search.marketplace"),
       cart_count: @cart_items.size %>
 
-<div class="page-header" role="banner" aria-label="<%= t("marketplace.cart_header") %>">
+<div class="page-header">
   <%= tag.h1 t("pages.cart") %>
   <p><%= t("marketplace.item", count: @cart_items.size) %></p>
 </div>

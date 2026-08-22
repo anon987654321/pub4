@@ -1,6 +1,6 @@
 <% content_for :title, t("stories.title") %>
 
-<div class="page-header" role="banner" aria-label="<%= t("stories.title") %>">
+<div class="page-header">
   <%= tag.h1 t("stories.title") %>
   <% if authenticated? %>
     <%= link_to t("stories.new"), new_story_path, class: "btn btn-sm" %>

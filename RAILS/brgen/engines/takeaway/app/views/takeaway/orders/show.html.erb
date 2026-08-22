@@ -1,6 +1,6 @@
 <% content_for :title, t("takeaway.order_title", id: @order.id) %>
 
-<div class="page-header" role="banner" aria-label="<%= t("takeaway.order_details") %>">
+<div class="page-header">
   <hgroup>
     <p><%= link_to @order.restaurant.name, restaurant_path(@order.restaurant) %></p>
     <%= tag.h1 t("takeaway.order_title", id: @order.id) %>

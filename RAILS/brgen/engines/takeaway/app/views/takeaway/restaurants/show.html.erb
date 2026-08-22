@@ -6,7 +6,7 @@
       [@restaurant.name, request.original_url.split("?").first]
     ])) %>
 
-<div class="page-header" role="banner" aria-label="<%= t("takeaway.restaurant_header") %>">
+<div class="page-header">
   <%= tag.h1 @restaurant.name %>
   <nav role="navigation" aria-label="<%= t("takeaway.restaurant_actions") %>">
     <% if authenticated? && @restaurant.owner?(Current.user) %>

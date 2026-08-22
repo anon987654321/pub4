@@ -1,6 +1,6 @@
 <% content_for :title, t("takeaway.order_from", restaurant: @restaurant.name) %>
 
-<header class="page-header" role="banner" aria-label="<%= t("takeaway.restaurant_header") %>">
+<header class="page-header">
   <hgroup>
     <p><%= @restaurant.cuisine_type %> · <%= @restaurant.city_label %></p>
     <%= tag.h1 t("takeaway.order_from", restaurant: @restaurant.name) %>

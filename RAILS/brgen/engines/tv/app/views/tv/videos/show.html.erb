@@ -4,7 +4,7 @@
 <% content_for :og_type, "video.other" %>
 <% content_for :og_image, seo_image_url(@video.thumbnail) %>
 
-<div class="page-header" role="banner">
+<div class="page-header">
   <hgroup>
     <p><%= link_to @video.channel.name, channel_path(@video.channel) %></p>
     <%= tag.h1 @video.title %>

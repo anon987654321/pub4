@@ -1,7 +1,7 @@
 <% content_for :title, @page.title %>
 
 <article class="wiki-page">
-  <div class="page-header" role="banner" aria-label="<%= @page.title %>">
+  <div class="page-header">
     <hgroup>
       <p><%= link_to t("wiki.heading"), community_wiki_index_path(@community) %></p>
       <%= tag.h1 @page.title %>

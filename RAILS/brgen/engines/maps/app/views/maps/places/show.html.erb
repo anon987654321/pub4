@@ -7,7 +7,7 @@
       [@place.name, request.original_url.split("?").first]
     ])) %>
 
-<div class="page-header" role="banner" aria-label="<%= t("aria.place_details_header") %>">
+<div class="page-header">
   <%= tag.h1 @place.name %>
   <nav role="navigation" aria-label="<%= t("aria.place_navigation") %>">
     <%= link_to t("actions.back"), :back, class: "btn" %>

@@ -40,7 +40,7 @@
     <article class="feed-post<%= " #{css_class}" if css_class.present? %>"
              role="article"
              aria-label="<%= t("post.by_author", name: name, default: "Post by %{name}") %>">
-      <header class="feed-post-meta feed-post-byline" role="banner">
+      <header class="feed-post-meta feed-post-byline">
         <span class="author">
           <% if url.present? && !(post.try(:anonymous?) || post.try(:user)&.try(:guest?)) %>
             <%= link_to name, url, class: "link-inherit" %>
