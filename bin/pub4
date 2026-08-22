@@ -22,6 +22,7 @@ def usage
       bin/pub4 vps logs <app> [--lines N] [--remote]
       bin/pub4 post-pull
       bin/pub4 measure [--deep] [--json]
+      bin/pub4 test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/pub4 land -m <msg> <path>...  commit, rebase, re-check, push
       bin/pub4 worktree <name>        own checkout + branch, so agents never share an index
       bin/pub4 hooks                  install the shared-tree commit guard
@@ -137,6 +138,53 @@ when "hooks"
   puts "hooks: core.hooksPath -> OPENBSD/dev/githooks"
   Dir.children(hooks).sort.each { |hook| puts "  #{hook}#{File.executable?(File.join(hooks, hook)) ? '' : '  (NOT EXECUTABLE)'}" }
   puts "hooks: cross-tree commits now refused unless PUB4_CROSS_TREE=1"
+when "test"
+  # The smallest COMPLETE proof for the paths given (dirty files when none
+  # are). Complete means whole suites — a green over hand-picked tests is
+  # unmeasured. The mapping that lived in CLAUDE.md prose and session
+  # memory, made executable:
+  #   MASTER/**        -> MASTER rake test (+ dogfood when law/ moved)
+  #   RAILS/shared/**  -> all three app suites (shared lands in three apps)
+  #   RAILS/<app>/**   -> that app suite
+  #   RAILS/gates|test -> the standalone contract suite
+  #   OPENBSD/**       -> its local minitests (box-side proof stays on vm23)
+  #   STUDIO/**        -> refused; that tree belongs to its own session
+  paths = ARGV.dup
+  if paths.empty?
+    paths = IO.popen(%w[git status --porcelain -z], chdir: ROOT, &:read)
+              .split("\0").filter_map { |l| l[3..] }
+  end
+  trees = paths.map { |p| p.split("/").first(2) }
+  abort("pub4 test: STUDIO belongs to its own session — run its checks there") if trees.any? { |t| t.first == "STUDIO" }
+
+  jobs = []
+  rails_parts = trees.select { |t| t.first == "RAILS" }.map(&:last).uniq
+  if trees.any? { |t| t.first == "MASTER" }
+    jobs << ["MASTER suite", %w[bundle exec rake test], File.join(ROOT, "MASTER"), {}]
+    if paths.any? { |p| p.start_with?("MASTER/law/") }
+      jobs << ["MASTER dogfood", %w[bundle exec rake dogfood], File.join(ROOT, "MASTER"), {}]
+    end
+  end
+  app_suites = rails_parts.include?("shared") ? %w[brgen amber bsdports] : (rails_parts & %w[brgen amber bsdports])
+  app_suites.each do |app|
+    jobs << ["#{app} suite", %w[rbenv exec bundle exec bin/rails test],
+             File.join(ROOT, "RAILS", app), { "RBENV_VERSION" => "3.4.9" }]
+  end
+  if rails_parts.any? { |part| %w[gates test].include?(part) } || !app_suites.empty?
+    jobs << ["RAILS contracts", %w[ruby test/run_all.rb], File.join(ROOT, "RAILS"), {}]
+  end
+  if trees.any? { |t| t.first == "OPENBSD" }
+    runner = 'Dir["test/test_*.rb"].sort.each { |f| system(RbConfig.ruby, f) || abort(f) }'
+    jobs << ["OPENBSD minitests", ["ruby", "-e", runner], File.join(ROOT, "OPENBSD"), {}]
+  end
+  abort("pub4 test: no suite maps to #{paths.first(3).join(', ')}") if jobs.empty?
+
+  failed = jobs.reject do |name, cmd, dir, env|
+    puts "== #{name}"
+    system(env, *cmd, chdir: dir)
+  end
+  failed.each { |name, *| warn "pub4 test: FAILED #{name}" }
+  exit(failed.empty? ? 0 : 1)
 when "vps"
   sub = ARGV.shift
   case sub
