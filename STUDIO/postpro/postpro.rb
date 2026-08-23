@@ -230,9 +230,18 @@ module PostproBootstrap
 end
 
 BOOTSTRAP = PostproBootstrap.run
-$logger = Logger.new("postpro.log", "daily", level: Logger::DEBUG)
+# Anchored to the tool, not to the shell's working directory — the same CWD
+# defect this file already fixes for master.json and repligen.rb. A bare
+# relative path meant even a read-only --vocab-check created a log wherever the
+# operator happened to be standing.
+$logger = Logger.new(File.join(__dir__, "postpro.log"), "daily", level: Logger::DEBUG)
 $cli_logger = Object.new.tap do |obj|
   def obj.info(msg) = PostproBootstrap.dmesg(msg)
+  # warn was missing while two call sites used it, so a bad recipe key hit
+  # private Kernel#warn, raised NoMethodError, and process_file's rescue turned
+  # it into "Variation 1 failed" — naming neither the recipe nor the key, and
+  # producing no output files for one typo.
+  def obj.warn(msg) = PostproBootstrap.dmesg("warn #{msg}")
   def obj.error(msg) = PostproBootstrap.dmesg("error #{msg}")
 end
 
@@ -2005,7 +2014,13 @@ def print_film(image, stock = :kodak_2383, intensity = 0.70)
   hd = pdata[:hd]
   bands = %i[r g b].map { |c| Vips::Image.new_from_array([HD.channel_curve(hd[c])]) }
   lut = Vips::Image.bandjoin(bands).cast("uchar")
-  developed = image.maplut(lut)
+  # maplut hands back the LUT's interpretation, which is :matrix, so the
+  # colourspace("b-w") below was a no-op returning three bands: hi_mask became
+  # three bands, the bandjoin made a nine-band image, and `add` raised
+  # "not one band or 9 bands" straight into the rescue. cinematic, blockbuster
+  # and cinema_scan have therefore never had a print stage at all. Restoring
+  # the interpretation is metadata only — the pixels are identical.
+  developed = image.maplut(lut).copy(interpretation: image.interpretation)
   img_f = developed.cast("float") / 255.0
   luma  = developed.colourspace("b-w").cast("float") / 255.0
   if pdata[:warmth]
@@ -2180,10 +2195,15 @@ end
 def edge_aware_nr(image, strength = 0.60)
   blurred = image.gaussblur(1.5 + strength * 2.0)
   quick = image.gaussblur(1.5)
-  edge_diff = (image - quick) + (quick - image)
-  edge_luma = edge_diff.extract_band(0) * 0.299 +
-              edge_diff.extract_band(1) * 0.587 +
-              edge_diff.extract_band(2) * 0.114
+  # `(image - quick) + (quick - image)` is a value plus its own negation:
+  # identically zero at every pixel, so the mask was always 0 and this returned
+  # a plain full-frame blur — measured bit-identical to gaussblur alone. The
+  # edge term wants the magnitude of the detail, which is what selective_sharpen
+  # sixteen lines below was already corrected to use.
+  detail = image.cast("float") - quick.cast("float")
+  edge_luma = ((detail.extract_band(0) * 0.299) +
+               (detail.extract_band(1) * 0.587) +
+               (detail.extract_band(2) * 0.114)).abs
   mask = (edge_luma > (12.0 * (1.0 - strength * 0.5))).ifthenelse(1, 0)
   mask3 = mask.bandjoin([mask, mask])
   safe_cast(image * mask3 + blurred * mask3.linear([-1.0], [1.0]))
@@ -2620,7 +2640,14 @@ def recipe(image, recipe_data)
   result = image
   recipe_data.each do |fx, params|
     opts = params.is_a?(Hash) ? params : {}
-    intensity = params.is_a?(Hash) ? params["intensity"].to_f : params.to_f
+    # nil.to_f is 0.0, so the object form — which exists so you can set the
+    # other keys, and is therefore exactly where omitting this one is likely —
+    # ran the effect at zero and changed nothing. Absent means default, not off.
+    intensity = if params.is_a?(Hash)
+                  params.key?("intensity") ? params["intensity"].to_f : 1.0
+                else
+                  params.to_f
+                end
     method = fx.gsub("_professional", "")
     unless RECIPE_ALLOWED.include?(method)
       $cli_logger.warn "recipe: #{fx} is not an allowed effect — skipped"
@@ -2749,7 +2776,12 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       processed = rgb_bands(processed)
       timestamp = Time.now.strftime("%Y%m%d%H%M%S")
       suffix = preset_name || "processed"
-      output = file.sub(File.extname(file), "_#{suffix}_v#{i + 1}_#{timestamp}#{File.extname(file)}")
+      # Built from dirname + basename, not String#sub on the extension: sub
+      # matches the first occurrence anywhere in the path, so a directory
+      # component containing the extension (shoots/2024.jpg/frame.jpg) was
+      # rewritten and the write went to a path that does not exist.
+      ext    = File.extname(file)
+      output = File.join(File.dirname(file), "#{File.basename(file, ext)}_#{suffix}_v#{i + 1}_#{timestamp}#{ext}")
 
       quality = CONFIG["jpeg_quality"] || 95
       if ARGV.include?("--tiff16") || output.end_with?(".tif", ".tiff")
@@ -3182,10 +3214,17 @@ def run_random
 
   PostproBootstrap.dmesg "random dir=#{dir} files=#{files.count} mode=#{experimental ? 'experimental' : 'uplift'}"
   count = (argv_flag("--count") || argv_flag("-n") || 4).to_i.clamp(1, 6)
+  # warmth is an effect and masterpiece does not exist at all; preset() returns
+  # the image untouched for an unknown name, so both silently dropped a layer
+  # out of the two-preset chain below. Verified against PRESETS rather than
+  # trimmed by eye — vocab_check never looked at this list.
   uplift_presets = %i[portrait cinematic magic_hour blockbuster golden_age reversal
-                      warmth noir masterpiece anamorphic aged_kodachrome analog_scan
+                      noir anamorphic aged_kodachrome analog_scan
                       cinema_scan nitrate fiber_print expired reticulated ortho
                       tilt_shift_look haunted quality_uplift]
+  unknown = uplift_presets.reject { |name| PRESETS.key?(name) }
+  $cli_logger.warn "random: dropping unknown presets #{unknown.join(', ')}" if unknown.any?
+  uplift_presets -= unknown
 
   files.each_with_index do |file, index|
     $cli_logger.info "#{index + 1}/#{files.count}: #{File.basename(file)}"
@@ -3207,7 +3246,8 @@ def run_random
           processed = apply_finishing_grain(processed, base)
           processed = rgb_bands(processed)
           timestamp = Time.now.strftime("%Y%m%d%H%M%S")
-          output = file.sub(File.extname(file), "_#{base}+#{layer}_v#{i + 1}_#{timestamp}#{File.extname(file)}")
+          ext    = File.extname(file)
+      output = File.join(File.dirname(file), "#{File.basename(file, ext)}_#{base}+#{layer}_v#{i + 1}_#{timestamp}#{ext}")
           quality = CONFIG["jpeg_quality"] || 95
           processed.write_to_file(output, Q: quality)
           PostproBootstrap.dmesg "write chain=#{base}+#{layer} out=#{File.basename(output)}"
@@ -3227,11 +3267,20 @@ def run_watch
     $cli_logger.error "Unknown preset: #{preset_name}"
     exit 1
   end
-  seen    = Dir.glob(File.join(dir, "IMG_*.{jpg,jpeg,JPG,JPEG}")).map { |f| [f, File.mtime(f)] }.to_h
+  # The output name matches the input glob, and run_watch carried none of the
+  # reject guard the other two batch paths use, so every graded file was seen
+  # as new and graded again: one seed image produced fourteen nested
+  # generations in thirty seconds, on a directory that is a phone camera roll.
+  already_graded = Regexp.union(PRESETS.keys.map(&:to_s) + %w[processed masterpiece postpro])
+  watch_glob = lambda do
+    Dir.glob(File.join(dir, "IMG_*.{jpg,jpeg,JPG,JPEG}"))
+       .reject { |f| File.basename(f).match?(already_graded) || File.basename(f).match?(/_v\d+_/) }
+  end
+  seen    = watch_glob.call.map { |f| [f, File.mtime(f)] }.to_h
   PostproBootstrap.dmesg "watch dir=#{dir} preset=#{preset_name} known=#{seen.size}"
   loop do
     sleep 2
-    Dir.glob(File.join(dir, "IMG_*.{jpg,jpeg,JPG,JPEG}")).each do |path|
+    watch_glob.call.each do |path|
       mtime = File.mtime(path)
       next if seen[path] == mtime
       seen[path] = mtime

@@ -274,4 +274,54 @@ class TestPostproFilm < Minitest::Test
     out, = capture_io { problems = send(:vocab_check) }
     assert_equal 0, problems, "postpro --vocab-check reports problems:\n#{out}"
   end
+
+  # An effect that runs, raises nothing, and changes not a single pixel is this
+  # tool's recurring defect: print_film raised into a rescue and was skipped,
+  # edge_aware_nr's mask was identically zero so it was a plain blur, and
+  # newton_rings sat below 8-bit quantisation. vocab_check reported "0 problems"
+  # through all three, because it asks whether an effect is reachable rather
+  # than whether it does anything. This asks the second question.
+  #
+  # The probe is noise plus a hard edge over the full range, so an effect has
+  # both detail and contrast to act on. INERT lists the ones known to be
+  # no-ops on this probe for an honest reason, so the list itself is the record.
+  INERT = {
+    newton_rings: "amplitude is below 8-bit quantisation at every intensity it is called with"
+  }.freeze
+
+  def test_every_effect_changes_at_least_one_pixel
+    skip "libvips absent on this host" unless defined?(Vips)
+
+    probe = build_probe
+    unchanged = RECIPE_ALLOWED.reject { |name| INERT.key?(name.to_sym) }.select do |name|
+      adapter = RECIPE_ADAPTERS[name]
+      out = if adapter
+              adapter.call(probe, 1.0, {})
+            elsif respond_to?(name, true)
+              send(name, probe, 1.0)
+            end
+      out.nil? || (out.cast("float") - probe.cast("float")).abs.max.zero?
+    rescue StandardError
+      false # a raising effect is a different defect; vocab_check owns that
+    end
+
+    assert_empty unchanged,
+                 "these effects ran and changed nothing on a full-range probe:\n  #{unchanged.join("\n  ")}"
+  end
+
+  # Colour, not grey. A monochrome probe makes desaturate, ortho_film,
+  # skin_protect and stock_matrix look inert when they are behaving correctly —
+  # they have nothing to act on. Each band gets its own noise field and its own
+  # offset, so there is chroma, luminance detail and a hard edge.
+  def build_probe
+    edge = Vips::Image.black(64, 64).draw_rect([90], 0, 0, 32, 64, fill: true)
+    bands = [110, 140, 95].map.with_index do |mean, i|
+      ((Vips::Image.gaussnoise(64, 64, mean: mean, sigma: 30, seed: 7 + i) + edge) / 1.4)
+    end
+    probe = Vips::Image.bandjoin(bands).cast("uchar")
+    # A blown highlight, or halation, bokeh_rendering and anamorphic_flare have
+    # nothing above threshold to bloom and read as inert when they are not.
+    probe.draw_rect([255, 255, 255], 44, 44, 12, 12, fill: true)
+         .copy(interpretation: :srgb)
+  end
 end
