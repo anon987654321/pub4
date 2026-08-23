@@ -1,7 +1,10 @@
 ---
 total: 0
 apps: {}
-rules:
+# Renamed from `rules:` on 2026-08-23. lint:data_singularity refuses one
+# top-level key defined in two data files, and rules.yml — the law — owns
+# that name. These are per-rule finding ceilings, which is what they say now.
+rule_ceilings:
 - ANTI_DIVITIS
 - ARIA_INTERACTIVE
 - ARIA_LABELS

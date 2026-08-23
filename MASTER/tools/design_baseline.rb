@@ -102,7 +102,7 @@ module Pub4
 
       if ratchet
         File.write(CEILING, { "total" => total, "apps" => current.sort.to_h,
-                              "rules" => DESIGN_RULES.sort }.to_yaml)
+                              "rule_ceilings" => DESIGN_RULES.sort }.to_yaml)
         puts "design_baseline: recorded #{total} as the new low"
         return true
       end

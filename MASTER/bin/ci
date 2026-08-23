@@ -12,6 +12,12 @@ def run_step(name, *cmd, chdir: ROOT, env: nil)
   print "ci: #{name.ljust(24)} "
   $stdout.flush
   env_vars = env ? ENV.to_h.merge(env) : ENV.to_h
+  # Rake steps go through bundler. Without it they resolve against whatever
+  # gems happen to be activated, and `rake test` died on a json version clash
+  # partway through — reporting 177 runs where the same task under bundler
+  # reports 1245, and calling that a CI result. A gate that runs a fifth of the
+  # suite is worse than one that does not run.
+  cmd = ["bundle", "exec", *cmd[2..]] if cmd[0] == RUBY && cmd[1] == "-S"
   out, status = Open3.capture2e(env_vars, *cmd, chdir: chdir)
   if status.success?
     puts "ok"
@@ -31,7 +37,12 @@ failures << "test:subsystems" unless run_step("rake test:subsystems", RUBY, "-S"
 failures << "spec" unless run_step("rake spec", RUBY, "-S", "rake", "spec")
 failures << "selftest" unless run_step("rake selftest", RUBY, "-S", "rake", "selftest")
 failures << "data_singularity" unless run_step("rake lint:data_singularity", RUBY, "-S", "rake", "lint:data_singularity")
-failures << "core_smoke" unless run_step("core smoke", RUBY, File.join(ROOT, "core", "spec", "core_smoke.rb"))
+# Through the rake task, which is the one place the path and the -I flag are
+# spelled once. This called ROOT/core/spec/core_smoke.rb directly; core/ was
+# folded into lib/ on 2026-08-12 and the file has been at spec/core_smoke.rb
+# since, so the step raised LoadError on every run — meaning bin/ci, and with
+# it `bin/check --profile=full`, could not pass for eleven days.
+failures << "core_smoke" unless run_step("core smoke", RUBY, "-S", "rake", "core_smoke")
 
 if ENV["MASTER_CI_FULL"] == "1"
   failures << "smoke" unless run_step("smoke", File.join(ROOT, "bin", "smoke"))
