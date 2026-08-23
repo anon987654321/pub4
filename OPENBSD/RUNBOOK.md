@@ -333,6 +333,22 @@ Per-app: `doas zsh RAILS/<app>/<app>.sh`. New Propshaft assets need `rails asset
 
 Ruby on VPS: `ruby34`, `bundle34`. Never parallel `bin/ci` across SSH sessions.
 
+**`gc.auto` is 0 in `/home/dev/pub4`, and that is load-bearing.** git runs
+`gc --auto` after a pull and detaches it, so on 2026-08-23 the pull that set up
+a deploy spawned a `pack-objects` holding 266 MB, and on a 1 GB box the Rails
+suite took SIGTERM after 18 tests and the seed step after that. The deploy log
+said only `bin/rails aborted!` — the killer leaves nothing in it, so read
+`vmstat` and `ps auxww | sort -k5 -rn` before believing any theory about the app.
+Setting it to 0 means nothing packs the repo automatically; `/etc/weekly.local`
+does it instead, as dev, and if that line is ever removed the checkout grows
+loose objects forever.
+
+Run it by hand before a deploy if a pull has just landed a lot:
+
+```zsh
+cd /home/dev/pub4 && git gc --quiet && git count-objects -v
+```
+
 ## Gates
 
 ```zsh

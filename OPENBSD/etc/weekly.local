@@ -29,3 +29,20 @@ export PATH
 su dev -c 'cd /home/dev/pub4 && /usr/local/bin/ruby34 OPENBSD/bin/domain_watch.rb' \
   > /var/log/domain_watch.log 2>&1 ||
   logger -t weekly.local "domain_watch: a domain is expiring, lapsed or changed hands - see /var/log/domain_watch.log"
+
+# Repack the checkout on a schedule instead of whenever a pull happens to trip
+# git's threshold.
+#
+# git runs `gc --auto` after a pull and detaches it, so the repack is invisible
+# and its timing is decided by loose-object count. On 2026-08-23 a pull before a
+# deploy spawned pack-objects holding 266 MB on a 1 GB box; the Rails suite died
+# on SIGTERM after 18 tests and the seed step after it, and the deploy log showed
+# only "bin/rails aborted!" with no cause in it. `gc.auto 0` is set in dev's
+# checkout, so this line is not an optimisation — it is the only thing that packs
+# the repo now. 51 packs and 4400 loose objects when it went in.
+#
+# As dev for the same reason domain_watch is: root repacking a dev-owned tree
+# leaves root-owned pack files behind, and the next pull cannot write them.
+su dev -c 'cd /home/dev/pub4 && /usr/local/bin/git gc --quiet' \
+  > /var/log/git_gc.log 2>&1 ||
+  logger -t weekly.local "git gc failed in /home/dev/pub4 - see /var/log/git_gc.log"
