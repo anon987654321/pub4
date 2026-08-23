@@ -516,7 +516,16 @@ spine:
   # sentence with no digits, so the floor was permanently its fallback.
   #
   # Same sponsor as the two entries below: wiring, not features.
-  lib_code_ceiling: 38950
+  # RAISED 2026-08-23, 38950 -> 38960 (+10): MASTER_MODEL, a one-run override
+  # at the single door every LLM request passes through. It exists because the
+  # machine running MASTER does not always hold credit with the provider the
+  # router picks — a workstation with a Claude subscription can send every lane
+  # through the local claude binary while vm23 keeps its OpenRouter routing
+  # untouched, since the variable is unset there.
+  #
+  # Ten lines for a switch that makes an unrunnable MASTER runnable is the
+  # cheapest thing in this file's history.
+  lib_code_ceiling: 38960
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

@@ -102,6 +102,7 @@ module Master
         return Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
 
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        selected_model = forced_model || selected_model
         selected_model = vision_model_for(selected_model) if image_present?(image)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
@@ -132,6 +133,30 @@ module Master
         out
       end
 
+
+      # One model for every lane, for one run. Set MASTER_MODEL and the router's
+      # choice is overridden at the single door every request passes through —
+      # cheap, default, strong, vision, the council's personas and the fix
+      # loop's consensus alike.
+      #
+      # It exists for the case where the machine running MASTER has credit with
+      # one provider and not another. On vm23 and ai.brgen.no it is unset and
+      # routing is unchanged; from a workstation with a Claude subscription,
+      # `MASTER_MODEL=claude-cli:claude-opus-4-8` sends everything through the
+      # local claude binary instead of OpenRouter.
+      #
+      # Deliberately not a config key: a setting that silently redirects every
+      # model call belongs to a shell session, not to a file that deploys.
+      def forced_model
+        value = ENV["MASTER_MODEL"].to_s.strip
+        return nil if value.empty?
+
+        unless @forced_announced
+          Master::Trace::Dmesg.status("llm0", "MASTER_MODEL=#{value} — every lane forced to this model")
+          @forced_announced = true
+        end
+        value
+      end
 
       def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
       def web_chat_model?(model_id)   = model_id.to_s.start_with?("web-chat:")
