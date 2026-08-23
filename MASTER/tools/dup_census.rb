@@ -40,10 +40,18 @@ module Pub4
       File.exist?(CEILING) ? YAML.safe_load_file(CEILING).fetch("duplicate_sets", 0) : 0
     end
 
-    def run(ratchet: false)
+    def run(ratchet: false, list: false)
       d = sets
       puts "dup_census: #{d.size} duplicate set(s), " \
            "#{d.sum { |(_, size), v| size * (v.size - 1) } / 1024}KB shadowed (ceiling #{ceiling})"
+      # A count nobody can act on is a ratchet, not a finding. --list prints
+      # what was counted, largest shadow first, and changes no number.
+      if list
+        d.sort_by { |(_, size), v| -size * (v.size - 1) }.each do |(_, size), v|
+          puts "  #{size / 1024}KB x#{v.size}: #{v.join(' | ')}"
+        end
+        return 0
+      end
       if ratchet && d.size < ceiling
         File.write(CEILING, { "duplicate_sets" => d.size }.to_yaml)
         puts "dup_census: recorded #{d.size} as the new low"
@@ -60,4 +68,4 @@ module Pub4
   end
 end
 
-exit Pub4::DupCensus.run(ratchet: ARGV.include?("--ratchet")) if $PROGRAM_NAME == __FILE__
+exit Pub4::DupCensus.run(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list")) if $PROGRAM_NAME == __FILE__

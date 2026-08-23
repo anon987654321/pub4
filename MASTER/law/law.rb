@@ -66,10 +66,35 @@ module Law
 
     private
 
+    # File-scope laws get the same two exemptions the line-scope ones have. All
+    # eleven had neither, so they were blind to comment leaders and to the
+    # `scan: intentional` opt-out this framework advertises — which is how
+    # RATE_LIMITING_MISSING fired at :error on a sixteen-line controller with no
+    # actions, on the word "login" inside a comment. At :error that also gates
+    # the file out of the semantic pass entirely.
     def scan_file(text, file)
       return [] if absent && text.match?(absent)
-      return [] unless detect.call(text)
+      return [] unless detect.call(considered_text(text, file))
+
       [Finding.new(id, file, 1, text[/.*/])]
+    end
+
+    # Comments and intentional-marked lines blanked, newlines kept, so a
+    # multi-line detector still sees the file's shape.
+    def considered_text(text, file)
+      leaders = reads_comments ? [] : COMMENT_LEADERS.fetch(File.extname(file), [])
+      return text if leaders.empty? && !text.include?("scan:")
+
+      text.each_line.with_index.map do |line, index|
+        # A shebang is not a comment here: STRICT_MODE_ZSH asks whether a script
+        # that declares an interpreter also sets strict mode, so blanking line 1
+        # made it unable to see the script at all.
+        next line if index.zero? && line.start_with?("#!")
+
+        skip = leaders.any? { |leader| line.lstrip.start_with?(leader) } ||
+               line.match?(/scan:\s*intentional\b/)
+        skip ? "\n" : line
+      end.join
     end
 
     def scan_lines(text, file)
