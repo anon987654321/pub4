@@ -158,8 +158,15 @@ else
   fi
 
   print "vps-deploy: $app (ci + sync)"
-  zsh "$repo/OPENBSD/vps_ci.sh" "$app"
-  ci_status=$?
+  # `|| ci_status=$?` rather than a bare call and `ci_status=$?` after it. This
+  # script runs under `set -e`, so a failing CI run exited here immediately and
+  # the restart below — the whole reason the stand-down records jobs_was_up —
+  # never ran. On 2026-08-23 that left brgen_jobs stopped after a failed deploy,
+  # invisibly: nothing 5xx'd, the queue simply stopped draining. A command
+  # followed by `||` is exempt from errexit, which is what makes the status
+  # capture reachable at all.
+  ci_status=0
+  zsh "$repo/OPENBSD/vps_ci.sh" "$app" || ci_status=$?
 
   if (( jobs_was_up )); then
     doas rcctl start "$jobs_service" >/dev/null 2>&1 \
