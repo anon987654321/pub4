@@ -12,7 +12,10 @@ checks:
   - {id: chrome.importmap, in: brgen/app/views/layouts/application.html.erb, has: [javascript_importmap_tags]}
   - {id: chrome.single_css, in: brgen/app/views/layouts/application.html.erb, has: [stylesheet_link_tag], lack: [tokens.css, minimal-ui]}
   - {id: chrome.pwa_manifest, in: brgen/app/views/layouts/application.html.erb, has: [pwa_manifest]}
-  - {id: chrome.legal_footer, in: brgen/app/views/shared/_site_legal_footer.html.erb, has: [privacy, terms, cookies]}
+  # The partial is the engine's, not brgen's — amber's row above already points
+  # at it through the layout. brgen/ never held a copy, so this row matched
+  # nothing and asserted nothing about the three legal links it names.
+  - {id: chrome.legal_footer, in: shared/app/views/shared/_site_legal_footer.html.erb, has: [privacy, terms, cookies]}
   - {id: chrome.mobile_tab_bar, in: brgen/app/views/shared/_mobile_chrome.html.erb, has: [tab-bar, nav.home, nav.explore]}
   - {id: chrome.nav_swiper, in: brgen/app/views/shared/_nav_swiper.html.erb, has: [nav_swiper, a11y.sections]}
   # --- design tokens / layout standards ---

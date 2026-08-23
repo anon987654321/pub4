@@ -234,7 +234,12 @@ module Pub4
       # brings size their own card and hero images instead of leaving the tag bare.
       # 24 -> 23 with the Event/Story fill, which reserves the event card and hero
       # images the same way.
-      "unreserved_media" => 22,
+      # 23 -> 22 -> 20 on 2026-08-23. Unattributed, deliberately: the drop was
+      # found by the ratchet going stale rather than by the change that caused
+      # it, and guessing which of the last week's commits sized those two images
+      # would put a wrong sentence in a file whose whole value is being right
+      # about numbers.
+      "unreserved_media" => 20,
       "layout_transition" => 3,
       "font_without_display" => 0,
     }.freeze
