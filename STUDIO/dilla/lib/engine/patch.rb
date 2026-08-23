@@ -184,7 +184,11 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:voyager_mono_lead, role: :lead, program: 87, weight: 2.0, mix: 0.9, fs_gain: 1.42,
               octave: 1, gate: 0.62, arp_styles: %i[up updown],
               color: "Voyager mono line",
-              fx: "lowpass=f=2400,equalizer=f=180:t=q:w=1.4:g=4.0,aphaser=speed=0.09:decay=0.5"),
+              # speed=0.1, not 0.09: ffmpeg's aphaser floor is 0.1 and it refuses
+              # anything below, which took the whole fx chain down with it — so
+              # this patch was handed back with no phaser, no lowpass and no EQ.
+              # 0.1 is the nearest legal value to what was written.
+              fx: "lowpass=f=2400,equalizer=f=180:t=q:w=1.4:g=4.0,aphaser=speed=0.1:decay=0.5"),
   # Thin, slightly brittle and digital next to the Moog -- that contrast is what
   # it is for, so it is not smoothed with chorus.
   synth_patch(:microkorg_lead, role: :lead, program: 81, weight: 1.8, mix: 0.86, fs_gain: 1.35,

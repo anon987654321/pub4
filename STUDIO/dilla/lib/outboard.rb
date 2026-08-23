@@ -418,12 +418,17 @@ module Outboard
   def delay_throw(bpm: 76, bars: 8, window: 2.0, time_ms: 320, feedback: 0.62)
     bar = 4.0 * 60.0 / bpm.to_f
     period = (bar * bars).round(3)
+    # The volume gate mutes OUTSIDE the window, not inside it. enable makes a
+    # filter active while its expression is true, so gating on lt() would have
+    # silenced the throw and passed echo the rest of the time -- the inverse.
+    #
+    # This note lives above the literal rather than inside it. A comment between
+    # two backslash-continued fragments ends the literal, so the method used to
+    # return only its last two lines: [dt_dry] was never defined and every
+    # RACK=dub render died on an undefined filter label.
     "asplit=2[dt_dry][dt_wet];" \
       "[dt_wet]aecho=0.9:#{feedback}:#{time_ms.round}|#{(time_ms * 2).round}|#{(time_ms * 3).round}:" \
       "0.7|0.5|0.35,lowpass=f=2600,highpass=f=200," \
-      # Muted OUTSIDE the window, not inside it. enable makes a filter active
-      # while its expression is true, so gating on lt() would have silenced the
-      # throw and passed echo the rest of the time -- the exact inverse.
       "volume=0:enable='gte(mod(t\\,#{period})\\,#{window})'[dt_throw];" \
       "[dt_dry][dt_throw]amix=inputs=2:weights=1 1:normalize=0"
   end
