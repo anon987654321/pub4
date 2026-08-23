@@ -3566,9 +3566,12 @@ style:
   # Authoritative upstream clones: script/clone_style_guides.sh → knowledge/style_guides/
   # Codified index: data/runtime.yml#style_guides (ruby/rails/js/css/seo gates)
 
-  ruby:
-    quotes: double  # always double-quoted strings; single only inside regex or '\1' backrefs
-    frozen_string: true  # every .rb file must start with # frozen_string_literal: true
+  # Rules that are not about any one medium. line_order declares
+  # applies_to: [ruby, yaml, erb, js, css, html, sh, md] — every medium this
+  # repo writes — and sat inside the Ruby bucket declaring it; comment
+  # discipline, identifier naming and the blank-line limit are the same shape.
+  # Filed by language, applied everywhere: the bucket was the wrong axis.
+  universal:
 
     comments_max_lines: 1           # class/module/method comments: 1 line or none
     comments_require_why: true      # only add when WHY is non-obvious (hidden constraint, workaround)
@@ -3594,6 +3597,36 @@ style:
       - "edge-case handlers, rescue branches, fallback paths"
     line_order_applies_to: [ruby, yaml, erb, js, css, html, sh, md]
     line_order_enforced_by: "sweep IMPORTANCE_ORDER technique; council Maintainer + Layperson personas"
+
+    naming_spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
+    naming_paths_rule: "Rails-parameterized slug density — snake_case paths; each token a concrete noun or verb; Strunk omit needless words."
+    naming_paths_inspired_by: "ActiveSupport::Inflector#parameterize (meaning and density, not hyphen separator)"
+    naming_paths_format: snake_case
+    naming_paths_max_tokens: 4
+    naming_paths_forbidden_tokens: [main, misc, base, util, helper, handlers, handler, manager, service, object, thing, stuff, tmp, old, new, copy, final, v2, data, info]
+    naming_paths_examples_good: [crawl_browser, domain_alignment_gate, browser_probe_support, operator_principles]
+    naming_paths_examples_bad: [misc_util, cbp, foo_helper, main_base, util_service]
+    naming_forbidden_abbreviations:
+      - idx
+      - sig
+      - tmp
+      - buf
+      - val
+      - ret
+      - obj
+      - str
+      - arr
+      - num
+      - cnt
+      - ptr
+      - msg   # unless it IS the domain term (e.g., a Message object named msg is ok if short-lived)
+    naming_rule: "Spell identifiers out. Domain names can be short (id, url, ip) — abbreviations cannot."
+
+    blank_lines_max_consecutive: 1     # no double blank lines anywhere
+
+  ruby:
+    quotes: double  # always double-quoted strings; single only inside regex or '\1' backrefs
+    frozen_string: true  # every .rb file must start with # frozen_string_literal: true
 
     bugs_to_avoid:
       - pattern: "Dir.chdir"
@@ -3632,30 +3665,6 @@ style:
         reason: "event receives new state instead of previous state"
         fix: "capture prev = current before mutation; use prev in publish/return"
 
-    naming_spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
-    naming_paths_rule: "Rails-parameterized slug density — snake_case paths; each token a concrete noun or verb; Strunk omit needless words."
-    naming_paths_inspired_by: "ActiveSupport::Inflector#parameterize (meaning and density, not hyphen separator)"
-    naming_paths_format: snake_case
-    naming_paths_max_tokens: 4
-    naming_paths_forbidden_tokens: [main, misc, base, util, helper, handlers, handler, manager, service, object, thing, stuff, tmp, old, new, copy, final, v2, data, info]
-    naming_paths_examples_good: [crawl_browser, domain_alignment_gate, browser_probe_support, operator_principles]
-    naming_paths_examples_bad: [misc_util, cbp, foo_helper, main_base, util_service]
-    naming_forbidden_abbreviations:
-      - idx
-      - sig
-      - tmp
-      - buf
-      - val
-      - ret
-      - obj
-      - str
-      - arr
-      - num
-      - cnt
-      - ptr
-      - msg   # unless it IS the domain term (e.g., a Message object named msg is ok if short-lived)
-    naming_rule: "Spell identifiers out. Domain names can be short (id, url, ip) — abbreviations cannot."
-
     prefer_string_methods_rule: "Prefer start_with? / include? / end_with? / split over regex when string methods suffice."
     prefer_string_methods_rationale: "Regex is expressive but noisy. Use it when patterns require it, not as a default."
     prefer_string_methods_prefer:
@@ -3676,8 +3685,6 @@ style:
       - "rubocop for style enforcement"
       - "prism for Ruby parsing"
     outsource_to_gems_caveat: "Evaluate gem quality first: maintained, tested, minimal footprint."
-
-    blank_lines_max_consecutive: 1     # no double blank lines anywhere
 
 
   shell:
@@ -3807,23 +3814,6 @@ style:
       - "color contrast >= WCAG 2.2 AAA on body text (7:1)"
       - "tracking: tighten display, loosen all-caps (.08em)"
       - "no centered body copy; left-align for left-to-right languages"
-
-  # Canonical 10-item reference — style.yml is not globbed by Master.load_rules,
-  # so this list feeds no detector directly. All 10 now have live semantic
-  # entries in the unit scope of data/rules.yml: SYSTEM_STATUS/MATCH_REAL_WORLD/USER_CONTROL/
-  # CONSISTENCY/GUARD_EXPENSIVE_OPS/RECOGNITION_OVER_RECALL/FLEXIBILITY_EFFICIENCY/
-  # AESTHETIC_MINIMALISM/ERROR_RECOVERY/HELP_AND_DOCUMENTATION.
-  nielsen_heuristics:
-    - { id: 1, name: visibility_of_system_status,        rule: "every async action shows progress within 100ms" }
-    - { id: 2, name: match_real_world,                   rule: "use users' language; mirror real-world conventions" }
-    - { id: 3, name: user_control_and_freedom,           rule: "undo, cancel, escape from every flow" }
-    - { id: 4, name: consistency_and_standards,          rule: "platform conventions; consistent terminology across surface" }
-    - { id: 5, name: error_prevention,                   rule: "constraints + confirmation > error messages" }
-    - { id: 6, name: recognition_over_recall,            rule: "show options; don't make users remember" }
-    - { id: 7, name: flexibility_and_efficiency,         rule: "shortcuts for experts; defaults for novices" }
-    - { id: 8, name: aesthetic_and_minimalist_design,    rule: "every element earns its place; cut ruthlessly" }
-    - { id: 9, name: help_users_recognize_recover_errors, rule: "plain language; suggest the fix; one-click recovery" }
-    - { id: 10, name: help_and_documentation,            rule: "context-sensitive; concrete examples; searchable" }
 
   accessibility:
     # Body text earns AAA in both modes (12.51:1 dark, 16.26:1 light, measured

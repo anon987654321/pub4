@@ -211,7 +211,7 @@ module Master
         [
           ("Ruby bugs to avoid: #{bug_text}." unless bugs.empty?),
           shell_style_line(style),
-          optional_rule("Naming", style.dig("ruby", "naming_rule")),
+          optional_rule("Naming", style.dig("universal", "naming_rule")),
           optional_rule("String methods", style.dig("ruby", "prefer_string_methods_rule")),
           optional_rule("Gems", style.dig("ruby", "outsource_to_gems_rule")),
         ].compact
@@ -232,7 +232,7 @@ module Master
           html_style_line(style["html"]),
           css_style_line(style["css"]),
           typography_style_line(style["typography"]),
-          heuristics_style_line(style["nielsen_heuristics"]),
+          heuristics_style_line,
           accessibility_style_line(style["accessibility"]),
         ].compact
       end
@@ -276,11 +276,26 @@ module Master
           "measure #{typography["measure"] || "65ch"}; left-align body."
       end
 
-      def heuristics_style_line(heuristics)
-        return unless heuristics.is_a?(Array) && !heuristics.empty?
+      # Read from the rules that enforce them, not from a second list beside
+      # them. style.nielsen_heuristics restated NN/g's ten as {id, name, rule}
+      # while the registry already carried nine as scored entries whose `source`
+      # names the heuristic and whose `name` is the requirement — and the prompt
+      # only ever emitted the labels, so the restated `rule:` text reached
+      # nothing. The tenth, error prevention, is GUARD_EXPENSIVE_OPS.
+      # Two spellings appear in the sources ("Heuristic #5" and "heuristic 5"),
+      # and PROGRESSIVE_DISCLOSURE cites NN/g with no number, so it is grouped
+      # out. Grouping also keeps the list at ten rather than twelve: #1 is
+      # claimed by both SYSTEM_STATUS and FEEDBACK_LOOPS.
+      def heuristics_style_line
+        by_number = Array(@rules.data(:rules)&.dig("rules", "unit"))
+                    .select { |r| r["source"].to_s.include?("Nielsen") }
+                    .group_by { |r| r["source"][/[Hh]euristic #?(\d+)/, 1] }
+                    .reject { |number, _| number.nil? }
+        return if by_number.empty?
 
-        labels = heuristics.first(10).map { |item| "#{item["id"]}.#{item["name"]}" }
-        "Nielsen heuristics enforced: #{labels.join(', ')}."
+        listed = by_number.sort_by { |number, _| number.to_i }
+                          .map { |number, rs| "#{number}. #{rs.map { |r| r['name'] }.join(' / ')}" }
+        "Nielsen heuristics enforced: #{listed.join('; ')}."
       end
 
       def accessibility_style_line(accessibility)

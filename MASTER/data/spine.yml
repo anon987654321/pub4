@@ -494,7 +494,18 @@ spine:
   #
   # This is the ceiling doing its job: the spend is wiring, not features, and
   # every line of it makes law that was already written start being applied.
-  lib_code_ceiling: 38934
+  # RAISED 2026-08-23, 38934 -> 38939 (+5): the Nielsen heuristics had two
+  # homes. style.nielsen_heuristics listed NN/g's ten as {id, name, rule} while
+  # twelve registry entries already carried them as scored rules whose `source`
+  # names the heuristic — and the prompt only ever emitted the labels, so the
+  # restated `rule:` text reached nothing at all. The data copy is deleted (-17
+  # lines of YAML) and the prompt line derives from the rules that enforce it,
+  # which costs five lines of grouping because the sources spell it two ways
+  # and #1 is claimed by both SYSTEM_STATUS and FEEDBACK_LOOPS.
+  #
+  # Same shape of spend as the entry below it: one source instead of two, paid
+  # for in lib.
+  lib_code_ceiling: 38939
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
