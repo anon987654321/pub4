@@ -849,6 +849,8 @@ nb:
     released: "sluppet"
   flash:
     comment_not_yours: Du kan bare slette dine egne kommentarer.
+    posted: Publisert.
+    posted_anonymously: Publisert anonymt.
     wear_once_note: "Bruk det én gang før du bestemmer deg."
     item_moved: "%{title} er flyttet til %{state}."
     affiliate_link_saved: "Affiliatelenken er lagret."

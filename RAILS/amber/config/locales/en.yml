@@ -847,6 +847,8 @@ en:
     released: "released"
   flash:
     comment_not_yours: You can only delete your own comments.
+    posted: Posted.
+    posted_anonymously: Posted anonymously.
     wear_once_note: "Wear once before deciding."
     item_moved: "%{title} moved to %{state}."
     affiliate_link_saved: "Affiliate link saved."

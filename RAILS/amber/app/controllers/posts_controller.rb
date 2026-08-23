@@ -37,7 +37,8 @@ class PostsController < ApplicationController
     if @post.save
       anon.record_post!
       @post.record_activity!("AmberPostCreated", source_vertical: "amber") unless guest?
-      redirect_to(guest? ? root_path : posts_path, notice: guest? ? "Posted anonymously" : "Posted")
+      redirect_to(guest? ? root_path : posts_path,
+                  notice: t(guest? ? "flash.posted_anonymously" : "flash.posted"))
     else
       redirect_to root_path, alert: @post.errors.full_messages.to_sentence
     end

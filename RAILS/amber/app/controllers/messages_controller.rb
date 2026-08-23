@@ -6,7 +6,11 @@ class MessagesController < ApplicationController
   def index
     load_inbox
     @message = Current.user.sent_messages.build
-    Current.user.received_messages.unread.find_each(&:read!)
+    # One UPDATE, not one per message. This issued a write per unread row on a
+    # GET, so opening a large inbox turned a read into an unbounded write burst.
+    # update_all skips callbacks and updated_at by design — read_at is the fact
+    # being recorded, and nothing keys a cache on a message's updated_at.
+    Current.user.received_messages.unread.update_all(read_at: Time.current)
   end
 
   def create
