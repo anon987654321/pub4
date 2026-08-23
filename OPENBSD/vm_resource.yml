@@ -18,9 +18,17 @@ optional_services:
   - litestream
 
 limits:
-  load_avg_1m_warn: 0.85
-  load_avg_1m_crit: 1.20
-  mem_free_pct_warn: 12
+  # These mirror resource_guard.sh, which is the live authority — the values
+  # here were 0.85/1.2 against a box whose measured 1-minute load sits at p50
+  # 1.01 and p75 1.69, so the documented budget described continuous alarm
+  # while the guard quietly used 2.5/5.0. Change the script first, then this.
+  load_avg_1m_warn: 2.5
+  load_avg_1m_crit: 5.00
+  # 12 sat above the observed p50 of 13 and would have alarmed at rest; the
+  # guard runs 8 after three recalibrations that never reached this file.
+  mem_free_pct_warn: 8
   mem_free_pct_crit: 6
+  # Restore floor, read by the guard as MEM_RESTORE.
+  mem_free_pct_restore: 10
   relayd_check_interval: 120
   master_falcon_workers: 2  # SSE must not block /up relayd health checks

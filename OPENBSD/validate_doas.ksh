@@ -8,6 +8,12 @@
 # lockout case and not the case the change actually risks. A lost variable would then
 # surface as OPERATOR.sh refusing --stage-1 with a confusing "rerun with
 # I_UNDERSTAND_DNS_WIPE=1" — half an hour after the config that broke it landed.
+
+# set -e and pipefail: a failed step inside a manual deploy used to continue
+# to the next one, and with only set -e a failed `sysctl | awk` yields an empty
+# string that the caller then compares against nothing.
+set -e
+set -o pipefail
 DOAS_ENV_CANARY=${DOAS_ENV_CANARY:-I_UNDERSTAND_DNS_WIPE}
 
 validate_doas_can_reach_root() {

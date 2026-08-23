@@ -269,7 +269,14 @@ sync_openbsd_apply() {
   done
   # (In per-app: before bundle, check Gemfile etc.)
 
-  install -m 755 "${SCRIPT_DIR}/resource_guard.sh" /usr/local/bin/resource_guard.sh 2>/dev/null || true
+  # Not `|| true`. The crontab schedules /usr/local/bin/resource_guard.sh every
+  # five minutes and it is the load-shedding guard that keeps this 1GB box up —
+  # swallowing the install failure meant it could simply be absent, with no
+  # error, while every log line still said the crontab was installed.
+  if ! install -m 755 "${SCRIPT_DIR}/resource_guard.sh" /usr/local/bin/resource_guard.sh; then
+    log ERROR "resource_guard.sh install failed — the load guard would be absent"
+    return 1
+  fi
   install_tracked_crontab || return 1
 
   typeset -a svcs=(nsd httpd relayd smtpd master)

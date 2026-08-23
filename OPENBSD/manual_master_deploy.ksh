@@ -3,6 +3,12 @@
 # Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/OPENBSD/manual_master_deploy.ksh
 # Watch: tail -f /tmp/master_manual.log
 
+
+# set -e and pipefail: a failed step inside a manual deploy used to continue
+# to the next one, and with only set -e a failed `sysctl | awk` yields an empty
+# string that the caller then compares against nothing.
+set -e
+set -o pipefail
 LOG=/tmp/master_manual.log
 exec >"$LOG" 2>&1
 set -x

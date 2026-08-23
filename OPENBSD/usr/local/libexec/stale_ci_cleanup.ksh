@@ -2,6 +2,12 @@
 # Kill orphaned CI/scan workers when vm23 is saturated. Sourced by resource_guard.sh.
 # Safe-ish: skips falcon/rc.d parents; targets test/seed/ci/cli patterns only.
 
+
+# set -e and pipefail: a failed step inside a manual deploy used to continue
+# to the next one, and with only set -e a failed `sysctl | awk` yields an empty
+# string that the caller then compares against nothing.
+set -e
+set -o pipefail
 stale_ci_cleanup() {
   typeset load=${1:-0}
   typeset mem_free=${2:-100}
