@@ -141,8 +141,31 @@ if [[ ${SKIP_CI:-} == 1 ]]; then
   print "vps-deploy: $app (sync via ${app}.sh, SKIP_CI=1)"
   zsh "$repo/RAILS/${app}/${app}.sh"
 else
+  # The app's resident Solid Queue worker stands down for the CI run.
+  #
+  # vm23 is 1 GB. brgen_jobs holds ~380 MB resident and brgen's suite is 896
+  # tests: on 2026-08-23 the runner was OOM-killed mid-suite with swap at 898 MB
+  # of 1264, and the failure is silent in the worst way — 155 dots, no summary,
+  # no failure block, and vps_ci reporting "Tests: Rails failed". Dots then
+  # nothing in a CI test section means the runner was killed, not that a test
+  # failed. Stopped and restarted here so the knowledge lives in the deploy
+  # rather than in whoever remembers to type it.
+  jobs_service="${app}_jobs"
+  jobs_was_up=0
+  if doas rcctl get "$jobs_service" >/dev/null 2>&1 && doas rcctl check "$jobs_service" >/dev/null 2>&1; then
+    print "vps-deploy: $app (stand down $jobs_service for the CI run)"
+    doas rcctl stop "$jobs_service" >/dev/null 2>&1 && jobs_was_up=1
+  fi
+
   print "vps-deploy: $app (ci + sync)"
   zsh "$repo/OPENBSD/vps_ci.sh" "$app"
+  ci_status=$?
+
+  if (( jobs_was_up )); then
+    doas rcctl start "$jobs_service" >/dev/null 2>&1 \
+      || print -u2 "vps-deploy: $jobs_service did not come back — start it"
+  fi
+  (( ci_status == 0 )) || exit $ci_status
 fi
 
 # Primary database, then the cache/queue/cable schemas.
@@ -227,6 +250,30 @@ if [[ -f $queue_schema ]] && ! grep -q 'define(version: 0)' "$queue_schema" 2>/d
   ksh "$repo/OPENBSD/solid_queue_proof.sh" "$app" \
     || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
 fi
+
+# Restore whatever the guard shed while we were deploying.
+#
+# resource_guard sheds the OPTIONAL list — litestream, bsdports, amber — under
+# sustained pressure, and a deploy is exactly that. relayd keeps answering TLS
+# with their ports closed, so the outage reads as a hang rather than a 5xx and
+# nothing reports it: on 2026-08-23 amber and bsdports were restarted by hand
+# three times in one session, each time discovered by a person running curl.
+#
+# `vps-deploy all` folds the restore into its ordering; a single-app deploy had
+# no such pass at all, which is the common case. Reported, not silent — a
+# service that needed restoring is a fact about the box worth seeing.
+restored=()
+for other in amber bsdports litestream; do
+  [[ $other == "$app" ]] && continue
+  doas rcctl get "$other" >/dev/null 2>&1 || continue          # not configured here
+  doas rcctl check "$other" >/dev/null 2>&1 && continue        # already up
+  if doas rcctl restart "$other" >/dev/null 2>&1 && doas rcctl check "$other" >/dev/null 2>&1; then
+    restored+=("$other")
+  else
+    print -u2 "vps-deploy: $other is down and would not restart — check it"
+  fi
+done
+(( ${#restored} )) && print "vps-deploy: restored after shedding: ${restored}"
 
 print "vps-deploy: $app ok"
 write_stamp "$app" ok
