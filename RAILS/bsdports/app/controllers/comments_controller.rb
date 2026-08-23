@@ -19,12 +19,21 @@ class CommentsController < ApplicationController
 
   def destroy
     @comment = @port.comments.find(params[:id])
+    removed = nil
     if Current.user && @comment.user_id == Current.user.id
-      @comment.destroy!
+      # Recorded before the row goes, not after: the activity was being written
+      # against a deleted primary key. amber's twin already did it in this
+      # order, so the two apps disagreed.
       @comment.record_activity!("PortCommentRemoved", source_vertical: "bsdports")
+      removed = ActionView::RecordIdentifier.dom_id(@comment)
+      @comment.destroy!
     end
     respond_to do |format|
-      format.turbo_stream
+      # Rendered inline: app/views/comments/ has no destroy.turbo_stream, so
+      # every Turbo deletion ended in a missing-template error.
+      format.turbo_stream do
+        removed ? render(turbo_stream: turbo_stream.remove(removed)) : head(:forbidden)
+      end
       format.html { redirect_to @port }
     end
   end

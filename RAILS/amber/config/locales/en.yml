@@ -20,6 +20,9 @@ en:
     name: "Amber"
   skip_to_content: "Skip to main content"
   amber:
+    declutter:
+      box_elapsed: "30-day declutter box elapsed for «%{title}» — sell, donate, or restore with intention."
+      last_chance_outfit: "Last chance · %{title}"
     logo_aria: "Amber logo with retro lines"
     feed:
       compose_prompt: "Share an #ootd thought…"
@@ -843,6 +846,7 @@ en:
     recycled: "recycled"
     released: "released"
   flash:
+    comment_not_yours: You can only delete your own comments.
     wear_once_note: "Wear once before deciding."
     item_moved: "%{title} moved to %{state}."
     affiliate_link_saved: "Affiliate link saved."

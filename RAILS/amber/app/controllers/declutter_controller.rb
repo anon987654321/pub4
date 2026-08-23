@@ -9,8 +9,12 @@ class DeclutterController < ApplicationController
     @duplicates = DuplicateDetector.new(Current.user).ranked_groups
     @overdue_challenges = DeclutterChallenge.where(user: Current.user).overdue.includes(:item)
     @active_challenges = DeclutterChallenge.where(user: Current.user).active.includes(:item)
-    @aging_box = Current.user.items.declutter_box.select { |item| box_age_days(item) >= 30 }
-    @box_items = Current.user.items.declutter_box.order(updated_at: :asc).limit(24)
+    # One load, two views of it. box_age_days reads a JSON metadata key with an
+    # updated_at fallback, so the age filter cannot be pushed into SQL — but
+    # querying the same scope twice to do it can be.
+    box = Current.user.items.declutter_box.order(updated_at: :asc).to_a
+    @aging_box = box.select { |item| box_age_days(item) >= 30 }
+    @box_items = box.first(24)
   end
 
   def review
@@ -77,7 +81,9 @@ class DeclutterController < ApplicationController
     end
 
     outfit = Current.user.outfits.create!(
-      name: "Last chance · #{@item.title}",
+      # Through I18n: this string is persisted as an outfit name, so an English
+      # one written today cannot be translated tomorrow.
+      name: t("amber.declutter.last_chance_outfit", title: @item.title),
       description: suggestion[:reason].to_s,
       occasion: @item.occasions.first
     )
@@ -90,7 +96,10 @@ class DeclutterController < ApplicationController
   private
 
   def set_item
-    @item = Current.user.items.find(params[:id])
+    # Preloaded: strict_loading_by_default is on, so #review reading
+    # @item.declutter_review and #challenge reading @item.declutter_challenges
+    # both raised on a bare find — those two pages 500'd in production.
+    @item = Current.user.items.includes(:declutter_review, :declutter_challenges).find(params[:id])
   end
 
   def review_params

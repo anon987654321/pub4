@@ -25,12 +25,25 @@ class CommentsController < ApplicationController
 
   def destroy
     @comment = @post.comments.find(params[:id])
-    return unless Current.user && @comment.user_id == Current.user.id
+    # A bare `return` fell through to the same implicit render as success, so
+    # the owner and a stranger got the identical missing-template error.
+    unless Current.user && @comment.user_id == Current.user.id
+      return respond_to do |format|
+        format.turbo_stream { head :forbidden }
+        format.html { redirect_to @post, alert: t("flash.comment_not_yours") }
+      end
+    end
 
     @comment.record_activity!("AmberCommentRemoved", source_vertical: "amber")
+    # The id is captured before the row goes: dom_id on a destroyed record
+    # still works, but reading it first is what makes that obvious.
+    removed = ActionView::RecordIdentifier.dom_id(@comment)
     @comment.destroy!
     respond_to do |format|
-      format.turbo_stream
+      # Rendered inline: there is no destroy.turbo_stream template in this
+      # app, so every Turbo deletion ended in a missing-template error and the
+      # comment stayed on the page.
+      format.turbo_stream { render turbo_stream: turbo_stream.remove(removed) }
       format.html { redirect_to @post }
     end
   end

@@ -19,6 +19,9 @@ nb:
     name: "Amber"
   skip_to_content: "Hopp til hovedinnhold"
   amber:
+    declutter:
+      box_elapsed: "30-dagers utrangeringsboks utløpt for «%{title}» — selg, gi bort, eller sett i stand med omtanke."
+      last_chance_outfit: "Siste sjanse · %{title}"
     logo_aria: "Amber-logo med retrolinjer"
     feed:
       compose_prompt: "Del en #ootd tanke…"
@@ -845,6 +848,7 @@ nb:
     recycled: "gjenvunnet"
     released: "sluppet"
   flash:
+    comment_not_yours: Du kan bare slette dine egne kommentarer.
     wear_once_note: "Bruk det én gang før du bestemmer deg."
     item_moved: "%{title} er flyttet til %{state}."
     affiliate_link_saved: "Affiliatelenken er lagret."

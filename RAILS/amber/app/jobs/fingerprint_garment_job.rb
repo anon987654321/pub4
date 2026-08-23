@@ -6,7 +6,9 @@ class FingerprintGarmentJob < ApplicationJob
   queue_as :default
 
   def perform(item_id)
-    item = Item.find(item_id)
+    # Both associations preloaded: strict_loading_by_default made the bare find
+    # raise on item.user before this job ever wrote a fingerprint.
+    item = Item.includes(:user, :garment_embedding).find(item_id)
     vector = WardrobeAi.new(item.user).fingerprint_for(item)
     return if vector.blank?
 

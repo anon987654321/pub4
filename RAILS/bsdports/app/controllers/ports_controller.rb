@@ -5,7 +5,10 @@ class PortsController < ApplicationController
 
   allow_unauthenticated_access only: %i[index show explore]
   before_action :set_port, only: %i[show explore watch unwatch crossref_cves review]
-  before_action :require_authentication, only: %i[crossref_cves review]
+  # watch/unwatch called require_authentication inside the action body,
+  # where its redirect does not halt the action — so the next line ran
+  # find_or_create_by!(user: Current.user) for an unauthenticated visitor.
+  before_action :require_authentication, only: %i[crossref_cves review watch unwatch]
 
   def index
     expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
@@ -58,7 +61,6 @@ class PortsController < ApplicationController
   end
 
   def watch
-    require_authentication
     @port.watches.find_or_create_by!(user: Current.user)
     @watching = true
     @port.record_activity!("PortWatched", source_vertical: "bsdports", actor: Current.user)
@@ -69,7 +71,6 @@ class PortsController < ApplicationController
   end
 
   def unwatch
-    require_authentication
     # delete_all avoids Reactable association load (no Reaction model on bsdports).
     @port.watches.where(user_id: Current.user.id).delete_all
     @watching = false
