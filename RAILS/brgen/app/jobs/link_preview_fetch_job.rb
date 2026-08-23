@@ -33,8 +33,11 @@ class LinkPreviewFetchJob < ApplicationJob
 
   def fetch(url)
     uri = URI(url)
-    return nil unless uri.is_a?(URI::HTTPS) && OutboundHttp.public_https?(uri)
+    return nil unless uri.is_a?(URI::HTTPS)
 
+    # No public_https? pre-check: it resolved the host, and then get() resolved
+    # it again — a rebinding window on a URL a stranger supplied. request()
+    # resolves once and connects to the address it checked.
     response = get(uri)
     return nil unless response.is_a?(Net::HTTPSuccess)
     return nil unless response["content-type"].to_s.start_with?("text/html")
@@ -46,14 +49,10 @@ class LinkPreviewFetchJob < ApplicationJob
   end
 
   def get(uri)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    http.open_timeout = OutboundHttp::TIMEOUT
-    http.read_timeout = OutboundHttp::TIMEOUT
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request["Accept"] = "text/html"
-    request["User-Agent"] = "brgen link preview"
-    http.request(request)
+    OutboundHttp.request(
+      uri,
+      headers: { "Accept" => "text/html", "User-Agent" => "brgen link preview" }
+    )
   end
 
   def meta(document, property)

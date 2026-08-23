@@ -12,7 +12,6 @@ module Fediverse
   # Outgoing HTTP. Net::HTTP from stdlib rather than a gem, because this deploys
   # to OpenBSD and the dependency surface of federation is already large enough.
   module Client
-    TIMEOUT = 10
     ACCEPT = "application/activity+json, application/ld+json"
 
     # Remote servers are untrusted input. A malicious or broken one can answer a
@@ -41,19 +40,12 @@ module Fediverse
       # who follows whom to anyone on the path, and a fediverse peer that only
       # speaks http is not one worth talking to.
       return nil unless uri.is_a?(URI::HTTPS)
-      return nil unless public_https?(uri)
 
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.open_timeout = TIMEOUT
-      http.read_timeout = TIMEOUT
-
-      klass = method == :post ? Net::HTTP::Post : Net::HTTP::Get
-      req = klass.new(uri.request_uri)
-      headers.each { |name, value| req[name] = value }
-      req.body = body if body
-
-      http.request(req)
+      # No public_https? pre-check: it resolved the host and Net::HTTP resolved
+      # it again below, so a peer controlling its own DNS could answer public
+      # for the check and 127.0.0.1 for the connection. Inbox and key fetches
+      # run before signature verification, so the host is attacker-chosen here.
+      OutboundHttp.request(uri, method: method, headers: headers, body: body)
     rescue *NETWORK_ERRORS => e
       Rails.logger.warn("fediverse: #{method} #{url} failed: #{e.class}") if defined?(Rails)
       nil

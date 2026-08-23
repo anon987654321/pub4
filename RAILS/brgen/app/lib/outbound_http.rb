@@ -47,4 +47,40 @@ module OutboundHttp
   rescue IPAddr::InvalidAddressError
     true
   end
+
+  # Resolve once, check that address, then connect to *that* address.
+  #
+  # public_https? above resolves the host to validate it, and every caller then
+  # handed the hostname to Net::HTTP, which resolved it again at connect time.
+  # Between those two lookups an attacker controlling the DNS answer can return
+  # a public address for the check and 127.0.0.1 for the connection — classic
+  # rebinding, and the reason a validate-then-connect pair is not a guard. The
+  # window is not theoretical: both callers fetch a URL a stranger supplied.
+  #
+  # ipaddr= pins the socket destination while Net::HTTP keeps the original host
+  # for the Host header and SNI, so certificate verification still checks the
+  # name rather than the address.
+  def request(uri, method: :get, headers: {}, body: nil)
+    raise URI::InvalidURIError, "HTTPS required" unless uri.is_a?(URI::HTTPS)
+    raise URI::InvalidURIError, "non-standard HTTPS port" unless uri.port.nil? || uri.port == 443
+
+    address = Resolv.getaddresses(uri.host).reject { |addr| unsafe_ip?(addr) }.first
+    raise SocketError, "unsafe or unresolvable remote host" unless address
+
+    http = Net::HTTP.new(uri.host, uri.port || 443)
+    # Refuse rather than fall back: without pinning this is the same
+    # validate-then-reresolve pair the method exists to remove.
+    raise SocketError, "Net::HTTP cannot pin remote address" unless http.respond_to?(:ipaddr=)
+
+    http.ipaddr = address
+    http.use_ssl = true
+    http.open_timeout = TIMEOUT
+    http.read_timeout = TIMEOUT
+
+    klass = method.to_sym == :post ? Net::HTTP::Post : Net::HTTP::Get
+    request = klass.new(uri.request_uri)
+    headers.each { |key, value| request[key] = value }
+    request.body = body if body
+    http.request(request)
+  end
 end
