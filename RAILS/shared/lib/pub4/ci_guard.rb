@@ -141,7 +141,7 @@ module Pub4
       file = open_shared(path)
       begin
         unless file.flock(File::LOCK_EX | File::LOCK_NB)
-          warn "pub4-ci-guard: #{path} busy (#{safe_read(holder)})"
+          warn "pub4-ci-guard: #{path} busy — #{busy_detail(path, holder)}"
           exit 1
         end
         write_holder!(holder)
@@ -206,7 +206,27 @@ module Pub4
     def holder_info
       user = ENV["USER"] || ENV["LOGNAME"] || "unknown"
       app = File.basename(Dir.pwd)
-      "#{user}@#{app} pid=#{Process.pid}"
+      "#{user}@#{app} pid=#{Process.pid} since=#{Time.now.utc.strftime('%H:%M:%SZ')}"
+    end
+
+    # "busy (unknown)" is accurate and unusable: it cannot distinguish a
+    # live CI run from a lock whose holder note was lost, and it gives nobody
+    # a next step. Age always exists, so it is always said — a lock held for
+    # four seconds and one held for forty minutes want different responses.
+    def busy_detail(path, holder)
+      note = safe_read(holder).to_s.strip
+      age = begin
+        secs = (Time.now - File.mtime(path)).to_i
+        secs < 120 ? "#{secs}s" : "#{secs / 60}m"
+      rescue SystemCallError
+        "age unknown"
+      end
+
+      if note.empty? || note == "unknown"
+        "held #{age}, holder note absent (killed run, or the shell side took it)"
+      else
+        "held #{age} by #{note}"
+      end
     end
 
     def with_timeout
