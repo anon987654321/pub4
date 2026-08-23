@@ -104,6 +104,10 @@ nb:
     open_full: "Åpne AI"
     embed_heading: "AI-assistent"
   messages:
+    # shared/_action_bar renders on every host app but these two keys only
+    # existed in brgen's own locale, so amber shipped "translation missing" as
+    # the aria-label on its reply and share buttons.
+    reply: "Svar"
     title: "Meldinger"
     choose_recipient: "Velg mottaker"
     to: "Til %{name}"
@@ -125,6 +129,10 @@ nb:
     unavailable: "Nyhetsbrevet åpner når e-postrutene er satt opp for denne appen."
     unsubscribe: "Meld deg av"
     affiliate_disclosure: "Noen lenker er affiliatelenker. Vi kan tjene provisjon."
+  # Plural, and separate from post: — shared/_action_bar asks for posts.share.
+  posts:
+    share: "Del"
+
   post:
     submit: "Post"
     share_look: "Del et look"

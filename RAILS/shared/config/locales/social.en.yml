@@ -105,6 +105,11 @@ en:
     open_full: "Open AI"
     embed_heading: "AI assistant"
   messages:
+    # shared/_action_bar renders on every host app but these two keys only
+    # existed in brgen's own locale, so amber shipped "translation missing" as
+    # the aria-label on its reply and share buttons — the same gap the comment
+    # above the a11y block describes for bsdports.
+    reply: "Reply"
     title: "Messages"
     choose_recipient: "Choose recipient"
     to: "To %{name}"
@@ -126,6 +131,10 @@ en:
     unavailable: "Newsletter signup opens after email routes are configured for this app."
     unsubscribe: "Unsubscribe"
     affiliate_disclosure: "Some links are affiliate links. We may earn a commission."
+  # Plural, and separate from post: — shared/_action_bar asks for posts.share.
+  posts:
+    share: "Share"
+
   post:
     submit: "Post"
     share_look: "Share a look"
