@@ -44,7 +44,16 @@ Law.define(:GUARD_CLAUSE) do
   severity :info
   languages %i[ruby]
   scope :file
-  detect { |text| text.match?(/^\s*def \w+.*\n\s*if .+\n(?:.*\n)*?\s*else\n(?:.*\n)*?\s*end\s*$/m) }
+  # No /m, and [^\n]* rather than .*: with /m the `.` after `def \w+` matched
+  # newlines, so the pattern swallowed the whole file and backtracked — any
+  # file containing a def, a later `if`, a later `else` and a trailing `end`
+  # matched, and scope :file reports every hit at line 1. It flagged 321 of
+  # 2,381 authored Ruby files, each pointing at frozen_string_literal. The
+  # lookahead keeps the body inside one method. The 3-line fixtures below are
+  # too small to exhibit that, which is why prove! never caught it.
+  detect do |text|
+    text.match?(/^[ \t]*def \w+[^\n]*\n[ \t]*if [^\n]+\n(?:(?![ \t]*def )[^\n]*\n)*?[ \t]*else\n(?:(?![ \t]*def )[^\n]*\n)*?[ \t]*end[ \t]*$/)
+  end
   fix "Flatten to: return ... unless condition"
   bad <<~X
     def go(x)
@@ -183,7 +192,11 @@ Law.define(:RESCUE_ON_DEF) do
   languages %i[ruby]
   path_exclude %r{/review/scan/rules/}
   scope :file
-  detect { |text| text.match?(/^\s*def \w+.*\n\s*begin\n(?:.*\n)*?\s*rescue/m) }
+  # Same /m defect as GUARD_CLAUSE above: the pattern spanned unrelated methods,
+  # gluing a def to a rescue hundreds of lines away and reporting it at line 1.
+  # A def-level rescue is a `begin` on the line directly after the def, which is
+  # what the bad fixture shows.
+  detect { |text| text.match?(/^[ \t]*def \w+[^\n]*\n[ \t]*begin\n(?:(?![ \t]*def )[^\n]*\n)*?[ \t]*rescue/) }
   fix "Put rescue directly on the def block."
   bad <<~X
     def go

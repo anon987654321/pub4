@@ -44,9 +44,23 @@ module Law
     end
 
     # A rule proves itself before it may judge anything else.
+    #
+    # The reach half is proved too, because it was the half that broke:
+    # NEVER_BATCH_DELETE declared `languages %i[ruby shell]` and no file can
+    # carry the language "shell" — FILE_LANGUAGE_MAP emits "zsh" — so a law
+    # written after a batch-delete incident could not read a single shell
+    # script, and passed prove! every boot because prove! called scan directly
+    # and never asked applies?. A declared language that nothing produces is a
+    # rule aimed at nothing.
     def prove!
       raise ArgumentError, "#{id}: bad fixture not flagged" if scan(bad).empty?
       raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
+
+      unreachable = languages.map(&:to_s) - Master::FILE_LANGUAGE_MAP.values.uniq
+      unless unreachable.empty?
+        raise ArgumentError,
+              "#{id}: declares language(s) #{unreachable.join(', ')} that FILE_LANGUAGE_MAP never produces"
+      end
       self
     end
 

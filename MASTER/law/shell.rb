@@ -27,7 +27,12 @@ end
 Law.define(:NEVER_BATCH_DELETE) do
   source "master.yml v66 file_deletion_protocol — never batch-delete files"
   severity :error
-  languages %i[ruby shell]
+  # zsh, not shell: FILE_LANGUAGE_MAP emits "zsh" for .sh/.zsh/.bash and no file
+  # can ever carry the language "shell", so applies? returned false for every
+  # shell script in the repo — 73 of them, including both glob-rm sites. This
+  # law exists because of the 2026-01-05 incident where 16 files were deleted by
+  # one glob, and it has only ever been able to see the Ruby half.
+  languages %i[ruby zsh]
   detect do |line|
     line.match?(/\brm\s+(-[a-zA-Z]*[rf][a-zA-Z]*\s+)*[^\s;|&]*[*?{]/) ||
       line.match?(/FileUtils\.rm(_r|_rf|_f)?\(?\s*Dir\[/) ||

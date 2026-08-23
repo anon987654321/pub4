@@ -14,7 +14,10 @@
 Law.define(:PROSE_ACTIVE_VOICE) do
   source "Strunk, Elements of Style (1918) Rule 10 — use the active voice"
   severity :info
-  languages %i[prose markdown ruby]
+  # `prose` is not a language FILE_LANGUAGE_MAP produces — the note at the
+  # top of this file already says so about EN_DASH_RANGE, and these two kept
+  # declaring it anyway. markdown and ruby are the real reach.
+  languages %i[markdown ruby]
   detect { |line| line.match?(/\b(was|were|is|are|been|be)\s+\w+ed\b/) }
   fix "Recast active: 'the bug was fixed by X' -> 'X fixed the bug'."
   bad  "The bug was fixed by the maintainer."
@@ -25,7 +28,10 @@ end
 Law.define(:PROSE_OMIT_QUALIFIERS) do
   source "Strunk, Elements of Style (1918) — the leech words"
   severity :warn
-  languages %i[prose markdown ruby]
+  # `prose` is not a language FILE_LANGUAGE_MAP produces — the note at the
+  # top of this file already says so about EN_DASH_RANGE, and these two kept
+  # declaring it anyway. markdown and ruby are the real reach.
+  languages %i[markdown ruby]
   detect { |line| line.match?(/\b(very|rather|really|quite|pretty|somewhat|just|actually|basically|literally|simply)\b/) }
   fix "Delete the qualifier; let the verb or noun carry the weight."
   bad  "This is very fast."

@@ -88,7 +88,15 @@ end
 Law.define(:NULL_BLINDNESS) do
   source "SQL/Ruby — explicit NULL/nil handling"
   severity :error
-  detect { |line| (s = line.strip) && !s.start_with?("#") && s.match?(/= NULL|!= NULL|== nil.*column|column.*== nil/) }
+  # `= NULL` with no word boundary matched `<= NULL_FLOOR_DB` and
+  # `>= NULL_FLOOR_DB` — a float comparison against a dB floor, flagged at
+  # error severity, which then gated those files out of the semantic pass
+  # entirely. `!= NULL` was also a strict substring of `= NULL`, so that half
+  # of the alternation had never done anything.
+  detect do |line|
+    (s = line.strip) && !s.start_with?("#") &&
+      s.match?(/(?:(?<![<>=!])=|!=)\s*NULL\b|== nil.*column|column.*== nil/)
+  end
   fix "Use IS NULL / IS NOT NULL in SQL; .nil? in Ruby."
   bad  "WHERE deleted_at = NULL"
   good <<~X
@@ -104,7 +112,14 @@ Law.define(:SECRET_PROXIMITY) do
   # A literal "password" in a test or seed IS the fixture — both fleet hits
   # were user.password = "password" in exactly those files (2026-08-22).
   path_exclude %r{/test/|/spec/|/db/seeds}
-  detect { |line| line.match?(/(password|secret|token|api_key|private_key)\s*=\s*['"][^'"]{8,}/) }
+  # The value must be a CLOSED quoted literal, and the identifier must not
+  # itself sit inside a string. `[^'"]{8,}` had no reason to stay inside a
+  # quote, so it matched the source BETWEEN two literals — the "secret" it
+  # reported in auth_tier.rb was the code `token=") || p == `. At :error
+  # severity, which also gated that file out of the semantic pass.
+  detect do |line|
+    line.match?(/(?<!['"])(password|secret|token|api_key|private_key)\s*=\s*(?:"[^"\n]{8,}"|'[^'\n]{8,}')/i)
+  end
   fix "Move secret to environment variable or secrets manager."
   bad  "api_key = 'sk_live_abcdef123456'"
   good "api_key = ENV.fetch('API_KEY')"
