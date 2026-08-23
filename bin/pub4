@@ -117,6 +117,13 @@ when "land"
   push_out, pushed = run!("git", "push", "origin", "HEAD:main")
   abort("land: push refused\n#{push_out}") unless pushed
   puts "land: on origin/main"
+when "snapshot"
+  # Regenerates snapshot_<TREE>.md — the verbatim packs handed to another model
+  # when it needs the whole tree rather than a summary. The generator that made
+  # them was bin/snapshot, deleted with the DEPLOY tree, so the three files sat
+  # stale at a commit no checkout still has and nothing could refresh them.
+  # Lives in MASTER/tools so it is one implementation, reachable from here.
+  exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "snapshot.rb"), *ARGV)
 when "post-pull"
   script = File.join(OPENBSD_OPS, "bin", "post-pull-checklist")
   exec(script, *ARGV)
