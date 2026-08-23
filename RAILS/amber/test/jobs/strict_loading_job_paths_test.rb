@@ -31,11 +31,15 @@ class StrictLoadingJobPathsTest < ActiveSupport::TestCase
   def test_cascading_associations_are_exempt_from_strict_loading
     fresh = Item.find(make_item.id)
 
-    %i[declutter_review declutter_challenges sustainability_metric garment_embedding].each do |assoc|
+    exempt = %i[declutter_review declutter_challenges sustainability_metric garment_embedding]
+    raising = exempt.reject do |assoc|
       fresh.public_send(assoc)
+      true
     rescue ActiveRecord::StrictLoadingViolationError
-      flunk "#{assoc} now raises — CascadingAssociationsLoad no longer covers it"
+      false
     end
+
+    assert_empty raising, "CascadingAssociationsLoad no longer covers #{raising.join(', ')}"
   end
 
   def test_belongs_to_user_still_raises_on_a_bare_find

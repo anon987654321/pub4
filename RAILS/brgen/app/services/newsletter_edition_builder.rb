@@ -93,7 +93,11 @@ class NewsletterEditionBuilder
   end
 
   def fetch_posts(city_record)
-    scope = Post.hot.includes(:user, :community, :image)
+    # with_attached_image, not includes(:image): an attachment is reached
+    # through image_attachment and image_blob, and there is no association
+    # called :image to preload. This raised AssociationNotFoundError on every
+    # run, so no newsletter has ever been composed.
+    scope = Post.hot.includes(:user, :community).with_attached_image
     if city_record
       ActsAsTenant.with_tenant(city_record) { scope.limit(6).to_a }
     else
