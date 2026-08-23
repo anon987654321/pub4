@@ -133,6 +133,11 @@ voice:
 
   preserve:
     boot_message: "5-line dmesg style, never collapse to one line"
+    # The floor the guard enforces, as a number it can actually read. It used
+    # to be extracted with /\d+/ from the sentence below, which has no digits,
+    # so min_lines was permanently the hardcoded fallback of 2 and editing the
+    # sentence changed nothing.
+    diagnostic_min_lines: 2
     diagnostic_output: "structured multi-line output is intentional, never compress to abbreviations"
     help_text: "include command name, description, and at least one example"
     spinner_feedback: "show elapsed time and status, do not remove progress indicators"

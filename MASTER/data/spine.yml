@@ -505,7 +505,18 @@ spine:
   #
   # Same shape of spend as the entry below it: one source instead of two, paid
   # for in lib.
-  lib_code_ceiling: 38939
+  # RAISED 2026-08-23, 38939 -> 38950 (+11): three safety interlocks that read
+  # as wired and were not. Review::Consensus — three models, quorum two, before
+  # an autofix lands — was constructed by Agent#consensus and called by nothing;
+  # it is reachable from RuleLoop now, behind MASTER_CONSENSUS_FIXES because
+  # three model calls per fix is a spend to opt into. OutputGuard dug
+  # anti_simulation.require_evidence from the top level, where soul.yml has no
+  # such key, so the evidence contract was two hardcoded strings; it derives
+  # from the constitution now. And min_lines was extracted with /\d+/ from a
+  # sentence with no digits, so the floor was permanently its fallback.
+  #
+  # Same sponsor as the two entries below: wiring, not features.
+  lib_code_ceiling: 38950
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

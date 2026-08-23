@@ -147,8 +147,31 @@ module Master
 
         verified = reflexion_verify(violation, source)
         return :reflexion_rejected unless verified
+        return :consensus_rejected unless consensus_approves?(violation, verified)
 
         apply(violation[:file], verified, violation) ? :applied : :rejected
+      end
+
+      # Review::Consensus fans a candidate fix out to three models and requires
+      # a quorum of two before it lands. It was constructed by Agent#consensus
+      # and called by nothing, so the interlock read as wired for as long as it
+      # has existed — the most consequential shape of this repo's inert-config
+      # defect, because it is a safety gate.
+      #
+      # Reachable now, and off unless asked for: three model calls per fix is a
+      # spend the operator opts into rather than discovers on a bill.
+      def consensus_approves?(violation, candidate)
+        return true unless ENV["MASTER_CONSENSUS_FIXES"] == "1"
+
+        @agent.consensus.approve_fix?(
+          prompt: "Rule #{@rule.id} on #{violation[:file]}",
+          candidate:,
+          violation:
+        )
+      rescue StandardError => e
+        # A broken quorum must not silently approve. Refuse and say why.
+        Master::Ground::Swallow.log(e, context: "RuleLoop#consensus_approves?") if defined?(Master::Ground::Swallow)
+        false
       end
 
       def apply(path, new_src, violation)

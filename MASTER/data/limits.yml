@@ -245,15 +245,6 @@ scan_profiles:
     rules: '*'
     aliases: []
     description: Full deep scan intended for RAILS app trees (use path RAILS/<app>)
-conflicts:
-  strategy: highest_priority_wins
-  rules:
-  - condition: dry conflicts with wet or aha
-    resolution: favor wet/aha if fewer than 3 duplications exist
-  - condition: clarity conflicts with simplicity
-    resolution: favor clarity
-  - condition: fix introduces higher priority violation
-    resolution: reject fix, report to autoloop
 autoloop:
   background: true
   startup_delay: 90
@@ -279,12 +270,6 @@ autoloop:
   - knowledge/
   - fix_
   - patch_
-sweep:
-  scan_depth: deep
-  converge_threshold: 0.05
-  converge_window: 2
-  max_cycles: 16
-  codebase_map: true
 zeitwerk:
   inflections:
     autoloop: AutoLoop
@@ -343,6 +328,28 @@ session_modes:
 # constrain the runtime, and a rule that constrains nothing must not sit beside
 # ones that do.
 guidance:
+
+  # Moved out of the enforced set on 2026-08-23: nothing reads it.
+  # test_limits_split claimed a reader for each, and verified that claim
+  # with a bare substring match that passed on coincidence.
+  conflicts:
+    strategy: highest_priority_wins
+    rules:
+    - condition: dry conflicts with wet or aha
+      resolution: favor wet/aha if fewer than 3 duplications exist
+    - condition: clarity conflicts with simplicity
+      resolution: favor clarity
+    - condition: fix introduces higher priority violation
+      resolution: reject fix, report to autoloop
+  # Moved out of the enforced set on 2026-08-23: nothing reads it.
+  # test_limits_split claimed a reader for each, and verified that claim
+  # with a bare substring match that passed on coincidence.
+  sweep:
+    scan_depth: deep
+    converge_threshold: 0.05
+    converge_window: 2
+    max_cycles: 16
+    codebase_map: true
   file_reading:
     rule: READ_FULL_FILES
     statement: Read complete files. Never grep, head, tail, or partial‑read to understand code.

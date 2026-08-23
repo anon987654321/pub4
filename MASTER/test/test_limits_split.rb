@@ -14,17 +14,20 @@ class TestLimitsSplit < Minitest::Test
   PATH = Master.limits_path
 
   # enforced key => [file that reads it, the expression it reads it with]
+  # Four of these were false and passed anyway, because the check below was a
+  # bare substring match on the file's text: `zeitwerk` matched the gem's own
+  # `require "zeitwerk"` and `validation` matched `category: :validation`.
+  # `conflicts` and `sweep` had no reader at all and now live under guidance:;
+  # `dmesg` and `validation` were pointed at files that never open limits.yml.
   READERS = {
     "autoloop" => ["lib/fix/fix_loop/convergence_config.rb", "autoloop"],
-    "conflicts" => ["lib/cli/scan_report.rb", "conflicts"],
     "loc_budgets" => ["Rakefile", "loc_budgets"],
-    "dmesg" => ["lib/cli/cli/command_handlers.rb", "dmesg"],
+    "dmesg" => ["lib/trace/dmesg.rb", "dmesg"],
     "principle_groups" => ["lib/cli/scan_request.rb", "principle_groups"],
     "process" => ["lib/ops/process_budget.rb", "process"],
     "scan_profiles" => ["lib/cli/scan_request.rb", "scan_profiles"],
     "session_modes" => ["lib/ground/mode_posture.rb", "session_modes"],
-    "sweep" => ["lib/cli/turn_router.rb", "sweep"],
-    "validation" => ["lib/builder.rb", "validation"],
+    "validation" => ["lib/ground/schema_check.rb", "validation"],
     "zeitwerk" => ["lib/master.rb", "zeitwerk"],
   }.freeze
 
@@ -43,8 +46,16 @@ class TestLimitsSplit < Minitest::Test
   def test_every_enforced_key_is_read_by_the_file_that_claims_to_read_it
     READERS.each do |key, (relative, expression)|
       refute_nil limits[key], "#{key} is gone from #{PATH}"
-      assert_includes source(relative), expression,
+      src = source(relative)
+      assert_includes src, expression,
                       "#{relative} no longer reads #{key} — move it under guidance: or fix the reader"
+      # The name alone is not evidence: this file's whole purpose is keeping
+      # unread law from blurring back into enforced law, and a bare
+      # assert_includes passed on four false claims — `zeitwerk` matched the
+      # gem's own require line. The named file must at least open limits.
+      assert_match(/limits/i, src,
+                   "#{relative} contains the word #{key} but never opens #{PATH} — " \
+                   "the claim is a coincidence, not a reader")
     end
   end
 
@@ -63,8 +74,14 @@ class TestLimitsSplit < Minitest::Test
                  .reject { |path| path.end_with?("rule_accessors.rb", "rules.rb") }
     bodies = sources.to_h { |path| [path.sub("#{Master::ROOT}/", ""), File.read(path)] }
 
+    # Both halves, or this is the same coincidence in the other direction: a
+    # file must open limits AND name the key. scan_report.rb contains the word
+    # "conflicts" and has never read limits.yml, which is exactly how the
+    # forward map came to carry four false claims.
     promoted = limits.fetch("guidance").keys.filter_map do |key|
-      readers = bodies.select { |_, body| body.match?(/(["':])#{Regexp.escape(key)}\b/) }.keys
+      readers = bodies.select do |_, body|
+        body.match?(/(["':])#{Regexp.escape(key)}\b/) && body.match?(/limits/i)
+      end.keys
       "#{key} → #{readers.first(2).join(", ")}" if readers.any?
     end
 

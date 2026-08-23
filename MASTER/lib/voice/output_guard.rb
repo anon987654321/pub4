@@ -23,7 +23,12 @@ module Master
         @rules = rules || Ground::Rules.new
         @preserve = @rules.preserve
         soul = @rules.data(:soul) || {}
-        @evidence = soul.dig("anti_simulation", "require_evidence") || {}
+        # Under "absolute", where soul.yml actually nests it. There is no
+        # top-level anti_simulation key, so this dug nothing and @evidence has
+        # always been {} — the evidence contract is enforced by the hardcoded
+        # regexes further down instead. prompt_filter.rb digs the same block
+        # with the "absolute" prefix, which is what confirms the shape.
+        @evidence = soul.dig("absolute", "anti_simulation", "require_evidence") || {}
       end
 
       def sanitize(text, context: :routine)
@@ -53,8 +58,11 @@ module Master
       end
 
       def preserve_diagnostic_structure(text)
-        min_lines = (@preserve["diagnostic_output"] || @preserve[:diagnostic_output]).to_s[/\d+/]&.to_i
-        min_lines = 2 if min_lines.nil? || min_lines < 2
+        # Read as a number from the key that holds one. This used to run /\d+/
+        # over `diagnostic_output`, whose value is a sentence with no digits, so
+        # the match was always nil and the floor was permanently the fallback.
+        min_lines = (@preserve["diagnostic_min_lines"] || @preserve[:diagnostic_min_lines]).to_i
+        min_lines = 2 if min_lines < 2
         lines = text.lines
         return text if lines.size >= min_lines
         text
@@ -108,12 +116,17 @@ module Master
         end
       end
 
+      # Derived from soul.yml, not restating it. @evidence was dug from a key
+      # that does not exist and was therefore always {}, so these two strings
+      # were the whole contract — a hardcoded copy of the constitution sitting
+      # a few lines below the read meant to supply it. The fallbacks keep the
+      # previous behaviour if the key is ever absent.
       def append_evidence_hint(text, context)
-        hint = case context
-               when :modification then "\n[evidence required: show unified diff]"
-               when :completion then "\n[evidence required: show command output]"
-               else return text
-               end
+        requirement = @evidence[context.to_s] ||
+                      { modification: "show unified diff", completion: "show command output" }[context]
+        return text unless requirement
+
+        hint = "\n[evidence required: #{requirement}]"
         text.include?("[evidence required") ? text : "#{text}#{hint}"
       end
     end
