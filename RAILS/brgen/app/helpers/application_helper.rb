@@ -178,10 +178,27 @@ module ApplicationHelper
 
   # Public href for a domain record. Vertical models use absolute subdomain URLs
   # so apex surfaces (activity, notifications) can open the right host.
+  # Distinguishes "no branch claimed this class" from "the branch claimed it and
+  # there is no link" — a Message with no conversation, a Dating::Profile that is
+  # not yours. Both are nil, and only the first may fall through to
+  # polymorphic_path.
+  UNROUTED = Object.new.freeze
+
   def record_public_href(record)
     return if record.blank?
 
     domain = Current.domain.presence || (respond_to?(:request) ? request.host : nil) || "brgen.no"
+    href = apex_href(record, domain)
+    href = engine_href(record, domain) if href == UNROUTED
+    return href unless href == UNROUTED
+
+    polymorphic_path(record) if respond_to?(:polymorphic_path)
+  rescue StandardError # scan: intentional — an unroutable record renders unlinked, which is the correct degradation
+    nil
+  end
+
+  # The city apex: everything served from the host itself rather than a vertical.
+  def apex_href(record, domain)
     case record
     when Event then main_app.event_url(record, host: domain)
     when Story then main_app.story_url(record, host: domain)
@@ -192,6 +209,15 @@ module ApplicationHelper
     when Message then main_app.conversation_path(record.conversation) if record.try(:conversation)
     when Conversation
       record.channel? ? main_app.channel_path(record.slug) : main_app.conversation_path(record)
+    when Follow
+      main_app.user_path(record.follower) if record.try(:follower)
+    else UNROUTED
+    end
+  end
+
+  # The mountable verticals, each on its own subdomain of the same city host.
+  def engine_href(record, domain)
+    case record
     when Marketplace::Listing
       marketplace.listing_url(record, host: domain, subdomain: marketplace_subdomain)
     when Marketplace::Store
@@ -204,6 +230,20 @@ module ApplicationHelper
       takeaway.restaurant_url(record, host: domain, subdomain: "takeaway")
     when Takeaway::Order
       takeaway.order_url(record, host: domain, subdomain: "takeaway")
+    when Place
+      maps.place_url(record, host: domain, subdomain: "maps")
+    when Dating::Match
+      dating.matches_url(host: domain, subdomain: "dating")
+    when Dating::Profile
+      dating.profile_url(host: domain, subdomain: "dating") if record.user_id == Current.user&.id
+    else media_href(record, domain)
+    end
+  end
+
+  # tv and playlist, split off only because engine_href was over the length
+  # ceiling with them in it.
+  def media_href(record, domain)
+    case record
     when Tv::Channel
       tv.channel_url(record, host: domain, subdomain: "tv")
     when Tv::Video
@@ -217,19 +257,8 @@ module ApplicationHelper
       playlist.set_url(record, host: domain, subdomain: "playlist")
     when Playlist::Playlist
       playlist.playlist_url(record, host: domain, subdomain: "playlist")
-    when Place
-      maps.place_url(record, host: domain, subdomain: "maps")
-    when Dating::Match
-      dating.matches_url(host: domain, subdomain: "dating")
-    when Dating::Profile
-      dating.profile_url(host: domain, subdomain: "dating") if record.user_id == Current.user&.id
-    when Follow
-      main_app.user_path(record.follower) if record.try(:follower)
-    else
-      polymorphic_path(record) if respond_to?(:polymorphic_path)
+    else UNROUTED
     end
-  rescue StandardError # scan: intentional — an unroutable record renders unlinked, which is the correct degradation
-    nil
   end
 
   # Deep link for an ActivityEvent row (object_type + object_id).

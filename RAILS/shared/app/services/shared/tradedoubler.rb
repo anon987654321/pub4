@@ -243,39 +243,7 @@ module Shared
             end.first
           end
 
-          image = product["productImage"]
-          image_url = if image.is_a?(Hash)
-                        image["url"]
-          else
-                        dig.call("imageUrl", "productImage", "imageURL")
-          end
-
-          price_raw = dig.call("price", "Price", "priceValue")
-          if price_raw.is_a?(Hash)
-            currency = price_raw["currency"].presence
-            price_raw = price_raw["value"]
-          else
-            currency = dig.call("currency", "Currency")
-          end
-          if offer.is_a?(Hash) && offer["priceHistory"].is_a?(Array) && offer["priceHistory"].any?
-            latest = offer["priceHistory"].last
-            if latest.is_a?(Hash)
-              ph = latest["price"] || latest
-              if ph.is_a?(Hash)
-                price_raw ||= ph["value"]
-                currency ||= ph["currency"]
-              else
-                price_raw ||= ph
-              end
-            end
-          end
-
-          availability = dig.call("availability", "inStock")
-          in_stock = case availability.to_s.downcase
-          when "out of stock", "outofstock", "false", "0", "n", "no" then false
-          else
-                       ![ false, "false", "0", 0 ].include?(dig.call("inStock"))
-          end
+          price_raw, currency = price_and_currency(offer, dig)
 
           {
             external_id: dig.call("productId", "id", "productID", "sourceProductId", "asin").to_s.presence,
@@ -286,12 +254,54 @@ module Shared
             program_id: (product.dig("program", "id") || dig.call("programId")).to_s.presence,
             price_cents: to_cents(price_raw),
             currency: currency.to_s.presence,
-            image_url: image_url.to_s.presence,
+            image_url: image_url(product, dig).to_s.presence,
             click_url: dig.call("productUrl", "clickUrl", "trackingUrl").to_s.presence,
             category: category_name(product) || dig.call("categoryName", "category").to_s.presence,
-            in_stock: in_stock,
+            in_stock: in_stock?(dig),
             feed_id: dig.call("feedId")
           }
+        end
+      end
+
+      # productImage is a hash in the official shape and a bare string in the
+      # legacy one, and the legacy feeds disagree with each other about the key.
+      def image_url(product, dig)
+        image = product["productImage"]
+        return image["url"] if image.is_a?(Hash)
+
+        dig.call("imageUrl", "productImage", "imageURL")
+      end
+
+      # Price arrives three ways: as a hash carrying its own currency, as a bare
+      # value with the currency alongside it, or only inside the offer's price
+      # history. The history fills gaps rather than overriding — a current price
+      # beats a historical one.
+      def price_and_currency(offer, dig)
+        raw = dig.call("price", "Price", "priceValue")
+        if raw.is_a?(Hash)
+          currency = raw["currency"].presence
+          raw = raw["value"]
+        else
+          currency = dig.call("currency", "Currency")
+        end
+
+        latest = offer["priceHistory"].last if offer.is_a?(Hash) && offer["priceHistory"].is_a?(Array)
+        return [ raw, currency ] unless latest.is_a?(Hash)
+
+        historical = latest["price"] || latest
+        if historical.is_a?(Hash)
+          [ raw || historical["value"], currency || historical["currency"] ]
+        else
+          [ raw || historical, currency ]
+        end
+      end
+
+      # Absent availability is treated as in stock, because most feeds omit the
+      # field entirely for stocked items.
+      def in_stock?(dig)
+        case dig.call("availability", "inStock").to_s.downcase
+        when "out of stock", "outofstock", "false", "0", "n", "no" then false
+        else ![ false, "false", "0", 0 ].include?(dig.call("inStock"))
         end
       end
 

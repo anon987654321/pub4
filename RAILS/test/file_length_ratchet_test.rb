@@ -61,7 +61,7 @@ class FileLengthRatchetTest < Minitest::Test
     "gates/support/cdp_session.rb" => 428,
     # +2 for the `module Shared` wrapper when the affiliate stack moved into the
     # engine. No code was added.
-    "shared/app/services/shared/tradedoubler.rb" => 393,
+    "shared/app/services/shared/tradedoubler.rb" => 391,
     # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
     # which gated every deploy.
     "brgen/db/seeds.rb" => 426,
@@ -70,9 +70,9 @@ class FileLengthRatchetTest < Minitest::Test
     "gates/support/geometry_probe.rb" => 415,
     "amber/app/services/wardrobe_ai.rb" => 319,
     "gates/lib/live/user_flow.rb" => 313,
-    "shared/app/assets/stylesheets/_minimal.scss" => 486,
-    "shared/app/assets/stylesheets/_zen_shell.scss" => 486,
-    "shared/app/assets/stylesheets/_shell.scss" => 466,
+    "shared/app/assets/stylesheets/_minimal.scss" => 460,
+    "shared/app/assets/stylesheets/_zen_shell.scss" => 477,
+    "shared/app/assets/stylesheets/_shell.scss" => 458,
     "shared/app/assets/stylesheets/_shell_widgets.scss" => 444,
     # 435 -> 436 on 2026-08-11, and it is the only raise in this file. The header says
     # never raise, and the reason it gives is to force a split when a file grows by
@@ -85,7 +85,7 @@ class FileLengthRatchetTest < Minitest::Test
     # Both were over: the layout by 8 and the player by 1. Split rather than
     # raised — the mobile bottom chrome moved to shared/_mobile_chrome and the
     # timestamped-comment composer to playlist/playlists/_comment_form.
-    "brgen/app/views/layouts/application.html.erb" => 190,
+    "brgen/app/views/layouts/application.html.erb" => 186,
     "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 155,
   }.freeze
 

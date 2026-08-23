@@ -178,7 +178,11 @@ class DesignContractTest < Minitest::Test
 
   def test_action_bar_contract
     partial = File.read(ACTION_BAR)
-    assert_includes partial, 'data-controller="action"'
+    # The wiring, not the literal. The like button gained `popover` alongside
+    # `action`, and a Stimulus controller list is unordered and open-ended, so an
+    # exact-string assertion fails on a legitimate second controller while still
+    # passing if `action` were renamed to something with the same prefix.
+    assert_match(/data-controller="[^"]*\baction\b[^"]*"/, partial)
     assert_includes partial, 'data-clipboard-target="source"'
     assert_includes partial, 'like_count.positive? ? like_count : ""'
     assert File.file?(ICON_PARTIAL)

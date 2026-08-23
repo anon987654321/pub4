@@ -143,6 +143,13 @@ module Shared
       add(:warning, path, :flat_design, "box-shadow detected; this repo's design system is flat -- use a 1px border for separation instead") if body.match?(BOX_SHADOW_PATTERN)
       add(:warning, path, :flat_design, "backdrop-filter/filter blur() detected; this repo's design system is flat -- use a solid background instead") if body.match?(BACKDROP_BLUR_PATTERN)
       add(:info, path, :color_inherit, "color: inherit detected; good for preventing default link colors") if body.match?(COLOR_INHERIT_PATTERN)
+      scan_style_measurements(path, body)
+    end
+
+    # The checks that read a number out of the stylesheet and compare it to a
+    # budget, split from the plain pattern matches above only because the two
+    # together were over the method length ceiling.
+    def scan_style_measurements(path, body)
       body.scan(/font-size:\s*(\d+(?:\.\d+)?)px/i).flatten.each do |size|
         add(:warning, path, :small_font, "Font size #{size}px is below 16px") if size.to_f < Shared::FrontendRuleSet::TYPOGRAPHY[:body_font_px][:min]
       end

@@ -30,20 +30,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       raise Marketplace::Payments::NotConfigured, provider.capitalize
     end
 
-    # listing_id is the ONE-CLICK lane (operator, 2026-08-22): the buy bar
-    # posts here directly and the order is created and paid in the same
-    # request — listing → Vipps app → done, one click on the site. The
-    # single-order path it joins has no address gate on purpose: classifieds
-    # delivery is negotiated between the parties, and Vipps carries the
-    # buyer's identity.
-    payable =
-      if params[:listing_id].present?
-        create_buy_now_order
-      elsif params[:order_id].present?
-        find_payable_order
-      else
-        payable_orders.presence
-      end
+    payable = resolve_payable
     return if performed?
     unless payable
       redirect_to cart_path, alert: t("flash.marketplace.cart_not_payable")
@@ -99,6 +86,21 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   end
 
   private
+
+  # Three lanes reach payment, and which one is running is decided by the
+  # parameter that arrived.
+  #
+  # listing_id is the ONE-CLICK lane (operator, 2026-08-22): the buy bar posts
+  # here directly and the order is created and paid in the same request —
+  # listing → Vipps app → done, one click on the site. The single-order path it
+  # joins has no address gate on purpose: classifieds delivery is negotiated
+  # between the parties, and Vipps carries the buyer's identity.
+  def resolve_payable
+    return create_buy_now_order if params[:listing_id].present?
+    return find_payable_order if params[:order_id].present?
+
+    payable_orders.presence
+  end
 
   # The buy bar's one-click order: same construction as OrdersController#create
   # (variant-aware price, quantity 1) minus the offer framing — this is a

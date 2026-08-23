@@ -51,7 +51,12 @@ class MethodLengthRatchetTest < Minitest::Test
   # responsibility bound, then mutation-test each half.
   CEILINGS = {
     "gates" => [39, 68],
-    "brgen" => [9, 57],
+    # 57 -> 48 on 2026-08-23. record_public_href was the 52: one case statement
+    # over every routable class in the city, split into the apex, the verticals
+    # and the two media engines. A sentinel separates "no branch claimed this
+    # class" from "the branch claimed it and there is no link", because only the
+    # first may fall through to polymorphic_path and both are nil.
+    "brgen" => [9, 48],
     "shared" => [3, 36],
     "amber" => [1, 35],
     "bsdports" => [1, 46],
