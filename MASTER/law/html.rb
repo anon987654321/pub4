@@ -278,24 +278,19 @@ Law.define(:SKIP_TO_MAIN) do
   good "<body><a href=\"#main-content\">skip</a><main id=\"main-content\"></main></body>"
 end
 
-# A paragraph tag wrapped around a single template expression opens in HTML,
-# leaves for Ruby, returns, and closes in HTML — four context switches to emit
-# one line of text. Rails' tag builder writes the same thing as one expression:
-# a third shorter, impossible to leave unclosed, and escaping its attributes by
-# construction instead of by the author remembering to.
+# TAG_HELPER_OVER_MARKUP is retired, not moved. Its detector matched
+# `<p><%= ... %></p>` and its siblings; PREFER_TAG_HELPERS in the registry
+# (lib/review/scan/rules/web_rules.rb, SIMPLE_WRAPPER_TAG_RE) is a strict
+# superset — the same shape plus div, span, li and label, and tolerant of
+# attributes. Measured over 536 RAILS views: every one of this rule's 292
+# findings was also one of the registry's, so it only ever double-reported.
 #
-# Scoped to elements whose entire body is a single template expression. Markup
-# with real structure inside it reads better as markup; a tag around one value
-# is a method call written the long way.
-Law.define(:TAG_HELPER_OVER_MARKUP) do
-  source "Rails ActionView::Helpers::TagHelper — one expression, not four context switches"
-  severity :warn
-  languages %i[html]
-  detect { |line| line.match?(%r{<(p|small|strong|em|h[1-6]|figcaption|legend|caption|dt|dd)>\s*<%=[^%]*%>\s*</\1>}) }
-  fix "Use the tag builder, as in tag.p of a translated string."
-  bad  "<p><%= t(\"greeting\") %></p>"
-  good "<%= tag.p t(\"greeting\") %>"
-end
+# The reasoning it carried is kept, because it is the argument for the rule
+# that survives: a tag around one expression leaves for Ruby, returns, and
+# closes in HTML -- four context switches to emit one line. The tag builder
+# writes the same thing as one expression, a third shorter, impossible to
+# leave unclosed, escaping its attributes by construction rather than by the
+# author remembering to.
 
 # Migrated from data/rules.yml UTILITY_CLASS_SOUP. The registry twin knew
 # more utility vocabularies (ml/mr/px/py/flex/grid/w-/h-, case-insensitive)

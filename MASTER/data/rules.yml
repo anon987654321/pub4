@@ -1129,7 +1129,7 @@ rules:
     name: frozen_string_literal magic comment required
     tier: core
     severity: warning
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add ''# frozen_string_literal: true'' as first line.'
     languages:
@@ -1149,7 +1149,7 @@ rules:
     name: set -euo pipefail at script top
     tier: core
     severity: error
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add 'set -euo pipefail' after shebang.
     languages:
@@ -1169,7 +1169,7 @@ rules:
     name: Use semantic HTML5 elements
     tier: accessibility
     severity: warning
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>.
     languages:
@@ -1200,7 +1200,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Restructure selectors to avoid specificity bankruptcy.
     languages:
     - css
@@ -1209,7 +1209,7 @@ rules:
     name: Structure evident at a glance
     tier: aesthetic
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this file have dense blocks with no visual breaks, or ragged
       indentation?
@@ -1220,7 +1220,7 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # folded into another rule; no detector of its own
     folded_into: SQUINT_TEST # same detector; one law, two ids
     fix: One blank line between sections, never more than two.
   - id: NO_MULTIPLE_LANGUAGES
@@ -1363,7 +1363,7 @@ rules:
     name: Use &. consistently
     tier: style
     severity: warning
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Rewrite to x&.foo&.bar
     languages:
@@ -1414,7 +1414,7 @@ rules:
     name: Use Array(), Hash(), String() coercions
     tier: style
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Use Array(x) instead of x.nil? ? [] : x'
     languages:
@@ -1424,7 +1424,7 @@ rules:
     name: Use %i[] and %w[] for symbol/string arrays
     tier: style
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use %i[a b c] for symbol arrays.
     languages:
@@ -1478,7 +1478,7 @@ rules:
     # (?<![\w:.]) so a symbol or method named :bare_rescue is not a bare rescue.
     # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues had
     # been an error-severity finding against itself, recorded in DEBT.md as noise.
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # folded into another rule; no detector of its own
     folded_into: FAIL_VISIBLY # same detector; one law, two ids
     fix: Rescue StandardError or a specific class.
     languages:
@@ -1538,7 +1538,7 @@ rules:
     name: Use ?. over && chains
     tier: style
     severity: warning
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Rewrite to obj?.foo?.bar
     languages:
@@ -1558,7 +1558,7 @@ rules:
     name: Use template literals over concatenation
     tier: style
     severity: warning
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use `Hello ${name}!` template literals.
     languages:
@@ -1578,7 +1578,7 @@ rules:
     name: Use for...of instead of for...in for arrays
     tier: safety
     severity: error
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: for...in iterates prototype properties. Use for...of.
     languages:
@@ -1589,7 +1589,7 @@ rules:
     tier: safety
     severity: error
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/js_rules.rb), not law/
     fix: Use "$VAR" to prevent word splitting.
     languages:
     - zsh
@@ -1608,7 +1608,7 @@ rules:
     name: Replace backticks with $(command)
     tier: style
     severity: warning
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use $(command) — nestable and readable.
     languages:
@@ -1619,7 +1619,7 @@ rules:
     tier: accessibility
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add alt= attribute.
     languages:
     - html
@@ -1649,7 +1649,7 @@ rules:
     tier: performance
     severity: info
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add loading="lazy".
     languages:
     - html
@@ -1668,7 +1668,7 @@ rules:
     name: Prefer logical properties for RTL support
     tier: design
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use margin-inline-start/end, padding-inline-start/end.
     languages:
@@ -1688,7 +1688,7 @@ rules:
     name: Names reveal intent
     tier: clarity
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use domain-specific names. user_profile, error_message.
   - id: WHY_NOT_WHAT
@@ -1721,7 +1721,7 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/universal_rules.rb), not law/
     fix: Use ellipsis, em dash, curly quotes in UI strings.
   - id: SILENCE_ON_SUCCESS
     source: Unix philosophy — Rule of Silence (no news is good news)
@@ -1737,7 +1737,7 @@ rules:
     tier: interface
     severity: info
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/universal_rules.rb), not law/
     fix: No ASCII separators. No box drawing. Whitespace is the layout tool.
   - id: PRECOMPUTE_MATH
     source: MASTER-native (precompute constant math)
@@ -1930,7 +1930,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/js_rules.rb), not law/
     fix: Reference a CSS custom property or design token.
     languages:
     - css
@@ -1950,7 +1950,7 @@ rules:
     name: var is function-scoped and hoisted — use const or let
     tier: safety
     severity: error
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use const (default) or let (when reassigned).
     languages:
@@ -1970,7 +1970,7 @@ rules:
     name: HTML must declare charset early in <head>
     tier: correctness
     severity: error
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add <meta charset=UTF-8> as first element in <head>.
     languages:
@@ -1981,7 +1981,7 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add aria-label, aria-labelledby, or id paired with <label for>.
     languages:
     - html
@@ -1991,7 +1991,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     folded_into: SEMANTIC_ELEMENTS # same detector; one law, two ids
     fix: Use semantic landmarks; flatten nesting beyond three divs.
     languages:
@@ -2042,7 +2042,7 @@ rules:
     tier: accessibility
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: 'Add @media (prefers-reduced-motion: reduce) override.'
     languages:
     - css
@@ -2063,7 +2063,7 @@ rules:
     name: One space before operators — no column padding
     tier: density
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Remove padding; one space before operators. Column alignment decays and hides
       diffs.
@@ -2103,7 +2103,7 @@ rules:
     name: Separate large numeric literals with underscores
     tier: clarity
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Group digits in threes: 1000000 -> 1_000_000.'
     languages:
@@ -2113,7 +2113,7 @@ rules:
     name: Use &:method for single-method blocks
     tier: density
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Collapse { |x| x.name } -> (&:name).
     languages:
@@ -2417,7 +2417,7 @@ rules:
     name: Default to immutable data
     tier: functional
     severity: info
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Are mutable objects shared across threads or scopes?
     fix: Freeze collections. Use frozen/const by default.
@@ -2460,7 +2460,7 @@ rules:
     tier: refactoring
     severity: warning
     autofix: true
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    detect_lexical: ~ # folded into another rule; no detector of its own
     folded_into: LAW_OF_DEMETER # same detector; one law, two ids
     fix: Talk only to immediate collaborators.
   - id: MIDDLE_MAN
@@ -2601,7 +2601,7 @@ rules:
     name: Confirm before costly or destructive operations
     tier: safety
     severity: error
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this execute an expensive or destructive operation without
       confirmation?
@@ -2748,7 +2748,7 @@ rules:
     name: Cut hollow intensifiers and hedges
     tier: density
     severity: warning
-    autofix: true
+    autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Delete the qualifier; let the verb or noun carry the weight.
     languages:
