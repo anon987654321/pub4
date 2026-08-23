@@ -16,17 +16,22 @@ module Shared
 
     MODEL = ENV.fetch("NEWSLETTER_MODEL", ENV.fetch("REWRITE_MODEL", "google/gemini-2.0-flash-001"))
 
-    def self.daily(city_name:, stories:, hero: nil, app_name: "Brgen", locale: "en", cta_url: nil)
-      new(app_name:, locale:).daily(city_name:, stories:, hero:, cta_url:)
+    def self.daily(city_name:, stories:, hero: nil, app_name: "Brgen", locale: "en", cta_url: nil, host: nil)
+      new(app_name:, locale:, host:).daily(city_name:, stories:, hero:, cta_url:)
     end
 
-    def self.weekly_deals(city_name:, deals:, hero: nil, app_name: "Brgen", locale: "en")
-      new(app_name:, locale:).weekly_deals(city_name:, deals:, hero:)
+    def self.weekly_deals(city_name:, deals:, hero: nil, app_name: "Brgen", locale: "en", host: nil)
+      new(app_name:, locale:, host:).weekly_deals(city_name:, deals:, hero:)
     end
 
-    def initialize(app_name: "Brgen", locale: "en")
+    # host is the city domain this edition is written for, so a letter about
+    # Oslo links to oshlo.no. Without it url_for raises "Missing host to link
+    # to!" — the rescue below turned that into a nil link for every story and
+    # every image, so an edition composed and shipped with nothing to click.
+    def initialize(app_name: "Brgen", locale: "en", host: nil)
       @app_name = app_name
       @locale = locale
+      @host = host.presence
     end
 
     def daily(city_name:, stories:, hero: nil, cta_url: nil)
@@ -150,22 +155,34 @@ module Shared
       )
     end
 
+    # A newsletter is read outside the app, so every link has to be absolute.
+    # url_for raises without a host and there is no request here to infer one
+    # from, which is why these take @host rather than relying on a default.
+    def url_options
+      @host ? { host: @host, protocol: "https" } : {}
+    end
+
     def story_url(story)
       return story if story.is_a?(String)
       return nil unless defined?(Rails) && story.respond_to?(:model_name)
 
-      Rails.application.routes.url_helpers.url_for(story)
+      # polymorphic_url, not url_for: url_for takes one argument, so passing a
+      # record and a host raises "wrong number of arguments" — a different
+      # ArgumentError from the "Missing host" one, and indistinguishable in a
+      # log line that recorded only the class.
+      Rails.application.routes.url_helpers.polymorphic_url(story, **url_options)
     rescue StandardError => e
-      Rails.logger.warn("newsletter url skipped: #{e.class}")
+      Rails.logger.warn("newsletter url skipped: #{e.class}: #{e.message}")
       nil
     end
 
     def story_image_url(story)
       return nil unless story.respond_to?(:image) && story.image.attached?
 
-      Rails.application.routes.url_helpers.url_for(story.image.variant(resize_to_limit: [800, 450], format: :webp))
+      variant = story.image.variant(resize_to_limit: [800, 450], format: :webp)
+      Rails.application.routes.url_helpers.rails_representation_url(variant, **url_options)
     rescue StandardError => e
-      Rails.logger.warn("newsletter url skipped: #{e.class}")
+      Rails.logger.warn("newsletter url skipped: #{e.class}: #{e.message}")
       nil
     end
 

@@ -39,7 +39,8 @@ class NewsletterEditionBuilder
       stories: posts,
       hero: hero,
       app_name: "Brgen",
-      cta_url: root_url
+      cta_url: root_url(city_record),
+      host: newsletter_host(city_record)
     )
     persist!("daily", city_name, edition)
   end
@@ -55,7 +56,8 @@ class NewsletterEditionBuilder
       city_name: label_for(city_name, city_record),
       deals: deals,
       hero: hero,
-      app_name: "Brgen"
+      app_name: "Brgen",
+      host: newsletter_host(city_record)
     )
     record = persist!("weekly_deals", city_name, edition)
     merge_vouchers!(record, vouchers) if vouchers.any?
@@ -141,9 +143,16 @@ class NewsletterEditionBuilder
     city_record&.name || city_name.to_s.titleize
   end
 
-  def root_url
-    Rails.application.routes.url_helpers.root_url(host: ENV.fetch("APP_HOST", "brgen.no"), protocol: "https")
+  # The city's own domain, so a letter about Oslo links to oshlo.no rather than
+  # sending every reader to Bergen. APP_HOST is the fallback for a city row with
+  # no domain and for the no-city case.
+  def newsletter_host(city_record)
+    city_record&.domain.presence || ENV.fetch("APP_HOST", "brgen.no")
+  end
+
+  def root_url(city_record = nil)
+    Rails.application.routes.url_helpers.root_url(host: newsletter_host(city_record), protocol: "https")
   rescue StandardError
-    "https://brgen.no"
+    "https://#{newsletter_host(city_record)}"
   end
 end
