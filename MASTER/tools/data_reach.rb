@@ -65,7 +65,12 @@ module Pub4
       end
       return 0 unless out.size > ceiling
 
-      out.first(15).each { |k| puts "  #{k} — no code names this key; wire a reader or delete the block" }
+      # All of them, not the first 15. A census that names a third of what it
+      # counted leaves the rest invisible: this printed 15 of 55, so the forty
+      # it did not name could not be acted on and a +1 could not be attributed
+      # to any change. Silent truncation reads as "that is all of them", which
+      # is the one thing it must not say.
+      out.each { |k| puts "  #{k} — no code names this key; wire a reader or delete the block" }
       1
     end
   end

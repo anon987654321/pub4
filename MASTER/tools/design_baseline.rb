@@ -97,6 +97,19 @@ module Pub4
       recorded = ceilings
       recorded_total = recorded.fetch("total", nil)
 
+      # The recorded rule set is read back, not just written. A baseline counted
+      # against a different set of rules than the one running is a number about
+      # nothing — and until this read existed, `rule_ceilings` was a key with a
+      # writer and no reader, which is the defect this repo has most of.
+      recorded_rules = Array(recorded["rule_ceilings"])
+      unless recorded_rules.empty? || recorded_rules == DESIGN_RULES.sort
+        added = DESIGN_RULES.sort - recorded_rules
+        gone = recorded_rules - DESIGN_RULES.sort
+        puts "design_baseline: rule set has changed since the baseline was recorded — " \
+             "#{"added #{added.join(', ')}" unless added.empty?}" \
+             "#{" removed #{gone.join(', ')}" unless gone.empty?}; re-record with --ratchet"
+      end
+
       puts "design_baseline: #{total} violation(s) (ceiling #{recorded_total || "unrecorded"})"
       current.sort.each { |app, count| puts "  #{app}: #{count} (ceiling #{recorded.dig("apps", app) || "-"})" }
 
