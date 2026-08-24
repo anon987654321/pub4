@@ -6,7 +6,7 @@ require_relative "builder/ai_boot"
 require_relative "fix/rollback"
 require_relative "trace/ledger/feedback"
 require_relative "trace/ledger/reflexion"
-require_relative "trace/snapshot_publisher"
+require_relative "trace/snapshot/publisher"
 
 module Master
   module Builder
@@ -233,7 +233,7 @@ module Master
 
     def boot_snapshot(container)
       root = container[:root]
-      pub = Trace::SnapshotPublisher
+      pub = Trace::Snapshot::Publisher
       out = File.join(root, ".master", "snapshot.md")
       if pub.boot_current?(root, out)
         container[:bus]&.publish("boot:snapshot_skipped")

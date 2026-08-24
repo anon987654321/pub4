@@ -3,14 +3,14 @@
 require "fileutils"
 require "open3"
 require_relative "../../trace/self_evolution_trigger"
-require_relative "../../trace/snapshot_publisher"
+require_relative "../../trace/snapshot/publisher"
 
 module Master
   module CLI
     module CommandRegistry
       module_function
 
-      SKIP_SEGS = Master::Trace::SnapshotPublisher::SKIP_SEGS
+      SKIP_SEGS = Master::Trace::Snapshot::Publisher::SKIP_SEGS
 
       def system_commands(agent:, diag:, root:, session: nil, bus: nil, scanner: nil, ai: nil)
         container = { session:, config: {}, root:, bus: }
@@ -62,7 +62,7 @@ module Master
 
       def dispatch_snapshot(root, ctx: nil)
         repo_root = File.expand_path("..", root)
-        pub = Master::Trace::SnapshotPublisher
+        pub = Master::Trace::Snapshot::Publisher
         [
           pub.write(target: root, label: "MASTER", repo_root:, mode: :archive),
           pub.write(target: File.expand_path("../OPENBSD", root), label: "OPENBSD", repo_root:, mode: :archive),
@@ -71,7 +71,7 @@ module Master
       end
 
       def publish_snapshot_digest(target, label, repo_root: File.expand_path("..", target))
-        Master::Trace::SnapshotPublisher.write(target:, label:, repo_root:, mode: :digest).first
+        Master::Trace::Snapshot::Publisher.write(target:, label:, repo_root:, mode: :digest).first
       end
 
       def dispatch_diag(diag, ctx: nil)
@@ -166,10 +166,10 @@ module Master
         [body, audit].reject { |part| part.to_s.strip.empty? }.join("\n")
       end
 
-      def snapshot_output_dir = Master::Trace::SnapshotPublisher.output_dir
+      def snapshot_output_dir = Master::Trace::Snapshot::Publisher.output_dir
 
       def publish_snapshot(target, label, repo_root: File.expand_path("..", target))
-        Master::Trace::SnapshotPublisher.write(target:, label:, repo_root:, mode: :archive).first
+        Master::Trace::Snapshot::Publisher.write(target:, label:, repo_root:, mode: :archive).first
       end
 
       def walk_tree(dir, level, depth:, cap:, tree_lines:)

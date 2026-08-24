@@ -9,7 +9,7 @@ class TestSnapshotPublisher < Minitest::Test
       Dir.mktmpdir do |downloads|
         prior = ENV["MASTER_SNAPSHOT_DIR"]
         ENV["MASTER_SNAPSHOT_DIR"] = downloads
-        pub = Master::Trace::SnapshotPublisher
+        pub = Master::Trace::Snapshot::Publisher
         messages = pub.write(target:, label: "TEST", mode: :both)
 
         assert_equal 2, messages.size
@@ -31,7 +31,7 @@ class TestSnapshotPublisher < Minitest::Test
       prior = ENV["MASTER_SNAPSHOT_DIR"]
       ENV["MASTER_SNAPSHOT_DIR"] = downloads
       File.write(File.join(downloads, "MASTER_snapshot.md"), "# digest\n")
-      section = Master::Trace::SnapshotPublisher.artifacts_section
+      section = Master::Trace::Snapshot::Publisher.artifacts_section
       assert section.any? { |line| line.include?(downloads) }
       refute section.any? { |line| line.include?("repo root") }
     ensure

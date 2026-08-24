@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestSnapshotAgentGuide < Minitest::Test
   def test_render_includes_analysis_protocol_sections
-    body = Master::Trace::SnapshotAgentGuide.render(label: "OPENBSD")
+    body = Master::Trace::Snapshot::AgentGuide.render(label: "OPENBSD")
 
     assert_includes body, "## Agent analysis protocol"
     assert_includes body, "Word-for-word read + cross-reference"

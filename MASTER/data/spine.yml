@@ -538,7 +538,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_code_ceiling: 38966
+  lib_code_ceiling: 38962
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

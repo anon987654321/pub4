@@ -856,12 +856,21 @@ guidance:
 # which has never existed — the spine is `lib/core` — and the task skipped a
 # missing path silently, so the one invariant DEBT.md calls load-bearing had a
 # budget line that never evaluated. The task aborts on a missing path now.
+# lib/trace RAISED 2681 -> 2699 on 2026-08-25, and it is the first raise this
+# file has taken, so it should be argued rather than noted. The eighteen lines
+# are `module Log`, `module Ledger`, `module Snapshot` and their matching ends,
+# two per file across nine files — Zeitwerk maps a path to a constant, so a
+# subdirectory costs exactly that and there is no way to shelve a file more
+# cheaply. lib/cli falls 7913 -> 7887 in the same commit for a real deletion,
+# so lib/ is eight lines lighter overall and lint:spine ratcheted 38966 ->
+# 38962. Extraction is what the header asks for and extraction is what this is;
+# the number moved because the unit cannot express it.
 loc_budgets:
-  lib/cli: 7913
+  lib/cli: 7887
   lib/review: 13990
   lib/fix: 3536
   lib/io: 4730
-  lib/trace: 2681
+  lib/trace: 2699
   lib/ground: 8102
   lib/voice: 4310
   lib/boot: 331
