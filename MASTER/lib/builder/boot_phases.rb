@@ -21,7 +21,7 @@ module Master
         undo = Trace::Undo.new(session:, event_bus: bus, root: @root)
         metrics = Trace::Metrics.new(root: @root, event_bus: bus)
         Trace::Log::Audit.new(root: @root, event_bus: bus)
-        Trace::SwallowLedger.new(event_bus: bus, root: @root).attach
+        Trace::Ledger::Swallow.new(event_bus: bus, root: @root).attach
         recorder = Trace::Recorder.new(root: @root, event_bus: bus)
         write_tracker = Trace::WriteTracker.new(event_bus: bus)
         Trace::WriteTracker.current = write_tracker

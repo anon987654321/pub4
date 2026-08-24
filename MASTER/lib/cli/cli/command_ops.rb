@@ -21,7 +21,7 @@ module Master
       end
 
       def run_swallow_report
-        puts @refs.renderer.render("swallow-report: reading SwallowLedger", mode: :dim)
+        puts @refs.renderer.render("swallow-report: reading Ledger::Swallow", mode: :dim)
         ledger_path = File.join(@refs.root, "runtime", "swallow_ledger.jsonl")
         unless File.exist?(ledger_path)
           puts @refs.renderer.render("swallow-report: no ledger at #{ledger_path}", mode: :dim)

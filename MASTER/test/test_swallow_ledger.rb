@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# SwallowLedger subscribes to swallow:error events and tallies them per
+# Ledger::Swallow subscribes to swallow:error events and tallies them per
 # context, flushing a JSONL snapshot every SNAPSHOT_EVERY swallows.
 class TestSwallowLedger < Minitest::Test
   # Minimal in-memory bus matching EventBus#subscribe / #publish.
@@ -15,7 +15,7 @@ class TestSwallowLedger < Minitest::Test
   def setup
     @root   = Dir.mktmpdir("swallow_ledger_test")
     @bus    = FakeBus.new
-    @ledger = Master::Trace::SwallowLedger.new(event_bus: @bus, root: @root).attach
+    @ledger = Master::Trace::Ledger::Swallow.new(event_bus: @bus, root: @root).attach
   end
 
   def teardown
@@ -56,7 +56,7 @@ class TestSwallowLedger < Minitest::Test
   end
 
   def test_attach_without_bus_is_safe
-    ledger = Master::Trace::SwallowLedger.new(event_bus: nil, root: @root).attach
+    ledger = Master::Trace::Ledger::Swallow.new(event_bus: nil, root: @root).attach
     assert_equal 0, ledger.total
   end
 end

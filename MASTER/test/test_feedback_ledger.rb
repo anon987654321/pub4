@@ -6,7 +6,7 @@ require "sqlite3"
 require "tmpdir"
 require_relative "test_helper"
 require_relative "../lib/ground/knowledge_store"
-require_relative "../lib/trace/feedback_ledger"
+require_relative "../lib/trace/ledger/feedback"
 
 class TestFeedbackLedger < Minitest::Test
   class FakeBus
@@ -35,7 +35,7 @@ class TestFeedbackLedger < Minitest::Test
     learnings = Master::Ground::KnowledgeStore.new(root:)
     rollback_calls = []
     rollback = lambda { |result| rollback_calls << result; true }
-    Master::Trace::FeedbackLedger.new(event_bus: bus, learnings:, rollback:).attach
+    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:, rollback:).attach
     db = nil
 
     bus.publish("tool:after", { tool: "write_file", exit_code: 0 })

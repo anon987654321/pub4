@@ -30,10 +30,10 @@ class TestReflexionLedger < Minitest::Test
 
   def test_records_blocked_commit_as_reflection
     bus = FakeBus.new
-    Master::Trace::ReflexionLedger.new(event_bus: bus, root: @dir).attach
+    Master::Trace::Ledger::Reflexion.new(event_bus: bus, root: @dir).attach
     bus.publish("fix_loop:commit_blocked", reason: "syntax", files: ["lib/a.rb"])
 
-    reflections = Master::Trace::ReflexionLedger.new(event_bus: bus, root: @dir).recent
+    reflections = Master::Trace::Ledger::Reflexion.new(event_bus: bus, root: @dir).recent
     assert_equal 1, reflections.size
     assert_includes reflections.first, "syntax"
     assert_includes reflections.first, "a.rb"
@@ -41,7 +41,7 @@ class TestReflexionLedger < Minitest::Test
 
   def test_caps_reflection_history
     bus = FakeBus.new
-    Master::Trace::ReflexionLedger.new(event_bus: bus, root: @dir).attach
+    Master::Trace::Ledger::Reflexion.new(event_bus: bus, root: @dir).attach
     60.times { |i| bus.publish("fix_loop:commit_blocked", reason: "rubocop", files: ["lib/f#{i}.rb"]) }
 
     path = File.join(@dir, "runtime", "reflexions.ndjson")

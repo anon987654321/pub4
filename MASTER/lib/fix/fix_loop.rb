@@ -45,8 +45,8 @@ module Master
         @rule_order     = RuleOrder.new(rules:, learnings:, bus:, root:)
         @pass_runner    = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
-        # Wire ReflexionLedger for strict self-correction per rules.yml (AK102, self-application)
-        @reflexions = Trace::ReflexionLedger.new(event_bus: bus, root:) if bus
+        # Wire Ledger::Reflexion for strict self-correction per rules.yml (AK102, self-application)
+        @reflexions = Trace::Ledger::Reflexion.new(event_bus: bus, root:) if bus
       end
 
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS, incremental: @incremental)

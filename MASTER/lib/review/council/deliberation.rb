@@ -154,7 +154,7 @@ module Master
           return context unless @bus
 
           root = @rules&.instance_variable_get(:@root) || Dir.pwd
-          recent = Trace::ReflexionLedger.new(event_bus: @bus, root:).recent(3)
+          recent = Trace::Ledger::Reflexion.new(event_bus: @bus, root:).recent(3)
           return context if recent.empty?
 
           [context, "Recent reflexions for rule adherence: #{recent.join(' | ')}"].compact.join("\n")

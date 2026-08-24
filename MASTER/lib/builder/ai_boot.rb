@@ -40,8 +40,8 @@ module Master
 
     def finalize_ai_boot(bus:, root:, infra:, agent:, autonomous:, scanner:, lean_boot:)
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
-      Trace::FeedbackLedger.new(event_bus: bus, learnings: autonomous[:learnings]).attach
-      Trace::ReflexionLedger.new(event_bus: bus, root:).attach
+      Trace::Ledger::Feedback.new(event_bus: bus, learnings: autonomous[:learnings]).attach
+      Trace::Ledger::Reflexion.new(event_bus: bus, root:).attach
       subscribe_graph_retriever(bus:, infra:, root:) unless lean_boot
       return if ENV["MASTER_SKIP_SELF_TEST"] == "1"
 
