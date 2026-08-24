@@ -109,9 +109,9 @@ module Master
       end
 
       def status(token = nil, root: Master::ROOT)
-        return { paired: valid_token?(token, root:), subject: subject_for(token, root:), profile: ToolProfile.current_name } if token.to_s != ""
+        return { paired: valid_token?(token, root:), subject: subject_for(token, root:), profile: Tool::Profile.current_name } if token.to_s != ""
 
-        { paired: Fiber[:master_paired] == true, subject: Fiber[:master_pair_subject], profile: ToolProfile.current_name }
+        { paired: Fiber[:master_paired] == true, subject: Fiber[:master_pair_subject], profile: Tool::Profile.current_name }
       end
 
       def load_yaml(path)

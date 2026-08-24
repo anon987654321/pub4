@@ -22,10 +22,10 @@ module MasterContainerLoader
   # Master carries its own Zeitwerk loader and never eager-loads, so its
   # constants resolve by autoload on first reference. Zeitwerk autoloading is
   # not thread-safe, and the web tier arranges the one collision that matters:
-  # ApplicationController names Master::Ground::ToolProfile in its class body,
+  # ApplicationController names Master::Ground::Tool::Profile in its class body,
   # which Rails evaluates on the first request — inside the window where the
   # bootstrap thread is autoloading Master constants of its own. The collision
-  # surfaces as `uninitialized constant Master::Ground::ToolProfile`, and it
+  # surfaces as `uninitialized constant Master::Ground::Tool::Profile`, and it
   # takes out any request that lands in the window, including a warming probe.
   #
   # 160 ms for the namespace, once, against a container bootstrap measured in

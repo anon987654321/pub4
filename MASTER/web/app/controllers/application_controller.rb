@@ -8,7 +8,7 @@ require "master"
 class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
-  VISITOR_ALLOWED_TOOLS = Master::Ground::ToolProfile.public_names.freeze
+  VISITOR_ALLOWED_TOOLS = Master::Ground::Tool::Profile.public_names.freeze
   AUTHENTICATED_ACTIONS = %i[dmesg history live metrics metrics_prometheus].freeze
   TTS_SYNTH_ACTIONS = %i[show].freeze
   TTS_POLL_ACTIONS = %i[status stream].freeze

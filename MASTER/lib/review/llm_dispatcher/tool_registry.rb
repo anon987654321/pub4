@@ -9,14 +9,14 @@ module Master
         def llm_tools(selected_model)
           return [] unless tool_capable?(selected_model)
 
-          profile = Ground::ToolProfile.current
+          profile = Ground::Tool::Profile.current
           @llm_tools_by_tier ||= {}
           @llm_tools_by_tier[profile] ||= build_llm_tools(profile:)
         end
 
         def build_llm_tools(visitor: false, profile: nil)
-          profile ||= visitor ? :public : Ground::ToolProfile.current
-          allowed = Ground::ToolProfile.allowlist(profile)
+          profile ||= visitor ? :public : Ground::Tool::Profile.current
+          allowed = Ground::Tool::Profile.allowlist(profile)
           tier = @model_router&.tier_for_model(@config.model).to_s
           @tools.filter_map do |tool|
             wrapper = LLM_TOOL_MAP[tool.class]

@@ -79,7 +79,7 @@ module Master
           unless Ground::SubagentContext.permits?(name) && Ground::SubagentContext.permits?(runtime)
             return "<tool_result name=\"#{name}\">error: tool denied for subagent #{Ground::SubagentContext.active_type}</tool_result>"
           end
-          unless Ground::ToolProfile.allow?(name) && Ground::ToolProfile.allow?(runtime)
+          unless Ground::Tool::Profile.allow?(name) && Ground::Tool::Profile.allow?(runtime)
             return "<tool_result name=\"#{name}\">error: tool denied</tool_result>"
           end
 

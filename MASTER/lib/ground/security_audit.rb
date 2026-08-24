@@ -66,13 +66,13 @@ module Master
       end
 
       def public_profile_has_no_shell
-        names = ToolProfile.public_names
+        names = Tool::Profile.public_names
         ok = names.none? { |name| %w[Shell WriteFile StrReplace].include?(name) }
         Check.new(ok:, name: "public-profile", detail: "public=#{names.join(',')}")
       end
 
       def messaging_has_no_shell
-        names = ToolProfile.messaging_names
+        names = Tool::Profile.messaging_names
         ok = names.none? { |name| %w[Shell WriteFile StrReplace].include?(name) }
         Check.new(ok:, name: "messaging-profile", detail: "messaging=#{names.join(',')}")
       end

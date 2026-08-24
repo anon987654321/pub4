@@ -33,7 +33,7 @@ module Master
           parts << felt_sense_section if @felt_sense.is_a?(Hash)
           parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
           parts << Ground::ActivePlan.prompt_section(@config["root"] || Master::ROOT)
-          parts << Ground::ToolProfile.session_note
+          parts << Ground::Tool::Profile.session_note
           parts << Ground::PersonalWorkspace.prompt_section(@config["root"] || Master::ROOT)
           parts << @code_index.summary if @code_index&.built?
           parts << @memory.context_summary if @memory&.context_summary

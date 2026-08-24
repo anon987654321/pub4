@@ -149,7 +149,7 @@ class ChatController < ApplicationController
     msg = params[:message].to_s.strip
     return render(json: { changed: false }) if msg.empty?
 
-    # Same fiber flags as /chat/message. Without them ToolProfile.current is
+    # Same fiber flags as /chat/message. Without them Tool::Profile.current is
     # :full, so a visitor enhance turn advertised ReadFile and could have the
     # model open .master/config.yml for the web token.
     with_master_fiber(unlocked: unlocked?) do

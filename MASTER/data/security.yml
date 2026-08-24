@@ -26,7 +26,7 @@ tools:
   custom:
     # Read by lib/cli/destructive_routes.rb#blocking_review?.
     require_review_for_destructive: true
-  # Read by lib/ground/tool_profile.rb. public = open internet; messaging =
+  # Read by lib/ground/tool/profile.rb. public = open internet; messaging =
   # paired visitor (fetch + personal memory, never Shell); full is implicit
   # (authenticated, dangerous only when elevated).
   profiles:

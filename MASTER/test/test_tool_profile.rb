@@ -13,43 +13,43 @@ class TestToolProfile < Minitest::Test
     Fiber[:master_visitor] = true
     Fiber[:master_paired] = nil
 
-    assert_equal :public, Master::Ground::ToolProfile.current
-    assert Master::Ground::ToolProfile.allow?("AskLlm")
-    refute Master::Ground::ToolProfile.allow?("WebFetch")
-    refute Master::Ground::ToolProfile.allow?("Shell")
+    assert_equal :public, Master::Ground::Tool::Profile.current
+    assert Master::Ground::Tool::Profile.allow?("AskLlm")
+    refute Master::Ground::Tool::Profile.allow?("WebFetch")
+    refute Master::Ground::Tool::Profile.allow?("Shell")
   end
 
   def test_paired_visitor_is_messaging
     Fiber[:master_visitor] = true
     Fiber[:master_paired] = true
 
-    assert_equal :messaging, Master::Ground::ToolProfile.current
-    assert Master::Ground::ToolProfile.allow?("WebFetch")
-    assert Master::Ground::ToolProfile.allow?("MemoryRecord")
-    refute Master::Ground::ToolProfile.allow?("Shell")
-    refute Master::Ground::ToolProfile.allow?("WriteFile")
+    assert_equal :messaging, Master::Ground::Tool::Profile.current
+    assert Master::Ground::Tool::Profile.allow?("WebFetch")
+    assert Master::Ground::Tool::Profile.allow?("MemoryRecord")
+    refute Master::Ground::Tool::Profile.allow?("Shell")
+    refute Master::Ground::Tool::Profile.allow?("WriteFile")
   end
 
   def test_authenticated_is_full
     Fiber[:master_visitor] = false
     Fiber[:master_paired] = nil
 
-    assert_equal :full, Master::Ground::ToolProfile.current
-    assert_nil Master::Ground::ToolProfile.allowlist
-    assert Master::Ground::ToolProfile.allow?("ReadFile")
+    assert_equal :full, Master::Ground::Tool::Profile.current
+    assert_nil Master::Ground::Tool::Profile.allowlist
+    assert Master::Ground::Tool::Profile.allow?("ReadFile")
   end
 
   def test_session_note_names_the_scope
     Fiber[:master_visitor] = true
-    assert_match(/public visitor/, Master::Ground::ToolProfile.session_note)
+    assert_match(/public visitor/, Master::Ground::Tool::Profile.session_note)
 
     Fiber[:master_paired] = true
-    assert_match(/paired messaging/, Master::Ground::ToolProfile.session_note)
+    assert_match(/paired messaging/, Master::Ground::Tool::Profile.session_note)
   end
 
   def test_yaml_profiles_are_the_allowlists
-    public = Master::Ground::ToolProfile.public_names
-    messaging = Master::Ground::ToolProfile.messaging_names
+    public = Master::Ground::Tool::Profile.public_names
+    messaging = Master::Ground::Tool::Profile.messaging_names
 
     assert_equal %w[AskLlm WebSearch SubdomainOrchestrator], public
     assert_includes messaging, "WebFetch"

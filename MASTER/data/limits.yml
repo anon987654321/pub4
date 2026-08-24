@@ -862,7 +862,7 @@ loc_budgets:
   lib/fix: 3536
   lib/io: 4730
   lib/trace: 2681
-  lib/ground: 8104
+  lib/ground: 8103
   lib/voice: 4310
   lib/boot: 331
   lib/rails: 1159

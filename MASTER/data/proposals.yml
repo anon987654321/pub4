@@ -142,6 +142,21 @@ proposals:
       now, which is the cheapest check that catches this and the one that fires.
     refuted_by: MASTER/test/test_cohesion.rb test_a_family_whose_destination_is_taken_is_not_a_family
 
+  - id: tool-contract-validates-nothing
+    tree: MASTER
+    state: open
+    claim: "Ground::Tool::Contract has no production caller; its own docstring says it enforces at the call site"
+    note: >
+      114 lines declaring typed contracts — allowed inputs, output shape,
+      permission tier, retry policy, timeout, side-effect class — and find,
+      validate and permitted_for? are called from nothing. Its header says "the
+      validator enforces these at the call site before any tool runs", and
+      lib/builder/ai_boot.rb asserted "strict guard remains in Tool::Contract for
+      shell/git"; that comment is corrected here, the module is not. Second inert
+      gate the lib/ground regroup surfaced, after Policy::Sandbox, and the same
+      shape: a guard nothing asks, with a comment insisting it is the guard.
+      Wire it or delete it — both change what tool execution permits.
+
   - id: ground-is-a-76-file-drawer
     tree: MASTER
     state: open

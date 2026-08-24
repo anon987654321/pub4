@@ -285,7 +285,7 @@ spine:
   # the counter; the comments are the record, and only the counter was reset.
   #
   # RAISED 2026-08-13, 38869 -> 39258 (+389). Pairing before personal tools:
-  # Ground::Pairing, ToolProfile, PersonalWorkspace, SecurityAudit, plus the
+  # Ground::Pairing, Tool::Profile, PersonalWorkspace, SecurityAudit, plus the
   # WebFetch LLM wrapper and the MemoryRecord paired-workspace branch. These are
   # readers for security/defaults.yml keys that lived under planned: and enforced
   # nothing — the same category as worn_type. Public stays AskLlm/WebSearch/
@@ -538,7 +538,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_code_ceiling: 38967
+  lib_code_ceiling: 38966
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

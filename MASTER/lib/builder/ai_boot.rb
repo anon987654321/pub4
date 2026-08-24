@@ -31,7 +31,9 @@ module Master
       lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
       swarm = lean_boot ? nil : Review::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
       council = build_council(agent:, bus:, root:)
-      # Permissive for user chat (CLI + web); strict guard remains in ToolContract for shell/git.
+      # Permissive for user chat (CLI + web). This used to add "strict guard
+      # remains in Tool::Contract for shell/git", which is not true: Tool::Contract
+      # validates nothing anywhere — see data/proposals.yml.
       guard = Review::Security::InjectionGuard.new(mode: :permissive)
       { scanner:, lean_boot:, swarm:, council:, guard: }
     end
