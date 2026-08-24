@@ -114,6 +114,20 @@ proposals:
     claim: "cohesion.rb groups on split(_).first, so it cannot see MASTER's own suffix families"
     landed_by: 033b854ef
 
+  - id: sandbox-policy-has-no-production-caller
+    tree: MASTER
+    state: open
+    claim: "Ground::Policy::Sandbox.decide is called only from tests; Io::Shell carries its own BLOCKLIST"
+    note: >
+      Two shell-safety gates, and the live one is not the hardened one.
+      lib/io/shell.rb:11 has its own BLOCKLIST and consults nothing else, while
+      Policy::Sandbox is the module whose header documents catching `rm -fr ~`,
+      arbitrary flag ordering, `rm --recursive --force ~`, fork bombs and
+      wget-pipe-to-shell — all found by adversarial testing, all reachable from
+      no production path. Either wire decide() into Io::Shell or fold its
+      patterns into the BLOCKLIST; both change what the shell tool refuses, so
+      it is an operator decision rather than a refactor.
+
   - id: ground-is-a-76-file-drawer
     tree: MASTER
     state: open

@@ -105,16 +105,16 @@ class TestLimitsSplit < Minitest::Test
     assert_includes File.read(PATH), "guidance:"
   end
 
-  # phases/code_principles are not merely unread — Ground::WorkflowPolicy hardcodes
+  # phases/code_principles are not merely unread — Ground::Policy::Workflow hardcodes
   # the same concepts as Ruby constants and never consults this file. Recorded so the
   # next person to edit the YAML expecting an effect finds out here.
   def test_the_ruby_that_actually_governs_phases_is_named
     guidance = limits.fetch("guidance")
 
-    assert guidance.key?("phases"), "phases belongs to guidance until WorkflowPolicy reads it"
+    assert guidance.key?("phases"), "phases belongs to guidance until Policy::Workflow reads it"
     assert guidance.key?("code_principles")
-    policy = source("lib/ground/workflow_policy.rb")
-    assert_includes policy, "PHASES", "WorkflowPolicy is the enforced source for phases"
-    refute_includes policy, "limits.yml", "if WorkflowPolicy starts reading limits.yml, promote the keys"
+    policy = source("lib/ground/policy/workflow.rb")
+    assert_includes policy, "PHASES", "Policy::Workflow is the enforced source for phases"
+    refute_includes policy, "limits.yml", "if Policy::Workflow starts reading limits.yml, promote the keys"
   end
 end

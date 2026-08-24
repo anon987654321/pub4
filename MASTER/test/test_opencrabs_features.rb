@@ -29,12 +29,12 @@ class TestOpenCrabsFeatures < Minitest::Test
   end
 
   def test_subagent_policy_excludes_recursive_tools
-    assert Master::Ground::SubagentPolicy.excluded?("spawn_agent")
-    assert Master::Ground::SubagentPolicy.excluded?("rebuild")
+    assert Master::Ground::Policy::Subagent.excluded?("spawn_agent")
+    assert Master::Ground::Policy::Subagent.excluded?("rebuild")
   end
 
   def test_subagent_policy_explore_allow_list
-    names = Master::Ground::SubagentPolicy.allowed_tool_names(:explore, [])
+    names = Master::Ground::Policy::Subagent.allowed_tool_names(:explore, [])
     assert_includes names, "ReadFile"
     refute_includes names, "WriteFile"
   end
@@ -67,9 +67,9 @@ class TestOpenCrabsFeatures < Minitest::Test
   end
 
   def test_swarm_role_maps_to_taxonomy
-    assert_equal :explore, Master::Ground::SubagentPolicy.type_for_swarm_role(:analyst)
-    assert_equal :research, Master::Ground::SubagentPolicy.type_for_swarm_role(:researcher)
-    ctx = Master::Ground::SubagentPolicy.context_for_swarm_role(:reviewer, [])
+    assert_equal :explore, Master::Ground::Policy::Subagent.type_for_swarm_role(:analyst)
+    assert_equal :research, Master::Ground::Policy::Subagent.type_for_swarm_role(:researcher)
+    ctx = Master::Ground::Policy::Subagent.context_for_swarm_role(:reviewer, [])
     assert_equal :verify, ctx[:type]
     assert ctx[:allowed].is_a?(Array)
   end

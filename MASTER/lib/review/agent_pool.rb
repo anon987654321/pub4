@@ -22,8 +22,8 @@ module Master
       end
 
       def spawn(type:, tag: nil, &block)
-        parsed = Ground::SubagentPolicy.parse(type)
-        allowed = Ground::SubagentPolicy.allowed_tool_names(parsed, @parent_tools)
+        parsed = Ground::Policy::Subagent.parse(type)
+        allowed = Ground::Policy::Subagent.allowed_tool_names(parsed, @parent_tools)
         @mutex.synchronize do
           reap_dead
           return Result.err("agent_pool: at capacity (#{@max})", category: :validation) if @workers.size >= @max

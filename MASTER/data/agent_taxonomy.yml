@@ -1,4 +1,4 @@
-# config_status: wired  # AgentPool + SubagentPolicy + SubagentContext (2026-06-24)
+# config_status: wired  # AgentPool + Policy::Subagent + SubagentContext (2026-06-24)
 # Typed child agents (cleaner than ad-hoc thread spawning).
 # Source: opencrabs + Manus reunification (#76, #81).
 agent_types:

@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 class TestSandboxPolicy < Minitest::Test
-  POLICY = Master::Ground::SandboxPolicy
+  POLICY = Master::Ground::Policy::Sandbox
 
   def test_denies_empty_command
     decision = POLICY.decide("")

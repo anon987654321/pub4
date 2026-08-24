@@ -7,7 +7,7 @@
 # accessors that might have reached the rest (`Rules#workflow` and
 # `Rules#workflow_rule(key)`) had zero call sites and are deleted. Worse than
 # unread, two of the largest are contradicted: `phases` and `code_principles`
-# describe the same concepts as `Ground::WorkflowPolicy::PHASES` and `::PRINCIPLES`,
+# describe the same concepts as `Ground::Policy::Workflow::PHASES` and `::PRINCIPLES`,
 # which are hardcoded Ruby constants that never consult this file. Editing the YAML
 # changed nothing; the Ruby is what ran.
 #
@@ -862,7 +862,7 @@ loc_budgets:
   lib/fix: 3536
   lib/io: 4730
   lib/trace: 2681
-  lib/ground: 8116
+  lib/ground: 8104
   lib/voice: 4310
   lib/boot: 331
   lib/rails: 1159

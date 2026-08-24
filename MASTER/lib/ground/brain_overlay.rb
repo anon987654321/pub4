@@ -5,10 +5,10 @@ module Master
     class BrainOverlay
       CORE_FILES = %w[
         standing_orders.rb
-        workflow_policy.rb
+        policy/workflow.rb
         research_thresholds.rb
         tool_protocol.rb
-        subagent_policy.rb
+        policy/subagent.rb
       ].freeze
 
       CONTEXTUAL_FILES = %w[
@@ -35,7 +35,7 @@ module Master
         lines = ["Brain overlay: Ruby policy is authoritative; markdown is legacy/contextual."]
         lines << Master::Ground::ToolProtocol.brief if defined?(Master::Ground::ToolProtocol)
         lines << Master::Ground::ResearchThresholds.brief if defined?(Master::Ground::ResearchThresholds)
-        lines << Master::Ground::WorkflowPolicy.brief if defined?(Master::Ground::WorkflowPolicy)
+        lines << Master::Ground::Policy::Workflow.brief if defined?(Master::Ground::Policy::Workflow)
         lines.compact.join("\n\n")
       end
 

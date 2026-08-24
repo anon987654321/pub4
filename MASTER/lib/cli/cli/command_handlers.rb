@@ -71,9 +71,9 @@ module Master
         puts @refs.renderer.render("verify: checking recently landed operator symbols", mode: :dim)
         plan = {
           files: %w[lib/ground/intent_router.rb lib/ground/attention_context.rb
-                    lib/ground/unfinished_ledger.rb lib/ground/orchestration_policy.rb],
+                    lib/ground/unfinished_ledger.rb lib/ground/policy/orchestration.rb],
           symbols: %w[Master::Ground::IntentRouter Master::Ground::AttentionContext
-                      Master::Ground::UnfinishedLedger Master::Ground::OrchestrationPolicy],
+                      Master::Ground::UnfinishedLedger Master::Ground::Policy::Orchestration],
           callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify],
         }
         checker = Master::Ground::DoneChecker.new

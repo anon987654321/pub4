@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestSecurityAdversarialEval < Minitest::Test
   # Matches OpenCrabs' security-eval: an adversarial corpus of destructive
-  # commands run against the real gate (SandboxPolicy), not a hypothetical
+  # commands run against the real gate (Policy::Sandbox), not a hypothetical
   # one. Their README distinguishes two tiers -- deterministic
   # destructive-command cases (testable without a live model, safe for a
   # normal test run) vs exfiltration/impersonation cases (need a real
@@ -13,7 +13,7 @@ class TestSecurityAdversarialEval < Minitest::Test
   # infrastructure this session didn't build.
   #
   # This isn't hypothetical coverage -- every DENY case here was tested
-  # against the *original* SandboxPolicy first, and several of them
+  # against the *original* Policy::Sandbox first, and several of them
   # (rm -fr, rm --recursive --force, the fork bomb, wget|bash, device
   # redirects) came back "ask" instead of "deny": real, exploitable gaps,
   # not just untested ones. Fixed alongside this file, same commit.
@@ -50,7 +50,7 @@ class TestSecurityAdversarialEval < Minitest::Test
 
   def test_every_deny_case_is_actually_denied
     failures = DENY_CASES.filter_map do |id, cmd|
-      decision = Master::Ground::SandboxPolicy.decide(cmd)
+      decision = Master::Ground::Policy::Sandbox.decide(cmd)
       "#{id}: expected deny, got #{decision.mode} (#{cmd.inspect})" unless decision.deny?
     end
 
@@ -59,7 +59,7 @@ class TestSecurityAdversarialEval < Minitest::Test
 
   def test_benign_commands_are_not_denied
     failures = NOT_DENY_CASES.filter_map do |id, cmd|
-      decision = Master::Ground::SandboxPolicy.decide(cmd)
+      decision = Master::Ground::Policy::Sandbox.decide(cmd)
       "#{id}: expected non-deny, got deny (#{cmd.inspect})" if decision.deny?
     end
 

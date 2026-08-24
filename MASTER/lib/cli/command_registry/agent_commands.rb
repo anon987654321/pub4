@@ -26,9 +26,9 @@ module Master
         type, task = arg.split(/\s+/, 2)
         return "usage: /btw <type> <task>" if task.to_s.strip.empty?
 
-        parsed = Ground::SubagentPolicy.parse(type)
+        parsed = Ground::Policy::Subagent.parse(type)
         spawn = agent_pool.spawn(type: parsed, tag: "btw") do
-          prompt = "#{Ground::SubagentPolicy.prompt_for(parsed)}\n\nTask:\n#{task}"
+          prompt = "#{Ground::Policy::Subagent.prompt_for(parsed)}\n\nTask:\n#{task}"
           summary = agent.ask_once(prompt).to_s.strip
           bus&.publish("btw:done", type: parsed, summary: summary[0, 4_000])
           bus&.publish("agent:plan_done", summary:) if parsed == :plan
