@@ -75,7 +75,9 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 /* Starts clear of the fixed city brand, which otherwise covered the left edge
    of #map-search and ate taps meant for the search box. */
 .map-hud { position: fixed; top: var(--space-4); left: var(--brand-mark-inline); z-index: var(--z-app); display: flex; flex-direction: column; gap: var(--space-2); max-width: 280px; }
-.map-search-input { flex: 1; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: inherit; font-size: var(--text-base); }
+/* min-height: the newsletter email field carries this class and rendered_geometry
+   measured it at 232x38, under the 44px design_rules.ux_laws.fitts minimum. */
+.map-search-input { flex: 1; min-height: var(--tap-min); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: inherit; font-size: var(--text-base); }
 .map-place-popup { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--text-sm); }
 
 /* In-feed affiliate unit. The original pen packed uneven images with Packery

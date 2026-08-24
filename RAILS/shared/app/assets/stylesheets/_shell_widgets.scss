@@ -44,6 +44,11 @@
   font-size: var(--text-base);
   font-family: inherit;
   width: 100%;
+  /* The pill around this is padded to 44px, but the input inside it is what
+     takes the tap, and rendered_geometry measured that at 202x38 against
+     design_rules.ux_laws.fitts.target_min_px of 44. Padding on a parent does
+     not enlarge a child's hit area. */
+  min-height: var(--tap-min);
 }
 
 .widget-search input::placeholder {
