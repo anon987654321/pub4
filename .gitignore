@@ -130,21 +130,18 @@ STUDIO/dilla/project/learnings/vocals/**/*.raw
 STUDIO/dilla/renders/
 STUDIO/dilla/demo*.wav
 STUDIO/dilla/demo*.mp3
-# demo.mp3 itself is tracked, and only that one name. dilla.rb has always called
-# it "the artifact worth tracking" and printed "(tracked artifact)" to the
-# operator as it wrote the file -- while this rule ignored it. One of the two was
-# wrong for as long as both existed; the code's account is the one being kept.
+# No rendered audio is tracked, demo.mp3 and RELEASE.mp3 included (operator,
+# 2026-08-24). demo.mp3 carried an exception here for a while on the argument
+# that a demo which exists on one machine is not a demo; that argument lost to
+# the simpler one, which is that a render is reproducible output and the repo is
+# not where it belongs. They were 88 MB and 33 MB against GitHub's hard 100 MB
+# per-file push limit, with no LFS available (see the note at the top of this
+# section) — so the exception was also one good render away from blocking a push.
 #
-# The WAV above stays ignored and that is not an oversight: it is the working
-# master and runs 5-7x the mp3 (130 MB for 25 tracks against roughly 30 MB).
-#
-# Size is the live constraint here, not a formality. GitHub's hard per-file push
-# limit is 100 MB, LFS is not available (see the note at the top of this
-# section), and the curated 86-track demo measures 71 minutes -- which is 102 MB
-# at dilla's default 192kbps and would be REJECTED at push. It fits at 128k
-# (68 MB) or 96k (51 MB). If the catalogue grows or bars go up, re-measure before
-# assuming the next demo still fits.
-!STUDIO/dilla/demo.mp3
+# Untracked, not deleted: both files stay on disk. A dilla render is not
+# reproducible — the seed and performer rotate per run — so deleting one loses a
+# take for good, whatever its current state.
+STUDIO/dilla/RELEASE.mp3
 # `demo-each` writes the catalogue one mp3 per track into the dilla root as
 # NN_title.mp3. These are TRACKED, against the rule above that generated audio
 # is not, and the exception is deliberate: this set IS the current demo -- the
