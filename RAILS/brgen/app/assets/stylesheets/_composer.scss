@@ -220,6 +220,9 @@
 }
 
 .composer .compose-hint p {
+  /* Capped in ch: design_rules.typography.line_length wants prose inside the
+     measure, and this ran past it. */
+  max-width: var(--measure-narrow, 45ch);
   margin: 0 0 var(--space-1, 0.25rem);
 }
 

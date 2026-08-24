@@ -224,8 +224,10 @@
   letter-spacing: -0.01em;
 }
 
+/* ch, not rem: 32rem is 640px at amber's root and the measure the type
+   actually sets is counted in characters, which is what the gate reads. */
 .amber-guest-hero .body {
-  max-width: 32rem;
+  max-width: var(--measure-narrow, 45ch);
   margin-inline: auto;
   color: var(--text-dim);
   margin-block: 0;
@@ -285,7 +287,13 @@
   margin-bottom: var(--luxury-space-xs);
 }
 
+/* The footer nav and the language switcher are both link lists a thumb hunts
+   for, and both measured under the 44px fitts floor on nine surfaces. */
 .amber-footer-cols a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  min-inline-size: var(--tap-min, 44px);
   font-size: var(--luxury-font-meta);
   color: var(--luxury-text);
 }

@@ -48,6 +48,9 @@ body.auth-surface {
 }
 
 .auth-form-lead {
+  /* Capped in ch: design_rules.typography.line_length wants prose inside the
+     measure, and this ran past it. */
+  max-width: var(--measure-narrow, 45ch);
   margin: 0 0 var(--space-4, 1rem);
   font-size: var(--text-sm);
   line-height: 1.5;
@@ -143,7 +146,13 @@ body.auth-surface {
   color: var(--text-secondary, var(--text-dim));
 }
 
+/* "Create account" is the second most-pressed control on this page and
+   measured 105x22 against the 44px fitts floor. inline-flex so the anchor box
+   grows without breaking the wrapped row above it. */
 .auth-form-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
   color: var(--accent, var(--text));
   font-weight: var(--weight-bold);
   text-decoration: none;

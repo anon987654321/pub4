@@ -102,8 +102,14 @@ body.vertical-dating .nearby-chat-widget {
   display: none;
 }
 
+/* Left-aligned text in a centred block. The splash keeps its composition —
+   the paragraph is still centred on the page — but six centred lines give the
+   reader a ragged left edge to re-find on every line, which is the case
+   design_rules names when it flags centred prose past three lines. */
 .dating-intro-hint {
-  margin: 0;
+  margin: 0 auto;
+  text-align: start;
+  max-width: var(--measure-narrow, 45ch);
   padding-top: clamp(48px, 12vh, 96px);
   /* Was a hand-written stack with Inter LAST, so it rendered system-ui and the
      Inter in it never had a chance to apply. */

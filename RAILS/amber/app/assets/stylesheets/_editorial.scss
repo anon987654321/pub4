@@ -51,6 +51,13 @@
   max-width: var(--measure, 66ch);
 }
 
+/* The card may run to the full measure; its copy may not — this paragraph
+   measured 64ch against a feed profile that wants 50. */
+.newsletter-cta p,
+.subscribe-box p {
+  max-width: var(--measure-narrow, 45ch);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

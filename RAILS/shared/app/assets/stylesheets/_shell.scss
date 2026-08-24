@@ -418,6 +418,9 @@ html.chrome-hidden .tab-bar {
   display: none;
 }
 .tab-bar-coach-text {
+  /* Capped in ch: design_rules.typography.line_length wants prose inside the
+     measure, and this ran past it. */
+  max-width: var(--measure-narrow, 45ch);
   margin: 0 0 0.65rem;
   font-size: var(--text-sm);
   line-height: 1.4;

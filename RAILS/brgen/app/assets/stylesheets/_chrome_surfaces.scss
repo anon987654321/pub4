@@ -91,9 +91,15 @@ aside.city-today,
 /* The city strip opens on a tap. summary carries the real heading so the
    browser own disclosure state, keyboard handling and screen-reader
    announcement apply to the title rather than to a wrapper, and the h2 goes
-   inline so the marker sits beside it instead of above. */
+   inline so the marker sits beside it instead of above.
+
+   It is a real control on all three counts, so it takes a real target: it
+   measured 318x20 against the 44px design_rules.ux_laws.fitts floor. */
 .city-today summary {
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
 }
 
 .city-today summary h2 {
@@ -129,6 +135,20 @@ aside.city-today,
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
+}
+
+/* The rows are scannable columns of links, and a link's own box is what takes
+   the tap — measured at 52x20 on city-today and 39x21 on the sidebar cards,
+   against the 44px design_rules.ux_laws.fitts floor. The li above stays
+   baseline-aligned, so the text keeps its column; only the hit area grows. */
+.sidebar-card li a,
+.city-today-list li a,
+.also-nearby li a,
+.profile-verticals li a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  min-inline-size: var(--tap-min, 44px);
 }
 
 /* Each vertical's rows under one subheading. */
