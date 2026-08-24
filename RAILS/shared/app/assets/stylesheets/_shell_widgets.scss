@@ -321,7 +321,7 @@ section h2 {
   list-style: none;
   font-family: var(--font);
   font-size: var(--text-sm);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .nearby-chat-widget-composer {
@@ -346,7 +346,7 @@ section h2 {
   max-height: 6.5rem;
   font-family: var(--font);
   font-size: var(--text-base);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .nearby-chat-widget-composer textarea:focus {
@@ -379,7 +379,7 @@ section h2 {
   padding: 1rem 0.95rem;
   font-family: var(--font);
   font-size: var(--text-sm);
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text, #d8d6e0);
 }
 
@@ -535,7 +535,7 @@ section h2 {
 .install-prompt p {
   margin: 0;
   font-size: var(--text-sm);
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text-dim, var(--text-secondary));
 }
 

@@ -30,7 +30,7 @@ body.vertical-messenger #messages.channel-log {
   gap: 0;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: var(--text-sm);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 /* Phone first, and the phone does not get the aligned column.
