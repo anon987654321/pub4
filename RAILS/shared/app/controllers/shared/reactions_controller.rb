@@ -10,7 +10,9 @@ module Shared
       @active = Shared::ReactionToggle.call(user: current_user, reactable: @target, kind: @kind)
 
       respond_to do |format|
-        format.html { redirect_back fallback_location: main_app.root_path, notice: t(@active ? "shared.flash.reaction_added" : "shared.flash.reaction_removed") }
+        format.html {
+ redirect_back fallback_location: main_app.root_path,
+notice: t(@active ? "shared.flash.reaction_added" : "shared.flash.reaction_removed") }
         format.turbo_stream
         format.json { render json: { active: @active, kind: @kind } }
       end

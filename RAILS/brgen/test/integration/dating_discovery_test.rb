@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "test_helper"
 
 # Dating::Profile.oriented_for enforces mutual gender preference so discovery is

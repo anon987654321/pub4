@@ -42,8 +42,8 @@ module Shared
       base = "item" if base.blank?
 
       scope = self.class.unscoped
-      scope = scope.where(city_id: city_id) if respond_to?(:city_id) && city_id.present?
-      scope = scope.where.not(id: id) if persisted?
+      scope = scope.where(city_id:) if respond_to?(:city_id) && city_id.present?
+      scope = scope.where.not(id:) if persisted?
 
       candidate = base
       suffix = 2

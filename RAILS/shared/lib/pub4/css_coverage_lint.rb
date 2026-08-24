@@ -201,7 +201,7 @@ module Pub4
           body = strip_erb(File.read(view, encoding: "UTF-8"))
           next if body.include?(OPT_OUT)
 
-          [/class:\s*["']([^"'<>]+)["']/, /class=["']([^"'<>]*)["']/].each do |pattern|
+          [ /class:\s*["']([^"'<>]+)["']/, /class=["']([^"'<>]*)["']/ ].each do |pattern|
             body.scan(pattern) do |(list)|
               names = list.to_s.split(/\s+/)
               names.each do |name|
@@ -259,7 +259,7 @@ module Pub4
       lists = class_lists[name] || []
       return false if lists.empty?
 
-      lists.all? { |list| (list - [name]).any? { |sibling| defined_names.include?(sibling) } }
+      lists.all? { |list| (list - [ name ]).any? { |sibling| defined_names.include?(sibling) } }
     end
 
     # A class that names a Stimulus controller mounted on the same element is that
@@ -317,14 +317,15 @@ module Pub4
     end
 
     def scan
-      undefined_classes.map { |name| Finding.new("undefined_class", name, used_names[name].size, rel(used_names[name].first)) } +
+      undefined_classes.map { |name|
+ Finding.new("undefined_class", name, used_names[name].size, rel(used_names[name].first)) } +
         unused_selectors.map { |name| Finding.new("unused_selector", name, 0, nil) }
     end
 
     def rel(path) = path.to_s.sub("#{RAILS_ROOT}/", "")
 
     def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [kind, findings.count { |f| f.kind == kind }] }
+      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
     end
 
     def over_baseline(findings = scan)

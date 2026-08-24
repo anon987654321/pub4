@@ -23,7 +23,7 @@ module Shared
     def webpush_options
       return {} unless configured?
 
-      { subject: subject, public_key: public_key, private_key: private_key }
+      { subject:, public_key:, private_key: }
     end
   end
 end

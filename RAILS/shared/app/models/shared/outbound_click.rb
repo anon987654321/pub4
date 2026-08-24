@@ -21,7 +21,7 @@ module Shared
     validates :url_host, length: { maximum: 255 }
 
     scope :since, ->(time) { where(created_at: time..) }
-    scope :for_merchant, ->(merchant) { where(merchant: merchant) }
+    scope :for_merchant, ->(merchant) { where(merchant:) }
 
     # A host, or nil for anything that is not an absolute http(s) URL — a relative
     # path, a javascript: URI, or junk. Returning nil means "do not record",
@@ -49,7 +49,7 @@ module Shared
         epi: epi.presence,
         user_id: user&.id,
         guest: user.respond_to?(:guest?) ? !!user.guest? : false,
-        created_at: Time.current
+        created_at: Time.current,
       )
     end
 

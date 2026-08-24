@@ -17,7 +17,8 @@ module Shared
     end
 
     def self.message(app:, bytes_used:, max_size_bytes:)
-      "#{app} cache at #{usage_percent(bytes_used: bytes_used, max_size_bytes: max_size_bytes)}% (#{bytes_used}/#{max_size_bytes} bytes)"
+      "#{app} cache at #{usage_percent(bytes_used:,
+max_size_bytes:)}% (#{bytes_used}/#{max_size_bytes} bytes)"
     end
   end
 end

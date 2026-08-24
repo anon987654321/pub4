@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # AN204: OAuth callback handler
 
 class OmniauthCallbacksController < ::ApplicationController
@@ -46,7 +47,7 @@ class OmniauthCallbacksController < ::ApplicationController
     user = User.find_by(email_address: email) if email.present?
     user ||= User.create!(
       email_address: email.presence || "#{auth.uid}@#{auth.provider}.oauth",
-      password: SecureRandom.hex(24)
+      password: SecureRandom.hex(24),
     )
     persist_external_identity(user, auth)
     persist_legacy_authentication(user, auth)
@@ -105,7 +106,7 @@ class OmniauthCallbacksController < ::ApplicationController
     guest = User.find_by(id: session[:guest_user_id], guest: true)
     return unless guest
 
-    AccountMerger.new(guest_user: guest, user: user).call if defined?(AccountMerger)
+    AccountMerger.new(guest_user: guest, user:).call if defined?(AccountMerger)
   rescue StandardError => error
     Rails.logger.warn("OAuth guest merge failed: #{error.message}")
   end

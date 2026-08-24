@@ -18,7 +18,7 @@ module Shared
 
     SPACING = {
       base_unit: 8,
-      scale: [4, 8, 16, 24, 32, 48, 64].freeze,
+      scale: [ 4, 8, 16, 24, 32, 48, 64 ].freeze,
       touch_target_px: { min: 44, recommended: 48 },
     }.freeze
 

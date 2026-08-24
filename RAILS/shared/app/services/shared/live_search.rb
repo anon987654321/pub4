@@ -27,7 +27,7 @@ module Shared
       latency_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
       notify_analytics(count, latency_ms)
       suggestions = count.zero? && query.present? ? related_terms : []
-      Result.new(scope: filtered, result_count: count, latency_ms: latency_ms, suggestions: suggestions)
+      Result.new(scope: filtered, result_count: count, latency_ms:, suggestions:)
     end
 
     private
@@ -70,18 +70,18 @@ module Shared
       return if query.blank?
 
       payload = {
-        query: query,
+        query:,
         result_count: count,
-        latency_ms: latency_ms,
-        vertical: vertical,
-        app: app_name
+        latency_ms:,
+        vertical:,
+        app: app_name,
       }
       Shared::EventEmitter.call("search.query", **payload)
     end
 
     def related_terms
       tokens = query.downcase.split(/\W+/).reject { |token| token.length < 3 }
-      tokens.flat_map { |token| [token, token.chop, "#{token}s"] }.uniq.first(5)
+      tokens.flat_map { |token| [ token, token.chop, "#{token}s" ] }.uniq.first(5)
     end
 
     def app_name

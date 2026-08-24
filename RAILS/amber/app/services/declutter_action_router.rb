@@ -13,7 +13,7 @@ class DeclutterActionRouter
       recommendation: recommendation,
       destination: destination_for(recommendation),
       copy: copy_for(recommendation),
-      score: score,
+      score: score
     }
   end
 

@@ -12,6 +12,6 @@ class StylePreference < ApplicationRecord
     fit: "fit",
     material: "material",
     occasion: "occasion",
-    avoid: "avoid",
+    avoid: "avoid"
   }, default: :aesthetic
 end

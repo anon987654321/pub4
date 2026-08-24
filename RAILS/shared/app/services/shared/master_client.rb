@@ -57,7 +57,7 @@ module Shared
     # Convenience: free-text assist with a domain prefix for logging/routing.
     def assist(prompt, domain: "general", session_key: nil)
       message = "[rails/#{domain}] #{prompt}"
-      turn(message, session_key: session_key, channel: "rails-#{domain}")
+      turn(message, session_key:, channel: "rails-#{domain}")
     end
 
     private

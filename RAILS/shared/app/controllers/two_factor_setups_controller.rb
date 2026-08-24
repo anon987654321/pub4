@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # AN207: TOTP two-factor setup and verification
 
 class TwoFactorSetupsController < ::ApplicationController

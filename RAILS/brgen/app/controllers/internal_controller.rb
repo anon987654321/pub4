@@ -16,7 +16,7 @@ class InternalController < ApplicationController
       tv_live_streams: Tv::LiveStream.live.count,
       dating_profiles: Dating::Profile.count,
       dilla_engine: Shared::DillaProcessor.available?,
-      master_client: Shared::MasterClient.configured?,
+      master_client: Shared::MasterClient.configured?
     }
   end
 

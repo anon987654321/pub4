@@ -38,7 +38,7 @@ class Vote < ApplicationRecord
       end
     return if delta.zero?
 
-    klass.where(id: votable_id).update_all(["score = COALESCE(score, 0) + ?", delta])
+    klass.where(id: votable_id).update_all([ "score = COALESCE(score, 0) + ?", delta ])
   end
 
   # `votable.user` was a lazy belongs_to read on a votable the controller loaded

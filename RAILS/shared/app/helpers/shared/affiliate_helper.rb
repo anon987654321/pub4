@@ -21,7 +21,7 @@ module Shared
 
     def affiliate_deals_for(category: nil, limit: 8)
       @affiliate_deals_cache ||= {}
-      @affiliate_deals_cache[[ category, limit ]] ||= Shared::Affiliate.deals(category: category, limit: limit)
+      @affiliate_deals_cache[[ category, limit ]] ||= Shared::Affiliate.deals(category:, limit:)
     end
   end
 end

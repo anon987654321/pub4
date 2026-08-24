@@ -11,14 +11,14 @@ class ContentRewriterTest < Minitest::Test
       {
         title: "Local café tip",
         body: "Try the cinnamon bun on Torget.",
-        comments: ["I believe it might be worth the queue.", "Open early on Saturdays."],
+        comments: [ "I believe it might be worth the queue.", "Open early on Saturdays." ],
       }
     end
 
     result = rewriter.rewrite(
       title: "[r/bergen] Best kanelbolle?",
       body: "I think that perhaps someone could recommend a bakery.",
-      comments: ["I believe it might be Baker Hansen."]
+      comments: [ "I believe it might be Baker Hansen." ],
     )
 
     assert_equal "Local café tip", result.title

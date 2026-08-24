@@ -34,7 +34,7 @@ class PostFollowingLaneTest < ActiveSupport::TestCase
     noise = make_post(@stranger, "fremmed")
 
     ids = Post.followed_by(@reader).pluck(:id)
-    assert_equal [newer.id, older.id], ids.first(2), "chronological, newest first — ranking is the fenced horizon item"
+    assert_equal [ newer.id, older.id ], ids.first(2), "chronological, newest first — ranking is the fenced horizon item"
     assert_not_includes ids, noise.id, "a stranger's post must never reach the following lane"
   end
 

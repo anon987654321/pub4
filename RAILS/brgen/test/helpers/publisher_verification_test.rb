@@ -17,7 +17,7 @@ class PublisherVerificationTest < ActionDispatch::IntegrationTest
   end
 
   def with_env(vars)
-    old = vars.keys.to_h { |k| [k, ENV[k]] }
+    old = vars.keys.to_h { |k| [ k, ENV[k] ] }
     vars.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
     yield
   ensure

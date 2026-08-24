@@ -27,7 +27,7 @@ module Shared
     # distance_to) for every including model, breaking their external callers.
     def self.cell_id(lat:, lng:, km: 10.0)
       d_lat = km / EARTH_KM * (180.0 / Math::PI)
-      d_lng = d_lat / Math.cos([lat.to_f.abs, 0.0001].max * Math::PI / 180.0)
+      d_lng = d_lat / Math.cos([ lat.to_f.abs, 0.0001 ].max * Math::PI / 180.0)
       cell_lat = (lat.to_f / d_lat).floor
       cell_lng = (lng.to_f / d_lng).floor
       "#{cell_lat}:#{cell_lng}"
@@ -46,7 +46,7 @@ module Shared
         return none if lat == 0 && lng == 0
 
         d_lat = radius_km / EARTH_KM * (180.0 / Math::PI)
-        d_lng = d_lat / Math.cos([lat.abs, 0.0001].max * Math::PI / 180.0)
+        d_lng = d_lat / Math.cos([ lat.abs, 0.0001 ].max * Math::PI / 180.0)
 
         where(latitude: (lat - d_lat)..(lat + d_lat))
           .where(longitude: (lng - d_lng)..(lng + d_lng))

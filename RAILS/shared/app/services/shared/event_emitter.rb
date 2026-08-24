@@ -17,7 +17,7 @@ module Shared
           Rails.event.notify(name, **payload)
         end
       else
-        Rails.logger.info({ event: name, payload: payload }.to_json)
+        Rails.logger.info({ event: name, payload: }.to_json)
       end
       true
     rescue StandardError => e

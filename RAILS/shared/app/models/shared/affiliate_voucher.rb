@@ -16,7 +16,7 @@ module Shared
       3 => "free_article",
       4 => "free_shipping",
       5 => "raffle",
-      6 => "promotion"
+      6 => "promotion",
     }.freeze
 
     validates :source, presence: true, inclusion: { in: SOURCES }
@@ -36,23 +36,23 @@ module Shared
 
     def to_struct
       Tradedoubler::Voucher.new(
-        external_id: external_id,
-        program_id: program_id,
-        program_name: program_name,
-        code: code,
-        title: title,
-        short_description: short_description,
-        description: description,
-        voucher_type_id: voucher_type_id,
-        track_url: track_url,
-        landing_url: landing_url,
-        discount_amount: discount_amount,
-        percentage: percentage,
-        site_specific: site_specific,
-        exclusive: exclusive,
-        currency: currency,
-        starts_at: starts_at,
-        ends_at: ends_at
+        external_id:,
+        program_id:,
+        program_name:,
+        code:,
+        title:,
+        short_description:,
+        description:,
+        voucher_type_id:,
+        track_url:,
+        landing_url:,
+        discount_amount:,
+        percentage:,
+        site_specific:,
+        exclusive:,
+        currency:,
+        starts_at:,
+        ends_at:,
       )
     end
 
@@ -76,7 +76,7 @@ module Shared
         market: Tradedoubler.market,
         starts_at: voucher.starts_at,
         ends_at: voucher.ends_at,
-        last_seen_at: Time.current
+        last_seen_at: Time.current,
       )
       record.save!
       record

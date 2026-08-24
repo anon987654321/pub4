@@ -8,7 +8,7 @@ class Takeaway::MenuItem < ApplicationRecord
   has_one_attached :photo
   process_media_variants :photo, variants: {
     thumb: { resize_to_limit: [ 320, 320 ], format: :webp },
-    card: { resize_to_limit: [ 720, 540 ], format: :webp },
+    card: { resize_to_limit: [ 720, 540 ], format: :webp }
   }
 
   validates :name, :price_cents, presence: true

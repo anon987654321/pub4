@@ -45,11 +45,11 @@ class PostsController < ApplicationController
     @comment_sort = COMMENT_SORTS.include?(params[:sort]) ? params[:sort] : "best"
     roots = @post.comments.where(parent_id: nil)
     roots = case @comment_sort
-            when "new"           then roots.new_first
-            when "top"           then roots.top
-            when "controversial" then roots.controversial
-            else roots.best
-            end
+    when "new"           then roots.new_first
+    when "top"           then roots.top
+    when "controversial" then roots.controversial
+    else roots.best
+    end
     @comments    = roots.includes(:user, :votes, replies: [ :user, :votes ])
     @new_comment = Comment.new
     @quotes      = @post.reposts.quoted.includes(:user).order(created_at: :desc)

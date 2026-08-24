@@ -127,7 +127,7 @@ class ItemsController < ApplicationController
     flash[:undo] = {
       "path" => restore_item_path(@item),
       "method" => "post",
-      "label" => I18n.t("items.undo_restore"),
+      "label" => I18n.t("items.undo_restore")
     }
     redirect_to @item, notice: I18n.t("items.archived_notice")
   end

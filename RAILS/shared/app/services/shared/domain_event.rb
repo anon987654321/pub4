@@ -10,10 +10,10 @@ module Shared
         action: action.to_s,
         subject_type: subject.class.name,
         subject_id: subject.id,
-        app: app,
+        app:,
         source_vertical: vertical,
-        locality: locality,
-        visibility: visibility,
+        locality:,
+        visibility:,
       }.merge(metadata || {})
 
       EventEmitter.call("#{app}.#{action}", **payload)
@@ -28,13 +28,13 @@ module Shared
       return unless defined?(::ActivityEvent)
 
       ActivityEventRecorder.call(
-        actor: actor,
+        actor:,
         event_name: action_to_event_name(action),
         object: subject,
         source_vertical: vertical,
-        locality: locality,
-        visibility: visibility,
-        metadata: metadata.merge(domain_action: action.to_s)
+        locality:,
+        visibility:,
+        metadata: metadata.merge(domain_action: action.to_s),
       )
     end
 

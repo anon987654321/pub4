@@ -49,7 +49,7 @@ class Marketplace::Listing < ApplicationRecord
   has_many_attached :photos
   process_media_variants :photos, variants: {
     thumb: { resize_to_limit: [ 360, 360 ], format: :webp },
-    card: { resize_to_limit: [ 800, 800 ], format: :webp },
+    card: { resize_to_limit: [ 800, 800 ], format: :webp }
   }
 
   CONDITIONS = %w[new like_new good fair poor].freeze

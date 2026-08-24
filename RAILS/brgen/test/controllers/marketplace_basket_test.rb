@@ -44,7 +44,7 @@ class MarketplaceBasketTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { Marketplace::Address.count }, 1 do
       post marketplace.addresses_path, params: { address: {
-        recipient: "Kari", line1: "Marken 4", postcode: "5017", city_name: "Bergen", country_code: "NO",
+        recipient: "Kari", line1: "Marken 4", postcode: "5017", city_name: "Bergen", country_code: "NO"
       } }
     end
     # Making someone tick a box on a list of one is ceremony.

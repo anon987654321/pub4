@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Shared auth routes — instance_eval from each app's config/routes.rb
 
 resource :account, only: %i[show destroy], controller: "account_settings" do

@@ -22,7 +22,7 @@ class PasswordlessSessionsTest < ActionDispatch::IntegrationTest
     end
 
     mail = ActionMailer::Base.deliveries.last
-    body = [mail.html_part, mail.text_part].compact.map { |part| part.body.to_s }.join
+    body = [ mail.html_part, mail.text_part ].compact.map { |part| part.body.to_s }.join
     token = @user.reload.magic_link_token
 
     assert_predicate token, :present?, "the request must mint a token"

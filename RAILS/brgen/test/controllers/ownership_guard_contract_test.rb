@@ -39,7 +39,7 @@ class OwnershipGuardContractTest < Minitest::Test
     "drafts_controller.rb" => "writes to session[:drafts] only — no AR record, nothing another user could touch",
     "email_subscriptions_controller.rb" => "token in the unsubscribe link is itself the authorization, not user login",
     "locations_controller.rb" => "only ever writes to Current.user's own row (me.update_columns); broadcasts are reads",
-    "users_controller.rb" => "edit/update act on @user = Current.user only — never a param-supplied id",
+    "users_controller.rb" => "edit/update act on @user = Current.user only — never a param-supplied id"
   }.freeze
 
   def test_every_mutating_controller_has_an_ownership_guard

@@ -26,7 +26,7 @@ class LogoPlacementTest < ActiveSupport::TestCase
       source = path.read
       # body.vertical-x .brgen-logo-mark { ... } — the surface-scoped ones only.
       source.scan(/^\s*body\.vertical-[\w-]+[^{]*\.brgen-logo-mark[^{]*\{([^}]*)\}/m).flat_map do |(body)|
-        body.scan(/^\s*([a-z-]+)\s*:/).flatten.map { |prop| [path.basename.to_s, prop] }
+        body.scan(/^\s*([a-z-]+)\s*:/).flatten.map { |prop| [ path.basename.to_s, prop ] }
       end
     end
   end

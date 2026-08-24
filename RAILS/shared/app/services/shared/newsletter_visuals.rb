@@ -29,7 +29,8 @@ module Shared
     def hero_for(city_name:, theme:, seed_attachment: nil)
       if seed_attachment&.attached?
         processed = postpro_attachment(seed_attachment)
-        return Hero.new(url: processed, alt: "#{city_name} — #{theme}", caption: "Processed with postpro", source: :postpro) if processed
+        return Hero.new(url: processed, alt: "#{city_name} — #{theme}", caption: "Processed with postpro",
+source: :postpro) if processed
       end
 
       generated = repligen_hero(city_name:, theme:)
@@ -81,7 +82,7 @@ module Shared
 
     def replicate_predict(token:, prompt:)
       uri = URI("https://api.replicate.com/v1/models/#{REPLIGEN_MODEL}/predictions")
-      payload = { input: { prompt: prompt, aspect_ratio: "16:9", output_format: "jpg" } }
+      payload = { input: { prompt:, aspect_ratio: "16:9", output_format: "jpg" } }
       response = replicate_post(uri, token, payload)
       prediction = JSON.parse(response)
       result = poll_prediction(prediction["urls"]["get"], token)

@@ -46,7 +46,7 @@ module Playlist
         artist: "Imported",
         source_type: source_type,
         source_url: line,
-        privacy: "public",
+        privacy: "public"
       }
     end
 

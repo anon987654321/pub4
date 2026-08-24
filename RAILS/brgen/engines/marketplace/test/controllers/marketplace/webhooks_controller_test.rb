@@ -97,7 +97,7 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
       postcode: "5003", city_name: "Bergen", country_code: "NO"
     )
     checkout = Marketplace::Checkout.create!(user: @buyer, marketplace_address: address, currency: "NOK")
-    [@order, second].each { |row| row.update!(marketplace_checkout_id: checkout.id, payment_reference: "vipps_basket") }
+    [ @order, second ].each { |row| row.update!(marketplace_checkout_id: checkout.id, payment_reference: "vipps_basket") }
     checkout.update!(status: "pending_payment", payment_reference: "vipps_basket")
     payload = { reference: "vipps_basket", state: "AUTHORIZED" }.to_json
     mac = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", secret, payload))

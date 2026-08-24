@@ -30,7 +30,7 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   config.assume_ssl = true
   config.force_ssl = false
 
-  config.log_tags = [:request_id]
+  config.log_tags = [ :request_id ]
   config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "warn")
   config.silence_healthcheck_path = "/up"
@@ -60,7 +60,7 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   # nb, Romance to fr, de-CH to de to en) and amber's and bsdports' { nb: :en }.
   # All three apps set their own; none of them got it in production.
   config.active_record.dump_schema_after_migration = false
-  config.active_record.attributes_for_inspect = [:id]
+  config.active_record.attributes_for_inspect = [ :id ]
 
   config.hosts = Array(hosts)
   config.host_authorization = {

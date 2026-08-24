@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -388,7 +388,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_130000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.datetime "verified_at"
-    t.boolean "visible"
+    t.boolean "visible", default: false, null: false
     t.index ["city_id"], name: "index_dating_profiles_on_city_id"
     t.index ["neighborhood_id"], name: "index_dating_profiles_on_neighborhood_id"
     t.index ["user_id"], name: "index_dating_profiles_on_user_id"
@@ -1226,7 +1226,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_130000) do
     t.integer "likes_count"
     t.string "name"
     t.integer "plays_count"
-    t.boolean "public_access"
+    t.boolean "public_access", default: false, null: false
     t.string "slug"
     t.integer "tracks_count"
     t.datetime "updated_at", null: false
@@ -1291,7 +1291,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_130000) do
   end
 
   create_table "posts", force: :cascade do |t|
-    t.boolean "anonymous"
+    t.boolean "anonymous", default: false, null: false
     t.integer "city_id"
     t.integer "comments_count", default: 0, null: false
     t.integer "community_id"
@@ -1467,8 +1467,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_130000) do
     t.integer "price_cents"
     t.integer "restaurant_id", null: false
     t.datetime "updated_at", null: false
-    t.boolean "vegan"
-    t.boolean "vegetarian"
+    t.boolean "vegan", default: false, null: false
+    t.boolean "vegetarian", default: false, null: false
     t.index ["restaurant_id"], name: "index_takeaway_menu_items_on_restaurant_id"
   end
 
@@ -1522,7 +1522,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_130000) do
   end
 
   create_table "takeaway_restaurants", force: :cascade do |t|
-    t.boolean "active"
+    t.boolean "active", default: false, null: false
     t.string "address"
     t.string "city"
     t.integer "city_id"
@@ -1684,7 +1684,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_130000) do
 
   create_table "tv_subscriptions", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.boolean "notify_on_upload"
+    t.boolean "notify_on_upload", default: false, null: false
     t.integer "tv_channel_id", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false

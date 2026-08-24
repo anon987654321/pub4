@@ -50,7 +50,8 @@ module Pub4
         true
       else
         violations.each do |v|
-          warn "fallback_drift_lint: #{v.file}:#{v.line} var(#{v.token}, #{v.fallback_hex}) matches no real definition of #{v.token}"
+          warn "fallback_drift_lint: #{v.file}:#{v.line} var(#{v.token}, #{v.fallback_hex}) " \
+               "matches no real definition of #{v.token}"
         end
         false
       end

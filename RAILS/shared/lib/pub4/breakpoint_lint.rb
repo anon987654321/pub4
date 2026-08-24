@@ -140,8 +140,8 @@ module Pub4
           next [] if line.match?(CONTAINER)
 
           line.to_enum(:scan, QUERY).map { Regexp.last_match }.map do |match|
-            [rel(path), index + 1, match[:bound], to_px(match[:value], match[:unit]).round,
-             "#{match[:value]}#{match[:unit]}"]
+            [ rel(path), index + 1, match[:bound], to_px(match[:value], match[:unit]).round,
+             "#{match[:value]}#{match[:unit]}" ]
           end
         end
       end
@@ -173,7 +173,7 @@ module Pub4
     end
 
     def opted_out?(lines, index)
-      lines[[index - 1, 0].max..index].join.include?(OPT_OUT)
+      lines[[ index - 1, 0 ].max..index].join.include?(OPT_OUT)
     end
 
     def rel(path)
@@ -181,7 +181,7 @@ module Pub4
     end
 
     def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [kind, findings.count { |f| f.kind == kind }] }
+      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
     end
 
     def over_baseline(findings = scan)

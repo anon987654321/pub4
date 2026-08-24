@@ -6,7 +6,7 @@
 # would need auth, a route and a design decision to serve the same numbers.
 namespace :visits do
   desc "Visits per host over the last N days (default 30)"
-  task :hosts, [:days] => :environment do |_, args|
+  task :hosts, [ :days ] => :environment do |_, args|
     days = (args[:days].presence || 30).to_i
     since = days.days.ago.to_date
     by_host = Shared::VisitCount.by_host(since: since)
@@ -42,7 +42,7 @@ namespace :visits do
   # Visits are the denominator Shared::OutboundClick has been missing: a click
   # rate is the number that decides whether affiliate work is worth more of it.
   desc "Click-through rate: outbound clicks against visits over N days"
-  task :ctr, [:days] => :environment do |_, args|
+  task :ctr, [ :days ] => :environment do |_, args|
     days = (args[:days].presence || 30).to_i
     visits = Shared::VisitCount.total(since: days.days.ago.to_date)
     clicks = Shared::OutboundClick.since(days.days.ago).count

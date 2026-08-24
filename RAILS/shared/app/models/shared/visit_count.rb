@@ -29,7 +29,7 @@ module Shared
     validates :host, :route, length: { maximum: 255 }
 
     scope :since, ->(date) { where(day: date..) }
-    scope :for_host, ->(host) { where(host: host) }
+    scope :for_host, ->(host) { where(host:) }
 
     # Obvious crawlers, so "which city has traffic" does not answer "the one the
     # crawlers like". Read from the request and never stored — matching on a
@@ -56,7 +56,7 @@ module Shared
       normalized = host.to_s.downcase.delete_prefix("www.")
       return nil if normalized.length > 255
 
-      key = { app: app.to_s, host: normalized, route: route.to_s, day: day }
+      key = { app: app.to_s, host: normalized, route: route.to_s, day: }
       # UPDATE first, INSERT only when the day's row does not exist yet. Written
       # this way rather than as an ON CONFLICT upsert because the placeholder
       # syntax for that differs between SQLite and PostgreSQL, and apps.yml has

@@ -4,7 +4,7 @@
 # Include from each app: eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
 
 sc_pin = lambda do |name, preload: true|
-  pin "@stimulus-components/#{name}", to: "@stimulus-components--#{name}.js", preload: preload
+  pin("@stimulus-components/#{name}", to: "@stimulus-components--#{name}.js", preload:)
 end
 
 pin "@hotwired/turbo-rails", to: "turbo.min.js"

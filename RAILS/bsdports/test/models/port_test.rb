@@ -67,8 +67,8 @@ class PortTest < ActiveSupport::TestCase
     # which is deliberate -- brgen lost its chat rooms for weeks to a lazy load
     # in a strict_loading scope -- so a test that reads through the association
     # is testing the wrong thing anyway.
-    assert_equal [gettext], Port.where(id: git.id).includes(:depends_on).first.depends_on.to_a
-    assert_equal [git], Port.where(id: gettext.id).includes(:reverse_deps).first.reverse_deps.to_a,
+    assert_equal [ gettext ], Port.where(id: git.id).includes(:depends_on).first.depends_on.to_a
+    assert_equal [ git ], Port.where(id: gettext.id).includes(:reverse_deps).first.reverse_deps.to_a,
                  "the reverse edge resolves through an explicit foreign key; a rename breaks it silently"
     assert_empty Port.where(id: git.id).includes(:reverse_deps).first.reverse_deps.to_a
     assert_empty Port.where(id: gettext.id).includes(:depends_on).first.depends_on.to_a
@@ -93,9 +93,9 @@ class PortTest < ActiveSupport::TestCase
     mine = port("curl", maintainer: keeper)
     theirs = port("make", category: other)
 
-    assert_equal [mine], Port.by_category(@category).to_a
-    assert_equal [theirs], Port.by_category(other).to_a
-    assert_equal [mine], Port.by_maintainer(keeper).to_a
+    assert_equal [ mine ], Port.by_category(@category).to_a
+    assert_equal [ theirs ], Port.by_category(other).to_a
+    assert_equal [ mine ], Port.by_maintainer(keeper).to_a
   end
 
   test "recent_updates orders by the commit date and lists a port once" do
@@ -106,7 +106,7 @@ class PortTest < ActiveSupport::TestCase
     PortUpdate.create!(port: fresh, new_version: "3", committed_at: 2.hours.ago)
 
     result = Port.recent_updates.to_a
-    assert_equal [fresh, old], result, "the newest commit does not lead"
+    assert_equal [ fresh, old ], result, "the newest commit does not lead"
     assert_equal result.uniq, result, "a port with two updates appeared twice"
   end
 

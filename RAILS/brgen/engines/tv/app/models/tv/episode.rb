@@ -19,7 +19,7 @@ module Tv
       number.to_s
     end
 
-    # tracks_activity actor. Two hops, so the intermediate show is fetched without
+  # tracks_activity actor. Two hops, so the intermediate show is fetched without
   # strict loading and can then be walked normally.
   # See Shared::StrictSafeAssociations.
   def channel_owner = strict_safe(:show)&.channel&.user

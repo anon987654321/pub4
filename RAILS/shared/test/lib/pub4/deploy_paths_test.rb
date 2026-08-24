@@ -78,7 +78,7 @@ class DeployPathsTest < Minitest::Test
   end
 
   def with_env(vars)
-    old = vars.keys.to_h { |key| [key, ENV[key]] }
+    old = vars.keys.to_h { |key| [ key, ENV[key] ] }
     vars.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
     yield
   ensure

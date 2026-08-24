@@ -47,17 +47,17 @@ class OutfitItemTest < ActiveSupport::TestCase
     last = OutfitItem.create!(outfit: @outfit, item: @coat, position: 2)
     first = OutfitItem.create!(outfit: @outfit, item: @shirt, position: 1)
 
-    assert_equal [first, last], OutfitItem.where(outfit: @outfit).to_a
+    assert_equal [ first, last ], OutfitItem.where(outfit: @outfit).to_a
   end
 
   test "reordering moves the render order" do
     coat = OutfitItem.create!(outfit: @outfit, item: @coat, position: 1)
     shirt = OutfitItem.create!(outfit: @outfit, item: @shirt, position: 2)
 
-    assert_equal [coat, shirt], OutfitItem.where(outfit: @outfit).to_a
+    assert_equal [ coat, shirt ], OutfitItem.where(outfit: @outfit).to_a
 
     coat.update!(position: 3)
-    assert_equal [shirt, coat], OutfitItem.where(outfit: @outfit).to_a
+    assert_equal [ shirt, coat ], OutfitItem.where(outfit: @outfit).to_a
   end
 
   test "an unpositioned entry does not break the ordering" do

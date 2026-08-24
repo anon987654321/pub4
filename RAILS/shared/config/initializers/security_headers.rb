@@ -16,5 +16,5 @@ Rails.application.config.action_dispatch.default_headers.merge!(
   # one that decides, and it drifted to geolocation=() for weeks, which is what
   # actually killed #nearby.
   "Permissions-Policy" => "accelerometer=(), camera=(), geolocation=(self), gyroscope=(), microphone=(), payment=(), usb=()",
-  "X-XSS-Protection" => "0"
+  "X-XSS-Protection" => "0",
 )

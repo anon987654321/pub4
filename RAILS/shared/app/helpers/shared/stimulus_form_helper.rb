@@ -7,9 +7,9 @@ module Shared
       rows = options.delete(:rows)
       wrapper = tag.div(
         data: {
-          controller: ["character-counter", ("textarea-autogrow" if autogrow)].compact.join(" "),
+          controller: [ "character-counter", ("textarea-autogrow" if autogrow) ].compact.join(" "),
           character_counter_countdown_value: true,
-        }
+        },
       ) do
         field_options = options.deep_dup
         field_options[:maxlength] = max
@@ -18,7 +18,7 @@ module Shared
 
         field =
           if rows
-            form.text_area(method, **field_options, rows: rows)
+            form.text_area(method, **field_options, rows:)
           else
             form.text_area(method, **field_options)
           end
@@ -44,7 +44,7 @@ module Shared
             type: "button",
             class: "btn btn-ghost btn-sm password-toggle",
             data: { action: "password-visibility#toggle" },
-            aria: { label: "Toggle password visibility" }
+            aria: { label: "Toggle password visibility" },
           ) do
             safe_join([
               tag.span(I18n.t("actions.show"), data: { password_visibility_target: "icon" }),
@@ -69,7 +69,7 @@ module Shared
           controller: "read-more",
           read_more_more_text_value: more,
           read_more_less_text_value: less,
-        }
+        },
       ) do
         safe_join([
           tag.div(simple_format(text, {}, sanitize: false), class: class_name, data: { read_more_target: "content" }),

@@ -70,8 +70,8 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     assert Dating::Like.exists?(liker: emilie.user, likee: magnus)
     assert Dating::Like.exists?(liker: magnus, likee: emilie.user)
     assert Dating::Match.where(status: "matched").exists?(
-      ["(initiator_id = ? AND receiver_id = ?) OR (initiator_id = ? AND receiver_id = ?)",
-       emilie.user_id, magnus.id, magnus.id, emilie.user_id]
+      [ "(initiator_id = ? AND receiver_id = ?) OR (initiator_id = ? AND receiver_id = ?)",
+       emilie.user_id, magnus.id, magnus.id, emilie.user_id ]
     )
   end
 

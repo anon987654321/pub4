@@ -17,7 +17,7 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
   # coordinate rather than sharing a fixed one, to guarantee its geo room's
   # slug can't collide with another test's.
   def random_base_coords
-    [40 + rand(40.0), -20 + rand(60.0)]
+    [ 40 + rand(40.0), -20 + rand(60.0) ]
   end
 
   def geo_room_slug(lat, lng)
@@ -67,7 +67,7 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
     get nearby_room_path
 
     room = Conversation.find_by!(slug: geo_room_slug(lat, lng))
-    assert_equal [a.id, b.id].sort, room.participants.pluck(:id).sort
+    assert_equal [ a.id, b.id ].sort, room.participants.pluck(:id).sort
   end
 
   test "messages in a geo room render under the anonymous handle, not the real display name" do

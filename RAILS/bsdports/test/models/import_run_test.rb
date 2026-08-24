@@ -70,6 +70,6 @@ class ImportRunTest < ActiveSupport::TestCase
     old = import_run(started_at: 3.days.ago).tap(&:save!)
     fresh = import_run(started_at: 1.hour.ago).tap(&:save!)
 
-    assert_equal [fresh, old], ImportRun.recent.to_a
+    assert_equal [ fresh, old ], ImportRun.recent.to_a
   end
 end

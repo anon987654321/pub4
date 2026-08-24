@@ -31,7 +31,7 @@ module Shared
     scope :fresh, -> { where(last_seen_at: STALE_AFTER.ago..) }
     scope :real, -> { where(placeholder: false) }
     scope :for_market, ->(market) { where(market: [ market.to_s.upcase, nil ]) if market.present? }
-    scope :for_category, ->(category) { where(category: category) if category.present? }
+    scope :for_category, ->(category) { where(category:) if category.present? }
     # Cheapest-first would reward junk; newest-first at least tracks the feed.
     scope :sellable, -> { in_stock.fresh.order(last_seen_at: :desc) }
 
@@ -47,7 +47,7 @@ module Shared
     # rows, and must refresh last_seen_at even when nothing else changed —
     # that timestamp is how `fresh` distinguishes live from withdrawn.
     def self.upsert_from_feed!(source:, external_id:, **attributes)
-      record = find_or_initialize_by(source: source, external_id: external_id)
+      record = find_or_initialize_by(source:, external_id:)
       record.assign_attributes(attributes)
       record.last_seen_at = Time.current
       record.save!

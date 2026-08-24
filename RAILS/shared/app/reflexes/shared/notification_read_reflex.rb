@@ -6,7 +6,7 @@ module Shared
       notification = current_user.notifications.find(element.dataset["notification-id"])
       notification.mark_as_read!
       morph "#notification-#{notification.id}",
-            render(partial: "notifications/notification_row", locals: { notification: notification })
+            render(partial: "notifications/notification_row", locals: { notification: })
     end
 
     private

@@ -71,12 +71,12 @@ module Shared
       # --- Read path for views -------------------------------------------------
 
       def deals(category: nil, limit: 8)
-        stored = stored_deals(category: category, limit: limit)
+        stored = stored_deals(category:, limit:)
         return stored if stored.any?
         return [] unless configured?
 
         Rails.cache.fetch(cache_key("deals", category, limit), expires_in: cache_ttl_for(:search_results)) do
-          fetch_deals(category: category, limit: limit)
+          fetch_deals(category:, limit:)
         end
       end
 
@@ -93,12 +93,13 @@ module Shared
       end
 
       def vouchers(limit: 20, site_specific: false, program_id: nil)
-        stored = stored_vouchers(limit: limit, site_specific: site_specific)
+        stored = stored_vouchers(limit:, site_specific:)
         return stored if stored.any?
         return [] unless vouchers_configured?
 
-        Rails.cache.fetch(cache_key("vouchers", limit, site_specific, program_id), expires_in: cache_ttl_for(:search_results)) do
-          fetch_vouchers(limit: limit, site_specific: site_specific, program_id: program_id)
+        Rails.cache.fetch(cache_key("vouchers", limit, site_specific, program_id),
+expires_in: cache_ttl_for(:search_results)) do
+          fetch_vouchers(limit:, site_specific:, program_id:)
         end
       end
 
@@ -123,9 +124,9 @@ module Shared
         written = 0
         ids.each do |fid|
           written += if import_mode == "unlimited"
-                       import_unlimited!(fid, category: category)
+                       import_unlimited!(fid, category:)
           else
-                       import_search!(fid, category: category, pages: pages)
+                       import_search!(fid, category:, pages:)
           end
         end
         written
@@ -135,7 +136,7 @@ module Shared
         return 0 unless vouchers_configured?
         return 0 unless defined?(AffiliateVoucher) && AffiliateVoucher.table_exists?
 
-        rows = fetch_vouchers(limit: limit, site_specific: false, program_id: nil, persist: false)
+        rows = fetch_vouchers(limit:, site_specific: false, program_id: nil, persist: false)
         rows.count do |row|
           AffiliateVoucher.upsert_from_api!(row)
           true
@@ -159,7 +160,7 @@ module Shared
             language: feed["languageISOCode"].to_s,
             product_count: feed["numberOfProducts"].to_i,
             program_ids: Array(feed["programs"]).filter_map { |p| p.is_a?(Hash) ? p["programId"] : nil },
-            last_modified: feed["lastModifiedTime"].to_s
+            last_modified: feed["lastModifiedTime"].to_s,
           )
         end
       rescue StandardError => e
@@ -175,7 +176,7 @@ module Shared
       end
 
       def feed_last_updated(fid)
-        body = get_json(matrix_uri("productsUnlimited/lastUpdated", matrix: { fid: fid }, token: products_token))
+        body = get_json(matrix_uri("productsUnlimited/lastUpdated", matrix: { fid: }, token: products_token))
         return nil unless body.is_a?(Hash)
 
         body["lastUpdatedTime"]
@@ -187,20 +188,20 @@ module Shared
 
       def fetch_page(fid:, category: nil, page: 1, page_size: PAGE_SIZE)
         matrix = {
-          fid: fid,
-          page: page,
+          fid:,
+          page:,
           pageSize: page_size,
-          limit: [ page * page_size, SEARCH_HARD_CAP ].min
+          limit: [ page * page_size, SEARCH_HARD_CAP ].min,
         }
         matrix[:category] = category if category.present?
         matrix[:language] = language_param if language_param.present?
 
-        body = get_json(matrix_uri("products", matrix: matrix, token: products_token))
+        body = get_json(matrix_uri("products", matrix:, token: products_token))
         parse(body)
       end
 
       def fetch_unlimited(fid:)
-        body = get_json(matrix_uri("productsUnlimited", matrix: { fid: fid }, token: products_token))
+        body = get_json(matrix_uri("productsUnlimited", matrix: { fid: }, token: products_token))
         parse(body)
       end
 
@@ -210,7 +211,7 @@ module Shared
 
         rows = []
         ids.each do |fid|
-          rows.concat(fetch_page(fid: fid, category: category, page: 1))
+          rows.concat(fetch_page(fid:, category:, page: 1))
           break if rows.size >= limit
         end
         rows.first(limit).map { |row| row_to_deal(row) }
@@ -221,7 +222,7 @@ module Shared
         matrix[:siteSpecific] = true if site_specific
         matrix[:programId] = program_id if program_id.present?
 
-        body = get_json(matrix_uri("vouchers", matrix: matrix, token: vouchers_token))
+        body = get_json(matrix_uri("vouchers", matrix:, token: vouchers_token))
         list = body.is_a?(Array) ? body : Array(body.is_a?(Hash) ? body["vouchers"] || body["voucher"] : nil)
         list.filter_map { |raw| parse_voucher(raw) }
       rescue StandardError => e
@@ -258,7 +259,7 @@ module Shared
             click_url: dig.call("productUrl", "clickUrl", "trackingUrl").to_s.presence,
             category: category_name(product) || dig.call("categoryName", "category").to_s.presence,
             in_stock: in_stock?(dig),
-            feed_id: dig.call("feedId")
+            feed_id: dig.call("feedId"),
           }
         end
       end
@@ -349,7 +350,7 @@ module Shared
           image_url: product.image_url.to_s,
           click_url: product.click_url.to_s,
           merchant: product.merchant.to_s,
-          placeholder: product.placeholder?
+          placeholder: product.placeholder?,
         )
       end
 
@@ -362,19 +363,19 @@ module Shared
           image_url: row[:image_url].to_s,
           click_url: row[:click_url].to_s,
           merchant: row[:merchant].to_s,
-          placeholder: false
+          placeholder: false,
         )
       end
 
       # EPI helpers for tracked surfaces (appended by views / Link Converter).
       def epi_for(**parts) = Shared::LinkConverter.epi_for(**parts)
 
-      def append_epi(url, epi:, epi2: nil) = Shared::LinkConverter.append_epi(url, epi: epi, epi2: epi2)
+      def append_epi(url, epi:, epi2: nil) = Shared::LinkConverter.append_epi(url, epi:, epi2:)
 
       def link_converter_remote_url = Shared::LinkConverter.remote_script_url
 
       # Download server-side Link Converter script (ad-block resistant path).
-      def sync_link_converter!(local_path:) = Shared::LinkConverter.sync!(local_path: local_path)
+      def sync_link_converter!(local_path:) = Shared::LinkConverter.sync!(local_path:)
 
       def matrix_uri(path, matrix:, token:, extension: "json")
         matrix_part = matrix.compact.map do |key, value|
@@ -383,7 +384,7 @@ module Shared
         suffix = matrix_part.empty? ? "" : ";#{matrix_part}"
         ext = extension.present? ? ".#{extension}" : ""
         uri = URI("#{BASE}/#{path}#{ext}#{suffix}")
-        uri.query = URI.encode_www_form(token: token)
+        uri.query = URI.encode_www_form(token:)
         uri
       end
 
@@ -420,10 +421,10 @@ module Shared
         (1..pages).each do |page|
           break if page * PAGE_SIZE > SEARCH_HARD_CAP
 
-          rows = fetch_page(fid: fid, category: category, page: page)
+          rows = fetch_page(fid:, category:, page:)
           break if rows.empty?
 
-          written += upsert_rows(rows, category: category)
+          written += upsert_rows(rows, category:)
           break if rows.size < PAGE_SIZE
         end
         written
@@ -436,8 +437,8 @@ module Shared
           return 0
         end
 
-        rows = fetch_unlimited(fid: fid)
-        written = upsert_rows(rows, category: category)
+        rows = fetch_unlimited(fid:)
+        written = upsert_rows(rows, category:)
         Rails.cache.write(cache_key_lu, updated, expires_in: 48.hours) if updated.present?
         written
       end
@@ -450,7 +451,7 @@ module Shared
 
           AffiliateProduct.upsert_from_feed!(
             source: "tradedoubler",
-            external_id: external_id,
+            external_id:,
             title: row[:title],
             description: row[:description],
             merchant: row[:merchant],
@@ -460,9 +461,9 @@ module Shared
             image_url: row[:image_url],
             click_url: row[:click_url],
             category: category.presence || row[:category],
-            market: market,
+            market:,
             in_stock: row[:in_stock],
-            placeholder: false
+            placeholder: false,
           )
           written += 1
         end
@@ -492,7 +493,7 @@ module Shared
           exclusive: raw["exclusive"] == true,
           currency: raw["currencyId"].to_s,
           starts_at: parse_td_time(raw["startDate"] || raw["publishStartDate"]),
-          ends_at: parse_td_time(raw["endDate"] || raw["publishEndDate"])
+          ends_at: parse_td_time(raw["endDate"] || raw["publishEndDate"]),
         )
       end
 

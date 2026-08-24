@@ -58,7 +58,7 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
       post conversation_messages_path(conversation),
            params: {
              message: { content: "hei fra hjørnet", message_type: "text" },
-             origin: "widget",
+             origin: "widget"
            },
            as: :turbo_stream
     end

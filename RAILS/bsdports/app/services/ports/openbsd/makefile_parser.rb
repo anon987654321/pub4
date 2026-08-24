@@ -34,7 +34,7 @@ module Ports
           build_depends: parse_depends(vars["BUILD_DEPENDS"]),
           run_depends: parse_depends(vars["RUN_DEPENDS"]),
           lib_depends: parse_depends(vars["LIB_DEPENDS"]),
-          permit_file_distfiles: permit_distfiles?(vars),
+          permit_file_distfiles: permit_distfiles?(vars)
         }
       end
 

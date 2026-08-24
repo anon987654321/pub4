@@ -128,7 +128,7 @@ module Pub4
     end
 
     def opted_out?(lines, index)
-      [lines[index], index.positive? ? lines[index - 1] : nil]
+      [ lines[index], index.positive? ? lines[index - 1] : nil ]
         .compact.any? { |line| line.include?(OPT_OUT) }
     end
 
@@ -221,12 +221,12 @@ module Pub4
       return [] if bare.empty? || bare.match?(UNMEASURABLE)
 
       if (m = bare.match(/\A(-?[\d.]+)(px|rem|em|%)\z/))
-        return [Finding.new(file, line, "absolute_line_height", "#{m[1]}#{m[2]}", prop)]
+        return [ Finding.new(file, line, "absolute_line_height", "#{m[1]}#{m[2]}", prop) ]
       end
       return [] unless bare.match?(/\A[\d.]+\z/)
       return [] if line_heights.include?(Float(bare))
 
-      [Finding.new(file, line, "off_scale_line_height", bare, prop)]
+      [ Finding.new(file, line, "off_scale_line_height", bare, prop) ]
     end
 
     def check_font_weight(file, line, prop, value)
@@ -234,7 +234,7 @@ module Pub4
       return [] unless bare.match?(/\A\d+\z/)
       return [] if font_weights.include?(Integer(bare))
 
-      [Finding.new(file, line, "off_scale_font_weight", bare, prop)]
+      [ Finding.new(file, line, "off_scale_font_weight", bare, prop) ]
     end
 
     # Relative to the repo root, not to RAILS: the corpus spans two trees now
@@ -252,10 +252,10 @@ module Pub4
     # The nearest declared step, for a report that says what to write instead.
     def nearest(finding)
       allowed = case finding.kind
-                when "off_scale_space" then space_px
-                when "off_scale_radius" then radius_px
-                else return nil
-                end
+      when "off_scale_space" then space_px
+      when "off_scale_radius" then radius_px
+      else return nil
+      end
       m = finding.value.match(LENGTH) or return nil
       px = to_px(m[1], m[2].to_s).abs
       "#{allowed.min_by { |step| (step - px).abs }.to_i}px"

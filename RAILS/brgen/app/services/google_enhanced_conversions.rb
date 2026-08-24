@@ -57,7 +57,7 @@ module GoogleEnhancedConversions
       raise NotConfigured, "Google enhanced conversions" unless configured?
 
       event = build_event(order)
-      ingest!(events: [event], validate_only: validate_only)
+      ingest!(events: [ event ], validate_only: validate_only)
     end
 
     def build_event(order)
@@ -70,7 +70,7 @@ module GoogleEnhancedConversions
         "eventSource" => "WEB",
         "eventTimestamp" => paid_at.utc.iso8601,
         "conversionValue" => value,
-        "currency" => currency,
+        "currency" => currency
       }
 
       gclid = order.try(:gclid).presence
@@ -90,7 +90,7 @@ module GoogleEnhancedConversions
       identifiers = order.try(:ad_user_data_consent) == true ? user_identifiers_for(order) : []
       if identifiers.any?
         event["userData"] = {
-          "userIdentifiers" => identifiers,
+          "userIdentifiers" => identifiers
         }
       end
 
@@ -170,9 +170,9 @@ module GoogleEnhancedConversions
           {
             "itemId" => offer.to_s,
             "unitPrice" => (item.try(:unit_price) || item.try(:[], :unit_price) || item.try(:price)).to_f,
-            "quantity" => (item.try(:quantity) || item.try(:[], :quantity) || 1).to_i,
+            "quantity" => (item.try(:quantity) || item.try(:[], :quantity) || 1).to_i
           }
-        end,
+        end
       }.tap { |h| return nil if h["items"].empty? }
     end
 
@@ -184,7 +184,7 @@ module GoogleEnhancedConversions
       status = granted ? "CONSENT_GRANTED" : "CONSENT_DENIED"
       {
         "adUserData" => status,
-        "adPersonalization" => status,
+        "adPersonalization" => status
       }
     end
 
@@ -194,14 +194,14 @@ module GoogleEnhancedConversions
           {
             "operatingAccount" => {
               "accountType" => "GOOGLE_ADS",
-              "accountId" => customer_id,
+              "accountId" => customer_id
             },
             "productDestinationId" => conversion_action_id
           }
         ],
         "encoding" => "HEX",
         "events" => events,
-        "validateOnly" => validate_only,
+        "validateOnly" => validate_only
       }
 
       # Some Data Manager setups use GOOGLE_ADS_ACCOUNT as accountType string;

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "test_helper"
 require "tempfile"
 require "base64"
@@ -18,7 +19,7 @@ class ShareTargetTest < ActionDispatch::IntegrationTest
   end
 
   test "sharing a photo into brgen creates a draft with the image attached" do
-    Tempfile.create(["shot", ".png"]) do |f|
+    Tempfile.create([ "shot", ".png" ]) do |f|
       f.binmode; f.write(PNG); f.rewind
       upload = Rack::Test::UploadedFile.new(f.path, "image/png")
       assert_difference -> { Post.count }, 1 do

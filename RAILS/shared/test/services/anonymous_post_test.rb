@@ -52,8 +52,8 @@ class AnonymousPostTest < Minitest::Test
   private
 
   def build_service(user:, fingerprint:)
-    request = RequestStub.new(fingerprint: fingerprint)
-    Shared::AnonymousPost.new(request: request, user: user)
+    request = RequestStub.new(fingerprint:)
+    Shared::AnonymousPost.new(request:, user:)
   end
 
   def setup_database

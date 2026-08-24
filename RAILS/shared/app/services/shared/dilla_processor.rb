@@ -36,7 +36,7 @@ module Shared
     def normalize_bars(bars)
       n = bars.to_i
       n = DEFAULT_BARS if n <= 0
-      [[n, MAX_BARS].min, 4].max
+      [ [ n, MAX_BARS ].min, 4 ].max
     end
 
     # Render to a temp path. Returns absolute path or nil.
@@ -62,14 +62,14 @@ module Shared
     end
 
     def attach_to_record!(record, attachment_name: :render, style: "dilla", bars: DEFAULT_BARS)
-      path = render_to_file!(style: style, bars: bars)
+      path = render_to_file!(style:, bars:)
       return false unless path
 
       File.open(path, "rb") do |io|
         record.public_send(attachment_name).attach(
-          io: io,
+          io:,
           filename: File.basename(path),
-          content_type: "audio/mpeg"
+          content_type: "audio/mpeg",
         )
       end
       FileUtils.rm_f(path)
@@ -93,7 +93,7 @@ module Shared
         "SPEAK" => ENV.fetch("DILLA_SPEAK", "0"),
         "DILLA_SPEAK" => ENV.fetch("DILLA_SPEAK", "0"),
         "RAP_VOCAL" => ENV.fetch("RAP_VOCAL", "jonas_v"),
-        "RENDER_MODE" => "dilla"
+        "RENDER_MODE" => "dilla",
       }
       # Leave TRACK/PROGRESSION unset for the generic "dilla" style so the
       # engine's own default-progression resolution picks it, same as an
@@ -102,7 +102,7 @@ module Shared
         env["TRACK"] = track
         env["PROGRESSION"] = track
       end
-      cmd = [RbConfig.ruby, script.to_s, "dilla", output.to_s, bars.to_s]
+      cmd = [ RbConfig.ruby, script.to_s, "dilla", output.to_s, bars.to_s ]
       run_with_timeout(env, cmd)
     end
 
@@ -132,7 +132,7 @@ module Shared
           rescue Errno::ESRCH, Errno::EPERM
             nil
           end
-          [out_reader, err_reader].each(&:kill)
+          [ out_reader, err_reader ].each(&:kill)
           log("dilla render timed out after #{seconds}s — killed pid #{wait_thr.pid}")
           return false
         end

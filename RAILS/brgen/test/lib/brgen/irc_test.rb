@@ -15,7 +15,7 @@ class BrgenIrcMessageTest < ActiveSupport::TestCase
   test "parses a command with no trailing" do
     m = M.parse("NICK alice")
     assert_equal "NICK", m.command
-    assert_equal ["alice"], m.params
+    assert_equal [ "alice" ], m.params
   end
 
   test "parses a prefix" do
@@ -25,9 +25,9 @@ class BrgenIrcMessageTest < ActiveSupport::TestCase
   end
 
   test "build colon-quotes only a spaced last param" do
-    assert_equal "PONG :a b", M.build("PONG", ["a b"])
-    assert_equal "JOIN #brgen", M.build("JOIN", ["#brgen"])
-    assert_equal ":srv 353 me = #brgen :@master +echo", M.build("353", ["me", "=", "#brgen", "@master +echo"], prefix: "srv")
+    assert_equal "PONG :a b", M.build("PONG", [ "a b" ])
+    assert_equal "JOIN #brgen", M.build("JOIN", [ "#brgen" ])
+    assert_equal ":srv 353 me = #brgen :@master +echo", M.build("353", [ "me", "=", "#brgen", "@master +echo" ], prefix: "srv")
   end
 end
 
@@ -51,8 +51,8 @@ class BrgenIrcSessionTest < ActiveSupport::TestCase
 
     def channel_name(chan) = "##{chan.slug}"
     def topic(_chan) = "the lobby"
-    def history(_chan, **) = [{ id: 1, nick: "master", text: "welcome" }]
-    def roster(_chan) = [{ nick: "master", mode: "@" }, { nick: "echo", mode: "+" }]
+    def history(_chan, **) = [ { id: 1, nick: "master", text: "welcome" } ]
+    def roster(_chan) = [ { nick: "master", mode: "@" }, { nick: "echo", mode: "+" } ]
     def messages_since(_chan, last) = @relay.select { |m| m[:id] > last }
 
     def post(chan, nick, text)
@@ -100,13 +100,13 @@ class BrgenIrcSessionTest < ActiveSupport::TestCase
     @session.handle("JOIN #brgen")
     out = @session.handle("PRIVMSG #brgen :hei alle")
     assert_empty out, "IRC never echoes your own PRIVMSG"
-    assert_equal [{ slug: "brgen", nick: "alice", text: "hei alle" }], @bridge.posts
+    assert_equal [ { slug: "brgen", nick: "alice", text: "hei alle" } ], @bridge.posts
   end
 
   test "poll relays web-side messages but not the client's own nick" do
     register!
     @session.handle("JOIN #brgen")
-    @bridge.relay = [{ id: 2, nick: "bob", text: "from the web" }, { id: 3, nick: "alice", text: "mine" }]
+    @bridge.relay = [ { id: 2, nick: "bob", text: "from the web" }, { id: 3, nick: "alice", text: "mine" } ]
     out = @session.poll
     assert(out.any? { |l| l == ":bob PRIVMSG #brgen :from the web" })
     assert(out.none? { |l| l.include?(":alice PRIVMSG") })

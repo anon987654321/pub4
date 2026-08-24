@@ -6,10 +6,10 @@ module Ground
 
     def log(error, context:, **metadata)
       if defined?(::Master::Ground::Swallow)
-        ::Master::Ground::Swallow.log(error, context: context, **metadata)
+        ::Master::Ground::Swallow.log(error, context:, **metadata)
       else
         Rails.logger.warn(
-          "swallow:error context=#{context} #{error.class}: #{error.message} #{metadata.inspect}"
+          "swallow:error context=#{context} #{error.class}: #{error.message} #{metadata.inspect}",
         )
       end
       nil

@@ -2,6 +2,9 @@
 
 require "test_helper"
 
+# Asserted through the I18n key, not the English sentence. These apps default
+# to nb; the literals only ever matched because rails-i18n was missing, so the
+# tests were pinned to the absence of a translation.
 class OutfitTest < ActiveSupport::TestCase
   setup do
     @user = User.strict_loading(false).create!(email_address: "outfit@amber.test", password: "password123")
@@ -11,7 +14,7 @@ class OutfitTest < ActiveSupport::TestCase
     outfit = Outfit.new(user: @user)
 
     assert_not outfit.valid?
-    assert_includes outfit.errors[:name], "can't be blank"
+    assert_includes outfit.errors[:name], I18n.t("errors.messages.blank")
   end
 
   test "context_label joins season category and occasion" do

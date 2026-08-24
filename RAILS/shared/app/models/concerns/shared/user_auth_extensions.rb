@@ -19,7 +19,7 @@ module Shared
       token = SecureRandom.urlsafe_base64(32)
       update!(
         remember_token: token,
-        remember_token_expires_at: REMEMBER_DURATION.from_now
+        remember_token_expires_at: REMEMBER_DURATION.from_now,
       )
       token
     end

@@ -152,7 +152,8 @@ module Pub4
       is_source = File.directory?(internal_shared.to_s)
       is_deployed_sibling = File.directory?(sibling_shared.to_s)
       unless is_source || is_deployed_sibling
-        warn "DeployPaths: unexpected layout. rails_root=#{root} (expected RAILS/shared in source or sibling shared/ on target)"
+        warn "DeployPaths: unexpected layout. rails_root=#{root} " \
+             "(expected RAILS/shared in source or sibling shared/ on target)"
       end
       true
     end

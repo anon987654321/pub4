@@ -68,7 +68,7 @@ class Playlist::Track < ApplicationRecord
 
   def playback_url
     return audio_file if audio_file.attached?
-    return source_url if source_type == "direct"
+    source_url if source_type == "direct"
   end
 
   def external_embed_url

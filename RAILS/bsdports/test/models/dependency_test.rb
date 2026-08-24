@@ -71,8 +71,8 @@ class DependencyTest < ActiveSupport::TestCase
     run = Dependency.create!(port: @git, depends_on: @gettext, dep_type: "run")
     Dependency.create!(port: @git, depends_on: port("zlib"), dep_type: "lib")
 
-    assert_equal [build], Dependency.buildtime.to_a
-    assert_equal [run], Dependency.runtime.to_a
+    assert_equal [ build ], Dependency.buildtime.to_a
+    assert_equal [ run ], Dependency.runtime.to_a
   end
 
   # depth > 6 and a seen set are the two termination conditions, and only the

@@ -38,7 +38,7 @@ class DemoMediaTest < Minitest::Test
   private
 
   def with_env(overrides)
-    backup = overrides.keys.to_h { |key| [key, ENV[key]] }
+    backup = overrides.keys.to_h { |key| [ key, ENV[key] ] }
     overrides.each { |key, value| ENV[key] = value }
     yield
   ensure

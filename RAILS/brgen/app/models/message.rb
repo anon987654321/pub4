@@ -22,7 +22,7 @@ class Message < ApplicationRecord
   has_one_attached :attachment
   process_media_variants :attachment, variants: {
     inline: { resize_to_limit: [ 900, 900 ], format: :webp },
-    thumb: { resize_to_limit: [ 320, 320 ], format: :webp },
+    thumb: { resize_to_limit: [ 320, 320 ], format: :webp }
   }
 
   # unless deleted?: unsend! empties the body and keeps the row, and without

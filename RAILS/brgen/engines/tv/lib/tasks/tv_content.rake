@@ -16,7 +16,7 @@
 # every frame.
 namespace :tv do
   desc "Ingest a manifest of video files into a Tv::Channel (idempotent by slug)"
-  task :ingest, [:manifest] => :environment do |_, args|
+  task :ingest, [ :manifest ] => :environment do |_, args|
     require "yaml"
     manifest_path = args[:manifest] or abort "tv:ingest needs a manifest path"
     manifest = YAML.safe_load_file(manifest_path)
@@ -62,7 +62,7 @@ namespace :tv do
   end
 
   desc "Generate a starter pack (Replicate when keyed; TV_TEST_CARDS=1 for ffmpeg test cards)"
-  task :starter_pack, [:out_dir] => :environment do |_, args|
+  task :starter_pack, [ :out_dir ] => :environment do |_, args|
     out = File.expand_path(args[:out_dir] || "tmp/tv_starter_pack")
     FileUtils.mkdir_p(out)
 
@@ -84,12 +84,12 @@ namespace :tv do
     # libfreetype ffmpeg and the Homebrew build ships without it, so the
     # frame is the pattern and the LABEL is the product's own title overlay.
     cards = [
-      ["testbilde-1", "brgen tv · fargebar",     "smptehdbars=size=1280x720:rate=25", 12],
-      ["testbilde-2", "brgen tv · monoskop",     "testsrc2=size=1280x720:rate=25",    10],
-      ["testbilde-3", "brgen tv · rgb",          "rgbtestsrc=size=1280x720:rate=25",   8],
-      ["testbilde-4", "brgen tv · gradient",     "gradients=size=1280x720:rate=25",   15],
-      ["testbilde-5", "brgen tv · mandelbrot",   "mandelbrot=size=1280x720:rate=25",   9],
-      ["testbilde-6", "brgen tv · livssignal",   "life=size=1280x720:rate=25:mold=10", 11],
+      [ "testbilde-1", "brgen tv · fargebar",     "smptehdbars=size=1280x720:rate=25", 12 ],
+      [ "testbilde-2", "brgen tv · monoskop",     "testsrc2=size=1280x720:rate=25",    10 ],
+      [ "testbilde-3", "brgen tv · rgb",          "rgbtestsrc=size=1280x720:rate=25",   8 ],
+      [ "testbilde-4", "brgen tv · gradient",     "gradients=size=1280x720:rate=25",   15 ],
+      [ "testbilde-5", "brgen tv · mandelbrot",   "mandelbrot=size=1280x720:rate=25",   9 ],
+      [ "testbilde-6", "brgen tv · livssignal",   "life=size=1280x720:rate=25:mold=10", 11 ]
     ]
     videos = cards.map do |slug, label, source, secs|
       mp4 = File.join(out, "#{slug}.mp4")
@@ -110,7 +110,7 @@ namespace :tv do
       "city" => ENV.fetch("TV_CITY", "brgen.no"),
       "channel" => { "name" => "brgen testbilde", "slug" => "testbilde",
                      "description" => "Prøvesendinger mens kanalene fylles." },
-      "videos" => videos,
+      "videos" => videos
     }
     File.write(File.join(out, "manifest.yml"), manifest.to_yaml)
     puts "tv:starter_pack: #{videos.size} test cards + manifest -> #{out}"

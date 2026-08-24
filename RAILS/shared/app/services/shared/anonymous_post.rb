@@ -26,7 +26,7 @@ module Shared
     def remaining
       return unless guest?
 
-      [LIMIT - quota.post_count, 0].max
+      [ LIMIT - quota.post_count, 0 ].max
     end
 
     private
@@ -51,7 +51,7 @@ module Shared
     end
 
     def quota
-      @quota ||= AnonymousPostQuota.find_or_create_by!(fingerprint: fingerprint)
+      @quota ||= AnonymousPostQuota.find_or_create_by!(fingerprint:)
     end
   end
 end

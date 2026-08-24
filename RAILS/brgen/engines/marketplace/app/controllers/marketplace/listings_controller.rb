@@ -38,10 +38,10 @@ class Marketplace::ListingsController < Marketplace::BaseController
     scope = scope.where("price_cents <= ?", (params[:max_price].to_f * 100).to_i) if params[:max_price].present?
     @sort = %w[recent price_low price_high].include?(params[:sort]) ? params[:sort] : "recent"
     sorted = case @sort
-             when "price_low"  then scope.order(price_cents: :asc)
-             when "price_high" then scope.order(price_cents: :desc)
-             else scope.recent
-             end
+    when "price_low"  then scope.order(price_cents: :asc)
+    when "price_high" then scope.order(price_cents: :desc)
+    else scope.recent
+    end
     @pagy, @listings = pagy(sorted)
     @listing_distances = listing_distances(@listings, @search_lat, @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)

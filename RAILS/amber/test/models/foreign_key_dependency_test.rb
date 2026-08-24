@@ -88,7 +88,7 @@ class ForeignKeyDependencyTest < ActiveSupport::TestCase
     "User -> Shared::ReviewCase (reporter_id)",
     "User -> Shared::ReviewCase (reviewer_id)",
     "User -> WardrobeItem (user_id)",
-    "User -> WearLog (user_id)",
+    "User -> WearLog (user_id)"
   ].freeze
 
   def uncovered_foreign_keys

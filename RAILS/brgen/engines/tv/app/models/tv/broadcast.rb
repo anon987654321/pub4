@@ -10,7 +10,7 @@ class Tv::Broadcast < ApplicationRecord
   has_one_attached :thumbnail
   process_media_variants :thumbnail, variants: {
     poster: { resize_to_limit: [ 1_280, 720 ], format: :webp },
-    thumb: { resize_to_limit: [ 480, 270 ], format: :webp },
+    thumb: { resize_to_limit: [ 480, 270 ], format: :webp }
   }
 
   validates :title, presence: true

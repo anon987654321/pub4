@@ -11,7 +11,7 @@ class WeeklyDealsJobTest < ActiveSupport::TestCase
       subject: "Bergen — picks worth your attention",
       lede: "A handful of offers we would actually click ourselves.",
       stories: [],
-      deals: [{ "title" => "Deal", "url" => "https://example.com", "description" => "Good", "price" => "10", "currency" => "NOK", "merchant" => "Shop", "image_url" => "" }]
+      deals: [ { "title" => "Deal", "url" => "https://example.com", "description" => "Good", "price" => "10", "currency" => "NOK", "merchant" => "Shop", "image_url" => "" } ]
     )
     EmailSubscription.create!(
       email: "deals@example.com",

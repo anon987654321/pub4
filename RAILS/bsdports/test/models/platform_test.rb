@@ -21,7 +21,7 @@ class PlatformTest < ActiveSupport::TestCase
   # `openbsd`, so a uniqueness failure cannot be read as a format one.
   test "a slug is lowercase alphanumeric with no separators" do
     %w[freebsd netbsd2].each { |slug| assert Platform.new(name: "x", slug:).valid?, "#{slug} refused" }
-    ["free-bsd", "free_bsd", "FreeBSD", "free bsd"].each do |slug|
+    [ "free-bsd", "free_bsd", "FreeBSD", "free bsd" ].each do |slug|
       refute Platform.new(name: "x", slug:).valid?, "#{slug.inspect} accepted"
     end
   end
@@ -63,7 +63,7 @@ class PlatformTest < ActiveSupport::TestCase
     Port.create!(platform:, category:, name: "curl", pkgpath: "net/curl", version: "1")
     ImportRun.create!(platform:, status: "succeeded", started_at: Time.current)
 
-    assert_difference ["Port.count", "Category.count", "ImportRun.count"], -1 do
+    assert_difference [ "Port.count", "Category.count", "ImportRun.count" ], -1 do
       platform.destroy!
     end
   end

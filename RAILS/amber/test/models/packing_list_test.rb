@@ -62,7 +62,7 @@ class PackingListTest < ActiveSupport::TestCase
     item = Item.create!(user: @user, title: "Rain shell", category: "Outerwear")
     PackingListItem.create!(packing_list: record, item:)
 
-    assert_equal [item], PackingList.where(id: record.id).includes(:items).first.items.to_a
+    assert_equal [ item ], PackingList.where(id: record.id).includes(:items).first.items.to_a
   end
 
   test "destroying a list takes its entries and leaves the garments" do

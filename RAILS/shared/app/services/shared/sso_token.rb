@@ -87,7 +87,7 @@ module Shared
       return true if jti.empty?
 
       key = "#{NONCE_PREFIX}:#{payload["app"]}:#{jti}"
-      ttl = [payload["exp"].to_i - Time.now.to_i, 0].max + NONCE_GRACE
+      ttl = [ payload["exp"].to_i - Time.now.to_i, 0 ].max + NONCE_GRACE
       cache = nonce_cache
       return cache.write(key, true, unless_exist: true, expires_in: ttl) if cache
 

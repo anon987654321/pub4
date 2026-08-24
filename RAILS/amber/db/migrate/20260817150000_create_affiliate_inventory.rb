@@ -37,9 +37,9 @@ class CreateAffiliateInventory < ActiveRecord::Migration[8.1]
       t.string "source", limit: 32, null: false
       t.string "title", limit: 300, null: false
       t.datetime "updated_at", null: false
-      t.index ["last_seen_at"], name: "index_affiliate_products_on_last_seen_at"
-      t.index ["market", "category", "last_seen_at"], name: "index_affiliate_products_on_market_category_freshness"
-      t.index ["source", "external_id"], name: "index_affiliate_products_on_source_and_external_id", unique: true
+      t.index [ "last_seen_at" ], name: "index_affiliate_products_on_last_seen_at"
+      t.index [ "market", "category", "last_seen_at" ], name: "index_affiliate_products_on_market_category_freshness"
+      t.index [ "source", "external_id" ], name: "index_affiliate_products_on_source_and_external_id", unique: true
     end
     create_table "affiliate_vouchers", force: :cascade do |t|
       t.string "code", limit: 256
@@ -64,9 +64,9 @@ class CreateAffiliateInventory < ActiveRecord::Migration[8.1]
       t.text "track_url", null: false
       t.datetime "updated_at", null: false
       t.integer "voucher_type_id", default: 1, null: false
-      t.index ["market", "ends_at"], name: "index_affiliate_vouchers_on_market_and_ends_at"
-      t.index ["site_specific"], name: "index_affiliate_vouchers_on_site_specific"
-      t.index ["source", "external_id"], name: "index_affiliate_vouchers_on_source_and_external_id", unique: true
+      t.index [ "market", "ends_at" ], name: "index_affiliate_vouchers_on_market_and_ends_at"
+      t.index [ "site_specific" ], name: "index_affiliate_vouchers_on_site_specific"
+      t.index [ "source", "external_id" ], name: "index_affiliate_vouchers_on_source_and_external_id", unique: true
     end
     create_table "affiliate_conversions", force: :cascade do |t|
       t.datetime "created_at", null: false
@@ -92,11 +92,11 @@ class CreateAffiliateInventory < ActiveRecord::Migration[8.1]
       t.string "transaction_id", limit: 128
       t.datetime "updated_at", null: false
       t.string "visitor_id", limit: 128
-      t.index ["created_at"], name: "index_affiliate_conversions_on_created_at"
-      t.index ["epi"], name: "index_affiliate_conversions_on_epi"
-      t.index ["message_type_id"], name: "index_affiliate_conversions_on_message_type_id"
-      t.index ["order_number"], name: "index_affiliate_conversions_on_order_number"
-      t.index ["source", "transaction_id", "message_type_id"], name: "index_affiliate_conversions_on_source_txn_message", unique: true
+      t.index [ "created_at" ], name: "index_affiliate_conversions_on_created_at"
+      t.index [ "epi" ], name: "index_affiliate_conversions_on_epi"
+      t.index [ "message_type_id" ], name: "index_affiliate_conversions_on_message_type_id"
+      t.index [ "order_number" ], name: "index_affiliate_conversions_on_order_number"
+      t.index [ "source", "transaction_id", "message_type_id" ], name: "index_affiliate_conversions_on_source_txn_message", unique: true
     end
   end
 end

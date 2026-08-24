@@ -40,7 +40,7 @@ module Shared
         kind: :daily,
         city_name:,
         seed: curated.first,
-        fallback: default_daily_lede(city_name)
+        fallback: default_daily_lede(city_name),
       )
 
       Edition.new(
@@ -58,9 +58,9 @@ module Shared
         stories: curated.map { |story| story_struct(story) },
         deals: [],
         cta_label: "Open #{@app_name}",
-        cta_url: cta_url,
+        cta_url:,
         permission_line: permission_line(city_name),
-        edition_date: edition_today
+        edition_date: edition_today,
       )
     end
 
@@ -70,7 +70,7 @@ module Shared
         kind: :weekly_deals,
         city_name:,
         seed: curated.first,
-        fallback: default_deals_lede(city_name)
+        fallback: default_deals_lede(city_name),
       )
 
       Edition.new(
@@ -90,7 +90,7 @@ module Shared
         cta_label: "Browse deals",
         cta_url: nil,
         permission_line: permission_line(city_name),
-        edition_date: edition_today
+        edition_date: edition_today,
       )
     end
 
@@ -138,8 +138,8 @@ module Shared
         title: read_attr(story, :title).to_s,
         url: story_url(story),
         teaser: StrunkWhitePass.call(truncate_text(read_attr(story, :content).to_s, 140)),
-        meta: [read_attr(read_attr(story, :community), :name), read_attr(story, :author_name)].compact.join(" · "),
-        image_url: story_image_url(story)
+        meta: [ read_attr(read_attr(story, :community), :name), read_attr(story, :author_name) ].compact.join(" · "),
+        image_url: story_image_url(story),
       )
     end
 
@@ -151,7 +151,7 @@ module Shared
         price: deal.price.to_s,
         currency: deal.currency.to_s,
         merchant: deal.merchant.to_s,
-        image_url: deal.image_url.to_s
+        image_url: deal.image_url.to_s,
       )
     end
 
@@ -179,7 +179,7 @@ module Shared
     def story_image_url(story)
       return nil unless story.respond_to?(:image) && story.image.attached?
 
-      variant = story.image.variant(resize_to_limit: [800, 450], format: :webp)
+      variant = story.image.variant(resize_to_limit: [ 800, 450 ], format: :webp)
       Rails.application.routes.url_helpers.rails_representation_url(variant, **url_options)
     rescue StandardError => e
       Rails.logger.warn("newsletter url skipped: #{e.class}: #{e.message}")

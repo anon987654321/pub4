@@ -9,7 +9,7 @@ module ApplicationHelper
   IMAGE_PRESETS = {
     thumb: [ [ :thumb, 240 ] ],
     card: [ [ :thumb, 240 ], [ :card, 720 ] ],
-    detail: [ [ :thumb, 240 ], [ :card, 720 ] ],
+    detail: [ [ :thumb, 240 ], [ :card, 720 ] ]
   }.freeze
 
   def amber_ai_available?
@@ -69,7 +69,7 @@ module ApplicationHelper
             srcset: fallback_srcset,
             sizes: sizes,
             **image_options
-          ),
+          )
         ]
       )
     end

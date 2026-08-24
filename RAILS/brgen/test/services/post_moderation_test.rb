@@ -8,7 +8,7 @@ class PostModerationTest < ActiveSupport::TestCase
     "Hello http://cardff.uk,\r\n\r\nWe can place your website on Google 1st page",
     "Hello there,\r\n\r\nI would like to discuss AI SEO!",
     "Greetings from DreamProxies\r\n\r\nSuperb proxy offer: premium, fast and t",
-    "Для эффективного использования программы можно приобрести <a href=http",
+    "Для эффективного использования программы можно приобрести <a href=http"
   ].freeze
 
   def guest = @guest ||= User.create!(email_address: "guest_#{SecureRandom.hex(8)}@guest.local",

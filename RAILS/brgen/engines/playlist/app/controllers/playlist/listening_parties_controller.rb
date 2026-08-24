@@ -81,7 +81,7 @@ class Playlist::ListeningPartiesController < Playlist::BaseController
       code = params[:code].to_s.upcase
       return false unless code.present? && code == @party.join_code.to_s.upcase
 
-      session[:listening_party_ok] = Array(session[:listening_party_ok]) | [@party.id]
+      session[:listening_party_ok] = Array(session[:listening_party_ok]) | [ @party.id ]
       true
     end
-  end
+end

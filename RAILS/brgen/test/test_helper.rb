@@ -30,7 +30,7 @@ module ActiveSupport
     def build_takeaway_order(restaurant:, user:, item: nil, quantity: 1, **attrs)
       item ||= Takeaway::MenuItem.create!(
         restaurant: restaurant, name: "Dagens rett",
-        price_cents: [restaurant.min_order_cents.to_i, 12_000].max, available: true
+        price_cents: [ restaurant.min_order_cents.to_i, 12_000 ].max, available: true
       )
       order = Takeaway::Order.new(
         { user: user, restaurant: restaurant, delivery_address: "Torget 1" }.merge(attrs)

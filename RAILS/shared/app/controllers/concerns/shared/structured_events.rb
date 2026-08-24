@@ -10,7 +10,7 @@ module Shared
       if defined?(Rails.event) && Rails.event.respond_to?(:notify)
         Rails.event.notify(name, **payload)
       else
-        Rails.logger.info({ event: name, payload: payload }.to_json)
+        Rails.logger.info({ event: name, payload: }.to_json)
       end
     rescue StandardError => e
       Rails.logger.debug("structured event skipped: #{name} #{e.class}: #{e.message}")

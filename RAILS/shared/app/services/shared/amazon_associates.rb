@@ -77,7 +77,7 @@ module Shared
 
       # Same contract as Tradedoubler.deals: prefer table; live only as fallback.
       def deals(category: nil, limit: 8)
-        stored = stored_deals(category: category, limit: limit)
+        stored = stored_deals(category:, limit:)
         return stored if stored.any?
         return [] unless configured?
 
@@ -109,10 +109,10 @@ module Shared
 
         written = 0
         (1..pages).each do |page|
-          rows = search_items(keywords: category.presence || "deals", page: page)
+          rows = search_items(keywords: category.presence || "deals", page:)
           break if rows.empty?
 
-          rows.each { |row| written += 1 if upsert_row!(row, category: category) }
+          rows.each { |row| written += 1 if upsert_row!(row, category:) }
           break if rows.size < PAGE_SIZE
         end
         written
@@ -153,7 +153,7 @@ module Shared
             category: row[:category],
             market: Shared::AmazonMarketplace.country_for(row[:market]),
             in_stock: true,
-            placeholder: false
+            placeholder: false,
           )
           written += 1
         end
@@ -172,19 +172,19 @@ module Shared
             category: entry[:category] || entry["category"],
             image_url: entry[:image_url] || entry["image_url"],
             price_cents: entry[:price_cents] || entry["price_cents"],
-            currency: entry[:currency] || entry["currency"]
+            currency: entry[:currency] || entry["currency"],
           }
         else
           asin = entry.to_s.strip.upcase
           {
-            asin: asin,
+            asin:,
             title: "Amazon product #{asin}",
             description: "",
             market: default_market,
             category: nil,
             image_url: nil,
             price_cents: nil,
-            currency: nil
+            currency: nil,
           }
         end
       end
@@ -206,7 +206,7 @@ module Shared
           category: category.presence || row[:category],
           market: Shared::AmazonMarketplace.country_for(market),
           in_stock: row.fetch(:in_stock, true),
-          placeholder: false
+          placeholder: false,
         )
         true
       end
@@ -218,7 +218,7 @@ module Shared
           "partnerType" => "Associates",
           "marketplace" => marketplace_host,
           "itemPage" => page,
-          "resources" => DEFAULT_RESOURCES
+          "resources" => DEFAULT_RESOURCES,
         }
         parse_search(post_catalog("/catalog/v1/searchItems", payload))
       end
@@ -233,7 +233,7 @@ module Shared
           "partnerTag" => partner_tag,
           "partnerType" => "Associates",
           "marketplace" => marketplace_host,
-          "resources" => DEFAULT_RESOURCES
+          "resources" => DEFAULT_RESOURCES,
         }
         parse_items(post_catalog("/catalog/v1/getItems", payload))
       end
@@ -280,9 +280,9 @@ module Shared
         req["Content-Type"] = "application/json"
         req.body = JSON.generate(
           grant_type: "client_credentials",
-          client_id: client_id,
-          client_secret: client_secret,
-          scope: "creatorsapi::default"
+          client_id:,
+          client_secret:,
+          scope: "creatorsapi::default",
         )
         res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 8, read_timeout: 15) do |http|
           http.request(req)
@@ -291,7 +291,7 @@ module Shared
         token = data["access_token"]
         raise "Creators API token error: #{data['error'] || data['error_description'] || res.code}" if token.blank?
 
-        ttl = [(data["expires_in"].to_i - 60), 60].max
+        ttl = [ (data["expires_in"].to_i - 60), 60 ].max
         Rails.cache.write(TOKEN_CACHE_KEY, token, expires_in: ttl.seconds) if defined?(Rails) && Rails.cache
         token
       end
@@ -316,7 +316,7 @@ module Shared
 
         # Prefer API detailPageURL (already tagged). Fall back to marketplace helper.
         click = (item["detailPageURL"] || item["DetailPageURL"]).to_s
-        click = Shared::AmazonMarketplace.product_url(asin, market: market) if click.blank?
+        click = Shared::AmazonMarketplace.product_url(asin, market:) if click.blank?
 
         title = item.dig("itemInfo", "title", "displayValue") ||
                 item.dig("ItemInfo", "Title", "DisplayValue") ||
@@ -345,7 +345,7 @@ module Shared
           image_url: image.to_s,
           click_url: click.to_s,
           category: nil,
-          in_stock: availability !~ /unavailable|out of stock/i
+          in_stock: availability !~ /unavailable|out of stock/i,
         }
       end
 
@@ -358,7 +358,7 @@ module Shared
           image_url: row[:image_url].to_s,
           click_url: row[:click_url].to_s,
           merchant: row[:merchant].to_s.presence || "Amazon",
-          placeholder: false
+          placeholder: false,
         )
       end
     end

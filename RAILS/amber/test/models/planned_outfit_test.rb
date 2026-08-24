@@ -56,7 +56,7 @@ class PlannedOutfitTest < ActiveSupport::TestCase
     today = planned.tap(&:save!)
     later = planned(planned_date: Date.current + 3).tap(&:save!)
 
-    assert_equal [today, later], PlannedOutfit.upcoming.to_a,
+    assert_equal [ today, later ], PlannedOutfit.upcoming.to_a,
                  "today is upcoming — a plan for this morning is not history"
   end
 

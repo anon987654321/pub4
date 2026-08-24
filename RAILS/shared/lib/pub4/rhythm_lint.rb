@@ -63,7 +63,7 @@ module Pub4
 
     def scss_paths
       base = File.expand_path("../../app/assets/stylesheets", __dir__)
-      [File.join(base, "_tokens.scss"), File.join(base, "_dialect_tokens.scss")]
+      [ File.join(base, "_tokens.scss"), File.join(base, "_dialect_tokens.scss") ]
     end
 
     def to_px(value, unit)

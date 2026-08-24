@@ -76,7 +76,7 @@ class FrontendAuditorTest < Minitest::Test
   end
 
   def test_flags_main_landmarks_in_regular_views
-    assert_view_rule('<main><h1>Nested</h1></main>', :nested_main)
+    assert_view_rule("<main><h1>Nested</h1></main>", :nested_main)
   end
 
   def test_flags_duplicate_turbo_cache_control_directives
@@ -102,7 +102,7 @@ class FrontendAuditorTest < Minitest::Test
 
       assert pen_findings.any? { |f| f.rule == :product_pen && f.severity == :info }
       assert pen_findings.none? { |f| f.severity == :warning || f.severity == :error },
-             "pen CSS must not hygiene-fail: #{pen_findings.map { |f| [f.severity, f.rule] }.inspect}"
+             "pen CSS must not hygiene-fail: #{pen_findings.map { |f| [ f.severity, f.rule ] }.inspect}"
     end
   end
 

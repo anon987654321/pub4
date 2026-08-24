@@ -9,12 +9,14 @@ module Shared
       def tracks_activity(created: nil, updated: nil, source_vertical: "general", visibility: "public", actor: nil)
         if created
           after_commit on: :create do
-            record_activity!(created, actor: resolved_activity_actor(actor), source_vertical: source_vertical, visibility: visibility)
+            record_activity!(created, actor: resolved_activity_actor(actor), source_vertical:,
+visibility:)
           end
         end
         if updated
           after_commit on: :update do
-            record_activity!(updated, actor: resolved_activity_actor(actor), source_vertical: source_vertical, visibility: visibility)
+            record_activity!(updated, actor: resolved_activity_actor(actor), source_vertical:,
+visibility:)
           end
         end
       end
@@ -24,12 +26,12 @@ module Shared
       action = opts[:action] || event_name.to_s.tr(":", ".").underscore.tr("_", ".")
       Shared::DomainEvent.record!(
         actor: opts[:actor] || activity_actor,
-        action: action,
+        action:,
         subject: opts[:object] || self,
         source_vertical: opts[:source_vertical] || "general",
         locality: opts[:locality],
         visibility: opts[:visibility] || "public",
-        metadata: (opts[:metadata] || {}).merge(legacy_event_name: event_name.to_s)
+        metadata: (opts[:metadata] || {}).merge(legacy_event_name: event_name.to_s),
       )
     rescue StandardError => e
       Rails.logger.warn("activity skipped: #{e.class}: #{e.message}") if defined?(Rails)
@@ -70,9 +72,9 @@ module Shared
     def activity_actor
       own = if self.class.reflect_on_association(:user)&.belongs_to?
               strict_safe(:user)
-            elsif respond_to?(:user)
+      elsif respond_to?(:user)
               user
-            end
+      end
       return own if own.present?
 
       Current.user if defined?(Current) && Current.respond_to?(:user)

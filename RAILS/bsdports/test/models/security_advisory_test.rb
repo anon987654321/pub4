@@ -60,14 +60,14 @@ class SecurityAdvisoryTest < ActiveSupport::TestCase
     open_one = advisory(identifier: "CVE-2026-0002").tap(&:save!)
     advisory(identifier: "CVE-2026-0003", resolved_at: Time.current).save!
 
-    assert_equal [open_one], SecurityAdvisory.active.to_a
+    assert_equal [ open_one ], SecurityAdvisory.active.to_a
   end
 
   test "recent leads with the newest publication" do
     old = advisory(identifier: "a", published_at: 10.days.ago).tap(&:save!)
     fresh = advisory(identifier: "b", published_at: 1.hour.ago).tap(&:save!)
 
-    assert_equal [fresh, old], SecurityAdvisory.recent.to_a
+    assert_equal [ fresh, old ], SecurityAdvisory.recent.to_a
   end
 
   test "destroying a port takes its advisories with it" do

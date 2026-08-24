@@ -115,7 +115,7 @@ module Pub4
     end
 
     def expand(ref, offset, blocks)
-      refs = [ref]
+      refs = [ ref ]
       ref.scan(/\#\{\$(\w+)\}/).flatten.uniq.each do |var|
         block = blocks.select { |b| b[:var] == var && b[:range].cover?(offset) }.min_by { |b| b[:range].size }
         next unless block
@@ -148,17 +148,18 @@ module Pub4
     # is why a shared stylesheet needs the file in shared or in all three.
     def roots_for(path)
       tree = tree_of(path)
-      return [File.join(RAILS_ROOT, tree, "public"), File.join(RAILS_ROOT, "shared", "public"),
-              File.join(RAILS_ROOT, tree, "app/assets")] if APPS.include?(tree)
+      return [ File.join(RAILS_ROOT, tree, "public"), File.join(RAILS_ROOT, "shared", "public"),
+              File.join(RAILS_ROOT, tree, "app/assets") ] if APPS.include?(tree)
 
-      [File.join(RAILS_ROOT, "shared", "public"), File.join(RAILS_ROOT, "shared", "app/assets")]
+      [ File.join(RAILS_ROOT, "shared", "public"), File.join(RAILS_ROOT, "shared", "app/assets") ]
     end
 
     def satisfied_everywhere?(ref, path)
       return true if satisfied?(ref, roots_for(path))
       return false if APPS.include?(tree_of(path))
 
-      APPS.all? { |app| satisfied?(ref, [File.join(RAILS_ROOT, app, "public"), File.join(RAILS_ROOT, app, "app/assets")]) }
+      APPS.all? { |app|
+ satisfied?(ref, [ File.join(RAILS_ROOT, app, "public"), File.join(RAILS_ROOT, app, "app/assets") ]) }
     end
 
     # A root-absolute ref is a path under the root. A relative one is resolved
@@ -191,7 +192,7 @@ module Pub4
     def rel(path) = path.to_s.sub("#{RAILS_ROOT}/", "")
 
     def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [kind, findings.count { |f| f.kind == kind }] }
+      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
     end
 
     def over_baseline(findings = scan)

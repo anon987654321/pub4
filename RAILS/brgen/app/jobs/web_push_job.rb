@@ -26,7 +26,7 @@ class WebPushJob < ApplicationJob
       title: notification.try(:title).presence || "brgen",
       body: notification.try(:body).to_s,
       url: target_path(notification),
-      tag: "brgen-#{notification.kind}",
+      tag: "brgen-#{notification.kind}"
     }.to_json
 
     subscriptions.find_each do |subscription|

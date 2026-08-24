@@ -90,7 +90,7 @@ module Shared
         raise ArgumentError, "unknown icon #{key.inspect} — known: #{ICONS.join(', ')}"
       end
 
-      render(partial: "shared/icon", locals: { name: key, size: size, css_class: css_class })
+      render(partial: "shared/icon", locals: { name: key, size:, css_class: })
     end
 
     def reaction_glyph(kind)
@@ -216,7 +216,7 @@ module Shared
     def image_dimensions(source)
       meta = source.try(:metadata).presence || source.try(:blob).try(:metadata) || {}
       width, height = meta["width"], meta["height"]
-      width && height ? { width: width, height: height } : {}
+      width && height ? { width:, height: } : {}
     end
 
     # A localised relative time, whole. Fourteen views wrote
@@ -242,7 +242,7 @@ module Shared
       link_options = { class: attrs[:class], aria: attrs[:aria] }
       link_options[:data] = attrs[:data] if attrs[:data].present?
       link_to(attrs[:path], **link_options) do
-        safe_join([icon(attrs[:icon], size: 26), tag.span(attrs[:label])])
+        safe_join([ icon(attrs[:icon], size: 26), tag.span(attrs[:label]) ])
       end
     end
 
@@ -261,7 +261,7 @@ module Shared
           icon: item.icon,
           class: "nav-item#{" active" if item.active}",
           aria: item.aria || { label: item.label },
-          data: item.data
+          data: item.data,
         }
       else
         {
@@ -270,7 +270,7 @@ module Shared
           icon: item.fetch(:icon),
           class: "nav-item#{" active" if item[:active]}",
           aria: item[:aria] || { label: item[:label] },
-          data: item[:data]
+          data: item[:data],
         }
       end
     end

@@ -17,7 +17,7 @@ class GarmentTaxonomy
     "jacket" => "Outerwear",
     "coat" => "Outerwear",
     "accessory" => "Accessories",
-    "bag" => "Accessories",
+    "bag" => "Accessories"
   }.freeze
 
   WEATHER_BY_MATERIAL = {
@@ -25,7 +25,7 @@ class GarmentTaxonomy
     /linen|hemp/i => "warm",
     /cotton/i => "mild",
     /leather|suede/i => "dry",
-    /nylon|polyester|shell/i => "rain",
+    /nylon|polyester|shell/i => "rain"
   }.freeze
 
   FORMALITY_BY_CATEGORY = {
@@ -34,7 +34,7 @@ class GarmentTaxonomy
     "Shoes" => 0.5,
     "Accessories" => 0.35,
     "Tops" => 0.4,
-    "Bottoms" => 0.4,
+    "Bottoms" => 0.4
   }.freeze
 
   def self.normalize_category(value)

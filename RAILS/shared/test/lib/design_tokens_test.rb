@@ -43,7 +43,8 @@ class DesignTokensTest < Minitest::Test
 
       assert DesignTokens.sync_face_css!(path)
       body = File.read(path)
-      assert_includes body, DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.strip.split(";").first
+      assert_includes body,
+DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.strip.split(";").first
       refute_includes body, stale
     end
   end

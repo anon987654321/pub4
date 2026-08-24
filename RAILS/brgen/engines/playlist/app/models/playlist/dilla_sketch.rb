@@ -28,9 +28,9 @@ class Playlist::DillaSketch < ApplicationRecord
     mix = s.fetch(:mix_, nil) || s.fetch(:mix, nil)
     base = if pat || aud || mix
              { pat_: pat, aud_: aud, mix_: mix }
-           else
+    else
              s
-           end
+    end
     base.merge(
       style: (style.presence || base.dig(:mix_, :style) || "dilla"),
       bars: (bars.presence || base.dig(:mix_, :bars) || 12),

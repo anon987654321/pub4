@@ -29,8 +29,8 @@ class WellKnownController < ApplicationController
       aliases: [ user.actor_uri ],
       links: [
         { rel: "self", type: "application/activity+json", href: user.actor_uri },
-        { rel: "http://webfinger.net/rel/profile-page", type: "text/html", href: user.actor_uri },
-      ],
+        { rel: "http://webfinger.net/rel/profile-page", type: "text/html", href: user.actor_uri }
+      ]
     }, content_type: "application/jrd+json"
   end
 
@@ -38,8 +38,8 @@ class WellKnownController < ApplicationController
     render json: {
       links: [
         { rel: "http://nodeinfo.diaspora.software/ns/schema/2.1",
-          href: "https://#{request.host}/nodeinfo/2.1" },
-      ],
+          href: "https://#{request.host}/nodeinfo/2.1" }
+      ]
     }
   end
 
@@ -54,7 +54,7 @@ class WellKnownController < ApplicationController
       usage: { users: { total: federated_scope(city).count } },
       # A city is an instance. Saying so is the honest description of what this
       # server is, and it is what makes the city partitioning legible to peers.
-      metadata: { nodeName: city&.name || "brgen", nodeDescription: "A city." },
+      metadata: { nodeName: city&.name || "brgen", nodeDescription: "A city." }
     }
   end
 

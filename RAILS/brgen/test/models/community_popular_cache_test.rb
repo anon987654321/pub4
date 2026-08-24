@@ -48,7 +48,7 @@ class CommunityPopularCacheTest < ActiveSupport::TestCase
 
     # Distinct keys: the second tenant must compute rather than read the first's.
     assert_equal a.map(&:id), b.map(&:id), "same data expected in this fixture set"
-    assert Rails.cache.exist?(["communities/popular", "global", 10])
-    assert Rails.cache.exist?(["communities/popular", -1, 10])
+    assert Rails.cache.exist?([ "communities/popular", "global", 10 ])
+    assert Rails.cache.exist?([ "communities/popular", -1, 10 ])
   end
 end

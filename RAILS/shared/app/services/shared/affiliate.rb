@@ -38,13 +38,13 @@ module Shared
 
       # Read path for views. Table first, across every source at once.
       def deals(category: nil, limit: 8)
-        stored = stored_deals(category: category, limit: limit)
+        stored = stored_deals(category:, limit:)
         return stored if stored.any?
 
         # Nothing stored: give each configured network one chance to answer, in
         # priority order, and stop at the first that does.
         configured_networks.each do |network|
-          live = network.deals(category: category, limit: limit)
+          live = network.deals(category:, limit:)
           return live if live.any?
         end
 
@@ -68,7 +68,7 @@ module Shared
       # zero rather than raising, so a partially-approved setup still works.
       def import_all!(category: nil)
         networks.to_h do |network|
-          [ network.name.demodulize.underscore, network.configured? ? network.import!(category: category) : 0 ]
+          [ network.name.demodulize.underscore, network.configured? ? network.import!(category:) : 0 ]
         end
       end
 
@@ -83,7 +83,7 @@ module Shared
           image_url: product.image_url.to_s,
           click_url: product.click_url.to_s,
           merchant: product.merchant.to_s,
-          placeholder: product.placeholder
+          placeholder: product.placeholder,
         )
       end
     end

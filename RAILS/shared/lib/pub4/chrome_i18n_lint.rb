@@ -199,7 +199,7 @@ module Pub4
     module_function
 
     def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [kind, findings.count { |f| f.kind == kind }] }
+      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
     end
 
     def over_baseline(findings = scan)
@@ -280,7 +280,7 @@ module Pub4
     end
 
     def comment_or_opt_out?(lines, index)
-      window = lines[[index - 1, 0].max..index].join
+      window = lines[[ index - 1, 0 ].max..index].join
       window.include?(OPT_OUT) || window.lstrip.start_with?("<%#", "#")
     end
   end

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class WeeklyStatsJobTest < ActiveSupport::TestCase
-  test 'writes weekly stats to cache' do
+  test "writes weekly stats to cache" do
     written = nil
     cache = Object.new
     cache.define_singleton_method(:write) do |key, value, **options|
@@ -15,7 +15,7 @@ class WeeklyStatsJobTest < ActiveSupport::TestCase
       WeeklyStatsJob.perform_now
     end
 
-    assert_equal 'brgen:weekly_stats', written[:key]
+    assert_equal "brgen:weekly_stats", written[:key]
     assert_kind_of Hash, written[:value]
     assert written[:options].key?(:expires_in)
   end

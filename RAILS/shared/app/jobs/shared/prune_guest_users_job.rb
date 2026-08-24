@@ -110,7 +110,8 @@ module Shared
 
       return false unless load5 > LOAD_CEILING
 
-      Rails.logger.info("PruneGuestUsersJob: load #{load5} over #{LOAD_CEILING} (5-min), leaving the rest for the next run")
+      Rails.logger.info("PruneGuestUsersJob: load #{load5} over #{LOAD_CEILING} (5-min), " \
+                        "leaving the rest for the next run")
       true
     end
   end

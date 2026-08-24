@@ -64,7 +64,7 @@ class SiteVerification
           token = token.to_s.strip
           next unless network.match?(NETWORK) && token.match?(TOKEN)
 
-          [network, token]
+          [ network, token ]
         end
         acc[host] = entries.to_h if entries.any?
       end

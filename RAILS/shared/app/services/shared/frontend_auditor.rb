@@ -50,7 +50,7 @@ module Shared
     ALLOWED_IMPORTANT_PATTERN = /@media\s*\(\s*prefers-reduced-motion|@media\s+print/i
 
     def self.call(root:, changed_paths: nil)
-      new(root: root, changed_paths: changed_paths).call
+      new(root:, changed_paths:).call
     end
 
     def initialize(root:, changed_paths: nil)
@@ -93,32 +93,42 @@ module Shared
     end
 
     def scan_shell(path, body)
-      add(:error, path, :embedded_app_file, "Shell script appears to write tracked app files; extract embedded content") if body.match?(SHELL_EMBED_PATTERN)
-      add(:warning, path, :mixed_shebang, "Shell script has both bash and zsh shebangs") if body.include?("#!/bin/bash") && body.include?("#!/usr/bin/env zsh")
+      add(:error, path, :embedded_app_file,
+"Shell script appears to write tracked app files; extract embedded content") if body.match?(SHELL_EMBED_PATTERN)
+      add(:warning, path, :mixed_shebang,
+"Shell script has both bash and zsh shebangs") if body.include?("#!/bin/bash") && body.include?("#!/usr/bin/env zsh")
     end
 
     def scan_view(path, body)
       mailer_view = path.match?(MAILER_STYLE_PATH_PATTERN) || path.match?(MAILER_VIEW_PATH_PATTERN)
       unless mailer_view
-        add(:warning, path, :inline_css, "Inline <style> block found; extract to tracked stylesheet") if body.match?(INLINE_STYLE_PATTERN)
+        add(:warning, path, :inline_css,
+"Inline <style> block found; extract to tracked stylesheet") if body.match?(INLINE_STYLE_PATTERN)
       end
       if body.match?(INLINE_STYLE_ATTR_PATTERN) && !css_var_only_styles?(body) && !mailer_view
         add(:warning, path, :inline_style_attr, "Inline style= attribute found; move to application.scss")
       end
-      add(:warning, path, :inline_javascript, "Inline <script> block found; extract to tracked JavaScript") if body.match?(INLINE_SCRIPT_PATTERN)
+      add(:warning, path, :inline_javascript,
+"Inline <script> block found; extract to tracked JavaScript") if body.match?(INLINE_SCRIPT_PATTERN)
       add(:info, path, :chartjs, "Chart.js detected; protect config/data separation") if body.match?(CHART_PATTERN)
-      add(:warning, path, :bem_in_views, "BEM class in view — use bare tag targeting") if body.match?(BEM_IN_VIEW_PATTERN)
-      add(:warning, path, :utility_class_soup, "Utility class soup in view — move to SCSS") if body.match?(UTILITY_SOUP_PATTERN)
-      add(:warning, path, :anti_divitis, "Deep div nesting — flatten or use semantic landmarks") if body.match?(DIV_NESTING_PATTERN)
-      add(:warning, path, :invalid_paragraph_block, "Block element nested directly inside <p>; use a field or semantic wrapper") if body.match?(INVALID_PARAGRAPH_BLOCK_PATTERN)
-      add(:warning, path, :empty_landmark, "Empty landmark found; remove it until it contains meaningful content") if body.match?(EMPTY_LANDMARK_PATTERN)
+      add(:warning, path, :bem_in_views,
+"BEM class in view — use bare tag targeting") if body.match?(BEM_IN_VIEW_PATTERN)
+      add(:warning, path, :utility_class_soup,
+"Utility class soup in view — move to SCSS") if body.match?(UTILITY_SOUP_PATTERN)
+      add(:warning, path, :anti_divitis,
+"Deep div nesting — flatten or use semantic landmarks") if body.match?(DIV_NESTING_PATTERN)
+      add(:warning, path, :invalid_paragraph_block,
+"Block element nested directly inside <p>; use a field or semantic wrapper") if body.match?(INVALID_PARAGRAPH_BLOCK_PATTERN)
+      add(:warning, path, :empty_landmark,
+"Empty landmark found; remove it until it contains meaningful content") if body.match?(EMPTY_LANDMARK_PATTERN)
       if path.match?(%r{(?:\A|/)app/views/}) && !layout_path?(path) && body.match?(/<main\b/i)
         add(:warning, path, :nested_main, "View defines <main> inside the application layout; use section or div")
       end
       if body.scan(/turbo-cache-control/i).size > 1
         add(:warning, path, :duplicate_turbo_cache_control, "Multiple Turbo cache-control directives found")
       end
-      add(:warning, path, :skip_to_main, "Layout missing skip link to #main-content") if layout_missing_skip?(path, body)
+      add(:warning, path, :skip_to_main, "Layout missing skip link to #main-content") if layout_missing_skip?(path,
+body)
       add(:warning, path, :single_h1, "Multiple h1 tags in one view") if body.scan(/<h1\b/i).size > 1
     end
 
@@ -130,19 +140,31 @@ module Shared
         return
       end
 
-      add(:info, path, :keyframes, "Keyframes detected; mark restored animations as protected") if body.match?(KEYFRAMES_PATTERN)
-      add(:info, path, :font_face, "Font-face detected; keep font declarations in dedicated/protected file") if body.match?(FONT_FACE_PATTERN)
-      add(:warning, path, :important, "Use of !important detected; prefer cascade and specificity") if important_violations?(body)
-      add(:warning, path, :logical_properties, "Physical left/right properties detected; prefer logical properties") if body.match?(LOGICAL_PROPERTY_PATTERN)
+      add(:info, path, :keyframes,
+"Keyframes detected; mark restored animations as protected") if body.match?(KEYFRAMES_PATTERN)
+      add(:info, path, :font_face,
+"Font-face detected; keep font declarations in dedicated/protected file") if body.match?(FONT_FACE_PATTERN)
+      add(:warning, path, :important,
+"Use of !important detected; prefer cascade and specificity") if important_violations?(body)
+      add(:warning, path, :logical_properties,
+"Physical left/right properties detected; prefer logical properties") if body.match?(LOGICAL_PROPERTY_PATTERN)
       if css_file_size_violation?(path, body)
-        add(:warning, path, :css_file_size, "CSS file exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]} lines; split into smaller files")
+        add(:warning, path, :css_file_size,
+"CSS file exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]} lines; split into smaller files")
       end
-      add(:warning, path, :selector_specificity, "Selector exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes]} class selectors; flatten the selector chain") if selector_depths(body).any? { |depth| depth > Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes] }
-      add(:warning, path, :will_change, "will-change detected; restrict it to active animations or component connect/disconnect hooks") if body.match?(WILL_CHANGE_PATTERN)
-      add(:warning, path, :paint_cost, "box-shadow hover detected; prefer background-color, opacity, or transform for hover states") if body.match?(BOX_SHADOW_HOVER_PATTERN)
-      add(:warning, path, :flat_design, "box-shadow detected; this repo's design system is flat -- use a 1px border for separation instead") if body.match?(BOX_SHADOW_PATTERN)
-      add(:warning, path, :flat_design, "backdrop-filter/filter blur() detected; this repo's design system is flat -- use a solid background instead") if body.match?(BACKDROP_BLUR_PATTERN)
-      add(:info, path, :color_inherit, "color: inherit detected; good for preventing default link colors") if body.match?(COLOR_INHERIT_PATTERN)
+      add(:warning, path, :selector_specificity,
+"Selector exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes]} class selectors; flatten the selector chain") if selector_depths(body).any? { |depth|
+ depth > Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes] }
+      add(:warning, path, :will_change,
+"will-change detected; restrict it to active animations or component connect/disconnect hooks") if body.match?(WILL_CHANGE_PATTERN)
+      add(:warning, path, :paint_cost,
+"box-shadow hover detected; prefer background-color, opacity, or transform for hover states") if body.match?(BOX_SHADOW_HOVER_PATTERN)
+      add(:warning, path, :flat_design,
+"box-shadow detected; this repo's design system is flat -- use a 1px border for separation instead") if body.match?(BOX_SHADOW_PATTERN)
+      add(:warning, path, :flat_design,
+"backdrop-filter/filter blur() detected; this repo's design system is flat -- use a solid background instead") if body.match?(BACKDROP_BLUR_PATTERN)
+      add(:info, path, :color_inherit,
+"color: inherit detected; good for preventing default link colors") if body.match?(COLOR_INHERIT_PATTERN)
       scan_style_measurements(path, body)
     end
 
@@ -164,13 +186,16 @@ module Shared
         next unless unit == "ch"
 
         range = Shared::FrontendRuleSet::TYPOGRAPHY[:line_length]
-        add(:warning, path, :line_length, "max-width #{width}ch outside #{range[:min]}-#{range[:max]}ch prose range") if width < range[:min] || width > range[:max]
+        add(:warning, path, :line_length,
+"max-width #{width}ch outside #{range[:min]}-#{range[:max]}ch prose range") if width < range[:min] || width > range[:max]
       end
-      add(:info, path, :centered_prose, "Centered text block — left-align body copy per style.yml") if body.match?(CENTERED_PROSE_PATTERN)
+      add(:info, path, :centered_prose,
+"Centered text block — left-align body copy per style.yml") if body.match?(CENTERED_PROSE_PATTERN)
     end
 
     def scan_javascript(path, body)
-      add(:info, path, :chartjs, "Chart.js config detected; separate chart data from options") if body.match?(CHART_PATTERN)
+      add(:info, path, :chartjs,
+"Chart.js config detected; separate chart data from options") if body.match?(CHART_PATTERN)
     end
 
     def important_violations?(body)
@@ -184,7 +209,7 @@ module Shared
     end
 
     def add(severity, path, rule, message)
-      findings << Finding.new(severity: severity, path: path, rule: rule, message: message)
+      findings << Finding.new(severity:, path:, rule:, message:)
     end
 
     def css_var_only_styles?(body)

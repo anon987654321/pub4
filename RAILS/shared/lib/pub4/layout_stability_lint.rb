@@ -81,7 +81,7 @@ module Pub4
     def source_lines(path) = strip_comments(File.read(path, encoding: "UTF-8")).lines
 
     def opted_out?(lines, index)
-      [lines[index], index.positive? ? lines[index - 1] : nil]
+      [ lines[index], index.positive? ? lines[index - 1] : nil ]
         .compact.any? { |line| line.include?(OPT_OUT) }
     end
 
@@ -163,12 +163,12 @@ module Pub4
           # Six lines of lead-in. An ERB wrapper and the tag it wraps are
           # normally within two or three; six is slack for a conditional and a
           # blank line between them.
-          context = lines[[index - 6, 0].max...index].join
+          context = lines[[ index - 6, 0 ].max...index].join
 
           line.scan(MEDIA).flat_map do |tag|
             next [] if sized?(tag, context)
 
-            [Finding.new(rel(path), index + 1, "unreserved_media", tag.to_s.strip[0, 90])]
+            [ Finding.new(rel(path), index + 1, "unreserved_media", tag.to_s.strip[0, 90]) ]
           end
         end
       end
@@ -186,7 +186,7 @@ module Pub4
             named = LAYOUT_PROPS.select { |prop| value.match?(/(?<![-\w])#{Regexp.escape(prop)}(?![-\w])/) }
             next [] if named.empty?
 
-            [Finding.new(rel(path), index + 1, "layout_transition", named.join(", "))]
+            [ Finding.new(rel(path), index + 1, "layout_transition", named.join(", ")) ]
           end
         end
       end
@@ -202,7 +202,7 @@ module Pub4
 
           line = body[0, offset].count("\n") + 1
           family = block[/font-family\s*:\s*([^;]+);/, 1].to_s.strip
-          [Finding.new(rel(path), line, "font_without_display", family)]
+          [ Finding.new(rel(path), line, "font_without_display", family) ]
         end
       end
     end

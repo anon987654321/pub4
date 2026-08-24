@@ -54,7 +54,7 @@ module Shared
       # Without a transaction id, use order+message as a soft key so retries do
       # not explode the table, but still accept first write.
       key = {
-        source: source,
+        source:,
         transaction_id: attrs[:transaction_id].presence ||
                         "order:#{attrs[:order_number]}:msg:#{attrs[:message_type_id]}",
         message_type_id: attrs[:message_type_id],

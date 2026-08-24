@@ -184,12 +184,12 @@ class CiGuardTest < Minitest::Test
   end
 
   def test_load_over_the_limit_waits_and_proceeds_when_it_falls
-    readings = [9.0, 9.0, 0.5]
+    readings = [ 9.0, 9.0, 0.5 ]
     with_load_sequence(readings) do
       slept = nil
       err = capture_stderr { slept = record_sleeps { Pub4::CiGuard.check_load! } }
 
-      assert_equal [20, 20], slept, "must poll twice, then proceed on the third reading"
+      assert_equal [ 20, 20 ], slept, "must poll twice, then proceed on the third reading"
       assert_includes err, "waiting"
     end
   end
@@ -210,7 +210,7 @@ class CiGuardTest < Minitest::Test
 
   private
 
-  def with_load(value, &block) = with_load_sequence([value], &block)
+  def with_load(value, &block) = with_load_sequence([ value ], &block)
 
   # minitest/mock is unavailable to these bare-ruby tests, so the seam is a
   # singleton override. Saved and re-aliased rather than removed: module_function
@@ -282,7 +282,7 @@ class CiGuardTest < Minitest::Test
   end
 
   def with_env(vars)
-    previous = vars.to_h { |k, _| [k, ENV.fetch(k, nil)] }
+    previous = vars.to_h { |k, _| [ k, ENV.fetch(k, nil) ] }
     vars.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
     yield
   ensure

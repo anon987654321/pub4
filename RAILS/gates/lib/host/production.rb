@@ -148,7 +148,16 @@ module Deploy
         fail_app!(app_failures, "missing shared/lib/pub4/deploy_paths.rb") unless File.file?(paths)
         fail_app!(app_failures, "shared CI must use Pub4::CiGuard") unless ci_text.include?("Pub4::CiGuard")
         fail_app!(app_failures, "shared CI must skip importmap on VPS") unless ci_text.include?("unless vps_host")
-        fail_app!(app_failures, "shared CI must skip RuboCop on VPS") unless ci_text.match?(/rubocop.*unless vps_host|unless vps_host.*rubocop/m)
+        # RuboCop no longer skips on the VPS, so this asserts the opposite of what it
+        # used to. vm23 is where the deploy gate actually runs; skipping there left
+        # the only Ruby-style enforcement a local bin/ci nothing runs automatically,
+        # and this gate passed the whole time because line 139 tests for the word
+        # "rubocop" being present in the file — which it was, inside the branch that
+        # skipped it.
+        fail_app!(app_failures, "shared CI must run RuboCop on the VPS too") if
+          ci_text.match?(/rubocop[^\n]*unless vps_host|step\("Style: Ruby"[^\n]*unless vps_host/)
+        fail_app!(app_failures, "shared CI must lint engines/ and test/") unless
+          ci_text.match?(/rubocop.*db\/migrate test engines/m)
       else
         fail_app!(app_failures, "missing bin/ci")
       end

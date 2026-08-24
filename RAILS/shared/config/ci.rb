@@ -5,7 +5,12 @@ require "rbconfig"
 require_relative "../lib/pub4/ci_guard"
 
 ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
-ENV["BUNDLER_AUDIT_UPDATE"] ||= "0"
+# Refresh by default. This was "0", and the step below only passes --update
+# when it is "1", so a clean bundler-audit meant "clean against whatever
+# ruby-advisory-db shipped inside the installed gem" — a sentence about the
+# gem release date, not about this tree. Set it to 0 to opt out where there is
+# no network.
+ENV["BUNDLER_AUDIT_UPDATE"] ||= "1"
 ENV["NPM_CONFIG_CACHE"] ||= File.expand_path("~/.npm")
 monorepo_rails = "/home/dev/pub4/RAILS"
 ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "shared"))
@@ -31,12 +36,17 @@ Pub4::CiGuard.run! do
       ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "build_all_css.rb"),
       "/home/dev/pub4/RAILS/tools/build_all_css.rb",
       File.expand_path("../..", __dir__) + "/tools/build_all_css.rb",
-      File.expand_path("pub4-rails/RAILS/tools/build_all_css.rb", ENV["HOME"].to_s)
+      File.expand_path("pub4-rails/RAILS/tools/build_all_css.rb", ENV["HOME"].to_s),
     ].compact.find { |candidate| File.readable?(candidate) }
+    # A step that could not run is not a step that passed. These else branches
+    # used to `echo ... skipping`, which exits 0, so a checkout missing the CSS
+    # builder or a design lint reported a full green CI having measured none of
+    # them. RAILS/bin/premerge's header argues exactly this and implements
+    # exit-3 for it.
     if css_builder
       step "Styles: pub4 CSS", "#{RbConfig.ruby} #{css_builder} --app #{app}"
     else
-      step "Styles: pub4 CSS", "echo 'tools/build_all_css.rb not found in any known location -- skipping' >&2"
+      step "Styles: pub4 CSS", "echo 'tools/build_all_css.rb not found in any known location' >&2; exit 1"
     end
     pub4_lib = ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "shared/lib/pub4")
     pub4_lib ||= File.expand_path("../lib/pub4", __dir__)
@@ -53,14 +63,28 @@ Pub4::CiGuard.run! do
       if File.readable?(script)
         step "Design: #{label}", "#{RbConfig.ruby} #{script}"
       else
-        step "Design: #{label}", "echo '#{lint}.rb not found -- skipping' >&2"
+        step "Design: #{label}", "echo '#{lint}.rb not found at #{script}' >&2; exit 1"
       end
     end
     importmap_audit = %(bundle exec #{RbConfig.ruby} -e 'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])')
     step("Security: Importmap audit", importmap_audit) unless vps_host
-    rubocop = 'bundle exec rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
-    step("Style: Ruby", rubocop) unless vps_host
-    audit = ENV["BUNDLER_AUDIT_UPDATE"] == "1" ? "bundle exec bundler-audit check --update" : "bundle exec bundler-audit check"
+    # Two changes, and they belong together.
+    #
+    # `engines` and `test`: brgen's five mountable verticals live at
+    # engines/*/app, outside every root this listed, and no app's test/ was
+    # linted either. Those are the directories the misindented methods were
+    # found in — valid Ruby at the wrong nesting level, exactly where RuboCop
+    # was not pointed.
+    #
+    # No `unless vps_host`: vm23 is where the deploy gate actually runs, so
+    # skipping it there left the only enforcement a local bin/ci or bin/premerge
+    # that nothing runs automatically. It is a source-text check needing no
+    # browser and no database, so the reasons the system tests and the importmap
+    # audit are skipped on the VPS do not apply to it.
+    rubocop = 'bundle exec rubocop $(for d in app lib config db/migrate test engines; do [ -d "$d" ] && printf "%s " "$d"; done)'
+    step "Style: Ruby", rubocop
+    audit = "bundle exec bundler-audit check"
+    audit += " --update" if ENV["BUNDLER_AUDIT_UPDATE"] == "1"
     step "Security: Gem audit", audit
     step "Security: Brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
     step "Tests: DB prepare", "env RAILS_ENV=test bin/rails db:test:prepare"

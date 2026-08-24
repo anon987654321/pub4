@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # AN212: GDPR account deletion + export
 
 class AccountSettingsController < ::ApplicationController

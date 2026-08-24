@@ -1,9 +1,11 @@
 # frozen_string_literal: true
+
 module Shared
   class Engine < ::Rails::Engine
     isolate_namespace Shared
     # Use << not += — Rails 8.1 freezes path arrays during engine boot; += breaks later engines.
-    %w[app/models app/models/concerns app/services app/controllers app/controllers/concerns app/policies app/helpers app/jobs app/reflexes].each do |dir|
+    %w[app/models app/models/concerns app/services app/controllers app/controllers/concerns app/policies app/helpers
+app/jobs app/reflexes].each do |dir|
       config.autoload_paths << root.join(dir).to_s
     end
     # NO db/migrate path. Deliberate, and the deletion of a line that looked like
@@ -130,9 +132,8 @@ module Shared
         ActionDispatch::Static,
         public_path,
         index: nil,
-        headers: app.config.public_file_server.headers
+        headers: app.config.public_file_server.headers,
       )
     end
-
   end
 end

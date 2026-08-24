@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: cab41d1862ee67d0
+    digest: a19ee632b04f9e47
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -339,7 +339,7 @@ apps:
       maps/places#show:
       - "/places/:id"
   amber:
-    digest: 13eb14863db74495
+    digest: 7b455ac740de2b1f
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -512,7 +512,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   bsdports:
-    digest: 98730922f58a448a
+    digest: 45e048df6cb9d42b
     routes:
       rails/pwa#offline:
       - "/offline"

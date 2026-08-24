@@ -10,7 +10,7 @@ module Shared
       raise ArgumentError, "invalid value" unless value.in?([ -1, 1 ])
 
       votable.public_send(value == 1 ? :upvote_by : :downvote_by, current_user)
-      morph vote_selector, render(partial: vote_partial, locals: { votable: votable })
+      morph vote_selector, render(partial: vote_partial, locals: { votable: })
     end
 
     private

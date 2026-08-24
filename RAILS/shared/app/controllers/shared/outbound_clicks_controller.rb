@@ -34,7 +34,7 @@ module Shared
         surface: params[:surface],
         merchant: params[:merchant],
         epi: params[:epi],
-        user: Current.try(:user)
+        user: Current.try(:user),
       )
       head :no_content
     rescue StandardError => e

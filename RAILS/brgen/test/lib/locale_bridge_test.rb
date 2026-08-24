@@ -49,6 +49,6 @@ class LocaleBridgeTest < ActiveSupport::TestCase
 
   test "denver has one apex" do
     denvers = Brgen::DomainRegistry::ENTRIES.select { |entry| entry.city == "Denver" }
-    assert_equal ["denvr.us"], denvers.map(&:domain)
+    assert_equal [ "denvr.us" ], denvers.map(&:domain)
   end
 end

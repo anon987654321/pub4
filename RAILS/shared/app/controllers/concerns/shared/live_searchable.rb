@@ -19,7 +19,7 @@ module Shared
     end
 
     def live_search_scope(scope, columns:)
-      apply_live_search(scope, columns: columns)
+      apply_live_search(scope, columns:)
     end
 
     def apply_live_search(scope, columns:, vertical: nil, filters: {})
@@ -31,9 +31,9 @@ module Shared
       @live_search_result = Shared::LiveSearch.search(
         scope,
         query: live_search_query,
-        columns: columns,
-        vertical: vertical,
-        app: live_search_app_name
+        columns:,
+        vertical:,
+        app: live_search_app_name,
       )
       @search_suggestions = @live_search_result.suggestions
       @live_search_result.scope
@@ -51,12 +51,12 @@ module Shared
           streams << turbo_stream.replace(
             "search_suggestions",
             partial: "shared/search_suggestions",
-            locals: { suggestions: search_suggestions }
+            locals: { suggestions: search_suggestions },
           )
           streams << turbo_stream.replace(
             "live_search_results",
-            partial: partial,
-            locals: locals
+            partial:,
+            locals:,
           )
           render turbo_stream: streams
         end

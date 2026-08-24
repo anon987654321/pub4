@@ -12,7 +12,7 @@ module Shared
     class_methods do
       def process_media_variants(attachment_name, variants:)
         self.media_variant_definitions = media_variant_definitions.merge(
-          attachment_name.to_s => variants
+          attachment_name.to_s => variants,
         )
       end
     end
@@ -31,12 +31,12 @@ module Shared
           self.class.name,
           id,
           attachment_name,
-          variants: variants
+          variants:,
         )
       rescue StandardError => error
         Rails.logger.error(
           "MediaProcessable #{self.class.name}##{id} #{attachment_name}: " \
-          "#{error.class}: #{error.message}"
+          "#{error.class}: #{error.message}",
         )
       end
     end

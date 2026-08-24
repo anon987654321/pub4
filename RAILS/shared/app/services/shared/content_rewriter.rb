@@ -24,14 +24,16 @@ module Shared
       Result.new(
         title: StrunkWhitePass.call(raw[:title]),
         body: StrunkWhitePass.call(raw[:body]),
-        comments: Array(raw[:comments]).map { |comment| StrunkWhitePass.call(comment) }.reject { |comment| comment.to_s.strip.empty? }
+        comments: Array(raw[:comments]).map { |comment|
+ StrunkWhitePass.call(comment) }.reject { |comment| comment.to_s.strip.empty? },
       )
     rescue StandardError => error
       Rails.logger.warn("ContentRewriter fallback: #{error.class}: #{error.message}") if defined?(Rails)
       Result.new(
         title: StrunkWhitePass.call(title),
         body: StrunkWhitePass.call(body),
-        comments: Array(comments).map { |comment| StrunkWhitePass.call(comment) }.reject { |comment| comment.to_s.strip.empty? }
+        comments: Array(comments).map { |comment|
+ StrunkWhitePass.call(comment) }.reject { |comment| comment.to_s.strip.empty? },
       )
     end
 
@@ -69,13 +71,13 @@ module Shared
       {
         title: json["title"].presence || fallback_title,
         body: json["body"].presence || fallback_body,
-        comments: Array(json["comments"]).presence || fallback_comments
+        comments: Array(json["comments"]).presence || fallback_comments,
       }
     rescue JSON::ParserError
       {
         title: fallback_title,
         body: fallback_body,
-        comments: fallback_comments
+        comments: fallback_comments,
       }
     end
   end

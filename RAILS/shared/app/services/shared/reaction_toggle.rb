@@ -14,11 +14,12 @@ module Shared
 
     def call
       klass = defined?(::Reaction) ? ::Reaction : Shared::Reaction
-      reaction = klass.find_by(user: user, reactable: reactable, kind: kind)
+      reaction = klass.find_by(user:, reactable:, kind:)
       active = reaction.nil?
-      active ? klass.create!(user: user, reactable: reactable, kind: kind) : reaction.destroy!
+      active ? klass.create!(user:, reactable:, kind:) : reaction.destroy!
 
-      Shared::EventEmitter.call("shared.reaction.toggled", user_id: user.id, target: target_label, kind: kind, active: active) if defined?(Shared::EventEmitter)
+      Shared::EventEmitter.call("shared.reaction.toggled", user_id: user.id, target: target_label, kind:,
+active:) if defined?(Shared::EventEmitter)
       active
     end
 

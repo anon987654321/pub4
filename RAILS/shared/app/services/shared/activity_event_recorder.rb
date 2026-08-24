@@ -6,14 +6,14 @@ module Shared
       return unless defined?(::ActivityEvent)
 
       ::ActivityEvent.create!(
-        actor: actor,
-        event_name: event_name,
+        actor:,
+        event_name:,
         object_type: object.class.name,
         object_id: object.id,
-        source_vertical: source_vertical,
-        locality: locality,
-        visibility: visibility,
-        metadata: metadata
+        source_vertical:,
+        locality:,
+        visibility:,
+        metadata:,
       )
     end
   end

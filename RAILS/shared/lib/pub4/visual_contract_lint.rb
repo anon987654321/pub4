@@ -31,8 +31,8 @@ module Pub4
       "bsdports" => "bsdports/app/assets/builds/application.css",
     }.freeze
 
-    TEXT_PAIRS = [%w[--text --bg], %w[--text-secondary --surface], %w[--text-secondary --bg]].freeze
-    UI_PAIRS = [%w[--accent --bg], %w[--danger --bg]].freeze
+    TEXT_PAIRS = [ %w[--text --bg], %w[--text-secondary --surface], %w[--text-secondary --bg] ].freeze
+    UI_PAIRS = [ %w[--accent --bg], %w[--danger --bg] ].freeze
 
     INTERACTIVE_SELECTOR = /\ba\b|button|\.btn|link|tab|chip|badge|action|:hover|:focus|active|vote|toggle|nav|pill|switch|control|icon|spinner|progress|ring|cursor|caret|brand|logo|accent|input|select|textarea|summary/i
 
@@ -58,15 +58,17 @@ module Pub4
     end
 
     def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [kind, findings.count { |f| f.kind == kind }] }
+      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
     end
 
     def run
       findings = scan
       over = counts(findings).select { |kind, count| count > BASELINES.fetch(kind) }
-      counts(findings).each { |kind, count| puts "visual_contract_lint: #{kind} #{count} (baseline #{BASELINES.fetch(kind)})" }
+      counts(findings).each { |kind, count|
+ puts "visual_contract_lint: #{kind} #{count} (baseline #{BASELINES.fetch(kind)})" }
       findings.each { |f| puts "  #{f.kind} #{f.file}: #{f.detail}" }
-      over.each { |kind, count| warn "visual_contract_lint: #{kind} #{count} exceeds baseline #{BASELINES.fetch(kind)}" }
+      over.each { |kind, count|
+ warn "visual_contract_lint: #{kind} #{count} exceeds baseline #{BASELINES.fetch(kind)}" }
       over.empty?
     end
 
@@ -79,7 +81,7 @@ module Pub4
 
         css = File.read(path, encoding: "UTF-8")
         tokens = root_tokens(css)
-        pairs = TEXT_PAIRS.map { |p| p + [4.5] } + UI_PAIRS.map { |p| p + [3.0] }
+        pairs = TEXT_PAIRS.map { |p| p + [ 4.5 ] } + UI_PAIRS.map { |p| p + [ 3.0 ] }
         base = pairs.filter_map do |fg, bg, min|
           ratio = ratio_for(tokens, fg, bg)
           next unless ratio && ratio < min
@@ -104,7 +106,8 @@ module Pub4
       winners.filter_map do |vertical, hex|
         ratio = contrast_ratio(hex, surface)
         next unless ratio < 3.0
-        Finding.new("low_contrast", rel, "vertical-#{vertical} accent #{hex} on #{surface} = #{ratio.round(2)}:1 (needs 3:1)")
+        Finding.new("low_contrast", rel,
+"vertical-#{vertical} accent #{hex} on #{surface} = #{ratio.round(2)}:1 (needs 3:1)")
       end
 end
 
@@ -132,14 +135,14 @@ end
     end
 
     def contrast_ratio(hex_a, hex_b)
-      la, lb = [relative_luminance(hex_a), relative_luminance(hex_b)].sort.reverse
+      la, lb = [ relative_luminance(hex_a), relative_luminance(hex_b) ].sort.reverse
       (la + 0.05) / (lb + 0.05)
     end
 
     def relative_luminance(hex)
       hex = hex.delete("#")
       hex = hex.chars.map { |c| c * 2 }.join if hex.size == 3
-      r, g, b = [hex[0, 2], hex[2, 2], hex[4, 2]].map do |channel|
+      r, g, b = [ hex[0, 2], hex[2, 2], hex[4, 2] ].map do |channel|
         c = channel.to_i(16) / 255.0
         c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055)**2.4
       end

@@ -43,7 +43,7 @@ module Pub4
         lines = File.readlines(path, encoding: "UTF-8")
         lines.each_with_index do |line, i|
           next unless line.match?(PATTERN)
-          window = lines[[i - 1, 0].max..[i + 2, lines.size - 1].min].join
+          window = lines[[ i - 1, 0 ].max..[ i + 2, lines.size - 1 ].min].join
           next if window.include?(OPT_OUT)
           next if window.include?("empty_state")
           next if window.include?("link_to") || window.include?("href=")

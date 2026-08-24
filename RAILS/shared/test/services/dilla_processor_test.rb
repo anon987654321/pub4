@@ -9,12 +9,12 @@ require_relative "../../app/services/shared/dilla_processor"
 # run_with_timeout must free the worker and kill the child instead of blocking.
 class DillaProcessorTest < Minitest::Test
   def test_successful_command_returns_true
-    ok = Shared::DillaProcessor.run_with_timeout({}, [RbConfig.ruby, "-e", "STDOUT.puts 'done'"])
+    ok = Shared::DillaProcessor.run_with_timeout({}, [ RbConfig.ruby, "-e", "STDOUT.puts 'done'" ])
     assert_equal true, ok
   end
 
   def test_failing_command_returns_false
-    ok = Shared::DillaProcessor.run_with_timeout({}, [RbConfig.ruby, "-e", "exit 1"])
+    ok = Shared::DillaProcessor.run_with_timeout({}, [ RbConfig.ruby, "-e", "exit 1" ])
     assert_equal false, ok
   end
 
@@ -27,7 +27,7 @@ class DillaProcessorTest < Minitest::Test
   def test_hung_command_times_out_quickly_instead_of_blocking
     with_env("DILLA_SH_TIMEOUT" => "1") do
       started = Time.now
-      ok = Shared::DillaProcessor.run_with_timeout({}, [RbConfig.ruby, "-e", "sleep 30"])
+      ok = Shared::DillaProcessor.run_with_timeout({}, [ RbConfig.ruby, "-e", "sleep 30" ])
       elapsed = Time.now - started
 
       assert_equal false, ok, "a render past the timeout must fail, not succeed"
@@ -38,7 +38,7 @@ class DillaProcessorTest < Minitest::Test
   private
 
   def with_env(overrides)
-    backup = overrides.keys.to_h { |key| [key, ENV[key]] }
+    backup = overrides.keys.to_h { |key| [ key, ENV[key] ] }
     overrides.each { |key, value| ENV[key] = value }
     yield
   ensure

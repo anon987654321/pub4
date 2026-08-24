@@ -11,7 +11,7 @@ class VippsCheckoutConfigTest < ActiveSupport::TestCase
   KEYS = %w[VIPPS_EPAYMENT_CLIENT_ID VIPPS_EPAYMENT_CLIENT_SECRET VIPPS_MSN
             VIPPS_SUBSCRIPTION_KEY VIPPS_API_BASE VIPPS_TEST_MODE].freeze
 
-  setup { @saved = KEYS.to_h { |k| [k, ENV[k]] }; KEYS.each { |k| ENV.delete(k) } }
+  setup { @saved = KEYS.to_h { |k| [ k, ENV[k] ] }; KEYS.each { |k| ENV.delete(k) } }
   teardown { @saved.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v } }
 
   def prod(&block)

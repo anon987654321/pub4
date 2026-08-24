@@ -23,7 +23,7 @@ class ListingExpiryTest < ActiveSupport::TestCase
   def listing(**attrs)
     Marketplace::Listing.create!({
       user: @seller, title: "Ting #{SecureRandom.hex(3)}", category: @category,
-      price_cents: 10_000, status: "active",
+      price_cents: 10_000, status: "active"
     }.merge(attrs))
   end
 

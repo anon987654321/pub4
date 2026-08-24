@@ -10,7 +10,7 @@ module Shared
         reporter: current_user,
         reviewable: @target,
         reason: params[:reason].presence || "other",
-        notes: params[:notes]
+        notes: params[:notes],
       )
 
       respond_to do |format|

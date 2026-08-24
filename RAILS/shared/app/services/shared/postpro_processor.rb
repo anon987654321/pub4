@@ -59,7 +59,7 @@ module Shared
           if attached.is_a?(ActiveStorage::Attached::Many) && replace
             attached.purge
           end
-          attached.attach(io: io, filename: filename, content_type: "image/jpeg")
+          attached.attach(io:, filename:, content_type: "image/jpeg")
         end
         true
       end

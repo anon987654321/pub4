@@ -68,7 +68,7 @@ module SchemaHelper
       "@type" => "CollectionPage",
       "name" => name,
       "url" => url,
-      "mainEntity" => item_list_schema(items, title: name, item_type: item_type),
+      "mainEntity" => item_list_schema(items, title: name, item_type:),
     }.compact
   end
 

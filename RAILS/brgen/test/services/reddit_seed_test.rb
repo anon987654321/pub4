@@ -24,7 +24,7 @@ class RedditSeedTest < ActiveSupport::TestCase
         "title" => "[r/bergen] Best kanelbolle?",
         "body" => "Looking for bakery tips downtown.",
         "url" => "https://www.reddit.com/r/bergen/comments/abc123/",
-        "top_comments" => [{ "author" => "u1", "body" => "Baker Hansen on Torget." }]
+        "top_comments" => [ { "author" => "u1", "body" => "Baker Hansen on Torget." } ]
       }
     ])
 
@@ -33,7 +33,7 @@ class RedditSeedTest < ActiveSupport::TestCase
       Shared::ContentRewriter::Result.new(
         title: "Best cinnamon bun downtown?",
         body: "Which bakery should I try near Torget?",
-        comments: ["Baker Hansen opens early.", "Get there before ten."]
+        comments: [ "Baker Hansen opens early.", "Get there before ten." ]
       )
     end
 
@@ -55,5 +55,4 @@ class RedditSeedTest < ActiveSupport::TestCase
   def stub_scrape(items)
     Scrape.define_singleton_method(:call) { |_url, **_kwargs| items }
   end
-
 end

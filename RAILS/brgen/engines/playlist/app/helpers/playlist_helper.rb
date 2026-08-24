@@ -13,7 +13,7 @@ module PlaylistHelper
     # Optional mix-in of recent hosted youtube/direct from the vertical (still pub4 lineage spirit)
     hosted = Playlist::Track
       .where(source_type: %w[youtube direct])
-      .where.not(source_url: [nil, ""])
+      .where.not(source_url: [ nil, "" ])
       .limit(8)
       .filter_map { |track| radio_track_from_source(track) }
 

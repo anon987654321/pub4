@@ -22,8 +22,8 @@ class TvIngestTest < ActiveSupport::TestCase
       "videos" => [
         { "title" => "Klipp én", "file" => "tiny.mp4", "thumbnail" => "tiny.png",
           "duration_seconds" => 1, "status" => "published" },
-        { "title" => "Klipp to", "file" => "tiny.mp4", "duration_seconds" => 1 },
-      ],
+        { "title" => "Klipp to", "file" => "tiny.mp4", "duration_seconds" => 1 }
+      ]
     }.to_yaml)
     ActsAsTenant.current_tenant = @city
     User.create!(email_address: "tvowner-#{SecureRandom.hex(4)}@brgen.no",

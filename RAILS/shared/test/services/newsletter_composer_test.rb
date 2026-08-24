@@ -11,13 +11,13 @@ class NewsletterComposerTest < Minitest::Test
       title: "New café on Torget",
       content: "I think that perhaps you should try the cinnamon bun.",
       community: OpenStruct.new(name: "Mat"),
-      author_name: "local"
+      author_name: "local",
     )
 
     edition = Shared::NewsletterComposer.daily(
       city_name: "Bergen",
-      stories: [story],
-      app_name: "Brgen"
+      stories: [ story ],
+      app_name: "Brgen",
     )
 
     assert_equal "Brgen", edition.app_name
@@ -36,10 +36,10 @@ class NewsletterComposerTest < Minitest::Test
       price: "499",
       currency: "NOK",
       merchant: "Norrøna",
-      image_url: "https://example.com/img.jpg"
+      image_url: "https://example.com/img.jpg",
     )
 
-    edition = Shared::NewsletterComposer.weekly_deals(city_name: "Bergen", deals: [deal])
+    edition = Shared::NewsletterComposer.weekly_deals(city_name: "Bergen", deals: [ deal ])
 
     assert_equal :weekly_deals, edition.kind
     assert_equal 1, edition.deals.size

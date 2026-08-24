@@ -4,7 +4,7 @@ class CreatePlatformsAndImportRuns < ActiveRecord::Migration[8.1]
   PLATFORMS = [
     { name: "OpenBSD", slug: "openbsd", tree_path: "/usr/ports", mirror_url: "ftp://ftp.openbsd.org/pub/OpenBSD" },
     { name: "FreeBSD", slug: "freebsd", tree_path: "/usr/ports", mirror_url: "ftp://ftp.freebsd.org/pub/FreeBSD" },
-    { name: "NetBSD", slug: "netbsd", tree_path: "/usr/pkgsrc", mirror_url: "ftp://ftp.netbsd.org/pub/pkgsrc" },
+    { name: "NetBSD", slug: "netbsd", tree_path: "/usr/pkgsrc", mirror_url: "ftp://ftp.netbsd.org/pub/pkgsrc" }
   ].freeze
 
   def up

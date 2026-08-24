@@ -24,7 +24,7 @@ class Post < ApplicationRecord
   has_one_attached :audio
   process_media_variants :image, variants: {
     card: { resize_to_limit: [ 800, 800 ], format: :webp },
-    hero: { resize_to_limit: [ 1_200, 1_200 ], format: :webp },
+    hero: { resize_to_limit: [ 1_200, 1_200 ], format: :webp }
   }
 
   belongs_to :user

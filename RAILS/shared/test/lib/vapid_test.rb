@@ -17,7 +17,7 @@ class VapidTest < Minitest::Test
   private
 
   def with_env(vars)
-    old = vars.keys.to_h { |k| [k, ENV[k]] }
+    old = vars.keys.to_h { |k| [ k, ENV[k] ] }
     vars.each { |k, v| ENV[k] = v }
     yield
   ensure

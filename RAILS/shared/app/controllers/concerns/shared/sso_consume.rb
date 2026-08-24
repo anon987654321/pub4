@@ -20,7 +20,7 @@ module Shared
 
       user = find_or_create_sso_user(
         email: payload["email"],
-        display_name: payload["display_name"]
+        display_name: payload["display_name"],
       )
       unless user
         redirect_to(sso_failure_path, alert: t("shared.flash.sso_session_failed", email: payload["email"]))

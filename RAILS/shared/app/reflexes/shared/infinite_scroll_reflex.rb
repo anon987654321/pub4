@@ -51,27 +51,27 @@ module Shared
     end
 
     def load_more
-      @pagy, @records = pagy(scope, page: page, request:)
+      @pagy, @records = pagy(scope, page:, request:)
       after_paginate
 
       morph :nothing
       cable_ready.insert_adjacent_html(
-        selector: selector,
-        position: position,
-        html: page_html
+        selector:,
+        position:,
+        html: page_html,
       ).broadcast
 
       if @pagy&.next
         cable_ready
-          .set_attribute(selector: selector, name: "data-next-page", value: @pagy.next)
+          .set_attribute(selector:, name: "data-next-page", value: @pagy.next)
           .broadcast
       else
-        cable_ready.remove(selector: selector).broadcast
+        cable_ready.remove(selector:).broadcast
       end
 
       # Always clear loading state for Hotwire/Stimulus integration
       cable_ready
-        .set_attribute(selector: selector, name: "data-loading", value: "false")
+        .set_attribute(selector:, name: "data-loading", value: "false")
         .broadcast
 
       # Dispatch for additional Stimulus/Hotwire listeners (e.g. re-init controllers)
@@ -143,7 +143,7 @@ module Shared
 
       wrapper = self.class.row_wrapper
       @records.each_with_index.map { |record, index|
-        row = wrap_row(render(partial: partial, locals: row_locals(record)), wrapper)
+        row = wrap_row(render(partial:, locals: row_locals(record)), wrapper)
         extra = after_row(record, slot_for(index))
         extra ? row + wrap_row(extra, wrapper) : row
       }.join

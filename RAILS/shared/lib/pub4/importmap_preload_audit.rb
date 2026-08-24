@@ -49,20 +49,20 @@ module Pub4
     # [[specifier, resolved_url], ...] for every pin that emits a
     # <link rel="modulepreload"> pointing off-site.
     def external_preloads(importmap, resolver:)
-      importmap.preloaded_module_packages(resolver: resolver)
-               .filter_map { |path, package| [package.name, path] if path.to_s.match?(EXTERNAL) }
+      importmap.preloaded_module_packages(resolver:)
+               .filter_map { |path, package| [ package.name, path ] if path.to_s.match?(EXTERNAL) }
     end
 
     # [[specifier, resolved_url], ...] for every pin resolving off-site at all,
     # preloaded or not.
     def external_pins(importmap, resolver:)
-      JSON.parse(importmap.to_json(resolver: resolver))
+      JSON.parse(importmap.to_json(resolver:))
           .fetch("imports", {})
-          .filter_map { |name, path| [name, path] if path.to_s.match?(EXTERNAL) }
+          .filter_map { |name, path| [ name, path ] if path.to_s.match?(EXTERNAL) }
     end
 
     def unexpected_external_pins(importmap, resolver:)
-      external_pins(importmap, resolver: resolver)
+      external_pins(importmap, resolver:)
         .reject { |name, _path| ALLOWED_EXTERNAL_PINS.include?(name) }
     end
   end

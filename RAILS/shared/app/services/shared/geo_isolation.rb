@@ -10,7 +10,7 @@ module Shared
 
         lat = coordinates[:latitude].to_f
         lng = coordinates[:longitude].to_f
-        { status: :secure, bounds: [lat.round(4), lng.round(4)] }
+        { status: :secure, bounds: [ lat.round(4), lng.round(4) ] }
       rescue StandardError => e
         { status: :error, message: e.message }
       end

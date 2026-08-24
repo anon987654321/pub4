@@ -28,7 +28,7 @@ namespace :affiliate do
   end
 
   desc "Seed curated Amazon ASINs into Shared::AffiliateProduct with correct marketplace tags (no API needed)"
-  task :amazon_seed, [:market] => :environment do |_, args|
+  task :amazon_seed, [ :market ] => :environment do |_, args|
     market = (args[:market].presence || ENV.fetch("AMAZON_MARKET", "SE")).upcase
     unless Shared::AmazonAssociates.tag_only_configured?(market)
       warn "No AMAZON_ASSOCIATE_TAG_#{Shared::AmazonMarketplace.country_for(market)} set — cannot tag links."

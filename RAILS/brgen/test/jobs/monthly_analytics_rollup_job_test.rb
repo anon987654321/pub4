@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class MonthlyAnalyticsRollupJobTest < ActiveSupport::TestCase
-  test 'writes monthly analytics rollup to cache' do
+  test "writes monthly analytics rollup to cache" do
     written = nil
     cache = Object.new
     cache.define_singleton_method(:write) do |key, value, **options|

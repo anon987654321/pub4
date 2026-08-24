@@ -30,7 +30,7 @@ module Pub4
     # between loading this file and running CI.
     MAX_LOAD = ENV.fetch("PUB4_CI_MAX_LOAD", "4").to_f
     TIMEOUT_S = Integer(ENV.fetch("PUB4_CI_TIMEOUT", "3600"))
-    VPS_MARKERS = ["/etc/relayd.conf", "/var/db/pub4_vps"].freeze
+    VPS_MARKERS = [ "/etc/relayd.conf", "/var/db/pub4_vps" ].freeze
 
     module_function
 

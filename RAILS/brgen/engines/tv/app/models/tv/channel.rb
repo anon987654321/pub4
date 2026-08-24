@@ -18,11 +18,11 @@ class Tv::Channel < ApplicationRecord
   has_one_attached :banner
   has_one_attached :avatar
   process_media_variants :avatar, variants: {
-    thumb: { resize_to_limit: [ 240, 240 ], format: :webp },
+    thumb: { resize_to_limit: [ 240, 240 ], format: :webp }
   }
   process_media_variants :banner, variants: {
     hero: { resize_to_limit: [ 1_600, 600 ], format: :webp },
-    card: { resize_to_limit: [ 800, 300 ], format: :webp },
+    card: { resize_to_limit: [ 800, 300 ], format: :webp }
   }
 
   validates :name, :slug, presence: true

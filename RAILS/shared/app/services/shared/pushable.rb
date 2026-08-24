@@ -14,7 +14,7 @@ module Shared
           endpoint: sub.endpoint,
           p256dh:   sub.p256dh,
           auth:     sub.auth,
-          vapid:    Shared::Vapid.webpush_options
+          vapid:    Shared::Vapid.webpush_options,
         )
       rescue Webpush::ExpiredSubscription, Webpush::InvalidSubscription
         sub.destroy

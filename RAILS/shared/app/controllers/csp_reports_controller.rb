@@ -26,7 +26,7 @@ class CspReportsController < ActionController::API
       "csp_violation directive=#{report['violated-directive'].to_s.first(120)} " \
       "blocked=#{report['blocked-uri'].to_s.first(200)} " \
       "document=#{report['document-uri'].to_s.first(200)} " \
-      "line=#{report['line-number']}"
+      "line=#{report['line-number']}",
     )
     head :no_content
   end

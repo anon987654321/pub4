@@ -20,4 +20,4 @@ class Playlist::PartyMessagesController < Playlist::BaseController
       joined = Array(session[:listening_party_ok]).include?(@party.id)
       raise ActiveRecord::RecordNotFound unless host || joined
     end
-  end
+end

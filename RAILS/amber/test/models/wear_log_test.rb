@@ -55,7 +55,7 @@ class WearLogTest < ActiveSupport::TestCase
     yesterday = WearLog.create!(user: @user, item: @item, worn_on: 1.day.ago.to_date)
     later_entry = WearLog.create!(user: @user, item: @item, worn_on: 1.day.ago.to_date)
 
-    assert_equal [later_entry, yesterday, old], WearLog.recent.to_a
+    assert_equal [ later_entry, yesterday, old ], WearLog.recent.to_a
   end
 
   # --- the two counters -----------------------------------------------------
@@ -63,7 +63,7 @@ class WearLogTest < ActiveSupport::TestCase
   test "wearing an item writes a log and moves the counter together" do
     @item.update!(times_worn: 2)
 
-    assert_difference ["WearLog.count", "@item.reload.times_worn"], 1 do
+    assert_difference [ "WearLog.count", "@item.reload.times_worn" ], 1 do
       @item.wear!
     end
   end

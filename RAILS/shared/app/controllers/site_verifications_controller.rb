@@ -30,7 +30,7 @@ class SiteVerificationsController < ApplicationController
   # predates any consent the app asks for.
   skip_before_action :authenticate_user!, raise: false
   skip_before_action :verify_authenticity_token, raise: false
-  allow_browser versions: :modern, block: -> {} if respond_to?(:allow_browser)
+  allow_browser versions: :modern, block: -> { } if respond_to?(:allow_browser)
 
   NETWORK = /\A[a-z0-9_-]{2,32}\z/
   TOKEN   = /\A[A-Za-z0-9_.:-]{4,128}\z/

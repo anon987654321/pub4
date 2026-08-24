@@ -10,7 +10,8 @@ module Shared
   module DemoMedia
     extend self
 
-    def attach_remote!(record, attachment_name, seed:, width: 800, height: 600, content_type: "image/jpeg", catalog: nil)
+    def attach_remote!(record, attachment_name, seed:, width: 800, height: 600, content_type: "image/jpeg",
+catalog: nil)
       return false if skip_attach?
 
       return true if attach_from_catalog!(record, attachment_name, seed:, content_type:, catalog:)
@@ -62,8 +63,8 @@ module Shared
 
       record.public_send(attachment_name).attach(
         io: StringIO.new(io.read),
-        filename: filename,
-        content_type: content_type
+        filename:,
+        content_type:,
       )
       true
     end
@@ -75,9 +76,9 @@ module Shared
     def attach_from_file!(record, attachment_name, path:, seed:, content_type:)
       File.open(path, "rb") do |io|
         record.public_send(attachment_name).attach(
-          io: io,
+          io:,
           filename: "#{seed}#{File.extname(path)}",
-          content_type: content_type
+          content_type:,
         )
       end
       true
