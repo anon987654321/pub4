@@ -509,12 +509,13 @@ namespace :lint do
         "shared file reference, not a fact — agent_map and council both point at the chat view",
       "strategy: highest_priority_wins" =>
         "coincident strings for two different facts: limits.yml rule-conflict strategy, soul.yml conflict resolution",
-      "forbidden: [will, would, could, might]" =>
-        "open: soul absolute.anti_simulation is the source; voice.yml carries a shadowed fallback copy (rule_accessors.rb:26)",
-      "env: [REPLICATE_API_TOKEN, REPLICATE_API_KEY]" =>
-        "open: providers.yml and models.yml media_providers both declare the replicate key env vars",
-      "default_model: nvidia/nemotron-3-super-120b-a12b:free" =>
-        "open: soul negotiable + providers.yml openrouter + Master::OPENROUTER_DEFAULT all hold the default free model",
+      # The three "open:" entries that were here are gone rather than expired:
+      # each named a cross-file duplicate that has since been collapsed to one
+      # source. anti_simulation's forbidden list is soul.yml only now (the
+      # voice.yml shadow copy was deleted), and both replicate env vars and the
+      # default free model live in providers.yml alone. Verified one file each
+      # before removing — a stale exemption is a hole in this gate, which is why
+      # the task fails on one rather than ignoring it.
     }
     files = Dir.chdir(__dir__) { Dir.glob("data/**/*.yml").reject { |f| f.include?("baseline") } }
     dups = Master::Ground::ContentDedupScan.scan(root: __dir__, files: files)

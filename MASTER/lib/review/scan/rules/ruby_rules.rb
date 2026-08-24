@@ -5,6 +5,55 @@ module Master
     module Scan
       module Rules
 
+        # Assignment/branch/condition counts for one method, for ABC size.
+        #
+        # A module method rather than a lambda inside the rule block: counting
+        # them in place put the case arms five levels deep — rule block, walk
+        # lambda, def check, inner lambda, case — and LINEARITY caps nesting at
+        # four. The rule that reported it is defined in this file, so the file
+        # was failing the law it declares.
+        #
+        # Flat here on purpose: one guard, one dispatch to a lookup, no nesting
+        # to reintroduce.
+        module RubyRuleSupport
+          ASSIGNMENT_NODES = %i[
+            LocalVariableWriteNode InstanceVariableWriteNode ClassVariableWriteNode
+            GlobalVariableWriteNode ConstantWriteNode LocalVariableOperatorWriteNode
+            InstanceVariableOperatorWriteNode MultiWriteNode
+          ].freeze
+
+          CONDITION_NODES = %i[
+            IfNode UnlessNode WhileNode UntilNode CaseNode WhenNode AndNode OrNode RescueNode
+          ].freeze
+
+          # [assignments, branches, conditions] over the whole subtree.
+          def self.abc_counts(node)
+            counts = { a: 0, b: 0, c: 0 }
+            visit(node, counts)
+            [counts[:a], counts[:b], counts[:c]]
+          end
+
+          def self.visit(node, counts)
+            node.child_nodes.compact.each do |child|
+              next unless child.respond_to?(:child_nodes)
+
+              counts[bucket(child)] += 1 if bucket(child)
+              visit(child, counts)
+            end
+          end
+
+          # A CallNode ending in `=` is an assignment, not a branch — attr
+          # writers would otherwise inflate B for every setter call.
+          def self.bucket(node)
+            short = node.class.name.split("::").last.to_sym
+            return :a if ASSIGNMENT_NODES.include?(short)
+            return :c if CONDITION_NODES.include?(short)
+            return nil unless short == :CallNode
+
+            node.name.to_s.end_with?("=") ? :a : :b
+          end
+        end
+
         # Retired registry twins — each lives once, in law/:
         #   MIGRATION_ADD_REFERENCE_NO_FK, MIGRATION_FIND_OR_CREATE_BY, MIGRATION_REMOVE_COLUMN, PERCENT_LITERAL
         #   RATE_LIMITING_MISSING, STRICT_LOADING_MISSING, TRANSFORM_KEYS
@@ -144,25 +193,7 @@ module Master
           walk = lambda do |node|
             next unless node.respond_to?(:child_nodes)
             if node.is_a?(Prism::DefNode)
-              a = b = c = 0
-              inner = lambda do |n|
-                next unless n.respond_to?(:child_nodes)
-                case n
-                when Prism::LocalVariableWriteNode, Prism::InstanceVariableWriteNode,
-                     Prism::ClassVariableWriteNode, Prism::GlobalVariableWriteNode,
-                     Prism::ConstantWriteNode, Prism::LocalVariableOperatorWriteNode,
-                     Prism::InstanceVariableOperatorWriteNode, Prism::MultiWriteNode
-                  a += 1
-                when Prism::CallNode
-                  n.name.to_s.end_with?("=") ? a += 1 : b += 1
-                when Prism::IfNode, Prism::UnlessNode, Prism::WhileNode, Prism::UntilNode,
-                     Prism::CaseNode, Prism::WhenNode, Prism::AndNode, Prism::OrNode,
-                     Prism::RescueNode
-                  c += 1
-                end
-                n.child_nodes.compact.each { |child| inner.call(child) }
-              end
-              node.child_nodes.compact.each { |child| inner.call(child) }
+              a, b, c = RubyRuleSupport.abc_counts(node)
               abc = Math.sqrt(a**2 + b**2 + c**2)
               if abc > 40
                 findings << finding(line: node.location.start_line,

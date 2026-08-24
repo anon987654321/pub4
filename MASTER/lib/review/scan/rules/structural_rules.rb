@@ -392,32 +392,38 @@ module Master
             lines = code.to_s.lines
             findings = []
             visit(ast) do |node|
-              next unless node.is_a?(Prism::ClassNode)
-              public_defs = count_public_methods(node)
-              # Code lines, not span. The raw span charged for rationale
-              # comments, so a well-explained class breached while a stripped
-              # one passed — the counter DENSITY and lint:spine already
-              # retired, surviving here. Core::Constitution read 348 under it
-              # while holding 250 lines of code, and the self_violation halted
-              # every /through fix stage; the only "fix" the span offered was
-              # deleting the law's own reasoning.
-              line_count = CodeMetrics.method_code_lines(node, lines)
-              if public_defs > METHOD_LIMIT
-                findings << finding(
-                  line: node.location.start_line,
-                  message: "god class #{node.constant_path.slice} has #{public_defs} public methods (max #{METHOD_LIMIT}) — decompose",
-                )
-              elsif line_count > LINE_LIMIT
-                findings << finding(
-                  line: node.location.start_line,
-                  message: "god class #{node.constant_path.slice} is #{line_count} code lines (max #{LINE_LIMIT}) — split at responsibility boundaries",
-                )
-              end
+              breach = class_breach(node, lines)
+              findings << finding(line: node.location.start_line, message: breach) if breach
             end
             findings
           end
 
           private
+
+          # The message for a class that is too big, or nil for one that is not.
+          # Split out of check_ast because that method was 21 code lines against
+          # DENSITY's max of 20 — the same law this file's neighbours declare.
+          #
+          # Code lines, not span. The raw span charged for rationale comments, so
+          # a well-explained class breached while a stripped one passed — the
+          # counter DENSITY and lint:spine already retired, surviving here.
+          # Core::Constitution read 348 under it while holding 250 lines of code,
+          # and the self_violation halted every /through fix stage; the only
+          # "fix" the span offered was deleting the law's own reasoning.
+          def class_breach(node, lines)
+            return nil unless node.is_a?(Prism::ClassNode)
+
+            public_defs = count_public_methods(node)
+            name = node.constant_path.slice
+            if public_defs > METHOD_LIMIT
+              return "god class #{name} has #{public_defs} public methods (max #{METHOD_LIMIT}) — decompose"
+            end
+
+            line_count = CodeMetrics.method_code_lines(node, lines)
+            return nil unless line_count > LINE_LIMIT
+
+            "god class #{name} is #{line_count} code lines (max #{LINE_LIMIT}) — split at responsibility boundaries"
+          end
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)
