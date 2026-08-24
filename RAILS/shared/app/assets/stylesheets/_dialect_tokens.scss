@@ -197,7 +197,15 @@
   --surface-elevated: #f2f2f2;
   --search-bg: #f0f0f0;
   --text: #222222;
-  --text-secondary: #666666;
+/* #666666 -> #545454: the light twin of the #969696 fix in the dark set. On
+   this palette's own #f2f2f2 elevated surface it measured APCA Lc 71.0
+   against a 75 floor, and WCAG 5.13 against the AAA 7.0 style.yml declares.
+   #545454 clears both on all three grounds it lands on (white, #f8f8f8,
+   #f2f2f2) at Lc 86.3/80.6/78.6 and WCAG 7.57, and stays a clear step under
+   --text #222222. It became visible when markedsplass and takeaway were
+   pinned light — before that the gate was measuring them in dark, so this
+   whole palette was reported against grounds it never renders on. */
+--text-secondary: #545454;
   --border: #d9d9d9;
   --hover: color-mix(in srgb, var(--text) 8%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);

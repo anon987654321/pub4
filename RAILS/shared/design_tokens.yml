@@ -219,7 +219,10 @@ brgen_old_light:
   surface_elevated: "#f2f2f2"
   search_bg: "#f0f0f0"
   text: "#222222"
-  text_secondary: "#666666"
+  # #666666 -> #545454: APCA Lc 71.0 on this palette's own #f2f2f2 elevated
+  # surface against a 75 floor, WCAG 5.13 against AAA 7.0. #545454 clears both
+  # on white, #f8f8f8 and #f2f2f2 and stays under text #222222.
+  text_secondary: "#545454"
   border: "#d9d9d9"
   accent: "#1a1a1a"
   accent_hover: "#000000"

@@ -17,8 +17,14 @@
     Claiming the opt-out the shared system already provides fixes it without
     touching shared CSS. The explicit toggle is unaffected: it switches through
     `#dark-toggle:checked ~ .theme-root`, a different selector, so a visitor who
-    asks for light still gets light. Dark by default, light on request. %>
-<html lang="<%= Current.locale || I18n.locale %>" dir="ltr" data-theme="dark" class="chrome-hidden">
+    asks for light still gets light.
+
+    The value is per vertical, not a constant (operator, 2026-08-24). It was
+    hardcoded "dark" for every surface, so markedsplass, maps and takeaway --
+    the three that are designed light -- rendered on the dark palette while
+    their accents stayed tuned for the light one. ApplicationHelper#surface_theme
+    holds the mapping. %>
+<html lang="<%= Current.locale || I18n.locale %>" dir="ltr" data-theme="<%= surface_theme %>" class="chrome-hidden">
 <head>
   <meta charset="utf-8">
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>

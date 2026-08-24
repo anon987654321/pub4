@@ -142,6 +142,28 @@ module ApplicationHelper
     Current.subapp || inferred_vertical_from_controller
   end
 
+  # Which theme a surface is, decided per vertical rather than per visitor
+  # (operator, 2026-08-24). These are product decisions — markedsplass and
+  # takeaway are storefronts and read light, the media and social surfaces read
+  # dark — not preferences, so prefers-color-scheme does not get a vote.
+  #
+  # The layout used to hardcode data-theme="dark" for every surface, which
+  # pinned the three light verticals to the wrong palette: markedsplass measured
+  # a dark ground under the light tokens its own accents are tuned against.
+# Anything not listed inherits brgen's dark default.
+#
+# maps is NOT here, against the operator's list, and deliberately so until
+# that is settled: _vertical_maps_shell.scss pins the whole dialect dark on
+# purpose, because the MapLibre basemap is dark and letting shared components
+# follow the theme measured 2.44:1 on the place cards. Declaring the surface
+# light while its own stylesheet pins dark tokens produces a half-themed page
+# rather than a light one. Making maps light is a basemap decision first.
+LIGHT_VERTICALS = %i[marketplace takeaway].freeze
+
+  def surface_theme
+    LIGHT_VERTICALS.include?(active_vertical&.to_sym) ? "light" : "dark"
+  end
+
   def home_feed_following?
     Brgen::HomeFeed.following?(feed: params[:feed])
   end
