@@ -1,6 +1,2 @@
-# Top-level data/*.yml keys no code names, counted by tools/data_reach.rb.
-# A census with a ceiling, not a verdict — a generically-iterated file never
-# names its keys — but every silent-declaration defect this repo has found
-# (media_providers, soul default_model, languages %i[rails]) would have been
-# a +1 here on arrival. Down only; lower with --ratchet.
-unnamed: 54
+---
+unnamed: 53

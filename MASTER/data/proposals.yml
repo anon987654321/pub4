@@ -1,0 +1,134 @@
+---
+# The refutation ledger.
+#
+# A refinement loop that cannot record "tried this, it was wrong, here is why"
+# re-proposes the same thing every round and never plateaus. That is the whole
+# reason this file exists, and it is the difference between a loop that
+# converges and one that oscillates.
+#
+# Measured on the session that built it: of roughly twenty findings checked,
+# five were refuted — and every one of them looked correct on a first read.
+#
+# States:
+#   open     — proposed, not yet acted on
+#   landed   — done, with the commit that did it
+#   refuted  — checked and wrong, with the reason. NEVER delete a refuted row:
+#              deleting it is what lets the next round propose it again.
+#
+# `id` is stable and hand-written; a generated one changes when the finder does
+# and the ledger loses its memory.
+proposals:
+  - id: solidus-marketplace-is-inert
+    tree: RAILS
+    state: refuted
+    claim: "Brgen::SolidusMarketplace has no readers and cites a doc that does not exist"
+    reason: >
+      Wrong on both counts, and the grep that produced it ran from the wrong
+      directory. engines/marketplace/config/routes.rb mounts Spree::Core::Engine
+      behind .mountable?, brgen/docs/SOLIDUS_MARKETPLACE.md exists, apps.yml
+      tracks it, and test/solidus_staging_contract_test.rb passes at HEAD. The
+      wiring was deleted and restored inside one session.
+    refuted_by: RAILS/test/solidus_staging_contract_test.rb
+
+  - id: spark-joy-should-default-false
+    tree: RAILS
+    state: refuted
+    claim: "items.spark_joy is a nilable boolean and should default to false"
+    reason: >
+      It is genuinely three-state. WardrobeAi#heuristic_joy branches
+      `== true` / `== false` / else, and TasteRanker scores nil at 0.5 against
+      false at 0.0 — nil means "not asked yet", which is a different fact from
+      "no". Collapsing it stopped a high-wear item reading as a keeper.
+    refuted_by: RAILS/amber/test/services/wardrobe_ai_test.rb
+
+  - id: view-event-completed-should-default-false
+    tree: RAILS
+    state: refuted
+    claim: "tv_view_events.completed is a nilable boolean and should default to false"
+    reason: >
+      Same shape. Tv::ViewEvent#record_progress! writes
+      `limit ? seconds >= limit * COMPLETION_THRESHOLD : completed`, so a video
+      with no duration leaves it nil on purpose: "we cannot know whether this
+      finished" is not "it did not finish".
+    refuted_by: RAILS/brgen/engines/tv/test/models/tv/view_event_test.rb
+
+  - id: affiliate-tables-missing-fk-indexes
+    tree: RAILS
+    state: refuted
+    claim: "affiliate_conversions and friends have six unindexed foreign keys"
+    reason: >
+      None of them is a foreign key. They are Tradedoubler's identifiers from
+      the feed — product_id is a string(128), program_id a string(64),
+      visitor_id a string. The detector keyed on the `_id` suffix.
+    refuted_by: RAILS/brgen/db/schema.rb
+
+  - id: outbound-clicks-user-id-needs-an-index
+    tree: RAILS
+    state: refuted
+    claim: "outbound_clicks.user_id is a real foreign key with no index"
+    reason: >
+      It is real and it is unindexed, and nothing filters on it: every read in
+      PartnerAttributionReport goes through created_at, merchant or epi. An
+      index here is write cost on the fastest-growing table in the tree, bought
+      for no query.
+    refuted_by: RAILS/brgen/app/services/partner_attribution_report.rb
+
+  - id: dependent-destroy-missing-on-84-associations
+    tree: RAILS
+    state: refuted
+    claim: "84 has_many/has_one declarations carry no dependent:"
+    reason: >
+      Shared::CascadingAssociationsLoad wraps has_many/has_one at the class
+      level, so the census counted declarations whose behaviour is supplied by
+      the concern rather than by the line.
+    refuted_by: RAILS/shared/app/models/concerns/shared/cascading_associations_load.rb
+
+  - id: schema-org-builders-are-unreachable
+    tree: RAILS
+    state: refuted
+    claim: "sixteen schema.org builders in SchemaHelper have no caller"
+    reason: >
+      build_schema dispatches to them by type, and json_ld_for is called from
+      fourteen views across brgen, its engines and amber. Only recipe_schema and
+      generic_schema are genuinely unemitted.
+    refuted_by: RAILS/shared/app/helpers/schema_helper.rb
+
+  - id: rubocop-config-missing-in-bsdports
+    tree: RAILS
+    state: refuted
+    claim: "bsdports has the rubocop gem and no committed .rubocop.yml"
+    reason: >
+      All four .rubocop.yml files are tracked. The listing that produced this
+      used a glob that expanded in the wrong directory.
+    refuted_by: git ls-files RAILS/bsdports/.rubocop.yml
+
+  - id: loc-budget-has-no-caller
+    tree: MASTER
+    state: landed
+    claim: "rake loc_budget fails on nine of twelve subsystems and nothing calls it"
+    landed_by: 6e964bbce
+
+  - id: cohesion-reads-only-prefix-families
+    tree: MASTER
+    state: landed
+    claim: "cohesion.rb groups on split(_).first, so it cannot see MASTER's own suffix families"
+    landed_by: 033b854ef
+
+  - id: ground-is-a-76-file-drawer
+    tree: MASTER
+    state: open
+    claim: "lib/ground holds four families — policy (5), memory (3), tool (3), map (3) — that want subdirectories"
+    note: >
+      Plans are generated: COHESION_DIR=lib/ground rake lint:cohesion. Each is a
+      constant rename under Zeitwerk, so it wants one family per commit and a
+      clean shared checkout, not a sweep.
+
+  - id: de-fr-nl-locales-are-five-keys
+    tree: RAILS
+    state: open
+    claim: "brgen ships de/fr/nl locale files with 5 keys against en/nb's 1634"
+    note: >
+      LocaleBridge routes six countries' city domains to them, so those pages
+      render five translated words and 1629 English ones. Needs a decision:
+      complete them, or delete them and let those countries fall to :en
+      deliberately.

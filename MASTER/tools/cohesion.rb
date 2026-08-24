@@ -268,14 +268,18 @@ module Pub4
 
     SKIP = %r{/(vendor|node_modules|tmp|log|\.git|fixtures|dummy)/}
 
-    def census_dirs
-      ROOTS.flat_map { |root| Dir.glob(File.join(REPO, root, "**/")) + [File.join(REPO, root)] }
+    # A census that reports the repo-wide number under every tree's heading is
+# four copies of one fact wearing four names. --tree scopes it.
+def roots_for(tree) = tree ? ROOTS.select { |r| r == tree || r.start_with?("#{tree}/") } : ROOTS
+
+def census_dirs(tree = nil)
+      roots_for(tree).flat_map { |root| Dir.glob(File.join(REPO, root, "**/")) + [File.join(REPO, root)] }
            .map { |d| d.chomp("/") }.uniq.reject { |d| d.match?(SKIP) }
            .select { |d| Dir.glob(File.join(d, "*.rb")).size >= MIN_FAMILY }
     end
 
-    def census
-      census_dirs.sort.filter_map do |dir|
+    def census(tree = nil)
+      census_dirs(tree).sort.filter_map do |dir|
         plans = plans_for(dir)
         [dir.sub("#{REPO}/", "").chomp("/"), plans] unless plans.empty?
       end
@@ -297,10 +301,12 @@ module Pub4
       File.exist?(CENSUS) ? YAML.safe_load_file(CENSUS).fetch("families", 0) : 0
     end
 
-    def run_census(ratchet: false, list: false)
-      rows = census
+    def run_census(ratchet: false, list: false, tree: nil)
+      rows = census(tree)
       total = rows.sum { |_, plans| plans.size }
-      puts "cohesion_census: #{total} family/families across #{rows.size} directories (ceiling #{ceiling})"
+      scope = tree ? " in #{tree}" : ""
+      ceil = tree ? "-" : ceiling
+      puts "cohesion_census: #{total} family/families across #{rows.size} directories#{scope} (ceiling #{ceil})"
 
       if list
         rows.each do |dir, plans|
@@ -309,6 +315,8 @@ module Pub4
         end
         return 0
       end
+
+      return 0 if tree
 
       if ratchet && total < ceiling
         File.write(CENSUS, { "families" => total }.to_yaml)
@@ -329,7 +337,8 @@ end
 
 if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--census")
-    exit Pub4::Cohesion.run_census(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list"))
+    tree = ARGV.grep(/\A--tree=/).first&.split("=", 2)&.last
+    exit Pub4::Cohesion.run_census(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list"), tree:)
   end
 
   target = ARGV.reject { |a| a.start_with?("--") }.first
