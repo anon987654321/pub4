@@ -43,7 +43,19 @@ class AudioGraph
   # both explicitly; the spine keeps that rather than rediscovering it.
   AMIX_OPTIONS = "duration=first:normalize=0"
 
-  def initialize
+  # A renderer being migrated onto the spine has to be able to emit the graph it
+  # emits today, including where that graph is wrong. render_industrial omits
+  # normalize=0 on all three of its amix calls, and measured against a 440Hz
+  # reference that is 4.1 dB quieter than the same weights give under
+  # normalize=0 (-21.07 against -16.94 RMS). Its bed then feeds a sidechain
+  # compressor at -24dB, a tanh saturator and a compressor at -14dB, so the
+  # difference is audible rather than bookkeeping.
+  #
+  # Passing the legacy string is how a migration proves parity first and changes
+  # the sound second, as two decisions instead of one. It is not a default:
+  # AMIX_OPTIONS is, and anything new gets the explicit form.
+  def initialize(amix_options: AMIX_OPTIONS)
+    @amix_options = amix_options
     @channels = []
     @buses = {}
     @master_chain = []
@@ -93,15 +105,26 @@ class AudioGraph
 
     label = "#{target}_sum"
     clauses << "#{parts.map(&:first).join}amix=inputs=#{parts.size}:" \
-               "weights=#{parts.map { |(_, g)| format_gain(g) }.join(' ')}:#{AMIX_OPTIONS}[#{label}]"
+               "weights=#{parts.map { |(_, g)| format_gain(g) }.join(' ')}:#{@amix_options}[#{label}]"
     [clauses, label]
   end
 
+  # The label the master sum landed on, once to_filter_complex has run. A
+  # renderer migrating one section at a time needs this: render_industrial sums
+  # a bed and then keeps building by hand -- sidechain, reverb send, delay send
+  # -- so it wants the sum and its label, not a finished graph ending in [out].
+  attr_reader :sum_label
+
+  # out_label: nil emits the sum and stops. Anything else appends the master
+  # chain (or anull) and lands on that label.
   def to_filter_complex(out_label: "out")
     clauses = []
     @channels.each { |c| clauses << channel_clause(c) }
     _, summed = sum_into(:master, clauses)
     raise ArgumentError, "nothing routes to master" unless summed
+
+    @sum_label = summed
+    return clauses.join(";") if out_label.nil?
 
     tail = @master_chain.reject { |f| f.to_s.strip.empty? }
     if tail.empty?
