@@ -99,7 +99,14 @@ rules:
   # 65 -> 41 the same day. style.yml declares AAA; body text earns it and
   # the remaining 41 pairs are the secondary/accent band — lifting them is a
   # palette decision (operator), so the band is banked, not forced.
-  contrast_below_aaa: 41
+  # 41 -> 43 on 2026-08-24, and the tree did not get worse: luxury gained a
+  # light_danger token. #a7473b was already rendered on amber's light grounds
+  # and was already below AAA there; it simply was not declared, so this metric
+  # could not enumerate it and the geometry gate reported it as a colour
+  # "outside design_tokens.yml" instead. Declaring it moved the same two pairs
+  # from invisible to counted. Removing the token puts this back to 41 and the
+  # debt back out of sight, which is the trade this file exists to refuse.
+  contrast_below_aaa: 43
   # Added 2026-08-09, when design_rules.yml's `typography` block finally got a
   # reader. type_scale counts font-size literals off the --text-* ladder in
   # _tokens.scss; weight_ladder counts font-weight literals off

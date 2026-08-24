@@ -124,7 +124,9 @@
   --border: #e6e0d8;
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
-  --accent: #7e6e55;
+  /* Darkened by 2 to clear APCA Lc 75.1 from 74.2 — the only amber colour that
+     failed both contrast models rather than WCAG alone. */
+  --accent: #7c6c53;
   --danger: #a7473b;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -158,7 +160,12 @@
   --surface-elevated: #1a1a1a;
   --search-bg: #222222;
   --text: #e0e0e0;
-  --text-secondary: #969696;
+  /* #969696 -> #cfcfcf: APCA Lc 44.3 against a 75 floor on #1a1a1a, and it is
+     the single most-repeated contrast finding in the tree (44 sites over four
+     dark grounds). #cfcfcf clears 75 on all four and still sits a clear step
+     under --text #e0e0e0 at Lc 86.5, so secondary text stays secondary. If it
+     reads too bright, #b4b4b4 is the Lc 60 tier. */
+  --text-secondary: #cfcfcf;
   --border: #333333;
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);

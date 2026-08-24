@@ -86,7 +86,13 @@ luxury:
   light_border: "#e6e0d8"
   # Darker, not lighter: this is the light theme, so contrast comes from
   # going down. #8c7a5e was 3.82:1 on light_bg and 4.15 on light_surface.
-  light_accent: "#7e6e55"   # warm taupe/gold, WCAG AA on warm paper
+  # Darkened by 2 from #7e6e55 to clear APCA Lc 75 on white; it was the only
+  # colour in the tree failing both contrast models rather than WCAG alone.
+  light_accent: "#7c6c53"   # warm taupe/gold, WCAG AA on warm paper
+  # The danger tone amber actually renders. It was absent here, so every surface
+  # using it reported a text colour "outside design_tokens.yml" while the value
+  # itself was deliberate.
+  light_danger: "#a7473b"
   # Dark mode (compatible with existing)
   dark_bg: "#1a1816"
   dark_surface: "#24221f"
@@ -189,7 +195,11 @@ brgen_old_dark:
   surface_elevated: "#1a1a1a"
   search_bg: "#222222"
   text: "#e0e0e0"
-  text_secondary: "#969696"
+  # #969696 -> #cfcfcf: APCA Lc 44.3 against the 75 floor on this palette's
+  # own #1a1a1a and #222222 surfaces, and the most-repeated contrast finding
+  # in the tree. Still a clear step under text #e0e0e0 (Lc 86.5). #b4b4b4 is
+  # the Lc 60 tier if this reads too bright.
+  text_secondary: "#cfcfcf"
   border: "#333333"
   accent: "#f2f2f2"
   accent_hover: "#d0d0d0"
