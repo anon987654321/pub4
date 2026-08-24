@@ -93,6 +93,27 @@ class LayoutContractTest < Minitest::Test
     assert_includes body, ".page-header"
   end
 
+  # A mark that carries a host is wider than a bare wordmark, and the mark is
+  # fixed and takes pointer events — so when it outgrows the gutter the nav
+  # clears for it, it does not look broken, it quietly eats the first taps on
+  # the nav's leading link. Measured at 390px: markedsplass.brgen.no overran by
+  # 4px and elementFromPoint at the link's own leading edge returned the mark.
+  #
+  # Widening the gutter alone only holds until a longer host exists, so the mark
+  # is bounded BY the gutter. That bound is the actual guarantee; this pins it.
+  def test_a_brand_mark_carrying_a_host_cannot_outgrow_its_gutter
+    body = File.read(LAYOUT_CHROME)
+
+    assert_match(/body:has\(\.brand-mark \.brand-sub\)/, body,
+                 "the wider gutter should be keyed on the mark actually having a subdomain")
+    bound = body[/\.brand-mark:has\(\.brand-sub\)\s*\{[^}]*\}/m]
+    refute_nil bound, "expected .brand-mark:has(.brand-sub) to bound the mark"
+    assert_includes bound, "max-inline-size", "the mark has to be bounded, not merely reserved for"
+    assert_includes bound, "var(--brand-mark-inline)",
+                     "the bound has to be the gutter itself, so the two cannot drift apart"
+    assert_includes bound, "overflow: hidden", "an unbounded overflow still paints over the nav"
+  end
+
   def test_shared_chrome_tokens_declare_layout_floor
     yml = File.read(TOKENS)
     assert_match(/chrome_inset:\s*"12px"/, yml)

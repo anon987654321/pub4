@@ -1,4 +1,9 @@
 <% content_for :title, t("restricted.title") %>
+<%# shared/_empty_state heads itself with an h2, which is right where it is a
+    section inside a page — 64 pages render it that way. Here it IS the page, so
+    the page would open at level 2 with no h1 above it. The h1 goes here rather
+    than in the partial, so the other 64 keep the level they should have. %>
+<h1 class="visually-hidden"><%= t("restricted.title") %></h1>
 <%= render "shared/empty_state",
       title: t("restricted.title"),
       body: t("restricted.body"),

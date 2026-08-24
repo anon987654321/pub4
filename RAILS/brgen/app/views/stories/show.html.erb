@@ -1,6 +1,13 @@
 <% content_for :title, t("stories.by", user: @story.user.display_name) %>
 
 <article class="story-viewer" aria-label="<%= t("stories.by", user: @story.user.display_name) %>">
+  <%# The viewer's only heading was the h2 seen-count near the bottom, so the
+      page opened at level 2 and its outline said "seen by N" rather than whose
+      story it is. Hidden because the visible identity here is the author's name
+      set as <strong> in the header below, and promoting that to a heading would
+      restyle it — the name is already the accessible name of the article and
+      the document title, so this states it once more where the outline reads. %>
+  <h1 class="visually-hidden"><%= t("stories.by", user: @story.user.display_name) %></h1>
   <header class="story-viewer-head">
     <p>
       <%= tag.strong @story.user.display_name %>

@@ -4,6 +4,13 @@
   <script src="/vendor/maplibre-gl.js"></script>
 <% end %>
 
+<%# The page is a full-bleed map, so its heading cannot be visible without
+    sitting on top of the map. Hidden rather than absent: this was the one brgen
+    surface with no heading at any level, which leaves it with no entry in the
+    document outline and nothing for a screen reader to land on after the skip
+    link. Same treatment the layout already gives the city apex h1. %>
+<h1 class="visually-hidden"><%= t("maps.map") %></h1>
+
 <section role="application" aria-label="<%= t("maps.aria_map") %>" data-controller="map" data-map-points-value="<%= json_escape(@points_json) %>" data-map-center-lat-value="<%= @map_center_lat %>" data-map-center-lng-value="<%= @map_center_lng %>" data-map-zoom-value="12" data-map-style-url-value="https://tiles.openfreemap.org/styles/positron">
   <div id="map" class="map-canvas" data-map-target="canvas" aria-hidden="true"></div>
 
