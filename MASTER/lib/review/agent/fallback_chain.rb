@@ -110,12 +110,20 @@ module Master
           @model_router.failover_skip_categories || NON_RETRYABLE
         end
 
+        # The tiers exist for provider 429s, so the sleep is the point. It is
+        # opt-out rather than opt-in because a gate that must be switched on is
+        # a gate nothing switches on: the old MASTER_STRICT_BACKOFF switch was
+        # set in no environment, no test and no rc.d script, so every retry went
+        # straight back at the provider while this method published an event
+        # saying it had waited. `slept:` rides along so the trace cannot claim a
+        # wait that did not happen.
         def backoff_before_retry(model, mode, retry_index)
           tiers = @model_router&.failover_cooldown_tiers || [30, 60, 300]
           delay = tiers[[retry_index, tiers.size - 1].min]
+          slept = ENV["MASTER_NO_BACKOFF"] != "1"
           @bus&.publish("llm:failover_backoff", model:, mode:, retry: retry_index + 1, delay:,
-                                                tiered: true)
-          sleep delay if ENV["MASTER_STRICT_BACKOFF"] == "1"
+                                                tiered: true, slept:)
+          sleep delay if slept
         end
 
         def record_failover_skip(model, response)

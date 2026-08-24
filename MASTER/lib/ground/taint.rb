@@ -2,8 +2,22 @@
 
 module Master
   module Ground
-    # CaMeL-style capability tag helpers — see tainted.rb for the wrapper struct.
+    # CaMeL-style capability tagging. `Tainted` wraps untrusted tool output
+    # (web_fetch, read_file of external content) so privileged tool calls can
+    # refuse to act on it — the #1 defence against prompt injection
+    # (OWASP LLM01). Refs: Defeating Prompt Injections by Design / CaMeL
+    # (arXiv:2503.18813).
+    #
+    # The wrapper is nested here rather than living in its own file because it
+    # is eight lines that only this module constructs, and a reader chasing
+    # "what is tainted?" should not have to open two files to find a Struct and
+    # four predicates.
     module Taint
+      Tainted = Struct.new(:value, :source) do
+        def tainted? = true
+        def to_s = value.to_s
+      end
+
       module_function
 
       def wrap(value, source:)

@@ -529,11 +529,18 @@ namespace :lint do
   end
 end
 
-desc "Full audit: constitution + selftest + the lint:* gates"
-task audit: %i[dogfood constitution selftest studio lint:frozen lint:data_singularity lint:spine lint:autoload
+# Every gate this Rakefile defines runs here. The list used to name twelve of
+# nineteen, and the omissions were not a judgement — `loc_budget` was failing on
+# nine of twelve subsystems while `rake audit` reported passed, because nothing
+# called it. A gate defined and uncalled is a gate that has stopped measuring
+# without anyone deciding it should.
+desc "Full audit: constitution + selftest + every lint:* gate + the ratchets"
+task audit: %i[dogfood constitution selftest studio core_smoke security_sweep
+               lint:frozen lint:data_singularity lint:spine lint:autoload
                lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
                lint:do_not_touch lint:instruments lint:constant_collisions
-               lint:capability] do
+               lint:capability lint:cohesion lint:rule_reach lint:models lint:dedup
+               loc_budget] do
   puts "audit: passed"
 end
 
@@ -605,14 +612,19 @@ task :loc_budget do
   budgets = limits.fetch("loc_budgets", {})
   abort "loc_budget: no loc_budgets key in data/limits.yml" if budgets.empty?
 
+  # A budget for a path that does not exist measures nothing, and skipping it
+  # quietly is how `core: 916` sat here budgeting MASTER/core — which has never
+  # existed, the spine lives at lib/core — while reading as an enforced line.
+  missing = budgets.keys.reject { |dir| File.exist?(File.join(__dir__, dir)) }
+  abort "loc_budget: no such path(s): #{missing.join(', ')} — fix the key or drop it" if missing.any?
+
   over = budgets.filter_map do |dir, budget|
     path = File.join(__dir__, dir)
     actual = if File.file?(path)
       File.foreach(path).count
-    elsif File.directory?(path)
+    else
       Dir.glob(File.join(path, "**", "*.rb")).sum { |file| File.foreach(file).count }
     end
-    next unless actual
 
     puts "loc_budget: #{dir} #{actual}/#{budget}"
     [dir, actual, budget] if actual > budget

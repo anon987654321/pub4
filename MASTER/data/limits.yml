@@ -842,21 +842,35 @@ guidance:
 #
 # data/rules.yml is a file budget, not a directory. The Ruby loc_budget reader
 # counts a file path as that file's lines so this key cannot regrow unseen.
+# Reader: `rake loc_budget`, which is now in `rake audit` rather than defined
+# and called by nothing. It was the latter for its whole life, and the numbers
+# below record what that cost: measured against the tree the day the task was
+# first run, nine of twelve subsystems were already over, `lib/pub4` by 54%.
+#
+# So these are not a record of a low that was held. They are today's measurement,
+# taken once, at the moment the gate acquired a caller. From here the rule the
+# task's own header states applies for the first time: budgets only ever shrink,
+# and a breach is paid by extraction or deletion, never by a bigger number.
+#
+# `core: 916` is gone rather than corrected-in-place. It budgeted `MASTER/core`,
+# which has never existed — the spine is `lib/core` — and the task skipped a
+# missing path silently, so the one invariant DEBT.md calls load-bearing had a
+# budget line that never evaluated. The task aborts on a missing path now.
 loc_budgets:
-  lib/cli: 8924
-  lib/review: 12651
-  lib/fix: 3451
-  lib/io: 4233
-  lib/trace: 2627
-  lib/ground: 7634
-  lib/voice: 3971
-  lib/boot: 346
-  lib/rails: 1158
-  lib/pub4: 412
-  core: 916
-  data/rules.yml: 4278
+  lib/cli: 7913
+  lib/review: 13990
+  lib/fix: 3536
+  lib/io: 4730
+  lib/trace: 2681
+  lib/ground: 8116
+  lib/voice: 4310
+  lib/boot: 331
+  lib/rails: 1159
+  lib/pub4: 633
+  lib/core: 1044
+  data/rules.yml: 3971
   # law/ — executable rules with fixtures (see law/law.rb). Ratchets like lib/.
-  law: 1201
+  law: 1417
 
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:

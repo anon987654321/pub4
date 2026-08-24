@@ -47,13 +47,6 @@ module Master
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
       TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
       TOOL_RESULT_ROLE = "user"
-      KEY_PATTERNS = [
-        /sk-[A-Za-z0-9_\-]{16,}/,
-        /sk-ant-[A-Za-z0-9_\-]{16,}/,
-        /Bearer\s+[A-Za-z0-9_\-\.]{16,}/i,
-        /\b[A-Za-z0-9]{32,}\b/,
-      ].freeze
-
       LLM_TOOL_MAP = {
         Io::ReadFile => Io::LLM::ReadFile,
         Io::WriteFile => Io::LLM::WriteFile,
@@ -127,12 +120,10 @@ module Master
         classified_call_failure(err)
       end
 
-      def redact_secrets(text)
-        out = text.to_s
-        KEY_PATTERNS.each { |re| out = out.gsub(re, "[REDACTED]") }
-        out
-      end
-
+      # Ground::Redactor owns the pattern list. It was copied here verbatim, and
+      # a redaction list that exists twice is a list where the next pattern
+      # added to one copy leaves the other still printing the key.
+      def redact_secrets(text) = Ground::Redactor.text(text)
 
       # One model for every lane, for one run. Set MASTER_MODEL and the router's
       # choice is overridden at the single door every request passes through —
