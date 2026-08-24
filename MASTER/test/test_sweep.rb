@@ -56,6 +56,25 @@ class TestSweep < Minitest::Test
     end
   end
 
+# OPENBSD and STUDIO had one probe each against MASTER's eleven, so their
+# headings reported a repo-wide cohesion number and nothing else — a sweep
+# that measures almost nothing still prints a clean-looking block.
+def test_every_tree_has_a_probe_of_its_own
+  S::TREES.each do |tree|
+    own = S.probes.select { |p| p.trees == [tree] }
+
+    refute_empty own, "#{tree} has no probe that speaks only for it"
+  end
+end
+
+def test_sibling_probes_point_at_a_script_that_exists
+  { "OPENBSD" => "tools/reach.rb", "STUDIO" => "gate.rb" }.each do |tree, script|
+    path = File.join(S::ROOT, tree, script)
+
+    assert File.file?(path), "#{tree} probe runs #{script}, which is not there"
+  end
+end
+
   def test_the_ledger_parses_and_every_row_is_shaped
     rows = S.ledger.fetch("proposals")
 

@@ -166,6 +166,18 @@ proposals:
       constant rename under Zeitwerk, so it wants one family per commit and a
       clean shared checkout, not a sweep.
 
+  - id: openbsd-lib-gate-family
+    tree: OPENBSD
+    state: open
+    claim: "OPENBSD/lib has gate_environment.rb, gate_ledger.rb and gate_result.rb wanting lib/gate/"
+    note: >
+      The only family cohesion finds in OPENBSD. Not mechanical like the
+      lib/ground four: GateResult is required across the tree boundary by
+      RAILS/gates via a relative path, which OPENBSD/data/debt.yml already
+      records as gate_result_is_a_shared_kernel_filed_under_deploy. Regrouping
+      it moves a constant RAILS depends on, so the boundary decision comes first
+      and the shelf second.
+
   - id: de-fr-nl-locales-are-five-keys
     tree: RAILS
     state: open

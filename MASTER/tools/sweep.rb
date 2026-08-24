@@ -58,6 +58,18 @@ module Pub4
         Probe.new(unit: "rulereach", trees: %w[MASTER], run: -> { tool("rule_reach.rb") }),
         Probe.new(unit: "namespace", trees: %w[MASTER], run: -> { tool("namespace_ratchet.rb") }),
         Probe.new(unit: "designbase", trees: %w[RAILS], run: -> { tool("design_baseline.rb") }),
+# OPENBSD's declarations and their readers live in different files by
+# design — crontab names a path, OPERATOR.sh installs it, rc.d holds the
+# service, nsd.conf names the zone — and nothing failed when a pair
+# stopped agreeing.
+Probe.new(unit: "obsdreach", trees: %w[OPENBSD],
+          run: -> { sibling("OPENBSD", "tools/reach.rb") }),
+# STUDIO's coverage was never thin, only unreported here: gate.rb parses
+# every first-party file, checks dilla's manifest against the disk, and
+# boots the guarded entry points. `rake studio` already runs it; this is
+# what makes its result visible in a sweep.
+Probe.new(unit: "studiogate", trees: %w[STUDIO],
+          run: -> { sibling("STUDIO", "gate.rb") }),
         Probe.new(unit: "instruments", trees: %w[MASTER], run: -> { tool("instruments.rb") }),
         Probe.new(unit: "constcoll", trees: %w[MASTER], run: -> { tool("constant_collisions.rb") }),
         Probe.new(unit: "secsweep", trees: %w[MASTER], run: -> { tool("security_sweep.rb") }),
@@ -67,6 +79,14 @@ module Pub4
     def tool(name, *args)
       capture(RbConfig.ruby, File.join(MASTER, "tools", name), *args)
     end
+
+# Run from the sibling's own directory. MASTER requires nothing from the
+# other trees and they resolve their own relative paths; a probe is a
+# subprocess for the same reason rake studio_gate is one.
+def sibling(tree, script, *args)
+  dir = File.join(ROOT, tree)
+  capture(RbConfig.ruby, File.join(dir, script), *args, chdir: dir)
+end
 
     def rake(task)
       capture(RbConfig.ruby, "-S", "rake", task, chdir: MASTER)
