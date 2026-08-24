@@ -169,6 +169,33 @@ class CohesionTest < Minitest::Test
     assert_equal "merge", Pub4::Cohesion.plans_for(@tmp).first[:plan]
   end
 
+# ---- a shelf that is already occupied -------------------------------------
+#
+# lib/ground has memory.rb, memory_index.rb and memory_search.rb. They read as
+# a family and are not: Memory::Search already exists as a mixin on the Memory
+# class, and MemorySearch is a standalone keyword search over a repo doc index
+# that happens to start with the same word. The generated plan would have moved
+# the second on top of the first, and only executing it would have found out.
+
+def test_a_family_whose_destination_is_taken_is_not_a_family
+  write("thing.rb", namespaced("Thing"))
+  write("thing_index.rb", namespaced("ThingIndex"))
+  write("thing_search.rb", namespaced("ThingSearch"))
+  FileUtils.mkdir_p(File.join(@tmp, "thing"))
+  File.write(File.join(@tmp, "thing", "search.rb"), namespaced("Search"))
+
+  assert_empty Pub4::Cohesion.plans_for(@tmp),
+               "thing/search.rb is taken, so these three are not one kind"
+end
+
+def test_an_empty_destination_still_regroups
+  write("thing.rb", namespaced("Thing"))
+  write("thing_index.rb", namespaced("ThingIndex"))
+  write("thing_search.rb", namespaced("ThingSearch"))
+
+  assert_equal "regroup", Pub4::Cohesion.plans_for(@tmp).first[:plan]
+end
+
   # ---- the census -----------------------------------------------------------
 
   def test_the_census_roots_all_exist

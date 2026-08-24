@@ -128,6 +128,20 @@ proposals:
       patterns into the BLOCKLIST; both change what the shell tool refuses, so
       it is an operator decision rather than a refactor.
 
+  - id: memory-is-a-family-in-lib-ground
+    tree: MASTER
+    state: refuted
+    claim: "memory.rb, memory_index.rb and memory_search.rb are one family wanting lib/ground/memory/"
+    reason: >
+      They share a word, not a kind. Memory::Search already exists in
+      lib/ground/memory/ as a mixin on the Memory class — it reads @mutex and
+      @store and does sqlite-backed hybrid recall over memory entries. MemorySearch
+      is a standalone class doing keyword scoring over MemoryIndex, which indexes
+      repo documents. Executing the generated plan would have moved the second on
+      top of the first. cohesion.rb refuses a plan whose destination is occupied
+      now, which is the cheapest check that catches this and the one that fires.
+    refuted_by: MASTER/test/test_cohesion.rb test_a_family_whose_destination_is_taken_is_not_a_family
+
   - id: ground-is-a-76-file-drawer
     tree: MASTER
     state: open
