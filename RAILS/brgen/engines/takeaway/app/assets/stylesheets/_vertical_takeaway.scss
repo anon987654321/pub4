@@ -13,7 +13,21 @@ body.vertical-takeaway {
   /* --food-dash is an urgency red on a dark chip. Used as ink directly on a
      light feed card it measures 2.93:1, so text-on-surface takes its own value:
      4.80 on --surface-elevated, 4.54 on the card fill. */
-  --food-dash-ink: #c62b1b;
+  /* The DARK-card value is the default, because the app is dark by default:
+     the layout ships data-theme="dark" and _minimal.scss only swaps to light
+     tokens under prefers-color-scheme: light. Declaring the light-card ink here
+     handed every OS-dark visitor #c62b1b on a dark card — APCA Lc 24.1, WCAG
+     3.12, which fails AA — while the toggle rule below (correct, but only fired
+     when someone touched the toggle) was the only thing that ever set it right.
+     Same structure as the token file it inherits: dark default, light in the
+     media query. */
+  --food-dash-ink: var(--food-dash);
+}
+
+@media (prefers-color-scheme: light) {
+  body.vertical-takeaway {
+    --food-dash-ink: #c62b1b;
+  }
 }
 
 /* Dark mode puts that same meta text on a dark card, where the darkened red

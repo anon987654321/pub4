@@ -11,7 +11,10 @@ body.vertical-dating {
      the one label on the intro a user is meant to read carefully. Same hue,
      darkened until it clears AA: 5.62:1 on --bg. Dark mode keeps the bright
      teal, which is already 9.42:1 there. */
-  --dating-accent-ink: #00705c;
+  /* Dark default, light in the media query — see the takeaway sheet for the
+     same correction. #00705c is the light-card ink and was landing on dark at
+     APCA Lc 22.2 / WCAG 3.47 for every visitor whose OS prefers dark. */
+  --dating-accent-ink: var(--dating-accent);
   --dating-accent-warm: var(--vertical-dating-accent-warm, #ff5500);
   --dating-pass: var(--danger);
   background: var(--dating-bg);
@@ -21,6 +24,12 @@ body.vertical-dating {
 
 body.vertical-dating #dark-toggle:checked ~ .theme-root {
   --dating-accent-ink: var(--dating-accent);
+}
+
+@media (prefers-color-scheme: light) {
+  body.vertical-dating {
+    --dating-accent-ink: #00705c;
+  }
 }
 
 /* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */

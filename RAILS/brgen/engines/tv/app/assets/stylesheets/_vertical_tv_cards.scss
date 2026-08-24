@@ -104,7 +104,7 @@
   inset-block-end: 8px;
   inset-inline-end: 8px;
   padding: 1px 4px;
-  font: var(--weight-bold) 0.6875rem/1.4 var(--font-mono, var(--font));
+  font: var(--weight-bold) var(--text-xs)/1.4 var(--font-mono, var(--font));
   font-variant-numeric: tabular-nums;
   color: var(--text);
   background: color-mix(in srgb, var(--bg) 78%, transparent);

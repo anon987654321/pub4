@@ -11,7 +11,7 @@
 
 .offline-page-meta {
   margin: 0;
-  font: 0.6875rem/1.4 ui-monospace, monospace;
+  font: var(--text-xs)/1.4 ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-dim, var(--text-secondary));

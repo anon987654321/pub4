@@ -182,7 +182,7 @@ section h2 {
   color: var(--text, #d8d6e0);
   padding: 0.625rem 0.95rem;
   min-height: var(--tap-min);
-  font: 0.8125rem/1 var(--font-mono, ui-monospace, monospace);
+  font: var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.02em;
   cursor: pointer;
 }
@@ -286,7 +286,7 @@ section h2 {
   justify-content: space-between;
   padding: 0.625rem 0.875rem;
   border-bottom: 1px solid var(--border, #46435a);
-  font: var(--weight-bold) 0.8125rem/1 var(--font-mono, ui-monospace, monospace);
+  font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
   color: var(--text-dim, var(--text-secondary));
   flex-shrink: 0;
 }
@@ -478,7 +478,7 @@ section h2 {
   border-radius: 0;
   background: var(--bg, #17161c);
   text-decoration: none;
-  font: var(--weight-bold) 0.8125rem/1 var(--font-mono, ui-monospace, monospace);
+  font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
   width: fit-content;
 }
 

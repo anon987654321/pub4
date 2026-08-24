@@ -456,7 +456,7 @@ html.chrome-hidden .tab-bar {
   border: 0;
   background: var(--hover, #232030);
   color: var(--text, #d8d6e0);
-  font: var(--weight-bold) 0.8125rem/1 var(--font);
+  font: var(--weight-bold) var(--text-xs)/1 var(--font);
   cursor: pointer;
 }
 .tab-bar-coach-show {
