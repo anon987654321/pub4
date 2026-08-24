@@ -44,7 +44,7 @@ class TestPrincipleMapRepair < Minitest::Test
 
       assert_equal [%w[accessibility FAKE_DANGLING_RULE], %w[other_principle ANOTHER_FAKE_RULE]], fixed
 
-      rewritten = Master::Ground::PrincipleMap.load(root:)
+      rewritten = Master::Ground::Map::Principle.load(root:)
       assert_equal %w[ARIA_INTERACTIVE IMG_ALT], rewritten.principles["accessibility"].rule_ids
       assert_equal [], rewritten.principles["other_principle"].rule_ids
     end

@@ -89,7 +89,7 @@ module Master
 
       def dispatch_map(root:, ctx: nil)
         arg = arg_for(ctx).to_s.strip
-        map = Master::Ground::PrincipleMap.load(root:)
+        map = Master::Ground::Map::Principle.load(root:)
         case arg
         when "", "status" then map.summary_line
         when "gaps" then map_gaps_report(map)
@@ -119,7 +119,7 @@ module Master
         hits.empty? ? "principle_map integrity: clean" : hits.join("\n")
       end
 
-      # Advisory, not enforced -- see PrincipleMap#provenance_gaps for why
+      # Advisory, not enforced -- see Map::Principle#provenance_gaps for why
       # this stays out of SelfTest's gating path.
       def map_provenance_report(map)
         gaps = map.provenance_gaps

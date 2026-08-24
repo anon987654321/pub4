@@ -261,7 +261,7 @@ module Master
       end
 
       def map_line
-        Master::Ground::PrincipleMap.load(root: @root).summary_line
+        Master::Ground::Map::Principle.load(root: @root).summary_line
       rescue StandardError => e
         stage_failure("principle map", "map0", e)
       end

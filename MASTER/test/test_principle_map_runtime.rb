@@ -8,7 +8,7 @@ class TestPrincipleMapRuntime < Minitest::Test
   end
 
   def test_principle_map_loads
-    map = Master::Ground::PrincipleMap.load(root: @root)
+    map = Master::Ground::Map::Principle.load(root: @root)
     assert map.principles.size > 50, "expected substantial principle map"
     assert map.summary_line.include?("principle_map")
     assert map.aesthetic.any?, "aesthetic/ui cluster should be non-empty"
@@ -74,7 +74,7 @@ class TestPrincipleMapRuntime < Minitest::Test
     assert_includes hits, "aesthetic_neglect"
   end
 
-  # Advisory-only (see PrincipleMap#provenance_gaps) -- must never be wired
+  # Advisory-only (see Map::Principle#provenance_gaps) -- must never be wired
   # into SelfTest, so a real fixture with a mix of attributed/unattributed
   # entries confirms it just reports, it doesn't gate anything.
   def test_provenance_gaps_flags_entries_missing_source
@@ -101,7 +101,7 @@ class TestPrincipleMapRuntime < Minitest::Test
             tags: []
       YAML
 
-      map = Master::Ground::PrincipleMap.load(root: dir)
+      map = Master::Ground::Map::Principle.load(root: dir)
       gaps = map.provenance_gaps
 
       assert_equal ["unattributed_one"], gaps.map(&:id)
@@ -110,7 +110,7 @@ class TestPrincipleMapRuntime < Minitest::Test
 
   def test_principle_map_integrity_against_registry
     require_relative "../lib/review/scan/rule_dsl"
-    map = Master::Ground::PrincipleMap.load(root: @root)
+    map = Master::Ground::Map::Principle.load(root: @root)
     registered = Master::Review::Scan::Rule.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s : nil

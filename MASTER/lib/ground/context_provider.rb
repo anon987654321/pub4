@@ -35,20 +35,20 @@ module Master
       private
 
       def repo_map(query, limit)
-        return [] unless defined?(Master::Ground::RepoMap)
+        return [] unless defined?(Master::Ground::Map::Repo)
 
-        Master::Ground::RepoMap.new(root: @root).relevant(query, limit:).map do |entry|
+        Master::Ground::Map::Repo.new(root: @root).relevant(query, limit:).map do |entry|
           { source: :repo_map, path: entry.path, text: "#{entry.path} #{entry.language} #{entry.bytes}B" }
         end
       end
 
       def cross_repo_map(query, limit)
-        return [] unless defined?(Master::Ground::RepoMap)
+        return [] unless defined?(Master::Ground::Map::Repo)
 
         roots = cross_repo_roots
         return [] if roots.empty?
 
-        Master::Ground::RepoMap.new(root: @root, roots:).relevant(query, limit:).map do |entry|
+        Master::Ground::Map::Repo.new(root: @root, roots:).relevant(query, limit:).map do |entry|
           { source: :cross_repo_map, path: entry.path, text: "#{entry.path} #{entry.language} #{entry.bytes}B" }
         end
       end

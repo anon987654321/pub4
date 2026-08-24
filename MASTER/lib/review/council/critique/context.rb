@@ -111,7 +111,7 @@ module Master
           end
 
           def principles_in(clusters)
-            Master::Ground::PrincipleMap.load.principles.values.select { |entry| (entry.tags & clusters).any? }
+            Master::Ground::Map::Principle.load.principles.values.select { |entry| (entry.tags & clusters).any? }
           end
 
           # Round-robin across the clusters, not the first N alphabetically.

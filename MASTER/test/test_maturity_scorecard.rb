@@ -42,7 +42,7 @@ class TestMaturityScorecard < Minitest::Test
     end
   end
 
-  # Matches PrincipleMap's own fallback: a root with no maturity.yml of its
+  # Matches Map::Principle's own fallback: a root with no maturity.yml of its
   # own reads the real repo's copy rather than coming up empty.
   def test_missing_file_falls_back_to_the_real_repo_copy
     Dir.mktmpdir do |root|

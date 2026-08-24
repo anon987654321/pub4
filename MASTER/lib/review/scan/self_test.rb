@@ -359,7 +359,7 @@ module Master
           path = File.join(@root, "data", "principle_map.yml")
           return [finding(path:, line: 1, message: "missing data/principle_map.yml")] unless File.file?(path)
 
-          map = Master::Ground::PrincipleMap.load(root: @root)
+          map = Master::Ground::Map::Principle.load(root: @root)
           registered = Master::Review::Scan::Rule.registry.filter_map do |klass|
             Master::Review::Scan::RuleFactory.registry_id(klass, root: @root)&.upcase
           end

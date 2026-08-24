@@ -13,7 +13,7 @@ module Master
     # this session before this existed -- a dangling reference is a
     # broken pointer, not real content, so removing it can't lose
     # information the way blindly deduping an ambiguous duplicate key
-    # could. That class stays report-only (see PrincipleMap#integrity),
+    # could. That class stays report-only (see Map::Principle#integrity),
     # not auto-fixed, for the same reason OpenClaw's doctor --fix
     # explains before rewriting rather than guessing.
     module PrincipleMapRepair
@@ -43,7 +43,7 @@ module Master
         # pointer, not a dangling one. Loaded from Master::ROOT because law/
         # is global like the registry — `root:` here may be a fixture dir.
         registered |= law_rule_ids
-        map = Master::Ground::PrincipleMap.load(root:)
+        map = Master::Ground::Map::Principle.load(root:)
         map.principles.each_with_object([]) do |(id, entry), acc|
           entry.rule_ids.each { |rid| acc << [id, rid] unless registered.include?(rid.to_s.upcase) }
         end
