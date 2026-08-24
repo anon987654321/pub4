@@ -878,8 +878,14 @@ loc_budgets:
   lib/pub4: 633
   lib/core: 1044
   data/rules.yml: 3971
-  # law/ — executable rules with fixtures (see law/law.rb). Ratchets like lib/.
-  law: 1417
+# law/ — executable rules with fixtures (see law/law.rb). Ratchets like lib/.
+#
+# RAISED 1417 -> 1444 on 2026-08-25 for RUBY_SCREAMING_CONST, and the argument
+# is that this is the one budget where a rise can be the point. law/ holds
+# rules that fire; the twenty-seven lines bought a rule that could not, and
+# rule_reach fell 58 -> 57. A law/ that may only shrink can only ever lose
+# enforcement.
+  law: 1444
 
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:

@@ -275,6 +275,33 @@ Law.define(:RUBY_SYMBOL_TO_PROC) do
   good "names = users.map(&:name)"
 end
 
+# Migrated from data/rules.yml RUBY_SCREAMING_CONST, which declared only a
+# detect_semantic and was therefore the one RUBY_* naming rule that could not
+# fire: the semantic prompt drops info severity, so it sat in rule_reach's
+# unreachable set while its six siblings ran lexically.
+#
+# The reason it was left semantic is the exception, not the rule: a constant
+# holding a *type* is CamelCase by convention — Entry = Data.define(...),
+# Finding = Struct.new(...) — and this tree uses that shape everywhere. So the
+# detector asks what is on the right, not only what is on the left, and an
+# alias of another constant is spared for the same reason.
+Law.define(:RUBY_SCREAMING_CONST) do
+  source "Ruby Style Guide / RuboCop Naming/ConstantName"
+  severity :info
+  languages %i[ruby]
+  path_exclude %r{/review/scan/rules/}
+  detect do |line|
+    match = line.match(/^\s*([A-Z][A-Za-z0-9]*)\s*=(?!=|~|>)\s*(.*)$/)
+    next false unless match && match[1].match?(/[a-z]/)
+    next false if match[2].match?(/\A(Struct\.new|Data\.define|Class\.new|Module\.new)/)
+
+    !match[2].match?(/\A[A-Z][\w:]*\s*\z/)
+  end
+  fix "Scream a constant that holds a value: MaxRetries = 3 -> MAX_RETRIES = 3."
+  bad  "MaxRetries = 3"
+  good "MAX_RETRIES = 3"
+end
+
 # RUBY_TERNARY_NOT_NESTED lives once, in the registry (cosmetic_rules.rb):
 # it parses with Prism and asks the AST whether a ternary branch holds a
 # ternary. This regex counted `?` and `:` characters, so a string literal

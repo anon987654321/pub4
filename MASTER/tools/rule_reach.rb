@@ -81,17 +81,27 @@ module Pub4
     def run(ratchet: false, json: false)
       all = rules
       out = unreachable(all)
-      return puts(JSON.pretty_generate(total: all.size, mechanical: mechanical(all).size,
-                                       prompted: prompted(all).size, unreachable: out.map { |r| r["id"] })) if json
+# `puts` returns nil and this handed that straight to Kernel#exit, so
+# --json printed correct JSON and then died with a TypeError.
+if json
+  puts(JSON.pretty_generate(total: all.size, mechanical: mechanical(all).size,
+                            prompted: prompted(all).size, unreachable: out.map { |r| r["id"] }))
+  return 0
+end
 
-      puts "rule_reach: #{all.size} rules — #{mechanical(all).size} without a model, " \
-           "#{prompted(all).size} with one, #{out.size} unreachable (ceiling #{ceiling})"
+# "unreachable" read as "no detector", which is what the advice below used
+# to assume. Measured 2026-08-25: all 58 declare a detect_semantic and
+# every one is info severity, so what drops them is the exclusion this
+# file's own header describes. Naming the filter names the lever.
+puts "rule_reach: #{all.size} rules — #{mechanical(all).size} without a model, " \
+     "#{prompted(all).size} with one, #{out.size} dropped by the info filter (ceiling #{ceiling})"
       return record(out.size) if ratchet && out.size < ceiling
 
       return 0 unless out.size > ceiling
 
-      out.first(10).each { |rule| puts "  #{rule['id']} (#{rule['severity']}) reaches no detector" }
-      puts "rule_reach: give it a detect_lexical, or drop it — law nothing can enforce is a claim"
+out.first(10).each { |rule| puts "  #{rule['id']} (#{rule['severity']}) declares only a semantic detector at info" }
+puts "rule_reach: raise its severity so the prompt keeps it, give it a detect_lexical, or drop it — " \
+     "law nothing can enforce is a claim"
       1
     end
 
