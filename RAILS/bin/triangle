@@ -67,8 +67,25 @@ module Deploy
       false
     end
 
-    def self.boot(app)
-      FileUtils.mkdir_p(RUN_DIR)
+# Propshaft pins the digest it serves through public/assets/.manifest.json,
+# and Rails says so out loud when you precompile in development: "Rails will
+# not serve any changed assets until you delete public/assets/.manifest.json".
+# So a stylesheet edit plus dartsass:build changes the file on disk and
+# nothing that a browser — or a rendered gate — actually reads. On 2026-08-24
+# that cost three edit/build/measure rounds against an unchanged number while
+# the fix was already compiled in.
+#
+# Clearing it here rather than documenting it: a manual step that only
+# matters after a CSS change, and whose absence produces a plausible wrong
+# measurement rather than an error, is a step that will be skipped.
+def self.clear_asset_manifest(app)
+  manifest = File.join(app[:dir], "public", "assets", ".manifest.json")
+  File.delete(manifest) if File.file?(manifest)
+end
+
+def self.boot(app)
+  clear_asset_manifest(app)
+  FileUtils.mkdir_p(RUN_DIR)
       log = File.open(log_file(app), "a")
       pid = Process.spawn(
         env_for(app),

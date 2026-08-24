@@ -401,7 +401,7 @@ turbo-frame {
 .data-state { display: inline-flex; width: fit-content; padding: 0.15rem 0.4rem; border: 1px solid var(--border); border-radius: var(--radius-xs); color: var(--text-secondary); font-size: var(--text-xs); }
 .data-state--stale { border-color: var(--status-stale-border); color: var(--status-stale-text); }
 .ports-purpose { max-width: 58ch; font-size: var(--text-lg); line-height: 1.5; color: var(--text); }
-kbd { padding: 0.12rem 0.35rem; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
+kbd { padding: 0.12rem 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
 .install-panel { margin-block: var(--space-6); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-elevated); }
 .install-panel [data-controller="clipboard"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
 .install-panel input { min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: var(--space-3); }

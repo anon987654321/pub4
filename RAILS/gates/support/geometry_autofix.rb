@@ -68,6 +68,15 @@ module Deploy
         # Findings repeat per viewport and render() dedupes by selector, so
         # report what actually lands in the file, not the finding count.
         count = body.lines.count { |line| line.include?("{") }
+        # A header and a list of comments is not a fix. On 2026-08-24 a run wrote
+        # this partial containing no rules at all and registered an @use for it,
+        # resurrecting a layer that had been deliberately retired at 90ef51aa6
+        # ("retire the geometry autofix layer into the stylesheets that own the
+        # rules"). An empty file wired into the cascade is worse than no file:
+        # it reads as an active fix layer and holds nothing. It also protects an
+        # existing partial from being emptied by a round that found nothing.
+        next if count.zero?
+
         if dry
           Kernel.warn "  [autofix dry] would write #{path.sub(RAILS_ROOT + '/', '')} (#{count} rule(s))"
           written += 1

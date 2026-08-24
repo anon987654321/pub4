@@ -188,7 +188,7 @@ main[role="main"] {
      shrink-wrap; fit-content states the intent even where a rule fights it. */
   width: fit-content;
   inset-inline-end: auto;
-  padding: 0.25rem 0.35rem;
+  padding: 0.25rem 4px;
   font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
   letter-spacing: -0.03em;
   color: var(--text);

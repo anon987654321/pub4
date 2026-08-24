@@ -18,7 +18,7 @@ body.vertical-maps article.place {
 body.vertical-maps article.place dl {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.35rem 1rem;
+  gap: 4px 1rem;
   padding: 1rem;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04); // scan: intentional — white-alpha lift on the maps night shell

@@ -422,9 +422,9 @@ section h2 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem 0.5rem;
+  gap: 4px 0.5rem;
   margin: 0;
-  padding: 0.35rem 0.75rem;
+  padding: 4px 0.75rem;
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
@@ -442,7 +442,7 @@ section h2 {
   cursor: pointer;
   min-height: var(--tap-min);
   min-width: var(--tap-min);
-  padding: 0 0.35rem;
+  padding: 0 4px;
   text-decoration: underline;
   text-underline-offset: 2px;
   border-radius: 0;
@@ -488,7 +488,7 @@ section h2 {
 }
 
 .nearby-chat-widget-log li {
-  padding: 0.35rem 0;
+  padding: 4px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--border, #46435a) 55%, transparent);
 }
 

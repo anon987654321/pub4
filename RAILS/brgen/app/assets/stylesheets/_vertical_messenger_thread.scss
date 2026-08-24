@@ -23,7 +23,7 @@ body.vertical-messenger .disappearing-settings {
 }
 
 body.vertical-messenger .disappearing-settings select {
-  margin-inline-start: 0.35rem;
+  margin-inline-start: 4px;
   background: var(--msg-surface);
   border: 1px solid var(--msg-border);
   color: var(--msg-ink);
@@ -182,7 +182,7 @@ body.vertical-messenger #typing-indicator[data-active="true"]::before {
   display: inline-block;
   width: 2rem;
   height: 2px;
-  margin-inline-end: 0.35rem;
+  margin-inline-end: 4px;
   vertical-align: middle;
   background: var(--msg-accent);
   animation: msg-type-bar 1s var(--ease-in-out) infinite;

@@ -290,7 +290,7 @@ body.vertical-tv .duration-chip {
   position: absolute;
   inset-block-end: var(--space-2xs);
   inset-inline-end: var(--space-2xs);
-  padding: 0.1rem 0.35rem;
+  padding: 0.1rem 4px;
   font: var(--weight-bold) 0.7rem/1 var(--font-mono, ui-monospace, monospace);
   background: var(--scrim-72);
   border-radius: 2px;
@@ -312,13 +312,13 @@ body.vertical-takeaway [data-available="false"] {
 }
 body.vertical-takeaway .sold-out-badge {
   display: inline-block;
-  margin-inline-start: 0.35rem;
+  margin-inline-start: 4px;
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border: 1px solid var(--border);
-  padding: 0.1rem 0.35rem;
+  padding: 0.1rem 4px;
   border-radius: var(--radius-xs, 4px);
   color: var(--text-secondary);
 }
@@ -326,13 +326,13 @@ body.vertical-takeaway .sold-out-badge {
 body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::after {
   content: "Sold out";
   display: inline-block;
-  margin-inline-start: 0.35rem;
+  margin-inline-start: 4px;
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border: 1px solid var(--border);
-  padding: 0.1rem 0.35rem;
+  padding: 0.1rem 4px;
   border-radius: var(--radius-xs, 4px);
   color: var(--text-secondary);
 }
