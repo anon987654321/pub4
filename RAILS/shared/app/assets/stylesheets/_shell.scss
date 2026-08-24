@@ -254,6 +254,15 @@ main[role="main"] {
   gap: 4px;
   width: 100%;
 }
+
+/* The group wrappers are semantic only. display: contents keeps the nav-items
+   as the flex column's own children, so the gap still falls between items
+   rather than between two groups and nothing moves — the same reason the feed
+   lists use it on their <li>. Remove this and the grouping becomes a visible
+   layout change, which it is not meant to be. */
+.sidebar nav .nav-group {
+  display: contents;
+}
 .nav-item {
   display: flex;
   align-items: center;

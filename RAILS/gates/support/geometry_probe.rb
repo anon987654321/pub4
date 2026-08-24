@@ -431,7 +431,16 @@ module Deploy
                 const kr = k.getBoundingClientRect();
                 return kr.width > 0 && kr.height > 0;
               });
-            groups.push({ sel: selFor(container), count: choices.length,
+            // Chunking is the other prescribed remedy for Hick, alongside a
+            // scrolling rail: a bar that splits its entries into labelled
+            // role=group sections asks the reader to choose within a group, not
+            // among every link at once. Reported so the gate can judge the
+            // largest chunk rather than the container total — brgen groups its
+            // eleven verticals as 4 and 7, and counting 11 credited neither.
+            const chunks = [...container.querySelectorAll('[role=group]')]
+              .map(g => g.querySelectorAll('a[href], button, [role=tab], [role=menuitem]').length)
+              .filter(n => n > 0);
+            groups.push({ sel: selFor(container), count: choices.length, chunks,
                           scrollable: container.scrollWidth > container.clientWidth + 4 });
           });
 

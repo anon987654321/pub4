@@ -154,7 +154,13 @@ module Deploy
       return if warn_at <= 0 && max_choices <= 0
 
       Array(data["groups"]).each do |group|
-        count = group["count"].to_i
+        # The largest chunk when the bar labels its sections, the total when it
+        # does not. Hick is about peers at one decision level, and a labelled
+        # role=group is a level — the same argument the scrollable exemption
+        # above makes for a rail. Counting every link in a chunked bar credits
+        # neither remedy and reports a number no reader ever faces.
+        chunks = Array(group["chunks"]).map(&:to_i).reject(&:zero?)
+        count = chunks.any? ? chunks.max : group["count"].to_i
         next if count <= max_choices || group["scrollable"]
 
         over = warn_at.positive? && count > warn_at

@@ -157,6 +157,15 @@
       <aside class="sidebar" aria-label="<%= t("nav.sidebar") %>" data-edge-swiper-target="root">
         <nav data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
+<%# Chunked, not shortened. Hick's law is about peers at one decision
+    level: ten flat entries is the number the reader faces, four
+    labelled groups is between one and four. The split follows the
+    order the nav already had — discovery, then the inbox, then the
+    city, then the account — so nothing is reordered and no entry
+    changes meaning. role=group carries it to assistive tech, and
+    _shell.scss gives .nav-group display: contents so the nav's own
+    flex column still lays the items out and nothing moves. %>
+          <div class="nav-group" role="group" aria-label="<%= t("nav.group_discover") %>">
           <%= link_to main_app.root_path, class: nav_cls.(main_app.root_path) do %>
             <%= icon :home, size: 26 %>
             <%= t("nav.home") %>
@@ -170,6 +179,8 @@
             <%= icon :search, size: 26 %>
             <%= t("nav.search") %>
           <% end %>
+          </div>
+          <div class="nav-group" role="group" aria-label="<%= t("nav.group_inbox") %>">
           <%= link_to main_app.notifications_path, class: nav_cls.(main_app.notifications_path) do %>
             <%= icon :notifications, size: 26 %>
             <%= t("nav.notifications") %>
@@ -178,6 +189,8 @@
             <%= icon :messages, size: 26 %>
             <%= t("nav.messages") %>
           <% end %>
+          </div>
+          <div class="nav-group" role="group" aria-label="<%= t("nav.group_city") %>">
           <%= link_to main_app.nearby_path, class: nav_cls.(main_app.nearby_path) do %>
             <%= icon :nearby, size: 26 %>
             <%= t("nav.nearby") %>
@@ -190,6 +203,8 @@
             <%= icon :camera, size: 26 %>
             <%= t("nav.stories") %>
           <% end %>
+          </div>
+          <div class="nav-group" role="group" aria-label="<%= t("nav.group_account") %>">
           <% if authenticated? %>
             <%= link_to main_app.user_path(Current.user), class: nav_cls.(main_app.user_path(Current.user)) do %>
               <%= icon :profile, size: 26 %>
@@ -201,6 +216,7 @@
               <%= t("nav.sign_in") %>
             <% end %>
           <% end %>
+          </div>
         </nav>
         <% if authenticated? %>
           <div class="sidebar-dropdown" data-controller="dropdown" data-action="click@window->dropdown#hide">

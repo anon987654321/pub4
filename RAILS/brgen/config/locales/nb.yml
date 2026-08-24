@@ -56,6 +56,10 @@ nb:
     advanced_post: Utvidet innlegg med bilde
     your_feed: Din strøm
   nav:
+    group_discover: "Oppdag"
+    group_inbox: "Innboks"
+    group_city: "Byen"
+    group_account: "Konto"
     pagination: Sidenavigasjon
     trending_tags: Populære emneknagger
     home: Hjem

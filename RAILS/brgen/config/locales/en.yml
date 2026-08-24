@@ -56,6 +56,10 @@ en:
     advanced_post: Advanced post with photo
     your_feed: Your feed
   nav:
+    group_discover: "Discover"
+    group_inbox: "Inbox"
+    group_city: "The city"
+    group_account: "Account"
     pagination: Pagination
     trending_tags: Trending tags
     home: Home
