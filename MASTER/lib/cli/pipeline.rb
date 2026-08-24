@@ -115,32 +115,6 @@ module Master
         end
       end
 
-      class SkipOnPressure
-        def initialize(stage, bus: nil)
-          @stage = stage
-          @bus   = bus
-        end
-
-        def call(ctx)
-          return @stage.call(ctx) unless ctx.pressure
-          label = pressure_label
-          @bus&.publish("pipeline:skipped", stage: label, reason: "pressure")
-          $stdout.puts "pipeline: skipped #{label} (pressure)"
-          $stdout.flush
-          Result.ok(ctx)
-        end
-
-        private
-
-        def pressure_label
-          stage_class = @stage.class.name
-          short_name  = stage_class.split("::").last
-          return short_name unless @stage.respond_to?(:stages)
-          names = @stage.stages.map { |s| s.class.name.split("::").last }.join(",")
-          "parallel[#{names}]"
-        end
-      end
-
       private
 
       DEPLOY_RE = /\b(deploy|ship|shipping|release|publish)\b/i

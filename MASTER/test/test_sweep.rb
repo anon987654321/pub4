@@ -95,9 +95,15 @@ end
     end
   end
 
-  def test_every_landed_row_names_its_commit
+  # A proposal can close over several commits — lib/ground took four, three
+  # regroups and a refutation — so this reads a list and requires every entry to
+  # be a real sha rather than assuming one closes one.
+  def test_every_landed_row_names_its_commits
     S.ledger.fetch("proposals").select { |r| r["state"] == "landed" }.each do |row|
-      assert_match(/\A[0-9a-f]{7,40}\z/, row["landed_by"].to_s, "#{row['id']} landed without a commit")
+      shas = row["landed_by"].to_s.split
+
+      refute_empty shas, "#{row['id']} landed without a commit"
+      shas.each { |sha| assert_match(/\A[0-9a-f]{7,40}\z/, sha, "#{row['id']} names #{sha.inspect}") }
     end
   end
 

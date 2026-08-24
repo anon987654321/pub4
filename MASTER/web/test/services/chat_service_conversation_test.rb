@@ -20,7 +20,7 @@ class ChatServiceConversationTest < ActiveSupport::TestCase
   setup do
     Fiber[:master_conversation] = nil
     @dir = Dir.mktmpdir
-    @bus = Master::Trace::EventBus.new(event_log: Master::Trace::EventLog.new(root: @dir))
+    @bus = Master::Trace::EventBus.new(event_log: Master::Trace::Log::Event.new(root: @dir))
     @stream = FakeStream.new
     @mine = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     @service = ChatService.new(

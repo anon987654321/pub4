@@ -12,7 +12,7 @@ module Master
       def initialize(root: Master::ROOT, recorder: nil)
         @root = root
         @recorder = recorder
-        @event_log = EventLog.new(root:)
+        @event_log = Log::Event.new(root:)
       end
 
       def render(arg: "")
@@ -119,7 +119,7 @@ module Master
       end
 
       def render_evidence(limit:)
-        log = EvidenceLog.new(root: @root)
+        log = Log::Evidence.new(root: @root)
         records = log.recent(limit)
         return "replay: no evidence events" if records.empty?
 

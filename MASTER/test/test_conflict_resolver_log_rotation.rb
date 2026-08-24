@@ -5,7 +5,7 @@ require_relative "test_helper"
 class TestConflictResolverLogRotation < Minitest::Test
   # conflict_log.jsonl was append-only with no cap and grew to 890MB
   # (alongside activity.jsonl's 1.2GB -- together they filled the disk and
-  # crashed an in-progress /fix round). Same fix as EventLog: rotate aside
+  # crashed an in-progress /fix round). Same fix as Log::Event: rotate aside
   # before appending once oversized, never read the whole file to do it.
   def test_log_conflict_rotates_an_oversized_log_instead_of_growing_forever
     Dir.mktmpdir do |dir|

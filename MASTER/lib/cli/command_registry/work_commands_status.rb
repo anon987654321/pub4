@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
-require_relative "../../trace/event_log"
+require_relative "../../trace/log/event"
 require_relative "formatter"
 require_relative "../resync_service"
 require_relative "../fix_preview_report"
@@ -59,7 +59,7 @@ module Master
       end
 
       def last_event(root, pattern)
-        Trace::EventLog.new(root:).recent(40, pattern:).last
+        Trace::Log::Event.new(root:).recent(40, pattern:).last
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CommandRegistry.last_event")
         nil
@@ -113,7 +113,7 @@ module Master
       end
 
       def failure_events(root, n)
-        records = Trace::EventLog.new(root:).recent(40)
+        records = Trace::Log::Event.new(root:).recent(40)
         records = records.select { |rec| rec["event"].to_s.match?(Trace::ReplayReader::FAILURE_PATTERN) }
         records.last(n).map { |rec| event_summary(rec, 2) }
       rescue StandardError => e
@@ -122,7 +122,7 @@ module Master
       end
 
       def recent_events(root, n)
-        Trace::EventLog.new(root:).recent(n).map { |rec| event_summary(rec, 3) }.compact
+        Trace::Log::Event.new(root:).recent(n).map { |rec| event_summary(rec, 3) }.compact
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CommandRegistry.recent_events")
         []
@@ -138,7 +138,7 @@ module Master
         arg = arg_for(ctx)
         n_arg, pattern = arg.split(/\s+/, 2)
         n = n_arg.to_i.positive? ? n_arg.to_i : 20
-        records = Trace::EventLog.new(root:).tail(n, pattern:)
+        records = Trace::Log::Event.new(root:).tail(n, pattern:)
         return "tail: no events" if records.empty?
 
         records.map do |rec|

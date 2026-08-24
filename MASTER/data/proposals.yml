@@ -159,12 +159,16 @@ proposals:
 
   - id: ground-is-a-76-file-drawer
     tree: MASTER
-    state: open
+    state: landed
     claim: "lib/ground holds four families — policy (5), memory (3), tool (3), map (3) — that want subdirectories"
+    landed_by: 5fb974498 e9c484630 a9b2cd4bb 1a8c02a39
     note: >
-      Plans are generated: COHESION_DIR=lib/ground rake lint:cohesion. Each is a
-      constant rename under Zeitwerk, so it wants one family per commit and a
-      clean shared checkout, not a sweep.
+      Three regrouped and one refuted, one commit each. `cohesion lib/ground`
+      reports zero families. The spine never rose: each family paid its own nesting
+      out of what the regroup exposed — a one-method parent module with a single
+      caller, a dead report formatter, and principle_map.rb's duplicate
+      `module Master` block, itself the residue of an earlier collapse. 38970 to
+      38966, ratcheted three times.
 
   - id: openbsd-lib-gate-family
     tree: OPENBSD

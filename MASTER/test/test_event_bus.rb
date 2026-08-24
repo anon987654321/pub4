@@ -7,7 +7,7 @@ class TestEventBus < Minitest::Test
     Fiber[:master_conversation] = nil
     @dir = Dir.mktmpdir
     @bus = Master::Trace::EventBus.new(
-      event_log: Master::Trace::EventLog.new(root: @dir),
+      event_log: Master::Trace::Log::Event.new(root: @dir),
     )
   end
 

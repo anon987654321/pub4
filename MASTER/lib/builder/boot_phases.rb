@@ -11,8 +11,8 @@ module Master
       end
 
       def call
-        event_log = Trace::EventLog.new(root: @root)
-        evidence_log = Trace::EvidenceLog.new(root: @root)
+        event_log = Trace::Log::Event.new(root: @root)
+        evidence_log = Trace::Log::Evidence.new(root: @root)
         bus = Trace::EventBus.new(event_log:, evidence_log:)
         Ground::Swallow.event_bus = bus
         ring = Trace::RingBuffer.new(RING_SIZE)
@@ -20,7 +20,7 @@ module Master
         session = Trace::Session.new(root: @root, budget_max: @config.budget_max, req_max: @config.req_max)
         undo = Trace::Undo.new(session:, event_bus: bus, root: @root)
         metrics = Trace::Metrics.new(root: @root, event_bus: bus)
-        Trace::AuditLog.new(root: @root, event_bus: bus)
+        Trace::Log::Audit.new(root: @root, event_bus: bus)
         Trace::SwallowLedger.new(event_bus: bus, root: @root).attach
         recorder = Trace::Recorder.new(root: @root, event_bus: bus)
         write_tracker = Trace::WriteTracker.new(event_bus: bus)

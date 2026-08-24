@@ -16,7 +16,7 @@ class TestEvidenceLog < Minitest::Test
   end
 
   def test_operational_events_match_prefixes
-    log = Trace::EvidenceLog.new(root: @dir)
+    log = Trace::Log::Evidence.new(root: @dir)
     assert log.operational?("ops:commit")
     assert log.operational?("pipeline:rollback")
     assert log.operational?("resync:reset")
@@ -25,8 +25,8 @@ class TestEvidenceLog < Minitest::Test
   end
 
   def test_event_bus_dual_writes_evidence_stream
-    activity = Trace::EventLog.new(root: @dir, stream: "activity")
-    evidence = Trace::EvidenceLog.new(root: @dir)
+    activity = Trace::Log::Event.new(root: @dir, stream: "activity")
+    evidence = Trace::Log::Evidence.new(root: @dir)
     bus = Trace::EventBus.new(event_log: activity, evidence_log: evidence)
     bus.publish("ops:commit", head: "abc123")
     bus.publish("scan:complete", count: 1)
