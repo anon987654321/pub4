@@ -34,6 +34,53 @@ module Master
           Dir.glob(File.join(dir, "**", "*.rb")).sum { |file| code_lines(File.read(file)) }
         end
 
+        # Lines that exist only because Zeitwerk maps a path to a constant.
+        #
+        # `module Master` / `module Ground` / `module Policy` wrapping one nested
+        # module carry no implementation; the loader requires them and the file
+        # would not resolve without them. Counting them made every structural
+        # improvement cost two lines per file, so lint:spine and lint:cohesion
+        # pulled against each other and cohesion lost by default — three rounds
+        # of regrouping were paid for by luck, then by the last orphan in lib/,
+        # then by a budget raise.
+        #
+        # Only `module`, and only when its body is exactly one module or class.
+        # A module holding a constant, a method, or two children is doing work
+        # and counts. A `class` wrapping a class is a design choice nothing
+        # forced, and counts too.
+        def namespace_lines(source)
+          require "prism"
+          result = Prism.parse(source.to_s)
+          return 0 unless result.success?
+
+          count_namespaces(result.value)
+        end
+
+        def count_namespaces(node)
+          return 0 unless node.respond_to?(:child_nodes)
+
+          own = pure_namespace?(node) ? 2 : 0
+          node.child_nodes.compact.sum(own) { |child| count_namespaces(child) }
+        end
+
+        # Two lines: the `module` and its `end`.
+        def pure_namespace?(node)
+          return false unless node.is_a?(Prism::ModuleNode)
+
+          statements = node.body
+          return false unless statements.is_a?(Prism::StatementsNode)
+          return false unless statements.body.size == 1
+
+          statements.body.first.is_a?(Prism::ModuleNode) || statements.body.first.is_a?(Prism::ClassNode)
+        end
+
+        # What lint:spine bounds: code minus the loader's ceremony.
+        def body_lines(source) = code_lines(source) - namespace_lines(source)
+
+        def body_lines_in(dir)
+          Dir.glob(File.join(dir, "**", "*.rb")).sum { |file| body_lines(File.read(file)) }
+        end
+
         # A method's body only: between `def` and its `end`, blank lines and
         # whole-line comments excluded.
         #

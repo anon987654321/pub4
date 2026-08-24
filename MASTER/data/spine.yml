@@ -9,7 +9,7 @@
 #
 # What this file claims, settled 2026-08-11 (DECISIONS.md, "The invariant"):
 # `core_files: 6` is the invariant — a new top-level concept in core/ is a design
-# change. `lib_code_ceiling` is a BUDGET WITH A SPONSOR, not a promise that lib/
+# change. `lib_body_ceiling` is a BUDGET WITH A SPONSOR, not a promise that lib/
 # never grows: it has been raised three times and the unit changed once, so the
 # old sentence had already been disproved by its own log. The mechanism is
 # unchanged; the claim is now the one that is true.
@@ -17,6 +17,24 @@
 # The ceiling only ever goes down. When lib/ shrinks, run `rake lint:spine
 # RATCHET=1` to record the new low; there is no task that raises it. Raising it
 # is a deliberate edit to this file, in a commit that says why.
+# UNIT CHANGED 2026-08-25, lib_code_ceiling -> lib_body_ceiling, 38962 -> 36970.
+#
+# Body lines are code lines minus the ones Zeitwerk forces: a `module` whose
+# body is exactly one module or class, and its matching `end`. Those carry no
+# implementation — the loader maps a path to a constant and the file would not
+# resolve without them — and counting them set this ratchet against
+# lint:cohesion, which wants files shelved into namespaces that cost exactly
+# two lines per file.
+#
+# That was not theoretical. Three rounds of regrouping in two days were paid
+# for in turn by luck (each family happened to expose dead code), by the last
+# orphan class in lib/, and finally by a budget raise because nothing was left.
+# A ratchet that charges for structure will get structure it did not want.
+#
+# 2014 lines, about 5%, are wrappers. The number below is the remainder,
+# measured once at the rename. A module holding a constant, a method or two
+# children is doing work and still counts; so does a `class` wrapping a class,
+# which nothing forced.
 spine:
   # Total lines across lib/**/*.rb.
   #
@@ -538,7 +556,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_code_ceiling: 38962
+  lib_body_ceiling: 36970
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

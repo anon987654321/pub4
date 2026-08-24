@@ -62,6 +62,7 @@ module Pub4
       lines = source.lines
       defs = def_nodes(source)
       { "code_lines" => metrics.code_lines(source),
+        "namespace_lines" => metrics.namespace_lines(source),
         "longest_method" => defs.map { |node| metrics.method_code_lines(node, lines) }.max.to_i,
         "public_methods" => class_nodes(source).sum { |node| metrics.public_method_count(node) } }
     end

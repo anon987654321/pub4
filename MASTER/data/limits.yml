@@ -865,9 +865,19 @@ guidance:
 # so lib/ is eight lines lighter overall and lint:spine ratcheted 38966 ->
 # 38962. Extraction is what the header asks for and extraction is what this is;
 # the number moved because the unit cannot express it.
+# THIRD RAISE IN ONE DAY, and DEBT.md is right that the count is the signal.
+# lib/trace +18 for namespaces, law +27 for a rule that can fire, lib/review
+# +47 for CodeMetrics.namespace_lines and the paragraph explaining it. Each is
+# argued; the pattern still deserves naming.
+#
+# They share a cause. loc_budget counts raw lines — comments included — so it
+# charges for the explanation of a change as well as the change. lint:spine
+# stopped charging for Zeitwerk wrappers today; this file has not stopped
+# charging for the reason a wrapper exists. That is a decision with an owner,
+# not something to fix by trimming a comment.
 loc_budgets:
   lib/cli: 7887
-  lib/review: 13990
+  lib/review: 14037
   lib/fix: 3536
   lib/io: 4730
   lib/trace: 2699

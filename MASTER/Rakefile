@@ -321,22 +321,29 @@ namespace :lint do
     # three ratchet passes had been paid for out of dead code rather than
     # deciding which one meant it. They now agree.
     #
-    # The key is lib_code_ceiling, not lib_ceiling: the unit changed, and a
-    # renamed key makes a stale number a load error instead of a silent pass at
-    # roughly 20% slack.
-    if config.key?("lib_ceiling") && !config.key?("lib_code_ceiling")
-      abort "lint:spine: data/spine.yml still carries lib_ceiling, which counted raw lines. " \
-            "This task now counts code lines (non-blank, non-comment). Rename the key to " \
-            "lib_code_ceiling and re-measure -- the old number is ~20% slack in the new unit, " \
-            "so carrying it across would pass having measured nothing."
+    # The key names the unit, and the unit has changed twice. lib_ceiling counted
+    # raw lines; lib_code_ceiling counted non-blank non-comment; lib_body_ceiling
+    # subtracts the lines Zeitwerk forces — a `module` wrapping exactly one module
+    # or class, and its `end`.
+    #
+    # Renaming on each change is the mechanism: a stale number becomes a load
+    # error instead of a silent pass, this time at roughly 5% slack. Both older
+    # keys are refused by name so neither can be carried across quietly.
+    %w[lib_ceiling lib_code_ceiling].each do |stale|
+      next unless config.key?(stale) && !config.key?("lib_body_ceiling")
+
+      abort "lint:spine: data/spine.yml still carries #{stale}. This task counts body lines now — " \
+        "code minus the module wrappers Zeitwerk requires, which carry no implementation and " \
+        "made every regroup cost two lines per file. Rename the key to lib_body_ceiling and " \
+        "re-measure; the old number is ~5% slack in the new unit."
     end
-    ceiling = config.fetch("lib_code_ceiling")
+    ceiling = config.fetch("lib_body_ceiling")
     # Master::Review::Scan::CodeMetrics, not a copy of the counter. This task and
     # tools/ratchets.rb each carried their own, for the same ratchet, in the same
     # table — they agreed by luck rather than by construction.
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
     require "master"
-    lines = Master::Review::Scan::CodeMetrics.code_lines_in(File.join(__dir__, "lib"))
+    lines = Master::Review::Scan::CodeMetrics.body_lines_in(File.join(__dir__, "lib"))
     # lib/core.rb and lib/core/*.rb both count: the entrypoint is a concept
     # (Effect, VERBS, Secret), and globbing only the directory would have relaxed
     # a 6-file invariant to 5 the moment the spine moved, without saying so.
@@ -372,7 +379,7 @@ namespace :lint do
     # The ratchet only tightens. Nothing here can raise the ceiling.
     if lines < ceiling && ENV["RATCHET"] == "1"
       body = File.read(File.join(__dir__, "data", "spine.yml"))
-      body = body.sub(/^  lib_code_ceiling: \d+$/, "  lib_code_ceiling: #{lines}")
+      body = body.sub(/^  lib_body_ceiling: \d+$/, "  lib_body_ceiling: #{lines}")
       # A real fall clears the raise log, which is what makes the allowance a
       # budget rather than a countdown to a permanent failure. Earning back a
       # raise requires lib/ to actually come down first.
@@ -391,7 +398,7 @@ namespace :lint do
       # report is worse, because nothing looks wrong.
       begin
         spine = YAML.safe_load(body).fetch("spine")
-        spine.fetch("lib_code_ceiling")
+        spine.fetch("lib_body_ceiling")
         raise "raise log still holds #{spine["raised"].size} entries" unless Array(spine["raised"]).empty?
       rescue StandardError => e
         abort "lint:spine: refusing to write data/spine.yml — the rewrite does not parse " \

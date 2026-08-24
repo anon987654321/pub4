@@ -108,7 +108,7 @@ module Pub4
     def spine_rows
       spine = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("spine")
       [
-        Row.new(name: "spine.lib_code_ceiling", current: lib_code_lines, ceiling: spine["lib_code_ceiling"],
+        Row.new(name: "spine.lib_body_ceiling", current: lib_code_lines, ceiling: spine["lib_body_ceiling"],
                 direction: :down, source: "MASTER/data/spine.yml",
                 note: "a budget with a sponsor, not a promise (DECISIONS.md)"),
         Row.new(name: "spine.core_files", current: Dir.glob(File.join(MASTER, "lib/{core.rb,core/*.rb}")).size,
@@ -127,7 +127,7 @@ module Pub4
     def lib_code_lines
       $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
       require "master"
-      Master::Review::Scan::CodeMetrics.code_lines_in(File.join(MASTER, "lib"))
+      Master::Review::Scan::CodeMetrics.body_lines_in(File.join(MASTER, "lib"))
     end
 
     # The RAILS lints, each a Pub4 module with its own BASELINES.
