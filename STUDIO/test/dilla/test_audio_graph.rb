@@ -47,8 +47,11 @@ class TestAudioGraph < Minitest::Test
 
     assert_includes graph_text, "[kick][snare]amix=inputs=2:weights=1 0.8:duration=first:normalize=0[drum_sum]"
     assert_includes graph_text, "[drum_sum]acompressor=threshold=0.1[drum]"
-    # The bus arrives at master as one channel, carrying its own weight.
-    assert_includes graph_text, "[pad][drum]amix=inputs=2:weights=0.75 0.9:duration=first:normalize=0[master_sum]"
+    # The bus arrives at master as one channel, carrying its own weight, and in
+    # the position it was declared -- :drum is declared above :pad here, so it
+    # leads. This expectation used to read [pad][drum], which was the old
+    # sum-channels-then-buses behaviour rather than a decision.
+    assert_includes graph_text, "[drum][pad]amix=inputs=2:weights=0.9 0.75:duration=first:normalize=0[master_sum]"
   end
 
   def test_the_master_chain_lands_on_the_out_label
@@ -103,5 +106,33 @@ class TestAudioGraph < Minitest::Test
 
     assert_includes graph.to_filter_complex,
                     "[first][second][third]amix=inputs=3:weights=0.1 0.2 0.3:duration=first:normalize=0"
+  end
+
+  # Found by migrating render_industrial rather than by reading the code: the
+  # first version summed every channel and then every bus, so a bus declared
+  # first arrived last. The sum is the same either way -- each weight travels
+  # with its input -- but the graph differs as text, and text is how a migration
+  # is proved. A bus is a routing declaration, not a second-class one.
+  def test_a_bus_holds_its_declared_position_among_channels
+    graph = AudioGraph.new
+    graph.bus(:drum)
+    graph.channel(:kit, input: "[drums]", bus: :drum)
+    graph.channel(:rumble, input: "1:a", gain: 0.55)
+    graph.channel(:noise, input: "2:a", gain: 0.06)
+
+    # :drum was declared before both channels, so [drums] leads the sum.
+    assert_includes graph.to_filter_complex,
+                    "[drums][rumble][noise]amix=inputs=3:weights=1 0.55 0.06"
+  end
+
+  # The other half of the same fix: a pass-through of an already-labelled source
+  # is that label. Renaming it would be audibly identical and textually noisy.
+  def test_a_pass_through_of_a_label_emits_no_clause
+    graph = AudioGraph.new
+    graph.channel(:kit, input: "[drums]")
+    graph.channel(:other, input: "1:a", gain: 0.5)
+
+    refute_includes graph.to_filter_complex, "anull[kit]"
+    assert_includes graph.to_filter_complex, "[drums][other]amix"
   end
 end

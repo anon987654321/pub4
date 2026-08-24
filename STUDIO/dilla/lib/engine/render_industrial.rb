@@ -137,6 +137,11 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
     kick: :ind_kick, clap: :ind_clap, hat: :ind_hat, open: :open_hat, bass: :ind_bass_e, stab: :ind_stab,
   )
 
+  # The same pre-graph drum stage render_dilla runs. DRUM_FIELD_LAYER is empty
+  # unless the operator sets it, so this changes nothing by default -- it makes
+  # the capability reachable from a renderer that never had it.
+  drum_field_layer!(drum_tmp, duration: duration)
+
   sides_path = File.join(STEM_DIR, "sides.mp3")
   command = ["ffmpeg", "-y", "-i", drum_tmp]
   idx = 1
@@ -154,22 +159,40 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
 
   filt = []
   filt << "[0:a]aformat=channel_layouts=stereo,asplit=2[drums][drums_sc]"
-  filt << "[#{rumble_idx}:a]aformat=channel_layouts=mono,lowpass=f=95,equalizer=f=48:t=o:w=0.8:g=8,volume=0.42[rumble]"
+
+  # The bed, as channels rather than as two arrays kept in step by hand.
+  #
+  # mix_in and mix_w used to be appended under the same `if`, which is the shape
+  # that silently mis-assigns every weight the moment one append lands without
+  # the other -- amix takes weights positionally, not by name.
+  #
+  # :drum is a bus with an empty chain today, so it collapses to [drums] and this
+  # emits the graph it always emitted; test_audio_graph_industrial pins that as
+  # text, with and without the optional texture. It is a bus so the channel strip
+  # this renderer has never had has somewhere to go -- give :drum a chain and
+  # every kit voice under it moves together.
+  #
+  # amix_options is the legacy string on purpose. This renderer omits normalize=0
+  # where render_dilla sets it, which measures 4.1 dB into a sidechain
+  # compressor, a tanh saturator and a compressor. Audible, and a separate
+  # decision from this one.
+  bed = AudioGraph.new(amix_options: "duration=first")
+  bed.bus(:drum)
+  bed.channel(:kit, input: "[drums]", bus: :drum)
+  bed.channel(:rumble, input: "#{rumble_idx}:a", gain: 0.55,
+              chain: ["aformat=channel_layouts=mono", "lowpass=f=95",
+                      "equalizer=f=48:t=o:w=0.8:g=8", "volume=0.42"])
   if sides_idx
-    filt << "[#{sides_idx}:a]aformat=channel_layouts=stereo,atrim=0:#{duration},asetpts=PTS-STARTPTS," \
-            "highpass=f=180,lowpass=f=8500,volume=0.18[texture]"
+    bed.channel(:texture, input: "#{sides_idx}:a", gain: 0.28,
+                chain: ["aformat=channel_layouts=stereo", "atrim=0:#{duration}",
+                        "asetpts=PTS-STARTPTS", "highpass=f=180", "lowpass=f=8500",
+                        "volume=0.18"])
   end
-  filt << "[#{noise_idx}:a]highpass=f=400,lowpass=f=5000,volume=0.04[noise]"
-  mix_in = ["[drums]", "[rumble]"]
-  mix_w  = ["1.0", "0.55"]
-  if sides_idx
-    mix_in << "[texture]"
-    mix_w << "0.28"
-  end
-  mix_in << "[noise]"
-  mix_w << "0.06"
-  filt << "#{mix_in.join}amix=inputs=#{mix_in.length}:weights=#{mix_w.join(' ')}:duration=first[bed]"
-  filt << "[bed][drums_sc]sidechaincompress=threshold=-24dB:ratio=8:attack=0.5:release=110:level_sc=0.9[pumped]"
+  bed.channel(:noise, input: "#{noise_idx}:a", gain: 0.06,
+              chain: ["highpass=f=400", "lowpass=f=5000", "volume=0.04"])
+  filt << bed.to_filter_complex(out_label: nil)
+  bed_label = bed.sum_label
+  filt << "[#{bed_label}][drums_sc]sidechaincompress=threshold=-24dB:ratio=8:attack=0.5:release=110:level_sc=0.9[pumped]"
   filt << "[pumped]asplit=2[dry][rev_send]"
   filt << "[rev_send]highpass=f=100,lowpass=f=9000,aecho=0.7:0.8:480|960|1920|3200:0.6|0.45|0.3|0.18[verb]"
   filt << "[dry][verb]amix=inputs=2:weights=0.62 0.38[with_verb]"

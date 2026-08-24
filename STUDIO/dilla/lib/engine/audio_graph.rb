@@ -58,6 +58,7 @@ class AudioGraph
     @amix_options = amix_options
     @channels = []
     @buses = {}
+    @order = []
     @master_chain = []
   end
 
@@ -68,6 +69,7 @@ class AudioGraph
 
     @channels << Channel.new(name: name.to_sym, input: input.to_s, chain: Array(chain),
                              gain: gain, bus: bus.to_sym)
+    @order << [:channel, name.to_sym]
     self
   end
 
@@ -77,6 +79,7 @@ class AudioGraph
     raise ArgumentError, "a bus cannot feed itself" if name == into.to_sym
 
     @buses[name] = Bus.new(name: name, chain: Array(chain), gain: gain, into: into.to_sym)
+    @order << [:bus, name]
     self
   end
 
@@ -92,10 +95,22 @@ class AudioGraph
     feeding_channels = @channels.select { |c| c.bus == target }
     feeding_buses = @buses.values.select { |b| b.into == target }
 
-    parts = feeding_channels.map { |c| ["[#{c.name}]", c.gain] }
-    feeding_buses.each do |b|
-      _, label = emit_bus(b, clauses)
-      parts << ["[#{label}]", b.gain] if label
+    # Declaration order across BOTH kinds. Summing every channel and then every
+    # bus put a bus last however early it was declared, which reorders amix's
+    # inputs. That is the same sum arithmetically -- each weight travels with
+    # its input -- but a different graph as text, and migrations here are proved
+    # by comparing graphs as text. It also broke the invariant this class
+    # documents at the top.
+    parts = []
+    @order.each do |kind, name|
+      if kind == :channel
+        found = feeding_channels.find { |c| c.name == name } or next
+        parts << ["[#{channel_label(found)}]", found.gain]
+      else
+        found = feeding_buses.find { |b| b.name == name } or next
+        _, label = emit_bus(found, clauses)
+        parts << ["[#{label}]", found.gain] if label
+      end
     end
     return [clauses, nil] if parts.empty?
 
@@ -119,7 +134,7 @@ class AudioGraph
   # chain (or anull) and lands on that label.
   def to_filter_complex(out_label: "out")
     clauses = []
-    @channels.each { |c| clauses << channel_clause(c) }
+    @channels.each { |c| (clause = channel_clause(c)) && clauses << clause }
     _, summed = sum_into(:master, clauses)
     raise ArgumentError, "nothing routes to master" unless summed
 
@@ -155,7 +170,26 @@ class AudioGraph
     [clauses, @emitted_buses[bus.name]]
   end
 
+  # A channel whose source is already a label and which applies nothing is that
+  # label. Emitting [drums]anull[kit] would be audibly identical and textually
+  # different, and the whole migration strategy here rests on comparing graphs
+  # as text -- so a pass-through of an existing label stays that label rather
+  # than growing a rename nobody asked for.
+  #
+  # Deliberately not extended to input specifiers like 0:a. Those can be fed to
+  # amix directly too, but then the channel's name never appears in the graph
+  # and a reader cannot tell which source is which.
+  def pass_through?(channel)
+    channel.input.start_with?("[") && channel.chain.none? { |f| f.to_s.strip != "" }
+  end
+
+  def channel_label(channel)
+    pass_through?(channel) ? channel.input.delete("[]") : channel.name.to_s
+  end
+
   def channel_clause(channel)
+    return nil if pass_through?(channel)
+
     source = channel.input.start_with?("[") ? channel.input : "[#{channel.input}]"
     chain = channel.chain.reject { |f| f.to_s.strip.empty? }
     chain = ["anull"] if chain.empty?
