@@ -20,8 +20,19 @@
 <% controls = local_assigns.fetch(:controls, %w[previous toggle stop next volume]) %>
 <% act = ->(name) { "click->#{scope}##{name}" } %>
 
+<%# Rests visible, retires, and comes back when the pointer reaches the bottom
+    edge — the same nav-autohide the top bar uses, with edge/zone set because a
+    bar that has slid off-screen cannot be hovered. 6000ms on arrival so the
+    controls can be found before they leave; 3000 once the reader has touched
+    them. prefers-reduced-motion keeps it put. %>
 <nav class="playlist-transport-bar"
      role="group"
+     data-controller="nav-autohide"
+     data-nav-autohide-hidden-class="playlist-transport-bar--hidden"
+     data-nav-autohide-edge-value="bottom"
+     data-nav-autohide-zone-value="72"
+     data-nav-autohide-delay-value="6000"
+     data-nav-autohide-idle-value="3000"
      aria-label="<%= t("playlist.transport", default: "Playback") %>">
   <% if controls.include?("previous") %>
     <button type="button" class="transport-btn" data-action="<%= act.call("previous") %>"

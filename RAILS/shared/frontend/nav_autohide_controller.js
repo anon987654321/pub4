@@ -16,11 +16,21 @@ import { Controller } from "@hotwired/stimulus"
 // Usage:
 //   <div class="nav_swiper" data-controller="nav-autohide"
 //        data-nav-autohide-delay-value="4000">
+//
+// edge/zone exist because a hidden bar cannot be hovered. pointerenter fires on
+// the element, and once the element has translated off-screen there is nothing
+// under the cursor to enter — so on a mouse the bar left and never came back.
+// Touch had document-level touchstart and the keyboard had focusin; the mouse
+// had nothing. `zone` watches the last N pixels against `edge` and reveals when
+// the pointer arrives there, which is how a video player's chrome behaves and
+// what a reader already expects at a screen edge.
 export default class extends Controller {
   static classes = ["hidden"]
   static values = {
     delay: { type: Number, default: 4000 },
     idle: { type: Number, default: 2500 },
+    edge: { type: String, default: "top" },
+    zone: { type: Number, default: 0 },
   }
 
   connect() {
@@ -38,6 +48,11 @@ export default class extends Controller {
     this.element.addEventListener("pointerleave", this.onLeave)
     document.addEventListener("touchstart", this.onReveal, { passive: true })
 
+    if (this.zoneValue > 0) {
+      this.onPointerMove = this.revealFromEdge.bind(this)
+      document.addEventListener("pointermove", this.onPointerMove, { passive: true })
+    }
+
     this.scheduleHide(this.delayValue)
   }
 
@@ -48,6 +63,19 @@ export default class extends Controller {
     this.element.removeEventListener("focusin", this.onReveal)
     this.element.removeEventListener("pointerleave", this.onLeave)
     document.removeEventListener("touchstart", this.onReveal)
+    if (this.onPointerMove) document.removeEventListener("pointermove", this.onPointerMove)
+  }
+
+  // Only acts while hidden, and only from the edge this bar lives on, so a
+  // pointer crossing the page does not keep waking a bar it never approached.
+  revealFromEdge(event) {
+    if (!this.element.classList.contains(this.hiddenClassName)) return
+
+    const y = event.clientY
+    const near = this.edgeValue === "bottom"
+      ? y >= window.innerHeight - this.zoneValue
+      : y <= this.zoneValue
+    if (near) this.reveal()
   }
 
   reveal() {

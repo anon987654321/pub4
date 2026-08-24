@@ -396,6 +396,30 @@ body.vertical-playlist {
   background: var(--surface-elevated);
   border-block-start: 1px solid var(--border);
   color: var(--text);
+  transition: transform var(--transition-normal, 300ms) var(--ease-out);
+}
+
+/* Retired, not removed: it slides out of the viewport and keeps its place in
+   the tab order, so a keyboard reader can still reach the controls and
+   focusin brings it back (nav_autohide_controller). translate rather than
+   display or visibility for the same reason — a hidden button is not a
+   focusable one. */
+.playlist-transport-bar--hidden {
+  transform: translateY(100%);
+}
+
+/* A reader who asked for less motion asked for less of exactly this: the bar
+   stays where it is rather than sliding more slowly. The controller already
+   declines to schedule a hide under this query; this is the belt to that
+   brace, for a class left behind by a disconnect mid-transition. */
+@media (prefers-reduced-motion: reduce) {
+  .playlist-transport-bar {
+    transition: none;
+  }
+
+  .playlist-transport-bar--hidden {
+    transform: none;
+  }
 }
 
 .playlist-transport-bar .transport-btn {

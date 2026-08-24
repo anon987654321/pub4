@@ -381,6 +381,17 @@ module Deploy
       send_cmd("Runtime.enable")
       send_cmd("Network.enable")
       send_cmd("Log.enable")
+      # A headless page is not the focused window, so document.hasFocus() is
+      # false and Chrome suppresses focus/focusin/blur entirely. `.focus()` still
+      # moves document.activeElement, which is what makes this so easy to miss:
+      # the element looks focused and no event ever fires. Anything that reveals
+      # chrome on focusin — the autohiding nav bars — measured as broken, and
+      # keyboard_flow was asking a browser that could not answer.
+      send_cmd("Emulation.setFocusEmulationEnabled", enabled: true)
+    rescue StandardError
+      # Older Chrome without the command: everything else still works, and a
+      # focus reading from such a build was already unreliable rather than newly so.
+      nil
     end
 
     # A desync poisons the read stream, not the browser. Rebuilding the
