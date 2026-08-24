@@ -1,0 +1,16 @@
+---
+# Families of files that read as one concept — the reader is
+# `ruby tools/cohesion.rb --census`, wired into `rake lint:cohesion` and
+# `rake audit`.
+#
+# 44 is today's measurement, not a low that was held. The tool printed proposals
+# and exited 0 for its whole life, was absent from `rake audit` until 2026-08-24,
+# and read only prefix families — so it reported "nothing to merge" for
+# lib/ground, lib/review, lib/cli and lib/voice, 325 files, and the reason was
+# the matcher rather than the tree.
+#
+# Down only. A new family is a directory that has grown a third file of one kind
+# without anyone naming the kind; regroup it, merge it, or argue the number up
+# in a commit that says why. `--ratchet` records a new low, `--list` prints what
+# was counted.
+families: 44

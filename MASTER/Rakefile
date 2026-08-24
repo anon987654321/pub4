@@ -276,13 +276,22 @@ namespace :lint do
     puts "lint:autoload: #{groups.values.flatten.size} ignores, all still necessary"
   end
 
-  desc "files that are one concept under several names — proposes merges, never performs one"
+  # Was: print proposals for one hardcoded directory and exit 0 regardless. That
+  # is a report, not a gate, and it was absent from `rake audit` too — so for its
+  # whole life nothing read what it found. The census counts families across every
+  # declared root against a recorded low, in the shape dup_census and
+  # namespace_ceilings already use, and fails when a new one appears.
+  #
+  # COHESION_DIR still asks the one-directory question, which is the one worth
+  # asking when you are about to do the surgery.
+  desc "files that are one concept under several names — counts families against a recorded low"
   task :cohesion do
-    target = ENV.fetch("COHESION_DIR", File.expand_path("../STUDIO/dilla/lib/engine", __dir__))
-    if Dir.exist?(target)
-      system(RbConfig.ruby, File.join(__dir__, "tools", "cohesion.rb"), target)
+    tool = File.join(__dir__, "tools", "cohesion.rb")
+    if (target = ENV["COHESION_DIR"])
+      abort "lint:cohesion: #{target} absent" unless Dir.exist?(target)
+      system(RbConfig.ruby, tool, target)
     else
-      puts "lint:cohesion: #{target} absent — skipping"
+      abort "lint:cohesion: a new family appeared" unless system(RbConfig.ruby, tool, "--census")
     end
   end
 
