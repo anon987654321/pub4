@@ -56,7 +56,12 @@ module Shared
     end
 
     # @stimulus-components/read-more
-    def read_more(text, lines: 3, more: "Read more", less: "Read less", class_name: "read-more-content")
+    # Defaults through t(), not English literals: a default argument bypasses
+    # the i18n discipline the rest of the tree keeps, and these render inside
+    # a page whose default locale is nb.
+    def read_more(text, lines: 3, more: nil, less: nil, class_name: "read-more-content")
+      more ||= t("shared.read_more", default: "Read more")
+      less ||= t("shared.read_less", default: "Read less")
       return "" if text.blank?
 
       tag.div(

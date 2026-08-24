@@ -21,16 +21,16 @@ class Takeaway::OrdersController < Takeaway::BaseController
     @menu_items = @restaurant.menu_items.available
   end
 
-def create
-  # A kitchen that is shut cannot cook now, but can take an order for later —
-  # that is most of what scheduling is for. Checked here rather than only in
-  # the view, because a hidden button is not a closing time.
-  unless @restaurant.accepting_orders?(scheduled_for: order_params[:scheduled_for])
-    redirect_to restaurant_path(@restaurant), alert: t("flash.takeaway.closed_now")
-    return
-  end
+  def create
+    # A kitchen that is shut cannot cook now, but can take an order for later —
+    # that is most of what scheduling is for. Checked here rather than only in
+    # the view, because a hidden button is not a closing time.
+    unless @restaurant.accepting_orders?(scheduled_for: order_params[:scheduled_for])
+      redirect_to restaurant_path(@restaurant), alert: t("flash.takeaway.closed_now")
+      return
+    end
 
-  @order = @restaurant.orders.build(order_params.merge(user: Current.user))
+    @order = @restaurant.orders.build(order_params.merge(user: Current.user))
     item_params.each do |item_id, qty|
       next unless qty.to_i > 0
       item = @restaurant.menu_items.available.find_by(id: item_id)

@@ -3,7 +3,6 @@ import AutoSubmit from "@stimulus-components/auto-submit"
 import CheckboxSelectAll from "@stimulus-components/checkbox-select-all"
 import Clipboard from "@stimulus-components/clipboard"
 import Dropdown from "@stimulus-components/dropdown"
-import Hotkey from "@stimulus-components/hotkey"
 import Lightbox from "@stimulus-components/lightbox"
 import Notification from "@stimulus-components/notification"
 import ReadMore from "@stimulus-components/read-more"
@@ -62,9 +61,7 @@ const COMPONENT_REGISTRATIONS = [
   // sites, and a turbo-frame stack does its job natively — a lazy frame
   // shows its skeleton children until the fetch lands.
   ["dropdown", Dropdown],
-  ["hotkey", Hotkey],
   ["lightbox", Lightbox],
-  ["notification", Notification],
   ["toast", Notification],
   ["read-more", ReadMore],
   ["reveal", Reveal],

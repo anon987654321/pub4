@@ -1,6 +1,6 @@
 <% content_for :title, @item.title %>
 <% content_for :description, meta_description_for(@item) if respond_to?(:meta_description_for) %>
-<% content_for :json_ld, json_ld_for(@item, type: :product) if respond_to?(:json_ld_for) %>
+<% content_for :json_ld, json_ld_for(@item, type: :product) %>
 
 <article class="item-detail item-detail--luxury">
   <div class="luxury-detail-grid">

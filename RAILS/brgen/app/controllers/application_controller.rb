@@ -23,7 +23,6 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   before_action :set_domain_context
-  before_action :log_tenant_access
 
   allow_browser versions: :modern
 
@@ -39,13 +38,6 @@ class ApplicationController < ActionController::Base
       format.html { redirect_back fallback_location: main_app.root_path, alert: message }
       format.any  { head :forbidden }
     end
-  end
-
-  def log_tenant_access
-    tenant = request.subdomain.presence || "brgen"
-    Rails.logger.info(
-      "[tenant_access] tenant=#{tenant} ip=#{request.remote_ip} path=#{request.fullpath} at=#{Time.now.to_i}"
-    )
   end
 
   def set_domain_context
@@ -66,10 +58,16 @@ class ApplicationController < ActionController::Base
 
     # Wire ActsAsTenant if the gem is in use (for row-level city scoping on models)
     if defined?(ActsAsTenant)
-      city_record = result.city_record || City.find_by(domain: result.entry.domain)
-      ActsAsTenant.current_tenant = city_record if city_record
+      # result.city_record is already `City.find_by(domain: entry.domain)` —
+      # DomainRegistry.resolve runs exactly that. The second `City.find_by` that
+      # stood here was the same query again, reachable only when the first had
+      # just returned nil, so it could never return a record. It only ever cost
+      # a round trip per request.
+      ActsAsTenant.current_tenant = result.city_record if result.city_record
     end
   rescue Brgen::DomainRegistry::UnknownHost, Brgen::DomainRegistry::UnknownSubdomain
-    render plain: "Unknown host", status: :not_found
+    # The app's styled 404, not two words of text/plain. An unknown host is a
+    # typo or a stale link far more often than an attack.
+    render_http_error(:not_found, "unknown_host")
   end
 end

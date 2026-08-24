@@ -34,25 +34,25 @@ class Takeaway::Restaurant < ApplicationRecord
   scope :popular, -> { order(rating: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
 
-# A restaurant with no hours recorded is treated as open, not shut: most of
-# them have none yet, and defaulting to closed would empty the listing.
-# `active` remains the switch for "not taking orders at all".
-def open_now?(moment = Time.current)
-  return false unless active?
-  return true unless Takeaway::OpeningHour.exists?(restaurant_id: id)
+  # A restaurant with no hours recorded is treated as open, not shut: most of
+  # them have none yet, and defaulting to closed would empty the listing.
+  # `active` remains the switch for "not taking orders at all".
+  def open_now?(moment = Time.current)
+    return false unless active?
+    return true unless Takeaway::OpeningHour.exists?(restaurant_id: id)
 
-  Takeaway::OpeningHour.open_at?(id, moment)
-end
+    Takeaway::OpeningHour.open_at?(id, moment)
+  end
 
-# An order for later is still allowed while the kitchen is shut — that is
-# most of what scheduling is for.
-def accepting_orders?(scheduled_for: nil)
-  return active? if scheduled_for.present?
+  # An order for later is still allowed while the kitchen is shut — that is
+  # most of what scheduling is for.
+  def accepting_orders?(scheduled_for: nil)
+    return active? if scheduled_for.present?
 
-  open_now?
-end
+    open_now?
+  end
 
-def hours_for(wday) = opening_hours.for_weekday(wday).order(:opens_minute)
+  def hours_for(wday) = opening_hours.for_weekday(wday).order(:opens_minute)
 
   def owner?(account)
     user_id == account&.id

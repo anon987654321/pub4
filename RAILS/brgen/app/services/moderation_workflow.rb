@@ -38,23 +38,23 @@ class ModerationWorkflow
     report
   end
 
-private
+  private
 
-# report.reportable is a lazy polymorphic read, and ApplicationRecord is
-# strict_loading by default. report! creates the report with its subject in
-# memory so that path was fine; transition! takes a report a controller
-# loaded by id, which has nothing preloaded — so resolving a report raised
-# after update! had already written the new status. Admin::Reports#update
-# has been on that path the whole time.
-#
-# strict_safe does not apply: it needs reflection.klass, which a polymorphic
-# belongs_to has no single answer for.
-def subject_for(report)
-  return report.reportable if report.association(:reportable).loaded?
+  # report.reportable is a lazy polymorphic read, and ApplicationRecord is
+  # strict_loading by default. report! creates the report with its subject in
+  # memory so that path was fine; transition! takes a report a controller
+  # loaded by id, which has nothing preloaded — so resolving a report raised
+  # after update! had already written the new status. Admin::Reports#update
+  # has been on that path the whole time.
+  #
+  # strict_safe does not apply: it needs reflection.klass, which a polymorphic
+  # belongs_to has no single answer for.
+  def subject_for(report)
+    return report.reportable if report.association(:reportable).loaded?
 
-  klass = report.reportable_type.to_s.safe_constantize
-  klass.respond_to?(:strict_loading) ? klass.strict_loading(false).find_by(id: report.reportable_id) : nil
-end
+    klass = report.reportable_type.to_s.safe_constantize
+    klass.respond_to?(:strict_loading) ? klass.strict_loading(false).find_by(id: report.reportable_id) : nil
+  end
 
   def flag_for(report, status:)
     subject = subject_for(report)

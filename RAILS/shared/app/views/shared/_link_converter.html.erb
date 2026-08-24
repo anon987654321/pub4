@@ -16,7 +16,7 @@
 <% if Shared::LinkConverter.configured? %>
   <% script_src = Shared::LinkConverter.script_src(Rails.public_path) %>
   <% if script_src.present? %>
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="<%= content_security_policy_nonce %>">
       window.tdlcAsyncInit = function() {
         var epi = <%= raw(
           Shared::LinkConverter.epi_for(

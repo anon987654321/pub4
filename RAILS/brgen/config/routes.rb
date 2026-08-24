@@ -46,7 +46,13 @@ Rails.application.routes.draw do
   MAPS_SUBDOMAINS        = Brgen::DomainRegistry::MAPS_SUBDOMAINS
   MESSENGER_SUBDOMAINS   = Brgen::DomainRegistry::MESSENGER_SUBDOMAINS
 
-  resource  :session, only: %i[new create destroy]
+  resource :session, only: %i[new create destroy] do
+    # Passwordless sign-in. The mailer, the token generator and the columns
+    # have existed since 20260709120000; the route the link pointed at never
+    # did, so nothing could send one and nothing could consume one.
+    get  "magic", to: "sessions#magic", as: :magic
+    post "magic", to: "sessions#request_magic", as: :request_magic
+  end
   resources :passwords, param: :token, only: %i[new create edit update]
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../shared/config/routes/verification.rb", __dir__)))

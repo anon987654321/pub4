@@ -142,15 +142,15 @@ module Pub4
       # 34 is what is left after every literal aria-label in brgen and its five
       # verticals became an aria.* key. The remainder is amber, bsdports and
       # shared, measured on this tree.
-# 34 -> 31: shared/_wardrobe_showcase went, and took three literal
-# aria-labels with it — "Wardrobe by body region" and the two carousel
-# labels, none of which had ever been through a locale file.
-# 31 -> 30: tv home header "TV header" became t("tv.home_title").
-# 30 -> 23 (2026-08-21): the action-bar icons took t() labels in the
-# consistency campaign; banking the fall so it cannot silently regrow.
-# 23 -> 21: the duplicate page banners were deleted and their aria-labels
-# went with them, two of which were English literals.
-"aria_label" => 21,
+      # 34 -> 31: shared/_wardrobe_showcase went, and took three literal
+      # aria-labels with it — "Wardrobe by body region" and the two carousel
+      # labels, none of which had ever been through a locale file.
+      # 31 -> 30: tv home header "TV header" became t("tv.home_title").
+      # 30 -> 23 (2026-08-21): the action-bar icons took t() labels in the
+      # consistency campaign; banking the fall so it cannot silently regrow.
+      # 23 -> 21: the duplicate page banners were deleted and their aria-labels
+      # went with them, two of which were English literals.
+      "aria_label" => 21,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps

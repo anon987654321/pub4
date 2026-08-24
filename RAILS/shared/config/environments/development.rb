@@ -42,6 +42,12 @@ Rails.application.configure do
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
+  # Routes carry the same host. action_mailer.default_url_options only reaches
+  # ActionMailer; anything generating a URL through Rails.application.routes —
+  # an isolated engine's main_app proxy, a job, a runner — reads this one, and
+  # it was unset in every environment.
+  config.after_initialize { Rails.application.routes.default_url_options = { host: "localhost", port: 3000 } }
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 

@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: 6a6e243e64fccb54
+    digest: cab41d1862ee67d0
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -32,6 +32,8 @@ apps:
       - "/terms"
       pages#cookies:
       - "/cookies"
+      sessions#magic:
+      - "/session/magic"
       sessions#new:
       - "/session/new"
       passwords#new:
@@ -337,7 +339,7 @@ apps:
       maps/places#show:
       - "/places/:id"
   amber:
-    digest: 117ecfec69a9715f
+    digest: 13eb14863db74495
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -347,6 +349,8 @@ apps:
       - "/sso/from_master"
       registrations#new:
       - "/registration/new"
+      sessions#magic:
+      - "/session/magic"
       sessions#new:
       - "/session/new"
       pages#show:
@@ -508,7 +512,7 @@ apps:
       active_storage/disk#show:
       - "/rails/active_storage/disk/:encoded_key/*filename"
   bsdports:
-    digest: b7cc7045d85f7ac5
+    digest: 98730922f58a448a
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -516,6 +520,8 @@ apps:
       - "/internal/status"
       sso#from_master:
       - "/sso/from_master"
+      sessions#magic:
+      - "/session/magic"
       sessions#new:
       - "/session/new"
       pages#show:

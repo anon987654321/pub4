@@ -1,62 +1,62 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org'
-ruby '~> 3.4'
+source "https://rubygems.org"
+ruby "~> 3.4"
 
-gem 'async'
-gem 'async-http'
-gem 'falcon'
-gem 'rails', '~> 8.1'
-gem 'rails-i18n', '~> 8.0'
-gem 'sqlite3', '~> 2.1'
+gem "async"
+gem "async-http"
+gem "falcon"
+gem "rails", "~> 8.1.2"
+gem "rails-i18n", "~> 8.0"
+gem "sqlite3", "~> 2.1"
 
 # Real-time
-gem 'importmap-rails'
-gem 'stimulus-rails'
-gem 'turbo-rails'
+gem "importmap-rails"
+gem "stimulus-rails"
+gem "turbo-rails"
 
 # Solid Stack (Rails 8)
-gem 'solid_cable'
-gem 'solid_cache'
-gem 'solid_queue'
+gem "solid_cable"
+gem "solid_cache"
+gem "solid_queue"
 
 # Authentication
-gem 'bcrypt', '~> 3.1'
-gem 'omniauth'
-gem 'omniauth-github'
-gem 'omniauth-google-oauth2'
-gem 'omniauth-rails_csrf_protection'
-gem 'pundit'
-gem 'rotp'
-gem 'rqrcode'
+gem "bcrypt", "~> 3.1"
+gem "omniauth"
+gem "omniauth-github"
+gem "omniauth-google-oauth2"
+gem "omniauth-rails_csrf_protection"
+gem "pundit"
+gem "rotp"
+gem "rqrcode"
 
 # Social
-gem 'acts_as_tenant'
+gem "acts_as_tenant"
 
 # Features
-gem 'geocoder'
-gem 'image_processing'
-gem 'pagy'
-gem 'ruby-vips'
-gem 'webpush'
-gem 'quilt' # BRGEN_OLD's identicon avatars (pub/__OLD_BACKUPS/BRGEN_OLD)
+gem "geocoder"
+gem "image_processing"
+gem "pagy"
+gem "ruby-vips"
+gem "webpush"
+gem "quilt" # BRGEN_OLD's identicon avatars (pub/__OLD_BACKUPS/BRGEN_OLD)
 
 # Real-time + LLM + structured data (per ruby_style.yml stimulus_reflex_stack + SEO requirements)
-gem 'futurism'
-gem 'ruby_llm'
+gem "futurism"
+gem "ruby_llm"
 
-gem 'faker', require: false
+gem "faker", require: false
 
 group :development, :test do
-  gem 'ferrum'
-  gem 'minitest', '~> 5.25'
+  gem "ferrum"
+  gem "minitest", "~> 5.25"
 
-  gem 'brakeman'
-  gem 'bundler-audit'
-  gem 'rubocop-rails-omakase'
+  gem "brakeman"
+  gem "bundler-audit"
+  gem "rubocop-rails-omakase"
 
-  gem 'bullet', require: false
-  gem 'rack-mini-profiler', require: false
+  gem "bullet", require: false
+  gem "rack-mini-profiler", require: false
 end
 
 group :test do
@@ -66,14 +66,14 @@ group :test do
   gem "axe-core-capybara"
 end
 # Engine-ize spike: shared as local path gem (relative from rails/brgen)
-gem 'pub4-shared', path: '../shared'
+gem "pub4-shared", path: "../shared"
 # TV vertical as a mountable engine (vertical-as-engine pilot; see ENGINES.md).
-gem 'brgen-tv', path: 'engines/tv', require: 'tv'
-gem 'brgen-marketplace', path: 'engines/marketplace', require: 'marketplace'
-gem 'brgen-playlist', path: 'engines/playlist', require: 'playlist'
-gem 'brgen-takeaway', path: 'engines/takeaway', require: 'takeaway'
-gem 'brgen-dating', path: 'engines/dating', require: 'dating'
-gem 'brgen-maps', path: 'engines/maps', require: 'maps'
+gem "brgen-tv", path: "engines/tv", require: "tv"
+gem "brgen-marketplace", path: "engines/marketplace", require: "marketplace"
+gem "brgen-playlist", path: "engines/playlist", require: "playlist"
+gem "brgen-takeaway", path: "engines/takeaway", require: "takeaway"
+gem "brgen-dating", path: "engines/dating", require: "dating"
+gem "brgen-maps", path: "engines/maps", require: "maps"
 
 gem "dartsass-rails", "~> 0.5.1"
 
@@ -91,3 +91,4 @@ if ENV["SOLIDUS_MARKETPLACE"] == "1"
   gem "solidus_marketplace", "0.1.0"
   gem "solidus_multi_domain", "~> 1.5"
 end
+

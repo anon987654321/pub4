@@ -14,14 +14,14 @@ class PostsController < ApplicationController
   rate_limit to: 30, within: 3.minutes, only: %i[create share], name: "sustained",
     with: -> { redirect_to posts_path, alert: t("shared.flash.rate_limited") }
 
-# ONE declaration. Rails deduplicates callbacks by filter name, so declaring
-# :require_real_user twice did not add a second gate -- the later `only:`
-# REPLACED the earlier one, and edit/update/destroy silently lost it. Read off
-# the callback chain: PostsController had exactly one require_real_user.
-# authorize_owner still covered those three here, which is why nothing broke
-# visibly; amber's ItemsController had the identical pattern with nothing
-# behind it and served an anonymous GET /items/new 200.
-before_action :require_real_user, only: %i[edit update destroy share]
+  # ONE declaration. Rails deduplicates callbacks by filter name, so declaring
+  # :require_real_user twice did not add a second gate -- the later `only:`
+  # REPLACED the earlier one, and edit/update/destroy silently lost it. Read off
+  # the callback chain: PostsController had exactly one require_real_user.
+  # authorize_owner still covered those three here, which is why nothing broke
+  # visibly; amber's ItemsController had the identical pattern with nothing
+  # behind it and served an anonymous GET /items/new 200.
+  before_action :require_real_user, only: %i[edit update destroy share]
   before_action :set_post,          only: [ :show, :edit, :update, :destroy ]
   before_action :authorize_owner,   only: [ :edit, :update, :destroy ]
   before_action :set_community,     only: [ :new, :create ]

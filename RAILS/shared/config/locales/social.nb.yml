@@ -85,6 +85,8 @@ nb:
     with_snapchat: "Logg inn med Snapchat"
     with_vipps: "Logg inn med Vipps"
     two_factor_lead: "Skann QR-koden eller skriv inn hemmeligheten i autentiseringsappen din."
+    magic_link: "Send meg en innloggingslenke"
+    magic_link_send: "Send lenken"
   status:
     updating_results: "Oppdaterer resultater…"
     results_updated: "Resultater oppdatert"
@@ -160,6 +162,8 @@ nb:
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
     view: "Vis"
+    read_more: "Les mer"
+    read_less: "Vis mindre"
     back: "Tilbake"
     edit: "Rediger"
     delete: "Slett"
@@ -179,6 +183,8 @@ nb:
       account_deletion_cancelled: "Sletting av kontoen er avbrutt."
       account_scheduled_for_deletion: "Denne kontoen er satt opp for sletting."
       sign_in_required: "Logg inn for å fortsette."
+      magic_link_sent: "Finnes det en konto på den adressen, er innloggingslenken på vei."
+      magic_link_invalid: "Innloggingslenken er utløpt eller allerede brukt."
       rate_limited: "Prøv igjen senere."
       credentials_invalid: "Prøv en annen e-postadresse eller et annet passord."
       password_reset_sent: "Instruksjoner for å tilbakestille passordet er sendt (hvis det finnes en bruker med den e-postadressen)."
@@ -220,6 +226,10 @@ nb:
     password_reset_subject: "Tilbakestill passordet"
     verify_email_subject: "Bekreft e-postadressen"
     sign_in_link_subject: "Innloggingslenke"
+    sign_in_link_greeting: "Hei %{name},"
+    sign_in_link_action: "Logg inn"
+    sign_in_link_expiry: "Lenken virker én gang og utløper om %{minutes} minutter."
+    sign_in_link_ignore: "Har du ikke bedt om dette, kan du se bort fra e-posten — ingenting er endret."
   nav:
     brand_home: "Til forsiden"
   pages:

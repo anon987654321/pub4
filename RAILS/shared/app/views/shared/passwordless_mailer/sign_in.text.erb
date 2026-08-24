@@ -1,0 +1,7 @@
+<%= t("mailer.sign_in_link_greeting", name: @user.try(:name).presence || @user.email_address) %>
+
+<%= t("mailer.sign_in_link_action") %>:
+<%= @url %>
+
+<%= t("mailer.sign_in_link_expiry", minutes: Shared::UserAuthExtensions::MAGIC_LINK_DURATION.in_minutes.to_i) %>
+<%= t("mailer.sign_in_link_ignore") %>

@@ -209,6 +209,16 @@ module Shared
       post.try(:author_avatar_url).presence || post.try(:user)&.try(:avatar_url)
     end
 
+    # Intrinsic dimensions from the analyzed blob, so the browser reserves the
+    # box before the bytes arrive (aspect-ratio is derived from the pair even
+    # under width:100% CSS). Nothing to reserve is an empty hash, not a guess —
+    # unanalyzed blobs and non-attachment sources stay dimensionless.
+    def image_dimensions(source)
+      meta = source.try(:metadata).presence || source.try(:blob).try(:metadata) || {}
+      width, height = meta["width"], meta["height"]
+      width && height ? { width: width, height: height } : {}
+    end
+
     # A localised relative time, whole. Fourteen views wrote
     # `<%= time_ago_in_words(x) %> ago`, which prints the Rails-localised span
     # and then an English word: every brgen post page read "rundt 2 måneder
@@ -219,16 +229,6 @@ module Shared
     # titles, aria-labels, search placeholders and controller flashes; nothing
     # looked at body text, and nothing at all could have seen a bare word typed
     # after a helper call. RAILS/test/view_body_copy_i18n_test.rb does now.
-# Intrinsic dimensions from the analyzed blob, so the browser reserves the
-# box before the bytes arrive (aspect-ratio is derived from the pair even
-# under width:100% CSS). Nothing to reserve is an empty hash, not a guess —
-# unanalyzed blobs and non-attachment sources stay dimensionless.
-def image_dimensions(source)
-  meta = source.try(:metadata).presence || source.try(:blob).try(:metadata) || {}
-  width, height = meta["width"], meta["height"]
-  width && height ? { width: width, height: height } : {}
-end
-
     def time_ago(time)
       return nil if time.blank?
 

@@ -191,26 +191,26 @@ end
       src.lines[0...line_number].reverse_each.find { |l| l.match?(/^\s*[^@\s\/][^{]*\{/) }
     end
 
-# --- button vocabulary ----------------------------------------------------
+    # --- button vocabulary ----------------------------------------------------
 
-# The closed set (2026-08-21 consolidation): base + four variants + two
-# rare utilities. The zen-era btn--primary BEM twins died in the same
-# pass; any new spelling is the next schism at birth.
-# btn-share is its own pill (share control on marketplace/tv/nearby), not a
+    # The closed set (2026-08-21 consolidation): base + four variants + two
+    # rare utilities. The zen-era btn--primary BEM twins died in the same
+    # pass; any new spelling is the next schism at birth.
+    # btn-share is its own pill (share control on marketplace/tv/nearby), not a
     # variant of the base — in the vocabulary because it is worn and styled.
     BTN_VOCABULARY = %w[btn btn-primary btn-ghost btn-danger btn-sm btn-link btn-block btn-share].to_set
 
-def btn_findings
-  views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,shared}/app/views/**/*.erb")) +
-          Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views/**/*.erb"))
-  views.flat_map do |path|
-    File.read(path, encoding: "UTF-8").each_line.with_index(1).filter_map do |line, n|
-      stray = line.scan(/\bbtn--?[\w-]+/).uniq.reject { |c| BTN_VOCABULARY.include?(c) }
-      next if stray.empty?
-      Finding.new("btn_vocabulary", path.sub("#{RAILS_ROOT}/", ""), "line #{n}: #{stray.join(" ")}")
+    def btn_findings
+      views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,shared}/app/views/**/*.erb")) +
+              Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views/**/*.erb"))
+      views.flat_map do |path|
+        File.read(path, encoding: "UTF-8").each_line.with_index(1).filter_map do |line, n|
+          stray = line.scan(/\bbtn--?[\w-]+/).uniq.reject { |c| BTN_VOCABULARY.include?(c) }
+          next if stray.empty?
+          Finding.new("btn_vocabulary", path.sub("#{RAILS_ROOT}/", ""), "line #{n}: #{stray.join(" ")}")
+        end
+      end
     end
-  end
-end
 
     # --- compose costume ------------------------------------------------------
 

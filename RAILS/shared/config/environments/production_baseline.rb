@@ -13,7 +13,12 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
   config.public_file_server.enabled = true
-  config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
+  # Not a year on everything under public/. Propshaft serves the fingerprinted
+  # assets and sets its own immutable caching on them; this header reached the
+  # rest of the tree too — robots.txt, manifest.json, the service worker — and
+  # those are the files whose whole job is to change. A stale service worker is
+  # a client pinned to an old build for as long as the cache holds.
+  config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.hour.to_i}" }
   config.active_storage.service = :local
 
   # Optional global CDN for Propshaft assets (e.g. https://cdn.example.com).
@@ -47,12 +52,13 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
-  config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options = { host: mailer_host, protocol: "https" }
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = { address: "127.0.0.1", port: 25 }
+  apply_mail_and_url_baseline(config, mailer_host)
 
-  config.i18n.fallbacks = true
+  # No `config.i18n.fallbacks = true` here. Environment config loads after
+  # application.rb, so a blanket `true` set here silently overwrote every app's
+  # own chain: brgen's Brgen::LocaleBridge.fallbacks_map (17 locales, Nordic to
+  # nb, Romance to fr, de-CH to de to en) and amber's and bsdports' { nb: :en }.
+  # All three apps set their own; none of them got it in production.
   config.active_record.dump_schema_after_migration = false
   config.active_record.attributes_for_inspect = [:id]
 
@@ -60,4 +66,23 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   config.host_authorization = {
     exclude: ->(request) { %w[/up /health].include?(request.path) },
   }
+end
+
+# Extracted from apply_production_baseline rather than inlined: the method-length
+# ratchet asks for a split before a bigger number, and mail delivery plus URL
+# generation is one subject.
+def apply_mail_and_url_baseline(config, mailer_host)
+  # One value, two consumers. action_mailer.default_url_options only reaches
+  # ActionMailer; anything generating a URL through Rails.application.routes —
+  # an isolated engine's main_app proxy, a job, a runner — reads
+  # routes.default_url_options, which was unset in every environment. The
+  # passwordless mailer read the second one, got no host, and shipped a
+  # relative path. Derived from one local so the two cannot drift.
+  url_options = { host: mailer_host, protocol: "https" }
+
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.default_url_options = url_options
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = { address: "127.0.0.1", port: 25 }
+  config.after_initialize { Rails.application.routes.default_url_options = url_options }
 end

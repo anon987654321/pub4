@@ -73,49 +73,49 @@ class Message < ApplicationRecord
 
   def expired? = expires_at&.past?
 
-def edited? = edited_at.present?
-def deleted? = deleted_at.present?
-def reply? = parent_id.present?
-def voice? = message_type == "audio"
-def forwarded? = forwarded_from_id.present?
+  def edited? = edited_at.present?
+  def deleted? = deleted_at.present?
+  def reply? = parent_id.present?
+  def voice? = message_type == "audio"
+  def forwarded? = forwarded_from_id.present?
 
-# A forward carries the body into another thread. Same promise as search: a
-# message that has disappeared or been unsent is gone, so there is nothing to
-# carry.
-def forwardable? = !deleted? && !expired?
+  # A forward carries the body into another thread. Same promise as search: a
+  # message that has disappeared or been unsent is gone, so there is nothing to
+  # carry.
+  def forwardable? = !deleted? && !expired?
 
-# Editing is bounded: a message that can be rewritten hours later is a
-# message a reader cannot trust, and the receipt they already read is gone.
-EDIT_WINDOW = 15.minutes
+  # Editing is bounded: a message that can be rewritten hours later is a
+  # message a reader cannot trust, and the receipt they already read is gone.
+  EDIT_WINDOW = 15.minutes
 
-def editable_by?(user)
-  user.present? && user.id == sender_id && !deleted? && created_at > EDIT_WINDOW.ago
-end
+  def editable_by?(user)
+    user.present? && user.id == sender_id && !deleted? && created_at > EDIT_WINDOW.ago
+  end
 
-# Unsending has no window. A message sent to the wrong room — with a real
-# address in it, on a hyperlocal chat — is a safety problem, not a typo.
-def deletable_by?(user)
-  user.present? && user.id == sender_id && !deleted?
-end
+  # Unsending has no window. A message sent to the wrong room — with a real
+  # address in it, on a hyperlocal chat — is a safety problem, not a typo.
+  def deletable_by?(user)
+    user.present? && user.id == sender_id && !deleted?
+  end
 
-def edit!(new_content)
-  update!(content: new_content, edited_at: Time.current)
-end
+  def edit!(new_content)
+    update!(content: new_content, edited_at: Time.current)
+  end
 
-# The row stays, the body goes: a hard delete leaves a hole in a thread and
-# orphans whatever replied to it.
-def unsend!
-  update_columns(
-    content: "", deleted_at: Time.current, updated_at: Time.current
-  )
-end
+  # The row stays, the body goes: a hard delete leaves a hole in a thread and
+  # orphans whatever replied to it.
+  def unsend!
+    update_columns(
+      content: "", deleted_at: Time.current, updated_at: Time.current
+    )
+  end
 
-# Expiry is unsend, not destroy: a hard delete holes a thread and orphans
-# replies (the reason unsend! exists). Attachments go with the body.
-def expire!
-  unsend!
-  attachment.purge if attachment.attached?
-end
+  # Expiry is unsend, not destroy: a hard delete holes a thread and orphans
+  # replies (the reason unsend! exists). Attachments go with the body.
+  def expire!
+    unsend!
+    attachment.purge if attachment.attached?
+  end
 
   # Urgency tier for the fading-bubble treatment in the message thread —
   # derived from how much of the message's own lifespan is left, not a

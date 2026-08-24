@@ -14,6 +14,11 @@
     </div>
     <div class="actions">
       <%= f.submit t("auth.sign_in"), class: "btn btn-primary" %>
+      <%# formaction, not a second form: the address is already in the field above,
+          and formnovalidate lets it through without the password this path does
+          not need. %>
+      <%= f.submit t("auth.magic_link"), formaction: request_magic_session_path,
+                   formnovalidate: true, class: "btn btn-link" %>
     </div>
     <p class="auth-form-footer">
       <%= link_to t("auth.forgot_password"), new_password_path %>

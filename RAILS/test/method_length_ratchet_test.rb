@@ -57,7 +57,7 @@ class MethodLengthRatchetTest < Minitest::Test
     # class" from "the branch claimed it and there is no link", because only the
     # first may fall through to polymorphic_path and both are nil.
     "brgen" => [9, 48],
-    "shared" => [3, 36],
+    "shared" => [3, 34],
     "amber" => [1, 35],
     "bsdports" => [1, 46],
   }.freeze

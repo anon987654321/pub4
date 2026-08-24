@@ -85,6 +85,8 @@ en:
     with_snapchat: "Sign in with Snapchat"
     with_vipps: "Sign in with Vipps"
     two_factor_lead: "Scan the QR code or enter the secret in your authenticator app."
+    magic_link: "Email me a sign-in link"
+    magic_link_send: "Send the link"
   # Live regions in shared/_live_search_form and autosave_controller. bsdports had no copy of these and shipped "translation missing" into the announced values.
   status:
     updating_results: "Updating results…"
@@ -162,6 +164,8 @@ en:
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
     view: "View"
+    read_more: "Read more"
+    read_less: "Read less"
     back: "Back"
     edit: "Edit"
     delete: "Delete"
@@ -176,6 +180,8 @@ en:
       account_deletion_cancelled: "Account deletion cancelled."
       account_scheduled_for_deletion: "This account is scheduled for deletion."
       sign_in_required: "Sign in to continue."
+      magic_link_sent: "If that address has an account, a sign-in link is on its way."
+      magic_link_invalid: "That sign-in link has expired or been used already."
       rate_limited: "Try again later."
       credentials_invalid: "Try another email address or password."
       password_reset_sent: "Password reset instructions sent (if a user with that email address exists)."
@@ -217,6 +223,10 @@ en:
     password_reset_subject: "Reset your password"
     verify_email_subject: "Confirm your email"
     sign_in_link_subject: "Sign-in link"
+    sign_in_link_greeting: "Hi %{name},"
+    sign_in_link_action: "Sign in"
+    sign_in_link_expiry: "The link works once and expires in %{minutes} minutes."
+    sign_in_link_ignore: "If you did not ask for this, ignore this email — nothing has changed."
   nav:
     brand_home: "Home"
   pages:

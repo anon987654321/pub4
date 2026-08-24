@@ -164,13 +164,23 @@ module Brgen
 
     def self.resolve_city_record(entry)
       return unless defined?(City)
-
-      connection = ActiveRecord::Base.connection
-      return unless connection.table_exists?(:cities)
+      return unless cities_table?
 
       City.find_by(domain: entry.domain)
     rescue ActiveRecord::StatementInvalid
       nil
+    end
+
+    # Memoised because a table cannot appear or vanish inside a running process,
+    # and this ran a schema probe on every request alongside the lookup it
+    # guards. The boot-order case it exists for — the registry resolving before
+    # migrations have run — only needs answering once.
+    def self.cities_table?
+      return @cities_table if defined?(@cities_table)
+
+      @cities_table = ActiveRecord::Base.connection.table_exists?(:cities)
+    rescue ActiveRecord::StatementInvalid, ActiveRecord::NoDatabaseError
+      @cities_table = false
     end
 
     def self.subdomain_for(host, domain)

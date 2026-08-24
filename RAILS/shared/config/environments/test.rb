@@ -51,6 +51,12 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost" }
 
+  # Routes carry the same host. action_mailer.default_url_options only reaches
+  # ActionMailer; anything generating a URL through Rails.application.routes —
+  # an isolated engine's main_app proxy, a job, a runner — reads this one, and
+  # it was unset in every environment.
+  config.after_initialize { Rails.application.routes.default_url_options = { host: "localhost" } }
+
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 

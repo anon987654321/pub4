@@ -3,7 +3,11 @@
 require Shared::Engine.root.join("lib/omniauth/strategies/vipps").to_s if File.exist?(Shared::Engine.root.join("lib/omniauth/strategies/vipps.rb"))
 
 Rails.application.config.x.oauth_provider_slugs = []
-OmniAuth.config.allowed_request_methods = %i[post get]
+# POST only. shared/_oauth_links renders every provider with button_to, so GET
+# is reachable by nobody but a cross-site request; brgen carried a whole second
+# copy of this file whose one real difference was tightening this, and the copy
+# also lost Google its scope and prompt because app initializers load last.
+OmniAuth.config.allowed_request_methods = %i[post]
 OmniAuth.config.silence_get_warning = true
 
 register_provider = lambda do |builder, name, client_id_env, client_secret_env, options = {}|

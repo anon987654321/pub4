@@ -3,3 +3,4 @@
 
 get "health", to: "fleet_health#show"
 post "web_vitals", to: "web_vitals#create"
+post "csp-reports", to: "csp_reports#create"

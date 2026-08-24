@@ -743,7 +743,7 @@ DEPENDENCIES
   pundit
   quilt
   rack-mini-profiler
-  rails (~> 8.1)
+  rails (~> 8.1.2)
   rails-i18n (~> 8.0)
   rotp
   rqrcode

@@ -109,13 +109,13 @@ pin "lightgallery", to: "lightgallery.js"
 # content itself has no external deps so it moves here just as cleanly).
 pin "idb-keyval", to: "idb-keyval.js"
 
-# dialog, scroll-to, sound and speech-recognition were pinned, vendored,
+# dialog, scroll-to, sound, speech-recognition and hotkey were pinned, vendored,
 # imported and registered, and no ERB in any of the four apps carries a
 # data-controller for them -- four components shipped and preloaded on every page
 # so that nothing could use them. Dropped from stimulus_boot.js with these pins.
 %w[
   animated-number auto-submit character-counter checkbox-select-all clipboard
-  dropdown hotkey lightbox notification read-more
+  dropdown lightbox notification read-more
   reveal sortable password-visibility popover rails-nested-form
 ].each { |name| sc_pin.call(name) }
 
