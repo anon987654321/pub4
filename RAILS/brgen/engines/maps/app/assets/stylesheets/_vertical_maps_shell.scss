@@ -2,25 +2,32 @@
 @use "dialect_tokens" as x;
 
 body.vertical-maps {
-  /* The basemap is pinned dark, so the whole dialect is pinned dark with it.
-     Without this only the --maps-* aliases below were dark and every SHARED
-     component dropped on this surface still read the theme: secondary text
-     resolved to #5c586e in light mode and measured 2.44:1 on the place cards. Pinning the palette fixes the aliases and the
-     shared widgets in one place instead of patching each component.
+  /* maps is a LIGHT surface (operator, 2026-08-24) and the layout pins it, so
+     this dialect follows the theme like every other vertical.
 
-     $accent/$bg are passed rather than defaulted so this does not depend on
-     whether this file or _vertical_shell.scss's @each cascades last — both
-     write `body.vertical-maps` at the same specificity. */
-  @include x.dark-tokens($accent: #5b8fd4, $bg: #12151c, $surface: #12151c); // scan: intentional — definition: the maps dialect instantiated with its own values
+     What was here pinned the whole dialect dark, on the stated grounds that
+     "the basemap is pinned dark". The basemap it actually loads is
+     openfreemap's positron -- background rgb(242,243,240) -- and liberty
+     before it was #f8f4f0. Both light. The comment was describing a basemap
+     this app has not used, so the shell was rendering dark chrome around a
+     light map and the two never matched.
+
+     The concern that comment recorded was real and is answered by the theme
+     rather than by pinning: secondary text resolved to #5c586e in light mode
+     and measured 2.44:1 on the place cards. Those cards are on a light ground
+     now, where --text-secondary is #545454 -- APCA Lc 78.6 on #f2f2f2. */
 
   /* Cool graphite cartography — aligns with vertical_accents.maps. These stay
-     token references rather than literals: the include above puts the dark
-     dialect on THIS element, and a custom property holding var(--x) resolves
-     against the element it is declared on, so --text here is now #d8d6e0 and
-     not the theme's. Before the include they followed the light theme, and the
-     wordmark rendered near-black on near-black at 1.04:1 — on a page whose
-     whole purpose is a map you read labels off. Measured after: 12.71 (ink),
-     5.24 (muted), 5.50 (accent) on --maps-bg. */
+     token references rather than literals so they follow whatever theme the
+     surface is in. They used to resolve against a dark dialect included on
+     THIS element, which is why the note here said --text was #d8d6e0; with the
+     include gone they resolve against the light theme the layout now pins.
+
+     The failure that include was answering is still worth knowing about: with
+     no dialect at all the wordmark once rendered near-black on near-black at
+     1.04:1, on a page whose whole purpose is a map you read labels off. A
+     pinned theme fixes that as well as a pinned dialect did, and matches the
+     basemap instead of fighting it. */
   --maps-bg: var(--bg);
   --maps-ink: var(--text);
   --maps-muted: var(--text-secondary);

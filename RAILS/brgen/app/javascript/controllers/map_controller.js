@@ -1,6 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
-const DEFAULT_STYLE = "https://tiles.openfreemap.org/styles/liberty"
+// positron, not liberty. Both are light -- liberty's background is #f8f4f0 and
+// positron's is rgb(242,243,240), so this was never a dark-to-light change --
+// but liberty carries 111 styled layers of colourful cartography and positron
+// carries 55 desaturated ones. Positron is drawn to sit UNDER data rather than
+// to be read for itself, which is the same argument the rest of this design
+// system makes about chrome.
+const DEFAULT_STYLE = "https://tiles.openfreemap.org/styles/positron"
 
 export default class extends Controller {
   static targets = ["canvas", "search", "popup"]

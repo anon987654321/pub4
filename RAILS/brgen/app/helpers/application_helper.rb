@@ -150,15 +150,14 @@ module ApplicationHelper
   # The layout used to hardcode data-theme="dark" for every surface, which
   # pinned the three light verticals to the wrong palette: markedsplass measured
   # a dark ground under the light tokens its own accents are tuned against.
-# Anything not listed inherits brgen's dark default.
-#
-# maps is NOT here, against the operator's list, and deliberately so until
-# that is settled: _vertical_maps_shell.scss pins the whole dialect dark on
-# purpose, because the MapLibre basemap is dark and letting shared components
-# follow the theme measured 2.44:1 on the place cards. Declaring the surface
-# light while its own stylesheet pins dark tokens produces a half-themed page
-# rather than a light one. Making maps light is a basemap decision first.
-LIGHT_VERTICALS = %i[marketplace takeaway].freeze
+  # Anything not listed inherits brgen's dark default.
+  #
+  # maps rejoined on 2026-08-24 with its basemap. The note here used to say the
+  # MapLibre basemap was dark and that pinning the dialect dark was therefore
+  # correct. It was not: the app loads openfreemap positron, background
+  # rgb(242,243,240), and loaded liberty at #f8f4f0 before that. Both light. The
+  # shell was drawing dark chrome around a light map.
+  LIGHT_VERTICALS = %i[marketplace maps takeaway].freeze
 
   def surface_theme
     LIGHT_VERTICALS.include?(active_vertical&.to_sym) ? "light" : "dark"

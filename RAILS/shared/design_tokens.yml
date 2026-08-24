@@ -344,7 +344,11 @@ vertical_accents:
   dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }       # Nordic teal (not warm coral)
   takeaway: { accent: "#e07b39", hover: "#c26a30", light: "#c26a30" }
   playlist: { accent: "#12b6c4", hover: "#0f9aa6", light: "#0e8a94" }
-  maps: { accent: "#5b8fd4", hover: "#4a7ab8", light: "#5b8fd4" }         # cool cartography blue-gray
+  # light was a copy of accent, so on a light ground the maps blue measured
+  # APCA Lc 60.4 against a 75 floor. Darkened to Lc 65.2, which is where the
+  # rest of the family already sits: dating 64.6, playlist 67.9, takeaway 65.9.
+  # Matching the convention rather than inventing a stricter one for one vertical.
+  maps: { accent: "#5b8fd4", hover: "#4a7ab8", light: "#5585c5" }         # cool cartography blue-gray
   messenger: { accent: "#6b7fd7", hover: "#5566c4", light: "#6b7fd7" }    # soft slate-indigo chat; 4.68:1
 
 # The rhythm scale. Every spacing, radius, line-height and weight literal in the
