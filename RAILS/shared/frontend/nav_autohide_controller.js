@@ -1,5 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Signs that a reader is present rather than a page that has merely loaded.
+// touchstart is absent on purpose: it already reveals, and a tap that reveals
+// should not also be the tap that starts the bar's countdown.
+const ARM_EVENTS = ["pointermove", "scroll", "wheel", "keydown", "touchmove"]
+
 // The primary nav shows itself, then gets out of the way.
 //
 // It was permanent (operator decision 2026-08-08) because a drawer had been
@@ -24,6 +29,14 @@ import { Controller } from "@hotwired/stimulus"
 // had nothing. `zone` watches the last N pixels against `edge` and reveals when
 // the pointer arrives there, which is how a video player's chrome behaves and
 // what a reader already expects at a screen edge.
+//
+// The countdown starts at the reader's first sign of engagement, not at load.
+// A timer armed on connect spends itself while the page is still painting and
+// while the reader is still deciding where to look, so the bar left before it
+// had been read — it measured the browser's progress rather than the reader's.
+// Holding until a move, scroll, wheel or keypress means a reader who has not
+// arrived yet keeps the nav, and one who is already moving gets the same delay
+// they always did, counted from the moment they were actually there.
 export default class extends Controller {
   static classes = ["hidden"]
   static values = {
@@ -31,6 +44,9 @@ export default class extends Controller {
     idle: { type: Number, default: 2500 },
     edge: { type: String, default: "top" },
     zone: { type: Number, default: 0 },
+    // "activity" waits for the reader; "load" starts counting immediately, for
+    // a surface that genuinely wants the bar gone whether or not anyone is there.
+    arm: { type: String, default: "activity" },
   }
 
   connect() {
@@ -53,7 +69,8 @@ export default class extends Controller {
       document.addEventListener("pointermove", this.onPointerMove, { passive: true })
     }
 
-    this.scheduleHide(this.delayValue)
+    if (this.armValue === "load") this.scheduleHide(this.delayValue)
+    else this.armOnActivity()
   }
 
   disconnect() {
@@ -64,6 +81,25 @@ export default class extends Controller {
     this.element.removeEventListener("pointerleave", this.onLeave)
     document.removeEventListener("touchstart", this.onReveal)
     if (this.onPointerMove) document.removeEventListener("pointermove", this.onPointerMove)
+    this.disarm()
+  }
+
+  // The first move, scroll, wheel or keypress is the reader arriving. Until one
+  // of those happens the bar simply stays, however long the page has been open.
+  // once:true on every listener means this costs nothing after it has fired.
+  armOnActivity() {
+    this.onActivity = () => {
+      this.disarm()
+      this.scheduleHide(this.delayValue)
+    }
+    ARM_EVENTS.forEach((name) =>
+      document.addEventListener(name, this.onActivity, { passive: true, once: true }))
+  }
+
+  disarm() {
+    if (!this.onActivity) return
+    ARM_EVENTS.forEach((name) => document.removeEventListener(name, this.onActivity))
+    this.onActivity = null
   }
 
   // Only acts while hidden, and only from the edge this bar lives on, so a
@@ -80,6 +116,10 @@ export default class extends Controller {
 
   reveal() {
     this.clear()
+    // A reveal is itself the reader arriving, so the pending arm has nothing
+    // left to wait for — without this it would fire later and quietly restart
+    // the countdown with the longer opening delay.
+    this.disarm()
     this.element.classList.remove(this.hiddenClassName)
     this.scheduleHide()
   }

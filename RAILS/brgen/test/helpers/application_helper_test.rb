@@ -212,4 +212,44 @@ class ApplicationHelperTest < ActionView::TestCase
     n = Notification.new(user: user, actor: user, kind: "like", notifiable: post)
     assert_equal post_path(post), notification_href(n)
   end
+
+  # The wordmark used to be the literal "brgen" on every host, so Oslo and
+  # Frankfurt wore Bergen's name and a vertical was indistinguishable from the
+  # apex it hangs off. These pin the three shapes it can take.
+  test "brand mark on a city apex is that city, not brgen" do
+    Current.domain = "oshlo.no"
+    Current.subapp = nil
+
+    assert_equal({ label: "oshlo" }, brand_mark_fragments)
+  end
+
+  test "brand mark on the bergen apex is unchanged" do
+    Current.domain = "brgen.no"
+    Current.subapp = nil
+
+    assert_equal({ label: "brgen" }, brand_mark_fragments)
+  end
+
+  test "brand mark on a vertical names the whole host" do
+    Current.domain = "brgen.no"
+    Current.subapp = :marketplace
+    request.host = "markedsplass.brgen.no"
+
+    fragments = brand_mark_fragments
+    assert_equal "markedsplass.", fragments[:prefix]
+    assert_equal "brgen", fragments[:label]
+    assert_equal ".no", fragments[:suffix]
+    # The parts have to reassemble into the host the reader typed — that is the
+    # whole claim the mark is making.
+    assert_equal "markedsplass.brgen.no", fragments.values_at(:prefix, :label, :suffix).join
+  end
+
+  test "brand mark carries a non-no tld intact" do
+    Current.domain = "lsangeles.com"
+    Current.subapp = :marketplace
+    request.host = "marketplace.lsangeles.com"
+
+    assert_equal "marketplace.lsangeles.com",
+                 brand_mark_fragments.values_at(:prefix, :label, :suffix).join
+  end
 end

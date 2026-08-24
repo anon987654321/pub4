@@ -16,15 +16,30 @@
     computes to zero height. Do not hang layout off it.
 
     Params:
-      label — the wordmark text. Defaults to the app name.
-      href  — where home is. Defaults to the app's root_path. %>
-<% mark_label = local_assigns.fetch(:label) { t("app.name", default: "brgen") } %>
-<% mark_href  = local_assigns.fetch(:href) { main_app.respond_to?(:root_path) ? main_app.root_path : "/" } %>
+      label  — the wordmark text. Defaults to the app name.
+      href   — where home is. Defaults to the app's root_path.
+      prefix — quiet text before the label, e.g. a subdomain "markedsplass.".
+      suffix — quiet text after it, e.g. a TLD ".no".
+
+    prefix/suffix are how one wordmark says which host it is on without becoming
+    a second logo: brgen names the city and keeps the weight, the parts around it
+    recede. Both are optional and default to nothing, so amber and bsdports —
+    which are single-host apps with no subdomain to name — render exactly the
+    bare mark they always did. %>
+<% mark_label  = local_assigns.fetch(:label) { t("app.name", default: "brgen") } %>
+<% mark_href   = local_assigns.fetch(:href) { main_app.respond_to?(:root_path) ? main_app.root_path : "/" } %>
+<% mark_prefix = local_assigns[:prefix].presence %>
+<% mark_suffix = local_assigns[:suffix].presence %>
 <%# brgen passes its historical class alongside so every rule already written
     against .brgen-logo-mark keeps applying. %>
 <% mark_class = local_assigns.fetch(:class_name, "brand-mark") %>
+<%# The accessible name is the whole host when there is one, because "brgen" on
+    markedsplass.brgen.no would announce the wrong surface to a screen reader. %>
+<% mark_name = t("nav.brand_home", default: "#{mark_prefix}#{mark_label}#{mark_suffix}") %>
 <header>
-  <%= link_to mark_href, class: mark_class, aria: { label: t("nav.brand_home", default: mark_label) } do %>
+  <%= link_to mark_href, class: mark_class, aria: { label: mark_name } do %>
+    <% if mark_prefix %><span class="brand-sub"><%= mark_prefix %></span><% end %>
     <span class="brand-text"><%= mark_label %></span>
+    <% if mark_suffix %><span class="brand-tld"><%= mark_suffix %></span><% end %>
   <% end %>
 </header>

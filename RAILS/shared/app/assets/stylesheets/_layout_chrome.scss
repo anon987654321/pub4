@@ -206,6 +206,40 @@ main[role="main"] {
   font-weight: inherit;
 }
 
+/* The host around the wordmark. A vertical's mark reads markedsplass.brgen.no,
+   and only the city keeps the mark's weight — the subdomain and TLD are the
+   same type one step down and dimmed, so the shape a reader recognises is still
+   the wordmark and the rest is an address. currentColor via opacity rather than
+   a second colour token, so this needs nothing per theme. */
+.brand-mark .brand-sub,
+.brand-mark .brand-tld {
+  font-size: 0.72em;
+  font-weight: var(--weight-normal, 400);
+  letter-spacing: 0;
+  opacity: 0.62;
+}
+
+/* A mark carrying a host is wider than the bare wordmark, so the chrome beside
+   it has to reserve more. Keyed on :has(.brand-sub) — the condition is exactly
+   "this mark has a subdomain in it", so no surface has to remember to opt in and
+   nothing reserves the wider gutter on a plain apex. Browsers without :has()
+   keep the 4.75rem above, which is the pre-existing behaviour rather than a
+   broken one. */
+body:has(.brand-mark .brand-sub) {
+  --brand-mark-inline: 10.5rem;
+}
+
+/* On a narrow screen the TLD is the least load-bearing part of the address --
+   the subdomain says which surface and the wordmark says which city, and both
+   survive. Dropping it buys back roughly two characters of gutter. */
+@media (max-width: 30rem) {
+  .brand-mark .brand-tld { display: none; }
+
+  body:has(.brand-mark .brand-sub) {
+    --brand-mark-inline: 8.5rem;
+  }
+}
+
 .brand-mark:hover,
 .brand-mark:focus:not(:focus-visible),
 .brand-mark:active {

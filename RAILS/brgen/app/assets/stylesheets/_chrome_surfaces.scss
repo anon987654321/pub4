@@ -70,6 +70,15 @@
   padding: var(--space-4);
 }
 
+/* The city strip is closed most of the time, so unlike its cousins it is a
+   single summary row rather than a heading over a list. At the shared inset the
+   card read as a box drawn around one line — the padding outweighed what it
+   held. One step down the scale, applied here rather than to the group, because
+   the others really are cards and still want the card's inset. */
+.city-today {
+  padding: var(--space-3);
+}
+
 /* Same inline inset as .compose-launcher. .post-feed is the home list, the
    posts index, bookmarks and hashtags — #feed-panel alone left those
    sibling feeds full-bleed after the home column was inset. */

@@ -102,7 +102,10 @@
   <%# One shared mark across brgen, amber and bsdports (shared/_brand_mark).
       class_name keeps .brgen-logo-mark so every rule already written against it
       -- including _vertical_shell's playlist case -- still applies. %>
-  <%= render "shared/brand_mark", label: "brgen", class_name: "brand-mark brgen-logo-mark" %>
+  <%# label/prefix/suffix come from brand_mark_fragments so the mark names the
+      host: "brgen" on the apex, "markedsplass.brgen.no" on a vertical, and the
+      city's own name on every other city host. %>
+  <%= render "shared/brand_mark", **brand_mark_fragments, class_name: "brand-mark brgen-logo-mark" %>
   <% unless vertical_surface? %>
     <div role="region" aria-label="<%= t("theme.region") %>">
 <%# The one theme mechanism: the shared toggle writes data-theme through

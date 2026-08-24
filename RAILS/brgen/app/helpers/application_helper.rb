@@ -163,6 +163,35 @@ module ApplicationHelper
     LIGHT_VERTICALS.include?(active_vertical&.to_sym) ? "light" : "dark"
   end
 
+  # The wordmark names the host it is actually on.
+  #
+  # It was the literal "brgen" on every surface, so Oslo, Stavanger, Trondheim,
+  # Cardiff, Edinburgh and Frankfurt all wore Bergen's name, and every vertical
+  # wore it too — markedsplass and dating were indistinguishable from the city
+  # apex they hang off. One mark still, not seven: the city label keeps the
+  # weight and the wordmark's letterspacing, and the subdomain and TLD are set
+  # quieter around it, so the shape a reader recognises is unchanged and the
+  # thing it now says is true.
+  #
+  # Current.domain is the city domain the request resolved to (brgen.no,
+  # lsangeles.com), so this follows the registry rather than parsing the host a
+  # second time and disagreeing with it.
+  def brand_mark_fragments
+    domain = Current.domain.presence || "brgen.no"
+    city, _, tld = domain.partition(".")
+    return { label: city } unless vertical_surface?
+
+    # The host's own subdomain, not the subapp key: the two differ wherever an
+    # alias is in play — markedsplass.brgen.no resolves to :marketplace, and the
+    # mark should say what the reader typed.
+    subdomain = Brgen::DomainRegistry.subdomain_for(
+      Brgen::DomainRegistry.normalize_host(request&.host), domain
+    )
+    return { label: city } if subdomain.blank?
+
+    { prefix: "#{subdomain}.", label: city, suffix: ".#{tld}" }
+  end
+
   def home_feed_following?
     Brgen::HomeFeed.following?(feed: params[:feed])
   end
