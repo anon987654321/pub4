@@ -44,6 +44,7 @@ prompt_ordering:
   - master_priority
   - master_constitution_kernel
   - master_refusal_policy
+  - master_attention
   - master_style
 
 absolute:

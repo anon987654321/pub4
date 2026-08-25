@@ -40,8 +40,42 @@ module Master
 
       def add_contextual_sections(sections)
         add_rules(sections)
+        add_attention(sections)
         add_language_style(sections)
         add_design_rules(sections)
+      end
+
+      # The breadcrumb protocol, from the file that defines it.
+      #
+      # data/attention_context.yml has specified map/zoom/act/target/parent since
+      # it was written, along with when to emit one and when silence is better.
+      # Its own runtime_uses says "include in prompt-builder metadata for long
+      # agentic tasks". Nothing did: the only reference to AttentionContext in
+      # the tree was a /help listing naming the file, and the word breadcrumb
+      # appeared nowhere in a built prompt.
+      #
+      # Read from the protocol rather than restated here, so the vocabulary has
+      # one source and adding a zoom or an act to the yaml changes the prompt.
+      def add_attention(sections)
+        protocol = Master::Ground::AttentionContext
+        philosophy = protocol.protocol.dig("protocol", "philosophy").to_s.strip
+        return if philosophy.empty?
+
+        sections["master_attention"] = <<~XML.strip
+          <master_attention>
+          #{philosophy}
+          Format: #{protocol.template(:compact_text)}
+          zoom: #{protocol.valid_zooms.join(' / ')}
+          act: #{protocol.valid_acts.join(' / ')}
+          Three moves, and naming one is the point of the breadcrumb: stay on the current map,
+          `deep` to push a child onto it, `out` to pop back to a parent. On `out`, the work under
+          the popped node is finished with — summarise it in one line and stop carrying its detail.
+          Emit when: #{Array(protocol.protocol["when_to_emit"]).join(', ')}
+          Stay silent when: #{Array(protocol.protocol["when_not_to_emit"]).join(', ')}
+          </master_attention>
+        XML
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PromptBuilder.add_attention", severity: :cosmetic)
       end
 
       def base_prompt_sections
@@ -432,9 +466,20 @@ module Master
         XML
       end
 
+      # A section built and left out of prompt_ordering is dropped without a
+      # word, which is how a whole block can be written, tested by hand, and
+      # never reach a model. Logged rather than raised: a missing section is a
+      # worse prompt, not a broken turn.
       def ordered_sections(sections, soul, context: :full)
         ordering = Array(soul["prompt_ordering"])
         ordering = sections.keys if ordering.empty?
+        unordered = sections.keys - ordering - (context == :core ? [] : [])
+        unless unordered.empty?
+          Master::Ground::Swallow.log(
+            RuntimeError.new("prompt sections built but absent from soul prompt_ordering: #{unordered.join(', ')}"),
+            context: "PromptBuilder.ordered_sections", severity: :load_bearing
+          )
+        end
         ordering = ordering & CORE_SECTIONS if context == :core
         ordering.filter_map { |key| sections[key] }.join("\n\n")
       end
