@@ -42,6 +42,25 @@
 # BLOCKLIST — two gates, and the hardened one was not the live one. Six lines
 # that make a security gate run is what a budget with a sponsor is for, and the
 # new unit means these six are code rather than ceremony.
+# RAISED 2026-08-25, 36892 -> 36930 (+38). Two effects in Core::World could
+# destroy work that was not the fold's, and both are now scoped.
+#
+# `git commit -m msg` committed THE INDEX. This checkout is shared — other
+# sessions and a human stage into it — so the fold signed its message onto
+# whatever they had staged. CLAUDE.md forbids exactly that of agents, and the
+# fold was the one agent doing it. Commit is path-scoped now and refuses to run
+# unscoped, with a matching constitutional rule so the refusal is stated law.
+#
+# `rollback` undid ONE failed effect with `git reset --hard HEAD`, discarding
+# every uncommitted change in the tree. Anything a concurrent session had
+# touched since the checkpoint was outside the patch and simply gone. Rollback
+# now restores only the path the failed write names, and reports rather than
+# resets when it cannot scope — PRESERVE_FIRST over a convenient guess.
+#
+# The lines are the two scoped paths plus their git helpers, after tightening
+# five out. They buy a property no scanner could: the fold cannot take or
+# destroy another session's work. Pinned by four tests, each mutation-checked
+# against the old behaviour.
 spine:
   # Total lines across lib/**/*.rb.
   #
@@ -563,7 +582,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_body_ceiling: 36892
+  lib_body_ceiling: 36930
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

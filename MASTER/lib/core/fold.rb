@@ -63,7 +63,10 @@ module Master::Core
       checkpoint = @world.checkpoint
       observation = @world.perform(admitted)
       @memory.record(admitted, observation)
-      @world.rollback(checkpoint) if observation.err?
+      # The effect goes with the checkpoint: rollback undoes what THIS effect
+      # touched, and without knowing which effect failed it can only guess at the
+      # blast radius — which it used to do with a tree-wide reset.
+      @world.rollback(checkpoint, admitted) if observation.err?
       emit(turn, admitted, observation)
       nil
     end

@@ -52,6 +52,9 @@ module Master::Core
         - never write a secret into a file or note
         - never write the constitution (data/rules.yml, data/soul.yml) or the core/ spine
         - exec argv must be an array of strings
+        - `git commit` must name its paths — this checkout is shared with other
+          sessions and a human, so an unscoped commit takes their staged work too.
+          Stage a new file first; a scoped commit can only name a tracked path.
         - no `done` or `git commit` until exec evidence reaches the threshold
           (#{EVIDENCE_WEIGHTS}; threshold #{Proof::PASS_THRESHOLD})
         - medium+ goals carry approach/chosen notes — do not write before reading them

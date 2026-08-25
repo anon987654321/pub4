@@ -71,6 +71,7 @@ module Master::Core
         scope_creep_rule,
         evidence_for_done_rule,
         git_commit_evidence_rule,
+        git_commit_scope_rule,
         two_hats_rule,
         council_for_done_rule,
         ideation_before_write_rule,
@@ -284,6 +285,22 @@ module Master::Core
       })
     end
 
+    # A commit names what it commits.
+    #
+    # World refuses an unscoped commit too, and that is the guarantee; this rule
+    # exists so the refusal is a stated law with a reason the model can read,
+    # rather than an error surfacing from the mechanism after the attempt. The
+    # index in this checkout belongs to everyone at once — other sessions, and a
+    # human — so "commit whatever is staged" is never a thing the fold means.
+    def self.git_commit_scope_rule
+      Rule.new(id: :git_commit_scope, verbs: %i[git], judge: lambda { |effect, _memory|
+        next nil unless effect.args[:operation].to_s.to_sym == :commit
+        next nil if Array(effect.args[:paths]).map(&:to_s).any? { |p| !p.strip.empty? }
+
+        Verdict::Block.new(reason: "commit must name its paths; the index is shared", by: :git_commit_scope)
+      })
+    end
+
     # High-risk goals require an in-process council critique before done.
     def self.council_for_done_rule
       Rule.new(id: :council_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
@@ -359,7 +376,7 @@ module Master::Core
                          :safe_exec_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
-                         :git_commit_evidence_rule, :council_for_done_rule,
+                         :git_commit_evidence_rule, :git_commit_scope_rule, :council_for_done_rule,
                          :ideation_before_write_rule, :new_path_rule, :ruby_syntax_error, :safe_rx
   end
 end

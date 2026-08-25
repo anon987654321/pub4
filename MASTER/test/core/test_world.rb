@@ -198,4 +198,60 @@ class WorldTest < Minitest::Test
       ["TIMEOUT after 1s: git", Master::Core::World::TIMED_OUT]
     end
   end
+
+  # A real repository, because the whole claim here is about what git does with
+  # the index and nothing short of git can answer that.
+  def with_git_world
+    Dir.mktmpdir do |root|
+      %w[init -q].then { |a| system("git", *a, root, out: File::NULL, err: File::NULL) }
+      %w[user.email a@b.c user.name tester].each_slice(2) do |k, v|
+        system("git", "-C", root, "config", k, v, out: File::NULL, err: File::NULL)
+      end
+      File.write(File.join(root, "seed.txt"), "seed\n")
+      system("git", "-C", root, "add", "seed.txt", out: File::NULL, err: File::NULL)
+      system("git", "-C", root, "commit", "-qm", "seed", out: File::NULL, err: File::NULL)
+      yield Master::Core::World.new(root:), root
+    end
+  end
+
+  def committed_paths(root)
+    `git -C #{root} show --name-only --format= HEAD`.split("\n").map(&:strip).reject(&:empty?)
+  end
+
+  # The one that matters. This checkout is shared — other sessions and a human
+  # stage things in the same index — so a bare `git commit` takes their work and
+  # signs the fold's message on it. CLAUDE.md forbids exactly this of agents, and
+  # the fold was the agent doing it.
+  def test_commit_does_not_carry_someone_elses_staged_file
+    with_git_world do |world, root|
+      File.write(File.join(root, "mine.rb"), "MINE = 1\n")
+      File.write(File.join(root, "theirs.rb"), "THEIRS = 1\n")
+      # Somebody else's work, already staged, sitting in the shared index.
+      system("git", "-C", root, "add", "theirs.rb", out: File::NULL, err: File::NULL)
+      # The fold stages its own file the way it actually does — a new path has to
+      # be tracked before a scoped commit can name it. Both files are now staged,
+      # which is precisely the situation the bare commit used to sweep up.
+      world.perform(E.git(:stage, paths: ["mine.rb"]))
+
+      obs = world.perform(E.git(:commit, paths: ["mine.rb"], message: "mine only"))
+      assert obs.ok?, obs.message
+
+      assert_equal ["mine.rb"], committed_paths(root)
+      refute_includes committed_paths(root), "theirs.rb", "the fold committed another session's staged file"
+    end
+  end
+
+  # Refused rather than defaulted: guessing "everything I touched" is a decision
+  # made by the layer with the least information, and it is unrecoverable when wrong.
+  def test_commit_without_paths_is_refused
+    with_git_world do |world, root|
+      File.write(File.join(root, "theirs.rb"), "THEIRS = 1\n")
+      system("git", "-C", root, "add", "theirs.rb", out: File::NULL, err: File::NULL)
+
+      obs = world.perform(E.git(:commit, message: "everything"))
+      refute obs.ok?, "an unscoped commit must not run"
+      assert_match(/paths/, obs.message)
+      assert_equal ["seed.txt"], committed_paths(root), "HEAD moved despite the refusal"
+    end
+  end
 end

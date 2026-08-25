@@ -118,7 +118,11 @@ class TestKernelSpine < Minitest::Test
       memory.record(Master::Core::Effect.exec(["true"], evidence: kind), Master::Core::Observation.ok("ok"))
     end
     verdict = constitution.admit(
-      Master::Core::Effect.git(:commit, message: "fix the bug and refactor the helper"),
+      # paths: because a commit now has to name what it commits — an unscoped one
+      # is refused before two_hats ever sees it. This fixture is about the message
+      # mixing two hats, so it states a scope and lets that rule do the judging.
+      Master::Core::Effect.git(:commit, paths: ["MASTER/a.rb"],
+                                        message: "fix the bug and refactor the helper"),
       memory,
     )
 

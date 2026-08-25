@@ -54,16 +54,45 @@ module Master::Core
       }
     end
 
-    def rollback(checkpoint)
-      return Observation.ok("rollback: clean #{checkpoint[:id]}") if checkpoint[:patch].to_s.empty?
+    # Undo one failed effect — and only what that effect touched.
+    #
+    # The Fold takes a checkpoint immediately before each effect and rolls back
+    # if that single effect errored, so the blast radius that is CORRECT here is
+    # one effect's worth. What this did instead was `git reset --hard HEAD`,
+    # which discards every uncommitted change in the working tree, and then
+    # re-applied the checkpoint patch — a patch of tracked modifications as they
+    # stood a moment earlier.
+    #
+    # In this repo that is destructive. The checkout is shared: other sessions
+    # and a human edit it concurrently, and CLAUDE.md exists because that has
+    # already cost real work. Anything another session changed between the
+    # checkpoint and the failure was outside the patch and simply gone, and
+    # anything they had staged lost its staged state either way. Undoing one
+    # failed write by discarding everyone's uncommitted work is a worse outcome
+    # than the write.
+    #
+    # So: a write is undone at its own path, which is known exactly. Anything
+    # else has an unknown blast radius, and for those the honest answer is to say
+    # the effect was not rolled back rather than to guess with `reset --hard`.
+    # PRESERVE_FIRST and SURFACE_ERRORS_FIRST are both soul.yml code_rules; a
+    # loud un-undone exec obeys them, a silent tree-wide reset obeys neither.
+    def rollback(checkpoint, effect = nil)
+      path = rollback_path(effect)
 
-      if git_has_head?
-        git_capture("reset", "--hard", "HEAD")
-        apply_patch(checkpoint[:patch])
-      else
-        apply_patch_reverse(checkpoint[:patch])
+      # No path to scope to. An empty checkpoint means there was nothing to undo
+      # in the first place; anything else is an effect whose reach is unknown.
+      unless path
+        return Observation.ok("rollback: clean #{checkpoint[:id]}") if checkpoint[:patch].to_s.empty?
+
+        return Observation.no(unscoped_rollback_message(effect, checkpoint))
       end
-      Observation.ok("rolled back tracked changes #{checkpoint[:id]}")
+
+      # Scoped, so the checkpoint being empty is not a reason to skip: it means
+      # the path was unmodified then, and restoring it to HEAD is exactly right.
+      # The old early return here is why a write that dirtied a clean tree and
+      # then failed was never undone at all.
+      restore_path(path, checkpoint[:patch])
+      Observation.ok("rolled back #{path} #{checkpoint[:id]}")
     rescue StandardError => e
       Observation.no("rollback failed: #{e.class}: #{e.message}")
     end
@@ -101,13 +130,37 @@ module Master::Core
       status.success? ? Observation.ok(out.to_s.strip) : Observation.no(out.to_s.strip)
     end
 
+    # commit is path-scoped, and refuses to run without paths.
+    #
+    # `git commit -m msg` commits THE INDEX, which in this repo is shared: the
+    # checkout is one working tree that several sessions and a human use at
+    # once, so whatever anyone else had staged went into the fold's commit under
+    # the fold's message. That is the exact failure CLAUDE.md forbids agents from
+    # causing ("commit path-scoped at minimum"), and the fold was the one agent
+    # not doing it.
+    #
+    # `git commit -- <paths>` commits the working-tree state of those paths and
+    # ignores the index entirely, which is what makes it safe here. The cost is
+    # that this form cannot express a deletion; a fold that needs one has to say
+    # so as its own effect rather than have it ride along invisibly.
+    #
+    # Empty paths is refused rather than defaulted. Defaulting to "everything I
+    # touched" would be a guess about intent made by the layer with the least
+    # information, and the failure it guesses wrong about is unrecoverable.
     def do_git(operation:, paths: [], message: nil, **)
       case operation.to_s.to_sym
       when :diff then Observation.ok(git_capture("diff"))
       when :stage then Observation.ok(git_capture("add", "--", *Array(paths)))
-      when :commit then Observation.ok(git_capture("commit", "-m", message.to_s))
+      when :commit then do_git_commit(Array(paths), message)
       else Observation.no("unknown git operation: #{operation}")
       end
+    end
+
+    def do_git_commit(paths, message)
+      scoped = paths.map(&:to_s).reject(&:empty?)
+      return Observation.no("git commit needs paths: an unscoped commit takes the shared index") if scoped.empty?
+
+      Observation.ok(git_capture("commit", "-m", message.to_s, "--", *scoped))
     end
 
     def do_ask(prompt:, options: nil, **)
@@ -267,6 +320,53 @@ module Master::Core
     def apply_patch_reverse(patch)
       out, status = bounded_capture2e("git", "-C", @root, "apply", "--reverse", "--binary", "-", stdin_data: patch)
       raise out.strip unless status.success?
+    end
+
+    # Only a write names its target up front. exec can touch anything, and git
+    # operations are undone by git rather than by a patch.
+    def rollback_path(effect)
+      return nil unless effect.respond_to?(:verb) && effect.verb == :write
+
+      effect.args[:path].to_s.then { |p| p.empty? ? nil : p }
+    end
+
+    def unscoped_rollback_message(effect, checkpoint)
+      "rollback skipped for #{effect.respond_to?(:verb) ? effect.verb : "unknown"} #{checkpoint[:id]}: " \
+        "no path to scope to, and a tree-wide reset would discard concurrent work in this shared checkout"
+    end
+
+    # Restore one path to the state the checkpoint captured.
+    #
+    # Two steps because the patch is a diff against HEAD: put the file back to
+    # HEAD, then re-apply only this path's hunks from the checkpoint. --include
+    # is what keeps the rest of the patch — other files, other sessions' work —
+    # out of it.
+    #
+    # A path git does not know at HEAD is left exactly as it is. It could be a
+    # file the effect created, but it could equally be an untracked file that was
+    # already there, and nothing captured at checkpoint time tells the two apart.
+    # Deleting on that guess is the one outcome that cannot be undone, and
+    # test_world_rollback already pins that a pre-existing untracked file survives.
+    def restore_path(path, patch)
+      raise "#{path} is untracked at HEAD; left alone rather than guessed to be new" unless tracked_at_head?(path)
+
+      git_capture("checkout", "HEAD", "--", path)
+      apply_patch_for(path, patch)
+    end
+
+    def tracked_at_head?(path)
+      return false unless git_has_head?
+
+      out, status = bounded_capture2e("git", "-C", @root, "ls-tree", "--name-only", "HEAD", "--", path)
+      status.success? && !out.strip.empty?
+    end
+
+    # An empty selection is not a failure: the path had no uncommitted change at
+    # checkpoint time, so HEAD is already the state being restored to.
+    def apply_patch_for(path, patch)
+      out, status = bounded_capture2e("git", "-C", @root, "apply", "--binary", "--include=#{path}", "-",
+                                      stdin_data: patch)
+      raise out.strip unless status.success? || out.include?("No valid patches")
     end
   end
 end
