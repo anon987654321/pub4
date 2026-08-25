@@ -56,16 +56,18 @@ open:
   summary: |-
     Re-measured on the box 2026-08-12, as this entry asked. /home is at 89% (1.9G free of 17G), up from 99% that morning — the three retired apps (baibl, blognet, hjerterom) still had home directories worth 1.6G between them, for products removed from the repo in July. The git figure moved too: /home/dev/pub4 is 8.0G and .git is 3.3G of it, not the 7.7G recorded on 2026-08-02, so someone has run a gc. The claim underneath stands. The ten largest objects in history are 80–87 MB WAV renders under DEPLOY/dilla/renders/beats/, a path that no longer exists and never will again; every `git pull` deploy carries them, so this does not improve by itself and more RAM does not touch it. Operator-owned: the fix is a history rewrite, i.e. a force-push to a public repo. Strip these blobs in the same pass as the key purge above.
      RE-MEASURED 2026-08-22: /home is 67% (5.4G free) and the three retired app homes are gone. What remains is exactly the history rewrite, and it is SCHEDULED, not casual: it needs every session quiescent (STUDIO carries live uncommitted work), a coordinated force-push, and a vm23 re-clone in the same hour. Strip the WAV blobs and the key purge in one pass.
+    RE-MEASURED 2026-08-25: /home is 68% (5.3G free of 17G), not the 89% above.
+    The three retired app homes this entry names — baibl, blognet, hjerterom — are
+    gone, and /home/dev/pub4 is 4.9G against the 8.0G recorded, so the weekly
+    `git gc` in weekly.local is doing its job. .git is still 3.6G of the 4.9G,
+    which is the remaining shape of the problem, but it is not pressure: /var is
+    16% and / is 18%. Nothing here is urgent; the entry stays only so the .git
+    figure has somewhere to be re-read.
 - id: amber_moving_to_its_own_apex
   tag: operator-priority
   summary: |-
     amber is intended to move from amber.brgen.no to amberapp.com (operator, 2026-08-11, not yet bought). Filed before the move because one coupling is easy to miss and expensive: the session cookie is `domain: :all` (shared/config/initializers/session_store.rb), which scopes it to the REGISTRABLE domain. Today that is brgen.no, so a visitor who signs in on brgen.no is signed in on amber.brgen.no. On a separate apex the cookie stops crossing, and the replacement — Shared::SsoToken — is consume-only here: nothing in this repository mints one (the minting side is MASTER's and is not in this tree). So cross-app identity would go from working-by-cookie to unimplemented, silently, for anyone who expects it. The fleet plumbing mostly follows apps.yml now and does not need hand edits: port_inventory, domain_alignment's live_apexes, health_check --public-only and therefore uptime-check.sh all derive from it. What does need hand work: an acme cert and a relayd keypair for the new apex, ALL_DOMAINS in OPERATOR.sh, DNS (own zone in nsd or external), deploy_inventory.json's mirror, canonical/sitemap hosts, the PWA manifest start_url and scope, and any CSP or embed allowlist that names brgen.no. Worth doing for revenue reasons as well as branding: TradeDoubler publisher approval and AdSense site review both go easier for an apex that is the product than for a subdomain of something else.
      CORRECTED 2026-08-22 (later): amberapp.com is a REDIRECT SHELL — every path returns the same 114-byte JS-redirect page (verified: /fonts/* serve text/html there and font/woff2 on amber.brgen.no). The apex is bought and certified but the app does not live there yet; the move itself, with the entry's coupling list, is still ahead. DECIDED: amber keeps its own identity space (no cross-apex SSO — separate product, separate accounts); remaining hand work is the canonical/redirect choice for amber.brgen.no and the sitemap/manifest host sweep the entry lists.
-- id: rails_coverage_contract_is_tautological
-  tag: operator-priority
-  summary: |-
-    controller_coverage_contract_test.rb and model_coverage_contract_test.rb assert only that source files contain class/def strings — they never boot Rails or call a method, so they pass against a body of `raise`. Both now say so in their own headers and are honest apps.yml claim-checks; the real numbers are ratcheted in RAILS/test/coverage_ratchet_test.rb (amber 1/30 controllers and 5/31 models, brgen 14/87 and 11/98, bsdports 2/11 and 1/13), failing in both directions. What is open is the gap itself: money and trust paths (vipps checkout, moderation_workflow, trust_score, account_merger, identity_assurer) have no tests. Checkout left that list on 2026-08-03 and the reason it read as zero is the lesson — the tests existed and had never run, because `bin/rails test` globbed from the app root and never saw engines/*/test.
-     THE NAMED GAP CLOSED 2026-08-22: trust_score, identity_assurer, account_merger, moderation_workflow and the vipps money contract all have tests that CALL the real paths now (15 tests, brgen test/services/). The moderation test found a live bug on its first run — penalize_owner's metadata line still read the polymorphic lazily, so resolving a bare-loaded report raised AFTER the status write, exactly the trap the service's own comment described two methods up. The vipps test pins the misconfigured-fakes-success refusal. Controller/model floors unchanged (service tests live beside, not inside, those counts); what remains open is only the broad floor-raising grind the ratchet already holds.
 - id: rails_audit_backlog_2026_08_10
   tag: agent-workable
   summary: |-
@@ -107,6 +109,14 @@ not_debt:
 
     '
 closed:
+- id: rails_coverage_contract_is_tautological
+  resolution: >-
+    Not debt, and the entry says so itself: both tests now carry headers stating
+    they are apps.yml claim-checks rather than test coverage, and name
+    RAILS/test/coverage_ratchet_test.rb as the real number — which exists and
+    passes (3 runs, 9 assertions, verified 2026-08-25). An external review raised
+    this again the same day as a live defect; it is a documented decision, and
+    re-reading the header is the whole answer. Closed so it stops being re-found.
 - id: etc_drift_six_configs
   resolution: >-
     Closed 2026-08-25, the day it was opened. The drift gate found six configs
