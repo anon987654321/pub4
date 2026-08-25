@@ -7,22 +7,27 @@ class TestSoul < Minitest::Test
     def ask_once(*) = draft
   end
 
-  # Both halves of soul's absolute law must reach the model.
+  # Every axiom soul declares must reach the model that has to obey it.
   #
-  # absolute.rules arrived through PersonalityPromptBuilder#add_rules and
-  # absolute.aesthetic_rules arrived nowhere: its only reader was
-  # fix/rule_loop.rb, so NO_ASCII_DECORATION, FLAT_UI, STRUNK_ACTIVE and
+  # absolute.rules arrived through PersonalityPromptBuilder#add_rules while a
+  # second section, absolute.aesthetic_rules, arrived nowhere: its only reader
+  # was fix/rule_loop.rb. So NO_ASCII_DECORATION, FLAT_UI, STRUNK_ACTIVE and
   # DEEP_SCAN_ONLY governed the fix loop's rewrites while the model writing the
-  # code was never told them. Measured at 30/30 against 0/19. A rule the author
+  # code was never told them — 30 of 30 against 0 of 19. A rule the author
   # cannot see is a rule the fixer spends its turn undoing.
+  #
+  # The second section is gone rather than given a second reader: nothing ever
+  # read the split as a distinction, and why_explainer dug only the first, so
+  # /why on any of the nineteen answered nothing at all.
   def test_every_absolute_axiom_reaches_the_system_prompt
     prompt = Master::Voice::Personality.new.send(:build_system_prompt, context: :full)
     absolute = YAML.safe_load_file(Master.data_path("soul.yml")).fetch("absolute")
 
-    %w[rules aesthetic_rules].each do |section|
-      missing = absolute.fetch(section).keys.reject { |id| prompt.include?(id) }
-      assert_empty missing, "soul absolute.#{section} not in the prompt: #{missing.join(', ')}"
-    end
+    refute absolute.key?("aesthetic_rules"),
+           "one list: a split nothing reads is a section /why cannot reach"
+
+    missing = absolute.fetch("rules").keys.reject { |id| prompt.include?(id) }
+    assert_empty missing, "soul absolute.rules not in the prompt: #{missing.join(', ')}"
   end
 
   DOCUMENT = <<~SOUL

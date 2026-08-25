@@ -73,7 +73,6 @@ module Master
           lines  = ["Golden rule: #{golden}",
                     "Minimum change that eliminates the violation. Do not touch unrelated code."]
           abs.fetch("rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
-          abs.fetch("aesthetic_rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "rule_loop.golden_rule")

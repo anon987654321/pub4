@@ -46,20 +46,15 @@ class TestMasterLoop < Minitest::Test
   # The operator's standing orders live in soul.yml, not in the catalogue the
   # file scanner reads. They govern how to work rather than what source text may
   # look like, so no detector can match one, and rules.yml offered them a shape
-  # with a severity and a tier they could never use. soul's absolute.rules and
-  # aesthetic_rules reach the prompt whole through
-  # PersonalityPromptBuilder#add_rules; Ground::Constitution cut them to 480
-  # characters, which took 358 off FLAT_HIERARCHY alone.
+  # with a severity and a tier they could never use. soul reaches the prompt
+  # whole through PersonalityPromptBuilder#add_rules; Ground::Constitution cut
+  # them to 480 characters, which took 358 off FLAT_HIERARCHY alone.
   def test_operator_conduct_lives_in_soul_not_in_the_scanner_catalogue
-    soul = YAML.safe_load_file(Master.data_path("soul.yml"))
-    rules = soul.fetch("absolute").fetch("rules")
-    aesthetic = soul.fetch("absolute").fetch("aesthetic_rules")
+    rules = YAML.safe_load_file(Master.data_path("soul.yml")).fetch("absolute").fetch("rules")
 
-    %w[OPERATOR_AUTONOMY EXECUTE_NOT_INSTRUCT SHELL_DISCIPLINE VPS_SERIAL_TRUTH NO_NEW_FILES].each do |id|
+    %w[OPERATOR_AUTONOMY EXECUTE_NOT_INSTRUCT SHELL_DISCIPLINE VPS_SERIAL_TRUTH NO_NEW_FILES
+       STRUNK_WHITE FLAT_PIXELS VOICE_TERSE_UNIX MICRO_REFINEMENTS].each do |id|
       assert rules.key?(id), "#{id} must be soul law; it binds conduct, not source text"
-    end
-    %w[STRUNK_WHITE FLAT_PIXELS VOICE_TERSE_UNIX MICRO_REFINEMENTS].each do |id|
-      assert aesthetic.key?(id), "#{id} must be soul aesthetic law"
     end
 
     refute Master.load_rules.key?("operator_principles"),

@@ -154,7 +154,16 @@ absolute:
       itemised diff. Close with one consolidation question. "Land all" means batch and commit
       without per-item reconfirmation.
 
-  aesthetic_rules:
+# No aesthetic_rules section. It held nineteen axioms and the split was never
+# read as a distinction: rule_loop concatenated both into one flat list with
+# identical formatting, and why_explainer dug only `rules`, so /why on
+# NO_COLUMN_ALIGN, STRUNK_ACTIVE, FLAT_UI or any of the other eighteen
+# returned nothing at all.
+#
+# UNIVERSAL_CROSS_DISCIPLINARY_RULES below is the reason it collapses rather
+# than getting a second reader: one law across Ruby, markup and prose, with
+# only the detector changing. An axiom about spacing and an axiom about
+# rescuing are the same kind of claim about the same tree.
     NO_ASCII_DECORATION: "Strunk & White — no box-drawing or === / ### banners in code, comments, docs, or CLI; content is the separator."
     NO_COLUMN_ALIGN: "KISS — one space between tokens; never pad columns (alignment decays on every edit)."
     NO_CONSECUTIVE_BLANK_LINES: "Boy Scout Rule — one blank line between sections; zero between related lines."
