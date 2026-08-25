@@ -579,6 +579,15 @@ namespace :lint do
     sh RbConfig.ruby, File.join(__dir__, "tools", "swallowed_errors.rb")
   end
 
+  # Audits the rules rather than the tree. Fails on a rule whose fixtures only
+  # pass because a fixture is read differently from a real file, and on one that
+  # flags most of what it reads. Both are how a broken detector looks from the
+  # inside — prove! green, findings meaningless.
+  desc "Rules that cannot see their own subject, or fire on nearly everything"
+  task :rule_audit do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "rule_audit.rb")
+  end
+
   desc "No two files loadable into one process define the same top-level constant"
   task :constant_collisions do
     sh RbConfig.ruby, File.join(__dir__, "tools", "constant_collisions.rb")
