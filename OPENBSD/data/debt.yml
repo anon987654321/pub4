@@ -6,16 +6,36 @@ open:
     vm23 runs a locally built libvips, and `pkg_add -u` will replace it with the stock package. The port graphics/libvips carries `-Drsvg=disabled` among the loaders OpenBSD turns off, so the packaged build has no svgload at all — librsvg-2.61.1 is installed beside it and is never reached. amber's garment cut-outs need it: Amber::GarmentSilhouette rasterises SVG it generates itself.
      Rebuilt 2026-08-23 from a signify-verified 7.8 ports tree with `-Drsvg=enabled` and `x11/gnome/librsvg` added to LIB_DEPENDS (the port path is x11/gnome, not graphics — `graphics/librsvg` fails as a broken dependency). Package kept at /usr/ports/packages/amd64/all/libvips-8.14.5.tgz, so a re-install after an update is `make reinstall` in /usr/ports/graphics/libvips rather than a fresh build.
      What makes this quiet: GarmentSilhouette#png returns nil and logs one line when vips cannot read SVG, and the seeder then keeps whatever photos the items already had. A stock-package upgrade therefore does not break the site, it just stops the cut-outs regenerating — nothing announces it. Re-check with `vips -l | grep svgload` after any pkg_add -u touching graphics.
+    UPDATE 2026-08-25: the detection this entry asks for exists. daily.local now
+    checks `vips -l` for svgload and logs loudly when it is gone, naming the
+    recovery (make reinstall in /usr/ports/graphics/libvips). Verified in both
+    directions — it passes against the live loader list and fails against a string
+    without svgload. Currently healthy: 4 svgload operators, vips 8.14.5. What is
+    left is the rebuild itself after a pkg_add -u, which is operator work.
 - id: off_host_dr
   tag: operator-priority
   summary: |-
     Litestream has never replicated anything, and not for the reason this entry gave. Measured on the box 2026-08-12: the binary is not installed. `which litestream` finds nothing, pkg_info has no entry, and /etc/rc.d/litestream points at /usr/local/bin/litestream, which does not exist. rcctl has been reporting litestream(failed) in daily.out under "Services that should be running but aren't", next to httpd, for months. /etc/litestream.yml was also the pre-2026-07 version, with `path: <dir>` plus `pattern:` — a form litestream rejects — so even installed it would not have started. The repo's corrected copy (one entry per database file, three apps, hjerterom's stanza gone) is deployed, so the config is right whenever the package lands. Two things, in order: `doas pkg_add litestream`, then an off-host replica. The file:// replicas are on the same disk as the source, which covers an accidental delete and nothing else. Until then Shared::DatabaseSnapshotJob is the only thing backing up production.sqlite3, and it writes to that same disk.
      STOPGAP LANDED 2026-08-22: OPENBSD/bin/dr-pull pulls VACUUM INTO snapshots of every primary nightly to the operator Mac via launchd, integrity-checked and restore-drilled (brgen opens with 81,911 readable users). Litestream-with-a-bucket remains the endgame and needs an account.
+    RE-SCOPED 2026-08-25. This row reads as "there are no off-host backups", which
+    is false and has been for a while. dr-pull runs nightly from the operator Mac
+    under launchd, snapshots every production*.sqlite3 with VACUUM INTO, verifies
+    PRAGMA integrity_check on arrival and keeps 14 — verified by an actual restore
+    drill on 2026-08-25, posts and listings matching live exactly. The row is about
+    LITESTREAM, which is not in OpenBSD ports and so cannot be pkg_add'ed at all.
+    It is now rcctl-disabled and out of pkg_scripts, because a service that can
+    never start kept `rcctl ls failed` permanently non-empty and taught everyone to
+    skim the one list that announces a real outage. See OPENBSD/DECISIONS.md.
 - id: multi_app_ram
   tag: operator-priority
   summary: |-
     vm23 ~1GB cannot keep master + brgen + amber resident, and bsdports is a fourth app that does not fit at all. UVM out-of-swap kills ruby34 when they all boot. Raise RAM (≥2GB) or run amber on-demand. Restart order: master → brgen → amber → relayd. Smoke: sh OPENBSD/bin/deploy-smoke.sh (ALLOW_AMBER_DOWN=1 if amber policy is optional). It also shows up as a STARTUP RACE rather than an OOM kill, and that form looks like a broken app. amber needs ~20s to signal ready; Falcon SIGKILLs the worker if that misses its health-check window, so while another app's CI has the box at load 5+, amber restarts, gets killed, and rcctl reports amber(failed) with port 61352 closed. It is not broken — `bin/rails runner` boots it (BOOT_OK) and on a quiet box it logs "Finished startup" then ready:true within ~20s and stays. Wait for the deploy to finish and restart. Do NOT reproduce this by hand without --health-check-timeout 300: the rc.d passes it, a bare `falcon serve` defaults to 30s, and the worker then dies at exactly +30s, which reads as confirmation of a timeout theory that is wrong.
      DECIDED 2026-08-22 (operator delegation): stay at 1GB with exactly one resident worker (brgen_jobs, ~380M measured, 131M free after). The resize question reopens only if amber earns its own worker.
+    UPDATE 2026-08-25: operator has scheduled the 2 GB upgrade for Friday. Until
+    then the shape is unchanged and the measurements stand — swap reached 96%
+    with no deploy running. vps-deploy already stands the app's job worker down
+    for the CI run (line 156, since the 2026-08-23 OOM); doing it by hand first is
+    unnecessary and makes that stand-down silently skip.
 - id: internet_app_runs_as_passwordless_root_user
   tag: operator-priority
   summary: |-
@@ -57,25 +77,6 @@ open:
     See MASTER/DEBT.md "Scanner noise".
 
     '
-- id: etc_drift_six_configs
-  tag: operator-priority
-  summary: >-
-    config_drift_gate found six of eleven verbatim configs differing between
-    OPENBSD/etc and live /etc on 2026-08-25, on its first run that compared
-    anything. It had been reporting "clean (0 verbatim configs)" because ROOT
-    resolved relative to the installed script rather than the repo, so every
-    lookup missed and each one skipped past without being tallied (fixed in
-    001142b7e, which also made a zero numerator a failure). httpd.conf 372B repo
-    / 672B live, rc.conf.local 201/212, newsyslog.conf 2336/1460, rc.d/brgen
-    3735/2927, rc.d/amber 3310/3291, rc.d/bsdports 3800/3781. doas.conf, pf.conf,
-    login.conf, ssh/sshd_config and rc.d/master match. Each is either an
-    undeployed fix or a hand-edit nobody copied back, and the direction matters -
-    repo is LARGER for newsyslog.conf and all three rc.d files, which reads as
-    live being older. The rc.d files start production services, so reconciling
-    them is a read in both directions plus a restart per app, not a sync.
-    httpd.conf is the one to read first - live is nearly double the repo, and
-    OPENBSD/CLAUDE.md was corrected the same day for claiming there is no HTTP
-    listener at all.
 not_debt:
 - id: rails_autofix_scars
   summary: '11 `autofix: removed box-shadow (flat UI)` markers in _shell, _shell_widgets
@@ -96,6 +97,20 @@ not_debt:
 
     '
 closed:
+- id: etc_drift_six_configs
+  resolution: >-
+    Closed 2026-08-25, the day it was opened. The drift gate found six configs
+    differing on its first run that compared anything; all six are reconciled and
+    the gate reports "clean (11/11 verbatim configs match live /etc)". httpd.conf
+    was fixed by another session mid-flight. rc.conf.local drifted because live
+    correctly had brgen_jobs in pkg_scripts and the mirror did not — a reboot
+    would have come up without the job worker. newsyslog.conf differed ONLY by a
+    comment header, rotation rules byte-identical, so live simply never received
+    the documentation. All three rc.d files carried the same undeployed change,
+    RUBY_YJIT_ENABLE=0, decided 2026-08-17 and never installed: a no-op today
+    because Ruby 3.4 ships YJIT off, and pinned because Rails generates
+    Dockerfiles that set it to 1 and a future Ruby may default it on. Installing
+    them was therefore safe and changed no behaviour.
 - id: gate_result_is_a_shared_kernel_filed_under_deploy
   resolution: 'Closed 2026-08-13 by the second of the two options the entry named:
     an OPENBSD/DECISIONS.md entry, "OPENBSD/lib/ Owns The Gate Kernel, On Purpose".

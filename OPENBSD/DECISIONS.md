@@ -183,3 +183,32 @@ gate ships with the shape it must flag and the shape it must not
 detector test is the retrofit shape); an EXISTING gate gets its pair when
 next touched. Not a big-bang retrofit of 47 gates — the same enforce-forward
 choice as FILE_SPRAWL.
+
+## rcctl owns rc.conf.local, and litestream is off the boot list — 2026-08-25
+
+**`/etc/rc.conf.local` cannot hold prose.** `rcctl enable/disable` rewrites the
+file and re-sorts every line alphabetically. A fourteen-line rationale installed
+at the top came back interleaved into nonsense on the next `rcctl disable` —
+sentences from three paragraphs alternating, because each line sorted
+independently. One comment line survives (`#` sorts to the top); anything longer
+does not. The mirror in `OPENBSD/etc/rc.conf.local` carries exactly one line,
+which says this, and points here.
+
+It does not show up immediately: the scrambling happens on the next rcctl write,
+not on install, so a drift check run straight after installing passes.
+
+**litestream is removed from `pkg_scripts` and `rcctl disable`d.** It has never
+replicated anything and cannot — litestream is not in OpenBSD ports, so there is
+no package to add and no port to build. Left enabled it failed at every boot and
+sat permanently in `rcctl ls failed`, which is the list `daily.out` prints under
+"services that should be running but aren't". A list whose only entry can never
+be fixed teaches everyone to skim it, and that list is how a real outage is
+supposed to announce itself. It is empty now.
+
+This is not a decision to go without off-host backups. `OPENBSD/bin/dr-pull`
+runs nightly from the operator Mac under launchd, snapshots every
+`production*.sqlite3` with `VACUUM INTO`, verifies `PRAGMA integrity_check` on
+arrival and keeps the last 14. Verified 2026-08-25 by an actual restore drill:
+posts and listings in the 24th's brgen snapshot matched live exactly. If
+litestream is ever wanted, it needs a Go build on the box, which is a separate
+decision with its own maintenance cost.
