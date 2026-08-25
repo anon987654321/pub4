@@ -14,8 +14,43 @@ class TestKernelSpine < Minitest::Test
     end
   end
 
-  def constitution
-    Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__))
+  def constitution(sandbox: nil)
+    Master::Core::Constitution.load(data_dir: File.expand_path("../../data", __dir__), sandbox:)
+  end
+
+  # The hardened shell policy is injected, not required — core reaches nothing in
+  # lib/. These pin the seam itself: that an injected denial stops an exec, that
+  # the policy's :ask default does not, and that without an injection the fold is
+  # left on safe_exec_rule alone, which is what it was before.
+  def test_an_injected_sandbox_denial_blocks_the_exec
+    denier = ->(argv) { "denied: #{argv.first}" }
+    verdict = constitution(sandbox: denier).admit(
+      Master::Core::Effect.exec(%w[rm -rf /]), Master::Core::Memory.new
+    )
+
+    assert_kind_of Master::Core::Verdict::Block, verdict
+    assert_equal :sandboxed_exec, verdict.by
+  end
+
+  # The policy answers :ask for anything it does not recognise, which is most
+  # commands. If that became a refusal the fold could not run its own tests, so
+  # the lambda returns nil and the effect has to survive.
+  def test_a_sandbox_that_does_not_deny_lets_the_exec_through
+    permissive = ->(_argv) { nil }
+    verdict = constitution(sandbox: permissive).admit(
+      Master::Core::Effect.exec(%w[bundle exec rake test], evidence: :test_pass), Master::Core::Memory.new
+    )
+
+    assert_kind_of Master::Core::Verdict::Allow, verdict
+  end
+
+  # The real lambda the CLI hands in, so the seam is pinned against the actual
+  # policy rather than a stand-in that could agree with nothing.
+  def test_the_wired_sandbox_denies_a_dangerous_rm_and_allows_a_test_run
+    sandbox = Master::CLI::CoreBridge.send(:shell_sandbox)
+
+    refute_nil sandbox.call(%w[rm -rf /]), "the hardened policy did not deny a recursive force rm"
+    assert_nil sandbox.call(%w[bundle exec rake test]), "the fold cannot run its own tests"
   end
 
   def test_done_without_evidence_is_blocked

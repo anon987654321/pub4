@@ -35,7 +35,8 @@ module Master
       def build_fold(root:, model:, model_id:, memory:, critique_runner:, max_turns:, observer:)
         Master::Core::Fold.new(
           model:       model || Master::Core::Model.new(**{ model_id: }.compact),
-          constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier),
+          constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,
+                                                        sandbox: shell_sandbox),
           world:       Master::Core::World.new(root:, critique_runner:),
           memory:,
           max_turns:,
@@ -50,6 +51,21 @@ module Master
           Master::Review::Scan::WriteGuard.default.verdict(path:, content:).blocking
                                           .map { |f| "#{f[:rule]}:#{f[:line]} #{f[:message]}" }
         end
+      end
+
+      # And the Fold EXECS through World, not through Io::Shell — the same
+      # sentence, one verb over. Io::Shell has consulted Ground::Policy::Sandbox
+      # since that gate was wired in, so the hardened policy was live on the tool
+      # path and absent from the constitutional one, which is the path that runs
+      # unattended. Handed in rather than required, because core reaches nothing
+      # in lib/ (test_no_lib_backedges).
+      #
+      # Returns a reason only for :deny. The policy answers :ask for anything it
+      # does not recognise, which is most commands, and Io::Shell does not treat
+      # that as an error either — mapping it to one here would refuse the fold its
+      # own test runs.
+      def shell_sandbox
+        ->(argv) { Master::Ground::Policy::Sandbox.decide(argv.join(" ")).then { |v| v.reason if v.deny? } }
       end
 
       def run_string(goal, root:, bus: nil, model: nil, model_id: nil)

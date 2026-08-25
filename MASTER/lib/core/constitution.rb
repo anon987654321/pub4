@@ -30,9 +30,21 @@ module Master::Core
     # nothing in lib/. It takes (path:, content:) and answers what the write
     # introduces, so the design law judges a write on the way in, like every
     # other rule here, instead of waiting for someone to run a scan.
-    def self.load(data_dir:, verify: nil)
+    # sandbox is the exec counterpart of verify, and injected for the same reason:
+    # the spine reaches nothing in lib/, so the hardened shell policy is handed in
+    # rather than required. It takes (argv) and answers a deny reason or nil.
+    #
+    # Without it, the only thing standing between the model and the machine was
+    # safe_exec_rule's veto regex over the joined argv. Io::Shell has consulted
+    # Ground::Policy::Sandbox — an adversarial corpus covering dangerous rm in any
+    # flag order, fork bombs, curl-piped-to-shell, device truncation — since that
+    # gate was wired in, but the Fold does not exec through Io::Shell. It execs
+    # through World. So the hardened gate was live for the tool path and absent
+    # from the constitutional one, which is the path that actually runs unattended.
+    def self.load(data_dir:, verify: nil, sandbox: nil)
       rules = default_rules(YAML.safe_load_file(File.join(data_dir, "rules.yml"), aliases: true))
       rules += [scan_clean_rule(verify)] if verify
+      rules += [sandboxed_exec_rule(sandbox)] if sandbox
       new(rules:)
     end
 
@@ -142,6 +154,21 @@ module Master::Core
         next nil if blocking.empty?
 
         Verdict::Block.new(reason: "write introduces #{blocking.join("; ")}", by: :scan_clean)
+      })
+    end
+
+    # The hardened shell policy, applied to the constitutional exec path.
+    #
+    # Blocks on a denial only. The policy answers :deny, :ask or :allow, and :ask
+    # is what it returns for anything it does not recognise — which is most real
+    # commands — so treating :ask as a refusal would stop the fold running its own
+    # tests. Io::Shell made the same call for the same reason; this keeps the two
+    # gates saying the same thing rather than inventing a second opinion.
+    def self.sandboxed_exec_rule(sandbox)
+      Rule.new(id: :sandboxed_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
+        reason = sandbox.call(Array(effect.args[:argv]).map(&:to_s)) or next nil
+
+        Verdict::Block.new(reason: "sandbox denied: #{reason}", by: :sandboxed_exec)
       })
     end
 
@@ -373,7 +400,7 @@ module Master::Core
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
     private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule,
-                         :safe_exec_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
+                         :safe_exec_rule, :sandboxed_exec_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :git_commit_scope_rule, :council_for_done_rule,

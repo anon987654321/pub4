@@ -85,6 +85,27 @@
 # labelled the exec with, so exec(["true"], evidence: "test_pass") still scores.
 # Binding kinds to the commands that can produce them is a policy table and a
 # separate decision.
+# RAISED 2026-08-25, 36944 -> 36955 (+11). The hardened shell policy now gates the
+# constitutional exec path. Io::Shell has consulted Ground::Policy::Sandbox — an
+# adversarial corpus covering dangerous rm in any flag order, fork bombs,
+# curl-piped-to-shell, device truncation — since that gate was wired in, but the
+# Fold does not exec through Io::Shell. It execs through World, so the hardened
+# gate was live on the tool path and absent from the one that runs unattended.
+# Injected, not required, because core reaches nothing in lib/: the same seam
+# `verify:` already uses, and a denial-only mapping because the policy answers
+# :ask for anything it does not recognise and treating that as a refusal would
+# stop the fold running its own tests.
+#
+# THIRD RAISE IN ONE SESSION, and the note twenty lines up says exactly what that
+# means: a ceiling that rises whenever a day's work pushes against it measures
+# nothing. Recording it rather than spreading the three across commits to make
+# each look small. All three are security fixes to the fold's own boundary and
+# each is pinned by mutation-checked tests, which is what a sponsor is — but the
+# allowance is now spent, and the honest next move is lib/ falling back rather
+# than a fourth raise. The candidate is known and documented: the Transcendent
+# half of lib/voice, reached by nothing. It is not being taken here because
+# deleting ~1500 lines of speech code inside a security commit is how a good
+# deletion gets reverted along with the fix it rode in on.
 spine:
   # Total lines across lib/**/*.rb.
   #
@@ -606,7 +627,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_body_ceiling: 36944
+  lib_body_ceiling: 36955
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
