@@ -189,6 +189,16 @@ MASTER_LUFS_BY_STYLE = {
   # quality gate kept its old -20.5..-15.5 window and failed every track the
   # operator had just asked for, reporting the requested level as a defect.
   techno: -14.0,
+  # -17.0, which is what analog already renders at. render_analog asks for
+  # :analog and there was no :analog, so it took the fetch's :default fallback
+  # silently. Written out rather than left implicit: the number does not change,
+  # but it stops being a side effect of what :default happens to say, and the
+  # operator now has somewhere to put a different one.
+  #
+  # render_industrial is deliberately not here. It asks for :techno by name, so
+  # it masters at techno's level on purpose and tracks it if that moves. Whether
+  # industrial should have its own target is a sound decision, not a gap.
+  analog: -17.0,
   default: -17.0,
 }.freeze
 

@@ -1100,8 +1100,14 @@ class TestDilla < Minitest::Test
       puts JSON.generate(
         renderers: %w[render_hate_techno render_industrial render_analog render_hiphop]
                      .to_h { |m| [m, masters.call(body.call(m))] },
-        # Lookbehind so the definition itself is not counted as one of its callers.
-        call_sites: src.scan(/(?<!def )normalise_genre_master!\\(/).length,
+        # Every family a renderer actually asks for, and whether the mastering
+        # table has an entry for it. normalise_genre_master! does
+        # `fetch(family, MASTER_LUFS_BY_STYLE[:default])`, so a family with no
+        # entry masters at whatever :default happens to say and never mentions
+        # it — which is how :analog rendered at -17.0 while looking like it had
+        # a target of its own.
+        families: src.scan(/(?<!def )normalise_genre_master!\\([^,]+,\\s*:(\\w+)/).flatten.uniq.sort,
+        styles: MASTER_LUFS_BY_STYLE.keys.map(&:to_s).sort,
         # The invariant is that techno has its own entry, not what that entry
         # says. This asserted == -17.0 until 2026-08-11, which was the value of
         # :default — so it passed identically whether techno was explicit or
@@ -1118,8 +1124,15 @@ class TestDilla < Minitest::Test
       assert reaches, "#{name} never sets an integrated loudness, so it will drift " \
                       "against every other renderer the moment they share a playlist"
     end
-    assert_equal 3, result.fetch("call_sites"),
-                 "one call site per self-mastering renderer; a new one that skips this is the bug"
+    # The count was hard-coded at 3 and went stale the moment render_industrial
+    # was routed through the spine and started mastering itself — a fourth call
+    # site, which is the fix rather than the bug. What the message always meant
+    # is asserted directly now: no renderer asks for a family the table has no
+    # answer for.
+    missing = result.fetch("families") - result.fetch("styles")
+    assert_empty missing,
+                 "these renderers ask normalise_genre_master! for a family with no entry in " \
+                 "MASTER_LUFS_BY_STYLE, so they master at :default and say nothing: #{missing.join(', ')}"
     assert result.fetch("techno_is_explicit"),
            "techno's target must be its own entry in MASTER_LUFS_BY_STYLE rather than " \
            "falling through to :default — the level itself is the operator's to set"
