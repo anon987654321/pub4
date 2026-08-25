@@ -795,6 +795,52 @@ end
 case command
 when "capabilities"
   puts Master::Io::AnalogCapabilities.report(:repligen)
+when "chains"
+  # The chains this tree ships, from the directory rather than a maintained
+  # list, so adding one is adding a file.
+  require_relative "chain"
+  names = Repligen::Chain.available
+  if names.empty?
+    puts "repligen: no chains in #{Repligen::Chain::DEFAULT_DIR}"
+  else
+    names.each do |name|
+      chain = Repligen::Chain.load(name)
+      puts "#{name}  (#{chain[:stages].length} stages)"
+      puts "  #{chain[:description].to_s.strip.gsub(/\s+/, ' ')[0, 200]}"
+      puts Repligen::Chain.plan(chain)
+      puts
+    end
+  end
+when "chain"
+  # Validated whole, before anything is spent. A chain that fails at stage 6
+  # because stage 2 could not produce what stage 3 assumed has already cost the
+  # first five, which is why this refuses on the plan rather than on the wire.
+  require_relative "chain"
+  name = ARGV.shift.to_s
+  abort "usage: repligen chain NAME [--dry-run]" if name.empty?
+
+  chain = begin
+    Repligen::Chain.load(name)
+  rescue Repligen::Chain::Invalid => e
+    abort "repligen: #{e.message}"
+  end
+
+  puts "repligen: chain #{name} — #{chain[:stages].length} stages"
+  puts Repligen::Chain.plan(chain)
+
+  problems = Repligen::Chain.problems(chain, capability_for: method(:capability_for))
+  unless problems.empty?
+    warn ""
+    problems.each { |problem| warn "repligen: REFUSED — #{problem}" }
+    abort "repligen: #{problems.length} problem(s); nothing was requested and nothing was spent"
+  end
+  puts "repligen: the chain is satisfiable — every stage can take what the one before it produces"
+
+  # Execution is deliberately not wired here yet. A half-wired chain that runs
+  # three stages and then discovers stage four is the exact failure the
+  # validation above exists to prevent, and it would spend real money doing it.
+  abort "repligen: chain execution is not wired yet — this validated the plan only" unless options[:dry_run]
+  puts "repligen: --dry-run, so nothing was requested"
 when "vocab-check"
   vocab_check
 when "generate"

@@ -1,0 +1,22 @@
+description: >
+  Generate, then change the surface twice while the geometry survives. The point
+  of the ladder is that each restyle stage inherits the previous frame, so two
+  complete surface changes land on the same scene rather than on three unrelated
+  ones. AMBITION.md section B, item 25.
+stages:
+  - name: establish
+    model: black-forest-labs/flux-1.1-pro-ultra
+    prompt: a woman on a Bergen quayside in winter light
+    options:
+      aspect_ratio: "4:5"
+      raw: true
+
+  - name: retexture
+    model: black-forest-labs/flux-kontext-pro
+    prompt: retextured in oxidised copper and wet slate, same scene, same pose
+    inherits: [image]
+
+  - name: restyle
+    model: black-forest-labs/flux-kontext-pro
+    prompt: rendered as a hand-tinted silver gelatin print
+    inherits: [image]
