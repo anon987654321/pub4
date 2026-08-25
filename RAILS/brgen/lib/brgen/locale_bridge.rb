@@ -40,7 +40,7 @@ module Brgen
     # better served by Norwegian than by English, and Icelandic has no Faker
     # locale either (see CityContent::LOCALE_BY_COUNTRY).
     def fallbacks_map
-      nordic = NORDIC.reject { |code| code == :nb }.to_h { |code| [code, %i[nb en]] }
+      nordic = NORDIC.reject { |code| code == :nb }.to_h { |code| [ code, %i[nb en] ] }
 
       { nb: %i[en], en: %i[nb], "en-US": %i[en], "en-GB": %i[en] }.merge(nordic)
     end
