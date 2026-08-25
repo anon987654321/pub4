@@ -129,6 +129,25 @@ doas groupadd _pub4ci 2>/dev/null || true
 doas usermod -G _pub4ci "${app}" 2>/dev/null || true
 doas chgrp _pub4ci /home/dev 2>/dev/null || true
 doas chmod 710 /home/dev 2>/dev/null || true
+
+# The other half of that entry, which it missed: /home/dev was tightened and
+# /home/<app> was not. /home/brgen, /home/brgen/app and .../app/storage were
+# all 755 with production.sqlite3 at 644 brgen:brgen, so as dev — not brgen,
+# not in group brgen — `sqlite3 .../production.sqlite3 "select count(*) from
+# users"` returned 17756, and that table carries password_digest, otp_secret,
+# remember_token and magic_link_token. Every local account could do it,
+# including www and sshd, which are where a relayd or sshd compromise lands.
+#
+# Only storage tightens. /home/<app> and /home/<app>/app stay 755 because
+# vps-deploy tests `-d /home/<app>/app` as dev, and that needs the traversal.
+# The app itself owns the directory, so it reads and writes as before; every
+# crontab on this box is root's; and relayd declares no file root, so nothing
+# serves these from disk.
+#
+# Re-asserted here rather than done once by hand: sync_from_repo's path list
+# does not include storage today, and a line added to it later would silently
+# put this back to 755.
+doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
 doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
 deploy_status "$app" "bundle install + bin/ci"
 doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 config unset without 2>/dev/null || true && bundle34 config unset deployment 2>/dev/null || true && bundle34 install --jobs=2 && bundle34 exec bin/ci'" \

@@ -329,7 +329,18 @@ closed:
 - id: secrets_in_process_argv_and_world_readable_home
   note: 'closed 2026-08-22: /home/dev is 710 dev:_pub4ci (app users traverse by group,
     proven both directions), .zshrc 600, the two chmod o+x sites and OPERATOR.sh updated
-    (5889e1a8a).'
+    (5889e1a8a). REOPENED and closed again 2026-08-25: that pass tightened the checkout
+    and left the live data. /home/brgen, /home/brgen/app and .../app/storage were all
+    755 with production.sqlite3 at 644 brgen:brgen, so as dev — not brgen, not in group
+    brgen — sqlite3 returned 17756 rows from the users table, which carries
+    password_digest, otp_secret, remember_token, magic_link_token and
+    email_verification_token. amber and bsdports the same. Readable by dev, amber,
+    bsdports, johann, www, sshd, build, bin and operator; www and sshd are where a
+    relayd or sshd compromise lands. Now 750 on /home/<app>/app/storage for all three,
+    applied one app at a time with each verified serving between: dev is refused on
+    all three, each app still reads its own DB and brgen still writes, and brgen,
+    brgen_jobs, amber, bsdports and master all answer 200. Re-asserted from vps_ci.sh
+    beside the /home/dev line so a later edit to sync_from_repo cannot put it back.'
 - id: amber_bsdports_stop_and_stay_down
   note: 'closed 2026-08-22: every sub-item done; both apps survived three full deploy
     chains on 2026-08-21/22 and the armed uptime-check watches every 5 minutes.'
