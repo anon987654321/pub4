@@ -93,8 +93,30 @@ class Marketplace::Order < ApplicationRecord
     )
   end
 
+  # One order becomes paid exactly once, and the guard for that has to be inside
+  # the transaction.
+  #
+  # It was outside. The webhook controller asks `payable?` and then calls this,
+  # so two deliveries of the same Stripe or Vipps event — which providers do
+  # send — both read unpaid, both enter here, and both consume stock, notify
+  # buyer and seller, and run partner attribution.
+  #
+  # The `.lock` below reads as protection and is not: on SQLite, Rails emits a
+  # plain SELECT with no FOR UPDATE, so `Marketplace::Variant.lock.find_by`
+  # locks nothing whatsoever. Checked rather than assumed —
+  # `Marketplace::Variant.lock.to_sql` returns a bare SELECT.
+  #
+  # lock! is FOR UPDATE where the adapter has it and a reload where it does not,
+  # and the reload is the half that matters here: SQLite serialises writers, so
+  # by the time a second delivery holds the write transaction the first has
+  # committed, and re-reading payment_status sees it.
   def mark_paid!(reference: payment_reference)
+    transitioned = false
     transaction do
+      lock!
+      next if payment_status == "paid"
+
+      transitioned = true
       # The variant is what was bought, so the variant is what runs out. Falling
       # back to the listing's own stock would let four sizes share one count,
       # which is the thing variants exist to stop.
@@ -110,6 +132,12 @@ class Marketplace::Order < ApplicationRecord
         status: "paid"
       )
     end
+    # Everything below is a side effect of the transition, so it only runs when
+    # this call is the one that made it. A replayed webhook used to send the
+    # buyer a second "payment confirmed" and attribute the order to a partner
+    # twice.
+    return unless transitioned
+
     title = listing_title
     deliver_notification(seller, title: "Payment received", body: "Payment for #{title} cleared.", source: self, kind: "order")
     deliver_notification(buyer_record, title: "Payment confirmed", body: "Your payment for #{title} is confirmed.", source: self, kind: "order")

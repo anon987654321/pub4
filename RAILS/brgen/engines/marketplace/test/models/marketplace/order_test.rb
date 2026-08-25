@@ -15,6 +15,36 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
     ActsAsTenant.current_tenant = nil
   end
 
+  # Providers redeliver. Stripe retries an endpoint that times out or 500s, and
+  # Vipps does the same, so a second delivery of one payment is ordinary traffic
+  # rather than an attack. It used to be guarded by asking `payable?` in the
+  # controller — outside the transaction — so both deliveries read unpaid and
+  # both went through: stock consumed twice, buyer and seller notified twice,
+  # partner attribution run twice.
+  #
+  # Two separate instances, because that is what two requests have. One instance
+  # calling mark_paid! twice would pass on its own in-memory state.
+  test "a redelivered payment event does not consume stock or notify twice" do
+    ActsAsTenant.with_tenant(@city) do
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Ski",
+                                             price_cents: 9_000, currency: "NOK", stock: 2)
+      order = Marketplace::Order.create!(buyer: @buyer, listing: listing, status: "pending")
+
+      first = Marketplace::Order.strict_loading(false).find(order.id)
+      second = Marketplace::Order.strict_loading(false).find(order.id)
+
+      first.mark_paid!(reference: "evt_1")
+      second.mark_paid!(reference: "evt_1")
+
+      confirmations = Notification.where(source_type: "Marketplace::Order", source_id: order.id,
+                                         title: "Payment confirmed").count
+
+      assert_equal "paid", order.reload.payment_status
+      assert_equal 1, listing.reload.stock, "stock was consumed twice"
+      assert_equal 1, confirmations, "the buyer was told twice"
+    end
+  end
+
   test "accept transitions pending to accepted" do
     ActsAsTenant.with_tenant(@city) do
       listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Jacket", price_cents: 12_000, currency: "NOK")
