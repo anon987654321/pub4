@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "rbconfig"
 require "open3"
 
 # Every ratchet in the repo, in one place, with its current value beside its
@@ -32,6 +33,7 @@ module Pub4
   module Ratchets
     ROOT = File.expand_path("../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
+    RUBY = RbConfig.ruby
     MASTER = File.join(ROOT, "MASTER")
 
     # name, current, ceiling, and how to read it again. `direction` is what the
@@ -63,8 +65,11 @@ module Pub4
     module_function
 
     def all(deep: false)
-      rows = spine_rows + master_yaml_rows + rails_lint_rows + css_budget_rows +
+      rows = spine_rows + master_yaml_rows + rails_lint_rows +
              file_length_rows + coverage_rows
+      # The placeholders only when the real numbers are not being fetched, or
+      # every css_budget rule would appear twice under --deep.
+      rows += deep ? css_constitution_rows : css_budget_rows
       rows += deep_rows if deep
       rows.compact
     end
@@ -228,6 +233,72 @@ module Pub4
     end
 
     # Deep rows: these shell out to a scanner and cost minutes.
+
+    # css_budget's seven rules, from one gate run.
+    #
+    # css_budget_rows above has said "current value is --deep (runs
+    # css_constitution)" since it was written, and --deep did not run it: the
+    # four rows in deep_rows below are selftest, selfcheck, principle_trace and
+    # design_baseline. So the register's own note described a reader that did
+    # not exist, and the seven rules it covers stayed `?` in every mode.
+    #
+    # That matters more than a blank column. On 2026-08-25 four RAILS ratchets
+    # were red at once and `measure` could not see any of the CSS ones — the
+    # tool whose whole purpose is "every ratchet, current beside recorded" was
+    # blind exactly where the failures were, which is how they accumulated
+    # without anyone noticing they had.
+    #
+    # One invocation for all seven, not seven: the gate walks 94 stylesheets and
+    # running it per rule would turn a slow command into an unusable one.
+    def css_constitution_rows
+      ceilings = css_budget_ceilings
+      return [] if ceilings.empty?
+
+      # Both gates, because the seven rules are split across them: rhythm,
+      # important, magic_hex, type_scale and weight_ladder come from
+      # css_constitution, and the two contrast rules from design_metrics. The
+      # ceilings all live in one file, which is what made them look like one
+      # gate's business.
+      output = %w[css_constitution design_metrics].map do |gate|
+        Open3.capture2e(RUBY, "gates/runner.rb", gate, chdir: RAILS).first
+      end.join("\n")
+
+      ceilings.map do |rule, ceiling|
+        # The SUMMARY line, not the first line that happens to name the rule.
+        #
+        # css_constitution prints one line per finding before its total —
+        # "rhythm: brgen/.../_canvas.scss:21 120px" — so matching any line
+        # mentioning the rule picked a file path and read no number from it.
+        # rhythm was the one rule with findings to print, so it was the one rule
+        # this got wrong, which is the shape a looser regex always has.
+        #
+        # Three spellings, all of them the gates' own:
+        #   "rule: 59, under its 66 ceiling (-7)"   passing with slack
+        #   "rule: 91 exceeds ceiling 90 (+1)"      over
+        #   "rule: at its 0 ceiling"                exactly on it
+        name = Regexp.escape(rule)
+        summary = output.lines.find do |candidate|
+          candidate.match?(/#{name}: (?:\d+,? (?:under|exceeds)|at its \d+ ceiling)/)
+        end
+        current = if summary.nil?
+                    nil
+                  elsif summary.match?(/#{name}: at its \d+ ceiling/)
+                    summary[/#{name}: at its (\d+) ceiling/, 1].to_i
+                  else
+                    summary[/#{name}: (\d+)/, 1]&.to_i
+                  end
+        Row.new(name: "css_budget.#{rule}", current: current, ceiling: ceiling, direction: :down,
+                source: "RAILS: gates/runner.rb css_constitution",
+                note: current.nil? ? "neither gate printed a count for #{rule} (silent when it passes)" : nil)
+      end
+    end
+
+    def css_budget_ceilings
+      path = File.join(RAILS, "gates/data/css_budget.yml")
+      return {} unless File.file?(path)
+
+      YAML.safe_load_file(path).fetch("rules")
+    end
 
     def deep_rows
       [
