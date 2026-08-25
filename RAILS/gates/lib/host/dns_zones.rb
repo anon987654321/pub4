@@ -27,6 +27,9 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     REGISTRY = File.join(ROOT, "RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
     NAMESERVER = "46.23.89.226"
+    INVENTORY = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
+    # Two, so one operator's blocked resolver is not a false finding.
+    PUBLIC_RESOLVERS = %w[1.1.1.1 9.9.9.9].freeze
 
     def self.run
       new.run
@@ -37,10 +40,73 @@ module Deploy
       generated_output_matches
       every_domain_has_a_zone
       nameserver_answers
+      app_domains_delegate_to_us
       @result
     end
 
     private
+
+    # The three app domains, and whether the public internet points them here.
+    #
+    # nameserver_answers above asks 46.23.89.226 directly, which answers for
+    # every zone it serves whether or not anything delegates to it. That is a
+    # different question from the one that decides whether a site is reachable,
+    # and bsdports.org is what the difference looks like: registered to us at
+    # Domeneshop through 2027-08-08, relayd holding a keypair and a Host match
+    # for it, a valid certificate on disk to Nov 10 2026, RUNBOOK.md naming
+    # https://bsdports.org as its URL, the app itself answering 200 on 47312 —
+    # and the .org registry delegating the name to ns1/2/3.expireddomain.hyp.net,
+    # Domeneshop's parking servers, which publish no A record. The app has been
+    # publicly unreachable and every check we had said it was fine.
+    #
+    # Nothing could have caught it. domain_watch reads its population from
+    # nsd.conf, and bsdports.org is not a zone we serve, so it was never looked
+    # at; the expiry watch reads expiry, and the registration is paid. Owned,
+    # paid, configured, and dark.
+    #
+    # Asked against a public resolver rather than ours, because "does the world
+    # agree" is the whole question.
+    def app_domains_delegate_to_us
+      domains = app_domains
+      return @result.inconclusive!("dns_zones: deploy_inventory.json not parseable") if domains.empty?
+
+      resolver = Resolv::DNS.new(nameserver: PUBLIC_RESOLVERS, search: [], ndots: 1)
+      resolver.timeouts = 3
+
+      begin
+        resolver.getaddress("one.one.one.one")
+      rescue Resolv::ResolvError, Resolv::ResolvTimeout, SystemCallError => e
+        return @result.skipped_live("dns_zones: no public resolver reachable (#{e.class}) — " \
+                                    "delegation not measured")
+      end
+
+      domains.each { |app, domain| check_delegation(resolver, app, domain) }
+    end
+
+    def check_delegation(resolver, app, domain)
+      addresses = resolver.getaddresses(domain).map(&:to_s)
+
+      if addresses.empty?
+        @result.fail("dns_zones: #{domain} (#{app}) resolves nowhere on the public internet — " \
+                     "the app is unreachable no matter what rcctl says. Check the registrar's " \
+                     "nameservers: a lapsed-then-renewed domain comes back parked.")
+      elsif !addresses.include?(NAMESERVER)
+        @result.fail("dns_zones: #{domain} (#{app}) resolves to #{addresses.sort.join(', ')}, " \
+                     "not #{NAMESERVER} — it is delegated somewhere that is not us")
+      end
+      @result.checked!(1)
+    rescue Resolv::ResolvTimeout
+      @result.skipped_live("dns_zones: public lookup for #{domain} timed out — not measured, not absent")
+    end
+
+    def app_domains
+      require "json"
+      JSON.parse(File.read(INVENTORY))
+          .fetch("apps", [])
+          .filter_map { |app| [ app["name"], app["domain"] ] if app["domain"].to_s.include?(".") }
+    rescue Errno::ENOENT, JSON::ParserError
+      []
+    end
 
     def generated_output_matches
       _written, stale = RenderDns.render_zones(check: true)
