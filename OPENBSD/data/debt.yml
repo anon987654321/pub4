@@ -51,6 +51,18 @@ open:
     bundler calls Dir.pwd first; .ssh and priv keep drwx------.
     STILL OPEN: `bin/master` from a terminal is dev, and dev is still nopass root.
     The remote path is closed; the local one is the remaining half.
+    COST, recorded 2026-08-25 because the next app to be moved will pay it too:
+    the first deploy that carried daemon_user="master" to the box did not bring
+    ai.brgen.no back, and vps-deploy halted the whole pass at master. Bundler.setup
+    ends in Definition#write_lock, which touches Gemfile.lock on every boot even
+    when the resolution is unchanged; the lock is dev's, so as dev that write had
+    always succeeded silently and as master it is EACCES and falcon never binds.
+    The trace names File.utime and says nothing about users or permissions.
+    BUNDLE_FROZEN=true in the daemon's env is the fix and is now load-bearing —
+    it also makes the structural Mac-vs-BSD lock drift a startup error naming the
+    gem rather than a silent rewrite. Before moving brgen/amber/bsdports off any
+    daemon_user, check the same assumption: the daemon had write access to its own
+    source tree and something was quietly using it.
 - id: home_partition_full_from_git_history
   tag: operator-priority
   summary: |-
@@ -106,8 +118,10 @@ open:
   summary: >-
     Five foreign-key columns carry no index — affiliate_conversions.event_type_id,
     .program_id and .site_id, affiliate_vouchers.voucher_type_id, and
-    outbound_clicks.user_id. Same set in all three apps, because they are shared
-    affiliate tables. Deliberately NOT indexed on 2026-08-25: all three tables
+    outbound_clicks.user_id. NOT the same set in all three apps, as this row said
+    until 2026-08-25: bsdports has outbound_clicks and neither affiliate table, so
+    it is one column there and five in brgen and amber. Read from each schema.rb.
+    Deliberately NOT indexed on 2026-08-25: all three tables
     hold 0 rows in production (posts holds 1402 for scale) because the affiliate
     feature is still placeholder — TRADEDOUBLER_TOKEN is unset and the seeder
     flags its products placeholder: true. An index on an empty table buys nothing
