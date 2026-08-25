@@ -208,7 +208,11 @@ DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
                                    VOICE_STACK_DETUNE=unison|octaves|fifths|
                                    spread, _MACRO=0.5, _VARIATION=0.25 (one knob
                                    giving each voice a different value),
-                                   _DRIFT=9 cents, _KEYTRACK=0.5
+                                   _DRIFT=9 cents, _KEYTRACK=0.5,
+                                   _STEMS=1 keeps each voice as its own file.
+                                   The macro picks a MODEL (tine glass analog
+                                   string reed choir blade figure) and the model
+                                   picks a patch from the 212 in the catalogue.
   LPG=1                          Buchla low-pass gate on the lead: it darkens
                                    as it decays, which is what makes a note read
                                    as struck. Measured, the 4-12k band falls

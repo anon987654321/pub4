@@ -737,6 +737,38 @@ end
     refute_in_delta 220.0, moved.first[2][:hz].first, 1.0
   end
 
+  # A model is a name over patches that already exist, not a second synthesis
+  # engine. Every one has to resolve to a real patch, or a voice falls back to a
+  # default and the model is a label with nothing behind it.
+  def test_every_model_resolves_to_a_patch_in_the_catalogue
+    unresolved = VoiceStack.model_names.reject do |model|
+      VoiceStack.patch_for(model, SYNTH_PATCH_CATALOG)
+    end
+
+    assert_empty unresolved, "these models name nothing in the catalogue"
+  end
+
+  # The preference is what makes a model specific. A model that falls through to
+  # its whole role is legal -- and if EVERY model did, the vocabulary would be
+  # eight names for five roles.
+  def test_models_pick_distinct_patches
+    picks = VoiceStack.model_names.map do |m|
+      VoiceStack.patch_for(m, SYNTH_PATCH_CATALOG, seed: 11)[:id]
+    end
+
+    assert_operator picks.uniq.length, :>=, 6, "the models collapse onto the same patches: #{picks.inspect}"
+  end
+
+  # The macro has to reach across the vocabulary, or the stack is one character
+  # however wide the variation.
+  def test_the_macro_sweeps_the_whole_model_list
+    reached = (0..20).map { |i| VoiceStack.model_for(i / 20.0) }.uniq
+
+    assert_equal VoiceStack.model_names.length, reached.length
+    assert_equal VoiceStack.model_names.first, VoiceStack.model_for(0.0)
+    assert_equal VoiceStack.model_names.last, VoiceStack.model_for(1.0)
+  end
+
   # ------------------------------------------------------- low-pass gate
 
   # The whole claim of an LPG, as arithmetic on the control signal: as it closes,

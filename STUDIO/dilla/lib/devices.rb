@@ -850,6 +850,57 @@ module VoiceStack
     end
   end
 
+# The models: named characters, over the patches this engine already has.
+#
+# P_4L offers sixteen Plaits models and picking one is how a voice gets its
+# character. dilla has 212 synth patches tagged by role -- 36 electric pianos,
+# 50 warm pads, 85 leads -- so the useful thing here is NOT a second synthesis
+# engine. It is a small vocabulary of characters that resolve to patches the
+# catalogue already holds, which is the difference between naming what is here
+# and building a parallel one beside it.
+#
+# Each model is a role plus a preference: substrings that pick a family within
+# that role. A model that matches nothing falls back to its role, so adding a
+# model cannot break a render -- the worst case is that it is less specific
+# than intended.
+MODELS = {
+  tine:   { role: :ep,         prefer: %w[rhodes wurli tine] },
+  glass:  { role: :ep,         prefer: %w[dx fm bell glass] },
+  analog: { role: :warm,       prefer: %w[moog prophet juno voyager] },
+  string: { role: :warm,       prefer: %w[string strings orchestra] },
+  reed:   { role: :texture,    prefer: %w[organ flute reed] },
+  choir:  { role: :texture,    prefer: %w[vox choir voice] },
+  blade:  { role: :lead,       prefer: %w[lead saw acid] },
+  figure: { role: :scale_lead, prefer: %w[arp] },
+}.freeze
+
+def model_names = MODELS.keys
+
+# The model a macro position lands on. One control, several characters, which
+# is the P_4L idea applied to the voices this engine actually has.
+def model_for(position)
+  names = MODELS.keys
+  names[(position.to_f.clamp(0.0, 1.0) * (names.length - 1)).round]
+end
+
+# Resolve a model to a patch from a catalogue the CALLER supplies.
+#
+# Passed in rather than reached for: devices.rb loads before the engine parts,
+# so referring to SYNTH_PATCH_CATALOG here would be a dependency pointing the
+# wrong way -- a device reaching up into the renderer that uses it.
+def patch_for(model, catalog, seed: 4242)
+  spec = MODELS.fetch(model.to_sym) { MODELS[:tine] }
+  in_role = catalog.select { |patch| patch[:role] == spec[:role] }
+  return nil if in_role.empty?
+
+  preferred = in_role.select do |patch|
+    id = patch[:id].to_s
+    spec[:prefer].any? { |word| id.include?(word) }
+  end
+  pool = preferred.empty? ? in_role : preferred
+  pool[Random.new(seed).rand(pool.length)]
+end
+
   # The same note events, transposed for one voice. Cents and semitones together,
   # because a stack wants both -- semitones for the register, cents for the
   # thickness.

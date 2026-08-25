@@ -923,11 +923,14 @@ def voice_stack_lead!(path, events, duration)
   )
   rendered = plan.filter_map do |voice|
     part = "#{path}.vs#{voice.index}.wav"
-    # The macro position picks the patch. One control, several timbres -- which
-    # is the P_4L idea applied to the voices this engine actually has.
-    program = EP_GM_PROGRAMS[(voice.macro * EP_GM_PROGRAMS.length).floor.clamp(0, EP_GM_PROGRAMS.length - 1)]
+    # The macro position picks a MODEL, and the model picks a patch out of the
+    # 212 this engine already has. One control, several characters -- the P_4L
+    # idea over dillas own catalogue rather than beside it.
+    model = VoiceStack.model_for(voice.macro)
+    patch = VoiceStack.patch_for(model, SYNTH_PATCH_CATALOG, seed: seed_for("vsmodel#{voice.index}"))
     render_lead_via_fluidsynth(part, VoiceStack.transpose(events, voice), duration,
-                               scale_arp: true, program_override: program)
+                               scale_arp: true,
+                               program_override: patch ? patch[:program] : EP_GM_PROGRAMS[voice.index % EP_GM_PROGRAMS.length])
     File.file?(part) ? part : nil
   end
   return nil if rendered.empty?
@@ -941,9 +944,20 @@ def voice_stack_lead!(path, events, duration)
       "amix=inputs=#{rendered.length}:duration=longest:normalize=0," \
       "volume=#{(1.0 / Math.sqrt(rendered.length)).round(4)}[out]",
       "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
-  rendered.each { |f| FileUtils.rm_f(f) }
+  # VOICE_STACK_STEMS=1 keeps each voice as its own file instead of deleting it.
+  #
+  # P_4L taps every voice before its filter so the voices can be processed
+  # separately; this engine renders each voice to a file and then sums, so the
+  # equivalent is simply not throwing them away. What a modular does with a
+  # patch cable, a renderer does with a path.
+  if ENV["VOICE_STACK_STEMS"] == "1"
+    dmesg("voice stack: kept #{rendered.length} voice stem(s) beside #{File.basename(path)}",
+          unit: "harm0", parent: "dilla0")
+  else
+    rendered.each { |f| FileUtils.rm_f(f) }
+  end
   dmesg("voice stack: #{plan.length} voices, #{ENV.fetch('VOICE_STACK_DETUNE', 'fifths')}, " \
-        "macro spread #{plan.map { |v| v.macro.round(2) }.join('/')}",
+        "models #{plan.map { |v| VoiceStack.model_for(v.macro) }.join('/')}",
         unit: "harm0", parent: "dilla0")
   File.file?(path) ? path : nil
 end
