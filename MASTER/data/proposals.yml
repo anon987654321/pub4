@@ -209,3 +209,27 @@ proposals:
       under a "nearest available Romance locale" rule, the same mistake the file's
       Polish note already recorded. Translating 1579 keys is a budget and a product
       decision; this is the refusal to pretend it had been made.
+
+  - id: dilla-engine-six-merges
+    tree: STUDIO
+    state: refuted
+    claim: "STUDIO/dilla/lib/engine has six mergeable families totalling 10383 lines"
+    reason: >
+      All six, for two reasons the tool could not see, and either alone is
+      sufficient. Five are scattered through ENGINE_PARTS rather than sitting
+      together — render spans indices 4 to 65 with 54 foreign files inside it,
+      drum and lead 36 each, tables 21, stream 6 — and engine_sources.rb states
+      the contract outright: "constants in these files are computed at load time
+      from ones above them, and reordering silently changes their values." On a
+      beat engine that symptom is a different sound, and renders are not
+      deterministic, so it could not have been checked afterwards.
+      The sixth — dilla_progression, dilla_drums, dilla_schedule — is contiguous
+      at 48-50 and still wrong: all three headers say they were "split out of
+      dilla.rb", so the merge undoes a deliberate split and recreates a
+      1104-line file under the name of the file it came from. SMALL_FILES flags
+      anything over 300 lines, and every one of the six produced between 1076
+      and 2925.
+      cohesion.rb gates merges on manifest contiguity and on the SMALL_FILES
+      threshold now. It exists to counterbalance SMALL_FILES and had no upper
+      bound, which is not a counterbalance.
+    refuted_by: MASTER/test/test_cohesion.rb test_a_family_scattered_through_the_manifest_is_not_mergeable

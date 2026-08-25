@@ -43,7 +43,19 @@ require "yaml"
 
 module Pub4
   module Cohesion
-    MIN_FAMILY = 3
+MIN_FAMILY = 3
+
+# SMALL_FILES flags a file over 300 lines, and this tool exists to
+# counterbalance it — its own header says so: "SMALL_FILES, NO_GOD_CLASS and
+# INTEGRATED_SYSTEMS all say split further. None says these three are one
+# thing." A counterbalance with no upper bound is not a counterbalance.
+#
+# It had none. Run against STUDIO/dilla it proposed six merges producing
+# files of 1076 to 2925 lines — up to ten times the threshold the same tree
+# enforces — and the three dilla_* files say in their own headers that they
+# were "split out of dilla.rb". The proposal was to undo a deliberate split
+# and recreate the file, under the name of the file it came from.
+MAX_MERGED_LINES = 300
 
     module_function
 
@@ -126,6 +138,34 @@ module Pub4
     # Load order is load-bearing wherever an ordered manifest exists, so the plan
     # names the latest member as the merge site: everything the earlier members
     # read at load time is still defined by the time they run.
+def mergeable?(files, manifest)
+  cross_references(files) >= 2 &&
+    contiguous_in?(files, manifest) &&
+    files.sum { |f| File.readlines(f).size } <= MAX_MERGED_LINES
+end
+
+    # A merge moves code, and where an ordered manifest exists the order is the
+    # contract. STUDIO/dilla/lib/engine_sources.rb says so outright: "constants
+    # in these files are computed at load time from ones above them, and
+    # reordering silently changes their values."
+    #
+    # So a family is only mergeable when its members already sit together. Of
+    # dilla's six families, five do not: render spans indices 4 to 65 with 54
+    # foreign files inside it, drum and lead 36 each, tables 21, stream 6.
+    # Merging any of them would move code across other files' load-time
+    # computation, and on a beat engine the failure mode is a different sound —
+    # which renders cannot A/B, because they are not deterministic.
+    #
+    # Nothing to check when there is no manifest: order is then not a contract.
+    def contiguous_in?(files, manifest)
+      return true if manifest.empty?
+
+      idx = files.map { |f| manifest.index(File.basename(f, ".rb")) }
+      return false if idx.any?(&:nil?)
+
+      idx.sort.each_cons(2).all? { |a, b| b == a + 1 }
+    end
+
     def merge_plan(name, files, kind, manifest)
       ordered = manifest.empty? ? files : files.sort_by { |f| manifest.index(File.basename(f, ".rb")) || Float::INFINITY }
       {
@@ -215,7 +255,7 @@ return nil if collisions.any?
         flat = files.reject { |f| namespaced?(f) }
 
         if flat.size >= MIN_FAMILY
-          merge_plan(name, flat, kind, manifest) if cross_references(flat) >= 2
+          merge_plan(name, flat, kind, manifest) if mergeable?(flat, manifest)
         elsif flat.empty? && files.size >= MIN_FAMILY
           regroup_plan(name, files, kind, dir)
         end
@@ -305,7 +345,8 @@ def census_dirs(tree = nil)
       found = families(dir).filter_map do |name, files, kind|
         flat = files.reject { |f| namespaced?(f) }
         if flat.size >= MIN_FAMILY
-          merge_plan(name, flat, kind, manifest_order(dir)) if cross_references(flat) >= 2
+          manifest = manifest_order(dir)
+          merge_plan(name, flat, kind, manifest) if mergeable?(flat, manifest)
         elsif flat.empty? && files.size >= MIN_FAMILY
           regroup_plan(name, files, kind, dir)
         end

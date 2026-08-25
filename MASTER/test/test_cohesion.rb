@@ -196,6 +196,50 @@ def test_an_empty_destination_still_regroups
   assert_equal "regroup", Pub4::Cohesion.plans_for(@tmp).first[:plan]
 end
 
+# ---- the two gates a merge needs ------------------------------------------
+#
+# Both were missing, and STUDIO/dilla is where that showed. The tool proposed
+# six merges there; every one of them was wrong, for two different reasons.
+
+# engine_sources.rb states the contract: "constants in these files are computed
+# at load time from ones above them, and reordering silently changes their
+# values." Five of dilla's six families are not contiguous in that manifest —
+# render spans 54 foreign files — so merging moves code across other files'
+# load-time computation. On a beat engine the symptom is a different sound, and
+# renders are not deterministic, so it cannot be A/B'd.
+def test_a_family_scattered_through_the_manifest_is_not_mergeable
+  flat_family
+
+  refute Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")),
+                                   %w[thing_a other_one other_two thing_b thing_c])
+end
+
+def test_a_family_that_sits_together_is_mergeable
+  flat_family
+
+  assert Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")),
+                                   %w[other_one thing_a thing_b thing_c other_two])
+end
+
+# No manifest means order is not a contract, so contiguity has nothing to say.
+def test_without_a_manifest_contiguity_does_not_block
+  flat_family
+
+  assert Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")), [])
+end
+
+# The counterbalance needs a bound or it is not a counterbalance. dilla's six
+# proposals produced files of 1076 to 2925 lines against a SMALL_FILES
+# threshold of 300 — and the three dilla_* headers say they were "split out of
+# dilla.rb", so the proposal was to undo a deliberate split and recreate the
+# file under the name of the file it came from.
+def test_a_merge_that_would_breach_small_files_is_refused
+  3.times { |n| write("big_#{n}.rb", "def big_#{n} = big_#{(n + 1) % 3}\n" + ("# pad\n" * 120)) }
+
+  refute Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "big_*.rb")), [])
+  assert_operator Pub4::Cohesion::MAX_MERGED_LINES, :<=, 300
+end
+
   # ---- the census -----------------------------------------------------------
 
   def test_the_census_roots_all_exist
