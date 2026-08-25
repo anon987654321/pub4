@@ -137,6 +137,30 @@ if [[ -x $repo/OPENBSD/resource_guard.sh ]]; then
   doas ksh "$repo/OPENBSD/resource_guard.sh" || true
 fi
 
+# What is about to be deployed, against what is actually running.
+#
+# The gate compares OPENBSD/etc byte-for-byte with live /etc, and until
+# 001142b7e it had never compared anything: ROOT resolved relative to the
+# installed script, every lookup missed, and it printed "clean (0 verbatim
+# configs)". Its first working run found six of eleven drifted. A deploy is
+# exactly when that matters — it is the moment the repo becomes the box.
+#
+# Advisory, not blocking, and deliberately so: six configs differ today
+# (debt.yml, etc_drift_six_configs), three of them rc.d files that start
+# production services, so a hard gate here would refuse every deploy until an
+# unrelated backlog is cleared. Make it blocking when that row closes; a warning
+# that names a number is still the difference between knowing and not.
+if [[ -x /usr/local/bin/config_drift_gate.rb ]]; then
+  if ! /usr/local/bin/ruby34 /usr/local/bin/config_drift_gate.rb > /tmp/vps-deploy-drift.out 2>&1; then
+    # ruby34, not grep: coreutils are banned in committed scripts here, and the
+    # gate's own summary line already carries the count in the shape we want.
+    drift_count=$(/usr/local/bin/ruby34 -e \
+      'print File.read("/tmp/vps-deploy-drift.out").scan(/: DRIFT -/).size' 2>/dev/null)
+    print "vps-deploy: $app WARNING — ${drift_count:-?} config(s) in /etc differ from the repo being deployed"
+    print "vps-deploy: $app see /tmp/vps-deploy-drift.out (debt.yml: etc_drift_six_configs)"
+  fi
+fi
+
 if [[ ${SKIP_CI:-} == 1 ]]; then
   print "vps-deploy: $app (sync via ${app}.sh, SKIP_CI=1)"
   zsh "$repo/RAILS/${app}/${app}.sh"
