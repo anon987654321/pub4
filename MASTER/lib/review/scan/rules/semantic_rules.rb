@@ -274,9 +274,30 @@ module Master
             response = @agent.ask(build_prompt(pairs, path), operation: :scan_comment_drift).to_s
             parse_findings(response, pairs)
           rescue StandardError => e
-            # An unreachable or misbehaving agent must not read as "no drift".
-            Master::Ground::Swallow.log(e, context: "CommentDriftRule", severity: :load_bearing, path:)
+            # An unreachable or misbehaving agent must not read as "no drift" —
+            # still true, and why this logs at all rather than returning quietly.
+            #
+            # But a missing CLI is not a misbehaving agent, it is a capability
+            # this machine does not have, and it is the same fact on every file.
+            # Logged per file at :load_bearing it produced 4,663 identical
+            # entries, which is what a genuinely load-bearing failure has to
+            # compete with when someone finally reads the log. Absence is
+            # cosmetic and recorded once; misbehaviour stays load-bearing and
+            # recorded every time.
+            severity = absent_capability?(e) ? :cosmetic : :load_bearing
+            return [] if severity == :cosmetic && @capability_absent
+
+            @capability_absent = true if severity == :cosmetic
+            Master::Ground::Swallow.log(e, context: "CommentDriftRule", severity:, path:)
             []
+          end
+
+          # ENOENT on the CLI itself, however the runner wraps it. Not a guess at
+          # the message shape: agent.rb raises with the binary name in the text,
+          # and Errno::ENOENT is what actually reaches here when it is absent.
+          def absent_capability?(error)
+            error.is_a?(Errno::ENOENT) ||
+              error.message.match?(/No such file or directory|command not found|not installed/i)
           end
 
           private

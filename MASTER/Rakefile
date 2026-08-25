@@ -566,6 +566,19 @@ namespace :lint do
     sh RbConfig.ruby, File.join(__dir__, "tools", "instruments.rb")
   end
 
+  # Ground::Swallow classifies what it swallows and writes it down; until
+  # 2026-08-25 nothing ever read the file back. Its own header says the severity
+  # exists "so the next diagnostic hunt can filter for :load_bearing" — this is
+  # that hunt, and the first run found 4,663 load-bearing swallows from a single
+  # rule that had been failing silently through every scan it belonged to.
+  #
+  # Reads local runtime state, so it reports rather than ratchets: the honest
+  # number depends on how much has run since the log was last cleared.
+  desc "Load-bearing errors that were swallowed and never looked at"
+  task :swallowed do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "swallowed_errors.rb")
+  end
+
   desc "No two files loadable into one process define the same top-level constant"
   task :constant_collisions do
     sh RbConfig.ruby, File.join(__dir__, "tools", "constant_collisions.rb")
