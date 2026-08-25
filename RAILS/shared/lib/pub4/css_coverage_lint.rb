@@ -178,7 +178,7 @@ BASELINES = { "undefined_class" => 9, "unused_selector" => 153 }.freeze
     # status appears only in JavaScript — and a scan of the views alone called
     # the rule styling it unused, which is the opposite of true.
     #
-    # Read as views because that is what they are: the markup exists, it is just
+    # Read as views because that is what they are: the markup exists, it is
     # assembled at runtime. Both frontend homes are covered, so a controller
     # promoted from an app into shared/frontend does not change the count.
     def rendered_by_javascript
@@ -224,6 +224,11 @@ BASELINES = { "undefined_class" => 9, "unused_selector" => 153 }.freeze
       end
     end
 
+    # Five extractors and one recorder. This was a single 48-line method holding
+    # five copies of the same three lines, which is how it grew past the ratchet
+    # every time somebody found another way to apply a class. Each extractor now
+    # keeps its reason next to its pattern, and a sixth way is a new method
+    # rather than another paragraph in this one.
     def used_names
       @used_names ||= begin
         @lists = {}
@@ -232,75 +237,74 @@ BASELINES = { "undefined_class" => 9, "unused_selector" => 153 }.freeze
           body = strip_erb(File.read(view, encoding: "UTF-8"))
           next if body.include?(OPT_OUT)
 
-          [ /class:\s*["']([^"'<>]+)["']/, /class=["']([^"'<>]*)["']/ ].each do |pattern|
-            body.scan(pattern) do |(list)|
-              names = list.to_s.split(/\s+/)
-              names.each do |name|
-                (used[name] ||= []) << view
-                (@lists[name] ||= []) << names
-              end
-            end
-          end
-
-          # The tag-helper array form — class: ["card", ("wide" if wide)] —
-          # holds its names as Ruby string literals, invisible to the two
-          # attribute patterns above.
-          body.scan(/class:\s*\[([^\]]*)\]/m) do |(list)|
-            names = list.scan(/["']([\w\s-]+)["']/).flatten.flat_map(&:split)
-            names.each do |name|
-              (used[name] ||= []) << view
-              (@lists[name] ||= []) << names
-            end
-          end
-
-          # The JavaScript files are read as views for exactly one reason — the
-          # markup exists, it is just assembled at runtime — and then every
-          # pattern above looked for a `class=` attribute, which is the one way a
-          # Stimulus controller does NOT apply a class. `classList.toggle("x")`,
-          # `.add`, `.remove`, `.replace` and a `className =` assignment were all
-          # invisible, so a rule styling a state only JS can produce read as dead
-          # while the JS that produces it sat in the scanned set.
-          #
-          # Found when `drawer-open` — added to the root by edge_swiper so chrome
-          # that cannot be a CSS sibling of a drawer can respond to one — pushed
-          # unused_selector to 181 against a ceiling of 180.
-          body.scan(/classList\s*\.\s*(?:add|remove|toggle|replace|contains)\s*\(([^)]*)\)/m) do |(args)|
-            names = args.scan(/["']([\w\s-]+)["']/).flatten.flat_map(&:split)
-            names.each do |name|
-              (used[name] ||= []) << view
-              (@lists[name] ||= []) << names
-            end
-          end
-
-          body.scan(/className\s*=\s*["']([\w\s-]+)["']/) do |(list)|
-            names = list.to_s.split(/\s+/)
-            names.each do |name|
-              (used[name] ||= []) << view
-              (@lists[name] ||= []) << names
-            end
-          end
-
-          # A class attribute that embeds an ERB conditional —
-          # class="unit<%= " unit--wide" if wide %>" — never matches the plain
-          # attribute pattern (the `<` ends the value), so both the base name
-          # and the literal inside the tag read as unused. The browser sees
-          # every quoted fragment; count them.
-          body.scan(/class=["']((?:[^"'<>]|<%=(?:(?!%>).)*?%>)*)["']/m) do |(list)|
-            next unless list.include?("<%=")
-
-            flat = list.gsub(/<%=(?:(?!%>).)*?%>/m) { |tag| tag.scan(/["']([^"']*)["']/).flatten.join(" ") }
-            names = flat.split(/\s+/)
-            names.each do |name|
-              (used[name] ||= []) << view
-              (@lists[name] ||= []) << names
-            end
-          end
+          class_lists_in(body).each { |names| record_names(used, view, names) }
         end
         used
       end
     end
 
-    # Every class list a name appeared in, so a sibling can be consulted.
+    # A name is recorded together with the list it appeared in, so a sibling can
+    # be consulted later: `unit unit--wide` is what proves the modifier belongs
+    # to a class that is styled.
+    def class_lists_in(body)
+      attribute_lists(body) + helper_array_lists(body) +
+        javascript_lists(body) + interpolated_attribute_lists(body)
+    end
+
+    def record_names(used, view, names)
+      names.each do |name|
+        (used[name] ||= []) << view
+        (@lists[name] ||= []) << names
+      end
+    end
+
+    def attribute_lists(body)
+      [ /class:\s*["']([^"'<>]+)["']/, /class=["']([^"'<>]*)["']/ ].flat_map do |pattern|
+        body.scan(pattern).map { |(list)| list.to_s.split(/\s+/) }
+      end
+    end
+
+    # The tag-helper array form — class: ["card", ("wide" if wide)] — holds its
+    # names as Ruby string literals, invisible to the two attribute patterns.
+    def helper_array_lists(body)
+      body.scan(/class:\s*\[([^\]]*)\]/m).map do |(list)|
+        list.scan(/["']([\w\s-]+)["']/).flatten.flat_map(&:split)
+      end
+    end
+
+    # The JavaScript files are read as views for exactly one reason — the markup
+    # exists, it is just assembled at runtime — and then every pattern above
+    # looked for a `class=` attribute, which is the one way a Stimulus
+    # controller does NOT apply a class. `classList.toggle("x")`, `.add`,
+    # `.remove`, `.replace` and a `className =` assignment were all invisible,
+    # so a rule styling a state only JS can produce read as dead while the JS
+    # that produces it sat in the scanned set.
+    #
+    # Found when `drawer-open` — added to the root by edge_swiper so chrome that
+    # cannot be a CSS sibling of a drawer can respond to one — pushed
+    # unused_selector to 181 against a ceiling of 180.
+    def javascript_lists(body)
+      toggled = body.scan(/classList\s*\.\s*(?:add|remove|toggle|replace|contains)\s*\(([^)]*)\)/m)
+                    .map { |(args)| args.scan(/["']([\w\s-]+)["']/).flatten.flat_map(&:split) }
+      assigned = body.scan(/className\s*=\s*["']([\w\s-]+)["']/)
+                     .map { |(list)| list.to_s.split(/\s+/) }
+      toggled + assigned
+    end
+
+    # A class attribute that embeds an ERB conditional —
+    # class="unit<%= " unit--wide" if wide %>" — never matches the plain
+    # attribute pattern (the `<` ends the value), so both the base name and the
+    # literal inside the tag read as unused. The browser sees every quoted
+    # fragment; count them.
+    def interpolated_attribute_lists(body)
+      body.scan(/class=["']((?:[^"'<>]|<%=(?:(?!%>).)*?%>)*)["']/m).filter_map do |(list)|
+        next unless list.include?("<%=")
+
+        list.gsub(/<%=(?:(?!%>).)*?%>/m) { |tag| tag.scan(/["']([^"']*)["']/).flatten.join(" ") }
+            .split(/\s+/)
+      end
+    end
+
     def class_lists
       used_names
       @lists

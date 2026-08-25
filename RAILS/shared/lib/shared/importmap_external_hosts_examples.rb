@@ -14,7 +14,7 @@ module Shared
   #
   # It has to boot Rails rather than read importmap_baseline.rb as text, and
   # that is the whole reason it exists. Two external hosts were preloaded on
-  # every brgen.no page and only one was pinned by us: cable_ready ships its own
+  # every brgen.no page and we pinned only one: cable_ready ships its own
   # config/importmap.rb pinning morphdom to ga.jspm.io, gem paths are drawn
   # before the app's, and `pin` defaults to preload: true. Nothing in this repo
   # named the host. A source scan cannot see a dependency's pins; the resolved

@@ -265,7 +265,7 @@ module Deploy
 
     # typography.letter_spacing.lowercase_body_should_letterspace is false.
     # Tracking opens up all-caps, where the counters close; on lowercase prose it
-    # just breaks the word shape a reader matches against.
+    # breaks the word shape a reader matches against.
     def check_lowercase_tracking
       return if @rules.dig("typography", "letter_spacing", "lowercase_body_should_letterspace")
 
@@ -618,7 +618,7 @@ module Deploy
 
         inventory.concat(DesignMetrics.extract_font_sizes_px(File.read(path)))
       end
-      uniq = inventory.map { |s| s.round }.uniq
+      uniq = inventory.map(&:round).uniq
       if uniq.size > max_sizes + 6 # allow some responsive noise beyond token set
         @result.fail(
           "design_metrics type_scale: brgen SCSS uses #{uniq.size} distinct px sizes (budget ~#{max_sizes + 6}) principle=hierarchy",

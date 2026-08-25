@@ -82,7 +82,7 @@ module Pub4
     # deploy that waits four minutes for its own predecessor to finish is a
     # deploy that works; one that exits is an outage plus a retry.
     #
-    # Bounded, because waiting forever on a genuinely wedged box is just a
+    # Bounded, because waiting forever on a genuinely wedged box is a
     # slower failure — and it still exits 1 at the end, so nothing downstream
     # has to learn a new outcome.
     # Read per call, not frozen at require time — the same reason the note above

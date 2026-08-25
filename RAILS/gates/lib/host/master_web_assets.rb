@@ -38,7 +38,7 @@ module Deploy
         # where something has run precompile. So its absence means two different
         # things, and this reported the harsher one everywhere: on the deploy host
         # a missing manifest is a real broken deploy, but in a fresh clone or a
-        # `bin/pub4 worktree` checkout it just means nobody has built assets here
+        # `bin/pub4 worktree` checkout it means nobody has built assets here
         # yet. That made `production` fail on arrival in any new working copy,
         # which is a gate people learn to read past — and this one guards the
         # face's assets.

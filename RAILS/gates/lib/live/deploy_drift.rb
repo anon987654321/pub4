@@ -9,7 +9,7 @@ module Deploy
   # Is what is committed actually running?
   #
   # 2026-07-29 produced nine production faults and most of them were already
-  # understood — they had simply never shipped. brgen's deploys had been failing
+  # understood — they had never shipped. brgen's deploys had been failing
   # on one drifted var() fallback since 2026-07-25, so the takeaway 500 fix and
   # the tab-bar overlap fix sat in the repo, correct, for four days. Later the
   # same day two more fixes (every TV channel page 404ing, an invisible primary

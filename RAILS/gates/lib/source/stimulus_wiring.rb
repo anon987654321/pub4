@@ -7,7 +7,7 @@ module Deploy
   #
   # Four dead references shipped and survived a full audit pass because nothing
   # checks this class of wiring: it does not raise, it does not log, the page
-  # renders, and the feature is simply absent. `data-controller="pwa-standalone"`
+  # renders, and the feature is absent. `data-controller="pwa-standalone"`
   # named a controller nobody wrote (amber + bsdports layouts);
   # `data-controller="offline-feed"` named a brgen-local file from amber, whose
   # importmap eager-loads only its own directory; `submit->form-submit#lock`
@@ -177,7 +177,7 @@ module Deploy
     # POST reached Shared::ReactionsController with no subject. That controller
     # opens with params.require(:target_gid), which raises ParameterMissing, so
     # the request 400'd, _rollback reverted the optimistic toggle, and the like
-    # button simply did not work. Nothing raised anywhere a human would look.
+    # button did not work. Nothing raised anywhere a human would look.
     #
     # Splitting is ambiguous from the markup alone -- data-action-target-gid-value
     # could be identifier "action" + value "targetGid", or identifier

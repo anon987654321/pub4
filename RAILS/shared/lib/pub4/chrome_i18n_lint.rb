@@ -131,7 +131,7 @@ module Pub4
       # The eleven that went are aria-labels that became keys while the engines
       # were being worked over.
       #
-      # What the note above is really guarding is that this file is read from the
+      # What the note above guards is that this file is read from the
       # shared engine, so the number is the whole family's: a +1 in a brgen view
       # fails amber's CI, which is how amber sat undeployed for a day. Recording
       # the true low is still right — a baseline nobody trusts is worse — but
@@ -150,7 +150,12 @@ module Pub4
       # consistency campaign; banking the fall so it cannot silently regrow.
       # 23 -> 21: the duplicate page banners were deleted and their aria-labels
       # went with them, two of which were English literals.
-      "aria_label" => 21,
+# 21 -> 9 (2026-08-25): the i18n pass on the engines. Twelve literal
+# aria-labels, titles and SVG <title>s became keys — tv channel results
+# and actions, TV shows, the YouTube frame, amber's capsule, creator,
+# item, outfit and add-item headers, and the ad slot, which shipped
+# "Advertisement" to all three apps from the shared partial.
+"aria_label" => 9,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -188,7 +193,12 @@ module Pub4
       # left with it. Banked.
       # 191 -> 190: the tv fallback poster's alt is the video title, not a
       # defaulted string.
-      "translate_default" => 189,
+# 190 -> 189: see above.
+# 189 -> 188 (2026-08-26): events/index stopped hand-rolling its own next
+# link. `t("actions.load_more", default: "More")` went with it — the
+# surface renders shared/_pager now, like every other paginated one, and
+# the pager fetches its strings without defaults.
+"translate_default" => 188,
     }.freeze
 
     # Kept for callers that referenced the old single number.

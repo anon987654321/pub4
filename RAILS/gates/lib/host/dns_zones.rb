@@ -124,7 +124,7 @@ module Deploy
     end
 
     # Every domain the installer deploys must have a zone file and a zone block.
-    # Seven zone files were served by nobody for months because nsd.conf and the
+    # Seven zone files reached no server for months because nsd.conf and the
     # directory were maintained separately.
     def every_domain_has_a_zone
       declared = RenderDns.zones.keys
