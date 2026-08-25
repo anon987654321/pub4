@@ -138,8 +138,32 @@ class UserPurgeJobTest < ActiveJob::TestCase
   # each model for its table_name rather than pluralising its constant. The
   # first draft of the coverage test guessed instead, produced
   # "marketplace_addresss", matched nothing, and passed.
+  # RAILS/test/ is not inside this app, and on the box it is not beside it either.
+  # Rails.root is /home/brgen/app there, so Rails.root/.. is /home/brgen — a real
+  # directory with no test/ in it, which is why `require Rails.root.join("../test/
+  # erasure_coverage_test")` resolved in a source checkout and raised LoadError on
+  # "/home/brgen/test/erasure_coverage_test" on every VPS deploy. It failed the
+  # whole Rails suite at 0 failures, 1 error and halted the pass.
+  #
+  # Same candidate order and the same readability test as DeployBacklogTest, whose
+  # comment records why the canonical checkout comes before the per-app pub4-rails
+  # copy: those copies go stale without anything noticing.
+  ERASURE_COVERAGE_ROOTS = [
+    ENV["PUB4_RAILS_ROOT"],
+    "/home/dev/pub4/RAILS",
+    "/home/#{ENV.fetch('PUB4_CI_APP', 'brgen')}/pub4-rails/RAILS",
+    File.expand_path("../../..", __dir__)
+  ].compact.freeze
+
   test "every table the job touches is classified the way the job treats it" do
-    require Rails.root.join("../test/erasure_coverage_test").to_s
+    found = ERASURE_COVERAGE_ROOTS
+            .map { |root| File.join(root, "test", "erasure_coverage_test.rb") }
+            .find { |path| File.readable?(path) }
+    # Not a skip: this test exists to catch a table the job touches and nothing
+    # classifies, and a silent skip is exactly how that gap would survive. Name
+    # what was searched so the next reader fixes the sync rather than the test.
+    assert found, "erasure_coverage_test.rb not readable under any of: #{ERASURE_COVERAGE_ROOTS.join(', ')}"
+    require found
     classified = ErasureCoverageTest::CLASSIFIED
 
     { destroy: UserPurgeJob::DESTROY, nullify: UserPurgeJob::NULLIFY }.each do |disposition, rows|
