@@ -22,28 +22,10 @@ require "timeout"
 # Load MASTER without booting the CLI
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
-# ---- merged from lib/boot/hash_dig_compat.rb — its only reader is this helper ----
-module Master
-  # Coltrane 2.x replaces Hash#dig with a variant that calls .dig on nil
-  # intermediates. Restore MRI-compatible nil-short-circuit chaining.
-  module HashDigCompat
-    def dig(*keys)
-      keys.reduce(self) do |obj, key|
-        break nil unless obj.respond_to?(:[])
-
-        obj[key]
-      end
-    end
-  end
-
-  module_function
-
-  def install_hash_dig_compat!
-    return if Hash.ancestors.first == HashDigCompat
-
-    Hash.prepend(HashDigCompat)
-  end
-end
+# Not inlined here. dilla/lib/music_gems.rb requires this same file by absolute
+# path right after `require "coltrane"`, and inlining it broke that require —
+# see the file's own header.
+require_relative "../lib/boot/hash_dig_compat"
 Master.install_hash_dig_compat!
 
 # Bound individual tests to prevent hangs, while leaving integration fixtures
