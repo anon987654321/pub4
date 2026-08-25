@@ -1,9 +1,0 @@
-fr:
-  hello: "Bonjour"
-  app:
-    name: "Brgen"
-  feed:
-    title: "Actualités locales"
-  nav:
-    sign_in: "Se connecter"
-    new_post: "Nouvelle publication"

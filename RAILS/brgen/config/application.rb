@@ -43,7 +43,10 @@ module App
 
     config.time_zone = "Europe/Oslo"
     config.i18n.default_locale = :nb
-    config.i18n.available_locales = %i[nb en nl de fr]
+    # Two, because two ship. de/fr/nl held five keys each against en's 1579 and
+    # were deleted 2026-08-25; see Brgen::LocaleBridge for why a stub locale is
+    # worse than none.
+    config.i18n.available_locales = %i[nb en]
     config.i18n.fallbacks = Brgen::LocaleBridge.fallbacks_map
     # config.eager_load_paths << Rails.root.join("extras")
 

@@ -1,9 +1,0 @@
-nl:
-  hello: "Hallo"
-  app:
-    name: "Brgen"
-  feed:
-    title: "Lokaal nieuws"
-  nav:
-    sign_in: "Inloggen"
-    new_post: "Nieuw bericht"

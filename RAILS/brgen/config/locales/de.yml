@@ -1,9 +1,0 @@
-de:
-  hello: "Hallo"
-  app:
-    name: "Brgen"
-  feed:
-    title: "Lokale Nachrichten"
-  nav:
-    sign_in: "Anmelden"
-    new_post: "Neuer Beitrag"

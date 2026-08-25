@@ -82,8 +82,11 @@ class DomainRegistryTest < ActiveSupport::TestCase
     assert_includes subs, "bergen"
   end
 
-  test "locale bridge maps dutch registry locale to nl" do
-    assert_equal :nl, Brgen::LocaleBridge.resolve(:nl)
+  # Was :nl. nl.yml held five keys against en.yml's 1579 and was deleted on
+  # 2026-08-25, so amstrdam.nl, rottrdam.nl and utrcht.nl now get English rather
+  # than five Dutch words on an English page. See Brgen::LocaleBridge.
+  test "locale bridge maps dutch registry locale to en now that nl does not ship" do
+    assert_equal :en, Brgen::LocaleBridge.resolve(:nl)
   end
 
   test "locale bridge maps en-US to en" do
