@@ -260,6 +260,39 @@ module PostproBootstrap
 end
 
 BOOTSTRAP = PostproBootstrap.run
+
+# Four numbers on an image, or the delta across a grade. Handled here, straight
+# after boot, because everything below this point can reach the interactive
+# prompt — and a measurement that waits for a keypress is a measurement nobody
+# puts in a script.
+#
+# Everything this file claims about putting texture back — the grain, the
+# halation, the H&D shoulder — was an assertion until something measured it.
+# `--measure FILE` reads one image; adding `--against AFTER` reads the pair and
+# says which way each number moved and whether that is the direction film
+# emulation should move it.
+if ARGV.include?("--measure")
+  require_relative "uncanny"
+  subject = ARGV[ARGV.index("--measure") + 1]
+  if subject.nil? || !File.file?(subject)
+    PostproBootstrap.dmesg("ERROR --measure needs a readable file")
+    exit 1
+  end
+
+  against = ARGV.include?("--against") ? ARGV[ARGV.index("--against") + 1] : nil
+  if against.nil?
+    PostproBootstrap.dmesg("measure #{File.basename(subject)}: #{Postpro::Uncanny.read(subject)}")
+  elsif !File.file?(against)
+    PostproBootstrap.dmesg("ERROR --against #{against} is not a file")
+    exit 1
+  else
+    comparison = Postpro::Uncanny.compare(subject, against)
+    PostproBootstrap.dmesg("measure before: #{comparison[:before]}")
+    PostproBootstrap.dmesg("measure after:  #{comparison[:after]}")
+    Postpro::Uncanny.verdict(comparison).each { |line| PostproBootstrap.dmesg("measure #{line}") }
+  end
+  exit 0
+end
 # Anchored to the tool, not to the shell's working directory — the same CWD
 # defect this file already fixes for master.json and repligen.rb. A bare
 # relative path meant even a read-only --vocab-check created a log wherever the
