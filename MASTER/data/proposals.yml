@@ -332,8 +332,9 @@ proposals:
 
   - id: app-homes-are-world-readable
     tree: OPENBSD
-    state: open
+    state: landed
     claim: "every local account on vm23 can read all three production databases"
+    landed_by: OPENBSD/vps_ci.sh + chmod on vm23, 2026-08-25
     note: >
       Found while refuting the row above, and it is what that one was reaching
       for. /home/brgen, /home/brgen/app and /home/brgen/app/storage are all 755
