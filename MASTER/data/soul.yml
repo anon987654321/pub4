@@ -90,6 +90,70 @@ absolute:
     A_FINDING_IS_A_HYPOTHESIS: a recorded finding states where and what, and is routinely wrong about both. Re-measure before fixing. Of 129 hardcoded_copy findings, 38 were already translated one branch away, 8 named the first of two occurrences in their file, and 1 was hardcoded Norwegian a literal-matching rule cannot tell from English. Fixing a stale finding list edits code that was already right.
     EXEMPTIONS_EXPIRE: an allowlist entry, baseline row or opt-out that outlives its subject is a hole in a gate nobody can see, because the thing it excuses is invisible. Every exemption names what it excuses, and a check fails when the named thing stops existing.
 
+    # Operating conduct, moved here from data/rules.yml where 27 entries carried
+    # `type: feedback` — a field no other rule had. They are standing orders about
+    # how to work, not properties of source text, so no detector could ever match
+    # them and none did: every one sat in the catalogue the file scanner reads,
+    # unreachable, while rule_reach counted them as law nothing can run.
+    OPERATOR_AUTONOMY: >-
+      when a scan finds violations, sweep to convergence rather than pausing for per-fix
+      confirmation. One approved direction runs the whole backlog. "Ship all", "yes", "do it",
+      "kill X keep Y" are binding. Ask before destructive shared-state edits, material
+      ambiguity, or a genuine either-or.
+    EXECUTE_NOT_INSTRUCT: >-
+      run the probes, gates, tests and fixes here. Never close with "you should run X" when X
+      is executable. Gate stdout beats narrative completion; on failure, diagnose and retry
+      rather than handing the chore back.
+    SCAN_SWEEP_CONVERGENCE: >-
+      "through" means deep scan the path, then sweep until clean or blocked. Lint written
+      paths and audit lib/ for drift after mutations. Plain language, not memorised command
+      chains.
+    COUNCIL_WHEN_RISKY: >-
+      council is Review-stage deliberation with a Security veto. Run it on dangerous patterns,
+      multi-file diffs, or when config enables it. Scan plus sweep is the default loop;
+      council is conditional.
+    PROBE_BEFORE_SHIP: >-
+      after an OPENBSD/ or MASTER/web/ edit, run bin/probe integrity before declaring done. A
+      failing gate means the task is still open.
+    VPS_SERIAL_TRUTH: >-
+      one SSH session, no parallel bin/ci. Production truth is vm23. Copy any edit made on the
+      box back into git in the same session.
+    RESTART_RAILS: >-
+      one file, one restart. After a MASTER/web, live lib/ or data YAML deploy, restart and
+      wait before curling. Never batch web edits behind a single restart at the end.
+    DEVICE_LIMITS: >-
+      heavy work belongs on the VPS. The Mac edits and HTTP-probes; browser gates run on the
+      deploy host unless explicitly forced local.
+    CONFIGURATION_AS_CODE: >-
+      runtime-read material lives in data files, not prose. Top-level READMEs are
+      one-paragraph stubs pointing at runtime truth. When behaviour changes, refresh the stub
+      in the same commit.
+    MERGE_BEFORE_MULTIPLY: >-
+      before copying a block to vary one literal, extract or parameterise it. File and module
+      sprawl is the same law one level up.
+    NO_NEW_FILES: >-
+      edit the original path. No _fixed.rb, no staging copy, no new file without approval —
+      try merge or rename first on every touch.
+    SHELL_DISCIPLINE: >-
+      no sed, awk, grep, head, tail, find, wc, perl or python in agent shell calls or
+      committed scripts; BSD variants break GNU idioms and this tree deploys to OpenBSD. Ruby,
+      zsh builtins and the dedicated tools instead.
+    GIT_COMMITS: >-
+      commit after every meaningful change and never batch unrelated work. One concern per
+      commit where practical; imperative subjects.
+    DIVERGED_BRANCH_SYNC: >-
+      on a rejected push with overlapping commits, tag a backup, reset to origin, cherry-pick
+      only the intended commits, and push. Prefer cherry-pick over rebasing mixed history;
+      never force-push main.
+    UNIVERSAL_CROSS_DISCIPLINARY_RULES: >-
+      a rule expresses a medium-agnostic principle with a per-language adapter. Small parts,
+      vertical rhythm, nesting depth and naming silhouette are one law in Ruby, markup and
+      prose — only the detector changes.
+    META_FRAMING: >-
+      after a batch, surface what is missing or structurally off rather than dumping an
+      itemised diff. Close with one consolidation question. "Land all" means batch and commit
+      without per-item reconfirmation.
+
   aesthetic_rules:
     NO_ASCII_DECORATION: "Strunk & White — no box-drawing or === / ### banners in code, comments, docs, or CLI; content is the separator."
     NO_COLUMN_ALIGN: "KISS — one space between tokens; never pad columns (alignment decays on every edit)."
@@ -100,7 +164,16 @@ absolute:
     STRUNK_ACTIVE: "Strunk & White — active voice in code, comments, commits, CLI, TTS; omit needless words."
     INVERTED_PYRAMID: "Inverted Pyramid (prose) — commits, comments, and log lines lead with the fact; context trails."
     DEEP_SCAN_ONLY: "Fixed Point — deep scan only; quick and standard depths forbidden."
-    FLAT_HIERARCHY: "Flat Hierarchy — aggressive merge/rename on every write; paths are dense Rails-parameterize slugs (snake_case, Strunk-clean tokens); standing order aggressive_merge."
+    FLAT_HIERARCHY: "Flat Hierarchy — aggressive merge/rename on every write; paths are dense Rails-parameterize slugs (snake_case, Strunk-clean tokens); no main, misc, util, helper or abbreviation filler; fold *_support into parents and extend an existing gate rather than adding a script; lib/ depth 4 unless the domain warrants more."
+    STYLE: "KISS — the shortest correct form in every language. No filler, redundant branches, ceremonial patterns, defensive over-engineering, or comments restating code."
+    STRUNK_WHITE: "Strunk & White — active voice, needless words omitted, concrete nouns and verbs, one idea per sentence. Sentence case in prose, comments, logs and CLI; snake_case in code. No banners or bracket tags: ok: and warn: prefixes instead."
+    LINT_BEAUTIFY: "Boy Scout Rule — touching a file obliges a full-file lint pass, not only the edited lines. Collapse double blanks, fix spacing, and reassess every comment: delete what-comments, keep a one-line why only when non-obvious."
+    MICRO_REFINEMENTS: "Craft — fix tighter words, honest names, correct spacing and better glyphs when seen, beyond the stated task. Apply without asking; mention only the non-obvious."
+    HTML_CSS_STYLE: "Semantic HTML — bare selectors (nav a, main, h1) over class soup; tag helpers over content_tag; omit class attributes unless brand, btn or badge semantics require them. Structure carries meaning, classes are the last resort."
+    FLAT_PIXELS: "Flat Design — UI and particles stay two-dimensional, uniform in size and alpha, with no fake depth or parallax. Exception: pixels that collectively resemble a 3D model, as in face mode."
+    MOTION_COLOR_GRADING: "Motion Design — ease all motion with frame-independent delta time; ease-out arrivals, ease-in-out crossfades, never a linear snap. Palettes anchor on complements with shadow/midtone/highlight triplets."
+    MASTER_PROMPT_AESTHETIC: "Renderer prompt_line is fixed: bold-red master, dim branch and phase, dim token bar, dollar terminator. New ornamentation belongs in reply tags, status rows or dmesg."
+    VOICE_TERSE_UNIX: "Unix voice — one job per unit, silence on success, composable lines, no corporate filler. Operator replies use plain English with proper casing; kernel and dmesg stay lowercase terse."
 
 negotiable:
   style: sentence_case

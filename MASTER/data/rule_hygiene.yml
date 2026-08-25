@@ -9,8 +9,10 @@
 # rule. One of the two is a fold nobody finished; closing it means deleting the
 # absorbed rule or dropping the alias, and that is a decision per pair.
 #
-# missing_metadata: 43 rules declare neither tier nor severity, so every count
-# that groups by either omits them without saying so.
+# missing_metadata: 16 rules declare neither tier nor severity, so every count
+# that groups by either omits them without saying so. It was 43 until the 27
+# operator_principles entries moved to soul.yml, where conduct belongs and where
+# a tier and a severity were never the right shape for them.
 id_case_collisions: 2
 alias_shadows_live_rule: 1
-missing_metadata: 43
+missing_metadata: 16
