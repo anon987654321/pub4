@@ -68,7 +68,8 @@ class ProjectTree
     end
   end
 
-  # These reads used to be hardcoded `puts` lines, which is how they came to
+  # These reads come from the tree, not from hardcoded `puts` lines, which is
+  # how the old ones came to
   # describe a repo that no longer existed: they still named lib/now, lib/judge,
   # lib/loop and lib/reach (renamed to cli/review/fix/io in 693d2630d), a
   # kernel/ directory (renamed to core/), "7 apps" (there are 3), lora as a
