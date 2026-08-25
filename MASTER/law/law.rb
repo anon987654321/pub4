@@ -31,7 +31,20 @@ module Law
     ".html" => ["<!--"], ".htm" => ["<!--"], ".erb" => ["<!--"],
   }.freeze
 
-  MEMBERS = %i[id source severity languages scope path path_exclude absent detect fix bad good reads_comments].freeze
+  # `ask` is the semantic half: a rule whose subject cannot be matched by a
+  # regex states the question instead, and the model answers it. It sits beside
+  # `detect` rather than in a second file because a rule is one thing and its
+  # detector kind is a property of it — the split across law/ and data/rules.yml
+  # put 52 rules' detector in one file and their severity and fix text in
+  # another, which is a shape no rename can make legible.
+  #
+  # bad/good stay required for both kinds. For `detect` they are proved by
+  # running the regex at load. For `ask` they cannot be — no model call at boot —
+  # so they are the prompt's own worked examples, carried into the question and
+  # checkable offline by a task that has a model. A semantic rule with no
+  # example of what it is looking for is the unfalsifiable shape this file
+  # already refuses in the lexical case.
+  MEMBERS = %i[id source severity languages scope path path_exclude absent detect ask fix bad good reads_comments].freeze
   Rule = Data.define(*MEMBERS) do
     def applies?(file, language)
       return false if path && !file.include?(path)
@@ -39,7 +52,14 @@ module Law
       language.nil? || languages.empty? || languages.include?(language)
     end
 
+    # A semantic rule has no detector to run here. It is carried to the model by
+    # the semantic pass instead, so scanning it lexically must find nothing
+    # rather than raise on a nil detect.
+    def semantic? = !ask.nil?
+
     def scan(text, file: "-")
+      return [] if semantic?
+
       scope == :file ? scan_file(text, file) : scan_lines(text, file)
     end
 
@@ -53,8 +73,14 @@ module Law
     # and never asked applies?. A declared language that nothing produces is a
     # rule aimed at nothing.
     def prove!
-      raise ArgumentError, "#{id}: bad fixture not flagged" if scan(bad).empty?
-      raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
+      # The reach check below applies to both kinds; only the detector half is
+      # skipped for a semantic rule, because proving it needs a model and this
+      # runs at boot. The fixtures are still required — Builder#build refuses
+      # without them — they are simply proved by rake rather than by require.
+      unless semantic?
+        raise ArgumentError, "#{id}: bad fixture not flagged" if scan(bad).empty?
+        raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
+      end
 
       unreachable = languages.map(&:to_s) - Master::FILE_LANGUAGE_MAP.values.uniq
       unless unreachable.empty?
@@ -110,14 +136,29 @@ module Law
   end
 
   class Builder
-    %i[source severity languages scope path path_exclude absent fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source severity languages scope path path_exclude absent ask fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, reads_comments: false }
+    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
+    # Exactly one detector kind, and the fixtures either way.
+    #
+    # Both is not a richer rule, it is two rules sharing an id: the lexical half
+    # would fire at load and the semantic half in the model pass, and a finding
+    # would carry no answer to which one produced it. Neither is the shape this
+    # file calls documentation.
     def build
-      missing = %i[detect bad good].reject { |k| @h.key?(k) }
+      kinds = %i[detect ask].select { |k| @h[k] }
+      raise ArgumentError, "#{@h[:id]}: needs detect or ask" if kinds.empty?
+      raise ArgumentError, "#{@h[:id]}: has both detect and ask — one rule, one detector kind" if kinds.size > 1
+
+      # `fix` is in this list because Data requires it and Builder does not
+      # default it, so a rule that omitted it died with "missing keyword: :fix"
+      # from Data#initialize — a message about the implementation rather than
+      # about the rule. Every existing law sets it; only the error changes.
+      missing = %i[bad good fix].reject { |k| @h.key?(k) }
       raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
+
       Rule.new(**@h.slice(*MEMBERS)).prove!
     end
   end
@@ -154,8 +195,8 @@ module Law
           fence = nil if line.strip == fence
           next "#\n"
         end
-        fence = line[/^\s*(?:bad|good)\s+<<~(\w+)/, 1]
-        line.match?(/^\s*(?:source|detect|fix|bad|good)\b/) ? "#\n" : line
+        fence = line[/^\s*(?:bad|good|ask)\s+<<~(\w+)/, 1]
+        line.match?(/^\s*(?:source|detect|ask|fix|bad|good)\b/) ? "#\n" : line
       end.join
     end
   end
