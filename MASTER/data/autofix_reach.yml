@@ -1,0 +1,14 @@
+---
+# Ceilings for tools/autofix_reach.rb.
+#
+# dangling: a rule naming a transform that no code implements. Seven of eight
+# named transforms are in this state, so the field currently promises an edit
+# that cannot happen. Emptying it means writing the transform or demoting the
+# rule to autofix: false — a decision per rule, which is why this is a ceiling
+# and not an error.
+#
+# bare_true: autofix: true with no transform named. Nothing can apply it and
+# nothing can check it, and twelve of these have no detector either. The target
+# shape is a named transform or false; bare true is the unfinished middle.
+dangling: 7
+bare_true: 31

@@ -101,6 +101,14 @@ module Pub4
          [Pub4::RuleAudit.audit[:silent].size,
           YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("silent")]
        end,
+       master_row("autofix_reach.dangling", "data/autofix_reach.yml", "rules naming a transform nothing implements") do
+         require File.join(MASTER, "tools/autofix_reach")
+         [Pub4::AutofixReach.dangling.size, Pub4::AutofixReach.ceilings.fetch("dangling")]
+       end,
+       master_row("autofix_reach.bare_true", "data/autofix_reach.yml", "rules claiming a fix without naming it") do
+         require File.join(MASTER, "tools/autofix_reach")
+         [Pub4::AutofixReach.bare_true.size, Pub4::AutofixReach.ceilings.fetch("bare_true")]
+       end,
        master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")
          [Pub4::DupCensus.sets.size, Pub4::DupCensus.ceiling]
