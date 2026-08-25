@@ -16,6 +16,10 @@ LIVE_ENV = Pub4::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
 
 failures = []
 failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deploy_identity.rb")
+# Repo-side on purpose: a guard whose target nothing installs fails OPEN, and
+# the one that did (daily.local -> config_drift_gate.rb) went unnoticed for as
+# long as it existed because the only check that could see it ran on the box.
+failures << "installed targets" unless runner.run("installed targets", RUBY, "OPENBSD/installed_targets_gate.rb")
 failures << "ports" unless runner.run("ports", RUBY, "RAILS/gates/runner.rb", "port_inventory")
 # dns_zones was registered in RAILS/gates/gates.yml and invoked by nothing — the
 # only one of the 47 that no script in this repo named, so `runner.rb --all`
