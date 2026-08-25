@@ -39,7 +39,7 @@ def dilla_mix_buses? = ENV["DILLA_MIX_BUSES"] == "1"
 def dilla_mix_bus_chain(name)
   raw = ENV["DILLA_BUS_#{name.to_s.upcase}"].to_s
   literal = raw.empty? ? [] : [raw]
-  mod = dilla_bus_modulation(name)
+  mod = dilla_bus_patch(name, @render_duration_sec.to_f) || dilla_bus_modulation(name)
   mod ? mod + literal : literal
 end
 
@@ -88,14 +88,46 @@ def dilla_bus_modulation(name)
     warn "bus modulation: #{e.message}"
     return nil
   end
-  route = matrix.routes.first
+  emit_bus_matrix(matrix, name, duration)
+end
+
+# BUS_PATCH=random — a whole patch on a bus instead of one LFO.
+#
+# P_4Ls most-used control is the one that patches itself, and the reason it gets
+# used is that its output is worth hearing more often than not. PatchBay.random
+# is built for that: one source per destination, depths biased low, and at least
+# one inverted so the routes do not all rise together.
+#
+# BUS_PATCH_SEED pins it. A random patch nobody can get back is a take nobody can
+# repeat, which is the fault provenance.rb exists to prevent.
+def dilla_bus_patch(name, duration)
+  return nil unless ENV["BUS_PATCH"].to_s == "random"
+
+  matrix, patch = DillaModulation::PatchBay.random(
+    bpm: @render_bpm || 88.0,
+    routes: ENV.fetch("BUS_PATCH_ROUTES", "4").to_i,
+    seed: ENV.fetch("BUS_PATCH_SEED", seed_for("buspatch")).to_i
+  )
+  dmesg("bus patch: " + patch.map { |src, ds| "#{src}->#{ds.keys.join("+")}" }.join(" "),
+        unit: "harm0", parent: "dilla0")
+  emit_bus_matrix(matrix, name, duration)
+end
+
+# A matrix as [asendcmd, filter, filter, ...] ready to prefix onto a bus chain.
+#
+# Every route needs its own named filter instance in the graph, and the name has
+# to be the one the command file writes -- which is why both come from the same
+# matrix rather than being spelled twice.
+def emit_bus_matrix(matrix, name, duration)
   path = File.join(SCRATCH_DIR, "busmod_#{name}.cmds")
   FileUtils.mkdir_p(SCRATCH_DIR)
   prefix = DillaModulation.prefix_for(matrix, path:, duration:)
   return nil unless prefix
 
-  dmesg("bus modulation: #{matrix.describe.first}", unit: "harm0", parent: "dilla0")
-  [prefix, "#{matrix.instance_name(route)}=#{route.param}=#{matrix.initial(route)}"]
+  matrix.describe.each { |line| dmesg("bus modulation: #{line}", unit: "harm0", parent: "dilla0") }
+  [prefix] + matrix.routes.map do |route|
+    "#{matrix.instance_name(route)}=#{route.param}=#{matrix.initial(route)}"
+  end
 end
 
 def dilla_mix_graph(mix_labels, mix_weights)

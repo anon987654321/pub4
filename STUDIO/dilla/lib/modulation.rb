@@ -780,3 +780,136 @@ module DillaAutomation
     "lowpass=f=#{cutoff_hz},aphaser=speed=#{phaser_speed}:decay=#{phaser_decay}"
   end
 end
+
+# Reopened so the patch bay is DillaModulation::PatchBay rather than a
+# top-level constant. Appending to a file puts the text after the module's end;
+# the bay refers to Matrix, SOURCES and DEFAULT_RATE_HZ by their bare names, so
+# it has to be lexically inside.
+module DillaModulation
+# ---------------------------------------------------------------- patch bay
+#
+# Sources and destinations as data, so a patch is a table rather than code.
+#
+# Everything above can already build any patch; what it could not do was let
+# anything OTHER than a programmer build one. A route needs a filter name, a
+# parameter name, a base, a range and a scale, and getting any of them wrong is
+# either an exception or -- worse -- a route that ffmpeg accepts and ignores.
+# That is a fine interface for a caller and a hopeless one for a rotation, a
+# macro, or a random patcher.
+#
+# So the bay names a small set of things worth modulating, in musical terms, and
+# resolves each to the filter and parameter underneath. `cutoff` rather than
+# `lowpass.frequency`; `bite` rather than `acrusher.bits`. Two consequences that
+# matter more than the convenience: a patch can be written by something that
+# knows nothing about ffmpeg, and every destination here is one that has been
+# checked to be runtime-settable, so a patch cannot silently do nothing.
+module PatchBay
+  module_function
+
+  # The destinations, in the order a patch is most likely to want them.
+  #
+  # Each is a filter, a parameter, and the base value a route centres on when the
+  # caller does not name one. The ranges come from MUSICAL above -- this table
+  # deliberately does not restate them, because two tables of ranges is the
+  # defect knobs.rb was written to stop.
+  DESTINATIONS = {
+    cutoff: { filter: "lowpass", param: "frequency", base: 3000.0 },
+    rumble: { filter: "highpass", param: "frequency", base: 120.0 },
+    tone: { filter: "equalizer", param: "gain", base: 0.0 },
+    bite: { filter: "acrusher", param: "bits", base: 12.0 },
+    crush: { filter: "acrusher", param: "mix", base: 0.3 },
+    width: { filter: "stereotools", param: "balance_out", base: 0.0 },
+    squeeze: { filter: "acompressor", param: "threshold", base: 0.2 },
+    push: { filter: "acompressor", param: "ratio", base: 3.0 },
+    air: { filter: "aexciter", param: "amount", base: 1.5 },
+    weight: { filter: "asubboost", param: "boost", base: 3.0 },
+    strange: { filter: "afreqshift", param: "shift", base: 0.0 },
+  }.freeze
+
+  # The sources, as recipes rather than instances, so a patch can ask for "a slow
+  # LFO" without deciding its rate.
+  #
+  # Rates are musical divisions, resolved against the render's tempo -- a random
+  # patch in hertz would drift against the track, which is the one way to make a
+  # generated patch sound accidental rather than deliberate.
+  SOURCES = {
+    slow: { kind: :lfo, rate: "4bar", family: :curved, morph: 0.33 },
+    breathing: { kind: :lfo, rate: "2bar", family: :curved, morph: 0.66 },
+    pulse: { kind: :lfo, rate: "1/4", family: :straight, morph: 0.25 },
+    stutter: { kind: :lfo, rate: "1/8", family: :stepped, morph: 0.33 },
+    stepping: { kind: :lfo, rate: "1/4", family: :stepped, morph: 0.0 },
+    wander: { kind: :random, rate_hz: 0.6 },
+  }.freeze
+
+  def source_names = SOURCES.keys
+  def destination_names = DESTINATIONS.keys
+
+  # Build a matrix from a patch written as { source => [destination, ...] } or
+  # { source => { destination => depth } }. Unknown names raise rather than being
+  # skipped: a patch with a typo in it should not half-apply.
+  def build(patch, bpm:, rate_hz: DEFAULT_RATE_HZ)
+    matrix = Matrix.new(rate_hz:)
+    patch.each do |source_name, targets|
+      spec = SOURCES.fetch(source_name.to_sym) do
+        raise ArgumentError, "no source #{source_name} — #{source_names.join(', ')}"
+      end
+      add_source(matrix, source_name, spec, bpm)
+      pairs = targets.is_a?(Hash) ? targets : targets.to_h { |t| [t, 1.0] }
+      pairs.each do |dest_name, depth|
+        dest = DESTINATIONS.fetch(dest_name.to_sym) do
+          raise ArgumentError, "no destination #{dest_name} — #{destination_names.join(', ')}"
+        end
+        matrix.route(source_name, instance: "#{source_name}_#{dest_name}",
+                                  filter: dest[:filter], param: dest[:param],
+                                  base: dest[:base], depth:)
+      end
+    end
+    matrix
+  end
+
+  def add_source(matrix, name, spec, bpm)
+    if spec[:kind] == :random
+      matrix.random(name, rate_hz: spec[:rate_hz])
+    else
+      matrix.synced_lfo(name, rate: spec[:rate], bpm:,
+                              family: spec[:family], morph: spec[:morph])
+    end
+  end
+
+  # A random patch that is valid by construction and musical by restraint.
+  #
+  # P_4L's most-used control is the one that patches itself, and the reason it is
+  # used is that its output is worth listening to more often than not. A uniform
+  # draw over every source and destination at full depth is not -- it produces a
+  # patch where everything moves at once, which sounds like a fault rather than
+  # like a decision.
+  #
+  # Three restraints, and each is the difference between a generator and a toy:
+  #
+  #   ONE source per destination. Two LFOs on one cutoff is not richer, it is
+  #   two filters fighting, and the result is neither of them.
+  #
+  #   Depths biased low. Drawn from a squared uniform, so most routes are subtle
+  #   and the occasional one is not. A patch of six routes at full depth is six
+  #   things shouting.
+  #
+  #   At least one route inverted, when there is more than one route. That is the
+  #   attenuverter earning its place: without a negative depth every destination
+  #   rises together and the patch is one gesture wearing several hats.
+  def random(bpm:, routes: 4, seed: 4242, rate_hz: DEFAULT_RATE_HZ)
+    rng = Random.new(seed)
+    dests = DESTINATIONS.keys.shuffle(random: rng).first(routes.clamp(1, DESTINATIONS.length))
+    sources = SOURCES.keys.shuffle(random: rng)
+    patch = Hash.new { |h, k| h[k] = {} }
+    dests.each_with_index do |dest, i|
+      source = sources[i % sources.length]
+      depth = (rng.rand**2).clamp(0.08, 1.0).round(3)
+      # The inversion: guaranteed on the second route so a two-route patch has
+      # one, rather than left to a coin toss that fails half the time.
+      depth = -depth if i == 1 || (i > 1 && rng.rand < 0.3)
+      patch[source][dest] = depth
+    end
+    [build(patch, bpm:, rate_hz:), patch]
+  end
+end
+end

@@ -196,6 +196,11 @@ DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
                                    BUS_MOD_HZ=0.25,
                                    _FILTER=lowpass, _PARAM=frequency, _BASE,
                                    _DEPTH, _MODE=modulate|remote
+  BUS_PATCH=random               A whole modulation patch on the bus instead of
+                                   one LFO: one source per destination, depths
+                                   biased low, at least one inverted. Needs
+                                   BUS_MOD=<bus>. BUS_PATCH_ROUTES=4,
+                                   BUS_PATCH_SEED pins it so a take repeats.
   VOICE_STACK=4                  The lead played by 4 voices at once — every
                                    voice plays ALL of it, differing in register,
                                    tuning and timbre (Hocket splits notes

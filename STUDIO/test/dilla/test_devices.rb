@@ -617,6 +617,65 @@ end
     end
   end
 
+  # ----------------------------------------------------------- patch bay
+
+  # Every destination in the bay must be runtime-settable. One that is not would
+  # be accepted by ffmpeg and ignored -- a route that measures as a flat line and
+  # reports as a success, which is the failure this whole module is built to
+  # avoid.
+  def test_every_destination_is_actually_modulatable
+    dead = DillaModulation::PatchBay::DESTINATIONS.reject do |_name, d|
+      DillaModulation.params_for(d[:filter])[d[:param]]&.runtime?
+    end
+
+    assert_empty dead.keys, "these would be accepted by ffmpeg and do nothing"
+  end
+
+  # A patch with a typo must not half-apply: three good routes and one silently
+  # dropped is worse than a refusal, because it renders.
+  def test_an_unknown_name_is_refused_rather_than_skipped
+    assert_raises(ArgumentError) { DillaModulation::PatchBay.build({ nosuch: [:cutoff] }, bpm: 88.0) }
+    assert_raises(ArgumentError) { DillaModulation::PatchBay.build({ slow: [:nosuch] }, bpm: 88.0) }
+  end
+
+  # The three restraints that make a generated patch worth hearing.
+  def test_a_random_patch_is_restrained
+    matrix, patch = DillaModulation::PatchBay.random(bpm: 88.0, routes: 5, seed: 7)
+    depths = matrix.routes.map(&:depth)
+    destinations = patch.values.flat_map(&:keys)
+
+    assert_equal destinations.length, destinations.uniq.length,
+                 "two sources on one destination is two filters fighting"
+    assert(depths.any?(&:negative?), "no inverted route: every destination rises together")
+    assert_operator depths.map(&:abs).sum / depths.length, :<, 0.6,
+                    "depths should be biased low; a patch of routes at full depth is shouting"
+  end
+
+  # Same seed, same patch. A generated take nobody can get back is the fault
+  # provenance.rb exists to prevent.
+  def test_a_random_patch_is_reproducible
+    a, = DillaModulation::PatchBay.random(bpm: 88.0, routes: 4, seed: 11)
+    b, = DillaModulation::PatchBay.random(bpm: 88.0, routes: 4, seed: 11)
+    c, = DillaModulation::PatchBay.random(bpm: 88.0, routes: 4, seed: 12)
+
+    assert_equal a.describe, b.describe
+    refute_equal a.describe, c.describe
+  end
+
+  # Rates come from the bay as musical divisions, so a patch follows the tempo.
+  # In hertz a generated patch would drift against the track, which is the one
+  # way to make it sound accidental rather than deliberate.
+  def test_patch_rates_follow_the_tempo
+    slow, = DillaModulation::PatchBay.random(bpm: 80.0, routes: 6, seed: 3)
+    fast, = DillaModulation::PatchBay.random(bpm: 160.0, routes: 6, seed: 3)
+    lfos = ->(m) { m.sources.values.select { |s| s.kind == :lfo }.map(&:rate_hz).sort }
+
+    slow_rates = lfos.call(slow)
+    fast_rates = lfos.call(fast)
+    refute_empty slow_rates
+    slow_rates.zip(fast_rates).each { |s, f| assert_in_delta s * 2, f, 1e-6 }
+  end
+
   # --------------------------------------------------------- voice stack
 
   # P_4L's actual move: one macro position becomes n DIFFERENT positions. If the
