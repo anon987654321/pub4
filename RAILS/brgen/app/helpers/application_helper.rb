@@ -192,6 +192,27 @@ module ApplicationHelper
     { prefix: "#{subdomain}.", label: city, suffix: ".#{tld}" }
   end
 
+  # Where the mark goes when you click it.
+  #
+  # main_app.root_path is "/" on every host, and on a vertical "/" is that
+  # vertical — so the mark reading "dating.brgen.no" reloaded dating. On
+  # markedsplass that was merely redundant, because its nav swiper carries
+  # eleven other destinations. On dating it was a dead end: dating renders no
+  # primary nav at all (operator, 2026-08-25), so the wordmark is the only
+  # chrome on the page and it did not lead anywhere.
+  #
+  # The city apex is the honest target. It is the word the mark emphasises —
+  # "brgen" keeps the weight, the subdomain and TLD recede around it — so
+  # sending the click to the city is what the mark already looks like it does.
+  def brand_mark_href
+    return main_app.root_path unless vertical_surface?
+
+    domain = Current.domain.presence
+    return main_app.root_path if domain.blank?
+
+    "#{request&.protocol || 'https://'}#{domain}/"
+  end
+
   def home_feed_following?
     Brgen::HomeFeed.following?(feed: params[:feed])
   end

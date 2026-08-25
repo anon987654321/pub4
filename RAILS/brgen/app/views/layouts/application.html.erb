@@ -105,7 +105,8 @@
   <%# label/prefix/suffix come from brand_mark_fragments so the mark names the
       host: "brgen" on the apex, "markedsplass.brgen.no" on a vertical, and the
       city's own name on every other city host. %>
-  <%= render "shared/brand_mark", **brand_mark_fragments, class_name: "brand-mark brgen-logo-mark" %>
+  <%= render "shared/brand_mark", **brand_mark_fragments, href: brand_mark_href,
+             class_name: "brand-mark brgen-logo-mark" %>
   <% unless vertical_surface? %>
     <div role="region" aria-label="<%= t("theme.region") %>">
 <%# The one theme mechanism: the shared toggle writes data-theme through

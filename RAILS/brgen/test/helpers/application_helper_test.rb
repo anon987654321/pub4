@@ -244,6 +244,28 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal "markedsplass.brgen.no", fragments.values_at(:prefix, :label, :suffix).join
   end
 
+  # Every city is a peer — the mark leaves for whichever city the request
+  # resolved to, never a hardcoded brgen.no. dating renders no primary nav, so
+  # on that vertical this link is the only way off the page.
+  test "brand mark on a vertical leaves for its own city apex" do
+    { "brgen.no" => "brgen.no", "lsangeles.com" => "lsangeles.com",
+      "stvanger.no" => "stvanger.no", "trndheim.no" => "trndheim.no" }.each do |domain, expected|
+      Current.domain = domain
+      Current.subapp = :dating
+      request.host = "dating.#{domain}"
+
+      assert_equal "http://#{expected}/", brand_mark_href,
+                   "the mark on dating.#{domain} should leave for #{expected}"
+    end
+  end
+
+  test "brand mark on an apex still links to root" do
+    Current.domain = "oshlo.no"
+    Current.subapp = nil
+
+    assert_equal "/", brand_mark_href
+  end
+
   test "brand mark carries a non-no tld intact" do
     Current.domain = "lsangeles.com"
     Current.subapp = :marketplace
