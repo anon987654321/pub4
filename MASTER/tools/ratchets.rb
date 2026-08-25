@@ -83,6 +83,29 @@ module Pub4
          require File.join(MASTER, "tools/rule_reach")
          [Pub4::RuleReach.unreachable.size, YAML.safe_load_file(File.join(MASTER, "data/rule_reach.yml")).fetch("unreachable")]
        end,
+       # Three rows rather than one, because they are three different facts and
+       # collapsing them would let a rule go blind while another stops being
+       # silent and the total holds still.
+       master_row("rule_audit.blind", "data/rule_audit.yml", "rules proved on input their subjects never get") do
+         require File.join(MASTER, "tools/rule_audit")
+         [Pub4::RuleAudit.audit[:fixture_blindness].size,
+          YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("blind")]
+       end,
+       master_row("rule_audit.saturated", "data/rule_audit.yml", "rules flagging most of what they read") do
+         require File.join(MASTER, "tools/rule_audit")
+         [Pub4::RuleAudit.audit[:saturation].size,
+          YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("saturated")]
+       end,
+       master_row("rule_audit.silent", "data/rule_audit.yml", "rules firing on nothing in the corpus") do
+         require File.join(MASTER, "tools/rule_audit")
+         [Pub4::RuleAudit.audit[:silent].size,
+          YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("silent")]
+       end,
+       master_row("rule_audit.semantic_unreached", "data/rule_audit.yml", "semantic rules never asked") do
+         require File.join(MASTER, "tools/rule_audit")
+         [Pub4::RuleAudit.audit[:semantic_reach][:unreached].size,
+          YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("semantic_unreached")]
+       end,
        master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")
          [Pub4::DupCensus.sets.size, Pub4::DupCensus.ceiling]

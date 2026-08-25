@@ -1,0 +1,22 @@
+---
+# Ceilings for tools/rule_audit.rb — the audit of the rules, not of the tree.
+#
+# blind and saturated are 0 and must stay 0. They are not a backlog: a rule whose
+# fixtures only pass because a fixture is read differently from a real file, or
+# one that flags most of what it reads, produces findings that mean nothing, and
+# it looks green from the inside. FROZEN_STRING_LITERAL sat at 423 of 423 while
+# passing prove! at every boot.
+#
+# silent is a real number and falls slowly. A rule that fires on nothing here is
+# usually a CSS or JavaScript law over a mostly-Ruby corpus, which is a property
+# of the sample rather than of the rule — so it is recorded rather than fixed,
+# and it moves when the corpus or the rule set does. It is a ceiling so that a
+# rule going quiet is visible; it is not evidence of a defect on its own.
+blind: 0
+saturated: 0
+silent: 18
+
+# Semantic rules that exist and are never asked. Lower it by labelling a
+# principle `mode: opportunity`, which the filter already admits, not by
+# removing the filter — info violations really do double the prompt for noise.
+semantic_unreached: 67
