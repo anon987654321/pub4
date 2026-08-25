@@ -31,11 +31,17 @@ module Deploy
     # amber is deliberately absent: its :root includes luxury-light-tokens, so
     # light is its design rather than a bug, and asserting dark there would be
     # this gate telling the truth about the wrong intent.
+    # theme: here is the product decision, mirroring ApplicationHelper's
+    # LIGHT_VERTICALS (marketplace, maps, takeaway read light — operator,
+    # 2026-08-24). It is duplicated rather than read because this gate runs under
+    # bare ruby with no app booted; check_theme compares it to what the page
+    # actually declares, so the two drifting apart fails here rather than going
+    # quiet the way it did when this list still called both storefronts dark.
     SURFACES = [
       { host: "brgen.no", theme: :dark },
       { host: "playlist.brgen.no", theme: :dark },
-      { host: "markedsplass.brgen.no", theme: :dark },
-      { host: "takeaway.brgen.no", theme: :dark },
+      { host: "markedsplass.brgen.no", theme: :light },
+      { host: "takeaway.brgen.no", theme: :light },
       { host: "dating.brgen.no", theme: :dark },
       { host: "tv.brgen.no", theme: :dark },
     ].freeze
@@ -53,6 +59,13 @@ module Deploy
       # --tab-bar-h. Sitting flush would put it under a bar that intercepts the
       # click.
       "playlist.brgen.no" => :raised,
+      # Same mechanism, same reason: both storefronts set bottom: var(--tab-bar-h)
+      # and clear their tab bar by its own declared height (44px here, 60px on
+      # playlist). Measured rather than assumed — at rest the bar is translated
+      # off-screen with pointer-events:none, so a snapshot taken while the chrome
+      # is hidden makes the lift look gratuitous. It is not: the bar comes back.
+      "markedsplass.brgen.no" => :raised,
+      "takeaway.brgen.no" => :raised,
     }.freeze
 
     # A background this light cannot be a dark theme, whatever the tokens say.
@@ -121,17 +134,47 @@ module Deploy
       @result.skipped_live("rendered_invariants: #{host} #{e.class}")
     end
 
+    # Two separate questions, and conflating them is what made this gate wrong.
+    #
+    # It used to hold one expected theme per host and compare the rendered luma to
+    # that. Then markedsplass, maps and takeaway became light on purpose (operator,
+    # 2026-08-24: storefronts read light, and that is a product decision, not a
+    # preference) and this list did not move with them. The gate reported two
+    # deliberate surfaces as defects and told anyone reading to "fix" them by
+    # pinning data-theme="dark" — undoing the decision on the gate's say-so.
+    #
+    # So the palette question is now asked against the page's own declaration:
+    # whatever <html data-theme> says, the pixels have to agree. That is the bug
+    # this gate was written for — a prefers-color-scheme block outranking a bare
+    # :root, so the served palette contradicted the declared one — and it stays
+    # caught without the gate holding an opinion about which surface is which.
+    #
+    # The product decision is still pinned, separately, by SURFACES: an accidental
+    # flip of surface_theme is a real regression and would otherwise pass here,
+    # since a flipped page agrees with itself perfectly.
     def check_theme(host, expected, data)
       luma = data["luma"]
       return unless luma
 
-      too_light = expected == :dark && luma > DARK_MAX_LUMA
-      return unless too_light
+      declared = data["declared"]
+      if declared.nil? || declared.empty?
+        return @result.fail("#{host} declares no data-theme on <html>; surface_theme should always write one")
+      end
+
+      if declared != expected.to_s
+        @result.fail(
+          "#{host} declares data-theme=\"#{declared}\" but this gate expects #{expected}. " \
+          "If the surface changed on purpose, move it in SURFACES; if not, surface_theme regressed.",
+        )
+      end
+
+      serves_light = luma > DARK_MAX_LUMA
+      return unless serves_light == (declared == "dark")
 
       @result.fail(
-        "#{host} serves a light background (luma #{luma.round(2)}, bg #{data['bg']}) " \
-        "while its :root declares dark. Check for a prefers-color-scheme block " \
-        "outranking it — the fix is data-theme=\"dark\" on <html>, not new CSS.",
+        "#{host} declares data-theme=\"#{declared}\" but serves a #{serves_light ? 'light' : 'dark'} " \
+        "background (luma #{luma.round(2)}, bg #{data['bg']}). The declaration and the pixels " \
+        "disagree — look for a prefers-color-scheme block outranking :root, not for new CSS.",
       )
     end
 
@@ -212,7 +255,10 @@ module Deploy
             ? { cy: Math.round(tr.top + tr.height / 2) }
             : null;
         }
-        return JSON.stringify({ bg, luma, chat, band });
+        // What the page says it is serving. surface_theme writes this per
+        // surface, so it is the app's own answer rather than the gate's guess.
+        const declared = document.documentElement.getAttribute("data-theme");
+        return JSON.stringify({ bg, luma, chat, band, declared });
       })()
     JS
   end

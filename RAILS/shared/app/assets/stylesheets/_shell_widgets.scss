@@ -103,7 +103,14 @@
 .theme-toggle {
   position: fixed;
   padding: 12px;
-  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px) - 12px);
+  /* No -12px here. The inline axis compensates for the transparent padding so the
+     icon still sits --chrome-inset from the edge; the block axis must not, because
+     what this has to line up with is the bar, not the top of the screen.
+     .brgen-logo-mark is the same --tap-min box at this same top and centres on 33;
+     subtracting the padding put this one at -1.4 and centred it on 21, 12px above
+     everything beside it. The icon was there before the padding was added too — the
+     compensation preserved the misalignment rather than causing it. */
+  top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px));
   inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px) - 12px);
   z-index: var(--z-chrome-toggle);
   width: var(--tap-min);

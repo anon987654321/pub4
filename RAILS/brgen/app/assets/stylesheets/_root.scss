@@ -287,7 +287,9 @@ body.vertical-marketplace #navBar {
 
 @media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   .theme-toggle {
-    inset-block-start: var(--space-2);
+    /* Inline only. The block axis is the shared rule's job — restating it as a
+       bare --space-2 dropped --top-band-nudge and left the control on 31 against
+       the bar's 33, the same misalignment as desktop in a smaller dose. */
     inset-inline-end: var(--space-2);
   }
 }
