@@ -52,7 +52,19 @@ sync_from_repo() {
     # engines/ carries brgen's vertical Rails engines (path gems in the Gemfile);
     # without it the copy-tree Gemfile's `path: 'engines/<v>'` resolves to a missing
     # dir and bundle aborts. See RAILS/brgen/ENGINES.md.
-    local -a paths=(test app lib config bin db engines public vendor/javascript Gemfile Gemfile.lock config.ru Rakefile)
+    # .rubocop.yml is here because bin/ci runs from this copy-tree, not from the
+    # repo — so the style gate reads whatever config was last left in the live
+    # dir. It was not synced, so the copy froze on 2026-08-13 while the tracked
+    # one moved on, and the two disagreed: the stale file re-enabled
+    # Layout/LineLength and Style/TrailingCommaInArguments, which the tracked one
+    # leaves to omakase. That produced 1283 offences on vm23 against 2 for the
+    # same command and the same 734 files locally.
+    #
+    # It stayed invisible until RuboCop began running on the VPS at all, and it
+    # deadlocked the pipeline the moment it did: the corrected config can only
+    # reach the live dir through a sync, and the sync is gated behind the CI run
+    # that the stale config was failing.
+    local -a paths=(test app lib config bin db engines public vendor/javascript Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml)
     local -a existing=()
     local rel
     for rel in "${paths[@]}"; do
