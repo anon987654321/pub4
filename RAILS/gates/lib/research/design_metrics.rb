@@ -373,7 +373,7 @@ module Deploy
       normal_min = 7.0 if normal_min <= 0 # design_rules AAA default
 
       all_pairs = @tokens.flat_map { |name, dialect| DesignMetrics.token_pairs(name, dialect) } +
-                  DesignMetrics.vertical_accent_pairs(@tokens)
+                  DesignMetrics.vertical_accent_pairs(@tokens, RAILS)
       if all_pairs.empty?
         @result.fail("design_metrics contrast: no token pairs resolved from design_tokens.yml", severity: :soft)
         return

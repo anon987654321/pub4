@@ -166,15 +166,68 @@ module Deploy
     # for nothing.
     VERTICAL_SURFACE_DIALECT = "brgen_old_dark"
 
-    def vertical_accent_pairs(tokens)
+    # Vertical accents used only inside a light-theme block.
+    #
+    # The comment on MODE_PREFIX above states the rule this enforces — pairing a
+    # light-mode foreground against a dark-mode surface invents a combination
+    # the UI never renders — and MODE_PREFIX cannot reach these, because
+    # vertical_accents carry no light_/dark_ prefix. So the mode is read from
+    # the stylesheets instead of from the key.
+    #
+    # marketplace is the case. --vertical-marketplace-accent-hover has exactly
+    # one use in the whole tree, at _vertical_marketplace.scss:73, under
+    # `:root[data-theme="light"]` — and design_tokens.yml says why in the note
+    # above the token: the accent is a background carrying dark ink, so small
+    # text in this vertical wears `hover`, and only the light theme swaps to it.
+    # On its actual ground it measures 6.03:1. Paired against brgen_old_dark's
+    # #000000 and #1a1a1a it reads 3.48 and 2.89, and reported two AA failures
+    # for a combination that cannot be rendered.
+    #
+    # Raising the ceiling to absorb those would have been worse than the finding:
+    # contrast_below_aa is 0 precisely so a real one is visible the day it lands.
+    def light_only_vertical_keys(rails_root)
+      globs = %w[
+        {shared,brgen,amber,bsdports}/app/assets/stylesheets/**/*.scss
+        brgen/engines/*/app/assets/stylesheets/*.scss
+      ]
+      light_only = {}
+      globs.each do |pattern|
+        Dir.glob(File.join(rails_root, pattern)).each do |path|
+          next if path.include?("/builds/") || path.include?("/public/assets/") ||
+                  path.include?("/vendor/") || path.include?("/node_modules/")
+
+          theme = nil
+          File.readlines(path).each do |line|
+            theme = "light" if line.include?('data-theme="light"')
+            theme = "dark" if line.include?('data-theme="dark"')
+            theme = nil if line.strip == "}"
+            line.scan(/--vertical-(\w+)-accent-(\w+)/) do |vertical, key|
+              token = "#{vertical}_#{key}"
+              # Any use outside a light block disqualifies it for good.
+              light_only[token] = false unless theme == "light"
+              light_only[token] = true unless light_only.key?(token)
+            end
+          end
+        rescue StandardError
+          next
+        end
+      end
+      light_only.select { |_, only| only }.keys
+    end
+
+    def vertical_accent_pairs(tokens, rails_root = nil)
       verticals = tokens["vertical_accents"]
       social = tokens[VERTICAL_SURFACE_DIALECT] || tokens["social"]
       return [] unless verticals.is_a?(Hash) && social.is_a?(Hash)
 
+      # Computed once, not per vertical.
+      light_only = rails_root ? light_only_vertical_keys(rails_root) : []
+
       verticals.flat_map do |vertical, row|
         next [] unless row.is_a?(Hash)
 
-        row.slice("accent", "hover").flat_map do |key, fg|
+        row.slice("accent", "hover").reject { |key, _| light_only.include?("#{vertical}_#{key}") }
+           .flat_map do |key, fg|
           VERTICAL_BACKGROUNDS.filter_map do |bg_key|
             bg = social[bg_key]
             ratio = bg && contrast_ratio(fg, bg)
