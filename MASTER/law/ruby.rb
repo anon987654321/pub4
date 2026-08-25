@@ -406,7 +406,15 @@ Law.define(:USE_THEN) do
   languages %i[ruby]
   path_exclude %r{/review/scan/rules/}
   scope :file
-  detect { |text| text.match?(/(\w+)\s*=\s*\w+\(.*\)\n\s*\w+\(\1\)/m) }
+  # The same defect GUARD_CLAUSE carried and had fixed above: `/m` makes `.`
+  # match newlines, so `\(.*\)` ran to the last paren in the file and any file
+  # holding an assignment and a later call matched. scope :file then reports it
+  # at line 1, so every hit pointed at frozen_string_literal.
+  #
+  # The pair has to be adjacent to be a pipeline — that is the whole idea the
+  # rule is about, and it is what the fixtures show. [^\n]* keeps the call on
+  # its own line.
+  detect { |text| text.match?(/^[ \t]*(\w+)\s*=\s*\w+\([^\n]*\)\n[ \t]*\w+\(\1\)/) }
   fix "Chain with .then { |r| next_step(r) }"
   bad <<~X
     r = parse(src)
