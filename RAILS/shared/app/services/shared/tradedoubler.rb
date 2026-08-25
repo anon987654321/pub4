@@ -88,7 +88,12 @@ module Shared
                         .for_category(category)
                         .limit(limit)
                         .map { |product| to_deal(product) }
-      rescue ActiveRecord::StatementInvalid
+      # AffiliateProduct.table_exists? is checked on the way in, so this cannot be
+      # the missing-table case. What is left is a schema fault — a column the
+      # scope names and the table has not got, a migration half-applied — and
+      # returning [] for that is a shop page that is quietly empty forever.
+      rescue ActiveRecord::StatementInvalid => e
+        Rails.logger.warn("tradedoubler deals: #{e.class}: #{e.message}")
         []
       end
 
@@ -109,7 +114,9 @@ expires_in: cache_ttl_for(:search_results)) do
         scope = AffiliateVoucher.live.order(ends_at: :asc)
         scope = scope.where(site_specific: true) if site_specific
         scope.limit(limit).map(&:to_struct)
-      rescue ActiveRecord::StatementInvalid
+      # Same shape as deals above: the table check is already done on the way in.
+      rescue ActiveRecord::StatementInvalid => e
+        Rails.logger.warn("tradedoubler vouchers: #{e.class}: #{e.message}")
         []
       end
 

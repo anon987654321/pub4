@@ -100,7 +100,10 @@ module Shared
                         .for_category(category)
                         .limit(limit)
                         .map { |p| Affiliate.to_deal(p) }
-      rescue ActiveRecord::StatementInvalid
+      # The table check is on the way in, so this is a schema fault rather than an
+      # absent table — and `deals` two methods up already logs exactly this way.
+      rescue ActiveRecord::StatementInvalid => e
+        Rails.logger.warn("amazon_associates stored_deals: #{e.class}: #{e.message}")
         []
       end
 

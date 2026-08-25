@@ -167,7 +167,11 @@ module Brgen
       return unless cities_table?
 
       City.find_by(domain: entry.domain)
-    rescue ActiveRecord::StatementInvalid
+    # cities_table? is checked on the way in. A StatementInvalid past that point
+    # is a schema fault, and swallowing it makes every city resolve to no
+    # record — which reads as an unconfigured city rather than a broken one.
+    rescue ActiveRecord::StatementInvalid => e
+      Rails.logger.warn("domain_registry city lookup: #{e.class}: #{e.message}")
       nil
     end
 
