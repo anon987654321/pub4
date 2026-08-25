@@ -24,7 +24,22 @@ require "open3"
 require "digest"
 require_relative "lib/utf8"
 
-ROOT = File.expand_path("..", __dir__)
+# The repo is found, not assumed to be one level up.
+#
+# daily.local runs the INSTALLED copy at /usr/local/bin — root must not execute a
+# file the dev user can rewrite — and from there `..` is /usr/local, so ETC was
+# /usr/local/etc and every one of the eleven comparisons found no repo mirror.
+# The gate warned eleven times, `next`ed past each without recording anything,
+# and exited 0 reporting "clean (0 verbatim configs)". It had been reporting
+# clean while comparing nothing.
+#
+# Reading the checkout is safe in a way that executing it is not: root compares
+# bytes it never runs, so the escalation the installed copy exists to close stays
+# closed. PUB4_ROOT first so a worktree or a test can point it somewhere else.
+ROOT = [ENV["PUB4_ROOT"], File.expand_path("..", __dir__), "/home/dev/pub4"]
+       .compact
+       .find { |dir| File.file?(File.join(dir, "OPENBSD", "etc", "doas.conf")) } ||
+       File.expand_path("..", __dir__)
 ETC = File.join(ROOT, "OPENBSD", "etc")
 
 VERBATIM = {
@@ -85,15 +100,20 @@ def split_stream(out, paths)
   result
 end
 
-def report(drift, missing, compared)
+def report(drift, missing, compared, unfound)
   EXCLUDED.each { |name| puts "config-drift: #{name.ljust(22)} skip - templated or generated (not verbatim)" }
   compared.each { |name| puts "config-drift: #{name.ljust(22)} ok" }
 
-  if drift.empty? && missing.empty?
-    puts "config-drift: clean (#{compared.size} verbatim configs match live /etc)"
+  # The denominator, always. "clean" without it is the shape of every gate in
+  # this tree that has ever passed having measured nothing: it reads identically
+  # whether eleven files matched or the gate could not find a single one.
+  if drift.empty? && missing.empty? && unfound.empty?
+    puts "config-drift: clean (#{compared.size}/#{VERBATIM.size} verbatim configs match live /etc)"
     return
   end
 
+  unfound.each { |name| warn "config-drift: #{name}: no repo mirror under #{ETC}" }
+  warn "config-drift: compared #{compared.size}/#{VERBATIM.size} — a gate that compares nothing is not a passing gate" if compared.empty?
   missing.each { |name| warn "config-drift: #{name}: live file missing or unreadable on vm23" }
   drift.each do |name, detail|
     warn "config-drift: #{name}: DRIFT - live /etc differs from OPENBSD/etc"
@@ -110,12 +130,15 @@ end
 drift = {}
 missing = []
 compared = []
+unfound = []
 live_map = live_files(VERBATIM.values)
 
 VERBATIM.each do |repo_rel, live_path|
   repo_path = File.join(ETC, repo_rel)
   unless File.file?(repo_path)
-    warn "config-drift: #{repo_rel}: missing repo mirror #{repo_path}"
+    # Recorded, not merely warned. `next` alone left this out of every tally, so
+    # a gate that could not find the repo at all still exited 0.
+    unfound << repo_rel
     next
   end
 
@@ -135,5 +158,5 @@ VERBATIM.each do |repo_rel, live_path|
   end
 end
 
-report(drift, missing, compared)
-exit(drift.empty? && missing.empty? ? 0 : 1)
+report(drift, missing, compared, unfound)
+exit(drift.empty? && missing.empty? && unfound.empty? ? 0 : 1)
