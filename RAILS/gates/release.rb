@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 # runner.rb sets this for itself, but it starts the three subprocess gates with
 # system(), and a fresh process does not inherit Encoding.default_external. Under
 # the C locale that OPENBSD/integrity_gate.rb deliberately uses, reading UTF-8

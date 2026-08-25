@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 # Subprocess gates are started with system() and do not inherit runner.rb's
 # Encoding.default_external; see the same require in release.rb.
 require_relative "../../OPENBSD/lib/utf8"
