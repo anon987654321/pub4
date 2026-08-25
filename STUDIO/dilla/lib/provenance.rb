@@ -156,7 +156,8 @@ module DillaProvenance
       keys = engine_env_keys
       Object.const_get(:USER_PINNED_ENV).select do |key, value|
         keys.include?(key) && !value.to_s.empty? &&
-          !ENV_DENY.include?(key) && !key.match?(ENV_DENY_PATTERN) &&
+          !ENV_DENY.include?(key) && !TOOLCHAIN_ENV.include?(key) &&
+          !key.match?(ENV_DENY_PATTERN) &&
           !DillaKnobs::ENGINE_WRITTEN.include?(key)
       end
     end
@@ -215,6 +216,23 @@ module DillaProvenance
       BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN_PATH GEM_HOME GEM_PATH
       RBENV_VERSION RUBYOPT RUBYLIB
       GROK_AGENT
+    ].freeze
+
+    # dilla's own switches, which decide whether a check runs rather than what
+    # comes out of the render. They were reaching `pinned` because they are read
+    # by the engine, which is the test for a knob and not the test for a pin.
+    #
+    # DILLA_ASSET_CHECK=0 skips the missing-input abort and DILLA_KNOB_CHECK=0
+    # skips knob validation, so recording them as operator pins puts them in the
+    # reproduce command — and replaying a take would turn off the two guards
+    # that tell you the take cannot be reproduced. DILLA_QUIET only silences a
+    # warn line, but it is the same kind of thing and belongs with them.
+    #
+    # Found because the suite sets all three, so provenance recorded the test
+    # harness's plumbing as the operator's choices. That test passed alone and
+    # failed in the suite, which is the shape of every leak like this.
+    TOOLCHAIN_ENV = %w[
+      DILLA_QUIET DILLA_ASSET_CHECK DILLA_KNOB_CHECK
     ].freeze
     ENV_DENY_PATTERN = /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH|COOKIE|SESSION/i
 
