@@ -26,7 +26,8 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: .ruby-version
+
           bundler-cache: false
 
       - name: Layout suite (source + fixture gates; no live app required)

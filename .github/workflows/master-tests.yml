@@ -24,7 +24,8 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: .ruby-version
+
           bundler-cache: true
           working-directory: MASTER
 
@@ -39,7 +40,8 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: .ruby-version
+
           bundler-cache: true
           working-directory: MASTER
 
