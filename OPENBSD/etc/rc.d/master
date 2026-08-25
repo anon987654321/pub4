@@ -17,7 +17,21 @@ daemon="/bin/ksh"
 # Falcon workers: keep at 1 on 1GB VPS so amber/bsdports can boot alongside master+brgen.
 # Secrets stay in /etc/master.env and are sourced inside the child so they
 # do not appear in `ps` argv. CACHE_VERSION is not a secret.
-daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env && set +a && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} SECRET_KEY_BASE_DUMMY=1 && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+# BUNDLE_FROZEN is load-bearing now that this runs as master rather than dev.
+#
+# Bundler.setup ends in Definition#write_lock, which touches Gemfile.lock on every
+# boot even when the resolution has not changed. The lock is owned by dev, so as
+# dev that write was silent and nobody knew it happened; as master it is EACCES
+# and falcon never binds. ai.brgen.no went down for exactly this the first time
+# daemon_user="master" reached the box, and the stack trace named File.utime
+# rather than anything about permissions or users.
+#
+# Frozen makes the daemon a reader. It also turns the repo's structural lock drift
+# (MASTER/Gemfile declares rb-kqueue on BSD only, and the lock is committed from a
+# Mac) from a silent rewrite into a startup error that says which gem disagrees —
+# which is the failure this box should have, because the rewrite was papering over
+# a lock that does not describe what is installed here.
+daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env && set +a && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} SECRET_KEY_BASE_DUMMY=1 BUNDLE_FROZEN=true && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 # Prod safety flags (MASTER_SAFE_MODE etc.) live in /etc/master.env (see master.env.sample).
 # rc.d sets a minimal set; env can override for the face runtime. See DeployPaths and
 # MASTER/data/limits.yml for resource budgets on 1GB VPS.
