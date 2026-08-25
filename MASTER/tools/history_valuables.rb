@@ -1,9 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-# frozen_string_literal: true
-
 require "open3"
 
 ROOT = File.expand_path("../..", __dir__)

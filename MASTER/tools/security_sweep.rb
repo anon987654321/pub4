@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-
 require "open3"
 
 # SWEEP_ROOT, not ROOT. This file is required by test/test_security_sweep.rb,
