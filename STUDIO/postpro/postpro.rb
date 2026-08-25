@@ -305,6 +305,45 @@ BOOTSTRAP = PostproBootstrap.run
 # `--measure FILE` reads one image; adding `--against AFTER` reads the pair and
 # says which way each number moved and whether that is the direction film
 # emulation should move it.
+# Video, frame by frame, through the same grade the stills use.
+#
+# Handled here with --measure, before anything that can reach the interactive
+# prompt. postpro is libvips and every input glob is jpg/jpeg/png/webp, so this
+# is the half of "the house filter on all our photos and videos" that did not
+# exist.
+if ARGV.include?("--video")
+  require_relative "motion"
+  source = ARGV[ARGV.index("--video") + 1]
+  target = ARGV.include?("--output") ? ARGV[ARGV.index("--output") + 1] : nil
+  preset = ARGV.include?("--preset") ? ARGV[ARGV.index("--preset") + 1] : "portrait"
+  grain  = ARGV.include?("--grain-hold") ? :hold : :moving
+  seed   = Integer(ENV.fetch("POSTPRO_SEED", "1"), exception: false) || 1
+
+  if source.nil? || !File.file?(source)
+    PostproBootstrap.dmesg("ERROR --video needs a readable file")
+    exit 1
+  end
+  if target.nil?
+    PostproBootstrap.dmesg("ERROR --video needs --output FILE")
+    exit 1
+  end
+
+  begin
+    probe = Postpro::Motion.probe(source)
+    estimate = Postpro::Motion.estimate(probe)
+    # Said before the work, not discovered during it: this decodes every frame
+    # to disk and grades each one as a photograph.
+    PostproBootstrap.dmesg("video #{probe.width}x#{probe.height} #{probe.fps.round(3)}fps — " \
+                           "#{estimate[:frames]} frames, roughly #{estimate[:seconds]}s of grading")
+    Postpro::Motion.grade(source, target, preset: preset, seed: seed, grain: grain,
+                          io: $stdout)
+  rescue Postpro::Motion::Unavailable => e
+    PostproBootstrap.dmesg("ERROR video: #{e.message}")
+    exit 1
+  end
+  exit 0
+end
+
 if ARGV.include?("--measure")
   require_relative "uncanny"
   subject = ARGV[ARGV.index("--measure") + 1]
@@ -2368,6 +2407,23 @@ HALATION_THRESHOLD    = 0.7
 # over-exposed highlights on any channel trigger the halo. Per-channel blur
 # radii R>G>>B model wavelength-dependent penetration depth in the emulsion
 # stack. Output clamp prevents HDR overshoot from adding solarization.
+# Starved in five presets, and it is an ordering interaction rather than a bug
+# here.
+#
+# This gates on luma > HALATION_THRESHOLD (0.7) in LINEAR scRGB, where 8-bit
+# white is 1.0 — so it fires on any real highlight. Measured standalone on a
+# probe carrying a blown specular it moves the picture by 0.042 mean absolute,
+# which is not subtle.
+#
+# But in cinematic, blockbuster, kodachrome_look, anamorphic and cinema_scan it
+# runs AFTER film_curve, and film_curve compresses hard: POSTPRO_EXPLAIN=1 shows
+# it dropping spread by 24.7 on the same probe. By the time halation arrives
+# there is nothing left above 0.7, so it contributes exactly nothing and the log
+# still reports the step as having run.
+#
+# Two fixes and both change what those presets look like — move halation ahead
+# of film_curve, or lower the threshold — so neither is taken here. Found by
+# POSTPRO_EXPLAIN=1, which is what that flag is for.
 def halation(image, intensity = 1.0, tint: HALATION_TINT_VISION3)
   sigma_r = [image.width / 45.0, 6.0].max.clamp(6.0, 120.0)
   sigma_g = sigma_r * 0.55
