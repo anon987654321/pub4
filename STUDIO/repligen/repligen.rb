@@ -618,6 +618,25 @@ def append_gallery_manifest(sidecar, alt_text)
   File.open(manifest, "a") { |f| f.puts(sidecar.merge(alt_text:).to_json) }
 end
 
+# The grade every output gets unless it is turned off.
+#
+# It was `--postpro PRESET`, opt-in, one flag on one command — so the default
+# was no grade at all, and the house look was whatever anyone remembered to
+# type. A look that has to be remembered is not a house look.
+#
+# `portrait` because repligen mostly makes faces and it is the preset built for
+# them: kodak_portra with skin_protect, and grain. The grain is not decoration.
+# Generated skin is too clean and its specular response uniform, because models
+# learn from retouched photography and have no account of subsurface scattering
+# — see STUDIO/PHOTOGRAPHY.md §4. Grain is the direct answer to the first half
+# of that, and it is the single highest-yield thing that can be done to a
+# generated face after the fact.
+#
+# Changed in one place, here, or per run with --postpro, or per shell with
+# REPLIGEN_POSTPRO. --no-postpro turns it off entirely, which is what you want
+# when the output is going into another tool that will grade it later.
+HOUSE_POSTPRO = ENV.fetch("REPLIGEN_POSTPRO", "portrait")
+
 def maybe_handoff_postpro(output, preset)
   return output unless preset
 
@@ -785,6 +804,8 @@ parser = OptionParser.new do |p|
   p.on("--no-raw") { options[:no_raw] = true }
   p.on("--image FILE") { |v| options[:image] = File.expand_path(v) }
   p.on("--postpro PRESET") { |v| options[:postpro] = v }
+  # Off entirely. The grade is the default now, so this is the escape hatch.
+  p.on("--no-postpro") { options[:postpro] = false }
 end
 command = ARGV.shift || "help"
 parser.parse!(ARGV)
@@ -906,6 +927,7 @@ when "generate"
   options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio], options[:distance])
   client = options[:dry_run] ? nil : Master::Io::ReplicateClient.new
 
+  options[:postpro] = HOUSE_POSTPRO if options[:postpro].nil?
   warn_vocab_conflicts(options)
   negative_prompt = compile_negative_prompt(options)
   # Say it out loud. The request is about to go out without the constraint the
