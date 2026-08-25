@@ -35,6 +35,20 @@
 # measured once at the rename. A module holding a constant, a method or two
 # children is doing work and still counts; so does a `class` wrapping a class,
 # which nothing forced.
+# RAISED 2026-08-25, 37042 -> 37057 (+15), and 8 of those are not mine.
+#
+# +7 is ReplicateClient#input_keys, which reads the input parameter names a
+# model currently declares from the same GET latest_version already makes. It
+# is what `rake repligen:schema_audit` compares MODEL_CAPABILITIES against.
+# repligen keeps that table so it can refuse an unsupported option rather than
+# let the API ignore one — the right call, and a second source of truth, so it
+# goes stale silently: the tests check the table against itself and drift
+# surfaces as a 422 in production or a setting quietly dropped.
+#
+# +8 arrived in 9b7d92a69 ("bin/pub4 status invented a tree called ASTER")
+# between this ceiling being set and this commit. Recorded here rather than
+# left to fail the next session's unrelated patch, which is the convention the
+# +15 raise below already set.
 # RAISED 2026-08-25, 36970 -> 37042 (+72). lib/pub4/readers.rb, which answers
 # "who reaches this file" across all four trees before somebody deletes it.
 #
@@ -663,7 +677,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_body_ceiling: 37042
+  lib_body_ceiling: 37057
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

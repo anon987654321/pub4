@@ -54,4 +54,58 @@ namespace :postpro do
   end
 end
 
+namespace :repligen do
+  desc "Compare MODEL_CAPABILITIES against the schemas Replicate currently declares"
+  task :schema_audit do
+    # The second-source-of-truth problem, made visible. repligen keeps its own
+    # capability table so it can refuse an unsupported option instead of letting
+    # the API ignore it — the right call, and the reason the table can go stale
+    # without anything noticing: the tests check the table against itself, so
+    # drift surfaces as a 422 in production, or as an operator's setting
+    # silently dropped, which is worse because it looks like it worked.
+    #
+    # Deliberately not part of `rake`. It needs the network and a token, and a
+    # check that cannot run must say so rather than pass.
+    require_relative "../MASTER/lib/io/replicate_client"
+
+    token = Master::Io::ReplicateClient.load_token
+    if token.to_s.strip.empty?
+      puts "repligen: schema_audit skipped — no REPLICATE_API_TOKEN; nothing was measured"
+      next
+    end
+
+    engine = File.read(File.expand_path("repligen/repligen.rb", __dir__))
+    table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] or abort "repligen: MODEL_CAPABILITIES not found"
+    declared = table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m)
+                    .to_h { |model, keys| [ model, keys.split ] }
+    abort "repligen: parsed no models — the table's shape changed, and this would pass having read nothing" if declared.empty?
+
+    client = Master::Io::ReplicateClient.new(token: token)
+    drifted = 0
+    declared.each do |model, ours|
+      live = client.input_keys(model)
+      if live.empty?
+        puts "repligen: #{model} — no schema returned (renamed or withdrawn?)"
+        drifted += 1
+        next
+      end
+
+      gone = ours - live
+      added = live - ours
+      puts "repligen: #{model} ok (#{ours.length} keys)" if gone.empty? && added.empty?
+      next if gone.empty? && added.empty?
+
+      drifted += 1
+      puts "repligen: #{model} DRIFT"
+      puts "  we send keys the model no longer declares: #{gone.join(', ')}" if gone.any?
+      puts "  the model declares keys we never send:     #{added.join(', ')}" if added.any?
+    rescue StandardError => e
+      puts "repligen: #{model} — lookup failed (#{e.class}: #{e.message})"
+      drifted += 1
+    end
+    puts "repligen: #{drifted} of #{declared.length} model(s) need attention"
+    exit(1) unless drifted.zero?
+  end
+end
+
 task default: %i[gate test]

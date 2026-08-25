@@ -5,7 +5,10 @@ generates harmony, programs drums, plays sampled loops against them, mixes,
 masters, and writes an mp3 or wav. Everything runs locally through `ffmpeg` and
 `fluidsynth` — nothing is uploaded and nothing is fetched at render time.
 
-Tests: `cd MASTER && bundle exec ruby -Itest test/test_dilla.rb`
+Tests: `cd STUDIO && rake test:dilla` (or bare `rake` for the gate and every
+suite). The line here named `MASTER/test/test_dilla.rb`, which has not existed
+since the suite moved to `STUDIO/test/dilla/` — so it sent an operator to
+validate nothing and read the result as passing.
 
 ENV knobs and the render path in detail: `ENV_AND_RENDER.md`. Operator scripts,
 including `redo_nine.sh`, live under `scripts/`.

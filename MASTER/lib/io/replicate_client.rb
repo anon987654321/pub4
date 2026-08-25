@@ -258,6 +258,23 @@ module Master
           "\r\n--#{boundary}--\r\n".b
       end
 
+      # The input parameter names the provider currently declares, from the same
+      # GET latest_version already makes.
+      #
+      # repligen keeps its own MODEL_CAPABILITIES table so it can refuse an
+      # unsupported option rather than let the API ignore it — which is the right
+      # call, and is also a second source of truth. When Replicate changes a
+      # schema the table goes stale, the tests stay green because they only check
+      # the table against itself, and the drift shows up as a 422 in production
+      # or, worse, as a setting silently dropped.
+      def input_keys(model_id)
+        owner, name = model_id.split("/")
+        model = get(URI("#{BASE}/models/#{owner}/#{name}"))
+        schema = model.dig("latest_version", "openapi_schema",
+                           "components", "schemas", "Input", "properties")
+        Array(schema&.keys)
+      end
+
       def latest_version(model_id)
         owner, name = model_id.split("/")
         model = get(URI("#{BASE}/models/#{owner}/#{name}"))
