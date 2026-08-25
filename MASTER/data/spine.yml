@@ -102,10 +102,16 @@
 # each look small. All three are security fixes to the fold's own boundary and
 # each is pinned by mutation-checked tests, which is what a sponsor is — but the
 # allowance is now spent, and the honest next move is lib/ falling back rather
-# than a fourth raise. The candidate is known and documented: the Transcendent
-# half of lib/voice, reached by nothing. It is not being taken here because
-# deleting ~1500 lines of speech code inside a security commit is how a good
-# deletion gets reverted along with the fix it rode in on.
+# than a fourth raise.
+#
+# CORRECTION, same day: this paragraph named the Transcendent half of lib/voice
+# as the candidate, "reached by nothing". That was repeated from a stale note and
+# is false. lib/voice/transcendent.rb is called from lib/voice/speech.rb in five
+# places, from bin/tts-speak, and has its own test. It is live. The candidate
+# evaporated on the first grep, which is the whole reason DEBT.md says to trace
+# the caller before proposing a deletion — and the reason this correction is
+# here rather than quietly removed: the claim was committed, so the retraction
+# belongs beside it.
 spine:
   # Total lines across lib/**/*.rb.
   #

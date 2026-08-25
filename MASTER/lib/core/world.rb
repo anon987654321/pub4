@@ -84,7 +84,8 @@ module Master::Core
       unless path
         return Observation.ok("rollback: clean #{checkpoint[:id]}") if checkpoint[:patch].to_s.empty?
 
-        return Observation.no(unscoped_rollback_message(effect, checkpoint))
+        return Observation.no("rollback skipped #{checkpoint[:id]}: no path to scope to, and a tree-wide " \
+                              "reset would discard concurrent work in this shared checkout")
       end
 
       # Scoped, so the checkpoint being empty is not a reason to skip: it means
@@ -121,9 +122,14 @@ module Master::Core
       seconds = timeout.to_i
       seconds = EXEC_TIMEOUT if seconds <= 0 || seconds > EXEC_TIMEOUT
 
+      # A name mapped to nil is UNSET in the child. Passing "ENV minus credentials"
+      # would do nothing instead: spawn MERGES an env hash over the inherited
+      # environment, so every dropped key would be inherited straight back.
+      # Unsetting by name is also why the toolchain needs no enumerating —
+      # everything not matched here arrives exactly as it did before.
       out, status = bounded_capture2e(
         *argv,
-        env: credential_free_env,
+        env: ENV.keys.grep(CREDENTIAL_ENV_RX).to_h { |name| [name, nil] },
         chdir: @root,
         timeout: seconds,
       )
@@ -152,14 +158,6 @@ module Master::Core
     CREDENTIAL_ENV_RX = /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|SESSION|COOKIE|SALT|CERT|PRIVATE|
                          \A(?:AWS|GOOGLE|GCP|AZURE|STRIPE|TWILIO|SENDGRID|VAPID|DATABASE_URL)/xi
 
-    # A name mapped to nil is UNSET in the child. Passing "ENV minus credentials"
-    # instead would do nothing: spawn merges an env hash over the inherited
-    # environment, so every dropped key would simply be inherited back. Unsetting
-    # by name is also why the toolchain needs no enumerating — everything not
-    # named here is inherited exactly as before.
-    def credential_free_env
-      ENV.keys.grep(CREDENTIAL_ENV_RX).to_h { |name| [name, nil] }
-    end
 
     # commit is path-scoped, and refuses to run without paths.
     #
@@ -356,14 +354,7 @@ module Master::Core
     # Only a write names its target up front. exec can touch anything, and git
     # operations are undone by git rather than by a patch.
     def rollback_path(effect)
-      return nil unless effect.respond_to?(:verb) && effect.verb == :write
-
-      effect.args[:path].to_s.then { |p| p.empty? ? nil : p }
-    end
-
-    def unscoped_rollback_message(effect, checkpoint)
-      "rollback skipped for #{effect.respond_to?(:verb) ? effect.verb : "unknown"} #{checkpoint[:id]}: " \
-        "no path to scope to, and a tree-wide reset would discard concurrent work in this shared checkout"
+      effect.args[:path].to_s.then { |p| p unless p.empty? } if effect.respond_to?(:verb) && effect.verb == :write
     end
 
     # Restore one path to the state the checkpoint captured.

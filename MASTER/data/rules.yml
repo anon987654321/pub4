@@ -434,6 +434,20 @@ evidence_scoring:
     profiling_data: 10
   pass_threshold: 80
   block_threshold: 50
+  # What can actually produce each kind of proof. The kind used to be whatever the
+  # model wrote in the effect, so exec(["true"], evidence: "test_pass") was worth
+  # 35 and four of them ended the turn — the fold graded its own paper. A command
+  # that does not run the tests cannot be a passing test run.
+  #
+  # Unmatched scores nothing rather than blocking the effect: the fold may run what
+  # it likes, it just cannot claim credit for it. Mirrors Master::Core::Proof
+  # PRODUCERS, which is the Ruby source, and a test pins the two together.
+  producers:
+    test_pass: 'rake\s+test|rails\s+test|rspec|minitest|bin/(?:ci|check|gate)|ruby\S*\s[^;|]*\btest/'
+    scan_clean: 'bin/(?:check|gate|scan)|rubocop|brakeman|bundler-audit|rake\s+(?:lint|audit|scan)'
+    code_review: 'bin/(?:review|critique)|rake\s+(?:review|critique)'
+    log_analysis: 'journalctl|dmesg|rcctl|/var/log|\.log\b'
+    profiling_data: 'benchmark|stackprof|ruby-prof|memory_profiler|--profile'
 schema_metadata:
   optional_fields:
     reversibility: free | cheap | surgical | impossible

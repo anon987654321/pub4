@@ -23,6 +23,26 @@ module Master::Core
     PASS_THRESHOLD = 80
     ALTERNATIVES_REQUIRED = 15
 
+    # What can actually produce each kind of proof. The kind was whatever the
+    # model wrote in the effect, so `exec(["true"], evidence: "test_pass")` was
+    # worth 35 points and four such calls ended the turn — the fold graded its own
+    # paper. A command that does not run the tests cannot be a passing test run.
+    #
+    # Unmatched scores nothing rather than blocking: the fold may run whatever it
+    # likes, it just cannot claim credit for it. Refusing the effect outright
+    # would turn a wrong label into a dead turn, and the label is the model's
+    # mistake to correct on the next one.
+    PRODUCERS = {
+      # `ruby ... test/x.rb` rather than `ruby -I<something>test`: the real
+      # invocation in this repo is `ruby -Ilib -Itest test/core/test_world.rb`,
+      # where the include flags come first and an adjacency pattern misses it.
+      test_pass: %r{\b(?:rake\s+test|rails\s+test|rspec|minitest|bin/(?:ci|check|gate)|ruby\S*\s[^;|]*\btest/)},
+      scan_clean: %r{\b(?:bin/(?:check|gate|scan)|rubocop|brakeman|bundler-audit|rake\s+(?:lint|audit|scan))},
+      code_review: %r{\b(?:bin/(?:review|critique)|rake\s+(?:review|critique))},
+      log_analysis: %r{\b(?:journalctl|dmesg|rcctl|/var/log|\.log\b)},
+      profiling_data: %r{\b(?:benchmark|stackprof|ruby-prof|memory_profiler|--profile)},
+    }.freeze
+
     attr_reader :risk
 
     def initialize(risk: :low)
@@ -67,7 +87,7 @@ module Master::Core
 
       kind = effect.args[:evidence].to_s.to_sym
       score = SCORING.fetch(kind, 0)
-      return unless score.positive?
+      return unless score.positive? && PRODUCERS[kind]&.match?(Array(effect.args[:argv]).join(" "))
 
       @evidence << Evidence.new(kind:, ok: true, score:, detail: observation.message, at: Time.now.utc,
                                 generation: @generation)

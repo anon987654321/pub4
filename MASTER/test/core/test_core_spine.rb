@@ -149,8 +149,12 @@ class TestKernelSpine < Minitest::Test
   def test_two_hats_blocks_a_mixed_large_commit
     memory = Master::Core::Memory.new
     memory.record(Master::Core::Effect.write("MASTER/a.rb", "x\n" * 201), Master::Core::Observation.ok("ok"))
-    %i[test_pass scan_clean code_review].each do |kind|
-      memory.record(Master::Core::Effect.exec(["true"], evidence: kind), Master::Core::Observation.ok("ok"))
+    # A command that can actually produce each kind. ["true"] used to stand in for
+    # all three, which PRODUCERS now scores at zero — the fixture would reach
+    # git_commit_evidence instead of the rule it is about.
+    { test_pass: %w[bundle exec rake test], scan_clean: %w[bin/check],
+      code_review: %w[bin/review] }.each do |kind, argv|
+      memory.record(Master::Core::Effect.exec(argv, evidence: kind), Master::Core::Observation.ok("ok"))
     end
     verdict = constitution.admit(
       # paths: because a commit now has to name what it commits — an unscoped one
