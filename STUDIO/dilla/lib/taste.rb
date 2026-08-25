@@ -29,9 +29,23 @@ require "json"
 module DillaTaste
   # Each dimension: how to measure it, and which knob moves it. The knob is
   # named so a finding is actionable; nothing here sets one.
+  #
+  # Every uppercase name here is checked against DillaKnobs by the suite. Two of
+  # them were not knobs: MASTER_TARGET_LRA and MASTER_TARGET_LUFS, which the
+  # engine reads nowhere. So this module's whole output -- a dimension, a
+  # separation, and the knob that moves it -- ended by naming a control that does
+  # not exist, on the two dimensions an operator is most likely to act on.
+  #
+  # That is the same defect this file exists to avoid in the other direction: a
+  # confident number nobody can act on. Advice about a knob that is not there is
+  # worse than no advice, because it is followed.
+  #
+  # LRA has no single knob and saying so is the honest answer -- it falls out of
+  # the arrangement and the master compression, which is why both are named
+  # rather than one invented.
   DIMENSIONS = {
-    "loudness range (LRA)" => { units: "LU", knob: "MASTER_TARGET_LRA / the section layers" },
-    "integrated loudness" => { units: "LUFS", knob: "MASTER_TARGET_LUFS" },
+    "loudness range (LRA)" => { units: "LU", knob: "SECTION_LAYERS, the master bus compression" },
+    "integrated loudness" => { units: "LUFS", knob: "MASTER_LUFS (STREAM_LUFS in a stream)" },
     "true peak" => { units: "dBTP", knob: "the limiter" },
     "transient density" => { units: "onsets/s", knob: "GHOST_TIER, DRUM_CHOPS, the drum feel" },
     "low-versus-mid balance" => { units: "dB", knob: "KICK_GAIN, BASS_MIX_WEIGHT, SAMPLE_LOOP_SUB_DB" },

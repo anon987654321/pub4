@@ -164,6 +164,11 @@ def help
       arrangement out.mp3 ref.wav    Does it have sections? Foote spectral novelty
                                        + short-term loudness spread, against a
                                        reference record.  `detail`
+      ab KNOB=value [bars=16]      Two renders differing in exactly those knobs,
+                                       plus a control arm so the render-to-render
+                                       noise floor is printed beside the result.
+                                       UPPERCASE=knob, lowercase=option.
+                                       track= seed= out= keep detail
       modulate in out lfo=0.5        A parameter moved over time via asendcmd
                                        target=filter.param base=N depth=0..1
                                        mode=modulate|remote family=straight|curved

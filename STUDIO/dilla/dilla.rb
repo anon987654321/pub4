@@ -721,6 +721,7 @@ DISPATCH = {
   "midi-bag" => -> { midi_bag_cli!(ARGV) },
   "wav-map" => -> { wav_map_cli!(ARGV) },
   "arrangement" => -> { arrangement_cli!(ARGV) },
+  "ab" => -> { ab_cli!(ARGV) },
   "macro" => -> { macro_cli!(ARGV) },
   "modulate" => -> { modulate_cli!(ARGV) },
   "import-midi" => -> { import_midi_drums!(ARGV.shift.to_s) },

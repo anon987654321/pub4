@@ -218,6 +218,25 @@ class TestDevices < Minitest::Test
     assert DillaMacros.verify!
   end
 
+  # The same guard, for the other place that hands the operator a knob name.
+  #
+  # `dilla taste` ends every finding with the control that moves that dimension,
+  # and two of them named knobs the engine reads nowhere -- MASTER_TARGET_LRA and
+  # MASTER_TARGET_LUFS -- on the two dimensions an operator is most likely to act
+  # on. The advice ran, read as authoritative, and pointed at nothing.
+  #
+  # Uppercase tokens only: the field is prose with knob names in it ("GHOST_TIER,
+  # DRUM_CHOPS, the drum feel"), so the prose is skipped and the names are not.
+  def test_taste_never_names_a_knob_the_engine_never_reads
+    missing = DillaTaste::DIMENSIONS.flat_map do |dimension, spec|
+      spec[:knob].to_s.scan(/\b[A-Z][A-Z0-9_]{3,}\b/).reject { |n| DillaKnobs[n] }
+                 .map { |n| "#{dimension} -> #{n}" }
+    end
+
+    assert_empty missing,
+                 "taste names a knob nothing reads; the advice will be followed and do nothing"
+  end
+
   def test_a_macro_sweeps_between_its_own_ends
     DillaMacros::MACROS.each do |name, targets|
       low = DillaMacros.resolve(name, 0.0)

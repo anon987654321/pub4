@@ -1014,3 +1014,148 @@ def arrangement_cli!(argv)
     end
   end
 end
+
+# ------------------------------------------------------------------------ ab
+#
+#   dilla ab COPY_MACHINE=6 bars=16 track=semua_untuk_mu
+#   dilla ab SONITEX=donuts_soul bars=48 detail
+#
+# UPPERCASE is a knob to change; lowercase is an option for the comparison
+# itself. That is dillas own convention -- every knob in the engine is uppercase
+# -- and it means no separator, which matters because the global flag parser
+# consumes `--` before dispatch runs and aborts on it.
+#
+# Two renders differing in exactly the stated knobs, level-matched, measured.
+#
+# This was done by hand a dozen times over one session and got the answer wrong
+# more than once, always the same way: an arm that differed in something other
+# than the variable. A 16-bar comparison whose windows did not overlap the change
+# proved nothing and was reported as a negative; a "same settings" pair turned
+# out to use two different section maps. Both would have been caught by the two
+# things this does automatically -- pin the seed and freeze the learned state on
+# both arms, and print the render-to-render noise floor beside the difference.
+#
+# The noise floor is the part worth having. Two identical-seed renders of this
+# engine still differ (RENDER_SEED does not fully pin; the measured spread is
+# about 0.15 on the novelty metrics and a few hundredths of a dB on level), so a
+# difference smaller than that is not a finding. Without a control arm there is
+# no way to know which side of that line a number falls on -- and a no-kit
+# reference built four minutes too late is what six hypotheses died for.
+# What a render legitimately needs from the surrounding process. Everything
+# else is dropped, so neither arm can inherit a booted style.
+AB_PASSTHROUGH = %w[PATH HOME TMPDIR LANG SHELL USER].freeze
+
+def ab_cli!(argv)
+  # Split on case rather than handing everything to device_flags, which treats
+  # every key=value as an option and would swallow the knobs being compared.
+  changes = argv.select { |a| a =~ /\A[A-Z][A-Z0-9_]*=/ }
+  flags, = device_flags(argv - changes, switches: %w[detail keep])
+  return puts("usage: dilla ab KNOB=value [KNOB=value…] [-- bars=16 track=… detail]") if changes.empty?
+
+  bars = device_int(flags, :bars, 16)
+  out = flags[:out] || File.join(SCRATCH_DIR, "ab")
+  FileUtils.mkdir_p(out)
+  # A CLEAN environment, not this process's.
+  #
+  # `dilla ab` runs inside dilla.rb, which sets style-lock knobs during its own
+  # boot -- env_locks.rb reasserts them so the mix does not drift. A child
+  # spawned with the parent's environment inherits all of that, and the first
+  # version of this command produced three arms of identical file size because
+  # the inherited style pinned SONITEX over the very knob under test.
+  #
+  # That is exactly the failure this command exists to prevent -- arms differing
+  # in more than the variable -- so it must not commit it itself. Only what a
+  # render legitimately needs from the process is carried through, and the spawn
+  # below passes unsetenv_others so nothing else can leak in.
+  base = AB_PASSTHROUGH.to_h { |k| [k, ENV.fetch(k, nil)] }.compact
+  base.merge!("DILLA_FROZEN" => "1",
+              "RENDER_SEED" => flags.fetch(:seed, "20260825").to_s,
+              "DILLA_SH_TIMEOUT" => ENV.fetch("DILLA_SH_TIMEOUT", "900"))
+  base["TRACK"] = flags[:track] if flags[:track]
+
+  # Three arms, not two. The control is a second render of the BASELINE, which
+  # is what turns "these differ by 0.3 dB" into "these differ by 0.3 dB and the
+  # noise is 0.2".
+  arms = {
+    "baseline" => base,
+    "control" => base,
+    "changed" => base.merge(changes.to_h { |c| c.split("=", 2) }),
+  }
+  rendered = arms.to_h do |name, env|
+    path = File.join(out, "ab_#{name}.mp3")
+    puts "rendering #{name}#{name == 'changed' ? " (#{changes.join(' ')})" : ''}…"
+    system(env, RbConfig.ruby, DillaSources.entry, "dilla", path, bars.to_s,
+           unsetenv_others: true, out: File::NULL, err: File::NULL)
+    [name, path]
+  end
+  missing = rendered.reject { |_, p| File.file?(p) }
+  return puts("ab: #{missing.keys.join(', ')} failed to render") if missing.any?
+
+  report_ab(rendered, changes, flags.key?(:detail))
+  FileUtils.rm_rf(out) unless flags.key?(:keep)
+end
+
+# What differs, against what differs anyway.
+def report_ab(rendered, changes, detail)
+  vals = rendered.transform_values { |p| ab_measure(p) }
+  noise = (vals["control"][:lufs] - vals["baseline"][:lufs]).abs
+  puts
+  puts "changed: #{changes.join(' ')}"
+  puts format("%-12s %9s %9s %9s %9s", "arm", "LUFS", "LRA", "peak", "crest")
+  vals.each do |name, v|
+    puts format("%-12s %9.2f %9.2f %9.2f %9.2f", name, v[:lufs], v[:lra], v[:peak], v[:crest])
+  end
+  puts
+  d = vals["changed"][:lufs] - vals["baseline"][:lufs]
+  puts format("level     %+.2f LUFS against a %.2f LUFS noise floor -- %s",
+              d, noise,
+              d.abs > [noise * 2, 0.05].max ? "real" : "inside the noise")
+
+  # Level is a weak discriminator here and saying so is the point: the engine
+  # normalises every render to a fixed integrated loudness, so a change that
+  # alters the TONE and not the level reports +0.00 LUFS and reads as nothing.
+  # A preset swap is exactly that. Bands are the metric that separates them --
+  # a level change moves every band together, and an instrumentation or tone
+  # change does not, which is what "spread" measures.
+  bands = ab_bands(rendered)
+  puts
+  puts format("%-12s %8s %8s %8s %8s %8s %8s", "arm", "30-120", "120-300", "300-800", "800-2k", "2k-5k", "5k-12k")
+  bands.each { |name, v| puts format("%-12s %8.1f %8.1f %8.1f %8.1f %8.1f %8.1f", name, *v) }
+  ctl = bands["control"].each_with_index.map { |v, i| (v - bands["baseline"][i]).abs }.max
+  chg = bands["changed"].each_with_index.map { |v, i| v - bands["baseline"][i] }
+  puts format("bands     largest change %+.1f dB, spread %.1f dB, against %.1f dB of render noise -- %s",
+              chg.max_by(&:abs), chg.max - chg.min, ctl,
+              chg.map(&:abs).max > [ctl * 2, 0.3].max ? "real" : "inside the noise")
+  return unless detail
+
+  puts
+  puts "arrangement (same instrument, same frame duration on both arms):"
+  puts Arrangement.compare([rendered["baseline"], rendered["changed"]])
+end
+
+# Octave-ish bands, cascaded twice each so the skirts are steep enough that a
+# neighbouring band does not leak into the reading.
+AB_BANDS = [[30, 120], [120, 300], [300, 800], [800, 2000], [2000, 5000], [5000, 12_000]].freeze
+
+def ab_bands(rendered)
+  rendered.transform_values do |path|
+    AB_BANDS.map do |lo, hi|
+      o = IO.popen(["ffmpeg", "-hide_banner", "-i", path, "-af",
+                    "highpass=f=#{lo},highpass=f=#{lo},lowpass=f=#{hi},lowpass=f=#{hi},volumedetect",
+                    "-f", "null", "-"], err: %i[child out], &:read)
+      o[/mean_volume: (-?[\d.]+)/, 1].to_f
+    end
+  end
+end
+
+def ab_measure(path)
+  o = IO.popen(["ffmpeg", "-hide_banner", "-i", path, "-af", "volumedetect", "-f", "null", "-"],
+               err: %i[child out], &:read)
+  e = IO.popen(["ffmpeg", "-hide_banner", "-i", path, "-af", "ebur128=peak=true", "-f", "null", "-"],
+               err: %i[child out], &:read)
+  peak = o[/max_volume: (-?[\d.]+)/, 1].to_f
+  rms = o[/mean_volume: (-?[\d.]+)/, 1].to_f
+  { peak:, rms:, crest: (peak - rms).round(2),
+    lufs: e.scan(/I:\s*(-?[\d.]+) LUFS/).flatten.last.to_f,
+    lra: e.scan(/LRA:\s*(-?[\d.]+) LU/).flatten.last.to_f }
+end
