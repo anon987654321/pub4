@@ -319,20 +319,41 @@ proposals:
 
   - id: chmod-a-rx-over-the-rails-tree
     tree: OPENBSD
+    state: refuted
+    claim: "RAILS/_runtime_gate.sh:73 runs a recursive a+rX over a tree holding production databases and master.key files"
+    reason: >
+      The tree holds neither, and this row asserted both from a laptop by listing
+      what the repo contains rather than what the box does. Measured on vm23:
+      /home/dev/pub4/RAILS has no master.key and no .env anywhere in it, and one
+      production.sqlite3 — amber's, 4096 bytes, zero tables, untracked. The real
+      databases live under /home/<app>/app/storage and are not on the path the
+      chmod touches. What it widens there is source code already public on GitHub.
+    refuted_by: ls -ln on vm23, 2026-08-25
+
+  - id: app-homes-are-world-readable
+    tree: OPENBSD
     state: open
-    claim: "RAILS/_runtime_gate.sh:73 runs `chmod -R a+rX` over /home/dev/pub4/RAILS"
+    claim: "every local account on vm23 can read all three production databases"
     note: >
-      Confirmed and deliberately not landed from here. The tree it widens contains
-      RAILS/*/storage/production.sqlite3 — user emails, password digests, private
-      messages — and the untracked config/master.key files, and a+r makes every one
-      of them world-readable. What holds today is the parent: /home/dev is 710
-      dev:_pub4ci (debt.yml secrets_in_process_argv_and_world_readable_home, closed
-      2026-08-22), so the world cannot traverse to them. It is one chmod on /home/dev
-      away from being an exposure, and the comment two lines above the call already
-      says the gate "must not widen /home/dev to the world".
-      The obvious narrowing is g+rX instead of a+rX, since the comment says traversal
-      is group-based. That is exactly what cannot be decided from here: it is only
-      correct if the files under the tree are group _pub4ci rather than group dev,
-      and if they are group dev the app users lose access and every deploy's bin/ci
-      breaks. `ls -ln /home/dev/pub4/RAILS` on vm23 settles it in one line. Operator
-      decision, per "production is vm23 only".
+      Found while refuting the row above, and it is what that one was reaching
+      for. /home/brgen, /home/brgen/app and /home/brgen/app/storage are all 755
+      and production.sqlite3 is 644 brgen:brgen; amber and bsdports are the same.
+      Nothing on the path is restricted.
+      Proven rather than inferred: as dev — uid 1000, not brgen, not in group
+      brgen — sqlite3 returned 17748 rows from brgen's users table and an email
+      address out of it. That table carries password_digest, remember_token,
+      magic_link_token, otp_secret and email_verification_token.
+      The accounts that can do this are dev, amber, bsdports, johann, www, sshd,
+      build, bin and operator. www and sshd are the ones that matter: they are
+      where a relayd or sshd compromise lands, and from there the digests and OTP
+      secrets of every brgen user are a plain file read.
+      This is the blind spot in debt.yml
+      secrets_in_process_argv_and_world_readable_home, closed 2026-08-22. That
+      entry tightened /home/dev to 710 dev:_pub4ci and left /home/<app> at 755:
+      the checkout was protected and the live data was not.
+      Proposed fix is chmod 750 on /home/<app>/app/storage for the three apps,
+      and the three things that could break it were checked first — relayd
+      declares no file root and is a pure proxy, every crontab on the box is
+      root's, and vps-deploy line 126 tests -d /home/<app>/app as dev, which
+      keeps working because /home/<app> and /app stay 755. Operator call: it is a
+      production permissions change.
