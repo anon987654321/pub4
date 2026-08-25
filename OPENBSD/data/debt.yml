@@ -57,6 +57,25 @@ open:
     See MASTER/DEBT.md "Scanner noise".
 
     '
+- id: etc_drift_six_configs
+  tag: operator-priority
+  summary: >-
+    config_drift_gate found six of eleven verbatim configs differing between
+    OPENBSD/etc and live /etc on 2026-08-25, on its first run that compared
+    anything. It had been reporting "clean (0 verbatim configs)" because ROOT
+    resolved relative to the installed script rather than the repo, so every
+    lookup missed and each one skipped past without being tallied (fixed in
+    001142b7e, which also made a zero numerator a failure). httpd.conf 372B repo
+    / 672B live, rc.conf.local 201/212, newsyslog.conf 2336/1460, rc.d/brgen
+    3735/2927, rc.d/amber 3310/3291, rc.d/bsdports 3800/3781. doas.conf, pf.conf,
+    login.conf, ssh/sshd_config and rc.d/master match. Each is either an
+    undeployed fix or a hand-edit nobody copied back, and the direction matters -
+    repo is LARGER for newsyslog.conf and all three rc.d files, which reads as
+    live being older. The rc.d files start production services, so reconciling
+    them is a read in both directions plus a restart per app, not a sync.
+    httpd.conf is the one to read first - live is nearly double the repo, and
+    OPENBSD/CLAUDE.md was corrected the same day for claiming there is no HTTP
+    listener at all.
 not_debt:
 - id: rails_autofix_scars
   summary: '11 `autofix: removed box-shadow (flat UI)` markers in _shell, _shell_widgets
