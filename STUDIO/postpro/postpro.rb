@@ -718,10 +718,10 @@ PRESETS = {
   process_e6: { fx: %w[optical_blur spectral_temp push_pull film_curve color_separate halation highlight_roll grain],
                 stock: :ektachrome_100, temp: 5600, intensity: 0.90, stops: 2.0 },
 
-  cinematic: { fx: %w[optical_blur spectral_temp tonemap film_curve orange_mask halation shadow_lift print_film grain],
+  cinematic: { fx: %w[optical_blur spectral_temp halation tonemap film_curve orange_mask shadow_lift print_film grain],
                stock: :kodak_vision3_500t, temp: 4500, intensity: 0.90, print_stock: :kodak_2383 },
 
-  blockbuster: { fx: %w[optical_blur spectral_temp tonemap bleach_bypass film_curve orange_mask teal_orange halation print_film grain],
+  blockbuster: { fx: %w[optical_blur spectral_temp halation tonemap bleach_bypass film_curve orange_mask teal_orange print_film grain],
                  stock: :kodak_vision3, temp: 4800, intensity: 0.90, print_stock: :kodak_2383 },
 
   golden_age: { fx: %w[optical_blur spectral_temp vintage_lens film_curve orange_mask technicolor warmth dir_coupler bloom_pro grain],
@@ -772,7 +772,7 @@ PRESETS = {
   arctic: { fx: %w[optical_blur spectral_temp tonemap film_curve desaturate bleach_bypass highlight_roll grain],
             stock: :tri_x, temp: 6500, intensity: 0.90 },
 
-  kodachrome_look: { fx: %w[optical_blur spectral_temp tonemap film_curve stock_matrix kodachrome_sim dir_coupler halation grain],
+  kodachrome_look: { fx: %w[optical_blur spectral_temp halation tonemap film_curve stock_matrix kodachrome_sim dir_coupler grain],
                      stock: :kodachrome, temp: 5600, intensity: 0.90 },
 
   technicolor_3strip: { fx: %w[optical_blur spectral_temp film_curve stock_matrix technicolor dir_coupler bloom_pro grain],
@@ -798,7 +798,7 @@ PRESETS = {
 
   # LENSES[:anamorphic] was the one entry in that table no preset reached at
   # all. The preset named after it is the obvious home for it.
-  anamorphic: { fx: %w[optical_blur vintage_lens longitudinal_ca spectral_temp tonemap film_curve anamorphic_flare halation grain],
+  anamorphic: { fx: %w[optical_blur vintage_lens longitudinal_ca spectral_temp halation tonemap film_curve anamorphic_flare grain],
                 stock: :kodak_vision3_500t, temp: 4200, intensity: 0.90, lens: "anamorphic" },
 
   contact_print: { fx: %w[optical_blur spectral_temp adjacency_effects film_curve darkroom_print shadow_lift grain],
@@ -810,7 +810,7 @@ PRESETS = {
   wide_angle: { fx: %w[optical_blur lens_distortion spectral_temp film_curve halation grain],
                 stock: :fuji_velvia, temp: 5800, intensity: 0.90, k1: -0.14 },
 
-  cinema_scan: { fx: %w[optical_blur spectral_temp longitudinal_ca tonemap film_curve orange_mask halation bokeh_rendering print_film grain],
+  cinema_scan: { fx: %w[optical_blur spectral_temp longitudinal_ca halation tonemap film_curve orange_mask bokeh_rendering print_film grain],
                  stock: :kodak_vision3, temp: 4600, intensity: 0.90, print_stock: :kodak_2383 },
 
   diffraction: { fx: %w[optical_blur spectral_temp diffraction_blur film_curve micro_contrast grain],
