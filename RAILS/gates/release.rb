@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-
 # runner.rb sets this for itself, but it starts the three subprocess gates with
 # system(), and a fresh process does not inherit Encoding.default_external. Under
 # the C locale that OPENBSD/integrity_gate.rb deliberately uses, reading UTF-8
@@ -13,10 +11,32 @@ require_relative "../../OPENBSD/lib/utf8"
 require "open3"
 require "rbconfig"
 require "timeout"
-require_relative "lib/domain_alignment"
-require_relative "lib/frontend_production"
-require_relative "lib/frontend_auditor"
-require_relative "lib/stimulus_components"
+# From the manifest, not from four hardcoded paths.
+#
+# All four moved into lib/host and lib/source, gates.yml moved with them, and
+# these four lines did not — so this file raised LoadError on
+# lib/domain_alignment before reaching its first gate. Nothing in-process
+# noticed: release is one of the gates runner.rb starts with system(), so a
+# subprocess that dies on require reads as a failing gate rather than a missing
+# file, and `constitutional_scan` was wired under release earlier tonight on the
+# assumption it ran at all.
+#
+# gates.yml is where a gate's require lives — RAILS/CLAUDE.md calls it declared
+# once — so reading it here is what stops the next move breaking this file again.
+# Keyed on the classes this file names, not on `covered_by: release`: it also
+# runs frontend_auditor, which belongs to layout_suite, so requiring its own
+# composite loaded three of the four and left the fourth undefined at line 152.
+require "yaml"
+RELEASE_GATE_CLASSES = %w[
+  Deploy::DomainAlignmentGate
+  Deploy::FrontendAuditorGate
+  Deploy::FrontendProductionGate
+  Deploy::StimulusComponentsGate
+].freeze
+
+YAML.load_file(File.join(__dir__, "gates.yml")).then { |manifest| manifest["gates"] || manifest }
+    .each_value.select { |row| row.is_a?(Hash) && RELEASE_GATE_CLASSES.include?(row["class"]) }
+    .each { |row| require_relative row.fetch("require") }
 
 ROOT = File.expand_path("..", __dir__)
 APPS = %w[amber brgen bsdports].freeze
