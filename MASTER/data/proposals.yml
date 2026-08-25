@@ -116,8 +116,9 @@ proposals:
 
   - id: sandbox-policy-has-no-production-caller
     tree: MASTER
-    state: open
+    state: landed
     claim: "Ground::Policy::Sandbox.decide is called only from tests; Io::Shell carries its own BLOCKLIST"
+    landed_by: a64e93157
     note: >
       Two shell-safety gates, and the live one is not the hardened one.
       lib/io/shell.rb:11 has its own BLOCKLIST and consults nothing else, while
@@ -127,6 +128,11 @@ proposals:
       no production path. Either wire decide() into Io::Shell or fold its
       patterns into the BLOCKLIST; both change what the shell tool refuses, so
       it is an operator decision rather than a refactor.
+    note: >
+      Wired into Io::Shell#preflight_error as sandbox_error, :deny only — :ask is
+      decide()'s default arm and @governor already owns approval. Two tests in
+      test_runtime_hardening.rb assert the wiring rather than the policy: six denied
+      commands refused through Shell#call, and `echo hello` still running.
 
   - id: memory-is-a-family-in-lib-ground
     tree: MASTER
@@ -144,8 +150,9 @@ proposals:
 
   - id: tool-contract-validates-nothing
     tree: MASTER
-    state: open
+    state: landed
     claim: "Ground::Tool::Contract has no production caller; its own docstring says it enforces at the call site"
+    landed_by: 7d95eb40e
     note: >
       Deleted rather than wired, on three findings that only appeared when someone
       tried to wire it. Its REGISTRY names nine tools and exactly one — web_fetch —

@@ -891,7 +891,7 @@ loc_body_budgets:
   lib/core: 682
   lib/design: 270
   lib/fix: 2643
-  lib/ground: 5983
+  lib/ground: 5899
   lib/io: 3545
   lib/ops: 251
   lib/pub4: 470
