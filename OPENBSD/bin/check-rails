@@ -4,6 +4,7 @@
 require "optparse"
 require_relative "../../MASTER/lib/pub4/check_runner"
 require_relative "../../MASTER/lib/pub4/ruby_runner"
+require_relative "../../MASTER/lib/pub4/environment"
 
 ROOT = File.expand_path("../..", __dir__)
 RUBY = Pub4::RubyRunner.gate_ruby
@@ -18,6 +19,20 @@ end.parse!
 
 runner = Pub4::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP_TIMEOUT)
 failures = []
+
+# On the deploy host every app is listening, so a live check that declines to
+# run has found something rather than been unlucky. GateResult#skipped_live
+# turns into a failure under this flag instead of a warning.
+#
+# It was decided per-loop and applied to one of the two, so the source tier —
+# which holds page_simulation and flow_journey, both skipped_live callers —
+# ran soft on the VPS as well as off it. And the host test was a second,
+# narrower one: File.exist?("/etc/rc.d/brgen") beside Environment.on_vps?'s
+# /etc/relayd.conf. Two predicates for one fact disagree the moment brgen's
+# rc.d script is renamed, and the hand-rolled one cannot be rehearsed —
+# on_vps? honours DEPLOY_ASSUME_VPS=1, which is how this gets exercised from a
+# laptop before it is trusted on the box.
+LIVE_ENV = Pub4::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
 
 GATES_RUNNER = "RAILS/gates/runner.rb"
 
@@ -57,7 +72,8 @@ source_gates = [
 ]
 
 source_gates.each do |name, gate|
-  env = name == "layout suite" ? { "GATE_AUTOFIX" => "0" } : {}
+  env = LIVE_ENV.dup
+  env["GATE_AUTOFIX"] = "0" if name == "layout suite"
   failures << name.tr(" ", "_") unless runner.run(name, RUBY, GATES_RUNNER, gate, env: env)
 end
 
@@ -83,12 +99,10 @@ if deep
     timeout: Integer(ENV.fetch("DEPLOY_DEEP_CHECK_TIMEOUT", "2400"))
   )
   deep_gates.each do |name, gate|
-    env = { "GATE_AUTOFIX" => "0" }
-    # On the deploy host every live half is REQUIRED: a closed port reading
-    # as green is how amber and bsdports were once down for days invisibly
-    # (rails_gates_not_wired, final item — closed 2026-08-22). Off-host runs
-    # keep the skip so a laptop without triangle does not false-fail.
-    env["GATE_REQUIRE_LIVE"] = "1" if %w[rendered\ suite release constitutional\ scan].include?(name) || File.exist?("/etc/rc.d/brgen")
+    # These three are live by definition and require the live half wherever
+    # they run; LIVE_ENV supplies it for everything else on the deploy host.
+    env = LIVE_ENV.merge("GATE_AUTOFIX" => "0")
+    env["GATE_REQUIRE_LIVE"] = "1" if %w[rendered\ suite release constitutional\ scan].include?(name)
     failures << name.tr(" ", "_") unless deep_runner.run(name, RUBY, GATES_RUNNER, gate, env: env)
   end
 else
