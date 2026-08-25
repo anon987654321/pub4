@@ -329,7 +329,7 @@ module Master
         File.write(list, sequence.map { |p| "file '#{p}'" }.join("\n"))
         ok = system("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out_path,
                     out: File::NULL, err: File::NULL)
-        sequence.each { |p| File.delete(p) if File.exist?(p) }
+        sequence.each { |p| File.delete(p) if File.exist?(p) } # scan: intentional — a named list of temp files this call created
         File.delete(list) if File.exist?(list)
         ok && File.size?(out_path)
       end

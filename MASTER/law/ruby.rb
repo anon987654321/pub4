@@ -63,8 +63,18 @@ Law.define(:GUARD_CLAUSE) do
   # 2,381 authored Ruby files, each pointing at frozen_string_literal. The
   # lookahead keeps the body inside one method. The 3-line fixtures below are
   # too small to exhibit that, which is why prove! never caught it.
+  # The if and its else must be one block. Allowing any non-def line between
+  # them let the match cross an `end` and stitch a method's first `if` — which
+  # already returns early — to the `else` of a later, unrelated one. signals.rb
+  # was flagged for exactly that: on_int opens with a guard and the pattern
+  # reached past its `end` to the next conditional.
+  #
+  # The backreference pins `else` and `end` to the `if`'s own indent and every
+  # line between to a deeper one, so a closed block cannot be crossed. 24 files
+  # to 18, and what remains is a method whose whole body is the conditional —
+  # which is what the fixtures show and what a guard clause replaces.
   detect do |text|
-    text.match?(/^[ \t]*def \w+[^\n]*\n[ \t]*if [^\n]+\n(?:(?![ \t]*def )[^\n]*\n)*?[ \t]*else\n(?:(?![ \t]*def )[^\n]*\n)*?[ \t]*end[ \t]*$/)
+    text.match?(/^[ \t]*def \w+[^\n]*\n([ \t]+)if [^\n]+\n(?:\1[ \t]+[^\n]*\n|[ \t]*\n)*?\1else\n(?:\1[ \t]+[^\n]*\n|[ \t]*\n)*?\1end\n/)
   end
   fix "Flatten to: return ... unless condition"
   bad <<~X

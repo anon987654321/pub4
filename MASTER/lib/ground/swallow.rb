@@ -64,7 +64,7 @@ module Master
           backup = "#{LOG_PATH}.#{Time.now.utc.strftime("%Y%m%d%H%M%S")}"
           File.rename(LOG_PATH, backup)
           # Keep only last 5 backups
-          Dir.glob("#{LOG_PATH}.*").sort.reverse.drop(5).each { |f| File.delete(f) }
+          Dir.glob("#{LOG_PATH}.*").sort.reverse.drop(5).each { |f| File.delete(f) } # scan: intentional — log rotation, drop(5) keeps the five newest
         end
 
         private
