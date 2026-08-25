@@ -155,11 +155,94 @@ TIME_OF_DAY_VOCAB = {
 # list here rather than repeating it in compile_prompt, resolve_vocab and the
 # option parser is what makes it possible to add a dimension in one place --
 # and what makes vocab-check able to check all of them without being told.
+# Camera-to-subject distance, which is a different axis from --distance above.
+#
+# --distance is the CROP: macro through establishing. This is how far away the
+# camera stands, and it is the one that decides whether a face is distorted.
+# Focal length does not distort a face; distance does. An 85mm lens flatters
+# because filling a frame with a head puts the photographer 2-3 m back, where
+# the nose is not meaningfully nearer the sensor than the ears. At 40 cm it is,
+# and the nose enlarges while the ears recede. See STUDIO/PHOTOGRAPHY.md.
+#
+# The two were one field, so there was no way to ask for a head-and-shoulders
+# crop taken from three metres — which is the ordinary portrait, and was
+# unsayable.
+SUBJECT_DISTANCE_VOCAB = {
+  "selfie" => "camera at arm's length, roughly 45cm from the face, visible " \
+              "wide-angle perspective: nose and forehead enlarged, ears falling away",
+  "0.5m" => "camera roughly half a metre from the subject, strong near-far perspective",
+  "1m" => "camera about a metre from the subject, mild perspective exaggeration",
+  "2m" => "camera about two metres back, natural facial proportion",
+  "3m" => "camera about three metres back, compressed facial proportion, ears and " \
+          "nose rendered at nearly the same scale, the geometry of an 85mm portrait",
+  "5m" => "camera about five metres back, strongly compressed, flattened features, " \
+          "the geometry of a 135mm portrait",
+  "far" => "camera far from the subject, telephoto compression stacking the planes",
+}.freeze
+
+# The thing that has never been available in a photograph.
+#
+# A selfie's framing and gaze come with a selfie's geometry, because arm length
+# fixes the distance. A generated image has no camera in it, so the two can be
+# separated: the intimacy and eye contact of a selfie with the facial proportion
+# of a portrait taken from three metres. Asked for as one word because it is one
+# idea, and because spelling it out every time is how it stops being asked for.
+SELFIE_GEOMETRY = "held at arm's length in framing and eye contact but with the " \
+  "facial proportions of a portrait made from three metres, no wide-angle " \
+  "enlargement of the nose or forehead"
+
+# Which side of the face the key light falls on. Independent of the pattern.
+#
+# Short lighting keys the side turned AWAY from camera and slims; broad keys the
+# near side and widens. Most portraiture wants short, and almost nobody asks for
+# it by name.
+KEY_SIDE_VOCAB = {
+  "short" => "short lighting, key on the side of the face turned away from camera, " \
+             "the near cheek falling into shadow, slimming",
+  "broad" => "broad lighting, key on the side of the face turned toward camera, " \
+             "widening the apparent face",
+  "even" => "key light square to the face, both sides equally lit",
+}.freeze
+
+# The light source reflected in the eye. Its shape states the modifier, which is
+# why a portrait reads as lit rather than rendered — and why AI eyes read as
+# wrong when the reflection is a perfect featureless dot.
+CATCHLIGHT_VOCAB = {
+  "softbox" => "rectangular catchlight high in each eye, the shape of a softbox",
+  "beauty_dish" => "round catchlight with a darker centre, the shape of a beauty dish",
+  "window" => "large soft rectangular catchlight from a window, filling much of the iris",
+  "sun" => "small hard bright catchlight, the sun as a point source",
+  "ring" => "continuous ring catchlight encircling the pupil",
+  "twin" => "two catchlights, a key and a fill, at ten and two o'clock",
+  "none" => "no catchlight, eyes unlit and recessive",
+}.freeze
+
+# What a retouched training set removed.
+#
+# Generated skin is too clean and its specular response uniform, because models
+# learn from retouched photography and have no account of subsurface scattering:
+# real skin is translucent and light returns from below it, warm and soft. These
+# are the positive terms; PLASTIC_SKIN_NEGATIVE below is the other half.
+SKIN_VOCAB = {
+  "real" => "visible pores and fine vellus hair, uneven skin texture across the face, " \
+            "subsurface scattering warming the light through the ears and nostrils",
+  "oily" => "an oily T-zone catching specular highlights while the cheeks stay matte, " \
+            "asymmetric specular response",
+  "dry" => "dry matte skin, fine flaking at the nose and lips, light sitting on the surface",
+  "weathered" => "weathered skin, sun damage, broken capillaries, deep expression lines",
+  "young" => "smooth young skin that still carries pores and down, not airbrushed",
+  "sweat" => "a film of sweat catching hard specular highlights across the forehead and nose",
+}.freeze
+
 VOCABULARIES = {
   stock: STOCK_VOCAB,
   lens: LENS_VOCAB,
   camera_height: CAMERA_HEIGHT_VOCAB,
   distance: DISTANCE_VOCAB,
+  subject_distance: SUBJECT_DISTANCE_VOCAB,
+  key_side: KEY_SIDE_VOCAB,
+  catchlight: CATCHLIGHT_VOCAB,
+  skin: SKIN_VOCAB,
   lighting: LIGHTING_VOCAB,
   weather: WEATHER_VOCAB,
   time_of_day: TIME_OF_DAY_VOCAB,
@@ -303,6 +386,7 @@ end
 def compile_prompt(base_prompt, options)
   segments = [base_prompt]
   VOCABULARIES.each_key { |field| segments << resolve_vocab(field, options[field]) }
+  segments << SELFIE_GEOMETRY if options[:selfie_geometry]
   segments.compact.join(", ")
 end
 
@@ -464,7 +548,29 @@ VOCAB_CONFLICTS = [
   [:weather, %w[snow frost aurora], :time_of_day, %w[golden_hour]],
 ].freeze
 
+# A bare "selfie" in the prompt asks for the distortion, and gets it.
+#
+# The word carries a geometry: arm's length is 40-70cm, which is exactly the
+# range where the nose enlarges and the ears fall away, and a model trained on
+# millions of real selfies reproduces that faithfully. It is not a style the
+# model is applying badly; it is the correct rendering of what was asked for.
+#
+# Warned rather than refused, because sometimes the distortion is wanted — it
+# is what makes a selfie read as a selfie. What must not happen is getting it
+# without having chosen it.
+def warn_bare_selfie(prompt, options)
+  return unless prompt.to_s.match?(/\bselfie\b/i)
+  return if options[:selfie_geometry] || options[:subject_distance]
+
+  warn "warn: the prompt says \"selfie\" with no --subject-distance and no " \
+       "--selfie-geometry, so the model will render it at arm's length with the " \
+       "nose enlarged and the ears falling away — which is what a real selfie is."
+  warn "warn: --selfie-geometry keeps the framing and the eye contact and drops " \
+       "the distortion; --subject-distance selfie asks for it deliberately."
+end
+
 def warn_vocab_conflicts(options)
+  warn_bare_selfie(options[:prompt], options)
   VOCAB_CONFLICTS.each do |field_a, values_a, field_b, values_b|
     a = options[field_a]&.to_s&.downcase&.tr("- ", "__")
     b = options[field_b]&.to_s&.downcase&.tr("- ", "__")
@@ -652,6 +758,13 @@ parser = OptionParser.new do |p|
   p.on("--lens NAME") { |v| options[:lens] = v }
   p.on("--camera-height NAME") { |v| options[:camera_height] = v }
   p.on("--distance NAME") { |v| options[:distance] = v }
+  p.on("--subject-distance NAME") { |v| options[:subject_distance] = v }
+  p.on("--key-side NAME") { |v| options[:key_side] = v }
+  p.on("--catchlight NAME") { |v| options[:catchlight] = v }
+  p.on("--skin NAME") { |v| options[:skin] = v }
+  # The framing and gaze of a selfie with the facial proportions of a portrait
+  # made from three metres. Not a combination a camera can produce.
+  p.on("--selfie-geometry") { options[:selfie_geometry] = true }
   p.on("--lighting NAME") { |v| options[:lighting] = v }
   p.on("--weather NAME") { |v| options[:weather] = v }
   p.on("--time-of-day NAME") { |v| options[:time_of_day] = v }
