@@ -41,6 +41,16 @@ open:
   summary: |-
     etc/rc.d/master:22 sets daemon_user="dev", and dev's doas rule is nopass with no command scoping, so ANY code execution as dev on the internet-facing app (ai.brgen.no) is root without a password. brgen/amber/bsdports correctly run as their own users; only master does not. The fix is a dedicated master user + chown. It is NOT doas command scoping — see DECISIONS.md, "/etc/doas.conf installs only on a deliberate root run", for why cmd rules cannot work here. REDUCED 2026-08-03: the `keepenv` half is gone (dev now has a five-variable setenv allowlist), so the environment-injection route to root no longer exists. The chat entry point into exec was closed 2026-07-27. The escalation primitive itself is unchanged.
      DECIDED 2026-08-22 (operator delegation): the dedicated master user migration is approved and scheduled as its own sitting — NOT improvised on a live box: create _master, chown MASTER runtime state (.master/, knowledge/, web/tmp, web/public/assets), rc.d daemon_user=_master, drop dev from doas or scope it, then a full restart drill. Until then dev's unscoped nopass doas stands measured (permit nopass ... dev as root, read from /etc/doas.conf on 2026-08-22).
+    NARROWED 2026-08-25. rc.d/master ran the internet-facing daemon as dev; it
+    now runs as master:1005, built to the same shape as brgen/amber/bsdports —
+    own group, _pub4ci for traverse, /bin/ksh because rc.subr needs a login shell.
+    It reads code and gems from /home/dev/pub4 (0755, read-only to it) and writes
+    only .master, web/tmp and web/log (dev:master 2775, setgid). Verified as master
+    before the switch: writing repo code refused, doas refused. /home/dev went
+    drwx--x--- to drwxr-x--- because getcwd needs read on every ancestor and
+    bundler calls Dir.pwd first; .ssh and priv keep drwx------.
+    STILL OPEN: `bin/master` from a terminal is dev, and dev is still nopass root.
+    The remote path is closed; the local one is the remaining half.
 - id: home_partition_full_from_git_history
   tag: operator-priority
   summary: |-

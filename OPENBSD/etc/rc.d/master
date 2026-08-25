@@ -21,7 +21,31 @@ daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env &&
 # Prod safety flags (MASTER_SAFE_MODE etc.) live in /etc/master.env (see master.env.sample).
 # rc.d sets a minimal set; env can override for the face runtime. See DeployPaths and
 # MASTER/data/limits.yml for resource budgets on 1GB VPS.
-daemon_user="dev"
+# The public-facing process does not run as the user who can become root.
+#
+# This was daemon_user="dev", and dev's doas rule is nopass with no command
+# scoping, so any code execution inside the process serving ai.brgen.no was root
+# without a password — the one app on this box whose daemon_user was not its own
+# user. debt.yml has called that operator-priority since it was written, and the
+# fix it names is a dedicated user, not doas command rules (DECISIONS.md,
+# "/etc/doas.conf installs only on a deliberate root run").
+#
+# master:1005, in _pub4ci for traverse on /home/dev, /bin/ksh like every other
+# app user because rc.subr starts a daemon through a login shell. It reads the
+# code and gems from /home/dev/pub4 (0755, so read-only to it) and writes only
+# MASTER/.master, web/tmp and web/log, which are dev:master 2775 — setgid so new
+# files stay group-shared with the dev CLI. /etc/master.env is root:master 0640,
+# the same shape as brgen.env and amber.env.
+#
+# Verified as master before the switch: cd, env, gems, and all three writes
+# succeed; writing repo code is refused and `doas` is refused. That second pair
+# is the whole point — a fold that cannot write code cannot hand dev something
+# to execute, which is the path a shared checkout would otherwise leave open.
+#
+# Note what this does NOT cover: `bin/master` run from a terminal is still dev,
+# and dev is still nopass root. This closes the REMOTE path, which is the one an
+# attacker reaches.
+daemon_user="master"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_logger="daemon.notice"
 daemon_timeout="300"
