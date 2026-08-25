@@ -206,9 +206,28 @@ namespace :test do
     %w[test/test_web_http.rb test/test_browser.rb].each { |file| ruby "-Itest", file }
   end
 
+  # Outside MASTER's bundle, for the reason studio_test carries a paragraph
+  # about: `sh` inherits BUNDLE_GEMFILE, so `bundle exec rails test` inside web/
+  # resolved against MASTER's Gemfile, which has no railties. It failed with
+  # "can't find executable rails for gem railties ... perhaps you meant to add it
+  # to your Gemfile", which reads as a broken web app and is a broken invocation.
+  # web/ has its own Gemfile and its own suite; run it from there and it is green.
+  #
+  # The same fix was applied to studio_test and this task was not revisited,
+  # which is how one bug survives in a file that already documents it.
   desc "Rails web integration tests (MASTER/web)"
   task :web do
-    sh "cd web && bundle exec rails test"
+    # Bundler.with_unbundled_env, not a hash of nils. `sh` sets a nil value to the
+    # empty string rather than unsetting it, and an empty BUNDLE_GEMFILE still
+    # searches upward — from web/ that finds MASTER/Gemfile, whose lock names seven
+    # gems web/ does not vendor. An empty BUNDLE_PATH separately overrides
+    # web/.bundle/config, which says vendor/bundle.
+    #
+    # studio_test uses the hash-of-nils idiom and has never been bitten: STUDIO has
+    # no .bundle/config and no parent Gemfile above it.
+    Bundler.with_unbundled_env do
+      Dir.chdir(File.join(__dir__, "web")) { sh "bundle exec rails test" }
+    end
   end
 
   desc "Static web UI checks (asset manifest, boot contract)"
