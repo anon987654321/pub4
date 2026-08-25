@@ -307,29 +307,31 @@ SECTION_LAYER_GAIN_ARRANGED = {
 # So: the removal is available (set 0.0) and is not the default. See the note
 # on FORM_FIT for the other half -- a section only reads as one if it also
 # lasts longer than a bar.
-  # harm is a DUCK here and not a removal, and that is a retreat from what the
-  # measurement above argues for. The reason is that the removal could not be
-  # shown to work.
+  # harm STOPS in the intro and the breakdown, and the duration rule below is
+  # what makes that safe.
   #
-  # Setting harm to 0.0 puts `volume=0.0:enable='between(t,0.04,43.438)'` at the
-  # head of the harmony bus -- verified in the emitted filtergraph, and verified
-  # to mute by 80 dB when that exact five-stage clause is run standalone on white
-  # noise. In the render it changes nothing: a 128-bar take with the bus muted
-  # for its first 43 seconds measures 1.6 dB LOUDER across 250-2000 Hz than one
-  # with no harmony envelope at all, and its novelty peak is 0.00440 against
-  # 0.00440. Something between the graph and the file is not applying it, and
-  # until that is found, shipping a 0.0 here would be shipping a knob that reads
-  # as an arrangement and produces silence in the source and nothing in the
-  # audio -- which is the exact defect class this tree keeps finding.
+  # The measurements say a section boundary needs a change in what is PLAYING,
+  # not in how loud it is: on a real render a timbre change at a known second
+  # moved the novelty detector 14x and a 6 dB level change 1.5x. So the loudest
+  # channel in the mix leaves, rather than ducking.
   #
-  # The ducking values below are the ones that were here before, and they are
-  # honest about what they are: a level change, which the same measurements say
-  # is worth about a seventh of a timbre change. See DEBT.
+  # The reason this was a duck until now was a misreading, and it is worth
+  # keeping. A 128-bar take with the harmony muted for 43 seconds measured
+  # 1.6 dB LOUDER across 250-2000 Hz than one without the envelope, which read as
+  # "the envelope does nothing". It was not: the arms were not matched -- one
+  # cycled its form and the other did not -- and a later three-arm test with a
+  # no-kit reference showed the envelopes land exactly on the reference. The
+  # mechanism was never broken; the comparison was.
+  #
+  # What the same reference showed is why this is easy to get wrong: a channel's
+  # entire contribution to a band can be 4 dB, so a perfect mute looks like 3.6
+  # and reads as a failure unless something with the channel genuinely absent is
+  # measured beside it.
   intro:     { drums: 0.0,  bass: 0.30, lead: 0.0,  chops: 0.0,  sample: 0.55,
-               harm: 0.72, pad: 0.80, texture: 1.60 },
+               harm: 0.0,  pad: 0.85, texture: 1.60 },
   main:      { harm: 1.0,  pad: 1.0,  texture: 1.0 },
   breakdown: { drums: 0.0,  bass: 0.55, chops: 0.0,
-               harm: 1.12, pad: 1.20, texture: 1.85 },
+               harm: 0.0,  pad: 1.20, texture: 1.85 },
   build:     { lead: 0.0,   sample: 0.7,
                harm: 1.06, pad: 0.90, texture: 1.25 },
   turn:      { lead: 0.0,   harm: 1.0, pad: 1.08, texture: 1.15 },
@@ -386,6 +388,36 @@ def section_layer_windows(layer, n_bars, bar_p)
     end
   end
   spans.map { |s| [(s[:from] * bar_p).round(3), (s[:to] * bar_p).round(3), s[:gain]] }
+       .map { |from, to, gain| [from, to, survivable_gain(gain, to - from)] }
+end
+
+# A removal too short to read as a section becomes a duck instead.
+#
+# Both halves of this come from the same measurement. A boundary needs a change
+# in WHAT IS PLAYING -- 14x against a level change's 1.5x -- and it needs to last
+# long enough to be heard as a section rather than as a fault. The novelty
+# detector's kernel is twelve seconds either side, and a listener is not much
+# more generous.
+#
+# The legacy form's breakdowns are ONE BAR: 2.7 seconds at 88 BPM, three times in
+# thirty-two. Taking the loudest channel in the mix out for 2.7 seconds is a beat
+# drop, which is a real gesture -- but three of them in ninety seconds is a
+# stutter, and it is not what the table means by "breakdown". So a full removal
+# survives only in a section long enough to be one, and anywhere shorter it
+# becomes a duck that still moves the balance without punching a hole.
+#
+# Eight seconds is roughly three bars at these tempos: long enough that the ear
+# settles into the new instrumentation, short enough that a four-bar breakdown
+# still qualifies. Nothing else in the table is affected -- this only ever
+# softens a 0.0, and never touches a gain that was already a level change.
+SECTION_REMOVAL_MIN_SEC = 8.0
+SECTION_SHORT_REMOVAL_DUCK = 0.45
+
+def survivable_gain(gain, seconds)
+  return gain unless gain.to_f.zero?
+  return gain if seconds >= SECTION_REMOVAL_MIN_SEC
+
+  SECTION_SHORT_REMOVAL_DUCK
 end
 
 # volume with `enable` rather than one expression: each window is its own stage,

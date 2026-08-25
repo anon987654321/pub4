@@ -10,6 +10,33 @@ require_relative "helper"
 # reads, and that a device which claims to rearrange notes does not invent or
 # lose any.
 class TestDevices < Minitest::Test
+  # Every test here runs in the same process as every other dilla test, and this
+  # file's subject is knobs -- so it is the one most able to poison the rest.
+  #
+  # It did. test_apply_keeps_a_hand_set_knob calls DillaMacros.apply!, which sets
+  # KICK_GAIN and BASS_MIX_WEIGHT, and restored only the one it named. Others set
+  # FORM and SECTION_LAYERS through a helper that restores correctly but cannot
+  # know what the code under test set for itself. The result was failures in
+  # test_engine_probes.rb -- camel_32 arriving as soul_32, donuts_warm as
+  # donuts_soul -- that look like engine bugs and are this file's litter, and
+  # which move with the random test order so they come and go.
+  #
+  # A full snapshot is the only version of this that cannot be got wrong by
+  # forgetting a name. It costs one Hash copy per test.
+  def setup
+    @env_before = ENV.to_h
+  end
+
+  def teardown
+    (ENV.keys - @env_before.keys).each { |k| ENV.delete(k) }
+    @env_before.each { |k, v| ENV[k] = v unless ENV[k] == v }
+    # The form map memoises, so a test that changed FORM leaves the resolved map
+    # behind even once the variable is back.
+    return unless instance_variable_defined?(:@resolve_form_map)
+
+    remove_instance_variable(:@resolve_form_map)
+  end
+
   # ------------------------------------------------------------- modulation
 
   # The failure this catches is the one that cost the first measurement: a
@@ -567,6 +594,69 @@ end
   # a loop of a form rather than the shape of a piece, and it is why dilla could
   # not express what the records it is measured against do: one arc, each part
   # happening once, across four or five minutes.
+  # On past 64 bars, off below it, and both ends forced by the knob.
+  #
+  # 64 is exactly two passes of the 32-bar maps this engine ships -- the last
+  # length at which a repeated form is still a structure rather than a loop of
+  # one. A render that sets no FORM is untouched either way, because
+  # form_section_at is never reached without one.
+  def test_form_fit_turns_itself_on_for_long_renders
+    with_env("FORM" => "soul_32", "FORM_FIT" => nil) do
+      forget_form_map!
+
+      assert_equal 2, runs_of((0...64).map { |b| dilla_section(b, 64) }).count { |k, _| k == :intro },
+                   "at 64 bars a 32-bar form should still cycle"
+      forget_form_map!
+
+      assert_equal 1, runs_of((0...65).map { |b| dilla_section(b, 65) }).count { |k, _| k == :intro },
+                   "past 64 bars it should fit"
+    end
+  end
+
+  def test_the_knob_forces_both_directions
+    long_cycled = with_env("FORM" => "soul_32", "FORM_FIT" => "0") do
+      forget_form_map!
+      runs_of((0...128).map { |b| dilla_section(b, 128) }).count { |k, _| k == :intro }
+    end
+    short_fitted = with_env("FORM" => "soul_32", "FORM_FIT" => "1") do
+      forget_form_map!
+      runs_of((0...32).map { |b| dilla_section(b, 32) }).count { |k, _| k == :intro }
+    end
+
+    assert_equal 4, long_cycled, "FORM_FIT=0 must still cycle at 128 bars"
+    assert_equal 1, short_fitted
+  end
+
+  # A removal too short to read as a section becomes a duck.
+  #
+  # Both halves come from the same measurement: a boundary needs a change in what
+  # is playing (14x against a level change's 1.5x) AND it needs to last. The
+  # legacy form's breakdowns are one bar -- 2.7s at 88 BPM, three times in
+  # thirty-two -- and taking the loudest channel out for 2.7s three times in
+  # ninety seconds is a stutter, not an arrangement.
+  def test_short_removals_soften_and_long_ones_stand
+    assert_in_delta SECTION_SHORT_REMOVAL_DUCK, survivable_gain(0.0, 2.7), 1e-9
+    assert_in_delta 0.0, survivable_gain(0.0, 12.0), 1e-9
+    # It only ever softens a full removal; a gain that was already a level
+    # change is never touched, whatever the duration.
+    assert_in_delta 0.45, survivable_gain(0.45, 1.0), 1e-9
+    assert_in_delta 1.2, survivable_gain(1.2, 1.0), 1e-9
+  end
+
+  def test_the_arranged_table_removes_the_harmony_where_a_section_is_long_enough
+    with_env("SECTION_LAYERS" => "full", "FORM" => "soul_32", "FORM_FIT" => "1") do
+      forget_form_map!
+      windows = section_layer_windows(:harm, 128, 60.0 / 88 * 4)
+      removed = windows.select { |_, _, g| g.to_f.zero? }
+
+      refute_empty removed, "the harmony should leave in a long intro"
+      removed.each do |from, to, _|
+        assert_operator to - from, :>=, SECTION_REMOVAL_MIN_SEC,
+                        "a removal shorter than the minimum should have softened"
+      end
+    end
+  end
+
   def test_form_fit_stretches_the_form_over_the_track_instead_of_repeating_it
     with_env("FORM" => "soul_32", "FORM_FIT" => "1") do
       forget_form_map!
@@ -578,11 +668,19 @@ end
     end
   end
 
-  def test_the_default_still_cycles
+  # Below the threshold the default still cycles, which is the half of the old
+  # behaviour worth keeping: a repeated form on a beat is a legitimate thing to
+  # want, and at one or two passes it still reads as one.
+  #
+  # This test used to assert four intros at 128 bars. That was the old default
+  # and it is now wrong -- the assertion was updated because the contract
+  # changed, not to make a failing test pass. The forced-cycling case it used to
+  # cover lives in test_the_knob_forces_both_directions.
+  def test_the_default_still_cycles_below_the_threshold
     with_env("FORM" => "soul_32", "FORM_FIT" => nil) do
       forget_form_map!
 
-      assert_equal 4, runs_of((0...128).map { |b| dilla_section(b, 128) }).count { |kind, _| kind == :intro }
+      assert_equal 2, runs_of((0...64).map { |b| dilla_section(b, 64) }).count { |kind, _| kind == :intro }
     end
   end
 

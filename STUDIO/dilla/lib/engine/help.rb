@@ -225,12 +225,20 @@ DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
     ARRANGEMENT AND BUS
       SECTION_LAYERS=1 (default)     Drums, bass and the sampled bed follow the
                                        section map; pads and texture play flat
-      SECTION_LAYERS=full            The harmony bus, the analog pad and the
-                                       vinyl/rumble texture get section shapes
-                                       too — the two loudest channels had none.
-      FORM_FIT=1                     Stretch FORM/SECTION_MAP across the track
-                                       instead of repeating it. soul_32 over 128
-                                       bars is four intros without this; one with.
+      SECTION_LAYERS=full            The harmony bus LEAVES in the intro and in
+                                       any breakdown long enough to read as one
+                                       (8s+); shorter ones duck instead, because
+                                       taking the loudest channel out for a bar
+                                       three times in ninety seconds is a
+                                       stutter, not a section. The analog pad and
+                                       the vinyl/rumble texture get section
+                                       shapes too.
+      FORM_FIT                       Stretch FORM/SECTION_MAP across the track
+                                       instead of repeating it. ON by default
+                                       past 64 bars — soul_32 over 128 bars is
+                                       four intros cycling, one fitted.
+                                       FORM_FIT=0 forces cycling, =1 forces
+                                       fitting; with no FORM set it does nothing.
       DILLA_MIX_BUSES=1              Group the mix into kit/harmonic/low/texture
                                        buses instead of one flat amix
       DILLA_BUS_<NAME>=<filters>     A filter chain on one of those buses

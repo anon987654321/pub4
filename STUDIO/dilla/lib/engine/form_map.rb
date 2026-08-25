@@ -47,13 +47,13 @@ def resolve_form_map
   @resolve_form_map
 end
 
-# FORM_FIT=1 — stretch the form across the track instead of repeating it.
+# FORM_FIT — stretch the form across the track instead of repeating it.
 #
 # A form is a CYCLE here: form_section_at takes `bar % cycle_len`, so a 32-bar
-# map over a 128-bar render is four copies of itself. Measured on soul_32 at 128
-# bars that is four intros and four outros, with an "intro" arriving at bars 32,
-# 64 and 96. An intro that happens four times is not an intro, and a form that
-# repeats is a loop of a form rather than the shape of a piece.
+# map over a 128-bar render is four copies of itself -- four intros, four outros,
+# an "intro" arriving at bars 32, 64 and 96. An intro that happens four times is
+# not an intro, and a form that repeats is a loop of a form rather than the shape
+# of a piece.
 #
 # That matters for what this engine is being asked to do. The records it is
 # measured against have one or two section boundaries across four or five
@@ -66,11 +66,27 @@ end
 # outro:4 over 128 bars becomes 16/32/32/32/16 rather than four passes of
 # 4/8/8/8/4. The shape is the operator's; only its size follows the render.
 #
-# Off by default, and it has to be. Every existing take was made with the cycling
-# behaviour, a form that repeats is a legitimate thing to want on a beat, and
-# this changes which section every bar belongs to -- which changes the drums, the
-# bass, the bed and the pads on a render that asks for it.
-def form_fit_enabled? = ENV["FORM_FIT"] == "1"
+# ON BY DEFAULT PAST 64 BARS. Below about two passes a repeated form reads as a
+# repeated form, which is a legitimate thing to want on a beat. Past it, it stops
+# being a form at all: nothing is unique and "intro" stops meaning anything a
+# listener can hear. soul_32 and camel_32 are 32-bar maps, so 64 is exactly two
+# passes -- the last length at which a repeat is still a structure rather than a
+# loop of one.
+#
+# FORM_FIT=0 forces cycling at any length and FORM_FIT=1 forces fitting; only the
+# unset case consults the bar count. A render that sets no FORM is untouched
+# either way, because form_section_at is never reached without one -- so this
+# changes nothing for the default render path and everything for a long one that
+# asked for a shape.
+FORM_FIT_DEFAULT_BARS = 64
+
+def form_fit_enabled?(n_bars = nil)
+  case ENV["FORM_FIT"]
+  when "1" then true
+  when "0" then false
+  else n_bars.to_i > FORM_FIT_DEFAULT_BARS
+  end
+end
 
 def form_section_at(bar, n_bars)
   map = resolve_form_map
@@ -78,7 +94,7 @@ def form_section_at(bar, n_bars)
   cycle_len = map.sum { |_, len| len }
   return if cycle_len <= 0
 
-  if form_fit_enabled? && n_bars.to_i.positive?
+  if form_fit_enabled?(n_bars) && n_bars.to_i.positive?
     # Proportional, in bars, with the last section absorbing the rounding so the
     # map always covers the track exactly. Rounding each section independently
     # leaves a gap or an overlap at the end, and a bar belonging to no section
