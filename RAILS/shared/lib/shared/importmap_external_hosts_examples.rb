@@ -64,8 +64,8 @@ module Shared
       end
     end
 
-    def app_importmap      = Rails.application.importmap
+    def app_importmap = Rails.application.importmap
     def importmap_resolver = ApplicationController.helpers
-    def resolved_imports   = JSON.parse(app_importmap.to_json(resolver: importmap_resolver)).fetch("imports", {})
+    def resolved_imports = JSON.parse(app_importmap.to_json(resolver: importmap_resolver)).fetch("imports", {})
   end
 end
