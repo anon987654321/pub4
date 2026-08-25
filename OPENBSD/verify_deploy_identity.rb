@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 # Verifies low-level OPERATOR identity hygiene without requiring app dependencies.
 # Run from the repository root:
 #   ruby OPENBSD/verify_deploy_identity.rb

@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 ROOT = File.expand_path("..", __dir__)
 OPENBSD = File.join(ROOT, "OPENBSD")
 TOOLING = File.join(ROOT, "OPENBSD")

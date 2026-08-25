@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+
+# frozen_string_literal: true
 # Mirror live VPS config into OPENBSD/ with secret redaction.
 # Run on VPS: doas ruby34 ~/pub4/OPENBSD/sync.rb
 

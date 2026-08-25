@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 path = ARGV[0] || "/etc/relayd.conf"
 body = File.read(path)
 lines = body.each_line.filter_map do |line|

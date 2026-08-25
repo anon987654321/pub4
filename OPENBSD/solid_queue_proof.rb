@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 # Prove that an app's background jobs actually get run.
 #
 # This asserted a mechanism — a registered SolidQueue::Process — and vm23 does

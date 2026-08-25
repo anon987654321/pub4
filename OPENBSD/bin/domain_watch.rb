@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 # Which of our domains are still ours, and which have gone.
 #
 # amstrdam.nl was registered to us and served Amsterdam. It lapsed, dropped, and

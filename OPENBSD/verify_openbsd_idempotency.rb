@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# frozen_string_literal: true
+
 # OPERATOR.sh legitimately contains UTF-8 bytes (em dashes in comments); the
 # plain string #include? checks below tolerated that under the remote's
 # US-ASCII default external encoding, but the =~ regex checks do not.
