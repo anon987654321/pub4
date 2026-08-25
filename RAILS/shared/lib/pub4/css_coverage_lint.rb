@@ -128,7 +128,21 @@ module Pub4
     # the DYNAMIC_SEEDS above stopped the census miscounting runtime-built
     # names. The 174 left are dominated by amber sheets, which belong to
     # amber\x27s active session — recorded in SURFACES.md, not touched here.
-    BASELINES = { "undefined_class" => 0, "unused_selector" => 174 }.freeze
+    # unused_selector RAISED 174 -> 180 on 2026-08-25, and the six are named
+# because a raised baseline without a list is a number nobody can act on.
+#
+# Nine unrendered partials were deleted and took their markup with them, so
+# the CSS only they used went unreferenced: jox-logo and logo and frames from
+# _jox_logo, marketplace-subnav from _subnav, feed-tab and type from
+# _city_switcher. The two dedicated stylesheets went with their partials —
+# shared/_device_showcase.scss whole, and its two @forwards — but these six
+# live inside _root.scss, _nav.scss, _marketplace.scss and
+# _jsfiddle_chrome.scss alongside rules that are still used.
+#
+# Left for the owner deliberately: visual work in this tree is not something
+# to do on a tool's judgement, and dead CSS costs bytes where dead markup
+# cost a reader's time.
+BASELINES = { "undefined_class" => 0, "unused_selector" => 180 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

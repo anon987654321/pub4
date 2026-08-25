@@ -239,7 +239,7 @@ module Pub4
       # it, and guessing which of the last week's commits sized those two images
       # would put a wrong sentence in a file whose whole value is being right
       # about numbers.
-      "unreserved_media" => 20,
+      "unreserved_media" => 18,
       "layout_transition" => 3,
       "font_without_display" => 0,
     }.freeze

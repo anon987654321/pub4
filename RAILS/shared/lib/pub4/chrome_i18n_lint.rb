@@ -188,7 +188,7 @@ module Pub4
       # left with it. Banked.
       # 191 -> 190: the tv fallback poster's alt is the video title, not a
       # defaulted string.
-      "translate_default" => 190,
+      "translate_default" => 189,
     }.freeze
 
     # Kept for callers that referenced the old single number.

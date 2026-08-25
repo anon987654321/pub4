@@ -249,10 +249,12 @@ class DeployBacklogTest < Minitest::Test
     tracks_controller = read_source(File.join(ROOT, "brgen/app/controllers/playlist/tracks_controller.rb"))
     routes = read_source(File.join(ROOT, "brgen/config/routes.rb"))
     schema_helper = read_source(File.join(ROOT, "shared/app/helpers/schema_helper.rb"))
-    # The player and the queue partial it renders, read as one — same reason
-    # read_source joins brgen's routes with its engines': the split is a file
-    # boundary, not a change to what the page carries.
-    player = %w[_player _queue].sum("") { |f| read_source(File.join(ROOT, "brgen/app/views/playlist/playlists/#{f}.html.erb")) }
+    # _player alone. It used to be read together with a _queue partial, on the
+    # stated grounds that the player "renders" it — and it did not. _queue was
+    # split out of _player, then _player grew the queue markup back inline and
+    # nothing rendered the extracted file again. This assertion passed because
+    # the file existed, not because the relationship did. Deleted 2026-08-25.
+    player = read_source(File.join(ROOT, "brgen/app/views/playlist/playlists/_player.html.erb"))
     show = read_source(File.join(ROOT, "brgen/app/views/playlist/playlists/show.html.erb"))
     index = read_source(File.join(ROOT, "brgen/app/views/playlist/playlists/index.html.erb"))
     hosted_form = read_source(File.join(ROOT, "brgen/app/views/playlist/hosted_tracks/_form.html.erb"))
