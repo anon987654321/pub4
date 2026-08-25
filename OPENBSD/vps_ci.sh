@@ -44,6 +44,42 @@ sync_ci_rails_root() {
   doas chown -R "${app}:${app}" "$mirror"
 }
 
+# Names every tracked entry at the app root that is neither synced nor kept
+# local. Warns rather than fails: this list is discovered from git at deploy
+# time, so a wrong reading here would refuse a deploy for a documentation file,
+# and a deploy pipeline that cries wolf gets its checks removed. Loud and
+# specific is the useful setting until the set has been stable a while.
+#
+# Found this way: .rubocop.yml was missing and nothing said so for twelve days,
+# and .ruby-version is absent from amber's and bsdports' copy-trees entirely.
+unaccounted_tracked_files() {
+  local app=$1 repo=$2
+  local -a synced=(${(P)3}) kept=(${(P)4})
+  local -a tracked missing
+  tracked=(${(f)"$(git -C "$repo" ls-files "RAILS/$app" 2>/dev/null)"}) || return 0
+  (( ${#tracked} )) || return 0
+
+  local rel top
+  for rel in $tracked; do
+    top=${${rel#RAILS/$app/}%%/*}
+    [[ -n $top ]] || continue
+    # A synced entry may be a subpath — vendor/javascript covers vendor's only
+    # tracked content — so a top-level name counts as accounted when any synced
+    # path is it or descends from it. Without this the check reports `vendor`,
+    # which is the accounting being wrong rather than the sync.
+    (( ${synced[(Ie)$top]} )) && continue
+    [[ -n ${synced[(r)$top/*]} ]] && continue
+    (( ${kept[(Ie)$top]} )) && continue
+    [[ $top == *.sh || $top == *.md ]] && continue
+    missing+=($top)
+  done
+
+  local -a uniq_missing=(${(u)missing})
+  (( ${#uniq_missing} )) || return 0
+  print -u2 "vps_ci: $app — tracked but neither synced nor kept local: ${uniq_missing}"
+  print -u2 "vps_ci: $app — add each to paths (bin/ci reads the copy-tree) or to kept_local with a reason"
+}
+
 sync_from_repo() {
   local src=$repo/RAILS/$app
   local shared_src=$repo/RAILS/shared
@@ -64,7 +100,34 @@ sync_from_repo() {
     # deadlocked the pipeline the moment it did: the corrected config can only
     # reach the live dir through a sync, and the sync is gated behind the CI run
     # that the stale config was failing.
-    local -a paths=(test app lib config bin db engines public vendor/javascript Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml)
+    # Everything tracked at the app root is either synced or named as deliberately
+    # not synced. An allowlist that simply omits things fails silently and in the
+    # worst direction: bin/ci runs from this copy-tree, so a config that never
+    # arrives means the gate reads a stale one. .rubocop.yml did exactly that —
+    # frozen on 2026-08-13, re-enabling cops the tracked file leaves to omakase,
+    # producing 1283 offences against 2 locally and deadlocking the pipeline,
+    # because the corrected config could only arrive through the sync that the
+    # stale config was failing.
+    #
+    # KEPT_LOCAL is the other half. Without it, "not in paths" means both "we
+    # decided against it" and "nobody thought about it", and those must not look
+    # alike. sync_accounts_for_every_tracked_file below turns the second into an
+    # error at deploy time rather than a puzzle weeks later.
+    local -a paths=(test app lib config bin db engines public vendor/javascript
+                    Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml .ruby-version)
+    # Named as deliberately not synced, so "absent from paths" stops meaning both
+    # "decided against" and "never considered". log/ and storage/ are the running
+    # app's own state and syncing them would overwrite production data; the rest
+    # is documentation that no gate and no runtime reads.
+    # log/ and storage/ are the running app's own state — syncing them would
+    # overwrite production data. docs/ and script/ are read by no gate and no
+    # runtime. domains.yml has no reader anywhere in the repo (checked
+    # 2026-08-25; the live copy is thirteen days and half a file behind, and
+    # nothing noticed because nothing reads it). Procfile.dev is for `bin/dev`
+    # on a laptop.
+    local -a kept_local=(log storage docs script domains.yml Procfile.dev)
+    unaccounted_tracked_files "$app" "$repo" paths kept_local
+
     local -a existing=()
     local rel
     for rel in "${paths[@]}"; do
