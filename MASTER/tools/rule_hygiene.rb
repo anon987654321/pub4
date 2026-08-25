@@ -81,12 +81,36 @@ module Pub4
                 .map { |r| r["id"] }
     end
 
+    # One id, two definitions, two wordings, and no way for a reader to tell
+    # which governs. FAIL_VISIBLY had three — soul said "never rescue Exception",
+    # law/ said "catch specific errors, log context, re-raise", rules.yml said
+    # "surface errors immediately" — and each had its own detector or none.
+    #
+    # The rule for resolving one: whichever population holds the detector owns
+    # the wording. A population that only restates it is the copy. soul is the
+    # exception in one direction only, for an axiom nothing can check.
+    def cross_population_duplicates
+      soul = YAML.safe_load_file(File.join(MASTER, "data", "soul.yml"))
+                 .dig("absolute", "rules").to_h.keys.map(&:upcase)
+      detectable = yaml_rules.select { |r| %w[detect_semantic detect_structural detect_lexical].any? { |k| r[k].to_s.strip != "" } }
+                             .map { |r| r["id"].to_s.upcase }
+      homes = Hash.new { |h, k| h[k] = [] }
+      { "law/" => law_ids.map(&:upcase), "RuleDSL" => dsl_ids.map(&:upcase),
+        "rules.yml" => detectable, "soul" => soul }.each do |name, ids|
+        ids.each { |id| homes[id] << name }
+      end
+      homes.select { |_, where| where.uniq.size > 1 }
+           .map { |id, where| { rule: id, homes: where.uniq } }
+           .sort_by { |h| h[:rule] }
+    end
+
     def ceilings = YAML.safe_load_file(CEILING)
 
     def report
       { id_case_collisions: id_case_collisions,
         alias_shadows_live_rule: alias_shadows_live_rule,
-        missing_metadata: missing_metadata }
+        missing_metadata: missing_metadata,
+        cross_population_duplicates: cross_population_duplicates }
     end
 
     def run(json: false)

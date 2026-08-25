@@ -67,7 +67,12 @@ absolute:
     NEGOTIABLE: allow if explicitly permitted
     FLEXIBLE: negotiate at runtime
   rules:
-    FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class.
+# FAIL_VISIBLY and NO_COLUMN_ALIGN are not here. law/ defines both with a
+# detector and a fix line, and the prompt now emits law/ directly, so stating
+# them again here would be the third and fourth wording of one rule —
+# FAIL_VISIBLY had three, across soul, law/ and rules.yml, and a reader had
+# no way to tell which one governed. An axiom belongs here when nothing can
+# check it. Anything a detector checks belongs where its detector is.
     COLLAPSE_BEFORE_ADDING: >-
       before writing a new file, class, or dependency, try nine moves first and
       in this order. defrag (one source, not several). decouple (a tree requires
@@ -165,7 +170,6 @@ absolute:
 # only the detector changing. An axiom about spacing and an axiom about
 # rescuing are the same kind of claim about the same tree.
     NO_ASCII_DECORATION: "Strunk & White — no box-drawing or === / ### banners in code, comments, docs, or CLI; content is the separator."
-    NO_COLUMN_ALIGN: "KISS — one space between tokens; never pad columns (alignment decays on every edit)."
     NO_CONSECUTIVE_BLANK_LINES: "Boy Scout Rule — one blank line between sections; zero between related lines."
     IMPORTANCE_ORDER: "Inverted Pyramid (files) — public API first, primary logic next, helpers and constants last; see rules.yml style.line_order."
     FLAT_UI: "Flat Design — uniform size at rest; depth only when pixels collectively resemble a 3D model."

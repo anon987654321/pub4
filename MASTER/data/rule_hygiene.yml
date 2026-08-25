@@ -16,3 +16,9 @@
 id_case_collisions: 2
 alias_shadows_live_rule: 1
 missing_metadata: 16
+
+# cross_population_duplicates: one id defined in two places, in two wordings,
+# with no way to tell which governs. FAIL_VISIBLY had three. Resolve one by
+# keeping the wording where the detector is; a population that only restates it
+# is the copy.
+cross_population_duplicates: 21

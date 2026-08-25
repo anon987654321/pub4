@@ -132,7 +132,7 @@ module Master
       def add_priority(sections)
         sections["master_priority"] = <<~XML.strip
           <master_priority>
-          1) Constitutional axioms and anti-simulation
+          1) Constitutional rules and anti-simulation
           2) Operator directives
           3) Universal and kernel rules
           4) Code-style rules
@@ -159,21 +159,43 @@ module Master
         XML
       end
 
-      # One section, because soul carries one list. absolute.rules and a separate
-      # absolute.aesthetic_rules were never read as a distinction — rule_loop
-      # concatenated both with identical formatting, and why_explainer dug only
-      # the first, so /why on NO_COLUMN_ALIGN or FLAT_UI answered nothing.
+      # One list called Rules, from both places that hold one.
+      #
+      # soul holds the rules no detector can check — read before write, surface
+      # errors first, verify the instrument. law/ holds the rules a detector does
+      # check, and its `fix` line is that rule's one wording. Emitting law/ here
+      # is what lets soul stop restating it: FAIL_VISIBLY was written out in
+      # soul, in law/ and in rules.yml, three files and three wordings for one
+      # rule, with no way for a reader to tell which governed.
+      #
+      # Not two labelled blocks. Whether a detector happens to exist is a fact
+      # about the tooling, not a different kind of rule, and splitting the list
+      # on it is the same mistake as the aesthetic_rules section that had to be
+      # collapsed for the same reason.
       def add_rules(sections)
         rules = @rules.rules
-        return if rules.empty?
+        detected = detected_rules
+        return if rules.empty? && detected.empty?
 
         thresholds = @rules.thresholds
         substitutions = {
           max_lines: thresholds.dig("class", "max_lines") || 200,
           max_methods: thresholds.dig("class", "max_methods") || 6,
         }
-        body = rules.map { |id, statement| "#{id}: #{statement % substitutions}" }.join("\n")
-        sections["master_style"] = "<master_style>\nAxioms:\n#{body}\n</master_style>"
+        held = rules.map { |id, statement| "#{id}: #{statement % substitutions}" }
+        sections["master_style"] = "<master_style>\nRules:\n#{(held + detected).join("\n")}\n</master_style>"
+      end
+
+      # Loaded lazily, and a failure here is cosmetic: a prompt missing part of
+      # the list is worse than one built without it, and neither is a reason to
+      # fail the turn.
+      def detected_rules
+        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+        ::Law.rules.values.map { |rule| "#{rule.id}: #{rule.fix}" }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PromptBuilder.detected_rules", severity: :cosmetic)
+        []
       end
 
       def add_language_style(sections)

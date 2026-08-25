@@ -49,3 +49,31 @@ respellings:
   vm23: V M twenty three
   bsdports: B S D ports
   oshlo: Oslo
+
+# Synonym sets. One word per concept, and the winner is the one already
+# dominant in the tree — a rename costs less when it moves the minority.
+#
+# This is not a spelling preference. Two words for one concept means a reader
+# cannot tell whether they name the same thing, and a search for one misses
+# the other: law/ and rules.yml held the same kind of object under two names
+# for months, and law_bridge_rule.rb still uses both in one filename.
+#
+# `keep` is measured, not chosen by taste. Counts are mentions across
+# MASTER/{lib,law,tools,bin} with paths named for the word beside them.
+synonyms:
+  - keep: rule
+    counted: 1504 mentions, 35 paths
+    avoid: [law, axiom, principle, convention, guideline, philosophy, doctrine, heuristic, standard, norm]
+    note: >-
+      law is second at 356 and owns law/, so it is the one real cost of this
+      choice. policy is deliberately absent from `avoid`: Ground::Policy is
+      runtime authorisation, a different concept that happens to be a synonym
+      in English.
+  - keep: check
+    counted: gate, lint and audit all name the same act at different sizes
+    avoid: [gate, lint, audit, probe, verify]
+    note: >-
+      Unmeasured, and listed so the next person measures it rather than
+      guessing. gate reads as a release gate, lint as a source pass and probe
+      as a live request, which may be three real distinctions or three words
+      for one act.
