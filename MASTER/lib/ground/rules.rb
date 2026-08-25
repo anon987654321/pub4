@@ -34,6 +34,7 @@ module Master
         end
 
         def rules = @rules ||= (@soul_data.dig("absolute", "rules") || {}).freeze
+        def aesthetic_rules = @aesthetic_rules ||= (@soul_data.dig("absolute", "aesthetic_rules") || {}).freeze
         def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
         def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
       end

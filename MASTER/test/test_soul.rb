@@ -7,6 +7,24 @@ class TestSoul < Minitest::Test
     def ask_once(*) = draft
   end
 
+  # Both halves of soul's absolute law must reach the model.
+  #
+  # absolute.rules arrived through PersonalityPromptBuilder#add_rules and
+  # absolute.aesthetic_rules arrived nowhere: its only reader was
+  # fix/rule_loop.rb, so NO_ASCII_DECORATION, FLAT_UI, STRUNK_ACTIVE and
+  # DEEP_SCAN_ONLY governed the fix loop's rewrites while the model writing the
+  # code was never told them. Measured at 30/30 against 0/19. A rule the author
+  # cannot see is a rule the fixer spends its turn undoing.
+  def test_every_absolute_axiom_reaches_the_system_prompt
+    prompt = Master::Voice::Personality.new.send(:build_system_prompt, context: :full)
+    absolute = YAML.safe_load_file(Master.data_path("soul.yml")).fetch("absolute")
+
+    %w[rules aesthetic_rules].each do |section|
+      missing = absolute.fetch(section).keys.reject { |id| prompt.include?(id) }
+      assert_empty missing, "soul absolute.#{section} not in the prompt: #{missing.join(', ')}"
+    end
+  end
+
   DOCUMENT = <<~SOUL
     Version: 1.2.3
     Persona: Malay

@@ -36,6 +36,12 @@
 # children is doing work and still counts; so does a `class` wrapping a class,
 # which nothing forced.
 # RAISED 2026-08-25, 37042 -> 37057 (+15), and 8 of those are not mine.
+# RAISED again 37057 -> 37090 (+33). Two sponsors, both about a rule reaching
+# something. CommentDriftRule now grades a missing CLI as cosmetic instead of
+# writing 4,663 identical load-bearing entries. PersonalityPromptBuilder now
+# emits soul absolute.aesthetic_rules as well as absolute.rules, which took the
+# aesthetic half from 0 of 19 in the system prompt to 19 of 19, and Ground::Rules
+# gained the accessor for it.
 #
 # +7 is ReplicateClient#input_keys, which reads the input parameter names a
 # model currently declares from the same GET latest_version already makes. It
@@ -677,7 +683,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_body_ceiling: 37057
+  lib_body_ceiling: 37090
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

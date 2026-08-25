@@ -159,17 +159,36 @@ module Master
         XML
       end
 
+      # Both halves of soul's absolute law, because only one half was arriving.
+      #
+      # absolute.rules reached the prompt through here and absolute.aesthetic_rules
+      # reached fix/rule_loop.rb and nothing else — measured 30/30 against 0/19.
+      # So NO_ASCII_DECORATION, FLAT_UI, STRUNK_ACTIVE and DEEP_SCAN_ONLY governed
+      # the fix loop's rewrites while the model writing the code in the first place
+      # was never told about them. A rule the author cannot see is a rule the fixer
+      # spends its turn undoing.
+      #
+      # Two labels rather than one list: a code axiom and a style axiom answer
+      # different questions, and flattening them costs the reader the distinction
+      # for no saved tokens.
       def add_rules(sections)
         rules = @rules.rules
-        return if rules.empty?
+        aesthetic = @rules.aesthetic_rules
+        return if rules.empty? && aesthetic.empty?
 
         thresholds = @rules.thresholds
         substitutions = {
           max_lines: thresholds.dig("class", "max_lines") || 200,
           max_methods: thresholds.dig("class", "max_methods") || 6,
         }
-        body = rules.map { |id, statement| "#{id}: #{statement % substitutions}" }.join("\n")
-        sections["master_style"] = "<master_style>\nCode axioms:\n#{body}\n</master_style>"
+        blocks = []
+        blocks << "Code axioms:\n#{axiom_lines(rules, substitutions)}" unless rules.empty?
+        blocks << "Style axioms:\n#{axiom_lines(aesthetic, substitutions)}" unless aesthetic.empty?
+        sections["master_style"] = "<master_style>\n#{blocks.join("\n\n")}\n</master_style>"
+      end
+
+      def axiom_lines(rules, substitutions)
+        rules.map { |id, statement| "#{id}: #{statement % substitutions}" }.join("\n")
       end
 
       def add_language_style(sections)
