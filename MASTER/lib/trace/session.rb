@@ -35,9 +35,15 @@ module Master
 
         def load!
           return self unless File.exist?(@path)
+
           begin
             data = JSON.parse(File.read(@path), symbolize_names: true)
-          rescue JSON::ParserError, Errno::ENOENT
+            # A valid JSON array or scalar parses and then dies on the first
+            # data.fetch below, which reads as a crash in the loader rather than
+            # as a damaged file.
+            raise JSON::ParserError, "session root is not an object" unless data.is_a?(Hash)
+          rescue JSON::ParserError, Errno::ENOENT => e
+            quarantine_corrupt_session!(e)
             data = {}
           end
           @phase = data.fetch(:phase, nil)&.to_sym || :discover
@@ -49,10 +55,29 @@ module Master
           # would stamp a fresh `ts` on every restored turn and re-derive a name
           # the file already carries. Pinned to :local: this file is the
           # operator's transcript, and loading it must not land in a visitor.
-          msgs = data.fetch(:messages, [])
+          msgs = Array(data.fetch(:messages, []))
           est = msgs.sum { |m| Session.estimate_tokens(m[:content]) }
           @mutex.synchronize { @conversations[Session::LOCAL] = { messages: msgs, token_est: est, name: data[:name] } }
           self
+        end
+
+        private
+
+        # A damaged transcript is renamed, never deleted, and never fatal.
+        #
+        # The rescue above used to swallow the parse error and continue with an
+        # empty hash, so the next save overwrote the file that caused it and the
+        # evidence went with it. Now the bytes are kept beside a .reason file
+        # naming the error, and startup carries on: a corrupt transcript is not
+        # worth refusing to boot over, and it is worth being able to read
+        # afterwards.
+        def quarantine_corrupt_session!(error)
+          stamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
+          target = "#{@path}.corrupt.#{stamp}.#{Process.pid}"
+          FileUtils.mv(@path, target)
+          File.write("#{target}.reason", "#{error.class}: #{error.message}\n")
+        rescue StandardError
+          nil
         end
       end
     end

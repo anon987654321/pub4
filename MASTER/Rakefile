@@ -6,7 +6,11 @@ require "timeout"
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
-  t.test_files = FileList["test/test_*.rb"].exclude(
+  # test/**/test_*.rb, not test/test_*.rb. Thirty test files live in
+  # subdirectories — test/autonomy, test/cli and others — and the flat glob
+  # collected none of them, so `rake test` reported 1300 runs over a suite that
+  # has more. All thirty pass; they had simply never been asked.
+  t.test_files = FileList["test/**/test_*.rb"].exclude(
     "test/test_browser.rb",
     "test/test_web_http.rb"
   )
