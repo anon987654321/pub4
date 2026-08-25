@@ -190,11 +190,26 @@ module Law
     # not conduct. Neutralize them (keeping line numbers) before a law judges law/.
     def conduct(text)
       fence = nil
+      block_end = nil
       text.each_line.map do |line|
         if fence
           fence = nil if line.strip == fence
           next "#\n"
         end
+        # A `detect do ... end` spanning lines declares evidence on every one of
+        # them, not just the line that opens it. NULL_BLINDNESS carries `= NULL`
+        # inside its own regex on a continuation line, and this method only ever
+        # blanked the opening line, so the law read its own detector as a
+        # violation of itself and dogfood could not go green.
+        if block_end
+          block_end = nil if line == block_end
+          next "#\n"
+        end
+        if (indent = line[/^(\s*)(?:detect|scan_lines)\s+do\b/, 1])
+          block_end = "#{indent}end\n"
+          next "#\n"
+        end
+
         fence = line[/^\s*(?:bad|good|ask)\s+<<~(\w+)/, 1]
         line.match?(/^\s*(?:source|detect|ask|fix|bad|good)\b/) ? "#\n" : line
       end.join

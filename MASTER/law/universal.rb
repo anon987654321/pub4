@@ -130,6 +130,12 @@ Law.define(:SQUINT_TEST) do
   source "Squint Test readability heuristic (Sandi Metz)"
   severity :info
   scope :file
+  # Comment lines are content for this law, not noise. considered_text replaces
+  # each one with a bare newline, so any four consecutive comment lines became
+  # `\n\n\n\n` and read as a gap — which made every heavily-commented file in
+  # this tree, including every file under law/, a finding about blank lines it
+  # does not have.
+  reads_comments true
   detect { |text| text.match?(/\n{4,}/m) }
   fix "One blank line between sections, never more than two consecutive."
   bad <<~X

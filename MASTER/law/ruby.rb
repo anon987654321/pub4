@@ -28,6 +28,13 @@ Law.define(:FROZEN_STRING_LITERAL) do
   severity :warn
   languages %i[ruby]
   scope :file
+  # Its subject IS a comment, so it has to be allowed to see one. Without this,
+  # considered_text blanks line 1 before the detector reads it and the file looks
+  # like it starts with a newline — which is exactly what the lookahead is
+  # testing for. Measured before the fix: 423 of 423 files under MASTER/lib that
+  # carry the magic comment were flagged as missing it. A law that fires on every
+  # file it should pass is indistinguishable from one nobody wired up.
+  reads_comments true
   detect { |text| text.match?(/\A(?!# frozen_string_literal)/m) }
   fix "Add '# frozen_string_literal: true' as first line."
   bad <<~X
