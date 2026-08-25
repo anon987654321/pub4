@@ -26,6 +26,7 @@ def usage
       bin/pub4 land -m <msg> <path>...  commit, rebase, re-check, push
       bin/pub4 worktree <name>        own checkout + branch, so agents never share an index
       bin/pub4 hooks                  install the shared-tree commit guard
+      bin/pub4 readers <path>         who reaches this file, across all four trees
 
     Profiles (passed through to check scripts):
       OPENBSD/bin/check --profile=contributor
@@ -135,6 +136,42 @@ when "worktree"
   name = ARGV.shift
   abort("usage: bin/pub4 worktree <name>   (e.g. bin/pub4 worktree claude)") if name.to_s.empty?
   exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
+when "readers"
+  # Before you believe "its only reader is X". That sentence has been wrong four
+  # times in this repo and each time the grep behind it could not see the
+  # reference that mattered — most expensively hash_dig_compat.rb, whose second
+  # reader was in another tree, built its path with File.expand_path, left the
+  # extension off, and sat inside a `rescue LoadError` so the breakage warned
+  # instead of raising and dilla rendered without coltrane for days.
+  require "pub4/readers"
+  target = ARGV.shift
+  abort("usage: bin/pub4 readers <path>   (e.g. bin/pub4 readers MASTER/lib/boot/hash_dig_compat.rb)") if target.to_s.empty?
+
+  hits = Pub4::Readers.find(root: ROOT, target: target)
+  if hits.empty?
+    puts "readers: no reference to #{target} anywhere in #{Pub4::Readers::TREES.join(', ')}"
+    puts "readers: that is the only case where deleting it is a reader-count question and not a judgement call"
+    exit 0
+  end
+
+  by_kind = hits.group_by(&:kind)
+  # Ordered by how load-bearing the reference is, not alphabetically: a require
+  # breaks on delete, a mention is usually a comment.
+  %i[require path_build render test constant mention].each do |kind|
+    rows = by_kind[kind] or next
+    label = { require: "require", path_build: "path built at runtime", render: "rendered by name", test: "asserted by a test",
+              constant: "constant (Zeitwerk or direct)", mention: "mentioned" }.fetch(kind)
+    puts "readers: #{label} — #{rows.length}"
+    rows.first(40).each { |r| puts "  #{r.path}:#{r.line}  #{r.text[0, 120]}" }
+    puts "  … and #{rows.length - 40} more" if rows.length > 40
+  end
+  # A constant reference is a Zeitwerk load and breaks exactly like a require;
+  # prose mentions were reclassified before they got here.
+  hard = (by_kind[:require].to_a + by_kind[:path_build].to_a + by_kind[:render].to_a +
+          by_kind[:test].to_a + by_kind[:constant].to_a).length
+  puts "readers: #{hard} reference(s) would break on delete or move"
+  exit(hard.zero? ? 0 : 1)
+
 when "hooks"
   # core.hooksPath rather than copying into .git/hooks: a copy is a second
   # implementation that drifts from the tracked one, silently, which is the

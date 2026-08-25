@@ -35,6 +35,21 @@
 # measured once at the rename. A module holding a constant, a method or two
 # children is doing work and still counts; so does a `class` wrapping a class,
 # which nothing forced.
+# RAISED 2026-08-25, 36970 -> 37042 (+72). lib/pub4/readers.rb, which answers
+# "who reaches this file" across all four trees before somebody deletes it.
+#
+# The sponsor is a defect that has now cost this repo four times, most recently
+# hash_dig_compat.rb: merged into a test helper as "its only reader is this
+# helper", when STUDIO's music_gems.rb required it by File.expand_path from
+# another tree, with the extension left off, inside a `rescue LoadError` — so it
+# warned instead of raising and dilla rendered without coltrane for days. The
+# other three are _search_loading (a partial spelled without its underscore or
+# its extensions), RepoMap (a constant, no path anywhere) and Log::Evidence
+# (referenced only by a test).
+#
+# Each of those was a grep that could not see one spelling. 72 lines that make
+# the count right is what a budget with a sponsor is for, and the alternative is
+# the fifth one.
 # RAISED 2026-08-25, 36970 -> 36976 (+6), the first raise under the body-line
 # unit. Io::Shell#sandbox_error, which wires Ground::Policy::Sandbox into the
 # shell preflight. That module was written from an adversarial corpus and was
@@ -648,7 +663,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_body_ceiling: 36970
+  lib_body_ceiling: 37042
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
