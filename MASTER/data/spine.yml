@@ -104,6 +104,21 @@
 # allowance is now spent, and the honest next move is lib/ falling back rather
 # than a fourth raise.
 #
+# RAISED 2026-08-25, 36955 -> 36970 (+15), and not by the session raising it.
+# lib/boot/hash_dig_compat.rb, restored in d1f6a31af. Coltrane 2.1.5 redefines
+# Hash#dig directly on Hash, so it wins for the whole process the moment coltrane
+# is required and raises NoMethodError where MRI returns nil; the prepend restores
+# MRI's behaviour. The file had been merged into test_helper.rb under the note
+# "its only reader is this helper" when it had two — STUDIO's music_gems.rb
+# required it by absolute path, that require landed inside a `rescue LoadError`,
+# and dilla rendered without coltrane's chord parsing for as long as it took to
+# notice.
+#
+# Recorded here because the commit that added it did not, and a ratchet nobody
+# reconciles is the decoration this file opens by criticising. Fifteen lines that
+# restore a load-bearing file is a sponsor; the point of writing it down is that
+# the breach had an owner and a reason rather than being absorbed silently.
+#
 # CORRECTION, same day: this paragraph named the Transcendent half of lib/voice
 # as the candidate, "reached by nothing". That was repeated from a stale note and
 # is false. lib/voice/transcendent.rb is called from lib/voice/speech.rb in five
@@ -633,7 +648,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_body_ceiling: 36955
+  lib_body_ceiling: 36970
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
