@@ -147,15 +147,15 @@ proposals:
     state: open
     claim: "Ground::Tool::Contract has no production caller; its own docstring says it enforces at the call site"
     note: >
-      114 lines declaring typed contracts — allowed inputs, output shape,
-      permission tier, retry policy, timeout, side-effect class — and find,
-      validate and permitted_for? are called from nothing. Its header says "the
-      validator enforces these at the call site before any tool runs", and
-      lib/builder/ai_boot.rb asserted "strict guard remains in Tool::Contract for
-      shell/git"; that comment is corrected here, the module is not. Second inert
-      gate the lib/ground regroup surfaced, after Policy::Sandbox, and the same
-      shape: a guard nothing asks, with a comment insisting it is the guard.
-      Wire it or delete it — both change what tool execution permits.
+      Deleted rather than wired, on three findings that only appeared when someone
+      tried to wire it. Its REGISTRY names nine tools and exactly one — web_fetch —
+      matches a live one: file_read/file_write are inverted from read_file/write_file,
+      shell_exec is zsh, git_op is git_context, and postpro/repligen/scan are no tool
+      at all, while fourteen live tools have no contract. Its injection check fires
+      only for :shell_exec and :git_op, names that never occur. And the guard it
+      would run is InjectionGuard in :strict mode, which is default-deny — it
+      refuses clean input lacking an allowlist token, so it rejects `ls -la` and
+      `git status`. Wiring it would have bricked the shell tool.
 
   - id: ground-is-a-76-file-drawer
     tree: MASTER

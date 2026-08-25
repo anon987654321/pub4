@@ -33,8 +33,11 @@ Three shapes here look wrong from outside and are not:
 
 Six stages were deleted to pay for it, and every one was constructed nowhere or
 only by another of the six. `Stages::Guard` scanned messages for prompt
-injection — `Ground::Tool::Contract` and `Builder::AiBoot` still run the same
-`InjectionGuard`. `Stages::Deliberate` wrapped a coding message with "list four
+injection — `Builder::AiBoot` still runs `InjectionGuard`. This sentence named
+`Ground::Tool::Contract` as a second runner until 2026-08-25, and it never was
+one: nothing called that module, its gate fired only on tool names no live tool
+has, and its `:strict` mode is default-deny, which would have refused `ls -la`.
+It is deleted; the guard that runs is `:permissive`, in AiBoot, alone. `Stages::Deliberate` wrapped a coding message with "list four
 approaches first" — `Proof#ideation_satisfied?` enforces that at the gate now.
 `Stages::Review` orchestrated the other three and was built by nothing.
 `Stages::Lint` scanned written paths after the fact, which is `WriteGuard`'s job
