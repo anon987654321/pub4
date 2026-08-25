@@ -159,7 +159,18 @@ module Master
             [path, code.bytesize, @rules_mtime].join(":")
           end
 
+          # Two sources while the rule populations are being collapsed into one.
+          #
+          # law/ takes precedence: a rule migrated there is defined once, with its
+          # severity and its worked examples in the same block, and the yaml entry
+          # left behind is the stale half. Merging in that order means a migration
+          # is a one-file move rather than a move plus a deletion that has to land
+          # in the same commit to avoid a duplicate prompt.
           def load_semantic_rules
+            from_yaml.merge(from_law)
+          end
+
+          def from_yaml
             data = Master.load_rules
             Master.flatten_rules(data["rules"])
               .select { |r| r["detect_semantic"] }
@@ -173,6 +184,28 @@ module Master
                   blast_radius: r["blast_radius"],
                 }
               end
+          end
+
+          # A law's bad/good are its worked examples. Carrying them into the
+          # prompt is the whole reason the fixtures are required for `ask` rules:
+          # the model gets the same two cases the author had to write down, so a
+          # prompt that drifts from its examples is visible rather than implied.
+          def from_law
+            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+
+            ::Law.rules.values.select(&:semantic?).each_with_object({}) do |rule, h|
+              h[rule.id.to_s] = {
+                prompt: "#{rule.ask}\nViolates: #{rule.bad.strip}\nSatisfies: #{rule.good.strip}",
+                severity: rule.severity,
+                mode: :violation,
+                reversibility: nil,
+                blast_radius: nil,
+              }
+            end
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "SemanticRule.from_law", severity: :load_bearing)
+            {}
           end
 
           def build_prompt(code, path)
