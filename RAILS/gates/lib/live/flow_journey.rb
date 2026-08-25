@@ -217,7 +217,7 @@ module Deploy
       #
       # Always the app under test: url stays on 127.0.0.1:<port> and the public
       # hostname travels in the Host header, which is the shape a relative
-      # redirect already had. An absolute Location used to be taken at face
+      # redirect already had. Taking an absolute Location at face
       # value, so a 301 to http://brgen.no/nearby/room sent the next request to
       # the real brgen.no on port 80 — relayd answers there with a TLS redirect
       # that Net::HTTP reads as "EOFError: end of file reached", which is how

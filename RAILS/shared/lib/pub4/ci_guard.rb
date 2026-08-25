@@ -9,7 +9,8 @@ module Pub4
   module CiGuard
     # The one CI lock, shared with the shell side.
     #
-    # This used to be /var/tmp/pub4-ci.lock while OPENBSD/lib/ci_lock.sh called
+    # One path, because two do not exclude each other. /var/tmp/pub4-ci.lock sat
+    # here while OPENBSD/lib/ci_lock.sh called
     # itself "the one definition of the pub4 CI mutex path" and pointed three
     # shell scripts at /var/db/pub4/ci.lock. Two files, no mutual exclusion
     # between them — and the half that was actually being locked was the half

@@ -69,8 +69,8 @@ module Deploy
       relayd_keys = parse_relayd_keypairs
 
       if master[:apps] && !master[:apps].empty?
-        # Derived from apps.yml, not restated. This table used to be a literal
-        # of the same three domain/port pairs, which made the gate a fifth copy
+        # Derived from apps.yml, not restated. A literal table of the same three
+        # domain/port pairs makes the gate a fifth copy
         # of the fact it exists to protect: edit apps.yml and the gate keeps
         # asserting the old numbers, and passes. port_inventory checks the other
         # four mirrors against apps.yml but does not read gates/lib, so nothing

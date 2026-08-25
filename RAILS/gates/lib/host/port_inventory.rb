@@ -72,7 +72,7 @@ module Deploy
       "RAILS/env.sample",
       "RAILS/tools/build_workbox.mjs",
     ].freeze
-    # The config files a retired app leaves itself in. This list used to be
+    # The config files a retired app leaves itself in. A hand-kept list goes
     # RETIRED_ACTIVE_PATHS alone — five scripts — and none of them was where the
     # leftover references actually lived. On 2026-08-12, two months after DECISIONS.md
     # recorded "baibl + blognet removed — apps, relayd, acme, nsd, litestream,

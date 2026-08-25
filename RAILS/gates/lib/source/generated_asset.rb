@@ -7,7 +7,7 @@ module Deploy
   class GeneratedAssetGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    # Stylesheets only. app/javascript/**/*.{js,ts} used to be watched here and
+    # Stylesheets only. Watching app/javascript/**/*.{js,ts} here
     # compared against application.css — but every app serves its JS through
     # importmap, unbundled, so no JS file has application.css as its build
     # artifact and no JS edit can make it stale. Touching a Stimulus controller

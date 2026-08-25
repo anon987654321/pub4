@@ -166,7 +166,7 @@ def emit_gate_result(key, result, verbose:)
   # counted in the "ALL PASSED" line either. run_one prints the outcome label.
   #
   # The gate's own pass line only prints when it was asked for by name, which is
-  # how it used to be invoked directly. Under --all the suite summary speaks for
+  # how it is invoked directly. Under --all the suite summary speaks for
   # it, and forty success lines would bury the failures.
   verbose ? result.render(pass_message(GATES.fetch(key))) : result.render
 end
@@ -182,7 +182,7 @@ def run_subprocess(key, row)
   ok = system(*ruby_cmd, path, *extra)
   status = $?
 
-  # Three cases, and only two of them used to be told apart.
+  # Three cases, and two of them are easy to conflate.
   #
   # `system` returns nil when the command could not be run at all — no such
   # interpreter, script not executable. That is the gate erroring, not the gate

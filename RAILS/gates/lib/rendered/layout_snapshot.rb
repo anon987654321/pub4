@@ -155,7 +155,7 @@ module Deploy
     # Current.user has coordinates and the lobby channel when it does not — so
     # the tab is 94px or 104px wide depending on visitor state, and the two
     # alternate between runs of this gate. The partial's own comment records an
-    # earlier fix for the same symptom: the label used to be rewritten by
+    # earlier fix for the same symptom, where the label was rewritten by
     # nearby_chat_controller after the frame arrived, and moving it server-side
     # stopped the visible relabel without making the width one value.
     # Excluded rather than re-recorded, because re-recording could not converge.
