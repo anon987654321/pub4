@@ -21,6 +21,11 @@ class TestChain < Minitest::Test
     "black-forest-labs/flux-kontext-pro" => {
       input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed input_image]
     },
+    # FLUX 2 takes references as a LIST. A validator that knows only the
+    # singular refuses every chain built on the current generation.
+    "black-forest-labs/flux-2-max" => {
+      input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed]
+    },
     "black-forest-labs/flux-schnell" => {
       input_keys: %w[prompt aspect_ratio output_format seed num_inference_steps]
     }
@@ -66,11 +71,28 @@ class TestChain < Minitest::Test
           inherits: [image]
     YML
 
-    assert(problems.any? { |p| p.include?("declares no input_image") },
+    assert(problems.any? { |p| p.include?("declares neither input_image nor input_images") },
            "expected a refusal naming input_image, got #{problems.inspect}")
   end
 
+  def test_a_stage_inheriting_an_image_into_a_flux_2_model_is_allowed
+    problems = problems_for(<<~YML)
+      stages:
+        - name: establish
+          model: black-forest-labs/flux-2-max
+          prompt: a quayside
+        - name: restyle
+          model: black-forest-labs/flux-2-max
+          prompt: as a print
+          inherits: [image]
+    YML
+
+    assert_empty problems,
+                 "flux-2 spells it input_images; refusing that refuses the entire current generation"
+  end
+
   def test_the_first_stage_cannot_inherit
+
     problems = problems_for(<<~YML)
       stages:
         - name: establish

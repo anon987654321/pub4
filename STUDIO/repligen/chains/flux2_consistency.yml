@@ -1,0 +1,9 @@
+description: FLUX 2 multi-reference consistency spine, AMBITION.md section B item 26.
+stages:
+  - name: establish
+    model: black-forest-labs/flux-2-max
+    prompt: a woman on a Bergen quayside in winter light
+  - name: hold
+    model: black-forest-labs/flux-2-max
+    prompt: the same person, three metres back, overcast
+    inherits: [image]

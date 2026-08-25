@@ -340,6 +340,48 @@ MODEL_CAPABILITIES = {
     # out of range here, which is why the ceiling is per-model and not global.
     steps_key: "num_inference_steps", steps_range: (1..4), steps_default: 4,
   },
+  # FLUX 2, the current generation and the default as of 2026-08-25.
+  #
+  # `input_images`, PLURAL, and that is the whole reason these entries were
+  # worth waiting for rather than guessing. FLUX 2 takes up to eight reference
+  # images and holds a character across them, where FLUX 1's editors took a
+  # single `input_image`. A guessed singular key would have been refused by the
+  # chain validator on every FLUX 2 chain — correctly, and for a reason nobody
+  # would have found quickly.
+  #
+  # Read from Replicate's own documentation rather than from the schema
+  # endpoint, which needs a token this machine does not have. `rake
+  # repligen:schema_audit` is what confirms them against the provider, and
+  # should be the first thing run once a token is present.
+  #
+  # No safety_tolerance: that was a FLUX 1.1 field and nothing in the FLUX 2
+  # documentation carries it. Declaring a key the model does not take is the
+  # exact failure MODEL_CAPABILITIES exists to prevent, so it is left out until
+  # the audit says otherwise.
+  "black-forest-labs/flux-2-max" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  "black-forest-labs/flux-2-pro" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  # Typography specialist — clean text, captions, complex layouts — and the
+  # widest blend surface at ten references.
+  "black-forest-labs/flux-2-flex" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  # Sub-second. The exploration lane: run a prompt here, then commit the winner
+  # to flux-2-max.
+  "black-forest-labs/flux-2-klein-4b" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  "black-forest-labs/flux-2-dev" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
   "stability-ai/stable-diffusion-3.5-large" => {
     input_keys: %w[prompt aspect_ratio output_format seed cfg steps],
     negative_prompt_key: nil,
@@ -349,7 +391,8 @@ MODEL_CAPABILITIES = {
 }.freeze
 DEFAULT_CAPABILITY = { input_keys: %w[prompt aspect_ratio output_format seed], negative_prompt_key: nil }.freeze
 
-PREVIEW_MODEL = "black-forest-labs/flux-schnell"
+# Sub-second, and the current generation. Explore here, commit to FINAL_MODEL.
+PREVIEW_MODEL = "black-forest-labs/flux-2-klein-4b"
 # What --final asks for. The flag was parsed into options[:final] and nothing
 # ever read it, so `--final` did nothing at all: with REPLIGEN_MODEL set to a
 # preview model it silently kept previewing.
@@ -357,7 +400,7 @@ PREVIEW_MODEL = "black-forest-labs/flux-schnell"
 # Ultra, not Pro: 4 MP and a raw mode that matches the stock/lens vocabulary.
 # Cheap one-shots stay on flux-1.1-pro (the default); --final is how one
 # image leaves preview and also leaves the 1 MP-class model.
-FINAL_MODEL = "black-forest-labs/flux-1.1-pro-ultra"
+FINAL_MODEL = "black-forest-labs/flux-2-max"
 
 def capability_for(model_id)
   MODEL_CAPABILITIES[model_id] || DEFAULT_CAPABILITY
@@ -493,7 +536,17 @@ def raw_mode?(options)
   !!(options[:stock] || options[:lens])
 end
 
+# Up to eight, because that is what flux-2-max and flux-2-pro accept; flex takes
+# ten and klein-4b five, and the model's own schema is what refuses the excess
+# rather than a number guessed here. Empty becomes nil so .compact drops the key
+# entirely — sending an empty list is not the same as not sending one.
+def reference_images(options)
+  refs = (Array(options[:references]) + [options[:image]]).compact.uniq
+  refs.empty? ? nil : refs.first(8)
+end
+
 def build_input(prompt, options, seed:, negative_prompt:)
+
   cap = capability_for(options[:model])
   full = {
     prompt:,
@@ -504,7 +557,15 @@ def build_input(prompt, options, seed:, negative_prompt:)
     negative_prompt:,
     raw: raw_mode?(options) || nil,
     input_image: options[:image],
+    # FLUX 2 takes references as a LIST, up to eight, and holds a character
+    # across them. That is the consistency spine a long chain needs: stage N's
+    # outputs become stage N+1's references, so the chain accumulates rather
+    # than drifting. --reference may be given more than once; --image still
+    # works and counts as the first of them.
+    input_images: reference_images(options),
+    output_quality: 90,
   }.compact
+
   [model_number(cap, :guidance, options[:guidance]),
    model_number(cap, :steps, options[:steps])].compact.each { |key, value| full[key] = value }
   if cap[:negative_prompt_key] && full.key?(:negative_prompt)
@@ -669,7 +730,8 @@ end
 # the thing you asked for.
 # The keys build_input can fill from something other than a per-model knob.
 # Keep in step with the literal hash there.
-PRODUCIBLE_INPUT_KEYS = %w[prompt aspect_ratio output_format safety_tolerance seed raw input_image].freeze
+PRODUCIBLE_INPUT_KEYS = %w[prompt aspect_ratio output_format output_quality safety_tolerance seed raw
+                           input_image input_images].freeze
 
 def vocab_problems
   problems = []
@@ -764,7 +826,7 @@ end
 
 cache = File.expand_path(ENV.fetch("REPLIGEN_CATALOG", "~/.cache/repligen/models.json"))
 blob_cache_dir = File.expand_path(ENV.fetch("REPLIGEN_BLOB_CACHE", "~/.cache/repligen/blobs"))
-options = { model: ENV.fetch("REPLIGEN_MODEL", "black-forest-labs/flux-1.1-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
+options = { model: ENV.fetch("REPLIGEN_MODEL", "black-forest-labs/flux-2-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
 parser = OptionParser.new do |p|
   p.banner = "Usage: repligen.rb generate|search|sync|stats|capabilities|vocab-check [options]"
   p.on("--prompt TEXT") { |v| options[:prompt] = v }
@@ -803,6 +865,8 @@ parser = OptionParser.new do |p|
   p.on("--raw") { options[:raw] = true }
   p.on("--no-raw") { options[:no_raw] = true }
   p.on("--image FILE") { |v| options[:image] = File.expand_path(v) }
+  # Repeatable. FLUX 2 holds a character across up to eight of these.
+  p.on("--reference FILE") { |v| (options[:references] ||= []) << File.expand_path(v) }
   p.on("--postpro PRESET") { |v| options[:postpro] = v }
   # Off entirely. The grade is the default now, so this is the escape hatch.
   p.on("--no-postpro") { options[:postpro] = false }

@@ -99,9 +99,13 @@ module Repligen
           end
           # The refusal that matters: a stage that expects an image from the one
           # before it, handed to a model with nowhere to put an image.
-          if what == "image" && !keys.include?("input_image")
-            found << "#{position} inherits the previous image, but #{stage.model} declares no " \
-                     "input_image — it would silently generate from the prompt alone"
+          # Either spelling. FLUX 1 editors take a single `input_image`; FLUX 2
+          # takes `input_images`, a list of up to eight it holds a character
+          # across. Checking only the singular would have refused every FLUX 2
+          # chain — correctly by its own rule, and wrongly in fact.
+          if what == "image" && (keys & %w[input_image input_images]).empty?
+            found << "#{position} inherits the previous image, but #{stage.model} declares neither " \
+                     "input_image nor input_images — it would silently generate from the prompt alone"
           end
         end
 
