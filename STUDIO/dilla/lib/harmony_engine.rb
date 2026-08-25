@@ -776,7 +776,7 @@ module DillaHarmony
   # since a false-reject here would silently swap out a fine progression for
   # no reason anyone could audit after the fact.
   def report_harmony_beauty!(pads, cfg)
-    return unless defined?(DillaHarmonyScore) && ENV["BEAUTY_REPORT"] == "1"
+    return unless defined?(DillaHarmonyScore) && ENV["BEAUTY_REPORT"] != "0"
 
     analysis = DillaHarmonyScore.analyze(pads)
     warn "harmony-beauty: #{cfg[:track]} score=#{analysis[:score]} #{analysis[:breakdown]}"

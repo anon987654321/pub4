@@ -215,7 +215,10 @@ def deep_default_render!(dest, n_bars)
     render_dilla(dest, n_bars)
   end
   log_render_meta(dest)
-  dilla_quality(dest) if ENV["QUALITY_REPORT"] == "1" && File.file?(dest)
+  # Reported unless QUALITY_REPORT=0. Read-only: it measures the file that
+  # was just written and prints. A measurement nobody asked for is how a
+  # drift gets noticed.
+  dilla_quality(dest) if ENV["QUALITY_REPORT"] != "0" && File.file?(dest)
 end
 
 def default_render!(argv = ARGV)

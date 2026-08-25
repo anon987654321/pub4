@@ -180,8 +180,15 @@ def apply_ghost_tier_vel(vel, tier)
   (vel * GHOST_TIERS.fetch(tier, GHOST_TIERS[:pocket])[:mul]).clamp(0.03, 0.72).round(3)
 end
 
+# Stems are written unless STEM_EXPORT=0 or KEEP_STEMS=0.
+#
+# It was opt-in, so the default was that a render you might want to remix
+# arrived flattened and the parts were gone. Nothing here changes what the
+# mix sounds like — it writes files beside it — which is why this one can be
+# turned on without an ear on it. The cost is disk, and the crate is the
+# place that has been expensive rather than this.
 def export_render_stems!(destination, drum_tmp, harmonic_tmp, events, duration, cfg, use_stem_harmony:)
-  return unless ENV["STEM_EXPORT"] == "1" || ENV["KEEP_STEMS"] == "1"
+  return unless ENV["STEM_EXPORT"] != "0" || ENV["KEEP_STEMS"] != "0"
   stem_dir = File.join(File.dirname(destination), "#{File.basename(destination, '.*')}_stems")
   FileUtils.mkdir_p(stem_dir)
   FileUtils.cp(drum_tmp, File.join(stem_dir, "drums.wav")) if File.exist?(drum_tmp)

@@ -1027,7 +1027,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   end
   export_render_stems!(destination, drum_tmp, harmonic_tmp, events, duration, cfg,
                        use_stem_harmony:)
-  keep_stems ||= ENV["KEEP_STEMS"] == "1"
+  keep_stems ||= ENV["KEEP_STEMS"] != "0"
   unless keep_stems
     FileUtils.rm_f(drum_tmp)
     FileUtils.rm_f(harmonic_tmp) unless use_stem_harmony
