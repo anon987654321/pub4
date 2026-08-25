@@ -68,7 +68,12 @@ unaccounted_tracked_files() {
     # path is it or descends from it. Without this the check reports `vendor`,
     # which is the accounting being wrong rather than the sync.
     (( ${synced[(Ie)$top]} )) && continue
-    [[ -n ${synced[(r)$top/*]} ]] && continue
+    # :- is load-bearing under `set -u`. (I) yields an index and is 0 when there
+    # is no match, so it is safe bare; (r) yields the matched VALUE, and a search
+    # that matches nothing is an unset parameter, which nounset makes fatal. This
+    # aborted every deploy's CI step with "synced[(r)$top/*]: parameter not set"
+    # — the guard erroring rather than the thing it guards.
+    [[ -n ${synced[(r)$top/*]:-} ]] && continue
     (( ${kept[(Ie)$top]} )) && continue
     [[ $top == *.sh || $top == *.md ]] && continue
     missing+=($top)
