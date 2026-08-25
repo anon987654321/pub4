@@ -754,6 +754,7 @@ parser = OptionParser.new do |p|
   p.on("--output FILE") { |v| options[:output] = File.expand_path(v) }
   p.on("--limit N", Integer) { |v| options[:limit] = v.clamp(1, 1_000) }
   p.on("--dry-run") { options[:dry_run] = true }
+  p.on("--until STAGE") { |v| options[:until] = v }
   p.on("--stock NAME") { |v| options[:stock] = v }
   p.on("--lens NAME") { |v| options[:lens] = v }
   p.on("--camera-height NAME") { |v| options[:camera_height] = v }
@@ -836,11 +837,56 @@ when "chain"
   end
   puts "repligen: the chain is satisfiable — every stage can take what the one before it produces"
 
-  # Execution is deliberately not wired here yet. A half-wired chain that runs
-  # three stages and then discovers stage four is the exact failure the
-  # validation above exists to prevent, and it would spend real money doing it.
-  abort "repligen: chain execution is not wired yet — this validated the plan only" unless options[:dry_run]
-  puts "repligen: --dry-run, so nothing was requested"
+  if options[:dry_run]
+    puts "repligen: --dry-run, so nothing was requested"
+    exit 0
+  end
+
+  # The loop itself lives in Chain.run, which takes this block. It is injected
+  # so the carry-forward can be tested without spending anything — see
+  # test/tools/test_chain.rb, which hands in a recorder and asserts that stage
+  # N+1 really is given stage N's file. That is the one thing a chain must get
+  # right and the one thing that fails silently: a model handed no image just
+  # generates from the prompt and returns something plausible.
+  abort "repligen: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
+    Master::Io::ReplicateClient.load_token.to_s.strip.empty?
+
+  base = options[:output] || "chain-#{name}.jpg"
+  ext = File.extname(base)
+  ext = ".jpg" if ext.empty?
+  stem = base.sub(/#{Regexp.escape(File.extname(base))}\z/, "")
+  client = Master::Io::ReplicateClient.new
+
+  perform = lambda do |stage:, index:, total:, image:, seed:|
+    target = "#{stem}-#{format('%02d', index + 1)}-#{stage.name}#{ext}"
+    stage_options = options.merge(stage.options).merge(model: stage.model)
+    stage_options[:image] = image if image
+    prompt = stage.inherits.include?("prompt") ? options[:prompt] : stage.prompt
+    compiled = compile_prompt(prompt, stage_options)
+    negative = compile_negative_prompt(stage_options)
+    stage_seed = seed || options[:seed] || SecureRandom.random_number(2**31)
+    input = build_input(compiled, stage_options, seed: stage_seed, negative_prompt: negative)
+
+    puts "repligen: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
+    urls = Array(client.predict(stage.model, input)).flatten.compact
+    abort "repligen: stage #{stage.name} returned no output; earlier stages are kept" if urls.empty?
+
+    FileUtils.mkdir_p(File.dirname(target))
+    client.download_url(urls.first, target)
+    digest, = cache_blob(target, blob_cache_dir)
+    write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest)
+    puts "repligen: stage #{index + 1} wrote #{target}"
+    { path: target, seed: stage_seed }
+  end
+
+  produced = Repligen::Chain.run(chain, perform: perform, until_stage: options[:until],
+                                        image: options[:image], seed: options[:seed])
+
+  # postpro last, on the final frame only — grading an intermediate would be
+  # graded again by every stage after it.
+  maybe_handoff_postpro(produced.last, options[:postpro]) if produced.any?
+  puts "repligen: chain #{name} produced #{produced.length} frame(s)"
+  puts produced
 when "vocab-check"
   vocab_check
 when "generate"

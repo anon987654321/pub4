@@ -123,7 +123,45 @@ module Repligen
       found
     end
 
+    # Run the stages, carrying forward what each one declares it inherits.
+    #
+    # `perform` is injected rather than called directly, for the same reason
+    # capability_for is: this is the path that spends money, and a loop that can
+    # only be exercised by spending it is a loop nobody checks. The tests hand in
+    # a recorder and assert the carry-forward — that stage N+1 is actually given
+    # stage N's file, which is the one thing a chain has to get right and the one
+    # thing that fails silently, because a model handed no image just generates
+    # from the prompt and returns something plausible.
+    #
+    # Returns the files produced, in order. Every intermediate is kept: a chain
+    # is worth running because of what happens between stages, and a run that
+    # discards stage 2 cannot tell you that stage 2 was where the look was won.
+    def self.run(chain, perform:, until_stage: nil, image: nil, seed: nil)
+      carried_image = image
+      carried_seed = seed
+      produced = []
+
+      chain.fetch(:stages).each_with_index do |stage, index|
+        inherited_image = stage.inherits.include?("image") ? carried_image : nil
+        inherited_seed = stage.inherits.include?("seed") ? carried_seed : nil
+
+        result = perform.call(
+          stage: stage, index: index, total: chain[:stages].length,
+          image: inherited_image, seed: inherited_seed
+        )
+        break if result.nil?
+
+        produced << result[:path]
+        carried_image = result[:path]
+        carried_seed = result[:seed] if result[:seed]
+        break if until_stage && until_stage == stage.name
+      end
+
+      produced
+    end
+
     # What will happen, in order, without doing it.
+
     def self.plan(chain)
       chain.fetch(:stages).each_with_index.map do |stage, index|
         carried = stage.inherits.empty? ? "nothing" : stage.inherits.join(" + ")

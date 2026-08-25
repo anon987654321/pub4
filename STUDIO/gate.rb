@@ -77,6 +77,12 @@ module Deploy
         owner: "this file — pinned by STUDIO/test/test_studio_gate.rb",
       },
       {
+        name: "tools",
+        glob: "tools/**/*.rb",
+        entry: nil,
+        owner: "operator tools run from STUDIO/Rakefile — parse-checked only",
+      },
+      {
         name: "test",
         glob: "test/**/*.rb",
         entry: nil,

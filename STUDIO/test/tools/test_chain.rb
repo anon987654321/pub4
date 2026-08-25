@@ -186,4 +186,98 @@ class TestChain < Minitest::Test
     assert_includes plan[1], "beta"
     assert_includes plan[1], "image", "the plan has to say what each stage carries forward"
   end
+  # The carry-forward, which is the one thing a chain must get right and the one
+  # thing that fails silently: a model handed no image generates from the prompt
+  # and returns something entirely plausible. Chain.run takes the performer as
+  # an argument precisely so this can be checked without spending anything.
+  def recorder
+    calls = []
+    perform = lambda do |stage:, index:, total:, image:, seed:|
+      calls << { name: stage.name, image: image, seed: seed, index: index, total: total }
+      { path: "out-#{index + 1}-#{stage.name}.jpg", seed: 1000 + index }
+    end
+    [calls, perform]
+  end
+
+  def test_each_stage_receives_the_previous_stages_file
+    calls, perform = recorder
+    chain = chain_from(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one }
+        - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [image] }
+        - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three, inherits: [image] }
+    YML
+
+    produced = Repligen::Chain.run(chain, perform: perform)
+
+    assert_nil calls[0][:image], "the first stage has nothing to inherit"
+    assert_equal "out-1-a.jpg", calls[1][:image], "stage 2 must be handed stage 1s file"
+    assert_equal "out-2-b.jpg", calls[2][:image], "stage 3 must be handed stage 2s file"
+    assert_equal %w[out-1-a.jpg out-2-b.jpg out-3-c.jpg], produced,
+                 "every intermediate is kept, not just the last frame"
+  end
+
+  def test_a_stage_that_inherits_nothing_is_handed_nothing
+    calls, perform = recorder
+    chain = chain_from(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one }
+        - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two }
+    YML
+
+    Repligen::Chain.run(chain, perform: perform)
+
+    assert_nil calls[1][:image],
+               "a stage that declares no inheritance must not silently receive the previous frame"
+  end
+
+  def test_seed_carries_only_when_inherited
+    calls, perform = recorder
+    chain = chain_from(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one }
+        - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [seed] }
+        - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three }
+    YML
+
+    Repligen::Chain.run(chain, perform: perform)
+
+    assert_equal 1000, calls[1][:seed], "stage 2 inherits the seed stage 1 used"
+    assert_nil calls[2][:seed], "stage 3 does not inherit, so it gets none"
+  end
+
+  def test_until_stops_after_the_named_stage
+    calls, perform = recorder
+    chain = chain_from(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one }
+        - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [image] }
+        - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three, inherits: [image] }
+    YML
+
+    produced = Repligen::Chain.run(chain, perform: perform, until_stage: "b")
+
+    assert_equal 2, calls.length, "--until b must not run c"
+    assert_equal %w[out-1-a.jpg out-2-b.jpg], produced
+  end
+
+  # A stage that fails returns nil, and the run stops rather than handing the
+  # next stage a file that does not exist.
+  def test_a_failed_stage_stops_the_run_and_keeps_what_came_before
+    chain = chain_from(<<~YML)
+      stages:
+        - { name: a, model: black-forest-labs/flux-kontext-pro, prompt: one }
+        - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [image] }
+        - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three, inherits: [image] }
+    YML
+    perform = lambda do |stage:, index:, total:, image:, seed:|
+      next nil if stage.name == "b"
+
+      { path: "out-#{index + 1}.jpg", seed: 1 }
+    end
+
+    produced = Repligen::Chain.run(chain, perform: perform)
+
+    assert_equal %w[out-1.jpg], produced, "stage 1 is kept; nothing after the failure runs"
+  end
 end
