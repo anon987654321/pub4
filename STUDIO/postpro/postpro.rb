@@ -18,6 +18,9 @@ require "digest"
 # by the path below; postpro and repligen were simply never updated with it.
 require_relative "../../MASTER/lib/io/analog_capabilities"
 
+require "open3"
+require "rbconfig"
+
 BOOT_TIME = Time.now.freeze
 
 module PostproBootstrap
@@ -311,6 +314,50 @@ BOOTSTRAP = PostproBootstrap.run
 # prompt. postpro is libvips and every input glob is jpg/jpeg/png/webp, so this
 # is the half of "the house filter on all our photos and videos" that did not
 # exist.
+# What is wrong with this photograph, and which half a grade can reach.
+#
+# --rescue FILE diagnoses and stops. Add --output FILE and it applies the
+# preset its findings point at. It names what it cannot fix every time, because
+# three of the four layers a photograph fails on are beyond any grade, and a
+# tool that quietly tries everything and reports success is lying about them.
+if ARGV.include?("--rescue")
+  require_relative "rescue"
+  subject = ARGV[ARGV.index("--rescue") + 1]
+  if subject.nil? || !File.file?(subject)
+    PostproBootstrap.dmesg("ERROR --rescue needs a readable file")
+    exit 1
+  end
+
+  findings = Postpro::Rescue.diagnose(subject)
+  Postpro::Rescue.report(findings).each { |line| PostproBootstrap.dmesg(line) }
+
+  target = ARGV.include?("--output") ? ARGV[ARGV.index("--output") + 1] : nil
+  preset = Postpro::Rescue.preset_for(findings)
+  if target.nil?
+    PostproBootstrap.dmesg("rescue: diagnosis only — pass --output FILE to apply " \
+                           "#{preset || 'a grade'}")
+    exit 0
+  end
+  if preset.nil?
+    PostproBootstrap.dmesg("rescue: nothing to apply; the optical layer is already sound")
+    exit 0
+  end
+
+  PostproBootstrap.dmesg("rescue: applying preset=#{preset}")
+  out, status = Open3.capture2e(RbConfig.ruby, __FILE__, "--input", subject,
+                                "--output", target, "--preset", preset)
+  unless status.success?
+    PostproBootstrap.dmesg("ERROR rescue: the grade failed: #{out.lines.last.to_s.strip}")
+    exit 1
+  end
+
+  require_relative "uncanny"
+  comparison = Postpro::Uncanny.compare(subject, target)
+  Postpro::Uncanny.verdict(comparison).each { |line| PostproBootstrap.dmesg("rescue: #{line}") }
+  PostproBootstrap.dmesg("rescue: wrote #{target}")
+  exit 0
+end
+
 if ARGV.include?("--video")
   require_relative "motion"
   source = ARGV[ARGV.index("--video") + 1]
