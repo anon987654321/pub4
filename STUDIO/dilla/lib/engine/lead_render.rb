@@ -257,7 +257,7 @@ def mix_harmonic_wav_stems(destination, duration, **stem_paths)
   true
 end
 
-def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, counter: false)
+def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, counter: false, program_override: nil)
   return if lead_events.empty? || !fluidsynth_pad_available?
   midi_path = "#{path}.smf.mid"
   lead_voice = scale_arp ? resolve_scale_lead_voice : resolve_lead_voice
@@ -265,7 +265,7 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, co
   role = scale_arp ? :scale_lead : :lead
   # The counter-line borrows the lead's soundfont and takes a strings or choir
   # program out of it, rather than the bright synth the rotation would pick.
-  program = counter ? counter_lead_program : lead_voice[:program]
+  program = program_override || (counter ? counter_lead_program : lead_voice[:program])
   write_smf(midi_path, lead_events, program:, bank: (counter ? 0 : lead_voice[:bank]),
             duration:, midi_fx: resolve_midi_fx_for(patch, role:), lead_mode: true)
   fs_gain = lead_voice[:patch]&.fetch(:fs_gain, 1.3) || 1.3
@@ -397,6 +397,23 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
                     harmony_lead_events(pad_events, cfg, harmony_lead_cfg, progression_insight: insight) : []
   creative_events = creative_on ? lead_events_creative(pad_events, cfg, duration:, n_bars: n_bars_est) : []
 
+  # MIDI_BAG=1 — the lead's pitches, on the kit's rhythm.
+  #
+  # ringtone.tools' MIDI Bag, at the one place in this engine where both halves
+  # already exist as note events: the arp has pitches with a contour, and the
+  # drum grid has onsets with accents. Normally a note is an indivisible pair of
+  # the two. This refuses that pairing and takes each half from a different part.
+  #
+  # sample_flip does the same separation for AUDIO slices and constrains them to
+  # the chord underneath. Nothing did it for note events, so a melody the engine
+  # generated could not be re-rhythmed by a pattern the engine also generated.
+  #
+  # Applied before the section envelope below, so a bagged lead still obeys the
+  # arrangement -- the envelope drops notes outside their sections, and it has to
+  # act on the notes that will actually sound.
+  harmony_lead_ev = midi_bag_lead_events(harmony_lead_ev, cfg, n_bars_est)
+  lead_arp_ev = midi_bag_lead_events(lead_arp_ev, cfg, n_bars_est)
+
   # The lead's section envelope, applied to its notes because it has no bus.
   #
   # All four lead paths, for the reason the comment below gives about the log
@@ -411,7 +428,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   end
 
   scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
-  harmony_lead_rendered = harmony_lead_ev.any? ? render_lead_via_fluidsynth(harmony_lead_path, harmony_lead_ev, duration, scale_arp: true) : nil
+  harmony_lead_rendered = harmony_lead_ev.any? ? render_hocket_lead!(harmony_lead_path, harmony_lead_ev, duration) : nil
   # Say which lead actually played, and how many notes it played.
   #
   # The counter-line silently returned nothing for a whole render batch because
@@ -730,4 +747,122 @@ def cache_self_sample!(destination)
       "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", SELF_SAMPLE_CACHE
 rescue StandardError
   FileUtils.rm_f(SELF_SAMPLE_CACHE)
+end
+
+# --------------------------------------------------------------- MIDI Bag
+#
+# The lead's pitches laid onto the kit's onsets, as MidiDevices::Bag defines it.
+#
+# Off by default and it must be: this changes WHEN every lead note sounds, which
+# is the most audible thing about a part. It is also the device most likely to be
+# wanted per-track rather than globally -- a bagged lead is a strong effect, and
+# the same setting that makes one beat sound played makes another sound broken.
+#
+# The timing source is the kit's actual grid rather than an invented one: a
+# sixteenth grid with the fourth sixteenth of each beat thinned on even steps,
+# accented on the quarters. That is what makes the bagged part inherit the beat's
+# pocket instead of running as a machine.
+def midi_bag_lead_events(events, cfg, n_bars)
+  return events unless ENV["MIDI_BAG"] == "1"
+  return events if events.nil? || events.empty?
+
+  bar_p = (60.0 / cfg[:bpm].to_f) * 4.0
+  return events unless bar_p.positive? && n_bars.to_i.positive?
+
+  timing = midi_bag_grid(bar_p, n_bars)
+  return events if timing.empty?
+
+  chord_at = if ENV.fetch("MIDI_BAG_FIT", "1") != "0"
+               chords = dilla_progression(cfg[:progression])
+               ->(t) { chords[((t / bar_p).floor) % chords.length] } if chords&.any?
+             end
+  out = MidiDevices::Bag.apply(
+    pitches: events, timing:,
+    order: ENV.fetch("MIDI_BAG_ORDER", "cycle").to_sym,
+    velocity_from: ENV.fetch("MIDI_BAG_VELOCITY", "timing").to_sym,
+    rests: ENV.fetch("MIDI_BAG_RESTS", "0.25").to_f,
+    seed: seed_for("midibag"),
+    chord_at:
+  )
+  return events if out.empty?
+
+  dmesg("midi bag: #{events.length} lead pitch(es) on #{out.length} kit onset(s)",
+        unit: "harm0", parent: "dilla0")
+  out
+end
+
+# The kit's onsets as timing slots, with its accents.
+def midi_bag_grid(bar_p, n_bars)
+  step = bar_p / 16.0
+  (0...(n_bars.to_i * 16)).filter_map do |i|
+    beat = i % 16
+    next if [3, 7, 11, 15].include?(beat) && i.even?
+
+    [i * step, [0, 4, 8, 12].include?(beat) ? 0.9 : 0.55, { hz: [110.0] }, step * 0.85]
+  end
+end
+
+# --------------------------------------------------------------- Hocket
+#
+# One line, distributed across the pad voices the engine already has.
+#
+# HOCKET=n splits a lead across n voices; the caller renders each through a
+# different patch, so a line played on one instrument becomes a line played BY an
+# ensemble. Returns the voices as an array, or a single-element array when off --
+# so a caller can treat the two cases the same and the off path stays exactly
+# what it was.
+def hocket_lead_voices(events)
+  voices = ENV.fetch("HOCKET", "1").to_i
+  return [events] unless voices > 1 && events&.any?
+
+  split = MidiDevices::Hocket.split(
+    events, voices:,
+    mode: ENV.fetch("HOCKET_MODE", "pendulum").to_sym,
+    hold: ENV.fetch("HOCKET_HOLD", "1").to_i,
+    seed: seed_for("hocket")
+  )
+  dmesg("hocket: #{events.length} note(s) across #{voices} voice(s) " \
+        "(#{split.map(&:length).join('/')})", unit: "harm0", parent: "dilla0")
+  split
+end
+
+# The harmony lead, played by an ensemble instead of an instrument.
+#
+# HOCKET=1 (the default) renders exactly what it always rendered, through the one
+# call it always used. Above 1 the line is split by MidiDevices::Hocket and each
+# voice goes through a DIFFERENT electric-piano program from EP_GM_PROGRAMS, then
+# the voices are summed.
+#
+# Different programs is the whole point and not a flourish: hocketing a line
+# across four copies of one patch is a line with gaps in it, which sounds like a
+# fault. Across four timbres it is an ensemble handing a melody between players,
+# which is what the technique is for and what it is named after.
+#
+# amix with normalize=0, for the reason audio_graph.rb gives -- the default
+# rescales by input count, so a four-voice hocket would arrive a quarter the
+# level of the one-voice line it replaces and read as "the leads got quiet".
+# 1/sqrt(n) instead: the voices play at different times and sum as power.
+def render_hocket_lead!(path, events, duration)
+  voices = hocket_lead_voices(events)
+  return render_lead_via_fluidsynth(path, events, duration, scale_arp: true) if voices.one?
+
+  rendered = voices.each_with_index.filter_map do |voice, i|
+    next if voice.empty?
+
+    part = "#{path}.hocket#{i}.wav"
+    render_lead_via_fluidsynth(part, voice, duration, scale_arp: true,
+                                                      program_override: EP_GM_PROGRAMS[i % EP_GM_PROGRAMS.length])
+    File.file?(part) ? part : nil
+  end
+  return nil if rendered.empty?
+  return (FileUtils.mv(rendered.first, path) && path) if rendered.one?
+
+  inputs = rendered.flat_map { |f| ["-i", f] }
+  gain = (1.0 / Math.sqrt(rendered.length)).round(4)
+  sh! "ffmpeg", "-y", *inputs, "-filter_complex",
+      "#{(0...rendered.length).map { |i| "[#{i}:a]" }.join}" \
+      "amix=inputs=#{rendered.length}:duration=longest:normalize=0,volume=#{gain}[out]",
+      "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+  rendered.each { |f| FileUtils.rm_f(f) }
+  File.file?(path) ? path : nil
 end

@@ -116,7 +116,12 @@ class AudioGraph
 
     # One input is not a mix. amix with inputs=1 still resamples and reweights,
     # so a single-channel bus would not be bit-identical to the channel itself.
-    return [clauses, parts.first[0].delete("[]")] if parts.one? && parts.first[1] == 1.0
+    #
+    # Float 1.0 only, never the String "1.0". A caller that spells its weights as
+    # strings is a caller proving text parity against a graph it already emits,
+    # and render_dilla emits amix unconditionally -- so collapsing its one-channel
+    # case here would be this class quietly deciding to change a render.
+    return [clauses, parts.first[0].delete("[]")] if parts.one? && parts.first[1].eql?(1.0)
 
     label = "#{target}_sum"
     clauses << "#{parts.map(&:first).join}amix=inputs=#{parts.size}:" \
@@ -198,7 +203,15 @@ class AudioGraph
 
   # Weights are positional strings in amix. 1.0 renders as "1", not "1.0", to
   # match what render_dilla already writes -- the graphs are compared as text.
+  #
+  # A weight handed over as a String is emitted exactly as written. render_dilla's
+  # weights are ENV.fetch results and tuned literals -- "1.0", "1.70", "0.9" --
+  # and a round trip through Float turns "1.0" into "1" and "1.70" into "1.7".
+  # Same mix, different text, and the whole migration onto this spine is proved
+  # by comparing text. The string is the caller's decision and it survives.
   def format_gain(value)
+    return value if value.is_a?(String)
+
     f = value.to_f
     f == f.to_i ? f.to_i.to_s : f.to_s
   end

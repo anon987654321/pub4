@@ -7,6 +7,143 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
+# Which bus each channel belongs to, when there are buses at all.
+#
+# Off by default and it has to be. A bus is an extra amix, and while a bus at
+# gain 1.0 with its channels' weights carried through is the same sum
+# arithmetically, it is not the same graph as text -- and the parity proof for
+# moving this renderer onto the spine is textual. So the default is what it has
+# always been: every channel straight to master, one amix, no buses.
+#
+# DILLA_MIX_BUSES=1 groups them. The grouping is not cosmetic: a bus is the only
+# place a filter can sit that affects a GROUP of channels, which is what makes
+# it somewhere to hang a modulated filter. Modulating six channels separately is
+# six routes and six instances; modulating the bus they share is one.
+DILLA_MIX_BUS_MAP = {
+  drums_c: :kit, drums: :kit, sc_mix: :kit, bedcarved: :kit, loopbed: :kit, bedbridged: :kit,
+  harm: :harmonic, padbed: :harmonic, analogpad: :harmonic, chops: :harmonic,
+  bassbus: :low, bassducked: :low, subbed: :low,
+  vinyl: :texture, rumble: :texture, selfsample: :texture, wavmap: :texture,
+}.freeze
+
+def dilla_mix_buses? = ENV["DILLA_MIX_BUSES"] == "1"
+
+# A bus chain is empty unless something asks for one. An empty-chained bus still
+# sums, so the grouping is real even before anything is patched onto it -- which
+# is the difference between a bus and a comment saying these belong together.
+#
+# DILLA_BUS_<NAME> puts a literal filter chain on one. BUS_MOD=<name> puts a
+# MOVING one there, which is the reason buses were added at all: a modulated
+# filter on a bus reaches every channel in it, and modulating six channels
+# separately would be six routes and six filter instances that then have to agree.
+def dilla_mix_bus_chain(name)
+  raw = ENV["DILLA_BUS_#{name.to_s.upcase}"].to_s
+  literal = raw.empty? ? [] : [raw]
+  mod = dilla_bus_modulation(name)
+  mod ? mod + literal : literal
+end
+
+# The modulated filter for a bus, as [asendcmd, named-filter] ready to prefix.
+#
+# One source, one destination, deliberately. A matrix can carry thirty-two routes
+# and the useful thing here is the smallest complete demonstration that a
+# parameter can move over a render: an LFO on a lowpass across a group of
+# channels. Anything richer is worth building as a device rather than as four
+# more environment variables.
+#
+# BUS_MOD names which bus (kit, harmonic, low, texture). Nothing moves unless it
+# is set, and DILLA_MIX_BUSES=1 is required for buses to exist at all.
+def dilla_bus_modulation(name)
+  return nil unless ENV["BUS_MOD"].to_s == name.to_s
+  return nil unless (duration = @render_duration_sec.to_f).positive?
+
+  matrix = DillaModulation::Matrix.new
+  matrix.lfo(:bus, rate_hz: ENV.fetch("BUS_MOD_HZ", "0.25").to_f,
+                   family: ENV.fetch("BUS_MOD_FAMILY", "curved").to_sym,
+                   morph: ENV.fetch("BUS_MOD_MORPH", "0.33").to_f)
+  filter = ENV.fetch("BUS_MOD_FILTER", "lowpass")
+  param = ENV.fetch("BUS_MOD_PARAM", "frequency")
+  begin
+    matrix.route(:bus, instance: "bus#{name}", filter:, param:,
+                       base: ENV["BUS_MOD_BASE"]&.to_f,
+                       depth: ENV.fetch("BUS_MOD_DEPTH", "1.0").to_f,
+                       mode: ENV.fetch("BUS_MOD_MODE", "modulate").to_sym)
+  rescue ArgumentError => e
+    # A route to a parameter ffmpeg will not accept at runtime is refused by the
+    # matrix rather than emitted. Warn and carry on unmodulated: a render should
+    # not die because a modulation target was misspelled.
+    warn "bus modulation: #{e.message}"
+    return nil
+  end
+  route = matrix.routes.first
+  path = File.join(SCRATCH_DIR, "busmod_#{name}.cmds")
+  FileUtils.mkdir_p(SCRATCH_DIR)
+  prefix = DillaModulation.prefix_for(matrix, path:, duration:)
+  return nil unless prefix
+
+  dmesg("bus modulation: #{matrix.describe.first}", unit: "harm0", parent: "dilla0")
+  [prefix, "#{matrix.instance_name(route)}=#{route.param}=#{matrix.initial(route)}"]
+end
+
+def dilla_mix_graph(mix_labels, mix_weights)
+  graph = AudioGraph.new
+  buses = if dilla_mix_buses?
+            mix_labels.filter_map { |l| DILLA_MIX_BUS_MAP[l.delete("[]").to_sym] }.uniq
+          else
+            []
+          end
+  # Buses first, so a bus's position in the master amix follows its declaration
+  # rather than the position of whichever channel happened to mention it first.
+  buses.each { |b| graph.bus(b, chain: dilla_mix_bus_chain(b)) }
+  mix_labels.each_with_index do |label, i|
+    name = label.delete("[]")
+    bus = buses.empty? ? :master : (DILLA_MIX_BUS_MAP[name.to_sym] || :master)
+    graph.channel(name, input: label, gain: mix_weights[i], bus:)
+  end
+  graph
+end
+
+# COPY_MACHINE=n — the sampled bed, played n times at once.
+#
+# ringtone.tools' Copy Machine, on the one source in a dilla render where it has
+# something to say: the record. Copies at different speeds drift apart in time as
+# well as pitch, so a four-bar loop stops being four bars and becomes a cloud of
+# itself -- which is a texture this engine could not make. organic_vary already
+# does multi-speed passes and does them SEQUENTIALLY, one at a time; this is the
+# same idea with the passes sounding together.
+#
+# Applied after flip_loop_entry, so a flipped bed clouds the flip rather than the
+# record it came from -- the flip is the musical decision and this is a texture
+# over it.
+#
+# Off by default. It replaces the bed, which is the loudest sampled thing in a
+# render, and turning it on for every take on nobody's say-so is not a choice a
+# wiring change gets to make. COPY_MACHINE_FAMILY picks harmonic (default),
+# chromatic or spray; the rest of CopyMachine's controls carry their own defaults.
+def copy_machine_loop_entry(loop_entry, duration)
+  copies = ENV.fetch("COPY_MACHINE", "0").to_i
+  return loop_entry unless copies > 1 && loop_entry && File.file?(loop_entry[:path].to_s)
+
+  dest = dilla_render_tmp("copymachine")
+  out = CopyMachine.build!(
+    src: loop_entry[:path], dest:,
+    copies:,
+    family: ENV.fetch("COPY_MACHINE_FAMILY", "harmonic").to_sym,
+    reverse: ENV.fetch("COPY_MACHINE_REVERSE", "0.25").to_f,
+    width: ENV.fetch("COPY_MACHINE_WIDTH", "0.8").to_f,
+    drift: ENV.fetch("COPY_MACHINE_DRIFT", "220").to_f,
+    seed: seed_for("copymachine"),
+    duration:, rate: SAMPLE_RATE
+  )
+  return loop_entry unless out && File.file?(out)
+
+  dmesg("copy machine: #{copies} copies of #{File.basename(loop_entry[:path])} at once",
+        unit: "harm0", parent: "dilla0")
+  # The bed now covers the whole duration by construction, so the caller must not
+  # -stream_loop it -- the same reason organic_vary's output is fed straight in.
+  loop_entry.merge(path: out, copy_machined: true)
+end
+
 def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = nil, keep_stems: false)
   require_tools! "ffmpeg"
   cleanup_render_scratch!
@@ -56,6 +193,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   pick_synth_patches!(cfg, bar: n_bars / 2, n_bars:)
   beat_p   = 60.0 / cfg[:bpm]
   duration = (beat_p * 4.0 * n_bars).round(3)
+  # Buses are built far below this point and need the length to size a command
+  # file; the alternative is threading it through four call sites that do not
+  # otherwise care about it.
+  @render_duration_sec = duration
   needed_chords = (n_bars.to_f / cfg[:chord_bars]).ceil + 1
   if GENERATED_STYLES.include?(cfg[:progression].to_sym) || cfg[:progression].to_sym == :generated
     ENV["GEN_LENGTH"] = needed_chords.to_s
@@ -432,6 +573,16 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     analog_idx = idx
     idx += 1
   end
+  # A picture, read as an oscillator. Same treatment as the analog pad: rendered
+  # to a file first so it is an input like any other and needs no special case
+  # anywhere downstream.
+  wav_map_file = wav_map_layer!(cfg, duration)
+  wav_map_idx = nil
+  if wav_map_file && File.file?(wav_map_file)
+    command += ["-i", wav_map_file]
+    wav_map_idx = idx
+    idx += 1
+  end
   loop_entry = sample_loop_for(cfg[:track])
   # The flip. Cuts the record into pieces and plays a new line out of them,
   # against this track's own chords, instead of repeating the record. What comes
@@ -442,6 +593,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # Falls back to looping when the record will not yield enough usable pieces.
   # A worse version of the track is better than no track.
   loop_entry = flip_loop_entry(loop_entry, cfg, pads, n_bars) if loop_entry
+  loop_entry = copy_machine_loop_entry(loop_entry, duration) if loop_entry
   loop_idx = nil
   if loop_entry
     varied = nil
@@ -454,6 +606,10 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
       # NOT be stream_looped -- that would repeat the varied bed identically and
       # put the sameness back at a longer period.
       command += ["-i", varied]
+    elsif loop_entry[:copy_machined]
+      # Same reason: the cloud was rendered to the full duration, and looping it
+      # would stack a second period on top of the one the copies already make.
+      command += ["-i", loop_entry[:path]]
     else
       command += ["-stream_loop", "-1", "-i", loop_entry[:path]]
     end
@@ -537,7 +693,15 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   harm_fade_start = (beat_p * 4.0 * [intro_bars, 2].min).round(2)
   harm_fade_dur = (beat_p * 4.0 * 1.25).round(2)
   unless use_stem_harmony
-    filt << build_harm_bus_filter(1, duration, cfg, cfg[:sonic], harm_fade_start, harm_fade_dur, beat_p, n_bars)
+    # The harmony bus is the loudest single channel in a typical render (weight
+    # 1.12-1.70 against the kit's 0.95) and until now the only channel of that
+    # size with no section shape at all. Under the default table :harm is
+    # declared flat at 1.0 everywhere, so this is a no-op and the mix is
+    # unchanged; under SECTION_LAYERS=full it swells into the breakdowns.
+    filt << apply_section_envelope(
+      build_harm_bus_filter(1, duration, cfg, cfg[:sonic], harm_fade_start, harm_fade_dur, beat_p, n_bars),
+      :harm, n_bars, beat_p * 4.0
+    )
     if cfg[:sidechain]
       filt.concat(sidechain_filter_chain(cfg, drum_label:))
       mix_labels = ["[sc_mix]"]
@@ -627,7 +791,13 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     filt << apply_section_envelope(
       "[#{analog_idx}:a]aformat=channel_layouts=stereo,highpass=f=70,lowpass=f=6800," \
       "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS[analogpad]",
-      :harm, n_bars, beat_p * 4.0
+      # :pad, not :harm. This call asked for :harm and the default table says
+      # nothing about :harm, so it has always returned the chain untouched --
+      # the analog pad, the second-loudest channel in a typical render, has
+      # never had a section shape. :harm is the synth harmony bus below and now
+      # gets its own; this one is the analog pad and gets :pad. Under the
+      # default table both are silent, exactly as before.
+      :pad, n_bars, beat_p * 4.0
     )
     mix_labels << "[analogpad]"
     mix_weights << ENV.fetch("ANALOG_PAD_WEIGHT", "0.62").to_s
@@ -670,14 +840,37 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     mix_weights << "0.75"
   end
 
+  # The wav_Map drone joins as a texture channel. Highpassed off the sub so it
+  # does not fight the bass it sits under, and lowpassed so a picture full of
+  # fine detail does not arrive as a sheet of top end. Its weight puts it under
+  # the analog pad rather than beside it.
+  if wav_map_idx
+    filt << apply_section_envelope(
+      "[#{wav_map_idx}:a]aformat=channel_layouts=stereo," \
+      "highpass=f=#{ENV.fetch('WAV_MAP_HP', '55')},lowpass=f=#{ENV.fetch('WAV_MAP_LP', '7000')}," \
+      "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS[wavmap]",
+      :texture, n_bars, beat_p * 4.0
+    )
+    mix_labels << "[wavmap]"
+    mix_weights << ENV.fetch("WAV_MAP_WEIGHT", "0.30").to_s
+  end
+
+  # Vinyl and rumble carry the :texture envelope, which the default table has no
+  # entry for -- so under SECTION_LAYERS=1 these are byte-identical to what they
+  # were. Under `full` they come up when the band drops out, which is when a
+  # record's surface is something you hear rather than something under the mix.
   if vinyl_amp.positive?
-    filt << "[#{idx}:a]highpass=f=120,lowpass=f=6000,volume=0.045[vinyl]"
+    filt << apply_section_envelope(
+      "[#{idx}:a]highpass=f=120,lowpass=f=6000,volume=0.045[vinyl]", :texture, n_bars, beat_p * 4.0
+    )
     mix_labels << "[vinyl]"
     mix_weights << "0.35"
   end
   if turntable_rumble
     rumble_idx = vinyl_amp.positive? ? idx + 1 : idx
-    filt << "[#{rumble_idx}:a]lowpass=f=40,highpass=f=22,volume=0.04[rumble]"
+    filt << apply_section_envelope(
+      "[#{rumble_idx}:a]lowpass=f=40,highpass=f=22,volume=0.04[rumble]", :texture, n_bars, beat_p * 4.0
+    )
     mix_labels << "[rumble]"
     mix_weights << "0.25"
   end
@@ -688,8 +881,26 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     mix_labels << "[selfsample]"
     mix_weights << "0.55"
   end
-  filt << "#{mix_labels.join}amix=inputs=#{mix_labels.length}:weights=#{mix_weights.join(' ')}:duration=first:normalize=0[mix]"
-  filt.concat(master_bus_filters("mix", track: cfg[:track].to_s, duration:, ir_input_idx:, cfg:))
+  # The mix goes through the routing spine instead of being joined by hand.
+  #
+  # audio_graph.rb was written to make "route this to the drum bus" sayable and
+  # then had exactly one caller -- render_industrial, for a bed -- while this
+  # renderer, the one the spine was modelled on, kept assembling the string
+  # itself. Its header says so. This is the second caller.
+  #
+  # Every entry in mix_labels is a label a clause above already emitted, so each
+  # becomes a pass-through channel: the spine writes no rename for it, and the
+  # amix it emits is character-identical to the line this replaces -- weights,
+  # positional order and options included. test_audio_graph_render_dilla.rb pins
+  # that against the literal string, so a divergence fails rather than ships.
+  #
+  # The weights stay Strings deliberately. They are ENV.fetch results and tuned
+  # literals -- "1.0", "1.70", "0.9" -- and a round trip through Float would
+  # write "1" and "1.7" instead. Same mix, different text, and the parity proof
+  # is textual. AudioGraph#format_gain passes a String through untouched.
+  graph = dilla_mix_graph(mix_labels, mix_weights)
+  filt << graph.to_filter_complex(out_label: nil)
+  filt.concat(master_bus_filters(graph.sum_label, track: cfg[:track].to_s, duration:, ir_input_idx:, cfg:))
 
   # Drop empty segments so a stray "" never becomes "No such filter: ''".
   filt_graph = filt.flatten.compact.map(&:to_s).map(&:strip).reject(&:empty?).join(";")

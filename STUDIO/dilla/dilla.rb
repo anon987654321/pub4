@@ -106,7 +106,11 @@ require_relative "lib/master_heuristics"
 require_relative "lib/spectral_engine"
 require_relative "lib/dilla_ml"
 require_relative "lib/dfam_engine"
-require_relative "lib/automation_lane"
+# Parameters that move over time, and the small devices that move them. modulation
+# reads TapeHysteresis for its random walk and requires it itself; macros reads
+# knobs.rb, which is why it comes after.
+require_relative "lib/modulation"
+require_relative "lib/devices"
 require_relative "lib/knobs"
 require_relative "lib/frozen_state"
 require_relative "lib/assets_manifest"
@@ -709,6 +713,16 @@ DISPATCH = {
   # of 250 chord progressions. Each was found by ear or by accident, one at a
   # time. This finds them all at once.
   "audit" => -> { exit(capability_audit! ? 0 : 1) },
+  # The devices. Each is a small machine with one idea, reachable on its own so
+  # it can be auditioned before it is wired into a render -- which is the
+  # difference between a device and a feature buried in a renderer.
+  "copy-machine" => -> { copy_machine_cli!(ARGV) },
+  "hocket" => -> { hocket_cli!(ARGV) },
+  "midi-bag" => -> { midi_bag_cli!(ARGV) },
+  "wav-map" => -> { wav_map_cli!(ARGV) },
+  "arrangement" => -> { arrangement_cli!(ARGV) },
+  "macro" => -> { macro_cli!(ARGV) },
+  "modulate" => -> { modulate_cli!(ARGV) },
   "import-midi" => -> { import_midi_drums!(ARGV.shift.to_s) },
   "export-midi" => -> { export_midi_drums!(ARGV.shift || MIDI_SEED_DIR) },
   "crit" => -> { crit_session_cli!(ARGV.shift) },

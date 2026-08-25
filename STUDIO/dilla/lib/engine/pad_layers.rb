@@ -750,3 +750,44 @@ def mix_granular_into_pads!(pads_path, grain_path, duration)
     FileUtils.rm_f(grain_path)
   end
 end
+
+# --------------------------------------------------- wav_Map as a pad layer
+#
+# WAV_MAP=<image> renders that picture as a sustained oscillator under the mix.
+#
+# WavMap reads an image as a height field and traces a closed path across it to
+# make one cycle of a waveform, so the picture's texture becomes the tone's
+# harmonic content. Until now it was reachable only from the command line, which
+# meant the one bridge between STUDIO's image tools and its audio engine could
+# not be crossed by a render.
+#
+# The pitch is the track's own tonic rather than a number: a drone in the wrong
+# key is the one layer no amount of level fixes, and KeyLock already knows what
+# the rotation is centred on. Two octaves down from A4 puts it under the bass
+# where a drone belongs.
+#
+# Off by default. It adds a continuous tone to every bar of a render, which is a
+# large decision, and the image is the operator's to choose -- there is no
+# sensible default picture.
+def wav_map_layer!(cfg, duration)
+  image = ENV["WAV_MAP"].to_s
+  return nil unless !image.empty? && File.file?(image)
+
+  tonic = KeyLock::PITCH_CLASS[ENV.fetch("KEY_LOCK_TONIC", "Bb")] || 10
+  hz = 110.0 * (2.0**(tonic / 12.0))
+  hz /= 2.0 while hz > 165.0
+  dest = dilla_render_tmp("wavmap")
+  out = WavMap.render!(image, dest,
+                       hz: ENV.fetch("WAV_MAP_HZ", hz.round(2)).to_f,
+                       duration:,
+                       path: ENV.fetch("WAV_MAP_PATH", "circle").to_sym,
+                       lobes: ENV.fetch("WAV_MAP_LOBES", "5").to_i,
+                       rate: SAMPLE_RATE,
+                       drift_cents: ENV.fetch("WAV_MAP_DRIFT", "6").to_f,
+                       seed: seed_for("wavmap"))
+  return nil unless out && File.file?(out)
+
+  dmesg("wav map: #{File.basename(image)} as an oscillator at #{hz.round(1)}Hz",
+        unit: "harm0", parent: "dilla0")
+  out
+end

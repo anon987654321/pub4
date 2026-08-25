@@ -148,6 +148,68 @@ def help
     SONITEX
       sonitex_list                   List STX-1260 subset presets
 
+    DEVICES (options are bare words, not --flags — the global flag parser eats those)
+      macro                          The 8 macro words, and which knobs each moves
+      macro dust=0.7 weight=0.6      What they would set; add `apply` to set it
+      copy-machine in out copies=8   N copies of one sound at once, some reversed
+                                       family=harmonic|chromatic|spray reverse=0..1
+                                       width=0..1 drift=ms duration=S  `describe`
+      hocket voices=4 mode=pendulum  One line split across voices (round_robin|
+                                       pendulum|shift_register|random) hold=N `write`
+      midi-bag order=cycle           Melody's pitches on the kit's rhythm
+                                       order=cycle|random|walk rests=0..1 `fit-chords`
+      wav-map image.png out.wav      A picture read as a waveform (brightness is
+                                       elevation) path=circle|spiral|lissajous|rose
+                                       hz=110 duration=S lobes=N  `describe`
+      arrangement out.mp3 ref.wav    Does it have sections? Foote spectral novelty
+                                       + short-term loudness spread, against a
+                                       reference record.  `detail`
+      modulate in out lfo=0.5        A parameter moved over time via asendcmd
+                                       target=filter.param base=N depth=0..1
+                                       mode=modulate|remote family=straight|curved
+
+DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
+  COPY_MACHINE=6                 The sampled bed played 6 times at once, at
+                                   different speeds. COPY_MACHINE_FAMILY=
+                                   harmonic|chromatic|spray, _REVERSE, _WIDTH,
+                                   _DRIFT. Needs a track whose bed is on disk.
+  MIDI_BAG=1                     The lead's pitches on the kit's onsets.
+                                   MIDI_BAG_ORDER=cycle|random|walk,
+                                   MIDI_BAG_RESTS=0.25, MIDI_BAG_FIT=1
+                                   (snap each to the chord underneath).
+  HOCKET=3                       The harmony lead split across 3 voices, each
+                                   through a different EP program.
+                                   HOCKET_MODE=round_robin|pendulum|
+                                   shift_register|random, HOCKET_HOLD=1
+  WAV_MAP=path.png               A picture read as an oscillator, mixed as a
+                                   texture channel in the track's key.
+                                   WAV_MAP_PATH=circle|spiral|lissajous|rose,
+                                   _HZ, _WEIGHT, _HP, _LP, _LOBES
+  BUS_MOD=texture                An LFO on a mix bus filter. Needs
+                                   DILLA_MIX_BUSES=1. BUS_MOD_HZ=0.25,
+                                   _FILTER=lowpass, _PARAM=frequency, _BASE,
+                                   _DEPTH, _MODE=modulate|remote
+  STREAM_MACROS=1                Rotate stream slots by macro word (dust,
+                                   drift, weight, air…) instead of by knobs.
+
+    ARRANGEMENT AND BUS
+      SECTION_LAYERS=1 (default)     Drums, bass and the sampled bed follow the
+                                       section map; pads and texture play flat
+      SECTION_LAYERS=full            The harmony bus, the analog pad and the
+                                       vinyl/rumble texture get section shapes
+                                       too — the two loudest channels had none.
+      FORM_FIT=1                     Stretch FORM/SECTION_MAP across the track
+                                       instead of repeating it. soul_32 over 128
+                                       bars is four intros without this; one with.
+      DILLA_MIX_BUSES=1              Group the mix into kit/harmonic/low/texture
+                                       buses instead of one flat amix
+      DILLA_BUS_<NAME>=<filters>     A filter chain on one of those buses
+      CONSOLE_STACK=3                Instances in the summing stack (1-4). Measured:
+                                       at matched THD, 3 stages put 23 dB less third
+                                       harmonic in than 1 — a warmth control, not a
+                                       drive one. Reached via RACK=summed.
+      MOD_RATE_HZ=48                 Modulation command resolution
+
     EXTERNAL ASSETS (opt-in only — engine is pure-Ruby/ffmpeg by default)
       fetch-assets                   Cache CC0 drum WAVs + extra soundfonts
                                       (galaxy, supersaw, giga-fm, yamaha-grand + VintageDreams)

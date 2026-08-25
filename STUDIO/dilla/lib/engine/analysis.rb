@@ -524,3 +524,324 @@ def sweep
 ensure
   previous ? ENV["BARS"] = previous : ENV.delete("BARS")
 end
+
+# ------------------------------------------------------------- arrangement
+#
+# Does a track have sections, and how strongly? Absorbed from arrangement.rb.
+#
+# It lives here rather than in spectral_audit.rb, which is the other file that
+# reads spectrograms, for a reason worth stating: spectral_audit is not required
+# by dilla.rb -- only by its own runner script -- so merging there would have
+# made a loaded module depend on an unloaded one. This file is the engine's
+# inspection surface, holds knobs_report and where_report, and is already in
+# ENGINE_PARTS. `dilla arrangement` is the same kind of question as `dilla
+# knobs`, asked about audio.
+# Does this track have an arrangement, and how strong is it?
+#
+# The question this exists for is one I could not otherwise answer. dilla's
+# section map is real -- the envelopes are in the emitted filtergraph -- and a
+# default render still measures 1.4 dB from start to end. Asked how much harder
+# the pads should drop, the honest answer was "that is the operator's number",
+# and that is true of the FINAL choice and a cop-out as an analysis. There is a
+# measurable question underneath it: how much do records move, and how much does
+# this one.
+#
+# Two instruments, because they fail differently.
+#
+#   LEVEL     short-term loudness over time. Direct, standard, and blind to an
+#             arrangement that changes instrumentation without changing level --
+#             which is most of Melody A.M. and a good deal of Donuts.
+#
+#   NOVELTY   self-similarity of the spectrum, convolved with a checkerboard
+#             kernel: Foote's method, the standard way to find section
+#             boundaries in music information retrieval. It asks whether the
+#             sound at minute two RESEMBLES the sound at minute one, which
+#             catches a breakdown that stays at the same level, and is not
+#             fooled by a track that merely gets louder.
+#
+# The spectrum comes from ffmpeg's showspectrumpic rather than an FFT written
+# here. That is not laziness: spectral_audit.rb already renders spectrograms for
+# auditing, WavMap already reads an image as a grid of numbers, and an FFT in
+# Ruby over a five-minute file would be the slowest part of this by an order of
+# magnitude. One ffmpeg pass produces the whole feature matrix.
+#
+# WHAT THIS CANNOT DO, stated plainly because the temptation is to forget it:
+# none of this says whether a track is good. taste.rb makes the argument at
+# length and it holds here -- a measurement is worth something once it is
+# anchored to material an ear has already sorted. So `compare` exists, and the
+# useful use of this module is measuring a render against records, not against a
+# number somebody invented.
+module Arrangement
+  # A frame is a fixed number of SECONDS, and the column count follows from the
+  # file's length. Getting this backwards invalidates every comparison this
+  # module exists to make, so it is worth saying exactly how.
+  #
+  # The first version fixed the column count at 512 and let the duration decide
+  # what a frame meant. An 87-second render then measured at 0.17 s per frame and
+  # a 290-second record at 0.57 s -- so the render was being asked "does this
+  # sixth of a second resemble the last one", which at 88 BPM is roughly one
+  # eighth-note, while the record was asked about half-second spans. One reads
+  # individual notes as novelty; the other reads phrases.
+  #
+  # That produced a confident and completely false result: records appeared to
+  # have six times less frame-to-frame novelty than dilla, and three separate
+  # hypotheses were built and tested against it -- the section map, the grain
+  # cloud's randomisation, the Sonitex master chain -- all of which correctly
+  # refuted, because there was nothing there to explain. Measured at equal
+  # duration, 87 seconds each, the same files read: record 2.92 and 4.77, a
+  # dilla release 2.45, a default dilla render 2.73. Indistinguishable.
+  #
+  # So the frame is half a second and the columns follow. Comparing two files of
+  # different lengths still compares different spans of music, which is a real
+  # limit -- but it no longer compares different QUESTIONS.
+  FRAME_SEC = 0.5
+  MIN_COLUMNS = 64
+  MAX_COLUMNS = 2048
+  BINS = 256
+
+  def self.columns_for(duration)
+    (duration.to_f / FRAME_SEC).round.clamp(MIN_COLUMNS, MAX_COLUMNS)
+  end
+
+  # Half-width of the checkerboard kernel, in frames. Foote's kernel compares the
+  # block before a point with the block after it; this is how much "before" and
+  # "after" mean. At a half-second frame, 24 frames is twelve seconds either side
+  # -- four to eight bars at the tempos here, which is the unit an arrangement
+  # actually turns on. A narrow kernel finds bar lines; a wide one finds movements.
+  #
+  # In frames rather than seconds only because the convolution counts in frames;
+  # with FRAME_SEC fixed the two are the same statement.
+  KERNEL = 24
+
+  module_function
+
+  # The spectrogram as columns of normalised band energy.
+  #
+  # Each column is L2-normalised, which is what makes the similarity below a
+  # comparison of SPECTRAL SHAPE rather than of level. Without it a loud section
+  # resembles every other loud section and the novelty curve becomes a worse
+  # copy of the loudness curve -- two instruments measuring one thing.
+  def features(path, columns: nil)
+    return nil unless path && File.file?(path)
+
+    columns ||= columns_for(duration_of(path))
+    png = File.join(Dir.tmpdir, "arrangement_#{Process.pid}.png")
+    ok = system("ffmpeg", "-v", "error", "-y", "-i", path,
+                "-lavfi", "showspectrumpic=s=#{columns}x#{BINS}:mode=combined:scale=log:legend=0",
+                "-frames:v", "1", png, out: File::NULL, err: File::NULL)
+    return nil unless ok && File.file?(png)
+
+    raw = IO.popen(["ffmpeg", "-v", "error", "-i", png, "-vf", "format=gray",
+                    "-frames:v", "1", "-f", "rawvideo", "-"], "rb", err: File::NULL, &:read)
+    File.unlink(png)
+    return nil if raw.nil? || raw.bytesize < columns * BINS
+
+    bytes = raw.unpack("C*")
+    (0...columns).map do |x|
+      col = (0...BINS).map { |y| bytes[(y * columns) + x].to_f }
+      norm = Math.sqrt(col.sum { |v| v * v })
+      norm.zero? ? col : col.map { |v| v / norm }
+    end
+  end
+
+  def duration_of(path)
+    `ffprobe -v error -show_entries format=duration -of csv=p=0 "#{path}"`.to_f
+  end
+
+  def cosine(a, b)
+    sum = 0.0
+    a.each_index { |i| sum += a[i] * b[i] }
+    sum
+  end
+
+  # Foote novelty.
+  #
+  # At each point, compare the two blocks either side of it with the two blocks
+  # ACROSS it. A boundary is where before-resembles-before, after-resembles-after,
+  # and before does not resemble after. That is exactly a checkerboard: positive
+  # on the two diagonal quadrants, negative on the two off-diagonal ones.
+  #
+  # Only the band near the diagonal is computed. The full matrix is 512x512 and
+  # the kernel never looks further than KERNEL frames away, so the other 96% of
+  # it would be built and discarded.
+  def novelty(features, kernel: KERNEL)
+    n = features.length
+    curve = Array.new(n, 0.0)
+    (kernel...(n - kernel)).each do |c|
+      same = 0.0
+      cross = 0.0
+      (1..kernel).each do |i|
+        (1..kernel).each do |j|
+          # Gaussian taper. An untapered kernel rings -- every boundary grows
+          # two smaller shoulders at +-kernel, and the peak picker then reports
+          # three sections where there is one.
+          w = Math.exp(-((i * i) + (j * j)) / (2.0 * (kernel / 2.0)**2))
+          same += w * cosine(features[c - i], features[c - j])
+          same += w * cosine(features[c + i - 1], features[c + j - 1])
+          cross += 2.0 * w * cosine(features[c - i], features[c + j - 1])
+        end
+      end
+      curve[c] = (same - cross) / (2.0 * kernel * kernel)
+    end
+    curve
+  end
+
+  # Peaks worth calling boundaries.
+  #
+  # A threshold relative to the curve's own spread rather than an absolute one:
+  # novelty scales with how different a record's sections are from each other,
+  # and a fixed cut would report every section of a varied record and none of a
+  # subtle one. The minimum gap stops one boundary being counted three times.
+# The noise floor of this instrument, measured rather than assumed.
+#
+# A relative threshold alone reports sections in material that has none: one
+# bar looped fifteen times, which by construction has no boundary anywhere,
+# came back with four -- because mean-plus-1.5-sigma always finds something,
+# and in a flat curve what it finds is noise.
+#
+# So null cases were built and measured, at the half-second frame this module
+# now uses everywhere:
+#
+#   one bar looped x15   peak 0.00137     no boundary exists
+#   white noise          peak 0.00003     no boundary exists
+#   pure tone            peak 0.00007     no boundary exists
+#   a hard splice        peak 0.02021     one boundary, at a known second
+#
+# Fifteen times the loudest null. 0.005 is the midpoint on a log scale between
+# the two populations, which is the honest place for a threshold separating
+# them. It is a floor, not a calibration: a record whose sections differ only
+# slightly falls under it and reports as one section, and that is the correct
+# failure -- this says "I cannot see a boundary", not "there is none".
+#
+# The earlier value was 0.015, derived the same way from the same two files
+# measured with a FIXED COLUMN COUNT rather than a fixed frame duration. That
+# instrument separated the two populations by only 4.25x; this one separates
+# them by 15x, on the same audio.
+NOISE_FLOOR = 0.005
+
+  def boundaries(curve, seconds_per_frame:, min_gap_sec: 8.0, sensitivity: 1.5, floor: NOISE_FLOOR)
+    live = curve.reject(&:zero?)
+    return [] if live.length < 8
+
+    mean = live.sum / live.length
+    sd = Math.sqrt(live.sum { |v| (v - mean)**2 } / live.length)
+    cut = [mean + (sensitivity * sd), floor].max
+    gap = (min_gap_sec / seconds_per_frame).round
+    found = []
+    curve.each_index do |i|
+      next if curve[i] < cut
+      next unless curve[i] == curve[[i - gap, 0].max..[i + gap, curve.length - 1].min].max
+      next if found.any? && (i - found.last) < gap
+
+      found << i
+    end
+    found
+  end
+
+  # Short-term loudness over time, from ffmpeg's own R128 meter.
+  #
+  # ebur128 prints a running M (momentary, 400 ms) and S (short-term, 3 s) to
+  # stderr. S is the one that matters here: 400 ms tracks individual kicks and
+  # would report a busy loop as dynamic, while 3 s is about a bar and tracks
+  # what a section does.
+  def loudness_envelope(path)
+    out = IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", path,
+                    "-af", "ebur128=peak=none", "-f", "null", "-"],
+                   err: %i[child out], &:read)
+    out.scan(/t:\s*([\d.]+)\s+.*?S:\s*(-?[\d.inf]+)/).filter_map do |t, s|
+      value = s.to_f
+      # -inf and the first three seconds, where the 3 s window is not yet full.
+      next if s.include?("inf") || value < -70.0 || t.to_f < 3.0
+
+      [t.to_f, value]
+    end
+  end
+
+  # Percentile spread of the short-term loudness, which is what "how much does
+  # this move" means numerically.
+  #
+  # p10 to p90 rather than min to max: one clipped transient or one gap between
+  # tracks would otherwise define the whole answer. This is the same reasoning
+  # R128's own LRA uses, and the number is comparable to LRA without being it --
+  # LRA gates at -20 LU relative and this does not, so a track with long quiet
+  # passages reads wider here and that is the intent.
+  def spread(envelope)
+    return nil if envelope.length < 10
+
+    values = envelope.map(&:last).sort
+    p = ->(q) { values[(q * (values.length - 1)).round] }
+    { p10: p.call(0.10), p50: p.call(0.50), p90: p.call(0.90),
+      spread: (p.call(0.90) - p.call(0.10)).round(2) }
+  end
+
+  # Everything about one file.
+  def analyse(path)
+    duration = duration_of(path)
+    return nil unless duration.positive?
+
+    columns = columns_for(duration)
+    feats = features(path, columns:) or return nil
+
+    spf = duration / columns
+    curve = novelty(feats)
+    marks = boundaries(curve, seconds_per_frame: spf)
+    env = loudness_envelope(path)
+    live = curve.reject(&:zero?)
+    {
+      path:, duration:,
+      seconds_per_frame: spf,
+      boundaries: marks.map { |i| (i * spf).round(1) },
+      sections: marks.length + 1,
+      mean_section_sec: marks.empty? ? duration : (duration / (marks.length + 1)),
+      novelty_peak: live.empty? ? 0.0 : live.max.round(4),
+      novelty_mean: live.empty? ? 0.0 : (live.sum / live.length).round(4),
+      # How far the strongest boundary stands above the ordinary run of the
+      # curve. A record with real sections has a few tall peaks; a loop has a
+      # curve that is all shoulder and no peak, whatever its absolute height.
+      novelty_contrast: live.empty? || live.max.zero? ? 0.0 : (live.max / (live.sum / live.length)).round(2),
+      loudness: spread(env),
+    }
+  end
+
+  # One line per file, so a render and a record can be read side by side. This
+  # is the point of the module: the target is what records do, not a number.
+  def compare(paths)
+    rows = paths.filter_map { |p| analyse(p) }
+    header = format("%-34s %7s %7s %8s %9s %9s", "file", "mins", "sects", "mean s", "contrast", "LU p10-90")
+    table = [header, "-" * header.length] + rows.map do |r|
+      format("%-34s %7.1f %7d %8.1f %9.2f %9s",
+             File.basename(r[:path])[0, 34], r[:duration] / 60.0, r[:sections],
+             r[:mean_section_sec], r[:novelty_contrast],
+             r[:loudness] ? r[:loudness][:spread] : "-")
+    end
+    table + duration_warning(rows)
+  end
+
+  # Say so when the files being compared are not the same length.
+  #
+  # The frame is a fixed duration now, so two files are at least asked the same
+  # question -- but they are still asked it about different amounts of music, and
+  # that alone moves the answer a long way. The same record measured over 87,
+  # 145, 220 and 289 seconds reads contrast 4.28, 3.94, 3.68 and 12.18: flat
+  # until the window happens to include its one real boundary at 276 s, then
+  # triple. Comparing a 1.4-minute render against a 4.8-minute record is
+  # therefore mostly comparing 1.4 minutes against 4.8 minutes.
+  #
+  # This warns rather than refusing, because the comparison is still worth
+  # having -- it just is not the comparison it looks like, and the reading here
+  # went wrong in exactly that way before anyone excerpted the record.
+  def duration_warning(rows)
+    return [] if rows.length < 2
+
+    longest = rows.map { |r| r[:duration] }.max
+    shortest = rows.map { |r| r[:duration] }.min
+    return [] if shortest.zero? || (longest / shortest) < 1.5
+
+    ["",
+     format("NOTE  these differ in length by %.1fx (%.1f min against %.1f min).",
+            longest / shortest, longest / 60.0, shortest / 60.0),
+     "      Contrast is roughly flat with duration until the window includes a real",
+     "      boundary, and then it jumps. Excerpt them to the same length before",
+     "      reading anything into the difference."]
+  end
+end

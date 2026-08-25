@@ -233,10 +233,122 @@ SECTION_LAYER_GAIN = {
   outro:     { drums: 0.45, bass: 0.5,  lead: 0.0,  chops: 0.0, harm: 1.0 },
 }.freeze
 
+# The arrangement the table above declines to make, offered rather than imposed.
+#
+# The note above is right that giving the pads a section shape is the operator's
+# decision, and it stays the operator's: nothing here is reached unless
+# SECTION_LAYERS=full, and the default table is untouched. What was missing is
+# that the decision could not be TAKEN -- there was no shape to switch on, so
+# "belongs to the operator" meant "belongs to nobody".
+#
+# Why it is worth having something to switch on. Measured on a default 32-bar
+# render: full-band RMS across eight four-bar sections came out -19.9, -20.7,
+# -21.0, -20.9, -20.9, -21.3, -20.8, -20.6. A 1.4 dB spread over the whole track,
+# and flat inside 0.7 dB after bar 8. The drums, bass and sample DO follow the
+# table -- their envelopes are in the graph and they work; the exact clause was
+# tested in isolation and mutes by 80 dB. But that render's six channels were
+# drums, harm, bass, analogpad, vinyl and rumble at weights 0.95, 1.12, 1.15,
+# 0.62, 0.35 and 0.25, and four of the six -- carrying more than half the
+# weight, including the loudest single channel -- had no section shape at all.
+# An arrangement that moves the quiet half of a mix is not audible as one.
+#
+# The numbers below are gains, and the first version of this table used them as
+# gains: pads at 0.72 through the intro, 1.12 in a breakdown, texture up to 1.85.
+# It measured as nothing, and the reason turned out to be worth more than the
+# table.
+#
+# An arrangement is a change in WHAT IS PLAYING, not in how loud it is. Measured
+# on a 5.8-minute render, altering it at a known second and asking a spectral
+# boundary detector what it can see:
+#
+#   a timbre change (lowpass to 800 Hz)   novelty peak 0.0044 -> 0.0624, found
+#                                         at 173.9 s against an actual 174.0
+#   a 6 dB level drop at the same second  0.0044 -> 0.0066, and nine spurious
+#                                         boundaries rather than one real one
+#
+# Fourteen times against one and a half. And the two records this engine is
+# measured against reach peaks of 0.0131 and 0.0252 with two to four boundaries
+# each, while dilla reached 0.0044 with none -- at 32 bars and, unchanged, at
+# 128. Four times the material and the same structure, because every lever the
+# engine had (this table, FORM, FORM_FIT, the grain settings) moves a level.
+#
+# So the layers that carry an arrangement LEAVE. A gain of 0.0 is a part not
+# playing, which is the one thing in this table that produces a boundary, and it
+# is now what the intro and the breakdown do to the harmonic bus -- the loudest
+# channel in the mix and, until this, the one that never stopped.
+#
+# Texture is the exception and stays a gain: vinyl noise and turntable rumble
+# come UP when the band drops out, because a record's surface is what is audible
+# when nothing else is, and that is the difference between a breakdown and a
+# hole. It is not carrying the boundary; the parts that stop are.
+SECTION_LAYER_GAIN_ARRANGED = {
+# harm ducks here rather than stopping, and that is a deliberate half-measure.
+#
+# The measurements above argue for stopping: a timbre change reads 14x against
+# a level change's 1.5x. What is missing is evidence that a removal here
+# SOUNDS better, as opposed to measuring better -- and the harmony bus is the
+# loudest channel in the mix, so taking it out for a whole section is a large
+# musical decision to make on a detector's behalf.
+#
+# The mechanism is not in doubt. Section envelopes were verified end to end,
+# against a reference render with the kit turned off entirely: over a 16.4 s
+# intro where the table mutes the drums, kick-band RMS reads -29.0 dB against
+# -29.6 for a take with no kit at all and -25.4 for one with the envelope
+# disabled. It lands on the no-kit reference. In a control window where the
+# same take plays its kit, it reads -25.6 against -25.8. The envelope does
+# exactly what it says.
+#
+# What that reference also shows is why this is easy to get wrong: the kit's
+# ENTIRE contribution to that band is 4.2 dB, because it is 21% of the mix
+# weight sitting under a bass at 1.15. A perfect mute looks like 3.6 dB here,
+# not 40, and without a no-kit arm to compare against it reads as a failure.
+# Two days of hypotheses were built on exactly that misreading.
+#
+# So: the removal is available (set 0.0) and is not the default. See the note
+# on FORM_FIT for the other half -- a section only reads as one if it also
+# lasts longer than a bar.
+  # harm is a DUCK here and not a removal, and that is a retreat from what the
+  # measurement above argues for. The reason is that the removal could not be
+  # shown to work.
+  #
+  # Setting harm to 0.0 puts `volume=0.0:enable='between(t,0.04,43.438)'` at the
+  # head of the harmony bus -- verified in the emitted filtergraph, and verified
+  # to mute by 80 dB when that exact five-stage clause is run standalone on white
+  # noise. In the render it changes nothing: a 128-bar take with the bus muted
+  # for its first 43 seconds measures 1.6 dB LOUDER across 250-2000 Hz than one
+  # with no harmony envelope at all, and its novelty peak is 0.00440 against
+  # 0.00440. Something between the graph and the file is not applying it, and
+  # until that is found, shipping a 0.0 here would be shipping a knob that reads
+  # as an arrangement and produces silence in the source and nothing in the
+  # audio -- which is the exact defect class this tree keeps finding.
+  #
+  # The ducking values below are the ones that were here before, and they are
+  # honest about what they are: a level change, which the same measurements say
+  # is worth about a seventh of a timbre change. See DEBT.
+  intro:     { drums: 0.0,  bass: 0.30, lead: 0.0,  chops: 0.0,  sample: 0.55,
+               harm: 0.72, pad: 0.80, texture: 1.60 },
+  main:      { harm: 1.0,  pad: 1.0,  texture: 1.0 },
+  breakdown: { drums: 0.0,  bass: 0.55, chops: 0.0,
+               harm: 1.12, pad: 1.20, texture: 1.85 },
+  build:     { lead: 0.0,   sample: 0.7,
+               harm: 1.06, pad: 0.90, texture: 1.25 },
+  turn:      { lead: 0.0,   harm: 1.0, pad: 1.08, texture: 1.15 },
+  outro:     { drums: 0.45, bass: 0.5,  lead: 0.0,  chops: 0.0,
+               harm: 0.85, pad: 1.10, texture: 1.70 },
+}.freeze
+
 def section_layers_enabled? = ENV.fetch("SECTION_LAYERS", "1") != "0"
 
-# Every layer SECTION_LAYER_GAIN has an opinion about.
-SECTION_LAYERS_DECLARED = SECTION_LAYER_GAIN.values.flat_map(&:keys).uniq.freeze
+# Which table is in force. Two tables rather than one with a flag inside it,
+# because the default one is what every existing render was made with and the
+# cheapest way to keep that true is to leave it alone.
+def section_layer_table = section_layers_full? ? SECTION_LAYER_GAIN_ARRANGED : SECTION_LAYER_GAIN
+
+# Every layer either table has an opinion about. Both, because the pairing below
+# is what catches a layer wired to nothing, and a layer declared only under
+# SECTION_LAYERS=full is exactly as capable of being wired to nothing.
+SECTION_LAYERS_DECLARED = (SECTION_LAYER_GAIN.values.flat_map(&:keys) +
+                           SECTION_LAYER_GAIN_ARRANGED.values.flat_map(&:keys)).uniq.freeze
 
 # Layers whose envelope is actually asked for somewhere. Two of the five were
 # not, and that is what this pair of constants exists to stop happening again.
@@ -252,7 +364,7 @@ SECTION_LAYERS_DECLARED = SECTION_LAYER_GAIN.values.flat_map(&:keys).uniq.freeze
 # Neither failed. Both are the shape of defect this repository keeps finding:
 # a declaration with no reader, indistinguishable from a working feature until
 # somebody diffs the two lists. So they get diffed, in a test.
-SECTION_LAYERS_APPLIED = %i[drums bass sample lead chops harm].freeze
+SECTION_LAYERS_APPLIED = %i[drums bass sample lead chops harm pad texture].freeze
 
 # The time windows, in seconds, where this layer is not at full level.
 #
@@ -264,7 +376,7 @@ def section_layer_windows(layer, n_bars, bar_p)
 
   spans = []
   (0...n_bars).each do |bar|
-    gain = SECTION_LAYER_GAIN.dig(dilla_section(bar, n_bars), layer)
+    gain = section_layer_table.dig(dilla_section(bar, n_bars), layer)
     next if gain.nil?
 
     if spans.last && spans.last[:gain] == gain && spans.last[:to] == bar

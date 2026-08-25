@@ -206,6 +206,7 @@ def restore_explicit_stream_env!
 end
 
 def stream_rotate_voices_and_arps!(track_index)
+  stream_rotate_macros!(track_index)
   return if ENV["STREAM_ROTATE_LEAD"] == "0" && ENV["STREAM_ROTATE_SYNTH"] == "0"
   @stream_iterate_count = (@stream_iterate_count || 0)
   i = track_index + @stream_iterate_count
@@ -275,4 +276,39 @@ def normalize_track_loudness!(path, lufs: nil)
     end
   end
   path
+end
+
+# STREAM_MACROS=1 — vary a stream slot by a WORD rather than by six numbers.
+#
+# Everything else in this file rotates knobs: LEAD_VOICE, LEAD_ARP_MODE,
+# HARMONIC_LEAD_ARP_WEIGHT, DRUM_PRESET. That works and it is why the rotation
+# reads as a list of assignments -- each slot differs from the last by a handful
+# of numbers nobody can hear individually.
+#
+# DillaMacros exists to say those in musical terms: `dust`, `drift`, `air`,
+# `weight`. This walks a small cycle of them so consecutive slots differ by an
+# idea instead of by arithmetic, and so the difference is one a listener can
+# name. Off by default; the rotation's current behaviour is unchanged without it.
+#
+# apply! does not overwrite a knob the operator set by hand -- macros are the
+# coarse control and an explicit export is the fine one -- so a pinned stream
+# stays pinned.
+STREAM_MACRO_CYCLE = [
+  { dust: 0.25, air: 0.55 },
+  { drift: 0.45, density: 0.4 },
+  { weight: 0.65, glue: 0.7 },
+  { dust: 0.6, drift: 0.3 },
+  { density: 0.7, air: 0.35 },
+  { chaos: 0.3, drift: 0.55 },
+].freeze
+
+def stream_rotate_macros!(track_index)
+  return unless ENV["STREAM_MACROS"] == "1"
+
+  settings = STREAM_MACRO_CYCLE[track_index % STREAM_MACRO_CYCLE.length]
+  result = DillaMacros.apply!(settings)
+  return if result[:applied].empty?
+
+  dmesg("macros: #{settings.map { |k, v| "#{k}=#{v}" }.join(' ')} -> #{result[:applied].join(' ')}",
+        unit: "style0", parent: "dilla0")
 end

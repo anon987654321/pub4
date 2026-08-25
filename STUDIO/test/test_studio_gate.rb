@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "helper"
+require "open3"
+require "rbconfig"
+require "digest"
+require "tmpdir"
 require_relative "../gate.rb"
 
 # The gate is the only thing standing between MASTER's fix loop and a broken
@@ -135,4 +139,90 @@ class TestStudioGate < Minitest::Test
     assert_operator result.checks_ran, :>, 0, "a gate that checked nothing cannot have passed"
     refute result.measured_nothing?, result.nothing_measured_reason.to_s
   end
+
+# The suite has to leave dilla's state exactly as it found it.
+#
+# This is tested end to end, in a real subprocess minitest run, because the way
+# it broke was invisible to every other kind of check. The restoration existed,
+# was correct, was called, and ran at the wrong moment:
+#
+#   test/helper.rb requires minitest/autorun, which registers an at_exit that
+#   RUNS THE SUITE. `at_exit` handlers run LIFO, so an at_exit registered after
+#   that one fires FIRST -- before any test has run. The restore was therefore
+#   putting back files nothing had touched yet, every run, for its whole life,
+#   while the suite went on rewriting them.
+#
+# Nothing failed. The code was present and the hook was live; only its ORDER was
+# wrong, and order is not visible in a diff, a parse check, or a unit test of
+# restore_engine_state! -- which passes perfectly when called directly.
+#
+# It was masked further by a second restore hook in test_engine_probes.rb, added
+# as a Minitest.after_run block, which ran at the right time and did the work.
+# Removing that duplicate -- correct on its own terms, since the two snapshotted
+# the same files at different moments and fought at exit -- is what exposed this.
+#
+# So the guard is behavioural: dirty a real state file inside a real test run and
+# check it comes back. A source-grep for "Minitest.after_run" would pass on a
+# hook registered in a file nobody loads.
+  TARGET = File.expand_path("../dilla/project/session.json", __dir__)
+
+  def test_a_test_run_that_dirties_engine_state_restores_it
+    skip "no session state on this machine yet" unless File.file?(TARGET)
+
+    original = File.binread(TARGET)
+    Dir.mktmpdir do |dir|
+      # A minimal suite that loads STUDIO's helper -- which is what installs the
+      # restoration -- and then writes rubbish into a tracked state file from
+      # inside a test, which is exactly what loading the engine does.
+      probe = File.join(dir, "test_dirty.rb")
+      File.write(probe, <<~RUBY)
+        require #{File.expand_path("helper.rb", __dir__).inspect}
+        class TestDirty < Minitest::Test
+          def test_writes_engine_state
+            File.binwrite(#{TARGET.inspect}, "{\\"dirtied_by\\": \\"the restoration guard\\"}")
+            assert true
+          end
+        end
+      RUBY
+      out, err, status = Open3.capture3(RbConfig.ruby, probe)
+
+      assert status.success?, "the probe suite failed: #{err}#{out}"
+      assert_equal original, File.binread(TARGET),
+                   "a test run dirtied #{File.basename(TARGET)} and the suite did not put it back — " \
+                   "check that test/helper.rb registers restore_engine_state! with Minitest.after_run " \
+                   "and not with a bare at_exit, which runs BEFORE the tests"
+    end
+  ensure
+    # Whatever the assertion decided, this tree is not ours to leave broken.
+    File.binwrite(TARGET, original) if original && File.binread(TARGET) != original
+  end
+
+  # The ordering trap, stated as its own check. The behavioural test above is the
+  # real guard; this one names the cause, so a failure says what to fix rather
+  # than only that something is wrong.
+  def test_the_restore_is_registered_where_it_runs_after_the_suite
+    source = File.read(File.expand_path("helper.rb", __dir__))
+
+    assert_match(/Minitest\.after_run\s*\{\s*Studio\.restore_engine_state!/, source,
+                 "restore_engine_state! must be registered with Minitest.after_run — a bare at_exit " \
+                 "is registered after minitest/autorun's and therefore runs before the tests")
+  end
+
+  # One snapshot, taken before the engine can write anything. Two hooks holding
+  # snapshots from different moments is what the probe file used to do, and at
+  # exit the later snapshot won and undid the earlier one's work.
+  def test_only_one_snapshot_of_engine_state_exists
+    # Comments stripped first, which is not fussiness -- the first version of
+    # this test failed on test_engine_probes.rb because the note explaining why
+    # its hook was REMOVED mentions Minitest.after_run by name. A ratchet that
+    # reads prose reports the documentation of a fix as the fix's absence, and
+    # dilla's own wiring ratchets strip comments for exactly this reason.
+    duplicates = Dir[File.expand_path("dilla/test_*.rb", __dir__)].select do |path|
+      File.read(path).gsub(/^\s*#(?!\{).*$/, "").match?(/Minitest\.after_run|STATE_AT_LOAD/)
+    end
+
+    assert_empty duplicates.map { |p| File.basename(p) },
+                 "a second state-restoration hook has come back; test/helper.rb owns this"
+  end
+
 end

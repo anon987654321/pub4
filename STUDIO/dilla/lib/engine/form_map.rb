@@ -47,11 +47,52 @@ def resolve_form_map
   @resolve_form_map
 end
 
-def form_section_at(bar, _n_bars)
+# FORM_FIT=1 — stretch the form across the track instead of repeating it.
+#
+# A form is a CYCLE here: form_section_at takes `bar % cycle_len`, so a 32-bar
+# map over a 128-bar render is four copies of itself. Measured on soul_32 at 128
+# bars that is four intros and four outros, with an "intro" arriving at bars 32,
+# 64 and 96. An intro that happens four times is not an intro, and a form that
+# repeats is a loop of a form rather than the shape of a piece.
+#
+# That matters for what this engine is being asked to do. The records it is
+# measured against have one or two section boundaries across four or five
+# minutes -- a whole-song arc, each part happening once. dilla could not express
+# that at any length: the only way to get a single pass was to hand-write a
+# SECTION_MAP whose lengths happen to sum to the exact bar count, which is a
+# different map for every render length.
+#
+# So: scale the map's proportions to the track. intro:4,main:8,build:8,turn:8,
+# outro:4 over 128 bars becomes 16/32/32/32/16 rather than four passes of
+# 4/8/8/8/4. The shape is the operator's; only its size follows the render.
+#
+# Off by default, and it has to be. Every existing take was made with the cycling
+# behaviour, a form that repeats is a legitimate thing to want on a beat, and
+# this changes which section every bar belongs to -- which changes the drums, the
+# bass, the bed and the pads on a render that asks for it.
+def form_fit_enabled? = ENV["FORM_FIT"] == "1"
+
+def form_section_at(bar, n_bars)
   map = resolve_form_map
   return unless map&.any?
   cycle_len = map.sum { |_, len| len }
   return if cycle_len <= 0
+
+  if form_fit_enabled? && n_bars.to_i.positive?
+    # Proportional, in bars, with the last section absorbing the rounding so the
+    # map always covers the track exactly. Rounding each section independently
+    # leaves a gap or an overlap at the end, and a bar belonging to no section
+    # falls through to the legacy map -- which would put a stray `main` after the
+    # outro and be very hard to see.
+    scaled = 0.0
+    map.each_with_index do |(kind, len), i|
+      return kind if i == map.length - 1
+
+      scaled += len.to_f * n_bars / cycle_len
+      return kind if bar < scaled.round
+    end
+  end
+
   pos = bar % cycle_len
   cumulative = 0
   map.each do |kind, len|

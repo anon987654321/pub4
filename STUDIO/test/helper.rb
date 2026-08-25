@@ -61,6 +61,30 @@ module Studio
   end
 end
 
+# After the tests, and this has to be said explicitly, because the obvious
+# spelling does the opposite of what it looks like.
+#
+# `at_exit` handlers run LIFO. minitest/autorun registers its own at line 21 of
+# this file, and that handler is what RUNS THE SUITE. Anything registered after
+# it -- like the `at_exit { Studio.restore_engine_state! }` that used to be on
+# this line -- therefore fires FIRST, before a single test has run, restoring
+# files nothing has touched yet. It was a no-op for its whole life, and the
+# suite went on dirtying dilla/project/*.json exactly as the note above says it
+# must not.
+#
+# It was not noticed because test/dilla/test_engine_probes.rb had grown a second
+# restore hook of its own, as a Minitest.after_run block, which does run after
+# the tests and did work. Two hooks with snapshots taken at different moments is
+# its own bug -- see that file -- so the duplicate is gone and this one is
+# registered where it actually runs.
+#
+# Minitest.after_run runs inside minitest's at_exit, once the suite is finished.
+Minitest.after_run { Studio.restore_engine_state! }
+
+# And a backstop for the paths minitest never reaches: a helper loaded by
+# something that is not a test run, or an abort before the suite starts. Runs
+# before the tests in a normal run, where it restores files nothing has changed
+# yet and costs a stat apiece.
 at_exit { Studio.restore_engine_state! }
 
 module Studio

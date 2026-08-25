@@ -25,32 +25,34 @@ class TestDilla < Minitest::Test
   # overrides it for slower hosts.
   PROBE_TIMEOUT = Integer(ENV.fetch("DILLA_PROBE_TIMEOUT", "90"))
 
-  # Loading the engine writes dilla's session and learnings JSON, and those are
-  # tracked files in a tree this suite does not own. STUDIO's own helper restores
-  # them; these probes shell out to the engine directly and never reach it, so
-  # `rake test` here left three files modified under STUDIO every run. A suite
-  # that dirties a sibling checkout turns every later `git status` into a
-  # question about who did it — which cost two sessions an afternoon on
-  # 2026-08-16, when 46 unrelated files arrived in the same tree by other means.
+  # There is no state restoration here, and there used to be. Removing it is the
+  # fix, not a regression, and the reason is worth keeping because the version
+  # that lived here looked strictly safer than having nothing.
   #
-  # Restores what was there at load, not what git has: the point is to leave the
-  # tree as found, and it is routinely found dirty.
-  STATE_FILES = %w[
-    project/session.json
-    project/learnings/learned_engine.json
-    project/learnings/playlist_catalog.json
-  ].map { |rel| File.expand_path("../../dilla/#{rel}", __dir__) }.freeze
-
-  STATE_AT_LOAD = STATE_FILES.to_h { |path| [path, (File.binread(path) if File.exist?(path))] }.freeze
-
-  Minitest.after_run do
-    STATE_AT_LOAD.each do |path, body|
-      next File.delete(path) if body.nil? && File.exist?(path)
-      next if body.nil? || File.exist?(path) && File.binread(path) == body
-
-      File.binwrite(path, body)
-    end
-  end
+  # Loading the engine writes dilla's session and learnings JSON, and those are
+  # tracked files in a tree this suite does not own. Two separate hooks restored
+  # them: Studio.restore_engine_state! in test/helper.rb, and a Minitest.after_run
+  # block here. Two hooks, one file, and -- this is the part that made it a bug --
+  # SNAPSHOTS TAKEN AT DIFFERENT MOMENTS.
+  #
+  #   test/helper.rb        binreads project/**/*.json when the helper loads.
+  #   test/dilla/helper.rb  then requires the engine, WHICH WRITES session.json.
+  #   this file             binread the same paths after that, at its own load.
+  #
+  # So the helper held the pristine bytes and this file held the already-dirtied
+  # ones. Both fired at exit, and whichever ran last decided the outcome -- with
+  # this one last, the "restore" put the engine's load-time write back and undid
+  # the helper's work. `M STUDIO/dilla/project/session.json` after a clean suite
+  # run is that, and it is exactly the tree-dirtying the block was added to stop.
+  #
+  # The second cost was a flaky test. test_dilla_frozen_... asserted the file's
+  # MTIME, and a restore that writes byte-identical content still moves an mtime,
+  # so a hook doing nothing meaningful could fail a test about the engine. That
+  # test now asserts content, which is what its own contract is about.
+  #
+  # One hook, snapshotting earliest, covering a superset of these three paths:
+  # test/helper.rb's glob is dilla/project/**/*.json. Nothing is lost by deleting
+  # this, and the earlier snapshot is the correct one.
 
   # `env:` is injected before the engine loads, which is the only point at which
   # it can matter: the engine reads most switches into constants and memoizes
@@ -2645,11 +2647,26 @@ class TestDilla < Minitest::Test
     Dir.mktmpdir do |dir|
       env = { "BARS" => "2", "DILLA_FROZEN" => "1",
               "DILLA_SCRATCH_DIR" => File.join(dir, "scratch"), "DILLA_OUTPUT_DIR" => dir }
-      before = File.mtime(session)
+      # Content, not mtime.
+      #
+      # This asked for mtime and failed about one run in four, on an engine that
+      # is not at fault: twenty consecutive frozen renders were measured against
+      # this file and moved neither its bytes nor its timestamp. What moved the
+      # mtime was the suite's own duplicate restore hook, writing byte-identical
+      # content back -- see the note at the top of this file.
+      #
+      # Content is also the stricter question, which is why this is not a test
+      # being relaxed to make it pass. The paragraph above says what frozen is
+      # for: an A/B whose two takes differ because of the change and not because
+      # the state moved between them. What breaks that is the state's CONTENT
+      # changing. A timestamp that moves while the bytes stand still breaks
+      # nothing, and a byte that changes while the timestamp somehow holds would
+      # break everything and pass the old assertion.
+      before = File.binread(session)
       _o, err, status = Open3.capture3(env, RbConfig.ruby, ENGINE, "dilla", File.join(dir, "cold.wav"))
       assert status.success?, "frozen render failed: #{err}"
 
-      assert_equal before, File.mtime(session), "DILLA_FROZEN=1 must not write the session back"
+      assert_equal before, File.binread(session), "DILLA_FROZEN=1 must not write the session back"
       assert_match(/frozen: not writing project\/session\.json/, err,
                    "a skipped write is announced; silently dropping data would be worse than the bug this fixes")
       assert_includes JSON.parse(File.read(File.join(dir, "cold.wav.dilla"))).fetch("frozen"),

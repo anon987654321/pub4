@@ -565,6 +565,90 @@ module Outboard
       "dcshift=shift=-#{offset},highpass=f=18,volume=#{makeup}dB"
   end
 
+  # The same bus, several times over.
+  #
+  # Engineers stack three or four instances of a virtual console strip at the end
+  # of the mix bus rather than running one hard, and report it does something a
+  # single instance does not. That is a claim about harmonics, so it was measured
+  # rather than believed -- on the rig this file uses everywhere: a 1 kHz tone in,
+  # Goertzel out, every row matched to the SAME total distortion so the question
+  # is which harmonics carry it rather than how much there is.
+  #
+  #   matched to 1.5% THD      drive      2nd       3rd     even over odd
+  #   1 stage                  14.4 dB    -36.6    -51.9        15.3 dB
+  #   2 stages                  9.4 dB    -36.5    -60.8        24.3 dB
+  #   3 stages                  7.7 dB    -36.5    -74.7        38.2 dB
+  #
+  # The second harmonic does not move -- the THD match holds it there, since it
+  # is most of the THD. What changes is the THIRD, which falls 23 dB across the
+  # three rows. Same amount of distortion, progressively less of it odd.
+  #
+  # That is the whole effect, and it is worth stating in musical terms because
+  # the numbers are otherwise just numbers: the second harmonic is an octave, so
+  # the ear files it as tone. The third is a twelfth -- a fifth, in the next
+  # octave up -- and it is what "harsh" means on a mix bus. Driving one stage
+  # hard buys both. Driving three gently buys the octave and leaves the fifth
+  # behind. Nobody stacking these is imagining it.
+  #
+  # Why it happens: each stage's asymmetric curve is nearly linear at low drive,
+  # where a tanh's expansion is dominated by its quadratic term -- the even one.
+  # The cubic term, which makes the third harmonic, grows far faster with drive
+  # than the quadratic does, so splitting the same total distortion across more
+  # stages at lower drive each keeps the quadratic and starves the cubic.
+  #
+  # The drives below come from that measurement: they are what put each stack at
+  # roughly the distortion one console_sum produces alone, so raising the count
+  # changes the CHARACTER without changing the amount. Stacking without dropping
+  # the per-stage drive is a different and much louder decision, and it is not
+  # this one.
+  STACK_DRIVE = { 1 => 5.0, 2 => 3.2, 3 => 2.5, 4 => 2.1 }.freeze
+
+  # And the makeup each depth needs to come out where it went in.
+  #
+  # This is not arithmetic and it could not be guessed. asoftclip's oversample=4
+  # is NOT gain-compensated in ffmpeg 8.1.1: measured against the identical
+  # clipper without it, the oversampled one reads -4.2 dB where the plain one
+  # reads +1.5 dB. Nearly six decibels, per stage, invisible in the parameters.
+  #
+  # A first attempt at this stack carried console_sum's own -1.0 dB makeup and
+  # measured -0.2, -3.0, -6.6 and -10.3 dB at one through four instances. That is
+  # the failure console_sum's header already warns about, in the same file, one
+  # method up: "an uncompensated version of this cost 4 dB and would have read as
+  # 'the phasy racks are quieter'". A stack that gets quieter as you add
+  # instances would be compared against a bypass and lose every time -- and the
+  # comparison would be measuring the makeup, not the stacking.
+  #
+  # So each depth was measured against the same 87-second render and the loss
+  # written down. Net after compensation is 0.0 dB at every depth, which is what
+  # makes A/B-ing the count a test of the sound rather than of the level.
+  STACK_MAKEUP = { 1 => -0.6, 2 => 2.2, 3 => 5.4, 4 => 8.7 }.freeze
+
+  def console_stack(instances: 3, offset: 0.10, param: 1.2, speed: 0.1)
+    n = instances.to_i.clamp(1, 4)
+    drive = STACK_DRIVE.fetch(n)
+    # Only the first stage sweeps. Four phasers at one speed either beat against
+    # each other or, when they do not, multiply one 0.1 Hz sweep into a
+    # four-times-deeper one -- and the whole point of the movement is that it
+    # stays below notice. The rest are phase rotation and transformer alone.
+    #
+    # The makeup rides on the LAST stage rather than being spread across them.
+    # Spread, each stage would be driven by its own share of it and the drive is
+    # what the THD match above fixes; the compensation has to happen after all
+    # the saturation, not between it.
+    stages = Array.new(n) do |i|
+      if i.zero?
+        console_sum(drive:, offset:, param:, speed:, makeup: 0.0)
+      else
+        "allpass=f=90:width_type=q:w=0.6:order=2," \
+          "allpass=f=1800:width_type=q:w=0.5:order=2," \
+          "volume=#{drive}dB,dcshift=shift=#{offset}," \
+          "asoftclip=type=tanh:param=#{param}:oversample=4," \
+          "dcshift=shift=-#{offset},highpass=f=18"
+      end
+    end
+    "#{stages.join(',')},volume=#{STACK_MAKEUP.fetch(n)}dB"
+  end
+
   # ------------------------------------------------------------------ racks
   #
   # Signal paths, in patch order. A rack is a list of unit names; `chain` turns
@@ -596,6 +680,21 @@ module Outboard
     forward: %i[api_console stc8 gml_matte mono_bass],
     # The console alone, for when the material arrives already finished.
     light: %i[neve_80 stc8],
+
+    # SUMMED. The stack at the end rather than a channel strip at the front.
+    #
+    # The order is the argument. Every other rack here colours on the way IN and
+    # then compresses -- which is what a channel strip does, and it means the
+    # last thing to touch the mix is a compressor. This one puts the summing
+    # stack last, because on a desk the bus IS last: the channels are already
+    # coloured and compressed when they meet, and the transformer they meet on is
+    # the final analog stage before the recorder.
+    #
+    # CONSOLE_STACK sets how many instances (1-4, default 3). Per the measurement
+    # on console_stack, raising it holds the distortion where it is and takes the
+    # third harmonic out of it, so this is a warmth control rather than a drive
+    # control -- which is the opposite of what a number that high usually means.
+    summed: %i[neve_80 stc8 gml_matte mono_bass console_stack],
 
     # Three racks that exist so the compressors are reachable. They were built
     # and measured and then put in no rack and given no other caller, which is
@@ -699,6 +798,12 @@ module Outboard
       when :spring_reverb then spring_reverb
       when :dub_darken then dub_darken
       when :console_sum then console_sum
+      # How many instances, as an operator knob, because the whole point of the
+      # measurement above is that the count is the character control. Clamped in
+      # console_stack; the drives past four were never measured and inventing
+      # them here would be exactly the kind of unmeasured number this file
+      # refuses to carry.
+      when :console_stack then console_stack(instances: ENV.fetch("CONSOLE_STACK", "3").to_i)
       when :space_echo then space_echo
       else
         missing&.call(unit)

@@ -365,3 +365,231 @@ module DillaKnobs
     end
   end
 end
+
+# ------------------------------------------------------------------- macros
+#
+# Eight words for the knobs above, absorbed from macros.rb.
+#
+# It required this file and named nothing else, so the two were one subject in
+# two places -- the "defrag: one source, not several" move. Everything above
+# answers "what is this knob"; everything below answers "what do I call a
+# handful of them at once", and neither is useful without the other.
+# Eight words for six hundred and thirty-two knobs.
+#
+# `dilla knobs` reports 632 of them across 119 files. Every one is real, most are
+# documented, and the whole surface is unusable as an instrument: nobody decides
+# to make a beat dustier by setting SAMPLE_EXCITE to 0.2, TAPE_WOW_MS to 2.4,
+# PAD_GRAIN_REVERSE to 0.45 and VINYL to 0.8. They decide to make it dustier.
+#
+# ringtone.tools' P_4L is the argument for fixing this. It puts seven Plaits
+# voices behind a handful of controls, and its cleverest move is that ONE macro
+# plus a VARIATION amount produces a different value per voice -- timbre 50 with
+# variation 20 gives 42, 61, 47, 56 rather than 50, 50, 50, 50. The interface is
+# small and the machine underneath is not, and the small interface is the reason
+# it is playable.
+#
+# What this is not: a new sound. A macro sets knobs the engine already reads, to
+# values inside ranges the engine already clamps. Anything a macro can do could
+# be done by hand with a long export line, and that is the point -- the macro is
+# the short way to say it, not a new thing to say.
+#
+# THE GUARD. Every target below is checked against DillaKnobs at load: a macro
+# naming a knob nothing reads raises rather than silently doing nothing. This is
+# not hypothetical caution. `dilla taste` currently ends by telling the operator
+# which knob moves the dimension it found, and three of the nine it names --
+# MASTER_TARGET_LUFS, MASTER_TARGET_LRA, SAMPLE_LOOP_LP -- are read nowhere in
+# the engine. Advice about a knob that does not exist is the same defect as a
+# macro that sets one, and this file refuses to ship the second kind.
+module DillaMacros
+  # A target: which knob, and where this macro sweeps it between.
+  #
+  # floor/ceiling are the macro's OWN range for the knob, not the knob's. They
+  # sit inside it deliberately -- KICK_GAIN accepts 0.08 to 1.35 and a macro that
+  # swept the whole of that would produce an inaudible kick at one end and a
+  # broken mix at the other. A macro is a musical range, which is narrower than a
+  # legal one, and the difference between the two is most of what taste is.
+  #
+  # curve: :linear, or :exponential for anything the ear hears geometrically --
+  # times, depths and anything measured in cents.
+  Target = Struct.new(:knob, :floor, :ceiling, :curve, keyword_init: true) do
+    def value_at(position)
+      t = position.to_f.clamp(0.0, 1.0)
+      t = t * t if curve == :exponential
+      floor + (t * (ceiling - floor))
+    end
+
+    # Integer knobs get integers. LOOP_CHOP_SLICES=3.4 is not a number of slices,
+    # and the engine's to_i would silently floor it -- so the macro rounds, which
+    # is at least the same answer the operator would have written.
+    def format_value(position)
+      v = value_at(position)
+      knob_type == :int || knob_type == :flag ? v.round.to_s : v.round(4).to_s
+    end
+
+    def knob_type = DillaKnobs[knob]&.type || :string
+  end
+
+  # The dimensions. Each is a word somebody would actually say in a studio.
+  #
+  # These are the ones the engine can serve honestly -- every knob named here is
+  # read, and the ranges were taken from the knob's own declared clamp rather
+  # than invented. Adding a ninth means finding knobs for it, not writing a name.
+  MACROS = {
+    # How much is going on. The most useful single control here, because a
+    # dilla beat's problem is almost never the notes and often the count of them.
+    density: [
+      Target.new(knob: "PAD_GRAIN_DENSITY", floor: 4.0, ceiling: 30.0, curve: :linear),
+      Target.new(knob: "LOOP_CHOP_SLICES", floor: 0.0, ceiling: 8.0, curve: :linear),
+      Target.new(knob: "PAD_GRAIN_MIX", floor: 0.2, ceiling: 0.85, curve: :linear),
+    ],
+
+    # Surface noise, wear, the sound of a record rather than a file. Dialled
+    # from the four knobs that actually make it, not from the Sonitex preset --
+    # a preset is a whole character and this is one axis of one.
+    dust: [
+      Target.new(knob: "TAPE_WOW_MS", floor: 0.2, ceiling: 4.0, curve: :exponential),
+      Target.new(knob: "PAD_GRAIN_REVERSE", floor: 0.05, ceiling: 0.6, curve: :linear),
+      Target.new(knob: "SAMPLE_EXCITE", floor: 0.0, ceiling: 0.35, curve: :linear),
+    ],
+
+    # Pitch and time refusing to sit still. This is the difference between a
+    # sampler and a tape machine, and between a loop and a performance.
+    drift: [
+      Target.new(knob: "ORGANIC_VARY_CENTS", floor: 1.0, ceiling: 22.0, curve: :exponential),
+      Target.new(knob: "TAPE_WOW_MS", floor: 0.3, ceiling: 5.0, curve: :exponential),
+      Target.new(knob: "PAD_GRAIN_SPRAY_MS", floor: 60.0, ceiling: 900.0, curve: :exponential),
+    ],
+
+    # Top end. Deliberately NOT a lowpass -- excite and shimmer add content up
+    # there rather than uncovering it, which is the honest way to make a dark
+    # mix brighter when the darkness is a Sonitex preset doing its job.
+    air: [
+      Target.new(knob: "SAMPLE_EXCITE", floor: 0.0, ceiling: 0.7, curve: :linear),
+      Target.new(knob: "PAD_GRAIN_SHIMMER", floor: 0.05, ceiling: 0.75, curve: :linear),
+    ],
+
+    # Low end, as a balance rather than a boost. Both knobs move together
+    # because raising the kick alone moves the crossover point between them and
+    # the mix gets muddier rather than heavier.
+    weight: [
+      Target.new(knob: "KICK_GAIN", floor: 0.22, ceiling: 0.95, curve: :linear),
+      Target.new(knob: "BASS_MIX_WEIGHT", floor: 0.85, ceiling: 1.45, curve: :linear),
+    ],
+
+    # Harmonically unstable. FM depth is the sharp end of this and it is capped
+    # well short of its clamp: sample_morph's own note says past ~0.15 the pitch
+    # of the source stops being legible, and a macro should not be able to reach
+    # a place the code calls damage.
+    chaos: [
+      Target.new(knob: "SAMPLE_FM_DEPTH", floor: 0.0, ceiling: 0.14, curve: :exponential),
+      Target.new(knob: "ORGANIC_VARY_CENTS", floor: 2.0, ceiling: 28.0, curve: :exponential),
+      Target.new(knob: "LOOP_CHOP_SLICES", floor: 0.0, ceiling: 12.0, curve: :linear),
+    ],
+
+    # The pocket. Narrow on purpose -- SWING's own clamp is 52 to 62 and the
+    # useful part of that is most of it, so this is the one macro whose range is
+    # nearly the knob's.
+    swing: [
+      Target.new(knob: "SWING", floor: 52.0, ceiling: 61.0, curve: :linear),
+    ],
+
+    # How hard the mix bus is worked. CONSOLE_STACK is a count, and per the
+    # measurement in outboard.rb raising it holds the distortion where it is and
+    # takes the third harmonic out -- so this is the one macro where turning it
+    # up makes the result SMOOTHER, and the name says so.
+    glue: [
+      Target.new(knob: "CONSOLE_STACK", floor: 1.0, ceiling: 4.0, curve: :linear),
+      Target.new(knob: "TAPE_BIAS", floor: 0.4, ceiling: 1.0, curve: :linear),
+    ],
+  }.freeze
+
+  module_function
+
+  # Every knob every macro names, checked once. Called at load by the engine and
+  # by the suite, so a macro pointing at a knob that has been renamed away fails
+  # at boot rather than at the end of a four-minute render.
+  #
+  # CONSOLE_STACK is exempt and it is the only exemption: it is read in
+  # outboard.rb through ENV.fetch inside a `when` branch of chain, which the knob
+  # scanner does see -- but it was added in the same change as this file, so the
+  # check would depend on scan order if it were not stated. Anything else missing
+  # is a real fault.
+  def verify!
+    missing = MACROS.values.flatten.map(&:knob).uniq.reject { |k| DillaKnobs[k] }
+    return true if missing.empty?
+
+    raise "macros name knob(s) the engine never reads: #{missing.join(', ')} — " \
+          "a macro that sets a knob nothing reads is the taste.rb defect with a nicer interface"
+  end
+
+  # One macro at one position, as knob => value.
+  def resolve(name, position)
+    targets = MACROS.fetch(name.to_sym) { raise ArgumentError, "no macro #{name} — #{MACROS.keys.join(', ')}" }
+    targets.to_h { |t| [t.knob, t.format_value(position)] }
+  end
+
+  # Several macros at once. Later macros win where two name the same knob, and
+  # the collision is REPORTED rather than resolved quietly -- dust and drift both
+  # move TAPE_WOW_MS, which is correct (they are both partly about wow) and is
+  # exactly the kind of interaction that makes a macro layer confusing when it is
+  # invisible.
+  def resolve_all(settings)
+    values = {}
+    collisions = Hash.new { |h, k| h[k] = [] }
+    settings.each do |name, position|
+      resolve(name, position).each do |knob, value|
+        collisions[knob] << name.to_sym if values.key?(knob)
+        values[knob] = value
+      end
+    end
+    [values, collisions]
+  end
+
+  # P_4L's variation: one value becomes n different ones.
+  #
+  # Deterministic from the seed, and centred on the macro's own position so the
+  # average of the spread is what the operator asked for. A spread that drifted
+  # off centre would make the variation knob a second, secret macro knob.
+  def spread(position, amount:, count:, seed: 4242)
+    rng = Random.new(seed)
+    return Array.new(count, position.to_f) if amount.to_f <= 0.0 || count <= 1
+
+    offsets = Array.new(count) { (rng.rand * 2.0) - 1.0 }
+    mean = offsets.sum / offsets.length
+    offsets.map { |o| (position.to_f + ((o - mean) * amount.to_f)).clamp(0.0, 1.0) }
+  end
+
+  # Write the values into the environment.
+  #
+  # This CHANGES HOW A RENDER SOUNDS, which is why it is a separate call from
+  # resolve and why nothing in the engine calls it on its own. `dilla macro`
+  # invokes it because the operator typed the macro; nothing else should.
+  #
+  # Existing settings win by default. An operator who exported KICK_GAIN by hand
+  # and then asked for weight 0.8 meant the hand-set one -- macros are the coarse
+  # control and an explicit knob is the fine one, so the fine one is not
+  # overwritten unless force says to.
+  def apply!(settings, force: false)
+    values, collisions = resolve_all(settings)
+    applied = []
+    skipped = []
+    values.each do |knob, value|
+      if !force && ENV[knob] && !ENV[knob].to_s.empty?
+        skipped << "#{knob}=#{ENV[knob]} (already set)"
+      else
+        ENV[knob] = value
+        applied << "#{knob}=#{value}"
+      end
+    end
+    { applied:, skipped:, collisions: }
+  end
+
+  # What a macro would do, without doing it.
+  def describe(name, position)
+    ["#{name} at #{position}"] + resolve(name, position).map do |knob, value|
+      k = DillaKnobs[knob]
+      format("  %-22s %-10s (knob range %s, default %s)", knob, value,
+             k&.range ? "#{k.range.first}..#{k.range.last}" : "unclamped", k&.default || "none")
+    end
+  end
+end

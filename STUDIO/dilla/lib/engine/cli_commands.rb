@@ -691,3 +691,326 @@ def wiring_check
   end
   status
 end
+
+# ============================================================================
+# THE DEVICES, FROM THE COMMAND LINE
+#
+# Absorbed from device_cmds.rb, which was a second file of exactly this kind
+# created in the same change as the commands it held. Every device can be run
+# on its own, on a file the operator names, before it is wired into anything --
+# which is the lesson behind `dilla audit`: 24 pad voices, 209 of 250
+# progressions and a pad whose effect chain had never opened all shipped
+# complete, correct and unreachable. A device with no way to hear it alone is a
+# device nobody can tell is broken.
+#
+# Options are BARE WORDS -- `copies=8`, `describe` -- not --flags. dilla.rb's
+# global flag parser consumes every argument starting with -- before dispatch
+# runs and aborts on any it does not recognise, so `dilla wav-map pic.png
+# describe` would die printing a list of 104 flags. knobs_report hit this first
+# and its header says the same thing.
+# ============================================================================
+# key=value pairs and declared switches out of an argv tail, positionals in order.
+def device_flags(argv, switches: [])
+  flags = {}
+  rest = []
+  known = switches.map(&:to_s)
+  argv.each do |arg|
+    if arg.include?("=") && !File.exist?(arg)
+      key, value = arg.split("=", 2)
+      flags[key.delete_prefix("--").tr("-", "_").to_sym] = value
+    elsif known.include?(arg)
+      flags[arg.tr("-", "_").to_sym] = ""
+    else
+      rest << arg
+    end
+  end
+  [flags, rest]
+end
+
+def device_float(flags, key, default) = flags.key?(key) ? flags[key].to_f : default
+def device_int(flags, key, default) = flags.key?(key) ? flags[key].to_i : default
+
+# ---------------------------------------------------------------- copy machine
+#
+#   dilla copy-machine in.wav out.wav copies=8 family=spray duration=12
+#   dilla copy-machine describe copies=8 family=harmonic
+def copy_machine_cli!(argv)
+  flags, rest = device_flags(argv, switches: %w[describe])
+  plan = CopyMachine.plan(
+    copies: device_int(flags, :copies, 6),
+    family: (flags[:family] || "harmonic").to_sym,
+    reverse: device_float(flags, :reverse, 0.25),
+    width: device_float(flags, :width, 0.8),
+    drift: device_float(flags, :drift, 220.0),
+    tilt: device_float(flags, :tilt, 0.55),
+    seed: device_int(flags, :seed, 4242)
+  )
+  if flags.key?(:describe) || rest.length < 2
+    puts CopyMachine.describe(plan)
+    puts "families: #{CopyMachine::RATIOS.keys.join(', ')}"
+    return puts("usage: dilla copy-machine <in> <out> [copies=N family=… duration=S]") if rest.length < 2
+  end
+
+  src, dest = rest
+  out = CopyMachine.build!(
+    src:, dest:,
+    copies: device_int(flags, :copies, 6),
+    family: (flags[:family] || "harmonic").to_sym,
+    reverse: device_float(flags, :reverse, 0.25),
+    width: device_float(flags, :width, 0.8),
+    drift: device_float(flags, :drift, 220.0),
+    tilt: device_float(flags, :tilt, 0.55),
+    seed: device_int(flags, :seed, 4242),
+    duration: flags.key?(:duration) ? flags[:duration].to_f : nil,
+    rate: SAMPLE_RATE
+  )
+  puts out ? "copy-machine: #{plan.length} copies -> #{out}" : "copy-machine: no such source #{src}"
+end
+
+# --------------------------------------------------------------------- hocket
+#
+# Runs on the progression the engine would render, so what it prints is what a
+# real part would be split into rather than a demonstration on invented notes.
+#
+#   dilla hocket voices=4 mode=pendulum hold=2
+def hocket_cli!(argv)
+  flags, = device_flags(argv, switches: %w[write])
+  cfg = dilla_resolve_config
+  events = hocket_source_events(cfg)
+  return puts("hocket: the current track produced no note events to split") if events.empty?
+
+  split = MidiDevices::Hocket.split(
+    events,
+    voices: device_int(flags, :voices, 4),
+    mode: (flags[:mode] || "pendulum").to_sym,
+    hold: device_int(flags, :hold, 1),
+    seed: device_int(flags, :seed, 4242)
+  )
+  puts "hocket: #{events.length} note(s) from #{cfg[:track]} across #{split.length} voice(s), " \
+       "mode=#{flags[:mode] || 'pendulum'} hold=#{device_int(flags, :hold, 1)}"
+  puts MidiDevices::Hocket.describe(split).map { |l| "  #{l}" }
+  return unless flags.key?(:write)
+
+  # One SMF per voice, so the split can be heard rather than read. midi_smf's
+  # writer is reused as-is; nothing here invents a MIDI byte.
+  dir = flags[:write].to_s.empty? ? File.join(SCRATCH_DIR, "hocket") : flags[:write]
+  FileUtils.mkdir_p(dir)
+  split.each_with_index do |voice, i|
+    next if voice.empty?
+
+    path = File.join(dir, "voice_#{i + 1}.mid")
+    write_smf(path, voice, program: EP_GM_PROGRAMS[i % EP_GM_PROGRAMS.length], channel: i)
+    puts "  wrote #{path}"
+  end
+end
+
+# The notes a hocket has to work with. The harmonic arp is the engine's most
+# note-dense part and the one a hocket is actually for -- splitting a pad across
+# voices moves sustained chords around, which is a different and duller effect.
+def hocket_source_events(cfg)
+  chords = dilla_progression(cfg[:progression])
+  return [] if chords.nil? || chords.empty?
+
+  bar = 60.0 / cfg[:bpm].to_f * 4.0
+  step = bar / 8.0
+  (0...(chords.length * 8)).map do |i|
+    chord = chords[(i / 8) % chords.length]
+    [i * step, 0.55 + ((i % 4).zero? ? 0.25 : 0.0), chord, step * 0.9]
+  end
+end
+
+# ------------------------------------------------------------------- midi bag
+#
+#   dilla midi-bag order=walk rests=0.25 fit-chords
+def midi_bag_cli!(argv)
+  flags, = device_flags(argv, switches: %w[write fit-chords fit_chords])
+  cfg = dilla_resolve_config
+  pitches = hocket_source_events(cfg)
+  return puts("midi-bag: the current track produced no pitches to bag") if pitches.empty?
+
+  # The timing comes from the drum grid, which is the whole point: the melody's
+  # notes land where the kit lands rather than where the melody put them.
+  timing = midi_bag_timing_events(cfg)
+  return puts("midi-bag: no drum grid to take timing from") if timing.empty?
+
+  chord_at = if flags.key?(:fit_chords)
+               bar = 60.0 / cfg[:bpm].to_f * 4.0
+               chords = dilla_progression(cfg[:progression])
+               ->(t) { chords[((t / bar).floor) % chords.length] }
+             end
+  out = MidiDevices::Bag.apply(
+    pitches:, timing:,
+    order: (flags[:order] || "cycle").to_sym,
+    velocity_from: (flags[:velocity_from] || "timing").to_sym,
+    rests: device_float(flags, :rests, 0.0),
+    seed: device_int(flags, :seed, 4242),
+    chord_at:
+  )
+  puts "midi-bag: #{pitches.length} pitch(es) from #{cfg[:track]}, " \
+       "#{timing.length} timing slot(s) from the kit -> #{out.length} note(s)"
+  out.first(12).each do |t, v, chord, sustain|
+    puts format("  %6.2fs  vel %.2f  %-22s sus %.2f", t, v,
+                Array(chord[:hz]).first(3).map { |hz| hz.round(1) }.join("/"), sustain)
+  end
+  puts "  …#{out.length - 12} more" if out.length > 12
+  return unless flags.key?(:write)
+
+  path = flags[:write].to_s.empty? ? File.join(SCRATCH_DIR, "midi_bag.mid") : flags[:write]
+  FileUtils.mkdir_p(File.dirname(path))
+  write_smf(path, out, program: PAD_GM_PROGRAM)
+  puts "  wrote #{path}"
+end
+
+# The kit's onsets, as timing slots. Velocities come with them, which is what
+# makes the bagged part inherit the drums' accents.
+def midi_bag_timing_events(cfg)
+  bar = 60.0 / cfg[:bpm].to_f * 4.0
+  step = bar / 16.0
+  (0...32).filter_map do |i|
+    beat = i % 16
+    # A sixteenth grid with the offbeats thinned, so what comes out is a part
+    # rather than a machine gun. Downbeats and the two-and-four accent.
+    next if [3, 7, 11, 15].include?(beat) && i.even?
+
+    [i * step, [0, 4, 8, 12].include?(beat) ? 0.9 : 0.55, { hz: [110.0] }, step * 0.85]
+  end
+end
+
+# -------------------------------------------------------------------- wav map
+#
+#   dilla wav-map picture.png out.wav hz=110 path=lissajous duration=8
+#   dilla wav-map picture.png describe
+def wav_map_cli!(argv)
+  flags, rest = device_flags(argv, switches: %w[describe])
+  image = rest.shift
+  return puts("usage: dilla wav-map <image> [out.wav] [hz=110 path=#{WavMap::PATHS.join('|')}]") unless image
+
+  path = (flags[:path] || "circle").to_sym
+  if flags.key?(:describe) || rest.empty?
+    puts WavMap.describe(image, path:, lobes: device_int(flags, :lobes, 5))
+    return if rest.empty?
+  end
+  out = WavMap.render!(image, rest.first,
+                       hz: device_float(flags, :hz, 110.0),
+                       duration: device_float(flags, :duration, 8.0),
+                       path:, lobes: device_int(flags, :lobes, 5),
+                       rate: SAMPLE_RATE,
+                       drift_cents: device_float(flags, :drift_cents, 6.0),
+                       seed: device_int(flags, :seed, 4242))
+  puts out ? "wav-map: #{File.basename(image)} via #{path} -> #{out}" : "wav-map: could not read #{image}"
+end
+
+# --------------------------------------------------------------------- macros
+#
+#   dilla macro                      what there is
+#   dilla macro dust=0.7 weight=0.6  what those would set, without setting it
+#   dilla macro dust=0.7 apply
+def macro_cli!(argv)
+  flags, rest = device_flags(argv, switches: %w[apply force])
+  settings = rest.take_while { |a| a.include?("=") }.to_h do |pair|
+    name, value = pair.split("=", 2)
+    [name.to_sym, value.to_f]
+  end
+  if settings.empty?
+    puts "macros — #{DillaMacros::MACROS.length} words for #{DillaKnobs.all.length} knobs"
+    DillaMacros::MACROS.each do |name, targets|
+      puts format("  %-9s %s", name, targets.map(&:knob).join(", "))
+    end
+    return puts("\nusage: dilla macro dust=0.7 weight=0.6 [apply] [force]")
+  end
+
+  values, collisions = DillaMacros.resolve_all(settings)
+  settings.each_key { |name| puts DillaMacros.describe(name, settings[name]) }
+  collisions.each do |knob, names|
+    puts "  NOTE #{knob} is set by more than one macro (#{names.join(', ')}); the last one wins"
+  end
+  return puts("\n#{values.length} knob(s) — add `apply` to set them for this process") unless flags.key?(:apply)
+
+  result = DillaMacros.apply!(settings, force: flags.key?(:force))
+  puts "\napplied: #{result[:applied].join(' ')}"
+  puts "kept your own: #{result[:skipped].join(' ')}" if result[:skipped].any?
+end
+
+# ----------------------------------------------------------------- modulation
+#
+# Prints and proves a matrix rather than rendering with one. Wiring modulation
+# into a render changes how every take sounds, and that is not a decision this
+# command makes -- it is here so the mechanism can be measured before it is.
+#
+#   dilla modulate in.wav out.wav lfo=0.5 target=lowpass.frequency base=900
+def modulate_cli!(argv)
+  flags, rest = device_flags(argv, switches: %w[describe])
+  target = (flags[:target] || "lowpass.frequency").split(".")
+  filter, param = target
+  matrix = DillaModulation::Matrix.new
+  matrix.lfo(:lfo1, rate_hz: device_float(flags, :lfo, 0.5),
+                    family: (flags[:family] || "curved").to_sym,
+                    morph: device_float(flags, :morph, 0.33))
+  begin
+    matrix.route(:lfo1, instance: "mod", filter:, param:,
+                        base: flags.key?(:base) ? flags[:base].to_f : nil,
+                        depth: device_float(flags, :depth, 1.0),
+                        mode: (flags[:mode] || "modulate").to_sym)
+  rescue ArgumentError => e
+    return puts("modulate: #{e.message}")
+  end
+  puts matrix.describe.map { |l| "  #{l}" }
+
+  src, dest = rest
+  return puts("usage: dilla modulate <in> <out> [lfo=Hz target=filter.param base=N depth=0..1]") unless src && dest
+  return puts("modulate: no such file #{src}") unless File.file?(src)
+
+  duration = audio_duration_sec(src).to_f
+  return puts("modulate: could not read a duration from #{src}") unless duration.positive?
+
+  cmds = File.join(SCRATCH_DIR, "modulation.cmds")
+  FileUtils.mkdir_p(SCRATCH_DIR)
+  prefix = DillaModulation.prefix_for(matrix, path: cmds, duration:)
+  route = matrix.routes.first
+  chain = "#{prefix},#{matrix.instance_name(route)}=#{route.param}=#{matrix.initial(route)}"
+  sh! "ffmpeg", "-y", "-i", src, "-af", chain, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", dest
+  puts "modulate: #{File.readlines(cmds).length} command(s) over #{duration.round(1)}s -> #{dest}"
+end
+
+# --------------------------------------------------------------- arrangement
+#
+# Does this have an arrangement, and how does it compare with a record?
+#
+#   dilla arrangement out.mp3
+#   dilla arrangement out.mp3 crate/sources/kembara_rindu/source.wav
+#
+# Two files or more prints the comparison table, which is the only use of this
+# worth much: the numbers mean nothing on their own and everything against
+# material somebody has already judged.
+def arrangement_cli!(argv)
+  flags, rest = device_flags(argv, switches: %w[detail])
+  paths = rest.reject(&:empty?)
+  if paths.empty?
+    return puts("usage: dilla arrangement <file> [reference…]   " \
+                "(add `detail` for boundaries and the loudness spread)")
+  end
+
+  missing = paths.reject { |p| File.file?(p) }
+  puts "no such file: #{missing.join(', ')}" if missing.any?
+  paths -= missing
+  return if paths.empty?
+
+  puts Arrangement.compare(paths)
+  return unless flags.key?(:detail)
+
+  puts
+  paths.each do |path|
+    r = Arrangement.analyse(path) or next
+
+    puts "#{File.basename(path)}"
+    puts format("  boundaries   %s", r[:boundaries].empty? ? "(none above the noise floor)" : r[:boundaries].join(", "))
+    puts format("  novelty      peak %.4f  mean %.4f  contrast %.2f " \
+                "(null cases: one-bar loop peaks #{format('%.5f', 0.00137)}, " \
+                "the floor is #{format('%.3f', Arrangement::NOISE_FLOOR)})",
+                r[:novelty_peak], r[:novelty_mean], r[:novelty_contrast])
+    if (l = r[:loudness])
+      puts format("  short-term   p10 %.1f  p50 %.1f  p90 %.1f  spread %.1f LU",
+                  l[:p10], l[:p50], l[:p90], l[:spread])
+    end
+  end
+end
