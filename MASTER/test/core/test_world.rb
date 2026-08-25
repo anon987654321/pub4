@@ -199,6 +199,30 @@ class WorldTest < Minitest::Test
     end
   end
 
+  # exec output becomes an Observation, Memory records it, and the next turn hands
+  # it back to the model — so anything the child can read, the model can read.
+  # `env: nil` inherited the whole process environment, which on this box holds
+  # OPENROUTER_API_KEY and friends, so `exec(["env"])` was a supported way to
+  # print every credential into the transcript.
+  def test_exec_does_not_pass_credentials_to_the_child
+    with_world do |world, _root|
+      ENV["MASTER_TEST_FAKE_API_KEY"] = "sk-should-never-be-visible"
+      ENV["MASTER_TEST_AWS_SECRET_ACCESS_KEY"] = "aws-should-never-be-visible"
+      ENV["MASTER_TEST_ORDINARY_VAR"] = "ordinary-and-inherited"
+
+      obs = world.perform(E.exec(%w[env]))
+      assert obs.ok?, obs.message
+
+      refute_includes obs.value!, "sk-should-never-be-visible", "an API key reached the child"
+      refute_includes obs.value!, "aws-should-never-be-visible", "an AWS secret reached the child"
+      # The toolchain still has to work — the fold earns its evidence by running
+      # bundle/rake, so this must not become a blanket scrub of the environment.
+      assert_includes obs.value!, "ordinary-and-inherited", "ordinary environment was stripped too"
+    ensure
+      %w[MASTER_TEST_FAKE_API_KEY MASTER_TEST_AWS_SECRET_ACCESS_KEY MASTER_TEST_ORDINARY_VAR].each { |k| ENV.delete(k) }
+    end
+  end
+
   # A real repository, because the whole claim here is about what git does with
   # the index and nothing short of git can answer that.
   def with_git_world

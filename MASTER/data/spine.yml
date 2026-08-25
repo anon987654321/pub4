@@ -61,6 +61,30 @@
 # five out. They buy a property no scanner could: the fold cannot take or
 # destroy another session's work. Pinned by four tests, each mutation-checked
 # against the old behaviour.
+# RAISED 2026-08-25, 36930 -> 36944 (+14). Two more from the same review, both
+# about what the fold can learn and what it can claim.
+#
+# do_exec passed `env: nil`, which reads as "nothing the model supplied rides
+# through" and is true — but it also inherits the whole process environment, and
+# exec output becomes an Observation that Memory records and the next turn hands
+# back to the model. `exec(["env"])` was therefore a supported way to read every
+# API key into the transcript. no_secret_rule watches write and note, so the one
+# direction it never covered was the one flowing INTO the model. Credential-shaped
+# names are now unset in the child; everything else is inherited exactly as before,
+# because the toolchain the fold proves its work with is the broad moving set and
+# an allowlist would break `bundle exec rake test` the first time it forgot one.
+#
+# Proof#evidence_score summed every recorded score. So three `test_pass` tags were
+# 105 points from one kind of proof, and evidence earned before a write still
+# counted after it — a fold could test, rewrite the file it tested, and reach
+# `done` on the earlier run. Score is now per-kind and per-generation, where a
+# write advances the generation. Re-earning after a change works, so staleness is
+# not a dead end.
+#
+# Still NOT fixed, and deliberately: the evidence kind is whatever the model
+# labelled the exec with, so exec(["true"], evidence: "test_pass") still scores.
+# Binding kinds to the commands that can produce them is a policy table and a
+# separate decision.
 spine:
   # Total lines across lib/**/*.rb.
   #
@@ -582,7 +606,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_body_ceiling: 36930
+  lib_body_ceiling: 36944
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

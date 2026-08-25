@@ -123,11 +123,42 @@ module Master::Core
 
       out, status = bounded_capture2e(
         *argv,
-        env: nil,
+        env: credential_free_env,
         chdir: @root,
         timeout: seconds,
       )
       status.success? ? Observation.ok(out.to_s.strip) : Observation.no(out.to_s.strip)
+    end
+
+    # Credentials do not go into the child, because the child's output comes back.
+    #
+    # `env: nil` inherited the whole process environment. That was written to mean
+    # "nothing the MODEL supplied rides through", and it does mean that — but the
+    # process running the fold holds OPENROUTER_API_KEY, ANTHROPIC_API_KEY,
+    # REPLICATE_API_TOKEN and the rest, and exec output becomes an Observation,
+    # which Memory records, which the next turn hands back to the model. So
+    # `exec(["env"])` was a supported way to read every key into the transcript.
+    #
+    # no_secret_rule already forbids a secret reaching a file or a note. It watches
+    # write and note only, so the exec path — the one that flows INTO the model
+    # rather than out of it — was the direction nothing covered.
+    #
+    # Removed by name rather than allowlisted by name. An allowlist is the safer
+    # shape in general, but here it would have to enumerate the toolchain the fold
+    # proves its work with — PATH, HOME, GEM_*, BUNDLE_*, RBENV_*, RUBY* — and the
+    # first variable it forgot would break `bundle exec rake test`, i.e. the fold's
+    # ability to earn evidence at all. Credential names are the narrow, stable set;
+    # the toolchain is the broad, moving one. This drops the narrow set.
+    CREDENTIAL_ENV_RX = /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|SESSION|COOKIE|SALT|CERT|PRIVATE|
+                         \A(?:AWS|GOOGLE|GCP|AZURE|STRIPE|TWILIO|SENDGRID|VAPID|DATABASE_URL)/xi
+
+    # A name mapped to nil is UNSET in the child. Passing "ENV minus credentials"
+    # instead would do nothing: spawn merges an env hash over the inherited
+    # environment, so every dropped key would simply be inherited back. Unsetting
+    # by name is also why the toolchain needs no enumerating — everything not
+    # named here is inherited exactly as before.
+    def credential_free_env
+      ENV.keys.grep(CREDENTIAL_ENV_RX).to_h { |name| [name, nil] }
     end
 
     # commit is path-scoped, and refuses to run without paths.

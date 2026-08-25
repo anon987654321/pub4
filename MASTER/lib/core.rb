@@ -42,7 +42,10 @@ module Master::Core
     def to_s = "#{verb}(#{args.keys.join(', ')})"
   end
 
-  Evidence = Data.define(:kind, :ok, :score, :detail, :at)
+  # generation: which state of the tree this was earned against. Evidence proved
+  # something about the code as it stood; a write after it makes it a statement
+  # about a tree that no longer exists. Proof counts only the current generation.
+  Evidence = Data.define(:kind, :ok, :score, :detail, :at, :generation)
 
   # A Verdict is the Constitution's answer to an Effect. The Core sees two
   # shapes; the third is internal to a single rule:

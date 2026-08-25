@@ -35,6 +35,7 @@ module Master::Core
       @read_paths = []
       @asked = false
       @started_at = Time.now
+      @generation = 0
     end
 
     def council_required? = %i[high critical].include?(@risk)
@@ -53,7 +54,8 @@ module Master::Core
 
     def mark_council_pass!(detail: "council pass")
       @council_pass = true
-      @evidence << Evidence.new(kind: :council_pass, ok: true, score: 0, detail:, at: Time.now.utc)
+      @evidence << Evidence.new(kind: :council_pass, ok: true, score: 0, detail:, at: Time.now.utc,
+                                generation: @generation)
       self
     end
 
@@ -65,7 +67,10 @@ module Master::Core
 
       kind = effect.args[:evidence].to_s.to_sym
       score = SCORING.fetch(kind, 0)
-      @evidence << Evidence.new(kind:, ok: true, score:, detail: observation.message, at: Time.now.utc) if score.positive?
+      return unless score.positive?
+
+      @evidence << Evidence.new(kind:, ok: true, score:, detail: observation.message, at: Time.now.utc,
+                                generation: @generation)
     end
 
     private
@@ -73,9 +78,30 @@ module Master::Core
     # Both are asked only by the two predicates above. Public here would put the
     # count back where this split started.
     def ideation_required? = %i[medium high critical].include?(@risk)
-    def evidence_score = @evidence.select(&:ok).sum(&:score)
+
+    # Two narrowings, both of which the old sum allowed.
+    #
+    # Only the CURRENT generation counts. Evidence proved something about the code
+    # as it stood when it was earned; a write since then makes it a claim about a
+    # tree that no longer exists. The old sum let a fold test, then rewrite the
+    # file it had tested, then reach `done` on the strength of the earlier run.
+    #
+    # And each kind scores ONCE. Nothing deduplicated, so three `test_pass` tags
+    # were 105 points from a single kind of proof — the threshold exists to demand
+    # several independent kinds, and repetition is not independence.
+    #
+    # What this deliberately does NOT fix: the kind is still whatever the model
+    # labelled the exec with, so `exec(["true"], evidence: "test_pass")` still
+    # scores 35. Binding a kind to the commands that can legitimately produce it
+    # is the real answer and is a policy table, not a one-line predicate.
+    def evidence_score
+      @evidence.select { |e| e.ok && e.generation == @generation }
+               .group_by(&:kind)
+               .sum { |_kind, found| found.map(&:score).max }
+    end
 
     def remember_write(effect)
+      @generation += 1
       tree = effect.args[:path].to_s.split("/").find { |part| Constitution::REPO_TREES.include?(part) }
       @write_trees << tree if tree
       @write_lines += effect.args[:content].to_s.lines.size

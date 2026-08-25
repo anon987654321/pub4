@@ -29,4 +29,50 @@ class EvidencePolicyTest < Minitest::Test
       assert_includes prompt, "#{kind}=#{weight}"
     end
   end
+
+  E = Master::Core::Effect
+  OK = Master::Core::Observation.ok("ok")
+
+  def proof_with(*kinds)
+    proof = Master::Core::Proof.new(risk: :low)
+    kinds.each { |kind| proof.record_evidence(E.exec(%w[true], evidence: kind), OK) }
+    proof
+  end
+
+  # Three distinct kinds is what the threshold is designed to want.
+  def test_three_distinct_kinds_reach_the_threshold
+    assert proof_with(:test_pass, :scan_clean, :code_review).proved?
+  end
+
+  # Repetition is not independence. Nothing deduplicated, so the same tag three
+  # times was 105 points out of one kind of proof.
+  def test_repeating_one_kind_does_not_stack
+    proof = proof_with(:test_pass, :test_pass, :test_pass)
+    refute proof.proved?, "three of the same evidence kind reached the threshold"
+  end
+
+  # Evidence proves something about the tree it was earned against. A write after
+  # it makes it a claim about a tree that no longer exists, so `done` must not be
+  # reachable on the strength of a run that predates the change.
+  def test_a_write_invalidates_evidence_earned_before_it
+    proof = proof_with(:test_pass, :scan_clean, :code_review)
+    assert proof.proved?, "precondition: the fold had proved itself"
+
+    proof.record_evidence(E.write("MASTER/lib/thing.rb", "CHANGED = 1\n"), OK)
+
+    refute proof.proved?, "evidence survived a write to the code it was proving"
+  end
+
+  # And it can be re-earned: the fold tests again after the change and is proved
+  # once more. Staleness must not be a dead end.
+  def test_evidence_re_earned_after_a_write_counts_again
+    proof = proof_with(:test_pass, :scan_clean, :code_review)
+    proof.record_evidence(E.write("MASTER/lib/thing.rb", "CHANGED = 1\n"), OK)
+    refute proof.proved?
+
+    %i[test_pass scan_clean code_review].each do |kind|
+      proof.record_evidence(E.exec(%w[true], evidence: kind), OK)
+    end
+    assert proof.proved?, "a fold that re-proves its work after a change is stuck"
+  end
 end
