@@ -121,6 +121,10 @@ module Pub4
          require File.join(MASTER, "tools/rule_hygiene")
          [Pub4::RuleHygiene.report[:missing_metadata].size, Pub4::RuleHygiene.ceilings.fetch("missing_metadata")]
        end,
+       master_row("self_findings", "data/self_findings.yml", "what our own rules find in our own trees") do
+         require File.join(MASTER, "tools/self_findings")
+         [Pub4::SelfFindings.by_rule.values.sum, Pub4::SelfFindings.ceiling]
+       end,
        master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")
          [Pub4::DupCensus.sets.size, Pub4::DupCensus.ceiling]
