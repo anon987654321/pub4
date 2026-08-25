@@ -222,11 +222,35 @@ end
       return [] unless File.file?(path)
 
       src = File.read(path, encoding: "UTF-8")
-      src.scan(/^[^{\n]*\.city-today[^{\n]*\{([^}]*)\}/m).filter_map do |(body)|
-        next unless body.match?(/radius-pill|tap-min/)
+      src.scan(/^([^{\n]*\.city-today[^{\n]*)\{([^}]*)\}/m).filter_map do |(selector, body)|
+        next unless costume?(selector, body)
+
         Finding.new("compose_costume", "brgen/app/assets/stylesheets/_chrome_surfaces.scss",
-                    ".city-today wears the compose pill again")
+                    "#{selector.strip} wears the compose pill again")
       end
+    end
+
+    # The costume is the PILL, not a tap target.
+    #
+    # This matched /radius-pill|tap-min/ under any .city-today selector, which
+    # made it fire on `.city-today summary { min-height: var(--tap-min, 44px) }`
+    # — a disclosure toggle, a real control, raised to the 44px Fitts floor by
+    # 01e14ffa6 ("link lists were 20px tall where the floor is 44"). Two correct
+    # rules in collision: ux_laws.fitts says a control takes a real target, and
+    # this said a reading surface must not dress as the writing control. The
+    # detector could not tell them apart, so the honest fix is the detector.
+    #
+    # A tap target on a DESCENDANT control is legitimate and always was. On the
+    # strip itself it is not: the strip is a card, it is not pressable, and a
+    # 44px minimum there is the compose pill's shape arriving by another name.
+    # radius-pill stays a costume marker wherever it appears, because nothing
+    # under this strip has any business being pill-shaped.
+    def costume?(selector, body)
+      return true if body.match?(/radius-pill/)
+      return false unless body.match?(/tap-min/)
+
+      # The strip itself — `.city-today` or `aside.city-today`, no descendant.
+      selector.strip.split(",").any? { |part| part.strip.match?(/\A[a-z]*\.city-today\z/) }
     end
   end
 end
