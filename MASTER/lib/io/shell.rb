@@ -71,8 +71,25 @@ module Master
       private
 
       def preflight_error(command)
-        verify_binaries(command) || blocked_error(command) || force_error(command) ||
-          batch_delete_error(command) || writable_error(command) || interactive_error(command)
+        verify_binaries(command) || blocked_error(command) || sandbox_error(command) ||
+          force_error(command) || batch_delete_error(command) || writable_error(command) ||
+          interactive_error(command)
+      end
+
+      # Ground::Policy::Sandbox was written from an adversarial corpus — `rm -fr ~`
+      # in any flag order, fork bombs, curl and wget piped to a shell, truncating
+      # a raw device by redirection — and was reached by nothing but its own
+      # tests. This class carried a separate BLOCKLIST and consulted no one, so
+      # the tree had two shell gates and the hardened one was not the live one.
+      #
+      # Only :deny. :ask is what decide() returns for anything it does not
+      # recognise, and @governor already owns approval — mapping :ask to a hard
+      # error here would refuse every unremarkable command.
+      def sandbox_error(command)
+        verdict = Master::Ground::Policy::Sandbox.decide(command)
+        return unless verdict.deny?
+
+        Result.err("sandbox denied: #{verdict.reason} — #{command}", category: :validation)
       end
 
       def batch_delete_error(command)

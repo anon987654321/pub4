@@ -35,6 +35,13 @@
 # measured once at the rename. A module holding a constant, a method or two
 # children is doing work and still counts; so does a `class` wrapping a class,
 # which nothing forced.
+# RAISED 2026-08-25, 36970 -> 36976 (+6), the first raise under the body-line
+# unit. Io::Shell#sandbox_error, which wires Ground::Policy::Sandbox into the
+# shell preflight. That module was written from an adversarial corpus and was
+# reached by nothing but its own tests while Shell consulted a separate
+# BLOCKLIST — two gates, and the hardened one was not the live one. Six lines
+# that make a security gate run is what a budget with a sponsor is for, and the
+# new unit means these six are code rather than ceremony.
 spine:
   # Total lines across lib/**/*.rb.
   #
@@ -556,7 +563,7 @@ spine:
   # That is the trade this budget exists to make explicit: LINEARITY and DENSITY
   # are law, this number is a budget with a sponsor. Proven behaviour-identical
   # over 4257 method definitions before it was spent.
-  lib_body_ceiling: 36970
+  lib_body_ceiling: 36976
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
