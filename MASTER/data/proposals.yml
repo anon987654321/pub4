@@ -179,22 +179,33 @@ proposals:
 
   - id: openbsd-lib-gate-family
     tree: OPENBSD
-    state: open
+    state: refuted
     claim: "OPENBSD/lib has gate_environment.rb, gate_ledger.rb and gate_result.rb wanting lib/gate/"
-    note: >
-      The only family cohesion finds in OPENBSD. Not mechanical like the
-      lib/ground four: GateResult is required across the tree boundary by
-      RAILS/gates via a relative path, which OPENBSD/data/debt.yml already
-      records as gate_result_is_a_shared_kernel_filed_under_deploy. Regrouping
-      it moves a constant RAILS depends on, so the boundary decision comes first
-      and the shelf second.
+    reason: >
+      Three findings, and the first one alone settles it. OPENBSD/lib holds six
+      Ruby files; a three-file family is cohesion's MIN_FAMILY exactly, which is
+      the floor rather than a signal. Half a directory is not a drawer.
+      Second, the shelf would cost 69 files and 101 constant references across a
+      tree boundary — RAILS requires gate_result by relative path from four
+      different depths, 62 files deep — and the intermediate state does not build,
+      so it wants a PUB4_CROSS_TREE commit to tidy a directory that is not untidy.
+      Third, this ledger row said it waits on a boundary decision. That decision was
+      already made and closed on 2026-08-13: OPENBSD/DECISIONS.md, "OPENBSD/lib/
+      Owns The Gate Kernel, On Purpose", with data/debt.yml recording that a
+      repo-level shared kernel was considered and rejected. Revisit when a fifth
+      consumer appears, which is the trigger that entry names — not before, and not
+      for a rename.
+    refuted_by: OPENBSD/data/debt.yml gate_result_is_a_shared_kernel_filed_under_deploy
 
   - id: de-fr-nl-locales-are-five-keys
     tree: RAILS
-    state: open
+    state: landed
     claim: "brgen ships de/fr/nl locale files with 5 keys against en/nb's 1634"
+    landed_by: a08bab3ee
     note: >
-      LocaleBridge routes six countries' city domains to them, so those pages
-      render five translated words and 1629 English ones. Needs a decision:
-      complete them, or delete them and let those countries fall to :en
-      deliberately.
+      Deleted, and LocaleBridge routes those countries to :en deliberately.
+      available_locales is nb and en, which is what ships. Two domains were being
+      served the wrong language outright — mlan.it and lisbon.pt resolved to :fr
+      under a "nearest available Romance locale" rule, the same mistake the file's
+      Polish note already recorded. Translating 1579 keys is a budget and a product
+      decision; this is the refusal to pretend it had been made.
