@@ -870,32 +870,37 @@ guidance:
 # +47 for CodeMetrics.namespace_lines and the paragraph explaining it. Each is
 # argued; the pattern still deserves naming.
 #
-# They share a cause. loc_budget counts raw lines — comments included — so it
-# charges for the explanation of a change as well as the change. lint:spine
-# stopped charging for Zeitwerk wrappers today; this file has not stopped
-# charging for the reason a wrapper exists. That is a decision with an owner,
-# not something to fix by trimming a comment.
-loc_budgets:
-  lib/cli: 7887
-  lib/review: 14037
-  lib/fix: 3536
-  lib/io: 4730
-  lib/trace: 2699
-  lib/ground: 8102
-  lib/voice: 4310
-  lib/boot: 331
-  lib/rails: 1159
-  lib/pub4: 633
-  lib/core: 1044
-  data/rules.yml: 3971
-# law/ — executable rules with fixtures (see law/law.rb). Ratchets like lib/.
+# UNIT CHANGED 2026-08-25, loc_budgets -> loc_body_budgets. Raw lines to body
+# lines: blanks, comments and the module wrappers Zeitwerk requires are all out.
 #
-# RAISED 1417 -> 1444 on 2026-08-25 for RUBY_SCREAMING_CONST, and the argument
-# is that this is the one budget where a rise can be the point. law/ holds
-# rules that fire; the twenty-seven lines bought a rule that could not, and
-# rule_reach fell 58 -> 57. A law/ that may only shrink can only ever lose
-# enforcement.
-  law: 1444
+# The old unit charged for the paragraph explaining a change as well as the
+# change, which took three raises in one day to make visible — lib/trace for
+# namespaces, law for a rule that could finally fire, lib/review for the measure
+# that exempted the namespaces. All three are moot here. A budget that taxes its
+# own justification selects for unexplained diffs.
+#
+# lib/builder, lib/design and lib/ops had no budget at all and now do; a
+# namespace nobody budgeted is a namespace that could grow without anyone
+# noticing, which is what this table exists to prevent.
+#
+# Measured once at the rename. Down only from here.
+loc_body_budgets:
+  lib/boot: 227
+  lib/builder: 252
+  lib/cli: 6080
+  lib/core: 682
+  lib/design: 270
+  lib/fix: 2643
+  lib/ground: 5983
+  lib/io: 3539
+  lib/ops: 251
+  lib/pub4: 470
+  lib/rails: 925
+  lib/review: 9765
+  lib/trace: 1999
+  lib/voice: 3181
+  law: 852
+  data/rules.yml: 3679
 
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:

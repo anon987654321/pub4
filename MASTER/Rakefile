@@ -635,17 +635,37 @@ namespace :constitution do
   end
 end
 
-# LOC ratchet — budgets live in data/limits.yml under loc_budgets, and this task
-# is that key's reader. limits.yml is the file DEBT.md names for holding 44 keys
-# with no reader, so a budget nothing read would have been the 45th.
+# LOC ratchet — budgets live in data/limits.yml under loc_body_budgets, and this
+# task is that key's reader. limits.yml is the file DEBT.md names for holding 44
+# keys with no reader, so a budget nothing read would have been the 45th.
 #
 # Budgets only ever shrink. A diff that grows a subsystem past its budget fails
 # here, and the remedy is extraction or deletion, never a bigger number.
+#
+# The unit is body lines, and the key is renamed with it — the mechanism
+# lint:spine uses, so a stale number is a load error rather than a silent pass
+# at roughly 30% slack. `loc_budgets` counted raw lines: blanks, comments and
+# the module wrappers Zeitwerk requires. That charged for the paragraph
+# explaining a change as well as the change, and took three raises in one day
+# to say so — lib/trace for namespaces, law for a rule that could finally fire,
+# lib/review for the measure that exempted the namespaces. All three are moot
+# in this unit.
+#
+# CodeMetrics, not a local count, for the reason it exists: lint:spine and
+# tools/ratchets.rb each carried their own copy and agreed by luck.
 task :loc_budget do
   require "yaml"
+  $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+  require "master"
+  metrics = Master::Review::Scan::CodeMetrics
   limits = YAML.safe_load_file(File.join(__dir__, "data", "limits.yml"), aliases: true)
-  budgets = limits.fetch("loc_budgets", {})
-  abort "loc_budget: no loc_budgets key in data/limits.yml" if budgets.empty?
+  if limits.key?("loc_budgets") && !limits.key?("loc_body_budgets")
+    abort "loc_budget: data/limits.yml still carries loc_budgets, which counted raw lines — " \
+          "blanks, comments and Zeitwerk's module wrappers. This task counts body lines now. " \
+          "Rename the key to loc_body_budgets and re-measure; the old numbers are ~30% slack."
+  end
+  budgets = limits.fetch("loc_body_budgets", {})
+  abort "loc_budget: no loc_body_budgets key in data/limits.yml" if budgets.empty?
 
   # A budget for a path that does not exist measures nothing, and skipping it
   # quietly is how `core: 916` sat here budgeting MASTER/core — which has never
@@ -656,9 +676,9 @@ task :loc_budget do
   over = budgets.filter_map do |dir, budget|
     path = File.join(__dir__, dir)
     actual = if File.file?(path)
-      File.foreach(path).count
+      metrics.body_lines(File.read(path))
     else
-      Dir.glob(File.join(path, "**", "*.rb")).sum { |file| File.foreach(file).count }
+      metrics.body_lines_in(path)
     end
 
     puts "loc_budget: #{dir} #{actual}/#{budget}"
