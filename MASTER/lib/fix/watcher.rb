@@ -42,13 +42,13 @@ module Master
       end
 
       def sample!
-        s     = build_sample
+        s = build_sample
         self.class.last_sample = s
         level = classify(s)
         case level
         when :crit then @bus&.publish("system:crit", s.merge(level: "crit"))
         when :warn then @bus&.publish("system:warn", s.merge(level: "warn")) if @prev_level != :warn
-        else            @bus&.publish("system:sample", s)
+        else @bus&.publish("system:sample", s)
         end
         @prev_level = level
         s

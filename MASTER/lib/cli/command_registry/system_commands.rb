@@ -33,9 +33,9 @@ module Master
 
       def dispatch_tree(root, ctx: nil)
         arg = arg_for(ctx)
-        cfg   = (Master.load_yaml(File.join(root, "data", "rules.yml")) || {}).dig("paths", "tree") || {}
+        cfg = (Master.load_yaml(File.join(root, "data", "rules.yml")) || {}).dig("paths", "tree") || {}
         depth = arg.to_i.positive? ? arg.to_i : (cfg["max_depth"] || 2)
-        cap   = cfg["max_lines"] || 200
+        cap = cfg["max_lines"] || 200
         tree_lines = []
         walk_tree(root, 1, depth:, cap:, tree_lines:)
         tree_lines.join("\n")
@@ -180,7 +180,7 @@ module Master
           next if name.start_with?(".") || SKIP_SEGS.include?(name)
 
           path = File.join(dir, name)
-          tree_lines << "#{"  " * (level - 1)}#{name}#{File.directory?(path) ? "/" : ""}"
+          tree_lines << "#{" " * (level - 1)}#{name}#{File.directory?(path) ? "/" : ""}"
           walk_tree(path, level + 1, depth:, cap:, tree_lines:) if File.directory?(path)
         end
       rescue Errno::EACCES, Errno::ENOENT => e

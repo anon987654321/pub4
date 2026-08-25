@@ -377,8 +377,8 @@ module Master
         end
 
         def parallel_map(items)
-          cursor  = Mutex.new
-          index   = 0
+          cursor = Mutex.new
+          index = 0
           results = Array.new(items.size)
           threads = Array.new(POOL_SIZE) do
             Thread.new(results) do |thread_results|

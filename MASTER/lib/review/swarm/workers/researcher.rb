@@ -7,7 +7,7 @@ module Master
         # Synthesizes research from external sources. No codebase context.
         class Researcher < Worker
           PREFERRED_MODEL = "google/gemini-2.0-flash-lite:free".freeze
-          FALLBACK_MODEL  = "openrouter/auto".freeze
+          FALLBACK_MODEL = "openrouter/auto".freeze
 
           CONFIDENCE_MAP = { "high" => 0.9, "med" => 0.6, "medium" => 0.6, "low" => 0.3 }.freeze
 

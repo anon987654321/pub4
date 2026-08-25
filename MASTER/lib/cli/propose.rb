@@ -370,13 +370,13 @@ module Master
       end
 
       def initialize(container:)
-        @session     = container[:session]
-        @config      = container[:config]
-        @root        = container.fetch(:root, Dir.pwd)
-        @violations  = 0
-        @bus         = container[:bus]
-        @git         = container.fetch(:git) { Master::Io::GitOperations.new(@root) }
-        @learnings   = container[:learnings]
+        @session = container[:session]
+        @config = container[:config]
+        @root = container.fetch(:root, Dir.pwd)
+        @violations = 0
+        @bus = container[:bus]
+        @git = container.fetch(:git) { Master::Io::GitOperations.new(@root) }
+        @learnings = container[:learnings]
       end
 
       attr_writer :violations

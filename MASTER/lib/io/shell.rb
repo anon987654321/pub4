@@ -23,8 +23,8 @@ module Master
       REDIRECT_RE = /(?:^|\s)(?:>|>>)\s*([^\s;&|]+)/.freeze
       PRIVILEGE_RE = /\bdoas\b/.freeze
 
-      BLOCKLIST   = Review::Security::Permissions::BLOCKLIST
-      ZSH_BANNED  = begin
+      BLOCKLIST = Review::Security::Permissions::BLOCKLIST
+      ZSH_BANNED = begin
         merged = Master.load_yaml(Master.data_path("patterns.yml"))
         zsh_data = (merged && merged["zsh"]) ||
                     Master.load_yaml(Master.data_path("zsh_patterns.yml"))
@@ -41,13 +41,13 @@ module Master
       BINARY_RE = /\b(?:bundle|ruby|rake|git|node|npm|yarn|python\d*|perl)\b/.freeze
 
       def initialize(root:, governor:, event_bus: nil, library_verify: nil)
-        @root     = root
+        @root = root
         @governor = governor
-        @bus      = event_bus
+        @bus = event_bus
         @library_verify = library_verify || Ground::LibraryVerify.new(root:)
-        @cmd      = TTY::Command.new(printer: :null)
-        @recent   = []
-        @mutex    = Mutex.new
+        @cmd = TTY::Command.new(printer: :null)
+        @recent = []
+        @mutex = Mutex.new
       end
 
       def call(command:)

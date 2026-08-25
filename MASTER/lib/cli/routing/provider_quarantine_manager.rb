@@ -26,9 +26,9 @@ module Master
 
         def initialize(health: ProviderHealth.new, path: QUARANTINE_PATH, now: -> { Time.now.utc }, event_bus: nil)
           @health = health
-          @path   = path
-          @now    = now
-          @bus    = event_bus
+          @path = path
+          @now = now
+          @bus = event_bus
         end
 
         def route?(model)
@@ -55,10 +55,10 @@ module Master
 
         def quarantine(model:, reason:, duration: nil)
           return if quarantined?(model)
-          now        = @now.call
+          now = @now.call
           exp_duration = duration || exponential_duration(model)
           expires_at = now + exp_duration
-          entry      = { model: model.to_s, reason:, quarantined_at: now.iso8601,
+          entry = { model: model.to_s, reason:, quarantined_at: now.iso8601,
                          expires_at: expires_at.iso8601, duration: exp_duration }
           append(entry)
           @bus&.publish("provider:quarantined", model:, reason:, expires_at: expires_at.iso8601, duration: exp_duration)

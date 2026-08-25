@@ -59,8 +59,8 @@ module Master
         Result.err(e.message, category: e.category)
       end
 
-      def record_cost(amount)  = synchronize { @session_total += amount }
-      def session_total        = synchronize { @session_total }
+      def record_cost(amount) = synchronize { @session_total += amount }
+      def session_total = synchronize { @session_total }
 
       def state = synchronize { @state }
 

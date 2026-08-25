@@ -29,7 +29,7 @@ module Master
           "standing order '#{name}' saved"
         end
 
-        def enable(name)  = toggle(name, true)
+        def enable(name) = toggle(name, true)
         def disable(name) = toggle(name, false)
 
         def reset(name)

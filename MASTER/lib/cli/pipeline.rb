@@ -11,18 +11,18 @@ module Master
       attr_reader :last_timings
 
       def initialize(stages, bus: nil, trace: false, root: nil, event_bus: nil, orchestrator: nil, scanner: nil)
-        @stages       = stages
+        @stages = stages
         @last_timings = {}
-        @bus          = bus || event_bus
-        @trace        = trace
-        @root         = root
+        @bus = bus || event_bus
+        @trace = trace
+        @root = root
         @orchestrator = orchestrator
-        @scanner      = scanner
-        @rollback     = root ? Master::Fix::Rollback.new(root:, bus: @bus) : nil
+        @scanner = scanner
+        @rollback = root ? Master::Fix::Rollback.new(root:, bus: @bus) : nil
       end
 
       def call(initial)
-        wf_id   = "pipeline-#{Process.pid}-#{Time.now.to_i}"
+        wf_id = "pipeline-#{Process.pid}-#{Time.now.to_i}"
         timings = {}
         @orchestrator&.execute(intent_type: :llm_call, workflow_id: wf_id, payload: { stage: "start" }) { nil }
         wrapped = initial_context_result(initial)
@@ -43,11 +43,11 @@ module Master
 
         def initialize(*stages, bus: nil)
           @stages = stages
-          @bus    = bus
+          @bus = bus
         end
 
         def call(ctx)
-          frozen  = ctx.freeze
+          frozen = ctx.freeze
           results = run_stage_pool(frozen)
           Result.ok(merge_results(ctx, results))
         rescue StandardError => e
@@ -222,9 +222,9 @@ module Master
 
         @bus&.publish("pipeline:stage_start", stage: label, pressure: !!ctx.pressure)
 
-        t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         stage_result = stage.call(ctx)
-        ms    = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SECOND).round
+        ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SECOND).round
         timings[label] = ms
         return stage_result if stage_result.err?
 

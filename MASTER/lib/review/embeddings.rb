@@ -29,9 +29,9 @@ module Master
 
       def ollama_alive?
         return @ollama_alive unless @ollama_alive.nil?
-        uri  = URI.join(ENV["OLLAMA_BASE_URL"], "/api/tags")
+        uri = URI.join(ENV["OLLAMA_BASE_URL"], "/api/tags")
         http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl      = uri.scheme == "https"
+        http.use_ssl = uri.scheme == "https"
         http.open_timeout = HTTP_TIMEOUT
         http.read_timeout = HTTP_TIMEOUT
         res = http.get(uri.request_uri)
@@ -47,17 +47,17 @@ module Master
         a.each_with_index do |x, i|
           y = b[i]
           dot += x * y
-          na  += x * x
-          nb  += y * y
+          na += x * x
+          nb += y * y
         end
         mag = Math.sqrt(na) * Math.sqrt(nb)
         mag.zero? ? 0.0 : dot / mag
       end
 
       def ollama_embed(text)
-        uri  = URI.join(ENV["OLLAMA_BASE_URL"], "/api/embeddings")
+        uri = URI.join(ENV["OLLAMA_BASE_URL"], "/api/embeddings")
         http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl     = uri.scheme == "https"
+        http.use_ssl = uri.scheme == "https"
         http.read_timeout = HTTP_TIMEOUT
         http.open_timeout = HTTP_TIMEOUT
         req = Net::HTTP::Post.new(uri.request_uri, "Content-Type" => "application/json")

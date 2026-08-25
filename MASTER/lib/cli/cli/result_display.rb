@@ -141,7 +141,7 @@ module Master
         delta = now_cost - @last_cost
         @last_cost = now_cost
         tokens = @refs.session.token_est
-        cents  = (delta * 100).round(2)
+        cents = (delta * 100).round(2)
         return if cents.zero? && tokens.zero?
         line = "cost: +¢#{format('%.2f', cents)} · #{tokens} tok · #{short_model(@refs.agent.model)}"
         puts @refs.renderer.render(line, mode: :dim)
@@ -160,7 +160,7 @@ module Master
       def print_chips
         chips = next_action_chips
         return if chips.empty?
-        puts @refs.renderer.render("  next: #{chips.join("  ")}", mode: :dim)
+        puts @refs.renderer.render("  next: #{chips.join(" ")}", mode: :dim)
       end
 
       def next_action_chips

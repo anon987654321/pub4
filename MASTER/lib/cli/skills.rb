@@ -9,10 +9,10 @@ module Master
       attr_reader :loaded
 
       def initialize(root:, event_bus: nil)
-        @root   = root
-        @bus    = event_bus
+        @root = root
+        @bus = event_bus
         @loaded = []
-        @usage  = load_usage
+        @usage = load_usage
       end
 
       def discover!

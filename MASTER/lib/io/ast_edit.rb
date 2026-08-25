@@ -29,10 +29,10 @@ module Master
 
         src = File.read(fp)
         case operation.to_s
-        when "find_method"    then find_method(src, opts[:name].to_s)
-        when "rename_method"  then rename_method(fp:, src:, from: opts[:from].to_s, to: opts[:to].to_s)
-        when "add_after"      then add_after_method(fp:, src:, after_name: opts[:after].to_s, code: opts[:code].to_s)
-        when "method_lines"   then method_lines(src, opts[:name].to_s)
+        when "find_method" then find_method(src, opts[:name].to_s)
+        when "rename_method" then rename_method(fp:, src:, from: opts[:from].to_s, to: opts[:to].to_s)
+        when "add_after" then add_after_method(fp:, src:, after_name: opts[:after].to_s, code: opts[:code].to_s)
+        when "method_lines" then method_lines(src, opts[:name].to_s)
         else
           Result.err("ast_edit: unknown operation: #{operation}", category: :validation)
         end
@@ -43,12 +43,12 @@ module Master
       private
 
       def find_method(src, name)
-        lines  = src.lines
+        lines = src.lines
         ranges = method_line_ranges(src)
-        entry  = ranges.find { |r| r[:name] == name }
+        entry = ranges.find { |r| r[:name] == name }
         return Result.err("ast_edit: method not found: #{name}", category: :validation) unless entry
 
-        slice  = lines[(entry[:start] - 1)..(entry[:end] - 1)].join
+        slice = lines[(entry[:start] - 1)..(entry[:end] - 1)].join
         Result.ok("# #{name} (lines #{entry[:start]}–#{entry[:end]})\n#{slice}")
       end
 
@@ -77,7 +77,7 @@ module Master
         return Result.err("ast_edit: after/code required", category: :validation) if after_name.empty? || code.empty?
 
         ranges = method_line_ranges(src)
-        entry  = ranges.find { |r| r[:name] == after_name }
+        entry = ranges.find { |r| r[:name] == after_name }
         return Result.err("ast_edit: method not found: #{after_name}", category: :validation) unless entry
 
         perm = @governor&.permit?(NAME, TIER, fp)
@@ -97,7 +97,7 @@ module Master
 
       def method_lines(src, name)
         ranges = method_line_ranges(src)
-        entry  = ranges.find { |r| r[:name] == name }
+        entry = ranges.find { |r| r[:name] == name }
         return Result.err("ast_edit: method not found: #{name}", category: :validation) unless entry
         Result.ok("#{name}: lines #{entry[:start]}–#{entry[:end]}")
       end
@@ -105,8 +105,8 @@ module Master
       def method_line_ranges(src)
         require "ripper"
         ranges = []
-        stack  = []
-        depth  = 0
+        stack = []
+        depth = 0
 
         Ripper.lex(src).each do |(line, _col), type, token, _state|
           depth = lex_token_depth(type, token, line, stack, depth, ranges)
@@ -144,7 +144,7 @@ module Master
       def close_method_range(stack, depth, line, ranges)
         return unless !stack.empty? && depth == stack.last[:depth]
 
-        entry       = stack.pop
+        entry = stack.pop
         entry[:end] = line
         ranges << entry if entry[:name]
       end

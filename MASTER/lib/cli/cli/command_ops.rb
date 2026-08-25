@@ -195,7 +195,7 @@ module Master
 
       def run_cmd
         puts @refs.renderer.render("describe what you want — work is a sentence", mode: :dim)
-        puts @refs.renderer.render("ops: #{SLASH_COMMANDS.join("  ")}", mode: :dim)
+        puts @refs.renderer.render("ops: #{SLASH_COMMANDS.join(" ")}", mode: :dim)
         puts @refs.renderer.render("work: say the path. /help lists the eight commands.", mode: :dim)
       end
 
@@ -279,7 +279,7 @@ module Master
         end
       end
 
-      def run_ui_critique    = run_critique(:ui, label: "ui-critique", intro: "assembling panel — brutal honesty mode")
+      def run_ui_critique = run_critique(:ui, label: "ui-critique", intro: "assembling panel — brutal honesty mode")
       def run_sound_critique = run_critique(:sound, label: "sound-critique", intro: "assembling audio panel")
       def run_dilla_critique = run_critique(:dilla, label: "dilla-critique",
                                                     intro: "assembling dilla engine + mix panel (multi-solution → cherry-pick)")

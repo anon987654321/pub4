@@ -12,25 +12,25 @@ module Master
   # Usage (VPS, after `gem install rb-kqueue` or `rb-inotify`):
   #   WatchLoop.new(rules:, agent:, scanner:, root:, bus:).run
     class WatchLoop
-      DEBOUNCE_SECONDS   = 5.0
+      DEBOUNCE_SECONDS = 5.0
       MAX_EVENTS_PER_MIN = 20
-      WATCH_EXTENSIONS   = %w[.rb .erb .yml .yaml .json .toml .js .css .html].freeze
-      SKIP_DIRS          = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
+      WATCH_EXTENSIONS = %w[.rb .erb .yml .yaml .json .toml .js .css .html].freeze
+      SKIP_DIRS = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
 
       def initialize(rules:, agent:, scanner:, root:, bus: nil, learnings: nil, fix_loop: nil)
-        @rules    = rules
-        @agent    = agent
-        @scanner  = scanner
-        @root     = root
-        @bus      = bus
+        @rules = rules
+        @agent = agent
+        @scanner = scanner
+        @root = root
+        @bus = bus
         @learnings = learnings
         @fix_loop = fix_loop
-        @queue     = Queue.new
+        @queue = Queue.new
         @mtime_map = {}
         @in_progress = Mutex.new
         @in_progress_set = Set.new
         @event_times = []
-        @watcher   = build_watcher
+        @watcher = build_watcher
       end
 
       def run

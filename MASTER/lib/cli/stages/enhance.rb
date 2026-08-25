@@ -14,9 +14,9 @@ module Master
         MIN_WORDS = 5
 
         SKIP_RE = /\A(?:
-          \/                                      |
-          ```                                     |
-          (?:hi+|hey|hello)\z                     |
+          \/ |
+          ``` |
+          (?:hi+|hey|hello)\z |
           (?:yes|no|ok+|yep|nope?|sure|agreed)\z
         )/xi.freeze
         # SKIP_RE branches: slash command, code fence, pure greeting, one-word affirmation
@@ -48,7 +48,7 @@ module Master
 
         def initialize(agent:, event_bus: nil, skills: nil)
           @agent = agent
-          @bus   = event_bus
+          @bus = event_bus
           @skills = skills
         end
 
@@ -56,7 +56,7 @@ module Master
         def call(ctx)
           return Result.ok(ctx) if ctx.pre_enhanced
 
-          msg    = apply_skills(ctx.message.to_s.strip)
+          msg = apply_skills(ctx.message.to_s.strip)
           result = call_raw(msg)
           return Result.ok(ctx) unless result[:changed]
 
@@ -96,7 +96,7 @@ module Master
         end
 
         def enhance(msg)
-          raw    = @agent.ask_once(msg, system: SYSTEM)
+          raw = @agent.ask_once(msg, system: SYSTEM)
           parsed = JSON.parse(raw.to_s.strip)
           { enhanced: parsed["enhanced"].to_s.strip, changed: parsed["changed"] == true }
         rescue JSON::ParserError

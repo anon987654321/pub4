@@ -15,35 +15,35 @@ module Master
 
     # Default tool factories. Override via data/tools.yml or register_tool().
     DEFAULT_TOOL_MAP = {
-      "ReadFile"        => ->(r, i) {
+      "ReadFile" => ->(r, i) {
         Io::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
       },
-      "WriteFile"       => ->(r, i) {
+      "WriteFile" => ->(r, i) {
         Io::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
           event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
-      "StrReplace"      => ->(r, i) {
+      "StrReplace" => ->(r, i) {
         Io::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
           event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
-      "BatchReplace"    => ->(r, i) { Io::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
-      "AstEdit"         => ->(r, i) {
+      "BatchReplace" => ->(r, i) { Io::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "AstEdit" => ->(r, i) {
         Io::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
       },
-      "MemoryRecord"    => ->(r, i) { Io::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]) },
-      "Tree"            => ->(r, i) { Io::Tree.new(root: r, event_bus: i[:bus]) },
-      "ListDir"         => ->(r, i) { Io::ListDir.new(root: r, event_bus: i[:bus]) },
-      "SearchFiles"     => ->(r, i) { Io::SearchFiles.new(root: r, event_bus: i[:bus]) },
+      "MemoryRecord" => ->(r, i) { Io::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]) },
+      "Tree" => ->(r, i) { Io::Tree.new(root: r, event_bus: i[:bus]) },
+      "ListDir" => ->(r, i) { Io::ListDir.new(root: r, event_bus: i[:bus]) },
+      "SearchFiles" => ->(r, i) { Io::SearchFiles.new(root: r, event_bus: i[:bus]) },
       "SearchKnowledge" => ->(r, i) { Io::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
-      "SymbolLookup"    => ->(r, i) { Io::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]) },
-      "Shell"           => ->(r, i) {
+      "SymbolLookup" => ->(r, i) { Io::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]) },
+      "Shell" => ->(r, i) {
         Io::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus], library_verify: i[:library_verify])
       },
-      "GitContext"      => ->(r, i) { Io::GitContext.new(root: r, event_bus: i[:bus]) },
-      "WebFetch"        => ->(r, i) { Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
-      "WebSearch"       => ->(r, i) { Io::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
-      "Clean"           => ->(r, i) { Io::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
-      "FeedbackRecord"  => ->(r, i) { Io::FeedbackRecord.new(learnings: i[:learnings]) },
+      "GitContext" => ->(r, i) { Io::GitContext.new(root: r, event_bus: i[:bus]) },
+      "WebFetch" => ->(r, i) { Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
+      "WebSearch" => ->(r, i) { Io::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
+      "Clean" => ->(r, i) { Io::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "FeedbackRecord" => ->(r, i) { Io::FeedbackRecord.new(learnings: i[:learnings]) },
       "SubdomainOrchestrator" => ->(r, i) {
         Io::SubdomainOrchestrator.new(root: r, event_bus: i[:bus],
           web_fetch: Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]))
@@ -87,7 +87,7 @@ module Master
       Ground::BootChecks.run(root:)
       Master.configure_providers!
       infra = build_infrastructure(root)
-      ai    = build_ai(root, infra)
+      ai = build_ai(root, infra)
       _pipeline, _gateway, runtime = build_runtime(root:, infra:, ai:)
       runtime
     end

@@ -30,13 +30,13 @@ module Master
 
         def cheap_first(chain)
           cheap = chain.select { |m| @model_router.tier_for_model(m) == "cheap" }
-          rest  = chain.reject { |m| @model_router.tier_for_model(m) == "cheap" }
+          rest = chain.reject { |m| @model_router.tier_for_model(m) == "cheap" }
           cheap.empty? ? chain : (cheap + rest)
         end
 
         def strong_first(chain)
           strong = chain.select { |m| @model_router.tier_for_model(m) == "strong" }
-          rest   = chain.reject { |m| @model_router.tier_for_model(m) == "strong" }
+          rest = chain.reject { |m| @model_router.tier_for_model(m) == "strong" }
           strong.empty? ? chain : (strong + rest)
         end
 

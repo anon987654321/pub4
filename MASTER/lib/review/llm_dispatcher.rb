@@ -150,9 +150,9 @@ module Master
       end
 
       def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
-      def web_chat_model?(model_id)   = model_id.to_s.start_with?("web-chat:")
-      def tool_capable?(model_id)     = TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
-      def claude_model?(model_id)     = CLAUDE_RE.match?(model_id.to_s)
+      def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
+      def tool_capable?(model_id) = TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
+      def claude_model?(model_id) = CLAUDE_RE.match?(model_id.to_s)
       def vision_capable?(model_id)
         id = model_id.to_s
         return false if NON_VISION_RE.match?(id)
@@ -218,7 +218,7 @@ module Master
       def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, &blk)
         sys = system || system_prompt
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
-        return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:)     if web_chat_model?(selected_model)
+        return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:) if web_chat_model?(selected_model)
         if !tool_capable?(selected_model) && @tools.any?
           return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
         end

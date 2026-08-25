@@ -29,7 +29,7 @@ module Master
         EVIDENCE_CONTRACT = %i[observed_facts inferred_plan uncertainty rollback_path verification_path].freeze
 
         def initialize(router: IntentRouter.new, registry: nil)
-          @router   = router
+          @router = router
           @registry = registry
         end
 
@@ -63,8 +63,8 @@ module Master
 
         def select_model(risk)
           case risk
-          when :low      then :cheap
-          when :medium   then :fast
+          when :low then :cheap
+          when :medium then :fast
           when :high, :critical then :strong
           else :fast
           end

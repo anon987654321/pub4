@@ -14,11 +14,11 @@ module Master
       MAX_EVENTS_PER_TURN = 200
 
       def initialize(root:, event_bus:)
-        @dir   = File.join(root, ".master", "traces")
-        @bus   = event_bus
+        @dir = File.join(root, ".master", "traces")
+        @bus = event_bus
         @mutex = Mutex.new
         @current = nil
-        @last    = nil
+        @last = nil
         FileUtils.mkdir_p(@dir)
         subscribe
       end

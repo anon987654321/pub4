@@ -18,7 +18,7 @@ module Master
 
       def initialize(governor:, event_bus: nil)
         @governor = governor
-        @bus      = event_bus
+        @bus = event_bus
       end
 
       def call(query:)
@@ -30,7 +30,7 @@ module Master
         response = fetch_search_response(query)
         return Result.err("web_search: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
 
-        data    = JSON.parse(response.body)
+        data = JSON.parse(response.body)
         results = extract_results(data)
         @bus&.publish("tool:after", tool: NAME, query:)
         Result.ok(results)

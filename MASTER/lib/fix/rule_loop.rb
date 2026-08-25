@@ -67,10 +67,10 @@ module Master
         private
 
         def build_soul_preamble
-          soul   = Master.load_yaml(Master.data_path("soul.yml"))
-          abs    = soul.fetch("absolute", {})
+          soul = Master.load_yaml(Master.data_path("soul.yml"))
+          abs = soul.fetch("absolute", {})
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-          lines  = ["Golden rule: #{golden}",
+          lines = ["Golden rule: #{golden}",
                     "Minimum change that eliminates the violation. Do not touch unrelated code."]
           abs.fetch("rules", {}).each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
@@ -127,7 +127,7 @@ module Master
           ext = File.extname(path).downcase
           result.value!
                 .select { |f| Severity.at_least?(f[:severity], MIN_SEVERITY) }
-                .map    { |f| Violation.from_finding(f, file: path, ext:) }
+                .map { |f| Violation.from_finding(f, file: path, ext:) }
         end
       end
 

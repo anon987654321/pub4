@@ -81,7 +81,7 @@ module Master
         def topo_sort(rules, deps)
           id_map = rules.to_h { |r| [r.id, r] }
           in_deg = Hash.new(0)
-          adj    = Hash.new { |h, k| h[k] = [] }
+          adj = Hash.new { |h, k| h[k] = [] }
           rules.each do |rule|
             (deps[rule.id] || []).each do |dep_id|
               next unless id_map[dep_id]
@@ -89,7 +89,7 @@ module Master
               in_deg[rule.id] += 1
             end
           end
-          queue  = rules.select { |r| in_deg[r.id].zero? }.map(&:id)
+          queue = rules.select { |r| in_deg[r.id].zero? }.map(&:id)
           sorted = []
           until queue.empty?
             id = queue.shift

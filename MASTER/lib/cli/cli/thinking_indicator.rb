@@ -29,9 +29,9 @@ module Master
 
       def init_thinking_state!
         @think_mutex = Mutex.new
-        @think_t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        @think_t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @think_stage = "intake"
-        @think_sub   = @refs.bus&.subscribe("*") do |payload|
+        @think_sub = @refs.bus&.subscribe("*") do |payload|
           update_think_stage(payload)
           emit_dmesg_line(payload)
         end
@@ -81,9 +81,9 @@ module Master
       def glyph_for_event(ev)
         case ev
         when /:(done|ok|success|rendered|synthesis)\b/ then VERDICT_GLYPH[:ok]
-        when /:(error|fail|timeout|veto)\b/            then VERDICT_GLYPH[:fail]
-        when /:(warn|warning|escalat)\b/               then VERDICT_GLYPH[:warn]
-        else                                                VERDICT_GLYPH[:info]
+        when /:(error|fail|timeout|veto)\b/ then VERDICT_GLYPH[:fail]
+        when /:(warn|warning|escalat)\b/ then VERDICT_GLYPH[:warn]
+        else VERDICT_GLYPH[:info]
         end
       end
 

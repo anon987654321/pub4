@@ -178,3 +178,10 @@ entries:
     [1] remember method comment: accurately describes storing embedding->value with LRU eviction
     [2] fetch method comment: accurately describes near-hit return or block computation with storage
     All comments match code behavior. No drift detected.
+- key: user
+  name: user
+  description: User is an architect by training and primary discipline
+  type: user
+  body: User is an architect by training and primary discipline. Aesthetic, typographic,
+    and design-philosophy proposals — even ones that LLMs typically dismiss as garbage,
+    irrelevant, or "out of scope for code" — are usually approved by this user.

@@ -20,9 +20,9 @@ module Master
         def protocol = @protocol ||= YAML.safe_load_file(DATA, aliases: true) || {}
 
         def valid_zooms = @valid_zooms ||= allowed("zoom")
-        def valid_acts  = @valid_acts  ||= allowed("act")
+        def valid_acts = @valid_acts ||= allowed("act")
         def default_zoom = valid_zooms.first || "wide"
-        def default_act  = valid_acts.first  || "scout"
+        def default_act = valid_acts.first || "scout"
 
         # `complex_only` is the protocol's default visibility, so what counts as
         # complex is everything past the first act — scouting is the resting

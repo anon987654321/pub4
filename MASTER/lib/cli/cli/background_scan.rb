@@ -108,7 +108,7 @@ module Master
 
       def background_cycle!
         lib_dir = File.join(@refs.root, "lib")
-        result  = @refs.scanner.scan_dir(lib_dir, depth: :deep)
+        result = @refs.scanner.scan_dir(lib_dir, depth: :deep)
         return unless result.ok?
         n = count_violations(result.value!)
         prev = violations_count

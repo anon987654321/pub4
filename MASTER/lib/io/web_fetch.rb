@@ -35,7 +35,7 @@ module Master
 
       def initialize(governor:, event_bus: nil)
         @governor = governor
-        @bus      = event_bus
+        @bus = event_bus
       end
 
       def call(url:)
@@ -81,7 +81,7 @@ module Master
         return Result.err("web_fetch: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
 
         raw_body = response.body.to_s
-        body     = raw_body.byteslice(0, MAX_BYTES * 4)
+        body = raw_body.byteslice(0, MAX_BYTES * 4)
         stripped = strip_html(body)[0, MAX_BYTES]
         @bus&.publish("tool:after", tool: NAME, url:)
         @bus&.publish("tool:untrusted_output", tool: NAME, source: url)

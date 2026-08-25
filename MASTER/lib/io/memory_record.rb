@@ -15,12 +15,12 @@ module Master
 
       def initialize(memory:, root: Dir.pwd, event_bus: nil)
         @memory = memory
-        @root   = root
-        @bus    = event_bus
+        @root = root
+        @bus = event_bus
       end
 
       def call(key:, description:, body:, type: "general")
-        key  = key.to_s.strip.downcase
+        key = key.to_s.strip.downcase
         type = VALID_TYPES.include?(type.to_s) ? type.to_s : "general"
         return Result.err("memory_record: key must match #{KEY_RE.source}", category: :validation) unless KEY_RE.match?(key)
 
@@ -60,7 +60,7 @@ module Master
       def relative(path) = path.sub("#{@root}/", "")
 
       VALID_TYPES = %w[user feedback project reference general].freeze
-      KEY_RE      = /\A[a-z0-9][a-z0-9_]{1,60}\z/.freeze
+      KEY_RE = /\A[a-z0-9][a-z0-9_]{1,60}\z/.freeze
     end
   end
 end

@@ -15,9 +15,9 @@ module Master
             tally = { approved: 0, rejected: 0, neutral: 0 }
             artifacts.each_value do |v|
               case v.is_a?(Hash) ? v["approved"] : nil
-              when true  then tally[:approved] += 1
+              when true then tally[:approved] += 1
               when false then tally[:rejected] += 1
-              else            tally[:neutral]  += 1
+              else tally[:neutral] += 1
               end
             end
             tally
@@ -26,10 +26,10 @@ module Master
           def derive_verdict(confidence, votes)
             if votes[:approved].positive? || votes[:rejected].positive?
               votes[:rejected] > votes[:approved] ? :rejected : :approved
-            elsif confidence.zero?     then :error
-            elsif confidence >= 0.8    then :approved
-            elsif confidence >= 0.5    then :mixed
-            else                            :rejected
+            elsif confidence.zero? then :error
+            elsif confidence >= 0.8 then :approved
+            elsif confidence >= 0.5 then :mixed
+            else :rejected
             end
           end
 
@@ -123,11 +123,11 @@ module Master
             if value.is_a?(Hash)
               approved = value["approved"] || value[:approved]
               return :approve if approved == true
-              return :reject  if approved == false
+              return :reject if approved == false
             end
             text = value.to_s.downcase
             return :approve if text.match?(/\b(approv(e|ed)|looks good|no issues|lgtm)\b/)
-            return :reject  if text.match?(/\b(reject|fail|error|violation|problem|insecure)\b/)
+            return :reject if text.match?(/\b(reject|fail|error|violation|problem|insecure)\b/)
             :neutral
           end
 
@@ -158,7 +158,7 @@ module Master
     module Swarm
       class Coordinator
         SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, :votes, keyword_init: true) do
-          def ok?       = !%i[error insufficient_quorum].include?(verdict)
+          def ok? = !%i[error insufficient_quorum].include?(verdict)
           def approved? = verdict == :approved
           def consensus?
             v = votes || { approved: 0, rejected: 0, neutral: 0 }

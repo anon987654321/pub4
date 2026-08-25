@@ -5,15 +5,15 @@ module Master
     module Ledger
       # Tallies swallow:error events per context — a spike in one context is a defect, not noise.
       class Swallow
-        LEDGER_PATH    = "runtime/swallow_ledger.jsonl"
+        LEDGER_PATH = "runtime/swallow_ledger.jsonl"
         SNAPSHOT_EVERY = 50
 
         def initialize(event_bus:, root: Master::ROOT)
-          @bus    = event_bus
-          @root   = root
+          @bus = event_bus
+          @root = root
           @counts = Hash.new(0)
-          @total  = 0
-          @mutex  = Mutex.new
+          @total = 0
+          @mutex = Mutex.new
         end
 
         # Subscribe to the swallow stream. Call once at boot.

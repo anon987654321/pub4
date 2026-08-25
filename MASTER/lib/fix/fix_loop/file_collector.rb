@@ -25,7 +25,7 @@ module Master
 
         def initialize(root:, bus: nil)
           @root = root
-          @bus  = bus
+          @bus = bus
           @skipped = 0
         end
 

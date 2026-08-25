@@ -14,7 +14,7 @@ module Master
   # logic belongs here.
     module Expression
       CREATIVE_STYLES = %i[dramatic intense energetic storyteller ethereal].freeze
-      LOW_STYLES      = %i[whispered intimate robotic calm].freeze
+      LOW_STYLES = %i[whispered intimate robotic calm].freeze
 
       CONFIDENCE_WEIGHTS = { verdict: 0.45, retrieval: 0.30, council: 0.25 }.freeze
       VOWEL_SHAPES = { "a" => "A", "e" => "E", "i" => "I", "o" => "O", "u" => "U" }.freeze

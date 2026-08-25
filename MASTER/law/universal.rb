@@ -16,7 +16,7 @@ Law.define(:FAIL_VISIBLY) do
   severity :error
   detect { |line| line.match?(/(?<![\w:.])rescue\s*$|(?<![\w:.])rescue\s+Exception\b/) }
   fix "Catch specific errors, log context, re-raise or return Result."
-  bad  "rescue Exception"
+  bad "rescue Exception"
   good "rescue IOError => e"
 end
 
@@ -26,7 +26,7 @@ Law.define(:FULL_BY_DEFAULT) do
   severity :warn
   detect { |line| line.match?(/\b(shallow|standard|quick|lite|basic|light|simple)\b\s*[|,)\]]\s*\b(deep|full|advanced|complete|thorough)\b/) }
   fix "Drop the degraded tier. If a real cost tradeoff exists, rename to surface the cost (lexical < structural < semantic), not the result quality."
-  bad  "modes = [shallow, deep]"
+  bad "modes = [shallow, deep]"
   good "modes = [deep]"
 end
 
@@ -44,7 +44,7 @@ Law.define(:GUARD_EXPENSIVE_OPS) do
   path_exclude %r{/test/|/spec/|/db/seeds|/db/migrate/|seeder|demo_seed|_seed\b}
   detect { |line| line.match?(/\b[A-Z]\w*(?:::\w+)*\.(?:delete_all|destroy_all)\b|\bdrop_table\b|\bTRUNCATE\b|\btruncate_tables?\b|rm\s+-rf\b/) }
   fix "Cost estimate before execution. Require opt-in for danger; scope the delete to a parent."
-  bad  "Session.delete_all"
+  bad "Session.delete_all"
   good "user.sessions.delete_all"
 end
 
@@ -60,7 +60,7 @@ Law.define(:MEANINGFUL_NAMES) do
   severity :info
   detect { |line| line.match?(/\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\b\s*=/) }
   fix "Use domain-specific names. user_profile, error_message."
-  bad  "tmp = load"
+  bad "tmp = load"
   good "user_profile = load"
 end
 
@@ -77,7 +77,7 @@ Law.define(:NO_COLUMN_ALIGN) do
   # is in law/, so the rule was blind to a third of its own subject.
   detect { |line| (s = line.strip) && !s.start_with?("*") && !s.match?(/\A[-=]+\z/) && line.match?(/\S {2,}(?:=>|[^=!<>=]?=[^=>]|:\s)/) }
   fix "Remove padding; one space before operators. Column alignment decays and hides diffs."
-  bad  "name    = 1"
+  bad "name    = 1"
   good "name = 1"
 end
 
@@ -103,7 +103,7 @@ Law.define(:NULL_BLINDNESS) do
       s.match?(/(?:(?<![<>=!])=|!=)\s*NULL\b|== nil.*column|column.*== nil/)
   end
   fix "Use IS NULL / IS NOT NULL in SQL; .nil? in Ruby."
-  bad  "WHERE deleted_at = NULL"
+  bad "WHERE deleted_at = NULL"
   good <<~X
     WHERE deleted_at IS NULL
     # `= NULL` -> `IS NULL`, in SQL and nowhere else.
@@ -126,7 +126,7 @@ Law.define(:SECRET_PROXIMITY) do
     line.match?(/(?<!['"])(password|secret|token|api_key|private_key)\s*=\s*(?:"[^"\n]{8,}"|'[^'\n]{8,}')/i)
   end
   fix "Move secret to environment variable or secrets manager."
-  bad  "api_key = 'sk_live_abcdef123456'"
+  bad "api_key = 'sk_live_abcdef123456'"
   good "api_key = ENV.fetch('API_KEY')"
 end
 
@@ -185,7 +185,7 @@ Law.define(:UNBOUNDED_RETRY) do
   # judges law/, and it reads lines, not blocks.
   detect { |line| (s = line.strip) && !s.start_with?("#") && !s.match?(/retry\\/) && (b = s.gsub(/"(?:\\.|[^"\\])*"/, '""').gsub(/'[^']*'/, "''")) && (b.match?(/(?<![:\w|])retry(?![?:\w|])/) || b.match?(/while\s+true/)) || false }
   fix "Add max_attempts cap and exponential backoff."
-  bad  "retry"
+  bad "retry"
   good <<~X
     next if action == :retry
     def retry?(error, attempt:)
@@ -220,7 +220,7 @@ Law.define(:NO_CHANGELOG_COMMENT) do
       line.match?(/^\s*(?:#|\/\/|\*)[^\n]{0,60}\bchanged from\b[^\n]{0,40}\bto\b/i)
   end
   fix "State the present reason. Put the history in the commit message, or in DECISIONS.md if it must be read again."
-  bad  "# RENAMED 2026-08-25 from Foo to Bar"
+  bad "# RENAMED 2026-08-25 from Foo to Bar"
   good "# Bar names what it returns, so a caller can tell it from Baz."
 end
 
@@ -230,6 +230,6 @@ Law.define(:WHY_NOT_WHAT) do
   reads_comments true
   detect { |line| line.match?(/#\s*(increment|set|get|update|return|initialize|create|add)\s+\w+/) }
   fix "Comments should explain intent, not restate the code."
-  bad  "# increment counter"
+  bad "# increment counter"
   good "# retries are capped so a flapping host cannot pin the worker"
 end

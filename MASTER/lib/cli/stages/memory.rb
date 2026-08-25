@@ -14,7 +14,7 @@ module Master
 
         def initialize(memory:, event_bus: nil)
           @memory = memory
-          @bus    = event_bus
+          @bus = event_bus
         end
 
         def call(ctx)
@@ -31,7 +31,7 @@ module Master
         private
 
         def record_episode(ctx, user_text)
-          reply  = ctx.rendered.to_s
+          reply = ctx.rendered.to_s
           digest = "user: #{user_text[0, EPISODE_CHARS]} | reply: #{reply[0, EPISODE_CHARS]}"
           @memory.remember("episode_#{Time.now.to_i}", digest, type: "general")
         end

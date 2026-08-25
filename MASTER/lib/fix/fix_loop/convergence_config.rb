@@ -20,11 +20,11 @@ module Master
           end
           [mode_cap, configured].compact.map(&:to_i).min
         end
-        def clean_runs_required    = convergence_cfg["consecutive_clean_runs_required"]          || CLEAN_RUNS
-        def plateau_window         = convergence_cfg["stagnant_threshold"]                       || PLATEAU_WINDOW
-        def max_cycles_default     = workflow_cfg.dig("autoloop", "max_cycles")                 || max_passes_default
-        def startup_delay_default  = workflow_cfg.dig("autoloop", "startup_delay")              || STARTUP_DELAY
-        def idle_sleep_default     = workflow_cfg.dig("autoloop", "idle_sleep")                 || IDLE_SLEEP
+        def clean_runs_required = convergence_cfg["consecutive_clean_runs_required"] || CLEAN_RUNS
+        def plateau_window = convergence_cfg["stagnant_threshold"] || PLATEAU_WINDOW
+        def max_cycles_default = workflow_cfg.dig("autoloop", "max_cycles") || max_passes_default
+        def startup_delay_default = workflow_cfg.dig("autoloop", "startup_delay") || STARTUP_DELAY
+        def idle_sleep_default = workflow_cfg.dig("autoloop", "idle_sleep") || IDLE_SLEEP
       end
     end
   end
