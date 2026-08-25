@@ -111,3 +111,23 @@
 .vertical-purpose {
   margin-block-end: var(--space-3, 0.75rem);
 }
+
+/* The three legal links in this footer measured 85x19, 42x19 and 151x19 on the
+   live surface — a third of the 44px floor design_rules.ux_laws sets, and the
+   same floor _chrome_surfaces cites by name when it gives .city-today summary a
+   real target. Found by measuring rectangles in a browser; no source-text lint
+   can see a line box.
+
+   The target grows, the type does not. These are legal links rather than
+   navigation and are meant to stay quiet, so padding does the work and
+   --text-sm is untouched. inline-flex because a 19px box with margin around it
+   is still hit-tested at 19: the box itself has to be 44.
+
+   Scoped to this footer. The shared .site-legal footer already clears the floor
+   at 48px on brgen.no, so a shared rule would have been inert here and
+   redundant there — which is exactly what the first attempt at this was. */
+.dating-intro-trust nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+}
