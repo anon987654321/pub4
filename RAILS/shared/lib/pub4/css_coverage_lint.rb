@@ -142,7 +142,24 @@ module Pub4
 # Left for the owner deliberately: visual work in this tree is not something
 # to do on a tool's judgement, and dead CSS costs bytes where dead markup
 # cost a reader's time.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 180 }.freeze
+# unused_selector 180 -> 153 and undefined_class 0 -> 9 in one change, both from
+# teaching used_names about classList. The JS was already in the scanned set and
+# every pattern looked for a `class=` attribute, which is the one way a Stimulus
+# controller never applies a class.
+#
+# The 28 that stopped being reported were rules styling a state only JS produces —
+# real CSS, called dead by a detector that could not see its trigger.
+#
+# The 9 that appeared are the opposite and are named here because this file's own
+# rule is that a raised baseline without a list is a number nobody can act on:
+#   canvas-inverted  lazy-fade-in  lazy-loaded  luxury-product-ready
+#   queued  show  start-ack  tap-ripple  ui-inverted
+# Eight of the nine have no rule in any stylesheet and are never read back by
+# `classList.contains` or a selector, so applying them does nothing at all —
+# neither paint nor state another reader can see. That is a finding per site, not
+# a sweep: a missing rule and a leftover toggle look identical from here, and
+# deleting the call is wrong if the CSS was lost rather than never written.
+BASELINES = { "undefined_class" => 9, "unused_selector" => 153 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -230,6 +247,33 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 180 }.freeze
           # attribute patterns above.
           body.scan(/class:\s*\[([^\]]*)\]/m) do |(list)|
             names = list.scan(/["']([\w\s-]+)["']/).flatten.flat_map(&:split)
+            names.each do |name|
+              (used[name] ||= []) << view
+              (@lists[name] ||= []) << names
+            end
+          end
+
+          # The JavaScript files are read as views for exactly one reason — the
+          # markup exists, it is just assembled at runtime — and then every
+          # pattern above looked for a `class=` attribute, which is the one way a
+          # Stimulus controller does NOT apply a class. `classList.toggle("x")`,
+          # `.add`, `.remove`, `.replace` and a `className =` assignment were all
+          # invisible, so a rule styling a state only JS can produce read as dead
+          # while the JS that produces it sat in the scanned set.
+          #
+          # Found when `drawer-open` — added to the root by edge_swiper so chrome
+          # that cannot be a CSS sibling of a drawer can respond to one — pushed
+          # unused_selector to 181 against a ceiling of 180.
+          body.scan(/classList\s*\.\s*(?:add|remove|toggle|replace|contains)\s*\(([^)]*)\)/m) do |(args)|
+            names = args.scan(/["']([\w\s-]+)["']/).flatten.flat_map(&:split)
+            names.each do |name|
+              (used[name] ||= []) << view
+              (@lists[name] ||= []) << names
+            end
+          end
+
+          body.scan(/className\s*=\s*["']([\w\s-]+)["']/) do |(list)|
+            names = list.to_s.split(/\s+/)
             names.each do |name|
               (used[name] ||= []) << view
               (@lists[name] ||= []) << names
