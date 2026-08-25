@@ -124,32 +124,12 @@ module Pub4
       end
     end
 
-    # Semantic rules that exist and are never asked.
-    #
-    # SemanticRule drops info-severity rules that are neither kernel-tier nor
-    # mode: opportunity, and says why: info violations double the prompt for
-    # noise. That is a real cost argument and this does not overturn it. What it
-    # does is make the consequence a number instead of a silence — 67 of 141
-    # semantic rules reach no prompt, and they are the philosophy, architecture,
-    # ux, refactoring and aesthetic tiers: GALLS_LAW, UNIX_PHILOSOPHY,
-    # BEAUTIFUL_CODE.
-    #
-    # The lever is already built and unused. `mode: opportunity` survives the
-    # filter by design — the prompt frame has a whole block for opportunities,
-    # asking for refactors only where they would simplify — and exactly three
-    # rules in the tree set it. A principle labelled as the opportunity it is
-    # gets asked; one left as an info violation does not. Lowering this ceiling
-    # means labelling, not deleting the filter.
-    def semantic_reach
-      require File.join(MASTER, "lib", "master") unless defined?(Master)
-      data = Master.load_rules
-      all = Master.flatten_rules(data["rules"]).select { |r| r["detect_semantic"].to_s.strip != "" }
-      asked = all.reject { |r| r["severity"] == "info" && r["mode"] != "opportunity" && r["tier"] != "kernel" }
-      { total: all.size, asked: asked.size, unreached: (all - asked).map { |r| r["id"] }.sort }
-    rescue StandardError
-      { total: 0, asked: 0, unreached: [] }
-    end
-
+    # "Which rules are never asked" belongs to tools/rule_reach.rb, which counts
+    # 57 and had counted them before this file existed. A version of it here
+    # measured 67 by also counting rules whose semantic prompt is dropped while a
+    # lexical detector still enforces them — reachable rules, reported as gaps.
+    # One question, one instrument; this one is about whether a rule that DOES
+    # run can see its subject.
     def audit
       blind = law.values.reject(&:semantic?).filter_map { |rule| fixture_blindness(rule) }
       measured = rates
@@ -160,8 +140,7 @@ module Pub4
         corpus: corpus.size,
         fixture_blindness: blind,
         saturation: measured.select { |r| r[:rate] > SATURATION }.sort_by { |r| -r[:rate] },
-        silent: measured.select { |r| r[:hits].zero? }.map { |r| r[:rule] }.sort,
-        semantic_reach: semantic_reach
+        silent: measured.select { |r| r[:hits].zero? }.map { |r| r[:rule] }.sort
       }
     end
 
@@ -187,11 +166,6 @@ module Pub4
 
       puts "rule_audit: #{result[:silent].size} rule(s) fired on nothing here — #{result[:silent].join(', ')}" unless result[:silent].empty?
 
-      reach = result[:semantic_reach]
-      unless reach[:unreached].empty?
-        puts "rule_audit: #{reach[:asked]} of #{reach[:total]} semantic rules reach a prompt; " \
-             "#{reach[:unreached].size} are never asked (label a principle `mode: opportunity` to admit it)"
-      end
 
       result[:fixture_blindness].empty? && result[:saturation].empty?
     end

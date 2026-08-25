@@ -101,11 +101,6 @@ module Pub4
          [Pub4::RuleAudit.audit[:silent].size,
           YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("silent")]
        end,
-       master_row("rule_audit.semantic_unreached", "data/rule_audit.yml", "semantic rules never asked") do
-         require File.join(MASTER, "tools/rule_audit")
-         [Pub4::RuleAudit.audit[:semantic_reach][:unreached].size,
-          YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("semantic_unreached")]
-       end,
        master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")
          [Pub4::DupCensus.sets.size, Pub4::DupCensus.ceiling]

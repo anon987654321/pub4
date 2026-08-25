@@ -16,7 +16,3 @@ blind: 0
 saturated: 0
 silent: 18
 
-# Semantic rules that exist and are never asked. Lower it by labelling a
-# principle `mode: opportunity`, which the filter already admits, not by
-# removing the filter — info violations really do double the prompt for noise.
-semantic_unreached: 67
