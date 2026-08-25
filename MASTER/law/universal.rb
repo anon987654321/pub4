@@ -70,7 +70,12 @@ end
 Law.define(:NO_COLUMN_ALIGN) do
   source "Ruby Style Guide / RuboCop Layout — no token alignment"
   severity :info
-  detect { |line| (s = line.strip) && !s.start_with?("*") && !s.match?(/\A[-=]+\z/) && line.match?(/\S {2,}(?:=>|[^=!<>]=[^=>]|:\s)/) }
+  # The character class before `=` is optional. Required, it could only match by
+  # backtracking into the run of spaces, so `name    = 1` was caught on three
+  # spaces and `result  = x` slipped through on exactly two — the commonest
+  # spacing of all. 121 findings under MASTER/lib became 154, and none of the 33
+  # is in law/, so the rule was blind to a third of its own subject.
+  detect { |line| (s = line.strip) && !s.start_with?("*") && !s.match?(/\A[-=]+\z/) && line.match?(/\S {2,}(?:=>|[^=!<>=]?=[^=>]|:\s)/) }
   fix "Remove padding; one space before operators. Column alignment decays and hides diffs."
   bad  "name    = 1"
   good "name = 1"
