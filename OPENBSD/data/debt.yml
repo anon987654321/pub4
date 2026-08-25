@@ -89,6 +89,21 @@ open:
     See MASTER/DEBT.md "Scanner noise".
 
     '
+- id: affiliate_fk_columns_unindexed
+  tag: agent-workable
+  summary: >-
+    Five foreign-key columns carry no index — affiliate_conversions.event_type_id,
+    .program_id and .site_id, affiliate_vouchers.voucher_type_id, and
+    outbound_clicks.user_id. Same set in all three apps, because they are shared
+    affiliate tables. Deliberately NOT indexed on 2026-08-25: all three tables
+    hold 0 rows in production (posts holds 1402 for scale) because the affiliate
+    feature is still placeholder — TRADEDOUBLER_TOKEN is unset and the seeder
+    flags its products placeholder: true. An index on an empty table buys nothing
+    and costs a production migration on a 1GB box. THE TRIGGER IS ROWS: index
+    these the first time affiliate data is real, before the tables grow, not on a
+    schedule. Measured with a detector checked against a known-answer schema
+    block first — a naive pass reported 318 because this schema expresses every
+    index as `t.index` inside create_table and carries no `add_index` at all.
 not_debt:
 - id: rails_autofix_scars
   summary: '11 `autofix: removed box-shadow (flat UI)` markers in _shell, _shell_widgets
