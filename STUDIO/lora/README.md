@@ -173,3 +173,48 @@ run anyone finishes.
 The free Kaggle lane exists because neither of the other two has produced FLUX
 weights: one needs hardware this Mac does not have, the other needs money per
 attempt.
+
+## Where the base model has moved (surveyed 2026-08-25)
+
+This toolkit trains against **FLUX.1-dev**, via `ostris/flux-dev-lora-trainer`
+on the Replicate lane. That is the previous generation. Read this before
+finishing a dataset, because two of the three findings change what a dataset is
+*for*.
+
+**FLUX 2 trains LoRAs, and the base to train against is a specific one.**
+`black-forest-labs/flux-2-klein-9b-base-lora` is the undistilled base, which
+Replicate describes as preserving the complete training signal and being the one
+intended for LoRA workflows. A LoRA trained on FLUX.1-dev is for FLUX.1-dev; it
+is not a FLUX 2 adapter. So the lane choice here is now also a base-generation
+choice, and it was not before.
+
+**FLUX 2 does character consistency from reference images with no training at
+all.** `flux-2-max` and `flux-2-pro` take up to 8 reference images,
+`flux-2-flex` up to 10, `flux-2-klein-4b` up to 5, and hold a character across
+a batch. That is the same problem a subject LoRA solves, by a different route,
+and it is worth deciding deliberately rather than by inertia:
+
+| | subject LoRA | FLUX 2 multi-reference |
+|---|---|---|
+| up-front cost | a curated captioned set, then a training run | none |
+| per-image cost | cheapest once trained | references sent every request |
+| the dataset | committed, and permanent in git history | passed per request, committed nowhere |
+| control | strongest for one subject, many generations | strong, and nothing to retrain when the base moves |
+
+The third row is the one that matters most here. The privacy problem this README
+already states plainly — that committing a face publishes it, and deleting it
+later does not remove it from history — is a property of the *training* route
+and not of the *reference* route.
+
+**A single photograph can bootstrap a set.** Replicate's `consistent-character`
+takes one image of a person and produces many poses, expressions and lighting
+setups, which is their documented answer to having too few real photographs.
+That is directly the `johann` case above: 3 captioned images, needing 12-18.
+
+Nothing here is a recommendation to switch. Which base to train against, and
+whether to train at all rather than reference, decide what the portraits look
+like and what ends up permanently public — both operator calls. What this note
+exists to prevent is making them by not noticing they were being made.
+
+Sources: replicate.com/collections/flux, /docs/guides/extend/working-with-loras,
+/docs/get-started/fine-tune-with-flux, /blog/fine-tune-flux-with-faces.
