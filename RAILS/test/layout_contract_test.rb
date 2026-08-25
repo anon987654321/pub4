@@ -35,6 +35,41 @@ class LayoutContractTest < Minitest::Test
   #
   # Per-file, which is the honest limit -- a view rendered into a layout that
   # already carries an h1 is a skip this cannot see. It catches what it claims.
+  # A heading is written three ways in this tree and only one of them is a tag.
+  #
+  # This scanned /<h([1-6])\b/ — literal markup only — while the dominant form
+  # here is `tag.h1`, so the gate has been reading a fraction of the headings and
+  # passing on what it could not see. posts/show, communities/index and
+  # dating/home all head themselves with tag.h1 and were invisible to it.
+  #
+  # ERB comments are blanked first: a commented-out example beside a heading is
+  # documentation, not markup, and counting it makes the fix for a finding read
+  # as the finding.
+  HEADING = /<h([1-6])\b|\btag\.h([1-6])\b|content_tag\(?\s*:h([1-6])\b/
+
+  def heading_levels(source)
+    source.gsub(/<%#.*?%>/m) { |comment| comment.gsub(/[^\n]/, " ") }
+          .scan(HEADING)
+          .map { |match| match.compact.first.to_i }
+  end
+
+  # The instrument, against an answer written here rather than derived from it.
+  # Five headings in three notations, one of them commented out — if this stops
+  # returning [1, 2, 3, 4] the detector has drifted and every count below it is
+  # decoration. tools/instruments.rb makes the same argument for MASTER's
+  # counters; this is the same idea at the size that fits in a test.
+  def test_the_heading_detector_sees_all_three_notations
+    sample = <<~ERB
+      <%# <h5>commented out, not a heading</h5> %>
+      <h1>literal</h1>
+      <%= tag.h2 "helper" %>
+      <%= content_tag(:h3, "content_tag") %>
+      <h4 class="x">attributes</h4>
+    ERB
+
+    assert_equal [1, 2, 3, 4], heading_levels(sample)
+  end
+
   def test_no_view_skips_a_heading_level
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,shared}", "app", "views", "**", "*.html.erb")) +
             Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.html.erb"))
@@ -42,8 +77,7 @@ class LayoutContractTest < Minitest::Test
     refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
 
     skips = views.flat_map do |path|
-      levels = File.read(path).scan(/<h([1-6])\b/).flatten.map(&:to_i)
-      levels.each_cons(2).filter_map do |from, to|
+      heading_levels(File.read(path)).each_cons(2).filter_map do |from, to|
         "#{path.delete_prefix("#{ROOT}/")}: h#{from} -> h#{to}" if to > from + 1
       end
     end
