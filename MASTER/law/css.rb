@@ -112,7 +112,19 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   source "MASTER-native (one language per file)"
   severity :warn
   languages %i[ruby javascript css scss zsh]
-  detect { |line| line.match?(/<%|<script\b|<style\b|<<[~-]?["'`]?(?:SQL|HTML|CSS|JS|JAVASCRIPT)\b/) }
+  # A regex that matches `<%` is not ERB, and a string naming a heredoc tag is
+  # not a heredoc. Unmasked this flagged the scanner's own ERB detectors, the
+  # source-masking constants and css_coverage_lint's comment stripper — 35 of 72
+  # findings were code ABOUT an embedded language rather than an instance of one,
+  # which is the shape law.rb's `conduct` already neutralises for law/ itself.
+  # The remaining 37 are real <<~SQL and <<~JS heredocs and stay findings.
+  detect do |line|
+    masked = line.dup
+    masked.gsub!(/"(?:[^"\\]|\\.)*"/) { |m| "\0" * m.length }
+    masked.gsub!(/'(?:[^'\\]|\\.)*'/) { |m| "\0" * m.length }
+    masked.gsub!(Regexp.new('(?<![\w)\]])/(?:[^/\\\\\n]|\\\\.)+/[mixo]*')) { |m| "\0" * m.length }
+    masked.match?(/<%|<script\b|<style\b|<<[~-]?["'`]?(?:SQL|HTML|CSS|JS|JAVASCRIPT)\b/)
+  end
   fix "One language per layer. Separate into distinct files or clearly demarcated sections."
   bad  "rows = connection.exec(<<~SQL)"
   good "rows = connection.exec(query)"

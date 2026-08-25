@@ -58,8 +58,18 @@ end
 Law.define(:MEANINGFUL_NAMES) do
   source "Clean Code — meaningful names (Robert C. Martin)"
   severity :info
-  detect { |line| line.match?(/\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\b\s*=/) }
-  fix "Use domain-specific names. user_profile, error_message."
+  # The right-hand side has to already carry a better name, which is what the
+  # fixtures below describe: `tmp = load` wastes the name `load` that is right
+  # there. Any generic name on the left was 484 findings, and a sample of them
+  # was `data = YAML.safe_load(path)`, `result = ideation.ideate(goal)` and
+  # `result = img_f * (1.0 - intensity)` — expressions whose value genuinely is
+  # the parsed data or the result, with no domain word going spare. Renaming
+  # those makes the code worse, and 457 of the 484 were that shape.
+  #
+  # An expression with arguments, arithmetic or a literal is exempt for the same
+  # reason: there is no name in it to prefer.
+  detect { |line| line.match?(/\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\s*=\s*@?[a-z_]\w*(?:\.\w+)*\s*(?:#.*)?$/) }
+  fix "Name it after what the right-hand side already calls it, or after the domain."
   bad "tmp = load"
   good "user_profile = load"
 end

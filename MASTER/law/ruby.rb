@@ -257,8 +257,23 @@ Law.define(:RUBY_NUMERIC_UNDERSCORE) do
   severity :info
   languages %i[ruby]
   path_exclude %r{/review/scan/rules/}
-  detect { |line| line.match?(/[^\d_.]\d{5,}(?![\d_])/) }
-  fix "Group digits in threes: 1000000 -> 1_000_000."
+  # A long run of digits inside a string is not a numeric literal. Unmasked, this
+  # read a port out of "http://127.0.0.1:38182/", an ffmpeg filter's
+  # sample_rates=44100, the hex in '#010203', and the digits in this rule's own
+  # fix line — 107 findings of which 81 were quoted text. Strings, regexes and
+  # trailing comments are blanked before the digits are counted, and a preceding
+  # colon or word character rules out a port or an identifier.
+  detect do |line|
+    masked = line.dup
+    masked.gsub!(/"(?:[^"\\]|\\.)*"/) { |m| "\0" * m.length }
+    masked.gsub!(/(?:[^\w?\\]|\A)'(?:[^'\\]|\\.)*'/) { |m| "\0" * m.length }
+    masked.gsub!(%r{/(?:[^/\\\n]|\\.)+/}) { |m| "\0" * m.length }
+    if (at = masked.index(/(?<!['"\0])#/))
+      masked[at..] = "\0" * (masked.length - at)
+    end
+    masked.match?(/(?<![\d_.:\w])\d{5,}(?![\d_])/)
+  end
+  fix "Group digits in threes: one million is 1_000_000."
   bad  "max = 1000000"
   good "max = 1_000_000"
 end
