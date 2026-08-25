@@ -44,17 +44,17 @@ end
 
 def dest_for(path)
   case path
-  when %r{^/etc/rc\.d/(.+)}        then File.join(MIRROR, "etc", "rc.d", $1)
-  when %r{^/etc/(.+)}              then File.join(MIRROR, "etc", $1)
-  when %r{^/var/nsd/etc/(.+)}      then File.join(MIRROR, "var", "nsd", "etc", $1)
-  when %r{^/var/nsd/zones/(.+)}    then File.join(MIRROR, "var", "nsd", "zones", $1)
-  when %r{^/home/dev/(.+)}         then File.join(MIRROR, "etc", File.basename($1))
-  else                                   File.join(MIRROR, "etc", File.basename(path))
+  when %r{^/etc/rc\.d/(.+)} then File.join(MIRROR, "etc", "rc.d", $1)
+  when %r{^/etc/(.+)} then File.join(MIRROR, "etc", $1)
+  when %r{^/var/nsd/etc/(.+)} then File.join(MIRROR, "var", "nsd", "etc", $1)
+  when %r{^/var/nsd/zones/(.+)} then File.join(MIRROR, "var", "nsd", "zones", $1)
+  when %r{^/home/dev/(.+)} then File.join(MIRROR, "etc", File.basename($1))
+  else File.join(MIRROR, "etc", File.basename(path))
   end
 end
 
 mirrored = []
-skipped  = []
+skipped = []
 SOURCES.each do |path|
   unless File.exist?(path)
     skipped << path
