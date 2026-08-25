@@ -412,7 +412,12 @@ scale:
       # value.
       # 88 -> 84 on 2026-08-24, measured. Four of the 0.35rem sites described
       # above are gone; the rest of that group still stands.
-      off_scale_space: 84
+      #
+      # 84 -> 66 on 2026-08-25. Measured, not chosen: the ratchet's own
+      # staleness check names the number, and eighteen of the sites the note
+      # above describes are gone. Lowering it is the whole point of a baseline —
+      # left at 84 it would have re-admitted them one at a time.
+      off_scale_space: 66
       # 13 -> 6 on 2026-08-24 (operator). The nine sites that flanked the
       # carrier value are on it: 1.55 in _channel_irc, _chrome_polish, _posts
       # and _chat_reactions, and 1.45 in _vertical_marketplace and
