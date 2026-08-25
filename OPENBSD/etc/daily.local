@@ -51,3 +51,25 @@ elif command -v dig >/dev/null 2>&1; then
 else
   logger -t daily.local "NSD smoke check skipped — no drill or dig"
 fi
+
+# vm23 runs a locally built libvips with -Drsvg=enabled. The OpenBSD port turns
+# rsvg off, so `pkg_add -u` replaces it with a build that has no svgload at all
+# and librsvg sits installed beside it, never reached.
+#
+# Nothing about that is loud. Amber::GarmentSilhouette#png returns nil and logs
+# one line when vips cannot read the SVG it generates, the seeder carries on, and
+# the garment cut-outs are simply absent — a feature that stops existing rather
+# than an error anyone is paged for. This is the detection debt.yml asks for
+# under libvips_local_build; the recovery is `make reinstall` in
+# /usr/ports/graphics/libvips, whose package is kept at
+# /usr/ports/packages/amd64/all/libvips-8.14.5.tgz.
+#
+# ruby34 rather than `vips -l | grep svgload`: grep is banned in committed
+# scripts here (rules.yml, BSD/GNU idiom drift), and the exit status is the
+# whole signal anyway.
+if command -v vips >/dev/null 2>&1; then
+  /usr/local/bin/ruby34 -e 'exit(`vips -l 2>/dev/null`.include?("svgload") ? 0 : 1)' || \
+    logger -t daily.local "libvips lost svgload — amber garment cut-outs degrade silently; make reinstall in /usr/ports/graphics/libvips"
+else
+  logger -t daily.local "libvips absent — amber garment cut-outs cannot render"
+fi
