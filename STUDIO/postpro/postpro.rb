@@ -259,6 +259,40 @@ module PostproBootstrap
   end
 end
 
+# Did that effect actually change the picture?
+#
+# Off unless POSTPRO_EXPLAIN=1, because it costs two reductions per step and the
+# ordinary path should not pay for a diagnostic. When on, every fx line gains
+# the mean and spread it moved, and an effect that moved neither is named as
+# having done nothing — which is a defect this file has already had once, in the
+# form of an fx name with no implementation.
+module PostproExplain
+  def self.on? = ENV["POSTPRO_EXPLAIN"] == "1"
+
+  def self.snapshot(image)
+    return nil unless on?
+
+    { avg: image.avg, deviate: image.deviate }
+  rescue StandardError
+    nil
+  end
+
+  def self.delta(before, image)
+    return "" unless before
+
+    now = snapshot(image)
+    return "" unless now
+
+    d_avg = (now[:avg] - before[:avg]).abs
+    d_dev = (now[:deviate] - before[:deviate]).abs
+    return " NO-OP (moved nothing)" if d_avg < 1e-9 && d_dev < 1e-9
+
+    format(" avg%+.4f spread%+.4f", now[:avg] - before[:avg], now[:deviate] - before[:deviate])
+  rescue StandardError
+    ""
+  end
+end
+
 BOOTSTRAP = PostproBootstrap.run
 
 # Four numbers on an image, or the delta across a grade. Handled here, straight
@@ -2419,6 +2453,17 @@ def preset(image, name)
 
   p[:fx].each_with_index do |fx, i|
     t0 = Time.now
+    # What the picture looked like before this step, when asked. POSTPRO_EXPLAIN=1
+    # turns the dmesg line below into a report of what each effect actually did,
+    # rather than only that it ran.
+    #
+    # This file already carries the reason: an fx name with no arm in the case
+    # returned the image untouched while the log reported the step as having run,
+    # so a preset could be four steps short of what it says it is and the log
+    # would agree with the preset. That was fixed for the missing-arm case. It
+    # does not cover the arm that exists, runs, and changes nothing — which looks
+    # identical from outside.
+    before_stats = PostproExplain.snapshot(result)
     result = case fx
              when "optical_blur"        then optical_blur(result, 0.5)
              when "tonemap"             then tonemap(result, type: :aces, exposure: p.fetch(:tonemap_ev, 0.0), intensity: p[:intensity] * 0.85)
@@ -2513,7 +2558,8 @@ def preset(image, name)
              end
     result = result.copy_memory
     GC.start(full_mark: false) if (i % 4).zero?
-    PostproBootstrap.dmesg "fx=#{fx} step=#{i + 1}/#{n_steps} time=%.3fs" % (Time.now - t0)
+    PostproBootstrap.dmesg "fx=#{fx} step=#{i + 1}/#{n_steps} time=%.3fs%s" %
+                           [(Time.now - t0), PostproExplain.delta(before_stats, result)]
   end
 
   PostproBootstrap.dmesg "preset=#{name} done total=%.2fs" % (Time.now - t_start)
