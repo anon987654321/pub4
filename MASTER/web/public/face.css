@@ -1542,7 +1542,12 @@ canvas#face,
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  padding: 0.25rem 0.35rem;
+  /* 0.25rem both ways. The inline value was 0.35rem, which is 5.6px at a
+     16px root and the exact case design_tokens.yml documents: a sub-grid
+     fraction landing on a fractional device pixel, which the browser
+     antialiases. Nearest declared step is 4px, which the block value already
+     was. */
+  padding: 0.25rem;
   /* 800 is brgen's --weight-heavy. The literal 700 here was the other half of
      the mismatch: monospace at 700 beside a sans at 800 reads as two brands. */
   font: 800 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-brand);
