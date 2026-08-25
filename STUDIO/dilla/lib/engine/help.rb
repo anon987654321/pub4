@@ -196,6 +196,14 @@ DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
                                    BUS_MOD_HZ=0.25,
                                    _FILTER=lowpass, _PARAM=frequency, _BASE,
                                    _DEPTH, _MODE=modulate|remote
+  VOICE_STACK=4                  The lead played by 4 voices at once — every
+                                   voice plays ALL of it, differing in register,
+                                   tuning and timbre (Hocket splits notes
+                                   BETWEEN voices; these compose).
+                                   VOICE_STACK_DETUNE=unison|octaves|fifths|
+                                   spread, _MACRO=0.5, _VARIATION=0.25 (one knob
+                                   giving each voice a different value),
+                                   _DRIFT=9 cents, _KEYTRACK=0.5
   LPG=1                          Buchla low-pass gate on the lead: it darkens
                                    as it decays, which is what makes a note read
                                    as struck. Measured, the 4-12k band falls

@@ -844,14 +844,15 @@ end
 # 1/sqrt(n) instead: the voices play at different times and sum as power.
 def render_hocket_lead!(path, events, duration)
   voices = hocket_lead_voices(events)
-  return render_lead_via_fluidsynth(path, events, duration, scale_arp: true) if voices.one?
+  return voice_stack_lead!(path, events, duration) if voices.one?
 
   rendered = voices.each_with_index.filter_map do |voice, i|
     next if voice.empty?
 
     part = "#{path}.hocket#{i}.wav"
-    render_lead_via_fluidsynth(part, voice, duration, scale_arp: true,
-                                                      program_override: EP_GM_PROGRAMS[i % EP_GM_PROGRAMS.length])
+    voice_stack_lead!(part, voice, duration) ||
+      render_lead_via_fluidsynth(part, voice, duration, scale_arp: true,
+                                                        program_override: EP_GM_PROGRAMS[i % EP_GM_PROGRAMS.length])
     File.file?(part) ? part : nil
   end
   return nil if rendered.empty?
@@ -893,4 +894,56 @@ def low_pass_gate_lead!(path)
   FileUtils.mv(out, path)
   dmesg("low-pass gate: the lead darkens as it decays", unit: "harm0", parent: "dilla0")
   path
+end
+
+# VOICE_STACK=n — the lead played by n voices at once.
+#
+# Not Hocket, and the difference is the point. Hocket splits notes BETWEEN
+# voices, so each plays part of the line and the ear reassembles it. This has
+# every voice play ALL of it, differing in register, tuning and timbre -- an
+# ensemble playing together rather than passing a melody around. A section, not
+# a hocket.
+#
+# The two compose: HOCKET=3 VOICE_STACK=2 gives three voices each doubled.
+#
+# Off by default. It multiplies the lead's density, which is the loudest
+# structural change available to this part.
+def voice_stack_lead!(path, events, duration)
+  voices = ENV.fetch("VOICE_STACK", "1").to_i
+  return render_lead_via_fluidsynth(path, events, duration, scale_arp: true) unless voices > 1
+
+  plan = VoiceStack.plan(
+    voices:,
+    macro: ENV.fetch("VOICE_STACK_MACRO", "0.5").to_f,
+    variation: ENV.fetch("VOICE_STACK_VARIATION", "0.25").to_f,
+    detune_mode: ENV.fetch("VOICE_STACK_DETUNE", "fifths").to_sym,
+    drift: ENV.fetch("VOICE_STACK_DRIFT", "9").to_f,
+    key_track: ENV.fetch("VOICE_STACK_KEYTRACK", "0.5").to_f,
+    seed: seed_for("voicestack")
+  )
+  rendered = plan.filter_map do |voice|
+    part = "#{path}.vs#{voice.index}.wav"
+    # The macro position picks the patch. One control, several timbres -- which
+    # is the P_4L idea applied to the voices this engine actually has.
+    program = EP_GM_PROGRAMS[(voice.macro * EP_GM_PROGRAMS.length).floor.clamp(0, EP_GM_PROGRAMS.length - 1)]
+    render_lead_via_fluidsynth(part, VoiceStack.transpose(events, voice), duration,
+                               scale_arp: true, program_override: program)
+    File.file?(part) ? part : nil
+  end
+  return nil if rendered.empty?
+  return (FileUtils.mv(rendered.first, path) && path) if rendered.one?
+
+  # Same power-sum reasoning as the hocket: detuned voices are uncorrelated, so
+  # 1/n would leave the stack far quieter than the single voice it replaces.
+  inputs = rendered.flat_map { |f| ["-i", f] }
+  sh! "ffmpeg", "-y", *inputs, "-filter_complex",
+      "#{(0...rendered.length).map { |i| "[#{i}:a]" }.join}" \
+      "amix=inputs=#{rendered.length}:duration=longest:normalize=0," \
+      "volume=#{(1.0 / Math.sqrt(rendered.length)).round(4)}[out]",
+      "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+  rendered.each { |f| FileUtils.rm_f(f) }
+  dmesg("voice stack: #{plan.length} voices, #{ENV.fetch('VOICE_STACK_DETUNE', 'fifths')}, " \
+        "macro spread #{plan.map { |v| v.macro.round(2) }.join('/')}",
+        unit: "harm0", parent: "dilla0")
+  File.file?(path) ? path : nil
 end

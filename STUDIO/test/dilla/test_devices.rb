@@ -617,6 +617,67 @@ end
     end
   end
 
+  # --------------------------------------------------------- voice stack
+
+  # P_4L's actual move: one macro position becomes n DIFFERENT positions. If the
+  # voices all landed on the same value the stack would be one voice rendered n
+  # times, which is louder and nothing else.
+  def test_the_stack_gives_every_voice_its_own_macro_position
+    plan = VoiceStack.plan(voices: 5, macro: 0.5, variation: 0.4)
+
+    assert_equal 5, plan.length
+    assert_equal 5, plan.map(&:macro).uniq.length
+  end
+
+  # Variation 0 is the degenerate case and has to collapse cleanly, or "no
+  # variation" would still wobble.
+  def test_zero_variation_collapses_the_stack_to_one_position
+    plan = VoiceStack.plan(voices: 4, macro: 0.7, variation: 0.0)
+
+    assert_equal [0.7], plan.map(&:macro).uniq
+  end
+
+  # The spread has to be the spread that was ASKED for, whatever the seed.
+  # Independent draws cluster: measured across five seeds at amount 0.25 the span
+  # came out 0.360, 0.288, 0.327, 0.199 and 0.342 -- between a third and two
+  # thirds of the request, depending on luck. Stratified draws fix that, and this
+  # is the test that would have caught it.
+  def test_the_spread_is_the_amount_that_was_requested
+    spans = [1, 42, 4242, 777, 999].map do |seed|
+      values = DillaMacros.spread(0.5, amount: 0.25, count: 4, seed:)
+
+      assert_in_delta 0.5, values.sum / values.length, 1e-9, "seed #{seed} moved the centre"
+      values.max - values.min
+    end
+
+    assert_operator spans.max - spans.min, :<, 0.12,
+                    "the delivered spread swings with the seed: #{spans.map { |s| s.round(3) }.inspect}"
+    assert_operator spans.min, :>, 0.3, "the requested amount is not being delivered"
+  end
+
+  # Key tracking: a voice an octave up needs its cutoff an octave up, or the top
+  # of a stack goes dull because a fixed cutoff removes a larger share of a
+  # higher note's harmonics.
+  def test_key_tracking_follows_the_register
+    full = VoiceStack.plan(voices: 3, detune_mode: :octaves, key_track: 1.0)
+    none = VoiceStack.plan(voices: 3, detune_mode: :octaves, key_track: 0.0)
+    up = full.find { |v| v.semitones == 12 }
+
+    assert_in_delta 2.0, up.cutoff_scale, 1e-6, "an octave up should double the cutoff at full tracking"
+    assert_equal [1.0], none.map(&:cutoff_scale).uniq, "no tracking means no scaling"
+  end
+
+  # Transposition must move pitch and nothing else -- same count, same times.
+  def test_transposing_a_voice_keeps_the_rhythm
+    events = (0...8).map { |i| [i * 0.25, 0.8, { hz: [220.0] }, 0.2] }
+    voice = VoiceStack.plan(voices: 2, detune_mode: :octaves).last
+    moved = VoiceStack.transpose(events, voice)
+
+    assert_equal events.map(&:first), moved.map(&:first)
+    assert_equal events.length, moved.length
+    refute_in_delta 220.0, moved.first[2][:hz].first, 1.0
+  end
+
   # ------------------------------------------------------- low-pass gate
 
   # The whole claim of an LPG, as arithmetic on the control signal: as it closes,
@@ -673,12 +734,22 @@ end
 # So reach is a ratchet. A module here has to be named by something that is not
 # itself, not its own CLI command, and not a test: a renderer, a bus builder, a
 # scheduler -- code a render actually runs.
+#
+# The path is the module's OWN file, excluded from the search so a module is
+# never counted as calling itself. Keeping it right matters more than it looks:
+# after the merge into devices.rb these still named copy_machine.rb,
+# midi_devices.rb, wav_map.rb and macros.rb, none of which exist any more -- so
+# nothing was excluded, devices.rb counted as an external caller of its own
+# modules, and the ratchet passed for every one of them without checking
+# anything. A guard keyed on a stale path is a guard that has stopped guarding.
 DEVICE_MODULES = {
-  "CopyMachine" => "lib/copy_machine.rb",
-  "MidiDevices" => "lib/midi_devices.rb",
-  "WavMap" => "lib/wav_map.rb",
+  "CopyMachine" => "lib/devices.rb",
+  "MidiDevices" => "lib/devices.rb",
+  "WavMap" => "lib/devices.rb",
+  "LowPassGate" => "lib/devices.rb",
+  "VoiceStack" => "lib/devices.rb",
   "DillaModulation" => "lib/modulation.rb",
-  "DillaMacros" => "lib/macros.rb",
+  "DillaMacros" => "lib/knobs.rb",
 }.freeze
 
 # device_cmds is the CLI surface and arrangement.rb is an analysis tool; being

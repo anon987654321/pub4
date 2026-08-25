@@ -762,3 +762,111 @@ module LowPassGate
     File.file?(dest) ? dest : nil
   end
 end
+
+# ------------------------------------------------------------------------
+# VoiceStack
+# ------------------------------------------------------------------------
+
+# One part, several voices, and one knob that makes them differ.
+#
+# ringtone.tools' P_4L II is seven Plaits oscillators behind a small interface,
+# and its cleverest move is not the oscillator count -- it is that ONE macro
+# produces a DIFFERENT value per voice. Timbre 50 with variation 20 gives 42, 61,
+# 47, 56 rather than 50, 50, 50, 50. The interface stays small and the machine
+# underneath does not, which is what makes it playable.
+#
+# dilla could already render a part several times; what it could not do was make
+# the copies differ in a controlled way. Hocket splits notes BETWEEN voices --
+# each voice plays some of the line. This is the other thing: every voice plays
+# ALL of it, and they differ in tuning and timbre. One is an ensemble passing a
+# melody around; this is an ensemble playing it together, which is a section
+# rather than a hocket.
+#
+# DillaMacros.spread has computed exactly this arithmetic since it was written
+# and nothing has ever called it. This is what it was for.
+module VoiceStack
+  module_function
+
+  # How the voices relate in pitch.
+  #
+  #   :unison   all at the written pitch, differing only in the cents drift
+  #             below. The thickest and the least harmonic decision.
+  #   :octaves  spread across octaves around the written pitch. Reads as one
+  #             instrument with a wide register rather than as several.
+  #   :fifths   octaves and fifths, in the organ-stop tradition -- a 2 2/3 rank
+  #             sitting above an 8. Historically how one keypress became a
+  #             timbre, which is exactly what this module is for.
+  #   :spread   voices fan outward by whole tones. Deliberately not a chord: it
+  #             blurs the pitch instead of harmonising it, which is the cluster
+  #             sound rather than the choir sound.
+  DETUNE_MODES = %i[unison octaves fifths spread].freeze
+
+  SEMITONE_PLAN = {
+    unison: [0, 0, 0, 0, 0, 0, 0],
+    octaves: [0, 12, -12, 24, -24, 12, -12],
+    fifths: [0, 12, 7, 19, -12, 24, 7],
+    spread: [0, 2, -2, 4, -4, 6, -6],
+  }.freeze
+
+  # A voice, as data. Everything the renderer needs and nothing it does not, so
+  # a plan can be printed and pinned in a test without rendering a sample.
+  Voice = Struct.new(:index, :semitones, :cents, :gain, :macro, :cutoff_scale, keyword_init: true)
+
+  # voices:    how many. Seven is P_4L's count and the plan tables above hold it.
+  # macro:     the shared position, 0..1, of whatever the caller is varying.
+  # variation: how far the voices depart from it. 0 makes them identical, which
+  #            is the degenerate case worth being able to ask for.
+  # drift:     detune in cents, spread across the voices. Small numbers only --
+  #            past about 25 cents the stack stops being one instrument and
+  #            becomes several out of tune with each other.
+  # key_track: how hard each voice's filter follows its own pitch, 0..1. An
+  #            octave up moves the cutoff an octave up at 1.0. Without it the top
+  #            of a stack goes dull, because a fixed cutoff removes a larger
+  #            share of a higher note's harmonics.
+  def plan(voices: 4, macro: 0.5, variation: 0.25, detune_mode: :fifths,
+           drift: 9.0, key_track: 0.5, tilt: 0.4, seed: 4242)
+    n = voices.to_i.clamp(1, 7)
+    steps = SEMITONE_PLAN.fetch(detune_mode.to_sym) { SEMITONE_PLAN[:fifths] }
+    # The P_4L move, and the reason DillaMacros.spread exists: one position
+    # becomes n positions centred on it.
+    positions = DillaMacros.spread(macro, amount: variation, count: n, seed:)
+    rng = Random.new(seed)
+    (0...n).map do |i|
+      semis = steps[i]
+      # Alternating sign so the drift does not all pull one way, which would be a
+      # tuning offset rather than a chorus.
+      cents = i.zero? ? 0.0 : ((i.odd? ? 1 : -1) * drift.to_f * (0.4 + (0.6 * rng.rand))).round(2)
+      Voice.new(
+        index: i,
+        semitones: semis,
+        cents:,
+        # Voices far from the written pitch sit back, or the stack reads as an
+        # octave doubling rather than as one instrument.
+        gain: (1.0 / (1.0 + (tilt.to_f * (semis.abs / 12.0)))).round(4),
+        macro: positions[i].round(4),
+        # Key tracking, as a multiplier on whatever cutoff the caller uses.
+        cutoff_scale: (2.0**((semis / 12.0) * key_track.to_f.clamp(0.0, 1.0))).round(4)
+      )
+    end
+  end
+
+  # The same note events, transposed for one voice. Cents and semitones together,
+  # because a stack wants both -- semitones for the register, cents for the
+  # thickness.
+  def transpose(events, voice)
+    ratio = 2.0**((voice.semitones + (voice.cents / 100.0)) / 12.0)
+    Array(events).map do |time, velocity, chord, sustain|
+      next [time, velocity, chord, sustain] unless chord.is_a?(Hash) && Array(chord[:hz]).any?
+
+      [time, velocity * voice.gain, chord.merge(hz: chord[:hz].map { |hz| hz * ratio }), sustain]
+    end
+  end
+
+  # What a plan is, one line per voice.
+  def describe(plan)
+    plan.map do |v|
+      format("voice %d  %+3d st  %+6.2f cents  gain %.3f  macro %.3f  cutoff x%.3f",
+             v.index, v.semitones, v.cents, v.gain, v.macro, v.cutoff_scale)
+    end
+  end
+end
