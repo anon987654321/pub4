@@ -271,6 +271,14 @@ body.vertical-marketplace .search {
   #topHalf {
     flex-wrap: wrap;
     padding-block: 6px;
+    /* Not the brand clearance here. This bar wraps at this width, and
+       padding-inline-start indents every wrapped row, not just the one that sits
+       beside the mark: measured at 390px, all four rows started at x=176, leaving
+       the search 173px of a 390px screen and pushing #logoWrapper's right edge to
+       400. Nothing is cleared by it either — .brand-mark is fixed at y 11–55 and
+       #topHalf sits inside .app-shell, which is pinned at top=62, so the two
+       cannot meet at any scroll offset. */
+    padding-inline-start: 10px;
   }
 
   #navBar .nav-deliver {
