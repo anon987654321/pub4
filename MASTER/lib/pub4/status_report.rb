@@ -87,13 +87,45 @@ module Pub4
 
     def dirty_by_tree
       git("status", "--porcelain").to_s.lines
-        .map { |l| l[3..].to_s.split("/").first }
-        .compact.tally.sort_by { |_, n| -n }.to_h
+        .filter_map { |line| tree_of(line) }
+        .tally.sort_by { |_, n| -n }.to_h
     end
 
+    # Porcelain is `XY <path>`, and <path> is not always a bare path.
+    #
+    # git QUOTES it whenever it holds a space or a non-ASCII byte, so a dirty
+    # `STUDIO/dilla/før.wav` was tallied under the tree `"STUDIO` — a quote
+    # character in the name of a tree, in the line whose whole job is telling one
+    # session which trees hold another session's work. A rename reports
+    # `<old> -> <new>`, and the tree that matters is where the file landed.
+    #
+    # Not the offset: `l[3..]` is right, because quoting changes the path and not
+    # the two status characters before it. Stated because the obvious reading of
+    # this bug blames the slice.
+    def tree_of(line)
+      path = line[3..].to_s.strip
+      return nil if path.empty?
+
+      path = path.split(" -> ").last.to_s
+      path = path.delete_prefix('"').delete_suffix('"')
+      tree = path.split("/").first
+      tree&.empty? ? nil : tree
+    end
+
+    # rstrip, not strip: in `git status --porcelain` the leading whitespace is
+    # DATA. An unstaged modification is " M path", and strip ate that space off
+    # the first line only — so whenever the alphabetically-first dirty file was
+    # unstaged-modified, its tree lost a character and was tallied separately.
+    # That is where "dirty in ASTER: 1" and "dirty in AILS: 1" came from, beside
+    # a correct MASTER and RAILS: one line short, intermittent, and depending on
+    # which file happened to sort first.
+    #
+    # Every other caller here is single-value plumbing — branch --show-current,
+    # rev-parse, rev-list --count — whose output carries no leading whitespace,
+    # so trimming only the tail is the same answer for them and the right one here.
     def git(*args)
       out, status = Open3.capture2e("git", *args, chdir: @root)
-      status.success? ? out.strip : nil
+      status.success? ? out.rstrip : nil
     end
 
     def backlog_source
