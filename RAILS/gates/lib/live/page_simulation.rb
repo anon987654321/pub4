@@ -132,7 +132,19 @@ module Deploy
       body = response.body.to_s
       findings = []
 
-      unless code.between?(200, 399)
+      # The header above says auth-only pages are noted rather than hard-failed
+      # when unauthenticated, and that was true only for the redirect shape: a
+      # controller answering the guest with a 302 to sign-in lands inside
+      # 200..399 and passes, while one answering `head :forbidden` was a hard
+      # failure for behaving correctly. Dating's verification queue is the
+      # second kind — a moderation surface whose index is `head :forbidden
+      # unless reviewer?`, so 403 is the right answer to this gate's persona.
+      #
+      # 404 and 5xx stay hard. Those say the page is missing or broken, which is
+      # what this is for.
+      if [ 401, 403 ].include?(code)
+        findings << soft("HTTP #{code} — auth-only for the guest persona")
+      elsif !code.between?(200, 399)
         findings << hard("HTTP #{code} for #{url}#{page[:host] ? " Host=#{page[:host]}" : ""}")
       end
 

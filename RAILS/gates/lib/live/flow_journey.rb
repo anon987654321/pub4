@@ -202,8 +202,7 @@ module Deploy
           if [301, 302, 303, 307, 308].include?(code)
             location = response["location"].to_s
             redirects << location
-            url = absolutize(location, url)
-            header_host = URI(url).host if location.start_with?("http") && !location.include?("127.0.0.1")
+            url, header_host = follow(location, url, header_host)
             next
           end
           return Response.new(code: code, body: response.body.to_s,
@@ -214,14 +213,25 @@ module Deploy
 
       private
 
-      def absolutize(location, current)
-        return location if location.start_with?("http")
+      # Where the next hop is fetched from, and under which name.
+      #
+      # Always the app under test: url stays on 127.0.0.1:<port> and the public
+      # hostname travels in the Host header, which is the shape a relative
+      # redirect already had. An absolute Location used to be taken at face
+      # value, so a 301 to http://brgen.no/nearby/room sent the next request to
+      # the real brgen.no on port 80 — relayd answers there with a TLS redirect
+      # that Net::HTTP reads as "EOFError: end of file reached", which is how
+      # this was found. The quiet half is the worse one: every absolute redirect
+      # that did not happen to fail was measuring production and reporting it as
+      # a local journey.
+      def follow(location, current, header_host)
+        target = URI.join(current, location)
+        host = local?(target.host) ? header_host : target.host
 
-        base = URI(current)
-        base.path = location.start_with?("/") ? location.split("?").first : base.path
-        base.query = location.include?("?") ? location.split("?", 2).last : nil
-        base.to_s
+        [ "http://#{@host}:#{@port}#{target.request_uri}", host ]
       end
+
+      def local?(host) = [ @host, "127.0.0.1", "localhost" ].include?(host)
 
       # Report the vanity host in messages when one was used, so a failure reads
       # markedsplass.brgen.no/cart rather than 127.0.0.1:38182/cart.
