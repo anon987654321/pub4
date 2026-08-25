@@ -134,7 +134,7 @@ module Master
     #
     # `mask-image: linear-gradient(to right, transparent 0%, #000 3%, #000 97%,
     # transparent)` fades the edges of a scroller. In a mask the alpha channel
-    # is what renders and black simply means "fully opaque" — the hex is doing
+    # is what renders and black means "fully opaque" — the hex is doing
     # arithmetic, and nothing themeable is being expressed. Tokenising it would
     # make a fade follow the theme, which is not a thing a fade can do.
     MASK_DECLARATION = /(?:-webkit-)?mask(?:-image)?\s*:[^;]*;/

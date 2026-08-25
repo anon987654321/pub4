@@ -116,7 +116,12 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   # to stop doing the one thing it exists for, and the rule is about a document
   # mixing languages — the shape RAILS/CLAUDE.md names when it says split large
   # mixed HTML/CSS/JS files.
-  path_exclude %r{/(?:knowledge_store|knowledge_schema|catalog_index)\.rb\z|/memory/search\.rb\z}
+  # A file whose job is to detect another language has to quote it. That is the
+  # distinction Law.conduct draws for law/, and the scanner's own rule
+  # definitions are the same subject: web_rules.rb carries an ERB regex, an
+  # operator message reading "<tag><%= … %></tag>" and advice about auto-escaped
+  # <%= %>. None is a template; all three are prose and patterns about one.
+  path_exclude %r{/(?:knowledge_store|knowledge_schema|catalog_index)\.rb\z|/memory/search\.rb\z|/review/scan/rules/}
   # A regex that matches `<%` is not ERB, and a string naming a heredoc tag is
   # not a heredoc. Unmasked this flagged the scanner's own ERB detectors, the
   # source-masking constants and css_coverage_lint's comment stripper — 35 of 72
@@ -127,14 +132,18 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   # `connection.exec(query)`, meaning the other language lives in a name rather
   # than inside a call. PROBE = <<~JS and SCHEMA = <<~SQL are already that, and
   # flagging them asks for a change the rule cannot describe.
+  # Strings are not masked, and must not be: `template = "<%= x %>"` is a Ruby
+  # file carrying an ERB template, which is the defect exactly, and blanking
+  # string literals made the rule blind to its own primary case. What
+  # distinguishes it from a scanner naming the delimiter is completeness — an
+  # ERB tag opens and closes. `ERB_OPEN = "<%"` is a pattern; `"<%= x %>"` is a
+  # template. Regexes stay masked, since `/<%|<script\b/` is a detector.
   detect do |line|
     next false if line.match?(/\A\s*[A-Z][A-Z0-9_]*\s*=\s*<<[~-]/)
 
-    masked = line.dup
-    masked.gsub!(/"(?:[^"\\]|\\.)*"/) { |m| "\0" * m.length }
-    masked.gsub!(/'(?:[^'\\]|\\.)*'/) { |m| "\0" * m.length }
-    masked.gsub!(Regexp.new('(?<![\w)\]])/(?:[^/\\\\\n]|\\\\.)+/[mixo]*')) { |m| "\0" * m.length }
-    masked.match?(/<%|<script\b|<style\b|<<[~-]?["'`]?(?:SQL|HTML|CSS|JS|JAVASCRIPT)\b/)
+    masked = line.gsub(Regexp.new('(?<![\w)\]])/(?:[^/\\\\\n]|\\\\.)+/[mixo]*')) { |m| "\0" * m.length }
+    masked.gsub!(/%r[{(\[](?:[^})\]\\]|\\.)*[})\]][mixo]*/) { |m| "\0" * m.length }
+    masked.match?(/<%.*%>|<script\b|<style\b|<<[~-]?["'`]?(?:SQL|HTML|CSS|JS|JAVASCRIPT)\b/)
   end
   fix "One language per layer. Separate into distinct files or clearly demarcated sections."
   bad  "rows = connection.exec(<<~SQL)"

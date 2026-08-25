@@ -41,8 +41,11 @@ class TestAttentionContext < Minitest::Test
   def test_rendering_uses_the_protocol_templates
     context = AC.new(map: "a/b", zoom: "deep", act: "patch")
 
-    assert_equal "⟦a/b | zoom: deep | act: patch⟧", context.to_s
-    assert_equal "[MAP a/b][ZOOM deep][ACT patch]", context.to_markdown
+    # No bracket tags and no enclosing glyphs: the breadcrumb is read by a
+    # person at the top of a reply, and the decoration was the part they asked
+    # to lose. NO_ASCII_DECORATION carries the same rule for everything else.
+    assert_equal "a/b · zoom deep · act patch", context.to_s
+    assert_equal "a/b — zoom deep, act patch", context.to_markdown
   end
 
   def test_scouting_is_not_complex

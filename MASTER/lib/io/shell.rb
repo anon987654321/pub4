@@ -78,8 +78,8 @@ module Master
 
       # Ground::Policy::Sandbox was written from an adversarial corpus — `rm -fr ~`
       # in any flag order, fork bombs, curl and wget piped to a shell, truncating
-      # a raw device by redirection — and was reached by nothing but its own
-      # tests. This class carried a separate BLOCKLIST and consulted no one, so
+      # a raw device by redirection — and nothing but its own tests reached it.
+      # This class carried a separate BLOCKLIST and consulted no one, so
       # the tree had two shell gates and the hardened one was not the live one.
       #
       # Only :deny. :ask is what decide() returns for anything it does not

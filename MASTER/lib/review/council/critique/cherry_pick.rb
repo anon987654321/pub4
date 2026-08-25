@@ -44,7 +44,7 @@ module Master
           end
 
           # Jaccard-ish overlap normalized by the larger side, so a long idea
-          # cannot score highly just by containing many words.
+          # cannot score highly by containing many words.
           def text_overlap(one, other)
             words_one = one.downcase.scan(/\w+/).to_set
             words_other = other.downcase.scan(/\w+/).to_set

@@ -70,7 +70,7 @@ module Master
           end
         end
 
-      # Generic names: only very short or clearly placeholder names. `data` and
+      # Generic names: only short or clearly placeholder names. `data` and
       # `result` are contextually meaningful in most Ruby code.
 
         RuleDSL.rule :TYPOGRAPHIC_EXCELLENCE,

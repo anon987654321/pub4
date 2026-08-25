@@ -21,12 +21,19 @@ class CoreBridgeTest < Minitest::Test
 
   # The real Constitution blocks `done` before an evidence threshold, so a
   # completing run must first produce passing exec evidence — same as production.
+  #
+  # The argv has to name a command Proof::PRODUCERS recognises. Declaring
+  # `evidence: :test_pass` on `true` records nothing: an exec that claims an
+  # evidence kind its command could not have produced is the forgery that guard
+  # exists to refuse, so these ran three no-ops, earned no evidence, and the
+  # fold spun to max_turns refusing `done` forty times. `echo` keeps them
+  # side-effect free while the argv stays something a producer pattern matches.
   def evidence_then_done(*extra, summary:)
     [
       *extra,
-      Master::Core::Effect.exec(["true"], evidence: :test_pass),
-      Master::Core::Effect.exec(["true"], evidence: :scan_clean),
-      Master::Core::Effect.exec(["true"], evidence: :code_review),
+      Master::Core::Effect.exec(%w[echo rake test], evidence: :test_pass),
+      Master::Core::Effect.exec(%w[echo rubocop], evidence: :scan_clean),
+      Master::Core::Effect.exec(%w[echo rake review], evidence: :code_review),
       Master::Core::Effect.done(summary),
     ]
   end

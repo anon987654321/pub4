@@ -23,7 +23,14 @@ module Pub4
     ROOT = File.expand_path("..", MASTER_DIR)
     CEILING = File.join(MASTER_DIR, "data", "self_findings.yml")
 
-    TREES = %w[MASTER/lib MASTER/law MASTER/tools RAILS/shared/lib RAILS/gates OPENBSD STUDIO].freeze
+    # The locale trees carry the only non-English prose in the repo, which is
+    # what the nb laws in law/prose.rb judge. Without them those two load,
+    # prove their fixtures, and reach no file — law that reads as enforcement
+    # and enforces nothing, which is the defect this repo names most often.
+    TREES = %w[
+      MASTER/lib MASTER/law MASTER/tools RAILS/shared/lib RAILS/gates OPENBSD STUDIO
+      RAILS/*/config/locales RAILS/*/engines/*/config/locales
+    ].freeze
 
     module_function
 
@@ -36,10 +43,23 @@ module Pub4
       ::Law.rules
     end
 
+    # Every extension a law can declare, not just Ruby. The corpus globbed
+    # `*.rb` while the laws claim nine languages, so every css, scss, yaml,
+    # markdown, html, json and shell law in the registry was measured against
+    # nothing and reported clean: NULLISH_COALESCING, I18N_COVERAGE,
+    # STRICT_LOADING_MISSING and META_CHARSET had 75 findings between them that
+    # this tool could not see. A ratchet blind to two thirds of its subject
+    # counts down to zero without the tree improving.
+    # Globbed per extension rather than `**/*` filtered afterwards: STUDIO holds
+    # the sample library, so walking every entry to stat it costs more than the
+    # scan does. Memoized because `run` asks for the list twice.
     def files
-      TREES.flat_map { |t| Dir.glob(File.join(ROOT, t, "**", "*.rb")) }
-           .reject { |f| f.include?("/vendor/") || f.include?("/node_modules/") }
-           .sort
+      law # loads Master before FILE_LANGUAGE_MAP is read, as by_rule does
+      @files ||= Master::FILE_LANGUAGE_MAP.keys
+                                          .flat_map { |ext| TREES.flat_map { |t| Dir.glob(File.join(ROOT, t, "**", "*#{ext}")) } }
+                                          .reject { |f| f.include?("/vendor/") || f.include?("/node_modules/") || f.include?("/assets/builds/") }
+                                          .uniq
+                                          .sort
     end
 
     # A law file necessarily contains the pattern it forbids — in its detector,

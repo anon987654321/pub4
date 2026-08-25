@@ -115,7 +115,14 @@ class TestRulesYamlRegistry < Minitest::Test
     assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_rule")
     assert_equal "kernel", preserve_rule.fetch("tier")
     assert_match(/Preserve behavior and intent/, preserve_rule.fetch("fix"))
-    assert_match(/never rewrite working code/i, soul.dig("absolute", "rules", "PRESERVE_FIRST"))
+    # The wording lives in law/, not in soul. This asserted soul.absolute.rules
+    # still carried it, which test_soul.rb asserts soul must not — one of the
+    # two had to be reading the tree as it is.
+    refute soul.dig("absolute", "rules"), "soul must not hold rules; law/ is the registry"
+    law_dir = File.expand_path("../law", __dir__)
+    require File.join(law_dir, "law")
+    ::Law.load_all(law_dir) if ::Law.rules.empty?
+    assert_match(/never rewrite working code/i, ::Law.rules.fetch(:PRESERVE_FIRST).practice)
   end
 
   def test_patterns_do_not_reference_unknown_rules_yml_ids

@@ -4,8 +4,8 @@ module Master
   module Ground
     # Loads data/maturity.yml -- a maturity scorecard matching OpenClaw's
     # taxonomy.yaml. See that file's header for the full rationale
-    # (SURFACE_ERRORS_FIRST / anti_simulation: prove completion, don't
-    # just claim it).
+    # (SURFACE_ERRORS_FIRST / anti_simulation: prove completion,
+    # don't just claim it).
     class MaturityScorecard
       STATUSES = %w[verified smoke broken].freeze
       PATH = File.join(Master::DATA, "maturity.yml").freeze

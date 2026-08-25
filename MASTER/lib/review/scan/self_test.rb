@@ -191,7 +191,7 @@ module Master
             next [] unless code.match?(/\b(?:Open3\.|Net::HTTP)\b/)
             # wait_thr.join(timeout_s) is a legitimate bounded-wait idiom (join
             # returns nil on timeout without raising, so the code must check it
-            # and kill the process) -- same guarantee as Timeout.timeout, just
+            # and kill the process) -- same guarantee as Timeout.timeout,
             # spelled differently. Matched narrowly so plain Array#join(", ")
             # elsewhere in the file can't produce a false "it's bounded".
             next [] if code.match?(/Timeout\.|read_timeout|open_timeout|block_until_ms|\b\w*thr\w*\.join\(/i)

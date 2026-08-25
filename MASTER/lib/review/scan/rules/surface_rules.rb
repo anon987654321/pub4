@@ -306,7 +306,7 @@ module Master
             next unless line.match?(/color\s*:\s*#([0-9a-f]{3,8})/i)
             hex = line[/color\s*:\s*#([0-9a-f]{3,8})/i, 1].to_s
             next if hex.empty?
-            # crude: very light gray text
+            # crude: light gray text
             next unless hex.match?(/\A([ef]{3}|[ef]{6}|ccc|ddd|eee)\z/i)
             # …but light text is only low-contrast against a light background, and
             # this read the foreground alone. #navBar declares `background-color:

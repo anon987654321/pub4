@@ -152,9 +152,9 @@ module Master
       end
 
       # Review::Consensus fans a candidate fix out to three models and requires
-      # a quorum of two before it lands. It was constructed by Agent#consensus
-      # and called by nothing, so the interlock read as wired for as long as it
-      # has existed — the most consequential shape of this repo's inert-config
+      # a quorum of two before it lands. Agent#consensus constructs it and
+      # nothing calls it, so the interlock read as wired for as long as it has
+      # existed — the most consequential shape of this repo's inert-config
       # defect, because it is a safety gate.
       #
       # Reachable now, and off unless asked for: three model calls per fix is a

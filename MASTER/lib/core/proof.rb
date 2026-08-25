@@ -29,7 +29,7 @@ module Master::Core
     # paper. A command that does not run the tests cannot be a passing test run.
     #
     # Unmatched scores nothing rather than blocking: the fold may run whatever it
-    # likes, it just cannot claim credit for it. Refusing the effect outright
+    # likes, it cannot claim credit for it. Refusing the effect outright
     # would turn a wrong label into a dead turn, and the label is the model's
     # mistake to correct on the next one.
     PRODUCERS = {

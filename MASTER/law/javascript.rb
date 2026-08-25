@@ -55,10 +55,26 @@ Law.define(:NULLISH_COALESCING) do
   severity :info
   languages %i[javascript]
   path_exclude %r{/public/three\.module\.js\z}
-  detect { |line| line.match?(/(\w+)\s*\|\|\s*\w+/) }
+  # The fix line already says when `??` is the answer: where 0 or '' are valid
+  # values. A bare `\w+ \|\| \w+` says nothing about that and fired on 21 of 41
+  # JavaScript files — every boolean condition in the tree, where `??` is not an
+  # improvement but a syntax error: `if (!this.tracking || this.startPos === null)`
+  # cannot mix `??` with `||` unparenthesised, and `event.currentTarget ||
+  # this.element` falls back between two objects, neither of which is ever 0.
+  #
+  # The defect needs a literal on the right — `x || 0`, `x || ''` — which is
+  # where a falsy-but-valid left side silently takes the fallback. An identifier
+  # or member expression on the right is an object default and idiomatic `||`.
+  detect do |line|
+    next false if line.match?(/\b(?:if|while|switch)\s*\(/)
+    next false unless line.match?(/=\s*[^=]*\|\|/)
+    next false if line.match?(/[!<>=]=/)
+
+    line.match?(/\|\|\s*(?:-?\d+(?:\.\d+)?|""|''|``)\s*[;,)\]}]?\s*$/)
+  end
   fix "Use ?? when 0 or '' are valid values."
-  bad  "count || fallback"
-  good "count ?? fallback"
+  bad  "const n = count || 0"
+  good "const n = count ?? 0"
 end
 
 # Migrated from data/rules.yml OPTIONAL_CHAINING.

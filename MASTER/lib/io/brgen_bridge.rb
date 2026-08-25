@@ -36,10 +36,9 @@ module Master
       end
 
       def summary
-        result = status
-        return result.message unless result.ok?
+        return status.message unless status.ok?
 
-        s = result.value!
+        s = status.value!
         "ok: brgen tenant=#{s['city']} at #{s['generated_at']}\n" \
           "marketplace_listings=#{s['marketplace_listings']} takeaway_open_orders=#{s['takeaway_open_orders']} " \
           "playlist_tracks=#{s['playlist_tracks']} tv_live_streams=#{s['tv_live_streams']} dating_profiles=#{s['dating_profiles']}"

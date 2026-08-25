@@ -59,7 +59,7 @@ class TestMasterLoop < Minitest::Test
 
     refute Master.load_rules.key?("operator_principles"),
            "conduct in rules.yml is a rule no detector can ever match"
-    refute YAML.safe_load_file(Master.data_path("soul.yml")).fetch("absolute").key?("rules"),
+    refute Master.load_yaml(Master.data_path("soul.yml")).fetch("absolute").key?("rules"),
            "one registry: law/, not soul"
   end
 

@@ -11,8 +11,8 @@ module Master
       # stale-scan guard).
       #
       # One implementation, because two drift. FileProcessor computes this when
-      # a finding is recorded and RuleLoop::FixVerification recomputed it just
-      # before applying a fix; the two definitions disagreed, one carrying an
+      # a finding is recorded and RuleLoop::FixVerification recomputed it
+      # just before applying a fix; the two definitions disagreed, one carrying an
       # `ast_present` key the other
       # didn't. Marshal.dump serializes every key, so a 6-field hash and a
       # 5-field hash never produce the same digest no matter how identical

@@ -3,15 +3,17 @@
 require "minitest/autorun"
 require "pathname"
 
-ROOT = Pathname.new(__dir__).join("..", "..").expand_path
-LIB = ROOT.join("lib")
-# The fold spine moved from core/ into lib/core/ on 2026-08-12. The directory
-# boundary that used to make this test trivially true is gone, so the test now
-# does the work that boundary was doing: name the fold's files explicitly and
-# prove none of them reaches for the application spine around it.
-CORE = [LIB.join("core.rb"), *LIB.join("core").glob("**/*.rb")].freeze
-
 class NoLibBackedgesTest < Minitest::Test
+  # Scoped to the class: three files in one test process defined a top-level
+  # ROOT, one of them a String, and load order picked the winner.
+  ROOT = Pathname.new(__dir__).join("..", "..").expand_path
+  LIB = ROOT.join("lib")
+  # The fold spine moved from core/ into lib/core/ on 2026-08-12. The directory
+  # boundary that used to make this test trivially true is gone, so the test now
+  # does the work that boundary was doing: name the fold's files explicitly and
+  # prove none of them reaches for the application spine around it.
+  CORE = [LIB.join("core.rb"), *LIB.join("core").glob("**/*.rb")].freeze
+
   def test_core_files_do_not_require_lib
     offenders = []
     CORE.each do |path|

@@ -34,7 +34,7 @@ module Master
 
       # Summaries come from each section's own first line, so the index cannot
       # drift from the sections it lists. `deploy` is read from the YAML rather
-      # than through #section, which would render the whole operator doc just to
+      # than through #section, which would render the whole operator doc to
       # take one line off the top.
       def index
         rows = (keys - [INDEX_KEY]).map { |key| "  #{key.ljust(12)} #{summary_for(key)}" }

@@ -45,8 +45,17 @@ module Pub4
 
     module_function
 
+    # Through the accessor, not a second load of rules.yml: the file this tool
+    # audits has to be the file the runtime reads, and reader_singularity is
+    # the ratchet that keeps those two from drifting apart.
+    def master_rules
+      lib = File.join(MASTER, "lib")
+      $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+      require "master"
+      Master.load_rules(root: MASTER)
+    end
+
     def rules
-      data = YAML.load_file(File.join(MASTER, "data", "rules.yml"))
       found = []
       walk = lambda do |node|
         case node
@@ -56,7 +65,7 @@ module Pub4
           node.each_value(&walk)
         end
       end
-      walk.call(data)
+      walk.call(master_rules)
       found
     end
 
@@ -99,20 +108,20 @@ module Pub4
     end
 
     def run(json: false)
-      result = report
-      return (puts JSON.pretty_generate(result)) || result[:dangling].empty? if json
+      found = report
+      return (puts JSON.pretty_generate(found)) || found[:dangling].empty? if json
 
-      puts "autofix_reach: #{result[:named]} rule(s) name a transform, #{result[:bare_true].size} say only `true`"
+      puts "autofix_reach: #{found[:named]} rule(s) name a transform, #{found[:bare_true].size} say only `true`"
 
-      if result[:dangling].empty?
+      if found[:dangling].empty?
         puts "autofix_reach: every named transform is implemented"
       else
-        result[:dangling].each do |d|
+        found[:dangling].each do |d|
           warn "autofix_reach: #{d[:rule]} names transform `#{d[:transform]}`, which is implemented nowhere"
         end
       end
 
-      undetectable = result[:bare_true].select { |b| b[:detectors].zero? }
+      undetectable = found[:bare_true].select { |b| b[:detectors].zero? }
       unless undetectable.empty?
         warn "autofix_reach: #{undetectable.size} rule(s) claim autofix and have no detector — " \
              "cannot be found, cannot be fixed: #{undetectable.map { |b| b[:rule] }.join(', ')}"
@@ -120,8 +129,8 @@ module Pub4
 
       c = ceilings
       over = []
-      over << "dangling #{result[:dangling].size} > #{c['dangling']}" if result[:dangling].size > c["dangling"]
-      over << "bare_true #{result[:bare_true].size} > #{c['bare_true']}" if result[:bare_true].size > c["bare_true"]
+      over << "dangling #{found[:dangling].size} > #{c['dangling']}" if found[:dangling].size > c["dangling"]
+      over << "bare_true #{found[:bare_true].size} > #{c['bare_true']}" if found[:bare_true].size > c["bare_true"]
       over.each { |line| warn "autofix_reach: exceeds baseline — #{line}" }
       over.empty?
     end

@@ -40,7 +40,7 @@ module Master
         # Every file carries its date, so the set is self-describing where it
         # lands. Same-day regeneration overwrites that day's file rather than
         # accumulating — deliberate, because unpruned 13MB sets in a repo root
-        # get very expensive very quickly. If you need two distinct sets in one
+        # get expensive quickly. If you need two distinct sets in one
         # day, point MASTER_SNAPSHOT_DIR somewhere.
         #
         # MASTER_SNAPSHOT_DIR still overrides. The ~/Downloads fallback is kept

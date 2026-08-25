@@ -36,19 +36,22 @@ module Master
         raise "YAML #{path}: #{key} must be #{type}, got #{value.class}"
       end
 
-      def validate_boot!(data_dir)
-        rules = load_yaml(File.join(data_dir, "rules.yml"), required: { "schema" => Integer, "laws" => Hash })
+      # Takes the parsed documents rather than opening them. Reading the files
+      # here made this a second reader of rules.yml and of autoload.yml, and a
+      # checker that re-parses is checking its own copy: the loader could still
+      # hand the runtime something this never saw. Given the data, it asserts
+      # the shape the autonomous loop depends on and nothing else.
+      def validate_boot!(rules:, autoload:)
+        validate_hash!(rules, "data/rules.yml")
+        require_type!(rules, "schema", Integer, "data/rules.yml")
+        require_type!(rules, "laws", Hash, "data/rules.yml")
         raise "data/rules.yml: schema must be >= 1" if rules["schema"].to_i < 1
         raise "data/rules.yml: laws cannot be empty" if rules["laws"].empty?
 
-        autoload = load_yaml(File.join(data_dir, "autoload.yml"), required: { "autoload" => Hash })
+        validate_hash!(autoload, "data/autoload.yml")
+        require_type!(autoload, "autoload", Hash, "data/autoload.yml")
         autoload["autoload"].each do |reason, paths|
           raise "data/autoload.yml: #{reason} must be an array" unless paths.is_a?(Array)
-        end
-
-        %w[soul.yml runtime.yml project_context.yml].each do |name|
-          path = File.join(data_dir, name)
-          load_yaml(path) if File.file?(path)
         end
 
         true

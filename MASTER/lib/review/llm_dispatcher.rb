@@ -29,10 +29,10 @@ module Master
       #                                    when a 200s outer timeout killed it
       #
       # A single persona could not answer inside 60s with the machine otherwise
-      # idle, so every council was decided by whichever two personas the
-      # scheduler happened to favour. That is what "quorum not reached (2/26)"
-      # was: not disagreement, not an outage, just a stopwatch set below the
-      # length of the task.
+      # idle, so whichever two personas the scheduler happened to favour decided
+      # every council. That is what "quorum not reached (2/26)" was: not
+      # disagreement, not an outage, a stopwatch set below the length of the
+      # task.
       #
       # 300 covers the four-concurrent case with headroom. MASTER_CLAUDE_CLI_TIMEOUT
       # still overrides it. Note the shape of those numbers if this needs tuning

@@ -66,7 +66,7 @@ module Master::Core
     # In this repo that is destructive. The checkout is shared: other sessions
     # and a human edit it concurrently, and CLAUDE.md exists because that has
     # already cost real work. Anything another session changed between the
-    # checkpoint and the failure was outside the patch and simply gone, and
+    # checkpoint and the failure was outside the patch and gone, and
     # anything they had staged lost its staged state either way. Undoing one
     # failed write by discarding everyone's uncommitted work is a worse outcome
     # than the write.

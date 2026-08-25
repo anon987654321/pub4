@@ -22,7 +22,7 @@ module Master
       # Every swallow this session looked identical from outside -- the
       # extract_code NameError (defeated the primary LLM fix strategy every
       # single call) and a genuinely cosmetic glob-found-nothing were both
-      # just another line in the same undifferentiated stream. severity:
+      # another line in the same undifferentiated stream. severity:
       # is opt-in and defaults to :cosmetic (never claims something is
       # load-bearing without a caller actually saying so); it exists so a
       # caller who *has* done that judgment call once can tag it, and the

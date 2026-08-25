@@ -227,9 +227,17 @@ class TestScanRuleContracts < Minitest::Test
   # The 2026-08-19 twin-drift debt closed at zero on 2026-08-21: an id that
   # lives in law/ and the registry at once is two detectors free to disagree
   # about one rule — the exact drift UNBOUNDED_RETRY proved. Zero is held.
+  #
+  # Two detectors is the hazard, and a `practice` rule has none: it states a
+  # principle for the prompt and checks nothing. FLAT_PIXELS is both — the
+  # design rule that binds what gets built, in law/practice.rb, and a narrow
+  # detector for imageSmoothingEnabled and bloom language, in the registry.
+  # Comparing every law id caught that pair and would have kept the principle
+  # out of the system prompt to protect against a disagreement neither half can
+  # have.
   def test_no_id_lives_in_both_law_and_registry
     Rules::LawBridgeRule.new
-    law_ids = Law.rules.keys.map(&:to_s)
+    law_ids = Law.rules.values.select(&:scannable?).map { |rule| rule.id.to_s }
     registry_ids = Master::Review::Scan::Rule.registry.filter_map do |klass|
       Master::Review::Scan::RuleFactory.registry_id(klass, root: Master::ROOT)&.upcase
     end

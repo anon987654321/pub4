@@ -54,8 +54,11 @@ module Law
 
   MEMBERS = %i[id source severity languages scope path path_exclude absent detect ask practice fix bad good reads_comments].freeze
   Rule = Data.define(*MEMBERS) do
+    # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
+    # and one member of a pair reading its argument the other way is a trap for
+    # whoever writes the next law.
     def applies?(file, language)
-      return false if path && !file.include?(path)
+      return false if path && !(path.is_a?(Regexp) ? file.match?(path) : file.include?(path))
       return false if path_exclude && file.match?(path_exclude)
       language.nil? || languages.empty? || languages.include?(language)
     end

@@ -36,10 +36,19 @@ module Pub4
     # fixture and a good one in law/<id>.rb. Counting only the yml column reported
     # eighty-one of them as reaching nothing on the day they became the only rules
     # in the tree that prove themselves before they may judge anything.
+    # Asked of the loaded registry, not of the source text. Scanning for a
+    # literal `Law.define(:ID)` reads only the laws whose id is spelled in the
+    # file, and law/prose.rb generates its four from data/rules.yml — one pair
+    # per natural language — so a grep saw none of them and called two live,
+    # proving, firing laws unreachable. Loading is what running does.
     def enacted
       dir = File.join(ROOT, "law")
       return Set.new unless Dir.exist?(dir)
 
+      require File.join(dir, "law")
+      ::Law.load_all(dir) if ::Law.rules.empty?
+      ::Law.rules.keys.map(&:to_s).to_set
+    rescue StandardError
       Dir.glob(File.join(dir, "*.rb")).flat_map { |f| File.read(f).scan(/Law\.define\(:(\w+)\)/) }.flatten.to_set
     end
 

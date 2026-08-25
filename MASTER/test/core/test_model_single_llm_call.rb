@@ -3,9 +3,14 @@
 require "minitest/autorun"
 require "pathname"
 
-ROOT = Pathname.new(__dir__).join("..", "..").expand_path
-
 class ModelSingleLlmCallTest < Minitest::Test
+  # Scoped to the class. At top level this was the third `ROOT` in one test
+  # process — test_no_lib_backedges.rb defines the same Pathname, and
+  # STUDIO/dilla/dilla.rb defines a String. Load order decided which won, so
+  # this test passed alone and died on `undefined method 'join' for a String`
+  # in the full run.
+  ROOT = Pathname.new(__dir__).join("..", "..").expand_path
+
   def test_model_rb_has_one_llm_ask_site
     path = ROOT.join("lib", "core", "model.rb")
     text = path.read

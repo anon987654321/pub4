@@ -29,8 +29,17 @@ module Pub4
 
     module_function
 
+    # Through the accessor, not a second load of rules.yml: the file this tool
+    # audits has to be the file the runtime reads, and reader_singularity is
+    # the ratchet that keeps those two from drifting apart.
+    def master_rules
+      lib = File.join(MASTER, "lib")
+      $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+      require "master"
+      Master.load_rules(root: MASTER)
+    end
+
     def yaml_rules
-      data = YAML.load_file(File.join(MASTER, "data", "rules.yml"))
       found = []
       walk = lambda do |node|
         case node
@@ -40,7 +49,7 @@ module Pub4
           node.each_value(&walk)
         end
       end
-      walk.call(data)
+      walk.call(master_rules)
       found
     end
 
@@ -87,16 +96,18 @@ module Pub4
     # "surface errors immediately" — and each had its own detector or none.
     #
     # The rule for resolving one: whichever population holds the detector owns
-    # the wording. A population that only restates it is the copy. soul is the
-    # exception in one direction only, for an axiom nothing can check.
+    # the wording. A population that only restates it is the copy.
+    #
+    # There were four populations here. soul.yml was the fourth, and its rules
+    # moved into law/practice.rb, so `absolute.rules` reads nil and the branch
+    # contributed an empty list to every comparison — a reader of a key that no
+    # longer exists, which reader_singularity counts and nothing else would.
     def cross_population_duplicates
-      soul = YAML.safe_load_file(File.join(MASTER, "data", "soul.yml"))
-                 .dig("absolute", "rules").to_h.keys.map(&:upcase)
       detectable = yaml_rules.select { |r| %w[detect_semantic detect_structural detect_lexical].any? { |k| r[k].to_s.strip != "" } }
                              .map { |r| r["id"].to_s.upcase }
       homes = Hash.new { |h, k| h[k] = [] }
       { "law/" => law_ids.map(&:upcase), "RuleDSL" => dsl_ids.map(&:upcase),
-        "rules.yml" => detectable, "soul" => soul }.each do |name, ids|
+        "rules.yml" => detectable }.each do |name, ids|
         ids.each { |id| homes[id] << name }
       end
       homes.select { |_, where| where.uniq.size > 1 }

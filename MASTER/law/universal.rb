@@ -67,8 +67,24 @@ Law.define(:MEANINGFUL_NAMES) do
   # those makes the code worse, and 457 of the 484 were that shape.
   #
   # An expression with arguments, arithmetic or a literal is exempt for the same
-  # reason: there is no name in it to prefer.
-  detect { |line| line.match?(/\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\s*=\s*@?[a-z_]\w*(?:\.\w+)*\s*(?:#.*)?$/) }
+  # reason: there is no name in it to prefer, and three more shapes where the
+  # generic name is the right one and there is nothing
+  # better to take: `@data = data` is the constructor idiom and has no other name
+  # available; `result = blk.call` names a result after a call whose own last
+  # word is `call`; and `@data = load_data` is already named after the method
+  # that produced it, which is the rule satisfied rather than broken.
+  detect do |line|
+    next false unless line.match?(/\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\s*=\s*@?[a-z_]\w*(?:\.\w+)*\s*(?:#.*)?$/)
+
+    left, right = line.match(/@?(\w+)\s*=\s*@?([\w.]+)/)&.captures
+    next false if left.nil?
+    next false if left == right                                   # @data = data
+    next false if right.match?(/\.(?:call|run|value|result)\z/)   # a call's result
+    next false if right.split(".").last.to_s.include?(left)       # @data = load_data
+    next false if right == "nil"                                  # nothing to name it after
+
+    true
+  end
   fix "Name it after what the right-hand side already calls it, or after the domain."
   bad "tmp = load"
   good "user_profile = load"

@@ -581,6 +581,25 @@ Law.define(:MASTER_PROMPT_AESTHETIC) do
   good "leaves the prompt line, adds a status row"
 end
 
+# The registry (surface_rules.rb) also carries a FLAT_PIXELS, and the two are
+# not the same statement: that one is a lexical detector for
+# imageSmoothingEnabled and bloom/scanline language in a canvas layer. This is
+# the design principle it comes from, which binds what gets built before there
+# is a line to detect. Dropped from the prompt when soul.absolute.rules moved
+# here, because the id already existed elsewhere and looked migrated.
+Law.define(:FLAT_PIXELS) do
+  source "MASTER constitution (soul.yml absolute.rules)"
+  severity :warn
+  practice <<~TEXT
+    Flat Design — UI and particles stay two-dimensional, uniform in size and
+    alpha, with no fake depth or parallax. Exception: pixels that collectively
+    resemble a 3D model, as in face mode.
+  TEXT
+  fix "Keep the surface flat: uniform size and alpha, no fake depth or parallax."
+  bad  "a drop shadow under the particle field to suggest depth"
+  good "uniform alpha across the particle field"
+end
+
 Law.define(:VOICE_TERSE_UNIX) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn

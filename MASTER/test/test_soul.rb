@@ -19,7 +19,7 @@ class TestSoul < Minitest::Test
   # resolve.
   def test_every_rule_reaches_the_system_prompt_from_one_registry
     prompt = Master::Voice::Personality.new.send(:build_system_prompt, context: :full)
-    absolute = YAML.safe_load_file(Master.data_path("soul.yml")).fetch("absolute")
+    absolute = Master.load_yaml(Master.data_path("soul.yml")).fetch("absolute")
 
     %w[rules aesthetic_rules].each do |key|
       refute absolute.key?(key), "soul must not hold rules; law/ is the registry"

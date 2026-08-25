@@ -55,13 +55,20 @@ class TestStudioMedia < Minitest::Test
     end
   end
 
-  def test_repligen_vocab_check_exits_zero_and_final_is_ultra
+  # The model string is not the invariant. This pinned flux-1.1-pro-ultra and
+  # went red the day 495bb98d8 made FLUX 2 the default — a deliberate upgrade
+  # the test read as a regression, which is what a version literal in an
+  # assertion always ends up doing. What has to hold is that FINAL_MODEL names a
+  # model repligen actually knows, and vocab-check is the check that proves it:
+  # repligen.rb refuses a FINAL_MODEL with no MODEL_CAPABILITIES entry.
+  def test_repligen_vocab_check_exits_zero_and_final_model_is_known
     out, status = run_script(REPLIGEN, "vocab-check")
     assert status.success?, "repligen vocab-check failed:\n#{out}"
 
     source = File.read(REPLIGEN)
-    assert_match(/FINAL_MODEL = "black-forest-labs\/flux-1.1-pro-ultra"/, source)
-    assert_includes source, '"black-forest-labs/flux-1.1-pro-ultra"'
+    final = source[/^FINAL_MODEL = "([^"]+)"/, 1]
+    assert final, "repligen must declare a FINAL_MODEL"
+    assert_includes source, %("#{final}"), "FINAL_MODEL #{final} has no entry beside it"
     assert_includes source, '"black-forest-labs/flux-kontext-pro"'
     assert_includes source, "input_image"
     assert_includes source, '"raw"'

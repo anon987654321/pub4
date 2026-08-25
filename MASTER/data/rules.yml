@@ -2877,6 +2877,99 @@ rules:
       to this UI surface. Flag dishonest progress, missing empty/error states, chrome
       that competes with content. CLEAN if solid.
 
+# Prose law vocabulary, one entry per natural language.
+#
+# Strunk's rules describe a shape, not an English word list: an intensifier
+# that adds emphasis and no information, a passive that hides its actor. Every
+# language with those has its own words for them, and holding the words inside
+# the detector made law/prose.rb English-only by accident. Held here, a second
+# language is a data edit — `ids` names the laws it generates, and law/prose.rb
+# defines one per entry.
+#
+# `paths` is load-bearing rather than decoration. Norwegian `bare` (only) is an
+# English word this tree uses constantly — "a bare regex", "bare true", "a bare
+# div" — so a vocabulary let loose outside the files its language is written in
+# returns nothing but false positives. Each entry names where it is spoken.
+#
+# `keep` holds the senses that are not the defect: the same word doing
+# contrastive, comparative, temporal or determiner work. Every pattern in it
+# was earned against a measured false positive, and law/prose.rb carries the
+# count and the evidence for each.
+#
+# The same principle in code and in design is not repeated here. A needless
+# parameter is DEAD_CODE, needless ornament is the design_rules below, and one
+# statement of a rule is the point.
+prose:
+  en:
+    spoken_in: '.'
+    file_languages: [markdown, ruby]
+    # Where the language is written inside those files. English here is the
+    # prose in comments, so the detector has to skip the code around them;
+    # `values` reads a locale file, where the strings are the prose and the keys
+    # are not.
+    reads: comments
+    ids:
+      qualifiers: PROSE_OMIT_QUALIFIERS
+      passive: PROSE_ACTIVE_VOICE
+    fixtures:
+      qualifiers: { bad: '# This is very fast.', good: '# This is fast.' }
+      passive:
+        bad: '# The bug was fixed by the maintainer.'
+        good: '# The maintainer fixed the bug.'
+    # `actually` and `literally` are absent on purpose. Both read as leeches
+    # and neither is one here: they are contrastive, setting what is against
+    # what was claimed, which is this repo's recurring subject. 85 and 4 hits
+    # respectively, every one of them that use.
+    leeches: [very, rather, really, quite, pretty, somewhat, just, basically, simply]
+    keep:
+      - 'rather than'                              # a contrast, not a degree
+      - 'rather\s*$'                               # "rather than" wrapped mid-phrase
+      - 'just (?:as|because|before|after|when)'    # a comparison
+      - '(?:not|never)\s+(?:just|simply|only)'     # a negation
+      - 'n''t\s+(?:just|simply|only)'
+      - 'just\s+(?:\w+ed|found|said|ran|saw|built)' # moments ago, a tense marker
+      - '(?:the|this|that|its) very'               # a determiner picking a thing out
+    passive:
+      auxiliary: '(?:was|were|been)'
+      participle: '(?:\w+ly\s+)?\w+ed'
+      agent: 'by'
+  nb:
+    # Bokmål reaches the tree through the Rails locale files and nowhere else;
+    # every comment in the repo is English. Scoped there, `bare` is Norwegian.
+    spoken_in: '(?:\A|[/.])nb\.yml\z'
+    file_languages: [yaml]
+    reads: values
+    ids:
+      qualifiers: PROSE_OMIT_QUALIFIERS_NB
+      passive: PROSE_ACTIVE_VOICE_NB
+    fixtures:
+      qualifiers:
+        bad: 'tittel: Dette er veldig raskt'
+        good: 'tittel: Dette er raskt'
+      passive:
+        bad: 'notis: Feilen ble rettet av vedlikeholderen'
+        good: 'notis: Vedlikeholderen rettet feilen'
+    # `egentlig` and `faktisk` are held out for the same reason `actually` is:
+    # both mark a contrast with what was assumed rather than grading anything.
+    #
+    # `bare` is held out on measured evidence. It reads as English `just` and
+    # carries the same split, but in this tree the restrictive sense is the only
+    # one present: all 11 hits were "du kan bare slette dine egne kommentarer",
+    # "bare medlemmer poster", "Dating er bare for voksne". Bokmål has no other
+    # word for that "only", so deleting it inverts the sentence — the copy stops
+    # saying what a reader may not do. English `just` keeps its place because
+    # the merely sense does appear there; here it does not.
+    leeches: [veldig, svært, ganske, nokså, temmelig, virkelig, simpelthen]
+    keep:
+      - 'heller enn'          # rather than
+      - 'ikke bare'           # not only
+    # Bokmål builds the periphrastic passive with bli/ble/blitt and marks the
+    # agent with `av`, which is the same shape the English rule judges.
+    passive:
+      auxiliary: '(?:ble|blitt)'
+      participle: '\w+(?:et|dd|tt|t)'
+      agent: 'av'
+
 # Folded from data/design_rules.yml — one file for all rules.
 design_rules:
   typography:

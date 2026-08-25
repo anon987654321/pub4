@@ -90,7 +90,7 @@ module Pub4
         # so a case-sensitive include? skipped the file before any pattern ran.
         # Same for a partial, where @stem is "_search_loading" and every caller
         # writes "shared/search_loading". A prefilter that rejects what the
-        # matcher would have accepted is just a silent false negative.
+        # matcher would have accepted is a silent false negative.
         next unless body.downcase.include?(@partial.downcase) ||
                     body.include?(@camel)
 

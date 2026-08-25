@@ -15,8 +15,8 @@ module Master
         # Live scan progress: dmesg-style streaming status lines, checkpoint
         # snapshots, and completion events. Grouped apart from the core
         # scan/parallelism logic to keep Scanner itself under NO_GOD_CLASS's
-        # 300-line ceiling -- a real separation (reporting vs scanning), not
-        # just metric evasion; mixed-in modules live in their own ModuleNode
+        # 300-line ceiling -- a real separation (reporting vs scanning),
+        # not just metric evasion; mixed-in modules live in their own ModuleNode
         # so this doesn't count against the including class's own span.
         module ProgressReporter
           private

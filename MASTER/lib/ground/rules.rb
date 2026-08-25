@@ -18,9 +18,16 @@ module Master
         def strunk = @strunk ||= (voice["strunk"] || {}).freeze
         def preserve = @preserve ||= (voice["preserve"] || {}).freeze
 
+        # Lazy, for the same reason limits.yml stopped being parsed in the
+        # constructor: `constitution` is the only reader, and every Rules built
+        # to ask for `rules` was opening soul.yml to back an accessor it never
+        # touched. RuleLoop#build_soul_preamble does exactly that, so a preamble
+        # read the file twice and its cache could only ever halve the cost.
+        def soul_data = @soul_data ||= (load_yaml(@soul_path) || {})
+
         def constitution
           @constitution ||= begin
-            absolute = @soul_data["absolute"] || {}
+            absolute = soul_data["absolute"] || {}
             {
               "golden_rule" => absolute["golden_rule"] || @data["golden_rule"],
               "protection" => absolute["protection_tiers"] || @data["protection"],
@@ -104,7 +111,6 @@ module Master
         @data = load_yaml(@rules_path) || {}
         @voice_data = load_yaml(@voice_path) || {}
         @data["rules"] = load_split_rules
-        @soul_data = load_yaml(@soul_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
         # construction purely to back two accessors nobody called; the callers that
         # do want it (scan_request, fix_loop, mode_posture) each read it themselves,

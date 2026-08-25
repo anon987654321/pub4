@@ -152,7 +152,7 @@ module Master
         return "usage: /critique <file|text>" if arg.empty?
         path = expand_or_root(arg, root)
         # respond_to?, not `&.agent` — the safe-navigation operator guards a nil
-        # deliberation but not a deliberation that simply has no agent (lean
+        # deliberation but not a deliberation that has no agent (lean
         # boot, or a test double), which raised NoMethodError from here.
         has_agent = deliberation.respond_to?(:agent) && deliberation.agent
         return general_council_critique(deliberation, path) if has_agent && File.exist?(path)

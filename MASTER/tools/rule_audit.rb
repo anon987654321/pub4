@@ -55,8 +55,15 @@ module Pub4
       "MASTER/lib/**/*.rb",
       "MASTER/law/*.rb",
       "RAILS/shared/app/**/*.rb",
-      "RAILS/shared/app/assets/stylesheets/*.scss",
-      "RAILS/shared/frontend/*.js"
+      # Recursive, and both stylesheet homes. The non-recursive `stylesheets/*`
+      # reached the partials at that one level and nothing below it, which is
+      # why six css laws — CLAMP_TYPOGRAPHY, FIXED_HEIGHT, LOGICAL_PROPERTIES,
+      # MEASURE_OPTIMUM, NO_IMPORT_SCSS, NO_LONG_TRANSITION — reported firing on
+      # nothing. A law judged against no file of its own language is untested,
+      # not clean.
+      "RAILS/shared/app/assets/stylesheets/**/*.scss",
+      "RAILS/shared/frontend/**/*.scss",
+      "RAILS/shared/frontend/**/*.js"
     ].freeze
 
     # A rule flagging more than this share of the files it applies to is
@@ -146,29 +153,29 @@ module Pub4
     end
 
     def run(json: false)
-      result = audit
-      return (puts JSON.pretty_generate(result)) || result[:fixture_blindness].empty? if json
+      found = audit
+      return (puts JSON.pretty_generate(found)) || found[:fixture_blindness].empty? if json
 
-      puts "rule_audit: #{result[:lexical]} with a detector + #{result[:semantic]} asked + #{result[:practice]} practice, over #{result[:corpus]} files"
+      puts "rule_audit: #{found[:lexical]} with a detector + #{found[:semantic]} asked + #{found[:practice]} practice, over #{found[:corpus]} files"
 
-      if result[:fixture_blindness].empty?
+      if found[:fixture_blindness].empty?
         puts "rule_audit: every fixture survives being read as a real file"
       else
-        result[:fixture_blindness].each do |f|
+        found[:fixture_blindness].each do |f|
           warn "rule_audit: #{f[:rule]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
         end
         warn "rule_audit: a fixture read whole and a file read with its comments blanked are different inputs"
       end
 
-      result[:saturation].each do |r|
+      found[:saturation].each do |r|
         warn format("rule_audit: %s fires on %d of %d applicable files (%d%%) — describing the tree, not judging it",
                     r[:rule], r[:hits], r[:applicable], (r[:rate] * 100).round)
       end
 
-      puts "rule_audit: #{result[:silent].size} rule(s) fired on nothing here — #{result[:silent].join(', ')}" unless result[:silent].empty?
+      puts "rule_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
 
 
-      result[:fixture_blindness].empty? && result[:saturation].empty?
+      found[:fixture_blindness].empty? && found[:saturation].empty?
     end
   end
 end

@@ -1,7 +1,8 @@
 ---
 # What MASTER's own rules find in MASTER's own tree, and the three sibling trees.
 #
-# 534 across 759 files from the 70 rules that carry a lexical detector. This is
+# 556 across 1083 files from the rules that carry a lexical detector, 448 of
+# them in STUDIO. This is
 # the honest answer to "would running MASTER through its own rules make it
 # tidier": yes for names, spacing and comments, which is where almost all of it
 # sits. It is not the answer for defragmentation — COLLAPSE_BEFORE_ADDING,
@@ -11,4 +12,18 @@
 # Lexical only. The full gate's semantic pass blocks on a model call: measured at
 # 17 minutes elapsed against 4 minutes of CPU, idle in a TLS read. A number that
 # needs a network and a key is a number nobody has.
-findings: 534
+#
+# The corpus was `**/*.rb` until the laws were checked against it: they claim
+# nine languages, so every css, scss, yaml, markdown, html, json and shell law
+# was measured against no file and reported clean. NULLISH_COALESCING,
+# I18N_COVERAGE, STRICT_LOADING_MISSING and META_CHARSET had 75 findings
+# between them that this number could not see. A ratchet blind to two thirds of
+# its subject falls to zero without the tree improving.
+#
+# The number moved 553 -> 556 across the same pass that cut 44 findings from
+# the files it edited. Both are true: the per-file count fell, and narrowing a
+# detector moves every file it reads, not only the ones in the diff. Measured
+# against HEAD, the edits are -44; the balance is the prose, css and nullish
+# detectors seeing their real subject for the first time. One of the three is
+# another session's uncommitted RAILS work, which this tree carries too.
+findings: 556
