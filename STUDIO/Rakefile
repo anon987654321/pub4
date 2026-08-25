@@ -150,4 +150,16 @@ namespace :repligen do
   end
 end
 
+desc "Find tests that only pass in company, or only alone (TEST=substring to narrow)"
+task :isolation do
+  # dilla's files share one process on purpose, so every test can see what the
+  # ones before it left behind. Three defects this session had that shape and
+  # all three were found by running one test on its own after a hunch; this does
+  # it for all of them. Not part of `rake`: one process per test is minutes, and
+  # a check nobody will wait for is a check nobody runs.
+  require_relative "tools/isolation"
+  failures = StudioIsolation.run(pattern: ENV["TEST"])
+  exit(1) unless failures.zero?
+end
+
 task default: %i[gate test]
