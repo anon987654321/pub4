@@ -96,8 +96,19 @@ else
 end
 
 # Static family contracts (no app boot / Ruby 3.4 required).
-contract_loader = 'Dir["RAILS/test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }'
-failures << "rails_contracts" unless runner.run("rails contracts", RUBY, "-e", contract_loader)
+#
+# Through run_all.rb, which gives each file its own process. Loading all 82
+# into one interpreter worked, and worked by luck twice over: nearly every
+# file declares ROOT at class scope and several declare APPS, GATES, LINT and
+# SKIP, colliding only because they sit inside differently-named classes; and
+# several shell out to gates that call exit, so one exit anywhere ends the run
+# with Minitest reporting on whatever it had collected by then. Both failure
+# modes are silent — a wrong constant surfaces as an assertion about the wrong
+# tree, and an early exit as a green line over a short run.
+#
+# Measured at the swap rather than assumed: 559 runs either way, the same two
+# files red. The isolation is what is bought here, not coverage.
+failures << "rails_contracts" unless runner.run("rails contracts", RUBY, "RAILS/test/run_all.rb")
 
 if profile == "contributor"
   puts "deploy-rails: auditor            skip — contributor profile"
