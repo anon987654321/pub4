@@ -55,31 +55,49 @@ for subdir in */(N); do
 
   checksum=$(print -l "${sorted_hashes[@]}" | md5 -q)
 
-  new_checksums["$folder"]="$checksum"
-
   backup_file="${folder}_${date_format}.tgz"
 
-  if [[ -z "${old_checksums[$folder]}" || "${old_checksums[$folder]}" != "$checksum" ]]; then
+  # :- on both reads. `set -u` is on and these are associative-array lookups,
+  # so an unseen folder is an unset parameter and zsh aborts on it. Every
+  # folder is unseen on a first run — the run where there is no checksum file
+  # at all — so a first run died on the first folder, every time.
+  if [[ -z "${old_checksums[$folder]:-}" || "${old_checksums[$folder]:-}" != "$checksum" ]]; then
 
     print "Backing up: $folder -> $backup_file"
 
-    tar cvzf "$backup_file" "$folder" 2>/dev/null
+    # In the if-condition, not before it. This was a bare `tar` followed by
+    # `if [[ $? -ne 0 ]]`, and `set -e` is on, so a failing tar killed the
+    # script at that line: the handler under it had never run once, and no
+    # folder after the failing one was reached. A command in an if-condition is
+    # the one place set -e stands aside.
+    #
+    # stderr goes to the error log rather than /dev/null. The reason a backup
+    # failed is the whole content of the report.
+    if tar cvzf "$backup_file" "$folder" 2>>"$HOME/script_errors.log"; then
 
-    if [[ $? -ne 0 ]]; then
+      print "Created: $backup_file"
+
+      new_checksums["$folder"]="$checksum"
+
+    else
 
       log_error "tar failed for $backup_file"
 
       print "Failed: $backup_file"
 
-    else
-
-      print "Created: $backup_file"
+      # tar writes what it managed to read before giving up, so a failure
+      # leaves a short .tgz sitting next to the good ones with nothing to
+      # distinguish it. Removing it is what makes the next run's retry the
+      # only copy there is.
+      rm -f "$backup_file"
 
     fi
 
   else
 
     print "Skipped (no changes): $folder"
+
+    new_checksums["$folder"]="$checksum"
 
   fi
 

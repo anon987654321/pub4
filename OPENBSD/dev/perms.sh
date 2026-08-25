@@ -45,27 +45,45 @@ print "Apply? (y/N)"
 
 read -r confirm
 
+# The three chmod/chown blocks below put each command inside its own `if`.
+#
+# They were bare commands followed by `if [[ $? -ne 0 ]]`, and `set -e` is on
+# at the top of this file: a failing chown exited the script on its own line,
+# so the message under it had never printed once and the two blocks after it
+# never ran. Every one of these handlers was unreachable. A command in an
+# if-condition is the one place set -e stands aside — which is why the failure
+# arms below say what failed and then carry on to the next block, as the
+# original clearly intended.
+#
+# The `: ` in the success arm is deliberate: there is nothing to do when it
+# works, and `if ! cmd` would read as a negation rather than as a handler.
 if [[ "$confirm" =~ ^[Yy]$ ]]; then
 
-  chown -R "$owner_group" ./**/* 2>>"$HOME/script_errors.log"
+  if chown -R "$owner_group" ./**/* 2>>"$HOME/script_errors.log"; then
 
-  if [[ $? -ne 0 ]]; then
+    :
+
+  else
 
     print "Some chown failed; see $HOME/script_errors.log"
 
   fi
 
-  chmod -R "$file_perms" ./**/*(.) 2>>"$HOME/script_errors.log"
+  if chmod -R "$file_perms" ./**/*(.) 2>>"$HOME/script_errors.log"; then
 
-  if [[ $? -ne 0 ]]; then
+    :
+
+  else
 
     print "Some file perms failed"
 
   fi
 
-  chmod -R "$folder_perms" ./**/*(/) 2>>"$HOME/script_errors.log"
+  if chmod -R "$folder_perms" ./**/*(/) 2>>"$HOME/script_errors.log"; then
 
-  if [[ $? -ne 0 ]]; then
+    :
+
+  else
 
     print "Some folder perms failed"
 
