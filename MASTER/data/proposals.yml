@@ -233,3 +233,106 @@ proposals:
       threshold now. It exists to counterbalance SMALL_FILES and had no upper
       bound, which is not a counterbalance.
     refuted_by: MASTER/test/test_cohesion.rb test_a_family_scattered_through_the_manifest_is_not_mergeable
+
+  - id: marketplace-payment-race-on-redelivery
+    tree: RAILS
+    state: landed
+    claim: "mark_paid! is guarded by payable? outside the transaction, so a redelivered webhook double-consumes stock"
+    landed_by: f8bc5bf5c
+    note: >
+      Worse than reported. The `.lock` inside mark_paid! read as protection and was
+      none: Marketplace::Variant.lock.to_sql returns a bare SELECT on SQLite, no FOR
+      UPDATE, so it locked nothing. The guard is lock! plus a re-read inside the
+      transaction — FOR UPDATE where the adapter has it, a reload where it does not,
+      and the reload is the half that matters because SQLite serialises writers.
+
+  - id: contract-suite-loaded-in-one-process
+    tree: OPENBSD
+    state: landed
+    claim: "check-rails loads 82 test files into one interpreter; run_all.rb exists and nothing calls it"
+    landed_by: f88d7be42
+    note: >
+      check-full had already switched, with the same reasoning in its own comment;
+      check-rails was the one never updated. Measured rather than assumed at the
+      swap: 559 runs either way, the same two files red. The isolation is what is
+      bought, not coverage — the constant-collision and early-exit hazards are real
+      but were not firing.
+
+  - id: runtime-gate-passes-when-unavailable
+    tree: OPENBSD
+    state: landed
+    claim: "a gate that cannot reach the app reads green"
+    landed_by: c8d705fd3
+    note: >
+      Half true, and the half that was true was not where the claim pointed.
+      GATE_REQUIRE_LIVE already existed and already turned skipped_live into a
+      failure; it was set in one of check-rails' two loops. The source tier, holding
+      page_simulation and flow_journey, ran soft on the VPS as well as off it, and
+      check-openbsd's dns_zones never set it from the box that serves the zone.
+      Also two host predicates for one fact — a hand-rolled /etc/rc.d/brgen test
+      beside Environment.on_vps?, which is the one that honours DEPLOY_ASSUME_VPS=1
+      and can therefore be rehearsed.
+
+  - id: journey-gate-measures-production
+    tree: RAILS
+    state: landed
+    claim: "found while checking the above, not in the audit"
+    landed_by: 59708635b
+    note: >
+      brgen's /live answers 301 with an absolute Location of http://brgen.no/…, and
+      FlowClient took it at face value: the next hop left 127.0.0.1:38182 for the
+      real brgen.no on port 80, where relayd's TLS redirect reads to Net::HTTP as
+      "EOFError: end of file reached". The error is the good case — an absolute
+      redirect that happens to succeed makes the gate fetch the live site and report
+      it as a local journey. Verify the instrument first: this was found while
+      running the gate, not while reading it.
+
+  - id: gdpr-erasure-stops-at-the-users-row
+    tree: RAILS
+    state: landed
+    claim: "UserPurgeJob erases the users row and its sessions and nothing else"
+    landed_by: 637c57f74
+    note: >
+      Confirmed. The root cause is worth keeping: erasure anonymises the users row
+      instead of destroying it, so no dependent: :destroy in the graph ever fires
+      and every table has to be named by hand. The dating profile — bio,
+      coordinates, photographs and an identity-verification selfie — survived, along
+      with postal addresses, federated email and phone, delivery addresses, the
+      newsletter subscription, and coordinates on every post, story, listing and
+      event. Two guards landed with the fix, because a hand list goes stale.
+
+  - id: backup-gzip-failure-is-silent
+    tree: OPENBSD
+    state: landed
+    claim: "a failing gzip/tar in the backup path goes unreported"
+    landed_by: cc829bd71
+    note: >
+      Refuted where the audit aimed and confirmed one directory over. backup_priv.sh
+      — the script that actually backs anything up — sets `set -euo pipefail` on line
+      30, so its `tar | openssl` pipeline does fail the script. OPENBSD/dev/backup.sh
+      is the one with the defect, and it had three: an `if [[ $? -ne 0 ]]` handler
+      that set -e makes unreachable; an unset associative lookup under set -u that
+      killed every first run on the first folder; and a checksum written before the
+      tar was attempted, so a folder that failed once would read as unchanged and be
+      skipped from then on. perms.sh had the same unreachable-handler shape three
+      more times.
+
+  - id: chmod-a-rx-over-the-rails-tree
+    tree: OPENBSD
+    state: open
+    claim: "RAILS/_runtime_gate.sh:73 runs `chmod -R a+rX` over /home/dev/pub4/RAILS"
+    note: >
+      Confirmed and deliberately not landed from here. The tree it widens contains
+      RAILS/*/storage/production.sqlite3 — user emails, password digests, private
+      messages — and the untracked config/master.key files, and a+r makes every one
+      of them world-readable. What holds today is the parent: /home/dev is 710
+      dev:_pub4ci (debt.yml secrets_in_process_argv_and_world_readable_home, closed
+      2026-08-22), so the world cannot traverse to them. It is one chmod on /home/dev
+      away from being an exposure, and the comment two lines above the call already
+      says the gate "must not widen /home/dev to the world".
+      The obvious narrowing is g+rX instead of a+rX, since the comment says traversal
+      is group-based. That is exactly what cannot be decided from here: it is only
+      correct if the files under the tree are group _pub4ci rather than group dev,
+      and if they are group dev the app users lose access and every deploy's bin/ci
+      breaks. `ls -ln /home/dev/pub4/RAILS` on vm23 settles it in one line. Operator
+      decision, per "production is vm23 only".
