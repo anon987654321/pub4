@@ -135,3 +135,44 @@ compiled prompt, which is how the image was made rather than what it is of.
 `--postpro PRESET` hands the finished file straight to
 `STUDIO/postpro/postpro.rb`. The `capabilities` command emits the executable
 60-item Repligen/LoRA contract as JSON.
+
+## Keeping the model table honest
+
+`MODEL_CAPABILITIES` is a second source of truth. It exists so an unsupported
+option is refused rather than accepted-and-ignored — a request that "works"
+while dropping a setting is much harder to notice than a 422 — and the cost of
+that is that it goes stale silently: the tests check the table against itself,
+so provider drift surfaces in production or not at all.
+
+```sh
+cd STUDIO
+rake repligen:schema_audit                                   # table vs. live schemas
+rake repligen:schema_suggest MODEL=black-forest-labs/flux-2-max   # an entry to paste
+```
+
+Neither runs as part of `rake`. Both need the network and a token, and a check
+that cannot run says so rather than passing.
+
+**Surveyed 2026-08-25.** Nothing here is broken — `flux-1.1-pro` is live and
+carries no deprecation notice. But the six declared models are a generation
+behind what Replicate now leads with, and none of these is named here:
+
+| model | why it might matter |
+|---|---|
+| `black-forest-labs/flux-2-max` | BFL's current highest-fidelity image model |
+| `bytedance/seedream-5-pro` | flagship text-to-image **and** editing in one model |
+| `google/nano-banana-2` | fast generation with conversational editing |
+| `openai/gpt-image-2` | sharp text rendering inside the image |
+| `krea/krea-2-medium` | expressive illustration, anime, painterly |
+| `prunaai/p-image` | sub-second generation |
+
+The shape of the field moved as well as the names: editing is now a mode of the
+flagship models rather than a separate one, which is a different arrangement
+from the single `flux-kontext-pro` path here that requires `--image`. Recraft V4
+also emits editable SVG, which nothing in this tool can currently receive.
+
+Adopting any of them decides what the pictures look like, so it stays an
+operator call. `schema_suggest` is here so that when the decision is made, the
+input keys come off the provider instead of out of somebody's memory — the one
+thing that must never be guessed, since guessing them breaks the refusal that
+makes the table worth keeping.

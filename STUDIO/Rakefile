@@ -106,6 +106,48 @@ namespace :repligen do
     puts "repligen: #{drifted} of #{declared.length} model(s) need attention"
     exit(1) unless drifted.zero?
   end
+
+  desc "Emit a MODEL_CAPABILITIES entry for MODEL=owner/name from its live schema"
+  task :schema_suggest do
+    # Adding a model to repligen means declaring exactly which input keys it
+    # accepts, because the whole design is to refuse an option the model does
+    # not take rather than let the API drop it silently. That makes guessing the
+    # keys worse than not adding the model at all: a wrong declaration either
+    # refuses something valid or sends something invalid, and both look like the
+    # tool working.
+    #
+    # So this reads them off the provider instead of anybody typing them. It
+    # prints an entry to paste; it does not edit the table, because which models
+    # this tool offers is a decision about what the pictures look like.
+    require_relative "../MASTER/lib/io/replicate_client"
+
+    model = ENV["MODEL"].to_s.strip
+    abort "usage: rake repligen:schema_suggest MODEL=owner/name" if model.empty?
+
+    token = Master::Io::ReplicateClient.load_token
+    abort "repligen: no REPLICATE_API_TOKEN — the schema can only come from the provider" if token.empty?
+
+    keys = Master::Io::ReplicateClient.new(token: token).input_keys(model)
+    abort "repligen: #{model} returned no input schema (wrong slug, or private?)" if keys.empty?
+
+    # Named so the two knobs repligen exposes are wired if the model has them,
+    # and left out when it does not — flux-schnell takes steps and no guidance,
+    # and that asymmetry is why the ranges are per-model.
+    guidance = keys.find { |k| %w[guidance guidance_scale cfg cfg_scale].include?(k) }
+    steps = keys.find { |k| %w[num_inference_steps steps].include?(k) }
+    negative = keys.find { |k| k.include?("negative") }
+
+    puts "  # #{model} — input keys read from the live schema on #{Time.now.strftime('%Y-%m-%d')}."
+    puts "  #{model.dump} => {"
+    puts "    input_keys: %w[#{keys.join(' ')}],"
+    puts "    negative_prompt_key: #{negative ? negative.dump : 'nil'},"
+    puts "    guidance_key: #{guidance.dump}, guidance_range: (0.0..10.0), guidance_default: 3.0," if guidance
+    puts "    steps_key: #{steps.dump}, steps_range: (1..50), steps_default: 28," if steps
+    puts "  },"
+    puts
+    puts "repligen: ranges and defaults above are placeholders — the schema gives names, not"
+    puts "repligen: what is musical for this model. Read the model page before pasting."
+  end
 end
 
 task default: %i[gate test]

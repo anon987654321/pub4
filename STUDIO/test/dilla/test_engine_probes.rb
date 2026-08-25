@@ -57,7 +57,35 @@ class TestDilla < Minitest::Test
   # pools at load, so setting ENV inside `script` is too late and silently reads
   # back the default. A test that flips a switch between two calls in one process
   # gets the first pool twice.
+  # Retried once on timeout, because a timeout is not a hang.
+  #
+  # The bound exists for a real failure — the coltrane-gem hang pinned a probe
+  # near 100% CPU forever with no output and no test failure. But every probe
+  # loads the whole engine in a fresh subprocess and some of them render audio,
+  # and the budget has now been too tight twice for the same reason: 30s fired
+  # spuriously, was raised to 90s, and 90s fires spuriously on a machine with
+  # other sessions on it. The two-bar smoke render takes 21s alone and exceeds
+  # 90s under contention.
+  #
+  # Raising it again trades away the thing it is for. A hang does not finish on
+  # the second attempt either, so one retry separates the two: a genuine hang
+  # costs twice the budget and still fails, and a load spike costs one wasted
+  # probe and passes. This is the same conclusion RAILS/gates dns_zones reached
+  # about a dropped UDP packet — a timeout is not an absent record.
   def eval_in_engine(script, timeout: PROBE_TIMEOUT, env: {})
+    attempt = 0
+    begin
+      attempt += 1
+      run_engine_probe(script, timeout: timeout, env: env)
+    rescue Timeout::Error
+      retry if attempt < 2
+
+      flunk "engine probe timed out after #{timeout}s twice — a load spike does not " \
+            "survive a retry, so this is the hang the bound is for (see README, coltrane-gem)"
+    end
+  end
+
+  def run_engine_probe(script, timeout:, env:)
     preamble = env.map { |k, v| "ENV[#{k.to_s.dump}] = #{v.to_s.dump}" }.join("\n")
     probe = <<~RUBY
       $PROGRAM_NAME = "dilla_test_probe"
@@ -78,9 +106,11 @@ class TestDilla < Minitest::Test
           status = wait_thr.value
         end
       rescue Timeout::Error
+        # Kill the group before re-raising: the retry must not race a probe that
+        # is still holding ffmpeg or fluidsynth open.
         pgid = Process.getpgid(wait_thr.pid) rescue wait_thr.pid
         Process.kill("-KILL", pgid) rescue nil
-        flunk "engine probe timed out after #{timeout}s (likely the coltrane-gem hang — see README)"
+        raise
       end
     end
     assert status.success?, "engine probe failed: #{err}"
