@@ -211,10 +211,21 @@ shared_wiring:
   class: Deploy::SharedWiringGate
   pass: "Shared wiring gate passed (routes, importmap, public assets, Stimulus)."
 
+# MASTER's 164 executable rules reach this tree through exactly one door, and
+# until now it was a door nobody opened: no covered_by meant this ran only when
+# named by hand, so a RAILS deploy was gated by RuboCop, Brakeman and the app
+# suite and by none of the constitution. Two trailing commas blocked brgen for
+# ten hours on 2026-08-25 while NO_COLUMN_ALIGN, which exists for exactly that,
+# never ran.
+#
+# release rather than production: this is scan-only and takes about eleven
+# minutes, which is right for the gate that fronts a release and wrong for every
+# CI run on a 1 vCPU box.
 constitutional_scan:
   require: lib/meta/constitutional_scan
   class: Deploy::ConstitutionalScanGate
   pass: "Constitutional scan preflight completed."
+  covered_by: release
 
 # Owns every browser-backed gate below it. Each leaf launches Chrome, so running
 # one twice in a single invocation is pure wall-clock waste.
