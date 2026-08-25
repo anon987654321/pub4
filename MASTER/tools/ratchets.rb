@@ -140,6 +140,8 @@ module Pub4
       "css_coverage" => "shared/lib/pub4/css_coverage_lint.rb",
       "asset_url" => "shared/lib/pub4/asset_url_lint.rb",
       "visual_contract" => "shared/lib/pub4/visual_contract_lint.rb",
+      "model_contract" => "shared/lib/pub4/model_contract_lint.rb",
+      "destructive_action" => "shared/lib/pub4/destructive_action_lint.rb",
     }.freeze
 
     def rails_lint_rows
