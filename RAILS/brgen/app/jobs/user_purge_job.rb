@@ -43,7 +43,7 @@ class UserPurgeJob < ApplicationJob
     { model: "ExternalIdentity",      key: :user_id },
     { model: "Marketplace::Address",  key: :user_id },
     # What someone searched for, saved under their name. Nobody else reads it.
-    { model: "Marketplace::SavedSearch", key: :user_id },
+    { model: "Marketplace::SavedSearch", key: :user_id }
   ].freeze
 
   # Retained rows with personal columns to clear.
@@ -66,7 +66,7 @@ class UserPurgeJob < ApplicationJob
     { model: "Marketplace::Checkout", key: :user_id, columns: %i[marketplace_address_id] },
     # An event has a venue rather than a home, but the coordinates on one
     # somebody hosted themselves are theirs.
-    { model: "Event",                 key: :user_id, columns: %i[latitude longitude] },
+    { model: "Event",                 key: :user_id, columns: %i[latitude longitude] }
   ].freeze
 
   def perform
