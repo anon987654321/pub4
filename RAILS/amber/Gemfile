@@ -76,7 +76,11 @@ group :development do
   gem "web-console"
 end
 gem "pagy", "~> 9.3"
-gem "ruby-openai"
+# brgen already uses ruby_llm, and two LLM clients in one repo is one more
+# than the number anybody keeps current. It speaks OpenRouter natively, so
+# WardrobeAi::OpenRouter needs no uri_base override. Replaced ruby-openai
+# on 2026-08-25.
+gem "ruby_llm"
 gem "ruby-vips"
 gem "falcon"
 gem "ferrum"

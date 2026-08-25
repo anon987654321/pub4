@@ -4,8 +4,38 @@ require "zlib"
 require "base64"
 
 class WardrobeAi
-  OPENROUTER_BASE = "https://openrouter.ai/api/v1"
   MODEL = "google/gemini-2.0-flash-001"
+
+  # The only part of this service that knows a vendor exists.
+  #
+  # WardrobeAi used to hold an OpenAI::Client directly, so `chat` reached into
+  # `response.dig("choices", 0, "message", "content")` — the service's entire
+  # knowledge of AI was one vendor's HTTP response shape, and the test double
+  # existed to reproduce that shape rather than the behaviour. The seam is now
+  # `ask(prompt) -> String`, which is what the caller actually wants, and the
+  # double is three lines.
+  #
+  # ruby_llm rather than ruby-openai because brgen already uses ruby_llm and
+  # two LLM clients in one repo is one more than the number of them anybody
+  # keeps current. It speaks OpenRouter natively — openrouter_api_key is a
+  # first-class setting, so the uri_base override this used to need is gone.
+  class OpenRouter
+    def initialize(token)
+      @token = token
+    end
+
+    # assume_model_exists: the model id is OpenRouter's, not one from
+    # ruby_llm's bundled registry, and the registry is a snapshot that goes
+    # stale. Refusing to call a model because a shipped list has not heard of
+    # it is the wrong failure.
+    def ask(prompt)
+      RubyLLM.context { |config| config.openrouter_api_key = @token }
+             .chat(model: MODEL, provider: :openrouter, assume_model_exists: true)
+             .with_params(response_format: { type: "json_object" })
+             .ask(prompt)
+             .content
+    end
+  end
 
   def self.configured?
     ENV["OPENROUTER_API_KEY"].to_s.strip.present?
@@ -221,20 +251,13 @@ class WardrobeAi
     token = ENV["OPENROUTER_API_KEY"].to_s.strip
     return nil if token.empty?
 
-    OpenAI::Client.new(access_token: token, uri_base: OPENROUTER_BASE)
+    OpenRouter.new(token)
   end
 
   def chat(prompt)
     return fallback_response(prompt) unless @client
 
-    response = @client.chat(
-      parameters: {
-        model: MODEL,
-        messages: [ { role: "user", content: prompt } ],
-        response_format: { type: "json_object" }
-      },
-    )
-    content = response.dig("choices", 0, "message", "content")
+    content = @client.ask(prompt)
     return fallback_response(prompt) if content.blank?
 
     JSON.parse(content)

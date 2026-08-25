@@ -9,14 +9,13 @@ class WardrobeAiTest < ActiveSupport::TestCase
       @error = error
     end
 
-    def chat(parameters:)
+    # The seam is ask(prompt) -> String. This used to reproduce OpenAI's
+    # choices/message/content envelope, so the double asserted a vendor's HTTP
+    # shape rather than what WardrobeAi actually needs from a model.
+    def ask(_prompt)
       raise @error if @error
 
-      {
-        "choices" => [
-          { "message" => { "content" => @content } }
-        ]
-      }
+      @content
     end
   end
 
