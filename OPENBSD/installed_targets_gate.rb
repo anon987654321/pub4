@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-
 # Every executable the box is told to run must be one the repo actually installs.
 #
 # On 2026-08-25 /etc/daily.local guarded a root-run drift check on

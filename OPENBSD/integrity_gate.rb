@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-
 # OPENBSD integrity chain — production, phantom FK, frontend, relayd, domain, crawl inventory.
 
 require "open3"

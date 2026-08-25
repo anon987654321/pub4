@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-
 # render_dns.rb — every name this box answers for, from one source.
 #
 #   ruby OPENBSD/bin/render_dns.rb            write zones, nsd.conf, acme-client.conf
