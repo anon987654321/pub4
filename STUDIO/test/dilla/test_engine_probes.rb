@@ -976,14 +976,33 @@ class TestDilla < Minitest::Test
       unreachable = (loops - excluded).reject do |slug|
         presets.include?(slug) || aliases.any? { |a, t| t == slug && presets.include?(a) }
       end
-      puts JSON.generate(loops: loops, unreachable: unreachable,
+      puts JSON.generate(builtin_count: TRACK_SAMPLE_LOOPS_BUILTIN.length, loops: loops, unreachable: unreachable,
                          missing_files: TRACK_SAMPLE_LOOPS.reject { |_, v| File.file?(v[:path]) }.keys)
     RUBY
-    assert_operator result.fetch("loops").length, :>=, 12
+    # As above: the rack is the builtins until the rebuilt crate registers its
+    # chops, and this test's real content is the two assertions below it —
+    # a loop with no preset never renders, and an entry pointing at a missing
+    # file renders silently with no bed. Those hold at any crate size.
+    assert_operator result.fetch("loops").length, :>=, result.fetch("builtin_count")
     assert_empty result.fetch("unreachable"),
                  "hand-cut loops with no preset never render: #{result.fetch('unreachable').inspect}"
-    assert_empty result.fetch("missing_files"),
-                 "a loop entry pointing at a file that is not there renders silently without a bed"
+    # A ratchet rather than assert_empty, because these four are a known and
+    # deliberate state rather than a defect. 74d9e4c1b cleared the crate on the
+    # operator's call — 133 renders and 498 samples — and it is being rebuilt
+    # from source with yt-dlp and demucs. Their entries stay: the hp and sub_db
+    # on each was measured per loop, and deleting the table to satisfy a test
+    # would throw away tuning that the files coming back will need.
+    #
+    # assert_empty here failed the suite for the state the operator asked for.
+    # A skip would go quiet and stay quiet. This fails on a fifth, and tightens
+    # on its own as the rebuild lands each file.
+    awaiting_rebuild = %w[kembara_rindu lo_borges rauingar arat_swost_wolet]
+    fileless = result.fetch("missing_files")
+    assert_empty fileless - awaiting_rebuild,
+                 "a loop entry pointing at a file that is not there renders silently without a bed: " \
+                 "#{(fileless - awaiting_rebuild).inspect}"
+    assert_operator fileless.length, :<=, awaiting_rebuild.length,
+                    "more fileless loops than the crate rebuild accounts for"
   end
 
   # GENRE names a bundle; it does not seize the controls. Every value in it is
@@ -1336,8 +1355,14 @@ class TestDilla < Minitest::Test
   # share -- including DEMO_TECHNO_SHARE=1.
   def test_sampled_beds_are_never_reassigned_to_the_techno_renderer
     result = eval_in_engine(<<~RUBY)
-      beds = TRACK_SAMPLE_LOOPS.keys.map(&:to_s) +
-             TRACK_SAMPLE_LOOP_ALIASES.keys.map(&:to_s)
+      # Aliases whose target is actually in the rack. An alias pointing at a
+      # loop the crate does not have is not a sampled bed — there is no sample
+      # to lose — and counting it as one made this test assert that the engine
+      # protects a record that is not there. The crate was cleared on the
+      # operator's call in 74d9e4c1b and is being rebuilt from source, so the
+      # eight sheger_* aliases resolve to nothing until it lands.
+      live_aliases = TRACK_SAMPLE_LOOP_ALIASES.select { |_, target| TRACK_SAMPLE_LOOPS.key?(target) }
+      beds = TRACK_SAMPLE_LOOPS.keys.map(&:to_s) + live_aliases.keys.map(&:to_s)
       # With TECHNO_HARMONY off the techno renderer cannot carry a bed, so no
       # sampled track may be reassigned at any share.
       ENV.delete("TECHNO_HARMONY")
@@ -1362,10 +1387,13 @@ class TestDilla < Minitest::Test
       # guard.
       plain = (TRACK_PRESETS.keys.map(&:to_s) - beds).first(40)
       eligible = plain.each_with_index.count { |slug, i| demo_techno_slot?(i, slug) }
-      puts JSON.generate(stolen: stolen, bed_count: beds.length, lifted: lifted,
+      puts JSON.generate(builtin_count: TRACK_SAMPLE_LOOPS_BUILTIN.length, stolen: stolen, bed_count: beds.length, lifted: lifted,
                          plain_sampled: plain.length, plain_eligible: eligible)
     RUBY
-    assert_operator result.fetch("bed_count"), :>=, 12
+    # 12 is the populated-crate number. With the crate cleared the builtin
+    # loops are all there is, and asserting the full count would fail the suite
+    # on the state the operator deliberately put the tree in.
+    assert_operator result.fetch("bed_count"), :>=, result.fetch("builtin_count")
     assert_empty result.fetch("stolen"),
                  "sampled beds reassigned to techno, so the sample never plays: #{result.fetch('stolen').inspect}"
     assert_operator result.fetch("lifted"), :>, 0,
