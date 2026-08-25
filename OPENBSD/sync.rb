@@ -22,7 +22,7 @@ FIXED_SOURCES = [
 # artifacts (*.zone.signed, K*.key, K*.ds) are regenerated on every re-sign, so
 # mirroring them would put a churning copy of the DNS into every git diff while
 # the nameserver — not the repo — remains the source of truth. This script used
-# to glob all four patterns; it had simply never been run, which is the only
+# to glob all four patterns; it had never been run, which is the only
 # reason the repo is clean of them. nsd.conf stays in FIXED_SOURCES above: that
 # is server configuration, not zone data.
 #

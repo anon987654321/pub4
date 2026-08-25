@@ -6,7 +6,7 @@
 # files by design: crontab.vm23 names a path, OPERATOR.sh installs it, rc.d
 # holds the service, nsd.conf names the zone. Nothing in the tree fails when
 # those halves stop agreeing, and the failure is invisible from either side —
-# both files are complete and correct, and the job is simply not scheduled.
+# both files are complete and correct, and the job is not scheduled.
 #
 # That has happened. test/test_tracked_crontab.rb records uptime-check.sh sitting
 # in crontab.vm23 and usr/local/bin/ for six days while being on neither the

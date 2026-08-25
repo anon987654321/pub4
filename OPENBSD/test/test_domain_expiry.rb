@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Domains expire silently and the site just stops.
+# Domains expire silently and the site stops.
 #
 # amstrdam.nl served Amsterdam, lapsed, dropped, and was re-registered by someone
 # else on 2026-05-18 — noticed 81 days later, by accident. lndon.uk went the same

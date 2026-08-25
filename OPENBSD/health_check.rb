@@ -255,7 +255,7 @@ end
 # which has no Puma plugin to read it, so no worker had ever started. Measured
 # 2026-08-12: 1670 jobs enqueued, 0 finished, 0 processes, 0 recurring tasks.
 # Every check on this box passed throughout — the web app was healthy and the
-# jobs simply piled up in a SQLite file nobody queried. Disappearing messages
+# jobs piled up in a SQLite file nobody queried. Disappearing messages
 # had never disappeared and 141,753 guest rows had never been pruned.
 #
 # Read-only and per app, from the queue database directly rather than by booting

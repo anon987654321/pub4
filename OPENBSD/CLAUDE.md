@@ -108,7 +108,7 @@ never deletes destination files that are absent from the source. A file
 deleted from git therefore survived indefinitely on the VPS's copy-tree
 checkout, invisibly, until something referenced it and broke at runtime.
 
-This was fixed by adding `doas rm -rf` before each `tar xf -` extraction
+Adding `doas rm -rf` before each `tar xf -` extraction fixed this
 (both in `sync_from_repo()`'s per-directory loop and in
 `sync_ci_rails_root()`). If you're debugging a VPS-only failure where a file
 "shouldn't exist anymore" but the error implies it does, first check whether

@@ -8,7 +8,7 @@
 #
 # There were three descriptions of the same DNS and no two agreed. OPERATOR.sh's
 # ALL_DOMAINS listed 53 domains; /var/nsd/zones/master held 61 zone files;
-# nsd.conf declared 54 zones, so seven zone files were served by nobody and three
+# nsd.conf declared 54 zones, so seven zone files reached no server and three
 # more pointed at a .signed file that did not exist. Only brgen.no had SPF, DMARC
 # or a www record. oshlo.no — live, certificated, serving real visitors — had
 # none of the three. Every zone advertised an MX for a mail server that does not
