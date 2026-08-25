@@ -42,4 +42,16 @@ task :gate do
   ruby File.expand_path("gate.rb", __dir__)
 end
 
+namespace :postpro do
+  desc "Install postpro's runtime dependencies (ruby-vips, tty-prompt, libvips)"
+  task :bootstrap do
+    # The one place installation is allowed. postpro.rb used to do this from
+    # file scope, so `rake gate` — which loads the file to check that it boots —
+    # could gem-install and reach for brew/apt/pkg_add. A check observes the
+    # environment; repairing it is a separate command, and this is it.
+    ENV["POSTPRO_INSTALL_DEPS"] = "1"
+    ruby File.expand_path("postpro/postpro.rb", __dir__), "--vocab-check"
+  end
+end
+
 task default: %i[gate test]

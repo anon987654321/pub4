@@ -23,14 +23,17 @@ BOOT_TIME = Time.now.freeze
 module PostproBootstrap
   def self.dmesg(msg)
     elapsed = defined?(BOOT_TIME) ? " +%.3fs" % (Time.now - BOOT_TIME) : ""
-    tag = if msg.start_with?("ERROR", "error")
+    # FATAL is in this list because it was not, and the one message that uses
+    # it — libvips unavailable, on the line before `exit 1` — printed as
+    # "postpro: ok: FATAL libvips unavailable".
+    tag = if msg.start_with?("ERROR", "error", "FATAL", "fatal")
             "fix:"
           elsif msg.start_with?("WARN", "warn")
             "warn:"
           else
             "ok:"
           end
-    text = msg.sub(/\A(?:OK|WARN|ERROR|ok|warn|error)\s+/i, "")
+    text = msg.sub(/\A(?:OK|WARN|ERROR|FATAL)\s+/i, "")
     $stdout.puts "postpro#{elapsed}: #{tag} #{text}"
     $stdout.flush
   end
@@ -39,11 +42,26 @@ module PostproBootstrap
     dmesg "ruby#{RUBY_VERSION} os=#{RbConfig::CONFIG["host_os"]} pid=#{Process.pid}"
   end
 
+  # Whether installing is allowed at all.
+  #
+  # It used to be unconditional, and `BOOTSTRAP = PostproBootstrap.run` runs at
+  # file scope — so *loading* postpro.rb could `gem install ruby-vips`, and on a
+  # miss go on to `brew install vips`, `apt install libvips-dev` or
+  # `doas pkg_add vips`. STUDIO's own gate loads this file to check that it
+  # boots, which made `rake gate` a command that could mutate the machine it was
+  # supposed to be measuring. A check observes; it does not repair.
+  #
+  # Default is observe. POSTPRO_INSTALL_DEPS=1 opts in, and `rake
+  # postpro:bootstrap` is the spelling meant for a human. Never inferred from a
+  # tty: the gate's probe inherits one when rake is run from a terminal, which
+  # would put the mutation right back under the check.
+  def self.install_allowed? = ENV["POSTPRO_INSTALL_DEPS"] == "1"
+
   def self.ensure_gems
     vips_available = ensure_vips
     tty_available = ensure_tty_prompt
 
-    dmesg "vipsgem=#{vips_available} tty=#{tty_available}"
+    dmesg "vipsgem=#{vips_available} tty=#{tty_available} install=#{install_allowed?}"
     { vips: vips_available, tty: tty_available }
   end
 
@@ -51,6 +69,12 @@ module PostproBootstrap
     require "vips"
     true
   rescue LoadError
+    unless install_allowed?
+      dmesg "WARN ruby-vips gem missing — `rake postpro:bootstrap` installs it, " \
+            "or POSTPRO_INSTALL_DEPS=1 to allow it from here"
+      return false
+    end
+
     dmesg "WARN ruby-vips gem missing, attempting install..."
     begin
       if system("gem install ruby-vips --no-document")
@@ -72,6 +96,12 @@ module PostproBootstrap
     require "tty-prompt"
     true
   rescue LoadError
+    unless install_allowed?
+      dmesg "WARN tty-prompt gem missing — degraded prompt experience; " \
+            "`rake postpro:bootstrap` installs it"
+      return false
+    end
+
     dmesg "WARN tty-prompt gem missing, attempting install..."
     begin
       if system("gem install tty-prompt --no-document")
