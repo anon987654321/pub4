@@ -244,6 +244,50 @@ end
 
 task default: :test
 
+# Which files moved the spine, so the number comes with a culprit.
+#
+# The ratchet said "+16" and nothing else, and on 2026-08-25 that cost an hour and
+# nearly a wrong ceiling raise: 15 of those 16 lines were another session's
+# untracked file in a shared checkout, and the session reading the number assumed
+# they were its own. A ratchet that reports only a total makes every concurrent
+# session responsible for every other session's work.
+#
+# Untracked files are listed first and explicitly, because they are the ones a
+# `git diff` does not show and the ones a stash-and-remeasure silently attributes
+# to you. Body lines, not raw, so the numbers match the ceiling's own unit.
+def spine_movers(root)
+  metrics = Master::Review::Scan::CodeMetrics
+  # --porcelain reports paths from the REPO root, not from -C, so they have to be
+  # joined against the toplevel. Joining them against MASTER/ instead finds no
+  # file, every row filters out, and the attributor reports "nothing uncommitted"
+  # while staring at the file that moved the number — which is the failure this
+  # whole helper exists to prevent, so it is worth the extra call.
+  top = IO.popen(["git", "-C", root, "rev-parse", "--show-toplevel"], &:read).strip
+  at = lambda do |rel|
+    out = IO.popen(["git", "-C", top, "show", "HEAD:#{rel}"], err: File::NULL, &:read)
+    $?.success? ? metrics.body_lines(out) : 0
+  end
+
+  changed = IO.popen(["git", "-C", root, "status", "--porcelain", "--", "lib"], &:read).lines
+  rows = changed.filter_map do |line|
+    status, rel = line.strip.split(" ", 2)
+    next unless rel && File.file?(File.join(top, rel))
+
+    now = metrics.body_lines(File.read(File.join(top, rel)))
+    was = status == "??" ? 0 : at.call(rel)
+    next if now == was
+
+    [rel, now - was, status == "??" ? " (untracked)" : ""]
+  end
+  return "  (nothing uncommitted under lib/ — the overage is already committed)\n" if rows.empty?
+
+  lines = rows.sort_by { |(_, delta, _)| -delta }
+              .map { |rel, delta, note| format("  %+5d  %s%s\n", delta, rel, note) }
+  "  moved by uncommitted work:\n#{lines.join}"
+rescue StandardError => e
+  "  (could not attribute: #{e.class})\n"
+end
+
 namespace :lint do
   desc "Check all Ruby files have # frozen_string_literal: true"
   task :frozen do
@@ -375,7 +419,8 @@ namespace :lint do
     end
 
     if lines > ceiling
-      abort "lint:spine: lib/ is #{lines} lines, ceiling is #{ceiling} (+#{lines - ceiling}). " \
+      abort "lint:spine: lib/ is #{lines} lines, ceiling is #{ceiling} (+#{lines - ceiling}).\n" +
+            spine_movers(__dir__) +
             "Absorb it, or raise the ceiling in data/spine.yml in a commit that says why."
     end
 
