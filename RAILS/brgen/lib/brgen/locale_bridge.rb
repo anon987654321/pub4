@@ -39,10 +39,18 @@ module Brgen
     # Nordic languages fall to nb before en: a Danish or Swedish reader is far
     # better served by Norwegian than by English, and Icelandic has no Faker
     # locale either (see CityContent::LOCALE_BY_COUNTRY).
+    #
+    # en is terminal, and nothing falls back to it from below. It used to: the
+    # map read `en: %i[nb]`, so a key missing from en.yml would have rendered
+    # one Norwegian sentence inside an English paragraph, which reads as a bug
+    # rather than as a gap. It never fired — RAILS/test/locale_contract_test.rb
+    # asserts en and nb declare the same keys, and they do, all 1579 of them.
+    # A fallback reachable only by breaking a contract test, and wrong when it
+    # is reached, is not a safety net.
     def fallbacks_map
       nordic = NORDIC.reject { |code| code == :nb }.to_h { |code| [ code, %i[nb en] ] }
 
-      { nb: %i[en], en: %i[nb], "en-US": %i[en], "en-GB": %i[en] }.merge(nordic)
+      { nb: %i[en], "en-US": %i[en], "en-GB": %i[en] }.merge(nordic)
     end
   end
 end

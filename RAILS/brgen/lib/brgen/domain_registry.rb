@@ -49,8 +49,8 @@ module Brgen
 
     # Entry.locale is the language of the city, not a promise that we ship a
     # YAML file for it. LocaleBridge.resolve is what I18n.locale becomes —
-    # da/sv/fi/is → nb, it/pt → fr, pl/en-US/en-GB → en. Do not add a thin
-    # locale file that is a copy of another language; that is a claim.
+    # da/sv/fi/is → nb, and everything else → en. Do not add a thin locale
+    # file that is a copy of another language; that is a claim.
     ENTRIES = [
       Entry.new("brgen.no", "Bergen", "NO", :nb, "NOK", "markedsplass"),
       Entry.new("longyearbyn.no", "Longyearbyen", "NO", :nb, "NOK", "markedsplass"),
