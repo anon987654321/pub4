@@ -182,6 +182,8 @@ when "hooks"
   puts "hooks: core.hooksPath -> OPENBSD/dev/githooks"
   Dir.children(hooks).sort.each { |hook| puts "  #{hook}#{File.executable?(File.join(hooks, hook)) ? '' : '  (NOT EXECUTABLE)'}" }
   puts "hooks: cross-tree commits now refused unless PUB4_CROSS_TREE=1"
+  puts "hooks: post-commit records this session's SHAs, so pre-push names the foreign ones"
+  puts "hooks: PUB4_SESSION=<name> keys that ledger explicitly; without it the shell is the key"
 when "test"
   # The smallest COMPLETE proof for the paths given (dirty files when none
   # are). Complete means whole suites — a green over hand-picked tests is

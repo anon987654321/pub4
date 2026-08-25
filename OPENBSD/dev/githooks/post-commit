@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Records that this session made this commit.
+#
+# pre-push's header says git offers no way to tell sessions apart, and that is
+# true of git. It is not true of a session, which knows perfectly well what it
+# just committed — it simply had nowhere to write it down. So this writes it
+# down, and pre-push stops guessing.
+#
+# The guess it was making is the reason this exists. It marks the newest commit
+# "yours?" and the rest as somebody else's, which is right most of the time and
+# wrong exactly when it matters: on 2026-08-25 a session pushed and carried four
+# commits from another, having read a list where all four sat under a "not
+# yours" marker it had already decided to override. The refusal was not the
+# problem. PUB4_PUSH_ALL=1 is one phrase, it answers every objection at once,
+# and after the fourth or fifth time it is typed without reading.
+#
+# A ledger changes what the warning can say. "3 of these 4 are not from this
+# session, here they are" is a specific claim about specific commits, and a
+# specific claim is much harder to wave through than a general one.
+#
+# Keyed on PUB4_SESSION when the environment sets one, and otherwise on the
+# terminal's own session — the point is only to distinguish concurrent agents in
+# one checkout, so anything stable per agent and different between them works.
+# With neither, this writes nothing and pre-push behaves exactly as before: no
+# ledger is not a claim that a commit is foreign.
+
+require "fileutils"
+
+def session_id
+  explicit = ENV["PUB4_SESSION"].to_s.strip
+  return explicit unless explicit.empty?
+
+  # Not a fallback that invents an identity: the parent pid is stable for the
+  # life of one shell and differs between two, which is the only property
+  # needed. If even that is unavailable, record nothing.
+  ppid = Process.ppid
+  ppid.positive? ? "ppid-#{ppid}" : ""
+rescue StandardError
+  ""
+end
+
+id = session_id
+exit 0 if id.empty?
+
+git_dir = IO.popen(%w[git rev-parse --git-dir], &:read).strip
+exit 0 if git_dir.empty?
+
+sha = IO.popen(%w[git rev-parse HEAD], &:read).strip
+exit 0 if sha.empty?
+
+ledger = File.join(git_dir, "pub4-session-commits")
+FileUtils.mkdir_p(File.dirname(ledger))
+File.open(ledger, "a") { |f| f.puts("#{id} #{sha}") }
+exit 0

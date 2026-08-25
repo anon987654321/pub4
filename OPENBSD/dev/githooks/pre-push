@@ -27,6 +27,30 @@ def commits(range)
     .lines(chomp: true).reject(&:empty?).map { |line| line.split("") }
 end
 
+# What this session committed, per post-commit. Absent, this is empty and every
+# commit stays "unknown" — a missing ledger must never read as "foreign", or the
+# first push from a shell without one becomes a wall of false accusations.
+def session_commits
+  id = ENV["PUB4_SESSION"].to_s.strip
+  id = "ppid-#{Process.ppid}" if id.empty?
+  git_dir = IO.popen(%w[git rev-parse --git-dir], &:read).strip
+  return [] if git_dir.empty?
+
+  path = File.join(git_dir, "pub4-session-commits")
+  return [] unless File.file?(path)
+
+  File.readlines(path, chomp: true).filter_map do |line|
+    recorded_id, sha = line.split(" ", 2)
+    sha if recorded_id == id
+  end
+rescue StandardError
+  []
+end
+
+MINE = session_commits.freeze
+
+def mine?(sha) = MINE.any? { |recorded| recorded.start_with?(sha) || sha.start_with?(recorded) }
+
 pushing = []
 $stdin.each_line do |line|
   local_ref, local_sha, _remote_ref, remote_sha = line.split
@@ -44,7 +68,8 @@ if pushing.size == 1
   # commit is exactly where the "yours?" guess is weakest, so it gets printed
   # rather than assumed.
   sha, author, age, subject = pushing.first
-  warn "pre-push: publishing #{sha} (#{author}, #{age}) #{subject[0, 62]}"
+  origin = MINE.empty? ? "" : (mine?(sha) ? " — this session's" : " — NOT this session's")
+  warn "pre-push: publishing #{sha} (#{author}, #{age})#{origin} #{subject[0, 62]}"
   exit 0
 end
 
@@ -55,11 +80,23 @@ warn ""
 warn "pre-push: REFUSED — #{pushing.size} commits would be published, not 1:"
 warn ""
 pushing.each_with_index do |(sha, author, age, subject), index|
-  marker = index.zero? ? "yours?" : "      "
+  # The ledger, when there is one, replaces the guess. "yours?" on the newest
+  # commit was right most of the time and wrong exactly when it mattered.
+  marker = if MINE.empty?
+             index.zero? ? "yours?" : "      "
+           else
+             mine?(sha) ? "mine  " : "FOREIGN"
+           end
   warn format("  %s %s  %-12s %-14s %s", marker, sha, author, age, subject[0, 62])
 end
 warn ""
-warn "  Only the top one is plausibly this session's. The rest belong to whoever"
+if MINE.empty?
+  warn "  Only the top one is plausibly this session's. The rest belong to whoever"
+else
+  foreign = pushing.count { |(sha, *)| !mine?(sha) }
+  warn "  #{foreign} of these #{pushing.size} were not committed by this session, and are marked"
+  warn "  FOREIGN above. They belong to whoever"
+end
 warn "  is also working in this checkout, and pushing publishes their work on"
 warn "  their behalf, before they have decided to."
 warn ""
