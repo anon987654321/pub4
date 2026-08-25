@@ -370,3 +370,20 @@ closed:
     ask becomes doctrine in OPENBSD/DECISIONS.md — every NEW gate carries its fixture
     pair, existing gates get one when touched (tap_target_probe and focus_walk_probe
     are the exemplars).'
+- id: bsdports_org_delegated_to_parking
+  note: 'open 2026-08-25, registrar-side. bsdports.org does not resolve: the .org registry
+    delegates it to ns1/2/3.expireddomain.hyp.net — Domeneshop''s parking servers — which
+    publish no A record. Confirmed against b0.org.afilias-nst.org, not a cached resolver.
+    The registration is ours and paid to 2027-08-08, and whois shows autoRenewPeriod, so
+    the shape is: it lapsed on 2026-08-08, Domeneshop moved the nameservers to parking,
+    the registration auto-renewed, and the nameservers were never put back. Everything
+    downstream still believes in it — relayd holds a keypair and a Host match, a valid
+    certificate sits at /etc/ssl/bsdports.org.fullchain.pem to Nov 10 2026, RUNBOOK.md
+    names https://bsdports.org as the URL, OPERATOR.sh probes it, rcctl says ok and the
+    app answers 200 on 47312. It has simply been dark. Fix is one registrar change: set
+    the nameservers at Domeneshop to ns.hyp.net and ns.brgen.no, which is what brgen.no
+    uses. Do it before Nov 10 or the certificate renewal fails too — acme-client needs
+    the name to resolve here for HTTP-01. Nothing we had could have caught this:
+    domain_watch takes its population from nsd.conf and bsdports.org is not a zone we
+    serve, and the expiry watch reads expiry, which is paid. dns_zones now asks a public
+    resolver whether each app domain points at 46.23.89.226, and fails on this one.'
