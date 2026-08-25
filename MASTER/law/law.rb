@@ -44,6 +44,14 @@ module Law
   # checkable offline by a task that has a model. A semantic rule with no
   # example of what it is looking for is the unfalsifiable shape this file
   # already refuses in the lexical case.
+  # One real extension per language a law can declare, for proving a fixture the
+  # way a subject is actually read. Ordered so the first match is the ordinary
+  # case for that language rather than an alias of it.
+  REALISTIC_EXTENSION = {
+    ".rb" => "ruby", ".js" => "javascript", ".scss" => "scss", ".css" => "css",
+    ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
+  }.freeze
+
   MEMBERS = %i[id source severity languages scope path path_exclude absent detect ask fix bad good reads_comments].freeze
   Rule = Data.define(*MEMBERS) do
     def applies?(file, language)
@@ -80,6 +88,8 @@ module Law
       unless semantic?
         raise ArgumentError, "#{id}: bad fixture not flagged" if scan(bad).empty?
         raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
+
+        prove_as_real_file!
       end
 
       unreachable = languages.map(&:to_s) - Master::FILE_LANGUAGE_MAP.values.uniq
@@ -91,6 +101,34 @@ module Law
     end
 
     private
+
+    # The same two fixtures, read the way a real file is read.
+    #
+    # Above, they prove through file "-": no extension, so no comment syntax, so
+    # the text is read whole. A real subject has an extension and its comment
+    # lines are blanked before the detector sees them. Those are different
+    # inputs, and a rule can be right about one and wrong about the other.
+    #
+    # FROZEN_STRING_LITERAL asks whether a file opens with the magic comment. It
+    # proved clean on "-" at every boot and fired on 423 of 423 files under
+    # MASTER/lib that carry the comment, because blanking line 1 leaves a file
+    # that starts with a newline. SQUINT_TEST counts four consecutive newlines,
+    # and four blanked comment lines are four newlines. Both were found by
+    # measuring rather than by any proof, which is why the proof now measures.
+    #
+    # Costs nothing at boot and makes the whole defect class unreachable: a rule
+    # that cannot see its own subject no longer loads.
+    def prove_as_real_file!
+      extension = REALISTIC_EXTENSION.find { |ext, lang| languages.empty? || languages.map(&:to_s).include?(lang) }&.first
+      return self unless extension
+
+      as_file = "fixture#{extension}"
+      raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
+                           "considered_text blanks its subject first (set reads_comments?)" if scan(bad, file: as_file).empty?
+      raise ArgumentError, "#{id}: good fixture clean on \"-\" but flagged on #{extension}" unless scan(good, file: as_file).empty?
+
+      self
+    end
 
     # File-scope laws get the same two exemptions the line-scope ones have. All
     # eleven had neither, so they were blind to comment leaders and to the
