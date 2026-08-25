@@ -1,7 +1,7 @@
-# vm23_small: boot core only; optional apps via rcctl start or resource_guard when idle.
+# vm23_small: boot core only. rcctl OWNS this file and re-sorts it — one comment line survives, prose does not. Rationale: OPENBSD/DECISIONS.md.
 httpd_flags=
 nsd_flags=
 pf=YES
-pkg_scripts=master brgen amber bsdports litestream
+pkg_scripts=master brgen amber bsdports brgen_jobs
 relayd_flags=
 sndiod_flags=NO
