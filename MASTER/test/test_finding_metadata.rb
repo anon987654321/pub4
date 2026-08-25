@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+# See test_adversarial_rule: SemanticRule lives in a plural rules file and is
+# reached by require, never by autoload.
+require "review/scan/rules/semantic_rules"
 
 class TestFindingMetadata < Minitest::Test
   def test_finding_exposes_rule_id_and_schema_metadata
