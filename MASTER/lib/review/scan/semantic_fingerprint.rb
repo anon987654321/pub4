@@ -10,11 +10,10 @@ module Master
       # a fix is about to be applied to it (RuleLoop::FixVerification's
       # stale-scan guard).
       #
-      # Single canonical implementation for a reason: this used to be
-      # duplicated (FileProcessor#semantic_fingerprint, computed when a
-      # finding is first recorded, vs RuleLoop::FixVerification's copy,
-      # recomputed just before applying a fix) and the two definitions had
-      # quietly drifted -- one included an `ast_present` key the other
+      # One implementation, because two drift. FileProcessor computes this when
+      # a finding is recorded and RuleLoop::FixVerification recomputed it just
+      # before applying a fix; the two definitions disagreed, one carrying an
+      # `ast_present` key the other
       # didn't. Marshal.dump serializes every key, so a 6-field hash and a
       # 5-field hash never produce the same digest no matter how identical
       # the underlying code is. Every fingerprint comparison failed,

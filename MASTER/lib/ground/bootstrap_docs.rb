@@ -2,7 +2,8 @@
 
 module Master
   module Ground
-    # Agent/bootstrap prose formerly scattered across top-level .md files.
+    # Agent and bootstrap prose as data, so the runtime reads it rather than
+    # a reader parsing markdown.
     # Read via BootstrapDocs.section(name) or the YAML under data/bootstrap.yml.
     module BootstrapDocs
       PATH = File.join(Master::DATA, "bootstrap.yml").freeze

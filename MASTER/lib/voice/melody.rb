@@ -7,7 +7,7 @@ module Master
     # Phrase segmentation and inter-phrase rests, plus the pentatonic contour that
     # sits on top of them for lyrical text (DiffSinger/CoMelSinger-inspired).
     #
-    # Those are two different things and they used to be one. Segmentation and
+    # Those are two different things and one name covered both. Segmentation and
     # rests are rhythm, which every utterance wants; the pentatonic pitch targets
     # are a stylistic mode that only lyrical text should get. Because
     # build_phrase_plan always attached both, the whole plan sat behind

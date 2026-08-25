@@ -34,7 +34,7 @@ module Master
 
         # Must match Review::Scan::SemanticFingerprint.for exactly -- it's
         # what stamped the fingerprint being compared against here. These
-        # used to be two separately-maintained copies of the same formula
+        # is one formula with one home; two separately-maintained copies drift
         # that quietly drifted apart (one included an extra field the
         # other didn't), so every comparison failed permanently regardless
         # of whether the file had actually changed. See that module's own

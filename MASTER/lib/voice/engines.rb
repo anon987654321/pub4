@@ -10,7 +10,7 @@ module Master
       # edge_melodic/edge lead the chain: they're a fast local subprocess and
       # already speak whatever data/voice.yml names (do not repeat the voice
       # here — that is how the last two switches left the tree stale). Kokoro
-      # used to be forced first via `attempt?`'s always-try-on-OpenBSD gate,
+      # is no longer forced first by `attempt?`'s always-try-on-OpenBSD gate,
       # but that's a network round-trip to a third-party inference API on
       # every single phrase -- on a 1-CPU VPS with a serial synth queue, that
       # was the dominant source of "TTS is slow." It stays in the chain as a

@@ -392,15 +392,11 @@ module Master
         propose_tree&.call || "propose-tree: not wired"
       end
 
-      # /replay, formerly work_commands_replay.rb.
-
       def dispatch_replay(root:, trace: nil, ctx: nil)
         Trace::ReplayReader.new(root:, recorder: trace).render(arg: arg_for(ctx))
       rescue StandardError => e
         "replay: #{e.message}"
       end
-
-      # /graph, formerly work_commands_graph.rb.
 
       def dispatch_graph(root:, code_index:, reference_graph:, ctx: nil)
         arg = arg_for(ctx)
