@@ -191,7 +191,9 @@ DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
                                    WAV_MAP_PATH=circle|spiral|lissajous|rose,
                                    _HZ, _WEIGHT, _HP, _LP, _LOBES
   BUS_MOD=texture                An LFO on a mix bus filter. Needs
-                                   DILLA_MIX_BUSES=1. BUS_MOD_HZ=0.25,
+                                   DILLA_MIX_BUSES=1. BUS_MOD_SYNC=1/4|1/8T|
+                                   4bar is tempo-locked and wins over
+                                   BUS_MOD_HZ=0.25,
                                    _FILTER=lowpass, _PARAM=frequency, _BASE,
                                    _DEPTH, _MODE=modulate|remote
   STREAM_MACROS=1                Rotate stream slots by macro word (dust,

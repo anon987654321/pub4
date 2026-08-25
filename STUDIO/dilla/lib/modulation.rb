@@ -161,6 +161,52 @@ module DillaModulation
     (a * (1.0 - blend)) + (b * blend)
   end
 
+  # --------------------------------------------------------------- rate sync
+  #
+  # A modulation rate in bars and beats rather than hertz.
+  #
+  # Every rate this engine wants is musical: a filter that opens once a bar, a
+  # tremolo on eighths, a swell across four bars. Expressing those in hertz means
+  # doing 88/240 in your head and redoing it whenever the tempo moves -- and a
+  # rate that does not move with the tempo is the one modulation that always
+  # sounds wrong, because it drifts against everything else in the render.
+  #
+  # Accepts what a musician would write:
+  #
+  #   "1/4"    one cycle per quarter note        "4bar"   one cycle per 4 bars
+  #   "1/8T"   triplet eighth                    "2b"     same, abbreviated
+  #   "1/16."  dotted sixteenth                  0.25     hertz, unchanged
+  #
+  # T shortens the value to two thirds, so the rate goes UP by half. A dot
+  # lengthens it by half, so the rate goes DOWN to two thirds. Getting those two
+  # backwards is the classic error and the reason they are spelled out here.
+  #
+  # 4/4 is assumed, which is what every grid in this engine is.
+  BAR_BEATS = 4.0
+
+  def sync_hz(rate, bpm)
+    return rate.to_f if rate.is_a?(Numeric)
+
+    text = rate.to_s.strip.downcase
+    return text.to_f if text.match?(/\A[\d.]+\z/)
+
+    beat_sec = 60.0 / bpm.to_f
+    seconds =
+      if (bars = text[/\A([\d.]+)\s*b(?:ar)?s?\z/, 1])
+        bars.to_f * BAR_BEATS * beat_sec
+      elsif (denom = text[/\A1\/([\d.]+)/, 1])
+        # 1/4 is a quarter note; 1/1 is a whole note, which is one bar in 4/4.
+        (BAR_BEATS / denom.to_f) * beat_sec
+      else
+        raise ArgumentError, "cannot read #{rate.inspect} as a rate — try 1/4, 1/8T, 2bar or a number in Hz"
+      end
+    seconds *= 2.0 / 3.0 if text.end_with?("t")
+    seconds *= 1.5 if text.end_with?(".")
+    raise ArgumentError, "#{rate.inspect} at #{bpm} BPM is not a positive rate" unless seconds.positive?
+
+    1.0 / seconds
+  end
+
   # ----------------------------------------------------------------- sources
   #
   # A source is a function of time returning -1..1. Nothing here knows what it
@@ -412,6 +458,12 @@ module DillaModulation
 
       @sources[id] = Source.new(id:, **opts)
       self
+    end
+
+    # rate: accepts a musical division as well as hertz. `lfo(:x, rate: "1/8T",
+    # bpm: 88)` is a triplet-eighth cycle; `rate_hz:` still takes a number.
+    def synced_lfo(id, rate:, bpm:, family: :curved, morph: 0.33, phase: 0.0)
+      lfo(id, rate_hz: DillaModulation.sync_hz(rate, bpm), family:, morph:, phase:)
     end
 
     def lfo(id, rate_hz:, family: :curved, morph: 0.33, phase: 0.0)

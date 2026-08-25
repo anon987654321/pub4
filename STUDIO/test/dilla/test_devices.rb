@@ -63,6 +63,45 @@ class TestDevices < Minitest::Test
     assert_operator values.max, :<=, 8000.0
   end
 
+  # A rate in bars and beats. Every modulation this engine wants is musical, and
+  # a rate in hertz drifts against everything else the moment the tempo moves.
+  def test_sync_rates_resolve_to_the_right_period
+    bpm = 88.0
+    beat = 60.0 / bpm
+    bar = beat * 4
+    {
+      "1/4" => beat, "1/8" => beat / 2, "1/16" => beat / 4,
+      "1/1" => bar, "1bar" => bar, "4bar" => bar * 4, "2b" => bar * 2,
+    }.each do |spec, seconds|
+      assert_in_delta seconds, 1.0 / DillaModulation.sync_hz(spec, bpm), 1e-9, spec
+    end
+  end
+
+  # T shortens a value to two thirds so the RATE rises by half; a dot lengthens
+  # it by half so the rate falls to two thirds. Getting those the wrong way round
+  # is the classic error and would be inaudible as a bug and obvious as a feel.
+  def test_triplets_are_faster_and_dots_are_slower
+    plain = DillaModulation.sync_hz("1/8", 88.0)
+
+    assert_in_delta plain * 1.5, DillaModulation.sync_hz("1/8T", 88.0), 1e-9
+    assert_in_delta plain * (2.0 / 3.0), DillaModulation.sync_hz("1/8.", 88.0), 1e-9
+  end
+
+  def test_a_number_is_still_hertz_and_garbage_is_refused
+    assert_in_delta 0.25, DillaModulation.sync_hz(0.25, 88.0), 1e-9
+    assert_in_delta 0.25, DillaModulation.sync_hz("0.25", 88.0), 1e-9
+    assert_raises(ArgumentError) { DillaModulation.sync_hz("nonsense", 88.0) }
+  end
+
+  # The point of syncing: the same division is a different number of hertz at a
+  # different tempo, and tracks a rotation whose BPM changes per slot.
+  def test_a_synced_rate_follows_the_tempo
+    slow = DillaModulation.sync_hz("1/4", 80.0)
+    fast = DillaModulation.sync_hz("1/4", 160.0)
+
+    assert_in_delta slow * 2, fast, 1e-9
+  end
+
   # A shape that leaves -1..1 would push every route past its range and be
   # clamped into a flat top, which is a shape nobody chose.
   def test_every_lfo_shape_stays_within_minus_one_and_one

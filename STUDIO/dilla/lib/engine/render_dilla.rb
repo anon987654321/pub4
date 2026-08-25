@@ -58,7 +58,20 @@ def dilla_bus_modulation(name)
   return nil unless (duration = @render_duration_sec.to_f).positive?
 
   matrix = DillaModulation::Matrix.new
-  matrix.lfo(:bus, rate_hz: ENV.fetch("BUS_MOD_HZ", "0.25").to_f,
+  # BUS_MOD_SYNC takes a musical division -- 1/4, 1/8T, 4bar -- and wins over
+  # BUS_MOD_HZ when set. A rate in hertz does not move with the tempo, so on a
+  # rotation that changes BPM per track it drifts against everything else.
+  begin
+    rate_hz = if (sync = ENV["BUS_MOD_SYNC"])
+                DillaModulation.sync_hz(sync, @render_bpm || 88.0)
+              else
+                ENV.fetch("BUS_MOD_HZ", "0.25").to_f
+              end
+  rescue ArgumentError => e
+    warn "bus modulation: #{e.message}"
+    return nil
+  end
+  matrix.lfo(:bus, rate_hz:,
                    family: ENV.fetch("BUS_MOD_FAMILY", "curved").to_sym,
                    morph: ENV.fetch("BUS_MOD_MORPH", "0.33").to_f)
   filter = ENV.fetch("BUS_MOD_FILTER", "lowpass")
@@ -197,6 +210,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # file; the alternative is threading it through four call sites that do not
   # otherwise care about it.
   @render_duration_sec = duration
+  @render_bpm = cfg[:bpm].to_f
   needed_chords = (n_bars.to_f / cfg[:chord_bars]).ceil + 1
   if GENERATED_STYLES.include?(cfg[:progression].to_sym) || cfg[:progression].to_sym == :generated
     ENV["GEN_LENGTH"] = needed_chords.to_s

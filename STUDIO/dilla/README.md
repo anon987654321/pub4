@@ -363,8 +363,30 @@ were all silent — the code ran, returned success, and did nothing.
   that the sound people mean by "console" is the sum of thirty slightly
   different channels, and then runs one pass. NastyVCS gets its character from
   transformer circuitry at *both* input and output plus a phase-alignment stage
-  used for colouring — which is why five instances in series sounds like
-  something one instance does not. There is no instance count.
+  used for colouring — which is why several instances in series sound like
+  something one instance does not.
+
+  There is an instance count now: `RACK=summed` with `CONSOLE_STACK=1..4`, and it
+  is a *warmth* control rather than a drive one, which is the opposite of what a
+  number that high usually means. Matched to the same 1.5% THD, one hard stage
+  puts the 3rd harmonic at −51.9 dB and three gentle ones at −74.7 — same amount
+  of distortion, 23 dB less of it odd. The 2nd holds steady because the THD match
+  pins it there. Even harmonics are octaves and read as tone; the 3rd is a
+  twelfth and is what "harsh" means on a mix bus. Each depth carries a measured
+  makeup, because `asoftclip`'s `oversample=4` is not gain-compensated in ffmpeg
+  8.1.1 and an uncalibrated stack measured 10 dB down at four instances.
+- **`donuts_warm` decides whether a kit entry is audible as one.** The default
+  preset stacks `hf_rolloff: 7000`, `groove_wear_lp: 9500` and
+  `crush_post_lp: 6000`, so the snare crack and hat shimmer are gone before any
+  arrangement happens. Measured across a section boundary where the kit enters,
+  the 5–12 kHz band moves **0.0 dB** under `donuts_warm` and **+6.8 dB** under
+  `donuts_soul`, against **+9.2 dB** for a real record at the same kind of
+  boundary. Whole-file, the two presets differ by −8.0 dB in that band.
+
+  Neither is wrong — `donuts_warm` is the Donuts sound and that is the point of
+  it. But on a track whose arrangement depends on the drums arriving, the darker
+  preset removes the thing that makes the arrival legible. `dilla ab
+  SONITEX=donuts_soul bars=8` measures the swap in one command.
 
 ## Five findings that keep recurring
 
