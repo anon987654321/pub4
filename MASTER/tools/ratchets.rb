@@ -109,6 +109,18 @@ module Pub4
          require File.join(MASTER, "tools/autofix_reach")
          [Pub4::AutofixReach.bare_true.size, Pub4::AutofixReach.ceilings.fetch("bare_true")]
        end,
+       master_row("rule_hygiene.id_case_collisions", "data/rule_hygiene.yml", "ids differing only by case") do
+         require File.join(MASTER, "tools/rule_hygiene")
+         [Pub4::RuleHygiene.report[:id_case_collisions].size, Pub4::RuleHygiene.ceilings.fetch("id_case_collisions")]
+       end,
+       master_row("rule_hygiene.alias_shadows_live_rule", "data/rule_hygiene.yml", "aliases naming a rule that still exists") do
+         require File.join(MASTER, "tools/rule_hygiene")
+         [Pub4::RuleHygiene.report[:alias_shadows_live_rule].size, Pub4::RuleHygiene.ceilings.fetch("alias_shadows_live_rule")]
+       end,
+       master_row("rule_hygiene.missing_metadata", "data/rule_hygiene.yml", "rules with neither tier nor severity") do
+         require File.join(MASTER, "tools/rule_hygiene")
+         [Pub4::RuleHygiene.report[:missing_metadata].size, Pub4::RuleHygiene.ceilings.fetch("missing_metadata")]
+       end,
        master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")
          [Pub4::DupCensus.sets.size, Pub4::DupCensus.ceiling]

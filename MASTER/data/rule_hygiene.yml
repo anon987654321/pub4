@@ -1,0 +1,16 @@
+---
+# Ceilings for tools/rule_hygiene.rb.
+#
+# id_case_collisions: bare_rescue/BARE_RESCUE and eight_px_rhythm/EIGHT_PX_RHYTHM.
+# Two ids differing only by case are two rules to a registry and one rule to a
+# reader, so findings, priors and exemptions split across the pair.
+#
+# alias_shadows_live_rule: DRY claims duplicate_code, which is still its own
+# rule. One of the two is a fold nobody finished; closing it means deleting the
+# absorbed rule or dropping the alias, and that is a decision per pair.
+#
+# missing_metadata: 43 rules declare neither tier nor severity, so every count
+# that groups by either omits them without saying so.
+id_case_collisions: 2
+alias_shadows_live_rule: 1
+missing_metadata: 43

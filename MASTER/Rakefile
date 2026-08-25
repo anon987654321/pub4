@@ -593,6 +593,11 @@ namespace :lint do
     sh RbConfig.ruby, File.join(__dir__, "tools", "autofix_reach.rb")
   end
 
+  desc "Rule ids, aliases and metadata: collisions, unfinished folds, missing tier/severity"
+  task :rule_hygiene do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "rule_hygiene.rb")
+  end
+
   desc "No two files loadable into one process define the same top-level constant"
   task :constant_collisions do
     sh RbConfig.ruby, File.join(__dir__, "tools", "constant_collisions.rb")
