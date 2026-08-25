@@ -196,6 +196,12 @@ DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
                                    BUS_MOD_HZ=0.25,
                                    _FILTER=lowpass, _PARAM=frequency, _BASE,
                                    _DEPTH, _MODE=modulate|remote
+  LPG=1                          Buchla low-pass gate on the lead: it darkens
+                                   as it decays, which is what makes a note read
+                                   as struck. Measured, the 4-12k band falls
+                                   17.5 dB further than the body over a decay.
+                                   LPG_BLEND=1.0 (0 = plain VCA), LPG_DEPTH,
+                                   LPG_DECAY_MS=220, LPG_DROOP=2.4
   STREAM_MACROS=1                Rotate stream slots by macro word (dust,
                                    drift, weight, air…) instead of by knobs.
 

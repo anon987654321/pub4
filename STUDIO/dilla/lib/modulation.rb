@@ -505,7 +505,16 @@ module DillaModulation
       super
       self.mode = (mode || :modulate).to_sym
       self.polarity = (polarity || :bipolar).to_sym
-      self.depth = (depth || 1.0).to_f.clamp(0.0, 1.0)
+      # -1..1, not 0..1. A negative depth is an ATTENUVERTER: the same source,
+      # inverted, so one destination rises while another falls.
+      #
+      # Clamping this to zero made every fan-out a chorus -- every parameter
+      # moving the same way at the same moment, which is one modulation applied N
+      # times. One inverted route is the difference between that and counterpoint,
+      # and it is the single cheapest thing a modular patch does that this engine
+      # could not say. A filter opening as a gain falls is a crossfade; both
+      # opening together is just louder.
+      self.depth = (depth || 1.0).to_f.clamp(-1.0, 1.0)
     end
 
     # -1..1 from the source becomes a number in the parameter's units.

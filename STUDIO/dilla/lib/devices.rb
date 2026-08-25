@@ -651,3 +651,114 @@ module WavMap
     lines
   end
 end
+
+# ------------------------------------------------------------------------
+# LowPassGate
+# ------------------------------------------------------------------------
+
+# The Buchla low-pass gate: loudness and brightness fall together.
+#
+# Every dynamic stage in this engine separates the two. A VCA changes level and
+# leaves the tone alone; a filter changes tone and leaves the level alone; the
+# grain cloud and the tape model touch neither. So a note here decays by getting
+# quieter while staying exactly as bright as it started, which is a thing no
+# acoustic sound does -- strike anything and its top end dies before its
+# amplitude does, because the high partials are damped hardest.
+#
+# An LPG is that coupling made into a module. One control opens both a gain and a
+# lowpass, so a decaying note darkens as it fades. It is the single reason
+# West-Coast synthesis sounds struck rather than played, and there was nothing in
+# this engine that could do it.
+#
+# THE VACTROL IS THE INSTRUMENT. A photocell facing an LED responds fast to light
+# arriving and slowly to light leaving, and the slow side is not exponential --
+# it is a lag whose time constant grows as the cell darkens. That asymmetry is
+# what separates an LPG from a filter and a VCA wired to the same envelope; the
+# same patch with a linear envelope sounds synthetic, and the difference is
+# entirely in the decay's shape.
+#
+# Pure Ruby on samples, for the reason tape_hysteresis.rb gives about its own
+# model: this is per-sample state, output depends on history, and no ffmpeg
+# filter has the behaviour. Reuses SampleFlip's decode/encode so the file paths
+# are the ones the rest of the engine already uses.
+module LowPassGate
+  module_function
+
+  # Attack is fast and roughly fixed. Decay is slow and gets slower as the
+  # control falls, which is the vactrol's defining nonlinearity: the tail of a
+  # note lasts longer than its shape predicts.
+  ATTACK_MS = 3.0
+  DECAY_MS = 220.0
+  # How much the decay stretches as the cell darkens. At 0 this is an ordinary
+  # one-pole and the whole point is lost.
+  VACTROL_DROOP = 2.4
+
+  # The cutoff at full open, and at fully closed. The floor is what makes a dying
+  # note dark rather than merely quiet, and it is low on purpose -- an LPG that
+  # bottoms out at 2 kHz still sounds like a filter sweep.
+  OPEN_HZ = 12_000.0
+  CLOSED_HZ = 180.0
+
+  # How much of the control drives the gain versus the filter.
+  #
+  # A real LPG offers three modes -- gate (gain only), filter (tone only) and
+  # combined -- and combined is the one people mean. `blend` at 1.0 is combined,
+  # 0.0 is a plain VCA, and anything between is available because a bass part
+  # usually wants less filter than a pluck does.
+  def process(samples, rate: 44_100, blend: 1.0, attack_ms: ATTACK_MS,
+              decay_ms: DECAY_MS, droop: VACTROL_DROOP, depth: 1.0)
+    return samples if samples.empty?
+
+    attack = Math.exp(-1.0 / ((attack_ms / 1000.0) * rate))
+    decay_base = (decay_ms / 1000.0) * rate
+    control = 0.0
+    lp = 0.0
+    peak = samples.map(&:abs).max.to_f
+    return samples if peak.zero?
+
+    samples.map do |sample|
+      # Rectified envelope of the input drives the cell. A real LPG is driven by
+      # a control voltage, but driving it from the signal is what makes this
+      # usable on material the engine has already rendered.
+      level = sample.abs / peak
+      if level > control
+        control = level + ((control - level) * attack)
+      else
+        # The droop: as the control falls, the time constant grows, so the tail
+        # stretches. This is the whole vactrol.
+        stretch = 1.0 + (droop * (1.0 - control))
+        coeff = Math.exp(-1.0 / (decay_base * stretch))
+        control *= coeff
+      end
+      opened = control * depth.clamp(0.0, 1.0)
+      # Cutoff geometrically between closed and open: the ear hears cutoff in
+      # octaves, so a linear sweep spends most of its travel where nothing is.
+      hz = CLOSED_HZ * ((OPEN_HZ / CLOSED_HZ)**opened)
+      a = 1.0 - Math.exp(-2.0 * Math::PI * hz / rate)
+      lp += a * (sample - lp)
+      gated = (lp * blend) + (sample * (1.0 - blend))
+      # Floats out, floats in. SampleFlip decodes to -1..1 and encodes from
+      # -1..1; rounding here silenced the whole signal, because every sample in
+      # that range rounds to 0 or +-1. The one line that made a working DSP model
+      # produce digital silence.
+      gated * ((1.0 - blend) + (opened * blend))
+    end
+  end
+
+  # Process a file in place through the gate. Returns dest, or nil when the
+  # source is missing -- the engine's convention for an optional layer.
+  def build!(src:, dest:, rate: 44_100, blend: 1.0, depth: 1.0,
+             attack_ms: ATTACK_MS, decay_ms: DECAY_MS, droop: VACTROL_DROOP)
+    return nil unless src && File.file?(src)
+
+    left, right = SampleFlip.decode(src, rate:)
+    return nil if left.nil? || left.empty?
+
+    SampleFlip.encode!(
+      process(left, rate:, blend:, depth:, attack_ms:, decay_ms:, droop:),
+      process(right, rate:, blend:, depth:, attack_ms:, decay_ms:, droop:),
+      dest
+    )
+    File.file?(dest) ? dest : nil
+  end
+end

@@ -617,6 +617,49 @@ end
     end
   end
 
+  # ------------------------------------------------------- low-pass gate
+
+  # The whole claim of an LPG, as arithmetic on the control signal: as it closes,
+  # the cutoff falls WITH it. A VCA leaves cutoff alone, a filter leaves gain
+  # alone, and this is the coupling that makes a note sound struck.
+  def test_the_gate_darkens_as_it_closes
+    span = LowPassGate::OPEN_HZ / LowPassGate::CLOSED_HZ
+    open_hz = LowPassGate::CLOSED_HZ * (span**1.0)
+    half_hz = LowPassGate::CLOSED_HZ * (span**0.5)
+    shut_hz = LowPassGate::CLOSED_HZ * (span**0.0)
+
+    assert_in_delta LowPassGate::OPEN_HZ, open_hz, 1e-6
+    assert_in_delta LowPassGate::CLOSED_HZ, shut_hz, 1e-6
+    assert_operator half_hz, :<, open_hz
+    assert_operator half_hz, :>, shut_hz
+    # Geometric, not linear. The ear hears cutoff in octaves, and a linear sweep
+    # spends most of its travel where there is nothing left to hear.
+    refute_in_delta (open_hz + shut_hz) / 2.0, half_hz, 100.0
+  end
+
+  # A signal in must produce a signal out. The first version rounded a -1..1
+  # float signal to integers and silenced it completely: the DSP model was
+  # correct and the output was digital silence.
+  def test_the_gate_passes_signal
+    samples = (0...4410).map { |i| 0.6 * Math.sin(2 * Math::PI * 220 * i / 44_100.0) }
+    out = LowPassGate.process(samples, rate: 44_100)
+
+    assert_equal samples.length, out.length
+    assert_operator out.map(&:abs).max, :>, 0.01, "the gate silenced a steady tone"
+    assert(out.any? { |v| v != v.round }, "output must be floats; rounding silences a -1..1 signal")
+  end
+
+  # blend 0 is a plain VCA and must not filter, which is what makes the control
+  # a real choice rather than decoration.
+  def test_blend_zero_leaves_the_tone_alone
+    samples = (0...2205).map { |i| 0.5 * Math.sin(2 * Math::PI * 6000 * i / 44_100.0) }
+    vca = LowPassGate.process(samples, rate: 44_100, blend: 0.0)
+    gated = LowPassGate.process(samples, rate: 44_100, blend: 1.0)
+
+    assert_operator vca.map(&:abs).max, :>, gated.map(&:abs).max,
+                    "at 6 kHz a closed gate must remove more than a VCA does"
+  end
+
 # ------------------------------------------------------- device reach
 
 # A device no renderer can call is a device that cannot change a render.

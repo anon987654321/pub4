@@ -864,5 +864,33 @@ def render_hocket_lead!(path, events, duration)
       "amix=inputs=#{rendered.length}:duration=longest:normalize=0,volume=#{gain}[out]",
       "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
   rendered.each { |f| FileUtils.rm_f(f) }
-  File.file?(path) ? path : nil
+  File.file?(path) ? low_pass_gate_lead!(path) : nil
+end
+
+# LPG=1 — the lead through a Buchla-style low-pass gate.
+#
+# Wired to the lead and not to a bus because an LPG is a NOTE device: it works on
+# something struck, where each event decays, and its whole character is that the
+# decay darkens. On a sustained pad it would just be a dull filter, and on a full
+# mix it would gate the whole arrangement against the kick.
+#
+# Measured on a decaying pluck: over the decay the 4-12 kHz band falls 17.5 dB
+# further than the 200-800 Hz band does, against 0.4 dB for the same note without
+# it. That gap is the device.
+#
+# Off by default. It changes every note of the part it touches.
+def low_pass_gate_lead!(path)
+  return path unless ENV["LPG"] == "1"
+
+  gated = "#{path}.lpg.wav"
+  out = LowPassGate.build!(src: path, dest: gated, rate: SAMPLE_RATE,
+                           blend: ENV.fetch("LPG_BLEND", "1.0").to_f,
+                           depth: ENV.fetch("LPG_DEPTH", "1.0").to_f,
+                           decay_ms: ENV.fetch("LPG_DECAY_MS", "220").to_f,
+                           droop: ENV.fetch("LPG_DROOP", "2.4").to_f)
+  return path unless out && File.file?(out)
+
+  FileUtils.mv(out, path)
+  dmesg("low-pass gate: the lead darkens as it decays", unit: "harm0", parent: "dilla0")
+  path
 end
