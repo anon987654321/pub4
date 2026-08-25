@@ -2231,14 +2231,20 @@ rules:
     detect_semantic: Does this unit introduce complexity the problem doesn't require?
     fix: FLATTEN nesting; SPLIT god classes; INLINE single-call helpers; delete abstractions
       until it hurts.
-  - id: POLA_PRINCIPLE
+  - id: LEAST_ASTONISHMENT
     source: Principle of Least Astonishment (POLA) — not least resistance
     name: Principle of Least Astonishment
     tier: principle
     severity: warning
     autofix: false
+    # The id does not repeat "principle": the P in POLA is already that word, and
+    # a doubled synonym belongs least of all in the rule against names that
+    # surprise their reader. Astonishment over surprise matches the source line
+    # and the acronym; surprise is the more natural English and is an alias.
+    # Aliases exist because an id appears in findings, exemptions and priors.
     aliases:
     - pola
+    - pola_principle
     - no_surprises
     detect_semantic: Does the name promise behavior the implementation contradicts,
       or would a reader be surprised by this behavior generally?
