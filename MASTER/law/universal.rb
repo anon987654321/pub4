@@ -194,6 +194,31 @@ Law.define(:UNBOUNDED_RETRY) do
 end
 
 # Migrated from data/rules.yml WHY_NOT_WHAT.
+# Distinct from WHY_NOT_WHAT, which is about a comment restating the code beside
+# it. This one is about a comment that records the edit history of the line.
+# Git already holds that, per line, with an author and a message, and never
+# drifts from it; a comment holding the same thing is a second copy that decays
+# the first time someone edits the code and not the paragraph above it. The homes
+# for a reason worth re-reading are DECISIONS.md and DEBT.md.
+#
+# Narrow on purpose. "Measured 2026-08-11: /home is at 89%" is evidence for a
+# present claim and stays. What this catches is a dated change verb and the
+# past-tense framing of a line's earlier content, which carry no reason at all.
+# Counted across the tree before landing: 47 lines, none of them in law/.
+Law.define(:NO_CHANGELOG_COMMENT) do
+  source "MASTER-native — git holds history; comments hold reasons"
+  severity :warn
+  reads_comments true
+  detect do |line|
+    line.match?(/^\s*(?:#|\/\/|\*)\s*(?:RAISED|TRIMMED|UPDATED?|RENAMED|MOVED|CHANGED|REVERTED|REMOVED|ADDED|DEPRECATED|NARROWED|REDUCED|FIXED)\b[^\n]{0,40}\d{4}-\d{2}-\d{2}/i) ||
+      line.match?(/^\s*(?:#|\/\/|\*)[^\n]{0,60}\b(?:used to be|was previously|were previously|formerly)\b/i) ||
+      line.match?(/^\s*(?:#|\/\/|\*)[^\n]{0,60}\bchanged from\b[^\n]{0,40}\bto\b/i)
+  end
+  fix "State the present reason. Put the history in the commit message, or in DECISIONS.md if it must be read again."
+  bad  "# RENAMED 2026-08-25 from Foo to Bar"
+  good "# Bar names what it returns, so a caller can tell it from Baz."
+end
+
 Law.define(:WHY_NOT_WHAT) do
   source "Clean Code / Code Complete — comments explain why, not what"
   severity :info
