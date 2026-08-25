@@ -77,9 +77,17 @@ tooling bug.
 `RAILS/shared/config/ci.rb` gates several steps on `vps_host` (true when
 `PUB4_CI_GUARD=1`, `/var/db/pub4_vps` exists, or `/etc/relayd.conf` exists):
 
-- `Security: Importmap audit`, `Style: Ruby` (RuboCop), `Tests: System (a11y)`
-  — **skipped on the VPS**, required locally. A local `bin/ci` failure here is
-  real; it does not mean the VPS run will also fail.
+- `Security: Importmap audit` and `Tests: System (a11y)` — **skipped on the
+  VPS**, required locally. A local `bin/ci` failure in those two is real; it
+  does not mean the VPS run will also fail. Both need something the box does
+  not have on hand (a booted environment, a browser).
+- `Style: Ruby` (RuboCop) — **runs on the VPS too**, and this list said
+  otherwise until 2026-08-25. `ci.rb` carries the reason next to the step: vm23
+  is where the deploy gate actually runs, so skipping it there left enforcement
+  to a local `bin/ci` that nothing runs automatically. It is a source-text check
+  needing no browser and no database, so the reasons the other two are skipped
+  do not apply. A RuboCop failure on the box is a real deploy blocker — do not
+  read it as a local-only bucket, which is exactly what this file used to say.
 - `Tests: Seeds` — runs with `SKIP_BERGEN_DEMO=1` on the VPS, without it
   locally. A local seed failure about a duplicate Bergen demo email is a
   local-DB-state artifact, not a real blocker — don't chase it.
