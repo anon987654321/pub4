@@ -9,7 +9,7 @@ script = File.read(File.expand_path("OPERATOR.sh", __dir__), encoding: "UTF-8")
 issues = []
 
 backup_idx = script.index("backup_directory /var/nsd/zones/master nsd-zones")
-delete_idx = script.index("rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)")
+delete_idx = script.index("rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)") # scan: intentional — searches for the command, never runs it
 issues << "nsd backup does not precede destructive delete" unless backup_idx && delete_idx && backup_idx < delete_idx
 
 # Regexes, not exact strings: the actual variable names in OPERATOR.sh ($src/$d,
