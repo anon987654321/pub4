@@ -1,7 +1,7 @@
 ---
 # What MASTER's own rules find in MASTER's own tree, and the three sibling trees.
 #
-# 641 across 758 files from the 70 rules that carry a lexical detector. This is
+# 606 across 759 files from the 70 rules that carry a lexical detector. This is
 # the honest answer to "would running MASTER through its own rules make it
 # tidier": yes for names, spacing and comments, which is where almost all of it
 # sits. It is not the answer for defragmentation — COLLAPSE_BEFORE_ADDING,
@@ -11,4 +11,4 @@
 # Lexical only. The full gate's semantic pass blocks on a model call: measured at
 # 17 minutes elapsed against 4 minutes of CPU, idle in a TLS read. A number that
 # needs a network and a key is a number nobody has.
-findings: 641
+findings: 606

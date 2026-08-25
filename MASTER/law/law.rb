@@ -52,7 +52,7 @@ module Law
     ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
   }.freeze
 
-  MEMBERS = %i[id source severity languages scope path path_exclude absent detect ask fix bad good reads_comments].freeze
+  MEMBERS = %i[id source severity languages scope path path_exclude absent detect ask practice fix bad good reads_comments].freeze
   Rule = Data.define(*MEMBERS) do
     def applies?(file, language)
       return false if path && !file.include?(path)
@@ -65,8 +65,11 @@ module Law
     # rather than raise on a nil detect.
     def semantic? = !ask.nil?
 
+    # Neither kind scans source: one is answered by a model, one binds behaviour.
+    def scannable? = detect ? true : false
+
     def scan(text, file: "-")
-      return [] if semantic?
+      return [] unless scannable?
 
       scope == :file ? scan_file(text, file) : scan_lines(text, file)
     end
@@ -85,7 +88,7 @@ module Law
       # skipped for a semantic rule, because proving it needs a model and this
       # runs at boot. The fixtures are still required — Builder#build refuses
       # without them — they are simply proved by rake rather than by require.
-      unless semantic?
+      if scannable?
         raise ArgumentError, "#{id}: bad fixture not flagged" if scan(bad).empty?
         raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
 
@@ -174,21 +177,32 @@ module Law
   end
 
   class Builder
-    %i[source severity languages scope path path_exclude absent ask fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source severity languages scope path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, reads_comments: false }
+    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
-    # Exactly one detector kind, and the fixtures either way.
+    # Exactly one kind, and the fixtures whichever it is.
     #
-    # Both is not a richer rule, it is two rules sharing an id: the lexical half
-    # would fire at load and the semantic half in the model pass, and a finding
-    # would carry no answer to which one produced it. Neither is the shape this
-    # file calls documentation.
+    #   detect   a regex reads the source. Proved by running it at load.
+    #   ask      a question a model answers about the source. Fixtures ride into
+    #            the prompt as worked examples.
+    #   practice a rule about how to work rather than about source text — sweep
+    #            to convergence, one SSH session, restart after a deploy. No
+    #            detector can exist for one, and that is a property of the
+    #            subject, not a reason to keep them in a second file.
+    #
+    # The third kind is why every rule now lives here. They were in soul.yml
+    # because this builder demanded a detector; a rule about conduct cannot have
+    # one, so the requirement was excluding exactly the rules it could not
+    # describe. Its fixtures are illustrative rather than executable — the
+    # shortest example of following it and of not — and prove! does not scan them.
+    #
+    # Two kinds at once is two rules sharing an id, not a richer rule.
     def build
-      kinds = %i[detect ask].select { |k| @h[k] }
-      raise ArgumentError, "#{@h[:id]}: needs detect or ask" if kinds.empty?
-      raise ArgumentError, "#{@h[:id]}: has both detect and ask — one rule, one detector kind" if kinds.size > 1
+      kinds = %i[detect ask practice].select { |k| @h[k] }
+      raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
+      raise ArgumentError, "#{@h[:id]}: has #{kinds.join(' and ')} — one rule, one kind" if kinds.size > 1
 
       # `fix` is in this list because Data requires it and Builder does not
       # default it, so a rule that omitted it died with "missing keyword: :fix"
@@ -248,8 +262,8 @@ module Law
           next "#\n"
         end
 
-        fence = line[/^\s*(?:bad|good|ask)\s+<<~(\w+)/, 1]
-        line.match?(/^\s*(?:source|detect|ask|fix|bad|good)\b/) ? "#\n" : line
+        fence = line[/^\s*(?:bad|good|ask|practice)\s+<<~(\w+)/, 1]
+        line.match?(/^\s*(?:source|detect|ask|practice|fix|bad|good)\b/) ? "#\n" : line
       end.join
     end
   end

@@ -51,9 +51,15 @@ class TestLawBridgeRule < Minitest::Test
   # Every law proved itself against its own fixtures at load. If that stops
   # being true the bridge should not be the place it is discovered, but a rule
   # arriving here unproven would mean prove! had been skipped.
+  #
+  # Three parts still, and the third is one of three kinds: a detector, a
+  # question for a model, or a practice. Requiring `detect` specifically was the
+  # rule that kept 47 conduct rules in soul.yml — no regex reads "one SSH
+  # session" off a file, so demanding one excluded exactly the rules it could
+  # not describe.
   def test_every_loaded_law_carries_its_fixtures
     rule # force the load
-    unproven = Law.rules.values.reject { |r| r.bad && r.good && r.detect }
+    unproven = Law.rules.values.reject { |r| r.bad && r.good && (r.detect || r.ask || r.practice) }
     assert_empty unproven.map(&:id), "laws without all three parts reached the registry"
   end
 end

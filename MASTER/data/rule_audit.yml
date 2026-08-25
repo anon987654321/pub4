@@ -14,5 +14,5 @@
 # rule going quiet is visible; it is not evidence of a defect on its own.
 blind: 0
 saturated: 0
-silent: 18
+silent: 19
 

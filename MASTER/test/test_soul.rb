@@ -7,27 +7,28 @@ class TestSoul < Minitest::Test
     def ask_once(*) = draft
   end
 
-  # Every axiom soul declares must reach the model that has to obey it.
+  # Every rule reaches the model that has to obey it, and there is one place
+  # they come from.
   #
-  # absolute.rules arrived through PersonalityPromptBuilder#add_rules while a
-  # second section, absolute.aesthetic_rules, arrived nowhere: its only reader
-  # was fix/rule_loop.rb. So NO_ASCII_DECORATION, FLAT_UI, STRUNK_ACTIVE and
-  # DEEP_SCAN_ONLY governed the fix loop's rewrites while the model writing the
-  # code was never told them — 30 of 30 against 0 of 19. A rule the author
-  # cannot see is a rule the fixer spends its turn undoing.
-  #
-  # The second section is gone rather than given a second reader: nothing ever
-  # read the split as a distinction, and why_explainer dug only the first, so
-  # /why on any of the nineteen answered nothing at all.
-  def test_every_absolute_axiom_reaches_the_system_prompt
+  # soul carried absolute.rules and absolute.aesthetic_rules. The second reached
+  # nothing but fix/rule_loop, so NO_ASCII_DECORATION, FLAT_UI and DEEP_SCAN_ONLY
+  # governed the fixer's rewrites while the model writing the code was never told
+  # them. Then both moved to law/, once the `conduct` kind let a rule about how
+  # to work be a Law like any other — a rule the author cannot see is a rule the
+  # fixer spends its turn undoing, and a rule in two files is one a reader cannot
+  # resolve.
+  def test_every_rule_reaches_the_system_prompt_from_one_registry
     prompt = Master::Voice::Personality.new.send(:build_system_prompt, context: :full)
     absolute = YAML.safe_load_file(Master.data_path("soul.yml")).fetch("absolute")
 
-    refute absolute.key?("aesthetic_rules"),
-           "one list: a split nothing reads is a section /why cannot reach"
+    %w[rules aesthetic_rules].each do |key|
+      refute absolute.key?(key), "soul must not hold rules; law/ is the registry"
+    end
 
-    missing = absolute.fetch("rules").keys.reject { |id| prompt.include?(id) }
-    assert_empty missing, "soul absolute.rules not in the prompt: #{missing.join(', ')}"
+    rules = Master::Ground::Rules.new.rules
+    refute_empty rules, "law/ must load"
+    missing = rules.keys.reject { |id| prompt.include?(id) }
+    assert_empty missing, "rules absent from the prompt: #{missing.first(5).join(', ')}"
   end
 
   DOCUMENT = <<~SOUL

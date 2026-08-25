@@ -207,28 +207,33 @@ module Master
       # on it is the same mistake as the aesthetic_rules section that had to be
       # collapsed for the same reason.
       def add_rules(sections)
-        rules = @rules.rules
-        detected = detected_rules
-        return if rules.empty? && detected.empty?
+        rules = all_rules
+        return if rules.empty?
 
-        thresholds = @rules.thresholds
-        substitutions = {
-          max_lines: thresholds.dig("class", "max_lines") || 200,
-          max_methods: thresholds.dig("class", "max_methods") || 6,
-        }
-        held = rules.map { |id, statement| "#{id}: #{statement % substitutions}" }
-        sections["master_style"] = "<master_style>\nRules:\n#{(held + detected).join("\n")}\n</master_style>"
+        sections["master_style"] = "<master_style>\nRules:\n#{rules.join("\n")}\n</master_style>"
       end
 
-      # Loaded lazily, and a failure here is cosmetic: a prompt missing part of
-      # the list is worse than one built without it, and neither is a reason to
-      # fail the turn.
-      def detected_rules
+      # Every rule, from the one place that holds them.
+      #
+      # This used to concatenate soul's absolute.rules with law/'s, because a
+      # rule about conduct could not be a Law — Builder demanded a detector and
+      # none exists for "one SSH session". `conduct` removed that requirement and
+      # the 47 moved, so there is no second list to merge and no question about
+      # which file governs.
+      #
+      # A conduct rule states itself; a detector rule states its fix, which is
+      # the imperative form of the same thing.
+      #
+      # Loaded lazily, and a failure is cosmetic: a prompt missing part of the
+      # list is worse than one built without it, and neither should fail a turn.
+      def all_rules
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-        ::Law.rules.values.map { |rule| "#{rule.id}: #{rule.fix}" }
+        ::Law.rules.values.map do |rule|
+          "#{rule.id}: #{(rule.practice || rule.fix).to_s.gsub(/\s+/, ' ').strip}"
+        end
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "PromptBuilder.detected_rules", severity: :cosmetic)
+        Master::Ground::Swallow.log(e, context: "PromptBuilder.all_rules", severity: :cosmetic)
         []
       end
 

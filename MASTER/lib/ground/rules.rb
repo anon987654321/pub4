@@ -33,7 +33,17 @@ module Master
           end
         end
 
-        def rules = @rules ||= (@soul_data.dig("absolute", "rules") || {}).freeze
+        # From law/, the one registry. soul carried absolute.rules until the
+        # `conduct` kind let a rule about how to work be a Law like any other.
+        def rules
+          @rules ||= begin
+            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+            ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
+          rescue StandardError
+            {}.freeze
+          end
+        end
         def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
         def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
       end

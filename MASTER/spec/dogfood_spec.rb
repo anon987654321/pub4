@@ -11,12 +11,27 @@ require File.join(ROOT, "lib", "master")
 Law.load_all
 
 class DogfoodSpec < Minitest::Test
-  # Every law flags its bad fixture and spares its good one. Failure here is
-  # the archaeological audit: a capability went missing, or a detector regressed.
+  # Every law with a detector flags its bad fixture and spares its good one.
+  # Failure here is the archaeological audit: a capability went missing, or a
+  # detector regressed.
+  #
+  # A practice rule has no detector — no regex can read "one SSH session" off a
+  # file — so its fixtures are illustrative and this proof does not apply. What
+  # still applies is that it HAS them: Builder refuses a rule without a bad and a
+  # good whatever its kind, because a rule carrying no example of its own subject
+  # is the unfalsifiable shape this file exists to reject.
   Law.rules.each do |id, rule|
-    define_method("test_law_#{id}_proves_itself") do
-      refute_empty rule.scan(rule.bad),  "#{id}: bad fixture not flagged"
-      assert_empty rule.scan(rule.good), "#{id}: good fixture flagged (false positive)"
+    if rule.scannable?
+      define_method("test_law_#{id}_proves_itself") do
+        refute_empty rule.scan(rule.bad),  "#{id}: bad fixture not flagged"
+        assert_empty rule.scan(rule.good), "#{id}: good fixture flagged (false positive)"
+      end
+    else
+      define_method("test_rule_#{id}_carries_both_examples") do
+        refute_empty rule.bad.to_s.strip,  "#{id}: no example of breaking it"
+        refute_empty rule.good.to_s.strip, "#{id}: no example of following it"
+        refute_equal rule.bad.to_s.strip, rule.good.to_s.strip, "#{id}: the two examples are the same"
+      end
     end
   end
 

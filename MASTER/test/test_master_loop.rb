@@ -49,16 +49,18 @@ class TestMasterLoop < Minitest::Test
   # with a severity and a tier they could never use. soul reaches the prompt
   # whole through PersonalityPromptBuilder#add_rules; Ground::Constitution cut
   # them to 480 characters, which took 358 off FLAT_HIERARCHY alone.
-  def test_operator_conduct_lives_in_soul_not_in_the_scanner_catalogue
-    rules = YAML.safe_load_file(Master.data_path("soul.yml")).fetch("absolute").fetch("rules")
+  def test_operator_conduct_is_a_rule_like_any_other
+    rules = Master::Ground::Rules.new.rules
 
     %w[OPERATOR_AUTONOMY EXECUTE_NOT_INSTRUCT SHELL_DISCIPLINE VPS_SERIAL_TRUTH NO_NEW_FILES
        STRUNK_WHITE FLAT_PIXELS VOICE_TERSE_UNIX MICRO_REFINEMENTS].each do |id|
-      assert rules.key?(id), "#{id} must be soul law; it binds conduct, not source text"
+      assert rules.key?(id), "#{id} binds conduct and must still be a rule"
     end
 
     refute Master.load_rules.key?("operator_principles"),
            "conduct in rules.yml is a rule no detector can ever match"
+    refute YAML.safe_load_file(Master.data_path("soul.yml")).fetch("absolute").key?("rules"),
+           "one registry: law/, not soul"
   end
 
   def test_council_prompts_load_from_council_yml

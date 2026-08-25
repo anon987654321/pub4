@@ -54,8 +54,8 @@ fields:
       - [provider_economy, council]
 
 rendering:
-  compact_text: "⟦%{map} | zoom: %{zoom} | act: %{act}⟧"
-  markdown_text: "[MAP %{map}][ZOOM %{zoom}][ACT %{act}]"
+  compact_text: "%{map} · zoom %{zoom} · act %{act}"  # no brackets: NO_ASCII_DECORATION
+  markdown_text: "%{map} — zoom %{zoom}, act %{act}"  # no bracket tags either
   yaml_block: |
     attention:
       map: "%{map}"

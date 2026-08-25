@@ -59,7 +59,9 @@ module Master
 
       def soul_rule(key)
         slug = key.upcase.tr("-", "_")
-        hit = soul.dig("absolute", "rules", slug) or return
+        # law/ holds every rule now, so /why answers for conduct rules too —
+        # it dug soul and returned nothing for NO_COLUMN_ALIGN and FLAT_UI.
+        hit = Master::Ground::Rules.new.rules[slug] or return
         ["constitutional rule: #{slug}", "  #{hit}"].join("\n")
       end
 

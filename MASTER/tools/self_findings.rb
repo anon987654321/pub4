@@ -42,11 +42,20 @@ module Pub4
            .sort
     end
 
+    # A law file necessarily contains the pattern it forbids — in its detector,
+    # its fix line and its bad fixture. Law.scan neutralises those before a law
+    # judges law/; this file called rule.scan directly and skipped it, so all 35
+    # findings under law/ were laws quoting themselves. With conduct applied it
+    # is 0, which is the honest number: those lines declare evidence.
+    def considered(path, text)
+      path.include?("/MASTER/law/") ? ::Law.conduct(text) : text
+    end
+
     def by_rule
       rules = law # loads Master before the map below is read
       counts = Hash.new(0)
       files.each do |path|
-        text = File.read(path, encoding: "UTF-8").scrub
+        text = considered(path, File.read(path, encoding: "UTF-8").scrub)
         lang = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
         rules.each_value do |rule|
           next if rule.semantic? || !rule.applies?(path, lang)

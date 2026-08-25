@@ -115,7 +115,7 @@ module Pub4
 
     def rates
       files = corpus.map { |path| [path, language_of(path), File.read(path, encoding: "UTF-8").scrub] }
-      law.values.reject(&:semantic?).filter_map do |rule|
+      law.values.select(&:scannable?).filter_map do |rule|
         applicable = files.select { |path, lang, _| rule.applies?(path, lang) }
         next if applicable.empty?
 
@@ -131,12 +131,13 @@ module Pub4
     # One question, one instrument; this one is about whether a rule that DOES
     # run can see its subject.
     def audit
-      blind = law.values.reject(&:semantic?).filter_map { |rule| fixture_blindness(rule) }
+      blind = law.values.select(&:scannable?).filter_map { |rule| fixture_blindness(rule) }
       measured = rates
       {
         rules: law.size,
-        lexical: law.values.count { |r| !r.semantic? },
+        lexical: law.values.count(&:scannable?),
         semantic: law.values.count(&:semantic?),
+        practice: law.values.count { |r| !r.practice.nil? },
         corpus: corpus.size,
         fixture_blindness: blind,
         saturation: measured.select { |r| r[:rate] > SATURATION }.sort_by { |r| -r[:rate] },
@@ -148,7 +149,7 @@ module Pub4
       result = audit
       return (puts JSON.pretty_generate(result)) || result[:fixture_blindness].empty? if json
 
-      puts "rule_audit: #{result[:lexical]} lexical + #{result[:semantic]} semantic rules over #{result[:corpus]} files"
+      puts "rule_audit: #{result[:lexical]} with a detector + #{result[:semantic]} asked + #{result[:practice]} practice, over #{result[:corpus]} files"
 
       if result[:fixture_blindness].empty?
         puts "rule_audit: every fixture survives being read as a real file"
