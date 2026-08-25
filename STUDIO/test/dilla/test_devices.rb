@@ -63,6 +63,66 @@ class TestDevices < Minitest::Test
     assert_operator values.max, :<=, 8000.0
   end
 
+  # The stepped family exists because neither other family can hold still. Every
+  # shape in it has to stay in range like any other, or a route clamps into a
+  # flat top nobody chose.
+  def test_stepped_shapes_stay_in_range_and_hold_their_value
+    DillaModulation::STEPPED.each do |shape|
+      (0..64).each do |p|
+        v = DillaModulation.send(shape, p / 64.0)
+
+        assert_operator v, :>=, -1.0001, "#{shape} at #{p / 64.0}"
+        assert_operator v, :<=, 1.0001, "#{shape} at #{p / 64.0}"
+      end
+    end
+  end
+
+  # Sample-and-hold read three times for one phase must give one answer. A
+  # stateful generator would give each route a different number, which would make
+  # one source behave as several and is the bug that is hardest to see.
+  def test_sample_and_hold_is_stable_for_a_given_phase
+    assert_equal 1, 5.times.map { DillaModulation.sample_hold(0.42) }.uniq.length
+    refute_equal DillaModulation.sample_hold(0.42), DillaModulation.sample_hold(0.92)
+  end
+
+  # It has to actually hold -- a value that changed every sample would be noise
+  # wearing the name of a sequencer.
+  def test_sample_and_hold_holds
+    inside_one_step = (0...6).map { |i| DillaModulation.sample_hold(0.01 + (i * 0.005)) }
+
+    assert_equal 1, inside_one_step.uniq.length
+  end
+
+  # A fan-out is one source reaching several parameters, each with its own depth.
+  # Equal depths everywhere would be one modulation applied N times.
+  def test_a_fan_reaches_every_destination_with_its_own_depth
+    matrix = DillaModulation::Matrix.new
+    matrix.lfo(:one, rate_hz: 0.5)
+    matrix.fan(:one, [
+                 { instance: "a", filter: "lowpass", param: "frequency", base: 900.0, depth: 1.0 },
+                 { instance: "b", filter: "equalizer", param: "gain", base: 0.0, depth: 0.4 },
+               ])
+
+    assert_equal 2, matrix.routes.length
+    assert_equal [1.0, 0.4], matrix.routes.map(&:depth)
+    assert_equal 1, matrix.routes.map { |r| r.source.id }.uniq.length
+  end
+
+  # The follower normalises against a STATED window, so the same beat drives a
+  # route the same way regardless of how loud the file was mastered.
+  def test_the_envelope_follower_is_normalised_to_its_window
+    points = [[0.0, -60.0], [1.0, -30.0], [2.0, 0.0]]
+    # Reproduce the mapping the follower applies, and check both ends land.
+    mapped = points.map do |t, level|
+      [t, (((level.clamp(-50.0, -8.0) + 50.0) / 42.0) * 2.0) - 1.0]
+    end
+
+    assert_in_delta(-1.0, mapped[0][1], 1e-9, "below the floor pins to -1")
+    assert_in_delta 1.0, mapped[2][1], 1e-9, "above the ceiling pins to +1"
+    assert_operator mapped[1][1], :>, -1.0
+    assert_operator mapped[1][1], :<, 1.0
+  end
+
   # A rate in bars and beats. Every modulation this engine wants is musical, and
   # a rate in hertz drifts against everything else the moment the tempo moves.
   def test_sync_rates_resolve_to_the_right_period

@@ -138,9 +138,72 @@ module DillaModulation
     (2.0 * Math.exp(-curve * p)) - 1.0
   end
 
+  # Stepped family: staircase -> sample-and-hold -> pendulum -> random walk.
+  #
+  # Neither family above can hold still. Both are continuous by construction, so
+  # every value between two points is visited on the way, and a modulation that
+  # JUMPS -- the oldest gesture in modular synthesis -- was not expressible.
+  #
+  # The four are ordered by how predictable the next step is, so the morph knob
+  # runs from "counts" to "wanders" rather than between unrelated behaviours.
+  STEPS = 8
+
+  # An even staircase up and back. Predictable, and the one that reads as a
+  # sequence rather than as an effect.
+  def staircase(phase)
+    p = phase % 1.0
+    step = (p * STEPS).floor
+    up = step < STEPS / 2
+    idx = up ? step : STEPS - 1 - step
+    ((idx.to_f / ((STEPS / 2) - 1)) * 2.0) - 1.0
+  end
+
+  # Sample and hold: a new value each step, held flat until the next.
+  #
+  # Deterministic from the step index rather than from a stateful RNG, so the
+  # same phase always gives the same value. A source read by three routes has to
+  # give all three the same number, and a generator that advanced per call would
+  # give each of them a different one -- which would be three sources wearing
+  # one name.
+  def sample_hold(phase, seed: 7)
+    step = ((phase % 1.0) * STEPS).floor
+    h = ((step * 2_654_435_761) ^ (seed * 40_503)) & 0x7fffffff
+    ((h % 2001) / 1000.0) - 1.0
+  end
+
+  # A pendulum over the same steps: 0, 2, 4, 6, 7, 5, 3, 1. Visits every value
+  # exactly once per cycle in an order that is neither scalar nor random, which
+  # is the analog shift register's musical trick.
+  PENDULUM_ORDER = [0, 2, 4, 6, 7, 5, 3, 1].freeze
+
+  def pendulum(phase)
+    idx = PENDULUM_ORDER[((phase % 1.0) * STEPS).floor % STEPS]
+    ((idx.to_f / (STEPS - 1)) * 2.0) - 1.0
+  end
+
+  # A random walk: each step moves up or down from the last rather than jumping
+  # anywhere, so consecutive values are related and the line wanders instead of
+  # scattering.
+  #
+  # The last step is forced to return the walk to where it started, so the cycle
+  # does not DRIFT -- repeated cycles cover the same ground rather than climbing
+  # away. That is not the same as closing smoothly: this is a stepped shape and
+  # the wrap is a step like any other, sometimes a larger one. WavMap's paths
+  # close because a waveform's loop point is heard as a click; a control-rate
+  # modulation has no such constraint, and jumps are the point of this family.
+  def random_walk(phase, seed: 7)
+    steps = (0...STEPS).map { |i| ((((i * 2_246_822_519) ^ (seed * 668_265_263)) >> 8) & 1).zero? ? -1 : 1 }
+    # Force the walk back to zero across the cycle so it closes.
+    steps[-1] = -steps[0...-1].sum
+    walk = steps.each_with_object([0]) { |d, acc| acc << acc.last + d }
+    span = [walk.map(&:abs).max, 1].max
+    walk[((phase % 1.0) * STEPS).floor % STEPS].to_f / span
+  end
+
   STRAIGHT = %i[square trapezoid triangle ramp].freeze
   CURVED = %i[parabola sine sharkfin exponential].freeze
-  FAMILIES = { straight: STRAIGHT, curved: CURVED }.freeze
+  STEPPED = %i[staircase sample_hold pendulum random_walk].freeze
+  FAMILIES = { straight: STRAIGHT, curved: CURVED, stepped: STEPPED }.freeze
 
   # Continuous position through a family. morph 0 is the first shape, 1 is the
   # last, and everything between is a crossfade of the two it falls between.
@@ -262,6 +325,42 @@ module DillaModulation
 
       seq[(time * rate_hz).floor % seq.length].to_f.clamp(-1.0, 1.0)
     end
+  end
+
+  # ------------------------------------------------------ envelope follower
+  #
+  # A modulation source that is a real audio file's loudness over time.
+  #
+  # The engine already builds this shape and throws it away: render_dilla taps
+  # the kit three ways and lowpasses one to 120 Hz as a sidechain KEY, which is
+  # an envelope follower whose only permitted destination is a compressor. This
+  # makes the same signal available to anything -- so a filter can open on the
+  # kick, a pad can brighten with the bass, the vinyl can duck under the snare.
+  #
+  # Measured from ffmpeg's ebur128 momentary loudness rather than a peak meter:
+  # 400 ms is what "how loud is it right now" means to a listener, and a sample
+  # meter would track individual transients and make every route stutter.
+  #
+  # Returned as an :envelope source, so it is interchangeable with an LFO and
+  # inherits its interpolation. The follower is a measurement, not a new kind of
+  # thing.
+  def follow(path, floor: -50.0, ceiling: -8.0)
+    return nil unless path && File.file?(path)
+
+    out = IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", path.to_s,
+                    "-af", "ebur128=peak=none", "-f", "null", "-"],
+                   err: %i[child out], &:read)
+    points = out.scan(/t:\s*([\d.]+)\s+.*?M:\s*(-?[\d.inf]+)/).filter_map do |t, m|
+      next if m.include?("inf")
+
+      # Normalised to -1..1 across a stated dynamic window. Without a fixed
+      # window the same beat would drive a route differently depending on how
+      # loud the file happened to be mastered, which is a modulation that
+      # depends on the mix rather than on the performance.
+      level = m.to_f.clamp(floor, ceiling)
+      [t.to_f, (((level - floor) / (ceiling - floor)) * 2.0) - 1.0]
+    end
+    points.empty? ? nil : points
   end
 
   # Linear between breakpoints, held at both ends. Same contract as
@@ -469,6 +568,23 @@ module DillaModulation
     def lfo(id, rate_hz:, family: :curved, morph: 0.33, phase: 0.0)
       source(id, kind: :lfo, rate_hz:, family:, morph:, phase:)
     end
+
+# One source, several destinations -- Ableton's LFO maps eight.
+#
+# The matrix has always been able to hold thirty-two routes from one source;
+# what it could not do was say so in one call, so every fan-out was four
+# near-identical route lines that had to be kept in step by hand. Each
+# destination keeps its own depth, because a fan-out where everything moves
+# by the same amount is one modulation applied four times rather than four
+# parameters moving together.
+#
+# targets: [{ instance:, filter:, param:, depth:, base:, mode: }, ...]
+def fan(source_id, targets)
+  targets.each do |t|
+    route(source_id, **{ depth: 1.0 }.merge(t))
+  end
+  self
+end
 
     def envelope(id, points) = source(id, kind: :envelope, points:)
     def random(id, rate_hz: 2.0, theta: 0.55, sigma: 0.9, seed: 7)

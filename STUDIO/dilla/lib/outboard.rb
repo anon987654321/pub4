@@ -649,6 +649,54 @@ module Outboard
     "#{stages.join(',')},volume=#{STACK_MAKEUP.fetch(n)}dB"
   end
 
+  # ------------------------------------------- Bode frequency shifter
+  #
+  # Not a pitch shifter, and the difference is the whole unit.
+  #
+  # A pitch shift multiplies every partial by the same ratio, so a harmonic
+  # series stays a harmonic series and the sound keeps its identity an octave up.
+  # A FREQUENCY shift adds the same number of hertz to every partial, so 100,
+  # 200, 300 becomes 200, 300, 400 -- ratios of 1:1.5:2 instead of 1:2:3. The
+  # result is inharmonic by construction, which is why the Bode shifter is a
+  # klangumwandler and not a transposer, and why small shifts read as metallic
+  # rather than as a wrong note.
+  #
+  # Measured: a 1 kHz tone shifted +100 arrives at 1100 Hz, -100 at 900, +300 at
+  # 1300. Exactly the stated hertz, which is the one thing worth checking about a
+  # filter nothing in this engine had ever called.
+  #
+  # Small values are the musical ones. Past about 50 Hz the source stops being
+  # recognisable, which is the same boundary sample_morph draws for FM depth and
+  # for the same reason: the ear tracks a pitch until the partials stop agreeing
+  # about what it is.
+  def freq_shift(hz: 12, level: 1.0)
+    "afreqshift=shift=#{hz}:level=#{level}"
+  end
+
+  # ------------------------------------------------- broadband phase rotation
+  #
+  # Phase, and nothing else. Measured against a 1 kHz tone the spectrum is
+  # unchanged to the noise floor -- identical to bypass at every bin.
+  #
+  # So on its own it is inaudible, and that is not a fault: it is the same
+  # property that makes console_sum's allpass stages worth having. It becomes
+  # audible the moment it meets a copy of itself, which is how it is used. Summed
+  # against the dry signal at 1 kHz:
+  #
+  #   shift 0.1   -6.5 dB    near cancellation
+  #   shift 0.25  -0.8 dB
+  #   shift 0.5   +3.7 dB
+  #   shift 1.0   +6.0 dB    fully in phase, so the sum doubles
+  #
+  # Which makes it a comb filter whose notches do not move with frequency the way
+  # a delay's do -- a delay's comb is periodic in hertz, this one is flat across
+  # the spectrum. That is the difference between a flanger and a phase rotator,
+  # and it is why this one thickens without the sweep being obvious.
+  def phase_rotate(shift: 0.35, mix: 0.5)
+    "asplit=2[prdry][prwet];[prwet]aphaseshift=shift=#{shift}[prsh];" \
+      "[prdry][prsh]amix=inputs=2:weights=#{(1.0 - mix).round(3)} #{mix}:normalize=0"
+  end
+
   # ------------------------------------------------------------------ racks
   #
   # Signal paths, in patch order. A rack is a list of unit names; `chain` turns
@@ -797,6 +845,8 @@ module Outboard
       when :dub_phaser then dub_phaser
       when :spring_reverb then spring_reverb
       when :dub_darken then dub_darken
+      when :freq_shift then freq_shift(hz: ENV.fetch("FREQ_SHIFT_HZ", "12").to_f)
+      when :phase_rotate then phase_rotate(shift: ENV.fetch("PHASE_ROTATE", "0.35").to_f)
       when :console_sum then console_sum
       # How many instances, as an operator knob, because the whole point of the
       # measurement above is that the count is the character control. Clamped in
