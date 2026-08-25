@@ -277,6 +277,24 @@ sync_openbsd_apply() {
     log ERROR "resource_guard.sh install failed — the load guard would be absent"
     return 1
   fi
+
+  # daily.local runs this as ROOT, and it guards on `[ -x /usr/local/bin/... ]`,
+  # so the guard is exactly as load-bearing as the install. Nothing installed it:
+  # config_drift_gate.rb sits at the repo root rather than under usr/local/bin/,
+  # so install_root_configs never carried it, and the guard was false on every
+  # run. Live had been edited by hand to run /home/dev/pub4/OPENBSD/... instead —
+  # root executing a file the dev user can rewrite, every morning, which is the
+  # escalation the guard's own comment forbids. Deploying daily.local without
+  # this would swap that for a check that silently never runs.
+  #
+  # lib/utf8.rb goes too: the script's `require_relative "lib/utf8"` resolves
+  # beside itself, so the installed copy is only self-contained with it there.
+  install -d -m 755 /usr/local/bin/lib
+  if ! install -m 755 "${SCRIPT_DIR}/config_drift_gate.rb" /usr/local/bin/config_drift_gate.rb ||
+     ! install -m 644 "${SCRIPT_DIR}/lib/utf8.rb" /usr/local/bin/lib/utf8.rb; then
+    log ERROR "config_drift_gate install failed — daily.local would skip the drift check in silence"
+    return 1
+  fi
   install_tracked_crontab || return 1
 
   typeset -a svcs=(nsd httpd relayd smtpd master)
