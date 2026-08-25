@@ -26,15 +26,34 @@ answers on its own port from the box, the front door is down, not a backend — 
 if something you did not deploy (ai.brgen.no) is down too, that is the diagnosis
 rather than collateral.
 
-Do not include port 80 in that test. This paragraph said "80 *and* 443 both
-refuse" until 2026-08-10, and port 80 always refuses: `relayd.conf` declares one
-relay, `listen on 0.0.0.0 port 443 tls`, and `netstat` on vm23 shows a single
-listener on `*.443`. There is no HTTP listener to lose. Half the signature was a
-constant, so a healthy box read as half-dead and checking 80 felt like evidence
-while carrying none. Found by writing the check wrong in the other direction —
-`curl http://brgen.no:443/up` speaks plain HTTP at a TLS port and returns 000, so
-a first pass reported both ports refusing and looked exactly like the outage it
-was inventing.
+Do not read port 80 as part of that test, but not for the reason this file gave
+until 2026-08-25. It said port 80 "always refuses", that `relayd.conf` declares
+the only listener, and that "there is no HTTP listener to lose". That is wrong:
+`httpd` runs as `www` and holds `*.80`, and `fstat` on vm23 shows three of its
+processes there. relayd does declare exactly one relay — `listen on 0.0.0.0
+port 443 tls` — but relayd is not the only daemon on the box.
+
+What port 80 answers is a 301 to HTTPS, plus ACME HTTP-01 challenges out of
+`/acme`; `/etc/httpd.conf` is twelve lines and says so. So a request to 80
+returns 301 whether or not a single Rails app is running, which is why it
+carries no information about a shed or a relayd failure — the same conclusion
+the old paragraph reached from a false premise, and it is worth keeping the
+distinction because the premise has a consequence the conclusion does not: if
+port 80 ever *does* refuse, that is a real finding. Certificate renewal goes
+through it, so httpd being down means the certs stop renewing silently and the
+site fails ~90 days later for a reason nothing will connect to this.
+
+The original note is still true of the mistake that produced it: `curl
+http://brgen.no:443/up` speaks plain HTTP at a TLS port and returns 000, so a
+check written that way reports both ports refusing and looks exactly like the
+outage it is inventing.
+
+`httpd.conf`'s second server block listens on `* port 6666` and serves
+`/postpro` — personal photographs — with no TLS and no auth. It is unreachable
+from outside only because `pf.conf` line 14 is `block log all` and the pass
+rules name 22, 53, 80 and 443 and nothing else; verified 000 from off-box on
+2026-08-25. One daemon's config is relying on another's to not be an exposure,
+so treat any pf change as touching that too.
 
 ## `SKIP_CI=1` does not mean "skip CI"
 
