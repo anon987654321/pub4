@@ -158,12 +158,16 @@ main[role="main"] {
      the bar itself adds) rather than restated as a constant: at an 18px root a
      hardcoded 3.5rem measured 63px against a 62px bar and left a 1px seam. */
   --nav-swiper-h: calc(var(--tap-min, 44px) + (var(--space-2) * 2) + var(--safe-top, 0px));
-  /* The mark outranks app chrome, because it is the one element that is the same
-     on every surface of every app. 91 (--z-nav + 1) was not enough: _minimal
-     gives every `nav` position: fixed with z-index: 100, so bsdports own primary
-     nav painted over it and elementFromPoint at the mark centre returned the nav.
-     Below --z-modal (1000) and --z-toast (1100); above any nav. */
-  --z-brand: 120;
+  /* --z-brand moved to _tokens.scss, where the rest of the ladder lives. It was
+     declared here, which made the ladder two sources: a reader sizing a new
+     layer against _tokens saw --z-overlay: 100 then --z-modal: 1000 and could
+     not know 110 and 120 were taken. The reasoning it carried is worth keeping:
+
+     the mark outranks app chrome because it is the one element identical on
+     every surface of every app. 91 (--z-nav + 1) was not enough — _minimal
+     gives every `nav` position: fixed with z-index: 100, so bsdports' own
+     primary nav painted over it and elementFromPoint at the mark centre
+     returned the nav. Below --z-modal and --z-toast; above any nav. */
 }
 
 .brand-mark {

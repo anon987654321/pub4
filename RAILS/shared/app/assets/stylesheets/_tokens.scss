@@ -104,10 +104,18 @@
     --scrim-55: rgb(0 0 0 / 0.55);
     --scrim-65: rgb(0 0 0 / 0.65);
     --scrim-72: rgb(0 0 0 / 0.72);
+    /* The ladder is one source. It was two: --z-brand lived in _layout_chrome
+       and --z-chrome-toggle nowhere at all, so three tiers existed above
+       --z-overlay that this list did not know about, and a reader sizing a new
+       layer against it would have been reading a subset. Two disagreeing
+       sources are what made the brgen wordmark invisible once already. Values
+       are unchanged — this moves where they are declared, not what they are. */
     --z-canvas: 1;
     --z-chrome: 10;
     --z-ui: 90;
     --z-overlay: 100;
+    --z-chrome-toggle: 110;
+    --z-brand: 120;
     --z-modal: 1000;
     --z-toast: 1100;
     --z-skip: 2000;

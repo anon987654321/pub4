@@ -105,7 +105,7 @@
   padding: 12px;
   top: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px) - 12px);
   inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px) - 12px);
-  z-index: 110;
+  z-index: var(--z-chrome-toggle);
   width: var(--tap-min);
   height: var(--tap-min);
   display: inline-flex;
