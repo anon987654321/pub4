@@ -103,6 +103,19 @@ export default class extends Controller {
 
   toggle() { this.revealed ? this.hide() : this.show() }
 
+  // A revealed drawer is an opaque, full-height panel. Anything fixed beneath it
+  // is invisible AND unclickable, while still being a tab stop and still counting
+  // as a target. The drawer cannot be a CSS sibling of that chrome — .tab-bar-peel
+  // hangs off .app-shell while the drawer sits inside .layout — so the state goes
+  // on the root, where any of it can reach the fact.
+  //
+  // Recomputed from the DOM rather than counted, because two panels share this
+  // controller and a counter would drift the first time one was removed while open.
+  syncRootState() {
+    const open = !!document.querySelector('[data-controller~="edge-swiper"].revealed')
+    document.documentElement.classList.toggle("drawer-open", open)
+  }
+
   show() {
     this.revealed = true
     // The wrapper, not the root target: the CSS keys .sidebar-swiper.revealed
@@ -112,6 +125,7 @@ export default class extends Controller {
     // hidden' nav was hiding a dead reveal.
     this.element.classList.add("revealed")
     if (this.hasGripTarget) this.gripTarget.setAttribute("aria-expanded", "true")
+    this.syncRootState()
   }
 
   hide() {
@@ -121,5 +135,6 @@ export default class extends Controller {
     this.revealed = false
     this.element.classList.remove("revealed")
     if (this.hasGripTarget) this.gripTarget.setAttribute("aria-expanded", "false")
+    this.syncRootState()
   }
 }

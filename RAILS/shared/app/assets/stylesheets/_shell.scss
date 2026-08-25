@@ -405,6 +405,22 @@ html.chrome-hidden .tab-bar {
   display: none;
 }
 
+/* A revealed drawer is min(300px, 85vw) of opaque, full-height panel anchored to
+   an edge. Below md its inner edge is past the horizontal centre, so it lands on
+   top of the bottom-centre peel: the geometry gate measured the peel's own centre
+   pixel owned by aside.sidebar on all 16 brgen mobile surfaces, first visit, with
+   the drawer showing itself as the operator asked it to.
+   Withdrawing the peel while a drawer is open states what is already true — it is
+   behind an opaque panel — instead of leaving a control that is painted over,
+   still focusable, and still counted as a target. The drawer's own dismissal
+   brings it back. At md and above the drawer stops short of centre and the peel
+   is reachable, so the rule stops there too. */
+@media (max-width: 639px) {
+  html.drawer-open .tab-bar-peel {
+    display: none;
+  }
+}
+
 /* First-visit coach — sits just above the flush bottom peel once. */
 .tab-bar-coach {
   position: fixed;

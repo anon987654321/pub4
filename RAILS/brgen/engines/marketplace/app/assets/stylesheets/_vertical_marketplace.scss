@@ -62,6 +62,17 @@ main#main-content > header.market-hero h1 {
   color: var(--accent);
 }
 
+/* --accent is sized to carry #1a1824 ink as a button background (.compose-btn),
+   which puts a floor under its luminance. On the light ground that same taupe is
+   3.48:1 as small text, against 1.4.3's 4.5. Retuning --accent cannot fix it:
+   carrying the ink needs luminance >= 0.2200 and being text on white needs
+   <= 0.1833, so darkening it enough for this kicker drops .compose-btn to 3.70.
+   Only the light theme has the problem — on the dark ground --accent is 5.02:1 —
+   so only the light theme swaps, to the deeper taupe of the same pair at 6.03:1. */
+:root[data-theme="light"] .market-hero-kicker {
+  color: var(--vertical-marketplace-accent-hover, #6f6149);
+}
+
 .market-hero p:not([class]) {
   margin: 0;
   max-width: 46ch;

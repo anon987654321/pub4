@@ -339,7 +339,14 @@ vertical_accents:
   # light: what light mode wears — the dark-tuned hue where it already clears
   # 3:1 on white, a darkened same-hue variant where it did not (dating 1.91:1,
   # playlist 2.47:1, takeaway 2.97:1 — visual_contract_lint low_contrast).
-  marketplace: { accent: "#98876e", hover: "#6f6149", light: "#98876e" }  # taupe storefront + serif; lifted from #8c7a5e (3.92:1)
+  # Do not darken this to fix text contrast — it cannot be done here. The accent is
+  # a BACKGROUND carrying #1a1824 ink (.compose-btn), which needs luminance >= 0.2200,
+  # while being 4.5:1 text on white needs <= 0.1833. The two bounds do not overlap, so
+  # an accent that satisfies one always breaks the other: darkening to #80715c fixed
+  # .market-hero-kicker (3.48 -> 4.74) and broke .compose-btn (5.02 -> 3.70) in the
+  # same run. Small text in this vertical wears `hover` instead. (The note that used
+  # to sit here called #8c7a5e 3.92:1 — it is 4.15:1.)
+  marketplace: { accent: "#98876e", hover: "#6f6149", light: "#98876e" }  # taupe storefront + serif
   tv: { accent: "#dc635c", hover: "#b83a33", light: "#dc635c" }        # lifted from #d6473f (3.74:1 on surface_elevated)
   dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }       # Nordic teal (not warm coral)
   takeaway: { accent: "#e07b39", hover: "#c26a30", light: "#c26a30" }
