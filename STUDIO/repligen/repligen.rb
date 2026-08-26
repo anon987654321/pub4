@@ -23,8 +23,8 @@ require_relative "../../MASTER/lib/boot/paths"
 # unreachable.
 require "shellwords"
 
-# Structured fields compose onto the free-text --prompt. An unrecognised value
-# used to be documented as "a no-op rather than a crash" -- but compile_prompt
+# Structured fields compose onto the free-text --prompt. The docs called an
+# unrecognised value "a no-op rather than a crash" -- but compile_prompt
 # looks the key up and .compacts the nil away, so `--stock portra400` produced a
 # prompt with no film stock in it, silently, after paying for the generation and
 # waiting for it. A no-op is the worst of the three options here: a crash costs
@@ -345,9 +345,9 @@ MODEL_CAPABILITIES = {
   # `input_images`, PLURAL, and that is the whole reason these entries were
   # worth waiting for rather than guessing. FLUX 2 takes up to eight reference
   # images and holds a character across them, where FLUX 1's editors took a
-  # single `input_image`. A guessed singular key would have been refused by the
-  # chain validator on every FLUX 2 chain — correctly, and for a reason nobody
-  # would have found quickly.
+  # single `input_image`. The chain validator would refuse a guessed singular
+  # key on every FLUX 2 chain — correctly, and for a reason nobody would have
+  # found quickly.
   #
   # Read from Replicate's own documentation rather than from the schema
   # endpoint, which needs a token this machine does not have. `rake
@@ -534,6 +534,27 @@ def raw_mode?(options)
   return false if options[:no_raw]
   return true if options[:raw]
   !!(options[:stock] || options[:lens])
+end
+
+# Local paths become URLs the provider can actually fetch.
+#
+# Replicate reads input_image/input_images over HTTP. Handing it
+# "/Users/…/frame.jpg" is a path only this machine can resolve, and the API
+# does not fail helpfully on that — it fails somewhere inside the model, after
+# the prediction has been created and billed.
+#
+# Nothing uploaded before this. --image had the same defect, so every edit-model
+# call was passing a local path; the chain executor inherited it, and stage 2
+# would have been the first thing to hit it. Found by printing the payload a
+# chain would send rather than by running one.
+#
+# Already-URLs and data: URIs pass through untouched, so a reference fetched
+# from somewhere else stays as it is.
+def upload_reference(client, path)
+  return path if path.to_s.start_with?("http://", "https://", "data:")
+  return path unless File.file?(path.to_s)
+
+  client.upload_file(path.to_s)
 end
 
 # Up to eight, because that is what flux-2-max and flux-2-pro accept; flex takes
@@ -857,7 +878,7 @@ parser = OptionParser.new do |p|
   p.on("--seed N", Integer) { |v| options[:seed] = v }
   # Both knobs are per-model: --guidance is `guidance` on flux-dev and `cfg` on
   # SD 3.5, --steps is `num_inference_steps` on Flux and `steps` on SD 3.5, and
-  # the ranges differ. build_input maps and checks; here they are just numbers.
+  # the ranges differ. build_input maps and checks; here they are numbers.
   p.on("--guidance N", Float) { |v| options[:guidance] = v }
   p.on("--steps N", Integer) { |v| options[:steps] = v }
   p.on("--preview") { options[:preview] = true }
@@ -930,8 +951,8 @@ when "chain"
   # The loop itself lives in Chain.run, which takes this block. It is injected
   # so the carry-forward can be tested without spending anything — see
   # test/tools/test_chain.rb, which hands in a recorder and asserts that stage
-  # N+1 really is given stage N's file. That is the one thing a chain must get
-  # right and the one thing that fails silently: a model handed no image just
+  # N+1 is given stage N's file. That is the one thing a chain must get
+  # right and the one thing that fails silently: a model handed no image
   # generates from the prompt and returns something plausible.
   abort "repligen: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
     Master::Io::ReplicateClient.load_token.to_s.strip.empty?
@@ -945,7 +966,9 @@ when "chain"
   perform = lambda do |stage:, index:, total:, image:, seed:|
     target = "#{stem}-#{format('%02d', index + 1)}-#{stage.name}#{ext}"
     stage_options = options.merge(stage.options).merge(model: stage.model)
-    stage_options[:image] = image if image
+    # Uploaded, not passed as a path: the provider fetches these over HTTP and
+    # a local path is resolvable only here.
+    stage_options[:image] = upload_reference(client, image) if image
     prompt = stage.inherits.include?("prompt") ? options[:prompt] : stage.prompt
     compiled = compile_prompt(prompt, stage_options)
     negative = compile_negative_prompt(stage_options)
@@ -993,6 +1016,12 @@ when "generate"
 
   options[:postpro] = HOUSE_POSTPRO if options[:postpro].nil?
   warn_vocab_conflicts(options)
+  # --image and --reference are local paths until they are not. Uploaded once,
+  # here, so build_input below puts URLs into input_image / input_images.
+  unless options[:dry_run]
+    options[:image] = upload_reference(client, options[:image]) if options[:image]
+    options[:references] = Array(options[:references]).map { |r| upload_reference(client, r) } if options[:references]
+  end
   negative_prompt = compile_negative_prompt(options)
   # Say it out loud. The request is about to go out without the constraint the
   # rest of this file spends four functions assembling, and the only reason it

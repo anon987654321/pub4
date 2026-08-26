@@ -319,4 +319,33 @@ class TestRepligenPrompt < Minitest::Test
     refute respond_to?(:vocab_check, true),
            "the reporter exits the process; it belongs below the guard with the CLI"
   end
+  # Replicate fetches input_image / input_images over HTTP, so a local path is
+  # resolvable only on the machine that made it — and the API does not fail
+  # helpfully on one. It creates the prediction, bills it, and fails inside the
+  # model. Nothing uploaded before this was added, so every --image call was
+  # sending a path, and a chain's second stage would have been the first thing
+  # to hit it.
+  def test_a_local_path_is_uploaded_and_a_url_is_left_alone
+    uploads = []
+    client = Object.new
+    client.define_singleton_method(:upload_file) do |path|
+      uploads << path
+      "https://replicate.delivery/uploaded/#{File.basename(path)}"
+    end
+
+    Dir.mktmpdir do |dir|
+      local = File.join(dir, "frame.jpg")
+      File.write(local, "not really a jpeg")
+
+      assert_equal "https://replicate.delivery/uploaded/frame.jpg",
+                   upload_reference(client, local)
+      assert_equal [local], uploads, "a local file has to be uploaded exactly once"
+
+      uploads.clear
+      remote = "https://example.invalid/already.jpg"
+      assert_equal remote, upload_reference(client, remote)
+      assert_equal "data:image/png;base64,AAAA", upload_reference(client, "data:image/png;base64,AAAA")
+      assert_empty uploads, "a URL or data: URI must not be re-uploaded"
+    end
+  end
 end
