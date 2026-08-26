@@ -233,3 +233,24 @@ STUDIO/lora/**/*.pid
 STUDIO/lora/*/train_run.log
 STUDIO/lora/*/weights/*/samples/
 STUDIO/lora/*/weights/*/config.yaml
+
+# Photographs of people, and everything derived from them.
+#
+# These were untracked because nobody had run `git add` on them, which is not
+# the same as being protected: one `git add STUDIO/lora` and seventeen
+# photographs of a real person are in a public repository's history forever.
+# lora/README.md has always said committing them publishes the face and that
+# deleting them later does not remove it — this is that sentence made
+# load-bearing.
+#
+# The subject is not the operator. Ragnhild's likeness is hers, and the cost of
+# an accident here is not a revert.
+#
+# Deliberate publication is still possible with `git add -f`, which is the point:
+# it should take a decision rather than a reflex.
+STUDIO/lora/*/sources/
+STUDIO/lora/*/dataset/
+STUDIO/lora/*/dataset_*/
+STUDIO/lora/*/retouched/
+STUDIO/lora/*/out/
+STUDIO/lora/*/weights/
