@@ -189,8 +189,16 @@ DILLA_PRODUCED_TRACKS = ARTIST_VERIFIED_PROGRESSIONS.select do |_k, v|
   v[:artist] == "J Dilla" || v[:producer] == "J Dilla"
 end.keys.freeze
 
+# Off by default: the full curated pool rotates, and ARTIST_VERIFIED_ONLY=1
+# narrows it back to the transcribed-from-record progressions.
+#
+# Held the pool to 12 of 401 progressions, which is small enough that a rotation
+# returns to the same changes within a few renders -- the reason successive
+# demos kept arriving on the same progression. Verified-only remains the right
+# setting for checking the engine against a specific record; it is the wrong
+# default for writing, which is what most renders are.
 def artist_verified_only?
-  ENV.fetch("ARTIST_VERIFIED_ONLY", "1") != "0"
+  ENV.fetch("ARTIST_VERIFIED_ONLY", "0") != "0"
 end
 
 # Default on (2026-07-27 user request): stream/deep rotation uses only the

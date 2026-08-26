@@ -522,6 +522,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
                 decay: 2.0, mod_hz: 0.45, source_offset:)
     end
 
+    melody_gain = MELODY_BASE_GAIN * resolved_lead_mix_weight
     melody_events.each do |(t, v, hz)|
       event_frame = (t * SAMPLE_RATE).round
       total = (0.18 * SAMPLE_RATE).round
@@ -531,7 +532,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
       frequency = hz.is_a?(Numeric) ? hz : MELODY_CHOP_HZ.first
       count.times do |i|
         tt = (source_offset + i).to_f / SAMPLE_RATE
-        sample = v * 0.11 * Math.exp(-tt * 8.5) * Math.sin(2 * Math::PI * frequency * tt)
+        sample = v * melody_gain * Math.exp(-tt * 8.5) * Math.sin(2 * Math::PI * frequency * tt)
         left[local_start + i] += sample * 0.55
         right[local_start + i] += sample * 0.45
       end

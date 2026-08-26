@@ -272,10 +272,33 @@ end
 module PostproExplain
   def self.on? = ENV["POSTPRO_EXPLAIN"] == "1"
 
+  # Brightness, contrast and TEXTURE.
+  #
+  # The third was missing, and its absence is why a chain that was destroying
+  # micro-detail read as healthy here. avg and deviate are both nearly blind to
+  # a gaussian blur — softening a photograph moves its mean not at all and its
+  # standard deviation barely, while taking most of the high-frequency energy
+  # out of it. Measured on one frame: optical_blur reported spread-0.0021, a
+  # number small enough to ignore, in the same step that removed 57% of the
+  # picture's texture.
+  #
+  # uncanny.rb's own header says the number to watch is the texture delta. The
+  # per-step report could not see it.
   def self.snapshot(image)
     return nil unless on?
 
-    { avg: image.avg, deviate: image.deviate }
+    { avg: image.avg, deviate: image.deviate, texture: texture(image) }
+  rescue StandardError
+    nil
+  end
+
+  # Laplacian energy, as uncanny.rb measures it. Inlined rather than delegated:
+  # this module is defined before the bootstrap has decided whether vips is
+  # present, so it cannot require uncanny at load time.
+  def self.texture(image)
+    luma = image.bands >= 3 ? image.colourspace("b-w") : image
+    luma = luma.cast(:float) / 255.0
+    luma.conv(Vips::Image.new_from_array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]]), precision: :float).abs.avg
   rescue StandardError
     nil
   end
@@ -288,9 +311,12 @@ module PostproExplain
 
     d_avg = (now[:avg] - before[:avg]).abs
     d_dev = (now[:deviate] - before[:deviate]).abs
-    return " NO-OP (moved nothing)" if d_avg < 1e-9 && d_dev < 1e-9
+    d_tex = now[:texture] && before[:texture] ? (now[:texture] - before[:texture]).abs : 0.0
+    return " NO-OP (moved nothing)" if d_avg < 1e-9 && d_dev < 1e-9 && d_tex < 1e-9
 
-    format(" avg%+.4f spread%+.4f", now[:avg] - before[:avg], now[:deviate] - before[:deviate])
+    line = format(" avg%+.4f spread%+.4f", now[:avg] - before[:avg], now[:deviate] - before[:deviate])
+    line += format(" texture%+.4f", now[:texture] - before[:texture]) if now[:texture] && before[:texture]
+    line
   rescue StandardError
     ""
   end
@@ -437,6 +463,12 @@ end
 
 if BOOTSTRAP[:gems][:vips]
   require "vips"
+  # Here rather than at the top of the file: uncanny.rb opens with `require
+  # "vips"`, so requiring it before the bootstrap has decided vips is present
+  # would raise during load and take the whole tool down instead of degrading.
+  # The grade reads it now — shadow_lift asks where the blacks already sit, and
+  # preset() asks how much texture and contrast the source arrived with.
+  require_relative "uncanny"
 end
 
 # Was File.exist?("repligen.rb") -- relative to the CURRENT WORKING DIRECTORY,
@@ -1328,12 +1360,39 @@ def highlight_roll(image, threshold = 200, intensity = 1.0)
   safe_cast(image * (1 - intensity) + result * intensity)
 end
 
-def shadow_lift(image, lift = 0.15, preserve_blacks = true)
+# A film toe: the blacks sit slightly off zero rather than crushed to it.
+#
+# Expressed as a TARGET rather than an amount, which is the whole fix. An
+# amount cannot know what it is being added to, so the same call that puts a
+# gentle toe under a crushed render turns a photograph milky — the photograph
+# already had its toe and got a second one on top. A target is self-limiting:
+# reach it from below, and do nothing at all when the picture is already there.
+#
+# 0.045 of full scale, about 11/255. Chosen as a film toe rather than measured
+# from a stock, and worth saying so — STOCKS carries H&D curves but no toe
+# density, so there is nothing in the table to derive this from.
+SHADOW_TOE_TARGET = 0.045
+
+def shadow_lift(image, lift = SHADOW_TOE_TARGET, preserve_blacks = true)
   gray = image.colourspace("b-w").cast("float") / 255.0
   inv_gray = gray.linear(-1, 1)
-  shadow_mask = preserve_blacks ? (inv_gray ** 2.0) * 0.8 : inv_gray * lift
+
+  # `lift` is the fraction of full scale added at the darkest point, applied
+  # ONCE. It used to be applied twice on the false branch (`inv_gray * lift`
+  # and again in `* 255 * lift`, so 0.12 meant 0.0144) and replaced by a
+  # constant 0.8 on the true branch — which made `preserve_blacks: true` lift
+  # pure black by 30.6 levels against the other branch's 5.7. The flag named
+  # for preserving blacks raised them 5.4x harder than the flag that does not.
+  shadow_mask = preserve_blacks ? inv_gray**2.0 : inv_gray
+
+  # Only the distance still to travel. A frame whose blacks already sit at or
+  # above the toe gets nothing, so this can no longer stack onto a photograph
+  # that had already been graded, scanned, or simply exposed properly.
+  headroom = [lift - Postpro::Uncanny.black_point(image), 0.0].max
+  return image if headroom <= 0.0
+
   lift_rgb = shadow_mask.bandjoin([shadow_mask, shadow_mask])
-  safe_cast(image + lift_rgb * 255 * lift)
+  safe_cast(image + lift_rgb * 255 * headroom)
 end
 
 def micro_contrast(image, radius = 5, intensity = 0.3)
@@ -1515,7 +1574,16 @@ end
 
 # OLPF (optical low-pass filter) simulation. Two-gaussian PSF: sharp core (84%)
 # + wide skirt (16%) matches the Lorentzian wings measured on real lens MTFs.
+# Below this the lens is sharper than the sampling grid and there is nothing to
+# simulate. Needed because of the floors below: they keep gaussblur off zero,
+# and in doing so they also meant a sigma scaled down toward nothing still blurred
+# at full strength. Asking for a tenth of the defocus produced all of it, so the
+# source-aware scaling in preset() had no effect here until this existed.
+OPTICAL_BLUR_FLOOR = 0.12
+
 def optical_blur(image, sigma = 0.6)
+  return image if sigma < OPTICAL_BLUR_FLOOR
+
   core = image.gaussblur([sigma * 0.6, 0.3].max)
   skirt = image.gaussblur([sigma * 2.8, 0.5].max)
   safe_cast(core.cast("float") * 0.84 + skirt.cast("float") * 0.16)
@@ -1564,11 +1632,26 @@ def dir_coupler(image, strength = 0.15)
   img_f = image.cast("float") / 255.0
   # Lateral inhibition: each dye layer's development byproducts diffuse σ≈0.8px
   # and suppress adjacent layers — desaturates pure hues, sharpens colour edges.
-  r_d, g_d, b_d = img_f.bandsplit.map { |ch| ch.gaussblur(0.8) }
+  #
+  # The diffusion is on the INHIBITOR, not on the picture. It used to be on
+  # both: every band of the output was built from `r_d, g_d, b_d`, the blurred
+  # channels, so the whole frame was replaced by a σ=0.8 gaussian of itself and
+  # only `strength * 0.5` of the high-pass came back — about 5% at the strength
+  # `portrait` calls it with. On a photograph that cost 52% of the picture's
+  # texture in one step, which is more than every other effect in the chain
+  # combined, while the log reported spread-2.38 and looked unremarkable.
+  #
+  # It also inverted what the line above claims. A layer's own density is sharp;
+  # what reaches it from its neighbours has diffused. Subtracting a blurred
+  # neighbour from a sharp channel IS an unsharp mask, so written this way the
+  # edge effect falls out of the physics instead of being bolted on after it —
+  # which is what "sharpens colour edges" meant.
+  r_s, g_s, b_s = img_f.bandsplit
+  r_d, g_d, b_d = [r_s, g_s, b_s].map { |ch| ch.gaussblur(0.8) }
   inhibition = Vips::Image.bandjoin([
-    r_d - g_d * (0.08 * strength) - b_d * (0.04 * strength),
-    g_d - r_d * (0.12 * strength) - b_d * (0.07 * strength),
-    b_d - r_d * (0.06 * strength) - g_d * (0.10 * strength),
+    r_s - g_d * (0.08 * strength) - b_d * (0.04 * strength),
+    g_s - r_d * (0.12 * strength) - b_d * (0.07 * strength),
+    b_s - r_d * (0.06 * strength) - g_d * (0.10 * strength),
   ])
   inhibited = clamp01(inhibition) * 255.0
   desatd = inhibited * (1.0 - strength * 0.3) + gray * (strength * 0.3)
@@ -2546,13 +2629,78 @@ def tonemap_hbd(linear)
   Vips::Image.bandjoin(curved)
 end
 
+# How much of the grade this picture actually needs.
+#
+# Every preset here was tuned against generated images, and against those it is
+# purely additive: a render arrives with no micro-texture and no toe, so
+# optical_blur costs nothing (there is no detail to lose), film_curve has the
+# whole tonal range to play with, and grain is the point of the exercise.
+#
+# Point the same chain at a photograph and each of those becomes a subtraction.
+# Measured on a phone photograph through `portrait`: film_curve took 14.7 levels
+# of contrast out and added 11.4 of brightness, shadow_lift another 4.3, and
+# optical_blur removed roughly four times more texture than grain put back. The
+# result is milky, flat and pink, and it is worse than the input by every number
+# uncanny.rb reports.
+#
+# So the subtractive steps are scaled by what the source arrived with. A flat
+# render measures near zero on both axes and gets the full grade unchanged —
+# which the golden-grade suite pins, since `portrait` must still put texture
+# into a flat field. A photograph measures high and gets the smoothing and the
+# curve backed off, while grain, the stock's colour and the toe still apply.
+#
+# On by default and not reachable by a flag, deliberately: a grade that damages
+# real photographs unless you know to disable it is a grade that damages real
+# photographs.
+#
+# The knees are calibrated, not guessed. Below TEXTURE_FLOOR is rescue.rb's
+# definition of "no micro-detail" — phone noise reduction, a beauty filter, or
+# a diffusion model. TEXTURE_NATIVE is the low end of the nine phone photographs
+# measured here, which ran 0.015 to 0.092. The tonal pair is the same idea on
+# the contrast axis: those photographs ran 0.15 to 0.28.
+TEXTURE_FLOOR = 0.004
+TEXTURE_NATIVE = 0.015
+TONAL_FLOOR = 0.10
+TONAL_NATIVE = 0.22
+# The curve never scales to nothing: the stock has a look, and a photograph
+# that needs none of the repair should still come out graded rather than
+# untouched. Defocus does scale to nothing, because simulated lens softness is
+# not a look anyone asked for on a frame that is already sharp — it is only
+# ever there to give grain something to sit on.
+GRADE_FLOOR = 0.25
+
+def source_headroom(image)
+  reading = Postpro::Uncanny.read_image(image)
+  { blur: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.0),
+    curve: taper(reading.tonal_range, TONAL_FLOOR, TONAL_NATIVE, GRADE_FLOOR),
+    reading: reading }
+rescue StandardError => e
+  # A measurement failure must not cost the grade. Full strength is what every
+  # preset did before this existed.
+  $logger.error "source_headroom: #{e.message}"
+  { blur: 1.0, curve: 1.0, reading: nil }
+end
+
+# 1.0 at or below `floor`, `minimum` at or above `native`, linear between.
+def taper(value, floor, native, minimum)
+  return 1.0 if value <= floor
+  return minimum if value >= native
+
+  1.0 - ((value - floor) / (native - floor)) * (1.0 - minimum)
+end
+
 def preset(image, name)
   p = PRESETS[name.to_sym]
   return image unless p
   processed = image
   t_start = Time.now
   n_steps = p[:fx].length
+  head = source_headroom(image)
   PostproBootstrap.dmesg "preset=#{name} stock=#{p[:stock]} steps=#{n_steps} intensity=#{p[:intensity]}"
+  if head[:reading]
+    PostproBootstrap.dmesg format("source %s -> blur x%.2f curve x%.2f",
+                                  head[:reading], head[:blur], head[:curve])
+  end
 
   p[:fx].each_with_index do |fx, i|
     t0 = Time.now
@@ -2568,10 +2716,10 @@ def preset(image, name)
     # identical from outside.
     before_stats = PostproExplain.snapshot(processed)
     processed = case fx
-             when "optical_blur"        then optical_blur(processed, 0.5)
+             when "optical_blur"        then optical_blur(processed, 0.5 * head[:blur])
              when "tonemap"             then tonemap(processed, type: :aces, exposure: p.fetch(:tonemap_ev, 0.0), intensity: p[:intensity] * 0.85)
              when "halation"            then halation(processed, p[:intensity] * 0.60, tint: halation_tint_for(p[:stock]))
-             when "film_curve"          then film_curve(processed, p[:stock], p[:intensity])
+             when "film_curve"          then film_curve(processed, p[:stock], p[:intensity] * head[:curve])
              when "stock_matrix"        then stock_matrix(processed, p[:stock], p[:intensity] * 0.85)
              when "spectral_temp"       then spectral_temp(processed, source_kelvin: 6504, target_kelvin: p[:temp], intensity: p[:intensity] * 0.50)
              when "color_temp"          then color_temp(processed, p[:temp], p[:intensity] * 0.50)
@@ -2584,7 +2732,7 @@ def preset(image, name)
              when "split_grade"         then split_grade(processed, intensity: p[:intensity] * 0.25)
              when "split_toning"        then split_toning(processed)
              when "skin_protect"        then skin_protect(processed, p[:intensity])
-             when "shadow_lift"         then shadow_lift(processed, 0.12, true)
+             when "shadow_lift"         then shadow_lift(processed, SHADOW_TOE_TARGET, true)
              when "highlight_roll"      then highlight_roll(processed, 200, p[:intensity] * 0.50)
              when "micro_contrast"      then micro_contrast(processed, 5, p[:intensity] * 0.20)
              # Was a hard-coded 800 for every preset. grain's whole ISO term is

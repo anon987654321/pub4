@@ -69,26 +69,44 @@ module DillaComposition
              velocity_spread: 0.1, gate_mul: 0.92, ghost_boost: 1.2 },
   }.freeze
 
+  # velocity_curve is an accent SHAPE, not a level. dilla_velocity multiplies the
+  # role base by it per 16th, so a curve has to centre on 1.0: the contour says
+  # which subdivision is emphasised, and DILLA_ROLE_VELOCITY_BASE alone says how
+  # hard the kit hits.
+  #
+  # Every curve here centred on ~0.5 instead, which is not an accent at all --
+  # it is a second, hidden gain stage attenuating the whole kit by ~8 dB on every
+  # profile at once. Measured on a 16-bar donuts render: the loudest snare in the
+  # take reached 0.261 against its 0.66 base, the loudest kick 0.180 against 0.49,
+  # and the kit sat only +2.0 dB over the harmony bus. Because the scaling was
+  # uniform across roles, it read as "no drums" rather than as a quiet kick --
+  # cutting KICK_GAIN in half moved the presence band by 0.1 dB, since the snare
+  # and hats were being held down by exactly the same factor.
+  #
+  # Each contour below is its original, divided by its own mean. Relative accent,
+  # swing and ghost density are bit-for-bit what they were; only the missing 8 dB
+  # comes back. Renormalising to 1.0 puts the kit +6.6 dB and its presence band
+  # +6.3 dB, at +6.7 dB over the harmony bus.
   GROOVE_DNA = {
     donuts: {
       kick_offset_ms: [0, 6, 12, 18, 24], hat_offset_ms: [8, 14, 20, 26],
-      swing: 61, ghost_density: 1.25, velocity_curve: [0.42, 0.52, 0.48, 0.58],
+      swing: 61, ghost_density: 1.25, velocity_curve: [0.84, 1.04, 0.96, 1.16],
     },
     fantastic_vol2: {
       kick_offset_ms: [0, 4, 10, 16], hat_offset_ms: [6, 12, 18],
-      swing: 58, ghost_density: 1.1, velocity_curve: [0.48, 0.55, 0.5, 0.6],
+      swing: 58, ghost_density: 1.1, velocity_curve: [0.901, 1.033, 0.939, 1.127],
     },
     endtroducing: {
       kick_offset_ms: [0, 8, 14], hat_offset_ms: [10, 18, 24],
-      swing: 54, ghost_density: 0.85, velocity_curve: [0.4, 0.46, 0.44, 0.5],
+      swing: 54, ghost_density: 0.85, velocity_curve: [0.889, 1.022, 0.978, 1.111],
     },
     madvillainy: {
       kick_offset_ms: [0, 5, 11, 20], hat_offset_ms: [7, 15, 22],
-      swing: 63, ghost_density: 1.4, velocity_curve: [0.5, 0.62, 0.55, 0.65],
+      swing: 63, ghost_density: 1.4, velocity_curve: [0.862, 1.069, 0.948, 1.121],
     },
     cosmogramma: {
       kick_offset_ms: [0, 10, 18, 26], hat_offset_ms: [12, 20, 28],
-      swing: 66, ghost_density: 1.15, velocity_curve: [0.44, 0.52, 0.5, 0.56],
+      swing: 66, ghost_density: 1.15, velocity_curve: [0.871, 1.03, 0.99, 1.109],
     },
   }.freeze
 
