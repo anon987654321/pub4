@@ -32,9 +32,21 @@ def session_id
   explicit = ENV["PUB4_SESSION"].to_s.strip
   return explicit unless explicit.empty?
 
-  # Not a fallback that invents an identity: the parent pid is stable for the
-  # life of one shell and differs between two, which is the only property
-  # needed. If even that is unavailable, record nothing.
+  # The parent pid, which is stable for SOME agents and not others — and the
+  # difference is worth stating, because this comment used to claim it was
+  # stable full stop.
+  #
+  # Measured after a day in a shared checkout: this session's shells share one
+  # parent, so its commits grouped under a single key. A concurrent agent
+  # spawned a fresh parent per command, so its commits landed under 61 keys,
+  # one each.
+  #
+  # Harmless, and worth knowing why. The guard only ever asks whether a commit
+  # is MINE, so a key that fragments produces no false claim — it produces no
+  # claim at all, which is the safe direction. What it cannot do is group
+  # another session's work, and nothing asks it to.
+  #
+  # Set PUB4_SESSION and none of this applies.
   ppid = Process.ppid
   ppid.positive? ? "ppid-#{ppid}" : ""
 rescue StandardError
