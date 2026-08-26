@@ -147,22 +147,64 @@ module Deploy
         values = Set.new
         Dir.glob(File.join(rails_root, "*/app/assets/builds/application.css")).each do |path|
           css = File.read(path) rescue next
-          decls = []
-          css.scan(/([^{}]+)\{([^{}]*)\}/) do
-            selector = Regexp.last_match(1)
-            body = Regexp.last_match(2)
-            body.scan(/(?:\A|;)\s*#{Regexp.escape(prop)}\s*:\s*([^;]+)/) do
-              decls << [selector.strip.split(",").map(&:strip), Regexp.last_match(1).strip.downcase]
-            end
-          end
-          # Among bare `:root` rules only the last one is the default winner.
-          bare = decls.each_index.select { |i| decls[i][0] == [":root"] }
-          bare[0..-2].to_a.each { |i| decls[i] = nil }
-          decls.compact.each { |_, v| values << v }
+decls = []
+css.scan(/([^{}]+)\{([^{}]*)\}/) do
+  selector = Regexp.last_match(1)
+  body = Regexp.last_match(2)
+  offset = Regexp.last_match.begin(0)
+  body.scan(/(?:\A|;)\s*#{Regexp.escape(prop)}\s*:\s*([^;]+)/) do
+    decls << [selector.strip.split(",").map(&:strip), Regexp.last_match(1).strip.downcase,
+              conditional_at(css, offset)]
+  end
+end
+# Among bare `:root` rules only the last one is the default winner —
+# but a `:root` inside @media is not a bare `:root`. It applies only
+# when its condition holds, so it cannot shadow the default, and the
+# regex above cannot tell them apart on its own: both have the
+# selector text ":root".
+#
+# bsdports is the case. application.scss:38 sets --text-secondary to
+# #499149 and line 509 sets it to var(--text) inside
+# `@media (prefers-contrast: more)`. Reading the second as the winner
+# made this report #499149 as overridden — a colour that never reaches
+# a pixel — while a browser with default settings paints it on 45
+# elements of the ports index. design_tokens.yml then recorded the
+# wrong value twice on the strength of that reading, most recently with
+# a note reasoning explicitly from "a later :root".
+#
+# Both values paint, under different conditions, so both stay in the
+# set; only the unconditional one gets to shadow.
+bare = decls.each_index.select { |i| decls[i][0] == [":root"] && !decls[i][2] }
+bare[0..-2].to_a.each { |i| decls[i] = nil }
+decls.compact.each { |_, v, _| values << v }
         end
         values
       end
     end
+
+# Is the rule starting at this offset nested inside a conditional at-rule?
+#
+# Counts unclosed `@media`/`@supports`/`@container` blocks before the offset.
+# A declaration inside one applies only when its condition holds, which is
+# what separates an override from an alternative.
+  def conditional_at(css, offset)
+    head = css[0...offset]
+    depth = 0
+    opens = []
+    head.scan(/@(media|supports|container)[^{;]*\{|\{|\}/) do |kind|
+      token = Regexp.last_match(0)
+      if token.end_with?("{") && kind.first
+        opens << depth
+        depth += 1
+      elsif token == "{"
+        depth += 1
+      else
+        depth -= 1
+        opens.pop while opens.any? && opens.last >= depth
+      end
+    end
+    opens.any?
+  end
 
     # Does this dialect's declared value survive the cascade under any of the
     # CSS names the token can take?

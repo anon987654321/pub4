@@ -242,18 +242,27 @@ openbsd_wscons:
   surface_elevated: "#0a140a"
   search_bg: "#0f1a0f"
   text: "#63c363"
-  # Resolved from the built stylesheet, not from the nearest-looking hex.
+  # Resolved from the browser, not from the built stylesheet.
   #
-  # This said #3d7a3d (4.05:1 on black — a contrast failure the gate duly
-  # reported). bsdports/application.scss:30 says #499149, which looks like the
-  # answer and is not: a later :root sets --text-secondary: var(--text), so the
-  # painted value is --text, which resolves to #63c363 at 9.52:1. bsdports never
-  # had a contrast problem at any point; this declaration was wrong twice over.
+  # This has now been wrong three times, each time in a way the previous
+  # correction introduced. It said #3d7a3d (4.05:1, a contrast failure the gate
+  # duly reported). It was then corrected to #63c363 on the reasoning that "a
+  # later :root sets --text-secondary: var(--text), so the painted value is
+  # --text" — and that later :root is inside `@media (prefers-contrast: more)`
+  # at application.scss:506. It is the high-contrast override, not the default.
   #
-  # Worth a product look, separately: secondary text is now identical to primary
-  # text, so the wscons dialect has no typographic hierarchy between them. That
-  # is a design question, not a contrast one, and is left alone here.
-  text_secondary: "#63c363"
+  # What a browser actually paints on bsdports with default settings, measured
+  # 2026-08-26: --text-secondary resolves to #499149 and it colours 45 elements
+  # on the ports index, against #63c363 on 219. So the dialect does have a
+  # secondary tier, the previous note's closing worry about lost hierarchy was
+  # about a value nothing renders, and 5.43:1 is the contrast that ships.
+  #
+  # 5.43:1 clears AA and misses the AAA 7.0 style.yml declares. That is real
+  # debt and it is counted here rather than declared away — the same trade the
+  # css_budget note records for amber's light_danger: a token that names the
+  # painted value makes the pair visible to every measurement, and one that
+  # names an aspiration hides it.
+  text_secondary: "#499149"
   border: "#1a3a1a"
   hover: "rgba(99, 195, 99, 0.1)"
   hover_subtle: "rgba(99, 195, 99, 0.03)"

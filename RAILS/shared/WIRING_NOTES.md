@@ -172,6 +172,34 @@ first, and so described brgen in a palette and radius scale it had left.
 | bsdports | `openbsd_wscons`, all radii **0** | Inline `:root` in its own `application.scss` — *not* a mixin here |
 | MASTER web face | `face_root`, radius 0 | `MASTER/web`, outside this tree |
 
+**Declared is not worn, third correction (2026-08-26).** `openbsd_wscons.text_secondary`
+has now been wrong three times, and the second correction caused the third.
+It said `#3d7a3d`; that was corrected to `#63c363` on the reasoning that "a later
+`:root` sets `--text-secondary: var(--text)`". That later `:root` is inside
+`@media (prefers-contrast: more)` — the high-contrast override, not the default.
+A browser with default settings paints `#499149` on 45 elements of the ports
+index against `#63c363` on 219, so the dialect does have a secondary tier and it
+ships at 5.43:1: above AA, below the AAA `style.yml` declares.
+
+The instrument agreed with the wrong reading, which is why the note survived two
+passes. `DesignMetrics.winning_property_values` kept only the last bare `:root`
+declaration of a property, and a `:root` inside `@media` has the same selector
+text as one outside it — so the conditional value shadowed the default and the
+gate reported the real colour as "never reaches a pixel". It reads at-rule
+nesting now; eight token pairs that were being skipped are counted, and
+`contrast_below_aaa` moved 39 → 43 without the ceiling moving. That direction is
+the point: a token naming the painted value makes the pair visible to every
+measurement, one naming an aspiration hides it.
+
+**The AI embed keeps its own dialect (2026-08-26).** brgen's guest home carries
+MASTER's monospace voice inside the social dialect's sans, which reads as two
+type systems meeting in one viewport. It stays, and this is the decision rather
+than the accident: the chip is a doorway into MASTER, `ai.brgen.no` is a
+different surface with a different contract, and the mono *is* how that surface
+identifies itself — the same reason bsdports and the face are CRT-mono and brgen
+social is not. What would be wrong is the mono spreading into feed chrome; it is
+scoped to the embed and should stay there.
+
 **brgen's actual dark palette** — grayscale, and deliberately so (`_root.scss`:
 "this app's identity is the direction itself, not a rotated hue"):
 - bg `#000000`, surface/elevated `#1a1a1a`, search `#222222`

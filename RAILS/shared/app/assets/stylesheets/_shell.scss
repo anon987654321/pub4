@@ -159,6 +159,55 @@ main[role="main"] {
   transform: translateX(0);
 }
 
+/* Both rails stand open where the gutter can hold them, and nowhere else.
+
+   The shell comment at the top of this file states the constraint: sidebar and
+   widgets are off-canvas panels, "never permanently occupying feed width". That
+   is not relaxed here, it is the reason for the breakpoint. --feed-max is 600px
+   and .layout centres it, so at 1280px each gutter is (1280 - 600) / 2 = 340px
+   against a 300px rail: 40px of clearance, measured in a browser at 1280 and
+   1440 rather than worked out on paper. Both panels are
+   position: fixed and out of flow, so the feed's column, measure and centre are
+   the same number at 1279px and at 1281px. What changes is only whether 680px of
+   otherwise empty gutter shows the navigation and the city rail that were
+   already built, or shows nothing.
+
+   1280px is the breakpoint _minimal.scss already uses for the wide root scale,
+   not a new one; below it the swipe-reveal drawer is unchanged, which is the
+   behaviour RAILS/CLAUDE.md records as deliberate.
+
+   The grips go with it. A grip exists to reveal a panel that is hidden, and at
+   this width neither is — leaving them would be an affordance for something
+   that has already happened. edge_swiper only toggles a class (it sets no
+   inline style), so its toggle simply has no visual effect up here. */
+@media (min-width: 1280px) {
+  .sidebar,
+  .widgets {
+    transform: translateX(0);
+  }
+
+  .sidebar-swiper,
+  .widgets-swiper {
+    pointer-events: auto;
+  }
+
+  .edge-grip {
+    display: none;
+  }
+
+  /* The gutter is wide, not infinite: hold each rail off the feed by one step
+     so the column keeps its own edge rather than gaining a neighbour. */
+  .sidebar {
+    inset-inline-start: 0;
+    padding-inline-end: var(--space-6);
+  }
+
+  .widgets {
+    inset-inline-end: 0;
+    padding-inline-start: var(--space-6);
+  }
+}
+
 /* Edge-reveal grip — progressive: nearly invisible until hover/focus.
    Swipe from the edge still works via edge_swiper without the mark. */
 .edge-grip {
