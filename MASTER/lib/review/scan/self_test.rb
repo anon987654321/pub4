@@ -3,7 +3,6 @@
 require_relative "rule_dsl"
 
 
-# ---- merged from lib/review/scan/self_test/deploy_checks.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Review
     module Scan

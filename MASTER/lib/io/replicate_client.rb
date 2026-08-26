@@ -13,7 +13,6 @@ require_relative "../ground/failure_taxonomy"
 require_relative "../ground/swallow"
 
 
-# ---- merged from lib/io/replicate_client/asset_transfer.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Io
     class ReplicateClient
@@ -47,7 +46,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/io/replicate_client/training.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Io
     class ReplicateClient

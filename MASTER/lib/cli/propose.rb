@@ -6,7 +6,6 @@ require "time"
 require_relative "../ground/bias_guard"
 
 
-# ---- merged from lib/cli/propose/candidate_sources.rb (one-file directory collapse, 2026-08-19) ----
 require "open3"
 require "set"
 

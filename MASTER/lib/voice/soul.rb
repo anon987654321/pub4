@@ -5,7 +5,6 @@ require "open3"
 require "pathname"
 
 
-# ---- merged from lib/voice/soul/proposal_lifecycle.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Voice
     class Soul

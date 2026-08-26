@@ -5,7 +5,6 @@ require "set"
 require "monitor"
 
 
-# ---- merged from lib/review/code_index/query_api.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Review
     class CodeIndex
@@ -72,8 +71,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/review/code_index/symbol_visitor.rb (one-file directory collapse, 2026-08-19) ----
-require "prism"
 
 module Master
   module Review

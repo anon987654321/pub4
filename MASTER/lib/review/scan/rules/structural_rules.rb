@@ -3,9 +3,6 @@
 require "prism"
 
 
-# ---- merged from lib/review/scan/rules/structural_rules/convention_rules.rb (one-file directory collapse, 2026-08-19) ----
-require "prism"
-
 module Master
   module Review
     module Scan
@@ -227,7 +224,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/review/scan/rules/structural_rules/lib_root_discipline_rule.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Review
     module Scan

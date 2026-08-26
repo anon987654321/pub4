@@ -4,7 +4,6 @@ require "json"
 require "fileutils"
 
 
-# ---- merged from lib/trace/session/persistence.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Trace
     class Session
@@ -83,7 +82,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/trace/session/snapshots.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Trace
     class Session

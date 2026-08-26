@@ -4,7 +4,6 @@ require "sqlite3"
 require "json"
 
 
-# ---- merged from lib/ground/knowledge_store/feedback_events.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Ground
     class KnowledgeStore
@@ -42,7 +41,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/ground/knowledge_store/strategy_outcomes.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Ground
     class KnowledgeStore

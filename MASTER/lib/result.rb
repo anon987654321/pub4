@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 
-
-# ---- merged from lib/result/err_chaining.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   class Result
     # Functor/monad composition for Result::Err — all three are identity
@@ -15,7 +13,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/result/err_classification.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   class Result
     # Retry-policy classification for Result::Err — separate from Err's own
@@ -54,7 +51,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/result/ok_chaining.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   class Result
     # Functor/monad composition for Result::Ok (map/flat_map/and_then) — kept

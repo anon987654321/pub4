@@ -3,7 +3,6 @@
 require "set"
 
 
-# ---- merged from lib/ground/standing_orders/order_management.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Ground
     class StandingOrders

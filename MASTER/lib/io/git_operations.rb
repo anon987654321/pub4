@@ -3,7 +3,6 @@
 require "open3"
 
 
-# ---- merged from lib/io/git_operations/mutations.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Io
     class GitOperations

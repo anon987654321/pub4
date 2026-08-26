@@ -32,8 +32,7 @@ module Master
 
       def filter_findings(findings)
         rows = findings.map { |finding| normalize(finding) }
-        rows = suppress_dry_below_rule_of_three(rows)
-        suppress_lower_priority_laws(rows)
+        suppress_dry_below_rule_of_three(rows).then { |kept| suppress_lower_priority_laws(kept) }
       end
 
       # Would applying this fix trade the original violation for a worse one?

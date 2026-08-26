@@ -43,8 +43,7 @@ module Master
           return fetch_codepen(m[1], m[2])
         end
 
-        rewritten = rewrite(url)
-        fetch_one(rewritten)
+        rewrite(url).then { |rewritten| fetch_one(rewritten) }
       end
 
       private

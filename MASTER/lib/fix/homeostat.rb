@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 
-
-# ---- merged from lib/fix/homeostat/derived_signals.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Fix
     class Homeostat
@@ -57,7 +55,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/fix/homeostat/health_predicates.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Fix
     class Homeostat
