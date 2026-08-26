@@ -28,7 +28,7 @@ def grade_filter(fx, stock)
     "aeval=exprs='val(0)+0.07*val(0)*abs(val(0))|val(1)+0.07*val(1)*abs(val(1))'"
   when "spectral_warmth"
     # Color temperature analog: low-shelf boost + high-shelf cut.
-    db  = stock[:warmth_db].round(1)
+    db = stock[:warmth_db].round(1)
     cut = (db * 0.65).round(1)
     "equalizer=f=90:width_type=o:width=2:g=#{db},equalizer=f=9500:width_type=o:width=2:g=-#{cut}"
   when "parallel_compress"
@@ -245,7 +245,7 @@ end
 #   is, while leaving the music that changes.
 #
 #   NO TOP. Broadcast bandwidth and a lossy codec both stop well short of 20 kHz,
-#   so there is simply nothing above about 15. It cannot be equalised back --
+#   so there is nothing above about 15. It cannot be equalised back --
 #   boosting silence gives louder silence. It has to be SYNTHESISED, by generating
 #   harmonics from the content just below the cliff. This is what aexciter is
 #   for, and its refusal to touch anything below its frequency -- which made it
@@ -365,7 +365,7 @@ def sonitex_tape_filters(input_tag = "mix", out_tag: "snx_out")
   pop_dyn = s[:pop_amp].round(3)
   # Each Device is one self-contained labeled ffmpeg segment (input/output
   # tags already embedded) -- .to_a below is byte-identical to the plain
-  # array literal this replaced, just introspectable (`ruby dilla.rb tracks`).
+  # array literal this replaced, introspectable (`ruby dilla.rb tracks`).
   chain = DillaMixer::DeviceChain.new([
     DillaMixer::Device.new(:comp,
       "[#{input_tag}]acompressor=threshold=#{s[:comp_threshold]}dB:ratio=#{s[:comp_ratio]}:attack=#{s[:comp_attack]}:release=#{s[:comp_release]}:makeup=#{s[:comp_makeup]}[snx1]"),
@@ -473,7 +473,7 @@ def sub_bass_mono_filter(input_tag, out_tag: "monobassed")
   "[sblo][sbhi]amix=inputs=2:weights=1.0 1.0:duration=first:normalize=0[#{out_tag}]"
 end
 
-# Very slow, very subtle continuous pitch/tempo drift — real tape/vinyl
+# Very slow, subtle continuous pitch/tempo drift — real tape/vinyl
 # never holds perfectly still. Two independent slow LFOs (not locked to
 # the same rate) so it doesn't read as a single obvious wobble.
 def analog_drift_filter(input_tag, out_tag: "drifted")
@@ -483,7 +483,7 @@ end
 CONVOLUTION_IR_CACHE = File.join(SCRATCH_DIR, "ir_%s.wav")
 
 # Real convolution reverb via ffmpeg's afir filter — genuinely convolving
-# against an impulse response, just a synthesized one (exponentially
+# against an impulse response, a synthesized one (exponentially
 # decaying filtered noise per "room") rather than a recorded one, since no
 # real IR files exist in this repo. That's a legitimate, standard way to
 # build a reverb IR algorithmically, not a fake stand-in for the effect.
@@ -575,7 +575,7 @@ end
 
 # A real destabilizing moment, not another polite EQ nudge: heavy
 # lowpass+bitcrush gate right before the build lands, then a short hard
-# silence gap — the mix actually breaks for a beat instead of just getting
+# silence gap — the mix actually breaks for a beat instead of getting
 # brighter. Fires at 79% through, build_up_filter picks up right after.
 def break_filter(input_tag, duration, out_tag: "broke")
   break_t = (duration * 0.79).round(2)
@@ -608,7 +608,7 @@ def grade(input = nil, output = nil, preset_name = nil)
   output      ||= input.sub(/(\.\w+)\z/, "_#{preset_name}\\1")
   abort "missing #{input}" unless File.exist?(input)
   p = GRADE_PRESETS[preset_name.to_sym] or abort "unknown preset: #{preset_name}. valid: #{GRADE_PRESETS.keys.join(', ')}"
-  stock   = AUDIO_STOCKS[p[:stock]]
+  stock = AUDIO_STOCKS[p[:stock]]
   filters = p[:fx].map { |fx| grade_filter(fx, stock) }.compact
   abort "no filters for preset #{preset_name}" if filters.empty?
   chain = [filters, "lowpass=f=#{stock[:rolloff_hz]}"].flatten.join(",")

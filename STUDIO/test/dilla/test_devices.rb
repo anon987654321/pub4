@@ -270,7 +270,7 @@ class TestDevices < Minitest::Test
 
   def test_the_bag_takes_time_from_one_source_and_pitch_from_the_other
     pitches = (0...4).map { |i| [i * 9.9, 0.9, { hz: [220.0 * (i + 1)] }, 5.0] }
-    timing  = (0...16).map { |i| [i * 0.25, 0.4, { hz: [999.0] }, 0.1] }
+    timing = (0...16).map { |i| [i * 0.25, 0.4, { hz: [999.0] }, 0.1] }
     out = MidiDevices::Bag.apply(pitches:, timing:, order: :cycle)
 
     assert_equal timing.map(&:first), out.map(&:first), "times must come from the timing source"
@@ -282,7 +282,7 @@ class TestDevices < Minitest::Test
 
   def test_rests_remove_notes_rather_than_silencing_them
     pitches = [[0.0, 0.9, { hz: [220.0] }, 1.0]]
-    timing  = (0...200).map { |i| [i * 0.1, 0.5, { hz: [1.0] }, 0.05] }
+    timing = (0...200).map { |i| [i * 0.1, 0.5, { hz: [1.0] }, 0.05] }
     out = MidiDevices::Bag.apply(pitches:, timing:, rests: 0.5, seed: 11)
 
     assert_operator out.length, :<, timing.length
@@ -293,7 +293,7 @@ class TestDevices < Minitest::Test
   # Fitting to the chord must move pitch CLASS and keep register. Collapsing a
   # two-octave phrase into the chord's own octave is the failure mode.
   def test_chord_fitting_keeps_the_register
-    low  = { hz: [110.0] }
+    low = { hz: [110.0] }
     high = { hz: [1760.0] }
     target = { hz: [261.63, 329.63, 392.0] } # C major
     [low, high].each do |chord|
@@ -702,7 +702,7 @@ end
 
   # Every bar has to belong to a section. Rounding each scaled length
   # independently leaves a gap, and a bar that matches nothing falls through to
-  # the legacy map -- a stray `main` after the outro, very hard to see.
+  # the legacy map -- a stray `main` after the outro, hard to see.
   def test_every_bar_belongs_to_a_section_at_any_length
     with_env("FORM" => "soul_32", "FORM_FIT" => "1") do
       [17, 32, 33, 64, 100, 128, 257].each do |bars|

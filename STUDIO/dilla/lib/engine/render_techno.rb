@@ -404,7 +404,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
 
   # HATE_MODERN=1 is the contemporary club pattern, not the industrial one.
   #
-  # Modern techno is defined by a very small number of things and the offbeat
+  # Modern techno is defined by a small number of things and the offbeat
   # open hat is the biggest: a four-on-the-floor kick with an open hat on every
   # eighth between the kicks. That single relationship is what makes a pattern
   # read as current rather than as 90s industrial, and it is why this is a
@@ -972,16 +972,16 @@ end
 def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
   require_tools! "ffmpeg"
   n_bars = [bars, TECHNO_BARS].max
-  beat  = 60.0 / TECHNO_BPM
-  bar   = beat * 4
-  step  = beat / 4
+  beat = 60.0 / TECHNO_BPM
+  bar = beat * 4
+  step = beat / 4
   total = (bar * n_bars).round(3)
 
   kick_per_bar = Array.new(TECHNO_BARS) { [0, 4, 8, 12] }
   kick_per_bar[7] = [0, 4, 8, 12, 14, 15]
   clap_per_bar = Array.new(TECHNO_BARS) { [4, 12] }
   clap_per_bar[3] = [4, 12, 14]; clap_per_bar[7] = [4, 10, 12, 14]
-  hat_per_bar  = Array.new(TECHNO_BARS) { [2, 6, 10, 14] }
+  hat_per_bar = Array.new(TECHNO_BARS) { [2, 6, 10, 14] }
   hat_per_bar[3] = []; hat_per_bar[5] = [0, 2, 4, 6, 8, 10, 12, 14]
   open_per_bar = Array.new(TECHNO_BARS) { [] }
   open_per_bar[3] = [14]; open_per_bar[7] = [14]
@@ -991,7 +991,7 @@ def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
   cycle = (bar * TECHNO_BARS).round(6)
   kicks = TECHNO_BARS.times.flat_map { |b| kick_per_bar[b].map { |s| (b * bar + s * step).round(6) } }
   claps = TECHNO_BARS.times.flat_map { |b| clap_per_bar[b].map { |s| (b * bar + s * step).round(6) } }
-  hats  = TECHNO_BARS.times.flat_map { |b| hat_per_bar[b].map  { |s| (b * bar + s * step).round(6) } }
+  hats = TECHNO_BARS.times.flat_map { |b| hat_per_bar[b].map  { |s| (b * bar + s * step).round(6) } }
   opens = TECHNO_BARS.times.flat_map { |b| open_per_bar[b].map { |s| (b * bar + s * step).round(6) } }
   acid_hits = TECHNO_BARS.times.flat_map { |b| bass_notes[b].then { |f| acid_steps.map { |s| [(b * bar + s * step).round(6), f] } } }
 

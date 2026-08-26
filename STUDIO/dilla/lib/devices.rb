@@ -332,7 +332,7 @@ module MidiDevices
   # Ringtone's MIDI Bag records some notes, then switches mode: incoming MIDI
   # becomes the TIMING and the recorded notes supply the PITCHES. A note event is
   # normally an indivisible pair -- this note, at this moment -- and the device
-  # simply refuses that pairing. What comes out is the melody's notes in the
+  # refuses that pairing. What comes out is the melody's notes in the
   # drums' rhythm, or the bassline's pitches on the hi-hat grid.
   #
   # WHAT THIS ENGINE ALREADY HAS, and why this is still worth adding. sample_flip
@@ -451,7 +451,7 @@ module WavMap
 
   # The surface is square and this size. Larger buys nothing: the path samples
   # WAVETABLE_LEN points from it, so a 512x512 grid is already oversampled for a
-  # 2048-point cycle unless the path is very long, and a 4K source would spend
+  # 2048-point cycle unless the path is long, and a 4K source would spend
   # its time being averaged away.
   GRID = 512
 
@@ -585,7 +585,7 @@ module WavMap
       # A short fade at both ends. A wavetable started mid-cycle at full level
       # is a click, and this file's whole argument is about discontinuities.
       env = fade(i, frames, rate)
-      left[i]  = ((a * 0.62) + (b * 0.38)) * env * 26_000
+      left[i] = ((a * 0.62) + (b * 0.38)) * env * 26_000
       right[i] = ((a * 0.38) + (b * 0.62)) * env * 26_000
       phase = (phase + step_a) % len
       phase_b = (phase_b + step_b) % len
