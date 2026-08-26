@@ -19,7 +19,14 @@
 // 8 seconds; output is one already-sigmoid probability that the speaker has
 // finished. See whisper_mel.js for the feature pipeline it expects.
 
-import { logMelSpectrogram, N_MELS, N_FRAMES, SAMPLE_RATE, N_SAMPLES } from "./whisper_mel.js";
+// Root-absolute, like every other path this file reaches for
+// (/vendor/onnxruntime/, /models/, /mic_capture_processor.js). It was
+// "./whisper_mel.js", and a relative specifier resolves against the importing
+// module s own URL: face.runtime imports this file through the digest map, so
+// the browser asked /assets/ for a sibling that only exists there digested and
+// got a 404 on every page load. The public copy is what the other three paths
+// already use and it is the one that resolves.
+import { logMelSpectrogram, N_MELS, N_FRAMES, SAMPLE_RATE, N_SAMPLES } from "/whisper_mel.js";
 
 const ORT_URL = "/vendor/onnxruntime/ort.wasm.min.mjs";
 const ORT_WASM_DIR = "/vendor/onnxruntime/";

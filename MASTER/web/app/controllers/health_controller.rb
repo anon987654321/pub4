@@ -10,12 +10,27 @@ class HealthController < ActionController::API
       git: git_healthy?,
       container: container_healthy?,
     }
-    # TTS is mandatory, so it stays critical — a genuine TTS-capability
-    # outage (worker missing or EventMachine without SSL) should 503 and alert.
-    # replicate (media) stays non-critical (degraded). tts_healthy? now checks
-    # capability rather than transient socket liveness, so this no longer
-    # false-503s while the on-demand daemon is between syntheses.
-    critical = %i[tts git]
+# TTS is mandatory, so it stays critical — a genuine TTS-capability
+# outage (worker missing or EventMachine without SSL) should 503 and alert.
+# replicate (media) stays non-critical (degraded). tts_healthy? now checks
+# capability rather than transient socket liveness, so this no longer
+# false-503s while the on-demand daemon is between syntheses.
+#
+# git is NOT critical, and was. It answers "can this process read the SHA it
+# is running", which is provenance rather than liveness: a service that
+# cannot name its own commit still serves every request correctly. Making it
+# critical meant one unreadable repo took ai.brgen.no to a hard 503 —
+# measured live 2026-08-26 with tts: true and git: false, so the only failing
+# check was the one that cannot affect a response.
+#
+# It failed for a reason worth keeping next to the decision. 37bfa28ce moved
+# the daemon off `dev` (whose doas rule is nopass and uncommented, so any
+# code execution as dev was root) onto its own `master` user. The repo at
+# /home/dev/pub4 still belongs to dev, and git refuses to operate on another
+# user's repository — "detected dubious ownership" — so every git call from
+# the daemon started failing silently. cbd97c2b0 already caught one
+# consequence of that same move; this is the second.
+    critical = %i[tts]
     critical_ok = critical.all? { |key| checks[key] }
     status = if critical_ok
                checks.values.all? { |value| value == true } ? "ok" : "degraded"
@@ -47,9 +62,15 @@ class HealthController < ActionController::API
     false
   end
 
+  # -c safe.directory, because the daemon and the repository have different
+  # owners by design: the process runs as `master` and /home/dev/pub4 belongs to
+  # `dev`. Passing it per call keeps the fix in the thing that needs it rather
+  # than in a global git config on the box, which nothing in this repo
+  # provisions and which a rebuild would lose.
   def git_healthy?
     repo = Rails.root.join("..").to_s
-    system("git", "-C", repo, "rev-parse", "--is-inside-work-tree", out: File::NULL, err: File::NULL)
+    system("git", "-c", "safe.directory=#{repo}", "-C", repo, "rev-parse", "--is-inside-work-tree",
+           out: File::NULL, err: File::NULL)
   rescue StandardError => _
     false
   end
@@ -77,7 +98,8 @@ class HealthController < ActionController::API
 
   def git_sha
     repo = Rails.root.join("..").to_s
-    out, status = Open3.capture2("git", "-C", repo, "rev-parse", "--short", "HEAD")
+    out, status = Open3.capture2("git", "-c", "safe.directory=#{repo}", "-C", repo,
+                                 "rev-parse", "--short", "HEAD")
     status.success? ? out.strip : nil
   end
 
