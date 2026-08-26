@@ -30,10 +30,10 @@ checks:
   - {id: feed.city_today_inset, in: brgen/app/assets/stylesheets/_chrome_surfaces.scss, has: ["aside.city-today", ".post-feed", "margin-inline: var(--space-4)"]}
   - {id: feed.city_today_card, in: brgen/app/views/home/_today.html.erb, has: ["city-today sidebar-card", "<details>", "<summary>"]}
   - {id: feed.compose_dialog, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["<dialog", compose-launcher, form-submit, posts_path]}
-  - {id: feed.compose_guest, in: brgen/app/views/shared/_feed_compose.html.erb, has: [anonymous, guest_hint]}
+  - {id: feed.compose_guest, in: brgen/app/views/shared/_feed_compose.html.erb, has: [anonymous, "guest?"]}
   - {id: feed.compose_tiptap, in: brgen/app/views/shared/_feed_compose.html.erb, has: [tiptap-editor, textarea-autogrow]}
   - {id: feed.compose_media, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["accept: \"image/*\"", "accept: \"video/*\"", "accept: \"audio/*\""]}
-  - {id: feed.compose_nearby, in: brgen/app/views/shared/_feed_compose.html.erb, has: [post_nearby]}
+  - {id: feed.compose_nearby, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["hidden_field :nearby"]}
   - {id: feed.card_frame_top, in: brgen/app/views/posts/_post.html.erb, has: ['target: "_top"']}
   - {id: feed.card_vote, in: brgen/app/views/posts/_post.html.erb, has: [post_vote_path, action#toggle]}
   - {id: feed.card_comment, in: brgen/app/views/posts/_post.html.erb, has: [post_comments_path]}

@@ -227,10 +227,27 @@
 // for their many existing call sites, now pointing at the renamed sources.
 @mixin app-root-tokens {
   // The typeface, declared once per app root rather than inside a palette.
-  // brgen re-declares it as Inter after this include (_root.scss); amber and
-  // bsdports take this default. Anything that only pins a palette — a vertical,
-  // a theme toggle — no longer changes the face as a side effect.
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  // Every app takes this default; anything that only pins a palette — a
+  // vertical, a theme toggle — cannot change the face as a side effect.
+  //
+  // system-ui leads. The stack under it is the same one it resolves to, kept
+  // as the fallback chain for engines that predate the keyword: system-ui is
+  // the only entry that reaches the platform UI face on Windows and Android,
+  // where -apple-system means nothing and the browser fell to "Segoe UI" or
+  // Roboto by name.
+  --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  // The wordmark, and only the wordmark. brgen.no and oshlo.no are printed on
+  // stock in Helvetica Neue Pro, so the logotype is a fixed piece of the
+  // identity and not a UI-font decision: it is set in the printed face
+  // wherever the printed face exists, and in a metric-compatible substitute
+  // where it does not. Apple ships Helvetica Neue, most Linux ships Nimbus
+  // Sans (a Helvetica clone), and Arial is metrically identical to Helvetica,
+  // so the mark keeps its width and rhythm on every platform for no bytes.
+  //
+  // The Pro cut itself cannot ship: it is licensed per seat from Monotype and
+  // a webfont licence is a separate purchase. Nothing here downloads a font.
+  --font-brand: "Helvetica Neue", Helvetica, "Nimbus Sans", Arial, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);

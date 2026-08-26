@@ -65,8 +65,9 @@
         </div>
       </div>
 
+      <%# No heading. Three icons in a row are already the whole instruction, and
+          "Add to your post" above them restated it in words. %>
       <div class="composer-attach">
-        <span class="composer-attach-label"><%= t("feed.add_to_post", default: "Add to your post") %></span>
         <div class="compose-actions">
           <%# Each of these wraps its input in a <label>, which normally names it —
               but the label's only content is an aria-hidden icon, so the
@@ -96,44 +97,29 @@
         </div>
       </div>
 
-      <%# The Live layer, folded in. Its posts always went to this feed; what the
-          separate page added was this stamp. Shown only to someone who has
-          already shared coordinates, because a checkbox that silently does
-          nothing is worse than no checkbox. %>
+      <%# The Live layer, folded in. Attaching your area is the default rather than
+          an opt-in: the coordinate is only here at all because you already shared
+          it, and it is rounded to about a kilometre before anything stores it, so
+          the checkbox was asking permission for something already granted at a
+          precision that names a district rather than an address. Hidden, not
+          removed — the field still travels with the form. %>
       <% if Current.user&.latitude.present? && Current.user.longitude.present? %>
-        <%# No class: the stylesheet selects this with
-            .composer-form label:has(> input[type="checkbox"]), which describes
-            what it is rather than restating it. %>
-        <label>
-          <%= f.check_box :nearby %>
-          <%= t("feed.post_nearby") %>
-          <%= tag.small t("feed.post_nearby_hint") %>
-        </label>
+        <%= f.hidden_field :nearby, value: true %>
       <% end %>
 
       <%= f.submit t("feed.post_action"), class: "btn btn-primary composer-submit" %>
 
-      <%# The guest hint used to be a <details> whose summary repeated the author
-          row above it word for word -- "Du poster som gjest" twice in one
-          dialog, the second time as a disclosure triangle hiding the only part
-          that was new. The author row states who you are; this states the one
-          consequence, in the open. %>
-      <div class="compose-hint">
-        <% if guest? %>
-          <%# Two sentences, so two elements. Rendered as siblings in one text
-              node they ran together as "…15 innlegg per nettleser The limit
-              slows spam…" with no separator at all. %>
-          <%# The count, not just the cap. amber has said "%{remaining} of %{limit}
-              left" since it shipped; brgen stated the cap and left you to find the
-              remainder by hitting it, which is an error message doing the work of a
-              status. %>
-          <%= tag.p t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT,
-                   remaining: Shared::AnonymousPost.new(request: request, user: Current.user).remaining) %>
-          <%= tag.p t("feed.guest_limit_why") %>
-        <% else %>
+      <%# Guests used to get two sentences here: how many posts remained in this
+          browser, and why the cap exists. The cap is a rule you meet at most once
+          and the dialog is a writing surface, so the count moved out of the way of
+          the draft; refusing a post still explains itself at the moment it
+          happens. The signed-in link stays — it is a way out of this dialog to the
+          full form, not commentary on it. %>
+      <% unless guest? %>
+        <div class="compose-hint">
           <%= link_to t("feed.advanced_post"), main_app.new_post_path, class: "link-inherit" %>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
     <% end %>
   </dialog>
 </div>

@@ -17,7 +17,13 @@
 // A SCSS variable rather than a second CSS declaration: both the dark :root and
 // the light toggle block re-include app-root-tokens, which carries the shared
 // default, so each has to override it. This way the stack itself is stated once.
-$brgen-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+// The body face is the platform UI face, which is the same default every other
+// app in this tree takes from app-root-tokens. This named Inter first, and
+// Inter is a webfont: five vendored cuts fetched over the wire to render text
+// that system-ui already renders, on a box with 1GB of RAM. The wordmark is
+// what carries the brand, and it has its own token — --font-brand — so the
+// body face no longer has to.
+$brgen-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
 :root {
   // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/

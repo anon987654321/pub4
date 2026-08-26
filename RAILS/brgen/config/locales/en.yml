@@ -42,17 +42,13 @@ en:
   app:
     name: Brgen
   feed:
-    post_nearby: "Attach my area"
-    post_nearby_hint: "Shows up nearby — the location is rounded to about a kilometre."
     title: Local news
     compose_prompt: What are you up to today?
     compose_blank: Write something first.
     compose_title: Create post
-    add_to_post: Add to your post
     posting_as_guest: Anon
     post_action: Post
     guest_hint: Posting as anon · %{remaining} of %{limit} posts left in this browser
-    guest_limit_why: The limit slows spam without asking for an account.
     advanced_post: Advanced post with photo
     your_feed: Your feed
   nav:

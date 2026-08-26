@@ -139,13 +139,24 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 var(--space-4);
 }
 
+/* The field spans the dialog. The horizontal inset used to sit on this
+   scrolling container, which stopped the writing surface short of the edge on
+   both sides and left it reading as a box inside a box; on the input itself it
+   keeps the text off the edge without bounding the field. */
 .composer-body .compose-input,
 .composer-body .tiptap_area {
   min-height: 120px;
   font-size: var(--text-lg);
+  padding-inline: var(--space-4);
+  border: 0;
+  background: transparent;
+}
+
+.composer-body .tiptap_toolbar,
+.composer-body .char-counter {
+  margin-inline: var(--space-4);
 }
 
 /* Anchored to the bottom of the writing area rather than floating in the
@@ -176,21 +187,14 @@
 
 .composer-body .tiptap_btn:hover { background: var(--hover); }
 
+/* Three icon buttons, left-aligned under the writing area. This was a bordered
+   box with space-between, which existed to hold a heading apart from the icons;
+   the heading is gone, so the border framed a row against nothing. */
 .composer-attach {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
-  flex-wrap: wrap;
-  margin: var(--space-3) var(--space-4) 0;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
-.composer-attach-label {
-  font-size: var(--text-sm, 0.875rem);
-  font-weight: var(--weight-bold);
+  margin: var(--space-2) var(--space-4) 0;
 }
 
 /* The "attach my area" opt-in, selected by what it is rather than by a class

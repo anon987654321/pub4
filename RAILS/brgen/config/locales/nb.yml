@@ -42,17 +42,13 @@ nb:
   app:
     name: Brgen
   feed:
-    post_nearby: "Legg ved posisjon (omtrentlig)"
-    post_nearby_hint: "Vises i «i nærheten» — stedet rundes av til ca. én kilometer."
     title: Lokale nyheter
     compose_prompt: Del noe spennende nå
     compose_blank: Skriv noe først.
     compose_title: Opprett innlegg
-    add_to_post: Legg til i innlegget
     posting_as_guest: Anon
     post_action: Publiser
     guest_hint: Poster som anon · %{remaining} av %{limit} innlegg igjen i denne nettleseren
-    guest_limit_why: Grensen bremser spam uten å kreve konto.
     advanced_post: Utvidet innlegg med bilde
     your_feed: Din strøm
   nav:
