@@ -84,7 +84,7 @@ check() {
 
 up() { for s in "$@"; do : > "$DB/$s"; done }
 running() { ls "$DB" 2>/dev/null | grep -Ex 'amber|bsdports|litestream' | sort | tr '\n' ' ' | sed 's/ $//'; }
-reset() { rm -f "$DB"/* 2>/dev/null || true; up litestream bsdports amber; }
+reset() { rm -f "$DB"/* 2>/dev/null || true; up litestream bsdports amber; } # scan: intentional — clears this test's own scratch $DB between cases
 
 # physmem is ~1007M, so Free=400M is ~39% (clear), Free=40M is ~3% (breach).
 CLEAR=400

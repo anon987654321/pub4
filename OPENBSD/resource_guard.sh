@@ -237,8 +237,8 @@ if [[ $shed -eq 1 ]]; then
       break
     fi
   done
-  # tts-worker daemons used to be killed here too, at the same LOAD_WARN
-  # tier as shedding amber/bsdports. On this box, load sits at LOAD_WARN or
+  # tts-worker daemons are deliberately not killed here, though amber and
+  # bsdports shed at this LOAD_WARN tier. On this box, load sits at LOAD_WARN or
   # above almost continuously (observed 3.3-6.4 over a full session, never
   # below 2.5) -- so the warm TTS socket pool was being reaped on nearly
   # every 5-minute tick, forcing every synthesis onto the slow cold-boot

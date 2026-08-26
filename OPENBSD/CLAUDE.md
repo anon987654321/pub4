@@ -100,7 +100,7 @@ tooling bug.
 name which of the above buckets it's *not* in. When in doubt, read
 `RAILS/shared/config/ci.rb` directly rather than assuming.
 
-## Copy-tree sync used to be additive-only (fixed, but know why)
+## Copy-tree sync must delete before it extracts
 
 `vps_ci.sh`'s `sync_from_repo()`/`sync_ci_rails_root()` sync the repo to each
 app's copy-tree via `tar` extraction. Tar extraction only *overlays* — it

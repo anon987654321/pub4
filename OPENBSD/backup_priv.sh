@@ -62,11 +62,12 @@ if ! ssh -o ConnectTimeout=15 -o BatchMode=yes "$backup_host" true 2>/dev/null; 
 fi
 ssh -o BatchMode=yes "$backup_host" "mkdir -p $remote_dir"
 
-# The archive used to be written to /tmp/priv_<timestamp>.tar.enc: a
-# second-granularity predictable name in a world-writable directory, holding the
-# whole of ~/priv. Encrypted, but an attacker who pre-creates the path as a symlink
-# decides where it lands, and one who merely reads it gets the ciphertext to attack
-# offline at leisure. A 0700 directory under $HOME plus mktemp removes both.
+# The archive stages in a 0700 directory under $HOME, never /tmp. A name like
+# /tmp/priv_<timestamp>.tar.enc is predictable to the second, sits in a
+# world-writable directory and holds the whole of ~/priv. Encrypted, but an
+# attacker who pre-creates the path as a symlink decides where it lands, and one
+# who merely reads it gets the ciphertext to attack offline at leisure. The
+# private directory plus mktemp closes both.
 typeset stage_dir="${HOME}/.cache/pub4-backup"
 mkdir -p "$stage_dir"
 chmod 700 "$stage_dir"

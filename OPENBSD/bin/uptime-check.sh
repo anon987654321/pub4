@@ -9,10 +9,10 @@
 #
 # Exit 0 only when every endpoint returns HTTP 2xx/3xx.
 #
-# This used to be its own list of four hardcoded URLs. health_check.rb asks the
-# same question against RAILS/apps.yml, so the hardcoded copy could only ever go
-# stale — it would still have named four domains after a fifth app shipped, and
-# nothing would have reported that. --public-only is the scope that needs no
+# A wrapper, not a list of URLs of its own. health_check.rb asks the same
+# question against RAILS/apps.yml, and a hardcoded copy can only go stale — it
+# would still name four domains after a fifth app ships, and nothing would
+# report that. --public-only is the scope that needs no
 # rcctl, no pfctl and no /etc/relayd.conf, which is what made this a wrapper
 # rather than a deletion: the entry point is documented in RUNBOOK.md and
 # RAILS/amber/HEIR.md, and it is the one health check that runs anywhere.
