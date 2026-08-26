@@ -2927,7 +2927,7 @@ prose:
       - 'just (?:as|because|before|after|when)'    # a comparison
       - '(?:not|never)\s+(?:just|simply|only)'     # a negation
       - 'n''t\s+(?:just|simply|only)'
-      - 'just\s+(?:\w+ed|found|said|ran|saw|built)' # moments ago, a tense marker
+      - 'just\s+(?:been\s+)?(?:\w+ed|found|said|ran|saw|built)' # moments ago, a tense marker
       - '(?:the|this|that|its) very'               # a determiner picking a thing out
       # Measured against STUDIO's 138. `just` before a position or a quantity
       # measures rather than minimises — "pads land just under the kit", "just
