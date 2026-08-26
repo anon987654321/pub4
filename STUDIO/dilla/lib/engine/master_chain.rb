@@ -160,6 +160,103 @@ def widen_master!(path)
   path
 end
 
+# Wet-dominant parallel layering of the finished track against itself.
+#
+# Summing a processed copy with an unprocessed one is comb filtering, and how
+# audible that is depends entirely on the level difference -- which is why the
+# wet-strong/dry-weak direction is the safe one and a 50/50 blend is not. A dry
+# layer 14 dB down puts comb notches at +-1.6 dB, below the point where it reads
+# as filtering, while still returning the original attack transient underneath a
+# wet path that has smeared it. At 0 dB the same sum notches +-6 dB and hollows
+# out the midrange.
+#
+# MASTER_LAYER is the wet/dry balance, 0 (off, and the default) to 1.
+# MASTER_LAYER_DRY_DB moves the dry layer; the default is the -14 dB above.
+MASTER_LAYER_DRY_DB = -14.0
+
+def master_layer_amount = ENV.fetch("MASTER_LAYER", "0").to_f.clamp(0.0, 1.0)
+
+# A fraction of a Hz of frequency shift on the wet layer only.
+#
+# Frequency shifting is not pitch shifting: afreqshift displaces every partial
+# by a constant number of Hz, so harmonic ratios do not survive it. That is
+# ruinous at musical depths and is exactly why the value here is tiny. At 0.1 Hz
+# no partial moves audibly, but the wet layer's phase rotates continuously
+# against the dry with a 1/shift second beat period -- 10 seconds at the default
+# -- so the two layers drift in and out of alignment forever without repeating
+# and without an LFO. Above ~2 Hz it stops being drift and becomes ring
+# modulation, which is where the clamp is.
+def master_drift_hz = ENV.fetch("MASTER_DRIFT_HZ", "0").to_f.clamp(0.0, 2.0)
+
+def layer_master!(path)
+  amt = master_layer_amount
+  return path unless amt.positive? && File.file?(path)
+
+  dry_db = ENV.fetch("MASTER_LAYER_DRY_DB", MASTER_LAYER_DRY_DB.to_s).to_f.clamp(-40.0, 0.0)
+  drift = master_drift_hz
+  # asoftclip is not gain-compensated -- oversample=4 measures 4.2 dB down on
+  # this bus -- so the wet path would arrive quieter than the balance asks for
+  # and the dry would dominate a mix that is meant to be wet-led.
+  wet = +""
+  wet << "afreqshift=shift=#{drift}:level=1," if drift.positive?
+  wet << "aecho=0.9:0.75:37|53|71:0.28|0.20|0.14," \
+         "asoftclip=type=tanh:oversample=4,volume=4.2dB,treble=g=1.2:f=5500"
+  out = "#{path}.layer#{File.extname(path)}"
+  chain = "[0:a]asplit=2[ml_dry][ml_wet];" \
+          "[ml_wet]#{wet}[ml_w];" \
+          "[ml_dry]volume=#{(dry_db + (1.0 - amt) * -dry_db).round(2)}dB[ml_d];" \
+          "[ml_w][ml_d]amix=inputs=2:weights=#{amt.round(3)} 1:duration=first:normalize=0," \
+          "alimiter=limit=0.97[mlout]"
+  begin
+    sh! "ffmpeg", "-y", "-v", "error", "-i", path, "-filter_complex", chain,
+        "-map", "[mlout]", "-ar", SAMPLE_RATE.to_s, *codec_for(out), out
+    FileUtils.mv(out, path)
+    dmesg("master layer: wet #{amt}, dry #{dry_db} dB#{drift.positive? ? ", drift #{drift} Hz" : ''}",
+          unit: "mix0", parent: "dilla0")
+  rescue StandardError => e
+    warn "master layer skipped: #{e.message}"
+    FileUtils.rm_f(out)
+  end
+  path
+end
+
+# Tape varispeed on the finished master: pitch and tempo together, by resampling.
+#
+# This is deliberately not a pitch shifter. Holding tempo while moving pitch
+# needs a phase vocoder, which smears exactly the transients a drum record is
+# made of. Resampling has no artefact to trade away at all -- it is the file
+# read at a different rate, which is what a tape machine running slow does, and
+# the high end comes down with everything else. That descending top end is most
+# of what the effect actually sounds like.
+#
+# MASTER_VARISPEED is in semitones, negative for slower and lower. -1 is a 5.6%
+# move and lands 92 BPM at 86.8; a lot of records that read as subtly slow are
+# nearer 1-3%, so -0.2 to -0.5 is the subtle end of this knob.
+#
+# It runs after normalise_master!, so the loudness target is measured on the
+# unshifted file. Resampling does not change level, but it does change duration:
+# a track slowed a semitone is 5.9% longer than the bar count implies.
+def master_varispeed_semitones = ENV.fetch("MASTER_VARISPEED", "0").to_f.clamp(-4.0, 4.0)
+
+def varispeed_master!(path)
+  semis = master_varispeed_semitones
+  return path if semis.zero? || !File.file?(path)
+
+  ratio = 2.0**(semis / 12.0)
+  out = "#{path}.vari#{File.extname(path)}"
+  begin
+    sh! "ffmpeg", "-y", "-v", "error", "-i", path,
+        "-af", "asetrate=#{(SAMPLE_RATE * ratio).round},aresample=#{SAMPLE_RATE}",
+        "-ar", SAMPLE_RATE.to_s, *codec_for(out), out
+    FileUtils.mv(out, path)
+    dmesg("master varispeed: #{semis} st (x#{ratio.round(5)})", unit: "mix0", parent: "dilla0")
+  rescue StandardError => e
+    warn "master varispeed skipped: #{e.message}"
+    FileUtils.rm_f(out)
+  end
+  path
+end
+
 def normalise_master!(path, cfg)
   return path if ENV["MASTER_NORMALISE"] == "0" || !File.file?(path)
 

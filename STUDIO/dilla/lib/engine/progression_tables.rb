@@ -50,6 +50,33 @@ DEVICE_PROGRESSIONS = {
   # Modal interchange / borrowed from the parallel minor
   borrowed_bVI_lift: %w[Cmaj9 Abmaj9 Fm9 Gsus4],
   borrowed_bVII_fall: %w[Cmaj9 Bbmaj9 Fm9 Cmaj9],
+# The canonical patterns, in plain voicings on purpose.
+#
+# These are the progressions any theory discussion returns to -- Roman-numeral
+# patterns, not anyone's song. Four of them were absent from a table of 383,
+# which is the kind of gap that comes from building outward from one idiom: the
+# neo-soul and Dilla families were filled in exhaustively and the common ground
+# underneath them never got written down.
+#
+# Plain triads and sevenths, and that is the point rather than laziness.
+# Measured across the whole table, 65% of its 1,942 chord events are maj9 or
+# m9; dominants are 13% and bare triads under 1%. A ninth on every chord is one
+# colour, and a progression that is famous for its MOTION arrives sounding like
+# every other entry here if it is voiced the same way. The axis progression is
+# about the four roots, not about the extensions -- so it gets the four roots.
+#
+# Anything wanting the lush version can reach for the families above; the point
+# of these is that they are the plain statement the others are variations on.
+axis_major: %w[C G Am F],
+axis_minor: %w[Am F C G],
+axis_optimist: %w[F C G Am],
+doo_wop_fifties: %w[C Am F G],
+doo_wop_seventh: %w[Cmaj7 Am7 Dm7 G7],
+pachelbel_canon: %w[D A Bm F#m G D G A],
+royal_road: %w[Fmaj7 G7 Em7 Am],
+royal_road_minor: %w[Fmaj7 G7 Em7 Am7],
+primary_triads: %w[C F G C],
+plagal_amen: %w[C F C C],
   borrowed_iv_ache: %w[Fmaj9 Fm9 Cmaj9 Am9],
   borrowed_bIII_step: %w[Cmaj9 Ebmaj9 Fmaj9 Gsus4],
   borrowed_bII_shadow: %w[Cm9 Dbmaj9 Cm9 Gm7],

@@ -1095,7 +1095,12 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     s = @composition_session
     comp_note = ", performer=#{s.performer}/#{s.groove_dna} gen=#{s.generation}"
   end
+  # Layer first so the loudness target is measured on the finished balance, and
+  # varispeed last: resampling the master is the final act, the way a tape
+  # machine running slow is.
+  layer_master!(destination)
   normalise_master!(destination, cfg)
+  varispeed_master!(destination)
   puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{kick_note}, #{mix_note}, #{stem_note}, patches=#{patch_note}#{comp_note})"
 ensure
   # The call at the TOP of this method only clears ITS OWN pid's leftovers

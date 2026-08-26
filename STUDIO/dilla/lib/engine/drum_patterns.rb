@@ -441,6 +441,22 @@ FLYLO_OVERLAY_SECTION_SHIFT = {
 FLYLO_OVERLAY_GRID_COUNT = 8
 
 MELODY_CHOP_HZ = [392.00, 349.23, 311.13, 277.18, 261.63, 233.08].freeze
+
+# The lead's amplitude, and the one knob that scales it.
+#
+# The drum, harmony and bass buses each have a mix weight; the lead had none, so
+# its level was a literal inside the synthesis loop and could not be moved
+# without editing the renderer. Rendered alone it measures -51.0 dB against the
+# kit's -31.3 -- about 20 dB down, which is why a lead is inaudible in a default
+# mix and why there was no way to answer that by turning something.
+#
+# LEAD_MIX_WEIGHT defaults to 1.0, which is exactly the previous literal. Raising
+# it is a tone decision and belongs to the operator.
+MELODY_BASE_GAIN = 0.11
+
+def resolved_lead_mix_weight
+  ENV.fetch("LEAD_MIX_WEIGHT", "1.0").to_f.clamp(0.0, 8.0)
+end
 LOOSE_POCKET_TIMING_MS = {
   snare: -28..-12, ghost: -10..18, hat_down: 8..18, hat_up: 22..40,
   kick_anchor: 0..6, kick_sync: 10..22,
