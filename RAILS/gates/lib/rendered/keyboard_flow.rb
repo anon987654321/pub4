@@ -17,6 +17,18 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     MAX_TABS = 25
 
+    FOCUS_RESET = <<~JS
+      (() => {
+        if (document.activeElement && document.activeElement !== document.body) {
+          document.activeElement.blur();
+        }
+        document.body.setAttribute("tabindex", "-1");
+        document.body.focus();
+        const a = document.activeElement;
+        return !a || a === document.body || a === document.documentElement;
+      })()
+    JS
+
     ACTIVE = <<~JS
       (() => {
         const el = document.activeElement;
@@ -124,17 +136,7 @@ module Deploy
       # activeElement is body (or nothing) before tabbing means a page that fights
       # the reset is reported as unmeasurable rather than silently mismeasured.
       focus_reset = begin
-        cdp.evaluate(<<~JS)
-          (() => {
-            if (document.activeElement && document.activeElement !== document.body) {
-              document.activeElement.blur();
-            }
-            document.body.setAttribute("tabindex", "-1");
-            document.body.focus();
-            const a = document.activeElement;
-            return !a || a === document.body || a === document.documentElement;
-          })()
-        JS
+        cdp.evaluate(FOCUS_RESET)
       rescue CdpSession::Error
         nil
       end

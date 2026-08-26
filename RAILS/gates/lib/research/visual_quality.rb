@@ -161,29 +161,29 @@ module Deploy
 
     def apply_exemplar_result!(r, context:)
       if r.missing_required.any?
-        @result.fail(
+        return @result.fail(
           "#{context}: exemplar #{r.id} missing required #{r.missing_required.join(', ')} (#{r.score}/#{r.max})",
           severity: :hard
         )
-      elsif !r.pass?
-        @result.fail(
+      end
+
+      unless r.pass?
+        return @result.fail(
           "#{context}: exemplar #{r.id} score #{r.score}/#{r.max} < target #{r.target} notes=#{r.notes.join(',')}",
           severity: :soft
         )
-      else
-        @result.warn("#{context}: exemplar #{r.id} #{r.score}/#{r.max} (#{(r.ratio * 100).round}%)")
       end
+
+      @result.warn("#{context}: exemplar #{r.id} #{r.score}/#{r.max} (#{(r.ratio * 100).round}%)")
     end
 
     def apply_quality_result!(q, context:)
-      if q.pass?
-        @result.warn("#{context}: quality #{q.score}/#{q.max}")
-      else
-        @result.fail(
-          "#{context}: quality #{q.score}/#{q.max} < target #{q.target} notes=#{q.notes.join(',')} principle=venustas",
-          severity: :soft
-        )
-      end
+      return @result.warn("#{context}: quality #{q.score}/#{q.max}") if q.pass?
+
+      @result.fail(
+        "#{context}: quality #{q.score}/#{q.max} < target #{q.target} notes=#{q.notes.join(',')} principle=venustas",
+        severity: :soft
+      )
     end
 
     def dialect_surface(exemplar_id)

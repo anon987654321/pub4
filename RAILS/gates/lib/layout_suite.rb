@@ -46,17 +46,17 @@ module Deploy
     end
 
     def run
-      result = run_leaves
-      return result if result.ok? || !GateAutofix.enabled?
+      report = run_leaves
+      return report if report.ok? || !GateAutofix.enabled?
 
       # Suite-level second pass after leaf autofix (css_constitution already remeasured).
       # Apply any remaining mechanical fixes from aggregated failures, then remeasure all leaves.
-      applied = GateAutofix.apply_failures(result.failures, dry: GateAutofix.dry_run?)
+      applied = GateAutofix.apply_failures(report.failures, dry: GateAutofix.dry_run?)
       if applied.positive? && !GateAutofix.dry_run?
-        result.warn("layout_suite: suite-level autofix patched #{applied} file(s); full remeasure")
-        result = run_leaves
+        report.warn("layout_suite: suite-level autofix patched #{applied} file(s); full remeasure")
+        report = run_leaves
       end
-      result
+      report
     end
 
     def run_leaves

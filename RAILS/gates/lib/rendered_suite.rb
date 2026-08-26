@@ -40,13 +40,13 @@ module Deploy
     def self.run = new.run
 
     def run
-      result = run_leaves
-      return result if result.ok? || !GateAutofix.enabled?
+      report = run_leaves
+      return report if report.ok? || !GateAutofix.enabled?
 
-      applied = GateAutofix.apply_failures(result.failures, dry: GateAutofix.dry_run?)
-      return result unless applied.positive? && !GateAutofix.dry_run?
+      applied = GateAutofix.apply_failures(report.failures, dry: GateAutofix.dry_run?)
+      return report unless applied.positive? && !GateAutofix.dry_run?
 
-      result.warn("rendered_suite: suite-level autofix patched #{applied} file(s); full remeasure")
+      report.warn("rendered_suite: suite-level autofix patched #{applied} file(s); full remeasure")
       run_leaves
     end
 

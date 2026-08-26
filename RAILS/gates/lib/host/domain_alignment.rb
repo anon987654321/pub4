@@ -88,7 +88,7 @@ module Deploy
           result.fail("deploy_inventory.json port mismatch for #{name}: #{entry['port']} != #{exp[:port]}") if entry["port"].to_i != exp[:port]
         end
         m = master[:master] || {}
-        if m["domain"] != "ai.brgen.no" || m["port"].to_i != 53187
+        if m["domain"] != "ai.brgen.no" || m["port"].to_i != 53_187
           result.fail("deploy_inventory.json master_face mismatch: #{m['domain']}:#{m['port']}")
         end
       end

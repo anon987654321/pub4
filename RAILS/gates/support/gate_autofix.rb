@@ -13,6 +13,18 @@ module Deploy
   # Only deterministic, low-risk patches. Design pens, live HTTP, and payment
   # honesty never get rewritten here.
   module GateAutofix
+    REDUCED_MOTION = <<~CSS
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    CSS
+
     module_function
 
     PEN_ALLOW = %r{(?:^|/)(?:_search_yep|_jsfiddle_chrome|_marketplace_nav_bar|_marketplace_animated_logo)\.scss\z}
@@ -170,18 +182,7 @@ module Deploy
     def ensure_reduced_motion(body)
       return body if body.match?(/prefers-reduced-motion:\s*reduce/i)
 
-      block = <<~CSS
-
-        @media (prefers-reduced-motion: reduce) {
-          *,
-          *::before,
-          *::after {
-            animation: none !important;
-            transition: none !important;
-          }
-        }
-      CSS
-      body.rstrip + "\n" + block
+      body.rstrip + "\n" + REDUCED_MOTION
     end
 
     def strip_flat_violations(body)

@@ -40,7 +40,7 @@ YAML.load_file(File.join(__dir__, "gates.yml")).then { |manifest| manifest["gate
 
 ROOT = File.expand_path("..", __dir__)
 APPS = %w[amber brgen bsdports].freeze
-FAILURES = []
+FAILURES = [] # scan: intentional — this script's accumulator, appended to by every step below
 STEP_TIMEOUT = Integer(ENV.fetch("RELEASE_GATE_STEP_TIMEOUT", "180"))
 
 def command_available?(cmd)
@@ -123,7 +123,7 @@ BUNDLE = bundle_cmd
 # thirds of this gate needs no Bundler at all: eight plain-ruby contract tests
 # and four in-process gate classes. Those still run; only the per-app dartsass
 # and importmap steps are recorded as unchecked.
-UNCHECKED = []
+UNCHECKED = [] # scan: intentional — accumulator, as FAILURES above
 
 if BUNDLE
   APPS.each do |app|

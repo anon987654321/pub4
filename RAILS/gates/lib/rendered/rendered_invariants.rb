@@ -250,7 +250,7 @@ module Deploy
         const band = {};
         for (const sel of [".nav_link", ".brgen-logo-mark", ".theme-toggle"]) {
           const t = document.querySelector(sel);
-          const tr = t && t.getBoundingClientRect();
+          const tr = t?.getBoundingClientRect();
           band[sel] = (tr && tr.width > 0 && tr.height > 0)
             ? { cy: Math.round(tr.top + tr.height / 2) }
             : null;

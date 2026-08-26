@@ -30,7 +30,7 @@ module Deploy
       flows = Array(YAML.safe_load_file(@path)["flows"])
       ports = Inventory.new(root: @root).apps.to_h { |a| [a.name, a.port] }
       # MASTER web is not a RAILS/apps.yml row — face + mission control.
-      ports["master"] ||= 53187
+      ports["master"] ||= 53_187
 
       ran = 0
       flows.each do |flow|
