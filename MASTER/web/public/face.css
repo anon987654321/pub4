@@ -73,19 +73,22 @@
    design value. */
 :root {
   /* The wordmark, and only the wordmark. ai.brgen.no is the same brand as
-     brgen.no and has to be set in the same type; this is $brgen-font from
-     RAILS/brgen/app/assets/stylesheets/_root.scss verbatim. Neither site ships
-     Inter as a webfont, so both land on it where it is installed and on
-     system-ui where it is not — matching the stack is what makes them agree.
-     Everything else on this surface stays monospace. */
-  --font-brand: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+   brgen.no, and that brand is set in Helvetica Neue Pro — the face on the
+   printed stock. The Pro cut is licensed per seat and cannot ship as a
+   webfont, so the stack names the printed face where it exists (Apple ships
+   Helvetica Neue, most Linux ships the Nimbus Sans clone) and falls to Arial,
+   which is metrically identical to Helvetica, where it does not. Same value
+   as --font-brand in RAILS/shared _dialect_tokens.scss: matching the stack is
+   what makes the two surfaces agree, and this one downloads nothing.
+   Everything else here stays monospace. */
+--font-brand: "Helvetica Neue", Helvetica, "Nimbus Sans", Arial, sans-serif;
 }
 
 html, body {
   height: 100%;
   background: var(--face-bg);
   color: var(--face-fg);
-  font: 16px/1.5 "Inter",-apple-system,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font: 16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-feature-settings: "ss01","ss03","cv05","kern" 1;
   text-rendering: optimizeLegibility;
   overflow: hidden;

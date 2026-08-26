@@ -786,7 +786,13 @@
   });
 
   V.register(65, "metrics HUD", (ctx) => {
-    if (qs("hud") === "0") return;
+// Opt-in. This read `qs("hud") === "0"`, so fps, mode and entropy rendered
+// full-width at the top of the surface for every visitor unless they knew
+// to ask for silence. It is diagnostics — the element carries
+// aria-hidden="true", which is the code already saying it is not content —
+// and a console surface earns its calm by not showing its own frame rate.
+// ?hud=1 brings it back.
+if (qs("hud") !== "1") return;
     let hud = document.getElementById("face-metrics-hud");
     if (!hud) {
       hud = document.createElement("div");
@@ -1634,20 +1640,16 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
   }
 
   /* 119–130 reliability */
-  V.register(119, "build badge from MASTER_CACHE_VERSION", () => {
-    const ver = window.MASTER_CACHE_VERSION || "dev";
-    let badge = document.getElementById("build-badge");
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.id = "build-badge";
-      badge.className = "build-badge";
-      badge.setAttribute("aria-hidden", "true");
-      body.appendChild(badge);
-    }
-    badge.textContent = ver;
-    badge.title = `build ${ver}`;
-    root.dataset.buildBadge = ver;
-  });
+V.register(119, "build version on the root, not on the screen", () => {
+  const ver = window.MASTER_CACHE_VERSION || "dev";
+  // The dataset, not a span. This appended a visible <span id="build-badge">
+  // to every page — ungated, aria-hidden, showing a cache version in the
+  // corner of a surface whose whole subject is the face. The information is
+  // worth keeping and was never worth a pixel: it stays queryable here, and
+  // /health already reports git_sha for anyone asking which build is live.
+  root.dataset.buildBadge = ver;
+  document.getElementById("build-badge")?.remove();
+});
 
   V.register(120, "PROBE_STRICT note", () => {
     const strict = window.MASTER_RUNTIME?.probe_strict

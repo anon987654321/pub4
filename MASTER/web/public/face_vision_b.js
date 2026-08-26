@@ -234,7 +234,13 @@
   });
 
   V.register(65, "metrics HUD", (ctx) => {
-    if (qs("hud") === "0") return;
+// Opt-in. This read `qs("hud") === "0"`, so fps, mode and entropy rendered
+// full-width at the top of the surface for every visitor unless they knew
+// to ask for silence. It is diagnostics — the element carries
+// aria-hidden="true", which is the code already saying it is not content —
+// and a console surface earns its calm by not showing its own frame rate.
+// ?hud=1 brings it back.
+if (qs("hud") !== "1") return;
     let hud = document.getElementById("face-metrics-hud");
     if (!hud) {
       hud = document.createElement("div");
