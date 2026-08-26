@@ -232,7 +232,7 @@ module SampleFlip
       end
     end
     best = strength.each_with_index.max_by(&:first)
-    return nil unless best && best.first.positive?
+    return nil unless best&.first&.positive?
 
     best.last
   end
@@ -336,7 +336,7 @@ module SampleFlip
     degree = rng.rand(3)
     MOTIF_BARS.times.flat_map do |bar|
       # The second bar answers the first rather than repeating it. Using one
-      # figure for both made a two-bar phrase that was really a one-bar phrase
+      # figure for both made a two-bar phrase that was a one-bar phrase
       # played twice, which is the flat, circular quality the motif was meant to
       # cure. The answer holds back the last note and pushes into the bar line
       # instead -- call, then response.
@@ -372,7 +372,7 @@ module SampleFlip
     # dropped. Both exclusions were learned the same way, twice: a fixed
     # sixteenth changed nothing when the figure already ended on it, and then
     # choosing "any slot not in the remainder" happily chose back the note that
-    # had just been removed. Either way the response came out identical to the
+    # had been removed. Either way the response came out identical to the
     # call and the call-and-response was a no-op that reads correctly in the
     # source. Hence the guarantee below rather than trust.
     pickup = [14, 13, 15, 11, 10].find { |p| !kept.include?(p) && p != dropped }
@@ -493,8 +493,8 @@ module SampleFlip
   # a few milliseconds off, and that lateness is the whole feel.
   # One note at a time, and each one makes way for the next.
   #
-  # Pieces used to be laid down at their full length and left to overlap, so
-  # three unrelated fragments of a record could sound at once. That is where
+  # Pieces are not laid down at their full length and left to overlap, which
+  # sounds three unrelated fragments of a record at once. That is where
   # mud comes from, and no amount of mixing repairs it -- the parts genuinely
   # are all playing. A sampler pad does not behave that way: hitting the next
   # pad stops the last. So a note now runs until the next note begins, plus a
@@ -630,7 +630,7 @@ module SampleFlip
     primary = nil
     # Instrument records first, then any vocal stems. The tag is all that
     # separates them downstream: the cutting and pitch-finding are identical,
-    # because a voice is just another thing with a pitch and an attack.
+    # because a voice is another thing with a pitch and an attack.
     tagged = sources.map { |p| [p, false] } + Array(vocal_path).uniq.map { |p| [p, true] }
     tagged.each do |path, vocal|
       next unless path && File.file?(path)

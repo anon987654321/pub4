@@ -192,7 +192,7 @@ end
 def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, drums_only: false,
                    swing: 58.0, feel: :default, timing: nil, quintuplet: false, bass_pads: nil,
                    chord_phases: nil)
-  bar_p  = (beat_p * 4.0).round(6)
+  bar_p = (beat_p * 4.0).round(6)
   step_p = (beat_p / 4.0).round(6)
   events = Hash.new { |h, k| h[k] = [] }
   groove_meta = { snare_early_ms: [], hat_late_ms: [], ghost_vel: [] }

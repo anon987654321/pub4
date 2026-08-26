@@ -99,7 +99,7 @@ def form_section_at(bar, n_bars)
     # map always covers the track exactly. Rounding each section independently
     # leaves a gap or an overlap at the end, and a bar belonging to no section
     # falls through to the legacy map -- which would put a stray `main` after the
-    # outro and be very hard to see.
+    # outro and be hard to see.
     scaled = 0.0
     map.each_with_index do |(kind, len), i|
       return kind if i == map.length - 1

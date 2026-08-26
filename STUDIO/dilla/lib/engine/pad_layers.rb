@@ -350,7 +350,7 @@ def render_su_tunnel_melody(path, pad_events, duration, cfg: nil, n_bars: nil)
     sus = sustain.to_f
     next if sus <= 0.05
 
-    # The held pair only. The top line used to be built here by stepping through
+    # The held pair only. The top line is not built here by stepping through
     # top_tones[(ci + s) % length] -- a cycle through the chord's own notes,
     # indexed by which chord it was. That is an arpeggiator, not a melody: no
     # contour, no phrase, no motif, the same shape over every chord, and it
@@ -469,7 +469,7 @@ def render_su_tunnel_melody(path, pad_events, duration, cfg: nil, n_bars: nil)
     return
   ensure
     prev_soft ? ENV["DILLA_SOFT_SH"] = prev_soft : ENV.delete("DILLA_SOFT_SH")
-    sources.each { |s| FileUtils.rm_f(s) }
+    sources.each { |s| FileUtils.rm_f(s) } # scan: intentional — removes only the temp files this method rendered
   end
   return unless File.file?(path)
 

@@ -291,7 +291,7 @@ SYNTH_PATCH_CATALOG = [
   # note: three saws a few cents apart beat against each other, and the beating
   # is heard as weight. Here that is a short chorus with almost no modulation --
   # a fixed detune rather than a moving one -- and the ladder is a steep lowpass
-  # with a resonant lift sitting just on top of the cutoff.
+  # with a resonant lift sitting on top of the cutoff.
   synth_patch(:minimoog_bass, role: :bass, program: 38, weight: 3.0, mix: 1.2, fs_gain: 1.7,
               fx: "chorus=0.6:0.9:11|17|23:0.28|0.22|0.18:0.05|0.04|0.03:0.6|0.5|0.4," \
                   "equalizer=f=520:t=q:w=1.6:g=4.5,lowpass=f=520,lowpass=f=520," \
@@ -491,8 +491,8 @@ SYNTH_PATCH_CATALOG = [
   # close echo taps so notes overlap into a burble rather than a delay line.
   #
   # The resonant peak is what makes them read as liquid at all -- ffmpeg's
-  # lowpass has no resonance control, so the peak is an `equalizer` band just
-  # under the cutoff. Without it these are just quiet blips.
+  # lowpass has no resonance control, so the peak is an `equalizer` band
+  # under the cutoff. Without it these are quiet blips.
 
   # Main bubble voice: mid-register, wobbling, notes tumbling over each other.
   synth_patch(:flylo_bubble, role: :lead, program: 102, weight: 2.3, fs_gain: 1.24, gate: 0.34, octave: 3,
@@ -951,7 +951,7 @@ end
 #
 # 89 is Pad 2 (warm), already in WARM_PAD_GM_PROGRAMS. A pipe patch is usually
 # doing something soft and high, and a warm pad is the substitution least likely
-# to turn into a harsh stab where a breathy line used to be.
+# to turn into a harsh stab where a breathy line belongs.
 NONFLUTE_SUBSTITUTE_PROGRAM = 89
 
 def nonflute_program(program)

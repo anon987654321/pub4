@@ -16,7 +16,7 @@
 # 1. TRANSFORMER BUMP. Seventies Neve desks mixed at roughly microphone level
 #    and brought the signal back up through output transformers. Transformers
 #    are not flat: the core adds a small lift in the low bass and rolls away the
-#    very top. Both are reproduced here, gently, because the effect on a real
+#    top. Both are reproduced here, gently, because the effect on a real
 #    desk is small and the temptation to overdo it is what makes emulations
 #    sound like emulations.
 #
@@ -265,7 +265,7 @@ end
 # clipping generates harmonics above Nyquist and, with nowhere to go, they fold
 # back down as inharmonic aliasing. That folded content is what makes digital
 # clipping sound fizzy and brittle where analog sounds warm — real saturation
-# has no Nyquist to fold against, its harmonics simply extend and roll off. At
+# has no Nyquist to fold against, its harmonics extend and roll off. At
 # 4x the harmonics are generated with headroom and filtered before decimation,
 # so what survives is harmonically related to the signal.
 #

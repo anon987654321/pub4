@@ -21,7 +21,7 @@ end
 # makes each track start from a guaranteed-clean slate instead of trusting
 # leftovers from whatever the last track did.
 def cleanup_render_scratch!
-  Dir.glob(File.join(SCRATCH_DIR, "dilla_*.#{Process.pid}.*")).each { |f| FileUtils.rm_f(f) }
+  Dir.glob(File.join(SCRATCH_DIR, "dilla_*.#{Process.pid}.*")).each { |f| FileUtils.rm_f(f) } # scan: intentional — this process's own scratch files, pid-scoped
 end
 
 STREAM_LOCK_PATH = scratch_path("dilla_stream.lock").freeze

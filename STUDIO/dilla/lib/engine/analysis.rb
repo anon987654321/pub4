@@ -828,7 +828,7 @@ NOISE_FLOOR = 0.005
   # therefore mostly comparing 1.4 minutes against 4.8 minutes.
   #
   # This warns rather than refusing, because the comparison is still worth
-  # having -- it just is not the comparison it looks like, and the reading here
+  # having -- it is not the comparison it looks like, and the reading here
   # went wrong in exactly that way before anyone excerpted the record.
   def duration_warning(rows)
     return [] if rows.length < 2

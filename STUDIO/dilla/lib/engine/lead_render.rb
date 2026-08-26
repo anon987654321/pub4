@@ -25,7 +25,7 @@ LEAD_TARGET_RMS_DB = -14.5
 #
 # They also suit what the line actually plays. It holds each note for about two
 # beats, and a held note is what strings and choirs are for; a square-wave lead
-# holding for two beats just sounds stuck.
+# holding for two beats sounds stuck.
 #
 # These voices are already in the patch table (choir_aahs, voice_oohs,
 # juno_strings, string_orchestra) but only as pads -- every one is registered
@@ -196,9 +196,9 @@ def lead_post_fx_chain(patch, duration, boost_db)
   base = "volume=#{boost_db.round(2)}dB"
   patch_fx = patch&.dig(:fx)
   # Blend patch identity FX with a rotating rich chain so every take has motion.
-  # Process.pid used to be in here, so the lead came out with a different effect
-  # chain on every single run -- the take you liked could not be got back, and
-  # two renders of one track were never comparable. The render seed alone is
+  # Process.pid stays out of here. In it, the lead comes out with a different
+  # effect chain on every single run -- the take you liked cannot be got back, and
+  # two renders of one track are never comparable. The render seed alone is
   # what it was always meant to be keyed on.
   variant = LEAD_FX_VARIANTS[(@render_seed || 0) % LEAD_FX_VARIANTS.length]
   rich = ENV.fetch("LEAD_FX_RICH", "1") != "0"
@@ -253,7 +253,7 @@ def mix_harmonic_wav_stems(destination, duration, **stem_paths)
   lanes.each { |(_, path)| args << "-i" << path }
   sh!(*args, "-filter_complex", filter, "-map", "[harmonic]",
       "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", destination)
-  lanes.drop(2).each { |(_, path)| FileUtils.rm_f(path) }
+  lanes.drop(2).each { |(_, path)| FileUtils.rm_f(path) } # scan: intentional — removes only the temp files this method rendered
   true
 end
 
@@ -360,7 +360,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # The resynthesized choir IS the top line, so every synth lead lane below is
   # skipped rather than mixed quiet. Two top lines at once is the soup the
   # comment further down is about, and a vocal one loses that fight by being
-  # the more interesting signal — mixing them just muddies both.
+  # the more interesting signal — mixing them muddies both.
   su_melody_path = "#{path}.su_melody.wav"
   su_melody_rendered = nil
   if su_melody_enabled? && !no_lead?
@@ -671,10 +671,10 @@ end
 
 def dilla_stem_paths
   paths = {}
-  paths[:mids]    = STEM_MIDS    if File.exist?(STEM_MIDS)
-  paths[:highs]   = STEM_HIGHS   if File.exist?(STEM_HIGHS)
-  paths[:sub]     = STEM_SUB     if File.exist?(STEM_SUB)
-  paths[:center]  = STEM_CENTER  if File.exist?(STEM_CENTER)
+  paths[:mids] = STEM_MIDS    if File.exist?(STEM_MIDS)
+  paths[:highs] = STEM_HIGHS   if File.exist?(STEM_HIGHS)
+  paths[:sub] = STEM_SUB     if File.exist?(STEM_SUB)
+  paths[:center] = STEM_CENTER  if File.exist?(STEM_CENTER)
   paths
 end
 
@@ -864,7 +864,7 @@ def render_hocket_lead!(path, events, duration)
       "#{(0...rendered.length).map { |i| "[#{i}:a]" }.join}" \
       "amix=inputs=#{rendered.length}:duration=longest:normalize=0,volume=#{gain}[out]",
       "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
-  rendered.each { |f| FileUtils.rm_f(f) }
+  rendered.each { |f| FileUtils.rm_f(f) } # scan: intentional — removes only the temp files this method rendered
   File.file?(path) ? low_pass_gate_lead!(path) : nil
 end
 
@@ -872,7 +872,7 @@ end
 #
 # Wired to the lead and not to a bus because an LPG is a NOTE device: it works on
 # something struck, where each event decays, and its whole character is that the
-# decay darkens. On a sustained pad it would just be a dull filter, and on a full
+# decay darkens. On a sustained pad it would be a dull filter, and on a full
 # mix it would gate the whole arrangement against the kick.
 #
 # Measured on a decaying pluck: over the decay the 4-12 kHz band falls 17.5 dB
@@ -948,13 +948,13 @@ def voice_stack_lead!(path, events, duration)
   #
   # P_4L taps every voice before its filter so the voices can be processed
   # separately; this engine renders each voice to a file and then sums, so the
-  # equivalent is simply not throwing them away. What a modular does with a
+  # equivalent is not throwing them away. What a modular does with a
   # patch cable, a renderer does with a path.
   if ENV["VOICE_STACK_STEMS"] == "1"
     dmesg("voice stack: kept #{rendered.length} voice stem(s) beside #{File.basename(path)}",
           unit: "harm0", parent: "dilla0")
   else
-    rendered.each { |f| FileUtils.rm_f(f) }
+    rendered.each { |f| FileUtils.rm_f(f) } # scan: intentional — removes only the temp files this method rendered
   end
   dmesg("voice stack: #{plan.length} voices, #{ENV.fetch('VOICE_STACK_DETUNE', 'fifths')}, " \
         "models #{plan.map { |v| VoiceStack.model_for(v.macro) }.join('/')}",

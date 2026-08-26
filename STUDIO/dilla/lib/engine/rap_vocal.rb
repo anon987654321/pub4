@@ -438,7 +438,7 @@ def rap_vocal_measure_bpm_uncached(vocal_path, range: (60..180))
   # A random phase hits ~20% at this tolerance, so an absolute floor alone is
   # too easy to clear. A real pulse also stands clear of its neighbours: the
   # 100 BPM click scores 100% at the true tempo against 51% either side. Gunnhild
-  # scores 35% at 96 with 34% at 168 and 32% at 147 — no winner, just noise with
+  # scores 35% at 96 with 34% at 168 and 32% at 147 — no winner, noise with
   # a lean, and returning 96 from that produced a "beat match" no better than
   # chance. Require both the floor and real separation from the best unrelated
   # rival, or admit there is no tempo here.

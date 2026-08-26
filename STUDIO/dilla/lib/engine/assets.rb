@@ -87,7 +87,7 @@ end
 
 # Copies one kit's one-shots into CUSTOM_DRUM_DIR, which drum_sample_path
 # already prefers over the synthesized kit — no synthesis code changes
-# needed, this just populates the existing override hook.
+# needed, this populates the existing override hook.
 # Dig one seam into samples/dug/, recording provenance per side.
 #
 # Filtered to the public domain before anything is fetched -- see

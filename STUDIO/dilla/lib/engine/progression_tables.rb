@@ -710,7 +710,7 @@ CHORD_PROGRESSIONS = {
   # C major and Ab minor share exactly one note and no key. The "hexatonic
   # pole" -- the most distant pair triadic harmony can reach while still moving
   # every voice by a single step. It does not modulate and it does not resolve;
-  # it just opens a door onto a room that should not be there.
+  # it opens a door onto a room that should not be there.
   hexatonic_pole_shiver: %w[Cmaj9 Abm9 Cmaj9 Abm9],
   # The full ring that pole sits on: major, its parallel minor, down a major
   # third, again, again, home. Six stations, every move a single voice by a
@@ -770,7 +770,7 @@ CHORD_PROGRESSIONS = {
   # it laid on top. Two keys sounding at once and neither of them winning.
   two_moons_pedal: %w[Cm9 Gbmaj9/C Cm9 Abmaj9/C Cm9 Ebmaj9/C Cm9 Gbmaj9/C],
   # A minor arc that ends on the major third of its own tonic -- the Picardy
-  # third, which for two hundred years was simply how a minor piece was allowed
+  # third, which for two hundred years was how a minor piece was allowed
   # to stop. The window opening on the last bar.
   picardy_window: %w[Am9 Dm9 Fmaj9 Em9 Am9 Dm9 E7b9 Amaj9],
   # Every dominant suspended, resolving only into the next suspension, all the
@@ -1007,7 +1007,7 @@ TRACK_PRESETS = {
   # above) were reachable only via a raw GEN_STYLE=major_third_cycle_full|modal_interchange
   # env override with no discoverable named preset -- both are real, working,
   # theory-grounded generators (major-third symmetric substitution; borrowed
-  # chords from the parallel mode) that just had no entry here.
+  # chords from the parallel mode) that had no entry here.
   generated_coltrane: {
     bpm: 88, progression: :major_third_cycle_full, chord_bars: 2, phrase_bars: 16, swing: 58,
     feel: :organic, stereo_pan: true,

@@ -3,7 +3,7 @@
 
 ############################################################################
 # ARCHIVED 2026-07-26: this is a standalone, unrelated jazz-hop/dark-techno
-# experiment, not the Dilla engine (that's ../dilla.rb, formerly engine.rb).
+# experiment, not the Dilla engine (that's ../dilla.rb).
 # It was dropped into STUDIO/dilla/dilla.rb by the MASTER/tools -> studio
 # extraction (687c07a43) and, because ScriptDispatch resolves media tools by
 # STUDIO/<tool>/<tool>.rb convention, silently hijacked every chat-driven
@@ -104,7 +104,7 @@
 #      design, but the exact ms targets above were never explicitly
 #      verified against sox's `fade`/`synth` timing. Ghost notes exist
 #      (hiphop mode, quieter snare re-hits) but don't use a distinctly
-#      shorter/different envelope shape, just lower gain. Pad attack times
+#      shorter/different envelope shape, lower gain. Pad attack times
 #      vary per SoxVoice function (rhodes ~10ms, cs80/ambient much slower)
 #      but were not tuned specifically to "let transients cut through."
 #
@@ -529,7 +529,7 @@ module SoxVoice
     SoxShell.read_wav(out)
   end
 
-  # Brian Eno-style ambient pad: sine + a very subtly detuned saw.
+  # Brian Eno-style ambient pad: sine + a subtly detuned saw.
   def self.ambient(dir, freq, gain, duration)
     detune = freq * 1.0006
     sine, saw, out = %w[sine saw out].map { |n| "#{dir}/#{n}.wav" }
@@ -792,7 +792,7 @@ end
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
-# Modes: the harmonic void. No cadences, no resolution — just a mode to
+# Modes: the harmonic void. No cadences, no resolution — a mode to
 # snap a hypnotic cell into.
 # ---------------------------------------------------------------------------
 module Modes
@@ -1266,9 +1266,9 @@ module NastyVCS
   end
 
   def self.summing_glue(buffer)
-    out = parallel_compress(buffer)
-    out = harmonic_bloom(out)
-    tilt_eq(out)
+    parallel_compress(buffer)
+      .then { |compressed| harmonic_bloom(compressed) }
+      .then { |bloomed| tilt_eq(bloomed) }
   end
 end
 

@@ -184,7 +184,7 @@ def generate_fm_drum_kit!
      # (42Hz, slower decay) for body -- the FM element alone decays too
      # fast to carry real low-end weight now that this is the sole kick,
      # not a niche alternate. Gentle tanh saturation adds analog warmth.
-     # A very low-level noise floor under the whole hit (not a burst)
+     # A low-level noise floor under the whole hit (not a burst)
      # keeps it from sounding too digitally clean for a kit modeled on
      # dusty analog hardware.
      ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*6)*sin(2*PI*55*t+6*exp(-t*30)*sin(2*PI*58*t))+0.35*exp(-t*9)*sin(2*PI*42*t)':d=0.6:s=#{sr}",

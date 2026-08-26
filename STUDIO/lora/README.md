@@ -28,7 +28,7 @@ appended to work the model never did.
 **`dataset/` is versioned, and this repo's origin is public.** Twenty captioned
 photographs of two named people — 17 of Ragnhild, 3 of Johann — are committed
 and published, and that is deliberate rather than an oversight: it is what makes
-the Colab lane work without a token, since the notebook simply clones the
+the Colab lane work without a token, since the notebook clones the
 origin. Checked 2026-08-12. The consequence is that adding a photograph here
 publishes it, immediately and to anyone, and that removing it later leaves it in
 the history. Curate `sources/` freely; treat a `git add` under `dataset/` as

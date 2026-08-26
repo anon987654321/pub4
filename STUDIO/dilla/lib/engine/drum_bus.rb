@@ -40,7 +40,7 @@ end
 # 16th as the kick, both fight for the same moment and the kick loses definition
 # even though nothing overlaps in frequency. Ducking the top bus for a few tens
 # of milliseconds lets the kick through cleanly and is inaudible as an effect --
-# the hat is still there, it just arrives a fraction behind.
+# the hat is still there, it arrives a fraction behind.
 #
 # The dual-bus split makes this exact rather than approximate: the sub bus IS
 # the kick, so it can key the compressor directly instead of using the whole kit
@@ -223,7 +223,7 @@ end
 # A/B'd immediately after adding it, and the answer was NOT what the comment
 # above would lead you to expect: PAD_LP=3400 against PAD_LP=7000 produces
 # different files (different checksums, the override is definitely read) whose
-# octave-band energy is identical to 0.1 dB at every band. The pad bus simply
+# octave-band energy is identical to 0.1 dB at every band. The pad bus
 # does not carry enough of the mix's top end for its bandwidth to register.
 #
 # So the darkness is not here. What the same measurement did find: every sampled

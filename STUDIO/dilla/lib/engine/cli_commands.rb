@@ -306,9 +306,9 @@ end
 # `dir` is relative to ROOT rather than STEM_DIR because the stems live under
 # samples/demux; render_liveset resolves it against ROOT for that reason.
 #
-# bpm is deliberately nil. It used to be `bpm`, which is not a parameter here --
-# it is the method returning the RENDER's configured tempo, so all seven demucs
-# sets were recorded at 88.32 whatever the record actually ran at. A stem
+# bpm is deliberately nil. A bare `bpm` is not a parameter here -- it is the
+# method returning the RENDER's configured tempo, which records all seven demucs
+# sets at 88.32 whatever the record ran at. A stem
 # stretched by that ratio drifts. cd8e6850f settled the principle when it
 # rejected two of four vocal tempos rather than write a number that would drift:
 # no bpm is a question, a wrong bpm is a silent fault.
@@ -346,7 +346,7 @@ def stems(*args)
     stems_scan(*args[1, 2].compact)
   when "add"
     name = args[1] or abort "usage: ruby dilla.rb stems add <name> <dir> [bpm]"
-    dir  = args[2] or abort "usage: ruby dilla.rb stems add <name> <dir> [bpm]"
+    dir = args[2] or abort "usage: ruby dilla.rb stems add <name> <dir> [bpm]"
     stems_register(name, File.expand_path(dir), bpm: (args[3] && args[3].to_f))
   when nil
     stems_register("default", STEM_DIR, bpm: 90, source: "Sirkel Sag · Voicemails")
@@ -384,7 +384,7 @@ end
 # Nothing downstream asks. resolve_pad_chord_symbol answers nil on a symbol it
 # cannot build and progression_for's filter_map drops it without a word, so a
 # progression can render a chord short forever; and a symbol that resolves to
-# the WRONG notes never even loses a chord, it just sounds subtly incorrect in
+# the WRONG notes never even loses a chord, it sounds subtly incorrect in
 # a way no gate measures. Both failures were live when this was written:
 #
 #   Abdim          nil -- chromatic_descent_sixteen's bass walk had a hole in it
@@ -655,7 +655,7 @@ def wiring_dead_methods
   # Same corpus and the same comment-stripping as the constant ratchet: a
   # method named only in prose is not called. `.` is excluded here where the
   # constant rule keeps it -- a constant is never reached through a dot, but a
-  # method very often is, and `foo.bar` is a call on something else entirely.
+  # method often is, and `foo.bar` is a call on something else entirely.
   code = ENGINE_SOURCES.map { |path| File.read(path).gsub(/^\s*#(?!\{).*$/, "") }.join("\n")
   defined_at.reject do |name, _|
     next true if WIRING_EXTERNAL_CALLERS.include?(name)

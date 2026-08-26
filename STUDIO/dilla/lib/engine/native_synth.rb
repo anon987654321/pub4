@@ -126,7 +126,7 @@ end
 # 2*mod(f*t,1)-1, whose instantaneous phase reset generates harmonics all the way
 # up and folds everything above Nyquist back down as inharmonic grit -- audible
 # as fizz on sustained pads. Summing partials instead is anti-aliased by
-# construction: N is capped so N*f stays under Nyquist, so high notes simply get
+# construction: N is capped so N*f stays under Nyquist, so high notes get
 # fewer partials. (PolyBLEP would be the usual fix, but it is a per-sample
 # technique and this path emits an expression string for aevalsrc, not a Ruby
 # sample loop -- see archive/hiphop_techno_experiment.rb for the sample-loop
@@ -154,7 +154,7 @@ def native_waveform_body(frequency, wave:, bloom: 0.2, drift: "1", detune: 0.004
     # detune has to be in real cents to do anything: the beating between
     # oscillators IS the sound. (A proposal that suggested this used
     # [-0.03, 0, 0.03] "cents" applied as 2**(c/1200) -- 0.0000173%, so all
-    # three oscillators came out bit-identical and it was just a louder saw.)
+    # three oscillators came out bit-identical and it was a louder saw.)
     cents = (ENV["ANALOG_PAD_DETUNE_CENTS"] || 7.0).to_f.clamp(0.0, 50.0)
     spread = ->(c) { (frequency * (2.0**(c / 1200.0))).round(4) }
     [

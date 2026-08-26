@@ -230,7 +230,7 @@ end
 
 # The progression follows the track unless the caller pinned one.
 #
-# This used to be inline in stream() as
+# This stays out of stream(), where it read
 # `unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?`,
 # which skipped the assignment whenever PAD_VOICE or PAD_ARP_MODE was set — and
 # PROGRESSION is never empty, because apply_best_defaults! fills it with

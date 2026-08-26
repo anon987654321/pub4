@@ -83,11 +83,11 @@ def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.
   require_tools! "ffmpeg"
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
-  cfg      = madlib_resolve_config
-  n_bars   = bars_count || (ENV["BARS"] ? bars : 32)
-  beat_p   = 60.0 / cfg[:bpm]
+  cfg = madlib_resolve_config
+  n_bars = bars_count || (ENV["BARS"] ? bars : 32)
+  beat_p = 60.0 / cfg[:bpm]
   duration = (beat_p * 4.0 * n_bars).round(3)
-  events   = dilla_schedule(
+  events = dilla_schedule(
     n_bars, beat_p, [], drums_only: true,
     swing: cfg[:swing], feel: :loose_pocket, timing: cfg[:timing]
   )
@@ -130,7 +130,7 @@ def render_madlib_album(output_dir = File.join(ROOT, "renders", "beats"))
     base = File.join(output_dir, entry[:out])
     prev = %w[TRACK BARS BPM SWING DELICIOUS VLC].each_with_object({}) { |k, h| h[k] = ENV[k] }
     ENV["TRACK"] = entry[:track].to_s
-    ENV["BARS"]  = entry[:bars].to_s
+    ENV["BARS"] = entry[:bars].to_s
     ENV["DELICIOUS"] = "1"
     ENV["VLC"] = "1"
     render_madlib_drums("#{base}.wav", entry[:bars])
@@ -151,8 +151,8 @@ def render_slum_album(output_dir = File.join(ROOT, "renders"))
   TAPE_RENDER_CATALOG.each_with_index do |entry, i|
     dest = File.join(output_dir, "#{entry[:out]}.mp3")
     prev = %w[TRACK BARS BPM PROGRESSION SWING SONITEX SONITEX_PRESET ANALOG_CHAIN].each_with_object({}) { |k, h| h[k] = ENV[k] }
-    ENV["TRACK"]   = entry[:preset].to_s
-    ENV["BARS"]    = entry[:bars].to_s
+    ENV["TRACK"] = entry[:preset].to_s
+    ENV["BARS"] = entry[:bars].to_s
     ENV["SONITEX"] = "heavy"
     ENV["SONITEX_PRESET"] = "heavy"
     ENV["ANALOG_CHAIN"] = ANALOG_CHAIN_ROTATE[i % ANALOG_CHAIN_ROTATE.length].to_s

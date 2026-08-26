@@ -76,7 +76,7 @@ DEMO_RAP_ROTATION = %w[store_p haisam_johann angelo_johann slum_village].freeze
 # cheerfully reported rap=gunnhild. This is the same failure the comment on
 # four_seven's profile already describes ("a profile default that silently
 # discarded an explicit RAP_VOCAL on the command line made the render look
-# like it had simply ignored the request"), caught then for an explicit ON and
+# like it had ignored the request"), caught then for an explicit ON and
 # missed for an explicit OFF.
 #
 # Captured at load, before any preset runs, because by render time ENV no
@@ -451,6 +451,6 @@ MICROTIMING_MS = {
   # hand percussion sit late and loose enough to be almost off-beat, against a
   # kick locked to the grid -- the looseness reads as a player only because
   # everything around it is steady. The range is wider than any other role
-  # here on purpose: at hat_up's 12..32 it would just sound like another hat.
+  # here on purpose: at hat_up's 12..32 it would sound like another hat.
   perc: 22..58,
 }.freeze

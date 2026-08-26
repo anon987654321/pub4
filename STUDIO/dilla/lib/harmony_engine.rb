@@ -570,7 +570,7 @@ module DillaHarmony
   # semitone is the level the question is actually asked at -- a chord is a set
   # of pitches, not a set of frequencies.
   def dedupe_by_pitch(midis)
-    midis.uniq { |m| m.round }
+    midis.uniq(&:round)
   end
 
   def pitch_class_dist(a, b)

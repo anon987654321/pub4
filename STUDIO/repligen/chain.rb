@@ -134,7 +134,7 @@ module Repligen
     # only be exercised by spending it is a loop nobody checks. The tests hand in
     # a recorder and assert the carry-forward — that stage N+1 is actually given
     # stage N's file, which is the one thing a chain has to get right and the one
-    # thing that fails silently, because a model handed no image just generates
+    # thing that fails silently, because a model handed no image generates
     # from the prompt and returns something plausible.
     #
     # Returns the files produced, in order. Every intermediate is kept: a chain

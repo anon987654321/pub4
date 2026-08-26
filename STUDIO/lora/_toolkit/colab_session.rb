@@ -73,7 +73,7 @@ def install_ai_toolkit
   sh!("git", "clone", "--depth", "1", "https://github.com/ostris/ai-toolkit.git", AI_TOOLKIT.to_s)
   # Colab's own torch is CUDA-matched to its driver; a clean venv would pull a
   # second multi-GB one off PyPI that is not. run_ai_toolkit.rb requires a venv
-  # python, so it stays a venv — just one that can see the image's packages.
+  # python, so it stays a venv — one that can see the image's packages.
   sh!("python3", "-m", "venv", "--system-site-packages", AI_TOOLKIT.join(".venv").to_s)
   pip = AI_TOOLKIT.join(".venv/bin/pip").to_s
   sh!(pip, "install", "-q", "--upgrade", "pip", "wheel")

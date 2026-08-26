@@ -237,7 +237,7 @@ module RadioChop
         musicality: musicality.round(2),
         steadiness: steadiness.round(2),
         # Steadiness is subtracted, not thresholded: a window straddling a
-        # segue is not disqualified, it just loses to one that does not.
+        # segue is not disqualified, it loses to one that does not.
         score: (musicality - steadiness).round(3),
       }
     end
@@ -413,7 +413,7 @@ module RadioChop
     best_c, best_n = candidates.max_by(&:first)
     4.downto(2) do |k|
       c = correlation_at(env, best_n * k)
-      # The margin IS the check. It was deleted by an AstFixer autofix pass in
+      # The margin IS the check. An AstFixer autofix pass deleted it in
       # e7e48eed1, which left the trailing backslash behind: `return {...} \`
       # continued onto the loop's own `end`, which parses, so the file stayed
       # Syntax OK and the commit reported "all parse; both engines boot".
@@ -704,7 +704,7 @@ module RadioChop
     # sample nothing references and nothing cleans -- and if a later run reissued
     # that slug, TRACK=<slug> would resolve to whichever of the two was written
     # last.
-    Dir.glob(File.join(DEST, "#{slug_base}_*")).each { |d| FileUtils.rm_rf(d) }
+    Dir.glob(File.join(DEST, "#{slug_base}_*")).each { |d| FileUtils.rm_rf(d) } # scan: intentional — this run's own output directories under DEST
 
     loops = ranked.each_with_index.map do |m, i|
       slug = format("%s_%02d", slug_base, i + 1)

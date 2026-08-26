@@ -96,7 +96,7 @@ def setup_cell(options)
     else:
         subprocess.run(["git", "-C", "/content/pub4", "pull", "--ff-only"], check=True)
     # Runtime type is a menu item nobody remembers, and a CPU runtime does not
-    # announce itself — it just trains at a rate that never finishes. On Kaggle
+    # announce itself — it trains at a rate that never finishes. On Kaggle
     # the equivalent oversight cost an hour before anything said why, so this
     # asserts rather than prints.
     gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],

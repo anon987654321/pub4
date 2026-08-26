@@ -183,7 +183,7 @@ module DillaMaster
 
   # Ear-level roughness lives in 2–4 kHz. The old meter was a two-band
   # ratio split at 3.5 kHz, so that region sat inside `mid` and cancelled —
-  # a render measured −24.5 (very un-harsh) while sounding rough. Three-band:
+  # a render measured −24.5 (un-harsh) while sounding rough. Three-band:
   # body (180–2 kHz) vs presence (2–4 kHz) vs air (4 kHz+). Harshness is
   # presence standing above the body. Air being hotter is brightness, not
   # roughness. `needs_notch` keeps the 6 dB threshold so the quality gate

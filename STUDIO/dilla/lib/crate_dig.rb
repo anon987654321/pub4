@@ -289,12 +289,12 @@ module CrateDig
   # row records where it came from and under what terms, so the crate can answer
   # "may I release this" without anyone having to remember.
   def record!(entry)
-    data = manifest
-    data["items"].reject! { |i| i["identifier"] == entry["identifier"] }
-    data["items"] << entry
-    data["items"].sort_by! { |i| i["identifier"].to_s }
+    crate = manifest
+    crate["items"].reject! { |i| i["identifier"] == entry["identifier"] }
+    crate["items"] << entry
+    crate["items"].sort_by! { |i| i["identifier"].to_s }
     FileUtils.mkdir_p(DUG)
-    File.write(MANIFEST, JSON.pretty_generate(data) + "\n")
+    File.write(MANIFEST, JSON.pretty_generate(crate) + "\n")
     entry
   end
 

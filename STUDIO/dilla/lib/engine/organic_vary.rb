@@ -22,8 +22,8 @@ ORGANIC_VARY_TONE_HZ = (ENV["ORGANIC_VARY_TONE_HZ"] || 1800).to_i
 # Fixed walks, one value per repetition, cycling. Reproducibility again: a loop
 # that varies differently on every render cannot be mixed against.
 ORGANIC_VARY_PITCH_WALK = [0.0, 0.6, -0.4, 1.0, -0.8, 0.3, -1.0, 0.7].freeze
-ORGANIC_VARY_TIME_WALK  = [0.0, -0.5, 0.8, -0.2, 0.6, -0.9, 0.3, -0.6].freeze
-ORGANIC_VARY_TONE_WALK  = [0.0, -1.2, 0.8, -0.6, 1.4, -0.3, 0.5, -1.0].freeze
+ORGANIC_VARY_TIME_WALK = [0.0, -0.5, 0.8, -0.2, 0.6, -0.9, 0.3, -0.6].freeze
+ORGANIC_VARY_TONE_WALK = [0.0, -1.2, 0.8, -0.6, 1.4, -0.3, 0.5, -1.0].freeze
 
 # Chopping, as opposed to repeating.
 #
@@ -66,8 +66,8 @@ def organic_vary_loop!(src, dest, duration:)
   reps.times do |i|
     cents = ORGANIC_VARY_CENTS * ORGANIC_VARY_PITCH_WALK[i % ORGANIC_VARY_PITCH_WALK.size]
     shift = ORGANIC_VARY_MS * ORGANIC_VARY_TIME_WALK[i % ORGANIC_VARY_TIME_WALK.size]
-    tone  = ORGANIC_VARY_TONE_HZ * (1.0 + (0.18 * ORGANIC_VARY_TONE_WALK[i % ORGANIC_VARY_TONE_WALK.size]))
-    rate  = (SAMPLE_RATE * (2.0**(cents / 1200.0))).round
+    tone = ORGANIC_VARY_TONE_HZ * (1.0 + (0.18 * ORGANIC_VARY_TONE_WALK[i % ORGANIC_VARY_TONE_WALK.size]))
+    rate = (SAMPLE_RATE * (2.0**(cents / 1200.0))).round
     delay = [shift.round, 0].max
     parts.concat(["-i", src])
     # asetrate then aresample is a varispeed: pitch and length move together, as

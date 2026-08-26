@@ -109,8 +109,8 @@ end
 # swallows whole verses (0.20 gives one 13.96s span), a shorter one shatters
 # words (0.06 gives a 0.49s median).
 RAP_VOCAL_LINE_HOLD = (ENV["RAP_VOCAL_LINE_HOLD"] || 0.14).to_f
-RAP_VOCAL_LINE_REL  = (ENV["RAP_VOCAL_LINE_REL"] || 0.55).to_f
-RAP_VOCAL_LINE_MIN  = (ENV["RAP_VOCAL_LINE_MIN"] || 0.35).to_f
+RAP_VOCAL_LINE_REL = (ENV["RAP_VOCAL_LINE_REL"] || 0.55).to_f
+RAP_VOCAL_LINE_MIN = (ENV["RAP_VOCAL_LINE_MIN"] || 0.35).to_f
 
 # Analysis rate and band. 8 kHz is plenty for locating syllables -- the band
 # that decides where a voice is has nothing above 6 kHz in it -- and decoding
@@ -375,7 +375,7 @@ def audio_chroma(path)
     win = Array.new(RAP_VOCAL_KEY_N) { |n| raw[pos + n] * han[n] }
     rms = Math.sqrt(win.sum { |v| v * v } / RAP_VOCAL_KEY_N)
     # Voiced frames only. Silence and breath carry no key, and a gated stem is
-    # mostly silence — including it just adds a flat floor to every class.
+    # mostly silence — including it adds a flat floor to every class.
     if rms > 0.008
       coeffs.each do |pc, coeff|
         s1 = 0.0

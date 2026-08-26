@@ -52,7 +52,7 @@ module Acapella
   # The tempo of the original mix, in beats per minute.
   #
   # Measured from the low band, where the kick lives: the envelope of everything
-  # below 180 Hz is very nearly a picture of the kick pattern, and its strongest
+  # below 180 Hz is nearly a picture of the kick pattern, and its strongest
   # repeating period is the bar or the beat. RadioChop already does this well
   # enough for loop-finding and the same machinery serves here.
   # Candidate tempos, a fifth of a beat apart. Finer than a listener can name and
@@ -277,7 +277,7 @@ module Acapella
   # making the master wander, left in the vocal chain when the master was fixed.
   # The darker reading of the same voice.
   #
-  # Not simply the bright chain with the treble turned down -- that gives a dull
+  # Not the bright chain with the treble turned down -- that gives a dull
   # vocal, which is a different thing from a dark one. Dark means the weight
   # moves DOWN rather than the top going away: chest lifted around 220 Hz, the
   # consonant band kept but narrowed and placed lower at 2.8 kHz so the words
@@ -483,7 +483,7 @@ module Acapella
   #
   # A rapper stretched from 85 to 145 beats per minute is being asked to deliver
   # the same words in six-tenths of the time. atempo keeps the pitch, so it does
-  # not chipmunk -- it simply becomes a blur, and nobody raps at 145 anyway. Over
+  # not chipmunk -- it becomes a blur, and nobody raps at 145 anyway. Over
   # fast music a rapper works in HALF TIME: the beat is at 145 and the flow is at
   # 72.5, one syllable per two beats rather than one per beat. That is not a
   # compromise, it is what the form does.
@@ -596,7 +596,7 @@ module Acapella
       return nil
     end
 
-    # Every one of these branches used to be a bare `return nil`, which is the
+    # Not one of these branches is a bare `return nil`, which is the
     # failure this library exists to stop being: index.json is written once and
     # scratch/ is cleaned often, so the ordinary case is a row pointing at a
     # stem that is no longer on disk. Saying which one, and what to run, is the

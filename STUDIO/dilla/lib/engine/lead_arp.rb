@@ -626,9 +626,9 @@ def arp_variation_for_chord(chord_i, chord, cfg, base_arp_cfg, patch: nil, role:
 end
 
 # Every arp pattern was picked fresh per chord with no thread between phrases
-# — a melody that never restates or develops an idea, just cycles shapes.
+# — a melody that never restates or develops an idea, cycles shapes.
 # chord_motif_for already gives a stable, chord-symbol-consistent figure and
-# :motif already exists as a pattern_mode; this just deliberately reaches for
+# :motif already exists as a pattern_mode; this deliberately reaches for
 # it at phrase openings (not every chord — variation still matters) so a
 # phrase can actually be recognized as "the same idea" when it returns.
 def phrase_start_chord?(chord_i, cfg)

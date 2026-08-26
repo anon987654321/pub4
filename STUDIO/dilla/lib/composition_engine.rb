@@ -482,21 +482,21 @@ module DillaComposition
 
     def evolve_weights(cfg)
       if dilla_pocket_style?(cfg)
-        {
+        return {
           plan: (ENV["EVOLVE_PLAN_W"] || 0.32).to_f,
           critique: (ENV["EVOLVE_CRITIQUE_W"] || 0.34).to_f,
           harmony: (ENV["EVOLVE_HARMONY_W"] || 0.08).to_f,
           groove: (ENV["EVOLVE_GROOVE_W"] || 0.22).to_f,
         }
-      else
-        hw = (ENV["EVOLVE_HARMONY_W"] || 0.12).to_f
-        {
-          plan: (50 - hw * 50) / 100.0,
-          critique: 0.44,
-          harmony: hw,
-          groove: (ENV["EVOLVE_GROOVE_W"] || 0.06).to_f,
-        }
       end
+
+      hw = (ENV["EVOLVE_HARMONY_W"] || 0.12).to_f
+      {
+        plan: (50 - hw * 50) / 100.0,
+        critique: 0.44,
+        harmony: hw,
+        groove: (ENV["EVOLVE_GROOVE_W"] || 0.06).to_f,
+      }
     end
 
     def run(session:, cfg:, n_bars:, generations: 5, render_fn:)

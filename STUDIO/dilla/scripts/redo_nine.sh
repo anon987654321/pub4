@@ -20,7 +20,7 @@
 # back is the melodic lead, one voice per track from a different instrument
 # family, which is the only element that told these tracks apart.
 
-set -u
+set -u # scan: intentional — no -e: one track failing must not abort the other eight
 # The engine, the samples and ../../.ruby-version are all anchored to the dilla
 # root, so run from there rather than from scripts/.
 cd "${0:A:h}/.."

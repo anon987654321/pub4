@@ -361,7 +361,7 @@ def dilla_render_drone!(src, dest, duration:)
   end
   mix = DRONE_LAYER_TEMPOS.each_index.map { |i| "[d#{i}]" }.join
   chain << "#{mix}amix=inputs=#{DRONE_LAYER_TEMPOS.size}:normalize=0[dm]"
-  # A drone that arrives and leaves is a bed; one that just starts is a mistake.
+  # A drone that arrives and leaves is a bed; one that starts is a mistake.
   fade = [duration * DRONE_FADE_FRACTION, DRONE_FADE_MAX_SEC].min.round(2)
   chain << "[dm]afade=t=in:st=0:d=#{fade}," \
            "afade=t=out:st=#{(duration - fade).round(2)}:d=#{fade}[dout]"
@@ -387,7 +387,7 @@ DILLA_TAPE_STOP_BEATS = (ENV["DILLA_TAPE_STOP_BEATS"] || 4).to_f.clamp(0.5, 32.0
 # falling rates. 14 is enough that the steps read as a slide, not a staircase.
 TAPE_STOP_STEPS = 14
 # Where the platter ends up, as a fraction of speed. Not 0: the last slice would
-# be stretched to nothing audible and simply pad the file with rumble.
+# be stretched to nothing audible and pad the file with rumble.
 TAPE_STOP_FINAL_RATE = 0.08
 # >1 makes the fall accelerate, which is how a platter with real inertia stops.
 TAPE_STOP_CURVE = 1.6

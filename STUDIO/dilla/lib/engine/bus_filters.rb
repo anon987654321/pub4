@@ -58,7 +58,7 @@ def bus_analog_filter(bus)
   # The first version drove by 1.44x into a threshold of 0.76 and measured as
   # doing nothing at all -- because an individual bus peaks far below the summed
   # mix, so a threshold set for master levels is never reached and the clipper
-  # never engages. A saturator that never saturates is just a gain stage with a
+  # never engages. A saturator that never saturates is a gain stage with a
   # misleading name. Threshold now scales DOWN with drive so the harder it is
   # pushed the sooner it bites, which is what the control is supposed to mean.
   # alimiter, not asoftclip. Tested on a clean 200 Hz sine, where any energy
@@ -106,7 +106,7 @@ end
 # the depth in his records, and it is a delay rather than a reverb doing it.
 #
 # On the pads only. Through the drums it smears the transients the kit exists
-# for, and on the bass it muddies the octave the Pultec was just cleaning.
+# for, and on the bass it muddies the octave the Pultec was cleaning.
 def harm_space_echo
   return nil unless ENV.fetch("SPACE_ECHO", "1") != "0"
 
@@ -273,7 +273,7 @@ end
 # by the time it clamps down, the stick hit has already passed through
 # untouched, and what it compresses is the body behind it. The attack therefore
 # stands further above its own tail than it did going in. That is "crisper", and
-# it costs no headroom, unlike simply turning the drums up.
+# it costs no headroom, unlike turning the drums up.
 #
 # The shelf above 7 kHz is the stick and the hat sizzle. Small: this is a lo-fi
 # engine and 3 dB of air is the difference between dull and modern, while 8 dB
@@ -320,7 +320,7 @@ def bridge_plan(n_bars, bar_sec, track, every_bars)
 
   rng = Random.new(stable_hash("bridge:#{track}"))
   # Boundaries are the downbeats between sections. The final bar has no section
-  # after it, so it gets no bridge -- a gesture into silence is just a fade.
+  # after it, so it gets no bridge -- a gesture into silence is a fade.
   (every_bars...n_bars).step(every_bars).map do |bar|
     { at: (bar * bar_sec).round(4), kind: BRIDGE_KINDS[rng.rand(BRIDGE_KINDS.length)] }
   end

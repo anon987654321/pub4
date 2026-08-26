@@ -150,12 +150,12 @@ def stream(bars_count = STREAM_BARS_COUNT)
       end
       begin
         stream_play_track!(bars_count)
-      rescue SystemExit
+      rescue SystemExit, Interrupt
         raise
       rescue Timeout::Error
         warn "stream: #{ENV['TRACK'] || track} timed out after #{stream_track_timeout_sec}s — skipping"
         sleep 1.0
-      rescue Exception => e
+      rescue Exception => e # scan: intentional — track supervisor; SystemExit and Interrupt re-raised above
         warn "stream: #{ENV['TRACK'] || track} failed (#{e.class}) — #{e.message}"
         sleep 1.0
       end
@@ -174,9 +174,9 @@ def bass(root_hz = 55.0)
   require_tools! "ffplay"
   # Warbling sub bass: fundamental + slow pitch LFO + low harmonic content.
   # Models J Dilla's low-end: not a clean sine, has movement and weight.
-  lfo_hz   = 0.18
-  lfo_amt  = root_hz * 0.04
-  expr_l   = "0.45*sin(2*PI*(#{root_hz}+#{lfo_amt}*sin(2*PI*#{lfo_hz}*t))*t)" \
+  lfo_hz = 0.18
+  lfo_amt = root_hz * 0.04
+  expr_l = "0.45*sin(2*PI*(#{root_hz}+#{lfo_amt}*sin(2*PI*#{lfo_hz}*t))*t)" \
              "+0.08*sin(2*PI*#{(root_hz * 2).round(2)}*t)" \
              "+0.03*sin(2*PI*#{(root_hz * 3).round(2)}*t)"
   filter = "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"

@@ -52,7 +52,7 @@ Ruby and is by a wide margin the slowest stage here. It is opt-in and reports
 its own cost.
 
 **Swell, tilt, dropout and mono-bass run after loudness normalisation.** Applied
-before it, loudnorm simply removes them — a 3 dB musical swell is exactly what a
+before it, loudnorm removes them — a 3 dB musical swell is exactly what a
 normaliser exists to flatten.
 
 **The harmonic guard runs before arrangement**, so if it mutes the tonal layers

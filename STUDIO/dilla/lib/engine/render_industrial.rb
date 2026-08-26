@@ -21,12 +21,12 @@ end
 
 # Arranged industrial techno: intro → groove → breakdown → build → main → peak → outro.
 def industrial_techno_schedule(n_bars, beat_p, roots = nil)
-  bar_p  = (beat_p * 4.0).round(6)
+  bar_p = (beat_p * 4.0).round(6)
   step_p = (bar_p / 16.0).round(6)
   events = Hash.new { |h, k| h[k] = [] }
 
   n_bars.times do |bar|
-    base    = bar * bar_p
+    base = bar * bar_p
     section = industrial_techno_section(bar)
 
     case section
@@ -77,7 +77,7 @@ def industrial_techno_schedule(n_bars, beat_p, roots = nil)
         # render_sample_bus_wav resamples ind_bass_e to it. Without one it
         # carries a sample key and alternates E against Bb on bar arithmetic --
         # a fixed tritone, in every key, forever. That alternation is this
-        # renderer's signature and is kept as the default; it is simply no
+        # renderer's signature and is kept as the default; it is no
         # longer the only thing available.
         note = if roots
                  roots[(bar / 2) % roots.length]
@@ -86,7 +86,7 @@ def industrial_techno_schedule(n_bars, beat_p, roots = nil)
                else
                  :ind_bass_e
                end
-        vel  = section == :peak ? 0.82 : 0.68
+        vel = section == :peak ? 0.82 : 0.68
         vel *= 0.5 if section == :intro
         events[:bass] << [base + step * step_p, vel, note]
       end
@@ -105,9 +105,9 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
   require_tools! "ffmpeg"
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
-  ibpm     = ENV.fetch("IBPM", INDUSTRIAL_TECHNO_BPM.to_s).to_f
-  beat_p   = (60.0 / ibpm).round(6)
-  n_bars   = bars_count || (ENV["BARS"] ? bars : INDUSTRIAL_TECHNO_BARS)
+  ibpm = ENV.fetch("IBPM", INDUSTRIAL_TECHNO_BPM.to_s).to_f
+  beat_p = (60.0 / ibpm).round(6)
+  n_bars = bars_count || (ENV["BARS"] ? bars : INDUSTRIAL_TECHNO_BARS)
   duration = (beat_p * 4.0 * n_bars).round(3)
   dotted_8th_ms = (3.0 * beat_p / 4.0 * 1000.0).round(1)
   # Same spine as techno: the progression's chord roots, folded into the register
@@ -116,7 +116,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
   ind_roots = techno_harmony_roots(8, register: (38.0..76.0))
   dmesg("industrial harmony: bass follows #{ind_roots.uniq.length} chord root(s)",
         unit: "ind0", parent: "dilla0") if ind_roots
-  events   = industrial_techno_schedule(n_bars, beat_p, ind_roots)
+  events = industrial_techno_schedule(n_bars, beat_p, ind_roots)
 
   kit = {
     ind_kick: load_mono_sample(drum_sample_path("ind_kick.wav")),
@@ -128,7 +128,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
     ind_stab: load_mono_sample(drum_sample_path("ind_stab.wav")),
   }
   stab_hits = events[:stab].map { |t, v| [t, v, :ind_stab] }
-  drum_tmp  = File.join(SCRATCH_DIR, "ind_drums.wav")
+  drum_tmp = File.join(SCRATCH_DIR, "ind_drums.wav")
   render_sample_bus_wav(
     drum_tmp,
     events.merge(stab: stab_hits),
@@ -162,7 +162,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
 
   # The bed, as channels rather than as two arrays kept in step by hand.
   #
-  # mix_in and mix_w used to be appended under the same `if`, which is the shape
+  # mix_in and mix_w are appended separately. Under one `if` they take the shape
   # that silently mis-assigns every weight the moment one append lands without
   # the other -- amix takes weights positionally, not by name.
   #

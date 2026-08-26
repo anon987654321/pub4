@@ -78,7 +78,7 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
   # The drum bus had no fade of any kind, so every render opened on a full-level
   # kit at t=0 while the harm bus waited until bar 2 to fade in
   # (harm_fade_start in the mix assembly). Direct feedback that "the beginning
-  # is very abrupt" points here: the first thing you hear is a cold hit at full
+  # is abrupt" points here: the first thing you hear is a cold hit at full
   # gain, with nothing under it. One bar of qsin is enough to read as a
   # downbeat arriving rather than a tape splice, and it stays out of the way of
   # the harm fade that follows it.
@@ -135,7 +135,7 @@ end
 HARD_DRUM_CLICK_HP = 1800
 
 # Measured on a finished take: the drum bus is 36 dB down side-to-mid, which is
-# very nearly a point source, and it is 9.5 dB louder than the harmonic bus.
+# nearly a point source, and it is 9.5 dB louder than the harmonic bus.
 # So the loudest thing in the mix is mono, and the stereo thing is underneath
 # it -- which is why the finished master reads as mono (-46 to -65 dB side/mid)
 # while the harmonic stem on its own is a healthy -7, and real records sit at

@@ -100,7 +100,7 @@ def main
   abort "warn: input dir missing #{options[:input_dir]}" unless options[:input_dir].directory?
 
   if options[:clean_output] && !options[:dry_run]
-    Dir.glob(options[:output_dir].join("*_portrait.jpg")).each { |path| FileUtils.rm_f(path) }
+    Dir.glob(options[:output_dir].join("*_portrait.jpg")).each { |path| FileUtils.rm_f(path) } # scan: intentional — portraits regenerated into this run's output dir
   end
   FileUtils.mkdir_p(options[:output_dir]) unless options[:dry_run]
 

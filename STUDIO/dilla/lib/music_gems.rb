@@ -103,7 +103,7 @@ module DillaMusicGems
     # reached the templates, and what it returned had the characteristic note
     # missing -- G7b9 came back as an unaltered G7 (no Ab at all) and CmMaj7
     # as a shape with neither the minor third nor the major seventh. A
-    # dominant whose flat nine is gone is just a dominant, which is the same
+    # dominant whose flat nine is gone is a dominant, which is the same
     # failure the sus and m7b5 entries above already document.
     return if s.match?(/7alt|7#11|7b9|m7b5|mmaj7|sus|aug|dim/i) && !s.match?(/\A[A-G][#b]?7sus4\z/i)
 

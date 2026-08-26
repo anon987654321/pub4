@@ -99,7 +99,7 @@ PAD_LAYER_STACKS = {
   # The CS-80 and the Solina are both divide-down string machines whose whole
   # character is a slow chorused swell with no transient at all -- put a defined
   # voice on top of them and the chord reads clearly while the bed underneath
-  # just widens.
+  # widens.
   #
   # Rhodes first and loudest for that reason. CS-80 next because it has the most
   # movement. Solina under it for width. The Juno wash last and quietest -- its

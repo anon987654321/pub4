@@ -163,7 +163,7 @@ def scratch_path(name)
   File.join(SCRATCH_DIR, name)
 rescue Errno::EACCES, Errno::EROFS => e
   # Requiring this file has a side effect: STREAM_LOCK_PATH calls scratch_path
-  # at load time, so simply `require`-ing dilla creates a directory. Anything
+  # at load time, so `require`-ing dilla creates a directory. Anything
   # running as a different user than the checkout's owner then dies on load
   # rather than on use. That is not hypothetical — brgen's CI runs as user
   # brgen, its radio_bergen_study_test requires this file, and the whole Rails
@@ -210,7 +210,7 @@ ENGINE_PARTS = DillaSources::ENGINE_PARTS
 ENGINE_PARTS.each { |part| require_relative "lib/engine/#{part}" }
 
 # A part sitting in lib/engine/ that ENGINE_PARTS does not name is never
-# required. Nothing failed when that happened -- the file simply did not exist
+# required. Nothing failed when that happened -- the file did not exist
 # as far as the running engine was concerned -- so say it at load.
 unless DillaSources.unlisted_parts.empty?
   warn "dilla: lib/engine/ holds #{DillaSources.unlisted_parts.length} file(s) no ENGINE_PARTS entry " \

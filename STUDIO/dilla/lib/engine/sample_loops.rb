@@ -41,7 +41,7 @@ TRACK_SAMPLE_LOOPS_BUILTIN = {
   # nothing and concluded there was no problem.
   #
   # Original note, still true of the boundary: the detector had picked
-  # 13.88s off an energy step and was simply wrong: it found where the spoken
+  # 13.88s off an energy step and was wrong: it found where the spoken
   # intro stopped, which is not the same thing as where the passage worth
   # sampling starts. The measurements side with the operator -- this section
   # reads G minor at a Krumhansl fit of 0.813, against 0.27 for the detector's
@@ -154,7 +154,7 @@ TRACK_SAMPLE_LOOPS_BUILTIN = {
 TRACK_SAMPLE_LOOPS = RadioChop.registered_loops.merge(TRACK_SAMPLE_LOOPS_BUILTIN).freeze
 
 # Hand-cut loops kept in the rack but deliberately kept OUT of the medley and
-# the stream rotation. Still selectable by name (TRACK=rauingar), just never
+# the stream rotation. Still selectable by name (TRACK=rauingar), never
 # chosen for you.
 #
 # This list exists so "no preset" can mean a decision rather than an oversight.
@@ -509,13 +509,13 @@ SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "1.8").to_f.clamp(1.0, 20.0
 SAMPLE_EXCITE_CHARACTER = (ENV["SAMPLE_EXCITE_CHARACTER"] || "even").to_s.downcase
 
 def sample_excite_shaper
-  if SAMPLE_EXCITE_CHARACTER.start_with?("odd")
-    n = Math.tanh(SAMPLE_EXCITE_DRIVE).round(6)
-    "aeval=exprs='tanh(#{SAMPLE_EXCITE_DRIVE}*val(0))/#{n}|tanh(#{SAMPLE_EXCITE_DRIVE}*val(1))/#{n}'"
-  else
+  unless SAMPLE_EXCITE_CHARACTER.start_with?("odd")
     k = (SAMPLE_EXCITE_DRIVE * 0.06).round(4)
-    "aeval=exprs='val(0)+#{k}*val(0)*abs(val(0))|val(1)+#{k}*val(1)*abs(val(1))'"
+    return "aeval=exprs='val(0)+#{k}*val(0)*abs(val(0))|val(1)+#{k}*val(1)*abs(val(1))'"
   end
+
+  n = Math.tanh(SAMPLE_EXCITE_DRIVE).round(6)
+  "aeval=exprs='tanh(#{SAMPLE_EXCITE_DRIVE}*val(0))/#{n}|tanh(#{SAMPLE_EXCITE_DRIVE}*val(1))/#{n}'"
 end
 
 def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)

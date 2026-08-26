@@ -122,7 +122,7 @@ end
 # Sentence lengths are preserved and the terminal punctuation is put back, so
 # the TTS still phrases it as speech with commas and full stops in believable
 # places. That contrast is the joke -- someone delivering total gibberish with
-# the cadence of a man who means it. Scrambling the punctuation too would just
+# the cadence of a man who means it. Scrambling the punctuation too would
 # sound like a broken parser.
 def scramble_words(text, rng)
   return text unless scramble_speech?
@@ -270,5 +270,5 @@ def speak_over_track!(mp3_path, duration, _bpm = 90.0)
   FileUtils.mv(tmp, mp3_path)
   mp3_path
 ensure
-  segments&.each { |s| FileUtils.rm_f(s[:path]) }
+  segments&.each { |s| FileUtils.rm_f(s[:path]) } # scan: intentional — removes only the temp files this method rendered
 end

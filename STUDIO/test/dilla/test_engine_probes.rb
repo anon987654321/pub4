@@ -14,7 +14,7 @@ class TestDilla < Minitest::Test
 
   # A hung probe (coltrane-gem hang — see README) used to pin a
   # dilla_test_probe process near 100% CPU forever with no output and no
-  # test failure — just a silently-stuck test run. Bounded here: on timeout
+  # test failure — a silently-stuck test run. Bounded here: on timeout
   # the child (and its process group, in case it spawned ffmpeg/fluidsynth)
   # gets killed and the test fails loudly instead of hanging the suite.
   # Every probe loads the whole engine in a fresh subprocess, and `rake test`
@@ -25,9 +25,9 @@ class TestDilla < Minitest::Test
   # overrides it for slower hosts.
   PROBE_TIMEOUT = Integer(ENV.fetch("DILLA_PROBE_TIMEOUT", "90"))
 
-  # There is no state restoration here, and there used to be. Removing it is the
-  # fix, not a regression, and the reason is worth keeping because the version
-  # that lived here looked strictly safer than having nothing.
+  # There is no state restoration here, deliberately. Its absence is the fix,
+  # not a regression, and the reason is worth keeping because a restoring version
+  # looks strictly safer than having nothing.
   #
   # Loading the engine writes dilla's session and learnings JSON, and those are
   # tracked files in a tree this suite does not own. Two separate hooks restored
@@ -197,7 +197,7 @@ class TestDilla < Minitest::Test
     assert_equal "86", result.fetch("pad_vol")
     assert_equal "0.12", result.fetch("crossfade")
     assert_equal "1", result.fetch("drum_rotate")
-    # VOCAL_CARVE used to be asserted here. It was set to "1" by two defaults
+    # VOCAL_CARVE is not asserted here. Two defaults tables set it to "1"
     # tables and read by exactly one method, DillaMaster.vocal_carve_placeholder?,
     # which nothing called -- so this assertion only ever proved the string had
     # been written into ENV, never that a single pad was carved under a vocal.
@@ -1129,7 +1129,7 @@ class TestDilla < Minitest::Test
   #
   # Measured on a 26-track demo before this was wired: the 8 parts that hashed
   # into a techno slot came out at -12.3 LUFS against -18.7 for the other 18.
-  # Nothing failed, nothing warned -- the level was simply never set, and the
+  # Nothing failed, nothing warned -- the level was never set, and the
   # only symptom was one track in four being twice as loud as its neighbours.
   #
   # render_hiphop is deliberately checked by delegation rather than by grep: its
@@ -1412,7 +1412,7 @@ class TestDilla < Minitest::Test
       lifted = beds.each_with_index.count { |slug, i| demo_techno_slot?(i, slug) }
       ENV.delete("TECHNO_HARMONY")
       ENV.delete("DEMO_TECHNO_SHARE")
-      # Non-sample tracks must still be eligible, or the guard is just an off
+      # Non-sample tracks must still be eligible, or the guard is an off
       # switch. Counted across the real catalogue rather than probed at one
       # slug: whether any single track hashes into a slot is luck, and a
       # control that narrow fails for reasons that have nothing to do with the
@@ -1942,11 +1942,11 @@ class TestDilla < Minitest::Test
             "-ac", "2", "-ar", "44100", "-t", "2", path
         path
       end
-      dead  = make.call("dead.wav", "anullsrc=r=44100:cl=stereo")
+      dead = make.call("dead.wav", "anullsrc=r=44100:cl=stereo")
       quiet = File.join(dir, "quiet.wav")
       sh! "ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "sine=f=220:d=2",
           "-ac", "2", "-ar", "44100", "-af", "volume=-45dB", quiet
-      loud  = make.call("loud.wav", "sine=f=220:d=2")
+      loud = make.call("loud.wav", "sine=f=220:d=2")
 
       puts JSON.generate(
         dead_flagged: demo_part_dead?(dead),
@@ -2113,7 +2113,7 @@ class TestDilla < Minitest::Test
         analog_chain: ENV["ANALOG_CHAIN"]
       )
     RUBY
-    # These used to be five unconditional asserts, and they made this test a coin
+    # These are not five unconditional asserts, which made this test a coin
     # flip — the single largest source of this suite's nondeterminism (identical
     # `rake test` runs alternated between 3 and 4 failures).
     #
@@ -2124,7 +2124,7 @@ class TestDilla < Minitest::Test
     # they always do was asserting the dice.
     #
     # What is actually contractual: both calls return a note array, and any state
-    # a note *claims* must really be present in ENV. That is the invariant worth
+    # a note *claims* must be present in ENV. That is the invariant worth
     # guarding — a note saying "voicing=x" while ENV carries nothing would be a
     # real bug, and this still catches it.
     #
@@ -2752,7 +2752,7 @@ class TestDilla < Minitest::Test
       next if gained.empty?
 
       # Not a failure. A renderer reaching MORE is the direction this wants; the
-      # baseline just has to be updated so the ratchet holds at the new level.
+      # baseline has to be updated so the ratchet holds at the new level.
       puts "NOTE   #{renderer} now also reaches #{gained.join(', ')} — raise GENRE_SPINE_BASELINE"
     end
   end
@@ -2884,7 +2884,7 @@ class TestDilla < Minitest::Test
       # the part being deleted.
       assert_equal 101, second.dig("recipe", "render_seed")
       assert_equal({ "BARS" => "2" }, second.dig("recipe", "pinned"))
-      parts.each { |part| FileUtils.rm_f([part, "#{part}.dilla"]) }
+      parts.each { |part| FileUtils.rm_f([part, "#{part}.dilla"]) } # scan: intentional — removes only the temp files this method rendered
       assert_equal 101, JSON.parse(File.read("#{joined}.dilla")).dig("assembly", "from", 1, "recipe", "render_seed"),
                    "the record still names what part 2 was made from after part 2 is gone"
     end

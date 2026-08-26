@@ -158,7 +158,7 @@ def dilla_velocity(base, bar_index, step_index, spread: 0.10)
   track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s.downcase.tr("-", "_").to_sym
   spread += DillaLofiMachine.humanize_ticks_for(track) * 0.012 if DillaLofiMachine.harmony_profile?(track)
   seed = (bar_index * 1_009) + (step_index * 313) + (base * 10_000).to_i
-  rng  = Random.new(seed)
+  rng = Random.new(seed)
   gaussian = Math.sqrt(-2.0 * Math.log([rng.rand, 1e-9].max)) * Math.cos(2.0 * Math::PI * rng.rand)
   [[base * (1.0 + gaussian * spread), 0.03].max, 1.0].min.round(3)
 end

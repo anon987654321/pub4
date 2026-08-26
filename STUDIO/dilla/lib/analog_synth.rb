@@ -284,7 +284,7 @@ module AnalogSynth
 
       amp = spec[:amp].at(t, held) * gain
       # A hair of stereo, from the drift rather than from a widener: the two
-      # channels are the same voice at very slightly different levels, which is
+      # channels are the same voice at slightly different levels, which is
       # what two channels of an analogue desk actually were.
       left[dest] += filtered * amp * 0.52
       right[dest] += filtered * amp * 0.48

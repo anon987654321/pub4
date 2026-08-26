@@ -65,7 +65,7 @@ DEMO_VOICING_ROTATION = %w[
 #
 # Deliberately reports rather than enforces. A few entries SHOULD be
 # unreachable -- a hard-trap kit has no place in this catalogue -- and a check
-# that fails the build on those would just get switched off. A number that moves
+# that fails the build on those would get switched off. A number that moves
 # in the wrong direction is the useful signal.
 def capability_surfaces
   {
@@ -140,7 +140,7 @@ def demo_all_order
   # rather than shuffled: a catalogue should be in a stable order so a track you
   # heard yesterday is in the same place today.
   #
-  # DEMO_CURATED_ONLY=1 restores the old 86 for anyone who wants just those.
+  # DEMO_CURATED_ONLY=1 restores the old 86 for anyone who wants those.
   return curated if ENV["DEMO_CURATED_ONLY"] == "1"
 
   # The sampled beds go in too, and they are the reason this matters.

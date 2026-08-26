@@ -256,9 +256,9 @@ def install_stems_from_audio(src, bpm: 90, label: nil)
   require_tools! "ffmpeg"
   FileUtils.mkdir_p(STEM_DIR)
   slices = {
-    STEM_SUB    => "lowpass=f=85,equalizer=f=48:t=o:w=0.8:g=4",
-    STEM_MIDS   => "highpass=f=260,lowpass=f=3400,equalizer=f=800:t=o:w=1:g=2",
-    STEM_HIGHS  => "highpass=f=2200,lowpass=f=6800",
+    STEM_SUB => "lowpass=f=85,equalizer=f=48:t=o:w=0.8:g=4",
+    STEM_MIDS => "highpass=f=260,lowpass=f=3400,equalizer=f=800:t=o:w=1:g=2",
+    STEM_HIGHS => "highpass=f=2200,lowpass=f=6800",
     STEM_CENTER => "pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1",
     File.join(STEM_DIR, "sides.mp3") => "pan=stereo|c0=0.5*c0-0.5*c1|c1=0.5*c1-0.5*c0",
     File.join(STEM_DIR, "bass.mp3") => "highpass=f=55,lowpass=f=220,equalizer=f=90:t=o:w=1:g=3",

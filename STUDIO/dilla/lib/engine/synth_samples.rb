@@ -208,7 +208,7 @@ def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, c
       fh = hz * (2 ** (voice[:cents] / 1200.0))
       s = amp * voice[:gain] * env * Math.sin(2 * Math::PI * fh * t)
       pan = voice[:pan]
-      left[idx]  += s * (0.5 - pan * 0.5)
+      left[idx] += s * (0.5 - pan * 0.5)
       right[idx] += s * (0.5 + pan * 0.5)
     end
   end

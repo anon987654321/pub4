@@ -78,7 +78,7 @@ chaining possible: each stage can change one thing while holding another.
 
 `PHOTOGRAPHY.md` §1: distance distorts, not focal length. A selfie is fixed at
 the distortion range by arm length. A generated image has no camera, so this is
-the one place the physical trade-off can simply be refused.
+the one place the physical trade-off can be refused.
 
 47. Prompt the **camera-to-subject distance in metres**, not the focal length. The distance is the cause.
 48. Ask for the geometry of 2.5–3.5 m with the framing and gaze of a selfie — never available together before.

@@ -65,7 +65,7 @@ def render_setlist(path, outdir = nil)
   abort("no such setlist: #{path}") unless File.file?(path)
   doc = JSON.parse(File.read(path))
   # Handed the other .dilla, say which one it is. Falling through to "no takes"
-  # would blame the file for being empty when it is simply a different format
+  # would blame the file for being empty when it is a different format
   # with its own command.
   if doc["schema"].to_s != "setlist" && doc.key?("render_seed") && doc.key?("command")
     abort("#{File.basename(path)} is a render manifest, not a setlist — use: ruby dilla.rb replay #{path}")

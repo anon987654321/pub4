@@ -37,7 +37,7 @@ module DillaGroove
     [0, 6, 10],
     [0, 8],
   ].freeze
-  # Neo-soul / D'Angelo live-pocket: often just downbeat + one syncopation.
+  # Neo-soul / D'Angelo live-pocket: often downbeat + one syncopation.
   # Expanded set rotates across bars so stream/one-shots don't feel looped.
   POCKET_KICK_PHRASES_NEOSOUL = [
     [0, 10],
@@ -359,9 +359,9 @@ module DillaGroove
   # reachable by the tool this feel is modeled on.
   # Which way each role leans, in whole ticks. Positive drags, negative pushes.
   #
-  # The offsets used to be inline and one-directional: snare -3/-4, everything
-  # else positive. That is a real feel — a pushed snare against a dragged kit,
-  # which the code called "laid-back boom-bap tension" — but it was the only one
+  # The offsets are neither inline nor one-directional. Snare -3/-4 with
+  # everything else positive is a real feel — a pushed snare against a dragged
+  # kit, which the code calls "laid-back boom-bap tension" — but it is the only one
   # reachable, and SNARE_EARLY=0 could only switch it off, never reverse it.
   #
   # It is also the inverse of the lurch most people mean by "Dilla". On Donuts
@@ -408,7 +408,7 @@ module DillaGroove
   # the Dilla microtiming unless a knob was set, so every render anyone made
   # without reading that document came out boom-bap — snare four ticks EARLY
   # where the whole point is four ticks late. The table existed, was correct,
-  # and was reached by nobody.
+  # and nobody reached it.
   #
   # GROOVE_FEEL still takes boom_bap and camel; what changed is which one you
   # get for free.

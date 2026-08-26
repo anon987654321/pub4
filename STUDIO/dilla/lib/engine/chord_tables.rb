@@ -152,7 +152,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     chords: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
     sources: ["Ethan Hein Get Dis Money (E9sus4/D naming of D/E)"],
   },
-  # Slum Village — Climax (ChordU; was previously wrong-key Fm loop).
+  # Slum Village — Climax (ChordU, in key; not the Fm loop).
   e_major_third_rise: {
     artist: "Slum Village", title: "Climax", producer: "J Dilla",
     chords: %w[Emaj7 G#m7 C#m7 E7climax],

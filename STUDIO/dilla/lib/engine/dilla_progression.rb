@@ -116,8 +116,8 @@ def voice_led_pad_progression(pads)
   pads = thin_passing_extensions(pads)
   style = (ENV["VOICING"] || "rootless").to_s.downcase.tr("-", "_").to_sym
   style = :rootless unless DillaHarmony::VOICING_STYLES.include?(style)
-  # `style` used to be computed and then consulted only for `!= :cluster`, so
-  # VOICING and the per-track VOICING_ROTATION selected nothing: every render got
+  # `style` has to reach more than the `!= :cluster` test. Computed and consulted
+  # only there, VOICING and the per-track VOICING_ROTATION select nothing: every render gets
   # the default spread shape on chord one and raw template stacks after it. The
   # style has to reach the voicing engine for the rotation to be audible.
   led = DillaHarmony.voice_lead_chords(pads, rootless: style != :cluster, voicing: style)

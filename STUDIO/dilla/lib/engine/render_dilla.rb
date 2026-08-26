@@ -200,8 +200,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   cache_self_sample!(destination)
   # Set the previous take aside instead of deleting it.
   #
-  # This line used to be FileUtils.rm_f(destination), which destroyed the old
-  # render before a single note of the new one existed. Every path out of this
+  # This line must not be FileUtils.rm_f(destination), which destroys the old
+  # render before a single note of the new one exists. Every path out of this
   # method that is not "wrote #{destination}" therefore lost the take: a raise,
   # a timeout, a SIGTERM, ffmpeg refusing a filter, the operator pressing ^C
   # thirty seconds in. The window is not small — a 48-bar render is minutes long
@@ -219,9 +219,9 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # source, not a backup, and it is the only thing that has ever survived this.
   previous_take = "#{destination}.prev" if File.file?(destination)
   FileUtils.mv(destination, previous_take) if previous_take
-  cfg      = dilla_resolve_config
-  cfg      = DillaSeeds.apply_to_cfg!(cfg)
-  n_bars   = bars_count || bars
+  cfg = dilla_resolve_config
+  cfg = DillaSeeds.apply_to_cfg!(cfg)
+  n_bars = bars_count || bars
   DillaRhythm.configure!(n_bars:, bpm: cfg[:bpm])
   @render_pad_attack_sec = (cfg[:sonic]&.dig("synth", "pad_attack_ms") || 72).to_f / 1000.0
   rel_ms = (cfg[:sonic]&.dig("synth", "pad_release_ms") || 1400).to_f
@@ -236,7 +236,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     cfg = cfg.merge(swing: dna.empty? ? @composition_session.groove_profile[:swing].to_f : dna.to_f)
   end
   pick_synth_patches!(cfg, bar: n_bars / 2, n_bars:)
-  beat_p   = 60.0 / cfg[:bpm]
+  beat_p = 60.0 / cfg[:bpm]
   duration = (beat_p * 4.0 * n_bars).round(3)
   # Buses are built far below this point and need the length to size a command
   # file; the alternative is threading it through four call sites that do not
@@ -324,7 +324,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     # `stable_hash(chord[:name].to_s)` on a nil chord — because dilla_schedule
     # still walks the progression for timing whether or not anything voices it.
     # The guard below does `pads = []` too, so it carries the same crash; it has
-    # simply never fired, because it only triggers on a loop whose key cannot be
+    # never fired, because it only triggers on a loop whose key cannot be
     # read and every loop in the crate reads cleanly. A muted layer and an absent
     # progression are not the same thing: the chords still shape the schedule,
     # nothing renders them.
@@ -466,7 +466,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     bass_pads = voice_lead_chords(generate_progression(root_hz: pads.first[:hz].min * 0.5, mode: :minor,
                                                          length: pads.length))
   end
-  events   = dilla_schedule(
+  events = dilla_schedule(
     n_bars, beat_p, pads,
     chord_bars: cfg[:chord_bars], phrase_bars: cfg[:phrase_bars],
     swing: cfg[:swing], feel: cfg[:feel], timing: cfg[:timing], quintuplet: cfg[:quintuplet],
@@ -525,7 +525,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars) if ENV.fetch("ECLECTIC_PERC", "0") == "1"
   end
 
-  drum_tmp     = dilla_render_tmp("drums")
+  drum_tmp = dilla_render_tmp("drums")
   harmonic_tmp = dilla_render_tmp("harmonic")
   render_sample_bus_wav(drum_tmp, events, duration, kit, drum_bus_mapping)
   drum_field_layer!(drum_tmp, duration:)
@@ -568,7 +568,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   end
 
   chop_gate = gate_expr(events[:chop], hold: 0.32, scale: 0.95)
-  pad_gate  = pad_gate_expr(events[:pad])
+  pad_gate = pad_gate_expr(events[:pad])
   stems = dilla_stem_paths
   stem_tempo = (cfg[:bpm] / 90.0).round(4)
   pan_hz = (cfg[:bpm] / 15.0).round(3)
@@ -765,7 +765,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   if bass_own_bus && bass_bus_idx
     filt << apply_section_envelope(build_bass_bus_filter(bass_bus_idx, duration), :bass, n_bars, beat_p * 4.0)
     bass_label = "[bassbus]"
-    # The kick and the bass were both boosted in the same octave and simply
+    # The kick and the bass were both boosted in the same octave and
     # summed. The bass bus lifts 70 Hz by 3 dB, which is where a kick's
     # fundamental sits, and it entered the mix at 1.15 against the kit's 0.88 --
     # the loudest thing in the track, sitting exactly on top of the one sound
@@ -1065,7 +1065,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     FileUtils.rm_f(harmonic_tmp) unless use_stem_harmony
   end
   stem_note = use_stem_harmony ? stems.keys.join("+") : "synth-harmony+melody"
-  mix_note  = sonitex_label
+  mix_note = sonitex_label
   lead_arp_style = lead_arp_cfg_for(@render_lead_patch)&.dig(:style)
   # Only name patches that actually sounded.
   #

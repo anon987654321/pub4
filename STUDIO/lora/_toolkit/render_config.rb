@@ -99,7 +99,7 @@ def apply_device!(process)
   end
 end
 
-# Every LORA_* knob that used to be declared and never read.
+# Every LORA_* knob declared and never read.
 #
 # LORA_LR and LORA_RESOLUTIONS only suppressed a device default — the branches
 # above test ENV.key? to hold off their own figure, and then nothing set the

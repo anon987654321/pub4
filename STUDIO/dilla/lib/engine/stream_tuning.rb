@@ -223,14 +223,10 @@ def stream_creative_freedom_enabled?
 end
 
 def play_render_attempts
-  if quality_gate_enabled?
-    [STREAM_MAX_RETRIES, (ENV["RENDER_RETRIES"] || "2").to_i].max + 1
-  elsif stream_iterate_enabled?
-    retries = [(ENV["RENDER_RETRIES"] || "1").to_i, 1].max
-    retries + 1
-  else
-    1
-  end
+  return [STREAM_MAX_RETRIES, (ENV["RENDER_RETRIES"] || "2").to_i].max + 1 if quality_gate_enabled?
+  return 1 unless stream_iterate_enabled?
+
+  [(ENV["RENDER_RETRIES"] || "1").to_i, 1].max + 1
 end
 
 def stream_iterate_acceptable?(path)

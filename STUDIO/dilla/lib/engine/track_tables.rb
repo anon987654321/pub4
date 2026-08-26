@@ -153,7 +153,7 @@ CURATED_PROGRESSIONS = %i[
 # still_water_pedal and two_moons_pedal are deliberately NOT curated: the
 # comment above says this list skips heavy pedal and bitonal writing, and both
 # of them are exactly that. They stay reachable by name, which is the point of
-# writing them -- they are just not what the rotation should reach for blind.
+# writing them -- they are not what the rotation should reach for blind.
 
 FLYLO_TRACKS = %i[
   chromatic_mediant chromatic_mediant_drift sus_add9_ballad
@@ -338,7 +338,7 @@ end end },
     call + call.reverse.map { |d| (d + (n / 2)) % n }
   },
   # A short cell repeated, with one note of it advancing each time round. The
-  # figure stays recognisable while never being quite the same twice -- prayer
+  # figure stays recognisable while never being the same twice -- prayer
   # beads, where the count changes and the motion does not.
   rosary: lambda { |n|
     (0...n).flat_map { |pass| [0, (1 + pass) % n, (2 + pass) % n] }

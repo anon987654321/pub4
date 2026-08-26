@@ -297,7 +297,7 @@ module Outboard
   # and makes it sound like a record.
   #
   # The famous setting is all four ratio buttons pushed in at once, which the
-  # unit was never designed to allow: it produces a very high ratio with a
+  # unit was never designed to allow: it produces a high ratio with a
   # distorted, lagging knee. That is what the aggressive figures below are.
   def fet1176(threshold: -16, ratio: 12.0)
     "acompressor=threshold=#{threshold}dB:ratio=#{ratio}:attack=0.4:release=90:" \
@@ -330,7 +330,7 @@ module Outboard
   # so each repeat is a generation further from the original:
   #
   #   DARKER. The tape loses top end every time round. By the fourth repeat
-  #   there is very little above a few kilohertz, which is why a Space Echo tail
+  #   there is little above a few kilohertz, which is why a Space Echo tail
   #   fades into the track instead of cluttering it. A digital delay repeating a
   #   bright sound stays bright and quickly becomes a mess.
   #
@@ -527,7 +527,7 @@ module Outboard
   #                   same frequencies. That is the "phasy" character, and it is
   #                   real phase rather than an effect pretending to be one.
   #
-  #   MOVEMENT.       A very slow phaser, 0.1 Hz -- one sweep every ten seconds.
+  #   MOVEMENT.       A slow phaser, 0.1 Hz -- one sweep every ten seconds.
   #                   Not an audible whoosh; a bus that will not sit perfectly
   #                   still, which is the difference between analog and a plugin
   #                   bypassed.
@@ -584,7 +584,7 @@ module Outboard
   # three rows. Same amount of distortion, progressively less of it odd.
   #
   # That is the whole effect, and it is worth stating in musical terms because
-  # the numbers are otherwise just numbers: the second harmonic is an octave, so
+  # the numbers are otherwise numbers: the second harmonic is an octave, so
   # the ear files it as tone. The third is a twelfth -- a fifth, in the next
   # octave up -- and it is what "harsh" means on a mix bus. Driving one stage
   # hard buys both. Driving three gently buys the octave and leaves the fifth

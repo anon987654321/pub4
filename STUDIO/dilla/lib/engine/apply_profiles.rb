@@ -17,7 +17,7 @@ require_relative "../frozen_state"
 #
 # What this is NOT: a renderer switch. GENRE=techno colours a render and turns
 # on the harmonic path; it does not route to render_hate_techno. Routing on a
-# genre name would rebuild the fork this whole direction exists to remove, just
+# genre name would rebuild the fork this whole direction exists to remove,
 # through a new door -- `dilla.rb hate` is still how you ask for that engine,
 # and it now shares the progression with everything else.
 #
@@ -105,7 +105,7 @@ def promote_progression_hook!(track, beauty, report: nil, path: nil)
   distinct = chords ? chords.map { |c| c[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "") }.uniq.length : 0
   return unless distinct >= 6
   FileUtils.mkdir_p(DillaComposition::PROJECT_DIR)
-  data = begin
+  promoted = begin
     File.exist?(PROMOTED_PROFILES_PATH) ? JSON.parse(File.read(PROMOTED_PROFILES_PATH)) : {}
   rescue JSON::ParserError => e
     # A corrupt file used to hit the blanket `rescue StandardError` below and
@@ -116,9 +116,9 @@ def promote_progression_hook!(track, beauty, report: nil, path: nil)
     {}
   end
   key = track.to_s.downcase.tr("-", "_")
-  data[key] = (data[key] || 0) + 1
-  data["_last"] = { "track" => key, "beauty" => beauty.round(1), "at" => Time.now.utc.iso8601 }
-  DillaFrozen.write_json(PROMOTED_PROFILES_PATH, data)
+  promoted[key] = (promoted[key] || 0) + 1
+  promoted["_last"] = { "track" => key, "beauty" => beauty.round(1), "at" => Time.now.utc.iso8601 }
+  DillaFrozen.write_json(PROMOTED_PROFILES_PATH, promoted)
   remove_instance_variable(:@radio_bergen_learnings) if instance_variable_defined?(:@radio_bergen_learnings)
 rescue StandardError => e
   warn "progression promotion failed: #{e.message}"
@@ -246,7 +246,7 @@ TRACK_LAYER_PROFILES = {
     # SPEAK stays off — the source set has no speech in it. RAP_VOCAL does not:
     # the point of this track now is gunnhild over the sampled loop, and a
     # profile default that silently discarded an explicit RAP_VOCAL on the
-    # command line made the render look like it had simply ignored the request.
+    # command line made the render look like it had ignored the request.
     "SPEAK" => "0",
     # The loop carries the chords; the synth pad only shades under it.
     "PAD_VOL" => "34", "HARM_MIX_WEIGHT" => "0.55",

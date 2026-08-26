@@ -125,9 +125,9 @@ def synth_tabla_sample
   out
 end
 
-# Every voice below used to be one exp(-t*k) shape at a different rate —
+# No voice below is one exp(-t*k) shape at a different rate. That shape is
 # correct that a rim, a woodblock and an agogo bell decay at different
-# SPEEDS, wrong that they decay the same SHAPE. Real struck objects
+# SPEEDS, and wrong that they decay the same SHAPE. Real struck objects
 # don't share one physical behavior; each gets the envelope its actual
 # physical characteristics: a woodblock has ~zero ring (transient click,
 # then silence), a tambourine's metal jingles shimmer well after the

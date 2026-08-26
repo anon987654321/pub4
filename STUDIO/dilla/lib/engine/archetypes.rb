@@ -93,7 +93,7 @@ end
 # bar's own kick pattern (the "subject") a short beat later, rather than
 # drawing from its own independent pattern pool. Exposition/coda are left
 # alone -- a fugue states its subject plainly first and lets it go quiet at
-# the end; answering everywhere would just be a denser kit, not a dialogue.
+# the end; answering everywhere would be a denser kit, not a dialogue.
 FUGUE_GHOST_ANSWER_STEPS = 16
 FUGUE_GHOST_ANSWER_OFFSET = 3 # dotted-eighth-ish answer, not a flat echo
 

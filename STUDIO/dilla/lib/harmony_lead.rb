@@ -135,13 +135,13 @@ module DillaHarmonyLead
   # 4th, where the 11th is consonant and is half of what makes m11 voicings
   # sound the way they do. Chords that ask for the bright colour (lyd, maj9,
   # maj13) get the #11 instead of nothing.
-  DORIAN      = [0, 2, 3, 5, 7, 9, 10].freeze
-  AEOLIAN     = [0, 2, 3, 5, 7, 8, 10].freeze
-  LOCRIAN     = [0, 2, 3, 5, 6, 8, 10].freeze
-  PHRYGIAN    = [0, 1, 3, 5, 7, 8, 10].freeze
-  LYDIAN      = [0, 2, 4, 6, 7, 9, 11].freeze
-  IONIAN_NO4  = [0, 2, 4, 7, 9, 11].freeze
-  MIXO_NO4    = [0, 2, 4, 7, 9, 10].freeze
+  DORIAN = [0, 2, 3, 5, 7, 9, 10].freeze
+  AEOLIAN = [0, 2, 3, 5, 7, 8, 10].freeze
+  LOCRIAN = [0, 2, 3, 5, 6, 8, 10].freeze
+  PHRYGIAN = [0, 1, 3, 5, 7, 8, 10].freeze
+  LYDIAN = [0, 2, 4, 6, 7, 9, 11].freeze
+  IONIAN_NO4 = [0, 2, 4, 7, 9, 11].freeze
+  MIXO_NO4 = [0, 2, 4, 7, 9, 10].freeze
 
   def chord_quality(name)
     # Slash bass says nothing about the scale -- Bbm/E is still minor -- and the

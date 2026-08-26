@@ -121,7 +121,7 @@ end
 # --- keeping a sampled loop's harmony -----------------------------------------
 #
 # A sampled loop brings its own key with it. If the engine generates pads in a
-# different one, the two are simply out of tune with each other and no amount of
+# different one, the two are out of tune with each other and no amount of
 # mixing fixes that. This measures what key the loop is in and moves the
 # generated harmony onto it.
 #
@@ -253,9 +253,9 @@ end
 # Moves every chord by the interval between the pads' own root and the loop's,
 # choosing the shorter direction so the pads do not jump an octave to get there.
 #
-# Names move with the frequencies. Transposing :hz alone left the labels saying
-# what the harmony USED to be, and since beauty_report scores off c[:name] the
-# reported score described a progression that was never rendered.
+# Names move with the frequencies. Transposing :hz alone leaves the labels
+# describing the harmony before the transpose, and since beauty_report scores
+# off c[:name] the reported score then describes a progression nobody rendered.
 def transpose_pads_to(pads, target_pc)
   return pads if pads.empty?
 
@@ -274,7 +274,7 @@ end
 # Reorders chords so their top voice traces one arc -- up to a peak, then down
 # -- instead of wandering. The melody a listener follows is the top note of each
 # chord, so ordering by that is ordering the tune. The first chord stays put:
-# it is the harmonic home, and an arc that does not start at home is just a
+# it is the harmonic home, and an arc that does not start at home is a
 # different wander.
 # Rebuilds every chord as root, fifth and ninth -- no third.
 #
@@ -370,7 +370,7 @@ end
 
 # Aydin Esen's bitonal color: layer a second triad a tritone or major
 # 2nd above the primary chord's root (a real polychord stack) rather than
-# just extending the primary chord further up the tertian stack.
+# extending the primary chord further up the tertian stack.
 POLYTONAL_OFFSETS = [6, 2, 10].freeze
 
 def generate_polytonal_progression(root_hz: 130.81, mode: :minor, length: 8, seed: nil)

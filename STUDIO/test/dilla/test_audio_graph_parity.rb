@@ -22,11 +22,11 @@ class TestAudioGraphParity < Minitest::Test
   # Verbatim from render_dilla, with the interpolations resolved.
   PADBED = "[3:a]aformat=channel_layouts=stereo,atempo=#{TEMPO},atrim=0:#{DURATION},asetpts=PTS-STARTPTS," \
            "lowpass=f=3400,volume='#{PAD_GATE}':eval=frame,aphaser=speed=0.11:decay=0.4[padbed]".freeze
-  CHOPS  = "[4:a]aformat=channel_layouts=stereo,atempo=#{TEMPO},atrim=0:#{DURATION},asetpts=PTS-STARTPTS," \
+  CHOPS = "[4:a]aformat=channel_layouts=stereo,atempo=#{TEMPO},atrim=0:#{DURATION},asetpts=PTS-STARTPTS," \
            "highpass=f=400,volume='#{CHOP_GATE}':eval=frame,aecho=0.35:0.4:90:0.25[chops]".freeze
   SUBBED = "[5:a]aformat=channel_layouts=stereo,atempo=#{TEMPO},atrim=0:#{DURATION},asetpts=PTS-STARTPTS," \
            "lowpass=f=180,equalizer=f=72:t=o:w=1:g=4,volume=0.68[subbed]".freeze
-  VINYL  = "[6:a]highpass=f=120,lowpass=f=6000,volume=0.045[vinyl]".freeze
+  VINYL = "[6:a]highpass=f=120,lowpass=f=6000,volume=0.045[vinyl]".freeze
 
   # The chain each stem carries before it reaches the sum, split from its label.
   def stem_chain(body)

@@ -27,7 +27,7 @@ module DillaSources
   # they were written in, which is load-bearing: constants in these files are
   # computed at load time from ones above them, and reordering silently changes
   # their values. This list moved here from dilla.rb; dilla.rb still drives the
-  # requires, it just no longer owns the list.
+  # requires, it no longer owns the list.
   # audio_graph leads because it depends on nothing: it is a graph builder that
   # returns a string, so any part below it may hand it channels. %w[] takes no
   # comments, which is why this one is here and not beside the entry.

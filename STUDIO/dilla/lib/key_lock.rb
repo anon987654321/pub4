@@ -113,7 +113,7 @@ module KeyLock
   # stopped following the harmony they were playing over — audible as a lead in
   # a different key from the chords underneath it.
   #
-  # Transposing the frequencies is also simply more honest than dropping them:
+  # Transposing the frequencies is also more honest than dropping them:
   # a semitone shift is a ratio, the array is already in Hz, and re-deriving from
   # a symbol loses any voicing the source data encoded.
   def transpose_hz(list, semitones)

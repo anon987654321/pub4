@@ -465,7 +465,7 @@ end
 # stream, so there is no filtergraph label to prefix and its section gain has to
 # be applied to the notes. Events are [time, velocity, chord, sustain]; a gain
 # of zero drops the note rather than playing it at zero, because a MIDI note-on
-# at velocity 0 is a note-off in some synths and a very quiet note in others.
+# at velocity 0 is a note-off in some synths and a quiet note in others.
 #
 # Off by default under SECTION_LAYERS=1, which is what every existing render was
 # made with. SECTION_LAYERS=full turns on the layers the table has always

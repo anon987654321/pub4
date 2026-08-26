@@ -270,7 +270,7 @@ def demo_all(bars_count = 12, destination = nil)
     #
     # That was tried and reverted. An apply_track_layer_profile!(slug,
     # force: true) here does work -- production complexity drops 4.04 -> 3.81 on
-    # kembara_rindu and 3.92 -> 3.67 on lo_borges, so the layers really do come
+    # kembara_rindu and 3.92 -> 3.67 on lo_borges, so the layers do come
     # off -- but content enjoyment goes DOWN by 0.09 on both tracks, three seeds
     # each (audiobox-aesthetics; control sd 0.01-0.18). Neither delta clears its
     # own error bar alone, but they agree in sign and to two decimals, and
@@ -373,7 +373,7 @@ def demo_all(bars_count = 12, destination = nil)
             # `-c copy`: the concat demuxer probes only the FIRST input and
             # applies that codec to all of them, so one mp3 in slot 1 makes
             # ffmpeg copy mp3 packets into a WAV container and exit 0. Nothing
-            # raises, so the re-encode rescue below never fires; the file simply
+            # raises, so the re-encode rescue below never fires; the file
             # does not open (afplay: "AudioFileOpen failed ('dta?')") and
             # ffprobe reports a duration read from a header that does not
             # describe the data -- 14.2 minutes for 5.3 minutes of audio.

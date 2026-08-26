@@ -39,7 +39,7 @@ module SpectralAudit
 
   # ffmpeg writes its filter reports to stderr, so both streams matter. Reading
   # stdout alone is why the first run of this returned -120dB for every band:
-  # the numbers were there, just on the other stream.
+  # the numbers were there, on the other stream.
   def sh(*cmd)
     out, err, _status = Open3.capture3(*cmd)
     [out, err].join("\n")

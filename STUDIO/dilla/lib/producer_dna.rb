@@ -69,7 +69,7 @@ module DillaLofiMachine
     "9sus4" => [0, 5, 7, 10, 2],
     "9sus" => [0, 5, 7, 10, 2],
     # Symmetrical shapes — no template, no suffix, so every one of them raised
-    # ArgumentError and was swallowed by progression_for's rescue. That is how
+    # ArgumentError, which progression_for's rescue swallowed. That is how
     # chromatic_descent_sixteen lost the Abdim out of its D-C#-C-B-Bb-A-Ab-G
     # bass walk: the walk is the whole progression, and it was rendering with a
     # hole where the seventh step goes.
@@ -353,7 +353,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # in swing 66 against dilla_time, where MICROTIMING_MS pulls the snare early
     # and pushes the hats late while the kick sits near the grid. Three voices
     # disagreeing by milliseconds, which is the actual mechanism, rather than
-    # three voices disagreeing about which 16th they are on, which is just a
+    # three voices disagreeing about which 16th they are on, which is a
     # different pattern.
     dilla_lopsided: {
       swing: 56, humanize: 4, bpm: 90, mode: :dilla_time,
@@ -537,7 +537,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
   # nothing clever. A deliberate counterweight to the rest of this table, which
   # is otherwise entirely devoted to making drums lean, drift and misbehave.
   # Sometimes the sample is the idea and the kit only has to keep time under it,
-  # and there was nothing here that would simply do that.
+  # and there was nothing here that would do that.
   #
   # humanize 1 rather than 0: dead-flat machine timing is its own effect, and a
   # single tick of movement is the difference between simple and sterile.
@@ -1269,7 +1269,7 @@ euclid_sparse: {
     # slum_village_players_documented (91 BPM, 56% swing) and
     # flylo_camel_documented (86, 54) both rendered at the generic kit's 95 with
     # the kit's swing. The transcriptions were present and loading correctly the
-    # whole time; they were just being played at someone else's tempo.
+    # whole time; they were being played at someone else's tempo.
     preset[:swing] = drum[:swing] if drum && !ENV["SWING"] && !entry[:swing]
     preset[:bpm] = drum[:bpm] if drum && !ENV["BPM"] && !entry[:bpm]
     preset[:quintuplet] = drum[:mode] == :dilla_time if drum && !ENV["QUINTUPLET"]
@@ -1333,7 +1333,7 @@ euclid_sparse: {
     # No third by definition — the 4th, the b7 and the 9 are what must survive.
     "9sus4" => [0, 5, 10, 2], "9sus" => [0, 5, 10, 2],
     # A symmetrical chord is nothing but its symmetry: a diminished triad with
-    # a natural fifth in it, or an augmented one, is just a minor or major
+    # a natural fifth in it, or an augmented one, is a minor or major
     # triad wearing the wrong name.
     "dim" => [0, 3, 6], "dim7" => [0, 3, 6, 9], "aug" => [0, 4, 8],
     "maj7#5" => [0, 4, 8, 11],
@@ -1441,8 +1441,8 @@ euclid_sparse: {
   # the fifth, then the lowest inner voice. The bass and the top voice always
   # survive.
   #
-  # root_pc has to be told, not guessed. It used to be read off the lowest note,
-  # which is only the root in root position -- and the voicings that reach here
+  # root_pc has to be told, not guessed. Read off the lowest note it is only
+  # the root in root position -- and the voicings that reach here
   # are routinely inverted. Abmaj9 arrives as C Eb G Ab Bb, so "lowest note" said
   # C, "the fifth above C" said G, and G is Ab's MAJOR SEVENTH: Abmaj9/F and
   # Ebmaj9/C were each losing the one interval that separates a maj9 from a 6/9,

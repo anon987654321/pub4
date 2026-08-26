@@ -3,7 +3,7 @@ set -eu
 
 # One toolkit, any subject.
 #
-# This used to be copied per subject: johann/ai_toolkit was ~980 lines identical
+# One copy, not one per subject: johann/ai_toolkit was ~980 lines identical
 # to ragnhild/ai_toolkit apart from the name, verified by diffing the two with the
 # subject token normalised -- every file matched exactly. The cost was not the
 # disk, it was that a fix had to be made twice: moving lora/ to STUDIO/lora/ broke

@@ -48,7 +48,7 @@ module DillaKnobs
       found
     end
 
-    # The sites disagree about what this is. Not an error -- SAMPLE_LOOP really
+    # The sites disagree about what this is. Not an error -- SAMPLE_LOOP
     # is a path with a "0" off-switch -- but worth being able to ask about.
     def mixed? = (types.uniq - [:string]).length > 1
 
@@ -242,7 +242,7 @@ module DillaKnobs
       knobs.freeze
     end
 
-    # A read is very often `raw = ENV["X"].to_s` with the coercion that says what
+    # A read is often `raw = ENV["X"].to_s` with the coercion that says what
     # X IS three lines further down. Reading only the assignment line called
     # SAMPLE_LOOP a flag -- because grade_analog.rb has `ENV["SAMPLE_LOOP"].to_s
     # == "0"` -- when SAMPLE_LOOP is the one knob in this engine whose documented
@@ -299,7 +299,7 @@ module DillaKnobs
     # From what the code DOES with the value, at the read site and for a few
     # lines after it if the read was assigned to a variable.
     #
-    # Ordered by how much each piece of evidence claims. A path knob very often
+    # Ordered by how much each piece of evidence claims. A path knob often
     # ALSO has an `== "0"` off-switch, and reading that as "this is a flag" is
     # the SAMPLE_LOOP mistake; a path is the stronger statement, so it wins. A
     # knob nothing informative is done with stays :string, which is the honest

@@ -29,9 +29,9 @@ def system_with_timeout(argv, timeout_sec:, verbose: false)
   rescue StandardError
     # spawn raises before anything is returned when the binary is missing
     # (Errno::ENOENT), so err_path never reaches sh!, which is the only thing
-    # that removes it. This used to be handled by an `ensure` at the foot of
-    # the method containing a comment and no code, so every failed spawn left
-    # a dilla_sh_*.err file in the temp directory for good.
+    # that removes it. An `ensure` at the foot of the method holding a comment
+    # and no code removes nothing, and leaves every failed spawn's
+    # dilla_sh_*.err file in the temp directory for good.
     FileUtils.rm_f(err_path)
     raise
   ensure

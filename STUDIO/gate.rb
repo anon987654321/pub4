@@ -16,7 +16,7 @@ module Deploy
   # silently broken dilla and postpro before. The only thing standing between
   # that and a broken engine was `dilla debug`, which nobody runs after a fix
   # and which covers dilla alone: the other 13 Ruby files in STUDIO — postpro,
-  # repligen, the nine lora toolkit scripts — were checked by nothing at all.
+  # repligen, the nine lora toolkit scripts — had nothing checking them at all.
   #
   # Three checks, in increasing order of what they can catch:
   #

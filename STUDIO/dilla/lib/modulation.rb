@@ -513,7 +513,7 @@ module DillaModulation
       # times. One inverted route is the difference between that and counterpoint,
       # and it is the single cheapest thing a modular patch does that this engine
       # could not say. A filter opening as a gain falls is a crossfade; both
-      # opening together is just louder.
+      # opening together is louder.
       self.depth = (depth || 1.0).to_f.clamp(-1.0, 1.0)
     end
 
@@ -868,12 +868,10 @@ module PatchBay
   end
 
   def add_source(matrix, name, spec, bpm)
-    if spec[:kind] == :random
-      matrix.random(name, rate_hz: spec[:rate_hz])
-    else
-      matrix.synced_lfo(name, rate: spec[:rate], bpm:,
-                              family: spec[:family], morph: spec[:morph])
-    end
+    return matrix.random(name, rate_hz: spec[:rate_hz]) if spec[:kind] == :random
+
+    matrix.synced_lfo(name, rate: spec[:rate], bpm:,
+                            family: spec[:family], morph: spec[:morph])
   end
 
   # A random patch that is valid by construction and musical by restraint.

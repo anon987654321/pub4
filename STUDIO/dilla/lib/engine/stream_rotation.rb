@@ -64,7 +64,7 @@ end
 # The curated pairings stay first and in order, so a demo of eight still opens
 # on the house sound. The tail follows with a pocket chosen from each preset's
 # own declared mode rather than at random -- that pairing knowledge is exactly
-# what the curated table encodes, and the reason not to just shuffle everything.
+# what the curated table encodes, and the reason not to shuffle everything.
 def drum_rotation_full
   @drum_rotation_full ||= begin
     named = STREAM_DRUM_ROTATION.map { |d| d[:preset] }

@@ -93,7 +93,7 @@ end
 # Same shape either way -- { name:, hz: [...] } -- which is why this is a
 # substitution rather than a conversion: PAD_CHORDS was already a hardcoded
 # six-chord progression in F minor, so this renderer has always been harmonic,
-# just never in the key anything else was in.
+# never in the key anything else was in.
 def analog_schedule(bar_count, chords = nil)
   pool = (chords && chords.length >= 2) ? chords : PAD_CHORDS
   beat = beat_seconds

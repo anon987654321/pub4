@@ -220,7 +220,7 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
            "#{labels.map { |l| "[#{l}]" }.join}amix=inputs=#{rendered.length}:weights=#{weights}:" \
            "duration=first:normalize=0[blend]"
     sh! "ffmpeg", "-y", *inputs, "-filter_complex", filt, "-map", "[blend]", "-c:a", "pcm_s16le", path
-    rendered.each { |(p, _)| FileUtils.rm_f(p) }
+    rendered.each { |(p, _)| FileUtils.rm_f(p) } # scan: intentional — removes only the temp files this method rendered
   end
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
   boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(-24.0, 20.0)

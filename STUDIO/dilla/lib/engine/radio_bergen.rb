@@ -653,7 +653,7 @@ end
 
   def stringify_keys(obj)
     case obj
-    when Hash then obj.each_with_object({}) { |(k, v), h| h[k.to_s] = stringify_keys(v) }
+    when Hash then obj.to_h { |k, v| [k.to_s, stringify_keys(v)] }
     when Array then obj.map { |v| stringify_keys(v) }
     else obj
     end

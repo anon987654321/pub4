@@ -20,10 +20,10 @@ class TestAudioGraphIndustrial < Minitest::Test
   DURATION = "230.4"
   LEGACY_AMIX = "duration=first"
 
-  RUMBLE  = "[2:a]aformat=channel_layouts=mono,lowpass=f=95,equalizer=f=48:t=o:w=0.8:g=8,volume=0.42[rumble]"
+  RUMBLE = "[2:a]aformat=channel_layouts=mono,lowpass=f=95,equalizer=f=48:t=o:w=0.8:g=8,volume=0.42[rumble]"
   TEXTURE = "[1:a]aformat=channel_layouts=stereo,atrim=0:#{DURATION},asetpts=PTS-STARTPTS," \
             "highpass=f=180,lowpass=f=8500,volume=0.18[texture]"
-  NOISE   = "[3:a]highpass=f=400,lowpass=f=5000,volume=0.04[noise]"
+  NOISE = "[3:a]highpass=f=400,lowpass=f=5000,volume=0.04[noise]"
 
   def chain_of(clause) = clause[/\](.*)\[[a-z_]+\]\z/m, 1].split(",")
   def input_of(clause) = clause[/\A\[([^\]]+)\]/, 1]
@@ -34,7 +34,7 @@ class TestAudioGraphIndustrial < Minitest::Test
     filt << TEXTURE if with_texture
     filt << NOISE
     mix_in = ["[drums]", "[rumble]"]
-    mix_w  = ["1.0", "0.55"]
+    mix_w = ["1.0", "0.55"]
     if with_texture
       mix_in << "[texture]"
       mix_w << "0.28"

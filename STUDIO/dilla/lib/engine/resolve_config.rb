@@ -335,7 +335,7 @@ end
 # renderer is untouched by this, and measuring one proved it (80-140 Hz band
 # identical before and after, null residual -41 dB, i.e. render noise).
 #
-# It is still a real fix, just a latent one: the literal 140 was correct while
+# It is still a real fix, a latent one: the literal 140 was correct while
 # build_voicing folded every chord into MIDI 50..62 (147..247 Hz), where the
 # filter sat below the lowest root and only removed rumble.
 #

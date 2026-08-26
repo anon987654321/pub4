@@ -58,7 +58,7 @@ class TestGoldenGrade < Minitest::Test
   end
 
   # A horizontal ramp into near-white. Nothing here is clipped going in, so
-  # anything clipped coming out was clipped by the grade.
+  # the grade clipped anything clipped coming out.
   def highlight_ramp(dir)
     path = File.join(dir, "ramp.jpg")
     ramp = Vips::Image.xyz(320, 320)[0] * (250.0 / 320)

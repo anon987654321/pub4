@@ -141,7 +141,7 @@ DILLA_STYLE_DEFAULTS = {
   #
   # This block used to switch on all four lead layers at once and set
   # MELODIC_LEAD=0 to force sixteenth-note arps, with the note "real arps (not
-  # just slow melodic phrases)". That was the sound the operator described as
+  # slow melodic phrases)". That was the sound the operator described as
   # the leads destroying everything: three arp layers over the chords the pads
   # were already holding, at close to twice their level.
   #
@@ -344,7 +344,7 @@ RENDER_MODE_DEFAULTS = {
   # held rather than rotated.
   #
   # BPM 68 against the engine's 86 default: the swing model is unchanged, there
-  # is simply more time between hits for the pads to decay into. PAD_ATTACK and
+  # is more time between hits for the pads to decay into. PAD_ATTACK and
   # PAD_RELEASE are roughly double long_soul's, which is what makes chords
   # arrive rather than land.
   #
