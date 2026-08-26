@@ -11,15 +11,15 @@ development:
   cache:
     <<: *default
     database: storage/development_cache.sqlite3
-    migrations_paths: db/cache_schema_migrations
+    migrations_paths: db/cache_migrate
   queue:
     <<: *default
     database: storage/development_queue.sqlite3
-    migrations_paths: db/queue_schema_migrations
+    migrations_paths: db/queue_migrate
   cable:
     <<: *default
     database: storage/development_cable.sqlite3
-    migrations_paths: db/cable_schema_migrations
+    migrations_paths: db/cable_migrate
 
 # TEST_DB_ID gives a test run its own database files.
 #
@@ -40,15 +40,15 @@ test:
   cache:
     <<: *default
     database: storage/test_cache<%= ENV["TEST_DB_ID"] %>.sqlite3
-    migrations_paths: db/cache_schema_migrations
+    migrations_paths: db/cache_migrate
   queue:
     <<: *default
     database: storage/test_queue<%= ENV["TEST_DB_ID"] %>.sqlite3
-    migrations_paths: db/queue_schema_migrations
+    migrations_paths: db/queue_migrate
   cable:
     <<: *default
     database: storage/test_cable<%= ENV["TEST_DB_ID"] %>.sqlite3
-    migrations_paths: db/cable_schema_migrations
+    migrations_paths: db/cable_migrate
 
 production:
   primary:
@@ -57,12 +57,12 @@ production:
   cache:
     <<: *default
     database: storage/production_cache.sqlite3
-    migrations_paths: db/cache_schema_migrations
+    migrations_paths: db/cache_migrate
   queue:
     <<: *default
     database: storage/production_queue.sqlite3
-    migrations_paths: db/queue_schema_migrations
+    migrations_paths: db/queue_migrate
   cable:
     <<: *default
     database: storage/production_cable.sqlite3
-    migrations_paths: db/cable_schema_migrations
+    migrations_paths: db/cable_migrate

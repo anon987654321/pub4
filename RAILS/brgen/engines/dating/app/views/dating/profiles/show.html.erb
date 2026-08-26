@@ -34,7 +34,7 @@
     <% if @profile.bio.present? %>
       <%= read_more(@profile.bio, lines: 3, more: t("dating.read_bio"), less: t("dating.show_less")) %>
     <% else %>
-      <p>Bio<br>—</p>
+      <p><%= t("dating.bio") %><br>—</p>
     <% end %>
   </article>
 </section>

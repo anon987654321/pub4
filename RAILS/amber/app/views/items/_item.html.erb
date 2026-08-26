@@ -5,7 +5,7 @@
     <% if item.photos.attached? %>
       <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card, sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
     <% end %>
-    <nav role="navigation" aria-label="Item actions">
+    <nav role="navigation" aria-label="<%= t("items.actions_label") %>">
       <%= button_to t("items.wear"), wear_item_path(item), method: :post, class: "btn-sm" %>
       <% if item.spark_joy? %>
         <%= button_to t("items.no_joy_short"), clear_joy_item_path(item), method: :post, class: "btn-sm" %>

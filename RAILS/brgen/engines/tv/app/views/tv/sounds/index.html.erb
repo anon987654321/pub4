@@ -5,15 +5,19 @@
 </div>
 
 <% if @sounds.any? %>
-  <ul role="list" class="sound-list">
-    <% @sounds.each do |sound| %>
-      <li role="listitem">
-        <%= link_to sound.title, sound_path(sound) %>
-        <span class="sound-count"><%= t("tv.sound_clips", count: sound.videos_count) %></span>
-      </li>
-    <% end %>
+  <ul role="list" class="sound-list" id="tv-sounds">
+    <%= render partial: "tv/sounds/sound", collection: @sounds, as: :sound %>
   </ul>
-  <%= render "shared/pager", pagy: @pagy %>
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "SoundsInfiniteScrollReflex#load_more",
+             sentinel_id: "tv-sounds-sentinel" %>
+
+  <%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+      ActionCable, so without JavaScript a truncated list would say nothing about
+      the rest of itself. noscript, so a reader with JavaScript sees one
+      mechanism rather than two. %>
+  <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
 <% else %>
   <%= render "shared/empty_state", title: t("tv.sounds_empty"), body: t("tv.sounds_empty_body"),
         action: { label: t("tv.browse"), path: root_path } %>

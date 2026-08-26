@@ -1,73 +1,43 @@
-<% nb = I18n.locale.to_s.start_with?("nb", "nn") %>
 <% content_for :title, t("legal.terms") %>
 <% social = legal_social_network? %>
 <% amber = legal_app_key == "amber" %>
 
-<%# single_h1: locale-branched — one of the two h1s renders per request %>
 <article class="legal-prose">
-  <% if nb %>
-    <p class="legal-eyebrow">Brukervilkår</p>
-    <h1>Vilkår for <%= request.host %></h1>
-    <p class="legal-updated">Sist oppdatert 12. august 2026</p>
+  <p class="legal-eyebrow"><%= t("legal.terms_page.eyebrow") %></p>
+  <h1><%= t("legal.terms_page.heading", host: request.host) %></h1>
+  <p class="legal-updated"><%= t("legal.updated_on") %></p>
 
-    <p>Ved å bruke nettstedet godtar du disse vilkårene. Leser du dem ikke, bør du ikke bruke tjenesten.</p>
+  <p><%= t("legal.terms_page.intro") %></p>
 
-    <h2>Hvem kan bruke tjenesten</h2>
-    <p>Du må være minst 16 år for å opprette konto<% if social && !amber %>, og minst 18 år for datingfunksjonene<% end %>. Du er ansvarlig for aktiviteten på kontoen din.</p>
+  <%= tag.h2 t("legal.terms_page.who_heading") %>
+  <p><%= t("legal.terms_page.who_body",
+           dating: (social && !amber) ? t("legal.terms_page.who_dating_clause") : "") %></p>
 
-    <% if social %>
-      <h2>Innholdet ditt</h2>
-      <p>Du beholder rettighetene til det du publiserer<% if amber %>, inkludert bilder av klær og antrekk<% end %>. Du gir oss en ikke-eksklusiv lisens til å vise og distribuere innholdet som en del av tjenesten. Du står inne for at du har rett til å dele det du legger ut, og at det ikke krenker andres rettigheter.</p>
+  <% if social %>
+    <%= tag.h2 t("legal.terms_page.content_heading") %>
+    <p><%= t("legal.terms_page.content_body",
+             wardrobe: amber ? t("legal.terms_page.content_wardrobe_clause") : "") %></p>
 
-      <h2>Akseptabel bruk</h2>
-      <p>Ikke publiser ulovlig, hatefullt, villedende eller opphavsrettskrenkende innhold, ikke trakasser andre, og ikke misbruk tjenesten med spam eller automatiserte angrep. Vi kan fjerne innhold og stenge kontoer som bryter med dette.</p>
-    <% else %>
-      <h2>Katalogen</h2>
-      <p>Portebeskrivelsene kommer fra OpenBSD-kilder og er et søkeindeks, ikke en erstatning for den offisielle dokumentasjonen. Installer aldri en pakke uten å verifisere mot ditt eget speil.</p>
-    <% end %>
-
-    <% if social %>
-      <h2>Reklame og partnerlenker</h2>
-      <p>Nettstedet kan finansieres av egen annonsesalg og av partner-/affiliateprogrammer. Kjøper du via en partnerlenke, kan vi motta provisjon. Se <%= link_to "personvern", privacy_path %> og <%= link_to "informasjonskapsler", cookies_path %>.</p>
-    <% end %>
-
-    <h2>Ansvar</h2>
-    <p>Tjenesten leveres «som den er». Så langt loven tillater, er vi ikke ansvarlige for indirekte tap ved bruk av tjenesten.<% if social %> Brukergenerert innhold er den enkelte brukerens ansvar.<% end %></p>
-
-    <h2>Avslutning og lovvalg</h2>
-    <p>Du kan slette kontoen når som helst. Vi kan avslutte kontoer ved brudd på vilkårene. Norsk rett gjelder, med verneting i Bergen.</p>
+    <%= tag.h2 t("legal.terms_page.acceptable_heading") %>
+    <p><%= t("legal.terms_page.acceptable_body") %></p>
   <% else %>
-    <p class="legal-eyebrow">Terms of use</p>
-    <h1>Terms for <%= request.host %></h1>
-    <p class="legal-updated">Last updated 12 August 2026</p>
-
-    <p>By using this site you accept these terms. If you don’t read them, you shouldn’t use the service.</p>
-
-    <h2>Who can use it</h2>
-    <p>You must be at least 16 to hold an account<% if social && !amber %>, and at least 18 for the dating features<% end %>. You are responsible for activity on your account.</p>
-
-    <% if social %>
-      <h2>Your content</h2>
-      <p>You keep the rights to what you post<% if amber %>, including garment and outfit photos<% end %>. You grant us a non-exclusive licence to display and distribute that content as part of the service. You warrant that you have the right to share what you upload and that it does not infringe anyone else’s rights.</p>
-
-      <h2>Acceptable use</h2>
-      <p>Don’t post unlawful, hateful, deceptive or infringing content, don’t harass others, and don’t abuse the service with spam or automated attacks. We may remove content and suspend accounts that break these rules.</p>
-    <% else %>
-      <h2>The catalogue</h2>
-      <p>Port descriptions come from OpenBSD sources and are a search index, not a substitute for the official documentation. Never install a package without checking your own mirror.</p>
-    <% end %>
-
-    <% if social %>
-      <h2>Advertising and partner links</h2>
-      <p>The site may be funded by our own advertising and by partner / affiliate programmes. If you buy through a partner link, we may earn a commission. See <%= link_to "privacy", privacy_path %> and <%= link_to "cookies", cookies_path %>.</p>
-    <% end %>
-
-    <h2>Liability</h2>
-    <p>The service is provided “as is”. To the extent the law allows, we are not liable for indirect losses arising from use of the service.<% if social %> User-generated content is the responsibility of the user who posted it.<% end %></p>
-
-    <h2>Termination and governing law</h2>
-    <p>You may delete your account at any time. We may terminate accounts that breach these terms. Norwegian law applies, with venue in Bergen.</p>
+    <%= tag.h2 t("legal.terms_page.catalogue_heading") %>
+    <p><%= t("legal.terms_page.catalogue_body") %></p>
   <% end %>
+
+  <% if social %>
+    <%= tag.h2 t("legal.terms_page.partner_heading") %>
+    <p><%= t("legal.terms_page.partner_body_html",
+             privacy: link_to(t("legal.terms_page.partner_privacy_link"), privacy_path),
+             cookies: link_to(t("legal.terms_page.partner_cookies_link"), cookies_path)) %></p>
+  <% end %>
+
+  <%= tag.h2 t("legal.terms_page.liability_heading") %>
+  <p><%= t("legal.terms_page.liability_body",
+           ugc: social ? t("legal.terms_page.liability_ugc_clause") : "") %></p>
+
+  <%= tag.h2 t("legal.terms_page.termination_heading") %>
+  <p><%= t("legal.terms_page.termination_body") %></p>
 
   <nav>
     <%= link_to t("legal.privacy"), privacy_path %>

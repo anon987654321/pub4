@@ -45,7 +45,8 @@ the city-domain entry in `OPENBSD/data/debt.yml`.
 
 ## 2. relayd restart after route changes
 
-**Status:** open, and sharper than it reads.
+**Status:** the missing half is built; the entry stays open until a real deploy
+has exercised it on vm23.
 
 A route change in `relayd.conf` needs `rcctl restart relayd`, and that restart
 is not free. On 2026-08-10 relayd's `ca` process died during a restart
@@ -66,8 +67,11 @@ restart.
   closed. Not port 80 — relayd declares one relay, `listen on 0.0.0.0 port 443
   tls`, so 80 refuses on a healthy box and tests nothing.
 
-**Checked by:** `deploy_smoke_gate` validates relayd config content. Nothing
-yet re-checks liveness after the restart.
+**Checked by:** `deploy_smoke_gate` validates relayd config content, and
+`relayd_confirm_live` in `RAILS/_service.sh` re-checks 443 for 20s after the
+restart, before the deploy is allowed to report success. It names which of the
+two failure shapes happened: 443 refused while the app port still answers is
+relayd down; both refused is the app, not relayd.
 
 ---
 
@@ -111,7 +115,8 @@ different operations and only one of them is a workaround:
   back to tar copy`.
 
 So openrsync is used on every deploy, with a working fallback. The bundle-cache
-bootstrap in `_deploy.sh` calls it too, with no fallback at all.
+bootstrap in `_deploy.sh` called it too, with no fallback at all; it goes through
+`sync_tree` now, so all four calls have one.
 
 **Owner:** operations, low priority.
 
@@ -121,6 +126,8 @@ bootstrap in `_deploy.sh` calls it too, with no fallback at all.
   need the same fallback the tree sync has.
 - If it is reliable, the fallback stays as insurance and this entry closes.
 
-**Checked by:** nothing. The fallback is silent apart from a log line, so a box
-where openrsync never works would deploy correctly and slowly forever without
-anyone learning.
+**Checked by:** the bundle-cache bootstrap now goes through `sync_tree` like
+the tree sync does, so all four calls have the openrsync -> tar fallback. The
+remaining half of this entry stands: the fallback is still silent apart from a
+log line, so a box where openrsync never works deploys correctly and slowly
+forever without anyone learning.

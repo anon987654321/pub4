@@ -6,7 +6,7 @@
 
 <% if @shows.any? %>
   <%= turbo_frame_tag "tv-shows", target: "_top" do %>
-    <ul id="tv-shows-grid" class="show-grid card-grid feed_list" aria-label="TV shows">
+    <ul id="tv-shows-grid" class="show-grid card-grid feed_list" aria-label="<%= t("tv.shows_aria") %>">
       <% @shows.each do |show| %>
         <li><%= render "tv/shows/card", show:, channel: @channel %></li>
       <% end %>

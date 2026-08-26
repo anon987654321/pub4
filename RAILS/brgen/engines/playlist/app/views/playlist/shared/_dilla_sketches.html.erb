@@ -7,7 +7,7 @@
 <% can_manage = local_assigns.fetch(:can_manage, false) %>
 <% rich_form = local_assigns.fetch(:rich_form, false) %>
 <section role="region" aria-label="<%= t("aria.dilla_sketches") %>">
-  <h2>Dilla sketches / beats</h2>
+  <h2><%= t("playlist.dilla_sketches") %></h2>
   <p>
     Collaborative beat patterns. Lab:
     <a href="/dilla/dilla.html<%= local_assigns[:lab_query] %>" target="_blank" rel="noopener">dilla.html</a>

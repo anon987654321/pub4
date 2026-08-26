@@ -1,5 +1,5 @@
-<% content_for :title, "New outfit" %>
-<header role="banner" aria-label="New outfit header">
+<% content_for :title, t("pages.new_outfit") %>
+<header role="banner" aria-label="<%= t("outfits.new_header_label") %>">
   <%= tag.h1 t("pages.new_outfit") %>
 </header>
 <turbo-frame aria-live="polite" id="amber-outfit-new" data-turbo-action="replace">

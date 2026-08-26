@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_25_122000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -59,15 +59,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120000) do
     t.string "locality"
     t.json "metadata"
     t.string "moderation_state", default: "clean", null: false
-    t.integer "object_id", null: false
-    t.string "object_type", null: false
     t.string "source_vertical", null: false
+    t.integer "subject_id", null: false
+    t.string "subject_type", null: false
     t.datetime "updated_at", null: false
     t.string "visibility", default: "public", null: false
     t.index ["actor_id"], name: "index_activity_events_on_actor_id"
     t.index ["locality", "created_at"], name: "index_activity_events_on_locality_and_created_at"
-    t.index ["object_type", "object_id"], name: "index_activity_events_on_object_type_and_object_id"
     t.index ["source_vertical", "created_at"], name: "index_activity_events_on_source_vertical_and_created_at"
+    t.index ["subject_type", "subject_id"], name: "index_activity_events_on_subject_type_and_subject_id"
   end
 
   create_table "affiliate_conversions", force: :cascade do |t|
@@ -309,6 +309,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120000) do
     t.string "role", default: "member", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["conversation_id", "user_id"], name: "index_conversation_participants_on_pair", unique: true
     t.index ["conversation_id"], name: "index_conversation_participants_on_conversation_id"
     t.index ["user_id", "pinned_at"], name: "index_conversation_participants_on_user_id_and_pinned_at"
     t.index ["user_id"], name: "index_conversation_participants_on_user_id"
@@ -1012,6 +1013,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120000) do
     t.index ["created_at"], name: "index_outbound_clicks_on_created_at"
     t.index ["merchant", "created_at"], name: "index_outbound_clicks_on_merchant_and_created_at"
     t.index ["subject_type", "subject_id"], name: "index_outbound_clicks_on_subject_type_and_subject_id"
+    t.index ["user_id", "created_at"], name: "index_outbound_clicks_on_user_id_and_created_at"
   end
 
   create_table "partner_clicks", force: :cascade do |t|
@@ -1573,6 +1575,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.integer "weight", default: 0, null: false
+    t.index ["user_id", "kind", "source"], name: "index_trust_signals_on_user_kind_source", unique: true
     t.index ["user_id", "kind"], name: "index_trust_signals_on_user_id_and_kind"
     t.index ["user_id"], name: "index_trust_signals_on_user_id"
   end
@@ -1747,6 +1750,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120000) do
     t.datetime "expires_at"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["conversation_id", "user_id"], name: "index_typing_indicators_on_pair", unique: true
     t.index ["conversation_id"], name: "index_typing_indicators_on_conversation_id"
     t.index ["user_id"], name: "index_typing_indicators_on_user_id"
   end

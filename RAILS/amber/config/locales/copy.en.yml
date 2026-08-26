@@ -4,11 +4,20 @@
 # They move into nb.yml when it is quiet.
 en:
   ai:
+    capsule_actions_label: "Capsule actions"
+    capsule_header_label: "Capsule optimizer header"
+    heuristic_source: "local heuristic (no OpenRouter key or model empty)"
+    palette: "Palette:"
+    seasonal_type: "Seasonal type:"
+    suggestions: "Suggestions"
     analysis_unavailable: "Analysis unavailable"
     capsule_builder: "Capsule builder"
     clashing_items: "Clashing items"
     suggested_outfits: "Suggested outfits for %{days}d %{climate}"
   creator:
+    profile_label: "Creator profile"
+    remix_friendly: "Remix-friendly wardrobe"
+    showcase: "Showcase"
     showcase_items: "Showcase items"
   demo:
     wardrobe: "Demo wardrobe"
@@ -17,6 +26,14 @@ en:
     all_pieces: "All pieces"
     spark_joy: "Spark joy"
   outfits:
+    actions_label: "Outfit actions"
+    edit_heading: "Edit %{name}"
+    edit_title: "Edit outfit"
+    fallback_context: "Outfit"
+    header_label: "Outfit"
+    items_section: "Items"
+    new_header_label: "New outfit"
+    remove_item: "Remove"
     add_item: "Add item"
     style_combinations: "Style combinations"
     style_intelligence: "Style intelligence"

@@ -380,6 +380,7 @@ nb:
       one: "%{count} treff for «%{query}»"
       other: "%{count} treff for «%{query}»"
   messages:
+    anonymous: "anon"
     from_aria: Melding fra %{name}
     disappears_in: forsvinner om %{time}
     title: Meldinger
@@ -1343,6 +1344,7 @@ nb:
     nearby_places: I nærheten
     no_place: Ikke på kartet
   communities:
+    edit_heading: "Rediger %{name}"
     about: Om %{name}
     name_placeholder: f.eks. bergen, tech, musikk
     description_placeholder: Hva handler dette fellesskapet om?
@@ -1352,6 +1354,7 @@ nb:
     new_community: Nytt fellesskap
     also_in_city: Også i %{city}
   newsletter:
+    unsubscribe_link: "Meld av"
     email_placeholder: din@epost.com
     subscribe: Abonner
     title: Byoppdateringer
@@ -1429,6 +1432,9 @@ nb:
     next: Neste
     position: Side %{page} av %{pages}
   compose:
+    bold: "Fet"
+    bullet_list: "Punktliste"
+    italic: "Kursiv"
     add_photo: Legg til bilde
     record_video: Ta opp video
     record_audio: Ta opp lyd

@@ -1,4 +1,5 @@
 @use "stack" as *;
+@use "port_graph";
 @use "brand_clearance";
 @use "shell_widgets";
 @use "dialect_tokens" as x;
@@ -183,45 +184,6 @@ article > h2,
 article > section,
 #comments {
   margin-block-start: var(--space-8);
-}
-
-.dep-graph {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-block-start: var(--space-4);
-}
-
-.dep-graph {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
-}
-
-.dep-graph line {
-  stroke: var(--border);
-}
-
-.dep-graph circle {
-  fill: var(--surface-elevated);
-  stroke: var(--text-secondary);
-}
-
-.dep-graph text {
-  fill: var(--text);
-  font-family: var(--font-mono);
-}
-
-.logo {
-  text-indent: -9999px;
-  overflow: hidden;
-  margin: 0 0 var(--space-8);
-  width: 182px;
-  height: 44px;
-  background-image: url("bsdports_182x44.svg");
-  background-repeat: no-repeat;
-  background-size: contain;
 }
 
 /* shell_widgets' .page-header (a slim sticky 53px section bar) and stack's

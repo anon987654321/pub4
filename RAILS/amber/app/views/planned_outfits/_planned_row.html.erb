@@ -1,0 +1,9 @@
+<%# One planned wear. Extracted from planned_outfits/_list for the reflex. %>
+<li>
+  <div class="plan-row" id="<%= dom_id(planned_outfit) %>">
+    <span class="plan-date"><%= l(planned_outfit.planned_date, format: :long) %></span>
+    <%= link_to planned_outfit.outfit.name, planned_outfit.outfit %>
+    <% if planned_outfit.notes.present? %><%= planned_outfit.notes %><% end %>
+    <%= button_to t("actions.remove"), planned_outfit_path(planned_outfit), method: :delete, class: "btn-link", data: { turbo_frame: "planned-outfits" } %>
+  </div>
+</li>

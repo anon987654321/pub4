@@ -1,4 +1,4 @@
-<h1>Edit <%= @community.name %></h1>
+<h1><%= t("communities.edit_heading", name: @community.name) %></h1>
 <%= form_with model: @community do |f| %>
   <% if @community.errors.any? %>
     <ul>

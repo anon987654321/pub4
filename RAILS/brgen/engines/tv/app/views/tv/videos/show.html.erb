@@ -12,7 +12,7 @@
   <button class="btn-share" data-controller="share"
           data-share-title-value="<%= @video.title %>"
           data-share-url-value="<%= request.original_url %>"
-          data-action="click->share#share">Share</button>
+          data-action="click->share#share"><%= t("tv.share") %></button>
 </div>
 
 <%# progress-url is only set for a signed-in viewer: view events belong to a
@@ -91,7 +91,7 @@
 </section>
 
 <section>
-  <h2>Notes</h2>
+  <h2><%= t("tv.notes") %></h2>
   <%# The container existed and the model broadcast to this stream, but nothing
       subscribed — so a note from another viewer never arrived. %>
   <%= turbo_stream_from "tv:video:#{@video.id}:notes" %>
@@ -118,7 +118,7 @@
 </section>
 
 <section>
-  <h2>Discussion</h2>
+  <h2><%= t("tv.discussion") %></h2>
   <% if @video.comments.any? %>
     <% @video.comments.order(created_at: :asc).each do |comment| %>
       <article>

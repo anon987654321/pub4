@@ -27,7 +27,7 @@ visibility:)
       Shared::DomainEvent.record!(
         actor: opts[:actor] || activity_actor,
         action:,
-        subject: opts[:object] || self,
+        subject: opts[:subject] || self,
         source_vertical: opts[:source_vertical] || "general",
         locality: opts[:locality],
         visibility: opts[:visibility] || "public",

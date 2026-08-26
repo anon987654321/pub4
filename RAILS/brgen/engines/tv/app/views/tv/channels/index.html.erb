@@ -2,7 +2,7 @@
 
 <div class="page-header">
   <%= tag.h1 t("tv.channels_title") %>
-  <nav aria-label="TV channel actions">
+  <nav aria-label="<%= t("tv.channel_actions_aria") %>">
     <%= link_to "New channel", new_channel_path, class: "btn btn-primary btn-sm" if authenticated? %>
   </nav>
 </div>

@@ -74,6 +74,18 @@ module Deploy
 
     private
 
+# A layout and every partial its own views/layouts and views/shared hold.
+# Which file a piece of chrome sits in is an organisation decision; this
+# gate is about whether the chrome exists.
+def layout_with_partials(app)
+  root = File.join(RAILS_ROOT, app.name)
+  layout = File.read(File.join(root, "app/views/layouts/application.html.erb"))
+  layout + Dir.glob(File.join(root, "app/views/{layouts,shared}/_*.erb"))
+              .map { |partial| File.read(partial) }.join
+rescue StandardError
+  ""
+end
+
     def read_app_file(app, relative)
       path = File.join(RAILS_ROOT, app, relative)
       File.file?(path) ? File.read(path) : ""
@@ -131,7 +143,12 @@ module Deploy
       result.checked!(3 + files.fetch(:nav).length)
 
       if app.name == "brgen"
-        result.fail("brgen: sidebar search must submit to global_search_path") unless layout.include?("global_search_path")
+# layout_with_partials, not layout: brgen's sidebar moved into
+# layouts/_sidebar.html.erb when the layout was split for length, and
+# the search form went with it. The rendered markup did not change.
+unless layout_with_partials(app).include?("global_search_path")
+  result.fail("brgen: sidebar search must submit to global_search_path")
+end
         Array(files[:mobile_tabs]).each_with_index do |pat, i|
           result.fail("brgen: mobile tab missing aria/i18n marker ##{i + 1}") unless nav_source.match?(pat)
         end

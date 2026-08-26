@@ -1,0 +1,18 @@
+<%# The city network strip. Extracted from the layout when it passed the view
+    length ceiling; it is a self-contained block with its own data source and
+    the note below is the reason that source is what it is. %>
+<%# Only apexes that serve. This list used to be 29 domains written out here;
+    26 of them refused the connection and one, amstrdam.nl, had left us and
+    redirected to a stranger's site. DomainRegistry::LIVE_DOMAINS is the one
+    place that fact is recorded — do not iterate ENTRIES here. %>
+<% live_cities = Brgen::DomainRegistry.live_entries %>
+<% if live_cities.length > 1 %>
+  <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="<%= t("nav.city_network") %>" data-brgen-shell-target="carousel">
+    <div class="carousel-container" role="list">
+      <% live_cities.each do |entry| %>
+        <a class="carousel-slide<%= " active" if entry.domain == Current.domain %>" role="listitem"
+           href="https://<%= entry.domain %>/" data-domain="<%= entry.domain %>" data-base="<%= entry.domain %>"><%= entry.domain %></a>
+      <% end %>
+    </div>
+  </div>
+<% end %>

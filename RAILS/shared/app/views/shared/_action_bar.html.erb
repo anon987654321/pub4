@@ -56,14 +56,14 @@
   </button>
 
   <% if local_assigns[:view_count].present? %>
-    <span class="feed-action feed-action--views" aria-label="<%= view_count %> views">
+    <span class="feed-action feed-action--views" aria-label="<%= t("actions.views", count: view_count.to_i) %>">
       <%= icon(:views, size: 18) %>
       <span class="feed-action-count"><%= view_count %></span>
     </span>
   <% end %>
 
   <% if local_assigns[:share_url].present? %>
-    <span data-controller="clipboard" data-clipboard-success-content-value="Copied">
+    <span data-controller="clipboard" data-clipboard-success-content-value="<%= t("actions.copied") %>">
       <input type="hidden" data-clipboard-target="source" value="<%= share_url %>" aria-hidden="true" tabindex="-1">
       <button type="button"
               class="feed-action feed-action--share"

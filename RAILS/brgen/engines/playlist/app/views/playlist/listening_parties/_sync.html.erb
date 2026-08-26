@@ -1,6 +1,6 @@
 <% if track %>
   <p><%= t("playlist.now_playing") %> <%= tag.strong track.title %> — <%= track.artist %></p>
-  <p>Synced position: <%= party.position_seconds %>s</p>
+  <p><%= t("playlist.synced_position") %> <%= party.position_seconds %>s</p>
 <% else %>
   <p><%= t("playlist.waiting_for_host") %></p>
 <% end %>

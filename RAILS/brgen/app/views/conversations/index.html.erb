@@ -15,27 +15,12 @@
 </section>
 
 <% if @conversations.any? %>
-  <ul role="list" aria-label="<%= t("aria.conversations") %>">
-    <% @conversations.each do |c| %>
-      <% other = (c.participants - [Current.user]).first %>
-      <% last  = c.messages.last %>
-      <% pinned = @pinned_ids.include?(c.id) %>
-      <li role="listitem">
-        <%= link_to conversation_path(c) do %>
-          <%= tag.strong other&.display_name || "anon" %>
-          <% if last %>
-            <%= truncate(last.content.to_s, length: 80) %>
-            <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
-          <% end %>
-          <% unread = @unread_counts.fetch(c.id, 0) %>
-          <% if unread.positive? %><mark><%= unread %></mark><% end %>
-        <% end %>
-        <% if pinned %>
-          <%= button_to t("messages.unpin"), conversation_pin_path(c), method: :delete, class: "btn btn-ghost btn-sm" %>
-        <% else %>
-          <%= button_to t("messages.pin"), conversation_pin_path(c), class: "btn btn-ghost btn-sm" %>
-        <% end %>
-      </li>
+  <ul role="list" id="conversation-list" aria-label="<%= t("aria.conversations") %>">
+    <% @conversations.each do |conversation| %>
+      <%= render "conversations/conversation_row",
+                 conversation: conversation,
+                 unread: @unread_counts.fetch(conversation.id, 0),
+                 pinned: @pinned_ids.include?(conversation.id) %>
     <% end %>
   </ul>
 <% else %>
@@ -45,4 +30,13 @@
         action: { label: t("nav.nearby"), path: nearby_path } %>
 <% end %>
 
-<%= render "shared/pager", pagy: @pagy %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "ConversationsInfiniteScrollReflex#load_more",
+           sentinel_id: "conversation-list-sentinel" %>
+
+<%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+    ActionCable, so without JavaScript a truncated inbox would say nothing
+    about the rest of itself. noscript, so a reader with JavaScript sees one
+    mechanism rather than two. %>
+<noscript><%= render "shared/pager", pagy: @pagy %></noscript>

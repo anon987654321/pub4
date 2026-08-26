@@ -1,0 +1,20 @@
+# Engine-local strings.
+#
+# Every engine string used to live in brgen/config/locales, which made a
+# literal in the markup the path of least resistance for engine work and left
+# the engine unmountable anywhere else. Rails::Engine appends
+# config/locales/*.yml to I18n.load_path on its own -- no wiring beyond this
+# file existing -- and I18n deep-merges across load paths, so keys under the
+# same namespace in the host file stay reachable.
+#
+# Keys the host already carries are NOT copied here. Use them.
+nb:
+  tv:
+    channel_actions_aria: "Kanalhandlinger"
+    channel_results_aria: "Resultater for TV-kanaler"
+    discussion: "Diskusjon"
+    notes: "Notater"
+    recent: "Nylig"
+    share: "Del"
+    shows_aria: "TV-serier"
+    videos: "Videoer"

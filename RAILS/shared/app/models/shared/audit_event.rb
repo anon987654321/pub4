@@ -20,7 +20,7 @@ module Shared
   # belongs_to. The record an audit event names is frequently *already destroyed*
   # — that is the case it was built for — so an association would be a
   # permanently nil read under strict_loading. ActivityEvent made the same call
-  # with object_type/object_id for the same reason.
+  # with ActivityEvent subject_type/subject_id for the same reason.
   class AuditEvent < ApplicationRecord
     self.table_name = "audit_events"
 

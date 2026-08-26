@@ -38,7 +38,7 @@ class ActivityTrackableTest < ActiveSupport::TestCase
       bare.update!(description: "Nyheter fra Vestland")
 
       assert_equal "Nyheter fra Vestland", created.reload.description
-      event = ActivityEvent.where(object_type: "Tv::Channel", object_id: created.id).last
+      event = ActivityEvent.where(subject_type: "Tv::Channel", subject_id: created.id).last
       assert_not_nil event, "an activity event should have been recorded"
       assert_equal @owner.id, event.actor_id, "the actor must resolve to the channel owner, not nil"
     end
@@ -61,7 +61,7 @@ class ActivityTrackableTest < ActiveSupport::TestCase
       bare.update!(price_cents: 19_900)
 
       assert_equal 19_900, created.reload.price_cents
-      event = ActivityEvent.where(object_type: "Takeaway::MenuItem", object_id: created.id).last
+      event = ActivityEvent.where(subject_type: "Takeaway::MenuItem", subject_id: created.id).last
       assert_not_nil event
       assert_equal @owner.id, event.actor_id, "restaurant_owner must resolve through the restaurant"
     end

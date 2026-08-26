@@ -57,7 +57,13 @@ class MethodLengthRatchetTest < Minitest::Test
     # class" from "the branch claimed it and there is no link", because only the
     # first may fall through to polymorphic_path and both are nil.
     "brgen" => [9, 48],
-    "shared" => [3, 34],
+# 3/34 -> 2/32 on 2026-08-25. The 48 was css_coverage_lint's used_names:
+# five copies of the same three lines, one per way of applying a class,
+# which is why it grew past this ratchet on every new way found. Split
+# into four extractors and one recorder, with each reason kept next to
+# its own pattern. css_coverage_lint_test passes on the same baselines,
+# so the counts it reports are unchanged.
+"shared" => [2, 32],
     "amber" => [1, 35],
     "bsdports" => [1, 46],
   }.freeze

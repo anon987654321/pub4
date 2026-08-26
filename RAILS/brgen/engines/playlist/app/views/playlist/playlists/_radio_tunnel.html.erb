@@ -37,7 +37,7 @@
       <%= link_to "Upload", new_hosted_track_path %>
     <% end %>
     <% if local_assigns.fetch(:show_library, false) %>
-      <button type="button" class="radio-nav-btn" data-action="click->radio-tunnel#openLibrary">Library</button>
+      <button type="button" class="radio-nav-btn" data-action="click->radio-tunnel#openLibrary"><%= t("playlist.library") %></button>
     <% end %>
   </nav>
 
@@ -72,7 +72,7 @@
       height="1"
       frameborder="0"
       allow="autoplay; encrypted-media"
-      title="YouTube player"
+      title="<%= t("playlist.youtube_player_aria") %>"
     ></iframe>
   </div>
 

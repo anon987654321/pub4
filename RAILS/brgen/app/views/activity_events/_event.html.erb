@@ -6,7 +6,7 @@
     <%= tag.h2 activity_event_title(event) %>
   <% end %>
   <p>
-    <%= activity_event_vertical(event) %> · <%= event.object_type.to_s.demodulize %>
+    <%= activity_event_vertical(event) %> · <%= event.subject_type.to_s.demodulize %>
     · <%= time_ago(event.created_at) %>
   </p>
   <% if event.locality.present? %><p><%= event.locality %></p><% end %>

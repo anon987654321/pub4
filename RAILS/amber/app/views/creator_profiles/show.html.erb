@@ -1,7 +1,7 @@
 <% content_for :title, @profile.display_name %>
 <%= turbo_stream_from @profile %>
 
-<header class="profile-header" role="banner" aria-label="Creator profile">
+<header class="profile-header" role="banner" aria-label="<%= t("creator.profile_label") %>">
   <%= tag.h1 @profile.display_name %>
   <p>@<%= @profile.handle %></p>
   <% if @profile.bio.present? %>
@@ -10,11 +10,11 @@
   <% if authenticated? && Current.user == @profile.user %>
     <%= link_to t("wardrobe.edit_profile", default: t("actions.edit")), edit_my_creator_profile_path, class: "btn btn-sm" %>
   <% elsif @can_remix %>
-    <p>Remix-friendly wardrobe</p>
+    <p><%= t("creator.remix_friendly") %></p>
   <% end %>
 </header>
 
-<h2>Showcase</h2>
+<%= tag.h2 t("creator.showcase") %>
 <% if @showcase_items.any? %>
   <div class="item-grid">
     <% @showcase_items.each do |showcase| %>

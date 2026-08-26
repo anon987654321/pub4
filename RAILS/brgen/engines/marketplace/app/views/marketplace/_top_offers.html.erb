@@ -40,7 +40,7 @@
             <% else %>
               <div class="deal-card-placeholder" aria-hidden="true"><%= listing.title.to_s.first&.upcase || "?" %></div>
             <% end %>
-            <span class="deal-badge deal-badge--soft">Top</span>
+            <span class="deal-badge deal-badge--soft"><%= t("marketplace.top") %></span>
           </div>
           <div class="top-offer-body">
             <div class="deal-price"><%= listing.price_display %></div>

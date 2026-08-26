@@ -17,12 +17,12 @@
 <% if @outfits.any? %>
   <%= turbo_frame_tag "demo-outfits" do %>
     <section>
-      <h2>Outfits</h2>
+      <%= tag.h2 t("nav.outfits") %>
       <div class="plan-list">
         <% @outfits.each do |outfit| %>
           <div class="plan-row">
             <%= tag.strong outfit.name %>
-            <%= outfit.context_label %> · <%= pluralize(outfit.items.size, "piece") %>
+            <%= outfit.context_label %> · <%= t("items.pieces", count: outfit.items.size) %>
           </div>
         <% end %>
       </div>
@@ -32,10 +32,17 @@
 
 <section>
   <%= tag.h2 t("demo.all_pieces") %>
-  <div class="item-grid">
+  <div class="item-grid" id="demo-items">
     <%= render partial: "demo_wardrobe/item", collection: @items %>
   </div>
-  <% if @pagy.next %>
-    <p><%= link_to "Next page", demo_wardrobe_path(page: @pagy.next), class: "btn btn-ghost" %></p>
-  <% end %>
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "DemoWardrobeInfiniteScrollReflex#load_more",
+             sentinel_id: "demo-items-sentinel" %>
+
+  <%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+      ActionCable, so without JavaScript a truncated list would say nothing about
+      the rest of itself. noscript, so a reader with JavaScript sees one
+      mechanism rather than two. %>
+  <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
 </section>

@@ -1,8 +1,8 @@
 <% content_for :title, @outfit.name %>
 
-<header role="banner" aria-label="Outfit header">
+<header role="banner" aria-label="<%= t("outfits.header_label") %>">
   <hgroup>
-    <p><%= @outfit.context_label.presence || "Outfit" %></p>
+    <p><%= @outfit.context_label.presence || t("outfits.fallback_context") %></p>
     <%= tag.h1 @outfit.name %>
   </hgroup>
 </header>
@@ -27,7 +27,7 @@
 <% end %>
 
 <section>
-  <h2>Items</h2>
+  <%= tag.h2 t("outfits.items_section") %>
   <div class="item-grid" data-controller="sortable" data-sortable-update-url-value="<%= reorder_outfit_path(@outfit) %>">
     <%= render @outfit.items %>
   </div>
@@ -38,7 +38,7 @@
   <p><%= t("outfits.style_intelligence_lead") %></p>
 </section>
 
-<nav role="navigation" aria-label="Outfit actions">
+<nav role="navigation" aria-label="<%= t("outfits.actions_label") %>">
   <%= button_to t("actions.like_count", count: @outfit.likes_count.to_i), like_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= button_to t("outfits.share_brgen"), share_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= button_to t("outfits.wear_again"), wear_outfit_path(@outfit), method: :post, class: "btn" %>

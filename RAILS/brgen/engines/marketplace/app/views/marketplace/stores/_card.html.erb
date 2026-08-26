@@ -7,7 +7,7 @@
       <%= store.name.to_s.first&.upcase || "S" %>
     </div>
     <% if store.verified? %>
-      <span class="deal-badge deal-badge--soft">Verified</span>
+      <span class="deal-badge deal-badge--soft"><%= t("marketplace.verified") %></span>
     <% end %>
   </div>
 

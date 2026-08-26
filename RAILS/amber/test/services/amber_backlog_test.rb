@@ -181,7 +181,13 @@ class AmberBacklogTest < Minitest::Test
     assert_includes controller, "def show"
     assert_includes controller, "def create"
     assert_includes read("app/controllers/creator_wardrobe_items_controller.rb"), "def create"
-    assert_includes read("app/views/creator_profiles/show.html.erb"), "Showcase"
+# Through the key, not the rendered word. This asserted the English literal
+# "Showcase" and so pinned it in place: the 2026-08-25 i18n pass turned it
+# into t("creator.showcase") and this went red for the surface being
+# translated. Same shape as the logo contract test, which carries the same
+# note about the same week. What the backlog cares about is that the
+# showcase section exists, and a key proves that as well as a word does.
+assert_includes read("app/views/creator_profiles/show.html.erb"), %q{t("creator.showcase")}
     assert_includes read("app/views/users/show.html.erb"), "new_my_creator_profile_path"
   end
 end

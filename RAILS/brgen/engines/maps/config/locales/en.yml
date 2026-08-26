@@ -1,0 +1,17 @@
+# Engine-local strings.
+#
+# Every engine string used to live in brgen/config/locales, which made a
+# literal in the markup the path of least resistance for engine work and left
+# the engine unmountable anywhere else. Rails::Engine appends
+# config/locales/*.yml to I18n.load_path on its own -- no wiring beyond this
+# file existing -- and I18n deep-merges across load paths, so keys under the
+# same namespace in the host file stay reachable.
+#
+# Keys the host already carries are NOT copied here. Use them.
+en:
+  maps:
+    address: "Address"
+    city: "City"
+    coordinates: "Coordinates"
+    kind: "Type"
+    neighborhood: "Neighborhood"

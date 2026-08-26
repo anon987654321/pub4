@@ -1,56 +1,30 @@
-<% nb = I18n.locale.to_s.start_with?("nb", "nn") %>
 <% content_for :title, t("legal.cookies") %>
 <% social = legal_social_network? %>
 
-<%# single_h1: locale-branched — one of the two h1s renders per request %>
 <article class="legal-prose">
-  <% if nb %>
-    <p class="legal-eyebrow">Informasjonskapsler</p>
-    <h1>Informasjonskapsler på <%= request.host %></h1>
-    <p class="legal-updated">Sist oppdatert 12. august 2026</p>
+  <p class="legal-eyebrow"><%= t("legal.cookies_page.eyebrow") %></p>
+  <h1><%= t("legal.cookies_page.heading", host: request.host) %></h1>
+  <p class="legal-updated"><%= t("legal.updated_on") %></p>
 
-    <p>Vi holder bruken av informasjonskapsler på et minimum. Vi bruker <strong>ingen tredjeparts annonse- eller sporingsnettverk</strong> og bygger ingen profil av deg på tvers av nettsteder.</p>
+  <p><%= t("legal.cookies_page.intro_html") %></p>
 
-    <h2>Nødvendige</h2>
-    <p>En øktinformasjonskapsel holder deg innlogget og beskytter skjemaer mot forfalskning (CSRF). Uten den fungerer ikke innlogging. Denne krever ikke samtykke.</p>
+  <%= tag.h2 t("legal.cookies_page.necessary_heading") %>
+  <p><%= t("legal.cookies_page.necessary_body") %></p>
 
-    <% if social %>
-      <h2>Enhetsavtrykk</h2>
-      <p>Et førsteparts avtrykk av nettleseren brukes til å begrense hvor mye en gjest kan poste fra samme enhet, og til å bremse spam. Det er ikke en tredjepartskapsel, det selges ikke, og det brukes ikke til å vise deg annonser.</p>
+  <% if social %>
+    <%= tag.h2 t("legal.cookies_page.fingerprint_heading") %>
+    <p><%= t("legal.cookies_page.fingerprint_body") %></p>
 
-      <h2>Partner / affiliate</h2>
-      <p>Klikker du på en partnerlenke, kan partneren — for eksempel TradeDoubler eller Amazon Associates — sette en informasjonskapsel hos seg for å tilskrive et eventuelt kjøp til oss. Vi setter den ikke selv, og den brukes ikke til å vise deg annonser her.</p>
+    <%= tag.h2 t("legal.cookies_page.partner_heading") %>
+    <p><%= t("legal.cookies_page.partner_body") %></p>
 
-      <h2>Reklame</h2>
-      <p>Annonsene vi viser er <strong>førsteparts</strong> og selges direkte av oss når slike plasser er slått på. De setter ikke sporingskapsler og deler ikke data med annonsenettverk.</p>
-    <% end %>
-
-    <h2>Slik styrer du dem</h2>
-    <p>Du kan slette og blokkere informasjonskapsler i nettleseren din. Blokkerer du de nødvendige, kan du ikke logge inn.<% if social %> Vil du unngå partnerkapsler, la være å klikke på partnerlenker.<% end %></p>
-  <% else %>
-    <p class="legal-eyebrow">Cookies</p>
-    <h1>Cookies on <%= request.host %></h1>
-    <p class="legal-updated">Last updated 12 August 2026</p>
-
-    <p>We keep cookie use to a minimum. We run <strong>no third-party advertising or tracking networks</strong> and build no cross-site profile of you.</p>
-
-    <h2>Strictly necessary</h2>
-    <p>A session cookie keeps you signed in and protects forms against forgery (CSRF). Sign-in doesn’t work without it. It needs no consent.</p>
-
-    <% if social %>
-      <h2>Device fingerprint</h2>
-      <p>A first-party browser fingerprint caps how much a guest can post from one device and slows spam. It is not a third-party cookie, it is not sold, and it is not used to show you ads.</p>
-
-      <h2>Partner / affiliate</h2>
-      <p>If you click a partner link, the partner — for example TradeDoubler or Amazon Associates — may set a cookie on their side to attribute a resulting purchase to us. We don’t set it ourselves, and it isn’t used to show you ads here.</p>
-
-      <h2>Advertising</h2>
-      <p>The ads we show are <strong>first-party</strong> and sold directly by us when those slots are on. They set no tracking cookies and share no data with ad networks.</p>
-    <% end %>
-
-    <h2>How to control them</h2>
-    <p>You can delete and block cookies in your browser. Block the necessary ones and you won’t be able to sign in.<% if social %> To avoid partner cookies, don’t click partner links.<% end %></p>
+    <%= tag.h2 t("legal.cookies_page.advertising_heading") %>
+    <p><%= t("legal.cookies_page.advertising_body_html") %></p>
   <% end %>
+
+  <%= tag.h2 t("legal.cookies_page.control_heading") %>
+  <p><%= t("legal.cookies_page.control_body",
+           partner: social ? t("legal.cookies_page.control_partner_clause") : "") %></p>
 
   <nav>
     <%= link_to t("legal.privacy"), privacy_path %>

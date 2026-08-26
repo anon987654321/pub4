@@ -5,7 +5,7 @@
 </header>
 
 <% if @posts.any? %>
-  <ul class="post-feed feed_list">
+  <ul class="post-feed feed_list" id="bookmarks-list">
     <% @posts.each do |post| %>
       <li><%= render "posts/post", post: post %></li>
     <% end %>
@@ -17,4 +17,15 @@
         action: { label: t("empty.city_feed"), path: root_path } %>
 <% end %>
 
-<%= render "shared/pager", pagy: @pagy %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "BookmarksInfiniteScrollReflex#load_more",
+           sentinel_id: "bookmarks-sentinel" %>
+
+<%# The pager stays as the no-JS path. The sentinel needs a reflex round trip
+    over ActionCable, so without JavaScript a truncated list would say nothing
+    about the rest of itself — and this surface is also the only integration
+    coverage shared/_pager has across three apps and two pagy majors
+    (brgen/test/controllers/paginated_index_test.rb). noscript, so a reader
+    with JavaScript sees one mechanism rather than two. %>
+<noscript><%= render "shared/pager", pagy: @pagy %></noscript>

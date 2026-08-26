@@ -22,20 +22,20 @@
   <% end %>
   <dl role="list">
     <% if @place.address.present? %>
-      <dt>Address</dt>
+      <dt><%= t("maps.address") %></dt>
       <%= tag.dd @place.address %>
     <% end %>
-    <dt>Type</dt>
+    <dt><%= t("maps.kind") %></dt>
     <%= tag.dd @place.kind %>
     <% if @place.city %>
-      <dt>City</dt>
+      <dt><%= t("maps.city") %></dt>
       <%= tag.dd @place.city.name %>
     <% end %>
     <% if @place.neighborhood %>
-      <dt>Neighborhood</dt>
+      <dt><%= t("maps.neighborhood") %></dt>
       <%= tag.dd @place.neighborhood.name %>
     <% end %>
-    <dt>Coordinates</dt>
+    <dt><%= t("maps.coordinates") %></dt>
     <dd><%= @place.latitude %>, <%= @place.longitude %></dd>
   </dl>
 

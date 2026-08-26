@@ -1,89 +1,46 @@
-<% nb = I18n.locale.to_s.start_with?("nb", "nn") %>
 <% content_for :title, t("legal.privacy") %>
 <% contact = legal_contact_email %>
 <% social = legal_social_network? %>
 <% amber = legal_app_key == "amber" %>
 
-<%# single_h1: locale-branched — one of the two h1s renders per request %>
 <article class="legal-prose">
-  <% if nb %>
-    <p class="legal-eyebrow">Personvernerklæring</p>
-    <h1>Personvern hos <%= request.host %></h1>
-    <p class="legal-updated">Sist oppdatert 12. august 2026</p>
+  <p class="legal-eyebrow"><%= t("legal.privacy_page.eyebrow") %></p>
+  <h1><%= t("legal.privacy_page.heading", host: request.host) %></h1>
+  <p class="legal-updated"><%= t("legal.updated_on") %></p>
 
-    <p>Denne erklæringen forklarer hvilke opplysninger vi samler inn, hvorfor, og
-      hvilke rettigheter du har. Behandlingsansvarlig er den som driver dette
-      nettstedet. Vi oppgir ikke et organisasjonsnummer her fordi det ikke er
-      registrert et eget selskap for tjenesten. Spørsmål går til
-      <a href="mailto:<%= contact %>"><%= contact %></a>.</p>
+  <p><%= t("legal.privacy_page.intro_html", contact: mail_to(contact)) %></p>
 
-    <h2>Hva vi samler inn</h2>
-    <ul>
-      <li><strong>Konto</strong>: e-postadresse og valgt visningsnavn når du registrerer deg. Passord lagres kun som saltet hash.</li>
-      <% if social %>
-        <li><strong>Innhold du lager</strong>: innlegg, kommentarer, meldinger, bilder<% if amber %> og garderobedata (plagg, antrekk, brukshistorikk, glede)<% end %> du selv publiserer eller laster opp.</li>
-      <% else %>
-        <li><strong>Kontoaktivitet</strong>: kommentarer og overvåkningslister du selv oppretter på porter.</li>
-      <% end %>
-      <li><strong>Teknisk</strong>: en øktinformasjonskapsel som holder deg innlogget, og aggregert, ikke-identifiserende driftslogg for sikkerhet og feilretting.</li>
-      <% if social %>
-        <li><strong>Enhetsavtrykk</strong>: et førsteparts avtrykk av nettleseren, brukt til å begrense gjesteposting og spam. Det deles ikke med tredjepart og brukes ikke til reklame.</li>
-        <li><strong>Sted</strong>: kun omtrentlig posisjon, og bare hvis du selv aktiverer det for «i nærheten»-funksjoner. Vi lagrer aldri presis GPS.</li>
-      <% end %>
-    </ul>
-
+  <%= tag.h2 t("legal.privacy_page.collect_heading") %>
+  <ul>
+    <li><%= t("legal.privacy_page.account_item_html") %></li>
     <% if social %>
-      <h2>Reklame og partnerlenker</h2>
-      <p>Vi selger og viser <strong>vår egen annonseplass direkte</strong> når slike plasser er slått på. Førstepartsannonser deler ikke data med tredjeparts annonsenettverk. Enkelte lenker er <strong>partner-/affiliatelenker</strong>. Klikker du på en slik lenke, kan partneren sette en informasjonskapsel slik at et eventuelt kjøp tilskrives oss. Se <%= link_to "informasjonskapsler", cookies_path %>.</p>
+      <li><%= t("legal.privacy_page.content_item_html",
+                wardrobe: amber ? t("legal.privacy_page.content_wardrobe_clause") : "") %></li>
+    <% else %>
+      <li><%= t("legal.privacy_page.activity_item_html") %></li>
     <% end %>
-
-    <h2>Behandlingsgrunnlag</h2>
-    <p>Vi behandler kontodata for å oppfylle avtalen om å levere tjenesten (GDPR art. 6(1)(b)), sikkerhets- og driftslogg ut fra berettiget interesse (art. 6(1)(f))<% if social %>, og posisjon kun på grunnlag av ditt samtykke (art. 6(1)(a)), som du når som helst kan trekke tilbake<% end %>.</p>
-
-    <h2>Dine rettigheter</h2>
-    <p>Du har rett til innsyn, retting, sletting, dataportabilitet og til å protestere mot behandling. Du kan laste ned dataene dine og be om sletting fra kontoinnstillingene, eller kontakte oss. Du kan klage til Datatilsynet.</p>
-
-    <h2>Lagring og deling</h2>
-    <p>Vi selger aldri personopplysninger. Data lagres på produksjonsserveren i Europa og beholdes så lenge kontoen er aktiv. Sletter du kontoen, fjernes personopplysningene innen 30 dager, med unntak av det vi må beholde av rettslige grunner.</p>
-  <% else %>
-    <p class="legal-eyebrow">Privacy policy</p>
-    <h1>Privacy at <%= request.host %></h1>
-    <p class="legal-updated">Last updated 12 August 2026</p>
-
-    <p>This policy explains what we collect, why, and the rights you have. The
-      controller is the operator of this site. There is no registered company
-      number on file for the service. Questions go to
-      <a href="mailto:<%= contact %>"><%= contact %></a>.</p>
-
-    <h2>What we collect</h2>
-    <ul>
-      <li><strong>Account</strong>: your email and chosen display name at sign-up. Passwords are stored only as a salted hash.</li>
-      <% if social %>
-        <li><strong>Content you create</strong>: posts, comments, messages, images<% if amber %> and wardrobe data (garments, outfits, wear history, joy)<% end %> you choose to publish or upload.</li>
-      <% else %>
-        <li><strong>Account activity</strong>: comments and watch lists you create on ports.</li>
-      <% end %>
-      <li><strong>Technical</strong>: a session cookie that keeps you signed in, and aggregated, non-identifying operational logs for security and debugging.</li>
-      <% if social %>
-        <li><strong>Device fingerprint</strong>: a first-party browser fingerprint used to cap guest posts and slow spam. It is not shared with third parties and is not used for advertising.</li>
-        <li><strong>Location</strong>: approximate only, and only if you turn it on for “nearby” features. We never store precise GPS.</li>
-      <% end %>
-    </ul>
-
+    <li><%= t("legal.privacy_page.technical_item_html") %></li>
     <% if social %>
-      <h2>Advertising and partner links</h2>
-      <p>We sell and serve <strong>our own advertising directly</strong> when those slots are on. First-party ads share no data with third-party ad networks. Some links are <strong>partner / affiliate links</strong>. If you click one, the partner may set a cookie so a resulting purchase is attributed to us. See <%= link_to "cookies", cookies_path %>.</p>
+      <li><%= t("legal.privacy_page.fingerprint_item_html") %></li>
+      <li><%= t("legal.privacy_page.location_item_html") %></li>
     <% end %>
+  </ul>
 
-    <h2>Legal basis</h2>
-    <p>We process account data to perform our contract to provide the service (GDPR Art. 6(1)(b)), security and operational logs under legitimate interest (Art. 6(1)(f))<% if social %>, and location only on your consent (Art. 6(1)(a)), which you may withdraw at any time<% end %>.</p>
-
-    <h2>Your rights</h2>
-    <p>You have the right to access, rectify, erase and port your data, and to object to processing. You can export your data and request deletion from account settings, or contact us. You may lodge a complaint with your national data-protection authority.</p>
-
-    <h2>Storage and sharing</h2>
-    <p>We never sell personal data. Data is held on the production server in Europe and kept while your account is active. If you delete your account, personal data is removed within 30 days, except what we must retain for legal reasons.</p>
+  <% if social %>
+    <%= tag.h2 t("legal.privacy_page.ads_heading") %>
+    <p><%= t("legal.privacy_page.ads_body_html",
+             cookies: link_to(t("legal.privacy_page.ads_cookies_link"), cookies_path)) %></p>
   <% end %>
+
+  <%= tag.h2 t("legal.privacy_page.basis_heading") %>
+  <p><%= t("legal.privacy_page.basis_body",
+           location: social ? t("legal.privacy_page.basis_location_clause") : "") %></p>
+
+  <%= tag.h2 t("legal.privacy_page.rights_heading") %>
+  <p><%= t("legal.privacy_page.rights_body") %></p>
+
+  <%= tag.h2 t("legal.privacy_page.storage_heading") %>
+  <p><%= t("legal.privacy_page.storage_body") %></p>
 
   <nav>
     <%= link_to t("legal.terms"), terms_path %>

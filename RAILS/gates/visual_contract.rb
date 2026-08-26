@@ -26,6 +26,15 @@ DEFAULT_DRIFT_MAX_RATIO = "0.25"
 # under any Rails app bundle:
 #   bundle exec ruby ../visual_contract_gate.rb --capture --base http://127.0.0.1:3000 --app brgen
 module VisualContractGate
+  ACCESSIBILITY_PROBE = <<~JS
+    return [
+      ...[...document.querySelectorAll('img:not([alt])')].map(() => 'image_without_alt'),
+      ...[...document.querySelectorAll('button')].filter((el) => !(el.innerText.trim() || el.getAttribute('aria-label'))).map(() => 'button_without_name'),
+      ...(document.querySelectorAll('h1').length !== 1 ? ['heading_one_count'] : []),
+      ...[...document.querySelectorAll('input:not([type=hidden]), textarea, select')].filter((el) => !(el.labels?.length || el.getAttribute('aria-label'))).map(() => 'field_without_label')
+    ];
+  JS
+
   VIEWPORTS = {
     desktop: [1440, 900],
     compact: [1024, 768],
@@ -71,14 +80,7 @@ module VisualContractGate
   end
 
   def accessibility_violations(driver)
-    driver.execute_script(<<~JS)
-      return [
-        ...[...document.querySelectorAll('img:not([alt])')].map(() => 'image_without_alt'),
-        ...[...document.querySelectorAll('button')].filter((el) => !(el.innerText.trim() || el.getAttribute('aria-label'))).map(() => 'button_without_name'),
-        ...(document.querySelectorAll('h1').length !== 1 ? ['heading_one_count'] : []),
-        ...[...document.querySelectorAll('input:not([type=hidden]), textarea, select')].filter((el) => !(el.labels?.length || el.getAttribute('aria-label'))).map(() => 'field_without_label')
-      ];
-    JS
+    driver.execute_script(ACCESSIBILITY_PROBE)
   end
 
   # Diffs the prior screenshot at the same path (rolling baseline from the last
@@ -151,6 +153,43 @@ module VisualContractGate
       hard:, soft: strict ? [] : soft,
       drift: { states: drifted.length, pixels: drifted.sum { |row| row[:pixel_diff_count].to_i }, worst_ratio: worst },
     }
+  end
+
+  # States that fetched the same bytes from different routes.
+  #
+  # `grade` answers "did any cell fail"; `measured.zero?` answers "did anything
+  # navigate". Neither answers "did each cell measure its own page", and the
+  # committed manifests say several did not: bsdports carried one screenshot SHA
+  # across all eight of its states, amber across eight of its ten, and brgen's
+  # marketplace lenses recorded the apex routes, because a vertical lives on a
+  # subdomain this crawl cannot reach by port on 127.0.0.1. One live row covered
+  # for seventeen dead ones, and every accessibility and drift number was then
+  # one page counted eighteen times.
+  #
+  # Grouped per viewport, because the same route at two widths is the matrix
+  # doing its job. Two routes and one image is not.
+  def identical_captures(results)
+    results.group_by { |row| [ row[:viewport], row[:screenshot_sha256] ] }
+           .select { |(_, sha), rows| sha && distinct_documents(rows) > 1 }
+  end
+
+  # Two cells whose routes differ only after the "#" asked for the same
+  # document, and a screenshot of one document is the same bytes twice — a
+  # fragment moves the viewport, not the page. bsdports declares three lenses
+  # that way (detail, advisory and dependency all fetch /ports/1), and calling
+  # those a blind cell would be wrong: it is one document, deliberately looked
+  # at three times.
+  #
+  # Worth knowing all the same, because those three states contribute one
+  # measurement between them rather than three, so any count they produce is
+  # tripled. fragment_only_captures reports that, as a warning.
+  def distinct_documents(rows)
+    rows.map { |row| row[:route].to_s.split("#").first }.uniq.length
+  end
+
+  def fragment_only_captures(results)
+    results.group_by { |row| [ row[:viewport], row[:screenshot_sha256] ] }
+           .select { |(_, sha), rows| sha && rows.length > 1 && distinct_documents(rows) == 1 }
   end
 
   # Raised, not returned, so the caller decides the exit code. A missing driver
@@ -245,6 +284,28 @@ if measured.zero?
   warn "visual_contract: no state navigated (#{results.length} attempted) — Chrome and a booted app are required"
   warn "visual_contract: nothing measured, so nothing is claimed"
   exit 3
+end
+
+# The other half of the same question, and the half that was missing: a run can
+# navigate every cell and still measure nothing by fetching the same page for
+# each of them. See VisualContractGate.identical_captures for what the
+# committed manifests recorded.
+duplicates = VisualContractGate.identical_captures(results)
+unless duplicates.empty?
+  warn "visual_contract: states that captured an identical page from different routes —"
+  duplicates.each do |(viewport, sha), rows|
+    cells = rows.map { |row| "#{row[:state]}(#{row[:route]})" }.join(" ")
+    warn "  #{viewport} #{sha[0, 8]}: #{cells}"
+  end
+  warn "visual_contract: those cells measured nothing of their own"
+  exit 1
+end
+
+VisualContractGate.fragment_only_captures(results).each do |(viewport, sha), rows|
+  cells = rows.map { |row| row[:state] }.join(", ")
+  document = rows.first[:route].to_s.split("#").first
+  warn "visual_contract: #{viewport} #{sha[0, 8]} — #{cells} are one document (#{document}); " \
+       "their counts are that page measured #{rows.length}x"
 end
 
 drift = verdict[:drift]

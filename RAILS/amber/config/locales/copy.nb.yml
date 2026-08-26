@@ -4,11 +4,20 @@
 # They move into nb.yml when it is quiet.
 nb:
   ai:
+    capsule_actions_label: "Kapselhandlinger"
+    capsule_header_label: "Kapselgarderobe"
+    heuristic_source: "lokal heuristikk (ingen OpenRouter-nøkkel eller tom modell)"
+    palette: "Palett:"
+    seasonal_type: "Sesongtype:"
+    suggestions: "Forslag"
     analysis_unavailable: "Analysen er ikke tilgjengelig"
     capsule_builder: "Kapselbygger"
     clashing_items: "Plagg som skurrer"
     suggested_outfits: "Foreslåtte antrekk for %{days} dager i %{climate}"
   creator:
+    profile_label: "Skaperprofil"
+    remix_friendly: "Remiksvennlig garderobe"
+    showcase: "Utstilling"
     showcase_items: "Plagg i utstillingen"
   demo:
     wardrobe: "Demogarderobe"
@@ -17,6 +26,14 @@ nb:
     all_pieces: "Alle plagg"
     spark_joy: "Gir glede"
   outfits:
+    actions_label: "Antrekkhandlinger"
+    edit_heading: "Rediger %{name}"
+    edit_title: "Rediger antrekk"
+    fallback_context: "Antrekk"
+    header_label: "Antrekk"
+    items_section: "Plagg"
+    new_header_label: "Nytt antrekk"
+    remove_item: "Fjern"
     add_item: "Legg til plagg"
     style_combinations: "Stilkombinasjoner"
     style_intelligence: "Stilinnsikt"

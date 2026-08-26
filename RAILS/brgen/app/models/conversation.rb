@@ -145,8 +145,17 @@ class Conversation < ApplicationRecord
     messages.where(created_at: (Time.current - ACTIVE_WINDOW_SECONDS)..).distinct.count(:sender_id)
   end
 
+  # find_or_create_by! is a read then a write, and two joins of the same room
+  # interleave between the halves. The unique index added in
+  # 20260825120000 is what actually stops the second write; this rescue is how
+  # the loser of that race gets the winner's row instead of a 500. Without both,
+  # a duplicate row split `last_read_at` and the unread badge never cleared.
   def join!(user, role: "member")
-    membership = conversation_participants.find_or_create_by!(user_id: user.id)
+    membership = begin
+      conversation_participants.find_or_create_by!(user_id: user.id)
+    rescue ActiveRecord::RecordNotUnique
+      conversation_participants.find_by!(user_id: user.id)
+    end
     # Only ever raise a role (member -> voice -> op); a bot re-seated or a human
     # re-opening the room never loses its mode.
     if ConversationParticipant::RANK.fetch(role, 0) > ConversationParticipant::RANK.fetch(membership.role, 0)

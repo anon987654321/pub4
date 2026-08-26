@@ -1,5 +1,10 @@
 nb:
   actions:
+    copy: "Kopier"
+    copied: "Kopiert"
+    views:
+      one: "1 visning"
+      other: "%{count} visninger"
     copyable_text: "Tekst som skal kopieres"
     show: "Vis"
     hide: "Skjul"
@@ -161,6 +166,8 @@ nb:
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
+    advertisement: "Annonse"
+    reported: "Rapportert"
     view: "Vis"
     read_more: "Les mer"
     read_less: "Vis mindre"

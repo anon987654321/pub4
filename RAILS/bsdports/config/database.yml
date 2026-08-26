@@ -10,9 +10,28 @@ default: &default
   pool: <%= ENV.fetch("FALCON_WORKERS", ENV.fetch("RAILS_MAX_THREADS") { 5 }) %>
   timeout: 5000
 
+# Four databases in every environment, matching production. amber and
+# bsdports declared one here and four under production:, so Solid Cache,
+# Solid Queue and Action Cable first ran against their own database on vm23
+# and nowhere else — a Solid Queue bug in either app could only appear in
+# production. brgen has always declared all four everywhere; this is that
+# shape.
 development:
-  <<: *default
-  database: storage/development.sqlite3
+  primary:
+    <<: *default
+    database: storage/development.sqlite3
+  cache:
+    <<: *default
+    database: storage/development_cache.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/development_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/development_cable.sqlite3
+    migrations_paths: db/cable_migrate
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -25,11 +44,25 @@ development:
 # file, and with journal_mode WAL and a 5s timeout the loser gets
 # SQLite3::BusyException on every test. Unset it and nothing changes.
 test:
-  <<: *default
-  database: storage/test<%= ENV["TEST_DB_ID"] %>.sqlite3
+  primary:
+    <<: *default
+    database: storage/test<%= ENV["TEST_DB_ID"] %>.sqlite3
+  cache:
+    <<: *default
+    database: storage/test_cache<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/test_queue<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/test_cable<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/cable_migrate
 
-# Store production database in the storage/ directory, which by default
-# is mounted as a persistent Docker volume in config/deploy.yml.
+# Production databases live in storage/, which the copy-tree deploy syncs to
+# /home/<app>/app/storage on vm23. (There is no container and no deploy.yml —
+# this tree deploys with openrsync and rc.d on OpenBSD.)
 production:
   primary:
     <<: *default

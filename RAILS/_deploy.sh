@@ -57,16 +57,22 @@ deploy_tracked_app() {
   doas mkdir -p "$bundle_home"
 
   if [[ ! -d ${bundle_home}/gems ]]; then
+  # sync_tree, not a bare openrsync. sync_tree tries openrsync, retries without
+  # --delete, and falls back to a tar copy; these four calls had no fallback at
+  # all -- so the one operation on this box that is allowed to fail quietly was
+  # also the one whose failure leaves an app with no gems. BLOCKERS.md #4 named
+  # the asymmetry. The trailing 0 is "do not delete the destination first": a
+  # bundle cache is merged into, never replaced.
     if [[ -d ${SHARED_BUNDLE_CACHE}/gems ]]; then
       log "Bootstrapping gems from ${SHARED_BUNDLE_CACHE}"
       doas mkdir -p "${bundle_home}/gems" "${bundle_home}/cache"
-      doas openrsync -a "${SHARED_BUNDLE_CACHE}/gems/" "${bundle_home}/gems/"
-      [[ -d ${SHARED_BUNDLE_CACHE}/cache ]] && doas openrsync -a "${SHARED_BUNDLE_CACHE}/cache/" "${bundle_home}/cache/" || true
+      sync_tree "${SHARED_BUNDLE_CACHE}/gems" "${bundle_home}/gems" 0
+      [[ -d ${SHARED_BUNDLE_CACHE}/cache ]] && sync_tree "${SHARED_BUNDLE_CACHE}/cache" "${bundle_home}/cache" 0 || true
     elif [[ -d /home/amber/.bundle/gems && ${bundle_home} != /home/amber/.bundle ]]; then
       log "Bootstrapping gems from /home/amber/.bundle"
       doas mkdir -p "${bundle_home}/gems" "${bundle_home}/cache"
-      doas openrsync -a /home/amber/.bundle/gems/ "${bundle_home}/gems/"
-      [[ -d /home/amber/.bundle/cache ]] && doas openrsync -a /home/amber/.bundle/cache/ "${bundle_home}/cache/" || true
+      sync_tree /home/amber/.bundle/gems "${bundle_home}/gems" 0
+      [[ -d /home/amber/.bundle/cache ]] && sync_tree /home/amber/.bundle/cache "${bundle_home}/cache" 0 || true
     else
       log_warn "No shared bundle cache found; bundle install will resolve gems normally"
     fi

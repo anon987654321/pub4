@@ -307,6 +307,38 @@ passed = outcomes.count { |_, o| o == :passed }
 
 puts "\n#{'=' * 50}"
 
+# Whether the browser-backed half of this run measured anything.
+#
+# Those gates degrade to a warning without Chrome rather than failing, which
+# is right — a missing browser is a property of the machine, not a verdict
+# about the tree — but it means a green `--all` says nothing about them unless
+# you separately know Chrome was there. The committed visual manifests are the
+# argument for saying it out loud: eighteen declared states, three actual
+# pages, and every summary printed above them read PASSED.
+#
+# One line, printed with the verdict. It never changes an exit code.
+BROWSER_BACKED = %w[
+  rendered_suite rendered_invariants rendered_geometry webgl_surfaces viewport_spill
+  layout_snapshot journey_invariant reflow keyboard_flow mobile_flow cross_app
+  occlusion page_simulation visual_contract
+].freeze
+
+browser_gates = gates_to_run & BROWSER_BACKED
+if browser_gates.any?
+  chrome = begin
+    require_relative "support/cdp_session"
+    Deploy::CdpSession.available?
+  rescue StandardError
+    false
+  end
+  if chrome
+    puts "[gates] browser: Chrome present — #{browser_gates.size} browser-backed gate(s) could measure"
+  else
+    puts "[gates] browser: NO Chrome — #{browser_gates.size} browser-backed gate(s) degraded to " \
+         "warnings and measured nothing (#{browser_gates.join(', ')})"
+  end
+end
+
 # Printed before the verdict and independently of it, because it is the one line
 # that changes what the rest of the summary means. An errored gate blocked
 # nothing (fail-open), so a run can say ALL PASSED while a gate that would have

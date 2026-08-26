@@ -8,5 +8,5 @@
 </header>
 
 <%= tag.p @live_stream.description %>
-<% if @live_stream.scheduled_at %><p>Scheduled: <%= @live_stream.scheduled_at %></p><% end %>
+<% if @live_stream.scheduled_at %><p><%= t("live_streams.scheduled_at", at: l(@live_stream.scheduled_at, format: :short)) %></p><% end %>
 <%= link_to t("live_streams.all"), live_streams_path, class: "btn" %>

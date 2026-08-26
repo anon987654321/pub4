@@ -39,7 +39,7 @@
       <% if s["description"].present? %>
         <p><%= tag.strong t("ai.why_it_works") %> <%= s["description"] %></p>
       <% end %>
-      <% if s["source"] %><p>Source: <%= s["source"] %></p><% end %>
+      <% if s["source"] %><p><%= t("ai.source", source: s["source"]) %></p><% end %>
       <% if s["outfit_id"] %>
         <p><%= link_to t("actions.view_outfit", default: "View outfit"), outfit_path(s["outfit_id"]), class: "btn" %></p>
       <% end %>

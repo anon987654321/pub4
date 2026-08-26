@@ -10,8 +10,8 @@ class ActivityEventVisibilityTest < ActiveSupport::TestCase
   teardown { ActsAsTenant.current_tenant = nil }
 
   test "public_only keeps private activity off the profile" do
-    pub  = ActivityEvent.create!(actor: @user, source_vertical: "social", event_name: "PostCreated",  object_type: "Post", object_id: 1, visibility: "public",  moderation_state: "clean")
-    priv = ActivityEvent.create!(actor: @user, source_vertical: "dating", event_name: "DatingLike",    object_type: "User", object_id: 2, visibility: "private", moderation_state: "clean")
+    pub  = ActivityEvent.create!(actor: @user, source_vertical: "social", event_name: "PostCreated",  subject_type: "Post", subject_id: 1, visibility: "public",  moderation_state: "clean")
+    priv = ActivityEvent.create!(actor: @user, source_vertical: "dating", event_name: "DatingLike",    subject_type: "User", subject_id: 2, visibility: "private", moderation_state: "clean")
     ids = ActivityEvent.visible.public_only.where(actor_id: @user.id).pluck(:id)
     assert_includes ids, pub.id
     assert_not_includes ids, priv.id, "a private dating like must never surface on a profile"
@@ -20,7 +20,7 @@ class ActivityEventVisibilityTest < ActiveSupport::TestCase
   test "for_city_home keeps another city's listing off this city's strip" do
     foreign = ActivityEvent.create!(
       actor: @user, source_vertical: "marketplace", event_name: "ListingCreated",
-      object_type: "Marketplace::Listing", object_id: 9_999_999,
+      subject_type: "Marketplace::Listing", subject_id: 9_999_999,
       locality: "Oslo", visibility: "public", moderation_state: "clean"
     )
     category = Marketplace::Category.create!(name: "Chairs", slug: "chairs-#{SecureRandom.hex(4)}")
@@ -30,7 +30,7 @@ class ActivityEventVisibilityTest < ActiveSupport::TestCase
     )
     local = ActivityEvent.create!(
       actor: @user, source_vertical: "marketplace", event_name: "ListingCreated",
-      object_type: "Marketplace::Listing", object_id: listing.id,
+      subject_type: "Marketplace::Listing", subject_id: listing.id,
       visibility: "public", moderation_state: "clean"
     )
 

@@ -2,6 +2,11 @@
 # Apps can override any key in their own config/locales.
 en:
   actions:
+    copy: "Copy"
+    copied: "Copied"
+    views:
+      one: "1 view"
+      other: "%{count} views"
     copyable_text: "Text to copy"
     show: "Show"
     hide: "Hide"
@@ -163,6 +168,8 @@ en:
   # flash: block without colliding, and because the call sites say
   # t("shared.flash.…") — appended at top level they resolved to nothing at all.
   shared:
+    advertisement: "Advertisement"
+    reported: "Reported"
     view: "View"
     read_more: "Read more"
     read_less: "Read less"

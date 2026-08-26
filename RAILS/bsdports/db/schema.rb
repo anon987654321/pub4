@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_25_121000) do
   create_table "categories", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -82,6 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
     t.index ["created_at"], name: "index_outbound_clicks_on_created_at"
     t.index ["merchant", "created_at"], name: "index_outbound_clicks_on_merchant_and_created_at"
     t.index ["subject_type", "subject_id"], name: "index_outbound_clicks_on_subject_type_and_subject_id"
+    t.index ["user_id", "created_at"], name: "index_outbound_clicks_on_user_id_and_created_at"
   end
 
   create_table "platforms", force: :cascade do |t|

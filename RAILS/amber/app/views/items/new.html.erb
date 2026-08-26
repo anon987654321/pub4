@@ -1,5 +1,5 @@
 <% content_for :title, t("pages.add_item") %>
-<header role="banner" aria-label="Add wardrobe item header">
+<header role="banner" aria-label="<%= t("items.add_header_label") %>">
   <%= tag.h1 t("pages.add_item") %>
 </header>
 <turbo-frame aria-live="polite" id="amber-item-form" data-turbo-action="replace">

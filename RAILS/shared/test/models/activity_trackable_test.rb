@@ -16,7 +16,7 @@ class ActivityTrackableTest < Minitest::Test
 
   def test_recorder_noops_without_activity_event_model
     assert_nil Shared::ActivityEventRecorder.call(
-      actor: nil, event_name: "Test", object: Object.new, source_vertical: "test",
+      actor: nil, event_name: "Test", subject: Object.new, source_vertical: "test",
     )
   end
 end

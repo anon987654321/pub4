@@ -155,6 +155,8 @@ en:
     query: "Search query"
     submit: "Search"
   pages:
+    edit_item: "Edit"
+    edit_item_heading: "Edit %{name}"
     wardrobe: "Wardrobe"
     outfits: "Outfits"
     messages: "Messages"
@@ -363,6 +365,9 @@ en:
     action: "Install"
 
   items:
+    add_header_label: "Add wardrobe item"
+    mood_label: "Mood: %{mood}"
+    worn_times_short: "Worn %{count}×"
     occasion_tags: "work, casual, formal"
     worn_today: "Worn today"
     no_joy: "Doesn't spark joy"
@@ -424,6 +429,7 @@ en:
       photo_polish_skipped: "No photo polish"
       no_photos: "No photo polish"
       pending: "Pending media"
+      pending_no_worker: "Queued — media processing is off on this server"
       legacy: "Legacy media status (polish pipeline)"
     photo_processing_html: "<strong>Photo processing:</strong> uploads stay attached to your private wardrobe record. Amber creates garment segmentation, background-cleanup, colour and responsive derivatives for outfit matching. Deleting the item removes its attachments; archiving keeps them and is reversible."
     archiving_safer: "Archiving is safer. Permanent deletion removes the item record and its attached photos."
@@ -479,6 +485,7 @@ en:
     select_outfit: "Select outfit…"
     browse_outfits: "Browse outfits"
   live_streams:
+    scheduled_at: "Scheduled: %{at}"
     title: "Style sessions"
     all: "All style sessions"
     schedule_region: "Schedule style session"

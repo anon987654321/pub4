@@ -1,11 +1,11 @@
 <% content_for :title, t("pages.capsule") %>
 
-<header role="banner" aria-label="Capsule optimizer header">
+<header role="banner" aria-label="<%= t("ai.capsule_header_label") %>">
   <hgroup>
     <p><%= t("ai.capsule_builder") %></p>
     <%= tag.h1 t("pages.capsule_title") %>
   </hgroup>
-  <nav role="navigation" aria-label="Capsule actions">
+  <nav role="navigation" aria-label="<%= t("ai.capsule_actions_label") %>">
     <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
     <%= link_to t("nav.outfits"), outfits_path, class: "btn" %>
   </nav>

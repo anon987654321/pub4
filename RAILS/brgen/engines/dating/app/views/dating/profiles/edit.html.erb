@@ -11,7 +11,7 @@
     <%= render "shared/errors", object: @profile %>
 
     <fieldset class="dating-profile-essentials">
-      <legend class="visually-hidden">Essentials</legend>
+      <legend class="visually-hidden"><%= t("dating.essentials") %></legend>
       <% if @profile.photos.attached? %>
         <div class="field">
           <%= t("dating.current_photos") %>

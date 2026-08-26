@@ -23,7 +23,7 @@
   <% end %>
   <p><%= t("playlist.privacy.#{@set.privacy.presence || "public"}") %> · <%= t("playlist.tracks", count: @tracks.count) %> · <%= @set.formatted_duration %></p>
   <% if @set.collaborative? %>
-    <p>Collaborative</p>
+    <p><%= t("playlist.collaborative") %></p>
   <% end %>
   <% if authenticated? %>
     <div class="cluster">

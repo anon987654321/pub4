@@ -1,16 +1,9 @@
 <%= turbo_frame_tag "live-streams" do %>
   <section aria-label="<%= t("live_streams.scheduled_region") %>">
     <% if @live_streams.any? %>
-      <% @live_streams.each do |stream| %>
-        <article>
-          <h2><%= link_to stream.title, live_stream_path(stream) %></h2>
-          <p><%= live_stream_status_label(stream.status) %> · <%= stream.scheduled_at || stream.created_at %></p>
-          <% if stream.user_id == Current.user.id %>
-            <%= button_to t("live_streams.mark_live"), live_stream_path(stream), method: :patch, params: { start: true }, class: "btn", data: { turbo_frame: "live-streams" } if stream.status == "scheduled" %>
-            <%= button_to t("live_streams.mark_ended"), live_stream_path(stream), method: :patch, params: { end: true }, class: "btn", data: { turbo_frame: "live-streams" } if stream.status == "live" %>
-          <% end %>
-        </article>
-      <% end %>
+      <ul role="list" id="amber-live-streams">
+        <%= render partial: "live_streams/stream_row", collection: @live_streams, as: :live_stream %>
+      </ul>
     <% else %>
       <%= render "shared/empty_state",
             title: t("empty.no_sessions"),

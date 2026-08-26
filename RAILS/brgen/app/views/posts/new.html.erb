@@ -34,9 +34,9 @@
               data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
         <div class="tiptap_mount tiptap_mount--post" data-tiptap-editor-target="mount" hidden></div>
         <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
-          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
-          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
-          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><b>B</b></button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><i>i</i></button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">•</button>
         </div>
         <%# Bottom-right, inside the field, and quiet until you are typing — it
             used to render "10,000" above an empty editor, where it read as a

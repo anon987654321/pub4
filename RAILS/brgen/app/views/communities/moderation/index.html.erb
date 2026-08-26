@@ -60,6 +60,11 @@
       <% end %>
     </tbody>
   </table>
+
+  <%# A queue with pagy and no control: a community with more than a page of
+      open reports could only ever work the first one, and the two counts in
+      the header said how much was out of reach without offering a way to it. %>
+  <%= render "shared/pager", pagy: @pagy, label: t("community.mod_queue") %>
 <% else %>
   <%# NO_DEAD_ENDS: an empty moderation queue is the good state, and it still
       needs somewhere to go. Back to the community the moderator came from — the

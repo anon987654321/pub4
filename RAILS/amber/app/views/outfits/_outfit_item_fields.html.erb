@@ -6,5 +6,5 @@
     <%= f.select :item_id, Current.user.items.order(:title).map { |item| [item.title, item.id] }, { include_blank: "Select item…" } %>
   </div>
   <%= f.hidden_field :_destroy %>
-  <button type="button" class="btn-link" data-action="nested-form#remove">Remove</button>
+  <button type="button" class="btn-link" data-action="nested-form#remove"><%= t("outfits.remove_item") %></button>
 </div>

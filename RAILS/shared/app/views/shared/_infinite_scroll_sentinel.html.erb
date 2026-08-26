@@ -21,6 +21,12 @@
        <% if local_assigns[:channel_slug].present? %>data-channel-slug="<%= channel_slug %>"<% end %>
        <% if local_assigns[:feed].present? %>data-feed="<%= feed %>"<% end %>
        <% if local_assigns[:maintainer_id].present? %>data-maintainer-id="<%= maintainer_id %>"<% end %>
+       <%# Sixteen named pass-throughs above, one per filter any surface has
+           ever needed, and every new surface added a seventeenth. `data:` is
+           the escape hatch: pass a hash and it becomes data-* attributes, so
+           a reflex that needs a key nobody anticipated does not edit this
+           partial. The named ones stay — they are in eighteen call sites. %>
+       <%= tag.attributes(data: local_assigns[:data]) if local_assigns[:data].present? %>
        aria-live="polite">
     <%= t("status.loading_more") %>
   </div>

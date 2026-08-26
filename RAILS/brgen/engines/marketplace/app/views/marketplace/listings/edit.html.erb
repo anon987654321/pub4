@@ -15,7 +15,7 @@
     <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
     <details class="advanced-fields">
-      <summary>Precise coordinates (optional)</summary>
+      <summary><%= t("marketplace.precise_coordinates") %></summary>
       <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001", min: -90, max: 90 %></div>
       <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001", min: -180, max: 180 %></div>
     </details>

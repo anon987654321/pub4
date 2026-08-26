@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
-  include Pagy::Frontend
+  # Pagy::Frontend is gone in pagy 43 and amber calls no pagy_* helper — every
+  # paginated view in all three apps renders through shared/_pager, which reads
+  # the Pagy object directly. Including a module for helpers nothing calls was
+  # the one line standing between this app and the version the others are on.
 
   # Named ActiveStorage presets preprocessed by WardrobeMediaJob. Prefer these
   # so list/detail pages do not invent resize_to_limit widths the job never built
@@ -20,18 +23,43 @@ module ApplicationHelper
     WardrobeAi.master_photograph_available?
   end
 
-  def analysis_status_label(status)
-    key = case status.to_s
-    when "photo_polish_done" then "photo_polish_done"
-    when "photo_polish_failed" then "photo_polish_failed"
-    when "photo_polish_skipped", "no_photos" then status.to_s
-    when "pending" then "pending"
-    when /segmentation|background/ then "legacy"
-    end
-    return t("items.analysis.#{key}") if key
-
-    status.to_s.humanize
+# "Pending media" is only true while something is going to pick the job up.
+#
+# amber enqueues its media work — polish, fingerprinting, analysis — and on
+# vm23 no Solid Queue supervisor is resident for this app: OPENBSD/data/debt.yml
+# records the decision (1 GB, exactly one resident worker, brgen_jobs) and the
+# rc.d footer measured 103 jobs enqueued and 0 finished. So a garment uploaded
+# today shows "Pending media" and will show it forever, and the person who
+# uploaded it has no way to learn that pending is the terminal state here.
+#
+# That is the shape payment_honesty, affiliate_honesty and content_honesty all
+# exist to refuse: a label that describes an intention rather than a fact. When
+# no worker is registered the label says so instead.
+def analysis_status_label(status)
+  key = case status.to_s
+  when "photo_polish_done" then "photo_polish_done"
+  when "photo_polish_failed" then "photo_polish_failed"
+  when "photo_polish_skipped", "no_photos" then status.to_s
+  when "pending" then media_worker_running? ? "pending" : "pending_no_worker"
+  when /segmentation|background/ then "legacy"
   end
+  return t("items.analysis.#{key}") if key
+
+  status.to_s.humanize
+end
+
+# One query per request at most, and it degrades to "yes" rather than
+# announcing an outage on its own: a missing table or an unreachable queue
+# database is this check failing, not the worker being absent.
+def media_worker_running?
+  return @media_worker_running if defined?(@media_worker_running)
+
+  @media_worker_running = Rails.cache.fetch("amber:queue:worker_present", expires_in: 1.minute) do
+    SolidQueue::Process.where(last_heartbeat_at: 5.minutes.ago..).exists?
+  rescue StandardError
+    true
+  end
+end
 
   def live_stream_status_label(status)
     t("live_streams.status.#{status}", default: status.to_s)

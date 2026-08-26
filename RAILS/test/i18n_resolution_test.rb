@@ -44,8 +44,16 @@ class I18nResolutionTest < Minitest::Test
   # because Rails loads the whole directory and amber splits its into three
   # files — en.yml, copy.en.yml and validations.en.yml — of which this used to
   # read one.
+  #
+  # The mountable engines are here for the same reason they are in keys_used_by,
+  # and it is the same blind spot in the other direction: this side globbed only
+  # the host, so the first engine to carry its own config/locales — every one of
+  # them does now — reported its keys as unresolved. Rails::Engine appends
+  # config/locales/*.yml to I18n.load_path with no wiring, so a key defined
+  # there resolves in the mounting app exactly like a host key.
   def app_keys(app, locale)
     paths = Dir.glob(File.join(ROOT, "#{app}/config/locales/*#{locale}.yml")) +
+            Dir.glob(File.join(ROOT, "#{app}/engines/*/config/locales/*#{locale}.yml")) +
             Dir.glob(File.join(ROOT, "shared/config/locales/*.#{locale}.yml"))
     paths.each_with_object({}) { |path, out| out.merge!(flat_keys(path.sub("#{ROOT}/", ""))) }
   end

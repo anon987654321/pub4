@@ -1,0 +1,124 @@
+# The legal pages, as text rather than as markup.
+#
+# cookies/terms/privacy were one template each holding both languages behind
+# `<% if nb %>`, so the whole document existed twice in the same file. Nothing
+# was wrong with what it rendered. What it cost: no translator could reach the
+# pages, the two halves each carried their own hand-typed "last updated" date
+# and could drift without anything noticing, a third locale meant a third
+# branch, and the one body of text most likely to need a lawyer's edit was the
+# one body of text the locale parity check could not see.
+#
+# The conditional clauses stay conditional: %{dating}, %{wardrobe}, %{ugc},
+# %{location} and %{partner} are interpolated with either their clause key or
+# "", so the sentences read exactly as they did.
+en:
+  legal:
+    updated_on: Last updated 12 August 2026
+    cookies_page:
+      eyebrow: Cookies
+      heading: Cookies on %{host}
+      intro_html: We keep cookie use to a minimum. We run <strong>no third-party advertising
+        or tracking networks</strong> and build no cross-site profile of you.
+      necessary_heading: Strictly necessary
+      necessary_body: A session cookie keeps you signed in and protects forms against
+        forgery (CSRF). Sign-in doesn’t work without it. It needs no consent.
+      fingerprint_heading: Device fingerprint
+      fingerprint_body: A first-party browser fingerprint caps how much a guest can
+        post from one device and slows spam. It is not a third-party cookie, it is
+        not sold, and it is not used to show you ads.
+      partner_heading: Partner / affiliate
+      partner_body: If you click a partner link, the partner — for example TradeDoubler
+        or Amazon Associates — may set a cookie on their side to attribute a resulting
+        purchase to us. We don’t set it ourselves, and it isn’t used to show you ads
+        here.
+      advertising_heading: Advertising
+      advertising_body_html: The ads we show are <strong>first-party</strong> and
+        sold directly by us when those slots are on. They set no tracking cookies
+        and share no data with ad networks.
+      control_heading: How to control them
+      control_body: You can delete and block cookies in your browser. Block the necessary
+        ones and you won’t be able to sign in.%{partner}
+      control_partner_clause: " To avoid partner cookies, don’t click partner links."
+    terms_page:
+      eyebrow: Terms of use
+      heading: Terms for %{host}
+      intro: By using this site you accept these terms. If you don’t read them, you
+        shouldn’t use the service.
+      who_heading: Who can use it
+      who_body: You must be at least 16 to hold an account%{dating}. You are responsible
+        for activity on your account.
+      who_dating_clause: ", and at least 18 for the dating features"
+      content_heading: Your content
+      content_body: You keep the rights to what you post%{wardrobe}. You grant us
+        a non-exclusive licence to display and distribute that content as part of
+        the service. You warrant that you have the right to share what you upload
+        and that it does not infringe anyone else’s rights.
+      content_wardrobe_clause: ", including garment and outfit photos"
+      acceptable_heading: Acceptable use
+      acceptable_body: Don’t post unlawful, hateful, deceptive or infringing content,
+        don’t harass others, and don’t abuse the service with spam or automated attacks.
+        We may remove content and suspend accounts that break these rules.
+      catalogue_heading: The catalogue
+      catalogue_body: Port descriptions come from OpenBSD sources and are a search
+        index, not a substitute for the official documentation. Never install a package
+        without checking your own mirror.
+      partner_heading: Advertising and partner links
+      partner_body_html: The site may be funded by our own advertising and by partner
+        / affiliate programmes. If you buy through a partner link, we may earn a commission.
+        See %{privacy} and %{cookies}.
+      partner_privacy_link: privacy
+      partner_cookies_link: cookies
+      liability_heading: Liability
+      liability_body: The service is provided “as is”. To the extent the law allows,
+        we are not liable for indirect losses arising from use of the service.%{ugc}
+      liability_ugc_clause: " User-generated content is the responsibility of the
+        user who posted it."
+      termination_heading: Termination and governing law
+      termination_body: You may delete your account at any time. We may terminate
+        accounts that breach these terms. Norwegian law applies, with venue in Bergen.
+    privacy_page:
+      eyebrow: Privacy policy
+      heading: Privacy at %{host}
+      intro_html: This policy explains what we collect, why, and the rights you have.
+        The controller is the operator of this site. There is no registered company
+        number on file for the service. Questions go to %{contact}.
+      collect_heading: What we collect
+      account_item_html: "<strong>Account</strong>: your email and chosen display
+        name at sign-up. Passwords are stored only as a salted hash."
+      content_item_html: "<strong>Content you create</strong>: posts, comments, messages,
+        images%{wardrobe} you choose to publish or upload."
+      content_wardrobe_clause: " and wardrobe data (garments, outfits, wear history,
+        joy)"
+      activity_item_html: "<strong>Account activity</strong>: comments and watch lists
+        you create on ports."
+      technical_item_html: "<strong>Technical</strong>: a session cookie that keeps
+        you signed in, and aggregated, non-identifying operational logs for security
+        and debugging."
+      fingerprint_item_html: "<strong>Device fingerprint</strong>: a first-party browser
+        fingerprint used to cap guest posts and slow spam. It is not shared with third
+        parties and is not used for advertising."
+      location_item_html: "<strong>Location</strong>: approximate only, and only if
+        you turn it on for “nearby” features. We never store precise GPS."
+      ads_heading: Advertising and partner links
+      ads_body_html: We sell and serve <strong>our own advertising directly</strong>
+        when those slots are on. First-party ads share no data with third-party ad
+        networks. Some links are <strong>partner / affiliate links</strong>. If you
+        click one, the partner may set a cookie so a resulting purchase is attributed
+        to us. See %{cookies}.
+      ads_cookies_link: cookies
+      basis_heading: Legal basis
+      basis_body: We process account data to perform our contract to provide the service
+        (GDPR Art. 6(1)(b)), security and operational logs under legitimate interest
+        (Art. 6(1)(f))%{location}.
+      basis_location_clause: ", and location only on your consent (Art. 6(1)(a)),
+        which you may withdraw at any time"
+      rights_heading: Your rights
+      rights_body: You have the right to access, rectify, erase and port your data,
+        and to object to processing. You can export your data and request deletion
+        from account settings, or contact us. You may lodge a complaint with your
+        national data-protection authority.
+      storage_heading: Storage and sharing
+      storage_body: We never sell personal data. Data is held on the production server
+        in Europe and kept while your account is active. If you delete your account,
+        personal data is removed within 30 days, except what we must retain for legal
+        reasons.

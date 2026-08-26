@@ -1,0 +1,6 @@
+<%# One sound. Extracted from sounds/index so the reflex has a partial to
+    render — the spine renders one partial per record. %>
+<li role="listitem">
+  <%= link_to sound.title, sound_path(sound) %>
+  <span class="sound-count"><%= t("tv.sound_clips", count: sound.videos_count) %></span>
+</li>

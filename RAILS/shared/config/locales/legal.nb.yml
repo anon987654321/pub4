@@ -1,0 +1,126 @@
+# The legal pages, as text rather than as markup.
+#
+# cookies/terms/privacy were one template each holding both languages behind
+# `<% if nb %>`, so the whole document existed twice in the same file. Nothing
+# was wrong with what it rendered. What it cost: no translator could reach the
+# pages, the two halves each carried their own hand-typed "last updated" date
+# and could drift without anything noticing, a third locale meant a third
+# branch, and the one body of text most likely to need a lawyer's edit was the
+# one body of text the locale parity check could not see.
+#
+# The conditional clauses stay conditional: %{dating}, %{wardrobe}, %{ugc},
+# %{location} and %{partner} are interpolated with either their clause key or
+# "", so the sentences read exactly as they did.
+nb:
+  legal:
+    updated_on: Sist oppdatert 12. august 2026
+    cookies_page:
+      eyebrow: Informasjonskapsler
+      heading: Informasjonskapsler på %{host}
+      intro_html: Vi holder bruken av informasjonskapsler på et minimum. Vi bruker
+        <strong>ingen tredjeparts annonse- eller sporingsnettverk</strong> og bygger
+        ingen profil av deg på tvers av nettsteder.
+      necessary_heading: Nødvendige
+      necessary_body: En øktinformasjonskapsel holder deg innlogget og beskytter skjemaer
+        mot forfalskning (CSRF). Uten den fungerer ikke innlogging. Denne krever ikke
+        samtykke.
+      fingerprint_heading: Enhetsavtrykk
+      fingerprint_body: Et førsteparts avtrykk av nettleseren brukes til å begrense
+        hvor mye en gjest kan poste fra samme enhet, og til å bremse spam. Det er
+        ikke en tredjepartskapsel, det selges ikke, og det brukes ikke til å vise
+        deg annonser.
+      partner_heading: Partner / affiliate
+      partner_body: Klikker du på en partnerlenke, kan partneren — for eksempel TradeDoubler
+        eller Amazon Associates — sette en informasjonskapsel hos seg for å tilskrive
+        et eventuelt kjøp til oss. Vi setter den ikke selv, og den brukes ikke til
+        å vise deg annonser her.
+      advertising_heading: Reklame
+      advertising_body_html: Annonsene vi viser er <strong>førsteparts</strong> og
+        selges direkte av oss når slike plasser er slått på. De setter ikke sporingskapsler
+        og deler ikke data med annonsenettverk.
+      control_heading: Slik styrer du dem
+      control_body: Du kan slette og blokkere informasjonskapsler i nettleseren din.
+        Blokkerer du de nødvendige, kan du ikke logge inn.%{partner}
+      control_partner_clause: " Vil du unngå partnerkapsler, la være å klikke på partnerlenker."
+    terms_page:
+      eyebrow: Brukervilkår
+      heading: Vilkår for %{host}
+      intro: Ved å bruke nettstedet godtar du disse vilkårene. Leser du dem ikke,
+        bør du ikke bruke tjenesten.
+      who_heading: Hvem kan bruke tjenesten
+      who_body: Du må være minst 16 år for å opprette konto%{dating}. Du er ansvarlig
+        for aktiviteten på kontoen din.
+      who_dating_clause: ", og minst 18 år for datingfunksjonene"
+      content_heading: Innholdet ditt
+      content_body: Du beholder rettighetene til det du publiserer%{wardrobe}. Du
+        gir oss en ikke-eksklusiv lisens til å vise og distribuere innholdet som en
+        del av tjenesten. Du står inne for at du har rett til å dele det du legger
+        ut, og at det ikke krenker andres rettigheter.
+      content_wardrobe_clause: ", inkludert bilder av klær og antrekk"
+      acceptable_heading: Akseptabel bruk
+      acceptable_body: Ikke publiser ulovlig, hatefullt, villedende eller opphavsrettskrenkende
+        innhold, ikke trakasser andre, og ikke misbruk tjenesten med spam eller automatiserte
+        angrep. Vi kan fjerne innhold og stenge kontoer som bryter med dette.
+      catalogue_heading: Katalogen
+      catalogue_body: Portebeskrivelsene kommer fra OpenBSD-kilder og er et søkeindeks,
+        ikke en erstatning for den offisielle dokumentasjonen. Installer aldri en
+        pakke uten å verifisere mot ditt eget speil.
+      partner_heading: Reklame og partnerlenker
+      partner_body_html: Nettstedet kan finansieres av egen annonsesalg og av partner-/affiliateprogrammer.
+        Kjøper du via en partnerlenke, kan vi motta provisjon. Se %{privacy} og %{cookies}.
+      partner_privacy_link: personvern
+      partner_cookies_link: informasjonskapsler
+      liability_heading: Ansvar
+      liability_body: Tjenesten leveres «som den er». Så langt loven tillater, er
+        vi ikke ansvarlige for indirekte tap ved bruk av tjenesten.%{ugc}
+      liability_ugc_clause: " Brukergenerert innhold er den enkelte brukerens ansvar."
+      termination_heading: Avslutning og lovvalg
+      termination_body: Du kan slette kontoen når som helst. Vi kan avslutte kontoer
+        ved brudd på vilkårene. Norsk rett gjelder, med verneting i Bergen.
+    privacy_page:
+      eyebrow: Personvernerklæring
+      heading: Personvern hos %{host}
+      intro_html: Denne erklæringen forklarer hvilke opplysninger vi samler inn, hvorfor,
+        og hvilke rettigheter du har. Behandlingsansvarlig er den som driver dette
+        nettstedet. Vi oppgir ikke et organisasjonsnummer her fordi det ikke er registrert
+        et eget selskap for tjenesten. Spørsmål går til %{contact}.
+      collect_heading: Hva vi samler inn
+      account_item_html: "<strong>Konto</strong>: e-postadresse og valgt visningsnavn
+        når du registrerer deg. Passord lagres kun som saltet hash."
+      content_item_html: "<strong>Innhold du lager</strong>: innlegg, kommentarer,
+        meldinger, bilder%{wardrobe} du selv publiserer eller laster opp."
+      content_wardrobe_clause: " og garderobedata (plagg, antrekk, brukshistorikk,
+        glede)"
+      activity_item_html: "<strong>Kontoaktivitet</strong>: kommentarer og overvåkningslister
+        du selv oppretter på porter."
+      technical_item_html: "<strong>Teknisk</strong>: en øktinformasjonskapsel som
+        holder deg innlogget, og aggregert, ikke-identifiserende driftslogg for sikkerhet
+        og feilretting."
+      fingerprint_item_html: "<strong>Enhetsavtrykk</strong>: et førsteparts avtrykk
+        av nettleseren, brukt til å begrense gjesteposting og spam. Det deles ikke
+        med tredjepart og brukes ikke til reklame."
+      location_item_html: "<strong>Sted</strong>: kun omtrentlig posisjon, og bare
+        hvis du selv aktiverer det for «i nærheten»-funksjoner. Vi lagrer aldri presis
+        GPS."
+      ads_heading: Reklame og partnerlenker
+      ads_body_html: Vi selger og viser <strong>vår egen annonseplass direkte</strong>
+        når slike plasser er slått på. Førstepartsannonser deler ikke data med tredjeparts
+        annonsenettverk. Enkelte lenker er <strong>partner-/affiliatelenker</strong>.
+        Klikker du på en slik lenke, kan partneren sette en informasjonskapsel slik
+        at et eventuelt kjøp tilskrives oss. Se %{cookies}.
+      ads_cookies_link: informasjonskapsler
+      basis_heading: Behandlingsgrunnlag
+      basis_body: Vi behandler kontodata for å oppfylle avtalen om å levere tjenesten
+        (GDPR art. 6(1)(b)), sikkerhets- og driftslogg ut fra berettiget interesse
+        (art. 6(1)(f))%{location}.
+      basis_location_clause: ", og posisjon kun på grunnlag av ditt samtykke (art.
+        6(1)(a)), som du når som helst kan trekke tilbake"
+      rights_heading: Dine rettigheter
+      rights_body: Du har rett til innsyn, retting, sletting, dataportabilitet og
+        til å protestere mot behandling. Du kan laste ned dataene dine og be om sletting
+        fra kontoinnstillingene, eller kontakte oss. Du kan klage til Datatilsynet.
+      storage_heading: Lagring og deling
+      storage_body: Vi selger aldri personopplysninger. Data lagres på produksjonsserveren
+        i Europa og beholdes så lenge kontoen er aktiv. Sletter du kontoen, fjernes
+        personopplysningene innen 30 dager, med unntak av det vi må beholde av rettslige
+        grunner.

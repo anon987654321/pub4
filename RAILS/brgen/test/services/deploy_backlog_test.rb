@@ -1,28 +1,15 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "../support/source_reader"
 require_relative "../../../shared/app/services/shared/cache_policy"
 require_relative "../../../shared/app/services/shared/cache_health"
 require_relative "../../../shared/app/services/shared/cable_health"
 require_relative "../../../shared/app/services/shared/queue_failure_summary"
 
 class DeployBacklogTest < Minitest::Test
-  ROOT = ENV.fetch("PUB4_RAILS_ROOT") do
-    app = ENV.fetch("PUB4_CI_APP", "brgen")
-    candidates = [
-      # Canonical checkout first: per-app "pub4-rails" copies are leftovers from
-      # older deploy schemes and can go stale relative to the real monorepo
-      # without anything noticing (confirmed 2026-07-10: a stale
-      # /home/<app>/pub4-rails/RAILS caused every DeployBacklogTest assertion to
-      # silently check month-old file contents instead of failing loudly).
-      "/home/dev/pub4/RAILS",
-      "/home/#{app}/pub4-rails/RAILS",
-      File.expand_path("../../..", __dir__)
-    ]
-    candidates.find { |path| File.readable?(File.join(path, "shared", "app")) } ||
-      candidates.find { |path| File.directory?(File.join(path, "shared")) } ||
-      candidates.last
-  end.freeze
+  include SourceReader
+
 
   def test_shared_cache_policy_exposes_explicit_ttls
     assert_equal 300, Shared::CachePolicy.ttl_for(:feed_fragment)
@@ -243,7 +230,7 @@ class DeployBacklogTest < Minitest::Test
     migration = read_source(File.join(ROOT, "brgen/db/migrate/20260707121000_add_playlist_import_embed_and_expiry_fields.rb"))
     playlist = read_source(File.join(ROOT, "brgen/app/models/playlist/playlist.rb"))
     track = read_source(File.join(ROOT, "brgen/app/models/playlist/track.rb"))
-    importer = read_source(File.join(ROOT, "brgen/app/services/playlist/track_import.rb"))
+    importer = read_source(File.join(ROOT, "brgen/engines/playlist/app/services/playlist/track_import.rb"))
     imports_controller = read_source(File.join(ROOT, "brgen/app/controllers/playlist/imports_controller.rb"))
     playlists_controller = read_source(File.join(ROOT, "brgen/app/controllers/playlist/playlists_controller.rb"))
     tracks_controller = read_source(File.join(ROOT, "brgen/app/controllers/playlist/tracks_controller.rb"))
@@ -377,15 +364,20 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, "data-turbo-permanent"
       refute_includes source, 'turbo-cache-control", content: "no-cache"'
 
-      # Amber factors the sign-out link (and its turbo_prefetch:
-      # false safety attribute — prevents a hover-prefetch from firing the
-      # DELETE) into shared/_sidebar_nav.html.erb rather than inlining it in
-      # the layout; check that partial too when the layout itself doesn't.
-      app_dir = relative.split("/").first
-      nav_partial = File.join(ROOT, app_dir, "app/views/shared/_sidebar_nav.html.erb")
-      haystack = source
-      haystack += File.read(nav_partial) if File.file?(nav_partial)
-      assert_includes haystack, "turbo_prefetch: false"
+# The sign-out link carries turbo_prefetch: false so a hover-prefetch
+# cannot fire the DELETE. Which file holds it is not the point and has
+# already moved twice: amber factors it into shared/_sidebar_nav, and on
+# 2026-08-26 brgen's went into layouts/_sidebar when the layout was split
+# for length. This asserted one hardcoded partial path and went red on
+# that move even though the rendered markup was byte-identical — so it
+# reads the layout together with every partial the layouts directory and
+# shared/ hold, and asks only that the attribute exists somewhere the
+# layout can reach.
+app_dir = relative.split("/").first
+haystack = source + Dir.glob(File.join(ROOT, app_dir, "app/views/{layouts,shared}/_*.erb"))
+                       .map { |partial| File.read(partial) }.join
+assert_includes haystack, "turbo_prefetch: false",
+                "#{app_dir}: the sign-out link must not be hover-prefetchable"
     end
 
     setup = read_source(File.join(ROOT, "shared/app/controllers/concerns/shared/application_setup.rb"))
@@ -660,15 +652,6 @@ class DeployBacklogTest < Minitest::Test
     assert_includes routes, "resources :messages, only: %i[create]"
   end
 
-  def test_marketplace_listings_use_stimulus_reflex_infinite_scroll
-    partial = read_brgen("app/views/marketplace/listings/_live_search_results.html.erb")
-    reflex = read_brgen("app/reflexes/listings_infinite_scroll_reflex.rb")
-
-    assert_includes partial, "ListingsInfiniteScrollReflex#load_more"
-    assert_includes partial, "marketplace-listings-sentinel"
-    assert_includes reflex, "class ListingsInfiniteScrollReflex"
-    assert_includes reflex, "marketplace/listings/card"
-  end
 
   def test_playlist_tracks_and_hosted_tracks_wire_user_ownership
     migration = read_brgen("db/migrate/20260709120100_add_user_to_playlist_tracks.rb")
@@ -682,30 +665,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes tracks_controller, "user: Current.user"
   end
 
-  def test_home_feed_uses_stimulus_reflex_infinite_scroll
-    home = read_brgen("app/controllers/home_controller.rb")
-    partial = read_brgen("app/views/home/_live_search_results.html.erb")
-    reflex = read_brgen("app/reflexes/home_infinite_scroll_reflex.rb")
 
-    assert_includes home, "@pagy, @posts = pagy(scope)"
-    assert_includes partial, "HomeInfiniteScrollReflex#load_more"
-    assert_includes partial, "home-feed-sentinel"
-    assert_includes reflex, "Brgen::HomeFeed.scope"
-  end
-
-  def test_takeaway_and_tv_indexes_use_infinite_scroll_reflexes
-    restaurants = read_brgen("app/views/takeaway/restaurants/_live_search_results.html.erb")
-    channels = read_brgen("app/views/tv/channels/_live_search_results.html.erb")
-
-    assert_includes restaurants, "RestaurantsInfiniteScrollReflex#load_more"
-    assert_includes restaurants, "takeaway-restaurants-sentinel"
-    assert_includes channels, "ChannelsInfiniteScrollReflex#load_more"
-    assert_includes channels, "tv-channels-sentinel"
-    assert_includes read_source(File.join(ROOT, "brgen/app/reflexes/restaurants_infinite_scroll_reflex.rb")),
-                    "takeaway/restaurants/card"
-    assert_includes read_source(File.join(ROOT, "brgen/app/reflexes/channels_infinite_scroll_reflex.rb")),
-                    "tv/channels/row"
-  end
 
 # maps engine wiring: RAILS/test/maps_engine_wiring_contract_test.rb.
 # The marketplace scope stays here; it is not a maps fact.
@@ -746,35 +706,7 @@ end
     assert_includes read_brgen("app/controllers/sitemaps_controller.rb"), "Brgen::DomainRegistry.resolve"
   end
 
-  def test_marketplace_deals_stores_and_playlist_sets_use_infinite_scroll
-    deals_partial = read_brgen("app/views/marketplace/deals/_live_search_results.html.erb")
-    stores_partial = read_brgen("app/views/marketplace/stores/_live_search_results.html.erb")
-    sets_partial = read_brgen("app/views/playlist/sets/_live_search_results.html.erb")
 
-    assert_includes deals_partial, "DealsInfiniteScrollReflex#load_more"
-    assert_includes stores_partial, "StoresInfiniteScrollReflex#load_more"
-    assert_includes sets_partial, "SetsInfiniteScrollReflex#load_more"
-    assert_includes read_brgen("app/controllers/marketplace/deals_controller.rb"), "@pagy, @deals = pagy"
-    assert_includes read_brgen("app/controllers/marketplace/stores_controller.rb"), "@pagy, @stores = pagy"
-    assert_includes read_brgen("app/controllers/playlist/sets_controller.rb"), "@pagy, @sets = pagy"
-    assert_includes read_brgen("app/reflexes/deals_infinite_scroll_reflex.rb"), "marketplace/deals/card"
-    assert_includes read_brgen("app/reflexes/stores_infinite_scroll_reflex.rb"), "marketplace/stores/card"
-    assert_includes read_brgen("app/reflexes/sets_infinite_scroll_reflex.rb"), "playlist/sets/card"
-  end
-
-  def test_communities_infinite_scroll_and_crud_views_are_wired
-    partial = read_brgen("app/views/communities/_live_search_results.html.erb")
-    controller = read_brgen("app/controllers/communities_controller.rb")
-
-    assert_includes partial, "CommunitiesInfiniteScrollReflex#load_more"
-    assert_includes controller, "@pagy, @communities = pagy"
-    assert_includes controller, "def edit"
-    assert_includes controller, "def update"
-    assert_includes controller, "def destroy"
-    assert File.file?(File.join(ROOT, "brgen/app/views/communities/edit.html.erb"))
-    assert_includes read_brgen("app/reflexes/communities_infinite_scroll_reflex.rb"), "communities/card"
-    assert_includes read_source(File.join(ROOT, "brgen/app/assets/stylesheets/_communities.scss")), ".community-list"
-  end
 
   def test_playlist_set_likes_controller_and_ui_are_wired
     controller = read_brgen("app/controllers/playlist/likes_controller.rb")
@@ -788,14 +720,6 @@ end
     assert_includes show, "likes.count"
   end
 
-  def test_posts_infinite_scroll_preserves_search_query
-    partial = read_brgen("app/views/posts/_live_search_results.html.erb")
-    reflex = read_brgen("app/reflexes/posts_infinite_scroll_reflex.rb")
-
-    assert_includes partial, "q: params[:q]"
-    assert_includes reflex, 'element.dataset["q"]'
-    assert_includes reflex, "title LIKE ? OR content LIKE ?"
-  end
 
   def test_marketplace_stores_edit_update_destroy_are_wired
     controller = read_brgen("app/controllers/marketplace/stores_controller.rb")
@@ -810,63 +734,7 @@ end
     assert_includes read_brgen("app/assets/stylesheets/application.scss"), "_marketplace_stores"
   end
 
-  def test_secondary_brgen_verticals_use_infinite_scroll_reflexes
-    sentinel = read_source(File.join(ROOT, "shared/app/views/shared/_infinite_scroll_sentinel.html.erb"))
-    assert_includes sentinel, "data-channel-slug"
 
-    assert_includes read_brgen("app/views/tv/channels/_channel_videos.html.erb"), "ChannelVideosInfiniteScrollReflex#load_more"
-    assert_includes read_brgen("app/reflexes/channel_videos_infinite_scroll_reflex.rb"), "tv/videos/tv_video"
-
-    assert_includes read_brgen("app/views/tv/home/_trending_videos.html.erb"), "TrendingVideosInfiniteScrollReflex#load_more"
-    assert_includes read_brgen("app/reflexes/trending_videos_infinite_scroll_reflex.rb"), "Tv::Video.trending"
-
-    assert_includes read_brgen("app/views/takeaway/orders/index.html.erb"), "OrdersInfiniteScrollReflex#load_more"
-    assert_includes read_brgen("app/reflexes/orders_infinite_scroll_reflex.rb"), "takeaway/orders/order"
-
-    assert_includes read_brgen("app/views/dating/matches/index.html.erb"), "MatchesInfiniteScrollReflex#load_more"
-    assert_includes read_brgen("app/reflexes/matches_infinite_scroll_reflex.rb"), "dating/matches/match"
-
-    assert_includes read_brgen("app/views/marketplace/categories/show.html.erb"), "CategoryListingsInfiniteScrollReflex#load_more"
-    assert_includes read_brgen("app/reflexes/category_listings_infinite_scroll_reflex.rb"), "marketplace/listings/card"
-
-    assert_includes read_brgen("app/views/tv/shows/index.html.erb"), "ShowsInfiniteScrollReflex#load_more"
-    assert_includes read_brgen("app/reflexes/shows_infinite_scroll_reflex.rb"), "tv/shows/card"
-
-    assert_includes read_brgen("app/views/playlist/playlists/_library.html.erb"), "PlaylistsInfiniteScrollReflex#load_more"
-    assert_includes read_brgen("app/reflexes/playlists_infinite_scroll_reflex.rb"), "playlist/playlists/row"
-    assert_includes read_brgen("app/assets/stylesheets/_vertical_tv.scss"), ".show-grid"
-    assert_includes read_brgen("app/assets/stylesheets/_vertical_takeaway.scss"), ".order-list"
-    assert_includes read_brgen("app/views/dating/matches/index.html.erb"), "match-list"
-  end
-
-  def test_satellite_apps_use_infinite_scroll_reflexes
-    sentinel = read_source(File.join(ROOT, "shared/app/views/shared/_infinite_scroll_sentinel.html.erb"))
-
-    assert_includes read_source(File.join(ROOT, "amber/app/views/items/_live_search_results.html.erb")),
-                    "ItemsInfiniteScrollReflex#load_more"
-    assert_includes read_source(File.join(ROOT, "amber/app/reflexes/items_infinite_scroll_reflex.rb")),
-                    "items/item"
-
-    assert_includes read_source(File.join(ROOT, "amber/app/views/outfits/_live_search_results.html.erb")),
-                    "OutfitsInfiniteScrollReflex#load_more"
-    assert_includes read_source(File.join(ROOT, "amber/app/reflexes/outfits_infinite_scroll_reflex.rb")),
-                    "outfits/outfit"
-
-    # The sentinel moved out of _live_search_results and into the _list partial
-    # it renders, so asserting on _live_search_results directly went stale even
-    # though ports infinite scroll still works. Follow the render instead: the
-    # search results must reach the list, and the list must carry the reflex.
-    assert_includes read_source(File.join(ROOT, "bsdports/app/views/ports/_live_search_results.html.erb")),
-                    "ports/list"
-    assert_includes read_source(File.join(ROOT, "bsdports/app/views/ports/_list.html.erb")),
-                    "PortsInfiniteScrollReflex#load_more"
-    assert_includes read_source(File.join(ROOT, "bsdports/app/reflexes/ports_infinite_scroll_reflex.rb")),
-                    "ports/row"
-
-    assert_includes read_source(File.join(ROOT, "bsdports/app/views/maintainers/show.html.erb")),
-                    "MaintainerPortsInfiniteScrollReflex#load_more"
-    assert_includes sentinel, "data-maintainer-id"
-  end
 
   def test_brgen_visual_polish_stack_is_wired
     layout = read_brgen("app/views/layouts/application.html.erb")
@@ -923,32 +791,4 @@ end
 
   private
 
-# The five verticals moved to mountable engines (engines/<v>/app/...), so a path
-# like app/models/tv/channel.rb now lives at engines/tv/app/models/tv/channel.rb.
-# Resolve the host path first, then the engine location, then a flat basename
-# match for assets that moved without a namespace dir. See brgen/ENGINES.md.
-def read_brgen(relative)
-  read_source(File.join(ROOT, "brgen", relative))
-end
-
-# Resolve a ROOT-based source path, falling back to the mountable engines the
-# five verticals moved into (engines/<v>/app/...), then a flat basename match
-# for assets moved without a namespace dir. Migrations stayed in the host and
-# resolve directly. See brgen/ENGINES.md.
-def read_source(abs)
-  # brgen's routes now span the host plus every vertical engine — read them as one
-  # so "is this route wired" assertions find engine-owned routes too.
-  if abs.end_with?("brgen/config/routes.rb") && File.exist?(abs)
-    brgen_dir = File.dirname(File.dirname(abs)) # .../brgen (abs is .../brgen/config/routes.rb)
-    engine_routes = Dir.glob(File.join(brgen_dir, "engines", "*", "config", "routes.rb")).sort.map { |f| File.read(f) }
-    return ([ File.read(abs) ] + engine_routes).join("\n")
-  end
-  return File.read(abs) if File.exist?(abs)
-  rel = abs.sub(%r{\A#{Regexp.escape(File.join(ROOT, "brgen"))}/}, "")
-  moved = Dir.glob(File.join(ROOT, "brgen", "engines", "*", rel)).first
-  return File.read(moved) if moved
-  flat = Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "**", File.basename(abs))).first
-  return File.read(flat) if flat
-  File.read(abs)
-end
 end

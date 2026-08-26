@@ -9,12 +9,21 @@
 </div>
 
 <% if @listings.any? %>
-  <ul class="listing-grid feed_list">
+  <ul class="listing-grid feed_list" id="saved-listings">
     <% @listings.each do |listing| %>
       <li><%= render "marketplace/listings/card", listing: listing %></li>
     <% end %>
   </ul>
-  <%= render "shared/pager", pagy: @pagy %>
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "SavedListingsInfiniteScrollReflex#load_more",
+             sentinel_id: "saved-listings-sentinel" %>
+  <%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+      ActionCable, so without JavaScript a truncated list would say nothing about
+      the rest of itself. noscript, so a reader with JavaScript sees one
+      mechanism rather than two. %>
+  <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
+
 <% else %>
   <%# A sold or withdrawn listing leaves the list on its own — `live` is what
       every public surface reads, and a saved list that shows things nobody can

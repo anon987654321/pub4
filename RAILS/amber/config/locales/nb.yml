@@ -154,6 +154,8 @@ nb:
     query: "Søkeord"
     submit: "Søk"
   pages:
+    edit_item: "Rediger"
+    edit_item_heading: "Rediger %{name}"
     wardrobe: "Garderobe"
     outfits: "Antrekk"
     messages: "Meldinger"
@@ -362,6 +364,9 @@ nb:
     action: "Installer"
 
   items:
+    add_header_label: "Legg til plagg"
+    mood_label: "Stemning: %{mood}"
+    worn_times_short: "Brukt %{count}×"
     occasion_tags: "jobb, casual, formelt"
     worn_today: "Brukt i dag"
     no_joy: "Gir ikke glede"
@@ -423,6 +428,7 @@ nb:
       photo_polish_skipped: "Ingen fotopolering"
       no_photos: "Ingen fotopolering"
       pending: "Venter på media"
+      pending_no_worker: "I kø — mediebehandling er av på denne serveren"
       legacy: "Eldre mediestatus (poleringspipeline)"
     photo_processing_html: "<strong>Bildebehandling:</strong> opplastinger forblir knyttet til din private garderobeoppføring. Amber lager plaggsegmentering, bakgrunnsfjerning, farge og responsive varianter for antrekksmatching. Sletter du plagget, fjernes vedleggene; arkivering beholder dem og kan angres."
     archiving_safer: "Arkivering er tryggere. Permanent sletting fjerner plaggoppføringen og bildene som hører til."
@@ -478,6 +484,7 @@ nb:
     select_outfit: "Velg antrekk…"
     browse_outfits: "Se antrekk"
   live_streams:
+    scheduled_at: "Planlagt: %{at}"
     title: "Stiløkter"
     all: "Alle stiløkter"
     schedule_region: "Planlegg stiløkt"

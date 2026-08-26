@@ -93,9 +93,19 @@ module Deploy
           result.fail("#{app}: ReactionsController must subclass Shared::ReactionsController") unless reactions.include?("Shared::ReactionsController")
         end
 
+        # Present in the app, or present in shared for overlay_shared_public to
+        # merge in at deploy. Both satisfy the requirement and only the first was
+        # checked, so styles/errors.css failed in every checkout of this repo
+        # while production had it: it is tracked once in shared/public and copied
+        # per app by _sync.sh rather than committed three times. brgen and amber
+        # do carry their own 404/422/500 -- their own branding -- and bsdports
+        # uses shared's. Both shapes are correct, and a gate that understands
+        # only one of them reports a red that no edit in the tree can clear.
         REQUIRED_PUBLIC_FILES.each do |file|
-          path = File.join(RAILS_ROOT, app, "public", file)
-          result.fail("#{app}: missing public/#{file}") unless File.file?(path)
+          next if File.file?(File.join(RAILS_ROOT, app, "public", file))
+          next if File.file?(File.join(RAILS_ROOT, "shared", "public", file))
+
+          result.fail("#{app}: missing public/#{file}, and shared/public/#{file} is not there to overlay either")
         end
 
         FORBIDDEN_APP_JS.each do |rel|

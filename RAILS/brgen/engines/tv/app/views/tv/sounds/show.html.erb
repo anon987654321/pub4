@@ -9,12 +9,22 @@
 </div>
 
 <% if @videos.any? %>
-  <ul class="video-grid feed_list">
+  <ul class="video-grid feed_list" id="sound-videos">
     <% @videos.each do |video| %>
       <li><%= render "tv/videos/tv_video", tv_video: video %></li>
     <% end %>
   </ul>
-  <%= render "shared/pager", pagy: @pagy %>
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "SoundVideosInfiniteScrollReflex#load_more",
+             sentinel_id: "sound-videos-sentinel",
+             data: { sound_id: @sound.id } %>
+
+  <%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+      ActionCable, so without JavaScript a truncated list would say nothing about
+      the rest of itself. noscript, so a reader with JavaScript sees one
+      mechanism rather than two. %>
+  <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
 <% else %>
   <%# A sound whose clips are all unpublished is a real state: the sound
       outlives the video it came from. %>

@@ -153,8 +153,18 @@ class PwaDesignContractTest < Minitest::Test
   # the check failed on three layouts that had all got more correct. Assert the
   # landmark is named through a key that resolves to real copy; the three apps
   # do not agree on the wording (bsdports says "Home"), and never had to.
-  def assert_primary_nav_labelled(app, root, layout)
-    match = layout.match(/<nav\b[^>]*aria-label="<%=\s*t\(\s*["']([a-z0-9_.]+)["']/m)
+# The layout plus the partials it renders, not the layout alone.
+#
+# The landmark itself is what matters, and which file holds it is not
+# something this invariant should have an opinion about: brgen's <nav> moved
+# into layouts/_sidebar.html.erb on 2026-08-26 when the layout was split for
+# length, and this went red on rendered markup that was byte-identical
+# before and after. Third assertion in this suite to break that way in one
+# pass, which is why it now globs rather than names a file.
+def assert_primary_nav_labelled(app, root, layout)
+  haystack = layout + Dir.glob(File.join(root, "app/views/{layouts,shared}/_*.erb"))
+                         .map { |partial| File.read(partial) }.join
+  match = haystack.match(/<nav\b[^>]*aria-label="<%=\s*t\(\s*["']([a-z0-9_.]+)["']/m)
     refute_nil match, "#{app}: no <nav> landmark with a translated aria-label"
 
     locale = YAML.safe_load_file(File.join(root, "config", "locales", "en.yml")).fetch("en")

@@ -142,21 +142,7 @@
     <button id="push-enable-btn" class="push-enable-btn" hidden><%= t("push.enable") %></button>
   <% end %>
 
-  <%# Only apexes that serve. This list used to be 29 domains written out here;
-      26 of them refused the connection and one, amstrdam.nl, had left us and
-      redirected to a stranger's site. DomainRegistry::LIVE_DOMAINS is the one
-      place that fact is recorded — do not iterate ENTRIES here. %>
-  <% live_cities = Brgen::DomainRegistry.live_entries %>
-  <% if live_cities.length > 1 %>
-    <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="<%= t("nav.city_network") %>" data-brgen-shell-target="carousel">
-      <div class="carousel-container" role="list">
-        <% live_cities.each do |entry| %>
-          <a class="carousel-slide<%= " active" if entry.domain == Current.domain %>" role="listitem"
-             href="https://<%= entry.domain %>/" data-domain="<%= entry.domain %>" data-base="<%= entry.domain %>"><%= entry.domain %></a>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
+  <%= render "layouts/city_carousel" %>
 
   <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
     <div class="layout">
@@ -164,86 +150,7 @@
           the swipe-reveal drawer after the first dismissal — visible until
           known, hidden once learned (operator, 2026-08-22). %>
       <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-edge-swiper-intro-value="brgen-sidebar" data-turbo-permanent>
-      <aside class="sidebar" aria-label="<%= t("nav.sidebar") %>" data-edge-swiper-target="root">
-        <nav data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
-          <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
-<%# Chunked, not shortened. Hick's law is about peers at one decision
-    level: ten flat entries is the number the reader faces, four
-    labelled groups is between one and four. The split follows the
-    order the nav already had — discovery, then the inbox, then the
-    city, then the account — so nothing is reordered and no entry
-    changes meaning. role=group carries it to assistive tech, and
-    _shell.scss gives .nav-group display: contents so the nav's own
-    flex column still lays the items out and nothing moves. %>
-          <div class="nav-group" role="group" aria-label="<%= t("nav.group_discover") %>">
-          <%= link_to main_app.root_path, class: nav_cls.(main_app.root_path) do %>
-            <%= icon :home, size: 26 %>
-            <%= t("nav.home") %>
-          <% end %>
-          <%= render "shared/ai_nav_link" %>
-          <%= link_to main_app.communities_path, class: nav_cls.(main_app.communities_path) do %>
-            <%= icon :explore, size: 26 %>
-            <%= t("nav.explore") %>
-          <% end %>
-          <%= link_to main_app.global_search_path, class: nav_cls.(main_app.global_search_path) do %>
-            <%= icon :search, size: 26 %>
-            <%= t("nav.search") %>
-          <% end %>
-          </div>
-          <div class="nav-group" role="group" aria-label="<%= t("nav.group_inbox") %>">
-          <%= link_to main_app.notifications_path, class: nav_cls.(main_app.notifications_path) do %>
-            <%= icon :notifications, size: 26 %>
-            <%= t("nav.notifications") %>
-          <% end %>
-          <%= link_to main_app.conversations_path, class: nav_cls.(main_app.conversations_path) do %>
-            <%= icon :messages, size: 26 %>
-            <%= t("nav.messages") %>
-          <% end %>
-          </div>
-          <div class="nav-group" role="group" aria-label="<%= t("nav.group_city") %>">
-          <%= link_to main_app.nearby_path, class: nav_cls.(main_app.nearby_path) do %>
-            <%= icon :nearby, size: 26 %>
-            <%= t("nav.nearby") %>
-          <% end %>
-          <%= link_to main_app.events_path, class: nav_cls.(main_app.events_path) do %>
-            <%= icon :calendar, size: 26 %>
-            <%= t("nav.events") %>
-          <% end %>
-          <%= link_to main_app.stories_path, class: nav_cls.(main_app.stories_path) do %>
-            <%= icon :camera, size: 26 %>
-            <%= t("nav.stories") %>
-          <% end %>
-          </div>
-          <div class="nav-group" role="group" aria-label="<%= t("nav.group_account") %>">
-          <% if authenticated? %>
-            <%= link_to main_app.user_path(Current.user), class: nav_cls.(main_app.user_path(Current.user)) do %>
-              <%= icon :profile, size: 26 %>
-              <%= t("nav.profile") %>
-            <% end %>
-          <% else %>
-            <%= link_to main_app.new_session_path, class: nav_cls.(main_app.new_session_path) do %>
-              <%= icon :sign_in, size: 26 %>
-              <%= t("nav.sign_in") %>
-            <% end %>
-          <% end %>
-          </div>
-        </nav>
-        <% if authenticated? %>
-          <div class="sidebar-dropdown" data-controller="dropdown" data-action="click@window->dropdown#hide">
-            <button type="button" class="btn btn-ghost btn-sm" data-dropdown-button aria-expanded="false" data-action="click->dropdown#toggle"><%= t("nav.more") %></button>
-            <div class="sidebar-dropdown-menu hidden" data-dropdown-target="menu">
-              <%= link_to t("nav.profile"), main_app.user_path(Current.user) %>
-              <%= link_to t("nav.new_post"), main_app.new_post_path %>
-              <%= link_to t("nav.new_community"), main_app.new_community_path %>
-              <%= link_to t("nav.sign_out"), main_app.session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
-            </div>
-          </div>
-        <% end %>
-        <a href="<%= main_app.new_post_path %>" class="compose-btn">
-          <%= icon :compose, size: 22, css_class: "compose-icon" %>
-          <span class="compose-label"><%= t("nav.post") %></span>
-        </a>
-      </aside>
+      <%= render "layouts/sidebar" %>
       <button type="button" class="edge-grip edge-grip-start" data-edge-swiper-target="grip"
               data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
       </div>

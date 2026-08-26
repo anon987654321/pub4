@@ -332,19 +332,19 @@ module ApplicationHelper
     end
   end
 
-  # Deep link for an ActivityEvent row (object_type + object_id).
+  # Deep link for an ActivityEvent row (subject_type + subject_id).
   def activity_event_href(event)
-    return if event.blank? || event.object_type.blank? || event.object_id.blank?
+    return if event.blank? || event.subject_type.blank? || event.subject_id.blank?
 
     # Reuse the subject a batch loader already fetched (ActivityEvent
     # .for_city_home); only fall back to a lookup when the event arrived from
     # somewhere that did not preload one.
     record = event.activity_subject if event.respond_to?(:activity_subject)
     if record.nil?
-      klass = event.object_type.to_s.safe_constantize
+      klass = event.subject_type.to_s.safe_constantize
       return unless klass
 
-      record = klass.find_by(id: event.object_id)
+      record = klass.find_by(id: event.subject_id)
     end
     record_public_href(record)
   end
@@ -353,8 +353,8 @@ module ApplicationHelper
     return "" if event.blank?
 
     record = event.activity_subject if event.respond_to?(:activity_subject)
-    if record.nil? && event.object_type.present?
-      record = event.object_type.to_s.safe_constantize&.find_by(id: event.object_id)
+    if record.nil? && event.subject_type.present?
+      record = event.subject_type.to_s.safe_constantize&.find_by(id: event.subject_id)
     end
     name = record.try(:title).presence || record.try(:name).presence
     return name if name.present?

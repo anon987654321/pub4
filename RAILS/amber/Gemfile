@@ -75,7 +75,13 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
-gem "pagy", "~> 9.3"
+# Unpinned, like brgen and bsdports. amber sat on 9.x while the other two
+# moved to 43.x, and shared/_pager exists to paper over the split: the view
+# helpers were renamed between the majors (`pagy_nav(@pagy)` became
+# `@pagy.series_nav`, `prev` became `previous`), so the partial uses only
+# `page`, `pages` and `next` — the three both majors expose. Aligning the
+# versions is what lets that shim stop growing.
+gem "pagy"
 # brgen already uses ruby_llm, and two LLM clients in one repo is one more
 # than the number anybody keeps current. It speaks OpenRouter natively, so
 # WardrobeAi::OpenRouter needs no uri_base override. Replaced ruby-openai

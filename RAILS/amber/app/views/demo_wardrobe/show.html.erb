@@ -8,7 +8,7 @@
   <% end %>
   <%= tag.h1 @item.title %>
   <p><%= [@item.brand, @item.category, @item.color, @item.size].compact.join(" · ") %></p>
-  <p>Worn <%= @item.times_worn.to_i %>× · <%= @item.value_label %></p>
+  <p><%= t("items.worn_times_short", count: @item.times_worn.to_i) %> · <%= @item.value_label %></p>
   <% if @item.spark_joy? %>
     <p class="chip"><%= t("demo.spark_joy") %></p>
   <% end %>

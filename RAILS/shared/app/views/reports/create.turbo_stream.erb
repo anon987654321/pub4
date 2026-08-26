@@ -1,3 +1,3 @@
 <%= turbo_stream.replace "report_#{dom_id(@target)}" do %>
-  <span aria-live="polite">Reported</span>
+  <span aria-live="polite"><%= t("shared.reported") %></span>
 <% end %>

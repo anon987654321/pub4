@@ -379,6 +379,7 @@ en:
       one: "%{count} result for “%{query}”"
       other: "%{count} results for “%{query}”"
   messages:
+    anonymous: "anon"
     from_aria: Message from %{name}
     disappears_in: disappears in %{time}
     title: Messages
@@ -1340,6 +1341,7 @@ en:
     nearby_places: Nearby
     no_place: Not on the map
   communities:
+    edit_heading: "Edit %{name}"
     about: About %{name}
     name_placeholder: e.g. bergen, tech, musikk
     description_placeholder: What is this community about?
@@ -1349,6 +1351,7 @@ en:
     new_community: New community
     also_in_city: Also in %{city}
   newsletter:
+    unsubscribe_link: "Unsubscribe"
     email_placeholder: your@email.com
     subscribe: Subscribe
     title: City updates
@@ -1424,6 +1427,9 @@ en:
     next: Next
     position: Page %{page} of %{pages}
   compose:
+    bold: "Bold"
+    bullet_list: "Bullet list"
+    italic: "Italic"
     add_photo: Add photo
     record_video: Record video
     record_audio: Record audio

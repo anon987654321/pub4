@@ -113,17 +113,57 @@ module Deploy
         gemfile_text = File.read(gemfile)
         @result.warn("#{name}: Gemfile has no explicit ruby version") unless gemfile_text.match?(/^ruby\s+/)
         fail_app!(app_failures, "Gemfile must target Rails 8.1") unless gemfile_text.match?(/^gem ['"]rails['"], ['"]~> 8\.1/)
-        if gemfile_text.include?("solid_queue")
-          deploy_yml = File.join(app_dir, "config", "deploy.yml")
-          rcd = File.join(ROOT, "OPENBSD", "etc", "rc.d", name)
-          deploy_yml_text = File.file?(deploy_yml) ? File.read(deploy_yml) : ""
-          rcd_text = File.file?(rcd) ? File.read(rcd) : ""
-          fail_app!(app_failures, "Solid Queue deploy.yml must set SOLID_QUEUE_IN_PUMA: true") unless deploy_yml_text.include?("SOLID_QUEUE_IN_PUMA: true")
-          fail_app!(app_failures, "rc.d must export SOLID_QUEUE_IN_PUMA=true for Falcon") unless rcd_text.include?("SOLID_QUEUE_IN_PUMA=true")
-        end
+        check_job_supervisor(app_failures, name) if gemfile_text.include?("solid_queue")
       else
         fail_app!(app_failures, "missing Gemfile")
       end
+    end
+
+    # What supervises Solid Queue on this deploy, asserted against the thing
+    # that actually starts it.
+    #
+    # Two string checks are deliberately absent, and neither would mean anything:
+    #
+    #   deploy_yml_text.include?("SOLID_QUEUE_IN_PUMA: true")
+    #     read config/deploy.yml — Kamal boilerplate, generator defaults intact,
+    #     servers: 192.168.0.1. Nothing in this repo deploys with Kamal; it is
+    #     openrsync into /home/<app>/app and rc.d. Those files are gone.
+    #
+    #   rcd_text.include?("SOLID_QUEUE_IN_PUMA=true")
+    #     passed on the *comment* in rc.d/<app> that records the variable's
+    #     removal — "SOLID_QUEUE_IN_PUMA=true was here and is gone". In-Puma
+    #     mode is a Puma plugin and these apps run Falcon, so the export had
+    #     never started a worker. The check went green on the sentence
+    #     explaining why it should have gone red.
+    #
+    # So: comments are stripped before matching, the export must be absent
+    # rather than present, and the worker rc.d that really runs the supervisor
+    # has to exist and invoke it. Whether it is enabled on the box is an
+    # operator decision (vm23 is 1 GB — see debt.yml multi_app_ram); this gate
+    # reads the tree, so it asserts the script, not the rcctl state.
+    def check_job_supervisor(app_failures, name)
+      web_rcd = File.join(ROOT, "OPENBSD", "etc", "rc.d", name)
+      jobs_rcd = File.join(ROOT, "OPENBSD", "etc", "rc.d", "#{name}_jobs")
+
+      web_code = uncommented(web_rcd)
+      if web_code.match?(/SOLID_QUEUE_IN_PUMA\s*=/)
+        fail_app!(app_failures, "rc.d/#{name} sets SOLID_QUEUE_IN_PUMA — a Puma plugin variable under Falcon, read by nothing")
+      end
+
+      unless File.file?(jobs_rcd)
+        fail_app!(app_failures, "Solid Queue is the queue adapter but OPENBSD/etc/rc.d/#{name}_jobs does not exist")
+        return
+      end
+
+      return if uncommented(jobs_rcd).include?("solid_queue:start")
+
+      fail_app!(app_failures, "rc.d/#{name}_jobs does not run solid_queue:start")
+    end
+
+    def uncommented(path)
+      return "" unless File.file?(path)
+
+      File.read(path).lines.reject { |line| line.lstrip.start_with?("#") }.join
     end
 
     def check_ci(app_failures, app_dir)

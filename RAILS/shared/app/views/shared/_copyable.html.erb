@@ -1,5 +1,5 @@
-<div data-controller="clipboard" data-clipboard-success-content-value="Copied">
+<div data-controller="clipboard" data-clipboard-success-content-value="<%= t("actions.copied") %>">
   <input data-clipboard-target="source" type="text" value="<%= text %>" readonly
          aria-label="<%= local_assigns.fetch(:label, t("actions.copyable_text", default: "Text to copy")) %>">
-  <button type="button" data-action="clipboard#copy" data-clipboard-target="button">Copy</button>
+  <button type="button" data-action="clipboard#copy" data-clipboard-target="button"><%= t("actions.copy") %></button>
 </div>

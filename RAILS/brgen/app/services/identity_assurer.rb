@@ -14,12 +14,18 @@ class IdentityAssurer
       verified_at: Time.current
     )
 
-    TrustSignal.create!(
+    # find_or_create_by, not create!: granting the same assurance twice — a
+    # re-verification, a retried job, a second BankID round — used to write a
+    # second signal, and TrustScore sums them, so the same proof counted twice.
+    # The unique index on [user_id, kind, source] now refuses it outright, so
+    # this would raise rather than double-count; making it idempotent is the
+    # half that keeps re-verification working.
+    signal = TrustSignal.find_or_create_by!(
       user: user,
       kind: "#{level}_verified",
-      source: source,
-      weight: default_weight(level)
-    )
+      source: source
+    ) { |record| record.weight = default_weight(level) }
+    signal.update!(weight: default_weight(level)) if signal.weight != default_weight(level)
 
     TrustScore.new(user: user).call
 

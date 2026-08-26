@@ -16,5 +16,12 @@
 </section>
 
 <%= render "live_streams/list" %>
-
-<%= render "shared/pager", pagy: @pagy %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "LiveStreamsInfiniteScrollReflex#load_more",
+           sentinel_id: "amber-live-streams-sentinel" %>
+<%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+    ActionCable, so without JavaScript a truncated list would say nothing about
+    the rest of itself. noscript, so a reader with JavaScript sees one
+    mechanism rather than two. %>
+<noscript><%= render "shared/pager", pagy: @pagy %></noscript>

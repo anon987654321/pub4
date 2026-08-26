@@ -24,10 +24,10 @@
 <% slot = local_assigns[:slot].to_s %>
 <% client = ENV["ADSENSE_CLIENT"].to_s %>
 <% if client.present? && slot.present? && advertising_consent? %>
-  <aside class="ad-slot" aria-label="Advertisement">
+  <aside class="ad-slot" aria-label="<%= t("shared.advertisement") %>">
     <%# Labelled, because an unlabelled ad next to real listings is
         indistinguishable from editorial content. %>
-    <p class="ad-slot-label">Advertisement</p>
+    <p class="ad-slot-label"><%= t("shared.advertisement") %></p>
     <ins class="adsbygoogle"
          style="display:block" <%# scan: intentional — AdSense requires the inline display %>
          data-ad-client="<%= client %>"

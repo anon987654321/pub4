@@ -4,6 +4,10 @@ require "zlib"
 require "base64"
 
 class WardrobeAi
+  # The no-model answers. See wardrobe_ai/offline.rb — most machines and vm23
+  # by default have no OPENROUTER_API_KEY, so that path is the common one.
+  include Offline
+
   MODEL = "google/gemini-2.0-flash-001"
 
   # The only part of this service that knows a vendor exists.
@@ -269,102 +273,6 @@ class WardrobeAi
     fallback_response(prompt)
   end
 
-  def fallback_response(prompt)
-    if prompt.include?("outfit combinations")
-      { "outfits" => [] }
-    elsif prompt.include?("matching:")
-      { "item_ids" => [], "explanation" => "AI search unavailable — using local match when possible" }
-    elsif prompt.include?("capsule wardrobe")
-      { "items" => [], "gap_items" => [] }
-    else
-      {}
-    end
-  end
-
-  def heuristic_joy(item)
-    worn = item.times_worn.to_i
-    joy = if item.spark_joy == true
-      true
-    elsif item.spark_joy == false
-      false
-    else
-      worn >= 3 || item.life_phase == "current"
-    end
-    {
-      "sparks_joy" => joy,
-      "reason" => joy ? "Worn enough or tagged current-self — treat as a keeper until you feel otherwise." : "Low wear signal and no joy mark — try once more or release.",
-      "suggestion" => joy ? "Keep in active wardrobe and log wears." : "Start a wear-this-week challenge or open declutter review.",
-      "source" => "heuristic"
-    }
-  end
-
-  def offline_capsule
-    built = CapsuleBuilder.new(@user).build
-    explained = CapsuleBuilder.new(@user).explain(built)
-    keep_ids = built.map(&:id)
-    items = @user.items.active_wardrobe.map do |item|
-      decision = if keep_ids.include?(item.id)
-        "keep"
-      elsif item.spark_joy == false || item.underused?
-        "consider"
-      else
-        "keep"
-      end
-      reason = explained.find { |row| row[:id] == item.id }&.dig(:reason) || "Outside primary capsule set."
-      { "id" => item.id, "title" => item.title, "decision" => decision, "reason" => reason }
-    end
-    gaps = WardrobeGap.new(@user).gaps.map { |g|
-      g[:reason].presence || "#{g[:missing]} more #{g[:category]}"
-    }
-    { "items" => items, "gap_items" => gaps, "source" => "capsule_builder" }
-  end
-
-  def offline_palette
-    colors = @user.items.where.not(color: [ nil, "" ]).pluck(:color)
-    {
-      "palette" => colors.first(6).join(", ").presence || "unknown",
-      "season_type" => "unclassified",
-      "harmonious" => colors.first(5),
-      "clashing" => [],
-      "suggestions" => [ "Enable OpenRouter for seasonal colour analysis.", "Add hex/color tags when uploading photos." ],
-      "source" => "heuristic"
-    }
-  end
-
-  def offline_search(query)
-    q = query.to_s.strip.downcase
-    return { "item_ids" => [], "explanation" => "Empty query", "source" => "heuristic" } if q.blank?
-
-    tokens = q.split(/\s+/).reject(&:blank?)
-    matched = @user.items.select do |item|
-      hay = [ item.title, item.category, item.color, item.brand, item.material, item.occasion_tags, item.season ].join(" ").downcase
-      tokens.any? { |t| hay.include?(t) }
-    end
-    {
-      "item_ids" => matched.map(&:id),
-      "explanation" => "Local keyword match (#{matched.size} items). OpenRouter improves natural language.",
-      "source" => "heuristic"
-    }
-  end
-
-  def rule_based_outfits(items, occasion: nil, season: nil)
-    return [] if items.blank?
-
-    grouped = items.group_by(&:category)
-    picks = [
-      grouped["Tops"]&.first || grouped["Dresses"]&.first,
-      grouped["Bottoms"]&.first,
-      grouped["Shoes"]&.first
-    ].compact
-    return [] if picks.size < 2
-
-    [ {
-      "name" => [ occasion, season, "Closet combo" ].compact_blank.join(" · "),
-      "items" => picks.map(&:title),
-      "description" => "Rule-based from your active wardrobe (AI key not configured or model returned empty).",
-      "source" => "rule"
-    } ]
-  end
 
   def image_data_url(photo)
     return nil unless photo

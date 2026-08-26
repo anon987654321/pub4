@@ -1,0 +1,48 @@
+// The dependency graph and the wordmark.
+//
+// Split out of application.scss when that file passed its length ceiling. The
+// graph is five rules that only ever style an inline SVG on the port detail
+// page, and .logo is one rule; neither shares a selector with anything left
+// behind, which mattered here — bsdports styles `article > header` and
+// `.search-result` twice each in one file, so most blocks in it are order
+// dependent and cannot be moved. These two are not.
+
+.dep-graph {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-block-start: var(--space-4);
+}
+
+.dep-graph {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dep-graph line {
+  stroke: var(--border);
+}
+
+.dep-graph circle {
+  fill: var(--surface-elevated);
+  stroke: var(--text-secondary);
+}
+
+.dep-graph text {
+  fill: var(--text);
+  font-family: var(--font-mono);
+}
+
+.logo {
+  text-indent: -9999px;
+  overflow: hidden;
+  margin: 0 0 var(--space-8);
+  width: 182px;
+  height: 44px;
+  background-image: url("bsdports_182x44.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+

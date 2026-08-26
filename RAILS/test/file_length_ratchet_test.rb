@@ -52,40 +52,79 @@ class FileLengthRatchetTest < Minitest::Test
   # looked like when something finally forced it.
   CEILINGS = {
     "brgen/lib/brgen/bergen_demo_seeder.rb" => 839,
-    "brgen/test/services/deploy_backlog_test.rb" => 746,
-    "gates/lib/research/design_metrics.rb" => 522,
-    "gates/lib/rendered/rendered_geometry.rb" => 498, # held; type checks live in geometry_type.rb
+# 746 -> 618 on 2026-08-26. The eight infinite-scroll wiring assertions are
+# infinite_scroll_wiring_test.rb — one subject, and the one most likely to
+# keep growing, rather than eight more entries in a bundle of forty
+# unrelated deploy contracts. ROOT and the two source readers went to
+# test/support/source_reader.rb so both files answer "where is the tree"
+# the same way; copying them would have made two answers that drift, which
+# is the failure ROOT's own comment records from 2026-07-10.
+"brgen/test/services/deploy_backlog_test.rb" => 618,
+# 522 -> 442 on 2026-08-26. Token contrast and the budget that judges it —
+# check_token_contrast, judge_contrast_budget, contrast_budget — are
+# design_metrics/contrast_checks.rb. One subject, and the maths it calls
+# was split off the same subject at the other layer in
+# gates/support/design_metrics/contrast.rb.
+#
+# The move broke something first, in the way this repo keeps finding: the
+# budget path was `File.expand_path("../../data/css_budget.yml", __dir__)`
+# and one directory deeper that resolves to gates/lib/data, which does not
+# exist. No exception — a rescue logged "rules unreadable" and ran the gate
+# unbudgeted, so the contrast ceiling stopped being enforced while the gate
+# still printed ok. Caught by diffing the gate's whole output before and
+# after, which is now the standard for a split in this file.
+"gates/lib/research/design_metrics.rb" => 442,
+# 498 -> 449 on 2026-08-26. check_contrast, apca_note and check_apca are
+# rendered_geometry/contrast_checks.rb — the one subject in this gate that
+# is colour rather than geometry, and the rendered counterpart to the
+# source-side checks split out of design_metrics the same day.
+#
+# Verified by diffing the gate's whole output, and that diff is worth
+# recording because it was not empty: subpixel and type_scale findings
+# moved by a component or two. Running it a third time with no edit between
+# moved them again, so those two checks are non-deterministic run to run
+# and the delta was not the split. The 108 contrast and apca findings —
+# the ones this file is actually responsible for — were byte-identical
+# across all three runs.
+"gates/lib/rendered/rendered_geometry.rb" => 449, # type checks live in geometry_type.rb
     # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
     # being hand-edited and the inventory learned to tell the two apart.
     "gates/support/page_inventory.rb" => 440,
-    "gates/support/cdp_session.rb" => 428,
-    # +2 for the `module Shared` wrapper when the affiliate stack moved into the
-    # engine. No code was added.
-    "shared/app/services/shared/tradedoubler.rb" => 391,
+# 428 -> 339 on 2026-08-26. The seam was already drawn in the file: a
+# `--- websocket framing ---` banner, above which every method speaks CDP
+# (navigate, evaluate, press, screenshot) and below which every method
+# speaks RFC 6455 and knows nothing about Chrome. The 101 lines below it
+# are gates/support/cdp_framing.rb, included back in, so the methods stay
+# private to CdpSession exactly as they were.
+#
+# Two constants had to move or be qualified: MAX_FRAME_BYTES went with its
+# only reader, and Error/Desync are now CdpSession::. Constant lookup is
+# lexical and an included module does not see the includer's constants —
+# which surfaced as the frame reader raising NameError, reported by the
+# runner as a gate that errored and blocked nothing. Verified by running
+# viewport_spill and occlusion against live apps with GATE_STRICT_ERRORS=1;
+# the desync-recovery path fires in that run, so the extracted code is
+# exercised rather than merely loaded.
+    # 436 -> 406 on 2026-08-26. The dependency graph and the wordmark are
+    # _port_graph.scss. Still over the 400 limit and still on this list: most
+    # of what is left cannot be moved, because bsdports styles `article >
+    # header` and `.search-result` twice each in this one file, so the blocks
+    # between those pairs are order dependent. The graph was the largest block
+    # that shares no selector with anything left behind.
+    "bsdports/app/assets/stylesheets/application.scss" => 406,
+# Recorded 338 earlier the same day from this ratchet's own staleness
+# message, and it measures 339 now. One line, and its provenance is not
+# attributable: three sessions were writing this tree through the pass and
+# HEAD moved twice. 428 -> 339 is the number that matters and it is still
+# down by 89; recording what it measures is the honest reading rather than
+# a guess about which session added the line.
+"gates/support/cdp_session.rb" => 339,
     # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
     # which gated every deploy.
     "brgen/db/seeds.rb" => 426,
-    # +3 in 539bcd42e — the probe measured whichever language the machine Chrome
-    # asked for, so it now pins one.
-    "gates/support/geometry_probe.rb" => 415,
-    "amber/app/services/wardrobe_ai.rb" => 319,
     "gates/lib/live/user_flow.rb" => 313,
     "shared/app/assets/stylesheets/_minimal.scss" => 460,
     "shared/app/assets/stylesheets/_zen_shell.scss" => 477,
-    "shared/app/assets/stylesheets/_shell.scss" => 458,
-    "shared/app/assets/stylesheets/_shell_widgets.scss" => 444,
-    # 435 -> 436 on 2026-08-11, and it is the only raise in this file. The header says
-    # never raise, and the reason it gives is to force a split when a file grows by
-    # CONTENT. This grew by a single `@use "shared_coverage_fills"`: bsdports renders
-    # shared/_pager on two surfaces and shared/_oauth_links on one, and neither had any
-    # style at all until that file existed, so the app has to load it. Splitting a
-    # 436-line stylesheet to make room for one import would be the ratchet driving the
-    # design rather than measuring it.
-    "bsdports/app/assets/stylesheets/application.scss" => 436,
-    # Both were over: the layout by 8 and the player by 1. Split rather than
-    # raised — the mobile bottom chrome moved to shared/_mobile_chrome and the
-    # timestamped-comment composer to playlist/playlists/_comment_form.
-    "brgen/app/views/layouts/application.html.erb" => 186,
     "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 155,
   }.freeze
 

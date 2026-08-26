@@ -1,6 +1,6 @@
 <% content_for :title, t("pages.colour_palette") %>
 <%= tag.h1 t("pages.colour_palette_title") %>
-<% if @result["source"] %><p>Source: <%= @result["source"] %></p><% end %>
+<% if @result["source"] %><p><%= t("ai.source", source: @result["source"]) %></p><% end %>
 
 <% if @swatches.present? %>
   <section aria-label="<%= t("ai.palette_aria") %>">
@@ -18,15 +18,15 @@
 
 <% if @result["palette"] %>
   <div class="ai-card">
-    <p><strong>Palette:</strong> <%= @result["palette"] %></p>
-    <% if @result["season_type"].present? %><p><strong>Seasonal type:</strong> <%= @result["season_type"] %></p><% end %>
+    <p><strong><%= t("ai.palette") %></strong> <%= @result["palette"] %></p>
+    <% if @result["season_type"].present? %><p><strong><%= t("ai.seasonal_type") %></strong> <%= @result["season_type"] %></p><% end %>
   </div>
   <% if @result["clashing"]&.any? %>
     <%= tag.h2 t("ai.clashing_items") %>
     <ul><% @result["clashing"].each do |i| %><li><%= i %></li><% end %></ul>
   <% end %>
   <% if @result["suggestions"]&.any? %>
-    <h2>Suggestions</h2>
+    <%= tag.h2 t("ai.suggestions") %>
     <ul><% @result["suggestions"].each do |s| %><li><%= s %></li><% end %></ul>
   <% end %>
 <% else %>

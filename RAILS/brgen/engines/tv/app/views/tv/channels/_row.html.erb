@@ -1,5 +1,5 @@
 <% channel_content = capture do %>
-  <% if channel.live? %><span class="live-badge">Live</span><% end %>
+  <% if channel.live? %><span class="live-badge"><%= t("tv.live_badge") %></span><% end %>
 <% end %>
 <%= render "shared/feed_card",
   avatar_url: (channel.avatar.attached? ? main_app.url_for(channel.avatar) : nil),

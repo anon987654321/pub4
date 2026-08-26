@@ -5,16 +5,8 @@
 </header>
 
 <% if @orders.any? %>
-  <ul class="order-list">
-    <% @orders.each do |order| %>
-      <li class="order-row">
-        <%= link_to order, class: "order-link" do %>
-          <span class="order-title"><%= order.listing&.title || t("marketplace.orders.listing", default: "Listing") %></span>
-        <% end %>
-        <span class="order-status chip"><%= order.try(:status) %></span>
-        <time datetime="<%= order.created_at.iso8601 %>"><%= time_ago(order.created_at) %></time>
-      </li>
-    <% end %>
+  <ul class="order-list" id="buyer-orders">
+    <%= render partial: "marketplace/orders/order_row", collection: @orders, as: :order %>
   </ul>
 <% else %>
   <%# The empty case is the common one for a new account, and it was a page with
@@ -26,4 +18,13 @@
         action: { label: t("marketplace.orders.empty_action"), path: listings_path } %>
 <% end %>
 
-<%= render "shared/pager", pagy: @pagy %>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "BuyerOrdersInfiniteScrollReflex#load_more",
+           sentinel_id: "buyer-orders-sentinel" %>
+
+<%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+    ActionCable, so without JavaScript a truncated list would say nothing about
+    the rest of itself. noscript, so a reader with JavaScript sees one
+    mechanism rather than two. %>
+<noscript><%= render "shared/pager", pagy: @pagy %></noscript>

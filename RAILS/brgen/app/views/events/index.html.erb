@@ -25,10 +25,18 @@
         <li><%= render "events/event", event: event, rsvp_status: @my_rsvps[event.id] %></li>
       <% end %>
     </ul>
-    <% if @pagy.next %>
-      <%= link_to t("actions.load_more", default: "More"),
-                  events_path(page: @pagy.next), rel: "next", class: "btn btn-ghost" %>
-    <% end %>
+    <%# shared/pager, like every other paginated surface. The hand-rolled
+        link here offered next and nothing else, so the listing was the one
+        page in the app a reader could walk forward through and not back. %>
+    <%= render "shared/infinite_scroll_sentinel",
+               pagy: @pagy,
+               reflex: "EventsInfiniteScrollReflex#load_more",
+               sentinel_id: "brgen-events-sentinel" %>
+    <%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
+        ActionCable, so without JavaScript a truncated list would say nothing about
+        the rest of itself. noscript, so a reader with JavaScript sees one
+        mechanism rather than two. %>
+    <noscript><%= render "shared/pager", pagy: @pagy %></noscript>
   <% else %>
     <%# empty_state: the action is posting one, and anyone signed in can. %>
     <%= render "shared/empty_state",

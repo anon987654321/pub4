@@ -30,7 +30,7 @@ module Shared
       ActivityEventRecorder.call(
         actor:,
         event_name: action_to_event_name(action),
-        object: subject,
+        subject:,
         source_vertical: vertical,
         locality:,
         visibility:,

@@ -6,7 +6,7 @@
     <%= tag.p result["reason"] %>
     <p><%= tag.em result["suggestion"] %></p>
     <% if result["source"] %>
-      <p>Source: <%= result["source"] == "heuristic" ? "local heuristic (no OpenRouter key or model empty)" : result["source"] %></p>
+      <p><%= t("ai.source", source: result["source"] == "heuristic" ? t("ai.heuristic_source") : result["source"]) %></p>
     <% end %>
   <% end %>
 </aside>

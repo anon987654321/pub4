@@ -29,8 +29,8 @@ class ApplicationHelperTest < ActionView::TestCase
     event = ActivityEvent.new(
       source_vertical: "social",
       event_name: "PostCreated",
-      object_type: "Post",
-      object_id: post.id
+      subject_type: "Post",
+      subject_id: post.id
     )
 
     href = activity_event_href(event)
@@ -41,8 +41,8 @@ class ApplicationHelperTest < ActionView::TestCase
     event = ActivityEvent.new(
       source_vertical: "social",
       event_name: "PostCreated",
-      object_type: "Post",
-      object_id: 9_999_999
+      subject_type: "Post",
+      subject_id: 9_999_999
     )
     assert_nil activity_event_href(event)
   end
@@ -70,8 +70,8 @@ class ApplicationHelperTest < ActionView::TestCase
     event = ActivityEvent.new(
       source_vertical: "marketplace",
       event_name: "ListingCreated",
-      object_type: "Marketplace::Listing",
-      object_id: listing.id
+      subject_type: "Marketplace::Listing",
+      subject_id: listing.id
     )
 
     I18n.with_locale(:nb) do
@@ -84,8 +84,8 @@ class ApplicationHelperTest < ActionView::TestCase
     event = ActivityEvent.new(
       source_vertical: "takeaway",
       event_name: "TakeawayRestaurantCreated",
-      object_type: "Takeaway::Restaurant",
-      object_id: 9_999_999
+      subject_type: "Takeaway::Restaurant",
+      subject_id: 9_999_999
     )
     I18n.with_locale(:nb) do
       refute_equal "Takeawayrestaurantcreated", activity_event_title(event)
@@ -116,8 +116,8 @@ class ApplicationHelperTest < ActionView::TestCase
     event = ActivityEvent.new(
       source_vertical: "marketplace",
       event_name: "ListingCreated",
-      object_type: "Marketplace::Listing",
-      object_id: listing.id
+      subject_type: "Marketplace::Listing",
+      subject_id: listing.id
     )
 
     href = activity_event_href(event)

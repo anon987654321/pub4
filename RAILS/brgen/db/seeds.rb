@@ -532,8 +532,8 @@ if places.any?
     ActivityEvent.create!(
       actor: u,
       event_name: 'visited',
-      object_type: place.class.name,
-      object_id: place.id,
+      subject_type: place.class.name,
+      subject_id: place.id,
       source_vertical: 'maps',
       locality: place.try(:locality),
       created_at: rand(1..10).hours.ago

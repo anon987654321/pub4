@@ -45,6 +45,64 @@ install_rcd() {
   log_ok "rc.d ${svc} installed and enabled"
 }
 
+# relayd_confirm_live PORT
+# Post-restart verification, deliberately separate from the pre-restart config
+# validation above it.
+#
+# `rcctl restart relayd` returns 0 when the start command succeeded, and that is
+# not the same claim as "relayd is serving". On 2026-08-10 the ca process died
+# during a restart (ca_dispatch_relay: invalid relay hash -> lost child ->
+# parent terminating) and took every site on the box down for nine minutes; the
+# deploy that triggered it had logged relayd(ok) seconds earlier, because the
+# only check ran before the restart. RAILS/BLOCKERS.md #2 records that as open
+# with "nothing yet re-checks liveness after the restart". This is that check.
+#
+# The two failure shapes are distinguishable and it is worth saying which one
+# happened, because they need different actions:
+#
+#   relayd died   443 refuses in ~30ms while the app still answers on its own
+#                 port from the box. Every site is down. Not port 80 — relayd
+#                 declares one relay, `listen on 0.0.0.0 port 443 tls`, so 80
+#                 refuses on a healthy box and tests nothing.
+#   app shed      443 still answers TLS and only the app port is closed. TLS
+#                 answering is why a shed reads as curl 000 rather than a 5xx.
+relayd_confirm_live() {
+  local app_port=$1
+  local deadline=20
+
+  if ${_PRIV} ruby34 -e '
+    require "socket"
+    port, deadline = ARGV.map(&:to_i)
+    deadline.times do
+      begin
+        Socket.tcp("127.0.0.1", port, connect_timeout: 1) { |s| s.close }
+        exit 0
+      rescue StandardError
+        sleep 1
+      end
+    end
+    exit 1
+  ' 443 "$deadline"; then
+    log_ok "relayd: 443 accepting after restart"
+    return 0
+  fi
+
+  if ${_PRIV} ruby34 -e '
+    require "socket"
+    begin
+      Socket.tcp("127.0.0.1", ARGV[0].to_i, connect_timeout: 1) { |s| s.close }
+      exit 0
+    rescue StandardError
+      exit 1
+    end
+  ' "$app_port"; then
+    log_err "relayd: 443 refused for ${deadline}s while the app still answers on ${app_port} — relayd is down, every site with it"
+  else
+    log_err "relayd: 443 refused for ${deadline}s and so did ${app_port} — check the app before blaming relayd"
+  fi
+  return 1
+}
+
 # relayd_add_relay DOMAIN PORT
 # Idempotently adds a table + host-routing entry to /etc/relayd.conf for a new app,
 # then restarts relayd if anything actually changed. Fails loudly (non-zero, caught
@@ -106,6 +164,7 @@ relayd_add_relay() {
 
   if [[ $changed == 1 ]]; then
     ${_PRIV} rcctl restart relayd || { log_err "relayd: restart failed after config change"; return 1; }
+    relayd_confirm_live "$port" || return 1
     log_ok "relayd: restarted to pick up ${domain}"
   fi
   return 0

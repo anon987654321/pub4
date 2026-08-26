@@ -1,0 +1,98 @@
+// The add-to-home-screen prompt.
+//
+// Split out of _shell_widgets.scss with the chat dock, for the same reason
+// and on the same terms: one .install-prompt prefix, no selector shared with
+// its old neighbours, loaded by @use so it emits just ahead of them.
+//
+// Worth keeping the note that came with it: this partial rendered in all
+// three apps for months with nothing styling it, so the moment
+// install_prompt_controller.js cleared [hidden] the markup appeared as
+// unstyled text in document flow under the last thing on the page.
+
+/* PWA install prompt. shared/app/views/shared/_install_prompt.html.erb renders
+   in all three apps and no app styled it: the moment
+   install_prompt_controller.js cleared [hidden], the markup appeared as
+   unstyled text in document flow under the last thing on the page. Flat card,
+   pinned above the progressive tab bar like the chat widget. */
+.install-prompt {
+  position: fixed;
+  inset-inline: var(--chrome-inset, 12px);
+  bottom: calc(var(--tab-bar-h, 0px) + var(--safe-bottom, 0px) + var(--chrome-inset, 12px));
+  z-index: var(--z-toast, 1100);
+  max-width: 32rem;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp, 8px);
+  padding: 0.75rem 1rem;
+  background: var(--surface2, var(--surface-elevated, #211f28));
+  border: 1px solid var(--border, #46435a);
+  border-radius: var(--radius-card, 16px);
+  color: var(--text, #d8d6e0);
+  font-family: var(--font);
+}
+
+.install-prompt[hidden] { display: none; }
+
+.install-prompt strong {
+  font-size: var(--text-base);
+  font-weight: var(--weight-heavy, 700);
+}
+
+.install-prompt p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-dim, var(--text-secondary));
+}
+
+.install-prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp, 8px);
+}
+
+.install-prompt-primary,
+.install-prompt-secondary {
+  min-height: var(--tap-min);
+  padding: 0 0.9rem;
+  border: 1px solid var(--border, #46435a);
+  border-radius: var(--radius-sm, 8px);
+  font: var(--weight-bold) 0.875rem/1 var(--font);
+  cursor: pointer;
+}
+
+.install-prompt-secondary {
+  background: transparent;
+  color: var(--text-dim, var(--text-secondary));
+}
+
+/* Family primary is inverted type-on-background, not an accent fill — see
+   .btn-primary in _minimal.scss. */
+.install-prompt-primary {
+  background: var(--text, #d8d6e0);
+  border-color: var(--text, #d8d6e0);
+  color: var(--bg, #17161c);
+}
+
+.install-prompt-secondary:hover { color: var(--text, #d8d6e0); }
+.install-prompt-primary:hover { border-color: var(--text-dim, var(--text-secondary)); }
+
+/* Installed launches: pwa_standalone_controller.js stamps this on <html>. There
+   is nothing left to install, and the OS home indicator now sits where the
+   browser's own chrome used to. */
+:root[data-pwa-display="standalone"] .install-prompt { display: none; }
+
+:root[data-pwa-display="standalone"] body {
+  padding-bottom: var(--safe-bottom, 0px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
