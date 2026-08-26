@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "vips"
+
 require "json"
 require "fileutils"
 require_relative "../postpro/uncanny"
@@ -51,7 +52,15 @@ module Lora
     def self.scan(dir)
       files = Dir[File.join(dir, "**", "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}")].sort
       files.each_with_index.filter_map do |path, index|
-        image = Vips::Image.new_from_file(path, access: :random)
+        # autorot, or every phone photograph is measured sideways.
+        #
+        # A JPEG carries the sensor's raw pixels plus an EXIF Orientation tag
+        # saying how to turn them. Viewers apply it; vips hands back what is
+        # actually stored. Four of these sources are orientation=6 — rotate 90 —
+        # so without this they were measured as landscape when they are portrait,
+        # and written into the dataset on their side. A LoRA trained on that
+        # learns a sideways face.
+        image = Vips::Image.new_from_file(path, access: :random).autorot
         reading = Postpro::Uncanny.read(path)
         Candidate.new(path: path, width: image.width, height: image.height,
                       texture: reading.texture, clipping: reading.clipping, index: index)
@@ -153,7 +162,7 @@ module Lora
     def self.prepare(candidates, into:, token:, short_edge: TRAIN_SHORT_EDGE)
       FileUtils.mkdir_p(into)
       candidates.each_with_index.map do |candidate, index|
-        image = Vips::Image.new_from_file(candidate.path, access: :random)
+        image = Vips::Image.new_from_file(candidate.path, access: :random).autorot
         current = [image.width, image.height].min
         out_image = image.resize(short_edge.to_f / current)
 

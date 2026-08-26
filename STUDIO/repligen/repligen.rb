@@ -630,6 +630,38 @@ VOCAB_CONFLICTS = [
   [:weather, %w[snow frost aurora], :time_of_day, %w[golden_hour]],
 ].freeze
 
+# Black Forest Labs' own guidance for FLUX 2, and where this tool sits against it.
+#
+#   structure  Subject + Action + Style + Context, in that order. Word order
+#              matters and the main element goes first — which is why
+#              compile_prompt appends the vocabularies after the caller's
+#              prompt rather than before it.
+#   length     30-80 words for most work. 10-30 for quick exploration, 80+ only
+#              for genuinely complex scenes.
+#   camera     name the body, lens and aperture. "Shot on Hasselblad X2D, 80mm,
+#              f/2.8" beats any vague descriptor.
+#   colour     hex codes tied to specific objects, not colour words.
+#   negatives  FLUX 2 does not support them at all. That is already handled —
+#              the capability table carries negative_prompt_key: nil for all
+#              five, and negative_prompt_supported? warns and folds
+#              POSITIVE_SKIN_GUIDANCE into the positive prompt instead.
+#
+# Measured against this file: the caller's prompt plus three vocabulary fields
+# lands at 63 words, inside the band. All eleven at once is 142 — nearly double
+# the ceiling, and every field past it is competing for the model's attention
+# with the subject. The vocabularies are a menu, not a checklist, and this says
+# so at the moment somebody treats them as one.
+PROMPT_WORD_CEILING = 80
+
+def warn_prompt_length(compiled, model)
+  words = compiled.to_s.split.size
+  return if words <= PROMPT_WORD_CEILING
+
+  warn "warn: the compiled prompt is #{words} words against Black Forest Labs' 80-word " \
+       "guidance for #{model} — past that the later fields compete with the subject rather " \
+       "than describing it. Drop the vocabularies you are not actually deciding."
+end
+
 # A bare "selfie" in the prompt asks for the distortion, and gets it.
 #
 # The word carries a geometry: arm's length is 40-70cm, which is exactly the
@@ -1034,6 +1066,7 @@ when "generate"
   # twenty images. Only diversify() varies per index.
   compiled = compile_prompt(options[:prompt], options)
   compiled = "#{compiled}, #{POSITIVE_SKIN_GUIDANCE}" if negative_prompt && !negative_prompt_supported?(options[:model])
+  warn_prompt_length(compiled, options[:model])
 
   outputs = (0...options[:batch]).map do |index|
     varied = diversify(compiled, index, options[:batch])
