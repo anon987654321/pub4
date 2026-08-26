@@ -55,9 +55,9 @@ class UniquePairsForRaceProneUpserts < ActiveRecord::Migration[8.1]
       UPDATE conversation_participants AS keep SET
         last_read_at = (SELECT MAX(d.last_read_at) FROM conversation_participants d
                         WHERE d.conversation_id = keep.conversation_id AND d.user_id = keep.user_id),
-        pinned_at    = (SELECT MAX(d.pinned_at) FROM conversation_participants d
+        pinned_at = (SELECT MAX(d.pinned_at) FROM conversation_participants d
                         WHERE d.conversation_id = keep.conversation_id AND d.user_id = keep.user_id),
-        role         = (SELECT CASE MAX(CASE d.role WHEN 'op' THEN 2 WHEN 'voice' THEN 1 ELSE 0 END)
+        role = (SELECT CASE MAX(CASE d.role WHEN 'op' THEN 2 WHEN 'voice' THEN 1 ELSE 0 END)
                                  WHEN 2 THEN 'op' WHEN 1 THEN 'voice' ELSE 'member' END
                         FROM conversation_participants d
                         WHERE d.conversation_id = keep.conversation_id AND d.user_id = keep.user_id)

@@ -5,7 +5,7 @@
 #
 # Tv::HomeController is the other shape — a trending/live/recent grid, which is
 # the YouTube answer to "what is there". This is the TikTok one: no choosing,
-# just the next thing. It is only possible because Tv::ViewEvent finally records
+# the next thing. It is only possible because Tv::ViewEvent finally records
 # watch time; before that, `trending` sorted views_count, which is incremented
 # on page load, so a bounce ranked like a full view.
 class Tv::FeedController < Tv::BaseController

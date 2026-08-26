@@ -19,8 +19,8 @@ class Tv::ChannelsController < Tv::BaseController
     @pagy, @channels = pagy(scope)
     finish_live_search(partial: "tv/channels/live_search_results")
   end
-  def show     = (@pagy, @videos = pagy(@channel.videos.published))
-  def new      = (@channel = Tv::Channel.new)
+  def show = (@pagy, @videos = pagy(@channel.videos.published))
+  def new = (@channel = Tv::Channel.new)
   def edit;    end
 
   def create
@@ -50,7 +50,7 @@ class Tv::ChannelsController < Tv::BaseController
   # raises RecordNotFound every time, so every channel link on /channels 404'd
   # — including the ones the index itself renders. The sibling IRC
   # ChannelsController already reads params[:slug].
-  def set_channel    = (@channel = Tv::Channel.find_by!(slug: params[:slug]))
+  def set_channel = (@channel = Tv::Channel.find_by!(slug: params[:slug]))
   def channel_params = params.require(:channel).permit(:name, :description, :banner, :avatar)
 
   # user_id, not user: set_channel finds by slug with nothing preloaded, and

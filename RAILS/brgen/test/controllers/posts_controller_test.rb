@@ -63,9 +63,9 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "non-owner cannot update another user's post" do
-    owner  = User.create!(email_address: "post-owner-#{SecureRandom.hex(4)}@example.com", password: "password12345")
-    other  = User.create!(email_address: "post-other-#{SecureRandom.hex(4)}@example.com", password: "password12345")
-    post   = Post.create!(user: owner, title: "Original", content: "body", city: brgen_city)
+    owner = User.create!(email_address: "post-owner-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    other = User.create!(email_address: "post-other-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    post = Post.create!(user: owner, title: "Original", content: "body", city: brgen_city)
 
     host! "brgen.no"
     post session_url, params: { email_address: other.email_address, password: "password12345" }
@@ -95,9 +95,9 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "non-owner cannot destroy another user's post" do
-    owner  = User.create!(email_address: "post-owner2-#{SecureRandom.hex(4)}@example.com", password: "password12345")
-    other  = User.create!(email_address: "post-other2-#{SecureRandom.hex(4)}@example.com", password: "password12345")
-    post   = Post.create!(user: owner, title: "Original", content: "body", city: brgen_city)
+    owner = User.create!(email_address: "post-owner2-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    other = User.create!(email_address: "post-other2-#{SecureRandom.hex(4)}@example.com", password: "password12345")
+    post = Post.create!(user: owner, title: "Original", content: "body", city: brgen_city)
 
     host! "brgen.no"
     post session_url, params: { email_address: other.email_address, password: "password12345" }

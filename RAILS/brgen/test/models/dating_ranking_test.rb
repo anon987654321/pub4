@@ -35,14 +35,14 @@ class DatingRankingTest < ActiveSupport::TestCase
 
   test "someone active this week outranks someone last seen in March" do
     dormant = profile(handle: "dormant", last_active: 120.days.ago)
-    recent  = profile(handle: "recent", last_active: 1.hour.ago)
+    recent = profile(handle: "recent", last_active: 1.hour.ago)
 
     ranked = Dating::Profile.visible.ranked_for(@viewer).map(&:id)
     assert_operator ranked.index(recent.id), :<, ranked.index(dormant.id)
   end
 
   test "a never-seen profile ranks below a dormant one, not above" do
-    never   = profile(handle: "never")
+    never = profile(handle: "never")
     dormant = profile(handle: "dormant2", last_active: 120.days.ago)
 
     ranked = Dating::Profile.visible.ranked_for(@viewer).map(&:id)
@@ -52,7 +52,7 @@ class DatingRankingTest < ActiveSupport::TestCase
   # A profile with prompts gives the viewer something to reply to, which is the
   # whole interaction this vertical is for.
   test "among equally recent profiles, answered prompts come first" do
-    bare     = profile(handle: "bare", last_active: 1.hour.ago)
+    bare = profile(handle: "bare", last_active: 1.hour.ago)
     answered = profile(handle: "answered", last_active: 1.hour.ago, prompts: 2)
 
     ranked = Dating::Profile.visible.ranked_for(@viewer).map(&:id)
@@ -64,7 +64,7 @@ class DatingRankingTest < ActiveSupport::TestCase
   test "the order is stable for one viewer on one day" do
     4.times { |i| profile(handle: "stable#{i}", last_active: 1.hour.ago) }
 
-    first  = Dating::Profile.visible.ranked_for(@viewer).map(&:id)
+    first = Dating::Profile.visible.ranked_for(@viewer).map(&:id)
     second = Dating::Profile.visible.ranked_for(@viewer).map(&:id)
     assert_equal first, second
   end
@@ -77,7 +77,7 @@ class DatingRankingTest < ActiveSupport::TestCase
       email_address: "dr_other@brgen.no", password: "password123", username: "dr_other", city: @city
     )
 
-    mine   = Dating::Profile.visible.ranked_for(@viewer).map(&:id)
+    mine = Dating::Profile.visible.ranked_for(@viewer).map(&:id)
     theirs = Dating::Profile.visible.ranked_for(other).map(&:id)
     refute_equal mine, theirs
   end

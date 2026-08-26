@@ -235,7 +235,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
       restaurant = kitchen(name: "Dispatch Kitchen", address: "Marken 20")
       # `nearby` is a bounding box, so the far courier is inside it. Only real
       # haversine ordering picks the near one — a bbox alone would take either.
-      far  = courier(email: "far@brgen.no",  lat: 60.4180, lng: 5.3700)
+      far = courier(email: "far@brgen.no",  lat: 60.4180, lng: 5.3700)
       near = courier(email: "near@brgen.no", lat: 60.3920, lng: 5.3230)
 
       order = ticket!(restaurant, delivery_address: "Torget 2")

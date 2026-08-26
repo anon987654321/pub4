@@ -31,7 +31,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "form-submit-blank"
     # The chip is labelled "sign up". Sending it to sign-in made a new visitor
     # fill a form they have no account for. The sign-in page does link onward
-    # to /users/new — this just skips the extra hop.
+    # to /users/new — this skips the extra hop.
     assert_includes response.body, new_user_path
   end
 

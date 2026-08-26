@@ -60,7 +60,7 @@ class MarketplaceBasketTest < ActionDispatch::IntegrationTest
       post marketplace.checkout_path, params: { provider: "vipps" }
     end
     # Not a DoubleRenderError, which is what checking this after the
-    # nothing-payable branch produced: a 500 for a buyer who had simply not
+    # nothing-payable branch produced: a 500 for a buyer who had not
     # saved an address.
     assert_response :redirect
   end

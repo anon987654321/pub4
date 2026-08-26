@@ -32,5 +32,5 @@ class Tv::Channel < ApplicationRecord
   scope :popular, -> { order(subscribers_count: :desc) }
 
   def to_param = slug
-  def live?    = broadcasts.where(status: "live").exists?
+  def live? = broadcasts.where(status: "live").exists?
 end

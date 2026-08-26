@@ -15,7 +15,7 @@ class UnreadCountsTest < ActiveSupport::TestCase
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
     ActsAsTenant.current_tenant = @city
-    @me    = create_user("me")
+    @me = create_user("me")
     @other = create_user("other")
   end
 
@@ -47,9 +47,9 @@ class UnreadCountsTest < ActiveSupport::TestCase
 
   test "counts_for agrees with unread_count_for, unread and read alike" do
     unread = dm_with(@other, messages: 3)
-    read   = dm_with(create_user("read"), messages: 2)
+    read = dm_with(create_user("read"), messages: 2)
     read.mark_read_for!(@me)
-    empty  = dm_with(create_user("empty"))
+    empty = dm_with(create_user("empty"))
 
     per_record = assert_agrees_with_per_record([ unread.id, read.id, empty.id ])
     assert_equal 3, per_record[unread.id], "a never-opened thread has everything unread"

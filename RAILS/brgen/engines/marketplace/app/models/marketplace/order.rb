@@ -181,7 +181,7 @@ class Marketplace::Order < ApplicationRecord
 
   # Returnable only against a shop. The right to send a purchase back is a right
   # against a business; a private sale between two people in the same city is
-  # not one, and offering a control that the seller can simply refuse reads as a
+  # not one, and offering a control that the seller can refuse reads as a
   # promise the app cannot keep.
   def returnable_by?(user)
     return false unless user && user.id == buyer_id

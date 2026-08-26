@@ -98,9 +98,9 @@ module Fediverse
     # activity is recorded (so a redelivery is a duplicate rather than a
     # reprocess) and dropped, which is honest: pretending to accept content we
     # do not store would leave the sender believing it arrived.
-    def handle_create  = :not_ingested
+    def handle_create = :not_ingested
     def handle_announce = :not_ingested
-    def handle_like     = :not_ingested
+    def handle_like = :not_ingested
 
     # A Delete may only remove something its sender owns. A verified signature
     # proves who is asking, not what they are allowed to ask for.

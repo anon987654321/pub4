@@ -27,10 +27,10 @@ class EmailSubscriptionsController < ApplicationController
   def create
     sub = EmailSubscription.find_or_initialize_by(email: params[:email_subscription][:email])
     if sub.new_record?
-      sub.city                = params[:email_subscription][:city].presence
-      sub.locale              = I18n.locale.to_s
+      sub.city = params[:email_subscription][:city].presence
+      sub.locale = I18n.locale.to_s
       sub.agreed_to_marketing = params[:email_subscription][:agreed_to_marketing] == "1"
-      sub.interests           = params[:email_subscription][:interests].presence
+      sub.interests = params[:email_subscription][:interests].presence
       if sub.save
         EmailSubscriptionConfirmationJob.perform_later(sub.id)
         redirect_back fallback_location: root_path, notice: t("flash.confirm_your_inbox")

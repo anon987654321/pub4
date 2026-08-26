@@ -17,7 +17,7 @@ class Takeaway::OrdersController < Takeaway::BaseController
   end
 
   def new
-    @order      = Takeaway::Order.new
+    @order = Takeaway::Order.new
     @menu_items = @restaurant.menu_items.available
   end
 
@@ -90,6 +90,6 @@ class Takeaway::OrdersController < Takeaway::BaseController
   # tip_cents and scheduled_for are the customer's, so they are permitted;
   # totals are recomputed server-side in calculate_totals! and never read from
   # the form.
-  def order_params   = params.require(:takeaway_order).permit(:delivery_address, :special_instructions, :tip_cents, :scheduled_for)
-  def item_params    = params.dig(:takeaway_order, :items) || {}
+  def order_params = params.require(:takeaway_order).permit(:delivery_address, :special_instructions, :tip_cents, :scheduled_for)
+  def item_params = params.dig(:takeaway_order, :items) || {}
 end

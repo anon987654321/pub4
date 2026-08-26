@@ -51,10 +51,10 @@ module Shared
     ].freeze
 
     class << self
-      def client_id     = ENV["AMAZON_CREATORS_CLIENT_ID"].presence || ENV["AMAZON_ACCESS_KEY"].presence
+      def client_id = ENV["AMAZON_CREATORS_CLIENT_ID"].presence || ENV["AMAZON_ACCESS_KEY"].presence
       def client_secret = ENV["AMAZON_CREATORS_CLIENT_SECRET"].presence || ENV["AMAZON_SECRET_KEY"].presence
-      def version       = ENV.fetch("AMAZON_CREATORS_VERSION", "3.2")
-      def market        = ENV.fetch("AMAZON_MARKET", "SE")
+      def version = ENV.fetch("AMAZON_CREATORS_VERSION", "3.2")
+      def market = ENV.fetch("AMAZON_MARKET", "SE")
 
       # Catalog API ready when Creators credentials exist AND a tag for the
       # active market exists. Tag-only seeding only needs the tag.

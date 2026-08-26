@@ -45,7 +45,7 @@ module Shared
       vote&.value
     end
 
-    def upvoted_by?(u)   = voted_by?(u) == 1
+    def upvoted_by?(u) = voted_by?(u) == 1
     def downvoted_by?(u) = voted_by?(u) == -1
   end
 end

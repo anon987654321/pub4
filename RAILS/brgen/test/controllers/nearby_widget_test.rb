@@ -151,7 +151,7 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
   # the turbo-frame arrived. That is a visible relabel a beat after the page
   # settles, and it made layout_snapshot report
   # `.nearby-chat-widget-tab: w 92 -> 102` on and off for many runs in both
-  # directions -- re-baselining never converged, because it just re-recorded
+  # directions -- re-baselining never converged, because it re-recorded
   # whichever side of the race that run caught.
   #
   # Both sides now read Shared::UiHelper#ambient_chat_room_label, so there is one

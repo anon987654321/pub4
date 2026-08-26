@@ -14,7 +14,7 @@ class WellKnownController < ApplicationController
   def webfinger
     resource = params[:resource].to_s
     username = resource[/\Aacct:([^@]+)@(.+)\z/, 1]
-    domain   = resource[/\Aacct:([^@]+)@(.+)\z/, 2]
+    domain = resource[/\Aacct:([^@]+)@(.+)\z/, 2]
 
     if username.blank? || domain.blank? || domain != request.host
       head :not_found

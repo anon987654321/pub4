@@ -18,8 +18,8 @@ class VotesController < ApplicationController
 
   def create
     @votable = find_votable
-    vote     = @votable.votes.find_or_initialize_by(user: Current.user)
-    value    = params.dig(:vote, :value).to_i
+    vote = @votable.votes.find_or_initialize_by(user: Current.user)
+    value = params.dig(:vote, :value).to_i
 
     if vote.persisted? && vote.value == value
       vote.destroy

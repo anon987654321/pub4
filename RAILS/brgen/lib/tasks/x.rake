@@ -4,7 +4,7 @@ namespace :scrape do
   desc "X (Twitter) posts via Ferrum + vision LLM (queries: comma-separated, default: bergen,oslo,norge)"
   task :x, [ :queries ] => :environment do |_, args|
     queries = (args[:queries] || "bergen,oslo,norge").split(",").map(&:strip)
-    schema  = %w[author text timestamp likes retweets url]
+    schema = %w[author text timestamp likes retweets url]
     queries.each do |q|
       url = "https://x.com/search?q=#{CGI.escape(q)}&src=typed_query&f=live"
       Scrape.call(
@@ -19,7 +19,7 @@ namespace :scrape do
   task :x_seed, [ :queries ] => :environment do |_, args|
     require "cgi"
     queries = (args[:queries] || "bergen,oslo,norge").split(",").map(&:strip)
-    schema  = %w[author text timestamp likes retweets url]
+    schema = %w[author text timestamp likes retweets url]
 
     user = User.first || User.create!(email_address: "seed@x.local", password: "password123",
                                       password_confirmation: "password123", username: "xseed")
@@ -31,7 +31,7 @@ namespace :scrape do
       items.each do |item|
         # Fictivize + route to subapps
         title = "#{q.capitalize} buzz: #{item['text'][0..60]}..."
-        body  = [ item["text"],
+        body = [ item["text"],
                  "— scraped & fictivized from X search '#{q}' (#{item['timestamp']}, likes: #{item['likes']})" ].compact.join("\n\n")
 
         # Core social (always for feed)

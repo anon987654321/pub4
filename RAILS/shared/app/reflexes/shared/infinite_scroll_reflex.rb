@@ -7,7 +7,7 @@ module Shared
   # Twenty-one subclasses across the three apps each carried their own copy of
   # the first two steps -- an identical `load_more` that paginated and called
   # super, and a `page_html` that differed only in a partial path and a local
-  # name. The scope is the only thing that was ever really different, so that is
+  # name. The scope is the only thing that was ever different, so that is
   # the only thing a subclass writes now, alongside one `renders` line.
   #
   # A reflex that needs more than the pattern has three seams rather than a copy

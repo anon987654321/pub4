@@ -87,7 +87,7 @@ class Takeaway::Order < ApplicationRecord
     # Dispatch on the same write as the status change, so an order is never
     # observable as out_for_delivery with no courier attached. A nil id is left
     # out rather than written: no free driver in range means the order still
-    # leaves the kitchen, it just has nobody named on it yet.
+    # leaves the kitchen, it has nobody named on it yet.
     if next_status.to_s == "out_for_delivery" && delivery_driver_id.blank?
       assigned = dispatch_driver_id
       attrs[:delivery_driver_id] = assigned if assigned
@@ -129,7 +129,7 @@ class Takeaway::Order < ApplicationRecord
   # Minutes from order placement to the end of each stage. Anchored to
   # created_at (not "now") so the estimate visibly shrinks as the order
   # actually advances, instead of a fixed "25-35 min" string that never
-  # reflects what's really happening to this order.
+  # reflects what's happening to this order.
   ETA_MINUTES_BY_STATUS = {
     "pending" => 35,
     "confirmed" => 30,

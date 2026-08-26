@@ -29,8 +29,8 @@ module Brgen
       "mercato" => :marketplace
     }.freeze
 
-    TV_SUBDOMAINS          = %w[tv].freeze
-    DATING_SUBDOMAINS      = %w[dating].freeze
+    TV_SUBDOMAINS = %w[tv].freeze
+    DATING_SUBDOMAINS = %w[dating].freeze
     # `playlist` in every city, including the Norwegian ones. `spilleliste` was
     # here as a second Norwegian-language host for the same engine, and it was
     # the odd one out: marketplace is translated per country because the word is
@@ -39,11 +39,11 @@ module Brgen
     # everywhere and were never translated. Playlist is in that second group.
     # It also never resolved — spilleliste.brgen.no and spilleliste.oshlo.no were
     # both NXDOMAIN, so every gate and flow pointing at it was measuring nothing.
-    PLAYLIST_SUBDOMAINS    = %w[playlist].freeze
-    TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
+    PLAYLIST_SUBDOMAINS = %w[playlist].freeze
+    TAKEAWAY_SUBDOMAINS = %w[takeaway].freeze
     MARKETPLACE_SUBDOMAINS = SUBAPP_ALIASES.select { |_subdomain, subapp| subapp == :marketplace }.keys.freeze
-    MAPS_SUBDOMAINS        = %w[maps].freeze
-    MESSENGER_SUBDOMAINS   = %w[messenger].freeze
+    MAPS_SUBDOMAINS = %w[maps].freeze
+    MESSENGER_SUBDOMAINS = %w[messenger].freeze
 
     LOCAL_HOSTS = [ "127.0.0.1", "localhost" ].freeze
 

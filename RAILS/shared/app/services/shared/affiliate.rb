@@ -31,7 +31,7 @@ module Shared
       # Resolved inside Shared. Bare "Tradedoubler" would look for a top-level
       # constant that no longer exists, safe_constantize returns nil for it, and
       # filter_map drops it — so every network would go missing in silence and
-      # configured_networks would simply report none.
+      # configured_networks would report none.
       def networks = NETWORK_NAMES.filter_map { |name| "Shared::#{name}".safe_constantize }
 
       def configured_networks = networks.select(&:configured?)

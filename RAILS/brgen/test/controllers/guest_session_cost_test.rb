@@ -80,7 +80,7 @@ class GuestSessionCostTest < ActionDispatch::IntegrationTest
   end
 
   # Rails forces ActiveModel::SecurePassword.min_cost in the test environment, so
-  # a test that just checks the resulting cost passes whether or not the guest
+  # a test that checks the resulting cost passes whether or not the guest
   # path bypasses the setter — it did, and it caught nothing. Turning min_cost
   # off for the duration is what makes this assertion mean something: with
   # `guest.password =` restored, the digest comes back at cost

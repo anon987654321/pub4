@@ -16,7 +16,7 @@ module Shared
 
     REPLIGEN_MODEL = ENV.fetch("NEWSLETTER_HERO_MODEL", "black-forest-labs/flux-1.1-pro")
     POSTPRO_PRESET = ENV.fetch("NEWSLETTER_POSTPRO_PRESET", "magic_hour")
-    POSTPRO_STOCK  = ENV.fetch("NEWSLETTER_POSTPRO_STOCK", "kodak_portra")
+    POSTPRO_STOCK = ENV.fetch("NEWSLETTER_POSTPRO_STOCK", "kodak_portra")
 
     def self.hero_for(city_name:, theme:, seed_attachment: nil, public_base: nil)
       new(public_base:).hero_for(city_name:, theme:, seed_attachment:)

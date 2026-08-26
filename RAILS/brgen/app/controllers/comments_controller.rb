@@ -10,7 +10,7 @@ class CommentsController < ApplicationController
 
   def create
     @comment = @commentable.comments.build(comment_params)
-    @comment.user      = Current.user
+    @comment.user = Current.user
     @comment.parent_id = params[:parent_id] if params[:parent_id]
 
     if @comment.save

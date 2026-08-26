@@ -6,8 +6,8 @@ In `config/routes.rb` (alongside TradeDoubler):
 
 ```ruby
 post "webhooks/tradedoubler" => "webhooks/tradedoubler#create", as: :webhooks_tradedoubler
-post "webhooks/stripe"       => "webhooks/stripe#create",       as: :webhooks_stripe
-post "webhooks/vipps"        => "webhooks/vipps#create",        as: :webhooks_vipps
+post "webhooks/stripe" => "webhooks/stripe#create",       as: :webhooks_stripe
+post "webhooks/vipps" => "webhooks/vipps#create",        as: :webhooks_vipps
 ```
 
 ## Stripe

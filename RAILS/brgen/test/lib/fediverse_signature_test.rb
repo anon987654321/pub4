@@ -4,7 +4,7 @@ require "test_helper"
 
 # The security boundary of the whole feature. An inbox that verifies badly
 # accepts a Delete for anyone's post and a Follow from anyone's account, because
-# the actor field is just a string the sender chose. Every case here is a way
+# the actor field is a string the sender chose. Every case here is a way
 # that could go wrong.
 class FediverseSignatureTest < ActiveSupport::TestCase
   setup do

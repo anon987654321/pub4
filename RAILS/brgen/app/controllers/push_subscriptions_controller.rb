@@ -5,7 +5,7 @@ class PushSubscriptionsController < ApplicationController
     data = JSON.parse(request.body.read)
     Current.user.push_subscriptions.find_or_create_by!(endpoint: data["endpoint"]) do |s|
       s.p256dh = data.dig("keys", "p256dh")
-      s.auth   = data.dig("keys", "auth")
+      s.auth = data.dig("keys", "auth")
     end
     head :created
   rescue JSON::ParserError => e

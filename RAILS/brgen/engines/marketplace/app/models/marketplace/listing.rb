@@ -58,7 +58,7 @@ class Marketplace::Listing < ApplicationRecord
   # facts about them, which live in a table each rather than in columns that are
   # null for every bicycle.
   KINDS = %w[goods job housing gig].freeze
-  STATUSES   = %w[active sold reserved removed].freeze
+  STATUSES = %w[active sold reserved removed].freeze
   DEFAULT_RADIUS_KM = 5.0
   MAX_RADIUS_KM = 50.0
 

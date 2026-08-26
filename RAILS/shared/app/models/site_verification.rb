@@ -19,7 +19,7 @@
 # verification URL, which is exactly where someone will be looking.
 class SiteVerification
   NETWORK = /\A[a-z0-9_-]{2,32}\z/
-  TOKEN   = /\A[A-Za-z0-9_.:-]{4,128}\z/
+  TOKEN = /\A[A-Za-z0-9_.:-]{4,128}\z/
 
   class << self
     def token_for(host, network)

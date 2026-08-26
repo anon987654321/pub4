@@ -67,7 +67,7 @@ class Tv::Video < ApplicationRecord
   def duration_formatted
     return "—" unless duration_seconds
     h, rem = duration_seconds.divmod(3600)
-    m, s   = rem.divmod(60)
+    m, s = rem.divmod(60)
     h > 0 ? "%d:%02d:%02d" % [ h, m, s ] : "%d:%02d" % [ m, s ]
   end
 

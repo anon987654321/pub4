@@ -37,9 +37,9 @@ class EventTest < ActiveSupport::TestCase
   # A three-day festival is still upcoming on day two. Dropping an event from
   # the listing at its opening minute is how a what's-on page lies.
   test "upcoming keeps a running multi-day event and drops a finished one" do
-    running  = event(title: "Festival", starts_at: 1.day.ago, ends_at: 2.days.from_now)
+    running = event(title: "Festival", starts_at: 1.day.ago, ends_at: 2.days.from_now)
     finished = event(title: "I gar", starts_at: 3.days.ago, ends_at: 2.days.ago)
-    later    = event(title: "Neste uke", starts_at: 7.days.from_now)
+    later = event(title: "Neste uke", starts_at: 7.days.from_now)
 
     ids = Event.upcoming.map(&:id)
     assert_includes ids, running.id, "a festival on day two is still on"
@@ -49,7 +49,7 @@ class EventTest < ActiveSupport::TestCase
   end
 
   test "upcoming is ordered by when things start" do
-    late  = event(title: "Sent", starts_at: 9.days.from_now)
+    late = event(title: "Sent", starts_at: 9.days.from_now)
     early = event(title: "Tidlig", starts_at: 2.days.from_now)
 
     assert_equal [ early.id, late.id ], Event.upcoming.map(&:id) & [ early.id, late.id ]

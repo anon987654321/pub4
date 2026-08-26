@@ -88,11 +88,11 @@ class Item < ApplicationRecord
     end
   end
 
-  CATEGORIES   = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
-  SEASONS      = %w[Spring Summer Autumn Winter All-Season].freeze
+  CATEGORIES = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
+  SEASONS = %w[Spring Summer Autumn Winter All-Season].freeze
   MOOD_EFFECTS = %w[energising calming confident playful neutral].freeze
-  LIFE_PHASES  = %w[current past-self aspirational].freeze
-  OCCASIONS    = %w[work casual formal gym date travel].freeze
+  LIFE_PHASES = %w[current past-self aspirational].freeze
+  OCCASIONS = %w[work casual formal gym date travel].freeze
   LIFECYCLE_STATES = %w[active repair clean_needed tailor declutter_box sentimental_archive seasonal_archive resale donate sold donated recycled released].freeze
 
   def cost_per_wear

@@ -4,7 +4,7 @@
 #
 # Nothing here trusts the body until the signature over it verifies: an inbox
 # that skips that step accepts a Delete for anyone's post and a Follow from
-# anyone's account, because the actor field is just a string the sender chose.
+# anyone's account, because the actor field is a string the sender chose.
 class Fediverse::InboxesController < ApplicationController
   allow_unauthenticated_access
   # ActivityPub POSTs carry no CSRF token by design — the signature is the
@@ -38,7 +38,7 @@ class Fediverse::InboxesController < ApplicationController
     return head :bad_request if activity.blank?
 
     # Before the actor is fetched: a blocked instance must not be able to make
-    # this one issue an outbound request just by POSTing here.
+    # this one issue an outbound request by POSTing here.
     return head :forbidden if FediBlock.blocked_uri?(signature_key_id)
 
     actor = Fediverse::ActorFetcher.for_key_id(signature_key_id)

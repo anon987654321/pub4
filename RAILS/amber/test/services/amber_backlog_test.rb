@@ -57,7 +57,7 @@ class AmberBacklogTest < Minitest::Test
     # assertion failed on a controller that had got better.
     assert_localised "app/controllers/messages_controller.rb", "flash.message_sent", "Message sent."
     # "New message" was the compose form's heading before the page was
-    # localised; the form is what the assertion was really about, and it does
+    # localised; the form is what the assertion was about, and it does
     # not move when the copy does.
     assert_includes read("app/views/messages/index.html.erb"), 'render "messages/form"'
     assert_localised "app/views/messages/index.html.erb", "messages.title", "Messages"

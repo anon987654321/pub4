@@ -38,7 +38,7 @@ class HashtagTest < ActionDispatch::IntegrationTest
       # trending must surface `fresh` first and drop the purely-stale tag.
       stale = Hashtag.create!(name: "staletag", usage_count: 99)
       fresh = Hashtag.create!(name: "freshtag", usage_count: 2)
-      cold  = Hashtag.create!(name: "coldtag", usage_count: 50)
+      cold = Hashtag.create!(name: "coldtag", usage_count: 50)
 
       post = Post.create!(user: @user, title: "t", content: "body")
       Tagging.create!(hashtag: fresh, taggable: post) # within window (created now)

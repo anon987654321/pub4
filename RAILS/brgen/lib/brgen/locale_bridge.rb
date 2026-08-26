@@ -10,7 +10,7 @@ module Brgen
   # de.yml, fr.yml and nl.yml existed and held five keys each: hello, app.name,
   # feed.title, nav.sign_in, nav.new_post, against en.yml's 1579. Eleven city
   # domains routed to them, so those pages rendered five translated words and
-  # 1574 English ones — which reads worse than a page that is simply in English,
+  # 1574 English ones — which reads worse than a page that is in English,
   # because a reader cannot tell whether the rest is missing or the product is.
   #
   # Two were served the wrong language outright. mlan.it and lisbon.pt resolved

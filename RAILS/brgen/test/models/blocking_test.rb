@@ -6,7 +6,7 @@ class BlockingTest < ActiveSupport::TestCase
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
     ActsAsTenant.current_tenant = @city
-    @me   = User.create!(email_address: "me-#{SecureRandom.hex(4)}@brgen.no", password: "password12345", username: "me_#{SecureRandom.hex(3)}", city: @city)
+    @me = User.create!(email_address: "me-#{SecureRandom.hex(4)}@brgen.no", password: "password12345", username: "me_#{SecureRandom.hex(3)}", city: @city)
     @them = User.create!(email_address: "them-#{SecureRandom.hex(4)}@brgen.no", password: "password12345", username: "them_#{SecureRandom.hex(3)}", city: @city)
   end
   teardown { ActsAsTenant.current_tenant = nil }

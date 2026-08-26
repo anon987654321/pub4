@@ -20,7 +20,7 @@ class MessagesController < ApplicationController
     with: -> { redirect_back fallback_location: root_path, alert: t("flash.messages_rate_limited") }
 
   def create
-    @message        = @conversation.messages.build(message_params)
+    @message = @conversation.messages.build(message_params)
     @message.sender = Current.user
 
     if @message.save

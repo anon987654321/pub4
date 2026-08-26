@@ -28,7 +28,7 @@ class IconSpriteTest < ActionDispatch::IntegrationTest
   end
 
   def symbol_ids(body) = body.scan(/<symbol id="icon-([a-z_]+)"/).flatten
-  def use_refs(body)   = body.scan(/<use href="#icon-([a-z_]+)"/).flatten
+  def use_refs(body) = body.scan(/<use href="#icon-([a-z_]+)"/).flatten
 
   test "every use on the page resolves to a symbol that is present" do
     ActsAsTenant.with_tenant(@city) do

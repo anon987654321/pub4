@@ -10,7 +10,7 @@ require "test_helper"
 # reachable over HTTP — but importmap needs a *pin* for the module specifier to
 # exist, and stimulus-loading's eagerLoadControllersFrom("controllers") only
 # walks what the importmap declares. So an engine controller was downloadable and
-# registered nowhere: no error, no 404, no console warning, just a
+# registered nowhere: no error, no 404, no console warning, a
 # data-controller attribute that nothing answered.
 #
 # Measured before the fix: 91 imports, 19 under controllers/, zero from any

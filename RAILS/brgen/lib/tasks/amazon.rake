@@ -6,7 +6,7 @@ namespace :scrape do
   desc "Amazon search results via Ferrum + vision LLM (queries: comma-separated)"
   task :amazon, [ :queries ] => :environment do |_, args|
     queries = (args[:queries] || "vinyl,turntable,headphones").split(",").map(&:strip)
-    schema  = %w[title url price currency image_url asin rating reviews prime]
+    schema = %w[title url price currency image_url asin rating reviews prime]
     queries.each do |q|
       Scrape.call(
         "https://www.amazon.com/s?k=#{CGI.escape(q)}",

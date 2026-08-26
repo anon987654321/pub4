@@ -10,7 +10,7 @@ class ActivityEventVisibilityTest < ActiveSupport::TestCase
   teardown { ActsAsTenant.current_tenant = nil }
 
   test "public_only keeps private activity off the profile" do
-    pub  = ActivityEvent.create!(actor: @user, source_vertical: "social", event_name: "PostCreated",  subject_type: "Post", subject_id: 1, visibility: "public",  moderation_state: "clean")
+    pub = ActivityEvent.create!(actor: @user, source_vertical: "social", event_name: "PostCreated",  subject_type: "Post", subject_id: 1, visibility: "public",  moderation_state: "clean")
     priv = ActivityEvent.create!(actor: @user, source_vertical: "dating", event_name: "DatingLike",    subject_type: "User", subject_id: 2, visibility: "private", moderation_state: "clean")
     ids = ActivityEvent.visible.public_only.where(actor_id: @user.id).pluck(:id)
     assert_includes ids, pub.id

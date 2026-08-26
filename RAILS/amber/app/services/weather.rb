@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class Weather
-  BERGEN_LAT  = 60.39
-  BERGEN_LNG  = 5.32
-  API_URL     = "https://api.open-meteo.com/v1/forecast"
+  BERGEN_LAT = 60.39
+  BERGEN_LNG = 5.32
+  API_URL = "https://api.open-meteo.com/v1/forecast"
 
   # The dashboard asks for this on every authenticated render. Uncached and
   # untimed it was a synchronous round trip to open-meteo in front of amber's

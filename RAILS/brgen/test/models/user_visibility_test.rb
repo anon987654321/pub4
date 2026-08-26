@@ -13,7 +13,7 @@ class UserVisibilityTest < ActiveSupport::TestCase
     # No city:, and created outside any tenant -- exactly how resume_session
     # makes a guest and how the seeders make demo accounts.
     @author = User.strict_loading(false).create!(email_address: "cityless_author@brgen.no", password: "password123", username: "cityless_author")
-    @voter  = User.strict_loading(false).create!(email_address: "cityless_voter@brgen.no", password: "password123")
+    @voter = User.strict_loading(false).create!(email_address: "cityless_voter@brgen.no", password: "password123")
   end
 
   teardown do

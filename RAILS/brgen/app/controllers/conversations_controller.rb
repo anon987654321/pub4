@@ -54,7 +54,7 @@ class ConversationsController < ApplicationController
     @messages = @conversation.messages.visible.unexpired
                              .includes(:sender, :message_receipts, :link_preview, parent: :sender)
                              .recent.limit(50).reverse
-    @message  = Message.new
+    @message = Message.new
     # Where a forward can go: the reader's other threads. Built once for the
     # page rather than per message.
     @forward_targets = Conversation.for_user(Current.user).where(slug: nil).where.not(id: @conversation.id)

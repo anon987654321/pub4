@@ -33,7 +33,7 @@ class SiteVerificationsController < ApplicationController
   allow_browser versions: :modern, block: -> { } if respond_to?(:allow_browser)
 
   NETWORK = /\A[a-z0-9_-]{2,32}\z/
-  TOKEN   = /\A[A-Za-z0-9_.:-]{4,128}\z/
+  TOKEN = /\A[A-Za-z0-9_.:-]{4,128}\z/
 
   # The bare token, no markup. Most networks fetch this and compare bytes, so a
   # layout or a trailing newline can fail the check.

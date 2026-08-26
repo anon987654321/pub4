@@ -62,7 +62,7 @@ class Post < ApplicationRecord
   after_commit :federate_update, on: :update
 
   VOTE_SQL = Arel.sql("posts.score DESC, posts.created_at DESC")
-  TOP_SQL  = Arel.sql("posts.score DESC")
+  TOP_SQL = Arel.sql("posts.score DESC")
   # "hot" = score decayed by age, so it is a live ranking rather than an all-time
   # leaderboard: score/(age_hours + 2). A high-vote post sinks as it ages and a
   # fresh well-received one can surface. julianday keeps it a single SQLite
@@ -148,7 +148,7 @@ class Post < ApplicationRecord
   def quote_comment_by(user) = Repost.quote_comments_for(user)[id]
 
   def stamp_live_location!(lat:, lng:)
-    self.latitude  = lat.to_f.round(LIVE_LOCATION_PRECISION)
+    self.latitude = lat.to_f.round(LIVE_LOCATION_PRECISION)
     self.longitude = lng.to_f.round(LIVE_LOCATION_PRECISION)
     self.anonymous = true
     self
@@ -158,7 +158,7 @@ class Post < ApplicationRecord
   # comments.count, which queries even when the association is loaded — two
   # queries per feed post, 50 on the home page alone.
   def comment_count = comments_count
-  def author_name   = (anonymous? || user&.guest? || live?) ? "anon" : (user&.username.presence || "anon")
+  def author_name = (anonymous? || user&.guest? || live?) ? "anon" : (user&.username.presence || "anon")
 
   # Same anon check as author_name -- an identicon is only safe to show
   # alongside a real name. Showing it under "anon" too would give every

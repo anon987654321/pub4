@@ -62,7 +62,7 @@ class RatingRefreshTest < ActiveSupport::TestCase
 
   # Follow#emit_follow_created reads both sides to build the notification, and
   # rescues StandardError into a log line — so a strict-loading violation there
-  # does not fail loudly, it just silently stops notifying.
+  # does not fail loudly, it silently stops notifying.
   test "following notifies the followed user without swallowing an error" do
     ActsAsTenant.with_tenant(@city) do
       follower = user("follow-a")

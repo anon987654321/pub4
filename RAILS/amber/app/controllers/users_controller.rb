@@ -10,6 +10,6 @@ class UsersController < ApplicationController
       Item.none
     end
     @outfits = visible ? @user.outfits.order(created_at: :desc).limit(6) : Outfit.none
-    @posts   = @user.posts.recent.limit(10).includes(:outfit, :item, user: :profile)
+    @posts = @user.posts.recent.limit(10).includes(:outfit, :item, user: :profile)
   end
 end

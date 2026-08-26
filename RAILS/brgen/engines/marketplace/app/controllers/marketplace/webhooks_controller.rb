@@ -65,7 +65,7 @@ class Marketplace::WebhooksController < ActionController::Base
   # the listing title. Every model here is strict_loading by default (shared
   # ApplicationRecord) and production raises on a violation, so the associations
   # that path touches are preloaded rather than walked lazily. Marketplace::Order
-  # also guards each of those reads itself — this just avoids the extra queries.
+  # also guards each of those reads itself — this avoids the extra queries.
   def payable_scope
     Marketplace::Order.includes(:buyer, listing: :user)
   end

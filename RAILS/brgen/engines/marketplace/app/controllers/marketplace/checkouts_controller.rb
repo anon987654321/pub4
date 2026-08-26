@@ -46,7 +46,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     payable = build_basket(payable) if payable.is_a?(Array)
     # build_basket redirects on its own when there is no delivery address —
     # without this guard that became a second redirect and a
-    # DoubleRenderError, which is a 500 for a customer who had simply not
+    # DoubleRenderError, which is a 500 for a customer who had not
     # saved an address yet.
     return if performed? || payable.nil?
 

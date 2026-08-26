@@ -15,7 +15,7 @@ class UsersController < ApplicationController
     @followers_count = @user.followers.count
     @following_count = @user.following.count
     @active_follow = authenticated? && Current.user.following?(@user)
-    @active_block  = authenticated? && Current.user != @user && Current.user.blocking?(@user)
+    @active_block = authenticated? && Current.user != @user && Current.user.blocking?(@user)
     @activity = ActivityEvent.visible.public_only.where(actor_id: @user.id).recent.limit(20)
     @stores = @user.marketplace_stores.active.limit(8)
     @casual_listings = @user.marketplace_listings.live.casual.limit(8)

@@ -14,7 +14,7 @@ require "json"
 require "base64"
 
 class Scrape
-  MODEL    = ENV.fetch("SCRAPE_MODEL", "google/gemini-2.0-flash-001")
+  MODEL = ENV.fetch("SCRAPE_MODEL", "google/gemini-2.0-flash-001")
   ENDPOINT = URI("https://openrouter.ai/api/v1/chat/completions")
   HTML_MAX = 60_000
 
@@ -26,7 +26,7 @@ class Scrape
     browser.go_to(url)
     browser.network.wait_for_idle(timeout: 10)
     html = browser.body
-    png  = Base64.strict_encode64(browser.screenshot(encoding: :binary, full: true))
+    png = Base64.strict_encode64(browser.screenshot(encoding: :binary, full: true))
     browser.quit
     reason(url:, html:, png:, schema:, hint:)
   end
@@ -52,7 +52,7 @@ class Scrape
       response_format: { type: "json_object" },
     }
     req = Net::HTTP::Post.new(ENDPOINT,
-                              "Content-Type"  => "application/json",
+                              "Content-Type" => "application/json",
                               "Authorization" => "Bearer #{ENV.fetch('OPENROUTER_API_KEY')}")
     req.body = payload.to_json
     res = Net::HTTP.start(ENDPOINT.hostname, ENDPOINT.port, use_ssl: true, read_timeout: 60) { |h| h.request(req) }

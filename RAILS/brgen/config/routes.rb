@@ -38,13 +38,13 @@ Rails.application.routes.draw do
     session_id.present? && ::Session.exists?(id: session_id)
   }
 
-  TV_SUBDOMAINS          = Brgen::DomainRegistry::TV_SUBDOMAINS
-  DATING_SUBDOMAINS      = Brgen::DomainRegistry::DATING_SUBDOMAINS
-  PLAYLIST_SUBDOMAINS    = Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS
-  TAKEAWAY_SUBDOMAINS    = Brgen::DomainRegistry::TAKEAWAY_SUBDOMAINS
+  TV_SUBDOMAINS = Brgen::DomainRegistry::TV_SUBDOMAINS
+  DATING_SUBDOMAINS = Brgen::DomainRegistry::DATING_SUBDOMAINS
+  PLAYLIST_SUBDOMAINS = Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS
+  TAKEAWAY_SUBDOMAINS = Brgen::DomainRegistry::TAKEAWAY_SUBDOMAINS
   MARKETPLACE_SUBDOMAINS = Brgen::DomainRegistry::MARKETPLACE_SUBDOMAINS
-  MAPS_SUBDOMAINS        = Brgen::DomainRegistry::MAPS_SUBDOMAINS
-  MESSENGER_SUBDOMAINS   = Brgen::DomainRegistry::MESSENGER_SUBDOMAINS
+  MAPS_SUBDOMAINS = Brgen::DomainRegistry::MAPS_SUBDOMAINS
+  MESSENGER_SUBDOMAINS = Brgen::DomainRegistry::MESSENGER_SUBDOMAINS
 
   resource :session, only: %i[new create destroy] do
     # Passwordless sign-in. The mailer, the token generator and the columns
@@ -83,13 +83,13 @@ Rails.application.routes.draw do
   # is the same shape as two Mastodon instances — so an actor is resolved
   # against the requested host, not globally.
   get ".well-known/webfinger" => "well_known#webfinger", as: :webfinger
-  get ".well-known/nodeinfo"  => "well_known#nodeinfo_index"
-  get "nodeinfo/2.1"          => "well_known#nodeinfo", as: :nodeinfo
+  get ".well-known/nodeinfo" => "well_known#nodeinfo_index"
+  get "nodeinfo/2.1" => "well_known#nodeinfo", as: :nodeinfo
   # The shared inbox: one POST per instance instead of one per follower.
   post "inbox" => "fediverse/inboxes#create", as: :shared_inbox
-  get  "users/:username/outbox"    => "fediverse/actors#outbox",    as: :actor_outbox
+  get  "users/:username/outbox" => "fediverse/actors#outbox",    as: :actor_outbox
   get  "users/:username/followers" => "fediverse/actors#followers", as: :actor_followers
-  post "users/:username/inbox"     => "fediverse/inboxes#create",   as: :actor_inbox
+  post "users/:username/inbox" => "fediverse/inboxes#create",   as: :actor_inbox
   # The actor document shares its URL with the HTML profile, told apart by
   # Accept. A path constraint would not do: /users/5 is the existing profile
   # route and a username is not guaranteed to be non-numeric, so the header is

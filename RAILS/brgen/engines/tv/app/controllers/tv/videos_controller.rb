@@ -51,7 +51,7 @@ class Tv::VideosController < Tv::BaseController
   def destroy = (@video.destroy and redirect_to root_path)
 
   private
-  def own_channel  = Current.user.tv_channels.find_by!(slug: params[:channel_slug])
+  def own_channel = Current.user.tv_channels.find_by!(slug: params[:channel_slug])
   # ApplicationRecord sets strict_loading_by_default, and the show view reads
   # channel, comments and notes off the record -- unpreloaded that raises
   # everywhere violations are not downgraded to a log line (i.e. outside

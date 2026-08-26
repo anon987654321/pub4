@@ -50,9 +50,9 @@ class PostsController < ApplicationController
     when "controversial" then roots.controversial
     else roots.best
     end
-    @comments    = roots.includes(:user, :votes, replies: [ :user, :votes ])
+    @comments = roots.includes(:user, :votes, replies: [ :user, :votes ])
     @new_comment = Comment.new
-    @quotes      = @post.reposts.quoted.includes(:user).order(created_at: :desc)
+    @quotes = @post.reposts.quoted.includes(:user).order(created_at: :desc)
     @quote_comment = @post.quote_comment_by(Current.user)
     @crossposts = (@post.crossposted_from || @post).crossposts.includes(:community).where.not(id: @post.id)
     # Where this post can still go. Communities the reader may post in, minus
@@ -76,8 +76,8 @@ class PostsController < ApplicationController
       return
     end
 
-    @post           = Post.new(post_params.except(:nearby))
-    @post.user      = Current.user
+    @post = Post.new(post_params.except(:nearby))
+    @post.user = Current.user
     @post.anonymous = true if Current.user.guest? || ActiveModel::Type::Boolean.new.cast(post_params[:anonymous])
     stamp_nearby!
     if @post.content.present?

@@ -63,7 +63,7 @@ num_users = (50 * SEED_SCALE).clamp(10, 5000)
 # domains with their own locales.
 users = Brgen::CityContent.with_faker_locale('NO') do
   num_users.times.map do |i|
-    # A real-sounding name (this app's display_name is just username), not the
+    # A real-sounding name (this app's display_name is username), not the
     # old "seed0_xkq3f7" -- first_name+last_name directly (not Faker::Name.name)
     # avoids odd baked-in prefixes/suffixes ("Prof.", "Esq.", "III") in a
     # username. The numeric suffix stays for guaranteed uniqueness at up to

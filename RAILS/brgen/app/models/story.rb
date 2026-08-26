@@ -99,14 +99,14 @@ class Story < ApplicationRecord
     author = user
     return if author.blank? || author.latitude.blank?
 
-    self.latitude  = author.latitude
+    self.latitude = author.latitude
     self.longitude = author.longitude
   end
 
   def coarsen_location
     return if latitude.blank? || longitude.blank?
 
-    self.latitude  = latitude.to_f.round(LOCATION_PRECISION)
+    self.latitude = latitude.to_f.round(LOCATION_PRECISION)
     self.longitude = longitude.to_f.round(LOCATION_PRECISION)
   end
 

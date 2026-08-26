@@ -53,7 +53,7 @@ class TvWatchTimeTest < ActionDispatch::IntegrationTest
     host! "tv.brgen.no"
     patch tv.video_view_event_path(@video, event), params: { watch_time_seconds: 9_999 }
 
-    # Scoped through Current.user.tv_view_events, so the id simply is not found.
+    # Scoped through Current.user.tv_view_events, so the id is not found.
     assert_response :not_found
     assert_nil event.reload.watch_time_seconds
   end

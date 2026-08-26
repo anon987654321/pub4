@@ -64,7 +64,7 @@ class User < ApplicationRecord
 
   def messageable_users
     requested = Connection.accepted.where(requester_id: id).select(:addressee_id)
-    received  = Connection.accepted.where(addressee_id: id).select(:requester_id)
+    received = Connection.accepted.where(addressee_id: id).select(:requester_id)
     User.where(id: requested).or(User.where(id: received)).includes(:profile).order(:email_address)
   end
   # A subquery over the join table, not `following.to_a`.

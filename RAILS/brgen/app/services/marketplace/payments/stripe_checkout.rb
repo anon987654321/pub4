@@ -22,7 +22,7 @@ module Marketplace
       # nothing raises.
       #
       # Unlike an unset key, this one cannot be caught by `configured?`, because
-      # a test key IS configured. It just is not the right one.
+      # a test key IS configured. It is not the right one.
       def self.test_key?
         ENV["STRIPE_SECRET_KEY"].to_s.strip.start_with?("sk_test_")
       end
