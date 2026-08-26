@@ -1,2 +1,7 @@
 ---
-duplicate_sets: 43
+# 43 -> 44: index_outbound_clicks_on_user.rb, one identical migration in each of
+# the three apps. Same shape as the create_outbound_clicks triplet already
+# counted here — three apps with three databases genuinely need the migration
+# three times, and the duplication is the monorepo working as intended rather
+# than a file to collapse.
+duplicate_sets: 44

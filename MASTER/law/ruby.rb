@@ -181,10 +181,29 @@ Law.define(:MIGRATION_REMOVE_COLUMN) do
   severity :error
   languages %i[ruby]
   path "/db/migrate/"
-  detect { |line| line.match?(/remove_column/) }
+  # Whether the migration documents its path is a question about the migration,
+  # not about the line. amber's convert_money_to_ore does the safe thing eight
+  # times — add_column, backfill with an UPDATE, then remove_column — and a
+  # line-scoped detector reported all eight removals as unsafe while the
+  # backfill sat three lines above each one.
+  scope :file
+  detect do |text|
+    text.match?(/\bremove_column\b/) &&
+      !text.match?(/\b(?:add_column|rename_column|update_all|execute)\b/)
+  end
   fix "Document safety/backfill path before removing a column."
-  bad  "remove_column :users, :legacy"
-  good "add_column :users, :name, :string"
+  bad <<~X
+    def up
+      remove_column :users, :legacy
+    end
+  X
+  good <<~X
+    def up
+      add_column :users, :name, :string
+      execute "UPDATE users SET name = legacy"
+      remove_column :users, :legacy
+    end
+  X
 end
 
 # Migrated from data/rules.yml PERCENT_LITERAL.
@@ -419,14 +438,19 @@ Law.define(:STRICT_LOADING_MISSING) do
   scope :file
   path "/app/models/"
   absent /\bstrict_loading_by_default\b/
-  detect { |text| text.match?(/class\s+\w+\s+<\s+(?:ApplicationRecord|ActiveRecord::Base)\b/m) }
+  # The base class is where the default is set, and subclasses inherit it.
+  # Matching `< ApplicationRecord` too asked all thirty of amber's models to
+  # restate a setting RAILS/shared/app/models/application_record.rb already
+  # makes — the same shape as the `dependent:` census in proposals.yml, which
+  # counted declarations whose behaviour comes from the class above them.
+  detect { |text| text.match?(/class\s+\w+\s+<\s+ActiveRecord::Base\b/m) }
   fix "Add `self.strict_loading_by_default = true` to surface missing eager-loads."
   bad <<~X
-    class User < ApplicationRecord
+    class ApplicationRecord < ActiveRecord::Base
     end
   X
   good <<~X
-    class User < ApplicationRecord
+    class ApplicationRecord < ActiveRecord::Base
       self.strict_loading_by_default = true
     end
   X

@@ -29,7 +29,7 @@ module Pub4
     # and enforces nothing, which is the defect this repo names most often.
     TREES = %w[
       MASTER/lib MASTER/law MASTER/tools RAILS/shared/lib RAILS/gates OPENBSD STUDIO
-      RAILS/*/config/locales RAILS/*/engines/*/config/locales
+      RAILS/amber RAILS/brgen RAILS/bsdports RAILS/shared/app RAILS/shared/config
     ].freeze
 
     module_function
@@ -47,7 +47,19 @@ module Pub4
     # a Python virtualenv with pip, torch and urllib3 vendored inside it, and
     # its JavaScript and HTML were being graded against this repo's rules —
     # `var headers = []` in urllib3's emscripten worker is not our debt.
-    THIRD_PARTY = %r{/(?:vendor|node_modules|site-packages|assets/builds)/|/\.?venv[-/]}
+    # Code we did not write, and code we did not type. A Rails app carries both:
+    # public/assets is the precompiled output (1361 `var` findings in amber
+    # alone, none of them source), app/views/pwa/service-worker.js is what
+    # `npm run build:pwa` emits, and db/schema.rb says in its own first line
+    # that it is generated from the database.
+    THIRD_PARTY = %r{
+      /(?:vendor|node_modules|site-packages|assets/builds|public/assets)/
+      |/\.?venv[-/]
+      |/db/(?:schema|cable_schema|cache_schema|queue_schema)\.rb\z
+      |/(?:cable|cache|queue)_migrate/
+      |/service-worker\.js\z
+      |\.min\.(?:js|css)\z
+    }x
     # Every extension a law can declare, not just Ruby. The corpus globbed
     # `*.rb` while the laws claim nine languages, so every css, scss, yaml,
     # markdown, html, json and shell law in the registry was measured against

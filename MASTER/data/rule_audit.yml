@@ -14,13 +14,13 @@
 # ceiling so that a rule going quiet is visible; it is not evidence of a defect
 # on its own.
 #
-# 19 -> 21 because MEANINGFUL_NAMES and WHY_NOT_WHAT stopped finding anything:
-# the first had all fourteen of its findings fixed, the second was narrowed to
-# the terse restating comment it is actually about. A rule that finds nothing
-# because there is nothing left to find is the goal, and this counter cannot
-# tell that apart from a rule that broke. Read the names before reading the
-# number.
+# 19 -> 23 as the tree got cleaner, which is the direction this counter cannot
+# read. MEANINGFUL_NAMES, WHY_NOT_WHAT, NO_COLUMN_ALIGN and
+# STRICT_LOADING_MISSING all stopped finding anything because their findings
+# were fixed or their detector was narrowed to what it is actually about — and
+# a rule that finds nothing because nothing is left is the goal. Read the names
+# before reading the number.
 blind: 0
 saturated: 0
-silent: 21
+silent: 23
 

@@ -141,7 +141,27 @@ Law.define(:I18N_COVERAGE) do
   severity :warn
   languages %i[html]
   path "/app/views/"
-  detect { |line| line.match?(/>\s*[A-Za-z][^<]{3,}</) }
+  # Element content, not attribute text. Three shapes were being read as prose
+  # and none of them renders as any:
+  #
+  # A `>` inside a quoted attribute closes nothing — `data-action="click->
+  # media-picker#trigger"` made the Stimulus arrow look like a tag end, so the
+  # attribute name after it counted as content and a fully translated button
+  # was a finding. Quoted spans blank first.
+  #
+  # An ERB tag is blanked whole rather than left to look like a tag boundary.
+  # `<%= @summary[:active_items] %> active</span>` is a real finding — "active"
+  # is English on a Norwegian page — so the `%>` cannot simply be excluded; what
+  # has to go is the expression inside it, which is Ruby and not prose.
+  #
+  # And an ERB comment renders nothing at all.
+  detect do |line|
+    next false if line.match?(/<%#/)
+
+    line.gsub(/<%.*?%>/, " ")
+        .gsub(/"[^"\n]*"|'[^'\n]*'/) { |m| "\0" * m.length }
+        .match?(/>\s*[A-Za-z][^<]{3,}</)
+  end
   fix "Replace literal with t('.key')."
   bad  "<p>Welcome back</p>"
   good "<p><%= t('.welcome') %></p>"
@@ -188,6 +208,16 @@ Law.define(:NO_INLINE_SCRIPT_BLOCK) do
   source "CSP script-src / separation of concerns — assets are files"
   severity :warn
   languages %i[html]
+  # A static error page renders when Rails is not answering, so it cannot
+  # reach the asset pipeline: no stylesheet_link_tag, no digested URL, nothing
+  # served by the app that just failed. Inline is the only thing that works
+  # there, which is why 404/422/500 carry their own style block.
+  path_exclude %r{/public/\d{3}\.html\z}
+  # A static error page renders when Rails is not answering, so it cannot reach
+  # the asset pipeline: no stylesheet_link_tag, no digested URL, nothing served
+  # by the app that just failed. Inline is the only thing that works there,
+  # which is why every app's 404/422/500 carries its own style block.
+  path_exclude %r{/public/\d{3}\.html\z}
   detect { |line| line.match?(/<script(?![^>]*\bsrc=)|<style\b(?![^>]*\bhref=)/) }
   fix "Move it to an asset file and reference it with javascript_include_tag or stylesheet_link_tag."
   bad  "<div><script>boot()</script></div>"
@@ -199,6 +229,11 @@ Law.define(:NO_INLINE_STYLES) do
   source "CSP / separation of concerns — no inline styles"
   severity :warn
   languages %i[html]
+  # A static error page renders when Rails is not answering, so it cannot
+  # reach the asset pipeline: no stylesheet_link_tag, no digested URL, nothing
+  # served by the app that just failed. Inline is the only thing that works
+  # there, which is why 404/422/500 carry their own style block.
+  path_exclude %r{/public/\d{3}\.html\z}
   # A style attribute carrying only custom properties is a data channel to
   # the stylesheet — style="--swatch: teal" hands a value to a rule that
   # lives in CSS (color: var(--swatch)), which is the separation this law

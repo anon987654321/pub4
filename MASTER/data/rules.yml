@@ -2927,7 +2927,14 @@ prose:
       - 'just (?:as|because|before|after|when)'    # a comparison
       - '(?:not|never)\s+(?:just|simply|only)'     # a negation
       - 'n''t\s+(?:just|simply|only)'
-      - 'just\s+(?:been\s+)?(?:\w+ed|found|said|ran|saw|built)' # moments ago, a tense marker
+      # English past participles are not all -ed, and the temporal sense is the
+      # commonest one this tree uses: "what you just wore", "the first response
+      # just set", "a profile they had just seen".
+      - 'just\s+(?:been\s+)?(?:\w+ed|wore|worn|set|sent|seen|written|wrote|read|made|got|put|left|took|taken|came|went|said|found|ran|saw|built|began|gave|given|held|kept|lost|met|paid|ran|shown|told|thought)'
+      # English past participles are not all -ed. "a profile they had just seen",
+      # "the line was just written", "had just been sent" are all the temporal
+      # sense, and an auxiliary in front of `just` is what marks it.
+      - '(?:had|has|have|was|were)\s+just\s+(?:been\s+)?\w+'
       - '(?:the|this|that|its) very'               # a determiner picking a thing out
       # Measured against STUDIO's 138. `just` before a position or a quantity
       # measures rather than minimises — "pads land just under the kit", "just

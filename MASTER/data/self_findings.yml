@@ -1,9 +1,19 @@
 ---
 # What MASTER's own rules find in MASTER's own tree, and the three sibling trees.
 #
-# 1 across 1038 files, from the rules that carry a lexical detector. The one is
-# a Norwegian passive in brgen's UI copy, which is a product decision rather
-# than a defect and is left for the operator.
+# 158 across 2893 files, from the rules that carry a lexical detector.
+#
+# The corpus is the whole fleet now. It was MASTER plus the shared libs and the
+# gates; the three Rails apps were never measured at all, so amber's 345 source
+# files had never been read by a rule in their own repo. Adding them cost the
+# ratchet a jump from 1 to 158, and the number is honest for the first time.
+#
+# By tree, at the time of writing: amber 0, bsdports a handful, brgen the rest.
+#
+# Generated output is not source and is excluded, which matters more here than
+# anywhere else: public/assets alone carried 1361 `var` findings in amber, none
+# of them in a file anybody typed. service-worker.js is what `npm run build:pwa`
+# emits, and db/schema.rb says in its own first line that it is generated.
 #
 # Lexical only. The full gate's semantic pass blocks on a model call: measured at
 # 17 minutes elapsed against 4 minutes of CPU, idle in a TLS read. A number that
@@ -11,24 +21,11 @@
 # when the tree is restructured: COLLAPSE_BEFORE_ADDING, MERGE_BEFORE_MULTIPLY,
 # FLAT_HIERARCHY and NO_NEW_FILES have no detector at all.
 #
-# How it got from 1406 to 1, and why the second half of that is not the story it
-# looks like: roughly half the findings were the instrument, not the tree. The
-# corpus was `**/*.rb` while the laws claim nine languages, so every css, scss,
-# yaml, markdown, html, json and shell law was measured against no file and
-# reported clean. A Python virtualenv vendored under STUDIO was being graded
-# against this repo's rules. RUBY_NUMERIC_UNDERSCORE fired 23 times inside
-# ffmpeg filter strings, where its fix would have written 44_100 into
-# sample_rates=44100 and broken every render. UNBOUNDED_RETRY had a 100% false
-# positive rate: a bounded `retry if attempts < RETRIES` is the cap it asks for.
-# PROSE_ACTIVE_VOICE and PROSE_OMIT_QUALIFIERS could not see a comment at all —
-# reads_comments defaults to false, so in Ruby they read the code and skipped
-# the prose.
-#
-# The other half were real and are fixed: 33 leech words, 13 agented passives,
-# 30 comments rewritten from edit history into present-tense reasons, 22 renames,
-# 19 guard clauses, 195 columns of alignment padding.
-#
-# A count this low is only worth what the detectors behind it are worth. Every
-# narrowing above carries its evidence in the law that made it; read those
-# before reading this number.
-findings: 1
+# Roughly half of every finding this counter has ever reported was the
+# instrument rather than the tree, and the laws carry that evidence one by one.
+# The two that would have caused damage if believed: RUBY_NUMERIC_UNDERSCORE
+# fired inside ffmpeg filter strings, where its fix writes 44_100 into
+# sample_rates=44100 and breaks every render; USE_THEN never checked that the
+# intermediate is used once, and applying it to its own findings introduced
+# three NameErrors. Read the law before acting on the count.
+findings: 158

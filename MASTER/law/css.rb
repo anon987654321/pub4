@@ -112,16 +112,20 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   source "MASTER-native (one language per file)"
   severity :warn
   languages %i[ruby javascript css scss zsh]
-  # A database adapter's job is to speak SQL. Flagging it there asks the layer
-  # to stop doing the one thing it exists for, and the rule is about a document
-  # mixing languages — the shape RAILS/CLAUDE.md names when it says split large
-  # mixed HTML/CSS/JS files.
-  # A file whose job is to detect another language has to quote it. That is the
-  # distinction Law.conduct draws for law/, and the scanner's own rule
-  # definitions are the same subject: web_rules.rb carries an ERB regex, an
-  # operator message reading "<tag><%= … %></tag>" and advice about auto-escaped
-  # <%= %>. None is a template; all three are prose and patterns about one.
-  path_exclude %r{/(?:knowledge_store|knowledge_schema|catalog_index)\.rb\z|/memory/search\.rb\z|/review/scan/rules/}
+  # Three places where speaking a second language is the job rather than the
+  # defect, and the rule is about a document mixing them — the shape
+  # RAILS/CLAUDE.md names when it says split large mixed HTML/CSS/JS files.
+  #
+  # A database adapter speaks SQL; flagging it asks the layer to stop doing the
+  # one thing it exists for. A migration is the same: amber's
+  # convert_money_to_ore backfills through `execute <<~SQL.squish`, which is how
+  # a column move is done safely.
+  #
+  # And a file whose job is to detect another language has to quote it — the
+  # distinction Law.conduct already draws for law/. web_rules.rb carries an ERB
+  # regex, an operator message reading "<tag><%= … %></tag>" and advice about
+  # auto-escaped <%= %>; none is a template, all three are about one.
+  path_exclude %r{/(?:knowledge_store|knowledge_schema|catalog_index)\.rb\z|/memory/search\.rb\z|/review/scan/rules/|/db/migrate/}
   # A regex that matches `<%` is not ERB, and a string naming a heredoc tag is
   # not a heredoc. Unmasked this flagged the scanner's own ERB detectors, the
   # source-masking constants and css_coverage_lint's comment stripper — 35 of 72
