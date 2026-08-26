@@ -9,7 +9,12 @@ Law.define(:DOLLAR_PAREN) do
   source "ShellCheck SC2006 — $() over backticks"
   severity :warn
   languages %i[zsh]
-  detect { |line| line.match?(/`[^`]+`/) }
+  # A backtick followed by a method call is Ruby, not shell. drain-jobs.sh and
+  # prune-guests.sh both embed `ruby34 -e '...'` to read the load average, and
+  # inside that the backticks are Ruby's own command substitution — where they
+  # are correct and `$()` is not a thing. Shell never writes `` `cmd`.method ``,
+  # so the chain is the tell, and it costs nothing a real finding would have.
+  detect { |line| line.match?(/`[^`]+`/) && !line.match?(/`[^`]+`\s*\.\s*\w/) }
   fix "Use $(command) — nestable and readable."
   bad  "now=`date`"
   good "now=$(date)"
@@ -33,8 +38,20 @@ Law.define(:NEVER_BATCH_DELETE) do
   # law exists because of the 2026-01-05 incident where 16 files were deleted by
   # one glob, and it has only ever been able to see the Ruby half.
   languages %i[ruby zsh]
+  # File deletion lives here, and only here. GUARD_EXPENSIVE_OPS carried a bare
+  # `rm -rf` too, so one question had two instruments free to disagree; it keeps
+  # the database sweeps, this keeps the filesystem. The root and home targets
+  # came across with it — an unbounded `rm -rf /` is the same consequence class
+  # as a glob and the same rule should say so.
+  #
+  # `${app_dir}` is a variable expansion, not a brace glob, and the `{` in it
+  # was four of this law's six findings — every scoped removal in the deploy
+  # pipeline. Blanked before the glob test, since a `{` that survives is one
+  # somebody typed.
   detect do |line|
-    line.match?(/\brm\s+(-[a-zA-Z]*[rf][a-zA-Z]*\s+)*[^\s;|&]*[*?{]/) ||
+    bare = line.gsub(/\$\{[^}]*\}/) { |m| "\0" * m.length }
+    bare.match?(/\brm\s+(-[a-zA-Z]*[rf][a-zA-Z]*\s+)*[^\s;|&]*[*?{]/) ||
+      bare.match?(%r{\brm\s+-[a-zA-Z]*[rf][a-zA-Z]*\s+(?:"?/"?\s*(?:$|;)|"?~|\$\w+)}) ||
       line.match?(/FileUtils\.rm(_r|_rf|_f)?\(?\s*Dir\[/) ||
       line.match?(/\.each\s*\{[^}]*(?:File\.delete|FileUtils\.rm)/)
   end
@@ -78,6 +95,13 @@ Law.define(:STRICT_MODE_ZSH) do
   severity :error
   languages %i[zsh]
   scope :file
+  # A law that fires on what is MISSING cannot be silenced by blanking a line,
+  # which is all `scan: intentional` does — considered_text removes the marker
+  # and the absent `set -e` is still absent. `absent` is checked against the raw
+  # text before that, so it is the opt-out an absence-based law can honour, and
+  # dilla's redo_nine.sh needs one: aborting on the first non-zero exit would
+  # kill the other eight renders, which is the opposite of a batch script's job.
+  absent %r{scan:\s*intentional}
   detect { |text| text.start_with?("#!") && !text.match?(/^\s*set\s+-[eE]/) }
   fix "Add 'set -euo pipefail' after shebang."
   bad <<~X

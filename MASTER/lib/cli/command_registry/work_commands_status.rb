@@ -13,8 +13,8 @@ module Master
 
       # /status — one-frame health panel. Replaces seven probing tool calls.
       def dispatch_status(root:, fix_loop:, bus:, git: Io::GitOperations.new(File.expand_path("..", root)), trace: nil, ctx: nil)
-        data = gather_status_data(root:, fix_loop:, git:, trace:)
-        render_status_lines(data).join("\n")
+        gather_status_data(root:, fix_loop:, git:, trace:)
+          .then { |data| render_status_lines(data) }.join("\n")
       rescue StandardError => e
         "status: #{e.message}"
       end

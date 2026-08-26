@@ -1,29 +1,34 @@
 ---
 # What MASTER's own rules find in MASTER's own tree, and the three sibling trees.
 #
-# 556 across 1083 files from the rules that carry a lexical detector, 448 of
-# them in STUDIO. This is
-# the honest answer to "would running MASTER through its own rules make it
-# tidier": yes for names, spacing and comments, which is where almost all of it
-# sits. It is not the answer for defragmentation — COLLAPSE_BEFORE_ADDING,
-# MERGE_BEFORE_MULTIPLY, FLAT_HIERARCHY and NO_NEW_FILES have no detector at
-# all, so no number here moves when the tree is restructured.
+# 1 across 1038 files, from the rules that carry a lexical detector. The one is
+# a Norwegian passive in brgen's UI copy, which is a product decision rather
+# than a defect and is left for the operator.
 #
 # Lexical only. The full gate's semantic pass blocks on a model call: measured at
 # 17 minutes elapsed against 4 minutes of CPU, idle in a TLS read. A number that
-# needs a network and a key is a number nobody has.
+# needs a network and a key is a number nobody has. And no number here moves
+# when the tree is restructured: COLLAPSE_BEFORE_ADDING, MERGE_BEFORE_MULTIPLY,
+# FLAT_HIERARCHY and NO_NEW_FILES have no detector at all.
 #
-# The corpus was `**/*.rb` until the laws were checked against it: they claim
-# nine languages, so every css, scss, yaml, markdown, html, json and shell law
-# was measured against no file and reported clean. NULLISH_COALESCING,
-# I18N_COVERAGE, STRICT_LOADING_MISSING and META_CHARSET had 75 findings
-# between them that this number could not see. A ratchet blind to two thirds of
-# its subject falls to zero without the tree improving.
+# How it got from 1406 to 1, and why the second half of that is not the story it
+# looks like: roughly half the findings were the instrument, not the tree. The
+# corpus was `**/*.rb` while the laws claim nine languages, so every css, scss,
+# yaml, markdown, html, json and shell law was measured against no file and
+# reported clean. A Python virtualenv vendored under STUDIO was being graded
+# against this repo's rules. RUBY_NUMERIC_UNDERSCORE fired 23 times inside
+# ffmpeg filter strings, where its fix would have written 44_100 into
+# sample_rates=44100 and broken every render. UNBOUNDED_RETRY had a 100% false
+# positive rate: a bounded `retry if attempts < RETRIES` is the cap it asks for.
+# PROSE_ACTIVE_VOICE and PROSE_OMIT_QUALIFIERS could not see a comment at all —
+# reads_comments defaults to false, so in Ruby they read the code and skipped
+# the prose.
 #
-# The number moved 553 -> 556 across the same pass that cut 44 findings from
-# the files it edited. Both are true: the per-file count fell, and narrowing a
-# detector moves every file it reads, not only the ones in the diff. Measured
-# against HEAD, the edits are -44; the balance is the prose, css and nullish
-# detectors seeing their real subject for the first time. One of the three is
-# another session's uncommitted RAILS work, which this tree carries too.
-findings: 556
+# The other half were real and are fixed: 33 leech words, 13 agented passives,
+# 30 comments rewritten from edit history into present-tense reasons, 22 renames,
+# 19 guard clauses, 195 columns of alignment padding.
+#
+# A count this low is only worth what the detectors behind it are worth. Every
+# narrowing above carries its evidence in the law that made it; read those
+# before reading this number.
+findings: 1

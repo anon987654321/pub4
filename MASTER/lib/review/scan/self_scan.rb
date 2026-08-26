@@ -56,7 +56,7 @@ module Master
           return [] unless result.ok?
 
           check = result.value!.checks.find { |item| item.law == "SINGULARITY" }
-          return [] unless check && check.findings.any?
+          return [] unless check&.findings&.any?
 
           findings = check.findings.map do |finding|
             Finding.build(rule: "SINGULARITY", message: finding[:message], line: finding[:line],

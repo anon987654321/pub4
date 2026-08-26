@@ -72,11 +72,9 @@ module Master
       end
 
       def build_body(defn, params)
-        if defn["body_template"]
-          interpolate(defn["body_template"].to_s, params)
-        else
-          JSON.generate(params)
-        end
+        return JSON.generate(params) unless defn["body_template"]
+
+        interpolate(defn["body_template"].to_s, params)
       end
     end
   end

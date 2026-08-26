@@ -40,6 +40,9 @@ Law.define(:BARE_DIV_WRAPPER) do
   source "HTML5 semantics / WCAG 1.3.1 — an element with no meaning carries none"
   severity :warn
   languages %i[html]
+  # Same reason as META_CHARSET: bad_brgen_home.html is a bare-div document
+  # written to be caught, and grading it grades the test data.
+  path_exclude %r{/gates/fixtures/}
   # A div grouping a dt/dd pair inside a <dl> is the HTML 5.2 idiom, not a
   # styling wrapper — the spec added it precisely so the pair could share a
   # layout box.
@@ -157,6 +160,11 @@ Law.define(:META_CHARSET) do
   severity :error
   languages %i[html]
   scope :file
+  # A gate fixture is a specimen, not a page. RAILS/gates/fixtures holds
+  # hand-written good_ and bad_ documents that exist to be graded BY the gates,
+  # and the bad ones are wrong on purpose — nine of this law's findings were its
+  # own test data, including four files whose names say so.
+  path_exclude %r{/gates/fixtures/}
   # Both spellings count. The http-equiv form is the older one, and mail clients
   # honour it more reliably than the HTML5 short form — so shared/layouts/mailer
   # declares its encoding that way on purpose, and a detector accepting only the

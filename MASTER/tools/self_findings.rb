@@ -43,6 +43,11 @@ module Pub4
       ::Law.rules
     end
 
+    # Code we did not write and will not fix. STUDIO/dilla/tools/venv-demucs is
+    # a Python virtualenv with pip, torch and urllib3 vendored inside it, and
+    # its JavaScript and HTML were being graded against this repo's rules —
+    # `var headers = []` in urllib3's emscripten worker is not our debt.
+    THIRD_PARTY = %r{/(?:vendor|node_modules|site-packages|assets/builds)/|/\.?venv[-/]}
     # Every extension a law can declare, not just Ruby. The corpus globbed
     # `*.rb` while the laws claim nine languages, so every css, scss, yaml,
     # markdown, html, json and shell law in the registry was measured against
@@ -57,7 +62,7 @@ module Pub4
       law # loads Master before FILE_LANGUAGE_MAP is read, as by_rule does
       @files ||= Master::FILE_LANGUAGE_MAP.keys
                                           .flat_map { |ext| TREES.flat_map { |t| Dir.glob(File.join(ROOT, t, "**", "*#{ext}")) } }
-                                          .reject { |f| f.include?("/vendor/") || f.include?("/node_modules/") || f.include?("/assets/builds/") }
+                                          .reject { |f| f.match?(THIRD_PARTY) }
                                           .uniq
                                           .sort
     end

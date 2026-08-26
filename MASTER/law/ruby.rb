@@ -73,8 +73,15 @@ Law.define(:GUARD_CLAUSE) do
   # line between to a deeper one, so a closed block cannot be crossed. 24 files
   # to 18, and what remains is a method whose whole body is the conditional —
   # which is what the fixtures show and what a guard clause replaces.
+  # "A method whose whole body is the conditional" is what the paragraph above
+  # claims and what a guard clause can actually replace, but the pattern only
+  # anchored the `if` to the first line and never checked the method ended
+  # there. display_ok opens with `if streamed` and then prints five footers
+  # after the block; returning early from either arm would skip them, so there
+  # is no guard clause to flatten it to. The def's own `end` has to follow the
+  # conditional's.
   detect do |text|
-    text.match?(/^[ \t]*def \w+[^\n]*\n([ \t]+)if [^\n]+\n(?:\1[ \t]+[^\n]*\n|[ \t]*\n)*?\1else\n(?:\1[ \t]+[^\n]*\n|[ \t]*\n)*?\1end\n/)
+    text.match?(/^([ \t]*)def \w+[^\n]*\n\1[ \t]+if [^\n]+\n(?:(?!\1(?:def|end)\b)[^\n]*\n)*?\1[ \t]+else\n(?:(?!\1(?:def|end)\b)[^\n]*\n)*?\1[ \t]+end\n\1end\b/)
   end
   fix "Flatten to: return ... unless condition"
   bad <<~X
@@ -118,7 +125,12 @@ Law.define(:KERNEL_COERCION) do
   severity :info
   languages %i[ruby]
   path_exclude %r{/review/scan/rules/}
-  detect { |line| line.match?(/(\w+)\s*\.\s*nil\?\s*\?\s*\[\]\s*:\s*\1|(\w+)\s*\|\|\s*\[\](?!\s*<<)/) }
+  # The `|| []` arm left. The fix line names one substitution — the explicit
+  # nil-ternary — and `x || []` is not that: Array() splats a Hash into pairs
+  # and wraps a String, so swapping it in is a behaviour change wherever the
+  # value is not already an array or nil. The rule's own `good` fixture carries
+  # two surviving `|| []` forms, which is the rule agreeing with itself.
+  detect { |line| line.match?(/(\w+)\s*\.\s*nil\?\s*\?\s*\[\]\s*:\s*\1/) }
   fix "Use Array(x) instead of x.nil? ? [] : x"
   bad  "list.nil? ? [] : list"
   good <<~X
@@ -218,7 +230,18 @@ Law.define(:RESCUE_ON_DEF) do
   # gluing a def to a rescue hundreds of lines away and reporting it at line 1.
   # A def-level rescue is a `begin` on the line directly after the def, which is
   # what the bad fixture shows.
-  detect { |text| text.match?(/^[ \t]*def \w+[^\n]*\n[ \t]*begin\n(?:(?![ \t]*def )[^\n]*\n)*?[ \t]*rescue/) }
+  # The begin has to BE the body, which is what "put rescue on the def" means.
+  # Unanchored, this matched a begin/rescue guarding one statement at the top of
+  # a method — visual_contract.rb wraps its `require "selenium-webdriver"` that
+  # way and then does fifteen more lines. Hoisting that rescue to the def would
+  # widen it to catch a LoadError from anywhere in the method, which is the
+  # opposite of the tightening the rule is asking for.
+  #
+  # The backreference pins the begin's `end` and the def's `end` to their own
+  # indents, so the block only matches when nothing follows it.
+  detect do |text|
+    text.match?(/^([ \t]*)def \w+[^\n]*\n\1[ \t]+begin\n(?:(?!\1[ \t]*(?:def|end)\b)[^\n]*\n)*?\1[ \t]+rescue[^\n]*\n(?:(?!\1[ \t]*def )[^\n]*\n)*?\1[ \t]+end\n\1end\b/)
+  end
   fix "Put rescue directly on the def block."
   bad <<~X
     def go
@@ -255,7 +278,12 @@ Law.define(:RUBY_CAMEL_CLASS) do
   severity :warn
   languages %i[ruby]
   path_exclude %r{/review/scan/rules/}
-  detect { |line| line.match?(/^\s*(class|module)\s+([a-z]|[A-Z]\w*_)/) }
+  # A declaration ends the line, or continues only into a superclass. A sentence
+  # keeps going, and prose in a heredoc is not blanked the way a comment is:
+  # "module into shared/vendor/javascript, or pin it preload: false and" is a
+  # wrapped line of advice inside importmap_external_hosts_examples.rb, read as
+  # a module named `into`.
+  detect { |line| line.match?(/^\s*(class|module)\s+([a-z]\w*|[A-Z]\w*_\w*)\s*(?:<\s*[\w:]+\s*)?$/) }
   fix "Rename to CamelCase: class Album_store -> class AlbumStore."
   bad  "class Album_store"
   good "class AlbumStore"
@@ -281,7 +309,13 @@ Law.define(:RUBY_NUMERIC_UNDERSCORE) do
     if (at = masked.index(/(?<!['"\0])#/))
       masked[at..] = "\0" * (masked.length - at)
     end
-    masked.match?(/(?<![\d_.:\w])\d{5,}(?![\d_])/)
+    # `=` joins the lookbehind. A heredoc has no quotes to blank, so the ffmpeg
+    # graphs in mix_recipes.rb arrived unmasked and every `sample_rates=44100`
+    # and `equalizer=f=12000` read as a Ruby literal — 23 findings whose fix
+    # would have written `44_100` into a filter string and broken the render.
+    # Ruby spaces its assignment; a `=` flush against the digits is a config
+    # token in some other language.
+    masked.match?(/(?<![\d_.:\w=])\d{5,}(?![\d_])/)
   end
   fix "Group digits in threes: one million is 1_000_000."
   bad  "max = 1000000"
@@ -424,7 +458,26 @@ Law.define(:USE_THEN) do
   # The pair has to be adjacent to be a pipeline — that is the whole idea the
   # rule is about, and it is what the fixtures show. [^\n]* keeps the call on
   # its own line.
-  detect { |text| text.match?(/^[ \t]*(\w+)\s*=\s*\w+\([^\n]*\)\n[ \t]*\w+\(\1\)/) }
+  # The binding has to die at that second call. Adjacency alone says nothing
+  # about whether the name is used again, and in this tree it usually is:
+  # DiffStager builds an entry, persists it, and then publishes and returns
+  # three of its fields; SessionCapture parses, writes, and then feeds the same
+  # capture to three more updaters. Chaining those drops a variable the rest of
+  # the method needs — applying this rule to its own eight findings introduced
+  # three NameErrors, which is how the check below was earned.
+  #
+  # `then` is only an improvement where the intermediate exists to be handed on
+  # once. Everything after the pair, down to the end of the enclosing block, has
+  # to be free of the name.
+  detect do |text|
+    text.enum_for(:scan, /^([ \t]*)(\w+)\s*=\s*\w+\([^\n]*\)\n[ \t]*\w+\(\2\)/).any? do
+      match = Regexp.last_match
+      indent = match[1].length
+      rest = text[match.end(0)..].to_s.lines
+      stop = rest.index { |line| !line.strip.empty? && line[/\A[ \t]*/].length < indent }
+      (stop ? rest[0...stop] : rest).join.match?(/\b#{Regexp.escape(match[2])}\b/) == false
+    end
+  end
   fix "Chain with .then { |r| next_step(r) }"
   bad <<~X
     r = parse(src)

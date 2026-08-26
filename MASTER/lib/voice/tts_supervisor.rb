@@ -56,11 +56,9 @@ module Master
       end
 
       def socket_path(root = Master::ROOT, index: 0)
-        if pool_size <= 1 && index.zero?
-          File.join(root, ".master", "tts.sock")
-        else
-          File.join(root, ".master", "tts-#{index}.sock")
-        end
+        return File.join(root, ".master", "tts.sock") if pool_size <= 1 && index.zero?
+
+        File.join(root, ".master", "tts-#{index}.sock")
       end
 
       def next_socket(root = Master::ROOT)

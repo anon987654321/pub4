@@ -32,13 +32,13 @@ module Master
         def overlapping_keys(dir)
           files = Dir.glob(File.join(dir, "*.yml"))
           keys = files.each_with_object({}) do |f, h|
-            data = begin
+            document = begin
               Master.load_yaml(f)
             rescue StandardError => e
               Master::Ground::Swallow.log(e, context: "architecture_audit.overlapping_keys", path: f)
               nil
             end
-            h[File.basename(f)] = data.is_a?(Hash) ? data.keys : []
+            h[File.basename(f)] = document.is_a?(Hash) ? document.keys : []
           end
           pairs = []
           keys.to_a.combination(2) do |(a, ka), (b, kb)|

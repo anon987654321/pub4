@@ -28,10 +28,10 @@ module Master
           @scan_thread&.kill
           @refs.session.save!
           exit(0)
-        else
-          @interrupt_at = Time.now
-          puts "\n#{@refs.renderer.render("^C again to quit", mode: :warning)}"
         end
+
+        @interrupt_at = Time.now
+        puts "\n#{@refs.renderer.render("^C again to quit", mode: :warning)}"
       end
     end
   end

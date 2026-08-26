@@ -119,17 +119,23 @@ module Master
       end
 
       def require_kqueue_or_inotify
-        if RUBY_PLATFORM.include?("openbsd") || RUBY_PLATFORM.include?("freebsd")
-          require "rb-kqueue"
-          queue = KQueue::Queue.new
-          queue.watch(@root, :recursive, :write, :rename) { |ev| @queue << ev.path.to_s }
-          queue
-        else
-          require "rb-inotify"
-          n = INotify::Notifier.new
-          n.watch(@root, :close_write, :moved_to, :recursive) { |ev| @queue << ev.absolute_name }
-          n
-        end
+        return kqueue_watcher if RUBY_PLATFORM.match?(/openbsd|freebsd/)
+
+        inotify_watcher
+      end
+
+      def kqueue_watcher
+        require "rb-kqueue"
+        queue = KQueue::Queue.new
+        queue.watch(@root, :recursive, :write, :rename) { |ev| @queue << ev.path.to_s }
+        queue
+      end
+
+      def inotify_watcher
+        require "rb-inotify"
+        notifier = INotify::Notifier.new
+        notifier.watch(@root, :close_write, :moved_to, :recursive) { |ev| @queue << ev.absolute_name }
+        notifier
       end
     end
   end

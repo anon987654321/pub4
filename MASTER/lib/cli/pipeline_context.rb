@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 
-
-# ---- merged from lib/cli/pipeline_context/factory_methods.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module CLI
     class PipelineContext
@@ -101,21 +99,21 @@ module Master
       def initialize(hash)
         unknown = hash.keys - KNOWN_KEYS
         raise KeyError, "PipelineContext: unknown keys #{unknown.inspect}" unless unknown.empty?
-        @data = hash.freeze
+        @values = hash.freeze
       end
 
       # Read by symbol or string key — Hash-compatible subscript.
       def [](key)
-        @data[key.to_sym]
+        @values[key.to_sym]
       end
 
       # Struct-style accessors for all known keys.
       KNOWN_KEYS.each do |key|
-        define_method(key) { @data[key] }
+        define_method(key) { @values[key] }
       end
 
-      def key?(key) = @data.key?(key.to_sym)
-      def to_h = @data.dup
+      def key?(key) = @values.key?(key.to_sym)
+      def to_h = @values.dup
       # already immutable
       def freeze = self
 
@@ -124,14 +122,14 @@ module Master
       # stage results), mirroring the Hash-compatible #[]/#to_h/#wrap surface.
       def merge(overrides = {})
         overrides = overrides.to_h if overrides.is_a?(PipelineContext)
-        PipelineContext.new(@data.merge(normalize_overrides(overrides)))
+        PipelineContext.new(@values.merge(normalize_overrides(overrides)))
       end
 
       def ==(other)
-        other.is_a?(PipelineContext) && @data == other.to_h
+        other.is_a?(PipelineContext) && @values == other.to_h
       end
 
-      def inspect = "#<PipelineContext #{@data.inspect}>"
+      def inspect = "#<PipelineContext #{@values.inspect}>"
 
       private
 

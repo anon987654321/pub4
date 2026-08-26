@@ -77,11 +77,11 @@ module Master
       def teleport(nodes, focus)
         if focus.empty?
           base = (1 - DAMPING) / nodes.size
-          nodes.to_h { |n| [n, base] }
-        else
-          base = (1 - DAMPING) / focus.size
-          nodes.to_h { |n| [n, focus.include?(n) ? base : 0.0] }
+          return nodes.to_h { |n| [n, base] }
         end
+
+        base = (1 - DAMPING) / focus.size
+        nodes.to_h { |n| [n, focus.include?(n) ? base : 0.0] }
       end
 
       def pack(ordered)

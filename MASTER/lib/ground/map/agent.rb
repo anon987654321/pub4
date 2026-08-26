@@ -34,8 +34,8 @@ module Master
           end
 
           def resolve_patch_brief(key)
-            data = load
-            briefs = data["patch_briefs"] || {}
+            map = load
+            briefs = map["patch_briefs"] || {}
             return briefs[key] if briefs.key?(key)
 
             segments = key.split("/")

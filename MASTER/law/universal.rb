@@ -24,7 +24,12 @@ end
 Law.define(:FULL_BY_DEFAULT) do
   source "MASTER-native (no shallow/lite tiers by default)"
   severity :warn
-  detect { |line| line.match?(/\b(shallow|standard|quick|lite|basic|light|simple)\b\s*[|,)\]]\s*\b(deep|full|advanced|complete|thorough)\b/) }
+  # Both words have to be list items, not two adjectives that happen to meet.
+  # "sculpted soft key light, deep muted tones" is a prompt describing a
+  # photograph and "blue-hour ambient light, deep shadow tones" is a colour
+  # grade; the first tier word has to open a list or follow a separator, the way
+  # `[shallow, deep]` does.
+  detect { |line| line.match?(/(?:\A\s*|[\[(|,=:]\s*)(shallow|standard|quick|lite|basic|light|simple)\b\s*[|,)\]]\s*\b(deep|full|advanced|complete|thorough)\b/) }
   fix "Drop the degraded tier. If a real cost tradeoff exists, rename to surface the cost (lexical < structural < semantic), not the result quality."
   bad "modes = [shallow, deep]"
   good "modes = [deep]"
@@ -42,7 +47,20 @@ Law.define(:GUARD_EXPENSIVE_OPS) do
   source "MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention"
   severity :error
   path_exclude %r{/test/|/spec/|/db/seeds|/db/migrate/|seeder|demo_seed|_seed\b}
-  detect { |line| line.match?(/\b[A-Z]\w*(?:::\w+)*\.(?:delete_all|destroy_all)\b|\bdrop_table\b|\bTRUNCATE\b|\btruncate_tables?\b|rm\s+-rf\b/) }
+  # `rm -rf` left for NEVER_BATCH_DELETE, which already owned file deletion and
+  # already knew a scoped path from an unbounded one. Both laws claiming it was
+  # one question with two instruments, and every one of the twelve hits here was
+  # a bounded removal in the deploy pipeline — `doas rm -rf "${app_dir}/public"`
+  # — or prose in a runbook. This law is the database sweep.
+  #
+  # A symbol list names the operations; it does not perform them.
+  # Ground::Policy::Workflow's CONFIRM is exactly that, and reading it as a
+  # drop_table is reading a menu as a meal.
+  detect do |line|
+    next false if line.match?(/%[iw]\[/)
+
+    line.match?(/\b[A-Z]\w*(?:::\w+)*\.(?:delete_all|destroy_all)\b|\bdrop_table\b|\bTRUNCATE\b|\btruncate_tables?\b/)
+  end
   fix "Cost estimate before execution. Require opt-in for danger; scope the delete to a parent."
   bad "Session.delete_all"
   good "user.sessions.delete_all"
@@ -101,7 +119,16 @@ Law.define(:NO_COLUMN_ALIGN) do
   # spaces and `result  = x` slipped through on exactly two — the commonest
   # spacing of all. 121 findings under MASTER/lib became 154, and none of the 33
   # is in law/, so the rule was blind to a third of its own subject.
-  detect { |line| (s = line.strip) && !s.start_with?("*") && !s.match?(/\A[-=]+\z/) && line.match?(/\S {2,}(?:=>|[^=!<>=]?=[^=>]|:\s)/) }
+  # A run of spaces inside a quoted string is the string. OPENBSD/dev/perms.sh
+  # writes `print "File perms  = $file_perms"`, lining up two labels in the
+  # OUTPUT — the one place column alignment is the point rather than the defect.
+  detect do |line|
+    s = line.strip
+    next false if s.start_with?("*") || s.match?(/\A[-=]+\z/)
+
+    line.gsub(/"[^"\n]*"|'[^'\n]*'/) { |m| "\0" * m.length }
+        .match?(/\S {2,}(?:=>|[^=!<>=]?=[^=>]|:\s)/)
+  end
   fix "Remove padding; one space before operators. Column alignment decays and hides diffs."
   bad "name    = 1"
   good "name = 1"
@@ -148,7 +175,16 @@ Law.define(:SECRET_PROXIMITY) do
   # quote, so it matched the source BETWEEN two literals — the "secret" it
   # reported in auth_tier.rb was the code `token=") || p == `. At :error
   # severity, which also gated that file out of the semantic pass.
+  #
+  # An interpolated value is assembled at run time and cannot BE a literal
+  # secret. `token = "#{vertical}_#{key}"` builds a design-token name, and the
+  # literal is the whole point of the rule.
   detect do |line|
+    # Shell expansion counts too: `export HUGGINGFACE_HUB_TOKEN="${HF_TOKEN}"`
+    # forwards a value the environment already holds, which is the fix this rule
+    # asks for rather than the defect it names.
+    next false if line.match?(/=\s*"[^"\n]*(?:#\{|\$\{|\$\w)/)
+
     line.match?(/(?<!['"])(password|secret|token|api_key|private_key)\s*=\s*(?:"[^"\n]{8,}"|'[^'\n]{8,}')/i)
   end
   fix "Move secret to environment variable or secrets manager."
@@ -207,9 +243,26 @@ end
 Law.define(:UNBOUNDED_RETRY) do
   source "Release It! — retry budgets / bounded retries (Nygard)"
   severity :error
+  # Every finding this produced was a false positive, all five of them. Three
+  # narrowings, each against one of those shapes:
+  #
+  # A retry whose modifier bounds it IS the fix — `retry if attempts < RETRIES`
+  # is what "add a max_attempts cap" looks like once someone has added it, and
+  # flagging it asks for the change that is already there.
+  #
+  # `while true` left the rule. A supervisor loop that sleeps is not a retry: it
+  # is how every watcher in this tree is written, the bad fixture below is a
+  # bare `retry` rather than a loop, and the one hit was OPENBSD's file watcher
+  # doing its job. A rule about busy loops needs to see the body for a sleep,
+  # which is file scope and a different rule.
+  #
+  # The keyword has to be a statement. String blanking cannot survive a nested
+  # interpolation — `"CSS#{a ? " (retry)" : ""}"` left the word bare — and a
+  # `retry` that is not at the head of a statement is prose in every case.
+  #
   # One line on purpose: Law.conduct neutralizes `detect` lines when a law
   # judges law/, and it reads lines, not blocks.
-  detect { |line| (s = line.strip) && !s.start_with?("#") && !s.match?(/retry\\/) && (b = s.gsub(/"(?:\\.|[^"\\])*"/, '""').gsub(/'[^']*'/, "''")) && (b.match?(/(?<![:\w|])retry(?![?:\w|])/) || b.match?(/while\s+true/)) || false }
+  detect { |line| (s = line.strip) && !s.start_with?("#") && !s.match?(/retry\\/) && !s.match?(/\bretry\s+(?:if|unless)\b[^\n]*[<>]/) && (b = s.gsub(/"(?:\\.|[^"\\])*"/, '""').gsub(/'[^']*'/, "''")) && b.match?(/\A(?:.*(?:;|\bthen\b|\bdo\b)\s*)?retry(?![?:\w|])/) || false }
   fix "Add max_attempts cap and exponential backoff."
   bad "retry"
   good <<~X
@@ -254,7 +307,26 @@ Law.define(:WHY_NOT_WHAT) do
   source "Clean Code / Code Complete — comments explain why, not what"
   severity :info
   reads_comments true
-  detect { |line| line.match?(/#\s*(increment|set|get|update|return|initialize|create|add)\s+\w+/) }
+  # Two guards, and the second is the one that matters. Anchoring to the start
+  # of the comment is not enough, because these words are nouns as often as
+  # verbs and a wrapped paragraph puts them at the head of a line: "# set is
+  # closed and small" is about the verb SET, "# create is not a failure to
+  # lock" is about the create call. All six hits read that way.
+  #
+  # A comment restating the line below it is terse — that is what makes it
+  # worthless, and the fixture is two words. Prose that explains why runs on.
+  # Four words is the cut, so `# increment counter` stays caught and a sentence
+  # that merely opens with one of these words does not.
+  detect do |line|
+    body = line[/\A\s*#\s*(.*)/, 1].to_s
+    # A restating comment names its object: "increment counter". A function word
+    # after the verb means the line is mid-sentence — "get for free" is the tail
+    # of "what changed is which one you / get for free", wrapped.
+    next false unless body.match?(/\A(increment|set|get|update|return|initialize|create|add)\s+\w+/)
+    next false if body.match?(/\A\w+\s+(?:a|an|the|for|of|to|in|on|at|with|from|by|is|are|was|were|it|this|that)\b/)
+
+    body.split.length <= 4
+  end
   fix "Comments should explain intent, not restate the code."
   bad "# increment counter"
   good "# retries are capped so a flapping host cannot pin the worker"

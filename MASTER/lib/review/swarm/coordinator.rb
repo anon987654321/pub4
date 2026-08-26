@@ -3,7 +3,6 @@
 require "timeout"
 
 
-# ---- merged from lib/review/swarm/coordinator/vote_engine.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Review
     module Swarm
@@ -66,16 +65,12 @@ module Master
           end
 
           def conflict_signal(v)
-            if v.is_a?(Hash) && v.key?("approved")
-              v["approved"] ? :approve : :reject
-            else
-              text = v.to_s.downcase
-              if text.match?(/\b(approv(e|ed)|looks good|no issues)\b/)
-                :approve
-              elsif text.match?(/\b(reject|fail|error|violation|problem)\b/)
-                :reject
-              end
-            end
+            return v["approved"] ? :approve : :reject if v.is_a?(Hash) && v.key?("approved")
+
+            text = v.to_s.downcase
+            return :approve if text.match?(/\b(approv(e|ed)|looks good|no issues)\b/)
+
+            :reject if text.match?(/\b(reject|fail|error|violation|problem)\b/)
           end
 
           # Confidence-weighted vote across ok_workers. Returns [consensus, dissent, arbitrated].
@@ -100,14 +95,9 @@ module Master
           end
 
           def build_vote_result(agreement, best_workers, ok_workers, task_context)
-            if agreement >= CONSENSUS_THRESHOLD
-              consensus = summarize_outputs(best_workers)
-              dissent = ok_workers - best_workers
-              [consensus, dissent, false]
-            else
-              consensus = arbitrate(ok_workers, task_context)
-              [consensus, [], true]
-            end
+            return [arbitrate(ok_workers, task_context), [], true] if agreement < CONSENSUS_THRESHOLD
+
+            [summarize_outputs(best_workers), ok_workers - best_workers, false]
           end
 
           def extract_confidence(result)

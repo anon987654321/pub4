@@ -203,19 +203,19 @@ module Master
 
       def write_manifest_entry(key, ts:, value:)
         FileUtils.mkdir_p(@master_root)
-        data = manifest
-        data[key] = { "ts" => ts, "value" => stringify_for_yaml(value) }
-        File.write(@manifest_path, data.to_yaml)
+        entries = manifest
+        entries[key] = { "ts" => ts, "value" => stringify_for_yaml(value) }
+        File.write(@manifest_path, entries.to_yaml)
       end
 
       def delete_manifest_entry(key)
-        data = manifest
-        data.delete(key)
-        data.delete(key.to_s)
-        if data.empty?
+        entries = manifest
+        entries.delete(key)
+        entries.delete(key.to_s)
+        if entries.empty?
           File.delete(@manifest_path) if File.exist?(@manifest_path)
         else
-          File.write(@manifest_path, data.to_yaml)
+          File.write(@manifest_path, entries.to_yaml)
         end
       end
 
@@ -235,13 +235,13 @@ module Master
       end
 
       def serialize_value(value)
-        if defined?(Master::Result::Ok) && value.is_a?(Master::Result::Ok)
-          { __master_result: "ok", value: value.value! }
-        elsif defined?(Master::Result::Err) && value.is_a?(Master::Result::Err)
-          { __master_result: "err", message: value.message, category: value.category }
-        else
-          { __master_result: "raw", value: }
+        return { __master_result: "ok", value: value.value! } if defined?(Master::Result::Ok) && value.is_a?(Master::Result::Ok)
+
+        if defined?(Master::Result::Err) && value.is_a?(Master::Result::Err)
+          return { __master_result: "err", message: value.message, category: value.category }
         end
+
+        { __master_result: "raw", value: }
       end
 
       def restore_value(payload)

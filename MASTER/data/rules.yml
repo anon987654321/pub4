@@ -2929,10 +2929,27 @@ prose:
       - 'n''t\s+(?:just|simply|only)'
       - 'just\s+(?:\w+ed|found|said|ran|saw|built)' # moments ago, a tense marker
       - '(?:the|this|that|its) very'               # a determiner picking a thing out
+      # Measured against STUDIO's 138. `just` before a position or a quantity
+      # measures rather than minimises — "pads land just under the kit", "just
+      # enough to stop the DC step popping", "harmonics from the content just
+      # below the cliff".
+      - 'just\s+(?:enough|about|above|below|over|under|short|past|now|then)'
+      # `quite` after a negation means fully, so cutting it says the opposite:
+      # "the piano body GM never quite nails" would become a claim that GM never
+      # nails it at all.
+      - '(?:not|never|n''t|hardly)\s+(?:quite|really)'
+      - 'simply because'                           # a cause, not a manner
+      # An adverb modifies the next word across a space. `pretty-printed` is one
+      # word and the rule's sense of `pretty` is not in it.
+      - '\bpretty-\w'
     passive:
       auxiliary: '(?:was|were|been)'
       participle: '(?:\w+ly\s+)?\w+ed'
-      agent: 'by'
+      # `by` marks an agent here, but the same word marks a manner: "tuned by
+      # feel", "transcribed by ear", "measured by hand". Those say how the thing
+      # was done rather than who did it, and there is no active voice to move
+      # them to — "feel tuned the sigma" is not a sentence.
+      agent: 'by(?!\s+(?:ear|feel|hand|eye|design|accident|default|mistake|now|then)\b)'
   nb:
     # Bokmål reaches the tree through the Rails locale files and nowhere else;
     # every comment in the repo is English. Scoped there, `bare` is Norwegian.

@@ -227,11 +227,9 @@ module Master
         end
 
         def run_rule(rule:, code:, ast:, path:)
-          if ast && rule.respond_to?(:check_ast)
-            rule.check_ast(ast, code, path:)
-          else
-            rule.check(code, path:)
-          end
+          return rule.check(code, path:) unless ast && rule.respond_to?(:check_ast)
+
+          rule.check_ast(ast, code, path:)
         end
 
         def publish_scan_result(path:, depth:, findings:)

@@ -57,11 +57,9 @@ module Master
       end
 
       def parse_remember(text)
-        if text =~ /\Atype=(\S+)\s+(.+)/
-          [$2, $1]
-        else
-          [text, "general"]
-        end
+        return [text, "general"] unless text =~ /\Atype=(\S+)\s+(.+)/
+
+        [$2, $1]
       end
 
       def list_by_type(memory, type)
@@ -71,14 +69,15 @@ module Master
       end
 
       def memory_search(memory, query)
-        if memory.respond_to?(:semantic_recall)
-          hits = memory.semantic_recall(query)
-          return "(no matches: #{query})" if hits.empty?
-          hits.map { |h| "#{h[:key]}: #{h[:value]}" }.join("\n")
-        else
+        unless memory.respond_to?(:semantic_recall)
           hits = memory.all.select { |k, v| k.to_s.include?(query) || v.to_s.include?(query) }
-          hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")
+          return hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")
         end
+
+        hits = memory.semantic_recall(query)
+        return "(no matches: #{query})" if hits.empty?
+
+        hits.map { |h| "#{h[:key]}: #{h[:value]}" }.join("\n")
       end
 
       def dispatch_capture(root, ctx: nil)

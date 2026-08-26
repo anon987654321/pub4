@@ -5,7 +5,6 @@ require "fileutils"
 require_relative "atomic_write"
 
 
-# ---- merged from lib/ground/config/config_accessors.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Ground
     class Config
@@ -70,15 +69,15 @@ module Master
         @root = root
         @path = File.join(root, ".master", "config.yml")
         @mutex = Mutex.new
-        @data = load_config
+        @settings = load_config
       end
 
-      def [](key) = @mutex.synchronize { @data[key.to_s] }
-      def []=(key, value); @mutex.synchronize { @data[key.to_s] = value }; end
+      def [](key) = @mutex.synchronize { @settings[key.to_s] }
+      def []=(key, value); @mutex.synchronize { @settings[key.to_s] = value }; end
       def dig(key, *rest)
         @mutex.synchronize do
           k = key.to_s
-          rest.empty? ? @data[k] : @data.dig(k, *rest.map(&:to_s))
+          rest.empty? ? @settings[k] : @settings.dig(k, *rest.map(&:to_s))
         end
       end
 
@@ -88,11 +87,11 @@ module Master
         FileUtils.mkdir_p(File.dirname(@path))
         errs = validate if respond_to?(:validate)
         warn "config: validation issues before save: #{errs.join('; ')}" if errs && !errs.empty?
-        write_atomic(@path, @data.to_yaml, fsync: true)
+        write_atomic(@path, @settings.to_yaml, fsync: true)
       end
 
       def reload!
-        @mutex.synchronize { @data = load_config }
+        @mutex.synchronize { @settings = load_config }
       end
 
       # Validate config against known schema. Returns array of error strings.
@@ -115,7 +114,7 @@ module Master
         :budget_max, :warn_at, :max_per_file, :req_max, :cache_ttl, :history_max)
 
       def freeze_boot
-        snap = @mutex.synchronize { @data.dup }
+        snap = @mutex.synchronize { @settings.dup }
         BootConfig.new(
           root: @root, model: snap["model"], web_host: snap["web_host"], web_port: snap["web_port"].to_i,
           web_public_url: snap["web_public_url"], budget_max: snap["budget_max"].to_f,
@@ -124,7 +123,7 @@ module Master
         ).freeze
       end
 
-      def to_h = @mutex.synchronize { deep_dup(@data) }
+      def to_h = @mutex.synchronize { deep_dup(@settings) }
 
       private
 

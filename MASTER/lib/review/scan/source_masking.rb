@@ -64,11 +64,11 @@ module Master
         m = Regexp.last_match
         [m.begin(0), m.end(0), m[0]] if m[0].include?("\n")
       end
-      result = code.dup
+      masked = code.dup
       spans.reverse_each do |from, to, text|
-        result[from...to] = text.gsub(/\s*\n\s*/, " ") + ("\n" * text.count("\n"))
+        masked[from...to] = text.gsub(/\s*\n\s*/, " ") + ("\n" * text.count("\n"))
       end
-      result
+      masked
     end
 
     # What an HTML attribute rule should read: no ERB, one tag per line.

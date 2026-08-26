@@ -36,19 +36,19 @@ module Master
       end
 
       def render_deploy
-        data = load_operator
+        operator = load_operator
         lines = ["OPERATOR operator (runtime: OPENBSD/data/operator.yml)", ""]
-        lines << data.dig("app_layout", "summary").to_s
-        lines << "Deploy: #{data.dig('app_layout', 'deploy_entrypoint')}"
-        lines << "Deployed: #{data.dig('app_layout', 'deployed_tree')}"
+        lines << operator.dig("app_layout", "summary").to_s
+        lines << "Deploy: #{operator.dig('app_layout', 'deploy_entrypoint')}"
+        lines << "Deployed: #{operator.dig('app_layout', 'deployed_tree')}"
         lines << ""
         lines << "Single source of truth:"
-        data.fetch("single_source_of_truth", {}).each do |key, path|
+        operator.fetch("single_source_of_truth", {}).each do |key, path|
           lines << "  #{key}: #{path}"
         end
         lines << ""
         lines << "Recipes:"
-        Array(data["recipes"]).each do |recipe|
+        Array(operator["recipes"]).each do |recipe|
           lines << "  #{recipe['want']}: #{recipe['run']}"
         end
         lines.join("\n")

@@ -3,7 +3,6 @@
 require_relative "../command_registry/formatter"
 
 
-# ---- merged from lib/cli/cli/command_ops/system_ops.rb (one-file directory collapse, 2026-08-19) ----
 require "json"
 
 module Master
@@ -52,9 +51,9 @@ module Master
       def run_rails_pwa_audit
         puts @refs.renderer.render("rails-pwa-audit: scanning OPERATOR apps", mode: :dim)
         op = Master::Rails::MobilePwaOperator.new(agent: @refs.agent, event_bus: @refs.bus)
-        result = op.audit_all_deploy
-        if result.ok?
-          result.value!.each do |r|
+        audit = op.audit_all_deploy
+        if audit.ok?
+          audit.value!.each do |r|
             next puts @refs.renderer.render("  !! #{r[:app]}: #{r[:error]}", mode: :warning) if r[:error]
             icon = { green: "ok", amber: "—", red: "!!" }.fetch(r[:verdict], "??")
             puts @refs.renderer.render("  #{icon} #{r[:app]}: #{r.dig(:pwa, :findings)&.size || 0} finding(s)", mode: :dim)
@@ -70,10 +69,10 @@ module Master
       def run_rails_pwa_fix
         puts @refs.renderer.render("rails-pwa-fix: applying network-first SW + offline fallback to OPERATOR apps", mode: :dim)
         op = Master::Rails::MobilePwaOperator.new(agent: @refs.agent, event_bus: @refs.bus)
-        result = op.audit_all_deploy
-        return puts @refs.renderer.render("rails-pwa-fix: #{result.message}", mode: :warning) unless result.ok?
+        audit = op.audit_all_deploy
+        return puts @refs.renderer.render("rails-pwa-fix: #{audit.message}", mode: :warning) unless audit.ok?
         fixed = 0
-        result.value!.each do |r|
+        audit.value!.each do |r|
           next puts @refs.renderer.render("  !! #{r[:app]}: #{r[:error]}", mode: :warning) if r[:error]
           next if r[:verdict] == :green
           fix_result = op.respond_to?(:fix_app) ? op.fix_app(r[:app]) : Result.err("fix_app not implemented")
@@ -185,12 +184,10 @@ module Master
       end
 
       def run_last
-        if @last_input
-          puts @refs.renderer.render("rerun: #{@last_input[0, 60]}", mode: :dim)
-          run_input(@last_input)
-        else
-          puts @refs.renderer.render("no prior input", mode: :dim)
-        end
+        return puts @refs.renderer.render("no prior input", mode: :dim) unless @last_input
+
+        puts @refs.renderer.render("rerun: #{@last_input[0, 60]}", mode: :dim)
+        run_input(@last_input)
       end
 
       def run_cmd
@@ -220,19 +217,19 @@ module Master
         if @dmesg_sub
           @dmesg_sub.call
           @dmesg_sub = nil
-          puts @refs.renderer.render("dmesg: off", mode: :dim)
-        else
-          @dmesg_sub = @refs.bus&.subscribe("*") do |payload|
-            ts = payload.fetch(:ts, 0)
-            line = "  [#{ts.to_s.rjust(7)}] #{payload[:event]}"
-            begin
-              $stdout.puts @refs.renderer.render(line, mode: :dim)
-            rescue StandardError => e
-              Master::Ground::Swallow.log(e, context: "CLI.toggle_dmesg")
-            end
-          end
-          puts @refs.renderer.render("dmesg: on (events stream below)", mode: :dim)
+          return puts @refs.renderer.render("dmesg: off", mode: :dim)
         end
+
+        @dmesg_sub = @refs.bus&.subscribe("*") do |payload|
+          ts = payload.fetch(:ts, 0)
+          line = "  [#{ts.to_s.rjust(7)}] #{payload[:event]}"
+          begin
+            $stdout.puts @refs.renderer.render(line, mode: :dim)
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "CLI.toggle_dmesg")
+          end
+        end
+        puts @refs.renderer.render("dmesg: on (events stream below)", mode: :dim)
       end
 
       def toggle_chips

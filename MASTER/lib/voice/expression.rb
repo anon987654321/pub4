@@ -118,13 +118,10 @@ module Master
       end
 
       def tier_value(hi, lo, hi_val:, lo_val:, mid_val:)
-        if hi
-          hi_val
-        elsif lo
-          lo_val
-        else
-          mid_val
-        end
+        return hi_val if hi
+        return lo_val if lo
+
+        mid_val
       end
 
       def blendshapes_for(style_name)

@@ -9,11 +9,6 @@ require "time"
 require "yaml"
 
 
-# ---- merged from lib/review/repo_ecology/co_change_graph.rb (one-file directory collapse, 2026-08-19) ----
-require "fileutils"
-require "open3"
-require "yaml"
-
 module Master
   module Review
     class RepoEcology
@@ -26,8 +21,8 @@ module Master
                                         "-#{CO_CHANGE_COMMITS}")
           return {} unless status.success?
 
-          pair_counts = count_co_change_pairs(out)
-          graph_from_counts(pair_counts).transform_values(&:freeze).freeze
+          count_co_change_pairs(out)
+            .then { |pairs| graph_from_counts(pairs) }.transform_values(&:freeze).freeze
         rescue StandardError => e
           @bus&.publish("repo_ecology:co_change_error", error: e.message)
           {}
@@ -100,7 +95,6 @@ module Master
     end
   end
 end
-# ---- merged from lib/review/repo_ecology/report_rendering.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Review
     class RepoEcology

@@ -7,7 +7,6 @@ require_relative "cross_file_analysis"
 require_relative "file_processor"
 
 
-# ---- merged from lib/review/scan/scanner/progress_reporter.rb (one-file directory collapse, 2026-08-19) ----
 module Master
   module Review
     module Scan
@@ -85,7 +84,7 @@ module Master
             Master::Trace::Dmesg.status(
               unit,
               "hit #{done}/#{total} #{rel} +#{count}" \
-              "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}",
+              "#{eta_s&.positive? ? " eta=#{eta_s}s" : ""}",
             )
           end
 
@@ -98,7 +97,7 @@ module Master
             Master::Trace::Dmesg.status(
               unit,
               "checkpoint #{done}/#{total} violations=#{viol_total} dirty_files=#{dirty}" \
-              "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}" \
+              "#{eta_s&.positive? ? " eta=#{eta_s}s" : ""}" \
               " elapsed=#{elapsed.round}s" \
               "#{top_s.empty? ? "" : " top #{top_s}"}",
             )

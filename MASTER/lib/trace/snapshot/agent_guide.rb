@@ -76,16 +76,16 @@ module Master
         # surrounding template does not otherwise vary. Split out so this method is
         # the template and that one is the choice.
         def binary_inlining_note(full_inline:)
-          if full_inline
-            "4. Every git-tracked **text** file is inlined in full — no size cap, no " \
-            "\"large file, not inlined\" placeholders. Binaries (images, fonts, archives) " \
-            "are still not base64-inlined (that once produced multi-GB snapshots); their " \
-            "path just doesn't appear as a fenced block — read them from the real repo if needed."
-          else
-            "4. This is the small boot-context digest: binaries and files over the size cap " \
-            "are **listed only** (not inlined) — do not expect base64 blocks. For a full, " \
-            "uncapped pack use `bin/snapshot` instead (writes `snapshot_<LABEL>.md` at the repo root)."
+          unless full_inline
+            return "4. This is the small boot-context digest: binaries and files over the size cap " \
+                   "are **listed only** (not inlined) — do not expect base64 blocks. For a full, " \
+                   "uncapped pack use `bin/snapshot` instead (writes `snapshot_<LABEL>.md` at the repo root)."
           end
+
+          "4. Every git-tracked **text** file is inlined in full — no size cap, no " \
+          "\"large file, not inlined\" placeholders. Binaries (images, fonts, archives) " \
+          "are still not base64-inlined (that once produced multi-GB snapshots); their " \
+          "path just doesn't appear as a fenced block — read them from the real repo if needed."
         end
 
         def rehydrate_lines(full_inline: false)

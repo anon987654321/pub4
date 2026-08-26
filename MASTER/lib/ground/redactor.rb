@@ -40,10 +40,10 @@ module Master
       end
 
       def self.truncate(value)
-        str = value.to_s
-        return str if str.length <= DMESG_MAX
+        text = value.to_s
+        return text if text.length <= DMESG_MAX
 
-        "#{str[0, DMESG_MAX]}…"
+        "#{text[0, DMESG_MAX]}…"
       end
 
       def self.public_error_message
