@@ -1,7 +1,10 @@
-<%# Same frame as a DM. A channel and a conversation are the same kind of thing
-    to the reader — a room with a log — so switching between them must not be a
-    different motion. %>
-<%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
+<%# The same window as a DM. A channel and a conversation are the same kind of
+    thing to the reader — a room with a log — so switching between them must not be
+    a different motion, and arriving at a channel URL must not give a pane with no
+    way out of it. %>
+<section class="messenger-window" aria-label="<%= t("messages.title") %>">
+  <%= render "conversations/rooms_rail" %>
+  <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
   <% spec = Conversation::CHANNELS[@conversation.slug] || {} %>
   <% content_for :title, @conversation.channel_title %>
 
@@ -72,4 +75,5 @@
       <p><%= link_to t("chat.join_room"), channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
     <% end %>
   </section>
-<% end %>
+  <% end %>
+</section>

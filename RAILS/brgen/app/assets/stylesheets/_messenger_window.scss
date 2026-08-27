@@ -18,12 +18,25 @@
 
 .messenger-window {
   display: grid;
-  // One pane on a phone: the rail, or the room you opened. The frame swap is what
-  // moves between them, so there is no second scroll container to lose.
   grid-template-columns: 1fr;
   gap: 0;
   min-block-size: 100dvh;
 }
+
+// Master-detail on a phone: the rail, or the room, never both.
+//
+// The comment that stood above this claimed one pane on a phone and the CSS did
+// not do it — a single 1fr column stacks the rail on top of the conversation, so
+// reaching a message meant scrolling past every room first. That is the whole of
+// the layout on the device this will mostly be used on.
+//
+// :has(.conversation-log) is the test for "a room is open", because that class is
+// already the thing Message#broadcast_to_logs appends to — it exists in both show
+// views and in neither empty state, so nothing new has to be marked. Mobile-first
+// and min-width only, per MOBILE_FIRST: this is the default and the wide layout
+// below overrides it.
+.messenger-window:has(.conversation-log) .messenger-rail { display: none; }
+.messenger-window:not(:has(.conversation-log)) .messenger-pane { display: none; }
 
 .messenger-rail {
   display: flex;
@@ -137,6 +150,11 @@
     grid-template-columns: 240px minmax(0, 1fr);
     block-size: 100dvh;
   }
+
+  // There is room for both here, so the master-detail switch above is undone
+  // rather than repeated: whichever of the two the phone was hiding comes back.
+  .messenger-window:has(.conversation-log) .messenger-rail { display: flex; }
+  .messenger-window:not(:has(.conversation-log)) .messenger-pane { display: block; }
 
   .messenger-rail,
   .messenger-pane { block-size: 100dvh; }

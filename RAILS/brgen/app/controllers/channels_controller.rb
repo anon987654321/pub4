@@ -4,6 +4,11 @@
 # (see Conversation::CHANNELS); posting reuses MessagesController. Guests and
 # signed-in users both write — humans show as anonymous handles, bots as personas.
 class ChannelsController < ApplicationController
+  # A channel is a room in the same window as a DM, so it needs the same rail.
+  # Signed-out readers get the channel list without an inbox, which is what they
+  # have.
+  before_action :load_rail, only: :show
+
   def index
     @city = Current.city_record
 rooms = Conversation.channels.where(city_id: @city&.id).to_a
@@ -36,5 +41,17 @@ rooms = Conversation.channels.where(city_id: @city&.id).to_a
       @messages = @conversation.messages.visible.unexpired.includes(:sender).order(:created_at).last(100).to_a
     end
     @message = Message.new
+  end
+  private
+
+  def load_rail
+    return unless Current.user
+
+    @rail_conversations = Conversation.for_user(Current.user)
+                                      .where(slug: nil)
+                                      .includes(:participants, :messages)
+                                      .order(Conversation::INBOX_ORDER)
+                                      .limit(30)
+    @rail_unread = Conversation.unread_counts_for(Current.user)
   end
 end

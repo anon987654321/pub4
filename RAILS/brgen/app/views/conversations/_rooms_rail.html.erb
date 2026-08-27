@@ -1,69 +1,78 @@
 <%# The left rail of the messenger window: every room you can reach, without
     leaving the one you are in.
 
-    Each link targets the messenger-pane frame, so switching rooms swaps the
-    conversation and leaves the rail, its scroll position and the composer state
-    alone. Without the frame every switch was a full navigation — which is what
-    made this feel like a series of pages rather than one window. %>
+    Each room link targets the messenger-pane frame, so switching swaps the
+    conversation and leaves the rail, its scroll position and the composer alone.
+    Without the frame every switch was a full navigation, which is what made this
+    read as a series of pages rather than one window.
+
+    The DM list is optional. Guests reach channels without an inbox, and the rail
+    renders for them too — the channels above it are a static roster and are
+    always there. %>
+<% rail_conversations = @rail_conversations || [] %>
+<% rail_unread = @rail_unread || {} %>
+<% current_room = defined?(@conversation) ? @conversation : nil %>
+
 <nav class="messenger-rail" aria-label="<%= t("messages.rooms_label") %>">
-  <div class="messenger-rail-head">
-    <%= link_to new_conversation_path, class: "btn btn-primary messenger-rail-new",
-                data: { turbo_frame: "_top" } do %>
-      <%= icon :compose, size: 18 %>
-      <span><%= t("messages.new_message") %></span>
-    <% end %>
-</div>
+  <% if Current.user %>
+    <div class="messenger-rail-head">
+      <%= link_to new_conversation_path, class: "btn btn-primary messenger-rail-new",
+                  data: { turbo_frame: "_top" } do %>
+        <%= icon :compose, size: 18 %>
+        <span><%= t("messages.new_message") %></span>
+      <% end %>
+    </div>
 
-<%# Your own "message me" link. This is the whole on-ramp for somebody who has
-    no account here: they tap it, sign in with Vipps, and arrive in a
-    conversation with you. It sits in the rail because that is where you are
-    when you notice the person you want is not here yet. %>
-<div class="messenger-rail-invite">
-  <button type="button" class="messenger-rail-invite-copy"
-          data-controller="clipboard"
-          data-clipboard-source-value="<%= invite_url(token: Current.user.message_invite_token) %>"
-          data-action="click->clipboard#copy">
-    <%= icon :share, size: 16 %>
-    <span><%= t("invite.copy_link") %></span>
-  </button>
-</div>
+    <%# Your own "message me" link — the whole on-ramp for somebody with no account
+        here. It sits in the rail because that is where you are standing when you
+        notice the person you want is not here yet. %>
+    <div class="messenger-rail-invite">
+      <button type="button" class="messenger-rail-invite-copy"
+              data-controller="clipboard"
+              data-clipboard-source-value="<%= invite_url(token: Current.user.message_invite_token) %>"
+              data-action="click->clipboard#copy">
+        <%= icon :share, size: 16 %>
+        <span><%= t("invite.copy_link") %></span>
+      </button>
+    </div>
+  <% end %>
 
-<%# Channels are grouped
- and DMs are not, which is the one structural thing
-      Discord gets right that a flat list cannot: a heading is what makes thirty
-      rooms readable. Conversation::CHANNELS is a static roster, so the group is
-      known without a query. %>
+  <%# Channels are grouped under a heading and DMs are not. That is the one
+      structural thing a flat list cannot do, and Conversation::CHANNELS is a
+      static roster so the grouping costs no query. %>
   <h2 class="messenger-rail-group"><%= t("channels.title") %></h2>
   <ul class="messenger-rail-list" role="list">
-    <% Conversation::CHANNELS.each_key do |slug| %>
+    <% Conversation::CHANNELS.each do |slug, spec| %>
       <li role="listitem">
         <%= link_to channel_path(slug), class: "messenger-rail-room",
                     data: { turbo_frame: "messenger-pane" },
-                    aria: { current: (defined?(@conversation) && @conversation&.slug == slug) ? "page" : nil } do %>
+                    aria: { current: current_room&.slug == slug ? "page" : nil } do %>
           <span class="messenger-rail-hash" aria-hidden="true">#</span>
-          <span class="messenger-rail-name"><%= Conversation::CHANNELS[slug][:name] %></span>
+          <span class="messenger-rail-name"><%= spec[:name] %></span>
         <% end %>
       </li>
     <% end %>
   </ul>
 
-  <h2 class="messenger-rail-group"><%= t("messages.title") %></h2>
-  <ul class="messenger-rail-list" role="list">
-    <% @rail_conversations.each do |room| %>
-      <% unread = @rail_unread.fetch(room.id, 0) %>
-      <li role="listitem">
-        <%= link_to conversation_path(room), class: "messenger-rail-room",
-                    data: { turbo_frame: "messenger-pane" },
-                    aria: { current: (defined?(@conversation) && @conversation&.id == room.id) ? "page" : nil } do %>
-          <span class="messenger-rail-name"><%= room.display_name_for(Current.user) %></span>
-          <% if unread.positive? %>
-            <span class="messenger-rail-unread"><%= unread %></span>
+  <% if Current.user %>
+    <h2 class="messenger-rail-group"><%= t("messages.title") %></h2>
+    <ul class="messenger-rail-list" role="list">
+      <% rail_conversations.each do |room| %>
+        <% unread = rail_unread.fetch(room.id, 0) %>
+        <li role="listitem">
+          <%= link_to conversation_path(room), class: "messenger-rail-room",
+                      data: { turbo_frame: "messenger-pane" },
+                      aria: { current: current_room&.id == room.id ? "page" : nil } do %>
+            <span class="messenger-rail-name"><%= room.display_name_for(Current.user) %></span>
+            <% if unread.positive? %>
+              <span class="messenger-rail-unread"><%= unread %></span>
+            <% end %>
           <% end %>
-        <% end %>
-      </li>
-    <% end %>
-    <% if @rail_conversations.empty? %>
-      <li role="listitem" class="messenger-rail-empty"><%= t("messages.empty_title") %></li>
-    <% end %>
-  </ul>
+        </li>
+      <% end %>
+      <% if rail_conversations.empty? %>
+        <li role="listitem" class="messenger-rail-empty"><%= t("messages.empty_title") %></li>
+      <% end %>
+    </ul>
+  <% end %>
 </nav>
