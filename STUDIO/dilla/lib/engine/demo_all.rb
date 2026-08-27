@@ -82,6 +82,19 @@ def demo_all(bars_count = 12, destination = nil)
   # the harmony is audible on its own somewhere in the run.
   rap_every = (ENV["DEMO_RAP_EVERY"] || "2").to_i
 
+# The lead stack is a sprinkle, not a layer.
+#
+# VOICE_STACK renders every lead twice, and on a 451-part demo that measured
+# 0.54 parts/min against 2.31 without it -- 4.3x, or thirteen hours against
+# three. Paying that on every single track also misrepresents the feature:
+# the operator's word for it was "sprinkled on top", and a doubling that is
+# always present is not a sprinkle, it is the sound.
+#
+# Every third track, so it is heard as a colour that comes and goes and the
+# demo still finishes overnight. DEMO_VOICE_STACK_EVERY=1 puts it on all of
+# them, 0 turns it off entirely.
+voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
+
   # Captured ONCE, before the loop, because the loop assigns ENV["RAP_VOCAL"]
   # on every iteration -- reading it inside would return the previous slot's
   # value ("0" on most of them) instead of what the operator asked for.
@@ -293,6 +306,14 @@ def demo_all(bars_count = 12, destination = nil)
       # of 2 voices at rap_every 2 would land on the same voice every time.
       ENV["RAP_VOCAL"] = on ? demo_rap_slugs[(idx / rap_every) % demo_rap_slugs.length] : "0"
     end
+    # Same slot arithmetic as the vocal above, offset so the two do not always
+    # coincide: a track carrying both a rapper and a doubled lead every time
+    # would make the pair sound like one feature.
+    ENV["VOICE_STACK"] = if voice_stack_every.positive? && ((idx + 1) % voice_stack_every).zero?
+                           "2"
+                         else
+                           "1"
+                         end
 
     # Per-slot pocket, opt-in.
     #
