@@ -727,6 +727,9 @@ en:
     fresh: Fresh
     top: Top
     posts: Sort posts
+  place:
+    within_a_km: "less than 1 km away"
+    km_away: "%{count} km away"
   posts:
     score: Post score
     upvote: Upvote

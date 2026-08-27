@@ -729,6 +729,9 @@ nb:
     fresh: Fersk
     top: Topp
     posts: Sorter innlegg
+  place:
+    within_a_km: "under 1 km unna"
+    km_away: "%{count} km unna"
   posts:
     score: Poengsum
     upvote: Stem opp

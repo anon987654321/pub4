@@ -48,7 +48,16 @@
             <%= name %>
           <% end %>
         </span>
-        <% if time.present? && post.created_at %>
+  <%# How far away it was written, after who and when. Jodel's stamp, and the
+    reason its feed reads as a place — brgen has had the coordinates and the
+    distance method the whole time and rendered neither. Nil unless the
+    reader has shared a position and the post carries one, so a feed with no
+    location is unchanged rather than full of blanks. %>
+<% place = distance_stamp(post) %>
+<% if place %>
+  · <span class="feed-post-place"><%= place %></span>
+<% end %>
+      <% if time.present? && post.created_at %>
           · <time datetime="<%= post.created_at.iso8601 %>"><%= time %></time>
         <% elsif time.present? %>
           · <span class="feed-post-time"><%= time %></span>
