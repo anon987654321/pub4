@@ -40,8 +40,6 @@ module Shared
       |swiper-bundle(?:\.min)?\.css
       |public/dilla/
       |actiontext\.css
-      |frontend/layouts/visualizer
-      |public/assets/layouts/visualizer
       |public/assets/.*-[a-f0-9]{6,}\.(?:css|scss|js|erb|html)\z
       |minimal-ui\.css
     }ix
