@@ -59,6 +59,28 @@ def demo_all(bars_count = 12, destination = nil)
   # into SCRATCH_DIR, so it creates no directory of its own.
   out_dir = demo_each? ? SCRATCH_DIR : File.join(SCRATCH_DIR, "all_tracks_demo")
   FileUtils.mkdir_p(out_dir)
+  # From scratch, every time.
+  #
+  # The demo's job is to be what the code currently sounds like. Reusing parts
+  # broke that in the most confusing way available: the render succeeded, the log
+  # said so, and the audio was from before the change. A whole day of drum work
+  # was judged against a file that predated all of it.
+  #
+  # A staleness check against engine_mtime fixes the common case, but it still
+  # answers "is this part old enough to replace" -- a question that should not be
+  # asked when the point is correspondence between source and sound. The parts
+  # directory is emptied first and everything is rendered again.
+  #
+  # DEMO_KEEP_PARTS=1 keeps them, for iterating on one track when the other 450
+  # have not changed.
+  unless ENV["DEMO_KEEP_PARTS"] == "1"
+    stale = Dir.glob(File.join(out_dir, "*.{wav,mp3}"))
+    unless stale.empty?
+      dmesg("clearing #{stale.length} part(s) — the demo renders from scratch",
+            unit: "demo0", parent: "dilla0")
+      FileUtils.rm_f(stale)
+    end
+  end
   log_path = File.join(out_dir, "demo_all.log")
   catalog_path = File.join(out_dir, "catalog.txt")
   track_timeout = (ENV["DEMO_TRACK_TIMEOUT"] || ENV["STREAM_TRACK_TIMEOUT"] || "300").to_i

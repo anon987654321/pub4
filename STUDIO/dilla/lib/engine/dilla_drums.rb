@@ -43,12 +43,19 @@ DRUM_MORPH_PATH = %i[detroit_stumble la_beat_scene techno_drive].freeze
 # backwards: the load-bearing voice moved first and the change read as a cut.
 DRUM_MORPH_LEAD = { hats: 0.30, opens: 0.30, ghosts: 0.20, snares: 0.12, kicks: 0.0 }.freeze
 
-# On by default. The kit travelling Detroit -> LA -> techno across a piece is
-# the behaviour that was asked for, and shipping it behind a switch meant every
-# render needed DRUM_MORPH=1 spelled out or quietly produced the old single-feel
-# kit. DRUM_MORPH=0 pins one feel for the whole track.
+# OFF by default, and defaulting it on was a regression.
+#
+# The morph overrides the feel the preset chose. On one long piece that is the
+# point; across a 451-track showcase it means every track wears the same
+# Detroit -> LA -> techno journey regardless of what it is, and every one of
+# them ends in the same techno. The catalogue exists to show variety and this
+# homogenised it -- the progressions were all still there, playing under
+# identical drums, which is why the demo sounded like it was repeating itself.
+#
+# A default that overrides a per-track decision is not a default, it is an
+# override. DRUM_MORPH=1 asks for it.
 def drum_morph_enabled?
-  ENV.fetch("DRUM_MORPH", "1") != "0"
+  ENV.fetch("DRUM_MORPH", "0") != "0"
 end
 
 def drum_morph_feel(bar, role)
