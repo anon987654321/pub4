@@ -136,7 +136,12 @@ module RenderDns
     "#{lines.join("\n")}\n"
   end
 
-  SERIAL_LINE = /^ (\d{10}) /
+  # Indented as zone_body writes it, which is four spaces and not one. Anchored
+  # to a single space, this matched no zone file ever written: every read of an
+  # existing serial returned nil, so every render dated every serial to today
+  # and pushed 57 AXFRs at Domeneshop -- the thing the header promises it does
+  # not do.
+  SERIAL_LINE = /^\s+(\d{10}) /
 
   # A serial is only bumped when the rest of the zone changed. Same-day edits get
   # the counter; a bump across a day boundary restarts it. Ten digits, so it stays
