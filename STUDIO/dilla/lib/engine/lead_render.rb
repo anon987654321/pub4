@@ -909,8 +909,23 @@ end
 #
 # Off by default. It multiplies the lead's density, which is the loudest
 # structural change available to this part.
+# Two voices by default, not one.
+#
+# This returned early at VOICE_STACK=1, so the P_4L-shaped stack -- the
+# ringtone.tools idea this file is built on -- never ran in a normal render. The
+# operator asked for those leads "on top in the same scale and harmonies", and
+# they were switched off.
+#
+# Two rather than more, and it is the count that makes it safe. SEMITONE_PLAN's
+# fifths row is [0, 12, 7, 19, -12, 24, 7], so a two-voice stack takes [0, 12]:
+# the added voice is exactly an octave up. An octave is in key against any chord
+# in any scale, so "on top" is literal and the harmony cannot be wrong. Three
+# voices would add the +7 fifth, which is diatonic against most degrees and a
+# tritone against the seventh -- a musical decision rather than a safe default.
+#
+# VOICE_STACK=1 restores the single voice.
 def voice_stack_lead!(path, events, duration)
-  voices = ENV.fetch("VOICE_STACK", "1").to_i
+  voices = ENV.fetch("VOICE_STACK", "2").to_i
   return render_lead_via_fluidsynth(path, events, duration, scale_arp: true) unless voices > 1
 
   plan = VoiceStack.plan(
