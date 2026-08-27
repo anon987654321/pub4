@@ -83,7 +83,49 @@ def prepare
   abort "warn: no subject at #{SUBJECT_DIR}" unless SUBJECT_DIR.directory?
   [WEIGHTS_DIR, PERSIST].each(&:mkpath)
   restrain_the_downloader
+  add_swap
   puts "ok: subject #{SUBJECT} model #{MODEL}"
+end
+
+# Somewhere for the checkpoint shards to go that is not RAM.
+#
+# The download finishes now and the run dies one step later, at "Loading
+# checkpoint shards: 1/3". Same resource, different phase: FLUX.1-dev's weights
+# are 23.8 GB of fp16 and they are read into SYSTEM memory before quantisation
+# moves them to the card. A free Colab has 12.7 GB. It gets through the first
+# shard and is killed on the second.
+#
+# quantize and low_vram do not help with this. Both govern what ends up in VRAM,
+# and the ceiling being hit is host RAM during load — the model has to be
+# materialised before it can be made smaller.
+#
+# So: give the kernel a swapfile on the 100 GB scratch disk. The loader spills
+# instead of being killed, which is slow — reading weights back off disk once —
+# and it is the difference between a run and no run. 24 GB because the shards
+# total 23.8, and there is no benefit to being exact.
+#
+# Guarded rather than assumed. Colab happens to run as root and permit swapon;
+# a container that does not will fail here harmlessly, and the failure is worth
+# printing because it turns the next OOM from a mystery into a known cause.
+SWAP_PATH = "/content/swapfile"
+SWAP_SIZE = "24G"
+
+def add_swap
+  return puts "note: swap already active" if `swapon --show 2>/dev/null`.include?("/")
+
+  ok = system("fallocate", "-l", SWAP_SIZE, SWAP_PATH, out: File::NULL, err: File::NULL) &&
+       system("chmod", "600", SWAP_PATH, out: File::NULL, err: File::NULL) &&
+       system("mkswap", SWAP_PATH, out: File::NULL, err: File::NULL) &&
+       system("swapon", SWAP_PATH, out: File::NULL, err: File::NULL)
+
+  if ok
+    puts "note: #{SWAP_SIZE} of swap at #{SWAP_PATH}. FLUX's shards are 23.8 GB of fp16 and"
+    puts "note: are read into host RAM before quantisation; this box has 12.7 GB."
+  else
+    FileUtils.rm_f(SWAP_PATH)
+    puts "warn: could not enable swap — the loader may be killed at 'Loading checkpoint"
+    puts "warn: shards'. That is host RAM, not VRAM, and quantize/low_vram do not help."
+  end
 end
 
 # Download FLUX.1-dev without exhausting the machine's memory.
