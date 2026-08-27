@@ -729,6 +729,10 @@ nb:
     fresh: Fersk
     top: Topp
     posts: Sorter innlegg
+  invite:
+    copy_link: "Kopier meldingslenken min"
+    expired: "Invitasjonslenken er utløpt eller ikke gyldig lenger."
+    sign_in_to_reply: "Logg inn for å svare %{name}."
   place:
     within_a_km: "under 1 km unna"
     km_away: "%{count} km unna"

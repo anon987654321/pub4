@@ -28,6 +28,17 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # Someone who arrived on a "message me" link and had to sign in first lands in
+  # the conversation they were invited to, not on the city feed. Without this the
+  # link works only for people who already have an account, which is every person
+  # except the one it was sent to.
+  def after_authentication_url
+    token = session.delete(:invite_token)
+    return super if token.blank?
+
+    invite_path(token: token)
+  end
+
   # Registered accounts must confirm their email before posting under their
   # identity. Anonymous guests are unaffected — brgen's anonymous posting stays.
   def require_verified_email

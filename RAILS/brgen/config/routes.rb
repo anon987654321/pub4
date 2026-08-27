@@ -161,6 +161,11 @@ resources :fediverse_follows, only: %i[index create destroy], controller: "fediv
     resources :conversations, only: [ :create ]
   end
 
+# "Message me". Short on purpose: this is a link somebody types into a phone or
+# reads off a screen, and /i/ is as short as a path can be while still saying
+# what it is.
+get "i/:token" => "invites#show", as: :invite
+
   resources :conversations, only: %i[index new show update] do
     # Search over the reader's own threads; ?conversation_id= narrows it to one.
     collection { get :search }

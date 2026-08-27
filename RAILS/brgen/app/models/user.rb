@@ -8,10 +8,17 @@ class User < ApplicationRecord
   # would then need keeping in step with it.
   has_many :external_identities, dependent: :destroy
 
-# Who may appear in the people picker. Guests have no stable identity to hold a
-# conversation open, bots are addressed in their channel rather than privately,
-# and a scheduled-for-deletion account should not collect new threads.
-scope :messageable, -> { where(guest: false, bot: false, deleted_at: nil, deletion_scheduled_at: nil) }
+  # Who may appear in the people picker. Guests have no stable identity to hold a
+  # conversation open, bots are addressed in their channel rather than privately,
+  # and a scheduled-for-deletion account should not collect new threads.
+  scope :messageable, -> { where(guest: false, bot: false, deleted_at: nil, deletion_scheduled_at: nil) }
+
+  # The "message me" token. A signed_id rather than a stored invite: nothing to
+  # migrate, nothing to clean up, and it cannot be guessed or edited into someone
+  # else's. It expires because a link shared once tends to outlive its reason.
+  def message_invite_token
+    signed_id(purpose: InvitesController::PURPOSE, expires_in: InvitesController::TTL)
+  end
 
   def vipps_verified?
     return false unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)

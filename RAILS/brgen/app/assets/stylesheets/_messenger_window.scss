@@ -141,3 +141,28 @@
   .messenger-rail,
   .messenger-pane { block-size: 100dvh; }
 }
+
+// Your own "message me" link. Quiet: it is the thing you reach for once, when
+// somebody you want is not here yet, not a control you use every session.
+.messenger-rail-invite {
+  display: flex;
+}
+
+.messenger-rail-invite-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  inline-size: 100%;
+  min-height: var(--tap-min);
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
+}
+
+.messenger-rail-invite-copy:hover { background: var(--hover); color: var(--text); }

@@ -12,9 +12,24 @@
       <%= icon :compose, size: 18 %>
       <span><%= t("messages.new_message") %></span>
     <% end %>
-  </div>
+</div>
 
-  <%# Channels are grouped and DMs are not, which is the one structural thing
+<%# Your own "message me" link. This is the whole on-ramp for somebody who has
+    no account here: they tap it, sign in with Vipps, and arrive in a
+    conversation with you. It sits in the rail because that is where you are
+    when you notice the person you want is not here yet. %>
+<div class="messenger-rail-invite">
+  <button type="button" class="messenger-rail-invite-copy"
+          data-controller="clipboard"
+          data-clipboard-source-value="<%= invite_url(token: Current.user.message_invite_token) %>"
+          data-action="click->clipboard#copy">
+    <%= icon :share, size: 16 %>
+    <span><%= t("invite.copy_link") %></span>
+  </button>
+</div>
+
+<%# Channels are grouped
+ and DMs are not, which is the one structural thing
       Discord gets right that a flat list cannot: a heading is what makes thirty
       rooms readable. Conversation::CHANNELS is a static roster, so the group is
       known without a query. %>

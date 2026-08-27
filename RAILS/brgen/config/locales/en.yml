@@ -727,6 +727,10 @@ en:
     fresh: Fresh
     top: Top
     posts: Sort posts
+  invite:
+    copy_link: "Copy my message link"
+    expired: "That invite link has expired or is not valid any more."
+    sign_in_to_reply: "Sign in to reply to %{name}."
   place:
     within_a_km: "less than 1 km away"
     km_away: "%{count} km away"
