@@ -22,7 +22,12 @@ SECS = (ENV["SINE_CHORD_SECS"] || "4.6").to_f
 # written. Applied to every voice including the bass, so the whole field moves
 # together rather than the tuning coming apart.
 PITCH = 2.0**((ENV["SINE_PITCH_SEMITONES"] || "-1").to_f / 12.0)
-PER_FILE = (ENV["SINE_PROGS_PER_FILE"] || "5").to_i
+# Two progressions per file, not five. A file is held entirely in Ruby float
+# arrays and passes through a dozen copies -- the copy machine, the echo, the
+# master chain writing and reading it back -- and at five progressions the
+# generator was being killed before it ever wrote one, which from the speakers
+# looked like the catalogue had frozen on a single take.
+PER_FILE = (ENV["SINE_PROGS_PER_FILE"] || "2").to_i
 PROG_CHORDS = (ENV["SINE_PROG_CHORDS"] || "4").to_i
 
 # Eight ways to voice the same sine. Rotated per progression so the stream keeps
@@ -899,13 +904,23 @@ end
 # high harmonics that are not the ones distortion adds.
 def wave_fold!(l, r, amount: 1.9, mix: 0.5)
   l.length.times do |i|
-    [[l, i], [r, i]].each do |(buf, j)|
-      x = buf[j] * amount
-      x -= 4.0 * ((x + 1.0) / 4.0).floor * 1.0 while x.abs > 1.0 && x.abs < 40.0
-      x = Math.sin(buf[j] * amount * Math::PI * 0.5) if x.abs > 1.0
-      buf[j] = buf[j] * (1 - mix) + x * mix
-    end
+    l[i] = l[i] * (1 - mix) + fold_once(l[i] * amount) * mix
+    r[i] = r[i] * (1 - mix) + fold_once(r[i] * amount) * mix
   end
+end
+
+# Closed form, not a loop.
+#
+# The first version subtracted a multiple of four while the sample was out of
+# range, and at x = 2.0 that multiple is zero -- so it subtracted nothing and
+# spun forever. artifacts! calls this on every progression, which is why the
+# generator sat at a hundred percent CPU and never wrote a file: not memory, not
+# scheduling, one unbounded while.
+#
+# A wavefolder is a triangle wave of its input, so say that instead: reflect
+# through 1 and -1 as many times as the arithmetic implies, in one step.
+def fold_once(x)
+  1.0 - ((x + 1.0) % 4.0 - 2.0).abs
 end
 
 # The sampler catching on its own buffer. A slice is held and repeated, and the
@@ -1311,6 +1326,10 @@ xf = (RATE * XFADE).to_i
 # index 0 every time it came back, so the first six progressions were regenerated
 # over and over and the stream sounded like it had stopped rotating -- which,
 # from the listener's side, it had.
+# A salt that advances on every start. Without it a restart re-shuffled to the
+# same order, which from the speakers is indistinguishable from not shuffling.
+SALT_FILE = File.join(OUT, "salt.txt")
+SALT = ((File.file?(SALT_FILE) ? File.read(SALT_FILE).to_i : 0) + 1).tap { |v| File.write(SALT_FILE, v.to_s) }
 CURSOR = File.join(OUT, "cursor.txt")
 saved = File.file?(CURSOR) ? File.read(CURSOR).split.map(&:to_i) : [1, 0, 0]
 round = saved[0] - 1
@@ -1320,7 +1339,7 @@ seq = saved[2]
 loop do
   round += 1
   # Reordered every pass so a long listen is not the same sequence twice.
-  order = round == 1 ? names : names.shuffle(random: Random.new(round * 7919))
+  order = names.shuffle(random: Random.new(SALT + round * 7919))
   order.each_slice(PER_FILE).with_index do |group, gi|
     next if gi < start_group
     break if File.exist?(STOP)
@@ -1340,7 +1359,7 @@ loop do
         next
       end
 
-      treat = TREATMENTS[(gi * PER_FILE + ni) % TREATMENTS.length]
+      treat = TREATMENTS[((gi * PER_FILE + ni) * 7 + SALT * 5) % TREATMENTS.length]
       played << "#{name}/#{treat}"
       # The pads come from the engine's own synths, not from an oscillator in
       # this file. render_pad_via_fluidsynth plays the chord through a stack of
@@ -1350,7 +1369,8 @@ loop do
       #
       # PAD_VOICE names the stack, and the rotation walks all eleven so a long
       # listen passes through the warm classics and the strange ones both.
-      stack = PAD_STACKS[(gi * PER_FILE + ni) % PAD_STACKS.length]
+      slot = gi * PER_FILE + ni
+      stack = PAD_STACKS[(slot * 3 + SALT) % PAD_STACKS.length]
       ENV["PAD_VOICE"] = stack.to_s
       # Four chords per progression, not the whole thing: the point of the stream
       # is passing through the catalogue, and a ten-chord progression holds one
