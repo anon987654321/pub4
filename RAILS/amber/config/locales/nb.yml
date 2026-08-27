@@ -3,6 +3,10 @@ nb:
   # See the note in en.yml. Norwegian convention: non-breaking space as the
   # thousands delimiter, comma as the decimal separator, unit before the
   # amount — kr 1 234,50.
+  compose:
+    bold: "Fet"
+    italic: "Kursiv"
+    bullet_list: "Punktliste"
   number:
     format:
       delimiter: " "

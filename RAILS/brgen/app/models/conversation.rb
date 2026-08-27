@@ -336,7 +336,21 @@ end
     other_participants(user).first&.display_name || "Unknown"
   end
 
-  def other_participants(user)
-    participants.where.not(id: user.id)
-  end
+# reject when the association is already loaded, where.not when it is not.
+#
+# Every caller of display_name_for renders a list — the inbox, the rooms rail,
+# the forward-target picker — and every one of those controllers preloads
+# :participants. A `where` on an association ignores that and issues its own
+# SELECT, so the preload was bought and then bypassed once per row. Adding the
+# rail made it two lists per page and the query budget caught it; the defect was
+# already there in the inbox.
+#
+# Same family as message_receipts.find_by and outfit.items.count: `where`,
+# `find_by` and `count` all go to the database whatever is in memory, while
+# `reject`, `detect` and `size` read what is there.
+def other_participants(user)
+  return participants.reject { |p| p.id == user.id } if participants.loaded?
+
+  participants.where.not(id: user.id)
+end
 end

@@ -2,7 +2,7 @@
   avatar_url: nil,
   name: set.name,
   handle: t("playlist.privacy.#{set.privacy.presence || "public"}"),
-  meta: "#{t("playlist.tracks", count: set.tracks.count)} · #{set.formatted_duration}",
+  meta: "#{t("playlist.tracks", count: (@track_counts || {}).fetch(set.id, 0))} · #{set.formatted_duration}",
   content: set.description,
   url: set_path(set),
   class: "playlist" %>

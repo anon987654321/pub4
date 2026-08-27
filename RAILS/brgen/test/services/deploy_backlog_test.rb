@@ -673,12 +673,25 @@ def test_casual_listings_have_a_scope
   assert_includes read_brgen("engines/marketplace/app/models/marketplace/listing.rb"), "scope :casual"
 end
 
-  def test_messenger_compose_flow_accepts_username
+  # The username field is gone. It asked you to type the exact handle of the
+  # person you wanted, which is the one thing you do not know about somebody you
+  # have just met — so the feature worked only for people you had already written
+  # to. conversations#new is a people picker, and every row carries the button.
+  #
+  # The controller half is unchanged and still asserted: create still resolves a
+  # partner from params[:username] or params[:user_id], because the picker's
+  # button and the profile's Message button both post to it.
+  def test_messenger_compose_flow_reaches_the_people_picker
     index = read_brgen("app/views/conversations/index.html.erb")
+    rail = read_brgen("app/views/conversations/_rooms_rail.html.erb")
+    results = read_brgen("app/views/conversations/_people_results.html.erb")
     controller = read_brgen("app/controllers/conversations_controller.rb")
 
-    assert_includes index, "messenger-compose"
-    assert_includes index, "f.text_field :username"
+    assert_includes index, "messenger-window"
+    assert_includes rail, "new_conversation_path"
+    assert_includes results, "user_conversations_path(person)"
+    assert_includes controller, "def new"
+    assert_includes controller, "User.messageable"
     assert_includes controller, "resolve_conversation_partner"
     assert_includes controller, "params[:username]"
   end
