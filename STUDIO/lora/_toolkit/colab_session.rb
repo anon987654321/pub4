@@ -67,10 +67,18 @@ def sh!(*command)
   abort "warn: failed: #{command.join(' ')}"
 end
 
+# subject.env is shell — lib.sh sources it — so a value with spaces must be
+# quoted there, and a Ruby reader that splits on "=" has to strip the quotes back
+# off or they become part of the value.
 def subject_env
   Hash[SUBJECT_DIR.join("subject.env").read.lines.filter_map do |line|
     key, value = line.strip.split("=", 2)
-    [key, value] if value && !key.start_with?("#")
+    next unless value && !key.start_with?("#")
+
+    text = value.strip
+    quoted = text.length >= 2 && (text.start_with?('"') && text.end_with?('"') ||
+                                  text.start_with?("'") && text.end_with?("'"))
+    [key, quoted ? text[1..-2] : text]
   end]
 end
 

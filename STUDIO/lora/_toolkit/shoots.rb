@@ -58,8 +58,25 @@ def subject_env(subject)
 
   Hash[path.read.lines.filter_map do |line|
     key, value = line.strip.split("=", 2)
-    [key, value] if value && !key.start_with?("#")
+    [key, unquote(value)] if value && !key.start_with?("#")
   end]
+end
+
+# subject.env is shell, and lib.sh sources it. So a value containing spaces has
+# to be quoted, and a Ruby reader that splits on "=" and stops has to take the
+# quotes back off or they reach the prompt as characters.
+#
+# Both halves were wrong at once: DESCRIPTOR was written unquoted, so `. subject.env`
+# under `set -eu` parsed `DESCRIPTOR=47` and then tried to run `year`, exiting 127
+# before the renderer started. Quoting fixed the shell and broke Ruby, which then
+# put literal quotation marks in front of Ragnhild's description. Two parsers for
+# one file, and it has to satisfy both.
+def unquote(value)
+  text = value.to_s.strip
+  return text[1..-2].to_s if text.length >= 2 && (text.start_with?('"') && text.end_with?('"') ||
+                                                  text.start_with?("'") && text.end_with?("'"))
+
+  text
 end
 
 # The order is deliberate: who, then what they look like, then where they are,
