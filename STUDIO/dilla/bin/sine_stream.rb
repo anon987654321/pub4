@@ -327,27 +327,63 @@ def cassette!(l, r, drive: 1.5, top: 0.16, bottom: 0.014, gain: 0.8)
 end
 
 # Lay a vocal take over a buffer at `speed`, looping it if the take runs short.
-def add_vocal!(l, r, slug, speed, pick, gain: 0.62)
+# No take is ever used twice, and when they run out the track goes instrumental.
+#
+# The rotation used to index the file list by slot, so after forty-three takes
+# store_p came round again and started the whole set over -- and a restart began
+# it from the top regardless. A rapper repeating a verse is worse than a rapper
+# not being on the track, so the used list is kept on disk, survives a restart,
+# and when a voice is exhausted add_vocal! returns false and the progression
+# plays without it.
+VOCAL_USED_DIR = File.join(OUT, "vocals_used")
+
+def vocal_used(slug)
+  FileUtils.mkdir_p(VOCAL_USED_DIR)
+  p = File.join(VOCAL_USED_DIR, "#{slug}.txt")
+  File.file?(p) ? File.readlines(p).map(&:strip).reject(&:empty?) : []
+end
+
+def mark_vocal_used(slug, path)
+  FileUtils.mkdir_p(VOCAL_USED_DIR)
+  File.open(File.join(VOCAL_USED_DIR, "#{slug}.txt"), "a") { |o| o.puts(path) }
+end
+
+def add_vocal!(l, r, slug, speed, _index, gain: 0.62)
   files = vocal_files(slug)
   return false if files.empty?
 
-  path = files[pick % files.length]
+  fresh = files - vocal_used(slug)
+  # Every take spent. Silence is the correct answer, not a second airing.
+  return false if fresh.empty?
+
+  path = fresh.first
   got = read_wav(path)
-  return false unless got
+  if got.nil?
+    mark_vocal_used(slug, path)
+    return false
+  end
 
   vl, vr, vrate = got
   step = speed * (vrate.to_f / RATE)
   n = l.length
   src_n = vl.length
-  return false if src_n < 2
+  if src_n < 2
+    mark_vocal_used(slug, path)
+    return false
+  end
 
   n.times do |i|
-    pos = (i * step) % (src_n - 1)
+    pos = i * step
+    # The take is used once through and then stops. Wrapping it round to fill
+    # the bar is the same repetition in miniature.
+    break if pos >= src_n - 1
+
     j = pos.to_i
     frac = pos - j
     l[i] += (vl[j] * (1 - frac) + vl[j + 1] * frac) * gain
     r[i] += (vr[j] * (1 - frac) + vr[j + 1] * frac) * gain
   end
+  mark_vocal_used(slug, path)
   true
 end
 

@@ -9,5 +9,5 @@ S=/Users/mac/Music/dilla_sines
 while true; do
   [[ -f $S/STOP ]] && break
   /opt/homebrew/bin/ruby $S/demo_from_stream.rb >> $S/demo_daemon.log 2>&1
-  sleep 120
+  sleep 45
 done

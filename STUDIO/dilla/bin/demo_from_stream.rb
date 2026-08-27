@@ -52,9 +52,10 @@ files.each do |f|
 end
 abort "  no readable audio" if chunks.empty?
 mins_have = (have / 4.0 / RATE / 60)
-if have < need_bytes * 0.5
-  abort format("  only %.1f min of distinct material -- waiting rather than looping it", mins_have)
-end
+# Written continuously rather than once it reaches ten minutes: the demo grows
+# with the stream, so at any moment it is everything distinct that has been
+# played. It still never loops -- a short demo is honest, a repeated one is not.
+abort format("  only %.1f min so far -- too short to be a demo yet", mins_have) if mins_have < 1.0
 
 body = chunks.join[0, [need_bytes, have].min]
 wav = File.join(BASE, "demo_build.wav")
