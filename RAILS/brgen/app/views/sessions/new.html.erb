@@ -4,13 +4,22 @@
   <%= render "shared/oauth_links" %>
   <%= form_with url: session_path do |f| %>
     <%= render "shared/errors", object: f.object if f.object.respond_to?(:errors) %>
-    <div class="field">
+    <%# input then label, and a one-space placeholder, because that is what
+        .field--float needs: :placeholder-shown has to have a placeholder to be
+        true about, and the label has to follow the input to be its sibling. The
+        label is never hidden — it rises and shrinks, so it is still there while
+        you type and still there when you check the form before sending it. %>
+    <div class="field field--float">
+      <%= f.email_field :email_address, required: true, autofocus: true,
+            autocomplete: "username", inputmode: "email", enterkeyhint: "next",
+            placeholder: " ", value: params[:email_address] %>
       <%= f.label :email_address, t("auth.email") %>
-      <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address] %>
     </div>
-    <div class="field">
+    <div class="field field--float">
+      <%= password_visibility_field f, :password, required: true,
+            autocomplete: "current-password", enterkeyhint: "go",
+            placeholder: " ", maxlength: 72 %>
       <%= f.label :password, t("auth.password") %>
-      <%= password_visibility_field f, :password, required: true, autocomplete: "current-password", maxlength: 72 %>
     </div>
     <div class="actions">
       <%= f.submit t("auth.sign_in"), class: "btn btn-primary" %>
