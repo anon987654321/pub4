@@ -158,21 +158,41 @@ run anyone finishes.
 
 ## Status
 
-- **ragnhild**: dataset complete (17 captioned images), no `.safetensors` yet —
-  local MPS training died in the Metal compiler and the last run failed on the
-  gated FLUX.1-dev repo (needs `HF_TOKEN` with accepted licence). An earlier
-  Replicate run trained `basicfeatures/ragnhild:6197a9e1…` (see
-  `ragnhild/weights/ragnhild_v2/replicate_train.log`); with
-  `REPLICATE_API_TOKEN` set, either pull those weights or re-run. `retouched/`
-  holds 17 graded source photographs; there is no `out/` yet, because no
-  portrait of Ragnhild has been generated from any LoRA.
-- **johann**: dataset holds 3 captioned images — too few to train. Curate 12-18
-  varied photos (angles, light, expressions) into `johann/sources/`, caption
-  them into `johann/dataset/`, then pick a lane.
+- **ragnhild**: 8 images in `dataset_1024/`, 1024 on the short edge with every
+  original aspect ratio kept, built by `curate.rb`. No `.safetensors`. The
+  captions are STUBS — `ragnhild, woman, ` and nothing after it — and want
+  editing by hand before any run; a guessed caption teaches the wrong word.
+
+  The set is at the bottom of the 10-30 the guidance asks for, and two of the
+  eight are arguable: `07` and `08` are the same moment seconds apart, which
+  trains one example twice, and `11` has a filter already baked in that a LoRA
+  would learn as part of her face.
+
+  The 17-image set this section used to describe is gone, along with the 40
+  source photographs it came from — removed at `b7d47d6b6` because the subject
+  disliked them and they did not look much like her. `retouched/` and
+  `weights/` went with them, so the log naming the earlier Replicate run is
+  gone too. The destination model was `basicfeatures/ragnhild`; the version
+  hash survives here only as `6197a9e1…`, truncated. If that model is still on
+  the account it can be recovered with a token — but it was trained on the
+  photographs that were rejected, so it is the wrong LoRA of the right person.
+- **johann**: no images at all. `johann/` holds a launcher, `subject.env` and
+  `train.yaml`, and nothing to train on. Curate 12-18 varied photos (angles,
+  light, expressions) into `johann/sources/`, caption them, then pick a lane.
 
 The free Kaggle lane exists because neither of the other two has produced FLUX
 weights: one needs hardware this Mac does not have, the other needs money per
 attempt.
+
+**Local training on this Mac is not a slow lane, it is a closed one.** The
+machine is an M2 with 8 GB of unified memory, shared with the display. A
+LoRA run over FLUX.1-dev needs the 12B transformer, T5-XXL at 4.7B, CLIP-L and
+the VAE resident at once: about 15.8 GB of weights with the transformer already
+quantised to 4-bit, before a single activation, gradient or optimizer state.
+Caching the text embeddings once and dropping T5 takes it to roughly 6 GB of
+weights on an 8 GB machine, which is why the attempt that was made died in the
+Metal compiler rather than merely taking a long time. `LORA_DEVICE=mps` is kept
+because the profile is correct for a Mac that has the memory; this one does not.
 
 ## Where the base model has moved (surveyed 2026-08-25)
 
