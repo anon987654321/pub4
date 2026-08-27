@@ -23,13 +23,21 @@ const DEFAULT_TRACKS = [
   { title: "BTS Radio 2006", id: "6nWdggkulHk", artist: "Flying Lotus" }
 ]
 
+// Radio Bergen opens on the same track every session. A station has a signature
+// tune; a shuffle has none, and the first thing a visitor heard used to be
+// whichever of 24 tracks Math.random landed on. AFTA-1's "Due Time" is the
+// opener by operator decision. Rotation is random only after it has played, and
+// the lookup is by id so reordering the manifest cannot silently unpin it.
+const OPENING_TRACK_ID = "WC09qDzU9y4"
+
 class AudioEngine {
   constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS }) {
     this.iframe = iframe
     this.trackDisplay = trackDisplay
     this.tracks = tracks.length ? tracks : DEFAULT_TRACKS
     this.isPlaying = false
-    this.currentTrack = Math.floor(Math.random() * this.tracks.length)
+    const opener = this.tracks.findIndex((track) => track.id === OPENING_TRACK_ID)
+    this.currentTrack = opener >= 0 ? opener : Math.floor(Math.random() * this.tracks.length)
     this.userInteracted = false
     this.retryCount = 0
     this.maxRetries = 3
