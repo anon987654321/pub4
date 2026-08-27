@@ -28,4 +28,4 @@
 # sample_rates=44100 and breaks every render; USE_THEN never checked that the
 # intermediate is used once, and applying it to its own findings introduced
 # three NameErrors. Read the law before acting on the count.
-findings: 172
+findings: 169
