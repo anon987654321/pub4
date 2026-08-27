@@ -30,7 +30,11 @@
       <%# A future span, so not time_ago — "forsvinner om …", not "for … siden". %>
       <span class="expiry-chip" data-expiry="<%= message.expiry_urgency %>">· <%= t("messages.disappears_in", time: time_ago_in_words(message.expires_at)) %></span>
     <% end %>
-    <% receipt = message.message_receipts.find_by(user: Current.user) %>
+    <%# detect, not find_by. Both controllers preload message_receipts, and
+        find_by ignores a loaded association and issues its own SELECT — so the
+        preload was paid for and thrown away, one query per message per page.
+        This is the same defect the inbox had with unread_count_for. %>
+    <% receipt = message.message_receipts.detect { |r| r.user_id == Current.user&.id } %>
     <% if receipt&.read? %><span class="read-receipt">· <%= t("messages.read") %></span><% end %>
   </header>
   <% if message.story_id %>
