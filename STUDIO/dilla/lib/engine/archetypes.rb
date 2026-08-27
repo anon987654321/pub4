@@ -58,7 +58,7 @@ end
 # this way, so soft-fill's "don't clobber an explicit override" caution
 # doesn't apply).
 CONCRETE_SOUL_MIX = {
-  "SIDECHAIN_STYLE" => "flylo", # the harder-pump of the two real options
+  "SIDECHAIN_STYLE" => "wonky", # the harder-pump of the two real options
   "ANALOG_CHAIN" => "broadcast", # least-colored chain -- no vinyl warmth
   "SONITEX" => "donuts_soul", "SONITEX_PRESET" => "donuts_soul",
   "VINYL" => "0",

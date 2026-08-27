@@ -15,7 +15,7 @@ DILLA_STYLE_LOCK_KEYS = (
     MELODIC_LEAD SCALE_LEAD CREATIVE_LEAD HARMONY_LEAD
     SYNTH_MORPH SYNTH_CYCLE LEAD_MORPH EXPERIMENTAL_LEADS
     ARTIST_VERIFIED_ONLY STREAM_CREATIVE_FREEDOM STREAM_ROTATE_SYNTH STREAM_ROTATE_LEAD
-    DRUM_PRESET POCKET_SET EXTERNAL_KIT FM_DRUMS SWING FLYLO_DRUM_OVERLAY
+    DRUM_PRESET POCKET_SET EXTERNAL_KIT FM_DRUMS SWING WONKY_DRUM_OVERLAY
   ]
 ).freeze
 
@@ -35,40 +35,40 @@ DILLA_PAD_LEAD_LOCK_KEYS = %w[
 # Soulful hip-hop only — no boom_808 / industrial / hard-trap rotation.
 # The kits every stream and every demo track draws from.
 #
-# This was eight entries, all boom-bap, every one flylo: "0" -- so the eleven
-# Flying Lotus presets in DRUM_PRESETS (flylo_abstract, flylo_cosmogramma,
-# flylo_zodiac, flylo_burst, flylo_warp and the rest), the FLYLO_DRUM_OVERLAY
-# switch, and the whole learn-flylo command that transcribes a grid from a
+# This was eight entries, all boom-bap, every one wonky: "0" -- so the eleven
+# Flying Lotus presets in DRUM_PRESETS (wonky_abstract, wonky_cosmogramma,
+# wonky_zodiac, wonky_burst, wonky_warp and the rest), the WONKY_DRUM_OVERLAY
+# switch, and the whole learn-wonky command that transcribes a grid from a
 # record, were unreachable from anything that actually renders. The presets
 # existed and nothing could pick them. A demo of eight tracks came out
 # boom-bap eight times, by construction rather than by choice.
 #
-# Five FlyLo entries added. They are placed at odd indices so a run of
+# Five Wonky entries added. They are placed at odd indices so a run of
 # consecutive tracks alternates rather than arriving in a block, since the
 # rotation is indexed by track number.
 #
-# The pockets differ from the boom-bap half on purpose. flylo_abstract and
-# flylo_burst are busier and want the straighter pocket under them; dilla_drunk
-# with a FlyLo grid on top is two kinds of drunk at once.
+# The pockets differ from the boom-bap half on purpose. wonky_abstract and
+# wonky_burst are busier and want the straighter pocket under them; dilla_drunk
+# with a Wonky grid on top is two kinds of drunk at once.
 STREAM_DRUM_ROTATION = [
-  { preset: "dilla_slight",      pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "flylo_abstract",    pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "1" },
-  { preset: "dilla_drunk",       pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "flylo_cosmogramma", pocket: "classic",  kit: "03-soulful-vintage", fm: "0", flylo: "1" },
-  { preset: "mpc3000",           pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "flylo_zodiac",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "1" },
-  { preset: "madlib_dusty",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "flylo_warp",        pocket: "classic",  kit: "02-bounce",          fm: "1", flylo: "1" },
-  { preset: "sp1200",            pocket: "classic",  kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "flylo_burst",       pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "1" },
-  { preset: "dilla_slight",      pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "0" },
-  { preset: "mpc3000",           pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "0" },
-  { preset: "dilla_drunk",       pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "dilla_slight",      pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", wonky: "0" },
+  { preset: "wonky_abstract",    pocket: "classic",  kit: "02-bounce",          fm: "0", wonky: "1" },
+  { preset: "dilla_drunk",       pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", wonky: "0" },
+  { preset: "wonky_cosmogramma", pocket: "classic",  kit: "03-soulful-vintage", fm: "0", wonky: "1" },
+  { preset: "mpc3000",           pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", wonky: "0" },
+  { preset: "wonky_zodiac",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", wonky: "1" },
+  { preset: "madlib_dusty",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", wonky: "0" },
+  { preset: "wonky_warp",        pocket: "classic",  kit: "02-bounce",          fm: "1", wonky: "1" },
+  { preset: "sp1200",            pocket: "classic",  kit: "03-soulful-vintage", fm: "0", wonky: "0" },
+  { preset: "wonky_burst",       pocket: "classic",  kit: "02-bounce",          fm: "0", wonky: "1" },
+  { preset: "dilla_slight",      pocket: "classic",  kit: "02-bounce",          fm: "0", wonky: "0" },
+  { preset: "mpc3000",           pocket: "classic",  kit: "02-bounce",          fm: "0", wonky: "0" },
+  { preset: "dilla_drunk",       pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", wonky: "0" },
 ].freeze
 
 # Lead arp modes cycled each stream track (real figures, not held wash).
 STREAM_LEAD_ARP_ROTATION = %i[
-  flylo_spiral neo_quartal soul_wash moog_funk prophet_glass
+  wonky_spiral neo_quartal soul_wash moog_funk prophet_glass
   donuts_shimmer pocket_stab glass_spin vapor_wave acid_run
   crystal_scatter erykah_dust gospel_lift ballad_bloom melodic_soul
 ].freeze
@@ -79,7 +79,7 @@ STREAM_LEAD_ARP_ROTATION = %i[
 # near-duplicates of what was already here. The first 15 keep their order so the
 # front of the rotation sounds as it did; the rest follow.
 STREAM_LEAD_VOICE_ROTATION = %w[
-  soul_prophet flylo moog prophet neo_pluck glass vapor
+  soul_prophet wonky moog prophet neo_pluck glass vapor
   crystal acid soft ballad gospel erykah donuts cs
   minimoog pluck neon yamaha vintage giga supersaw harmonica
   guitar steel sitar world horn brass bass steelpan watermelon

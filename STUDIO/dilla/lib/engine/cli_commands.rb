@@ -529,7 +529,7 @@ def drum_check
   # even though liquid_dnb is not in DRUM_PRESETS at all. Verified against
   # profile_preset directly: it returns feel: :liquid_dnb.
   #
-  # liquid_dnb, one_drop, dilla_canon and flylo_canon were all added on purpose
+  # liquid_dnb, one_drop, dilla_canon and wonky_canon were all added on purpose
   # as opt-in ("nothing changes unless asked"), so a check calling them broken
   # was arguing with a decision. What is still worth saying is that nothing
   # NAMES them: you reach them only if you already know the word.

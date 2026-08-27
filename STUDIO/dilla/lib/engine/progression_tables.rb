@@ -706,7 +706,7 @@ CHORD_PROGRESSIONS = {
   descending_bass_minor_six: %w[Cm9 Cm9/Bb Abmaj13 G7#5 Cm9 Fm6 Dm7b5 Cm6],
 
   # Two chords, held long: a suspended dominant that never resolves against a
-  # 13th. Written for the slow FlyLo presets (flylo_massage, flylo_flamagra)
+  # 13th. Written for the slow Wonky presets (wonky_massage, wonky_flamagra)
   # where four changes in a bar would crowd the space they leave.
   sus_thirteen_hypnosis: %w[F7sus Ebmaj13],
 
@@ -954,7 +954,7 @@ TRACK_PRESETS = {
   sus_add9_ballad: { bpm: 92, progression: :sus_add9_ballad, chord_bars: 2, phrase_bars: 16, swing: 56,
                     feel: :timeless, stereo_pan: true },
   chromatic_mediant_drift: { bpm: 86, progression: :chromatic_mediant_drift, chord_bars: 2, phrase_bars: 32, swing: 54,
-                     feel: :flylo_abstract, stereo_pan: true, sidechain: true, voicing: :quartal, intro_bars: 8,
+                     feel: :wonky_abstract, stereo_pan: true, sidechain: true, voicing: :quartal, intro_bars: 8,
                      half_time_bars: (32..47),
                      timing: { snare: -28..-12, hat_up: 18..36, bass: 24..44, kick_anchor: 0..6, pad: 6..20 } },
   suspended_minor_close: { bpm: 91, progression: :suspended_minor_close, chord_bars: 2, swing: 56 },

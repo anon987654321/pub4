@@ -442,12 +442,12 @@ TRUE_PEAK_CEILING_LINEAR = (10**((TRUE_PEAK_CEILING_DB - TRUE_PEAK_ENCODER_HEADR
 # in the signal path. The numbers are left exactly as they are — they were tuned
 # by ear against what the master actually sounded like, not derived from this
 # comment, so the comment was wrong and the cut may still be right. But if the
-# non-flylo -11dB@95Hz ever sounds like too much bass removed, this is why.
+# non-wonky -11dB@95Hz ever sounds like too much bass removed, this is why.
 def mix_bass_chord_balance_filter(input_tag, out_tag: "balanced")
   # Sonitex warmth re-boosts sub; this stage tames sustained bass so chords
-  # stay clear. On Camel/FlyLo the same -11dB@95Hz was also deleting kick
+  # stay clear. On Camel/Wonky the same -11dB@95Hz was also deleting kick
   # fundamentals — protect the 45–70Hz pocket when the kit is primary.
-  if flylo_primary_drums?
+  if wonky_primary_drums?
     cut = sonitex_enabled? ? -5.5 : -3.5
     boost = sonitex_enabled? ? 5.5 : 4.5
     kick_restore = 4.2

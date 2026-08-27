@@ -99,22 +99,22 @@ def dilla_hat_steps(bar, feel, n_bars: nil)
   steps.uniq.sort
 end
 
-def flylo_overlay_steps(bar, section, role)
-  if (learned = learned_flylo_overlay_steps(role))&.any?
+def wonky_overlay_steps(bar, section, role)
+  if (learned = learned_wonky_overlay_steps(role))&.any?
     return learned.dup
   end
-  flylo_overlay_grid_pick(bar, section, role)
+  wonky_overlay_grid_pick(bar, section, role)
 end
 
-def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, _bar_p, beat_p, swing, _quintuplet, timing,
+def schedule_wonky_drum_overlay!(events, bar, n_bars, base, step_p, _bar_p, beat_p, swing, _quintuplet, timing,
                                  sec_gain, section, pad_chords, chord_bars:, phrase_bars:, chord_phases:)
-  return unless flylo_drum_overlay_enabled?
+  return unless wonky_drum_overlay_enabled?
   return if camel_mode? && bar < camel_drum_entry_bar
   return if !camel_drum_lock? && drum_drop_bar?(bar, section)
 
-  density = flylo_overlay_density(bar, n_bars, chord_bars:, pad_chords:,
+  density = wonky_overlay_density(bar, n_bars, chord_bars:, pad_chords:,
                                   chord_phases:, phrase_bars:)
-  density = density.clamp(flylo_primary_drums? ? 0.7 : 0.2, 1.35)
+  density = density.clamp(wonky_primary_drums? ? 0.7 : 0.2, 1.35)
   bar_bpm = DillaRhythm.bar_bpm(bar)
   overlay_gain = camel_drum_lock? ? density : (sec_gain * density)
   timing_use = timing || DillaLofiMachine::DILLA_TIMING
@@ -127,10 +127,10 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, _bar_p, beat
     ghost_snares = DillaGroove.pocket_snares_ghost(bar)
     hat_steps = DillaGroove.pocket_hats(bar)
   else
-    kicks = flylo_overlay_steps(bar, section, :kicks)
-    hard_snares = flylo_overlay_steps(bar, section, :snares)
-    ghost_snares = Array(learned_flylo_overlay_steps(:ghost_snares)).map(&:to_i)
-    hat_steps = flylo_overlay_steps(bar, section, :hats)
+    kicks = wonky_overlay_steps(bar, section, :kicks)
+    hard_snares = wonky_overlay_steps(bar, section, :snares)
+    ghost_snares = Array(learned_wonky_overlay_steps(:ghost_snares)).map(&:to_i)
+    hat_steps = wonky_overlay_steps(bar, section, :hats)
   end
 
   # --- Micro-timing: swing + snare-early / kick-late / hats-late + freehand kick ---
@@ -147,13 +147,13 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, _bar_p, beat
     t = place.call(step, role)
     base_vel = step.zero? ? 0.98 : 0.78
     vel = dilla_velocity(base_vel, bar, step, spread: 0.03) *
-          overlay_gain * flylo_kick_velocity_scale
+          overlay_gain * wonky_kick_velocity_scale
     vel *= 0.75 unless step.zero? || step == 10
     sk = DillaGroove.kick_sample_key(bar, step)
-    events[:flylo_kick] << [t.round(6), vel.clamp(0.55, 0.99), sk]
+    events[:wonky_kick] << [t.round(6), vel.clamp(0.55, 0.99), sk]
   end
 
-  return if section == :breakdown && !camel_keep_flylo_on_breakdown? && !camel_drum_lock?
+  return if section == :breakdown && !camel_keep_wonky_on_breakdown? && !camel_drum_lock?
 
   (hard_snares | ghost_snares).each do |step|
     ghost = ghost_snares.include?(step) && !hard_snares.include?(step)
@@ -162,7 +162,7 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, _bar_p, beat
     vel = dilla_velocity(base_vel, bar, step, spread: 0.04) *
           overlay_gain * (ghost ? 1.0 : 1.75)
     sk = DillaGroove.snare_sample_key(ghost:)
-    events[:flylo_snare] << [t.round(6), vel.clamp(ghost ? 0.1 : 0.6, ghost ? 0.32 : 0.98), sk]
+    events[:wonky_snare] << [t.round(6), vel.clamp(ghost ? 0.1 : 0.6, ghost ? 0.32 : 0.98), sk]
   end
 
   if backbeat_clap_enabled?
@@ -178,13 +178,13 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, _bar_p, beat
     t = place.call(step, role)
     base_vel = step.even? ? 0.46 : 0.32
     vel = dilla_velocity(base_vel, bar, step, spread: 0.06) * overlay_gain
-    events[:flylo_hat] << [t.round(6), vel.clamp(0.16, 0.68), :hat]
+    events[:wonky_hat] << [t.round(6), vel.clamp(0.16, 0.68), :hat]
   end
 
   return unless DillaGroove.pocket_open_hat?(bar)
     t = place.call(14, :open)
     vel = dilla_velocity(0.38, bar, 14, spread: 0.04) * overlay_gain
-    events[:flylo_hat] << [t.round(6), vel.clamp(0.18, 0.5), :open_hat]
+    events[:wonky_hat] << [t.round(6), vel.clamp(0.18, 0.5), :open_hat]
 
   # No perc / quint / rim spam — simplicity is the trick.
 end
@@ -457,7 +457,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       schedule_hat_roll!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, section) unless drop_bar
       schedule_drum_fills!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, feel, section) unless drop_bar
     end
-    schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, bar_p, beat_p, swing, quintuplet, timing,
+    schedule_wonky_drum_overlay!(events, bar, n_bars, base, step_p, bar_p, beat_p, swing, quintuplet, timing,
                                  sec_gain, section, pad_chords, chord_bars:, phrase_bars:,
                                  chord_phases:)
 

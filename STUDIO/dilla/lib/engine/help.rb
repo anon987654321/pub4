@@ -46,9 +46,9 @@ def help
       RENDER_MODE=long_soul|golden     Lush 32-bar soul (FORM + HARMONY_LEAD + bill_evans pads)
       STREAM_PUNCH=1                   Kit-forward + creative max (off comfort sofa mix)
       FORM=soul_16|soul_32|donuts_time|camel_32  Section map for drums/arp density
-      CAMEL_DRUM_ENTRY_BAR=4             Bars before FlyLo drums enter
+      CAMEL_DRUM_ENTRY_BAR=4             Bars before Wonky drums enter
       STREAM_TRACK=chromatic_mediant_drift  Pin progression in stream mode
-      CAMEL_KEEP_FLYLO=1                 Keep FlyLo overlay on breakdowns
+      CAMEL_KEEP_WONKY=1                 Keep Wonky overlay on breakdowns
       HARMONY_LEAD=1                     Chord-tone harmonic arp stem (voiced pads + extensions)
       STREAM_SOUL=1 (stream default)     Locked Donuts turnaround + harmony lead + soul form
       STREAM_HARMONY_EVERY=2           Rotate voicing + soul TRACK family every N tracks
@@ -110,8 +110,8 @@ def help
       learn-promote                  Merge catalog copyable_dna → learned_engine.json (runtime)
       learn-calibrate [--audio-root] Measured dossiers → global BPM/swing calibration
       learn-diff [--audio-root]      Curated vs measured vs learned diff report
-      learn-flylo <url|path> [track] [apply] [shallow]
-                                   yt-dlp → demucs → FlyLo 16-step grid → learned_engine
+      learn-wonky <url|path> [track] [apply] [shallow]
+                                   yt-dlp → demucs → Wonky 16-step grid → learned_engine
                                    Default track quartal_west_coast; Camel grid baked into engine
       rap-vocal ingest <artist> <url|path>
                                    yt-dlp → demucs → isolated vocals + phrase/BPM catalog
@@ -119,7 +119,7 @@ def help
       rap-vocal list               Show ingested vocal catalog
       RAP_VOCAL=<slug> on render/stream  Auto-fit (atempo+bar phase) + mix (RAP_VOCAL_MIX, RAP_VOCAL_WEIGHT, RAP_VOCAL_BED_WEIGHT, RAP_VOCAL_SPARKLE_DB)
       LA_BEAT_PROGRESSION=1            Long random progressions + variable chord lengths (stream soul)
-      FLYLO_DRUM_OVERLAY=1             FlyLo overlay; Camel grid on quartal_west_coast / flylo_camel
+      WONKY_DRUM_OVERLAY=1             Wonky overlay; Camel grid on quartal_west_coast / wonky_camel
       clean <in> [out]             Denoise + loudnorm
 
     STEM RACK (stems/manifest.json)
@@ -269,7 +269,7 @@ DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
     ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
          PERFORMER=yancey GROOVE_DNA=donuts COMPOSITION=1 GENERATIONS=5 LISTEN_PASSES=3
      KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
-         KICK_GAIN=0.88 (0.78 on flylo) kick/sub level scale — lower if still loud
+         KICK_GAIN=0.88 (0.78 on wonky) kick/sub level scale — lower if still loud
          SONITEX=donuts_warm (default) | SONITEX=classic | SONITEX=heavy | SONITEX=0 dry
          crush off: SONITEX_SAMPLING=0  noise off: SONITEX_NOISE=0  TAPE_BIAS=1 TAPE_LOSS_HZ=0
          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)

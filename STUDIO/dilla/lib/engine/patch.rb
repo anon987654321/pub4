@@ -416,7 +416,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "tremolo=f=5.5:d=0.18,aecho=0.5:0.38:140|260:0.28|0.16"),
   synth_patch(:fifths_lead, role: :lead, program: 86, arp_styles: %i[updown major_third_cycle_full], octave: 2,
               fx: "vibrato=f=0.55:d=0.02,lowpass=f=4800"),
-  synth_patch(:saw_lead, role: :lead, program: 81, arp_styles: %i[random_walk flylo_wobble], octave: 2,
+  synth_patch(:saw_lead, role: :lead, program: 81, arp_styles: %i[random_walk wonky_wobble], octave: 2,
               midi_fx: MIDI_FX_LEAD, midi_arp: { style: :pingpong, subdiv: 8, gate: 0.55, vel: 0.5 },
               fx: "tremolo=f=3.2:d=0.2,aphaser=speed=0.22:decay=0.45"),
   synth_patch(:square_lead, role: :lead, program: 80, arp_styles: %i[euclidean donda_stab], octave: 2,
@@ -426,7 +426,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "chorus=0.6:0.8:45|55:0.3|0.25:0.3|0.25:1.2|1.6,lowpass=f=6000"),
   synth_patch(:supersaw_2, role: :lead, program: 3, sf2: :supersaw, arp_styles: %i[skip_up pingpong], octave: 2,
               fx: "tremolo=f=4.8:d=0.16,aecho=0.55:0.45:180|340:0.3|0.18"),
-  synth_patch(:supersaw_3, role: :lead, program: 7, sf2: :supersaw, arp_styles: %i[flylo_wobble random_walk], octave: 2,
+  synth_patch(:supersaw_3, role: :lead, program: 7, sf2: :supersaw, arp_styles: %i[wonky_wobble random_walk], octave: 2,
               fx: "aphaser=speed=0.18:decay=0.5,vibrato=f=0.4:d=0.015"),
   synth_patch(:brass_synth, role: :lead, program: 62, arp_styles: %i[up major_third_cycle_full], octave: 1,
               fx: "acompressor=threshold=-20dB:ratio=3:attack=8:release=90,lowpass=f=3800"),
@@ -452,7 +452,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "aecho=0.3:0.35:50|90:0.2|0.1"),
   synth_patch(:koto_pluck, role: :lead, program: 107, arp_styles: %i[euclidean spiral], octave: 2, gate: 0.48,
               fx: "lowpass=f=3500,aecho=0.4:0.45:70|130:0.22|0.1"),
-  synth_patch(:voice_lead, role: :lead, program: 54, arp_styles: %i[updown flylo_wobble], octave: 2,
+  synth_patch(:voice_lead, role: :lead, program: 54, arp_styles: %i[updown wonky_wobble], octave: 2,
               fx: "vibrato=f=0.5:d=0.014,aphaser=speed=0.1:decay=0.6"),
   synth_patch(:minimoog_lead, role: :lead, program: 81, weight: 2.4, fs_gain: 1.35, arp_styles: %i[up random_walk], octave: 1,
               midi_fx: MIDI_FX_LEAD, midi_arp: { style: :updown, subdiv: 4, gate: 0.65, vel: 0.48 },
@@ -479,13 +479,13 @@ SYNTH_PATCH_CATALOG = [
               arp_styles: %i[skip_up fibonacci donda_stab], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :skip_up, subdiv: 8, gate: 0.54, vel: 0.48 },
               fx: "aecho=0.42:0.38:70|130:0.22|0.1,highpass=f=220,lowpass=f=4200"),
-  synth_patch(:flylo_fm_shimmer, role: :lead, program: 98, weight: 2.4, fs_gain: 1.3, gate: 0.56, octave: 3,
+  synth_patch(:wonky_fm_shimmer, role: :lead, program: 98, weight: 2.4, fs_gain: 1.3, gate: 0.56, octave: 3,
               arp_styles: %i[spiral fibonacci random_walk], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :spiral, subdiv: 8, gate: 0.56, vel: 0.46 },
               fx: "aecho=0.5:0.45:110|200:0.3|0.16,aphaser=speed=0.12:decay=0.55,lowpass=f=5800"),
   # --- Bubbles: the liquid Brainfeeder texture ---------------------------
   #
-  # flylo_fm_shimmer above is the glassy end of this family (GM 98, crystal).
+  # wonky_fm_shimmer above is the glassy end of this family (GM 98, crystal).
   # These are the wet end: short gates so each note is a blip rather than a
   # sustained tone, pitch movement from vibrato instead of from the arp, and
   # close echo taps so notes overlap into a burble rather than a delay line.
@@ -495,24 +495,24 @@ SYNTH_PATCH_CATALOG = [
   # under the cutoff. Without it these are quiet blips.
 
   # Main bubble voice: mid-register, wobbling, notes tumbling over each other.
-  synth_patch(:flylo_bubble, role: :lead, program: 102, weight: 2.3, fs_gain: 1.24, gate: 0.34, octave: 3,
+  synth_patch(:wonky_bubble, role: :lead, program: 102, weight: 2.3, fs_gain: 1.24, gate: 0.34, octave: 3,
               arp_styles: %i[bubble_rise bubble_pop spiral], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :bubble_rise, subdiv: 8, gate: 0.34, vel: 0.44 },
               fx: "vibrato=f=6.5:d=0.28,aecho=0.6:0.55:70|130|210:0.4|0.24|0.14," \
                   "equalizer=f=1800:t=q:w=1.2:g=6,lowpass=f=6200"),
 
   # Droplets: higher, faster, drier. Sparse enough to sit over a busy kit.
-  synth_patch(:flylo_droplet, role: :lead, program: 96, weight: 1.9, fs_gain: 1.2, gate: 0.22, octave: 4,
+  synth_patch(:wonky_droplet, role: :lead, program: 96, weight: 1.9, fs_gain: 1.2, gate: 0.22, octave: 4,
               arp_styles: %i[bubble_pop stutter ratchet], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :bubble_pop, subdiv: 16, gate: 0.22, vel: 0.38 },
               fx: "vibrato=f=11:d=0.4,aecho=0.5:0.4:45|95:0.35|0.18,highpass=f=400," \
                   "equalizer=f=2600:t=q:w=0.9:g=8,lowpass=f=9000"),
 
   # Submerged: slow, dark and phasing -- the same idea heard from underwater.
-  # Pairs with the sparse slow grids (flylo_massage, flylo_flamagra) where a
+  # Pairs with the sparse slow grids (wonky_massage, wonky_flamagra) where a
   # fast bubble figure would crowd the space they exist to leave.
-  synth_patch(:flylo_gloop, role: :lead, program: 88, weight: 2.1, fs_gain: 1.3, gate: 0.62, octave: 2,
-              arp_styles: %i[bubble_rise flylo_wobble quint_spread], midi_fx: MIDI_FX_LEAD,
+  synth_patch(:wonky_gloop, role: :lead, program: 88, weight: 2.1, fs_gain: 1.3, gate: 0.62, octave: 2,
+              arp_styles: %i[bubble_rise wonky_wobble quint_spread], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :bubble_rise, subdiv: 4, gate: 0.62, vel: 0.42 },
               fx: "flanger=delay=4:depth=6:speed=0.4,aphaser=speed=0.25:decay=0.6," \
                   "lowpass=f=3400,aecho=0.7:0.6:180|320:0.35|0.2"),
@@ -574,7 +574,7 @@ SYNTH_PATCH_CATALOG = [
               midi_arp: { style: :donda_stab, subdiv: 8, gate: 0.5, vel: 0.54 },
               fx: "highpass=f=220,tremolo=f=0.55:d=0.07"),
   synth_patch(:tame_wobble_lead, role: :lead, program: 81, weight: 2.0, fs_gain: 1.32, gate: 0.58, octave: 2,
-              arp_styles: %i[flylo_wobble spiral], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[wonky_wobble spiral], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :spiral, subdiv: 8, gate: 0.56, vel: 0.46 },
               fx: "tremolo=f=0.65:d=0.14,aphaser=speed=0.16:decay=0.5,lowpass=f=5200"),
   # --- Scale-locked arp lead (continuous, same scale as each pad chord) ---
@@ -669,7 +669,7 @@ SYNTH_PATCH_CATALOG = [
               midi_arp: { style: :spiral, subdiv: 6, gate: 0.58, vel: 0.46 },
               fx: "aecho=0.5:0.44:100|190:0.28|0.14,highpass=f=400,lowpass=f=6200"),
   synth_patch(:vapor_lead, role: :lead, program: 3, sf2: :supersaw, weight: 2.3, fs_gain: 1.3, gate: 0.6, octave: 2,
-              arp_styles: %i[updown flylo_wobble], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[updown wonky_wobble], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :updown, subdiv: 4, gate: 0.62, vel: 0.48 },
               fx: "chorus=0.5:0.7:38|48:0.26|0.22:0.3|0.26:1.15|1.4,lowpass=f=5000"),
   synth_patch(:crystal_scale_lead, role: :scale_lead, program: 98, weight: 2.4, fs_gain: 1.24, gate: 0.58,
@@ -677,7 +677,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "aecho=0.46:0.4:110|200:0.24|0.12,lowpass=f=5400"),
   # --- Character leads (scale-locked arps + strong FX identity) ---
   synth_patch(:jupiter_superlead, role: :lead, program: 81, weight: 3.4, fs_gain: 1.42, gate: 0.58, octave: 2,
-              arp_styles: %i[spiral pingpong skip_up flylo_wobble], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[spiral pingpong skip_up wonky_wobble], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :spiral, subdiv: 8, gate: 0.56, vel: 0.56 },
               fx: "chorus=0.55:0.75:42|54:0.28|0.24:0.32|0.28:1.2|1.5,aecho=0.52:0.46:160|300:0.3|0.16,aphaser=speed=0.18:decay=0.48,equalizer=f=3000:t=o:w=1.4:g=3.5,lowpass=f=6800"),
   synth_patch(:obxr_sync_lead, role: :lead, program: 87, weight: 3.1, fs_gain: 1.4, gate: 0.52, octave: 2,
@@ -1138,7 +1138,7 @@ BEAUTIFUL_PATCH_IDS = {
   ],
 }.freeze
 
-# Experimental but musical leads — Flylo/Prophet/Moog/FM; not horror/novelty.
+# Experimental but musical leads — Wonky/Prophet/Moog/FM; not horror/novelty.
 EXPERIMENTAL_LEAD_IDS = {
   lead: (LEAD_VOICE_POOLS.values.flatten + %i[
     jupiter_superlead obxr_sync_lead cs80_brass_lead mono_poly_lead dx7_glass_arp
@@ -1513,8 +1513,8 @@ end
 def morph_lead_arp_cfg_for_chord(event_idx, patch)
   preset_key = MORPH_LEAD_ARP_CYCLE[event_idx % MORPH_LEAD_ARP_CYCLE.length]
   base = EXPERIMENTAL_LEAD_ARP_PRESETS[preset_key]&.dup ||
-         LEAD_ARP_PRESETS[:flylo_spiral]&.dup ||
-         { style: :spiral, subdiv: 8, gate: 0.52, vel: 0.56, arp_styles: %i[spiral flylo_wobble] }
+         LEAD_ARP_PRESETS[:wonky_spiral]&.dup ||
+         { style: :spiral, subdiv: 8, gate: 0.52, vel: 0.56, arp_styles: %i[spiral wonky_wobble] }
   styles = (base[:arp_styles] || []) + arp_styles_for_patch(patch, base[:style])
   base.merge(arp_styles: styles.uniq)
 end

@@ -141,7 +141,7 @@ module RadioChop
   # Worth knowing when reading the rest of the engine: RadioBergenStudy::DeepAudio
   # .band_rms builds the same graph the same wrong way, so its `window:` argument
   # is off by the same factor everywhere it is used. Not corrected from here --
-  # the thresholds and min_gap values in the flylo drum learner were tuned
+  # the thresholds and min_gap values in the wonky drum learner were tuned
   # against that series and would all shift under it.
   #
   # "-inf" is dropped rather than read: String#to_f turns it into 0.0, which is

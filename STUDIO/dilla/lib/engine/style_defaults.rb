@@ -73,15 +73,15 @@ DILLA_STYLE_DEFAULTS = {
   "CHOIR_VOX_GAIN" => "0.16",
   "LUSH_SYNTH" => "1",
   "MOTIF_RECALL" => "1",
-  # Hybrid pocket + FlyLo overlay so kick/snare/hat/clap all read on speakers.
-  # FLYLO_DRUMS_ONLY=1 + KICKS=0 was "no-kicks" and buried the hat bus under pads.
+  # Hybrid pocket + Wonky overlay so kick/snare/hat/clap all read on speakers.
+  # WONKY_DRUMS_ONLY=1 + KICKS=0 was "no-kicks" and buried the hat bus under pads.
   "KICKS" => "1",
   "POCKET_KICKS" => "1",
-  # Pocket soul kit first. FlyLo overlay / chops are opt-in — dual-kit mush
-  # was the main "drums suck" report (pocket + FlyLo + poly + shaker + chops).
-  "FLYLO_DRUMS_ONLY" => "0",
-  "FLYLO_DRUM_OVERLAY" => "0",
-  "FLYLO_KICK_GAIN" => "0.75",
+  # Pocket soul kit first. Wonky overlay / chops are opt-in — dual-kit mush
+  # was the main "drums suck" report (pocket + Wonky + poly + shaker + chops).
+  "WONKY_DRUMS_ONLY" => "0",
+  "WONKY_DRUM_OVERLAY" => "0",
+  "WONKY_KICK_GAIN" => "0.75",
   "KICK_SAMPLE_GAIN" => "0.9",
   "KICK_GAIN" => "0.88",
   "POCKET_DNA" => "1",
@@ -157,7 +157,7 @@ DILLA_STYLE_DEFAULTS = {
   "CREATIVE_LEAD" => "0",
   "MELODIC_LEAD" => "1",
   "LEAD_ARP" => "0",
-  "LEAD_ARP_MODE" => "flylo_spiral",
+  "LEAD_ARP_MODE" => "wonky_spiral",
   "LEAD_VOICE" => "soul_prophet",
   "EXPERIMENTAL_LEADS" => "0",
   "STREAM_LEAD_MIDI_RICH" => "1",
@@ -170,17 +170,17 @@ DILLA_STYLE_DEFAULTS = {
   "FM_NATIVE" => "1",
   "PAD_TEXTURE" => "1",
   "STREAM_CREATIVE_FREEDOM" => "1",
-  "SIDECHAIN_STYLE" => "flylo",
+  "SIDECHAIN_STYLE" => "wonky",
   "SONITEX" => "donuts_warm",
   "SONITEX_PRESET" => "donuts_warm",
   "ANALOG_CHAIN" => "vinyl_hot",
   "DRUM_PRESET" => "dilla_slight",
   # Quieter drum bus — kit sits under pads/vox (~−3…−4 dB vs previous hot path).
-  "FLYLO_OVERLAY_GAIN" => "0.95",
-  "FLYLO_SUB_MIX" => "1.0",
-  "FLYLO_TOP_MIX" => "0.65",
-  "FLYLO_MERGE_BOOST" => "1.05",
-  "FLYLO_BASE_DRUM_VOL" => "0.85",
+  "WONKY_OVERLAY_GAIN" => "0.95",
+  "WONKY_SUB_MIX" => "1.0",
+  "WONKY_TOP_MIX" => "0.65",
+  "WONKY_MERGE_BOOST" => "1.05",
+  "WONKY_BASE_DRUM_VOL" => "0.85",
   "DRUM_BUS_VOL" => "0.95",
   "DRUM_BUS_GAIN" => "0.92",
   "DRUM_MIX_WEIGHT" => "0.95",
@@ -198,7 +198,7 @@ DILLA_STYLE_DEFAULTS = {
   "HARM_SUB_SHELF_DB" => "0.6",
   "SIDECHAIN_DRUM_WEIGHT" => "1.2",
   "SIDECHAIN_HARM_WEIGHT" => "1.15",
-  "FLYLO_CHORD_DUCK" => "0.9",
+  "WONKY_CHORD_DUCK" => "0.9",
   "HARMONIC_PADS_WEIGHT" => "1.12",
   "HARMONIC_PADS_VOLUME" => "1.2",
   # Louder pad bed so Rhodes/Prophet read over kit (was 62 — too shy).
@@ -268,7 +268,7 @@ DILLA_BEST_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "LEAD_ARP_MODE", "LEAD_ARP", "EXPERIMENTAL_LEADS",
   "SYNTH_CYCLE", "LUSH_SYNTH", "PAD_TEXTURE",
   "DRUM_PRESET", "FM_DRUMS", "RAW_KICK",
-  "DRUM_SAMPLE_RAW", "POCKET_SET", "FLYLO_DRUM_OVERLAY",
+  "DRUM_SAMPLE_RAW", "POCKET_SET", "WONKY_DRUM_OVERLAY",
   "DRUM_CHOPS", "ECLECTIC_PERC", "BACKBEAT_CLAP",
   "PERFORMER", "GROOVE_DNA", "COMPOSITION",
   "GROOVE_ENGINE", "POCKET_DNA", "SWING_JITTER",
@@ -436,9 +436,9 @@ RENDER_MODE_DEFAULTS = {
 # soft-fill is first-writer-wins, so a copy that drifts from the style table
 # silently shadows the style DNA. Inheriting makes that drift impossible.
 DILLA_COMFORT_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
-  "POCKET_KICKS", "FLYLO_DRUMS_ONLY", "FLYLO_DRUM_OVERLAY",
-  "DRUM_CHOPS", "DRUM_PRESET", "FLYLO_SUB_MIX",
-  "FLYLO_TOP_MIX", "POCKET_DNA", "POCKET_SIMPLE",
+  "POCKET_KICKS", "WONKY_DRUMS_ONLY", "WONKY_DRUM_OVERLAY",
+  "DRUM_CHOPS", "DRUM_PRESET", "WONKY_SUB_MIX",
+  "WONKY_TOP_MIX", "POCKET_DNA", "POCKET_SIMPLE",
   "POCKET_GHOSTS", "POCKET_OPEN_HAT", "RAP_VOCAL_STYLE",
   "RAP_VOCAL_MIX", "RAP_VOCAL_WEIGHT", "RAP_VOCAL_BED_WEIGHT",
   "PAD_ARP_MODE", "LEAD_ARP", "LEAD_VOICE",
@@ -466,11 +466,11 @@ DILLA_COMFORT_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "BACKBEAT_CLAP" => "1",
   "POCKET_SET" => "dusty",
   "KICK_GAIN" => "1.0",
-  "FLYLO_KICK_GAIN" => "0.9",
+  "WONKY_KICK_GAIN" => "0.9",
   "KICK_SAMPLE_GAIN" => "1.0",
-  "FLYLO_OVERLAY_GAIN" => "0.9",
-  "FLYLO_MERGE_BOOST" => "1.0",
-  "FLYLO_BASE_DRUM_VOL" => "0.9",
+  "WONKY_OVERLAY_GAIN" => "0.9",
+  "WONKY_MERGE_BOOST" => "1.0",
+  "WONKY_BASE_DRUM_VOL" => "0.9",
   # Kit sits under voice; still readable.
   "DRUM_BUS_VOL" => "1.05",
   "DRUM_BUS_GAIN" => "1.0",
@@ -527,7 +527,7 @@ DILLA_COMFORT_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "SIDECHAIN_STYLE" => "dilla",
   "SIDECHAIN_DRUM_WEIGHT" => "1.25",
   "SIDECHAIN_HARM_WEIGHT" => "1.1",
-  "FLYLO_CHORD_DUCK" => "0.92",
+  "WONKY_CHORD_DUCK" => "0.92",
   "SONITEX" => "donuts_soul",
   "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "broadcast",
@@ -587,8 +587,8 @@ STREAM_SOUL_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "STREAM_LEARN_BIAS" => "0",
   "PROMOTION_BEAUTY_MIN" => "85",
   # Soft only — comfort force sets overlay 0; do not re-hot kit here.
-  "FLYLO_DRUM_OVERLAY" => "0",
-  "FLYLO_OVERLAY_GAIN" => "0.85",
+  "WONKY_DRUM_OVERLAY" => "0",
+  "WONKY_OVERLAY_GAIN" => "0.85",
   # Jonas V acapella (rap-vocal ingest) — tempo-fit per track BPM.
   # gunnhild is the only vocal source (operator decision). It is also the harder
   # one -- two usable pockets in 128s, needing pre-gain to survive the isolation

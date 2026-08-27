@@ -11,7 +11,7 @@ def dilla_render_tmp(tag)
   File.join(SCRATCH_DIR, "dilla_#{tag}.#{Process.pid}.wav")
 end
 
-# PID-scoped temp files (drums/harmonic/flylo_*/pads.wav.L0/.smf.mid/etc.)
+# PID-scoped temp files (drums/harmonic/wonky_*/pads.wav.L0/.smf.mid/etc.)
 # are reused across every track iteration within one long-running stream
 # process, not just within a single render. If a write is ever interrupted
 # (disk full, a signal mid-write) a stale/corrupt derived file can silently

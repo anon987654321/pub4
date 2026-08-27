@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 #
-# Which drums play at all: kick gates, halftime, FlyLo overlays and grids.
+# Which drums play at all: kick gates, halftime, Wonky overlays and grids.
 #
 # Part of the dilla engine, split out of dilla.rb. Defines methods and
 # constants at top level exactly as it did there; dilla.rb requires the
@@ -24,43 +24,43 @@ rescue StandardError
   base_kit
 end
 
-def flylo_primary_drums?
-  camel_mode? && flylo_drum_overlay_enabled?
+def wonky_primary_drums?
+  camel_mode? && wonky_drum_overlay_enabled?
 end
 
-# Under Camel/FlyLo primary, default to FlyLo grid ONLY.
+# Under Camel/Wonky primary, default to Wonky grid ONLY.
 # Hybrid pocket+overlay doubled kicks/snares (~10 kicks + ~9 snares/bar) and
-# sounded like broken machine-gun drums — set FLYLO_DRUMS_ONLY=0 to re-enable pocket.
-def flylo_drums_only?
+# sounded like broken machine-gun drums — set WONKY_DRUMS_ONLY=0 to re-enable pocket.
+def wonky_drums_only?
   # Default OFF — hybrid double-kit was the #1 "drums suck" failure mode.
-  flylo_primary_drums? && ENV.fetch("FLYLO_DRUMS_ONLY", "0") == "1"
+  wonky_primary_drums? && ENV.fetch("WONKY_DRUMS_ONLY", "0") == "1"
 end
 
 def dilla_pocket_drums_enabled?
-  !flylo_drums_only?
+  !wonky_drums_only?
 end
 
 def kicks_enabled?
   # Pocket kit kicks when overlay-only is off. Prefer POCKET_KICKS;
-  # KICKS=1 alone does not force pocket when FLYLO_DRUMS_ONLY=1.
-  return false if flylo_drums_only?
+  # KICKS=1 alone does not force pocket when WONKY_DRUMS_ONLY=1.
+  return false if wonky_drums_only?
   return ENV.fetch("POCKET_KICKS", "1") != "0" if ENV.key?("POCKET_KICKS")
   ENV.fetch("KICKS", "1") != "0"
 end
 
 def kick_velocity_scale
-  # Non-flylo default was cut from ~0.9 to 0.68 chasing a FlyLo-only
+  # Non-wonky default was cut from ~0.9 to 0.68 chasing a Wonky-only
   # "drums too hard" complaint, but this default is shared by every
-  # non-flylo track (pedal_e_descent included) and compounds with
+  # non-wonky track (pedal_e_descent included) and compounds with
   # dilla_role_velocity's already-lower kick_anchor/kick_sync bases --
   # real listening feedback was "absent proper kick drums." Restored
-  # toward the pre-cut value; flylo's own 0.78 is untouched.
-  default = flylo_primary_drums? ? "0.78" : "0.88"
+  # toward the pre-cut value; wonky's own 0.78 is untouched.
+  default = wonky_primary_drums? ? "0.78" : "0.88"
   ENV.fetch("KICK_GAIN", default).to_f.clamp(0.08, 1.35)
 end
 
-def flylo_kick_velocity_scale
-  ENV.fetch("FLYLO_KICK_GAIN", flylo_primary_drums? ? "1.15" : "0.85").to_f.clamp(0.2, 2.0)
+def wonky_kick_velocity_scale
+  ENV.fetch("WONKY_KICK_GAIN", wonky_primary_drums? ? "1.15" : "0.85").to_f.clamp(0.2, 2.0)
 end
 
 def halftime?
@@ -88,41 +88,41 @@ def backbeat_clap_enabled?
   ENV.fetch("BACKBEAT_CLAP", "1") != "0"
 end
 
-def flylo_drum_overlay_enabled?
-  ENV.fetch("FLYLO_DRUM_OVERLAY", ENV["STREAM_SOUL"] == "1" ? "1" : "0") != "0"
+def wonky_drum_overlay_enabled?
+  ENV.fetch("WONKY_DRUM_OVERLAY", ENV["STREAM_SOUL"] == "1" ? "1" : "0") != "0"
 end
 
-def flylo_overlay_rotate_steps(steps, rot)
+def wonky_overlay_rotate_steps(steps, rot)
   Array(steps).map { |s| (s + rot) % 16 }.uniq.sort
 end
 
-def flylo_overlay_grids_for(section)
-  @flylo_overlay_grid_cache ||= {}
-  bias = ENV.fetch("FLYLO_GRID_BIAS", section.to_s).to_sym
+def wonky_overlay_grids_for(section)
+  @wonky_overlay_grid_cache ||= {}
+  bias = ENV.fetch("WONKY_GRID_BIAS", section.to_s).to_sym
   cache_key = [section, bias, @render_seed || 0]
-  return @flylo_overlay_grid_cache[cache_key] if @flylo_overlay_grid_cache.key?(cache_key)
-  base = DillaLofiMachine::DRUM_PRESETS[:flylo_abstract]
-  shift = FLYLO_OVERLAY_SECTION_SHIFT.fetch(section, 2)
-  grids = FLYLO_OVERLAY_GRID_COUNT.times.map do |variant|
+  return @wonky_overlay_grid_cache[cache_key] if @wonky_overlay_grid_cache.key?(cache_key)
+  base = DillaLofiMachine::DRUM_PRESETS[:wonky_abstract]
+  shift = WONKY_OVERLAY_SECTION_SHIFT.fetch(section, 2)
+  grids = WONKY_OVERLAY_GRID_COUNT.times.map do |variant|
     rot = shift + variant
     {
-      kicks: flylo_overlay_rotate_steps(base[:kicks], rot),
-      snares: flylo_overlay_rotate_steps(base[:snares], rot * 2),
-      hats: flylo_overlay_rotate_steps(base[:hats], rot + variant),
-      perc: flylo_overlay_rotate_steps(base[:perc], rot + 1),
+      kicks: wonky_overlay_rotate_steps(base[:kicks], rot),
+      snares: wonky_overlay_rotate_steps(base[:snares], rot * 2),
+      hats: wonky_overlay_rotate_steps(base[:hats], rot + variant),
+      perc: wonky_overlay_rotate_steps(base[:perc], rot + 1),
     }
   end
-  @flylo_overlay_grid_cache[cache_key] = grids
+  @wonky_overlay_grid_cache[cache_key] = grids
 end
 
-def flylo_overlay_grid_pick(bar, section, role)
-  grids = flylo_overlay_grids_for(section)
+def wonky_overlay_grid_pick(bar, section, role)
+  grids = wonky_overlay_grids_for(section)
   seed = (@render_seed || 0) + stable_hash(section)
   idx = (bar + seed + (bar / 4)) % grids.length
   Array(grids[idx].fetch(role, [])).dup
 end
 
-def flylo_drum_grid_for(track)
+def wonky_drum_grid_for(track)
   t = track.to_s
   return if t.empty?
   eng = load_learned_engine
@@ -133,62 +133,73 @@ def flylo_drum_grid_for(track)
     (alias_key && BUILTIN_LEARNED_ENGINE.dig("drum_grids", alias_key))
 end
 
-def flylo_overlay_grid_hash
+def wonky_overlay_grid_hash
   # Camel/dilla style always uses the hip-hop pocket reduction of the Camel stem.
   # Project JSON may supply per-track grids when not in camel/dilla mode.
   grid = if camel_mode?
            POLY_TEMPORAL_DRUM_GRID
          else
-           flylo_drum_grid_for(ENV["TRACK"] || "")
+           wonky_drum_grid_for(ENV["TRACK"] || "")
          end
-  grid = POLY_TEMPORAL_DRUM_GRID if (grid.nil? || !grid.is_a?(Hash)) && flylo_drum_overlay_enabled?
+  grid = POLY_TEMPORAL_DRUM_GRID if (grid.nil? || !grid.is_a?(Hash)) && wonky_drum_overlay_enabled?
   grid.is_a?(Hash) ? grid : nil
 end
 
-def learned_flylo_overlay_steps(role)
-  grid = flylo_overlay_grid_hash
+# Learned grids on disk predate the rename and still key their steps flylo_*.
+# Renaming the reader without accepting the old spelling does not fail -- it
+# falls through to the bare key, finds nothing, and plays an empty grid, so a
+# learned pattern silently becomes silence. Read both, write only the new one.
+WONKY_GRID_LEGACY_PREFIX = "flylo_"
+def wonky_grid_steps(grid, name)
+  Array(grid["wonky_#{name}"] ||
+        grid["#{WONKY_GRID_LEGACY_PREFIX}#{name}"] ||
+        grid[name] || grid[name.to_sym] || [])
+end
+
+def learned_wonky_overlay_steps(role)
+  grid = wonky_overlay_grid_hash
   return unless grid
   case role
-  when :kicks then Array(grid["flylo_kicks"] || grid["kicks"] || grid[:kicks])
-  when :snares then Array(grid["flylo_snares"] || grid["snares"] || grid[:snares])
-  when :ghost_snares then Array(grid["flylo_ghost_snares"] || grid["ghost_snares"] || [])
-  when :hats then Array(grid["flylo_hats"] || grid["hats"] || grid[:hats])
-  when :hat_ghosts then Array(grid["flylo_hat_ghosts"] || grid["hat_ghosts"] || [])
-  when :perc then Array(grid["flylo_perc"] || grid["perc"] || grid[:perc])
-  when :claps then Array(grid["flylo_claps"] || grid["claps"] || [])
+  when :kicks then wonky_grid_steps(grid, "kicks")
+  when :snares then wonky_grid_steps(grid, "snares")
+  when :ghost_snares then wonky_grid_steps(grid, "ghost_snares")
+  when :hats then wonky_grid_steps(grid, "hats")
+  when :hat_ghosts then wonky_grid_steps(grid, "hat_ghosts")
+  when :perc then wonky_grid_steps(grid, "perc")
+  when :claps then wonky_grid_steps(grid, "claps")
   end
 end
 
-def flylo_chord_change_duck(bar, chord_bars)
+def wonky_chord_change_duck(bar, chord_bars)
   return 1.0 unless bar.positive? && chord_bars.positive? && (bar % chord_bars).zero?
-  ENV.fetch("FLYLO_CHORD_DUCK", "0.72").to_f.clamp(0.45, 1.0)
+  ENV.fetch("WONKY_CHORD_DUCK", "0.72").to_f.clamp(0.45, 1.0)
 end
 
 def camel_drum_lock?
   camel_mode? && ENV.fetch("CAMEL_DRUM_LOCK", "1") != "0"
 end
 
-def flylo_overlay_density(bar, n_bars, chord_bars:, pad_chords: nil, chord_phases: nil, phrase_bars: nil)
+def wonky_overlay_density(bar, n_bars, chord_bars:, pad_chords: nil, chord_phases: nil, phrase_bars: nil)
   # Camel lock: always full kit — section density (intro 0.42 × form 0.55 ≈ 0.23)
   # was the main reason the grid felt "missing" / wrong vs Camel.
-  return ENV.fetch("FLYLO_OVERLAY_GAIN", "1.2").to_f.clamp(0.9, 1.45) if camel_drum_lock?
+  return ENV.fetch("WONKY_OVERLAY_GAIN", "1.2").to_f.clamp(0.9, 1.45) if camel_drum_lock?
 
   section = dilla_section(bar, n_bars)
   form = form_section_at(bar, n_bars)
-  base = FLYLO_OVERLAY_SECTION_DENSITY.fetch(section, 0.85)
-  form_mul = form ? FLYLO_OVERLAY_FORM_MUL.fetch(form, 1.0) : 1.0
+  base = WONKY_OVERLAY_SECTION_DENSITY.fetch(section, 0.85)
+  form_mul = form ? WONKY_OVERLAY_FORM_MUL.fetch(form, 1.0) : 1.0
   phase = chord_phase_at(bar, pad_chords, chord_phases, chord_bars:, phrase_bars:)
   phase_mul = phase ? phase_gain_multiplier(phase) : 1.0
-  duck = flylo_chord_change_duck(bar, chord_bars)
-  gain = ENV.fetch("FLYLO_OVERLAY_GAIN", flylo_primary_drums? ? "1.12" : "0.55").to_f
+  duck = wonky_chord_change_duck(bar, chord_bars)
+  gain = ENV.fetch("WONKY_OVERLAY_GAIN", wonky_primary_drums? ? "1.12" : "0.55").to_f
   (base * form_mul * phase_mul * duck * gain).clamp(0.12, 1.45)
 end
 
 # Split roles — snare was on BOTH buses and hit twice (muddy / flammed).
-def flylo_sub_bus_mapping
-  { flylo_kick: :kick, flylo_perc: :cowbell }
+def wonky_sub_bus_mapping
+  { wonky_kick: :kick, wonky_perc: :cowbell }
 end
 
-def flylo_top_bus_mapping
-  { flylo_hat: :hat, flylo_quint: :hat, flylo_snare: :snare, flylo_rim: :rim, flylo_glitch: :ind_stab }
+def wonky_top_bus_mapping
+  { wonky_hat: :hat, wonky_quint: :hat, wonky_snare: :snare, wonky_rim: :rim, wonky_glitch: :ind_stab }
 end

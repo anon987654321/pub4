@@ -193,8 +193,8 @@ def layered_kick_sample(base_sample, seed: 7)
   drive = 1.1
   ceiling = Math.tanh(drive)
   # Old formula (0.16*KICK_GAIN+0.06) crushed kicks to ~0.2 peak before the bus —
-  # inaudible under pads. Camel/FlyLo needs near-unity sample level.
-  sample_mul = if flylo_primary_drums?
+  # inaudible under pads. Camel/Wonky needs near-unity sample level.
+  sample_mul = if wonky_primary_drums?
                  ENV.fetch("KICK_SAMPLE_GAIN", "0.95").to_f.clamp(0.4, 1.2)
                else
                  (0.16 * kick_velocity_scale + 0.06).clamp(0.08, 0.55)

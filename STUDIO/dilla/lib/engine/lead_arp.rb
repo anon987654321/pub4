@@ -223,7 +223,7 @@ end
 
 def lead_arp_enabled?
   # Explicit off always wins — was: pad_arp_mode != :held forced leads on even
-  # when LEAD_ARP=0, so "pads only" streams still rendered flylo lead soup.
+  # when LEAD_ARP=0, so "pads only" streams still rendered wonky lead soup.
   return false if ENV["LEAD_ARP"] == "0"
   return true if pad_arp_mode != :held
   ENV.fetch("LEAD_ARP", "1") != "0"
@@ -273,7 +273,7 @@ def lead_arp_cfg_for(patch)
       subdiv: 8,
       gate: (patch&.fetch(:gate, 0.72) || 0.72) * 0.88,
       vel: 0.55,
-      arp_styles: %i[spiral skip_up euclidean flylo_wobble pingpong],
+      arp_styles: %i[spiral skip_up euclidean wonky_wobble pingpong],
     }
   end
 end
@@ -418,7 +418,7 @@ def lead_arp_events_for_chord(time, velocity, chord, sustain, chord_i, cfg, arp_
   elsif role != :xlead
     # True arp: denser 8ths/16ths, rotate styles from preset pool.
     styles = Array(arp_cfg[:arp_styles])
-    styles = %i[spiral skip_up euclidean flylo_wobble] if styles.empty?
+    styles = %i[spiral skip_up euclidean wonky_wobble] if styles.empty?
     style = styles[chord_i % styles.length] || arp_cfg[:style] || :spiral
     variation = variation.merge(
       style:,

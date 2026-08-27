@@ -206,6 +206,20 @@ DEMUX_VOCAL_MODEL = "htdemucs_ft"
 # and the wiring ratchets read -- see that file for why there is exactly one of
 # them now. The order is load-bearing: constants in these files are computed at
 # load time from ones above them, and reordering silently changes their values.
+# The overlay's knobs were spelled FLYLO_* until the engine stopped naming a
+# competitor in its own source. An operator's shell history, notes and scripts
+# still say the old word, and an env var that is silently ignored is worse than
+# one that errors: the render runs, reports success, and does not do the thing
+# that was asked. So a legacy name is copied onto the new one here, once, before
+# any part reads ENV -- and only when the new name is unset, so the new spelling
+# always wins where both are given.
+ENV.keys.grep(/\AFLYLO_/).each do |legacy|
+  current = legacy.sub("FLYLO_", "WONKY_")
+  next if ENV[current] && !ENV[current].empty?
+  ENV[current] = ENV[legacy]
+  warn "dilla: #{legacy} is the old spelling of #{current} — honoured, but rename it"
+end
+
 ENGINE_PARTS = DillaSources::ENGINE_PARTS
 ENGINE_PARTS.each { |part| require_relative "lib/engine/#{part}" }
 
@@ -917,14 +931,14 @@ DISPATCH = {
     deep = ARGV.delete("--deep")
     learn_source!(src, apply: !apply.nil?, deep: !deep.nil?)
   end,
-  "learn-flylo" => lambda do
-    src = ARGV.shift or abort "usage: ruby dilla.rb learn-flylo <url-or-path> [track] [apply] [shallow]"
+  "learn-wonky" => lambda do
+    src = ARGV.shift or abort "usage: ruby dilla.rb learn-wonky <url-or-path> [track] [apply] [shallow]"
     apply = !ARGV.delete("apply").nil?
     deep = ARGV.delete("shallow").nil?
     track_arg = ARGV.reject { |a| a.start_with?("-") }.first
     track = (track_arg || "quartal_west_coast").to_sym
-    slug = track == :quartal_west_coast ? "flylo_camel" : track.to_s
-    learn_flylo_drums!(src, track:, slug:, apply:, deep:)
+    slug = track == :quartal_west_coast ? "wonky_camel" : track.to_s
+    learn_wonky_drums!(src, track:, slug:, apply:, deep:)
   end,
   "learn-apply" => lambda do
     report = DillaSourceLearn.load_last_report or abort "no last learn report — run: ruby dilla.rb learn <url>"

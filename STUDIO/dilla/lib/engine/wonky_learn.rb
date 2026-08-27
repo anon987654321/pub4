@@ -8,9 +8,9 @@
 # computed at load time from ones declared above them.
 require_relative "../frozen_state"
 
-FLYLO_LEARNINGS_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "flylo_drums").freeze
+WONKY_LEARNINGS_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "wonky_drums").freeze
 
-def flylo_quantize_onsets(onsets, bpm, window: 0.05)
+def wonky_quantize_onsets(onsets, bpm, window: 0.05)
   bar_frames = ((60.0 / bpm) * 4.0 / window).round
   step_frames = [bar_frames / 16.0, 1.0].max
   tally = Hash.new(0)
@@ -18,7 +18,7 @@ def flylo_quantize_onsets(onsets, bpm, window: 0.05)
   tally
 end
 
-def flylo_pick_steps(tally, role:, max_sec: 90, bpm: 86)
+def wonky_pick_steps(tally, role:, max_sec: 90, bpm: 86)
   max_steps = { kick: 6, snare: 6, hat: 12, perc: 5 }.fetch(role, 5)
   bars = (max_sec / ((60.0 / bpm) * 4.0)).ceil
   min_hits = case role
@@ -31,7 +31,7 @@ def flylo_pick_steps(tally, role:, max_sec: 90, bpm: 86)
   picks.empty? ? tally.sort_by { |_, c| -c }.first(max_steps).map(&:first).sort : picks
 end
 
-def flylo_onsets_adaptive(path, filter, role:, bpm:, max_sec: 90)
+def wonky_onsets_adaptive(path, filter, role:, bpm:, max_sec: 90)
   da = RadioBergenStudy::DeepAudio
   rms = da.band_rms(path, filter, window: 0.05, max_sec:)
   return [] if rms.empty?
@@ -54,13 +54,13 @@ def flylo_onsets_adaptive(path, filter, role:, bpm:, max_sec: 90)
     next if nxt && val <= nxt
     onsets << i if onsets.empty? || (i - onsets.last) >= min_gap
   end
-  flylo_pick_steps(flylo_quantize_onsets(onsets, bpm), role:, max_sec:, bpm:)
+  wonky_pick_steps(wonky_quantize_onsets(onsets, bpm), role:, max_sec:, bpm:)
 end
 
-def flylo_drum_grid_blend_fallback!(grid)
-  base = DillaLofiMachine::DRUM_PRESETS[:flylo_abstract]
+def wonky_drum_grid_blend_fallback!(grid)
+  base = DillaLofiMachine::DRUM_PRESETS[:wonky_abstract]
   {
-    flylo_kicks: :kicks, flylo_snares: :snares, flylo_hats: :hats, flylo_perc: :perc
+    wonky_kicks: :kicks, wonky_snares: :snares, wonky_hats: :hats, wonky_perc: :perc
   }.each do |grid_key, preset_key|
     steps = Array(grid[grid_key] || grid[grid_key.to_s])
     next if steps.length >= 3
@@ -70,7 +70,7 @@ def flylo_drum_grid_blend_fallback!(grid)
   grid
 end
 
-def flylo_drum_grid_from_stems(stem_dir, bpm: nil, analyze_sec: 120)
+def wonky_drum_grid_from_stems(stem_dir, bpm: nil, analyze_sec: 120)
   drums = File.join(stem_dir, "drums.wav")
   return unless File.file?(drums)
   da = RadioBergenStudy::DeepAudio
@@ -81,23 +81,23 @@ def flylo_drum_grid_from_stems(stem_dir, bpm: nil, analyze_sec: 120)
   end
   grid = {
     bpm: bpm.round,
-    swing: DillaLofiMachine::DRUM_PRESETS[:flylo_abstract][:swing],
+    swing: DillaLofiMachine::DRUM_PRESETS[:wonky_abstract][:swing],
     source_stem: drums,
-    flylo_kicks: flylo_onsets_adaptive(drums, "lowpass=f=220,highpass=f=50", role: :kick,
+    wonky_kicks: wonky_onsets_adaptive(drums, "lowpass=f=220,highpass=f=50", role: :kick,
                                         bpm:, max_sec: analyze_sec),
-    flylo_snares: flylo_onsets_adaptive(drums, "lowpass=f=5000,highpass=f=900", role: :snare,
+    wonky_snares: wonky_onsets_adaptive(drums, "lowpass=f=5000,highpass=f=900", role: :snare,
                                          bpm:, max_sec: analyze_sec),
-    flylo_hats: flylo_onsets_adaptive(drums, "lowpass=f=14000,highpass=f=5000", role: :hat,
+    wonky_hats: wonky_onsets_adaptive(drums, "lowpass=f=14000,highpass=f=5000", role: :hat,
                                       bpm:, max_sec: analyze_sec),
-    flylo_perc: flylo_onsets_adaptive(drums, "lowpass=f=8000,highpass=f=2000", role: :perc,
+    wonky_perc: wonky_onsets_adaptive(drums, "lowpass=f=8000,highpass=f=2000", role: :perc,
                                       bpm:, max_sec: analyze_sec),
   }
-  flylo_drum_grid_blend_fallback!(grid)
+  wonky_drum_grid_blend_fallback!(grid)
 end
 
-def learn_flylo_drums!(src, track: :quartal_west_coast, slug: "flylo_camel", apply: false, deep: true)
+def learn_wonky_drums!(src, track: :quartal_west_coast, slug: "wonky_camel", apply: false, deep: true)
   DillaSourceLearn.ensure_dir!
-  FileUtils.mkdir_p(FLYLO_LEARNINGS_DIR)
+  FileUtils.mkdir_p(WONKY_LEARNINGS_DIR)
   audio_path = if File.exist?(src.to_s)
                  File.expand_path(src)
                else
@@ -105,38 +105,38 @@ def learn_flylo_drums!(src, track: :quartal_west_coast, slug: "flylo_camel", app
                end
   stem_candidate = File.join(DEMUX_DIR, "demux", DEMUX_MODEL, File.basename(audio_path, ".*"))
   stem_dir = if File.file?(File.join(stem_candidate, "drums.wav"))
-               puts "flylo learn: reusing stems #{stem_candidate}"
+               puts "wonky learn: reusing stems #{stem_candidate}"
                stem_candidate
              else
                demux_six(audio_path)
              end
   demux_deep_bands!(stem_dir) if deep && !File.directory?(File.join(stem_dir, "bands"))
-  grid = flylo_drum_grid_from_stems(stem_dir)
-  abort "flylo drum learn: could not extract grid from #{stem_dir}" unless grid.is_a?(Hash) && grid[:flylo_kicks]&.any?
+  grid = wonky_drum_grid_from_stems(stem_dir)
+  abort "wonky drum learn: could not extract grid from #{stem_dir}" unless grid.is_a?(Hash) && grid[:wonky_kicks]&.any?
 
   grid[:learned_at] = Time.now.utc.iso8601
   grid[:source] = src.to_s
   grid[:slug] = slug.to_s
-  out_path = File.join(FLYLO_LEARNINGS_DIR, "#{slug}.json")
+  out_path = File.join(WONKY_LEARNINGS_DIR, "#{slug}.json")
   DillaFrozen.write_json(out_path, grid.transform_keys(&:to_s))
 
   eng = load_learned_engine(refresh: true)
   track_s = track.to_s
   eng["drum_grids"][track_s] = grid.transform_keys(&:to_s)
   eng["drum_grids"][slug.to_s] = grid.transform_keys(&:to_s)
-  eng["track_aliases"]["flylo_camel"] = track_s unless eng["track_aliases"]["flylo_camel"]
+  eng["track_aliases"]["wonky_camel"] = track_s unless eng["track_aliases"]["wonky_camel"]
   save_learned_engine!(eng)
   remove_instance_variable(:@learned_engine_cache) if instance_variable_defined?(:@learned_engine_cache)
 
   if apply
     ENV["TRACK"] = track_s
-    ENV["FLYLO_DRUM_OVERLAY"] = "1"
+    ENV["WONKY_DRUM_OVERLAY"] = "1"
     ENV["BPM"] = grid[:bpm].to_s if grid[:bpm]
     ENV["SWING"] = grid[:swing].to_s if grid[:swing]
     ENV["STREAM_LEARN_BIAS"] = "1"
   end
-  puts "flylo drums learned: #{slug} → #{track_s} kicks=#{grid[:flylo_kicks].join(',')} " \
-       "snares=#{grid[:flylo_snares].join(',')} hats=#{grid[:flylo_hats].join(',')} bpm=#{grid[:bpm]}"
+  puts "wonky drums learned: #{slug} → #{track_s} kicks=#{grid[:wonky_kicks].join(',')} " \
+       "snares=#{grid[:wonky_snares].join(',')} hats=#{grid[:wonky_hats].join(',')} bpm=#{grid[:bpm]}"
   puts "saved: #{out_path}"
   grid
 end

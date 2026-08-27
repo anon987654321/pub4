@@ -125,7 +125,7 @@ def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade
   # Pads are the character of the stream — keep them warm and present.
   # Kick space is a gentle HP + sidechain, not stripping pad body (165 Hz HP
   # + −5.5 dB sub cut made progressions inaudible).
-  default_vol = if flylo_primary_drums?
+  default_vol = if wonky_primary_drums?
                   "1.72"
                 elsif deep_render?
                   "1.82"
@@ -137,24 +137,24 @@ def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade
   sub_cut = ENV.fetch("HARM_SUB_CUT_DB", if deep
 "-1.8"
 else
-(flylo_primary_drums? ? "-2.4" : "-2.2")
+(wonky_primary_drums? ? "-2.4" : "-2.2")
 end)
   body_boost = ENV.fetch("HARM_BODY_DB", if deep
 "3.2"
 else
-(flylo_primary_drums? ? "2.6" : "2.8")
+(wonky_primary_drums? ? "2.6" : "2.8")
 end)
   mid_boost = ENV.fetch("HARM_MID_DB", if deep
 "2.9"
 else
-(flylo_primary_drums? ? "2.4" : "2.6")
+(wonky_primary_drums? ? "2.4" : "2.6")
 end)
   # Chord presence: body + gentle silk shelf (progressions read on small speakers).
   # HARM_PRESENCE_DB / HARM_AIR_DB are crit cherry-pick knobs (defaults keep prior character).
-  presence = ENV.fetch("HARM_PRESENCE_DB", flylo_primary_drums? ? "2.2" : "2.4").to_f
-  air_g = ENV.fetch("HARM_AIR_DB", flylo_primary_drums? ? "1.6" : "1.2").to_f
-  silk_g = flylo_primary_drums? ? [presence * 0.9, 2.0].min : [presence * 0.55, 1.2].min
-  air = if flylo_primary_drums?
+  presence = ENV.fetch("HARM_PRESENCE_DB", wonky_primary_drums? ? "2.2" : "2.4").to_f
+  air_g = ENV.fetch("HARM_AIR_DB", wonky_primary_drums? ? "1.6" : "1.2").to_f
+  silk_g = wonky_primary_drums? ? [presence * 0.9, 2.0].min : [presence * 0.55, 1.2].min
+  air = if wonky_primary_drums?
           "equalizer=f=2400:t=h:w=1800:g=#{silk_g.round(1)},equalizer=f=5200:t=h:w=2800:g=#{air_g.round(1)},"
         else
           "equalizer=f=2800:t=h:w=1800:g=#{air_g.round(1)},"
@@ -170,17 +170,17 @@ end)
   harm_hp = ENV.fetch("HARM_HP_HZ", if deep
 "66"
 else
-(flylo_primary_drums? ? "68" : "70")
+(wonky_primary_drums? ? "68" : "70")
 end).to_i
   sub_shelf = ENV.fetch("HARM_SUB_SHELF_DB", if deep
 "2.2"
 else
-(flylo_primary_drums? ? "1.8" : "1.0")
+(wonky_primary_drums? ? "1.8" : "1.0")
 end).to_f
   # Longer, smoother pad bloom (qsin) so chords arrive as wash, not a gate.
-  fade_in = flylo_primary_drums? ? (harm_fade_dur * 1.35).round(2) : harm_fade_dur
-  fade_curve = flylo_primary_drums? ? ":curve=qsin" : ""
-  build_cut = flylo_primary_drums? ? -0.8 : -2
+  fade_in = wonky_primary_drums? ? (harm_fade_dur * 1.35).round(2) : harm_fade_dur
+  fade_curve = wonky_primary_drums? ? ":curve=qsin" : ""
+  build_cut = wonky_primary_drums? ? -0.8 : -2
   "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
     "highpass=f=#{harm_hp},equalizer=f=72:t=o:w=1.2:g=#{sub_shelf}," \
     "equalizer=f=95:t=h:w=120:g=#{sub_cut}," \
@@ -196,19 +196,19 @@ end
 def sidechain_amix_weights
   # Camel: pads duck under kicks but stay the main body (not 2.05:0.78 — that
   # erased chord progressions). Kit still leads the transient.
-  d = ENV.fetch("SIDECHAIN_DRUM_WEIGHT", flylo_primary_drums? ? "1.48" : "1.0").to_f
-  h = ENV.fetch("SIDECHAIN_HARM_WEIGHT", flylo_primary_drums? ? "1.32" : "1.55").to_f
+  d = ENV.fetch("SIDECHAIN_DRUM_WEIGHT", wonky_primary_drums? ? "1.48" : "1.0").to_f
+  h = ENV.fetch("SIDECHAIN_HARM_WEIGHT", wonky_primary_drums? ? "1.32" : "1.55").to_f
   [d.round(3), h.round(3)]
 end
 
-def flylo_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
+def wonky_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
   dw, hw = sidechain_amix_weights
   # Musical duck: soft attack + longer release so pads bloom back between kicks
   # (was attack=1/release=28 — choppy, made progressions feel gated).
-  atk = flylo_primary_drums? ? 8 : 1
-  rel = flylo_primary_drums? ? 140 : 28
-  ratio = flylo_primary_drums? ? 3.2 : 5
-  thr = flylo_primary_drums? ? -22 : -20
+  atk = wonky_primary_drums? ? 8 : 1
+  rel = wonky_primary_drums? ? 140 : 28
+  ratio = wonky_primary_drums? ? 3.2 : 5
+  thr = wonky_primary_drums? ? -22 : -20
   [
     "#{drum_label}asplit=2[dr_dry][dr_sc]",
     "#{harm_label}[dr_sc]sidechaincompress=threshold=#{thr}dB:ratio=#{ratio}:attack=#{atk}:release=#{rel}:level_sc=0.9[harm_sc]",

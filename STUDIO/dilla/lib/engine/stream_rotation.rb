@@ -77,7 +77,7 @@ def drum_rotation_full
                else "dusty"
                end
       { preset:, pocket:, kit: "03-soulful-vintage",
-        flylo: preset.start_with?("flylo") ? "1" : "0" }
+        wonky: preset.start_with?("wonky") ? "1" : "0" }
     end
   end
 end
@@ -93,7 +93,7 @@ def stream_rotate_drums!(index)
   # followed by every other preset SORTED BY NAME, and the index walks it
   # straight through. Measured on a 34-slot demo: 31 different presets in 34
   # slots, nothing repeating, and past slot 13 the running order is alphabetical
-  # -- afro_clave, boom_808, dembow_lite, then the whole euclid_* and flylo_*
+  # -- afro_clave, boom_808, dembow_lite, then the whole euclid_* and wonky_*
   # runs. Five euclidean grids, a reggaeton dembow and an afro-cuban clave in a
   # hiphop demo, each heard once. Operator verdict: "the drums seem to go
   # without rhythm or purpose", which is what a kit that never repeats sounds
@@ -109,7 +109,7 @@ def stream_rotate_drums!(index)
   ENV["POCKET_SET"] = d[:pocket]
   ENV["EXTERNAL_KIT"] = d[:kit] if d[:kit] && !d[:kit].empty?
   ENV["FM_DRUMS"] = d[:fm] if d[:fm] == "1" && !USER_PINNED_ENV.key?("FM_DRUMS")
-  ENV["FLYLO_DRUM_OVERLAY"] = d[:flylo] || "0"
+  ENV["WONKY_DRUM_OVERLAY"] = d[:wonky] || "0"
   ENV["DRUM_CHOPS"] = "0" unless ENV["FORCE_DRUM_CHOPS"] == "1"
   ENV["ECLECTIC_PERC"] ||= "0"
   ENV["RAW_KICK"] = "1"

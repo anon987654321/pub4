@@ -77,8 +77,8 @@ DRUM_PATTERN_SETS = {
   # The two canon pockets, played rather than described.
   #
   # RADIO_BERGEN dossiers carry these as prose -- "MPC swing 54-62%; kick late-3
-  # anchor; snare early on 4/12; ghost on 2/10" for dilla_canon, "flylo_abstract
-  # broken 16ths; kick 0,5,8,13; displaced snares" for flylo_canon. Those strings
+  # anchor; snare early on 4/12; ghost on 2/10" for dilla_canon, "wonky_abstract
+  # broken 16ths; kick 0,5,8,13; displaced snares" for wonky_canon. Those strings
   # sit in a dossier hash near DOSSIERS_PATH; the drums come from
   # drum_pattern_pick, which is keyed on feel and has never seen them. So the
   # engine documented a pocket it did not play, in the two styles it is most
@@ -108,7 +108,7 @@ DRUM_PATTERN_SETS = {
   # The kick here is quoted exactly: 0, 5, 8, 13. Snares are displaced off 4/12
   # rather than sitting on them, which is what "displaced" buys -- the backbeat
   # stops being a reference point and the bar reads broken.
-  flylo_canon: {
+  wonky_canon: {
     kicks: [
       [0, 5, 8, 13], [0, 5, 8, 13, 15], [0, 5, 9, 13], [0, 4, 8, 13],
       [0, 5, 8, 12], [0, 3, 5, 8, 13],
@@ -162,7 +162,7 @@ DRUM_PATTERN_SETS = {
   },
   # LA beat scene — Knxwledge/Teebs/Samiyam side of the lineage.
   #
-  # flylo_canon displaces the snare off 4/12 so the backbeat stops being a
+  # wonky_canon displaces the snare off 4/12 so the backbeat stops being a
   # reference. This keeps that but thins everything around it: the kick is
   # sparse and never on 8, the hats leave whole beats empty, and the ghosts do
   # the work the hats stop doing. Space is the instrument here — the LA records
@@ -490,17 +490,17 @@ DRUM_FILL_SETS = {
   ],
 }.freeze
 
-# FlyLo abstract overlay — second drum schedule on top of Dilla pocket (wonky 16ths).
-FLYLO_OVERLAY_SECTION_DENSITY = {
+# Wonky abstract overlay — second drum schedule on top of Dilla pocket (wonky 16ths).
+WONKY_OVERLAY_SECTION_DENSITY = {
   intro: 0.42, main: 1.0, build: 0.88, turn: 0.92, breakdown: 0.35, outro: 0.48,
 }.freeze
-FLYLO_OVERLAY_FORM_MUL = {
+WONKY_OVERLAY_FORM_MUL = {
   intro: 0.55, main: 1.0, build: 0.92, turn: 0.95, breakdown: 0.38, outro: 0.5,
 }.freeze
-FLYLO_OVERLAY_SECTION_SHIFT = {
+WONKY_OVERLAY_SECTION_SHIFT = {
   intro: 0, main: 2, build: 4, turn: 6, breakdown: 1, outro: 3,
 }.freeze
-FLYLO_OVERLAY_GRID_COUNT = 8
+WONKY_OVERLAY_GRID_COUNT = 8
 
 MELODY_CHOP_HZ = [392.00, 349.23, 311.13, 277.18, 261.63, 233.08].freeze
 

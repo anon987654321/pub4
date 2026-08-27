@@ -310,7 +310,7 @@ def melt_master!(path)
           "[ml][mm][mh]amix=inputs=3:duration=first:normalize=0," \
           "dcshift=#{drive},asoftclip=type=tanh:oversample=8,dcshift=-#{drive},highpass=f=20," \
           "volume=#{MELT_MAKEUP_DB}dB," \
-          "acompressor=threshold=-20dB:ratio=1.5:attack=150:release=450:knee=10," \
+          "acompressor=threshold=-20dB:ratio=1.5:attack=150:release=450:knee=8," \
           "equalizer=f=8000:t=h:w=4000:g=#{(-0.8 * amt).round(2)}," \
           "alimiter=limit=0.97[mout]"
   begin
@@ -503,7 +503,7 @@ def master_bus_filters_enhanced(input_tag, cfg:, duration: nil, ir_input_idx: ni
     filt << mood_darken_filter("drifted", out_tag: "darkened", strength: darken)
     reverb_out = "darkened"
     if ir_input_idx
-      filt << convolution_reverb_filter("darkened", ir_input_idx, mix: cfg[:style_family] == :flylo ? 0.22 : 0.16, out_tag: "reverbed")
+      filt << convolution_reverb_filter("darkened", ir_input_idx, mix: cfg[:style_family] == :wonky ? 0.22 : 0.16, out_tag: "reverbed")
       reverb_out = "reverbed"
     end
     if analog_smooth_enabled?

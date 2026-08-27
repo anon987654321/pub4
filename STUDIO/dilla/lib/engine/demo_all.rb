@@ -114,7 +114,7 @@ def demo_all(bars_count = 12, destination = nil)
   # STREAM_CREATIVE_FREEDOM and STREAM_ANALOG_WILD on top. Five consecutive
   # tracks came out as
   #
-  #   lead=soul_prophet/flylo_spiral  lead=flylo/neo_quartal  lead=moog/soul_wash
+  #   lead=soul_prophet/wonky_spiral  lead=wonky/neo_quartal  lead=moog/soul_wash
   #   lead=prophet/moog_funk          lead=neo_pluck/prophet_glass
   #
   # -- a different instrument playing a different arp every time, each morphing

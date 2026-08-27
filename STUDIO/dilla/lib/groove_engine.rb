@@ -614,7 +614,7 @@ module DillaGroove
   # after lcm(11, 16) = 176 steps, or 11 bars.
   #
   # The gap this fills was a claim rather than a feature. producer_dna.rb's
-  # flylo_cosmogramma preset says its hats are "a 3-step cycle against a 16-step
+  # wonky_cosmogramma preset says its hats are "a 3-step cycle against a 16-step
   # bar, so they only agree with the downbeat once every three bars" -- but its
   # pool holds one entry, [0, 3, 6, 9, 12, 15], so drum_pattern_pick returns the
   # identical list for every bar and the hats hit the downbeat in all of them.

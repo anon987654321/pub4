@@ -251,7 +251,7 @@ def ensure_drum_kit!
 end
 
 # Optional one-shots sliced from demucs drums (path under samples/) for DRUM_CHOPS=1.
-DRUM_CHOP_SOURCE = "samples/demux/htdemucs_6s/flylo_camel_source/drums.wav"
+DRUM_CHOP_SOURCE = "samples/demux/htdemucs_6s/wonky_camel_source/drums.wav"
 DRUM_CHOP_DIR = "samples/drums/custom/grid_chops"
 DRUM_CHOP_BPM = 86.0
 
@@ -331,7 +331,7 @@ end
 def apply_drum_chops_to_kit!(kit)
   # Prefer pre-cut Camel oneshots, then grid_chops from demucs stem — but
   # only for roles that didn't already resolve to a real external-kit
-  # sample. These one-shots are all sliced from a single FlyLo Camel
+  # sample. These one-shots are all sliced from a single Wonky Camel
   # render (camel_chops and grid_chops are literally byte-identical files),
   # so they were unconditionally overwriting the hat/snare fix above with
   # the same narrow, zero-variety source every render.

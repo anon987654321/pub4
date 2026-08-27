@@ -201,7 +201,7 @@ def stream_track_banner(extra = nil)
     ENV["DRUM_PRESET"] || "kit",
     ENV["POCKET_SET"],
     (ENV["FM_DRUMS"] == "0" ? "analog" : "fm"),
-    (flylo_primary_drums? || ENV["FLYLO_DRUM_OVERLAY"] == "1" ? "flylo" : nil),
+    (wonky_primary_drums? || ENV["WONKY_DRUM_OVERLAY"] == "1" ? "wonky" : nil),
   ].compact.join("/")
   meta = "pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode} lead=#{lead_tag}/#{arp_tag} " \
          "drums=#{drum_tag} rap=#{rap_tag} speak=#{ENV.fetch('SPEAK', '0')}"

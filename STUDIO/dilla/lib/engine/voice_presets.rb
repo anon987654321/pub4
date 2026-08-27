@@ -53,7 +53,7 @@ PAD_VOICE_PRESETS = {
   # Flying Lotus: names the Prophet 6 ("most versatile and approachable modern
   # analog synth") and the Yamaha CS-60/Deckard's Dream as his essentials
   # (Synth History interview), with a Wurlitzer among the keys.
-  pad_flylo: { ep: :wurli_soul_bite, warm: :prophet_6_warm, warm2: :cs80_ensemble },
+  pad_wonky: { ep: :wurli_soul_bite, warm: :prophet_6_warm, warm2: :cs80_ensemble },
   # Röyksopp: the Juno-106 and MS-20 are the two they say will always be in the
   # setup; the Juno is the pad half of that pair. Solina and Mellotron stand in
   # for the PS-3100 and the Mellotron on the Melody A.M. list, and the DX-7 for
@@ -182,15 +182,15 @@ PAD_LAYER_STACKS = {
 PAD_VOICE_MORPH_VOICES = %i[moog prophet glass vapor rhodes neon crystal yamaha vintage giga_fm supersaw_bed].freeze
 
 # Soft experimental lead morph — avoid shred/hard noise walls by default.
-LEAD_MORPH_VOICES = %i[flylo prophet moog glass vapor soft yamaha vintage world steel].freeze
+LEAD_MORPH_VOICES = %i[wonky prophet moog glass vapor soft yamaha vintage world steel].freeze
 MORPH_LEAD_PATCH_POOL = {
   hard: %i[saw_lead square_lead dist_guitar charang_bite fm_lead_bell minimoog_lead fifths_lead overdrive_hook],
-  flylo: %i[flylo_fm_shimmer fm_lead_bell glass_arp_lead flute_airy prophet_bleeding_lead giga_fm_lead],
+  wonky: %i[wonky_fm_shimmer fm_lead_bell glass_arp_lead flute_airy prophet_bleeding_lead giga_fm_lead],
   glitch: %i[square_lead voice_lead whistle_hook charang_bite banjo_pluck koto_pluck shamisen_pluck],
   prophet: %i[prophet_lead big_lead_prophet5 soul_prophet_arp warm_prophet_hook prophet_bleeding_lead],
   moog: %i[moog_ladder_lead minimoog_lead moog_dilla_pocket questlove_moog_lead acid_pluck_lead synth_bass_deep],
   shred: %i[dist_guitar charang_bite saw_lead square_lead brass_synth pluck_synth overdrive_hook],
-  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell giga_fm_bell],
+  glass: %i[glass_arp_lead wonky_fm_shimmer fm_lead_bell giga_fm_bell],
   vapor: %i[vapor_lead supersaw_1 supersaw_2 supersaw_4 tame_wobble_lead],
   soft: %i[soft_synth_lead jazz_ballad_lead nord_stage_lead watermelon_glass yamaha_ballad_lead],
   yamaha: %i[yamaha_ballad_lead yamaha_scale_arp clean_jazz_guitar],
@@ -198,7 +198,7 @@ MORPH_LEAD_PATCH_POOL = {
   world: %i[sitar_drone shamisen_pluck shakuhachi_breath steel_drums fiddle_reel],
   steel: %i[steel_string clean_jazz_guitar nylon_guitar_pad steel_drums],
 }.freeze
-MORPH_LEAD_ARP_CYCLE = %i[flylo_spiral prophet_saw moog_rip soul_wash glass_spin vapor_wave neo_quartal].freeze
+MORPH_LEAD_ARP_CYCLE = %i[wonky_spiral prophet_saw moog_rip soul_wash glass_spin vapor_wave neo_quartal].freeze
 
 # FM synthesis — integer C:M = musical; irrational→rational morph stabilizes metallic timbres.
 FM_RATIO_POOL = [
@@ -280,14 +280,14 @@ TRACK_SOUL_LEAD_PROFILES = {
   slow_ballad_wash:    { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom" },
   suspended_ballad:    { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "soul_wash" },
   neo_soul_pocket:     { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "moog_funk" },
-  quartal_west_coast:  { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral" },
+  quartal_west_coast:  { "LEAD_VOICE" => "wonky", "LEAD_ARP_MODE" => "wonky_spiral" },
   maj7_minor_cycle:    { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "LEAD_ARP" => "1", "HARMONY_LEAD" => "1" },
   minor_iv_loop:       { "LEAD_VOICE" => "donuts", "LEAD_ARP_MODE" => "donuts_shimmer" },
   two_chord_hypnosis:  { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "pocket_stab" },
   relative_major_turn: { "LEAD_VOICE" => "soft", "LEAD_ARP_MODE" => "donuts_shimmer" },
   minor_turnaround:    { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal" },
   warm_minor_arc:      { "LEAD_VOICE" => "soft", "LEAD_ARP_MODE" => "soul_wash" },
-  minor_triad_walk:    { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "flylo_spiral" },
+  minor_triad_walk:    { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "wonky_spiral" },
   major_lifting:       { "LEAD_VOICE" => "prophet", "LEAD_ARP_MODE" => "neo_quartal" },
   slash_ninth_cycle:   { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "prophet_glass" },
   dorian_iv_loop:      { "LEAD_VOICE" => "prophet", "LEAD_ARP_MODE" => "soul_wash" },
@@ -310,7 +310,7 @@ TRACK_SOUL_LEAD_PROFILES = {
   timeless_authentic:  { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "prophet_glass", "HARMONY_LEAD" => "1" },
   long_soul:           { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   golden:              { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
-  chromatic_mediant_drift: { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  chromatic_mediant_drift: { "LEAD_VOICE" => "wonky", "LEAD_ARP_MODE" => "wonky_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   lydian_glass_cycle:      { "LEAD_VOICE" => "glass", "LEAD_ARP_MODE" => "glass_spin", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   pedal_upper_structures:  { "LEAD_VOICE" => "neon", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   bossa_major9_turn:       { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
@@ -318,7 +318,7 @@ TRACK_SOUL_LEAD_PROFILES = {
   two_chord_luminous:      { "LEAD_VOICE" => "crystal", "LEAD_ARP_MODE" => "crystal_scatter", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   mixo_sus_loop:           { "LEAD_VOICE" => "acid", "LEAD_ARP_MODE" => "acid_run", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   common_tone_drift:       { "LEAD_VOICE" => "glass", "LEAD_ARP_MODE" => "glass_spin", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
-  third_cycle_triads:     { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  third_cycle_triads:     { "LEAD_VOICE" => "wonky", "LEAD_ARP_MODE" => "wonky_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   drone_quartal_wash:      { "LEAD_VOICE" => "vapor", "LEAD_ARP_MODE" => "vapor_wave", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   waltz_relative_lift:     { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   half_time_gospel_plagal: { "LEAD_VOICE" => "gospel", "LEAD_ARP_MODE" => "gospel_lift", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
@@ -340,7 +340,7 @@ LEAD_VOICE_PRESETS = {
   prophet: :soul_prophet_arp,
   moog: :moog_dilla_pocket,
   neo_pluck: :neo_soul_pluck,
-  flylo: :flylo_fm_shimmer,
+  wonky: :wonky_fm_shimmer,
   ballad: :jazz_ballad_lead,
   gospel: :gospel_brass_lead,
   erykah: :erykah_dust_lead,
@@ -408,7 +408,7 @@ LUSH_LEAD_VOICE_POOLS = {
   prophet: %i[soul_prophet_arp prophet_lead warm_prophet_hook glasper_ep_lead],
   moog: %i[moog_dilla_pocket questlove_moog_lead minimoog_lead moog_ladder_lead synth_bass_deep],
   neo_pluck: %i[neo_soul_pluck dangelo_clav_lead rhodes_skank_lead steel_string],
-  flylo: %i[flylo_fm_shimmer fm_lead_bell glass_arp_lead giga_fm_lead],
+  wonky: %i[wonky_fm_shimmer fm_lead_bell glass_arp_lead giga_fm_lead],
   ballad: %i[jazz_ballad_lead nord_stage_lead glasper_ep_lead soft_synth_lead yamaha_ballad_lead],
   gospel: %i[gospel_brass_lead stevie_organ_lead trombone_soul],
   erykah: %i[erykah_dust_lead rhodes_lead_comp mark1_soul_lead],
@@ -417,14 +417,14 @@ LUSH_LEAD_VOICE_POOLS = {
   cs: %i[glasper_ep_lead soul_prophet_arp rhodes_lead_comp],
   minimoog: %i[minimoog_lead moog_ladder_lead questlove_moog_lead],
   pluck: %i[neo_soul_pluck dangelo_clav_lead shamisen_pluck],
-  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell giga_fm_lead],
+  glass: %i[glass_arp_lead wonky_fm_shimmer fm_lead_bell giga_fm_lead],
   vapor: %i[vapor_lead supersaw_1 supersaw_4 tame_wobble_lead],
   crystal: %i[glass_arp_lead fm_lead_bell],
   acid: %i[acid_pluck_lead moog_ladder_lead],
   neon: %i[moog_ladder_lead minimoog_lead acid_pluck_lead],
   yamaha: %i[yamaha_ballad_lead yamaha_scale_arp clean_jazz_guitar],
   vintage: %i[vintage_dream_lead giga_fm_lead harmonica_soul],
-  giga: %i[giga_fm_lead giga_fm_bass_lead flylo_fm_shimmer],
+  giga: %i[giga_fm_lead giga_fm_bass_lead wonky_fm_shimmer],
   supersaw: %i[supersaw_1 supersaw_2 supersaw_4 vapor_lead],
   harmonica: %i[harmonica_soul muted_trumpet_lead],
   guitar: %i[clean_jazz_guitar steel_string nylon_guitar_pad],
@@ -512,7 +512,7 @@ LEAD_VOICE_POOLS = {
   prophet: %i[jupiter_superlead soul_prophet_arp warm_prophet_hook mono_poly_lead obxr_sync_lead],
   moog: %i[moog_dilla_pocket mono_poly_lead questlove_moog_lead minimoog_lead sh101_sequence synth_bass_deep],
   neo_pluck: %i[neo_soul_pluck dx7_glass_arp dangelo_clav_lead glass_arp_lead steel_string],
-  flylo: %i[flylo_fm_shimmer dx7_glass_arp glass_arp_lead tame_wobble_lead jupiter_superlead giga_fm_lead],
+  wonky: %i[wonky_fm_shimmer dx7_glass_arp glass_arp_lead tame_wobble_lead jupiter_superlead giga_fm_lead],
   ballad: %i[jazz_ballad_lead cs80_brass_lead nord_stage_lead soft_synth_lead yamaha_ballad_lead],
   gospel: %i[cs80_brass_lead gospel_brass_lead stevie_organ_lead jp8_brass_arp trombone_soul],
   erykah: %i[erykah_dust_lead portishead_dust_lead rhodes_lead_comp mark1_soul_lead],
@@ -521,14 +521,14 @@ LEAD_VOICE_POOLS = {
   cs: %i[cs80_brass_lead cs_lead glasper_ep_lead soul_prophet_arp],
   minimoog: %i[minimoog_lead mono_poly_lead questlove_moog_lead moog_dilla_pocket],
   pluck: %i[neo_soul_pluck dx7_glass_arp dangelo_clav_lead glass_arp_lead shamisen_pluck],
-  glass: %i[dx7_glass_arp glass_arp_lead flylo_fm_shimmer jupiter_superlead giga_fm_lead],
+  glass: %i[dx7_glass_arp glass_arp_lead wonky_fm_shimmer jupiter_superlead giga_fm_lead],
   vapor: %i[vapor_lead jupiter_superlead tame_wobble_lead obxr_sync_lead supersaw_4],
   crystal: %i[dx7_glass_arp glass_arp_lead crystal_scale_lead],
   acid: %i[acid_pluck_lead sh101_sequence mono_poly_lead moog_ladder_lead],
   neon: %i[obxr_sync_lead mono_poly_lead jupiter_superlead acid_pluck_lead],
   yamaha: %i[yamaha_ballad_lead yamaha_scale_arp clean_jazz_guitar],
   vintage: %i[vintage_dream_lead giga_fm_lead harmonica_soul],
-  giga: %i[giga_fm_lead giga_fm_bass_lead flylo_fm_shimmer],
+  giga: %i[giga_fm_lead giga_fm_bass_lead wonky_fm_shimmer],
   supersaw: %i[supersaw_1 supersaw_2 supersaw_4 vapor_lead],
   harmonica: %i[harmonica_soul muted_trumpet_lead],
   guitar: %i[clean_jazz_guitar steel_string],
@@ -566,7 +566,7 @@ LEAD_ARP_PRESETS = {
                     arp_styles: %i[up downup quint_spread] },
   prophet_glass:  { style: :pingpong, subdiv: 6, gate: 0.62, vel: 0.52,
                     arp_styles: %i[pingpong skip_up updown] },
-  flylo_spiral:   { style: :spiral, subdiv: 8, gate: 0.58, vel: 0.46,
+  wonky_spiral:   { style: :spiral, subdiv: 8, gate: 0.58, vel: 0.46,
                     arp_styles: %i[spiral fibonacci random_walk] },
   neo_quartal:    { style: :quint_spread, subdiv: 6, gate: 0.68, vel: 0.46,
                     arp_styles: %i[quint_spread updown major_third_cycle_full] },
@@ -582,7 +582,7 @@ LEAD_ARP_PRESETS = {
   glass_spin:     { style: :spiral, subdiv: 6, gate: 0.58, vel: 0.46,
                     arp_styles: %i[spiral quint_spread pingpong] },
   vapor_wave:     { style: :updown, subdiv: 4, gate: 0.7, vel: 0.44,
-                    arp_styles: %i[updown flylo_wobble] },
+                    arp_styles: %i[updown wonky_wobble] },
   acid_run:       { style: :up, subdiv: 8, gate: 0.42, vel: 0.52,
                     arp_styles: %i[up skip_up euclidean] },
   crystal_scatter: { style: :fibonacci, subdiv: 6, gate: 0.55, vel: 0.45,
@@ -592,9 +592,9 @@ LEAD_ARP_PRESETS = {
 # Aggressive xlead arp figures — per-chord morph when LEAD_MORPH=1.
 EXPERIMENTAL_LEAD_ARP_PRESETS = {
   hard_stab:     { style: :donda_stab, subdiv: 8, gate: 0.44, vel: 0.64,
-                   arp_styles: %i[donda_stab euclidean flylo_wobble stutter burst] },
-  flylo_spiral:  { style: :spiral, subdiv: 8, gate: 0.52, vel: 0.56,
-                   arp_styles: %i[spiral fibonacci random_walk flylo_wobble ratchet] },
+                   arp_styles: %i[donda_stab euclidean wonky_wobble stutter burst] },
+  wonky_spiral:  { style: :spiral, subdiv: 8, gate: 0.52, vel: 0.56,
+                   arp_styles: %i[spiral fibonacci random_walk wonky_wobble ratchet] },
   glitch_walk:   { style: :random_walk, subdiv: 12, gate: 0.4, vel: 0.58,
                    arp_styles: %i[random_walk stutter ratchet euclidean burst] },
   prophet_saw:   { style: :pingpong, subdiv: 6, gate: 0.5, vel: 0.58,
@@ -602,14 +602,14 @@ EXPERIMENTAL_LEAD_ARP_PRESETS = {
   moog_rip:      { style: :up, subdiv: 4, gate: 0.62, vel: 0.6,
                    arp_styles: %i[up downup quint_spread ratchet stutter] },
   shred_burst:   { style: :burst, subdiv: 8, gate: 0.38, vel: 0.66,
-                   arp_styles: %i[burst stutter donda_stab flylo_wobble] },
+                   arp_styles: %i[burst stutter donda_stab wonky_wobble] },
   stutter_gate:  { style: :stutter, subdiv: 12, gate: 0.35, vel: 0.62,
                    arp_styles: %i[stutter ratchet euclidean skip_up burst] },
   ratchet_funk:  { style: :ratchet, subdiv: 6, gate: 0.48, vel: 0.64,
-                   arp_styles: %i[ratchet updown major_third_cycle_full burst flylo_wobble] },
+                   arp_styles: %i[ratchet updown major_third_cycle_full burst wonky_wobble] },
 }.freeze
 
 PAD_TO_LEAD_ARP = {
   wash: :soul_wash, shimmer: :donuts_shimmer, pulse: :moog_funk, blend: :neo_quartal,
-  duo: :prophet_glass, figure: :flylo_spiral, held: nil,
+  duo: :prophet_glass, figure: :wonky_spiral, held: nil,
 }.freeze

@@ -28,7 +28,7 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
          else
            { bits: 8, samples: 1.2, mix: 0.12 }
          end
-  haas = cfg[:style_family] == :flylo ? ",adelay=0|12" : ""
+  haas = cfg[:style_family] == :wonky ? ",adelay=0|12" : ""
   # Grit as a per-track compositional choice, not a fixed mix-bus setting
   # — cleaner through the exposition, dirtiest through the development
   # section, pulled back as the build lands. A producer varying the dirt
@@ -44,17 +44,17 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
     else
       "acrusher=bits=#{base[:bits]}:samples=#{base[:samples]}:mix=#{base[:mix]},"
     end
-  kick_boost = if flylo_primary_drums?
+  kick_boost = if wonky_primary_drums?
                  6.5
                elsif cfg[:style_family] == :dilla
                  3.5
                else
                  0.58
                end
-  # Bus fader. Comfort / explicit DRUM_BUS_VOL wins over the old hot FlyLo path.
+  # Bus fader. Comfort / explicit DRUM_BUS_VOL wins over the old hot Wonky path.
   base_vol = if ENV["DRUM_BUS_VOL"] && !ENV["DRUM_BUS_VOL"].empty?
                ENV["DRUM_BUS_VOL"].to_f.round(3)
-             elsif flylo_primary_drums?
+             elsif wonky_primary_drums?
                1.35
              else
                (0.24 * kick_velocity_scale + 0.1).round(2)
@@ -63,17 +63,17 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
   # 2026-08-10 ("make drums louder"). One multiplier, so it lifts kit and
   # sample-kick together and does not re-balance anything inside the bus.
   #
-  # The FlyLo path keeps 1.4: it is already the hot branch and stacking a raise
+  # The Wonky path keeps 1.4: it is already the hot branch and stacking a raise
   # on top of it is how the drums got called "too hard" before.
   #
   # Tune with DRUM_BUS_GAIN rather than editing this — the env var wins, and
   # every preset hash below carries its own value that this does not touch.
-  bus_gain = ENV.fetch("DRUM_BUS_GAIN", flylo_primary_drums? ? "1.4" : "1.26").to_f
+  bus_gain = ENV.fetch("DRUM_BUS_GAIN", wonky_primary_drums? ? "1.4" : "1.26").to_f
   drum_vol = (ENV["DEBUG_DRUM_WEIGHT"] || (base_vol * bus_gain).round(3)).to_s
   drum_air = ENV.fetch("DRUM_AIR_DB", "2.5").to_f
   drum_pres = ENV.fetch("DRUM_PRESENCE_DB", "2.5").to_f
   kick_boost = comfort_mode? ? [kick_boost, 1.2].min : kick_boost
-  flylo_eq = if flylo_drum_overlay_enabled? && !comfort_mode?
+  wonky_eq = if wonky_drum_overlay_enabled? && !comfort_mode?
                # Was stacking +5/+2.5/+4.9/+3.5dB across bass, low-mid, presence,
                # and air all at once -- direct feedback that the drums sound
                # "too hard" pointed at this chain. Presence/air were the biggest
@@ -104,7 +104,7 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
                 "afade=t=in:st=0:d=#{bar_sec.round(2)}:curve=qsin,"
               end
   head = "[0:a]aformat=channel_layouts=stereo,#{bus_analog_filter(:drums)}volume=#{drum_vol}," \
-         "#{drum_fade}equalizer=f=480:t=h:w=420:g=-1.5,#{flylo_eq}"
+         "#{drum_fade}equalizer=f=480:t=h:w=420:g=-1.5,#{wonky_eq}"
   # chomp the comma first: head ends comma-terminated so the next filter can be
   # appended, and pinning a label straight onto it yields ",[d_pre]" -- which
   # ffmpeg parses as an empty filter name and rejects the whole graph.

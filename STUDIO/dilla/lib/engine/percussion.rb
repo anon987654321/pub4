@@ -15,7 +15,7 @@ def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
   # Polyrhythm 5:4 layer
   poly5 = bar_p / 5.0
   (0...(duration / poly5).floor).each do |i|
-    next if family != :flylo && i % 5 != 0
+    next if family != :wonky && i % 5 != 0
     t = (i * poly5).round(6)
     events[:poly5] ||= []
     events[:poly5] << [t, (0.12 + 0.06 * Math.sin(i * 0.9)).clamp(0.06, 0.28), :rim]
@@ -37,7 +37,7 @@ def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
   end
 
   # Rim / brush / woodblock / agogo / glitch / tabla / tambourine — both
-  # style families now get the eclectic layer (was FlyLo-only, which left
+  # style families now get the eclectic layer (was Wonky-only, which left
   # :dilla-family tracks — most of STREAM_TRACKS — with almost nothing
   # here beyond sparse woodblock/agogo; real critique was "not intricate
   # or dynamic"). :dilla family gets a calmer rate, not zero.
@@ -47,8 +47,8 @@ def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
                               chord_bars: @render_chord_bars, phrase_bars: @render_phrase_bars)
     t = (i * step_p).round(6)
     r = rng.rand
-    if family == :flylo || family == :dilla
-      wild = family == :flylo ? 1.0 : 0.6
+    if family == :wonky || family == :dilla
+      wild = family == :wonky ? 1.0 : 0.6
       events[:rim] ||= []
       events[:rim] << [t, dilla_velocity(0.28, bar, i % 16, spread: 0.1), 0.35] if r < 0.04 * density * wild
       events[:glitch] ||= []
@@ -78,7 +78,7 @@ def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
   # Trigger-finger miss (intentional dropout)
   %i[kick snare hat].each do |key|
     next unless events[key]
-    events[key] = events[key].reject { |hit| rng.rand < 0.04 } if family == :flylo
+    events[key] = events[key].reject { |hit| rng.rand < 0.04 } if family == :wonky
   end
 
   events

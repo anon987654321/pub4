@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 #
-# Drum bus routing: FlyLo dual bus, ducking, field layer, drop bars.
+# Drum bus routing: Wonky dual bus, ducking, field layer, drop bars.
 #
 # Part of the dilla engine, split out of dilla.rb. Defines methods and
 # constants at top level exactly as it did there; dilla.rb requires the
@@ -20,12 +20,12 @@
 # Order matters: modulation BEFORE the EQ, so the phaser's own notches get
 # shaped by the top-end lift rather than fighting it, and light saturation last
 # so it thickens what the modulation produced.
-FLYLO_TOP_DIRT = (ENV["FLYLO_TOP_DIRT"] || 0).to_f.clamp(0.0, 1.0)
+WONKY_TOP_DIRT = (ENV["WONKY_TOP_DIRT"] || 0).to_f.clamp(0.0, 1.0)
 
-def flylo_top_dirt
-  return "" if FLYLO_TOP_DIRT <= 0.0
+def wonky_top_dirt
+  return "" if WONKY_TOP_DIRT <= 0.0
 
-  d = FLYLO_TOP_DIRT
+  d = WONKY_TOP_DIRT
   "aphaser=in_gain=0.6:out_gain=0.8:delay=#{(2.5 + (2.0 * d)).round(2)}:" \
     "decay=#{(0.3 * d).round(3)}:speed=#{(0.35 + (0.5 * d)).round(3)}," \
     "flanger=delay=#{(3.0 + (4.0 * d)).round(2)}:depth=#{(2.0 * d).round(2)}:" \
@@ -45,16 +45,16 @@ end
 # The dual-bus split makes this exact rather than approximate: the sub bus IS
 # the kick, so it can key the compressor directly instead of using the whole kit
 # as a trigger and ducking on every snare too.
-FLYLO_HAT_DUCK = (ENV["FLYLO_HAT_DUCK"] || 0).to_f.clamp(0.0, 1.0)
+WONKY_HAT_DUCK = (ENV["WONKY_HAT_DUCK"] || 0).to_f.clamp(0.0, 1.0)
 
-def flylo_duck_split
-  FLYLO_HAT_DUCK.positive? ? ",asplit=2[sub][subkey]" : "[sub]"
+def wonky_duck_split
+  WONKY_HAT_DUCK.positive? ? ",asplit=2[sub][subkey]" : "[sub]"
 end
 
-def flylo_duck_apply
-  return "[top]" unless FLYLO_HAT_DUCK.positive?
+def wonky_duck_apply
+  return "[top]" unless WONKY_HAT_DUCK.positive?
 
-  d = FLYLO_HAT_DUCK
+  d = WONKY_HAT_DUCK
   # Threshold high, release short. At 0.056 this triggered on anything in the
   # kick bus above about -25 dBFS, which is most of the time, so it behaved as a
   # general compressor on the top bus rather than as a duck -- measured, cymbals
@@ -114,21 +114,21 @@ def drum_field_layer!(drum_path, duration:)
   end
 end
 
-def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
+def merge_wonky_dual_bus!(drum_path, sub_path, top_path)
   unless File.file?(drum_path)
-    warn "flylo merge: missing drum bus — skipping overlay"
+    warn "wonky merge: missing drum bus — skipping overlay"
     return
   end
   unless File.file?(sub_path) && File.file?(top_path)
-    warn "flylo merge: overlay bus missing (sub=#{File.file?(sub_path)} top=#{File.file?(top_path)}) — skipping"
+    warn "wonky merge: overlay bus missing (sub=#{File.file?(sub_path)} top=#{File.file?(top_path)}) — skipping"
     return
   end
   merged = "#{drum_path}.merged.#{Process.pid}.wav"
-  boost = ENV.fetch("FLYLO_MERGE_BOOST", flylo_primary_drums? ? "1.85" : "1.22").to_f
-  sub_vol = (ENV.fetch("FLYLO_SUB_MIX", flylo_primary_drums? ? "1.05" : "0.38").to_f * boost).round(3)
-  top_vol = (ENV.fetch("FLYLO_TOP_MIX", flylo_primary_drums? ? "0.88" : "0.32").to_f * boost).round(3)
-  # Empty pocket base under FlyLo-only — don't pad-mix silence that dilutes the kit.
-  base_vol = ENV.fetch("FLYLO_BASE_DRUM_VOL", flylo_primary_drums? ? "0.15" : "1.0").to_f.round(3)
+  boost = ENV.fetch("WONKY_MERGE_BOOST", wonky_primary_drums? ? "1.85" : "1.22").to_f
+  sub_vol = (ENV.fetch("WONKY_SUB_MIX", wonky_primary_drums? ? "1.05" : "0.38").to_f * boost).round(3)
+  top_vol = (ENV.fetch("WONKY_TOP_MIX", wonky_primary_drums? ? "0.88" : "0.32").to_f * boost).round(3)
+  # Empty pocket base under Wonky-only — don't pad-mix silence that dilutes the kit.
+  base_vol = ENV.fetch("WONKY_BASE_DRUM_VOL", wonky_primary_drums? ? "0.15" : "1.0").to_f.round(3)
   # Sub bus used to lowpass @ 220Hz and kill kick click/body (150Hz+beater).
   # Keep boom + mid punch so kicks read on laptop speakers.
   sh! "ffmpeg", "-y", "-i", drum_path, "-i", sub_path, "-i", top_path,
@@ -136,10 +136,10 @@ def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
       "[0:a]volume=#{base_vol}[base];" \
       "[1:a]highpass=f=28,lowpass=f=520,equalizer=f=55:t=o:w=0.75:g=6.5," \
       "equalizer=f=110:t=o:w=1.0:g=4.0,equalizer=f=180:t=o:w=1.1:g=3.0," \
-      "volume=#{sub_vol}#{flylo_duck_split};" \
-      "[2:a]#{flylo_top_dirt}highpass=f=700,equalizer=f=3500:t=o:w=1.3:g=5.5," \
+      "volume=#{sub_vol}#{wonky_duck_split};" \
+      "[2:a]#{wonky_top_dirt}highpass=f=700,equalizer=f=3500:t=o:w=1.3:g=5.5," \
   "equalizer=f=6500:t=o:w=1.4:g=6.5,equalizer=f=9000:t=h:w=1.2:g=4.0," \
-  "volume=#{top_vol}#{flylo_duck_apply};" \
+  "volume=#{top_vol}#{wonky_duck_apply};" \
       "[base][sub][top]amix=inputs=3:duration=first:normalize=0," \
       "alimiter=limit=0.97:level_out=0.98",
       "-c:a", "pcm_s16le", merged

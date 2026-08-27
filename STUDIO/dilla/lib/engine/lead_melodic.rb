@@ -8,7 +8,7 @@
 # computed at load time from ones declared above them.
 
 # Occasional lead bursts — not every chord gets an arp. When they fire, use
-# intricate patterns (euclidean, fibonacci, flylo wobble, etc.) with
+# intricate patterns (euclidean, fibonacci, wonky wobble, etc.) with
 # call-and-response and patch-specific gate lengths.
 # --- The counter-line -------------------------------------------------------
 #

@@ -154,7 +154,7 @@ def arrange_fugue_progression(pads, needed_chords, cfg)
   recapitulation = [(needed_chords * 0.25).round, hook.length].max
   coda = [needed_chords - (exposition * hook.length) - development_len - recapitulation, 0].max
 
-  dev_root = hook.last[:hz].min * (cfg[:style_family] == :flylo ? (2**(3.0 / 12.0)) : 1.0)
+  dev_root = hook.last[:hz].min * (cfg[:style_family] == :wonky ? (2**(3.0 / 12.0)) : 1.0)
   dev_style = case cfg[:progression]
               when :planing then :planing
               when :chromatic_mediant then :chromatic_mediant
@@ -214,8 +214,8 @@ def camel_drum_entry_bar
   ENV.fetch("CAMEL_DRUM_ENTRY_BAR", "0").to_i
 end
 
-def camel_keep_flylo_on_breakdown?
-  ENV.fetch("CAMEL_KEEP_FLYLO", camel_mode? ? "1" : "0") != "0"
+def camel_keep_wonky_on_breakdown?
+  ENV.fetch("CAMEL_KEEP_WONKY", camel_mode? ? "1" : "0") != "0"
 end
 
 def la_beat_progression_enabled?
@@ -255,7 +255,7 @@ def sync_progression_to_track!(track)
   ENV["PROGRESSION"] = track.to_s
 end
 
-# LA beat / FlyLo stream — stitch random long sections with variable bar lengths
+# LA beat / Wonky stream — stitch random long sections with variable bar lengths
 # instead of looping the first four bars forever.
 def arrange_la_beat_progression(pads, needed_chords, cfg)
   return arrange_loop_progression(pads, needed_chords, cfg) + [nil] if pads.empty?

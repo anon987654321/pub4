@@ -4,13 +4,49 @@
   "source": "camel_stem_hiphop_pocket",
   "source_url": "https://www.youtube.com/watch?v=t6SXXx1Fu_4",
   "source_stem": "samples/demux/htdemucs_6s/flylo_camel_source/drums.wav",
-  "flylo_kicks": [0, 3, 6, 10, 13],
-  "flylo_snares": [4, 12],
-  "flylo_ghost_snares": [7, 15, 10],
-  "flylo_hats": [0, 2, 4, 6, 8, 10, 12, 14],
-  "flylo_hat_ghosts": [1, 3, 5, 9, 11, 13],
-  "flylo_perc": [3, 9, 11],
-  "flylo_claps": [4, 12],
+  "wonky_kicks": [
+    0,
+    3,
+    6,
+    10,
+    13
+  ],
+  "wonky_snares": [
+    4,
+    12
+  ],
+  "wonky_ghost_snares": [
+    7,
+    15,
+    10
+  ],
+  "wonky_hats": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14
+  ],
+  "wonky_hat_ghosts": [
+    1,
+    3,
+    5,
+    9,
+    11,
+    13
+  ],
+  "wonky_perc": [
+    3,
+    9,
+    11
+  ],
+  "wonky_claps": [
+    4,
+    12
+  ],
   "slug": "flylo_camel",
   "note": "Hip-hop pocket from Camel stem: downbeat kick, 2/4 snare, ghost snares, swung hats. Raw onset grid alone was unmusical.",
   "learned_at": "2026-07-18T18:30:00Z"

@@ -496,7 +496,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     cowbell: synth_cowbell_sample,
   )
   # Chop override off by default in comfort (DRUM_CHOPS=0); camel chops are
-  # always the same FlyLo slice and undo EXTERNAL_KIT character.
+  # always the same Wonky slice and undo EXTERNAL_KIT character.
   apply_drum_chops_to_kit!(kit) if ENV.fetch("DRUM_CHOPS", comfort_mode? ? "0" : "1") != "0"
   unless dilla_pocket_drums_enabled?
     bar_p = beat_p * 4.0
@@ -530,16 +530,16 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   render_sample_bus_wav(drum_tmp, events, duration, kit, drum_bus_mapping)
   drum_field_layer!(drum_tmp, duration:)
     console_strip!(drum_tmp, seed: 11)
-  if flylo_drum_overlay_enabled?
-    flylo_sub_tmp = dilla_render_tmp("flylo_sub")
-    flylo_top_tmp = dilla_render_tmp("flylo_top")
+  if wonky_drum_overlay_enabled?
+    wonky_sub_tmp = dilla_render_tmp("wonky_sub")
+    wonky_top_tmp = dilla_render_tmp("wonky_top")
     begin
-      render_sample_bus_wav(flylo_sub_tmp, events, duration, kit, flylo_sub_bus_mapping)
-      render_sample_bus_wav(flylo_top_tmp, events, duration, kit, flylo_top_bus_mapping)
-      merge_flylo_dual_bus!(drum_tmp, flylo_sub_tmp, flylo_top_tmp)
+      render_sample_bus_wav(wonky_sub_tmp, events, duration, kit, wonky_sub_bus_mapping)
+      render_sample_bus_wav(wonky_top_tmp, events, duration, kit, wonky_top_bus_mapping)
+      merge_wonky_dual_bus!(drum_tmp, wonky_sub_tmp, wonky_top_tmp)
     ensure
-      FileUtils.rm_f(flylo_sub_tmp)
-      FileUtils.rm_f(flylo_top_tmp)
+      FileUtils.rm_f(wonky_sub_tmp)
+      FileUtils.rm_f(wonky_top_tmp)
       FileUtils.rm_f("#{drum_tmp}.merged.#{Process.pid}.wav")
     end
   end
@@ -547,12 +547,12 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # sound flat/wrong. Comfort / DRUM_PEAK_LIFT_DB=0 skips the old always-hot lift
   # that made every mix's drums equally loud regardless of bus fader.
   if File.file?(drum_tmp)
-    peak_db = ENV.fetch("DRUM_PEAK_DB", flylo_primary_drums? ? "-1.0" : "-3.0").to_f
+    peak_db = ENV.fetch("DRUM_PEAK_DB", wonky_primary_drums? ? "-1.0" : "-3.0").to_f
     lift_db = if ENV["DRUM_PEAK_LIFT_DB"] && !ENV["DRUM_PEAK_LIFT_DB"].empty?
                 ENV["DRUM_PEAK_LIFT_DB"].to_f
               elsif comfort_mode?
                 0.0
-              elsif flylo_primary_drums?
+              elsif wonky_primary_drums?
                 5.5
               else
                 3.5

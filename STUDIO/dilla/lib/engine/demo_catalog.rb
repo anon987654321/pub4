@@ -15,7 +15,7 @@
 # This was fourteen slots naming nine voices, and three of them -- stack_rhodes,
 # stack_prophet, stack_soul -- filled more than half. Measured across all 86
 # tracks, 13 of the 37 defined pad voices were ever selected and 24 never were,
-# including every one of pad_dilla, pad_flylo and pad_royksopp: voices named for
+# including every one of pad_dilla, pad_wonky and pad_royksopp: voices named for
 # the producers this engine models, which had never been rendered once.
 #
 # Widened to reach all of them. The repeats that remain are deliberate -- the
@@ -29,7 +29,7 @@
 # slots read as one long stack.
 DEMO_PAD_ROTATION = %w[
   stack_rhodes stack_prophet pad_dilla stack_soul rhodes
-  pad_flylo prophet stack_glass rhodes_solo stack_vapor
+  pad_wonky prophet stack_glass rhodes_solo stack_vapor
   stack_rhodes pad_madlib moog stack_prophet vintage
   stack_soul pad_royksopp blend stack_yamaha glass
   stack_rhodes fm stack_vintage prophet nylon_soul
@@ -76,7 +76,7 @@ def capability_surfaces
     "lead voices" => [(defined?(LEAD_VOICE_PRESETS) ? LEAD_VOICE_PRESETS.keys : []),
                       STREAM_LEAD_VOICE_ROTATION],
     # LEAD_ARP_PRESETS, not ARP_PATTERN_BUILDERS. The rotation holds arp *modes*
-    # (flylo_spiral, soul_wash) and the builders are the low-level figures those
+    # (wonky_spiral, soul_wash) and the builders are the low-level figures those
     # modes draw from (up, euclidean, rosary) -- two vocabularies that share no
     # key, so the old pairing reported 29 of 29 unreachable no matter what was
     # rotated. The builders are reached at render time by arp_styles unions and

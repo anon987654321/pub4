@@ -30,9 +30,9 @@ def stream(bars_count = STREAM_BARS_COUNT)
     env_pass = %w[
       RENDER_MODE STREAM_SOUL STREAM_COMFORT STREAM_PUNCH DILLA_COMFORT SPEAK RAP_VOCAL
       STREAM_DEMO STREAM_TRACK STREAM_LOCK
-      FLYLO_TOP_MIX FLYLO_SUB_MIX FLYLO_MERGE_BOOST FLYLO_OVERLAY_GAIN FLYLO_DRUM_OVERLAY
+      WONKY_TOP_MIX WONKY_SUB_MIX WONKY_MERGE_BOOST WONKY_OVERLAY_GAIN WONKY_DRUM_OVERLAY
       DRUM_BUS_VOL DRUM_BUS_GAIN DRUM_MIX_WEIGHT DRUM_AIR_DB DRUM_PRESENCE_DB
-      KICK_GAIN FLYLO_KICK_GAIN POCKET_KICKS FLYLO_DRUMS_ONLY PAD_VOL STREAM_LUFS
+      KICK_GAIN WONKY_KICK_GAIN POCKET_KICKS WONKY_DRUMS_ONLY PAD_VOL STREAM_LUFS
       STREAM_ROTATE_LEAD STREAM_ROTATE_SYNTH STREAM_DRUM_ROTATE THEORY_RUNTIME THEORY_BACH
       PAD_VOICE PAD_ARP_MODE PAD_LAYERS LEAD_VOICE LEAD_ARP_MODE PROGRESSION SECTION_CYCLE
       DRUM_PRESET FM_DRUMS SWING BPM DRUM_FADE_IN
@@ -81,7 +81,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
   # refuses to overwrite a key that already has a value, so no track's
   # TRACK_SOUL_PAD/LEAD profile ever landed; and it skipped
   # stream_rotate_voices_and_arps! outright. Measured over one stream's log: 126
-  # consecutive renders on pad=stack_soul/held lead=soul_prophet/flylo_spiral,
+  # consecutive renders on pad=stack_soul/held lead=soul_prophet/wonky_spiral,
   # every track in the cycle, which is what "it all sounds like one song" is.
   #
   # Same fix as sync_progression_to_track! got for PROGRESSION, on the pad/lead

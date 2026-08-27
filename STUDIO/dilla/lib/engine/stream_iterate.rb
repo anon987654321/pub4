@@ -79,7 +79,7 @@ def stream_iterate_after_render!(path)
     notes.concat(stream_iterate_creative_freedom!)
   end
   notes.concat(stream_iterate_evolve_harmony!)
-  notes.concat(stream_iterate_evolve_flylo_drums!)
+  notes.concat(stream_iterate_evolve_wonky_drums!)
   notes.concat(stream_iterate_analog_emulation!)
   line = "[#{Time.now.utc.iso8601}] ##{@stream_iterate_count} track=#{ENV['TRACK']} beauty=#{beauty} " \
          "sub=#{sk[:recommendation]} harsh=#{harsh[:harshness]} #{notes.join(' ')}"
@@ -208,32 +208,32 @@ def stream_iterate_evolve_harmony!
   notes
 end
 
-# Evolve FlyLo overlay density, grid bias, quint hats, and dual-bus mix across stream iterations.
-def stream_iterate_evolve_flylo_drums!
-  return [] unless flylo_drum_overlay_enabled? && stream_iterate_enabled?
-  every = [(ENV["STREAM_FLYLO_EVERY"] || ENV["EVOLVE_EVERY"] || "2").to_i, 1].max
+# Evolve Wonky overlay density, grid bias, quint hats, and dual-bus mix across stream iterations.
+def stream_iterate_evolve_wonky_drums!
+  return [] unless wonky_drum_overlay_enabled? && stream_iterate_enabled?
+  every = [(ENV["STREAM_WONKY_EVERY"] || ENV["EVOLVE_EVERY"] || "2").to_i, 1].max
   return [] unless (@stream_iterate_count % every).zero?
 
   rng = render_rng("stream_evolve_67", drift: (@stream_iterate_count || 0) + 67)
   notes = []
-  remove_instance_variable(:@flylo_overlay_grid_cache) if instance_variable_defined?(:@flylo_overlay_grid_cache)
+  remove_instance_variable(:@wonky_overlay_grid_cache) if instance_variable_defined?(:@wonky_overlay_grid_cache)
 
-  ENV["FLYLO_OVERLAY_GAIN"] = rng.rand(0.62..0.88).round(2).to_s
-  ENV["FLYLO_CHORD_DUCK"] = rng.rand(0.72..0.9).round(2).to_s
-  ENV["FLYLO_SUB_MIX"] = rng.rand(0.42..0.58).round(2).to_s
-  ENV["FLYLO_TOP_MIX"] = rng.rand(0.38..0.54).round(2).to_s
-  ENV["FLYLO_GRID_BIAS"] = %i[intro main build turn breakdown outro].sample(random: rng).to_s
-  ENV["SIDECHAIN_STYLE"] = "flylo" if rng.rand < 0.4
+  ENV["WONKY_OVERLAY_GAIN"] = rng.rand(0.62..0.88).round(2).to_s
+  ENV["WONKY_CHORD_DUCK"] = rng.rand(0.72..0.9).round(2).to_s
+  ENV["WONKY_SUB_MIX"] = rng.rand(0.42..0.58).round(2).to_s
+  ENV["WONKY_TOP_MIX"] = rng.rand(0.38..0.54).round(2).to_s
+  ENV["WONKY_GRID_BIAS"] = %i[intro main build turn breakdown outro].sample(random: rng).to_s
+  ENV["SIDECHAIN_STYLE"] = "wonky" if rng.rand < 0.4
 
   if ENV.fetch("STREAM_LEARN_BIAS", "0") != "0" && rng.rand < 0.45
     if (hint = learn_catalog_top_hint)
       DillaSourceLearn.apply_hints_to_env!(hint)
-      notes << "flylo_learn=#{hint[:track] || hint['track']}"
+      notes << "wonky_learn=#{hint[:track] || hint['track']}"
     end
   end
 
-  notes << "flylo_gain=#{ENV['FLYLO_OVERLAY_GAIN']}"
-  notes << "flylo_grid=#{ENV['FLYLO_GRID_BIAS']}"
+  notes << "wonky_gain=#{ENV['WONKY_OVERLAY_GAIN']}"
+  notes << "wonky_grid=#{ENV['WONKY_GRID_BIAS']}"
   notes << "drum_gain=#{ENV['DRUM_BUS_GAIN']}" if ENV["DRUM_BUS_GAIN"]
   notes << "rap_vocal=#{ENV['RAP_VOCAL']}" if rap_vocal_stream_slug
   notes

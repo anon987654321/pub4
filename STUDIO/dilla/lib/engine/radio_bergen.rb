@@ -27,8 +27,8 @@ module RadioBergenStudy
                     dilla_track: "maj7_minor_cycle", sonic_key: "dilla_timeless", bpm: 86..92 },
     /slum village/i => { producer: "dilla", performer: "questlove", groove_dna: "donuts",
                          dilla_track: "neo_soul_pocket", sonic_key: "slum_players", bpm: 90..96 },
-    /flying lotus/i => { producer: "flylo", performer: "glasper", groove_dna: "wonky",
-                         dilla_track: "quartal_west_coast", sonic_key: "flylo_camel", bpm: 82..88 },
+    /flying lotus/i => { producer: "wonky", performer: "glasper", groove_dna: "wonky",
+                         dilla_track: "quartal_west_coast", sonic_key: "wonky_camel", bpm: 82..88 },
     /madlib/i => { producer: "madlib", performer: "karriem_riggins", groove_dna: "dust",
                    dilla_track: "minor_triad_walk", sonic_key: "madlib_eye", bpm: 92..98 },
     /samiyam/i => { producer: "dilla", performer: "yancey", groove_dna: "donuts",
@@ -44,8 +44,8 @@ module RadioBergenStudy
       dilla_track: "warm_minor_vamp", sonic_key: "dilla_timeless", bpm: 84..90,
       mix: "akmd_lofi_mastering",
     },
-    /mochi|itoh/i => { producer: "flylo", performer: "glasper", groove_dna: "wonky",
-                       dilla_track: "modal_safe", sonic_key: "flylo_camel", bpm: 120..128 },
+    /mochi|itoh/i => { producer: "wonky", performer: "glasper", groove_dna: "wonky",
+                       dilla_track: "modal_safe", sonic_key: "wonky_camel", bpm: 120..128 },
   }.freeze
 
   module_function
@@ -150,7 +150,7 @@ module RadioBergenStudy
       "stream_env_defaults" => INLINE_RADIO_BERGEN_LEARNINGS["stream_env_defaults"],
       "mix_notes" => [
         "AKMD local_mp3 rows use pub2 lofi mastering chain (60Hz HPF, 11.5kHz LPF, 80/200Hz boosts, soft clip).",
-        "Playlist rotation is Dilla/Slum/FlyLo weighted — bias stream TRACK toward stream_rotation_weights.",
+        "Playlist rotation is Dilla/Slum/Wonky weighted — bias stream TRACK toward stream_rotation_weights.",
         "Bergen local artists → warm_minor_vamp / warm pad wash; beat references → mapped producer DNA.",
         "Never autoplay YouTube in production without rights review — manifest is reference_only_until_rights_review.",
       ],
@@ -211,7 +211,7 @@ module RadioBergenStudy
     dilla_engine: { track: "slash_neo_soul", performer: "chris_dave" }
   },
   "flying_lotus_massage_situation" => {
-    bpm: 85, key: "Cm", drum_preset: :flylo_abstract, groove_dna: "wonky",
+    bpm: 85, key: "Cm", drum_preset: :wonky_abstract, groove_dna: "wonky",
     drums: "Broken 16ths; kicks on 0,5,8,13; snares displaced 2,6,10,15; heavy ghost layer.",
     texture: "Glitch clicks, sidechain pump, stereo pan on hats; sub drops out for air.",
     harmony: "Quartal stacks; chromatic mediant drift.",
@@ -264,22 +264,22 @@ module RadioBergenStudy
     dilla_engine: { track: "maj7_minor_cycle", performer: "questlove" }
   },
   "flying_lotus_me_yesterday_corded" => {
-    bpm: 83, key: "D", drum_preset: :flylo_abstract, groove_dna: "wonky",
+    bpm: 83, key: "D", drum_preset: :wonky_abstract, groove_dna: "wonky",
     drums: "Broken beat; irregular kick; snare clusters; glitch percussion.",
     texture: "Chopped vocal fragments; heavy stereo motion.",
     harmony: "Suspended ballad / chromatic drift.",
     dilla_engine: { track: "suspended_ballad", performer: "glasper" }
   },
   "flying_lotus_camel" => {
-    bpm: 84, key: "C", drum_preset: :flylo_abstract, groove_dna: "wonky",
+    bpm: 84, key: "C", drum_preset: :wonky_abstract, groove_dna: "wonky",
     drums: "Off-kilter 16ths; kick 0,5,8,13; snare 2,6,10,15; sidechain pump.",
     texture: "Quartal jazz haze; sidechain; vinyl 0.08; pan on arps.",
     harmony: "Cmaj9–Am9–Fmaj9–G6 quartal west coast.",
-    mix: "FlyLo camel preset — master LP 3.6 kHz.",
-    dilla_engine: { track: "quartal_west_coast", performer: "glasper", sonic_key: "flylo_camel" }
+    mix: "Wonky camel preset — master LP 3.6 kHz.",
+    dilla_engine: { track: "quartal_west_coast", performer: "glasper", sonic_key: "wonky_camel" }
   },
   "flying_lotus_golden_diva" => {
-    bpm: 82, key: "Eb", drum_preset: :flylo_abstract, groove_dna: "wonky",
+    bpm: 82, key: "Eb", drum_preset: :wonky_abstract, groove_dna: "wonky",
     drums: "Slow loose pocket; minimal kick; brush-like hats.",
     texture: "Glasper quartal keys; long reverb.",
     harmony: "Ebmaj9–Cm9–Abmaj9–Bb6.",
@@ -377,7 +377,7 @@ module RadioBergenStudy
     dilla_engine: { track: "iv_borrow_minor", performer: "yancey" }
   },
   "flying_lotus_bts_radio_2006" => {
-    bpm: 86, key: "varies", drum_preset: :flylo_abstract, groove_dna: "wonky",
+    bpm: 86, key: "varies", drum_preset: :wonky_abstract, groove_dna: "wonky",
     drums: "Live mix: long blends; percussion overdubs; tempo drift.",
     texture: "Radio collage; reverb throws; DJ-style filter sweeps.",
     harmony: "Multi-track medley — quartal + suspended ballads.",
@@ -591,8 +591,8 @@ end
         "harmony" => "maj7_minor_cycle + minor_iv_loop family",
         "bpm_cluster" => "86–94",
       },
-      "flylo_canon" => {
-        "drum_pattern" => "flylo_abstract broken 16ths; kick 0,5,8,13; displaced snares",
+      "wonky_canon" => {
+        "drum_pattern" => "wonky_abstract broken 16ths; kick 0,5,8,13; displaced snares",
         "texture" => "sidechain pump + jazz haze; quartal voicings; stereo pan hats",
         "harmony" => "quartal_west_coast / modern_quartal_stack",
         "bpm_cluster" => "82–88",

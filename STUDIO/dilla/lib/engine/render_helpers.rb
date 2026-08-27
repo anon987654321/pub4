@@ -175,10 +175,10 @@ def chord_pitch_classes(pads)
 end
 
 def sidechain_filter_chain(cfg, drum_label: "[drums]")
-  return flylo_sidechain_filters(drum_label:) unless cfg[:style_family] == :dilla
+  return wonky_sidechain_filters(drum_label:) unless cfg[:style_family] == :dilla
 
-  if ENV.fetch("SIDECHAIN_STYLE", "dilla").to_s == "flylo"
-    flylo_sidechain_filters(drum_label:)
+  if ENV.fetch("SIDECHAIN_STYLE", "dilla").to_s == "wonky"
+    wonky_sidechain_filters(drum_label:)
   else
     dilla_sidechain_filters(drum_label:)
   end
@@ -214,8 +214,8 @@ def dilla_role_velocity(role, bar, step, sec_gain: 1.0, backbeat: false)
   # same phrase), not the most locked-in.
   spread = role == :ghost ? 0.22 : 0.08
   vel = dilla_velocity(base, bar, step, spread:) * sec_gain
-  # FlyLo primary: kick-forward; snares/hats sit under kick (tops were piercing).
-  if flylo_primary_drums?
+  # Wonky primary: kick-forward; snares/hats sit under kick (tops were piercing).
+  if wonky_primary_drums?
     mul = case role
           when :kick_anchor, :kick_sync then 1.4
           when :snare, :clap then 1.05

@@ -83,14 +83,14 @@ end
 
 def style_family(track, feel: nil)
   if (entry = DillaLofiMachine.profile_entry(track))
-    return :flylo if entry[:producer] == :flylo
+    return :wonky if entry[:producer] == :wonky
     return :madlib if entry[:producer] == :madlib
     return :dilla
   end
-  return :flylo if FLYLO_TRACKS.include?(track.to_sym) || feel == :loose_pocket
+  return :wonky if WONKY_TRACKS.include?(track.to_sym) || feel == :loose_pocket
   return :dilla if DILLA_TRACKS.include?(track.to_sym) ||
                    %i[timeless organic chromatic_planing syncopated_slash_ninth
-                      dilla_slight dilla_drunk madlib_dusty flylo_abstract mpc3000 sp303 sp1200].include?(feel)
+                      dilla_slight dilla_drunk madlib_dusty wonky_abstract mpc3000 sp303 sp1200].include?(feel)
   return :madlib if track.to_s.include?("madlib")
   :default
 end
@@ -98,7 +98,7 @@ end
 # A global tempo trim, so "slow the beats down" scales the whole table rather than
 # pinning one number.
 #
-# Every profile carries its own tempo -- 86 on the FlyLo transcriptions, 91 on the
+# Every profile carries its own tempo -- 86 on the Wonky transcriptions, 91 on the
 # Slum Village ones, 96 on the harder pockets -- and the distances between them are
 # the point. BPM=88 would flatten all of them into one tempo and lose what separates
 # a Camel from a Players, so the trim multiplies whatever each track already asked
@@ -243,7 +243,7 @@ def enhanced_resolve_config
   sonic = sonic_profile_for(track)
   # DRUM_FEEL names the drum PATTERN vocabulary — DRUM_PATTERN_SETS — and it had
   # no way in. The value came only from the track preset, so a set no preset
-  # declared could not be reached at all: dilla_canon, flylo_canon and one_drop
+  # declared could not be reached at all: dilla_canon, wonky_canon and one_drop
   # were written, commented, and selected by nothing. dilla_canon is the one
   # carrying Dilla's own kick anchors (0/3/10), the ghosts and the displaced
   # snares, in an engine named after him.
@@ -271,10 +271,10 @@ def enhanced_resolve_config
     quintuplet: ENV["QUINTUPLET"] ? ENV["QUINTUPLET"] != "0" : (preset[:quintuplet] || false),
     sonic:,
     style_family: family,
-    sidechain: ENV["SIDECHAIN"] != "0" && (family == :flylo || preset[:sidechain] || sonic&.dig("synth", "sidechain_pump")),
-    no_quantize: ENV["NO_QUANTIZE"] == "1" || (family == :flylo && ENV["NO_QUANTIZE"] != "0"),
+    sidechain: ENV["SIDECHAIN"] != "0" && (family == :wonky || preset[:sidechain] || sonic&.dig("synth", "sidechain_pump")),
+    no_quantize: ENV["NO_QUANTIZE"] == "1" || (family == :wonky && ENV["NO_QUANTIZE"] != "0"),
     golden_swing: ENV["GOLDEN_SWING"] == "1",
-    voicing: (ENV["VOICING"] || preset[:voicing] || (family == :flylo ? :quartal : :spread)).to_sym,
+    voicing: (ENV["VOICING"] || preset[:voicing] || (family == :wonky ? :quartal : :spread)).to_sym,
     engine_progression: sonic&.dig("harmonic", "engine_progression")&.to_sym,
     half_time_bars: preset[:half_time_bars],
     # INTRO_BARS overrides the preset. There was no way to say "start on the
@@ -287,13 +287,13 @@ def enhanced_resolve_config
     # That is the right default for a full track and the wrong one for a loop.
     # INTRO_BARS=0 starts everything on bar one; the default is unchanged.
     intro_bars: (ENV["INTRO_BARS"].to_s.strip.empty? ? nil : ENV["INTRO_BARS"].to_i) ||
-                preset.fetch(:intro_bars, family == :flylo ? 8 : 4),
+                preset.fetch(:intro_bars, family == :wonky ? 8 : 4),
     master_lufs: resolve_master_lufs(family, sonic),
     master_lra: resolve_master_lra(family, sonic),
-    # Full darken (1.0) on FlyLo was muting kick beater + snare air under pads.
+    # Full darken (1.0) on Wonky was muting kick beater + snare air under pads.
     mood_darken_strength: if family == :dilla
                             deep_render? ? 0.36 : 0.55
-                          elsif family == :flylo || camel_mode?
+                          elsif family == :wonky || camel_mode?
                             0.42
                           else
                             0.75

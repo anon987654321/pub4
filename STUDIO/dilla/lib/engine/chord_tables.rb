@@ -38,7 +38,7 @@ MODAL_MINOR_CHORDS = [
 # (Fantastic Vol. 2, ChordU); D'Angelo "Untitled (How Does It Feel)"
 # (Voodoo — same Soulquarians lineage Dilla recorded alongside); Flying
 # Lotus "Never Catch Me" (danny fratina's published chord analysis) for the
-# quartal/#11 extended-jazz color FlyLo is known for.
+# quartal/#11 extended-jazz color Wonky is known for.
 EXTENDED_TENSION_CHORDS = [
   { name: "Ebm7fil",    hz: [155.56, 185.00, 233.08, 277.18, 349.23] }, # Fall in Love
   { name: "Bbm7fil",    hz: [116.54, 138.59, 174.61, 207.65, 261.63] },

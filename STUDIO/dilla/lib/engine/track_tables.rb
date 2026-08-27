@@ -9,7 +9,7 @@
 
 # =============================================================================
 # ENHANCEMENT LAYER — sonic profiles, extended harmony, eclectic drums,
-# FlyLo sidechain, fugue structure, per-style mastering. (Merged in from the
+# Wonky sidechain, fugue structure, per-style mastering. (Merged in from the
 # former dilla_enhancements.rb — kept as one file per project convention.)
 # =============================================================================
 
@@ -28,7 +28,7 @@ INLINE_SONIC_PROFILES = {
       "texture" => "donuts_lowpass_warmth",
     },
   },
-  flylo_camel: {
+  wonky_camel: {
     "harmonic" => {
       "engine_progression" => "chromatic_mediant_drift",
       "engine_chords" => %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG],
@@ -122,10 +122,10 @@ TRACK_SONIC_MAP = {
   voice_led_minor_arc: :dilla_timeless,
   borrowed_dominant_turn: :dilla_timeless,
   soul: :dilla_timeless,
-  chromatic_mediant: :flylo_camel,
-  chromatic_mediant_drift: :flylo_camel,
+  chromatic_mediant: :wonky_camel,
+  chromatic_mediant_drift: :wonky_camel,
   sus_add9_ballad: :madlib_eye,
-  generated_mediant: :flylo_camel,
+  generated_mediant: :wonky_camel,
   generated_planing: :dilla_timeless,
   generated: :dilla_timeless,
   players: :slum_players,
@@ -155,7 +155,7 @@ CURATED_PROGRESSIONS = %i[
 # of them are exactly that. They stay reachable by name, which is the point of
 # writing them -- they are not what the rotation should reach for blind.
 
-FLYLO_TRACKS = %i[
+WONKY_TRACKS = %i[
   chromatic_mediant chromatic_mediant_drift sus_add9_ballad
   generated_mediant generated_polytonal generated_neapolitan
 ].freeze
@@ -176,7 +176,7 @@ DILLA_TRACKS = %i[
 # would be a level decision made by measurement rather than by ear.
 MASTER_LUFS_BY_STYLE = {
   dilla: -19.0,
-  flylo: -17.0,
+  wonky: -17.0,
   madlib: -18.0,
   neo_soul: -18.5,
   # -14, on operator instruction 2026-08-11 ("make it louder, -14 lufs"). The
@@ -209,7 +209,7 @@ DILLA_QUALITY_LUFS_TARGET = ((MASTER_LUFS_BY_STYLE.values.min - 1.5)..(MASTER_LU
 
 LRA_BY_STYLE = {
   dilla: 13.0,
-  flylo: 14.0,
+  wonky: 14.0,
   madlib: 13.0,
   neo_soul: 12.0,
   default: 11.0,
@@ -236,7 +236,7 @@ ARP_PATTERN_BUILDERS = {
   euclidean:    ->(n) { hits = 5; steps = n * 2; (0...steps).map { |i| ((i * hits) % steps) < hits ? i % n : nil }.compact },
   major_third_cycle_full:     ->(n) { [0, 2, 1, 3, 2, 0, 1].first(n * 2) },
   donda_stab:   ->(n) { [0, 0, 2, 1].cycle.first(n * 2) },
-  flylo_wobble: ->(n) { (0...n).flat_map { |i| [i, i, (i + 1) % n] }.first(n * 3) },
+  wonky_wobble: ->(n) { (0...n).flat_map { |i| [i, i, (i + 1) % n] }.first(n * 3) },
   stutter:      ->(n, rng = Random.new(17)) { (0...[n * 4, 24].max).filter_map do |i| if i.even?
 (i / 2) % n
 else

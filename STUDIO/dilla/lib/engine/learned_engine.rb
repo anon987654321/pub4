@@ -16,19 +16,19 @@ require_relative "../frozen_state"
 # worth a load-time dependency on a sidecar. Corrects the CITATION only -- the
 # grid below was transcribed by ear, and if it came off the wrong video no id
 # change repairs it.
-FLYLO_CAMEL_SOURCE_URL = "https://www.youtube.com/watch?v=fU9YRGLPDQ8".freeze
+WONKY_CAMEL_SOURCE_URL = "https://www.youtube.com/watch?v=fU9YRGLPDQ8".freeze
 POLY_TEMPORAL_DRUM_GRID = {
   "bpm" => 86,
   "swing" => 60,
   "source" => "pocket_dna_simple",
-  "source_url" => FLYLO_CAMEL_SOURCE_URL,
-  "flylo_kicks" => [0, 6, 10],
-  "flylo_snares" => [4, 12],
-  "flylo_ghost_snares" => [7],
-  "flylo_hats" => [0, 2, 4, 6, 8, 10, 12, 14],
-  "flylo_hat_ghosts" => [],
-  "flylo_perc" => [],
-  "flylo_claps" => [4, 12],
+  "source_url" => WONKY_CAMEL_SOURCE_URL,
+  "wonky_kicks" => [0, 6, 10],
+  "wonky_snares" => [4, 12],
+  "wonky_ghost_snares" => [7],
+  "wonky_hats" => [0, 2, 4, 6, 8, 10, 12, 14],
+  "wonky_hat_ghosts" => [],
+  "wonky_perc" => [],
+  "wonky_claps" => [4, 12],
 }.freeze
 CAMEL_PROGRESSION_SYMS = %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG].freeze
 
@@ -36,18 +36,18 @@ BUILTIN_LEARNED_ENGINE = {
   "progressions" => {
     "chromatic_mediant_drift" => CAMEL_PROGRESSION_SYMS,
     "quartal_west_coast" => CAMEL_PROGRESSION_SYMS,
-    "flylo_camel" => CAMEL_PROGRESSION_SYMS,
+    "wonky_camel" => CAMEL_PROGRESSION_SYMS,
     "camel_bridge" => CAMEL_BRIDGE_SYMS,
     "camel_functional" => CAMEL_FUNCTIONAL_SYMS,
   },
   "drum_grids" => {
     "chromatic_mediant_drift" => POLY_TEMPORAL_DRUM_GRID,
     "quartal_west_coast" => POLY_TEMPORAL_DRUM_GRID,
-    "flylo_camel" => POLY_TEMPORAL_DRUM_GRID,
+    "wonky_camel" => POLY_TEMPORAL_DRUM_GRID,
   },
   "calibrations" => {},
   "track_aliases" => {
-    "flylo_camel" => "chromatic_mediant_drift",
+    "wonky_camel" => "chromatic_mediant_drift",
     "quartal_west_coast" => "chromatic_mediant_drift",
   },
   "top_track" => nil,

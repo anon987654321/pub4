@@ -135,7 +135,7 @@ module DillaLofiMachine
     kick_anchor: 4..10, kick_sync: 8..18, bass: 24..38, pad: 4..14,
   }.freeze
 
-  FLYLO_TIMING = {
+  WONKY_TIMING = {
     snare: -26..-12, ghost: -8..14, hat_down: 4..10, hat_up: 16..32,
     kick_anchor: 2..8, kick_sync: 6..16, bass: 22..42, pad: 6..18,
   }.freeze
@@ -269,7 +269,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # were first written with, and it is why this one did not read as hip-hop.
     # The abstraction stays in the kick and the near-continuous hats; the extra
     # snares moved to ghosts, where an off-backbeat hit belongs.
-    flylo_abstract: {
+    wonky_abstract: {
       swing: 53, humanize: 4, bpm: 84, mode: :straight_sixteenth,
       kicks: [0, 5, 8, 13], snares: [4, 12],
       hats: [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15],
@@ -319,9 +319,9 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # ONE RULE, learned the hard way: the backbeat stays on 4 and 12.
     #
     # The first version of this table put dilla_lopsided on snares [5, 13] and
-    # flylo_cosmogramma on [5, 13] too, reasoning that an unusual feel needs an
+    # wonky_cosmogramma on [5, 13] too, reasoning that an unusual feel needs an
     # unusual grid. That is wrong, and every transcription in this file says so:
-    # dilla_slight, four_seven and flylo_camel are all [4, 12], as conventional
+    # dilla_slight, four_seven and wonky_camel are all [4, 12], as conventional
     # as a drum machine preset. What makes those records sound the way they do
     # is MICROTIMING_MS -- the snare arriving 10-28ms early, hats 12-32ms late,
     # kick almost on the grid -- measured in milliseconds, not in 16ths. Moving
@@ -363,7 +363,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
 
     # The Camel grid, moved here so every pattern lives in one table. dilla.rb
     # holds the same steps in POLY_TEMPORAL_DRUM_GRID for the dual-bus overlay.
-    flylo_camel: {
+    wonky_camel: {
       swing: 54, humanize: 3, bpm: 86, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [7], claps: [4, 12], perc: [],
@@ -381,7 +381,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # this is what the preset has always sounded like; the polymeter the old
     # note described is now real and reachable as POLYMETER_HATS=3, which lands
     # the 3-cycle on the global step and takes 3 bars to come back round.
-    flylo_cosmogramma: {
+    wonky_cosmogramma: {
       swing: 52, humanize: 4, bpm: 78, mode: :straight_sixteenth,
       kicks: [0, 6, 11], snares: [4, 12],
       hats: [0, 3, 6, 9, 12, 15], ghosts: [2, 14], claps: [4, 12], perc: [10],
@@ -390,14 +390,14 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # backbeat when the bar is felt at half speed -- the one legitimate way the
     # snare leaves 4 and 12. Space is the instrument; this only works under
     # something that fills it.
-    flylo_zodiac: {
+    wonky_zodiac: {
       swing: 56, humanize: 3, bpm: 72, mode: :straight_sixteenth,
       kicks: [0, 11], snares: [8], hats: [4, 12],
       ghosts: [15], claps: [8], perc: [6],
     },
     # Loose and ambient, also half-time: snare on 8, kick answering it late.
     # No clap, hats sparse. Meant to sit under a drone rather than drive.
-    flylo_massage: {
+    wonky_massage: {
       swing: 58, humanize: 4, bpm: 68, mode: :straight_sixteenth,
       kicks: [0, 10], snares: [8], hats: [3, 7, 11, 15],
       ghosts: [5], claps: [], perc: [13],
@@ -432,7 +432,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # --- Five more in the Flying Lotus manner (BUILT, not transcribed) ---
     #
     # The five that were already here cluster in one place: sparse, 68-86 BPM,
-    # kick-and-space. That is one FlyLo and not the only one. These cover
+    # kick-and-space. That is one Wonky and not the only one. These cover
     # territory the table had nothing for -- stuttered sub, live-drummer
     # density, half-time, a kick that refuses the downbeat, and warped tape.
     #
@@ -440,7 +440,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # stated idea, for the reason argued at the top of this section: moving the
     # backbeat does not make a beat drunk, it makes it not hip-hop. Character
     # here is in kick placement, ghost density and swing. The millisecond layer
-    # is FLYLO_TIMING, which attaches to a track profile rather than to a drum
+    # is WONKY_TIMING, which attaches to a track profile rather than to a drum
     # preset -- these presets deliberately carry no `timing:` key, because
     # DRUM_PRESETS entries are never consulted for it and a key that is silently
     # ignored is worse than none.
@@ -448,7 +448,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # Stuttered sub: the kick doubles on consecutive 16ths so the low end
     # trips rather than lands. Hats stay plainly straight -- the whole event is
     # in the kick, and giving the hats a pattern too would bury it.
-    flylo_burst: {
+    wonky_burst: {
       swing: 54, humanize: 3, bpm: 82, mode: :straight_sixteenth,
       kicks: [0, 1, 6, 10, 11], snares: [4, 12],
       hats: [0, 2, 4, 6, 8, 10, 12, 14], ghosts: [7, 15], claps: [12], perc: [3],
@@ -458,7 +458,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # wash with ghosts filling every remaining gap, faster than anything else
     # in this table. Swing near 50 because a player pushing this hard plays
     # closer to straight, and the humanize does the rest.
-    flylo_deantoni: {
+    wonky_deantoni: {
       swing: 55, humanize: 4, bpm: 96, mode: :straight_sixteenth,
       kicks: [0, 3, 8, 11], snares: [4, 12],
       hats: (0..15).to_a, ghosts: [2, 6, 7, 10, 14, 15], claps: [], perc: [5, 13],
@@ -467,7 +467,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # Half-time: one backbeat in the bar at 8 instead of two at 4 and 12, so
     # the bar reads as half the tempo it is counted at. Hats sit only on the
     # offbeats, which leaves the downbeats to the sub.
-    flylo_flamagra: {
+    wonky_flamagra: {
       swing: 53, humanize: 3, bpm: 74, mode: :straight_sixteenth,
       kicks: [0, 3, 9], snares: [8], hats: [2, 6, 10, 14],
       ghosts: [12], claps: [8], perc: [15],
@@ -476,7 +476,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # After the downbeat the kick never lands on a beat again -- 7, 9 and 14
     # are all "e" and "a" positions. The backbeat is untouched, so the bar
     # stays legible while the low end argues with it.
-    flylo_offbeat_kick: {
+    wonky_offbeat_kick: {
       swing: 54, humanize: 3, bpm: 80, mode: :dilla_time,
       kicks: [0, 7, 9, 14], snares: [4, 12],
       hats: [0, 2, 4, 6, 8, 10, 12, 14], ghosts: [3, 11], claps: [4, 12], perc: [6],
@@ -485,7 +485,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # Warped tape: heavy swing, and every hat on the "e" so the whole hat line
     # sits behind the beat it belongs to. Slowest of the five; the drag is the
     # point.
-    flylo_warp: {
+    wonky_warp: {
       swing: 54, humanize: 4, bpm: 70, mode: :dilla_time,
       kicks: [0, 6, 10, 13], snares: [4, 12], hats: [1, 5, 9, 13],
       ghosts: [2, 14], claps: [], perc: [8],
@@ -544,18 +544,18 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
 
 # The Camel grid as MEASURED, not as simplified.
 #
-# project/learnings/flylo_drums/flylo_camel.json holds what a previous session
+# project/learnings/wonky_drums/wonky_camel.json holds what a previous session
 # got from a separated drum stem: kicks [0,3,6,10,13], ghost snares [7,15,10],
-# perc [3,9,11], hat ghosts [1,3,5,9,11,13]. The shipped flylo_camel uses
+# perc [3,9,11], hat ghosts [1,3,5,9,11,13]. The shipped wonky_camel uses
 # [0,6,10] / [7] / nothing, because the dense version "sounded wrong".
 #
-# That judgement was made before FLYLO_TOP_DIRT existed. Accounts of how these
+# That judgement was made before WONKY_TOP_DIRT existed. Accounts of how these
 # drums are built say the extra hits are meant to be dirty and half-buried --
 # phased, flanged, crushed -- not clean kit hits. A dense grid of clean hits
 # is busy; the same grid through the dirt may be the texture. Kept as a
 # separate preset so the two can be compared rather than one replacing the
 # other on a hunch.
-flylo_camel_measured: {
+wonky_camel_measured: {
   swing: 54, humanize: 3, bpm: 86, mode: :dilla_time,
   kicks: [0, 3, 6, 10, 13], snares: [4, 12],
   hats: [0, 2, 4, 6, 8, 10, 12, 14],
@@ -843,25 +843,25 @@ euclid_sparse: {
       drum_preset: :madlib_dusty, chords: %w[Dm7 Cm7 Fmaj9 Gm7], timing: DILLA_TIMING,
     },
     quartal_west_coast: {
-      producer: :flylo, key: "C major", bpm: 86, swing: 54,
-      chord_bars: 2, phrase_bars: 32, feel: :flylo_abstract, voicing: :quartal,
+      producer: :wonky, key: "C major", bpm: 86, swing: 54,
+      chord_bars: 2, phrase_bars: 32, feel: :wonky_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true, intro_bars: 8,
-      drum_preset: :flylo_abstract, chords: %w[Cmaj9 Am9 Fmaj9 G6], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract, chords: %w[Cmaj9 Am9 Fmaj9 G6], timing: WONKY_TIMING,
     },
     # Chromatic mediant drift profile.
     chromatic_mediant_drift: {
-      producer: :flylo, key: "D minor", bpm: 86, swing: 54,
-      chord_bars: 2, phrase_bars: 32, feel: :flylo_abstract, voicing: :quartal,
+      producer: :wonky, key: "D minor", bpm: 86, swing: 54,
+      chord_bars: 2, phrase_bars: 32, feel: :wonky_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true, intro_bars: 8,
-      drum_preset: :flylo_abstract,
+      drum_preset: :wonky_abstract,
       chords: %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG],
-      timing: FLYLO_TIMING,
+      timing: WONKY_TIMING,
     },
     slow_ballad_wash: {
-      producer: :flylo, key: "G major", bpm: 81, swing: 55,
-      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
+      producer: :wonky, key: "G major", bpm: 81, swing: 55,
+      chord_bars: 2, phrase_bars: 16, feel: :wonky_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract, chords: %w[G6 Em9 Cmaj9 Dmaj9], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract, chords: %w[G6 Em9 Cmaj9 Dmaj9], timing: WONKY_TIMING,
     },
     minor_triad_walk: {
       producer: :madlib, key: "D minor", bpm: 96, swing: 58,
@@ -925,10 +925,10 @@ euclid_sparse: {
       drum_preset: :madlib_dusty, chords: %w[F#m9 Bm7 Emaj7 C#m7], timing: MADLIB_TIMING,
     },
     modern_quartal_stack: {
-      producer: :flylo, key: "Eb major", bpm: 82, swing: 52,
-      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
+      producer: :wonky, key: "Eb major", bpm: 82, swing: 52,
+      chord_bars: 2, phrase_bars: 16, feel: :wonky_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract, chords: %w[Ebmaj9 Cm9 Abmaj9 Bb6], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract, chords: %w[Ebmaj9 Cm9 Abmaj9 Bb6], timing: WONKY_TIMING,
     },
     funk_sixteenth_turn: {
       producer: :dilla, key: "G minor", bpm: 88, swing: 55,
@@ -966,10 +966,10 @@ euclid_sparse: {
       drum_preset: :dilla_slight, chords: %w[Dm7/F Fmaj9/A Gm7/Bb Cmaj9/E], timing: DILLA_TIMING,
     },
     suspended_ballad: {
-      producer: :flylo, key: "D major", bpm: 78, swing: 55,
-      chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
+      producer: :wonky, key: "D major", bpm: 78, swing: 55,
+      chord_bars: 4, phrase_bars: 16, feel: :wonky_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract, chords: %w[Dmaj9 Am9 Gmaj9], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract, chords: %w[Dmaj9 Am9 Gmaj9], timing: WONKY_TIMING,
     },
     minor_line_cliche: {
       producer: :dilla, key: "A minor", bpm: 88, swing: 54,
@@ -987,10 +987,10 @@ euclid_sparse: {
       drum_preset: :madlib_dusty, chords: %w[Ebmaj9 Cm9 Fm7 Bb7], timing: MADLIB_TIMING,
     },
     jazz_ballad_waltz: {
-      producer: :flylo, key: "Ab major", bpm: 72, swing: 52,
-      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :bill_evans,
+      producer: :wonky, key: "Ab major", bpm: 72, swing: 52,
+      chord_bars: 2, phrase_bars: 16, feel: :wonky_abstract, voicing: :bill_evans,
       stereo_pan: true,
-      drum_preset: :flylo_abstract, chords: %w[Abmaj9 Fm7 Bbm7 Eb7], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract, chords: %w[Abmaj9 Fm7 Bbm7 Eb7], timing: WONKY_TIMING,
     },
     turnaround_ii_v: {
       producer: :dilla, key: "G major", bpm: 91, swing: 55,
@@ -1056,10 +1056,10 @@ euclid_sparse: {
     # neighbors when possible, one surprise per 4 bars, return by bar 8–16.
     lydian_glass_cycle: {
       producer: :dilla, key: "F Lydian-leaning", bpm: 88, swing: 54,
-      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
+      chord_bars: 2, phrase_bars: 16, feel: :wonky_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract,
-      chords: %w[Fmaj9 Am9 Gmaj9 Em9 Fmaj9 Dm9 Cmaj9 G7], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract,
+      chords: %w[Fmaj9 Am9 Gmaj9 Em9 Fmaj9 Dm9 Cmaj9 G7], timing: WONKY_TIMING,
     },
     pedal_upper_structures: {
       producer: :dilla, key: "C pedal", bpm: 84, swing: 55,
@@ -1081,10 +1081,10 @@ euclid_sparse: {
     },
     two_chord_luminous: {
       producer: :dilla, key: "Db / Fm", bpm: 78, swing: 54,
-      chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
+      chord_bars: 4, phrase_bars: 16, feel: :wonky_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract,
-      chords: %w[Dbmaj9 Fm9], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract,
+      chords: %w[Dbmaj9 Fm9], timing: WONKY_TIMING,
     },
     mixo_sus_loop: {
       producer: :dilla, key: "D Mixolydian", bpm: 96, swing: 53,
@@ -1093,11 +1093,11 @@ euclid_sparse: {
       chords: %w[Dmaj9 Cmaj9 Gmaj9 Dmaj9 F#m9 Em9 A7sus Dmaj9], timing: DILLA_TIMING,
     },
     common_tone_drift: {
-      producer: :flylo, key: "E common-tone field", bpm: 86, swing: 54,
-      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
+      producer: :wonky, key: "E common-tone field", bpm: 86, swing: 54,
+      chord_bars: 2, phrase_bars: 16, feel: :wonky_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract,
-      chords: %w[Em9 Cmaj9 Am9 Fmaj9 Em9 Gmaj9 Bm9 Em9], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract,
+      chords: %w[Em9 Cmaj9 Am9 Fmaj9 Em9 Gmaj9 Bm9 Em9], timing: WONKY_TIMING,
     },
     third_cycle_triads: {
       producer: :dilla, key: "F minor stations", bpm: 82, swing: 54,
@@ -1106,18 +1106,18 @@ euclid_sparse: {
       chords: %w[Fm9 Abmaj9 Bmaj9 Fm9 Dbmaj9 Emaj9 Abmaj9 Fm9], timing: DILLA_TIMING,
     },
     drone_quartal_wash: {
-      producer: :flylo, key: "D drone", bpm: 80, swing: 52,
-      chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
+      producer: :wonky, key: "D drone", bpm: 80, swing: 52,
+      chord_bars: 4, phrase_bars: 16, feel: :wonky_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract,
-      chords: %w[Dm9 G/D C/D Am9 Dm9 Fmaj9/D G/D Dm9], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract,
+      chords: %w[Dm9 G/D C/D Am9 Dm9 Fmaj9/D G/D Dm9], timing: WONKY_TIMING,
     },
     waltz_relative_lift: {
       producer: :dilla, key: "C minor → Eb", bpm: 72, swing: 52,
-      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :bill_evans,
+      chord_bars: 2, phrase_bars: 16, feel: :wonky_abstract, voicing: :bill_evans,
       stereo_pan: true,
-      drum_preset: :flylo_abstract,
-      chords: %w[Cm9 Abmaj9 Bb7 Ebmaj9 Fm9 Bb7 Ebmaj9 G7], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract,
+      chords: %w[Cm9 Abmaj9 Bb7 Ebmaj9 Fm9 Bb7 Ebmaj9 G7], timing: WONKY_TIMING,
     },
     half_time_gospel_plagal: {
       producer: :dilla, key: "Bb major", bpm: 74, swing: 54,
@@ -1132,10 +1132,10 @@ euclid_sparse: {
       chords: %w[Em9 Am9 D7 Gmaj9 Em9 Am9 D7 Gmaj9], timing: DILLA_TIMING,
     },
     whole_tone_bridge: {
-      producer: :flylo, key: "whole-tone → F minor", bpm: 88, swing: 54,
-      chord_bars: 1, phrase_bars: 8, feel: :flylo_abstract, voicing: :cluster,
-      drum_preset: :flylo_abstract,
-      chords: %w[C7 D7 E7 F#7 Fm9 Dbmaj9 Ebmaj9 Fm9], timing: FLYLO_TIMING,
+      producer: :wonky, key: "whole-tone → F minor", bpm: 88, swing: 54,
+      chord_bars: 1, phrase_bars: 8, feel: :wonky_abstract, voicing: :cluster,
+      drum_preset: :wonky_abstract,
+      chords: %w[C7 D7 E7 F#7 Fm9 Dbmaj9 Ebmaj9 Fm9], timing: WONKY_TIMING,
     },
     upper_triad_tower: {
       producer: :dilla, key: "Bb tower", bpm: 90, swing: 55,
@@ -1145,10 +1145,10 @@ euclid_sparse: {
     },
     minor_add9_lullaby: {
       producer: :dilla, key: "G minor", bpm: 70, swing: 53,
-      chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
+      chord_bars: 4, phrase_bars: 16, feel: :wonky_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract,
-      chords: %w[Gm9 Ebmaj9 Cm9 D7sus Gm9 Ebmaj9 Fmaj9 Gm9], timing: FLYLO_TIMING,
+      drum_preset: :wonky_abstract,
+      chords: %w[Gm9 Ebmaj9 Cm9 D7sus Gm9 Ebmaj9 Fmaj9 Gm9], timing: WONKY_TIMING,
     },
     dominant_chain_home: {
       producer: :dilla, key: "circle of fifths 7ths", bpm: 94, swing: 54,
@@ -1169,15 +1169,15 @@ euclid_sparse: {
     entries = YAML.safe_load_file(path)["documented_progressions"] || {}
     entries.each_with_object({}) do |(key, e), out|
       producer = e["producer"].to_sym
-      flylo = producer == :flylo
+      wonky = producer == :wonky
       out[key.to_sym] = {
         producer:, key: e["key"], bpm: e["bpm"], swing: e["swing"],
         chord_bars: e["chord_bars"], phrase_bars: e["phrase_bars"],
         voicing: e["voicing"].to_sym,
-        feel: flylo ? :flylo_abstract : :timeless,
-        drum_preset: flylo ? :flylo_abstract : :dilla_slight,
+        feel: wonky ? :wonky_abstract : :timeless,
+        drum_preset: wonky ? :wonky_abstract : :dilla_slight,
         chords: e["chords"],
-        timing: flylo ? FLYLO_TIMING : DILLA_TIMING
+        timing: wonky ? WONKY_TIMING : DILLA_TIMING
       }
     end
   rescue StandardError, Psych::Exception => e
@@ -1197,8 +1197,8 @@ euclid_sparse: {
     selfish: :relative_major_turn,
     look_of_love: :minor_turnaround,
     so_far_to_go: :warm_minor_arc,
-    flylo_camel: :chromatic_mediant_drift,
-    flylo_roberta: :slow_ballad_wash,
+    wonky_camel: :chromatic_mediant_drift,
+    wonky_roberta: :slow_ballad_wash,
     madlib_accordion: :minor_triad_walk,
     long_soul: :maj7_minor_cycle,
     golden: :neo_soul,
@@ -1267,7 +1267,7 @@ euclid_sparse: {
     # backwards for the documented entries out of dilla_reference.yml: tempo and
     # swing are most of what a transcription exists to preserve, and
     # slum_village_players_documented (91 BPM, 56% swing) and
-    # flylo_camel_documented (86, 54) both rendered at the generic kit's 95 with
+    # wonky_camel_documented (86, 54) both rendered at the generic kit's 95 with
     # the kit's swing. The transcriptions were present and loading correctly the
     # whole time; they were being played at someone else's tempo.
     preset[:swing] = drum[:swing] if drum && !ENV["SWING"] && !entry[:swing]

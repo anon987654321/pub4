@@ -99,7 +99,7 @@ module DillaSources
     render_madlib
     render_techno
     mix_recipes
-    flylo_learn
+    wonky_learn
     rap_vocal
     organic
     crate
