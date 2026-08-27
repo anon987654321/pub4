@@ -97,6 +97,16 @@ One-time setup on kaggle.com:
 2. **Phone-verify the account** — Settings → Phone Verification. Without it a
    notebook cannot reach the internet, so the model download and both git
    clones fail.
+
+   This is what killed the run of 2026-08-03, and it is worth knowing what it
+   looks like because the log does not say "phone verification" anywhere. The
+   notebook dies on `socket.gaierror: [Errno -3] Temporary failure in name
+   resolution` — DNS, at the first step that reaches the network — and then
+   IPython's own traceback formatter crashes while rendering it, so the last 60
+   lines of the log are `TypeError: object of type 'NoneType' has no len()`
+   inside `ultratb.py` and the real cause is 80 lines further up. Pull the log
+   with `kaggle kernels output <owner>/<kernel> -p <dir>` and search for
+   `gaierror` rather than reading the tail.
 3. **A notebook secret holding the HF token** — the notebook has to exist before
    a secret can be attached to it, so push once (`./lora --train-kaggle
    --async`), open the notebook, then Add-ons → Secrets → attach one. The label

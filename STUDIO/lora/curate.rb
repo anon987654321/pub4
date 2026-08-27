@@ -159,6 +159,20 @@ module Lora
     # upscaler's artefacts and calls them the subject.
     TRAIN_SHORT_EDGE = 1024
 
+    # `<subject>/dataset`, and named here because `into:` had no default and the
+    # first set prepared by this file went to `dataset_1024` — a directory no
+    # lane reads. `_toolkit/lib.sh` and `run_train_kaggle.rb` both resolve
+    # `SUBJECT_DIR/dataset` and nothing resolves anything else, so a set written
+    # anywhere else is invisible: the Kaggle lane reported "dataset missing" for
+    # a dataset that was sitting beside the directory it looked in.
+    #
+    # The short edge belongs in TRAIN_SHORT_EDGE, not in the directory name.
+    # Encoding it there invites one directory per resolution and leaves every
+    # lane guessing which is current.
+    DATASET_DIRNAME = "dataset"
+
+    def self.dataset_dir(subject_dir) = File.join(subject_dir, DATASET_DIRNAME)
+
     def self.prepare(candidates, into:, token:, short_edge: TRAIN_SHORT_EDGE)
       FileUtils.mkdir_p(into)
       candidates.each_with_index.map do |candidate, index|
