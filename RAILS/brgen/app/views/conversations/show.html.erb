@@ -53,15 +53,43 @@
       <% end %>
     </header>
 
-    <%= turbo_frame_tag "messages", target: "_top" do %>
-    <ul id="messages" data-turbo-permanent>
-      <% @messages.each do |m| %>
-        <%= render "messages/message", message: m, forward_targets: @forward_targets %>
-      <% end %>
-    </ul>
+    <%# The frame is named message_log, not messages. It and the list inside it
+        both answered to "messages", which is invalid HTML and, once the messenger
+        became one window, a hazard: two elements with one id while Turbo swaps
+        panes. target: "_top" stays, so a link inside a message leaves the window
+        rather than loading a whole page into the pane. %>
+    <%= turbo_frame_tag "message_log", target: "_top" do %>
+      <%# Three attributes this list did not have, and each was a real absence.
+
+          class="conversation-log" — Message#broadcast_to_logs appends to
+          `targets: ".conversation-log"`. Channels carried the class and the
+          nearby widget carried it; the DM did not. So a message was delivered
+          live everywhere except the one surface where somebody is waiting for
+          it, and the recipient had to reload to see anything.
+
+          data-controller — the unread divider and the stick-to-tail behaviour
+          channels have had all along.
+
+          role="log" — the ARIA role for a list that grows at the bottom, with an
+          implicit polite live region, so an arriving message is announced rather
+          than changing the page silently.
+
+          data-turbo-permanent is gone: preserving this element across a
+          navigation was harmless when a room was a page, and wrong now that
+          switching rooms swaps a frame — the old room's messages would be kept
+          under the new room's name. %>
+      <ul id="messages" role="log" class="conversation-log"
+          data-controller="conversation-log"
+          data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
+          data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
+          data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>">
+        <% @messages.each do |m| %>
+          <%= render "messages/message", message: m, forward_targets: @forward_targets %>
+        <% end %>
+      </ul>
     <% end %>
 
-    <p id="typing-indicator" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
+    <p id="typing-indicator" role="status" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
 
     <% if @editing %>
       <%= form_with model: @editing, url: conversation_message_path(@conversation, @editing), method: :patch do |f| %>

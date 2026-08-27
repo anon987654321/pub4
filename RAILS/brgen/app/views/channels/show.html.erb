@@ -28,7 +28,8 @@
       <%= render "channels/roster", conversation: @conversation %>
     </header>
 
-    <ul id="messages" class="channel-log conversation-log"
+    <%# See conversations/show — role="log" so arrivals are announced. %>
+    <ul id="messages" role="log" class="channel-log conversation-log"
         data-controller="conversation-log"
         data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
         data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
@@ -38,7 +39,7 @@
       <% end %>
     </ul>
 
-    <p id="typing-indicator" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
+    <p id="typing-indicator" role="status" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
 
     <% if Current.user.present? %>
       <% handle = Current.user.channel_handle %>
