@@ -14,7 +14,12 @@
 <% current_room = defined?(@conversation) ? @conversation : nil %>
 
 <nav class="messenger-rail" aria-label="<%= t("messages.rooms_label") %>">
-  <% if Current.user %>
+  <%# persisted?, not present?. A first-time visitor holds a soft guest that
+      find_or_create_guest_user has built but not written -- the row appears on
+      the second sighting, so a crawler never costs one. signed_id refuses an
+      unsaved record, and asking for a token here 500d the whole messenger for
+      everyone arriving for the first time. There is nothing to link to yet. %>
+  <% if Current.user&.persisted? %>
     <div class="messenger-rail-head">
       <%= link_to new_conversation_path, class: "btn btn-primary messenger-rail-new",
                   data: { turbo_frame: "_top" } do %>
