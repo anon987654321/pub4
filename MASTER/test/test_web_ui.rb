@@ -774,6 +774,21 @@ class TestWebUI < Minitest::Test
                     "StandardError alone leaves NoMemoryError to kill the thread in silence"
   end
 
+  # assets:precompile boots the app but never serves anything, and the container
+  # it would build spawns bin/tts-worker as a child that inherits the task's
+  # stdout. The worker outlives the task, the pipe stays open, and rc.d/master --
+  # which reads that pipe -- blocks forever on a precompile that already exited.
+  # That is master unable to start at all, from a file that looks fine.
+  def test_container_does_not_boot_during_an_assets_task
+    loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
+
+    assert_includes loader, "next if MasterContainerLoader.asset_task?",
+                    "after_initialize must skip the bootstrap for asset tasks"
+    assert_includes loader, "def asset_task?"
+    assert_match(/ARGV\.any\?.*assets:/, loader,
+                 "the guard has to recognise assets:precompile and its siblings")
+  end
+
   # A note that outlives its turn is the same bug pointed the other way: the
   # next visitor on that thread inherits a persona nobody asked for.
   def test_chat_service_clears_the_persona_note

@@ -6,12 +6,26 @@ Rails.application.config.x.master_container_mutex = Mutex.new
 Rails.application.config.x.master_bootstrap_started = false
 
 Rails.application.config.after_initialize do
+  next if MasterContainerLoader.asset_task?
+
   MasterContainerLoader.warm_shared_namespace!
   MasterContainerLoader.rearm!
 end
 
 module MasterContainerLoader
   module_function
+
+  # assets:precompile boots the whole app to resolve helpers, and it is not a
+  # server -- nothing will ever serve a request from it. Booting the container
+  # there is pure cost, and worse than cost: ensure_daemon! spawns
+  # bin/tts-worker as a child that inherits the task's stdout, so the worker
+  # outlives the task and holds the pipe open. rc.d/master reads that pipe, so
+  # rc_pre blocked forever on a precompile that had already exited, and master
+  # could not start at all. Measured 2026-08-27: two orphaned workers, sixteen
+  # minutes old, with no precompile process left behind them.
+  def asset_task?
+    ARGV.any? { |arg| arg.start_with?("assets:") }
+  end
 
   # Master::Ground is loaded here, on the main thread, before the bootstrap
   # thread below exists.
