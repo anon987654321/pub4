@@ -122,6 +122,22 @@ Pub4::CiGuard.run! do
     # test/application_system_test_case.rb's assert_accessible).
     step("Tests: System (a11y)", "bin/rails test:system") unless vps_host
     seed_env = vps_host ? "env RAILS_ENV=test SKIP_BERGEN_DEMO=1" : "env RAILS_ENV=test"
-    step "Tests: Seeds", "#{seed_env} bin/rails db:seed:replant"
+    # bin/rake, not bin/rails.
+    #
+    # Both run the same task, but bin/rails routes through railties' command
+    # dispatch, which globs every command file and requires them inside a rescue.
+    # On vm23 that lookup fails with "[WARNING] Could not load command
+    # rails/commands/rake/rake_command. Error: uninitialized constant
+    # Encoding::UTF_8" and then dies on "undefined method 'perform' for nil",
+    # because find_by_namespace("rake") returned nothing. The seed step is the LAST
+    # thing bin/ci runs, so this blocked every brgen deploy while the suite above it
+    # read green -- exactly the trap the seed-failure note warns about.
+    #
+    # Isolated rather than guessed: rake 13.4.2 is in the bundle; on the box
+    # `bundle exec ruby -e 'require "rake"; puts Encoding::UTF_8'` prints UTF-8;
+    # locally `rails -T` lists all 156 tasks. Bundle fine, rake fine, constant fine
+    # -- only the dispatch is broken, and only there. Going straight to rake does
+    # not touch it.
+    step "Tests: Seeds", "#{seed_env} bin/rake db:seed:replant"
   end
 end
