@@ -98,8 +98,10 @@ end
 # 400 Hz; the crack above 5 kHz is the part a microphone exaggerates and the part
 # that hurts on headphones.
 def snare!(l, r, at, seed)
-  n = (RATE * 0.26).to_i
-  atk = (RATE * 0.006).to_i
+  n = (RATE * 0.24).to_i
+  # 18 ms, not 6. A snare is a skin being pushed, not a step change, and the
+  # first few milliseconds are the entire difference between a hit and a stab.
+  atk = (RATE * 0.018).to_i
   rnd = Random.new(seed)
   lp = 0.0
   p1 = 0.0
@@ -113,7 +115,7 @@ def snare!(l, r, at, seed)
     # Noise through a one-pole at ~1.9 kHz, twice, so there is rustle without
     # any of it living above the roof.
     lp += 0.24 * ((rnd.rand * 2 - 1) - lp)
-    s = (body * 0.62 + lp * 0.38) * env * 0.42
+    s = (body * 0.62 + lp * 0.38) * env * 0.26
     j = at + i
     break if j >= l.length
 
@@ -1374,6 +1376,63 @@ def drum_chain!(l, r, seed)
   picked
 end
 
+# Levelling the kit against the music, by measurement rather than by taste.
+#
+# Fixed gains cannot do this. The pad bus arrives at whatever level eleven
+# different soundfont stacks happen to produce, so a kit set to sound right under
+# a Rhodes stack sticks out under a Solina one, and the master chain's four
+# rounds of compression then pull the transients further forward. The complaint
+# that the snares were too loud was correct and it was not a snare problem: the
+# kit had no relationship to what it was sitting under.
+#
+# So the drum bus is measured against the pad bus and scaled to a fixed ratio,
+# and every hit is held near the bus average by a fast compressor before it goes
+# anywhere. Nothing sticks out because nothing is allowed to.
+def rms_of(l, r)
+  return 0.0 if l.empty?
+
+  Math.sqrt(l.each_index.sum { |i| l[i] * l[i] + r[i] * r[i] } / (2.0 * l.length))
+end
+
+# The kit sits this far under the music it is playing along with. -7 dB is where
+# a drum sits in a soul record: felt, present, not fronting.
+DRUM_UNDER_DB = (ENV["SINE_DRUM_UNDER_DB"] || "-7.0").to_f
+
+def level_drums!(dl, dr, pad_l, pad_r)
+  music = rms_of(pad_l, pad_r)
+  kit = rms_of(dl, dr)
+  return if kit <= 0.00001 || music <= 0.00001
+
+  target = music * (10.0**(DRUM_UNDER_DB / 20.0))
+  g = target / kit
+  # Never more than unity: this levels a kit down to sit, it does not push a
+  # quiet kit up into the same problem from the other side.
+  g = [g, 1.0].min
+  dl.length.times { |i| dl[i] *= g; dr[i] *= g }
+end
+
+# A fast compressor on the kit alone, so no single hit leaves the bus much above
+# its own average. This is what stops one snare in a bar being the loudest thing
+# in the record.
+def tame_transients!(l, r, ratio: 4.0, over_db: 6.0)
+  avg = rms_of(l, r)
+  return if avg <= 0.00001
+
+  thr = avg * (10.0**(over_db / 20.0))
+  at = Math.exp(-1.0 / (RATE * 0.002))
+  rel = Math.exp(-1.0 / (RATE * 0.09))
+  env = 0.0
+  l.length.times do |i|
+    peak = [l[i].abs, r[i].abs].max
+    env = peak > env ? at * env + (1 - at) * peak : rel * env + (1 - rel) * peak
+    next unless env > thr
+
+    g = (thr + (env - thr) / ratio) / env
+    l[i] *= g
+    r[i] *= g
+  end
+end
+
 def master_pass!(l, r)
   # Three Sonitex passes, the third on the extreme parameter set. Stacking the
   # same lo-fi chain is not the same as turning one up: each pass band-limits
@@ -1648,6 +1707,8 @@ loop do
           drums_for_bar!(dl, dr, (bar * SECS * RATE).to_i, SECS, (gi * PER_FILE + ni) * 4 + bar)
         end
         used = drum_chain!(dl, dr, (gi * PER_FILE + ni) * 977 + SALT)
+        tame_transients!(dl, dr)
+        level_drums!(dl, dr, pl, pr)
         dl.length.times { |i| pl[i] += dl[i]; pr[i] += dr[i] }
         played[-1] = played.last + "{" + used.join("-") + "}"
       end

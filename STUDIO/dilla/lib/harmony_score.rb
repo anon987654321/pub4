@@ -50,19 +50,47 @@ module DillaHarmonyScore
     { score: score.round.clamp(30, 98), breakdown: }
   end
 
+  # A chord here carries its bass separately from its upper voices:
+  #
+  #   { name:, hz: [upper voices], bass_hz: <the root under them>, theory: }
+  #
+  # Everything below used to read :hz alone and take its lowest note as the bass,
+  # which is not the bass -- it is the bottom of the upper structure. The comment
+  # over strong_root_motion? even said it was using the bass note while the code
+  # used a_notes.min, so the instrument disagreed with its own description.
+  #
+  # That mattered more than a naming slip. A slash chord or an upper triad over a
+  # moving root is a structure held still while the bass walks underneath, and
+  # measuring it without the bass reports the opposite of what it is: the root
+  # motion vanishes and the upper voices, re-voiced to stay in register, read as
+  # leaps. upper_triad_tower scored worst of all 401 progressions on exactly this.
+  def voices_of(chord)
+    upper = Array(chord[:hz]).map { |hz| DillaHarmony.hz_to_midi(hz.to_f).round }.sort
+    bass = chord[:bass_hz].to_f.positive? ? DillaHarmony.hz_to_midi(chord[:bass_hz].to_f).round : upper.first
+    # Drop a duplicate of the bass out of the upper set so it is not counted as
+    # both the root and a voice above it.
+    [bass, upper.reject { |n| n == bass }]
+  end
+
   def transition_metrics(a, b)
-    a_notes = Array(a[:hz]).map { |hz| DillaHarmony.hz_to_midi(hz.to_f).round }.sort
-    b_notes = Array(b[:hz]).map { |hz| DillaHarmony.hz_to_midi(hz.to_f).round }.sort
+    a_bass, a_upper = voices_of(a)
+    b_bass, b_upper = voices_of(b)
+    a_upper = [a_bass] if a_upper.empty?
+    b_upper = [b_bass] if b_upper.empty?
     {
-      voice_leading_semitones: voice_leading_distance(a_notes, b_notes),
-      common_tone_ratio: common_tone_ratio(a_notes, b_notes),
-      contrary_motion: contrary_motion?(a_notes, b_notes),
-      strong_root_motion: strong_root_motion?(a_notes, b_notes),
+      # Upper voices only. The bass is a separate line with its own logic; adding
+      # its movement into the average is what made held structures look like leaps.
+      voice_leading_semitones: voice_leading_distance(a_upper, b_upper),
+      root_motion_semitones: ((b_bass - a_bass).abs % 12).to_f,
+      common_tone_ratio: common_tone_ratio(a_upper, b_upper),
+      contrary_motion: contrary_motion?(a_bass, a_upper, b_bass, b_upper),
+      oblique_motion: oblique_motion?(a_bass, a_upper, b_bass, b_upper),
+      strong_root_motion: strong_root_motion?(a_bass, b_bass),
     }
   end
 
-  # Nearest-neighbor voice pairing (not fixed SATB index -- chord voicings
-  # here don't guarantee equal voice counts), average movement per matched pair.
+  # Nearest-neighbor voice pairing (not fixed SATB index -- chord voicings here
+  # don't guarantee equal voice counts), average movement per matched pair.
   def voice_leading_distance(a_notes, b_notes)
     return 0.0 if a_notes.empty? || b_notes.empty?
 
@@ -78,23 +106,31 @@ module DillaHarmonyScore
     shared.to_f / [a_pc.length, b_pc.length].min
   end
 
-  def contrary_motion?(a_notes, b_notes)
-    return false if a_notes.empty? || b_notes.empty?
-
-    bass_delta = b_notes.min - a_notes.min
-    top_delta = b_notes.max - a_notes.max
-    bass_delta != 0 && top_delta != 0 && (bass_delta <=> 0) != (top_delta <=> 0)
+  # The real bass against the centre of the structure above it, rather than the
+  # bottom and top of one stack. Two independent lines moving apart is what
+  # contrary motion means; the outer notes of a single voicing moving apart is
+  # usually just a re-voicing.
+  def contrary_motion?(a_bass, a_upper, b_bass, b_upper)
+    bass_delta = b_bass - a_bass
+    upper_delta = centroid(b_upper) - centroid(a_upper)
+    bass_delta != 0 && upper_delta.abs > 0.25 && (bass_delta <=> 0) != (upper_delta <=> 0)
   end
 
-  # Root motion of a 4th/5th (5 or 7 semitones, either direction) is the
-  # circle-of-fifths functional-harmony backbone theory_runtime.rb's own
-  # header already names as a goal; reuse DillaHarmony's canonical root
-  # detection (bass note) rather than a separate implementation.
-  def strong_root_motion?(a_notes, b_notes)
-    return false if a_notes.empty? || b_notes.empty?
+  # Oblique motion: one line moves while the other holds. This is the pedal, the
+  # slash chord and the upper structure over a walking root -- the sound the old
+  # scorer had no term for at all, and therefore scored as failure.
+  def oblique_motion?(a_bass, a_upper, b_bass, b_upper)
+    bass_moved = (b_bass - a_bass).abs >= 1
+    upper_moved = (centroid(b_upper) - centroid(a_upper)).abs > 0.5
+    bass_moved != upper_moved
+  end
 
-    interval = (b_notes.min - a_notes.min).abs % 12
-    [5, 7].include?(interval)
+  def centroid(notes) = notes.empty? ? 0.0 : notes.sum.to_f / notes.length
+
+  # Root motion of a 4th or 5th is the circle-of-fifths backbone. Taken from the
+  # chord's own bass_hz, which is what the comment here always claimed.
+  def strong_root_motion?(a_bass, b_bass)
+    [5, 7].include?((b_bass - a_bass).abs % 12)
   end
 
   def chord_span_semitones(chord)
