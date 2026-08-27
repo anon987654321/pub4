@@ -1,0 +1,251 @@
+# The press shoot, not the portrait shoot.
+#
+# shoots.yml is a record of light — north windows, golden hour, one lamp. It
+# flatters, and it is meant to. This is the other brief: artist photography in
+# the tradition Warp built with The Designers Republic, Chris Cunningham and
+# Boards of Canada, where the picture is not trying to be liked.
+#
+# What that tradition actually does, as opposed to what "weird" would do:
+#
+#   Degraded media as the subject. Boards of Canada's whole visual language is
+#   1970s educational film — faded Kodachrome, magenta shift, dust. The decay is
+#   not an effect on a photograph, it IS the photograph.
+#
+#   Clinical over dramatic. Designers Republic went corporate-dystopian:
+#   passport lighting, fluorescent tubes, institutional grey. Flat and frontal is
+#   stranger than moody, because it looks like a document.
+#
+#   Obstruction. Cunningham shoots through mesh, glass, water, hair. The face is
+#   there and you have to work for it, which is the opposite of a selfie.
+#
+#   Hard flash, deep black. Not soft north light. Direct, unkind, and it makes
+#   bone structure the subject.
+#
+# The rule that keeps this from being ugly rather than striking: every sitting
+# here is still lit by something nameable, and still shot from a real distance.
+# An unflattering LIGHT is the brief; a badly made photograph is not.
+sides:
+  - Degraded Transmission
+  - Document
+  - Obstruction
+  - Field Recording
+  - Hard Flash
+  - Duration
+
+shoots:
+  - n: 1
+    side: Degraded Transmission
+    title: Educational Film, 1974
+    scene: a still from a faded 16mm educational film, magenta colour shift, soft optical printing, dust and hair in the gate
+    key: flat film lighting
+    distance: 3 m
+    lens: 50mm
+    stock: expired Kodachrome
+    note: Boards of Canada's entire visual world in one frame. The decay is the subject, not a filter over it.
+  - n: 2
+    side: Degraded Transmission
+    title: Third Generation
+    scene: a VHS still dubbed three times, tracking error tearing one band across the frame, chroma bleeding off the edges
+    key: camcorder toplight
+    distance: 2 m
+    lens: 35mm
+    stock: VHS
+    note: Degradation that a viewer can date. Third generation is where colour goes and the face survives.
+  - n: 3
+    side: Degraded Transmission
+    title: Album Page
+    scene: a Kodachrome snapshot lifted from a family album, orange shift, one corner lightly mould-bloomed
+    key: window sun, unmodified
+    distance: 2.5 m
+    lens: 45mm
+    stock: Kodachrome 64
+    note: The picture that already existed. Reads as recovered rather than taken.
+  - n: 4
+    side: Degraded Transmission
+    title: Photobooth
+    scene: one frame of a four-frame photobooth strip, direct booth flash, plain curtain behind, unposed
+    key: booth flash, frontal
+    distance: 0.8 m
+    lens: 40mm
+    stock: booth colour paper
+    note: The one sitting here shot close, because a booth is close. Machine-made and unflattering by design.
+  - n: 5
+    side: Document
+    title: Passport
+    scene: dead centre against pure neutral grey, no expression, both ears visible, biometric framing
+    key: flat frontal, no shadow
+    distance: 2 m
+    lens: 85mm
+    stock: neutral digital
+    note: Designers Republic understood that a document is stranger than a portrait. Nothing is hidden and nothing is offered.
+  - n: 6
+    side: Document
+    title: Fluorescent Bank
+    scene: under a ceiling bank of fluorescent tubes, green colour cast, institutional ceiling tiles visible above
+    key: overhead fluorescent
+    distance: 2.5 m
+    lens: 35mm
+    stock: Fuji Superia 400
+    note: The light of every waiting room in Europe. Unkind, specific, and instantly readable.
+  - n: 7
+    side: Document
+    title: Scanner
+    scene: lit from directly overhead by a cold clinical white source, everything below the brow in shadow, white surround
+    key: top-down clinical
+    distance: 1.5 m
+    lens: 85mm
+    stock: neutral digital
+    note: Medical rather than moody. Top light is the least flattering direction and the most sculptural.
+  - n: 8
+    side: Document
+    title: Contact Sheet Frame
+    scene: one frame with the adjacent frames and sprocket holes visible at the edges, grease pencil ring around it
+    key: whatever the frame had
+    distance: 2.5 m
+    lens: 50mm
+    stock: Tri-X 400
+    note: The apparatus in the picture. Says this was selected, which is a different claim from this was taken.
+  - n: 9
+    side: Obstruction
+    title: Frosted Glass
+    scene: standing behind privacy glass, the form and the colour of her clear, the face dissolved into texture
+    key: light from behind the glass
+    distance: 1 m
+    lens: 85mm
+    stock: Portra 400
+    note: Cunningham's move. Present and withheld at once, and the glass does the work.
+  - n: 10
+    side: Obstruction
+    title: Wire Mesh
+    scene: photographed through chain link, the mesh a soft grid across the frame, focus firmly on her and not on it
+    key: overcast, behind camera
+    distance: 2 m
+    lens: 135mm
+    stock: HP5 Plus
+    note: A long lens throws the mesh to nothing while keeping its rhythm. The obstruction stays legible without blocking.
+  - n: 11
+    side: Obstruction
+    title: Water on Glass
+    scene: pressed close to a wet pane, water sheeting down between her and the lens, features breaking and reforming
+    key: hard light through the water
+    distance: 0.6 m
+    lens: 50mm
+    stock: CineStill 800T
+    note: Moving obstruction. Every frame of this is different and only some of them are a face.
+  - n: 12
+    side: Obstruction
+    title: Wet Hair
+    scene: hair soaked flat to the skull and across half the face, water beading on skin, black surround
+    key: hard flash, camera-left
+    distance: 1.5 m
+    lens: 85mm
+    stock: Portra 800
+    note: Removes the hair as a flattering frame and leaves the skull. The most Cunningham thing here.
+  - n: 13
+    side: Field Recording
+    title: Concrete Tunnel
+    scene: standing far down a concrete underpass, a single fluorescent above her, the tunnel converging hard to the vanishing point
+    key: one fluorescent overhead
+    distance: 8 m
+    lens: 35mm
+    stock: CineStill 800T
+    note: The environment is the shot and she is the smallest thing in it. Perspective doing what a face cannot.
+  - n: 14
+    side: Field Recording
+    title: Ferry Deck
+    scene: on an open ferry deck in sea fog, wind flattening her clothing, the sea and the sky the same grey
+    key: total overcast
+    distance: 4 m
+    lens: 50mm
+    stock: Pro 400H
+    note: No horizon, no depth cue, no warmth. Norwegian in a way no fjord postcard is.
+  - n: 15
+    side: Field Recording
+    title: Sodium Harbour
+    scene: an industrial harbour at night, sodium vapour and steam off the water, containers stacked behind
+    key: sodium vapour
+    distance: 5 m
+    lens: 35mm
+    stock: CineStill 800T
+    note: Monochromatic orange that no white balance corrects, against cold steam. Warp's industrial register.
+  - n: 16
+    side: Field Recording
+    title: White Out
+    scene: on a mountainside in flat cloud with no horizon at all, snow and sky continuous, no scale anywhere
+    key: diffuse whiteout
+    distance: 6 m
+    lens: 85mm
+    stock: Ektar 100
+    note: A figure with no ground. The most abstract frame here and the one closest to an album sleeve.
+  - n: 17
+    side: Hard Flash
+    title: Direct, Black
+    scene: hard direct on-camera flash against deep black, shadow falling away hard behind the jaw, nothing else lit
+    key: bare flash, on axis
+    distance: 2 m
+    lens: 85mm
+    stock: Portra 800
+    note: The fashion-adjacent register Yves Tumor and Clark sit in. Unkind light, expensive result.
+  - n: 18
+    side: Hard Flash
+    title: Two Gels
+    scene: split lighting with a deep blue gel from one side and amber from the other, the two meeting down the centre of the face
+    key: blue key, amber rim
+    distance: 2 m
+    lens: 100mm
+    stock: Vision3 500T
+    note: Colour as structure rather than mood. The line down the middle is the composition.
+  - n: 19
+    side: Hard Flash
+    title: Flash and Motion
+    scene: rear-curtain flash, a sharp frozen face with a blurred trail of the movement that preceded it
+    key: flash plus 1/8s drag
+    distance: 2 m
+    lens: 50mm
+    stock: Superia 400
+    note: One picture containing two exposures of the same second. Sharp and smeared at once.
+  - n: 20
+    side: Hard Flash
+    title: Mirror Multiplied
+    scene: standing between two facing mirrors, several reflections receding, only the nearest sharp
+    key: hard flash, off axis
+    distance: 1.5 m
+    lens: 50mm
+    stock: Portra 400
+    note: Repetition as the subject. Which one is her is the question the frame asks.
+  - n: 21
+    side: Duration
+    title: Eight Seconds
+    scene: an eight second exposure in a dim room, her face still enough to register while everything moving has gone
+    key: available tungsten
+    distance: 2 m
+    lens: 50mm
+    stock: Portra 160
+    note: Stillness as a performance. Only what held still exists in the frame.
+  - n: 22
+    side: Duration
+    title: One Eye
+    scene: extreme close on a single eye, hard specular catchlight, the rest of the frame falling to black
+    key: single hard source
+    distance: 0.5 m
+    lens: 100mm macro
+    stock: Portra 800
+    note: Not a portrait at all. A sleeve detail, and it works at any crop.
+  - n: 23
+    side: Duration
+    title: Turned, Walking
+    scene: caught mid-stride walking away, head turned back over the shoulder, background already blurred by the pan
+    key: available daylight
+    distance: 4 m
+    lens: 135mm
+    stock: HP5 Plus
+    note: The press shot that does not pose. Reportage grammar on a staged subject.
+  - n: 24
+    side: Duration
+    title: Sat Down, Lit From Behind
+    scene: sitting on the floor against a bright window, entirely backlit, face in bounced shadow, edges burning out
+    key: window behind, no fill
+    distance: 3 m
+    lens: 85mm
+    stock: Portra 400
+    note: The last one. Almost a silhouette, and the only warmth in the set.

@@ -266,13 +266,15 @@ def apply_prompt_set!(process)
   return if request.empty?
 
   name, filter = request.split(":", 2)
-  abort "warn: unknown prompt set #{name} (only 'shoots')" unless name == "shoots"
-
   require_relative "shoots"
+  unless available_sets.include?(name)
+    abort "warn: unknown prompt set #{name} — have: #{available_sets.join(', ')}"
+  end
+
   side = filter if filter && filter !~ /\A[\d,\s]+\z/
   only = filter.split(",").map(&:to_i) if filter && filter =~ /\A[\d,\s]+\z/
 
-  built = prompts_for(File.basename(ROOT), side: side, only: only)
+  built = prompts_for(File.basename(ROOT), side: side, only: only, set: name)
   abort "warn: prompt set #{request} matched no sittings" if built.empty?
 
   process["sample"]["prompts"] = built.map(&:last)

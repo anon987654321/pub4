@@ -18,7 +18,25 @@ require "yaml"
 require "pathname"
 
 LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
-SHOOTS_FILE = LORA_ROOT.join("shoots.yml")
+
+# Two briefs, not one file with a mode flag.
+#
+# shoots.yml is a record of light and it flatters. shoots_warp.yml is the press
+# shoot — degraded media, clinical framing, obstruction, hard flash — and it is
+# not trying to. Mixing them would produce an average of the two, which is the
+# one thing neither brief wants.
+#
+# A set is any shoots*.yml beside this directory, so adding a third is adding a
+# file.
+def set_file(name)
+  return LORA_ROOT.join("shoots.yml") if name.nil? || name == "shoots"
+
+  LORA_ROOT.join("shoots_#{name}.yml")
+end
+
+def available_sets
+  LORA_ROOT.glob("shoots*.yml").map { |p| p.basename(".yml").to_s.sub(/\Ashoots_?/, "").then { |s| s.empty? ? "shoots" : s } }.sort
+end
 
 # CLIP's text encoder takes 77 tokens and discards the rest without saying so, so
 # a prompt that runs long loses its tail — which is where the film stock and the
@@ -57,29 +75,35 @@ def prompt_for(shoot, trigger:, descriptor:)
    shoot.fetch("stock")].join(", ")
 end
 
-def shoots(side: nil, only: nil)
-  all = YAML.load_file(SHOOTS_FILE).fetch("shoots")
+def shoots(side: nil, only: nil, set: nil)
+  file = set_file(set)
+  abort "warn: no set #{set.inspect} — have: #{available_sets.join(', ')}" unless file.file?
+
+  all = YAML.load_file(file).fetch("shoots")
   all = all.select { |s| s["side"].casecmp?(side) } if side
   all = all.select { |s| only.include?(s["n"]) } if only
   all
 end
 
-def prompts_for(subject, side: nil, only: nil)
+def prompts_for(subject, side: nil, only: nil, set: nil)
   env = subject_env(subject)
   trigger = env.fetch("TRIGGER")
   descriptor = env.fetch("DESCRIPTOR") do
-    raise "#{subject}/subject.env has no DESCRIPTOR — shoots.yml needs one to anchor age and appearance"
+    raise "#{subject}/subject.env has no DESCRIPTOR — a set needs one to anchor age and appearance"
   end
-  shoots(side: side, only: only).map { |s| [s, prompt_for(s, trigger: trigger, descriptor: descriptor)] }
+  shoots(side: side, only: only, set: set).map { |s| [s, prompt_for(s, trigger: trigger, descriptor: descriptor)] }
 end
 
 if $PROGRAM_NAME == __FILE__
-  subject = ARGV.shift or abort "warn: usage: shoots.rb <subject> [--side=NAME] [--only=1,2,3]"
+  subject = ARGV.shift or
+    abort "warn: usage: shoots.rb <subject> [--set=NAME] [--side=NAME] [--only=1,2,3]\n" \
+          "warn: sets: #{available_sets.join(', ')}"
+  set = ARGV.grep(/\A--set=/).first&.split("=", 2)&.last
   side = ARGV.grep(/\A--side=/).first&.split("=", 2)&.last
   only = ARGV.grep(/\A--only=/).first&.split("=", 2)&.last&.split(",")&.map(&:to_i)
 
   over = []
-  prompts_for(subject, side: side, only: only).each do |shoot, prompt|
+  prompts_for(subject, side: side, only: only, set: set).each do |shoot, prompt|
     tokens = approximate_tokens(prompt)
     over << shoot["title"] if tokens > TOKEN_LIMIT
     puts format("%02d  %-22s %3d tok  %s", shoot["n"], shoot["title"], tokens, prompt)
