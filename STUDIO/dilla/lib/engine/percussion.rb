@@ -73,7 +73,24 @@ def perc_rate(feel, bar, instrument, fallback)
   table.fetch(instrument, 0.0)
 end
 
+# Kick, snare/clap, hi-hat, ghost. The whole function sits out.
+#
+# Zeroing instruments one at a time kept missing some. agogo, woodblock,
+# tambourine and tabla went to 0 and the operator still heard ornaments,
+# because rim and glitch were still firing and poly5 -- a 5-against-4
+# polyrhythm mapped to a rim sound in drum_bus_mapping -- was ticking once a
+# bar underneath everything. Sixteen metallic hits in sixteen bars reads as
+# exactly the world percussion that was supposed to be gone.
+#
+# "Nothing else" is a statement about the whole layer, not a list of rates to
+# turn down, so these feels return before any of it runs. Any feel not named
+# here is untouched.
+KIT_ONLY_FEELS = %i[timeless organic syncopated_slash_ninth loose_pocket
+                    detroit_stumble la_beat_scene techno_drive default].freeze
+
 def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
+  return if KIT_ONLY_FEELS.include?(cfg[:feel]&.to_sym)
+
   rng = Random.new(stable_hash(cfg[:track].to_s) + 909)
   step_p = beat_p / 4.0
   family = cfg[:style_family]
