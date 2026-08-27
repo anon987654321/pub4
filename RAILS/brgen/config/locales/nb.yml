@@ -381,12 +381,17 @@ nb:
     disappears_in: forsvinner om %{time}
     title: Meldinger
     new_message: Ny melding
+    rooms_label: "Rom"
+    message_action: "Send melding"
+    no_people: "Ingen med det navnet her ennå."
+    find_people: "Søk etter noen"
     username: Brukernavn
     start_chat: Start chat
     empty_title: Ingen samtaler ennå
     empty_body: Send en melding for å starte.
     push_body_disappearing: Ny melding
     read: lest
+    edited: "endret"
     back_all: "← alle"
     back_channels: "← kanaler"
     disappearing: Forsvinnende meldinger
@@ -724,6 +729,13 @@ nb:
     fresh: Fersk
     top: Topp
     posts: Sorter innlegg
+  invite:
+    copy_link: "Kopier meldingslenken min"
+    expired: "Invitasjonslenken er utløpt eller ikke gyldig lenger."
+    sign_in_to_reply: "Logg inn for å svare %{name}."
+  place:
+    within_a_km: "under 1 km unna"
+    km_away: "%{count} km unna"
   posts:
     score: Poengsum
     upvote: Stem opp
@@ -824,6 +836,7 @@ nb:
     current_photos: Bilder du har nå
     more_details: Flere detaljer
     protected_with: Beskyttet med
+    vipps_required: For å bli med på dating må du logge inn med Vipps, slik at alle her er ekte personer.
     age: Alder
     edit_profile_blurb: Bilder og «om deg» betyr mest — resten er valgfritt.
     create_profile_blurb: Tre steg for å komme i gang — bilder, om deg, hvem du ser

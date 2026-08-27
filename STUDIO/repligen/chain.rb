@@ -36,6 +36,29 @@ module Repligen
     # is the multi-reference consistency spine that stops long chains drifting.
     INHERITABLE = %w[image references seed prompt].freeze
 
+    # Every spelling a model uses for "here is a picture to work from".
+    #
+    # This was `input_image` and `input_images` — the two FLUX spellings — and
+    # that was fine while every model here was a FLUX. It stops being fine the
+    # moment a chain reaches outside that family, which is the entire point of
+    # chaining: Depth Anything takes `image`, IC-Light takes `subject_image`,
+    # and the FLUX control models take `control_image`. Against the old list all
+    # three read as "declares nowhere to put an image", so the validator refused
+    # exactly the chains worth building and did it with a message blaming the
+    # model.
+    #
+    # A list rather than a per-model key, because the failure being prevented is
+    # a stage generating from the prompt alone with its input silently dropped,
+    # and any of these names being present is enough to rule that out.
+    IMAGE_INPUT_KEYS = %w[input_image input_images image subject_image control_image].freeze
+
+    # Models that take no prompt at all.
+    #
+    # A depth estimator has nothing to say to a text encoder — it reads geometry
+    # out of pixels. Requiring a prompt from one produces a chain carrying an
+    # empty string to satisfy a validator, which is worse than no check.
+    def self.promptless?(keys) = !Array(keys).map(&:to_s).include?("prompt")
+
     DEFAULT_DIR = File.join(__dir__, "chains")
 
     class Invalid < StandardError; end
@@ -88,6 +111,30 @@ module Repligen
         cap = capability_for.call(stage.model)
         keys = Array(cap[:input_keys])
 
+        # A declaration nobody has checked against the provider.
+        #
+        # Every other refusal in this method compares a chain against
+        # MODEL_CAPABILITIES. That is only worth doing while the capabilities
+        # are true, and some of them were written from a model's marketing page
+        # because Replicate's schema endpoint needs a token this machine has
+        # never had — and its web pages render their schemas in JavaScript, so
+        # they cannot be read either.
+        #
+        # An unverified entry is worse than a missing one. Missing, the chain
+        # refuses and says why. Wrong, the chain validates cleanly, the request
+        # goes out with a key the model does not take, the API ignores it, and
+        # something plausible comes back with a stage silently skipped. That is
+        # the failure this whole file exists to prevent, so it may not be
+        # introduced by the file's own reference data.
+        #
+        # `rake repligen:schema_audit` clears the flag by asking the provider.
+        if cap[:unverified]
+          found << "#{position} uses #{stage.model}, whose input_keys are declared from " \
+                   "documentation and have never been confirmed against the provider. " \
+                   "Run `rake repligen:schema_audit` with REPLICATE_API_TOKEN set, then " \
+                   "remove `unverified: true` from its entry."
+        end
+
         stage.inherits.each do |what|
           unless INHERITABLE.include?(what)
             found << "#{position} inherits #{what.inspect}, which is not one of #{INHERITABLE.join(', ')}"
@@ -103,9 +150,9 @@ module Repligen
           # takes `input_images`, a list of up to eight it holds a character
           # across. Checking only the singular would have refused every FLUX 2
           # chain — correctly by its own rule, and wrongly in fact.
-          if what == "image" && (keys & %w[input_image input_images]).empty?
-            found << "#{position} inherits the previous image, but #{stage.model} declares neither " \
-                     "input_image nor input_images — it would silently generate from the prompt alone"
+          if what == "image" && (keys & IMAGE_INPUT_KEYS).empty?
+            found << "#{position} inherits the previous image, but #{stage.model} declares none of " \
+                     "#{IMAGE_INPUT_KEYS.join(', ')} — it would silently generate from the prompt alone"
           end
         end
 
@@ -117,7 +164,8 @@ module Repligen
         end
 
         found << "#{position} has neither a prompt nor an inherited one" if
-          stage.prompt.to_s.strip.empty? && !stage.inherits.include?("prompt")
+          stage.prompt.to_s.strip.empty? && !stage.inherits.include?("prompt") &&
+          !promptless?(keys)
       end
 
       found << "chain #{chain[:name]} never preserves structure — every stage generates from " \

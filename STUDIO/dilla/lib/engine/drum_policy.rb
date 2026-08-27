@@ -137,11 +137,11 @@ def flylo_overlay_grid_hash
   # Camel/dilla style always uses the hip-hop pocket reduction of the Camel stem.
   # Project JSON may supply per-track grids when not in camel/dilla mode.
   grid = if camel_mode?
-           FLYLO_CAMEL_DRUM_GRID
+           POLY_TEMPORAL_DRUM_GRID
          else
            flylo_drum_grid_for(ENV["TRACK"] || "")
          end
-  grid = FLYLO_CAMEL_DRUM_GRID if (grid.nil? || !grid.is_a?(Hash)) && flylo_drum_overlay_enabled?
+  grid = POLY_TEMPORAL_DRUM_GRID if (grid.nil? || !grid.is_a?(Hash)) && flylo_drum_overlay_enabled?
   grid.is_a?(Hash) ? grid : nil
 end
 

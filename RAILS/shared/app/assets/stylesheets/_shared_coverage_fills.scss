@@ -57,6 +57,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* How far away a post was written. Same weight as the timestamp beside it,
+   because it is the same kind of fact — when and where, both metadata, neither
+   competing with what was said. tabular-nums so a column of "2 km" and "12 km"
+   does not jitter as the feed scrolls. */
+.feed-post-place {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 .feed-post-media {
   margin-block-start: var(--space-xs);
 }

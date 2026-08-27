@@ -47,29 +47,52 @@
   color: var(--dating-muted);
 }
 
-/* The bankID badge. Removed from the markup in d35b40ec0 and deleted here as
-   dead in 16370042a; both restored on 2026-08-13 once the original art turned
-   up showing the badge was part of the design rather than leftover. */
-.dating-intro-bankid {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
+/* The trust mark. This was a bankID badge whose "logo" was .dating-intro-bankid-
+   mark: an inline grid styling `span` children that the markup never contained,
+   so it reserved space and drew nothing. Vipps replaces it — same company, and
+   a Vipps Login is not billed per use the way a BankID verification is. */
+.dating-intro-vipps {
   font-weight: var(--weight-bold);
-  color: var(--dating-accent-ink);
   letter-spacing: -0.02em;
+  /* Vipps orange, their one brand constant. A literal because it is a
+     trademark value rather than a palette choice: no theme may recolour it and
+     no token should invite one to. */
+  color: #ff5b24;
 }
 
-.dating-intro-bankid-mark {
-  display: inline-grid;
-  grid-template-columns: repeat(3, var(--space-1));
-  gap: var(--space-1);
+/* Which way to swipe, at the two edges the thumb travels between. Dark grey and
+   low-contrast on purpose: the heart is the subject and these are a hint, so
+   they sit just above the background rather than competing with it.
+
+   Vertically centred on the viewport, not on the lede, so they stay level with
+   the heart whatever the hint above wraps to. */
+.dating-intro-arrow {
+  position: absolute;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  color: var(--dating-muted);
+  opacity: 0.45;
+  pointer-events: none;
 }
 
-.dating-intro-bankid-mark span {
-  width: var(--space-1);
-  height: var(--space-1);
-  border-radius: var(--radius-sm);
-  background: currentColor;
+.dating-intro-arrow--start { inset-inline-start: var(--space-2); }
+.dating-intro-arrow--end { inset-inline-end: var(--space-2); }
+
+@media (min-width: 40rem) {
+  .dating-intro-arrow--start { inset-inline-start: var(--space-5); }
+  .dating-intro-arrow--end { inset-inline-end: var(--space-5); }
+}
+
+/* A hint that never resolves is noise on a machine that cannot take the
+   gesture; the swipe still works, and the pointer user has the panel below. */
+@media (hover: hover) and (pointer: fine) {
+  .dating-intro-arrow { opacity: 0.28; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dating-intro-arrow { transition: none; }
 }
 
 /* Progressive profile form — essentials first, optional under details. */

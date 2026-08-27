@@ -45,7 +45,8 @@ module Deploy
     end
 
     def self.env_for(app)
-      { "RBENV_VERSION" => ruby_version, "RAILS_ENV" => "development", "PORT" => app[:port].to_s }
+      { "RBENV_VERSION" => ruby_version, "RAILS_ENV" => "development", "PORT" => app[:port].to_s,
+        "RAILS_LOG_LEVEL" => ENV.fetch("RAILS_LOG_LEVEL", "info") }
     end
 
     def self.listening?(port)
@@ -67,26 +68,29 @@ module Deploy
       false
     end
 
-# Propshaft pins the digest it serves through public/assets/.manifest.json,
-# and Rails says so out loud when you precompile in development: "Rails will
-# not serve any changed assets until you delete public/assets/.manifest.json".
-# So a stylesheet edit plus dartsass:build changes the file on disk and
-# nothing that a browser — or a rendered gate — actually reads. On 2026-08-24
-# that cost three edit/build/measure rounds against an unchanged number while
-# the fix was already compiled in.
-#
-# Clearing it here rather than documenting it: a manual step that only
-# matters after a CSS change, and whose absence produces a plausible wrong
-# measurement rather than an error, is a step that will be skipped.
-def self.clear_asset_manifest(app)
-  manifest = File.join(app[:dir], "public", "assets", ".manifest.json")
-  File.delete(manifest) if File.file?(manifest)
-end
+    # Propshaft pins the digest it serves through public/assets/.manifest.json,
+    # and Rails says so out loud when you precompile in development: "Rails will
+    # not serve any changed assets until you delete public/assets/.manifest.json".
+    # So a stylesheet edit plus dartsass:build changes the file on disk and
+    # nothing that a browser — or a rendered gate — actually reads. On 2026-08-24
+    # that cost three edit/build/measure rounds against an unchanged number while
+    # the fix was already compiled in.
+    #
+    # Clearing it here rather than documenting it: a manual step that only
+    # matters after a CSS change, and whose absence produces a plausible wrong
+    # measurement rather than an error, is a step that will be skipped.
+    def self.clear_asset_manifest(app)
+      manifest = File.join(app[:dir], "public", "assets", ".manifest.json")
+      File.delete(manifest) if File.file?(manifest)
+    end
 
-def self.boot(app)
-  clear_asset_manifest(app)
-  FileUtils.mkdir_p(RUN_DIR)
-      log = File.open(log_file(app), "a")
+    def self.boot(app)
+      clear_asset_manifest(app)
+      FileUtils.mkdir_p(RUN_DIR)
+      # Truncated, not appended. What this log is for is "why did this boot
+      # fail", which the current boot answers; keeping every prior one grew
+      # brgen.log to 1.8 GB and filled the disk.
+      log = File.open(log_file(app), "w")
       pid = Process.spawn(
         env_for(app),
         "rbenv", "exec", "bundle", "exec", "bin/rails", "server", "-p", app[:port].to_s, "-b", "127.0.0.1",

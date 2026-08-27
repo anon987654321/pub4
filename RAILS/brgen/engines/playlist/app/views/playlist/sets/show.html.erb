@@ -90,7 +90,7 @@
       <%= form_with url: set_tracks_path(@set), scope: :playlist_track do |form| %>
         <div class="field"><%= form.text_field :title, placeholder: t("playlist.title"), aria: { label: t("playlist.title") }, required: true %></div>
         <div class="field"><%= form.text_field :artist, placeholder: t("playlist.artist"), aria: { label: t("playlist.artist") } %></div>
-        <div class="field"><%= form.url_field :source_url, placeholder: t("playlist.url_optional"), aria: { label: t("playlist.url_optional") } %></div>
+        <div class="field"><%= form.url_field :source_url, placeholder: t("playlist.url_optional"), aria: { label: t("playlist.url_optional") }, inputmode: "url" %></div>
         <div class="field"><%= form.submit t("playlist.add"), class: "btn btn-primary btn-sm" %></div>
       <% end %>
     </div>

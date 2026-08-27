@@ -1,0 +1,59 @@
+description: >
+  Her, then her geometry, then her under different light, then film. The one
+  chain shape that can change the light on a face without inventing the face:
+  the identity is fixed by stage 1 and every stage after it holds something
+  while moving one thing.
+
+  Why this and not relighting the training set. A LoRA learns whatever is
+  constant across its images, and the shadow under a cheekbone is how the
+  cheekbone is read — relight the training photographs and the model learns a
+  generated bone structure welded to a real name. Here the face arrives already
+  hers from stage 1, and only the light moves.
+
+  Every model below carries `unverified: true` in MODEL_CAPABILITIES, so
+  Chain.problems refuses this chain until `rake repligen:schema_audit` has
+  confirmed the input keys against Replicate. That refusal is the point: a
+  guessed key validates cleanly, gets dropped by the API, and returns a
+  plausible picture with a stage silently skipped.
+stages:
+  # Identity. flux-2-max holds a character across up to eight reference images,
+  # so this is where "it is her" is decided and nothing downstream revisits it.
+  - name: subject
+    model: black-forest-labs/flux-2-max
+    prompt: >
+      ragnhild standing in a doorway on a Bergen street, late afternoon,
+      photographed at three metres on a 85mm lens at f/2, natural expression
+    options:
+      aspect_ratio: "4:5"
+
+  # Geometry. Not a picture — a depth map, which becomes the control_image for
+  # the stage after it. This is the stage that lets the light change without
+  # the face moving with it.
+  - name: geometry
+    model: chenxwh/depth-anything-v2
+    prompt: ""
+    inherits: [image]
+    options:
+      model_size: Large
+
+  # Light. IC-Light holds the subject and replaces the illumination; the depth
+  # map from the stage before keeps the relighting honest about which surfaces
+  # face the source.
+  # Light, and the emulsion with it. postpro is an OPTION rather than a stage —
+  # problems() already exempts `postpro:` from the accepted-keys check, because
+  # the grade runs locally after the API returns rather than being another
+  # model in the row. Writing it as a stage was my mistake and the validator
+  # caught it: `local/postpro` is not a model and has no capability entry.
+  #
+  # Last in the chain for the same reason it is last in a darkroom. Nothing in a
+  # relighting model knows what film does to a highlight, and house is thirteen
+  # steps of tone, colour and grain with nothing in it that softens.
+  - name: relight
+    model: zsxkib/ic-light-background
+    prompt: >
+      low winter sun from camera left, warm key raking across the face,
+      cool skylight fill from the right, deep but open shadows
+    inherits: [image, seed]
+    options:
+      light_source: Left Light
+      postpro: house

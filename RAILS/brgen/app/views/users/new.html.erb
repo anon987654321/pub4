@@ -10,7 +10,7 @@
     <%= render "shared/errors", object: @user %>
     <div class="field">
       <%= f.label :email_address, t("auth.email") %>
-      <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username" %>
+      <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username", inputmode: "email" %>
     </div>
     <div class="field">
       <%= f.label :username, t("auth.username_optional") %>

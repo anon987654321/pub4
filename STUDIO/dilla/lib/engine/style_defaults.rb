@@ -328,6 +328,43 @@ RENDER_MODE_DEFAULTS = {
     "RENDER_BEAUTY_MIN" => "75", "MOTIF_RECALL" => "1", "SLASH_BASS" => "1",
     "KEEP_STEMS" => "1", "GHOST_TIER" => "accent",
   },
+  # The record's own finish, as one name.
+  #
+  # Every knob below defaults to the engine's previous behaviour on its own, so
+  # nothing here changes an existing render -- which is correct for each knob
+  # taken separately and useless for a record, because it means the sound a whole
+  # album shares can only be reproduced by remembering sixteen environment
+  # variables in the right order. Fifteen of the sixteen differ from a bare run.
+  # That is not a sound anyone can ask for twice.
+  #
+  # So it is a mode: RENDER_MODE=album, and one word reaches it from the CLI, a
+  # setlist, or MASTER's dilla surface. Different beats, one finish -- the shapes
+  # vary and the superstructure does not.
+  #
+  # BARS=16 is load-bearing, not a length preference. harmony_lead_events drops
+  # every note in the first two bars of an intro section, so a 4-bar render
+  # produces zero lead events and an 8-bar one produces six, against 54 at
+  # sixteen. A short render of this mode is silently a different arrangement.
+  album: {
+    # Real sampled kit, with the layered kick an external kit otherwise disables
+    # and the backbeat clap that is implemented and off.
+    "EXTERNAL_KIT" => "03-soulful-vintage", "LAYER_KICK" => "1", "BACKBEAT_CLAP" => "1",
+    # Made new things old: 12-bit sampler grit and even-harmonic tube on the kit.
+    "DRUM_CRUSH_MIX" => "0.42", "DRUM_CRUSH_BITS" => "12", "DRUM_TUBE_DB" => "6",
+    "DRUM_PRESENCE_DB" => "6", "DRUM_AIR_DB" => "5", "DRUM_CRISP_AIR_DB" => "6",
+    # Made old things new: the sampled bed gets the pad bus's own shaping and
+    # sits at pad level rather than ten decibels under it.
+    "SAMPLE_LOOP_VOL" => "1.6", "SAMPLE_LOOP_WEIGHT" => "1.5",
+    "SAMPLE_LOOP_BODY_DB" => "2.8", "SAMPLE_LOOP_MID_DB" => "2.6",
+    "SAMPLE_LOOP_PRESENCE_DB" => "2.4", "SAMPLE_LOOP_AIR_DB" => "1.2",
+    # The lead, audible: it had no mix weight at all until LEAD_MIX_WEIGHT.
+    "HARMONY_LEAD" => "1", "LEAD_MIX_WEIGHT" => "3.0",
+    "VOICE_STACK" => "4", "VOICE_STACK_DETUNE" => "fifths",
+    "LPG" => "1", "HOCKET" => "3", "HOCKET_MODE" => "pendulum",
+    # The signature every beat carries.
+    "MELT" => "0.7", "MASTER_SMOOTH_DB" => "2", "MASTER_AIR_DB" => "0", "MASTER_TILT_DB" => "3",
+    "BARS" => "16", "COMPOSITION" => "1", "KEEP_STEMS" => "0",
+  },
   long_soul: {
     "FORM" => "soul_32", "COMPOSITION" => "1", "VOICING" => "bill_evans",
     "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "58",

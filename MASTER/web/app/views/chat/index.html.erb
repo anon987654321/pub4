@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>brgen</title>
+  <title><%= Trymbot.brand(request) || "brgen" %></title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23030303'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
@@ -46,7 +46,9 @@
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
-    window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
+    <% profile = persona.respond_to?(:browser_profile) ? persona.browser_profile : {} %>
+    <% profile = Trymbot.browser_profile(profile) if Trymbot.on?(request) %>
+    window.MASTER_PERSONA = <%= raw profile.to_json %>;
     window.MASTER_VOICE_POLICY = <%= raw Master::Voice::Policy.browser_payload.to_json %>;
     window.MASTER_SOUL_SUMMARY = "persona <%= persona&.name || 'anchor' %>; voice <%= Master::Voice::Policy.neural_voice %> (TTS fixed; persona affects text only); constitutional face";
     window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json %>;
@@ -54,6 +56,8 @@
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
   <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
+  <%# The toy-shop primer, and only on the host that wears it. %>
+  <% if Trymbot.on?(request) %><link rel="stylesheet" href="<%= asset_path("trymbot.css") %>"><% end %>
   <%# chat upload widget CSS isn't needed for the initial primer/face paint --
       defer it off the render-blocking path (inline onload= is blocked by CSP here). %>
   <link rel="preload" as="style" id="chat-upload-css" href="<%= asset_path("chat_upload.css") %>">
@@ -70,7 +74,7 @@
     #zsh { background: #000; }
   </style>
 </head>
-<body class="zen face-loading"
+<body class="zen face-loading<%= " trymbot" if Trymbot.on?(request) %>"
       data-layout="face"
       data-surface="face"
       data-runtime-profile="boot"
@@ -78,7 +82,11 @@
       data-visual-runtime="face"
       data-theme="dark"
       data-profile="<%= @profile.to_s %>"
-      data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
+      data-aesthetic="<%= Master::Voice::Aesthetic.mode %>"
+      <%# keep: show the primer rather than autostarting past it. The toy-shop
+          welcome is the point on that host, and the tap it costs is the user
+          gesture an AudioContext needs, so speech works from the first reply. %>
+      data-primer="<%= Trymbot.on?(request) ? "keep" : "auto" %>">
   <a href="#zin" class="skip-link"><%= t("skip_to_prompt") %></a>
   <%# The same wordmark the three RAILS apps carry, saying which host this is.
       Type only, fixed top-left, no chip or border — the mark is shared/_brand_mark
@@ -87,8 +95,9 @@
       <header> because it is page content that would otherwise sit outside any
       landmark, which is what axe flagged on the RAILS side. %>
   <header>
-    <a class="brand-mark" href="/" aria-label="<%= t("nav.brand_home", default: "ai.brgen.no") %>">
-      <span class="brand-text">ai.brgen.no</span>
+    <% mark = Trymbot.on?(request) ? Trymbot::HOST : "ai.brgen.no" %>
+    <a class="brand-mark" href="/" aria-label="<%= t("nav.brand_home", default: mark) %>">
+      <span class="brand-text"><%= mark %></span>
     </a>
   </header>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
@@ -128,7 +137,13 @@
        data-i18n-failed="<%= t("face.failed") %>"
        data-i18n-failed-live="<%= t("face.failed_live") %>">
     <h1 id="primer-title"><%= t("face.primer_title") %></h1>
-    <p class="tagline" id="primer-capabilities"><%= t("face.primer_capabilities") %></p>
+    <% if Trymbot.on?(request) %>
+      <p class="trymbot_wordmark" aria-label="<%= Trymbot::NAME %>"><% Trymbot::NAME.upcase.each_char do |letter| %><span aria-hidden="true"><%= letter %></span><% end %></p>
+      <p class="trymbot_tagline" id="primer-capabilities"><%= Trymbot::TAGLINE %></p>
+      <p class="trymbot_start"><%= Trymbot::START %></p>
+    <% else %>
+      <p class="tagline" id="primer-capabilities"><%= t("face.primer_capabilities") %></p>
+    <% end %>
     <p class="primer-consent" id="primer-consent"><%= t("face.primer_consent") %></p>
   </div>
   <%# The mic is off by default and the reason is in face.part5: the tap that
@@ -318,7 +333,7 @@ if(pv){
       // only job was to collect a click.
       try{
         var q=new URLSearchParams(location.search||'');
-        if(q.get('primer')!=='1'){
+        if(q.get('primer')!=='1'&&document.body.dataset.primer!=='keep'){
           document.body.classList.add('primer-autostart');
           if(p){p.setAttribute('aria-hidden','true');p.tabIndex=-1;}
           setTimeout(go,0);

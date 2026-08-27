@@ -6,11 +6,8 @@ Rails.application.config.x.master_container_mutex = Mutex.new
 Rails.application.config.x.master_bootstrap_started = false
 
 Rails.application.config.after_initialize do
-  next if Rails.application.config.x.master_bootstrap_started
-
-  Rails.application.config.x.master_bootstrap_started = true
   MasterContainerLoader.warm_shared_namespace!
-  Thread.new { MasterContainerLoader.ensure! }
+  MasterContainerLoader.rearm!
 end
 
 module MasterContainerLoader
@@ -37,6 +34,25 @@ module MasterContainerLoader
     Rails.logger.warn("master_container: could not warm Master::Ground: #{e.class}: #{e.message}")
   end
 
+  # Arms the one bootstrap thread, and is safe to call on every request that
+  # finds no container. The flag is claimed under the mutex so a burst of
+  # requests during the ~40s boot starts one thread between them, not one each.
+  #
+  # ApplicationController#require_container! calls this. It used to be a stub
+  # returning nil, on the grounds that the initializer owned the thread -- so
+  # there was exactly one attempt per process and no way back from a lost one.
+  def rearm!(config = Rails.application.config)
+    return config.x.master_container if config.x.master_container
+
+    claimed = config.x.master_container_mutex.synchronize do
+      next false if config.x.master_bootstrap_started
+
+      config.x.master_bootstrap_started = true
+    end
+    Thread.new { ensure! } if claimed
+    nil
+  end
+
   def ensure!(config = Rails.application.config)
     return config.x.master_container if config.x.master_container
 
@@ -50,9 +66,17 @@ module MasterContainerLoader
       container = Master.bootstrap_container(root:)
       config.x.master_container = container
       start_scheduler(container)
+      Rails.logger.info("master_container: ready")
       container
     end
-  rescue StandardError => e
+  # Exception, not StandardError. This runs in a thread with no joiner, so
+  # anything it does not catch disappears without a line anywhere -- and the
+  # flag above stays claimed, which used to mean the process served "Starting
+  # up..." for the rest of its life having logged nothing. NoMemoryError is the
+  # live case on a 1GB box under swap pressure, and it is not a StandardError.
+  rescue Exception => e # rubocop:disable Lint/RescueException
+    raise if e.is_a?(SystemExit) || e.is_a?(SignalException)
+
     Rails.logger.error("master_container boot failed: #{e.class}: #{e.message}")
     config.x.master_bootstrap_started = false
     nil

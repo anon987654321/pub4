@@ -38,9 +38,9 @@
                   data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
             <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
             <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
-              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold", default: "Bold") %>"><strong>B</strong></button>
-              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic", default: "Italic") %>"><em>i</em></button>
-              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list", default: "Bullet list") %>">&bull;</button>
+              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><strong>B</strong></button>
+              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><em>i</em></button>
+              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">&bull;</button>
             </div>
           </div>
           <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
@@ -55,7 +55,7 @@
     <details class="dating-profile-more">
       <summary><%= t("dating.more_details") %></summary>
       <div class="field"><%= f.label :gender %><%= f.select :gender, Dating::Profile::GENDERS, { include_blank: "—" } %></div>
-      <div class="field"><%= f.label :age %><%= f.number_field :age, min: 18, max: 99, required: true %></div>
+      <div class="field"><%= f.label :age %><%= f.number_field :age, min: 18, max: 99, required: true, inputmode: "numeric" %></div>
       <p><%= t("legal.dating_age") %></p>
       <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
       <div class="field">

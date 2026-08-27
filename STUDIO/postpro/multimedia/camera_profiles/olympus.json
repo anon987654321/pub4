@@ -1,0 +1,125 @@
+{
+  "vendor": "olympus",
+  "profiles": {
+    "olympus e-m10": {
+      "color_matrix": [
+        0.9033,
+        -0.3597,
+        0.026,
+        -0.2351,
+        0.97,
+        0.3111,
+        -0.0181,
+        0.0807,
+        0.5838
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "olympus e-m1": {
+      "color_matrix": [
+        1.1528,
+        -0.5742,
+        0.0118,
+        -0.2453,
+        1.0205,
+        0.2619,
+        -0.0751,
+        0.189,
+        0.6539
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "olympus e-m5": {
+      "color_matrix": [
+        0.9033,
+        -0.3597,
+        0.026,
+        -0.2351,
+        0.97,
+        0.3111,
+        -0.0181,
+        0.0807,
+        0.5838
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "olympus e-m5 mark ii": {
+      "color_matrix": [
+        1.0666,
+        -0.4647,
+        0.0038,
+        -0.3405,
+        1.1699,
+        0.192,
+        -0.0415,
+        0.1123,
+        0.6411
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "olympus e-p3": {
+      "color_matrix": [
+        0.7726,
+        -0.2728,
+        0.0476,
+        -0.2861,
+        0.9864,
+        0.3509,
+        -0.0782,
+        0.195,
+        0.6453
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "olympus e-p5": {
+      "color_matrix": [
+        0.9033,
+        -0.3597,
+        0.026,
+        -0.2351,
+        0.97,
+        0.3111,
+        -0.0181,
+        0.0807,
+        0.5838
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "olympus e-pl7": {
+      "color_matrix": [
+        1.0496,
+        -0.4598,
+        0.0061,
+        -0.321,
+        1.1502,
+        0.1931,
+        -0.036,
+        0.1006,
+        0.6394
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "olympus stylus 1": {
+      "color_matrix": [
+        0.8088,
+        -0.2367,
+        0.0056,
+        -0.2972,
+        1.0966,
+        0.2302,
+        -0.0617,
+        0.1704,
+        0.5228
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    }
+  }
+}

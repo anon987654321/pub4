@@ -177,6 +177,7 @@ class ChatController < ApplicationController
     response.headers["Cache-Control"]     = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
 
+    Fiber[:master_persona_note] = Trymbot::BRIEF if Trymbot.on?(request)
     ChatService.new(
       container:,
       params: mp,

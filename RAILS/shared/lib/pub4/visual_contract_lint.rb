@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "baseline_ratchet"
+
 module Pub4
   # The visual decisions that are law, made measurable. Four checks, one ratchet
   # each; every ceiling only descends.
@@ -51,14 +53,12 @@ module Pub4
 
     Finding = Struct.new(:kind, :file, :detail)
 
+    extend Pub4::BaselineRatchet
+
     module_function
 
     def scan
       contrast_findings + image_findings + accent_findings + costume_findings + btn_findings
-    end
-
-    def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
     end
 
     def run

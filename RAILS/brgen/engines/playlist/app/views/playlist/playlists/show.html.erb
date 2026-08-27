@@ -20,7 +20,7 @@
           <div class="field"><%= f.text_field :title, placeholder: t("playlist.title"), aria: { label: t("playlist.title") } %></div>
           <div class="field"><%= f.text_field :artist, placeholder: t("playlist.artist"), aria: { label: t("playlist.artist") } %></div>
           <div class="field"><%= f.select :source_type, Playlist::Track::SOURCE_TYPES.reject { |type| type == "whyp" }.map { |type| [type.humanize, type] }, { include_blank: t("playlist.source") }, { aria: { label: t("playlist.source") } } %></div>
-          <div class="field"><%= f.url_field :source_url, placeholder: t("playlist.url_optional"), aria: { label: t("playlist.url_optional") } %></div>
+          <div class="field"><%= f.url_field :source_url, placeholder: t("playlist.url_optional"), aria: { label: t("playlist.url_optional") }, inputmode: "url" %></div>
           <div class="field"><%= f.datetime_field :expires_at, aria: { label: t("playlist.expires_at") } %></div>
           <div class="field"><%= f.submit t("takeaway.add"), class: "btn btn-primary btn-sm" %></div>
         <% end %>

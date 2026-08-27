@@ -714,4 +714,64 @@ class TestWebUI < Minitest::Test
     assert_equal rebuilt, built,
                  "public/face.runtime.js differs from its sources at equal length"
   end
+
+  # The request-scoped persona note is the only path by which a host other than
+  # ai.brgen.no reaches the model's system prompt. Asserted through the builder
+  # rather than by reading the line that sets it, because the failure this
+  # guards against is a note nothing reads: the tab, the manifest and the voice
+  # would all still be right, and only the words would be MASTER's.
+  def test_persona_note_reaches_the_dynamic_prompt
+    probe = Class.new do
+      include Master::Review::PromptFilter
+      include Master::Review::Agent::PromptBuilder
+
+      def initialize = @config = {}
+
+      public :dynamic_prompt
+    end.new
+
+    Fiber[:master_persona_note] = "Persona note probe."
+    assert_includes probe.dynamic_prompt.to_s, "Persona note probe.",
+                    "dynamic_prompt dropped the persona note — Trymbot would speak as MASTER"
+  ensure
+    Fiber[:master_persona_note] = nil
+  end
+
+  # Rails serves public/ before it reaches the router, so a file with this name
+  # answers every request and pwa#manifest answers none. That is how the route
+  # and its template sat unreachable while a static copy drifted past them --
+  # and the failure is silent, because a manifest is still returned.
+  def test_no_static_manifest_shadows_the_route
+    static = File.expand_path("../web/public/manifest.json", __dir__)
+
+    refute File.exist?(static),
+           "public/manifest.json shadows pwa#manifest — the route cannot vary the manifest by host while it exists"
+  end
+
+  # The container is built once, in a thread with no joiner, and every request
+  # that finds none renders "Starting up...". Measured on vm23 2026-08-27: the
+  # container was nil for the life of the process, nothing was logged, and the
+  # started flag stayed claimed -- so the one attempt was the only attempt.
+  # These two lines are what make a second one possible.
+  def test_container_bootstrap_can_be_rearmed
+    loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
+    controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+
+    assert_includes controller, "MasterContainerLoader.rearm!",
+                    "require_container! must be able to start a new attempt, not just observe the failed one"
+    assert_includes loader, "def rearm!"
+    assert_includes loader, "config.x.master_bootstrap_started = false",
+                    "a failed attempt must release the flag or nothing retries"
+    assert_includes loader, "rubocop:disable Lint/RescueException",
+                    "StandardError alone leaves NoMemoryError to kill the thread in silence"
+  end
+
+  # A note that outlives its turn is the same bug pointed the other way: the
+  # next visitor on that thread inherits a persona nobody asked for.
+  def test_chat_service_clears_the_persona_note
+    service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
+
+    assert_includes service, "Fiber[:master_persona_note] = nil"
+    assert_includes service, "def clear_fiber_flags"
+  end
 end

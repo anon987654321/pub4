@@ -177,11 +177,17 @@ class Message < ApplicationRecord
     update_column(:link_preview_id, preview.id) if preview
   end
 
-  def deliver_receipts
-    conversation.participants.where.not(id: sender_id).each do |u|
-      message_receipts.create!(user: u, delivered_at: Time.current)
-    end
-  end
+# One insert for the room, not one per person in it. A twenty-person channel
+# paid twenty INSERTs on every message, inside the request that sent it.
+def deliver_receipts
+  now = Time.current
+  ids = conversation.participants.where.not(id: sender_id).pluck(:id)
+  return if ids.empty?
+
+  MessageReceipt.insert_all(
+    ids.map { |uid| { message_id: id, user_id: uid, delivered_at: now, created_at: now, updated_at: now } },
+  )
+end
 
   def clear_typing_indicators
     TypingIndicator.where(conversation:, user: sender).delete_all

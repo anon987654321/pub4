@@ -2,6 +2,6 @@
   avatar_url: nil,
   name: show.title,
   content: truncate(show.description, length: 100),
-  meta: t("tv.episode_count", count: show.episodes.count),
+  meta: t("tv.episode_count", count: (@episode_counts || {}).fetch(show.id, 0)),
   url: channel_show_path(channel, show),
   class: "tv" %>

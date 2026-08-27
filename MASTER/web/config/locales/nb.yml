@@ -71,6 +71,7 @@ nb:
     primer_title: "start AI"
     primer_capabilities: "stemme · bilde · musikk · kode"
     primer_consent: "Starter bilde og lyd. Mikrofonen spørres om først når du velger stemme; tekst virker om grafikken feiler."
+    primer_start_with_voice: "Start med stemme"
     starting: "starter…"
     loading_title: "laster… %{n}%"
     loading_status: "laster ansiktet %{n}%"

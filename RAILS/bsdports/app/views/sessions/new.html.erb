@@ -6,7 +6,7 @@
     <%= render "shared/errors", object: f.object if f.object.respond_to?(:errors) %>
     <div class="field">
       <%= f.label :email_address, t("auth.email") %>
-      <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address] %>
+      <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address], inputmode: "email" %>
     </div>
     <div class="field">
       <%= f.label :password, t("auth.password") %>

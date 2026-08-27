@@ -629,11 +629,41 @@ end
   # not the master. SAMPLE_MODERN=0 keeps the old subtraction-only path.
   modern = sample_modern_chain
   modern_s = modern && !modern.empty? ? "#{modern}," : ""
+  # The sampled bed gets the shaping the pad bus gets, or it stays a bed.
+  #
+  # build_harm_bus_filter lifts body, mid, presence and air into the chords --
+  # four additive stages plus a sub cut -- and the loop chain had none of them.
+  # Everything above this line is subtractive: a highpass, a mud cut and a
+  # lowpass. A sample run through only those cannot sit beside a pad that has
+  # been lifted in four bands; it reads as something playing behind the track
+  # rather than an instrument in it, which is the whole difference between a
+  # loop and a voice.
+  #
+  # Every default here is 0.0, so a render that does not ask for them is the
+  # render it was before. SAMPLE_LOOP_VOL (0.8 against the harm bus's 1.68) and
+  # SAMPLE_LOOP_WEIGHT (0.9 against 1.52) are the other half of the gap and are
+  # already knobs; these are the half that had no control at all.
+  #
+  # Centres match the harm bus rather than being picked fresh: 220 Hz body,
+  # 900 Hz mid, 2.8 kHz presence, 6 kHz air. Sharing centres is what lets the
+  # two buses be balanced against each other by ear instead of fighting in
+  # different bands.
+  body_g  = ENV.fetch("SAMPLE_LOOP_BODY_DB", "0").to_f
+  mid_g   = ENV.fetch("SAMPLE_LOOP_MID_DB", "0").to_f
+  pres_g  = ENV.fetch("SAMPLE_LOOP_PRESENCE_DB", "0").to_f
+  air_g   = ENV.fetch("SAMPLE_LOOP_AIR_DB", "0").to_f
+  shape = +""
+  shape << "equalizer=f=220:t=o:w=1.2:g=#{body_g}," unless body_g.zero?
+  shape << "equalizer=f=900:t=o:w=1.4:g=#{mid_g}," unless mid_g.zero?
+  shape << "equalizer=f=2800:t=h:w=1800:g=#{pres_g}," unless pres_g.zero?
+  shape << "equalizer=f=6000:t=h:w=2800:g=#{air_g}," unless air_g.zero?
+
   common = "aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
            "#{wow}#{echo}#{modern_s}" \
            "highpass=f=#{hp}," \
            "#{sub_eq}" \
            "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
+           "#{shape}" \
            "lowpass=f=#{(ENV['SAMPLE_LOOP_LP'] || entry[:lp] || 11_000).to_i}"
   tail = "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS"
 

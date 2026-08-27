@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "baseline_ratchet"
+
 require "yaml"
 
 module Pub4
@@ -79,6 +81,8 @@ module Pub4
     BASELINES = { "unknown_edge" => 0, "ambiguous_edge" => 0 }.freeze
 
     Finding = Struct.new(:file, :line, :kind, :value)
+
+    extend Pub4::BaselineRatchet
 
     module_function
 
@@ -178,17 +182,6 @@ module Pub4
 
     def rel(path)
       path.sub("#{RAILS_ROOT}/", "")
-    end
-
-    def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
-    end
-
-    def over_baseline(findings = scan)
-      counts(findings).filter_map do |kind, count|
-        baseline = BASELINES.fetch(kind)
-        "#{kind}: #{count} (baseline #{baseline}, +#{count - baseline})" if count > baseline
-      end
     end
 
     def run

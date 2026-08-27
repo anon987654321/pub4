@@ -11,7 +11,13 @@ module OmniAuth
              authorize_url: "/access-management-1.0/access/oauth2/auth",
              token_url: "/access-management-1.0/access/oauth2/token"
       option :scope, "openid email name phoneNumber"
-      option :provider_ignores_state, true
+# No provider_ignores_state. It was set true here, which turns off OmniAuth's
+# CSRF check on the callback: without it an attacker can complete the round
+# trip with their own authorization code and bind the victim's session to an
+# account the attacker controls. Vipps is a standards-compliant OIDC provider
+# and echoes `state`, so there was nothing to work around; the line arrived
+# in an automated polish pass rather than a decision. It matters more now
+# than it did — this strategy is what dating trusts to say a person is real.
 
       uid { raw_info["sub"] || raw_info["userId"] }
 

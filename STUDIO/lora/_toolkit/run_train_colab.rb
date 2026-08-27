@@ -88,7 +88,15 @@ end
 def setup_cell(options)
   <<~PYTHON.strip
     import subprocess
-    subprocess.run("apt-get -qq update && apt-get -qq install -y ruby git",
+    # python3-venv, because `python3 -m venv` is not part of python3 on Debian.
+    #
+    # Debian splits the stdlib: venv's bootstrap step, ensurepip, ships in a
+    # separate package, and Colab's image does not carry it. So `python3 -m venv`
+    # creates the directory, reaches ensurepip, and exits non-zero with
+    # "Command '[...ensurepip...]' returned non-zero exit status 1" — which
+    # names the failing subprocess and not the missing package, and reads like a
+    # Python problem rather than an apt one.
+    subprocess.run("apt-get -qq update && apt-get -qq install -y ruby git python3-venv python3-pip",
                    shell=True, check=True)
     if not os.path.isdir("/content/pub4/.git"):
         subprocess.run(["git", "clone", "--branch", "#{options[:branch]}", "--depth", "1",
@@ -108,6 +116,81 @@ def setup_cell(options)
   PYTHON
 end
 
+# Where the training images come from, and why it is not the clone.
+#
+# The clone is what makes this lane need no token, and it is also the reason to
+# think before using it: PUB4_REPO defaults to the public pub4 origin, so
+# "clone the repo for the dataset" means "publish the photographs first". For
+# generated subjects that is fine. For photographs of a person it is a decision
+# nobody should make by running a notebook.
+#
+# Drive is already mounted a few cells above, for checkpoints. The same mount
+# carries a dataset, so the images reach the GPU without reaching GitHub: put
+# them in MyDrive/lora/<subject>/dataset and this prefers them over anything in
+# the checkout.
+#
+# It fails rather than falling through when neither source has images. A lane
+# that trains on an empty directory produces a LoRA of nothing after several
+# hours, and the failure would surface as a bad likeness rather than as a
+# missing dataset.
+def dataset_cell(options)
+  drive_note = options[:drive] ? "" : " (--no-drive: Drive was not mounted, so only the checkout is checked)"
+  <<~PYTHON.strip
+    import glob, os, shutil
+    # Where the toolkit expects to find them, whichever source wins.
+    target = "/content/pub4/STUDIO/lora/#{SUBJECT}/dataset"
+    drive_set = "/content/drive/MyDrive/lora/#{SUBJECT}/dataset"
+
+    def count(path):
+        return len(glob.glob(os.path.join(path, "*.jpg")) +
+                   glob.glob(os.path.join(path, "*.jpeg")) +
+                   glob.glob(os.path.join(path, "*.png")) +
+                   glob.glob(os.path.join(path, "*.webp")))
+
+    if count(drive_set):
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        if os.path.islink(target) or os.path.isfile(target):
+            os.remove(target)
+        elif os.path.isdir(target):
+            shutil.rmtree(target)
+        shutil.copytree(drive_set, target)
+        print("ok: dataset from Drive —", count(target), "images (not from the public repo)")
+    elif count(target):
+        print("ok: dataset from the checkout —", count(target), "images")
+        print("note: these images are public, because #{options[:repo]} is.")
+    else:
+        raise SystemExit(
+            "warn: no training images.#{drive_note}\\n"
+            "fix: upload the captioned dataset to Drive at MyDrive/lora/#{SUBJECT}/dataset "
+            "(images plus their .txt captions), then Run all again."
+        )
+
+    # Every image needs its caption. ai-toolkit resolves <stem>.txt and falls
+    # through to the empty string when it is absent, so a broken pair is not an
+    # error there — it is an uncaptioned training image, and the run reports
+    # nothing.
+    # Images only — NOT "everything that is not a .txt".
+    #
+    # The first version globbed "*" and excluded .txt, which counts anything
+    # else in the folder as an uncaptioned image. ai-toolkit writes a
+    # `_latent_cache` DIRECTORY in here when cache_latents_to_disk is on, so the
+    # second run of any dataset refused to start, naming a directory as a
+    # missing caption. A check that fires on its own trainer's working files is
+    # worse than no check: it blocks the run and points at nothing.
+    stems = {os.path.splitext(os.path.basename(p))[0]
+             for ext in ("jpg", "jpeg", "png", "webp")
+             for p in glob.glob(os.path.join(target, "*." + ext))}
+    captions = {os.path.splitext(os.path.basename(p))[0]
+                for p in glob.glob(os.path.join(target, "*.txt"))}
+    missing = sorted(stems - captions)
+    if missing:
+        raise SystemExit("warn: %d image(s) have no .txt caption: %s\\n"
+                         "fix: upload the captions alongside the images."
+                         % (len(missing), ", ".join(missing[:6])))
+    print("ok: every image is captioned")
+  PYTHON
+end
+
 def train_cell(options)
   <<~PYTHON.strip
     # Everything past here is Ruby. cuda_t4 is a render_config.rb profile:
@@ -115,8 +198,48 @@ def train_cell(options)
     # FLUX.1-dev otherwise, 512 buckets because the budget is the clock.
     os.environ["LORA_STEPS"] = "#{options[:steps]}"
     os.environ["LORA_SAMPLE_EVERY"] = "#{options[:sample_every]}"
-    subprocess.run(["ruby", "/content/pub4/STUDIO/lora/_toolkit/colab_session.rb", "#{SUBJECT}"],
-                   check=True)
+    # SDXL, because FLUX.1-dev cannot be loaded here.
+    #
+    # Its weights are 23.8 GB of fp16 and diffusers materialises them in host
+    # RAM before quantisation can move anything to the card. A free Colab has
+    # 12.7 GB and the kernel is killed at "Loading checkpoint shards" — twice,
+    # recorded in app.log as restart (1/5). Swap would let the loader spill and
+    # this container refuses swapon. No arrangement of this machine fits 23.8
+    # into 12.7.
+    #
+    # SDXL is 6.9 GB. It is a real step down for holding one specific face
+    # across changing light, and it is the difference between photographs
+    # tonight and none. Delete this line to go back to FLUX on a machine with
+    # the memory — everything else in the config is shared.
+    os.environ["LORA_BASE"] = "sdxl"
+
+    # Piped and re-printed, NOT subprocess.run(check=True).
+    #
+    # A notebook does not show you a child process's output. IPython captures
+    # writes to Python's sys.stdout; a subprocess inherits the kernel's file
+    # descriptor 1 and writes past it, into a kernel log the browser never
+    # renders. So the whole Ruby session — every ok:, every run:, every warn:,
+    # and whatever pip said before it failed — went somewhere unreadable, and
+    # the only thing that reached the page was CalledProcessError naming
+    # subprocess.py. A run failed this way with literally no diagnostic
+    # attached: not the error, not even the first "ok:" line.
+    #
+    # Streamed line by line rather than captured at the end, because this runs
+    # for hours. capture_output=True would buffer the lot and show it after the
+    # fact, so a live run would look identical to a hung one.
+    proc = subprocess.Popen(
+        ["ruby", "/content/pub4/STUDIO/lora/_toolkit/colab_session.rb", "#{SUBJECT}"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    tail = []
+    for line in proc.stdout:
+        print(line, end="")
+        tail.append(line)
+        del tail[:-40]
+    proc.wait()
+    if proc.returncode:
+        raise SystemExit(
+            "training failed (exit %d). The cause is in the output above; the last "
+            "40 lines are:\\n%s" % (proc.returncode, "".join(tail)))
   PYTHON
 end
 
@@ -152,6 +275,10 @@ notebook = {
     cell("code", token_cell),
     cell("code", drive_cell(options)),
     cell("code", setup_cell(options)),
+    # After the clone, because it may overwrite what the clone brought, and
+    # before training, because it is the last point where a missing dataset is
+    # cheap to discover.
+    cell("code", dataset_cell(options)),
     cell("code", train_cell(options)),
   ],
   "metadata" => {

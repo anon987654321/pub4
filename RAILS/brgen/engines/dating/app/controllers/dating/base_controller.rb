@@ -5,6 +5,26 @@
 class Dating::BaseController < ApplicationController
   private
 
+  # A profile is shown to strangers, so the account behind it has to be a
+  # person. Vipps Login establishes that with a verified Norwegian phone
+  # number, and it is the cheap half of the pair — Vipps MobilePay owns BankID,
+  # but a BankID verification is billed per use and a Vipps Login is not.
+  #
+  # Nothing here fails closed on a misconfigured server: if VIPPS_CLIENT_ID is
+  # absent the provider never registers, and gating on it would lock every
+  # person out of a vertical for an operator's missing env var. When Vipps is
+  # not configured this is not a check anyone can pass, so it is not a check.
+  def require_vipps_identity
+    return unless vipps_login_available?
+    return if Current.user&.vipps_verified?
+
+    redirect_to sign_in_path, alert: t("dating.vipps_required")
+  end
+
+  def vipps_login_available?
+    Rails.application.config.x.oauth_provider_slugs.to_a.include?("vipps")
+  end
+
   def current_dating_profile
     return nil unless Current.user
 

@@ -146,3 +146,108 @@ Expression: [Rafal Wegiel](https://www.rafalwegiel.com/rafalwegielblog/the-power
 [RMCAD](https://www.rmcad.edu/blog/the-psychology-of-portrait-photography-making-subjects-feel-at-ease/).
 The AI tell: [Imagera](https://imagera.ai/blog/fix-ai-skin-plastic-look-2026),
 [Morphic](https://morphic.com/resources/how-to/fix-ai-generated-skin-realistic).
+
+## MASTER's law, refitted
+
+`MASTER/data/rules.yml` is 3,947 lines and 228 rules, and none of them can see a
+photograph — they are evaluated over source text, and the only image reference
+in the whole scanner tree is a payload encoder attaching files to an LLM
+request. The single rule that mentions imagery, `ANALOG_WARMTH`, is a
+`detect_semantic` question asked of *code* at severity `info`.
+
+But the rules are stated as principles rather than as syntax, and several of
+them arrived in software *from* visual design in the first place — Alexander's
+centres and levels of scale are architecture, and the squint test is a painter's
+trick that graphic design borrowed and code borrowed after that. Refitting them
+is closer to returning them than to translating them.
+
+Where a reading below is measurable, the metric that measures it is named.
+Where it is not, it says so; a rule that cannot be checked is a principle, not
+a gate, and pretending otherwise is the failure this file's neighbours keep
+finding.
+
+### Composition
+
+**`STRONG_CENTERS`** — *each module has one clear centre that organises the
+whole.* A frame has one subject and everything else is subordinate to it. Two
+competing centres is the commonest composition failure and it reads as
+restlessness rather than as an error. Not measurable here.
+
+**`LEVELS_OF_SCALE`** — *detail steps smoothly across scales, with no jarring
+jumps.* A photograph should resolve at every distance: the silhouette at a
+glance, the features at arm's length, the pores and fabric weave up close. A
+jump — sharp face, mushy background texture — is what upscaling and heavy
+denoise produce, and it is why an AI portrait can look right in a thumbnail and
+wrong at full size. Partly measurable: `Uncanny#texture` collapses when the
+smallest scale is gone.
+
+**`SQUINT_TEST`** — *structure evident at a glance.* Squint at the frame until
+detail disappears. If the subject no longer separates from the background, the
+composition depends on detail the viewer will not always have. This is the
+original photographic use; software borrowed it.
+
+**`ANTI_DIVITIS`** — *no styling-only wrappers.* Nothing in the frame that is
+not doing work. A prop that is there to fill space is a div with no semantics.
+
+**`SURFACE_AREA`** — *minimise the boundary between inside and outside.* Every
+element in frame is a thing the viewer must account for. Fewer, larger, deliberate.
+
+### Honesty
+
+**`LEAST_ASTONISHMENT`** — the strongest rule in the file for generated work.
+Nothing in the frame should make a viewer stop and count: fingers, teeth,
+earrings that differ, a catchlight in one eye and not the other. Astonishment
+here is not delight, it is the moment the picture stops being a photograph.
+
+**`DEFINE_ERRORS_OUT`** and **`POKA_YOKE`** — *design so the error cannot arise.*
+Perspective distortion is not correctable at any effort, so the fix is to stand
+three metres away, where it cannot happen. Blown highlights hold no information,
+so the fix is to expose for them. Both are capture-time decisions that make a
+post-production failure impossible rather than survivable.
+
+**`PARSE_DONT_VALIDATE`** — *convert untrusted input into a trusted shape once,
+at the boundary.* Fix at capture, not in the grade. `rescue.rb` exists to say
+which half of a photograph is still negotiable, and its answer is one layer of
+four.
+
+### The set
+
+**`DRY`** — two frames of the same moment are one photograph stored twice. This
+is the duplicate that cost this project an image: same cap, same dog, same strip
+lights, seconds apart. Measurable: perceptual distance between prepared frames.
+
+**`CONSISTENT_ERROR_STRATEGY`** — *one strategy per module.* One grade across a
+set, or the set reads as a pile. Exposure normalised to the set's own median
+before grading is this rule applied.
+
+**`MAGIC_COLOR`** — *colour references a token, not a raw value.* A grade
+references a stock. "Warmer" is a raw hex; `kodak_portra` is a token, and it
+carries an H&D curve, a dye matrix and a grain sigma that agree with each other.
+
+### Process
+
+**`CHESTERTONS_FENCE`** — understand why an element is in frame before removing
+it. The clutter on the table may be the reason the picture is warm.
+
+**`REVERSIBILITY`** — keep the ungraded original. Every grade in this repo is
+applied to a copy for exactly this reason, and the one time a set was graded in
+place, the recovery came out of git.
+
+**`DESIGN_IT_TWICE`** — two setups before committing to one. Cheap in
+photography and almost free in generation.
+
+**`BROKEN_WINDOWS`** — one visible flaw undermines a frame that is otherwise
+right, and viewers find it faster than they find anything you did well.
+
+**`FULL_BY_DEFAULT`** — *defaults are maximal correctness, no fake-choice tiers.*
+postpro's `house` runs the whole analog chain with no flag to discover, and the
+camera-profile pass is on rather than waiting to be switched on.
+
+**`ANALOG_WARMTH`** — the one rule already written for imagery, and the one this
+project disagrees with in part. Its prescription is "film grain, vintage lens
+softness, subtle colour cast"; `house` carries the grain and the cast and
+deliberately drops the softness, because simulated defocus on a frame that was
+already taken through a lens is invention rather than emulation, and softness is
+the one artefact nothing downstream can undo. The operator's instruction
+outranks the rule (soul > rules > this), and the disagreement is recorded rather
+than quietly resolved.

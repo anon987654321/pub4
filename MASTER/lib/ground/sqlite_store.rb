@@ -47,9 +47,22 @@ module Master
         FileUtils.touch(path) unless File.exist?(path)
       end
 
+      # Clears "other" and leaves owner and group alone, rather than clamping
+      # to 0700. The store is shared on purpose where MASTER runs as its own
+      # user: rc.d/master documents .master as dev:master 2775, and 0700 undid
+      # that on every boot the dev CLI took, locking the daemon out of the
+      # state directory it is given.
+      #
+      # EPERM is rescued for the same reason. chmod belongs to the owner, so
+      # the daemon raised it re-hardening a directory dev owns -- and this runs
+      # inside container bootstrap, where an unrescued raise leaves the whole
+      # web tier serving "Starting up..." with no container and no way back.
       def harden_sqlite_directory(dir)
-        FileUtils.chmod(0o700, dir)
-      rescue Errno::ENOSYS, Errno::EOPNOTSUPP
+        mode = File.stat(dir).mode & 0o7777
+        return if (mode & 0o007).zero?
+
+        FileUtils.chmod(mode & 0o7770, dir)
+      rescue Errno::ENOSYS, Errno::EOPNOTSUPP, Errno::EPERM
         SqliteStore.warn_chmod_unsupported_once(dir)
       end
 

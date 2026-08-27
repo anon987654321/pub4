@@ -26,6 +26,11 @@ class Playlist::SetsController < ApplicationController
       scope = scope.where(id: (set_ids + track_set_ids).uniq)
     end
     @pagy, @sets = pagy(scope)
+    # One grouped count for the page, through the join table sets reach tracks
+    # by. The card asked each set for tracks.count — a COUNT per card, and
+    # .count would query even if the association had been preloaded.
+    @track_counts = Playlist::SetTrack.where(playlist_set_id: @sets.map(&:id))
+                                      .group(:playlist_set_id).count
     finish_live_search(partial: "playlist/sets/live_search_results")
   end
 

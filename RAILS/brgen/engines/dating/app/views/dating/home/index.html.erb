@@ -17,6 +17,17 @@
   >
     <p class="dating-intro-hint"><%= t("dating.swipe_to_start") %></p>
 
+    <%# The gesture, drawn rather than described. The hint above says to swipe;
+        these say which way, at the two edges the thumb travels between.
+        aria-hidden because they are not controls -- pointer events belong to the
+        section, and the hint is the accessible instruction. %>
+    <span class="dating-intro-arrow dating-intro-arrow--start" aria-hidden="true">
+      <%= icon :chevron_left, size: 28 %>
+    </span>
+    <span class="dating-intro-arrow dating-intro-arrow--end" aria-hidden="true">
+      <%= icon :chevron_right, size: 28 %>
+    </span>
+
     <div class="dating-intro-lede">
       <%= render "dating/home/heart" %>
       <p class="dating-intro-title">dating</p>
@@ -24,16 +35,22 @@
 
     <footer class="dating-intro-trust">
       <%= t("legal.dating_age") %>
-      <%# Restored 2026-08-13. Removed in d35b40ec0, and its CSS then deleted as
-          dead in 16370042a — correctly, since nothing rendered it. The original
-          art (RAILS/shared/reference/banner_art/) shows the badge was part of
-          the design, and dating.protected_with survived in both locales the
-          whole time with no call site. %>
+      <%# Vipps, not BankID. Same company -- Vipps MobilePay owns BankID -- but a
+          BankID verification is billed per use and Vipps Login is not, and what this
+          line promises is "a real person signed in", which Vipps Login establishes
+          with a verified phone number.
+
+          A wordmark, not a logo file: Vipps' brand terms require their own supplied
+          artwork and nothing here may reach a CDN for it. Drop the official SVG at
+          shared/app/assets/images/vipps.svg and this span can render it instead;
+          until then the name set in their orange is the honest version, and it
+          costs no request.
+
+          The mark this replaces was three CSS dots and an empty <span> -- the
+          stylesheet styled `span` children the markup never had, so the badge beside
+          the word had been drawing nothing. %>
       <%= t("dating.protected_with") %>
-      <span class="dating-intro-bankid" aria-label="bankID">
-        <span class="dating-intro-bankid-mark" aria-hidden="true"></span>
-        bankID
-      </span>
+      <span class="dating-intro-vipps">Vipps</span>
       <nav aria-label="<%= t("legal.aria") %>">
         <%= link_to t("legal.privacy"), main_app.privacy_path %>
         <%= link_to t("legal.terms"), main_app.terms_path %>

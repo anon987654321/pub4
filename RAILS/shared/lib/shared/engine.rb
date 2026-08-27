@@ -104,6 +104,8 @@ app/jobs app/reflexes].each do |dir|
         # guaranteed to resolve at this point in boot.
         require_dependency Shared::Engine.root.join("app/helpers/shared/rich_text_helper").to_s
         helper Shared::RichTextHelper
+        require_dependency Shared::Engine.root.join("app/helpers/shared/place_helper").to_s
+        helper Shared::PlaceHelper
       end
     end
 

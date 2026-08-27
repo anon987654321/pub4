@@ -10,7 +10,7 @@
 <%= form_with url: fediverse_follows_path, method: :post, class: "form-wrap" do |f| %>
   <div class="field">
     <%= f.label :uri, t("fediverse.follow_label") %>
-    <%= f.url_field :uri, required: true, placeholder: "https://mastodon.example/users/kari" %>
+    <%= f.url_field :uri, required: true, placeholder: "https://mastodon.example/users/kari", inputmode: "url" %>
     <p class="form-help"><%= t("fediverse.follow_help") %></p>
   </div>
   <p><%= f.submit t("fediverse.follow_send"), class: "btn btn-primary" %></p>

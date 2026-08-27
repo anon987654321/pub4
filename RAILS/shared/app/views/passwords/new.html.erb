@@ -5,7 +5,7 @@
   <%= form_with url: passwords_path do |form| %>
     <div class="field">
       <%= form.label :email_address, t("auth.email") %>
-      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address] %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address], inputmode: "email" %>
     </div>
     <div class="actions">
       <%= form.submit t("auth.email_reset"), class: "btn btn-primary" %>

@@ -9,7 +9,7 @@
 # consequence worth stating plainly, because it was not stated and the erasure
 # was wrong for it: **no `dependent: :destroy` in the graph ever fires on this
 # path**. Nothing is destroyed, so nothing cascades. Every table holding
-# personal data has to be named here or it is simply kept.
+# personal data has to be named here or it is kept.
 #
 # It was only the users row and its sessions. A purged account still had its
 # dating profile — bio, coordinates, profile photographs and the
@@ -99,8 +99,8 @@ class UserPurgeJob < ApplicationJob
       updated_at: Time.current
     }
     attrs[:email_address] = "purged-#{user.id}@deleted.invalid" if user.has_attribute?(:email_address)
-    attrs[:username]      = "deleted_#{user.id}"                if user.has_attribute?(:username)
-    attrs[:display_name]  = nil                                 if user.has_attribute?(:display_name)
+    attrs[:username] = "deleted_#{user.id}"                if user.has_attribute?(:username)
+    attrs[:display_name] = nil                                 if user.has_attribute?(:display_name)
     attrs[:password_digest] = BCrypt::Password.create(SecureRandom.hex(24)) if user.has_attribute?(:password_digest)
     %i[otp_secret magic_link_token remember_token latitude longitude location].each do |col|
       attrs[col] = nil if user.has_attribute?(col)

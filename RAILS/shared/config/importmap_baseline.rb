@@ -24,15 +24,10 @@ pin "morphdom", to: "morphdom.js"
 pin "stimulus-use"
 pin "stimulus_reflex"
 pin "cable_ready"
-# No futurism pin. It used to be here — `pin "@stimulus_reflex/futurism", to:
-# "futurism.min.js"`, aliasing the scoped npm name stimulus_boot.js imported to
-# the asset the gem itself ships. The alias was correct and the module resolved
-# and registered on every page. What it never had was a consumer: no ERB in any
-# app carries data-controller="futurism", and shared/_futurism_pagy_list.html.erb
-# (the one place that would have) had zero callers. `pin` defaults to
-# preload: true, so the whole thing was fetched eagerly on every page load to
-# register a controller nothing asked for. Registration and partial removed with
-# it. The `futurism` gem stays in all three Gemfiles for the server-side
+# No futurism pin, because nothing consumes it: no ERB in any app carries
+# data-controller="futurism". `pin` defaults to preload: true, so pinning it
+# costs an eager fetch on every page load to register a controller nobody asks
+# for. The `futurism` gem stays in all three Gemfiles for the server-side
 # `futurize` helper; wiring a real paginated index to it is the open lazy-render
 # work in FINAL_TODO P0.4, and that starts by putting this pin back.
 # No date-fns pin, and unpkg.com is no longer contacted by any app. It existed

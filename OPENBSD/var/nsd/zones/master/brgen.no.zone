@@ -2,7 +2,7 @@
 $ORIGIN brgen.no.
 $TTL 3600
 @ IN SOA ns.brgen.no. hostmaster.brgen.no. (
-    2026081203 1800 900 604800 86400)
+    2026082701 1800 900 604800 86400)
 @ IN NS ns.brgen.no.
 @ IN NS ns.hyp.net.
 @ IN A 46.23.89.226
@@ -18,6 +18,7 @@ messenger IN A 46.23.89.226
 ns IN A 46.23.89.226
 playlist IN A 46.23.89.226
 takeaway IN A 46.23.89.226
+trymbot IN A 46.23.89.226
 tv IN A 46.23.89.226
 @ IN CAA 0 issue "letsencrypt.org"
 @ IN CAA 0 issuewild ";"

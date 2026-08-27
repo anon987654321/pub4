@@ -4,6 +4,10 @@ en:
   # currency is NOK. Without this block Rails fell back to its built-in
   # default and rendered dollars on every price, cost-per-wear and recovered
   # -value figure in the app.
+  compose:
+    bold: "Bold"
+    italic: "Italic"
+    bullet_list: "Bullet list"
   number:
     format:
       delimiter: ","

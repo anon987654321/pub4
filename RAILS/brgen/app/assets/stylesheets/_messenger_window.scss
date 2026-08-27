@@ -1,0 +1,186 @@
+// The messenger window.
+//
+// Geometry copied from Discord first, then moved onto this tree's rules, which is
+// the order the operator asked for: replicate exactly, then mould.
+//
+//   Discord            here            why it changed
+//   ---------------------------------------------------------------------------
+//   240px channel rail 240px           kept — already 30x the 8px base
+//   240px member list  240px           kept
+//   32px channel row   var(--tap-min)  layout_rules.touch.target_min_px is 44,
+//                                      and a 32px row is a miss on a phone
+//   8px row gutter     var(--space-2)  same number, named
+//   drop shadows       none            pixel_perfection.forbidden_css
+//
+// Mobile first and min-width only (MASTER MOBILE_FIRST): one column until there is
+// room for two. 1280 is design_tokens viewport.xl — BreakpointLint asserts every
+// media width is one of those edges, so this is not a width chosen here.
+
+.messenger-window {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  min-block-size: 100dvh;
+}
+
+// Master-detail on a phone: the rail, or the room, never both.
+//
+// The comment that stood above this claimed one pane on a phone and the CSS did
+// not do it — a single 1fr column stacks the rail on top of the conversation, so
+// reaching a message meant scrolling past every room first. That is the whole of
+// the layout on the device this will mostly be used on.
+//
+// :has(.conversation-log) is the test for "a room is open", because that class is
+// already the thing Message#broadcast_to_logs appends to — it exists in both show
+// views and in neither empty state, so nothing new has to be marked. Mobile-first
+// and min-width only, per MOBILE_FIRST: this is the default and the wide layout
+// below overrides it.
+.messenger-window:has(.conversation-log) .messenger-rail { display: none; }
+.messenger-window:not(:has(.conversation-log)) .messenger-pane { display: none; }
+
+.messenger-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-inline-end: 1px solid var(--border);
+  // The rail scrolls on its own, so a long inbox never moves the log.
+  overflow-y: auto;
+}
+
+.messenger-rail-head {
+  display: flex;
+}
+
+.messenger-rail-new {
+  inline-size: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+}
+
+.messenger-rail-group {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  // 0.08em: typography.letter_spacing.all_caps_min_em is 0.05 and max is 0.15.
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.messenger-rail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.messenger-rail-room {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.messenger-rail-room:hover { background: var(--hover); color: var(--text); }
+
+// The room you are reading. Discord marks this with a lighter ground and full-
+// strength text, which is the whole of it — no rule, no marker, no accent bar.
+.messenger-rail-room[aria-current="page"] {
+  background: var(--hover);
+  color: var(--text);
+  font-weight: var(--weight-bold);
+}
+
+.messenger-rail-hash {
+  color: var(--text-secondary);
+  font-weight: var(--weight-bold);
+}
+
+.messenger-rail-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messenger-rail-unread {
+  flex: none;
+  min-inline-size: 20px;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  // --accent-ink, the tree's existing token for text on the accent (see _forms).
+  // The literal that stood here would have tripped magic_color_hex_ban_inline,
+  // and invented a second name for a colour that already had one.
+  color: var(--accent-ink);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  text-align: center;
+}
+
+.messenger-rail-empty {
+  padding: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.messenger-pane {
+  display: block;
+  min-width: 0;
+  // The log scrolls, not the window: a composer that scrolls off the bottom of a
+  // conversation is the defect this pane exists to prevent.
+  overflow-y: auto;
+  padding: var(--space-3);
+}
+
+@media (min-width: 1280px) {
+  .messenger-window {
+    // 240px is Discord's rail, kept. The middle takes the rest — a conversation
+    // has no ideal measure the way prose does, because a line of chat is short.
+    grid-template-columns: 240px minmax(0, 1fr);
+    block-size: 100dvh;
+  }
+
+  // There is room for both here, so the master-detail switch above is undone
+  // rather than repeated: whichever of the two the phone was hiding comes back.
+  .messenger-window:has(.conversation-log) .messenger-rail { display: flex; }
+  .messenger-window:not(:has(.conversation-log)) .messenger-pane { display: block; }
+
+  .messenger-rail,
+  .messenger-pane { block-size: 100dvh; }
+}
+
+// Your own "message me" link. Quiet: it is the thing you reach for once, when
+// somebody you want is not here yet, not a control you use every session.
+.messenger-rail-invite {
+  display: flex;
+}
+
+.messenger-rail-invite-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  inline-size: 100%;
+  min-height: var(--tap-min);
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
+}
+
+.messenger-rail-invite-copy:hover { background: var(--hover); color: var(--text); }

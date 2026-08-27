@@ -291,6 +291,82 @@ article {
   padding-inline-start: calc(var(--space-3) * 2 + 20px);
 }
 
+/* The label a field wears until you write in it.
+
+   The transform below has existed for a while and reached nothing: it needs the
+   input before the label in the DOM, and all 69 same-line label/field pairs in
+   this tree put the label first — so the rule matched no element in any app.
+   It also needed somewhere to travel from, and no label anywhere was positioned,
+   so even in the right order it would have moved a flex-column label further up
+   into empty space.
+
+   .field--float is that missing half, and it is opt-in for the reason the comment
+   below records: an unscoped form pattern once reached the theme toggle and
+   float-labelled the brand chrome. A class cannot do that.
+
+   Mobile first, no framework, grid rather than absolute where it can be: the
+   label is placed in the same grid cell as the input, so it inherits the input's
+   box instead of being positioned against it by hand. */
+.field--float {
+  display: grid;
+  position: relative;
+}
+
+.field--float > input,
+.field--float > textarea {
+  grid-area: 1 / 1;
+  /* Room above the text for the label to sit in once it has risen. */
+  padding-block: calc(var(--space-4) + var(--space-1)) var(--space-2);
+}
+
+.field--float > label {
+  grid-area: 1 / 1;
+  align-self: center;
+  justify-self: start;
+  padding-inline: var(--space-3);
+  color: var(--text-secondary);
+  /* The label is decoration until it is read; the input owns the pointer. */
+  pointer-events: none;
+  transform-origin: left center;
+  transition: transform 150ms var(--ease-out), color 150ms var(--ease-out);
+}
+
+/* The placeholder is a single space on these inputs so :placeholder-shown has
+   something to be true about. It is never seen: the label covers it.
+
+   :has() rather than only the adjacent sibling, because password_visibility_field
+   wraps its input in a .password-field div to sit the show/hide button beside it
+   — so for a password the label is the wrapper's sibling, not the input's, and
+   `input + label` cannot reach it. Asking the field whether it contains a filled
+   or focused control works for both shapes and needs no markup change. */
+.field--float:has(> input:not(:placeholder-shown)) > label,
+.field--float:has(> input:focus) > label,
+.field--float:has(> textarea:not(:placeholder-shown)) > label,
+.field--float:has(> textarea:focus) > label,
+.field--float:has(.password-field input:not(:placeholder-shown)) > label,
+.field--float:has(.password-field input:focus) > label {
+  transform: translateY(-0.9em) scale(0.78);
+  color: var(--text-secondary);
+}
+
+/* The wrapper has to fill the same cell, or the password input sits in its own
+   row and the label floats over nothing. */
+.field--float > .password-field {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+}
+
+.field--float > .password-field > input {
+  flex: 1;
+  min-width: 0;
+  padding-block: calc(var(--space-4) + var(--space-1)) var(--space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field--float > label { transition: none; }
+}
+
 /* Text entries only, spelled out. :placeholder-shown never applies to a
    checkbox, so the bare `input:not(:placeholder-shown) + label` matched the
    THEME TOGGLE (a checkbox + its icon label) and float-labelled the brand

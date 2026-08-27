@@ -57,6 +57,7 @@ en:
     primer_title: "launch AI"
     primer_capabilities: "voice · image · music · code"
     primer_consent: "Starts visuals and sound. Microphone access is requested only when you choose voice input; text remains available if graphics fail."
+    primer_start_with_voice: "Start with voice"
     starting: "starting…"
     loading_title: "loading… %{n}%"
     loading_status: "loading face %{n}%"

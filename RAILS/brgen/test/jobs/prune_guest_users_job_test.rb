@@ -58,8 +58,12 @@ class PruneGuestUsersJobTest < ActiveSupport::TestCase
     conversation = Conversation.create!(conversation_type: "direct")
     conversation.conversation_participants.create!(user: author)
     conversation.conversation_participants.create!(user: guest)
-    message = conversation.messages.create!(sender: author, content: "hei", message_type: "text")
-    message.message_receipts.create!(user: guest)
+message = conversation.messages.create!(sender: author, content: "hei", message_type: "text")
+# deliver_receipts already made the guest's receipt on create. This used to
+# add a second one, which only worked because message_receipts had no unique
+# index — 20260827090000 added it, so the duplicate is now the error it
+# always was. Assert the receipt exists rather than making another.
+assert message.message_receipts.exists?(user: guest), "the callback should have delivered one"
 
     Shared::PruneGuestUsersJob.perform_now
 

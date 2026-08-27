@@ -388,7 +388,7 @@ if ARGV.include?("--video")
   require_relative "motion"
   source = ARGV[ARGV.index("--video") + 1]
   target = ARGV.include?("--output") ? ARGV[ARGV.index("--output") + 1] : nil
-  preset = ARGV.include?("--preset") ? ARGV[ARGV.index("--preset") + 1] : "portrait"
+  preset = ARGV.include?("--preset") ? ARGV[ARGV.index("--preset") + 1] : "house"
   grain = ARGV.include?("--grain-hold") ? :hold : :moving
   seed = Integer(ENV.fetch("POSTPRO_SEED", "1"), exception: false) || 1
 
@@ -723,6 +723,71 @@ FILM_BASE = {
 # → chemistry → optical_effect → print → grain. One contrast mode and one
 # color temperature approach per preset — no stacking.
 PRESETS = {
+  # The house grade, and the default: the whole analog path rather than a
+  # selection from it.
+  #
+  # Every other preset here is a look — a choice of some effects over others.
+  # This one is the answer to "put the full treatment on it", which is what the
+  # tool is for when nobody has asked for a particular film. Eighteen steps
+  # against the ten of the richest preset before it.
+  #
+  # Ordered by where each thing physically happens, not by taste, because the
+  # order is the difference between emulation and a stack of filters:
+  #
+  #   lens        optical_blur, vintage_lens, chromatic_aberration
+  #   exposure    spectral_temp, halation      (halation is light reflecting off
+  #                                            the film base back through the
+  #                                            emulsion, so it precedes the curve)
+  #   emulsion    emulsion_defocus             (dye layers sit at different depths)
+  #   development film_curve, stock_matrix, dir_coupler, adjacency_effects
+  #   negative    orange_mask
+  #   print       print_film
+  #   tone        skin_protect, shadow_lift, highlight_roll, micro_contrast
+  #   grain       last, because it is a property of the emulsion the print sees
+  #   gate        film_curl_vignette
+  #
+  # Safe as a default only because the source-aware scaling above exists: on a
+  # photograph that already has texture and contrast, the defocus goes to zero
+  # and the curve backs off, so eighteen steps do not mean eighteen
+  # subtractions. Against a generated image it runs at full strength, which is
+  # what a generated image needs.
+  # Two effects are deliberately NOT in this chain, having been measured in it
+  # and taken out. chromatic_aberration cost 0.0265 of texture and
+  # film_curl_vignette 0.0428 — together two thirds of the picture's
+  # micro-detail, and a vignette that dropped mean brightness by 53.8 levels.
+  # Both are legitimate and both remain available to the presets that want
+  # them; neither belongs in the one grade that runs when nobody chose.
+  #
+  # They are scaled now rather than merely excluded. When this was written the
+  # taper reached only the defocus and the curve, and the paragraph above was
+  # the only thing standing between a photograph and the damage — a note is not
+  # a mechanism. head[:fringe] and head[:vignette] taper on texture, so the two
+  # presets that want each still get them at a strength the source can afford.
+  # Keeping them out of the default is a separate decision and it stands.
+  #
+  # NOTHING IN THIS CHAIN SOFTENS THE PICTURE.
+  #
+  # optical_blur, emulsion_defocus and vintage_lens are all out — the last one
+  # took `lens:` with it, since it was that key's only reader and an unread key
+  # is a --vocab-check failure. They are lens simulation, and lens simulation on
+  # a frame that was already taken through a lens is invention, not emulation.
+  # Softness is also the one artefact that cannot be undone downstream, which
+  # makes it the wrong thing for a default to add on the operator's behalf.
+  #
+  # What is left is tone, colour and emulsion: the H&D curve, dye crosstalk,
+  # coupler inhibition, adjacency, the negative's mask, the print stock, and
+  # grain. Halation stays and is not a blur — it adds light that bounced off the
+  # film base back through the emulsion, which is why it glows rather than
+  # smears, and it measured at -0.0001 texture.
+  #
+  # This is the difference between a film emulation and a lo-fi filter. No lomo,
+  # no scan lines, no vignette, no defocus.
+  house: { fx: %w[spectral_temp halation film_curve stock_matrix dir_coupler
+                  adjacency_effects orange_mask print_film skin_protect
+                  shadow_lift highlight_roll micro_contrast grain],
+           stock: :kodak_portra, print_stock: :kodak_2383,
+           temp: 5400, intensity: 0.80 },
+
   portrait: { fx: %w[optical_blur spectral_temp film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
               stock: :kodak_portra, temp: 5200, intensity: 0.85 },
 
@@ -856,6 +921,24 @@ PRESETS = {
 
   expired: { fx: %w[optical_blur spectral_temp film_curve expired_film gate_weave],
              stock: :kodak_portra, temp: 5200, intensity: 0.90, age: 0.65 },
+
+  # The two presets below carry effects recovered from this file's first
+  # generation. Added as NEW presets rather than folded into the fifty-eight
+  # that already exist, because those are tuned looks and a recovered effect is
+  # not a reason to move one.
+  #
+  # A cassette that has been opened, or a back that no longer seals. The leak
+  # arrives from a frame edge and fogs the shadows first, so it belongs after
+  # the curve — the fog is light the emulsion received, not a grade applied to
+  # what it recorded.
+  light_leak: { fx: %w[optical_blur spectral_temp film_curve light_leaks halation grain],
+                stock: :kodak_portra, temp: 5600, intensity: 0.85 },
+
+  # Daylight printed as moonlight. A convention rather than a process — real
+  # moonlight is neither this blue nor this directional, and an audience reads
+  # it as night because film has always shown it this way.
+  day_for_night: { fx: %w[optical_blur spectral_temp film_curve day_for_night shadow_lift grain],
+                   stock: :kodak_vision3_500t, temp: 4100, intensity: 0.85 },
 
   reticulated: { fx: %w[optical_blur spectral_temp film_curve reticulation fixing_bath_fog grain],
                  stock: :tri_x, temp: 5600, intensity: 0.80 },
@@ -1035,8 +1118,32 @@ module HD
   end
 end
 
+# While true, safe_cast keeps float and does not clamp. Set only by preset(),
+# which clamps once at the end.
+$postpro_float_pipeline = false
+
+# Clamp to 0..255 and quantise to 8-bit — EXCEPT inside a preset chain.
+#
+# Every effect ends by calling this, so a sixteen-step chain used to round to
+# 8-bit sixteen times and, worse, clamp sixteen times. The rounding costs
+# precision; the clamping costs information that cannot be recovered. A step
+# that pushes a highlight to 260 has it cut to 255 permanently, and the next
+# step — the shoulder that exists precisely to roll that highlight back down —
+# receives a flat white plateau where the negative had detail.
+#
+# That is the opposite of what the thing being emulated does. The whole point of
+# a colour negative is latitude: it holds values far above and below what a
+# print shows, and the curve decides afterwards what becomes white. Clamping at
+# every stage models a sensor, not a film.
+#
+# So inside a chain the values stay float and unbounded, and preset() clamps
+# once at the end. Outside a chain — a bare effect call, a recipe step, a caller
+# that hands the result straight to write_to_file — behaviour is unchanged,
+# because those have no later step to hand headroom to.
 def safe_cast(image, format = "uchar")
   if format == "uchar"
+    return image.cast("float") if $postpro_float_pipeline
+
     f = image.cast("float")
     f = (f > 0).ifthenelse(f, 0)
     f = (f < 255).ifthenelse(f, 255)
@@ -1580,6 +1687,83 @@ end
 # at full strength. Asking for a tenth of the defocus produced all of it, so the
 # source-aware scaling in preset() had no effect here until this existed.
 OPTICAL_BLUR_FLOOR = 0.12
+
+# Light striking the film outside the gate.
+#
+# Recovered from the first generation of this file, and rebuilt rather than
+# restored. The original drew two to eight filled circles at random coordinates,
+# which is not what a light leak is: light enters at a cassette seam, a failing
+# door hinge or the film gate, so it arrives from a FRAME EDGE and falls off
+# inward. A disc in the middle of the picture has no physical account at all.
+#
+# Built as a distance ramp from one edge, raised to a power for the falloff and
+# added rather than blended, because fogging is additive exposure — the emulsion
+# receives light it should not have, and the shadows go first. That is also why
+# it lifts blacks far more visibly than highlights without any explicit masking.
+#
+# The warm colour is not a style choice. A leak is usually red-to-orange because
+# the film base and the cassette felt pass long wavelengths most readily, and
+# because the red-sensitive layer sits deepest and takes the most stray light.
+#
+# Seeded through postpro_seed, so which edge and how wide are reproducible. The
+# original called bare rand() and could not be reproduced twice.
+LEAK_TINT = [1.00, 0.62, 0.34].freeze
+
+def light_leaks(image, intensity = 0.5, edge: nil)
+  return image if intensity <= 0
+
+  picker = Random.new(postpro_seed(31))
+  edge ||= %i[left right top bottom][picker.rand(4)]
+  # How far across the frame the fog reaches: a seam leak is narrow, a failing
+  # back is wide.
+  reach = 0.18 + picker.rand * 0.22
+
+  w = image.width
+  h = image.height
+  # A 0..1 ramp that is 1 at the chosen edge and 0 by `reach` across the frame.
+  ramp =
+    case edge
+    when :left   then Vips::Image.xyz(w, h)[0].linear(-1.0 / (w * reach), 1.0)
+    when :right  then Vips::Image.xyz(w, h)[0].linear(1.0 / (w * reach), 1.0 - (1.0 / reach))
+    when :top    then Vips::Image.xyz(w, h)[1].linear(-1.0 / (h * reach), 1.0)
+    else              Vips::Image.xyz(w, h)[1].linear(1.0 / (h * reach), 1.0 - (1.0 / reach))
+    end
+  ramp = clamp01(ramp)
+  # Squared falloff: a leak has a soft core and a long tail, not a linear wedge.
+  ramp = (ramp**2.2) * (255.0 * intensity * 0.55)
+
+  bands = LEAK_TINT.map { |t| ramp * t }
+  safe_cast(image.cast("float") + Vips::Image.bandjoin(bands))
+rescue StandardError => e
+  $logger.error "light_leaks: #{e.message}"; image
+end
+
+# Underexposing and cooling a daylight frame to read as moonlight.
+#
+# Also recovered, and this one was already close to right, because it models a
+# real practice rather than an artefact: shoot in daylight, stop down hard,
+# print cold. Kept as it was in substance — darken, then lift blue — with the
+# random component removed so the same call gives the same result, and the blue
+# lift moved onto the shadows where moonlight actually reads.
+#
+# Not a physical process, unlike everything around it. It is a convention: an
+# audience reads cold-and-dark as night because film has always shown it that
+# way, and real moonlight is neither as blue nor as directional as this.
+def day_for_night(image, intensity = 0.6)
+  return image if intensity <= 0
+
+  darkened = image.cast("float").linear([1.0 - (0.42 * intensity)], [-18.0 * intensity])
+  r, g, b = darkened.bandsplit
+  # Weight the cast toward the low end. A uniform blue gain tints the highlights
+  # too, which reads as a filter over a daylight shot rather than as night.
+  luma = darkened.colourspace("b-w").cast("float") / 255.0
+  shadow_weight = clamp01(luma.linear(-1, 1))
+  b = b + (shadow_weight * 26.0 * intensity)
+  g = g + (shadow_weight * 6.0 * intensity)
+  safe_cast(Vips::Image.bandjoin([r, g, b]))
+rescue StandardError => e
+  $logger.error "day_for_night: #{e.message}"; image
+end
 
 def optical_blur(image, sigma = 0.6)
   return image if sigma < OPTICAL_BLUR_FLOOR
@@ -2667,12 +2851,47 @@ TONAL_NATIVE = 0.22
 # untouched. Defocus does scale to nothing, because simulated lens softness is
 # not a look anyone asked for on a frame that is already sharp — it is only
 # ever there to give grain something to sit on.
-GRADE_FLOOR = 0.25
+#
+# 0.70, raised from 0.25, because 0.25 was protecting the picture from the
+# grade rather than from damage. On a set of ordinary phone photographs the
+# taper measured them as already-good and cut the curve to a quarter, which
+# moved the mean about four levels and was invisible — the operator's report
+# was that postpro had never run, and the files had in fact been graded twice.
+#
+# The confusion was mine: I conflated subtractive with damaging. A film curve
+# compresses contrast, and that compression IS the look — the shoulder, the toe,
+# the way a highlight rolls instead of clipping. Measured on a real photograph,
+# the difference between 0.25 and 0.70 is eight points of texture (99% kept
+# against 91%, both comfortably inside the golden suite's 75% floor) and a
+# tonal shift from -0.05 to -0.07. Cheap, and the difference between a grade
+# you can see and one you cannot.
+#
+# What actually damaged photographs was never the curve. It was dir_coupler
+# rebuilding every band from a blurred copy, and defocus whose sigma floors
+# ignored any request to soften less. Both are fixed at the mechanism. The
+# taper should hold back the effects that destroy information and let the ones
+# that shape tone do their work.
+GRADE_FLOOR = 0.70
 
 def source_headroom(image)
   reading = Postpro::Uncanny.read_image(image)
   { blur: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.0),
-    curve: taper(reading.tonal_range, TONAL_FLOOR, TONAL_NATIVE, GRADE_FLOOR),
+    curve: curve_strength(reading.tonal_range),
+    # Two more effects that destroy what the source arrived with, and were
+    # measured doing it before being taken out of `house`:
+    # chromatic_aberration cost 0.0265 of texture and film_curl_vignette 0.0428
+    # on one frame, together two thirds of its micro-detail.
+    #
+    # They were left unscaled with a note saying so, which made the note the
+    # only thing standing between a photograph and the damage — and a note is
+    # not a mechanism. Both are still available to the two presets each that
+    # want them; those presets now get them at a strength the source can afford.
+    #
+    # Both taper on TEXTURE, not tonal range. Lateral CA blurs the red and blue
+    # channels against green, and a vignette's falloff destroys detail in the
+    # corners; neither is a tone curve, and neither has contrast to spend.
+    fringe: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.30),
+    vignette: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.35),
     reading: reading }
 rescue StandardError => e
   # A measurement failure must not cost the grade. Full strength is what every
@@ -2682,11 +2901,41 @@ rescue StandardError => e
 end
 
 # 1.0 at or below `floor`, `minimum` at or above `native`, linear between.
+#
+# Correct for a step that DESTROYS what the source already has: the more the
+# picture arrived with, the less of that step it should get. Defocus is the
+# case — a sharp frame wants none of it.
 def taper(value, floor, native, minimum)
   return 1.0 if value <= floor
   return minimum if value >= native
 
   1.0 - ((value - floor) / (native - floor)) * (1.0 - minimum)
+end
+
+# How much film curve this picture can afford, which runs the OTHER way.
+#
+# The curve used to go through taper() with everything else, and that was a
+# polarity error hiding behind a shared helper. taper() reduces a step as the
+# source gets richer, which is right for defocus and exactly wrong here: an H&D
+# curve does not add contrast, it compresses it — the toe and the shoulder are
+# both reductions. So tapering it upward for flat images handed the most
+# compression to the pictures with the least to spare.
+#
+# Measured across seven photographs: the most contrasty lost 26% of its tonal
+# range and the flattest lost 46%. Backwards, and visible as muddiness in
+# exactly the frames that were already soft.
+#
+# A film curve is a way of SPENDING contrast. A frame with plenty can afford the
+# full shoulder and looks like film for it; a flat one has nothing to give and
+# gets a light touch, because compressing an already-flat picture is not a look,
+# it is a loss.
+CURVE_FLOOR = 0.35
+
+def curve_strength(tonal_range)
+  return CURVE_FLOOR if tonal_range <= TONAL_FLOOR
+  return 1.0 if tonal_range >= TONAL_NATIVE
+
+  CURVE_FLOOR + ((tonal_range - TONAL_FLOOR) / (TONAL_NATIVE - TONAL_FLOOR)) * (1.0 - CURVE_FLOOR)
 end
 
 def preset(image, name)
@@ -2696,6 +2945,9 @@ def preset(image, name)
   t_start = Time.now
   n_steps = p[:fx].length
   head = source_headroom(image)
+  # Headroom on, for the whole chain. Values may exceed 0..255 between steps and
+  # only the final clamp decides what becomes white.
+  $postpro_float_pipeline = true
   PostproBootstrap.dmesg "preset=#{name} stock=#{p[:stock]} steps=#{n_steps} intensity=#{p[:intensity]}"
   if head[:reading]
     PostproBootstrap.dmesg format("source %s -> blur x%.2f curve x%.2f",
@@ -2733,6 +2985,8 @@ def preset(image, name)
              when "split_toning"        then split_toning(processed)
              when "skin_protect"        then skin_protect(processed, p[:intensity])
              when "shadow_lift"         then shadow_lift(processed, SHADOW_TOE_TARGET, true)
+             when "light_leaks"         then light_leaks(processed, p[:intensity] * 0.45)
+             when "day_for_night"       then day_for_night(processed, p[:intensity] * 0.70)
              when "highlight_roll"      then highlight_roll(processed, 200, p[:intensity] * 0.50)
              when "micro_contrast"      then micro_contrast(processed, 5, p[:intensity] * 0.20)
              # Was a hard-coded 800 for every preset. grain's whole ISO term is
@@ -2745,7 +2999,7 @@ def preset(image, name)
              # so no render anywhere has a grain pattern to preserve.
              when "grain"               then grain(processed, preset_effective_iso(p), p[:stock], p[:intensity] * 0.30)
              when "color_separate"      then color_separate(processed, p[:intensity] * 0.55)
-             when "chromatic_aberration" then chromatic_aberration(processed, p[:intensity] * 0.25)
+             when "chromatic_aberration" then chromatic_aberration(processed, p[:intensity] * 0.25 * head[:fringe])
              when "vintage_lens"        then vintage_lens(processed, p.fetch(:lens, "zeiss"), p[:intensity] * 0.70)
              when "teal_orange"         then teal_orange(processed, p[:intensity] * 0.80)
              when "bloom_pro"           then bloom_pro(processed, p[:intensity] * 0.25)
@@ -2771,7 +3025,7 @@ def preset(image, name)
              when "scan_noise"          then scan_noise(processed, p[:intensity] * 0.40)
              when "newton_rings"        then newton_rings(processed, p[:intensity] * 0.12)
              when "dust_and_hair"       then dust_and_hair(processed, p[:intensity] * 0.50)
-             when "film_curl_vignette"  then film_curl_vignette(processed, p[:intensity] * 0.45)
+             when "film_curl_vignette"  then film_curl_vignette(processed, p[:intensity] * 0.45 * head[:vignette])
              when "selenium_tone"       then selenium_tone(processed, p[:intensity] * 0.45)
              when "dye_fade"            then dye_fade(processed, p[:stock], p.fetch(:age, 0.50))
              when "darkroom_print"      then darkroom_print(processed, p[:intensity] * 0.50)
@@ -2814,7 +3068,16 @@ def preset(image, name)
   end
 
   PostproBootstrap.dmesg "preset=#{name} done total=%.2fs" % (Time.now - t_start)
-  processed
+  # The single clamp. Everything above ran in unbounded float; this is where
+  # the negative becomes a print.
+  $postpro_float_pipeline = false
+  safe_cast(processed)
+ensure
+  # One clamp, at the end, whatever happened in between — including a raise,
+  # which is why this is an ensure rather than a line before the return. Leaving
+  # the flag set would make every later bare effect call return unbounded float
+  # to a caller expecting 8-bit.
+  $postpro_float_pipeline = false
 end
 
 # Random Effects
@@ -3095,7 +3358,7 @@ def check_repligen
 
   return unless recent_files.any?
     $cli_logger.info "Found #{recent_files.count} recent Repligen outputs"
-    preset_name = PROMPT ? PROMPT.select("Choose preset for Repligen outputs:", PRESETS.keys) : (CONFIG["default_preset"] || "portrait")
+    preset_name = PROMPT ? PROMPT.select("Choose preset for Repligen outputs:", PRESETS.keys) : (CONFIG["default_preset"] || "house")
     recent_files.each { |file| process_file(file, 2, preset_name) }
 
 end
@@ -3108,8 +3371,21 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
   image = load_image(file)
   return 0 unless image
 
-  # Apply camera profile first if enabled
-  if CONFIG["apply_camera_profile_first"]
+  # The body's own colour response, before anything else touches the picture.
+  #
+  # ON BY DEFAULT, and set false only by someone who has a reason. It was
+  # `if CONFIG["apply_camera_profile_first"]` against a CONFIG that is {} unless
+  # a master.json exists, so the answer was nil on every invocation this file
+  # has ever had — fifty lines of matching and matrix application that had never
+  # run, aimed at a profiles directory that had never existed.
+  #
+  # Both halves are real now: multimedia/camera_profiles holds 121 bodies across
+  # six vendors, recovered from a VSCO DCP archive. A default of off would have
+  # kept them as decorative as the code that reads them.
+  #
+  # It no-ops safely on anything without EXIF Make/Model, which is every
+  # generated image — so a render is unaffected and a photograph is corrected.
+  unless CONFIG.fetch("apply_camera_profile_first", true) == false
     profile = get_camera_profile(image)
     if profile
       image = apply_camera_profile(image, profile)
@@ -3195,7 +3471,7 @@ def get_input
     # Fallback mode without tty-prompt
     patterns = ["**/*.{jpg,jpeg,png,webp}"]
     variations = CONFIG["variations"] || 2
-    preset_name = CONFIG["default_preset"] || "portrait"
+    preset_name = CONFIG["default_preset"] || "house"
     [patterns, variations, { type: :preset, preset: preset_name }]
   end
 end
@@ -3204,7 +3480,7 @@ def auto_mode
   PostproBootstrap.dmesg "auto mode enabled"
   patterns = ["**/*.{jpg,jpeg,png,webp}"]
   variations = CONFIG["variations"] || 2
-  preset_name = CONFIG["default_preset"] || "portrait"
+  preset_name = CONFIG["default_preset"] || "house"
 
   [patterns, variations, { type: :preset, preset: preset_name }]
 end
@@ -3439,7 +3715,8 @@ def vocab_check
   unless File.exist?(PostproBootstrap.master_config_path)
     notes << "no #{PostproBootstrap.master_config_path} — CONFIG is empty, so jpeg_quality, variations, " \
              "default_preset and apply_camera_profile_first all take their built-in fallbacks " \
-             "(the camera-profile pass is therefore off)"
+             "(preset=house, and the camera-profile pass is ON: #{CAMERA_PROFILES.values.sum(&:size)} " \
+             "bodies across #{CAMERA_PROFILES.size} vendors)"
   end
 
   # One actual pixel, through actual chains.

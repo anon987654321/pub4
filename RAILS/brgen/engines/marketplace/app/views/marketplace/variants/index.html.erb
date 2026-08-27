@@ -42,11 +42,11 @@
       <%# Blank price means the listing's own, so a shop varying only the size
           states the price once. %>
       <%= f.label :price_cents, t("marketplace.variant_price") %>
-      <%= f.number_field :price_cents, min: 0, step: 1, placeholder: @listing.price_cents.to_s %>
+      <%= f.number_field :price_cents, min: 0, step: 1, placeholder: @listing.price_cents.to_s, inputmode: "numeric" %>
     </div>
     <div class="field">
       <%= f.label :stock, t("marketplace.variant_stock") %>
-      <%= f.number_field :stock, min: 0, step: 1 %>
+      <%= f.number_field :stock, min: 0, step: 1, inputmode: "numeric" %>
     </div>
     <p><%= f.submit t("marketplace.add_variant"), class: "btn btn-primary" %></p>
   <% end %>

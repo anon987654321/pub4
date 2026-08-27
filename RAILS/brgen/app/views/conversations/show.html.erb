@@ -1,115 +1,152 @@
-<%= turbo_stream_from @conversation %>
-<% content_for :body_attrs do %>data-push-seen="true"<% end %>
+<%# Inside the window. The frame id matches the one conversations/index renders,
+    so a click in the rail swaps this pane and leaves the rail alone; arriving at
+    this URL directly still renders the whole window, because the rail is loaded
+    for show as well as index. %>
+<section class="messenger-window" aria-label="<%= t("messages.title") %>">
+  <%= render "conversations/rooms_rail" %>
+  <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
+    <%= turbo_stream_from @conversation %>
+    <% content_for :body_attrs do %>data-push-seen="true"<% end %>
 
-<header>
-  <%= tag.h1 @conversation.display_name_for(Current.user) %>
-  <nav aria-label="<%= t("messages.nav_label") %>">
-    <%= link_to t("messages.back_all"), conversations_path %>
-    <%= link_to t("messages.search"), search_conversations_path(conversation_id: @conversation.id) %>
-  </nav>
-  <% if @conversation.group_dm? %>
-    <section class="group-roster" aria-label="<%= t("messages.group_members_label") %>">
-      <ul role="list">
-        <% @conversation.participants.each do |participant| %>
-          <li role="listitem">
-            <%= participant.display_name %>
-            <% if @is_group_admin || participant.id == Current.user.id %>
-              <%= button_to participant.id == Current.user.id ? t("messages.group_leave") : t("actions.remove"),
-                    group_member_path(@conversation, participant), method: :delete,
-                    data: { turbo_confirm: t("messages.confirm_group_remove") } %>
+    <header>
+      <%= tag.h1 @conversation.display_name_for(Current.user) %>
+      <nav aria-label="<%= t("messages.nav_label") %>">
+        <%= link_to t("messages.back_all"), conversations_path %>
+        <%= link_to t("messages.search"), search_conversations_path(conversation_id: @conversation.id) %>
+      </nav>
+      <% if @conversation.group_dm? %>
+        <section class="group-roster" aria-label="<%= t("messages.group_members_label") %>">
+          <ul role="list">
+            <% @conversation.participants.each do |participant| %>
+              <li role="listitem">
+                <%= participant.display_name %>
+                <% if @is_group_admin || participant.id == Current.user.id %>
+                  <%= button_to participant.id == Current.user.id ? t("messages.group_leave") : t("actions.remove"),
+                        group_member_path(@conversation, participant), method: :delete,
+                        data: { turbo_confirm: t("messages.confirm_group_remove") } %>
+                <% end %>
+              </li>
             <% end %>
-          </li>
+          </ul>
+          <%= form_with url: group_members_path(@conversation), method: :post do |f| %>
+            <%= f.label :username, t("messages.group_add") %>
+            <%= f.text_field :username, placeholder: t("messages.username"), autocomplete: "username" %>
+            <%= f.submit t("actions.add_one"), class: "btn btn-sm" %>
+          <% end %>
+          <% if @is_group_admin %>
+            <%= form_with model: @conversation, url: group_path(@conversation), method: :patch do |f| %>
+              <%= f.label :name, t("messages.group_name") %>
+              <%= f.text_field :name, value: @conversation.name, maxlength: 80 %>
+              <%= f.submit t("actions.save"), class: "btn btn-sm" %>
+            <% end %>
+          <% end %>
+        </section>
+      <% end %>
+      <%= form_with url: conversation_path(@conversation), method: :patch,
+            class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
+        <span class="disappearing-badge" aria-hidden="true"></span>
+        <label for="disappearing"><%= t("messages.disappearing") %></label>
+        <%= form.select :disappearing,
+              Conversation::DISAPPEARING_OPTIONS.keys.map { |key| [key, key] },
+              { selected: Conversation::DISAPPEARING_OPTIONS.key(@conversation.disappearing_duration) || "off" },
+              { id: "disappearing", onchange: "this.form.requestSubmit()" } %>
+      <% end %>
+    </header>
+
+    <%# The frame is named message_log, not messages. It and the list inside it
+        both answered to "messages", which is invalid HTML and, once the messenger
+        became one window, a hazard: two elements with one id while Turbo swaps
+        panes. target: "_top" stays, so a link inside a message leaves the window
+        rather than loading a whole page into the pane. %>
+    <%= turbo_frame_tag "message_log", target: "_top" do %>
+      <%# Three attributes this list did not have, and each was a real absence.
+
+          class="conversation-log" — Message#broadcast_to_logs appends to
+          `targets: ".conversation-log"`. Channels carried the class and the
+          nearby widget carried it; the DM did not. So a message was delivered
+          live everywhere except the one surface where somebody is waiting for
+          it, and the recipient had to reload to see anything.
+
+          data-controller — the unread divider and the stick-to-tail behaviour
+          channels have had all along.
+
+          role="log" — the ARIA role for a list that grows at the bottom, with an
+          implicit polite live region, so an arriving message is announced rather
+          than changing the page silently.
+
+          data-turbo-permanent is gone: preserving this element across a
+          navigation was harmless when a room was a page, and wrong now that
+          switching rooms swaps a frame — the old room's messages would be kept
+          under the new room's name. %>
+      <ul id="messages" role="log" class="conversation-log"
+          data-controller="conversation-log"
+          data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
+          data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
+          data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>">
+        <% @messages.each do |m| %>
+          <%= render "messages/message", message: m, forward_targets: @forward_targets %>
         <% end %>
       </ul>
-      <%= form_with url: group_members_path(@conversation), method: :post do |f| %>
-        <%= f.label :username, t("messages.group_add") %>
-        <%= f.text_field :username, placeholder: t("messages.username"), autocomplete: "username" %>
-        <%= f.submit t("actions.add_one"), class: "btn btn-sm" %>
+    <% end %>
+
+    <p id="typing-indicator" role="status" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
+
+    <% if @editing %>
+      <%= form_with model: @editing, url: conversation_message_path(@conversation, @editing), method: :patch do |f| %>
+        <div class="field">
+          <%= f.label :content, t("messages.editing") %>
+          <%= f.text_area :content, rows: 3, value: @editing.content %>
+        </div>
+        <p>
+          <%= f.submit t("actions.save"), class: "btn btn-primary" %>
+          <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "btn btn-ghost" %>
+        </p>
       <% end %>
-      <% if @is_group_admin %>
-        <%= form_with model: @conversation, url: group_path(@conversation), method: :patch do |f| %>
-          <%= f.label :name, t("messages.group_name") %>
-          <%= f.text_field :name, value: @conversation.name, maxlength: 80 %>
-          <%= f.submit t("actions.save"), class: "btn btn-sm" %>
-        <% end %>
+    <% end %>
+
+    <%= form_with model: @message, url: conversation_messages_path(@conversation),
+                  id: "new_message",
+                  data: {
+                    turbo: true,
+                    controller: "typing-input",
+                    typing_input_url_value: conversation_typing_indicators_path(@conversation),
+                    action: "keydown->typing-input#composerKeydown input->typing-input#ping turbo:submit-end->typing-input#markValue"
+                  } do |f| %>
+      <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+        <%= f.text_area :content, rows: 3,
+              placeholder: t("chat.dm_placeholder"),
+              maxlength: 500,
+              enterkeyhint: "send",
+              aria: { label: t("chat.message_label") },
+              data: { character_counter_target: "input" } %>
+        <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+      </div>
+      <%# The recorder writes into this file field and flips the type to audio, so a
+          voice note goes through the same create path as a photo. %>
+      <%= f.hidden_field :message_type, value: "text", data: { voice_recorder_target: "type" } %>
+      <%= f.label :attachment, t("messages.attachment_label"), class: "visually-hidden" %>
+      <%= f.file_field :attachment, accept: "audio/*,image/*", class: "media-input-hidden", data: { voice_recorder_target: "file" } %>
+      <%= f.hidden_field :duration_seconds, data: { voice_recorder_target: "duration" } %>
+      <p data-controller="voice-recorder"
+         data-voice-recorder-max-seconds-value="120"
+         data-voice-recorder-record-label-value="<%= t("messages.record_voice") %>"
+         data-voice-recorder-stop-label-value="<%= t("messages.stop_recording") %>"
+         data-denied-text="<%= t("messages.microphone_denied") %>">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="voice-recorder#toggle" data-voice-recorder-target="button"><%= t("messages.record_voice") %></button>
+        <span data-voice-recorder-target="status" aria-live="polite"></span>
+      </p>
+      <% if @reply_to %>
+        <%# The referent travels in the form, so a reply is still a reply after a
+            reload — and the line says what is being answered, because a reply with
+            no visible referent is one nobody can follow. %>
+        <p class="msg-reply-context">
+          <%= t("messages.replying_to", name: @reply_to.sender.display_name) %>:
+          <%= truncate(@reply_to.content.to_s, length: 60) %>
+          <%= link_to t("actions.cancel"), conversation_path(@conversation) %>
+        </p>
+        <%= f.hidden_field :parent_id, value: @reply_to.id %>
       <% end %>
-    </section>
+      <p><%= f.submit t("actions.send"), class: "btn btn-primary" %></p>
+    <% end %>
   <% end %>
-  <%= form_with url: conversation_path(@conversation), method: :patch,
-        class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
-    <span class="disappearing-badge" aria-hidden="true"></span>
-    <label for="disappearing"><%= t("messages.disappearing") %></label>
-    <%= form.select :disappearing,
-          Conversation::DISAPPEARING_OPTIONS.keys.map { |key| [key, key] },
-          { selected: Conversation::DISAPPEARING_OPTIONS.key(@conversation.disappearing_duration) || "off" },
-          { id: "disappearing", onchange: "this.form.requestSubmit()" } %>
-  <% end %>
-</header>
-
-<%= turbo_frame_tag "messages", target: "_top" do %>
-<ul id="messages" data-turbo-permanent>
-  <% @messages.each do |m| %>
-    <%= render "messages/message", message: m, forward_targets: @forward_targets %>
-  <% end %>
-</ul>
-<% end %>
-
-<p id="typing-indicator" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
-
-<% if @editing %>
-  <%= form_with model: @editing, url: conversation_message_path(@conversation, @editing), method: :patch do |f| %>
-    <div class="field">
-      <%= f.label :content, t("messages.editing") %>
-      <%= f.text_area :content, rows: 3, value: @editing.content %>
-    </div>
-    <p>
-      <%= f.submit t("actions.save"), class: "btn btn-primary" %>
-      <%= link_to t("actions.cancel"), conversation_path(@conversation), class: "btn btn-ghost" %>
-    </p>
-  <% end %>
-<% end %>
-
-<%= form_with model: @message, url: conversation_messages_path(@conversation),
-              id: "new_message",
-              data: {
-                turbo: true,
-                controller: "typing-input",
-                typing_input_url_value: conversation_typing_indicators_path(@conversation),
-                action: "keydown->typing-input#composerKeydown input->typing-input#ping turbo:submit-end->typing-input#markValue"
-              } do |f| %>
-  <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
-    <%= f.text_area :content, rows: 3,
-          placeholder: t("chat.dm_placeholder"),
-          maxlength: 500,
-          enterkeyhint: "send",
-          aria: { label: t("chat.message_label") },
-          data: { character_counter_target: "input" } %>
-    <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-  </div>
-  <%# The recorder writes into this file field and flips the type to audio, so a
-      voice note goes through the same create path as a photo. %>
-  <%= f.hidden_field :message_type, value: "text", data: { voice_recorder_target: "type" } %>
-  <%= f.label :attachment, t("messages.attachment_label"), class: "visually-hidden" %>
-  <%= f.file_field :attachment, accept: "audio/*,image/*", class: "media-input-hidden", data: { voice_recorder_target: "file" } %>
-  <%= f.hidden_field :duration_seconds, data: { voice_recorder_target: "duration" } %>
-  <p data-controller="voice-recorder"
-     data-voice-recorder-max-seconds-value="120"
-     data-voice-recorder-record-label-value="<%= t("messages.record_voice") %>"
-     data-voice-recorder-stop-label-value="<%= t("messages.stop_recording") %>"
-     data-denied-text="<%= t("messages.microphone_denied") %>">
-    <button type="button" class="btn btn-ghost btn-sm" data-action="voice-recorder#toggle" data-voice-recorder-target="button"><%= t("messages.record_voice") %></button>
-    <span data-voice-recorder-target="status" aria-live="polite"></span>
-  </p>
-  <% if @reply_to %>
-    <%# The referent travels in the form, so a reply is still a reply after a
-        reload — and the line says what is being answered, because a reply with
-        no visible referent is one nobody can follow. %>
-    <p class="msg-reply-context">
-      <%= t("messages.replying_to", name: @reply_to.sender.display_name) %>:
-      <%= truncate(@reply_to.content.to_s, length: 60) %>
-      <%= link_to t("actions.cancel"), conversation_path(@conversation) %>
-    </p>
-    <%= f.hidden_field :parent_id, value: @reply_to.id %>
-  <% end %>
-  <p><%= f.submit t("actions.send"), class: "btn btn-primary" %></p>
-<% end %>
+</section>

@@ -1,6 +1,31 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  # Vipps Login is the identity dating trusts. ExternalIdentity/IdentityProvider
+  # already carry it — the callback writes one per successful OAuth round trip —
+  # so this asks a question of existing data rather than adding a column that
+  # would then need keeping in step with it.
+  has_many :external_identities, dependent: :destroy
+
+  # Who may appear in the people picker. Guests have no stable identity to hold a
+  # conversation open, bots are addressed in their channel rather than privately,
+  # and a scheduled-for-deletion account should not collect new threads.
+  scope :messageable, -> { where(guest: false, bot: false, deleted_at: nil, deletion_scheduled_at: nil) }
+
+  # The "message me" token. A signed_id rather than a stored invite: nothing to
+  # migrate, nothing to clean up, and it cannot be guessed or edited into someone
+  # else's. It expires because a link shared once tends to outlive its reason.
+  def message_invite_token
+    signed_id(purpose: InvitesController::PURPOSE, expires_in: InvitesController::TTL)
+  end
+
+  def vipps_verified?
+    return false unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
+
+    external_identities.joins(:identity_provider)
+                       .where(identity_providers: { slug: "vipps" }).exists?
+  end
+
   # Deliberately NOT CityTenantable. A person is not a tenant row: email
   # uniqueness is global, one session follows a visitor across every city
   # domain, and stranger discovery is radius-based (Shared::GeoLocatable), not

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "baseline_ratchet"
+
 require "set"
 
 module Pub4
@@ -59,6 +61,8 @@ module Pub4
     BASELINES = { "missing_asset" => 4 }.freeze
 
     Finding = Struct.new(:kind, :ref, :sheet, :tried)
+
+    extend Pub4::BaselineRatchet
 
     module_function
 
@@ -190,17 +194,6 @@ module Pub4
     end
 
     def rel(path) = path.to_s.sub("#{RAILS_ROOT}/", "")
-
-    def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
-    end
-
-    def over_baseline(findings = scan)
-      counts(findings).filter_map do |kind, count|
-        baseline = BASELINES.fetch(kind)
-        "#{kind}: #{count} (baseline #{baseline}, +#{count - baseline})" if count > baseline
-      end
-    end
 
     def run
       findings = scan

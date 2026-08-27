@@ -888,6 +888,68 @@ SYNTH_PATCH_CATALOG = [
               arp_styles: %i[skip_up updown], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :skip_up, subdiv: 8, gate: 0.58, vel: 0.48 },
               fx: "tremolo=f=0.3:d=0.04,aecho=0.42:0.4:90|160:0.22|0.1,lowpass=f=5000"),
+
+  # ------------------------------------------------------- Nordic downtempo
+  #
+  # The third of the reference records had no patches at all. Dilla is covered
+  # by the Rhodes and Moog families and Flying Lotus by four FM voices, but the
+  # Melody A.M. palette -- Juno-106, a string ensemble, a vocoder and soft FM --
+  # had nothing named for it, so a track reaching for that sound landed on a
+  # Rhodes and a supersaw.
+  #
+  # These are the instruments, not transcriptions: what separates that record
+  # from generic downtempo is that its pads are bucket-brigade chorus rather
+  # than digital, its strings are a divide-down ensemble rather than sampled
+  # strings, and its top end is FM bell rather than a filtered saw.
+
+  # JUNO-106 held pad, the bed the whole record sits on. Two chorus stages
+  # rather than one: the giveaway of a bucket-brigade line is that it detunes
+  # unevenly and carries its own noise, which one clean chorus cannot fake.
+  # Rolled at 6.8 kHz because the Juno's own VCF never had much above that.
+  synth_patch(:royksopp_melody_pad, role: :warm, program: 89, weight: 2.7, mix: 0.9, fs_gain: 1.34,
+              color: "Juno-106 chorus II bed", midi_fx: MIDI_FX_PAD_WARM,
+              fx: "chorus=0.62:0.82:26|34:0.44|0.39:0.30|0.26:1.35|1.85," \
+                  "chorus=0.7:0.5:11:0.22:0.18:0.6," \
+                  "equalizer=f=300:t=q:w=1.4:g=2.0,highpass=f=80,lowpass=f=6800,volume=0.93"),
+
+  # Solina-style divide-down string ensemble. A string machine is not strings:
+  # every note comes off one master oscillator divided down, so the chorus is
+  # the instrument rather than an effect on it. Three delay taps at once is what
+  # gives the ensemble its width; the 160 Hz highpass keeps it from fighting the
+  # pad, which is the mistake that makes stacked pads muddy.
+  synth_patch(:royksopp_solina_strings, role: :texture, program: 48, weight: 2.2, mix: 0.82, fs_gain: 1.28,
+              color: "divide-down ensemble",
+              fx: "chorus=0.68:0.88:14|21|29:0.5|0.45|0.4:0.34|0.30|0.27:1.05|1.55|2.15," \
+                  "highpass=f=160,equalizer=f=2200:t=q:w=1.8:g=2.2,lowpass=f=5200,volume=0.88"),
+
+  # Vocoder wash. No carrier/modulator pair here, so this is the formant half of
+  # the effect: three resonant peaks near the vowel formants over a soft voice
+  # program. It reads as a choir that is almost speaking, which is the useful
+  # part in a bed; a real vocoder needs a modulator the renderer does not have.
+  synth_patch(:royksopp_vocoder_wash, role: :texture, program: 54, weight: 1.9, mix: 0.76, fs_gain: 1.22,
+              color: "formant wash",
+              fx: "equalizer=f=520:t=q:w=1.1:g=4.5,equalizer=f=1480:t=q:w=1.3:g=3.6," \
+                  "equalizer=f=2520:t=q:w=1.5:g=2.8,chorus=0.5:0.7:19|27:0.3|0.26:0.24|0.2:0.9|1.4," \
+                  "highpass=f=200,lowpass=f=6000,volume=0.8"),
+
+  # Soft FM bell for the top line. Frequency modulation, so the attack is a
+  # glassy partial that no filtered saw produces -- lifted at 3.2 kHz and hollowed
+  # at 500 Hz, which is where an FM bell differs from a struck one. Short echo
+  # only; long tails on a bell turn the arpeggio to porridge.
+  synth_patch(:royksopp_glass_bell, role: :lead, program: 11, weight: 2.1, mix: 0.95, fs_gain: 1.3,
+              gate: 0.55, octave: 3, arp_styles: %i[up updown], midi_fx: MIDI_FX_LEAD,
+              color: "FM bell top line",
+              fx: "equalizer=f=3200:t=q:w=1.2:g=4.2,equalizer=f=500:t=q:w=1.4:g=-3.0," \
+                  "aecho=0.5:0.42:110|190:0.2|0.12,lowpass=f=9000"),
+
+  # Filtered analogue pulse bass. The movement is a slow resonant peak walking
+  # with the cutoff rather than a static lowpass, which is the difference between
+  # a synth bass that breathes and one that sits still. asubboost restores the
+  # fundamental the highpass in the chorus stage above would otherwise thin.
+  synth_patch(:royksopp_filter_pulse, role: :bass, program: 38, weight: 2.4, mix: 1.0, fs_gain: 1.4,
+              octave: 1, color: "resonant pulse bass",
+              fx: "equalizer=f=180:t=q:w=1.1:g=3.4,lowpass=f=1400," \
+                  "asubboost=dry=0.9:wet=0.45:decay=0.7:feedback=0.6:cutoff=85,volume=0.95"),
 ].freeze
 
 SYNTH_PATCH_BY_ROLE = SYNTH_PATCH_CATALOG.group_by { |p| p[:role] }.freeze

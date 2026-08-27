@@ -74,12 +74,10 @@ module Shared
     # Skipped rather than slowed when the box is loaded: a queue worker competing
     # with a deploy or a CI run is how the shed starts.
     #
-    # This read used to be File.read("/proc/loadavg"), which OpenBSD does not
-    # have. It raised ENOENT into a bare rescue that returned false, so the
-    # guard said "not busy" on every tick of the only machine it exists for —
-    # written the day after this job took the whole site down, and incapable of
-    # preventing that from the moment it was written. Pub4::LoadAverage reads
-    # sysctl first and returns nil rather than zero when it cannot tell.
+    # Read through Pub4::LoadAverage, which asks sysctl and returns nil rather
+    # than zero when it cannot tell. /proc/loadavg does not exist on OpenBSD:
+    # reading it there raises ENOENT, and a bare rescue around that answers
+    # "not busy" on every tick of the only machine this guard exists for.
     #
     # Unknown counts as busy. A hygiene job that skips a night costs nothing; a
     # hygiene job that runs blind against a 1-vCPU box cost the site once

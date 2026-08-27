@@ -50,19 +50,19 @@
 
   <p>
     <%= f.label :capacity, t("events.form.capacity") %>
-    <%= f.number_field :capacity, min: 1 %>
+    <%= f.number_field :capacity, min: 1, inputmode: "numeric" %>
     <%= t("events.form.capacity_hint") %>
   </p>
 
   <p>
     <%= f.label :price_cents, t("events.form.price") %>
-    <%= f.number_field :price_cents, min: 0, step: 100 %>
+    <%= f.number_field :price_cents, min: 0, step: 100, inputmode: "numeric" %>
     <%= t("events.form.price_hint") %>
   </p>
 
   <p>
     <%= f.label :external_url, t("events.form.external_url") %>
-    <%= f.url_field :external_url %>
+    <%= f.url_field :external_url, inputmode: "url" %>
   </p>
 
   <p>

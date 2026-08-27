@@ -76,22 +76,22 @@
               reader, one after another, with nothing to tell them apart.
               aria-label rather than visible text: these are 20px icon buttons in
               a row and adding words would redesign the compose bar. %>
-          <label class="compose-action" title="<%= t("compose.add_photo", default: "Add photo") %>">
+          <label class="compose-action" title="<%= t("compose.add_photo") %>">
             <%= icon :camera, size: 20 %>
             <%= f.file_field :image, accept: "image/*", capture: "environment",
-                  class: "visually-hidden", aria: { label: t("compose.add_photo", default: "Add photo") },
+                  class: "visually-hidden", aria: { label: t("compose.add_photo") },
                   data: { action: "change->feed-compose#mediaSelected" } %>
           </label>
-          <label class="compose-action" title="<%= t("compose.record_video", default: "Record video") %>">
+          <label class="compose-action" title="<%= t("compose.record_video") %>">
             <%= icon :video, size: 20 %>
             <%= f.file_field :video, accept: "video/*", capture: "environment",
-                  class: "visually-hidden", aria: { label: t("compose.record_video", default: "Record video") },
+                  class: "visually-hidden", aria: { label: t("compose.record_video") },
                   data: { action: "change->feed-compose#mediaSelected" } %>
           </label>
-          <label class="compose-action" title="<%= t("compose.record_audio", default: "Record audio") %>">
+          <label class="compose-action" title="<%= t("compose.record_audio") %>">
             <%= icon :mic, size: 20 %>
             <%= f.file_field :audio, accept: "audio/*", capture: "user",
-                  class: "visually-hidden", aria: { label: t("compose.record_audio", default: "Record audio") },
+                  class: "visually-hidden", aria: { label: t("compose.record_audio") },
                   data: { action: "change->feed-compose#mediaSelected" } %>
           </label>
         </div>

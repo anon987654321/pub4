@@ -44,7 +44,9 @@ daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env &&
 # fix it names is a dedicated user, not doas command rules (DECISIONS.md,
 # "/etc/doas.conf installs only on a deliberate root run").
 #
-# master:1005, in _pub4ci for traverse on /home/dev, /bin/ksh like every other
+# master:1005, in _pub4ci for read on /home/dev -- traverse alone is not enough,
+# because this is the one service whose working directory sits under it and
+# getcwd(3) names an ancestor by reading it. /bin/ksh like every other
 # app user because rc.subr starts a daemon through a login shell. It reads the
 # code and gems from /home/dev/pub4 (0755, so read-only to it) and writes only
 # MASTER/.master, web/tmp and web/log, which are dev:master 2775 — setgid so new

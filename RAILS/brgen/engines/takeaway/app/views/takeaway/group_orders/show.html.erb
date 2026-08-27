@@ -32,7 +32,7 @@
     </div>
     <div class="field">
       <%= f.label :quantity, t("takeaway.group_quantity") %>
-      <%= f.number_field :quantity, value: 1, min: 1, max: 20 %>
+      <%= f.number_field :quantity, value: 1, min: 1, max: 20, inputmode: "numeric" %>
     </div>
     <p><%= f.submit t("takeaway.group_add"), class: "btn btn-primary" %></p>
   <% end %>

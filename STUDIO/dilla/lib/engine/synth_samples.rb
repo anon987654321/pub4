@@ -73,6 +73,17 @@ def karplus_strong_pluck(freq, duration_sec, seed: nil, stretch: 0.996, damping:
 end
 
 def raw_kick_samples?
+  # LAYER_KICK=1 asks for the layered kick explicitly, and outranks every reason
+  # below to use the sample as it is.
+  #
+  # An external kit turns layering off (line below) so a chosen kick arrives
+  # unaltered rather than re-coated with the same synth every time -- correct as
+  # a default. But the LA beat-scene kick IS a layered one: a sampled top for the
+  # click and attack, a synthesised sub underneath it for the weight, which is
+  # what a single sampled one-shot cannot do at that depth. Wanting a real kit
+  # and a layered kick at once was unreachable, since choosing the kit silently
+  # decided the other question too.
+  return false if ENV["LAYER_KICK"] == "1"
   return true if ENV["RAW_KICK"] == "1" || ENV["DRUM_SAMPLE_RAW"] == "1"
   return true if comfort_mode?
   return true if ENV["EXTERNAL_KIT"] && !ENV["EXTERNAL_KIT"].empty?

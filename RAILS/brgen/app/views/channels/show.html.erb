@@ -1,69 +1,79 @@
-<% spec = Conversation::CHANNELS[@conversation.slug] || {} %>
-<% content_for :title, @conversation.channel_title %>
+<%# The same window as a DM. A channel and a conversation are the same kind of
+    thing to the reader — a room with a log — so switching between them must not be
+    a different motion, and arriving at a channel URL must not give a pane with no
+    way out of it. %>
+<section class="messenger-window" aria-label="<%= t("messages.title") %>">
+  <%= render "conversations/rooms_rail" %>
+  <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
+  <% spec = Conversation::CHANNELS[@conversation.slug] || {} %>
+  <% content_for :title, @conversation.channel_title %>
 
-<%= turbo_stream_from @conversation %>
-<% content_for :body_attrs do %>data-push-seen="true"<% end %>
+  <%= turbo_stream_from @conversation %>
+  <% content_for :body_attrs do %>data-push-seen="true"<% end %>
 
-<section class="channel-room" aria-label="<%= t("aria.channel") %>">
-  <header class="channel-room-header">
-    <%= link_to t("messages.back_channels"), channels_path, class: "channel-back" %>
-    <%= tag.h1 @conversation.channel_title %>
-    <%# This blurb is what lib/brgen/irc/bridge.rb:27 already serves to a real
-        IRC client as the TOPIC reply, so name it that on the web too rather
-        than having one room description with two names. %>
-    <% blurb = Conversation.channel_blurb(@conversation.slug) %>
-    <% if blurb.present? %>
-      <p class="channel-topic"><%= t("channels.topic", topic: blurb) %></p>
+  <section class="channel-room" aria-label="<%= t("aria.channel") %>">
+    <header class="channel-room-header">
+      <%= link_to t("messages.back_channels"), channels_path, class: "channel-back" %>
+      <%= tag.h1 @conversation.channel_title %>
+      <%# This blurb is what lib/brgen/irc/bridge.rb:27 already serves to a real
+          IRC client as the TOPIC reply, so name it that on the web too rather
+          than having one room description with two names. %>
+      <% blurb = Conversation.channel_blurb(@conversation.slug) %>
+      <% if blurb.present? %>
+        <p class="channel-topic"><%= t("channels.topic", topic: blurb) %></p>
+      <% end %>
+      <%# Heartbeat lives on the header, not the log, so it keeps running while the
+          reader scrolls back through history. %>
+      <p data-controller="presence"
+         data-presence-url-value="<%= conversation_presence_path(@conversation) %>">
+        <%= render "conversations/presence", conversation: @conversation %>
+      </p>
+      <%= render "channels/roster", conversation: @conversation %>
+    </header>
+
+    <%# See conversations/show — role="log" so arrivals are announced. %>
+    <ul id="messages" role="log" class="channel-log conversation-log"
+        data-controller="conversation-log"
+        data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
+        data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
+        data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>">
+      <% @messages.each do |m| %>
+        <%= render "messages/message", message: m %>
+      <% end %>
+    </ul>
+
+    <p id="typing-indicator" role="status" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
+
+    <% if Current.user.present? %>
+      <% handle = Current.user.channel_handle %>
+      <%= form_with model: @message, url: conversation_messages_path(@conversation),
+                    id: "new_message", class: "channel-composer",
+                    data: {
+                      turbo: true,
+                      controller: "typing-input",
+                      typing_input_url_value: conversation_typing_indicators_path(@conversation),
+                      action: "keydown->typing-input#composerKeydown input->typing-input#ping turbo:submit-end->typing-input#markValue"
+                    } do |f| %>
+        <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+          <%= f.text_area :content, rows: 2,
+                placeholder: t("chat.channel_placeholder", name: @conversation.name, handle: handle),
+                maxlength: 500,
+                enterkeyhint: "send",
+                aria: { label: t("chat.message_label") },
+                data: { character_counter_target: "input" } %>
+          <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+        </div>
+        <%= f.hidden_field :message_type, value: "text" %>
+        <%= f.submit t("actions.send"), class: "btn btn-primary" %>
+      <% end %>
+      <p>
+        <%= t("chat.posting_as") %> <%= tag.strong handle %><% if Current.user.guest? %> — <%= t("chat.no_signup") %><% end %>.
+      </p>
+    <% else %>
+      <%# Soft guest should already exist; if not, one round-trip mints it. %>
+      <p class="channel-signin"><%= t("chat.anyone_join") %></p>
+      <p><%= link_to t("chat.join_room"), channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
     <% end %>
-    <%# Heartbeat lives on the header, not the log, so it keeps running while the
-        reader scrolls back through history. %>
-    <p data-controller="presence"
-       data-presence-url-value="<%= conversation_presence_path(@conversation) %>">
-      <%= render "conversations/presence", conversation: @conversation %>
-    </p>
-    <%= render "channels/roster", conversation: @conversation %>
-  </header>
-
-  <ul id="messages" class="channel-log conversation-log"
-      data-controller="conversation-log"
-      data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
-      data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
-      data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>">
-    <% @messages.each do |m| %>
-      <%= render "messages/message", message: m %>
-    <% end %>
-  </ul>
-
-  <p id="typing-indicator" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
-
-  <% if Current.user.present? %>
-    <% handle = Current.user.channel_handle %>
-    <%= form_with model: @message, url: conversation_messages_path(@conversation),
-                  id: "new_message", class: "channel-composer",
-                  data: {
-                    turbo: true,
-                    controller: "typing-input",
-                    typing_input_url_value: conversation_typing_indicators_path(@conversation),
-                    action: "keydown->typing-input#composerKeydown input->typing-input#ping turbo:submit-end->typing-input#markValue"
-                  } do |f| %>
-      <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
-        <%= f.text_area :content, rows: 2,
-              placeholder: t("chat.channel_placeholder", name: @conversation.name, handle: handle),
-              maxlength: 500,
-              enterkeyhint: "send",
-              aria: { label: t("chat.message_label") },
-              data: { character_counter_target: "input" } %>
-        <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-      </div>
-      <%= f.hidden_field :message_type, value: "text" %>
-      <%= f.submit t("actions.send"), class: "btn btn-primary" %>
-    <% end %>
-    <p>
-      <%= t("chat.posting_as") %> <%= tag.strong handle %><% if Current.user.guest? %> — <%= t("chat.no_signup") %><% end %>.
-    </p>
-  <% else %>
-    <%# Soft guest should already exist; if not, one round-trip mints it. %>
-    <p class="channel-signin"><%= t("chat.anyone_join") %></p>
-    <p><%= link_to t("chat.join_room"), channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
+  </section>
   <% end %>
 </section>

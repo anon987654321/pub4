@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "baseline_ratchet"
+
 module Pub4
   # Ratchet: empty-state titles and live-search placeholders must go through
   # I18n (t(...)), not hardcoded English. Default locale is :nb across the
@@ -155,7 +157,10 @@ module Pub4
 # and actions, TV shows, the YouTube frame, amber's capsule, creator,
 # item, outfit and add-item headers, and the ad slot, which shipped
 # "Advertisement" to all three apps from the shared partial.
-"aria_label" => 9,
+      # → 8 (2026-08-27): amber's sidebar nav and tab bar stopped hand-rolling
+      # their SVGs, and the shared icon partial carries the label the inline
+      # markup had been repeating.
+"aria_label" => 8,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -198,7 +203,12 @@ module Pub4
 # link. `t("actions.load_more", default: "More")` went with it — the
 # surface renders shared/_pager now, like every other paginated one, and
 # the pager fetches its strings without defaults.
-"translate_default" => 188,
+      # → 181 (2026-08-27): every t("compose.*", default: "…") lost its fallback.
+      # All six keys have existed in en and nb the whole time, so the defaults
+      # were noise that only made this number worse — 27 call sites, and the
+      # count fell by 7 net because the tiptap rollout added its own before this
+      # pass removed them all.
+"translate_default" => 181,
     }.freeze
 
     # Kept for callers that referenced the old single number.
@@ -206,18 +216,9 @@ module Pub4
 
     Finding = Struct.new(:file, :line, :kind)
 
+    extend Pub4::BaselineRatchet
+
     module_function
-
-    def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
-    end
-
-    def over_baseline(findings = scan)
-      counts(findings).filter_map do |kind, count|
-        baseline = BASELINES.fetch(kind)
-        "#{kind}: #{count} (baseline #{baseline}, +#{count - baseline})" if count > baseline
-      end
-    end
 
     def run
       findings = scan

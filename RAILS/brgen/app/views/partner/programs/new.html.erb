@@ -15,10 +15,10 @@
     </div>
     <div class="field">
       <%= f.label :commission_rate, t("partner.rate_hint") %>
-      <%= f.number_field :commission_rate, required: true, min: 0 %>
+      <%= f.number_field :commission_rate, required: true, min: 0, inputmode: "numeric" %>
     </div>
-    <div class="field"><%= f.label :attribution_hours %><%= f.number_field :attribution_hours, min: 1 %></div>
-    <div class="field"><%= f.label :hold_days %><%= f.number_field :hold_days, min: 0 %></div>
+    <div class="field"><%= f.label :attribution_hours %><%= f.number_field :attribution_hours, min: 1, inputmode: "numeric" %></div>
+    <div class="field"><%= f.label :hold_days %><%= f.number_field :hold_days, min: 0, inputmode: "numeric" %></div>
     <div class="field"><%= f.check_box :auto_approve_partners %><%= f.label :auto_approve_partners %></div>
     <div class="field"><%= f.label :terms %><%= f.text_area :terms, rows: 5 %></div>
     <%= f.submit t("partner.create"), class: "btn" %>

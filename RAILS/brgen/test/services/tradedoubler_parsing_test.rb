@@ -30,8 +30,8 @@ class TradedoublerParsingTest < ActiveSupport::TestCase
           "priceHistory" => [ { "price" => { "value" => "199.00", "currency" => "NOK" } } ],
           "productUrl" => "http://x/p",
           "programName" => "Shop",
-          "availability" => { "inStock" => true },
-        } ],
+          "availability" => { "inStock" => true }
+        } ]
       } ]
     )
 
@@ -48,7 +48,7 @@ class TradedoublerParsingTest < ActiveSupport::TestCase
     rows = parse(
       "products" => [ {
         "name" => "Sko", "imageUrl" => "http://x/s.jpg", "price" => "499",
-        "currency" => "NOK", "productUrl" => "http://x/s", "programName" => "Butikk",
+        "currency" => "NOK", "productUrl" => "http://x/s", "programName" => "Butikk"
       } ]
     )
 

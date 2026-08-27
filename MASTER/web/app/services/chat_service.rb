@@ -339,6 +339,7 @@ class ChatService
     Fiber[:master_elevated] = nil
     Fiber[:master_paired] = nil
     Fiber[:master_pair_subject] = nil
+    Fiber[:master_persona_note] = nil
   end
 
   def tool_payload(event)

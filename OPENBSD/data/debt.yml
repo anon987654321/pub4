@@ -435,7 +435,14 @@ closed:
     applied one app at a time with each verified serving between: dev is refused on
     all three, each app still reads its own DB and brgen still writes, and brgen,
     brgen_jobs, amber, bsdports and master all answer 200. Re-asserted from vps_ci.sh
-    beside the /home/dev line so a later edit to sync_from_repo cannot put it back.'
+    beside the /home/dev line so a later edit to sync_from_repo cannot put it back.
+    CORRECTED 2026-08-27: /home/dev is 750, not 710. "Traverse by group, proven both
+    directions" proved traversal, and master is the one service whose working directory
+    is under /home/dev, where getcwd(3) names each ancestor by reading it. With --x it
+    chdir''d and then failed Dir.pwd with EACCES inside rubygems, before Bundler loaded,
+    so the daemon died at bundle34 writing no log of its own and ai.brgen.no answered
+    an empty reply for two days. Group read restores it; other still gets nothing, which
+    is the half this entry was ever about.'
 - id: amber_bsdports_stop_and_stay_down
   note: 'closed 2026-08-22: every sub-item done; both apps survived three full deploy
     chains on 2026-08-21/22 and the armed uptime-check watches every 5 minutes.'

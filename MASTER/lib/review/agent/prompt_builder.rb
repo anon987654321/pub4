@@ -29,6 +29,11 @@ module Master
 
         def dynamic_prompt
           parts = []
+          # Set by the web tier when a request arrives on a host that wears a
+          # different face, and cleared when the turn ends. It carries a
+          # constant, never anything the visitor typed -- a note assembled
+          # from user input would be an instruction the user wrote for us.
+          parts << Fiber[:master_persona_note]
           parts << conversational_register_line if casual_task?
           parts << felt_sense_section if @felt_sense.is_a?(Hash)
           parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic

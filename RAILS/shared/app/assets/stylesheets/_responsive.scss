@@ -1,15 +1,14 @@
-// Bottom clearance for the fixed tab bar.
+// Bottom clearance for the fixed tab bar, at every width.
 //
-// This used to be wrapped in @media (max-width: 768px), with the note "desktop
-// grid hides tab bar". That stopped being true when the shell became
-// single-column at every width (see _shell.scss): the tab bar is now the one
-// always-reachable nav and stays fixed on desktop too, so above 768px the last
-// row of every page sat underneath it. Measured at 1440px on takeaway and
-// tv/channels, where a link resolved to .tab-item instead of to itself.
+// The shell is single-column at every width (see _shell.scss), so the tab bar
+// is the one always-reachable nav and stays fixed on desktop too. Without
+// clearance above 768px the last row of every page sits underneath it, and a
+// link there resolves to .tab-item instead of to itself -- reproducible at
+// 1440px on takeaway and tv/channels.
 //
-// Uses the published --tab-bar-h rather than a hardcoded 60px so the clearance
-// tracks the bar instead of drifting from it. Verticals that hide the bar zero
-// that variable and correctly get their space back.
+// Reads the published --tab-bar-h rather than a literal height so the
+// clearance tracks the bar. Verticals that hide the bar zero that variable and
+// get their space back.
 main#main-content,
 main[role="main"] {
   /* --tab-bar-h is declared on :root by app-root-tokens, so the 54px fallback

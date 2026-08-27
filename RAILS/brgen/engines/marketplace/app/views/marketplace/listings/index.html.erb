@@ -56,14 +56,14 @@
   <button type="button" class="btn btn-ghost btn-sm" data-controller="geolocation" data-action="geolocation#pin">
     <%= t("marketplace.near_me") %>
   </button>
-  <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), aria: { label: t("marketplace.radius_label") } %>
+  <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), aria: { label: t("marketplace.radius_label") }, inputmode: "numeric" %>
   <%= f.select :sort,
         options_for_select([[t("marketplace.sort_recent", default: "Newest"), "recent"],
                             [t("marketplace.sort_price_low", default: "Price ↑"), "price_low"],
                             [t("marketplace.sort_price_high", default: "Price ↓"), "price_high"]], @sort),
         {}, aria: { label: t("marketplace.sort_label", default: "Sort") } %>
-  <%= f.number_field :min_price, value: params[:min_price], min: 0, step: 1, placeholder: t("marketplace.min_price", default: "Min"), aria: { label: t("marketplace.min_price", default: "Min price") } %>
-  <%= f.number_field :max_price, value: params[:max_price], min: 0, step: 1, placeholder: t("marketplace.max_price", default: "Max"), aria: { label: t("marketplace.max_price", default: "Max price") } %>
+  <%= f.number_field :min_price, value: params[:min_price], min: 0, step: 1, placeholder: t("marketplace.min_price", default: "Min"), aria: { label: t("marketplace.min_price", default: "Min price") }, inputmode: "numeric" %>
+  <%= f.number_field :max_price, value: params[:max_price], min: 0, step: 1, placeholder: t("marketplace.max_price", default: "Max"), aria: { label: t("marketplace.max_price", default: "Max price") }, inputmode: "numeric" %>
 <% end %>
 
 <%= render "marketplace/listings/facets", facets: @facets %>

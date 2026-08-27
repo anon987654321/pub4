@@ -110,7 +110,7 @@
       </div>
       <div class="field">
         <%= f.label :timestamp, "Timestamp (seconds)" %>
-        <%= f.number_field :timestamp, min: 0, step: 1 %>
+        <%= f.number_field :timestamp, min: 0, step: 1, inputmode: "numeric" %>
       </div>
       <%= f.submit t("tv.save_note"), class: "btn btn-primary btn-sm" %>
     <% end %>

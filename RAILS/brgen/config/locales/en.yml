@@ -380,12 +380,17 @@ en:
     disappears_in: disappears in %{time}
     title: Messages
     new_message: New message
+    rooms_label: "Rooms"
+    message_action: "Message"
+    no_people: "Nobody by that name here yet."
+    find_people: "Search for someone"
     username: Username
     start_chat: Start chat
     empty_title: No conversations yet
     empty_body: Send a message to get started.
     push_body_disappearing: New message
     read: read
+    edited: "edited"
     back_all: "← all"
     back_channels: "← channels"
     disappearing: Disappearing messages
@@ -722,6 +727,13 @@ en:
     fresh: Fresh
     top: Top
     posts: Sort posts
+  invite:
+    copy_link: "Copy my message link"
+    expired: "That invite link has expired or is not valid any more."
+    sign_in_to_reply: "Sign in to reply to %{name}."
+  place:
+    within_a_km: "less than 1 km away"
+    km_away: "%{count} km away"
   posts:
     score: Post score
     upvote: Upvote
@@ -823,6 +835,7 @@ en:
     current_photos: Current photos
     more_details: More details
     protected_with: Protected with
+    vipps_required: Joining dating needs a Vipps sign-in, so everyone here is a real person.
     age: Age
     edit_profile_blurb: Photos and about you matter most — other details stay optional.
     create_profile_blurb: Three steps to start — photos, about you, who you are looking

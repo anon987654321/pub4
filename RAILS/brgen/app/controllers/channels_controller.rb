@@ -4,9 +4,18 @@
 # (see Conversation::CHANNELS); posting reuses MessagesController. Guests and
 # signed-in users both write — humans show as anonymous handles, bots as personas.
 class ChannelsController < ApplicationController
+  # A channel is a room in the same window as a DM, so it needs the same rail.
+  # Signed-out readers get the channel list without an inbox, which is what they
+  # have.
+  before_action :load_rail, only: :show
+
   def index
     @city = Current.city_record
-    @channels = Conversation.channels.where(city_id: @city&.id).index_by(&:slug)
+rooms = Conversation.channels.where(city_id: @city&.id).to_a
+@channels = rooms.index_by(&:slug)
+# Two queries for the whole list rather than two per room.
+@message_counts = Conversation.message_counts_for(rooms)
+@active_counts = Conversation.active_counts_for(rooms)
   end
 
   def show
@@ -29,8 +38,27 @@ class ChannelsController < ApplicationController
     end
 
     ActsAsTenant.without_tenant do
-      @messages = @conversation.messages.visible.unexpired.includes(:sender).order(:created_at).last(100).to_a
+# The same preloads conversations#show uses, because the same partial
+# renders here. This included only :sender, while messages/_message also
+# reads message_receipts for the read chip, link_preview for the card and
+# parent.sender for the reply line — three queries per message that the
+# DM view had already paid once for the page.
+@messages = @conversation.messages.visible.unexpired
+                         .includes(:sender, :message_receipts, :link_preview, parent: :sender)
+                         .order(:created_at).last(100).to_a
     end
     @message = Message.new
+  end
+  private
+
+  def load_rail
+    return unless Current.user
+
+    @rail_conversations = Conversation.for_user(Current.user)
+                                      .where(slug: nil)
+                                      .includes(:participants, :messages)
+                                      .order(Conversation::INBOX_ORDER)
+                                      .limit(30)
+    @rail_unread = Conversation.unread_counts_for(Current.user)
   end
 end

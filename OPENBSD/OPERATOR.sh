@@ -385,7 +385,7 @@ ALL_APPS=(
 SERVICES=()
 
 ALL_DOMAINS=(
-  brgen.no:markedsplass,playlist,dating,tv,takeaway,maps,messenger,ai
+  brgen.no:markedsplass,playlist,dating,tv,takeaway,maps,messenger,ai,trymbot
   longyearbyn.no:markedsplass,playlist,dating,tv,takeaway,maps,messenger
   oshlo.no:markedsplass,playlist,dating,tv,takeaway,maps,messenger
   stvanger.no:markedsplass,playlist,dating,tv,takeaway,maps,messenger
