@@ -20,6 +20,7 @@
 # Expects:     HF_TOKEN in the environment, put there by the notebook
 
 require "fileutils"
+require "json"
 require "pathname"
 
 SUBJECT = ARGV.fetch(0) { abort "warn: usage: colab_session.rb <subject>" }
@@ -389,8 +390,12 @@ def checkpoint_nan?(path)
       raw.unpack("v*").any? { |bits| (bits & 0x7C00) == 0x7C00 && (bits & 0x03FF) != 0 }
     end
   end
-rescue StandardError => e
-  warn "note: could not inspect #{path.basename} (#{e.message}); resuming anyway"
+# Narrow on purpose. `rescue StandardError` here caught NameError from a missing
+# `require "json"` and reported it as an uninspectable file, so the guard was
+# inert from the moment it shipped and said "ok:" while doing nothing. A
+# malformed file is a thing to shrug at; a bug in this method is not.
+rescue IOError, SystemCallError, JSON::ParserError => e
+  warn "note: could not inspect #{path.basename} (#{e.class}: #{e.message}); resuming anyway"
   false
 end
 
@@ -416,6 +421,10 @@ def restore_checkpoints
       puts "warn: these were written by a run whose loss had already collapsed."
       puts "warn: delete them from #{PERSIST} once you are sure."
     end
+    # Not assumed to exist. LORA_COLAB_STAGES lets any stage run on its own, and
+    # the directory is only created by prepare, so `restore` alone died on ENOENT
+    # from inside FileUtils with a stack trace and no line of its own.
+    WEIGHTS_DIR.mkpath
     FileUtils.cp(path, WEIGHTS_DIR.join(path.basename))
     return puts "ok: resuming from #{path.basename}"
   end
