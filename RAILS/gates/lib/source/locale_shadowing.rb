@@ -61,10 +61,64 @@ module Deploy
         judge(app, shared, budgets)
         @result.checked!
       end
+      judge_orphans
       @result
     end
 
     private
+
+    # A key with no value deletes whatever a later merge would have kept.
+    #
+    # Removing the last child of a YAML mapping leaves the parent behind as a
+    # bare `nav:`, which parses as nil — and in I18n's deep merge nil REPLACES a
+    # Hash rather than being ignored. shared/ loads after every app, so one such
+    # key there wiped all 48 nav entries in brgen, 23 in amber and 8 in bsdports.
+    # Every navigation label in every app, from deleting one line.
+    #
+    # The shadowing check above could not see it: it compares values that
+    # disagree, and a key resolving to nothing disagrees with nobody. So it stayed
+    # green while three apps rendered "Translation missing" everywhere.
+    #
+    # Only shared/ can do this damage, because only shared/ loads last. An empty
+    # key in an app's own file is a dead declaration rather than a weapon, so it
+    # warns there and fails here.
+    def judge_orphans
+      %w[shared amber brgen bsdports].each do |tree|
+        Dir[File.join(RAILS_ROOT, tree, "config/locales/**/*.yml")].sort.each do |path|
+          doc = begin
+            YAML.safe_load_file(path, aliases: true)
+          rescue StandardError
+            next
+          end
+          next unless doc.is_a?(Hash)
+
+          empties = []
+          doc.each do |locale, tree_body|
+            next unless tree_body.is_a?(Hash)
+
+            collect_empty(tree_body, [locale.to_s], empties)
+          end
+          next if empties.empty?
+
+          rel = path.sub("#{RAILS_ROOT}/", "")
+          message = "locale_shadowing #{rel}: #{empties.length} key(s) with no value " \
+                    "(#{empties.first(4).join(', ')}) — a bare key parses as nil and nil " \
+                    "REPLACES a hash in I18n's merge"
+          tree == "shared" ? @result.fail(message) : @result.warn(message)
+        end
+      end
+    end
+
+    def collect_empty(node, prefix, out)
+      node.each do |key, value|
+        path = prefix + [key.to_s]
+        if value.is_a?(Hash)
+          value.empty? ? out << path.join(".") : collect_empty(value, path, out)
+        elsif value.nil?
+          out << path.join(".")
+        end
+      end
+    end
 
     def judge(app, shared, budgets)
       own = load_locales(File.join(RAILS_ROOT, app, "config/locales/**/*.yml"))
