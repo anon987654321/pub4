@@ -24,7 +24,21 @@ rescue StandardError
   base_kit
 end
 
+# The whole drum bus, one switch.
+#
+# Off by default, operator instruction 2026-08-27: "kill all the drums". The
+# custom kit carries exactly one snare and it landed on every track of a
+# 451-track demo, which is what that instruction was about. DRUMS=1 brings
+# them back with nothing else changed.
+#
+# Gated here rather than at the kit, because a kit swap still plays drums.
+def drums_enabled?
+  ENV.fetch("DRUMS", "0") != "0"
+end
+
 def wonky_primary_drums?
+  return false unless drums_enabled?
+
   camel_mode? && wonky_drum_overlay_enabled?
 end
 
@@ -37,10 +51,12 @@ def wonky_drums_only?
 end
 
 def dilla_pocket_drums_enabled?
-  !wonky_drums_only?
+  drums_enabled? && !wonky_drums_only?
 end
 
 def kicks_enabled?
+  return false unless drums_enabled?
+
   # Pocket kit kicks when overlay-only is off. Prefer POCKET_KICKS;
   # KICKS=1 alone does not force pocket when WONKY_DRUMS_ONLY=1.
   return false if wonky_drums_only?
