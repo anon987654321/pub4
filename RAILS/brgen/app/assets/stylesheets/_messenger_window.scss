@@ -142,6 +142,8 @@
 .messenger-pane {
   display: block;
   min-width: 0;
+  /* A conversation has no ideal measure, but an empty state does: centred in
+     1200px of black it read as vacancy rather than as an invitation. */
   // The log scrolls, not the window: a composer that scrolls off the bottom of a
   // conversation is the defect this pane exists to prevent.
   overflow-y: auto;
@@ -181,12 +183,18 @@
 }
 
 .messenger-rail-invite-copy {
-  display: inline-flex;
+  display: grid;
+  /* Icon column, then text. align-items on a flex row left the glyph beside the
+     first line of a two-line label and the second line hanging under it; a grid
+     column keeps the icon against the whole block however the words wrap. */
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: var(--space-2);
   inline-size: 100%;
   min-height: var(--tap-min);
+  padding-block: var(--space-2);
   padding-inline: var(--space-2);
+  text-align: start;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -198,3 +206,12 @@
 }
 
 .messenger-rail-invite-copy:hover { background: var(--hover); color: var(--text); }
+
+/* The empty state is a message, not a room. Hold it to a measure and put it
+   near the top of the pane, where the first line of a conversation would be —
+   dead centre of a tall column is where nothing lives. */
+.messenger-pane .empty-state {
+  max-inline-size: 34rem;
+  margin-inline: auto;
+  padding-block-start: var(--space-8);
+}
