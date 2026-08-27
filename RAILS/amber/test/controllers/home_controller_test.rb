@@ -24,13 +24,17 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # default) rather than pinning the English copy — same fix as b369c6213
     # made for brgen's home and signup pages.
     assert_includes response.body, I18n.t("home.guest_title")
-    # The mannequin, not the four stacked carousels it replaced. Operator order
-    # 2026-08-17: logo, then this, then the posts. The old assertions pinned
-    # shared/_wardrobe_showcase, which rendered from the layout and so appeared
-    # above every page in the app.
-    assert_includes response.body, "dressing-room"
-    assert_includes response.body, 'data-controller="wardrobe-carousel"'
-    assert_includes response.body, "mannequin-svg"
+    # Four browse rows, one per body region, back on the front page and rendered
+    # from home/index rather than from layouts/application -- which is what put
+    # them above the content of every page and this page's logo 5,410px down.
+    # The mannequin they replaced keeps its own page at outfits/dressing_room.
+    assert_includes response.body, "wardrobe_showcase"
+    assert_equal 4, response.body.scan(/wardrobe_showcase_row(?!_)/).size
+    # Adjacent rows drift opposite ways, so the same two garments never stay
+    # paired. Two of four carry the reverse class, which is what alternating is.
+    assert_equal 2, response.body.scan(/wardrobe_showcase_row_reverse/).size
+    assert_includes response.body, I18n.t("home.showcase.headwear.label")
+    assert_not_includes response.body, "mannequin-svg"
     # A garment name reaches the page whether or not a demo wardrobe is seeded.
     assert_includes response.body, "Gold hoop earrings"
     # Saving belongs to an account, so the guest gets the rotation without it.

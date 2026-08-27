@@ -107,6 +107,20 @@ nb:
     empty_title: "Ingen varsler ennå"
     empty_body: "Oppdateringer vises her."
   home:
+    showcase:
+      aria: "Garderobe etter kroppsregion"
+      headwear:
+        label: "Hodeplagg"
+        hint: "Luer, skjerf og smykker"
+      tops:
+        label: "Overdeler"
+        hint: "Gensere, t-skjorter og skjorter"
+      bottoms:
+        label: "Underdeler"
+        hint: "Bukser, skjørt og shorts"
+      shoes:
+        label: "Sko"
+        hint: "Støvler, flate sko og joggesko"
     dashboard: "Oversikt"
     items: "Plagg"
     spark_joy: "Glede"

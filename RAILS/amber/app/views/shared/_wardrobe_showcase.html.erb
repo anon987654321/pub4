@@ -1,0 +1,40 @@
+<%# Four browse rows under the logo, one per body region, each drifting the
+    opposite way to the one above it. Amber::WardrobeShowcase owns which
+    categories land in which row and which way each turns; this renders it.
+
+    A CSS marquee rather than Swiper. Swiper is pinned to a CDN
+    (importmap_baseline, preload: false), and a landing page is the last place
+    to spend a third-party fetch on something two transforms already do. It
+    also makes the alternation one property instead of a JSON options blob.
+
+    The slide list is rendered twice inside each track. The animation travels
+    exactly half the track, so the second copy is under the cursor at the
+    moment it resets and the loop has no seam. %>
+<% rows = Amber::WardrobeShowcase.rows %>
+<% rows = rows.reject { |row| row.items.empty? } %>
+<% if rows.any? %>
+  <section class="wardrobe_showcase" aria-label="<%= t("home.showcase.aria") %>">
+    <% rows.each do |row| %>
+      <div class="wardrobe_showcase_row<%= " wardrobe_showcase_row_reverse" if row.reverse %>">
+        <div class="wardrobe_showcase_head">
+          <h2 class="wardrobe_showcase_label"><%= t("home.showcase.#{row.key}.label") %></h2>
+          <p class="wardrobe_showcase_hint"><%= t("home.showcase.#{row.key}.hint") %></p>
+        </div>
+        <%# The track is decorative motion around links that are already in the
+            document twice. One copy is announced, the other hidden, so a screen
+            reader reads each garment once. %>
+        <div class="wardrobe_showcase_viewport">
+          <div class="wardrobe_showcase_track">
+            <% 2.times do |copy| %>
+              <div class="wardrobe_showcase_group" <%= "aria-hidden=true" if copy.positive? %>>
+                <% row.items.each do |item| %>
+                  <%= render "shared/wardrobe_carousel_slide", item: item, muted: copy.positive? %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </section>
+<% end %>

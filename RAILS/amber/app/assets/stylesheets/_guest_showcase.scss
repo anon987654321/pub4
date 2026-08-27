@@ -1,0 +1,154 @@
+/* Guest wardrobe carousels: four rows under the logo, one per body region.
+
+   The version this replaces rendered from layouts/application, so four rows at
+   1235px each sat above the content of every page a signed-out visitor could
+   reach and put the home logo at y=5410. It is rendered from home/index alone
+   now, and a row is a fixed, small height rather than whatever its contents
+   came to.
+
+   Motion is two transforms and no JavaScript. The track holds the slide list
+   twice and travels exactly half its width, so the copy under the cursor at the
+   reset is identical to the one leaving and the loop has no seam. Direction
+   alternates by row, which is the whole point of the arrangement: adjacent
+   zones drift opposite ways, so the same two garments never stay paired. */
+
+.wardrobe_showcase {
+  --slide_size: 104px;
+  --row_gap: var(--space-sm, 8px);
+
+  border-block: 1px solid var(--border, #e6e0d8);
+  padding-block: var(--space-3, 16px);
+
+  /* This is a flex item, and a flex item's min-width is auto -- so it refuses
+     to shrink below its content and the track's max-content width became the
+     section's width: 2115px inside a 600px column, with overflow:hidden
+     clipping nothing because there was nothing to clip. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+.wardrobe_showcase_row {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.wardrobe_showcase_row + .wardrobe_showcase_row {
+  border-top: 1px solid var(--border, #e6e0d8);
+  margin-top: var(--space-3, 16px);
+  padding-top: var(--space-3, 16px);
+}
+
+.wardrobe_showcase_head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-sm, 8px);
+  padding-inline: var(--space-md, 16px);
+  padding-bottom: var(--space-xs, 4px);
+}
+
+.wardrobe_showcase_label {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--weight-bold, 700);
+}
+
+.wardrobe_showcase_hint {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #6b665f);
+}
+
+/* The column, not the viewport. Full-bleed here ran the rows under the fixed
+   right rail and the ancestor clipped them anyway, so 100vw bought a band that
+   was neither full width nor aligned to anything.
+
+   overflow-x hidden and not auto: the track is twice the visible width by
+   construction, and a scrollbar under every row would be four scrollbars. */
+.wardrobe_showcase_viewport {
+  overflow: hidden;
+}
+
+.wardrobe_showcase_track {
+  display: flex;
+  width: max-content;
+  animation: wardrobe_showcase_drift 46s linear infinite;
+}
+
+.wardrobe_showcase_row_reverse .wardrobe_showcase_track {
+  animation-direction: reverse;
+}
+
+.wardrobe_showcase_group {
+  display: flex;
+  gap: var(--row_gap);
+  padding-inline: calc(var(--row_gap) / 2);
+}
+
+/* A rotation that moves under the cursor mid-click picks the wrong garment. */
+.wardrobe_showcase_viewport:hover .wardrobe_showcase_track,
+.wardrobe_showcase_viewport:focus-within .wardrobe_showcase_track {
+  animation-play-state: paused;
+}
+
+.wardrobe_slide {
+  width: var(--slide_size);
+  flex: 0 0 var(--slide_size);
+}
+
+.wardrobe_slide_media {
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--border, #e6e0d8);
+  /* Not plain surface: a white shirt or a white trainer on white paper is an
+     empty box with a caption under it. A few percent of ink behind the cut-out
+     gives the pale half of the wardrobe an edge to sit against. */
+  background: color-mix(in srgb, var(--text, #2c2824) 4%, var(--surface, #ffffff));
+}
+
+.wardrobe_slide_image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* No photo: the garment's own colour, with its initial over it. A grey box
+   would read as a failed image rather than as an item awaiting one. */
+.wardrobe_slide_swatch {
+  display: grid;
+  place-items: center;
+  background: var(--swatch, var(--surface, #ffffff));
+}
+
+/* difference against a pale swatch renders the letter invisible, which is the
+   one case the swatch exists for. Plain ink, and the swatches are chosen light
+   enough to carry it. */
+.wardrobe_slide_glyph {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: var(--weight-bold, 700);
+  color: var(--text, #2c2824);
+}
+
+.wardrobe_slide_title {
+  margin: var(--space-xs, 4px) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #6b665f);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes wardrobe_showcase_drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wardrobe_showcase_track { animation: none; }
+
+  /* Standing still, the second copy is redundant width the reader has to scroll
+     past, so the viewport becomes an ordinary scroller over the first. */
+  .wardrobe_showcase_viewport { overflow-x: auto; }
+  .wardrobe_showcase_group + .wardrobe_showcase_group { display: none; }
+}

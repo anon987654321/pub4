@@ -111,14 +111,15 @@
     </p>
   </section>
 
-  <%# The mannequin, wearing the demo wardrobe. Operator order, 2026-08-17: the
-      logo, then this, then the posts. It replaces shared/_wardrobe_showcase,
-      which was four mannequin-less carousels rendered from the layout — so they
-      appeared above the content of every page in the app, 1235px each, and put
-      this page's own logo 5,410px down. %>
-  <% if @dressing_room_zones.present? && @dressing_room_zones.values.any?(&:any?) %>
-    <%= render "shared/dressing_room", zones: @dressing_room_zones, savable: false %>
-  <% end %>
+  <%# Operator order: the logo, then these, then the posts. Four browse rows,
+      one per body region, each drifting the opposite way to the row above it.
+
+      Rendered from here and not from layouts/application, which is where the
+      earlier version sat -- four rows above the content of every page a
+      signed-out visitor could reach, putting this page's own logo 5,410px
+      down. The mannequin that stood in for them keeps its own page at
+      outfits/dressing_room. %>
+  <%= render "shared/wardrobe_showcase" %>
 
   <%= render "shared/feed_compose" %>
 

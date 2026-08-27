@@ -11,7 +11,6 @@ class HomeController < ApplicationController
         @demo_items = Amber::DemoWardrobe.preview_items
         @demo_outfits = Amber::DemoWardrobe.preview_outfits
       end
-      @dressing_room_zones = guest_dressing_room_zones
       @pagy, @guest_posts = pagy(Post.public_feed.includes(:outfit, :item, user: :profile))
       @anon_service = Shared::AnonymousPost.new(request: request, user: Current.user)
       return
@@ -45,14 +44,5 @@ class HomeController < ApplicationController
     # Weather is passed in rather than fetched again: StyleAssistant does no
     # network I/O, so the daily suggestion costs one wardrobe read.
     @today_look = StyleAssistant.new(Current.user, weather: @weather).suggest
-  end
-
-  private
-
-  # The mannequin on the landing page wears the demo wardrobe, or the curated
-  # names when none is seeded. Never nothing: an empty landing page was what the
-  # showcase's own fallback catalogue existed to prevent.
-  def guest_dressing_room_zones
-    Amber::DressingRoom.guest_zones
   end
 end

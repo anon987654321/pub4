@@ -108,6 +108,20 @@ en:
     empty_title: "No notifications yet"
     empty_body: "Updates will appear here."
   home:
+    showcase:
+      aria: "Wardrobe by body region"
+      headwear:
+        label: "Headwear"
+        hint: "Hats, scarves and jewellery"
+      tops:
+        label: "Tops and layers"
+        hint: "Sweaters, tees and shirts"
+      bottoms:
+        label: "Bottoms"
+        hint: "Trousers, skirts and shorts"
+      shoes:
+        label: "Shoes"
+        hint: "Boots, flats and trainers"
     dashboard: "Dashboard"
     items: "Items"
     spark_joy: "Spark joy"

@@ -1,0 +1,21 @@
+<%# locals: item, muted %>
+<%# muted is the second marquee copy: same markup, removed from the accessibility
+    tree and from the tab order, so the row reads and tabs once rather than twice. %>
+<% muted = local_assigns.fetch(:muted, false) %>
+<% slide_path = item.is_a?(Item) ? demo_wardrobe_item_path(item) : demo_wardrobe_path %>
+<div class="wardrobe_slide">
+  <% if item.is_a?(Item) && item.photos.attached? %>
+    <%= link_to slide_path, class: "wardrobe_slide_media", title: item.title,
+                aria: { label: item.title }, tabindex: (-1 if muted) do %>
+      <%= responsive_image_tag item.photos.first, alt: (muted ? "" : item.title),
+                               preset: :thumb, sizes: "140px", class: "wardrobe_slide_image" %>
+    <% end %>
+  <% else %>
+    <%= link_to slide_path, class: "wardrobe_slide_media wardrobe_slide_swatch", title: item.title,
+                aria: { label: item.title }, tabindex: (-1 if muted),
+                style: "--swatch: #{wardrobe_color_swatch(item.color)};" do %>
+      <span class="wardrobe_slide_glyph" aria-hidden="true"><%= item.title.to_s.first&.upcase %></span>
+    <% end %>
+  <% end %>
+  <p class="wardrobe_slide_title"><%= item.title %></p>
+</div>
