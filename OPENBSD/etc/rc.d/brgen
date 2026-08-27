@@ -12,8 +12,12 @@ APP_DIR=/home/brgen/app
 [ -f /etc/rails/brgen.env ] && . /etc/rails/brgen.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/brgen.env}"
 daemon="/bin/ksh"
-# SECRET_KEY_BASE is sourced from /etc/brgen.env at runtime by the app user and
-# re-exported (the file holds a bare KEY=value, which `.` sets un-exported) — NOT
+# The env file is sourced under `set -a` so everything in it is exported, NOT
+# named one variable at a time. Naming them was an allowlist nobody could see:
+# the file holds bare KEY=value which `.` sets un-exported, so only the keys
+# written into this line ever reached the process, and VAPID_PUBLIC_KEY sat in
+# /etc/brgen.env for hours doing nothing while push failed silently. Any key
+# added to the file now works without editing this script. Still NOT
 # interpolated into daemon_flags, where it landed in falcon's ps(1) argv for any
 # local account to read (debt.yml secrets_in_process_argv). /etc/brgen.env is
 # root:brgen 640. PUB4_ROOT/PUB4_RAILS_ROOT are not secrets and stay inline.
@@ -37,7 +41,7 @@ daemon="/bin/ksh"
 # generates sets RUBY_YJIT_ENABLE=1, and a future Ruby may turn it on at build
 # time. Without this line the box would quietly start paying for it, and the
 # symptom would be swap rather than anything that names YJIT.
-daemon_flags="-c 'cd ${APP_DIR} && . /etc/brgen.env && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production SECRET_KEY_BASE HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/brgen.env && set +a && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"
