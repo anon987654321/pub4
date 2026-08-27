@@ -99,6 +99,63 @@ def apply_device!(process)
   end
 end
 
+# LORA_BASE=sdxl — train against SDXL instead of FLUX.1-dev.
+#
+# Not a preference. FLUX.1-dev's weights are 23.8 GB of fp16 and diffusers
+# materialises them in host RAM before quantisation can move anything to the
+# card; a free Colab has 12.7 GB and the kernel is killed at "Loading checkpoint
+# shards". Swap would let it spill, and Colab's container refuses swapon. There
+# is no arrangement of that machine in which 23.8 fits in 12.7.
+#
+# SDXL is 6.9 GB and fits with room to spare. It is a genuine step down for this
+# job — 2.6B UNet against a 12B rectified-flow transformer — and where it shows
+# is exactly the thing a subject LoRA is for: FLUX holds a specific face across
+# changes of light and angle, SDXL drifts toward a generic one as the scene
+# varies, and it follows a long prompt less faithfully. Twelve validation
+# prompts each naming a lighting setup, a film stock and a focal length are more
+# than it will honour.
+#
+# It is the right call anyway when the alternative is no photographs tonight.
+#
+# Everything FLUX-specific has to go, not just the path. flowmatch is FLUX's
+# scheduler and SDXL wants ddpm. guidance 3.5 is a FLUX number; SDXL is trained
+# for about 7 and looks washed out below 5. quantize exists to make 12B fit and
+# costs quality on a model that already does. And SDXL is trained at 1024, so
+# the 512 buckets the T4 profile imposes for FLUX would train it below its own
+# native resolution — 768 is the compromise that fits a 16 GB card.
+SDXL_MODEL = "stabilityai/stable-diffusion-xl-base-1.0"
+
+def apply_sdxl!(process)
+  model = process["model"]
+  model["name_or_path"] = SDXL_MODEL
+  model.delete("is_flux")
+  model["is_xl"] = true
+  # Both were for a 12B transformer on a 16 GB card. SDXL needs neither, and
+  # quantising a model that already fits only costs precision.
+  model["quantize"] = false
+  model["low_vram"] = false
+
+  train = process["train"]
+  train["noise_scheduler"] = "ddpm"
+  # timestep_type belongs to flowmatch. Under ddpm it is at best ignored and at
+  # worst a config error, and leaving a key the scheduler does not read is the
+  # inert-declaration failure this repo keeps finding.
+  train.delete("timestep_type")
+
+  sample = process["sample"]
+  sample["guidance_scale"] = 7.0
+  sample["sample_steps"] = 30
+
+  # 768 rather than the T4 profile's 512: SDXL is trained at 1024 and 512 costs
+  # it detail it was built to carry. 1024 does not fit alongside the optimizer
+  # on a 16 GB Turing card.
+  process["datasets"].first["resolution"] = [768] unless ENV.key?("LORA_RESOLUTIONS")
+
+  warn "note: LORA_BASE=sdxl — SDXL 1.0 at 768, ddpm, guidance 7, no quantisation."
+  warn "note: chosen because FLUX.1-dev cannot be loaded in 12.7 GB of host RAM."
+  warn "note: likeness across varied light will be weaker than FLUX would give."
+end
+
 # Every LORA_* knob declared and never read.
 #
 # LORA_LR and LORA_RESOLUTIONS only suppressed a device default — the branches
@@ -108,6 +165,8 @@ end
 # not then load, so a local FLUX checkout passed the gate and downloaded the
 # gated one anyway.
 def apply_env_overrides!(process)
+  apply_sdxl!(process) if ENV["LORA_BASE"].to_s.strip.downcase == "sdxl"
+
   lr = ENV["LORA_LR"].to_s.strip
   process["train"]["lr"] = Float(lr) unless lr.empty?
 

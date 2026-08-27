@@ -190,6 +190,20 @@ def train_cell(options)
     # FLUX.1-dev otherwise, 512 buckets because the budget is the clock.
     os.environ["LORA_STEPS"] = "#{options[:steps]}"
     os.environ["LORA_SAMPLE_EVERY"] = "#{options[:sample_every]}"
+    # SDXL, because FLUX.1-dev cannot be loaded here.
+    #
+    # Its weights are 23.8 GB of fp16 and diffusers materialises them in host
+    # RAM before quantisation can move anything to the card. A free Colab has
+    # 12.7 GB and the kernel is killed at "Loading checkpoint shards" — twice,
+    # recorded in app.log as restart (1/5). Swap would let the loader spill and
+    # this container refuses swapon. No arrangement of this machine fits 23.8
+    # into 12.7.
+    #
+    # SDXL is 6.9 GB. It is a real step down for holding one specific face
+    # across changing light, and it is the difference between photographs
+    # tonight and none. Delete this line to go back to FLUX on a machine with
+    # the memory — everything else in the config is shared.
+    os.environ["LORA_BASE"] = "sdxl"
 
     # Piped and re-printed, NOT subprocess.run(check=True).
     #
