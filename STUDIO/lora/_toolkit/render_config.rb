@@ -200,6 +200,30 @@ def apply_env_overrides!(process)
   lr = ENV["LORA_LR"].to_s.strip
   process["train"]["lr"] = Float(lr) unless lr.empty?
 
+  # Johann set LORA_RANK=16 and LORA_ALPHA=16 in a notebook cell to cut VRAM, the
+  # cell printed "Set LORA_RANK to 16", and the run trained at 32 — no reader
+  # existed. Eight other LORA_* knobs had one, which is exactly what makes a
+  # missing ninth invisible: the convention says it should work.
+  #
+  # Worth having beyond that. Rank is the adapter's capacity, and on a
+  # seven-image set 32 is enough capacity to memorise the pictures rather than
+  # the person — including their grade and their backgrounds. 16 is the usual
+  # recommendation for a single-subject set this small. The default stays 32
+  # because changing it silently would swap one unexamined number for another;
+  # the knob is what was missing.
+  #
+  # alpha defaults to rank when unset, since alpha/rank is the scaling factor and
+  # setting one without the other changes the effective learning rate by the
+  # ratio — a surprise that reads as "rank 16 trains worse".
+  rank = ENV["LORA_RANK"].to_s.strip
+  alpha = ENV["LORA_ALPHA"].to_s.strip
+  unless rank.empty? && alpha.empty?
+    network = process["network"]
+    network["linear"] = Integer(rank) unless rank.empty?
+    network["linear_alpha"] = alpha.empty? ? network["linear"] : Integer(alpha)
+    warn "note: LoRA rank #{network['linear']}, alpha #{network['linear_alpha']}"
+  end
+
   resolutions = ENV["LORA_RESOLUTIONS"].to_s.strip
   unless resolutions.empty?
     process["datasets"].first["resolution"] = resolutions.split(",").map { |value| Integer(value.strip) }
