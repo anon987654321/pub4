@@ -122,7 +122,7 @@
     <% end %>
     <%= form_with model: [@item, @affiliate_link], url: item_affiliate_links_path(@item), class: "form-wrap" do |f| %>
       <div class="field"><%= f.label :merchant %><%= f.text_field :merchant, required: true, placeholder: t("items.merchant_placeholder") %></div>
-      <div class="field"><%= f.label :url %><%= f.url_field :url, required: true, placeholder: t("items.url_placeholder") %></div>
+      <div class="field"><%= f.label :url %><%= f.url_field :url, required: true, placeholder: t("items.url_placeholder"), inputmode: "url" %></div>
       <div class="field"><%= f.submit t("items.save_link"), class: "btn" %></div>
     <% end %>
   </section>

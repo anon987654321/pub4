@@ -56,7 +56,7 @@
         <%= form_with model: [:playlist, parent, Playlist::DillaSketch.new], url: create_url, class: "dilla-sketch-form" do |f| %>
           <%= f.text_field :name, placeholder: t("playlist.sketch_name"), aria: { label: t("playlist.sketch_name") }, required: true %>
           <%= f.select :style, %w[dilla flylo baroque neo-soul jazz], { selected: "dilla" }, { aria: { label: t("playlist.style", default: "Style") } } %>
-          <%= f.number_field :bars, value: 12, min: 4, max: 64, aria: { label: t("playlist.bars", default: "Bars") } %>
+          <%= f.number_field :bars, value: 12, min: 4, max: 64, aria: { label: t("playlist.bars", default: "Bars") }, inputmode: "numeric" %>
           <%= f.text_area :state, value: { pat_: {}, aud_: {}, mix_: { style: "dilla", bars: 12 } }.to_json, rows: 3, aria: { label: t("playlist.sketch_state", default: "Sketch state (JSON)") } %>
           <%= f.text_field :notes, placeholder: t("playlist.notes_optional"), aria: { label: t("playlist.notes_optional") } %>
           <label><input type="checkbox" name="render_now" value="1" checked /> <%= t("playlist.render_now") %></label>

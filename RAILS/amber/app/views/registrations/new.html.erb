@@ -4,7 +4,7 @@
   <%= form_with model: User.new, url: registration_path do |f| %>
     <div class="field">
       <%= f.label :email_address, t("auth.email") %>
-      <%= f.email_field :email_address, autofocus: true, autocomplete: "email" %>
+      <%= f.email_field :email_address, autofocus: true, autocomplete: "email", inputmode: "email" %>
     </div>
     <div class="field">
       <%= f.label :password, t("auth.password") %>

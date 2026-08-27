@@ -12,7 +12,7 @@
 
   <%= tag.fieldset do %>
     <%= form.label :item_id %>
-    <%= form.number_field :item_id, required: true %>
+    <%= form.number_field :item_id, required: true, inputmode: "numeric" %>
   <% end %>
 
   <%= tag.fieldset do %>

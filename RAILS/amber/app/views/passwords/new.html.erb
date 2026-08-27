@@ -4,7 +4,7 @@
   <%= form_with url: passwords_path do |f| %>
     <div class="field">
       <%= f.label :email_address, t("auth.email") %>
-      <%= f.email_field :email_address, autofocus: true, autocomplete: "email" %>
+      <%= f.email_field :email_address, autofocus: true, autocomplete: "email", inputmode: "email" %>
     </div>
     <div class="actions">
       <%= f.submit t("auth.email_reset"), class: "btn btn-primary" %>

@@ -10,7 +10,7 @@
   <div class="field"><%= f.label :size %><%= f.text_field :size %></div>
   <div class="field"><%= f.label :material %><%= f.text_field :material %></div>
   <div class="field"><%= f.label :brand %><%= f.text_field :brand %></div>
-  <div class="field"><%= f.label :price %><%= f.number_field :price, step: "0.01", min: 0 %></div>
+  <div class="field"><%= f.label :price %><%= f.number_field :price, step: "0.01", min: 0, inputmode: "decimal" %></div>
   <div class="field"><%= f.label :purchase_date %><%= f.date_field :purchase_date %></div>
   <div class="field">
     <%= f.label :season %>

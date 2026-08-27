@@ -12,12 +12,12 @@
 </div></div>
     <div class="field"><%= f.label :address %><%= f.text_field :address %></div>
     <div class="field"><%= f.label :city %><%= f.text_field :city %></div>
-    <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001" %></div>
-    <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001" %></div>
-    <div class="field"><%= f.label :phone %><%= f.telephone_field :phone, autocomplete: "tel" %></div>
+    <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001", inputmode: "decimal" %></div>
+    <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001", inputmode: "decimal" %></div>
+    <div class="field"><%= f.label :phone %><%= f.telephone_field :phone, autocomplete: "tel", inputmode: "tel" %></div>
     <div class="field"><%= f.label :cuisine_type %><%= f.select :cuisine_type, Takeaway::Restaurant::CUISINE_TYPES, { include_blank: "—" } %></div>
-    <div class="field"><%= f.label :delivery_fee_cents, t("takeaway.delivery_fee") %><%= f.number_field :delivery_fee_cents %></div>
-    <div class="field"><%= f.label :min_order_cents, t("takeaway.min_order") %><%= f.number_field :min_order_cents %></div>
+    <div class="field"><%= f.label :delivery_fee_cents, t("takeaway.delivery_fee") %><%= f.number_field :delivery_fee_cents, inputmode: "numeric" %></div>
+    <div class="field"><%= f.label :min_order_cents, t("takeaway.min_order") %><%= f.number_field :min_order_cents, inputmode: "numeric" %></div>
     <div class="field field--check"><%= f.check_box :active %><%= f.label :active, t("takeaway.active") %></div>
     <%= render "takeaway/restaurants/place_field", f: f %>
     <div class="field"><%= f.submit t("takeaway.save"), class: "btn btn-primary" %></div>
