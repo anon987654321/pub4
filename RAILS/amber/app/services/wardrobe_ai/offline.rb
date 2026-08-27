@@ -109,5 +109,5 @@ class WardrobeAi
         "source" => "rule"
       } ]
     end
-    end
   end
+end

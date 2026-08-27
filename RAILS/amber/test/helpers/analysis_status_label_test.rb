@@ -74,7 +74,7 @@ class AnalysisStatusLabelTest < ActionView::TestCase
       "photo_polish_done" => "items.analysis.photo_polish_done",
       "photo_polish_failed" => "items.analysis.photo_polish_failed",
       "photo_polish_skipped" => "items.analysis.photo_polish_skipped",
-      "no_photos" => "items.analysis.no_photos",
+      "no_photos" => "items.analysis.no_photos"
     }.each do |status, key|
       assert_equal I18n.t(key), analysis_status_label(status)
     end
