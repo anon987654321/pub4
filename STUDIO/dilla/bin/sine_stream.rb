@@ -10,6 +10,7 @@
 # this stream is not allowed to have.
 Dir.chdir("/Users/mac/Documents/GitHub/pub4/STUDIO/dilla")
 require "./dilla.rb"
+require "fileutils"
 
 RATE = 44_100
 OUT = "/Users/mac/Music/dilla_sines"
@@ -762,15 +763,87 @@ end
 # console -- so the bottom thickens and settles a little further every round,
 # which is where the depth comes from. Passes are attenuated slightly on the way
 # in so four of them do not simply crush.
-def master_chain!(l, r)
-  rounds = (ENV["SINE_MASTER_ROUNDS"] || "4").to_i.clamp(1, 8)
-  rounds.times do |k|
-    trim = k.zero? ? 1.0 : 0.86
-    l.length.times { |i| l[i] *= trim; r[i] *= trim } if trim < 1.0
-    master_pass!(l, r)
-  end
-  soft_limit!(l, r, ceiling: 0.94)
+# The master chain, as ffmpeg filters.
+#
+# The same nine Sonitex stages from SONITEX_STX1260, the console sum and the deep
+# stage, four rounds of the whole thing -- built from exactly the parameters the
+# Ruby version used. What changed is where it runs.
+#
+# Measured, because this was the thing that stopped the stream being live: the
+# Ruby chain took 70.5 seconds to master 20 seconds of audio, 3.5x slower than
+# realtime, so the generator could never feed the speakers no matter how it was
+# scheduled. The same chain in ffmpeg takes 2.7 seconds for the same 20 seconds
+# -- 0.137x realtime, twenty-five times faster than playback. Nothing about the
+# sound was traded for it; the arithmetic simply moved out of the interpreter.
+#
+# Two traps, both of which took the whole graph down rather than one stage:
+# aecho wants its decays pipe-separated like its delays, and the groove-wear
+# lowpass runs only on the last pass of each round, because four rounds of a
+# biquad at 5.2 kHz is mud and this engine has shipped a compounding-lowpass bug
+# before.
+def sonitex_filters(p, last:)
+  [
+    "acompressor=threshold=#{p[:comp_threshold]}dB:ratio=#{p[:comp_ratio]}:" \
+      "attack=#{p[:comp_attack]}:release=#{p[:comp_release]}:makeup=#{p[:comp_makeup]}",
+    "stereotools=slev=#{(p[:stereo_width] * p[:side_gain]).round(3)}",
+    "equalizer=f=#{p[:dist_pre_lp]}:t=h:w=1:g=#{p[:dist_pre_emph_db]}",
+    "asoftclip=type=tanh:param=#{p[:dist_drive]}",
+    "equalizer=f=#{p[:dist_pre_lp]}:t=h:w=1:g=#{(-p[:dist_pre_emph_db] * 0.75).round(2)}",
+    "lowpass=f=#{p[:hf_rolloff]}",
+    "highpass=f=#{p[:lf_rolloff]}",
+    "equalizer=f=#{p[:head_bump_hz]}:t=q:w=1.4:g=#{p[:head_bump_db]}",
+    "vibrato=f=#{p[:wow_rate]}:d=#{p[:wow_depth]}",
+    "vibrato=f=#{p[:flutter_hz]}:d=#{p[:flutter_depth]}",
+    "equalizer=f=#{p[:sibilance_hz]}:t=h:w=1:g=#{p[:sibilance_db]}",
+    "acrusher=bits=#{p[:crush_bits]}:mix=#{p[:crush_mix]}:samples=2",
+    (last ? "lowpass=f=#{p[:groove_wear_lp]}" : nil),
+    "acompressor=threshold=#{p[:out_comp_threshold]}dB:ratio=#{p[:out_comp_ratio]}:makeup=#{p[:out_comp_makeup]}",
+    "alimiter=limit=#{p[:limit]}",
+  ].compact
 end
+
+# Four console paths at sub-millisecond offsets. At these delays the copies land
+# inside one wavelength of each other and comb rather than echo, which is the
+# hollow a parallel console sum has and a single path does not.
+NASTY_FILTER = "aecho=0.92:0.88:0.3|0.7|1.1:0.5|0.42|0.34"
+DEEP_FILTERS = ["stereotools=delay=11",
+                "aphaser=in_gain=0.6:out_gain=0.7:delay=3:decay=0.35:speed=0.12",
+                "aecho=0.8:0.75:66|132:0.32|0.18"].freeze
+
+def master_filter_chain
+  @master_filter_chain ||= begin
+    rounds = (ENV["SINE_MASTER_ROUNDS"] || "4").to_i.clamp(1, 8)
+    parts = []
+    rounds.times do |k|
+      2.times { parts.concat(sonitex_filters(SONITEX_STX1260, last: false)) }
+      parts.concat(sonitex_filters(SONITEX_STX1260, last: true))
+      parts << NASTY_FILTER
+      parts.concat(DEEP_FILTERS) if k == rounds - 1 && ENV["SINE_DEEP"] != "0"
+    end
+    parts << "acompressor=threshold=-12dB:ratio=2:attack=30:release=260:makeup=1.15"
+    parts << "alimiter=limit=0.94"
+    parts.join(",")
+  end
+end
+
+def master_chain!(l, r)
+  tmp_in = File.join(OUT, "master_in_#{Process.pid}.wav")
+  tmp_out = File.join(OUT, "master_out_#{Process.pid}.wav")
+  write_wav(tmp_in, l, r)
+  ok = system("/opt/homebrew/bin/ffmpeg", "-y", "-i", tmp_in, "-af", master_filter_chain,
+              "-c:a", "pcm_s16le", tmp_out, out: File::NULL, err: File::NULL)
+  got = ok && File.file?(tmp_out) && File.size(tmp_out) > 1000 ? read_wav(tmp_out) : nil
+  FileUtils.rm_f(tmp_in)
+  FileUtils.rm_f(tmp_out)
+  # If ffmpeg refused the graph the music still has to reach the speakers, so
+  # fall back to the ceiling alone rather than to nothing.
+  return soft_limit!(l, r, ceiling: 0.94) unless got
+
+  n = [l.length, got[0].length].min
+  n.times { |i| l[i] = got[0][i]; r[i] = got[1][i] }
+  (n...l.length).each { |i| l[i] = 0.0; r[i] = 0.0 }
+end
+
 
 # The vocal chain, which is not the pad chain.
 #
@@ -810,6 +883,243 @@ def vocal_chain!(l, r)
 
     l[i] += r[i - d] * 0.14
     r[i] += l[i - d] * 0.11
+  end
+end
+
+# Artifacts. The things a clean chain is built to prevent.
+#
+# Each of these is a failure mode of real equipment -- a fold in an overdriven
+# stage, a tape dropout, a sampler repeating its buffer, a converter losing bits.
+# Applied to the music bus only: the vocal is summed after the master chain and
+# never sees any of it.
+
+# Wavefolding. wav_Map reads an image as a height field and the wavetable it
+# builds folds back on itself where the picture does; this is that fold without
+# the picture. Past unity the waveform turns back instead of clipping, which adds
+# high harmonics that are not the ones distortion adds.
+def wave_fold!(l, r, amount: 1.9, mix: 0.5)
+  l.length.times do |i|
+    [[l, i], [r, i]].each do |(buf, j)|
+      x = buf[j] * amount
+      x -= 4.0 * ((x + 1.0) / 4.0).floor * 1.0 while x.abs > 1.0 && x.abs < 40.0
+      x = Math.sin(buf[j] * amount * Math::PI * 0.5) if x.abs > 1.0
+      buf[j] = buf[j] * (1 - mix) + x * mix
+    end
+  end
+end
+
+# The sampler catching on its own buffer. A slice is held and repeated, and the
+# repeats shorten -- which is the gesture, not the repetition itself.
+def stutter!(l, r, seed: 3, events: 4, mix: 1.0)
+  n = l.length
+  rnd = Random.new(seed)
+  events.times do
+    at = (rnd.rand * (n * 0.85)).to_i
+    len = (RATE * (0.03 + rnd.rand * 0.09)).to_i
+    next if at + len * 6 >= n
+
+    reps = 3 + rnd.rand(4)
+    cur = len
+    pos = at + len
+    reps.times do
+      break if pos + cur >= n
+
+      cur.times do |k|
+        w = 0.5 - 0.5 * Math.cos(2 * Math::PI * k / cur)
+        l[pos + k] = l[pos + k] * (1 - mix * w) + l[at + k] * mix * w
+        r[pos + k] = r[pos + k] * (1 - mix * w) + r[at + k] * mix * w
+      end
+      pos += cur
+      cur = (cur * 0.72).to_i
+      break if cur < 200
+    end
+  end
+end
+
+# Grains played backwards in place. Short enough that the music keeps its shape
+# and the ear reads it as a smear rather than as a reversal.
+def reverse_grains!(l, r, seed: 5, count: 6, grain_ms: 140.0)
+  n = l.length
+  g = (RATE * grain_ms / 1000.0).to_i
+  return if g < 64 || n < g * 3
+
+  rnd = Random.new(seed)
+  count.times do
+    at = (rnd.rand * (n - g - 1)).to_i
+    sl = l[at, g].reverse
+    sr = r[at, g].reverse
+    g.times do |k|
+      w = 0.5 - 0.5 * Math.cos(2 * Math::PI * k / g)
+      l[at + k] = l[at + k] * (1 - w) + sl[k] * w
+      r[at + k] = r[at + k] * (1 - w) + sr[k] * w
+    end
+  end
+end
+
+# Tape dropouts. Oxide missing from the tape: the level falls and the top goes
+# with it, over a few milliseconds rather than instantly.
+def dropouts!(l, r, seed: 7, count: 5)
+  n = l.length
+  rnd = Random.new(seed)
+  count.times do
+    at = (rnd.rand * n).to_i
+    len = (RATE * (0.02 + rnd.rand * 0.10)).to_i
+    next if at + len >= n
+
+    z = 0.0
+    len.times do |k|
+      t = k.to_f / len
+      duck = 1.0 - 0.85 * Math.sin(Math::PI * t)
+      z += 0.05 * (l[at + k] - z)
+      l[at + k] = (l[at + k] * 0.4 + z * 0.6) * duck
+      r[at + k] *= duck
+    end
+  end
+end
+
+# Bits gone. Not a smooth quantiser -- the low bits are dropped outright, which
+# is what a converter losing its footing actually sounds like.
+def bit_mangle!(l, r, bits: 7, mix: 0.35)
+  q = 2**(bits - 1)
+  l.length.times do |i|
+    ml = (l[i] * q).to_i.to_f / q
+    mr = (r[i] * q).to_i.to_f / q
+    l[i] = l[i] * (1 - mix) + ml * mix
+    r[i] = r[i] * (1 - mix) + mr * mix
+  end
+end
+
+# Two or three of them per progression, chosen by seed so a take is reproducible
+# and no two neighbours get the same set.
+ARTIFACTS = %i[fold stutter reverse dropout bits].freeze
+
+def artifacts!(l, r, seed:, count: 2)
+  rnd = Random.new(seed)
+  ARTIFACTS.shuffle(random: rnd).first(count).each do |k|
+    case k
+    when :fold then wave_fold!(l, r, amount: 1.5 + rnd.rand, mix: 0.3 + rnd.rand * 0.3)
+    when :stutter then stutter!(l, r, seed: seed + 1, events: 2 + rnd.rand(4))
+    when :reverse then reverse_grains!(l, r, seed: seed + 2, count: 3 + rnd.rand(6))
+    when :dropout then dropouts!(l, r, seed: seed + 3, count: 3 + rnd.rand(5))
+    when :bits then bit_mangle!(l, r, bits: 6 + rnd.rand(3), mix: 0.25 + rnd.rand * 0.25)
+    end
+  end
+end
+
+# Old takes as source, rather than as rubbish.
+#
+# A previous render that does not work as a record still contains a performance,
+# and the way this engine has always treated a performance it did not make is to
+# sample it. Deleting a take because it sounds amateur throws away the one thing
+# that cannot be regenerated: a decision somebody made at a particular moment.
+#
+# So: strip the top off it, which removes the hats and cymbals and with them most
+# of what dates a beat; keep the body, which is the harmony and the room; run it
+# through Copy Machine so it stops being a loop and becomes a cloud of itself;
+# and put the current kit over it. What comes out is the old take's harmony under
+# new drums, which is the Detroit method pointed at our own back catalogue.
+RECYCLE_DIRS = [
+  "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/scratch/all_tracks_demo",
+  "/Users/mac/Music/dilla_showcase/queue",
+].freeze
+
+def recycle_sources
+  @recycle_sources ||= RECYCLE_DIRS.flat_map { |d| Dir[File.join(d, "*.wav")] }
+                                   .reject { |x| x.include?("_stems/") }
+                                   .select { |x| File.size(x) > 400_000 }
+                                   .sort
+end
+
+# Everything above ~2.2 kHz goes, two poles of it. That is where the hats live,
+# and a beat is mostly identifiable by its hats.
+def strip_top!(l, r, hz: 2200.0)
+  k = (1.0 - Math.exp(-2 * Math::PI * hz / RATE)).clamp(0.0005, 0.99)
+  2.times do
+    zl = 0.0
+    zr = 0.0
+    l.length.times do |i|
+      zl += k * (l[i] - zl)
+      zr += k * (r[i] - zr)
+      l[i] = zl
+      r[i] = zr
+    end
+  end
+end
+
+def recycle_bed!(l, r, index, gain: 0.34)
+  srcs = recycle_sources
+  return false if srcs.empty?
+
+  got = read_wav(srcs[index % srcs.length])
+  return false unless got
+
+  bl, br, = got
+  n = l.length
+  return false if bl.length < n / 2
+
+  # Start somewhere other than the top of the file, so the same source used
+  # twice does not give the same bar twice.
+  off = (index * 97_003) % [bl.length - 1, 1].max
+  seg_l = Array.new(n) { |i| bl[(off + i) % bl.length] }
+  seg_r = Array.new(n) { |i| br[(off + i) % br.length] }
+  strip_top!(seg_l, seg_r)
+  copy_machine!(seg_l, seg_r, copies: 3, reverse: 0.3, width: 0.9)
+  n.times do |i|
+    l[i] += seg_l[i] * gain
+    r[i] += seg_r[i] * gain
+  end
+  true
+end
+
+# Two-operator FM, with the carrier morphing between triangle and square.
+#
+# The soundfont stacks give warmth and they cannot give this: FM sidebands are
+# inharmonic when the ratio is not a whole number, and no amount of filtering a
+# sampled Rhodes produces them. The modulation index falls over the note, which
+# is the DX7 electric-piano gesture -- bright at the strike, pure by the tail.
+#
+# The carrier is not a sine. tanh(k*sin) approaches a square as k rises and
+# 2/pi*asin(sin) is a triangle, and morphing between them under an LFO is the
+# waveform itself moving rather than a filter moving over it.
+def morph_wave(phase, morph, hard)
+  tri = 2.0 / Math::PI * Math.asin(Math.sin(phase).clamp(-1.0, 1.0))
+  sq = Math.tanh(Math.sin(phase) * hard)
+  tri * (1.0 - morph) + sq * morph
+end
+
+def fm_chord!(l, r, hzs, bass_hz, secs, seed: 0, gain: 0.5)
+  n = [(RATE * secs).to_i, l.length].min
+  voices = hzs.map(&:to_f).reject { |h| h <= 0 }.sort
+  voices = voices + [bass_hz.to_f] if bass_hz.to_f > 0
+  return if voices.empty?
+
+  rnd = Random.new(seed)
+  # Ratios that are not whole numbers on purpose: 2.01 and 3.5 give sidebands
+  # that do not land on the harmonic series, which is the FM sound.
+  ratios = [1.0, 2.01, 3.5, 1.414, 7.0]
+  amp = gain / Math.sqrt(voices.length)
+  morph_rate = 2 * Math::PI * (0.06 + rnd.rand * 0.09) / RATE
+  voices.each_with_index do |hz, vi|
+    ratio = ratios[(vi + seed) % ratios.length]
+    idx0 = 2.4 + rnd.rand * 3.6
+    pan = voices.length > 1 ? ((vi.to_f / (voices.length - 1)) - 0.5) * 0.8 : 0.0
+    lg = Math.cos((pan + 1) * Math::PI / 4)
+    rg = Math.sin((pan + 1) * Math::PI / 4)
+    wc = 2 * Math::PI * hz / RATE
+    wm = wc * ratio
+    pc = 0.0
+    pm = 0.0
+    n.times do |i|
+      t = i.to_f / n
+      index = idx0 * Math.exp(-t * 2.6)
+      pm += wm
+      pc += wc
+      morph = 0.5 + 0.5 * Math.sin(morph_rate * i + vi)
+      v = morph_wave(pc + index * Math.sin(pm), morph, 3.4 + morph * 6.0)
+      env = Math.exp(-t * 1.5) * [i / (RATE * 0.006), 1.0].min
+      l[i] += v * amp * env * lg
+      r[i] += v * amp * env * rg
+    end
   end
 end
 
@@ -1017,6 +1327,8 @@ loop do
 
     l = []
     r = []
+    voc_l = []
+    voc_r = []
     played = []
     group.each_with_index do |name, ni|
       pads = begin
@@ -1089,22 +1401,48 @@ loop do
         barber_phaser!(pl, pr, mix: 0.45)
         granular_smear!(pl, pr, mix: 0.35, seed: gi * 17 + ni)
       end
-      # The vocal is built in its own buffer, gets its own chain, and is summed
-      # in after the pad has finished being modulated -- so nothing that moves
-      # the pad around ever touches the voice.
+      # The vocal is kept on its own bus for the whole file and summed in AFTER
+      # the master chain. Dirty is for the drums, the pads and the leads; four
+      # passes of Sonitex through a cassette is exactly what a rapper should not
+      # be going through. Same length as the music so the two stay aligned.
       unless ENV["SINE_VOCALS"] == "0" || pl.empty?
         slug = ni == group.length - 1 ? VOCAL_TAIL : VOCAL_LEAD
-        vl = Array.new(pl.length, 0.0)
-        vr = Array.new(pr.length, 0.0)
-        if add_vocal!(vl, vr, slug, VOCAL_SPEED[slug], gi * PER_FILE + ni, gain: 1.0)
-          vocal_chain!(vl, vr)
-          # Under the music on purpose. This is a record about the harmony; the
-          # voice completes it rather than fronting it.
-          g = (ENV["SINE_VOCAL_GAIN"] || "0.30").to_f
-          pl.length.times { |i| pl[i] += vl[i] * g; pr[i] += vr[i] * g }
+        seg_l = Array.new(pl.length, 0.0)
+        seg_r = Array.new(pr.length, 0.0)
+        if add_vocal!(seg_l, seg_r, slug, VOCAL_SPEED[slug], gi * PER_FILE + ni, gain: 1.0)
+          vocal_chain!(seg_l, seg_r)
           played[-1] = "#{played.last}+#{slug}"
         end
+        # Aligned to where this progression lands in the file, allowing for the
+        # crossfade overlap that shortens every join.
+        at = [l.length - xf, 0].max
+        need = at + seg_l.length
+        (voc_l.length...need).each { voc_l << 0.0; voc_r << 0.0 }
+        seg_l.each_index { |i| voc_l[at + i] += seg_l[i]; voc_r[at + i] += seg_r[i] }
       end
+      # An FM layer over the sampled stack on every other progression: sidebands
+      # the soundfonts cannot make, with the carrier morphing triangle to square.
+      if ENV["SINE_FM"] != "0" && (gi * PER_FILE + ni).odd?
+        pads.each_with_index do |c, bar|
+          at = (bar * SECS * RATE).to_i
+          seg = pl.length - at
+          next if seg < 1000
+
+          tl = Array.new(seg, 0.0)
+          tr = Array.new(seg, 0.0)
+          fm_chord!(tl, tr, Array(c[:hz]), c[:bass_hz], SECS, seed: bar + ni, gain: 0.42)
+          seg.times { |i| pl[at + i] += tl[i]; pr[at + i] += tr[i] }
+        end
+        played[-1] = played.last + "+fm"
+      end
+      # Every third progression carries an old take underneath it.
+      if ENV["SINE_RECYCLE"] != "0" && (gi * PER_FILE + ni) % 3 == 2 &&
+         recycle_bed!(pl, pr, gi * PER_FILE + ni)
+        played[-1] = played.last + "+recycled"
+      end
+      # Artifacts on the music bus, before the phase movement so the movement
+      # carries them across the field rather than sitting them in the middle.
+      artifacts!(pl, pr, seed: gi * 101 + ni, count: (ENV["SINE_ARTIFACTS"] || "2").to_i) unless ENV["SINE_ARTIFACTS"] == "0"
       # A slow phase movement on every pad regardless of treatment -- a static
       # stereo image is what makes a long stream stop sounding alive.
       barber_phaser!(pl, pr, rate_hz: 0.05 + (ni % 4) * 0.013, depth: 0.5, mix: 0.28)
@@ -1122,6 +1460,14 @@ loop do
     end
 
     master_chain!(l, r)
+    # The voice, clean, over the mastered music. Under it on purpose -- this is a
+    # record about the harmony, and the vocal completes it rather than fronts it.
+    unless voc_l.empty?
+      g = (ENV["SINE_VOCAL_GAIN"] || "0.26").to_f
+      n = [l.length, voc_l.length].min
+      n.times { |i| l[i] += voc_l[i] * g; r[i] += voc_r[i] * g }
+      soft_limit!(l, r, ceiling: 0.94)
+    end
     q = File.join(OUT, "q")
     # Stay a few files ahead and no further: enough that the player never
     # catches up, few enough that an edit to this file is heard soon.
