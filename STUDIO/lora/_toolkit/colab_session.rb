@@ -85,10 +85,38 @@ def prepare
   puts "ok: subject #{SUBJECT} model #{MODEL}"
 end
 
-def install_ai_toolkit
-  return puts "ok: ai-toolkit already present" if AI_TOOLKIT.join(".git").directory?
+# Can the toolkit actually run, as opposed to having been downloaded?
+#
+# The guard here used to be `.git exists`, and that is a fact about the clone
+# rather than about the install. A session that cloned and then died — a pip
+# failure, a runtime recycle, a closed tab — left a directory with .git in it
+# and no dependencies, and every retry afterwards printed "ok: ai-toolkit
+# already present" and went straight to training, where run.py died on its third
+# line importing dotenv. The step that would have fixed it was the step being
+# skipped, so the failure was perfectly repeatable and its cause was three lines
+# above it saying everything was fine.
+#
+# Asked of the venv instead, which is where the answer lives: import the things
+# run.py imports first. dotenv is what it actually failed on; torch and
+# safetensors cost nothing extra to check and fail earlier if the venv was built
+# against the wrong interpreter.
+TOOLKIT_SENTINELS = "import dotenv, torch, safetensors, transformers"
 
-  sh!("git", "clone", "--depth", "1", "https://github.com/ostris/ai-toolkit.git", AI_TOOLKIT.to_s)
+def toolkit_ready?
+  python = AI_TOOLKIT.join(".venv/bin/python")
+  return false unless python.file?
+
+  system(python.to_s, "-c", TOOLKIT_SENTINELS, out: File::NULL, err: File::NULL)
+end
+
+def install_ai_toolkit
+  return puts "ok: ai-toolkit present and importable" if toolkit_ready?
+
+  if AI_TOOLKIT.join(".git").directory?
+    puts "note: ai-toolkit is cloned but its dependencies do not import — installing"
+  else
+    sh!("git", "clone", "--depth", "1", "https://github.com/ostris/ai-toolkit.git", AI_TOOLKIT.to_s)
+  end
   # Colab's own torch is CUDA-matched to its driver; a clean venv would pull a
   # second multi-GB one off PyPI that is not. run_ai_toolkit.rb requires a venv
   # python, so it stays a venv — one that can see the image's packages.
@@ -96,21 +124,21 @@ def install_ai_toolkit
   pip = AI_TOOLKIT.join(".venv/bin/pip").to_s
   sh!(pip, "install", "-q", "--upgrade", "pip", "wheel")
 
-  # NOT -q, and that is the whole point of this line.
+  # NOT -q.
   #
-  # The requirements hard-pin versions that predate the interpreter Colab now
-  # ships: scipy==1.12.0 has wheels for cp39-cp312 only, and Colab is on 3.13,
-  # so pip falls back to building it from source and fails on a missing Fortran
-  # toolchain. Several other pins (albumentations, albucore, optimum-quanto,
-  # torchao) are the same shape.
+  # This install has not yet been observed to run on Colab at all: the first
+  # session cloned and stopped, and every session after it skipped this line
+  # because of the guard above. So whether it succeeds is genuinely unknown, and
+  # the one thing worth guaranteeing is that the answer arrives legibly.
   #
-  # Under -q none of that reaches the log. The install failed, sh! aborted, the
-  # notebook raised CalledProcessError, and the only visible artefact was a
-  # Python traceback about subprocess.py — a diagnostic suppressed at the exact
-  # point it was needed. Resolver output is verbose; a failure nobody can read
-  # is worse.
-  puts "note: installing ai-toolkit requirements verbosely — several pins predate Colab's Python,"
-  puts "note: and under -q a resolution failure arrives as a traceback about subprocess.py."
+  # There is a specific reason to expect trouble rather than an assumption of
+  # it. requirements.txt hard-pins versions older than the interpreter Colab now
+  # ships — scipy==1.12.0 publishes wheels for cp39-cp312 and Colab is on 3.13,
+  # which means a source build and a Fortran toolchain that is not there;
+  # albumentations, albucore, optimum-quanto and torchao are pinned the same
+  # way. If that is what happens, this line is where it will say so.
+  puts "note: installing ai-toolkit requirements verbosely. Several pins predate Colab's"
+  puts "note: Python 3.13 (scipy==1.12.0 has no cp313 wheel), so read this if it stops."
   sh!(pip, "install", "-r", AI_TOOLKIT.join("requirements.txt").to_s)
 end
 
