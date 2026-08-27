@@ -127,7 +127,7 @@ en:
     unread_count:
       one: "%{count} unread message — marked read when you open this page."
       other: "%{count} unread messages — marked read when you open this page."
-    empty_body: "Send one with the form above, or follow creators to start a circle."
+    empty_body: "New message, then search for whoever you want to write to."
     connections: "Connections"
   newsletter:
     email_placeholder: "your@email.com"

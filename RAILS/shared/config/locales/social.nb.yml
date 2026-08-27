@@ -125,7 +125,7 @@ nb:
     unread_count:
       one: "%{count} ulest melding — merkes som lest når du åpner siden."
       other: "%{count} uleste meldinger — merkes som lest når du åpner siden."
-    empty_body: "Send en med skjemaet over, eller følg skapere for å starte en sirkel."
+    empty_body: "Ny melding, og søk opp den du vil skrive til."
     connections: "Forbindelser"
   newsletter:
     email_placeholder: "din@epost.com"

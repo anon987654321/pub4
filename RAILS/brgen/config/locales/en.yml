@@ -387,6 +387,9 @@ en:
     username: Username
     start_chat: Start chat
     empty_title: No conversations yet
+    # Shadowed by shared/config/locales/social.*.yml, which loads after this
+    # file and wins the merge. Kept so the key resolves if the shared engine
+    # ever stops defining it; edit the shared copy to change what renders.
     empty_body: Send a message to get started.
     push_body_disappearing: New message
     read: read
