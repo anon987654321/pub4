@@ -50,9 +50,14 @@ class AssetUrlLintTest < Minitest::Test
     brgen_sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/_fonts_brand.scss")
 
     assert L.satisfied_everywhere?("/fonts/JetBrainsMonoNerdFont-Regular.woff2", shared_sheet)
-    assert L.satisfied_everywhere?("/fonts/inter-latin-400-normal.woff2", brgen_sheet)
-    refute L.satisfied_everywhere?("/fonts/inter-latin-400-normal.woff2", shared_sheet),
-           "inter lives only in brgen/public — a shared stylesheet asking for it would 404 on amber"
+    # Bricolage, not Inter. Inter was the example here until brgen stopped naming
+    # the family — the wordmark moved to --font-brand and the body face to
+    # system-ui, so the five cuts became five files no rule could pull and were
+    # deleted. Bricolage Grotesque is the marketplace display face, still
+    # vendored in brgen/public only, which is the property under test.
+    assert L.satisfied_everywhere?("/fonts/bricolage-grotesque-latin-wght-normal.woff2", brgen_sheet)
+    refute L.satisfied_everywhere?("/fonts/bricolage-grotesque-latin-wght-normal.woff2", shared_sheet),
+           "bricolage lives only in brgen/public — a shared stylesheet asking for it would 404 on amber"
   end
 
   # My own first run reported PP Neue Montreal in five weights because `expand`

@@ -199,3 +199,28 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
   flex: none;
   min-height: var(--tap-min);
 }
+
+/* The field-and-submit row on conversations/search.
+   
+   Unscoped for the same reason as the picker above: the rules this replaces were
+   body.vertical-messenger .messenger-compose-row, and they also targeted
+   input[type="text"] while the search view renders a search_field — so on the
+   city domain they matched nothing, and on the messenger subdomain they matched
+   the wrong input. */
+.messenger-compose-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.messenger-compose-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* "· edited", after the timestamp. Quiet on purpose — it is provenance, not
+   content, and it sits in a line the reader scans rather than reads. */
+.edited-mark {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}

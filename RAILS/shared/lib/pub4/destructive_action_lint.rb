@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "baseline_ratchet"
+
 module Pub4
   # A destructive control that asks nothing before it fires.
   #
@@ -49,6 +51,8 @@ module Pub4
 
     Finding = Struct.new(:kind, :file, :line, :detail)
 
+    extend Pub4::BaselineRatchet
+
     module_function
 
     def view_files
@@ -82,10 +86,6 @@ module Pub4
     def opted_out?(src, line)
       window = src.lines[[line - 4, 0].max...line].to_a.join
       window.include?(OPT_OUT)
-    end
-
-    def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [kind, findings.count { |f| f.kind == kind }] }
     end
 
     def run

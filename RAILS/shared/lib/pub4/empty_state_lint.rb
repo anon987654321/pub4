@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "baseline_ratchet"
+
 module Pub4
   # Empty states, in both directions.
   #
@@ -38,6 +40,8 @@ module Pub4
 
     Finding = Struct.new(:kind, :file, :line)
 
+    extend Pub4::BaselineRatchet
+
     module_function
 
     def run
@@ -62,10 +66,6 @@ module Pub4
     def view_files
       Dir.glob(File.join(rails_root, "*/app/views/**/*.erb")) +
         Dir.glob(File.join(rails_root, "brgen/engines/*/app/views/**/*.erb"))
-    end
-
-    def counts(findings = scan)
-      BASELINES.keys.to_h { |kind| [ kind, findings.count { |f| f.kind == kind } ] }
     end
 
     def scan
