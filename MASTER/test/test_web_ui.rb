@@ -748,23 +748,23 @@ class TestWebUI < Minitest::Test
            "public/manifest.json shadows pwa#manifest — the route cannot vary the manifest by host while it exists"
   end
 
-# The container is built once, in a thread with no joiner, and every request
-# that finds none renders "Starting up...". Measured on vm23 2026-08-27: the
-# container was nil for the life of the process, nothing was logged, and the
-# started flag stayed claimed -- so the one attempt was the only attempt.
-# These two lines are what make a second one possible.
-def test_container_bootstrap_can_be_rearmed
-  loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
-  controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+  # The container is built once, in a thread with no joiner, and every request
+  # that finds none renders "Starting up...". Measured on vm23 2026-08-27: the
+  # container was nil for the life of the process, nothing was logged, and the
+  # started flag stayed claimed -- so the one attempt was the only attempt.
+  # These two lines are what make a second one possible.
+  def test_container_bootstrap_can_be_rearmed
+    loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
+    controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
-  assert_includes controller, "MasterContainerLoader.rearm!",
-                  "require_container! must be able to start a new attempt, not just observe the failed one"
-  assert_includes loader, "def rearm!"
-  assert_includes loader, "config.x.master_bootstrap_started = false",
-                  "a failed attempt must release the flag or nothing retries"
-  assert_includes loader, "rescue Exception => e",
-                  "StandardError leaves NoMemoryError to kill the thread silently"
-end
+    assert_includes controller, "MasterContainerLoader.rearm!",
+                    "require_container! must be able to start a new attempt, not just observe the failed one"
+    assert_includes loader, "def rearm!"
+    assert_includes loader, "config.x.master_bootstrap_started = false",
+                    "a failed attempt must release the flag or nothing retries"
+    assert_includes loader, "rubocop:disable Lint/RescueException",
+                    "StandardError alone leaves NoMemoryError to kill the thread in silence"
+  end
 
   # A note that outlives its turn is the same bug pointed the other way: the
   # next visitor on that thread inherits a persona nobody asked for.
