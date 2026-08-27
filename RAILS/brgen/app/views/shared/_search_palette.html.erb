@@ -1,0 +1,42 @@
+<%# Search, opened over the page.
+
+    brgen carried search twice — a link in the left nav and a field in the right
+    widgets rail — and both rails are gone. This replaces them and costs no
+    permanent chrome: a glyph beside the wordmark, "/" for a reader and Cmd-K
+    for an operator.
+
+    The trigger is a real button and the shortcuts are an accelerator on top of
+    it, never the only way in. The form is shared/live_search_form, the same one
+    the posts and communities indexes use, so results stream here through the
+    machinery that already exists rather than a second search path. %>
+<div class="search_palette" data-controller="search-palette">
+  <button type="button"
+          class="search_palette_trigger"
+          data-action="click->search-palette#open"
+          aria-label="<%= t("nav.search") %>"
+          aria-keyshortcuts="/ Meta+K">
+    <%= icon :search, size: 22 %>
+  </button>
+
+  <%# aria-modal with a label, so a screen reader is told this is a layer over
+      the page rather than more of it. Escape and focus return live in the
+      controller. %>
+  <div class="search_palette_overlay"
+       role="dialog"
+       aria-modal="true"
+       aria-label="<%= t("nav.search") %>"
+       data-action="click->search-palette#backdrop">
+    <div class="search_palette_panel" data-search-palette-target="panel">
+      <%= render "shared/live_search_form",
+                 url: main_app.global_search_path,
+                 query: params[:q],
+                 placeholder: t("nav.search_placeholder"),
+                 label: t("nav.search"),
+                 show_submit: false,
+                 show_suggestions: false %>
+      <%# Where the Turbo Stream lands. The shared form's input already names
+          this id in aria-controls. %>
+      <div id="live_search_results" class="search_palette_results" aria-live="polite"></div>
+    </div>
+  </div>
+</div>

@@ -20,7 +20,16 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # AI is a chip / sidebar link, not an eager above-fold iframe hero.
     assert_not_includes response.body, 'class="ai-embed-frame"'
     assert_not_includes response.body, 'class="master-embed-frame"'
-    assert_match(/aside class="sidebar"[\s\S]*?#{Regexp.escape(Rails.application.config.x.master_web_url)}/, response.body)
+    # No left rail and no right rail (operator, 2026-08-27). The tab bar is fixed
+    # at every width and the swiper carries the verticals, so both restated what
+    # was already on screen. AI moved to the More sheet, which the assertion
+    # below still covers.
+    assert_not_includes response.body, "sidebar-swiper"
+    assert_not_includes response.body, %(<aside class="widgets")
+    # Search left with the rails; it opens over the page now.
+    assert_includes response.body, "search_palette"
+    # The city right now is the feed, not a strip of links above it.
+    assert_not_includes response.body, "city-today"
     # Through the key, not the English. The sidebar link stopped carrying a
     # hardcoded aria-label="AI assistant" when it became link_to
     # t("nav.ai_assistant") — its visible text is its accessible name now — and

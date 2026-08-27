@@ -42,6 +42,7 @@ import FeedCompose from "pub4/feed_compose"
 import TiptapEditor from "pub4/tiptap_editor"
 import FeedHotkey from "pub4/feed_hotkey"
 import EdgeSwiper from "pub4/edge_swiper"
+import SearchPalette from "pub4/search_palette"
 import NearbyChat from "pub4/nearby_chat"
 import ConversationLog from "pub4/conversation_log"
 import OptimisticSend from "pub4/optimistic_send"
@@ -189,6 +190,7 @@ export function bootPub4Stimulus(application) {
   application.register("tiptap-editor", TiptapEditor)
   application.register("feed-hotkey", FeedHotkey)
   application.register("edge-swiper", EdgeSwiper)
+  application.register("search-palette", SearchPalette)
   application.register("nearby-chat", NearbyChat)
   application.register("conversation-log", ConversationLog)
   application.register("optimistic-send", OptimisticSend)

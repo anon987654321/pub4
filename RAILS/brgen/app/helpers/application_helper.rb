@@ -176,20 +176,20 @@ module ApplicationHelper
   # Current.domain is the city domain the request resolved to (brgen.no,
   # lsangeles.com), so this follows the registry rather than parsing the host a
   # second time and disagreeing with it.
+  # The mark is the brand, and only the brand.
+  #
+  # It used to render the whole host on a vertical -- quiet "markedsplass.",
+  # bold "brgen", quiet ".no" -- so that one wordmark could say which surface
+  # a reader was on. That prints a URL where a logo goes, and it is a thing the
+  # nav already says better: the swiper marks the active vertical, and the page
+  # itself is the answer. Operator decision 2026-08-27.
+  #
+  # A single-length mark also retires the gutter arithmetic it needed. The
+  # reservation, the narrow-width TLD drop and the overflow bound in
+  # _layout_chrome all existed because this string varied per host.
   def brand_mark_fragments
     domain = Current.domain.presence || "brgen.no"
-    city, _, tld = domain.partition(".")
-    return { label: city } unless vertical_surface?
-
-    # The host's own subdomain, not the subapp key: the two differ wherever an
-    # alias is in play — markedsplass.brgen.no resolves to :marketplace, and the
-    # mark should say what the reader typed.
-    subdomain = Brgen::DomainRegistry.subdomain_for(
-      Brgen::DomainRegistry.normalize_host(request&.host), domain
-    )
-    return { label: city } if subdomain.blank?
-
-    { prefix: "#{subdomain}.", label: city, suffix: ".#{tld}" }
+    { label: domain.split(".").first }
   end
 
   # Where the mark goes when you click it.

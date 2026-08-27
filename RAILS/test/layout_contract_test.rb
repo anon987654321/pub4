@@ -127,25 +127,28 @@ class LayoutContractTest < Minitest::Test
     assert_includes body, ".page-header"
   end
 
-  # A mark that carries a host is wider than a bare wordmark, and the mark is
-  # fixed and takes pointer events — so when it outgrows the gutter the nav
-  # clears for it, it does not look broken, it quietly eats the first taps on
-  # the nav's leading link. Measured at 390px: markedsplass.brgen.no overran by
-  # 4px and elementFromPoint at the link's own leading edge returned the mark.
+  # The mark is the brand and nothing else, so it is one length on every host.
   #
-  # Widening the gutter alone only holds until a longer host exists, so the mark
-  # is bounded BY the gutter. That bound is the actual guarantee; this pins it.
-  def test_a_brand_mark_carrying_a_host_cannot_outgrow_its_gutter
-    body = File.read(LAYOUT_CHROME)
+  # It used to render the whole hostname on a vertical, and that string varying
+  # per host needed a gutter reservation, a narrow-width TLD drop and an
+  # overflow bound -- because the mark is fixed and takes pointer events, so a
+  # host longer than any measured did not look broken, it quietly ate the first
+  # taps on the nav's leading link. Measured at 390px before the bound existed:
+  # markedsplass.brgen.no overran by 4px and elementFromPoint at the link's own
+  # leading edge returned the mark.
+  #
+  # None of that machinery can come back on its own, but the hostname can. This
+  # asserts the mark stays one span, which is the condition all of it hung on.
+  def test_the_brand_mark_is_the_brand_and_not_a_hostname
+    partial = File.read(File.join(SHARED, "app/views/shared/_brand_mark.html.erb"))
 
-    assert_match(/body:has\(\.brand-mark \.brand-sub\)/, body,
-                 "the wider gutter should be keyed on the mark actually having a subdomain")
-    bound = body[/\.brand-mark:has\(\.brand-sub\)\s*\{[^}]*\}/m]
-    refute_nil bound, "expected .brand-mark:has(.brand-sub) to bound the mark"
-    assert_includes bound, "max-inline-size", "the mark has to be bounded, not merely reserved for"
-    assert_includes bound, "var(--brand-mark-inline)",
-                     "the bound has to be the gutter itself, so the two cannot drift apart"
-    assert_includes bound, "overflow: hidden", "an unbounded overflow still paints over the nav"
+    refute_includes partial, "brand-sub", "a subdomain span is a hostname in the mark again"
+    refute_includes partial, "brand-tld", "a TLD span is a hostname in the mark again"
+    assert_includes partial, %(<span class="brand-text">), "the mark is one span"
+
+    body = File.read(LAYOUT_CHROME)
+    refute_match(/\.brand-mark\s+\.brand-sub/, body,
+                 "the gutter arithmetic went with the hostname -- do not restore one without the other")
   end
 
   def test_shared_chrome_tokens_declare_layout_floor

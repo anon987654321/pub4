@@ -32,9 +32,10 @@
     the front page opens straight into the feed. Wayfinding to the verticals
     (main / AI / playlist / marketplace / dating) lives in the top nav, and the
     anonymous compose box sits above the posts. %>
-<% if @city_today.present? %>
-  <%= render "home/today", events: @city_today %>
-<% end %>
+<%# No city-today strip. The city right now IS the feed below -- its posts, its
+    people, the rooms they are in, what is for sale and what is on. A separate
+    strip of links to other hosts said the same thing worse, above the thing
+    itself. Operator decision 2026-08-27. %>
 
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation>
   <%# Hot / New / Following / Communities used to be a second horizontal row

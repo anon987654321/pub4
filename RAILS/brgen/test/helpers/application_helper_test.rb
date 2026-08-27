@@ -213,9 +213,10 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal post_path(post), notification_href(n)
   end
 
-  # The wordmark used to be the literal "brgen" on every host, so Oslo and
-  # Frankfurt wore Bergen's name and a vertical was indistinguishable from the
-  # apex it hangs off. These pin the three shapes it can take.
+  # The wordmark is the city, on every host. It was the literal "brgen"
+  # everywhere once, so Oslo and Frankfurt wore Bergen's name; it then went
+  # the other way and rendered whole hostnames on verticals. It is the city
+  # and nothing else now, which is one shape rather than three.
   test "brand mark on a city apex is that city, not brgen" do
     Current.domain = "oshlo.no"
     Current.subapp = nil
@@ -230,18 +231,15 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal({ label: "brgen" }, brand_mark_fragments)
   end
 
-  test "brand mark on a vertical names the whole host" do
+  test "brand mark on a vertical is still just the city" do
     Current.domain = "brgen.no"
     Current.subapp = :marketplace
     request.host = "markedsplass.brgen.no"
 
-    fragments = brand_mark_fragments
-    assert_equal "markedsplass.", fragments[:prefix]
-    assert_equal "brgen", fragments[:label]
-    assert_equal ".no", fragments[:suffix]
-    # The parts have to reassemble into the host the reader typed — that is the
-    # whole claim the mark is making.
-    assert_equal "markedsplass.brgen.no", fragments.values_at(:prefix, :label, :suffix).join
+    # It used to render the whole host -- quiet "markedsplass.", bold "brgen",
+    # quiet ".no". That prints a URL where a logo goes, and the nav swiper
+    # already marks which vertical is active. Operator decision 2026-08-27.
+    assert_equal({ label: "brgen" }, brand_mark_fragments)
   end
 
   # Every city is a peer — the mark leaves for whichever city the request
@@ -266,12 +264,11 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal "/", brand_mark_href
   end
 
-  test "brand mark carries a non-no tld intact" do
+  test "brand mark on a non-no city is that city" do
     Current.domain = "lsangeles.com"
     Current.subapp = :marketplace
     request.host = "marketplace.lsangeles.com"
 
-    assert_equal "marketplace.lsangeles.com",
-                 brand_mark_fragments.values_at(:prefix, :label, :suffix).join
+    assert_equal({ label: "lsangeles" }, brand_mark_fragments)
   end
 end

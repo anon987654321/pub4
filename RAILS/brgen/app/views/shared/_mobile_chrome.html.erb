@@ -69,6 +69,10 @@
         and it handles the no-location case, which the room itself cannot. %>
     <%= link_to t("nav.nearby"), main_app.nearby_path %>
     <%= link_to t("nav.channels"), main_app.channels_path %>
+    <%# Notifications lived only in the left rail, and the rail is gone. It is
+        a secondary destination, so it belongs in the sheet rather than as a
+        seventh tab -- five plus More is already the ceiling for a tab bar. %>
+    <%= link_to t("nav.notifications"), main_app.notifications_path if Current.user %>
     <%= link_to t("nav.new_post"), main_app.new_post_path %>
     <%= link_to t("nav.new_community"), main_app.new_community_path %>
     <% if authenticated? %>

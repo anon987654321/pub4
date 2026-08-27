@@ -107,6 +107,9 @@
       city's own name on every other city host. %>
   <%= render "shared/brand_mark", **brand_mark_fragments, href: brand_mark_href,
              class_name: "brand-mark brgen-logo-mark" %>
+  <%# Search lives here now, beside the mark, on every surface. Both rails
+      that used to carry it are gone. %>
+  <%= render "shared/search_palette" %>
   <% unless vertical_surface? %>
     <div role="region" aria-label="<%= t("theme.region") %>">
 <%# The one theme mechanism: the shared toggle writes data-theme through
@@ -146,14 +149,13 @@
 
   <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
     <div class="layout">
-      <%# intro: the sidebar starts revealed for a first-time visitor and stays
-          the swipe-reveal drawer after the first dismissal — visible until
-          known, hidden once learned (operator, 2026-08-22). %>
-      <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-edge-swiper-intro-value="brgen-sidebar" data-turbo-permanent>
-      <%= render "layouts/sidebar" %>
-      <button type="button" class="edge-grip edge-grip-start" data-edge-swiper-target="grip"
-              data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
-      </div>
+      <%# No left rail and no right rail. The tab bar is fixed at every width
+          (_shell.scss: it carries no media query), so home, explore, compose,
+          messages and nearby are already reachable on desktop, and the swiper
+          above carries the verticals. The left rail restated both; the right
+          rail held a search field, a discovery block and a newsletter card.
+          Search is the palette now -- / or Cmd-K, or the glyph in the tab bar.
+          Operator decision 2026-08-27. %>
 
       <main id="main-content" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
         <% if !vertical_surface? && current_page?(main_app.root_path) %>
@@ -184,7 +186,6 @@
         <%= yield %>
       </main>
 
-      <%= render "shared/widgets_rail" %>
     </div>
 
     <%= render "shared/mobile_chrome" %>

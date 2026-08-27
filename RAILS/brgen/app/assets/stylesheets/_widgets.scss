@@ -3,8 +3,6 @@
    Avoids duplicating shared x- primitives.
 */
 
-.sidebar-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.sidebar-card__head h3 { margin-bottom: 0; }
 .inherit { color: inherit; text-decoration: underline; }
 
 .sort-tabs { display: flex; padding-bottom: var(--space-2); }

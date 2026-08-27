@@ -215,64 +215,14 @@ font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-brand
   font-weight: inherit;
 }
 
-/* The host around the wordmark. A vertical's mark reads markedsplass.brgen.no,
-   and only the city keeps the mark's weight — the subdomain and TLD are the
-   same type one step down and dimmed, so the shape a reader recognises is still
-   the wordmark and the rest is an address. currentColor via opacity rather than
-   a second colour token, so this needs nothing per theme. */
-.brand-mark .brand-sub,
-.brand-mark .brand-tld {
-  font-size: 0.72em;
-  font-weight: var(--weight-normal, 400);
-  letter-spacing: 0;
-  opacity: 0.62;
-}
+/* The mark is one length on every host, so nothing here reserves a gutter for
+   it any more. Until 2026-08-27 a vertical's mark read markedsplass.brgen.no,
+   and that string varying per host needed: a dimmed treatment for the subdomain
+   and TLD, a :has(.brand-sub) inset reservation measured against the widest
+   real host, a narrow-width rule dropping the TLD to buy back gutter, and an
+   overflow bound so a longer host than any measured could not silently eat the
+   first taps on the nav beside it. All four went with the hostname. */
 
-/* A mark carrying a host is wider than the bare wordmark, so the chrome beside
-   it has to reserve more. Keyed on :has(.brand-sub) — the condition is exactly
-   "this mark has a subdomain in it", so no surface has to remember to opt in and
-   nothing reserves the wider gutter on a plain apex. Browsers without :has()
-   keep the 4.75rem above, which is the pre-existing behaviour rather than a
-   broken one.
-
-   Measured, not guessed. markedsplass.brgen.no is the widest real mark: 185px
-   at 1280 and 145px at 390 (the mark's font is clamp(…, 2.8vw, 1.125rem), so it
-   grows with the viewport). Both start at the 12px chrome inset, so they need
-   197px and 157px of clearance. A first pass at 10.5rem/8.5rem measured 189px
-   and 153px — under both, and the mark covered the leading 8px and 4px of the
-   nav's first link, which is the exact swallowed-tap defect --brand-mark-inline
-   was introduced to stop. */
-body:has(.brand-mark .brand-sub) {
-  --brand-mark-inline: 12rem;
-}
-
-/* On a narrow screen the TLD is the least load-bearing part of the address --
-   the subdomain says which surface and the wordmark says which city, and both
-   survive. Dropping it buys back roughly two characters of gutter. */
-@media (max-width: 30rem) {
-  .brand-mark .brand-tld { display: none; }
-
-  body:has(.brand-mark .brand-sub) {
-    --brand-mark-inline: 9.75rem;
-  }
-}
-
-/* The reservation is a contract, not a hope. Sizing the gutter to today's
-   longest host only holds until a longer one exists — markedsplass.lsangeles.com
-   is wider than anything measured above, and the failure is silent: the mark is
-   fixed and takes pointer events, so it does not overlap visibly so much as
-   quietly eat the first taps on whatever it covers.
-
-   Bounding the mark by its own gutter makes that impossible for any host. The
-   TLD is last in the flow, so an overrun trims it first, which is the right
-   thing to lose. Scoped to marks that carry a subdomain: amber and bsdports
-   render a bare wordmark against the narrow 4.75rem gutter, and "bsdports" is
-   close enough to that width that bounding it there would clip a correct mark. */
-.brand-mark:has(.brand-sub) {
-  max-inline-size: calc(var(--brand-mark-inline) - var(--chrome-inset, 12px) - var(--space-2, 0.5rem));
-  overflow: hidden;
-  white-space: nowrap;
-}
 
 .brand-mark:hover,
 .brand-mark:focus:not(:focus-visible),

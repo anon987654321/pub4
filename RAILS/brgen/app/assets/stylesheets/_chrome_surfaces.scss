@@ -58,38 +58,26 @@
 
 /* The city-interconnection surfaces are the same shape as a sidebar card — a
    heading over a list of links to things that already exist on another host —
-   so they share its treatment rather than each inventing one. .city-today and
-   .also-nearby are the home strip and the show-page aside; .profile-verticals
+   so they share its treatment rather than each inventing one.
+   .also-nearby is the show-page aside; .profile-verticals
    is the same list on a public profile. Grouped into the selectors below
    instead of copied: three near-identical blocks is how the card and its
    cousins drift apart. Compose is the writing control; this strip is not. */
 .sidebar-card,
-.city-today,
 .also-nearby,
 .profile-verticals {
   padding: var(--space-4);
 }
 
-/* The city strip is closed most of the time, so unlike its cousins it is a
-   single summary row rather than a heading over a list. At the shared inset the
-   card read as a box drawn around one line — the padding outweighed what it
-   held. One step down the scale, applied here rather than to the group, because
-   the others really are cards and still want the card's inset. */
-.city-today {
-  padding: var(--space-3);
-}
-
 /* Same inline inset as .compose-launcher. .post-feed is the home list, the
-   posts index, bookmarks and hashtags — #feed-panel alone left those
-   sibling feeds full-bleed after the home column was inset. */
-aside.city-today,
+   posts index, bookmarks and hashtags -- #feed-panel alone left those sibling
+   feeds full-bleed after the home column was inset. It shared this rule with
+   the city strip until that strip was removed. */
 .post-feed {
   margin-inline: var(--space-4);
   box-sizing: border-box;
 }
-
 .sidebar-card h2,
-.city-today h2,
 .also-nearby h2,
 .profile-verticals h2 {
   margin: 0 0 var(--space-3);
@@ -97,49 +85,7 @@ aside.city-today,
   font-weight: var(--weight-heavy);
 }
 
-/* The city strip opens on a tap. summary carries the real heading so the
-   browser own disclosure state, keyboard handling and screen-reader
-   announcement apply to the title rather than to a wrapper, and the h2 goes
-   inline so the marker sits beside it instead of above.
-
-   It is a real control on all three counts, so it takes a real target: it
-   measured 318x20 against the 44px design_rules.ux_laws.fitts floor. */
-.city-today summary {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  min-height: var(--tap-min, 44px);
-}
-
-.city-today summary h2 {
-  display: inline;
-  margin: 0;
-}
-
-/* The caret sits at the end of the row and turns when the strip opens. 200ms is
-   inside NO_LONG_TRANSITION's 300 ceiling, and transform is the compositor-only
-   property — rotating it costs no layout. */
-.city-today-caret {
-  margin-inline-start: auto;
-  flex: none;
-  color: var(--text-secondary);
-  transition: transform 200ms var(--ease-out);
-}
-
-.city-today details[open] .city-today-caret {
-  transform: rotate(180deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .city-today-caret { transition: none; }
-}
-
-.city-today details[open] .city-today-list {
-  margin-top: var(--space-3);
-}
-
 .sidebar-card ul,
-.city-today-list,
 .also-nearby ul,
 .profile-verticals ul {
   list-style: none;
@@ -148,7 +94,6 @@ aside.city-today,
 }
 
 .sidebar-card li + li,
-.city-today-list li + li,
 .also-nearby li + li,
 .profile-verticals li + li {
   margin-top: var(--space-2);
@@ -157,7 +102,7 @@ aside.city-today,
 /* The strip pairs each link with its vertical ("marketplace", "tv"). Baseline
    the two and let the label sit at the end, so the links stay a scannable
    column instead of a ragged one. */
-.city-today-list li {
+.sidebar-card li {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -165,11 +110,10 @@ aside.city-today,
 }
 
 /* The rows are scannable columns of links, and a link's own box is what takes
-   the tap — measured at 52x20 on city-today and 39x21 on the sidebar cards,
+   the tap — measured at 39x21 on the sidebar cards,
    against the 44px design_rules.ux_laws.fitts floor. The li above stays
    baseline-aligned, so the text keeps its column; only the hit area grows. */
 .sidebar-card li a,
-.city-today-list li a,
 .also-nearby li a,
 .profile-verticals li a {
   display: inline-flex;
