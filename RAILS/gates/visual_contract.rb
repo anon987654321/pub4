@@ -104,13 +104,74 @@ module VisualContractGate
     { pixel_diff_count: diff_count, pixel_diff_ratio: (diff_count.to_f / baseline_pixels.length).round(6), pixel_diff_image: diff_count.positive? ? diff_path : nil }
   end
 
-  # Classic Selenium `driver.manage.logs` was removed from selenium-webdriver's
-  # Ruby bindings; newer versions only expose console output via BiDi. Degrade to
-  # an empty list rather than crash the whole capture when it's unavailable.
-  def browser_console_errors(driver)
-    return [] unless driver.manage.respond_to?(:logs)
+  # Capture console output through a shim installed before page scripts run.
+  #
+  # The previous implementation guarded on `driver.manage.respond_to?(:logs)` and
+  # returned [] otherwise, which reads as careful degradation. It was not: the
+  # installed selenium-webdriver is 4.46.0 and `Manager#logs` does not exist in
+  # any of the three app bundles — grepped, not assumed. So the guard was always
+  # false, this always returned [], and the console-error count in every capture
+  # has been a structural zero. A gate that counts console errors and can never
+  # see one reports clean forever.
+  #
+  # BiDi is the supported replacement and it is a large dependency to take on for
+  # one number. execute_cdp is already available on the Chrome driver, so the shim
+  # goes in through Page.addScriptToEvaluateOnNewDocument — which runs before any
+  # page script, and is the only reason load-time messages are catchable at all.
+  # Reading it back after load is then an ordinary execute_script.
+  #
+  # window.onerror is included because an uncaught exception never passes through
+  # console.error, and it is the failure most worth catching.
+  CONSOLE_SHIM = <<~JS
+    (function () {
+      if (window.__pub4_console) return;
+      window.__pub4_console = [];
+      var record = function (level, parts) {
+        try {
+          window.__pub4_console.push({
+            level: level,
+            text: Array.prototype.map.call(parts, function (p) {
+              if (typeof p === "string") return p;
+              try { return JSON.stringify(p); } catch (e) { return String(p); }
+            }).join(" ")
+          });
+        } catch (e) { /* a broken shim must never break the page under test */ }
+      };
+      ["log", "info", "warn", "error"].forEach(function (level) {
+        var original = console[level];
+        console[level] = function () {
+          record(level === "warn" ? "warning" : level, arguments);
+          if (original) return original.apply(console, arguments);
+        };
+      });
+      window.addEventListener("error", function (e) {
+        record("error", [(e.error && e.error.stack) || e.message]);
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        record("error", ["unhandled rejection: " + (e.reason && e.reason.message || e.reason)]);
+      });
+    })();
+  JS
 
-    driver.manage.logs.get(:browser).select { |log| log.level == "SEVERE" }.map(&:message)
+  def install_console_shim(driver)
+    return false unless driver.respond_to?(:execute_cdp)
+
+    driver.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source: CONSOLE_SHIM)
+    true
+  rescue StandardError => e
+    # Non-fatal, but it must say so — a silent failure here is what produced the
+    # permanent zero this replaced.
+    warn "warn: console capture unavailable (#{e.class}: #{e.message}); counts will read 0"
+    false
+  end
+
+  def browser_console_errors(driver)
+    captured = driver.execute_script("return window.__pub4_console || null")
+    return [] unless captured
+
+    captured.select { |row| row["level"] == "error" }.map { |row| row["text"].to_s }.uniq
+  rescue StandardError
+    []
   end
 
   # Grades a capture. Extracted from the script body so the three severities are
@@ -218,6 +279,9 @@ module VisualContractGate
       # gem being absent: a precondition, not a finding.
       raise CannotMeasure, "could not start Chrome (#{e.class}: #{e.message})"
     end
+    # Before the first navigate, because the shim only sees what happens after it
+    # is installed and the messages worth catching happen during page load.
+    install_console_shim(driver)
     matrix(app).map do |cell|
       width, height = cell[:dimensions]
       driver.manage.window.resize_to(width, height)
