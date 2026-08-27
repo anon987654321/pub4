@@ -370,32 +370,77 @@ end
 # subtly NaN, it is comprehensively NaN.
 SAMPLE_VALUES = 4096
 
-def checkpoint_nan?(path)
+def each_sampled_tensor(path)
   File.open(path, "rb") do |file|
     header_length = file.read(8)&.unpack1("Q<")
-    return false unless header_length&.positive? && header_length < 100_000_000
+    return unless header_length&.positive? && header_length < 100_000_000
 
     header = JSON.parse(file.read(header_length).to_s)
     body = 8 + header_length
 
-    tensors = header.reject { |name, _| name == "__metadata__" }
-    tensors.first(4).any? do |_name, spec|
-      next false unless spec.is_a?(Hash) && spec["dtype"] == "F16"
+    header.each do |name, spec|
+      next if name == "__metadata__"
+      next unless spec.is_a?(Hash) && spec["dtype"] == "F16"
 
       start, finish = spec["data_offsets"]
-      next false unless start && finish && finish > start
+      next unless start && finish && finish > start
 
       file.seek(body + start)
-      raw = file.read([finish - start, SAMPLE_VALUES * 2].min).to_s
-      raw.unpack("v*").any? { |bits| (bits & 0x7C00) == 0x7C00 && (bits & 0x03FF) != 0 }
+      yield name, file.read([finish - start, SAMPLE_VALUES * 2].min).to_s.unpack("v*")
     end
   end
+end
+
+def checkpoint_nan?(path)
+  seen = 0
+  each_sampled_tensor(path) do |_name, values|
+    return true if values.any? { |bits| (bits & 0x7C00) == 0x7C00 && (bits & 0x03FF) != 0 }
+
+    seen += 1
+    break if seen >= 4
+  end
+  false
 # Narrow on purpose. `rescue StandardError` here caught NameError from a missing
 # `require "json"` and reported it as an uninspectable file, so the guard was
 # inert from the moment it shipped and said "ok:" while doing nothing. A
 # malformed file is a thing to shrug at; a bug in this method is not.
 rescue IOError, SystemCallError, JSON::ParserError => e
   warn "note: could not inspect #{path.basename} (#{e.class}: #{e.message}); resuming anyway"
+  false
+end
+
+# Has this checkpoint learned anything, whatever its filename claims?
+#
+# A NaN loss produces no gradient and ai-toolkit skips the step rather than
+# applying it, so the weights never move. The saver does not know that: it writes
+# ragnhild_v2_000000750.safetensors on schedule, the metadata says step 750, and
+# the next session resumes from it and trains the remaining 250 steps believing
+# it is finishing a run that never started. That produced the first real
+# portraits of Ragnhild off a quarter of the intended training.
+#
+# It is visible in the weights. A LoRA is a pair per module — down initialised
+# random, up initialised to zeros so the adapter is a no-op before training. Only
+# training moves the up side off zero. So an all-zero up side means untrained,
+# regardless of what the step counter says.
+#
+# Sampled across several modules because one all-zero tensor could be an honestly
+# dead module; every up tensor being zero could not.
+UP_TENSOR = /lora_up|lora_B/
+UP_TENSORS_TO_CHECK = 8
+
+def checkpoint_untrained?(path)
+  ups = 0
+  each_sampled_tensor(path) do |name, values|
+    next unless name.match?(UP_TENSOR)
+
+    # 0x7FFF masks the sign, so -0.0 still counts as zero.
+    return false if values.any? { |bits| (bits & 0x7FFF) != 0 }
+
+    ups += 1
+    break if ups >= UP_TENSORS_TO_CHECK
+  end
+  ups.positive?
+rescue IOError, SystemCallError, JSON::ParserError
   false
 end
 
@@ -407,18 +452,23 @@ def restore_checkpoints
   # session that resumes from it fail identically to the session that wrote it,
   # which is how a fixed pipeline keeps looking broken.
   ordered = saved.sort_by { |path| [-step_of(path), -path.mtime.to_i] }
-  poisoned = []
+  rejected = []
 
   ordered.each do |path|
     if checkpoint_nan?(path)
-      poisoned << path
+      rejected << [path, "NaN weights"]
+      next
+    end
+    if checkpoint_untrained?(path)
+      rejected << [path, "untrained — every LoRA up tensor is still zero"]
       next
     end
 
-    unless poisoned.empty?
-      puts "warn: skipped #{poisoned.length} checkpoint(s) containing NaN weights:"
-      poisoned.each { |bad| puts "warn:   #{bad.basename}" }
-      puts "warn: these were written by a run whose loss had already collapsed."
+    unless rejected.empty?
+      puts "warn: skipped #{rejected.length} checkpoint(s) that cannot be resumed from:"
+      rejected.each { |bad, why| puts "warn:   #{bad.basename} — #{why}" }
+      puts "warn: these came from a run whose loss had already collapsed. Their step"
+      puts "warn: numbers are real; the training behind those steps is not."
       puts "warn: delete them from #{PERSIST} once you are sure."
     end
     # Not assumed to exist. LORA_COLAB_STAGES lets any stage run on its own, and
@@ -429,7 +479,7 @@ def restore_checkpoints
     return puts "ok: resuming from #{path.basename}"
   end
 
-  puts "warn: every checkpoint in #{PERSIST} contains NaN weights (#{poisoned.length})."
+  puts "warn: all #{rejected.length} checkpoint(s) in #{PERSIST} are NaN or untrained."
   puts "warn: starting from scratch rather than resuming from a dead run."
 end
 
