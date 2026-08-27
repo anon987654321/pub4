@@ -9,8 +9,20 @@
 
 def build_drum_bus_filter(cfg, sonic, duration: nil)
   crush_mix = sonic&.dig("synth", "crush_mix")&.to_f
+  # DRUM_CRUSH_MIX overrides the sonic profile's grit.
+  #
+  # crush_mix was reachable only by editing a sonic profile, so the amount of
+  # sampler grit on the kit could not be tried against a render -- and grit is
+  # most of what separates a kit that sounds sampled from one that sounds
+  # synthesised. A hit that has been through a 12-bit sampler carries
+  # quantisation noise riding its own envelope, which is a texture no EQ
+  # produces. The dilla family default of 0.22 is a light dusting; a kit meant
+  # to sound lifted off a record wants considerably more.
+  env_mix = ENV["DRUM_CRUSH_MIX"].to_s.strip
+  crush_mix = env_mix.to_f if env_mix =~ /\A[\d.]+\z/
   base = if crush_mix&.positive?
-           { bits: 12, samples: 1.69, mix: crush_mix.clamp(0.08, 0.55) }
+           { bits: (ENV["DRUM_CRUSH_BITS"] || 12).to_i.clamp(4, 16),
+             samples: 1.69, mix: crush_mix.clamp(0.08, 0.85) }
          elsif cfg[:style_family] == :dilla
            { bits: 11, samples: 1.5, mix: 0.22 }
          else
@@ -100,7 +112,27 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
   tail = "equalizer=f=55:t=o:w=0.7:g=#{kick_boost},highpass=f=25#{haas}"
   return smooth_drum_bus_filter(head, tail) if smooth_drums?
 
-  "#{head}#{crush}" \
+  # Tube: even harmonics, which the drum bus had none of.
+  #
+  # The crusher above adds quantisation noise and the compressor adds level, but
+  # neither adds harmonics, and a kit that has been through a preamp has them.
+  # A symmetric clipper would add ODD harmonics and read as distortion; the DC
+  # offset here makes the transfer curve asymmetric, which produces EVEN
+  # harmonics -- second and fourth -- and those read as weight and warmth on a
+  # drum rather than as damage. The offset is removed immediately after, and the
+  # oversampling keeps the harmonics it generates from folding back as aliases.
+  #
+  # DRUM_TUBE_DB is off by default, so a render that does not ask for it is
+  # unchanged.
+  tube_db = ENV.fetch("DRUM_TUBE_DB", "0").to_f.clamp(0.0, 12.0)
+  tube = if tube_db.positive?
+           off = (0.02 + 0.006 * tube_db).round(4)
+           "dcshift=#{off},asoftclip=type=tanh:oversample=4,dcshift=-#{off}," \
+             "highpass=f=22,volume=#{(tube_db * 0.5).round(2)}dB,"
+         else
+           ""
+         end
+  "#{head}#{crush}#{tube}" \
     "acompressor=threshold=-14dB:ratio=2.2:attack=3:release=60" \
     "#{hard_drums? ? "[d_soft];#{hard_drum_stage('d_soft', 'd_hard')}[d_hard]" : ','}" \
     "#{tail}[drums]"

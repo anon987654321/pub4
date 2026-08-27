@@ -84,45 +84,144 @@ def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
   events
 end
 
-def synth_rim_sample
-  len = (0.06 * SAMPLE_RATE).round
-  rng = Random.new(42)
-  out = Array.new(len, 0.0)
-  len.times do |i|
-    t = i.to_f / SAMPLE_RATE
-    env = Math.exp(-t * 55.0)
-    out[i] = env * (rng.rand * 2.0 - 1.0) * 0.7
+# Struck objects, built the way struck objects actually behave.
+#
+# Every voice below used to be white noise or plain sines under one exponential
+# decay, and that is audibly not what a drum is. Three things separate a
+# synthesised hit from a sampled one, and all three are cheap to fix:
+#
+#   BAND LIMITING. Raw noise and raw squares carry energy past Nyquist, which
+#   folds back down as inharmonic aliasing. It is the single most "cheap
+#   digital" artefact there is. Everything here is filtered.
+#
+#   INHARMONICITY. A struck bar or bell rings at ratios that are NOT integers --
+#   a real cowbell is nothing like 1:1.5, and an agogo at exactly 3:2 reads as
+#   two oscillators rather than one object. The ratio tables below are
+#   stretched deliberately, and higher modes decay faster, which is the physics:
+#   short wavelengths lose energy to the mounting first.
+#
+#   A STRIKE. Every real percussion hit begins with a broadband contact noise
+#   before the body speaks. Without it a modal ring sounds like a synth pad
+#   with a fast attack, because that is exactly what it is.
+#
+# Deterministic per voice: the seeds are fixed, so a kit is the same kit twice.
+
+# Two-pole resonant bandpass, transposed direct form II. Used to band-limit
+# noise into a formant rather than letting it alias across the whole spectrum.
+def perc_bandpass(sig, freq, q)
+  w = 2.0 * Math::PI * freq / SAMPLE_RATE
+  alpha = Math.sin(w) / (2.0 * q)
+  b0 = alpha
+  b2 = -alpha
+  a0 = 1.0 + alpha
+  a1 = -2.0 * Math.cos(w)
+  a2 = 1.0 - alpha
+  x1 = x2 = y1 = y2 = 0.0
+  sig.map do |x|
+    y = (b0 / a0) * x + (b2 / a0) * x2 - (a1 / a0) * y1 - (a2 / a0) * y2
+    x2 = x1
+    x1 = x
+    y2 = y1
+    y1 = y
+    y
   end
-  out
 end
 
-def synth_clap_sample
-  len = (0.14 * SAMPLE_RATE).round
-  rng = Random.new(17)
+# A struck body: partials at inharmonic ratios, each with its own decay.
+def perc_modes(len, base, ratios, decays, amps)
   out = Array.new(len, 0.0)
-  3.times do |layer|
-    offset = (layer * 0.003 * SAMPLE_RATE).round
+  ratios.each_with_index do |r, m|
+    f = base * r
+    next if f >= SAMPLE_RATE * 0.45          # never place a partial past Nyquist
+    d = decays[m]
+    a = amps[m]
     len.times do |i|
-      next if i < offset
-      t = (i - offset).to_f / SAMPLE_RATE
-      env = Math.exp(-t * (30.0 + layer * 8))
-      out[i] += env * (rng.rand * 2.0 - 1.0) * (0.35 - layer * 0.08)
+      t = i.to_f / SAMPLE_RATE
+      out[i] += a * Math.exp(-t * d) * Math.sin(2.0 * Math::PI * f * t)
     end
   end
-  peak = out.map(&:abs).max || 1.0
-  out.map { |s| s / [peak, 0.01].max * 0.85 }
+  out
 end
 
-def synth_tabla_sample
-  len = (0.22 * SAMPLE_RATE).round
+# Contact noise: the moment before the body speaks.
+def perc_strike(len, seed, freq, q, decay, gain)
+  rng = Random.new(seed)
+  raw = Array.new(len) { rng.rand * 2.0 - 1.0 }
+  perc_bandpass(raw, freq, q).each_with_index.map do |v, i|
+    v * Math.exp(-(i.to_f / SAMPLE_RATE) * decay) * gain
+  end
+end
+
+def perc_normalize(out, peak)
+  m = out.map(&:abs).max || 1.0
+  out.map { |s| s / [m, 1.0e-6].max * peak }
+end
+
+# Rimshot: stick on the rim, plus the shell speaking underneath it. The old
+# version was noise alone, which is the "tss" half without the "tok" half --
+# the pitched shell mode is what makes it read as a drum being hit.
+def synth_rim_sample
+  len = (0.07 * SAMPLE_RATE).round
+  shell = perc_modes(len, 430.0, [1.0, 2.61, 4.19], [58.0, 96.0, 150.0], [0.60, 0.26, 0.12])
+  stick = perc_strike(len, 42, 2600.0, 1.1, 130.0, 0.75)
+  perc_normalize(shell.each_with_index.map { |v, i| v + stick[i] }, 0.78)
+end
+
+# Hand clap: several pairs of hands, not one.
+#
+# The old version fired three noise bursts 3 ms apart, which is inside the ear's
+# fusion window -- they arrive as a single transient, so it sounded like a snare
+# with no tone rather than a clap. Real claps in a room are 15-30 ms apart,
+# unevenly, and the last one is followed by the room. That spacing IS the sound.
+# Band-limited around 1.6 kHz because that is where hands live; white noise
+# reads as static.
+def synth_clap_sample
+  len = (0.34 * SAMPLE_RATE).round
+  rng = Random.new(17)
   out = Array.new(len, 0.0)
+  # four hits, unevenly spaced, each slightly quieter and duller than the last
+  [[0.0, 1.0, 1750.0], [0.017, 0.86, 1650.0], [0.036, 0.72, 1520.0], [0.058, 0.55, 1400.0]]
+    .each_with_index do |(delay, amp, fc), n|
+    off = (delay * SAMPLE_RATE).round
+    burst_len = len - off
+    next if burst_len <= 0
+    raw = Array.new(burst_len) { rng.rand * 2.0 - 1.0 }
+    perc_bandpass(raw, fc, 1.5).each_with_index do |v, i|
+      out[off + i] += v * Math.exp(-(i.to_f / SAMPLE_RATE) * (68.0 + n * 6.0)) * amp
+    end
+  end
+  # the room the hands are in: a slower, darker tail under all of it
+  tail_raw = Array.new(len) { rng.rand * 2.0 - 1.0 }
+  perc_bandpass(tail_raw, 1150.0, 0.8).each_with_index do |v, i|
+    out[i] += v * Math.exp(-(i.to_f / SAMPLE_RATE) * 13.0) * 0.22
+  end
+  perc_normalize(out, 0.85)
+end
+
+# Tabla. Nearly the only drum with a definite pitch, because the black tuning
+# paste loads the centre of the head so its modes fall close to whole-number
+# ratios instead of the inharmonic mess an undamped membrane produces. Close,
+# not exact -- the slight stretch below is the difference between a tabla and a
+# sine with a pitch envelope, which is what this was. The pitch drop stays: that
+# is the palm on the head.
+def synth_tabla_sample
+  len = (0.30 * SAMPLE_RATE).round
+  out = Array.new(len, 0.0)
+  ratios = [1.0, 2.01, 3.04, 4.09]
+  decays = [13.0, 20.0, 30.0, 44.0]
+  amps   = [0.60, 0.30, 0.16, 0.08]
   len.times do |i|
     t = i.to_f / SAMPLE_RATE
-    env = Math.exp(-t * 18.0) * (1.0 - Math.exp(-t * 120.0))
-    f = 180.0 + 90.0 * Math.exp(-t * 40.0)
-    out[i] = env * Math.sin(2 * Math::PI * f * t) * 0.6
+    bend = 1.0 + 0.55 * Math.exp(-t * 45.0)      # palm pressure releasing
+    attack = 1.0 - Math.exp(-t * 160.0)
+    ratios.each_with_index do |r, m|
+      f = 186.0 * r * bend
+      next if f >= SAMPLE_RATE * 0.45
+      out[i] += amps[m] * Math.exp(-t * decays[m]) * attack * Math.sin(2.0 * Math::PI * f * t)
+    end
   end
-  out
+  strike = perc_strike(len, 71, 1900.0, 1.3, 190.0, 0.30)
+  perc_normalize(out.each_with_index.map { |v, i| v + strike[i] }, 0.72)
 end
 
 # No voice below is one exp(-t*k) shape at a different rate. That shape is

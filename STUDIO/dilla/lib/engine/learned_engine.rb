@@ -17,7 +17,7 @@ require_relative "../frozen_state"
 # grid below was transcribed by ear, and if it came off the wrong video no id
 # change repairs it.
 FLYLO_CAMEL_SOURCE_URL = "https://www.youtube.com/watch?v=fU9YRGLPDQ8".freeze
-FLYLO_CAMEL_DRUM_GRID = {
+POLY_TEMPORAL_DRUM_GRID = {
   "bpm" => 86,
   "swing" => 60,
   "source" => "pocket_dna_simple",
@@ -41,9 +41,9 @@ BUILTIN_LEARNED_ENGINE = {
     "camel_functional" => CAMEL_FUNCTIONAL_SYMS,
   },
   "drum_grids" => {
-    "chromatic_mediant_drift" => FLYLO_CAMEL_DRUM_GRID,
-    "quartal_west_coast" => FLYLO_CAMEL_DRUM_GRID,
-    "flylo_camel" => FLYLO_CAMEL_DRUM_GRID,
+    "chromatic_mediant_drift" => POLY_TEMPORAL_DRUM_GRID,
+    "quartal_west_coast" => POLY_TEMPORAL_DRUM_GRID,
+    "flylo_camel" => POLY_TEMPORAL_DRUM_GRID,
   },
   "calibrations" => {},
   "track_aliases" => {

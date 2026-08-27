@@ -362,7 +362,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     },
 
     # The Camel grid, moved here so every pattern lives in one table. dilla.rb
-    # holds the same steps in FLYLO_CAMEL_DRUM_GRID for the dual-bus overlay.
+    # holds the same steps in POLY_TEMPORAL_DRUM_GRID for the dual-bus overlay.
     flylo_camel: {
       swing: 54, humanize: 3, bpm: 86, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],

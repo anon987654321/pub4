@@ -257,6 +257,75 @@ def varispeed_master!(path)
   path
 end
 
+# The album's sonic signature: one treatment every beat carries.
+#
+# A record is recognisable as a record because its tracks were finished the same
+# way. Everything upstream of here varies on purpose -- progression, kit, patch,
+# tape preset -- so this is the one stage that must not, and it is deliberately
+# a single named identity rather than a knob per render.
+#
+# Four stages, each aimed at a different cause of "harsh", because they are
+# different problems and one filter cannot fix them all:
+#
+#   DE-HARSH. Resonances between 1.8 and 5.2 kHz are what the ear calls harsh,
+#   and they are intermittent -- a static EQ cut there dulls the whole track to
+#   fix moments. So the band is split out and compressed on its own, hard and
+#   fast, and left alone when it is not ringing. Everything outside the band is
+#   untouched and re-summed.
+#
+#   EVEN HARMONICS. Symmetric clipping -- which every tanh stage in this engine
+#   is, and there are fifty of them -- generates ODD harmonics, and odd harmonics
+#   are what "overdrive" sounds like. A DC offset before the nonlinearity makes
+#   it asymmetric, which generates EVEN harmonics instead: the same saturation
+#   density read as warmth rather than distortion. The offset is removed after.
+#
+#   OVERSAMPLING. A nonlinearity at 44.1 kHz folds everything it generates above
+#   Nyquist back down as inharmonic aliases, and inharmonic content is the most
+#   fatiguing thing a mix can contain. asoftclip's own oversample does the whole
+#   job here; it is the cheapest real win available and costs nothing but CPU.
+#
+#   GLUE. Slow attack, low ratio, wide knee. Not level control -- it lets
+#   transients through untouched and only moves the sustain, which is what makes
+#   separate parts read as one performance rather than a stack.
+#
+# asoftclip is not gain-compensated (4.2 dB down on this bus, measured), so the
+# makeup below is a measured constant and not a guess.
+MELT_MAKEUP_DB = 4.2
+
+def melt_amount = ENV.fetch("MELT", "0").to_f.clamp(0.0, 1.0)
+
+def melt_master!(path)
+  amt = melt_amount
+  return path unless amt.positive? && File.file?(path)
+
+  drive = (0.03 + 0.05 * amt).round(4)          # DC offset -> asymmetry -> even harmonics
+  ratio = (2.0 + 2.0 * amt).round(2)            # de-harsh band only
+  thr   = (-22.0 - 6.0 * amt).round(1)
+  out = "#{path}.melt#{File.extname(path)}"
+  chain = "[0:a]asplit=3[mlow][mmid][mhigh];" \
+          "[mlow]lowpass=f=1800[ml];" \
+          "[mmid]highpass=f=1800,lowpass=f=5200," \
+          "acompressor=threshold=#{thr}dB:ratio=#{ratio}:attack=3:release=80:knee=6[mm];" \
+          "[mhigh]highpass=f=5200[mh];" \
+          "[ml][mm][mh]amix=inputs=3:duration=first:normalize=0," \
+          "dcshift=#{drive},asoftclip=type=tanh:oversample=8,dcshift=-#{drive},highpass=f=20," \
+          "volume=#{MELT_MAKEUP_DB}dB," \
+          "acompressor=threshold=-20dB:ratio=1.5:attack=150:release=450:knee=10," \
+          "equalizer=f=8000:t=h:w=4000:g=#{(-0.8 * amt).round(2)}," \
+          "alimiter=limit=0.97[mout]"
+  begin
+    sh! "ffmpeg", "-y", "-v", "error", "-i", path, "-filter_complex", chain,
+        "-map", "[mout]", "-ar", SAMPLE_RATE.to_s, *codec_for(out), out
+    FileUtils.mv(out, path)
+    dmesg("melt: de-harsh #{ratio}:1 @1.8-5.2k, even-harmonic drive #{drive}, 8x oversampled",
+          unit: "mix0", parent: "dilla0")
+  rescue StandardError => e
+    warn "melt skipped: #{e.message}"
+    FileUtils.rm_f(out)
+  end
+  path
+end
+
 def normalise_master!(path, cfg)
   return path if ENV["MASTER_NORMALISE"] == "0" || !File.file?(path)
 
