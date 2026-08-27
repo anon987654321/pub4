@@ -15,6 +15,7 @@
 # Binary files are listed in the tree and skipped in the body; a mirror that
 # claims to inline everything must say which files it could not.
 
+require "fileutils"
 require "open3"
 
 module Pub4
@@ -116,7 +117,13 @@ module Pub4
       return io.puts("snapshot: #{tree} has no tracked files — skipped") if paths.empty?
 
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
-      out = File.join(REPO, "snapshot_#{tree}.md")
+      # MASTER/output, not the repo root. The root is four trees and one file,
+      # and a tool that drops four generated markdown files beside them makes
+      # that untrue every time it runs -- gitignored, so the tracked state stayed
+      # right while the working directory did not.
+      dir = File.join(REPO, "MASTER", "output")
+      FileUtils.mkdir_p(dir)
+      out = File.join(dir, "snapshot_#{tree}.md")
 
       File.open(out, "w") do |f|
         f.puts "# #{tree} — source snapshot"
@@ -155,7 +162,7 @@ module Pub4
       end
 
       io.puts format("snapshot: %-8s %5d files (%d binary) → %s (%.1f MB)",
-                     tree, paths.size, binaries.size, File.basename(out),
+                     tree, paths.size, binaries.size, out.delete_prefix(REPO + "/"),
                      File.size(out) / 1_048_576.0)
     end
 
