@@ -1,5 +1,5 @@
 <%= form_with url: ai_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
-  <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M10.25 3.75a7.25 7.25 0 105.66 5.66l4.1 4.1 1.06-1.06-4.1-4.1A7.25 7.25 0 0010.25 3.75zm0 1.5a5.75 5.75 0 110 11.5 5.75 5.75 0 010-11.5z"/></svg>
+  <%= icon :search, size: 19 %>
   <%= form.search_field :q, value: params[:q], placeholder: t("search.wardrobe_short"), aria: { label: t("search.wardrobe_short") } %>
 <%# tabindex -1: this submit exists only so the form posts on Enter, which
     implicit submission already does. Being focusable AND visually hidden made it
