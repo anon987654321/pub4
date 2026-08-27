@@ -526,10 +526,57 @@ def watch_for_nan(line, state)
   true
 end
 
+# A resume that starts at the step ceiling trains nothing and says so nowhere.
+#
+# ai-toolkit reads the step out of the checkpoint metadata and begins there. If
+# that number is already LORA_STEPS the loop has no iterations left: it loads the
+# model, samples, saves, and exits — a full run's worth of output with no
+# gradient in it. The log line is "Found step 1000 in metadata, starting from
+# there" and it looks exactly like a healthy resume.
+#
+# It happened immediately after the untrained-checkpoint guard started working.
+# The guard correctly rejected the three NaN-era files and fell through to
+# ragnhild_v2.safetensors, which IS trained — 250 real steps — but carries step
+# 1000, because the dead run's 750 skipped steps still counted. Every guard so
+# far has been about whether a checkpoint learned anything; this is about whether
+# there is anything left to learn.
+#
+# Reading the metadata rather than the filename, because the file that caused
+# this has no step in its name at all.
+def checkpoint_step(path)
+  each_sampled_tensor(path) { break } # opens and validates the header
+  header = File.open(path, "rb") do |file|
+    length = file.read(8).unpack1("Q<")
+    JSON.parse(file.read(length))
+  end
+  meta = header["__metadata__"] or return nil
+  value = meta["training_step"] || meta["step"] || meta["steps"]
+  value && Integer(value, exception: false)
+rescue IOError, SystemCallError, JSON::ParserError
+  nil
+end
+
+def warn_if_already_at_ceiling
+  ceiling = Integer(ENV["LORA_STEPS"], exception: false) or return
+  resumable = WEIGHTS_DIR.glob("**/*.safetensors")
+                         .reject { |p| checkpoint_nan?(p) || checkpoint_untrained?(p) }
+  reached = resumable.filter_map { |p| checkpoint_step(p) || (s = step_of(p)).positive? && s }.max
+  return unless reached && reached >= ceiling
+
+  puts "warn: the checkpoint to resume from is already at step #{reached}, and"
+  puts "warn: LORA_STEPS is #{ceiling}. There are no steps left to run — this would"
+  puts "warn: load the model, sample, save, and exit having trained nothing."
+  puts "warn: raise LORA_STEPS above #{reached} to continue training, or clear"
+  puts "warn: #{PERSIST} to start over."
+  puts "warn: continuing anyway, because sampling an existing adapter is a real"
+  puts "warn: thing to want — but if you expected training, stop now."
+end
+
 def train
   ENV["LORA_DEVICE"] = "cuda_t4"
   ENV["LORA_SKIP_POSTPRO"] = "1"
   ENV["LORA_STEPS"] = ENV["LORA_STEPS"].to_s.strip.empty? ? "1800" : ENV["LORA_STEPS"]
+  warn_if_already_at_ceiling
   ENV["LORA_SAMPLE_EVERY"] = ENV["LORA_SAMPLE_EVERY"].to_s.strip.empty? ? "500" : ENV["LORA_SAMPLE_EVERY"]
   # Piped rather than system(), so watch_for_nan can see the loss. The output is
   # re-printed unchanged, so this costs nothing except the ability to stop.
