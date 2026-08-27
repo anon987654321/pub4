@@ -172,6 +172,27 @@ def apply_sdxl!(process)
   # somewhere soft, so the picture looks like an undertrained adapter and gets
   # blamed on the training. The first twelve portraits of Ragnhild were rendered
   # this way.
+  # Train the text encoder on SDXL, where the trigger token has to learn to mean
+  # a specific person.
+  #
+  # train.yaml says false because it was written for FLUX, whose T5 is frozen by
+  # design and where the transformer carries identity on its own. SDXL is not
+  # that: with the text encoder frozen, "ragnhild" keeps whatever CLIP already
+  # thought the word meant, and the UNet has to drag the face there against a
+  # fixed conditioning vector. It is the single largest likeness lever available
+  # on this base and it was off all day.
+  #
+  # Found by reading a LoRA Johann trained on Replicate in June, still sitting in
+  # his Downloads: 386 tensors, `text_encoder:N:rank: 16` throughout, plus <s1>
+  # and <s2> embeddings. Whatever produced that had this on.
+  #
+  # FLUX is left alone — apply_sdxl! is the only caller, so this cannot reach a
+  # FLUX run. LORA_TEXT_ENCODER=0 turns it off if a 16 GB card refuses it.
+  unless ENV["LORA_TEXT_ENCODER"].to_s.strip == "0"
+    process["train"]["train_text_encoder"] = true
+    warn "note: training the text encoder — on SDXL the trigger token has to learn the person."
+  end
+
   sample["sampler"] = "ddpm"
   sample["guidance_scale"] = 7.0
   sample["sample_steps"] = 30
