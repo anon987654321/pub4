@@ -53,19 +53,41 @@ do
   pkill -f "$pat" 2>/dev/null && echo "pkill $pat" || true
 done
 
+
+# A start already in flight is not a wedge, and killing one is how this script
+# became the thing it exists to fix.
+#
+# master's rc_pre rebuilds the face bundles and can run assets:precompile, which
+# takes over five minutes on one vCPU. The pkill below matches 'pub4/MASTER/web',
+# and an in-flight `rcctl start master` carries exactly that in its command line
+# (cd /home/dev/pub4/MASTER/web && ...) -- so this killed the start it was about
+# to re-issue, waited 75s, gave up, and cron ran the guard again five minutes
+# later. Each pass left another precompile behind, which kept load critical,
+# which triggered the next pass. Measured 2026-08-27: master could not complete
+# a single start for hours, and the box reached 100% swap.
+_master_starting=0
+if pgrep -f 'rcctl start master' >/dev/null 2>&1; then
+  echo 'master start already in flight — not touching it'
+  _master_starting=1
+fi
+
 echo "=== stop wedged Falcon workers (master + brgen) ==="
 pkill -f 'falcon.*53187' 2>/dev/null || true
 pkill -f 'ruby34.*53187' 2>/dev/null || true
 pkill -f 'falcon.*38182' 2>/dev/null || true
 pkill -f 'ruby34.*38182' 2>/dev/null || true
 pkill -f '/home/brgen/app' 2>/dev/null || true
-pkill -f 'pub4/MASTER/web' 2>/dev/null || true
+[ "$_master_starting" = "0" ] && pkill -f 'pub4/MASTER/web' 2>/dev/null || true
 sleep 2
 
 echo "=== restart core (master then brgen) ==="
-rcctl stop master 2>/dev/null || true
-sleep 1
-rcctl start master 2>/dev/null || echo "master start failed"
+if [ "$_master_starting" = "1" ]; then
+  echo 'skipping master restart — a start is already running'
+else
+  rcctl stop master 2>/dev/null || true
+  sleep 1
+  rcctl start master 2>/dev/null || echo "master start failed"
+fi
 _i=0
 while [[ $_i -lt 25 ]]; do
   curl -fsS -m 4 http://127.0.0.1:53187/up >/dev/null 2>&1 && echo "master /up ok" && break
