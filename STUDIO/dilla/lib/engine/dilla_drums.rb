@@ -43,8 +43,12 @@ DRUM_MORPH_PATH = %i[detroit_stumble la_beat_scene techno_house].freeze
 # backwards: the load-bearing voice moved first and the change read as a cut.
 DRUM_MORPH_LEAD = { hats: 0.30, opens: 0.30, ghosts: 0.20, snares: 0.12, kicks: 0.0 }.freeze
 
+# On by default. The kit travelling Detroit -> LA -> techno across a piece is
+# the behaviour that was asked for, and shipping it behind a switch meant every
+# render needed DRUM_MORPH=1 spelled out or quietly produced the old single-feel
+# kit. DRUM_MORPH=0 pins one feel for the whole track.
 def drum_morph_enabled?
-  ENV.fetch("DRUM_MORPH", "0") != "0"
+  ENV.fetch("DRUM_MORPH", "1") != "0"
 end
 
 def drum_morph_feel(bar, role)

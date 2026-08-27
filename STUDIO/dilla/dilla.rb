@@ -776,6 +776,10 @@ DISPATCH = {
   "play" => -> { play(ARGV.shift, (ARGV.shift || 8).to_i) },
   "live" => -> { live((ARGV.shift || 32).to_i) },
   "stream" => -> { stream((ARGV.shift || stream_bars_default).to_i) },
+  # The short one, kept because it is genuinely useful when iterating -- a few
+  # bars of each named style finishes in minutes. It is no longer what a bare
+  # invoke gives you, because "the demo" means the full catalogue.
+  "showcase" => -> { showcase_demo! },
   "demo-all" => lambda do
     bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || ENV["BARS"] || "12"
     out = ARGV.shift
@@ -1113,7 +1117,19 @@ if __FILE__ == $PROGRAM_NAME
     # explicitly via `ruby dilla.rb stream`, but convention-over-configuration
     # means the zero-args path should finish and produce a real file, runnable
     # headless/over SSH, not hang forever waiting on an audio device.
-    showcase_demo!
+    # Bare invoke renders THE demo -- every progression, every synth emulation,
+    # the timing work, the whole catalogue -- not a short showcase of it.
+    #
+    # It used to call showcase_demo!, a few bars of each named style. That is a
+    # different and much smaller artifact, and the difference was invisible from
+    # the command line: both wrote a demo and both finished. So "render the demo"
+    # and "render the demo" meant two things depending on which one you knew
+    # about, and the operator had to ask for demo-all by name every time to get
+    # the one that showcases the engine.
+    #
+    # `ruby dilla.rb demo-all` still works and is the same call. showcase_demo! is
+    # still reachable as `ruby dilla.rb showcase`.
+    demo_all
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!

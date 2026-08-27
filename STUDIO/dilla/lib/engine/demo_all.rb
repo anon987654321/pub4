@@ -230,7 +230,20 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
       parts << keep_mp3
       next
     end
-    if !demo_each? && !force && File.file?(part) && File.size(part) > 100_000 && !part.end_with?("_SILENCE.wav")
+    # A part is reusable only if it is NEWER than the engine that made it.
+    #
+    # This used to skip any part that merely existed and was over 100 kB, so once
+    # scratch/ held a full set, every later run reused all of it and the demo
+    # stopped reflecting the code. That is not hypothetical: after a day of
+    # changes to the groove, the vocal, the stereo field and the drum feels, a
+    # freshly "rendered" demo was still the old one, and the only way to get the
+    # new sound was to know about DEMO_FORCE and remember to say it.
+    #
+    # engine_mtime is the newest mtime across every file the engine is made of, so
+    # comparing against it means any edit anywhere invalidates the cache
+    # automatically. Nobody has to remember a flag, and a stale demo cannot be
+    # mistaken for a new one.
+    if !demo_each? && !force && File.file?(part) && File.size(part) > 100_000 && File.mtime(part) >= engine_mtime && !part.end_with?("_SILENCE.wav")
       # Reject silence leftovers from prior failed runs.
       dmesg("skip #{File.basename(part)}", unit: "demo0", parent: "dilla0")
       parts << part

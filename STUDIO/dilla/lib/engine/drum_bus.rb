@@ -168,8 +168,17 @@ def apply_drum_vol!(value)
   s
 end
 
+# Off by default: the drums play continuously.
+#
+# drum_drop_bar? silences the kit on the last bar of every 32-bar block and
+# every 8th bar of a breakdown. Operator direction is that the groove should be
+# continuous and change idiom instead of stopping, so the default moved rather
+# than being passed as DRUM_DROP=0 on every single render -- which is how it
+# was being used, and a default nobody wants is not a default.
+#
+# DRUM_DROP=1 restores the drops.
 def drum_drop_enabled?
-  ENV.fetch("DRUM_DROP", "1") != "0"
+  ENV.fetch("DRUM_DROP", "0") != "0"
 end
 
 def drum_drop_bar?(bar, section)
