@@ -1,0 +1,185 @@
+{
+  "vendor": "fujifilm",
+  "profiles": {
+    "fujifilm finepix x100": {
+      "color_matrix": [
+        1.3589,
+        -0.6494,
+        -0.0148,
+        -0.4182,
+        1.1567,
+        0.2988,
+        -0.0277,
+        0.0888,
+        0.7616
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm finepix x10": {
+      "color_matrix": [
+        1.5085,
+        -0.8567,
+        0.0639,
+        -0.3644,
+        1.1226,
+        0.2773,
+        0.0352,
+        0.0518,
+        0.5791
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x100s": {
+      "color_matrix": [
+        1.2147,
+        -0.6103,
+        -0.0062,
+        -0.2748,
+        1.0145,
+        0.3036,
+        -0.0222,
+        0.1111,
+        0.7347
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x100t": {
+      "color_matrix": [
+        1.2147,
+        -0.6103,
+        -0.0062,
+        -0.2748,
+        1.0145,
+        0.3036,
+        -0.0222,
+        0.1111,
+        0.7347
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x20": {
+      "color_matrix": [
+        1.2997,
+        -0.6851,
+        0.0572,
+        -0.4031,
+        1.1287,
+        0.3151,
+        0.0241,
+        0.0731,
+        0.5309
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x30": {
+      "color_matrix": [
+        1.4499,
+        -0.7943,
+        0.0564,
+        -0.5442,
+        1.374,
+        0.1827,
+        -0.0061,
+        0.1006,
+        0.571
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x-a1": {
+      "color_matrix": [
+        1.3008,
+        -0.6975,
+        0.105,
+        -0.2611,
+        0.9857,
+        0.3225,
+        -0.0214,
+        0.0644,
+        0.664
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x-a2": {
+      "color_matrix": [
+        1.2721,
+        -0.69,
+        0.032,
+        -0.3619,
+        1.1376,
+        0.2562,
+        -0.0342,
+        0.0808,
+        0.6972
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x-e1": {
+      "color_matrix": [
+        1.2049,
+        -0.5867,
+        -0.0192,
+        -0.3063,
+        1.0541,
+        0.2923,
+        -0.0228,
+        0.0797,
+        0.6882
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x-e2": {
+      "color_matrix": [
+        1.267,
+        -0.66,
+        0.0088,
+        -0.2824,
+        1.0665,
+        0.2495,
+        -0.0842,
+        0.1988,
+        0.7109
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm x-m1": {
+      "color_matrix": [
+        1.2049,
+        -0.5867,
+        -0.0192,
+        -0.3063,
+        1.0541,
+        0.2923,
+        -0.0228,
+        0.0797,
+        0.6882
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "fujifilm xq2": {
+      "color_matrix": [
+        1.3888,
+        -0.749,
+        0.0484,
+        -0.4247,
+        1.2445,
+        0.2,
+        -0.0325,
+        0.158,
+        0.5017
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    }
+  }
+}

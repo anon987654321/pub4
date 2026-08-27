@@ -1,0 +1,500 @@
+{
+  "vendor": "canon",
+  "profiles": {
+    "canon eos 100d": {
+      "color_matrix": [
+        0.6985,
+        -0.1611,
+        -0.0397,
+        -0.3596,
+        1.0749,
+        0.3295,
+        -0.0349,
+        0.1136,
+        0.6512
+      ],
+      "baseline_exposure": -0.25,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 1200d": {
+      "color_matrix": [
+        0.7164,
+        -0.1916,
+        -0.0431,
+        -0.3361,
+        1.06,
+        0.32,
+        -0.0272,
+        0.1058,
+        0.6442
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos-1d mark ii": {
+      "color_matrix": [
+        0.718,
+        -0.1623,
+        -0.0246,
+        -0.6794,
+        1.4095,
+        0.2977,
+        -0.0978,
+        0.1328,
+        0.8537
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos-1d mark ii n": {
+      "color_matrix": [
+        0.7218,
+        -0.159,
+        -0.0328,
+        -0.6635,
+        1.3904,
+        0.3024,
+        -0.0901,
+        0.1205,
+        0.8114
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos-1d mark iii": {
+      "color_matrix": [
+        0.7064,
+        -0.1449,
+        -0.0503,
+        -0.6904,
+        1.4333,
+        0.2817,
+        -0.0821,
+        0.109,
+        0.7409
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos-1d mark iv": {
+      "color_matrix": [
+        0.9965,
+        -0.4681,
+        -0.0136,
+        -0.28,
+        1.0398,
+        0.279,
+        0.0065,
+        0.0935,
+        0.643
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos-1d x": {
+      "color_matrix": [
+        0.7151,
+        -0.1143,
+        -0.079,
+        -0.3998,
+        1.14,
+        0.2975,
+        -0.0477,
+        0.1398,
+        0.769
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos-1ds mark ii": {
+      "color_matrix": [
+        0.7565,
+        -0.1791,
+        -0.0272,
+        -0.6727,
+        1.4067,
+        0.2934,
+        -0.082,
+        0.1093,
+        0.7688
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos-1ds mark iii": {
+      "color_matrix": [
+        0.6704,
+        -0.1154,
+        -0.0457,
+        -0.6783,
+        1.4191,
+        0.2848,
+        -0.0853,
+        0.116,
+        0.749
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 50d": {
+      "color_matrix": [
+        0.5852,
+        -0.0578,
+        -0.0042,
+        -0.4691,
+        1.1696,
+        0.3427,
+        -0.0886,
+        0.2323,
+        0.6879
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 550d": {
+      "color_matrix": [
+        0.7755,
+        -0.2449,
+        -0.0349,
+        -0.3106,
+        1.0222,
+        0.3362,
+        -0.0156,
+        0.0986,
+        0.6409
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 5d": {
+      "color_matrix": [
+        0.7284,
+        -0.1569,
+        -0.0425,
+        -0.6726,
+        1.4016,
+        0.2993,
+        -0.0926,
+        0.1258,
+        0.7774
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 5d mark ii": {
+      "color_matrix": [
+        0.5309,
+        -0.0229,
+        -0.0336,
+        -0.6241,
+        1.3265,
+        0.3337,
+        -0.0817,
+        0.1215,
+        0.6664
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 5d mark iii": {
+      "color_matrix": [
+        0.7234,
+        -0.1413,
+        -0.06,
+        -0.3631,
+        1.115,
+        0.285,
+        -0.0382,
+        0.1335,
+        0.6437
+      ],
+      "baseline_exposure": -0.25,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 5ds": {
+      "color_matrix": [
+        0.6848,
+        -0.1661,
+        -0.0221,
+        -0.3904,
+        1.0931,
+        0.3434,
+        -0.047,
+        0.1251,
+        0.6039
+      ],
+      "baseline_exposure": -0.17,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 5ds r": {
+      "color_matrix": [
+        0.6848,
+        -0.1661,
+        -0.0221,
+        -0.3904,
+        1.0931,
+        0.3434,
+        -0.047,
+        0.1251,
+        0.6039
+      ],
+      "baseline_exposure": -0.17,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 600d": {
+      "color_matrix": [
+        0.7164,
+        -0.1916,
+        -0.0431,
+        -0.3361,
+        1.06,
+        0.32,
+        -0.0272,
+        0.1058,
+        0.6442
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 60d": {
+      "color_matrix": [
+        0.7755,
+        -0.2449,
+        -0.0349,
+        -0.3106,
+        1.0222,
+        0.3362,
+        -0.0156,
+        0.0986,
+        0.6409
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 650d": {
+      "color_matrix": [
+        0.6985,
+        -0.1611,
+        -0.0397,
+        -0.3596,
+        1.0749,
+        0.3295,
+        -0.0349,
+        0.1136,
+        0.6512
+      ],
+      "baseline_exposure": -0.25,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 6d": {
+      "color_matrix": [
+        0.7546,
+        -0.1435,
+        -0.0929,
+        -0.3846,
+        1.1488,
+        0.2692,
+        -0.0332,
+        0.1209,
+        0.637
+      ],
+      "baseline_exposure": -0.25,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 700d": {
+      "color_matrix": [
+        0.6985,
+        -0.1611,
+        -0.0397,
+        -0.3596,
+        1.0749,
+        0.3295,
+        -0.0349,
+        0.1136,
+        0.6512
+      ],
+      "baseline_exposure": -0.25,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 70d": {
+      "color_matrix": [
+        0.7546,
+        -0.1435,
+        -0.0929,
+        -0.3846,
+        1.1488,
+        0.2692,
+        -0.0332,
+        0.1209,
+        0.637
+      ],
+      "baseline_exposure": -0.25,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 750d": {
+      "color_matrix": [
+        0.6671,
+        -0.1668,
+        -0.0272,
+        -0.3729,
+        1.0665,
+        0.3552,
+        -0.0409,
+        0.1271,
+        0.6293
+      ],
+      "baseline_exposure": 0.16,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 760d": {
+      "color_matrix": [
+        0.6671,
+        -0.1668,
+        -0.0272,
+        -0.3729,
+        1.0665,
+        0.3552,
+        -0.0409,
+        0.1271,
+        0.6293
+      ],
+      "baseline_exposure": -0.25,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 7d": {
+      "color_matrix": [
+        1.162,
+        -0.6349,
+        0.0005,
+        -0.2558,
+        1.0146,
+        0.2813,
+        0.0024,
+        0.0858,
+        0.6926
+      ],
+      "baseline_exposure": 0.0,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos 7d mark ii": {
+      "color_matrix": [
+        0.7795,
+        -0.2196,
+        -0.0251,
+        -0.3391,
+        1.0273,
+        0.3632,
+        -0.0373,
+        0.1283,
+        0.6613
+      ],
+      "baseline_exposure": -0.15,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon eos m": {
+      "color_matrix": [
+        0.6985,
+        -0.1611,
+        -0.0397,
+        -0.3596,
+        1.0749,
+        0.3295,
+        -0.0349,
+        0.1136,
+        0.6512
+      ],
+      "baseline_exposure": -0.25,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon powershot g15": {
+      "color_matrix": [
+        0.8204,
+        -0.3475,
+        0.0326,
+        -0.2919,
+        0.9461,
+        0.4065,
+        0.0159,
+        0.0225,
+        0.4291
+      ],
+      "baseline_exposure": 0.75,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon powershot g16": {
+      "color_matrix": [
+        0.7755,
+        -0.2449,
+        -0.0349,
+        -0.3106,
+        1.0222,
+        0.3362,
+        -0.0156,
+        0.0986,
+        0.6409
+      ],
+      "baseline_exposure": 0.75,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon powershot g1 x": {
+      "color_matrix": [
+        0.8138,
+        -0.2281,
+        -0.0659,
+        -0.3453,
+        1.1006,
+        0.2816,
+        -0.0297,
+        0.1118,
+        0.6471
+      ],
+      "baseline_exposure": 0.5,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon powershot g1 x mark ii": {
+      "color_matrix": [
+        0.8138,
+        -0.2281,
+        -0.0659,
+        -0.3453,
+        1.1006,
+        0.2816,
+        -0.0297,
+        0.1118,
+        0.6471
+      ],
+      "baseline_exposure": 0.5,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon powershot g3 x": {
+      "color_matrix": [
+        0.7755,
+        -0.2449,
+        -0.0349,
+        -0.3106,
+        1.0222,
+        0.3362,
+        -0.0156,
+        0.0986,
+        0.6409
+      ],
+      "baseline_exposure": -0.05,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    },
+    "canon powershot g7 x": {
+      "color_matrix": [
+        1.1125,
+        -0.5937,
+        0.0355,
+        -0.2979,
+        1.0926,
+        0.236,
+        -0.0116,
+        0.0835,
+        0.6064
+      ],
+      "baseline_exposure": -0.05,
+      "source": "VSCO DCP, Kodak Portra 400 2C profile for this body"
+    }
+  }
+}
