@@ -13,10 +13,13 @@
   <%= render "conversations/rooms_rail" %>
 
   <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
+    <%# No action here. The rail carries "Ny melding" as its first control and
+        it is on screen whenever this pane is, so an identical button in the
+        middle of the pane was the same offer made twice — and the copy under
+        the title already names the one in the rail. %>
     <%= render "shared/empty_state",
           title: t("messages.empty_title"),
-          body: t("messages.empty_body"),
-          action: { label: t("messages.new_message"), path: new_conversation_path } %>
+          body: t("messages.empty_body") %>
   <% end %>
 </section>
 

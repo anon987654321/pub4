@@ -14,7 +14,12 @@
   class="empty empty-state<%= " #{local_assigns[:class]}" if local_assigns[:class].present? %>"
   role="status"
   <% if live %>aria-live="polite"<% end %>>
-  <span class="empty-state-icon" aria-hidden="true">○</span>
+  <%# An icon only where a caller has one worth drawing. This was a hardcoded ○
+      — a 12px ring above every empty state in three apps, aria-hidden because
+      it says nothing, which is the argument for not drawing it at all. %>
+  <% if local_assigns[:icon].present? %>
+    <span class="empty-state-icon" aria-hidden="true"><%= icon local_assigns[:icon], size: 24 %></span>
+  <% end %>
   <% if title.present? %>
     <h2 class="empty-state-title"><%= title %></h2>
   <% end %>

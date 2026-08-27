@@ -20,7 +20,12 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
-  min-block-size: 100dvh;
+  /* Not 100dvh. This sits inside <main>, which starts 62px down and adds 58.5px
+     of padding, so a full viewport height here begins at y=121 and runs 121px
+     past the fold — measured on production at 1440x900. CSS has no expression
+     for "a viewport minus my own distance from the top", so the window stops
+     asking for one: it is sized by its content and the two panes below own their
+     own scrolling. */
 }
 
 // Master-detail on a phone: the rail, or the room, never both.
@@ -148,7 +153,9 @@
     // 240px is Discord's rail, kept. The middle takes the rest — a conversation
     // has no ideal measure the way prose does, because a line of chat is short.
     grid-template-columns: 240px minmax(0, 1fr);
-    block-size: 100dvh;
+    // No block-size here either, for the same reason as above: the window is
+    // 121px down the page, so a viewport-tall box ends 121px past the fold.
+    // The panes cap themselves instead.
   }
 
   // There is room for both here, so the master-detail switch above is undone
@@ -156,8 +163,15 @@
   .messenger-window:has(.conversation-log) .messenger-rail { display: flex; }
   .messenger-window:not(:has(.conversation-log)) .messenger-pane { display: block; }
 
+  /* Each pane scrolls to the bottom of the viewport rather than to a viewport's
+     worth of height, and keeps its scroll to itself — overscroll-behavior stops
+     a flick at the end of the log from scrolling the page behind it, which on a
+     chat is the difference between reading history and losing your place. */
   .messenger-rail,
-  .messenger-pane { block-size: 100dvh; }
+  .messenger-pane {
+    max-block-size: 100dvh;
+    overscroll-behavior: contain;
+  }
 }
 
 // Your own "message me" link. Quiet: it is the thing you reach for once, when
