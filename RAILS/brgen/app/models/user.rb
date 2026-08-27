@@ -1,6 +1,20 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+
+  # Vipps Login is the identity dating trusts. ExternalIdentity/IdentityProvider
+  # already carry it — the callback writes one per successful OAuth round trip —
+  # so this asks a question of existing data rather than adding a column that
+  # would then need keeping in step with it.
+  has_many :external_identities, dependent: :destroy
+
+  def vipps_verified?
+    return false unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
+
+    external_identities.joins(:identity_provider)
+                       .where(identity_providers: { slug: "vipps" }).exists?
+  end
+
   # Deliberately NOT CityTenantable. A person is not a tenant row: email
   # uniqueness is global, one session follows a visitor across every city
   # domain, and stranger discovery is radius-based (Shared::GeoLocatable), not

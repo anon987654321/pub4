@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 class Dating::ProfilesController < Dating::BaseController
-  # Soft guest profiles allowed — no signup to start dating.
   before_action :require_user_session
+  # Joining is Vipps-only. Everything else on this vertical stays readable to a
+  # signed-in person; what a verified identity buys is the right to appear in
+  # front of strangers, which is the exact thing a throwaway account is used
+  # for. The comment that stood here said "soft guest profiles allowed — no
+  # signup to start dating", which this deliberately reverses.
+  before_action :require_vipps_identity, only: %i[new create edit update]
   before_action :set_profile, only: %i[show edit update]
 
   def show; end
