@@ -190,13 +190,21 @@ deploy_status "$app" "sync tree"
 sync_from_repo
 pub4_ensure_ci_lock >/dev/null
 ci_rails_root=/home/${app}/pub4-rails/RAILS
-# App users traverse /home/dev by GROUP, not other: 710 dev:_pub4ci, members
-# brgen/amber/bsdports (2026-08-22, closes the world-traversable half of the
-# secrets debt entry). Idempotent so a fresh box converges on first CI run.
+# App users reach /home/dev by GROUP, not other: 750 dev:_pub4ci, members
+# brgen/amber/bsdports/master. That closes the world-readable half of the
+# secrets debt entry, which is the half that mattered -- `other` gets nothing.
+# Idempotent so a fresh box converges on first CI run.
+#
+# Group read, not 710. master is the one service whose working directory is
+# under /home/dev, and getcwd(3) names each ancestor by reading it, so `--x`
+# lets it chdir and then fails Dir.pwd with EACCES. rubygems calls Dir.pwd
+# before Bundler is even loaded, so master died at bundle34 with no log of its
+# own and ai.brgen.no served an empty reply. 710 was verified by traversing,
+# which is a weaker claim than the one it was taken to prove.
 doas groupadd _pub4ci 2>/dev/null || true
 doas usermod -G _pub4ci "${app}" 2>/dev/null || true
 doas chgrp _pub4ci /home/dev 2>/dev/null || true
-doas chmod 710 /home/dev 2>/dev/null || true
+doas chmod 750 /home/dev 2>/dev/null || true
 
 # The other half of that entry, which it missed: /home/dev was tightened and
 # /home/<app> was not. /home/brgen, /home/brgen/app and .../app/storage were
