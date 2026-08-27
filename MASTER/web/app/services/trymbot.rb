@@ -10,14 +10,22 @@
 # Trymbot is what MASTER was called first, so the name is a return rather
 # than an invention.
 #
-# To remove it: delete this file and the four files that name it --
-# chat_controller, tts_controller, chat/index.html.erb, pwa/manifest.json.erb.
-# Two more carry the request-scoped persona note it rides on
-# (prompt_builder, chat_service). That note names nothing and is worth
-# keeping: it is how any host wears a different face.
+# To remove it: delete this file, public/trymbot.css and the three woff2 in
+# public/fonts, then the five files that name it -- application_controller,
+# chat_controller, tts_controller, chat/index.html.erb and
+# pwa/manifest.json.erb.
+#
+# Three things it leans on are general and worth keeping: the request-scoped
+# persona note (prompt_builder, chat_service), body data-primer="keep", and
+# the host-aware brand mark. None of them names anybody.
 module Trymbot
   HOST = "trymbot.brgen.no"
   NAME = "Trymbot"
+
+  # The primer copy, here rather than in nb.yml, so removing this file removes
+  # the whole skin. Norwegian, and addressed to one person by name.
+  TAGLINE = "Hei Trym! Skal vi lage noe i dag?"
+  START = "TRYKK HER"
 
   # nb-NO-FinnNeural reads Norwegian natively. Lifted and hurried a little,
   # a grown man's voice lands nearer a small excited robot -- past roughly

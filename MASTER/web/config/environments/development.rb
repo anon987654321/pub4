@@ -64,5 +64,9 @@ Rails.application.configure do
   # list: config runs before autoloading, so it cannot ask a service which
   # hosts it claims, and a hand-kept list here would drift from the ones that
   # do.
-  config.hosts << /\A([a-z0-9-]+\.)*brgen\.no\z/i
+  # The port is part of the Host header a browser sends to a non-443 local
+  # server, and Regexp entries are matched against it whole -- so without
+  # the optional group a real browser gets the blocked-host page while curl
+  # with a hand-written Host header does not.
+  config.hosts << /\A([a-z0-9-]+\.)*brgen\.no(:\d+)?\z/i
 end
