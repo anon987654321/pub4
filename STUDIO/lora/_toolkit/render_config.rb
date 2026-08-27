@@ -125,11 +125,31 @@ end
 # native resolution — 768 is the compromise that fits a 16 GB card.
 SDXL_MODEL = "stabilityai/stable-diffusion-xl-base-1.0"
 
+# SDXL's own VAE overflows in fp16 and the loss becomes NaN.
+#
+# Observed, not anticipated: a 1000-step run reported `loss: 0.000e+00` from
+# step one and then several hundred consecutive `loss is nan` lines. It saved
+# checkpoints at 250 and 500 and both are worthless — a NaN gradient updates
+# nothing, so the adapter came out untrained while the run looked healthy from
+# the progress bar.
+#
+# The cause is well known and specific: SDXL was trained in fp32/bf16 and its
+# VAE has activations that exceed fp16's range. Everywhere else the answer is
+# bf16 — and Turing, which is what a free Colab T4 is, has no bf16 at all. That
+# is the same constraint that forced fp16 here in the first place, so the two
+# requirements collide and the VAE is the only place to break the deadlock.
+#
+# madebyollin/sdxl-vae-fp16-fix is that break: the same VAE with its weights
+# rescaled so the activations stay inside fp16. It is the standard remedy and
+# costs nothing.
+SDXL_VAE_FP16_FIX = "madebyollin/sdxl-vae-fp16-fix"
+
 def apply_sdxl!(process)
   model = process["model"]
   model["name_or_path"] = SDXL_MODEL
   model.delete("is_flux")
   model["is_xl"] = true
+  model["vae_path"] = SDXL_VAE_FP16_FIX if process.dig("train", "dtype").to_s == "fp16"
   # Both were for a 12B transformer on a 16 GB card. SDXL needs neither, and
   # quantising a model that already fits only costs precision.
   model["quantize"] = false

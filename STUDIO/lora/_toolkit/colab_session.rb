@@ -328,12 +328,67 @@ def restore_checkpoints
   puts "ok: resuming from #{newest.basename}"
 end
 
+# Stop the run the moment the loss stops being a number.
+#
+# A NaN gradient updates nothing, so training continues at full speed, the
+# progress bar advances, checkpoints are written on schedule, and the adapter
+# inside them is untrained. One run reached step 500 and generated twelve
+# validation images off a dead LoRA before anyone could see the problem — an
+# hour of a free GPU session spent producing plain SDXL.
+#
+# ai-toolkit prints "loss is nan" per occurrence and carries on. That is a
+# reasonable default for a transient spike; it is the wrong one for a schedule
+# that has collapsed, and the two look identical for the first few lines. Ten
+# consecutive is not a spike.
+NAN_TOLERANCE = 10
+
+def watch_for_nan(line, state)
+  if line.include?("loss is nan")
+    state[:nan] += 1
+    if state[:nan] == NAN_TOLERANCE
+      warn ""
+      warn "=" * 72
+      warn "ABORTING: #{NAN_TOLERANCE} consecutive NaN losses. Nothing is being learned."
+      warn "A NaN gradient updates no weights, so this would run to completion and"
+      warn "save checkpoints containing an untrained adapter."
+      warn ""
+      warn "On SDXL under fp16 this is usually the VAE: SDXL was trained in"
+      warn "fp32/bf16 and its VAE overflows fp16. render_config.rb sets"
+      warn "vae_path to madebyollin/sdxl-vae-fp16-fix for exactly this; if you"
+      warn "are seeing it anyway, that override did not reach the config."
+      warn "=" * 72
+      return false
+    end
+  else
+    state[:nan] = 0
+  end
+  true
+end
+
 def train
   ENV["LORA_DEVICE"] = "cuda_t4"
   ENV["LORA_SKIP_POSTPRO"] = "1"
   ENV["LORA_STEPS"] = ENV["LORA_STEPS"].to_s.strip.empty? ? "1800" : ENV["LORA_STEPS"]
   ENV["LORA_SAMPLE_EVERY"] = ENV["LORA_SAMPLE_EVERY"].to_s.strip.empty? ? "500" : ENV["LORA_SAMPLE_EVERY"]
-  Dir.chdir(SUBJECT_DIR) { sh!("sh", SUBJECT_DIR.join("lora").to_s, "--train") }
+  # Piped rather than system(), so watch_for_nan can see the loss. The output is
+  # re-printed unchanged, so this costs nothing except the ability to stop.
+  command = ["sh", SUBJECT_DIR.join("lora").to_s, "--train"]
+  puts "run: #{command.join(' ')}"
+  state = { nan: 0 }
+  ok = Dir.chdir(SUBJECT_DIR) do
+    IO.popen(command, err: %i[child out]) do |io|
+      io.each_line do |line|
+        print line
+        $stdout.flush
+        unless watch_for_nan(line, state)
+          Process.kill("TERM", io.pid) rescue nil
+          return abort("warn: aborted on NaN loss")
+        end
+      end
+    end
+    $?.success?
+  end
+  abort "warn: failed: #{command.join(' ')}" unless ok
 end
 
 # The adapter and the validation portraits are the deliverables. ai-toolkit
