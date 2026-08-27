@@ -115,9 +115,17 @@ local_mp3:
     src: /audio/akmd/johann-amiga.mp3
     seconds: 50
   - artist: Johann
+    title: Lofi
+    src: /audio/akmd/johann-lofi.mp3
+    seconds: 28
+  - artist: Johann
     title: Radio Bergen 1
     src: /audio/akmd/johann-radio_bergen_1.mp3
     seconds: 186
+  - artist: Mike T Jr
+    title: Rauingar
+    src: /audio/akmd/johann-rauingar.mp3
+    seconds: 19
   - artist: AKMD & Mike T
     title: Alt Kan Skje
     src: /audio/akmd/mike_t_and_johann-alt_kan_skje.mp3
