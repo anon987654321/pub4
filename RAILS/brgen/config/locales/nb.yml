@@ -381,6 +381,7 @@ nb:
     disappears_in: forsvinner om %{time}
     title: Meldinger
     new_message: Ny melding
+    rooms_label: "Rom"
     message_action: "Send melding"
     no_people: "Ingen med det navnet her ennå."
     find_people: "Søk etter noen"

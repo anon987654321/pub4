@@ -1,0 +1,54 @@
+<%# The left rail of the messenger window: every room you can reach, without
+    leaving the one you are in.
+
+    Each link targets the messenger-pane frame, so switching rooms swaps the
+    conversation and leaves the rail, its scroll position and the composer state
+    alone. Without the frame every switch was a full navigation — which is what
+    made this feel like a series of pages rather than one window. %>
+<nav class="messenger-rail" aria-label="<%= t("messages.rooms_label") %>">
+  <div class="messenger-rail-head">
+    <%= link_to new_conversation_path, class: "btn btn-primary messenger-rail-new",
+                data: { turbo_frame: "_top" } do %>
+      <%= icon :compose, size: 18 %>
+      <span><%= t("messages.new_message") %></span>
+    <% end %>
+  </div>
+
+  <%# Channels are grouped and DMs are not, which is the one structural thing
+      Discord gets right that a flat list cannot: a heading is what makes thirty
+      rooms readable. Conversation::CHANNELS is a static roster, so the group is
+      known without a query. %>
+  <h2 class="messenger-rail-group"><%= t("channels.title") %></h2>
+  <ul class="messenger-rail-list" role="list">
+    <% Conversation::CHANNELS.each_key do |slug| %>
+      <li role="listitem">
+        <%= link_to channel_path(slug), class: "messenger-rail-room",
+                    data: { turbo_frame: "messenger-pane" },
+                    aria: { current: (defined?(@conversation) && @conversation&.slug == slug) ? "page" : nil } do %>
+          <span class="messenger-rail-hash" aria-hidden="true">#</span>
+          <span class="messenger-rail-name"><%= Conversation::CHANNELS[slug][:name] %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+
+  <h2 class="messenger-rail-group"><%= t("messages.title") %></h2>
+  <ul class="messenger-rail-list" role="list">
+    <% @rail_conversations.each do |room| %>
+      <% unread = @rail_unread.fetch(room.id, 0) %>
+      <li role="listitem">
+        <%= link_to conversation_path(room), class: "messenger-rail-room",
+                    data: { turbo_frame: "messenger-pane" },
+                    aria: { current: (defined?(@conversation) && @conversation&.id == room.id) ? "page" : nil } do %>
+          <span class="messenger-rail-name"><%= room.display_name_for(Current.user) %></span>
+          <% if unread.positive? %>
+            <span class="messenger-rail-unread"><%= unread %></span>
+          <% end %>
+        <% end %>
+      </li>
+    <% end %>
+    <% if @rail_conversations.empty? %>
+      <li role="listitem" class="messenger-rail-empty"><%= t("messages.empty_title") %></li>
+    <% end %>
+  </ul>
+</nav>

@@ -380,6 +380,7 @@ en:
     disappears_in: disappears in %{time}
     title: Messages
     new_message: New message
+    rooms_label: "Rooms"
     message_action: "Message"
     no_people: "Nobody by that name here yet."
     find_people: "Search for someone"

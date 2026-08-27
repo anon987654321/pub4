@@ -1,21 +1,28 @@
-<div class="page-header">
-  <%= tag.h1 t("messages.title") %>
-  <%= link_to t("messages.search"), search_conversations_path, class: "btn btn-ghost" %>
-  <%= link_to t("messages.new_group"), new_group_path, class: "btn btn-ghost" %>
-</div>
+<% content_for :title, t("messages.title") %>
 
-<%# The picker, not a blank field. This asked for an exact username, which is
-    the one thing you do not know about someone you have just met — so starting
-    a conversation required already having had one. conversations#new searches
-    people and puts the button on every row. %>
-<p class="messenger-compose">
-  <%= link_to new_conversation_path, class: "btn btn-primary" do %>
-    <%= icon :compose, size: 18 %>
-    <span><%= t("messages.new_message") %></span>
+<%# The messenger window. Three panes held in one frame: rooms on the left, the
+    conversation in the middle, and — inside a channel — its roster on the right.
+    Switching rooms swaps only the middle, so the rail keeps its scroll and the
+    composer keeps what you typed.
+
+    Geometry copied from Discord and then moved onto this tree's rules: its rails
+    are 240px, which is already 30x the 8px base, so those stand. Its channel rows
+    are 32px tall and those do not — layout_rules.touch.target_min_px is 44, and a
+    32px row is a miss on a phone. --tap-min is the number here. %>
+<section class="messenger-window" aria-label="<%= t("messages.title") %>">
+  <%= render "conversations/rooms_rail" %>
+
+  <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
+    <%= render "shared/empty_state",
+          title: t("messages.empty_title"),
+          body: t("messages.empty_body"),
+          action: { label: t("messages.new_message"), path: new_conversation_path } %>
   <% end %>
-</p>
+</section>
 
-<% if @conversations.any? %>
+<%# The no-JS path. Without Turbo the frame above renders its empty state and
+    never changes, so the plain list stays as the way through. %>
+<noscript>
   <ul role="list" id="conversation-list" aria-label="<%= t("aria.conversations") %>">
     <% @conversations.each do |conversation| %>
       <%= render "conversations/conversation_row",
@@ -24,20 +31,5 @@
                  pinned: @pinned_ids.include?(conversation.id) %>
     <% end %>
   </ul>
-<% else %>
-  <%= render "shared/empty_state",
-        title: t("messages.empty_title"),
-        body: t("messages.empty_body"),
-        action: { label: t("nav.nearby"), path: nearby_path } %>
-<% end %>
-
-<%= render "shared/infinite_scroll_sentinel",
-           pagy: @pagy,
-           reflex: "ConversationsInfiniteScrollReflex#load_more",
-           sentinel_id: "conversation-list-sentinel" %>
-
-<%# Pager kept as the no-JS path: the sentinel needs a reflex round trip over
-    ActionCable, so without JavaScript a truncated inbox would say nothing
-    about the rest of itself. noscript, so a reader with JavaScript sees one
-    mechanism rather than two. %>
-<noscript><%= render "shared/pager", pagy: @pagy %></noscript>
+  <%= render "shared/pager", pagy: @pagy %>
+</noscript>
