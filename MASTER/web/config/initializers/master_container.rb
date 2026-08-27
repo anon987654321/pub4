@@ -16,13 +16,17 @@ module MasterContainerLoader
   module_function
 
   # assets:precompile boots the whole app to resolve helpers, and it is not a
-  # server -- nothing will ever serve a request from it. Booting the container
-  # there is pure cost, and worse than cost: ensure_daemon! spawns
-  # bin/tts-worker as a child that inherits the task's stdout, so the worker
-  # outlives the task and holds the pipe open. rc.d/master reads that pipe, so
-  # rc_pre blocked forever on a precompile that had already exited, and master
-  # could not start at all. Measured 2026-08-27: two orphaned workers, sixteen
-  # minutes old, with no precompile process left behind them.
+  # server -- nothing will ever serve a request from it. Building a container
+  # there costs a container nobody uses and leaves a tts-worker daemon behind
+  # for every precompile, which is why rc_pre kept accumulating orphaned
+  # workers.
+  #
+  # It is not why master would not start. That was the master_web_assets gate
+  # refusing on face.css :root drift, which rc_pre logs to syslog while rcctl
+  # prints nothing -- so the refusal read as a hang. spawn_daemon already
+  # redirects the child's stdio to a log and passes close_others, so no worker
+  # ever held rc.d's pipe. Recorded because the first explanation here said it
+  # did, and a wrong reason in a comment outlives the bug it misdescribes.
   def asset_task?
     ARGV.any? { |arg| arg.start_with?("assets:") }
   end
