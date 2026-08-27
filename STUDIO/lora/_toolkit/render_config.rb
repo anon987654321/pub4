@@ -163,6 +163,16 @@ def apply_sdxl!(process)
   train.delete("timestep_type")
 
   sample = process["sample"]
+  # Sample with the scheduler the model was trained under. train.yaml is written
+  # for FLUX, where flowmatch is right for both; switching only the training half
+  # left SDXL being denoised on a flow-matching sigma schedule it has never seen.
+  #
+  # This is what "blurry, like hairy skin" was. A mismatched schedule does not
+  # fail — it takes the wrong size step at every point on the curve and arrives
+  # somewhere soft, so the picture looks like an undertrained adapter and gets
+  # blamed on the training. The first twelve portraits of Ragnhild were rendered
+  # this way.
+  sample["sampler"] = "ddpm"
   sample["guidance_scale"] = 7.0
   sample["sample_steps"] = 30
 
@@ -245,6 +255,34 @@ def apply_prompt_set!(process)
   warn "note: prompt set #{request} — #{built.length} sitting(s)"
 end
 
+# Sampling and training must agree about how noise is scheduled.
+#
+# They are two keys in two different sections written for two different base
+# models, and nothing reconciled them. apply_sdxl! set train.noise_scheduler to
+# ddpm and left sample.sampler at flowmatch, so twelve portraits were denoised on
+# a schedule the model was never trained under. Nothing failed. The pictures came
+# out soft and the softness read as an undertrained LoRA.
+#
+# flowmatch belongs to flow-matching models — FLUX, SD3. Everything else is
+# epsilon/v-prediction on a DDPM-style curve. Crossing them is always a mistake
+# and is never reported, which is the only reason it survived a full run.
+FLOW_MATCHING = %w[flowmatch flow_match].freeze
+
+def reconcile_scheduler!(process)
+  scheduler = process.dig("train", "noise_scheduler").to_s
+  sampler = process.dig("sample", "sampler").to_s
+  return if scheduler.empty? || sampler.empty?
+  return if FLOW_MATCHING.include?(scheduler) == FLOW_MATCHING.include?(sampler)
+
+  abort <<~WARN
+    warn: noise_scheduler #{scheduler.inspect} and sampler #{sampler.inspect} disagree.
+    warn: one is flow-matching and the other is not, so every sample would be
+    warn: denoised on a curve the model was not trained on. That does not fail —
+    warn: it just produces soft, mushy frames that look like undertraining.
+    warn: Set both to flowmatch (FLUX, SD3) or neither (SDXL, SD1.5).
+  WARN
+end
+
 def build(mode)
   config = load_mapping(BASE)
   process = config.fetch("config").fetch("process").first
@@ -264,6 +302,8 @@ def build(mode)
     train["force_first_sample"] = true
     process["train"] = train
   end
+
+  reconcile_scheduler!(process)
 
   config
 end
