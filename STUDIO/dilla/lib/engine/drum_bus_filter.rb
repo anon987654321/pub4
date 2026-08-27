@@ -178,8 +178,21 @@ HARD_DRUM_CLICK_HP = 1800
 # would fight the last stage of every rack.
 DRUM_WIDTH_HZ = 250
 
+# On by default now, at a third of the available range.
+#
+# The stage below is careful, measured work -- haas rather than stereowiden
+# because every sample in the kit is mono, above 250 Hz only so the kick keeps
+# its attack -- and it defaulted to 0, which made all of it an anull. The kit
+# rendered dead centre and the operator heard exactly that: a mix that wants
+# each sound brought out into a field instead of stacked on one point.
+#
+# 0.35 rather than more: at that setting the haas delay is 4.1 ms left against
+# 1.1 ms right, well inside the ~30 ms fusion limit where the ear reads
+# direction rather than echo, and the side gain lifts 1.21x. Wider starts to
+# hollow the centre, and mono_bass folds the low end back at the end of the
+# rack anyway, so the width that survives is all in the kit's top half.
 def drum_width
-  ENV.fetch("DRUM_WIDTH", "0").to_f.clamp(0.0, 1.0)
+  ENV.fetch("DRUM_WIDTH", "0.35").to_f.clamp(0.0, 1.0)
 end
 
 def drum_width_stage(input, output)

@@ -187,10 +187,35 @@ end).to_f
     "equalizer=f=420:t=o:w=1.1:g=#{body_boost},equalizer=f=680:t=h:w=900:g=#{mid_boost}," \
     "equalizer=f=1400:t=h:w=1200:g=#{presence}," \
     "#{air}equalizer=f=#{lp}:t=o:w=1.0:g=0.8," \
+    "#{pad_wow_stage}" \
     "afade=t=in:st=#{harm_fade_start}:d=#{fade_in}#{fade_curve}," \
     "afade=t=out:st=#{(duration - outro_fade).round(2)}:d=#{outro_fade}#{fade_curve}," \
     "equalizer=f=800:t=h:w=600:g=#{build_cut}:enable='between(t,#{build_start},#{duration})'" \
     "#{harm_space_echo ? "[harm_pre];[harm_pre]#{harm_space_echo}[harm]" : '[harm]'}"
+end
+
+# Tape wow on the pad, and nothing else.
+#
+# The harmony bus had no modulation anywhere in it: EQ, two fades and a
+# build-side cut, all static. A chord that holds perfectly still for four bars
+# is the one thing a sampled record never does, and it is why a synthesised pad
+# reads as synthetic however good the voicing is -- the ear hears the absence
+# of drift before it hears the notes.
+#
+# vibrato, not chorus. Chorus adds delayed copies, which thickens and blurs;
+# wow is the tape transport running fractionally uneven, so it is a slow shift
+# in pitch of the ONE signal. 0.32 Hz is about three seconds a cycle, slower
+# than any note lasts, so it is felt as breathing rather than heard as an
+# effect. Depth 0.045 measured as +-1.5 Hz on a 440 Hz tone, about 6 cents --
+# under the ~15 cent threshold where a held chord stops sounding alive and
+# starts sounding out of tune.
+#
+# PAD_WOW=0 turns it off; PAD_WOW=<0..1> scales rate and depth together.
+def pad_wow_stage
+  amt = ENV.fetch("PAD_WOW", "1.0").to_f.clamp(0.0, 1.0)
+  return "" if amt <= 0.0
+
+  "vibrato=f=#{(0.32 * (0.7 + 0.3 * amt)).round(3)}:d=#{(0.045 * amt).round(4)},"
 end
 
 def sidechain_amix_weights
