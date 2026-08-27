@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_25_122000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_090000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -890,6 +890,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_122000) do
     t.datetime "read_at"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["message_id", "user_id"], name: "index_message_receipts_on_message_and_user", unique: true
     t.index ["message_id"], name: "index_message_receipts_on_message_id"
     t.index ["user_id"], name: "index_message_receipts_on_user_id"
   end

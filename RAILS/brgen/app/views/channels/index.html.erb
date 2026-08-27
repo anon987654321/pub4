@@ -16,11 +16,11 @@
           <span class="channel-blurb"><%= Conversation.channel_blurb(slug) %></span>
           <span class="channel-meta">
             <% if room %>
-              <% active = room.recent_active_count %>
+              <% active = @active_counts.fetch(room.id, 0) %>
               <% if active.positive? %>
                 <span class="channel-live">● <%= active %> <%= t("channels.active") %></span>
               <% else %>
-                <%= room.messages.size %> <%= t("channels.message") %>
+                <%= @message_counts.fetch(room.id, 0) %> <%= t("channels.message") %>
               <% end %>
             <% else %><%= t("channels.new_room") %><% end %>
           </span>

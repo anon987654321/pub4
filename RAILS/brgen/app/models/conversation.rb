@@ -18,13 +18,13 @@ class Conversation < ApplicationRecord
   # group Conversation looked up by its stable slug. `bots` names the personas
   # (see ChannelBot::PERSONAS) that hang out there.
   CHANNELS = {
-    "brgen"       => { name: "#brgen",       vertical: nil,           blurb: "The city-wide lobby — anything goes.",              bots: %w[master echo] },
+    "brgen" => { name: "#brgen",       vertical: nil,           blurb: "The city-wide lobby — anything goes.",              bots: %w[master echo] },
     "marketplace" => { name: "#marketplace", vertical: "marketplace", blurb: "Buying, selling, haggling, and finds.",              bots: %w[curator echo] },
-    "dating"      => { name: "#dating",      vertical: "dating",      blurb: "Flirt, vent, and swap first-date ideas.",           bots: %w[cupid echo] },
-    "playlist"    => { name: "#playlist",    vertical: "playlist",    blurb: "Now playing — share tracks and listening parties.", bots: %w[dj echo] },
-    "tv"          => { name: "#tv",          vertical: "tv",          blurb: "Live threads for shows and streams.",               bots: %w[critic echo] },
-    "takeaway"    => { name: "#takeaway",    vertical: "takeaway",    blurb: "What's good to order right now?",                   bots: %w[foodie echo] },
-    "maps"        => { name: "#maps",        vertical: "maps",        blurb: "Local spots, tips, and directions.",                bots: %w[scout echo] }
+    "dating" => { name: "#dating",      vertical: "dating",      blurb: "Flirt, vent, and swap first-date ideas.",           bots: %w[cupid echo] },
+    "playlist" => { name: "#playlist",    vertical: "playlist",    blurb: "Now playing — share tracks and listening parties.", bots: %w[dj echo] },
+    "tv" => { name: "#tv",          vertical: "tv",          blurb: "Live threads for shows and streams.",               bots: %w[critic echo] },
+    "takeaway" => { name: "#takeaway",    vertical: "takeaway",    blurb: "What's good to order right now?",                   bots: %w[foodie echo] },
+    "maps" => { name: "#maps",        vertical: "maps",        blurb: "Local spots, tips, and directions.",                bots: %w[scout echo] }
   }.freeze
 
   # Channels are ephemeral: messages fade so a room reads as "what's happening
@@ -99,7 +99,7 @@ class Conversation < ApplicationRecord
     end
   rescue ActiveRecord::RecordNotUnique
     # Two visitors opened the same fresh city channel at once — (slug, city) is
-    # unique, so the loser just adopts the winner's row.
+    # unique, so the loser adopts the winner's row.
     includes(:city).find_by!(slug: slug, city_id: city&.id)
   end
 
@@ -265,16 +265,59 @@ class Conversation < ApplicationRecord
 
   # { conversation_id => unread count }, for rendering a list of threads.
   # Absent key means zero, so callers should fetch with a 0 default.
+# Message and active-speaker counts for a set of rooms, in one query each.
+#
+# channels#index rendered seven rooms and asked each one for recent_active_count
+# and then messages.size — two COUNTs per room, fourteen queries to draw a list
+# of seven links. Same shape as unread_counts_for above, and the same fix.
+def self.message_counts_for(conversations)
+  Message.where(conversation_id: conversations).group(:conversation_id).count
+end
+
+def self.active_counts_for(conversations)
+  Message.where(conversation_id: conversations)
+         .where(created_at: (Time.current - ACTIVE_WINDOW_SECONDS)..)
+         .group(:conversation_id)
+         .distinct
+         .count(:sender_id)
+end
+
   def self.unread_counts_for(user)
     unread_scope_for(user).group("messages.conversation_id").count
   end
 
+  # Three queries, not two per message.
+  #
+  # This walked every unexpired message with find_each and did a find_or_initialize
+  # plus an update! on each one — a SELECT and often an INSERT per message, every
+  # time somebody opened a room. A channel holding a hundred messages cost two
+  # hundred round trips to render, on the read path, on one vCPU.
+  #
+  # The semantics are the same and worth stating, because the obvious rewrite gets
+  # them wrong: read_at is only ever set when it was blank. When a message was
+  # first read is a fact, and an upsert that overwrites it would quietly turn every
+  # revisit into a new "first read".
   def mark_read_for!(user)
     conversation_participants.find_by(user:)&.update!(last_read_at: Time.current)
-    messages.unexpired.find_each do |message|
-      receipt = message.message_receipts.find_or_initialize_by(user: user)
-      receipt.update!(read_at: Time.current) unless receipt.read_at
+
+    ids = messages.unexpired.pluck(:id)
+    return if ids.empty?
+
+    now = Time.current
+    seen = MessageReceipt.where(message_id: ids, user_id: user.id).pluck(:message_id, :read_at)
+    already = seen.to_h
+
+    missing = ids - already.keys
+    if missing.any?
+      MessageReceipt.insert_all(
+        missing.map { |mid| { message_id: mid, user_id: user.id, read_at: now, created_at: now, updated_at: now } },
+      )
     end
+
+    unread = already.filter_map { |mid, read_at| mid if read_at.nil? }
+    return if unread.empty?
+
+    MessageReceipt.where(message_id: unread, user_id: user.id).update_all(read_at: now, updated_at: now)
   end
 
   DISAPPEARING_OPTIONS = {

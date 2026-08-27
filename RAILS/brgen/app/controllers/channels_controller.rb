@@ -6,7 +6,11 @@
 class ChannelsController < ApplicationController
   def index
     @city = Current.city_record
-    @channels = Conversation.channels.where(city_id: @city&.id).index_by(&:slug)
+rooms = Conversation.channels.where(city_id: @city&.id).to_a
+@channels = rooms.index_by(&:slug)
+# Two queries for the whole list rather than two per room.
+@message_counts = Conversation.message_counts_for(rooms)
+@active_counts = Conversation.active_counts_for(rooms)
   end
 
   def show
