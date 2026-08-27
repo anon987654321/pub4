@@ -56,7 +56,12 @@ module Deploy
           let scrolls = false;
           for (let p = el.parentElement; p; p = p.parentElement) {
             const ox = getComputedStyle(p).overflowX;
-            if (ox === "auto" || ox === "scroll") { scrolls = true; break; }
+            // hidden and clip belong here for the same reason auto and scroll do:
+            // the ancestor decides what is on screen, and content it clips cannot
+            // widen the page. Without them a CSS marquee -- a max-content track
+            // inside an overflow:hidden viewport -- reported as a spill at every
+            // width while document.scrollWidth stayed exactly the viewport width.
+            if (ox === "auto" || ox === "scroll" || ox === "hidden" || ox === "clip") { scrolls = true; break; }
           }
           if (scrolls) continue;
           const p = el.parentElement;
