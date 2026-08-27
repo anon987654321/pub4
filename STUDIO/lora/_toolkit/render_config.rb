@@ -236,6 +236,34 @@ def apply_env_overrides!(process)
   # alpha defaults to rank when unset, since alpha/rank is the scaling factor and
   # setting one without the other changes the effective learning rate by the
   # ratio — a surprise that reads as "rank 16 trains worse".
+  # What size to render, and how many steps.
+  #
+  # train.yaml samples at 1024x1024 and 30 steps, which is SDXL's native size and
+  # the right default on a real GPU. On an M2 with 8 GB of unified memory it is
+  # not a slow path, it is a different regime: Metal asked for 12.5 GB, the
+  # machine paged on every denoising step, GPU utilisation sat at 22%, and one
+  # frame had not finished after fifty minutes. 24 frames would have been twenty
+  # hours.
+  #
+  # Dropping to 768 cuts the activation tensors to roughly half, which is the
+  # difference between fitting and not fitting. That is a step change rather than
+  # a percentage — a run that stops paging does not get 40% faster, it gets whole
+  # multiples faster.
+  #
+  # Separate knobs because the reasons differ: size is a memory decision and
+  # steps is a time-quality one.
+  sample_size = ENV["LORA_SAMPLE_SIZE"].to_s.strip
+  unless sample_size.empty?
+    process["sample"]["width"] = process["sample"]["height"] = Integer(sample_size)
+    warn "note: sampling at #{sample_size}px"
+  end
+
+  sample_steps = ENV["LORA_SAMPLE_STEPS"].to_s.strip
+  unless sample_steps.empty?
+    process["sample"]["sample_steps"] = Integer(sample_steps)
+    warn "note: #{sample_steps} denoising steps"
+  end
+
   rank = ENV["LORA_RANK"].to_s.strip
   alpha = ENV["LORA_ALPHA"].to_s.strip
   unless rank.empty? && alpha.empty?
