@@ -172,28 +172,11 @@ function start2DFallback() {
     z: i / TUNNEL_RINGS,
   }));
 
-  const drawTunnel = (w, h, cx, cy) => {
-    const fov = Math.max(w, h) * 0.6;
-    ctx.strokeStyle = "rgba(90,110,130,0.10)";
-    ctx.lineWidth = 1;
-    rings.forEach((ring) => {
-      ring.z = (ring.z + 0.0025) % 1;
-      const scale = fov / (fov + ring.z * fov);
-      const radius = Math.min(w, h) * 0.32 * scale;
-      const alpha = 0.16 * (1 - ring.z);
-      if (alpha <= 0.005) return;
-      ctx.beginPath();
-      for (let s = 0; s <= TUNNEL_SIDES; s += 1) {
-        const angle = (s / TUNNEL_SIDES) * Math.PI * 2 + phase * 0.15;
-        const x = cx + Math.cos(angle) * radius;
-        const y = cy + Math.sin(angle) * radius * 0.82;
-        if (s === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = `rgba(90,110,130,${alpha.toFixed(3)})`;
-      ctx.stroke();
-    });
-  };
+// No tunnel. It drew polygon rings behind the face — moveTo/lineTo strokes, a
+// dozen of them, at the exact moment the face itself is nothing but 1px points.
+// Operator, 2026-08-27: lines between the dots and lines in the background are
+// both wrong, and neither is brutalist. The face is points; the background is
+// nothing.
 
   const draw = () => {
     if (window.MASTER_FACE?.startEverything) {
@@ -206,7 +189,6 @@ function start2DFallback() {
     ctx.clearRect(0, 0, w, h);
 
     const breath = 0.5 + 0.5 * Math.sin(phase * 0.9);
-    drawTunnel(w, h, w * 0.5, h * 0.44);
     const grad = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, w * 0.42);
     grad.addColorStop(0, `rgba(28,26,24,${0.55 + breath * 0.08})`);
     grad.addColorStop(0.55, "#121110");
