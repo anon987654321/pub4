@@ -88,7 +88,15 @@ end
 def setup_cell(options)
   <<~PYTHON.strip
     import subprocess
-    subprocess.run("apt-get -qq update && apt-get -qq install -y ruby git",
+    # python3-venv, because `python3 -m venv` is not part of python3 on Debian.
+    #
+    # Debian splits the stdlib: venv's bootstrap step, ensurepip, ships in a
+    # separate package, and Colab's image does not carry it. So `python3 -m venv`
+    # creates the directory, reaches ensurepip, and exits non-zero with
+    # "Command '[...ensurepip...]' returned non-zero exit status 1" — which
+    # names the failing subprocess and not the missing package, and reads like a
+    # Python problem rather than an apt one.
+    subprocess.run("apt-get -qq update && apt-get -qq install -y ruby git python3-venv python3-pip",
                    shell=True, check=True)
     if not os.path.isdir("/content/pub4/.git"):
         subprocess.run(["git", "clone", "--branch", "#{options[:branch]}", "--depth", "1",

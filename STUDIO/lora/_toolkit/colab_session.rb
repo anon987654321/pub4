@@ -109,6 +109,36 @@ def toolkit_ready?
   system(python.to_s, "-c", TOOLKIT_SENTINELS, out: File::NULL, err: File::NULL)
 end
 
+# A venv with pip in it, by whichever route works.
+#
+# `python3 -m venv` is not self-contained on Debian. The stdlib is split into
+# packages and venv's bootstrap step, ensurepip, ships separately — so on an
+# image without python3-venv the command creates the directory, reaches
+# ensurepip, and exits 1 reporting the name of the subprocess that failed rather
+# than the name of the package that is missing. It reads as a Python fault and
+# is an apt one.
+#
+# The notebook installs python3-venv now, which should make the first branch
+# work. This exists because that is a fix in a different file: a notebook
+# regenerated from an older run_train_colab.rb, or any host whose image differs,
+# lands back here. virtualenv carries its own pip and needs no stdlib package,
+# so it works where venv does not.
+def make_venv(path)
+  return puts "ok: venv already at #{path}" if path.join("bin/python").file?
+
+  puts "run: python3 -m venv --system-site-packages #{path}"
+  return puts "ok: venv created" if system("python3", "-m", "venv", "--system-site-packages", path.to_s)
+
+  puts ""
+  puts "note: `python3 -m venv` failed. On Debian that is usually python3-venv"
+  puts "note: missing rather than anything wrong with Python — ensurepip lives in"
+  puts "note: that package. Falling back to virtualenv, which bundles its own pip."
+  FileUtils.rm_rf(path)
+  sh!("python3", "-m", "pip", "install", "-q", "--upgrade", "virtualenv")
+  sh!("python3", "-m", "virtualenv", "--system-site-packages", path.to_s)
+  puts "ok: venv created by virtualenv"
+end
+
 def install_ai_toolkit
   return puts "ok: ai-toolkit present and importable" if toolkit_ready?
 
@@ -120,7 +150,7 @@ def install_ai_toolkit
   # Colab's own torch is CUDA-matched to its driver; a clean venv would pull a
   # second multi-GB one off PyPI that is not. run_ai_toolkit.rb requires a venv
   # python, so it stays a venv — one that can see the image's packages.
-  sh!("python3", "-m", "venv", "--system-site-packages", AI_TOOLKIT.join(".venv").to_s)
+  make_venv(AI_TOOLKIT.join(".venv"))
   pip = AI_TOOLKIT.join(".venv/bin/pip").to_s
   sh!(pip, "install", "-q", "--upgrade", "pip", "wheel")
 
