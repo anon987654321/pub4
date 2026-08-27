@@ -82,7 +82,39 @@ def prepare
   ENV["AI_TOOLKIT_ROOT"] = AI_TOOLKIT.to_s
   abort "warn: no subject at #{SUBJECT_DIR}" unless SUBJECT_DIR.directory?
   [WEIGHTS_DIR, PERSIST].each(&:mkpath)
+  restrain_the_downloader
   puts "ok: subject #{SUBJECT} model #{MODEL}"
+end
+
+# Download FLUX.1-dev without exhausting the machine's memory.
+#
+# The run that got this far died mid-download at 12.6 GB of 23.8 GB, and Colab's
+# log recorded it honestly: `AsyncIOLoopKernelRestarter: restarting kernel`. Not
+# a crash in training, not a bad weight — the kernel was killed, and 12.6 GB is
+# what a free Colab has of system RAM.
+#
+# hf-xet is the reason. It is a deduplicating transfer that fetches content
+# chunks and REASSEMBLES them in memory, which is what the "Reconstructing
+# (incomplete total...)" progress bars in the log are. Alongside hf_transfer's
+# parallel connections it saturates the link beautifully and needs headroom
+# proportional to the file. FLUX.1-dev is larger than this box's RAM, so the
+# fast path cannot finish on the tier this lane exists to use.
+#
+# Both off. The plain downloader streams to disk and holds a buffer rather than
+# a file, so the ceiling becomes the 100 GB of scratch instead of 12.7 GB of
+# RAM. It is slower and it completes, which beats fast and killed.
+#
+# The cache goes to /content too. It defaults under ~/.cache, and on a runtime
+# whose home is small a 24 GB download can fill the wrong filesystem — same
+# failure, different resource, and much harder to read from the log.
+def restrain_the_downloader
+  ENV["HF_HUB_DISABLE_XET"] = "1"
+  ENV["HF_HUB_ENABLE_HF_TRANSFER"] = "0"
+  ENV["HF_HOME"] ||= "/content/hf_cache"
+  FileUtils.mkdir_p(ENV["HF_HOME"])
+  puts "note: xet and hf_transfer disabled — they reassemble in RAM, and FLUX.1-dev"
+  puts "note: is larger than a free Colab has. Slower, and it finishes."
+  puts "note: model cache at #{ENV['HF_HOME']}"
 end
 
 # Can the toolkit actually run, as opposed to having been downloaded?
