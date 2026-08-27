@@ -30,10 +30,17 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-let FACE_PIXEL_SIZE = 0.022;
-let FACE_GLOW_SCALE = 1.22;
 let FACE_PHOSPHOR_DECAY = 0.88;
 let FACE_RENDER_SCALE = 0.72;
+// The pixel grid is absolute, not a fraction of the display. Capping the render
+// buffer is what makes one drawn pixel mean the same thing on a phone, a CRT and
+// a 4K television — the big screen simply upscales the same grid further. Left
+// uncapped, the buffer grew with the display while particleScale() stayed
+// clamped at 1.35, so a face that reads solid on a laptop thinned to a sparse
+// dust of single pixels on a television, and cost four times as much to draw
+// while doing it.
+const FACE_BUFFER_MAX_W = 960;
+const FACE_BUFFER_MAX_H = 640;
 const soulDrift = Math.max(0, Math.min(1, Number(window.MASTER_SOUL_DRIFT || 0)));
 rootBody.dataset.soulDrift = soulDrift.toFixed(3);
 const modelBadge = (() => {
@@ -461,15 +468,13 @@ window.addEventListener('unhandledrejection', event => {
   enterDegradedTextUI(reason?.message ? `Degraded text mode: ${reason.message}` : 'Degraded text mode');
 });
 
-// Read particle sizing from CSS vars (web-ui-improvements.md:97) for theming/CRT profiles.
-// Fallbacks preserve current 8-bit phosphor look.
+// Read the phosphor profile from CSS vars for theming/CRT profiles.
+// --face-particle-size and --face-glow-scale are gone: particle size is fixed at
+// one pixel by law, and there is no glow layer left to scale. A knob whose only
+// legal value is its default is not a knob.
 (function applyFaceCssVars() {
   try {
     const cs = getComputedStyle(rootBody);
-    const ps = parseFloat(cs.getPropertyValue('--face-particle-size'));
-    if (ps > 0.001) FACE_PIXEL_SIZE = ps;
-    const gs = parseFloat(cs.getPropertyValue('--face-glow-scale'));
-    if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
     if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
@@ -594,7 +599,13 @@ function markFaceReady() {
 let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;
 if (_hasWebGL && THREE) {
   try {
-    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: false, preserveDrawingBuffer: true });
+    // antialias: false, deliberately. Nothing here has an edge to smooth — the
+    // scene is 1px points and one full-screen quad. Worse, MSAA is what stopped
+    // a 1px point being one pixel: a point whose centre lands between pixels
+    // resolves as partial coverage across up to four of them, so every particle
+    // came out dim and smeared rather than crisp. Multisampling a pixel-art
+    // buffer costs bandwidth to destroy the thing being drawn.
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
   } catch (e) {
@@ -648,8 +659,16 @@ function resize() {
   if (FACE_RENDER_SCALE > scaleMax || FACE_RENDER_SCALE < scaleMin) {
     FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);
   }
-  const internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
-  const internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
+  let internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
+  let internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
+  // Cap both axes by one shared factor, never independently: the canvas element
+  // is stretched to the full viewport, so clamping width and height separately
+  // would change the buffer's aspect against the element's and squash the face.
+  const cap = Math.min(1, FACE_BUFFER_MAX_W / internalW, FACE_BUFFER_MAX_H / internalH);
+  if (cap < 1) {
+    internalW = Math.max(280, Math.floor(internalW * cap));
+    internalH = Math.max(200, Math.floor(internalH * cap));
+  }
 
   renderer.setPixelRatio(1);
   renderer.setSize(internalW, internalH, false);

@@ -42,7 +42,6 @@ vec3 curlNoise(vec3 p){
 }
 uniform float uMorph;
 uniform float uTime;
-uniform float uSize;
 uniform vec3 uColor;
 uniform float uHc;
 uniform float uCurl;
@@ -76,7 +75,6 @@ attribute float boundary;
 attribute float zone;
 varying float vAlpha;
 varying vec3 vColor;
-varying float vFresnel;
 varying float vDepth;
 varying float vZoneVal;
 void main(){
@@ -138,9 +136,18 @@ void main(){
   // FA09 council sector — radial sector glow by zone during deliberation (carried via uBeat spike)
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
-  float sizeBoost=0.78+curvature*0.62+depth*1.22+boundary*0.42;
-  gl_PointSize=clamp(uSize*(260./-mv.z)*sizeBoost,2.0,4.0);
+  // One point is one pixel. The renderer draws into a FACE_RENDER_SCALE buffer
+  // that CSS upscales with image-rendering:pixelated, so a single fragment here
+  // IS the visible square block on screen. A point that grew toward the camera
+  // stopped being a pixel and became a blob, and a field of overlapping blobs is
+  // what read as a lit wireframe mass rather than a face built out of pixels.
+  gl_PointSize=1.0;
   gl_Position=projectionMatrix*mv;
+  // Curvature, depth and silhouette used to scale point SIZE. A pixel has no
+  // size to give, so they scale brightness instead — which is how a 1-bit image
+  // has always carried form. This is now the only 3D cue, so it does the work
+  // the deleted glow pass and fresnel rim were doing, without softening an edge.
+  float form=0.78+curvature*0.62+depth*1.22+boundary*0.42;
   float hc=uHc;
   float zoneAudio=0.0;
   if(zone<0.1) zoneAudio=uBass*0.18;
@@ -156,14 +163,14 @@ void main(){
   vAlpha*=flicker*uExposure;
   vAlpha*=1.0-0.45*clamp(uModelSwitch,0.0,1.0);
   vAlpha*=1.0-0.35*clamp(uQuestion,0.0,1.0);
+  vAlpha*=clamp(form*0.42,0.25,1.0);
   vAlpha=max(vAlpha,0.08);
   float shade=mix(0.14,1.0,depth);
-  vec3 warmCool=mix(vec3(0.62,0.64,0.86),vec3(1.0,1.0,1.0),depth);
-  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmCool*shade);
-  vec3 viewDir=normalize(-mv.xyz);
-  vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
-  vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
-  vFresnel=pow(1.0-abs(dot(viewDir,vn)),1.8);
+  // Warm, not cool. Receding points used to tint blue-violet, which reads
+  // clinical on black. A face meant to be comfortable to sit with warms as it
+  // recedes and resolves to a warm white at the nearest points.
+  vec3 warmDepth=mix(vec3(0.74,0.66,0.58),vec3(1.0,0.98,0.94),depth);
+  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmDepth*shade);
   vDepth=depth;
   vZoneVal=zone;
 }`;
@@ -171,21 +178,21 @@ void main(){
 const FRAG_SHADER = `
 varying float vAlpha;
 varying vec3 vColor;
-varying float vFresnel;
 varying float vDepth;
 varying float vZoneVal;
 uniform float uFocusDim;
 void main(){
-  vec2 pc=gl_PointCoord-0.5;
-  float square=max(abs(pc.x),abs(pc.y))*2.0;
-  float disc=step(square,0.90);
-  float alpha=disc*vAlpha*uFocusDim;
+  // No gl_PointCoord shaping. At gl_PointSize 1.0 a point is a single fragment,
+  // so there is no interior to carve a disc out of — the mask only ever cost an
+  // interpolation and rounded the one pixel it was drawing.
+  float alpha=vAlpha*uFocusDim;
   float eyeRgn=smoothstep(0.30,0.50,vZoneVal)*(1.0-smoothstep(0.50,0.65,vZoneVal));
   float mouthRgn=smoothstep(0.68,0.82,vZoneVal);
   float zoneDim=mix(1.0,mix(0.82,0.96,mouthRgn),eyeRgn*0.48);
   alpha*=zoneDim;
-  vec3 col=clamp(vColor+vFresnel*vColor*0.50,0.0,1.0);
-  gl_FragColor=vec4(col,max(0.0,alpha));
+  // No fresnel rim. A rim light is soft-glow shading under another name, and the
+  // silhouette term folded into vAlpha already states the edge as brightness.
+  gl_FragColor=vec4(clamp(vColor,0.0,1.0),max(0.0,alpha));
 }`;
 
 // No edge lines. The face is points, and nothing else: operator decision
@@ -204,7 +211,7 @@ if (_hasWebGL && THREE) {
   faceMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
-      uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE},
+      uMorph:{value:0}, uTime:{value:0},
       uColor:{value:new Color(1,1,1)},
       uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
@@ -216,9 +223,10 @@ if (_hasWebGL && THREE) {
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
       uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
     },
-    // Normal (not additive) blending on the main point layer so individual
-    // pixels stay crisp and discrete instead of bleeding into neighbors —
-    // the glow layer below still uses additive blending for its soft halo.
+    // Normal (not additive) blending, so individual pixels stay crisp and
+    // discrete instead of bleeding into their neighbours. This is the only
+    // point layer there is; the additive halo pass that used to sit behind it
+    // is gone.
     // No `blending:` here, deliberately. THREE.NormalBlending is not one of the
     // symbols script/three_face_entry.js re-exports, so naming it set this
     // material's blending to `undefined` rather than to normal alpha blending.
@@ -232,7 +240,7 @@ if (_hasWebGL && THREE) {
   facePoints = new THREE.Points(faceGeom, faceMat);
 }
 
-let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
+let morphCurrent = 0.0, morphTarget = 0.88;
 let mouthPool = null;
 let eyePool = null;
 function initSemanticPools() {
@@ -347,32 +355,11 @@ let lastT = performance.now();
 let _attnEyeClose = 0;
 window.MASTER_ATTENTION?.reset?.({ blinkMs: State.idleSignature?.blink_ms });
 let nodImpulse = 0;
-let glowPoints;
 let head;
 if (_hasWebGL && THREE && scene && facePoints) {
   head = new THREE.Object3D();
   scene.add(head);
   head.add(facePoints);
-  const glowMat = new THREE.ShaderMaterial({
-    vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
-    uniforms: {
-      uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE * FACE_GLOW_SCALE},
-      uColor:{value:new Color(1,1,1)},
-      uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
-      uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
-      uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
-      uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
-      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
-      uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
-      uVowel:{value:0}, uSurpriseY:{value:0},
-      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
-    },
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-  });
-  glowPoints = new THREE.Points(faceGeom, glowMat);
-  glowPoints.renderOrder = -1;
-  head.add(glowPoints);
 }
 
 async function swapMask(imageUrl) {
@@ -394,7 +381,6 @@ async function swapMask(imageUrl) {
     ng.setAttribute('zone',      new THREE.BufferAttribute(nd.zone, 1));
     facePoints.geometry.dispose();
     facePoints.geometry = ng;
-    if (glowPoints) { glowPoints.geometry.dispose(); glowPoints.geometry = ng; }
     morphCurrent = 0; morphTarget = 1.0;
     mouthPool = null; eyePool = null;
     initSemanticPools();

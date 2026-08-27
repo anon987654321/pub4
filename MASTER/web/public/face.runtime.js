@@ -32,10 +32,17 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-let FACE_PIXEL_SIZE = 0.022;
-let FACE_GLOW_SCALE = 1.22;
 let FACE_PHOSPHOR_DECAY = 0.88;
 let FACE_RENDER_SCALE = 0.72;
+// The pixel grid is absolute, not a fraction of the display. Capping the render
+// buffer is what makes one drawn pixel mean the same thing on a phone, a CRT and
+// a 4K television — the big screen simply upscales the same grid further. Left
+// uncapped, the buffer grew with the display while particleScale() stayed
+// clamped at 1.35, so a face that reads solid on a laptop thinned to a sparse
+// dust of single pixels on a television, and cost four times as much to draw
+// while doing it.
+const FACE_BUFFER_MAX_W = 960;
+const FACE_BUFFER_MAX_H = 640;
 const soulDrift = Math.max(0, Math.min(1, Number(window.MASTER_SOUL_DRIFT || 0)));
 rootBody.dataset.soulDrift = soulDrift.toFixed(3);
 const modelBadge = (() => {
@@ -463,15 +470,13 @@ window.addEventListener('unhandledrejection', event => {
   enterDegradedTextUI(reason?.message ? `Degraded text mode: ${reason.message}` : 'Degraded text mode');
 });
 
-// Read particle sizing from CSS vars (web-ui-improvements.md:97) for theming/CRT profiles.
-// Fallbacks preserve current 8-bit phosphor look.
+// Read the phosphor profile from CSS vars for theming/CRT profiles.
+// --face-particle-size and --face-glow-scale are gone: particle size is fixed at
+// one pixel by law, and there is no glow layer left to scale. A knob whose only
+// legal value is its default is not a knob.
 (function applyFaceCssVars() {
   try {
     const cs = getComputedStyle(rootBody);
-    const ps = parseFloat(cs.getPropertyValue('--face-particle-size'));
-    if (ps > 0.001) FACE_PIXEL_SIZE = ps;
-    const gs = parseFloat(cs.getPropertyValue('--face-glow-scale'));
-    if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
     if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
@@ -596,7 +601,13 @@ function markFaceReady() {
 let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;
 if (_hasWebGL && THREE) {
   try {
-    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: false, preserveDrawingBuffer: true });
+    // antialias: false, deliberately. Nothing here has an edge to smooth — the
+    // scene is 1px points and one full-screen quad. Worse, MSAA is what stopped
+    // a 1px point being one pixel: a point whose centre lands between pixels
+    // resolves as partial coverage across up to four of them, so every particle
+    // came out dim and smeared rather than crisp. Multisampling a pixel-art
+    // buffer costs bandwidth to destroy the thing being drawn.
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
     renderer.autoClear = true;
   } catch (e) {
@@ -650,8 +661,16 @@ function resize() {
   if (FACE_RENDER_SCALE > scaleMax || FACE_RENDER_SCALE < scaleMin) {
     FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);
   }
-  const internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
-  const internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
+  let internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
+  let internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
+  // Cap both axes by one shared factor, never independently: the canvas element
+  // is stretched to the full viewport, so clamping width and height separately
+  // would change the buffer's aspect against the element's and squash the face.
+  const cap = Math.min(1, FACE_BUFFER_MAX_W / internalW, FACE_BUFFER_MAX_H / internalH);
+  if (cap < 1) {
+    internalW = Math.max(280, Math.floor(internalW * cap));
+    internalH = Math.max(200, Math.floor(internalH * cap));
+  }
 
   renderer.setPixelRatio(1);
   renderer.setSize(internalW, internalH, false);
@@ -1016,7 +1035,6 @@ vec3 curlNoise(vec3 p){
 }
 uniform float uMorph;
 uniform float uTime;
-uniform float uSize;
 uniform vec3 uColor;
 uniform float uHc;
 uniform float uCurl;
@@ -1050,7 +1068,6 @@ attribute float boundary;
 attribute float zone;
 varying float vAlpha;
 varying vec3 vColor;
-varying float vFresnel;
 varying float vDepth;
 varying float vZoneVal;
 void main(){
@@ -1112,9 +1129,18 @@ void main(){
   // FA09 council sector — radial sector glow by zone during deliberation (carried via uBeat spike)
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
-  float sizeBoost=0.78+curvature*0.62+depth*1.22+boundary*0.42;
-  gl_PointSize=clamp(uSize*(260./-mv.z)*sizeBoost,2.0,4.0);
+  // One point is one pixel. The renderer draws into a FACE_RENDER_SCALE buffer
+  // that CSS upscales with image-rendering:pixelated, so a single fragment here
+  // IS the visible square block on screen. A point that grew toward the camera
+  // stopped being a pixel and became a blob, and a field of overlapping blobs is
+  // what read as a lit wireframe mass rather than a face built out of pixels.
+  gl_PointSize=1.0;
   gl_Position=projectionMatrix*mv;
+  // Curvature, depth and silhouette used to scale point SIZE. A pixel has no
+  // size to give, so they scale brightness instead — which is how a 1-bit image
+  // has always carried form. This is now the only 3D cue, so it does the work
+  // the deleted glow pass and fresnel rim were doing, without softening an edge.
+  float form=0.78+curvature*0.62+depth*1.22+boundary*0.42;
   float hc=uHc;
   float zoneAudio=0.0;
   if(zone<0.1) zoneAudio=uBass*0.18;
@@ -1130,14 +1156,14 @@ void main(){
   vAlpha*=flicker*uExposure;
   vAlpha*=1.0-0.45*clamp(uModelSwitch,0.0,1.0);
   vAlpha*=1.0-0.35*clamp(uQuestion,0.0,1.0);
+  vAlpha*=clamp(form*0.42,0.25,1.0);
   vAlpha=max(vAlpha,0.08);
   float shade=mix(0.14,1.0,depth);
-  vec3 warmCool=mix(vec3(0.62,0.64,0.86),vec3(1.0,1.0,1.0),depth);
-  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmCool*shade);
-  vec3 viewDir=normalize(-mv.xyz);
-  vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
-  vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
-  vFresnel=pow(1.0-abs(dot(viewDir,vn)),1.8);
+  // Warm, not cool. Receding points used to tint blue-violet, which reads
+  // clinical on black. A face meant to be comfortable to sit with warms as it
+  // recedes and resolves to a warm white at the nearest points.
+  vec3 warmDepth=mix(vec3(0.74,0.66,0.58),vec3(1.0,0.98,0.94),depth);
+  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmDepth*shade);
   vDepth=depth;
   vZoneVal=zone;
 }`;
@@ -1145,21 +1171,21 @@ void main(){
 const FRAG_SHADER = `
 varying float vAlpha;
 varying vec3 vColor;
-varying float vFresnel;
 varying float vDepth;
 varying float vZoneVal;
 uniform float uFocusDim;
 void main(){
-  vec2 pc=gl_PointCoord-0.5;
-  float square=max(abs(pc.x),abs(pc.y))*2.0;
-  float disc=step(square,0.90);
-  float alpha=disc*vAlpha*uFocusDim;
+  // No gl_PointCoord shaping. At gl_PointSize 1.0 a point is a single fragment,
+  // so there is no interior to carve a disc out of — the mask only ever cost an
+  // interpolation and rounded the one pixel it was drawing.
+  float alpha=vAlpha*uFocusDim;
   float eyeRgn=smoothstep(0.30,0.50,vZoneVal)*(1.0-smoothstep(0.50,0.65,vZoneVal));
   float mouthRgn=smoothstep(0.68,0.82,vZoneVal);
   float zoneDim=mix(1.0,mix(0.82,0.96,mouthRgn),eyeRgn*0.48);
   alpha*=zoneDim;
-  vec3 col=clamp(vColor+vFresnel*vColor*0.50,0.0,1.0);
-  gl_FragColor=vec4(col,max(0.0,alpha));
+  // No fresnel rim. A rim light is soft-glow shading under another name, and the
+  // silhouette term folded into vAlpha already states the edge as brightness.
+  gl_FragColor=vec4(clamp(vColor,0.0,1.0),max(0.0,alpha));
 }`;
 
 // No edge lines. The face is points, and nothing else: operator decision
@@ -1178,7 +1204,7 @@ if (_hasWebGL && THREE) {
   faceMat = new THREE.ShaderMaterial({
     vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
     uniforms: {
-      uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE},
+      uMorph:{value:0}, uTime:{value:0},
       uColor:{value:new Color(1,1,1)},
       uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
@@ -1190,9 +1216,10 @@ if (_hasWebGL && THREE) {
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
       uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
     },
-    // Normal (not additive) blending on the main point layer so individual
-    // pixels stay crisp and discrete instead of bleeding into neighbors —
-    // the glow layer below still uses additive blending for its soft halo.
+    // Normal (not additive) blending, so individual pixels stay crisp and
+    // discrete instead of bleeding into their neighbours. This is the only
+    // point layer there is; the additive halo pass that used to sit behind it
+    // is gone.
     // No `blending:` here, deliberately. THREE.NormalBlending is not one of the
     // symbols script/three_face_entry.js re-exports, so naming it set this
     // material's blending to `undefined` rather than to normal alpha blending.
@@ -1206,7 +1233,7 @@ if (_hasWebGL && THREE) {
   facePoints = new THREE.Points(faceGeom, faceMat);
 }
 
-let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
+let morphCurrent = 0.0, morphTarget = 0.88;
 let mouthPool = null;
 let eyePool = null;
 function initSemanticPools() {
@@ -1321,32 +1348,11 @@ let lastT = performance.now();
 let _attnEyeClose = 0;
 window.MASTER_ATTENTION?.reset?.({ blinkMs: State.idleSignature?.blink_ms });
 let nodImpulse = 0;
-let glowPoints;
 let head;
 if (_hasWebGL && THREE && scene && facePoints) {
   head = new THREE.Object3D();
   scene.add(head);
   head.add(facePoints);
-  const glowMat = new THREE.ShaderMaterial({
-    vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
-    uniforms: {
-      uMorph:{value:0}, uTime:{value:0}, uSize:{value:FACE_PIXEL_SIZE * FACE_GLOW_SCALE},
-      uColor:{value:new Color(1,1,1)},
-      uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
-      uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
-      uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
-      uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
-      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
-      uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
-      uVowel:{value:0}, uSurpriseY:{value:0},
-      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
-    },
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-  });
-  glowPoints = new THREE.Points(faceGeom, glowMat);
-  glowPoints.renderOrder = -1;
-  head.add(glowPoints);
 }
 
 async function swapMask(imageUrl) {
@@ -1368,7 +1374,6 @@ async function swapMask(imageUrl) {
     ng.setAttribute('zone',      new THREE.BufferAttribute(nd.zone, 1));
     facePoints.geometry.dispose();
     facePoints.geometry = ng;
-    if (glowPoints) { glowPoints.geometry.dispose(); glowPoints.geometry = ng; }
     morphCurrent = 0; morphTarget = 1.0;
     mouthPool = null; eyePool = null;
     initSemanticPools();
@@ -1814,13 +1819,21 @@ function frame(t) {
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
     const phonemeBoost = 1.0 + (State.visemeAmp || 0) * 0.18;
     const _breath = 0.5 + 0.5 * Math.sin(performance.now() * 0.000698);
-    const _breathSize = 0.94 + 0.12 * _breath;
-    faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost * _breathSize;
-    // Energy conservation for the additive pass: the less assembled the face,
-    // the more its points overlap in one region, so brightness must drop with
-    // morph or the cloud saturates to a solid white oval. Assembled (morph≈1)
-    // keeps full exposure; fully scattered would run at 35%.
-    if (faceMat.uniforms.uExposure) faceMat.uniforms.uExposure.value = 0.35 + 0.65 * Math.min(1, Math.max(0, morphCurrent));
+    // Confidence, voice and breath used to modulate point SIZE. A pixel is one
+    // pixel, so they modulate brightness instead: a whisper dims the face, a
+    // shout lifts it, and the breath cycle became a slow rise and fall in
+    // exposure rather than in scale. Same trade the shader makes for curvature
+    // and silhouette — in a 1px field, brightness is the only dimension left.
+    const _voiceGain = (0.55 + State.confidence * 0.45 + State.pulse * 0.12)
+      * whisperScale * shoutBoost * phonemeBoost * (0.94 + 0.12 * _breath);
+    // Energy conservation: the less assembled the face, the more its points
+    // overlap in one region, so brightness must drop with morph or the cloud
+    // saturates to a solid white oval. Assembled (morph≈1) keeps full exposure;
+    // fully scattered would run at 35%.
+    if (faceMat.uniforms.uExposure) {
+      faceMat.uniforms.uExposure.value =
+        (0.35 + 0.65 * Math.min(1, Math.max(0, morphCurrent))) * Math.min(1.35, Math.max(0.45, _voiceGain));
+    }
     const energeticGlow = /energetic|dramatic|intense|storyteller/i.test(String(State.currentSpeechStyle || ''))
       && (State.pulse || 0) > 0.35 ? Math.min(0.42, (State.pulse || 0) * 0.35) : 0;
     if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.03 + 0.06 * _breath + energeticGlow;
@@ -1875,7 +1888,6 @@ function frame(t) {
     const idleS3 = (t - State.lastTouch) / 1000;
     const eyeCloseTarget = _attnEyeClose || 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
-    morphGhost += (morphCurrent - morphGhost) * 0.035;
     faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524 + (State.entropy || 0) * 0.002;
     const soulDensity = 0.82 + soulDrift * 0.35;
     const confExposure = 0.68 + (State.confidence || 1) * 0.42;
@@ -1904,40 +1916,18 @@ function frame(t) {
     if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
     State._heartbeat = (State._heartbeat || 0) * 0.94;
     faceMat.uniforms.uHeartbeat.value = State._heartbeat || 0;
-    if (glowPoints) {
-      const gm = glowPoints.material;
-      gm.uniforms.uMorph.value = morphGhost;
-      Object.assign(gm.uniforms, {
-        uTime: faceMat.uniforms.uTime,
-        uColor: faceMat.uniforms.uColor, uHc: faceMat.uniforms.uHc,
-        uCurl: faceMat.uniforms.uCurl, uJaw: faceMat.uniforms.uJaw,
-        uMouse: faceMat.uniforms.uMouse, uBass: faceMat.uniforms.uBass,
-        uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing,
-        uMids: faceMat.uniforms.uMids, uHighs: faceMat.uniforms.uHighs,
-        uBeat: faceMat.uniforms.uBeat, uConfidence: faceMat.uniforms.uConfidence,
-        uTremor: faceMat.uniforms.uTremor, uTilt: faceMat.uniforms.uTilt,
-        uRain: faceMat.uniforms.uRain, uEarPulse: faceMat.uniforms.uEarPulse,
-        uRipple: faceMat.uniforms.uRipple, uVowel: faceMat.uniforms.uVowel,
-        uSurpriseY: faceMat.uniforms.uSurpriseY,
-        uFracture: faceMat.uniforms.uFracture, uBloom: faceMat.uniforms.uBloom,
-        uIdleDrift: faceMat.uniforms.uIdleDrift, uEyeClose: faceMat.uniforms.uEyeClose,
-        uGridAngle: faceMat.uniforms.uGridAngle, uHeartbeat: faceMat.uniforms.uHeartbeat,
-        uPulseRing: faceMat.uniforms.uPulseRing, uExposure: faceMat.uniforms.uExposure,
-        uFocusDim: faceMat.uniforms.uFocusDim, uPhosphorSoft: faceMat.uniforms.uPhosphorSoft,
-        uScanline: faceMat.uniforms.uScanline, uTime: faceMat.uniforms.uTime
-      });
-      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
-    }
   }
 
   State.flash *= 0.9;
   if (State.flash > 0.15) rootBody.dataset.faceFlash = '1';
   else delete rootBody.dataset.faceFlash;
   const renderMode = rootBody.dataset.faceRenderMode || 'auto';
-  const wireframeOn = renderMode === 'wireframe';
+  // No wireframe branch. `wireframe` is a triangle-rasterisation flag and this
+  // material is on a THREE.Points, so setting it did nothing in either
+  // direction — an inert switch named after the exact thing the face must
+  // never be. Mode 'wireframe' now falls through to 'auto', which is what it
+  // already rendered as.
   const rasterOnly = renderMode === 'raster' || (!renderer && renderMode !== '3d');
-  if (wireframeOn && faceMat) faceMat.wireframe = true;
-  else if (faceMat) faceMat.wireframe = false;
   if (rasterOnly && renderer) renderer.domElement.style.opacity = '0';
   else if (renderer) renderer.domElement.style.opacity = '';
   const phosphorOn = !State.reducedMotion && FACE_PHOSPHOR_DECAY > 0.12 && FACE_PHOSPHOR_DECAY < 0.98 && renderMode !== 'wireframe';
@@ -2163,7 +2153,10 @@ cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoT
 // FA33 battery saver LOD
 if ('getBattery' in navigator) {
   navigator.getBattery().then(b => {
-    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.013; else FACE_PIXEL_SIZE = 0.022; };
+    // Battery saver drops the render buffer, not the pixel size. Shrinking a
+    // 1px point is not available and never saved anything anyway — the cost is
+    // fill rate, so fewer pixels to fill is the only lever that pays.
+    const check = () => { FACE_RENDER_SCALE = (!b.charging && b.level < 0.15) ? 0.48 : 0.72; resize(); };
     check();
     b.addEventListener('levelchange', check);
     b.addEventListener('chargingchange', check);

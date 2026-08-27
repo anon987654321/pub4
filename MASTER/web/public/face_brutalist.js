@@ -22,9 +22,9 @@
     document.documentElement.style.setProperty("--transition-fast", "0ms");
     document.documentElement.style.setProperty("--transition-normal", "0ms");
     document.documentElement.style.setProperty("--ease-out", "steps(2,end)");
-    // Flat: no phosphor afterimage trail, no glow-halo expansion.
+      // Flat: no phosphor afterimage trail. The glow-halo pass this used to
+      // shrink no longer exists at all.
     document.documentElement.style.setProperty("--face-phosphor-decay", "0");
-    document.documentElement.style.setProperty("--face-glow-scale", "1.0");
     document.body.classList.add("brutalist-mode");
   }
 

@@ -100,3 +100,39 @@ Law.define(:TEMPLATE_LITERALS) do
   bad  "'Hello ' + name + '!'"
   good "`Hello ${name}!`"
 end
+
+# The face is a field of pixels, and a pixel has one size. The renderer draws
+# into a capped buffer that CSS upscales with image-rendering:pixelated, so one
+# fragment is one visible square block — a point that scales with depth or
+# curvature stops being a pixel and becomes a blob, and a field of overlapping
+# blobs is what made the face read as a lit wireframe mass. Depth, curvature and
+# silhouette belong in brightness instead, which is where 1-bit imagery has
+# always carried form.
+Law.define(:FACE_POINT_IS_ONE_PIXEL) do
+  source "pixel_perfection — MASTER/data/rules.yml, extended to WebGL"
+  severity :error
+  languages %i[javascript]
+  detect do |line|
+    line.match?(/gl_PointSize\s*=/) && !line.match?(/gl_PointSize\s*=\s*1\.0\s*;/)
+  end
+  fix "One point, one pixel: gl_PointSize=1.0. Put depth and curvature into brightness, not size."
+  bad  "  gl_PointSize=clamp(uSize*(260./-mv.z)*sizeBoost,2.0,4.0);"
+  good "  gl_PointSize=1.0;"
+end
+
+# pixel_perfection bans soft glow in CSS. It was implemented in WebGL instead,
+# where the CSS scanner could not see it: a second THREE.Points pass over the
+# same geometry at 1.22x size with additive blending, which is a halo by
+# construction. It also doubled every vertex and cost ~13 blended fragments per
+# particle. The brutalist profile "removed" it by setting the scale to 1.0 —
+# which co-sites the pass rather than deleting it, so the face just rendered
+# twice as bright. A knob cannot switch off a layer that should not exist.
+Law.define(:NO_WEBGL_GLOW_PASS) do
+  source "pixel_perfection forbidden_css: soft glow — the WebGL spelling of it"
+  severity :error
+  languages %i[javascript]
+  detect { |line| line.match?(/blending:\s*THREE\.AdditiveBlending/) }
+  fix "Delete the additive pass. Brightness states form; a second offset pass is a glow."
+  bad  "    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending"
+  good "    transparent: true, depthWrite: false"
+end

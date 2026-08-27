@@ -587,13 +587,21 @@ class TestWebUI < Minitest::Test
     assert_includes source, "connectTTSAudio(audio"
   end
 
-  def test_face_particles_are_crisp_depth_sized_pixels
+  # This test used to pin the opposite: a clamped, depth-scaled gl_PointSize and
+  # the two knobs that sized the particle and its halo. Those made each particle
+  # a 2-4px block that grew toward the camera, which is what made the face read
+  # as a lit wireframe mass rather than a field of pixels. Depth still carries
+  # the form — it moved from size into brightness, which is the only dimension a
+  # single pixel has.
+  def test_face_particles_are_one_pixel
     source = face_runtime_source
 
-    assert_includes source, "let FACE_PIXEL_SIZE = 0.022"
-    assert_includes source, "let FACE_GLOW_SCALE = 1.22"
-    assert_includes source, "gl_PointSize=clamp"
-    assert_includes source, "depth"
+    assert_includes source, "gl_PointSize=1.0;"
+    refute_includes source, "gl_PointSize=clamp"
+    refute_includes source, "FACE_PIXEL_SIZE"
+    refute_includes source, "FACE_GLOW_SCALE"
+    refute_includes source, "AdditiveBlending"
+    assert_includes source, "float form=0.78+curvature*0.62+depth*1.22+boundary*0.42;"
   end
 
   # SwarmCoordinator

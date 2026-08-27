@@ -312,10 +312,15 @@ test("nothing takes a 2D context on the shared #face canvas", () => {
   assert.doesNotMatch(fallback, /getElementById\(["']face["']\)\s*\.getContext/);
 });
 
-test("face.css includes subtle visual polish layers", () => {
+test("face.css carries no knob for a glow that no longer exists", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   assert.doesNotMatch(css, /body::after/);
-  assert.match(css, /--face-glow-scale:\s*1\.22/);
+  // This used to assert --face-glow-scale: 1.22, pinning the additive halo pass
+  // in place. The pass is gone and particle size is fixed at one pixel by
+  // FACE_POINT_IS_ONE_PIXEL, so both vars are asserted absent instead — a knob
+  // whose only legal value is its default is not a knob.
+  assert.doesNotMatch(css, /--face-glow-scale/);
+  assert.doesNotMatch(css, /--face-particle-size/);
   assert.match(css, /--mood-accent:\s*var\(--c-accent\)/);
   assert.doesNotMatch(css, /speaking.*#zsh \.pp.*--mood-accent/);
 });

@@ -433,13 +433,21 @@ function frame(t) {
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
     const phonemeBoost = 1.0 + (State.visemeAmp || 0) * 0.18;
     const _breath = 0.5 + 0.5 * Math.sin(performance.now() * 0.000698);
-    const _breathSize = 0.94 + 0.12 * _breath;
-    faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost * _breathSize;
-    // Energy conservation for the additive pass: the less assembled the face,
-    // the more its points overlap in one region, so brightness must drop with
-    // morph or the cloud saturates to a solid white oval. Assembled (morph≈1)
-    // keeps full exposure; fully scattered would run at 35%.
-    if (faceMat.uniforms.uExposure) faceMat.uniforms.uExposure.value = 0.35 + 0.65 * Math.min(1, Math.max(0, morphCurrent));
+    // Confidence, voice and breath used to modulate point SIZE. A pixel is one
+    // pixel, so they modulate brightness instead: a whisper dims the face, a
+    // shout lifts it, and the breath cycle became a slow rise and fall in
+    // exposure rather than in scale. Same trade the shader makes for curvature
+    // and silhouette — in a 1px field, brightness is the only dimension left.
+    const _voiceGain = (0.55 + State.confidence * 0.45 + State.pulse * 0.12)
+      * whisperScale * shoutBoost * phonemeBoost * (0.94 + 0.12 * _breath);
+    // Energy conservation: the less assembled the face, the more its points
+    // overlap in one region, so brightness must drop with morph or the cloud
+    // saturates to a solid white oval. Assembled (morph≈1) keeps full exposure;
+    // fully scattered would run at 35%.
+    if (faceMat.uniforms.uExposure) {
+      faceMat.uniforms.uExposure.value =
+        (0.35 + 0.65 * Math.min(1, Math.max(0, morphCurrent))) * Math.min(1.35, Math.max(0.45, _voiceGain));
+    }
     const energeticGlow = /energetic|dramatic|intense|storyteller/i.test(String(State.currentSpeechStyle || ''))
       && (State.pulse || 0) > 0.35 ? Math.min(0.42, (State.pulse || 0) * 0.35) : 0;
     if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.03 + 0.06 * _breath + energeticGlow;
@@ -494,7 +502,6 @@ function frame(t) {
     const idleS3 = (t - State.lastTouch) / 1000;
     const eyeCloseTarget = _attnEyeClose || 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
-    morphGhost += (morphCurrent - morphGhost) * 0.035;
     faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524 + (State.entropy || 0) * 0.002;
     const soulDensity = 0.82 + soulDrift * 0.35;
     const confExposure = 0.68 + (State.confidence || 1) * 0.42;
@@ -523,40 +530,18 @@ function frame(t) {
     if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
     State._heartbeat = (State._heartbeat || 0) * 0.94;
     faceMat.uniforms.uHeartbeat.value = State._heartbeat || 0;
-    if (glowPoints) {
-      const gm = glowPoints.material;
-      gm.uniforms.uMorph.value = morphGhost;
-      Object.assign(gm.uniforms, {
-        uTime: faceMat.uniforms.uTime,
-        uColor: faceMat.uniforms.uColor, uHc: faceMat.uniforms.uHc,
-        uCurl: faceMat.uniforms.uCurl, uJaw: faceMat.uniforms.uJaw,
-        uMouse: faceMat.uniforms.uMouse, uBass: faceMat.uniforms.uBass,
-        uShake: faceMat.uniforms.uShake, uPulseRing: faceMat.uniforms.uPulseRing,
-        uMids: faceMat.uniforms.uMids, uHighs: faceMat.uniforms.uHighs,
-        uBeat: faceMat.uniforms.uBeat, uConfidence: faceMat.uniforms.uConfidence,
-        uTremor: faceMat.uniforms.uTremor, uTilt: faceMat.uniforms.uTilt,
-        uRain: faceMat.uniforms.uRain, uEarPulse: faceMat.uniforms.uEarPulse,
-        uRipple: faceMat.uniforms.uRipple, uVowel: faceMat.uniforms.uVowel,
-        uSurpriseY: faceMat.uniforms.uSurpriseY,
-        uFracture: faceMat.uniforms.uFracture, uBloom: faceMat.uniforms.uBloom,
-        uIdleDrift: faceMat.uniforms.uIdleDrift, uEyeClose: faceMat.uniforms.uEyeClose,
-        uGridAngle: faceMat.uniforms.uGridAngle, uHeartbeat: faceMat.uniforms.uHeartbeat,
-        uPulseRing: faceMat.uniforms.uPulseRing, uExposure: faceMat.uniforms.uExposure,
-        uFocusDim: faceMat.uniforms.uFocusDim, uPhosphorSoft: faceMat.uniforms.uPhosphorSoft,
-        uScanline: faceMat.uniforms.uScanline, uTime: faceMat.uniforms.uTime
-      });
-      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
-    }
   }
 
   State.flash *= 0.9;
   if (State.flash > 0.15) rootBody.dataset.faceFlash = '1';
   else delete rootBody.dataset.faceFlash;
   const renderMode = rootBody.dataset.faceRenderMode || 'auto';
-  const wireframeOn = renderMode === 'wireframe';
+  // No wireframe branch. `wireframe` is a triangle-rasterisation flag and this
+  // material is on a THREE.Points, so setting it did nothing in either
+  // direction — an inert switch named after the exact thing the face must
+  // never be. Mode 'wireframe' now falls through to 'auto', which is what it
+  // already rendered as.
   const rasterOnly = renderMode === 'raster' || (!renderer && renderMode !== '3d');
-  if (wireframeOn && faceMat) faceMat.wireframe = true;
-  else if (faceMat) faceMat.wireframe = false;
   if (rasterOnly && renderer) renderer.domElement.style.opacity = '0';
   else if (renderer) renderer.domElement.style.opacity = '';
   const phosphorOn = !State.reducedMotion && FACE_PHOSPHOR_DECAY > 0.12 && FACE_PHOSPHOR_DECAY < 0.98 && renderMode !== 'wireframe';
@@ -782,7 +767,10 @@ cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoT
 // FA33 battery saver LOD
 if ('getBattery' in navigator) {
   navigator.getBattery().then(b => {
-    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.013; else FACE_PIXEL_SIZE = 0.022; };
+    // Battery saver drops the render buffer, not the pixel size. Shrinking a
+    // 1px point is not available and never saved anything anyway — the cost is
+    // fill rate, so fewer pixels to fill is the only lever that pays.
+    const check = () => { FACE_RENDER_SCALE = (!b.charging && b.level < 0.15) ? 0.48 : 0.72; resize(); };
     check();
     b.addEventListener('levelchange', check);
     b.addEventListener('chargingchange', check);

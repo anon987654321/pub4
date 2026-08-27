@@ -3434,6 +3434,12 @@ design_rules:
     - backdrop-filter
     - glassmorphism
     - soft glow
+    # The last two are the WebGL spellings of "soft glow". They belong in this
+    # key because it is read into the design prompt, so the model is told the ban
+    # rather than only scanned for it; FACE_POINT_IS_ONE_PIXEL and
+    # NO_WEBGL_GLOW_PASS in law/javascript.rb are what enforce them.
+    - additive second pass behind a point cloud
+    - gl_PointSize above 1.0
     forbidden_patterns:
     - 'box-shadow\s*:'
     - 'text-shadow\s*:'
