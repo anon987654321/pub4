@@ -563,13 +563,22 @@ def warn_if_already_at_ceiling
   reached = resumable.filter_map { |p| checkpoint_step(p) || (s = step_of(p)).positive? && s }.max
   return unless reached && reached >= ceiling
 
-  puts "warn: the checkpoint to resume from is already at step #{reached}, and"
-  puts "warn: LORA_STEPS is #{ceiling}. There are no steps left to run — this would"
-  puts "warn: load the model, sample, save, and exit having trained nothing."
-  puts "warn: raise LORA_STEPS above #{reached} to continue training, or clear"
-  puts "warn: #{PERSIST} to start over."
-  puts "warn: continuing anyway, because sampling an existing adapter is a real"
-  puts "warn: thing to want — but if you expected training, stop now."
+  warn ""
+  warn "=" * 72
+  warn "REFUSING: the checkpoint resumes at step #{reached} and LORA_STEPS is #{ceiling}."
+  warn ""
+  warn "There are no steps left to run. This would load the model, cache latents,"
+  warn "save the same weights back and exit — no training, and no images either,"
+  warn "because skip_first_sample means nothing samples until a step completes."
+  warn "It takes about ten minutes and produces nothing, and the log reads like a"
+  warn "normal run. That has now happened once."
+  warn ""
+  warn "Pick one:"
+  warn "  LORA_STEPS=#{reached + 1000}   continue training, keeping what is learnt"
+  warn "  clear #{PERSIST}   start over"
+  warn "  LORA_COLAB_STAGES=prepare,generate,harvest   just render from this adapter"
+  warn "=" * 72
+  abort "warn: nothing to train"
 end
 
 def train
