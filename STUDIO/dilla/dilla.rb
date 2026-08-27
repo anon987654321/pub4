@@ -681,6 +681,10 @@ DISPATCH = {
   File.write(sidecar, JSON.pretty_generate(report) + "\n")
   puts "  wrote #{sidecar}"
 },
+  # The continuous stream: every progression in the catalogue, played through the
+  # engine's own pad stacks with the kit, the vocal and the full master chain over
+  # it, generated into a queue that a separate player drains. It does not stop.
+  "sines" => -> { exec(RbConfig.ruby, File.join(ROOT, "bin", "sine_stream.rb"), *ARGV) },
   "chords" => -> { chords },
   "vocab-check" => -> { vocab_check },
   "clean" => -> { clean(ARGV.shift, ARGV.shift || File.join(OUTPUT_DIR, "clean.wav")) },
