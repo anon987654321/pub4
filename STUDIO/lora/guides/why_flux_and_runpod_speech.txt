@@ -1,0 +1,31 @@
+Why we use FLUX, and why we need RunPod.
+
+This is not about making any pretty portrait of a woman. It is about making Ragnhild — the same face, the same age, the same eyes and presence — under Bergen rain, Hardanger gold hour, café tungsten, and black-and-white film — without the identity sliding into a generic influencer face.
+
+FLUX one point dev is the base model for that job for four reasons.
+
+First, photoreal control. FLUX is a large rectified-flow model. It tends to respect light, skin texture, lens language, and framing better than older diffusion stacks. Our negatives — plastic skin, beauty filter, identity drift — only work if the base can still render honest faces under soft Nordic light. FLUX can.
+
+Second, it actually follows the prompt. We write deliberate craft: Portra four hundred, eighty-five millimeter, window-blue fill, exact likeness, no hat, woman in her forties. FLUX is strong enough at instruction-following that those dials matter instead of being ignored.
+
+Third, and this is the real differentiator: we can train a person LoRA on it. Chat and A P I portrait tools give you a plausible stranger who might resemble a description once. FLUX plus a LoRA with the trigger word ragnhild attaches a small adapter so the model’s latent space holds a stable identity you can call by name. Style, location, and film stock change; the person is supposed to hold.
+
+Fourth, full pipeline ownership. Training, prompts, checkpoints, and portrait postpro live in our repo and on our disk. We can retrain, tighten captions, reject bad steps, and regenerate. Closed A P Is do not give us that likeness loop.
+
+FLUX is not always best for everything. For logos or one-off concepts, a generalist A P I can be enough. For identity-first, multi-look portraits of one real person, FLUX plus a curated dataset plus LoRA is the right architecture.
+
+Now: why RunPod.
+
+FLUX is huge. A full person-LoRA train is not a laptop afternoon hobby on Apple Silicon for this project.
+
+The train recipe wants FLUX one point dev, about eighteen hundred steps, checkpoints every two hundred fifty, rank thirty-two LoRA, flow-matching, multi-resolution buckets at five twelve, seven sixty-eight, and ten twenty-four. On C U D A we want eight-bit Adam W, B F sixteen, and a higher learning rate. You need roughly twenty-four gigabytes or more of video memory, and fifty to eighty gigabytes of disk for the model, cache, and weights. That is intended mode: full resolution ladder, proper optimizer, real G P U settings.
+
+On the Mac, Metal forces survival mode. Quantization and low V RAM hacks stay on. Eight-bit Adam W often does not work, so we fall back to full Adam W. B F sixteen can blow up, so we fall back to F P sixteen. Resolution often collapses toward five twelve only. In practice the Mac loaded FLUX and died during latent caching with Metal compiler errors. Training never reached a clean step one. So the laptop is not slow but fine. For this LoRA it was not a reliable train host.
+
+RunPod is rent-a-G P U for that one heavy step. Accept the FLUX license, set your Hugging Face token, spin a pod with C U D A and enough memory, run the setup script with train, watch it in a tmux session named ragnhild, then secure-copy the safetensors files back to the Mac and kill the pod so you stop paying. On the Mac you run generate and postpro for the final portraits.
+
+The split is simple. RunPod trains the LoRA. The Mac checks, generates samples, grades with MASTER postpro, and reviews likeness. You are not choosing two different art styles. You are choosing train where the model fits and finishes, versus finish and grade where you live.
+
+Cost: a short twenty-four gigabyte pod for a few hours is usually a few dollars if you terminate when weights land. Leaving the pod idle is what gets expensive.
+
+In one sentence: we use FLUX because it can learn a real person’s face as a LoRA on a photoreal base that still obeys light and film language. We need RunPod because FLUX training needs a full NVIDIA G P U, the Mac cannot run the intended train recipe reliably, so we rent C U D A for the heavy step, copy the weights home, and generate and grade on the laptop.
