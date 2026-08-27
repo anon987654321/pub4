@@ -13,6 +13,54 @@ def drum_feel_key(feel)
   :default
 end
 
+# Morphing the kit across a track: Detroit, then the LA beat scene, then
+# industrial techno.
+#
+# A track has exactly one feel. Patterns rotate inside it bar to bar, but the
+# vocabulary never changes, so a long piece states one idea for its whole
+# length. The operator asked for the drums to travel between the three
+# families "smoothly", which is a thing this had no way to express.
+#
+# The voices hand over one at a time, and that is the whole trick. Switching
+# every voice on the same bar is a cut -- the listener hears a new song. A
+# producer moves the hats first, because the hats are the least load-bearing
+# part of the bar and the ear forgives them changing; then the snare, which is
+# the reference the bar is counted against; and the kick last, because the kick
+# is what makes it the same piece of music. By the time the kick moves, the
+# rest of the kit has already been in the new idiom for a while and the change
+# lands as arrival rather than as edit.
+#
+# DRUM_MORPH=0 turns it off and every voice takes the track's own feel, which
+# is the previous behaviour exactly.
+DRUM_MORPH_PATH = %i[detroit_stumble la_beat_scene techno_house].freeze
+
+# Fractions of the track at which each voice has completed its move. Hats are
+# a third of the way ahead of the kick throughout.
+# A bigger lead means this voice is further along the path, so it changes
+# EARLIER. The hats therefore carry the largest number and the kick zero --
+# written the other way round first, which put the kick in the new idiom four
+# bars in while the hats were still in the old one. That is the handover
+# backwards: the load-bearing voice moved first and the change read as a cut.
+DRUM_MORPH_LEAD = { hats: 0.30, opens: 0.30, ghosts: 0.20, snares: 0.12, kicks: 0.0 }.freeze
+
+def drum_morph_enabled?
+  ENV.fetch("DRUM_MORPH", "0") != "0"
+end
+
+def drum_morph_feel(bar, role)
+  return nil unless drum_morph_enabled?
+
+  n_bars = @render_total_bars.to_i
+  return nil unless n_bars.positive?
+
+  path = DRUM_MORPH_PATH
+  # Where this voice is in its own journey: its lead pulls it forward, so at
+  # any moment the hats are further along the path than the kick.
+  lead = DRUM_MORPH_LEAD.fetch(role.to_sym, 0.15)
+  t = ((bar.to_f / n_bars) + lead).clamp(0.0, 0.999)
+  path[(t * path.length).floor.clamp(0, path.length - 1)]
+end
+
 def drum_pattern_seed(feel)
   (stable_hash(feel) + (@render_seed || 0)) % 10_000
 end
@@ -21,6 +69,9 @@ def drum_pattern_pick(bar, feel, role)
   if (learned = learned_drum_steps(role))&.any?
     return learned.dup
   end
+  # A morph overrides the track's feel for THIS voice only, which is what makes
+  # the handover staggered rather than simultaneous.
+  feel = drum_morph_feel(bar, role) || feel
   sets = DRUM_PATTERN_SETS.fetch(drum_feel_key(feel))
   pool = sets.fetch(role)
   seed = drum_pattern_seed(feel)

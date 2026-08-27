@@ -194,6 +194,11 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                    chord_phases: nil)
   bar_p = (beat_p * 4.0).round(6)
   step_p = (beat_p / 4.0).round(6)
+  # Published once here so drum_morph_feel can read it without n_bars being
+  # threaded through seven call sites. Same idiom as @render_seed, and the
+  # alternative was a morph that silently never engaged because its callers
+  # passed nil -- the shape this engine keeps producing.
+  @render_total_bars = n_bars
   events = Hash.new { |h, k| h[k] = [] }
   groove_meta = { snare_early_ms: [], hat_late_ms: [], ghost_vel: [] }
   # Odd-meter/hemiola nod (Aydin Esen's Turkish-modal odd meters, without a
