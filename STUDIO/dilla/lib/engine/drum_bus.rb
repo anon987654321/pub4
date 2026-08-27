@@ -188,6 +188,17 @@ def drum_drop_bar?(bar, section)
 end
 
 def drum_bus_mapping
+  # The one place every drum voice becomes audio: render_dilla renders the
+  # drum bus from this map, and it is the only caller. An empty map is a
+  # silent bus whatever the schedulers produced.
+  #
+  # Gating the schedulers is not enough on its own -- seven of them place
+  # drum events (dilla_schedule, schedule_drum_fills!, schedule_hat_roll!,
+  # schedule_wonky_drum_overlay!, schedule_eclectic_percussion!,
+  # analog_schedule, industrial_techno_schedule) and a new one would arrive
+  # ungated. The snare fill and the 32nd hat roll on every eighth bar were
+  # ungated for exactly that reason.
+  return {} unless drums_enabled?
   # Bass/sub stay on the harmonic bus only — routing them here too doubled
   # the low end on every kick and buried the pad chords in the mix.
   map = {
