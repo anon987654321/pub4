@@ -39,7 +39,17 @@ RAP_VOCAL_LEAN_WALK = [0, 7, -5, 12, -3, 9, -8, 4, 2, -6, 11, -2].freeze
 # How far the beat steps back while the rap is going. Set the ratio to 1 to
 # disable the duck entirely and get the old fixed-weight mix back.
 RAP_VOCAL_DUCK_THRESHOLD_DB = (ENV["RAP_VOCAL_DUCK_THRESHOLD_DB"] || -30).to_f.clamp(-60.0, 0.0)
-RAP_VOCAL_DUCK_RATIO = (ENV["RAP_VOCAL_DUCK_RATIO"] || 2).to_f.clamp(1.0, 20.0)
+# Off. Ratio 1 is a bypass: the sidechain stage stays in the graph and does
+# nothing.
+#
+# It was added to answer "the vocals must be present when the rap is going",
+# and it does that -- measured 4.50 dB of duck on the bed. The operator does not
+# want it, which settles it: ducking the music under the voice is a radio
+# technique and this is a record. Presence has to come from where the voice sits
+# against the beat, not from pushing the beat out of the way.
+#
+# RAP_VOCAL_DUCK_RATIO=2 restores it.
+RAP_VOCAL_DUCK_RATIO = (ENV["RAP_VOCAL_DUCK_RATIO"] || 1).to_f.clamp(1.0, 20.0)
 
 # Reverse pre-swell: the head of each line, reversed and darkened, arriving
 # exactly as the line starts. Impractical before line placement existed --
