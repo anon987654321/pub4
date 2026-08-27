@@ -109,9 +109,20 @@ OPENBSD/var/nsd/zones/master/*
 # Generated and scratch audio: large (~4GB locally) and reproducible by running
 # the engine, so none of it is tracked. Two of these files are past GitHub's
 # 100MB hard push limit and LFS is not an option — the account's budget is
-# exhausted. What IS tracked on purpose: samples/ (the curated kits and source
-# takes the generator reads at runtime) and samples/dug/provenance.json, the
-# record of what each dug side is and why it may be used.
+# exhausted.
+#
+# samples/ is NOT tracked either, and this paragraph used to say it was. The
+# rule that governs it lives in STUDIO/dilla/.gitignore, which ignores both
+# samples/ and crate/ on the newer decision that audio is irreplaceable, is
+# backed up as files, and does not belong in git. That reversal came out of
+# the same 2026-08-03 incident as the vocals note below: samples/ carries
+# source takes from released records, which is exactly what should not be in
+# a public repository. What IS worth tracking from a sample directory is the
+# provenance record beside it, not the audio — the split the vocals note
+# describes.
+#
+# This mattered: read literally, this file promised that 51 curated files
+# existing only on one laptop were safely in the repo.
 
 # Vocal stems the learner reads at render time. The audio is NOT tracked; the
 # meta.json and catalog.json beside it are, because the record of what a stem is
