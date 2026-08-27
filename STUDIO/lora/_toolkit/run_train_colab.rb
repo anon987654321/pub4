@@ -169,9 +169,17 @@ def dataset_cell(options)
     # through to the empty string when it is absent, so a broken pair is not an
     # error there — it is an uncaptioned training image, and the run reports
     # nothing.
+    # Images only — NOT "everything that is not a .txt".
+    #
+    # The first version globbed "*" and excluded .txt, which counts anything
+    # else in the folder as an uncaptioned image. ai-toolkit writes a
+    # `_latent_cache` DIRECTORY in here when cache_latents_to_disk is on, so the
+    # second run of any dataset refused to start, naming a directory as a
+    # missing caption. A check that fires on its own trainer's working files is
+    # worse than no check: it blocks the run and points at nothing.
     stems = {os.path.splitext(os.path.basename(p))[0]
-             for p in glob.glob(os.path.join(target, "*"))
-             if not p.endswith(".txt")}
+             for ext in ("jpg", "jpeg", "png", "webp")
+             for p in glob.glob(os.path.join(target, "*." + ext))}
     captions = {os.path.splitext(os.path.basename(p))[0]
                 for p in glob.glob(os.path.join(target, "*.txt"))}
     missing = sorted(stems - captions)
