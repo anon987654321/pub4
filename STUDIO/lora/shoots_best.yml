@@ -1,0 +1,97 @@
+# The short list. Twenty-four, drawn from the other two sets by reference.
+#
+# References, not copies. A cherry-picked set that duplicated the prose would
+# drift from its source the first time a scene was reworded, and then two files
+# would describe the same sitting differently with nothing saying which rendered.
+#
+# Chosen on three criteria, in this order:
+#
+#   1. The face has to be readable. Likeness is the weak point right now, so a
+#      figure at 30 m is a beautiful idea and a wasted render. "Small in the
+#      Landscape" is the best composition in shoots.yml and it is not here.
+#
+#   2. No two from the same light. Four different greys is one grey. Overcast,
+#      sodium and studio each appear once or twice, not four times.
+#
+#   3. SDXL has to be able to draw it. This is the criterion that removes the
+#      most interesting warp entries, and it is not a judgement on the ideas:
+#      VHS tracking error, sprocket holes, chain-link with selective focus,
+#      sheeting water, sharp-face-inside-motion-blur and multiplied mirror
+#      reflections are all things this model renders as mush. They stay in
+#      shoots_warp.yml for a base that can hold them — FLUX can.
+#
+# Everything cut is still in its own file. Nothing here is a deletion.
+selection:
+  - from: shoots
+    n: 1
+    why: the reference portrait — soft frontal north light, the cleanest test of whether the likeness is right
+  - from: shoots
+    n: 6
+    why: midsummer sun almost horizontal at 11pm, a light that exists at no other latitude
+  - from: shoots
+    n: 9
+    why: domestic and unposed, one window, the half-second before she notices
+  - from: shoots
+    n: 11
+    value: honest
+    why: overhead light, no makeup — deliberately unflattering setup, usually the most alive frame
+  - from: shoots
+    n: 13
+    why: 1900K firelight from below, the warmest and most distinctive source in the set
+  - from: shoots
+    n: 16
+    why: neon and wet asphalt, the most saturated frame available
+  - from: shoots
+    n: 18
+    why: tungsten behind, cold window in front — teal and orange occurring rather than graded
+  - from: shoots
+    n: 20
+    why: a phone held low as the only source, instantly readable as this decade
+  - from: shoots
+    n: 23
+    why: backlit rain visible in the air, and she is unbothered by it
+  - from: shoots
+    n: 26
+    why: direct flash into falling snow — every flake near the lens becomes a disc, and it costs nothing
+  - from: shoots
+    n: 27
+    why: black storm sky behind, sun still on her; a contrast ratio that cannot be faked
+  - from: shoots
+    n: 29
+    why: Tri-X pushed under hard sun, the frame that shows real skin texture
+  - from: shoots
+    n: 30
+    why: one softbox on black — the classic sitting, and the second likeness test
+  - from: shoots
+    n: 36
+    why: low winter sun straight into the lens behind her, walking
+  - from: shoots
+    n: 42
+    why: her own room, window plus a lamp, the most personal frame here
+  - from: shoots
+    n: 46
+    why: just woken, low window light, no performance at all
+  - from: warp
+    n: 1
+    why: faded 16mm educational film — Boards of Canada in one frame, and SDXL renders decayed film well
+  - from: warp
+    n: 4
+    why: photobooth flash, machine-made and close; the only sitting shot at arm's length
+  - from: warp
+    n: 5
+    why: passport framing, flat and frontal — a document is stranger than a portrait
+  - from: warp
+    n: 6
+    why: fluorescent bank, green cast, institutional ceiling; the light of every waiting room in Europe
+  - from: warp
+    n: 12
+    why: wet hair flat to the skull under hard flash — removes the flattering frame and leaves the bone
+  - from: warp
+    n: 17
+    why: bare flash against black, the fashion-adjacent register done properly
+  - from: warp
+    n: 18
+    why: blue and amber gels meeting down the centre line of the face
+  - from: warp
+    n: 22
+    why: one eye, hard catchlight, black surround — a sleeve detail that works at any crop

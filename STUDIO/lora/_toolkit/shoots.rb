@@ -79,10 +79,31 @@ def shoots(side: nil, only: nil, set: nil)
   file = set_file(set)
   abort "warn: no set #{set.inspect} — have: #{available_sets.join(', ')}" unless file.file?
 
-  all = YAML.load_file(file).fetch("shoots")
+  doc = YAML.load_file(file)
+  all = doc["selection"] ? resolve_selection(doc.fetch("selection"), file) : doc.fetch("shoots")
   all = all.select { |s| s["side"].casecmp?(side) } if side
   all = all.select { |s| only.include?(s["n"]) } if only
   all
+end
+
+# A curated set names sittings in other sets rather than copying them.
+#
+# A copy drifts. The first time a scene is reworded in shoots.yml the duplicate
+# in the short list still says the old thing, two files describe the same sitting
+# differently, and nothing indicates which one rendered. So the short list is
+# { from:, n: } and the prose has exactly one home.
+#
+# Renumbered so a short list reads 1..24 rather than carrying the numbers it was
+# drawn from, and the source is kept on each so a frame can be traced back.
+def resolve_selection(entries, file)
+  entries.each_with_index.map do |entry, index|
+    source = entry.fetch("from")
+    number = entry.fetch("n")
+    found = shoots(set: source == "shoots" ? nil : source).find { |s| s["n"] == number }
+    abort "warn: #{file.basename} references #{source} ##{number}, which does not exist" unless found
+
+    found.merge("n" => index + 1, "source" => "#{source}##{number}", "why" => entry["why"])
+  end
 end
 
 def prompts_for(subject, side: nil, only: nil, set: nil)
