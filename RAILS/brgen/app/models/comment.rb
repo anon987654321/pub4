@@ -10,7 +10,11 @@ class Comment < ApplicationRecord
   # maintains it where the column exists, and posts is the one that has it.
   belongs_to :commentable, polymorphic: true, touch: true, counter_cache: :comments_count
 
-  validates :content, presence: true, length: { minimum: 1, maximum: 10000 }
+  include Shared::RichTextLength
+
+  # content holds Tiptap's HTML; the maximum measures the text inside it.
+  validates :content, presence: true, length: { minimum: 1 }
+  validates_rich_text_length :content, maximum: 10_000
 
   after_create_commit -> { broadcast_append_to [ commentable, "comments" ], partial: "comments/comment", locals: { comment: self } }
 

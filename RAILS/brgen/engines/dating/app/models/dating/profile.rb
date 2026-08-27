@@ -19,7 +19,7 @@ class Dating::Profile < ApplicationRecord
     card: { resize_to_limit: [ 800, 1_200 ], format: :webp }
   }
 
-  GENDERS     = %w[man woman nonbinary other].freeze
+  GENDERS = %w[man woman nonbinary other].freeze
   LOOKING_FOR = %w[man woman everyone].freeze
 
   # Mutual orientation for discovery: show the viewer only the gender they're
@@ -33,7 +33,10 @@ class Dating::Profile < ApplicationRecord
     relation
   }
 
-  validates :bio,         length: { maximum: 500 }
+  include Shared::RichTextLength
+
+  # bio holds Tiptap's HTML; the maximum measures the text inside it.
+  validates_rich_text_length :bio, maximum: 500
   validates :age, numericality: { greater_than_or_equal_to: 18, less_than: 100 }
   validates :gender,      inclusion: { in: GENDERS },     allow_nil: true
   validates :looking_for, inclusion: { in: LOOKING_FOR }, allow_nil: true
@@ -119,7 +122,7 @@ class Dating::Profile < ApplicationRecord
     end
   end
 
-  def liked_by?(user)    = Dating::Like.exists?(liker: user, likee: self.user)
+  def liked_by?(user) = Dating::Like.exists?(liker: user, likee: self.user)
   def disliked_by?(user) = Dating::Dislike.exists?(disliker: user, dislikee: self.user)
   def matched_with?(user)
     Dating::Match.where(status: "matched")

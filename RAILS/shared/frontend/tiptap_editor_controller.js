@@ -10,9 +10,9 @@ export default class extends Controller {
   //
   // This controller lives on .composer-body inside the compose <dialog>, which
   // is closed on page load. Stimulus connects controllers inside a closed dialog
-  // all the same, so connect() used to fetch @tiptap/core and
-  // @tiptap/starter-kit from esm.sh -- and with them the whole ProseMirror tree,
-  // dozens of module requests -- on every front-page visit, for an editor nobody
+  // all the same, so connect() used to fetch the editor and the
+  // whole ProseMirror tree -- dozens of module requests -- on every front-page
+  // visit, for an editor nobody
   // had asked for. Measured 537 requests for one brgen front-page load, four of
   // them still unresolved 20 seconds in.
   //
@@ -40,8 +40,12 @@ export default class extends Controller {
     this.element.removeEventListener("pointerdown", this.mount)
 
     try {
-      const { Editor } = await import("@tiptap/core")
-      const { default: StarterKit } = await import("@tiptap/starter-kit")
+      // One vendored module, one request. This was two dynamic imports of
+      // esm.sh, which resolved the whole ProseMirror tree over the network at
+      // the moment someone started writing; shared/script/build_tiptap.sh
+      // esbuilds Editor and StarterKit into shared/vendor/javascript/tiptap.js,
+      // which is what "tiptap" pins to.
+      const { Editor, StarterKit } = await import("tiptap")
 
       this.editor = new Editor({
         element: this.mountTarget,
@@ -79,9 +83,9 @@ export default class extends Controller {
       // or the next keystroke goes to a visually-hidden field.
       this.editor.commands.focus("end")
     } catch (err) {
-      // esm.sh/import failed — leave the plain textarea in place. Deliberately
-      // not retried: the textarea is fully functional, and re-requesting a CDN
-      // on every focus is worse than staying plain for the rest of the visit.
+      // The import failed — leave the plain textarea in place. Deliberately not
+      // retried: the textarea is fully functional, and re-requesting on every
+      // focus is worse than staying plain for the rest of the visit.
       if (window.MASTER_LOG?.warn) window.MASTER_LOG.warn("tiptap_editor", err)
     }
   }

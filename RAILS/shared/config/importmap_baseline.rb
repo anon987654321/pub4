@@ -52,6 +52,16 @@ pin "cable_ready"
 # demand; without this the preload fetched it anyway and the deferral bought
 # nothing.
 pin "sortablejs"
+# Tiptap, vendored rather than fetched — the rule this tree states in
+# STIMULUS_COMPONENTS_BASELINE.md and enforces for @stimulus-components. It was
+# two esm.sh pins, so every compose box on the site depended on a third party
+# being reachable at the moment someone started writing.
+#
+# preload: false is load-bearing. `pin` defaults to preload: true, which emits a
+# modulepreload and fetches all 288KB on every page load — for an editor most
+# visits never open — and makes the controller's dynamic import() decorative.
+pin "tiptap", to: "tiptap.js", preload: false
+pin "pub4/tiptap_editor", to: "tiptap_editor_controller.js"
 pin "pub4/hotwire", to: "hotwire.js"
 pin "pub4/stimulus_boot", to: "stimulus_boot.js"
 pin "pub4/live_search", to: "live_search_controller.js"

@@ -99,6 +99,11 @@ app/jobs app/reflexes].each do |dir|
       ActiveSupport.on_load(:action_controller_base) do
         require_dependency Shared::Engine.root.join("app/helpers/shared/ui_helper").to_s
         helper Shared::UiHelper
+        # Same require_dependency shape as UiHelper above: the engine app/helpers
+        # path is not on every app autoload path, so the bare constant is not
+        # guaranteed to resolve at this point in boot.
+        require_dependency Shared::Engine.root.join("app/helpers/shared/rich_text_helper").to_s
+        helper Shared::RichTextHelper
       end
     end
 

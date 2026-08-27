@@ -7,16 +7,29 @@
       } do |f| %>
   <div class="amber-compose-avatar" aria-hidden="true"><%= guest? ? "✦" : (Current.user.profile&.display_name&.first&.upcase || "A") %></div>
   <div class="amber-compose-inner">
-    <%= f.text_area :body,
-          rows: 1,
-          maxlength: 500,
-          placeholder: t("amber.feed.compose_prompt"), aria: { label: t("amber.feed.compose_prompt") },
-          class: "amber-compose-input",
-          data: {
-            controller: "textarea-autogrow",
-            feed_compose_target: "input",
-            action: "focus->feed-compose#expand blur->feed-compose#collapse"
-          } %>
+    <%# tiptap-editor mounts over the textarea on first focus; the textarea stays
+        the submitted field and the no-JS fallback. maxlength is gone from the
+        markup because the field now carries HTML -- the browser would count "<p>"
+        against the writer -- and Post validates the stripped text instead. %>
+    <div data-controller="tiptap-editor">
+      <%= f.text_area :body,
+            rows: 1,
+            maxlength: 500,
+            placeholder: t("amber.feed.compose_prompt"), aria: { label: t("amber.feed.compose_prompt") },
+            class: "amber-compose-input",
+            data: {
+              controller: "textarea-autogrow",
+              feed_compose_target: "input",
+              tiptap_editor_target: "field",
+              action: "focus->feed-compose#expand blur->feed-compose#collapse"
+            } %>
+      <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
+      <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold", default: "Bold") %>"><strong>B</strong></button>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic", default: "Italic") %>"><em>i</em></button>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list", default: "Bullet list") %>">&bull;</button>
+      </div>
+    </div>
     <div class="amber-compose-footer" data-feed-compose-target="footer" hidden>
       <div class="amber-compose-tags" aria-hidden="true">
         #ootd#capsulewardrobe#style
@@ -24,7 +37,7 @@
       <div class="amber-compose-submit">
         <% if guest? %>
           <%= f.hidden_field :anonymous, value: true %>
-          <span class="amber-compose-as">anon</span>
+          <span class="amber-compose-as"><%= t("amber.feed.posting_as_anon") %></span>
         <% end %>
         <%= f.submit t("amber.feed.post_action"), class: "btn btn-primary amber-compose-btn" %>
       </div>

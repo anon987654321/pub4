@@ -20,7 +20,16 @@
       <div class="field">
         <%= f.label :bio, t("dating.about_you") %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
-          <%= f.text_area :bio, rows: 4, maxlength: 500, data: { character_counter_target: "input" } %>
+          <div class="compose-surface" data-controller="tiptap-editor">
+            <%= f.text_area :bio, rows: 4, maxlength: 500,
+                  data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
+            <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
+            <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
+              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold", default: "Bold") %>"><strong>B</strong></button>
+              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic", default: "Italic") %>"><em>i</em></button>
+              <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list", default: "Bullet list") %>">&bull;</button>
+            </div>
+          </div>
           <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
         </div>
       </div>

@@ -3,17 +3,27 @@
   <%= hidden_field_tag :parent_id, parent_id %>
 <% end %>
 <div class="field">
-  <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%# maxlength is not forwarded to the textarea any more. The field carries the
+      editor's HTML once tiptap-editor mounts, and the browser would count the
+      markup against the writer; Comment validates the stripped text instead. It
+      is still honoured as the number the counter counts down from. %>
+  <div class="compose-surface" data-controller="tiptap-editor character-counter" data-character-counter-countdown-value="true">
     <%= form.text_area :content,
           placeholder: placeholder,
           rows: rows,
           required: (required ? true : nil),
-          maxlength: maxlength,
           aria: { label: submit },
           data: {
             character_counter_target: "input",
+            tiptap_editor_target: "field",
             controller: "textarea-autogrow"
           } %>
+    <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
+    <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
+      <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold", default: "Bold") %>"><strong>B</strong></button>
+      <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic", default: "Italic") %>"><em>i</em></button>
+      <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list", default: "Bullet list") %>">&bull;</button>
+    </div>
     <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
   </div>
 </div>

@@ -40,7 +40,10 @@
       <% end %>
     </header>
 
-    <p class="comment-body"><%= comment.content %></p>
+    <%# Escaped output would print a literal "<p>" now that the composer is an
+        editor. rich_text is the one allow-list (shared/helpers rich_text_helper);
+        a div because its output starts with <p>, which a <p> cannot contain. %>
+    <div class="comment-body prose"><%= rich_text comment.content %></div>
 
     <% if threaded && comment.respond_to?(:long_thread?) && comment.long_thread? %>
       <% if comment.respond_to?(:has_thread_summary?) && comment.has_thread_summary? %>

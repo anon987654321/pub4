@@ -16,8 +16,18 @@
     </div>
     <div class="field">
       <%= f.label :content, t("posts.body_optional") %>
-      <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :content, placeholder: t("post.text_optional"), rows: 5 , maxlength: 10000, data: { character_counter_target: "input" } %>
+      <div class="compose-surface" data-controller="tiptap-editor character-counter" data-character-counter-countdown-value="true">
+  <%# The stored value is already Tiptap's HTML — posts/new has mounted an editor
+      since it shipped — so editing a post showed the author raw "<p>" tags in a
+      textarea and invited them to save it back. %>
+  <%= f.text_area :content, placeholder: t("post.text_optional"), rows: 5, maxlength: 10000,
+        data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
+  <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
+  <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
+    <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold", default: "Bold") %>"><strong>B</strong></button>
+    <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic", default: "Italic") %>"><em>i</em></button>
+    <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list", default: "Bullet list") %>">&bull;</button>
+  </div>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
     </div>

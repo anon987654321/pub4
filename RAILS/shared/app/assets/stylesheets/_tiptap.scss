@@ -1,3 +1,12 @@
+// The Tiptap editor's own appearance, shared by every app that mounts it.
+// Lived in brgen only, which is why amber could not have a rich-text composer
+// without either copying this file or shipping an unstyled contenteditable.
+//
+// .compose-surface is the wrapper wherever an editor has a counter or a toolbar
+// to place -- brgen's post form and edit form, the shared comment form, both
+// dating bios and amber's creator bio. It is built from shared tokens only, so
+// it carries no app's identity. .tiptap_mount--post is still brgen-only and
+// matches nothing elsewhere.
 /* Tiptap minimal compose editor. Mirrors .compose-input; the mount + toolbar
    stay hidden until the tiptap_editor controller confirms Tiptap loaded, so the
    plain textarea is the visible fallback when it doesn't. */

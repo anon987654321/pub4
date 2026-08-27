@@ -5,7 +5,8 @@
   <%= tag.h1 @profile.display_name %>
   <p>@<%= @profile.handle %></p>
   <% if @profile.bio.present? %>
-    <%= tag.p @profile.bio %>
+    <%# The bio is a Tiptap field now; escaped output would print its markup. %>
+    <div class="prose"><%= rich_text @profile.bio %></div>
   <% end %>
   <% if authenticated? && Current.user == @profile.user %>
     <%= link_to t("wardrobe.edit_profile", default: t("actions.edit")), edit_my_creator_profile_path, class: "btn btn-sm" %>

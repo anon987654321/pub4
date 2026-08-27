@@ -11,8 +11,10 @@
         it read data-timeago-datetime-value, which no view ever set. %>
     · <time datetime="<%= @post.created_at.iso8601 %>"><%= time_ago(@post.created_at) %></time>
   </header>
-  <h1 class="post-title"><%= @post.body.truncate(80, separator: " ") %></h1>
-  <div class="feed-post-body feed-post-prose prose"><%= @post.body %></div>
+  <%# Stripped first: truncating the raw field would cut inside a tag and put
+      half an element in the page title. %>
+  <h1 class="post-title"><%= strip_tags(@post.body.to_s).truncate(80, separator: " ") %></h1>
+  <div class="feed-post-body feed-post-prose prose"><%= rich_text @post.body %></div>
   <% if @post.outfit %><p><em><%= t("post.outfit_label") %>: <%= link_to @post.outfit.name, outfit_path(@post.outfit) %></em></p><% end %>
   <% if @post.item %><p><em><%= t("post.item_label") %>: <%= link_to @post.item.title, item_path(@post.item) %></em></p><% end %>
   <footer>

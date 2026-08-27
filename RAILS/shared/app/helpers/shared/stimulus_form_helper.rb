@@ -72,7 +72,17 @@ module Shared
         },
       ) do
         safe_join([
-          tag.div(simple_format(text, {}, sanitize: false), class: class_name, data: { read_more_target: "content" }),
+# simple_format ran with sanitize: false and its output went straight to
+# the page, so anything a user typed into a bio was rendered as markup —
+# a stored XSS on every surface that reads a profile. simple_format still
+# does the newline-to-paragraph work, and the result then goes through the
+# same allow-list every other user rich text uses, which also makes this
+# safe for a field a Tiptap editor writes HTML into.
+tag.div(
+  sanitize(simple_format(text, {}, sanitize: false),
+           tags: Shared::RichTextHelper::TAGS, attributes: []),
+  class: class_name, data: { read_more_target: "content" }
+),
           tag.button(type: "button", class: "btn-link", data: { action: "read-more#toggle" }) { more },
         ])
       end

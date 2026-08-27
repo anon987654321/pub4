@@ -39,6 +39,7 @@ import Autosave from "pub4/autosave"
 import DraftStore from "pub4/draft_store"
 import MediaPicker from "pub4/media_picker"
 import FeedCompose from "pub4/feed_compose"
+import TiptapEditor from "pub4/tiptap_editor"
 import FeedHotkey from "pub4/feed_hotkey"
 import EdgeSwiper from "pub4/edge_swiper"
 import NearbyChat from "pub4/nearby_chat"
@@ -183,6 +184,7 @@ export function bootPub4Stimulus(application) {
   application.register("draft-store", DraftStore)
   application.register("media-picker", MediaPicker)
   application.register("feed-compose", FeedCompose)
+  application.register("tiptap-editor", TiptapEditor)
   application.register("feed-hotkey", FeedHotkey)
   application.register("edge-swiper", EdgeSwiper)
   application.register("nearby-chat", NearbyChat)
