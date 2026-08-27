@@ -109,7 +109,33 @@ def setup_cell(options)
         subprocess.run(["git", "clone", "--branch", "#{options[:branch]}", "--depth", "1",
                         "#{options[:repo]}", "/content/pub4"], check=True)
     else:
-        subprocess.run(["git", "-C", "/content/pub4", "pull", "--ff-only"], check=True)
+        # fetch + reset, not pull --ff-only.
+        #
+        # A --depth 1 clone has one commit and no ancestry, so once origin moves
+        # more than trivially there is nothing to fast-forward ALONG and the pull
+        # fails. check=True should have surfaced that — except a notebook re-run
+        # often has the cell output scrolled past, and the run continues into
+        # Ruby against a checkout that is days old.
+        #
+        # That is exactly what happened on 2026-08-27: three consecutive sessions
+        # ran against a stale clone, each one missing the guard written to
+        # prevent the failure it then hit. The fixes were pushed, correct, and
+        # nowhere near the machine.
+        #
+        # There is nothing local worth preserving here — the checkout is a
+        # delivery mechanism, and the dataset and checkpoints live in Drive — so
+        # the honest operation is "make this identical to origin", not "merge".
+        subprocess.run(["git", "-C", "/content/pub4", "fetch", "--depth", "1",
+                        "origin", "#{options[:branch]}"], check=True)
+        subprocess.run(["git", "-C", "/content/pub4", "reset", "--hard",
+                        "origin/#{options[:branch]}"], check=True)
+        subprocess.run(["git", "-C", "/content/pub4", "clean", "-fd"], check=True)
+
+    # Print what is actually checked out. Three sessions were spent on fixes that
+    # had been pushed and never arrived, and the log said nothing either way.
+    head = subprocess.run(["git", "-C", "/content/pub4", "log", "-1", "--format=%h %ad %s",
+                           "--date=short"], capture_output=True, text=True)
+    print("ok: pub4 at", head.stdout.strip())
     # Runtime type is a menu item nobody remembers, and a CPU runtime does not
     # announce itself — it trains at a rate that never finishes. On Kaggle
     # the equivalent oversight cost an hour before anything said why, so this
