@@ -124,261 +124,407 @@ class AudioEngine {
 
 // The tunnel's ink, matched to the MASTER face on ai.brgen.no.
 //
-// That face is monochrome and says so in its own source: every entry in its TINT
-// table is `GOLD`, and GOLD is `new Color(1, 1, 1)` — pure white, the name
-// vestigial. Depth and mood there are carried entirely by opacity, in four tiers
-// (--face-fg, then --face-muted 35%, --face-dim 18%, --face-soft 8%) over black,
-// with a single faint violet cast in the ink itself (--c-text: oklch(86% 0.02
-// 300)) and violet used sparingly as an accent, never as a ramp.
+// Both surfaces are warm now. The face's receding points used to tint
+// blue-violet and were changed to a warm ramp the same day this was; the rule
+// that matters is that the two surfaces of one site agree, not which end of the
+// spectrum they agree on. What is still forbidden here is what is forbidden
+// there: hue must not encode depth. Depth drives brightness, and the hue ramp is
+// a narrow warm one — ember at the far end, warm white at the near end — so the
+// tunnel reads as one lit material rather than as a rainbow.
 //
-// This tunnel did the opposite: it mapped ring depth to *hue*, ramping
-// rgb(0, n/2, n) from black to saturated blue, and held alpha constant at 128.
-// So the two surfaces of the same site read as different products — one
-// monochrome and architectural, one a blue rainbow.
-//
-// Now depth drives alpha and the hue is constant. #d8d6e0 is brgen's own --text
-// in the dark dialect, which is the same near-white-with-violet-cast the face
-// uses; taking it from the dialect rather than hardcoding a new value means the
-// tunnel follows the palette instead of pinning a second copy of it.
-const INK = { r: 216, g: 214, b: 224 }
+// Both ends are existing tokens rather than invented values, which is the same
+// reason the old ink took brgen's --text instead of picking a grey: a second
+// private copy of the palette drifts. The ember is design_tokens.yml
+// luxury.light_danger #a7473b and the near tone is luxury.light_bg #f8f5f0, the
+// warm paper amber is built on. Full-saturation ember only ever appears at
+// INK_ALPHA_MIN over black, so the far end reads as a dark coal, not as a
+// warning colour.
+const INK_FAR = { r: 167 / 255, g: 71 / 255, b: 59 / 255 }
+const INK_NEAR = { r: 248 / 255, g: 245 / 255, b: 240 / 255 }
 // Far rings barely present, near rings solid — the 8%-to-full range the face
-// works in, expressed as 0-255 alpha.
-const INK_ALPHA_MIN = 20
-const INK_ALPHA_MAX = 200
+// works in, expressed 0..1.
+const INK_ALPHA_MIN = 0.08
+const INK_ALPHA_MAX = 0.78
+
+// One pixel per particle, so the buffer is the grid. Capping it means a phone
+// and a television draw the same tunnel and the television simply upscales it —
+// uncapped, the buffer grew with the display while the ring count stayed fixed,
+// which both thinned the image and cost 4x more to draw. Mirrors the face's
+// FACE_BUFFER_MAX_W/H.
+const BUFFER_MAX_W = 960
+const BUFFER_MAX_H = 640
+
+// Phosphor decay. The previous frame is dimmed rather than cleared, so every
+// particle smears warm behind itself as it flies at the camera. This is the
+// glow, and it is a trail rather than a halo: an additive second pass over the
+// same geometry is what NO_WEBGL_GLOW_PASS forbids, and it is also what made
+// MASTER's face read as a lit wireframe.
+const TRAIL_DECAY = 0.82
+
+const VERT = `
+precision highp float;
+attribute float aAngle;
+attribute float aRingT;
+attribute float aSeed;
+uniform float uTime;
+uniform float uZ;
+uniform float uFov;
+uniform float uRadius;
+uniform vec2 uResolution;
+uniform vec2 uCenter;
+uniform float uBass;
+uniform float uMid;
+uniform float uHigh;
+uniform float uBreath;
+varying float vNear;
+varying float vSeed;
+void main() {
+  // Ring depth scrolls in the shader. The CPU used to walk 6,000 particles a
+  // frame adding a delta and re-sorting the rows; the same motion is one
+  // subtraction here, and nothing needs sorting because nothing is drawn
+  // back-to-front any more.
+  float span = uFov * 2.0;
+  float z = mod(aRingT * span + uZ, span) - uFov;
+
+  // Bass swells the ring, highs shimmer it per-particle. This is the audio
+  // reactivity that was previously impossible: a YouTube iframe is cross-origin
+  // so no AnalyserNode could see it, and the numbers driving this were a sine
+  // wave. They are now real FFT bands.
+  float shimmer = sin(aSeed * 6.2831 + uTime * 7.0) * uHigh * 0.05;
+  float radius = uRadius * (1.0 + uBass * 0.18 + uMid * 0.06 + shimmer) * uBreath;
+
+  float ang = aAngle + uTime;
+  vec2 p = vec2(cos(ang), sin(ang)) * radius;
+
+  // Guard the FOV singularity at z = -uFov so scale never blows up or NaNs.
+  float denom = max(0.5, uFov + z);
+  float scale = uFov / denom;
+  vec2 screen = p * scale + uCenter;
+
+  gl_Position = vec4(
+    (screen.x / uResolution.x) * 2.0 - 1.0,
+    1.0 - (screen.y / uResolution.y) * 2.0,
+    0.0,
+    1.0
+  );
+  // One point is one pixel — the same law the MASTER face obeys
+  // (FACE_POINT_IS_ONE_PIXEL). Depth is carried by brightness below, because a
+  // pixel has no size to give.
+  gl_PointSize = 1.0;
+
+  vNear = clamp(1.0 - (z + uFov) / span, 0.0, 1.0);
+  vSeed = aSeed;
+}`
+
+const FRAG = `
+precision highp float;
+uniform vec3 uInkFar;
+uniform vec3 uInkNear;
+uniform float uAlphaMin;
+uniform float uAlphaMax;
+uniform float uExposure;
+varying float vNear;
+varying float vSeed;
+void main() {
+  // No gl_PointCoord shaping: at gl_PointSize 1.0 there is no interior to carve.
+  float near = vNear * vNear;
+  float alpha = mix(uAlphaMin, uAlphaMax, near) * uExposure;
+  vec3 col = mix(uInkFar, uInkNear, near);
+  gl_FragColor = vec4(col, alpha);
+}`
+
+const FADE_VERT = `
+precision highp float;
+attribute vec2 aQuad;
+void main() { gl_Position = vec4(aQuad, 0.0, 1.0); }`
+
+const FADE_FRAG = `
+precision highp float;
+uniform float uFade;
+void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, uFade); }`
+
+function compile(gl, type, src, label) {
+  const s = gl.createShader(type)
+  gl.shaderSource(s, src)
+  gl.compileShader(s)
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(s)
+    gl.deleteShader(s)
+    throw new Error(`radio_brgen_tunnel: ${label} failed to compile: ${log}`)
+  }
+  return s
+}
+
+function program(gl, vsrc, fsrc, label) {
+  const p = gl.createProgram()
+  gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vsrc, `${label} vertex`))
+  gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fsrc, `${label} fragment`))
+  gl.linkProgram(p)
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    const log = gl.getProgramInfoLog(p)
+    gl.deleteProgram(p)
+    throw new Error(`radio_brgen_tunnel: ${label} failed to link: ${log}`)
+  }
+  return p
+}
 
 class VisualEngine {
   constructor(canvas) {
     this.canvas = canvas
-    // willReadFrequently forces software (CPU) rendering to speed up frequent
-    // getImageData reads -- but this canvas only reads once, on resize; every
-    // animation frame is a putImageData write. Leaving it on disables GPU
-    // compositing for the per-frame cost (up to ~32k manually drawn line
-    // segments) for no benefit, which reads as freezing/stutter over time.
-    this.ctx = canvas.getContext("2d")
     this.particles = []
     this.centers = []
     this.mouse = { x: 0, y: 0, down: false, active: false }
     this.touch = { x: 0, y: 0, active: false }
     this.time = 0
+    this.zOffset = 0
     this.colorInvertValue = 0
+    this.audioBoost = 0
+    this.breath = 1
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     // Classic c7c8effcd / Radio Bergen tunnel: fov 250, speed 0.75, dense rings.
     this.config = {
       fov: 250,
       speed: 0.75,
       particleCountPerRow: this.isMobile ? 32 : 48,
-      // zStep matches historical (4 desktop / 6 low-end) so rings fill -fov..+fov.
       zStep: this.isMobile ? 6 : 4
     }
-    this.stars = []
+    // antialias: false. Nothing here has an edge to smooth, and MSAA resolves a
+    // 1px point as partial coverage across up to four pixels — it costs
+    // bandwidth to destroy exactly the crispness this renderer exists for.
+    const opts = { alpha: false, antialias: false, depth: false, preserveDrawingBuffer: true }
+    this.gl = canvas.getContext("webgl", opts) || canvas.getContext("experimental-webgl", opts)
+    if (this.gl) {
+      try {
+        this.#initGL()
+      } catch (err) {
+        console.warn("radio_brgen_tunnel: WebGL init failed, falling back to 2D", err)
+        this.gl = null
+      }
+    }
+    if (!this.gl) this.#initFallback()
     this.resize()
   }
 
+  #initGL() {
+    const gl = this.gl
+    this.prog = program(gl, VERT, FRAG, "tunnel")
+    this.fadeProg = program(gl, FADE_VERT, FADE_FRAG, "phosphor fade")
+    this.attr = {
+      angle: gl.getAttribLocation(this.prog, "aAngle"),
+      ringT: gl.getAttribLocation(this.prog, "aRingT"),
+      seed: gl.getAttribLocation(this.prog, "aSeed")
+    }
+    this.uni = {}
+    for (const n of ["uTime", "uZ", "uFov", "uRadius", "uResolution", "uCenter",
+      "uBass", "uMid", "uHigh", "uBreath", "uInkFar", "uInkNear",
+      "uAlphaMin", "uAlphaMax", "uExposure"]) {
+      this.uni[n] = gl.getUniformLocation(this.prog, n)
+    }
+    this.fadeAttr = gl.getAttribLocation(this.fadeProg, "aQuad")
+    this.fadeUni = gl.getUniformLocation(this.fadeProg, "uFade")
+    this.quadBuf = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+    this.angleBuf = gl.createBuffer()
+    this.ringBuf = gl.createBuffer()
+    this.seedBuf = gl.createBuffer()
+    gl.disable(gl.DEPTH_TEST)
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.clearColor(0, 0, 0, 1)
+  }
+
+  #initFallback() {
+    this.ctx = this.canvas.getContext("2d")
+  }
+
   resize() {
-    this.w = Math.max(1, window.innerWidth)
-    this.h = Math.max(1, window.innerHeight)
+    const vw = Math.max(1, window.innerWidth)
+    const vh = Math.max(1, window.innerHeight)
+    // Cap both axes by one shared factor so the buffer's aspect keeps matching
+    // the stretched element's; clamping them independently would squash it.
+    const cap = Math.min(1, BUFFER_MAX_W / vw, BUFFER_MAX_H / vh)
+    this.w = Math.max(1, Math.floor(vw * cap))
+    this.h = Math.max(1, Math.floor(vh * cap))
     this.canvas.width = this.w
     this.canvas.height = this.h
-    this.ctx.fillStyle = "#000000"
-    this.ctx.fillRect(0, 0, this.w, this.h)
-    this.imageData = this.ctx.getImageData(0, 0, this.w, this.h)
-    this.data = this.imageData.data
+    this.canvas.style.imageRendering = "pixelated"
     this.centerX = this.w / 2
     this.centerY = this.h / 2
+    this.centerNow = { x: this.centerX, y: this.centerY }
+    this.viewW = vw
+    this.viewH = vh
+    if (this.gl) this.gl.viewport(0, 0, this.w, this.h)
+    else if (this.ctx) { this.ctx.fillStyle = "#000"; this.ctx.fillRect(0, 0, this.w, this.h) }
     this.initParticles()
-    this.stars = []
-    for (let i = 0; i < 80; i++) {
-      this.stars.push({
-        x: (Math.random() - 0.5) * this.w * 2,
-        y: (Math.random() - 0.5) * this.h * 2,
-        z: Math.random() * this.config.fov * 2 - this.config.fov,
-        brightness: Math.random() * 0.5 + 0.5
-      })
-    }
   }
 
   initParticles() {
+    const { fov, zStep, particleCountPerRow } = this.config
+    const rows = Math.max(1, Math.round((fov * 2) / zStep))
+    const count = rows * particleCountPerRow
+    const angle = new Float32Array(count)
+    const ringT = new Float32Array(count)
+    const seed = new Float32Array(count)
+    const angleStep = (Math.PI * 2) / particleCountPerRow
+    let k = 0
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < particleCountPerRow; j++) {
+        angle[k] = j * angleStep
+        ringT[k] = i / rows
+        // Deterministic per-particle offset. Math.random here would reshuffle
+        // the shimmer on every resize, which reads as the tunnel flinching.
+        seed[k] = ((i * 73 + j * 151) % 997) / 997
+        k += 1
+      }
+    }
+    this.pointCount = count
+    // `particles` and `centers` stay as length-bearing stubs: the dat.GUI panel
+    // and setPerformanceMode read config, but the old per-frame CPU arrays are
+    // gone — position is computed in the vertex shader now.
     this.particles = []
     this.centers = []
-    const { fov, zStep, particleCountPerRow } = this.config
-    const radius = 75
-    const angleStep = (Math.PI * 2) / particleCountPerRow
-    // Historical: for (z = -fov; z < fov; z += zStep)
-    for (let z = -fov; z < fov; z += zStep) {
-      const row = []
-      for (let j = 0; j < particleCountPerRow; j++) {
-        const angle = j * angleStep
-        row.push({
-          x: Math.cos(angle) * radius,
-          y: Math.sin(angle) * radius,
-          z,
-          x2d: 0,
-          y2d: 0,
-          angle,
-          radius,
-          radiusAudio: radius,
-          segments: particleCountPerRow,
-          index: j
-        })
-      }
-      this.particles.push(row)
-      this.centers.push({ x: this.centerX, y: this.centerY })
+    if (!this.gl) {
+      this.cpuAngle = angle
+      this.cpuRingT = ringT
+      this.cpuSeed = seed
+      return
     }
-  }
-
-  clearImageData() {
-    for (let i = 0, l = this.data.length; i < l; i += 4) {
-      this.data[i] = 0
-      this.data[i + 1] = 0
-      this.data[i + 2] = 0
-      this.data[i + 3] = 255
-    }
-  }
-
-  setPixel(x, y, r, g, b, a) {
-    if (x > 0 && x < this.w && y > 0 && y < this.h) {
-      const i = (x + y * this.w) * 4
-      this.data[i] = Math.min(255, Math.max(0, r))
-      this.data[i + 1] = Math.min(255, Math.max(0, g))
-      this.data[i + 2] = Math.min(255, Math.max(0, b))
-      this.data[i + 3] = Math.min(255, Math.max(0, a))
-    }
-  }
-
-  drawLine(x1, y1, x2, y2, r, g, b, a) {
-    const dx = Math.abs(x2 - x1)
-    const dy = Math.abs(y2 - y1)
-    const sx = x1 < x2 ? 1 : -1
-    const sy = y1 < y2 ? 1 : -1
-    let err = dx - dy
-    let lx = x1
-    let ly = y1
-    while (true) {
-      this.setPixel(lx, ly, r, g, b, a)
-      if (lx === x2 && ly === y2) break
-      const e2 = 2 * err
-      if (e2 > -dy) { err -= dy; lx += sx }
-      if (e2 < dx) { err += dx; ly += sy }
-    }
-  }
-
-  softInvert(value) {
-    for (let j = 0, n = this.data.length; j < n; j += 4) {
-      this.data[j] = Math.abs(value - this.data[j])
-      this.data[j + 1] = Math.abs(value - this.data[j + 1])
-      this.data[j + 2] = Math.abs(value - this.data[j + 2])
-      this.data[j + 3] = 255
-    }
+    const gl = this.gl
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.angleBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, angle, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.ringBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, ringT, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.seedBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, seed, gl.STATIC_DRAW)
   }
 
   update(audioData) {
     this.time += 0.005
-    if (!this.particles.length || !this.centers.length) { this.initParticles(); return }
-    const audioIntensity = Math.max(0, Math.min(1, audioData.average || 0))
+    const bass = Math.max(0, Math.min(1, audioData?.bass || 0))
+    const mid = Math.max(0, Math.min(1, audioData?.mid || 0))
+    const high = Math.max(0, Math.min(1, audioData?.high || 0))
+    const average = Math.max(0, Math.min(1, audioData?.average || 0))
+    this.bass = bass
+    this.mid = mid
+    this.high = high
+    this.audioBoost = average * 0.5
+
+    // Breathing: a slow swell independent of the music, so the tunnel is alive
+    // even in a quiet passage. ~9s period.
+    this.breath = 1 + 0.05 * Math.sin(performance.now() * 0.0007)
+
+    // Classic: hold = reverse (fly out), release = fly forward into the tunnel.
+    const isPressed = this.mouse.down
+    this.zOffset += isPressed ? this.config.speed : -this.config.speed
+
     const interactionX = this.touch.active ? this.touch.x : this.mouse.x
     const interactionY = this.touch.active ? this.touch.y : this.mouse.y
     const isInteracting = (this.touch.active || this.mouse.active) && this.mouse.down
-    // Classic: hold = reverse (fly out), release = fly forward into the tunnel.
-    const isPressed = this.mouse.down
-    const { fov, speed } = this.config
-    // Direct z step every frame (original). A prior 0.1 lerp made effective
-    // speed ~0.075 — almost frozen compared to the classic 0.75 fly.
-    const zDelta = isPressed ? speed : -speed
-    let sortNeeded = false
-
-    this.particles.forEach((row, i) => {
-      const center = this.centers[i]
-      if (isInteracting) {
-        center.x = (this.centerX - interactionX) * ((row[0].z - fov) / 500) + this.centerX
-        center.y = (this.centerY - interactionY) * ((row[0].z - fov) / 500) + this.centerY
-      } else {
-        center.x += (this.centerX - center.x) * 0.015
-        center.y += (this.centerY - center.y) * 0.015
-      }
-      row.forEach(particle => {
-        const audioBoost = audioIntensity * 0.5
-        particle.radiusAudio = particle.radius + audioBoost * 8
-        particle.z += zDelta
-        if (particle.z > fov) { particle.z -= fov * 2; sortNeeded = true }
-        else if (particle.z < -fov) { particle.z += fov * 2; sortNeeded = true }
-        // Guard FOV singularity (z ≈ -fov) so scale never blows up / NaNs.
-        const denom = Math.max(0.5, fov + particle.z)
-        const scale = fov / denom
-        particle.x = Math.cos(particle.angle + this.time) * particle.radiusAudio
-        particle.y = Math.sin(particle.angle + this.time) * particle.radiusAudio
-        particle.x2d = (particle.x * scale) + center.x
-        particle.y2d = (particle.y * scale) + center.y
-      })
-    })
-
-    if (sortNeeded && this.particles.every(row => row.length > 0)) {
-      this.particles.sort((a, b) => b[0].z - a[0].z)
-      this.centers = this.particles.map((_, i) => this.centers[i] || { x: this.centerX, y: this.centerY })
+    const c = this.centerNow
+    if (isInteracting) {
+      // Pointer coordinates arrive in viewport space; the buffer is capped, so
+      // they must be scaled into it or the tunnel leans the wrong distance.
+      const sx = this.w / (this.viewW || this.w)
+      const sy = this.h / (this.viewH || this.h)
+      c.x += (this.centerX + (this.centerX - interactionX * sx) * 0.35 - c.x) * 0.08
+      c.y += (this.centerY + (this.centerY - interactionY * sy) * 0.35 - c.y) * 0.08
+    } else {
+      c.x += (this.centerX - c.x) * 0.015
+      c.y += (this.centerY - c.y) * 0.015
     }
-
-    this.audioBoost = (audioData.average || 0) * 0.5
-    this.stars.forEach(star => {
-      // Historical: star.z -= speed * 2 (always fly toward camera)
-      star.z += zDelta * 2
-      if (star.z > fov) star.z -= fov * 2
-      else if (star.z < -fov) star.z += fov * 2
-    })
 
     if (isPressed) this.colorInvertValue = Math.min(255, this.colorInvertValue + 5)
     else this.colorInvertValue = Math.max(0, this.colorInvertValue - 5)
   }
 
   render() {
-    this.clearImageData()
-    if (!this.particles.length) return
-    this.particles.forEach((row, i) => {
-      const prevRow = i > 0 ? this.particles[i - 1] : null
-      row.forEach((particle, j) => {
-        const prevInRow = j > 0 ? row[j - 1] : row[row.length - 1]
-        // Depth reads as opacity, not as hue — the MASTER face's model. See INK.
-        const depth = i / this.particles.length
-        const alpha = Math.round(INK_ALPHA_MIN + depth * (INK_ALPHA_MAX - INK_ALPHA_MIN))
-        this.drawLine(
-          particle.x2d | 0, particle.y2d | 0,
-          prevInRow.x2d | 0, prevInRow.y2d | 0,
-          INK.r, INK.g, INK.b, alpha
-        )
-        if (prevRow) {
-          const prevInPrevRow = j === 0 ? prevRow[prevRow.length - 1] : prevRow[j - 1]
-          this.drawLine(
-            particle.x2d | 0, particle.y2d | 0,
-            prevInPrevRow.x2d | 0, prevInPrevRow.y2d | 0,
-            INK.r, INK.g, INK.b, alpha
-          )
-        }
-      })
-    })
-    if (this.colorInvertValue > 0) this.softInvert(this.colorInvertValue)
-    // Draw stars from c7c8effcd historical
-    this.stars.forEach(star => {
-      const scale = this.config.fov / (this.config.fov + star.z)
-      const sx = star.x * scale + this.centerX * 0.5 // approximate center
-      const sy = star.y * scale + this.centerY * 0.5
-      if (sx > 0 && sx < this.w && sy > 0 && sy < this.h) {
-        // Stars were already near-monochrome but lifted blue (b, b, b + 20).
-        // Same ink as the mesh now, so brightness is the only variable.
-        const b = Math.floor(star.brightness * 200 + (this.audioBoost || 0) * 50)
-        const tint = (c) => Math.min(255, Math.round(b * (c / 255)))
-        this.setPixel(sx | 0, sy | 0, tint(INK.r), tint(INK.g), tint(INK.b), 180)
-      }
-    })
-    this.ctx.putImageData(this.imageData, 0, 0)
+    if (this.gl) return this.#renderGL()
+    return this.#renderFallback()
+  }
+
+  #renderGL() {
+    const gl = this.gl
+    // Phosphor: dim the previous frame instead of clearing it. A black quad at
+    // alpha (1 - decay) under normal blending is dst * decay — the trail.
+    gl.useProgram(this.fadeProg)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf)
+    gl.enableVertexAttribArray(this.fadeAttr)
+    gl.vertexAttribPointer(this.fadeAttr, 2, gl.FLOAT, false, 0, 0)
+    gl.uniform1f(this.fadeUni, 1 - TRAIL_DECAY)
+    gl.drawArrays(gl.TRIANGLES, 0, 3)
+
+    gl.useProgram(this.prog)
+    const bind = (buf, loc) => {
+      if (loc < 0) return
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+      gl.enableVertexAttribArray(loc)
+      gl.vertexAttribPointer(loc, 1, gl.FLOAT, false, 0, 0)
+    }
+    bind(this.angleBuf, this.attr.angle)
+    bind(this.ringBuf, this.attr.ringT)
+    bind(this.seedBuf, this.attr.seed)
+
+    const u = this.uni
+    gl.uniform1f(u.uTime, this.time)
+    gl.uniform1f(u.uZ, this.zOffset)
+    gl.uniform1f(u.uFov, this.config.fov)
+    // Ring radius is expressed against the capped buffer rather than a fixed 75,
+    // so the tunnel fills the frame identically at every size.
+    gl.uniform1f(u.uRadius, Math.min(this.w, this.h) * 0.22)
+    gl.uniform2f(u.uResolution, this.w, this.h)
+    gl.uniform2f(u.uCenter, this.centerNow.x, this.centerNow.y)
+    gl.uniform1f(u.uBass, this.bass || 0)
+    gl.uniform1f(u.uMid, this.mid || 0)
+    gl.uniform1f(u.uHigh, this.high || 0)
+    gl.uniform1f(u.uBreath, this.breath || 1)
+    // Press inverts toward warm white rather than flipping the buffer: the old
+    // softInvert walked every byte of the image on the CPU each pressed frame.
+    const inv = this.colorInvertValue / 255
+    gl.uniform3f(u.uInkFar, INK_FAR.r + inv * 0.4, INK_FAR.g + inv * 0.5, INK_FAR.b + inv * 0.5)
+    gl.uniform3f(u.uInkNear, INK_NEAR.r, INK_NEAR.g, INK_NEAR.b)
+    gl.uniform1f(u.uAlphaMin, INK_ALPHA_MIN)
+    gl.uniform1f(u.uAlphaMax, INK_ALPHA_MAX)
+    gl.uniform1f(u.uExposure, 0.85 + (this.audioBoost || 0) * 0.3)
+
+    gl.drawArrays(gl.POINTS, 0, this.pointCount)
+  }
+
+  #renderFallback() {
+    const ctx = this.ctx
+    if (!ctx) return
+    ctx.fillStyle = `rgba(0,0,0,${(1 - TRAIL_DECAY).toFixed(3)})`
+    ctx.fillRect(0, 0, this.w, this.h)
+    const { fov } = this.config
+    const span = fov * 2
+    const radius = Math.min(this.w, this.h) * 0.22 * (1 + (this.bass || 0) * 0.18) * (this.breath || 1)
+    const c = this.centerNow
+    for (let i = 0; i < this.pointCount; i++) {
+      const z = ((this.cpuRingT[i] * span + this.zOffset) % span + span) % span - fov
+      const ang = this.cpuAngle[i] + this.time
+      const scale = fov / Math.max(0.5, fov + z)
+      const x = Math.cos(ang) * radius * scale + c.x
+      const y = Math.sin(ang) * radius * scale + c.y
+      if (x < 0 || x >= this.w || y < 0 || y >= this.h) continue
+      const near = Math.min(1, Math.max(0, 1 - (z + fov) / span)) ** 2
+      const a = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near
+      const r = Math.round((INK_FAR.r + (INK_NEAR.r - INK_FAR.r) * near) * 255)
+      const g = Math.round((INK_FAR.g + (INK_NEAR.g - INK_FAR.g) * near) * 255)
+      const b = Math.round((INK_FAR.b + (INK_NEAR.b - INK_FAR.b) * near) * 255)
+      ctx.fillStyle = `rgba(${r},${g},${b},${a.toFixed(3)})`
+      ctx.fillRect(x | 0, y | 0, 1, 1)
+    }
   }
 
   setTouch(x, y, active) {
-    this.touch.x = Math.max(0, Math.min(x, this.w))
-    this.touch.y = Math.max(0, Math.min(y, this.h))
+    this.touch.x = Math.max(0, Math.min(x, this.viewW || this.w))
+    this.touch.y = Math.max(0, Math.min(y, this.viewH || this.h))
     this.touch.active = active
   }
 
   setMouse(x, y, down, active) {
-    this.mouse.x = Math.max(0, Math.min(x, this.w))
-    this.mouse.y = Math.max(0, Math.min(y, this.h))
+    this.mouse.x = Math.max(0, Math.min(x, this.viewW || this.w))
+    this.mouse.y = Math.max(0, Math.min(y, this.viewH || this.h))
     this.mouse.down = down
     this.mouse.active = active
   }
