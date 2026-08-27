@@ -121,6 +121,68 @@ DRUM_PATTERN_SETS = {
     ],
     opens: [7, 15],
   },
+  # Detroit stumble — the kick is the erratic one.
+  #
+  # dilla_canon anchors every kick on 0 and the late 3 and lets snare and hat
+  # carry the lean. The microtiming literature describes the opposite balance:
+  # "21st Century Funk" (Academia) analyses Dilla's early beats and finds the
+  # KICK the unstable element against stable snare and hi-hat, with 10 of 13
+  # kick notes in one measure falling outside typical metric locations. Ethan
+  # Hein's Ableton analysis of "Get Dis Money" agrees on the other two: the
+  # backbeat sits a touch EARLY and the hats late, and because the ear orients
+  # on the loud backbeat, everything else is heard as dragging behind it.
+  #
+  # So here the snare never moves — [4, 12] in every single bar, deliberately
+  # repeated rather than varied — and the hats stay an even eighth grid. All of
+  # the variation is in the kick, which lands somewhere different every bar.
+  # That is a stumble rather than a lean, and a stumble is what "tipsy" means.
+  #
+  # Timing, not grid: the early backbeat and late hat come from GROOVE_FEEL, the
+  # same way dilla_canon's do. This table only says WHICH sixteenth, never how
+  # far off it sits.
+  detroit_stumble: {
+    kicks: [
+      [0, 3, 6, 10], [0, 2, 7, 10, 14], [0, 3, 9, 11], [0, 5, 10, 13],
+      [0, 3, 6, 11, 14], [0, 2, 6, 10], [0, 4, 7, 10, 15], [0, 3, 8, 10, 13],
+      [0, 6, 10, 12], [0, 3, 7, 14],
+    ],
+    snares: [[4, 12], [4, 12], [4, 12], [4, 12], [4, 12], [4, 12]],
+    # Ghosts on the sixteenth before each backbeat and trailing off it: the
+    # unaccented chatter that makes a programmed bar breathe. 3 and 11 lead into
+    # the snare, 6 and 14 fall out of it.
+    ghosts: [
+      [3, 6, 11, 14], [3, 7, 11, 14], [2, 6, 11, 15], [3, 6, 10, 14],
+      [1, 3, 11, 13], [3, 6, 9, 11, 14],
+    ],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
+    ],
+    opens: [6, 14],
+  },
+  # LA beat scene — Knxwledge/Teebs/Samiyam side of the lineage.
+  #
+  # flylo_canon displaces the snare off 4/12 so the backbeat stops being a
+  # reference. This keeps that but thins everything around it: the kick is
+  # sparse and never on 8, the hats leave whole beats empty, and the ghosts do
+  # the work the hats stop doing. Space is the instrument here — the LA records
+  # are quiet in the middle of the bar in a way the Detroit ones are not.
+  la_beat_scene: {
+    kicks: [
+      [0, 6, 11], [0, 7, 10], [0, 5, 11, 14], [0, 6, 9],
+      [0, 7, 12], [0, 3, 6, 11], [0, 6, 13], [0, 5, 9, 14],
+    ],
+    snares: [[5, 12], [4, 13], [5, 13], [6, 12], [4, 12], [5, 11]],
+    ghosts: [
+      [2, 3, 7, 9, 14], [1, 3, 8, 10, 15], [2, 7, 9, 13, 14],
+      [3, 6, 10, 14], [1, 2, 8, 11, 15], [2, 4, 9, 14],
+    ],
+    hats: [
+      [0, 3, 6, 8, 11, 14], [0, 2, 5, 8, 10, 13],
+      [2, 5, 7, 10, 13, 15], [0, 4, 7, 11, 14],
+    ],
+    opens: [8, 15],
+  },
   timeless: {
     kicks: [
       [0, 8, 10, 15], [0, 3, 9, 11, 14], [0, 6, 10, 13], [0, 2, 7, 10, 14],

@@ -968,6 +968,32 @@ TRACK_PRESETS = {
     feel: :timeless, quintuplet: true, voicing: :rootless,
     timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 },
   },
+  # Two doors were open for a new feel and neither of them names it: a feel added
+  # to DRUM_PATTERN_SETS without a preset is reachable only by someone who
+  # already knows the word (see the reachability audit in cli_commands.rb). These
+  # two presets are that name, and they are NEW entries rather than edits to
+  # existing ones so no track that already sounds right changes.
+  #
+  # The timing is the point of detroit_stumble, not just the grid. Every other
+  # preset pins kick_anchor near zero because the kick is treated as the
+  # reference the rest leans against. The microtiming literature has it the other
+  # way round -- the kick is the erratic element against a stable snare and hat --
+  # so here the kick gets the widest window in the table and the snare the
+  # narrowest. Backbeat slightly early and hats late, which is the direction
+  # Hein's analysis of "Get Dis Money" measures.
+  detroit_stumble_e: {
+    bpm: 90, progression: :pedal_e_descent, chord_bars: 1, phrase_bars: 8, swing: 56,
+    feel: :detroit_stumble, stereo_pan: true, quintuplet: true, voicing: :rootless,
+    timing: { snare: -18..-12, hat_up: 18..28, bass: 24..44, kick_anchor: -16..20 }
+  },
+  # The LA side: sparser, and the kick steadier than Detroit's because the space
+  # is doing the work instead. Snare sits later than it does above -- displaced
+  # rather than early -- which is what stops the backbeat reading as a reference.
+  la_beat_scene_e: {
+    bpm: 86, progression: :d_add9_soul_arc, chord_bars: 2, phrase_bars: 8, swing: 58,
+    feel: :la_beat_scene, stereo_pan: true, quintuplet: true, voicing: :spread,
+    timing: { snare: 6..18, hat_up: 10..22, bass: 30..52, kick_anchor: -6..10 }
+  },
   pedal_e_descent: {
     bpm: 92, progression: :pedal_e_descent, chord_bars: 1, phrase_bars: 6, swing: 54,
     feel: :syncopated_slash_ninth, stereo_pan: true, quintuplet: true, voicing: :rootless,
