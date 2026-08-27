@@ -23,6 +23,12 @@ class FediverseSsrfTest < Minitest::Test
     assert_match(/unsafe or unresolvable/, error.message)
   end
 
+  def test_ipv4_mapped_loopback_is_refused
+    assert OutboundHttp.unsafe_ip?("::ffff:127.0.0.1")
+    assert OutboundHttp.unsafe_ip?("::ffff:10.0.0.1")
+    assert OutboundHttp.unsafe_ip?("::ffff:169.254.169.254")
+  end
+
   def test_request_refuses_a_non_443_port
     assert_raises(URI::InvalidURIError) { OutboundHttp.request(URI("https://example.com:8443/actor")) }
   end

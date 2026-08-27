@@ -43,6 +43,7 @@ module OutboundHttp
 
   def unsafe_ip?(addr)
     ip = IPAddr.new(addr)
+    ip = ip.native if ip.respond_to?(:ipv4_mapped?) && ip.ipv4_mapped?
     UNSAFE_NETS.any? { |net| net.include?(ip) }
   rescue IPAddr::InvalidAddressError
     true

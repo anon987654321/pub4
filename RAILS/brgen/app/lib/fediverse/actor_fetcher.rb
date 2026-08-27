@@ -30,10 +30,14 @@ module Fediverse
     def upsert(uri, document)
       inbox = document["inbox"]
       return nil if inbox.blank?
+      return nil unless same_host?(uri, inbox)
+
+      shared = document.dig("endpoints", "sharedInbox")
+      shared = nil unless shared.blank? || same_host?(uri, shared)
 
       actor = FediActor.find_or_initialize_by(uri: uri)
       actor.inbox_url = inbox
-      actor.shared_inbox_url = document.dig("endpoints", "sharedInbox")
+      actor.shared_inbox_url = shared
       actor.username = document["preferredUsername"]
       actor.domain = URI(uri).host
       actor.display_name = document["name"]
@@ -44,6 +48,12 @@ module Fediverse
       actor
     rescue URI::InvalidURIError, ActiveRecord::RecordInvalid
       nil
+    end
+
+    def same_host?(left, right)
+      URI(left).host.to_s.downcase == URI(right).host.to_s.downcase
+    rescue URI::InvalidURIError
+      false
     end
   end
 end
