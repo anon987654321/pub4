@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-
   # Vipps Login is the identity dating trusts. ExternalIdentity/IdentityProvider
   # already carry it — the callback writes one per successful OAuth round trip —
   # so this asks a question of existing data rather than adding a column that

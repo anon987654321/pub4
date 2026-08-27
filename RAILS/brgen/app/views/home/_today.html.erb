@@ -8,7 +8,15 @@
       this: keyboard, screen-reader state and the open/closed toggle are the
       element's, not a controller's. %>
   <details>
-    <summary><%= tag.h2 t("home.intro_title", city: city_name) %></summary>
+<%# The chevron is the only thing saying this opens. display: flex on a
+    <summary> removes the browser's disclosure triangle — the rule that set a
+    44px target on this, because it is a real control, is the same rule that
+    took away the sign that it is one. So the strip read as a dead heading
+    with nothing under it. %>
+<summary>
+  <%= tag.h2 t("home.intro_title", city: city_name) %>
+  <%= icon :chevron_down, size: 18, css_class: "city-today-caret" %>
+</summary>
     <ul class="city-today-list">
       <% events.each do |event| %>
         <% href = activity_event_href(event) %>

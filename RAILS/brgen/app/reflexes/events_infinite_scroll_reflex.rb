@@ -20,10 +20,10 @@ class EventsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   def after_paginate
     @rsvps = if Current.user.blank? || @records.blank?
                {}
-             else
+    else
                EventRsvp.where(user_id: Current.user.id, event_id: @records.map(&:id))
                         .pluck(:event_id, :status).to_h
-             end
+    end
   end
 
   def row_locals(event) = { event: event, rsvp_status: @rsvps[event.id] }

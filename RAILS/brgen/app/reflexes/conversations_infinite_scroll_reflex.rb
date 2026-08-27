@@ -37,7 +37,7 @@ class ConversationsInfiniteScrollReflex < Shared::InfiniteScrollReflex
     {
       conversation: conversation,
       unread: @unread_counts.fetch(conversation.id, 0),
-      pinned: @pinned_ids.include?(conversation.id),
+      pinned: @pinned_ids.include?(conversation.id)
     }
   end
 end

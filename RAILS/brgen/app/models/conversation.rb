@@ -263,8 +263,8 @@ class Conversation < ApplicationRecord
     unread_scope_for(user).where(conversations: { slug: nil }).count
   end
 
-  # { conversation_id => unread count }, for rendering a list of threads.
-  # Absent key means zero, so callers should fetch with a 0 default.
+# { conversation_id => unread count }, for rendering a list of threads.
+# Absent key means zero, so callers should fetch with a 0 default.
 # Message and active-speaker counts for a set of rooms, in one query each.
 #
 # channels#index rendered seven rooms and asked each one for recent_active_count

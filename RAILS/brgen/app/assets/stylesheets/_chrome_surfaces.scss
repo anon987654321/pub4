@@ -116,6 +116,24 @@ aside.city-today,
   margin: 0;
 }
 
+/* The caret sits at the end of the row and turns when the strip opens. 200ms is
+   inside NO_LONG_TRANSITION's 300 ceiling, and transform is the compositor-only
+   property — rotating it costs no layout. */
+.city-today-caret {
+  margin-inline-start: auto;
+  flex: none;
+  color: var(--text-secondary);
+  transition: transform 200ms var(--ease-out);
+}
+
+.city-today details[open] .city-today-caret {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city-today-caret { transition: none; }
+}
+
 .city-today details[open] .city-today-list {
   margin-top: var(--space-3);
 }
