@@ -92,7 +92,7 @@ module Pub4
           "OPENBSD/bin/check && cd MASTER && bin/check --profile=contributor"
         else
           # resolves Ruby 3.4
-          "bin/ruby OPENBSD/bin/check"
+          "MASTER/bin/ruby OPENBSD/bin/check"
         end
       else
         "OPENBSD/bin/check-full"

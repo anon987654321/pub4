@@ -676,8 +676,8 @@ Three facts with no home of their own, kept because each was expensive to find.
   CLI sets it for the life of the process.
 - **An orphan sweep must include the repo-root `bin/` and must not filter by
   extension.** A 2026-08-03 sweep deleted `lib/pub4/status_report.rb` as an orphan
-  and broke `bin/pub4` for six days: the grep matched only `*.rb`/`*.yml`/`*.md`
-  and `bin/pub4` has no extension, and it ran from `MASTER/`, where `bin/` does not
+  and broke `MASTER/bin/pub4` for six days: the grep matched only `*.rb`/`*.yml`/`*.md`
+  and `MASTER/bin/pub4` has no extension, and it ran from `MASTER/`, where `bin/` does not
   mean the repo-root `bin/` that holds the caller. Pinned by
   `test/test_entrypoint_requires.rb`, which checks requires rather than constants —
   a constant sweep can be fooled by an extension filter; a missing file cannot.

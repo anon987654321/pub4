@@ -25,7 +25,7 @@ Run the smallest proof in `START_HERE.md` "Checks by change type". On failure: `
 
 ## Do not touch
 
-`START_HERE.md` "Do Not Touch". Isolated checkout if more than one agent is in the repo: `bin/pub4 worktree <name>` → work in `../pub4-<name>`. The shared tree has one git index; `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the minimum if you must share a tree.
+`START_HERE.md` "Do Not Touch". Isolated checkout if more than one agent is in the repo: `MASTER/bin/pub4 worktree <name>` → work in `../pub4-<name>`. The shared tree has one git index; `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the minimum if you must share a tree.
 
 ## Patch closeout
 

@@ -1,115 +1,109 @@
 # CLAUDE.md
 
-Guidance for Claude Code across the pub4 repo. Authority order:
-`MASTER/data/soul.yml` > `MASTER/data/rules.yml` > this file.
+One screen. Everything else is reference, reached from here.
 
-This file is a pointer, not a copy. Every subsystem keeps its own contract, and
-those files are maintained; duplicating them here produces a second source that
-drifts. The previous version of this file was deleted at `6cdd2cb97` after
-exactly that — it still described a `DEPLOY/` tree and `lib/now,judge,loop`
-modules that had been renamed.
+Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > this file >
+the per-tree contract. Feature truth is `RAILS/apps.yml`.
 
-## Layout
+This file points; it does not copy. Every subsystem keeps its own contract and
+those files are maintained, so restating them here produces a second source that
+drifts. The previous version was deleted at `6cdd2cb97` after exactly that — it
+still described a `DEPLOY/` tree and `lib/now,judge,loop` modules that had been
+renamed.
 
-```
-MASTER/    constitutional AI runtime in Ruby — the primary product
-RAILS/     Rails 8 apps: brgen (one process: city apex + subdomain engines), amber, bsdports
-OPENBSD/   deploy pipeline, VPS runbook, operator debt
-STUDIO/    media tools — dilla (beats), lora, postpro (grading), repligen (images)
-bin/       repo-level entry points: master, cli, pub4, ruby
-dotfiles/  shell and editor config
-```
+## The four trees
 
-## Where the contract lives
+| | what it is | entry point |
+|---|---|---|
+| `MASTER/` | A constitutional AI runtime in pure Ruby. The primary product. | `MASTER/bin/master "<instruction>"` |
+| `RAILS/` | Three Rails 8 apps: **brgen** (a city social network; its verticals are mounted engines), **amber** (wardrobe), **bsdports**. | `RAILS/bin/triangle up` |
+| `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/pub4 vps state` |
+| `STUDIO/` | Media tools. **dilla** makes beats, **postpro** grades images, **repligen**/**lora** generate. | `ruby STUDIO/dilla/dilla.rb` |
 
-| Working on | Read first |
-|---|---|
-| Anything in MASTER | `MASTER/START_HERE.md` (full contract), `MASTER/AGENTS.md` (task-scoped) |
-| MASTER law, scanners, fix loop | `MASTER/START_HERE.md` "Data File Budget"; all scanner law is `data/rules.yml` |
-| The web face / WebGL / primer tap | `MASTER/web/CLAUDE.md` |
-| Deploy, VPS, rc.d, relayd | `OPENBSD/CLAUDE.md`, then `OPENBSD/RUNBOOK.md` |
-| RAILS app CSS or visual work | `RAILS/shared/WIRING_NOTES.md` "Visual design system" |
-| brgen city hosts / verticals | `RAILS/brgen/AGENTS.md` (apex vs subdomain engines; not a fourth app) |
-| Why something odd-looking is deliberate | `MASTER/DECISIONS.md`, `OPENBSD/DECISIONS.md` |
-| Known debt, and what not to chase | `MASTER/DEBT.md`, `OPENBSD/data/debt.yml` |
+Nothing else sits at the repo root but this file.
 
-Feature truth is `RAILS/apps.yml`. Operator debt is `OPENBSD/data/debt.yml`.
-
-## Instructing MASTER
-
-`bin/master "<instruction>"` is the repo-wide instruction surface — the MASTER
-runtime booted from `MASTER/` so `data/soul.yml` and the sibling `RAILS`,
-`OPENBSD` and `STUDIO` trees all resolve. Bare `bin/master` opens a session;
-slash commands work as in `MASTER/bin/cli`, because it is that runtime.
-
-`bin/pub4` stays the *operator* surface (`status`, `vps state|deploy|logs`,
-`post-pull`). Two surfaces, no third: `bin/cli` was a compat shim forwarding to
-`bin/pub4` for legacy callers that no longer exist, and was deleted rather than
-kept — every `bin/cli` in this tree means `MASTER/bin/cli`.
-
-## Checks
-
-Run the smallest check that proves the work; do not report done without its
-output.
+## Commands
 
 ```zsh
-cd MASTER && bin/check                    # ordinary code
-cd MASTER && bin/check --profile=agent    # law, scanners, fix loop
-cd MASTER && bin/check --profile=web      # the face
-cd MASTER && bin/check --profile=full     # release gate: bin/ci + bin/probe all + rake audit
-bin/pub4 status                           # repo-level status
+MASTER/bin/pub4 status               # what is dirty, per tree
+MASTER/bin/pub4 test                 # the suites
+MASTER/bin/pub4 measure              # every ratchet, current vs ceiling
+MASTER/bin/pub4 worktree <name>      # your own checkout — see the first trap
+MASTER/bin/pub4 vps state | deploy   # the box
+
+cd MASTER && bin/check               # ordinary code
+cd MASTER && bin/check --profile=agent   # law, scanners, fix loop
+cd MASTER && bin/check --profile=web     # the face
+cd MASTER && bin/check --profile=full    # release gate
+ruby RAILS/gates/runner.rb --all     # every RAILS gate
 ```
 
-`--profile=agent` may fail on known debt tagged `agent-ignore` in
-`MASTER/DEBT.md`. Do not chase scan noise on unrelated patches.
+Run the smallest check that proves the work, and do not report done without its
+output. `--profile=agent` may fail on known debt tagged `agent-ignore`; do not
+chase scan noise on unrelated patches.
 
-## Repo-wide rules that catch agents
+`MASTER/bin/master "<instruction>"` is the repo-wide instruction surface — the
+runtime booted so `data/soul.yml` and the sibling trees all resolve. Bare
+`MASTER/bin/master` opens a session, and slash commands work as in
+`MASTER/bin/cli` because it is that runtime. `MASTER/bin/pub4` is the operator
+surface. Two surfaces, no third.
 
-**One git index, many agents.** The default checkout is shared. `git commit -a`
-sweeps another agent's half-finished work into your commit, and interleaved
-writes have produced silently corrupt files.
+## Five traps, in the order they will bite you
 
-```zsh
-bin/pub4 worktree <name>   # your own checkout + branch — the actual fix
-bin/pub4 hooks             # refuse cross-tree commits in the shared tree
-```
+1. **The checkout is shared.** Several agents edit this tree at once. `git commit -a`
+   sweeps up someone else's half-finished work, and `git push` publishes every
+   commit beneath yours. Take `MASTER/bin/pub4 worktree <name>`, or at minimum
+   commit path-scoped: `git commit -- <paths>` with no prior `git add`.
+2. **Strict loading is on in every environment.** Reading a lazy association off a
+   record fetched by id raises, in test and production both. Associations carrying
+   a `:destroy` cascade are exempt (`Shared::CascadingAssociationsLoad`), which is
+   easy to get backwards either way. Check before you claim a 500.
+3. **A deploy sheds amber and bsdports**, and relayd keeps answering TLS with their
+   ports closed — so the outage looks like a hang, not a 5xx. `vps-deploy` restores
+   them; deploying by hand, check ports 61352 and 47312.
+4. **The apps default to Norwegian.** Tests assert through I18n keys, never English
+   literals, and a hardcoded English string is a defect rather than a placeholder.
+5. **Renders are irreplaceable.** dilla and postpro write real output with rotating
+   seeds. Never render over a take that matters, and never change a rendered-sound
+   or graded-look default on your own judgement.
 
-Take the worktree if more than one agent is active. This paragraph asked for
-that in prose for months while the worktree cost a remembered path to a shell
-script and the shared tree cost nothing, so sessions kept choosing nothing —
-and on 2026-08-12 one session's debt write-up was committed by another under a
-message about something else. It is one command now.
+## Working in a shared index
 
-In the shared tree, commit path-scoped at minimum (`git commit -- <paths>`, no
-prior `git add`). `bin/pub4 hooks` installs two guards:
-
-- **`pre-commit`** refuses a commit spanning more than one top-level tree — the
-  `git commit -a` signature — unless you set `PUB4_CROSS_TREE=1`, and prints
-  everything it is leaving behind, so other sessions' work in your tree is
-  visible at the moment you commit.
-- **`pre-push`** refuses to publish more than one commit unless you set
-  `PUB4_PUSH_ALL=1`, listing each with its author and age first. On a single
-  commit it prints what is going rather than assuming it is yours.
+`MASTER/bin/pub4 hooks` installs two guards. `pre-commit` refuses a commit
+spanning more than one top-level tree — the `git commit -a` signature — unless
+`PUB4_CROSS_TREE=1`, and prints everything it leaves behind. `pre-push` refuses
+to publish more than one commit unless `PUB4_PUSH_ALL=1`, listing each with its
+author and age.
 
 Neither can tell sessions apart; nothing in git can. Path scoping bounds the
-commit, not the push: `git push` sends every commit beneath yours. Run
-`git log --oneline origin/main..HEAD` before pushing and say in your report what
-went with you.
-
-Path scoping bounds the commit, not the push. `git push` sends every commit
-beneath yours, so pushing one path-scoped commit publishes whatever anyone else
-committed and had not sent yet — on 2026-08-10 one push carried four commits
-another session had told its user were still local. Run `git log --oneline
-origin/main..HEAD` before pushing and say in your report what went with you.
-There is no per-commit push; the only real fix is a worktree.
+commit, not the push — `git push` sends every commit beneath yours, and on
+2026-08-10 one push carried four commits another session had told its user were
+still local. Run `git log --oneline origin/main..HEAD` before pushing and say in
+your report what went with you. There is no per-commit push; the only real fix is
+a worktree.
 
 Paths do not identify sessions either. Everything commits as the same author, and
-inferring "this is my tree, so this is my commit" was wrong twice on 2026-08-10 —
-three sessions were in `RAILS/` at once. Read the commit body before claiming or
-disclaiming one.
+inferring "this is my tree, so this is my commit" was wrong twice on 2026-08-10,
+when three sessions were in `RAILS/` at once. Read the commit body before
+claiming or disclaiming one.
+
+## Two habits this repo learned the hard way
+
+**Verify the instrument before the finding.** Naive pattern-matching over this
+tree produces mostly false positives — five candidate findings died on
+verification in one week, one report had to be retracted after the test written
+to prove it passed with the fix reverted, and a dead-file census was wrong forty
+times out of forty because it searched for `context_provider` while every caller
+wrote `Master::Ground::ContextProvider`. Before calling config inert, find the
+reader. Before calling code wrong, check what your scan measured.
+
+**A comment states the present-tense reason.** Not what the code used to do —
+that is what `git log` and the decision records are for.
+
+## House rules
 
 **Ruby and zsh, not GNU text tools.** `sed`, `awk`, `find`, `head`, `tail`, `wc`,
-`perl` and `python` are banned in agent shell calls and committed scripts — BSD
+`perl` and `python` are banned in agent shell calls and committed scripts: BSD
 variants break GNU idioms and this repo deploys to OpenBSD. Use `ruby -e`, zsh
 globs and builtins, or the dedicated file tools.
 
@@ -121,3 +115,15 @@ generated assets. Keys live in `/etc/*.env` on the VPS.
 
 **Production is vm23 only** (`dev@brgen.no`). One app CI/deploy at a time. After
 `git pull` on the box, run `vps-deploy` before expecting live health.
+
+## Where the rest lives
+
+| Working on | Read |
+|---|---|
+| Anything in MASTER | `MASTER/START_HERE.md`, then `MASTER/AGENTS.md` |
+| The web face, WebGL, TTS | `MASTER/web/CLAUDE.md` |
+| Deploy, the VPS, rc.d, relayd | `OPENBSD/CLAUDE.md`, then `OPENBSD/RUNBOOK.md` |
+| RAILS CSS or visual work | `RAILS/shared/WIRING_NOTES.md`, then `RAILS/shared/LAYOUT.md` |
+| brgen's city hosts and verticals | `RAILS/brgen/AGENTS.md` |
+| Why something odd is deliberate | `MASTER/DECISIONS.md`, `OPENBSD/DECISIONS.md` |
+| Known debt, and what not to chase | `MASTER/DEBT.md`, `OPENBSD/data/debt.yml` |

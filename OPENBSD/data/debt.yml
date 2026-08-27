@@ -49,7 +49,7 @@ open:
     before the switch: writing repo code refused, doas refused. /home/dev went
     drwx--x--- to drwxr-x--- because getcwd needs read on every ancestor and
     bundler calls Dir.pwd first; .ssh and priv keep drwx------.
-    STILL OPEN: `bin/master` from a terminal is dev, and dev is still nopass root.
+    STILL OPEN: `MASTER/bin/master` from a terminal is dev, and dev is still nopass root.
     The remote path is closed; the local one is the remaining half.
     COST, recorded 2026-08-25 because the next app to be moved will pay it too:
     the first deploy that carried daemon_user="master" to the box did not bring
@@ -89,7 +89,7 @@ open:
     RAILS/shared/lib/pub4/model_contract_lint.rb ratchets uninferrable_inverse
     (54) and no_validations (10); destructive_action_lint.rb ratchets
     unconfirmed_destroy (30). Both are wired into MASTER/tools/ratchets.rb and
-    appear in `bin/pub4 measure`. The inverse_of number is 54 rather than the 104
+    appear in `MASTER/bin/pub4 measure`. The inverse_of number is 54 rather than the 104
     counted by eye because half of what a grep calls a missing inverse_of is an
     association ActiveRecord infers by itself, and reporting those is reporting
     Rails working; the detector encodes the cases automatic_inverse_of documents
@@ -392,7 +392,7 @@ closed:
   resolution: pkg_add espeak; master rc.d PATH=/usr/local/bin; tts_proof.sh ok on
     vm23
 - id: macos_ruby_mismatch
-  resolution: contributor check profiles + bin/ruby shim skip runtime gates cleanly
+  resolution: contributor check profiles + MASTER/bin/ruby shim skip runtime gates cleanly
 - id: frontend_auditor
   resolution: amber items.scss split + timeline BEM removed
 - id: web_asset_discipline

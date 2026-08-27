@@ -12,14 +12,14 @@ OPENBSD is the production surface for pub4: vm23 config backup, relayd, NSD/acme
 
 ## Golden Commands
 
-- `bin/pub4 status` — one-screen repo/VPS posture and next command.
+- `MASTER/bin/pub4 status` — one-screen repo/VPS posture and next command.
 - `OPENBSD/RECIPES.md` — copy-paste operator recipes.
 - `OPENBSD/bin/check --profile=contributor` — fast static deploy gates.
 - `OPENBSD/bin/check-rails --profile=contributor` — Rails source gates (skips runtime on Ruby mismatch).
 - `OPENBSD/bin/check-openbsd` checks OpenBSD config/deploy identity locally.
 - `OPENBSD/bin/check-vps` is the explicit VPS/live gate wrapper; run it only on vm23 or with SSH/operator intent.
 - `OPENBSD/bin/check-full` chains the local checks and the integrity gate.
-- `OPENBSD/bin/vps-state` / `bin/pub4 vps deploy <app>` — deployed vs dev tree on vm23.
+- `OPENBSD/bin/vps-state` / `MASTER/bin/pub4 vps deploy <app>` — deployed vs dev tree on vm23.
 
 ## Source Of Truth
 

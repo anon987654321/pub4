@@ -1,4 +1,4 @@
-# OPENBSD operator runtime authority — served via /orient deploy and bin/pub4.
+# OPENBSD operator runtime authority — served via /orient deploy and MASTER/bin/pub4.
 # Markdown stubs (START_HERE.md, OPENBSD/RECIPES.md) point here; edit this file.
 
 meta:
@@ -25,19 +25,19 @@ single_source_of_truth:
 
 recipes:
   - want: See where I am
-    run: bin/pub4 status
+    run: MASTER/bin/pub4 status
     expect: mode, ruby, ports, next command
   - want: Fast local contributor check
     run: OPENBSD/bin/check --profile=contributor && cd MASTER && bin/check --profile=contributor
     expect: static gates ok
   - want: After git pull on vm23
-    run: OPENBSD/bin/post-pull-checklist && bin/pub4 vps state
+    run: OPENBSD/bin/post-pull-checklist && MASTER/bin/pub4 vps state
     expect: drift visible; follow deploy list
   - want: Deploy one Rails app on VPS
-    run: bin/pub4 vps deploy brgen --remote
+    run: MASTER/bin/pub4 vps deploy brgen --remote
     expect: CI + restart + /up ok (serial — one app at a time)
   - want: Deploy MASTER web
-    run: bin/pub4 vps deploy master --remote
+    run: MASTER/bin/pub4 vps deploy master --remote
     expect: assets precompiled + master restarted
   - want: Full integrity on VPS
     run: ssh brgen 'cd /home/dev/pub4 && ruby34 OPENBSD/integrity_gate.rb'

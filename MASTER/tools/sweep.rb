@@ -12,7 +12,7 @@
 # What already existed: eight instruments that each answer one such question for
 # one population — dup_census, data_reach, reader_singularity, rule_reach,
 # namespace_ratchet, design_baseline, loc_budget, cohesion. Each with its own
-# invocation, its own ceiling file, and no shared vocabulary. `bin/pub4 measure`
+# invocation, its own ceiling file, and no shared vocabulary. `MASTER/bin/pub4 measure`
 # aggregates the ratchets; nothing aggregates the *questions*.
 #
 # This does, per tree, in dmesg form, because a sweep that prints a wall of prose

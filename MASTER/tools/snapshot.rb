@@ -9,7 +9,7 @@
 # The generator that made them was `bin/snapshot`, deleted with the DEPLOY tree
 # in the OPENBSD reorganisation — so the three files sat eleven days stale at a
 # commit that no longer exists in any working checkout, with nothing able to
-# refresh them. This lives in tools/ and is reachable as `bin/pub4 snapshot`,
+# refresh them. This lives in tools/ and is reachable as `MASTER/bin/pub4 snapshot`,
 # which is the surface an operator already has.
 #
 # Binary files are listed in the tree and skipped in the body; a mirror that

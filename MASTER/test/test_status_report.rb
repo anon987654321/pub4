@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "pub4/status_report"
 
-# `bin/pub4 status` tells one session which trees hold another session's
+# `MASTER/bin/pub4 status` tells one session which trees hold another session's
 # uncommitted work. That line is the repo's answer to a shared checkout, so it
 # has to name the trees correctly — a mangled name reads as a tree nobody
 # recognises, and the reflex is to ignore the line rather than to distrust it.

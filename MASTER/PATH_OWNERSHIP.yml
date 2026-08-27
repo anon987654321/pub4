@@ -21,7 +21,7 @@ ownership:
       features live in RAILS/apps.yml, debt here, operator recipes in
       ../OPENBSD/data/operator.yml)
     risk: medium
-    check: bin/pub4 status
+    check: MASTER/bin/pub4 status
   bin/:
     purpose: executable entry points and validation wrappers
     risk: high
@@ -97,7 +97,7 @@ ownership:
   lib/pub4/:
     purpose: pub4-level (multi-repo) check/status tooling, separate namespace from Master
     risk: medium
-    check: bin/pub4 status
+    check: MASTER/bin/pub4 status
   lib/rails/:
     purpose: Rails-app audits (PWA, routes/views, Hotwire, face3d policy) for the RAILS/ tree
     risk: medium

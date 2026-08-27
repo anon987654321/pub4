@@ -4,7 +4,9 @@
 require "optparse"
 require "open3"
 
-ROOT = File.expand_path("..", __dir__)
+# Two levels: this lives in MASTER/bin/, and every sibling tree is reached
+# from the repo root above it.
+ROOT = File.expand_path("../..", __dir__)
 OPENBSD_OPS = File.join(ROOT, "OPENBSD")
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib")) unless $LOAD_PATH.include?(File.join(ROOT, "MASTER", "lib"))
 

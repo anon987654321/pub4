@@ -4,9 +4,9 @@ require_relative "test_helper"
 
 # Every require in an entry-point script must resolve to a file that exists.
 #
-# This gate exists because `bin/pub4` was dead on main for six days and nothing
+# This gate exists because `MASTER/bin/pub4` was dead on main for six days and nothing
 # reported it. `5203c698e` deleted `lib/pub4/status_report.rb` as an orphan while
-# `bin/pub4:12` required it, so every subcommand -- including the `bin/pub4
+# `MASTER/bin/pub4:12` required it, so every subcommand -- including the `MASTER/bin/pub4
 # status` CLAUDE.md documents as the repo-level check -- died with a LoadError
 # before it parsed argv.
 #
@@ -14,12 +14,12 @@ require_relative "test_helper"
 # both blindnesses are reproducible:
 #
 #   1. Extension filter. The sweep matched each file's innermost constant with a
-#      grep over *.rb, *.yml and *.md. `bin/pub4` has no extension, so its
+#      grep over *.rb, *.yml and *.md. `MASTER/bin/pub4` has no extension, so its
 #      `Pub4::StatusReport` call was invisible. Re-running that grep today still
 #      returns zero callers for a constant that plainly has one.
 #   2. Scope. The sweep ran from MASTER/, where `bin/` means `MASTER/bin/`. The
 #      caller lives in the *repo root* `bin/`, one directory above the scan root,
-#      and puts MASTER/lib on the load path itself (`bin/pub4:9`).
+#      and puts MASTER/lib on the load path itself (`MASTER/bin/pub4:9`).
 #
 # So this checks the requires rather than the constants: it does not care how a
 # file is referenced, only that what a runnable script asks for is on disk. A
@@ -75,8 +75,8 @@ class TestEntrypointRequires < Minitest::Test
   # again fails with the reason rather than a generic missing-file line.
   def test_bin_pub4_status_report_is_present
     assert_path_exists File.join(LIB, "pub4", "status_report.rb"),
-                       "bin/pub4 requires pub4/status_report and calls Pub4::StatusReport at :48. " \
+                       "MASTER/bin/pub4 requires pub4/status_report and calls Pub4::StatusReport at :48. " \
                        "It is not an orphan. A constant grep filtered by file extension cannot see " \
-                       "the caller, because bin/pub4 has no extension."
+                       "the caller, because MASTER/bin/pub4 has no extension."
   end
 end

@@ -41,9 +41,9 @@ critical_items:
 checks:
   file_presence:
     - RESTORE_FROM_PUB.md
-    - RECOVERY/pub/LEGACY_MANIFEST.yml
+    - MASTER/data/recovery/legacy_manifest.yml
     - RECOVERY/pub/README.md
-    - RECOVERY/pub/plugin_schema_v1.json
+    - MASTER/data/recovery/plugin_schema_v1.json
     - DEPLOY/bp/RESTORE_SOURCE_PIPELINE.md
     - STUDIO/postpro/IMAGE_ENGINE_POSITIONING.md
 

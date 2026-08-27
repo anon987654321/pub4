@@ -31,4 +31,4 @@ sections:
   deploy: |-
     RAILS/<app>/ is a full Rails 8 tree (app/views, config, db) — not a stub. <app>.sh copies it to /home/<app>/app on vm23.
     Feature truth: RAILS/apps.yml. Debt: OPENBSD/data/debt.yml. Horizon (agent ignore): apps.horizon.yml.
-    bin/pub4 status · bin/pub4 vps deploy <app> · OPENBSD/bin/post-pull-checklist after git pull on VPS.
+    MASTER/bin/pub4 status · MASTER/bin/pub4 vps deploy <app> · OPENBSD/bin/post-pull-checklist after git pull on VPS.

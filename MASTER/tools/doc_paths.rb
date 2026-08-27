@@ -147,7 +147,7 @@ module Pub4
     # Directories a Rails app creates when it runs, not when it is cloned.
     # `untracked_dirs` finds them by walking the disk, which works on a machine
     # that has booted the app and on the deploy host, and fails everywhere else:
-    # in a fresh clone or a new `bin/pub4 worktree` they have never been created,
+    # in a fresh clone or a new `MASTER/bin/pub4 worktree` they have never been created,
     # so START_HERE's `web/storage/` and `web/log/` and DEBT.md's `public/assets`
     # were reported as documents pointing at nothing.
     #

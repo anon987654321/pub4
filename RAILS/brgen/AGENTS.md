@@ -53,7 +53,7 @@ Full Rails 8 app in this directory. `brgen.sh` copy-tree deploys to
 
 - Golden checks: `OPENBSD/bin/check-rails --profile=contributor`; scan via
   `cd MASTER && bundle exec ruby bin/cli` → `/scan RAILS/brgen`.
-- VPS: `bin/pub4 vps deploy brgen --remote` (serial — never parallel with other apps).
+- VPS: `MASTER/bin/pub4 vps deploy brgen --remote` (serial — never parallel with other apps).
 - Do not: enable `force_ssl` behind relayd; edit `OPENBSD/deploy_inventory.json`
   without updating `apps.yml`; add a fourth public Rails app
   (`OPENBSD/DECISIONS.md`).

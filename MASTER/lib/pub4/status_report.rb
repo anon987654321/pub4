@@ -23,7 +23,7 @@ module Pub4
 
     # `from:`, not a positional — Environment.repo_root takes a keyword. The
     # positional call this replaces raised ArgumentError, and never showed it:
-    # bin/pub4 always passes root:, so the default was never evaluated.
+    # MASTER/bin/pub4 always passes root:, so the default was never evaluated.
     def initialize(root: Environment.repo_root(from: __dir__))
       @root = root
     end

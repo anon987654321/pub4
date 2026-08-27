@@ -1,6 +1,6 @@
 # Recipes
 
-Runtime authority: `OPENBSD/data/operator.yml` — list with `cd MASTER && bundle exec ruby bin/cli` then `/orient deploy`, or `bin/pub4 status`.
+Runtime authority: `OPENBSD/data/operator.yml` — list with `cd MASTER && bundle exec ruby bin/cli` then `/orient deploy`, or `MASTER/bin/pub4 status`.
 
 ## Repo shape (visual overview)
 

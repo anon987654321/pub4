@@ -64,7 +64,7 @@ Two things the old split was carrying, and where each went:
 - **The dependency direction survives, as a test.** The fold must not reach into the application spine. That was enforced by a directory boundary and is now enforced by `test/core/test_no_lib_backedges.rb`, which names the fold's files explicitly and fails if any of them requires a sibling under `lib/`. It also asserts it found the files at all, since a glob that matches nothing passes silently.
 - **`core_files` survives, counted differently.** `lib/{core.rb,core/*.rb}` — the directory plus the entrypoint beside it. Globbing only `lib/core/` would have read one under the ceiling and handed out a free concept. It stood at 6 through the merge and was raised to 7 <!-- cite: data/spine.yml#spine.core_files --> on 2026-08-12 for `Proof`.
 
-What the merge removed, beyond a directory: `bin/master-core` put `core/` on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb` files won was decided by load-path order. `bin/nsaudit` had to hand-require the second spine so the first one's constants would resolve. Both are gone.
+What the merge removed, beyond a directory: `MASTER/bin/master-core` put `core/` on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb` files won was decided by load-path order. `bin/nsaudit` had to hand-require the second spine so the first one's constants would resolve. Both are gone.
 
 `lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved files `lib/` fell 28. The arithmetic is in `data/spine.yml` so the claim is checkable rather than asserted. It was raised three times after that: once for `Review::Scan::CodeMetrics` — one line counter where there had been three — once to close the fold-spine findings the merge exposed, and once for `d35b40ec0`'s `worn_type` accessors, which took an operator decision to clear the raise log because nothing was left to absorb.
 
@@ -74,11 +74,11 @@ The figure that used to sit in that sentence is deliberately gone. It carried a 
 
 *Superseded 2026-08-12 — retained for the reasoning, not as current policy:*
 
-> `lib/` and `core/` are intentionally separate load paths. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `core/` is a small isolated constitutional fold loaded on its own path by the core tests and `bin/master-core`.
+> `lib/` and `core/` are intentionally separate load paths. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `core/` is a small isolated constitutional fold loaded on its own path by the core tests and `MASTER/bin/master-core`.
 >
 > Core types live under `Master::Core::` (not top-level `Master::`) so they coexist with lib constants in one process — the runtime cutover loads `core/` into the CLI via the bridge. `bin/nsaudit` loads the core entrypoint explicitly; the two-spine design is deliberate, not accidental duplication. (The module was named `Master::Kernel` until it was renamed to `Master::Core` to stop shadowing Ruby's built-in `::Kernel`.)
 >
-> Namespace tooling should treat `bin/master-core` as the core load entrypoint.
+> Namespace tooling should treat `MASTER/bin/master-core` as the core load entrypoint.
 
 ## The Spine Ratchet Replaces An Unmeasured Invariant
 

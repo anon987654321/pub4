@@ -72,7 +72,7 @@ legacy_roots:
   - path: plugin_schema_v1.json
     state: archived
     priority: medium
-    target_path: RECOVERY/pub/plugin_schema_v1.json
+    target_path: MASTER/data/recovery/plugin_schema_v1.json
     reason: >
       Old framework plugin/module schema. MASTER has a runtime plugin registry,
       but schema provenance should stay available.

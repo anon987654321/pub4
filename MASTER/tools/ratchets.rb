@@ -19,9 +19,9 @@ require "open3"
 # chrome_i18n_lint tested for the second; this makes it the contract for all of
 # them.
 #
-#   bin/pub4 measure            # fast: pure-Ruby lints + declared ceilings
-#   bin/pub4 measure --deep     # + the scans that cost minutes
-#   bin/pub4 measure --json
+#   MASTER/bin/pub4 measure            # fast: pure-Ruby lints + declared ceilings
+#   MASTER/bin/pub4 measure --deep     # + the scans that cost minutes
+#   MASTER/bin/pub4 measure --json
 #
 # Fast means "reads files"; deep means "runs a scanner". Nothing here shells out
 # in fast mode, so it is cheap enough to run before every commit.

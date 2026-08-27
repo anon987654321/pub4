@@ -328,13 +328,22 @@ module Master
         records.filter_map { |r| dead_candidate(r, corpus) }.first(MAX_DEAD_CANDIDATES)
       end
 
+      # The stem is only half the name. A Zeitwerk caller writes
+      # Master::Ground::ContextProvider, which downcases to the single token
+      # `contextprovider` — the stem with its underscores gone — so a check for
+      # `context_provider` finds nothing and every autoloaded file in the tree
+      # reads as dead. Measured 2026-08-27: all forty candidates this produced
+      # had live callers, a census that was wrong forty times out of forty.
       def dead_candidate(record, corpus)
         return if protected_path?(record.path)
+
         stem = File.basename(record.basename, record.ext).downcase
-        inbound = corpus.count { |path, text| path != record.path && text.include?(stem) }
+        names = [stem, stem.delete("_")].uniq
+        inbound = corpus.count { |path, text| path != record.path && names.any? { |n| text.include?(n) } }
         return unless inbound.zero?
         return if record.lines < 3
-        { path: record.path, reason: "no stem references found", lines: record.lines }
+
+        { path: record.path, reason: "no reference by stem or constant", lines: record.lines }
       end
 
       # Method-level extension of dead_file_candidates: a defined method whose

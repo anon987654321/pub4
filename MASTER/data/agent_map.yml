@@ -155,7 +155,7 @@ patch_briefs:
     tests: [test/test_speech.rb, bin/check]
   core/:
     check: rake test:core
-    tests: [rake test:core, bin/master-core --real "dogfood noop"]
+    tests: [rake test:core, MASTER/bin/master-core --real "dogfood noop"]
     note: constitutional fold spine — new ability = Effect verb in world.rb
   lib/voice/speech.rb:
     check: bin/check
@@ -231,7 +231,7 @@ patch_briefs:
     deploy: vps-deploy master
     post: ruby RAILS/tools/generate_face_root_css.rb
   OPENBSD/etc/rc.d/master:
-    check: bin/pub4 status
+    check: MASTER/bin/pub4 status
     topic: deploy
     tests: []
     deploy: doas cp OPENBSD/etc/rc.d/master /etc/rc.d/master

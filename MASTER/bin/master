@@ -24,7 +24,9 @@
 # (status, vps state/deploy/logs, post-pull) and this is the instruction
 # surface.
 
-ROOT = File.expand_path("..", __dir__)
+# Two levels: this lives in MASTER/bin/, and every sibling tree is reached
+# from the repo root above it.
+ROOT = File.expand_path("../..", __dir__)
 MASTER = File.join(ROOT, "MASTER")
 CLI = File.join(MASTER, "bin", "cli")
 

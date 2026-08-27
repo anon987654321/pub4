@@ -53,7 +53,7 @@
 # goes stale silently: the tests check the table against itself and drift
 # surfaces as a 422 in production or a setting quietly dropped.
 #
-# +8 arrived in 9b7d92a69 ("bin/pub4 status invented a tree called ASTER")
+# +8 arrived in 9b7d92a69 ("MASTER/bin/pub4 status invented a tree called ASTER")
 # between this ceiling being set and this commit. Recorded here rather than
 # left to fail the next session's unrelated patch, which is the convention the
 # +15 raise below already set.
@@ -239,7 +239,7 @@ spine:
   # breached: lib/ was 47753 raw lines here, +295 over the old 47458. That breach
   # was real and traced to four commits — +119 (22e012e52, a TTS lock that
   # outlived its owner), +141 (ae7f3f5a6, restoring lib/pub4/status_report.rb,
-  # which an orphan sweep had deleted while bin/pub4 still required it), +29
+  # which an orphan sweep had deleted while MASTER/bin/pub4 still required it), +29
   # (f82bcf63c), +6 (2839ab805). None of it is accretion the ratchet exists to
   # catch; one of them is a deletion being undone. Switching units does not
   # forgive it, and the number below is the honest post-fact measurement.

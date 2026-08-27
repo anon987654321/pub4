@@ -44,7 +44,7 @@ High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `lib/master.rb`, `lib/c
 | Law / scanners / loop | `bin/check --profile=agent` |
 | Web face | `bin/check --profile=web` |
 | Deploy / Rails | `OPENBSD/bin/check-rails --profile=contributor` |
-| Operator / release | `bin/pub4 status` then `OPENBSD/bin/check-full` |
+| Operator / release | `MASTER/bin/pub4 status` then `OPENBSD/bin/check-full` |
 
 **Do not optimize away:** the fold spine's independence from the rest of `lib/` — `lib/core*` requires nothing outside its own namespace, held by `test/core/test_no_lib_backedges.rb`; deferred WebGL until primer tap; constitution self-scan debt during unrelated UI work.
 

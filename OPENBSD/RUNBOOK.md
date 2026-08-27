@@ -145,7 +145,7 @@ so; this line used to name all three after the word `doas`.
 
 **Rules:**
 
-- Run `bin/pub4 status` before starting work; use `OPENBSD/RECIPES.md` for copy-paste paths.
+- Run `MASTER/bin/pub4 status` before starting work; use `OPENBSD/RECIPES.md` for copy-paste paths.
 - Treat `RAILS/apps.yml` and `OPENBSD/deploy_inventory.json` as inventories, not suggestions.
 - Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
 - Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/vps_ci.sh <app>` for per-app CI.

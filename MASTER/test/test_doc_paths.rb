@@ -23,8 +23,6 @@ class TestDocPaths < Minitest::Test
   # a path does.
   DOCS = %w[
     CLAUDE.md
-    START_HERE.md
-    CHANGELOG.md
     RAILS/CLAUDE.md
     OPENBSD/CLAUDE.md
     OPENBSD/RUNBOOK.md
@@ -34,7 +32,9 @@ class TestDocPaths < Minitest::Test
     RAILS/shared/WIRING_NOTES.md
   ].freeze
 
-  TREES = %w[MASTER RAILS OPENBSD STUDIO bin dotfiles].freeze
+  # The repo root is four trees and CLAUDE.md. bin/ moved under MASTER and
+  # dotfiles/ under OPENBSD, so neither is a top-level tree any more.
+  TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
   # Paths that name a thing on the VPS, not a thing in the repo.
   ABSOLUTE_OR_REMOTE = %r{\A(/|~|https?:|[a-z]+@)}
 

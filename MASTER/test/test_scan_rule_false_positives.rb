@@ -275,7 +275,7 @@ end
 
   def test_no_puts_still_exempts_the_cli_entry_layer
     assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "lib/cli/cli/repl_flow.rb")
-    assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "bin/master")
+    assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "MASTER/bin/master")
   end
 
   def test_no_puts_still_catches_a_bare_puts_in_library_code

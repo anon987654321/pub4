@@ -13,11 +13,14 @@ class TestRecoveryPubManifest < Minitest::Test
   # renamed away — asserting them would have made a green test the reason the
   # tree came back.
   def test_restore_docs_exist
+    # The prose halves are gone. RESTORE_FROM_PUB.md and the three RECOVERY/
+    # READMEs restated in 905 lines what the manifest below already holds as
+    # structured rows — a source, a state, and a reason per entry — and they
+    # opened by dating themselves to a layout this repo had already renamed.
+    # The ledger is what the contract needs; git holds the prose.
     required = [
-      "RESTORE_FROM_PUB.md",
-      "RECOVERY/pub/LEGACY_MANIFEST.yml",
-      "RECOVERY/pub/README.md",
-      "RECOVERY/pub/plugin_schema_v1.json",
+      "MASTER/data/recovery/legacy_manifest.yml",
+      "MASTER/data/recovery/plugin_schema_v1.json",
       "MASTER/data/recovery_pub.yml",
     ]
 
@@ -36,7 +39,7 @@ class TestRecoveryPubManifest < Minitest::Test
   end
 
   def test_legacy_manifest_has_state_definitions
-    manifest = YAML.safe_load(ROOT.join("RECOVERY/pub/LEGACY_MANIFEST.yml").read, permitted_classes: [Date])
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     states = manifest.fetch("states")
 
     %w[restored ported absorbed archived missing retired].each do |state|
