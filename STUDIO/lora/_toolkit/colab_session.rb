@@ -21,6 +21,7 @@
 
 require "fileutils"
 require "json"
+require "rbconfig"
 require "pathname"
 
 SUBJECT = ARGV.fetch(0) { abort "warn: usage: colab_session.rb <subject>" }
@@ -643,6 +644,25 @@ def generate
   sh! "sh", SUBJECT_DIR.join("lora").to_s, "--generate"
 end
 
+# Say which frames are worse than a real photograph, on the way past.
+#
+# Waxy skin, blown highlights and a plastic sheen arrive as finished JPEGs
+# alongside the good ones and raise nothing. Until now the only thing that caught
+# them was somebody scrolling a folder, which is how twelve portraits rendered on
+# a mismatched sampler were looked at three times before anyone said "blurry".
+#
+# Reports, never blocks. The thresholds are calibrated from seven dim phone
+# photographs, so they are a floor rather than a standard, and a frame that took
+# thirty seconds of GPU is worth keeping even when four numbers disagree with it.
+# --quarantine on judge.rb itself is the destructive-ish option, and it moves.
+def judge_portraits
+  judge = Pathname.new(__dir__).join("judge.rb")
+  return unless judge.file? && OUT_DIR.directory?
+
+  puts "run: judging #{OUT_DIR.basename} against the reference envelope"
+  system(RbConfig.ruby, judge.to_s, OUT_DIR.to_s)
+end
+
 # The adapter and the validation portraits are the deliverables. ai-toolkit
 # samples the curated prompt suite as it trains, so a training run is also the
 # generate run — which is why this lane needs no paid one to see a face.
@@ -652,6 +672,7 @@ def harvest
   (checkpoints + portraits).each { |path| FileUtils.cp(path, PERSIST.join(path.basename)) }
 
   puts "ok: #{checkpoints.length} checkpoint(s) and #{portraits.length} portrait(s) in #{PERSIST}"
+  judge_portraits
   abort "warn: training produced no .safetensors" if checkpoints.empty?
 end
 

@@ -1,0 +1,13 @@
+# Calibrated from 7 reference image(s) in /Users/mac/Documents/GitHub/pub4/STUDIO/lora/ragnhild/dataset.
+#
+# Floors are the reference minimum and ceilings the reference maximum: the
+# question a render has to answer is "am I worse than any real photograph of
+# her", not "am I better than the average one".
+#
+# Regenerate with:
+#   ruby _toolkit/judge.rb --calibrate <dir>
+thresholds:
+  texture: 0.012552
+  tonal_range: 0.091482
+  clipping: 0.000000
+  specular_spread: 0.195470
