@@ -211,6 +211,16 @@ shared_wiring:
   class: Deploy::SharedWiringGate
   pass: "Shared wiring gate passed (routes, importmap, public assets, Stimulus)."
 
+# An app translation and a shared one for the same key: one renders, the other
+# is dead, and nothing says which. Measured, not reasoned: shared/config/locales
+# sits in I18n.load_path TWICE and the second entry lands after every app, so
+# shared always wins. nav.brand_home is why all three apps render "Home".
+locale_shadowing:
+  require: lib/source/locale_shadowing
+  class: Deploy::LocaleShadowingGate
+  pass: "locale_shadowing: ok"
+  covered_by: production
+
 # MASTER's 164 executable rules reach this tree through exactly one door, and
 # until now it was a door nobody opened: no covered_by meant this ran only when
 # named by hand, so a RAILS deploy was gated by RuboCop, Brakeman and the app
