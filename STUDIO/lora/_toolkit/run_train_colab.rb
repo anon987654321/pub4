@@ -182,8 +182,34 @@ def train_cell(options)
     # FLUX.1-dev otherwise, 512 buckets because the budget is the clock.
     os.environ["LORA_STEPS"] = "#{options[:steps]}"
     os.environ["LORA_SAMPLE_EVERY"] = "#{options[:sample_every]}"
-    subprocess.run(["ruby", "/content/pub4/STUDIO/lora/_toolkit/colab_session.rb", "#{SUBJECT}"],
-                   check=True)
+
+    # Piped and re-printed, NOT subprocess.run(check=True).
+    #
+    # A notebook does not show you a child process's output. IPython captures
+    # writes to Python's sys.stdout; a subprocess inherits the kernel's file
+    # descriptor 1 and writes past it, into a kernel log the browser never
+    # renders. So the whole Ruby session — every ok:, every run:, every warn:,
+    # and whatever pip said before it failed — went somewhere unreadable, and
+    # the only thing that reached the page was CalledProcessError naming
+    # subprocess.py. A run failed this way with literally no diagnostic
+    # attached: not the error, not even the first "ok:" line.
+    #
+    # Streamed line by line rather than captured at the end, because this runs
+    # for hours. capture_output=True would buffer the lot and show it after the
+    # fact, so a live run would look identical to a hung one.
+    proc = subprocess.Popen(
+        ["ruby", "/content/pub4/STUDIO/lora/_toolkit/colab_session.rb", "#{SUBJECT}"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    tail = []
+    for line in proc.stdout:
+        print(line, end="")
+        tail.append(line)
+        del tail[:-40]
+    proc.wait()
+    if proc.returncode:
+        raise SystemExit(
+            "training failed (exit %d). The cause is in the output above; the last "
+            "40 lines are:\\n%s" % (proc.returncode, "".join(tail)))
   PYTHON
 end
 
