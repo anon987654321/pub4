@@ -59,10 +59,13 @@
   <%= csp_meta_tag %>
   <%= yield :head %>
   <%# Brand fonts are self-hosted (see _fonts_brand.scss); preload only the face
-      this surface actually uses so it is ready before first text paint. %>
-  <% if active_vertical.in?(%i[dating maps messenger]) %>
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-400-normal.woff2" crossorigin>
-  <% elsif active_vertical == :marketplace && File.file?(Rails.root.join("public/fonts/pp-neue-montreal-latin-700-normal.woff2")) %>
+      this surface actually uses so it is ready before first text paint.
+
+      Inter is gone -- _fonts_brand says so -- and its five cuts went with it,
+      but the preload for inter-latin-400 stayed and pointed at a 404 on dating,
+      maps and messenger. The File.file? guard below is the shape that survives
+      a font being retired; a bare href is not. %>
+  <% if active_vertical == :marketplace && File.file?(Rails.root.join("public/fonts/pp-neue-montreal-latin-700-normal.woff2")) %>
     <link rel="preload" as="font" type="font/woff2" href="/fonts/pp-neue-montreal-latin-700-normal.woff2" crossorigin>
   <% end %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
