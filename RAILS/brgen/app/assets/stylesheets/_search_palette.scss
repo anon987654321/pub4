@@ -47,7 +47,9 @@
   /* Start below the top chrome so the wordmark and the trigger stay legible —
      the page is dimmed, not replaced. */
   padding: calc(var(--chrome-inset, 12px) * 5) var(--space-3, 16px) var(--space-3, 16px);
-  background: color-mix(in srgb, var(--bg, #000) 72%, transparent);
+  /* Bare var(--bg): app-root-tokens defines it on every surface, and the
+     literal fallback named a black that no dialect actually uses. */
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
   overscroll-behavior: contain;
 }
 
