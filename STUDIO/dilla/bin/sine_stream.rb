@@ -53,59 +53,138 @@ def saturate(x, drive)
   Math.tanh(x * drive) / Math.tanh(drive)
 end
 
-def kick!(l, r, at, rate_secs)
-  n = (RATE * 0.42).to_i
-  start = at
+# The kit, rebuilt soft.
+#
+# The previous version made its hats from high-passed white noise through tanh,
+# then lifted 3.2 kHz on top of that, and the master chain lifted sibilance again
+# at 5.6 kHz on every one of its twelve passes. Compounded, that is a transient
+# with most of its energy exactly where the ear is most easily hurt, which is
+# what "sharp, stingy, knife-like" describes and it is a real thing to fix rather
+# than a taste.
+#
+# Everything here is built the other way round: no white noise anywhere, band
+# limited sources, attacks measured in milliseconds rather than samples, and the
+# top rolled off before anything downstream gets a chance to lift it.
+
+# Attacks are shaped, never instant. A step discontinuity is broadband energy at
+# full scale -- it is the click, and the click is the part that hurts.
+def soft_attack(i, samples) = i < samples ? (0.5 - 0.5 * Math.cos(Math::PI * i / samples)) : 1.0
+
+def kick!(l, r, at, _rate_secs)
+  n = (RATE * 0.52).to_i
+  atk = (RATE * 0.004).to_i
   ph = 0.0
   n.times do |i|
     t = i.to_f / n
-    # 118 Hz down to 41 Hz over the first fifth of the hit: the drop IS the kick.
-    hz = 41.0 + 77.0 * Math.exp(-t * 22.0)
+    # Starts lower and falls further than before: 88 Hz to 38, so the body is
+    # felt rather than heard, and no click layer on top of it at all.
+    hz = 38.0 + 50.0 * Math.exp(-t * 16.0)
     ph += 2 * Math::PI * hz / RATE
-    env = Math.exp(-t * 6.2)
-    click = i < 90 ? (1.0 - i / 90.0) * 0.35 : 0.0
-    s = saturate(Math.sin(ph) * env + click, 3.4) * 0.92 * env
-    j = start + i
+    env = Math.exp(-t * 5.0) * soft_attack(i, atk)
+    # tanh at 1.3, not 3.4: enough to thicken, not enough to square the peak.
+    s = Math.tanh(Math.sin(ph) * 1.3) / Math.tanh(1.3) * env * 0.80
+    j = at + i
     break if j >= l.length
+
     l[j] += s
     r[j] += s
   end
 end
 
-def hat!(l, r, at, open, seed)
-  n = (RATE * (open ? 0.20 : 0.055)).to_i
+# The snare is a tuned membrane, not a noise burst.
+#
+# Two detuned sine bodies with a soft band of noise UNDER a 2 kHz roof, rather
+# than a high-passed hiss. A real snare has most of its energy between 180 and
+# 400 Hz; the crack above 5 kHz is the part a microphone exaggerates and the part
+# that hurts on headphones.
+def snare!(l, r, at, seed)
+  n = (RATE * 0.26).to_i
+  atk = (RATE * 0.006).to_i
   rnd = Random.new(seed)
-  hp = 0.0
+  lp = 0.0
+  p1 = 0.0
+  p2 = 0.0
   n.times do |i|
     t = i.to_f / n
-    white = rnd.rand * 2.0 - 1.0
-    # One-pole high pass, run twice: noise minus its own low end is a hat.
-    hp = 0.86 * (hp + white)
-    env = Math.exp(-t * (open ? 6.0 : 26.0))
-    s = saturate(hp * env, 2.2) * (open ? 0.26 : 0.20)
+    env = Math.exp(-t * 12.0) * soft_attack(i, atk)
+    p1 += 2 * Math::PI * 186.0 / RATE
+    p2 += 2 * Math::PI * 247.0 / RATE
+    body = (Math.sin(p1) * 0.6 + Math.sin(p2) * 0.4)
+    # Noise through a one-pole at ~1.9 kHz, twice, so there is rustle without
+    # any of it living above the roof.
+    lp += 0.24 * ((rnd.rand * 2 - 1) - lp)
+    s = (body * 0.62 + lp * 0.38) * env * 0.42
     j = at + i
     break if j >= l.length
-    # Hats sit off-centre, alternating, so the kit occupies width the chord does not.
-    l[j] += s * (seed.even? ? 1.15 : 0.72)
-    r[j] += s * (seed.even? ? 0.72 : 1.15)
+
+    l[j] += s * 0.92
+    r[j] += s * 1.0
   end
 end
 
-# One bar of the kit over a chord of `secs`, with the two grids disagreeing.
-def drums_for_bar!(l, r, offset, secs, bar_index)
-  sixteenth = (RATE * secs / 16.0)
-  place = ->(step, nudge) { (offset + (step + nudge) * sixteenth).to_i }
+# Hats: a soft filtered rustle, not a cymbal.
+#
+# Bandpassed between roughly 900 Hz and 4 kHz with a shaped attack. Nothing above
+# 4 kHz survives, which is the whole point -- the sizzle a hat is usually given
+# is the frequency the ear fatigues on fastest.
+def hat!(l, r, at, open, seed)
+  n = (RATE * (open ? 0.16 : 0.048)).to_i
+  atk = (RATE * 0.0018).to_i
+  rnd = Random.new(seed)
+  lp1 = 0.0
+  lp2 = 0.0
+  hp = 0.0
+  n.times do |i|
+    t = i.to_f / n
+    w = rnd.rand * 2 - 1
+    lp1 += 0.30 * (w - lp1)
+    lp2 += 0.30 * (lp1 - lp2)
+    hp += 0.06 * (lp2 - hp)
+    band = lp2 - hp
+    env = Math.exp(-t * (open ? 7.0 : 24.0)) * soft_attack(i, atk)
+    s = band * env * (open ? 0.15 : 0.12)
+    j = at + i
+    break if j >= l.length
 
-  kicks = [0, 3, 6, 10].then { |k| bar_index.odd? ? k + [14] : k }
-  kicks.each { |st| kick!(l, r, place.(st, KICK_EARLY), secs) }
-
-  16.step(0, -2) { |_| nil }
-  (0...16).step(2) do |st|
-    open = st == 10
-    hat!(l, r, place.(st, HAT_LATE), open, st + bar_index)
+    l[j] += s * (seed.even? ? 1.05 : 0.82)
+    r[j] += s * (seed.even? ? 0.82 : 1.05)
   end
-  # Ghosts on the far side of the beat, quieter and later still.
-  [5, 13].each { |st| hat!(l, r, place.(st, GHOST_LATE), false, st + bar_index + 7) }
+end
+
+# Twelve patterns rather than one, walked by bar so the kit is never the same
+# two bars running. Each is [kick steps, snare steps, hat step, ghost steps] on
+# a sixteenth grid.
+KIT_PATTERNS = [
+  [[0, 6, 10], [4, 12], 2, [7, 14]],
+  [[0, 3, 8, 11], [4, 12], 2, [6, 13]],
+  [[0, 7], [4, 12], 4, [2, 10, 14]],
+  [[0, 6, 10, 14], [4, 12], 2, [3, 11]],
+  [[0, 5, 8], [4, 12], 3, [11, 15]],
+  [[0, 10], [4, 12], 2, [6, 7, 14]],
+  [[0, 3, 6, 10], [4, 12], 4, [13]],
+  [[0, 8, 11], [4, 12], 2, [2, 5, 14]],
+  [[0, 6, 9, 12], [4, 14], 2, [3, 10]],
+  [[0, 4, 10], [6, 12], 3, [1, 9, 15]],
+  [[0, 7, 11], [4, 12], 2, [5, 13, 14]],
+  [[0, 2, 8, 10], [4, 12], 4, [6, 15]],
+].freeze
+
+# Hats late, kicks early, against the same grid. Two clocks disagreeing is the
+# whole idea and the offsets are fractions of a sixteenth so they scale with
+# tempo.
+HAT_LATE = 0.24
+KICK_EARLY = -0.06
+GHOST_LATE = 0.31
+
+def drums_for_bar!(l, r, offset, secs, bar_index)
+  sixteenth = RATE * secs / 16.0
+  place = ->(step, nudge) { (offset + (step + nudge) * sixteenth).to_i }
+  kicks, snares, hat_step, ghosts = KIT_PATTERNS[bar_index % KIT_PATTERNS.length]
+
+  kicks.each { |st| kick!(l, r, place.(st, KICK_EARLY), secs) }
+  snares.each { |st| snare!(l, r, place.(st, 0.0), st + bar_index) }
+  (0...16).step(hat_step) { |st| hat!(l, r, place.(st, HAT_LATE), st == 10, st + bar_index) }
+  ghosts.each { |st| hat!(l, r, place.(st, GHOST_LATE), false, st + bar_index + 7) }
 end
 
 # ringtone.tools, reimplemented on the buffer instead of through ffmpeg.
@@ -856,7 +935,12 @@ def sonitex_filters(p, last:)
     "equalizer=f=#{p[:head_bump_hz]}:t=q:w=1.4:g=#{p[:head_bump_db]}",
     "vibrato=f=#{p[:wow_rate]}:d=#{p[:wow_depth]}",
     "vibrato=f=#{p[:flutter_hz]}:d=#{p[:flutter_depth]}",
-    "equalizer=f=#{p[:sibilance_hz]}:t=h:w=1:g=#{p[:sibilance_db]}",
+    # No sibilance lift. Sonitex specifies +1.6 dB at 5.6 kHz and this chain runs
+    # twelve passes, so it arrived as nearly twenty decibels piled in the band the
+    # ear fatigues on fastest -- most of what made the kit painful. The rest of
+    # the machine is faithful; this one stage deliberately is not, and a gentle
+    # cut stands in its place.
+    "equalizer=f=#{p[:sibilance_hz]}:t=h:w=1:g=-1.2",
     "acrusher=bits=#{p[:crush_bits]}:mix=#{p[:crush_mix]}:samples=2",
     (last ? "lowpass=f=#{p[:groove_wear_lp]}" : nil),
     "acompressor=threshold=#{p[:out_comp_threshold]}dB:ratio=#{p[:out_comp_ratio]}:makeup=#{p[:out_comp_makeup]}",
@@ -1236,6 +1320,60 @@ def flow_shape(slot)
   }
 end
 
+# The drum bus: long chains, assembled at random, per progression.
+#
+# The kit renders into its own buffer so it can be treated as a kit rather than
+# as part of the pad. Four to seven devices are drawn without replacement and run
+# in the order drawn, each with its own randomised settings, so the same pattern
+# comes out a different instrument every time.
+#
+# Two rules stop it becoming noise. Nothing in the pool lifts the top -- the kit
+# was rebuilt because it was too bright, and a random chain able to add sizzle
+# would undo that on one roll in five. And the chain always ends with a roof at
+# 6.5 kHz, whatever came before it.
+DRUM_DEVICES = %i[lpg comb ring fold crush echo cloud phase grain dropout smear].freeze
+
+def drum_chain!(l, r, seed)
+  rnd = Random.new(seed)
+  picked = DRUM_DEVICES.shuffle(random: rnd).first(4 + rnd.rand(4))
+  picked.each do |d|
+    case d
+    when :lpg then lpg!(l, r, decay_ms: 120 + rnd.rand(240), droop: 1.4 + rnd.rand * 1.4,
+                              blend: 0.35 + rnd.rand * 0.4)
+    when :comb then comb_resonator!(l, r, hz_from: 90 + rnd.rand(160), hz_to: 40 + rnd.rand(70),
+                                          feedback: 0.4 + rnd.rand * 0.35, mix: 0.15 + rnd.rand * 0.25)
+    when :ring then ring_mod!(l, r, hz: 28 + rnd.rand(90), drift_hz: 0.05 + rnd.rand * 0.5,
+                                    mix: 0.1 + rnd.rand * 0.22)
+    when :fold then wave_fold!(l, r, amount: 1.1 + rnd.rand * 0.7, mix: 0.12 + rnd.rand * 0.25)
+    when :crush then bit_mangle!(l, r, bits: 7 + rnd.rand(4), mix: 0.15 + rnd.rand * 0.3)
+    when :echo then space_echo!(l, r, time_s: 0.06 + rnd.rand * 0.4, feedback: 0.3 + rnd.rand * 0.35,
+                                      heads: 2 + rnd.rand(3), mix: 0.12 + rnd.rand * 0.3)
+    when :cloud then copy_machine!(l, r, copies: 2 + rnd.rand(4), reverse: rnd.rand * 0.5,
+                                         width: 0.5 + rnd.rand * 0.5)
+    when :phase then barber_phaser!(l, r, stages: 4 + rnd.rand(7), rate_hz: 0.05 + rnd.rand * 0.9,
+                                          depth: 0.4 + rnd.rand * 0.5, mix: 0.2 + rnd.rand * 0.4)
+    when :grain then granular_smear!(l, r, grain_ms: 30 + rnd.rand(120), jump: 0.1 + rnd.rand * 0.4,
+                                           mix: 0.15 + rnd.rand * 0.3, seed: seed + 3)
+    when :dropout then dropouts!(l, r, seed: seed + 5, count: 2 + rnd.rand(5))
+    when :smear then reverse_grains!(l, r, seed: seed + 7, count: 2 + rnd.rand(5),
+                                           grain_ms: 60 + rnd.rand(140))
+    end
+  end
+  # The roof, always: whatever the chain did, none of it leaves above 6.5 kHz.
+  k = 1.0 - Math.exp(-2 * Math::PI * 6500.0 / RATE)
+  2.times do
+    zl = 0.0
+    zr = 0.0
+    l.length.times do |i|
+      zl += k * (l[i] - zl)
+      zr += k * (r[i] - zr)
+      l[i] = zl
+      r[i] = zr
+    end
+  end
+  picked
+end
+
 def master_pass!(l, r)
   # Three Sonitex passes, the third on the extreme parameter set. Stacking the
   # same lo-fi chain is not the same as turning one up: each pass band-limits
@@ -1501,8 +1639,17 @@ loop do
       else
         played[-1] = "#{played.last}[#{stack}]"
       end
-      unless ENV["SINE_DRUMS"] == "0"
-        pads.each_index { |bar| drums_for_bar!(pl, pr, (bar * SECS * RATE).to_i, SECS, bar) }
+      unless ENV["SINE_DRUMS"] == "0" || pl.empty?
+        dl = Array.new(pl.length, 0.0)
+        dr = Array.new(pr.length, 0.0)
+        # The bar index carries the slot, so patterns keep advancing across
+        # progressions instead of restarting at pattern one every time.
+        pads.each_index do |bar|
+          drums_for_bar!(dl, dr, (bar * SECS * RATE).to_i, SECS, (gi * PER_FILE + ni) * 4 + bar)
+        end
+        used = drum_chain!(dl, dr, (gi * PER_FILE + ni) * 977 + SALT)
+        dl.length.times { |i| pl[i] += dl[i]; pr[i] += dr[i] }
+        played[-1] = played.last + "{" + used.join("-") + "}"
       end
       case treat
       when :copymachine then copy_machine!(pl, pr, copies: 4)
@@ -1605,7 +1752,11 @@ loop do
     q = File.join(OUT, "q")
     # Stay a few files ahead and no further: enough that the player never
     # catches up, few enough that an edit to this file is heard soon.
-    sleep 2 while Dir[File.join(q, "*.wav")].length >= 3 && !File.exist?(STOP)
+    # Eight deep, not three. The player replays an archived take when the queue
+    # runs dry, which repeats a whole take including its vocal -- and the queue
+    # ran dry every time the generator restarted. A deeper buffer means the
+    # replay path is reached rarely rather than routinely.
+    sleep 2 while Dir[File.join(q, "*.wav")].length >= 8 && !File.exist?(STOP)
     break if File.exist?(STOP)
 
     seq += 1
