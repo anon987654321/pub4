@@ -124,22 +124,79 @@ def install_ai_toolkit
   pip = AI_TOOLKIT.join(".venv/bin/pip").to_s
   sh!(pip, "install", "-q", "--upgrade", "pip", "wheel")
 
-  # NOT -q.
-  #
-  # This install has not yet been observed to run on Colab at all: the first
-  # session cloned and stopped, and every session after it skipped this line
-  # because of the guard above. So whether it succeeds is genuinely unknown, and
-  # the one thing worth guaranteeing is that the answer arrives legibly.
-  #
-  # There is a specific reason to expect trouble rather than an assumption of
-  # it. requirements.txt hard-pins versions older than the interpreter Colab now
-  # ships — scipy==1.12.0 publishes wheels for cp39-cp312 and Colab is on 3.13,
-  # which means a source build and a Fortran toolchain that is not there;
-  # albumentations, albucore, optimum-quanto and torchao are pinned the same
-  # way. If that is what happens, this line is where it will say so.
-  puts "note: installing ai-toolkit requirements verbosely. Several pins predate Colab's"
-  puts "note: Python 3.13 (scipy==1.12.0 has no cp313 wheel), so read this if it stops."
-  sh!(pip, "install", "-r", AI_TOOLKIT.join("requirements.txt").to_s)
+  install_requirements(pip)
+end
+
+# Exact pins that predate the interpreter Colab now ships.
+#
+# ai-toolkit pins these to a single version, and none of those versions
+# publishes a cp313 wheel. On Colab's Python 3.13 pip therefore falls back to
+# building from source, which for scipy wants a Fortran toolchain that is not
+# on the image. The pin is the problem, not the package: every one of these has
+# a later release that installs cleanly.
+#
+# Relaxed to a floor rather than removed, so pip still refuses a version older
+# than the one the toolkit was written against.
+STALE_PINS = %w[scipy albumentations albucore optimum-quanto torchao].freeze
+
+# Install, and if an exact pin is what stopped it, relax those pins and say so.
+#
+# Deliberately a fallback rather than the first attempt. The pins are the
+# author's intent and they may matter; trying them first means an environment
+# where they work gets what ai-toolkit asked for. Only when that fails does this
+# trade an exact version for an install that exists at all — and it prints what
+# it changed, because a silent version substitution in a training pipeline is
+# the kind of thing that surfaces three hours later as a strange loss curve.
+def install_requirements(pip)
+  requirements = AI_TOOLKIT.join("requirements.txt")
+  puts "run: #{pip} install -r #{requirements} (verbose; several pins predate Colab's Python 3.13)"
+  return puts "ok: requirements installed as pinned" if system(pip, "install", "-r", requirements.to_s)
+
+  relaxed = relax_pins(requirements)
+  puts ""
+  puts "note: the pinned install failed. Retrying with these exact pins relaxed to floors:"
+  puts "note:   #{STALE_PINS.join(', ')}"
+  puts "note: none of them publishes a wheel for Python 3.13, which is what Colab runs."
+  sh!(pip, "install", "-r", relaxed.to_s)
+  puts "ok: requirements installed with #{STALE_PINS.length} pin(s) relaxed"
+end
+
+# Flatten the -r includes, then relax. Both halves are necessary.
+#
+# requirements.txt opens with `-r requirements_base.txt` and holds exactly one
+# stale pin of its own; the other four are in that base file. So relaxing only
+# the top-level file misses four of the five. And a relaxed copy written
+# somewhere else keeps the `-r requirements_base.txt` line, which pip resolves
+# relative to the file it is reading — so the copy would look for a base file
+# that is not beside it and fail on something unrelated to the pins.
+#
+# Inlining the includes solves both: one flat file, every pin visible, no
+# relative reference left to break. Written into the toolkit directory anyway,
+# so anything else in there resolving by relative path still does.
+def relax_pins(requirements, depth = 0)
+  out = AI_TOOLKIT.join("requirements_relaxed.txt")
+  out.write(flatten_requirements(requirements).map { |line| relax_line(line) }.join)
+  out
+end
+
+def flatten_requirements(path, seen = [])
+  return [] if seen.include?(path.to_s) || seen.length > 8
+
+  seen << path.to_s
+  path.readlines.flat_map do |line|
+    include = line[/\A\s*-r\s+(\S+)/, 1]
+    next [line] unless include
+
+    nested = path.dirname.join(include)
+    nested.file? ? ["# inlined from #{include}\n", *flatten_requirements(nested, seen)] : [line]
+  end
+end
+
+def relax_line(line)
+  name = line[/\A\s*([A-Za-z0-9_.\-]+)\s*==/, 1]
+  return line unless name && STALE_PINS.include?(name.downcase)
+
+  line.sub("==", ">=")
 end
 
 # A checkpoint saved to Drive last session is the only reason a second session
