@@ -1,7 +1,7 @@
 ---
 job: extension
 config:
-  name: ragnhild_v2
+  name: ragnhild
   process:
   - type: sd_trainer
     training_folder:
@@ -112,6 +112,6 @@ config:
         beauty filter, heavy makeup, face morph, identity drift, teenage face, overly
         young face, generic influencer face, different woman
     meta:
-      name: ragnhild_v2
+      name: ragnhild
       version: '2.0'
       master_trigger: ragnhild
