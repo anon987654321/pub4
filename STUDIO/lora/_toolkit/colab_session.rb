@@ -44,7 +44,25 @@ end
 
 def sh!(*command)
   puts "run: #{command.join(' ')}"
-  system(*command) or abort "warn: failed: #{command.join(' ')}"
+  return if system(*command)
+
+  # A banner, because of where this output ends up. The notebook invokes this
+  # script through subprocess.run(check=True), so a non-zero exit surfaces in
+  # Colab as a CalledProcessError traceback with the Python frames of
+  # subprocess.py in it and nothing about what actually failed. The real reason
+  # is here, above that traceback, and it does not look like a heading — so
+  # people paste the traceback and the traceback says only that ruby exited 1.
+  #
+  # The same shape as the Kaggle failure documented in lora/README.md, where
+  # IPython's own formatter crashed while rendering a DNS error and buried it 80
+  # lines up. Worth a marker anyone can search for.
+  warn ""
+  warn "=" * 72
+  warn "FAILED: #{command.join(' ')}"
+  warn "The Python traceback below this only reports that ruby exited non-zero."
+  warn "The cause is the output ABOVE this banner."
+  warn "=" * 72
+  abort "warn: failed: #{command.join(' ')}"
 end
 
 def subject_env
@@ -77,7 +95,23 @@ def install_ai_toolkit
   sh!("python3", "-m", "venv", "--system-site-packages", AI_TOOLKIT.join(".venv").to_s)
   pip = AI_TOOLKIT.join(".venv/bin/pip").to_s
   sh!(pip, "install", "-q", "--upgrade", "pip", "wheel")
-  sh!(pip, "install", "-q", "-r", AI_TOOLKIT.join("requirements.txt").to_s)
+
+  # NOT -q, and that is the whole point of this line.
+  #
+  # The requirements hard-pin versions that predate the interpreter Colab now
+  # ships: scipy==1.12.0 has wheels for cp39-cp312 only, and Colab is on 3.13,
+  # so pip falls back to building it from source and fails on a missing Fortran
+  # toolchain. Several other pins (albumentations, albucore, optimum-quanto,
+  # torchao) are the same shape.
+  #
+  # Under -q none of that reaches the log. The install failed, sh! aborted, the
+  # notebook raised CalledProcessError, and the only visible artefact was a
+  # Python traceback about subprocess.py — a diagnostic suppressed at the exact
+  # point it was needed. Resolver output is verbose; a failure nobody can read
+  # is worse.
+  puts "note: installing ai-toolkit requirements verbosely — several pins predate Colab's Python,"
+  puts "note: and under -q a resolution failure arrives as a traceback about subprocess.py."
+  sh!(pip, "install", "-r", AI_TOOLKIT.join("requirements.txt").to_s)
 end
 
 # A checkpoint saved to Drive last session is the only reason a second session
