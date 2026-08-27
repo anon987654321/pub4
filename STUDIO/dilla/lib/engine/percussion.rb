@@ -54,6 +54,15 @@ PERC_VOCAB = {
   techno_drive: { rim: 0.0, glitch: 0.0, tabla: 0.0, tambourine: 0.0, woodblock: 0.0, agogo: 0.0 }
 }.freeze
 
+# The fallbacks are 0, not the old rates.
+#
+# Scoping this to the new feels only was too narrow: every other track in the
+# catalogue -- which is most of them, since the morph is opt-in -- kept getting
+# agogo, woodblock, tambourine and tabla sprinkled over it. The instruction was
+# not "use fewer of these on the new patterns", it was that Dilla and the LA beat
+# scene never played them. So they are off everywhere, and a feel would have to
+# name a rate explicitly in PERC_VOCAB to get one back.
+
 # The morph changes the feel per bar, so the ornaments have to follow it or the
 # kit arrives in techno while the percussion is still in Detroit.
 def perc_rate(feel, bar, instrument, fallback)
@@ -112,14 +121,14 @@ def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
       events[:glitch] ||= []
       events[:glitch] << [t + rng.rand * step_p * 0.5, dilla_velocity(0.35, bar, i, spread: 0.12), :ind_stab] if r < 0.02 * wild
       events[:tabla] ||= []
-      events[:tabla] << [t, dilla_velocity(0.32, bar, i, spread: 0.15)] if r < perc_rate(feel, bar, :tabla, 0.018) * density * wild
+      events[:tabla] << [t, dilla_velocity(0.32, bar, i, spread: 0.15)] if r < perc_rate(feel, bar, :tabla, 0.0) * density * wild
       events[:tambourine] ||= []
-      events[:tambourine] << [t, dilla_velocity(0.22, bar, i, spread: 0.1)] if i.even? && r < perc_rate(feel, bar, :tambourine, 0.08) * density * wild
+      events[:tambourine] << [t, dilla_velocity(0.22, bar, i, spread: 0.1)] if i.even? && r < perc_rate(feel, bar, :tambourine, 0.0) * density * wild
     end
     events[:woodblock] ||= []
-    events[:woodblock] << [t, dilla_velocity(0.2, bar, i, spread: 0.06)] if r < perc_rate(feel, bar, :woodblock, 0.01)
+    events[:woodblock] << [t, dilla_velocity(0.2, bar, i, spread: 0.06)] if r < perc_rate(feel, bar, :woodblock, 0.0)
     events[:agogo] ||= []
-    events[:agogo] << [t, dilla_velocity(0.18, bar, i, spread: 0.05)] if r < perc_rate(feel, bar, :agogo, 0.008)
+    events[:agogo] << [t, dilla_velocity(0.18, bar, i, spread: 0.05)] if r < perc_rate(feel, bar, :agogo, 0.0)
   end
 
   # Wall-of-noise bar every 32
