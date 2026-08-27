@@ -393,12 +393,18 @@ uniform vec3 uInkNear;
 uniform float uAlphaMin;
 uniform float uAlphaMax;
 uniform float uExposure;
+// Blink. -1 when idle; otherwise the position of a lid sweeping through the
+// tube in near-space, front to back. It is in the fragment stage because
+// that is where alpha already lives, and a blink is a dimming rather than a
+// movement -- a creature closing its eye does not change shape.
+uniform float uBlink;
 varying float vNear;
 varying float vSeed;
 void main() {
   // No gl_PointCoord shaping: at gl_PointSize 1.0 there is no interior to carve.
   float near = vNear * vNear;
   float alpha = mix(uAlphaMin, uAlphaMax, near) * uExposure;
+  if (uBlink >= 0.0) alpha *= 1.0 - 0.92 * (1.0 - smoothstep(0.0, 0.16, abs(near - uBlink)));
   vec3 col = mix(uInkFar, uInkNear, near);
   gl_FragColor = vec4(col, alpha);
 }`
@@ -457,6 +463,8 @@ class VisualEngine {
     this._startledUntil = 0
     this._bassEnv = 0
     this.lastBass = 0
+    this.blink = -1
+    this._blinkAt = performance.now() + 21000
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     // Classic c7c8effcd / Radio Bergen tunnel: fov 250, speed 0.75, dense rings.
     this.config = {
@@ -495,7 +503,7 @@ class VisualEngine {
     for (const n of ["uTime", "uZ", "uFov", "uRadius", "uResolution", "uCenter",
       "uBass", "uMid", "uHigh", "uBreath", "uInkFar", "uInkNear",
       "uAlphaMin", "uAlphaMax", "uExposure",
-      "uPeristalsis", "uLean", "uTwist", "uSag", "uSpread"]) {
+      "uPeristalsis", "uLean", "uTwist", "uSag", "uSpread", "uBlink"]) {
       this.uni[n] = gl.getUniformLocation(this.prog, n)
     }
     this.fadeAttr = gl.getAttribLocation(this.fadeProg, "aQuad")
@@ -592,6 +600,21 @@ class VisualEngine {
     // even in a quiet passage. ~9s period.
     const now = performance.now()
     this.breath = 1 + 0.05 * Math.sin(now * 0.0007)
+
+    // Blink: a lid sweeping the length of the tube in about 380ms, then a long
+    // wait. The interval is deliberately not a round number and carries a wide
+    // random spread, because a blink on a rhythm is a strobe -- the eye learns
+    // any period under a minute and stops reading it as involuntary. Sleeping
+    // things blink less, so dormancy stretches the wait rather than stopping it.
+    if (this.blink >= 0) {
+      this.blink += 0.055
+      if (this.blink > 1.16) {
+        this.blink = -1
+        this._blinkAt = now + 23700 + Math.random() * 41300 * (2 - this.posture.speedScale)
+      }
+    } else if (now >= this._blinkAt) {
+      this.blink = 0
+    }
 
     // Onset detection against a decaying envelope. A rising bass edge is the
     // startle; the envelope means a sustained loud passage does not keep
@@ -691,6 +714,7 @@ class VisualEngine {
     gl.uniform1f(u.uTwist, post.twist)
     gl.uniform1f(u.uSag, post.sag)
     gl.uniform1f(u.uSpread, post.spread)
+    gl.uniform1f(u.uBlink, this.blink)
     // Press inverts toward warm white rather than flipping the buffer: the old
     // softInvert walked every byte of the image on the CPU each pressed frame.
     const inv = this.colorInvertValue / 255
@@ -720,7 +744,14 @@ class VisualEngine {
       const y = Math.sin(ang) * radius * scale + c.y
       if (x < 0 || x >= this.w || y < 0 || y >= this.h) continue
       const near = Math.min(1, Math.max(0, 1 - (z + fov) / span)) ** 2
-      const a = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near
+      let a = INK_ALPHA_MIN + (INK_ALPHA_MAX - INK_ALPHA_MIN) * near
+      // The same lid as the shader. Without this the 2D path would quietly never
+      // blink, and the difference between the two renderers would be a behaviour
+      // rather than a resolution.
+      if (this.blink >= 0) {
+        const d = Math.min(1, Math.abs(near - this.blink) / 0.16)
+        a *= 1 - 0.92 * (1 - (d * d * (3 - 2 * d)))
+      }
       const r = Math.round((INK_FAR.r + (INK_NEAR.r - INK_FAR.r) * near) * 255)
       const g = Math.round((INK_FAR.g + (INK_NEAR.g - INK_FAR.g) * near) * 255)
       const b = Math.round((INK_FAR.b + (INK_NEAR.b - INK_FAR.b) * near) * 255)
