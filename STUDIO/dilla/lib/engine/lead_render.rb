@@ -289,6 +289,11 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, co
   end
   FileUtils.mv("#{path}.lead.wav", path)
   normalize_wav_to_rms!(path, target_db)
+  # The LPG here and not at the hocket exit: this is the leaf every lead path
+  # bottoms out in, and that exit is one of four. See the note above the section
+  # envelope -- a feature wired into half the paths it applies to is the harder
+  # bug to see, because it works.
+  low_pass_gate_lead!(path)
   path
 end
 
@@ -866,7 +871,7 @@ def render_hocket_lead!(path, events, duration)
       "amix=inputs=#{rendered.length}:duration=longest:normalize=0,volume=#{gain}[out]",
       "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
   rendered.each { |f| FileUtils.rm_f(f) } # scan: intentional — removes only the temp files this method rendered
-  File.file?(path) ? low_pass_gate_lead!(path) : nil
+  File.file?(path) ? path : nil # gated per voice at the leaf, not again on the mix
 end
 
 # LPG=1 — the lead through a Buchla-style low-pass gate.
@@ -892,6 +897,9 @@ def low_pass_gate_lead!(path)
                            droop: ENV.fetch("LPG_DROOP", "2.4").to_f)
   return path unless out && File.file?(out)
 
+  # Logged because it was silent, and a silent device reached from four paths is
+  # one nobody can tell fired -- it was wired to one of those paths for months.
+  dmesg("lpg: lead gated (blend #{ENV.fetch(%q(LPG_BLEND), %q(1.0))}, decay #{ENV.fetch(%q(LPG_DECAY_MS), %q(220))}ms)")
   FileUtils.mv(out, path)
   dmesg("low-pass gate: the lead darkens as it decays", unit: "harm0", parent: "dilla0")
   path

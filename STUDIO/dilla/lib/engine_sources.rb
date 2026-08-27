@@ -40,6 +40,7 @@ module DillaSources
     patch
     radio_bergen
     resolve_config
+    ringtone_layer
     progression_build
     groove_timing
     percussion
