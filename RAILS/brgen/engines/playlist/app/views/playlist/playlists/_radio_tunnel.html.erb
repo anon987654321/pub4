@@ -6,8 +6,12 @@
 <% end %>
 <% end %>
 
-<%# auto_start defaults true (including minimal playlist home) — same spirit as
-    MASTER face embed autostart. Overlay stays as a silent-autoplay fallback. %>
+<%# auto_start still defaults true for embeds, but the playlist home passes
+    false: a page that begins playing on load is music nobody asked for, coming
+    from a tab that may not be in front of you, and the transport bar is not on
+    that surface so there is nothing to press.
+    hide_overlay follows auto_start, so turning autoplay off reveals the start
+    overlay rather than leaving a silent page with no way in. %>
 <% auto_start = local_assigns.fetch(:auto_start, true) %>
 <% hide_overlay = local_assigns.fetch(:hide_overlay, auto_start) %>
 <%= tag.div(

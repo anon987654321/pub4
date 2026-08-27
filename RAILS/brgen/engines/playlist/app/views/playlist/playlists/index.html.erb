@@ -1,5 +1,12 @@
 <% content_for :title, t("playlist.home_title") %>
 
-<%# Immersive home: auto-start radio (no "tap to start" gate). Overlay only
-    reappears if the browser blocks YouTube autoplay. %>
-<%= render "playlist/playlists/radio_tunnel", minimal: true, auto_start: true %>
+<%# Immersive home, but the music waits to be asked for.
+    auto_start was true so the page began playing on load, which is music you
+    did not choose coming out of a tab you may not be looking at. It is hard to
+    stop for the same reason it is hard to find: the transport bar is not on
+    this surface, so the only control is closing the tab, and the operator spent
+    a while hunting a MacBook for the source of a Madlib track.
+    The tunnel still draws, breathes and blinks on load. Only the audio waits,
+    and the controller already starts it on the first pointer or key event, so
+    it costs one gesture rather than a hunt. %>
+<%= render "playlist/playlists/radio_tunnel", minimal: true, auto_start: false %>
