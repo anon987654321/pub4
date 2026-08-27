@@ -56,4 +56,13 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # The hosts this app answers to in production. Development's default allow
+  # list is localhost only, so probing the local server with a real Host header
+  # -- the only way to exercise anything that varies by host -- got a
+  # blocked-host page instead of the page under test. A pattern rather than a
+  # list: config runs before autoloading, so it cannot ask a service which
+  # hosts it claims, and a hand-kept list here would drift from the ones that
+  # do.
+  config.hosts << /\A([a-z0-9-]+\.)*brgen\.no\z/i
 end

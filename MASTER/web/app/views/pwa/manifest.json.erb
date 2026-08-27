@@ -1,5 +1,5 @@
 {
-  "name": "MASTER",
+  "name": "<%= Trymbot.brand(request) || "MASTER" %>",
   "icons": [
     {
       "src": "<%= asset_path("icon.png") %>",
@@ -23,7 +23,7 @@
     "client_mode": "navigate-new"
   },
   "scope": "/",
-  "description": "Public MASTER chat. Pair for personal notes. Not an operator console.",
+  "description": "<%= Trymbot.on?(request) ? "Roboten som lærer bort Ruby og musikk." : "Public MASTER chat. Pair for personal notes. Not an operator console." %>",
   "theme_color": "#000000",
   "background_color": "#000000"
 }

@@ -714,4 +714,35 @@ class TestWebUI < Minitest::Test
     assert_equal rebuilt, built,
                  "public/face.runtime.js differs from its sources at equal length"
   end
+
+  # The request-scoped persona note is the only path by which a host other than
+  # ai.brgen.no reaches the model's system prompt. Asserted through the builder
+  # rather than by reading the line that sets it, because the failure this
+  # guards against is a note nothing reads: the tab, the manifest and the voice
+  # would all still be right, and only the words would be MASTER's.
+  def test_persona_note_reaches_the_dynamic_prompt
+    probe = Class.new do
+      include Master::Review::PromptFilter
+      include Master::Review::Agent::PromptBuilder
+
+      def initialize = @config = {}
+
+      public :dynamic_prompt
+    end.new
+
+    Fiber[:master_persona_note] = "Persona note probe."
+    assert_includes probe.dynamic_prompt.to_s, "Persona note probe.",
+                    "dynamic_prompt dropped the persona note — Trymbot would speak as MASTER"
+  ensure
+    Fiber[:master_persona_note] = nil
+  end
+
+  # A note that outlives its turn is the same bug pointed the other way: the
+  # next visitor on that thread inherits a persona nobody asked for.
+  def test_chat_service_clears_the_persona_note
+    service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
+
+    assert_includes service, "Fiber[:master_persona_note] = nil"
+    assert_includes service, "def clear_fiber_flags"
+  end
 end
