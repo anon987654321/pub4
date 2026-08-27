@@ -26,12 +26,24 @@
     <%# Your own "message me" link — the whole on-ramp for somebody with no account
         here. It sits in the rail because that is where you are standing when you
         notice the person you want is not here yet. %>
-    <div class="messenger-rail-invite">
+    <%# user_plus, not share. share means "send this somewhere" and is right for
+        a post; this adds a person, which is what the link does and what Lucide's
+        user-plus draws.
+
+        The wrapper carries the controller and the button is a target, which is
+        the shape @stimulus-components/clipboard needs in order to swap the label
+        on success — the same pattern shared/_action_bar uses. A copy button with
+        no confirmation is a button people press twice. %>
+    <div class="messenger-rail-invite"
+         data-controller="clipboard"
+         data-clipboard-success-content-value="<%= t("actions.copied") %>">
+      <input type="hidden" data-clipboard-target="source"
+             value="<%= invite_url(token: Current.user.message_invite_token) %>"
+             aria-hidden="true" tabindex="-1">
       <button type="button" class="messenger-rail-invite-copy"
-              data-controller="clipboard"
-              data-clipboard-source-value="<%= invite_url(token: Current.user.message_invite_token) %>"
+              data-clipboard-target="button"
               data-action="click->clipboard#copy">
-        <%= icon :share, size: 16 %>
+        <%= icon :user_plus, size: 16 %>
         <span><%= t("invite.copy_link") %></span>
       </button>
     </div>
