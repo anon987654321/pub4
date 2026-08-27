@@ -41,6 +41,24 @@ fi
 TRIGGER="${TRIGGER:-$SUBJECT}"
 export SUBJECT MODEL TRIGGER SUBJECT_DIR
 
+# Turn off xet before anything can download a model.
+#
+# xet is Hugging Face's deduplicating transfer path. When it works it is
+# faster; when it does not, it hangs at zero bytes with the process asleep at
+# 0.1% CPU and no error, which is indistinguishable from a slow network. A
+# local SDXL pull sat like that for eight minutes on 2026-08-27 and moved at
+# 36 MB/s the moment these were set.
+#
+# colab_session.rb has disabled it since the first Colab run. The local lane
+# never did, so the same stall was waiting here for the first person to render
+# on their own machine.
+#
+# Set rather than exported conditionally: there is no case in this toolkit
+# where the dedup saving beats the risk of a silent hang, and both variables
+# are read by huggingface_hub at import time.
+export HF_HUB_DISABLE_XET=1
+export HF_HUB_ENABLE_HF_TRANSFER=0
+
 AI_TOOLKIT_ROOT="${AI_TOOLKIT_ROOT:-$HOME/ai-toolkit}"
 DATASET_DIR="$SUBJECT_DIR/dataset"
 WEIGHTS_DIR="$SUBJECT_DIR/weights/$MODEL"
