@@ -1,19 +1,15 @@
-{
-  "name": "<%= Trymbot.brand(request) || "MASTER" %>",
-  "icons": [
-    {
-      "src": "<%= asset_path("icon.png") %>",
-      "type": "image/png",
-      "sizes": "512x512"
-    },
-    {
-      "src": "<%= asset_path("icon.png") %>",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
-    }
-  ],
+<%#
+  The one manifest. public/manifest.json held this content as a static file,
+  and a file in public/ is served before the router reaches this template, so
+  pwa#manifest and this view answered nothing -- the richer static copy won
+  every request while this one drifted. Deleting the file is what makes the
+  route real, and the route is what lets the manifest vary by host.
+%>{
+  "name": "<%= Trymbot.brand(request) || "brgen" %>",
+  "short_name": "<%= Trymbot.brand(request) || "brgen" %>",
+  "description": "<%= Trymbot.on?(request) ? "Roboten som lærer bort Ruby og musikk." : "Constitutional AI agent" %>",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "edge_side_panel": {
@@ -22,8 +18,18 @@
   "launch_handler": {
     "client_mode": "navigate-new"
   },
-  "scope": "/",
-  "description": "<%= Trymbot.on?(request) ? "Roboten som lærer bort Ruby og musikk." : "Public MASTER chat. Pair for personal notes. Not an operator console." %>",
-  "theme_color": "#000000",
-  "background_color": "#000000"
+  "orientation": "any",
+  "background_color": "#030303",
+  "theme_color": "#030303",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any",     "type": "image/svg+xml" },
+    { "src": "/icon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]<% unless Trymbot.on?(request) %>,
+  <%# Not offered on the kid's host: two of the three open operator surfaces. %>
+  "shortcuts": [
+    { "name": "Chat", "short_name": "Chat", "url": "/", "description": "Open MASTER chat" },
+    { "name": "Focus face", "short_name": "Focus", "url": "/?focus=1", "description": "Face-only focus mode" },
+    { "name": "Mission control", "short_name": "Dashboard", "url": "/dashboard", "description": "Runtime observability" }
+  ]<% end %>
 }

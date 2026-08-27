@@ -737,6 +737,17 @@ class TestWebUI < Minitest::Test
     Fiber[:master_persona_note] = nil
   end
 
+  # Rails serves public/ before it reaches the router, so a file with this name
+  # answers every request and pwa#manifest answers none. That is how the route
+  # and its template sat unreachable while a static copy drifted past them --
+  # and the failure is silent, because a manifest is still returned.
+  def test_no_static_manifest_shadows_the_route
+    static = File.expand_path("../web/public/manifest.json", __dir__)
+
+    refute File.exist?(static),
+           "public/manifest.json shadows pwa#manifest — the route cannot vary the manifest by host while it exists"
+  end
+
   # A note that outlives its turn is the same bug pointed the other way: the
   # next visitor on that thread inherits a persona nobody asked for.
   def test_chat_service_clears_the_persona_note
