@@ -460,18 +460,11 @@ function frame(t) {
     faceMat.uniforms.uBass.value = (State.audioBass || 0) * 0.9 + faceMat.uniforms.uBass.value * 0.1;
     faceMat.uniforms.uMids.value = (State.audioMids || 0);
     faceMat.uniforms.uHighs.value = (State.audioHighs || 0);
-    const beatTarget = State.audioBeat || 0;
-    faceMat.uniforms.uBeat.value += (beatTarget - faceMat.uniforms.uBeat.value) * 0.35;
-    faceMat.uniforms.uBeat.value *= 0.82;
     const curiousTilt = State.mood === 'curious' ? 1.0 : 0.0;
     faceMat.uniforms.uTilt.value += (curiousTilt - faceMat.uniforms.uTilt.value) * 0.08;
     faceMat.uniforms.uConfidence.value = State.confidence || 1.0;
     const tremorTarget = faceMat.uniforms.uCurl.value * 0.75;
     faceMat.uniforms.uTremor.value += (tremorTarget - faceMat.uniforms.uTremor.value) * 0.03;
-    const shakeTarget = State.shake || 0;
-    faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
-    const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
-    faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
     const rainTarget = (State.mood === 'weary' && isRichMotionProfile()) ? 1.0 : 0.0;
     faceMat.uniforms.uRain.value += (rainTarget - faceMat.uniforms.uRain.value) * 0.02;
     const modelSwitch = State.modelSwitch || 0;
@@ -502,7 +495,6 @@ function frame(t) {
     const idleS3 = (t - State.lastTouch) / 1000;
     const eyeCloseTarget = _attnEyeClose || 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
-    faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524 + (State.entropy || 0) * 0.002;
     const soulDensity = 0.82 + soulDrift * 0.35;
     const confExposure = 0.68 + (State.confidence || 1) * 0.42;
     const baseExposure = soulDensity * confExposure;
@@ -513,13 +505,6 @@ function frame(t) {
     else if (engagement === 'thinking') focusDim *= 0.94;
     else if (engagement === 'speaking') focusDim = Math.min(1.04, focusDim * 1.02);
     faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;
-    const phosphorSoft = State.reducedMotion ? 0.46 : 0.74;
-    faceMat.uniforms.uPhosphorSoft.value += (phosphorSoft - faceMat.uniforms.uPhosphorSoft.value) * 0.04;
-    const crtProfile = rootBody.dataset.runtimeProfile === 'crt';
-    const scanTarget = crtProfile ? 0.40 : (State.mode === 'thinking' ? 0.32 : (State.mode === 'speaking' ? 0.14 : 0.08));
-    faceMat.uniforms.uScanline.value += (scanTarget - faceMat.uniforms.uScanline.value) * 0.05;
-    const chromaTarget = (State.mood === 'veto' || State.fracture > 0.35) ? 0.22 : 0.0;
-    if (faceMat.uniforms.uChroma) faceMat.uniforms.uChroma.value += (chromaTarget - faceMat.uniforms.uChroma.value) * 0.12;
     faceMat.uniforms.uTime.value = sec;
     if (idleS2 > 45) rootBody.dataset.longSilence = '1';
     else delete rootBody.dataset.longSilence;
@@ -527,9 +512,6 @@ function frame(t) {
     if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
       driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;
     }
-    if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
-    State._heartbeat = (State._heartbeat || 0) * 0.94;
-    faceMat.uniforms.uHeartbeat.value = State._heartbeat || 0;
   }
 
   State.flash *= 0.9;

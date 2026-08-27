@@ -1043,7 +1043,6 @@ uniform vec2 uMouse;
 uniform float uBass;
 uniform float uMids;
 uniform float uHighs;
-uniform float uBeat;
 uniform float uConfidence;
 uniform float uTremor;
 uniform float uTilt;
@@ -1057,8 +1056,6 @@ uniform float uFracture;
 uniform float uBloom;
 uniform float uIdleDrift;
 uniform float uEyeClose;
-uniform float uGridAngle;
-uniform float uHeartbeat;
 uniform float uExposure;
 uniform float uQuestion;
 attribute vec3 scatter;
@@ -1126,7 +1123,6 @@ void main(){
   }
   // FA20 pass bloom — brief outward radial spring then snap back
   if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
-  // FA09 council sector — radial sector glow by zone during deliberation (carried via uBeat spike)
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
   // One point is one pixel. The renderer draws into a FACE_RENDER_SCALE buffer
@@ -1208,13 +1204,13 @@ if (_hasWebGL && THREE) {
       uColor:{value:new Color(1,1,1)},
       uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
       uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
-      uBass:{value:0}, uShake:{value:0}, uPulseRing:{value:0},
-      uMids:{value:0}, uHighs:{value:0}, uBeat:{value:0},
+      uBass:{value:0},
+      uMids:{value:0}, uHighs:{value:0},
       uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
-      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
+      uFocusDim:{value:1.0}, uTime:{value:0}
     },
     // Normal (not additive) blending, so individual pixels stay crisp and
     // discrete instead of bleeding into their neighbours. This is the only
@@ -1846,18 +1842,11 @@ function frame(t) {
     faceMat.uniforms.uBass.value = (State.audioBass || 0) * 0.9 + faceMat.uniforms.uBass.value * 0.1;
     faceMat.uniforms.uMids.value = (State.audioMids || 0);
     faceMat.uniforms.uHighs.value = (State.audioHighs || 0);
-    const beatTarget = State.audioBeat || 0;
-    faceMat.uniforms.uBeat.value += (beatTarget - faceMat.uniforms.uBeat.value) * 0.35;
-    faceMat.uniforms.uBeat.value *= 0.82;
     const curiousTilt = State.mood === 'curious' ? 1.0 : 0.0;
     faceMat.uniforms.uTilt.value += (curiousTilt - faceMat.uniforms.uTilt.value) * 0.08;
     faceMat.uniforms.uConfidence.value = State.confidence || 1.0;
     const tremorTarget = faceMat.uniforms.uCurl.value * 0.75;
     faceMat.uniforms.uTremor.value += (tremorTarget - faceMat.uniforms.uTremor.value) * 0.03;
-    const shakeTarget = State.shake || 0;
-    faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
-    const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
-    faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
     const rainTarget = (State.mood === 'weary' && isRichMotionProfile()) ? 1.0 : 0.0;
     faceMat.uniforms.uRain.value += (rainTarget - faceMat.uniforms.uRain.value) * 0.02;
     const modelSwitch = State.modelSwitch || 0;
@@ -1888,7 +1877,6 @@ function frame(t) {
     const idleS3 = (t - State.lastTouch) / 1000;
     const eyeCloseTarget = _attnEyeClose || 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
-    faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524 + (State.entropy || 0) * 0.002;
     const soulDensity = 0.82 + soulDrift * 0.35;
     const confExposure = 0.68 + (State.confidence || 1) * 0.42;
     const baseExposure = soulDensity * confExposure;
@@ -1899,13 +1887,6 @@ function frame(t) {
     else if (engagement === 'thinking') focusDim *= 0.94;
     else if (engagement === 'speaking') focusDim = Math.min(1.04, focusDim * 1.02);
     faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;
-    const phosphorSoft = State.reducedMotion ? 0.46 : 0.74;
-    faceMat.uniforms.uPhosphorSoft.value += (phosphorSoft - faceMat.uniforms.uPhosphorSoft.value) * 0.04;
-    const crtProfile = rootBody.dataset.runtimeProfile === 'crt';
-    const scanTarget = crtProfile ? 0.40 : (State.mode === 'thinking' ? 0.32 : (State.mode === 'speaking' ? 0.14 : 0.08));
-    faceMat.uniforms.uScanline.value += (scanTarget - faceMat.uniforms.uScanline.value) * 0.05;
-    const chromaTarget = (State.mood === 'veto' || State.fracture > 0.35) ? 0.22 : 0.0;
-    if (faceMat.uniforms.uChroma) faceMat.uniforms.uChroma.value += (chromaTarget - faceMat.uniforms.uChroma.value) * 0.12;
     faceMat.uniforms.uTime.value = sec;
     if (idleS2 > 45) rootBody.dataset.longSilence = '1';
     else delete rootBody.dataset.longSilence;
@@ -1913,9 +1894,6 @@ function frame(t) {
     if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
       driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;
     }
-    if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
-    State._heartbeat = (State._heartbeat || 0) * 0.94;
-    faceMat.uniforms.uHeartbeat.value = State._heartbeat || 0;
   }
 
   State.flash *= 0.9;
