@@ -194,6 +194,16 @@ RAP_VOCAL_SNAP_MIN_LINES = 4
 # that does not depend on making progress.
 RAP_VOCAL_SNAP_MAX_PASSES = 512
 
+# A take gets used once. `taken % usable.size` wrapped back to the first line
+# whenever the performance ran out before the section did, so a short stem was
+# heard two, three or eight times over — the same words returning on a loop,
+# which is the one thing a rap verse cannot survive. When the lines run out the
+# vocal now stops and the beat carries the rest.
+#
+# RAP_VOCAL_REPEAT=1 restores the wrap for material where looping is the point
+# (a hook, a chant), which is why this is a switch rather than a deletion.
+RAP_VOCAL_REPEAT = ENV["RAP_VOCAL_REPEAT"] == "1"
+
 def rap_vocal_snap_placements(lines, take_sec, duration:, grid:, from_sec: 0.0, gap:)
   return [] if lines.size < RAP_VOCAL_SNAP_MIN_LINES
 
@@ -206,6 +216,7 @@ def rap_vocal_snap_placements(lines, take_sec, duration:, grid:, from_sec: 0.0, 
   passes = 0
   while cursor < duration && passes < RAP_VOCAL_SNAP_MAX_PASSES
     passes += 1
+    break if !RAP_VOCAL_REPEAT && taken >= usable.size
     line_from, line_to = usable[taken % usable.size]
     taken += 1
 
@@ -727,6 +738,16 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
   elsif seg_len <= 0 || seg_len >= duration
     sh! "ffmpeg", "-y", "-i", seg_path, "-t", duration.round(3).to_s,
         "-af", "#{outer}#{tail}",
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
+  elsif !RAP_VOCAL_REPEAT
+    # The take is shorter than the section and repeating is off, so it plays once
+    # and the beat carries the rest. apad fills the remainder with silence: the
+    # downstream mix expects a stem of exactly `duration`, and a short one would
+    # be handled by amix's dropout logic instead, which is not the same thing.
+    dmesg("rap-vocal once: #{seg_len.round(2)}s over #{duration.round(2)}s, no repeat",
+          unit: "vox0", parent: "dilla0")
+    sh! "ffmpeg", "-y", "-i", seg_path,
+        "-af", "#{outer}#{tail},apad", "-t", duration.round(3).to_s,
         "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
   else
     # Each crossfade consumes `xfade` of overlap, so n copies span
