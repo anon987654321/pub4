@@ -559,6 +559,24 @@ def demo_all(bars_count = 12, destination = nil)
     nil
   end
   mp3 = demo_encode_mp3(dest)
+  # The mp3 gets its own sidecar, not just the wav.
+  #
+  # record_assembly! above files the tracklist under `dest`, which is demo.wav —
+  # and demo.wav, demo.wav.dilla and demo.mp3 are all gitignored, so the only
+  # one of the three that reliably survives on disk is the mp3. It is the file
+  # this code calls the tracked artifact two lines down, it is the one that gets
+  # played and sent to people, and it was the one with no record of how it was
+  # made. On 2026-08-27 a 36:57 master finished with its provenance filed under a
+  # wav that no longer existed and a session.json five hours older than the
+  # render, so what made it could not be recovered at all. Seeds rotate per run;
+  # an unreproducible master with no manifest is simply lost.
+  if mp3
+    DillaProvenance.record_assembly!(
+      mp3, parts:,
+      how: "demo concat of #{parts.length} part(s), encoded to mp3" +
+           (ENV.fetch("DEMO_ALBUM_NORM", "0") == "1" ? ", after album loudnorm" : "")
+    )
+  end
   dmesg("wrote #{dest} parts=#{parts.length}/#{order.length} #{(File.size(dest) / 1_000_000.0).round(1)}MB #{dur.round(1)}s",
         unit: "demo0", parent: "dilla0")
   puts "ok: #{dest} (#{parts.length}/#{order.length} tracks, #{dur.round(1)}s)"
