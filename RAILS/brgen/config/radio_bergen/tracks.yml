@@ -24,123 +24,123 @@ meta:
 local_mp3:
   - artist: Angelo Reira & Johann
     title: Sandviken Hotell A
-    src: /audio/akmd/angelo_reira_and_johann-sandviken_hotell_a.mp3
+    src: /audio/akmd/sandviken_hotell_a.mp3
     seconds: 40
   - artist: Angelo Reira & Johann
     title: Sandviken Hotell B
-    src: /audio/akmd/angelo_reira_and_johann-sandviken_hotell_b.mp3
+    src: /audio/akmd/sandviken_hotell_b.mp3
     seconds: 46
   - artist: Chase Swayze
     title: Ants
-    src: /audio/akmd/chase_swayze-ants.mp3
+    src: /audio/akmd/ants.mp3
     seconds: 290
   - artist: Chase Swayze
     title: Chilly
-    src: /audio/akmd/chase_swayze-chilly.mp3
+    src: /audio/akmd/chilly.mp3
     seconds: 194
   - artist: Chase Swayze
     title: Cinnamonsistagirl
-    src: /audio/akmd/chase_swayze-cinnamonsistagirl.mp3
+    src: /audio/akmd/cinnamonsistagirl.mp3
     seconds: 315
   - artist: Chase Swayze
     title: Concrete Street
-    src: /audio/akmd/chase_swayze-concrete_street.mp3
+    src: /audio/akmd/concrete_street.mp3
     seconds: 187
   - artist: Chase Swayze
     title: Eleven
-    src: /audio/akmd/chase_swayze-eleven.mp3
+    src: /audio/akmd/eleven.mp3
     seconds: 299
   - artist: Chase Swayze
     title: Greenery
-    src: /audio/akmd/chase_swayze-greenery.mp3
+    src: /audio/akmd/greenery.mp3
     seconds: 240
   - artist: Chase Swayze
     title: Hannah
-    src: /audio/akmd/chase_swayze-hannah.mp3
+    src: /audio/akmd/hannah.mp3
     seconds: 250
   - artist: Chase Swayze
     title: Ijustwannafucku
-    src: /audio/akmd/chase_swayze-ijustwannafucku.mp3
+    src: /audio/akmd/ijustwannafucku.mp3
     seconds: 296
   - artist: Chase Swayze
     title: Jimmy Johnson
-    src: /audio/akmd/chase_swayze-jimmy_johnson.mp3
+    src: /audio/akmd/jimmy_johnson.mp3
     seconds: 279
   - artist: Chase Swayze
     title: Living Daylights
-    src: /audio/akmd/chase_swayze-living_daylights.mp3
+    src: /audio/akmd/living_daylights.mp3
     seconds: 353
   - artist: Chase Swayze
     title: Revenge
-    src: /audio/akmd/chase_swayze-revenge.mp3
+    src: /audio/akmd/revenge.mp3
     seconds: 323
   - artist: Chase Swayze
     title: Sardines
-    src: /audio/akmd/chase_swayze-sardines.mp3
+    src: /audio/akmd/sardines.mp3
     seconds: 263
   - artist: Chase Swayze
     title: Scott Free
-    src: /audio/akmd/chase_swayze-scott_free.mp3
+    src: /audio/akmd/scott_free.mp3
     seconds: 278
   - artist: Chase Swayze
     title: Shit Is Real
-    src: /audio/akmd/chase_swayze-shit_is_real.mp3
+    src: /audio/akmd/shit_is_real.mp3
     seconds: 258
   - artist: Chase Swayze
     title: Strange
-    src: /audio/akmd/chase_swayze-strange.mp3
+    src: /audio/akmd/strange.mp3
     seconds: 241
   - artist: Chase Swayze
     title: Underated
-    src: /audio/akmd/chase_swayze-underated.mp3
+    src: /audio/akmd/underated.mp3
     seconds: 191
   - artist: Chase Swayze
     title: Unobtanium
-    src: /audio/akmd/chase_swayze-unobtanium.mp3
+    src: /audio/akmd/unobtanium.mp3
     seconds: 213
   - artist: Haisam & Johann
     title: PB1
-    src: /audio/akmd/haisam_and_johann-pb1.mp3
+    src: /audio/akmd/pb1.mp3
     seconds: 108
   - artist: Jan Hakim & Johann
     title: Stailings A
-    src: /audio/akmd/jan_hakim_and_johann-stailings_a.mp3
+    src: /audio/akmd/stailings_a.mp3
     seconds: 31
   - artist: Jan Hakim & Johann
     title: Stailings B
-    src: /audio/akmd/jan_hakim_and_johann-stailings_b.mp3
+    src: /audio/akmd/stailings_b.mp3
     seconds: 127
   - artist: Johann
     title: Amiga
-    src: /audio/akmd/johann-amiga.mp3
+    src: /audio/akmd/amiga.mp3
     seconds: 50
   - artist: Johann
     title: Lofi
-    src: /audio/akmd/johann-lofi.mp3
+    src: /audio/akmd/lofi.mp3
     seconds: 28
   - artist: Johann
     title: Radio Bergen 1
-    src: /audio/akmd/johann-radio_bergen_1.mp3
+    src: /audio/akmd/radio_bergen_1.mp3
     seconds: 186
   - artist: Mike T Jr
     title: Rauingar
-    src: /audio/akmd/johann-rauingar.mp3
+    src: /audio/akmd/rauingar.mp3
     seconds: 19
   - artist: AKMD & Mike T
     title: Alt Kan Skje
-    src: /audio/akmd/mike_t_and_johann-alt_kan_skje.mp3
+    src: /audio/akmd/alt_kan_skje.mp3
     seconds: 34
   - artist: Whyppedcream
     title: Hemmelig 1
-    src: /audio/akmd/whyppedcream-hemmelig_1.mp3
+    src: /audio/akmd/hemmelig_1.mp3
     seconds: 186
   - artist: Whyppedcream
     title: Hemmelig 2
-    src: /audio/akmd/whyppedcream-hemmelig_2.mp3
+    src: /audio/akmd/hemmelig_2.mp3
     seconds: 457
   - artist: Whyppedcream
     title: Hemmelig 3
-    src: /audio/akmd/whyppedcream-hemmelig_3.mp3
+    src: /audio/akmd/hemmelig_3.mp3
     seconds: 358
 
 external_reference:
