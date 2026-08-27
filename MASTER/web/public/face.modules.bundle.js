@@ -658,7 +658,6 @@
     document.documentElement.style.setProperty("--transition-normal", "0ms");
     document.documentElement.style.setProperty("--ease-out", "steps(2,end)");
     document.documentElement.style.setProperty("--face-phosphor-decay", "0");
-    document.documentElement.style.setProperty("--face-glow-scale", "1.0");
     document.body.classList.add("brutalist-mode");
   }
   const aesthetic = window.MASTER_RUNTIME?.aesthetic || document.documentElement.dataset.aesthetic || "brutalist";
