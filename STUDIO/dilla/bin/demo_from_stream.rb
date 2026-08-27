@@ -36,9 +36,12 @@ files = Dir[File.join(ARCHIVE, "*.wav")].sort
 abort "  nothing in the archive yet" if files.empty?
 
 need_bytes = (TARGET * RATE * 4).to_i
+# Each take used once. Cycling the archive to reach ten minutes produced a demo
+# that repeated three takes seven times, which is the one thing this record is
+# not allowed to do -- better a short honest demo than a long looped one.
 chunks = []
 have = 0
-files.cycle do |f|
+files.each do |f|
   break if have >= need_bytes
 
   pcm = read_wav_pcm(f)
@@ -46,11 +49,14 @@ files.cycle do |f|
 
   chunks << pcm
   have += pcm.bytesize
-  break if chunks.length > 400
 end
 abort "  no readable audio" if chunks.empty?
+mins_have = (have / 4.0 / RATE / 60)
+if have < need_bytes * 0.5
+  abort format("  only %.1f min of distinct material -- waiting rather than looping it", mins_have)
+end
 
-body = chunks.join[0, need_bytes]
+body = chunks.join[0, [need_bytes, have].min]
 wav = File.join(BASE, "demo_build.wav")
 File.open(wav, "wb") do |o|
   o.write("RIFF"); o.write([36 + body.bytesize].pack("V")); o.write("WAVEfmt ")

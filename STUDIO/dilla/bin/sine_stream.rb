@@ -1138,6 +1138,47 @@ def fm_chord!(l, r, hzs, bass_hz, secs, seed: 0, gain: 0.5)
   end
 end
 
+# The shape of the stream, assessed from outside it.
+#
+# Every take was the same length, the same density and the same crossfade. That
+# is a canal: constant width, constant flow, no reason for anything to happen at
+# any particular moment. A river is not uniform -- it pools and it quickens, it
+# narrows into rapids and opens out again, and the transitions between those are
+# where it is worth listening.
+#
+# So the stream now moves on a slow cycle roughly sixteen progressions long.
+# Near the low point the takes are short and almost unprocessed: harmony, kit,
+# and little else. Near the high point they are long, layered and heavily
+# treated. Nothing announces the change; the width just varies, which is how a
+# river reads as alive rather than as a channel.
+FLOW_PERIOD = (ENV["SINE_FLOW_PERIOD"] || "16").to_f
+
+def flow_at(slot)
+  # Two cycles of different lengths, so the shape does not repeat on a bar line.
+  a = Math.sin(2 * Math::PI * slot / FLOW_PERIOD)
+  b = Math.sin(2 * Math::PI * slot / (FLOW_PERIOD * 2.6) + 1.1)
+  ((a * 0.65 + b * 0.35) + 1.0) / 2.0
+end
+
+def flow_shape(slot)
+  d = flow_at(slot)
+  {
+    depth: d,
+    # Pools hold two chords; rapids run six.
+    chords: (2 + (d * 4).round).clamp(2, 6),
+    # Calm stretches get no artifacts at all. A river is not turbulent
+    # everywhere, and constant turbulence reads as noise rather than as motion.
+    artifacts: d < 0.34 ? 0 : (d < 0.7 ? 1 : 3),
+    # Wider crossfades in the slow parts, so the pools run into each other, and
+    # tighter ones in the fast parts where the edges should be audible.
+    xfade: (RATE * (2.2 - d * 1.7)).to_i,
+    # The recycled bed belongs in the deep water.
+    recycle: d > 0.62,
+    # The FM layer is the quickening.
+    fm: d > 0.45,
+  }
+end
+
 def master_pass!(l, r)
   # Three Sonitex passes, the third on the extreme parameter set. Stacking the
   # same lo-fi chain is not the same as turning one up: each pass band-limits
@@ -1360,7 +1401,7 @@ loop do
       end
 
       treat = TREATMENTS[((gi * PER_FILE + ni) * 7 + SALT * 5) % TREATMENTS.length]
-      played << "#{name}/#{treat}"
+      played << "#{name}/#{treat}~#{(flow_at(gi * PER_FILE + ni) * 100).round}"
       # The pads come from the engine's own synths, not from an oscillator in
       # this file. render_pad_via_fluidsynth plays the chord through a stack of
       # real SF2 instruments -- Rhodes, Prophet, CS-80, Solina, Juno -- with each
@@ -1375,7 +1416,9 @@ loop do
       # Four chords per progression, not the whole thing: the point of the stream
       # is passing through the catalogue, and a ten-chord progression holds one
       # place for forty-six seconds.
-      pads = pads.first(PROG_CHORDS) if pads.length > PROG_CHORDS
+      flow = flow_shape(gi * PER_FILE + ni)
+      pads = pads.first(flow[:chords]) if pads.length > flow[:chords]
+      xf = flow[:xfade]
       events = pads.each_with_index.map { |c, bi| [bi * SECS, 0.85, c, SECS * 1.02] }
       dur = pads.length * SECS
       tmp = File.join(OUT, "pad_#{gi}_#{ni}.wav")
@@ -1442,7 +1485,7 @@ loop do
       end
       # An FM layer over the sampled stack on every other progression: sidebands
       # the soundfonts cannot make, with the carrier morphing triangle to square.
-      if ENV["SINE_FM"] != "0" && (gi * PER_FILE + ni).odd?
+      if ENV["SINE_FM"] != "0" && flow[:fm]
         pads.each_with_index do |c, bar|
           at = (bar * SECS * RATE).to_i
           seg = pl.length - at
@@ -1456,16 +1499,30 @@ loop do
         played[-1] = played.last + "+fm"
       end
       # Every third progression carries an old take underneath it.
-      if ENV["SINE_RECYCLE"] != "0" && (gi * PER_FILE + ni) % 3 == 2 &&
+      if ENV["SINE_RECYCLE"] != "0" && flow[:recycle] &&
          recycle_bed!(pl, pr, gi * PER_FILE + ni)
         played[-1] = played.last + "+recycled"
       end
+      # The white water. Where the river runs fastest every device is on at
+      # once -- the Copy Machine cloud, the Space Echo, the ring modulator, the
+      # comb and the folder -- each at a fraction of the mix it would take on
+      # its own, because five devices at full strength is not a flurry, it is
+      # mud. Only above 0.85, so it stays an event rather than a texture.
+      if flow[:depth] > 0.85 && ENV["SINE_FLURRY"] != "0"
+        copy_machine!(pl, pr, copies: 5, reverse: 0.4, width: 1.0)
+        space_echo!(pl, pr, time_s: SECS / 5.0, feedback: 0.5, heads: 3, mix: 0.3)
+        ring_mod!(pl, pr, hz: 61.0, drift_hz: 0.23, mix: 0.18)
+        comb_resonator!(pl, pr, hz_from: 210.0, hz_to: 88.0, feedback: 0.55, mix: 0.22)
+        wave_fold!(pl, pr, amount: 1.6, mix: 0.22)
+        played[-1] = played.last + "+flurry"
+      end
       # Artifacts on the music bus, before the phase movement so the movement
       # carries them across the field rather than sitting them in the middle.
-      artifacts!(pl, pr, seed: gi * 101 + ni, count: (ENV["SINE_ARTIFACTS"] || "2").to_i) unless ENV["SINE_ARTIFACTS"] == "0"
+      artifacts!(pl, pr, seed: gi * 101 + ni, count: flow[:artifacts]) if flow[:artifacts].positive? && ENV["SINE_ARTIFACTS"] != "0"
       # A slow phase movement on every pad regardless of treatment -- a static
       # stereo image is what makes a long stream stop sounding alive.
-      barber_phaser!(pl, pr, rate_hz: 0.05 + (ni % 4) * 0.013, depth: 0.5, mix: 0.28)
+      barber_phaser!(pl, pr, rate_hz: 0.04 + flow[:depth] * 0.09,
+                     depth: 0.35 + flow[:depth] * 0.4, mix: 0.14 + flow[:depth] * 0.26)
       cassette!(pl, pr) unless ENV["SINE_CASSETTE"] == "0"
       crossfade_append!(l, r, pl, pr, xf)
     end
