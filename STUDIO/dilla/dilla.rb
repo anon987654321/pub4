@@ -652,6 +652,35 @@ DISPATCH = {
   "separate" => -> { separate(ARGV.shift) },
   "render" => -> { render(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
   "verify" => -> { verify(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
+# `timing <file> [bpm]` -- where the drums actually land, per voice, against
+# the sixteenth grid. Writes <file>.timing.json and, if that file already
+# existed, prints the delta against it. This is the one measurement
+# dilla_quality does not make, and the only one that can tell a refactor from
+# a re-performance.
+"timing" => lambda {
+  path = ARGV.shift || File.join(ROOT, "demo.mp3")
+  bpm = (ARGV.shift || ENV["BPM"] || 90).to_f
+  abort "missing #{path}" unless File.file?(path)
+  sidecar = "#{path}.timing.json"
+  previous = (JSON.parse(File.read(sidecar), symbolize_names: true) if File.file?(sidecar))
+  report = pocket_timing_report(path, bpm:)
+  report[:roles].each do |role, st|
+    if st[:hits].to_i.zero?
+      puts format("  %-6s no hits detected", role)
+      next
+    end
+    puts format("  %-6s %4d hits  mean %+7.2f ms  median %+7.2f  stddev %6.2f  early %5.1f%%",
+                role, st[:hits], st[:mean_ms], st[:median_ms], st[:stddev_ms], st[:early_pct])
+  end
+  if previous
+    puts "  --- delta against the previous measurement of this file ---"
+    pocket_timing_delta(report, previous).each do |role, d|
+      puts format("  %-6s mean %+7.2f ms  stddev %+7.2f  hits %+d", role, d[:mean_ms], d[:stddev_ms], d[:hits])
+    end
+  end
+  File.write(sidecar, JSON.pretty_generate(report) + "\n")
+  puts "  wrote #{sidecar}"
+},
   "chords" => -> { chords },
   "vocab-check" => -> { vocab_check },
   "clean" => -> { clean(ARGV.shift, ARGV.shift || File.join(OUTPUT_DIR, "clean.wav")) },

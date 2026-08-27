@@ -110,6 +110,7 @@ module DillaSources
     punk_guitar
     learn_source
     electronium
+    characterize
   ].freeze
 
   class << self
