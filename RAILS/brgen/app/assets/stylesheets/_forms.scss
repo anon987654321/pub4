@@ -17,7 +17,8 @@
 }
 
 .btn:hover { opacity: .88; text-decoration: none; }
-/* Fill instead of outline. A transparent button with a 1px edge is a line;\n   a subtle surface reads as a control without one. */\n
+/* Fill instead of outline. A transparent button with a 1px edge is a line;
+   a subtle surface is a button. */
 .btn:focus-visible,
 .media-btn:focus-visible {
   outline: 2px solid var(--accent);
