@@ -20,12 +20,16 @@ module DillaHarmonyScore
     ct = transitions.map { |t| t[:common_tone_ratio] }
     contrary = transitions.count { |t| t[:contrary_motion] }
     strong_root = transitions.count { |t| t[:strong_root_motion] }
+    oblique = transitions.count { |t| t[:oblique_motion] }
+    root_moves = transitions.map { |t| t[:root_motion_semitones] }
     spreads = chords.map { |c| chord_span_semitones(c) }
 
     avg_vl = vl.sum / vl.length
     avg_ct = ct.sum / ct.length
     contrary_ratio = contrary.to_f / transitions.length
     strong_root_ratio = strong_root.to_f / transitions.length
+    oblique_ratio = oblique.to_f / transitions.length
+    avg_root_motion = root_moves.sum / root_moves.length
     spread_var = variance(spreads)
 
     # Smoother average voice-leading movement scores higher (Bach-style
@@ -36,11 +40,17 @@ module DillaHarmonyScore
     score += [avg_ct * 20, 16].min
     score += 8 if contrary_ratio.between?(0.2, 0.7)
     score += 6 if strong_root_ratio.between?(0.25, 0.75)
+    # Oblique motion earns its own points. A structure held while the bass
+    # walks under it is a technique, not a failure to move -- and with no term
+    # for it the scorer could only read it as absent voice leading.
+    score += 7 if oblique_ratio.between?(0.15, 0.6)
     score -= 6 if spread_var > 30 # register discipline: chords shouldn't randomly leap span
 
     breakdown = {
       avg_voice_leading_semitones: avg_vl.round(3),
       avg_common_tone_ratio: avg_ct.round(3),
+      avg_root_motion_semitones: avg_root_motion.round(3),
+      oblique_motion_ratio: oblique_ratio.round(3),
       contrary_motion_ratio: contrary_ratio.round(3),
       strong_root_motion_ratio: strong_root_ratio.round(3),
       register_spread_variance: spread_var.round(3),

@@ -1414,22 +1414,152 @@ end
 # A fast compressor on the kit alone, so no single hit leaves the bus much above
 # its own average. This is what stops one snare in a bar being the loudest thing
 # in the record.
-def tame_transients!(l, r, ratio: 4.0, over_db: 6.0)
+# An instantaneous ceiling on the kit, not a compressor.
+#
+# The first version used an envelope follower with a 2 ms attack, which is 88
+# samples during which every transient passes through at full height -- and the
+# transient IS the stab. It measured worse than doing nothing: crest went from
+# 16.1 dB to 17.9, because it pulled the body of each hit down while letting the
+# spike past, which is the opposite of the intent.
+#
+# This has no envelope and therefore no lag. Above a threshold set from the bus
+# RMS, the sample is bent through tanh rather than clipped, so the peak rounds
+# instead of squaring and nothing is left standing above the ceiling for a later
+# compressor to find and pull forward.
+def tame_transients!(l, r, over_db: 5.0, knee: 0.7)
   avg = rms_of(l, r)
   return if avg <= 0.00001
 
   thr = avg * (10.0**(over_db / 20.0))
-  at = Math.exp(-1.0 / (RATE * 0.002))
-  rel = Math.exp(-1.0 / (RATE * 0.09))
-  env = 0.0
+  ceiling = thr * (1.0 + knee)
   l.length.times do |i|
-    peak = [l[i].abs, r[i].abs].max
-    env = peak > env ? at * env + (1 - at) * peak : rel * env + (1 - rel) * peak
-    next unless env > thr
+    [l, r].each do |buf|
+      x = buf[i]
+      a = x.abs
+      next if a <= thr
 
-    g = (thr + (env - thr) / ratio) / env
-    l[i] *= g
-    r[i] *= g
+      over = (a - thr) / (ceiling - thr)
+      buf[i] = (thr + (ceiling - thr) * Math.tanh(over)) * (x.negative? ? -1 : 1)
+    end
+  end
+end
+
+# The bassline.
+#
+# The stream had bass notes and no bassline. Every chord's bass_hz was sounded as
+# one sustained tone underneath the pad for the whole bar -- correct pitch, no
+# rhythm, no motion, no relationship to the kick. That is a root, not a part.
+#
+# Every note here comes from the chord it is under: the root is bass_hz, and the
+# movement notes are the chord's own upper voices folded down into bass register.
+# Nothing is transposed onto a scale and nothing is invented, so a bassline can
+# never disagree with the harmony above it -- the question of whether the bass is
+# "in the same scale as the progression" cannot arise, because it has no notes of
+# its own.
+#
+# The one exception is the approach note into the next chord, which is
+# deliberately allowed to be outside: a chromatic step into the coming root is
+# the oldest device in bass playing and it works precisely because it is a
+# passing dissonance.
+BASS_LOW = 41.0
+BASS_HIGH = 110.0
+
+def fold_to_bass(hz)
+  return nil if hz.to_f <= 0
+
+  v = hz.to_f
+  v *= 2.0 while v < BASS_LOW
+  v /= 2.0 while v > BASS_HIGH
+  v
+end
+
+# One plucked bass note: fundamental with a little second and third, a soft
+# attack, and a decay that darkens as it falls -- the same idea as the low pass
+# gate, because a plucked string does exactly this.
+def bass_note!(l, r, at, hz, secs, gain: 0.5)
+  n = (RATE * secs).to_i
+  atk = (RATE * 0.009).to_i
+  ph = 0.0
+  z = 0.0
+  n.times do |i|
+    t = i.to_f / n
+    ph += 2 * Math::PI * hz / RATE
+    env = Math.exp(-t * 3.2) * soft_attack(i, atk)
+    raw = Math.sin(ph) + Math.sin(ph * 2) * 0.22 * Math.exp(-t * 6.0) +
+          Math.sin(ph * 3) * 0.07 * Math.exp(-t * 9.0)
+    # The tone closes as it decays, so the harmonics are only there at the front.
+    cut = 0.05 + 0.30 * env
+    z += cut * (raw - z)
+    v = Math.tanh(z * 1.25) / Math.tanh(1.25) * env * gain
+    j = at + i
+    break if j >= l.length
+
+    l[j] += v
+    r[j] += v
+  end
+end
+
+# The line follows the kick. Bass and kick on the same clock is what makes a beat
+# sit; the two disagreeing is a different genre entirely.
+def bass_line!(l, r, chord, next_chord, offset, secs, bar_index)
+  root = fold_to_bass(chord[:bass_hz])
+  return unless root
+
+  tones = Array(chord[:hz]).filter_map { |h| fold_to_bass(h) }.uniq.sort
+  fifth = tones.find { |t| ((12 * Math.log2(t / root)).round % 12) == 7 } || root * 1.5
+  seventh = tones.find { |t| [10, 11].include?((12 * Math.log2(t / root)).round % 12) }
+  nxt = next_chord && fold_to_bass(next_chord[:bass_hz])
+
+  sixteenth = RATE * secs / 16.0
+  kicks, = KIT_PATTERNS[bar_index % KIT_PATTERNS.length]
+  # Same early nudge the kick gets, so they land together rather than near.
+  place = ->(step) { (offset + (step + KICK_EARLY) * sixteenth).to_i }
+
+  kicks.each_with_index do |st, k|
+    hz = case k % 4
+         when 0 then root
+         when 1 then fifth
+         when 2 then seventh || root * 2.0
+         else root
+         end
+    len = [(secs / 16.0) * 3.4, 0.34].max
+    bass_note!(l, r, place.(st), hz, len, gain: k.zero? ? 0.55 : 0.4)
+  end
+
+  # The approach: a step into the coming root, on the last eighth. Chromatic if
+  # the move is small, a whole step if it is far -- which is what a bass player
+  # does without thinking about it.
+  return unless nxt
+
+  ratio = 12 * Math.log2(nxt / root)
+  step = ratio.abs < 0.5 ? 1 : (ratio.positive? ? -1 : 1)
+  approach = nxt * (2.0**(step / 12.0))
+  bass_note!(l, r, place.(14), approach, (secs / 16.0) * 1.8, gain: 0.3)
+end
+
+# The kick's own duck on the bass, and nothing else's.
+#
+# This is the one duck that was asked for and the only one in the engine: two low
+# sources competing for the same space, where the kick has to win for the beat to
+# read. It is not applied to anything else -- vocals were explicitly ruled out
+# and pads do not need it.
+def duck_bass_under_kick!(bl, br, offset, secs, bar_index, depth: 0.55)
+  sixteenth = RATE * secs / 16.0
+  kicks, = KIT_PATTERNS[bar_index % KIT_PATTERNS.length]
+  hold = (RATE * 0.13).to_i
+  kicks.each do |st|
+    at = (offset + (st + KICK_EARLY) * sixteenth).to_i
+    hold.times do |i|
+      j = at + i
+      next if j.negative? || j >= bl.length
+
+      # Full duck at the hit, recovered over 130 ms on a raised cosine so the
+      # bass swells back rather than steps back.
+      t = i.to_f / hold
+      g = 1.0 - depth * (0.5 + 0.5 * Math.cos(Math::PI * t))
+      bl[j] *= g
+      br[j] *= g
+    end
   end
 end
 
@@ -1709,7 +1839,21 @@ loop do
         used = drum_chain!(dl, dr, (gi * PER_FILE + ni) * 977 + SALT)
         tame_transients!(dl, dr)
         level_drums!(dl, dr, pl, pr)
-        dl.length.times { |i| pl[i] += dl[i]; pr[i] += dr[i] }
+        # The bass gets its own bus so the kick can duck it without ducking
+        # anything else, and so it is levelled against the music separately.
+        bl = Array.new(pl.length, 0.0)
+        br = Array.new(pr.length, 0.0)
+        unless ENV["SINE_BASS"] == "0"
+          pads.each_with_index do |c, bar|
+            at = (bar * SECS * RATE).to_i
+            bass_line!(bl, br, c, pads[bar + 1], at, SECS, (gi * PER_FILE + ni) * 4 + bar)
+            duck_bass_under_kick!(bl, br, at, SECS, (gi * PER_FILE + ni) * 4 + bar)
+          end
+          tame_transients!(bl, br, over_db: 6.0)
+          level_drums!(bl, br, pl, pr)
+          played[-1] = played.last + "+bass"
+        end
+        dl.length.times { |i| pl[i] += dl[i] + bl[i]; pr[i] += dr[i] + br[i] }
         played[-1] = played.last + "{" + used.join("-") + "}"
       end
       case treat
