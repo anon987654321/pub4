@@ -273,6 +273,15 @@ def train_cell(options)
     # FLUX.1-dev otherwise, 512 buckets because the budget is the clock.
     os.environ["LORA_STEPS"] = "#{options[:steps]}"
     os.environ["LORA_SAMPLE_EVERY"] = "#{options[:sample_every]}"
+    # Start from scratch rather than resuming an earlier adapter.
+    #
+    # A checkpoint records the network it was trained with. Training the text
+    # encoder adds modules that no earlier checkpoint has weights for, so a
+    # resume produces a half-initialised adapter and reports nothing unusual —
+    # the run looks normal and the face never arrives.
+    #
+    # Nothing in Drive is deleted. This run ignores it.
+    os.environ["LORA_FRESH"] = "1"
     # SDXL, because FLUX.1-dev cannot be loaded here.
     #
     # Its weights are 23.8 GB of fp16 and diffusers materialises them in host

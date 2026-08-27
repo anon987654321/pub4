@@ -472,6 +472,22 @@ def local_name(path)
 end
 
 def restore_checkpoints
+  # LORA_FRESH=1 — train from scratch without deleting anything in Drive.
+  #
+  # A checkpoint records the network it was trained with. Turn the text encoder
+  # on and the network gains modules the checkpoint has no weights for, so a
+  # resume produces a half-initialised adapter and reports nothing unusual.
+  # ragnhild's is exactly that case: 250 real steps, text encoder frozen, and it
+  # rendered a woman twenty years older than her.
+  #
+  # A flag rather than an instruction to clear Drive, because the checkpoints are
+  # evidence of what happened and deleting them to change a setting is the wrong
+  # trade. They stay; this run just ignores them.
+  if ENV["LORA_FRESH"].to_s.strip == "1"
+    puts "ok: LORA_FRESH=1 — starting from scratch, ignoring #{PERSIST.glob('*.safetensors').length} checkpoint(s) in Drive"
+    return
+  end
+
   saved = PERSIST.glob("*.safetensors").sort
   return puts "ok: no checkpoint to resume from" if saved.empty?
 
