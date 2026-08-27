@@ -30,6 +30,12 @@ const DEFAULT_TRACKS = [
 // the lookup is by id so reordering the manifest cannot silently unpin it.
 const OPENING_TRACK_ID = "WC09qDzU9y4"
 
+// FFT band edges as a fraction of the spectrum. 2048 bins over ~44.1kHz puts
+// bass under ~250Hz, mids to ~2kHz, highs above — the split that makes a kick
+// move the ring and a hat shimmer it.
+const BAND_BASS = 0.012
+const BAND_MID = 0.09
+
 class AudioEngine {
   constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS }) {
     this.iframe = iframe
@@ -49,6 +55,13 @@ class AudioEngine {
     this.highLevel = 0
     this.audioLevel = 0
     this.startTime = 0
+    this.audio = null
+    this.analyser = null
+    this.bins = null
+  }
+
+  get currentIsLocal() {
+    return Boolean(this.tracks[this.currentTrack]?.src)
   }
 
   start() {
@@ -61,12 +74,83 @@ class AudioEngine {
 
   setUserInteracted() { this.userInteracted = true }
 
+  // Built lazily and only once. An AudioContext created before a user gesture
+  // starts suspended, and MediaElementSource can only be attached to an element
+  // once — attaching per track throws InvalidStateError on the second one.
+  #ensureAnalyser() {
+    if (this.analyser) return true
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext
+      if (!Ctx || !this.audio) return false
+      this.audioContext = new Ctx()
+      const source = this.audioContext.createMediaElementSource(this.audio)
+      this.analyser = this.audioContext.createAnalyser()
+      this.analyser.fftSize = 2048
+      this.analyser.smoothingTimeConstant = 0.72
+      source.connect(this.analyser)
+      // Through the analyser to the speakers, not in parallel: a
+      // MediaElementSource is *moved* into the graph, so skipping this leaves
+      // the page silent while the numbers keep arriving.
+      this.analyser.connect(this.audioContext.destination)
+      this.bins = new Uint8Array(this.analyser.frequencyBinCount)
+      return true
+    } catch (err) {
+      console.warn("radio_brgen_tunnel: analyser unavailable, playing without it", err)
+      this.analyser = null
+      return false
+    }
+  }
+
+  #ensureAudioElement() {
+    if (this.audio) return this.audio
+    const el = document.createElement("audio")
+    el.preload = "auto"
+    el.crossOrigin = "anonymous"
+    el.addEventListener("ended", () => this.nextTrack())
+    el.addEventListener("error", () => {
+      this.retryCount += 1
+      this.nextTrack()
+    })
+    this.audio = el
+    return el
+  }
+
   loadCurrentTrack() {
     if (this.retryCount >= this.maxRetries) {
       if (this.trackDisplay) this.trackDisplay.textContent = "Audio failed: tap to retry"
       return
     }
     const track = this.tracks[this.currentTrack]
+    if (!track) return
+    clearTimeout(this._advanceTimer)
+    if (track.src) this.#loadLocal(track)
+    else this.#loadYouTube(track)
+  }
+
+  #loadLocal(track) {
+    // Silence the iframe first or the two sources overlap: the embed keeps
+    // playing while an <audio> element starts on top of it.
+    if (this.iframe && this.iframe.src) this.iframe.src = ""
+    const el = this.#ensureAudioElement()
+    el.src = track.src
+    const play = () => {
+      this.#ensureAnalyser()
+      this.audioContext?.resume?.()
+      const p = el.play()
+      if (p?.catch) {
+        p.catch(() => {
+          // Autoplay refused until a gesture; the controller's first-pointer
+          // handler calls start() again, so this is not a failure state.
+          this.isPlaying = false
+        })
+      }
+    }
+    this.isPlaying = true
+    play()
+  }
+
+  #loadYouTube(track) {
+    if (this.audio) this.audio.pause()
     const embedUrl = `https://www.youtube.com/embed/${track.id}?autoplay=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&playsinline=1&rel=0&showinfo=0&origin=${encodeURIComponent(window.location.origin)}`
     try {
       this.iframe.src = embedUrl
@@ -77,7 +161,9 @@ class AudioEngine {
           this.loadCurrentTrack()
         }
       }, 1000)
-      clearTimeout(this._advanceTimer)
+      // No 'ended' event is available across the iframe boundary, so an embed
+      // still needs a timer to advance. A local track does not — it fires
+      // 'ended' at its real length instead of being cut at three minutes.
       this._advanceTimer = setTimeout(() => {
         if (this.isPlaying) this.nextTrack()
       }, 180000)
@@ -96,28 +182,56 @@ class AudioEngine {
 
   getAudioData() {
     if (!this.isPlaying) return { bass: 0, mid: 0, high: 0, average: 0 }
-    const time = (performance.now() - this.startTime) * 0.01
-    const swing = Math.sin(time * 0.3) * 0.1
-    const pocket = Math.cos(time * 0.7) * 0.05
-    const bass = Math.max(0, Math.min(1, (0.3 + 0.5 * Math.sin(time * 1.4 + pocket)) * this.bassInfluence))
-    const mid = Math.max(0, Math.min(1, (0.4 + 0.3 * Math.sin(time * 2.8 + swing * 0.5)) * this.midInfluence))
-    const high = Math.max(0, Math.min(1, (0.2 + 0.3 * Math.sin(time * 3.7 + pocket * 0.3)) * this.highInfluence))
-    this.bassLevel = bass
-    this.midLevel = mid
-    this.highLevel = high
-    this.audioLevel = (bass + mid + high) / 3
-    return { bass, mid, high, average: this.audioLevel }
+
+    // Real spectrum when we are serving the file ourselves. The sine wave this
+    // replaced was not a placeholder for a missing feature — it was the only
+    // thing possible while every track was a cross-origin YouTube embed, which
+    // is why the tunnel appeared to react to music it could not hear.
+    if (this.analyser && this.bins) {
+      this.analyser.getByteFrequencyData(this.bins)
+      const len = this.bins.length
+      const bassEnd = Math.max(1, Math.floor(len * BAND_BASS))
+      const midEnd = Math.max(bassEnd + 1, Math.floor(len * BAND_MID))
+      let b = 0
+      let m = 0
+      let h = 0
+      for (let i = 0; i < bassEnd; i++) b += this.bins[i]
+      for (let i = bassEnd; i < midEnd; i++) m += this.bins[i]
+      for (let i = midEnd; i < len; i++) h += this.bins[i]
+      const bass = Math.min(1, (b / bassEnd / 255) * this.bassInfluence)
+      const mid = Math.min(1, (m / (midEnd - bassEnd) / 255) * this.midInfluence)
+      // Highs are quiet in absolute terms in most mixes, so a flat normalise
+      // leaves the shimmer term permanently near zero.
+      const high = Math.min(1, (h / (len - midEnd) / 255) * 2.6 * this.highInfluence)
+      this.bassLevel = bass
+      this.midLevel = mid
+      this.highLevel = high
+      this.audioLevel = (bass + mid + high) / 3
+      return { bass, mid, high, average: this.audioLevel }
+    }
+
+    // A YouTube embed cannot be analysed. Rather than invent a spectrum for it,
+    // report a low steady level: the tunnel keeps its own breathing and lean,
+    // which are autonomous, and simply does not claim to be hearing anything.
+    const level = 0.18
+    this.bassLevel = level
+    this.midLevel = level
+    this.highLevel = level * 0.5
+    this.audioLevel = level
+    return { bass: level, mid: level, high: level * 0.5, average: level }
   }
 
   updateTrackDisplay() {
     if (!this.trackDisplay) return
     const track = this.tracks[this.currentTrack]
+    if (!track) return
     this.trackDisplay.textContent = `${track.artist} - ${track.title}`
   }
 
   stop() {
     this.isPlaying = false
     if (this.iframe) this.iframe.src = ""
+    if (this.audio) this.audio.pause()
     clearTimeout(this._advanceTimer)
   }
 }

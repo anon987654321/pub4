@@ -7,7 +7,15 @@ module PlaylistHelper
   /x
 
   def radio_tunnel_catalog
-    # Use tracks excavated from pub4/index.html (via manifest) as primary source for auto-play
+    # Our own files first. They are the only ones the visualiser can actually
+    # hear — a YouTube embed is cross-origin, so the tunnel's bass and onset
+    # reaction fell back to a sine wave whenever one was playing. Shuffled, then
+    # the opener is pinned client-side by id/src, so the rotation varies while
+    # the first thing a visitor hears does not.
+    local = Brgen::RadioBergenManifest.local_tracks.shuffle
+
+    # YouTube stays as the tail of the catalogue: it is the wider record-crate
+    # the crew curated, and it still plays, it just cannot be analysed.
     manifest = Brgen::RadioBergenManifest.youtube_tracks
 
     # Optional mix-in of recent hosted youtube/direct from the vertical (still pub4 lineage spirit)
@@ -17,9 +25,13 @@ module PlaylistHelper
       .limit(8)
       .filter_map { |track| radio_track_from_source(track) }
 
-    catalog = (manifest + hosted).uniq { |t| t[:id] }
+    # Key on id OR src: a local track has no :id, so uniq-ing on :id alone
+    # collapsed all 28 of them into a single nil-keyed entry.
+    catalog = (local + manifest + hosted).uniq { |t| t[:id] || t[:src] }
     catalog = radio_tunnel_fallback_tracks if catalog.empty?
-    catalog.first(24)
+    # Enough for the whole local catalogue plus a tail of the crate. The old cap
+    # of 24 predates having any local tracks at all.
+    catalog.first(48)
   end
 
   def radio_tunnel_fallback_tracks

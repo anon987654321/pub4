@@ -89,6 +89,24 @@ module Brgen
         end
       end
 
+      # The tracks the app serves itself. These are the ones that carry a real
+      # signal: a YouTube embed is cross-origin so no AnalyserNode can read it,
+      # and the tunnel's audio reactivity ran off a sine wave for exactly that
+      # reason. An <audio> element pointed at our own file can be analysed.
+      def local_tracks
+        Array(load["local_mp3"]).filter_map do |row|
+          src = row["src"].presence
+          next unless src
+
+          {
+            title: row["title"].to_s,
+            src: src,
+            artist: row["artist"].presence || "AKMD",
+            seconds: row["seconds"].to_i
+          }
+        end
+      end
+
       def archaeology_lines
         manifest = load
         meta = manifest["meta"] || {}
