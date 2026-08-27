@@ -71,6 +71,35 @@ MIDI_FX_LEAD_RICH = (
 ).freeze
 
 SYNTH_PATCH_CATALOG = [
+  # Two machines that were asked for by name and were not in this catalogue.
+  #
+  # The ARP Odyssey is two oscillators a little out of tune with each other
+  # through a resonant filter, and its character is the resonance: a peak steep
+  # enough to be a pitch of its own, sitting just above the note. Duophonic, so
+  # it belongs on a lead rather than a pad.
+  { id: :arp_odyssey, role: :lead, program: 81, bank: 0, sf2: :default,
+    weight: 2.2, native: nil, mix: 1.1, octave: 0, gate: 0.82,
+    arp_styles: %i[up updown pingpong],
+    fx: "equalizer=f=1400:t=q:w=1.1:g=6.5,equalizer=f=320:t=o:w=1:g=2.4," \
+        "chorus=0.5:0.6:14|18:0.2|0.15:0.18|0.14:1.8|2.2," \
+        "asoftclip=type=tanh:param=1.35,equalizer=f=6200:t=h:w=1:g=-2.5," \
+        "aecho=0.9:0.35:38|76:0.18|0.1" },
+  # The Roland VP-330 is a choir and a string section behind a triple-chorus
+  # ensemble, and the ensemble IS the instrument -- three BBD lines at different
+  # rates, which is why one chorus never sounds like it. Three here, at rates
+  # that do not divide into each other.
+  { id: :vp330_choir, role: :warm, program: 52, bank: 0, sf2: :default,
+    weight: 3.0, native: nil, mix: 1.0, octave: 0,
+    arp_styles: %i[up],
+    fx: "chorus=0.6:0.82:22|31|43:0.3|0.24|0.19:0.28|0.21|0.17:0.7|1.1|1.7," \
+        "equalizer=f=260:t=o:w=1:g=1.8,equalizer=f=2600:t=h:w=1400:g=2.2," \
+        "lowpass=f=9000,aecho=0.9:0.45:120|240:0.2|0.12" },
+  { id: :vp330_strings, role: :warm, program: 48, bank: 0, sf2: :default,
+    weight: 2.4, native: nil, mix: 0.9, octave: 0,
+    arp_styles: %i[up updown],
+    fx: "chorus=0.62:0.8:19|29|41:0.32|0.26|0.2:0.3|0.24|0.18:0.9|1.3|1.9," \
+        "equalizer=f=180:t=o:w=1:g=1.4,equalizer=f=3200:t=h:w=1600:g=1.6," \
+        "lowpass=f=10500" },
   # --- Electric keys (EP / Rhodes family) ---
   # Galaxy SF2 when present — GM program 4 alone never reads as a real Rhodes
   # (no tine attack, no bell). Bank 2 is Galaxy's Mark-I family.

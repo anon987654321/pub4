@@ -107,6 +107,14 @@ PAD_LAYER_STACKS = {
   #
   # Four layers is the ceiling. A fifth ensemble adds no new information and
   # costs a FluidSynth pass, and the fourth is already at 0.5.
+  # The two machines that were missing, given a stack of their own rather than
+  # being buried as a fourth layer at 0.5 where nobody would hear which is which.
+  stack_odyssey: [
+    { id: :vp330_choir, mix: 1.2, role: :warm },
+    { id: :arp_odyssey, mix: 0.95, role: :lead },
+    { id: :vp330_strings, mix: 0.7, role: :warm },
+    { id: :rhodes_mark1, mix: 0.45, role: :ep },
+  ],
   stack_beauty: [
     { id: :rhodes_mark1, mix: 1.3, role: :ep },
     { id: :cs80_ensemble, mix: 1.1, role: :warm },

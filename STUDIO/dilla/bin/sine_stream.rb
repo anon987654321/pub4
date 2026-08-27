@@ -353,8 +353,15 @@ def add_vocal!(l, r, slug, speed, _index, gain: 0.62)
   return false if files.empty?
 
   fresh = files - vocal_used(slug)
-  # Every take spent. Silence is the correct answer, not a second airing.
-  return false if fresh.empty?
+  if fresh.empty?
+    # Every take has aired once. Retire the list rather than the voice: the
+    # catalogue starts again, reshuffled, so the second pass is not the first
+    # pass in the same order. No take repeats inside a cycle, which is the rule;
+    # a voice disappearing for good was a stricter reading than intended.
+    cycle = vocal_cycle(slug) + 1
+    reset_vocal_cycle(slug, cycle)
+    fresh = files.shuffle(random: Random.new(stable_vocal_seed(slug) + cycle * 7919))
+  end
 
   path = fresh.first
   got = read_wav(path)
@@ -374,8 +381,8 @@ def add_vocal!(l, r, slug, speed, _index, gain: 0.62)
 
   n.times do |i|
     pos = i * step
-    # The take is used once through and then stops. Wrapping it round to fill
-    # the bar is the same repetition in miniature.
+    # The take plays once through and then stops. Wrapping it round to fill the
+    # bar is the same repetition in miniature.
     break if pos >= src_n - 1
 
     j = pos.to_i
@@ -385,6 +392,20 @@ def add_vocal!(l, r, slug, speed, _index, gain: 0.62)
   end
   mark_vocal_used(slug, path)
   true
+end
+
+def stable_vocal_seed(slug) = slug.to_s.each_char.sum(&:ord)
+
+def vocal_cycle(slug)
+  p = File.join(VOCAL_USED_DIR, "#{slug}.cycle")
+  File.file?(p) ? File.read(p).to_i : 0
+end
+
+def reset_vocal_cycle(slug, cycle)
+  FileUtils.mkdir_p(VOCAL_USED_DIR)
+  File.write(File.join(VOCAL_USED_DIR, "#{slug}.cycle"), cycle.to_s)
+  FileUtils.rm_f(File.join(VOCAL_USED_DIR, "#{slug}.txt"))
+  @vocal_used_cache&.delete(slug)
 end
 
 # The 217 preset voicings, applied to the tone.
