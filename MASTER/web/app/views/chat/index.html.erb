@@ -138,7 +138,7 @@
        data-i18n-failed-live="<%= t("face.failed_live") %>">
     <h1 id="primer-title"><%= t("face.primer_title") %></h1>
     <% if Trymbot.on?(request) %>
-      <p class="trymbot_wordmark" aria-label="<%= Trymbot::NAME %>"><% Trymbot::NAME.upcase.each_char do |letter| %><span aria-hidden="true"><%= letter %></span><% end %></p>
+      <p class="trymbot_wordmark" aria-label="<%= Trymbot::NAME %>"><% Trymbot::NAME.downcase.each_char do |letter| %><span aria-hidden="true"><%= letter %></span><% end %></p>
       <p class="trymbot_tagline" id="primer-capabilities"><%= Trymbot::TAGLINE %></p>
       <p class="trymbot_start"><%= Trymbot::START %></p>
     <% else %>

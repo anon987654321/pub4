@@ -92,11 +92,41 @@ body.trymbot .trymbot_wordmark span:nth-child(5n + 3) { color: var(--trymbot_yel
 body.trymbot .trymbot_wordmark span:nth-child(5n + 4) { color: var(--trymbot_green); }
 body.trymbot .trymbot_wordmark span:nth-child(5n + 5) { color: var(--trymbot_purple); }
 
-/* The R, mirrored. The whole joke of the shop sign, and TRYMBOT happens to
-   carry its R in the one position where the joke still lands. */
+/* The r, mirrored. The whole joke of the shop sign, and trymbot happens to
+   carry its r in the one position where the joke still lands. */
 body.trymbot .trymbot_wordmark span:nth-child(2) {
   display: inline-block;
   transform: scaleX(-1);
+}
+
+/* The o is an eye.
+
+   Lowercase is what makes this possible: TRYMBOT has no round letter in a
+   position worth using, trymbot puts an o sixth. A pupil sits in the counter
+   and the letter squashes to a line every nine seconds or so.
+
+   This is the one loop on the screen, against the rule further down that a
+   loop would sit under a reading child forever. A blink earns it where the
+   letter-drop did not: the drop is an entrance, and repeating an entrance is
+   nagging -- but an eye that never blinks is not restful, it is dead, and
+   this is the face of something that talks back. It is the same idea as
+   MASTER's own face and the radio tunnel, which both blink on an irregular
+   interval, so the three surfaces are alive in the same way. */
+body.trymbot .trymbot_wordmark span:nth-child(6) {
+  display: inline-block;
+  position: relative;
+}
+
+body.trymbot .trymbot_wordmark span:nth-child(6)::after {
+  content: "";
+  position: absolute;
+  top: 47%;
+  left: 53%;
+  width: 0.17em;
+  height: 0.17em;
+  margin: -0.085em 0 0 -0.085em;
+  border-radius: 50%;
+  background: var(--trymbot_ink);
 }
 
 body.trymbot .trymbot_tagline {
@@ -143,6 +173,24 @@ body.trymbot #primer .primer-consent {
   body.trymbot .trymbot_wordmark span:nth-child(5) { animation-delay: 240ms; }
   body.trymbot .trymbot_wordmark span:nth-child(6) { animation-delay: 300ms; }
   body.trymbot .trymbot_wordmark span:nth-child(7) { animation-delay: 360ms; }
+}
+
+/* Nine seconds is long enough that the blink is never expected, and the blink
+   itself is 5% of the cycle -- an eye is open almost all the time. scaleY on
+   the letter, not on a drawn lid: the o already has the shape of an eye, so
+   closing it is squashing it. The pupil goes with it because it is a child of
+   the same element. */
+@media (prefers-reduced-motion: no-preference) {
+  body.trymbot .trymbot_wordmark span:nth-child(6) {
+    animation: trymbot_drop 420ms var(--ease-out) both,
+               trymbot_blink 9s 1.6s steps(1, end) infinite;
+  }
+}
+
+@keyframes trymbot_blink {
+  0%, 96% { transform: scaleY(1); }
+  97%, 98.5% { transform: scaleY(0.12); }
+  99%, 100% { transform: scaleY(1); }
 }
 
 @keyframes trymbot_drop {
