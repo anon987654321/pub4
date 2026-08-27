@@ -68,42 +68,42 @@ config:
       guidance_scale: 3.5
       sample_steps: 20
       prompts:
-      - ragnhild, adult Norwegian woman in her 40s, Nordic
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, Nordic
         editorial portrait in open shade, huge soft north light, neutral grey backdrop,
         clean catchlights, restrained makeup, Hasselblad medium format, gentle tonal
         rolloff, 100mm
-      - ragnhild, adult Norwegian woman in her 40s, Hardanger
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, Hardanger
         fjord at golden hour, low sun raking across the cheekbone, warm rim light
         through blowing hair, deep amber highlights, Kodak Gold 200, 50mm
-      - ragnhild, adult Norwegian woman in her 40s, night
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, night
         cafe interior, tungsten practicals behind her, cold blue window fill on the
         near side, teal and orange separation, lifted milky shadows, ARRI Alexa, 40mm
         anamorphic
-      - ragnhild, adult Norwegian woman in her 40s, hard midday
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, hard midday
         sun, black and white, Kodak Tri-X 400 pushed, deep contrast, sharp nose shadow,
         real skin texture and pores, photojournalistic, 35mm
-      - ragnhild, adult Norwegian woman in her 40s, high fashion
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, high fashion
         studio, single large softbox above and left, black seamless background, sculpted
         cheek shadow, glossy skin, editorial beauty lighting, 85mm
-      - ragnhild, adult Norwegian woman in her 40s, neon side
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, neon side
         street after rain, magenta and cyan signage as the only light sources, wet
         asphalt reflections, chromatic fringing, handheld, CineStill 800T, 35mm
-      - ragnhild, adult Norwegian woman in her 40s, candlelit
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, candlelit
         room, single flame just off frame, extreme low key, warm falloff into black,
         heavy grain, most of the face in shadow, 50mm wide open
-      - ragnhild, adult Norwegian woman in her 40s, high key
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, high key
         commercial portrait, white cyclorama, near shadowless wraparound light, bright
         airy exposure, crisp clean colour, catalogue photography, 105mm
-      - ragnhild, adult Norwegian woman in her 40s, backlit
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, backlit
         by a bright window in a steamy room, strong rim separating hair from haze,
         face in soft bounced shadow, blown highlights, dreamy diffusion, 85mm
-      - ragnhild, adult Norwegian woman in her 40s, snowfield
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, snowfield
         under heavy overcast, flat diffuse light from every direction, cool blue cast,
         visible breath, pale skin against white, Fuji Pro 400H, 70mm
-      - ragnhild, adult Norwegian woman in her 40s, passenger
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, passenger
         seat of a moving car, dappled sunlight sweeping through the windshield, handheld
         documentary framing, motion in the background, warm skin cool glass, 28mm
-      - ragnhild, adult Norwegian woman in her 40s, shooting
+      - ragnhild, 47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, shooting
         straight into the setting sun, heavy anamorphic lens flare, face rim-lit and
         half in silhouette, dust in the air, orange sky bokeh, 65mm
       neg: plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed
