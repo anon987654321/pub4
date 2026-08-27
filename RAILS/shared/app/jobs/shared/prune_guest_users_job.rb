@@ -58,16 +58,37 @@ module Shared
     private
 
     def stale_guest_ids
+      eligible.limit(BATCH).pluck(:id)
+    end
+
+    # Public channels do not save a guest from collection; private threads do.
+    #
+    # Almost every prunable guest has sat in #bergen, because reading a channel
+    # makes a participant row and a receipt for each message in it. Exempting
+    # participation as such would have exempted nearly the whole population and
+    # quietly turned this job into a no-op on the one box it exists to protect.
+    #
+    # A thread someone opened with you is the other case. Collecting that guest
+    # cascades through conversation_participants and leaves the other side
+    # holding a room that has lost half its history — and it outranks the
+    # retention arithmetic besides: a message invite is signed for thirty days
+    # and a session-less guest goes after seven, so an anonymous host could hand
+    # out a link, be collected, and leave it resolving to nothing for three more
+    # weeks. Conversation.channels is the roster and every entry in it has a
+    # slug, so slug-lessness is what separates a conversation from a room.
+    def eligible
+      private_threads = ::ConversationParticipant
+                        .joins(:conversation)
+                        .where(conversations: { slug: nil })
+                        .select(:user_id)
+
       ::User.where(guest: true)
             .where(created_at: ..RETENTION.ago)
             .where.missing(:sessions)
-            .limit(BATCH)
-            .pluck(:id)
+            .where.not(id: private_threads)
     end
 
-    def remaining
-      ::User.where(guest: true).where(created_at: ..RETENTION.ago).where.missing(:sessions).count
-    end
+    def remaining = eligible.count
 
     def pause = Float(ENV.fetch("PRUNE_GUESTS_PAUSE", "0.5"))
 

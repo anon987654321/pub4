@@ -23,9 +23,11 @@
       <% end %>
     </div>
 
-    <%# Your own "message me" link — the whole on-ramp for somebody with no account
-        here. It sits in the rail because that is where you are standing when you
-        notice the person you want is not here yet. %>
+    <%# Your own "message me" link, and you do not need an account to hand one out.
+    A guest here is a persisted row with a session behind it, so it can hold a
+    conversation; what a guest cannot do is appear in the people picker, which
+    is a different permission and stays closed. Being handed a link is not
+    being findable. %>
     <%# user_plus, not share. share means "send this somewhere" and is right for
         a post; this adds a person, which is what the link does and what Lucide's
         user-plus draws.

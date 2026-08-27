@@ -47,27 +47,50 @@ class PruneGuestUsersJobTest < ActiveSupport::TestCase
                  "left #{User.where(id: ids).count} of #{over_one_batch} behind — batching stopped early again"
   end
 
-  # A guest who has been in a conversation owns message_receipts, which carry an
-  # FK to users. Without has_many on User the destroy raises FOREIGN KEY
-  # constraint failed from SQLite, and the job dies on the first batch containing
-  # one. Guests owned 194,295 receipts on production when this was found.
+  # A guest who has read a channel owns message_receipts, which carry an FK to
+  # users. Without has_many on User the destroy raises FOREIGN KEY constraint
+  # failed from SQLite and the job dies on the first batch containing one.
+  # Guests owned 194,295 receipts on production when this was found.
+  #
+  # The room here has a slug, which is what makes it a public channel and keeps
+  # the guest collectable. That is the ordinary case: sitting in #bergen is a
+  # visit, not a relationship.
   test "destroys a guest that owns message receipts" do
     guest = build_guest(created_at: 30.days.ago)
     author = User.create!(email_address: "author_#{SecureRandom.hex(4)}@example.com",
                           password: "secret123", guest: false)
-    conversation = Conversation.create!(conversation_type: "direct")
-    conversation.conversation_participants.create!(user: author)
-    conversation.conversation_participants.create!(user: guest)
-message = conversation.messages.create!(sender: author, content: "hei", message_type: "text")
-# deliver_receipts already made the guest's receipt on create. This used to
-# add a second one, which only worked because message_receipts had no unique
-# index — 20260827090000 added it, so the duplicate is now the error it
-# always was. Assert the receipt exists rather than making another.
-assert message.message_receipts.exists?(user: guest), "the callback should have delivered one"
+    channel = Conversation.create!(conversation_type: "group", slug: "bergen-#{SecureRandom.hex(3)}")
+    channel.conversation_participants.create!(user: author)
+    channel.conversation_participants.create!(user: guest)
+    message = channel.messages.create!(sender: author, content: "hei", message_type: "text")
+
+    # deliver_receipts already made the guest receipt on create, and 20260827090000
+    # added the unique index that makes a second one an error rather than a dupe.
+    assert message.message_receipts.exists?(user: guest), "the callback should have delivered one"
 
     Shared::PruneGuestUsersJob.perform_now
 
     refute User.exists?(guest.id), "a guest with a message receipt must still be prunable"
+  end
+
+  # The exemption, and the reason the one above uses a channel.
+  #
+  # A slug-less conversation is a thread someone opened with a person: a DM, or
+  # a named group without a public roster entry. Collecting that guest cascades
+  # through conversation_participants and takes half the history with it, and an
+  # anonymous invite is signed for thirty days against a seven-day retention, so
+  # the link would outlive the account it points at.
+  test "spares a guest who is in a private thread" do
+    guest = build_guest(created_at: 30.days.ago)
+    author = User.create!(email_address: "author_#{SecureRandom.hex(4)}@example.com",
+                          password: "secret123", guest: false)
+    dm = Conversation.create!(conversation_type: "direct")
+    dm.conversation_participants.create!(user: author)
+    dm.conversation_participants.create!(user: guest)
+
+    Shared::PruneGuestUsersJob.perform_now
+
+    assert User.exists?(guest.id), "a guest holding a DM must survive collection"
   end
 
   test "is scheduled in production" do

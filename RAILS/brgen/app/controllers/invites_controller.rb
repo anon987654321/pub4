@@ -19,7 +19,16 @@ class InvitesController < ApplicationController
   def show
     host = User.find_signed(params[:token], purpose: PURPOSE)
     return redirect_to(root_path, alert: t("invite.expired")) if host.nil?
-    return redirect_to(root_path, alert: t("invite.expired")) unless User.messageable.exists?(host.id)
+# Deliberately not User.messageable. That scope answers "who may appear in the
+# people picker", and it excludes guests because a guest has no identity you
+# could search for later. Being handed a link is the opposite situation: the
+# person chose to give it to you, so there is nothing to find and nothing to
+# guess. Requiring both conflated a search permission with a share.
+#
+# What still disqualifies a host is being gone: a deleted account, or one on
+# its way out, should not open new threads.
+return redirect_to(root_path, alert: t("invite.expired")) if host.deleted_at.present?
+return redirect_to(root_path, alert: t("invite.expired")) if host.deletion_scheduled_at.present?
 
     # Not signed in yet: keep the token, not the resolved user, so the thing held
     # over the sign-in round trip is the same thing that arrived — and expires on
