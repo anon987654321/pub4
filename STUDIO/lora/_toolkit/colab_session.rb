@@ -319,13 +319,77 @@ end
 # A checkpoint saved to Drive last session is the only reason a second session
 # is cheaper than a first. ai-toolkit resumes from the newest save in the
 # training folder, reading the step back out of the safetensors metadata.
+# Does this checkpoint contain NaN?
+#
+# A run whose loss went NaN still writes checkpoints on schedule — the save code
+# does not inspect what it is saving. Those files then sit in Drive and the next
+# session resumes from them, which poisons a run that was otherwise fixed. That
+# happened here: the VAE fix landed, the run restarted, and it resumed from
+# step 750 of the dead run.
+#
+# safetensors is readable without a library: 8 bytes of little-endian header
+# length, then that many bytes of JSON naming every tensor with its dtype and
+# byte range, then the raw data. Enough to sample one tensor and look at it.
+#
+# float16 is NaN when the five exponent bits are all set and the mantissa is
+# not zero — (bits & 0x7C00) == 0x7C00 && (bits & 0x03FF) != 0. Checking a few
+# thousand values from each of a few tensors is plenty: a NaN checkpoint is not
+# subtly NaN, it is comprehensively NaN.
+SAMPLE_VALUES = 4096
+
+def checkpoint_nan?(path)
+  File.open(path, "rb") do |file|
+    header_length = file.read(8)&.unpack1("Q<")
+    return false unless header_length&.positive? && header_length < 100_000_000
+
+    header = JSON.parse(file.read(header_length).to_s)
+    body = 8 + header_length
+
+    tensors = header.reject { |name, _| name == "__metadata__" }
+    tensors.first(4).any? do |_name, spec|
+      next false unless spec.is_a?(Hash) && spec["dtype"] == "F16"
+
+      start, finish = spec["data_offsets"]
+      next false unless start && finish && finish > start
+
+      file.seek(body + start)
+      raw = file.read([finish - start, SAMPLE_VALUES * 2].min).to_s
+      raw.unpack("v*").any? { |bits| (bits & 0x7C00) == 0x7C00 && (bits & 0x03FF) != 0 }
+    end
+  end
+rescue StandardError => e
+  warn "note: could not inspect #{path.basename} (#{e.message}); resuming anyway"
+  false
+end
+
 def restore_checkpoints
   saved = PERSIST.glob("*.safetensors").sort
   return puts "ok: no checkpoint to resume from" if saved.empty?
 
-  newest = saved.max_by { |path| [step_of(path), path.mtime] }
-  FileUtils.cp(newest, WEIGHTS_DIR.join(newest.basename))
-  puts "ok: resuming from #{newest.basename}"
+  # Newest first, and skip any that is NaN. A poisoned checkpoint makes the
+  # session that resumes from it fail identically to the session that wrote it,
+  # which is how a fixed pipeline keeps looking broken.
+  ordered = saved.sort_by { |path| [-step_of(path), -path.mtime.to_i] }
+  poisoned = []
+
+  ordered.each do |path|
+    if checkpoint_nan?(path)
+      poisoned << path
+      next
+    end
+
+    unless poisoned.empty?
+      puts "warn: skipped #{poisoned.length} checkpoint(s) containing NaN weights:"
+      poisoned.each { |bad| puts "warn:   #{bad.basename}" }
+      puts "warn: these were written by a run whose loss had already collapsed."
+      puts "warn: delete them from #{PERSIST} once you are sure."
+    end
+    FileUtils.cp(path, WEIGHTS_DIR.join(path.basename))
+    return puts "ok: resuming from #{path.basename}"
+  end
+
+  puts "warn: every checkpoint in #{PERSIST} contains NaN weights (#{poisoned.length})."
+  puts "warn: starting from scratch rather than resuming from a dead run."
 end
 
 # Stop the run the moment the loss stops being a number.
