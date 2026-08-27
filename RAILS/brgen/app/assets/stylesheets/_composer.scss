@@ -154,22 +154,42 @@
   background: transparent;
 }
 
-.composer-body .tiptap_toolbar,
+.composer-body .composer-toolbar,
 .composer-body .char-counter {
   margin-inline: var(--space-4);
 }
 
-/* Anchored to the bottom of the writing area rather than floating in the
-   middle of it: the editor is min-height 120px, so an unattached toolbar sat
-   in ~90px of blank space belonging to neither the text nor the controls. */
-.composer-body .tiptap_toolbar {
+/* One row, two groups pushed to opposite ends: the marks that apply to the text
+   on the left, the things you attach to it on the right. They were two stacked
+   rows, which read as two unrelated toolbars and spent a whole row of height on
+   a phone for six 32px targets that fit in one.
+
+   Anchored to the bottom of the writing area rather than floating in the middle
+   of it: the editor is min-height 120px, so an unattached toolbar sat in ~90px
+   of blank space belonging to neither the text nor the controls. */
+.composer-body .composer-toolbar {
   position: sticky;
   bottom: 0;
   display: flex;
-  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-2) 0;
   border-top: 1px solid var(--border);
   background: inherit;
+}
+
+/* The groups themselves carry no chrome now — the row above owns the rule, the
+   stickiness and the ground, so each is just its own run of buttons. */
+.composer-body .tiptap_toolbar,
+.composer-body .compose-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  position: static;
 }
 
 /* Was --text-secondary at default weight against a dark surface: the B, the i
@@ -187,15 +207,6 @@
 
 .composer-body .tiptap_btn:hover { background: var(--hover); }
 
-/* Three icon buttons, left-aligned under the writing area. This was a bordered
-   box with space-between, which existed to hold a heading apart from the icons;
-   the heading is gone, so the border framed a row against nothing. */
-.composer-attach {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin: var(--space-2) var(--space-4) 0;
-}
 
 /* The "attach my area" opt-in, selected by what it is rather than by a class
    the markup has to carry. :has() is the reason this is possible at all — a

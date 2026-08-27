@@ -195,6 +195,23 @@ main[role="main"] {
     display: none;
   }
 
+  /* The mobile bar goes where the sidebar arrives.
+
+     .tab-bar is fixed to the bottom at every width -- it carries no media query
+     of its own, and the only thing that ever hid it was the scroll-away
+     chrome-hidden class. Its aria-label is Mobilnavigasjon and its five links
+     are a subset of Hovednavigasjon, which from this breakpoint up is pinned
+     open three hundred pixels to the left. So above 1280 it was the same
+     navigation twice, and the second copy sat across the legal footer:
+     measured at 1440x900, the bar occupies y 813-867 and the footer starts at
+     853, fourteen pixels underneath it.
+
+     Below this width nothing changes. The rails are still drawers there and the
+     bar is still the only navigation always on screen. */
+  .tab-bar {
+    display: none;
+  }
+
   /* The gutter is wide, not infinite: hold each rail off the feed by one step
      so the column keeps its own edge rather than gaining a neighbour. */
   .sidebar {

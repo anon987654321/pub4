@@ -58,44 +58,45 @@
                 action: "input->feed-compose#syncTitle"
               } %>
         <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
-        <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar">
-          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><b>B</b></button>
-          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><i>i</i></button>
-          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">•</button>
+        <%# One row, two groups: what marks up the text on the left, what
+            attaches to it on the right. These were stacked, which read as two
+            unrelated toolbars and cost a row of height on a phone. %>
+        <div class="composer-toolbar">
+          <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar">
+            <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="<%= t("compose.bold") %>"><b>B</b></button>
+            <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="<%= t("compose.italic") %>"><i>i</i></button>
+            <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="<%= t("compose.bullet_list") %>">•</button>
+          </div>
+          <div class="compose-actions">
+            <%# Each of these wraps its input in a <label>, which normally names it —
+                but the label's only content is an aria-hidden icon, so the
+                accessible name computes to "". title= is a tooltip, not a name.
+                The three inputs read as "unlabelled file upload" to a screen
+                reader, one after another, with nothing to tell them apart.
+                aria-label rather than visible text: these are 20px icon buttons in
+                a row and adding words would redesign the compose bar. %>
+            <label class="compose-action" title="<%= t("compose.add_photo") %>">
+              <%= icon :camera, size: 20 %>
+              <%= f.file_field :image, accept: "image/*", capture: "environment",
+                    class: "visually-hidden", aria: { label: t("compose.add_photo") },
+                    data: { action: "change->feed-compose#mediaSelected" } %>
+            </label>
+            <label class="compose-action" title="<%= t("compose.record_video") %>">
+              <%= icon :video, size: 20 %>
+              <%= f.file_field :video, accept: "video/*", capture: "environment",
+                    class: "visually-hidden", aria: { label: t("compose.record_video") },
+                    data: { action: "change->feed-compose#mediaSelected" } %>
+            </label>
+            <label class="compose-action" title="<%= t("compose.record_audio") %>">
+              <%= icon :mic, size: 20 %>
+              <%= f.file_field :audio, accept: "audio/*", capture: "user",
+                    class: "visually-hidden", aria: { label: t("compose.record_audio") },
+                    data: { action: "change->feed-compose#mediaSelected" } %>
+            </label>
+          </div>
         </div>
       </div>
 
-      <%# No heading. Three icons in a row are already the whole instruction, and
-          "Add to your post" above them restated it in words. %>
-      <div class="composer-attach">
-        <div class="compose-actions">
-          <%# Each of these wraps its input in a <label>, which normally names it —
-              but the label's only content is an aria-hidden icon, so the
-              accessible name computes to "". title= is a tooltip, not a name.
-              The three inputs read as "unlabelled file upload" to a screen
-              reader, one after another, with nothing to tell them apart.
-              aria-label rather than visible text: these are 20px icon buttons in
-              a row and adding words would redesign the compose bar. %>
-          <label class="compose-action" title="<%= t("compose.add_photo") %>">
-            <%= icon :camera, size: 20 %>
-            <%= f.file_field :image, accept: "image/*", capture: "environment",
-                  class: "visually-hidden", aria: { label: t("compose.add_photo") },
-                  data: { action: "change->feed-compose#mediaSelected" } %>
-          </label>
-          <label class="compose-action" title="<%= t("compose.record_video") %>">
-            <%= icon :video, size: 20 %>
-            <%= f.file_field :video, accept: "video/*", capture: "environment",
-                  class: "visually-hidden", aria: { label: t("compose.record_video") },
-                  data: { action: "change->feed-compose#mediaSelected" } %>
-          </label>
-          <label class="compose-action" title="<%= t("compose.record_audio") %>">
-            <%= icon :mic, size: 20 %>
-            <%= f.file_field :audio, accept: "audio/*", capture: "user",
-                  class: "visually-hidden", aria: { label: t("compose.record_audio") },
-                  data: { action: "change->feed-compose#mediaSelected" } %>
-          </label>
-        </div>
-      </div>
 
       <%# The Live layer, folded in. Attaching your area is the default rather than
           an opt-in: the coordinate is only here at all because you already shared
