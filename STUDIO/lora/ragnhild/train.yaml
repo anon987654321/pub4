@@ -37,6 +37,18 @@ config:
       noise_scheduler: flowmatch
       optimizer: adamw8bit
       lr: 0.0001
+      # linear, against ai-toolkit's default of sigmoid. The accepted values are
+      # sigmoid, linear, lognorm_blend, next_sample, weighted and one_step
+      # (config_modules.py line 538); linear is the one repeatedly reported to
+      # hold character likeness better, which is the only thing this LoRA is for.
+      #
+      # It changes which noise levels the training samples. sigmoid concentrates
+      # on the middle of the schedule, where broad structure and style live;
+      # linear spreads evenly, which spends more of the budget at the low-noise
+      # end where identity — the specific geometry of a face — is resolved.
+      #
+      # One line and reversible: delete it and the default returns.
+      timestep_type: linear
       ema_config:
         use_ema: true
         ema_decay: 0.995
