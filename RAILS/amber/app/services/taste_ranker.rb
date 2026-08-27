@@ -67,7 +67,7 @@ class TasteRanker
 
   # Why this garment ranks where it does, in the reader's language — these
   # strings land beside translated chrome in the dressing room and on the
-  # dashboard, and used to be the only English on a Norwegian page.
+  # dashboard, where anything untranslated is the only English on the page.
   def explain(item)
     [
       (t("joy") if item.spark_joy?),

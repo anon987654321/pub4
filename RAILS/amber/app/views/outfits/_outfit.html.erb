@@ -17,5 +17,5 @@
     <% end %>
   </div>
   <%= link_to outfit.name, outfit, class: "item-title" %>
-  <%= outfit.items.count %> items · <%= pluralize(outfit.total_wears, "wear") %>
+  <%= t("wardrobe.chip_items", count: outfit.items.count) %> · <%= t("outfits.combined_wears", count: outfit.total_wears) %>
 </article>

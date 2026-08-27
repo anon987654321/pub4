@@ -8,10 +8,10 @@
 </header>
 
 <div class="tag-row">
-  <span class="tag"><%= pluralize(@outfit.items.count, "item") %></span>
-  <span class="tag"><%= pluralize(@outfit.likes_count.to_i, "like") %></span>
-  <span class="tag"><%= pluralize(@outfit.total_wears, "combined wear") %></span>
-  <% if @outfit.estimated_value.positive? %><span class="tag"><%= number_to_currency(@outfit.estimated_value) %> wardrobe value</span><% end %>
+  <span class="tag"><%= t("outfits.linked_items", count: @outfit.items.count) %></span>
+  <span class="tag"><%= t("outfits.likes_on_page", count: @outfit.likes_count.to_i) %></span>
+  <span class="tag"><%= t("outfits.combined_wears", count: @outfit.total_wears) %></span>
+  <% if @outfit.estimated_value.positive? %><span class="tag"><%= t("outfits.wardrobe_value", amount: number_to_currency(@outfit.estimated_value)) %></span><% end %>
 </div>
 
 <% if @outfit.description.present? %>

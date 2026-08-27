@@ -95,18 +95,18 @@ module Amber
       private
 
       def items_for(key, categories, filter: nil)
-        if DemoWardrobe.available?
-          # with_photos_for_display preloads attachments, blobs, and
-          # variant_records. The slide partial used to invent multi-width webp
-          # variants (N cold lookups per image); it now uses named :thumb
-          # variants preprocessed by WardrobeMediaJob.
-          DemoWardrobe.items
-                      .with_photos_for_display
-                      .select do |item|
-            categories.include?(item.category) && zone_match?(item, filter)
-          end
-        else
-          FALLBACK[key].map { |row| SlideItem.new(**row, category: categories.first) }
+        unless DemoWardrobe.available?
+          return FALLBACK[key].map { |row| SlideItem.new(**row, category: categories.first) }
+        end
+
+        # with_photos_for_display preloads attachments, blobs and variant_records,
+        # and the slide partial asks for the named :thumb variants WardrobeMediaJob
+        # preprocesses. Inventing multi-width webp variants in the partial costs N
+        # cold lookups per image.
+        DemoWardrobe.items
+                    .with_photos_for_display
+                    .select do |item|
+          categories.include?(item.category) && zone_match?(item, filter)
         end
       end
 

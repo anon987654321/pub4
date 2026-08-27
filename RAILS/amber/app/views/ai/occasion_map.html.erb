@@ -4,9 +4,9 @@
   <% @coverage.each do |occasion, items| %>
     <div class="occasion-card occasion-card--<%= items.size < 2 ? 'sparse' : 'covered' %>">
       <%= tag.h2 occasion.capitalize %>
-      <span class="occasion-count"><%= items.size %> items</span>
+      <span class="occasion-count"><%= t("wardrobe.chip_items", count: items.size) %></span>
       <% if items.size < 2 %>
-        <p class="occasion-warn">Gap — consider adding pieces</p>
+        <p class="occasion-warn"><%= t("pages.occasion_gap") %></p>
       <% end %>
       <% items.first(3).each do |item| %>
         <div><%= link_to item.title, item %></div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>

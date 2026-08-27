@@ -50,12 +50,10 @@ class WardrobeItemsController < ApplicationController
   end
 
   def update
-    if @wardrobe_item.update(wardrobe_item_params)
-      @wardrobe_item.record_activity!("AmberWardrobeItemUpdated", source_vertical: "amber")
-      redirect_to wardrobe_items_path, notice: t("amber.wardrobe_item_updated", default: "Item updated")
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @wardrobe_item.update(wardrobe_item_params)
+
+    @wardrobe_item.record_activity!("AmberWardrobeItemUpdated", source_vertical: "amber")
+    redirect_to wardrobe_items_path, notice: t("amber.wardrobe_item_updated", default: "Item updated")
   end
 
   def destroy

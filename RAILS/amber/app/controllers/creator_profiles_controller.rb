@@ -37,11 +37,9 @@ class CreatorProfilesController < ApplicationController
   end
 
   def update
-    if @profile.update(creator_profile_params)
-      redirect_to creator_profile_path(@profile.handle), notice: t("flash.creator_profile_updated")
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @profile.update(creator_profile_params)
+
+    redirect_to creator_profile_path(@profile.handle), notice: t("flash.creator_profile_updated")
   end
 
   private

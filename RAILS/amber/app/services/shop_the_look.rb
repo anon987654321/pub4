@@ -13,7 +13,7 @@ module ShopTheLook
     def for_item(item, limit: 6)
       local = local_links(item)
       remote = remote_suggestions(item, limit: limit)
-      (local + remote).uniq { |s| s.url }.first(limit)
+      (local + remote).uniq(&:url).first(limit)
     end
 
     # Saved links, attributed.
@@ -43,9 +43,9 @@ module ShopTheLook
 
     # Why the remote feed cannot answer, or nil when it can.
     #
-    # This used to be two silent `return []` guards, and the second one was
-    # unconditional in amber: the feed client lived in brgen's app/services and
-    # was never loaded in this process, so setting TRADEDOUBLER_TOKEN in
+    # Not two silent `return []` guards. The second was unconditional in amber:
+    # the feed client lives in brgen's app/services and is not loaded in this
+    # process, so setting TRADEDOUBLER_TOKEN in
     # /etc/amber.env passed the first gate, hit the second, and produced nothing
     # — configuration with no reader, reporting nothing. Naming the reason is
     # what made that visible instead of empty.

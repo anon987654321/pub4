@@ -20,6 +20,8 @@ en:
     name: "Amber"
   skip_to_content: "Skip to main content"
   amber:
+    ai:
+      search_unavailable: "AI search unavailable — using local match when possible"
     declutter:
       box_elapsed: "30-day declutter box elapsed for «%{title}» — sell, donate, or restore with intention."
       last_chance_outfit: "Last chance · %{title}"
@@ -27,6 +29,7 @@ en:
     feed:
       compose_prompt: "Share an #ootd thought…"
       post_action: "Post"
+      posting_as_anon: "anon"
       guest_hint: "Posting as anon · %{remaining} of %{limit} posts left this browser"
       advanced_post: "Tag outfit or item →"
     nav:
@@ -155,6 +158,7 @@ en:
     query: "Search query"
     submit: "Search"
   pages:
+    occasion_gap: "Gap — consider adding pieces"
     edit_item: "Edit"
     edit_item_heading: "Edit %{name}"
     wardrobe: "Wardrobe"
@@ -242,6 +246,11 @@ en:
     chip_box: "%{count} box"
     chip_memory: "%{count} memory"
     chip_avg_wear: "%{amount} avg/wear"
+    chip_utilisation: "%{rate} % utilisation"
+    chip_spark_joy: "%{count} spark joy"
+    chip_items: "%{count} items"
+    chip_recovered: "%{amount} recovered"
+    chip_released: "%{count} released"
     lifecycle_filter: "Lifecycle filter"
     lifecycle:
       active: "Active"
@@ -442,6 +451,7 @@ en:
       one: "%{count} piece"
       other: "%{count} pieces"
   outfits:
+    wardrobe_value: "%{amount} wardrobe value"
     add_item: "Add a garment"
     style_combinations: "Combinations from your own wardrobe"
     style_intelligence: "What this outfit is doing"

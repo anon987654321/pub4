@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-# passwords_mailer/reset.* and layouts/mailer.* used to be copied into every
-# app. They now live in the engine, reachable only because Shared::Engine
+# passwords_mailer/reset.* and layouts/mailer.* live in the engine rather than
+# copied into every app, reachable only because Shared::Engine
 # appends its view path to ActionMailer as well as ActionController. Nothing
 # rendered a mailer in any suite, so that path was unproven — this proves it.
 class PasswordsMailerTest < ActionMailer::TestCase

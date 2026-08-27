@@ -8,12 +8,12 @@
 <% id_prefix = local_assigns.fetch(:id_prefix, "amber-logo") %>
 <div class="amber-instance">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" role="img" aria-label="<%= t("amber.logo_aria") %>" class="amber-logo-svg">
-    <title>Amber Logo - Nice Version</title>
+    <title><%= t("amber.logo_aria") %></title>
     <defs>
       <path id="<%= id_prefix %>-swoosh-path" d="M50,220 C250,180 750,180 950,220"/>
       <clipPath id="<%= id_prefix %>-text-mask">
         <text font-family="'Caprasimo', Arial, sans-serif" letter-spacing="-3" stroke="none" class="amber-logo-word">
-          <textPath href="#<%= id_prefix %>-swoosh-path" startOffset="2%">amber<tspan dx="10" dy="-40" stroke="none" class="amber-logo-mark">®</tspan></textPath>
+          <%# scan: intentional — the wordmark is the brand name, not translatable copy %><textPath href="#<%= id_prefix %>-swoosh-path" startOffset="2%">amber<tspan dx="10" dy="-40" stroke="none" class="amber-logo-mark">®</tspan></textPath>
         </text>
       </clipPath>
     </defs>

@@ -277,8 +277,8 @@ class WardrobeAi
   def image_data_url(photo)
     return nil unless photo
 
-    data = photo.download
-    "data:#{photo.content_type.presence || "image/jpeg"};base64,#{Base64.strict_encode64(data)}"
+    bytes = photo.download
+    "data:#{photo.content_type.presence || "image/jpeg"};base64,#{Base64.strict_encode64(bytes)}"
   end
 
   def chat_with_vision(prompt, image_data_urls)

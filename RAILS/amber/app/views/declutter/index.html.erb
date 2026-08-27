@@ -14,12 +14,12 @@
     <section role="region" aria-label="<%= t("declutter.summary_label") %>">
       <%= tag.h2 t("declutter.summary") %>
       <div class="chips">
-        <span class="chip"><%= @summary[:active_items] %> active</span>
-        <span class="chip"><%= @summary[:declutter_box] %> in box</span>
-        <span class="chip"><%= @summary[:sentimental_archive] %> memory</span>
-        <span class="chip"><%= @summary[:never_worn] %> never worn</span>
-        <span class="chip"><%= @summary[:released_items] %> released</span>
-        <span class="chip"><%= number_to_currency(@summary[:amount_recovered]) %> recovered</span>
+        <span class="chip"><%= t("wardrobe.chip_active", count: @summary[:active_items]) %></span>
+        <span class="chip"><%= t("wardrobe.chip_box", count: @summary[:declutter_box]) %></span>
+        <span class="chip"><%= t("wardrobe.chip_memory", count: @summary[:sentimental_archive]) %></span>
+        <span class="chip"><%= t("wardrobe.chip_never_worn", count: @summary[:never_worn]) %></span>
+        <span class="chip"><%= t("wardrobe.chip_released", count: @summary[:released_items]) %></span>
+        <span class="chip"><%= t("wardrobe.chip_recovered", amount: number_to_currency(@summary[:amount_recovered])) %></span>
       </div>
       <% if @summary[:matrix].present? %>
         <p><%= t("declutter.joy_use_matrix") %> <%= @summary[:matrix].map { |k, v| "#{k.to_s.humanize}: #{v}" }.join(" · ") %></p>

@@ -72,13 +72,11 @@ class ItemsController < ApplicationController
   def edit; end
 
   def update
-    if @item.update(item_params)
-      WardrobeMediaJob.enqueue_for(@item.id) if @item.photos.attached?
-      @item.record_activity!("AmberItemUpdated", source_vertical: "amber")
-      redirect_to(@item, notice: t("flash.updated"))
-    else
-      render(:edit, status: :unprocessable_entity)
-    end
+    return render(:edit, status: :unprocessable_entity) unless @item.update(item_params)
+
+    WardrobeMediaJob.enqueue_for(@item.id) if @item.photos.attached?
+    @item.record_activity!("AmberItemUpdated", source_vertical: "amber")
+    redirect_to(@item, notice: t("flash.updated"))
   end
 
   def destroy

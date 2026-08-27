@@ -101,12 +101,10 @@ class OutfitsController < ApplicationController
   end
 
   def update
-    if @outfit.update(outfit_params)
-      Shared::DomainEvent.record!(actor: Current.user, action: "outfit.updated", subject: @outfit, source_vertical: "amber") if defined?(Shared::DomainEvent)
-      redirect_to(@outfit, notice: t("flash.updated"))
-    else
-      render(:edit, status: :unprocessable_entity)
-    end
+    return render(:edit, status: :unprocessable_entity) unless @outfit.update(outfit_params)
+
+    Shared::DomainEvent.record!(actor: Current.user, action: "outfit.updated", subject: @outfit, source_vertical: "amber") if defined?(Shared::DomainEvent)
+    redirect_to(@outfit, notice: t("flash.updated"))
   end
 
   def destroy

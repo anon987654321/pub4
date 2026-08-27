@@ -19,6 +19,8 @@ nb:
     name: "Amber"
   skip_to_content: "Hopp til hovedinnhold"
   amber:
+    ai:
+      search_unavailable: "AI-søk er utilgjengelig — bruker lokalt treff der det går"
     declutter:
       box_elapsed: "30-dagers utrangeringsboks utløpt for «%{title}» — selg, gi bort, eller sett i stand med omtanke."
       last_chance_outfit: "Siste sjanse · %{title}"
@@ -26,6 +28,7 @@ nb:
     feed:
       compose_prompt: "Del en #ootd tanke…"
       post_action: "Publiser"
+      posting_as_anon: "anonym"
       guest_hint: "Poster som anon · %{remaining} av %{limit} innlegg igjen i denne nettleseren"
       advanced_post: "Merk antrekk eller plagg →"
     nav:
@@ -154,6 +157,7 @@ nb:
     query: "Søkeord"
     submit: "Søk"
   pages:
+    occasion_gap: "Hull — vurder å legge til plagg"
     edit_item: "Rediger"
     edit_item_heading: "Rediger %{name}"
     wardrobe: "Garderobe"
@@ -241,6 +245,11 @@ nb:
     chip_box: "%{count} boks"
     chip_memory: "%{count} minne"
     chip_avg_wear: "%{amount} snitt/bruk"
+    chip_utilisation: "%{rate} % utnyttelse"
+    chip_spark_joy: "%{count} gir glede"
+    chip_items: "%{count} plagg"
+    chip_recovered: "%{amount} gjenvunnet"
+    chip_released: "%{count} kvittet"
     lifecycle_filter: "Livssyklusfilter"
     lifecycle:
       active: "Aktiv"
@@ -441,6 +450,7 @@ nb:
       one: "%{count} plagg"
       other: "%{count} plagg"
   outfits:
+    wardrobe_value: "%{amount} garderobeverdi"
     add_item: "Legg til plagg"
     style_combinations: "Kombinasjoner fra din egen garderobe"
     style_intelligence: "Hva dette antrekket gjør"

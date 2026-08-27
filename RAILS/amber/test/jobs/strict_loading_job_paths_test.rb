@@ -13,7 +13,7 @@ require "test_helper"
 # sustainability_metric, garment_embedding) are all exempt and do NOT raise.
 #
 # `belongs_to :user` is not wrapped, and does. That is the read that bites jobs:
-# they have no request spec, and a job that raises on its first record simply
+# they have no request spec, and a job that raises on its first record
 # never does its work. Both jobs below read item.user.
 class StrictLoadingJobPathsTest < ActiveSupport::TestCase
   def make_item

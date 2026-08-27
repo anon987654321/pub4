@@ -13,11 +13,11 @@
   <div class="sidebar-card">
     <%= tag.h3 t("wardrobe.your_wardrobe") %>
     <ul>
-      <li><%= @items_count %> items</li>
-      <li><%= @joy_count %> spark joy</li>
-      <li><%= @never_worn_count %> never worn</li>
+      <li><%= t("wardrobe.chip_items", count: @items_count) %></li>
+      <li><%= t("wardrobe.chip_spark_joy", count: @joy_count) %></li>
+      <li><%= t("wardrobe.chip_never_worn", count: @never_worn_count) %></li>
       <% if @utilization_rate %>
-        <li><%= @utilization_rate %>% utilisation</li>
+        <li><%= t("wardrobe.chip_utilisation", rate: @utilization_rate) %></li>
       <% end %>
     </ul>
   </div>

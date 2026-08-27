@@ -18,15 +18,11 @@ class WardrobeAi
     private
 
     def fallback_response(prompt)
-      if prompt.include?("outfit combinations")
-        { "outfits" => [] }
-      elsif prompt.include?("matching:")
-        { "item_ids" => [], "explanation" => "AI search unavailable — using local match when possible" }
-      elsif prompt.include?("capsule wardrobe")
-        { "items" => [], "gap_items" => [] }
-      else
-        {}
-      end
+      return { "outfits" => [] } if prompt.include?("outfit combinations")
+      return { "items" => [], "gap_items" => [] } if prompt.include?("capsule wardrobe")
+      return {} unless prompt.include?("matching:")
+
+      { "item_ids" => [], "explanation" => I18n.t("amber.ai.search_unavailable") }
     end
 
     def heuristic_joy(item)
