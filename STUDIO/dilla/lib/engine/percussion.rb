@@ -35,13 +35,23 @@
 # rim stays because a rimshot is a hiphop sound and Dilla used one constantly.
 # glitch stays on the LA and techno feels only, where a stab is idiomatic;
 # Detroit gets none.
+# Kick, snare/clap, hi-hat, ghost. That is the kit.
+#
+# Operator direction, and it is what the records are: a Dilla or Slum Village
+# bar has a kick, a snare or clap, closed and open hats, and ghost snares
+# underneath. Nothing else. Tambourine, agogo, woodblock and tabla are
+# general-MIDI world percussion nobody in this lineage played, and rim and
+# glitch are the same argument one step quieter -- an ornament arriving on top
+# of a groove that should be carrying itself.
+#
+# Every rate is 0 for these three feels, so the eclectic layer contributes
+# nothing and the drums are the drums. Drive and groove come from the kit and
+# the microtiming, not from adding instruments. Any feel not listed keeps the
+# old rates, so nothing else in the catalogue changes.
 PERC_VOCAB = {
-  detroit_stumble: { rim: 0.028, glitch: 0.0, tabla: 0.0,
-                     tambourine: 0.0, woodblock: 0.0, agogo: 0.0 },
-  la_beat_scene:   { rim: 0.040, glitch: 0.030, tabla: 0.0,
-                     tambourine: 0.0, woodblock: 0.0, agogo: 0.0 },
-  techno_house:    { rim: 0.055, glitch: 0.050, tabla: 0.0,
-                     tambourine: 0.0, woodblock: 0.0, agogo: 0.0 }
+  detroit_stumble:   { rim: 0.0, glitch: 0.0, tabla: 0.0, tambourine: 0.0, woodblock: 0.0, agogo: 0.0 },
+  la_beat_scene:     { rim: 0.0, glitch: 0.0, tabla: 0.0, tambourine: 0.0, woodblock: 0.0, agogo: 0.0 },
+  techno_drive: { rim: 0.0, glitch: 0.0, tabla: 0.0, tambourine: 0.0, woodblock: 0.0, agogo: 0.0 }
 }.freeze
 
 # The morph changes the feel per bar, so the ornaments have to follow it or the

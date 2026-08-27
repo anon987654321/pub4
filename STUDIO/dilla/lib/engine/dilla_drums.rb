@@ -32,7 +32,7 @@ end
 #
 # DRUM_MORPH=0 turns it off and every voice takes the track's own feel, which
 # is the previous behaviour exactly.
-DRUM_MORPH_PATH = %i[detroit_stumble la_beat_scene techno_house].freeze
+DRUM_MORPH_PATH = %i[detroit_stumble la_beat_scene techno_drive].freeze
 
 # Fractions of the track at which each voice has completed its move. Hats are
 # a third of the way ahead of the kick throughout.

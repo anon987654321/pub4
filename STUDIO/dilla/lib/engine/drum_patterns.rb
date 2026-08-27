@@ -158,10 +158,6 @@ DRUM_PATTERN_SETS = {
       [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
       [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
     ],
-  # Sparse hand percussion off the backbeat -- present because a feel with no
-  # perc entry used to raise a KeyError through the morph, and because Detroit
-  # records do carry a shaker or a tambourine under the kit.
-  perc: [[7, 15], [3, 7, 15], [7, 11, 15], [1, 7, 15]],
   opens: [6, 14],
 },
 # LA beat scene — Knxwledge/Teebs/Samiyam side of the lineage.
@@ -185,9 +181,6 @@ DRUM_PATTERN_SETS = {
       [0, 3, 6, 8, 11, 14], [0, 2, 5, 8, 10, 13],
       [2, 5, 7, 10, 13, 15], [0, 4, 7, 11, 14],
     ],
-  # Denser and more irregular than Detroit's: on these records the percussion
-  # is doing what the hats stopped doing.
-  perc: [[2, 7, 11, 14], [1, 6, 9, 15], [3, 7, 10, 14], [2, 5, 11, 13]],
   opens: [8, 15],
 },
   timeless: {
@@ -273,6 +266,41 @@ DRUM_PATTERN_SETS = {
     ],
     opens: [6, 14],
   },
+# Industrial techno, with variation, because techno_house has none.
+#
+# techno_house is the only feel in this table with a single kick pattern --
+# kicks: [[0, 4, 8, 12]], one entry -- against four to ten everywhere else. Its
+# own comment admits it. Every bar of every techno passage in the catalogue is
+# therefore the identical four-on-the-floor, which is what "never repeat the
+# same beat twice" is a complaint about, and it is where the drum morph was
+# walking at the end of every piece.
+#
+# Four on the floor is the floor, not the ceiling. The variation is in what
+# happens BETWEEN the kicks -- a ghost before the four, a late one pushing into
+# the next bar, a doubled sixteenth -- so the pulse never moves and the bar is
+# never the same twice.
+#
+# Open hats sit on the offbeat, which is the lift of the genre: 2, 6, 10, 14
+# against kicks on 0, 4, 8, 12. techno_house opened on 6 and 14 only, so half
+# the lift was missing.
+#
+# Kick, snare, hat, ghost. No perc row: the kit carries itself.
+techno_drive: {
+  kicks: [
+    [0, 4, 8, 12], [0, 4, 8, 12, 14], [0, 4, 8, 11, 12], [0, 3, 4, 8, 12],
+    [0, 4, 8, 12, 15], [0, 4, 7, 8, 12], [0, 4, 8, 10, 12], [0, 2, 4, 8, 12],
+    [0, 4, 8, 12, 13], [0, 4, 6, 8, 12],
+  ],
+  snares: [[4, 12], [4, 12, 14], [4, 10, 12], [4, 12, 15], [2, 4, 12], [4, 12]],
+  ghosts: [[6, 14], [2, 6, 10, 14], [6, 11, 14], [3, 6, 14], [6, 9, 14]],
+  hats: [
+    [2, 6, 10, 14],
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    [2, 6, 10, 14, 15], [1, 3, 5, 7, 9, 11, 13, 15],
+    [2, 5, 6, 10, 13, 14], [0, 2, 4, 6, 8, 10, 12, 14],
+  ],
+  opens: [2, 6, 10, 14],
+},
   techno_house: {
     kicks: [[0, 4, 8, 12]],
     snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
