@@ -47,6 +47,11 @@ export default class extends Controller {
     // "activity" waits for the reader; "load" starts counting immediately, for
     // a surface that genuinely wants the bar gone whether or not anyone is there.
     arm: { type: String, default: "activity" },
+    // Scrolling is the reader saying they are reading the page, not the bar.
+    // Off by default: a transport bar is a control surface you scroll past and
+    // still want, while a wayfinding bar has already done its job by then.
+    // Pairs with zone, which is the way back.
+    hideOnScroll: { type: Boolean, default: false },
   }
 
   connect() {
@@ -69,6 +74,11 @@ export default class extends Controller {
       document.addEventListener("pointermove", this.onPointerMove, { passive: true })
     }
 
+    if (this.hideOnScrollValue) {
+      this.onScroll = this.hideForScroll.bind(this)
+      document.addEventListener("scroll", this.onScroll, { passive: true })
+    }
+
     if (this.armValue === "load") this.scheduleHide(this.delayValue)
     else this.armOnActivity()
   }
@@ -81,6 +91,7 @@ export default class extends Controller {
     this.element.removeEventListener("pointerleave", this.onLeave)
     document.removeEventListener("touchstart", this.onReveal)
     if (this.onPointerMove) document.removeEventListener("pointermove", this.onPointerMove)
+    if (this.onScroll) document.removeEventListener("scroll", this.onScroll)
     this.disarm()
   }
 
@@ -112,6 +123,18 @@ export default class extends Controller {
       ? y >= window.innerHeight - this.zoneValue
       : y <= this.zoneValue
     if (near) this.reveal()
+  }
+
+  // Straight to hidden rather than a shortened countdown: the reader has moved
+  // the page under the bar, which is the clearest statement that the bar is not
+  // what they are looking at. The edge zone is how it comes back.
+  hideForScroll() {
+    if (this.element.contains(document.activeElement)) return
+    if (this.prefersReducedMotion) return
+
+    this.clear()
+    this.disarm()
+    this.element.classList.add(this.hiddenClassName)
   }
 
   reveal() {

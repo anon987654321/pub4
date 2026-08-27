@@ -1,7 +1,21 @@
 <%# The bar rests visible, then retires — nav_autohide holds the timing and the
     reasoning. The hidden class is passed rather than hardcoded so the stylesheet
-    keeps naming its own states. %>
+    keeps naming its own states.
+
+    zone is what brings it back on a mouse, and without it the bar left and
+    stayed gone: the hidden state is translateY(-100%) with opacity 0, so the
+    element is off-screen and pointerenter — the only other mouse route to
+    reveal — can never fire on it. Touch had document-level touchstart and the
+    keyboard had focusin; the mouse had nothing. 64px is the band the cursor
+    arrives in when it goes looking for navigation, the same way a video
+    player's chrome behaves.
+
+    hide-on-scroll because scrolling is the reader saying they are reading the
+    page rather than the bar, and waiting out a timer after that is the bar
+    overstaying a decision already made. %>
 <div class="nav_swiper" data-controller="nav-autohide"
+     data-nav-autohide-zone-value="64"
+     data-nav-autohide-hide-on-scroll-value="true"
      data-nav-autohide-hidden-class="nav_swiper--hidden">
   <%# These are links that navigate — /channels, another host entirely — and
       there is no tabpanel anywhere on the page. Dressing them as

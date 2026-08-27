@@ -220,4 +220,22 @@ class LayoutContractTest < Minitest::Test
     assert_includes stack, "layout_chrome"
     assert_includes brgen, "layout_chrome"
   end
+
+  # A bar that hides on a timer needs a way back, and on a mouse the edge zone
+  # is the only one: the hidden state is translateY(-100%) with opacity 0, so
+  # pointerenter can never fire on the element itself. zone defaults to 0 and
+  # the controller registers its pointermove listener only when zone > 0, so
+  # leaving it unset is a bar that leaves and stays gone -- silently, because
+  # touch and keyboard still recover it and only the mouse is stranded.
+  def test_brgen_nav_can_come_back_on_a_mouse
+    partial = File.read(File.join(ROOT, "brgen/app/views/shared/_nav_swiper.html.erb"))
+    zone = partial[/data-nav-autohide-zone-value="(\d+)"/, 1]
+
+    refute_nil zone, "nav_swiper sets no edge zone, so a mouse cannot recover the bar"
+    assert_operator zone.to_i, :>, 0
+
+    controller = File.read(File.join(ROOT, "shared/frontend/nav_autohide_controller.js"))
+    assert_includes controller, "if (this.zoneValue > 0)",
+                    "the zone guard is what makes an unset zone silent — keep them described together"
+  end
 end
