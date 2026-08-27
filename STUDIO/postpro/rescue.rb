@@ -35,7 +35,24 @@ module Postpro
     # shot through haze.
     FLAT_CEILING = 0.06
     # Channel means further apart than this is a cast rather than a colour.
-    CAST_SPREAD = 12.0
+    #
+    # Raised from 12.0, which diagnosed a cast on six of nine ordinary
+    # photographs of one person. Skin is not neutral: it is red over green over
+    # blue by a wide margin in every light, so any frame filled by a face clears
+    # a 12-point spread on its subject alone. The threshold was measuring "is
+    # there a person in this picture".
+    #
+    # 12 was not arbitrary either — it is a reasonable number for a frame of
+    # mixed content. The mistake was applying a whole-frame threshold to
+    # portraits, which is what this tool is mostly pointed at.
+    #
+    # Set against the measured distribution of that set rather than by feel.
+    # Spreads ran 2.2, 4.9, 23.8, 27.7, 27.7, 28.2, 44.0, 58.7 — a body of
+    # ordinary warm indoor portraits clustered in the twenties, and a clear gap
+    # above them. 34 keeps the two that are genuinely cast (one shot under
+    # tungsten, one with a filter already baked in) and drops the four that were
+    # only faces.
+    CAST_SPREAD = 34.0
 
     Finding = Struct.new(:code, :severity, :message, :remedy, keyword_init: true)
 

@@ -50,7 +50,16 @@ module Postpro
       # top to bottom, and this reads it four times — which surfaces as
       # "vipspng: out of order read at line 64" on the second metric, after
       # the first has already returned a plausible number.
-      image = Vips::Image.new_from_file(path.to_s, access: :random)
+      read_image(Vips::Image.new_from_file(path.to_s, access: :random))
+    end
+
+    # The same four numbers, from an image already in hand.
+    #
+    # read() takes a path because every caller had one. The grade does not: it
+    # is holding a Vips::Image and would have to write a temporary file to ask
+    # what it is looking at, which is why it never asked and why it graded a
+    # photograph as though it were a render.
+    def self.read_image(image)
       luma = image.bands >= 3 ? image.colourspace("b-w") : image
       luma = luma.cast(:float) / 255.0
 
@@ -60,6 +69,16 @@ module Postpro
         clipping: clipping_percent(luma),
         tonal_range: luma.deviate
       )
+    end
+
+    # Where the blacks actually sit, 0..1.
+    #
+    # The 1st percentile rather than the minimum: one dead pixel or one JPEG
+    # ringing artefact reaches 0 in almost any frame, so the minimum answers a
+    # question about noise and this answers the question about the picture.
+    def self.black_point(image)
+      luma = image.bands >= 3 ? image.colourspace("b-w") : image
+      luma.cast(:uchar).percent(1) / 255.0
     end
 
     # Mean absolute response to the Laplacian. Smooth areas return ~0; pores,

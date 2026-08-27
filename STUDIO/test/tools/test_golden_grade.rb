@@ -156,4 +156,72 @@ class TestGoldenGrade < Minitest::Test
       end
     end
   end
+
+  # The other half of the flat-field case, and the half that was missing.
+  #
+  # Every test above feeds the grade something with nothing in it — a flat field
+  # or a clean ramp — which is the generated-image case the presets were tuned
+  # against. Against that input the chain is purely additive and cannot be
+  # caught taking anything away, because there is nothing there to take.
+  #
+  # A photograph arrives with texture and contrast already in it, and against
+  # that input the same chain was subtractive: measured on real photographs it
+  # removed up to 57% of the picture's micro-detail in a single step and 0.09 of
+  # its tonal range overall, coming out milky and flat. Three separate defects
+  # produced it — a blurred base in dir_coupler, a preserve_blacks branch that
+  # lifted blacks 5.4x harder than not preserving them, and a defocus whose
+  # sigma floors ignored any request to soften less.
+  #
+  # So: mid-grey with real high-frequency content in it, and gaussian noise
+  # rather than a photograph because fixtures here are generated and nothing
+  # binary belongs in git.
+  def textured_field(dir, value: 128, sigma: 24)
+    path = File.join(dir, "textured.png")
+    base = Vips::Image.black(320, 320).cast(:float) + value
+    noise = Vips::Image.gaussnoise(320, 320, mean: 0, sigma: sigma, seed: 7)
+    band = (base + noise).cast(:uchar)
+    # PNG, not JPEG: this fixture exists to carry high-frequency detail and JPEG
+    # is a low-pass filter, so a jpg fixture would measure the codec.
+    band.bandjoin([band, band]).write_to_file(path)
+    path
+  end
+
+  def test_the_textured_fixture_is_what_it_claims_to_be
+    Dir.mktmpdir do |dir|
+      texture = Postpro::Uncanny.read(textured_field(dir)).texture
+
+      assert_operator texture, :>, 0.015,
+                      "the fixture has to carry more texture than a photograph's low end (0.015) " \
+                      "or it cannot detect a grade that strips it"
+    end
+  end
+
+  def test_the_grade_does_not_strip_texture_from_a_picture_that_arrived_with_it
+    Dir.mktmpdir do |dir|
+      input = textured_field(dir)
+      before = Postpro::Uncanny.read(input).texture
+      after = Postpro::Uncanny.read(grade(input, "portrait", dir)).texture
+
+      assert_operator after, :>, before * 0.75,
+                      "portrait cut texture from #{before.round(4)} to #{after.round(4)} — a grade whose " \
+                      "whole claim is putting micro-detail back may not be the thing removing it"
+    end
+  end
+
+  # shadow_lift as a target rather than an amount. An amount cannot know what it
+  # is being added to, so it stacked a second toe onto pictures that already had
+  # one; the milky blacks in a graded photograph were this.
+  def test_a_frame_whose_blacks_are_already_open_is_not_lifted_further
+    Dir.mktmpdir do |dir|
+      # Black point deliberately well above the toe target of 0.045.
+      input = textured_field(dir, value: 150, sigma: 12)
+      before = Postpro::Uncanny.black_point(Vips::Image.new_from_file(input))
+      after = Postpro::Uncanny.black_point(Vips::Image.new_from_file(grade(input, "portrait", dir)))
+
+      assert_operator before, :>, 0.045, "the fixture must start above the toe or it tests nothing"
+      assert_operator after, :<, before + 0.02,
+                      "blacks that arrived open at #{before.round(3)} came back at #{after.round(3)} — " \
+                      "the toe is a floor to reach, not an amount to add"
+    end
+  end
 end
