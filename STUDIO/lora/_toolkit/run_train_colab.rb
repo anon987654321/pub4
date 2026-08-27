@@ -108,6 +108,73 @@ def setup_cell(options)
   PYTHON
 end
 
+# Where the training images come from, and why it is not the clone.
+#
+# The clone is what makes this lane need no token, and it is also the reason to
+# think before using it: PUB4_REPO defaults to the public pub4 origin, so
+# "clone the repo for the dataset" means "publish the photographs first". For
+# generated subjects that is fine. For photographs of a person it is a decision
+# nobody should make by running a notebook.
+#
+# Drive is already mounted a few cells above, for checkpoints. The same mount
+# carries a dataset, so the images reach the GPU without reaching GitHub: put
+# them in MyDrive/lora/<subject>/dataset and this prefers them over anything in
+# the checkout.
+#
+# It fails rather than falling through when neither source has images. A lane
+# that trains on an empty directory produces a LoRA of nothing after several
+# hours, and the failure would surface as a bad likeness rather than as a
+# missing dataset.
+def dataset_cell(options)
+  drive_note = options[:drive] ? "" : " (--no-drive: Drive was not mounted, so only the checkout is checked)"
+  <<~PYTHON.strip
+    import glob, os, shutil
+    # Where the toolkit expects to find them, whichever source wins.
+    target = "/content/pub4/STUDIO/lora/#{SUBJECT}/dataset"
+    drive_set = "/content/drive/MyDrive/lora/#{SUBJECT}/dataset"
+
+    def count(path):
+        return len(glob.glob(os.path.join(path, "*.jpg")) +
+                   glob.glob(os.path.join(path, "*.jpeg")) +
+                   glob.glob(os.path.join(path, "*.png")) +
+                   glob.glob(os.path.join(path, "*.webp")))
+
+    if count(drive_set):
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        if os.path.islink(target) or os.path.isfile(target):
+            os.remove(target)
+        elif os.path.isdir(target):
+            shutil.rmtree(target)
+        shutil.copytree(drive_set, target)
+        print("ok: dataset from Drive —", count(target), "images (not from the public repo)")
+    elif count(target):
+        print("ok: dataset from the checkout —", count(target), "images")
+        print("note: these images are public, because #{options[:repo]} is.")
+    else:
+        raise SystemExit(
+            "warn: no training images.#{drive_note}\\n"
+            "fix: upload the captioned dataset to Drive at MyDrive/lora/#{SUBJECT}/dataset "
+            "(images plus their .txt captions), then Run all again."
+        )
+
+    # Every image needs its caption. ai-toolkit resolves <stem>.txt and falls
+    # through to the empty string when it is absent, so a broken pair is not an
+    # error there — it is an uncaptioned training image, and the run reports
+    # nothing.
+    stems = {os.path.splitext(os.path.basename(p))[0]
+             for p in glob.glob(os.path.join(target, "*"))
+             if not p.endswith(".txt")}
+    captions = {os.path.splitext(os.path.basename(p))[0]
+                for p in glob.glob(os.path.join(target, "*.txt"))}
+    missing = sorted(stems - captions)
+    if missing:
+        raise SystemExit("warn: %d image(s) have no .txt caption: %s\\n"
+                         "fix: upload the captions alongside the images."
+                         % (len(missing), ", ".join(missing[:6])))
+    print("ok: every image is captioned")
+  PYTHON
+end
+
 def train_cell(options)
   <<~PYTHON.strip
     # Everything past here is Ruby. cuda_t4 is a render_config.rb profile:
@@ -152,6 +219,10 @@ notebook = {
     cell("code", token_cell),
     cell("code", drive_cell(options)),
     cell("code", setup_cell(options)),
+    # After the clone, because it may overwrite what the clone brought, and
+    # before training, because it is the last point where a missing dataset is
+    # cheap to discover.
+    cell("code", dataset_cell(options)),
     cell("code", train_cell(options)),
   ],
   "metadata" => {
