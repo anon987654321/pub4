@@ -5,6 +5,24 @@ require "net/http"
 require "json"
 require "uri"
 
+# Nothing to check when FLUX is not the base.
+#
+# This gate exists because FLUX.1-dev is licence-gated: a token that has not
+# accepted the terms downloads a 403 and the failure appears hundreds of lines
+# later inside diffusers. Real problem, and entirely FLUX's.
+#
+# SDXL is not gated. It needs no token at all. But every lane in run_generate.sh
+# calls this gate unconditionally, so an SDXL render on a machine with no HF
+# credentials refused to start — blocked by the licence terms of a model it was
+# never going to load.
+#
+# Exits 0 with a note rather than skipping silently, because a gate that stops
+# reporting is indistinguishable from a gate that stopped mattering.
+if ENV["LORA_BASE"].to_s.strip.downcase == "sdxl"
+  puts "ok: base is SDXL, which is not licence-gated — no Hugging Face token needed"
+  exit 0
+end
+
 FLUX_REPO = ENV.fetch("LORA_FLUX_MODEL", "black-forest-labs/FLUX.1-dev")
 FLUX_URL = "https://huggingface.co/#{FLUX_REPO}"
 TOKEN_PATHS = [
