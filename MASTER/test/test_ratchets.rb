@@ -14,6 +14,10 @@ require_relative "../tools/ratchets"
 # above the real number — slack the next change grows into without failing anything.
 # This makes both directions the contract for every ratchet at once.
 class TestRatchets < Minitest::Test
+  # Every ratchet over the whole 2871-file corpus. That is a minute of real
+  # measurement, not a hang, and the default 30s bound exists to catch hangs.
+  def test_timeout = 300
+
   def rows = @rows ||= Pub4::Ratchets.all
 
   def readable = rows.reject { |row| row.current.nil? || row.ceiling.nil? }

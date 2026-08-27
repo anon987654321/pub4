@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 require "fileutils"
 
 # DEBT.md, Test coverage: no test named StandingOrders. This is the runtime's

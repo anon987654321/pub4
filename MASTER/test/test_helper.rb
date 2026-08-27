@@ -30,13 +30,22 @@ Master.install_hash_dig_compat!
 
 # Bound individual tests to prevent hangs, while leaving integration fixtures
 # enough room on slower local runs.
+#
+# A test that needs longer says so by overriding `test_timeout`, rather than the
+# global number rising to fit its worst case. One test needs it: TestRatchets
+# measures every ratchet across the whole 2871-file corpus, which is a minute of
+# honest work and not a hang. Raising the default to cover that would stop the
+# other 1593 tests from catching a real one.
 MASTER_TEST_TIMEOUT = Integer(ENV.fetch("MASTER_TEST_TIMEOUT", "30"))
 Minitest::Test.class_eval do
   alias_method :run_without_timeout, :run
+
+  def test_timeout = MASTER_TEST_TIMEOUT
+
   def run(*args)
-    Timeout.timeout(MASTER_TEST_TIMEOUT) { run_without_timeout(*args) }
+    Timeout.timeout(test_timeout) { run_without_timeout(*args) }
   rescue Timeout::Error
-    failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after #{MASTER_TEST_TIMEOUT}s"))
+    failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after #{test_timeout}s"))
     self
   end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 # DEBT.md, Test coverage: no test named KeyRotator. It decides which OpenRouter key
 # every free-tier call uses, and its "single key makes every method a no-op"

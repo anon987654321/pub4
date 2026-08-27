@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 class TestOpenbsdTtsChain < Minitest::Test
   def test_openbsd_chain_constant_excludes_local_mlx

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 class TestPersonalityPromptBuilder < Minitest::Test
   # OpenClaw-inspired core-vs-contextual split (item #9): every persona

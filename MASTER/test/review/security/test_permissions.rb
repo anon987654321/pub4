@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../test_helper"
+require_relative "../../test_helper"
 
 # DEBT.md, Test coverage: no test named Permissions. This module is the tool
 # blocklist and the safe/guarded/dangerous tier table — a pure function over

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 class TestCouncilFace < Minitest::Test
   def test_for_architect_has_left_lane
