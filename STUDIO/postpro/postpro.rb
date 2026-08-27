@@ -758,15 +758,34 @@ PRESETS = {
   # Both are legitimate and both remain available to the presets that want
   # them; neither belongs in the one grade that runs when nobody chose.
   #
-  # The source-aware scaling does not reach them: it governs the defocus and the
-  # curve, and these two subtract by different mechanisms. That is worth fixing
-  # and is not fixed here, because a default preset is the wrong place to
-  # discover it.
-  house: { fx: %w[optical_blur vintage_lens spectral_temp halation
-                  emulsion_defocus film_curve stock_matrix dir_coupler adjacency_effects
-                  orange_mask print_film skin_protect shadow_lift highlight_roll
-                  micro_contrast grain],
-           stock: :kodak_portra, lens: "zeiss", print_stock: :kodak_2383,
+  # They are scaled now rather than merely excluded. When this was written the
+  # taper reached only the defocus and the curve, and the paragraph above was
+  # the only thing standing between a photograph and the damage — a note is not
+  # a mechanism. head[:fringe] and head[:vignette] taper on texture, so the two
+  # presets that want each still get them at a strength the source can afford.
+  # Keeping them out of the default is a separate decision and it stands.
+  #
+  # NOTHING IN THIS CHAIN SOFTENS THE PICTURE.
+  #
+  # optical_blur, emulsion_defocus and vintage_lens are all out — the last one
+  # took `lens:` with it, since it was that key's only reader and an unread key
+  # is a --vocab-check failure. They are lens simulation, and lens simulation on
+  # a frame that was already taken through a lens is invention, not emulation.
+  # Softness is also the one artefact that cannot be undone downstream, which
+  # makes it the wrong thing for a default to add on the operator's behalf.
+  #
+  # What is left is tone, colour and emulsion: the H&D curve, dye crosstalk,
+  # coupler inhibition, adjacency, the negative's mask, the print stock, and
+  # grain. Halation stays and is not a blur — it adds light that bounced off the
+  # film base back through the emulsion, which is why it glows rather than
+  # smears, and it measured at -0.0001 texture.
+  #
+  # This is the difference between a film emulation and a lo-fi filter. No lomo,
+  # no scan lines, no vignette, no defocus.
+  house: { fx: %w[spectral_temp halation film_curve stock_matrix dir_coupler
+                  adjacency_effects orange_mask print_film skin_protect
+                  shadow_lift highlight_roll micro_contrast grain],
+           stock: :kodak_portra, print_stock: :kodak_2383,
            temp: 5400, intensity: 0.80 },
 
   portrait: { fx: %w[optical_blur spectral_temp film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
@@ -1099,8 +1118,32 @@ module HD
   end
 end
 
+# While true, safe_cast keeps float and does not clamp. Set only by preset(),
+# which clamps once at the end.
+$postpro_float_pipeline = false
+
+# Clamp to 0..255 and quantise to 8-bit — EXCEPT inside a preset chain.
+#
+# Every effect ends by calling this, so a sixteen-step chain used to round to
+# 8-bit sixteen times and, worse, clamp sixteen times. The rounding costs
+# precision; the clamping costs information that cannot be recovered. A step
+# that pushes a highlight to 260 has it cut to 255 permanently, and the next
+# step — the shoulder that exists precisely to roll that highlight back down —
+# receives a flat white plateau where the negative had detail.
+#
+# That is the opposite of what the thing being emulated does. The whole point of
+# a colour negative is latitude: it holds values far above and below what a
+# print shows, and the curve decides afterwards what becomes white. Clamping at
+# every stage models a sensor, not a film.
+#
+# So inside a chain the values stay float and unbounded, and preset() clamps
+# once at the end. Outside a chain — a bare effect call, a recipe step, a caller
+# that hands the result straight to write_to_file — behaviour is unchanged,
+# because those have no later step to hand headroom to.
 def safe_cast(image, format = "uchar")
   if format == "uchar"
+    return image.cast("float") if $postpro_float_pipeline
+
     f = image.cast("float")
     f = (f > 0).ifthenelse(f, 0)
     f = (f < 255).ifthenelse(f, 255)
@@ -2808,12 +2851,47 @@ TONAL_NATIVE = 0.22
 # untouched. Defocus does scale to nothing, because simulated lens softness is
 # not a look anyone asked for on a frame that is already sharp — it is only
 # ever there to give grain something to sit on.
-GRADE_FLOOR = 0.25
+#
+# 0.70, raised from 0.25, because 0.25 was protecting the picture from the
+# grade rather than from damage. On a set of ordinary phone photographs the
+# taper measured them as already-good and cut the curve to a quarter, which
+# moved the mean about four levels and was invisible — the operator's report
+# was that postpro had never run, and the files had in fact been graded twice.
+#
+# The confusion was mine: I conflated subtractive with damaging. A film curve
+# compresses contrast, and that compression IS the look — the shoulder, the toe,
+# the way a highlight rolls instead of clipping. Measured on a real photograph,
+# the difference between 0.25 and 0.70 is eight points of texture (99% kept
+# against 91%, both comfortably inside the golden suite's 75% floor) and a
+# tonal shift from -0.05 to -0.07. Cheap, and the difference between a grade
+# you can see and one you cannot.
+#
+# What actually damaged photographs was never the curve. It was dir_coupler
+# rebuilding every band from a blurred copy, and defocus whose sigma floors
+# ignored any request to soften less. Both are fixed at the mechanism. The
+# taper should hold back the effects that destroy information and let the ones
+# that shape tone do their work.
+GRADE_FLOOR = 0.70
 
 def source_headroom(image)
   reading = Postpro::Uncanny.read_image(image)
   { blur: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.0),
-    curve: taper(reading.tonal_range, TONAL_FLOOR, TONAL_NATIVE, GRADE_FLOOR),
+    curve: curve_strength(reading.tonal_range),
+    # Two more effects that destroy what the source arrived with, and were
+    # measured doing it before being taken out of `house`:
+    # chromatic_aberration cost 0.0265 of texture and film_curl_vignette 0.0428
+    # on one frame, together two thirds of its micro-detail.
+    #
+    # They were left unscaled with a note saying so, which made the note the
+    # only thing standing between a photograph and the damage — and a note is
+    # not a mechanism. Both are still available to the two presets each that
+    # want them; those presets now get them at a strength the source can afford.
+    #
+    # Both taper on TEXTURE, not tonal range. Lateral CA blurs the red and blue
+    # channels against green, and a vignette's falloff destroys detail in the
+    # corners; neither is a tone curve, and neither has contrast to spend.
+    fringe: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.30),
+    vignette: taper(reading.texture, TEXTURE_FLOOR, TEXTURE_NATIVE, 0.35),
     reading: reading }
 rescue StandardError => e
   # A measurement failure must not cost the grade. Full strength is what every
@@ -2823,11 +2901,41 @@ rescue StandardError => e
 end
 
 # 1.0 at or below `floor`, `minimum` at or above `native`, linear between.
+#
+# Correct for a step that DESTROYS what the source already has: the more the
+# picture arrived with, the less of that step it should get. Defocus is the
+# case — a sharp frame wants none of it.
 def taper(value, floor, native, minimum)
   return 1.0 if value <= floor
   return minimum if value >= native
 
   1.0 - ((value - floor) / (native - floor)) * (1.0 - minimum)
+end
+
+# How much film curve this picture can afford, which runs the OTHER way.
+#
+# The curve used to go through taper() with everything else, and that was a
+# polarity error hiding behind a shared helper. taper() reduces a step as the
+# source gets richer, which is right for defocus and exactly wrong here: an H&D
+# curve does not add contrast, it compresses it — the toe and the shoulder are
+# both reductions. So tapering it upward for flat images handed the most
+# compression to the pictures with the least to spare.
+#
+# Measured across seven photographs: the most contrasty lost 26% of its tonal
+# range and the flattest lost 46%. Backwards, and visible as muddiness in
+# exactly the frames that were already soft.
+#
+# A film curve is a way of SPENDING contrast. A frame with plenty can afford the
+# full shoulder and looks like film for it; a flat one has nothing to give and
+# gets a light touch, because compressing an already-flat picture is not a look,
+# it is a loss.
+CURVE_FLOOR = 0.35
+
+def curve_strength(tonal_range)
+  return CURVE_FLOOR if tonal_range <= TONAL_FLOOR
+  return 1.0 if tonal_range >= TONAL_NATIVE
+
+  CURVE_FLOOR + ((tonal_range - TONAL_FLOOR) / (TONAL_NATIVE - TONAL_FLOOR)) * (1.0 - CURVE_FLOOR)
 end
 
 def preset(image, name)
@@ -2837,6 +2945,9 @@ def preset(image, name)
   t_start = Time.now
   n_steps = p[:fx].length
   head = source_headroom(image)
+  # Headroom on, for the whole chain. Values may exceed 0..255 between steps and
+  # only the final clamp decides what becomes white.
+  $postpro_float_pipeline = true
   PostproBootstrap.dmesg "preset=#{name} stock=#{p[:stock]} steps=#{n_steps} intensity=#{p[:intensity]}"
   if head[:reading]
     PostproBootstrap.dmesg format("source %s -> blur x%.2f curve x%.2f",
@@ -2888,7 +2999,7 @@ def preset(image, name)
              # so no render anywhere has a grain pattern to preserve.
              when "grain"               then grain(processed, preset_effective_iso(p), p[:stock], p[:intensity] * 0.30)
              when "color_separate"      then color_separate(processed, p[:intensity] * 0.55)
-             when "chromatic_aberration" then chromatic_aberration(processed, p[:intensity] * 0.25)
+             when "chromatic_aberration" then chromatic_aberration(processed, p[:intensity] * 0.25 * head[:fringe])
              when "vintage_lens"        then vintage_lens(processed, p.fetch(:lens, "zeiss"), p[:intensity] * 0.70)
              when "teal_orange"         then teal_orange(processed, p[:intensity] * 0.80)
              when "bloom_pro"           then bloom_pro(processed, p[:intensity] * 0.25)
@@ -2914,7 +3025,7 @@ def preset(image, name)
              when "scan_noise"          then scan_noise(processed, p[:intensity] * 0.40)
              when "newton_rings"        then newton_rings(processed, p[:intensity] * 0.12)
              when "dust_and_hair"       then dust_and_hair(processed, p[:intensity] * 0.50)
-             when "film_curl_vignette"  then film_curl_vignette(processed, p[:intensity] * 0.45)
+             when "film_curl_vignette"  then film_curl_vignette(processed, p[:intensity] * 0.45 * head[:vignette])
              when "selenium_tone"       then selenium_tone(processed, p[:intensity] * 0.45)
              when "dye_fade"            then dye_fade(processed, p[:stock], p.fetch(:age, 0.50))
              when "darkroom_print"      then darkroom_print(processed, p[:intensity] * 0.50)
@@ -2957,7 +3068,16 @@ def preset(image, name)
   end
 
   PostproBootstrap.dmesg "preset=#{name} done total=%.2fs" % (Time.now - t_start)
-  processed
+  # The single clamp. Everything above ran in unbounded float; this is where
+  # the negative becomes a print.
+  $postpro_float_pipeline = false
+  safe_cast(processed)
+ensure
+  # One clamp, at the end, whatever happened in between — including a raise,
+  # which is why this is an ensure rather than a line before the return. Leaving
+  # the flag set would make every later bare effect call return unbounded float
+  # to a caller expecting 8-bit.
+  $postpro_float_pipeline = false
 end
 
 # Random Effects
