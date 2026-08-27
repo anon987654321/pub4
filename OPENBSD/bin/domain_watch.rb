@@ -40,6 +40,7 @@ module Deploy
       "net" => "whois.verisign-grs.com", "se" => "whois.iis.se",
       "dk" => "whois.dk-hostmaster.dk", "fi" => "whois.fi", "is" => "whois.isnic.is",
       "de" => "whois.denic.de", "fr" => "whois.nic.fr", "be" => "whois.dns.be",
+      "us" => "whois.nic.us", "org" => "whois.pir.org",
     }.freeze
 
     AVAILABLE = /No match|NOT FOUND|not found|No entries found|is free|Status:\s*free|
@@ -53,7 +54,7 @@ module Deploy
       File.read(NSD_CONF).scan(/^\s*name:\s*"?([^"\s]+)"?/).flatten.uniq.sort
     end
 
-    def query(domain)
+    def whois_query(domain)
       server = SERVERS[domain.split(".").last]
       argv = ["whois"]
       argv += ["-h", server] if server
@@ -97,6 +98,67 @@ module Deploy
         { "state" => "unknown", "note" => out.lines.first.to_s.strip[0, 60] }
       end
     end
+
+  # whois first, RDAP for the registries that will not answer it.
+  #
+  # Identity Digital (.legal, .attorney, .healthcare) and SWITCH (.ch, .li)
+  # return an empty body to a plain whois, which the referral guard above then
+  # correctly files as unknown rather than guessing. Thirty-eight of the fifty-
+  # seven zones sat at unknown for that reason, so the snapshot could not answer
+  # the only question it exists to answer.
+  #
+  # RDAP is what those registries serve instead, and it is only safe once you
+  # know the registry actually runs it: a 404 means "no such domain" from a
+  # registry that has RDAP, and "no service here" from one that does not, and
+  # reading the second as available is the same mistake the guard above exists
+  # to prevent. IANA publishes which TLDs have RDAP and where, so the bootstrap
+  # is fetched first and a TLD missing from it is never called available.
+  def query(domain)
+    result = whois_query(domain)
+    return result unless result["state"] == "unknown"
+
+    rdap_query(domain) || result
+  end
+
+  BOOTSTRAP = "https://data.iana.org/rdap/dns.json"
+
+  def rdap_base(tld)
+    @rdap_bases ||= begin
+      out, = Open3.capture2e("/usr/bin/timeout", "20", "curl", "-sS", BOOTSTRAP)
+      parsed = JSON.parse(out.to_s)
+      parsed.fetch("services", []).each_with_object({}) do |(tlds, urls), map|
+        tlds.each { |t| map[t] = urls.first }
+      end
+    rescue StandardError
+      {}
+    end
+    @rdap_bases[tld]
+  end
+
+  def rdap_query(domain)
+    base = rdap_base(domain.split(".").last)
+    return nil unless base
+
+    url = "#{base.chomp("/")}/domain/#{domain}"
+    out, = Open3.capture2e("/usr/bin/timeout", "20", "curl", "-sSL", "-w", "\n%{http_code}", url)
+    lines = out.to_s.lines
+    code = lines.last.to_s.strip
+    return { "state" => "available" } if code == "404"
+    return nil unless code == "200"
+
+    body = JSON.parse(lines[0..-2].join) rescue nil
+    return nil unless body
+
+    event = ->(name) { body["events"]&.find { |e| e["eventAction"] == name }&.dig("eventDate") }
+    {
+      "state" => "registered",
+      "created" => event.call("registration"),
+      "expires" => event.call("expiration"),
+      "registrar" => body["entities"]
+                       &.find { |e| Array(e["roles"]).include?("registrar") }
+                       &.dig("vcardArray", 1)&.find { |f| f[0] == "fn" }&.last,
+    }.compact
+  end
 
     # Subdomains of a zone we already hold are not separately registrable.
     def registrable?(domain)
