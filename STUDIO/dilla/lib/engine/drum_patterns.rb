@@ -158,9 +158,13 @@ DRUM_PATTERN_SETS = {
       [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
       [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
     ],
-    opens: [6, 14],
-  },
-  # LA beat scene — Knxwledge/Teebs/Samiyam side of the lineage.
+  # Sparse hand percussion off the backbeat -- present because a feel with no
+  # perc entry used to raise a KeyError through the morph, and because Detroit
+  # records do carry a shaker or a tambourine under the kit.
+  perc: [[7, 15], [3, 7, 15], [7, 11, 15], [1, 7, 15]],
+  opens: [6, 14],
+},
+# LA beat scene — Knxwledge/Teebs/Samiyam side of the lineage.
   #
   # wonky_canon displaces the snare off 4/12 so the backbeat stops being a
   # reference. This keeps that but thins everything around it: the kick is
@@ -181,8 +185,11 @@ DRUM_PATTERN_SETS = {
       [0, 3, 6, 8, 11, 14], [0, 2, 5, 8, 10, 13],
       [2, 5, 7, 10, 13, 15], [0, 4, 7, 11, 14],
     ],
-    opens: [8, 15],
-  },
+  # Denser and more irregular than Detroit's: on these records the percussion
+  # is doing what the hats stopped doing.
+  perc: [[2, 7, 11, 14], [1, 6, 9, 15], [3, 7, 10, 14], [2, 5, 11, 13]],
+  opens: [8, 15],
+},
   timeless: {
     kicks: [
       [0, 8, 10, 15], [0, 3, 9, 11, 14], [0, 6, 10, 13], [0, 2, 7, 10, 14],

@@ -73,7 +73,15 @@ def drum_pattern_pick(bar, feel, role)
   # the handover staggered rather than simultaneous.
   feel = drum_morph_feel(bar, role) || feel
   sets = DRUM_PATTERN_SETS.fetch(drum_feel_key(feel))
-  pool = sets.fetch(role)
+  # fetch(role) raised KeyError when a feel has no entry for this voice, and the
+  # morph made that reachable: callers guard on the TRACK's feel
+  # (`if sets[:perc]` in dilla_ghost_steps) while this method had already swapped
+  # in the morphed one, so the guard checked a different hash from the fetch.
+  # 94 KeyErrors across ~47 tracks in one run. A missing voice is a legitimate
+  # thing for a feel to say -- it means "this idiom has no percussion" -- so it
+  # returns nothing instead of raising.
+  pool = sets[role]
+  return [] if pool.nil? || pool.empty?
   seed = drum_pattern_seed(feel)
   phrase = bar % 4
   idx = (phrase + seed + (bar / 8)) % pool.length
