@@ -185,79 +185,85 @@ DRUM_PATTERN_SETS = {
 },
 # Dilla Time. The kick is the erratic element; the backbeat never moves and
 # the hats stay straight, which is the collision the whole feel is named for.
-timeless: {
-  kicks: [
-    [0, 3, 10], [0, 3, 10, 14], [0, 2, 7, 10], [0, 3, 9, 10], [0, 3, 6, 10, 15],
-      [0, 5, 10, 13], [0, 3, 11], [0, 2, 3, 10], [0, 3, 8, 10], [0, 6, 10, 12],
-  ],
-  snares: [[4, 12], [4, 12], [4, 12], [4, 12], [4, 12], [4, 12]],
-  ghosts: [[3, 6, 11, 14], [3, 7, 11], [2, 6, 11, 15], [3, 6, 10, 14], [1, 3, 11, 13]],
-  hats: [
-    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
-  ],
-  opens: [6, 14],
-},
-# Dilla Time. The kick is the erratic element; the backbeat never moves and
-# the hats stay straight, which is the collision the whole feel is named for.
-loose_pocket: {
-  kicks: [
-    [0, 3, 10], [0, 3, 11, 14], [0, 4, 9, 12], [0, 2, 10], [0, 3, 7, 13],
-      [0, 6, 11], [0, 3, 10, 12], [0, 5, 11], [0, 3, 6, 10], [0, 8, 12, 15],
-  ],
-  snares: [[4, 12], [4, 12], [4, 12], [4, 12], [4, 12], [4, 12]],
-  ghosts: [[3, 6, 11, 14], [2, 7, 10, 15], [3, 5, 11, 13], [1, 6, 14], [3, 7, 9, 14]],
-  hats: [
-    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
-  ],
-  opens: [6, 14],
-},
-# Dilla Time. The kick is the erratic element; the backbeat never moves and
-# the hats stay straight, which is the collision the whole feel is named for.
-syncopated_slash_ninth: {
-  kicks: [
-    [0, 3, 10, 13], [0, 6, 10], [0, 3, 5, 10], [0, 3, 10, 15], [0, 2, 8, 11],
-      [0, 4, 6, 11], [0, 3, 9, 13], [0, 7, 11, 14], [0, 3, 10], [0, 5, 9, 12],
-  ],
-  snares: [[4, 12], [4, 12], [4, 12], [4, 12], [4, 12], [4, 12]],
-  ghosts: [[3, 7, 11, 15], [2, 6, 10, 13], [3, 6, 9, 14], [1, 5, 11], [3, 8, 11, 14]],
-  hats: [
-    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
-  ],
-  opens: [6, 14],
-},
-  chromatic_planing: {
-    kicks: [
-      [0, 4, 8, 12], [0, 3, 6, 9, 12, 15], [0, 2, 5, 8, 11, 14], [0, 1, 4, 7, 10, 13],
-      [0, 5, 9, 13], [0, 2, 6, 10, 14], [0, 4, 7, 11, 14], [0, 3, 8, 12, 15],
-    ],
-    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
-    ghosts: [
-      [2, 6, 10, 14], [1, 5, 9, 13], [3, 7, 11, 15], [2, 5, 9, 12, 14],
-    ],
-    hats: [
-      [0, 2, 4, 6, 8, 10, 12, 14], [1, 3, 5, 7, 9, 11, 13, 15],
-      [0, 2, 4, 6, 8, 10, 12, 14], [1, 3, 5, 7, 9, 11, 13, 15],
-    ],
+# Dilla Time. The kick is the erratic element and carries the most variation,
+# but the backbeat and the hats move too -- an anchored 4 and 12 with extra
+# hits and rolls around them, and hats that change density bar to bar. Pinning
+# them literally identical made the point academically and sounded like a
+# machine, which is the opposite of what the feel is for.
+  # Dilla Time. The kick is the erratic element and carries the most variation,
+  # but the backbeat and the hats move too: 4 and 12 stay anchored with extra
+  # hits and rolls around them, and the hats change density bar to bar. Pinning
+  # them literally identical made the point academically and sounded like a
+  # machine, which is the opposite of what this feel is for.
+  timeless: {
+    kicks: [[0, 3, 10], [0, 3, 10, 14], [0, 2, 7, 10], [0, 3, 9, 10], [0, 3, 6, 10, 15], [0, 5, 10, 13], [0, 3, 11], [0, 2, 3, 10], [0, 3, 8, 10], [0, 6, 10, 12]],
+    snares: [[4, 12], [4, 12, 14], [4, 11, 12], [4, 12, 15], [2, 4, 12], [4, 10, 12], [4, 12, 13], [3, 4, 12]],
+    ghosts: [[3, 6, 11, 14], [3, 7, 11], [2, 6, 11, 15], [3, 6, 10, 14], [1, 3, 11, 13], [2, 7, 10, 15]],
+    hats: [[0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 3, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 11, 12, 14], [0, 3, 6, 9, 12, 15], [0, 2, 6, 8, 10, 14], [0, 1, 2, 4, 6, 8, 10, 12, 13, 14]],
     opens: [6, 14],
   },
 # Dilla Time. The kick is the erratic element; the backbeat never moves and
 # the hats stay straight, which is the collision the whole feel is named for.
-organic: {
-  kicks: [
-    [0, 3, 6, 10], [0, 4, 10], [0, 3, 7, 11], [0, 2, 6, 10, 13], [0, 3, 10],
-      [0, 5, 8, 12], [0, 3, 6, 14], [0, 7, 10], [0, 2, 9, 12], [0, 4, 7, 11],
+  # Dilla Time. The kick is the erratic element and carries the most variation,
+  # but the backbeat and the hats move too: 4 and 12 stay anchored with extra
+  # hits and rolls around them, and the hats change density bar to bar. Pinning
+  # them literally identical made the point academically and sounded like a
+  # machine, which is the opposite of what this feel is for.
+  loose_pocket: {
+    kicks: [[0, 3, 10], [0, 3, 11, 14], [0, 4, 9, 12], [0, 2, 10], [0, 3, 7, 13], [0, 6, 11], [0, 3, 10, 12], [0, 5, 11], [0, 3, 6, 10], [0, 8, 12, 15]],
+    snares: [[4, 12], [4, 12, 14], [4, 12, 15], [4, 8, 12], [2, 4, 12], [4, 12, 13, 15], [4, 10, 12, 14], [4, 12]],
+    ghosts: [[3, 6, 11, 14], [3, 7, 11], [2, 6, 11, 15], [3, 6, 10, 14], [1, 3, 11, 13], [2, 7, 10, 15]],
+    hats: [[0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 13, 14], [0, 2, 5, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 15], [0, 2, 4, 6, 8, 9, 12, 14], [0, 2, 4, 6, 7, 10, 12, 14]],
+    opens: [6, 14],
+  },
+# Dilla Time. The kick is the erratic element; the backbeat never moves and
+# the hats stay straight, which is the collision the whole feel is named for.
+  # Dilla Time. The kick is the erratic element and carries the most variation,
+  # but the backbeat and the hats move too: 4 and 12 stay anchored with extra
+  # hits and rolls around them, and the hats change density bar to bar. Pinning
+  # them literally identical made the point academically and sounded like a
+  # machine, which is the opposite of what this feel is for.
+  syncopated_slash_ninth: {
+    kicks: [[0, 3, 10, 13], [0, 6, 10], [0, 3, 5, 10], [0, 3, 10, 15], [0, 2, 8, 11], [0, 4, 6, 11], [0, 3, 9, 13], [0, 7, 11, 14], [0, 3, 10], [0, 5, 9, 12]],
+    snares: [[4, 12], [4, 12, 13], [4, 6, 12], [4, 12, 14, 15], [3, 4, 12], [4, 10, 12], [4, 11, 12, 14], [4, 12]],
+    ghosts: [[3, 6, 11, 14], [3, 7, 11], [2, 6, 11, 15], [3, 6, 10, 14], [1, 3, 11, 13], [2, 7, 10, 15]],
+    hats: [[0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 15], [0, 2, 4, 5, 6, 8, 10, 12, 14], [0, 3, 4, 6, 8, 11, 12, 14], [0, 2, 4, 7, 8, 10, 12, 14], [1, 2, 4, 6, 8, 10, 13, 14]],
+    opens: [6, 14],
+  },
+  chromatic_planing: {
+    kicks: [
+      [0, 4, 8, 12], [0, 3, 6, 9, 12, 15], [0, 2, 5, 8, 11, 14], [0, 1, 4, 7, 10, 13],
+      [0, 5, 9, 13], [0, 2, 6, 10, 14], [0, 4, 7, 11, 14], [0, 3, 8, 12, 15],
   ],
-  snares: [[4, 12], [4, 12], [4, 12], [4, 12], [4, 12], [4, 12]],
-  ghosts: [[2, 6, 11, 14], [3, 7, 10, 15], [2, 5, 11, 13], [3, 6, 14], [1, 7, 11]],
+  snares: [[4, 12], [4, 12, 14], [4, 11, 12], [4, 12, 15], [2, 4, 12], [4, 10, 12], [4, 12, 13], [3, 4, 12]],
+  ghosts: [[3, 6, 11, 14], [3, 7, 11], [2, 6, 11, 15], [3, 6, 10, 14], [1, 3, 11, 13], [2, 7, 10, 15]],
   hats: [
-    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14],
+    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3],
+      [0, 2, 4, 6, 8, 10, 12, 14, 11], [0, 3, 6, 9, 12, 15],
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 2, 6, 8, 10, 14],
+      [0, 1, 2, 4, 6, 8, 10, 12, 13, 14],
   ],
   opens: [6, 14],
 },
+# Dilla Time. The kick is the erratic element; the backbeat never moves and
+# the hats stay straight, which is the collision the whole feel is named for.
+# Dilla Time. The kick is the erratic element and carries the most variation,
+# but the backbeat and the hats move too -- an anchored 4 and 12 with extra
+# hits and rolls around them, and hats that change density bar to bar. Pinning
+# them literally identical made the point academically and sounded like a
+# machine, which is the opposite of what the feel is for.
+  # Dilla Time. The kick is the erratic element and carries the most variation,
+  # but the backbeat and the hats move too: 4 and 12 stay anchored with extra
+  # hits and rolls around them, and the hats change density bar to bar. Pinning
+  # them literally identical made the point academically and sounded like a
+  # machine, which is the opposite of what this feel is for.
+  organic: {
+    kicks: [[0, 3, 6, 10], [0, 4, 10], [0, 3, 7, 11], [0, 2, 6, 10, 13], [0, 3, 10], [0, 5, 8, 12], [0, 3, 6, 14], [0, 7, 10], [0, 2, 9, 12], [0, 4, 7, 11]],
+    snares: [[4, 12], [4, 12, 15], [4, 7, 12], [4, 12, 14], [4, 9, 12], [2, 4, 12, 14], [4, 11, 12, 15], [4, 12]],
+    ghosts: [[3, 6, 11, 14], [3, 7, 11], [2, 6, 11, 15], [3, 6, 10, 14], [1, 3, 11, 13], [2, 7, 10, 15]],
+    hats: [[0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 5, 8, 10, 12, 14], [0, 2, 4, 6, 7, 8, 10, 12, 14], [2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 9, 10, 12, 14], [0, 2, 3, 6, 8, 10, 12, 15]],
+    opens: [6, 14],
+  },
 # Industrial techno, with variation, because techno_house has none.
 #
 # techno_house is the only feel in this table with a single kick pattern --
@@ -302,9 +308,17 @@ techno_drive: {
       [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15],
       [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15],
       [0, 2, 4, 5, 7, 8, 10, 11, 13, 14],
-    ],
-    opens: [6, 14],
-  },
+  ],
+  snares: [[4, 12], [4, 12, 15], [4, 7, 12], [4, 12, 14], [4, 9, 12], [2, 4, 12, 14], [4, 12], [4, 11, 12, 15]],
+  ghosts: [[3, 6, 11, 14], [3, 7, 11], [2, 6, 11, 15], [3, 6, 10, 14], [1, 3, 11, 13], [2, 7, 10, 15]],
+  hats: [
+    [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 5, 8, 10, 12, 14],
+      [0, 2, 4, 6, 8, 10, 12, 14, 7], [2, 4, 6, 8, 10, 12, 14],
+      [0, 2, 4, 6, 9, 10, 12, 14], [0, 2, 4, 6, 8, 11, 12, 14],
+      [0, 2, 3, 6, 8, 10, 12, 15],
+  ],
+  opens: [6, 14],
+},
   # ==========================================================================
   # Feels for dancing (2026-07-30).
   #
