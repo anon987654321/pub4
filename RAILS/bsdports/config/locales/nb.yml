@@ -4,6 +4,10 @@ nb:
     name: "BSDports"
   skip_to_content: "Hopp til hovedinnhold"
   nav:
+    # Was inherited from shared/config/locales/social.*.yml, which used to
+    # define nav.brand_home for every app and therefore overrode brgen and
+    # amber's own brand strings. Stated here so shared can stop.
+    brand_home: "Til forsiden"
     # Referenced by the engine chat widget. bsdports has no messages route, so the
     # branch that shows it never renders here — but a key the view can name must
     # resolve, or it ships as a translation_missing span the day it does.

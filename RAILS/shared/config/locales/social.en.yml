@@ -239,8 +239,6 @@ en:
     sign_in_link_action: "Sign in"
     sign_in_link_expiry: "The link works once and expires in %{minutes} minutes."
     sign_in_link_ignore: "If you did not ask for this, ignore this email — nothing has changed."
-  nav:
-    brand_home: "Home"
   pages:
     account: "Account"
     two_factor: "Two-factor authentication"
