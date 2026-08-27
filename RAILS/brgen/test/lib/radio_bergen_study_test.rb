@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "pub4/deploy_paths"
+require "yaml"
 
 script = Pub4::DeployPaths.radio_bergen_study_script
 raise LoadError, "radio_bergen_study.rb not found in #{Pub4::DeployPaths.radio_bergen_study_candidates.map(&:expand_path)}" unless script
@@ -12,7 +13,13 @@ class RadioBergenStudyTest < ActiveSupport::TestCase
     data = RadioBergenStudy.study!
 
     assert_operator data.dig("meta", "track_count").to_i, :>=, 25
-    assert_equal 9, data.dig("meta", "local_count")
+# Against the manifest rather than a literal. The catalogue went from 9 local
+# tracks to 30 when radio bergen started serving its own, and a hardcoded
+# count turned a deliberate change into a failing suite that blocked every
+# deploy for the rest of the day. What is worth asserting is that the study
+# counts what the manifest holds, which stays true as the catalogue grows.
+manifest = YAML.load_file(Rails.root.join("config/radio_bergen/tracks.yml"))
+assert_equal manifest.fetch("local_mp3").size, data.dig("meta", "local_count")
     assert_operator data.dig("meta", "youtube_count").to_i, :>=, 18
   end
 
