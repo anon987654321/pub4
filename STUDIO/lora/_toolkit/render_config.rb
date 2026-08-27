@@ -214,6 +214,37 @@ def apply_env_overrides!(process)
   process["sample"]["sample_every"] = Integer(sample_every) unless sample_every.empty?
 end
 
+# The twelve in train.yaml and the fifty in shoots.yml are different jobs.
+#
+# The twelve are a validation suite, chosen to disagree with each other as much
+# as possible — hard sun against candlelight against overcast — so that watching
+# them during training shows whether the likeness holds when the light changes.
+# Diversity is the whole point and swapping them costs the diagnostic.
+#
+# The fifty are the record: what gets rendered once there is a model worth
+# pointing at them. LORA_PROMPT_SET=shoots selects them, optionally narrowed:
+#
+#   LORA_PROMPT_SET=shoots                    all fifty
+#   LORA_PROMPT_SET=shoots:Weather            one side
+#   LORA_PROMPT_SET=shoots:1,7,12             named sittings
+def apply_prompt_set!(process)
+  request = ENV["LORA_PROMPT_SET"].to_s.strip
+  return if request.empty?
+
+  name, filter = request.split(":", 2)
+  abort "warn: unknown prompt set #{name} (only 'shoots')" unless name == "shoots"
+
+  require_relative "shoots"
+  side = filter if filter && filter !~ /\A[\d,\s]+\z/
+  only = filter.split(",").map(&:to_i) if filter && filter =~ /\A[\d,\s]+\z/
+
+  built = prompts_for(File.basename(ROOT), side: side, only: only)
+  abort "warn: prompt set #{request} matched no sittings" if built.empty?
+
+  process["sample"]["prompts"] = built.map(&:last)
+  warn "note: prompt set #{request} — #{built.length} sitting(s)"
+end
+
 def build(mode)
   config = load_mapping(BASE)
   process = config.fetch("config").fetch("process").first
@@ -223,6 +254,7 @@ def build(mode)
   requested_prompt = ENV["LORA_PROMPT"].to_s.strip
   # A direct request gets one exact prompt, while training keeps the curated suite.
   process["sample"]["prompts"] = [requested_prompt] unless requested_prompt.empty?
+  apply_prompt_set!(process)
   apply_device!(process)
   apply_env_overrides!(process)
 

@@ -552,6 +552,41 @@ def train
   abort "warn: failed: #{command.join(' ')}" unless ok
 end
 
+# Render the fifty sittings from a checkpoint that already exists.
+#
+# Training samples its twelve validation prompts as it goes, which is how the
+# first portraits arrived without a second GPU. But the twelve are chosen to
+# disagree with each other — they are a likeness diagnostic, not a record — and
+# the fifty in shoots.yml are the actual deliverable.
+#
+# Separated from train because it is a different economics. Training is thirty
+# minutes and produces one adapter; this is a sampling pass against an adapter
+# that already exists, roughly thirty seconds a sitting on a T4, and it can be
+# re-run as many times as there are ideas without touching the weights.
+#
+# LORA_PROMPT_SET narrows it — a side, or specific numbers — because fifty at
+# once is twenty-five minutes and a bad seed is worth finding in three.
+def generate
+  ENV["LORA_DEVICE"] = "cuda_t4"
+  ENV["LORA_SKIP_POSTPRO"] = "1"
+  ENV["LORA_PROMPT_SET"] = ENV["LORA_PROMPT_SET"].to_s.strip.empty? ? "shoots" : ENV["LORA_PROMPT_SET"]
+
+  weights = WEIGHTS_DIR.glob("*.safetensors")
+  if weights.empty?
+    abort "warn: no checkpoint in #{WEIGHTS_DIR} — run the train stage first, or " \
+          "put one in #{PERSIST} for restore to pick up"
+  end
+
+  usable = weights.reject { |path| checkpoint_nan?(path) || checkpoint_untrained?(path) }
+  if usable.empty?
+    abort "warn: every checkpoint in #{WEIGHTS_DIR} is NaN or untrained. Rendering " \
+          "from one would produce fifty pictures of the base model, not of #{SUBJECT}."
+  end
+
+  puts "ok: rendering set #{ENV['LORA_PROMPT_SET']} from #{usable.max_by { |p| step_of(p) }.basename}"
+  sh! "sh", SUBJECT_DIR.join("lora").to_s, "--generate"
+end
+
 # The adapter and the validation portraits are the deliverables. ai-toolkit
 # samples the curated prompt suite as it trains, so a training run is also the
 # generate run — which is why this lane needs no paid one to see a face.
@@ -566,10 +601,11 @@ end
 
 STAGES = {
   "prepare" => -> { prepare }, "install" => -> { install_ai_toolkit },
-  "restore" => -> { restore_checkpoints }, "train" => -> { train }, "harvest" => -> { harvest }
+  "restore" => -> { restore_checkpoints }, "train" => -> { train },
+  "generate" => -> { generate }, "harvest" => -> { harvest }
 }.freeze
 
-ENV.fetch("LORA_COLAB_STAGES", STAGES.keys.join(",")).split(",").each do |stage|
+ENV.fetch("LORA_COLAB_STAGES", STAGES.keys.reject { |s| s == "generate" }.join(",")).split(",").each do |stage|
   STAGES.fetch(stage.strip) { abort "warn: no stage #{stage}" }.call
 end
 puts "ok: session complete"

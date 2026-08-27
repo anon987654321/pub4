@@ -1,0 +1,539 @@
+# Fifty sittings, sequenced in eight sides like a record.
+#
+# Every entry names a real light — a direction, a quality, a time of day —
+# because that is the part a diffusion model can actually act on. "Beautiful
+# lighting" gets the average of everything the model has seen; "north window,
+# camera-left, no sun ever enters it" gets a picture.
+#
+# distance is here because perspective distortion is a function of subject
+# distance alone. Nothing in a grade corrects a face photographed from 40 cm,
+# which is why phone selfies read as phone selfies. Nearly every sitting here
+# asks for two to three metres.
+#
+# scene is the clause that reaches CLIP; note is the reason, for people.
+# Neither is generated at render time — a prompt that drifts between runs makes
+# two takes incomparable.
+#
+# Subject-agnostic on purpose. TRIGGER and DESCRIPTOR come from the subject.env
+# of whoever is being rendered, so this file is the same for every LoRA.
+sides:
+- Northern Light
+- Rooms She Lives In
+- After Dark
+- Weather
+- Silver
+- Moving
+- Editorial
+- Quiet
+shoots:
+- "n": 1
+  side: Northern Light
+  title: North Window
+  scene: standing a metre inside a tall north-facing window in winter
+  key: sky, camera-left
+  distance: 3 m
+  lens: 100mm
+  stock: Portra 400
+  note: Standing a metre inside a tall north-facing window in winter. No sun ever
+    enters it; the whole sky is the softbox. The oldest portrait light there is.
+- "n": 2
+  side: Northern Light
+  title: Bryggen Arch
+  scene: open shade under the stone arcade — lit entirely by light bounced off the
+    wet boards opposite
+  key: bounced ambient
+  distance: 2.5 m
+  lens: 85mm
+  stock: Pro 400H
+  note: Open shade under the stone arcade — lit entirely by light bounced off the
+    wet boards opposite. Cool, directionless, unforgiving in the right way.
+- "n": 3
+  side: Northern Light
+  title: Overcast Fjord
+  scene: the sky as one continuous source, horizon to horizon
+  key: total overcast
+  distance: 3 m
+  lens: 70mm
+  stock: Pro 400H
+  note: The sky as one continuous source, horizon to horizon. Shadowless wraparound
+    light; the water gives a second, dimmer key from below.
+- "n": 4
+  side: Northern Light
+  title: Snowfield Bounce
+  scene: fresh snow acting as a reflector under the chin — the fill comes up rather
+    than down, which erases every shadow a face normally carries
+  key: sky · Fill snow
+  distance: 3 m
+  lens: 85mm
+  stock: Ektar 100
+  note: Fresh snow acting as a reflector under the chin — the fill comes up rather
+    than down, which erases every shadow a face normally carries.
+- "n": 5
+  side: Northern Light
+  title: Blue Hour, Jetty
+  scene: twenty minutes after sunset
+  key: ambient dusk
+  distance: 4 m
+  lens: 50mm
+  stock: Vision3 500T
+  note: Twenty minutes after sunset. No sun, no lamps yet — only the sky, and it is
+    genuinely blue rather than tinted blue.
+- "n": 6
+  side: Northern Light
+  title: Eleven at Night
+  scene: midsummer, sun still above the horizon and coming in almost sideways
+  key: low horizontal sun
+  distance: 3 m
+  lens: 105mm
+  stock: Kodak Gold 200
+  note: Midsummer, sun still above the horizon and coming in almost sideways. Light
+    you cannot get at any other latitude or hour.
+- "n": 7
+  side: Northern Light
+  title: Through Rain
+  scene: photographed from outside through a rain-streaked pane
+  key: interior lamp
+  distance: 2 m
+  lens: 85mm
+  stock: CineStill 800T
+  note: Photographed from outside through a rain-streaked pane. She is sharp, the
+    glass is not, and the water writes over half the frame.
+- "n": 8
+  side: Northern Light
+  title: White Room
+  scene: an empty white-painted room where light entering one window bounces wall
+    to wall until it arrives from everywhere at once
+  key: multi-bounce
+  distance: 3 m
+  lens: 100mm
+  stock: Portra 160
+  note: An empty white-painted room where light entering one window bounces wall to
+    wall until it arrives from everywhere at once. Almost no shadow at all.
+- "n": 9
+  side: Rooms She Lives In
+  title: First Coffee
+  scene: kitchen table, morning, one window to her left
+  key: window, hard-ish
+  distance: 2.5 m
+  lens: 50mm
+  stock: Portra 400
+  note: Kitchen table, morning, one window to her left. Not posed — the picture is
+    the half-second before she notices the camera.
+- "n": 10
+  side: Rooms She Lives In
+  title: Reading Lamp
+  scene: one warm pool of light and the rest of the room gone
+  key: tungsten practical
+  distance: 2 m
+  lens: 85mm f/2
+  stock: Vision3 500T
+  note: One warm pool of light and the rest of the room gone. The falloff does the
+    composition; nothing else in frame is lit.
+- "n": 11
+  side: Rooms She Lives In
+  title: Bathroom Mirror
+  scene: overhead light, no makeup, honest
+  key: overhead
+  distance: 1.5 m
+  lens: 35mm
+  stock: Superia 400
+  note: Overhead light, no makeup, honest. The one sitting on this record that is
+    deliberately unflattering in its setup and usually comes out the most alive.
+- "n": 12
+  side: Rooms She Lives In
+  title: Between Two Rooms
+  scene: standing in a doorway, lit from the room behind her
+  key: backlight
+  distance: 3 m
+  lens: 85mm
+  stock: Portra 800
+  note: Standing in a doorway, lit from the room behind her. Rim on the hair and shoulders,
+    face in bounced shadow.
+- "n": 13
+  side: Rooms She Lives In
+  title: Firelight
+  scene: lit from below and slightly to one side by a hearth
+  key: fire, low · 1900K
+  distance: 2 m
+  lens: 50mm f/1.4
+  stock: CineStill 800T
+  note: Lit from below and slightly to one side by a hearth. Flickering, very warm,
+    and the colour temperature is genuinely wrong in a way film handles and digital
+    does not.
+- "n": 14
+  side: Rooms She Lives In
+  title: Door Ajar
+  scene: dark hallway, a single blade of light from a door left open
+  key: slot of daylight
+  distance: 3 m
+  lens: 50mm
+  stock: Delta 3200
+  note: Dark hallway, a single blade of light from a door left open. Most of the frame
+    is nothing; the eye goes where the light is.
+- "n": 15
+  side: Rooms She Lives In
+  title: Blanket, Late
+  scene: wrapped up on a sofa, screen glow as the only source
+  key: screen, 6500K
+  distance: 2 m
+  lens: 35mm
+  stock: Vision3 500T
+  note: Wrapped up on a sofa, screen glow as the only source. Cold light on a warm
+    scene, which is the visual signature of an evening in.
+- "n": 16
+  side: After Dark
+  title: Neon, After Rain
+  scene: magenta and cyan signage as the only sources, wet asphalt returning both
+  key: neon · Fill wet ground
+  distance: 2 m
+  lens: 35mm
+  stock: CineStill 800T
+  note: Magenta and cyan signage as the only sources, wet asphalt returning both.
+    The most saturated frame on the record.
+- "n": 17
+  side: After Dark
+  title: Passenger Seat
+  scene: parked at night, dashboard glow from below and a streetlamp through the windscreen
+  key: dash · Rim sodium
+  distance: 1.2 m
+  lens: 28mm
+  stock: Vision3 500T
+  note: Parked at night, dashboard glow from below and a streetlamp through the windscreen.
+    Two sources, two colours, one face.
+- "n": 18
+  side: After Dark
+  title: Back of the Café
+  scene: tungsten practicals behind her, cold window light on the near side
+  key: practicals · Fill window
+  distance: 2.5 m
+  lens: 40mm
+  stock: Vision3 500T
+  note: Tungsten practicals behind her, cold window light on the near side. Teal and
+    orange occurring naturally rather than being graded in.
+- "n": 19
+  side: After Dark
+  title: Sodium Vapour
+  scene: under an old streetlamp — monochromatic orange that no white balance can
+    fully correct, and should not
+  key: sodium, overhead
+  distance: 3 m
+  lens: 50mm
+  stock: Portra 800
+  note: Under an old streetlamp — monochromatic orange that no white balance can fully
+    correct, and should not.
+- "n": 20
+  side: After Dark
+  title: Screen Only
+  scene: a phone as the sole light source, held low
+  key: phone, low
+  distance: 1 m
+  lens: 35mm
+  stock: Delta 3200
+  note: A phone as the sole light source, held low. Hard, cold, upward — a modern
+    candlelight, and instantly readable as this decade.
+- "n": 21
+  side: After Dark
+  title: Fairground
+  scene: standing still while everything behind her is lit and moving
+  key: mixed bulbs
+  distance: 3 m
+  lens: 85mm f/1.8
+  stock: Portra 800
+  note: Standing still while everything behind her is lit and moving. Bokeh doing
+    most of the work; she is the only sharp thing.
+- "n": 22
+  side: After Dark
+  title: One Work Light
+  scene: under a bridge, a single bare bulb on a stand
+  key: bare bulb
+  distance: 2.5 m
+  lens: 85mm
+  stock: Tri-X 400
+  note: Under a bridge, a single bare bulb on a stand. Hard shadow, deep falloff,
+    no fill whatsoever. The most sculptural frame here.
+- "n": 23
+  side: Weather
+  title: Proper Rain
+  scene: hood up, water on the face, entirely unbothered
+  key: backlit rain
+  distance: 2.5 m
+  lens: 50mm
+  stock: Superia 400
+  note: Hood up, water on the face, entirely unbothered. The rain has to be visible
+    in the air, which means it must be backlit.
+- "n": 24
+  side: Weather
+  title: Full Wind
+  scene: hair completely in motion, eyes narrowed against it
+  key: overcast
+  distance: 3 m
+  lens: 85mm
+  stock: Pro 400H
+  note: Hair completely in motion, eyes narrowed against it. Nothing about this can
+    be staged and it never looks like it was.
+- "n": 25
+  side: Weather
+  title: Out of Fog
+  scene: emerging from sea fog — the fog is the diffusion and the falloff, and it
+    deletes the background entirely
+  key: diffuse, omnidirectional
+  distance: 4 m
+  lens: 105mm
+  stock: Portra 160
+  note: Emerging from sea fog — the fog is the diffusion and the falloff, and it deletes
+    the background entirely.
+- "n": 26
+  side: Weather
+  title: Caught Snowfall
+  scene: direct flash into falling snow at night
+  key: on-camera flash
+  distance: 2 m
+  lens: 35mm
+  stock: Portra 800
+  note: Direct flash into falling snow at night. Every flake near the lens becomes
+    a white disc; the effect is enormous and free.
+- "n": 27
+  side: Weather
+  title: Storm Light
+  scene: black sky behind, sun still on her
+  key: low sun · BG storm
+  distance: 4 m
+  lens: 70mm
+  stock: Velvia 50
+  note: Black sky behind, sun still on her. Twenty minutes of this exist before a
+    storm and there is no way to fake the contrast ratio.
+- "n": 28
+  side: Weather
+  title: Breakwater
+  scene: sea spray coming over the wall behind her
+  key: overcast · Spec spray
+  distance: 5 m
+  lens: 135mm
+  stock: Tri-X 400
+  note: Sea spray coming over the wall behind her. She is dry for one more second
+    and both of you know it.
+- "n": 29
+  side: Silver
+  title: Midday, Pushed
+  scene: hard overhead sun, Tri-X pushed a stop
+  key: hard sun
+  distance: 2.5 m
+  lens: 35mm
+  stock: Tri-X +1
+  note: Hard overhead sun, Tri-X pushed a stop. Deep contrast, a sharp shadow under
+    the nose, real skin texture and pores.
+- "n": 30
+  side: Silver
+  title: One Softbox
+  scene: studio, single large source above and left, black seamless
+  key: softbox, 45°
+  distance: 3 m
+  lens: 105mm
+  stock: Silver gelatin
+  note: Studio, single large source above and left, black seamless. The classic sitting,
+    and the one that shows whether the likeness is right.
+- "n": 31
+  side: Silver
+  title: Mid-Stride
+  scene: walking, caught between steps, unaware
+  key: overcast
+  distance: 4 m
+  lens: 35mm
+  stock: HP5 400
+  note: Walking, caught between steps, unaware. Reportage rather than portraiture
+    — the frame is not composed around her.
+- "n": 32
+  side: Silver
+  title: Profile, White
+  scene: full profile against blown white
+  key: backlit white
+  distance: 3 m
+  lens: 135mm
+  stock: FP4 125
+  note: Full profile against blown white. Reduced to an outline — the only sitting
+    here that is about shape rather than expression.
+- "n": 33
+  side: Silver
+  title: Available Darkness
+  scene: almost no light at all, Delta 3200, grain the size of the thing being photographed
+  key: whatever there is
+  distance: 2 m
+  lens: 50mm f/1.4
+  stock: Delta 3200
+  note: Almost no light at all, Delta 3200, grain the size of the thing being photographed.
+    Grain as the subject, not the tolerance.
+- "n": 34
+  side: Moving
+  title: Dancing
+  scene: slow shutter, one sharp instant inside the blur
+  key: practicals · drag
+  distance: 2.5 m
+  lens: 35mm · 1/8s
+  stock: Portra 800
+  note: Slow shutter, one sharp instant inside the blur. Everything except the face
+    is motion.
+- "n": 35
+  side: Moving
+  title: With Her Son
+  scene: laughing at something he said, not at the camera
+  key: overcast
+  distance: 3 m
+  lens: 50mm
+  stock: Portra 400
+  note: Laughing at something he said, not at the camera. The one on this list most
+    likely to become the picture that matters.
+- "n": 36
+  side: Moving
+  title: Cold Morning Walk
+  scene: dog, breath visible, low sun through bare trees
+  key: low sun, backlit
+  distance: 4 m
+  lens: 85mm
+  stock: Kodak Gold 200
+  note: Dog, breath visible, low sun through bare trees. A picture of a routine rather
+    than an occasion.
+- "n": 37
+  side: Moving
+  title: Hands and Steam
+  scene: cooking
+  key: under-cabinet
+  distance: 1 m
+  lens: 50mm macro
+  stock: Portra 800
+  note: Cooking. She is barely in it — the frame is hands, steam, a knife, and enough
+    of her face to know whose they are.
+- "n": 38
+  side: Moving
+  title: Out of the Sea
+  scene: just surfaced, cold, entirely alive
+  key: overcast · Spec water
+  distance: 2.5 m
+  lens: 85mm
+  stock: Ektar 100
+  note: Just surfaced, cold, entirely alive. Hair flat, skin reacting, no composure
+    left to perform with.
+- "n": 39
+  side: Moving
+  title: On the Water
+  scene: small boat, horizon behind, spray
+  key: sun · Fill sea
+  distance: 3 m
+  lens: 50mm
+  stock: Provia 100F
+  note: Small boat, horizon behind, spray. Wind and light both arriving from the same
+    direction, which is what makes it read as at sea.
+- "n": 40
+  side: Editorial
+  title: Beauty Key
+  scene: butterfly light from directly above the lens, small symmetrical shadow under
+    the nose, black seamless
+  key: above axis
+  distance: 2.5 m
+  lens: 105mm
+  stock: Portra 160
+  note: Butterfly light from directly above the lens, small symmetrical shadow under
+    the nose, black seamless. Unforgiving and very flattering at once.
+- "n": 41
+  side: Editorial
+  title: Hard Flash, Colour
+  scene: direct flash against a saturated backdrop, full length
+  key: bare flash
+  distance: 4 m
+  lens: 50mm
+  stock: Ektar 100
+  note: Direct flash against a saturated backdrop, full length. Fashion's most honest
+    light — it flatters nobody and everybody.
+- "n": 42
+  side: Editorial
+  title: Her Own Room
+  scene: environmental portrait — photographed among her own things, which say more
+    in one frame than a studio does in ten
+  key: window · Fill lamp
+  distance: 3.5 m
+  lens: 35mm
+  stock: Portra 400
+  note: Environmental portrait — photographed among her own things, which say more
+    in one frame than a studio does in ten.
+- "n": 43
+  side: Editorial
+  title: Rembrandt
+  scene: key high and 45° off-axis, the triangle of light on the far cheek, background
+    falling to nothing
+  key: 45° high
+  distance: 2.5 m
+  lens: 105mm
+  stock: Silver gelatin
+  note: Key high and 45° off-axis, the triangle of light on the far cheek, background
+    falling to nothing. Four hundred years old and still correct.
+- "n": 44
+  side: Editorial
+  title: Split
+  scene: 'light exactly side-on: half the face lit, half in shadow, the line down
+    the centre'
+  key: 90° side
+  distance: 2.5 m
+  lens: 85mm
+  stock: Tri-X 400
+  note: 'Light exactly side-on: half the face lit, half in shadow, the line down the
+    centre. The most severe setup on the record.'
+- "n": 45
+  side: Editorial
+  title: Small in the Landscape
+  scene: wide, distant, she occupies a twentieth of the frame
+  key: overcast
+  distance: 30 m
+  lens: 28mm
+  stock: Pro 400H
+  note: Wide, distant, she occupies a twentieth of the frame. A portrait where the
+    subject is the scale of everything else.
+- "n": 46
+  side: Quiet
+  title: Just Woken
+  scene: early light, no arrangement of anything at all
+  key: low window
+  distance: 2 m
+  lens: 50mm
+  stock: Portra 400
+  note: Early light, no arrangement of anything at all. The whole point is that nothing
+    has been decided yet.
+- "n": 47
+  side: Quiet
+  title: Hands
+  scene: close on hands only — a ring, a scar, the way she holds a cup
+  key: window, raking
+  distance: 0.5 m
+  lens: 100mm macro
+  stock: Portra 160
+  note: Close on hands only — a ring, a scar, the way she holds a cup. A portrait
+    with no face in it.
+- "n": 48
+  side: Quiet
+  title: Turned Away
+  scene: back to camera, looking out at something
+  key: window ahead
+  distance: 3 m
+  lens: 85mm
+  stock: Vision3 500T
+  note: Back to camera, looking out at something. Refuses the viewer, which is why
+    it holds them.
+- "n": 49
+  side: Quiet
+  title: Reflected
+  scene: her face in a window at night with the city behind it — both at once, neither
+    fully
+  key: interior · BG city
+  distance: 1.5 m
+  lens: 50mm
+  stock: CineStill 800T
+  note: Her face in a window at night with the city behind it — both at once, neither
+    fully. Two exposures in one plane.
+- "n": 50
+  side: Quiet
+  title: One Lamp, Late
+  scene: sitting on the floor, very late, one lamp
+  key: single lamp
+  distance: 2 m
+  lens: 35mm f/1.4
+  stock: Vision3 500T
+  note: 'Sitting on the floor, very late, one lamp. The last track: the least composed
+    and the closest to how a room actually looks at two in the morning.'
