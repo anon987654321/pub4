@@ -71,8 +71,13 @@ class TestChain < Minitest::Test
           inherits: [image]
     YML
 
-    assert(problems.any? { |p| p.include?("declares neither input_image nor input_images") },
-           "expected a refusal naming input_image, got #{problems.inspect}")
+    # The message lists every spelling a model might use, not just the two FLUX
+    # ones. It grew when the chain reached outside that family: Depth Anything
+    # takes `image`, IC-Light takes `subject_image`, the control models take
+    # `control_image`, and against a two-name list all three read as "nowhere to
+    # put an image" — refusing exactly the chains worth building.
+    assert(problems.any? { |p| p.include?("declares none of") && p.include?("input_image") },
+           "expected a refusal naming the image-input keys, got #{problems.inspect}")
   end
 
   def test_a_stage_inheriting_an_image_into_a_flux_2_model_is_allowed
