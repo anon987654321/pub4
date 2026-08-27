@@ -20,13 +20,28 @@
 # part of that idiom: techno has no agogo, Detroit has no glitch stab. A feel
 # with no entry keeps the old rates, so nothing that already sounded right
 # changes.
+# The vocabulary is what these producers actually played, and it is short.
+#
+# A Dilla or Slum Village kit is kick, snare, rimshot, clap, closed and open
+# hat, and ghost snares. That is the whole list. Tambourine, agogo, woodblock
+# and tabla are general-MIDI world percussion; neither Dilla nor the LA beat
+# scene used them, and sprinkling them over a Detroit pattern is what made a
+# demo full of new drum designs still sound like the old one.
+#
+# A first pass removed agogo and woodblock and left tambourine at 0.055, which
+# was the same mistake wearing a different instrument. Everything outside the
+# list is 0 now.
+#
+# rim stays because a rimshot is a hiphop sound and Dilla used one constantly.
+# glitch stays on the LA and techno feels only, where a stab is idiomatic;
+# Detroit gets none.
 PERC_VOCAB = {
-  detroit_stumble: { tambourine: 0.055, rim: 0.020, tabla: 0.0,
-                     woodblock: 0.0, agogo: 0.0, glitch: 0.0 },
-  la_beat_scene:   { rim: 0.050, glitch: 0.030, tabla: 0.020, tambourine: 0.018,
-                     woodblock: 0.0, agogo: 0.0 },
-  techno_house:    { rim: 0.065, glitch: 0.050, tabla: 0.0, tambourine: 0.0,
-                     woodblock: 0.0, agogo: 0.0 }
+  detroit_stumble: { rim: 0.028, glitch: 0.0, tabla: 0.0,
+                     tambourine: 0.0, woodblock: 0.0, agogo: 0.0 },
+  la_beat_scene:   { rim: 0.040, glitch: 0.030, tabla: 0.0,
+                     tambourine: 0.0, woodblock: 0.0, agogo: 0.0 },
+  techno_house:    { rim: 0.055, glitch: 0.050, tabla: 0.0,
+                     tambourine: 0.0, woodblock: 0.0, agogo: 0.0 }
 }.freeze
 
 # The morph changes the feel per bar, so the ornaments have to follow it or the
