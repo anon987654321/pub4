@@ -34,7 +34,10 @@
     </div>
 
     <footer class="dating-intro-trust">
-      <%= t("legal.dating_age") %>
+      <%# Three separate statements, not one sentence. They rendered as a single
+          run-on line at desk width and wrapped into four ragged ones on a phone,
+          with the trust mark orphaned from the words that qualify it. %>
+      <p><%= t("legal.dating_age") %></p>
       <%# Vipps, not BankID. Same company -- Vipps MobilePay owns BankID -- but a
           BankID verification is billed per use and Vipps Login is not, and what this
           line promises is "a real person signed in", which Vipps Login establishes
@@ -49,8 +52,12 @@
           The mark this replaces was three CSS dots and an empty <span> -- the
           stylesheet styled `span` children the markup never had, so the badge beside
           the word had been drawing nothing. %>
-      <%= t("dating.protected_with") %>
-      <span class="dating-intro-vipps">Vipps</span>
+      <%# One unit: "Beskyttet med Vipps" means nothing if the name wraps away
+          from the phrase that qualifies it, which is what a phone was doing. %>
+      <p class="dating-intro-guarantee">
+        <%= t("dating.protected_with") %>
+        <span class="dating-intro-vipps">Vipps</span>
+      </p>
       <nav aria-label="<%= t("legal.aria") %>">
         <%= link_to t("legal.privacy"), main_app.privacy_path %>
         <%= link_to t("legal.terms"), main_app.terms_path %>

@@ -36,15 +36,37 @@
   color: var(--dating-ink);
 }
 
+/* Three statements stacked, not one line wrapping.
+
+   This was a flex row with a 4px gap holding the age text, the trust mark and a
+   three-link nav — so at 1440 it read as one run-on sentence with no boundary
+   between "Beskyttet med Vipps" and "Personvern Vilkår Informasjonskapsler",
+   and on a phone it broke into four ragged lines with Vipps stranded on its own.
+
+   Column by default because a phone has one column; the row only appears when
+   there is width for the whole of it. */
 .dating-intro-trust {
   margin: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   font-family: var(--font);
   font-size: var(--text-sm);
   color: var(--dating-muted);
+  text-align: center;
+}
+
+.dating-intro-trust p {
+  margin: 0;
+}
+
+/* The phrase and the name are one thing and never break apart. */
+.dating-intro-guarantee {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  white-space: nowrap;
 }
 
 /* The trust mark. This was a bankID badge whose "logo" was .dating-intro-bankid-
