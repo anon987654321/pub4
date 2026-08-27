@@ -50,6 +50,7 @@ import OfflineFeed from "pub4/offline_feed"
 import PwaStandalone from "pub4/pwa_standalone"
 import BatteryAware from "pub4/battery_aware"
 import NetworkAware from "pub4/network_aware"
+import MediaExclusive from "pub4/media_exclusive"
 import Haptics from "pub4/haptics"
 import Geolocation from "pub4/geolocation"
 
@@ -169,6 +170,7 @@ export function bootPub4Stimulus(application) {
   application.register("install-prompt", InstallPrompt)
   application.register("theme-toggle", ThemeToggle)
   application.register("infinite-scroll", InfiniteScroll)
+  application.register("media-exclusive", MediaExclusive)
   application.register("browser-fingerprint", BrowserFingerprint)
   application.register("direct-upload", DirectUpload)
   application.register("outbound-click", OutboundClick)
