@@ -161,6 +161,25 @@ const BUFFER_MAX_H = 640
 // MASTER's face read as a lit wireframe.
 const TRAIL_DECAY = 0.82
 
+// Postures. Named weight sets the engine eases toward, never snaps to — the
+// easing is the whole effect, because a creature that changed shape on a frame
+// boundary would read as a scene cut. Weights compose, so `dormant` still
+// swallows and still leans; it does everything more slowly and more slackly.
+const POSTURES = {
+  awake: { peristalsis: 0.55, lean: 0.30, twist: 0.0016, sag: 0.0, spread: 1.0, exposure: 1.0, speedScale: 1.0 },
+  dormant: { peristalsis: 0.18, lean: 0.14, twist: 0.0006, sag: 1.0, spread: 1.28, exposure: 0.55, speedScale: 0.22 },
+  // Held for a beat after an onset — the tunnel flinches open, then settles.
+  startled: { peristalsis: 0.85, lean: 0.44, twist: 0.0034, sag: 0.0, spread: 1.06, exposure: 1.18, speedScale: 1.5 }
+}
+
+// How long the audio has to stay silent before the tunnel goes dormant.
+// getAudioData returns a flat zero when nothing is playing, so this is really
+// "nobody has started the radio", which is the state a first-time visitor sits
+// in. Dormancy is most of what makes a thing read as alive: something that
+// never rests is a motor.
+const DORMANT_AFTER_MS = 30000
+const STARTLE_MS = 900
+
 const VERT = `
 precision highp float;
 attribute float aAngle;
@@ -176,8 +195,30 @@ uniform float uBass;
 uniform float uMid;
 uniform float uHigh;
 uniform float uBreath;
+// Posture. Each weight is eased on the CPU toward a named target, and they
+// compose rather than exclude — a dormant tunnel still swallows, just slower.
+// A creature reads as alive through involuntary movement, not through a
+// repertoire of poses, so these are all things the tunnel does to itself.
+uniform float uPeristalsis;
+uniform float uLean;
+uniform float uTwist;
+uniform float uSag;
+uniform float uSpread;
 varying float vNear;
 varying float vSeed;
+
+// The lean. Two incommensurable sine pairs, so the curve never repeats on any
+// interval a viewer can learn. The far rings displace most, which bends the
+// tube into a spine — and roughly twice a minute the far end swings round into
+// line with the near end and the tunnel is looking down its own length at you.
+// That moment is not scheduled; it falls out of the drift, which is why it
+// lands as being watched rather than as an animation.
+vec2 leanAt(float t, float time) {
+  float a = t * 3.1 + time * 0.11;
+  float b = t * 2.3 - time * 0.07;
+  return vec2(sin(a) + 0.5 * sin(b * 1.7), cos(b) + 0.5 * cos(a * 1.3));
+}
+
 void main() {
   // Ring depth scrolls in the shader. The CPU used to walk 6,000 particles a
   // frame adding a delta and re-sorting the rows; the same motion is one
@@ -185,6 +226,7 @@ void main() {
   // back-to-front any more.
   float span = uFov * 2.0;
   float z = mod(aRingT * span + uZ, span) - uFov;
+  float near = clamp(1.0 - (z + uFov) / span, 0.0, 1.0);
 
   // Bass swells the ring, highs shimmer it per-particle. This is the audio
   // reactivity that was previously impossible: a YouTube iframe is cross-origin
@@ -193,8 +235,22 @@ void main() {
   float shimmer = sin(aSeed * 6.2831 + uTime * 7.0) * uHigh * 0.05;
   float radius = uRadius * (1.0 + uBass * 0.18 + uMid * 0.06 + shimmer) * uBreath;
 
-  float ang = aAngle + uTime;
+  // Peristalsis — a travelling constriction, keyed to z rather than to ring
+  // index so the wave moves through the tube instead of riding along with it.
+  // This is the one that turns a corridor into a throat.
+  radius *= 1.0 + uPeristalsis * 0.28 * sin((z / uFov) * 9.4248 - uTime * 2.2);
+
+  // Dormancy: the ring loosens and each particle drifts out by its own seed,
+  // so a sleeping tunnel goes slack rather than merely slow.
+  radius *= uSpread * (1.0 + uSag * aSeed * 0.22);
+
+  float ang = aAngle + uTime + z * uTwist;
   vec2 p = vec2(cos(ang), sin(ang)) * radius;
+
+  p += leanAt(aRingT, uTime) * uLean * uRadius * (0.25 + 0.75 * (1.0 - near));
+  // Gravity on the far end only — the near rings hold, so the tube sags away
+  // from the viewer the way a held rope does.
+  p.y += uSag * (1.0 - near) * uRadius * 0.30;
 
   // Guard the FOV singularity at z = -uFov so scale never blows up or NaNs.
   float denom = max(0.5, uFov + z);
@@ -212,7 +268,7 @@ void main() {
   // pixel has no size to give.
   gl_PointSize = 1.0;
 
-  vNear = clamp(1.0 - (z + uFov) / span, 0.0, 1.0);
+  vNear = near;
   vSeed = aSeed;
 }`
 
@@ -280,6 +336,13 @@ class VisualEngine {
     this.colorInvertValue = 0
     this.audioBoost = 0
     this.breath = 1
+    this.heart = 0
+    this.posture = { ...POSTURES.awake }
+    this.postureName = "awake"
+    this._lastLoudAt = performance.now()
+    this._startledUntil = 0
+    this._bassEnv = 0
+    this.lastBass = 0
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     // Classic c7c8effcd / Radio Bergen tunnel: fov 250, speed 0.75, dense rings.
     this.config = {
@@ -317,7 +380,8 @@ class VisualEngine {
     this.uni = {}
     for (const n of ["uTime", "uZ", "uFov", "uRadius", "uResolution", "uCenter",
       "uBass", "uMid", "uHigh", "uBreath", "uInkFar", "uInkNear",
-      "uAlphaMin", "uAlphaMax", "uExposure"]) {
+      "uAlphaMin", "uAlphaMax", "uExposure",
+      "uPeristalsis", "uLean", "uTwist", "uSag", "uSpread"]) {
       this.uni[n] = gl.getUniformLocation(this.prog, n)
     }
     this.fadeAttr = gl.getAttribLocation(this.fadeProg, "aQuad")
@@ -412,11 +476,40 @@ class VisualEngine {
 
     // Breathing: a slow swell independent of the music, so the tunnel is alive
     // even in a quiet passage. ~9s period.
-    this.breath = 1 + 0.05 * Math.sin(performance.now() * 0.0007)
+    const now = performance.now()
+    this.breath = 1 + 0.05 * Math.sin(now * 0.0007)
+
+    // Onset detection against a decaying envelope. A rising bass edge is the
+    // startle; the envelope means a sustained loud passage does not keep
+    // retriggering it, which is the difference between a flinch and a shudder.
+    this._bassEnv = Math.max(bass, this._bassEnv * 0.94)
+    const onset = bass - this._bassEnv > -0.001 && bass > 0.12 && bass - this.lastBass > 0.10
+    this.lastBass = bass
+    if (average > 0.02) this._lastLoudAt = now
+    if (onset) {
+      this._startledUntil = now + STARTLE_MS
+      // Lub-dub, not a motor. The second thump is the smaller one.
+      this.heart = 1
+    }
+    this.heart *= 0.90
+
+    const quietFor = now - this._lastLoudAt
+    this.postureName = now < this._startledUntil
+      ? "startled"
+      : (quietFor > DORMANT_AFTER_MS ? "dormant" : "awake")
+    const target = POSTURES[this.postureName]
+    // Waking is faster than falling asleep. Something that dozes off as sharply
+    // as it wakes up reads as a switch rather than as a body.
+    const ease = this.postureName === "dormant" ? 0.006 : 0.045
+    for (const k of Object.keys(target)) {
+      this.posture[k] += (target[k] - this.posture[k]) * ease
+    }
 
     // Classic: hold = reverse (fly out), release = fly forward into the tunnel.
     const isPressed = this.mouse.down
-    this.zOffset += isPressed ? this.config.speed : -this.config.speed
+    const beat = 1 + this.heart * 0.9
+    const speed = this.config.speed * this.posture.speedScale * beat
+    this.zOffset += isPressed ? speed : -speed
 
     const interactionX = this.touch.active ? this.touch.x : this.mouse.x
     const interactionY = this.touch.active ? this.touch.y : this.mouse.y
@@ -478,6 +571,12 @@ class VisualEngine {
     gl.uniform1f(u.uMid, this.mid || 0)
     gl.uniform1f(u.uHigh, this.high || 0)
     gl.uniform1f(u.uBreath, this.breath || 1)
+    const post = this.posture
+    gl.uniform1f(u.uPeristalsis, post.peristalsis)
+    gl.uniform1f(u.uLean, post.lean)
+    gl.uniform1f(u.uTwist, post.twist)
+    gl.uniform1f(u.uSag, post.sag)
+    gl.uniform1f(u.uSpread, post.spread)
     // Press inverts toward warm white rather than flipping the buffer: the old
     // softInvert walked every byte of the image on the CPU each pressed frame.
     const inv = this.colorInvertValue / 255
@@ -485,7 +584,7 @@ class VisualEngine {
     gl.uniform3f(u.uInkNear, INK_NEAR.r, INK_NEAR.g, INK_NEAR.b)
     gl.uniform1f(u.uAlphaMin, INK_ALPHA_MIN)
     gl.uniform1f(u.uAlphaMax, INK_ALPHA_MAX)
-    gl.uniform1f(u.uExposure, 0.85 + (this.audioBoost || 0) * 0.3)
+    gl.uniform1f(u.uExposure, (0.85 + (this.audioBoost || 0) * 0.3) * post.exposure)
 
     gl.drawArrays(gl.POINTS, 0, this.pointCount)
   }
