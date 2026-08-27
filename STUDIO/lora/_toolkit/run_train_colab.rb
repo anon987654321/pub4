@@ -28,6 +28,11 @@ require "pathname"
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
 SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path.freeze
 NOTEBOOK = SUBJECT_DIR.join("colab.ipynb")
+# A render notebook is a separate file, not a flag inside the training one:
+# the whole point is that opening it cannot start an hour of training by
+# accident, and a cell you have to remember to edit is exactly how two runs
+# were spent on 2026-08-27.
+RENDER_NOTEBOOK = SUBJECT_DIR.join("colab_render.ipynb")
 
 options = {
   steps: (ENV["LORA_COLAB_STEPS"] || "1800").to_i,
@@ -42,6 +47,8 @@ OptionParser.new do |parser|
   parser.on("--steps N", Integer, "Training steps (default #{options[:steps]})") { |v| options[:steps] = v }
   parser.on("--sample-every N", Integer, "Sample every N steps") { |v| options[:sample_every] = v }
   parser.on("--no-drive", "Do not mount Drive (nothing survives the runtime)") { options[:drive] = false }
+  parser.on("--render [SET]", "Write colab_render.ipynb, which renders from the existing",
+            "adapter instead of training (default set: shoots)") { |v| options[:render] = v || "shoots" }
   parser.on("-h", "--help") { puts parser; exit 0 }
 end.parse!
 
@@ -191,6 +198,48 @@ def dataset_cell(options)
   PYTHON
 end
 
+# A notebook whose job is pictures, not training.
+#
+# The training notebook produces images only as a side effect: ai-toolkit samples
+# its validation prompts every N steps, so a run with no steps left produces no
+# frames at all. That is not a corner case — it happened twice on 2026-08-27,
+# while an adapter that could have rendered fifty portraits sat finished in Drive.
+#
+# So: a second notebook, the same setup cells, whose last cell asks for the
+# generate stage and a prompt set. Nothing trains and no checkpoint is written,
+# which also means it cannot damage an adapter that took an hour to make.
+def render_cell(options)
+  <<~PYTHON.strip
+    # Render from the adapter already in Drive. No training happens here.
+    #
+    # prepare restores the newest usable checkpoint, generate renders the prompt
+    # set against it, harvest copies the frames back to Drive. The checkpoint
+    # guards still apply: a NaN or untrained adapter is refused rather than used,
+    # because fifty pictures of the base model look like a result and are not one.
+    os.environ["LORA_COLAB_STAGES"] = "prepare,restore,generate,harvest"
+    os.environ["LORA_BASE"] = "sdxl"
+
+    # shoots            all fifty sittings, about 25 minutes on a T4
+    # shoots:Weather    one side — six frames, about three minutes
+    # shoots:1,7,12     named sittings
+    os.environ["LORA_PROMPT_SET"] = "#{options[:render]}"
+
+    proc = subprocess.Popen(
+        ["ruby", "/content/pub4/STUDIO/lora/_toolkit/colab_session.rb", "#{SUBJECT}"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    tail = []
+    for line in proc.stdout:
+        print(line, end="")
+        tail.append(line)
+        del tail[:-40]
+    proc.wait()
+    if proc.returncode:
+        raise SystemExit(
+            "rendering failed (exit %d). The cause is in the output above; the "
+            "last 40 lines are:\\n%s" % (proc.returncode, "".join(tail)))
+  PYTHON
+end
+
 def train_cell(options)
   <<~PYTHON.strip
     # Everything past here is Ruby. cuda_t4 is a render_config.rb profile:
@@ -279,7 +328,7 @@ notebook = {
     # before training, because it is the last point where a missing dataset is
     # cheap to discover.
     cell("code", dataset_cell(options)),
-    cell("code", train_cell(options)),
+    cell("code", options[:render] ? render_cell(options) : train_cell(options)),
   ],
   "metadata" => {
     "accelerator" => "GPU",
@@ -291,11 +340,16 @@ notebook = {
   "nbformat_minor" => 0
 }
 
-NOTEBOOK.write("#{JSON.pretty_generate(notebook)}\n")
-puts "ok: wrote #{NOTEBOOK}"
-puts "ok: #{options[:steps]} steps, sample every #{options[:sample_every]}, drive #{options[:drive]}"
+target = options[:render] ? RENDER_NOTEBOOK : NOTEBOOK
+target.write("#{JSON.pretty_generate(notebook)}\n")
+puts "ok: wrote #{target}"
+if options[:render]
+  puts "ok: renders the #{options[:render]} prompt set from the existing adapter — nothing trains"
+else
+  puts "ok: #{options[:steps]} steps, sample every #{options[:sample_every]}, drive #{options[:drive]}"
+end
 puts
 puts "next: commit and push it, then open"
-puts "  https://colab.research.google.com/github/#{github_slug(options[:repo])}/blob/#{options[:branch]}/STUDIO/lora/#{SUBJECT}/colab.ipynb"
+puts "  https://colab.research.google.com/github/#{github_slug(options[:repo])}/blob/#{options[:branch]}/STUDIO/lora/#{SUBJECT}/#{target.basename}"
 puts
 puts "then: Runtime -> Change runtime type -> T4 GPU, set HF_TOKEN in the sidebar key icon, Run all"
