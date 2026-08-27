@@ -208,6 +208,14 @@ body.trymbot #primer .primer-consent {
    which on white paper is not subtle but invisible. Same control, same place,
    repainted for the paper it now sits on. */
 body.trymbot .primer-voice {
+  /* Anchored to the content, not to the bottom of the screen. The stock
+     control is fixed at 18vh from the bottom while the primer centres its
+     content, so the two drift apart as the viewport grows -- 125px of dead
+     space between the consent line and this button at 430x932, which reads
+     as padding under the big red button. Offset from the centre instead and
+     it travels with the stack at any height. */
+  inset-block-end: auto;
+  top: calc(50% + 160px);
   background: var(--trymbot_paper);
   border: 2px solid var(--trymbot_blue);
   border-radius: 999px;
