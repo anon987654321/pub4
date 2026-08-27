@@ -445,6 +445,24 @@ rescue IOError, SystemCallError, JSON::ParserError
   false
 end
 
+# A checkpoint keeps the name of the model that wrote it. ai-toolkit resumes by
+# the name it is running under.
+#
+# Rename MODEL in subject.env and those stop being the same string, so the
+# restore copies ragnhild_v2.safetensors into place, ai-toolkit looks for
+# ragnhild.safetensors, finds nothing, and renders from the BASE MODEL with no
+# adapter loaded. Nothing fails. You get a full set of photographs of a stranger,
+# and the only clue is the absence of a "RESUMING FROM" line in several hundred
+# lines of loader output.
+#
+# PERSIST is per-subject, so everything in it belongs to this subject whatever it
+# is called, and renaming on the way in is safe. The step suffix is preserved
+# because that is how ai-toolkit orders them.
+def local_name(path)
+  step = path.basename.to_s[/_(\d+)\.safetensors\z/, 1]
+  step ? "#{MODEL}_#{step}.safetensors" : "#{MODEL}.safetensors"
+end
+
 def restore_checkpoints
   saved = PERSIST.glob("*.safetensors").sort
   return puts "ok: no checkpoint to resume from" if saved.empty?
@@ -476,8 +494,14 @@ def restore_checkpoints
     # the directory is only created by prepare, so `restore` alone died on ENOENT
     # from inside FileUtils with a stack trace and no line of its own.
     WEIGHTS_DIR.mkpath
-    FileUtils.cp(path, WEIGHTS_DIR.join(path.basename))
-    return puts "ok: resuming from #{path.basename}"
+    landing = WEIGHTS_DIR.join(local_name(path))
+    FileUtils.cp(path, landing)
+    if landing.basename != path.basename
+      puts "ok: resuming from #{path.basename} (as #{landing.basename} — the model was renamed)"
+    else
+      puts "ok: resuming from #{path.basename}"
+    end
+    return
   end
 
   puts "warn: all #{rejected.length} checkpoint(s) in #{PERSIST} are NaN or untrained."
