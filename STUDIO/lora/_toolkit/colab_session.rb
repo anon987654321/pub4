@@ -84,7 +84,39 @@ def prepare
   [WEIGHTS_DIR, PERSIST].each(&:mkpath)
   restrain_the_downloader
   add_swap
+  drop_latent_cache
   puts "ok: subject #{SUBJECT} model #{MODEL}"
+end
+
+# The latents on disk remember which VAE made them. Nothing else does.
+#
+# cache_latents_to_disk writes one .npy beside each image the first time a run
+# encodes it, and every later run reads it back. The cache key is the image —
+# not the VAE, not the dtype, not the resolution the encoder was configured
+# with. So a run that encoded through a broken VAE leaves broken latents, and
+# the run that fixes the VAE never calls it.
+#
+# That is what happened here. SDXL's own VAE overflows fp16, the first run wrote
+# NaN latents, and the two runs afterwards read NaN off disk at step one with
+# vae_path: madebyollin/sdxl-vae-fp16-fix sitting correctly in the printed
+# config. The tell was in the log the whole time: "Caching latents to disk:
+# 7/7 [00:00<00:00, 4664.04it/s]". Encoding seven 768px images on a T4 takes
+# a second or two. 1.5 milliseconds is a cache hit.
+#
+# Recomputing costs that same second or two, so there is nothing to weigh: drop
+# it every run. At a dataset size where caching pays for itself, set
+# LORA_KEEP_LATENT_CACHE and take responsibility for invalidating it.
+CACHE_DIRNAME = "_latent_cache"
+
+def drop_latent_cache
+  return puts "note: keeping the latent cache (LORA_KEEP_LATENT_CACHE)" if ENV["LORA_KEEP_LATENT_CACHE"]
+
+  cache = SUBJECT_DIR.join("dataset", CACHE_DIRNAME)
+  return unless cache.directory?
+
+  latents = cache.glob("**/*").count(&:file?)
+  FileUtils.rm_rf(cache)
+  puts "ok: dropped #{latents} cached latent(s) — they are re-encoded by whichever VAE this run configures"
 end
 
 # Somewhere for the checkpoint shards to go that is not RAM.
@@ -416,10 +448,16 @@ def watch_for_nan(line, state)
       warn "A NaN gradient updates no weights, so this would run to completion and"
       warn "save checkpoints containing an untrained adapter."
       warn ""
-      warn "On SDXL under fp16 this is usually the VAE: SDXL was trained in"
+      warn "On SDXL under fp16 the source is the VAE: SDXL was trained in"
       warn "fp32/bf16 and its VAE overflows fp16. render_config.rb sets"
-      warn "vae_path to madebyollin/sdxl-vae-fp16-fix for exactly this; if you"
-      warn "are seeing it anyway, that override did not reach the config."
+      warn "vae_path to madebyollin/sdxl-vae-fp16-fix for exactly this."
+      warn ""
+      warn "If that override IS in the config above and you are still here, the"
+      warn "NaN is not being produced now — it is being read off disk. Check the"
+      warn "latent-caching line: seven images at 768px take a second or two to"
+      warn "encode on a T4, so a rate in the thousands per second means nothing"
+      warn "was encoded and the cache is from an earlier, broken run. prepare"
+      warn "drops that cache every run; LORA_KEEP_LATENT_CACHE turns it off."
       warn "=" * 72
       return false
     end
