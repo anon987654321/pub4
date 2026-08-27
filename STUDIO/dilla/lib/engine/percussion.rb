@@ -7,10 +7,43 @@
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
+# Percussion belongs to the idiom, not to every track alike.
+#
+# woodblock and agogo fired OUTSIDE the family check, at a flat probability, on
+# every step of every track in the catalogue. A Detroit kit, an LA kit and a
+# techno kit all got the same woodblock-and-agogo sprinkle laid over them, and
+# the operator heard exactly that -- "the redundant drum beat with agogo, not
+# the new ones we designed". The feels were driving kicks, snares, hats and
+# ghosts correctly; this layer was painting over the difference.
+#
+# Each feel names its own vocabulary and rate. 0 means the instrument is not
+# part of that idiom: techno has no agogo, Detroit has no glitch stab. A feel
+# with no entry keeps the old rates, so nothing that already sounded right
+# changes.
+PERC_VOCAB = {
+  detroit_stumble: { tambourine: 0.055, rim: 0.020, tabla: 0.0,
+                     woodblock: 0.0, agogo: 0.0, glitch: 0.0 },
+  la_beat_scene:   { rim: 0.050, glitch: 0.030, tabla: 0.020, tambourine: 0.018,
+                     woodblock: 0.0, agogo: 0.0 },
+  techno_house:    { rim: 0.065, glitch: 0.050, tabla: 0.0, tambourine: 0.0,
+                     woodblock: 0.0, agogo: 0.0 }
+}.freeze
+
+# The morph changes the feel per bar, so the ornaments have to follow it or the
+# kit arrives in techno while the percussion is still in Detroit.
+def perc_rate(feel, bar, instrument, fallback)
+  active = (drum_morph_feel(bar, :perc) || feel)
+  table = PERC_VOCAB[active&.to_sym]
+  return fallback unless table
+
+  table.fetch(instrument, 0.0)
+end
+
 def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
   rng = Random.new(stable_hash(cfg[:track].to_s) + 909)
   step_p = beat_p / 4.0
   family = cfg[:style_family]
+  feel = cfg[:feel]
 
   # Polyrhythm 5:4 layer
   poly5 = bar_p / 5.0
@@ -50,18 +83,18 @@ def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
     if family == :wonky || family == :dilla
       wild = family == :wonky ? 1.0 : 0.6
       events[:rim] ||= []
-      events[:rim] << [t, dilla_velocity(0.28, bar, i % 16, spread: 0.1), 0.35] if r < 0.04 * density * wild
+      events[:rim] << [t, dilla_velocity(0.28, bar, i % 16, spread: 0.1), 0.35] if r < perc_rate(feel, bar, :rim, 0.04) * density * wild
       events[:glitch] ||= []
       events[:glitch] << [t + rng.rand * step_p * 0.5, dilla_velocity(0.35, bar, i, spread: 0.12), :ind_stab] if r < 0.02 * wild
       events[:tabla] ||= []
-      events[:tabla] << [t, dilla_velocity(0.32, bar, i, spread: 0.15)] if r < 0.018 * density * wild
+      events[:tabla] << [t, dilla_velocity(0.32, bar, i, spread: 0.15)] if r < perc_rate(feel, bar, :tabla, 0.018) * density * wild
       events[:tambourine] ||= []
-      events[:tambourine] << [t, dilla_velocity(0.22, bar, i, spread: 0.1)] if i.even? && r < 0.08 * density * wild
+      events[:tambourine] << [t, dilla_velocity(0.22, bar, i, spread: 0.1)] if i.even? && r < perc_rate(feel, bar, :tambourine, 0.08) * density * wild
     end
     events[:woodblock] ||= []
-    events[:woodblock] << [t, dilla_velocity(0.2, bar, i, spread: 0.06)] if r < 0.01
+    events[:woodblock] << [t, dilla_velocity(0.2, bar, i, spread: 0.06)] if r < perc_rate(feel, bar, :woodblock, 0.01)
     events[:agogo] ||= []
-    events[:agogo] << [t, dilla_velocity(0.18, bar, i, spread: 0.05)] if r < 0.008
+    events[:agogo] << [t, dilla_velocity(0.18, bar, i, spread: 0.05)] if r < perc_rate(feel, bar, :agogo, 0.008)
   end
 
   # Wall-of-noise bar every 32
