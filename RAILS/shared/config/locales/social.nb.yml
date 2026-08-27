@@ -111,6 +111,11 @@ nb:
     open_full: "Åpne AI"
     embed_heading: "AI-assistent"
   messages:
+    # The day-break separator in a conversation log. Rendered by
+    # conversation_log_controller, which cannot reach I18n, so the strings are
+    # handed to it as Stimulus values.
+    today: I dag
+    yesterday: I går
     # shared/_action_bar renders on every host app but these two keys only
     # existed in brgen's own locale, so amber shipped "translation missing" as
     # the aria-label on its reply and share buttons.

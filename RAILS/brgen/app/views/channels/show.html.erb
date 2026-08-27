@@ -36,7 +36,10 @@
         data-controller="conversation-log"
         data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
         data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
-        data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>">
+        data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>"
+        data-conversation-log-today-label-value="<%= t("messages.today") %>"
+        data-conversation-log-yesterday-label-value="<%= t("messages.yesterday") %>"
+        data-conversation-log-locale-value="<%= I18n.locale %>">
       <% @messages.each do |m| %>
         <%= render "messages/message", message: m %>
       <% end %>

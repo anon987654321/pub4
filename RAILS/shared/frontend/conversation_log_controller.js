@@ -20,12 +20,16 @@ export default class extends Controller {
   static values = {
     viewerId: String,
     unreadOne: { type: String, default: "%{count} new message ↓" },
-    unreadOther: { type: String, default: "%{count} new messages ↓" }
+    unreadOther: { type: String, default: "%{count} new messages ↓" },
+    todayLabel: { type: String, default: "Today" },
+    yesterdayLabel: { type: String, default: "Yesterday" },
+    locale: { type: String, default: "en" }
   }
 
   connect() {
     this.unread = 0
     this.#stampAll()
+    this.#dayBreaks()
     this.#group()
     this.#pinToNewest()
 
@@ -33,6 +37,11 @@ export default class extends Controller {
       const added = mutations.flatMap((m) => Array.from(m.addedNodes))
       if (!added.length) return
       added.forEach((node) => { if (node.nodeType === Node.ELEMENT_NODE) this.#stamp(node) })
+      // #dayBreaks writes children of the element this observer watches, so it
+      // would wake itself forever. Suspending is the whole guard.
+      this.observer.disconnect()
+      this.#dayBreaks()
+      this.observer.observe(this.element, { childList: true })
       this.#group()
       const wasAtTail = this.#atTail()
       this.#pinToNewest()
@@ -106,13 +115,78 @@ export default class extends Controller {
   // a back-and-forth reads as two voices instead of a stack of identical
   // letterheads. Anything older than the window starts a fresh group even from
   // the same speaker, because a reply hours later is not the same breath.
+  // The date, once, where the day turns.
+  //
+  // Derived here rather than in the partial for the same reason grouping is: a
+  // message rendered by Turbo::Streams::ActionBroadcastJob has no idea what came
+  // before it, and a thread left open across midnight has to grow a separator
+  // without a reload. Both facts are already in the DOM — every message carries
+  // its own <time datetime> — so this needs nothing from the server.
+  //
+  // Separators are removed and re-derived on every pass rather than patched. The
+  // list is a conversation, not a table: it is short enough that recomputing is
+  // cheaper than reasoning about which break a late-arriving message invalidated.
+  #dayBreaks() {
+    this.element.querySelectorAll(":scope > .day-break").forEach((el) => el.remove())
+
+    let prevDay = null
+
+    Array.from(this.element.children).forEach((li) => {
+      const iso = li.querySelector("[data-sender-id] time")?.getAttribute("datetime")
+      if (!iso) return
+
+      const at = new Date(iso)
+      if (Number.isNaN(at.getTime())) return
+
+      const day = at.toDateString()
+      if (day === prevDay) return
+
+      prevDay = day
+      li.insertAdjacentElement("beforebegin", this.#dayBreakFor(at))
+    })
+  }
+
+  // Today and yesterday by name, the week by weekday, anything older by date.
+  // The ladder is what makes the label worth its line: "onsdag" locates a
+  // message in a way "22.08.2026" does not, right up until the week turns over
+  // and it stops being unambiguous.
+  #dayBreakFor(at) {
+    const li = document.createElement("li")
+    li.className = "day-break"
+    li.setAttribute("role", "separator")
+
+    const full = at.toLocaleDateString(this.localeValue, {
+      weekday: "long", day: "numeric", month: "long", year: "numeric"
+    })
+    li.setAttribute("aria-label", full)
+
+    const label = document.createElement("span")
+    label.textContent = this.#dayLabel(at)
+    li.append(label)
+    return li
+  }
+
+  #dayLabel(at) {
+    const midnight = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+    const days = Math.round((midnight(new Date()) - midnight(at)) / 86400000)
+
+    if (days === 0) return this.todayLabelValue
+    if (days === 1) return this.yesterdayLabelValue
+    if (days > 1 && days < 7) return at.toLocaleDateString(this.localeValue, { weekday: "long" })
+
+    return at.toLocaleDateString(this.localeValue, { day: "numeric", month: "long", year: "numeric" })
+  }
+
   #group() {
     let prevSender = null
     let prevAt = 0
 
     Array.from(this.element.children).forEach((li) => {
       const art = li.querySelector("[data-sender-id]")
-      if (!art) return
+      // A day break ends the run: two lines from the same person a minute apart
+      // across midnight are not one utterance, and grouping them would hide the
+      // header directly under the separator that just announced a new day.
+      if (!art) { prevSender = null; prevAt = 0; return }
       const sender = art.dataset.senderId
       const at = Date.parse(art.querySelector("time")?.getAttribute("datetime") || "") || 0
       const continues =
