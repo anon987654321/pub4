@@ -292,8 +292,7 @@ class ApplicationController < ActionController::Base
   end
 
   def start_container_bootstrap!
-    # Bootstrap thread is owned by config/initializers/master_container.rb.
-    nil
+    MasterContainerLoader.rearm!
   end
 
   def warming_exempt_path?
