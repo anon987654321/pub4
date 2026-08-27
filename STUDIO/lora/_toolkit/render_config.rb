@@ -186,6 +186,15 @@ def apply_sdxl!(process)
   # his Downloads: 386 tensors, `text_encoder:N:rank: 16` throughout, plus <s1>
   # and <s2> embeddings. Whatever produced that had this on.
   #
+  # Reach verified in ai-toolkit's source rather than assumed, because switching
+  # a flag on and finding out three runs later that nothing read it is this
+  # repo's most expensive recurring mistake. train_text_encoder reaches the
+  # network builder (BaseSDTrainProcess 214, 228), gates gradient preparation
+  # (740) and is read by the trainer (SDTrainer 310, 1442). SDXL's TWO text
+  # encoders are handled explicitly — line 741 branches on isinstance(list) and
+  # prepares both — so this is not a single-encoder assumption quietly training
+  # half of them.
+  #
   # FLUX is left alone — apply_sdxl! is the only caller, so this cannot reach a
   # FLUX run. LORA_TEXT_ENCODER=0 turns it off if a 16 GB card refuses it.
   unless ENV["LORA_TEXT_ENCODER"].to_s.strip == "0"
