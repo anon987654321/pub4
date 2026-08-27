@@ -1,7 +1,7 @@
 ---
 # What MASTER's own rules find in MASTER's own tree, and the three sibling trees.
 #
-# 158 across 2893 files, from the rules that carry a lexical detector.
+# 172 across 2873 files, from the rules that carry a lexical detector.
 #
 # The corpus is the whole fleet now. It was MASTER plus the shared libs and the
 # gates; the three Rails apps were never measured at all, so amber's 345 source
@@ -28,4 +28,4 @@
 # sample_rates=44100 and breaks every render; USE_THEN never checked that the
 # intermediate is used once, and applying it to its own findings introduced
 # three NameErrors. Read the law before acting on the count.
-findings: 158
+findings: 172

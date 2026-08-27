@@ -88,7 +88,15 @@ module Pub4
       path.include?("/MASTER/law/") ? ::Law.conduct(text) : text
     end
 
+    # Memoized for the same reason `files` is, and it matters more here: the
+    # corpus is 2871 files against 72 rules, and TestRatchets asks five separate
+    # questions of it in one process. Rescanning per question put every one of
+    # them over the test's timeout. The tree does not change inside a run.
     def by_rule
+      @by_rule ||= scan_corpus
+    end
+
+    def scan_corpus
       rules = law # loads Master before the map below is read
       counts = Hash.new(0)
       files.each do |path|

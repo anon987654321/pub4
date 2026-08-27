@@ -50,7 +50,7 @@ module Pub4
     # at 54 against 104 because half of what a grep calls a missing inverse_of is
     # an association Rails infers by itself — reporting those would be reporting
     # Rails working. Only falls; never raise to silence a failing run.
-    BASELINES = { "uninferrable_inverse" => 54, "no_validations" => 10 }.freeze
+    BASELINES = { "uninferrable_inverse" => 54, "no_validations" => 9 }.freeze
 
     Finding = Struct.new(:kind, :file, :line, :detail)
 
