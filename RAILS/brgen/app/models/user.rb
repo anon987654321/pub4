@@ -8,6 +8,11 @@ class User < ApplicationRecord
   # would then need keeping in step with it.
   has_many :external_identities, dependent: :destroy
 
+# Who may appear in the people picker. Guests have no stable identity to hold a
+# conversation open, bots are addressed in their channel rather than privately,
+# and a scheduled-for-deletion account should not collect new threads.
+scope :messageable, -> { where(guest: false, bot: false, deleted_at: nil, deletion_scheduled_at: nil) }
+
   def vipps_verified?
     return false unless defined?(::ExternalIdentity) && defined?(::IdentityProvider)
 

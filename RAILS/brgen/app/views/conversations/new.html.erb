@@ -1,0 +1,15 @@
+<% content_for :title, t("messages.new_message") %>
+
+<div class="page-header">
+  <%= link_to t("messages.back_all"), conversations_path, class: "btn btn-ghost" %>
+  <%= tag.h1 t("messages.new_message") %>
+</div>
+
+<%# Same live-search component communities and events use. It degrades to a plain
+    GET form without JavaScript, so the picker still works when the reflex does
+    not — which is the whole reason to reuse it rather than write a fetch. %>
+<%= live_search_index url: new_conversation_path,
+      results_partial: "conversations/people_results",
+      placeholder: t("messages.find_people"),
+      label: t("messages.find_people"),
+      frame_id: "people-index" %>

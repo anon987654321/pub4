@@ -4,15 +4,16 @@
   <%= link_to t("messages.new_group"), new_group_path, class: "btn btn-ghost" %>
 </div>
 
-<section class="messenger-compose" aria-label="<%= t("messages.new_message") %>">
-  <%= form_with url: conversations_path, method: :post, class: "messenger-compose-form" do |f| %>
-    <%= f.label :username, t("messages.new_message") %>
-    <div class="messenger-compose-row">
-      <%= f.text_field :username, placeholder: t("messages.username"), required: true, autocomplete: "username" %>
-      <%= f.submit t("messages.start_chat"), class: "btn" %>
-    </div>
+<%# The picker, not a blank field. This asked for an exact username, which is
+    the one thing you do not know about someone you have just met — so starting
+    a conversation required already having had one. conversations#new searches
+    people and puts the button on every row. %>
+<p class="messenger-compose">
+  <%= link_to new_conversation_path, class: "btn btn-primary" do %>
+    <%= icon :compose, size: 18 %>
+    <span><%= t("messages.new_message") %></span>
   <% end %>
-</section>
+</p>
 
 <% if @conversations.any? %>
   <ul role="list" id="conversation-list" aria-label="<%= t("aria.conversations") %>">

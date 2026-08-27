@@ -380,12 +380,16 @@ en:
     disappears_in: disappears in %{time}
     title: Messages
     new_message: New message
+    message_action: "Message"
+    no_people: "Nobody by that name here yet."
+    find_people: "Search for someone"
     username: Username
     start_chat: Start chat
     empty_title: No conversations yet
     empty_body: Send a message to get started.
     push_body_disappearing: New message
     read: read
+    edited: "edited"
     back_all: "← all"
     back_channels: "← channels"
     disappearing: Disappearing messages

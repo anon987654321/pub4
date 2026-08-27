@@ -30,6 +30,20 @@ class ConversationsController < ApplicationController
   # `visible.unexpired` like every render does: a message that has disappeared
   # or been unsent must not come back through a search box, or ephemerality is
   # a rendering choice rather than a promise.
+# Starting a conversation used to mean typing someone's exact username into a
+# blank field on the inbox: you had to already know the handle of the person you
+# wanted, which is the one thing you do not know about someone you just met.
+# This is the same live-search machinery communities and events already use,
+# pointed at people, and every row carries the button that opens the thread.
+def new
+  scope = User.messageable.where.not(id: Current.user.id)
+  scope = apply_live_search(scope, columns: %w[username display_name], vertical: "people")
+  # No query yet: show who is around rather than an empty box. Newest first is
+  # the closest thing to "recently active" without another column.
+  @people = scope.order(created_at: :desc).limit(24)
+  finish_live_search(partial: "conversations/people_results")
+end
+
   def search
     @query = params[:q].to_s.strip
     @conversation = Conversation.for_user(Current.user).find(params[:conversation_id]) if params[:conversation_id].present?

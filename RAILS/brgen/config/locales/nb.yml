@@ -381,12 +381,16 @@ nb:
     disappears_in: forsvinner om %{time}
     title: Meldinger
     new_message: Ny melding
+    message_action: "Send melding"
+    no_people: "Ingen med det navnet her ennå."
+    find_people: "Søk etter noen"
     username: Brukernavn
     start_chat: Start chat
     empty_title: Ingen samtaler ennå
     empty_body: Send en melding for å starte.
     push_body_disappearing: Ny melding
     read: lest
+    edited: "endret"
     back_all: "← alle"
     back_channels: "← kanaler"
     disappearing: Forsvinnende meldinger

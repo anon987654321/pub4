@@ -1,0 +1,30 @@
+<%# One row per person, each carrying the button that opens the thread. The
+    button posts to user_conversations_path, which conversations#create already
+    answers with find_or_create_direct — so a second click on someone you have
+    written to before reopens the existing conversation rather than making a
+    duplicate. %>
+<ul class="people-results" role="list" id="live_search_results">
+  <% if @people.any? %>
+    <% @people.each do |person| %>
+      <li class="person-row" role="listitem">
+        <%= link_to user_path(person), class: "person-identity" do %>
+          <%= image_tag person.avatar_url, class: "person-avatar", alt: "", width: 40, height: 40 %>
+          <span class="person-names">
+            <span class="person-name"><%= person.display_name %></span>
+            <% if person.username.present? %>
+              <span class="person-handle">@<%= person.username %></span>
+            <% end %>
+          </span>
+        <% end %>
+        <%= button_to user_conversations_path(person), method: :post, class: "btn person-message" do %>
+          <%= icon :messages, size: 18 %>
+          <span><%= t("messages.message_action") %></span>
+        <% end %>
+      </li>
+    <% end %>
+  <% else %>
+    <li class="person-row person-row--empty">
+      <%= t("messages.no_people") %>
+    </li>
+  <% end %>
+</ul>

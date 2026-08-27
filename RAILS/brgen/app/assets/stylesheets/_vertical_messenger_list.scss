@@ -50,39 +50,6 @@ body.vertical-messenger .messenger-compose {
   margin-bottom: 1rem;
 }
 
-body.vertical-messenger .messenger-compose label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: var(--text-sm);
-  color: var(--msg-muted);
-}
-
-body.vertical-messenger .messenger-compose-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
-body.vertical-messenger .messenger-compose-row input[type="text"] {
-  flex: 1;
-  min-width: 0;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--msg-border);
-  background: var(--msg-surface);
-  color: var(--msg-ink);
-  font-family: inherit;
-}
-
-body.vertical-messenger .messenger-compose-row input[type="submit"] {
-  padding: var(--space-3) var(--space-4);
-  border: none;
-  border-radius: var(--radius-pill);
-  background: var(--msg-accent);
-  color: var(--text);
-  font-weight: var(--weight-bold);
-  cursor: pointer;
-}
-
 body.vertical-messenger ul[aria-label="Conversations"] {
   list-style: none;
   margin: 0;
@@ -154,4 +121,81 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* The people picker.
+
+   Unscoped, unlike everything above it. body.vertical-messenger is only set
+   when active_vertical is messenger, i.e. on the messenger subdomain — and
+   conversations are routed on the main city domain too, where none of the
+   rules above apply. These are specific enough not to collide, and the picker
+   has to look the same from both. */
+.people-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.person-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  /* The whole row is the target on a phone, not the 18px glyph in it. */
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.person-row:last-child { border-bottom: 0; }
+
+.person-row--empty {
+  justify-content: flex-start;
+  color: var(--text-secondary);
+}
+
+.person-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.person-avatar {
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: var(--radius-pill);
+  flex: none;
+}
+
+.person-names {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.person-name {
+  font-weight: var(--weight-bold);
+  /* One line each: a display name is user-supplied and can be any length, and
+     a picker row that wraps to three lines stops being scannable. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-handle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.person-message {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  min-height: var(--tap-min);
 }

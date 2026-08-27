@@ -20,6 +20,12 @@
     <% else %>
       <time datetime="<%= message.created_at.iso8601 %>"><%= time_ago(message.created_at) %></time>
     <% end %>
+<%# messages#update sets edited_at and nothing ever showed it, so a message
+    could change under a reader with no sign that it had. The marker is the
+    whole contract: an edit is allowed because it is visible. %>
+<% if message.edited_at.present? %>
+  <span class="edited-mark" title="<%= l(message.edited_at, format: :short) %>">· <%= t("messages.edited") %></span>
+<% end %>
     <% if message.expires_at %>
       <%# A future span, so not time_ago — "forsvinner om …", not "for … siden". %>
       <span class="expiry-chip" data-expiry="<%= message.expiry_urgency %>">· <%= t("messages.disappears_in", time: time_ago_in_words(message.expires_at)) %></span>
