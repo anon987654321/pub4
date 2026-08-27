@@ -15,6 +15,7 @@
 #   ruby MASTER/tools/self_findings.rb
 #   ruby MASTER/tools/self_findings.rb --json
 
+require "English"
 require "json"
 
 module Pub4
@@ -67,16 +68,29 @@ module Pub4
     # STRICT_LOADING_MISSING and META_CHARSET had 75 findings between them that
     # this tool could not see. A ratchet blind to two thirds of its subject
     # counts down to zero without the tree improving.
-    # Globbed per extension rather than `**/*` filtered afterwards: STUDIO holds
-    # the sample library, so walking every entry to stat it costs more than the
-    # scan does. Memoized because `run` asks for the list twice.
+    # Asked of git rather than of the filesystem. The corpus is what the repo
+    # tracks plus what it has not ignored, which is what this tool has always
+    # claimed to measure -- and git prunes an ignored directory instead of
+    # descending it. Dir.glob could not: STUDIO carries a sample library, a
+    # scratch directory and gigabytes of renders, all gitignored, and walking
+    # them once per declared extension to throw them away took every one of
+    # TestRatchets' four questions past its 300s timeout. The same list comes
+    # back in 0.05s. Memoized because `run` asks for it twice.
     def files
       law # loads Master before FILE_LANGUAGE_MAP is read, as by_rule does
-      @files ||= Master::FILE_LANGUAGE_MAP.keys
-                                          .flat_map { |ext| TREES.flat_map { |t| Dir.glob(File.join(ROOT, t, "**", "*#{ext}")) } }
-                                          .reject { |f| f.match?(THIRD_PARTY) }
-                                          .uniq
-                                          .sort
+      @files ||= begin
+        listing = IO.popen(["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others",
+                            "--exclude-standard", "--", *TREES], &:read)
+        raise "self_findings: git ls-files failed in #{ROOT}" unless $CHILD_STATUS.success?
+
+        extensions = Master::FILE_LANGUAGE_MAP.keys
+        listing.split("\0").filter_map do |relative|
+          next unless extensions.include?(File.extname(relative))
+
+          path = File.join(ROOT, relative)
+          path unless path.match?(THIRD_PARTY)
+        end.sort
+      end
     end
 
     # A law file necessarily contains the pattern it forbids — in its detector,

@@ -14,13 +14,17 @@
 # ceiling so that a rule going quiet is visible; it is not evidence of a defect
 # on its own.
 #
-# 19 -> 23 as the tree got cleaner, which is the direction this counter cannot
-# read. MEANINGFUL_NAMES, WHY_NOT_WHAT, NO_COLUMN_ALIGN and
-# STRICT_LOADING_MISSING all stopped finding anything because their findings
+# 19 -> 24 as the tree got cleaner, which is the direction this counter cannot
+# read. MEANINGFUL_NAMES, WHY_NOT_WHAT, NO_COLUMN_ALIGN, STRICT_LOADING_MISSING
+# and NO_CHANGELOG_COMMENT all stopped finding anything because their findings
 # were fixed or their detector was narrowed to what it is actually about — and
 # a rule that finds nothing because nothing is left is the goal. Read the names
 # before reading the number.
+#
+# NO_CHANGELOG_COMMENT held exactly three hits in this corpus, one each in
+# rescue_handlers.rb, prune_guest_users_job.rb and _responsive.scss. All three
+# said what the code used to be; each now states why it is what it is.
 blind: 0
 saturated: 0
-silent: 23
+silent: 24
 
