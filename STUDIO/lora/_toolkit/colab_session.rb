@@ -154,8 +154,21 @@ def restrain_the_downloader
   ENV["HF_HUB_ENABLE_HF_TRANSFER"] = "0"
   ENV["HF_HOME"] ||= "/content/hf_cache"
   FileUtils.mkdir_p(ENV["HF_HOME"])
-  puts "note: xet and hf_transfer disabled — they reassemble in RAM, and FLUX.1-dev"
-  puts "note: is larger than a free Colab has. Slower, and it finishes."
+  # Says what it SETS, not what it achieves.
+  #
+  # It used to announce "xet and hf_transfer disabled ... Slower, and it
+  # finishes" — three claims, and the run disproved all three. The
+  # "Reconstructing (incomplete total...)" bars appeared exactly as before, so
+  # HF_HUB_DISABLE_XET did not take; the download was no slower; and the run did
+  # not finish. A message that reports an intention in the past tense is worse
+  # than no message, because the next reader takes it as evidence and looks
+  # somewhere else for the cause.
+  #
+  # The variables stay because they are correct to set and cost nothing. What
+  # changed is that this no longer claims they worked.
+  puts "note: requested HF_HUB_DISABLE_XET=1 and HF_HUB_ENABLE_HF_TRANSFER=0."
+  puts "note: xet has ignored this before — if you still see 'Reconstructing'"
+  puts "note: progress bars below, it did, and the transfer is still the fast path."
   puts "note: model cache at #{ENV['HF_HOME']}"
 end
 
