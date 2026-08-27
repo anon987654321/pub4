@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-# Backfills + adds NOT NULL constraints that already exist as `validates
-# presence:` in the models but were never enforced at the DB layer, adds a
-# missing FK index, and deduplicates + adds unique composite indexes backing
-# `validates uniqueness:` checks that were previously app-only (a real race
-# under concurrent requests, e.g. two taps on "watch" landing at once).
+# Backfills, then enforces at the DB layer what the models only assert in Ruby:
+# NOT NULL for every `validates presence:`, a missing FK index, and unique
+# composite indexes behind each `validates uniqueness:`. An app-only uniqueness
+# check races under concurrent requests -- two taps on "watch" landing at once
+# both pass validation and both insert.
 class AddIntegrityConstraints < ActiveRecord::Migration[8.1]
   def up
     execute "UPDATE categories SET name = 'Untitled category' WHERE name IS NULL"

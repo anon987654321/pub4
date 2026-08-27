@@ -28,5 +28,5 @@ eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), bindin
 
 pin "radio_brgen_tunnel", to: "radio_brgen_tunnel.js"
 
-# Tiptap is pinned in shared/config/importmap_baseline.rb, vendored to
-# shared/vendor/javascript/tiptap.js. It used to be two esm.sh pins here.
+# No tiptap pin here. It is pinned once in shared/config/importmap_baseline.rb,
+# vendored to shared/vendor/javascript/tiptap.js rather than fetched from a CDN.

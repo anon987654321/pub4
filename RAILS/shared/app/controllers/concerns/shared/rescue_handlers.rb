@@ -3,11 +3,10 @@
 module Shared
   # Centralised HTTP error handling for every app.
   #
-  # The HTML branches used to be `head :not_found` / `head :bad_request` /
-  # `head :forbidden`, which is a blank white page with a status code — the
-  # browser renders nothing at all. Each app ships a styled public/404.html that
-  # Rails serves for *unhandled* exceptions, and these handlers were the reason
-  # the handled ones never reached it.
+  # The HTML branches render a page rather than answering `head :not_found`,
+  # which paints a blank white screen with a status code and nothing else.
+  # Rails serves each app's styled public/404.html only for *unhandled*
+  # exceptions, so anything caught here has to render its own.
   module RescueHandlers
     extend ActiveSupport::Concern
 
