@@ -293,7 +293,7 @@ def synth_tabla_sample
   out = Array.new(len, 0.0)
   ratios = [1.0, 2.01, 3.04, 4.09]
   decays = [13.0, 20.0, 30.0, 44.0]
-  amps   = [0.60, 0.30, 0.16, 0.08]
+  amps = [0.60, 0.30, 0.16, 0.08]
   len.times do |i|
     t = i.to_f / SAMPLE_RATE
     bend = 1.0 + 0.55 * Math.exp(-t * 45.0)      # palm pressure releasing

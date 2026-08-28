@@ -17,7 +17,7 @@ Dir[File.join(OUT, "*.wav")].each { |f| FileUtils.rm_f(f) }
 # Pitched high on purpose: the ear is most sensitive around 3-4 kHz, which is
 # where a sound becomes piercing rather than merely loud.
 FROM = [1180.0, 980.0, 1420.0, 1640.0, 860.0, 1320.0, 1780.0, 1050.0].freeze
-TO   = [340.0, 420.0, 260.0, 380.0, 300.0, 240.0, 410.0, 290.0].freeze
+TO = [340.0, 420.0, 260.0, 380.0, 300.0, 240.0, 410.0, 290.0].freeze
 LEVEL = (ENV["TICK_LEVEL"] || "0.52").to_f
 
 8.times do |i|

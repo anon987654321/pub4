@@ -300,7 +300,7 @@ def melt_master!(path)
 
   drive = (0.03 + 0.05 * amt).round(4)          # DC offset -> asymmetry -> even harmonics
   ratio = (2.0 + 2.0 * amt).round(2)            # de-harsh band only
-  thr   = (-22.0 - 6.0 * amt).round(1)
+  thr = (-22.0 - 6.0 * amt).round(1)
   out = "#{path}.melt#{File.extname(path)}"
   chain = "[0:a]asplit=3[mlow][mmid][mhigh];" \
           "[mlow]lowpass=f=1800[ml];" \

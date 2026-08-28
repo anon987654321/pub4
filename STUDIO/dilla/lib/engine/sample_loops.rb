@@ -648,10 +648,10 @@ end
   # 900 Hz mid, 2.8 kHz presence, 6 kHz air. Sharing centres is what lets the
   # two buses be balanced against each other by ear instead of fighting in
   # different bands.
-  body_g  = ENV.fetch("SAMPLE_LOOP_BODY_DB", "0").to_f
-  mid_g   = ENV.fetch("SAMPLE_LOOP_MID_DB", "0").to_f
-  pres_g  = ENV.fetch("SAMPLE_LOOP_PRESENCE_DB", "0").to_f
-  air_g   = ENV.fetch("SAMPLE_LOOP_AIR_DB", "0").to_f
+  body_g = ENV.fetch("SAMPLE_LOOP_BODY_DB", "0").to_f
+  mid_g = ENV.fetch("SAMPLE_LOOP_MID_DB", "0").to_f
+  pres_g = ENV.fetch("SAMPLE_LOOP_PRESENCE_DB", "0").to_f
+  air_g = ENV.fetch("SAMPLE_LOOP_AIR_DB", "0").to_f
   shape = +""
   shape << "equalizer=f=220:t=o:w=1.2:g=#{body_g}," unless body_g.zero?
   shape << "equalizer=f=900:t=o:w=1.4:g=#{mid_g}," unless mid_g.zero?
