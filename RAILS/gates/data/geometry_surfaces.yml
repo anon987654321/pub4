@@ -21,21 +21,6 @@ include_brgen_verticals: true
 brgen_vertical_viewports: [mobile, desktop]
 
 surfaces:
-  # The fourth surface, and the one that had no gate at all until 2026-08-27.
-  # trymbot.brgen.no is the same MASTER process wearing a different face, and
-  # because nothing measured it, 125px of dead space under its main button
-  # reached the operator before it reached a check.
-  #
-  # The primer, not the face behind it: the face is a WebGL canvas at inset 0
-  # with an SSE stream that never closes, so it has no layout to measure and
-  # no load event to wait for. The primer is the screen a visitor is handed.
-  - app: master
-    label: trymbot_primer
-    host: trymbot.brgen.no
-    path: /
-    viewports: [mobile, desktop]
-    snapshot: true
-
   - app: amber
     label: home
     path: /
