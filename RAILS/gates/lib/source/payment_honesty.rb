@@ -22,6 +22,8 @@ module Deploy
     REQUIRED = {
       "brgen/app/services/marketplace/payments/not_configured.rb" => /NotConfigured/,
       "brgen/app/services/marketplace/payments/stripe_checkout.rb" => /NotConfigured|configured\?/,
+      "brgen/app/services/marketplace/payments/stripe_refund.rb" => /NotConfigured|StripeCheckout\.ensure!/,
+      "brgen/app/services/marketplace/payments/stripe_transfer.rb" => /NotConfigured|StripeCheckout\.ensure!/,
       "brgen/app/services/marketplace/payments/vipps_checkout.rb" => /NotConfigured|configured\?/,
       "#{ENGINE}/app/controllers/marketplace/checkouts_controller.rb" => /NotConfigured|provider/,
       # i18n keys or EN fallbacks after cart polish

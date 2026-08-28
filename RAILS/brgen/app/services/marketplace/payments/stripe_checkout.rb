@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "json"
-require "uri"
-
 module Marketplace
   module Payments
     # Stripe Checkout Session for cart/order totals.
@@ -31,36 +27,35 @@ module Marketplace
         defined?(Rails) && Rails.respond_to?(:env) ? Rails.env.production? : false
       end
 
-      def self.start!(order:, success_url:, cancel_url:)
+      def self.ensure!
         raise NotConfigured, "Stripe" unless configured?
+        return unless production? && test_key? && ENV["STRIPE_TEST_MODE"].to_s.strip.empty?
+
+        raise NotConfigured,
+              "Stripe (sk_test_ key in production takes payments that move no money; " \
+              "set STRIPE_TEST_MODE=1 to allow it deliberately)"
+      end
+
+      def self.start!(order:, success_url:, cancel_url:)
+        ensure!
         raise ArgumentError, "order is not payable" unless order.respond_to?(:startable?) && order.startable?
 
-        if production? && test_key? && ENV["STRIPE_TEST_MODE"].to_s.strip.empty?
-          raise NotConfigured,
-                "Stripe (sk_test_ key in production takes payments that move no money; " \
-                "set STRIPE_TEST_MODE=1 to allow it deliberately)"
-        end
-
         payable_kind = order.is_a?(Marketplace::Checkout) ? "checkout_id" : "order_id"
-        body = URI.encode_www_form(
-          "mode" => "payment",
-          "success_url" => success_url,
-          "cancel_url" => cancel_url,
-          "line_items[0][price_data][currency]" => order.payment_currency.downcase,
-          "line_items[0][price_data][product_data][name]" => order.payment_description.to_s.truncate(120),
-          "line_items[0][price_data][unit_amount]" => order.total_cents.to_i,
-          "line_items[0][quantity]" => 1,
-          "client_reference_id" => "#{payable_kind}:#{order.id}",
-          "metadata[#{payable_kind}]" => order.id.to_s
+        data = StripeClient.post(
+          API,
+          {
+            "mode" => "payment",
+            "success_url" => success_url,
+            "cancel_url" => cancel_url,
+            "line_items[0][price_data][currency]" => order.payment_currency.downcase,
+            "line_items[0][price_data][product_data][name]" => order.payment_description.to_s.truncate(120),
+            "line_items[0][price_data][unit_amount]" => order.total_cents.to_i,
+            "line_items[0][quantity]" => 1,
+            "client_reference_id" => "#{payable_kind}:#{order.id}",
+            "metadata[#{payable_kind}]" => order.id.to_s
+          },
+          idempotency_key: "marketplace-checkout-#{payable_kind}-#{order.id}"
         )
-        uri = URI(API)
-        req = Net::HTTP::Post.new(uri)
-        req.basic_auth(ENV.fetch("STRIPE_SECRET_KEY"), "")
-        req["Content-Type"] = "application/x-www-form-urlencoded"
-        req.body = body
-        res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 8, read_timeout: 20) { |http| http.request(req) }
-        data = JSON.parse(res.body)
-        raise "Stripe error: #{data["error"]&.dig("message") || res.code}" unless res.is_a?(Net::HTTPSuccess)
 
         order.mark_payment_pending!(provider: "stripe", reference: data["id"])
         data.fetch("url")

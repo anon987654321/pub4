@@ -21,6 +21,7 @@ module Marketplace
     def show
       @listings = @store.listings.live.recent.limit(100)
       @other_stores = Marketplace::Store.active.where.not(id: @store.id).limit(6)
+      @payouts = @store.payouts.order(created_at: :desc).limit(20) if Current.user&.id == @store.owner_id
     end
 
     def new
@@ -70,7 +71,7 @@ module Marketplace
     end
 
     def store_params
-      params.require(:store).permit(:name, :slug, :description, :vertical, :place_id)
+      params.require(:store).permit(:name, :slug, :description, :vertical, :place_id, :stripe_connect_id)
     end
 
     def load_city_places

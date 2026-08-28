@@ -24,3 +24,16 @@ nb:
       payment_confirmed_body: "Betalingen din for %{title} er bekreftet."
       on_its_way: "På vei"
       delivered: "Levert"
+    stripe_connect_id: "Stripe Connect-konto"
+    stripe_connect_hint: "acct_… fra Stripe Connect. Utbetalinger blir stående til dette er satt og Stripe er konfigurert."
+    payouts: Utbetalinger
+    payout_release: Send utbetaling
+    payout_release_confirm: Sende denne utbetalingen til den tilkoblede Stripe-kontoen?
+    payout_sent: Utbetaling sendt
+    payout_not_configured: Stripe Connect er ikke satt opp — utbetalingen blir stående.
+    payout_not_pending: Den utbetalingen venter ikke på sending.
+    payout_held: Holdes til fjorten dager etter levering, uten åpen retur.
+    payout_statuses:
+      pending: venter
+      sent: sendt
+      blocked: blokkert

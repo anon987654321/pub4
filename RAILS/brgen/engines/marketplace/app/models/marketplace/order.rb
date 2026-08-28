@@ -195,6 +195,20 @@ class Marketplace::Order < ApplicationRecord
   # The item is back on the shelf, and the order says so. Called when the seller
   # confirms receipt, not when the return is approved: an approved return that
   # never arrives would put a thing back in stock that is still in the post.
+  def enqueue_store_payout!
+    store_id = Marketplace::Listing.where(id: listing_id).pick(:store_id)
+    return if store_id.blank? || total_cents.to_i <= 0
+    return if Marketplace::Payout.exists?(order_id: id)
+
+    Marketplace::Payout.create!(
+      store_id: store_id,
+      order_id: id,
+      amount_cents: total_cents,
+      currency: payment_currency,
+      status: "pending"
+    )
+  end
+
   def restock_returned!
     transaction do
       update!(fulfilment_status: "returned")
@@ -207,6 +221,7 @@ class Marketplace::Order < ApplicationRecord
 
   def mark_delivered!
     update!(fulfilment_status: "delivered", delivered_at: Time.current)
+    enqueue_store_payout!
     deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.delivered"), body: listing_title, source: self, kind: "order")
   end
 

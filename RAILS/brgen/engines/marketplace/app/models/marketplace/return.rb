@@ -12,7 +12,7 @@ class Marketplace::Return < ApplicationRecord
   include Shared::StrictSafeAssociations
 
   # requested -> approved|refused, approved -> received. Money is a fourth thing
-  # (refunded_at), and nothing in the tree moves it yet.
+  # (refunded_at): StripeRefund on receive, or the row stays unrefunded.
   STATUSES = %w[requested approved refused received].freeze
   # Fourteen days from delivery, which is the statutory floor for a distance
   # purchase from a business in Norway.
@@ -52,8 +52,9 @@ class Marketplace::Return < ApplicationRecord
       update!(status: "received", resolved_by: by, resolved_at: Time.current)
       order_record&.restock_returned!
     end
+    refund_after_receive!
     deliver_notification(order_buyer, title: I18n.t("marketplace.return_received_title"),
-                                      body: I18n.t("marketplace.return_received_body"),
+                                      body: refunded? ? I18n.t("marketplace.return_refunded_body") : I18n.t("marketplace.return_refund_pending"),
                                       source: self, kind: "order")
   end
 
@@ -65,6 +66,24 @@ class Marketplace::Return < ApplicationRecord
 
   def order_record = strict_safe(:order)
   def order_buyer = User.find_by(id: strict_safe_attribute(:order, :buyer_id))
+
+  def refund_after_receive!
+    order = order_record
+    return if order.nil? || refunded?
+
+    payout = Marketplace::Payout.find_by(order_id: order.id)
+    payout&.clawback_or_void!
+    return if order.payment_provider != "stripe"
+
+    id = Marketplace::Payments::StripeRefund.submit!(order: order)
+    update!(refunded_at: Time.current, refund_reference: id)
+    order.update!(payment_status: "refunded")
+  rescue Marketplace::Payments::NotConfigured
+    nil
+  rescue StandardError => error
+    Rails.logger.warn("marketplace refund held: #{error.class}: #{error.message}")
+    nil
+  end
 
   def one_open_return_per_order
     return if order_id.blank?

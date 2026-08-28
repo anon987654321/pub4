@@ -26,6 +26,12 @@
   <% end %>
 
   <%= tag.fieldset do %>
+    <%= form.label :stripe_connect_id, t("marketplace.stripe_connect_id") %>
+    <%= form.text_field :stripe_connect_id, maxlength: 128, autocomplete: "off" %>
+    <%= tag.p t("marketplace.stripe_connect_hint"), class: "form-hint" %>
+  <% end %>
+
+  <%= tag.fieldset do %>
     <%= form.label :description %>
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= form.text_area :description, rows: 5 , maxlength: 2000, data: { character_counter_target: "input", controller: "textarea-autogrow" } %>

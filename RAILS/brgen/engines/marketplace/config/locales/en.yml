@@ -24,3 +24,16 @@ en:
       payment_confirmed_body: "Your payment for %{title} is confirmed."
       on_its_way: "On its way"
       delivered: "Delivered"
+    stripe_connect_id: "Stripe Connect account"
+    stripe_connect_hint: "acct_… from Stripe Connect. Payouts stay pending until this is set and Stripe is configured."
+    payouts: Payouts
+    payout_release: Send payout
+    payout_release_confirm: Send this payout to the connected Stripe account?
+    payout_sent: Payout sent
+    payout_not_configured: Stripe Connect is not configured — the payout stays pending.
+    payout_not_pending: That payout is not waiting to be sent.
+    payout_held: Held until fourteen days after delivery, with no open return.
+    payout_statuses:
+      pending: pending
+      sent: sent
+      blocked: blocked

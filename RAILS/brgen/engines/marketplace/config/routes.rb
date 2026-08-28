@@ -5,7 +5,9 @@
 # brgen config/routes.rb. The Amazon-style multi-seller storefront.
 Marketplace::Engine.routes.draw do
   root "listings#index"
-  resources :shops, controller: "stores"
+  resources :shops, controller: "stores" do
+    resources :payouts, only: :create
+  end
   resources :deals, only: %i[index show]
   resources :listings do
     member { post :renew }

@@ -20,11 +20,13 @@ module Marketplace
     belongs_to :owner, class_name: "User"
     belongs_to :place, optional: true
     has_many :listings, class_name: "Marketplace::Listing", dependent: :nullify
+    has_many :payouts, class_name: "Marketplace::Payout", dependent: :restrict_with_error
 
     validates :name, presence: true, length: { maximum: 160 }
     validates :slug, presence: true, uniqueness: true, length: { maximum: 180 }
     validates :vertical, inclusion: { in: VERTICALS }, allow_blank: true
     validates :description, length: { maximum: 4_000 }, allow_blank: true
+    validates :stripe_connect_id, format: { with: Marketplace::Payments::StripeTransfer::ACCOUNT }, allow_blank: true
 
     before_validation :default_slug
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_140000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -96,8 +96,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090000) do
     t.string "visitor_id", limit: 128
     t.index ["created_at"], name: "index_affiliate_conversions_on_created_at"
     t.index ["epi"], name: "index_affiliate_conversions_on_epi"
+    t.index ["event_type_id"], name: "index_affiliate_conversions_on_event_type_id"
     t.index ["message_type_id"], name: "index_affiliate_conversions_on_message_type_id"
     t.index ["order_number"], name: "index_affiliate_conversions_on_order_number"
+    t.index ["program_id"], name: "index_affiliate_conversions_on_program_id"
+    t.index ["site_id"], name: "index_affiliate_conversions_on_site_id"
     t.index ["source", "transaction_id", "message_type_id"], name: "index_affiliate_conversions_on_source_txn_message", unique: true
   end
 
@@ -149,7 +152,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090000) do
     t.datetime "updated_at", null: false
     t.integer "voucher_type_id", default: 1, null: false
     t.index ["market", "ends_at"], name: "index_affiliate_vouchers_on_market_and_ends_at"
+    t.index ["program_id"], name: "index_affiliate_vouchers_on_program_id"
     t.index ["site_specific"], name: "index_affiliate_vouchers_on_site_specific"
+    t.index ["voucher_type_id"], name: "index_affiliate_vouchers_on_voucher_type_id"
     t.index ["source", "external_id"], name: "index_affiliate_vouchers_on_source_and_external_id", unique: true
   end
 
@@ -792,6 +797,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090000) do
     t.integer "order_id", null: false
     t.text "reason", null: false
     t.datetime "refunded_at"
+    t.string "refund_reference", limit: 128
     t.text "resolution_note"
     t.datetime "resolved_at"
     t.integer "resolved_by_id"
@@ -841,6 +847,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090000) do
     t.integer "owner_id", null: false
     t.integer "place_id"
     t.string "slug", null: false
+    t.string "stripe_connect_id", limit: 128
     t.datetime "updated_at", null: false
     t.boolean "verified", default: false, null: false
     t.string "vertical"
@@ -849,6 +856,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090000) do
     t.index ["place_id"], name: "index_marketplace_stores_on_place_id"
     t.index ["slug"], name: "index_marketplace_stores_on_slug", unique: true
     t.index ["vertical", "active"], name: "index_marketplace_stores_on_vertical_and_active"
+  end
+
+  create_table "marketplace_payouts", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.string "blocked_reason", limit: 500
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 8, null: false
+    t.bigint "order_id"
+    t.datetime "sent_at"
+    t.string "status", default: "pending", null: false
+    t.bigint "store_id", null: false
+    t.string "stripe_transfer_id", limit: 128
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_marketplace_payouts_on_order_id", unique: true
+    t.index ["status"], name: "index_marketplace_payouts_on_status"
+    t.index ["store_id"], name: "index_marketplace_payouts_on_store_id"
   end
 
   create_table "marketplace_variant_options", force: :cascade do |t|
@@ -1884,6 +1907,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_090000) do
   add_foreign_key "marketplace_orders", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_orders", "marketplace_variants", column: "variant_id"
   add_foreign_key "marketplace_orders", "users", column: "buyer_id"
+  add_foreign_key "marketplace_payouts", "marketplace_orders", column: "order_id"
+  add_foreign_key "marketplace_payouts", "marketplace_stores", column: "store_id"
   add_foreign_key "marketplace_questions", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_questions", "users"
   add_foreign_key "marketplace_questions", "users", column: "answered_by_id"
