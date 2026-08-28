@@ -1,0 +1,32 @@
+<%# locals: (site_name:, page_title: nil, page_description: nil, fallback_image: nil) %>
+<%# Open Graph and Twitter card tags — what a link to this page renders as when
+    it is pasted into a chat or a social feed. All three apps need the same eight
+    tags and differ only in what they call themselves, so the site name, the
+    title and the description arrive as locals and the shape lives here.
+
+    The canonical, description and JSON-LD tags stay in each app's layout. They
+    are not card metadata, and brgen's city_copy_contract_test reads
+    layouts/application.html.erb directly for pages.default_description and
+    website_json_ld to prove no city renders another city's copy — a check this
+    partial must not walk out from under.
+
+    fallback_image is optional: pass it and every page gets a share thumbnail,
+    omit it and only the pages that set content_for(:og_image) do. brgen passes
+    its brand mark; amber and bsdports have never emitted an image tag and still
+    do not. %>
+<% custom_image = content_for(:og_image).presence %>
+<% share_image = custom_image || fallback_image %>
+<meta property="og:site_name" content="<%= site_name %>">
+<meta property="og:title" content="<%= page_title || site_name %>">
+<meta property="og:description" content="<%= page_description %>">
+<meta property="og:url" content="<%= request.original_url %>">
+<meta property="og:type" content="<%= content_for(:og_type).presence || "website" %>">
+<%# summary_large_image only for a page that named its own image: the brand-mark
+    fallback is a square icon and reads badly blown up to a wide card. %>
+<meta name="twitter:card" content="<%= custom_image ? "summary_large_image" : "summary" %>">
+<meta name="twitter:title" content="<%= page_title || site_name %>">
+<meta name="twitter:description" content="<%= page_description %>">
+<% if share_image %>
+  <meta property="og:image" content="<%= share_image %>">
+  <meta name="twitter:image" content="<%= share_image %>">
+<% end %>

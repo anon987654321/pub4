@@ -8,14 +8,13 @@
   <title><%= content_for?(:title) ? "#{yield :title} — BSDports" : "BSDports" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "BSDports — search OpenBSD ports, dependencies and local advisories." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
-  <meta property="og:site_name" content="BSDports">
-  <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "BSDports" %>">
-  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "Search OpenBSD ports, dependencies and local advisories." %>">
-  <meta property="og:url" content="<%= request.original_url %>">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "BSDports" %>">
-  <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "Search OpenBSD ports, dependencies and local advisories." %>">
+  <%# The card's description is the blurb without the "BSDports — " prefix the
+      <title> and meta description carry: a card already shows the site name on
+      its own line. %>
+  <%= render "shared/social_card_meta", site_name: "BSDports",
+                                        page_title: content_for(:title).presence,
+                                        page_description: content_for(:description).presence ||
+                                          "Search OpenBSD ports, dependencies and local advisories." %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <link rel="preload" href="/icon.png" as="image">

@@ -50,7 +50,9 @@
   <title><%= page_title ? "#{page_title} — #{city_name}" : city_name %></title>
   <meta name="description" content="<%= page_description %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
-  <%= render "layouts/social_card_meta", page_title: page_title, page_description: page_description %>
+  <%= render "shared/social_card_meta", site_name: city_name, page_title: page_title,
+                                        page_description: page_description,
+                                        fallback_image: "#{request.base_url}/icon.png" %>
   <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
