@@ -5,10 +5,6 @@ require "json"
 class RuntimeController < ApplicationController
   skip_before_action :require_container!
 
-  def catalog
-    render_runtime_json(Master::Ground::RuntimeCatalog.web_boot_payload)
-  end
-
   def boot_config
     render_runtime_json(Master::Ground::RuntimeCatalog.web_boot_payload)
   end
