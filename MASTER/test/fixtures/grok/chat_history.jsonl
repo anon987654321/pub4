@@ -1,4 +1,0 @@
-{"type":"user","content":"hello"}
-{"type":"assistant","content":"Short reply."}
-{"type":"user","content":"follow up"}
-{"type":"assistant","content":"This is the longer final assistant reply we want spoken."}

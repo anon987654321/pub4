@@ -1,4 +1,0 @@
-{"method":"session/update","params":{"sessionId":"sess-1","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"First "},"_meta":{"promptId":"turn-1"}}}}
-{"method":"session/update","params":{"sessionId":"sess-1","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"turn chunk."},"_meta":{"promptId":"turn-1"}}}}
-{"method":"session/update","params":{"sessionId":"sess-1","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"Latest "},"_meta":{"promptId":"turn-2"}}}}
-{"method":"session/update","params":{"sessionId":"sess-1","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"assistant message."},"_meta":{"promptId":"turn-2"}}}}
