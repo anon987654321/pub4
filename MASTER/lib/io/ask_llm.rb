@@ -23,7 +23,8 @@ module Master
         @bus&.publish("tool:before", tool: NAME, prompt: prompt[0, 80])
 
         result = @circuit_breaker.call(estimate_cost(prompt)) do
-          @cache.fetch(prompt, @agent.model) do
+          cache_prompt = "#{prompt}\n--context--\n#{Array(context).to_json}"
+          @cache.fetch(cache_prompt, @agent.model) do
             @agent.ask(prompt, context:)
           end
         end
