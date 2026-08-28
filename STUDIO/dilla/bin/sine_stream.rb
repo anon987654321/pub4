@@ -153,23 +153,55 @@ def hat!(l, r, at, open, seed)
   end
 end
 
-# Twelve patterns rather than one, walked by bar so the kit is never the same
-# two bars running. Each is [kick steps, snare steps, hat step, ghost steps] on
-# a sixteenth grid.
-KIT_PATTERNS = [
-  [[0, 6, 10], [4, 12], 2, [7, 14]],
-  [[0, 3, 8, 11], [4, 12], 2, [6, 13]],
-  [[0, 7], [4, 12], 4, [2, 10, 14]],
-  [[0, 6, 10, 14], [4, 12], 2, [3, 11]],
-  [[0, 5, 8], [4, 12], 3, [11, 15]],
-  [[0, 10], [4, 12], 2, [6, 7, 14]],
-  [[0, 3, 6, 10], [4, 12], 4, [13]],
-  [[0, 8, 11], [4, 12], 2, [2, 5, 14]],
-  [[0, 6, 9, 12], [4, 14], 2, [3, 10]],
-  [[0, 4, 10], [6, 12], 3, [1, 9, 15]],
-  [[0, 7, 11], [4, 12], 2, [5, 13, 14]],
-  [[0, 2, 8, 10], [4, 12], 4, [6, 15]],
-].freeze
+# The kit comes from DRUM_PATTERN_SETS, not from this file.
+#
+# Twelve patterns were written here by hand when the instruction was to keep
+# switching the beat, while lib/engine/drum_patterns.rb already held eighty-five
+# feels -- each with eight kick variants, six snare, six ghost and five hat, which
+# recombine into far more than twelve. That is the Dilla Time research, and the
+# stream was playing around it rather than through it. Same error as building an
+# oscillator next to the soundfont stacks.
+#
+# A feel is chosen per progression and the variants advance per bar on different
+# strides, so the kit recombines within a feel as well as moving between them:
+# the kick figure changes at a different rate from the hats, which is what makes
+# a beat feel played rather than looped.
+DILLA_FEELS = (DRUM_PATTERN_SETS.keys & %i[
+  dilla_canon detroit_stumble la_beat_scene timeless loose_pocket organic
+  syncopated_slash_ninth wonky_canon one_drop
+]).freeze
+
+# Everything else in the catalogue, kept separate so the Detroit feels carry the
+# weight and the rest arrive as variety rather than as an even split.
+OTHER_FEELS = (DRUM_PATTERN_SETS.keys - DILLA_FEELS).freeze
+
+def feel_for(slot)
+  # Three Detroit feels to one from the rest of the catalogue.
+  return DILLA_FEELS[(slot / 4 * 3 + slot % 4) % DILLA_FEELS.length] unless (slot % 4) == 3
+  return DILLA_FEELS.first if OTHER_FEELS.empty?
+
+  OTHER_FEELS[(slot / 4) % OTHER_FEELS.length]
+end
+
+# One bar's worth: which variant of each role sounds. The strides are coprime
+# with nothing in particular, only different from each other, so the roles do not
+# come back into alignment on a short cycle.
+def kit_for(feel, bar)
+  set = DRUM_PATTERN_SETS[feel] || DRUM_PATTERN_SETS[DILLA_FEELS.first]
+  pick = lambda do |role, stride|
+    v = Array(set[role])
+    return [] if v.empty?
+
+    Array(v[(bar * stride) % v.length])
+  end
+  {
+    kicks: pick.call(:kicks, 1),
+    snares: pick.call(:snares, 3),
+    ghosts: pick.call(:ghosts, 5),
+    hats: pick.call(:hats, 2),
+  }
+end
+
 
 # Hats late, kicks early, against the same grid. Two clocks disagreeing is the
 # whole idea and the offsets are fractions of a sixteenth so they scale with
@@ -178,15 +210,17 @@ HAT_LATE = 0.24
 KICK_EARLY = -0.06
 GHOST_LATE = 0.31
 
-def drums_for_bar!(l, r, offset, secs, bar_index)
+def drums_for_bar!(l, r, offset, secs, bar_index, feel = nil)
+  feel ||= feel_for(bar_index / 4)
+  kit = kit_for(feel, bar_index)
   sixteenth = RATE * secs / 16.0
   place = ->(step, nudge) { (offset + (step + nudge) * sixteenth).to_i }
-  kicks, snares, hat_step, ghosts = KIT_PATTERNS[bar_index % KIT_PATTERNS.length]
 
-  kicks.each { |st| kick!(l, r, place.(st, KICK_EARLY), secs) }
-  snares.each { |st| snare!(l, r, place.(st, 0.0), st + bar_index) }
-  (0...16).step(hat_step) { |st| hat!(l, r, place.(st, HAT_LATE), st == 10, st + bar_index) }
-  ghosts.each { |st| hat!(l, r, place.(st, GHOST_LATE), false, st + bar_index + 7) }
+  kit[:kicks].each { |st| kick!(l, r, place.call(st, KICK_EARLY), secs) }
+  kit[:snares].each { |st| snare!(l, r, place.call(st, 0.0), st + bar_index) }
+  kit[:hats].each { |st| hat!(l, r, place.call(st, HAT_LATE), st == 10, st + bar_index) }
+  kit[:ghosts].each { |st| hat!(l, r, place.call(st, GHOST_LATE), false, st + bar_index + 7) }
+  feel
 end
 
 # ringtone.tools, reimplemented on the buffer instead of through ffmpeg.
@@ -1511,7 +1545,7 @@ def bass_line!(l, r, chord, next_chord, offset, secs, bar_index)
   nxt = next_chord && fold_to_bass(next_chord[:bass_hz])
 
   sixteenth = RATE * secs / 16.0
-  kicks, = KIT_PATTERNS[bar_index % KIT_PATTERNS.length]
+  kicks = kit_for(feel_for(bar_index / 4), bar_index)[:kicks]
   # Same early nudge the kick gets, so they land together rather than near.
   place = ->(step) { (offset + (step + KICK_EARLY) * sixteenth).to_i }
 
@@ -1545,7 +1579,7 @@ end
 # and pads do not need it.
 def duck_bass_under_kick!(bl, br, offset, secs, bar_index, depth: 0.55)
   sixteenth = RATE * secs / 16.0
-  kicks, = KIT_PATTERNS[bar_index % KIT_PATTERNS.length]
+  kicks = kit_for(feel_for(bar_index / 4), bar_index)[:kicks]
   hold = (RATE * 0.13).to_i
   kicks.each do |st|
     at = (offset + (st + KICK_EARLY) * sixteenth).to_i
@@ -1961,7 +1995,7 @@ loop do
     # runs dry, which repeats a whole take including its vocal -- and the queue
     # ran dry every time the generator restarted. A deeper buffer means the
     # replay path is reached rarely rather than routinely.
-    sleep 2 while Dir[File.join(q, "*.wav")].length >= 8 && !File.exist?(STOP)
+    sleep 2 while Dir[File.join(q, "*.wav")].length >= 4 && !File.exist?(STOP)
     break if File.exist?(STOP)
 
     seq += 1
