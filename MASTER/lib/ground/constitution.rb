@@ -62,8 +62,8 @@ module Master
 
         private
 
+        # Operator-supplied markdown only; the standing orders are conduct rules in law/.
         def load_dir(dir, max_principles:, max_body_chars:)
-          return load_yaml(max_principles:, max_body_chars:).freeze if dir == DIR
           return [].freeze unless File.directory?(dir)
 
           Dir.glob(File.join(dir, "*.md")).sort.filter_map { |path| parse(path, max_body_chars:) }
@@ -73,23 +73,6 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "constitution.load", dir:)
           [].freeze
-        end
-
-        def load_yaml(max_principles:, max_body_chars:)
-          data = Master.law("operator_principles")
-          Array(data["principles"]).first(max_principles).filter_map do |row|
-            next unless row.is_a?(Hash)
-
-            {
-              name: row["name"].to_s,
-              description: row["description"].to_s,
-              type: row["type"].to_s,
-              body: row["body"].to_s[0, max_body_chars || MAX_BODY_CHARS],
-            }
-          end
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "constitution.load_yaml")
-          []
         end
 
         def parse(path, max_body_chars:)

@@ -64,7 +64,7 @@ module Master
         review_error review_verdict review_preapproved
         destructive_route
         pre_enhanced
-        rendered output_findings voice
+        rendered output_findings
         image felt_sense explicit_run
         channel metadata turn_id
         _timings _parallel_errors _parallel_timeout _stage_error
@@ -79,7 +79,6 @@ module Master
         output: [String, NilClass],
         output_findings: [Array, NilClass],
         pressure: [TrueClass, FalseClass, NilClass],
-        voice: [String, NilClass],
         felt_sense: [Hash, NilClass],
       }.freeze
 

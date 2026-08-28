@@ -700,7 +700,7 @@ spine:
   # .code_lines_in, superseded by body_lines_in when the unit changed; and
   # FailureTaxonomy's three back-compat pattern readers, whose Fix::Constants
   # consumers are gone.
-  lib_body_ceiling: 37132
+  lib_body_ceiling: 37059
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

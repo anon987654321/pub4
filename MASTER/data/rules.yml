@@ -3531,17 +3531,12 @@ design_rules:
       autofix + CI ratchets over one-off manual style. Never raise lint baselines
       to silence new debt.
 
-# Folded from data/operator_principles.yml — one file for all rules.
-# operator_principles moved to data/soul.yml on the operator decision.
-#
-# Twenty-seven entries lived here carrying `type: feedback`, a field no other
-# rule in this file has. They are standing orders about how to work — sweep to
-# convergence, run the gate yourself, one SSH session, restart after a deploy —
-# not properties of source text, so no detector could ever match one. They now
-# sit in soul.yml absolute.rules and absolute.aesthetic_rules, which
-# PersonalityPromptBuilder#add_rules injects whole as master_style; here they
-# were truncated to 480 characters by Ground::Constitution and FLAT_HIERARCHY
-# lost 358 of its 838.
+# No operator_principles section here, and no standing orders anywhere in this
+# file. Orders about how to work — sweep to convergence, run the gate yourself,
+# one SSH session, restart after a deploy — are not properties of source text, so
+# no detector can match one and this catalogue is the wrong registry for them.
+# They are conduct rules in law/practice.rb, which PersonalityPromptBuilder#add_rules
+# emits whole as master_style; filed here they were cut to 480 characters.
 style:
   # Ruby, shell, and git style rules enforced by MASTER.
   # Scan rules reference these; Personality injects them into every LLM system prompt.
@@ -3698,10 +3693,9 @@ style:
       - "string-interpolated git commands"
       - "rm -rf in deploy scripts without explicit guard"
 
-  # Operator directives moved to data/operator_principles.yml (27 principles,
-  # runtime authority) — this block was a fossilized parallel copy that also
-  # duplicated this file's own ruby.comments.reassess_on_touch and html/css
-  # sections. Deleted 2026-07-12; see operator_principles.yml instead.
+  # No operator directives under style: — they are conduct rules in law/practice.rb.
+  # The block that stood here duplicated this file's own ruby.comments.reassess_on_touch
+  # and html/css sections.
 
   erb:
     html_safe: explicit_only_after_sanitize

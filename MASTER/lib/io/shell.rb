@@ -8,7 +8,7 @@ module Master
   module Io
     # Shell — execute zsh commands with timeout and governor approval.
     # Three-layer defense (OpenCrabs pattern):
-    #   1. BLOCKLIST: hard-blocked destructive commands
+    #   1. Permissions blocklist: hard-blocked destructive commands
     #   2. Interactive detection: block commands that need a TTY
     #   3. Recent failure window: warn after 3 failures in last 5 commands
     class Shell
@@ -23,7 +23,6 @@ module Master
       REDIRECT_RE = /(?:^|\s)(?:>|>>)\s*([^\s;&|]+)/.freeze
       PRIVILEGE_RE = /\bdoas\b/.freeze
 
-      BLOCKLIST = Review::Security::Permissions::BLOCKLIST
       ZSH_BANNED = begin
         merged = Master.load_yaml(Master.data_path("patterns.yml"))
         zsh_data = (merged && merged["zsh"]) ||
@@ -162,8 +161,10 @@ module Master
         nil
       end
 
+      # Through Permissions, whose matchers are word-bounded: a bare include? of the
+      # same list refuses `grep -rn shutdown_handler lib` and `echo halt_state`.
       def blocked?(command)
-        BLOCKLIST.any? { |b| command.include?(b) }
+        Review::Security::Permissions.blocked?(command)
       end
 
       def interactive?(command)

@@ -67,7 +67,7 @@ absolute:
     PROTECTED: emit warning continue
     NEGOTIABLE: allow if explicitly permitted
     FLEXIBLE: negotiate at runtime
-# No rules here. All 47 moved to law/conduct.rb, which is the one registry:
+# No rules here. All 47 moved to law/practice.rb, which is the one registry:
 # 117 rules, each declaring how it is checked — `detect` for a regex, `ask`
 # for a question a model answers, `conduct` for a rule about how to work.
 #
