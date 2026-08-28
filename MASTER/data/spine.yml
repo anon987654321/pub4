@@ -690,7 +690,17 @@ spine:
   # warming page for two days: the state directory hardened itself out of the
   # daemon that needs it, and the container bootstrap had one attempt with no
   # way back from losing it.
-  lib_body_ceiling: 37392
+  #
+  # RATCHETED 2026-08-28, 37392 -> 37362. The ceiling had been breached by +15
+  # and the overage was paid out of code nothing reached: Pub4::Paths, whose
+  # callers left with the DEPLOY/ flatten and whose repo_root wrapper no longer
+  # matched Environment.repo_root's signature; RubyRunner.run_gate, dead for the
+  # same reason and unable to run if it were called, since its default chdir
+  # passes a positional argument to a keyword-only method; CodeMetrics
+  # .code_lines_in, superseded by body_lines_in when the unit changed; and
+  # FailureTaxonomy's three back-compat pattern readers, whose Fix::Constants
+  # consumers are gone.
+  lib_body_ceiling: 37362
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
