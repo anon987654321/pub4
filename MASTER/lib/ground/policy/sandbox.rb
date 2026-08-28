@@ -53,10 +53,18 @@ module Master
           /\Als\b|\Afind\b|\Agrep\b|\Arg\b/,
         ].freeze
 
-        Decision = Struct.new(:mode, :reason, keyword_init: true) do
+        Decision = Struct.new(:mode, :reason, :recognised, keyword_init: true) do
           def allow? = mode == :allow
           def ask? = mode == :ask
           def deny? = mode == :deny
+
+          # Two unrelated things answer :ask. A command matching ASK_PATTERNS --
+          # a push, a hard reset, a deploy -- is one this policy recognises by
+          # name and wants a person for. Everything it has no pattern for answers
+          # :ask as well, and that is most real commands. Only the first is worth
+          # stopping someone for, and a caller that cannot tell the two apart has
+          # to treat both as allow to stay usable.
+          def recognised_ask? = ask? && !!recognised
         end
 
         module_function
@@ -66,10 +74,10 @@ module Master
           return Decision.new(mode: :deny, reason: "empty command") if source.empty?
           return Decision.new(mode: :deny, reason: "recursive+force rm of a dangerous path") if dangerous_rm?(source)
           return Decision.new(mode: :deny, reason: "matched deny pattern") if DENY_PATTERNS.any? { |re| source.match?(re) }
-          return Decision.new(mode: :ask, reason: "matched ask pattern") if ASK_PATTERNS.any? { |re| source.match?(re) }
+          return Decision.new(mode: :ask, reason: "matched ask pattern", recognised: true) if ASK_PATTERNS.any? { |re| source.match?(re) }
           return Decision.new(mode: :allow, reason: "matched allow pattern") if ALLOW_PATTERNS.any? { |re| source.match?(re) }
 
-          Decision.new(mode: :ask, reason: "unknown command risk")
+          Decision.new(mode: :ask, reason: "unknown command risk", recognised: false)
         end
 
         # Flag-parses rather than pattern-matching flag order/form, so

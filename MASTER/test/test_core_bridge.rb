@@ -76,3 +76,61 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 end
+
+# The sandbox answers :deny, :ask or :allow. The bridge used to forward only
+# :deny, so :ask reached the Constitution as nil and nil means proceed — the
+# policy marked `git push`, a hard reset and a deploy as needing a person, and
+# the one path that runs unattended did them without asking.
+#
+# It cannot simply forward every :ask either. :ask is also what the policy
+# answers for any command it has no pattern for, which is most of them, so that
+# would stop the fold running its own tests. The two are told apart by whether
+# the policy recognised the command by name.
+class CoreBridgeSandboxTest < Minitest::Test
+  def sandbox = Master::CLI::CoreBridge.send(:shell_sandbox)
+
+  def test_a_recognised_ask_asks_a_person_instead_of_proceeding
+    assert_equal({ ask: "matched ask pattern" }, sandbox.call(%w[git push origin main]))
+  end
+
+  def test_the_other_named_asks_are_carried_too
+    [%w[git reset --hard], %w[git clean -fd .], %w[bundle exec rails db:drop]].each do |argv|
+      answer = sandbox.call(argv)
+      assert_kind_of Hash, answer, "#{argv.join(' ')} should reach a person"
+      assert answer[:ask], "#{argv.join(' ')} should carry an ask reason"
+    end
+  end
+
+  def test_a_command_the_policy_does_not_recognise_still_proceeds
+    assert_nil sandbox.call(%w[bundle exec rake test]),
+               "the fold has to be able to run its own tests without asking"
+  end
+
+  def test_a_denial_still_returns_a_reason
+    answer = sandbox.call(["rm", "-rf", "/"])
+    assert_kind_of String, answer
+    refute_empty answer
+  end
+
+  # End to end: the rule the bridge feeds turns a recognised ask into a Request,
+  # which is the verdict the Fold pauses on rather than one it executes.
+  def test_the_constitution_turns_a_recognised_ask_into_a_request
+    law = Master::Core::Constitution.new(
+      rules: [Master::Core::Constitution.send(:sandboxed_exec_rule, sandbox)],
+    )
+    verdict = law.admit(Master::Core::Effect.exec(%w[git push origin main]), nil)
+
+    assert_kind_of Master::Core::Verdict::Request, verdict
+    assert_match(/git push origin main/, verdict.prompt)
+  end
+
+  def test_the_constitution_still_allows_an_unrecognised_command
+    law = Master::Core::Constitution.new(
+      rules: [Master::Core::Constitution.send(:sandboxed_exec_rule, sandbox)],
+    )
+    verdict = law.admit(Master::Core::Effect.exec(%w[bundle exec rake test]), nil)
+
+    refute_kind_of Master::Core::Verdict::Request, verdict
+    refute_kind_of Master::Core::Verdict::Block, verdict
+  end
+end

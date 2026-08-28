@@ -60,12 +60,20 @@ module Master
       # unattended. Handed in rather than required, because core reaches nothing
       # in lib/ (test_no_lib_backedges).
       #
-      # Returns a reason only for :deny. The policy answers :ask for anything it
-      # does not recognise, which is most commands, and Io::Shell does not treat
-      # that as an error either — mapping it to one here would refuse the fold its
-      # own test runs.
+      # Three answers, because the policy has three. :deny returns a reason and
+      # blocks. An :ask the policy recognises by name — a push, a hard reset, a
+      # deploy — returns { ask: } and the Constitution turns it into a Request a
+      # person answers. The :ask it returns for every command it has no pattern
+      # for returns nil and proceeds, because that is most commands and the fold
+      # has to be able to run its own tests.
       def shell_sandbox
-        ->(argv) { Master::Ground::Policy::Sandbox.decide(argv.join(" ")).then { |v| v.reason if v.deny? } }
+        lambda { |argv|
+          decision = Master::Ground::Policy::Sandbox.decide(argv.join(" "))
+          next decision.reason if decision.deny?
+          next({ ask: decision.reason }) if decision.recognised_ask?
+
+          nil
+        }
       end
 
       def run_string(goal, root:, bus: nil, model: nil, model_id: nil)
