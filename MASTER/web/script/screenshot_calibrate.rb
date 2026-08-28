@@ -121,7 +121,10 @@ begin
   File.write(manifest_path, JSON.pretty_generate(manifest) + "\n")
   latest = File.join(options[:out], "latest")
   FileUtils.rm_f(latest)
-  FileUtils.ln_s(run_dir, latest)
+  # Relative, because latest and run_dir are always siblings under --out.
+  # An absolute link is the path of the checkout that happened to render it,
+  # so it resolves into that tree from every other clone and worktree.
+  FileUtils.ln_s(File.basename(run_dir), latest)
   puts "ok: manifest -> #{manifest_path}"
   puts "state: #{state.inspect}"
 rescue StandardError => e
