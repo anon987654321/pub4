@@ -36,8 +36,10 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
       first.mark_paid!(reference: "evt_1")
       second.mark_paid!(reference: "evt_1")
 
+      # The title is an I18n key and these apps default to nb, so a query for
+      # the English sentence counts zero and reads as "told twice" either way.
       confirmations = Notification.where(source_type: "Marketplace::Order", source_id: order.id,
-                                         title: "Payment confirmed").count
+                                         title: I18n.t("marketplace.order_notification.payment_confirmed")).count
 
       assert_equal "paid", order.reload.payment_status
       assert_equal 1, listing.reload.stock, "stock was consumed twice"

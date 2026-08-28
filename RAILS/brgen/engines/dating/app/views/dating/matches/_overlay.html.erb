@@ -2,8 +2,10 @@
   <div class="match-overlay-card">
     <p class="match-overlay-eyebrow">Dating</p>
     <%= tag.h2 t("dating.its_a_match") %>
-    <% other = current_user == match.initiator ? match.receiver : match.initiator %>
-    <p><%= other&.display_name || t("dating.someone") %> <%= t("dating.ready_to_chat") %></p>
+    <%# other_user is passed in already, resolved through strict_safe. Reading
+        match.initiator here instead raises: Dating::Match is strict_loading and
+        the broadcast renders this from an after_commit, off an unloaded record. %>
+    <p><%= other_user&.display_name || t("dating.someone") %> <%= t("dating.ready_to_chat") %></p>
     <%= link_to t("dating.open_messages"), main_app.conversations_path, class: "btn btn-primary btn-sm", data: { controller: "haptics", action: "click->haptics#match" } %>
   </div>
 </div>
