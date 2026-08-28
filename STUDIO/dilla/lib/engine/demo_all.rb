@@ -49,6 +49,22 @@ def acquire_demo_lock!
   end
 end
 
+# Did this part come out as music, rather than merely as a file?
+#
+# The test was File.size(part) > 50_000, and silence is not small: four bars of
+# stereo PCM is megabytes whether or not anything is playing. So a silent part
+# passed, the retry below -- which re-renders minimal with vocals, morphs and
+# self-sampling off, and exists for exactly this -- never ran, and the silence
+# survived until join, where dropping it was the only option left. Four of
+# twelve tracks were lost that way in one demo.
+#
+# Same detector the join uses, so the two cannot disagree about what is dead.
+def demo_part_rendered?(part)
+  return false unless File.file?(part) && File.size(part) > 50_000
+
+  !demo_part_dead?(part)
+end
+
 def demo_all(bars_count = 12, destination = nil)
   acquire_demo_lock! unless ENV["DEMO_NO_LOCK"] == "1"
   bars_count = bars_count.to_i
@@ -175,6 +191,11 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
       ENV["FM_NATIVE"] = "1"
     end
   end
+  # Named before the defaults tables run, so every part sidecar records the mode
+  # it was rendered in and a beat pulled back out of the record reproduces with
+  # the same table. The forcing that actually holds the signature down happens
+  # per slot, below -- this only makes the run honest about what it is.
+  ENV["RENDER_MODE"] = "album" if album_enabled? && ENV["RENDER_MODE"].to_s.empty?
   apply_best_defaults!
   apply_dilla_style!(force: true)
   force_env!(STREAM_STYLE_SAFE, label: "STREAM_STYLE_SAFE")
@@ -376,6 +397,14 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
     # decided which branch turned it on. Choir is a vocal; the demo has none.
     ENV["CHOIR_VOX"] = ENV.fetch("CHOIR_VOX", "0")
 
+    # The record. Last, because everything above it writes keys the album owns --
+    # stream_rotate_drums! sets EXTERNAL_KIT and RAW_KICK on every iteration and
+    # the lead rotation follows it -- so a signature applied any earlier is
+    # overwritten before the part renders and the demo comes out sounding like the
+    # rotation rather than like the album. ALBUM=0 renders the catalogue without
+    # it, which is the right instrument for judging a progression on its own.
+    apply_album_slot!(idx)
+
     dmesg(
       "render #{idx + 1}/#{order.length} #{slug} " \
       "pad=#{ENV['PAD_VOICE']}/#{ENV['PAD_ARP_MODE']} " \
@@ -445,7 +474,7 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
           render_dilla(part, bars_count)
         end
       end
-      ok = File.file?(part) && File.size(part) > 50_000
+      ok = demo_part_rendered?(part)
     rescue Timeout::Error
       dmesg_warn("timeout #{slug} after #{track_timeout}s")
       FileUtils.rm_f(part)
@@ -473,7 +502,7 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
         Timeout.timeout(track_timeout) do
           render_dilla(part, [bars_count, 8].min)
         end
-        ok = File.file?(part) && File.size(part) > 50_000
+        ok = demo_part_rendered?(part)
       rescue StandardError, Timeout::Error => e
         dmesg_warn("retry fail #{slug}: #{e.message}")
         FileUtils.rm_f(part)

@@ -816,6 +816,12 @@ DISPATCH = {
     step = [order.length / n, 1].max
     ENV["DEMO_TRACKS"] = order.each_slice(step).map(&:first).first(n).join(",")
     ENV["DEMO_MP3"] ||= "0"
+    # BARS, not just the argument. apply_best_defaults! sets 32, and something
+    # downstream reads the knob rather than what demo_all was handed -- so
+    # `demo-quick 8` rendered 32-bar tracks and took five minutes to do what it
+    # promises in one. demo-each carries the same line for the same reason;
+    # this is the sibling that was missed.
+    ENV["BARS"] = bars.to_s
     demo_all(bars.to_i, out)
   end,
   "live_now" => -> { live_now },
