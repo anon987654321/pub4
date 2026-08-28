@@ -63,8 +63,22 @@ module Pub4
       # not clean.
       "RAILS/shared/app/assets/stylesheets/**/*.scss",
       "RAILS/shared/frontend/**/*.scss",
-      "RAILS/shared/frontend/**/*.js"
+      "RAILS/shared/frontend/**/*.js",
+      # The face and the chat client — the largest hand-written JavaScript this
+      # repo owns, and the subject of two laws (FACE_POINT_IS_ONE_PIXEL,
+      # NO_WEBGL_GLOW_PASS) written for these files and no others. The corpus
+      # reached RAILS's Stimulus controllers and stopped, so both laws were
+      # reported silent by an audit that had never opened a file they govern,
+      # and NO_VAR and NO_COLUMN_ALIGN were reported silent while this
+      # directory broke them. Top level only: web/public/vendor and
+      # web/public/models are vendored, and BUILD_OUTPUT is generated.
+      "MASTER/web/public/*.js"
     ].freeze
+
+    # esbuild writes these from web/script/build_*.sh. Minified third-party
+    # bundles measure the toolchain that emitted them, not conduct anyone here
+    # chose, and one of them is a 500KB copy of three.js.
+    BUILD_OUTPUT = /\.bundle\.js\z|three\.face\.module\.js\z/
 
     # A rule flagging more than this share of the files it applies to is
     # reporting a property of the codebase rather than a violation. Set where it
@@ -86,6 +100,7 @@ module Pub4
     def corpus
       @corpus ||= CORPUS.flat_map { |glob| Dir.glob(File.join(ROOT, glob)) }
                         .reject { |f| f.include?("/vendor/") || f.include?("/node_modules/") }
+                        .reject { |f| f.match?(BUILD_OUTPUT) }
                         .sort
     end
 

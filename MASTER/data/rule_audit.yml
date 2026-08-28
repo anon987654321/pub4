@@ -24,6 +24,17 @@
 # NO_CHANGELOG_COMMENT held exactly three hits in this corpus, one each in
 # rescue_handlers.rb, prune_guest_users_job.rb and _responsive.scss. All three
 # said what the code used to be; each now states why it is what it is.
+#
+# 25 -> 23 by widening the corpus to MASTER/web/public/*.js rather than by
+# touching a rule. FACE_POINT_IS_ONE_PIXEL and NO_WEBGL_GLOW_PASS govern those
+# files and nothing else, and the corpus stopped at RAILS's Stimulus
+# controllers — so the audit called two laws silent without having opened a
+# file either one judges. Both are still silent, because the face obeys them.
+# The two that came off the list are NO_VAR and NO_COLUMN_ALIGN, which were
+# never silent: viewport_inset.js declares seven `var`s, and chat.js,
+# codebase.js, face.runtime.js and face_semantics.js align their assignments
+# into columns. That is the same shape as the scss glob fixed earlier — a law
+# judged against no file of its own is untested, not clean.
 blind: 0
 saturated: 0
 silent: 23
