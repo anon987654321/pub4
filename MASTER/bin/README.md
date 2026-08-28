@@ -13,22 +13,22 @@ Operator entrypoints for the constitutional runtime. Run from `MASTER/` unless n
 | `dogfood` | CLI dogfood (boot + chitchat) |
 | `gate` | Deploy/runtime gate helper |
 | `handoff` | Agent handoff bundle writer |
+| `master` | Repo-wide instruction surface: `bin/master "<instruction>"`, or bare for a session |
 | `master-core` | Core spine utilities |
 | `nsaudit` | Namespace reference audit |
 | `onboard` | New contributor onboarding checks |
 | `playbook` | Playbook runner |
 | `preflight` | Pre-deploy OpenBSD checks (zsh) |
 | `probe` | Readiness probes (`smoke`, `selftest`, `core`, `all`, …) |
-| `probe_selfscan` | Scanner self-reference probe |
 | `provider-catalog` | Refresh provider model catalog |
+| `pub4` | Repo-wide operator surface: status, test, measure, worktree, vps |
 | `reset-costs` | Reset local cost counters |
+| `ruby` | Resolve pub4's preferred Ruby and exec the rest of the command line |
 | `smoke` | Boot/wiring smoke |
 | `smoke-web` | Face HTTP smoke |
-| `snapshot` | Workspace snapshot |
 | `sync-env` | Sync env files from templates |
 | `test-safety` | Test harness safety checks |
 | `tts-bootstrap` | Start TTS worker stack |
 | `tts-e2e` | TTS end-to-end poll test |
 | `tts-speak` | One-shot TTS speak |
 | `tts-worker` | TTS worker process |
-| `web-screenshot` | Capture face UI screenshot |
