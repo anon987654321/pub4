@@ -88,7 +88,7 @@ module Deploy
       # Prefer high-traffic triangle surfaces first (home/live/wardrobe/feed),
       # then fill remaining slots so keyboard order is not only auth forms.
       preferred = %w[
-        brgen/core brgen/live brgen/nearby brgen/marketplace brgen/sign_in
+        brgen/core brgen/live brgen/nearby brgen/marketplace brgen/session_new
         amber/home amber/wardrobe amber/feed amber/sign_in
       ]
       desktop = GeometryProbe.surfaces

@@ -57,7 +57,7 @@ module Deploy
       "OPENBSD/CLAUDE.md" => "prose: same triage note",
       "OPENBSD/RUNBOOK.md" => "prose: operator reference",
       "OPENBSD/data/debt.yml" => "prose: dated incident records, deliberately frozen",
-      "RAILS/gates/data/PAGE_SIM.md" => "generated report",
+      "RAILS/gates/PAGE_SIM.md" => "generated report",
     }.freeze
 
     FLEET_SCAN_GLOB = "{RAILS,OPENBSD,MASTER,bin}/**/*.{rb,sh,yml,yaml,json,conf,mjs,js,md,erb,exp}"

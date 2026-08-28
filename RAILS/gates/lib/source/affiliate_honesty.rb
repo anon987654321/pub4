@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/source_contract"
 
 module Deploy
   # Partner-marketing honesty: placeholders must be flagged, disclosures present,
@@ -37,15 +38,7 @@ module Deploy
     def run
       @result = GateResult.new
 
-      REQUIRED.each do |rel, pat|
-        path = File.join(RAILS, rel)
-        unless File.file?(path)
-          @result.fail("affiliate_honesty: missing #{rel}")
-          next
-        end
-        body = File.read(path)
-        @result.fail("affiliate_honesty: #{rel} missing #{pat.inspect}") unless body.match?(pat)
-      end
+      SourceContract.require_patterns(@result, root: RAILS, required: REQUIRED, gate: "affiliate_honesty")
 
       FORBIDDEN.each do |rel, pat|
         path = File.join(RAILS, rel)

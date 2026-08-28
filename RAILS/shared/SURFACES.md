@@ -114,7 +114,7 @@ debt closed the same day (26 were a line-blind REDUCED_MOTION twin filing
 against face.css's own reset; the primer fade capped at 300ms; the rest were
 fences stated inline).
 
-## Tap-target sweep (gates/support/tap_target_probe.rb) — first run 2026-08-22
+## Tap-target sweep (gates/probes/tap_target_probe.rb) — first run 2026-08-22
 
 The 2026-08-17 hand-found pair is an instrument now: every interactive
 element on 7 pages against the fleet's own --tap-min, in a 390x844 mobile

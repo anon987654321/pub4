@@ -36,13 +36,6 @@ surfaces:
     viewports: [mobile, desktop]
     snapshot: true
 
-  - app: brgen
-    label: sign_in
-    host: brgen.no
-    path: /session/new
-    viewports: [mobile, desktop]
-    snapshot: true
-
   - app: amber
     label: home
     path: /

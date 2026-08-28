@@ -5,6 +5,7 @@ require "uri"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
+require_relative "../../support/source_contract"
 
 module Deploy
   # Checkout without PSP keys must fail honestly (MASTER fail_fast / good_design_is_honest).
@@ -41,15 +42,7 @@ module Deploy
 
     def run
       @result = GateResult.new
-      REQUIRED.each do |rel, pat|
-        path = File.join(RAILS, rel)
-        unless File.file?(path)
-          @result.fail("payment_honesty: missing #{rel}")
-          next
-        end
-        body = File.read(path)
-        @result.fail("payment_honesty: #{rel} missing #{pat.inspect}") unless body.match?(pat)
-      end
+      SourceContract.require_patterns(@result, root: RAILS, required: REQUIRED, gate: "payment_honesty")
 
       # Stripe/Vipps must raise NotConfigured when keys blank — source contract
       stripe = File.read(File.join(RAILS, "brgen/app/services/marketplace/payments/stripe_checkout.rb"))

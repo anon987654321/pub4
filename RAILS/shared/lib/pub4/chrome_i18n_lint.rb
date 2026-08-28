@@ -34,7 +34,7 @@ module Pub4
 
     # aria-label="…" / aria: { label: "…" } with a literal string.
     #
-    # RAILS/gates/data/GATE_ADEQUACY.md gap 2: "chrome_i18n_lint only empty titles +
+    # RAILS/gates/GATE_ADEQUACY.md gap 2: "chrome_i18n_lint only empty titles +
     # search placeholders; secondary aria-labels still EN." A screen-reader user on
     # :nb hears English for every one of them, and until this rule existed the number
     # was unknown — which is the actual problem. It is 172 (measured 2026-08-01, all
