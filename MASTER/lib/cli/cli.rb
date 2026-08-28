@@ -189,25 +189,6 @@ module Master
         state[:streamed] = true
       end
 
-      def suggested_next_prompt
-        top = proposer.top
-        return unless top
-        @last_suggestion = top[:action]
-        "#{top[:action]}  (#{top[:reason]})"
-      end
-
-      def accept_top_suggestion
-        return unless @last_suggestion
-        puts @refs.renderer.render("↳ #{@last_suggestion}", mode: :dim)
-        @repl.handle_line(@last_suggestion)
-      end
-
-      def next_action_chips
-        base = ["[/undo]", "[/why]", "[/last]"]
-        base.unshift("[/fix #{violations_count}v]") if violations_count.positive?
-        base
-      end
-
       def stream_chunk_handler(accumulated, state)
         handler = CLI::StreamAccumulator.new(accumulated).handler do |text|
           if state[:thinking_shown] && $stdout.isatty
@@ -223,12 +204,6 @@ module Master
           state[:streamed] = true
         end
         handler
-      end
-
-      def proposer
-        @proposer ||= Propose.new(container: @container)
-        @proposer.violations = violations_count
-        @proposer
       end
 
       def cli_felt_sense
