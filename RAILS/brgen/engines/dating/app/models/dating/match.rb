@@ -10,7 +10,20 @@ class Dating::Match < ApplicationRecord
   belongs_to :receiver,  class_name: "User"
   validates :initiator_id, uniqueness: { scope: :receiver_id }
   validates :status, inclusion: { in: %w[pending matched unmatched] }
-  after_create_commit :announce_match
+  # One registration covering both transitions, not two.
+  #
+  # after_create_commit and after_update_commit are both after_commit, and
+  # Rails identifies a callback by its filter -- so declaring :announce_match
+  # twice does not add a second hook, it replaces the first. Declared as two,
+  # the create hook vanished and a match written straight to "matched"
+  # (Dating::Like makes one when no pending row exists) announced to nobody:
+  # no notification either side, no conversation.
+  #
+  # previously_new_record? is what distinguishes the two cases inside one
+  # callback: true for the row that arrived matched, false for the pending row
+  # that just changed.
+  after_commit :announce_match, on: %i[create update],
+               if: -> { status == "matched" && (previously_new_record? || saved_change_to_status?) }
 
   scope :active, -> { where(status: "matched") }
 
@@ -58,8 +71,12 @@ class Dating::Match < ApplicationRecord
   def announce_match
     return unless status == "matched"
 
-    conversation = Conversation.find_or_create_direct(initiator, receiver)
-    [ initiator, receiver ].each do |user|
+    initiator_user = strict_safe(:initiator)
+    receiver_user = strict_safe(:receiver)
+    return if initiator_user.nil? || receiver_user.nil?
+
+    conversation = Conversation.find_or_create_direct(initiator_user, receiver_user)
+    [ initiator_user, receiver_user ].each do |user|
       Notification.create!(
         user: user,
         actor: other_user(user),

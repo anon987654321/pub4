@@ -99,4 +99,15 @@ class DatingLikesTest < ActionDispatch::IntegrationTest
 
     assert_empty Dating::Like.waiting_on(@me).to_a
   end
+
+  test "a mutual like created by foreign key still announces" do
+    Dating::Like.create!(liker: @them, likee: @me)
+    Dating::Like.create!(liker: @me, likee: @them)
+
+    match = Dating::Match.between(@me, @them)
+    assert_equal "matched", match.status
+    assert Notification.exists?(kind: "match", user: @me)
+    assert Notification.exists?(kind: "match", user: @them)
+    assert Conversation.for_user(@me).exists?
+  end
 end
