@@ -113,6 +113,10 @@ end
 # entirely, so it inherits the already-loaded interpreter instead of
 # re-booting one.
 def synth_forked(voice, rate, pitch, text, out_path)
+  if ENV["SSL_CERT_FILE"].to_s.empty?
+    cert = %w[/etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt].find { |p| File.file?(p) }
+    ENV["SSL_CERT_FILE"] = cert if cert
+  end
   pid = Process.fork do
     begin
       Process.setproctitle("tts-worker: synth")
@@ -234,7 +238,7 @@ end
 require_eventmachine_ssl!
 
 begin
-  ok = synth(voice, rate, pitch, text, out_path)
+  ok = synth_forked(voice, rate, pitch, text, out_path)
   exit(ok ? 0 : 1)
 rescue StandardError => e
   warn "tts-worker: #{e.class}: #{e.message}"
