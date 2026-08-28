@@ -138,12 +138,14 @@ module Master
 
       def print_cost_tooltip
         now_cost = @refs.session.cost.to_f
+        now_tokens = @refs.session.tokens_billed.to_i
         delta = now_cost - @last_cost
+        token_delta = now_tokens - @last_tokens.to_i
         @last_cost = now_cost
-        tokens = @refs.session.token_est
+        @last_tokens = now_tokens
         cents = (delta * 100).round(2)
-        return if cents.zero? && tokens.zero?
-        line = "cost: +¢#{format('%.2f', cents)} · #{tokens} tok · #{short_model(@refs.agent.model)}"
+        return if cents.zero? && token_delta.zero?
+        line = "cost: +¢#{format('%.2f', cents)} · #{token_delta} tok · #{short_model(@refs.agent.model)}"
         puts @refs.renderer.render(line, mode: :dim)
       end
 

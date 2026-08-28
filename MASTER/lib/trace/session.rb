@@ -139,7 +139,7 @@ module Master
       # restored around a block is a worse way to say the same thing.
       def self.conversation_key = Fiber[:master_conversation] || LOCAL
 
-      attr_reader :cost, :phase, :snapshots, :budget_max
+      attr_reader :cost, :tokens_billed, :phase, :snapshots, :budget_max
       attr_accessor :topic, :last_inferred_command, :last_inferred_args
 
       def initialize(root: Dir.pwd, budget_max: 10.0, req_max: 1.0)
@@ -150,6 +150,7 @@ module Master
         @conversations = {}
         @snapshots = {}
         @cost = 0.0
+        @tokens_billed = 0
         @phase = :discover
         @topic = nil
         @last_inferred_command = nil
@@ -179,7 +180,8 @@ module Master
         entry = nil
         @mutex.synchronize do
           @cost += amount
-          entry = { ts: Time.now.to_i, amount:, model:, tokens:, total: @cost }
+          @tokens_billed += tokens.to_i
+          entry = { ts: Time.now.to_i, amount:, model:, tokens: tokens.to_i, total: @cost, billed: @tokens_billed }
         end
         rotate_costs! if File.exist?(@costs_path) && File.size(@costs_path) > COSTS_MAX_BYTES
         File.open(@costs_path, "a") { |f| f.puts(JSON.generate(entry)) }

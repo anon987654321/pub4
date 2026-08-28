@@ -110,6 +110,7 @@ module Master
         @show_chips = false
         @last_input = nil
         @last_cost = 0.0
+        @last_tokens = 0
         @seen_error_categories = {}
         @dmesg_sub = nil
         @exit_code = 0
