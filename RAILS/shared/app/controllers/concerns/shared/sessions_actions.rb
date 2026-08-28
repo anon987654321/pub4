@@ -21,7 +21,7 @@ module Shared
 
     def create
       user = User.authenticate_by(params.permit(:email_address, :password))
-      if user && user.try(:deletion_pending?)
+      if user&.try(:deletion_pending?)
         # A scheduled-for-deletion account cannot sign back in and quietly keep
         # itself alive; erasure has teeth (see UserPurgeJob).
         redirect_to new_session_path, alert: t("shared.flash.account_scheduled_for_deletion")

@@ -96,7 +96,7 @@ namespace :brgen do
     desc "List posts the spam sweep would remove (read-only)"
     task report: :environment do
       rows = BrgenSpamSweep.scope.includes(:city).to_a
-      puts "#{rows.size} of #{Post.count} posts match; #{rows.count { |p| p.removed_at }} already removed"
+      puts "#{rows.size} of #{Post.count} posts match; #{rows.count(&:removed_at)} already removed"
 
       by_city = rows.group_by { |p| p.city&.name || "-" }
       by_city.sort_by { |_, v| -v.size }.each do |city, posts|

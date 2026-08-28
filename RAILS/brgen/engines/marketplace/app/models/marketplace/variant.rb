@@ -47,7 +47,7 @@ class Marketplace::Variant < ApplicationRecord
   # "M · Blå" — what the buyer picks from, built from the option rows rather
   # than stored, so renaming an option cannot leave a stale label behind.
   def label
-    parts = options.map { |option| option.value }
+    parts = options.map(&:value)
     parts.any? ? parts.join(" · ") : sku.presence || "—"
   end
 end

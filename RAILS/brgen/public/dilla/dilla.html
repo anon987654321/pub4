@@ -72,21 +72,21 @@
     <div class="status" id="status">Ready.</div>
   </main>
   <script>
-    const $ = (id) => document.getElementById(id);
+    const byId = (id) => document.getElementById(id);
     const params = new URLSearchParams(location.search);
 
     function buildState() {
       let state = {};
-      try { state = JSON.parse($("state").value); } catch (e) { state = {}; }
+      try { state = JSON.parse(byId("state").value); } catch (e) { state = {}; }
       state.mix_ = Object.assign({}, state.mix_ || {}, {
-        style: $("style").value,
-        bars: Number($("bars").value) || 12
+        style: byId("style").value,
+        bars: Number(byId("bars").value) || 12
       });
       return {
-        name: $("name").value,
-        style: $("style").value,
-        bars: Number($("bars").value) || 12,
-        notes: $("notes").value,
+        name: byId("name").value,
+        style: byId("style").value,
+        bars: Number(byId("bars").value) || 12,
+        notes: byId("notes").value,
         state
       };
     }
@@ -103,46 +103,46 @@
       }))));
     }
 
-    $("btn-copy").addEventListener("click", () => {
+    byId("btn-copy").addEventListener("click", () => {
       try {
         const hash = encodeHash();
         history.replaceState(null, "", location.pathname + location.search + "#" + hash);
         navigator.clipboard.writeText(hash).then(() => {
-          $("status").textContent = "Hash copied and set in URL.\nPaste JSON into the playlist sketch form, then Render.";
-          $("status").className = "status ok";
+          byId("status").textContent = "Hash copied and set in URL.\nPaste JSON into the playlist sketch form, then Render.";
+          byId("status").className = "status ok";
         });
       } catch (e) {
-        $("status").textContent = "Encode failed: " + e.message;
-        $("status").className = "status err";
+        byId("status").textContent = "Encode failed: " + e.message;
+        byId("status").className = "status err";
       }
     });
 
-    $("btn-decode").addEventListener("click", () => {
+    byId("btn-decode").addEventListener("click", () => {
       const raw = location.hash.replace(/^#/, "");
-      if (!raw) { $("status").textContent = "No hash in URL."; return; }
+      if (!raw) { byId("status").textContent = "No hash in URL."; return; }
       try {
         const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
-        if (json.name) $("name").value = json.name;
-        if (json.style) $("style").value = json.style;
-        if (json.bars) $("bars").value = json.bars;
-        $("state").value = JSON.stringify({
+        if (json.name) byId("name").value = json.name;
+        if (json.style) byId("style").value = json.style;
+        if (json.bars) byId("bars").value = json.bars;
+        byId("state").value = JSON.stringify({
           pat_: json.pat_ || {},
           aud_: json.aud_ || {},
           mix_: json.mix_ || { style: json.style || "dilla", bars: json.bars || 12 }
         }, null, 2);
-        $("status").textContent = "Loaded state from URL hash.";
-        $("status").className = "status ok";
+        byId("status").textContent = "Loaded state from URL hash.";
+        byId("status").className = "status ok";
       } catch (e) {
-        $("status").textContent = "Decode failed: " + e.message;
-        $("status").className = "status err";
+        byId("status").textContent = "Decode failed: " + e.message;
+        byId("status").className = "status err";
       }
     });
 
     if (params.get("playlist_id")) {
-      $("link-playlist").href = "/playlists/" + params.get("playlist_id");
-      $("link-playlist").textContent = "Open playlist #" + params.get("playlist_id");
+      byId("link-playlist").href = "/playlists/" + params.get("playlist_id");
+      byId("link-playlist").textContent = "Open playlist #" + params.get("playlist_id");
     }
-    if (location.hash) $("btn-decode").click();
+    if (location.hash) byId("btn-decode").click();
   </script>
 </body>
 </html>

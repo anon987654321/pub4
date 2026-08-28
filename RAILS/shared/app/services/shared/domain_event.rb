@@ -39,7 +39,7 @@ module Shared
     end
 
     def self.action_to_event_name(action)
-      action.to_s.split(".").map { |part| part.camelize }.join
+      action.to_s.split(".").map(&:camelize).join
     end
 
     private_class_method :persist_activity!, :action_to_event_name

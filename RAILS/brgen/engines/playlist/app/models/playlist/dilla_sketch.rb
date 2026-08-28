@@ -79,7 +79,7 @@ class Playlist::DillaSketch < ApplicationRecord
     end
     if playlist
       playlist.add_track!(t, user: user)
-    elsif set && set.respond_to?(:tracks)
+    elsif set&.respond_to?(:tracks)
       # sets may use a different association; best-effort
       set.tracks << t if set.tracks.respond_to?(:<<)
     end

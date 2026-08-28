@@ -182,7 +182,7 @@ listings = stores.flat_map do |store|
       longitude: bergen_lng + rand(-0.06..0.06),
       status: 'active',
       created_at: rand(1..60).days.ago,
-      views_count: rand((100 * SEED_SCALE)..(10000 * SEED_SCALE))
+      views_count: rand((100 * SEED_SCALE)..(10_000 * SEED_SCALE))
     )
   end
 end
@@ -272,7 +272,7 @@ playlists = users.sample(num_play).map do |user|
     name: "#{Faker::Music.genre} #{Faker::Music.album}",
     description: Faker::Lorem.sentence,
     tracks_count: rand(5..25),
-    plays_count: rand((100 * SEED_SCALE)..(100000 * SEED_SCALE)),
+    plays_count: rand((100 * SEED_SCALE)..(100_000 * SEED_SCALE)),
     collaborative: [true, false].sample
   )
 end

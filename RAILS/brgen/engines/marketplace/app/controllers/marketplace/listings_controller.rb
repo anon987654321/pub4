@@ -190,7 +190,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
       .to_a
     return deals if deals.size >= limit
 
-    seen = deals.filter_map { |deal| deal.listing_id }
+    seen = deals.filter_map(&:listing_id)
     fillers = policy_scope(Marketplace::Listing).active
       .where(kind: kind)
       .with_attached_photos
