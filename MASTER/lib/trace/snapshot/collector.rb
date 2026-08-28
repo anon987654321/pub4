@@ -9,7 +9,8 @@ module Master
   module Trace
     module Snapshot
       # Shared snapshot policy: git-tracked source text only, with explicit path skips.
-      # Used by Snapshot::Publisher (/snapshot) and bin/snapshot (repo-root artifacts).
+      # Used by Snapshot::Publisher (/snapshot). The repo-root packs are
+      # `pub4 snapshot`, which walks git ls-files itself rather than through here.
       module Collector
         SKIP_SEGS = %w[
           .git .master vendor tmp var node_modules .bundle coverage log dist knowledge
@@ -53,9 +54,10 @@ module Master
         end
 
         # cap: nil disables the size cap entirely -- every text file is inlined
-        # in full, no matter how large. Used by bin/snapshot (the full-repo LLM
-        # share pack); Snapshot::Publisher's boot-context digest keeps the default
-        # cap since that one is meant to stay small, not exhaustive.
+        # in full, no matter how large. Nothing passes it: Snapshot::Publisher is
+        # the only caller and keeps the default, because its boot-context digest
+        # is meant to stay small. The uncapped full-repo pack is `pub4 snapshot`,
+        # which walks git ls-files itself rather than through here.
         def partition(paths, cap: MAX_INLINE_BYTES)
           text = paths.select { |path| File.file?(path) && text_file?(path) }
           return { inlined: text.sort, large: [] } if cap.nil?

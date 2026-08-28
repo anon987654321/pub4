@@ -72,4 +72,4 @@ end
 # the Mac). Inheriting whatever `env ruby` happened to pick is how the local
 # boot broke before .ruby-version was pinned, and MASTER needs ~> 3.4.
 Dir.chdir(MASTER)
-exec(File.join(ROOT, "bin", "ruby"), CLI, *args)
+exec(File.join(MASTER, "bin", "ruby"), CLI, *args)

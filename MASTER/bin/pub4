@@ -58,7 +58,7 @@ when "measure"
   # Every ratchet in the repo, current beside recorded. Non-zero when any is over
   # its ceiling OR slack beneath it, because a ceiling above the real number is
   # room the next change grows into without failing anything.
-  require_relative "../MASTER/tools/ratchets"
+  require_relative "../tools/ratchets"
   deep = !ARGV.delete("--deep").nil?
   rows = Pub4::Ratchets.all(deep:)
   puts ARGV.include?("--json") ? Pub4::Ratchets.json(rows) : Pub4::Ratchets.render(rows)
@@ -90,7 +90,7 @@ when "land"
     [out.strip, status.success?]
   end
 
-  measure_out, measure_ok = run!(File.join(ROOT, "bin", "pub4"), "measure")
+  measure_out, measure_ok = run!(File.join(__dir__, "pub4"), "measure")
   unless measure_ok
     warn measure_out
     abort("land: a ratchet is off before you started — fix that first, or it lands with your change")
@@ -108,7 +108,7 @@ when "land"
 
   # The same measurement again. A rebase brings other people's commits under
   # yours, and theirs can put a ceiling over the edge that yours did not.
-  after_out, after_ok = run!(File.join(ROOT, "bin", "pub4"), "measure")
+  after_out, after_ok = run!(File.join(__dir__, "pub4"), "measure")
   unless after_ok
     warn after_out
     abort("land: green before the rebase, off after it — origin/main moved under you")

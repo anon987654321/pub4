@@ -8,9 +8,11 @@ module Master
       module AgentGuide
         module_function
 
-        # full_inline: true describes a pack with no per-file size cap (bin/snapshot);
-        # false describes Snapshot::Publisher's boot-context digest, which still lists
-        # oversized files rather than pasting them (kept small on purpose).
+        # full_inline: true describes a pack with no per-file size cap; false
+        # describes Snapshot::Publisher's boot-context digest, which still lists
+        # oversized files rather than pasting them (kept small on purpose). Only
+        # the false branch has a caller: the uncapped pack is `pub4 snapshot`,
+        # which collects and renders its own.
         def lines(label: "MASTER", full_inline: false)
           header_lines(label) + orient_lines + cross_reference_lines +
             execution_trace_lines + architecture_assessment_lines + rehydrate_lines(full_inline:)
@@ -79,7 +81,7 @@ module Master
           unless full_inline
             return "4. This is the small boot-context digest: binaries and files over the size cap " \
                    "are **listed only** (not inlined) — do not expect base64 blocks. For a full, " \
-                   "uncapped pack use `bin/snapshot` instead (writes `snapshot_<LABEL>.md` at the repo root)."
+                   "uncapped pack use `pub4 snapshot` (writes `snapshot_<TREE>.md` at the repo root)."
           end
 
           "4. Every git-tracked **text** file is inlined in full — no size cap, no " \
