@@ -42,7 +42,7 @@ class CommentsController < ApplicationController
   end
 
   def generate_summary
-    @comment = Comment.find(params[:id])
+    @comment = Comment.includes(:user, :votes, replies: :user).find(params[:id])
     return unless @comment.long_thread?
     ThreadSummarizer.call(@comment)
     respond_to do |format|
