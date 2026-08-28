@@ -218,7 +218,7 @@ apps:
         - { name: Dependency model,                                         status: done }
         - { name: SecurityAdvisory model,                                   status: done }
         - { name: Maintainer model,                                         status: done }
-        - { name: live search on name/summary/description (Hotwire),       status: done, notes: "ports_fts + PortsSearch" }
+        - { name: live search on name/summary/description (Hotwire),       status: done, notes: "ports_fts + Shared::LiveSearchable#apply_live_search in PortsController#index" }
         - { name: OpenBSD ports tree import (Makefile walk + HTTPS fallback), status: done, notes: "MakefileParser + Importer + PortsImportJob; unresolved deps logged to ImportRun. Three sources, best metadata first: local /usr/ports tree, then ports.tar.gz over HTTPS (full metadata, gated on 2 GB free via BSDPORTS_PORTS_TARBALL=1), then the mirror's published package index (names+versions only, 13k rows)." }
         - { name: FreeBSD/NetBSD ports parsers,                            status: planned, agent: ignore, notes: "OpenBSD-only production scope; platforms seeded inactive" }
         - { name: dependency tree visualization,                            status: done, notes: "Dependency.tree_for cycle guard + _dependency_tree.html.erb role=tree + reverse-deps on show" }

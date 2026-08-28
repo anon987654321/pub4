@@ -93,7 +93,6 @@ All under `app/services/`.
 | `WardrobeGap` | Finds missing categories and connectors; writes `Recommendation` rows |
 | `OutfitCompatibility` | Scores a combination on category balance, color balance, occasion fit |
 | `OutfitGeneration` | Generates outfits from scoped items, layer-aware, biased toward least-worn |
-| `OutfitOrdering` | Orders items within an outfit for display |
 | `StyleEvolution` | Wear timeline grouped into life phases |
 | `TasteRanker` | Ranks garments on declared preference plus joy, wear, recency and life phase; `explain` names the reasons |
 | `StyleAssistant` | One outfit for today — deterministic per user and date, weather-aware, rests recent wears, persists nothing |
