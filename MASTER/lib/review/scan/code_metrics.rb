@@ -30,10 +30,6 @@ module Master
           source.to_s.lines.count { |line| code_line?(line) }
         end
 
-        def code_lines_in(dir)
-          Dir.glob(File.join(dir, "**", "*.rb")).sum { |file| code_lines(File.read(file)) }
-        end
-
         # Lines that exist only because Zeitwerk maps a path to a constant.
         #
         # `module Master` / `module Ground` / `module Policy` wrapping one nested

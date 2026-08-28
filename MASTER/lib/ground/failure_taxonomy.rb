@@ -49,11 +49,6 @@ module Master
         [2**attempt, 60].min
       end
 
-      # Back-compat with Fix::Constants regex consumers.
-      def transient_pattern = @patterns["transient"]
-      def permanent_pattern = @patterns["permanent"]
-      def ambiguous_pattern = @patterns["ambiguous"]
-
       private
 
       def build_patterns
